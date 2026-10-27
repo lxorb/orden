@@ -556,6 +556,33 @@ describe('chats', () => {
       expect(env.db.prepare('select count(*) as n from chat_sockets').get()).toEqual({ n: 1 })
     })
 
+    test('taking somebody out a day after they opened the chat still closes their socket', async () => {
+      const chat = await chatOfOwner()
+      const writer = await socketOf('writer', chat)
+      at(25 * 60 * 60 * 1000)
+      // Anybody opening any chat a day later, which is when rows are cleared by age.
+      await socketOf('reader', await chatOfOwner())
+      await socketOf('reader', chat)
+      await call(env, `/v1/spaces/${spaceId}/share/members/writer@example.com`, {
+        method: 'DELETE',
+        token: people.owner,
+      })
+      expect(writer.closed).toBe(true)
+    })
+
+    test('a row a day old whose socket is gone is cleared by the next join', async () => {
+      const chat = await chatOfOwner()
+      const other = await chatOfOwner()
+      await socketOf('writer', chat)
+      // Gone without the close the object would have heard.
+      for (const socket of logs.of(chat).state.getWebSockets()) logs.of(chat).state.drop(socket)
+      at(25 * 60 * 60 * 1000)
+      await socketOf('reader', other)
+      expect(env.db.prepare('select chat_id, who from chat_sockets').all()).toEqual([
+        { chat_id: other, who: ids.reader },
+      ])
+    })
+
     test('a writer taken down to reading keeps the socket and posts no more', async () => {
       const chat = await chatOfOwner()
       const writer = await socketOf('writer', chat)

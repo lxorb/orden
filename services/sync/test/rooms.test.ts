@@ -1520,6 +1520,67 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
   })
 
+  /** A day and an hour from now, for as long as `work` runs: past the age a row
+   *  saying somebody has a file open is cleared at. */
+  async function aDayLater(work: () => Promise<void>): Promise<void> {
+    const later = Date.now() + 25 * 60 * 60 * 1000
+    const real = Date.now
+    Date.now = () => later
+    try {
+      await work()
+    } finally {
+      Date.now = real
+    }
+  }
+
+  async function ownerOpensAnother(): Promise<void> {
+    const ownerId = (await call(env, '/v1/me', { token: owner })).json.user.id
+    const other = (
+      await call(env, `/v1/spaces/${spaceId}/notes`, {
+        token: owner,
+        body: { path: 'other.md', content: 'x' },
+      })
+    ).json.note.id
+    await join(live.of(other).room, { id: other, spaceId, who: ownerId }, true)
+  }
+
+  test('has a socket open for more than a day closed when the owner takes them out', async () => {
+    const socket = await open(writerId)
+    await aDayLater(async () => {
+      // Anybody opening any file a day later, which is when rows are cleared by age.
+      await ownerOpensAnother()
+      await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
+        method: 'DELETE',
+        token: owner,
+      })
+    })
+    expect(socket.closed).toBe(true)
+  })
+
+  test('has a socket open for more than a day made a reader', async () => {
+    const socket = await open(writerId)
+    await aDayLater(async () => {
+      await ownerOpensAnother()
+      await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
+        method: 'PATCH',
+        token: owner,
+        body: { role: 'read' },
+      })
+    })
+    expect(socket.closed).toBe(false)
+    expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
+  })
+
+  test('has a row a day old cleared once its room has nobody of theirs in it', async () => {
+    env.db
+      .prepare('insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, 1)')
+      .run('gone-note', spaceId, writerId)
+    await aDayLater(ownerOpensAnother)
+    const rows = env.db.prepare('select note_id from room_sockets order by note_id').all()
+    expect(rows).not.toContainEqual({ note_id: 'gone-note' })
+    expect(rows).toHaveLength(1)
+  })
+
   test('has the socket closed when the owner takes them out', async () => {
     const socket = await open(writerId)
 

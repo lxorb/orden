@@ -25,6 +25,7 @@ import { MOST_BEHIND, MOST_PAGE, RECEIPTS_UP_TO, TYPING_EVERY } from '@nib/chats
 import { clientFrameOf, isWho, type Refusal, type ServerFrame } from '@nib/chats/wire'
 import { BEAT, BEAT_ANSWER } from '@nib/sync-core/wire'
 import { places } from '../bound'
+import { OPEN_HEADER, openAnswer, openIn, sweepOpened } from '../opened'
 import { note } from '../failed'
 import { askHub } from '../hub/reach'
 import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
@@ -43,6 +44,7 @@ import {
   ROLE,
   setMeta,
 } from './placing'
+import { askChat } from './ask'
 import { hubIdOf, reachAs, reaching } from './reach'
 import { SCHEMA } from './schema'
 
@@ -59,6 +61,7 @@ export type ChatAsk =
   | 'revoke'
   | 'erase'
   | 'profile'
+  | 'open'
 
 /** A person a request or a socket is from, as the door or the route decided. */
 export type Person = Asker & { id: string; guest: boolean }
@@ -107,9 +110,6 @@ const NAMES_FILE = `select 1 from messages m
 
 /** How long the list of who the chat reaches is believed. */
 const REACHERS_FOR = 60_000
-
-/** How long a row saying somebody has a chat open is believed; see rooms/room.ts. */
-const OPEN_FOR = 24 * 60 * 60 * 1000
 
 function attachedTo(socket: WebSocket): Attached | null {
   const held: unknown = socket.deserializeAttachment()
@@ -176,6 +176,8 @@ export class ChatLog implements DurableObject {
     const ask = (headers.get('x-nib-chat-ask') ?? '') as ChatAsk
 
     if (ask === 'erase') return await this.erase()
+    // Whether a row a day old still has a socket behind it; see opened.ts.
+    if (ask === 'open') return openAnswer(this.hasSocketOf(headers.get(OPEN_HEADER) ?? ''))
     if (ask === 'revoke') {
       return await this.revoke(headers.get('x-nib-revoked') ?? '', headers.get('x-nib-role'))
     }
@@ -1140,9 +1142,14 @@ export class ChatLog implements DurableObject {
     const chat = this.chatId()
     const space = readMeta(this.sql, 'space')
     if (!chat || !space) return
-    await this.env.DB.prepare('delete from chat_sockets where opened_at < ?')
-      .bind(Date.now() - OPEN_FOR)
-      .run()
+    // Rows a close never came for are cleared as new ones arrive, but only once the
+    // chat a row names says nobody of theirs is in it: a socket may simply have been
+    // open for days. See opened.ts.
+    await sweepOpened(this.env, { name: 'chat_sockets', key: 'chat_id' }, async (other, them) =>
+      other === chat
+        ? this.hasSocketOf(them)
+        : await openIn(await askChat(this.env, other, 'open', { [OPEN_HEADER]: them })),
+    )
     await this.env.DB.prepare(
       `insert into chat_sockets (chat_id, space_id, who, opened_at) values (?, ?, ?, ?)
        on conflict(chat_id, who) do update
@@ -1150,6 +1157,11 @@ export class ChatLog implements DurableObject {
     )
       .bind(chat, space, who, Date.now())
       .run()
+  }
+
+  /** Whether this person - an id, as the rows name them - has a socket here. */
+  private hasSocketOf(id: string): boolean {
+    return !!id && this.ctx.getWebSockets().some((socket) => attachedTo(socket)?.id === id)
   }
 
   private async forgetSocketRow(who: string): Promise<void> {
