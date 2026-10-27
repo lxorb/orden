@@ -45,7 +45,7 @@ import {
   type Reviewed,
 } from './changes'
 import { redoFile, undoFile } from './file-ops'
-import { type FileChange, fileChangesOf } from './files'
+import { type FileChange, fileChangesOf, spaceNamed } from './files'
 import { type Choice, type Made, planFor, type Plan } from './plan'
 import { summarized } from './summary'
 
@@ -151,8 +151,17 @@ class Review {
       for (const [path, track] of tracksOf(agent)) {
         const open = documentOf(path)
         if (open) track.follow(open)
-        for (const id of track.ids)
-          edits.push({ id, agent, path, at: track.madeAt(id), spots: track.spansOf(id) })
+        for (const id of track.ids) {
+          const thread = track.threadOf(id)
+          edits.push({
+            id,
+            agent,
+            path,
+            at: track.madeAt(id),
+            spots: track.spansOf(id),
+            ...(thread ? { thread } : {}),
+          })
+        }
       }
     }
     return edits
@@ -268,7 +277,9 @@ class Review {
   private follow(agent: string, path: string): void {
     const provider = providerOf(agent)
     if (!this.following.size || provider === null || path.startsWith('unsaved:')) return
-    const thread = answeringAt(provider, Date.now())
+    const last = tracksOf(agent).get(path)?.ids.at(-1)
+    const thread =
+      (last ? tracksOf(agent).get(path)?.threadOf(last) : null) ?? answeringAt(provider, Date.now())
     const root = workspace.activeSpace?.root
     if (!thread || !this.following.has(thread) || !root || withinSpace(root, path) === null) return
     if (workspace.active?.path !== path) void workspace.open(path)
@@ -399,7 +410,7 @@ class Review {
     const kept: Redo['made'] = []
     for (const one of made) {
       const space =
-        workspace.spaces.find((each) => each.id === one.space || each.name === one.space) ??
+        (one.space ? spaceNamed(workspace.spaces, one.space) : undefined) ??
         workspace.spaces.find((each) => each.id === thread.space)
       if (!space) continue
       const relative = nameOf(one.path).includes('.') ? one.path : `${one.path}.md`

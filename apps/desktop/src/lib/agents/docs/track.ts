@@ -81,6 +81,8 @@ export class Track {
   private readonly where = new Map<string, Span[]>()
   /** When each was made. */
   private readonly when = new Map<string, number>()
+  /** The AI panel thread each was made for, where its call said one. */
+  private readonly whose = new Map<string, string>()
   /** What putting back edits taken out by `undoSome` would do, by the caller's name
    *  for that take, carried through everything since: a rewind's Redo. */
   private readonly takenBack = new Map<string, { ids: string[]; changes: ChangeSet }>()
@@ -93,10 +95,13 @@ export class Track {
     private readonly told: (edits: number) => void,
   ) {}
 
-  /** A name for the next edit's mark: unique in this session. */
-  nextId(): string {
+  /** A name for the next edit's mark: unique in this session. `thread` is the AI panel
+   *  thread it is made for, where the call said one. */
+  nextId(thread?: string): string {
     this.made++
-    return `${this.prefix}:${String(this.made)}`
+    const id = `${this.prefix}:${String(this.made)}`
+    if (thread) this.whose.set(id, thread)
+    return id
   }
 
   /** Brings the steps up to the note as it is now: `open` is the document it is open
@@ -158,6 +163,11 @@ export class Track {
   /** When an edit was made, in milliseconds since 1970. */
   madeAt(id: string): number {
     return this.when.get(id) ?? 0
+  }
+
+  /** The AI panel thread an edit was made for, or null where its call said none. */
+  threadOf(id: string): string | null {
+    return this.whose.get(id) ?? null
   }
 
   /** Some of the edits taken back, as one transaction in the open note: the review's

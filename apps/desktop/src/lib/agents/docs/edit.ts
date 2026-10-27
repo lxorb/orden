@@ -268,7 +268,7 @@ function changeOpen(
 
   const track = trackOf(agent, note.path)
   const first = firstEdit(agent, note)
-  const changes = track.applyOpen(open, planned.edits, track.nextId())
+  const changes = track.applyOpen(open, planned.edits, track.nextId(agent.thread))
 
   // The version before, kept once per agent and note, and said whose edit it was
   // kept for. After the edit rather than before it, because nothing may come between
@@ -301,7 +301,7 @@ async function changeClosed(
   const after = applied(before, planned.edits)
   const track = trackOf(agent, note.path)
   track.catchUp(null, before)
-  const id = track.nextId()
+  const id = track.nextId(agent.thread)
 
   const snapshot = firstEdit(agent, note)
   const wrote = await writeClosed(desk, note, before, planned.edits, {

@@ -38,12 +38,29 @@ export function argsOf(part: Tool): Record<string, unknown> {
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '')
 
+/** The space a call ran in: the one its answer says, else the one it named. A call
+ *  that names none runs in the space in front at the time (agents/workspace/spaces.ts),
+ *  which is not the thread's once the reader has switched, so the verbs that make, move
+ *  and delete say it. Empty for a call of before they did. */
+export function spaceOfCall(part: Tool): string {
+  return text(answerOf(part)?.space) || text(argsOf(part).space)
+}
+
+/** The space named by id or by name, case aside: the way a verb finds it (`placeFor`). */
+export function spaceNamed<T extends { id: string; name: string }>(
+  spaces: readonly T[],
+  named: string,
+): T | undefined {
+  const folded = named.trim().toLowerCase()
+  return spaces.find((one) => one.id === named || one.name.toLowerCase() === folded)
+}
+
 /** What one call did to a file, or null for a call that did nothing of the kind. */
 export function fileChangeOf(part: Tool): FileChange | null {
   if (part.state !== 'ok') return null
   const verb = verbOf(part.verb)
   const said = answerOf(part)
-  const space = text(argsOf(part).space)
+  const space = spaceOfCall(part)
   const where = space ? { space } : {}
   if (verb === 'move_file') {
     const from = text(said?.from)

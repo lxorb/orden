@@ -334,7 +334,10 @@ mod tests {
     #[test]
     fn a_call_says_the_thread_it_runs_for() {
         let args = json!({ "path": "a.md" });
-        assert_eq!(asked_for("edit_note", &args, Some("thread-1"))["thread"], "thread-1");
+        assert_eq!(
+            asked_for("edit_note", &args, Some("thread-1"))["thread"],
+            "thread-1"
+        );
         assert!(asked_for("edit_note", &args, None).get("thread").is_none());
     }
 

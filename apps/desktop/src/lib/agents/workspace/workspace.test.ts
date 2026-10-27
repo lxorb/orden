@@ -968,7 +968,11 @@ describe('the notes, on the road', () => {
       },
       'thread-1',
     )
-    await call('set_task', { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true }, asker)
+    await call(
+      'set_task',
+      { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true },
+      asker,
+    )
     expect(docs.editNote).toHaveBeenCalledWith(
       { id: 'nib-anthropic', name: 'Claude', thread: 'thread-1' },
       { path: 'Soup.md', space: 'home' },

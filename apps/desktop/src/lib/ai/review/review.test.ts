@@ -354,7 +354,11 @@ describe('a call made in the space in front, not the thread’s', () => {
       thread,
       'move',
       [],
-      tool('move_file', { path: 'A.md', to: 'B.md' }, '{"from":"A.md","to":"B.md","space":"Other"}'),
+      tool(
+        'move_file',
+        { path: 'A.md', to: 'B.md' },
+        '{"from":"A.md","to":"B.md","space":"Other"}',
+      ),
     )
     await review.undoFiles(thread, review.files(thread))
     expect(fake.moves).toEqual([['/other', 'B.md', 'A.md']])

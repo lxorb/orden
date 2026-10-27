@@ -117,6 +117,8 @@ export const crateTools: Tools = {
         mode,
         tool: name,
         args: typeof args === 'object' && args !== null ? args : {},
+        // Whose an edit it makes is: every thread of the provider is one grant.
+        ...(thread ? { thread } : {}),
       })
       return outputIn(answered)
     } catch (error) {

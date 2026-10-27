@@ -47,7 +47,10 @@ describe('a thread’s changes', () => {
   })
 
   test('are the edits that say they are its own, whoever had started last', () => {
-    const edits = [{ ...edit('e1', 12), thread: 't2' }, { ...edit('e2', 45), thread: 't1' }]
+    const edits = [
+      { ...edit('e1', 12), thread: 't2' },
+      { ...edit('e2', 45), thread: 't1' },
+    ]
     const changes = changesOf(thread, edits, answering, new Set())
     expect(changes.map((one) => one.id)).toEqual(['e2'])
   })

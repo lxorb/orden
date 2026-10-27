@@ -263,7 +263,10 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Make ${relative} in ${place.space.name}`)
   if (question) return question
 
-  return done(await made(place, relative, wordsSent(call) ?? '', flag(call, 'open')))
+  // Said with the space it was made in: one the call did not name is the one in front,
+  // which a rewind of the thread later finds here rather than in the thread's own.
+  const answer = await made(place, relative, wordsSent(call) ?? '', flag(call, 'open'))
+  return done({ ...answer, space: place.space.name })
 }
 
 /** A new note, written where it goes. Opened behind the tab in front when asked, and

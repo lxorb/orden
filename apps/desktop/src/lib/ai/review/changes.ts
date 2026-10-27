@@ -1,8 +1,9 @@
 /** What a thread changed, worked out from the agents' edits (docs/ai-sidebar.md 4.5).
  *
  *  Every thread of a provider writes as that provider's one built-in agent, so an
- *  edit says which agent and when, and the sends (chat/sends.ts) say which thread was
- *  answering for that provider then. The message an edit answered is the reader's
+ *  edit says which agent, when, and the thread its call said it was for; for an edit
+ *  that says no thread, the sends (chat/sends.ts) say which thread was answering for
+ *  that provider then. The message an edit answered is the reader's
  *  latest message before it: that message's checkpoint is where taking the edit back
  *  goes back to. Steered messages joined a running turn and have no checkpoint of
  *  their own, as in Claude Code.
@@ -28,6 +29,8 @@ export interface Edit {
   path: string
   at: number
   spots: readonly Spot[]
+  /** The thread it was made for, where its call said one. */
+  thread?: string
 }
 
 /** One change of a thread's: an edit, the message it answered, and its size in lines. */
@@ -101,7 +104,10 @@ export function changesOf(
   for (const edit of edits) {
     if (kept.has(edit.id)) continue
     const provider = providerOf(edit.agent)
-    const by = provider === null ? null : answering(provider, edit.at)
+    if (provider === null) continue
+    // Two threads of a provider can run at once, and the time says only which started
+    // last: the thread the call said is the one, the time only for a call that said none.
+    const by = edit.thread ?? answering(provider, edit.at)
     if (by === null || !threads.has(by)) continue
     changes.push({
       ...edit,
