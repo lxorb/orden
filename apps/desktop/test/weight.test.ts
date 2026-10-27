@@ -882,8 +882,12 @@ function holds(tail: string): boolean {
  *  included (`reachedByOthers` and the kept `{ role, shared, items }` in
  *  sharing.svelte.ts), and an embed or a canvas file card is trusted by its own note
  *  (`embedNote` in link-index.svelte.ts, `EmbeddedNote` in @nib/markdown). Measured
- *  3,388,683 with main as of this raise. */
-const BUDGET = 3_389_500
+ *  3,388,683 with main as of this raise.
+ *
+ *  Raised 2026-10-27, to 3,390,300, for B540: a wait on the owner can be closed and
+ *  goes on out of sight (`closed`, `shown` and `close` in joining.svelte.ts).
+ *  Measured 3,389,973. */
+const BUDGET = 3_390_300
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

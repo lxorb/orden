@@ -76,6 +76,13 @@ class Joining {
   busy = $state(false)
   /** What went wrong, in the app's own voice, under the line. */
   error = $state<string | null>(null)
+  /** A wait the reader closed: it asks on out of sight, and being let in lands. */
+  closed = $state(false)
+
+  /** Whether the sheet is up: not for a closed wait, but for its answer. */
+  get shown(): boolean {
+    return this.step !== null && !(this.step === 'waiting' && this.closed)
+  }
 
   private token: string | null = null
   private asking: ReturnType<typeof setInterval> | undefined
@@ -117,6 +124,8 @@ class Joining {
     }
 
     this.token = held
+    // Picked back up out of sight, not over the app at every launch.
+    this.closed = true
     this.invitation = await api.invitation(held).catch(() => null)
     await this.walkThrough()
   }
@@ -158,6 +167,7 @@ class Joining {
       if (this.step === 'waiting' && !refused(error)) return
 
       this.stopAsking()
+      this.closed = false
       this.step = 'gone'
       return
     } finally {
@@ -193,6 +203,7 @@ class Joining {
 
     if (joined.declined) {
       this.stopAsking()
+      this.closed = false
       this.step = 'declined'
       return
     }
@@ -227,6 +238,7 @@ class Joining {
   private arrived() {
     this.stopAsking()
     this.step = null
+    this.closed = false
     this.token = null
     this.invitation = null
   }
@@ -253,9 +265,16 @@ class Joining {
     this.step = 'gone'
   }
 
-  /** The line is read, and the app underneath it is what is left. */
+  /** The wait out of sight, still asking. */
+  close() {
+    this.closed = true
+  }
+
+  /** The line is read, and the app underneath it is what is left. Also how a
+   *  wait is stopped. */
   dismiss() {
     this.stopAsking()
+    this.closed = false
     this.step = null
     this.token = null
     this.invitation = null
