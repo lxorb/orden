@@ -6,7 +6,11 @@
 /** One SVG rasterised by the browser, which is how the canvas's PNG is made too.
  *  Null where the browser refused the picture, which is a page nothing could be
  *  drawn from rather than an error worth a dialog. */
-export async function svgToPng(svg: string, width: number, height: number): Promise<Uint8Array | null> {
+export async function svgToPng(
+  svg: string,
+  width: number,
+  height: number,
+): Promise<Uint8Array | null> {
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
 
   try {

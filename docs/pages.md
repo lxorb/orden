@@ -423,10 +423,15 @@ the page and the cards on it, and the ink on top, each sheet clipped to itself
 canvas/picture.ts, with the plane's trust answer), and in the PNG the same card
 set as plain lines, since a browser will not rasterise a `foreignObject`. In the
 PDF a text card is real Helvetica text, broken to the card's width at the size
-and padding the plane sets it in, so typed words stay searchable; a character
-Helvetica has no glyph for is left out, and pictures, links and shapes on a page
-are not drawn into the PDF yet. The words and rules are in the light theme's
-colours whatever theme is on, because the sheet is white paper.
+and padding the plane sets it in, so typed words stay searchable. Everything the
+PDF cannot set as Helvetica text goes in as the plane's plain picture of the card,
+rasterised by the browser as the PNG export is: a shape, a link, a picture, and
+words in a script Helvetica has no glyphs for (Polish, Cyrillic, Greek, CJK,
+emoji). Those words are a picture rather than searchable text, but they are on
+paper; only where the browser refuses the picture does a card of words fall back
+to the letters Helvetica has. Ink, words and rules are in the theme's light
+colours whatever theme is on, because the sheet is white paper: a dark theme's
+default pen writes near white, which would vanish on it (B571).
 
 **Print** is the same PDF on paper (#350): the export's own pages, drawn a page at a
 time and handed to the print engine as one picture per sheet - the system's dialog on

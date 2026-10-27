@@ -157,6 +157,16 @@ describe('words typed on a page', () => {
     expect(performance.now() - began).toBeLessThan(400)
   })
 
+  test('are set only as far as their card shows them', async () => {
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
+    card.text = Array.from({ length: 2000 }, (_, at) => `word${at}`).join(' ')
+    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+
+    // A card 60px tall shows three lines of 24.8px; one more is clipped half way.
+    expect(first.match(/Tj/g)?.length).toBeLessThanOrEqual(4)
+  })
+
   test('reach the SVG of their page, and the PNG picture of it', () => {
     const canvas = note()
     const pages = canvas.nodes.filter((node): node is PageNode => node.type === 'page')
@@ -196,8 +206,8 @@ describe('what else is on a page', () => {
     const page = canvas.nodes[0] as PageNode
     const at = { x: page.x + 40, y: page.y + 300, width: 120, height: 80 }
     canvas.nodes.push(
-      { id: 's', type: 'shape', shape: 'rect', ...at } as CanvasNode,
-      { id: 'l', type: 'link', url: 'https://example.com', ...at, y: at.y + 100 } as CanvasNode,
+      { id: 's', type: 'shape', shape: 'rect', ...at },
+      { id: 'l', type: 'link', url: 'https://example.com', ...at, y: at.y + 100 },
     )
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
 

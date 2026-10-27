@@ -161,7 +161,9 @@ function plainCard(
     )
     .join('')
 
-  return `<text font-size="${type.size}" fill="${colour}" class="label">${spans}</text>`
+  // The class sets the 13px a card's words are in; bare words say their own size.
+  const own = bare ? ` style="font:400 ${type.size}px/1 ui-sans-serif,system-ui,sans-serif"` : ''
+  return `<text font-size="${type.size}" fill="${colour}" class="label"${own}>${spans}</text>`
 }
 
 function cardBody(
