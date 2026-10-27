@@ -45,13 +45,15 @@
     | { kind: 'sums'; id: string; group: Group }
   const lines = $derived.by((): Line[] => {
     const out: Line[] = []
-    for (const group of live.answer?.groups ?? []) {
+    const groups = live.answer?.groups ?? []
+    const keys = groups.map((group) => group.key)
+    for (const group of groups) {
       const key = groupName(group.key)
       if (property !== undefined) {
         out.push({
           kind: 'head',
           id: `head:${key}`,
-          label: groupLabel(property, group.key, live.today),
+          label: groupLabel(property, group.key, live.today, keys),
           count: group.rows.length,
         })
       }

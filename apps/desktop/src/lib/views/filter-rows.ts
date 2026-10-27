@@ -37,8 +37,6 @@ export interface FilterRows {
 /** Whether an operator takes a value. */
 export const takesValue = (op: Operator): boolean => op !== 'empty' && op !== 'filled'
 
-const PROPERTY = /^[A-Za-z_][\w.]*$/
-
 /** A value as the literal an expression writes: a number as itself, `true` and
  *  `false`, a day as `date("…")`, a call (`today()`) as itself, and words quoted. */
 export function literal(value: string): string {
@@ -72,10 +70,12 @@ export function expressionOf(row: { property: string; op: Operator; value: strin
     case '<=':
     case '>=':
       return `${property} ${op} ${literal(value)}`
+    // `isEmpty()`, as Obsidian writes it: 0 and false are values, only a missing
+    // property, an empty text or an empty list is empty.
     case 'empty':
-      return `!${property}`
+      return `${property}.isEmpty()`
     case 'filled':
-      return property
+      return `!${property}.isEmpty()`
     case 'contains':
       return `${property}.contains(${literal(value)})`
     case 'tag':
@@ -107,10 +107,11 @@ export function rowOf(expression: string): FilterRow {
     if (value !== null) return { property: compared[1], op, value }
   }
 
-  if (text.startsWith('!') && PROPERTY.test(text.slice(1))) {
-    return { property: text.slice(1), op: 'empty', value: '' }
-  }
-  if (PROPERTY.test(text) && text.includes('.')) return { property: text, op: 'filled', value: '' }
+  const empty = /^(!?)([A-Za-z_][\w.]*)\.isEmpty\(\)$/.exec(text)
+  if (empty?.[2]) return { property: empty[2], op: empty[1] ? 'filled' : 'empty', value: '' }
+
+  // A bare `prop` or `!prop` asks whether it is true, which is not whether it is
+  // empty (0 and false), so it is kept as written rather than read as either.
   return { kept: expression }
 }
 

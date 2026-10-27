@@ -25,7 +25,12 @@
   {#each live.answer?.groups ?? [] as group (groupName(group.key))}
     {#if property !== undefined}
       <p class="nib-section">
-        {groupLabel(property, group.key, live.today)}<span>{group.rows.length}</span>
+        {groupLabel(
+          property,
+          group.key,
+          live.today,
+          (live.answer?.groups ?? []).map((one) => one.key),
+        )}<span>{group.rows.length}</span>
       </p>
     {/if}
     {#each group.rows as row (`${row.space}:${rowId(row)}`)}

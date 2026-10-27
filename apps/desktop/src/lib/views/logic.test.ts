@@ -393,7 +393,11 @@ describe('the filter builder', () => {
       op: 'tag',
       value: 'work',
     })
-    expect(rowOf('!note.cover')).toEqual({ property: 'note.cover', op: 'empty', value: '' })
+    expect(rowOf('note.cover.isEmpty()')).toEqual({
+      property: 'note.cover',
+      op: 'empty',
+      value: '',
+    })
     expect(rowOf('(now() - file.ctime).days > 3')).toEqual({
       kept: '(now() - file.ctime).days > 3',
     })
@@ -424,11 +428,13 @@ describe('the filter builder on empty values', () => {
     noteRow('Full.md', 'estimate: 3\nbillable: true\ntags: [a]'),
   ]
   const shown = (row: { property: string; op: 'empty' | 'filled'; value: string }) => {
-    const base = readBase(`filters: ${JSON.stringify(expressionOf(row))}\nviews:\n  - type: table\n    name: T\n`)
-    const context = contextFor({ rows: notes, today: '2026-10-13', now: '2026-10-13T09:00:00' })
-    return answer(base, 0, notes, context).groups.flatMap((group) =>
-      group.rows.map((one) => one.file.basename),
+    const base = readBase(
+      `filters: ${JSON.stringify(expressionOf(row))}\nviews:\n  - type: table\n    name: T\n`,
     )
+    const context = contextFor({ rows: notes, today: '2026-10-13', now: '2026-10-13T09:00:00' })
+    return answer(base, 0, notes, context)
+      .groups.flatMap((group) => group.rows.map((one) => one.file.basename))
+      .sort()
   }
 
   test('counts 0 and false as values, and only missing, blank and empty lists as empty', () => {
@@ -451,11 +457,16 @@ describe('the filter builder on empty values', () => {
   test('reads both shapes back as rows', () => {
     for (const property of ['note.estimate', 'estimate']) {
       for (const op of ['empty', 'filled'] as const) {
-        expect(rowOf(expressionOf({ property, op, value: '' }))).toEqual({ property, op, value: '' })
+        expect(rowOf(expressionOf({ property, op, value: '' }))).toEqual({
+          property,
+          op,
+          value: '',
+        })
       }
     }
-    expect(rowOf('!note.cover')).toEqual({ property: 'note.cover', op: 'empty', value: '' })
-    expect(rowOf('note.cover')).toEqual({ property: 'note.cover', op: 'filled', value: '' })
+    // A bare property asks whether it is true, not whether it is empty.
+    expect(rowOf('!note.cover')).toEqual({ kept: '!note.cover' })
+    expect(rowOf('note.cover')).toEqual({ kept: 'note.cover' })
   })
 })
 

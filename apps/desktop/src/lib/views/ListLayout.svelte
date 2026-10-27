@@ -106,6 +106,8 @@
   let pickedFrom: string | null = null
   /** The add row Q asked for, by group name, and how many times; see AddRow's `asked`. */
   let adding = $state({ group: '', count: 0 })
+  /** The groups' keys, for what each group is called. */
+  const keys = $derived((live.answer?.groups ?? []).map((group) => group.key))
 
   const items = $derived(
     listItems(
@@ -405,7 +407,7 @@
               <span class="twist"><Twist open={!item.folded} /></span>
               {days
                 ? dayHead(item.group.key, live.today)
-                : groupLabel(property, item.group.key, live.today)}
+                : groupLabel(property, item.group.key, live.today, keys)}
               {#if item.count}<span class="count">{item.count}</span>{/if}
             </button>
           {/if}

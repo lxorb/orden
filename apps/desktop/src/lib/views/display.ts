@@ -42,6 +42,10 @@ const BY: Partial<Record<Grouping | Sorting, string>> = {
   name: 'task.text',
 }
 
+/** What each grouping groups by, where it differs from what its sorting sorts by: a
+ *  note's group is its path, so two notes of one name in two folders stay apart. */
+const GROUP_BY: Partial<Record<Grouping, string>> = { ...BY, note: 'file.path' }
+
 /** What a view is narrowed to. */
 export interface Only {
   priority?: 1 | 2 | 3 | 4
@@ -73,7 +77,9 @@ export function groupingOf(view: View, original: View | null): Grouping {
   if (original && same(view.groupBy, original.groupBy)) return 'default'
   const by = view.groupBy?.property
   if (by === undefined) return 'none'
-  return GROUPINGS.find((one) => BY[one] === by) ?? 'none'
+  // A view grouped by note before notes were grouped by path.
+  if (by === 'file.basename') return 'note'
+  return GROUPINGS.find((one) => GROUP_BY[one] === by) ?? 'none'
 }
 
 /** The view grouped another way. A note's headings are grouped in the order they are
@@ -94,7 +100,7 @@ export function withGrouping(
       if (original?.nib.groupOrder) nib.groupOrder = original.nib.groupOrder
       return next
     }
-    const property = BY[grouping]
+    const property = GROUP_BY[grouping]
     if (property === undefined) return next
     if (grouping === 'section') nib.groupOrder = 'rows'
     next.groupBy = { property, direction: 'ASC' }

@@ -108,8 +108,14 @@ export function propertyName(property: string, displayName?: string): string {
  *  and `p6`. A name rather than a word, the way Todoist writes it in every language. */
 export const priorityName = (priority: number): string => `p${priority}`
 
-/** What a group of a view is called. */
-export function groupLabel(property: string | undefined, value: Value, today: string): string {
+/** What a group of a view is called. `keys` are the keys of the view's groups, so a
+ *  note's group is called by its name, and by its folder too where two names clash. */
+export function groupLabel(
+  property: string | undefined,
+  value: Value,
+  today: string,
+  keys: readonly Value[] = [],
+): string {
   if (property === 'formula.overdue') return value === true ? t('Overdue') : t('Today')
   if (value === 'overdue') return t('Overdue')
   if (value === null || value === '') return t('None')
@@ -119,10 +125,22 @@ export function groupLabel(property: string | undefined, value: Value, today: st
   }
   if (property === 'task.priority' && typeof value === 'number') return priorityName(value)
   if (typeof value === 'boolean') return value ? '✓' : '–'
+  if (property === 'file.path' && typeof value === 'string') return noteLabel(value, keys)
   const day = dayIn(value)
   if (day !== null && (typeof value !== 'string' || value.length === 10))
     return dayWords(day, today)
   return groupName(value)
+}
+
+const nameOf = (path: string) => (path.split('/').pop() ?? path).replace(/\.md$/i, '')
+
+/** A note's group by its name, and its folder where another group's note has that name. */
+function noteLabel(path: string, keys: readonly Value[]): string {
+  const name = nameOf(path)
+  const clash = keys.some((key) => typeof key === 'string' && key !== path && nameOf(key) === name)
+  if (!clash) return name
+  const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '/'
+  return `${name} · ${folder}`
 }
 
 /** A day of Upcoming said the way Todoist heads it: the date and its weekday, and Today

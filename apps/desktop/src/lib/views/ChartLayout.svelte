@@ -61,7 +61,8 @@
     return own ?? TONES[at % TONES.length] ?? 'var(--accent)'
   }
 
-  const label = (at: number) => groupLabel(property, points[at]?.key ?? null, live.today)
+  const keys = $derived(points.map((point) => point.key))
+  const label = (at: number) => groupLabel(property, points[at]?.key ?? null, live.today, keys)
   const said = (at: number) => {
     const one = points[at]
     if (!one) return ''

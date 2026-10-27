@@ -355,6 +355,8 @@ export function callMethod(receiver: Val, name: string, args: readonly Arg[], sc
     found = stringMethod(receiver, name, args)
   } else if (typeof receiver === 'number') {
     found = numberMethod(receiver, name, args)
+  } else if (typeof receiver === 'boolean') {
+    found = name === 'isEmpty' ? { value: false } : null
   } else if (Array.isArray(receiver)) {
     found = listMethod(receiver, name, args, scope)
   } else if (isDate(receiver)) {

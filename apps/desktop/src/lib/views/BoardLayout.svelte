@@ -230,7 +230,12 @@
     if (project && sectionOf(group) === null) return t('None')
     if (days) return dayHead(group.key, live.today)
     if (group.key === null || group.key === '') return nothing
-    return groupLabel(property, group.key, live.today)
+    return groupLabel(
+      property,
+      group.key,
+      live.today,
+      groups.map((one) => one.key),
+    )
   }
 
   /** The tone a column's head wears: its option's, a task's box's or its priority's. */
@@ -927,7 +932,7 @@
         {/each}
       </div>
       {#each lanes as lane (groupName(lane))}
-        <p class="nib-section lane">{groupLabel(sub, lane, live.today)}</p>
+        <p class="nib-section lane">{groupLabel(sub, lane, live.today, lanes)}</p>
         <div class="row">
           {#each shownGroups as group (groupName(group.key))}
             {@render column(group, lane, rowsOf(group, lane))}
