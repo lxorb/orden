@@ -104,6 +104,21 @@ describe('unique ids', () => {
     ])
   })
 
+  test('a name ending in a dot or a space comes before its copy', () => {
+    for (const [original, copy] of [
+      ['Bugs/v1..md', 'Bugs/v1. copy.md'],
+      ['Bugs/v1 .md', 'Bugs/v1  copy.md'],
+    ]) {
+      const repairs = idRepairs(
+        [noteRow(copy ?? '', 'id: BUG-1'), noteRow(original ?? '', 'id: BUG-1')],
+        'id',
+        'BUG',
+        false,
+      )
+      expect(repairs.map((one) => one.row.path)).toEqual([copy])
+    }
+  })
+
   test('devices that spell a name differently on disk still pick the same twin', () => {
     // A `:` is `_` on a Mac and on Windows, and a Mac may hold a name decomposed.
     const spelled = {
