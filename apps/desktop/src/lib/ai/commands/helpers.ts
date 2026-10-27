@@ -117,6 +117,13 @@ export function batchTargets(instruction: string): { folders: string[]; tags: st
   }
 }
 
+/** The most notes one `/batch` works through. */
+const MOST_NOTES = 1_000
+
+/** As many hits as a folder's search may answer with before they are held to the
+ *  folder: every note of any space anybody keeps. */
+const EVERY_PATH = 1_000_000
+
 /** Whether a note, by its path in the space, sits in the folder `Inbox/` names: under
  *  it from the space's top, at any depth, and in any case, as the search folds it. */
 function inFolder(relative: string, folder: string): boolean {
@@ -132,23 +139,26 @@ function inFolder(relative: string, folder: string): boolean {
  *  The search's `path:` is words anywhere in the path, so `Inbox/` there is also
  *  `Old Inbox/`, `MyInbox/` and `Projects/Inbox/`. It still narrows the walk, and each
  *  hit is then held to the folder itself; a tag is asked apart, since an `any` of both
- *  cannot say which of them a hit answered. */
+ *  cannot say which of them a hit answered. The folder's search is let answer with
+ *  every path it matches, since the ones it then drops would otherwise fill the
+ *  count and push the folder's own notes out; the count is what is kept. */
 async function batchNotes(
   root: string,
   targets: { folders: string[]; tags: string[] },
 ): Promise<string[]> {
   const { searchSpace } = await import('../../search/space')
   const paths = new Set<string>()
-  const ask = async (of: Query[], keep: (path: string) => boolean): Promise<void> => {
+  const ask = async (of: Query[], most: number, keep: (path: string) => boolean): Promise<void> => {
     if (!of.length) return
     await searchSpace(
       root,
       { kind: 'any', of },
       [],
-      1_000,
+      most,
       (batch) => {
         for (const hit of batch.hits)
-          if (hit.page === undefined && !hit.tab && keep(hit.path)) paths.add(hit.path)
+          if (hit.page === undefined && !hit.tab && keep(hit.path) && paths.size < MOST_NOTES)
+            paths.add(hit.path)
       },
       workspace.leftOutOf(root),
     )
@@ -159,10 +169,12 @@ async function batchNotes(
   }
   await ask(
     targets.folders.map((text): Query => ({ kind: 'path', text, fold: true })),
+    EVERY_PATH,
     inOne,
   )
   await ask(
     targets.tags.map((tag): Query => ({ kind: 'tag', tag })),
+    MOST_NOTES,
     () => true,
   )
   return [...paths].sort()

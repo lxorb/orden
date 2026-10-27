@@ -101,11 +101,14 @@ export async function runAgent(args: Record<string, unknown>, asker: Asker): Pro
   const space = parent?.space ?? workspace.activeSpace?.id ?? ''
   if (!space) return { refused: 'open a space first' }
 
+  // The profile is the helper's space's, looked up there rather than in the space in
+  // front, and one somebody else may have written is handed over as their words.
   const type = word(args, 'subagent_type')
-  const profile = type
-    ? await import('../commands/found').then((one) => one.foundNamed('agent', type))
-    : null
+  const notes = await import('../commands/found')
+  const root = notes.rootOfSpace(space)
+  const profile = type && root ? await notes.foundNamed('agent', type, root) : null
   if (type && !profile) return { refused: `there is no agent profile called "${type}"` }
+  const instructions = await notes.wordsOf(profile)
   const effort = first(word(args, 'effort'), profile?.effort)
   const started = await helpers.start(
     {
@@ -116,7 +119,7 @@ export async function runAgent(args: Record<string, unknown>, asker: Asker): Pro
       model: first(word(args, 'model'), profile?.model),
       ...(EFFORTS.includes(effort as Effort) ? { effort: effort as Effort } : {}),
       mode: parent?.mode ?? asker.mode,
-      ...(profile?.body ? { instructions: profile.body } : {}),
+      ...(instructions ? { instructions } : {}),
     },
     {
       offered,

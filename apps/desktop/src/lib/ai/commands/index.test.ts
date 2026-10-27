@@ -14,6 +14,10 @@ vi.mock('./found', () => ({
   found: () => Promise.resolve(notes),
   foundNamed: (kind: string, name: string) =>
     Promise.resolve(notes.find((one) => one.kind === kind && one.name === name) ?? null),
+  // What a collaborator may have written, asked each time a note is used.
+  fromOthers: (path: string) => Promise.resolve(path.startsWith('team/')),
+  rootOfSpace: () => null,
+  wordsOf: (note: NoteCommand | null) => Promise.resolve(note?.body ?? ''),
 }))
 
 const { commands, effortIn } = await import('./index')
@@ -197,27 +201,47 @@ describe('the menu', () => {
     expect(thread).not.toHaveProperty('style')
   })
 
-  test("never lets a shared space's command or profile ask for more than the thread's mode", async () => {
-    const base = { path: 'team/c.md', arguments: [], tools: [], shared: true }
+  test("never lets a shared space's command ask for more than the thread's mode", async () => {
+    const base = { path: 'team/c.md', arguments: [], tools: [] }
     notes.push(
       { ...base, kind: 'command', name: 'weekly', body: 'Publish.', mode: 'full', effort: 'low' },
+      // Plan asks as the grant does and makes notes, so it is more than Approve.
       { ...base, kind: 'command', name: 'look', body: 'Look.', mode: 'plan' },
-      { ...base, kind: 'agent', name: 'poster', body: 'Post.', mode: 'auto' },
-      { ...base, kind: 'agent', name: 'reader', body: 'Read.', mode: 'plan' },
+      { ...base, kind: 'command', name: 'careful', body: 'Ask.', mode: 'approve' },
+      { ...base, path: 'own/m.md', kind: 'command', name: 'mine', body: 'Mine.', mode: 'full' },
     )
     expect(thread.mode).toBe('approve')
     const { panel, calls } = fakePanel(thread)
     const rows = commands(panel)
     await run(rows, 'weekly', '', panel)
     await run(rows, 'look', '', panel)
+    await run(rows, 'mine', '', panel)
+    thread.mode = 'auto'
+    await run(rows, 'look', '', panel)
+    await run(rows, 'careful', '', panel)
+    expect(calls.filter((one) => /^(turn|setMode|send)\(/.test(one))).toEqual([
+      'turn(open,"Publish.",{"effort":"low"})',
+      'send("Look.")',
+      'turn(open,"Mine.",{"mode":"full"})',
+      'turn(open,"Look.",{"mode":"plan"})',
+      'turn(open,"Ask.",{"mode":"approve"})',
+    ])
+  })
+
+  test("never lets a shared space's profile move the thread's mode", async () => {
+    const base = { path: 'team/a.md', arguments: [], tools: [] }
+    notes.push(
+      { ...base, kind: 'agent', name: 'poster', body: 'Post.', mode: 'full' },
+      { ...base, kind: 'agent', name: 'reader', body: 'Read.', mode: 'plan' },
+    )
+    thread.mode = 'auto'
+    const { panel, calls } = fakePanel(thread)
+    const rows = commands(panel)
     await run(rows, 'agents', 'poster', panel)
     expect(thread).toMatchObject({ agent: 'poster' })
     await run(rows, 'agents', 'reader', panel)
-    expect(calls.filter((one) => /^(turn|setMode|send)\(/.test(one))).toEqual([
-      'turn(open,"Publish.",{"effort":"low"})',
-      'turn(open,"Look.",{"mode":"plan"})',
-      'setMode("plan")',
-    ])
+    expect(thread).toMatchObject({ agent: 'reader' })
+    expect(calls.filter((one) => one.startsWith('setMode('))).toEqual([])
   })
 
   test('says /goal and /jobs as lines in the thread', async () => {

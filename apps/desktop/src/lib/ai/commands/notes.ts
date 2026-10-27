@@ -38,9 +38,6 @@ export interface NoteCommand {
   arguments: string[]
   /** An agent's tools, by name; empty for all of them. */
   tools: string[]
-  /** Whether it sits in a space somebody else can reach, so somebody else may have
-   *  written it: what it asks for never goes past what the reader chose (found.ts). */
-  shared?: boolean
 }
 
 function withMode(mode: Mode | null): { mode?: Mode } {

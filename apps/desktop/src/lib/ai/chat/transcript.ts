@@ -59,11 +59,15 @@ function attribute(label: string): string {
     .replace(/[\r\n\t]/g, ' ')
 }
 
+/** Words from outside inside nib's mark, which the model reads as data. */
+export function untrusted(source: string, words: string): string {
+  return `<${MARK} source="${attribute(source)}">\n${inert(words)}\n</${MARK}>`
+}
+
 /** One attachment's words, labelled, and marked where they came from outside. */
 function attached(one: Attachment): string {
   if (!one.text) return ''
-  if (one.untrusted)
-    return `<${MARK} source="${attribute(one.label)}">\n${inert(one.text)}\n</${MARK}>`
+  if (one.untrusted) return untrusted(one.label, one.text)
   return `<attached label="${attribute(one.label)}">\n${one.text}\n</attached>`
 }
 

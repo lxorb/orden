@@ -18,6 +18,10 @@ const NOTES: Record<string, string> = {
   'Projects/Inbox/c.md': 'c',
   'MyInbox/d.md': 'd',
   'Elsewhere/g.md': '#todo',
+  // More notes whose path has `Data/` in it than a search answers with, ahead of the
+  // folder itself in the walk.
+  ...Object.fromEntries(Array.from({ length: 1_200 }, (_, at) => [`Big Data/${at}.md`, 'x'])),
+  'Data/real.md': 'real',
 }
 
 vi.mock('../../workspace.svelte', () => ({
@@ -38,12 +42,14 @@ vi.mock('../../search/space', () => ({
     onFound: (found: { hits: unknown[]; loose: unknown[] }) => void,
   ) => {
     const matcher = new Matcher(query)
-    const hits = Object.entries(NOTES).flatMap(([relative, body]) =>
-      matcher.hits(
-        { path: `${ROOT}/${relative}`, relative, name: relative.replace(/^.*\//, ''), body },
-        most,
-      ),
-    )
+    const hits = Object.entries(NOTES)
+      .flatMap(([relative, body]) =>
+        matcher.hits(
+          { path: `${ROOT}/${relative}`, relative, name: relative.replace(/^.*\//, ''), body },
+          most,
+        ),
+      )
+      .slice(0, most)
     onFound({ hits, loose: [] })
     return Promise.resolve()
   },
@@ -80,4 +86,8 @@ test('/batch over a folder and a tag takes both, and only those', async () => {
     'Elsewhere/g',
     'Projects/Inbox/c',
   ])
+})
+
+test('/batch over a short folder still finds it behind many paths that only contain it', async () => {
+  expect(await batched('fix every note in Data/')).toEqual(['Data/real'])
 })

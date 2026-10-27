@@ -239,9 +239,11 @@ import {
   looksLikeAddress,
   originOfDocument,
   othersIn,
+  reachedByOthers,
   roleOf,
   share,
   sharedWithYou,
+  trustsHtmlAt,
   trustsHtmlIn,
 } from './sharing.svelte'
 import type { RemoteSpace, SharedItem } from './api'
@@ -630,6 +632,42 @@ describe('where a document’s words came from', () => {
     } finally {
       rooms.present = {}
     }
+  })
+
+  /** A note of the reader's own space handed to somebody on its own, with leave to
+   *  write by default: the space has nobody else in it, the note does. */
+  test('is the space, for a note of the reader’s own shared on its own', () => {
+    world.mirrors = { Notes: 'space-1' }
+    world.notes = { 'Notes/plan.md': 'n1' }
+    account.spaces = [remote('space-1', 'owner', false, ['n1'])]
+    account.listed = true
+
+    expect(originOfDocument(document('Notes/plan.md'))).toBe('space')
+    expect(trustsHtmlAt('Notes/plan.md')).toBe(false)
+    expect(reachedByOthers('Notes/plan.md')).toBe(true)
+    expect(reachedByOthers('Notes/other.md')).toBe(false)
+  })
+
+  /** Before the listing is in, a paired space kept as the reader's own may still be
+   *  shared with somebody: the role is kept on this device, who else is in it is not. */
+  test('is the space, for a paired space of the reader’s own before the listing is in', () => {
+    world.mirrors = { Notes: 'space-1' }
+    world.kept = { Notes: 'owner' }
+
+    expect(roleOf('Notes')).toBe('owner')
+    expect(originOfDocument(document('Notes/plan.md'))).toBe('space')
+    expect(trustsHtmlAt('Notes/plan.md')).toBe(false)
+    expect(reachedByOthers('Notes/plan.md')).toBe(true)
+
+    account.spaces = [remote('space-1', 'owner')]
+    account.listed = true
+    expect(reachedByOthers('Notes/plan.md')).toBe(false)
+  })
+
+  test('is the reader’s own, for a folder that mirrors nothing, before any listing', () => {
+    world.locals = ['Local']
+
+    expect(reachedByOthers('Local/plan.md')).toBe(false)
   })
 
   /** The other device in a room is this same person's, unless somebody else can

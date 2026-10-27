@@ -207,15 +207,20 @@ export function canWriteIn(
   return note.path === null || canWriteAt(note.path)
 }
 
-/** Whether the space a note sits in is one somebody else can reach: shared with
- *  anybody, or somebody else's to begin with. A note in no space at all is this
- *  machine's own. What decides that a note's raw HTML is words (below), and that a
- *  command, profile or style note asks for nothing the reader has not (ai/commands). */
+/** Whether somebody else may have written the note at this path: its space is shared
+ *  or somebody else's, or the note was shared on its own. Decides raw HTML (below) and
+ *  a collaborator's commands and AGENTS.md (ai/commands/found.ts). Until the listing
+ *  is in, a paired space it has not named counts as shared: a kept `owner` role says
+ *  nothing about who else is in it. */
 export function reachedByOthers(path: string | null): boolean {
   if (path === null) return false
 
   const space = workspace.spaces.find((one) => within(one.root, path) !== null)
   if (!space) return false
+  if (isSharedItem(path)) return true
+
+  const paired = sync.remoteIdFor(space.root) !== null
+  if (paired && !account.listed && !remoteOf(space.root)) return true
 
   return isShared(space.root) || roleOf(space.root) !== 'owner'
 }

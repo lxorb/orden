@@ -56,9 +56,10 @@ export function nextMode(mode: Mode): Mode {
   return CYCLE[(CYCLE.indexOf(mode) + 1) % CYCLE.length] ?? FIRST_MODE
 }
 
-/** How much a mode lets happen unasked: Plan only reads and writes its plan, Approve
- *  asks before each change, Auto before some, Full permissions never. */
-const LATITUDE: Record<Mode, number> = { plan: 0, approve: 1, auto: 2, full: 3 }
+/** How much a mode lets happen unasked (`supervised`, `in_mode` in ai_agent.rs):
+ *  Approve asks every change, Plan and Auto as the grant does (Plan with fewer
+ *  tools), Full never. */
+const LATITUDE: Record<Mode, number> = { approve: 0, plan: 1, auto: 2, full: 3 }
 
 /** The mode something not the reader's own asks for, where it lets no more happen
  *  than `held` does, or null where it would: a command or a profile from a shared

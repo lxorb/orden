@@ -13,7 +13,7 @@ import { sign, doctor, status, usage } from './account'
 import { availability } from './available'
 import { catchup, reply } from './chats'
 import { autocompact, copy, exportThread, listJobs, recap } from './conversation'
-import { foundNow } from './found'
+import { foundNow, fromOthers } from './found'
 import { batch, fork, research, subtask } from './helpers'
 import { type Host, hostOf, sendHere } from './host'
 import { expand, type NoteCommand } from './notes'
@@ -244,11 +244,13 @@ async function guarded(host: Host, context: CommandContext, run: Run | undefined
 
 /** The menu's row for a command written as a note. */
 function noteRow(note: NoteCommand, host: Host): PanelCommand {
-  // A shared note's mode is weighed against the thread it lands in, which is the one
-  // `sendHere` would open where none is.
-  const onceIn = (thread: Thread | null) => {
+  // A mode from a note somebody else may have written is weighed against the thread it
+  // lands in, which is the one `sendHere` would open where none is; who can reach the
+  // space is asked now, not when the note was found.
+  const onceIn = async (thread: Thread | null) => {
     const held = () => (thread ?? host.panel.ensure?.())?.mode ?? FIRST_MODE
-    const mode = note.mode && note.shared ? noMoreThan(note.mode, held()) : note.mode
+    const theirs = note.mode ? await fromOthers(note.path) : false
+    const mode = note.mode && theirs ? noMoreThan(note.mode, held()) : note.mode
     return {
       ...(note.model ? { model: note.model } : {}),
       ...(note.effort ? { effort: note.effort } : {}),
@@ -262,8 +264,8 @@ function noteRow(note: NoteCommand, host: Host): PanelCommand {
     ...(note.description ? { description: note.description } : {}),
     source: note.path,
     available: () => true,
-    run: ({ args, thread }) => {
-      const once = onceIn(thread)
+    run: async ({ args, thread }) => {
+      const once = await onceIn(thread)
       sendHere(host, thread, expand(note, args), Object.keys(once).length ? once : undefined)
     },
   }
