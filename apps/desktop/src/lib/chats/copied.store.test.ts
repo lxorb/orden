@@ -211,8 +211,8 @@ test("the chat's own pointer moved is listed where it went, and the file op move
   expect(paths()).toEqual(['/other/Plans.chat'])
 })
 
-test("the chat's own pointer carried into another space moves the chat there", async () => {
-  await chatsCarried(POINTER, '/other')
+test("the chat's own pointer carried into another space asks, and told to, moves the chat there", async () => {
+  expect((await carried(POINTER, '/other', 'chat')).asked).not.toBeNull()
 
   expect(moves).toEqual([`${CHAT} space-2`])
 })
@@ -220,7 +220,7 @@ test("the chat's own pointer carried into another space moves the chat there", a
 test('a duplicate carried into another space moves the file, never the chat', async () => {
   await came('/space/Plans copy.chat')
   await rescan()
-  await chatsCarried('/space/Plans copy.chat', '/other')
+  expect((await carried('/space/Plans copy.chat', '/other', 'chat')).asked).toBeNull()
 
   expect(moves).toEqual([])
 })
@@ -229,7 +229,7 @@ test('a copy in another space carried on, its original deleted, never moves the 
   await came('/other/Plans.chat')
   await went(POINTER)
   await rescan()
-  await chatsCarried('/other/Plans.chat', '/third')
+  expect((await carried('/other/Plans.chat', '/third', 'chat')).asked).toBeNull()
 
   expect(moves).toEqual([])
 })
@@ -241,7 +241,7 @@ test('a copy in another space carried on, its original deleted, never moves the 
 test('before the chats have started, a copy in another space carried on moves nothing', async () => {
   await came('/other/Plans.chat')
   await chats.forget()
-  await chatsCarried('/other/Plans.chat', '/third')
+  expect((await carried('/other/Plans.chat', '/third', 'chat')).asked).toBeNull()
 
   expect(moves).toEqual([])
 })
@@ -251,7 +251,7 @@ test('after a relaunch, a duplicate beside its original carried away moves nothi
   await rescan()
   await chats.forget()
   await chats.start('account-1')
-  await chatsCarried('/space/Plans copy.chat', '/other')
+  expect((await carried('/space/Plans copy.chat', '/other', 'chat')).asked).toBeNull()
 
   expect(chats.placedAt(CHAT)).toBe(POINTER)
   expect(moves).toEqual([])
@@ -261,28 +261,28 @@ test('after a relaunch, the original beside a duplicate carried away carries its
   await came('/space/Plans copy.chat')
   await chats.forget()
   await chats.start('account-1')
-  await chatsCarried(POINTER, '/other')
+  expect((await carried(POINTER, '/other', 'chat')).asked).not.toBeNull()
 
   expect(moves).toEqual([`${CHAT} space-2`])
 })
 
 test('a move into another space undone before the listing has heard brings the chat back', async () => {
-  await chatsCarried(POINTER, '/other')
+  expect((await carried(POINTER, '/other', 'chat')).asked).not.toBeNull()
   account.space = 'space-2'
   account.heard = false
   await moved(POINTER, '/other/Plans.chat')
   // As workspace/undoing.ts asks it: from where the pointer is, back to where it was.
-  await chatsCarried('/other/Plans.chat', '/space')
+  expect((await carried('/other/Plans.chat', '/space', 'chat')).asked).not.toBeNull()
 
   expect(moves).toEqual([`${CHAT} space-2`, `${CHAT} space-1`])
 })
 
 test('a move on into a third space before the listing has heard takes the chat along', async () => {
-  await chatsCarried(POINTER, '/other')
+  expect((await carried(POINTER, '/other', 'chat')).asked).not.toBeNull()
   account.space = 'space-2'
   account.heard = false
   await moved(POINTER, '/other/Plans.chat')
-  await chatsCarried('/other/Plans.chat', '/third')
+  expect((await carried('/other/Plans.chat', '/third', 'chat')).asked).not.toBeNull()
 
   expect(moves).toEqual([`${CHAT} space-2`, `${CHAT} space-3`])
 })
@@ -295,7 +295,7 @@ test('a chat the listing had not heard of yet is carried by its pointer', async 
   disk.pointers.set('/space/New.chat', CHAT)
   account.chats = [CHAT]
   await chats.pointerMoved(null, '/space/New.chat')
-  await chatsCarried('/space/New.chat', '/other')
+  expect((await carried('/space/New.chat', '/other', 'chat')).asked).not.toBeNull()
 
   expect(moves).toEqual([`${CHAT} space-2`])
 })
@@ -417,5 +417,109 @@ test('a space that would not read for one scan keeps the own pointer found in it
   const { asked } = await carried(COPY, '/other', 'chat')
 
   expect(asked).toBeNull()
+  expect(moves).toEqual([])
+})
+
+/** Whatever the device has inferred, a pointer carried into another space carries its
+ *  chat only on the owner's word given then: the one move it skips without asking is a
+ *  copy whose chat's own pointer is known, still there, and staying behind (fourth
+ *  review of #991). */
+
+test('a duplicate deleted and put back by undo is still a copy: carrying it asks', async () => {
+  await freshDevice()
+  await went(COPY)
+  await came(COPY)
+  await rescan()
+  const { asked } = await carried(COPY, '/other', 'file')
+
+  expect(asked).not.toBeNull()
+  expect(moves).toEqual([])
+})
+
+test('a duplicate deleted and the original duplicated again: carrying the new copy asks', async () => {
+  await freshDevice()
+  await went(COPY)
+  await came('/space/Plans copy 2.chat')
+  await rescan()
+  const { asked } = await carried('/space/Plans copy 2.chat', '/other', 'file')
+
+  expect(asked).not.toBeNull()
+  expect(moves).toEqual([])
+})
+
+test('a duplicate made before the launch scan is not taken for the original', async () => {
+  await chats.forget()
+  disk.pointers = new Map([[POINTER, CHAT]])
+  const starting = chats.start(`account-${Math.random()}`)
+  await came(COPY)
+  await starting
+  await rescan()
+  const { asked } = await carried(COPY, '/other', 'file')
+
+  expect(asked).not.toBeNull()
+  expect(moves).toEqual([])
+})
+
+test('a folder holding a chat twice, own pointer not known, asks once', async () => {
+  await chats.forget()
+  disk.pointers = new Map([
+    ['/space/F/Plans.chat', CHAT],
+    ['/space/F/Plans copy.chat', CHAT],
+  ])
+  await chats.start(`account-${Math.random()}`)
+  const leaf = (path: string) => ({
+    path,
+    name: path.split('/').pop(),
+    is_dir: false,
+    children: [],
+  })
+  const tree = vi.spyOn(workspace, 'entryAt').mockImplementation((path: string) =>
+    path === '/space/F'
+      ? ({
+          path,
+          name: 'F',
+          is_dir: true,
+          children: [leaf('/space/F/Plans copy.chat'), leaf('/space/F/Plans.chat')],
+        } as never)
+      : (null as never),
+  )
+  const choose = vi.spyOn(prompt, 'choose').mockResolvedValue('chat')
+  await chatsCarried('/space/F', '/other')
+  tree.mockRestore()
+  choose.mockRestore()
+
+  expect(choose).toHaveBeenCalledTimes(1)
+  expect(moves).toEqual([`${CHAT} space-2`])
+})
+
+test('a folder holding two chats asks once, naming both', async () => {
+  const second = `c_${'3'.repeat(32)}`
+  await chats.forget()
+  account.chats = [CHAT, second]
+  disk.pointers = new Map([
+    ['/space/F/Plans.chat', CHAT],
+    ['/space/F/Trip.chat', second],
+  ])
+  await chats.start(`account-${Math.random()}`)
+  const leaf = (path: string) => ({
+    path,
+    name: path.split('/').pop(),
+    is_dir: false,
+    children: [],
+  })
+  const tree = vi.spyOn(workspace, 'entryAt').mockImplementation((path: string) =>
+    path === '/space/F'
+      ? ({
+          path,
+          name: 'F',
+          is_dir: true,
+          children: [leaf('/space/F/Plans.chat'), leaf('/space/F/Trip.chat')],
+        } as never)
+      : (null as never),
+  )
+  const { asked } = await carried('/space/F', '/other', 'file')
+  tree.mockRestore()
+
+  expect(asked).toBe('Move the chats Plans, Trip to Other?')
   expect(moves).toEqual([])
 })
