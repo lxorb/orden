@@ -569,7 +569,10 @@ describe('another space, without switching', () => {
   })
 
   test('the space that is open takes the tree own rename', async () => {
-    await call('move_file', { path: 'Plan.md', to: 'Old plan' })
+    // Said with the space it ran in, which a later Undo moves it back in.
+    expect(await call('move_file', { path: 'Plan.md', to: 'Old plan' })).toMatchObject({
+      result: { from: 'Plan.md', to: 'Old plan.md', space: 'work' },
+    })
     expect(workspace.rename).toHaveBeenCalledWith('/s/Work/Plan.md', 'Old plan.md')
   })
 
@@ -640,7 +643,7 @@ describe('the tree', () => {
       code: 'rev_changed',
     })
     expect(await call('trash_file', { space: 'Home', path: 'Soup' })).toMatchObject({
-      result: { path: 'Soup.md', trashed: true },
+      result: { path: 'Soup.md', trashed: true, space: 'home' },
     })
     expect(workspace.remove).toHaveBeenCalledWith('/s/Home/Soup.md', false, 'Claude Code')
   })
@@ -949,6 +952,42 @@ describe('the notes, on the road', () => {
       [{ at: { task: 'Buy milk' }, replace: '- [x] Buy milk' }],
       'r1',
     )
+  })
+
+  /** Every thread of a provider writes as one agent, so the edit says which thread
+   *  asked: the review takes it back with that thread's rewind and no other's. */
+  test('an edit says the AI panel thread that asked for it', async () => {
+    const asker = callerOf(
+      {
+        id: 'nib-anthropic',
+        name: 'Claude',
+        scopes: EVERY,
+        spaces: 'all',
+        mode: 'unsupervised',
+        programs: [],
+      },
+      'thread-1',
+    )
+    await call(
+      'set_task',
+      { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true },
+      asker,
+    )
+    expect(docs.editNote).toHaveBeenCalledWith(
+      { id: 'nib-anthropic', name: 'Claude', thread: 'thread-1' },
+      { path: 'Soup.md', space: 'home' },
+      [{ at: { task: 'Buy milk' }, replace: '- [x] Buy milk' }],
+      'r1',
+    )
+  })
+
+  test('a new note says the space it was made in, the one in front where none was named', async () => {
+    expect(await call('create_note', { path: 'Fresh' })).toMatchObject({
+      result: { path: 'Fresh.md', created: true, space: 'work' },
+    })
+    expect(await call('create_note', { path: 'boards/Map.canvas', space: 'home' })).toMatchObject({
+      result: { path: 'boards/Map.canvas', created: true, space: 'home' },
+    })
   })
 
   test('a new note is never written over one, and write_note makes one that is not there', async () => {

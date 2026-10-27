@@ -239,6 +239,17 @@ pub fn ai_agent_tools(
     }))
 }
 
+/// What the window is asked for one call: the verb, its arguments, and the AI panel
+/// thread it runs for, which `nib mcp` says the same way (src/mcp/link.rs). Every thread
+/// of a provider is one grant, so only this says whose an edit the call makes is.
+fn asked_for(tool: &str, args: &Value, thread: Option<&str>) -> Value {
+    let mut asked = json!({ "verb": tool, "args": args, "rest": [] });
+    if let Some(thread) = thread {
+        asked["thread"] = json!(thread);
+    }
+    asked
+}
+
 /// One call, as the provider's agent, answered the way `nib mcp` answers a model.
 #[tauri::command(async)]
 pub fn ai_agent_call(
@@ -248,6 +259,7 @@ pub fn ai_agent_call(
     mode: Mode,
     tool: String,
     args: Value,
+    thread: Option<String>,
 ) -> Result<Value, String> {
     crate::agents::from_the_app(&webview)?;
     let grant = grant_for(&app, &agent)?;
@@ -257,7 +269,7 @@ pub fn ai_agent_call(
         return Err(format!("{tool} is not a tool in this mode"));
     }
     let args = host::with_defaults(&tool, if args.is_object() { args } else { json!({}) });
-    let asked = json!({ "verb": tool, "args": args, "rest": [] });
+    let asked = asked_for(&tool, &args, thread.as_deref());
     let caller = Caller::Agent(Box::new(supervised(grant, mode)));
     let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
     Ok(host::rendered(&tool, &args, status, &body))
@@ -318,6 +330,16 @@ mod tests {
         Category::Showing,
         Category::Takeover,
     ];
+
+    #[test]
+    fn a_call_says_the_thread_it_runs_for() {
+        let args = json!({ "path": "a.md" });
+        assert_eq!(
+            asked_for("edit_note", &args, Some("thread-1"))["thread"],
+            "thread-1"
+        );
+        assert!(asked_for("edit_note", &args, None).get("thread").is_none());
+    }
 
     fn builtin(reader_tabs: bool) -> Builtin {
         Builtin {

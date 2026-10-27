@@ -2,8 +2,9 @@
  *  edit of a provider's built-in agent was (docs/ai-sidebar.md 4.5).
  *
  *  Every thread of one provider acts as that provider's one grant (`nib-<id>`, see
- *  src-tauri/src/ai_agent.rs), whichever road answers it, so the edit itself cannot
- *  say which thread made it; the time it was made can. Every engine's sends pass
+ *  src-tauri/src/ai_agent.rs), whichever road answers it. Each call says the thread it
+ *  runs for and the edit keeps it; the time it was made is what is left for an edit
+ *  whose call said none, and it only says which thread had started last. Every engine's sends pass
  *  through `engineFor`, which writes each one down here as it starts and ends. A few
  *  hundred, kept for the session, like the edits they explain. */
 

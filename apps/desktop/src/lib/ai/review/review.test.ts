@@ -15,6 +15,15 @@ const fake = vi.hoisted(() => ({
   opened: [] as string[],
   /** Files that are there and will not read: another encoding, or a lock. */
   unreadable: new Set<string>(),
+  /** The moves made back: the space's folder, from, to. */
+  moves: [] as string[][],
+}))
+
+vi.mock('../../automation/acts', () => ({
+  movedIn: (root: string, from: string, to: string) => {
+    fake.moves.push([root, from, to])
+    return Promise.resolve()
+  },
 }))
 
 vi.mock('../../workspace.svelte', () => ({
@@ -22,7 +31,12 @@ vi.mock('../../workspace.svelte', () => ({
     get documents() {
       return fake.documents
     },
-    spaces: [{ id: 's1', name: 'Space', root: '/space' }],
+    spaces: [
+      { id: 's1', name: 'Space', root: '/space' },
+      { id: 's2', name: 'Other', root: '/other' },
+      // On Linux a space can differ from another only by case.
+      { id: 's3', name: 'space', root: '/space2' },
+    ],
     noteText: (path: string) =>
       fake.unreadable.has(path) ? Promise.resolve(null) : fake.desk.desk.noteText(path),
     remove: (path: string) => {
@@ -127,6 +141,7 @@ async function message(
   words: string,
   edits: { path: string; at: unknown; replace: string }[],
   parts: Turn['parts'] = [],
+  by: string = thread.id,
 ) {
   clock += 1000
   const turn: Turn = {
@@ -141,7 +156,7 @@ async function message(
   for (const one of edits) {
     await editNote(
       fake.desk.desk,
-      { id: `nib-${thread.provider}`, name: 'nib' },
+      { id: `nib-${thread.provider}`, name: 'nib', thread: by },
       { path: one.path },
       [{ at: one.at, replace: one.replace }],
     )
@@ -300,6 +315,122 @@ describe('a rewind', () => {
   })
 })
 
+/** A thread stays open across a switch of space, and a call that names none runs in
+ *  the space in front: taking it back in the thread's own space deleted or moved the
+ *  reader's note of that name there, on every device. */
+describe('a call made in the space in front, not the thread’s', () => {
+  const tool = (verb: string, args: unknown, answer: string): Turn['parts'] => [
+    {
+      kind: 'tool',
+      id: `c-${verb}`,
+      verb,
+      args,
+      state: 'ok',
+      result: { text: answer, images: [], error: false },
+    },
+  ]
+
+  test('a rewind sends the note it made there to Recently deleted, not the reader’s', async () => {
+    fake.desk = deskWith({ 'Made.md': 'the reader’s own words' })
+    fake.desk.disk.set('/other/Made.md', 'the agent’s words')
+    fake.documents = []
+    fake.removed = []
+    const thread = aThread()
+    await message(
+      thread,
+      'make',
+      [],
+      tool('create_note', { path: 'Made' }, '{"path":"Made.md","created":true,"space":"s2"}'),
+    )
+    await review.rewind(thread, 'make', 'notes', null)
+    expect(fake.removed).toEqual(['/other/Made.md'])
+    expect(fake.desk.fileOf('Made.md')).toBe('the reader’s own words')
+  })
+
+  test('Undo moves a note back where it was moved', async () => {
+    fake.desk = deskWith({ 'B.md': 'x' })
+    fake.documents = []
+    fake.moves = []
+    const thread = aThread()
+    await message(
+      thread,
+      'move',
+      [],
+      tool('move_file', { path: 'A.md', to: 'B.md' }, '{"from":"A.md","to":"B.md","space":"s2"}'),
+    )
+    await review.undoFiles(thread, review.files(thread))
+    expect(fake.moves).toEqual([['/other', 'B.md', 'A.md']])
+  })
+
+  test('a space only the case of a name tells from another is still the one it ran in', async () => {
+    fake.desk = deskWith({ 'Made.md': 'the reader’s own words' })
+    fake.desk.disk.set('/space2/Made.md', 'the agent’s words')
+    fake.documents = []
+    fake.removed = []
+    const thread = { ...aThread(), space: 's3' }
+    // By id, as the verbs answer now, and by its exact name, as a call that named it did.
+    await message(
+      thread,
+      'by id',
+      [],
+      tool('create_note', { path: 'Made' }, '{"path":"Made.md","created":true,"space":"s3"}'),
+    )
+    await review.rewind(thread, 'by id', 'notes', null)
+    expect(fake.removed).toEqual(['/space2/Made.md'])
+
+    fake.desk.disk.set('/space2/Made.md', 'the agent’s words')
+    fake.removed = []
+    await message(
+      thread,
+      'by name',
+      [],
+      tool('create_note', { path: 'Made', space: 'space' }, '{"path":"Made.md","created":true}'),
+    )
+    await review.rewind(thread, 'by name', 'notes', null)
+    expect(fake.removed).toEqual(['/space2/Made.md'])
+    expect(fake.desk.fileOf('Made.md')).toBe('the reader’s own words')
+  })
+
+  test('a space named in another case is that space', async () => {
+    fake.desk = deskWith({})
+    fake.desk.disk.set('/other/Made.md', 'the agent’s words')
+    fake.documents = []
+    fake.removed = []
+    const thread = aThread()
+    await message(
+      thread,
+      'make',
+      [],
+      tool('create_note', { path: 'Made', space: 'other' }, '{"path":"Made.md","created":true}'),
+    )
+    await review.rewind(thread, 'make', 'notes', null)
+    expect(fake.removed).toEqual(['/other/Made.md'])
+  })
+})
+
+/** Every thread of a provider writes as one agent: while two run at once, an edit put
+ *  down to whichever started last went with that thread's rewind. */
+describe('two threads of one provider at once', () => {
+  test('each has only the edits its own calls made', async () => {
+    fake.desk = deskWith({ 'a.md': 'one', 'b.md': 'two' }, ['a.md', 'b.md'])
+    fake.documents = Object.values(fake.desk.panes).map((pane) => pane.note)
+    const thread = aThread()
+    await message(thread, 'mine', [{ path: 'a.md', at: { quote: 'one' }, replace: 'ONE' }])
+    await message(
+      thread,
+      'while',
+      [{ path: 'b.md', at: { quote: 'two' }, replace: 'TWO' }],
+      [],
+      'another-thread',
+    )
+    expect(review.notes(thread).map((one) => one.path)).toEqual(['/space/a.md'])
+
+    await review.rewind(thread, 'mine', 'both', null)
+    expect(fake.desk.panes['a.md']?.text).toBe('one')
+    expect(fake.desk.panes['b.md']?.text).toBe('TWO')
+  })
+})
+
 describe('a change', () => {
   test('kept leaves the list, and its mark fades out of the note', async () => {
     fake.desk = deskWith({ 'k.md': 'one two' }, ['k.md'])
@@ -360,6 +491,24 @@ describe('Follow', () => {
     review.toggleFollow(thread)
     await message(thread, 'loud', [{ path: 'g.md', at: { quote: 'two' }, replace: 'TWO' }])
     expect(fake.opened).toEqual(['/space/g.md'])
+    review.toggleFollow(thread)
+  })
+
+  /** A step taken back is heard like one made: only an edit landing brings its note up. */
+  test('does not bring a note up when one of its edits is taken back', async () => {
+    fake.desk = deskWith({ 'h.md': 'one two' })
+    fake.documents = []
+    const thread = aThread()
+    review.toggleFollow(thread)
+    await message(thread, 'edit', [
+      { path: 'h.md', at: { quote: 'one' }, replace: 'ONE' },
+      { path: 'h.md', at: { quote: 'two' }, replace: 'TWO' },
+    ])
+    fake.opened = []
+    const [first] = review.changes(thread)
+    if (!first) throw new Error('changed')
+    await review.undo([first])
+    expect(fake.opened).toEqual([])
     review.toggleFollow(thread)
   })
 })

@@ -6,7 +6,7 @@
 
 import type { Part, Thread, Turn } from '../chat/types'
 import { type Change, changesSince, checkpoints } from './changes'
-import { answerOf, argsOf, type FileChange, fileChangeOf, verbOf } from './files'
+import { answerOf, type FileChange, fileChangeOf, spaceOfCall, verbOf } from './files'
 
 /** Claude Code's five, in its order. */
 export type Choice = 'both' | 'conversation' | 'notes' | 'summarize-from' | 'summarize-to'
@@ -45,12 +45,12 @@ const MOVES = new Set(['move_file', 'trash_file'])
  *  `Projects.md`, sent to Recently deleted on every device. */
 function madeBy(part: Extract<Part, { kind: 'tool' }>): Made | null {
   if (verbOf(part.verb) !== 'create_note') return null
-  const args = argsOf(part)
   const said = answerOf(part)
   if (said?.created !== true) return null
   const path = said.path
   if (typeof path !== 'string' || !path) return null
-  return typeof args.space === 'string' && args.space ? { path, space: args.space } : { path }
+  const space = spaceOfCall(part)
+  return space ? { path, space } : { path }
 }
 
 /** The calls the thread made in answer to `turn` and every message after it. */

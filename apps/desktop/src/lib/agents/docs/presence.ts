@@ -22,6 +22,9 @@ export interface Agent {
   id: string
   name: string
   accent?: string
+  /** The AI panel thread the edit is for, where the call said one: every thread of a
+   *  provider writes as that provider's one agent (lib/ai/chat/sends.ts). */
+  thread?: string
 }
 
 /** How long a caret stays after its agent last wrote. The caret's own fade runs to

@@ -45,7 +45,7 @@ import {
   type Reviewed,
 } from './changes'
 import { redoFile, undoFile } from './file-ops'
-import { type FileChange, fileChangesOf } from './files'
+import { type FileChange, fileChangesOf, spaceNamed } from './files'
 import { type Choice, type Made, planFor, type Plan } from './plan'
 import { summarized } from './summary'
 
@@ -111,6 +111,9 @@ class Review {
    *  word; off unless the reader turns it on). */
   readonly following = new SvelteSet<string>()
 
+  /** The newest edit heard in each note, by agent and note: what tells an edit landing
+   *  from one taken back, for Follow. */
+  private readonly landed = new Map<string, { id: string; at: number }>()
   private marked = new WeakSet<NoteDoc>()
   private readonly draw = onceAFrame(() => this.pushMarks())
   private saidTimer: ReturnType<typeof setTimeout> | undefined
@@ -151,8 +154,17 @@ class Review {
       for (const [path, track] of tracksOf(agent)) {
         const open = documentOf(path)
         if (open) track.follow(open)
-        for (const id of track.ids)
-          edits.push({ id, agent, path, at: track.madeAt(id), spots: track.spansOf(id) })
+        for (const id of track.ids) {
+          const thread = track.threadOf(id)
+          edits.push({
+            id,
+            agent,
+            path,
+            at: track.madeAt(id),
+            spots: track.spansOf(id),
+            ...(thread ? { thread } : {}),
+          })
+        }
       }
     }
     return edits
@@ -267,8 +279,17 @@ class Review {
    *  never moves the reader there (docs/agent-native.md 8.6). */
   private follow(agent: string, path: string): void {
     const provider = providerOf(agent)
-    if (!this.following.size || provider === null || path.startsWith('unsaved:')) return
-    const thread = answeringAt(provider, Date.now())
+    // Heard for a step taken back as well as for one made: only an edit newer than any
+    // heard before in the note is one landing.
+    const track = tracksOf(agent).get(path)
+    const last = track?.ids.at(-1)
+    const key = `${agent}\n${path}`
+    const seen = this.landed.get(key)
+    const at = last && track ? track.madeAt(last) : 0
+    const landing = !!last && last !== seen?.id && at >= (seen?.at ?? 0)
+    if (landing) this.landed.set(key, { id: last, at })
+    if (!landing || !this.following.size || provider === null || path.startsWith('unsaved:')) return
+    const thread = track?.threadOf(last) ?? answeringAt(provider, Date.now())
     const root = workspace.activeSpace?.root
     if (!thread || !this.following.has(thread) || !root || withinSpace(root, path) === null) return
     if (workspace.active?.path !== path) void workspace.open(path)
@@ -399,7 +420,7 @@ class Review {
     const kept: Redo['made'] = []
     for (const one of made) {
       const space =
-        workspace.spaces.find((each) => each.id === one.space || each.name === one.space) ??
+        (one.space ? spaceNamed(workspace.spaces, one.space) : undefined) ??
         workspace.spaces.find((each) => each.id === thread.space)
       if (!space) continue
       const relative = nameOf(one.path).includes('.') ? one.path : `${one.path}.md`
