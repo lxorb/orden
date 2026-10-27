@@ -9,6 +9,7 @@ import {
   sweepVersions,
   versionKey,
 } from '../src/versions'
+import { sha256 } from '../src/crypto'
 
 interface VersionView {
   versions?: { at: number; size: number; by: string }[]
@@ -347,6 +348,237 @@ describe('putting a space back to a moment', () => {
     expect(asked.json.notes).toBe(400)
     expect(asked.json.partial).toBe(true)
     expect(asked.json.left).toBe(1)
+  })
+
+  /** Notes under `Big/`, each with a version from before `at` whose body the
+   *  account holds. `changed` says which of them have moved on since; the rest
+   *  still say what their version says. */
+  async function bigSpace(count: number, changed: (made: number) => boolean): Promise<string> {
+    const at = Date.now() - 10 * 60 * 1000
+    const then = await sha256('then words')
+    const now = await sha256('now words')
+    await env.NOTES.put(versionKey(then), 'then words')
+    for (let made = 0; made < count; made++) {
+      const id = `big-${made}`
+      const differs = changed(made)
+      const name = String(made).padStart(4, '0')
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+           values (?, ?, ?, ?, 1, ?, 0, 10, ?)`,
+        )
+        .run(id, space, `Big/${name}.md`, 100 + made, at, differs ? now : then)
+      await env.NOTES.put(`spaces/${space}/${id}`, differs ? 'now words' : 'then words')
+      env.db
+        .prepare("insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, 10, '')")
+        .run(id, at - 1000, then)
+    }
+    return now
+  }
+
+  /** Asks the way the pane does, until the answer says there is nothing more. */
+  async function rollAll(): Promise<VersionView[]> {
+    const answers: VersionView[] = []
+    const at = Date.now() - 60 * 1000
+    for (let round = 0; round < 10; round++) {
+      const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+        token,
+        body: { at, under: 'Big' },
+      })
+      answers.push(done.json)
+      if (!done.json.partial || done.json.notes === 0) break
+    }
+    return answers
+  }
+
+  test('puts back every note of a space bigger than one request, across rounds', async () => {
+    const now = await bigSpace(401, () => true)
+
+    const answers = await rollAll()
+
+    expect(answers.map((one) => [one.notes, one.partial, one.left])).toEqual([
+      [400, true, 1],
+      [1, false, 0],
+    ])
+    const left = env.db.prepare('select count(*) as n from notes where hash = ?').get(now) as {
+      n: number
+    }
+    expect(left.n).toBe(0)
+  }, 60000)
+
+  test('and reaches the changed notes past the first four hundred that have not', async () => {
+    const now = await bigSpace(1000, (made) => made >= 995)
+
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: Date.now() - 60 * 1000, under: 'Big', dry: true },
+    })
+    expect(asked.json.notes).toBe(5)
+    expect(asked.json.partial).toBe(false)
+
+    const answers = await rollAll()
+
+    expect(answers.map((one) => one.notes)).toEqual([5])
+    const left = env.db.prepare('select count(*) as n from notes where hash = ?').get(now) as {
+      n: number
+    }
+    expect(left.n).toBe(0)
+  }, 60000)
+
+  test('and ends, saying what is left, when a note cannot be put back', async () => {
+    // The first note by path has a version whose body the account no longer
+    // holds, so every round lists it and none can write it.
+    const now = await bigSpace(402, () => true)
+    const gone = await sha256('gone words')
+    env.db.prepare("update note_versions set hash = ? where note_id = 'big-0'").run(gone)
+
+    const answers = await rollAll()
+
+    expect(answers.map((one) => [one.notes, one.left])).toEqual([
+      [399, 3],
+      [2, 1],
+      [0, 1],
+    ])
+    const left = env.db.prepare('select id from notes where hash = ?').all(now)
+    expect(left).toEqual([{ id: 'big-0' }])
+  }, 60000)
+
+  /** A note written, left as it was, and deleted since: its words never moved, so
+   *  only the delete is there to undo. Its one version is moved back, so it is
+   *  from before `before()`. */
+  async function deletedUnchanged(path: string): Promise<string> {
+    const made = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path, content: 'kept words' },
+    })
+    const id = made.json.note?.id ?? ''
+    env.db.prepare('update note_versions set at = at - ? where note_id = ?').run(6 * 60 * 1000, id)
+    env.db
+      .prepare('update notes set updated_at = updated_at - ? where id = ?')
+      .run(6 * 60 * 1000, id)
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    return id
+  }
+
+  const noteRow = (id: string) =>
+    env.db.prepare('select deleted, deleted_at, path from notes where id = ?').get(id) as {
+      deleted: number
+      deleted_at: number | null
+      path: string
+    }
+
+  test('brings back a note deleted since, even one whose words never changed', async () => {
+    const id = await deletedUnchanged('kept.md')
+
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before(), dry: true },
+    })
+    expect(asked.json.notes).toBe(3)
+    expect(asked.json.paths).toContain('kept.md')
+
+    const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before() },
+    })
+    expect(done.json.notes).toBe(3)
+    expect(done.json.left).toBe(0)
+    expect(noteRow(id)).toMatchObject({ deleted: 0, deleted_at: null, path: 'kept.md' })
+
+    const back = await call<VersionView>(env, `/v1/notes/${id}`, { token })
+    expect(back.json.content).toBe('kept words')
+  })
+
+  test('and next to a note that took its name meanwhile, rather than over it', async () => {
+    const id = await deletedUnchanged('kept.md')
+    const other = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'kept.md', content: 'the new one' },
+    })
+
+    const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before() },
+    })
+    expect(done.json.notes).toBe(3)
+    expect(noteRow(id)).toMatchObject({ deleted: 0, path: 'kept 2.md' })
+
+    const kept = await call<VersionView>(env, `/v1/notes/${other.json.note?.id ?? ''}`, { token })
+    expect(kept.json.content).toBe('the new one')
+    expect(kept.json.note?.path).toBe('kept.md')
+  })
+
+  test('and the words of a note edited and then deleted, next to the one that took its name', async () => {
+    await call(env, `/v1/notes/${first}`, { method: 'DELETE', token })
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Plans/one.md', content: 'the new one' },
+    })
+
+    const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before() },
+    })
+    expect(done.json.notes).toBe(2)
+    expect(noteRow(first)).toMatchObject({ deleted: 0, path: 'Plans/one 2.md' })
+    const back = await call<VersionView>(env, `/v1/notes/${first}`, { token })
+    expect(back.json.content).toBe('the first words')
+  })
+
+  test('and in a space whose tree is rows', async () => {
+    // The two notes written over have rooms there, which this harness has none of,
+    // so what is asked here is only the note that comes back.
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+    const id = await deletedUnchanged('kept.md')
+    expect(noteRow(id).deleted).toBe(1)
+
+    await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before() },
+    })
+    expect(noteRow(id)).toMatchObject({ deleted: 0, deleted_at: null, path: 'kept.md' })
+  })
+
+  test('but not a note that was already deleted at that moment', async () => {
+    const made = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'old.md', content: 'old words' },
+    })
+    const id = made.json.note?.id ?? ''
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    const ago = 10 * 60 * 1000
+    env.db.prepare('update note_versions set at = at - ? where note_id = ?').run(ago, id)
+    env.db
+      .prepare(
+        'update notes set deleted_at = deleted_at - ?1, updated_at = updated_at - ?1 where id = ?2',
+      )
+      .run(ago, id)
+
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before(), dry: true },
+    })
+    expect(asked.json.notes).toBe(2)
+    expect(asked.json.paths).not.toContain('old.md')
+
+    const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before() },
+    })
+    expect(done.json.notes).toBe(2)
+    expect(noteRow(id).deleted).toBe(1)
+  })
+
+  test('but not a note purged from Recently deleted', async () => {
+    const id = await deletedUnchanged('kept.md')
+    await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before(), dry: true },
+    })
+    expect(asked.json.notes).toBe(2)
+    expect(noteRow(id).deleted).toBe(1)
   })
 
   test('and nothing of the sort when it fits', async () => {

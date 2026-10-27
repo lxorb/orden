@@ -2,7 +2,7 @@ import { type Context, Hono } from 'hono'
 import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
-import { conflictPath, numbered } from '@nib/markdown/paths'
+import { conflictPath, freePath, numbered } from '@nib/markdown/paths'
 import { objectBody, readBody } from './body'
 import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
@@ -755,13 +755,15 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   if (at === undefined || at <= 0) return context.json({ error: 'when to go back to' }, 400)
 
   const folder = under.replace(/^\/+/, '')
-  const found = await versionsAt(context.env, space.id, folder, at)
-  const changed = found.filter((one) => one.hash !== one.live)
+  // Only notes that differ from what they said then, or were deleted since: one
+  // that already matches would take a place in the page every round and push the
+  // rest out of reach.
+  const changed = await versionsAt(context.env, space.id, folder, at)
 
   // The listing above stops at its ceiling, so a full page of rows may be a
   // whole answer or the first of several. Counted only then, and the count is
   // what lets the sheet say "four hundred of twelve hundred".
-  const cut = found.length >= ROLLBACK_AT_ONCE
+  const cut = changed.length >= ROLLBACK_AT_ONCE
   const held = cut ? await countVersionsAt(context.env, space.id, folder, at) : changed.length
 
   if (dry) {
@@ -779,11 +781,30 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
 
   let written = 0
   for (const one of changed) {
-    const note = await noteById(context.env, one.note_id)
+    let note = await noteById(context.env, one.note_id)
     if (!note) continue
 
-    const object = await context.env.NOTES.get(versionKey(one.hash))
-    if (!object) continue
+    // A note whose words are what they were then only needs to come back; one whose
+    // words moved needs them too, and is left as it is when they are gone.
+    const words = note.hash !== one.hash
+    const object = words ? await context.env.NOTES.get(versionKey(one.hash)) : null
+    if (words && !object) continue
+
+    // Deleted since: back out of Recently deleted first, the way its restore puts
+    // it, so a note that took its name meanwhile keeps it and this one is
+    // numbered next to it. Writing the words alone would bring it back onto a
+    // path somebody else holds. Write in the space is enough, unlike Recently
+    // deleted's restore, which is the owner's list: whoever may write here can
+    // already bring a deleted note back by writing it (PUT /notes/:id), and the
+    // rollback reaches only notes deleted after the moment it goes back to.
+    if (note.deleted) {
+      note = await restoreNote(context.env, note, device)
+      if (note.deleted) continue
+    }
+    if (!object) {
+      written += 1
+      continue
+    }
 
     // The device that asked, like any other write: a rollback is an edit, and the
     // history saying which machine made it is the same answer to the same
@@ -990,6 +1011,49 @@ notes.delete('/notes/:id', async (context) => {
 /** The note by id, whatever it is and wherever. */
 function noteById(env: Env, id: string): Promise<Note | null> {
   return env.DB.prepare('select * from notes where id = ?').bind(id).first<Note>()
+}
+
+/** A note out of Recently deleted, as the note it now is.
+ *
+ *  In a space whose tree is rows, a restore the tree says: the note back where it
+ *  was, with the folders it was in, numbered if its name was taken meanwhile. On the
+ *  v1 tree it goes back to its path, or the first free one next to it, because a
+ *  note that took the name while this one was away is not this one's to replace.
+ *  What Recently deleted's restore does, and a rollback to before the delete. */
+export async function restoreNote(env: Env, note: Note, device: string | undefined): Promise<Note> {
+  if (note.name_key) {
+    await deleteById(env, note.space_id, device, note.id, true)
+    const back = await noteById(env, note.id)
+    if (back) return back
+  }
+
+  const live = await env.DB.prepare('select path from notes where space_id = ? and deleted = 0')
+    .bind(note.space_id)
+    .all<{ path: string }>()
+  const taken = new Set(live.results.map((one) => one.path))
+  const path = freePath(note.path, (candidate) => taken.has(candidate))
+
+  const at = now()
+  // The number taken and the row written as one; see `atNextSeq`.
+  const { seq } = await atNextSeq(
+    env,
+    note.space_id,
+    env.DB.prepare(
+      `update notes set deleted = 0, deleted_at = null, path = ?2, seq = ${TAKEN_SEQ},
+                        version = version + 1, updated_at = ?3
+        where id = ?4`,
+    ).bind(note.space_id, path, at, note.id),
+  )
+
+  return {
+    ...note,
+    deleted: 0,
+    deleted_at: null,
+    path,
+    seq,
+    version: note.version + 1,
+    updated_at: at,
+  }
 }
 
 /** What `writeWords` answers for a note that moved past the version the writer named. */

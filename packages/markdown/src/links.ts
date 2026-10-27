@@ -15,7 +15,8 @@
  *  Imported on its own - `@nib/markdown/links` - by the editor, which wants the
  *  grammar and not the renderer that stands on it. */
 
-import { closesFence, closingTicks, fenceMark } from './fences'
+import { closingTicks, CodeBlocks, WORDS } from './fences'
+import { frontMatterBlock } from './front-matter'
 
 /** What one link between notes says. */
 export interface Wikilink {
@@ -418,13 +419,19 @@ interface Row {
  *  space: a large note should not be copied into an array of lines only to be
  *  thrown away again.
  *
- *  Which lines are a fence is fences.ts, shared with the comment stripper and the
- *  deck's break scanner, so all three step over the same code. A block closes on
- *  its own mark and nothing else: a line of tildes inside a backtick block is
- *  code being shown, and reading it as the end of the block took the rest of the
- *  note for prose. */
+ *  Which lines are code is `CodeBlocks` in fences.ts, the reading the renderer
+ *  agrees with and the tag and comment walks share. A block closes on its own
+ *  mark and nothing else: a line of tildes inside a backtick block is code being
+ *  shown, and reading it as the end of the block took the rest of the note for
+ *  prose. A fence inside a quote or a list item, and code indented with no fence,
+ *  are code as well. The Rust twin is `prose_lines` in src-tauri/src/links.rs,
+ *  which fills the desktop's index at launch, so the two read the same links. */
 export function* lines(text: string): Generator<Row> {
-  let fence: string | null = null
+  const code = new CodeBlocks()
+  // The front matter's lines, up to its closing fence, are words and not walked: the
+  // page leaves the block out, so a fence in a YAML value opens no code below it.
+  const matter = frontMatterBlock(text)
+  const wordsAt = matter ? matter.close + 1 : 0
   let line = 0
   let at = 0
 
@@ -432,16 +439,7 @@ export function* lines(text: string): Generator<Row> {
     const end = text.indexOf('\n', at)
     const row = text.slice(at, end === -1 ? text.length : end)
 
-    let delimiter = false
-    if (fence === null) {
-      fence = fenceMark(row)
-      delimiter = fence !== null
-    } else if (closesFence(row, fence)) {
-      fence = null
-      delimiter = true
-    }
-
-    yield { text: row, from: at, line, code: delimiter || fence !== null }
+    yield { text: row, from: at, line, code: at >= wordsAt && code.line(row) !== WORDS }
 
     if (end === -1) break
     at = end + 1
@@ -631,21 +629,12 @@ function headingSection(source: string, wanted: string): string | null {
   const needle = wanted.trim().toLowerCase()
   const slug = slugify(wanted)
 
-  let fence: string | null = null
+  const code = new CodeBlocks()
   let start = -1
   let level = 0
 
   for (const [index, line] of lines.entries()) {
-    if (fence !== null) {
-      if (closesFence(line, fence)) fence = null
-      continue
-    }
-
-    const mark = fenceMark(line)
-    if (mark) {
-      fence = mark
-      continue
-    }
+    if (code.line(line) !== WORDS) continue
 
     const hashes = HEADING.exec(line)?.[1]
     if (!hashes) continue

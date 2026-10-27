@@ -617,7 +617,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     async steer(thread, text) {
       const flight = running.get(thread.id)
       const live = sessions.get(thread.id)
-      if (!flight || !live || live.session.ended) return
+      if (!flight || !live || live.session.ended) return false
       if (kind === 'codex') {
         await live.session.say({ kind: 'steer', text })
       } else {
@@ -626,6 +626,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         await live.session.say({ kind: 'turn', text, images: [] })
       }
       flight.steered(text)
+      return true
     },
     async compact(thread, focus) {
       const live = sessions.get(thread.id)

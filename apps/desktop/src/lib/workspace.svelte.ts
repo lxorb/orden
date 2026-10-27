@@ -503,8 +503,10 @@ class Workspace {
       this.fileOps.follow(keeping(store))
     }
     this.fileOps.follow((op) => links.follow(op))
+    // A paper's words follow it, and a page note's paper follows the note; a space
+    // renamed or deleted takes every paper under its root. See pdf/papers.ts.
     this.fileOps.follow((op) => {
-      if (op.op === 'moved' && op.kind !== 'space') {
+      if (op.op === 'moved') {
         void papers().then(({ paperMoved }) => paperMoved(op.from, op.to), unfetched)
       } else if (op.op === 'removed') {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
@@ -2674,7 +2676,11 @@ class Workspace {
       // Imported here rather than at the top, so that a window which never opens a
       // PDF never loads the module that reads one.
       const listed = this.files
-      void import('./pdf/extract').then(({ readPapers }) => readPapers(root, listed), unfetched)
+      const tree = this.tree
+      void import('./pdf/extract').then(
+        ({ readPapers }) => readPapers(root, listed, tree),
+        unfetched,
+      )
     }
   }
 

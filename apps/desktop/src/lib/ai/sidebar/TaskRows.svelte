@@ -44,16 +44,19 @@
 
   const listed = $derived(read(said))
 
-  /** What each box says now, where the reader changed it here. */
+  /** What each box says now, where the reader changed it here, by space and place:
+   *  the rows are every space's, so one note and line can be two spaces' tasks. */
   let ticked = $state<Record<string, boolean>>({})
 
-  const isDone = (one: Task) => ticked[one.at] ?? (one.status === 'x' || one.status === 'X')
+  const placeOf = (one: Task) => `${one.space}\n${one.at}`
+  const isDone = (one: Task) => ticked[placeOf(one)] ?? (one.status === 'x' || one.status === 'X')
 
   async function tick(one: Task) {
     const done = !isDone(one)
-    ticked = { ...ticked, [one.at]: done }
+    const place = placeOf(one)
+    ticked = { ...ticked, [place]: done }
     const { tickTask } = await import('../../task-actions')
-    if (!(await tickTask(one.at, one.space, done))) ticked = { ...ticked, [one.at]: !done }
+    if (!(await tickTask(one.at, one.space, done))) ticked = { ...ticked, [place]: !done }
   }
 
   function open(one: Task) {
@@ -71,7 +74,7 @@
     {#if listed.filter}
       <code class="filter">{listed.filter}</code>
     {/if}
-    {#each listed.tasks as one (one.at)}
+    {#each listed.tasks as one, at (at)}
       <div class="task" class:done={isDone(one)}>
         <button
           class="box"

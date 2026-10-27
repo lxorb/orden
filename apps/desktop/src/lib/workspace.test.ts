@@ -5129,3 +5129,51 @@ describe('an essential asked for in a tab', () => {
     expect(workspace.tabs).toHaveLength(2)
   })
 })
+
+/** B515: a page note's paper is on disk beside it and in no operation, so what search
+ *  holds of its words has to hear of it through the note. See pdf/papers.ts. */
+describe('the words of the paper a page note holds', () => {
+  const papers = () => import('./pdf/papers')
+  const hits = async (root: string) => {
+    const { searchPapers } = await papers()
+    const { parseQuery } = await import('./search/query')
+    return searchPapers(root, parseQuery('entropy'), 20).map((hit) => hit.path)
+  }
+  const settled = () => new Promise((done) => setTimeout(done, 0))
+
+  beforeEach(async () => {
+    const { forgetPapers, paperRead } = await papers()
+    forgetPapers()
+    paperRead('/space/Lecture.pages.pdf', 1, ['entropy', 'of', 'a', 'system'])
+  })
+
+  afterEach(async () => (await papers()).forgetPapers())
+
+  test('follow the note renamed', async () => {
+    await workspace.fileMoved('/space/Lecture.pages', '/space/Physics.pages', 'file')
+    await settled()
+
+    expect(await hits('/space')).toEqual(['/space/Physics.pages.pdf'])
+  })
+
+  test('go with the note deleted', async () => {
+    await workspace.fileGone('/space/Lecture.pages', 'file')
+    await settled()
+
+    expect(await hits('/space')).toEqual([])
+  })
+
+  test('follow the space renamed', async () => {
+    await workspace.fileOps.tell({
+      op: 'moved',
+      from: '/space',
+      to: '/renamed',
+      kind: 'space',
+      root: '/space',
+      into: '/renamed',
+    })
+    await settled()
+
+    expect(await hits('/renamed')).toEqual(['/renamed/Lecture.pages.pdf'])
+  })
+})

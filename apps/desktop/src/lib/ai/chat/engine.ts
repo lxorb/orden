@@ -464,8 +464,9 @@ export function createApiEngine(setup: Setup): Engine {
     },
     send,
     steer(thread, text) {
-      steering.get(thread.id)?.push(text)
-      return Promise.resolve()
+      const list = steering.get(thread.id)
+      list?.push(text)
+      return Promise.resolve(!!list)
     },
     compact,
   }

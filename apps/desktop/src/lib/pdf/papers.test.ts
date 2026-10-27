@@ -23,6 +23,7 @@ const store = vi.hoisted(() => ({
 
 vi.mock('../tauri', () => ({
   isNative: false,
+  platform: () => 'linux',
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     const at = args.path as string
 
@@ -412,5 +413,191 @@ describe('a space read back before the file list has said anything', () => {
     await papersFor(ROOT)
 
     expect(found('ink')).toEqual([])
+  })
+})
+
+/** What the store does once every write in the air has landed. */
+const settled = () => new Promise((done) => setTimeout(done, 0))
+
+/** A list that read the space's top folder and found these page notes. */
+const walked = (notes: string[], folders: string[] = [ROOT]) => ({ notes, folders })
+
+/** A page note's paper sits beside it as `Lecture.pages.pdf`, and the file list shows
+ *  only the note. A rename, a move or a delete names the note, and the paper goes
+ *  with it on disk (`move_held` in paths.rs), so its words have to go with it here. */
+describe('the paper a page note holds', () => {
+  const NOTE = `${ROOT}/Lecture.pages`
+  const PAPER = `${ROOT}/Lecture.pages.pdf`
+
+  beforeEach(async () => {
+    paperOpened(PAPER, 'h1', 1)
+    paperRead(PAPER, 1, page('entropy of a closed system'))
+    await writePapers()
+  })
+
+  test('follows the note renamed, in memory and in the store', async () => {
+    paperMoved(NOTE, `${ROOT}/Physics.pages`)
+    await writePapers()
+    await settled()
+
+    expect(found('entropy').map((hit) => hit.path)).toEqual([`${ROOT}/Physics.pages.pdf`])
+    expect(store.records.has(PAPER)).toBe(false)
+    expect(store.records.has(`${ROOT}/Physics.pages.pdf`)).toBe(true)
+  })
+
+  test('follows the note into another space', () => {
+    paperMoved(NOTE, '/other/shelf/Lecture.pages')
+
+    expect(found('entropy')).toEqual([])
+    const there = searchPapers('/other', parseQuery('entropy'), 20)
+    expect(there.map((hit) => hit.path)).toEqual(['/other/shelf/Lecture.pages.pdf'])
+  })
+
+  test('goes with the note deleted, in memory and in the store', () => {
+    paperGone(NOTE)
+
+    expect(found('entropy')).toEqual([])
+    expect(store.records.has(PAPER)).toBe(false)
+  })
+
+  test('follows the note renamed while its words were only in the store', async () => {
+    forgetPapers()
+    paperMoved(NOTE, `${ROOT}/Physics.pages`)
+    await settled()
+
+    expect(store.records.has(PAPER)).toBe(false)
+    expect(store.records.has(`${ROOT}/Physics.pages.pdf`)).toBe(true)
+  })
+
+  test('does not come back under the old name from a walk in the air', async () => {
+    forgetPapers()
+    store.reading = (path) => {
+      if (path === PAPER) paperMoved(NOTE, `${ROOT}/Physics.pages`)
+    }
+    await papersFor(ROOT)
+
+    expect(found('entropy').map((hit) => hit.path)).not.toContain(PAPER)
+  })
+
+  test('left behind by an older build is dropped once the list says its note is gone', async () => {
+    forgetPapers()
+    papersListed(ROOT, new Map(), walked([]))
+    await papersFor(ROOT)
+
+    expect(found('entropy')).toEqual([])
+    await settled()
+    expect(store.records.has(PAPER)).toBe(false)
+  })
+
+  test('left behind and read back before the list said anything is dropped when it does', async () => {
+    forgetPapers()
+    await papersFor(ROOT)
+    expect(found('entropy')).toHaveLength(1)
+
+    papersListed(ROOT, new Map(), walked([]))
+    expect(found('entropy')).toEqual([])
+    await papersFor(ROOT)
+    expect(found('entropy')).toEqual([])
+    expect(store.records.has(PAPER)).toBe(false)
+  })
+
+  test('of another space is left alone by the list of this one', () => {
+    paperOpened('/other/Talk.pages.pdf', 'h2', 1)
+    paperRead('/other/Talk.pages.pdf', 1, page('entropy again'))
+    papersListed(ROOT, new Map(), walked([NOTE]))
+
+    expect(searchPapers('/other', parseQuery('entropy'), 20)).toHaveLength(1)
+  })
+
+  test('is kept where the list still has its note', async () => {
+    forgetPapers()
+    papersListed(ROOT, new Map(), walked([NOTE]))
+    await papersFor(ROOT)
+
+    expect(found('entropy').map((hit) => hit.path)).toEqual([PAPER])
+    expect(store.records.has(PAPER)).toBe(true)
+  })
+
+  // A list that could not be read - a disk not mounted, a space past the crate's
+  // bound - is no list at all, and says nothing about which notes are gone.
+  test('is kept where the list could not be read at all', async () => {
+    forgetPapers()
+    papersListed(ROOT, new Map(), null)
+    await papersFor(ROOT)
+    await settled()
+
+    expect(found('entropy')).toHaveLength(1)
+    expect(store.records.has(PAPER)).toBe(true)
+  })
+
+  test('is kept where the list did not read the folder it sits in', async () => {
+    const hidden = `${ROOT}/Locked/Optics.pages.pdf`
+    paperOpened(hidden, 'h3', 1)
+    paperRead(hidden, 1, page('optics of a lens'))
+    await writePapers()
+    forgetPapers()
+
+    papersListed(ROOT, new Map(), walked([NOTE]))
+    await papersFor(ROOT)
+    await settled()
+
+    expect(found('optics')).toHaveLength(1)
+    expect(store.records.has(hidden)).toBe(true)
+  })
+
+  // A paper whose note has gone is a PDF again, and the list shows it as one.
+  test('is kept as a PDF of its own where the list has it as a file', async () => {
+    forgetPapers()
+    papersListed(ROOT, new Map([[PAPER, 1]]), walked([]))
+    await papersFor(ROOT)
+    await settled()
+
+    expect(found('entropy')).toHaveLength(1)
+    expect(store.records.has(PAPER)).toBe(true)
+  })
+})
+
+/** A folder, or a whole space, names none of the papers inside it. */
+describe('papers inside a folder or a space', () => {
+  const PAPER = `${ROOT}/Week/Ink.pdf`
+  const NOTED = `${ROOT}/Week/Optics.pages.pdf`
+
+  beforeEach(async () => {
+    paperOpened(PAPER, 'h1', 1)
+    paperRead(PAPER, 1, page('ink on paper'))
+    paperOpened(NOTED, 'h2', 1)
+    paperRead(NOTED, 1, page('ink in a lens'))
+    await writePapers()
+  })
+
+  test('go with the folder deleted, in memory and in the store', async () => {
+    paperGone(`${ROOT}/Week`)
+    await settled()
+
+    expect(found('ink')).toEqual([])
+    expect(store.records.size).toBe(0)
+  })
+
+  test('go with the folder deleted while their words were only in the store', async () => {
+    forgetPapers()
+    paperGone(`${ROOT}/Week`)
+    await settled()
+
+    expect(store.records.size).toBe(0)
+  })
+
+  test('follow a space renamed, those only in the store too', async () => {
+    forgetPapers()
+    paperRead(PAPER, 1, page('ink on paper'))
+    paperOpened(PAPER, 'h1', 1)
+    paperMoved(ROOT, '/renamed')
+    await writePapers()
+    await settled()
+
+    expect([...store.records.keys()].sort()).toEqual([
+      '/renamed/Week/Ink.pdf',
+      '/renamed/Week/Optics.pages.pdf',
+    ])
+    expect(searchPapers('/renamed', parseQuery('ink'), 20)).toHaveLength(1)
   })
 })

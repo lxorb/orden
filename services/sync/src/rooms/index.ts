@@ -25,6 +25,7 @@ import { note } from '../failed'
 import type { Env, Note } from '../types'
 import { chatsRevoked } from '../chats/ask'
 import { machinesRevoked } from '../machines/revoke'
+import { SIGNED_IN_AS } from './access'
 import { isChatPointer, roomKind } from './kind'
 import type { Ingested } from './room'
 
@@ -52,15 +53,7 @@ import type { Ingested } from './room'
  *  row and one round trip. Where somebody holds both - a reader of the space who
  *  was given this note to write in - the stronger of the two is what the room is
  *  told: what they may do to this file is the most any of it allows. */
-const ALLOWED = `with me as (
-  select u.id as user_id, u.email as email, null as guest_id, s.id as session_id
-    from sessions s join users u on u.id = s.user_id
-   where s.token_hash = ?1 and s.expires_at > ?2
-  union all
-  select null as user_id, null as email, s.guest_id as guest_id, null as session_id
-    from guest_sessions s
-   where s.token_hash = ?1 and s.expires_at > ?2
-),
+const ALLOWED = `with ${SIGNED_IN_AS},
 reached as (
   select n.space_id as space_id,
          n.path as path,

@@ -9,12 +9,14 @@
  *
  *  `fenceMark` and `closesFence` are not markdown's whole grammar for a fence: a
  *  fence inside a blockquote or a list item carries a prefix, which they do not
- *  unwrap. What they answer is the question the four walks ask - does this line
- *  open or close a block of code - and they answer it the same way for all of them.
+ *  unwrap. What they answer is the question the deck's break scanner and the
+ *  editor ask - does this line open or close a block of code - and they answer
+ *  it the same way for all of them.
  *
  *  A reader that has to agree with the page about what is code asks `CodeBlocks`
  *  at the end of this file instead, which keeps the quotes and list items a line
- *  sits in. */
+ *  sits in: the comment stripper, the abbreviation collector and the link
+ *  scanner, and the tag and task walks outside this package. */
 
 /** Up to three spaces of indent, as CommonMark allows before an indented code
  *  block takes over; then the run of marks; then the info string, in which a
@@ -126,6 +128,7 @@ function spacesAt(line: string, at: number): number {
 export class CodeBlocks {
   private containers: Container[] = []
   private leaf: Leaf = null
+  private item = false
 
   /** A walk that has read what this one has, to go on from here apart from it. */
   copy(): CodeBlocks {
@@ -133,6 +136,12 @@ export class CodeBlocks {
     copy.containers = [...this.containers]
     copy.leaf = this.leaf
     return copy
+  }
+
+  /** Whether the last line read opened a list item of its own: what is code in it
+   *  then is the item's, and the line is still a list item to a reader of lists. */
+  get openedItem(): boolean {
+    return this.item
   }
 
   /** The mark of the fence that is open, or null outside one. */
@@ -143,6 +152,7 @@ export class CodeBlocks {
   line(raw: string): CodeLine {
     // A line break written as CRLF leaves its `\r` on a line split at `\n`.
     const line = expanded(raw.endsWith('\r') ? raw.slice(0, -1) : raw)
+    this.item = false
     let at = 0
     let matched = 0
 
@@ -241,6 +251,7 @@ export class CodeBlocks {
       if (width === null) break
 
       this.containers.push({ quote: false, width: indent + width })
+      this.item = true
       this.leaf = null
       rest = text.length > width ? text.slice(width) : ''
     }

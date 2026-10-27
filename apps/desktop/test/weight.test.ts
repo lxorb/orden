@@ -866,8 +866,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-27, to 3,380,900, for B484: what a space keeps by path follows a
  *  note or folder moved into another space (`moving` and `carried` in
  *  workspace/file-ops.ts, used by the excluded, folder icons, arranged, bookmarks and
- *  archive stores). Measured 3,380,079. */
-const BUDGET = 3_380_900
+ *  archive stores). Measured 3,380,079.
+ *
+ *  Raised 2026-10-27, to 3,384,900, for B516: what a held outline does reaches its
+ *  own note, never the one in front of it in the pane (`viewShowing` and `WhenShown`
+ *  in views.svelte.ts, `onNote` in App.svelte). Measured 3,384,041. */
+const BUDGET = 3_384_900
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

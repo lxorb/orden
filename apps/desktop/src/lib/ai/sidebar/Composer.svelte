@@ -149,7 +149,7 @@
     }
     for (const one of chat.heads) {
       if (one.id !== head?.id && one.title)
-        out.push({ kind: 'thread', id: one.id, label: one.title })
+        out.push({ kind: 'thread', id: one.id, label: one.title, space: one.space })
     }
     return out
   }
@@ -323,7 +323,9 @@
     if (shortcuts.pressed('ai.model', event))
       return run(() => (chat.popover = chat.popover === 'model' ? null : 'model'))
     if (shortcuts.pressed('ai.effort', event)) return run(() => chat.setEffort('next'))
-    if (shortcuts.pressed('ai.steer', event)) return run(() => chat.steer(around()))
+    // Into the running answer; with nothing running, the field's own send, as Enter.
+    if (shortcuts.pressed('ai.steer', event))
+      return run(() => (busy ? chat.steer() : void submit()))
     if (shortcuts.pressed('ai.unfold', event)) return run(() => chat.toggleFolded())
     if (shortcuts.pressed('ai.new', event)) return run(() => chat.newThread())
     if (shortcuts.pressed('ai.stop', event) && (busy || chat.popover)) {
@@ -601,7 +603,9 @@
               >
             </span>
           {/if}
-          {#each chat.chips as chip (`${chip.kind}:${chip.id}`)}
+          <!-- Keyed by the chip itself: two can name one thing, a command's words sent as
+               two chips of one label (B505). -->
+          {#each chat.chips as chip (chip)}
             <span
               class="chip"
               class:refused={chip.kind === 'picture' && chat.model?.images === false}

@@ -18,6 +18,7 @@ use std::fs::Metadata;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::AppHandle;
 
+use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter;
 use crate::notes::{words_of, words_stamped};
 use crate::paths::{files_in, in_spaces, is_canvas, is_shortcut, relative_to};
@@ -596,33 +597,29 @@ fn note_tags(body: &str) -> Vec<String> {
     out
 }
 
-/// Whether a line opens or closes a fenced code block.
-fn is_fence(line: &str) -> bool {
-    let trimmed = line.trim_start();
-    line.len() - trimmed.len() <= 3 && (trimmed.starts_with("```") || trimmed.starts_with("~~~"))
-}
-
 /// Every line of a note that is not code, with the number it is on. Both
 /// delimiters of a fence are code as well: neither can hold a link, a heading or a
-/// block name.
+/// block name. What is code is judged as the renderer judges it, by
+/// `code_blocks`: a fence closes on its own mark only, and a fence in a quote or
+/// a list item and code indented with no fence are code too. The same walk as
+/// `lines` in links.ts and `scanRows` in @nib/bases, so the desktop's index and
+/// the browser's read the same links and tasks out of a note.
+///
+/// The lines above `words_from`, the front matter's, are handed on as they are and
+/// not walked: the page leaves the block out, so a fence written in a YAML value
+/// opens no code below it.
 ///
 /// Handed to a closure rather than gathered into a list, because all three readers
 /// walk a note straight down and none of them looks back: a space of ten thousand
 /// notes is a million and a half lines, and this is asked of every one of them
 /// three times over.
-fn prose_lines(body: &str, mut each: impl FnMut(usize, &str)) {
-    let mut fenced = false;
+fn prose_lines(body: &str, words_from: usize, mut each: impl FnMut(usize, &str)) {
+    let mut code = CodeBlocks::default();
 
     for (index, line) in body.lines().enumerate() {
-        let fence = is_fence(line);
-        if fence {
-            fenced = !fenced;
+        if index < words_from || code.line(line) == CodeLine::Words {
+            each(index, line);
         }
-        if fenced || fence {
-            continue;
-        }
-
-        each(index, line);
     }
 }
 
@@ -654,7 +651,7 @@ fn prose(body: &str, words_from: usize) -> Prose {
     // The list items it is inside of, for what is written under each task.
     let mut open: Vec<Open> = Vec::new();
 
-    prose_lines(body, |index, line| {
+    prose_lines(body, words_from, |index, line| {
         let heading = heading_of(line);
         if let Some((level, text)) = heading {
             if index >= words_from {
@@ -1360,6 +1357,66 @@ mod tests {
         assert!(targets("write `[[Note]]` to link").is_empty());
         assert_eq!(targets("```\n[[Note]]\n```\n[[Real]]"), vec!["Real"]);
         assert_eq!(targets("`` ` [[Note]] `` [[Real]]"), vec!["Real"]);
+    }
+
+    /// A fence closes on its own mark only: the same character, at least as many
+    /// of them, and nothing after them. A line of tildes in a backtick block, or a
+    /// shorter fence in a longer one, is code being shown; reading it as the end
+    /// took the rest of the note for code. The cases of `findLinks` in links.ts.
+    #[test]
+    fn a_fence_closes_only_on_its_own_mark() {
+        let tilde = "```\n~~~\n```\n\nSee [[Plan]]\n- [ ] call Bob\n";
+        assert_eq!(targets(tilde), vec!["Plan"]);
+        assert_eq!(prose(tilde, 0).tasks.len(), 1);
+
+        assert_eq!(targets("````md\n```\n````\n[[Plan]]"), vec!["Plan"]);
+        // A backtick in the info string: not a fence at all.
+        assert_eq!(targets("```a`b\n[[Plan]]"), vec!["Plan"]);
+
+        let shown = "~~~md\n```js\n- [ ] example\n[[Example]]\n```\n~~~\n[[Real]]\n";
+        assert_eq!(targets(shown), vec!["Real"]);
+        assert!(prose(shown, 0).tasks.is_empty());
+    }
+
+    /// The front matter is no part of the page, so a fence in a YAML value opens
+    /// no code below it; a link written in it is still one.
+    #[test]
+    fn a_fence_in_the_front_matter_opens_no_code() {
+        let read = note_at(
+            "Fenced.md".to_string(),
+            "---\nscript: |\n  ```\nup: \"[[Up]]\"\n---\n- [ ] t [[L]]\n",
+        );
+        let targets: Vec<&str> = read.links.iter().map(|one| one.target.as_str()).collect();
+        assert_eq!(targets, ["Up", "L"]);
+        assert_eq!(read.tasks.len(), 1);
+        assert_eq!(read.tasks[0].text, "t [[L]]");
+    }
+
+    /// Code inside a quote or a list item, and code indented with no fence, is
+    /// code to the page, so it holds no link, heading or task. A task inside a
+    /// list item, nested or not, is still one.
+    #[test]
+    fn code_in_quotes_items_and_indents_holds_nothing() {
+        let quoted = "> ```\n> [[Example]]\n> - [ ] example\n> ```\n\n[[Real]]\n";
+        assert_eq!(targets(quoted), vec!["Real"]);
+        assert!(prose(quoted, 0).tasks.is_empty());
+
+        let indented =
+            "Words.\n\n    [[Example]]\n    - [ ] example\n    # Not a heading\n\n[[Real]]\n";
+        assert_eq!(targets(indented), vec!["Real"]);
+        assert!(prose(indented, 0).tasks.is_empty());
+
+        let item = "- a\n  ```\n  [[Example]]\n  # Not a heading\n  ```\n- [[Real]]\n";
+        assert_eq!(targets(item), vec!["Real"]);
+        assert!(headings_in(item).is_empty());
+
+        let tasks = prose(
+            "- [ ] one\n    - [ ] two\n\t- [ ] three\n- item\n  - [ ] four\n\n  - [ ] five\n",
+            0,
+        )
+        .tasks;
+        let texts: Vec<&str> = tasks.iter().map(|task| task.text.as_str()).collect();
+        assert_eq!(texts, ["one", "two", "three", "four", "five"]);
     }
 
     #[test]

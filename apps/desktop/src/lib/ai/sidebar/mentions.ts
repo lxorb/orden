@@ -32,6 +32,9 @@ export interface Mention {
   image?: { mime: string; data: string }
   /** The words of a `words` chip. */
   text?: string
+  /** The space a thread is kept in: the `@` list offers every space's threads, and a
+   *  thread is read where it is kept, not in the space of the one it is sent in. */
+  space?: string
 }
 
 /** One row of the list over the field, a mention's or a command's. */
