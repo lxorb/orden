@@ -138,7 +138,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
         name: `#${params.tag ?? ''}`,
         filters: `if(task, task.started && task.hasTag(${tag}), file.hasTag(${tag}))`,
         sort: [],
-        groupBy: { property: 'file.basename', direction: 'ASC' },
+        groupBy: { property: 'file.path', direction: 'ASC' },
         nib: { rows: 'both', kept: {} },
       })
     }

@@ -8,7 +8,7 @@
  *  Pure. `displayed` is what the engine is asked with: the view's own filters and the
  *  narrowing together. */
 
-import type { Base, Filter, Row, View } from '@nib/bases'
+import type { Base, Row, View } from '@nib/bases'
 
 export type Grouping = 'default' | 'none' | 'note' | 'section' | 'date' | 'deadline' | 'priority'
 export type Sorting = 'default' | 'manual' | 'name' | 'date' | 'deadline' | 'priority' | 'note'
@@ -42,6 +42,10 @@ const BY: Partial<Record<Grouping | Sorting, string>> = {
   name: 'task.text',
 }
 
+/** What each grouping groups by, where it differs from what its sorting sorts by: a
+ *  note's group is its path, so two notes of one name in two folders stay apart. */
+const GROUP_BY: Partial<Record<Grouping, string>> = { ...BY, note: 'file.path' }
+
 /** What a view is narrowed to. */
 export interface Only {
   priority?: 1 | 2 | 3 | 4
@@ -73,7 +77,9 @@ export function groupingOf(view: View, original: View | null): Grouping {
   if (original && same(view.groupBy, original.groupBy)) return 'default'
   const by = view.groupBy?.property
   if (by === undefined) return 'none'
-  return GROUPINGS.find((one) => BY[one] === by) ?? 'none'
+  // A view grouped by note before notes were grouped by path.
+  if (by === 'file.basename') return 'note'
+  return GROUPINGS.find((one) => GROUP_BY[one] === by) ?? 'none'
 }
 
 /** The view grouped another way. A note's headings are grouped in the order they are
@@ -94,7 +100,7 @@ export function withGrouping(
       if (original?.nib.groupOrder) nib.groupOrder = original.nib.groupOrder
       return next
     }
-    const property = BY[grouping]
+    const property = GROUP_BY[grouping]
     if (property === undefined) return next
     if (grouping === 'section') nib.groupOrder = 'rows'
     next.groupBy = { property, direction: 'ASC' }
@@ -199,12 +205,18 @@ const narrowed = new WeakMap<Base, Map<number, Base>>()
 export function displayed(base: Base, at: number): Base {
   const view = base.views[at]
   const extra = view ? onlyFilter(onlyOf(view)) : null
-  if (!view || extra === null) return base
+  // A view grouped by note name before notes were grouped by path: two notes of one
+  // name in two folders are two groups, as the Display menu's "note" now groups them.
+  const byName = view?.groupBy?.property === 'file.basename' ? view.groupBy : null
+  if (!view || (extra === null && !byName)) return base
   let kept = narrowed.get(base)
   const known = kept?.get(at)
   if (known) return known
-  const filters: Filter = view.filters ? { and: [view.filters, extra] } : extra
-  const made = withView(base, at, (one) => ({ ...one, filters }))
+  const made = withView(base, at, (one) => ({
+    ...one,
+    ...(extra === null ? {} : { filters: view.filters ? { and: [view.filters, extra] } : extra }),
+    ...(byName ? { groupBy: { ...byName, property: GROUP_BY.note ?? 'file.path' } } : {}),
+  }))
   if (!kept) narrowed.set(base, (kept = new Map<number, Base>()))
   kept.set(at, made)
   return made

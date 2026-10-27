@@ -9,7 +9,7 @@
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
-  import { displayName, knownProperties } from './columns'
+  import { displayName, holdsOf, knownProperties } from './columns'
   import { setViewNib } from './edit'
   import { expressionOf, type Operator, OPERATORS, rowOf, takesValue } from './filter-rows'
   import type { Kit } from './kit'
@@ -23,7 +23,11 @@
   const written = $derived(view?.nib.colour)
   const rules = $derived(colourRules(written))
   /** Each rule beside the filter row its condition reads as, where it reads as one. */
-  const shownRules = $derived((rules ?? []).map((rule) => ({ rule, shown: rowOf(rule.when) })))
+  /** What each property holds, for how a condition asks it whether it is empty. */
+  const holds = $derived(live.base ? holdsOf(live.base, live.rows) : undefined)
+  const shownRules = $derived(
+    (rules ?? []).map((rule) => ({ rule, shown: rowOf(rule.when, holds) })),
+  )
   const kinds = $derived(view?.nib.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
 
@@ -89,7 +93,7 @@
             label: propertyName(one, live.base ? displayName(live.base, one) : undefined),
           }))}
           onchange={(property: string) =>
-            change(at, { ...rule, when: expressionOf({ ...shown, property }) })}
+            change(at, { ...rule, when: expressionOf({ ...shown, property }, holds) })}
         />
         <Select
           label={t('Compare')}
@@ -97,7 +101,7 @@
           options={OPERATORS.map((one) => ({ value: one, label: OPERATOR_NAMES[one] }))}
           onchange={(op: string) => {
             const found = OPERATORS.find((one) => one === op)
-            if (found) change(at, { ...rule, when: expressionOf({ ...shown, op: found }) })
+            if (found) change(at, { ...rule, when: expressionOf({ ...shown, op: found }, holds) })
           }}
         />
         {#if takesValue(shown.op)}
@@ -108,7 +112,7 @@
             onchange={(event) =>
               change(at, {
                 ...rule,
-                when: expressionOf({ ...shown, value: event.currentTarget.value }),
+                when: expressionOf({ ...shown, value: event.currentTarget.value }, holds),
               })}
           />
         {:else}

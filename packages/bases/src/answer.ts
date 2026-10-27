@@ -96,6 +96,13 @@ export function groupName(key: Value): string {
   return key === null ? '' : text(key)
 }
 
+/** Two notes' paths in the order of the notes' names, then of the paths: a view
+ *  grouped by note heads its groups by name, so they read in that order. */
+function byNoteName(a: string, b: string): number {
+  const name = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/i, '')
+  return sortCompare(name(a), name(b)) || sortCompare(a, b)
+}
+
 /** The options a property's groups come in, nib's select options. */
 function optionOrder(base: Base, property: string | undefined): string[] {
   if (!property) return []
@@ -292,7 +299,10 @@ export function compileView(base: Base, which?: string | number): CompiledView {
             return a.key === b.key ? 0 : (a.key === null) !== noneFirst ? 1 : -1
           const byRank = rank(a.key) - rank(b.key)
           if (byRank !== 0) return byRank
-          const order = sortCompare(a.key, b.key)
+          const order =
+            by.property === 'file.path' && typeof a.key === 'string' && typeof b.key === 'string'
+              ? byNoteName(a.key, b.key)
+              : sortCompare(a.key, b.key)
           return by.direction === 'DESC' ? -order : order
         })
       return keys.map(({ key, members: inGroup }) => {

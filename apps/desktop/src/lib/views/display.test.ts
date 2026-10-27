@@ -14,6 +14,8 @@ import {
   withOnly,
   withSorting,
 } from './display'
+import { dropInto } from './drop'
+import { groupLabel, noteNames } from './words'
 
 const TODAY = '2026-10-13'
 const ROWS = taskRowsOfText(
@@ -84,5 +86,69 @@ describe('the Display menu', () => {
     expect(words(withOnly(today, 0, { project: 'Elsewhere.md' }))).toEqual([])
     expect(notesIn(ROWS)).toEqual([{ path: 'Errands.md', name: 'Errands' }])
     expect(withOnly(narrowed, 0, {}).views[0]?.nib.kept.only).toBeUndefined()
+  })
+})
+
+describe('a view grouped by note', () => {
+  const rows = [
+    ...taskRowsOfText('Notes', 'Alpha/Tasks.md', '- [ ] Alpha one 📅 2026-10-13'),
+    ...taskRowsOfText('Notes', 'Beta/Tasks.md', '- [ ] Beta one 📅 2026-10-13'),
+    ...taskRowsOfText('Notes', 'Inbox.md', '- [ ] Inbox one 📅 2026-10-13'),
+  ]
+  const today = builtinView('today')
+  const byNote = withGrouping(today, 0, 'note', today.views[0] ?? null)
+  const context = contextFor({ rows, today: TODAY, now: `${TODAY}T09:00:00` })
+  const groups = answer(displayed(byNote, 0), 0, rows, context).groups
+  const keys = groups.map((group) => group.key)
+
+  test('keeps notes of the same name in other folders apart', () => {
+    expect(groupingOf(byNote.views[0] ?? today.views[0]!, today.views[0] ?? null)).toBe('note')
+    // In the order of the notes' names, the path between two of one name.
+    expect(groups.map((group) => group.rows.map((row) => row.task?.text))).toEqual([
+      ['Inbox one'],
+      ['Alpha one'],
+      ['Beta one'],
+    ])
+  })
+
+  test('names each group by its note, with the folder where two names clash', () => {
+    const property = byNote.views[0]?.groupBy?.property
+    const names = noteNames(keys)
+    expect(keys.map((key) => groupLabel(property, key, TODAY, names))).toEqual([
+      'Inbox',
+      'Tasks · Alpha',
+      'Tasks · Beta',
+    ])
+  })
+
+  test('a task dropped on a group moves to that note, not one of the same name', () => {
+    const property = byNote.views[0]?.groupBy?.property ?? ''
+    const inbox = rows[2]!
+    expect(dropInto(property, keys[2] ?? null, inbox, TODAY)).toEqual({
+      move: { path: 'Beta/Tasks.md' },
+    })
+  })
+
+  test('a view saved grouped by note name is shown grouped by note', () => {
+    const view = byNote.views[0]
+    if (!view) throw new Error('no view')
+    const saved = {
+      ...byNote,
+      views: [{ ...view, groupBy: { property: 'file.basename', direction: 'ASC' as const } }],
+    }
+    expect(displayed(saved, 0).views[0]?.groupBy?.property).toBe('file.path')
+    expect(answer(displayed(saved, 0), 0, rows, context).groups).toHaveLength(3)
+  })
+
+  test('names two thousand groups at once without asking each of every other', () => {
+    const many = Array.from(
+      { length: 2000 },
+      (_, at) => `Folder ${Math.floor(at / 1000)}/Note ${at % 1000}.md`,
+    )
+    const started = performance.now()
+    const names = noteNames(many)
+    const said = many.map((key) => groupLabel('file.path', key, TODAY, names))
+    expect(performance.now() - started).toBeLessThan(150)
+    expect(said[0]).toBe('Note 0 · Folder 0')
   })
 })
