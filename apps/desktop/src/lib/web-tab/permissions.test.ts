@@ -42,17 +42,19 @@ const { grants, readAsked, siteOf } = await import('./permissions.svelte')
 
 let next = 1
 
-/** One request from a site, as the crate sends it. */
-function asked(site: string, kind: string, tab = 'a') {
+/** One request from a site, as the crate sends it, and as a private tab's page says it
+ *  came from a private tab. */
+function asked(site: string, kind: string, tab = 'a', privately = false) {
   const said = readAsked({ tab, id: next++, origin: `https://${site}/page`, kind })
   expect(said).not.toBe(null)
-  return said!
+  return { ...said!, privately }
 }
 
 beforeEach(() => {
   answered.length = 0
   grants.asking = []
   for (const site of ['a.example', 'b.example']) grants.forget(site)
+  grants.dropped('none', false)
 })
 
 test('reads a request and throws out anything that is not one', () => {
@@ -61,6 +63,7 @@ test('reads a request and throws out anything that is not one', () => {
     id: 1,
     site: 'a.example',
     ask: 'camera',
+    privately: false,
   })
 
   expect(readAsked({ tab: 'a', id: 1, origin: 'https://a.example/', kind: 'usb' })).toBe(null)
@@ -181,4 +184,73 @@ test('what is written down survives being read back', () => {
 test('the site is the host as the bar shows it', () => {
   expect(siteOf('https://www.a.example/page?a=1')).toBe('a.example')
   expect(siteOf(null)).toBe('')
+})
+
+// #787: a private tab's Allow was written to the store, and a normal tab on the same site
+// was then allowed with no bubble, and the site's info named the private visit.
+test("a private tab's answer is kept nowhere and never answers a normal tab", () => {
+  const privately = asked('a.example', 'camera', 'p', true)
+  grants.heard(privately)
+  grants.answer(privately, true)
+
+  expect(localStorage.getItem('nib:web-grants') ?? '').not.toContain('a.example')
+  expect(grants.of('a.example')).toEqual({})
+
+  const normal = asked('a.example', 'camera', 'n')
+  grants.heard(normal)
+  expect(grants.asking).toEqual([normal])
+})
+
+test('the private session answers its own tabs until the last private tab closes', () => {
+  const first = asked('a.example', 'camera', 'p', true)
+  grants.heard(first)
+  grants.answer(first, true)
+
+  // Another private tab, the same session: answered without a bubble.
+  grants.heard(asked('a.example', 'camera', 'q', true))
+  expect(grants.asking).toHaveLength(0)
+  expect(answered.at(-1)?.allow).toBe(true)
+  expect(grants.of('a.example', true)).toEqual({ camera: 'allow' })
+
+  // One private tab closed while another is open: the session goes on.
+  grants.dropped('p', true)
+  expect(grants.said('a.example', 'camera', true)).toBe('allow')
+
+  // The last one closed: what was said in it is gone.
+  grants.dropped('q', false)
+  expect(grants.said('a.example', 'camera', true)).toBe(null)
+  grants.heard(asked('a.example', 'camera', 'r', true))
+  expect(grants.asking).toHaveLength(1)
+})
+
+test('a private tab carries over what a normal tab blocked, and not what it allowed', () => {
+  const camera = asked('a.example', 'camera')
+  grants.heard(camera)
+  grants.answer(camera, true)
+  const location = asked('a.example', 'location')
+  grants.heard(location)
+  grants.answer(location, false)
+
+  expect(grants.of('a.example', true)).toEqual({ location: 'block' })
+
+  grants.heard(asked('a.example', 'location', 'p', true))
+  expect(grants.asking).toHaveLength(0)
+  expect(answered.at(-1)?.allow).toBe(false)
+
+  grants.heard(asked('a.example', 'camera', 'p', true))
+  expect(grants.asking).toHaveLength(1)
+})
+
+test("a private tab's site info changes and resets only the private session", () => {
+  const normal = asked('a.example', 'camera')
+  grants.heard(normal)
+  grants.answer(normal, true)
+
+  grants.remember('a.example', 'camera', 'block', true)
+  expect(grants.said('a.example', 'camera', true)).toBe('block')
+  expect(grants.said('a.example', 'camera')).toBe('allow')
+
+  grants.forget('a.example', true)
+  expect(grants.said('a.example', 'camera', true)).toBe(null)
+  expect(grants.said('a.example', 'camera')).toBe('allow')
 })

@@ -48,6 +48,10 @@
 #     seen in the web bar and in Settings, removed through the engine and gone from both,
 #     and still gone once Orden is started again without it (#789,
 #     scripts/extensions-drive.py);
+#   - with GRANTS=1, a site in a private tab asking for the camera and allowed, the
+#     private tab closed, and the same site asking from a normal tab: the private answer
+#     has to be written nowhere and the normal tab has to be asked (#787,
+#     scripts/grants-drive.py);
 #   - with WATCH=1, a space holding a folder nobody may read and four hundred more: a
 #     note written into it by another program has to be heard, at its top and deep in
 #     it, and again under a lowered limit of watched folders, which the watch has to say
@@ -182,7 +186,7 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ] || [ "${GRANTS:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
@@ -456,6 +460,11 @@ fi
 if [ "$status" = 0 ] && [ "${DOWNLOAD:-0}" = 1 ]; then
   sleep 3
   python3 "$here/download-drive.py" "$out" "$NIB_DOWNLOADS_DIR" "$out/served.txt" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${GRANTS:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/grants-drive.py" "$out" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then

@@ -229,6 +229,16 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #787: a private tab's answer to a site is kept for its private session only.
+      - name: A private tab's permission answer kept from normal tabs, under sway
+        if: always()
+        env:
+          OUT: wayland-out/grants
+          GRANTS: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #481: changes other programs make are noticed though a folder cannot be watched,
       # and the reader is told when the limit of watched folders is reached.
       - name: A space watched past a folder nobody may read and past the limit, under sway
