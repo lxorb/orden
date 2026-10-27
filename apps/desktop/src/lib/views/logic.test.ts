@@ -2,7 +2,7 @@ import { answer, builtinView, readBase, writeBase } from '@nib/bases'
 import { describe, expect, test } from 'vitest'
 import { daysShown, occurrences, place, placedByDay, stepped, timeOf } from './calendar'
 import { donutPaths, heights, linePath, seriesOf, settingsOf, totalOf } from './chart'
-import { changeOf, columnsOf, defaultColumns, editorOf, knownProperties } from './columns'
+import { changeOf, columnsOf, defaultColumns, editorOf, holdsOf, knownProperties } from './columns'
 import { contextFor } from './context'
 import { dayOf, nextMonday, nowOf, weekStart } from './days'
 import { dropInto } from './drop'
@@ -427,9 +427,10 @@ describe('the filter builder on empty values', () => {
     noteRow('Missing.md', 'other: 1'),
     noteRow('Full.md', 'estimate: 3\nbillable: true\ntags: [a]'),
   ]
+  const holds = holdsOf(readBase('views: []\n'), notes)
   const shown = (row: { property: string; op: 'empty' | 'filled'; value: string }) => {
     const base = readBase(
-      `filters: ${JSON.stringify(expressionOf(row))}\nviews:\n  - type: table\n    name: T\n`,
+      `filters: ${JSON.stringify(expressionOf(row, holds))}\nviews:\n  - type: table\n    name: T\n`,
     )
     const context = contextFor({ rows: notes, today: '2026-10-13', now: '2026-10-13T09:00:00' })
     return answer(base, 0, notes, context)
@@ -467,6 +468,48 @@ describe('the filter builder on empty values', () => {
     // A bare property asks whether it is true, not whether it is empty.
     expect(rowOf('!note.cover')).toEqual({ kept: '!note.cover' })
     expect(rowOf('note.cover')).toEqual({ kept: 'note.cover' })
+  })
+
+  test('asks a checkbox whether it is there, the way Obsidian reads every type', () => {
+    expect(holds('note.billable')).toBe('truth')
+    const empty = expressionOf({ property: 'note.billable', op: 'empty', value: '' }, holds)
+    expect(empty).toBe('note.billable == null')
+    expect(rowOf(empty, holds)).toEqual({ property: 'note.billable', op: 'empty', value: '' })
+    const filled = expressionOf({ property: 'note.billable', op: 'filled', value: '' }, holds)
+    expect(filled).toBe('note.billable != null')
+    expect(rowOf(filled, holds)).toEqual({ property: 'note.billable', op: 'filled', value: '' })
+    expect(shown({ property: 'note.billable', op: 'filled', value: '' })).toEqual(['Full', 'Zero'])
+  })
+
+  test('reads an older row back where truth and emptiness agree, and keeps it where not', () => {
+    const notes = [
+      noteRow('A.md', 'cover: a.png\nestimate: 0\ndone: false'),
+      noteRow('B.md', 'cover: ""\nwhen: 2026-10-01'),
+    ]
+    const typed = readBase('properties: {}\nviews: []\n')
+    const holds = holdsOf(
+      { ...typed, nib: { ...typed.nib, properties: { size: { format: 'percent', kept: {} } } } },
+      notes,
+    )
+    // Text, a date, a list, a property no note has yet: the old rows mean what new ones do.
+    expect(rowOf('!note.cover', holds)).toEqual({ property: 'note.cover', op: 'empty', value: '' })
+    expect(rowOf('note.when', holds)).toEqual({ property: 'note.when', op: 'filled', value: '' })
+    expect(rowOf('note.nothing', holds)).toEqual({
+      property: 'note.nothing',
+      op: 'filled',
+      value: '',
+    })
+    expect(rowOf('!task.due', holds)).toEqual({ property: 'task.due', op: 'empty', value: '' })
+    // A number or a checkbox, where 0 and false are not true but are there: kept as written.
+    expect(rowOf('note.estimate', holds)).toEqual({ kept: 'note.estimate' })
+    expect(rowOf('!note.done', holds)).toEqual({ kept: '!note.done' })
+    expect(rowOf('note.size', holds)).toEqual({ kept: 'note.size' })
+    expect(rowOf('!task.done', holds)).toEqual({ kept: '!task.done' })
+    expect(rowOf('task.priority', holds)).toEqual({ kept: 'task.priority' })
+    expect(rowOf('formula.x', holds)).toEqual({ kept: 'formula.x' })
+    // Saved again, an older row is written the new way.
+    const rows = rowsOf({ and: ['!note.cover', 'note.estimate'] }, holds)
+    expect(filterOf(rows, holds)).toEqual({ and: ['note.cover.isEmpty()', 'note.estimate'] })
   })
 })
 
