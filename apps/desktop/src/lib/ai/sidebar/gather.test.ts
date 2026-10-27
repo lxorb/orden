@@ -107,7 +107,7 @@ test('a chat of another space goes along from the space it is kept in', async ()
   const draft = await draftOf(
     'what did I say there?',
     [{ kind: 'thread', id: 'garden', label: 'Garden', space: HOME.id }],
-    'agent',
+    'auto',
     null,
     '',
     WORK,

@@ -149,7 +149,7 @@
     }
     for (const one of chat.heads) {
       if (one.id !== head?.id && one.title)
-        out.push({ kind: 'thread', id: one.id, label: one.title })
+        out.push({ kind: 'thread', id: one.id, label: one.title, space: one.space })
     }
     return out
   }
@@ -601,7 +601,9 @@
               >
             </span>
           {/if}
-          {#each chat.chips as chip (`${chip.kind}:${chip.id}`)}
+          <!-- Keyed by the chip itself: two can name one thing, a command's words sent as
+               two chips of one label (B505). -->
+          {#each chat.chips as chip (chip)}
             <span
               class="chip"
               class:refused={chip.kind === 'picture' && chat.model?.images === false}

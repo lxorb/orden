@@ -124,7 +124,7 @@ async function attachmentOf(
       return text ? { label: 'scratchpad', text: fitted(text, NOTE) } : null
     }
     case 'thread':
-      return await threadAttachment(space.id, chip.id, chip.label)
+      return await threadAttachment(chip.space ?? space.id, chip.id, chip.label)
     case 'picture':
       return chip.image ? { label: chip.label, image: chip.image } : null
     case 'words':

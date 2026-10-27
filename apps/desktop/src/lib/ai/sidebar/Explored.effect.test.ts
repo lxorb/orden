@@ -17,7 +17,7 @@ test('two reads with one id are two rows', () => {
     id: 'call_0',
     verb: 'read',
     args: { path },
-    state: 'done' as const,
+    state: 'ok' as const,
   })
   const target = document.createElement('div')
   document.body.append(target)

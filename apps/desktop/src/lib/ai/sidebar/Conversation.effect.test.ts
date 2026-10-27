@@ -14,8 +14,8 @@ const panel = vi.hoisted(() => ({
   thread: null,
   heads: [],
   running: [] as string[],
-  pending: {} as Record<string, string>,
-  steering: {} as Record<string, string[]>,
+  pending: {},
+  steering: {},
   trouble: null,
   unfolded: false,
   resets: {},
@@ -24,6 +24,16 @@ const panel = vi.hoisted(() => ({
   provider: null,
 }))
 vi.mock('./chat.svelte', () => ({ chat: panel }))
+
+/** jsdom has no ResizeObserver, and the conversation watches its own height. */
+vi.stubGlobal(
+  'ResizeObserver',
+  class {
+    observe = vi.fn()
+    unobserve = vi.fn()
+    disconnect = vi.fn()
+  },
+)
 
 const Conversation = (await import('./Conversation.svelte')).default
 
