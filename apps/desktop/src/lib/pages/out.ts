@@ -51,7 +51,7 @@ import { zipOf } from '../export/zip'
 import { PDF_TO_CSS } from '../pdf/pages'
 import { isDesktop } from '../tauri'
 import { paperPlaces } from './held'
-import { svgToPng, textWidth } from './raster'
+import { cssColour, svgToPng, textWidth } from './raster'
 import { escapeAll } from '@nib/markdown/html'
 
 /** What an export of a page note is about. */
@@ -696,59 +696,107 @@ const OPEN =
  *  with its accents is one, so a line is never broken inside it. */
 const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
 
-/** One line broken to a width, at most `most` lines: at a space where there is one,
- *  either side of a CJK character, and inside a run that is wider than the line where
- *  nothing else will do - which is what the plane's `overflow-wrap` does.
+/** The words of a line, including those of the scripts written without spaces - Thai,
+ *  Lao, Khmer, Burmese - which a browser breaks between by dictionary too. */
+const wordsOf = new Intl.Segmenter(undefined, { granularity: 'word' })
+
+/** What a browser never starts a line with in Japanese or Chinese: closing marks and
+ *  small kana, which stay with the character before them. */
+const CLOSING =
+  /^[、。，．・：；？！ー」』）〉》】〕ゝゞヽヾぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶ]$/u
+
+/** A line as the pieces it may be broken between: a word with the spaces after it, a
+ *  CJK character or an emoji on its own, and punctuation kept with what it follows. */
+function chunksOf(line: string): string[] {
+  const units: { text: string; word: boolean; space: boolean; open: boolean }[] = []
+  for (const one of wordsOf.segment(line)) {
+    if (OPEN.test(one.segment)) {
+      for (const part of graphemes.segment(one.segment)) {
+        units.push({ text: part.segment, word: true, space: false, open: true })
+      }
+    } else {
+      const space = /^\s+$/.test(one.segment)
+      units.push({ text: one.segment, word: !!one.isWordLike, space, open: false })
+    }
+  }
+
+  const chunks: string[] = []
+  let last: (typeof units)[number] | undefined
+  for (const unit of units) {
+    const apart =
+      last !== undefined &&
+      !unit.space &&
+      !CLOSING.test(unit.text) &&
+      (last.space || unit.open || last.open || (unit.word && last.word))
+    if (apart || !chunks.length) chunks.push(unit.text)
+    else chunks.push(`${chunks.pop() ?? ''}${unit.text}`)
+    last = unit
+  }
+  return chunks
+}
+
+/** How many of `parts` fit `width` measured whole, at least one: doubling and then
+ *  halving, so a run of thousands of characters costs a few measures of a line. */
+function longest(parts: readonly string[], width: number, fits: (text: string) => number) {
+  const ok = (count: number) => fits(parts.slice(0, count).join('').trimEnd()) <= width
+  let low = 1
+  while (low * 2 <= parts.length && ok(low * 2)) low *= 2
+  let high = Math.min(low * 2, parts.length + 1)
+  while (high - low > 1) {
+    const middle = Math.floor((low + high) / 2)
+    if (ok(middle)) low = middle
+    else high = middle
+  }
+  return low
+}
+
+/** One line broken to a width, at most `most` lines, the way a browser fills a line:
+ *  as many words as fit, each candidate line measured whole. Whole, because a line is
+ *  not the sum of its letters - a run of kana is set wider than its characters one by
+ *  one, and Arabic, Persian, Urdu or Burmese narrower, a letter alone being its wide
+ *  isolated form - and a line filled from the sum came out a line longer than the
+ *  screen's, its last words then cut at the card's edge. A word wider than the line
+ *  is cut between graphemes, as the plane's `overflow-wrap` does.
  *
- *  Character by character, adding up widths that are each measured once, so a
+ *  A line is measured once per word it takes, and a line is a card wide, so a long
  *  paragraph costs its length and not its length cubed - which, measuring every
- *  shorter prefix of the rest of the paragraph for each line, froze the app for
- *  minutes on a long one. The sum is only where to look, though: a run of kana is
- *  set wider as a whole than its characters one by one, so each line is measured
- *  whole once it is chosen and given back a break at a time while it does not fit. */
+ *  shorter prefix of the rest of the paragraph for each line, once froze the app for
+ *  minutes. */
 function broken(
   line: string,
   width: number,
   fits: (text: string) => number,
   most: number,
 ): string[] {
-  const chars = Array.from(graphemes.segment(line.trimEnd()), (one) => one.segment)
-  const sizes = chars.map((one) => fits(one))
-  const breaks = (at: number) =>
-    chars[at] === ' ' || OPEN.test(chars[at] ?? '') || OPEN.test(chars[at - 1] ?? '')
+  // A line the width of its room to the pixel is measured a hair over it, and a
+  // browser sets it on the line all the same.
+  const room = width + 0.01
   const out: string[] = []
-  let from = 0
-  let wide = 0
+  let now = ''
 
-  // The line from `from` up to `end`, given back to an earlier break - or a character,
-  // where it has none - until it fits when measured whole. Pushed, and where the next
-  // line begins handed back.
-  const close = (end: number): number => {
-    let text = chars.slice(from, end).join('').trimEnd()
-    while (end - from > 1 && fits(text) > width) {
-      let back = end - 1
-      while (back > from && !breaks(back)) back -= 1
-      end = back > from ? back : end - 1
-      text = chars.slice(from, end).join('').trimEnd()
+  for (const chunk of chunksOf(line)) {
+    if (now && fits((now + chunk).trimEnd()) <= room) {
+      now += chunk
+      continue
     }
-    out.push(text)
-    while (chars[end] === ' ') end += 1
-    return end
+    if (now) {
+      out.push(now.trimEnd())
+      if (out.length >= most) return out
+    }
+
+    let rest = chunk
+    while (fits(rest.trimEnd()) > room) {
+      const parts = Array.from(graphemes.segment(rest), (one) => one.segment)
+      if (parts.length < 2) break
+      const count = longest(parts, room, fits)
+      out.push(parts.slice(0, count).join('').trimEnd())
+      if (out.length >= most) return out
+      rest = parts.slice(count).join('')
+    }
+    now = rest
   }
 
-  for (let at = 0; at < chars.length && out.length < most; at += 1) {
-    if (at > from && wide + (sizes[at] ?? 0) > width && chars[at] !== ' ') {
-      let cut = at
-      while (cut > from && !breaks(cut)) cut -= 1
-      from = close(cut > from ? cut : at)
-      wide = 0
-      for (let back = from; back < at; back += 1) wide += sizes[back] ?? 0
-    }
-    wide += sizes[at] ?? 0
-  }
-
-  // What is left, which can still be wider whole than its sum.
-  while (from < chars.length && out.length < most) from = close(chars.length)
+  out.push(now.trimEnd())
   return out
 }
 
@@ -834,10 +882,18 @@ function escaped(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-/** A colour as the three numbers pdf-lib wants, nought to one. Anything that is
- *  not a hex colour comes out black, which is what ink is. */
+/** A colour as the three numbers pdf-lib wants, nought to one. Anything that is not
+ *  a colour comes out black, which is what ink is. */
 function hexOf(colour: string): { r: number; g: number; b: number } {
-  const found = /^#?([\da-f]{3}|[\da-f]{6})$/i.exec(colour.trim())
+  // A theme may give a colour in any CSS form; the browser says it as hex or rgb().
+  const said = cssColour(colour.trim())
+  const rgb = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i.exec(said)
+  if (rgb) {
+    const [r, g, b] = rgb.slice(1, 4).map((one) => Math.min(255, Number(one)) / 255)
+    return { r: r ?? 0, g: g ?? 0, b: b ?? 0 }
+  }
+
+  const found = /^#?([\da-f]{3}|[\da-f]{6})$/i.exec(said)
   if (!found?.[1]) return { r: 0, g: 0, b: 0 }
 
   // `#f00` is `#ff0000`.

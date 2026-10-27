@@ -427,12 +427,15 @@ and padding the plane sets it in, so typed words stay searchable. Everything the
 PDF cannot set as Helvetica text goes in as the plane's plain picture of the card,
 rasterised by the browser as the PNG export is: a shape, a link, a picture, and
 words in a script Helvetica has no glyphs for (Polish, Cyrillic, Greek, CJK,
-emoji). In that picture a text card's words are broken by the width the browser
-sets them at (`measureText`, in the same face), at a space or either side of a CJK
-character and never inside an emoji or a flag, at the plane's weight and line
-height; each line is measured whole once it is chosen, since a run of kana is set
-wider than its characters one by one, so a line of Japanese fits the card rather
-than running off its edge. Like the plane, a card's words are cut at its edge in
+emoji). In that picture a text card's words are set the way a browser fills a line:
+as many words as fit, each candidate line measured whole by the browser
+(`measureText`, in the same face), at the plane's weight and line height. Words are
+found by `Intl.Segmenter`, so Thai, Lao, Khmer and Burmese break between their
+words; CJK breaks between characters but never before a closing mark or a small
+kana; an emoji or a flag is never split. Whole, because a line is not the sum of
+its letters - kana is set wider, Arabic, Persian, Urdu and Burmese narrower - and a
+line filled from the sum took more lines than the screen, its last words then cut
+at the card's edge. Like the plane, a card's words are cut at its edge in
 every format, and a framed card has the same rounded, washed frame in all of them. Those words are a picture rather than
 searchable text, but they are on paper; only where the browser refuses the picture does a card of words fall back
 to the letters Helvetica has. Ink, words and rules are in the theme's light

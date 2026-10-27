@@ -39,13 +39,32 @@ export async function svgToPng(
 
 let measuring: CanvasRenderingContext2D | null | undefined
 
+/** One 2d context to measure and read colours with, or null where there is none. */
+function context(): CanvasRenderingContext2D | null {
+  if (typeof document === 'undefined') return null
+  measuring ??= document.createElement('canvas').getContext('2d')
+  return measuring
+}
+
 /** How wide the browser sets a run of text at a size in a face: what a pictured card's
  *  lines are broken by, so they fit the card in the picture the browser then draws in
  *  the same face. Zero where there is no 2d context, which breaks nothing. */
 export function textWidth(text: string, size: number, face: string): number {
-  measuring ??= document.createElement('canvas').getContext('2d')
-  if (!measuring) return 0
+  const ctx = context()
+  if (!ctx) return 0
 
-  measuring.font = `400 ${size}px ${face}`
-  return measuring.measureText(text).width
+  ctx.font = `400 ${size}px ${face}`
+  return ctx.measureText(text).width
+}
+
+/** A CSS colour as the browser says it back, which is hex or `rgb()` whatever form it
+ *  was written in - `hsl()`, a name, a theme's `rgb(...)` - so the PDF, which wants
+ *  numbers, can read it. Unchanged where there is no 2d context. */
+export function cssColour(colour: string): string {
+  const ctx = context()
+  if (!ctx) return colour
+
+  ctx.fillStyle = '#000000'
+  ctx.fillStyle = colour
+  return ctx.fillStyle
 }

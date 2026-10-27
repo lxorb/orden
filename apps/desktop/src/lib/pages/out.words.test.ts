@@ -47,6 +47,7 @@ vi.mock('./raster', () => ({
     return Promise.resolve(raster.refuse ? null : raster.png)
   },
   textWidth: (text: string, size: number) => widthOf(text, size),
+  cssColour: (colour: string) => colour,
 }))
 vi.mock('../link-index.svelte', () => ({
   links: {
