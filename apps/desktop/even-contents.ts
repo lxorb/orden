@@ -210,10 +210,11 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-10-24, to 5,700,000, for the second bug burn-down landed
  *  together (#681 to #948). Measured 5,654,763.
  *
- *  Raised on 2026-10-27, to 5,701,000, for B540: a wait on the owner can be closed or
- *  cancelled (JoinSheet.svelte, joining.svelte.ts). Measured 5,700,275. */
+ *  Raised on 2026-10-27, to 5,703,500, for B540: a wait on the owner can be closed or
+ *  cancelled, and is said in a pill while put aside (JoinSheet.svelte,
+ *  JoinPending.svelte, joining.svelte.ts). Measured 5,702,709. */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_701_000,
+  code: 5_703_500,
   catalogues: 850_000,
   styles: 290_000,
   fonts: 260_000,
