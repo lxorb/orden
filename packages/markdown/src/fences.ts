@@ -9,12 +9,14 @@
  *
  *  `fenceMark` and `closesFence` are not markdown's whole grammar for a fence: a
  *  fence inside a blockquote or a list item carries a prefix, which they do not
- *  unwrap. What they answer is the question the four walks ask - does this line
- *  open or close a block of code - and they answer it the same way for all of them.
+ *  unwrap. What they answer is the question the deck's break scanner and the
+ *  editor ask - does this line open or close a block of code - and they answer
+ *  it the same way for all of them.
  *
  *  A reader that has to agree with the page about what is code asks `CodeBlocks`
  *  at the end of this file instead, which keeps the quotes and list items a line
- *  sits in. */
+ *  sits in: the comment stripper, the abbreviation collector and the link
+ *  scanner, and the tag and task walks outside this package. */
 
 /** Up to three spaces of indent, as CommonMark allows before an indented code
  *  block takes over; then the run of marks; then the info string, in which a

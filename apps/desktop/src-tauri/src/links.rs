@@ -18,6 +18,7 @@ use std::fs::Metadata;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::AppHandle;
 
+use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter;
 use crate::notes::{words_of, words_stamped};
 use crate::paths::{files_in, in_spaces, is_canvas, is_shortcut, relative_to};
@@ -596,33 +597,25 @@ fn note_tags(body: &str) -> Vec<String> {
     out
 }
 
-/// Whether a line opens or closes a fenced code block.
-fn is_fence(line: &str) -> bool {
-    let trimmed = line.trim_start();
-    line.len() - trimmed.len() <= 3 && (trimmed.starts_with("```") || trimmed.starts_with("~~~"))
-}
-
 /// Every line of a note that is not code, with the number it is on. Both
 /// delimiters of a fence are code as well: neither can hold a link, a heading or a
-/// block name.
+/// block name. What is code is judged as the renderer judges it, by
+/// `code_blocks`: a fence closes on its own mark only, and a fence in a quote or
+/// a list item and code indented with no fence are code too. The same walk as
+/// `lines` in links.ts and `scanRows` in @nib/bases, so the desktop's index and
+/// the browser's read the same links and tasks out of a note.
 ///
 /// Handed to a closure rather than gathered into a list, because all three readers
 /// walk a note straight down and none of them looks back: a space of ten thousand
 /// notes is a million and a half lines, and this is asked of every one of them
 /// three times over.
 fn prose_lines(body: &str, mut each: impl FnMut(usize, &str)) {
-    let mut fenced = false;
+    let mut code = CodeBlocks::default();
 
     for (index, line) in body.lines().enumerate() {
-        let fence = is_fence(line);
-        if fence {
-            fenced = !fenced;
+        if code.line(line) == CodeLine::Words {
+            each(index, line);
         }
-        if fenced || fence {
-            continue;
-        }
-
-        each(index, line);
     }
 }
 

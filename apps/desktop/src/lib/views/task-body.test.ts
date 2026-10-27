@@ -1,5 +1,6 @@
 import { taskHash } from '@nib/bases'
 import { taskRowsOfText } from '@nib/bases/tasks'
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 import {
   commentsOf,
@@ -139,17 +140,34 @@ describe('what is written under a task', () => {
     expect(descriptionOf(typedEscape, task)?.text).toBe('\\```\n~~~')
   })
 
+  test('indented code is written as typed, and a list item opening a fence is escaped', () => {
+    const task = at(0, 'Deploy')
+    const typed = 'Diff:\n\n    - old\n    + new'
+    const note = withDescription('- [ ] Deploy\n- [ ] Next\n', task, typed) ?? ''
+    expect(note).toBe('- [ ] Deploy\n  Diff:\n\n      - old\n      + new\n- [ ] Next\n')
+    expect(descriptionOf(note, task)?.text).toBe(typed)
+    expect(withDescription(note, task, typed)).toBeNull()
+    expect(renderMarkdown(note)).toContain('- old\n+ new')
+
+    const listed = withDescription('- [ ] Deploy\n', task, '- ```\nx\n```') ?? ''
+    expect(listed).toBe('- [ ] Deploy\n  \\- ```\n  x\n  \\```\n')
+    expect(descriptionOf(listed, task)?.text).toBe('- ```\nx\n```')
+  })
+
   test('a code block under a tab-indented task in a CRLF note is written as typed', () => {
-    const task = at(1, 'Task')
-    const note = '# H\r\n\t- [ ] Task\r\n- [ ] Next\r\n'
+    // Under a task of its own: a tab at the margin with no list above it is indented
+    // code to the page, and holds no task.
+    const task = at(2, 'Task')
+    const note = '# H\r\n- [ ] Top\r\n\t- [ ] Task\r\n- [ ] Next\r\n'
     const typed = '```\n- a\n```\n~~~'
     const written = withDescription(note, task, typed) ?? ''
     expect(written).toBe(
-      '# H\r\n\t- [ ] Task\r\n\t  ```\r\n\t  - a\r\n\t  ```\r\n\t  \\~~~\r\n- [ ] Next\r\n',
+      '# H\r\n- [ ] Top\r\n\t- [ ] Task\r\n\t  ```\r\n\t  - a\r\n\t  ```\r\n\t  \\~~~\r\n- [ ] Next\r\n',
     )
     expect(descriptionOf(written, task)?.text).toBe(typed)
     expect(withDescription(written, task, typed)).toBeNull()
     expect(taskRowsOfText('S', 'n.md', written).map((row) => row.task?.text)).toEqual([
+      'Top',
       'Task',
       'Next',
     ])
@@ -263,7 +281,7 @@ describe('what is written under a task, fuzzed', () => {
   const NOTES = [
     ['- [ ] Task', '  - [ ] Sub', '  - c1 [at:: 2026-01-01T00:00]', '- [ ] Next'].join('\n'),
     ['# H', '1. [ ] Task', '   said', '- [ ] Next'].join('\n'),
-    ['\t- [ ] Task', '\t  old', '- [ ] Next'].join('\r\n'),
+    ['- [ ] Top', '\t- [ ] Task', '\t  old', '- [ ] Next'].join('\r\n'),
     ['- [ ] Top', '  - [ ] Task', '    - [ ] Sub', '- [ ] Next'].join('\n'),
     ['10. [ ] Task', '- [ ] Next'].join('\n'),
     ['- [ ] Task', '## After', '- [ ] Next', '```', '- [ ] code', '```', '- [ ] Last'].join('\n'),

@@ -497,9 +497,9 @@ describe('the headings a note holds', () => {
     const note = '- a\n  ```\n  # Not one\n  ```\n\n# One\n\nwords\n'
     expect(headingsOf(note)).toEqual(['One'])
     expect(sectionOf(note, { heading: 'Not one', block: null })).toBe(null)
-    expect(sectionOf('# One\n\n- a\n  ```\n  # Two\n  ```\n', { heading: 'One', block: null })).toBe(
-      '# One\n\n- a\n  ```\n  # Two\n  ```',
-    )
+    expect(
+      sectionOf('# One\n\n- a\n  ```\n  # Two\n  ```\n', { heading: 'One', block: null }),
+    ).toBe('# One\n\n- a\n  ```\n  # Two\n  ```')
   })
 })
 

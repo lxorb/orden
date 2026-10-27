@@ -8,6 +8,7 @@
  *  task's line is found again by its anchor, as every other edit of a view finds it. */
 
 import type { Row, TaskChange } from '@nib/bases'
+import { CODE, type CodeLine, CodeBlocks, OPENS, WORDS } from '@nib/markdown/fences'
 import { changed } from '../rows/write'
 import { lineOfAnchor } from './lines'
 
@@ -53,7 +54,7 @@ export function descriptionOf(text: string, anchor: Anchor): Description | null 
   // The lines the task holds, before the first indented no further than it.
   const held = lines.slice(at + 1)
   const out = held.findIndex((line) => line.trim() !== '' && indentOf(line) <= own)
-  const code = inCode(out === -1 ? held : held.slice(0, out))
+  const kinds = kindsOf(lines[at] ?? '', out === -1 ? held : held.slice(0, out))
 
   let end = at + 1
   let last = at
@@ -63,7 +64,8 @@ export function descriptionOf(text: string, anchor: Anchor): Description | null 
       end++
       continue
     }
-    if (indentOf(line) <= own || (LIST_ITEM.test(line) && !code[end - at - 1])) break
+    // A list item that opens a fence of its own is still a list item.
+    if (indentOf(line) <= own || (LIST_ITEM.test(line) && kinds[end - at - 1] !== CODE)) break
     last = end
     end++
   }
@@ -72,33 +74,37 @@ export function descriptionOf(text: string, anchor: Anchor): Description | null 
   const to = last + 1
   const said = lines
     .slice(from, to)
-    .map((line, index) => (code[index] ? dedent(line, indent) : unescaped(dedent(line, indent))))
+    .map((line, index) =>
+      kinds[index] === WORDS ? unescaped(dedent(line, indent)) : dedent(line, indent),
+    )
     .join('\n')
   return { from, to: Math.max(from, to), text: said }
 }
 
-/** Whether a line opens or closes a fenced code block: `isFence` in scan.ts. */
-function isFence(line: string): boolean {
-  const trimmed = line.trimStart()
-  return (
-    line.length - trimmed.length <= 3 && (trimmed.startsWith('```') || trimmed.startsWith('~~~'))
-  )
+/** What each of these lines, written under the task line `task`, is to scan.ts and
+ *  the page (`CodeBlocks`): words, code, or a fence that opens code. Code is a fenced
+ *  block, and code indented four columns past the task's content after a blank line.
+ *  In it a list mark is code, so it is written as typed and ends nothing; a backslash
+ *  there would be a character of the code.
+ *
+ *  Read from the task line down with the task's own indent taken off, so the task is
+ *  the list item these lines are inside of, wherever it is nested. */
+function kindsOf(task: string, lines: readonly string[]): CodeLine[] {
+  const own = indentOf(task)
+  const code = new CodeBlocks()
+  code.line(dedent(task, own))
+  return lines.map((line) => code.line(dedent(line, own)))
 }
 
-/** Which of these lines are in a code block, from a fence to the next one, as scan.ts
- *  reads them. In one a list mark is code, so it is written as typed and ends nothing;
- *  a backslash there would be a character of the code. A fence not closed in these
- *  lines opens no block, so typing one does not make the task's sub-tasks its words. */
-function inCode(lines: readonly string[]): boolean[] {
-  const code = lines.map(() => false)
-  for (let open = 0; open < lines.length; open++) {
-    if (!isFence(lines[open] ?? '')) continue
-    const close = lines.findIndex((line, at) => at > open && isFence(line))
-    if (close === -1) break
-    code.fill(true, open, close + 1)
-    open = close
+/** Whether the fence `code` has just been handed is closed among these lines, each
+ *  read as it is written: under the task's content column, a blank line empty. */
+function closedIn(code: CodeBlocks, rest: readonly string[], indent: string, own: number): boolean {
+  const ahead = code.copy()
+  for (const line of rest) {
+    ahead.line(line.trim() === '' ? '' : dedent(indent + line, own))
+    if (ahead.fence === null) return true
   }
-  return code
+  return false
 }
 
 /** A bullet or a number at the start of a line, and the backslashes already before its
@@ -114,7 +120,7 @@ const FENCE = /^([ \t]*)(\\*)(```|~~~)/
  *  as `- [ ] x`, a sub-task), outside the lines the next write replaces, and every save
  *  of the task view wrote it again. A line that had a backslash there already gets one
  *  more, so reading takes exactly one off and every description reads back as typed.
- *  Outside a code block a fence is one left open (`inCode`), which would hide every
+ *  Outside a code block a fence is one left open (see `withDescription`), which would hide every
  *  later line of the note from the index; it is written `\\```` the same way. */
 function escaped(line: string): string {
   return line.replace(BULLET, '$1\\$2$3').replace(NUMBER, '$1\\$2$3').replace(FENCE, '$1\\$2$3')
@@ -161,12 +167,31 @@ export function withDescription(text: string, anchor: Anchor, words: string): st
   const indent = contentIndent((lines[at] ?? '').replace(/\r$/, ''))
   const ending = (lines[at] ?? '').endsWith('\r') ? '\r' : ''
   const typed = said ? said.split('\n') : []
-  // Whether a line is code is judged as the note will hold it, at the task's indent.
-  const code = inCode(typed.map((line) => indent + line))
-  const written = typed.map(
-    (line, index) =>
-      (line.trim() === '' ? '' : indent + (code[index] ? line : escaped(line))) + ending,
-  )
+  // Whether a line is code is judged as the note will hold it, at the task's indent,
+  // each line after the ones above it as they are written. A fence is kept as typed
+  // where it opens a block that closes among these lines: one left open is no code
+  // block yet, and would hide every later line of the note from the index. A list
+  // item is escaped even where it opens a fence, as it would end the description.
+  const task = (lines[at] ?? '').replace(/\r$/, '')
+  const own = indentOf(task)
+  const code = new CodeBlocks()
+  code.line(dedent(task, own))
+  const written = typed.map((line, index) => {
+    if (line.trim() === '') {
+      code.line('')
+      return ending
+    }
+    const trial = code.copy()
+    const kind = trial.line(dedent(indent + line, own))
+    const kept =
+      kind === CODE ||
+      (kind === OPENS &&
+        !LIST_ITEM.test(line) &&
+        closedIn(trial, typed.slice(index + 1), indent, own))
+    const out = indent + (kept ? line : escaped(line))
+    code.line(dedent(out, own))
+    return out + ending
+  })
   lines.splice(now.from, now.to - now.from, ...written)
   return lines.join('\n')
 }
