@@ -273,6 +273,8 @@ export interface Chats {
   upload(bytes: Uint8Array): Promise<string | null>
   /** A file a message in this chat names, as a URL the window can draw. */
   fileUrl(chat: string, hash: string): Promise<string | null>
+  /** Grows each time the store lets go of the URLs it answered: none of them draws now. */
+  readonly fileEpoch: number
   /** A link's preview, made on this device (4.8); null for none. */
   preview(url: string): Promise<Preview | null>
 

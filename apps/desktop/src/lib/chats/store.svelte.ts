@@ -727,21 +727,14 @@ class ChatsStore implements Chats {
     const hash = [...new Uint8Array(digest)]
       .map((one) => one.toString(16).padStart(2, '0'))
       .join('')
-    if (!(await http.putBlob(hash, bytes))) return null
-    // Drawn from its own bytes: the server answers 404 until the post naming it is folded.
-    if (!this.urls.has(`${this.me}/${hash}`)) {
-      const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)]))
-      this.urls.set(`${this.me}/${hash}`, Promise.resolve(url))
-    }
-    return hash
+    return (await http.putBlob(hash, bytes)) ? hash : null
   }
 
   /** Addresses by reader, so one who just signed in is never handed the last one's. */
   private readonly urls = new Map<string, Promise<string | null>>()
+  fileEpoch = $state(0)
 
   fileUrl(chat: string, hash: string): Promise<string | null> {
-    const own = this.urls.get(`${this.me}/${hash}`)
-    if (own) return own
     const key = `${this.me}/${chat}/${hash}`
     let url = this.urls.get(key)
     if (!url) {
@@ -760,6 +753,7 @@ class ChatsStore implements Chats {
    *  next session comes after the reader changed, and a row may have asked already. */
   private forgetFiles(all: boolean): void {
     const mine = `${this.me}/`
+    this.fileEpoch++
     for (const [key, url] of this.urls) {
       if (!all && key.startsWith(mine)) continue
       this.urls.delete(key)

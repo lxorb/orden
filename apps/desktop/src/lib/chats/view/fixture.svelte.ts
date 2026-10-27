@@ -92,6 +92,7 @@ export class FixtureChats implements Chats {
   private readonly drafts = new Map<string, string>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise
   private readonly files = new Map<string, string>()
+  readonly fileEpoch = 0
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise
   private readonly listeners = new Set<() => void>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise

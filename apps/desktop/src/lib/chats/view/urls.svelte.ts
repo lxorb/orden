@@ -8,7 +8,8 @@
  *  rows that still draw the file then ask again, and a file no row draws is not asked at
  *  all. The wait stops growing at five minutes and never ends while a row draws the file:
  *  a server down for longer must not leave its pictures blank. Everything here belongs to
- *  one session: another store or another reader starts from nothing. */
+ *  one session: another store, another reader, or a store that let go of the URLs it
+ *  answered (`fileEpoch`, a sign-out) starts from nothing. */
 
 import { SvelteMap } from 'svelte/reactivity'
 import type { Chats } from '../api'
@@ -34,13 +35,21 @@ const out = new Set<string>()
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the misses; nothing draws from it
 const missed = new Map<string, Miss>()
 
-let session: { store: Chats; me: string | null; n: number } = { store: store(), me: null, n: 0 }
+let session: { store: Chats; me: string | null; epoch: number; n: number } = {
+  store: store(),
+  me: null,
+  epoch: 0,
+  n: 0,
+}
 let listening = false
 
 /** A file's address, or null while it is on its way or where there is none. */
 export function fileUrl(chat: string, hash: string): string | null {
   const current = store()
-  if (current !== session.store || current.me !== session.me) begin(current)
+  const { me, fileEpoch } = current
+  if (current !== session.store || me !== session.me || fileEpoch !== session.epoch) {
+    begin(current)
+  }
   const key = `${session.n}/${chat}/${hash}`
   freed.get(key)
   if (!asked.has(key)) {
@@ -50,10 +59,10 @@ export function fileUrl(chat: string, hash: string): string | null {
   return known.get(key) ?? null
 }
 
-/** Another store or reader: what the last one asked, kept and waits on goes. Its keys
+/** A new session: what the last one asked, kept and waits on goes. Its keys
  *  are another session's from here on, so nothing of it is drawn. */
 function begin(current: Chats): void {
-  session = { store: current, me: current.me, n: session.n + 1 }
+  session = { store: current, me: current.me, epoch: current.fileEpoch, n: session.n + 1 }
   asked.clear()
   out.clear()
   for (const { timer } of missed.values()) if (timer) clearTimeout(timer)
