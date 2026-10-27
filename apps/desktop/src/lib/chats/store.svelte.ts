@@ -188,6 +188,7 @@ class ChatsStore implements Chats {
     this.countedAt.clear()
     this.drafts.clear()
     this.people.clear()
+    for (const url of this.urls.values()) void url.then((one) => one && URL.revokeObjectURL(one))
     this.urls.clear()
     this.list = []
     this.ready = false
@@ -735,10 +736,10 @@ class ChatsStore implements Chats {
     const key = `${chat}/${hash}`
     let url = this.urls.get(key)
     if (!url) {
-      // Only an address is kept: a null is a dropped connection or a 5xx, asked again.
+      // A null is a dropped connection or a 5xx, asked again; a file gone stays gone.
       url = http.fileOf(chat, hash).then((blob) => {
-        if (blob) return URL.createObjectURL(blob)
-        if (this.urls.get(key) === url) this.urls.delete(key)
+        if (blob instanceof Blob) return URL.createObjectURL(blob)
+        if (!blob && this.urls.get(key) === url) this.urls.delete(key)
         return null
       })
       this.urls.set(key, url)

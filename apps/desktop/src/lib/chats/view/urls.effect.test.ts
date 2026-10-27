@@ -111,16 +111,24 @@ test('coming back online asks at once', async () => {
 
 test('online while an ask is on its way starts no second chain (review of #990, M1)', async () => {
   // a file the reader may no longer see: every answer is null, and each takes a second
-  const ask = vi.fn<Ask>(
-    () => new Promise<string | null>((resolve) => setTimeout(() => resolve(null), 1000)),
-  )
+  let open = 0
+  let most = 0
+  const ask = vi.fn<Ask>(() => {
+    most = Math.max(most, ++open)
+    return new Promise<string | null>((resolve) =>
+      setTimeout(() => {
+        open--
+        resolve(null)
+      }, 1000),
+    )
+  })
   useStore(storeOf('user:a', ask))
   const view = row('c1', 'h6')
 
   let flaps = 0
   for (let second = 0; second < 30 * 60; second++) {
     // the Wi-Fi flaps five times, each while an ask is out
-    if (flaps < 5 && ask.mock.calls.length > flaps && second % 7 === 0) {
+    if (flaps < 5 && open > 0) {
       window.dispatchEvent(new Event('online'))
       flaps++
     }
@@ -129,6 +137,7 @@ test('online while an ask is on its way starts no second chain (review of #990, 
     expect(vi.getTimerCount()).toBeLessThanOrEqual(2)
   }
   expect(flaps).toBe(5)
+  expect(most).toBe(1)
   expect(ask.mock.calls.length).toBeLessThanOrEqual(MOST_TRIES + 5)
   view.close()
 })
