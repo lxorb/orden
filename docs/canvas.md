@@ -148,6 +148,17 @@ to borrow. The same on a page note. A pen's barrel button is not it: that button
 the eraser on a plane and on paper, and has been since the pens came. See `pressed`
 and `released` in `canvas/tools.svelte.ts`.
 
+**A finger held on the bare plane, then moved, is a lasso** (#349): Emil, "holding
+down with your finger and then dragging after some short waiting time to get a lasso
+instead of a normal select". A finger on the plane moves it; held still for the
+menu's half second, it opens the menu as it always has, and let go there the menu is
+what it was for. Moved on instead, the menu goes and the finger draws a loop from
+where it was held, which catches the cards it goes round - whole, or by their middle
+where half caught counts - as well as the ink. The same on a page note's paper. A
+finger held on a card is still only its menu, since a finger moving on from there
+carries the card. See `onHeld` and `armed` in `canvas/pointer.ts`, `held` in
+`Pages.svelte`.
+
 **Three pens, always three.** A pen is a thing you own rather than a setting you
 pick, so a favourite is the whole pen: which nib, how wide, how much of the
 colour lands, and which colour. Three slots, never more and never fewer, so there
@@ -415,7 +426,8 @@ tested there rather than tried by hand:
 - **A tap in a drawing tool is a dot.** Always. Nothing on the plane is ever
   created by a tap with a pen in hand: a card comes from the tool that puts one
   down, or from a double press with the arrow, and from nowhere else.
-- **A press held still means something once.** Under a finger it is the menu.
+- **A press held still means something once.** Under a finger it is the menu, and
+  on the bare plane a lasso as well if the finger moves on (#349).
   Under a pen that is drawing it is the stroke asking to be straightened, and only
   when the pen's own switch says so. Never a menu under a pen: a nib resting on the
   page is a hand thinking.
