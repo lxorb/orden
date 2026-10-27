@@ -49,6 +49,18 @@ export function holdsDocument(kind: string): boolean {
   return shapeOf(kind) !== null
 }
 
+/** How an open tab joins an entry's document: a note's tab through its views, a canvas's
+ *  through its surface, and neither where the tab and the entry disagree about the shape.
+ *  The tab is opened by the file's name and the document is the entry's kind, which a
+ *  rename never changes: `Plan.md` renamed to `Plan.canvas` opens on a surface over a
+ *  document that is still words, and a plane bound into words is drawn into nothing the
+ *  file ever shows. Unjoined, the tab writes its file and the pass carries that. */
+export function joinsAs(tab: string, kind: string): 'views' | 'surface' | null {
+  const plane = shapeOf(kind) === 'plane'
+  if (tab === 'note') return plane ? null : 'views'
+  return plane ? 'surface' : null
+}
+
 /** Line endings as the editor holds them: what a document is compared and seeded in. A
  *  file keeps its own on disk (`as_written` in src-tauri/src/notes.rs). */
 export function unixLines(text: string): string {

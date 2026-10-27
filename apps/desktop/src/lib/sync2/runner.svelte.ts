@@ -43,7 +43,7 @@ import { kindOfName } from './create'
 import { Engine } from './engine'
 import { type Holding, spend } from '../sync/holding'
 import type { Carried } from '../pages/carried'
-import { holdsDocument, unixLines } from './kinds'
+import { holdsDocument, joinsAs, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put } from './store'
@@ -816,8 +816,10 @@ class Runner {
       if (!one.path) continue
       const note = one.note
       const surface = rooms.planes.get(one.key)
-      const on: On | null = note.kind === 'note' ? { note } : surface ? { surface } : null
-      const entry = on && engine.entryAt(one.path)
+      const entry = engine.entryAt(one.path)
+      const joins = entry && joinsAs(note.kind, entry.kind)
+      const on: On | null =
+        joins === 'views' ? { note } : joins === 'surface' && surface ? { surface } : null
       if (on && entry && engine.core.hasDoc(entry.id))
         wanted.set(one.key, { id: entry.id, on, arrivals: () => note.arrivals })
     }

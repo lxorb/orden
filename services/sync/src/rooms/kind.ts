@@ -43,6 +43,26 @@ export function roomKind(path: string): RoomKind {
   return isCanvasTarget(path) || isPagesTarget(path) ? 'plane' : 'words'
 }
 
+/** Which shape the room for a note has: the one function every road into a room asks.
+ *
+ *  On sync v2 that is the entry's kind, not its name. A rename there moves a name and
+ *  nothing else - the tree keeps the kind the entry was made as - and every device goes
+ *  on holding the document in that shape (`shapeOf` in the app's sync2/kinds.ts), so a
+ *  room that read the shape off a renamed name held a different document from all of
+ *  them. A `Plan.md` renamed to `Plan.canvas` is still words on every device, and its
+ *  file is still the words; the room is words too. A note not on an epoch yet has no
+ *  entry kind worth the name (the column says `note` for every row written before the
+ *  tree), and is read off its name as it always was; see `crossed` in room.ts for what
+ *  a room does when the two disagree. */
+export function noteKind(note: {
+  path: string
+  kind?: string | null
+  epoch?: number | null
+}): RoomKind {
+  if ((note.epoch ?? 0) < 1 || !note.kind) return roomKind(note.path)
+  return note.kind === 'canvas' || note.kind === 'pages' ? 'plane' : 'words'
+}
+
 /** What a website is doing in neither list: nothing, because no client asks for a
  *  room for one. A `.url` file holds an address and no words, so there is no document
  *  in it for two people to be in at once - the app refuses it at both ends, in

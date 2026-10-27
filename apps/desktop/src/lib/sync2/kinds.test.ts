@@ -3,7 +3,7 @@ import { writeShortcut } from '../web-tab/shortcut'
 import { TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
 import { MINE } from './docs'
-import { judge, turn } from './kinds'
+import { joinsAs, judge, turn } from './kinds'
 
 /** A web note under v2 settles the way v1's does since 2026-10-03: the newer copy
  *  stands and nothing is kept beside it (web-tab/settle.ts). */
@@ -67,5 +67,23 @@ describe('a note seeded with Windows line ends', () => {
     const doc = seeded('# Plan\r\n\r\nline one\r\n')
     turn('words', doc, '# Plan\n\nline one\n', '# Plan\n\nline one\nline two\n', MINE)
     expect(doc.getText(TEXT).toJSON()).toBe('# Plan\n\nline one\nline two\n')
+  })
+})
+
+/** A tab is opened by the file's name, and the document is the entry's kind, which a
+ *  rename across `.md` and `.canvas` never changes (A26-S1). */
+describe('an open tab joining its document', () => {
+  test('joins where the tab and the entry agree', () => {
+    expect(joinsAs('note', 'note')).toBe('views')
+    expect(joinsAs('canvas', 'canvas')).toBe('surface')
+    expect(joinsAs('pages', 'pages')).toBe('surface')
+    expect(joinsAs('canvas', 'pages')).toBe('surface')
+  })
+
+  test('joins neither way where a rename made the two disagree', () => {
+    // `Plan.md` renamed to `Plan.canvas`: a surface over words.
+    expect(joinsAs('canvas', 'note')).toBeNull()
+    // `Board.canvas` renamed to `Board.md`: views over a plane.
+    expect(joinsAs('note', 'canvas')).toBeNull()
   })
 })

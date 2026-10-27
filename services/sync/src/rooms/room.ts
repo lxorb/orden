@@ -66,7 +66,7 @@ import {
   kindOf,
   leavesAPlane,
   neverHeld,
-  roomKind,
+  noteKind,
   takeInto,
   writesOf,
   type RoomKind,
@@ -465,7 +465,7 @@ export class NoteRoom implements DurableObject {
       // What a push or a whole text brings is said to every socket here; none whose
       // sign-in has ended hears it.
       await this.askSignIns()
-      await this.open(held)
+      await this.arrive(held)
       await this.caughtUpWithEpoch(epochIn(request.headers.get('x-nib-epoch')))
       if (asked === 'push') return octets(await this.push(body))
       if (asked === 'pull') return octets(await this.pull(body))
@@ -496,8 +496,7 @@ export class NoteRoom implements DurableObject {
     held: Held,
     joining: Joining = { writes: true, who: '' },
   ): Promise<void> {
-    await this.crossed(held.kind)
-    await this.open(held)
+    await this.arrive(held)
     await this.caughtUpWithEpoch(joining.epoch)
 
     // Written down where a revocation can find it, and written before the socket
@@ -550,6 +549,17 @@ export class NoteRoom implements DurableObject {
     if (present) server.send(present)
   }
 
+  /** The room opened for somebody arriving, a socket or a request, with the shape the
+   *  door read off the note's row reconciled with the shape the room holds first. One
+   *  road for all of them: a push, a pull or a whole text handed in that skipped the
+   *  reconciling took the door's shape over the stored one, and read the words a room
+   *  held through the serialiser of the other kind - which for a note renamed to a
+   *  canvas was a settle writing an empty canvas over every word (A26-S1). */
+  private async arrive(held: Held): Promise<void> {
+    await this.crossed(held.kind)
+    await this.open(held)
+  }
+
   /** The file behind this room was renamed from a note into a canvas, or back,
    *  while the room held it.
    *
@@ -587,8 +597,25 @@ export class NoteRoom implements DurableObject {
     // object the runtime woke is a read.
     await this.open(held)
 
-    if (!(await this.settle(true))) {
+    // Written down only where the room carries something the file does not have. A
+    // room level with what it last settled has nothing of its own, and the file is the
+    // truth as it stands - which, for a room an older build wrote down as the wrong
+    // kind, is the words that room never held at all: a crossing settle there would
+    // write its empty serialisation over them.
+    if ((await this.carried(held)) !== null && !(await this.settle(true))) {
       throw new Error(`this room still holds the ${held.kind} its file was`)
+    }
+
+    // A note on sync v2 starts its next epoch from the file, as the new kind. The
+    // document the devices and the bucket's snapshot hold at this epoch is the old
+    // shape's, and the room about to be built from the file cannot merge with it; at
+    // the next epoch every device starts the new document from nothing.
+    if ((held.epoch ?? 0) >= 1) {
+      await this.env.DB.prepare(
+        'update notes set epoch = epoch + 1, epoch_base = hash where id = ? and epoch = ?',
+      )
+        .bind(held.noteId, held.epoch)
+        .run()
     }
 
     // The row saying somebody has this file open goes with the sockets: a close
@@ -601,6 +628,10 @@ export class NoteRoom implements DurableObject {
     }
 
     await this.ctx.storage.deleteAll()
+    // Nothing held about a room that is gone: whatever this object still answers
+    // before the runtime ends it opens the room again from storage.
+    this.held = null
+    this.opened = null
     this.ctx.abort('the file behind this room is another kind of file now')
 
     // `abort` ends the object rather than this function, so the join is refused
@@ -978,15 +1009,15 @@ export class NoteRoom implements DurableObject {
     if (held.version === undefined || held.hash === undefined) return
 
     const row = await this.env.DB.prepare(
-      'select version, path from notes where id = ? and deleted = 0',
+      'select version, path, kind, epoch from notes where id = ? and deleted = 0',
     )
       .bind(held.noteId)
-      .first<{ version: number; path: string }>()
+      .first<{ version: number; path: string; kind: string | null; epoch: number | null }>()
 
     if (!row || row.version === held.version) return
     // A file renamed across the two kinds while the room slept is not a note to take
     // the bytes of; that is `crossed`, and it runs before this.
-    if (roomKind(row.path) !== held.kind) return
+    if (noteKind(row) !== held.kind) return
 
     const mine = fileOf(held.kind, this.state.doc)
     if ((await sha256(mine)) !== held.hash) return
@@ -1129,10 +1160,10 @@ export class NoteRoom implements DurableObject {
     // came to be written over with nothing. What the room holds stays in the room,
     // where the next join's changeover writes it; see `crossed`, whose own settle
     // is the one that is meant to cross.
-    if (!crossing && roomKind(file.path) !== held.kind) {
+    if (!crossing && noteKind(file) !== held.kind) {
       noted(
         `room ${held.noteId}`,
-        new Error(`the file is a ${roomKind(file.path)} room now and this one holds ${held.kind}`),
+        new Error(`the file is a ${noteKind(file)} room now and this one holds ${held.kind}`),
         null,
       )
       return false
@@ -1422,8 +1453,8 @@ export class NoteRoom implements DurableObject {
     }
 
     // The same four refusals as a v1 settle, for the same reasons; see below.
-    if (!crossing && roomKind(file.path) !== held.kind) {
-      noted(`room ${held.noteId}`, new Error(`the file is a ${roomKind(file.path)} room now`), null)
+    if (!crossing && noteKind(file) !== held.kind) {
+      noted(`room ${held.noteId}`, new Error(`the file is a ${noteKind(file)} room now`), null)
       return false
     }
     const settled = fileOf(held.kind, this.state.doc)
