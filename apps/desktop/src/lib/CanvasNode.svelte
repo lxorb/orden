@@ -418,6 +418,11 @@
     background: var(--surface);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+    /* Its size is its own, written on it, and nothing inside reaches out: so what is
+       inside is laid out, styled and painted on its own, and a page of cards made at
+       once - an undo bringing them back, a zoom into reading distance - is that many
+       small layouts rather than one of the whole plane (#535). */
+    contain: strict;
     /* The pointer belongs to the surface, which decides what a press means. */
     touch-action: none;
     transition:
