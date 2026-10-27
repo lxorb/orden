@@ -412,9 +412,46 @@ paper is held, by the same rename that moved the paper.
 
 | Format | What it is |
 | --- | --- |
-| **PDF** | The original paper with the ink drawn onto its pages as vector paths. The text stays text, selectable and searchable. A note with no paper behind it gets fresh pages at its own sizes. |
+| **PDF** | The original paper with the ink drawn onto its pages as vector paths. The text stays text, selectable and searchable. A note with no paper behind it gets fresh pages at its own sizes, with their ruling. |
 | **PNG** | One file per page, at 2x, in a zip. |
 | **SVG** | One file per page, in a zip. |
+
+Every format carries what the page shows: the ruling (on a sheet with no paper
+behind it, since a paper covers its ruling on screen too), the words typed onto
+the page and the cards on it, and the ink on top, each sheet clipped to itself
+(B541). In the SVG a card is the canvas picture's own card (`drawnNode` in
+canvas/picture.ts, with the plane's trust answer).
+
+**The export does not break a text card into lines; the browser does.** Every
+attempt to break a card's words by hand came out different from the card on screen
+somewhere - another face for Arabic, a long word the card keeps whole and clips, a
+hyphen, kinsoku, a paragraph's margin, a heading's size - and each difference was
+words on the sheet on screen and off it in the export. So `laidOut` (pages/laid.ts)
+mounts the plane's own card, `CanvasNode.svelte`, off screen at the card's size in
+the light theme, lets the browser set it exactly as the page does, and reads back
+every line of every piece of text with its place, baseline, width, face, size,
+weight and colour (list markers included). Then:
+
+- **PDF:** a card whose words Helvetica can spell is real text, so it stays
+  searchable. Each line goes where the browser put it, in Helvetica, Helvetica Bold
+  or Oblique, or Courier for code, squeezed or stretched (`Tz`) to the width the
+  browser gave it, so it takes exactly its room on screen. Any other card goes in as
+  a picture of those same lines, rasterised by the browser: Polish, Cyrillic, Greek,
+  Arabic, Hebrew, CJK, Thai, emoji, and shapes, links and pictures. Only where the
+  browser refuses that picture does a card of words fall back to the letters
+  Helvetica has.
+- **PNG:** the same picture of those lines, since a browser will not rasterise a
+  `foreignObject`.
+
+In those pictures each line is set in the card's own face list (the document's
+`local()` faces, `Orden Arabic` among them, are carried into the SVG) and held to
+the browser's width with `textLength`. A run cut out of a right-to-left paragraph
+keeps the direction its end had in the paragraph (a U+200F mark), so a comma at the
+end of an Arabic line stays where the screen has it. Like the plane, a card's words
+are cut at its edge, and a framed card has the same rounded, washed frame in every
+format. Ink, words and rules are in the theme's light colours whatever theme is on,
+because the sheet is white paper: a dark theme's default pen writes near white,
+which would vanish on it (B571).
 
 **Print** is the same PDF on paper (#350): the export's own pages, drawn a page at a
 time and handed to the print engine as one picture per sheet - the system's dialog on
