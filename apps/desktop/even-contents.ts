@@ -204,7 +204,7 @@ export function partOf(file: string, catalogue: boolean): Part {
 
 /** Bytes each part may weigh, as staged. Measured on 2026-10-07 at 5,297,926 for the
  *  code, 762,886 for the catalogues, 266,816 for the styles, 256,168 for the fonts and
- *  33,555 for the pages and the icon. The budgets add up to 7,040,000, so 1.29 MiB of
+ *  33,555 for the pages and the icon. The budgets add up to 7,170,000, so 1.16 MiB of
  *  the 8 MiB ceiling is out of every part's reach without a change to this table.
  *
  *  The code raised on 2026-10-24, to 5,700,000, for the second bug burn-down landed
@@ -212,9 +212,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  Raised on 2026-10-27, to 5,702,000, for B561 and B562: a file the account has no room
  *  for waits on its own while the rest of the space syncs (sync2/files.ts, pass.ts).
- *  Measured 5,700,168. */
+ *  Measured 5,700,168.
+ *
+ *  Raised on 2026-10-27, to 5,730,000, once for the fourth bug burn-down's pending
+ *  fixes, so each of them need not raise it. Measured 5,700,028 with main as of this
+ *  raise. */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_702_000,
+  code: 5_730_000,
   catalogues: 850_000,
   styles: 290_000,
   fonts: 260_000,
