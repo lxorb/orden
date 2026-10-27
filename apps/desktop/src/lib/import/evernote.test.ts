@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
 import { readTask } from '@nib/markdown/task-line'
 import { readEvernote } from './evernote'
@@ -408,5 +408,26 @@ describe('an Evernote checkbox', () => {
     expect(task?.due).toBeUndefined()
     expect(task?.recurrence).toBeUndefined()
     expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
+  })
+})
+
+describe('an Evernote note written in the evening, west of Greenwich', () => {
+  beforeAll(() => {
+    vi.stubEnv('TZ', 'America/Los_Angeles')
+  })
+  afterAll(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("is dated by that evening's day, not by the UTC day after it", async () => {
+    const late = `  <note>
+    <title>Late</title>
+    <content><![CDATA[<en-note><div>words</div></en-note>]]></content>
+    <created>20260102T023000Z</created>
+    <updated>20260305T040000Z</updated>
+  </note>`
+    const text = noteAt(await readEvernote([file('Late.enex', enex(late))]), 'Late.md')
+    expect(text).toContain('date: 2026-01-01')
+    expect(text).toContain('updated: 2026-03-04')
   })
 })

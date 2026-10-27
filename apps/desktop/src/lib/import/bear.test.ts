@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
 import { bearTags, bearWords, readBear } from './bear'
 import { sourceOf, type Source } from './sources'
@@ -187,5 +187,27 @@ describe('a Bear export', () => {
     ])
 
     expect(plan.files.map((one) => one.path)).toEqual(['Trip.md'])
+  })
+})
+
+describe('a Bear note written in the evening, west of Greenwich', () => {
+  beforeAll(() => {
+    vi.stubEnv('TZ', 'America/Los_Angeles')
+  })
+  afterAll(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("is dated by that evening's day, not by the UTC day after it", async () => {
+    const plan = await readBear(
+      bundle('Late', '# Late\n', {
+        creationDate: '2026-01-02T02:30:00Z',
+        modificationDate: '2026-03-05T04:00:00Z',
+      }),
+    )
+
+    expect(textOf(plan, 'Late.md')).toBe(
+      '---\ndate: 2026-01-01\nupdated: 2026-03-04\n---\n\n# Late\n',
+    )
   })
 })

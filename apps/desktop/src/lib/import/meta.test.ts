@@ -1,5 +1,5 @@
 import { renderMarkdown } from '@nib/markdown'
-import { describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
 import { dayOf, frontMatterFor, noteText, tagName } from './meta'
 
@@ -202,6 +202,32 @@ describe('the day a date lands on', () => {
     expect(dayOf('soon')).toBeNull()
     expect(dayOf(0)).toBeNull()
     expect(dayOf('0001-01-01')).toBeNull()
+  })
+})
+
+/** Half past six in the evening in Los Angeles, which is already the next day in UTC.
+ *  Every shape of that one instant is the evening's day, as Keep's count of it is. */
+describe('the day an instant lands on, west of Greenwich', () => {
+  beforeAll(() => {
+    vi.stubEnv('TZ', 'America/Los_Angeles')
+  })
+  afterAll(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('is the local day whichever shape the instant is written in', () => {
+    expect(dayOf(1767321000000000)).toBe('2026-01-01')
+    expect(dayOf('20260102T023000Z')).toBe('2026-01-01')
+    expect(dayOf('2026-01-02T02:30:00Z')).toBe('2026-01-01')
+    expect(dayOf('2026-01-02T02:30:00.000Z')).toBe('2026-01-01')
+    expect(dayOf('2026-01-02T03:30:00.0000000+01:00')).toBe('2026-01-01')
+  })
+
+  test('a day or a wall clock with no zone is the day it says', () => {
+    expect(dayOf('2026-01-02')).toBe('2026-01-02')
+    expect(dayOf('2026-01-02T23:30:00')).toBe('2026-01-02')
+    expect(dayOf('2026-01-02 00:30')).toBe('2026-01-02')
+    expect(dayOf('20260102T003000')).toBe('2026-01-02')
   })
 })
 
