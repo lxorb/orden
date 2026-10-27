@@ -110,3 +110,21 @@ describe('a section carried', () => {
     expect(placedSection(three, 'A', 'Nowhere', true)).toBeNull()
   })
 })
+
+describe('sections and code', () => {
+  const NOTE = '## Intro\n````md\n```\n## Setup\n````\n\n## Setup\nreal\n'
+
+  test('a heading in code is not renamed', () => {
+    expect(renamedSection(NOTE, 'Setup', 'Start')).toBe(
+      NOTE.replace('## Setup\nreal', '## Start\nreal'),
+    )
+  })
+
+  test('a cut takes the code whole', () => {
+    expect(cutSection(NOTE, 'Intro')?.rest).toBe('## Setup\nreal\n')
+  })
+
+  test('a comment in the front matter is no section', () => {
+    expect(cutSection('---\n# c\n---\n## A\n', 'c')).toBeNull()
+  })
+})

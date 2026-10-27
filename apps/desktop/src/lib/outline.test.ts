@@ -85,3 +85,29 @@ describe('finding a heading by name', () => {
     expect(lineOfHeading(twice, 'Notes')).toBe(0)
   })
 })
+
+describe('the outline reads code the way the page does', () => {
+  test('a tilde line inside a backtick block does not close it', () => {
+    const note =
+      '# Setup\n```bash\ncat <<EOF > a.md\n~~~\nEOF\n# install deps\nnpm i\n```\n## Usage\ntext\n# Next\nmore'
+    expect(scanHeadings(note).map((one) => one.text)).toEqual(['Setup', 'Usage', 'Next'])
+    expect(lineOfHeading(scanHeadings(note), 'Usage')).toBe(8)
+  })
+
+  test('a shorter fence inside a longer one is code', () => {
+    const note = '# A\n````md\n```js\n# not\n```\n````\n# B\nb\n'
+    expect(scanHeadings(note).map((one) => one.text)).toEqual(['A', 'B'])
+  })
+
+  test('a fence in a list item closes on its own mark too', () => {
+    expect(scanHeadings('- a\n\n  ````\n  ```\n  ````\n# B\n').map((one) => one.text)).toEqual([
+      'B',
+    ])
+  })
+
+  test('a comment in the front matter is no heading', () => {
+    expect(scanHeadings('---\n# c\ntitle: x\n---\n# A\n')).toEqual([
+      { level: 1, text: 'A', line: 4 },
+    ])
+  })
+})
