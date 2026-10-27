@@ -173,9 +173,9 @@ class Search {
     ),
   )
 
-  /** Whether a hit will be replaced. */
+  /** Whether a hit will be replaced. Never a bare one; see `chosen`. */
   keeps(hit: Hit): boolean {
-    return !this.skipped.has(keyOf(hit))
+    return !hit.bare && !this.skipped.has(keyOf(hit))
   }
 
   toggle(hit: Hit) {
