@@ -2749,7 +2749,7 @@ class Workspace {
 
           // A note that moved is a note every link to it has to be pointed at again;
           // see `renameFile`, including why this comes before everything is told.
-          const rewrote = await this.retargetMoved(from, target, kind)
+          const rewrote = await this.retargetMoved(from, target)
           this.undone.record({
             kind: 'move',
             from,
@@ -4255,7 +4255,7 @@ class Workspace {
     // Every link to the note now points at a name nothing answers to, so they
     // are rewritten, silently, as Obsidian does. Recorded on the action so that
     // undoing the rename undoes the rewrite with it.
-    const rewrote = await this.retargetMoved(path, target, kind)
+    const rewrote = await this.retargetMoved(path, target)
     if (undoable) {
       this.undone.record({
         kind: 'rename',
@@ -4292,14 +4292,15 @@ class Workspace {
   }
 
   /** Every link to a note that has moved pointed at it again; whether any was. A rewrite
-   *  that fails leaves the note moved all the same, and it is told so before the error
-   *  goes on, or the rows would hold it at both paths and take it for a new note. */
-  private async retargetMoved(from: string, to: string, kind: Kind): Promise<boolean> {
+   *  that fails leaves the note moved all the same, so the move goes on as one: told, a
+   *  step to undo (which puts back whatever of the rewrite was done), and the tree read
+   *  again. Otherwise the rows would hold it at both paths and take it for a new note. */
+  private async retargetMoved(from: string, to: string): Promise<boolean> {
     try {
       return (await this.retarget(from, to, { moved: true })) > 0
     } catch (error) {
-      await this.fileMoved(from, to, kind)
-      throw error
+      log('error', `links to ${from} not rewritten after its move to ${to} - ${String(error)}`)
+      return true
     }
   }
 

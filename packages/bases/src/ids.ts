@@ -45,8 +45,7 @@ const FORBIDDEN = '<>:"\\|?*'
  *  fold case. Without its `.md`, so a copy, `Crash copy` or `Crash 2`, comes after the
  *  note it was copied from (`Crash`). */
 function spelledAlike(path: string): string[] {
-  return path
-    .replace(/\.md$/i, '')
+  const names = path
     .normalize('NFC')
     .split('/')
     .map((name) =>
@@ -55,6 +54,11 @@ function spelledAlike(path: string): string[] {
         .replace(/[. ]+$/, (tail) => '_'.repeat(tail.length))
         .toLowerCase(),
     )
+  // The ending goes after the disk's spelling, which reads the whole name: `v1..md`
+  // keeps its dot before `.md`, and so comes before its copy `v1. copy.md`.
+  const last = names.length - 1
+  names[last] = (names[last] ?? '').replace(/\.md$/, '')
+  return names
 }
 
 /** By code unit rather than by this device's locale, so every device orders alike. */

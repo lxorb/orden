@@ -1305,10 +1305,13 @@ the view's head holds under its name (`live.builder`), opened from a column's me
 - **Unique ids**: Unique ID in "Add a column" sets `nib.id` (no prefix, as Notion's
   default) and numbers every row of the base in the order they were made, as one write.
   A row made by the plus, a form or a template gets `nextId`; a note that appears in the
-  base without one, made there or moved in, gets the next from the runner; of two rows
-  sharing one, the later by path is renumbered, the path spelled as every disk agrees and
-  without `.md`, so a copy goes after its original (`idRepairs`, the same answer on every
-  device; a file's creation time is not synced). The id cell is not
+  base without one, made there or moved in, gets the next from the runner. A copy,
+  pasted or duplicated, is written without the ids of the space's bases before it is
+  told, so it gets the next and its original keeps its own (`idsLeftBehind` in
+  workspace/copying.ts). Of two rows two devices numbered alike, the later by path is
+  renumbered, folder by folder, spelled as every disk agrees and without `.md`
+  (`idRepairs`, the same answer on every device; a file's creation time is not synced).
+  The id cell is not
   editable; its Options are its prefix, and a new prefix is written into every id.
 - **Choices with tones**: Options in a column's menu (`OptionsBuilder`): each choice a
   tone (the theme's six through `CanvasColours` without its wheel), its words (renamed

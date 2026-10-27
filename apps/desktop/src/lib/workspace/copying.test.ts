@@ -38,9 +38,10 @@ vi.mock('./write-file', () => ({
   writeBytes: async () => undefined,
   writeFile: async () => undefined,
 }))
-vi.mock('../views/running', () => ({
-  numberingAt: (path: string) =>
-    path.startsWith('/s/Bugs/') ? [{ property: 'id', prefix: 'BUG' }] : [],
+vi.mock('../views/copied', () => ({
+  // The runner's own rule, for a space whose bases number by `id: BUG-`.
+  withoutIds: (path: string, text: string) =>
+    path.startsWith('/s/Bugs/') && /^id: BUG-/m.test(text) ? text.replace(/^id: .*\n/m, '') : null,
 }))
 
 const { copyRows } = await import('./copying')

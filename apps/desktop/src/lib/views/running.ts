@@ -2,7 +2,7 @@
  *  looked at once it settles, and the repeating templates. Plain state, kept apart from
  *  the runes that wire it to the app. See runner.svelte.ts for the why. */
 
-import { readBase, readAutomations, repeatDue, type Row } from '@nib/bases'
+import { idNumber, noteValues, readBase, readAutomations, repeatDue, type Row } from '@nib/bases'
 import { withProperties } from '@nib/bases/agent'
 import { insideOnly } from '../automation/inside'
 import { show } from '../reminders/platform'
@@ -16,6 +16,7 @@ import { writeFile } from '../workspace/write-file'
 import { writeEach } from './act'
 import { type HeldBase, planned } from './automate'
 import { contextFor } from './context'
+import { leaveIdsBy } from './copied'
 import { landing, onLanded } from './moving'
 import { nowHere, todayHere } from './days'
 import { templatesFolder, templateWords } from './templates'
@@ -81,6 +82,22 @@ export async function readHeld(path: string): Promise<void> {
 function rowsOf(space: string, path: string): readonly Row[] {
   return rows.of(space).filter((row) => row.path === path)
 }
+
+/** A copy's words without the ids the bases of the space holding it number their rows
+ *  by, or null where it holds none; see `idsLeftBehind` in workspace/copying.ts. */
+function withoutIds(path: string, text: string): string | null {
+  const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
+  if (!space) return null
+  const values = noteValues(text)
+  const gone: Record<string, null> = {}
+  for (const one of held.values()) {
+    const id = one.base.nib.id
+    if (one.space === space.name && id && idNumber(values[id.property], id.prefix) !== null)
+      gone[id.property] = null
+  }
+  return Object.keys(gone).length ? withProperties(text, gone) : null
+}
+leaveIdsBy(withoutIds)
 
 /** A base's automations, run on a note of its space that changed. Not in a space
  *  shared with this account to be read: what they write and move would be refused by

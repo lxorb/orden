@@ -27,7 +27,7 @@ import type { Picked } from '../import/sources'
 import { readsWords } from '../link-index.svelte'
 import { copiesInto } from '../move-targets'
 import { copyName } from '../note-name'
-import { nameOf } from '../space-paths'
+import { isMarkdownPath, nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import type { Entry } from '../workspace.svelte'
 import type { Copied, FileActions } from './undo.svelte'
@@ -149,6 +149,7 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
     .then(() => true)
     .catch(() => false)
   if (!landed) return false
+  await idsLeftBehind(entry, path)
 
   // Renamed before the copy is told, so it is told as one new folder note: a move
   // from the name it was copied under would be read as the note it was copied from,
@@ -158,6 +159,29 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
   await ws.fileCame(path, entry.is_dir ? 'folder' : 'file')
 
   return true
+}
+
+/** The notes a row is or holds, by path. */
+function notesIn(entry: Entry): Entry[] {
+  if (!entry.is_dir) return isMarkdownPath(entry.name) ? [entry] : []
+  return entry.children.flatMap(notesIn)
+}
+
+/** A copy written without the ids of the bases it is in, before anything hears it
+ *  came: the runner gives it the next, and the note it was copied from keeps the one
+ *  people may have written down. Which of two notes sharing an id is the copy is known
+ *  only here; no order of their paths can tell (B552). */
+async function idsLeftBehind(entry: Entry, path: string) {
+  const notes = notesIn(entry)
+  if (!notes.length) return
+  const { withoutIds } = await import('../views/copied')
+  for (const note of notes) {
+    const at = path + note.path.slice(entry.path.length)
+    const text = await invoke<string | null>('read_note', { path: at }).catch(() => null)
+    const words = text === null ? null : withoutIds(at, text)
+    if (words !== null)
+      await invoke('write_note', { path: at, content: words }).catch(() => undefined)
+  }
 }
 
 /** One file dropped from outside, by where it goes inside what was dropped:

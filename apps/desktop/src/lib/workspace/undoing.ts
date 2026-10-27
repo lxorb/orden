@@ -444,13 +444,10 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
       // The rename rewrote every link that pointed at the note; putting the name
       // back has to put those back too, which is the same rewrite the other way
       // round - and, again, before anything is told the note moved.
-      // A rewrite that fails leaves the name put back all the same; see `retargetMoved` in
-      // workspace.svelte.ts.
+      // A rewrite that fails leaves the name put back all the same, and told so; see
+      // `retargetMoved` in workspace.svelte.ts.
       if (action.rewrote)
-        await ws.retarget(action.to, action.from, { moved: true }).catch(async (error: unknown) => {
-          await ws.fileMoved(action.to, action.from, kind)
-          throw error
-        })
+        await ws.retarget(action.to, action.from, { moved: true }).catch(() => undefined)
       await ws.fileMoved(action.to, action.from, kind)
     }),
   )
