@@ -455,7 +455,8 @@
         {#each group.hits as hit (hit.line)}
           {@const task = hit.tab === undefined ? taskOf(hit) : null}
           <div class="line">
-            {#if search.replacing && hit.tab === undefined}
+            <!-- A bare row has no words to replace, so nothing to tick. -->
+            {#if search.replacing && hit.tab === undefined && !hit.bare}
               <button
                 class="tick"
                 class:on={search.keeps(hit)}

@@ -48,6 +48,17 @@ describe('replacing', () => {
     ])
   })
 
+  /** `task-todo:` on its own answers with a place of no width at each task, so the
+   *  row sits on the task. That is a row to show, not words to replace. */
+  test('puts nothing where a filter found no words', () => {
+    const body = '- [ ] buy milk\n- [ ] call Ana\nmilk is in the fridge\n'
+
+    expect(rewrite(body, 'task-todo:', 'X')).toBeNull()
+    for (const asked of ['task-todo: milk', 'milk task-todo:', 'task: milk']) {
+      expect(rewrite(body, asked, 'oat milk')?.text).toBe(body.replaceAll('milk', 'oat milk'))
+    }
+  })
+
   test('takes the words out when the replacement is empty', () => {
     expect(rewrite('alpha beta\n', '"alpha "', '')?.text).toBe('beta\n')
   })

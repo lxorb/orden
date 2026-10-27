@@ -48,7 +48,10 @@ export function replaceIn(
 ): Edit[] | null {
   const starts = lineStarts(body)
   const wanted = spans
-    .filter((span) => lines.has(lineAt(starts, span.from)))
+    // A span of no width is where a filter put a row, as `task-todo:` alone does
+    // at each task, and not words that answered: replacing it would write the
+    // replacement in front of every task.
+    .filter((span) => span.from < span.to && lines.has(lineAt(starts, span.from)))
     .sort((a, b) => a.from - b.from || b.to - a.to)
 
   const edits: Edit[] = []
