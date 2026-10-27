@@ -32,6 +32,21 @@ describe('the change a write that asked would make', () => {
     expect(shown?.rows.map((row) => row.change)).toEqual(['added', 'added'])
   })
 
+  test('is of the space it names, in whatever case, the way the call finds it', async () => {
+    const two = [...spaces, { id: 's2', name: 'Home', root: '/home' }]
+    const shown = await previewOf(
+      'edit_note',
+      { path: 'Plan', space: 'home', edits: [{ at: { quote: 'two' }, replace: 'TWO' }] },
+      two,
+      's1',
+      words({ '/work/Plan.md': 'nothing here', '/home/Plan.md': 'one\ntwo' }),
+    )
+    expect(shown?.rows.filter((row) => row.change !== 'same')).toEqual([
+      expect.objectContaining({ change: 'removed', text: 'two' }),
+      expect.objectContaining({ change: 'added', text: 'TWO' }),
+    ])
+  })
+
   test('is nothing for a call it cannot work out', async () => {
     const said = words({ '/work/Plan.md': 'one' })
     expect(await previewOf('set_task', { path: 'Plan' }, spaces, 's1', said)).toBeNull()
