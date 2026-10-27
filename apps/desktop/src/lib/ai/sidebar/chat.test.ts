@@ -860,6 +860,23 @@ describe('a chat while it answers', () => {
     tasks.stop('elsewhere')
   })
 
+  test('a delete refused leaves the work the chat started running', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await settled()
+    const { tasks } = await import('../commands/tasks.svelte')
+    const loop = vi.fn()
+    tasks.add({ thread: id, kind: 'loop', label: 'keep on', stop: loop })
+    refusing.delete = true
+
+    await chat.remove(id)
+    await settled()
+
+    expect(chat.heads.map((one) => one.id)).toContain(id)
+    expect(loop).not.toHaveBeenCalled()
+    tasks.stop(id)
+  })
+
   test('Stop stops the work the open chat started', async () => {
     const chat = await asked()
     const id = String(chat.thread?.id)
