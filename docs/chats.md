@@ -362,15 +362,13 @@ depends on the file's.
   only the spaces the account would take and asks it before the pointer's file moves, so a
   refusal leaves both where they were (`workspace/chat-carry.ts`). A copy of a pointer, pasted,
   dragged with Ctrl, duplicated or imported, is a second pointer to the same chat and never a
-  move: the chat stays in its space and is listed at a pointer in that space, keeping the one
-  it is listed at, whatever the order of the spaces, a scan or a deleted original say (B542). Only its
-  own pointer carried into another space moves it; a copy renamed, moved on or left alone
-  moves nothing, and reaches the chat only for those who reach its space. The device keeps
-  which pointer is a chat's own, per account and across launches (`chats/places.ts`), and
-  asks the account where the chat lives before carrying it. Not heard, the move is
-  refused, to be tried again. Two pointers in the chat's space and neither kept as its own
-  (a device that was not running when one was copied) are never told apart by their order:
-  carrying either asks the owner whether the chat goes too, naming it and the space. Deleting the pointer sends it to Recently deleted; emptying the trash ends the chat:
+  move: the chat stays in its space, whatever the order of the spaces, a scan or a deleted
+  original say (B542), and reaches it only for those who reach that space. A pointer carried
+  into another space takes its chat along only on the owner's word given then: the question
+  names the chat and the space, says who would read the history and who loses it, and starts
+  on Only the file. The one carry let go without asking is a copy whose chat's own pointer
+  (`chats/places.ts`, kept per account) is known, still there and staying behind. The
+  account is asked where the chat lives first; not heard, the move is refused. Deleting the pointer sends it to Recently deleted; emptying the trash ends the chat:
   the account erases its log 30 days later with the other leftovers. While the pointer is in
   Recently deleted the account does not list the chat (`GET /v2/chats` leaves out a chat
   whose `file_id` is a deleted note), and a device takes it off its list the moment the

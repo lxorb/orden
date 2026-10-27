@@ -2473,8 +2473,9 @@ export const ptPT: Dictionary = {
   'Shown on cards': 'Mostrado nos cartões',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Mover a conversa {name} para {space}?',
-  'Everyone in {space} can then read its whole history.':
-    'Todos em {space} poderão ler todo o histórico dela.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Todos em {space} poderão ler todo o histórico, e as pessoas em {from} perdem-no.',
+  'Move the chats {names} to {space}?': 'Mover as conversas {names} para {space}?',
   'Move the chat': 'Mover a conversa',
   'Only the file': 'Só o ficheiro',
 }

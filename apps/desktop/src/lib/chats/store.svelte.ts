@@ -29,7 +29,7 @@ import { account } from '../account.svelte'
 import { samePath, within } from '../space-paths'
 import { keep, storedText } from '../stored'
 import { sync } from '../sync.svelte'
-import { isNative } from '../tauri'
+import { isNative, joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import type {
   ChatEntry,
@@ -363,6 +363,10 @@ class ChatsStore implements Chats {
     // fresh device, or the kept one renamed away, never picks by the tree's order. One
     // not found is let go of, unless its space would not read this time.
     for (const [chat, place] of found) {
+      // Kept where it was, in a space that would not read this time, it stays: the
+      // pointer found elsewhere may be a copy.
+      const own = ownPointer(chat)
+      if (own !== null && unread.some((root) => within(root, own) !== null)) continue
       const ranks = [...(ranked.get(chat)?.values() ?? [])]
       const top = Math.max(...ranks)
       keepOwnPointer(chat, ranks.filter((one) => one === top).length > 1 ? null : place.path)
@@ -382,6 +386,15 @@ class ChatsStore implements Chats {
     // since the list was asked for, which no poke says until somebody posts in it.
     if ([...found.keys()].some((chat) => !engine.chats.get(chat)?.row)) await engine.refresh()
     this.drawList()
+  }
+
+  /** A folder moved or renamed: the chats' own pointers in it are where it went. The
+   *  file operations say a folder's move once, not each pointer in it. */
+  folderMoved(from: string, to: string): void {
+    for (const [chat, path] of ownPointers()) {
+      const inside = within(from, path)
+      if (inside !== null) keepOwnPointer(chat, inside ? joinPath(to, inside) : to)
+    }
   }
 
   /** The pointers the file list of the space at `root` holds now: one this device has not
@@ -869,13 +882,13 @@ class ChatsStore implements Chats {
     if ((before && !chat) || (chat !== null && !row) || moved) {
       void this.engine?.refresh().catch(() => false)
     }
-    if (chat && to) {
-      // Its own pointer moved, or the first of it this device has seen: its own now. A
-      // second pointer of a chat whose own is not known is not made its own by moving.
-      const own = ownPointer(chat)
-      if (own !== null ? from !== null && samePath(own, from) : !this.places.has(chat)) {
-        keepOwnPointer(chat, to)
-      }
+    // Its own pointer moved: its own where it went. A pointer that came, or one moved
+    // while the own is not known, is never made its own here: a copy put back by undo or
+    // made before the launch scan looks just like the first pointer of a chat. A scan
+    // decides that, or making the chat, or the owner carrying it (B542).
+    const own = chat ? ownPointer(chat) : null
+    if (chat && to && own !== null && from !== null && samePath(own, from)) {
+      keepOwnPointer(chat, to)
     }
     if (chat && to && root) {
       const place = { root, path: to }

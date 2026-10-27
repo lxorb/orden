@@ -2447,8 +2447,9 @@ export const ha: Dictionary = {
   'Shown on cards': 'Ana nunawa a katuna',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'A matsar da hira {name} zuwa {space}?',
-  'Everyone in {space} can then read its whole history.':
-    'Duk wanda ke cikin {space} zai iya karanta dukan tarihinta.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Duk wanda ke cikin {space} zai iya karanta dukan tarihin, kuma mutanen {from} za su rasa shi.',
+  'Move the chats {names} to {space}?': 'A matsar da hirarraki {names} zuwa {space}?',
   'Move the chat': 'Matsar da hirar',
   'Only the file': 'Fayil kaɗai',
 }

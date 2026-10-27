@@ -2506,8 +2506,9 @@ export const pl: Dictionary = {
   'Shown on cards': 'Widoczne na kartach',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Przenieść czat {name} do {space}?',
-  'Everyone in {space} can then read its whole history.':
-    'Wtedy wszyscy w {space} przeczytają całą jego historię.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Wtedy wszyscy w {space} przeczytają całą historię, a osoby w {from} ją stracą.',
+  'Move the chats {names} to {space}?': 'Przenieść czaty {names} do {space}?',
   'Move the chat': 'Przenieś czat',
   'Only the file': 'Tylko plik',
 }

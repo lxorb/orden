@@ -2408,8 +2408,9 @@ export const gu: Dictionary = {
   'Shown on cards': 'કાર્ડ પર દેખાય છે',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ચેટ {name} ને {space} માં ખસેડવી?',
-  'Everyone in {space} can then read its whole history.':
-    'પછી {space} માં બધા તેનો આખો ઇતિહાસ વાંચી શકશે.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'પછી {space} માં બધા આખો ઇતિહાસ વાંચી શકશે, અને {from} ના લોકો તે ગુમાવશે.',
+  'Move the chats {names} to {space}?': 'ચેટ {names} ને {space} માં ખસેડવી?',
   'Move the chat': 'ચેટ ખસેડો',
   'Only the file': 'ફક્ત ફાઇલ',
 }

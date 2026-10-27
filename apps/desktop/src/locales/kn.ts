@@ -2438,8 +2438,9 @@ export const kn: Dictionary = {
   'Shown on cards': 'ಕಾರ್ಡ್‌ಗಳಲ್ಲಿ ತೋರಿಸಲಾಗಿದೆ',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ಚಾಟ್ {name} ಅನ್ನು {space} ಗೆ ಸರಿಸಬೇಕೆ?',
-  'Everyone in {space} can then read its whole history.':
-    'ಆಗ {space} ನಲ್ಲಿರುವ ಎಲ್ಲರೂ ಅದರ ಸಂಪೂರ್ಣ ಇತಿಹಾಸವನ್ನು ಓದಬಹುದು.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'ಆಗ {space} ನಲ್ಲಿರುವ ಎಲ್ಲರೂ ಸಂಪೂರ್ಣ ಇತಿಹಾಸವನ್ನು ಓದಬಹುದು, ಮತ್ತು {from} ನಲ್ಲಿರುವವರು ಅದನ್ನು ಕಳೆದುಕೊಳ್ಳುತ್ತಾರೆ.',
+  'Move the chats {names} to {space}?': 'ಚಾಟ್‌ಗಳು {names} ಅನ್ನು {space} ಗೆ ಸರಿಸಬೇಕೆ?',
   'Move the chat': 'ಚಾಟ್ ಸರಿಸಿ',
   'Only the file': 'ಫೈಲ್ ಮಾತ್ರ',
 }

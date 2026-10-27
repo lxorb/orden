@@ -2389,8 +2389,9 @@ export const vi: Dictionary = {
   'Shown on cards': 'Hiển thị trên thẻ',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Chuyển cuộc trò chuyện {name} tới {space}?',
-  'Everyone in {space} can then read its whole history.':
-    'Khi đó mọi người trong {space} có thể đọc toàn bộ lịch sử của nó.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Khi đó mọi người trong {space} có thể đọc toàn bộ lịch sử, và những người trong {from} mất quyền xem.',
+  'Move the chats {names} to {space}?': 'Chuyển các cuộc trò chuyện {names} tới {space}?',
   'Move the chat': 'Chuyển cuộc trò chuyện',
   'Only the file': 'Chỉ tệp',
 }

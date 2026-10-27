@@ -2447,8 +2447,9 @@ export const sw: Dictionary = {
   'Shown on cards': 'Inaonyeshwa kwenye kadi',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Hamisha gumzo {name} kwa {space}?',
-  'Everyone in {space} can then read its whole history.':
-    'Kila mtu katika {space} ataweza kusoma historia yake yote.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Kila mtu katika {space} ataweza kusoma historia yote, na watu wa {from} wataipoteza.',
+  'Move the chats {names} to {space}?': 'Hamisha magumzo {names} kwa {space}?',
   'Move the chat': 'Hamisha gumzo',
   'Only the file': 'Faili pekee',
 }

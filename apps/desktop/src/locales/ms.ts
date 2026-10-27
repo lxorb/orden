@@ -2405,8 +2405,9 @@ export const ms: Dictionary = {
   'Shown on cards': 'Ditunjukkan pada kad',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Alihkan sembang {name} ke {space}?',
-  'Everyone in {space} can then read its whole history.':
-    'Semua orang dalam {space} kemudian boleh membaca seluruh sejarahnya.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Semua orang dalam {space} kemudian boleh membaca seluruh sejarah, dan orang dalam {from} kehilangannya.',
+  'Move the chats {names} to {space}?': 'Alihkan sembang {names} ke {space}?',
   'Move the chat': 'Alihkan sembang',
   'Only the file': 'Fail sahaja',
 }

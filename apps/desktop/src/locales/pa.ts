@@ -2421,8 +2421,9 @@ export const pa: Dictionary = {
   'Shown on cards': 'ਕਾਰਡਾਂ ਉੱਤੇ ਦਿਖਾਇਆ',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ਚੈਟ {name} ਨੂੰ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
-  'Everyone in {space} can then read its whole history.':
-    'ਫਿਰ {space} ਵਿੱਚ ਹਰ ਕੋਈ ਇਸਦਾ ਪੂਰਾ ਇਤਿਹਾਸ ਪੜ੍ਹ ਸਕੇਗਾ।',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'ਫਿਰ {space} ਵਿੱਚ ਹਰ ਕੋਈ ਪੂਰਾ ਇਤਿਹਾਸ ਪੜ੍ਹ ਸਕੇਗਾ, ਅਤੇ {from} ਦੇ ਲੋਕ ਇਸਨੂੰ ਗੁਆ ਦੇਣਗੇ।',
+  'Move the chats {names} to {space}?': 'ਚੈਟਾਂ {names} ਨੂੰ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
   'Move the chat': 'ਚੈਟ ਭੇਜੋ',
   'Only the file': 'ਸਿਰਫ਼ ਫ਼ਾਈਲ',
 }

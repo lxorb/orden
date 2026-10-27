@@ -2419,8 +2419,9 @@ export const mr: Dictionary = {
   'Shown on cards': 'कार्डवर दाखवलेले',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'चॅट {name} {space} मध्ये हलवायचा?',
-  'Everyone in {space} can then read its whole history.':
-    'मग {space} मधील सर्वजण त्याचा संपूर्ण इतिहास वाचू शकतील.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'मग {space} मधील सर्वजण संपूर्ण इतिहास वाचू शकतील, आणि {from} मधील लोक तो गमावतील.',
+  'Move the chats {names} to {space}?': 'चॅट {names} {space} मध्ये हलवायचे?',
   'Move the chat': 'चॅट हलवा',
   'Only the file': 'फक्त फाइल',
 }

@@ -2429,8 +2429,9 @@ export const gsw: Dictionary = {
   'Shown on cards': 'Uf de Charte zeigt',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Chat {name} uf {space} verschiebe?',
-  'Everyone in {space} can then read its whole history.':
-    'Alli in {space} chönd dänn sin ganze Verlauf läse.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Alli in {space} chönd dänn de ganz Verlauf läse, und d Lüüt in {from} verlüüred en.',
+  'Move the chats {names} to {space}?': 'Chats {names} uf {space} verschiebe?',
   'Move the chat': 'Chat verschiebe',
   'Only the file': 'Nur d Datei',
 }

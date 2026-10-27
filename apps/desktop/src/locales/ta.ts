@@ -2449,8 +2449,9 @@ export const ta: Dictionary = {
   'Shown on cards': 'அட்டைகளில் காட்டப்படுபவை',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'அரட்டை {name} ஐ {space} க்கு நகர்த்தவா?',
-  'Everyone in {space} can then read its whole history.':
-    'அப்போது {space} இல் உள்ள அனைவரும் அதன் முழு வரலாற்றையும் படிக்கலாம்.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'அப்போது {space} இல் உள்ள அனைவரும் முழு வரலாற்றையும் படிக்கலாம், {from} இல் உள்ளவர்கள் அதை இழப்பார்கள்.',
+  'Move the chats {names} to {space}?': 'அரட்டைகள் {names} ஐ {space} க்கு நகர்த்தவா?',
   'Move the chat': 'அரட்டையை நகர்த்து',
   'Only the file': 'கோப்பு மட்டும்',
 }

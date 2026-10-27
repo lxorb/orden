@@ -55,6 +55,7 @@ const { ApiError } = await import('../api')
 const { failed } = await import('../views/failed.svelte')
 const { spacesOfPaths } = await import('../tab-strip/to-space')
 const { keepOwnPointer } = await import('../chats/places')
+const { prompt } = await import('../prompt.svelte')
 
 /** The owner's space the reader writes in, another of that owner's, and the reader's
  *  own. */
@@ -95,6 +96,9 @@ beforeEach(async () => {
   asked.answer = () => Promise.resolve(true)
   // The pointer the chats list this chat at, as the store keeps it (chats/places.ts).
   keepOwnPointer(CHAT, POINTER)
+  // A chat goes with its pointer only on the owner's word (chats/copied.store.test.ts
+  // holds the question itself); here the owner says yes each time.
+  vi.spyOn(prompt, 'choose').mockResolvedValue('chat')
   failed.dismiss()
   await workspace.loadTree()
 })

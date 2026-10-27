@@ -481,14 +481,15 @@ test('a folder holding a chat twice, own pointer not known, asks once', async ()
           is_dir: true,
           children: [leaf('/space/F/Plans copy.chat'), leaf('/space/F/Plans.chat')],
         } as never)
-      : (null as never),
+      : null,
   )
   const choose = vi.spyOn(prompt, 'choose').mockResolvedValue('chat')
   await chatsCarried('/space/F', '/other')
+  const asked = choose.mock.calls.length
   tree.mockRestore()
   choose.mockRestore()
 
-  expect(choose).toHaveBeenCalledTimes(1)
+  expect(asked).toBe(1)
   expect(moves).toEqual([`${CHAT} space-2`])
 })
 
@@ -515,11 +516,29 @@ test('a folder holding two chats asks once, naming both', async () => {
           is_dir: true,
           children: [leaf('/space/F/Plans.chat'), leaf('/space/F/Trip.chat')],
         } as never)
-      : (null as never),
+      : null,
   )
   const { asked } = await carried('/space/F', '/other', 'file')
   tree.mockRestore()
 
   expect(asked).toBe('Move the chats Plans, Trip to Other?')
+  expect(moves).toEqual([])
+})
+
+test('a folder renamed in its space takes the own pointer along, and a copy in it stays a copy', async () => {
+  await chats.forget()
+  disk.pointers = new Map([['/space/F/Plans.chat', CHAT]])
+  await chats.start(`account-${Math.random()}`)
+  await came('/space/F/Plans copy.chat')
+  disk.pointers = new Map([
+    ['/space/G/Plans.chat', CHAT],
+    ['/space/G/Plans copy.chat', CHAT],
+  ])
+  chats.folderMoved('/space/F', '/space/G')
+  await rescan()
+  const { asked } = await carried('/space/G/Plans copy.chat', '/other', 'chat')
+
+  expect(chats.placedAt(CHAT)).toBe('/space/G/Plans.chat')
+  expect(asked).toBeNull()
   expect(moves).toEqual([])
 })

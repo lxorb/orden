@@ -2390,7 +2390,9 @@ export const am: Dictionary = {
   'Shown on cards': 'በካርዶች ላይ የሚታዩ',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ውይይቱ {name} ወደ {space} ይዛወር?',
-  'Everyone in {space} can then read its whole history.': 'በ{space} ያሉ ሁሉ ከዚያ ሙሉ ታሪኩን ማንበብ ይችላሉ።',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'ከዚያ በ{space} ያሉ ሁሉ ሙሉ ታሪኩን ማንበብ ይችላሉ፣ በ{from} ያሉትም ያጡታል።',
+  'Move the chats {names} to {space}?': 'ውይይቶቹ {names} ወደ {space} ይዛወሩ?',
   'Move the chat': 'ውይይቱን አንቀሳቅስ',
   'Only the file': 'ፋይሉን ብቻ',
 }

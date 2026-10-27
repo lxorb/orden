@@ -28,6 +28,9 @@ interface Choice {
    *  alone. The `id` is the path, so a row that chose an icon of its own wears it
    *  here as well; see FileMark.svelte. */
   mark?: FileMark
+  /** The answer the keyboard starts on, so Enter gives it: the safe one, where the
+   *  other cannot be taken back. Otherwise the first in the row. */
+  lands?: boolean
   /** The space this row is, where it is a space rather than a file: the one being
    *  looked at, or another to move something into. It wears what the switcher
    *  gives it - the space's own icon, or its first letter - in the box a mark

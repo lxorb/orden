@@ -2399,8 +2399,9 @@ export const ja: Dictionary = {
   'Shown on cards': 'カードに表示',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'チャット {name} を {space} へ移動しますか？',
-  'Everyone in {space} can then read its whole history.':
-    '{space} の全員がその履歴をすべて読めるようになります。',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    '{space} の全員が履歴をすべて読めるようになり、{from} の人は読めなくなります。',
+  'Move the chats {names} to {space}?': 'チャット {names} を {space} へ移動しますか？',
   'Move the chat': 'チャットを移動',
   'Only the file': 'ファイルのみ',
 }

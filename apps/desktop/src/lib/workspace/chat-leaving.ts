@@ -5,7 +5,7 @@
 import { ApiError } from '../api'
 import { t } from '../i18n.svelte'
 import { onDisk } from '../on-disk'
-import { nameOf, samePath } from '../space-paths'
+import { nameOf, samePath, within } from '../space-paths'
 import { sync } from '../sync.svelte'
 import { joinPath } from '../tauri'
 import { failed } from '../views/failed.svelte'
@@ -66,54 +66,87 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   const listing = await listChats().catch(() => null)
   const spaces = listing ? new Map(listing.chats.map((one) => [one.id, one.space])) : null
 
+  // The chats this move would carry, each once with the first of its pointers moving.
+  const carrying = new Map<string, string>()
   for (const pointer of pointers) {
     const chat = await readPointer(pointer)
-    if (!chat) continue
-    // Only the chat's own pointer carries it: one in the space the chat lives in on the
-    // account, and the one this device keeps as its own (chats/places.ts). A copy - in
-    // another space, or beside it - carries nothing, and neither does a pointer to a
-    // chat the account does not list: the file moves and the chat stays where it lives
-    // (B542). Where the device cannot tell, it does not guess: with the account not
-    // heard the move is refused, to be tried again, and with the own pointer not known
-    // - a fresh device, two pointers beside each other - the owner is asked.
+    if (!chat || carrying.has(chat)) continue
+    // A chat goes with its pointer only where it lives in the space the pointer leaves,
+    // as the account says now; a copy elsewhere, or a pointer to a chat the account does
+    // not list, carries nothing, and with the account not heard the move is refused, to
+    // be tried again (B542).
     const lives = spaces ? (spaces.get(chat) ?? null) : lastMoved(chat)
     if (lives === null && !spaces) await refuse(new Error('the account could not be reached'))
     if (lives !== home) continue
+    // A copy beyond doubt: the chat's own pointer is known, still there, and stays behind
+    // in this space. That alone is let go without a word.
     const own = ownPointer(chat)
-    if (own === null) {
-      const answer = await carryAsked(chatName(pointer), to.name)
-      if (answer === null) await refuse(new Error('not moved'))
-      if (answer === 'file') continue
-    } else if (!pointers.some((one) => samePath(one, own))) continue
+    const staying =
+      own !== null &&
+      within(from.root, own) !== null &&
+      !pointers.some((one) => samePath(one, own)) &&
+      (await readPointer(own)) === chat
+    if (!staying) carrying.set(chat, pointer)
+  }
+  if (!carrying.size) return none
+
+  // Every other one is the owner's to say, then and once for the whole move: a chat's
+  // history is what the people of the other space would read, and a device that only
+  // inferred which pointer is the original has been wrong before.
+  const names = [...carrying.values()].map((pointer) => chatName(pointer))
+  const answer = await carryAsked(names, from.name, to.name)
+  if (answer === null) await refuse(new Error('not moved'))
+  if (answer === 'file') return none
+
+  for (const [chat, pointer] of carrying) {
     // Not heard is not moved either: the file would be in the new space with its chat
     // still in the old one, which is what this is here to never leave behind.
-    const answer = await moveChat(chat, space).catch((error: unknown) =>
+    const moving = await moveChat(chat, space).catch((error: unknown) =>
       error instanceof ApiError ? error : new Error(String(error)),
     )
-    if (answer instanceof Error) await refuse(answer)
-    if (answer === false) await refuse(new Error('the account could not be reached'))
+    if (moving instanceof Error) await refuse(moving)
+    if (moving === false) await refuse(new Error('the account could not be reached'))
     moved.push(chat)
     movedHere(chat, space)
     // Its own pointer is where the move puts it, before the file operation is heard, so
-    // an undo straight after carries it back.
+    // an undo straight after finds it.
     keepOwnPointer(chat, joinPath(folder, nameOf(path)) + pointer.slice(path.length))
     owned.push([chat, pointer])
   }
   return back
 }
 
-/** A chat whose own pointer this device does not know, carried into another space: the
- *  owner says whether the chat goes with this pointer, or only the file does. Null for
- *  the question put away, and then nothing moves. */
-async function carryAsked(name: string, to: string): Promise<'chat' | 'file' | null> {
-  const { prompt } = await import('../prompt.svelte')
-  const answer = await prompt.choose({
-    title: t('Move the chat {name} to {space}?', { name, space: to }),
-    detail: t('Everyone in {space} can then read its whole history.', { space: to }),
+/** The question a carry puts: whether the chats go with their pointers into `to`, or
+ *  only the files do. The safe answer comes first and takes the keyboard, so Enter keeps
+ *  the history where it is. */
+export function carryQuestion(names: readonly string[], from: string, to: string) {
+  return {
+    title:
+      names.length === 1
+        ? t('Move the chat {name} to {space}?', { name: names[0] ?? '', space: to })
+        : t('Move the chats {names} to {space}?', { names: names.join(', '), space: to }),
+    detail: t(
+      'Everyone in {space} can then read the whole history, and the people in {from} lose it.',
+      {
+        space: to,
+        from,
+      },
+    ),
     options: [
+      { id: 'file', label: t('Only the file'), primary: true, lands: true },
       { id: 'chat', label: t('Move the chat'), danger: true },
-      { id: 'file', label: t('Only the file'), primary: true },
     ],
-  })
+  }
+}
+
+/** The owner's answer: the chats too, the files only, or null for the question put
+ *  away, and then nothing moves. */
+async function carryAsked(
+  names: readonly string[],
+  from: string,
+  to: string,
+): Promise<'chat' | 'file' | null> {
+  const { prompt } = await import('../prompt.svelte')
+  const answer = await prompt.choose(carryQuestion(names, from, to))
   return answer === 'chat' || answer === 'file' ? answer : null
 }

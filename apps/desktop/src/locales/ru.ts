@@ -2506,8 +2506,9 @@ export const ru: Dictionary = {
   'Shown on cards': 'Показано на карточках',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Переместить чат {name} в {space}?',
-  'Everyone in {space} can then read its whole history.':
-    'Тогда все в {space} смогут прочитать всю его историю.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Тогда все в {space} смогут прочитать всю историю, а люди в {from} её потеряют.',
+  'Move the chats {names} to {space}?': 'Переместить чаты {names} в {space}?',
   'Move the chat': 'Переместить чат',
   'Only the file': 'Только файл',
 }

@@ -2355,8 +2355,9 @@ export const zhHantHK: Dictionary = {
   'Shown on cards': '在卡片上顯示',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': '將對話 {name} 移到 {space}？',
-  'Everyone in {space} can then read its whole history.':
-    '之後 {space} 中的所有人都能閱讀它的全部紀錄。',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    '之後 {space} 中的所有人都能閱讀全部紀錄，{from} 中的人將失去它。',
+  'Move the chats {names} to {space}?': '將對話 {names} 移到 {space}？',
   'Move the chat': '移動對話',
   'Only the file': '只移檔案',
 }

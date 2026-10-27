@@ -2420,8 +2420,9 @@ export const fa: Dictionary = {
   'Shown on cards': 'نمایش روی کارت‌ها',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'گفتگوی {name} به {space} منتقل شود؟',
-  'Everyone in {space} can then read its whole history.':
-    'آن‌گاه همه در {space} می‌توانند کل تاریخچه‌اش را بخوانند.',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'آن‌گاه همه در {space} می‌توانند کل تاریخچه را بخوانند و افراد {from} آن را از دست می‌دهند.',
+  'Move the chats {names} to {space}?': 'گفتگوهای {names} به {space} منتقل شوند؟',
   'Move the chat': 'انتقال گفتگو',
   'Only the file': 'فقط فایل',
 }
