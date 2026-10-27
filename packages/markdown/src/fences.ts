@@ -128,6 +128,7 @@ function spacesAt(line: string, at: number): number {
 export class CodeBlocks {
   private containers: Container[] = []
   private leaf: Leaf = null
+  private item = false
 
   /** A walk that has read what this one has, to go on from here apart from it. */
   copy(): CodeBlocks {
@@ -135,6 +136,12 @@ export class CodeBlocks {
     copy.containers = [...this.containers]
     copy.leaf = this.leaf
     return copy
+  }
+
+  /** Whether the last line read opened a list item of its own: what is code in it
+   *  then is the item's, and the line is still a list item to a reader of lists. */
+  get openedItem(): boolean {
+    return this.item
   }
 
   /** The mark of the fence that is open, or null outside one. */
@@ -145,6 +152,7 @@ export class CodeBlocks {
   line(raw: string): CodeLine {
     // A line break written as CRLF leaves its `\r` on a line split at `\n`.
     const line = expanded(raw.endsWith('\r') ? raw.slice(0, -1) : raw)
+    this.item = false
     let at = 0
     let matched = 0
 
@@ -243,6 +251,7 @@ export class CodeBlocks {
       if (width === null) break
 
       this.containers.push({ quote: false, width: indent + width })
+      this.item = true
       this.leaf = null
       rest = text.length > width ? text.slice(width) : ''
     }

@@ -94,7 +94,8 @@ export function scanRows(content: string): ScannedRows {
 
   for (let index = 0; index < lines.length; index++) {
     const line = (lines[index] ?? '').replace(/\r$/, '')
-    if (code.line(line) !== WORDS || index < wordsFrom) continue
+    // The front matter is no part of the page: a fence in a YAML value opens no code.
+    if (index < wordsFrom || code.line(line) !== WORDS) continue
 
     const heading = headingAt(line)
     if (heading) {

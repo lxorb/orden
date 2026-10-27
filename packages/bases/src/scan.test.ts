@@ -96,4 +96,9 @@ describe('what a note gives the rows of its space', () => {
       texts('- [ ] one\n    - [ ] two\n\t- [ ] three\n- item\n  - [ ] four\n\n  - [ ] five\n'),
     ).toEqual(['one', 'two', 'three', 'four', 'five'])
   })
+
+  test('a fence in the front matter opens no code below it', () => {
+    const read = scanRows('---\nscript: |\n  ```\nup: "[[Up]]"\n---\n- [ ] t [[L]]\n')
+    expect(read.tasks.map((one) => one.text)).toEqual(['t [[L]]'])
+  })
 })

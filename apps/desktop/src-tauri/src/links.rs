@@ -605,15 +605,19 @@ fn note_tags(body: &str) -> Vec<String> {
 /// `lines` in links.ts and `scanRows` in @nib/bases, so the desktop's index and
 /// the browser's read the same links and tasks out of a note.
 ///
+/// The lines above `words_from`, the front matter's, are handed on as they are and
+/// not walked: the page leaves the block out, so a fence written in a YAML value
+/// opens no code below it.
+///
 /// Handed to a closure rather than gathered into a list, because all three readers
 /// walk a note straight down and none of them looks back: a space of ten thousand
 /// notes is a million and a half lines, and this is asked of every one of them
 /// three times over.
-fn prose_lines(body: &str, mut each: impl FnMut(usize, &str)) {
+fn prose_lines(body: &str, words_from: usize, mut each: impl FnMut(usize, &str)) {
     let mut code = CodeBlocks::default();
 
     for (index, line) in body.lines().enumerate() {
-        if code.line(line) == CodeLine::Words {
+        if index < words_from || code.line(line) == CodeLine::Words {
             each(index, line);
         }
     }
@@ -647,7 +651,7 @@ fn prose(body: &str, words_from: usize) -> Prose {
     // The list items it is inside of, for what is written under each task.
     let mut open: Vec<Open> = Vec::new();
 
-    prose_lines(body, |index, line| {
+    prose_lines(body, words_from, |index, line| {
         let heading = heading_of(line);
         if let Some((level, text)) = heading {
             if index >= words_from {
@@ -1372,6 +1376,20 @@ mod tests {
         let shown = "~~~md\n```js\n- [ ] example\n[[Example]]\n```\n~~~\n[[Real]]\n";
         assert_eq!(targets(shown), vec!["Real"]);
         assert!(prose(shown, 0).tasks.is_empty());
+    }
+
+    /// The front matter is no part of the page, so a fence in a YAML value opens
+    /// no code below it; a link written in it is still one.
+    #[test]
+    fn a_fence_in_the_front_matter_opens_no_code() {
+        let read = note_at(
+            "Fenced.md".to_string(),
+            "---\nscript: |\n  ```\nup: \"[[Up]]\"\n---\n- [ ] t [[L]]\n",
+        );
+        let targets: Vec<&str> = read.links.iter().map(|one| one.target.as_str()).collect();
+        assert_eq!(targets, ["Up", "L"]);
+        assert_eq!(read.tasks.len(), 1);
+        assert_eq!(read.tasks[0].text, "t [[L]]");
     }
 
     /// Code inside a quote or a list item, and code indented with no fence, is

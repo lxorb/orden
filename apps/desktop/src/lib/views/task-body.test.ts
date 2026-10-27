@@ -154,6 +154,28 @@ describe('what is written under a task', () => {
     expect(descriptionOf(listed, task)?.text).toBe('- ```\nx\n```')
   })
 
+  test('a comment that opens code after its mark is a comment, and a description save keeps it', () => {
+    const task = at(0, 'Task')
+    for (const words of ['>     quoted code', '-     x', '*     x', '2)     x', '1.      x']) {
+      const note = withComment('- [ ] Task\n- [ ] Next\n', task, words, '2026-10-24T10:00') ?? ''
+      expect(
+        commentsOf(note, task).map((one) => one.text),
+        words,
+      ).toEqual([words])
+      expect(descriptionOf(note, task)?.text, words).toBe('')
+      const described = withDescription(note, task, 'new words') ?? ''
+      expect(
+        commentsOf(described, task).map((one) => one.text),
+        words,
+      ).toEqual([words])
+
+      // Typed as a description, it is escaped, and reads back as typed.
+      const typed = withDescription('- [ ] Task\n- [ ] Next\n', task, words) ?? ''
+      expect(descriptionOf(typed, task)?.text, words).toBe(words)
+      expect(commentsOf(typed, task), words).toEqual([])
+    }
+  })
+
   test('a code block under a tab-indented task in a CRLF note is written as typed', () => {
     // Under a task of its own: a tab at the margin with no list above it is indented
     // code to the page, and holds no task.
@@ -256,8 +278,20 @@ describe('what is written under a task, fuzzed', () => {
   const STARTS = ['- ', '\\- ', '1. ', '1\\. ', '* ', '+ ', '  ', '\t', '[ ] ', '\\[ ] ', '', '-']
   const FENCES = ['```', '~~~', '```js', '\\```', '\\\\~~~', '   ```', '    ```', '\t```']
   const MORE = ['x ', '> ', '# ', '    - ', '- [ ] ', '* [x] ', '1. [ ] ', '\\- [ ] ', '- \\[ ] ']
+  /** Marks with code after them: a quote or an item that opens indented code on its
+   *  own line. A heading typed into a description moves the tasks below it into its
+   *  section, a separate matter, so these are fuzzed without one. */
+  const CODE_AFTER = [
+    ...MORE.filter((one) => one !== '# '),
+    '>     ',
+    '-     ',
+    '*     ',
+    '2)     ',
+    '1.      ',
+  ]
   const WORDS = ['a', 'b c', ' ', '', '- d', '\\', '[x]', '[ ] e']
-  const line = () => (random(6) === 0 ? pick(FENCES) : pick([...STARTS, ...MORE]) + pick(WORDS))
+  let marks = MORE
+  const line = () => (random(6) === 0 ? pick(FENCES) : pick([...STARTS, ...marks]) + pick(WORDS))
   /** Words as they are typed: lines, and code blocks that are closed. */
   function typed(): string {
     const out: string[] = []
@@ -287,8 +321,8 @@ describe('what is written under a task, fuzzed', () => {
     ['- [ ] Task', '## After', '- [ ] Next', '```', '- [ ] code', '```', '- [ ] Last'].join('\n'),
   ]
 
-  test('any description and any comment read back as typed and change no task', () => {
-    for (let round = 0; round < 4000; round++) {
+  function roundTrips(rounds: number) {
+    for (let round = 0; round < rounds; round++) {
       const note = NOTES[round % NOTES.length] ?? ''
       const task = at(
         note.split('\n').findIndex((one) => one.includes('Task')),
@@ -321,6 +355,16 @@ describe('what is written under a task, fuzzed', () => {
       expect(tasksOf(commented), words).toEqual(before)
       expect(descriptionOf(commented, task)?.text, words).toBe(descriptionOf(note, task)?.text)
     }
+  }
+
+  test('any description and any comment read back as typed and change no task', () => {
+    marks = MORE
+    roundTrips(4000)
+  })
+
+  test('and so do ones with code after a quote or a list mark', () => {
+    marks = CODE_AFTER
+    roundTrips(4000)
   })
 })
 

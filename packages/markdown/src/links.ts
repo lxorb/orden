@@ -16,6 +16,7 @@
  *  grammar and not the renderer that stands on it. */
 
 import { closingTicks, CodeBlocks, WORDS } from './fences'
+import { frontMatterBlock } from './front-matter'
 
 /** What one link between notes says. */
 export interface Wikilink {
@@ -427,6 +428,10 @@ interface Row {
  *  which fills the desktop's index at launch, so the two read the same links. */
 export function* lines(text: string): Generator<Row> {
   const code = new CodeBlocks()
+  // The front matter's lines, up to its closing fence, are words and not walked: the
+  // page leaves the block out, so a fence in a YAML value opens no code below it.
+  const matter = frontMatterBlock(text)
+  const wordsAt = matter ? matter.close + 1 : 0
   let line = 0
   let at = 0
 
@@ -434,7 +439,7 @@ export function* lines(text: string): Generator<Row> {
     const end = text.indexOf('\n', at)
     const row = text.slice(at, end === -1 ? text.length : end)
 
-    yield { text: row, from: at, line, code: code.line(row) !== WORDS }
+    yield { text: row, from: at, line, code: at >= wordsAt && code.line(row) !== WORDS }
 
     if (end === -1) break
     at = end + 1

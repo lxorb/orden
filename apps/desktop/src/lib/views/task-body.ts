@@ -64,8 +64,8 @@ export function descriptionOf(text: string, anchor: Anchor): Description | null 
       end++
       continue
     }
-    // A list item that opens a fence of its own is still a list item.
-    if (indentOf(line) <= own || (LIST_ITEM.test(line) && kinds[end - at - 1] !== CODE)) break
+    // A list item that opens a fence or code of its own is still a list item.
+    if (indentOf(line) <= own || (LIST_ITEM.test(line) && !kinds[end - at - 1]?.held)) break
     last = end
     end++
   }
@@ -75,25 +75,31 @@ export function descriptionOf(text: string, anchor: Anchor): Description | null 
   const said = lines
     .slice(from, to)
     .map((line, index) =>
-      kinds[index] === WORDS ? unescaped(dedent(line, indent)) : dedent(line, indent),
+      kinds[index]?.kind === WORDS ? unescaped(dedent(line, indent)) : dedent(line, indent),
     )
     .join('\n')
   return { from, to: Math.max(from, to), text: said }
 }
 
-/** What each of these lines, written under the task line `task`, is to scan.ts and
- *  the page (`CodeBlocks`): words, code, or a fence that opens code. Code is a fenced
- *  block, and code indented four columns past the task's content after a blank line.
- *  In it a list mark is code, so it is written as typed and ends nothing; a backslash
- *  there would be a character of the code.
+/** Which of these lines, written under the task line `task`, are code the task holds,
+ *  as scan.ts and the page read them (`CodeBlocks`): a fenced block, and code indented
+ *  four columns past the task's content after a blank line. In it a list mark is code,
+ *  so it is written as typed and ends nothing; a backslash there would be a character
+ *  of the code. Code a list item opens on its own line (`-     x`, `>` and indented
+ *  code after the mark) is the item's, and the line is still a list item: a comment,
+ *  which ends the description.
  *
  *  Read from the task line down with the task's own indent taken off, so the task is
- *  the list item these lines are inside of, wherever it is nested. */
-function kindsOf(task: string, lines: readonly string[]): CodeLine[] {
+ *  the list item these lines are inside of, wherever it is nested. Also answers what
+ *  each line is, for the words of a line that is no code. */
+function kindsOf(task: string, lines: readonly string[]): { kind: CodeLine; held: boolean }[] {
   const own = indentOf(task)
   const code = new CodeBlocks()
   code.line(dedent(task, own))
-  return lines.map((line) => code.line(dedent(line, own)))
+  return lines.map((line) => {
+    const kind = code.line(dedent(line, own))
+    return { kind, held: kind === CODE && !code.openedItem }
+  })
 }
 
 /** Whether the fence `code` has just been handed is closed among these lines, each
@@ -171,7 +177,8 @@ export function withDescription(text: string, anchor: Anchor, words: string): st
   // each line after the ones above it as they are written. A fence is kept as typed
   // where it opens a block that closes among these lines: one left open is no code
   // block yet, and would hide every later line of the note from the index. A list
-  // item is escaped even where it opens a fence, as it would end the description.
+  // item is escaped even where it opens a fence or code, as it would end the
+  // description.
   const task = (lines[at] ?? '').replace(/\r$/, '')
   const own = indentOf(task)
   const code = new CodeBlocks()
@@ -184,7 +191,7 @@ export function withDescription(text: string, anchor: Anchor, words: string): st
     const trial = code.copy()
     const kind = trial.line(dedent(indent + line, own))
     const kept =
-      kind === CODE ||
+      (kind === CODE && !trial.openedItem) ||
       (kind === OPENS &&
         !LIST_ITEM.test(line) &&
         closedIn(trial, typed.slice(index + 1), indent, own))

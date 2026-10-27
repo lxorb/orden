@@ -385,6 +385,11 @@ describe('finding the links in a note', () => {
     expect(targets('> see [[Quoted]]\n- and [[Listed]]\n')).toEqual(['Quoted', 'Listed'])
   })
 
+  test('a fence in the front matter opens no code below it', () => {
+    const note = '---\nscript: |\n  ```\nup: "[[Up]]"\n---\n- [ ] t [[L]]\n'
+    expect(findLinks(note).map((one) => one.target)).toEqual(['Up', 'L'])
+  })
+
   test('a shorter fence or one with a backtick in its info string closes nothing', () => {
     const targets = (text: string) => findLinks(text).map((one) => one.target)
     expect(targets('````md\n```\n````\n[[Plan]]')).toEqual(['Plan'])
