@@ -57,12 +57,16 @@ export async function readPapers(root: string, files: readonly Entry[]): Promise
   reading = root
   const papers = files.filter((one) => isPdfTarget(one.name))
   const stamps = new Map(papers.map((one) => [one.path, one.modified]))
+  // And which page notes there are, so the paper of one that has gone - renamed or
+  // deleted in a sitting that did not let go of its words - is dropped rather than
+  // read back. See `papersListed`.
+  const notes = files.filter((one) => isPagesTarget(one.name)).map((one) => one.path)
 
   // Said before the turn is waited for, not after it. This is the one thing in the
   // app that knows when each of these files was last written, and a search asked
   // before this pass gets its turn - a query fence in the note the app opens is
   // exactly that - has to be held to it too. See `papersListed`.
-  papersListed(root, stamps)
+  papersListed(root, stamps, notes)
 
   await startup.turn('search')
   if (reading !== root) return
@@ -74,7 +78,7 @@ export async function readPapers(root: string, files: readonly Entry[]): Promise
     const held = await heldPapers(root, files)
     if (reading !== root) return
     for (const one of held) stamps.set(one.path, one.modified)
-    if (held.length) papersListed(root, stamps)
+    if (held.length) papersListed(root, stamps, notes)
     papers.push(...held)
   }
 

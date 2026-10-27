@@ -23,6 +23,7 @@ const store = vi.hoisted(() => ({
 
 vi.mock('../tauri', () => ({
   isNative: false,
+  platform: () => 'linux',
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     const at = args.path as string
 
@@ -478,6 +479,26 @@ describe('the paper a page note holds', () => {
     expect(found('entropy')).toEqual([])
     await Promise.resolve()
     expect(store.records.has(PAPER)).toBe(false)
+  })
+
+  test('left behind and read back before the list said anything is dropped when it does', async () => {
+    forgetPapers()
+    await papersFor(ROOT)
+    expect(found('entropy')).toHaveLength(1)
+
+    papersListed(ROOT, new Map(), [])
+    expect(found('entropy')).toEqual([])
+    await papersFor(ROOT)
+    expect(found('entropy')).toEqual([])
+    expect(store.records.has(PAPER)).toBe(false)
+  })
+
+  test('of another space is left alone by the list of this one', async () => {
+    paperOpened('/other/Talk.pages.pdf', 'h2', 1)
+    paperRead('/other/Talk.pages.pdf', 1, page('entropy again'))
+    papersListed(ROOT, new Map(), [NOTE])
+
+    expect(searchPapers('/other', parseQuery('entropy'), 20)).toHaveLength(1)
   })
 
   test('is kept where the list still has its note', async () => {
