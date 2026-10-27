@@ -197,6 +197,29 @@ describe('the menu', () => {
     expect(thread).not.toHaveProperty('style')
   })
 
+  test("never lets a shared space's command or profile ask for more than the thread's mode", async () => {
+    const base = { path: 'team/c.md', arguments: [], tools: [], shared: true }
+    notes.push(
+      { ...base, kind: 'command', name: 'weekly', body: 'Publish.', mode: 'full', effort: 'low' },
+      { ...base, kind: 'command', name: 'look', body: 'Look.', mode: 'plan' },
+      { ...base, kind: 'agent', name: 'poster', body: 'Post.', mode: 'auto' },
+      { ...base, kind: 'agent', name: 'reader', body: 'Read.', mode: 'plan' },
+    )
+    expect(thread.mode).toBe('approve')
+    const { panel, calls } = fakePanel(thread)
+    const rows = commands(panel)
+    await run(rows, 'weekly', '', panel)
+    await run(rows, 'look', '', panel)
+    await run(rows, 'agents', 'poster', panel)
+    expect(thread).toMatchObject({ agent: 'poster' })
+    await run(rows, 'agents', 'reader', panel)
+    expect(calls.filter((one) => /^(turn|setMode|send)\(/.test(one))).toEqual([
+      'turn(open,"Publish.",{"effort":"low"})',
+      'turn(open,"Look.",{"mode":"plan"})',
+      'setMode("plan")',
+    ])
+  })
+
   test('says /goal and /jobs as lines in the thread', async () => {
     const { panel } = fakePanel(thread)
     const rows = commands(panel)
