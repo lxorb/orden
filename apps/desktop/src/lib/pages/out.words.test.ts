@@ -29,8 +29,13 @@ const emOf = (one: string) =>
     : /[ЖЩШЮМжщшюм]/.test(one)
       ? 0.85
       : 0.55
-const widthOf = (text: string, size: number) =>
-  Array.from(text).reduce((sum, one) => sum + emOf(one) * size, 0)
+/** And a run of kana as a browser measures it: wider as a whole than its characters
+ *  one by one, as Chromium's are by up to seven per cent - so a breaker that adds up
+ *  single characters overruns the card. */
+const widthOf = (text: string, size: number) => {
+  const sum = Array.from(text).reduce((all, one) => all + emOf(one) * size, 0)
+  return Array.from(text).length > 1 && /\p{Script=Hiragana}/u.test(text) ? sum * 1.07 : sum
+}
 vi.mock('./raster', () => ({
   svgToPng: (svg: string) => {
     raster.drawn.push(svg)
@@ -298,6 +303,62 @@ describe('words set as a picture', () => {
     const { lines, size } = setLines(svg.slice(svg.indexOf('<text')))
     for (const line of lines) expect(widthOf(line, size)).toBeLessThanOrEqual(220 - 12)
     expect(lines.join('')).toBe(japanese)
+  })
+
+  test('fit the card when a run is wider than its characters', async () => {
+    raster.drawn = []
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
+    card.text =
+      'ましたしてもらいましたけれどもそういうことでしたらまたあしたにしましょうね。わかりました。それではまたあした。'
+    card.width = 300
+    card.height = 400
+    await pagesPdf(out(canvas))
+
+    const { lines, size } = setLines(raster.drawn[0] ?? '')
+    for (const line of lines) expect(widthOf(line, size)).toBeLessThanOrEqual(300 - 12)
+    expect(lines.join('')).toBe(card.text)
+  })
+
+  test('never split an emoji made of several', async () => {
+    raster.drawn = []
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
+    card.text = Array.from({ length: 12 }, () => '👨‍👩‍👧‍👦🇩🇪').join('')
+    card.width = 80
+    card.height = 400
+    await pagesPdf(out(canvas))
+
+    const { lines } = setLines(raster.drawn[0] ?? '')
+    expect(lines.length).toBeGreaterThan(1)
+    for (const line of lines) {
+      expect(line).not.toMatch(/^\u200d|\u200d$/u)
+      expect(line).not.toMatch(/^\u{1F1EA}/u)
+    }
+    expect(lines.join('')).toBe(card.text)
+  })
+
+  test('stay inside their card in the PNG picture of the page', () => {
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & {
+      text: string
+      bare?: boolean
+    }
+    card.bare = false
+    card.text = Array.from({ length: 40 }, () => 'overflowing').join(' ')
+    card.width = 300
+    card.height = 60
+    const pages = canvas.nodes.filter((node): node is PageNode => node.type === 'page')
+    const svg = pageSvg(out(canvas), pages[0]!, 1, true)
+
+    const doc = new DOMParser().parseFromString(svg, 'image/svg+xml')
+    const text = doc.querySelector('tspan')?.closest('text')
+    const box = text?.parentElement?.closest('svg')
+    expect(box).not.toBe(doc.documentElement)
+    expect(box?.getAttribute('x')).toBe(String(card.x))
+    expect(box?.getAttribute('y')).toBe(String(card.y))
+    expect(box?.getAttribute('width')).toBe('300')
+    expect(box?.getAttribute('height')).toBe('60')
   })
 
   test("keep a group's name, which sits above its box", async () => {
