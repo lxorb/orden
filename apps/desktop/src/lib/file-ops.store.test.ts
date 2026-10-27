@@ -771,3 +771,113 @@ describe('a note renamed while a canvas showing it is open and drawn on', () => 
     expect(store.canvas.nodes.find((one) => one.id === 'a')?.x).toBe(40)
   })
 })
+
+describe('a note renamed while a canvas showing it is drawn on and not yet written', () => {
+  const card = { x: 0, y: 0, width: 250, height: 60 }
+  async function drawn(plane: object) {
+    const { CanvasStore } = await import('./canvas/store.svelte')
+    disk.current?.files.set(`${ROOT}/Board.canvas`, JSON.stringify(plane))
+    await indexed()
+    await vi.waitFor(() =>
+      expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'),
+    )
+    await workspace.open(`${ROOT}/Board.canvas`)
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    return new CanvasStore(tab)
+  }
+  const settled = async (store: { follow(): boolean; part(): void }) => {
+    store.follow()
+    store.part()
+    await workspace.writeNow()
+    await workspace.writesSettled()
+  }
+  const saved = () =>
+    (
+      JSON.parse(disk.current?.files.get(`${ROOT}/Board.canvas`) ?? '{}') as {
+        nodes: { id: string; file?: string; x: number }[]
+      }
+    ).nodes
+
+  test('keeps the card where it was dragged, with its new path', async () => {
+    const store = await drawn({
+      nodes: [{ id: 'f', type: 'file', file: 'Plan.md', ...card }],
+      edges: [],
+      nib: { version: 1, at: { f: 1 } },
+    })
+    store.edit({
+      ...store.canvas,
+      nodes: store.canvas.nodes.map((one) => (one.id === 'f' ? { ...one, x: 40 } : one)),
+    })
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
+    await settled(store)
+
+    // Merged from the file, the card took the rewrite whole and its drag was lost.
+    const shown = store.canvas.nodes.find((one) => one.id === 'f') as { file?: string; x: number }
+    expect([shown.file, shown.x]).toEqual(['Road.md', 40])
+    expect(saved().map((one) => [one.file, one.x])).toEqual([['Road.md', 40]])
+  })
+
+  test('and a plane another app wrote, with no times in it, takes the new path', async () => {
+    const store = await drawn({
+      nodes: [
+        { id: 'a', type: 'text', text: 'a', ...card },
+        { id: 'f', type: 'file', file: 'Plan.md', ...card },
+      ],
+      edges: [],
+    })
+    store.edit({
+      ...store.canvas,
+      nodes: store.canvas.nodes.map((one) => (one.id === 'a' ? { ...one, x: 40 } : one)),
+    })
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
+    await settled(store)
+
+    // Both sides had no time for the card, and the tie went to `Plan.md`.
+    const shown = store.canvas.nodes.find((one) => one.id === 'f') as { file?: string }
+    expect(shown.file).toBe('Road.md')
+    expect(saved().map((one) => one.file)).toEqual([undefined, 'Road.md'])
+  })
+})
+
+describe('a page note at the top of the space, its paper moved', () => {
+  const page = (file: string) =>
+    JSON.stringify({
+      nodes: [{ id: 'f', type: 'file', file, x: 0, y: 0, width: 250, height: 60 }],
+      edges: [],
+    })
+  const pages = () =>
+    (
+      JSON.parse(disk.current?.files.get(`${ROOT}/Doc.pages`) ?? '{}') as {
+        nodes: { file?: string }[]
+      }
+    ).nodes.map((node) => node.file)
+
+  test('follows a paper moved into a folder', async () => {
+    disk.current?.files.set(`${ROOT}/Ref.pdf`, '')
+    disk.current?.unreadable.add(`${ROOT}/Ref.pdf`)
+    disk.current?.files.set(`${ROOT}/Doc.pages`, page('Ref.pdf'))
+    disk.current?.folders.add(`${ROOT}/Archive`)
+    await indexed()
+
+    await workspace.move(`${ROOT}/Ref.pdf`, `${ROOT}/Archive`)
+    await workspace.writesSettled()
+
+    expect(pages()).toEqual(['Archive/Ref.pdf'])
+  })
+
+  test('and a folder holding it moved into another', async () => {
+    disk.current?.files.set(`${ROOT}/Work/Ref.pdf`, '')
+    disk.current?.unreadable.add(`${ROOT}/Work/Ref.pdf`)
+    disk.current?.files.set(`${ROOT}/Doc.pages`, page('Work/Ref.pdf'))
+    disk.current?.folders.add(`${ROOT}/Archive`)
+    await indexed()
+
+    await workspace.move(`${ROOT}/Work`, `${ROOT}/Archive`)
+    await workspace.writesSettled()
+
+    expect(pages()).toEqual(['Archive/Work/Ref.pdf'])
+  })
+})

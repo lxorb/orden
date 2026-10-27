@@ -15,7 +15,11 @@
  *
  *  Its own module, fetched by the rewrite that needs it. */
 
-import type { FoundLink } from '@nib/markdown/links'
+import type { Canvas } from '@nib/markdown/canvas'
+import { type FoundLink, isPagesTarget } from '@nib/markdown/links'
+import { paperOf } from './pages/held'
+import { folderOf } from './space-paths'
+import type { NoteDoc } from './workspace/documents.svelte'
 import { skim, type Span } from './json-skim'
 import { type Move, retargetLinks } from './link-rewrite'
 
@@ -45,7 +49,9 @@ export function rewriteCanvasLinks(
  *  what it held as two versions of one edit, and kept whichever sorted first: a
  *  card renamed from `Plan.md` to `Road.md` went back to `Plan.md`, on screen and in
  *  the file. See `later` in canvas-merge.ts. A plane with no times, another app's,
- *  is given none: nothing in it is stamped, so nothing is merged by them. */
+ *  is given none here, since writing them in would change a file nobody has opened;
+ *  one that is open is rewritten through its surface instead, which stamps what it
+ *  changes (`relinked` in canvas/store.svelte.ts). */
 export function retargetCanvas(
   text: string,
   /** The canvas, relative to the space, where it is now. */
@@ -86,6 +92,57 @@ export function retargetCanvas(
     out = out.slice(0, edit.from) + edit.insert + out.slice(edit.to)
   }
   return out
+}
+
+/** The same rewrite of a plane drawn on screen, card by card: every card it leaves
+ *  alone is the very card it was, so the edit is stamped as changing only the ones it
+ *  changed (`stamped` in canvas-merge.ts). The plane itself where nothing changed. */
+export function retargetPlane(
+  canvas: Canvas,
+  source: string,
+  file: (path: string) => string | null,
+  to: (link: FoundLink) => string | null,
+): Canvas {
+  const nodes = canvas.nodes.map((node) => {
+    if (node.type === 'file') {
+      const there = file(node.file)
+      return there === null ? node : { ...node, file: there }
+    }
+    if (node.type !== 'text') return node
+    const after = retargetLinks(node.text, source, to)
+    return after === null || after === node.text ? node : { ...node, text: after }
+  })
+  return nodes.some((node, at) => node !== canvas.nodes[at]) ? { ...canvas, nodes } : canvas
+}
+
+/** Where each card of the plane at `note` goes once `moving` is done, or null for a
+ *  page note in a folder, whose links are asked the way a note's are. A card is a path
+ *  from the top of the space, never resolved by name: asked as a wikilink, `Plan.md`
+ *  still reached `Archive/Plan.md`, and the card was left naming nothing. A page note in
+ *  a folder reads a page's paper from that folder first, and every page note reads
+ *  the paper it holds first by the name it had (`paperPlaces` in pages/held.ts), so a
+ *  card naming that paper, or going to be it, is left alone. */
+export function cardsMoving(
+  note: string,
+  moving: (path: string) => string | null,
+): ((path: string) => string | null) | null {
+  if (!isPagesTarget(note)) return moving
+  if (folderOf(note) !== '') return null
+  const own = paperOf(note)
+  return (path) => {
+    const there = path === own ? null : moving(path)
+    return there === own ? null : there
+  }
+}
+
+/** The canvas on screen for an open document, when one is drawn; see `relinked` in
+ *  canvas/store.svelte.ts. */
+export async function drawnPlane(doc: NoteDoc) {
+  const [{ CanvasStore }, { workspace }] = await Promise.all([
+    import('./canvas/store.svelte'),
+    import('./workspace.svelte'),
+  ])
+  return CanvasStore.drawing(doc, workspace.tabs)
 }
 
 /** One piece of the file replaced. */

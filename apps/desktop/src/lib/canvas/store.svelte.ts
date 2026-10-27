@@ -295,6 +295,23 @@ export class CanvasStore implements PlaneSurface {
     this.soon()
   }
 
+  /** The plane with the paths on it pointed somewhere else, by a rename or a move:
+   *  one edit like any other, so what it changed is stamped as changed now and goes
+   *  into the room, and written into the document at once, since the rewrite writes
+   *  the file in the same breath. Answers whether there was anything to change. Given
+   *  through the plane rather than its file, so a card dragged and not written yet
+   *  keeps its place, and a plane that keeps no times still takes the new paths; see
+   *  `retargetIn` in link-index.svelte.ts. */
+  relinked(change: (canvas: Canvas) => Canvas): boolean {
+    if (this.readOnly) return false
+    const next = change(this.canvas)
+    if (next === this.canvas) return false
+
+    this.edit(next)
+    this.writing.flush()
+    return true
+  }
+
   undo() {
     // In a room, taking something back is the room's own history: what this device
     // drew and never what somebody else did. See rooms/plane-bind.ts.
