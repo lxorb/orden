@@ -2,7 +2,9 @@
  *  lines with the headings above them (docs/tasks.md 5.3).
  *
  *  The twin of the same two fields of `scan_links` in links.rs, read the same way:
- *  outside code, below the front matter, every line a task is with the heading path
+ *  outside code as the renderer reads it (`CodeBlocks`: a fence closes on its own
+ *  mark, and one in a quote or a list item, or code indented with no fence, is code
+ *  too), below the front matter, every line a task is with the heading path
  *  the walk has come past. Raw rather than parsed, because the rows parse the fields
  *  with the one reader they have (`@nib/bases`), so the crate and the window cannot
  *  disagree about what a date is. The cases in scan.test.ts are the twins of the
@@ -17,6 +19,7 @@
  *  reads it for every note (web/commands.ts), the rows for a note just saved
  *  (rows/store.ts), and the account connector for every note it answers about. */
 
+import { CodeBlocks, WORDS } from '@nib/markdown/fences'
 import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { taskAt } from '@nib/markdown/tasks'
 
@@ -87,13 +90,12 @@ export function scanRows(content: string): ScannedRows {
   const section: { level: number; text: string }[] = []
   const open: Open[] = []
   const lines = content.split('\n')
-  let fenced = false
+  const code = new CodeBlocks()
 
   for (let index = 0; index < lines.length; index++) {
     const line = (lines[index] ?? '').replace(/\r$/, '')
-    const fence = isFence(line)
-    if (fence) fenced = !fenced
-    if (fenced || fence || index < wordsFrom) continue
+    // The front matter is no part of the page: a fence in a YAML value opens no code.
+    if (index < wordsFrom || code.line(line) !== WORDS) continue
 
     const heading = headingAt(line)
     if (heading) {
@@ -156,14 +158,6 @@ function lineOf(content: string, at: number): number {
     lines++
   }
   return lines
-}
-
-/** Whether a line opens or closes a fenced code block: `is_fence` in links.rs. */
-function isFence(line: string): boolean {
-  const trimmed = line.trimStart()
-  return (
-    line.length - trimmed.length <= 3 && (trimmed.startsWith('```') || trimmed.startsWith('~~~'))
-  )
 }
 
 /** A heading's level and words: `heading_of` in links.rs. */

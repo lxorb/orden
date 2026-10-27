@@ -827,6 +827,15 @@ describe('abbreviations', () => {
     expect(html.match(/<abbr/g)).toHaveLength(1)
   })
 
+  test('is defined after a fence that ended with the list item it was in', () => {
+    // The fence is the item's, so the line at the margin ends both: the
+    // definition under them is words, and the page reads it as one.
+    const html = renderMarkdown(
+      '- a\n  ```\n  code\n\n*[HTML]: HyperText Markup Language\n\nI write HTML.\n',
+    )
+    expect(html).toContain('<abbr title="HyperText Markup Language">HTML</abbr>')
+  })
+
   test('leaves code alone', () => {
     const html = renderMarkdown('*[HTML]: HyperText Markup Language\n\n`HTML` and HTML\n')
     expect(html).toContain('<code>HTML</code>')
