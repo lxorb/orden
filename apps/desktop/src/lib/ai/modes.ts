@@ -56,16 +56,22 @@ export function nextMode(mode: Mode): Mode {
   return CYCLE[(CYCLE.indexOf(mode) + 1) % CYCLE.length] ?? FIRST_MODE
 }
 
-/** How much a mode lets happen unasked (`supervised`, `in_mode` in ai_agent.rs):
- *  Approve asks every change, Plan and Auto as the grant does (Plan with fewer
- *  tools), Full never. */
-const LATITUDE: Record<Mode, number> = { approve: 0, plan: 1, auto: 2, full: 3 }
+/** The modes each one holds within it (`supervised`, `in_mode` in ai_agent.rs). Auto
+ *  has every tool and asks as the grant does, so it holds Approve (asks more) and Plan
+ *  (fewer tools); Full holds all. Plan and Approve hold neither: Plan makes notes
+ *  unasked, Approve opens and steers pages unasked. */
+const HOLDS: Record<Mode, readonly Mode[]> = {
+  approve: ['approve'],
+  plan: ['plan'],
+  auto: ['auto', 'approve', 'plan'],
+  full: MODES,
+}
 
-/** The mode something not the reader's own asks for, where it lets no more happen
- *  than `held` does, or null where it would: a command or a profile from a shared
+/** The mode something not the reader's own asks for, where `held` holds it, or null
+ *  where it would let anything happen that `held` does not: a command from a shared
  *  space may make a thread more careful, never less (docs/agent-native.md 9.6). */
 export function noMoreThan(asked: Mode, held: Mode): Mode | null {
-  return LATITUDE[asked] <= LATITUDE[held] ? asked : null
+  return HOLDS[held].includes(asked) ? asked : null
 }
 
 /** Whether a mode makes changes without the reader's Approve first. */

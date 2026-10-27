@@ -9,7 +9,7 @@
 import { t } from '../../i18n.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { Thread } from '../chat/types'
-import { found, foundNamed, fromOthers } from './found'
+import { found, foundNamed, fromOthers, rootOfSpace } from './found'
 import { type Host, sendHere } from './host'
 import { type Held, setRemembers, STYLES } from './instructions'
 import { commandName } from './notes'
@@ -86,6 +86,13 @@ export async function skills(host: Host, thread: Thread | null, args: string): P
     )
 }
 
+/** The notes of the thread's own space, which is where its profile and style are
+ *  looked up on every turn; none where that space is not on this device. */
+async function inThreadSpace(thread: Thread) {
+  const root = rootOfSpace(thread.space)
+  return root ? await found(root) : []
+}
+
 /** `/agents [name]`: the thread's profile chosen (its model, effort and mode with it),
  *  cleared with `none`, or listed. */
 export async function agents(host: Host, thread: Thread | null, args: string): Promise<void> {
@@ -94,7 +101,7 @@ export async function agents(host: Host, thread: Thread | null, args: string): P
   const held = open as Held
   const name = commandName(args)
   if (!name) {
-    const profiles = (await found(rootOf(open) ?? undefined))
+    const profiles = (await inThreadSpace(open))
       .filter((one) => one.kind === 'agent')
       .map((one) => one.name)
     host.line(open, listed(profiles, held.agent))
@@ -105,7 +112,8 @@ export async function agents(host: Host, thread: Thread | null, args: string): P
     host.touched(open)
     return
   }
-  const profile = await foundNamed('agent', name, rootOf(open) ?? undefined)
+  const root = rootOfSpace(open.space)
+  const profile = root ? await foundNamed('agent', name, root) : null
   if (!profile) {
     host.line(open, t('No such agent'))
     return
@@ -125,7 +133,7 @@ export async function outputStyle(host: Host, thread: Thread | null, args: strin
   if (!open) return
   const held = open as Held
   const name = commandName(args)
-  const notes = (await found(rootOf(open) ?? undefined))
+  const notes = (await inThreadSpace(open))
     .filter((one) => one.kind === 'output-style')
     .map((one) => one.name)
   const all = [...Object.keys(STYLES), ...notes]

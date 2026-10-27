@@ -20,6 +20,7 @@
     setReadOnlyMode,
     type Text,
   } from '@nib/editor'
+  import type { EmbeddedNote } from '@nib/markdown'
   import type { CanvasNode } from './canvas/format'
   import { cardHtml, fileSource, fileUrl, isPicture, keptByAccount } from './canvas/render'
   import { account } from './account.svelte'
@@ -78,7 +79,7 @@
 
   /** The words of the note a file node names, once they have arrived. Null until
    *  then, and for a file the space no longer holds. */
-  let source = $state<string | null>(null)
+  let source = $state<EmbeddedNote | null>(null)
 
   $effect(() => {
     if (node.type !== 'file' || isPicture(node.file)) return
@@ -97,12 +98,14 @@
   /** The words this node holds, whichever kind it is: a card's own, a shape's, or the
    *  note a file card names once it has arrived. */
   const words = $derived(
-    node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source,
+    node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source?.text,
   )
+  /** A file card shows another note, so it is markup only where that note is too. */
+  const markup = $derived(trusted && !(node.type === 'file' && source?.escapeHtml !== false))
 
   /** The card's markdown as HTML. Read from the cache next door, so a card that
    *  has not changed costs nothing however often the plane moves. */
-  const html = $derived(words ? cardHtml(words, canvasPath, trusted) : '')
+  const html = $derived(words ? cardHtml(words, canvasPath, markup) : '')
 
   /** The shape's own corners, in the box's own coordinates, so the svg scales with
    *  the node and the arithmetic stays in one place. Through the same geometry the hit

@@ -107,7 +107,7 @@ export async function readingHtml(
       // A base fence is a box the reading view draws the view into; see views/mount.ts.
       base: true,
     }),
-    prepareEmbeds(note.text, (target) => links.embedSource(target, note.path)),
+    prepareEmbeds(note.text, (target) => links.embedNote(target, note.path)),
   ])
 
   const at = performance.now()

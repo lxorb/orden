@@ -16,7 +16,7 @@
  *  is what keeps the two apart. */
 
 import { DIAGRAM_LANGUAGES, RENDERED_LANGUAGES } from '@nib/editor'
-import { codeBlocks, findLinks, type Wikilink } from '@nib/markdown'
+import { codeBlocks, type EmbeddedNote, findLinks, type Wikilink } from '@nib/markdown'
 import { loadFor } from '@nib/markdown/engines'
 import { highlightedFence } from '@nib/markdown/highlight'
 import { escapeAll } from '@nib/markdown/html'
@@ -34,8 +34,8 @@ export type Fence = (code: string, language: string) => string | null
  *  embed of a note the space has not got does anyway. */
 export async function prepareEmbeds(
   source: string,
-  read: (target: string) => Promise<string | null>,
-): Promise<(link: Wikilink) => string | null> {
+  read: (target: string) => Promise<string | EmbeddedNote | null>,
+): Promise<(link: Wikilink) => string | EmbeddedNote | null> {
   const wanted = new Set(
     findLinks(source)
       // A file is not read: the renderer draws a picture, a player or a card
@@ -48,7 +48,7 @@ export async function prepareEmbeds(
       .map((link) => link.target),
   )
 
-  const bodies = new Map<string, string>()
+  const bodies = new Map<string, string | EmbeddedNote>()
   await Promise.all(
     [...wanted].map(async (target) => {
       const body = await read(target).catch(() => null)

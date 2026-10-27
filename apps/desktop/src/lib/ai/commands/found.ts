@@ -58,12 +58,13 @@ async function ask(root: string, version: number): Promise<NoteCommand[]> {
 
 /** What a space holds (the one in front, unless another is named), as last found; a
  *  search is started when that is out of date, and its answer is what the next call
- *  returns. */
+ *  returns. The link index follows the space in front only, so its version says
+ *  nothing of another: that one is asked again every time. */
 export function foundNow(root = workspace.activeSpace?.root): NoteCommand[] {
   if (!root) return []
-  const version = links.version
+  const version = root === workspace.activeSpace?.root ? links.version : -1
   const kept = held.get(root)
-  if (kept?.version !== version && !asking.has(root)) {
+  if ((version < 0 || kept?.version !== version) && !asking.has(root)) {
     asking.set(
       root,
       ask(root, version)
@@ -76,9 +77,9 @@ export function foundNow(root = workspace.activeSpace?.root): NoteCommand[] {
 
 /** The same, waited for: for a command typed whole before the menu was ever opened. */
 export async function found(root = workspace.activeSpace?.root): Promise<NoteCommand[]> {
-  foundNow(root)
-  if (root) await asking.get(root)
-  return foundNow(root)
+  if (!root) return []
+  const now = foundNow(root)
+  return (await asking.get(root)) ?? now
 }
 
 /** One kind, by name, in the space named or the one in front. */
