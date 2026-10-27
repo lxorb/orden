@@ -62,9 +62,9 @@ test('a note moved to another folder, its own relative link rewritten, keeps the
   expect(one.files.get(`${ROOT}/Archive/Plan.md`)).toBe('- [ ] Read [spec](../Work/Spec.md)\n')
   expect(tasks()).toEqual(['Archive/Plan.md: Read [spec](../Work/Spec.md)'])
 
-  // The undo is the same move the other way round, and the same order.
+  // Moved back, the rewritten link still reaches the note from there, so it stays.
   await workspace.undoFileAction()
   await workspace.writesSettled()
-  expect(one.files.get(`${ROOT}/Work/Plan.md`)).toBe('- [ ] Read [spec](Spec.md)\n')
-  expect(tasks()).toEqual(['Work/Plan.md: Read [spec](Spec.md)'])
+  expect(one.files.get(`${ROOT}/Work/Plan.md`)).toBe('- [ ] Read [spec](../Work/Spec.md)\n')
+  expect(tasks()).toEqual(['Work/Plan.md: Read [spec](../Work/Spec.md)'])
 })

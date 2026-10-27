@@ -16,6 +16,7 @@
  *  Its own module, fetched by the rewrite that needs it. */
 
 import type { FoundLink } from '@nib/markdown/links'
+import { skim, type Span } from './json-skim'
 import { type Move, retargetLinks } from './link-rewrite'
 
 /** The plane with every card that points at `move.from` pointing at `move.to`, or
@@ -37,34 +38,47 @@ export function rewriteCanvasLinks(
 
 /** The same with a place of its own for each card and link: `file` answers where
  *  the file a card names is now, and `to` where a text card's link points now, each
- *  relative to the space and null for one to leave alone; see `retargetLinks`. */
+ *  relative to the space and null for one to leave alone; see `retargetLinks`.
+ *
+ *  Each card changed is an edit made `now`, and is stamped so in a plane that keeps
+ *  times. With the time it had, a plane open and drawn on merged the rewrite with
+ *  what it held as two versions of one edit, and kept whichever sorted first: a
+ *  card renamed from `Plan.md` to `Road.md` went back to `Plan.md`, on screen and in
+ *  the file. See `later` in canvas-merge.ts. A plane with no times, another app's,
+ *  is given none: nothing in it is stamped, so nothing is merged by them. */
 export function retargetCanvas(
   text: string,
   /** The canvas, relative to the space, where it is now. */
   source: string,
   file: (path: string) => string | null,
   to: (link: FoundLink) => string | null,
+  now = Date.now(),
 ): string | null {
   const nodes = nodeStrings(text)
   if (!nodes) return null
 
-  const edits: { from: number; to: number; insert: string }[] = []
+  const edits: Edit[] = []
+  const changed: string[] = []
   for (const node of nodes) {
     const type = node.get('type')?.value
     const card = node.get('file')
     const words = node.get('text')
     const there = type === 'file' && card ? file(card.value) : null
+    const id = node.get('id')?.value
 
     if (card && there !== null) {
       edits.push({ from: card.from, to: card.to, insert: JSON.stringify(there) })
+      if (id !== undefined) changed.push(id)
     } else if (type === 'text' && words) {
       const after = retargetLinks(words.value, source, to)
       if (after !== null && after !== words.value) {
         edits.push({ from: words.from, to: words.to, insert: JSON.stringify(after) })
+        if (id !== undefined) changed.push(id)
       }
     }
   }
   if (!edits.length) return null
+  edits.push(...timesOf(text, changed, now))
 
   // From the end, so an edit never moves the place of one still to be made.
   let out = text
@@ -72,6 +86,36 @@ export function retargetCanvas(
     out = out.slice(0, edit.from) + edit.insert + out.slice(edit.to)
   }
   return out
+}
+
+/** One piece of the file replaced. */
+interface Edit {
+  from: number
+  to: number
+  insert: string
+}
+
+/** The edits that stamp `ids` with `now` in the plane's times, `nib.at`: each time in
+ *  place, and one the plane has none for put first. None where it keeps no times. */
+function timesOf(text: string, ids: readonly string[], now: number): Edit[] {
+  const nib = skim(text, ['nib'])?.get('nib')
+  const at: Span | undefined = nib ? skim(text, ['at'], nib)?.get('at') : undefined
+  const held = at ? skim(text, ids, at) : null
+  if (!at || !held) return []
+
+  const edits: Edit[] = []
+  const missing: string[] = []
+  for (const id of new Set(ids)) {
+    const time = held.get(id)
+    if (time) edits.push({ from: time.from, to: time.to, insert: String(now) })
+    else missing.push(id)
+  }
+  if (missing.length) {
+    const empty = text.slice(at.from + 1, at.to - 1).trim() === ''
+    const added = missing.map((id) => `${JSON.stringify(id)}: ${now}`).join(', ')
+    edits.push({ from: at.from + 1, to: at.from + 1, insert: empty ? added : `${added}, ` })
+  }
+  return edits
 }
 
 /** A string value in the file: where its literal starts and ends, and what it says. */

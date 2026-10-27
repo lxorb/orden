@@ -1719,11 +1719,20 @@ class Links {
         return stillReaches(source, link, there, !shifted, kept) ? null : there
       }
 
-      // Whether this note is worth reading at all, decided from the index.
-      const candidates = note.links.filter(
-        (link) => named(link) || (shifted && link.kind === 'markdown'),
-      )
-      if (!candidates.some((link) => to(link) !== null)) continue
+      // Whether this note is worth reading at all, decided from the index. A canvas's
+      // links in the index are its file cards, each a path from the top of the space
+      // that is never resolved by name: one is read when a card names what moved.
+      // Asked as a wikilink, `Plan.md` still reached `Archive/Plan.md` by its name,
+      // and the card was left naming a file that is not there. Not a page note's: a
+      // page names its paper from the note's folder first, and the paper the note
+      // holds by the name it had (`paperPlaces` in pages/held.ts).
+      const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
+      const worth = isCanvasTarget(note.path)
+        ? note.links.some((link) => moving(link.target) !== null)
+        : note.links.some(
+            (link) => (named(link) || (shifted && link.kind === 'markdown')) && to(link) !== null,
+          )
+      if (!worth) continue
 
       const absolute = insideSpace(root, note.path)
       const target = went === null ? absolute : insideSpace(root, went)
@@ -1733,7 +1742,6 @@ class Links {
       const read = listed?.(note.path) ?? note
 
       // A plane is JSON, and is rewritten as JSON; see canvas-rewrite.ts.
-      const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
       const after = plane
         ? (await import('./canvas-rewrite')).retargetCanvas(before, source, moving, to)
         : retargetLinks(before, source, to)

@@ -681,9 +681,11 @@ describe('a canvas showing a file that moves', () => {
   const board = (file: string) =>
     JSON.stringify({ nodes: [{ id: 'f', type: 'file', file, ...card }], edges: [] })
   const cards = () =>
-    (JSON.parse(disk.current?.files.get(`${ROOT}/Board.canvas`) ?? '{}') as {
-      nodes: { file?: string }[]
-    }).nodes.map((node) => node.file)
+    (
+      JSON.parse(disk.current?.files.get(`${ROOT}/Board.canvas`) ?? '{}') as {
+        nodes: { file?: string }[]
+      }
+    ).nodes.map((node) => node.file)
   const shown = async (path: string) =>
     vi.waitFor(() => expect(links.backlinks(path).map((one) => one.path)).toContain('Board.canvas'))
 

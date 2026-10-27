@@ -307,7 +307,14 @@ export class RowsStore {
 
       const rest = within(at, path, was.root) ?? ''
       const moved = rest ? (there ? `${there}/${rest}` : rest) : there
-      this.edit(now, pathKey(moved, now.root), () => movedRows(rows, moved, now.name))
+      // Rows already where it went are a save there since the rename, newer than the
+      // words that moved: a link rewrite writes a moved note at its new path, and says
+      // so, before the move is told (`retargetIn` in link-index.svelte.ts). Carried over
+      // them, a task kept a line the note no longer has, and nothing could tick it. A
+      // rename that changed only the case is its own key, emptied just above.
+      this.edit(now, pathKey(moved, now.root), (saved) =>
+        saved?.length ? bornWhen(saved, rows) : movedRows(rows, moved, now.name),
+      )
     }
     return true
   }
@@ -420,4 +427,14 @@ function readOf(note: ScannedNote): NoteRead {
     tags: note.tags,
     links: note.links,
   }
+}
+
+/** A note's rows from a save, made when the rows it had were: the save at the place a
+ *  note moved to took the move for its first write; see `moved`. */
+function bornWhen(saved: readonly Row[], had: readonly Row[]): Row[] {
+  const first = saved[0]
+  const ctime = had[0]?.file.ctime
+  if (!first || ctime === undefined || first.file.ctime === ctime) return [...saved]
+  const file = { ...first.file, ctime }
+  return saved.map((row) => ({ ...row, file }))
 }
