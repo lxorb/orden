@@ -29,12 +29,122 @@ describe('unique ids', () => {
     expect(idText('', 3)).toBe('3')
   })
 
-  test('two devices offline both made 8: the younger becomes 9, and both agree', () => {
+  test('two devices offline both made 8: one becomes 9, and both agree', () => {
     const older = noteRow('Bugs/Older.md', 'id: BUG-8', { ctime: day('2026-04-01') })
     const younger = noteRow('Bugs/Younger.md', 'id: BUG-8', { ctime: day('2026-04-02') })
     const repairs = idRepairs([...bugs, younger, older], 'id', 'BUG', false)
     expect(repairs.map((one) => [one.row.path, one.id])).toEqual([['Bugs/Younger.md', 'BUG-9']])
     expect(idRepairs([...bugs, older, younger], 'id', 'BUG', false)).toEqual(repairs)
+  })
+
+  test('two devices that disagree on when the rows were made renumber the same one, and settle', () => {
+    // ctime is each disk's own birth time, which sync does not carry: A made X and B
+    // made Y offline, so each device thinks the other's note is the younger.
+    const paths = ['Bugs/X.md', 'Bugs/Y.md', 'Bugs/Z.md']
+    const ctimes = {
+      A: { 'Bugs/X.md': 1, 'Bugs/Y.md': 3, 'Bugs/Z.md': 5 },
+      B: { 'Bugs/X.md': 4, 'Bugs/Y.md': 2, 'Bugs/Z.md': 6 },
+    }
+    // What has synced: every note's id, the same on both devices.
+    let ids: Record<string, string> = Object.fromEntries(paths.map((path) => [path, 'BUG-45']))
+    const seenOn = (device: 'A' | 'B') => [
+      ...bugs,
+      ...paths.map((path) =>
+        noteRow(path, { id: ids[path] ?? '' }, { ctime: ctimes[device][path as 'Bugs/X.md'] }),
+      ),
+    ]
+
+    for (let round = 0; round < 3; round++) {
+      const a = idRepairs(seenOn('A'), 'id', 'BUG', false)
+      const b = idRepairs(seenOn('B'), 'id', 'BUG', false)
+      expect(a.map((one) => [one.row.path, one.id])).toEqual(b.map((one) => [one.row.path, one.id]))
+      // Each device writes its repairs; the sync then carries both.
+      const next = { ...ids }
+      for (const one of [...a, ...b]) next[one.row.path] = one.id
+      ids = next
+    }
+    const held = paths.map((path) => ids[path])
+    expect(new Set(held).size).toBe(paths.length)
+    expect(idRepairs(seenOn('A'), 'id', 'BUG', false)).toEqual([])
+    expect(idRepairs(seenOn('B'), 'id', 'BUG', false)).toEqual([])
+  })
+
+  test('a duplicate is renumbered, not the note it was copied from', () => {
+    const repairs = idRepairs(
+      [
+        noteRow('Bugs/Crash.md', 'id: BUG-45', { ctime: 1 }),
+        noteRow('Bugs/Crash copy.md', 'id: BUG-45', { ctime: 9 }),
+        noteRow('Bugs/Crash 2.md', 'id: BUG-45', { ctime: 9 }),
+      ],
+      'id',
+      'BUG',
+      false,
+    )
+    expect(repairs.map((one) => [one.row.path, one.id])).toEqual([
+      ['Bugs/Crash 2.md', 'BUG-46'],
+      ['Bugs/Crash copy.md', 'BUG-47'],
+    ])
+  })
+
+  test('a copied folder is renumbered, not the folder it was copied from', () => {
+    const repairs = idRepairs(
+      [
+        noteRow('Trip/Trip.md', 'id: T-4'),
+        noteRow('Trip copy/Trip copy.md', 'id: T-4'),
+        noteRow('Projects/X.md', 'id: T-1'),
+        noteRow('Projects copy/X.md', 'id: T-1'),
+      ],
+      'id',
+      'T',
+      false,
+    )
+    expect(repairs.map((one) => one.row.path)).toEqual([
+      'Projects copy/X.md',
+      'Trip copy/Trip copy.md',
+    ])
+  })
+
+  test('a name ending in a dot or a space comes before its copy', () => {
+    for (const [original, copy] of [
+      ['Bugs/v1..md', 'Bugs/v1. copy.md'],
+      ['Bugs/v1 .md', 'Bugs/v1  copy.md'],
+    ]) {
+      const repairs = idRepairs(
+        [noteRow(copy ?? '', 'id: BUG-1'), noteRow(original ?? '', 'id: BUG-1')],
+        'id',
+        'BUG',
+        false,
+      )
+      expect(repairs.map((one) => one.row.path)).toEqual([copy])
+    }
+  })
+
+  test('devices that spell a name differently on disk still pick the same twin', () => {
+    // A `:` is `_` on a Mac and on Windows, and a Mac may hold a name decomposed.
+    const spelled = {
+      linux: { X: 'Bugs/Meeting: Q3.md', Y: 'Bugs/MeetingA.md', Z: 'Bugs/\u00dcbel.md' },
+      mac: { X: 'Bugs/Meeting_ Q3.md', Y: 'Bugs/MeetingA.md', Z: 'Bugs/U\u0308bel.md' },
+    }
+    let ids: Record<string, string> = { X: 'BUG-45', Y: 'BUG-45', Z: 'BUG-45' }
+    const seenOn = (device: 'linux' | 'mac') =>
+      (['X', 'Y', 'Z'] as const).map((note) =>
+        noteRow(spelled[device][note], { id: ids[note] ?? '' }, { ctime: 1 }),
+      )
+    const noteOf = (device: 'linux' | 'mac', path: string) =>
+      (['X', 'Y', 'Z'] as const).find((note) => spelled[device][note] === path)
+
+    for (let round = 0; round < 3; round++) {
+      const linux = idRepairs(seenOn('linux'), 'id', 'BUG', false)
+      const mac = idRepairs(seenOn('mac'), 'id', 'BUG', false)
+      const named = (device: 'linux' | 'mac', out: typeof linux) =>
+        out.map((one) => [noteOf(device, one.row.path), one.id])
+      expect(named('linux', linux)).toEqual(named('mac', mac))
+      const next = { ...ids }
+      for (const [note, id] of [...named('linux', linux), ...named('mac', mac)])
+        if (note && id) next[note] = id
+      ids = next
+    }
+    expect(new Set(Object.values(ids)).size).toBe(3)
   })
 
   test('turned on, every row without one is numbered in the order they were made', () => {

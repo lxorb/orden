@@ -3,9 +3,9 @@
  *
  *  The next id is one more than the highest the rows hold, so an id is never handed out
  *  twice while its row exists. Two devices offline can both make 45; whoever looks
- *  first after the second sync renumbers one of them (`idRepairs`), always the younger
- *  row, so both devices pick the same one and the older row keeps the id people may
- *  already have written down. Pure. */
+ *  first after the second sync renumbers one of them (`idRepairs`). Which one is decided
+ *  by the note's path, spelled the same way on every disk: a file's creation time is
+ *  each disk's own and sync does not carry it (B552). Pure. */
 
 import type { Row, Value } from './types'
 
@@ -36,31 +36,74 @@ export function nextId(rows: readonly Row[], property: string, prefix: string): 
   return idText(prefix, highest + 1)
 }
 
-/** Older first: created earlier, then by path, so every device orders them alike. */
-const older = (a: Row, b: Row) => a.file.ctime - b.file.ctime || a.path.localeCompare(b.path)
+/** What Windows holds in no name, beside the control characters. */
+const FORBIDDEN = '<>:"\\|?*'
 
-/** The ids to write so that every row has one and no two share one: a row without
- *  one gets the next, in the order the rows were made, and of two rows sharing one
- *  the younger gets the next. `missing` false leaves rows without one alone, which is
- *  what looking does; turning ids on gives every row one. */
+/** A path's folders and name as every device spells them: each disk writes a name it cannot hold its own
+ *  way (a `:` as `_` on a Mac, `<>:"\|?*` and a trailing dot or space as `_` on
+ *  Windows; sync2/places.ts `localName`), a Mac may hold it decomposed, and a disk may
+ *  fold case. Without its `.md`, so a copy, `Crash copy` or `Crash 2`, comes after the
+ *  note it was copied from (`Crash`). */
+function spelledAlike(path: string): string[] {
+  const names = path
+    .normalize('NFC')
+    .split('/')
+    .map((name) =>
+      Array.from(name, (char) => (char < ' ' || FORBIDDEN.includes(char) ? '_' : char))
+        .join('')
+        .replace(/[. ]+$/, (tail) => '_'.repeat(tail.length))
+        .toLowerCase(),
+    )
+  // The ending goes after the disk's spelling, which reads the whole name: `v1..md`
+  // keeps its dot before `.md`, and so comes before its copy `v1. copy.md`.
+  const last = names.length - 1
+  names[last] = (names[last] ?? '').replace(/\.md$/, '')
+  return names
+}
+
+/** By code unit rather than by this device's locale, so every device orders alike. */
+const byCode = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
+
+/** By that spelling, one folder or name at a time, so a copied folder comes after the
+ *  one it was copied from as a copied name does (`Projects/X` before `Projects copy/X`,
+ *  where the whole path would put the space before the `/`); the path as this disk has
+ *  it only breaks a tie. */
+function byPath(a: Row, b: Row): number {
+  const one = spelledAlike(a.path)
+  const other = spelledAlike(b.path)
+  for (let at = 0; at < Math.min(one.length, other.length); at++) {
+    const order = byCode(one[at] ?? '', other[at] ?? '')
+    if (order) return order
+  }
+  return one.length - other.length || byCode(a.path, b.path)
+}
+
+/** Older first on this disk, for rows only this device numbers. */
+const older = (a: Row, b: Row) => a.file.ctime - b.file.ctime || byPath(a, b)
+
+/** The ids to write so that every row has one and no two share one: of two rows
+ *  sharing one the later by path gets the next, in path order, so every device writes
+ *  the same; then a row without one gets the next, in the order the rows were made.
+ *  `missing` false leaves rows without one alone, which is what looking does; turning
+ *  ids on gives every row one. */
 export function idRepairs(
   rows: readonly Row[],
   property: string,
   prefix: string,
   missing = true,
 ): { row: Row; id: string }[] {
-  const notes = rows.filter((row) => row.kind === 'note').sort(older)
+  const notes = rows.filter((row) => row.kind === 'note').sort(byPath)
   let next = idNumber(nextId(notes, property, prefix), prefix) ?? 1
   const seen = new Set<number>()
-  const out: { row: Row; id: string }[] = []
+  const twins: Row[] = []
+  const without: Row[] = []
   for (const row of notes) {
     const number = idNumber(row.note[property], prefix)
-    if (number !== null && !seen.has(number)) {
-      seen.add(number)
-      continue
-    }
-    if (number === null && !missing) continue
-    out.push({ row, id: idText(prefix, next++) })
+    if (number === null) without.push(row)
+    else if (seen.has(number)) twins.push(row)
+    else seen.add(number)
   }
+  const out = twins.map((row) => ({ row, id: idText(prefix, next++) }))
+  if (missing) for (const row of without.sort(older)) out.push({ row, id: idText(prefix, next++) })
   return out
 }

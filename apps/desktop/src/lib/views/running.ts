@@ -2,11 +2,12 @@
  *  looked at once it settles, and the repeating templates. Plain state, kept apart from
  *  the runes that wire it to the app. See runner.svelte.ts for the why. */
 
-import { readBase, readAutomations, repeatDue, type Row } from '@nib/bases'
+import { idNumber, inBase, readBase, readAutomations, repeatDue, type Row } from '@nib/bases'
 import { withProperties } from '@nib/bases/agent'
 import { insideOnly } from '../automation/inside'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'
+import { noteRowsOf, type RowsChange } from '../rows/store'
 import { canWriteAt } from '../sharing.svelte'
 import { insideSpace, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
@@ -15,6 +16,8 @@ import { writeFile } from '../workspace/write-file'
 import { writeEach } from './act'
 import { type HeldBase, planned } from './automate'
 import { contextFor } from './context'
+import { leaveIdsBy } from './copied'
+import { landing, onLanded } from './moving'
 import { nowHere, todayHere } from './days'
 import { templatesFolder, templateWords } from './templates'
 
@@ -28,11 +31,22 @@ export function basesAre(paths: readonly string[]) {
 }
 
 /** Whether any base is worth running at all. */
-export const running = (): boolean => held.size > 0
+const running = (): boolean => held.size > 0
 /** Notes the runner just wrote, whose next change is its own. */
 const ours = new Set<string>()
-/** Notes waiting for their quiet moment, with the rows they had before it. */
-const waiting = new Map<string, { removed: readonly Row[]; timer: ReturnType<typeof setTimeout> }>()
+/** Notes waiting for their quiet moment, with the rows they had before it. One written
+ *  where a move under way is going has no timer yet: it waits at `at`, its path on
+ *  disk, for the move to be told or to be over (moving.ts). */
+const waiting = new Map<
+  string,
+  {
+    space: string
+    path: string
+    removed: readonly Row[]
+    timer?: ReturnType<typeof setTimeout>
+    at?: string
+  }
+>()
 
 /** How long a note is left to settle before its bases look at it: long enough for the
  *  write that changed it to have finished recording its undo, so the runner's write can
@@ -68,6 +82,36 @@ export async function readHeld(path: string): Promise<void> {
 function rowsOf(space: string, path: string): readonly Row[] {
   return rows.of(space).filter((row) => row.path === path)
 }
+
+/** The space holding a path, and the bases of it that number their rows. */
+function numbering(path: string) {
+  const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
+  const bases = space
+    ? [...held.values()].filter((one) => one.space === space.name && one.base.nib.id)
+    : []
+  return { space, bases }
+}
+
+/** A copy's words without the ids of the bases it is a row of where it landed, or null
+ *  where it holds none. A copy outside every base keeps its id: nothing reads it as a
+ *  row, and a base without a prefix reads any number as one of its ids. See
+ *  `idsLeftBehind` in workspace/copying.ts. */
+function withoutIds(path: string, text: string): string | null {
+  const { space, bases } = numbering(path)
+  const relative = space && within(space.root, path, space.root)
+  if (!space || !relative || !bases.length) return null
+  const row = noteRowsOf(space.name, relative, text).find((one) => one.kind === 'note')
+  if (!row) return null
+  const context = contextFor({ rows: rows.of(space.name), today: todayHere(), now: nowHere() })
+  const gone: Record<string, null> = {}
+  for (const one of bases) {
+    const id = one.base.nib.id
+    if (id && idNumber(row.note[id.property], id.prefix) !== null && inBase(one.base, row, context))
+      gone[id.property] = null
+  }
+  return Object.keys(gone).length ? withProperties(text, gone) : null
+}
+leaveIdsBy({ numbers: (path) => numbering(path).bases.length > 0, without: withoutIds })
 
 /** A base's automations, run on a note of its space that changed. Not in a space
  *  shared with this account to be read: what they write and move would be refused by
@@ -114,20 +158,64 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   }
 }
 
-/** A note's rows changed: looked at once they settle, unless the change is the runner's. */
-export function heard(space: string, path: string, removed: readonly Row[]) {
-  const key = keyOf(space, path)
-  if (ours.delete(key)) return
-  const was = waiting.get(key)
-  if (was) clearTimeout(was.timer)
-  const before = was?.removed ?? removed
+/** A change the rows store told: a note's, with a note row after it, is heard. A note
+ *  renamed or moved is heard as it was where it came from, so its bases see a move,
+ *  not a note just made (B551). */
+export function heardChange(change: RowsChange) {
+  if (change.path === null || !running()) return
+  if (!change.added.some((row) => row.kind === 'note')) return
+  if (change.from) heard(change.space, change.path, change.from.rows, change.from)
+  else {
+    const at = insideSpace(change.root, change.path)
+    heard(change.space, change.path, change.removed, undefined, landing(at) ? at : undefined)
+  }
+}
+
+/** Looks at a note once it has settled. */
+function settling(key: string, space: string, path: string, before: readonly Row[]) {
   waiting.set(key, {
+    space,
+    path,
     removed: before,
     timer: setTimeout(() => {
       waiting.delete(key)
       void run(space, path, before)
     }, SETTLE),
   })
+}
+
+// A move that is over without telling where a note waiting for it went: the note is
+// looked at as what it is.
+onLanded(() => {
+  for (const [key, one] of waiting) {
+    if (one.at !== undefined && !landing(one.at)) settling(key, one.space, one.path, one.removed)
+  }
+})
+
+/** A note's rows changed: looked at once they settle, unless the change is the runner's.
+ *  `from` is where a moved note was: what it was there, still waiting to be looked at,
+ *  is what it was before, and what a save at its new path told first is not. `at` is
+ *  the note's path on disk where a move under way is going there: it waits for it. */
+export function heard(
+  space: string,
+  path: string,
+  removed: readonly Row[],
+  from?: { space: string; path: string },
+  at?: string,
+) {
+  const key = keyOf(space, path)
+  const left = from && keyOf(from.space, from.path)
+  const there = left === undefined ? undefined : waiting.get(left)
+  if (left !== undefined && there) {
+    clearTimeout(there.timer)
+    waiting.delete(left)
+  }
+  if (ours.delete(key)) return
+  const was = waiting.get(key)
+  if (was) clearTimeout(was.timer)
+  const before = there?.removed ?? (from ? removed : (was?.removed ?? removed))
+  if (at === undefined) settling(key, space, path, before)
+  else waiting.set(key, { space, path, removed: before, at })
 }
 
 // ---- repeating templates ------------------------------------------------------------

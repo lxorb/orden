@@ -200,6 +200,42 @@ describe('the rows of every space', () => {
     expect(store.of().map((row) => row.file.ctime)).toEqual([1, 1])
   })
 
+  test('a renamed or moved note says where it was, so it is not taken for a note just made', async () => {
+    const { store, heard, settled } = rig(
+      { [`${WORK}/Projects/Launch.md`]: '---\nstatus: Doing\n---\n' },
+      WORK,
+    )
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    heard.length = 0
+
+    void store.follow({
+      op: 'moved',
+      from: `${WORK}/Projects/Launch.md`,
+      to: `${WORK}/Projects/Launch v2.md`,
+      kind: 'file',
+      root: WORK,
+    })
+    const there = heard.find((one) => one.path === 'Projects/Launch v2.md')
+    expect(there?.added).toHaveLength(1)
+    expect(there?.from).toMatchObject({ space: 'Work', path: 'Projects/Launch.md' })
+    expect(there?.from?.rows[0]?.note).toEqual({ status: 'Doing' })
+
+    heard.length = 0
+    void store.follow({
+      op: 'moved',
+      from: `${WORK}/Projects`,
+      to: `${WORK}/Archive/Projects`,
+      kind: 'folder',
+      root: WORK,
+    })
+    const moved = heard.find((one) => one.path === 'Archive/Projects/Launch v2.md')
+    expect(moved?.from?.path).toBe('Projects/Launch v2.md')
+    // A note only written is told without one.
+    store.saved(`${WORK}/New.md`, 'x\n')
+    expect(heard.at(-1)?.from).toBeUndefined()
+  })
+
   test('a note made, moved into a folder and removed takes its rows each way', async () => {
     const { store, disk, settled } = rig({}, WORK)
     store.spacesAre([{ root: WORK, name: 'Work' }])

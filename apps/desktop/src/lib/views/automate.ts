@@ -1,6 +1,6 @@
 /** What a base does by itself when one of its rows changes (docs/tasks.md 5.12, 5.13):
  *  its automations, and its ids - the next one for a row just made without one, and a
- *  fresh one for the younger of two rows two devices numbered alike while offline.
+ *  fresh one for the later by path of two rows two devices numbered alike offline.
  *
  *  Pure: handed the bases of the space, the one note's rows before and after, every row
  *  of the space and the clock, it answers what to write, what to move and what to say.
@@ -43,7 +43,8 @@ function ownRows(base: Base, all: readonly Row[], context: Context): Row[] {
 }
 
 /** Everything the space's bases do because the note whose rows were `removed` now has
- *  the rows `added`. */
+ *  the rows `added`. For a note renamed or moved, `removed` is what it was where it
+ *  came from (B551), which is an add only to a base it was not in. */
 export function planned(
   bases: readonly HeldBase[],
   removed: readonly Row[],
@@ -63,8 +64,17 @@ export function planned(
 
   for (const held of bases) {
     if (held.space !== after.space || !inBase(held.base, after, context)) continue
+    // A note renamed or moved within the base is the row it was; one moved in from
+    // outside it, or from another space, is a row the base has just been given. An
+    // edit that brings a note into the base is a change to it, as it always was.
+    const moved =
+      before !== undefined && (before.path !== after.path || before.space !== after.space)
+    const was =
+      moved && !(before.space === held.space && inBase(held.base, before, context))
+        ? undefined
+        : before
 
-    const effect = fired(readAutomations(held.base), before, after, filling)
+    const effect = fired(readAutomations(held.base), was, after, filling)
     if (effect) {
       if (Object.keys(effect.set).length) set(after, effect.set)
       if (effect.move !== undefined) out.moves.push({ row: after, folder: effect.move })
@@ -74,7 +84,7 @@ export function planned(
     const id = held.base.nib.id
     if (!id) continue
     const own = ownRows(held.base, all, context)
-    if (before === undefined && idNumber(after.note[id.property], id.prefix) === null) {
+    if (was === undefined && idNumber(after.note[id.property], id.prefix) === null) {
       set(after, { [id.property]: nextId(own, id.property, id.prefix) })
     }
     for (const { row, id: next } of idRepairs(own, id.property, id.prefix, false)) {

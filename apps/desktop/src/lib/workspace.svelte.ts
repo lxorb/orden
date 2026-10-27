@@ -2730,31 +2730,36 @@ class Workspace {
       // write of those held until the documents have been told where they went; see
       // `holdingUnder` in workspace/saving.svelte.ts. Unnesting is a move of its
       // own, so it comes after the hold rather than inside it.
-      await this.saving.holdingUnder(from, async () => {
-        // And back where it was if the move did not happen - something already
-        // there, a file that has gone. The listing is what the tree really is, and
-        // until it is read again the row is sitting in a folder that does not hold
-        // it; see `remove`, which puts a row back the same way.
-        try {
-          await invoke('rename_note', { from, to: target })
-        } catch (error) {
-          await back()
-          await this.loadTree()
-          throw error
-        }
+      // Said to be under way until it is told, so the rewrite's write of the note at
+      // its new path is not taken for a note just made; see views/moving.ts.
+      const { moving } = await import('./views/moving')
+      await moving(target, () =>
+        this.saving.holdingUnder(from, async () => {
+          // And back where it was if the move did not happen - something already
+          // there, a file that has gone. The listing is what the tree really is, and
+          // until it is read again the row is sitting in a folder that does not hold
+          // it; see `remove`, which puts a row back the same way.
+          try {
+            await invoke('rename_note', { from, to: target })
+          } catch (error) {
+            await back()
+            await this.loadTree()
+            throw error
+          }
 
-        // A note that moved is a note every link to it has to be pointed at again;
-        // see `renameFile`, including why this comes before everything is told.
-        const rewrote = (await this.retarget(from, target, { moved: true })) > 0
-        this.undone.record({
-          kind: 'move',
-          from,
-          to: target,
-          ...(rewrote ? { rewrote } : {}),
-          ...(how ? { [how]: true } : {}),
-        })
-        await this.fileMoved(from, target, kind)
-      })
+          // A note that moved is a note every link to it has to be pointed at again;
+          // see `renameFile`, including why this comes before everything is told.
+          const rewrote = await this.retargetMoved(from, target)
+          this.undone.record({
+            kind: 'move',
+            from,
+            to: target,
+            ...(rewrote ? { rewrote } : {}),
+            ...(how ? { [how]: true } : {}),
+          })
+          await this.fileMoved(from, target, kind)
+        }),
+      )
       await this.loadTree()
       await this.unnest(folderOf(from))
     })
@@ -4222,6 +4227,12 @@ class Workspace {
    *  did; only the first is a step to undo and a heading to rewrite. `hold`: a PDF
    *  turned into its page note; see `rename_note`. */
   private async renameFile(path: string, target: string, undoable: boolean, hold = false) {
+    // Under way until it is told; see `move`.
+    const { moving } = await import('./views/moving')
+    await moving(target, () => this.renamingFile(path, target, undoable, hold))
+  }
+
+  private async renamingFile(path: string, target: string, undoable: boolean, hold: boolean) {
     const kind = this.kindAt(path)
 
     // The new name is on the row before the rename has happened; the listing
@@ -4244,7 +4255,7 @@ class Workspace {
     // Every link to the note now points at a name nothing answers to, so they
     // are rewritten, silently, as Obsidian does. Recorded on the action so that
     // undoing the rename undoes the rewrite with it.
-    const rewrote = (await this.retarget(path, target, { moved: true })) > 0
+    const rewrote = await this.retargetMoved(path, target)
     if (undoable) {
       this.undone.record({
         kind: 'rename',
@@ -4278,6 +4289,19 @@ class Workspace {
     await this.fileMoved(path, target, kind)
     await this.loadTree()
     this.persist()
+  }
+
+  /** Every link to a note that has moved pointed at it again; whether any was. A rewrite
+   *  that fails leaves the note moved all the same, so the move goes on as one: told, a
+   *  step to undo, and the tree read again; with nothing said to have been rewritten, so
+   *  the undo points no link that was already dangling at the old name. Otherwise the rows would hold it at both paths and take it for a new note. */
+  private async retargetMoved(from: string, to: string): Promise<boolean> {
+    try {
+      return (await this.retarget(from, to, { moved: true })) > 0
+    } catch (error) {
+      log('error', `links to ${from} not rewritten after its move to ${to} - ${String(error)}`)
+      return false
+    }
   }
 
   /** Whether a row is a folder or a file, asked before it moves. */
