@@ -57,6 +57,8 @@ export function changeOf(task: TaskRow, entry: Entry): TaskChange {
   const keptLow = task.priority > 4 && (fields.priority ?? 4) === 4
   const change: TaskChange = {
     ...(unchanged ? {} : { text: editedWords(task.text, entry.text) }),
+    // A task with no day keeps its repeat and time (a deadline alone), unless the last
+    // date it had goes, which takes them with it (`changedTask`).
     ...changeFor(task, {
       due: fields.due ?? null,
       time: fields.time ?? null,

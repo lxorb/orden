@@ -9,7 +9,7 @@
 
 import { addDays, parseRule, type Row, ruleText, type TaskChange, weekday } from '@nib/bases'
 import { parseQuickAdd } from '@nib/bases/language'
-import { dayOf, type DueReads, startField } from '@nib/markdown/task-dates'
+import { dayOf, type DueReads, startField, startOf } from '@nib/markdown/task-dates'
 
 /** What a pick says about a task's day: null takes the field away, absent leaves it.
  *  `due` is the day picked, which is the day the task starts (#371). */
@@ -144,6 +144,9 @@ export function changeFor(task: Dated | null, picked: Scheduled): TaskChange {
   const reads = task?.dueReads ?? 'start'
   const field = task ? startField(task, reads) : 'start'
   if (picked.due === null) {
+    // A task with no day (a deadline alone, or no date at all) has none to take away,
+    // so its time and its repeat stay as they are.
+    if (task && (startOf(task, reads) ?? task.scheduled) === undefined) return {}
     const out: TaskChange = { [field]: null, time: null, recurrence: null }
     // Whatever would be read as its start once that is gone, goes with it.
     if (task?.start !== undefined) out.start = null
