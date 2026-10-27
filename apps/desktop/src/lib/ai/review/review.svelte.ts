@@ -111,6 +111,9 @@ class Review {
    *  word; off unless the reader turns it on). */
   readonly following = new SvelteSet<string>()
 
+  /** The newest edit heard in each note, by agent and note: what tells an edit landing
+   *  from one taken back, for Follow. */
+  private readonly landed = new Map<string, { id: string; at: number }>()
   private marked = new WeakSet<NoteDoc>()
   private readonly draw = onceAFrame(() => this.pushMarks())
   private saidTimer: ReturnType<typeof setTimeout> | undefined
@@ -276,10 +279,17 @@ class Review {
    *  never moves the reader there (docs/agent-native.md 8.6). */
   private follow(agent: string, path: string): void {
     const provider = providerOf(agent)
-    if (!this.following.size || provider === null || path.startsWith('unsaved:')) return
-    const last = tracksOf(agent).get(path)?.ids.at(-1)
-    const thread =
-      (last ? tracksOf(agent).get(path)?.threadOf(last) : null) ?? answeringAt(provider, Date.now())
+    // Heard for a step taken back as well as for one made: only an edit newer than any
+    // heard before in the note is one landing.
+    const track = tracksOf(agent).get(path)
+    const last = track?.ids.at(-1)
+    const key = `${agent}\n${path}`
+    const seen = this.landed.get(key)
+    const at = last && track ? track.madeAt(last) : 0
+    const landing = !!last && last !== seen?.id && at >= (seen?.at ?? 0)
+    if (landing) this.landed.set(key, { id: last, at })
+    if (!landing || !this.following.size || provider === null || path.startsWith('unsaved:')) return
+    const thread = track?.threadOf(last) ?? answeringAt(provider, Date.now())
     const root = workspace.activeSpace?.root
     if (!thread || !this.following.has(thread) || !root || withinSpace(root, path) === null) return
     if (workspace.active?.path !== path) void workspace.open(path)

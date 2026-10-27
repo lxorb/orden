@@ -133,7 +133,7 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   const to = movedPath(from, judgedForWriting(need(call, 'to')), entry.is_dir)
 
   // Said with the space, so a later Undo moves it back there (lib/ai/review/files.ts).
-  if (to === from) return done({ from, to, space: place.space.name })
+  if (to === from) return done({ from, to, space: place.space.id })
   if (entry.is_dir && to.startsWith(`${from}/`)) {
     throw new Refused('bad_arguments', `${from} cannot go inside itself`)
   }
@@ -150,7 +150,7 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   if (place.open) await movedIn(place.space.root, from, to)
   else await movedAway(place, source, onDisk(place, to), entry.is_dir)
 
-  return done({ from, to, space: place.space.name })
+  return done({ from, to, space: place.space.id })
 }
 
 /** A move in a space the reader is not in: the same obligations the tree's own rename
@@ -205,7 +205,7 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
 
   await workspace.remove(path, entry.is_dir, sourceOf(call))
 
-  return done({ path: relative, trashed: true, space: place.space.name })
+  return done({ path: relative, trashed: true, space: place.space.id })
 }
 
 export async function createFolder(call: Call): Promise<AgentAnswer> {

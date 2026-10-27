@@ -266,7 +266,7 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
   // Said with the space it was made in: one the call did not name is the one in front,
   // which a rewind of the thread later finds here rather than in the thread's own.
   const answer = await made(place, relative, wordsSent(call) ?? '', flag(call, 'open'))
-  return done({ ...answer, space: place.space.name })
+  return done({ ...answer, space: place.space.id })
 }
 
 /** A new note, written where it goes. Opened behind the tab in front when asked, and

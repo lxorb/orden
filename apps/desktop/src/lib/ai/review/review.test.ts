@@ -34,6 +34,8 @@ vi.mock('../../workspace.svelte', () => ({
     spaces: [
       { id: 's1', name: 'Space', root: '/space' },
       { id: 's2', name: 'Other', root: '/other' },
+      // On Linux a space can differ from another only by case.
+      { id: 's3', name: 'space', root: '/space2' },
     ],
     noteText: (path: string) =>
       fake.unreadable.has(path) ? Promise.resolve(null) : fake.desk.desk.noteText(path),
@@ -338,7 +340,7 @@ describe('a call made in the space in front, not the thread’s', () => {
       thread,
       'make',
       [],
-      tool('create_note', { path: 'Made' }, '{"path":"Made.md","created":true,"space":"Other"}'),
+      tool('create_note', { path: 'Made' }, '{"path":"Made.md","created":true,"space":"s2"}'),
     )
     await review.rewind(thread, 'make', 'notes', null)
     expect(fake.removed).toEqual(['/other/Made.md'])
@@ -357,11 +359,40 @@ describe('a call made in the space in front, not the thread’s', () => {
       tool(
         'move_file',
         { path: 'A.md', to: 'B.md' },
-        '{"from":"A.md","to":"B.md","space":"Other"}',
+        '{"from":"A.md","to":"B.md","space":"s2"}',
       ),
     )
     await review.undoFiles(thread, review.files(thread))
     expect(fake.moves).toEqual([['/other', 'B.md', 'A.md']])
+  })
+
+  test('a space only the case of a name tells from another is still the one it ran in', async () => {
+    fake.desk = deskWith({ 'Made.md': 'the reader’s own words' })
+    fake.desk.disk.set('/space2/Made.md', 'the agent’s words')
+    fake.documents = []
+    fake.removed = []
+    const thread = { ...aThread(), space: 's3' }
+    // By id, as the verbs answer now, and by its exact name, as a call that named it did.
+    await message(
+      thread,
+      'by id',
+      [],
+      tool('create_note', { path: 'Made' }, '{"path":"Made.md","created":true,"space":"s3"}'),
+    )
+    await review.rewind(thread, 'by id', 'notes', null)
+    expect(fake.removed).toEqual(['/space2/Made.md'])
+
+    fake.desk.disk.set('/space2/Made.md', 'the agent’s words')
+    fake.removed = []
+    await message(
+      thread,
+      'by name',
+      [],
+      tool('create_note', { path: 'Made', space: 'space' }, '{"path":"Made.md","created":true}'),
+    )
+    await review.rewind(thread, 'by name', 'notes', null)
+    expect(fake.removed).toEqual(['/space2/Made.md'])
+    expect(fake.desk.fileOf('Made.md')).toBe('the reader’s own words')
   })
 
   test('a space named in another case is that space', async () => {
@@ -464,6 +495,24 @@ describe('Follow', () => {
     review.toggleFollow(thread)
     await message(thread, 'loud', [{ path: 'g.md', at: { quote: 'two' }, replace: 'TWO' }])
     expect(fake.opened).toEqual(['/space/g.md'])
+    review.toggleFollow(thread)
+  })
+
+  /** A step taken back is heard like one made: only an edit landing brings its note up. */
+  test('does not bring a note up when one of its edits is taken back', async () => {
+    fake.desk = deskWith({ 'h.md': 'one two' })
+    fake.documents = []
+    const thread = aThread()
+    review.toggleFollow(thread)
+    await message(thread, 'edit', [
+      { path: 'h.md', at: { quote: 'one' }, replace: 'ONE' },
+      { path: 'h.md', at: { quote: 'two' }, replace: 'TWO' },
+    ])
+    fake.opened = []
+    const [first] = review.changes(thread)
+    if (!first) throw new Error('changed')
+    await review.undo([first])
+    expect(fake.opened).toEqual([])
     review.toggleFollow(thread)
   })
 })

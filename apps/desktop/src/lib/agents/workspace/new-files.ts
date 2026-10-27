@@ -98,6 +98,6 @@ export async function createFile(
   // Said with the space, which a call that named none does not know (notes.ts).
   return done({
     ...(await make(place, relative, words, flag(call, 'open'))),
-    space: place.space.name,
+    space: place.space.id,
   })
 }

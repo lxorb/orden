@@ -571,7 +571,7 @@ describe('another space, without switching', () => {
   test('the space that is open takes the tree own rename', async () => {
     // Said with the space it ran in, which a later Undo moves it back in.
     expect(await call('move_file', { path: 'Plan.md', to: 'Old plan' })).toMatchObject({
-      result: { from: 'Plan.md', to: 'Old plan.md', space: 'Work' },
+      result: { from: 'Plan.md', to: 'Old plan.md', space: 'work' },
     })
     expect(workspace.rename).toHaveBeenCalledWith('/s/Work/Plan.md', 'Old plan.md')
   })
@@ -643,7 +643,7 @@ describe('the tree', () => {
       code: 'rev_changed',
     })
     expect(await call('trash_file', { space: 'Home', path: 'Soup' })).toMatchObject({
-      result: { path: 'Soup.md', trashed: true, space: 'Home' },
+      result: { path: 'Soup.md', trashed: true, space: 'home' },
     })
     expect(workspace.remove).toHaveBeenCalledWith('/s/Home/Soup.md', false, 'Claude Code')
   })
@@ -983,10 +983,10 @@ describe('the notes, on the road', () => {
 
   test('a new note says the space it was made in, the one in front where none was named', async () => {
     expect(await call('create_note', { path: 'Fresh' })).toMatchObject({
-      result: { path: 'Fresh.md', created: true, space: 'Work' },
+      result: { path: 'Fresh.md', created: true, space: 'work' },
     })
     expect(await call('create_note', { path: 'boards/Map.canvas', space: 'home' })).toMatchObject({
-      result: { path: 'boards/Map.canvas', created: true, space: 'Home' },
+      result: { path: 'boards/Map.canvas', created: true, space: 'home' },
     })
   })
 
