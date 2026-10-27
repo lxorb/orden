@@ -2694,4 +2694,5 @@ export const ptBR: Dictionary = {
   'Move the chats {names} to {space}?': 'Mover as conversas {names} para {space}?',
   'Move the chat': 'Mover a conversa',
   'Only the file': 'Só o arquivo',
+  'Trust this space again': 'Confiar neste espaço de novo',
 }

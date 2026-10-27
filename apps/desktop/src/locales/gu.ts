@@ -2629,4 +2629,5 @@ export const gu: Dictionary = {
   'Move the chats {names} to {space}?': 'ચેટ {names} ને {space} માં ખસેડવી?',
   'Move the chat': 'ચેટ ખસેડો',
   'Only the file': 'ફક્ત ફાઇલ',
+  'Trust this space again': 'આ સ્પેસ પર ફરી વિશ્વાસ કરો',
 }

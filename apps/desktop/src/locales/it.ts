@@ -2719,4 +2719,5 @@ export const it: Dictionary = {
   'Move the chats {names} to {space}?': 'Spostare le chat {names} in {space}?',
   'Move the chat': 'Sposta la chat',
   'Only the file': 'Solo il file',
+  'Trust this space again': 'Fidati di nuovo di questo spazio',
 }

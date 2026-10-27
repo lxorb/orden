@@ -2656,4 +2656,5 @@ export const te: Dictionary = {
   'Move the chats {names} to {space}?': 'చాట్‌లు {names} ను {space} కి తరలించాలా?',
   'Move the chat': 'చాట్‌ను తరలించు',
   'Only the file': 'ఫైల్ మాత్రమే',
+  'Trust this space again': 'ఈ స్పేస్‌ను మళ్లీ నమ్మండి',
 }

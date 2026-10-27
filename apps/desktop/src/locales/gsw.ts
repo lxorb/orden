@@ -2663,4 +2663,5 @@ export const gsw: Dictionary = {
   'Move the chats {names} to {space}?': 'Chats {names} uf {space} verschiebe?',
   'Move the chat': 'Chat verschiebe',
   'Only the file': 'Nur d Datei',
+  'Trust this space again': 'Däm Bereich wider vertroue',
 }

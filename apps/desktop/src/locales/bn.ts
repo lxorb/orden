@@ -2639,4 +2639,5 @@ export const bn: Dictionary = {
   'Move the chats {names} to {space}?': 'চ্যাট {names} {space}-এ সরাবেন?',
   'Move the chat': 'চ্যাট সরান',
   'Only the file': 'শুধু ফাইল',
+  'Trust this space again': 'এই স্পেসে আবার ভরসা করুন',
 }

@@ -2616,4 +2616,5 @@ export const ja: Dictionary = {
   'Move the chats {names} to {space}?': 'チャット {names} を {space} へ移動しますか？',
   'Move the chat': 'チャットを移動',
   'Only the file': 'ファイルのみ',
+  'Trust this space again': 'このスペースを再び信頼する',
 }

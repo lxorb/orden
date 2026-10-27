@@ -2604,4 +2604,5 @@ export const ko: Dictionary = {
   'Move the chats {names} to {space}?': '채팅 {names}을(를) {space}(으)로 옮길까요?',
   'Move the chat': '채팅 옮기기',
   'Only the file': '파일만',
+  'Trust this space again': '이 공간을 다시 신뢰',
 }

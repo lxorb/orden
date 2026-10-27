@@ -2672,4 +2672,5 @@ export const kn: Dictionary = {
   'Move the chats {names} to {space}?': 'ಚಾಟ್‌ಗಳು {names} ಅನ್ನು {space} ಗೆ ಸರಿಸಬೇಕೆ?',
   'Move the chat': 'ಚಾಟ್ ಸರಿಸಿ',
   'Only the file': 'ಫೈಲ್ ಮಾತ್ರ',
+  'Trust this space again': 'ಈ ಸ್ಪೇಸ್ ಅನ್ನು ಮತ್ತೆ ನಂಬಿ',
 }

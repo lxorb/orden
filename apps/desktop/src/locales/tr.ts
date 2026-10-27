@@ -2657,4 +2657,5 @@ export const tr: Dictionary = {
   'Move the chats {names} to {space}?': '{names} sohbetleri {space} alanına taşınsın mı?',
   'Move the chat': 'Sohbeti taşı',
   'Only the file': 'Yalnızca dosya',
+  'Trust this space again': 'Bu alana yeniden güven',
 }

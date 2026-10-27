@@ -2650,4 +2650,5 @@ export const pa: Dictionary = {
   'Move the chats {names} to {space}?': 'ਚੈਟਾਂ {names} ਨੂੰ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
   'Move the chat': 'ਚੈਟ ਭੇਜੋ',
   'Only the file': 'ਸਿਰਫ਼ ਫ਼ਾਈਲ',
+  'Trust this space again': 'ਇਸ ਸਪੇਸ ਉੱਤੇ ਮੁੜ ਭਰੋਸਾ ਕਰੋ',
 }

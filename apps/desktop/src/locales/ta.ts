@@ -2688,4 +2688,5 @@ export const ta: Dictionary = {
   'Move the chats {names} to {space}?': 'அரட்டைகள் {names} ஐ {space} க்கு நகர்த்தவா?',
   'Move the chat': 'அரட்டையை நகர்த்து',
   'Only the file': 'கோப்பு மட்டும்',
+  'Trust this space again': 'இந்த இடத்தை மீண்டும் நம்பு',
 }

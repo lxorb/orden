@@ -2729,4 +2729,5 @@ export const uk: Dictionary = {
   'Move the chats {names} to {space}?': 'Перемістити чати {names} до {space}?',
   'Move the chat': 'Перемістити чат',
   'Only the file': 'Лише файл',
+  'Trust this space again': 'Знову довіряти цьому простору',
 }

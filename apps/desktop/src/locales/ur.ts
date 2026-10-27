@@ -2637,4 +2637,5 @@ export const ur: Dictionary = {
   'Move the chats {names} to {space}?': 'چیٹس {names} کو {space} میں منتقل کریں؟',
   'Move the chat': 'چیٹ منتقل کریں',
   'Only the file': 'صرف فائل',
+  'Trust this space again': 'اس اسپیس پر دوبارہ بھروسا کریں',
 }

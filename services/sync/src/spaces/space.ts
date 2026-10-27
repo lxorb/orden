@@ -282,6 +282,66 @@ export async function sharedAmong(env: Env, spaceIds: readonly string[]): Promis
   return new Set(found.map((row) => row.space_id))
 }
 
+/** Writes down that somebody besides the owner may now write in a space, or in one
+ *  note of it where `item` names it. Kept after they leave, because their words stay:
+ *  what marks a space's words as somebody else's asks this as well as who is in it
+ *  now (`onceSharedAmong`, mcp/tools.ts `spacesFor`). See migrations/0065. */
+export async function onceShared(env: Env, spaceId: string, item = ''): Promise<void> {
+  await env.DB.prepare('insert or ignore into once_shared (space_id, item, at) values (?, ?, ?)')
+    .bind(spaceId, item, now())
+    .run()
+}
+
+/** Which of these spaces somebody besides the owner could once write in, and which
+ *  notes of them were once shared on their own. One query for the whole listing, the
+ *  way `sharedAmong` is. */
+export async function onceSharedAmong(
+  env: Env,
+  spaceIds: readonly string[],
+): Promise<{ spaces: Set<string>; items: Map<string, string[]> }> {
+  const spaces = new Set<string>()
+  const items = new Map<string, string[]>()
+  if (!spaceIds.length) return { spaces, items }
+
+  const found = await askInChunks(spaceIds, async (chunk) => {
+    const { results } = await env.DB.prepare(
+      `select space_id, item from once_shared where space_id in (${places(chunk.length)})`,
+    )
+      .bind(...chunk)
+      .all<{ space_id: string; item: string }>()
+
+    return results
+  })
+
+  for (const row of found) {
+    if (!row.item) {
+      spaces.add(row.space_id)
+      continue
+    }
+    const held = items.get(row.space_id) ?? []
+    if (held.length < MOST_ITEMS) held.push(row.item)
+    items.set(row.space_id, held)
+  }
+
+  return { spaces, items }
+}
+
+/** The owner saying a space's words are theirs again: what was kept of who could once
+ *  write in it goes, except for whoever is still in it. */
+export async function trustAgain(env: Env, spaceId: string): Promise<void> {
+  await env.DB.prepare(
+    `delete from once_shared
+      where space_id = ?1
+        and not exists (select 1 from space_members m
+                         where m.space_id = ?1 and m.item = once_shared.item)
+        and not exists (select 1 from guest_members g
+                         where g.space_id = ?1 and g.item = once_shared.item
+                           and g.joined_at is not null)`,
+  )
+    .bind(spaceId)
+    .run()
+}
+
 /** How many files of one space may be shared on their own. The sheet lists two
  *  hundred people, and this is the same number for the same reason: a space
  *  whose listing cannot name every share it has is a space whose owner cannot

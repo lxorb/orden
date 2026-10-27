@@ -2648,4 +2648,5 @@ export const fa: Dictionary = {
   'Move the chats {names} to {space}?': 'گفتگوهای {names} به {space} منتقل شوند؟',
   'Move the chat': 'انتقال گفتگو',
   'Only the file': 'فقط فایل',
+  'Trust this space again': 'دوباره به این فضا اعتماد کن',
 }

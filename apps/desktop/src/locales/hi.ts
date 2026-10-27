@@ -2640,4 +2640,5 @@ export const hi: Dictionary = {
   'Move the chats {names} to {space}?': 'चैट {names} को {space} में ले जाएँ?',
   'Move the chat': 'चैट ले जाएँ',
   'Only the file': 'सिर्फ़ फ़ाइल',
+  'Trust this space again': 'इस स्पेस पर फिर से भरोसा करें',
 }

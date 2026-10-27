@@ -2563,4 +2563,5 @@ export const zhHans: Dictionary = {
   'Move the chats {names} to {space}?': '将对话 {names} 移动到 {space}？',
   'Move the chat': '移动对话',
   'Only the file': '仅文件',
+  'Trust this space again': '再次信任此空间',
 }

@@ -2643,4 +2643,5 @@ export const ps: Dictionary = {
   'Move the chats {names} to {space}?': 'خبرې اترې {names} {space} ته وخوځول شي؟',
   'Move the chat': 'خبرې اترې وخوځوه',
   'Only the file': 'یوازې فایل',
+  'Trust this space again': 'په دې ځای بیا باور وکړئ',
 }

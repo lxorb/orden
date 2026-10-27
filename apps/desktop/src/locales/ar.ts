@@ -2756,4 +2756,5 @@ export const ar: Dictionary = {
   'Move the chats {names} to {space}?': 'أتنقل المحادثات {names} إلى {space}؟',
   'Move the chat': 'انقل المحادثة',
   'Only the file': 'الملف فقط',
+  'Trust this space again': 'الوثوق بهذه المساحة مجددًا',
 }

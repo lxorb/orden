@@ -2625,4 +2625,5 @@ export const jv: Dictionary = {
   'Move the chats {names} to {space}?': 'Pindhah obrolan {names} menyang {space}?',
   'Move the chat': 'Pindhah obrolan',
   'Only the file': 'Mung berkase',
+  'Trust this space again': 'Pitados papan iki maneh',
 }

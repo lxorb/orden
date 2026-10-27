@@ -146,13 +146,15 @@ export function marked(source: string | null, words: string): string {
 }
 
 /** The files of a space somebody holds on their own, by note id. The same rows the
- *  listing marks (`itemsSharedIn`): an invitation counts, a guest once joined. */
+ *  listing marks (`itemsSharedIn`): an invitation counts, a guest once joined. And
+ *  any somebody once held and has handed back (`once_shared`). */
 async function sharedItems(env: Env, space: Space): Promise<Set<string>> {
   if (!space.items) return new Set()
   const { results } = await env.DB.prepare(
     `select item from space_members where space_id = ?1 and item <> ''
      union select item from guest_members
-      where space_id = ?1 and item <> '' and joined_at is not null`,
+      where space_id = ?1 and item <> '' and joined_at is not null
+     union select item from once_shared where space_id = ?1 and item <> ''`,
   )
     .bind(space.id)
     .all<{ item: string }>()
@@ -178,17 +180,21 @@ function text(args: Record<string, unknown>, name: string): string | undefined |
  *  space would hand a model the lot. */
 export async function spacesFor(env: Env, userId: string): Promise<Space[]> {
   // Who else is in a space is asked the way the listing asks it (`sharedAmong`,
-  // `itemsSharedIn`), so the mark and the rail never disagree.
+  // `itemsSharedIn`), so the mark and the rail never disagree. And who else could
+  // once write in it (`once_shared`): somebody who left took their row, not their
+  // words.
   const { results } = await env.DB.prepare(
     `select sp.id, sp.name, sp.user_id,
         case when sp.user_id = ?1 then 'owner' else m.role end as role,
         (sp.user_id <> ?1
           or exists (select 1 from space_members o where o.space_id = sp.id and o.item = '')
           or exists (select 1 from guest_members g where g.space_id = sp.id and g.item = ''
-                      and g.joined_at is not null)) as shared,
+                      and g.joined_at is not null)
+          or exists (select 1 from once_shared x where x.space_id = sp.id and x.item = '')) as shared,
         (exists (select 1 from space_members o where o.space_id = sp.id and o.item <> '')
           or exists (select 1 from guest_members g where g.space_id = sp.id and g.item <> ''
-                      and g.joined_at is not null)) as items
+                      and g.joined_at is not null)
+          or exists (select 1 from once_shared x where x.space_id = sp.id and x.item <> '')) as items
       from spaces sp
       left join space_members m
         on m.space_id = sp.id and m.item = ''

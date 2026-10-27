@@ -384,3 +384,58 @@ describe('0064, the versions kept as they are', () => {
     database.close()
   })
 })
+
+describe('0065, who could once write in a space', () => {
+  test('is everybody in one today, and the account behind a note written from another', () => {
+    const database = upTo('0064_held_versions.sql')
+    seed(database)
+    database.exec(`insert into users (id, email, created_at) values ('f', 'f@b.c', 1)`)
+    database.exec(
+      `insert into spaces (id, user_id, name, created_at, updated_at) values
+         ('team', 'u', 'Team', 1, 1), ('left', 'u', 'Left', 1, 1), ('mine', 'u', 'Mine', 1, 1),
+         ('script', 'u', 'Script', 1, 1), ('guest', 'u', 'Guest', 1, 1),
+         ('gone', 'u', 'Gone', 1, 1)`,
+    )
+    database.exec(
+      `insert into space_members (space_id, email, item, role, created_at)
+       values ('team', 'f@b.c', '', 'write', 2), ('sp', 'f@b.c', 'n9', 'write', 3)`,
+    )
+    database.exec(
+      `insert into devices (id, user_id, name, platform, created_at)
+       values ('dev-u', 'u', 'Mac', 'mac', 1), ('dev-f', 'f', 'Phone', 'ios', 1)`,
+    )
+    database.exec(
+      `insert into mcp_tokens (token_hash, user_id, created_at) values
+         ('0123456789abcdefmine', 'u', 1), ('fedcba9876543210them', 'f', 1)`,
+    )
+    database.exec(
+      `insert into sessions (token_hash, user_id, created_at, expires_at)
+       values ('aaaabbbbccccdddd0000', 'u', 1, 9)`,
+    )
+    // The owner's device, session, token and pre-0064 program name are the owner's; a
+    // device of another account, its token, a guest and a session nobody holds now are not.
+    database.exec(
+      `insert into notes (id, space_id, path, seq, updated_at, deleted, size, hash, doc_by,
+                          updated_by)
+       values ('a', 'left', 'Evil.md', 1, 7, 0, 1, 'h', 'dev-f', null),
+              ('b', 'mine', 'Plan.md', 1, 7, 0, 1, 'h', 'dev-u', 'session:aaaabbbbccccdddd'),
+              ('c', 'mine', 'Run.md', 1, 7, 0, 1, 'h', 'program:0123456789abcdef', 'program:u'),
+              ('d', 'script', 'Run.md', 1, 7, 0, 1, 'h', 'dev-u', 'program:fedcba9876543210'),
+              ('e', 'guest', 'Hi.md', 1, 7, 0, 1, 'h', 'guest:g1', null),
+              ('f', 'gone', 'Old.md', 1, 7, 0, 1, 'h', 'session:0000111122223333', null)`,
+    )
+
+    database.exec(sql('0065_once_shared.sql'))
+
+    const rows = database.prepare(`select space_id, item from once_shared order by space_id`).all()
+    expect(rows).toEqual([
+      { space_id: 'gone', item: '' },
+      { space_id: 'guest', item: '' },
+      { space_id: 'left', item: '' },
+      { space_id: 'script', item: '' },
+      { space_id: 'sp', item: 'n9' },
+      { space_id: 'team', item: '' },
+    ])
+    database.close()
+  })
+})

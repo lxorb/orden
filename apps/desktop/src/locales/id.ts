@@ -2637,4 +2637,5 @@ export const id: Dictionary = {
   'Move the chats {names} to {space}?': 'Pindahkan obrolan {names} ke {space}?',
   'Move the chat': 'Pindahkan obrolan',
   'Only the file': 'Hanya berkasnya',
+  'Trust this space again': 'Percayai ruang ini lagi',
 }

@@ -2613,4 +2613,5 @@ export const vi: Dictionary = {
   'Move the chats {names} to {space}?': 'Chuyển các cuộc trò chuyện {names} tới {space}?',
   'Move the chat': 'Chuyển cuộc trò chuyện',
   'Only the file': 'Chỉ tệp',
+  'Trust this space again': 'Tin cậy lại không gian này',
 }

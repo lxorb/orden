@@ -2627,4 +2627,5 @@ export const my: Dictionary = {
   'Move the chats {names} to {space}?': 'ချတ်များ {names} ကို {space} သို့ ရွှေ့မလား',
   'Move the chat': 'ချတ်ကို ရွှေ့ရန်',
   'Only the file': 'ဖိုင်သာ',
+  'Trust this space again': 'ဤနေရာကို ထပ်မံယုံကြည်ရန်',
 }

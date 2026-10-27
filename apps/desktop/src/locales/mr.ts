@@ -2644,4 +2644,5 @@ export const mr: Dictionary = {
   'Move the chats {names} to {space}?': 'चॅट {names} {space} मध्ये हलवायचे?',
   'Move the chat': 'चॅट हलवा',
   'Only the file': 'फक्त फाइल',
+  'Trust this space again': 'या स्पेसवर पुन्हा विश्वास ठेवा',
 }

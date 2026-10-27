@@ -2696,4 +2696,5 @@ export const fil: Dictionary = {
   'Move the chats {names} to {space}?': 'Ilipat ang mga chat na {names} sa {space}?',
   'Move the chat': 'Ilipat ang chat',
   'Only the file': 'Ang file lang',
+  'Trust this space again': 'Pagkatiwalaan muli ang space na ito',
 }

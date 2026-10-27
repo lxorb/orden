@@ -2681,4 +2681,5 @@ export const ha: Dictionary = {
   'Move the chats {names} to {space}?': 'A matsar da hirarraki {names} zuwa {space}?',
   'Move the chat': 'Matsar da hirar',
   'Only the file': 'Fayil kaɗai',
+  'Trust this space again': 'Sake amincewa da wannan wuri',
 }

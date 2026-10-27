@@ -2587,4 +2587,5 @@ export const th: Dictionary = {
   'Move the chats {names} to {space}?': 'ย้ายแชต {names} ไปยัง {space} ไหม',
   'Move the chat': 'ย้ายแชต',
   'Only the file': 'เฉพาะไฟล์',
+  'Trust this space again': 'เชื่อถือพื้นที่นี้อีกครั้ง',
 }

@@ -2679,4 +2679,5 @@ export const ml: Dictionary = {
   'Move the chats {names} to {space}?': 'ചാറ്റുകൾ {names} {space}-ലേക്ക് നീക്കണോ?',
   'Move the chat': 'ചാറ്റ് നീക്കുക',
   'Only the file': 'ഫയൽ മാത്രം',
+  'Trust this space again': 'ഈ സ്പേസിനെ വീണ്ടും വിശ്വസിക്കുക',
 }

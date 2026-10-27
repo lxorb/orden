@@ -2724,4 +2724,5 @@ export const fr: Dictionary = {
   'Move the chats {names} to {space}?': 'Déplacer les discussions {names} vers {space} ?',
   'Move the chat': 'Déplacer la discussion',
   'Only the file': 'Le fichier seul',
+  'Trust this space again': 'Faire de nouveau confiance à cet espace',
 }
