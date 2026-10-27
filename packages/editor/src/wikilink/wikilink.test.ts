@@ -299,6 +299,24 @@ describe('which note a name means', () => {
     expect(resolveNote(top, 'Plan')?.path).toBe('Plan.md')
   })
 
+  /** The one spelling that reaches a note at the top of the space from beside a
+   *  namesake, which a rename writes where nothing shorter does (B543). */
+  test('a path from the top of the space, written with a leading slash, means that path', () => {
+    const here = index([note('Road.md'), note('B/Road.md'), note('X/B/Road.md')], 'B/x.md')
+    expect(resolveNote(here, 'Road')?.path).toBe('B/Road.md')
+    expect(resolveNote(here, '/Road')?.path).toBe('Road.md')
+    expect(resolveNote(here, '/Road.md')?.path).toBe('Road.md')
+    expect(resolveNote(index([note('X/B/Road.md'), note('B/Road.md')], 'X/B/x.md'), '/B/Road')?.path).toBe(
+      'B/Road.md',
+    )
+    expect(resolveNote(index([note('X/Road.md')]), '/Road')).toBeNull()
+
+    const files = { ...index([]), path: 'B/x.md', files: ['B/paper.pdf', 'paper.pdf'] }
+    expect(resolveFile(files, '/paper.pdf', 'wikilink')).toBe('paper.pdf')
+    expect(resolveFile(files, '/B/paper.pdf', 'wikilink')).toBe('B/paper.pdf')
+    expect(resolveFile({ ...files, files: ['B/paper.pdf'] }, '/paper.pdf', 'wikilink')).toBeNull()
+  })
+
   test('nothing at all is nothing', () => {
     expect(resolveNote(SPACE, 'Nowhere')).toBeNull()
     expect(resolveNote(SPACE, '   ')).toBeNull()
