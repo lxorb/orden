@@ -41,7 +41,9 @@ vi.mock('../workspace/write-file', () => ({
 vi.mock('./keep', () => ({ keepNow: () => undefined }))
 vi.mock('./clearing', () => ({ sitesSince: () => [] }))
 vi.mock('./pages.svelte', () => ({ pages: { rehouse: () => Promise.resolve() } }))
+const copying = new Set<string>()
 vi.mock('./web-data.svelte', () => ({
+  isCopying: (own: string) => copying.has(own),
   freshOwn: () => 'fedcba9876543210',
   ownStore: (own: string | null) => (own ? `note_${own}` : null),
   webData: { history: () => 'nib:web-visits' },
@@ -79,6 +81,7 @@ beforeEach(() => {
   asked.length = 0
   tabs.length = 0
   listed.length = 0
+  copying.clear()
 })
 
 test('a note set back to Global clears the store only it named', async () => {
@@ -108,6 +111,17 @@ test('a note set back to Global leaves a store a note open in a tab still names'
   files.set('/other/B.url', SEPARATE.replace('Mail', 'Mail 2'))
   tabs.push({ kind: 'web', path: '/other/B.url', apart: null, id: 't' })
   listed.push({ path: '/s/A.url', name: 'A.url' })
+
+  await setGlobal('/s/A.url')
+
+  expect(cleared).toEqual([])
+})
+
+test('a note set back to Global leaves a store a tab saved out of it is being copied from', async () => {
+  files.set('/s/A.url', SEPARATE)
+  listed.push({ path: '/s/A.url', name: 'A.url' })
+  // A link-out tab of A is being saved: its store is copied out of A's (`ownFor`).
+  copying.add('0123456789abcdef')
 
   await setGlobal('/s/A.url')
 

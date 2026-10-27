@@ -255,7 +255,21 @@ fn parsed<'a, T: Deserialize<'a>>(text: &'a str) -> Result<T, String> {
 #[cfg(test)]
 mod tests {
     use super::super::cookies::{Cookie, Partition};
-    use super::chosen;
+    use super::{chosen, takes_storage};
+
+    #[test]
+    fn the_shared_store_keeps_an_origin_s_storage_and_a_fresh_store_takes_the_copy() {
+        assert!(takes_storage(false, false), "nothing there: copied");
+        assert!(
+            !takes_storage(true, false),
+            "the shared store's own storage stands"
+        );
+        assert!(
+            takes_storage(true, true),
+            "a store made for the copy holds nothing of its own"
+        );
+        assert!(takes_storage(false, true));
+    }
 
     fn cookie(name: &str, value: &str, expires: Option<f64>) -> Cookie {
         Cookie {

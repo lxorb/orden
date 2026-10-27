@@ -37,6 +37,9 @@ const sent: { command: string; path: string; content: string }[] = []
 /** What each command was given, for the few tests that need more than its path. */
 const given: { command: string; args: Record<string, unknown> | undefined }[] = []
 
+/** Whether each store copy was told to the rest of the app while it ran. */
+const copyingSeen: boolean[] = []
+
 /** A write held open, for a test about what happens while one is in the air:
  *  writing a file is a round trip, and somebody may type during it. */
 /** A read held open too, for a test about what happens while one is in the air.
@@ -64,6 +67,11 @@ vi.mock('./tauri', async (importOriginal) => ({
       content: typeof args?.content === 'string' ? args.content : '',
     })
     given.push({ command, args })
+    // Whether the store a copy reads is held as in use while it is read; see own-data.ts.
+    if (command === 'web_copy') {
+      const { isCopying } = await import('./web-tab/web-data.svelte')
+      copyingSeen.push(isCopying(String(args?.from).replace(/^note_/, '')))
+    }
 
     // The crate's judge: nib opens nothing from outside its spaces but its own two
     // settings files, and the stamp is where the window asks; see `openable`.
@@ -2845,6 +2853,9 @@ describe('a new tab', () => {
         into: `note_${own}`,
         origins: ['https://example.org'],
       })
+      expect(copyingSeen).toEqual([true])
+      const { isCopying } = await import('./web-tab/web-data.svelte')
+      expect(isCopying('0123456789abcdef')).toBe(false)
     } finally {
       delete notes['/space/Apart.url']
     }

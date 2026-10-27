@@ -117,3 +117,30 @@ pub async fn web_copy(
         .collect();
     merge::merge(&webview, from, Some(into), &origins, true).await
 }
+
+#[cfg(test)]
+mod tests {
+    use super::copy_stores;
+
+    #[test]
+    fn a_copy_is_from_a_named_store_into_another_note_s() {
+        assert_eq!(
+            copy_stores("note_0123456789abcdef", "note_fedcba9876543210"),
+            Ok(("note_0123456789abcdef", "note_fedcba9876543210"))
+        );
+        assert!(
+            copy_stores("", "note_fedcba9876543210").is_err(),
+            "not the shared store"
+        );
+        assert!(
+            copy_stores("note_0123456789abcdef", "").is_err(),
+            "not into the shared store"
+        );
+        assert!(
+            copy_stores("note_0123456789abcdef", "space_w").is_err(),
+            "only into a note's own"
+        );
+        assert!(copy_stores("note_0123456789abcdef", "note_0123456789abcdef").is_err());
+        assert!(copy_stores("note_0123456789abcdef", "note_../x").is_err());
+    }
+}
