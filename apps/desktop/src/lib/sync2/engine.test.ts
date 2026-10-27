@@ -604,6 +604,39 @@ describe('an outbox folded while offline', () => {
     expect(here.engine.waiting(SPACE)).toBe(false)
     expect(here.store.rows('outbox')).toEqual([])
   })
+
+  test('a note made in a new folder in the same millisecond keeps its folder across a relaunch', async () => {
+    // The folder's mkdir and the note's create are queued in one step, at one clock
+    // reading. Read back after a relaunch they must still come in the order they were
+    // made, whatever their ids: ids that sort the create first make it refused `gone`
+    // and made again at the top of the space. The ids here are chosen to sort that way.
+    let drawn = 0
+    const random = vi.spyOn(Math, 'random').mockImplementation(() => (drawn += 1) * 1e-6)
+    try {
+      const account = new ReferenceAccount(new Clock(), SEEDED)
+      const here = await device(account)
+      here.online = false
+      await here.disk.write(`${ROOT}/New/Idea.md`, 'hello')
+      await here.engine.created(`${ROOT}/New/Idea.md`, false, 'hello')
+      await here.engine.quit()
+      here.engine.stop()
+      await here.launch()
+
+      here.online = true
+      await here.engine.pass(SPACE)
+      await here.engine.pass(SPACE)
+
+      const entries = (await account.view()).entries
+      const folder = entries.find((entry) => entry.name === 'New')
+      const note = entries.find((entry) => entry.name === 'Idea.md')
+      expect(folder).toBeDefined()
+      expect(note?.parent).toBe(folder?.id)
+      expect(here.disk.files.has(`${ROOT}/New/Idea.md`)).toBe(true)
+      expect(here.disk.files.has(`${ROOT}/Idea.md`)).toBe(false)
+    } finally {
+      random.mockRestore()
+    }
+  })
 })
 
 describe('a folder deleted here', () => {

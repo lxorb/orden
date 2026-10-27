@@ -49,6 +49,7 @@ import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put } from './store'
 import { Refused } from './transport'
 import { pairsFromV1 } from './v1-pairs'
+import { usage } from '../usage.svelte'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
@@ -124,6 +125,8 @@ class Runner {
   }
   private stops: (() => void)[] = []
   private due = new Set<string>()
+  /** The spaces whose last pass heard the account had no room for a file. */
+  private readonly full = new Set<string>()
   private passing_: Promise<void> | null = null
   private timer: ReturnType<typeof setTimeout> | undefined
   private quiet = 0
@@ -244,6 +247,8 @@ class Runner {
     for (const stop of this.stops.splice(0)) stop()
     for (const key of this.carried) uncarry(key)
     this.carried.clear()
+    this.full.clear()
+    usage.syncFull(false)
     for (const one of this.bound.values()) one.part()
     this.bound.clear()
     clearTimeout(this.timer)
@@ -474,6 +479,10 @@ class Runner {
           this.watched?.follow()
         }
         const passed = await engine.pass(id)
+        if (passed?.full) this.full.add(id)
+        else if (passed?.finished) this.full.delete(id)
+        for (const one of this.full) if (!engine.core.spaces.has(one)) this.full.delete(one)
+        usage.syncFull(this.full.size > 0)
         if (!passed?.finished) offline = true
         if (passed && (passed.pulled || passed.pushed)) moved = true
         if (passed?.pulled && id === this.spaceOnScreen(engine)) await workspace.loadTree()

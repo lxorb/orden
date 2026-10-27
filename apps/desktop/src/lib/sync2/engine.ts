@@ -25,6 +25,7 @@ import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { holdsDocument } from './kinds'
 import { holderOf } from '../pages/held'
+import { waitsForBytes } from './files'
 import { foldIn } from './ingest'
 import { settle, type SpaceState } from './places'
 import { pass, type Passed, resting } from './pass'
@@ -148,7 +149,8 @@ export class Engine implements AskedEngine {
   waiting(spaceId: string): boolean {
     const space = this.core.spaces.get(spaceId)
     if (!space) return false
-    if (space.outbox.length) return true
+    // A file waiting for room for its bytes is tried again in a while, not soon.
+    if (space.outbox.some((one) => !waitsForBytes(this.core, space, one))) return true
     for (const entry of space.entries.values()) {
       if (
         this.core.hasPending(entry.id) &&
