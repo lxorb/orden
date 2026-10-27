@@ -85,7 +85,7 @@
   import { hand } from './canvas/hand.svelte'
   import { aimed, fading, latticeLayers, latticeLevel, settled, stepped } from './canvas/lattice'
   import { drawnWidth, pens } from './canvas/pens.svelte'
-  import { hitAt, HANDLE, PORT } from './canvas/hit'
+  import { hitAt, HANDLE, PORT, roomFor } from './canvas/hit'
   import { assisted, leadPoint, penFelt, tidyShape, transformed } from './canvas/ink'
   import { inkColour } from './canvas/paint'
   import { readPalette } from './canvas/palette'
@@ -552,9 +552,15 @@
   /** The card the four dots sit on: whatever is under the pointer, and nothing
    *  while a gesture is under way, a card is being written in, or the tool in
    *  hand is not the arrow. */
-  const ported = $derived(
-    gesture || store.editing !== null || tools.which !== 'select' ? null : machine.hovered,
-  )
+  const ported = $derived.by(() => {
+    if (gesture || store.editing !== null || tools.which !== 'select') return null
+    const under = machine.hovered
+    const node = under === null ? undefined : shown.nodes.find((one) => one.id === under)
+    // And only on a card big enough on screen to be pressed apart from them; see
+    // `roomFor` in canvas/hit.ts.
+    if (!node || !roomFor(boxOf(node), camera.scale, PORT)) return null
+    return node.id
+  })
 
   const portedBox = $derived(shown.nodes.find((node) => node.id === ported) ?? null)
 
@@ -2026,7 +2032,9 @@
           style:border-width="{unit}px"
         ></div>
 
-        {#each HANDLES as handle (handle.id)}
+        <!-- Only on a box big enough on screen to be grabbed apart from them; see
+             `roomFor` in canvas/hit.ts. -->
+        {#each roomFor(box, camera.scale, HANDLE) ? HANDLES : [] as handle (handle.id)}
           <div
             class="handle"
             style:left="{box.x + ((handle.x + 1) / 2) * box.width}px"
