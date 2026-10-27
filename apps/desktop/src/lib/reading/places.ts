@@ -19,6 +19,8 @@
  *  pixel measured over estimates. So the page's half is a `scrollIntoView` on the
  *  heading itself, in Reading.svelte, where the elements are. */
 
+import { CodeBlocks, WORDS } from '@nib/markdown/fences'
+
 /** A place in the note as the two faces both understand it: which heading it is
  *  under, and how far from that heading to the next.
  *
@@ -87,7 +89,6 @@ function frontMatterEnd(text: string): number {
  *  code, and what the renderer reads too. */
 const ATX = /^ {0,3}#{1,6}(?:\s|$)/
 const UNDERLINE = /^ {0,3}(?:=+|-+)[ \t]*$/
-const FENCE = /^\s{0,3}(?:```|~~~)/
 /** A line that opens something other than a paragraph, and so cannot be the words
  *  of an underlined heading: a list, a quote, a table row, indented code. */
 const NOT_PROSE = /^(?: {4}|\t|[ \t]*(?:[-*+>|]|\d+[.)])(?:\s|$))/
@@ -101,7 +102,8 @@ const NOT_PROSE = /^(?: {4}|\t|[ \t]*(?:[-*+>|]|\d+[.)])(?:\s|$))/
  *  of the note rather than lining the wrong ones up. */
 export function headingOffsets(text: string): number[] {
   const found: number[] = []
-  let fenced = false
+  // Code as the page reads it: a block closes on its own mark only.
+  const code = new CodeBlocks()
   // Front matter is metadata and never reaches the page, so nothing in it is a
   // heading - and its closing `---` would otherwise read as one, underlining the
   // last field. Stepped over rather than cut off, because these offsets are into
@@ -114,10 +116,7 @@ export function headingOffsets(text: string): number[] {
     const end = text.indexOf('\n', at)
     const line = text.slice(at, end === -1 ? text.length : end)
 
-    if (FENCE.test(line)) {
-      fenced = !fenced
-      prose = null
-    } else if (fenced) {
+    if (code.line(line) !== WORDS) {
       prose = null
     } else if (ATX.test(line)) {
       found.push(at)
