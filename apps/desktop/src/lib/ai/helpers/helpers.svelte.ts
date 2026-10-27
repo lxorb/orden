@@ -20,7 +20,7 @@
  *  and list the models are handed in (`Roads`), so the rules are tested apart from the
  *  panel. */
 
-import { newThread } from '../chat/threads'
+import { keepThread, newThread } from '../chat/threads'
 import { untrusted } from '../chat/transcript'
 import type { Effort, Mode, Thread } from '../chat/types'
 import { tasks } from '../commands/tasks.svelte'
@@ -96,13 +96,18 @@ export function answerFor(helper: Pick<Helper, 'answer' | 'description' | 'outsi
   return untrusted(`helper ${helper.description}`, helper.answer)
 }
 
+/** What a thread keeps of the work it is in, written down with it: every thread started
+ *  under it at any depth (what its review covers, review/changes.ts), and the thread it
+ *  was itself started under. */
+type InTree = Thread & { helpers?: string[]; parent?: string }
+
 class Helpers {
   /** Every helper of this run, newest last. */
   all = $state.raw<Helper[]>([])
 
   private stops = new Map<string, AbortController>()
-  /** The thread each helper was started under, as it is held this run. */
-  private above = new Map<string, Thread>()
+  /** Every thread in a tree of work this run, by id: the ones the panel holds. */
+  private held = new Map<string, InTree>()
   private ends = new Map<string, Promise<void>>()
 
   get(id: string): Helper | null {
@@ -170,14 +175,7 @@ class Helpers {
       started: Date.now(),
     }
     this.all = [...this.all, helper]
-    // Its changes are reviewed with the thread that started it and every one above
-    // (review/changes.ts), as a command's helper's are; the list is written down with
-    // the thread when its turn ends.
-    for (let above = parent; above; above = this.above.get(above.id) ?? null) {
-      const held = above as Thread & { helpers?: string[] }
-      held.helpers = [...(held.helpers ?? []), helper.id]
-    }
-    if (parent) this.above.set(helper.id, parent)
+    if (parent) this.startedUnder(parent, thread)
 
     const stopper = new AbortController()
     this.stops.set(helper.id, stopper)
@@ -230,22 +228,44 @@ class Helpers {
     return this.get(id)
   }
 
+  /** `child` is started under `parent`, by `run_agent` or by a command (`/subtask`,
+   *  `/fork`, `/batch`, `/deep-research`): one tree for every kind. Every thread above
+   *  takes it into its review; one above the parent is written down now, the parent
+   *  with the turn or command that started it. */
+  startedUnder(parent: Thread, child: Thread): void {
+    const made = child as InTree
+    made.parent = parent.id
+    // A copy (`/fork`, `/subtask`) has started nothing yet, whatever its original did.
+    delete made.helpers
+    this.held.set(parent.id, parent)
+    this.held.set(child.id, made)
+    let above: InTree | undefined = parent
+    while (above) {
+      if (!above.helpers?.includes(child.id)) {
+        above.helpers = [...(above.helpers ?? []), child.id]
+        if (above !== parent) void keepThread(above).catch(() => undefined)
+      }
+      above = above.parent ? this.held.get(above.parent) : undefined
+    }
+  }
+
+  /** A thread deleted: out of the trees. */
+  forget(id: string): void {
+    this.held.delete(id)
+  }
+
   /** Stops one helper, and every helper under it. */
   stop(id: string): void {
     this.stops.get(id)?.abort()
     this.stopUnder(id)
   }
 
-  /** Stops everything a thread started, and what that started: its helpers and its
-   *  work on the task list (`/batch`, `/subtask`, `/fork`, a goal, a loop). What
+  /** Stops everything a thread started, down its tree: its work on the task list
+   *  (`/batch`, `/subtask`, `/fork`, a goal, a loop), its helpers, and theirs. What
    *  stopping or deleting a thread does. */
   stopUnder(thread: string): void {
-    for (const one of this.all) {
-      if (one.parent === thread && one.state === 'running') this.stop(one.id)
-    }
-    const under = tasks.of(thread).flatMap((one) => (one.helper ? [one.helper] : []))
     tasks.stop(thread)
-    for (const one of under) this.stopUnder(one)
+    for (const one of [...this.held.values()]) if (one.parent === thread) this.stop(one.id)
   }
 }
 
