@@ -481,7 +481,7 @@ describe('the field while a message is changed', () => {
     chat.editQueued(chat.queue[0]!.id)
     chat.text = 'second, changed'
 
-    chat.steer(around)
+    chat.steer()
 
     expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
     chat.cancelEdit()
@@ -865,6 +865,8 @@ describe('a chat while it answers', () => {
     const thread = chat.thread!
     thread.turns.push({ id: 'm1', role: 'model', at: 2, parts: [] })
     engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
+    // The list read at launch is in before the reader asks again.
+    await settled()
 
     chat.retry()
 

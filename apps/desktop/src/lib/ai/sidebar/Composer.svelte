@@ -323,7 +323,9 @@
     if (shortcuts.pressed('ai.model', event))
       return run(() => (chat.popover = chat.popover === 'model' ? null : 'model'))
     if (shortcuts.pressed('ai.effort', event)) return run(() => chat.setEffort('next'))
-    if (shortcuts.pressed('ai.steer', event)) return run(() => chat.steer(around()))
+    // Into the running answer; with nothing running, the field's own send, as Enter.
+    if (shortcuts.pressed('ai.steer', event))
+      return run(() => (busy ? chat.steer() : void submit()))
     if (shortcuts.pressed('ai.unfold', event)) return run(() => chat.toggleFolded())
     if (shortcuts.pressed('ai.new', event)) return run(() => chat.newThread())
     if (shortcuts.pressed('ai.stop', event) && (busy || chat.popover)) {

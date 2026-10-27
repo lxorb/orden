@@ -145,9 +145,8 @@ test('a chat of another space picked with @ keeps its space', async () => {
 
 test('Ctrl+Enter with nothing running sends as Enter does, the selection with it', async () => {
   const chosen = views.chosen
-  const selectedText = views.selectedText
   views.chosen = 5
-  views.selectedText = () => 'picked words'
+  const picked = vi.spyOn(views, 'selectedText').mockReturnValue('picked words')
   panel.text = 'explain this'
   panel.chips = []
   const field = composer()
@@ -156,7 +155,7 @@ test('Ctrl+Enter with nothing running sends as Enter does, the selection with it
 
   await vi.waitFor(() => expect(panel.submit).toHaveBeenCalled())
   views.chosen = chosen
-  views.selectedText = selectedText
+  picked.mockRestore()
   expect(panel.steer).not.toHaveBeenCalled()
   expect((panel.chips as { kind: string }[]).map((one) => one.kind)).toEqual(['selection'])
 })

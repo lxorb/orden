@@ -327,8 +327,15 @@ export async function writeThread(thread: Thread): Promise<void> {
   await store.meta.put(store.listKey(thread.space), JSON.stringify([...others, head]))
 }
 
-/** Deletes a thread for good (`/delete`). */
+/** Threads deleted this run: never written again, whatever still holds one (an answer
+ *  that ends after the delete, a helper's line, a model picked), so a chat deleted
+ *  while it answers stays deleted. Ids are never reused. */
+const removed = new Set<string>()
+
+/** Deletes a thread for good (`/delete`), once a write of it on its way is done. */
 export async function deleteThread(space: string, id: string): Promise<void> {
+  removed.add(id)
+  await writing.get(id)?.done.catch(() => undefined)
   if (isNative) {
     await invoke<null>('ai_thread_delete', { space, id })
     return
@@ -365,6 +372,7 @@ function again(entry: { next: boolean }): boolean {
 }
 
 export function keepThread(thread: Thread): Promise<void> {
+  if (removed.has(thread.id)) return Promise.resolve()
   const held = writing.get(thread.id)
   if (held) {
     held.next = true
@@ -376,7 +384,7 @@ export function keepThread(thread: Thread): Promise<void> {
       do {
         entry.next = false
         await writeThread(thread)
-      } while (again(entry))
+      } while (again(entry) && !removed.has(thread.id))
     } finally {
       writing.delete(thread.id)
     }
