@@ -124,7 +124,13 @@
   async function openTarget(link: Reference | Outgoing, press: MouseEvent) {
     if (!('to' in link) || !root) return
     if (link.to) await workspace.openEntry(insideSpace(root, link.to), howFor(tabAsk(press)))
-    else if (tabAsk(press) === 'plain') ongoto?.(link.line)
+    else if (tabAsk(press) === 'plain') {
+      // This note is the one the panel is about, which a held panel keeps while
+      // another tab is in front; going to its line means bringing it there first.
+      const tab = workspace.panelTab
+      if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
+      ongoto?.(link.line)
+    }
   }
 </script>
 

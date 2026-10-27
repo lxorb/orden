@@ -345,7 +345,10 @@
   /** Takes the reader to a line of the note the panel is about.
    *
    *  A panel held on a note open in another pane takes them to that pane first: a
-   *  row is pressed to go somewhere, and going somewhere means being there. */
+   *  row is pressed to go somewhere, and going somewhere means being there. The
+   *  same goes for a tab behind another in its own pane; the line is landed on
+   *  once the pane shows that note, never in the one that was in front (see
+   *  `goto` in App.svelte). */
   function jump(line: number) {
     const tab = workspace.panelTab
     if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
