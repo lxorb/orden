@@ -8,6 +8,7 @@ import { NOT_AN_OBJECT } from '../refused'
 import { objectBody } from '../body'
 import { tokenIn } from '../auth'
 import { now, randomToken, sha256 } from '../crypto'
+import { programDevice } from '../sync2/device'
 import { grantForToken } from '../oauth'
 import type { Env, Variables } from '../types'
 
@@ -15,6 +16,9 @@ export interface TokenRow {
   token_hash: string
   user_id: string
   read_only: number
+  /** The device a write through this token is, the way a program's request names
+   *  one (sync2/device.ts): what tells two scripts' versions of a note apart. */
+  device?: string
 }
 
 /** Tokens are recognisable on sight, so one found in a config file is obvious. */
@@ -59,8 +63,9 @@ export async function bearer(env: Env, header: string | undefined): Promise<Toke
   const token = tokenIn(header)
   if (!token) return null
 
+  const device = await programDevice(token)
   const grant = await grantForToken(env, token)
-  if (grant) return { token_hash: '', ...grant }
+  if (grant) return { token_hash: '', ...grant, device }
 
   const row = await env.DB.prepare(
     `select token_hash, user_id, read_only from mcp_tokens
@@ -75,7 +80,7 @@ export async function bearer(env: Env, header: string | undefined): Promise<Toke
       .run()
   }
 
-  return row ?? null
+  return row ? { ...row, device } : null
 }
 
 /** What the settings show, behind the ordinary session: the clients that

@@ -30,6 +30,7 @@ import type { Env, Note, Variables, Whoever } from './types'
 import {
   countVersionsAt,
   deviceIn,
+  holdVersion,
   keepVersion,
   ROLLBACK_AT_ONCE,
   presentVersion,
@@ -351,6 +352,10 @@ export async function noteBeside(
 export interface Saving {
   docBy?: string
   epoch?: number
+  /** The device a version of these words is kept for where it is not `docBy`: a
+   *  room settling a note with no document, which does not write who settled it
+   *  into the note but does tell its versions apart by it. See versions.ts. */
+  versionBy?: string
 }
 
 export async function saveNote(
@@ -429,7 +434,9 @@ export async function saveNote(
   // arrives through - a push, or a room settling what four devices wrote. Best
   // effort: the note is already stored, and a version that could not be written
   // is not a reason to answer the save with a failure. See versions.ts.
-  await keepVersion(env, updated, content, by).catch(() => undefined)
+  await keepVersion(env, updated, content, by, saving.docBy ?? saving.versionBy ?? null).catch(
+    () => undefined,
+  )
 
   // And the paths this note has just stopped answering on - it was renamed, or
   // its permalink or its aliases changed - so that a link somebody else wrote
@@ -805,6 +812,11 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
       written += 1
       continue
     }
+
+    // What it says now, as a version the rollback's own write cannot fold away, so
+    // that what the rollback writes over is still on the account.
+    const current = await context.env.NOTES.get(noteKey(note.space_id, note.id))
+    if (current) await holdVersion(context.env, note, await current.text(), '')
 
     // The device that asked, like any other write: a rollback is an edit, and the
     // history saying which machine made it is the same answer to the same
