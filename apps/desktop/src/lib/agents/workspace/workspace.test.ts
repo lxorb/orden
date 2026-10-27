@@ -230,8 +230,16 @@ vi.mock('../../tauri', async (original) => ({
 
 vi.mock('../../sharing.svelte', () => ({
   isShared: (root: string) => root === '/s/Home',
+  reachedByOthers: (path: string | null) =>
+    path !== null && (path.startsWith('/s/Home/') || othersWrite.has(path)),
+  reachedByOthersIn: (root: string) =>
+    root === '/s/Home' || [...othersWrite].some((path) => path.startsWith(`${root}/`)),
   canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
 }))
+
+/** Notes of a space nobody else is in that somebody else can write all the same: one
+ *  shared on its own, set by a test. */
+const othersWrite = new Set<string>()
 
 /** The roots of the spaces shared with this account to read, set by a test. */
 const readOnly = new Set<string>()
@@ -894,6 +902,26 @@ describe('the notes, on the road', () => {
       untrusted: 'shared space Home',
     })
     expect(await call('read_note', { path: 'Plan' })).not.toHaveProperty('untrusted')
+  })
+
+  /** Work is nobody else's, but its plan was shared on its own, so somebody else writes
+   *  in it: the verbs ask who can reach the note, not whether the space is shared. */
+  test('a note shared on its own is read as data, and so is a listing of its space', async () => {
+    othersWrite.add('/s/Work/Plan.md')
+    try {
+      expect(await call('read_note', { path: 'Plan' })).toMatchObject({
+        untrusted: 'shared space Work',
+      })
+      expect(await call('list_notes', {})).toMatchObject({ untrusted: 'shared space Work' })
+      expect(await call('list_versions', { path: 'Plan' })).toMatchObject({
+        untrusted: 'shared space Work',
+      })
+      expect(await call('list_tasks', { space: 'Work' })).toMatchObject({
+        untrusted: 'shared space Work',
+      })
+    } finally {
+      othersWrite.clear()
+    }
   })
 
   test('a property is one edit of the whole note against the words it was worked out from', async () => {

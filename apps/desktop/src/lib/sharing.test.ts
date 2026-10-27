@@ -252,6 +252,7 @@ import {
   originOfDocument,
   othersIn,
   reachedByOthers,
+  reachedByOthersIn,
   roleOf,
   share,
   sharedWithYou,
@@ -544,6 +545,34 @@ describe('what may be done before the account has listed its spaces', () => {
     expect(reachedByOthers('Items/other.md')).toBe(false)
     // A note the store cannot name yet could be the one that was shared.
     expect(reachedByOthers('Items/new.md')).toBe(true)
+  })
+
+  /** What an answer listing many notes of a space asks (an agent's search, its tree):
+   *  a space with one note shared on its own counts, and so does one the listing has
+   *  not named yet, offline included. */
+  test('answers for a whole space as its notes would, before and after the listing', async () => {
+    world.mirrors = { Team: 'space-1', Solo: 'space-2', Items: 'space-3' }
+    world.notes = { 'Items/plan.md': 'n1' }
+    account.spaces = [
+      remote('space-1', 'owner', true),
+      remote('space-2', 'owner'),
+      remote('space-3', 'owner', false, ['n1']),
+    ]
+    await account.loadSpaces()
+
+    expect(reachedByOthersIn('Team')).toBe(true)
+    expect(reachedByOthersIn('Items')).toBe(true)
+    expect(reachedByOthersIn('Solo')).toBe(false)
+
+    account.spaces = []
+    account.listed = false
+    account.user = null
+    world.mirrors = {}
+    world.locals = ['Team', 'Solo', 'Items']
+
+    expect(reachedByOthersIn('Team')).toBe(true)
+    expect(reachedByOthersIn('Items')).toBe(true)
+    expect(reachedByOthersIn('Solo')).toBe(false)
   })
 
   /** The listing can answer before the sync has paired anything, which is an ordinary
