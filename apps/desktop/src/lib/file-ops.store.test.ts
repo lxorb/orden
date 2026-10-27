@@ -881,3 +881,93 @@ describe('a page note at the top of the space, its paper moved', () => {
     expect(pages()).toEqual(['Archive/Work/Ref.pdf'])
   })
 })
+
+describe('a note renamed while a canvas showing it is open in the back of its pane', () => {
+  const card = { x: 0, y: 0, width: 250, height: 60 }
+  const saved = () =>
+    (
+      JSON.parse(disk.current?.files.get(`${ROOT}/Board.canvas`) ?? '{}') as {
+        nodes: { id: string; file?: string; x: number }[]
+      }
+    ).nodes
+  async function opened(plane: object) {
+    const { CanvasStore } = await import('./canvas/store.svelte')
+    disk.current?.files.set(`${ROOT}/Board.canvas`, JSON.stringify(plane))
+    await indexed()
+    await vi.waitFor(() =>
+      expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'),
+    )
+    await workspace.open(`${ROOT}/Board.canvas`)
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    return { CanvasStore, tab }
+  }
+
+  test('keeps what reached the document since, and lets go of the surface', async () => {
+    const { CanvasStore, tab } = await opened({
+      nodes: [{ id: 'f', type: 'file', file: 'Plan.md', ...card }],
+      edges: [],
+      nib: { version: 1, at: { f: 1 } },
+    })
+    const back = new CanvasStore(tab)
+    // Taken down with the tab still open; the plane stopped following the document.
+    back.part()
+    // Another device's card arrives, and the open document takes it.
+    tab.note.replace(
+      JSON.stringify({
+        nodes: [
+          { id: 'f', type: 'file', file: 'Plan.md', ...card },
+          { id: 'n', type: 'text', text: 'theirs', ...card },
+        ],
+        edges: [],
+        nib: { version: 1, at: { f: 1, n: 5 } },
+      }),
+      false,
+    )
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
+    // Written by the rewrite, so not owed again by the document.
+    expect(tab.note.dirty).toBe(false)
+    await workspace.writeNow()
+    await workspace.writesSettled()
+
+    // The rename went through the plane as it was when the tab went back, and wrote
+    // it over the document: the other device's card was gone, here and for them.
+    expect(saved().map((one) => [one.id, one.file])).toEqual([
+      ['f', 'Road.md'],
+      ['n', undefined],
+    ])
+
+    back.gone()
+    expect(CanvasStore.drawing(tab.note, workspace.tabs)).toBeNull()
+  })
+
+  test('and the surface made when the tab comes back is the one drawn on', async () => {
+    const { CanvasStore, tab } = await opened({
+      nodes: [
+        { id: 'f', type: 'file', file: 'Plan.md', ...card },
+        { id: 'g', type: 'text', text: 'g', ...card },
+      ],
+      edges: [],
+      nib: { version: 1, at: { f: 1, g: 1 } },
+    })
+    new CanvasStore(tab).gone()
+    const now = new CanvasStore(tab)
+    expect(CanvasStore.drawing(tab.note, workspace.tabs)).toBe(now)
+    now.edit({
+      ...now.canvas,
+      nodes: now.canvas.nodes.map((one) => (one.id === 'g' ? { ...one, x: 40 } : one)),
+    })
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
+    now.follow()
+    now.part()
+    await workspace.writeNow()
+    await workspace.writesSettled()
+
+    expect(saved().map((one) => [one.id, one.file, one.x])).toEqual([
+      ['f', 'Road.md', 0],
+      ['g', undefined, 40],
+    ])
+  })
+})

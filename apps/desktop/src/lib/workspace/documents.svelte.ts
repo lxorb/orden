@@ -293,6 +293,15 @@ export class NoteDoc {
     if (!dirty && this.before !== null) this.before = text
   }
 
+  /** The file written with these words by someone other than the document's own
+   *  write: a link rewrite through a canvas's surface (`relinked`). Clean again, as
+   *  `edited` leaves it, so the same words are not written and sent a second time. */
+  wroteAs(text: string) {
+    if (this.behind || this.words !== text) return
+    this.dirty = false
+    if (this.before !== null) this.before = text
+  }
+
   /** Words changed under the note by something other than an editor, as the
    *  ranges that changed: a replacement across the space, and putting one
    *  back. The file is written in the same breath, so this leaves the note

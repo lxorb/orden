@@ -1777,6 +1777,7 @@ class Links {
         },
       )
       if (!wrote) continue
+      if (relinked) doc?.wroteAs(after)
       for (const hear of hearing) hear(target, after)
       told?.push(target)
 

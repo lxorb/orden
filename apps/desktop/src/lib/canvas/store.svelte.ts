@@ -159,8 +159,11 @@ export class CanvasStore implements PlaneSurface {
     const kept = this.restored
     if (kept) this.tab.camera = { x: kept.x, y: kept.y, scale: kept.scale }
 
-    drawn.add(new WeakRef(this))
+    drawn.add(this.mine)
   }
+
+  /** How `drawn` holds this surface, so it can let go of it; see `gone`. */
+  private readonly mine = new WeakRef(this)
 
   /** The plane drawn for a document in one of these tabs, while there is one: what an
    *  agent's edit of a canvas goes through, so that it is one more edit on the surface
@@ -304,6 +307,8 @@ export class CanvasStore implements PlaneSurface {
    *  `retargetIn` in link-index.svelte.ts. */
   relinked(change: (canvas: Canvas) => Canvas): boolean {
     if (this.readOnly) return false
+    // Up to the document first, so what arrived under the plane is never written over.
+    this.follow()
     const next = change(this.canvas)
     if (next === this.canvas) return false
 
@@ -387,6 +392,16 @@ export class CanvasStore implements PlaneSurface {
    *  itself again. */
   private stackChanged() {
     this.local = { undo: this.history.canUndo, redo: this.history.canRedo }
+  }
+
+  /** The surface taken down: a tab closed, or sent to the back of its pane. What it
+   *  owes is written, and it is no longer the plane drawn for its document, which it
+   *  stops following. Kept in `drawn`, a rename or an agent's edit went through it
+   *  while its tab was in the back, onto a plane that had missed what arrived since,
+   *  and wrote that over the document. */
+  gone() {
+    this.part()
+    drawn.delete(this.mine)
   }
 
   /** Anything owing, written now: the room is being left, or the last tab on this
