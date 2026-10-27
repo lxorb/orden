@@ -360,7 +360,9 @@ depends on the file's.
   pointer alone, and a writer who is not the space's owner moves it only into another space
   of that owner, since a move leaves nothing in the owner's Recently deleted. The app offers
   only the spaces the account would take and asks it before the pointer's file moves, so a
-  refusal leaves both where they were (`workspace/chat-carry.ts`). Duplicate makes a new, empty chat beside it, never a second pointer to
+  refusal leaves both where they were (`workspace/chat-carry.ts`). A copy of a pointer, pasted,
+  dragged with Ctrl or imported, is a second pointer and never a move: the chat stays in its
+  space, listed at the pointer it had, and so does it when the copy is moved on (B542). Duplicate makes a new, empty chat beside it, never a second pointer to
   one log. Deleting the pointer sends it to Recently deleted; emptying the trash ends the chat:
   the account erases its log 30 days later with the other leftovers. While the pointer is in
   Recently deleted the account does not list the chat (`GET /v2/chats` leaves out a chat

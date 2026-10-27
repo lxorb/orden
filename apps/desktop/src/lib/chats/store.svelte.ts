@@ -776,6 +776,12 @@ class ChatsStore implements Chats {
     return place.path
   }
 
+  /** The pointer this device lists the chat at, the first of any copies. Null when it
+   *  is not placed here yet. */
+  placedAt(chat: string): string | null {
+    return this.places.get(chat)?.path ?? null
+  }
+
   chatAt(path: string): Promise<string | null> {
     return readPointer(path)
   }
@@ -790,7 +796,11 @@ class ChatsStore implements Chats {
   }
 
   /** A pointer moved, came or went on this device (workspace/file-ops.ts): where its
-   *  chat is now. A move into another space moves the chat on the account.
+   *  chat is now. Its own pointer moved into another space moves the chat there on the
+   *  account; a second pointer to a chat already placed (a copy, a duplicate, an import,
+   *  or that copy moved on) is a file and nothing more, and the chat stays at the pointer
+   *  it had, as `findPointers` keeps the first. Access is the chat's space, never the
+   *  file (docs/chats.md 4.2), so a copy in another space reaches nothing there (B542).
    *
    *  One that went - deleted here, or its deletion brought by the sync - takes its chat
    *  off the list at once, rather than leaving the row the account still lists until it
@@ -807,12 +817,14 @@ class ChatsStore implements Chats {
     if (chat) this.gone.delete(chat)
     const unlisted = chat !== null && !this.engine?.chats.get(chat)?.row
     if ((before && !chat) || unlisted) void this.engine?.refresh().catch(() => false)
-    if (chat && to) {
+    if (chat && to && !next.has(chat)) {
       const root = workspace.spaces.find((one) => within(one.root, to) !== null)?.root ?? null
       if (root) next.set(chat, { root, path: to })
       const remoteSpace = root ? this.remoteOf(root) : null
       const row = this.engine?.chats.get(chat)?.row
-      if (remoteSpace && row && row.space !== remoteSpace) {
+      // Only a move of the pointer the chat was placed at; one that came from nowhere
+      // moves nothing on the account.
+      if (before?.[0] === chat && remoteSpace && row && row.space !== remoteSpace) {
         await http.moveChat(chat, remoteSpace).catch(() => false)
         await this.engine?.refresh()
       }

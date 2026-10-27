@@ -25,9 +25,10 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   const pointers = await pointersMoving(path)
   if (!pointers.length) return none
 
-  const [{ moveChat }, { readPointer }] = await Promise.all([
+  const [{ moveChat }, { readPointer }, { chats }] = await Promise.all([
     import('../chats/http'),
     import('../chats/pointers'),
+    import('../chats/store.svelte'),
   ])
   const moved: string[] = []
   const home = sync.remoteIdFor(from.root)
@@ -53,6 +54,10 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   for (const pointer of pointers) {
     const chat = await readPointer(pointer)
     if (!chat) continue
+    // A copy of a pointer whose chat is placed at another one carries nothing: the chat
+    // stays with the pointer it has, and a copy never moves it (B542).
+    const placed = chats.placedAt(chat)
+    if (placed !== null && !pointers.some((one) => samePath(one, placed))) continue
     // Not heard is not moved either: the file would be in the new space with its chat
     // still in the old one, which is what this is here to never leave behind.
     const answer = await moveChat(chat, space).catch((error: unknown) =>

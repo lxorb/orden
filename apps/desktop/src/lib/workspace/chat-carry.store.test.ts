@@ -119,6 +119,21 @@ test('into another of the owner’s spaces, the chat moves on the account, then 
   expect(failed.retry).toBeNull()
 })
 
+test('a copy of a pointer moved into another space moves the file, never the chat', async () => {
+  // A second pointer to a chat placed at its first is a file and nothing more (B542).
+  const { chats } = await import('../chats/store.svelte')
+  const placed = vi.spyOn(chats, 'placedAt').mockReturnValue(POINTER)
+  const copy = `${SHARED}/Plans copy.chat`
+  disk.current?.files.set(copy, chatText({ v: 1, chat: CHAT }))
+  await workspace.loadTree()
+  await workspace.moveMany([copy], OWNERS)
+  placed.mockRestore()
+  expect(asked.moves).toEqual([])
+  expect(there(copy)).toBe(false)
+  expect(there(`${OWNERS}/Plans copy.chat`)).toBe(true)
+  expect(there(POINTER)).toBe(true)
+})
+
 test('a folder holding a pointer is a pointer carried', async () => {
   disk.current?.folders.add(`${SHARED}/Projects`)
   disk.current?.files.set(`${SHARED}/Projects/Plans.chat`, chatText({ v: 1, chat: CHAT }))
