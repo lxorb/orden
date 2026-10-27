@@ -234,6 +234,11 @@ function stillReaches(
   }
 
   const written = spelled(link.target)
+  // From the top of the space, the whole path or nothing; see `resolveNote`.
+  if (written.startsWith('/')) {
+    const whole = written.replace(/^\/+/, '')
+    return at === whole || shownName(at) === whole
+  }
   return ends(at, written) || ends(shownName(at), written)
 }
 

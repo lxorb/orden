@@ -88,20 +88,28 @@ function targetFor(link: FoundLink, source: string, placed: string | Placed): st
   // may leave off; a PDF's is not one of them, so a link to one keeps its ending.
   const spelled = (path: string) =>
     shownName(link.target) === link.target ? shownName(path) : path
-  if (link.target.includes('/')) return spelled(to)
+  const fromTop = spelled(`/${to}`)
+  const reaches = (written: string) => typeof placed === 'string' || placed.reaches(written)
 
-  // A bare name stays bare where the name alone still reaches the note. Where the
-  // space holds another of that name nearer to the link, or shallower, it takes as
-  // much of the path as reaches the one that moved, the way Obsidian writes a link
-  // to a name two notes share: `[[Plan]]` to `A/Plan.md` renamed `A/Road.md`
-  // beside a `B/Road.md` is `[[A/Road]]` from `B`, and opened `B/Road.md` written
-  // `[[Road]]` (B543).
+  // A path from the top of the space stays one, and reaches what it names.
+  if (link.target.startsWith('/')) return fromTop
+
+  // A path written out stays the whole path. A bare name stays bare where the name
+  // alone still reaches the note. Where the space holds another of that name nearer
+  // to the link, or shallower, it takes as much of the path as reaches the one that
+  // moved, the way Obsidian writes a link to a name two notes share: `[[Plan]]` to
+  // `A/Plan.md` renamed `A/Road.md` beside a `B/Road.md` is `[[A/Road]]` from `B`,
+  // and opened `B/Road.md` written `[[Road]]`. Where nothing does - a note at the
+  // top of the space has no path to tell it from a namesake beside the link, and a
+  // path is read as the end of one - it is the path from the top, `[[/Road]]`
+  // (B543).
   const parts = to.split('/')
-  for (let from = parts.length - 1; from > 0; from--) {
+  const first = link.target.includes('/') ? 0 : parts.length - 1
+  for (let from = first; from >= 0; from--) {
     const written = spelled(parts.slice(from).join('/'))
-    if (typeof placed === 'string' || placed.reaches(written)) return written
+    if (reaches(written)) return written
   }
-  return spelled(to)
+  return fromTop
 }
 
 /** A path as a markdown target: the characters a browser or an editor would

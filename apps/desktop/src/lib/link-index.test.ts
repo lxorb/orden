@@ -978,10 +978,7 @@ describe('renaming a note rewrites the links to it', () => {
     links.notesMoved(at('A/Plan.md'), at('A/Road.md'))
 
     expect(notes['X/A/n.md']).toBe('see [[/A/Road]] and [[/A/Road]]')
-    expect(links.outgoing(at('X/A/n.md')).map((one) => one.to)).toEqual([
-      'A/Road.md',
-      'A/Road.md',
-    ])
+    expect(links.outgoing(at('X/A/n.md')).map((one) => one.to)).toEqual(['A/Road.md', 'A/Road.md'])
   })
 
   test('a link written from the top of the space stays written so', async () => {

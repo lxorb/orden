@@ -306,9 +306,9 @@ describe('which note a name means', () => {
     expect(resolveNote(here, 'Road')?.path).toBe('B/Road.md')
     expect(resolveNote(here, '/Road')?.path).toBe('Road.md')
     expect(resolveNote(here, '/Road.md')?.path).toBe('Road.md')
-    expect(resolveNote(index([note('X/B/Road.md'), note('B/Road.md')], 'X/B/x.md'), '/B/Road')?.path).toBe(
-      'B/Road.md',
-    )
+    expect(
+      resolveNote(index([note('X/B/Road.md'), note('B/Road.md')], 'X/B/x.md'), '/B/Road')?.path,
+    ).toBe('B/Road.md')
     expect(resolveNote(index([note('X/Road.md')]), '/Road')).toBeNull()
 
     const files = { ...index([]), path: 'B/x.md', files: ['B/paper.pdf', 'paper.pdf'] }
