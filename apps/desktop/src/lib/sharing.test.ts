@@ -69,6 +69,8 @@ interface World {
   shared: SharedItem[]
   /** The words each of those files comes down with. */
   words: Record<string, string>
+  /** What hears a file operation, as the workspace tells one; see workspace/file-ops.ts. */
+  followers: ((op: FileOp) => unknown)[]
   /** Every shared file that was opened, and every one whose tabs were closed. */
   opened: { id: string; name: string; path: string; text: string }[]
   closed: string[]
@@ -96,6 +98,7 @@ const world = vi.hoisted((): World => ({
   notes: {},
   shared: [],
   words: {},
+  followers: [],
   opened: [],
   closed: [],
   showing: [],
@@ -216,6 +219,15 @@ vi.mock('./workspace.svelte', () => ({
       world.opened.push({ id: item.id, name: item.name, path: item.path, text }),
     closeShared: (id: string) => world.closed.push(id),
     showingShared: (id: string) => world.showing.includes(id),
+    // What pairing a space somebody shared asks of the workspace: a folder of its
+    // own, named for the space.
+    adoptSpace: (name: string) => Promise.resolve(name),
+    applyIcon: () => null,
+    applySpaceOrder: () => false,
+    bookmarks: { adopt: () => null },
+    fileOps: {
+      follow: (follower: (op: FileOp) => unknown) => world.followers.push(follower),
+    },
   },
 }))
 
@@ -246,8 +258,10 @@ import {
   trustsHtmlAt,
   trustsHtmlIn,
 } from './sharing.svelte'
+import { pairSpaces, type Pairing } from './space-pairing'
 import type { RemoteSpace, SharedItem } from './api'
 import type { NoteDoc } from './workspace/documents.svelte'
+import type { FileOp } from './workspace/file-ops'
 import { memoryStorage } from '../../test/disk'
 
 /** What a launch reads back of the last one: the roles remembered by folder. */
@@ -546,6 +560,88 @@ describe('what may be done before the account has listed its spaces', () => {
 
     expect(reachedByOthers('Team/weekly.md')).toBe(true)
     expect(reachedByOthers('Local/plan.md')).toBe(false)
+  })
+
+  /** A space joined in this session: the listing that names it comes before the
+   *  pairing that gives it a folder. Quit before the next listing, and the next
+   *  launch, offline, still has to know the folder is somebody else's. */
+  test('keeps what the listing said of a space paired after it, for the next launch', async () => {
+    world.mirrors = { Local: 'space-0' }
+    account.spaces = [
+      remote('space-0', 'owner'),
+      { ...remote('space-1', 'write', true), name: 'Team' },
+    ]
+    await account.loadSpaces()
+
+    const pairing: Pairing = {
+      pairs: () =>
+        Object.entries(world.mirrors).map(([root, spaceId]) => ({ root, spaceId, shared: false })),
+      pair: (root, spaceId) => {
+        world.mirrors = { ...world.mirrors, [root]: spaceId }
+      },
+      unpair: (root) => {
+        world.mirrors = Object.fromEntries(
+          Object.entries(world.mirrors).filter(([one]) => one !== root),
+        )
+      },
+      share: () => undefined,
+    }
+    await pairSpaces('session', pairing)
+    expect(world.mirrors).toEqual({ Local: 'space-0', Team: 'space-1' })
+
+    account.spaces = []
+    account.listed = false
+    account.user = null
+    world.mirrors = {}
+    world.locals = ['Team', 'Local']
+
+    expect(roleOf('Team')).toBe('write')
+    expect(reachedByOthers('Team/weekly.md')).toBe(true)
+    expect(trustsHtmlAt('Team/weekly.md')).toBe(false)
+    expect(reachedByOthers('Local/plan.md')).toBe(false)
+  })
+
+  /** A space renamed here: the folder changes, and the account is not asked again
+   *  until the next listing. What was kept follows the folder. */
+  test('keeps what the listing said of a space renamed after it, for the next launch', async () => {
+    world.mirrors = { Team: 'space-1' }
+    account.spaces = [remote('space-1', 'owner', true)]
+    await account.loadSpaces()
+
+    world.mirrors = { Crew: 'space-1' }
+    for (const follow of world.followers) {
+      follow({ op: 'moved', kind: 'space', from: 'Team', to: 'Crew', root: null })
+    }
+
+    account.spaces = []
+    account.listed = false
+    account.user = null
+    world.mirrors = {}
+    world.locals = ['Crew']
+
+    expect(reachedByOthers('Crew/weekly.md')).toBe(true)
+    expect(trustsHtmlAt('Crew/weekly.md')).toBe(false)
+  })
+
+  /** Left, or deleted: the folder goes, and a folder of the same name made before the
+   *  next listing is a new one of the reader's own. */
+  test('forgets what was kept of a space once its folder goes', async () => {
+    world.mirrors = { Theirs: 'space-1' }
+    account.spaces = [remote('space-1', 'read', true)]
+    await account.loadSpaces()
+
+    world.mirrors = {}
+    for (const follow of world.followers) {
+      follow({ op: 'removed', kind: 'space', path: 'Theirs', root: null })
+    }
+
+    account.spaces = []
+    account.listed = false
+    account.user = null
+    world.locals = ['Theirs']
+
+    expect(roleOf('Theirs')).toBe('owner')
+    expect(canWriteAt('Theirs/plan.md')).toBe(true)
   })
 
   test('takes a role an older build kept, which says nothing of who else is in, as shared', () => {

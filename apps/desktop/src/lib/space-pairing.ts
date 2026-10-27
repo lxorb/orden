@@ -36,9 +36,17 @@ const inTheAir = new WeakMap<Pairing, Promise<void>>()
 export function pairSpaces(token: string, pairing: Pairing): Promise<void> {
   const running = inTheAir.get(pairing)
   if (running) return running
-  const now = pairOnce(token, pairing).finally(() => inTheAir.delete(pairing))
+  const now = pairOnce(token, pairing)
+    .finally(rolesPaired)
+    .finally(() => inTheAir.delete(pairing))
   inTheAir.set(pairing, now)
   return now
+}
+
+/** The roles written down again with the folders this pairing made: the listing
+ *  wrote them before a joined space had one. Imported late, as the account does. */
+async function rolesPaired(): Promise<void> {
+  ;(await import('./sharing.svelte')).rememberRoles()
 }
 
 async function pairOnce(token: string, pairing: Pairing): Promise<void> {
