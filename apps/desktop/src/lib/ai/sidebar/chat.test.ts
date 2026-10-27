@@ -756,3 +756,119 @@ describe('a note made of a thread', () => {
     await vi.waitFor(() => expect(said(chat)).toEqual(['Save as a note · no such space']))
   })
 })
+
+describe('a chat while it answers', () => {
+  beforeEach(() => {
+    kept.clear()
+    deleted.length = 0
+    localStorage.clear()
+    engine.send.mockClear()
+  })
+
+  const around = { front: null, selection: '' }
+  const settled = () => new Promise((resolve) => setTimeout(resolve, 30))
+
+  async function asked() {
+    const { keepThread, newThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm')
+    thread.title = 'Plan'
+    thread.turns = [
+      { id: 'u1', role: 'you', at: 1, parts: [], draft: { text: 'old question', attachments: [] } },
+    ]
+    await keepThread(thread)
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    await chat.openThread(thread.id, false)
+    return chat
+  }
+
+  test('stays deleted once deleted while it answers', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    engine.send.mockImplementationOnce(
+      (thread: Thread, draft: Draft, _on: unknown, signal?: AbortSignal) =>
+        new Promise<void>((resolve) => {
+          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          signal?.addEventListener('abort', () => resolve())
+        }),
+    )
+    chat.text = 'go on'
+    chat.submit(around)
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+
+    await chat.remove(id)
+    await settled()
+
+    expect(deleted).toEqual([`work/${id}`])
+    expect(kept.get('work')?.has(id)).toBe(false)
+    expect(chat.heads.map((one) => one.id)).not.toContain(id)
+  })
+
+  test('keeps a first message on its way in the space it was asked in', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    await settled()
+    let go: () => void = () => undefined
+    const gate = new Promise<void>((resolve) => (go = resolve))
+    engine.send.mockImplementationOnce(
+      async (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) => {
+        await gate
+        thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+        thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+        on({ type: 'done', stop: 'end' })
+      },
+    )
+    chat.text = 'what is in my work notes'
+    chat.submit(around)
+    const id = String(chat.thread?.id)
+    // The reader moves to another space while the message is gathered and first asked.
+    chat.here('home')
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    go()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await settled()
+
+    expect(chat.thread?.space).toBe('work')
+    expect(kept.get('work')?.has(id)).toBe(true)
+    expect(kept.get('home')?.has(id) ?? false).toBe(false)
+  })
+
+  test('keeps the message and its answer on Ask again where the provider is gone', async () => {
+    const { keepThread, newThread } = await import('../chat/threads')
+    const thread = newThread('work', 'gone', 'm')
+    thread.title = 'Plan'
+    thread.turns = [
+      { id: 'u1', role: 'you', at: 1, parts: [], draft: { text: 'old question', attachments: [] } },
+      { id: 'm1', role: 'model', at: 2, parts: [{ kind: 'text', text: 'the answer' }] },
+    ]
+    await keepThread(thread)
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await chat.openThread(thread.id, false)
+    const { ai } = await import('../store.svelte')
+    const gone = vi.spyOn(ai, 'provider').mockReturnValue(null)
+
+    chat.retry()
+
+    gone.mockRestore()
+    expect(chat.thread?.turns.map((one) => one.id)).toEqual(['u1', 'm1'])
+    expect(chat.trouble).toBeTruthy()
+    expect(engine.send).not.toHaveBeenCalled()
+  })
+
+  test('keeps the message and its answer on Ask again refused before any turn', async () => {
+    const chat = await asked()
+    const thread = chat.thread!
+    thread.turns.push({ id: 'm1', role: 'model', at: 2, parts: [] })
+    engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
+
+    chat.retry()
+
+    await vi.waitFor(() => expect(chat.trouble).toBe('down'))
+    expect(thread.turns.map((one) => one.id)).toEqual(['u1', 'm1'])
+  })
+})

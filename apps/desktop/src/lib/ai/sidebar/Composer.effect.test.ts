@@ -53,6 +53,7 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
+const { views } = await import('../../views.svelte')
 const Composer = (await import('./Composer.svelte')).default
 
 let target: HTMLElement
@@ -64,6 +65,7 @@ beforeEach(() => {
   panel.submit.mockClear()
   panel.chips = []
   panel.heads = []
+  panel.steer.mockClear()
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -139,4 +141,33 @@ test('a chat of another space picked with @ keeps its space', async () => {
   enter(field)
 
   expect(panel.chips).toEqual([{ kind: 'thread', id: 'garden', label: 'Garden', space: 'home' }])
+})
+
+test('Ctrl+Enter with nothing running sends as Enter does, the selection with it', async () => {
+  const chosen = views.chosen
+  const selectedText = views.selectedText
+  views.chosen = 5
+  views.selectedText = () => 'picked words'
+  panel.text = 'explain this'
+  panel.chips = []
+  const field = composer()
+
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }))
+
+  await vi.waitFor(() => expect(panel.submit).toHaveBeenCalled())
+  views.chosen = chosen
+  views.selectedText = selectedText
+  expect(panel.steer).not.toHaveBeenCalled()
+  expect((panel.chips as { kind: string }[]).map((one) => one.kind)).toEqual(['selection'])
+})
+
+test('Ctrl+Enter with nothing running runs a typed command', async () => {
+  panel.text = '/export to the desk'
+  const field = composer()
+
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }))
+
+  await vi.waitFor(() => expect(ran).toEqual(['export:to the desk']))
+  expect(panel.steer).not.toHaveBeenCalled()
+  expect(panel.submit).not.toHaveBeenCalled()
 })
