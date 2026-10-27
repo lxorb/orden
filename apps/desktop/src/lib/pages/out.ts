@@ -44,13 +44,15 @@ import { inkColour, type Palette } from '../canvas/paint'
 import { DEFAULT_INK, readPalette } from '../canvas/palette'
 import { cardType, drawnNode, inlinedSvg, plainLines, styles } from '../canvas/picture'
 import { inkSvg } from '../canvas/svg'
+import { type Box } from '../canvas/geometry'
 import { fileBytes } from '../bytes'
 import { chooseTarget, download, writeFile } from '../export/save'
 import { zipOf } from '../export/zip'
 import { PDF_TO_CSS } from '../pdf/pages'
 import { isDesktop } from '../tauri'
 import { paperPlaces } from './held'
-import { svgToPng } from './raster'
+import { svgToPng, textWidth } from './raster'
+import { escapeAll } from '@nib/markdown/html'
 
 /** What an export of a page note is about. */
 export interface PagesOut {
@@ -206,7 +208,11 @@ export function pageSvg(out: PagesOut, page: PageNode, index: number, plain = fa
   // A sheet with a page of a paper behind it shows the paper over its ruling on screen.
   const ruling = page.file ? '' : rulingSvg(page.pattern, page.width, palette.dot ?? '')
   const cards = cardsOn(out.canvas, page)
-    .map((node) => drawnNode(node, palette, out.path, out.root, plain, out.trusted ?? false))
+    .map((node) =>
+      plain && node.type === 'text'
+        ? plainWords(node, palette)
+        : drawnNode(node, palette, out.path, out.root, plain, out.trusted ?? false),
+    )
     .join('')
 
   return [
@@ -365,9 +371,10 @@ export async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
     // of its own: a page of a paper covers its ruling on screen too.
     const ruled = from === null && page.pattern !== 'blank'
     const cards = cardsOn(out.canvas, page)
-    const pictures = await Promise.all(
-      cards.map((card) => cardPdf(doc, card, out, palette, glyphs)),
-    )
+    // One at a time, so a sheet of a hundred shapes holds one canvas of pixels at once
+    // rather than a hundred.
+    const pictures: (Placed | null)[] = []
+    for (const card of cards) pictures.push(await cardPdf(doc, card, out, palette, glyphs))
     if (ruled || cards.length) {
       sheet.pushOperators(
         lib.pushGraphicsState(),
@@ -382,13 +389,14 @@ export async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
       )
       if (ruled) sheet.pushOperators(...rulingPdf(lib, page, palette))
       for (const [index, card] of cards.entries()) {
-        const image = pictures[index]
-        if (image) {
+        const placed = pictures[index]
+        if (placed) {
+          const { image, box } = placed
           sheet.drawImage(image, {
-            x: card.x - page.x,
-            y: -(card.y - page.y + card.height),
-            width: card.width,
-            height: card.height,
+            x: box.x - page.x,
+            y: -(box.y - page.y + box.height),
+            width: box.width,
+            height: box.height,
           })
         } else if (font) wordsPdf(lib, sheet, font, card, page, palette)
       }
@@ -477,13 +485,19 @@ function spelled(text: string): string {
  *  no glyphs for - Polish, Cyrillic, Greek, CJK, emoji - which would otherwise be on
  *  the screen and missing from paper. Null for a card that is set as text, or one the
  *  browser would not draw: a card of words then keeps the letters the font has. */
+/** A card's picture and the box it covers on the plane. */
+interface Placed {
+  image: import('pdf-lib').PDFImage
+  box: Box
+}
+
 async function cardPdf(
   doc: import('pdf-lib').PDFDocument,
   card: CanvasNode,
   out: PagesOut,
   palette: Palette,
   glyphs: ReadonlySet<number>,
-): Promise<import('pdf-lib').PDFImage | null> {
+): Promise<Placed | null> {
   if (card.type === 'text') {
     const text = spelled(card.text)
     if (!text.trim()) return null
@@ -492,16 +506,76 @@ async function cardPdf(
     }
   }
 
+  // A group's name sits above its box (see `drawnNode`), so its picture reaches up to it.
+  const above = card.type === 'group' && card.label ? 24 : 0
+  const box = { x: card.x, y: card.y - above, width: card.width, height: card.height + above }
   const svg = [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${card.width}" height="${card.height}"`,
-    ` viewBox="${card.x} ${card.y} ${card.width} ${card.height}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${box.width}" height="${box.height}"`,
+    ` viewBox="${box.x} ${box.y} ${box.width} ${box.height}">`,
     `<style>${styles(palette)}</style>`,
-    drawnNode(card, palette, out.path, out.root, true, out.trusted ?? false),
+    card.type === 'text'
+      ? plainWords(card, palette)
+      : drawnNode(card, palette, out.path, out.root, true, out.trusted ?? false),
     '</svg>',
   ].join('')
-  const png = await svgToPng(await inlinedSvg(svg), card.width, card.height).catch(() => null)
+  const png = await svgToPng(await inlinedSvg(svg), box.width, box.height).catch(() => null)
 
-  return png ? doc.embedPng(png) : null
+  return png ? { image: await doc.embedPng(png), box } : null
+}
+
+/** The face a pictured card's words are set and measured in, the plane's own sans. */
+const FACE = 'ui-sans-serif, system-ui, sans-serif'
+
+/** A text card as SVG for a picture: its frame where it has one, and its words in
+ *  lines broken by how wide the browser sets them (`textWidth`), at the size, weight,
+ *  padding and line height of the plane - so a line of Japanese, a full em to the
+ *  character, fits the card rather than running off its edge and out of the picture. */
+function plainWords(card: CanvasNode & { type: 'text' }, palette: Palette): string {
+  const type = cardType(!!card.bare)
+  const line = type.size * 1.55
+  const lines = linesOf(
+    card.text,
+    card.width - 2 * type.padX,
+    (text) => textWidth(text, type.size, FACE),
+    Math.ceil(card.height / line) + 1,
+  )
+  const colour = card.color === undefined ? (palette.text ?? '') : inkColour(card.color, palette)
+  const edge = card.color === undefined ? (palette.line ?? '') : colour
+  const frame = card.bare
+    ? ''
+    : `<rect x="${card.x}" y="${card.y}" width="${card.width}" height="${card.height}" rx="8" fill="#ffffff" stroke="${edge}"/>`
+  const spans = lines
+    .map(
+      (one, index) =>
+        `<tspan x="${card.x + type.padX}" y="${(card.y + type.padY + (line + type.size) / 2 - 3 + index * line).toFixed(2)}">${escapeAll(one)}</tspan>`,
+    )
+    .join('')
+
+  return `<g>${frame}<text font-family="${FACE}" font-size="${type.size}" font-weight="400" fill="${card.bare ? colour : (palette.text ?? '')}">${spans}</text></g>`
+}
+
+/** A card's text as the lines it is set in: its markdown read as plain lines, each
+ *  broken to `width` by `fits`, at most `most` of them. */
+function linesOf(
+  text: string,
+  width: number,
+  fits: (text: string) => number,
+  most: number,
+): string[] {
+  const known = new Map<string, number>()
+  const measured = (one: string) => {
+    let size = known.get(one)
+    if (size === undefined) known.set(one, (size = fits(one)))
+    return size
+  }
+  const lines: string[] = []
+
+  for (const one of plainLines(spelled(text))) {
+    if (lines.length >= most) break
+    lines.push(...broken(one, width, measured, most - lines.length))
+  }
+
+  return lines
 }
 
 /** One card's words as real PDF text in the page's frame: broken to the card's width
@@ -533,13 +607,10 @@ function wordsPdf(
   const fits = (text: string) => font.widthOfTextAtSize(text, type.size)
   // As many lines as the card shows, and no more: a long paragraph in a short card is
   // not set beyond its last visible line.
-  const most = Math.ceil(card.height / line) + 1
-  const lines: string[] = []
-  for (const one of plainLines(spelled(card.text))) {
-    if (lines.length >= most) break
-    const kept = one.replace(/[\s\S]/gu, (c) => (glyphs.has(c.codePointAt(0) ?? -1) ? c : ''))
-    lines.push(...broken(kept, card.width - 2 * type.padX, fits, most - lines.length))
-  }
+  const kept = card.text.replace(/[\s\S]/gu, (c) =>
+    c === '\n' || c === '\t' || glyphs.has(c.codePointAt(0) ?? -1) ? c : '',
+  )
+  const lines = linesOf(kept, card.width - 2 * type.padX, fits, Math.ceil(card.height / line) + 1)
 
   sheet.pushOperators(
     lib.pushGraphicsState(),
@@ -582,56 +653,51 @@ function rgb1(lib: PdfLib, colour: { r: number; g: number; b: number }) {
   return lib.rgb(colour.r, colour.g, colour.b)
 }
 
-/** One line broken to a width, at the spaces where it can be and inside a word where
- *  a word is wider than the line, which is what the plane's `overflow-wrap` does. At
- *  most `most` lines.
+/** Where a line may break inside a run with no spaces: either side of a CJK character
+ *  or an emoji, as a browser breaks them. */
+const OPEN =
+  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Extended_Pictographic}\u3000-\u303f\uff00-\uffef]/u
+
+/** One line broken to a width, at most `most` lines: at a space where there is one,
+ *  either side of a CJK character, and inside a run that is wider than the line where
+ *  nothing else will do - which is what the plane's `overflow-wrap` does.
  *
- *  Word by word, adding up widths: each word is measured once, so a paragraph costs
- *  its length and not its length cubed - which, measuring every shorter prefix of the
- *  rest of the paragraph for each line, froze the app for minutes on a long one. */
+ *  Character by character, adding up widths that are each measured once: a paragraph
+ *  costs its length and not its length cubed - which, measuring every shorter prefix of
+ *  the rest of the paragraph for each line, froze the app for minutes on a long one. */
 function broken(
   line: string,
   width: number,
   fits: (text: string) => number,
   most: number,
 ): string[] {
+  const chars = Array.from(line.trimEnd())
+  const sizes = chars.map((one) => fits(one))
   const out: string[] = []
-  const space = fits(' ')
-  let now = ''
+  let from = 0
   let wide = 0
+  let cut = -1
 
-  for (const word of line.trimEnd().split(' ')) {
-    if (out.length >= most) return out
-    let rest = word
-    let size = fits(rest)
+  for (let at = 0; at < chars.length; at += 1) {
+    const one = chars[at] ?? ''
+    if (at > from && (one === ' ' || OPEN.test(one) || OPEN.test(chars[at - 1] ?? ''))) cut = at
 
-    if (now && wide + space + size <= width) {
-      now += ` ${rest}`
-      wide += space + size
-      continue
-    }
-    if (now) out.push(now)
+    if (at > from && wide + (sizes[at] ?? 0) > width && one !== ' ') {
+      const end = cut > from ? cut : at
+      out.push(chars.slice(from, end).join('').trimEnd())
+      if (out.length >= most) return out
 
-    // A word wider than the line, cut where the next character would not fit.
-    while (size > width && rest.length > 1 && out.length < most) {
-      let cut = 0
-      let at = 0
-      for (const one of rest) {
-        const step = fits(one)
-        if (cut && at + step > width) break
-        at += step
-        cut += one.length
-      }
-      out.push(rest.slice(0, cut))
-      rest = rest.slice(cut)
-      size = fits(rest)
+      from = end
+      while (chars[from] === ' ') from += 1
+      wide = 0
+      for (let back = from; back < at; back += 1) wide += sizes[back] ?? 0
+      cut = -1
     }
 
-    now = rest
-    wide = size
+    if (at >= from) wide += sizes[at] ?? 0
   }
 
-  if (out.length < most) out.push(now)
+  out.push(chars.slice(from).join(''))
   return out
 }
 

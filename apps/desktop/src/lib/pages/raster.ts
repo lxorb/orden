@@ -36,3 +36,16 @@ export async function svgToPng(
     URL.revokeObjectURL(url)
   }
 }
+
+let measuring: CanvasRenderingContext2D | null | undefined
+
+/** How wide the browser sets a run of text at a size in a face: what a pictured card's
+ *  lines are broken by, so they fit the card in the picture the browser then draws in
+ *  the same face. Zero where there is no 2d context, which breaks nothing. */
+export function textWidth(text: string, size: number, face: string): number {
+  measuring ??= document.createElement('canvas').getContext('2d')
+  if (!measuring) return 0
+
+  measuring.font = `400 ${size}px ${face}`
+  return measuring.measureText(text).width
+}

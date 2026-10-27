@@ -119,7 +119,7 @@ describe('words typed on a page', () => {
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
 
     expect(raster.drawn).toHaveLength(1)
-    expect(raster.drawn[0]).toContain('Kolokwium w środę 試験 ✓')
+    expect(setLines(raster.drawn[0] ?? '').lines.join(' ')).toBe('Kolokwium w środę 試験 ✓')
     expect(first).toMatch(/ Do$/m)
     expect(first).not.toContain(hex('Kolokwium'))
     // The other sheet's words are still text.
@@ -272,7 +272,10 @@ describe('words set as a picture', () => {
   test.each([japanese, russian])('fit the card and lose nothing: %s', async (text) => {
     raster.drawn = []
     const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & {
+      text: string
+      bare?: boolean
+    }
     card.bare = false
     card.text = text
     card.width = 300
