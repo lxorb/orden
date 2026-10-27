@@ -4,7 +4,7 @@
  *  timezone}`, `deadline {date}`, `duration {amount, unit}`, priority 4 as p1). */
 
 import { renderMarkdown } from '@nib/markdown'
-import { describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { sourceOf } from './sources'
 import {
   clockOf,
@@ -334,6 +334,73 @@ describe('from the account', () => {
     )
     const kept = plan.files.find((one) => one.path === 'Projects/Todoist.md')
     expect(kept?.kind === 'note' ? kept.text : '').toBe('- [x] Pack the boxes ✅ 2026-10-01\n')
+  })
+})
+
+describe('a task done and a comment posted in the evening, west of Greenwich', () => {
+  beforeAll(() => {
+    vi.stubEnv('TZ', 'America/Los_Angeles')
+  })
+  afterAll(() => {
+    vi.unstubAllEnvs()
+  })
+
+  /** Seven in the evening of the 30th and eight in the evening of the 1st in Los
+   *  Angeles, both already the next day in UTC. */
+  const LATE: Record<string, unknown> = {
+    '/projects': { results: [{ id: 'p-1', name: 'Home' }], next_cursor: null },
+    '/sections': { results: [], next_cursor: null },
+    '/tasks': {
+      results: [
+        {
+          id: 't-1',
+          project_id: 'p-1',
+          content: 'Fix the tap',
+          priority: 1,
+          labels: [],
+          note_count: 1,
+        },
+      ],
+      next_cursor: null,
+    },
+    '/reminders': { results: [], next_cursor: null },
+    '/comments?task_id=t-1': {
+      results: [{ content: 'The plumber said', posted_at: '2026-10-02T03:00:00.000000Z' }],
+      next_cursor: null,
+    },
+    '/tasks/completed/by_completion_date': {
+      items: [
+        {
+          id: 't-2',
+          project_id: 'p-1',
+          content: 'Pack the boxes',
+          priority: 1,
+          labels: [],
+          completed_at: '2026-10-01T02:00:00.000000Z',
+        },
+      ],
+      next_cursor: null,
+    },
+  }
+  const late: Fetch = (url) => {
+    const path = url
+      .replace('https://api.todoist.com/api/v1', '')
+      .replace(/[?&](limit|since|until)=[^&]*/g, '')
+      .replace(/\?$/, '')
+    const page = LATE[path]
+    return Promise.resolve({
+      ok: !!page,
+      status: page ? 200 : 404,
+      json: () => Promise.resolve(page),
+    })
+  }
+
+  test("are dated by that evening's day, not by the UTC day after it", async () => {
+    const plan = planOf(await readTodoistAccount(late, 'secret', { completed: true, now: NOW }))
+    const home = plan.files.find((one) => one.path === 'Projects/Home.md')
+    const text = home?.kind === 'note' ? home.text : ''
+    expect(text).toContain('  2026-10-01: The plumber said')
+    expect(text).toContain('- [x] Pack the boxes ✅ 2026-09-30')
   })
 })
 

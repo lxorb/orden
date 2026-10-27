@@ -17,7 +17,7 @@ import { asked } from './asks'
 import { type Call, done, maybe, need, writerOf } from './call'
 import { Refused } from './problem'
 import { judged, onDisk, type Place, placeFor, sharedSource, writableAt } from './spaces'
-import { nameOf } from '../../space-paths'
+import { notePath } from '../../space-paths'
 
 /** A version's name as an agent hands it back: where it is kept and when. */
 function idOf(version: Version): string {
@@ -27,7 +27,7 @@ function idOf(version: Version): string {
 function noteOf(call: Call): { place: Place; relative: string; path: string } {
   const place = placeFor(call, maybe(call, 'space'))
   const asked = judged(need(call, 'path'))
-  const relative = nameOf(asked).includes('.') ? asked : `${asked}.md`
+  const relative = notePath(asked) ?? asked
   return { place, relative, path: onDisk(place, relative) }
 }
 

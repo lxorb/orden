@@ -730,10 +730,14 @@ def panel_ends(page: Page, label: str) -> None:
         check(False, f"[{label}] the panel has a foot to measure")
         return
 
-    # The web app adds a third, the app to download (SidebarFoot.svelte), which the
-    # desktop app has no use for; the two every build has are the theme and Settings.
+    # The web app adds one more, the app to download (SidebarFoot.svelte), which the
+    # desktop app has no use for; the three every build has are Send feedback (#548),
+    # the theme and Settings.
     kept = [one["name"] for one in foot["acts"] if one["name"] != "Download the app"]
-    check(len(kept) == 2, f"[{label}] the foot holds the theme and the settings ({kept})")
+    check(
+        len(kept) == 3 and kept[0] == "Send feedback" and kept[2] == "Settings",
+        f"[{label}] the foot holds Send feedback, the theme and the settings ({kept})",
+    )
     for one in foot["acts"]:
         check(
             abs(one["markX"]) <= SLACK and abs(one["markY"]) <= SLACK,

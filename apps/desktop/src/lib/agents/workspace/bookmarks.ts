@@ -8,7 +8,7 @@
  *  graph views are the reader's arrangement of the list and are left to them. */
 
 import type { AgentAnswer } from '../../automation/caller'
-import { nameOf } from '../../space-paths'
+import { notePath } from '../../space-paths'
 import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from '../../workspace/bookmarks.svelte'
 import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'
@@ -26,7 +26,8 @@ async function bookmarkOf(call: Call, place: Place): Promise<Bookmark> {
   const path = judged(need(call, 'path'))
   const heading = maybe(call, 'heading')
   if (heading !== null) {
-    const note = nameOf(path).includes('.') ? path : `${path}.md`
+    const note = notePath(path)
+    if (note === null) throw new Refused('bad_arguments', `${path} is not a markdown note`)
     return { kind: 'heading', path: note, text: heading }
   }
 

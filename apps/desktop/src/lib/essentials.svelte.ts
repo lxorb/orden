@@ -13,7 +13,12 @@ import type { OpenHow } from './new-tab'
 import { moving } from './list-landing.svelte'
 import { canWriteAt } from './sharing.svelte'
 import { folderOf, insideSpace, samePath } from './space-paths'
-import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from './workspace/bookmarks.svelte'
+import {
+  type Bookmark,
+  filedUnder,
+  MOST_BOOKMARKS,
+  sameBookmark,
+} from './workspace/bookmarks.svelte'
 import { workspace, type Entry } from './workspace.svelte'
 
 /** Where something carried over the bookmarks would land: the bookmark it is beside,
@@ -124,7 +129,7 @@ export function placed(held: readonly Bookmark[], marks: readonly Bookmark[], at
 
   const come = marks
     .filter((mark, index) => marks.findIndex((other) => sameBookmark(mark, other)) === index)
-    .map(({ kind, path, text, view }) => ({ kind, path, text, ...(view ? { view } : {}) }))
+    .map((mark) => filedUnder(mark, null))
     .slice(0, MOST_BOOKMARKS - rest.length)
 
   return [...rest.slice(0, ahead), ...come, ...rest.slice(ahead)]

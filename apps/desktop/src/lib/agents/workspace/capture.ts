@@ -27,7 +27,7 @@ import { attachmentFolder } from '../../attachments'
 import { modes } from '../../modes.svelte'
 import { paperInches } from '../../page-setup'
 import { settings } from '../../settings.svelte'
-import { nameOf, relativeTo } from '../../space-paths'
+import { notePath, relativeTo } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { pages } from '../../web-tab/pages.svelte'
 import { clipNote } from '../../web-tab/note'
@@ -221,9 +221,8 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const relative =
     target === null
       ? await freshPath(place, maybe(call, 'folder'), page.title || page.url)
-      : nameOf(target).includes('.')
-        ? target
-        : `${target}.md`
+      : notePath(target)
+  if (relative === null) throw new Refused('bad_arguments', `${target} is not a markdown note`)
 
   // Before the question and before any picture is kept beside the note: a space shared
   // to be read takes neither a new note nor a section added to one there.
