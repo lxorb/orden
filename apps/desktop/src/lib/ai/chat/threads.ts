@@ -97,6 +97,8 @@ export function branchThread(thread: Thread, upTo: string, title?: string): Thre
     delete copy.compaction
   }
   delete copy.goal
+  // A copy has started nothing yet: what the original's helpers did is its review's.
+  delete (copy as Thread & { helpers?: string[] }).helpers
   const now = Date.now()
   return {
     ...copy,

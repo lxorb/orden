@@ -96,18 +96,19 @@ export function answerFor(helper: Pick<Helper, 'answer' | 'description' | 'outsi
   return untrusted(`helper ${helper.description}`, helper.answer)
 }
 
-/** What a thread keeps of the work it is in, written down with it: every thread started
- *  under it at any depth (what its review covers, review/changes.ts), and the thread it
- *  was itself started under. */
-type InTree = Thread & { helpers?: string[]; parent?: string }
+/** What a thread keeps of the work started under it, written down with it: every thread
+ *  started under it at any depth, what its review covers (review/changes.ts). */
+type Helped = Thread & { helpers?: string[] }
 
 class Helpers {
   /** Every helper of this run, newest last. */
   all = $state.raw<Helper[]>([])
 
   private stops = new Map<string, AbortController>()
-  /** Every thread in a tree of work this run, by id: the ones the panel holds. */
-  private held = new Map<string, InTree>()
+  /** The work running under a thread, by its helper thread's id: only while the turn
+   *  or task that started it runs. A thread whose work ended (a `/fork` copy, a finished
+   *  `/subtask` the reader carries on) is a thread of its own again. */
+  private under = new Map<string, { parent: Helped; child: Thread }>()
   private ends = new Map<string, Promise<void>>()
 
   get(id: string): Helper | null {
@@ -212,6 +213,7 @@ class Helpers {
           this.stops.delete(helper.id)
           // A helper's own helpers end with it.
           this.stopUnder(helper.id)
+          this.endedUnder(helper.id)
         }),
     )
     return helper
@@ -228,30 +230,29 @@ class Helpers {
     return this.get(id)
   }
 
-  /** `child` is started under `parent`, by `run_agent` or by a command (`/subtask`,
-   *  `/fork`, `/batch`, `/deep-research`): one tree for every kind. Every thread above
-   *  takes it into its review; one above the parent is written down now, the parent
-   *  with the turn or command that started it. */
+  /** `child` runs work for `parent`, started by `run_agent` or by a command
+   *  (`/subtask`, `/fork`, `/batch`, `/deep-research`), until `endedUnder`: one tree for
+   *  every kind. Every thread above takes it into its review; one above the parent is
+   *  written down now, the parent with the turn or command that started it. */
   startedUnder(parent: Thread, child: Thread): void {
-    const made = child as InTree
-    made.parent = parent.id
-    // A copy (`/fork`, `/subtask`) has started nothing yet, whatever its original did.
-    delete made.helpers
-    this.held.set(parent.id, parent)
-    this.held.set(child.id, made)
-    let above: InTree | undefined = parent
-    while (above) {
-      if (!above.helpers?.includes(child.id)) {
-        above.helpers = [...(above.helpers ?? []), child.id]
-        if (above !== parent) void keepThread(above).catch(() => undefined)
-      }
-      above = above.parent ? this.held.get(above.parent) : undefined
+    this.under.set(child.id, { parent, child })
+    for (let above: Helped | undefined = parent; above; above = this.under.get(above.id)?.parent) {
+      if (above.helpers?.includes(child.id)) continue
+      above.helpers = [...(above.helpers ?? []), child.id]
+      if (above !== parent) void keepThread(above).catch(() => undefined)
     }
   }
 
-  /** A thread deleted: out of the trees. */
+  /** The work `child` ran for its parent is over. What it started in it stays in the
+   *  reviews above; what is started there later is its own. */
+  endedUnder(child: string): void {
+    this.under.delete(child)
+  }
+
+  /** A thread deleted: out of the tree, with what ran under it. */
   forget(id: string): void {
-    this.held.delete(id)
+    this.under.delete(id)
+    for (const [child, one] of [...this.under]) if (one.parent.id === id) this.forget(child)
   }
 
   /** Stops one helper, and every helper under it. */
@@ -265,7 +266,7 @@ class Helpers {
    *  stopping or deleting a thread does. */
   stopUnder(thread: string): void {
     tasks.stop(thread)
-    for (const one of [...this.held.values()]) if (one.parent === thread) this.stop(one.id)
+    for (const [child, one] of [...this.under]) if (one.parent.id === thread) this.stop(child)
   }
 }
 

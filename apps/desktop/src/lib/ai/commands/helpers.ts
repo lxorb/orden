@@ -44,7 +44,6 @@ function helperOf(parent: Thread, title: string, copy: boolean, mode?: Mode): Th
           title,
         }
   if (mode) made.mode = mode
-  helpers.startedUnder(parent, made)
   return made
 }
 
@@ -65,6 +64,7 @@ async function run(
     helper: helper.id,
     stop: () => stopper.abort(),
   })
+  helpers.startedUnder(parent, helper)
   host.adopt(helper)
   try {
     return await host.turn(helper, text, { signal: stopper.signal })
@@ -72,6 +72,7 @@ async function run(
     return null
   } finally {
     tasks.done(task.id)
+    helpers.endedUnder(helper.id)
   }
 }
 
@@ -208,12 +209,14 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
         false,
         parent.mode,
       )
+      helpers.startedUnder(parent, helper)
       host.adopt(helper)
       const ended = await host
         .turn(helper, `${instruction}\n\nWork on this one note only: [[${linkOf(path, root)}]]`, {
           signal: stopper.signal,
         })
         .catch(() => null)
+      helpers.endedUnder(helper.id)
       if (ended && ended.stop !== 'error' && ended.stop !== 'stopped') done++
     }
   }

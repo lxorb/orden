@@ -78,10 +78,11 @@ const roads: Roads = {
   run: (thread, _text, signal) => held(thread, signal),
 }
 
+const adopted = vi.fn((_thread: Thread) => undefined)
 const host = {
   turn: (thread: Thread, _text: string, once?: { signal?: AbortSignal }) =>
     held(thread, once?.signal),
-  adopt: vi.fn(),
+  adopt: adopted,
   touched: vi.fn(),
   line: vi.fn(),
 } as unknown as Host
@@ -185,7 +186,7 @@ describe('work the reader starts later', () => {
     const thread = top()
     thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
     fork(host, thread, '')
-    const copy = vi.mocked(host.adopt).mock.calls.at(-1)?.[0]
+    const copy = adopted.mock.calls.at(-1)?.[0]
     if (!copy) throw new Error('forked')
     const helper = await helpers.start(asked(copy), roads)
     if ('refused' in helper) throw new Error(helper.refused)
