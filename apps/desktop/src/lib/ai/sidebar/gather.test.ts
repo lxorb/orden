@@ -53,7 +53,26 @@ vi.mock('../../workspace.svelte', () => ({
 
 vi.mock('../../web-tab/pages.svelte', () => ({ pages: { read: () => Promise.resolve(null) } }))
 vi.mock('../../scratchpad/pad', () => ({ scratchpad: { where: () => Promise.resolve('') } }))
-vi.mock('../chat/threads', () => ({ readThread: () => Promise.resolve(null) }))
+/** Chats kept by space, as the crate keeps them: Garden is Home's. */
+vi.mock('../chat/threads', () => ({
+  readThread: (space: string, id: string) =>
+    Promise.resolve(
+      space === 'home' && id === 'garden'
+        ? {
+            id: 'garden',
+            turns: [
+              {
+                id: 'u',
+                role: 'you',
+                at: 1,
+                parts: [],
+                draft: { text: 'plant roses', attachments: [] },
+              },
+            ],
+          }
+        : null,
+    ),
+}))
 
 const { draftOf } = await import('./gather')
 
@@ -81,4 +100,19 @@ describe('a message in a thread of another space than the one in front', () => {
     )
     expect(draft.attachments.map((one) => one.label)).toContain('Team/Ana.md')
   })
+})
+
+test('a chat of another space goes along from the space it is kept in', async () => {
+  // The `@` list offers every space's chats, each with its own space (Composer.svelte).
+  const draft = await draftOf(
+    'what did I say there?',
+    [{ kind: 'thread', id: 'garden', label: 'Garden', space: HOME.id }],
+    'agent',
+    null,
+    '',
+    WORK,
+  )
+  expect(draft.attachments.map((one) => [one.label, one.text])).toEqual([
+    ['Garden', '> plant roses'],
+  ])
 })
