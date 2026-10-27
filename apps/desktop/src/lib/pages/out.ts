@@ -13,6 +13,12 @@
  *  it gets pages made at its own sizes instead, which is the same code with an empty
  *  document under it.
  *
+ *  **What is on a page goes out with it.** The ink, the words typed onto it and the
+ *  cards put on it, and the ruling it is printed with (B541): the reader sees all of
+ *  them on the sheet, so a sheet that has left the app shows all of them. The cards are
+ *  the plane's own picture of a card (canvas/picture.ts) in the SVG and the PNG, and
+ *  real text in the PDF, so the words there are still words a reader can find.
+ *
  *  The ink goes into the page's own content and not into an `/Ink` annotation. Both
  *  would be the same strokes twice, and of the two, content is the one every reader
  *  and every printer draws: pdf-lib has no annotation writer of its own, and ink
@@ -25,10 +31,18 @@
  *  export's libraries. */
 
 import { onPage, pagesOf } from '@nib/markdown/pages'
-import { type Canvas, type InkStroke, type PageNode, readCanvas } from '../canvas/format'
+import {
+  type Canvas,
+  type CanvasNode,
+  type InkStroke,
+  type PageNode,
+  type Pattern,
+  readCanvas,
+} from '../canvas/format'
 import { INK_STYLES, inkOpacity, outlineOf } from '../canvas/ink'
 import { inkColour, type Palette } from '../canvas/paint'
 import { readPalette } from '../canvas/palette'
+import { cardType, drawnNode, inlinedSvg, plainLines, styles } from '../canvas/picture'
 import { inkSvg } from '../canvas/svg'
 import { fileBytes } from '../bytes'
 import { chooseTarget, download, writeFile } from '../export/save'
@@ -45,6 +59,9 @@ export interface PagesOut {
   path: string | null
   root: string | null
   name: string
+  /** Whether the cards' HTML is markup rather than the characters it is made of,
+   *  asked the way the page on screen asks it; see trust.ts. */
+  trusted?: boolean
 }
 
 /** The note that is open, as the three exports below want it.
@@ -58,6 +75,7 @@ export function pagesOutOf(open: {
   name: string
   path: string | null
   root: string | null
+  trusted?: boolean
 }): PagesOut {
   return {
     canvas: readCanvas(open.text),
@@ -67,6 +85,7 @@ export function pagesOutOf(open: {
     path: open.path,
     root: open.root,
     name: open.name,
+    trusted: open.trusted ?? false,
   }
 }
 
@@ -87,24 +106,100 @@ function inkOn(canvas: Canvas, page: PageNode): InkStroke[] {
   return canvas.ink.filter((stroke) => onPage(stroke, box))
 }
 
+/** The cards on one page: every node but a page that overlaps it, in the plane's
+ *  order. Overlaps and not "starts on", because a card that runs over the edge of a
+ *  sheet shows on both on screen, and each sheet is clipped to itself. */
+function cardsOn(canvas: Canvas, page: PageNode): CanvasNode[] {
+  return canvas.nodes.filter(
+    (node) =>
+      node.type !== 'page' &&
+      node.x + node.width > page.x &&
+      node.x < page.x + page.width &&
+      node.y + node.height > page.y &&
+      node.y < page.y + page.height,
+  )
+}
+
+/** The words and the rules on a sheet that has left the app, in the colours of white
+ *  paper: the light theme's text and `--canvas-dot`. The theme on screen may be dark,
+ *  and its light words would be invisible on a white sheet. */
+const PAPER_TEXT = '#1a1d23'
+const PAPER_RULE = '#d5dce5'
+
+function paperPalette(palette: Palette): Palette {
+  return { ...palette, text: PAPER_TEXT, surface: '#ffffff', bg: '#ffffff', line: '#d6d9de' }
+}
+
+/** The ruling pitches, as PagesPage.svelte draws them: 8mm lines and a 5mm grid at
+ *  96 to the inch, a one pixel rule at the bottom of each pitch, and a dot of one
+ *  pixel's radius in the middle of each square of the grid. */
+const LINES = 30
+const GRID = 19
+
+/** A ruling as one SVG pattern, or nothing for a blank page. */
+function rulingSvg(pattern: Pattern, width: number): string {
+  const tile = (w: number, h: number, body: string) =>
+    `<pattern id="ruling" patternUnits="userSpaceOnUse" width="${w}" height="${h}">${body}</pattern>`
+  switch (pattern) {
+    case 'lines':
+      return tile(
+        width,
+        LINES,
+        `<rect y="${LINES - 1}" width="${width}" height="1" fill="${PAPER_RULE}"/>`,
+      )
+    case 'grid':
+      return tile(
+        GRID,
+        GRID,
+        `<rect y="${GRID - 1}" width="${GRID}" height="1" fill="${PAPER_RULE}"/><rect x="${GRID - 1}" width="1" height="${GRID}" fill="${PAPER_RULE}"/>`,
+      )
+    case 'dots':
+      return tile(
+        GRID,
+        GRID,
+        `<circle cx="${GRID / 2}" cy="${GRID / 2}" r="1" fill="${PAPER_RULE}"/>`,
+      )
+    case 'blank':
+      return ''
+  }
+}
+
 /** One page as an SVG, in the page's own coordinates: the origin at its top left,
- *  and the ink moved so a stroke drawn half way down the third page is half way down
- *  its own picture.
+ *  and everything on it moved so a stroke drawn half way down the third page is half
+ *  way down its own picture. The ruling, then the cards, then the ink, which is the
+ *  order the page on screen stacks them in.
  *
  *  White paper, because paper is white. A page note honours the theme on screen -
  *  that is what a screen is for - and a sheet that has left the app is a sheet: ink
  *  that was drawn light on a dark page would be invisible on it, so the export
- *  writes the page the way it would be printed. */
-function pageSvg(out: PagesOut, page: PageNode, index: number): string {
+ *  writes the page the way it would be printed.
+ *
+ *  `plain` is the picture a PNG is rasterised from: a browser will not hand over the
+ *  pixels of an SVG with a `foreignObject` in it, so the cards are set as plain lines
+ *  there, which is what the plane's own PNG does too. Exported for its tests. */
+export function pageSvg(out: PagesOut, page: PageNode, index: number, plain = false): string {
   const strokes = inkOn(out.canvas, page).map((stroke) => moved(stroke, -page.x, -page.y))
   const ink = inkSvg(strokes, out.palette)
   const label = `Page ${index}`
+  const palette = paperPalette(out.palette)
+
+  // A sheet with a page of a paper behind it shows the paper over its ruling on screen.
+  const ruling = page.file ? '' : rulingSvg(page.pattern, page.width)
+  const cards = cardsOn(out.canvas, page)
+    .map((node) => drawnNode(node, palette, out.path, out.root, plain, out.trusted ?? false))
+    .join('')
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${page.width}" height="${page.height}"`,
     ` viewBox="0 0 ${page.width} ${page.height}">`,
     `<title>${label.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</title>`,
+    cards ? `<style>${styles(palette)}</style>` : '',
+    `<defs><clipPath id="sheet"><rect width="${page.width}" height="${page.height}"/></clipPath>${ruling}</defs>`,
     `<rect width="${page.width}" height="${page.height}" fill="#ffffff"/>`,
+    ruling ? `<rect width="${page.width}" height="${page.height}" fill="url(#ruling)"/>` : '',
+    cards
+      ? `<g clip-path="url(#sheet)"><g transform="translate(${-page.x} ${-page.y})">${cards}</g></g>`
+      : '',
     ink,
     '</svg>',
   ].join('')
@@ -181,10 +276,12 @@ export async function exportPagesSvg(out: PagesOut): Promise<string | undefined>
 
   const name = stem(out.name)
   const zip = await zipOf(
-    pages.map((page, at) => ({
-      path: `${name}/${name} ${numbered(at + 1, pages.length)}.svg`,
-      body: pageSvg(out, page, at + 1),
-    })),
+    await Promise.all(
+      pages.map(async (page, at) => ({
+        path: `${name}/${name} ${numbered(at + 1, pages.length)}.svg`,
+        body: await inlinedSvg(pageSvg(out, page, at + 1)),
+      })),
+    ),
   )
 
   return handOver(`${name} pages`, 'zip', 'ZIP', zip, 'application/zip')
@@ -199,7 +296,8 @@ export async function exportPagesPng(out: PagesOut): Promise<string | undefined>
   const entries: { path: string; body: Uint8Array }[] = []
 
   for (const [at, page] of pages.entries()) {
-    const bytes = await svgToPng(pageSvg(out, page, at + 1), page.width, page.height)
+    const svg = await inlinedSvg(pageSvg(out, page, at + 1, true))
+    const bytes = await svgToPng(svg, page.width, page.height)
     if (!bytes) continue
 
     entries.push({ path: `${name}/${name} ${numbered(at + 1, pages.length)}.png`, body: bytes })
@@ -232,7 +330,8 @@ export async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
   const pages = pagesOf(out.canvas)
   if (!pages.length) return null
 
-  const { BlendMode, degrees, PDFDocument, rgb } = await import('pdf-lib')
+  const lib = await import('pdf-lib')
+  const { BlendMode, degrees, PDFDocument, rgb } = lib
 
   // The paper the pages came from, where they all came from one. A note whose pages
   // name several papers, or none, gets blank pages at its own sizes: the ink is what
@@ -245,6 +344,10 @@ export async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
   const doc = bytes ? await PDFDocument.load(bytes) : await PDFDocument.create()
   const kept = bytes ? await doc.copyPages(doc, doc.getPageIndices()) : []
   const carried = doc.getPageCount()
+  // Helvetica, which every reader has: the words stay text without a font file in
+  // the export. Embedded only for a note with words in it.
+  const words = out.canvas.nodes.some((node) => node.type === 'text' && node.text.trim())
+  const font = words ? await doc.embedFont(lib.StandardFonts.Helvetica) : null
 
   for (const [at, page] of pages.entries()) {
     // The page of the paper this sheet is a sheet of, where there is one and it is
@@ -265,6 +368,28 @@ export async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
     const scale = (turn % 180 ? box.height : box.width) / page.width
     const x = box.x + (turn >= 180 ? box.width : 0)
     const y = box.y + (turn === 0 || turn === 270 ? box.height : 0)
+
+    // The ruling and the words, under the ink as on screen. The ruling only on a sheet
+    // of its own: a page of a paper covers its ruling on screen too.
+    const ruled = from === null && page.pattern !== 'blank'
+    const cards = font ? cardsOn(out.canvas, page) : []
+    const palette = paperPalette(out.palette)
+    if (ruled || cards.length) {
+      sheet.pushOperators(
+        lib.pushGraphicsState(),
+        // The page's own frame: its top left at the origin, in its pixels, `y` up the
+        // page as everything in a PDF is - so a point of the page is (x, -y).
+        lib.translate(x, y),
+        lib.rotateDegrees(turn),
+        lib.scale(scale, scale),
+        lib.rectangle(0, -page.height, page.width, page.height),
+        lib.clip(),
+        lib.endPath(),
+      )
+      if (ruled) sheet.pushOperators(...rulingPdf(lib, page))
+      if (font) for (const card of cards) wordsPdf(lib, sheet, font, card, page, palette)
+      sheet.pushOperators(lib.popGraphicsState())
+    }
 
     for (const stroke of inkOn(out.canvas, page)) {
       const ring = outlineOf(stroke)
@@ -306,6 +431,129 @@ export async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
   for (let index = carried - 1; index >= 0; index -= 1) doc.removePage(index)
 
   return new Uint8Array(await doc.save())
+}
+
+type PdfLib = typeof import('pdf-lib')
+type Sheet = import('pdf-lib').PDFPage
+type Font = import('pdf-lib').PDFFont
+
+/** A page's ruling as PDF operators in the page's frame (see `pagesPdf`): the rules
+ *  as thin filled bars, and the dots as squares a pixel and a half across - at that
+ *  size a square is a dot on any paper, and two thousand of them stay a small page. */
+function rulingPdf(lib: PdfLib, page: PageNode): import('pdf-lib').PDFOperator[] {
+  const colour = hexOf(PAPER_RULE)
+  const ops = [lib.setFillingRgbColor(colour.r, colour.g, colour.b)]
+  const bar = (left: number, top: number, w: number, h: number) =>
+    ops.push(lib.rectangle(left, -(top + h), w, h))
+
+  if (page.pattern === 'lines') {
+    for (let at = LINES - 1; at < page.height; at += LINES) bar(0, at, page.width, 1)
+  } else if (page.pattern === 'grid') {
+    for (let at = GRID - 1; at < page.height; at += GRID) bar(0, at, page.width, 1)
+    for (let at = GRID - 1; at < page.width; at += GRID) bar(at, 0, 1, page.height)
+  } else if (page.pattern === 'dots') {
+    for (let top = GRID / 2; top < page.height; top += GRID) {
+      for (let left = GRID / 2; left < page.width; left += GRID)
+        bar(left - 0.75, top - 0.75, 1.5, 1.5)
+    }
+  }
+
+  ops.push(lib.fill())
+  return ops
+}
+
+/** One card's words as real PDF text in the page's frame: broken to the card's width
+ *  with the font's own widths, at the size and inside the padding the plane sets them
+ *  in, and clipped to the card as the plane clips it. A card with a frame on screen
+ *  gets its frame. Only text cards: a picture, a link or a shape on a page is not
+ *  drawn into the PDF yet.
+ *
+ *  A character Helvetica has no glyph for is left out rather than failing the whole
+ *  export; that is the cost of a font every reader already has. */
+function wordsPdf(
+  lib: PdfLib,
+  sheet: Sheet,
+  font: Font,
+  card: CanvasNode,
+  page: PageNode,
+  palette: Palette,
+) {
+  if (card.type !== 'text' || !card.text.trim()) return
+
+  const type = cardType(!!card.bare)
+  const left = card.x - page.x
+  const top = card.y - page.y
+  const colour = hexOf(
+    card.bare && card.color !== undefined ? inkColour(card.color, palette) : PAPER_TEXT,
+  )
+  const glyphs = new Set(font.getCharacterSet())
+  const fits = (text: string) => font.widthOfTextAtSize(text, type.size)
+  const lines = plainLines(card.text).flatMap((line) =>
+    broken(
+      line.replace(/[\s\S]/gu, (one) => (glyphs.has(one.codePointAt(0) ?? -1) ? one : '')),
+      card.width - 2 * type.padX,
+      fits,
+    ),
+  )
+
+  sheet.pushOperators(
+    lib.pushGraphicsState(),
+    lib.rectangle(left, -(top + card.height), card.width, card.height),
+    lib.clip(),
+    lib.endPath(),
+  )
+
+  if (!card.bare) {
+    const line = hexOf(palette.line ?? '#d6d9de')
+    sheet.drawRectangle({
+      x: left,
+      y: -(top + card.height),
+      width: card.width,
+      height: card.height,
+      color: rgb1(lib, hexOf('#ffffff')),
+      borderColor: rgb1(lib, line),
+      borderWidth: 1,
+    })
+  }
+
+  for (const [index, text] of lines.entries()) {
+    if (!text) continue
+    // The middle of the line box, a little under it for the baseline, as the SVG sets it.
+    const baseline = top + type.padY + index * type.line + type.line / 2 + type.size * 0.35
+    if (baseline - type.size > top + card.height) break
+    sheet.drawText(text, {
+      x: left + type.padX,
+      y: -baseline,
+      size: type.size,
+      font,
+      color: rgb1(lib, colour),
+    })
+  }
+
+  sheet.pushOperators(lib.popGraphicsState())
+}
+
+function rgb1(lib: PdfLib, colour: { r: number; g: number; b: number }) {
+  return lib.rgb(colour.r, colour.g, colour.b)
+}
+
+/** One line broken to a width, at the spaces where it can be and inside a word where
+ *  a word is wider than the line, which is what the plane's `overflow-wrap` does. */
+function broken(line: string, width: number, fits: (text: string) => number): string[] {
+  const out: string[] = []
+  let rest = line.trimEnd()
+
+  while (rest && fits(rest) > width) {
+    let cut = rest.length
+    while (cut > 1 && fits(rest.slice(0, cut)) > width) cut -= 1
+    const space = rest.lastIndexOf(' ', cut)
+    const at = space > 0 ? space : cut
+    out.push(rest.slice(0, at))
+    rest = rest.slice(space > 0 ? at + 1 : at)
+  }
+
+  out.push(rest)
+  return out
 }
 
 /** How finely a page is drawn for the printer, against its size on screen: twice,

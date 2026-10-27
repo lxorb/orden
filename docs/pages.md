@@ -412,9 +412,21 @@ paper is held, by the same rename that moved the paper.
 
 | Format | What it is |
 | --- | --- |
-| **PDF** | The original paper with the ink drawn onto its pages as vector paths. The text stays text, selectable and searchable. A note with no paper behind it gets fresh pages at its own sizes. |
+| **PDF** | The original paper with the ink drawn onto its pages as vector paths. The text stays text, selectable and searchable. A note with no paper behind it gets fresh pages at its own sizes, with their ruling. |
 | **PNG** | One file per page, at 2x, in a zip. |
 | **SVG** | One file per page, in a zip. |
+
+Every format carries what the page shows: the ruling (on a sheet with no paper
+behind it, since a paper covers its ruling on screen too), the words typed onto
+the page and the cards on it, and the ink on top, each sheet clipped to itself
+(B541). In the SVG a card is the canvas picture's own card (`drawnNode` in
+canvas/picture.ts, with the plane's trust answer), and in the PNG the same card
+set as plain lines, since a browser will not rasterise a `foreignObject`. In the
+PDF a text card is real Helvetica text, broken to the card's width at the size
+and padding the plane sets it in, so typed words stay searchable; a character
+Helvetica has no glyph for is left out, and pictures, links and shapes on a page
+are not drawn into the PDF yet. The words and rules are in the light theme's
+colours whatever theme is on, because the sheet is white paper.
 
 **Print** is the same PDF on paper (#350): the export's own pages, drawn a page at a
 time and handed to the print engine as one picture per sheet - the system's dialog on

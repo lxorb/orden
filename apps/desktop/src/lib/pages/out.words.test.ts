@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest'
-import { decodePDFRawStream, type PDFArray, PDFDocument, type PDFRawStream } from 'pdf-lib'
+import { decodePDFRawStream, PDFDocument, type PDFRawStream } from 'pdf-lib'
 import { added, emptyPages } from '@nib/markdown/pages'
 import type { Canvas, CanvasNode, PageNode } from '../canvas/format'
 
@@ -37,7 +37,10 @@ function note(pattern: PageNode['pattern'] = 'blank'): Canvas {
     width: 220,
     height: 60,
   })
-  return { ...two, nodes: [...two.nodes, words('w1', 'Exam on Friday', a!), words('w2', 'Second sheet', b!)] }
+  return {
+    ...two,
+    nodes: [...two.nodes, words('w1', 'Exam on Friday', a!), words('w2', 'Second sheet', b!)],
+  }
 }
 
 /** Every content stream of one sheet, as text. */
@@ -45,7 +48,8 @@ async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
   const doc = await PDFDocument.load(bytes)
   const sheet = doc.getPage(at)
   const contents = sheet.node.Contents()
-  const streams = contents && 'asArray' in contents ? (contents as PDFArray).asArray() : contents ? [contents] : []
+  const streams =
+    contents && 'asArray' in contents ? contents.asArray() : contents ? [contents] : []
   return streams
     .map((one) => decodePDFRawStream(doc.context.lookup(one as never) as PDFRawStream).decode())
     .map((one) => new TextDecoder().decode(one))
@@ -53,7 +57,7 @@ async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
 }
 
 const hex = (text: string) =>
-  [...text].map((one) => one.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase()).join('')
+  Array.from(text, (one) => one.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase()).join('')
 
 describe('words typed on a page', () => {
   test('reach its sheet of the PDF as real text, and only that sheet', async () => {
