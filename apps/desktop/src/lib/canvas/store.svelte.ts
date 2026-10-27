@@ -472,7 +472,17 @@ export class CanvasStore implements PlaneSurface {
     // The icon is the file's own metadata rather than anything on the plane, so
     // the words that just arrived are the newest word on it: a merge that kept
     // ours would make taking an icon away impossible while the canvas is open.
-    const together = { ...merged(ours, arrived), icon: arrived.icon ?? null }
+    //
+    // And what the file holds that Orden does not read, for the same reason: nothing in
+    // the app changes it, so the file is the only one that can have a newer word on it,
+    // and what is open holds only what the file said before - two changes made outside
+    // before the app writes again count the same generation (#781).
+    const together: Canvas = {
+      ...merged(ours, arrived),
+      icon: arrived.icon ?? null,
+      ...(arrived.extras ? { extras: arrived.extras } : {}),
+    }
+    if (!arrived.extras) delete together.extras
     this.canvas = together
     this.keepPicked()
     // Whatever the merge kept goes to the other devices as the edit it is.

@@ -247,8 +247,9 @@ function resolvedPlane(
   const iconColor = iconSide('iconColor')
   if (icon !== undefined) out.icon = icon
   if (iconColor !== undefined) out.iconColor = iconColor
-  // What either side held that is not read, kept as a merge of two files keeps it: the
-  // union, by id (#780; canvas-extras.ts in @nib/markdown).
+  // What either side held that is not read, kept as a merge of two files keeps it: each
+  // at the higher generation either side has it at, gone where it was thrown away since
+  // (#780, #781; canvas-extras.ts in @nib/markdown).
   if (holdsExtras(local.extras) || holdsExtras(remote.extras)) {
     out.extras = mergedExtras(local.extras, remote.extras)
   }
