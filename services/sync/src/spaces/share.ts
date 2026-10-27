@@ -629,7 +629,15 @@ share.delete('/:id/share/link', atLeast('owner'), about(), async (context) => {
 
   // Whoever is still waiting to come in through it is waiting on nothing now: the
   // requests go with it, so an Accept later lets nobody in that the link no longer
-  // would, and a reader who presses Cancel finds nothing to take back (B540).
+  // would, and a reader who presses Cancel finds nothing to take back (B540). A
+  // guest the request was all of goes too, the way one taken out does.
+  const waiting = await context.env.DB.prepare(
+    `select guest_id from guest_members
+      where space_id = ? and item = ? and joined_at is null and declined_at is null`,
+  )
+    .bind(space.id, scope.id)
+    .all<{ guest_id: string }>()
+
   await context.env.DB.batch([
     context.env.DB.prepare('delete from space_links where space_id = ? and item = ?').bind(
       space.id,
@@ -644,6 +652,7 @@ share.delete('/:id/share/link', atLeast('owner'), about(), async (context) => {
         where space_id = ? and item = ? and joined_at is null and declined_at is null`,
     ).bind(space.id, scope.id),
   ])
+  for (const { guest_id } of waiting.results) await forgetEmptyGuest(context.env, guest_id)
 
   return context.json(await sharing(context.env, space, context.get('user'), scope))
 })

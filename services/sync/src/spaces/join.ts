@@ -30,7 +30,7 @@ import { accountFor, claimWhatWasGuested, openSession, presentUser, requireWhoev
 import { objectBody, readBody } from '../body'
 import { cleanPersonName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../crypto'
 import { forgetMailed, mailer, mayMail, requestMessage } from '../email'
-import { newGuest, presentGuest } from '../guests'
+import { forgetEmptyGuest, newGuest, presentGuest } from '../guests'
 import { machineOf, mayTellTheOwner } from '../limits'
 import { asksForSecond, halfWay } from '../second'
 import type { Env, Guest, Space, User, Variables } from '../types'
@@ -440,6 +440,8 @@ join.delete('/:token', async (context) => {
     )
       .bind(space.id, who.guest.id, item)
       .run()
+    // A guest the request was all of is nobody now, sessions and all.
+    await forgetEmptyGuest(context.env, who.guest.id)
   }
 
   return context.json({ ok: true })

@@ -589,7 +589,10 @@ pill at the foot of the window (`JoinPending.svelte`) says "Waiting for Emil"
 until there is an answer, and opens it again; Slack's pending invitation and
 Google Docs' "request sent" are the model. Cancel takes the request back with
 `DELETE /v1/join/:token`, which removes only the reader's own row still waiting,
-so an Accept afterwards finds nobody. Signing out ends the wait too.
+so an Accept afterwards finds nobody, and a guest the request was all of goes
+with it. Turning the link off, and so Reset link too, ends every request made
+through it the same way: a request through a link that no longer exists is not
+one to accept. Signing out ends the wait too.
 
 **A guest persists, and can be claimed.** The guest token lives in the same
 store as an account's - `nib:session`, and the plugin's vault with it - so a guest

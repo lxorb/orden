@@ -356,7 +356,8 @@ class Joining {
         if (!(error instanceof ApiError && error.status === 404)) {
           this.error = message(error, t('Try again'))
           this.closed = false
-          this.later()
+          // An ask that was on its way may have scheduled the next one already.
+          if (!this.asking) this.later()
           return
         }
       }
