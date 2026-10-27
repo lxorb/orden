@@ -42,6 +42,18 @@ import { presentSpace, type Given } from './space'
  *  which it was is not somebody-with-a-link's to learn. */
 const EXPIRED = 'that link has expired'
 
+/** A page still asking about a request that is gone: the month a request lasts
+ *  ran out, or the reader withdrew it. Asking again does not knock again; the
+ *  link does, followed afresh. */
+const NO_LONGER_WAITING = 'that request has run out'
+
+/** Whether this is a page that is waiting asking again, rather than somebody at
+ *  the link for the first time. */
+async function askingAgain(context: Reply): Promise<boolean> {
+  const body = (await context.req.json().catch(() => null)) as { again?: unknown } | null
+  return body?.again === true
+}
+
 type Mode = 'open' | 'approval'
 
 /** What a device calls itself, which becomes the first half of a guest's name.
@@ -399,7 +411,38 @@ join.post('/:token', async (context) => {
   if (who?.kind === 'user') return await asAnAccount(context, found, who.user)
   if (who?.kind === 'guest') return await asAGuest(context, found, who.guest)
 
+  // A page that was waiting and lost its session: nobody is asking any more.
+  if (await askingAgain(context)) return context.json({ error: NO_LONGER_WAITING }, 410)
   return await asNobody(context, found)
+})
+
+/** Somebody waiting who stops: their own request, and only one still waiting,
+ *  is taken off the owner's list, so Accept afterwards finds nobody. */
+join.delete('/:token', async (context) => {
+  const who = await requireWhoever(context.env, context.req.header('authorization'))
+  if (!who) return context.json({ error: 'sign in first' }, 401)
+
+  const found = await tokenLeadsTo(context.env, context.req.param('token'))
+  if (!found) return context.json({ error: EXPIRED }, 404)
+  const { space, item } = found
+
+  if (who.kind === 'user') {
+    await context.env.DB.prepare(
+      'delete from space_requests where space_id = ? and email = ? and item = ?',
+    )
+      .bind(space.id, who.user.email, item)
+      .run()
+  } else {
+    await context.env.DB.prepare(
+      `delete from guest_members
+        where space_id = ? and guest_id = ? and item = ?
+          and joined_at is null and declined_at is null`,
+    )
+      .bind(space.id, who.guest.id, item)
+      .run()
+  }
+
+  return context.json({ ok: true })
 })
 
 /** The mailed link, opening the account it was written to. The whole of what
@@ -470,6 +513,16 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
       return context.json(landedOn(context.env, found, already.role, await owner()))
     }
 
+    // Asked again by a page that was waiting, and no request is left to wait on.
+    if (await askingAgain(context)) {
+      const waiting = await context.env.DB.prepare(
+        'select 1 from space_requests where space_id = ? and email = ? and item = ?',
+      )
+        .bind(space.id, user.email, item)
+        .first()
+      if (!waiting) return context.json({ error: NO_LONGER_WAITING }, 410)
+    }
+
     if (!(await roomToWait(context.env, space.id, item))) return tooManyWaiting(context)
 
     await context.env.DB.prepare(
@@ -507,6 +560,7 @@ async function asAGuest(context: Reply, found: Leads, guest: Guest) {
 
   if (standing?.declined_at) return context.json({ guest: said, declined: true })
   if (standing) return context.json({ guest: said, waiting: true })
+  if (await askingAgain(context)) return context.json({ error: NO_LONGER_WAITING }, 410)
 
   if (!(await roomForAGuest(context.env, space.id, item))) {
     return context.json({ error: 'that link is busy, try again in a minute' }, 429)
