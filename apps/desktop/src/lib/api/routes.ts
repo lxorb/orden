@@ -338,12 +338,13 @@ export interface RemoteSession {
   current: boolean
 }
 
-/** One version the account holds: when it was written, how big it was, and the
- *  device that sent it. */
+/** One version the account holds: when it was written, how big it was, the
+ *  device that sent it, and the sha256 of its words (absent from an older server). */
 export interface RemoteVersion {
   at: number
   size: number
   by: string
+  hash?: string
 }
 
 export interface SpaceFile {

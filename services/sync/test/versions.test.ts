@@ -13,7 +13,7 @@ import {
 import { sha256 } from '../src/crypto'
 
 interface VersionView {
-  versions?: { at: number; size: number; by: string }[]
+  versions?: { at: number; size: number; by: string; hash?: string }[]
   at?: number
   content?: string
   notes?: number
@@ -69,6 +69,12 @@ describe('the account keeps what a note said', () => {
     expect(held.status).toBe(200)
     expect(held.json.versions).toHaveLength(1)
     expect(env.keys()).toContain(versionKey(rows(env, note)[0]?.hash ?? ''))
+  })
+
+  test('says the hash of its words, so a device can tell its own copy of them', async () => {
+    const held = await call<VersionView>(env, `/v1/notes/${note}/versions`, { token })
+
+    expect(held.json.versions?.[0]?.hash).toBe(await sha256('# One'))
   })
 
   test('and every push after it, at most one every five minutes and the newest', async () => {
