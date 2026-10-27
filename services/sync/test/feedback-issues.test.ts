@@ -246,6 +246,77 @@ describe('a report whose words carry another report’s mark', () => {
   })
 })
 
+/** An account deleted through the routes, all three steps. */
+async function leave(token: string): Promise<void> {
+  const mailed = await mail(() => call(env, '/v1/account/delete/code', { token, body: {} }))
+  const found = /(\d{3}) (\d{3})/.exec(mailed)
+  const verified = await call<{ ticket: string }>(env, '/v1/account/delete/verify', {
+    token,
+    body: { code: `${found?.[1] ?? ''}${found?.[2] ?? ''}` },
+  })
+  const gone = await call(env, '/v1/account', {
+    method: 'DELETE',
+    token,
+    body: { ticket: verified.json.ticket },
+  })
+  expect(gone.status).toBe(200)
+}
+
+describe('a report whose account is deleted', () => {
+  test('leaves nothing of it in the issue it became', async () => {
+    const token = await signIn(env, 'reader@example.com')
+    await call(env, '/v1/feedback', { token, body: REPORT })
+    expect(hub.issues[0]?.body).toContain('reader@example.com')
+
+    await leave(token)
+
+    const [issue] = hub.issues
+    expect(issue?.state).toBe('closed')
+    expect(JSON.stringify(issue)).not.toContain('reader@example.com')
+    expect(JSON.stringify(issue)).not.toContain('tab strip')
+    expect(JSON.stringify(issue)).not.toContain('another line')
+    expect(env.db.prepare("select what from leftovers where what like 'issues/%'").all()).toEqual(
+      [],
+    )
+  })
+
+  test('and is redacted the next night where GitHub did not answer the first time', async () => {
+    const token = await signIn(env, 'reader@example.com')
+    await call(env, '/v1/feedback', { token, body: REPORT })
+    const working = hub.fetch
+    vi.stubGlobal('fetch', async (input: string | URL | Request, init?: RequestInit) =>
+      init?.method === 'PATCH' ? new Response('{}', { status: 502 }) : working(input, init),
+    )
+
+    await leave(token)
+    expect(hub.issues[0]?.body).toContain('reader@example.com')
+
+    vi.stubGlobal('fetch', working)
+    await sweepLeftovers(env)
+    expect(hub.issues[0]?.body).not.toContain('reader@example.com')
+    expect(hub.issues[0]?.state).toBe('closed')
+  })
+
+  test('while its issue is being opened leaves nothing of it there either', async () => {
+    const token = await signIn(env, 'reader@example.com')
+    hub.failing = ['refuse']
+    await call(env, '/v1/feedback', { token, body: REPORT })
+    const at = ((await rows())[0]?.issue_next_at ?? 0) + 1
+
+    // The account goes between the run taking the report on and GitHub opening it.
+    hub.meanwhile = () => {
+      hub.meanwhile = null
+      env.db.prepare('delete from feedback').run()
+    }
+    await openWaitingIssues(env, at)
+
+    expect(hub.issues).toHaveLength(1)
+    expect(hub.issues[0]?.state).toBe('closed')
+    expect(JSON.stringify(hub.issues[0])).not.toContain('reader@example.com')
+    expect(JSON.stringify(hub.issues[0])).not.toContain('tab strip')
+  })
+})
+
 describe('the issue', () => {
   const report = (over: Partial<Report> = {}): Report => ({
     id: 'r1',

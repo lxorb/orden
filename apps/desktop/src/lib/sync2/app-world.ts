@@ -91,7 +91,15 @@ function diskOf(telling: Telling): Disk {
       // travel; a page note, whose paper only this trash keeps beside it; and any other
       // file, whose bytes the account keeps only as a version.
       if (syncDeletes(path, kind)) await invoke('delete_note', { path })
-      else await invoke('trash_item', { path, kind: kind === 'folder' ? 'folder' : 'note' })
+      // Leaving what the account holds as an entry of its own, a PDF's highlights, for
+      // that entry's own move or delete: a PDF turned into its page note elsewhere comes
+      // as this delete, run first, and a move of its highlights, which found none.
+      else
+        await invoke('trash_item', {
+          path,
+          kind: kind === 'folder' ? 'folder' : 'note',
+          alone: true,
+        })
       await telling.gone(path, kind)
     },
     mkdir: (path) => invoke('create_folder', { path }).then(() => undefined),

@@ -21,7 +21,13 @@
  *  spelled (`x.@lxorb`, `&#64;lxorb`), no table or heading or comment in it is one, so
  *  a report can neither reach a person through the repository nor dress itself as the
  *  table the app adds or hide that table. The title, which GitHub draws as text, has
- *  every at sign broken. */
+ *  every at sign broken.
+ *
+ *  Deleting the account a report came from deletes the report (erase.ts), and the issue
+ *  goes with it as far as this token can take it: closed, and its title and body
+ *  written over with nothing of the report, from the list of what an account leaves
+ *  behind (src/leftovers.ts). Deleting the issue itself takes an admin of the
+ *  repository, which the minion is not. */
 
 import { now } from './crypto'
 import { oneLine } from './email'

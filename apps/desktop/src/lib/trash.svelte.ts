@@ -30,7 +30,8 @@ export interface TrashItem {
   source: 'account' | 'device'
   /** The id the source knows it by. */
   ref: string
-  /** A device entry's place in the notes folder. */
+  /** Where a thing in this device's trash goes back to. The account's own restore is
+   *  the server's to allow, so its rows have none. */
   from?: string
 }
 
