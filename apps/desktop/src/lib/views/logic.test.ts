@@ -1,4 +1,5 @@
 import { answer, builtinView, readBase, writeBase } from '@nib/bases'
+import { changedTask } from '@nib/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
 import { daysShown, occurrences, place, placedByDay, stepped, timeOf } from './calendar'
 import { donutPaths, heights, linePath, seriesOf, settingsOf, totalOf } from './chart'
@@ -268,6 +269,11 @@ describe('a drop into a group', () => {
     expect(dropInto('formula.day', day, started, TODAY)).toEqual({
       change: { task: { start: '2026-10-09', due: '2026-10-09' } },
     })
+    const drop = dropInto('formula.day', day, started, TODAY)
+    const change = drop && 'change' in drop ? drop.change.task : undefined
+    expect(change && changedTask('- [ ] Pay bill 🛫 2026-09-28 📅 2026-10-01', change)).toBe(
+      '- [ ] Pay bill 🛫 2026-10-09 📅 2026-10-09',
+    )
     // A deadline still to come stays where it is.
     const later = vault('- [ ] Pay bill 🛫 2026-10-02 📅 2026-10-20')
     expect(dropInto('formula.day', day, later, TODAY)).toEqual({

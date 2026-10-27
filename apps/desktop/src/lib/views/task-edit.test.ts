@@ -107,7 +107,8 @@ describe('a task in quick add’s field and back', () => {
     const save = (line: string, reads?: 'deadline') => {
       const one = task(line)
       if (reads) one.dueReads = reads
-      return changedTask(line, changeOf(one, { text: 'Pay rent', ...prefillFor(one, null) }))
+      const fields = { tags: [], remind: [], ...prefillFor(one, null).fields }
+      return changedTask(line, changeOf(one, { text: 'Pay rent', fields }))
     }
     // A vault's `📅` is a deadline, and the line stays as it was.
     expect(save('- [ ] Pay rent 🔁 every month 📅 2026-11-01', 'deadline')).toBe(
@@ -123,8 +124,9 @@ describe('a task in quick add’s field and back', () => {
 
   test('taking the repeat out of a task with no start date takes it away', () => {
     const one = task('- [ ] Pay rent [repeat:: every month] [deadline:: 2026-11-01]')
-    const { recurrence: _gone, ...fields } = prefillFor(one, null).fields ?? {}
-    const change = changeOf(one, { text: 'Pay rent', fields: { tags: [], remind: [], ...fields } })
+    const fields = { tags: [], remind: [], ...prefillFor(one, null).fields }
+    delete fields.recurrence
+    const change = changeOf(one, { text: 'Pay rent', fields })
     expect(change.recurrence).toBeNull()
     expect(change.deadline).toBe('2026-11-01')
   })

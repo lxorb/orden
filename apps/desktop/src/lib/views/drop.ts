@@ -11,8 +11,15 @@
  *  through the engine where the answer is "done", so a recurring task dropped on Done
  *  makes its next occurrence as a tick in the editor would. */
 
-import { deadlineField, startField } from '@nib/markdown/task-dates'
-import { groupName, type Priority, type Row, type TaskChange, type Value } from '@nib/bases'
+import { deadlineField, deadlineOf, startField, startOf } from '@nib/markdown/task-dates'
+import {
+  groupName,
+  type Priority,
+  type Row,
+  type TaskChange,
+  type TaskRow,
+  type Value,
+} from '@nib/bases'
 import type { RowChange } from '../rows/write'
 import { bare, isNoteProperty } from './columns'
 import { dayIn } from './values'
@@ -86,6 +93,23 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
   return null
 }
 
+/** A task dropped on a day of Upcoming. One whose deadline has passed is late by that
+ *  deadline, so the deadline moves to the day, as Todoist's drag reschedules an overdue
+ *  task's date: it leaves Overdue and shows on that day. Its start, where it has one,
+ *  moves with it; one with a deadline alone gets no start date. */
+function dayDrop(key: Value, task: TaskRow, row: Row, today: string): Drop | null {
+  const start = taskDrop('date', key, row, today)
+  const deadline = deadlineOf(task, task.dueReads)
+  const day = key === null ? null : dayIn(key)
+  if (day === null || deadline === undefined || deadline >= today) return start
+  const late: TaskChange = dated(deadlineField(task, task.dueReads), day)
+  // Placed by its deadline alone, the deadline is all that moves.
+  if ((startOf(task, task.dueReads) ?? task.scheduled) === undefined)
+    return { change: { task: late } }
+  const moved = start && 'change' in start ? start.change.task : {}
+  return { change: { task: { ...moved, ...late } } }
+}
+
 /** The drop into the group keyed `key` of a view grouped by `property`, or null
  *  where no write would put the row there. `today` is the reader's day. `from` is the
  *  key of the group the row was carried out of, where it was in one: a card of a list
@@ -107,7 +131,7 @@ export function dropInto(
   if (property === 'formula.overdue') {
     return key === false && row.task ? taskDrop('deadline', today, row, today) : null
   }
-  if (property === 'formula.day') return row.task ? taskDrop('date', key, row, today) : null
+  if (property === 'formula.day') return row.task ? dayDrop(key, row.task, row, today) : null
 
   // A task grouped by the note it is in moves to that note.
   if ((property === 'file.path' || property === 'file.basename') && row.kind === 'task') {
