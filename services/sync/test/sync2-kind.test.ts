@@ -15,7 +15,7 @@ import { type PullResponse, type PushResponse, seedPlane, seedUpdate } from '@ni
 import { subprotocol, TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
 import { NoteRoom } from '../src/rooms/room'
-import { call, signIn, type TestEnv, testEnv } from './harness'
+import { call, type RpcView, signIn, type TestEnv, testEnv } from './harness'
 import { doorway, join } from './room'
 import { framed, type Live, live } from './sync2'
 
@@ -248,6 +248,83 @@ describe('a canvas renamed to a note', () => {
 
     const after = readCanvas(await body(id))
     expect(after.nodes.map((one) => (one as { text?: string }).text)).toEqual(['a card, moved'])
+  })
+})
+
+describe('a canvas renamed to a note, written as prose', () => {
+  async function renamedBoard(warm: boolean): Promise<string> {
+    const id = await made('Board.canvas', writeCanvas(CARD))
+    await prepare()
+    await join(rooms.of(id).room, { id, spaceId: space, kind: 'plane' })
+    await rooms.settle()
+    await renamed(id, 'Board.md')
+    if (!warm) evict(id)
+    return id
+  }
+
+  function cards(text: string): string[] {
+    return readCanvas(text).nodes.map((one) => (one as { text?: string }).text ?? '')
+  }
+
+  for (const warm of [false, true]) {
+    const room = warm ? 'warm' : 'cold'
+
+    test(`refuses a v1 save of prose to a ${room} room, and keeps the cards`, async () => {
+      const id = await renamedBoard(warm)
+      const put = await call(env, `/v1/notes/${id}`, {
+        method: 'PUT',
+        token,
+        body: { content: '# Board\n\nprose\n', baseVersion: row(id).version },
+      })
+      expect(put.status, put.text).toBe(422)
+      await rooms.settle()
+      expect(cards(await body(id))).toEqual(['a card'])
+    })
+  }
+
+  test('refuses the connector writing prose into it, and says why', async () => {
+    const id = await renamedBoard(false)
+    const mcp = await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })
+    const written = await call<RpcView>(env, '/mcp', {
+      token: mcp.json.token,
+      body: {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: {
+          name: 'write_note',
+          arguments: { space: 'Kinds', path: 'Board.md', content: '# Board\n\nprose\n' },
+        },
+      },
+    })
+    expect(written.json.result.content[0]?.text).toMatch(/canvas/)
+    await rooms.settle()
+    expect(cards(await body(id))).toEqual(['a card'])
+  })
+})
+
+describe('a note renamed to a canvas, saved on an old version', () => {
+  test('is a conflict, as a note is, rather than a canvas merge that drops the save', async () => {
+    const id = await made('Plan.md', 'one\n')
+    await prepare()
+    await renamed(id, 'Plan.canvas')
+    const stale = row(id).version
+
+    const first = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'one\ntwo\n', baseVersion: stale },
+    })
+    expect(first.status, first.text).toBe(200)
+
+    const late = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'one\nmine\n', baseVersion: stale },
+    })
+    expect(late.status, late.text).toBe(409)
+    expect(late.json.content).toBe('one\ntwo\n')
+    expect(await body(id)).toBe('one\ntwo\n')
   })
 })
 
