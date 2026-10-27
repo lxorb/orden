@@ -3,6 +3,7 @@ import { beforeEach, afterEach, describe, expect, test, vi } from 'vitest'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import {
   deviceIn,
+  keepVersion,
   KEEP_FOR,
   MOST_KEPT,
   MOST_VERSION_BYTES,
@@ -361,6 +362,85 @@ describe('the account keeps what a note said', () => {
       )
       expect(held.length).toBeLessThanOrEqual(25)
     }
+  })
+})
+
+describe('a note many write in at once', () => {
+  let env: TestEnv
+  let note: string
+  let clock: number
+
+  beforeEach(async () => {
+    env = testEnv()
+    const token = await signIn(env, 'a@b.dev')
+    const made = await call<VersionView>(env, '/v1/spaces', { token, body: { name: 'Work' } })
+    const wrote = await call<VersionView>(env, `/v1/spaces/${made.json.space?.id ?? ''}/notes`, {
+      token,
+      body: { path: 'minutes.md', content: 'the agenda' },
+    })
+    note = wrote.json.note?.id ?? ''
+    // The note's history goes back three weeks.
+    env.db.exec(`update note_versions set at = at - ${20 * 24 * 60 * 60 * 1000}`)
+    clock = Date.now()
+    vi.spyOn(Date, 'now').mockImplementation(() => clock)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    env.close()
+  })
+
+  /** Saves, `every` milliseconds apart, from the devices given in turn. */
+  async function saves(count: number, every: number, devices: readonly (string | null)[]) {
+    for (let at = 0; at < count; at++) {
+      clock += every
+      const content = `words ${at}`
+      const hash = await sha256(content)
+      await keepVersion(
+        env,
+        { id: note, hash, size: content.length },
+        content,
+        '',
+        devices[at % devices.length] ?? null,
+      )
+    }
+  }
+
+  test('keeps a bounded number of versions of two people typing together', async () => {
+    // Twenty minutes of a room settling every 1.2 seconds, for whoever typed last.
+    await saves(1034, 1200, ['dev-owner', 'dev-bob'])
+
+    const held = rows(env, note)
+    expect(held.length).toBeLessThan(40)
+    expect(held[0]?.hash).toBe(await sha256('the agenda'))
+    expect(held.at(-1)?.hash).toBe(await sha256('words 1033'))
+  }, 60000)
+
+  test('and of a writer that names no device', async () => {
+    await saves(50, 1200, [null])
+
+    expect(rows(env, note).length).toBeLessThan(4)
+    expect(rows(env, note).at(-1)?.hash).toBe(await sha256('words 49'))
+  })
+
+  test('and over the ceiling, gives up the crowded recent ones before the old and the held', async () => {
+    const insert = env.db.prepare(
+      "insert into note_versions (note_id, at, hash, size, by, held) values (?, ?, ?, 5, '', ?)",
+    )
+    // A year of one a week, a held one among them, and then a crowd from today.
+    const week = 7 * 24 * 60 * 60 * 1000
+    for (let at = 1; at <= 50; at++)
+      insert.run(note, clock - at * week, `week-${at}`, at === 30 ? 1 : 0)
+    for (let at = 0; at < MOST_KEPT; at++)
+      insert.run(note, clock - 60 * 60 * 1000 + at, `crowd-${at}`, 0)
+
+    await saves(1, 1200, ['dev-owner'])
+
+    const hashes = rows(env, note).map((one) => one.hash)
+    expect(hashes.length).toBeLessThanOrEqual(MOST_KEPT)
+    for (let at = 1; at <= 50; at++) expect(hashes).toContain(`week-${at}`)
+    expect(hashes).toContain(await sha256('the agenda'))
+    expect(hashes.at(-1)).toBe(await sha256('words 0'))
   })
 })
 
