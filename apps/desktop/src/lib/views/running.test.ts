@@ -7,7 +7,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
  *  written, `../Private` moved a note into another space, or made the day's note
  *  there over whatever was there. */
 
-const { written, template, moved, plan } = vi.hoisted(() => ({
+const { written, template, moved, plan, before } = vi.hoisted(() => ({
+  before: [] as unknown[][],
   written: new Map<string, string>(),
   template: { folder: '' },
   moved: [] as string[],
@@ -22,11 +23,14 @@ vi.mock('@nib/bases', async (importOriginal) => ({
   readAutomations: () => [],
 }))
 vi.mock('./automate', () => ({
-  planned: () => ({
-    writes: [],
-    moves: [{ row: { space: 'Shared', path: 'Inbox/a.md' }, folder: plan.folder }],
-    notices: [],
-  }),
+  planned: (_bases: unknown, removed: unknown[]) => {
+    before.push(removed)
+    return {
+      writes: [],
+      moves: [{ row: { space: 'Shared', path: 'Inbox/a.md' }, folder: plan.folder }],
+      notices: [],
+    }
+  },
 }))
 vi.mock('../workspace.svelte', () => ({
   workspace: {
@@ -69,9 +73,10 @@ vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 // Every space here may be written in; one that may not is read-only.test.ts's.
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 
-const { heard, readHeld, repeatTemplates } = await import('./running')
+const { heard, heardChange, readHeld, repeatTemplates } = await import('./running')
 
 beforeEach(() => {
+  before.length = 0
   written.clear()
   moved.length = 0
 })
@@ -112,5 +117,59 @@ describe("a repeating template's note", () => {
     await repeatTemplates()
 
     expect([...written.keys()].filter((path) => !path.includes('/Templates/'))).toEqual([])
+  })
+})
+
+describe('a note renamed or moved', () => {
+  const was = { kind: 'note', space: 'Shared', path: 'Inbox/old.md', note: { status: 'Doing' } }
+  const now = { ...was, path: 'Inbox/a.md' }
+  const settle = () => new Promise((done) => setTimeout(done, 150))
+
+  test('is looked at with the rows it had where it was, not as a note just made', async () => {
+    plan.folder = '../Private'
+    await readHeld('/s/Shared/Tasks.base')
+    heardChange({
+      root: '/s/Shared',
+      space: 'Shared',
+      path: 'Inbox/a.md',
+      removed: [],
+      added: [now] as never,
+      from: { space: 'Shared', path: 'Inbox/old.md', rows: [was] as never },
+    })
+    await settle()
+
+    expect(before).toEqual([[was]])
+  })
+
+  test('written where it goes before the move is told, is still a move (B498)', async () => {
+    plan.folder = '../Private'
+    await readHeld('/s/Shared/Tasks.base')
+    // An edit at the old path, then the link rewrite's save at the new one, then the move.
+    heardChange({
+      root: '/s/Shared',
+      space: 'Shared',
+      path: 'Inbox/old.md',
+      removed: [was] as never,
+      added: [was] as never,
+    })
+    heardChange({
+      root: '/s/Shared',
+      space: 'Shared',
+      path: 'Inbox/a.md',
+      removed: [],
+      added: [now] as never,
+    })
+    heardChange({
+      root: '/s/Shared',
+      space: 'Shared',
+      path: 'Inbox/a.md',
+      removed: [now] as never,
+      added: [now] as never,
+      from: { space: 'Shared', path: 'Inbox/old.md', rows: [] },
+    })
+    await settle()
+
+    // Looked at once, as it was before the edit at its old path.
+    expect(before).toEqual([[was]])
   })
 })

@@ -29,12 +29,44 @@ describe('unique ids', () => {
     expect(idText('', 3)).toBe('3')
   })
 
-  test('two devices offline both made 8: the younger becomes 9, and both agree', () => {
+  test('two devices offline both made 8: one becomes 9, and both agree', () => {
     const older = noteRow('Bugs/Older.md', 'id: BUG-8', { ctime: day('2026-04-01') })
     const younger = noteRow('Bugs/Younger.md', 'id: BUG-8', { ctime: day('2026-04-02') })
     const repairs = idRepairs([...bugs, younger, older], 'id', 'BUG', false)
     expect(repairs.map((one) => [one.row.path, one.id])).toEqual([['Bugs/Younger.md', 'BUG-9']])
     expect(idRepairs([...bugs, older, younger], 'id', 'BUG', false)).toEqual(repairs)
+  })
+
+  test('two devices that disagree on when the rows were made renumber the same one, and settle', () => {
+    // ctime is each disk's own birth time, which sync does not carry: A made X and B
+    // made Y offline, so each device thinks the other's note is the younger.
+    const paths = ['Bugs/X.md', 'Bugs/Y.md', 'Bugs/Z.md']
+    const ctimes = {
+      A: { 'Bugs/X.md': 1, 'Bugs/Y.md': 3, 'Bugs/Z.md': 5 },
+      B: { 'Bugs/X.md': 4, 'Bugs/Y.md': 2, 'Bugs/Z.md': 6 },
+    }
+    // What has synced: every note's id, the same on both devices.
+    let ids: Record<string, string> = Object.fromEntries(paths.map((path) => [path, 'BUG-45']))
+    const seenOn = (device: 'A' | 'B') => [
+      ...bugs,
+      ...paths.map((path) =>
+        noteRow(path, { id: ids[path] ?? '' }, { ctime: ctimes[device][path as 'Bugs/X.md'] }),
+      ),
+    ]
+
+    for (let round = 0; round < 3; round++) {
+      const a = idRepairs(seenOn('A'), 'id', 'BUG', false)
+      const b = idRepairs(seenOn('B'), 'id', 'BUG', false)
+      expect(a.map((one) => [one.row.path, one.id])).toEqual(b.map((one) => [one.row.path, one.id]))
+      // Each device writes its repairs; the sync then carries both.
+      const next = { ...ids }
+      for (const one of [...a, ...b]) next[one.row.path] = one.id
+      ids = next
+    }
+    const held = paths.map((path) => ids[path])
+    expect(new Set(held).size).toBe(paths.length)
+    expect(idRepairs(seenOn('A'), 'id', 'BUG', false)).toEqual([])
+    expect(idRepairs(seenOn('B'), 'id', 'BUG', false)).toEqual([])
   })
 
   test('turned on, every row without one is numbered in the order they were made', () => {
