@@ -4,7 +4,7 @@ import { expect, test, vi } from 'vitest'
  *  a dropped connection or a 5xx, and the store kept that answer for the whole session, so
  *  "Save as note" and every surface left the file out until the app restarted. */
 
-const server = vi.hoisted(() => ({ answers: [] as (Blob | null)[], asked: 0 }))
+const server = vi.hoisted(() => ({ answers: [] as (Blob | 'gone' | null)[], asked: 0 }))
 
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
@@ -40,4 +40,20 @@ test('signing out forgets the addresses', async () => {
   const second = await chats.fileUrl('c2', 'h1')
   expect(second).not.toBe(first)
   expect(server.asked).toBe(2)
+})
+
+test('a file the server says is gone or not for the reader is not asked again this session', async () => {
+  server.asked = 0
+  server.answers = ['gone', new Blob(['x'])]
+  expect(await chats.fileUrl('c3', 'h1')).toBeNull()
+  expect(await chats.fileUrl('c3', 'h1')).toBeNull()
+  expect(server.asked).toBe(1)
+})
+
+test('signing out lets go of the files it drew', async () => {
+  server.answers = [new Blob(['a'])]
+  const url = await chats.fileUrl('c4', 'h1')
+  const revoke = vi.spyOn(URL, 'revokeObjectURL')
+  await chats.forget()
+  expect(revoke).toHaveBeenCalledWith(url)
 })
