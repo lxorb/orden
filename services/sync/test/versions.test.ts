@@ -539,6 +539,36 @@ describe('putting a space back to a moment', () => {
     expect(noteRow(id)).toMatchObject({ deleted: 0, deleted_at: null, path: 'kept.md' })
   })
 
+  test('but not a note that was already deleted at that moment', async () => {
+    const made = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'old.md', content: 'old words' },
+    })
+    const id = made.json.note?.id ?? ''
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    const ago = 10 * 60 * 1000
+    env.db.prepare('update note_versions set at = at - ? where note_id = ?').run(ago, id)
+    env.db
+      .prepare(
+        'update notes set deleted_at = deleted_at - ?1, updated_at = updated_at - ?1 where id = ?2',
+      )
+      .run(ago, id)
+
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before(), dry: true },
+    })
+    expect(asked.json.notes).toBe(2)
+    expect(asked.json.paths).not.toContain('old.md')
+
+    const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before() },
+    })
+    expect(done.json.notes).toBe(2)
+    expect(noteRow(id).deleted).toBe(1)
+  })
+
   test('but not a note purged from Recently deleted', async () => {
     const id = await deletedUnchanged('kept.md')
     await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })

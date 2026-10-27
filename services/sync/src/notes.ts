@@ -793,7 +793,10 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
     // Deleted since: back out of Recently deleted first, the way its restore puts
     // it, so a note that took its name meanwhile keeps it and this one is
     // numbered next to it. Writing the words alone would bring it back onto a
-    // path somebody else holds.
+    // path somebody else holds. Write in the space is enough, unlike Recently
+    // deleted's restore, which is the owner's list: whoever may write here can
+    // already bring a deleted note back by writing it (PUT /notes/:id), and the
+    // rollback reaches only notes deleted after the moment it goes back to.
     if (note.deleted) {
       note = await restoreNote(context.env, note, device)
       if (note.deleted) continue
