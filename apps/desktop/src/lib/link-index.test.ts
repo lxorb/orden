@@ -889,6 +889,57 @@ describe('renaming a note rewrites the links to it', () => {
     expect(links.fileNamed('report.pdf')).toBe('Archive/report.pdf')
   })
 
+  /** A bare `[[Plan]]` rewritten to `[[Road]]` opened another folder's `Road.md`
+   *  once the space held one nearer to the link, or shallower: the rename sent the
+   *  link to a note nobody renamed. Written with as much of the path as it takes to
+   *  reach the renamed note, the way Obsidian writes one (B543). */
+  test('onto a name another folder holds, with as much path as reaches it', async () => {
+    await space({
+      'A/Plan.md': '# Plan',
+      'B/Road.md': '# other road',
+      'B/x.md': 'see [[Plan]], [[Plan#Intro|the plan]], [[Plan#^b1]] and [p](../A/Plan.md)',
+      'A/y.md': 'see [[Plan]]',
+    })
+
+    await links.retarget(at('A/Plan.md'), at('A/Road.md'), ROOT)
+    links.notesMoved(at('A/Plan.md'), at('A/Road.md'))
+
+    expect(notes['B/x.md']).toBe(
+      'see [[A/Road]], [[A/Road#Intro|the plan]], [[A/Road#^b1]] and [p](../A/Road.md)',
+    )
+    // Beside the renamed note, the bare name still reaches it.
+    expect(notes['A/y.md']).toBe('see [[Road]]')
+    expect(links.outgoing(at('B/x.md')).map((one) => one.to)).toEqual([
+      'A/Road.md',
+      'A/Road.md',
+      'A/Road.md',
+      'A/Road.md',
+    ])
+  })
+
+  test('onto a name the top of the space holds', async () => {
+    await space({
+      'Projects/Plan.md': '# Plan',
+      'Road.md': '# root road',
+      'x.md': 'see [[Plan]]',
+      'Deep/Projects/Road.md': '# deeper',
+    })
+
+    await links.retarget(at('Projects/Plan.md'), at('Projects/Road.md'), ROOT)
+    links.notesMoved(at('Projects/Plan.md'), at('Projects/Road.md'))
+
+    expect(notes['x.md']).toBe('see [[Projects/Road]]')
+    expect(links.outgoing(at('x.md'))[0]?.to).toBe('Projects/Road.md')
+  })
+
+  test('a file onto a name the top of the space holds', async () => {
+    await space({ 'x.md': 'see [[paper.pdf]]' }, ['Papers/paper.pdf', 'notes.pdf'])
+
+    await links.retarget(at('Papers/paper.pdf'), at('Papers/notes.pdf'), ROOT)
+
+    expect(notes['x.md']).toBe('see [[Papers/notes.pdf]]')
+  })
+
   test('a note whose name did not change is left alone', async () => {
     await space({ 'Plan.md': '# Plan', 'One.md': '[[Plan]]' })
     expect(await links.retarget(at('Plan.md'), at('Plan.md'), ROOT)).toBe(0)
