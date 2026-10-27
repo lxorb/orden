@@ -20,11 +20,23 @@ const raster = vi.hoisted(() => ({
     (one) => one.charCodeAt(0),
   ),
 }))
+/** How wide text is set, stood in for with widths a real face has: a CJK character
+ *  is a full em, the wide Cyrillic letters most of one, everything else a little over
+ *  half. */
+const emOf = (one: string) =>
+  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}。、]/u.test(one)
+    ? 1
+    : /[ЖЩШЮМжщшюм]/.test(one)
+      ? 0.85
+      : 0.55
+const widthOf = (text: string, size: number) =>
+  Array.from(text).reduce((sum, one) => sum + emOf(one) * size, 0)
 vi.mock('./raster', () => ({
   svgToPng: (svg: string) => {
     raster.drawn.push(svg)
     return Promise.resolve(raster.refuse ? null : raster.png)
   },
+  textWidth: (text: string, size: number) => widthOf(text, size),
 }))
 vi.mock('../link-index.svelte', () => ({
   links: {
@@ -240,5 +252,69 @@ describe('ink in the pen with no colour of its own (B571)', () => {
     expect(svg).not.toContain('#f4f7fb')
     expect(svg).toContain('#d5dce5')
     expect(svg).not.toContain('#2b323d')
+  })
+})
+
+/** The lines of words a picture sets, and the size they are set at. */
+function setLines(svg: string): { lines: string[]; size: number } {
+  const size = Number(/<text[^>]*font-size="([\d.]+)"/.exec(svg)?.[1])
+  const lines = [...svg.matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)].map((one) =>
+    (one[1] ?? '').replace(/&amp;/g, '&'),
+  )
+  return { lines, size }
+}
+
+describe('words set as a picture', () => {
+  const japanese =
+    '今日は大学で日本語の授業がありました。先生はとても親切でした。宿題は明日までです。'
+  const russian = 'Широкий шрифт: Жжж Щщщ Шшш Ююю Ммм широкий шрифт Жжж Щщщ'
+
+  test.each([japanese, russian])('fit the card and lose nothing: %s', async (text) => {
+    raster.drawn = []
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
+    card.bare = false
+    card.text = text
+    card.width = 300
+    card.height = 400
+    await pagesPdf(out(canvas))
+
+    const { lines, size } = setLines(raster.drawn[0] ?? '')
+    expect(lines.length).toBeGreaterThan(1)
+    for (const line of lines) expect(widthOf(line, size)).toBeLessThanOrEqual(300 - 24)
+    expect(lines.join('').replace(/ /g, '')).toBe(text.replace(/ /g, ''))
+  })
+
+  test('fit the card in the PNG picture of the page too', () => {
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
+    card.text = japanese
+    const pages = canvas.nodes.filter((node): node is PageNode => node.type === 'page')
+    const svg = pageSvg(out(canvas), pages[0]!, 1, true)
+
+    const { lines, size } = setLines(svg.slice(svg.indexOf('<text')))
+    for (const line of lines) expect(widthOf(line, size)).toBeLessThanOrEqual(220 - 12)
+    expect(lines.join('')).toBe(japanese)
+  })
+
+  test("keep a group's name, which sits above its box", async () => {
+    raster.drawn = []
+    const canvas = note()
+    const page = canvas.nodes[0] as PageNode
+    canvas.nodes.push({
+      id: 'g',
+      type: 'group',
+      label: 'Week one',
+      x: page.x + 40,
+      y: page.y + 400,
+      width: 200,
+      height: 100,
+    })
+    await pagesPdf(out(canvas))
+
+    const svg = raster.drawn[0] ?? ''
+    const top = Number(/viewBox="[-\d.]+ ([-\d.]+)/.exec(svg)?.[1])
+    const label = Number(/<text[^>]*y="([-\d.]+)"[^>]*>Week one/.exec(svg)?.[1])
+    expect(label - 13).toBeGreaterThanOrEqual(top)
   })
 })
