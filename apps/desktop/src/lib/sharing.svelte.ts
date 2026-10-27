@@ -32,6 +32,7 @@ import { within } from './sync/mirror'
 import { sync } from './sync.svelte'
 import { type Origin, originOf, trustsHtml } from './trust'
 import type { NoteDoc } from './workspace/documents.svelte'
+import { keeping } from './workspace/file-ops'
 import { type Space, workspace } from './workspace.svelte'
 
 /** The account's copy of a local folder, once one has been paired with it. */
@@ -75,6 +76,10 @@ const ROLES_KEY = 'nib:space-roles'
  *  wrote it down: `{ role, shared, items }`, or a bare role from an older build.
  *  Parsed again only when the text changes, since this is asked for every row. */
 function kept(root: string): unknown {
+  return keptRoles()[root]
+}
+
+function keptRoles(): Record<string, unknown> {
   const text = storedText(ROLES_KEY)
   if (text !== rolesText) {
     rolesText = text
@@ -82,8 +87,23 @@ function kept(root: string): unknown {
     rolesRead = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
   }
 
-  return rolesRead[root]
+  return rolesRead
 }
+
+/** What was kept follows a space's folder as it moves, and goes with it: the next
+ *  listing to rewrite it can be a launch away. */
+function rekeep(from: string, to: string | null): void {
+  const roles = keptRoles()
+  const at = Object.keys(roles).find((root) => samePath(root, from))
+  if (at === undefined) return
+
+  const { [at]: one, ...rest } = roles
+  keep(ROLES_KEY, JSON.stringify(to === null ? rest : { ...rest, [to]: one }))
+}
+
+workspace.fileOps.follow(
+  keeping({ spaceMoved: (from, to) => rekeep(from, to), forget: (root) => rekeep(root, null) }),
+)
 
 /** The role in what was kept. */
 function remembered(root: string): SpaceRole | null {

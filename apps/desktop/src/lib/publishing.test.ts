@@ -101,6 +101,7 @@ vi.mock('./workspace.svelte', () => ({
     get spaces() {
       return Object.keys(world.mirrors).map((root) => ({ id: root, name: root, root }))
     },
+    fileOps: { follow: () => () => undefined },
   },
 }))
 

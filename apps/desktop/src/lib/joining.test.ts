@@ -94,6 +94,7 @@ vi.mock('./sync.svelte', () => ({
 vi.mock('./workspace.svelte', () => ({
   workspace: {
     spaces: [{ id: 'here', name: 'Plans', root: '/Plans' }],
+    fileOps: { follow: () => () => undefined },
     showSpace: (id: string) => {
       world.shown = id
       return Promise.resolve()
