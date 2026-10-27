@@ -20,7 +20,7 @@ import type { Env } from './types'
 
 /** How long a row is believed without asking. Well past any sitting a room stays awake
  *  for, so the asking is rare. */
-export const OPEN_FOR = 24 * 60 * 60 * 1000
+const OPEN_FOR = 24 * 60 * 60 * 1000
 
 /** How many day-old rows one join asks about. Rows go stale far slower than sockets
  *  join, so a few each time keeps the table drained without making a join wait on
@@ -30,7 +30,7 @@ const ASKED_AT_ONCE = 10
 /** The header an object is asked with whether this person has a socket in it, and
  *  what it answers. */
 export const OPEN_HEADER = 'x-nib-open'
-export interface OpenAnswer {
+interface OpenAnswer {
   open: boolean
 }
 
