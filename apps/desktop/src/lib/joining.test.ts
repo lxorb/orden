@@ -390,6 +390,8 @@ describe('a link that asks first', () => {
     await joining.start()
     expect(joining.step).toBe('waiting')
     expect(world.asked[0]?.key).toBe(TOKEN)
+    // Out of sight: a wait the reader already left does not cover the app again.
+    expect(joining.shown).toBe(false)
   })
 })
 
@@ -437,6 +439,41 @@ describe('waiting on the owner', () => {
     await joining.walkThrough()
 
     expect(joining.step).toBe('gone')
+    expect(localStorage.getItem('nib:waiting')).toBeNull()
+  })
+
+  test('covers the app while it is new', () => {
+    expect(joining.shown).toBe(true)
+  })
+
+  test('can be closed, and goes on asking out of sight', async () => {
+    joining.close()
+
+    expect(joining.shown).toBe(false)
+    expect(joining.step).toBe('waiting')
+    expect(localStorage.getItem('nib:waiting')).toBe(TOKEN)
+
+    world.through = { guest: { id: 'g1', name: 'Ada' }, space }
+    await joining.walkThrough()
+
+    expect(joining.step).toBeNull()
+    expect(world.shown).toBe('here')
+  })
+
+  test('says so when the owner declines a wait that was closed', async () => {
+    joining.close()
+    world.through = { guest: { id: 'g1', name: 'Ada' }, declined: true }
+    await joining.walkThrough()
+
+    expect(joining.step).toBe('declined')
+    expect(joining.shown).toBe(true)
+  })
+
+  test('can be stopped, and the next launch does not pick it back up', () => {
+    joining.dismiss()
+
+    expect(joining.step).toBeNull()
+    expect(joining.shown).toBe(false)
     expect(localStorage.getItem('nib:waiting')).toBeNull()
   })
 
