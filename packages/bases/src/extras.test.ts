@@ -86,6 +86,24 @@ describe('unique ids', () => {
     ])
   })
 
+  test('a copied folder is renumbered, not the folder it was copied from', () => {
+    const repairs = idRepairs(
+      [
+        noteRow('Trip/Trip.md', 'id: T-4'),
+        noteRow('Trip copy/Trip copy.md', 'id: T-4'),
+        noteRow('Projects/X.md', 'id: T-1'),
+        noteRow('Projects copy/X.md', 'id: T-1'),
+      ],
+      'id',
+      'T',
+      false,
+    )
+    expect(repairs.map((one) => one.row.path)).toEqual([
+      'Projects copy/X.md',
+      'Trip copy/Trip copy.md',
+    ])
+  })
+
   test('devices that spell a name differently on disk still pick the same twin', () => {
     // A `:` is `_` on a Mac and on Windows, and a Mac may hold a name decomposed.
     const spelled = {

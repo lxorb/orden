@@ -84,6 +84,49 @@ describe('a base at work on a change', () => {
     expect(plan([was], [now], [older, now]).writes).toEqual([])
   })
 
+  test('an edit that brings a note into a base is a change, not an add', () => {
+    const doneBase = readBase(`filters:
+  and:
+    - note.status == "Done"
+nib:
+  automations:
+    - when: { property: status, is: Done }
+      set: { finished: "{{date}}" }
+    - when: added
+      set: { status: Not started }
+`)
+    const doing = noteRow('Tasks/A.md', 'status: Doing')
+    const done = noteRow('Tasks/A.md', 'status: Done')
+    const context = contextFor({ rows: [done], today: TODAY, now: `${TODAY}T09:30:00` })
+    const out = planned(
+      [{ name: 'Done', space: 'Notes', base: doneBase }],
+      [doing],
+      [done],
+      [done],
+      context,
+      filling,
+    )
+    expect(out.writes).toEqual([
+      { row: done, change: { note: { finished: { kind: 'date', iso: TODAY } } } },
+    ])
+  })
+
+  test('an edit that brings a note back into a base does not set it to what an added note is', () => {
+    const live = readBase(`filters:
+  and:
+    - note.status != "Archived"
+nib:
+  automations:
+    - when: added
+      set: { status: Not started }
+`)
+    const archived = noteRow('P/A.md', 'status: Archived')
+    const doing = noteRow('P/A.md', 'status: Doing')
+    const context = contextFor({ rows: [doing], today: TODAY, now: `${TODAY}T09:30:00` })
+    const live1 = [{ name: 'Live', space: 'Notes', base: live }]
+    expect(planned(live1, [archived], [doing], [doing], context, filling).writes).toEqual([])
+  })
+
   test('a note outside the base is none of its business', () => {
     const film = noteRow('Films/Heat.md', 'status: Done')
     expect(plan([noteRow('Films/Heat.md', 'status: Doing')], [film], [film]).writes).toEqual([])
