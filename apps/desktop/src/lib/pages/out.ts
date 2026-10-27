@@ -481,6 +481,8 @@ function wordsPdf(
   if (card.type !== 'text' || !card.text.trim()) return
 
   const type = cardType(!!card.bare)
+  // The plane's line height, which is 1.55.
+  const line = type.size * 1.55
   const left = card.x - page.x
   const top = card.y - page.y
   const colour = hexOf(
@@ -504,22 +506,22 @@ function wordsPdf(
   )
 
   if (!card.bare) {
-    const line = hexOf(palette.line ?? '#d6d9de')
+    const edge = hexOf(palette.line ?? '#d6d9de')
     sheet.drawRectangle({
       x: left,
       y: -(top + card.height),
       width: card.width,
       height: card.height,
       color: rgb1(lib, hexOf('#ffffff')),
-      borderColor: rgb1(lib, line),
+      borderColor: rgb1(lib, edge),
       borderWidth: 1,
     })
   }
 
   for (const [index, text] of lines.entries()) {
     if (!text) continue
-    // The middle of the line box, a little under it for the baseline, as the SVG sets it.
-    const baseline = top + type.padY + index * type.line + type.line / 2 + type.size * 0.35
+    // A little under the middle of the line box, as the plane's picture sets it.
+    const baseline = top + type.padY + (line + type.size) / 2 - 3 + index * line
     if (baseline - type.size > top + card.height) break
     sheet.drawText(text, {
       x: left + type.padX,

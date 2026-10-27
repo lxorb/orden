@@ -111,19 +111,12 @@ const CARD_FONT = 13
 /** How the words of a card are set, as the plane sets them: a card at 13px inside
  *  8px and 12px of padding, and words with no card round them (#421) at the 16px a
  *  line of a note is, inside 4px and 6px. See `.card` and `.bare` in CanvasNode. */
-export function cardType(bare: boolean): {
-  size: number
-  line: number
-  padX: number
-  padY: number
-} {
-  return bare
-    ? { size: 16, line: 16 * 1.55, padX: 6, padY: 4 }
-    : { size: CARD_FONT, line: CARD_FONT * 1.55, padX: 12, padY: 8 }
+export function cardType(bare: boolean) {
+  return bare ? { size: 16, padX: 6, padY: 4 } : { size: CARD_FONT, padX: 12, padY: 8 }
 }
 
 /** The lines of a card, broken to its width. */
-function fitted(text: string, width: number, size = CARD_FONT, pad = 12): string[] {
+function fitted(text: string, width: number, size: number, pad: number): string[] {
   const most = Math.max(4, Math.floor((width - 2 * pad) / (size * PER_CHARACTER)))
   const out: string[] = []
 
@@ -150,38 +143,25 @@ function plainCard(
   box: Box,
   palette: Palette,
   bare = false,
-  colour?: string,
+  colour = palette.text ?? '#111',
 ): string {
-  if (!bare) {
-    const lines = fitted(text, box.width).slice(0, Math.floor((box.height - 12) / LINE))
-    if (!lines.length) return ''
-
-    const spans = lines
-      .map(
-        (line, index) =>
-          `<tspan x="${box.x + 12}" y="${box.y + 20 + index * LINE}">${escapeAll(line)}</tspan>`,
-      )
-      .join('')
-
-    return `<text font-size="${CARD_FONT}" fill="${palette.text ?? '#111'}" class="label">${spans}</text>`
-  }
-
-  const type = cardType(true)
+  const type = cardType(bare)
+  const line = bare ? type.size * 1.55 : LINE
   const lines = fitted(text, box.width, type.size, type.padX).slice(
     0,
-    Math.max(1, Math.ceil((box.height - 2 * type.padY) / type.line)),
+    Math.floor((box.height - 1.5 * type.padY) / line),
   )
   if (!lines.length) return ''
 
-  // The middle of each line box, a little under it for the baseline.
+  // The baseline a little under the middle of each line box.
   const spans = lines
     .map(
-      (line, index) =>
-        `<tspan x="${box.x + type.padX}" y="${(box.y + type.padY + index * type.line + type.line / 2 + type.size * 0.35).toFixed(2)}">${escapeAll(line)}</tspan>`,
+      (one, index) =>
+        `<tspan x="${box.x + type.padX}" y="${box.y + type.padY + (line + type.size) / 2 - 3 + index * line}">${escapeAll(one)}</tspan>`,
     )
     .join('')
 
-  return `<text font-size="${type.size}" font-weight="400" fill="${colour ?? palette.text ?? '#111'}" class="label">${spans}</text>`
+  return `<text font-size="${type.size}" fill="${colour}" class="label">${spans}</text>`
 }
 
 function cardBody(
@@ -312,7 +292,7 @@ export function drawnNode(
 
   if (plain) {
     const bare = node.type === 'text' && !!node.bare
-    const colour = bare && node.color !== undefined ? colourOf(node, palette, '') : undefined
+    const colour = bare ? colourOf(node, palette, palette.text ?? '#111') : undefined
     return `<g>${card}${plainCard(saidBy(node), box, palette, bare, colour)}</g>`
   }
 
