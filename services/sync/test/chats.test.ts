@@ -102,7 +102,12 @@ describe('chats', () => {
   }
 
   /** A socket into a chat, let in at the role the door would have given. */
-  async function socketOf(who: keyof People, chat: string, since?: number): Promise<ChatSocket> {
+  async function socketOf(
+    who: keyof People,
+    chat: string,
+    since?: number,
+    login?: string,
+  ): Promise<ChatSocket> {
     const guestly = who === 'guestWriter' || who === 'guestReader'
     const person = { id: ids[who], guest: guestly }
     const reached = await reachAs(env, person, chat)
@@ -117,6 +122,7 @@ describe('chats', () => {
       },
       { chat, space: reached.space },
       since,
+      login,
     )
   }
 
@@ -578,9 +584,97 @@ describe('chats', () => {
       for (const socket of logs.of(chat).state.getWebSockets()) logs.of(chat).state.drop(socket)
       at(25 * 60 * 60 * 1000)
       await socketOf('reader', other)
+      await logs.of(other).state.idle()
       expect(env.db.prepare('select chat_id, who from chat_sockets').all()).toEqual([
         { chat_id: other, who: ids.reader },
       ])
+    })
+
+    test('taking somebody out reaches every chat they have open, past two hundred', async () => {
+      // Two hundred and fifty chats of the space the writer has open, written down before
+      // the one whose socket is watched, so it comes last whichever way they are read.
+      const chatRow = env.db.prepare(
+        'insert into chats (id, space_id, created_at) values (?, ?, 0)',
+      )
+      const socketRow = env.db.prepare(
+        'insert into chat_sockets (chat_id, space_id, who, opened_at) values (?, ?, ?, ?)',
+      )
+      for (let n = 0; n < 250; n++) {
+        const other = `!${String(n).padStart(3, '0')}`
+        chatRow.run(other, spaceId)
+        socketRow.run(other, spaceId, ids.writer, Date.now())
+      }
+      const chat = await chatOfOwner()
+      const writer = await socketOf('writer', chat)
+      await call(env, `/v1/spaces/${spaceId}/share/members/writer@example.com`, {
+        method: 'DELETE',
+        token: people.owner,
+      })
+      expect(writer.closed).toBe(true)
+      expect(logs.asked.filter((one) => one.ask === 'revoke')).toHaveLength(251)
+    })
+
+    test('a device closing while another of the same person joins leaves the row', async () => {
+      const chat = await chatOfOwner()
+      const laptop = await socketOf('writer', chat)
+      // The laptop's close lands while the phone's row is being written: after that
+      // write, before the phone's socket is taken.
+      const prepare = env.DB.prepare.bind(env.DB)
+      let pending = true
+      env.DB.prepare = (sql: string) => {
+        const statement = prepare(sql)
+        if (!pending || !sql.trimStart().startsWith('insert into chat_sockets')) return statement
+        pending = false
+        const bind = statement.bind.bind(statement)
+        statement.bind = (...values: unknown[]) => {
+          const bound = bind(...values)
+          const run = bound.run.bind(bound)
+          bound.run = async () => {
+            const done = await run()
+            await hangUp(logs.of(chat), laptop)
+            return done
+          }
+          return bound
+        }
+        return statement
+      }
+      const phone = await socketOf('writer', chat)
+      env.DB.prepare = prepare
+      expect(phone.closed).toBe(false)
+      expect(env.db.prepare('select who from chat_sockets where chat_id = ?').all(chat)).toEqual([
+        { who: ids.writer },
+      ])
+    })
+
+    test('somebody taken out where no revocation reached is closed within a minute', async () => {
+      const chat = await chatOfOwner()
+      const writer = await socketOf('writer', chat, undefined, await sha256(people.writer))
+      const owner = await socketOf('owner', chat, undefined, await sha256(people.owner))
+      // Gone from the space without the route that tells the chat.
+      env.db
+        .prepare("delete from space_members where space_id = ? and email = 'writer@example.com'")
+        .run(spaceId)
+      at(400_000)
+      await say(logs.of(chat), owner, { t: 'send', event: postOf('still there?') })
+      expect(writer.closed).toBe(true)
+      expect(writer.closedWith?.code).toBe(1008)
+      expect(owner.closed).toBe(false)
+    })
+
+    test('a writer made a reader where no revocation reached posts no more within a minute', async () => {
+      const chat = await chatOfOwner()
+      const writer = await socketOf('writer', chat, undefined, await sha256(people.writer))
+      env.db
+        .prepare(
+          "update space_members set role = 'read' where space_id = ? and email = 'writer@example.com'",
+        )
+        .run(spaceId)
+      at(400_000)
+      writer.take()
+      const post = postOf('still?')
+      await say(logs.of(chat), writer, { t: 'send', event: post })
+      expect(writer.closed).toBe(false)
+      expect(writer.take()).toEqual([{ t: 'refused', id: post.id, error: 'role' }])
     })
 
     test('a writer taken down to reading keeps the socket and posts no more', async () => {
