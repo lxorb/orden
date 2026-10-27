@@ -250,25 +250,39 @@ export function reachedByOthers(path: string | null): boolean {
   if (path === null) return false
 
   const space = workspace.spaces.find((one) => within(one.root, path) !== null)
-  if (!space) return false
-  if (isSharedItem(path)) return true
+  return !!space && reached(space.root, path)
+}
 
-  const unknown = !account.listed || sync.remoteIdFor(space.root) === null
-  if (unknown && !remoteOf(space.root) && keptShared(space.root, path)) return true
+/** The same for a space as a whole: whether somebody else may have written anything
+ *  in it, a note shared on its own included. What an answer that names many notes of
+ *  the space asks, an agent's search or its list of the tree. */
+export function reachedByOthersIn(root: string): boolean {
+  const space = workspace.spaces.find((one) => samePath(one.root, root))
+  return !!space && reached(space.root, null)
+}
 
-  return isShared(space.root) || roleOf(space.root) !== 'owner'
+/** `reachedByOthers` for one note of the space at `root`, or for any of them. */
+function reached(root: string, path: string | null): boolean {
+  if (path === null ? !!remoteOf(root)?.sharedItems?.length : isSharedItem(path)) return true
+
+  const unknown = !account.listed || sync.remoteIdFor(root) === null
+  if (unknown && !remoteOf(root) && keptShared(root, path)) return true
+
+  return isShared(root) || roleOf(root) !== 'owner'
 }
 
 /** Before the listing, or before the folder is paired: whether what the last one kept, or not knowing, says somebody
- *  else may be in the space or the note. A bare role kept by an older build says
+ *  else may be in the space or the note, any note of it where `path` is null.
+ *  A bare role kept by an older build says
  *  nothing of who else is in, and neither does a pairing nothing was kept for. */
-function keptShared(root: string, path: string): boolean {
+function keptShared(root: string, path: string | null): boolean {
   const one = kept(root)
   if (one === undefined) return sync.remoteIdFor(root) !== null
   if (!one || typeof one !== 'object') return true
   const { shared, items } = one as Kept
   if (shared) return true
   if (!items?.length) return false
+  if (path === null) return true
   const id = sync.tracked(path)?.id
   return !id || items.includes(id)
 }

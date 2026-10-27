@@ -117,7 +117,7 @@ export async function readNote(call: Call): Promise<AgentAnswer> {
     if (read.backlinks !== undefined) read.backlinks = index.backlinks(path)
   }
 
-  return done(read, sharedSource(place))
+  return done(read, sharedSource(place, relative))
 }
 
 export async function editNote(call: Call): Promise<AgentAnswer> {

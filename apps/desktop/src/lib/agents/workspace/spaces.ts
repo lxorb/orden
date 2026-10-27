@@ -12,7 +12,7 @@
 
 import { threadSpaceOf } from '../../automation/caller'
 import { insideOnly } from '../../automation/inside'
-import { canWriteAt, isShared } from '../../sharing.svelte'
+import { canWriteAt, reachedByOthers, reachedByOthersIn } from '../../sharing.svelte'
 import { insideSpace } from '../../space-paths'
 import { type Space, workspace } from '../../workspace.svelte'
 import { type Call, maybe } from './call'
@@ -100,10 +100,21 @@ export function judgedForWriting(asked: string): string {
 }
 
 /** Where the words of a place came from when somebody else can write them too: a
- *  space shared with others, whose notes an agent reads as data and never as what to
- *  do (docs/agent-native.md 9.6). Null for the reader's own. */
-export function sharedSource(place: Place): string | null {
-  return isShared(place.space.root) ? `shared space ${place.space.name}` : null
+ *  space shared with others, or a note of it shared on its own, which an agent reads
+ *  as data and never as what to do (docs/agent-native.md 9.6). Asked of the one note a
+ *  verb read where it read one, else of the space as a whole, with the rule raw HTML
+ *  and AGENTS.md go by (`reachedByOthers`). A tab's document somebody shared with the
+ *  reader has no path here, and its share says it. Null for the reader's own. */
+export function sharedSource(
+  place: Place,
+  relative = '',
+  doc?: { shared: string | null } | null,
+): string | null {
+  if (doc && doc.shared !== null) return 'note shared with you'
+  const reached = relative
+    ? reachedByOthers(onDisk(place, relative))
+    : reachedByOthersIn(place.space.root)
+  return reached ? `shared space ${place.space.name}` : null
 }
 
 /** Where a path of a place is on this disk. */

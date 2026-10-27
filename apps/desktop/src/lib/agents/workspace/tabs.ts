@@ -184,7 +184,7 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
   // writes in are not the reader's words.
   const outside =
     tab?.kind === 'terminal' ? 'tab titles and terminal output' : named ? 'tab titles' : null
-  return done(context, sharedSource(place) ?? sharedSource(front) ?? outside)
+  return done(context, sharedSource(place, '', tab?.note) ?? sharedSource(front) ?? outside)
 }
 
 /** Whether a tab's title is somebody else's words: a page's, or the program a terminal
@@ -206,7 +206,7 @@ function behind(call: Call): boolean {
 
 /** A tab made or opened, answered as its row; null where nothing came of it. */
 function answered(tab: Tab | null | undefined, place?: Place): AgentAnswer {
-  return done(tab ? tabOf(tab) : null, place ? sharedSource(place) : null)
+  return done(tab ? tabOf(tab) : null, place ? sharedSource(place, '', tab?.note) : null)
 }
 
 /** The site rule that denies an address to this agent, as the crate matches one: the

@@ -32,7 +32,7 @@ function noteOf(call: Call): { place: Place; relative: string; path: string } {
 }
 
 export async function listVersions(call: Call): Promise<AgentAnswer> {
-  const { place, path } = noteOf(call)
+  const { place, relative, path } = noteOf(call)
   const versions = await versionsOf(path)
 
   return done(
@@ -42,7 +42,7 @@ export async function listVersions(call: Call): Promise<AgentAnswer> {
       size: one.size,
       by: one.by || (one.path === null ? 'account' : 'this device'),
     })),
-    sharedSource(place),
+    sharedSource(place, relative),
   )
 }
 

@@ -140,7 +140,12 @@ vi.mock('../../tauri', async (original) => ({
 
 /** Whether the open space is shared with this account only to read, set by a test. */
 let readOnly = false
-vi.mock('../../sharing.svelte', () => ({ isShared: () => false, canWriteAt: () => !readOnly }))
+vi.mock('../../sharing.svelte', () => ({
+  isShared: () => false,
+  reachedByOthers: () => false,
+  reachedByOthersIn: () => false,
+  canWriteAt: () => !readOnly,
+}))
 vi.mock('../../web-tab/pages.svelte', () => ({ pages: { addressOf: () => null } }))
 vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
@@ -367,6 +372,16 @@ describe('where the reader is', () => {
       result: { selection: { running: true, selected: 'On branch' } },
       untrusted: 'tab titles and terminal output',
     })
+  })
+
+  /** A note somebody shared with the reader on its own has no path here, so its share
+   *  says whose words it holds (docs/agent-native.md 9.6). */
+  test('a note shared with the reader, in front, is read as data', async () => {
+    const theirs = tab('theirs', 'note', null, { shown: 'Their plan' })
+    theirs.note.shared = 'item-1'
+    tabs.push(theirs)
+    workspace.activeTabId = 'theirs'
+    expect(await call('get_context', {})).toMatchObject({ untrusted: 'note shared with you' })
   })
 })
 

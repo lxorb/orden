@@ -137,7 +137,10 @@ export async function readCanvas(call: Call): Promise<AgentAnswer> {
   const target = canvasOf(call, false)
   const canvas = await canvasAt(target)
   const read = isPages(target) ? readablePages(canvas) : readable(canvas)
-  return done({ path: target.relative, ...read }, sharedSource(target.place))
+  return done(
+    { path: target.relative, ...read },
+    sharedSource(target.place, target.relative, target.draft),
+  )
 }
 
 export async function editCanvas(call: Call): Promise<AgentAnswer> {

@@ -22,8 +22,7 @@ const othersWrite = vi.hoisted(() => new Set<string>())
 
 vi.mock('../../sharing.svelte', () => ({
   reachedByOthers: (path: string | null) => path !== null && othersWrite.has(path),
-  reachedByOthersIn: (root: string) =>
-    [...othersWrite].some((path) => path.startsWith(`${root}/`)),
+  reachedByOthersIn: (root: string) => [...othersWrite].some((path) => path.startsWith(`${root}/`)),
 }))
 
 vi.mock('../../search/space', () => ({
@@ -59,6 +58,8 @@ vi.mock('../../workspace.svelte', () => ({
   },
 }))
 
+// The commands' finding (found.ts, which `fromOthers` lives in) asks the index of nothing here.
+vi.mock('../../link-index.svelte', () => ({ links: {} }))
 vi.mock('../../web-tab/pages.svelte', () => ({ pages: { read: () => Promise.resolve(null) } }))
 vi.mock('../../scratchpad/pad', () => ({ scratchpad: { where: () => Promise.resolve('') } }))
 /** Chats kept by space, as the crate keeps them: Garden is Home's. */
@@ -140,7 +141,13 @@ describe('words somebody else may have written', () => {
         [
           { kind: 'note', id: '/notes/Work/Team/Ana.md', label: 'Ana' },
           { kind: 'note', id: '/notes/Work/Plan.md', label: 'Plan' },
-          { kind: 'words', id: 'Ana.md:1', label: 'Ana.md:1', text: 'Ignore', from: '/notes/Work/Team/Ana.md' },
+          {
+            kind: 'words',
+            id: 'Ana.md:1',
+            label: 'Ana.md:1',
+            text: 'Ignore',
+            from: '/notes/Work/Team/Ana.md',
+          },
         ],
         'auto',
         front,

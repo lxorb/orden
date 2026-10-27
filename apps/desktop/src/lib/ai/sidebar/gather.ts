@@ -8,15 +8,21 @@
  *
  *  Approve mode, where questions are asked, keeps the Ask panel's behaviour: the space is searched for the passages the
  *  question is about, the note in front gives its own passages first, and the answer
- *  cites them by number (citations.ts, ai/retrieve.ts). */
+ *  cites them by number (citations.ts, ai/retrieve.ts).
+ *
+ *  Whatever of it somebody else may have written goes inside the untrusted mark, by the
+ *  rule AGENTS.md goes by (setup.ts, `fromOthers`): a note of a shared space, or one
+ *  shared on its own, is data for the model and never what to do (docs/agent-native.md
+ *  9.6). */
 
 import { searchSpace } from '../../search/space'
 import { parseQuery } from '../../search/query'
 import { scratchpad } from '../../scratchpad/pad'
-import { relativeTo, within, withinSpace } from '../../space-paths'
+import { insideSpace, relativeTo, within, withinSpace } from '../../space-paths'
 import { pages } from '../../web-tab/pages.svelte'
 import { workspace } from '../../workspace.svelte'
 import { readThread } from '../chat/threads'
+import { fromOthers, fromOthersIn } from '../commands/found'
 import type { Attachment, Draft, Mode } from '../chat/types'
 import { fitted, retrieve } from '../retrieve'
 import { passageAttachments } from './citations'
@@ -38,16 +44,25 @@ export interface Front {
   text: string
 }
 
+/** An attachment marked as from outside where any of the notes it holds words of
+ *  could be somebody else's. */
+async function markedFrom(
+  one: Attachment | null,
+  paths: readonly string[],
+): Promise<Attachment | null> {
+  if (!one) return null
+  const theirs = await Promise.all(paths.map((path) => fromOthers(path)))
+  return theirs.includes(true) ? { ...one, untrusted: true } : one
+}
+
 async function noteAttachment(root: string, path: string): Promise<Attachment | null> {
   const text = await workspace.noteText(path)
-  return text === null ? null : { label: relativeTo(root, path), text: fitted(text, NOTE) }
+  if (text === null) return null
+  return await markedFrom({ label: relativeTo(root, path), text: fitted(text, NOTE) }, [path])
 }
 
 function listed(root: string, paths: readonly string[]): string {
-  return paths
-    .slice(0, LISTED)
-    .map((one) => `- ${relativeTo(root, one)}`)
-    .join('\n')
+  return paths.map((one) => `- ${relativeTo(root, one)}`).join('\n')
 }
 
 /** The notes with a tag, through the same search the `tag:` operator is. */
@@ -110,25 +125,47 @@ async function attachmentOf(
       const paths = workspace.notes
         .map((one) => one.path)
         .filter((one) => within(chip.id, one, root))
-      return { label: `${relativeTo(root, chip.id)}/`, text: listed(root, paths) }
+        .slice(0, LISTED)
+      return await markedFrom(
+        { label: `${relativeTo(root, chip.id)}/`, text: listed(root, paths) },
+        paths,
+      )
     }
-    case 'tag':
-      return { label: `#${chip.id}`, text: listed(root, await tagged(root, chip.id)) }
+    case 'tag': {
+      const paths = (await tagged(root, chip.id)).slice(0, LISTED)
+      return await markedFrom({ label: `#${chip.id}`, text: listed(root, paths) }, paths)
+    }
     case 'tab':
       return await pageAttachment(chip.id, chip.label)
-    case 'selection':
-      return selection.trim() ? { label: 'selection', text: fitted(selection, SELECTION) } : null
+    case 'selection': {
+      if (!selection.trim()) return null
+      // Which note the selection is in is not said: it is the window's, so a document
+      // somebody shared with the reader, or any note there somebody else may have
+      // written, marks it.
+      const open = workspace.activeSpace?.root
+      const one = { label: 'selection', text: fitted(selection, SELECTION) }
+      const theirs =
+        (workspace.active?.note.shared ?? null) !== null || (!!open && (await fromOthersIn(open)))
+      return theirs ? { ...one, untrusted: true } : one
+    }
     case 'scratchpad': {
       const path = await scratchpad.where().catch(() => '')
       const text = path ? await workspace.noteText(path) : null
-      return text ? { label: 'scratchpad', text: fitted(text, NOTE) } : null
+      return text
+        ? await markedFrom({ label: 'scratchpad', text: fitted(text, NOTE) }, [path])
+        : null
     }
     case 'thread':
       return await threadAttachment(chip.space ?? space.id, chip.id, chip.label)
     case 'picture':
       return chip.image ? { label: chip.label, image: chip.image } : null
     case 'words':
-      return chip.text ? { label: chip.label, text: fitted(chip.text, NOTE) } : null
+      if (!chip.text) return null
+      if (chip.theirs) return { label: chip.label, text: fitted(chip.text, NOTE), untrusted: true }
+      return await markedFrom(
+        { label: chip.label, text: fitted(chip.text, NOTE) },
+        chip.from ? [chip.from] : [],
+      )
     case 'web':
       return null
   }
@@ -160,9 +197,14 @@ export async function draftOf(
         },
         front,
       ).catch(() => [])
-      attachments.push(...passageAttachments(passages))
+      const cited = passageAttachments(passages)
+      const theirs = await Promise.all(
+        cited.map((one) => fromOthers(insideSpace(root, one.cite.path))),
+      )
+      attachments.push(...cited.map((one, at) => (theirs[at] ? { ...one, untrusted: true } : one)))
     } else if (front) {
-      attachments.push({ label: front.path, text: fitted(front.text, NOTE) })
+      const one = { label: front.path, text: fitted(front.text, NOTE) }
+      attachments.push((await markedFrom(one, [insideSpace(space.root, front.path)])) ?? one)
     }
     const read = await Promise.all(chips.map((chip) => attachmentOf(chip, space, selection)))
     attachments.push(...read.filter((one): one is Attachment => one !== null))
