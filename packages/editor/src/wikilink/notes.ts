@@ -442,9 +442,14 @@ export function resolveRelative(index: NoteIndex, target: string): NoteRef | nul
  *  written in sits in. Shared by the two things that resolve one: a note, and a
  *  file beside the notes. */
 function relativeParts(index: NoteIndex, target: string): string[] {
-  const parts = index.path === null ? [] : folderOf(index.path).split('/').filter(Boolean)
+  const written = target.replace(/\\/g, '/')
+  // A leading slash starts at the top of the space, as in any markdown reader.
+  const parts =
+    index.path === null || written.startsWith('/')
+      ? []
+      : folderOf(index.path).split('/').filter(Boolean)
 
-  for (const part of target.replace(/\\/g, '/').split('/')) {
+  for (const part of written.split('/')) {
     if (part === '' || part === '.') continue
     if (part === '..') parts.pop()
     else parts.push(part)

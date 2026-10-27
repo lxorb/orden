@@ -221,8 +221,10 @@ function stillReaches(
   if (link.kind === 'markdown') {
     // The note's folder spelled the way the target is, or `./B.md` in a folder with
     // a capital never matched once folded.
-    const parts = spelled(folderOf(source)).split('/').filter(Boolean)
-    for (const part of spelled(link.target).split('/')) {
+    // A leading slash starts at the top of the space; see `relativeParts`.
+    const target = spelled(link.target)
+    const parts = target.startsWith('/') ? [] : spelled(folderOf(source)).split('/').filter(Boolean)
+    for (const part of target.split('/')) {
       if (part === '' || part === '.') continue
       // Above the top of the space is nowhere a link should climb to, even where
       // the resolver stops at the top.
@@ -281,8 +283,9 @@ function fileNamed(
 ): string | null {
   let files: readonly string[] | undefined
   if (link.kind === 'markdown') {
-    const parts = folderOf(source).split('/').filter(Boolean)
-    for (const part of link.target.replace(/\\/g, '/').split('/')) {
+    const target = link.target.replace(/\\/g, '/')
+    const parts = target.startsWith('/') ? [] : folderOf(source).split('/').filter(Boolean)
+    for (const part of target.split('/')) {
       if (part === '' || part === '.') continue
       if (part === '..') parts.pop()
       else parts.push(part)

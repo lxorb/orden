@@ -430,7 +430,7 @@ describe('links between notes on a published page', () => {
     await publish({ subdomain: 'field' })
 
     const response = await call(env, '/b/x', { host: 'field.nibeditor.com' })
-    expect(response.text).toContain('<a class="wikilink" href="/road">Road</a>')
+    expect(response.text).toContain('<a class="wikilink" href="/road">/Road</a>')
     expect(response.text).toContain('<a class="wikilink" href="/b/road">the other</a>')
 
     const road = await call(env, '/road', { host: 'field.nibeditor.com' })

@@ -4611,11 +4611,13 @@ class Workspace {
     root: string,
     source: string | null,
   ): Promise<string | null> {
-    const clean = target.replace(/[\\]/g, '/').replace(/^\/+|\/+$/g, '')
+    const slashed = target.replace(/[\\]/g, '/')
+    const clean = slashed.replace(/^\/+|\/+$/g, '')
     if (!clean) return null
 
+    // A path from the top of the space, `[[/Road]]`, is made there (B543).
     const inside = source === null ? null : withinSpace(root, source)
-    const here = inside === null ? '' : folderOf(inside)
+    const here = inside === null || slashed.trimStart().startsWith('/') ? '' : folderOf(inside)
     const relative = clean.includes('/') || !here ? clean : `${here}/${clean}`
 
     // What a link says is somebody's prose. A note out of a shared space, a room,

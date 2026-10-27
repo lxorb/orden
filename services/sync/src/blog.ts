@@ -185,6 +185,9 @@ function pages(listed: readonly Page[]): Map<string, string> {
 
     for (let at = 0; at < parts.length; at++) byName.set(parts.slice(at).join('/'), url)
     byName.set(whole, url)
+    // And from the top of the space, `[[/Road]]`, which names this path alone: what
+    // a rename writes where nothing shorter reaches the note (B543).
+    byName.set(`/${whole}`, url)
   }
 
   return byName
@@ -220,6 +223,7 @@ function fileUrls(files: readonly SpaceFile[]): Map<string, string> {
     // it was never recorded; see `wrong` in spaces/files.ts.
     const parts = file.path.toLowerCase().split('/')
     for (let at = 0; at < parts.length; at++) byName.set(parts.slice(at).join('/'), url)
+    byName.set(`/${parts.join('/')}`, url)
   }
 
   return byName
@@ -348,10 +352,11 @@ function decoded(target: string): string | null {
 /** One path resolved against the note it was written in: the folder that note is
  *  in, plus the road the link takes out of it, with `.` and `..` walked. */
 function against(from: string, target: string): string {
-  const here = from.replace(/\\/g, '/').split('/').slice(0, -1)
-  const out: string[] = [...here]
+  const written = target.replace(/\\/g, '/')
+  // A leading slash starts at the top of the space, as the app reads one.
+  const out = written.startsWith('/') ? [] : from.replace(/\\/g, '/').split('/').slice(0, -1)
 
-  for (const step of target.replace(/\\/g, '/').split('/')) {
+  for (const step of written.split('/')) {
     if (step === '' || step === '.') continue
     if (step === '..') out.pop()
     else out.push(step)
@@ -369,7 +374,10 @@ async function embedded(
   source: string,
 ): Promise<(link: Wikilink) => string | null> {
   const byName = new Map<string, Note>()
-  for (const note of notes) byName.set(nameOf(note.path), note)
+  for (const note of notes) {
+    byName.set(nameOf(note.path), note)
+    byName.set(`/${nameOf(note.path)}`, note)
+  }
 
   const wanted = new Set<string>()
   for (const link of findLinks(source)) {

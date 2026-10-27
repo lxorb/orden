@@ -344,7 +344,10 @@ async function listBacklinks(
 
     const body = await noteBody(env, space.id, row.id)
     for (const link of findLinks(body)) {
-      if (!names.has(link.target.replace(MARKDOWN, '').toLowerCase())) continue
+      const said = link.target.replace(MARKDOWN, '').toLowerCase()
+      // A leading slash is a path from the top of the space, the whole path alone.
+      const anchored = said.replace(/^\/+/, '')
+      if (anchored !== said ? anchored !== parts.join('/') : !names.has(said)) continue
       found.push(`${row.path}:${lineAt(body, link.from) + 1}`)
       break
     }
