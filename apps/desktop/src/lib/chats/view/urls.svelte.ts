@@ -6,15 +6,14 @@
  *  Only an address is kept. A fetch that failed (offline, a 5xx) is let go after a wait
  *  that doubles, give or take a quarter, and at once when the device is back online; the
  *  rows that still draw the file then ask again, and a file no row draws is not asked at
- *  all. After `MOST_TRIES` asks only coming back online lets a file go again. Everything
- *  here belongs to one session: another store or another reader starts from nothing. */
+ *  all. The wait stops growing at five minutes and never ends while a row draws the file:
+ *  a server down for longer must not leave its pictures blank. Everything here belongs to
+ *  one session: another store or another reader starts from nothing. */
 
 import { SvelteMap } from 'svelte/reactivity'
 import type { Chats } from '../api'
 import { store } from './source.svelte'
 
-/** How many times a file is asked before only `online` lets it go again. */
-export const MOST_TRIES = 8
 const FIRST_WAIT = 2_000
 const LONGEST_WAIT = 5 * 60_000
 
@@ -24,7 +23,9 @@ interface Miss {
 }
 
 const known = new SvelteMap<string, string>()
-/** Bumped when a miss is let go, so the rows that draw the file read it again. */
+/** Bumped when a miss is let go, so the rows that draw the file read it again. A key is
+ *  in it from just after its first ask, so a bump reruns only the rows of that file, not
+ *  every row that read a key it did not hold. */
 const freed = new SvelteMap<string, number>()
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- what was asked; nothing draws from it
 const asked = new Set<string>()
@@ -77,6 +78,9 @@ function ask(chat: string, hash: string, key: string): void {
     } else miss(key)
   }
   out.add(key)
+  queueMicrotask(() => {
+    if (session === asking && !freed.has(key)) freed.set(key, 0)
+  })
   void store()
     .fileUrl(chat, hash)
     .then(answered, () => answered(null))
@@ -87,8 +91,7 @@ function miss(key: string): void {
   if (was?.timer) clearTimeout(was.timer)
   const tries = (was?.tries ?? 0) + 1
   const wait = Math.min(FIRST_WAIT * 2 ** (tries - 1), LONGEST_WAIT) * (0.75 + Math.random() / 2)
-  const timer = tries < MOST_TRIES ? setTimeout(() => free(key), wait) : null
-  missed.set(key, { tries, timer })
+  missed.set(key, { tries, timer: setTimeout(() => free(key), wait) })
   if (!listening && typeof window !== 'undefined') {
     listening = true
     window.addEventListener('online', again)
@@ -103,13 +106,13 @@ function free(key: string): void {
   freed.set(key, (freed.get(key) ?? 0) + 1)
 }
 
-/** Back online: every miss that waits, or has run out of tries, is let go now, with one
- *  more try. A file whose ask is still out, or that no row has asked again, is left. */
+/** Back online: every miss that waits is let go now, its wait starting over. A file whose
+ *  ask is still out, or that no row has asked again, is left. */
 function again(): void {
   for (const [key, was] of missed) {
     if (out.has(key) || !asked.has(key)) continue
     if (was.timer) clearTimeout(was.timer)
-    was.tries = Math.min(was.tries, MOST_TRIES - 1)
+    was.tries = 0
     free(key)
   }
 }

@@ -165,6 +165,7 @@ class ChatsStore implements Chats {
   async forget(): Promise<void> {
     const cache = this.cache
     this.stop()
+    this.forgetFiles(true)
     await cache?.forget().catch(() => undefined)
   }
 
@@ -188,8 +189,7 @@ class ChatsStore implements Chats {
     this.countedAt.clear()
     this.drafts.clear()
     this.people.clear()
-    for (const url of this.urls.values()) void url.then((one) => one && URL.revokeObjectURL(one))
-    this.urls.clear()
+    this.forgetFiles(false)
     this.list = []
     this.ready = false
   }
@@ -727,24 +727,44 @@ class ChatsStore implements Chats {
     const hash = [...new Uint8Array(digest)]
       .map((one) => one.toString(16).padStart(2, '0'))
       .join('')
-    return (await http.putBlob(hash, bytes)) ? hash : null
+    if (!(await http.putBlob(hash, bytes))) return null
+    // Drawn from its own bytes: the server answers 404 until the post naming it is folded.
+    if (!this.urls.has(`${this.me}/${hash}`)) {
+      const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)]))
+      this.urls.set(`${this.me}/${hash}`, Promise.resolve(url))
+    }
+    return hash
   }
 
+  /** Addresses by reader, so one who just signed in is never handed the last one's. */
   private readonly urls = new Map<string, Promise<string | null>>()
 
   fileUrl(chat: string, hash: string): Promise<string | null> {
-    const key = `${chat}/${hash}`
+    const own = this.urls.get(`${this.me}/${hash}`)
+    if (own) return own
+    const key = `${this.me}/${chat}/${hash}`
     let url = this.urls.get(key)
     if (!url) {
-      // A null is a dropped connection or a 5xx, asked again; a file gone stays gone.
+      // Only an address is kept: a null (offline, a 5xx, a 404 not yet folded) is asked again.
       url = http.fileOf(chat, hash).then((blob) => {
-        if (blob instanceof Blob) return URL.createObjectURL(blob)
-        if (!blob && this.urls.get(key) === url) this.urls.delete(key)
+        if (blob) return URL.createObjectURL(blob)
+        if (this.urls.get(key) === url) this.urls.delete(key)
         return null
       })
       this.urls.set(key, url)
     }
     return url
+  }
+
+  /** Lets go of the addresses, all of them or all but the reader's now: a stop for the
+   *  next session comes after the reader changed, and a row may have asked already. */
+  private forgetFiles(all: boolean): void {
+    const mine = `${this.me}/`
+    for (const [key, url] of this.urls) {
+      if (!all && key.startsWith(mine)) continue
+      this.urls.delete(key)
+      void url.then((one) => one && URL.revokeObjectURL(one))
+    }
   }
 
   async preview(url: string): Promise<Preview | null> {

@@ -182,20 +182,16 @@ export async function putBlob(hash: string, bytes: Uint8Array): Promise<boolean>
   }
 }
 
-/** A file a message of this chat names, as bytes; `'gone'` where the server says it is not
- *  there or not for this reader (404, 403, 410), null where it could not answer. */
-export async function fileOf(chat: string, hash: string): Promise<Blob | 'gone' | null> {
+/** A file a message of this chat names, as bytes. */
+export async function fileOf(chat: string, hash: string): Promise<Blob | null> {
   const token = account.token
   if (!token) return null
   try {
     const response = await fetch(`${BASE}${chatPath(chat)}/files/${hash}`, {
       headers: { authorization: `Bearer ${token}` },
     })
-    if (response.ok) return await response.blob()
-    return GONE.has(response.status) ? 'gone' : null
+    return response.ok ? await response.blob() : null
   } catch {
     return null
   }
 }
-
-const GONE = new Set([403, 404, 410])

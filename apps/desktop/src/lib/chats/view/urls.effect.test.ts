@@ -215,3 +215,24 @@ test('another account starts from nothing, and the last one asks no more', async
   seen.close()
   missing.close()
 })
+
+test('letting one file go redraws only the rows of that file (review of #990, L3)', async () => {
+  const ask = vi.fn<Ask>((_chat, hash) => Promise.resolve(hash === 'h13' ? 'blob:ok' : null))
+  useStore(storeOf('user:a', ask))
+  let reads = 0
+  const close = root(() => {
+    watch(() => {
+      reads++
+      fileUrl('c1', 'h13')
+    })
+  })
+  const failing = row('c1', 'h12')
+  flushSync()
+  await wait(0)
+  const settled = reads
+  await wait(10 * 60_000)
+  expect(ask.mock.calls.length).toBeGreaterThan(3)
+  expect(reads).toBe(settled)
+  failing.close()
+  close()
+})
