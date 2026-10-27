@@ -12,14 +12,7 @@
  *  makes its next occurrence as a tick in the editor would. */
 
 import { deadlineField, deadlineOf, startField, startOf } from '@nib/markdown/task-dates'
-import {
-  groupName,
-  type Priority,
-  type Row,
-  type TaskChange,
-  type TaskRow,
-  type Value,
-} from '@nib/bases'
+import { groupName, type Priority, type Row, type TaskChange, type Value } from '@nib/bases'
 import type { RowChange } from '../rows/write'
 import { bare, isNoteProperty } from './columns'
 import { dayIn } from './values'
@@ -79,7 +72,20 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
         : field === 'deadline'
           ? deadlineField(task, reads)
           : field
-    return { change: { task: dated(which, day) } }
+    const change = dated(which, day)
+    // A task whose deadline has passed is late by that deadline, so a drop on a day
+    // moves the deadline there, as Todoist's drag reschedules an overdue task: it
+    // leaves Overdue and shows on that day. Its start, where it has one, moves with it;
+    // one with a deadline alone gets no start date. Upcoming's days, its week strip,
+    // the calendar and the agenda all drop here.
+    const deadline = deadlineOf(task, reads)
+    const late = field === 'date' && day !== null && !task.done && !task.cancelled
+    if (late && deadline !== undefined && deadline < today) {
+      const moved = dated(deadlineField(task, reads), day)
+      const placed = (startOf(task, reads) ?? task.scheduled) !== undefined
+      return { change: { task: placed ? { ...change, ...moved } : moved } }
+    }
+    return { change: { task: change } }
   }
 
   if (field === 'assignee') {
@@ -91,23 +97,6 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
   }
 
   return null
-}
-
-/** A task dropped on a day of Upcoming. One whose deadline has passed is late by that
- *  deadline, so the deadline moves to the day, as Todoist's drag reschedules an overdue
- *  task's date: it leaves Overdue and shows on that day. Its start, where it has one,
- *  moves with it; one with a deadline alone gets no start date. */
-function dayDrop(key: Value, task: TaskRow, row: Row, today: string): Drop | null {
-  const start = taskDrop('date', key, row, today)
-  const deadline = deadlineOf(task, task.dueReads)
-  const day = key === null ? null : dayIn(key)
-  if (day === null || deadline === undefined || deadline >= today) return start
-  const late: TaskChange = dated(deadlineField(task, task.dueReads), day)
-  // Placed by its deadline alone, the deadline is all that moves.
-  if ((startOf(task, task.dueReads) ?? task.scheduled) === undefined)
-    return { change: { task: late } }
-  const moved = start && 'change' in start ? start.change.task : {}
-  return { change: { task: { ...moved, ...late } } }
 }
 
 /** The drop into the group keyed `key` of a view grouped by `property`, or null
@@ -131,7 +120,11 @@ export function dropInto(
   if (property === 'formula.overdue') {
     return key === false && row.task ? taskDrop('deadline', today, row, today) : null
   }
-  if (property === 'formula.day') return row.task ? dayDrop(key, row.task, row, today) : null
+  // Completed's days are the days its tasks were done, which no drop changes.
+  if (property === 'formula.day') {
+    const task = row.task
+    return task && !task.done && !task.cancelled ? taskDrop('date', key, row, today) : null
+  }
 
   // A task grouped by the note it is in moves to that note.
   if ((property === 'file.path' || property === 'file.basename') && row.kind === 'task') {

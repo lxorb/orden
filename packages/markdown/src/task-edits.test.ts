@@ -267,6 +267,6 @@ describe('code in a task', () => {
     )
     expect(
       changedTask('- [ ] Pay [repeat:: every week when done] [time:: 09:00]', { priority: 1 }),
-    ).toBe('- [ ] Pay [repeat:: every week when done] [time:: 09:00] [priority:: 1]')
+    ).toBe('- [ ] Pay [priority:: highest] [repeat:: every week when done] [time:: 09:00]')
   })
 })

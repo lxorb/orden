@@ -9,13 +9,10 @@ import { editedWords, shownWords, unescapedAt } from '@nib/markdown/escapes'
 import { deadlineField, deadlineOf, startOf } from '@nib/markdown/task-dates'
 import { changeFor } from './schedule/schedule'
 
-/** The day the field shows as the task's date: its start, else its scheduled day. */
-const dayIn = (task: TaskRow) => startOf(task, task.dueReads) ?? task.scheduled
-
 /** The field's prefill for a task as it stands, and its description's words. */
 export function prefillFor(task: TaskRow, description: string | null): Prefill {
   // Its start date and its deadline, as its space reads a `📅` (#371).
-  const due = dayIn(task)
+  const due = startOf(task, task.dueReads) ?? task.scheduled
   const deadline = deadlineOf(task, task.dueReads)
   const fields: NonNullable<Prefill['fields']> = {
     ...(due === undefined ? {} : { due }),
@@ -58,18 +55,15 @@ export function changeOf(task: TaskRow, entry: Entry): TaskChange {
   // left as they were write nothing, not even a double blank closed.
   const unchanged = entry.text === shownWords(task.text).replace(/\s+/gu, ' ').trim()
   const keptLow = task.priority > 4 && (fields.priority ?? 4) === 4
-  // A day taken out of the field takes its time and repeat with it, as Todoist's does.
-  // A task that had no day to take (a deadline alone) keeps both as the field holds them.
-  const undated = (fields.due ?? null) === null && dayIn(task) === undefined
   const change: TaskChange = {
     ...(unchanged ? {} : { text: editedWords(task.text, entry.text) }),
-    ...(undated
-      ? { time: fields.time ?? null, recurrence: fields.recurrence ?? null }
-      : changeFor(task, {
-          due: fields.due ?? null,
-          time: fields.time ?? null,
-          recurrence: fields.recurrence ?? null,
-        })),
+    // A task with no day keeps its repeat and time (a deadline alone), unless the last
+    // date it had goes, which takes them with it (`changedTask`).
+    ...changeFor(task, {
+      due: fields.due ?? null,
+      time: fields.time ?? null,
+      recurrence: fields.recurrence ?? null,
+    }),
     priority: keptLow ? task.priority : (fields.priority ?? 4),
     tags: fields.tags,
     remind: fields.remind,

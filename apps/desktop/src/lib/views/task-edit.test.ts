@@ -122,12 +122,11 @@ describe('a task in quick add’s field and back', () => {
     )
   })
 
-  test('taking the repeat out of a task with no start date takes it away', () => {
-    const one = task('- [ ] Pay rent [repeat:: every month] [deadline:: 2026-11-01]')
+  test('taking its only date away takes the repeat and the time with it', () => {
+    const line = '- [ ] Pay rent [time:: 09:00] [repeat:: every month] [deadline:: 2026-11-01]'
+    const one = task(line)
     const fields = { tags: [], remind: [], ...prefillFor(one, null).fields }
-    delete fields.recurrence
-    const change = changeOf(one, { text: 'Pay rent', fields })
-    expect(change.recurrence).toBeNull()
-    expect(change.deadline).toBe('2026-11-01')
+    delete fields.deadline
+    expect(changedTask(line, changeOf(one, { text: 'Pay rent', fields }))).toBe('- [ ] Pay rent')
   })
 })

@@ -218,9 +218,10 @@ interface Arrival {
 /** The edits that turn `line` into the line with `change` made, smallest first,
  *  in line order, never overlapping, offsets into the line. None for a line that is
  *  not a task, or a change that changes nothing. */
-export function writeTask(line: string, change: TaskChange): TextEdit[] {
+export function writeTask(line: string, asked: TaskChange): TextEdit[] {
   const parsed = parseTask(line)
   if (!parsed) return []
+  const change = withoutOrphans(parsed.fields, asked)
 
   const { fields, tokens } = parsed
   const edits: TextEdit[] = []
@@ -447,6 +448,20 @@ function arrivals(
 /** Edits in line order, an insertion before a removal at the same place. */
 function ordered(edits: TextEdit[]): TextEdit[] {
   return edits.sort((a, b) => a.from - b.from || a.to - a.from - (b.to - b.from))
+}
+
+const DATES = ['due', 'start', 'scheduled', 'deadline'] as const
+
+/** The change, with a repeat and a time taken away where it takes away the last date
+ *  the task had: they belong to that date, and Todoist holds no repeat without one. A
+ *  task that never had a date keeps them. */
+function withoutOrphans(fields: TaskFields, change: TaskChange): TaskChange {
+  if (fields.recurrence === undefined && fields.time === undefined) return change
+  if (!DATES.some((date) => fields[date] !== undefined)) return change
+  const left = DATES.some((date) =>
+    date in change ? change[date] != null : fields[date] !== undefined,
+  )
+  return left ? change : { ...change, recurrence: null, time: null }
 }
 
 /** The line with the change made. */
