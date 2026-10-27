@@ -145,3 +145,23 @@ describe('next to a link to a heading', () => {
     expect(after.match(/#setup/g)).toHaveLength(1)
   })
 })
+
+describe('next to an address and inside marks', () => {
+  test('a rename leaves a link that only names the tag in its query', () => {
+    const note = 'see [docs](https://x.test/app?tab=#setup) #setup\n'
+    expect(change('setup', 'install', note)?.after).toBe(
+      'see [docs](https://x.test/app?tab=#setup) #install\n',
+    )
+  })
+
+  test('a rename keeps the marks round a tag, underscores included', () => {
+    expect(change('urgent', 'later', '_#urgent_ call\n')?.after).toBe('_#later_ call\n')
+  })
+
+  test('taking a tag away takes the marks it was the whole of', () => {
+    expect(change('todo', null, 'Shipped\n~~#todo~~\nMore #a\n')?.after).toBe(
+      'Shipped\n\nMore #a\n',
+    )
+    expect(change('todo', null, 'Done ==#todo== and **#todo** now\n')?.after).toBe('Done and now\n')
+  })
+})

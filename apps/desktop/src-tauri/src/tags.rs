@@ -532,4 +532,29 @@ mod tests {
         );
         assert_eq!(tags_in("| x | y |\n| - | - |\n|#f|#g|\n"), vec!["#f", "#g"]);
     }
+
+    /// The rows of `PARITY` in @nib/markdown's tags.test.ts, which the page is
+    /// held to, and of "alike on the page and in the index" in search/tags.test.ts.
+    #[test]
+    fn reads_the_parity_rows() {
+        let rows: [(&str, &[&str]); 11] = [
+            ("see https://x.test/?q=#x", &[]),
+            ("[link](https://x.test/?q=#x)", &[]),
+            ("<https://x.test/#a> <https://x.test/?a=#b>", &[]),
+            ("plain a|#b text", &[]),
+            ("code-ish a=#b prose and color=#ff8800", &[]),
+            ("snake_#x 3*#y ~#z", &[]),
+            ("[[Note|#alias]]", &[]),
+            ("[s](#setup) ![i](#img) and [s](#open", &[]),
+            ("**#a** ~~#d~~ ==#e== x **#f**", &["#a", "#d", "#e", "#f"]),
+            (
+                "_#u_ and __#todo__ and _#snake_case_",
+                &["#u", "#todo", "#snake_case"],
+            ),
+            ("| x | y |\n| - | - |\n|#f|#g|", &["#f", "#g"]),
+        ];
+        for (source, tags) in rows {
+            assert_eq!(tags_in(&format!("{source}\n")), tags, "{source}");
+        }
+    }
 }
