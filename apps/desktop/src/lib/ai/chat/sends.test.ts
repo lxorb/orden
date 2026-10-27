@@ -6,7 +6,7 @@ function fakeEngine(): Engine & { extra: () => string } {
   return {
     models: () => Promise.resolve([]),
     send: () => new Promise((done) => setTimeout(done, 5)),
-    steer: () => Promise.resolve(),
+    steer: () => Promise.resolve(true),
     compact: () => Promise.resolve(),
     extra: () => 'kept',
   }

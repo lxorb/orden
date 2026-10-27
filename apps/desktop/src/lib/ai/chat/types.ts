@@ -297,8 +297,9 @@ export interface Engine {
     on: (event: EngineEvent) => void,
     signal: AbortSignal,
   ): Promise<GoalState | null>
-  /** Words for the running turn, delivered after the call in flight. */
-  steer(thread: Thread, text: string): Promise<void>
+  /** Words for the running turn, delivered after the call in flight; false where the
+   *  turn is not ready for them yet (or is over), and they were not taken. */
+  steer(thread: Thread, text: string): Promise<boolean>
   compact(thread: Thread, focus?: string): Promise<void>
   /** The thread's turns were cut (a rewind, an edited message): an engine that keeps a
    *  conversation of its own forgets it, so the next send starts from the thread's. */

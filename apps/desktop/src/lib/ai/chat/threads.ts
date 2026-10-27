@@ -327,8 +327,45 @@ export async function writeThread(thread: Thread): Promise<void> {
   await store.meta.put(store.listKey(thread.space), JSON.stringify([...others, head]))
 }
 
-/** Deletes a thread for good (`/delete`). */
-export async function deleteThread(space: string, id: string): Promise<void> {
+/** Threads deleted this run: never written again, whatever still holds one (an answer
+ *  that ends after the delete, a helper's line, a model picked), so a chat deleted
+ *  while it answers stays deleted. Ids are never reused. */
+const removed = new Set<string>()
+
+/** Whether a thread was deleted this run, or is being deleted. */
+export function isDeleted(id: string): boolean {
+  return removed.has(id)
+}
+
+/** Deletes on their way, by thread. */
+const deleting = new Map<string, Promise<void>>()
+
+/** Whether a thread is deleted for good, once a delete on its way is done. */
+export async function staysDeleted(id: string): Promise<boolean> {
+  await deleting.get(id)?.catch(() => undefined)
+  return removed.has(id)
+}
+
+/** Deletes a thread for good (`/delete`), once a write of it on its way is done. A
+ *  delete that fails leaves the thread kept, and written again as it changes. */
+export function deleteThread(space: string, id: string): Promise<void> {
+  removed.add(id)
+  const done = (async () => {
+    try {
+      await writing.get(id)?.done.catch(() => undefined)
+      await deleted(space, id)
+    } catch (error) {
+      removed.delete(id)
+      throw error
+    } finally {
+      deleting.delete(id)
+    }
+  })()
+  deleting.set(id, done)
+  return done
+}
+
+async function deleted(space: string, id: string): Promise<void> {
   if (isNative) {
     await invoke<null>('ai_thread_delete', { space, id })
     return
@@ -365,6 +402,7 @@ function again(entry: { next: boolean }): boolean {
 }
 
 export function keepThread(thread: Thread): Promise<void> {
+  if (removed.has(thread.id)) return Promise.resolve()
   const held = writing.get(thread.id)
   if (held) {
     held.next = true
@@ -376,7 +414,7 @@ export function keepThread(thread: Thread): Promise<void> {
       do {
         entry.next = false
         await writeThread(thread)
-      } while (again(entry))
+      } while (again(entry) && !removed.has(thread.id))
     } finally {
       writing.delete(thread.id)
     }

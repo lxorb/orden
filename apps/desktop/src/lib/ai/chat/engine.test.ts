@@ -86,7 +86,7 @@ vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
 
 /** The fake crate: one read-only tool, and whatever each test makes a call do. */
 const calls: { name: string; args: unknown; mode: Mode }[] = []
-let onCall: () => Promise<void> | void = () => undefined
+let onCall: () => unknown = () => undefined
 let where = ''
 const tools: Tools = {
   list: () =>
