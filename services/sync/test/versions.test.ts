@@ -146,6 +146,23 @@ describe('the account keeps what a note said', () => {
     ])
   })
 
+  test('but not into the words of another device', async () => {
+    for (const [content, baseVersion, device] of [
+      ['# Mine', 1, 'the laptop'],
+      ['# Bob', 2, 'Bob'],
+      ['# Mine again', 3, 'the laptop'],
+    ] as const) {
+      await call(env, `/v1/notes/${note}`, {
+        method: 'PUT',
+        token,
+        body: { content, baseVersion },
+        headers: { 'x-nib-device': device },
+      })
+    }
+
+    expect(rows(env, note).map((one) => one.by)).toEqual(['', 'the laptop', 'Bob', 'the laptop'])
+  })
+
   test('but not the same words twice', async () => {
     agedBy(env, 6 * 60 * 1000)
     await call(env, `/v1/notes/${note}`, {
