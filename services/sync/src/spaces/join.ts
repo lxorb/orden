@@ -27,7 +27,7 @@
 import { Hono, type Context } from 'hono'
 import { SPACE_IS_FULL } from '../refused'
 import { accountFor, claimWhatWasGuested, openSession, presentUser, requireWhoever } from '../auth'
-import { readBody } from '../body'
+import { objectBody, readBody } from '../body'
 import { cleanPersonName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../crypto'
 import { forgetMailed, mailer, mayMail, requestMessage } from '../email'
 import { newGuest, presentGuest } from '../guests'
@@ -50,8 +50,8 @@ const NO_LONGER_WAITING = 'that request has run out'
 /** Whether this is a page that is waiting asking again, rather than somebody at
  *  the link for the first time. */
 async function askingAgain(context: Reply): Promise<boolean> {
-  const body = (await context.req.json().catch(() => null)) as { again?: unknown } | null
-  return body?.again === true
+  // Through the guard on a body's length, as anything anybody may post to is.
+  return (await objectBody(context))?.again === true
 }
 
 type Mode = 'open' | 'approval'

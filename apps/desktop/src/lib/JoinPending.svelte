@@ -7,6 +7,7 @@
    *  The recording pill's shape, in the same middle track; see RecordingPill.svelte
    *  and `.notices` in App.svelte. Fetched only while something is put aside; see
    *  surfaces.svelte.ts. */
+  import Cross from './Cross.svelte'
   import { joining } from './joining.svelte'
   import { t } from './i18n.svelte'
 
@@ -22,24 +23,46 @@
 </script>
 
 {#if joining.aside}
-  <button type="button" class="nib-bar pending" onclick={() => joining.reopen()}>
-    {#if joining.step === 'waiting'}<span class="pulse"></span>{/if}
-    {said}
-  </button>
+  <div class="nib-bar pending">
+    <button type="button" class="open" onclick={() => joining.reopen()}>
+      {#if joining.step === 'waiting'}<span class="pulse"></span>{/if}
+      {said}
+    </button>
+    <!-- A link nobody has asked through yet is let go of here; a wait is let go
+         of with Cancel in the sheet, which also takes the request back. -->
+    {#if joining.step === 'asking'}
+      <button
+        type="button"
+        class="nib-glyph"
+        aria-label={t('Dismiss')}
+        title={t('Dismiss')}
+        onclick={() => joining.dismiss()}
+      >
+        <Cross />
+      </button>
+    {/if}
+  </div>
 {/if}
 
 <style>
   .pending {
     grid-column: 2;
     align-items: center;
+    animation: pill-in var(--dur-base) var(--ease-spring);
+  }
+
+  .open {
+    display: flex;
+    align-items: center;
     gap: var(--space-2);
     min-height: var(--row-height);
     padding-inline: var(--space-3);
+    border: none;
+    background: none;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     color: var(--text);
     cursor: default;
-    animation: pill-in var(--dur-base) var(--ease-spring);
   }
 
   :global([data-touch]) .pending {

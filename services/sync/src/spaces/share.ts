@@ -627,9 +627,23 @@ share.delete('/:id/share/link', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
 
-  await context.env.DB.prepare('delete from space_links where space_id = ? and item = ?')
-    .bind(space.id, scope.id)
-    .run()
+  // Whoever is still waiting to come in through it is waiting on nothing now: the
+  // requests go with it, so an Accept later lets nobody in that the link no longer
+  // would, and a reader who presses Cancel finds nothing to take back (B540).
+  await context.env.DB.batch([
+    context.env.DB.prepare('delete from space_links where space_id = ? and item = ?').bind(
+      space.id,
+      scope.id,
+    ),
+    context.env.DB.prepare('delete from space_requests where space_id = ? and item = ?').bind(
+      space.id,
+      scope.id,
+    ),
+    context.env.DB.prepare(
+      `delete from guest_members
+        where space_id = ? and item = ? and joined_at is null and declined_at is null`,
+    ).bind(space.id, scope.id),
+  ])
 
   return context.json(await sharing(context.env, space, context.get('user'), scope))
 })

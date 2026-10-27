@@ -90,7 +90,7 @@
       </p>
       <!-- Slack's pending request: Cancel takes it back, Close leaves it asking. -->
       <div class="actions">
-        <button type="button" class="nib-button is-quiet" onclick={() => joining.cancel()}
+        <button type="button" class="nib-button is-quiet" onclick={() => void joining.cancel()}
           >{t('Cancel')}</button
         >
         <button type="button" class="nib-button is-quiet" onclick={() => joining.close()}

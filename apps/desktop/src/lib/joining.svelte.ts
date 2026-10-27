@@ -145,8 +145,11 @@ class Joining {
     }
 
     this.token = held
-    // Picked back up out of sight, not over the app at every launch.
+    // Picked back up out of sight, not over the app at every launch, and as the
+    // wait it is: the ask is asking again, so a request that ran out while the app
+    // was closed is not made anew and the owner is not mailed about it twice.
     this.closed = true
+    this.step = 'waiting'
     this.invitation = await api.invitation(held).catch(() => null)
     await this.walkThrough()
   }
@@ -189,7 +192,10 @@ class Joining {
       // A wait survives anything but a refusal. The owner may be about to
       // answer, the next ask is three seconds away, and the link is still
       // written down for the launch after this one.
-      if (this.step === 'waiting' && !refused(error)) return
+      if (this.step === 'waiting' && !refused(error)) {
+        if (!this.asking) this.later()
+        return
+      }
 
       this.stopAsking()
       this.closed = false
@@ -281,22 +287,37 @@ class Joining {
 
   /** The next ask, however the one before it ended. */
   private later() {
-    const hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden'
+    const page = typeof document === 'undefined' ? null : document
+    if (page && !this.watching) page.addEventListener('visibilitychange', this.seen)
+    this.watching = page
     this.asking = setTimeout(
-      () => {
-        this.asking = undefined
-        this.asks += 1
-        void this.walkThrough().finally(() => {
-          if (this.step === 'waiting' && !this.asking) this.later()
-        })
-      },
-      askDelay(this.asks, hidden),
+      () => this.askNow(),
+      askDelay(this.asks, page?.visibilityState === 'hidden'),
     )
   }
+
+  private askNow() {
+    clearTimeout(this.asking)
+    this.asking = undefined
+    this.asks += 1
+    void this.walkThrough().finally(() => {
+      if (this.step === 'waiting' && !this.asking) this.later()
+    })
+  }
+
+  /** The tab back on screen: a hidden tab asks every few minutes, and the owner
+   *  may have answered in the meantime. */
+  private readonly seen = () => {
+    if (this.watching?.visibilityState === 'visible' && this.asking) this.askNow()
+  }
+
+  private watching: Document | null = null
 
   private stopAsking() {
     clearTimeout(this.asking)
     this.asking = undefined
+    this.watching?.removeEventListener('visibilitychange', this.seen)
+    this.watching = null
     forget(WAITING_KEY)
   }
 
@@ -319,10 +340,27 @@ class Joining {
 
   /** Cancel on a wait: the request is taken back from the owner, so an Accept
    *  afterwards lets nobody in, and nothing asks again. */
-  cancel() {
+  async cancel() {
     const token = this.token
     if (this.step === 'waiting' && token && account.token) {
-      void api.withdraw(token, account.token).catch(() => undefined)
+      // No ask while the request is being taken back, or its answer would race it.
+      clearTimeout(this.asking)
+      this.asking = undefined
+      try {
+        await api.withdraw(token, account.token)
+      } catch (error) {
+        if (this.token !== token) return
+        // Gone with its link, which takes the request with it: nothing to take back.
+        // Anything else leaves the request with the owner, so the wait stays, on
+        // screen and still asking, and Cancel is there to press again.
+        if (!(error instanceof ApiError && error.status === 404)) {
+          this.error = message(error, t('Try again'))
+          this.closed = false
+          this.later()
+          return
+        }
+      }
+      if (this.token !== token) return
     }
     this.dismiss()
   }
