@@ -52,6 +52,9 @@
 #     private tab closed, and the same site asking from a normal tab: the private answer
 #     has to be written nowhere and the normal tab has to be asked (#787,
 #     scripts/grants-drive.py);
+#   - with PDFMARK=1, two PDFs and a blank page note put in the space and one PDF
+#     opened, which makes it a page note: its row and its tab have to wear the PDF's
+#     mark and the blank one's another (#676, scripts/pdf-mark-drive.py);
 #   - with WATCH=1, a space holding a folder nobody may read and four hundred more: a
 #     note written into it by another program has to be heard, at its top and deep in
 #     it, and again under a lowered limit of watched folders, which the watch has to say
@@ -330,6 +333,8 @@ fi
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
 # With KILL=1, the endpoint and no page (#961).
 [ "${KILL:-0}" = 1 ] && endpoint
+# With PDFMARK=1, the endpoint and no page (#676).
+[ "${PDFMARK:-0}" = 1 ] && endpoint
 # With CERT=1, the endpoint and a site over https, a real one: its certificate is the
 # point (#776).
 if [ "${CERT:-0}" = 1 ]; then
@@ -555,6 +560,11 @@ fi
 # again (#961). A tenth, sooner than the engine puts the page's storage on the disk of its
 # own accord, which a second was not; a kill, not a quit, so nothing is written on the way
 # out.
+if [ "$status" = 0 ] && [ "${PDFMARK:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/pdf-mark-drive.py" "$out" || status=1
+fi
+
 if [ "$status" = 0 ] && [ "${KILL:-0}" = 1 ]; then
   sleep 3
   if python3 "$here/kill-drive.py" "$out" write; then
