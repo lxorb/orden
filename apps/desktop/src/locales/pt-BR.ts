@@ -2687,4 +2687,11 @@ export const ptBR: Dictionary = {
     'Aqui as páginas da web procuram endereços como o sistema faz; o DNS dele é definido nos ajustes do próprio sistema.',
   'Set by the settings file': 'Definido pelo arquivo de configurações',
   'The settings file has a problem': 'O arquivo de configurações tem um problema',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Mover a conversa {name} para {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Todos em {space} poderão ler todo o histórico, e as pessoas em {from} o perderão.',
+  'Move the chats {names} to {space}?': 'Mover as conversas {names} para {space}?',
+  'Move the chat': 'Mover a conversa',
+  'Only the file': 'Só o arquivo',
 }

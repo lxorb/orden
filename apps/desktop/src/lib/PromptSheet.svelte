@@ -172,7 +172,7 @@
               class="nib-button"
               class:is-danger={option.danger}
               class:is-quiet={!option.primary && !option.danger}
-              data-lands={prompt.tick && option.primary ? '' : undefined}
+              data-lands={option.lands || (prompt.tick && option.primary) ? '' : undefined}
               onclick={() => prompt.pick(option.id)}
             >
               {t(option.label)}

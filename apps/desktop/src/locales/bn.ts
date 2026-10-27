@@ -2632,4 +2632,11 @@ export const bn: Dictionary = {
     'এখানে ওয়েব পেজ সিস্টেমের মতো করেই ঠিকানা খোঁজে; এর DNS সিস্টেমের নিজস্ব সেটিংসে ঠিক করা হয়।',
   'Set by the settings file': 'সেটিংস ফাইলে নির্ধারিত',
   'The settings file has a problem': 'সেটিংস ফাইলে একটি সমস্যা আছে',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'চ্যাট {name} {space}-এ সরাবেন?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'তখন {space}-এর সবাই পুরো ইতিহাস পড়তে পারবে, আর {from}-এর লোকেরা তা হারাবে।',
+  'Move the chats {names} to {space}?': 'চ্যাট {names} {space}-এ সরাবেন?',
+  'Move the chat': 'চ্যাট সরান',
+  'Only the file': 'শুধু ফাইল',
 }

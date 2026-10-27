@@ -2630,4 +2630,11 @@ export const ur: Dictionary = {
     'یہاں ویب صفحات پتے ویسے ہی تلاش کرتے ہیں جیسے سسٹم؛ اس کا DNS سسٹم کی اپنی ترتیبات میں طے ہوتا ہے۔',
   'Set by the settings file': 'سیٹنگز فائل سے طے شدہ',
   'The settings file has a problem': 'سیٹنگز فائل میں مسئلہ ہے',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'چیٹ {name} کو {space} میں منتقل کریں؟',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'پھر {space} میں ہر کوئی پوری تاریخ پڑھ سکے گا، اور {from} کے لوگ اسے کھو دیں گے۔',
+  'Move the chats {names} to {space}?': 'چیٹس {names} کو {space} میں منتقل کریں؟',
+  'Move the chat': 'چیٹ منتقل کریں',
+  'Only the file': 'صرف فائل',
 }

@@ -2665,4 +2665,11 @@ export const kn: Dictionary = {
     'ಇಲ್ಲಿ ವೆಬ್ ಪುಟಗಳು ಸಿಸ್ಟಮ್‌ನಂತೆಯೇ ವಿಳಾಸಗಳನ್ನು ಹುಡುಕುತ್ತವೆ; ಅದರ DNS ಅನ್ನು ಸಿಸ್ಟಮ್‌ನ ಸ್ವಂತ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಹೊಂದಿಸಲಾಗುತ್ತದೆ.',
   'Set by the settings file': 'ಸೆಟ್ಟಿಂಗ್ಸ್ ಫೈಲ್‌ನಿಂದ ಹೊಂದಿಸಲಾಗಿದೆ',
   'The settings file has a problem': 'ಸೆಟ್ಟಿಂಗ್ಸ್ ಫೈಲ್‌ನಲ್ಲಿ ಸಮಸ್ಯೆ ಇದೆ',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ಚಾಟ್ {name} ಅನ್ನು {space} ಗೆ ಸರಿಸಬೇಕೆ?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'ಆಗ {space} ನಲ್ಲಿರುವ ಎಲ್ಲರೂ ಸಂಪೂರ್ಣ ಇತಿಹಾಸವನ್ನು ಓದಬಹುದು, ಮತ್ತು {from} ನಲ್ಲಿರುವವರು ಅದನ್ನು ಕಳೆದುಕೊಳ್ಳುತ್ತಾರೆ.',
+  'Move the chats {names} to {space}?': 'ಚಾಟ್‌ಗಳು {names} ಅನ್ನು {space} ಗೆ ಸರಿಸಬೇಕೆ?',
+  'Move the chat': 'ಚಾಟ್ ಸರಿಸಿ',
+  'Only the file': 'ಫೈಲ್ ಮಾತ್ರ',
 }

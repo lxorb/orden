@@ -2606,4 +2606,11 @@ export const vi: Dictionary = {
     'Ở đây các trang web tra cứu địa chỉ theo cách của hệ thống; DNS được đặt trong phần cài đặt của chính hệ thống.',
   'Set by the settings file': 'Do tệp cài đặt quy định',
   'The settings file has a problem': 'Tệp cài đặt có vấn đề',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Chuyển cuộc trò chuyện {name} tới {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Khi đó mọi người trong {space} có thể đọc toàn bộ lịch sử, và những người trong {from} mất quyền xem.',
+  'Move the chats {names} to {space}?': 'Chuyển các cuộc trò chuyện {names} tới {space}?',
+  'Move the chat': 'Chuyển cuộc trò chuyện',
+  'Only the file': 'Chỉ tệp',
 }

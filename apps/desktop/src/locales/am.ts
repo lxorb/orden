@@ -2590,4 +2590,11 @@ export const am: Dictionary = {
     'እዚህ ድረ-ገጾች አድራሻዎችን የሚፈልጉት ሥርዓቱ በሚፈልግበት መንገድ ነው፤ የDNS ቅንብሩ በሥርዓቱ ቅንብሮች ውስጥ ነው።',
   'Set by the settings file': 'በቅንብሮች ፋይል የተቀመጠ',
   'The settings file has a problem': 'የቅንብሮች ፋይሉ ችግር አለበት',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ውይይቱ {name} ወደ {space} ይዛወር?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'ከዚያ በ{space} ያሉ ሁሉ ሙሉ ታሪኩን ማንበብ ይችላሉ፣ በ{from} ያሉትም ያጡታል።',
+  'Move the chats {names} to {space}?': 'ውይይቶቹ {names} ወደ {space} ይዛወሩ?',
+  'Move the chat': 'ውይይቱን አንቀሳቅስ',
+  'Only the file': 'ፋይሉን ብቻ',
 }

@@ -2650,4 +2650,11 @@ export const tr: Dictionary = {
     'Burada web sayfaları adresleri sistemin yaptığı gibi bulur; DNS’i sistemin kendi ayarlarından değiştirilir.',
   'Set by the settings file': 'Ayarlar dosyasında belirlendi',
   'The settings file has a problem': 'Ayarlar dosyasında bir sorun var',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '{name} sohbeti {space} alanına taşınsın mı?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Bundan sonra {space} içindeki herkes tüm geçmişi okuyabilir ve {from} içindekiler onu kaybeder.',
+  'Move the chats {names} to {space}?': '{names} sohbetleri {space} alanına taşınsın mı?',
+  'Move the chat': 'Sohbeti taşı',
+  'Only the file': 'Yalnızca dosya',
 }

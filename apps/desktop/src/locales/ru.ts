@@ -2729,4 +2729,11 @@ export const ru: Dictionary = {
     'Здесь веб-страницы ищут адреса так же, как система; её DNS задаётся в настройках самой системы.',
   'Set by the settings file': 'Задано файлом настроек',
   'The settings file has a problem': 'В файле настроек есть ошибка',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Переместить чат {name} в {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Тогда все в {space} смогут прочитать всю историю, а люди в {from} её потеряют.',
+  'Move the chats {names} to {space}?': 'Переместить чаты {names} в {space}?',
+  'Move the chat': 'Переместить чат',
+  'Only the file': 'Только файл',
 }

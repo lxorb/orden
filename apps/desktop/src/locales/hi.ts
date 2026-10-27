@@ -2633,4 +2633,11 @@ export const hi: Dictionary = {
     'यहाँ वेब पेज पते वैसे ही ढूँढते हैं जैसे सिस्टम; इसका DNS सिस्टम की अपनी सेटिंग्स में तय होता है।',
   'Set by the settings file': 'सेटिंग्स फ़ाइल द्वारा तय',
   'The settings file has a problem': 'सेटिंग्स फ़ाइल में समस्या है',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'चैट {name} को {space} में ले जाएँ?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'तब {space} में हर कोई पूरा इतिहास पढ़ सकेगा, और {from} के लोग इसे खो देंगे।',
+  'Move the chats {names} to {space}?': 'चैट {names} को {space} में ले जाएँ?',
+  'Move the chat': 'चैट ले जाएँ',
+  'Only the file': 'सिर्फ़ फ़ाइल',
 }

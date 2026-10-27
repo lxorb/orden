@@ -2649,4 +2649,11 @@ export const te: Dictionary = {
     'ఇక్కడ వెబ్ పేజీలు సిస్టమ్ లాగే చిరునామాలను వెతుకుతాయి; దాని DNS సిస్టమ్ సొంత సెట్టింగ్‌లలో సెట్ చేయబడుతుంది.',
   'Set by the settings file': 'సెట్టింగ్‌ల ఫైల్ నిర్ణయించింది',
   'The settings file has a problem': 'సెట్టింగ్‌ల ఫైల్‌లో సమస్య ఉంది',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'చాట్ {name} ను {space} కి తరలించాలా?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'అప్పుడు {space} లోని అందరూ పూర్తి చరిత్రను చదవగలరు, {from} లోని వారు దాన్ని కోల్పోతారు.',
+  'Move the chats {names} to {space}?': 'చాట్‌లు {names} ను {space} కి తరలించాలా?',
+  'Move the chat': 'చాట్‌ను తరలించు',
+  'Only the file': 'ఫైల్ మాత్రమే',
 }

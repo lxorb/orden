@@ -2620,4 +2620,11 @@ export const my: Dictionary = {
     'ဤနေရာတွင် ဝဘ်စာမျက်နှာများသည် စနစ်ကဲ့သို့ပင် လိပ်စာများကို ရှာသည်။ ၎င်း၏ DNS ကို စနစ်၏ ဆက်တင်များတွင် သတ်မှတ်ရသည်။',
   'Set by the settings file': 'ဆက်တင်ဖိုင်က သတ်မှတ်ထားသည်',
   'The settings file has a problem': 'ဆက်တင်ဖိုင်တွင် ပြဿနာရှိသည်',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ချတ် {name} ကို {space} သို့ ရွှေ့မလား',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'ထို့နောက် {space} ရှိ လူတိုင်း မှတ်တမ်းအားလုံးကို ဖတ်နိုင်ပြီး {from} ရှိ လူများ ဆုံးရှုံးမည်။',
+  'Move the chats {names} to {space}?': 'ချတ်များ {names} ကို {space} သို့ ရွှေ့မလား',
+  'Move the chat': 'ချတ်ကို ရွှေ့ရန်',
+  'Only the file': 'ဖိုင်သာ',
 }

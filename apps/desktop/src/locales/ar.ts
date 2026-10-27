@@ -2749,4 +2749,11 @@ export const ar: Dictionary = {
     'تبحث صفحات الويب هنا عن العناوين كما يفعل النظام؛ ويُضبط DNS في إعدادات النظام نفسه.',
   'Set by the settings file': 'محدد في ملف الإعدادات',
   'The settings file has a problem': 'في ملف الإعدادات مشكلة',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'أتنقل المحادثة {name} إلى {space}؟',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'سيتمكن كل من في {space} من قراءة السجل كاملًا، ويفقده من في {from}.',
+  'Move the chats {names} to {space}?': 'أتنقل المحادثات {names} إلى {space}؟',
+  'Move the chat': 'انقل المحادثة',
+  'Only the file': 'الملف فقط',
 }

@@ -2556,4 +2556,11 @@ export const zhHans: Dictionary = {
     '这里的网页按系统的方式查找地址；DNS 需在系统自己的设置中更改。',
   'Set by the settings file': '由设置文件指定',
   'The settings file has a problem': '设置文件有问题',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '将对话 {name} 移动到 {space}？',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    '之后 {space} 中的所有人都能阅读全部历史，{from} 中的人将失去它。',
+  'Move the chats {names} to {space}?': '将对话 {names} 移动到 {space}？',
+  'Move the chat': '移动对话',
+  'Only the file': '仅文件',
 }

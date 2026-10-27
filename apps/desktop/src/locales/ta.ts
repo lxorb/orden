@@ -2681,4 +2681,11 @@ export const ta: Dictionary = {
     'இங்கு இணையப் பக்கங்கள் கணினியைப் போலவே முகவரிகளைத் தேடுகின்றன; அதன் DNS கணினியின் சொந்த அமைப்புகளில் அமைக்கப்படுகிறது.',
   'Set by the settings file': 'அமைப்புகள் கோப்பால் அமைக்கப்பட்டது',
   'The settings file has a problem': 'அமைப்புகள் கோப்பில் சிக்கல் உள்ளது',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'அரட்டை {name} ஐ {space} க்கு நகர்த்தவா?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'அப்போது {space} இல் உள்ள அனைவரும் முழு வரலாற்றையும் படிக்கலாம், {from} இல் உள்ளவர்கள் அதை இழப்பார்கள்.',
+  'Move the chats {names} to {space}?': 'அரட்டைகள் {names} ஐ {space} க்கு நகர்த்தவா?',
+  'Move the chat': 'அரட்டையை நகர்த்து',
+  'Only the file': 'கோப்பு மட்டும்',
 }

@@ -2675,4 +2675,11 @@ export const sw: Dictionary = {
     'Hapa kurasa za wavuti hutafuta anwani kama mfumo unavyofanya; DNS yake huwekwa katika mipangilio ya mfumo wenyewe.',
   'Set by the settings file': 'Imewekwa na faili la mipangilio',
   'The settings file has a problem': 'Faili la mipangilio lina tatizo',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Hamisha gumzo {name} kwa {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Kila mtu katika {space} ataweza kusoma historia yote, na watu wa {from} wataipoteza.',
+  'Move the chats {names} to {space}?': 'Hamisha magumzo {names} kwa {space}?',
+  'Move the chat': 'Hamisha gumzo',
+  'Only the file': 'Faili pekee',
 }

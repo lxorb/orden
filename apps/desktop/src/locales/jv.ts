@@ -2618,4 +2618,11 @@ export const jv: Dictionary = {
     'Ing kene kaca web nggoleki alamat kaya sistem; DNS-e disetel ing setelan sistem dhewe.',
   'Set by the settings file': 'Disetel dening file setelan',
   'The settings file has a problem': 'File setelan ana masalah',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Pindhah obrolan {name} menyang {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Kabeh wong ing {space} banjur bisa maca kabeh riwayat, lan wong ing {from} kelangan.',
+  'Move the chats {names} to {space}?': 'Pindhah obrolan {names} menyang {space}?',
+  'Move the chat': 'Pindhah obrolan',
+  'Only the file': 'Mung berkase',
 }

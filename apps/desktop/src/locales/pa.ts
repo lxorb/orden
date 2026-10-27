@@ -2643,4 +2643,11 @@ export const pa: Dictionary = {
     'ਇੱਥੇ ਵੈੱਬ ਪੰਨੇ ਸਿਸਟਮ ਵਾਂਗ ਹੀ ਪਤੇ ਲੱਭਦੇ ਹਨ; ਇਸ ਦਾ DNS ਸਿਸਟਮ ਦੀਆਂ ਆਪਣੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਤੈਅ ਹੁੰਦਾ ਹੈ।',
   'Set by the settings file': 'ਸੈਟਿੰਗਾਂ ਫ਼ਾਈਲ ਵੱਲੋਂ ਤੈਅ',
   'The settings file has a problem': 'ਸੈਟਿੰਗਾਂ ਫ਼ਾਈਲ ਵਿੱਚ ਸਮੱਸਿਆ ਹੈ',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ਚੈਟ {name} ਨੂੰ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'ਫਿਰ {space} ਵਿੱਚ ਹਰ ਕੋਈ ਪੂਰਾ ਇਤਿਹਾਸ ਪੜ੍ਹ ਸਕੇਗਾ, ਅਤੇ {from} ਦੇ ਲੋਕ ਇਸਨੂੰ ਗੁਆ ਦੇਣਗੇ।',
+  'Move the chats {names} to {space}?': 'ਚੈਟਾਂ {names} ਨੂੰ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
+  'Move the chat': 'ਚੈਟ ਭੇਜੋ',
+  'Only the file': 'ਸਿਰਫ਼ ਫ਼ਾਈਲ',
 }

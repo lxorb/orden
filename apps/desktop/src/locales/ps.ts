@@ -2636,4 +2636,11 @@ export const ps: Dictionary = {
     'دلته ویب پاڼې پتې هماغسې لټوي لکه سیسټم؛ د هغه DNS د سیسټم په خپلو امستنو کې ټاکل کېږي.',
   'Set by the settings file': 'د امستنو فایل ټاکلی',
   'The settings file has a problem': 'د امستنو فایل کې ستونزه ده',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'خبرې اترې {name} {space} ته وخوځول شي؟',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'بیا به په {space} کې هرڅوک ټول تاریخ ولولي، او په {from} کې خلک به یې له لاسه ورکړي.',
+  'Move the chats {names} to {space}?': 'خبرې اترې {names} {space} ته وخوځول شي؟',
+  'Move the chat': 'خبرې اترې وخوځوه',
+  'Only the file': 'یوازې فایل',
 }

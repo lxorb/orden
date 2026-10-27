@@ -2692,4 +2692,11 @@ export const de: Dictionary = {
     'Webseiten schlagen Adressen hier so nach wie das System; sein DNS wird in den Einstellungen des Systems festgelegt.',
   'Set by the settings file': 'Von der Einstellungsdatei festgelegt',
   'The settings file has a problem': 'Die Einstellungsdatei hat ein Problem',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Chat {name} nach {space} verschieben?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Alle in {space} können dann den ganzen Verlauf lesen, und die Leute in {from} verlieren ihn.',
+  'Move the chats {names} to {space}?': 'Chats {names} nach {space} verschieben?',
+  'Move the chat': 'Chat verschieben',
+  'Only the file': 'Nur die Datei',
 }

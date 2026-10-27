@@ -2597,4 +2597,11 @@ export const ko: Dictionary = {
     '여기서는 웹 페이지가 시스템과 같은 방식으로 주소를 찾습니다. DNS는 시스템 자체 설정에서 바꿉니다.',
   'Set by the settings file': '설정 파일에서 지정됨',
   'The settings file has a problem': '설정 파일에 문제가 있습니다',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '채팅 {name}을(를) {space}(으)로 옮길까요?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    '그러면 {space}의 모든 사람이 전체 기록을 읽을 수 있고, {from}의 사람들은 볼 수 없게 돼요.',
+  'Move the chats {names} to {space}?': '채팅 {names}을(를) {space}(으)로 옮길까요?',
+  'Move the chat': '채팅 옮기기',
+  'Only the file': '파일만',
 }

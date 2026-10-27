@@ -2622,4 +2622,11 @@ export const gu: Dictionary = {
     'અહીં વેબ પેજ સિસ્ટમની જેમ જ સરનામાં શોધે છે; તેનું DNS સિસ્ટમના પોતાના સેટિંગ્સમાં નક્કી થાય છે.',
   'Set by the settings file': 'સેટિંગ્સ ફાઇલ દ્વારા નક્કી',
   'The settings file has a problem': 'સેટિંગ્સ ફાઇલમાં સમસ્યા છે',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ચેટ {name} ને {space} માં ખસેડવી?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'પછી {space} માં બધા આખો ઇતિહાસ વાંચી શકશે, અને {from} ના લોકો તે ગુમાવશે.',
+  'Move the chats {names} to {space}?': 'ચેટ {names} ને {space} માં ખસેડવી?',
+  'Move the chat': 'ચેટ ખસેડો',
+  'Only the file': 'ફક્ત ફાઇલ',
 }

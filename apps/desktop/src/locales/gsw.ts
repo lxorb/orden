@@ -2656,4 +2656,11 @@ export const gsw: Dictionary = {
     'Websiite luege d Adrässe do so naa wie s System; sis DNS wird i de Iistellige vom System festgleit.',
   'Set by the settings file': 'Vo de Iistelligsdatei feschtgleit',
   'The settings file has a problem': 'D Iistelligsdatei hät es Problem',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Chat {name} uf {space} verschiebe?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Alli in {space} chönd dänn de ganz Verlauf läse, und d Lüüt in {from} verlüüred en.',
+  'Move the chats {names} to {space}?': 'Chats {names} uf {space} verschiebe?',
+  'Move the chat': 'Chat verschiebe',
+  'Only the file': 'Nur d Datei',
 }

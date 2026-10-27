@@ -2630,4 +2630,11 @@ export const id: Dictionary = {
     'Di sini halaman web mencari alamat seperti sistem; DNS-nya diatur di pengaturan sistem itu sendiri.',
   'Set by the settings file': 'Diatur oleh file pengaturan',
   'The settings file has a problem': 'File pengaturan bermasalah',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Pindahkan obrolan {name} ke {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Semua orang di {space} lalu bisa membaca seluruh riwayat, dan orang-orang di {from} kehilangannya.',
+  'Move the chats {names} to {space}?': 'Pindahkan obrolan {names} ke {space}?',
+  'Move the chat': 'Pindahkan obrolan',
+  'Only the file': 'Hanya berkasnya',
 }

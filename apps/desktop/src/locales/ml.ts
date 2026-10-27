@@ -2672,4 +2672,11 @@ export const ml: Dictionary = {
     'ഇവിടെ വെബ് പേജുകൾ സിസ്റ്റം ചെയ്യുന്നതുപോലെ വിലാസങ്ങൾ കണ്ടെത്തുന്നു; അതിന്റെ DNS സിസ്റ്റത്തിന്റെ സ്വന്തം ക്രമീകരണങ്ങളിലാണ് മാറ്റുന്നത്.',
   'Set by the settings file': 'ക്രമീകരണ ഫയൽ നിശ്ചയിച്ചത്',
   'The settings file has a problem': 'ക്രമീകരണ ഫയലിൽ ഒരു പ്രശ്നമുണ്ട്',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ചാറ്റ് {name} {space}-ലേക്ക് നീക്കണോ?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'അപ്പോൾ {space}-ലെ എല്ലാവർക്കും മുഴുവൻ ചരിത്രവും വായിക്കാം, {from}-ലെ ആളുകൾക്ക് അത് നഷ്ടമാകും.',
+  'Move the chats {names} to {space}?': 'ചാറ്റുകൾ {names} {space}-ലേക്ക് നീക്കണോ?',
+  'Move the chat': 'ചാറ്റ് നീക്കുക',
+  'Only the file': 'ഫയൽ മാത്രം',
 }

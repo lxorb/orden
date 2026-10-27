@@ -2689,4 +2689,11 @@ export const fil: Dictionary = {
     'Dito, hinahanap ng mga web page ang mga address sa paraan ng system; ang DNS nito ay itinatakda sa sariling settings ng system.',
   'Set by the settings file': 'Itinakda ng settings file',
   'The settings file has a problem': 'May problema ang settings file',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Ilipat ang chat na {name} sa {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Mababasa na ng lahat sa {space} ang buong kasaysayan, at mawawala ito sa mga tao sa {from}.',
+  'Move the chats {names} to {space}?': 'Ilipat ang mga chat na {names} sa {space}?',
+  'Move the chat': 'Ilipat ang chat',
+  'Only the file': 'Ang file lang',
 }

@@ -2609,4 +2609,11 @@ export const ja: Dictionary = {
     'ここではウェブページは システムと同じ方法でアドレスを調べます。DNS はシステム自体の設定で変更します。',
   'Set by the settings file': '設定ファイルで指定済み',
   'The settings file has a problem': '設定ファイルに問題があります',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'チャット {name} を {space} へ移動しますか？',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    '{space} の全員が履歴をすべて読めるようになり、{from} の人は読めなくなります。',
+  'Move the chats {names} to {space}?': 'チャット {names} を {space} へ移動しますか？',
+  'Move the chat': 'チャットを移動',
+  'Only the file': 'ファイルのみ',
 }
