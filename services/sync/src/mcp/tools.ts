@@ -419,7 +419,7 @@ export async function putNote(
     if (saved === null) return `${path} could not be written just now. Try again.`
     if (saved === MOVED) return `${path} changed while I was writing it. Read it again first.`
     if (saved === UNREADABLE) {
-      return `${path} is a canvas under a name that says words. Write JSON Canvas into it, or leave it.`
+      return `${path} is a canvas. Write JSON Canvas into it, or leave it as it is.`
     }
   } else {
     try {

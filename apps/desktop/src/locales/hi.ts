@@ -1982,6 +1982,7 @@ export const hi: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'यह {device}',
   '{name} is back: {device} was writing in it': '{name} वापस आ गया: {device} उसमें लिख रहा था',
+  'Changes to {name} are not syncing': '{name} में किए गए बदलाव सिंक नहीं हो रहे हैं',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'खोलना',
   Pressing: 'दबाना',

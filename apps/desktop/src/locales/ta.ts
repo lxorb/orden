@@ -2017,6 +2017,7 @@ export const ta: Dictionary = {
   'This {device}': 'இந்த {device}',
   '{name} is back: {device} was writing in it':
     '{name} திரும்பி வந்தது: {device} அதில் எழுதிக்கொண்டிருந்தது',
+  'Changes to {name} are not syncing': '{name} இல் செய்த மாற்றங்கள் ஒத்திசைக்கப்படவில்லை',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'திறத்தல்',
   Pressing: 'அழுத்துதல்',

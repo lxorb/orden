@@ -18,7 +18,7 @@
  *  This file is that difference and nothing more: what fills an empty document, what
  *  the settle writes, and the two questions a settle asks before it writes at all. */
 
-import { canvasIn, readCanvas, writeCanvas } from '@nib/markdown/canvas'
+import { holdsCanvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { TEXT } from '@nib/rooms'
 import { fold } from '@nib/rooms/fold'
@@ -70,7 +70,7 @@ export function noteKind(note: {
  *  is refused rather than taken for an empty canvas. The app asks the same question of
  *  what it reads off the disk (`readable` in its sync2/kinds.ts). */
 export function readsAs(kind: RoomKind, text: string): boolean {
-  return kind !== 'plane' || (text.trim() !== '' && canvasIn(text) !== null)
+  return kind !== 'plane' || holdsCanvas(text)
 }
 
 /** What a website is doing in neither list: nothing, because no client asks for a

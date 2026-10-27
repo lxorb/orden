@@ -36,7 +36,7 @@ import type { PlaneSurface } from '../canvas/shared'
 import type { Watched } from './watching'
 import { rooms } from '../rooms.svelte'
 import * as Y from 'yjs'
-import { asking, type Held, type HeldAnswer } from './asking.svelte'
+import { asking, type Held, type HeldAnswer, unsyncedToast } from './asking.svelte'
 import { attach, attachPlane, type PlaneJoin } from './binding'
 import { carry, uncarry } from './carry'
 import { kindOfName } from './create'
@@ -874,7 +874,7 @@ class Runner {
     if (this.told.has(key)) return
     this.told.add(key)
     log('warn', `sync2: ${path} is open as another kind than it syncs as`)
-    void import('../unread.svelte').then((one) => one.unread.there(path))
+    void unsyncedToast(path.split(/[\\/]/).pop() ?? path)
   }
 
   /** Open notes whose documents a room is carrying, by document key. */

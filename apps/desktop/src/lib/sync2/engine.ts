@@ -53,7 +53,11 @@ export interface Placed {
 
 export class Engine implements AskedEngine {
   readonly held: HeldList
-  private readonly listeners: Listeners = { resurrected: new Set(), pass: new Set() }
+  private readonly listeners: Listeners = {
+    resurrected: new Set(),
+    pass: new Set(),
+    unsynced: new Set(),
+  }
 
   private constructor(
     readonly core: Core,
@@ -61,6 +65,7 @@ export class Engine implements AskedEngine {
   ) {
     this.held = new HeldList(core, names)
     core.events.resurrected = (event) => this.emit('resurrected', event)
+    core.events.unsynced = (event) => this.emit('unsynced', event)
     core.events.held = () => {
       void this.held.refresh()
       for (const [id, told] of [...this.unheld]) {

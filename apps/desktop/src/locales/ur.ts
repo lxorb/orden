@@ -1983,6 +1983,7 @@ export const ur: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'یہ {device}',
   '{name} is back: {device} was writing in it': '{name} واپس آ گیا: {device} اس میں لکھ رہا تھا',
+  'Changes to {name} are not syncing': '{name} میں تبدیلیاں سنک نہیں ہو رہیں',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'کھولنا',
   Pressing: 'دبانا',

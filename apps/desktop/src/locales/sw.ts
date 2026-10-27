@@ -2016,6 +2016,7 @@ export const sw: Dictionary = {
   'This {device}': '{device} hiki',
   '{name} is back: {device} was writing in it':
     '{name} imerudi: {device} ilikuwa ikiandika ndani yake',
+  'Changes to {name} are not syncing': 'Mabadiliko kwenye {name} hayasawazishwi',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Kufungua',
   Pressing: 'Kubonyeza',

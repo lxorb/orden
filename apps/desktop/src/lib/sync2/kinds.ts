@@ -14,7 +14,7 @@
  *
  *  Everything else in the engine speaks files - text in, text out - and asks here. */
 
-import { canvasIn, readCanvas, writeCanvas } from '@nib/markdown/canvas'
+import { holdsCanvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { TEXT } from '@nib/rooms'
 import { pushPlane, readPlane } from '@nib/rooms/plane'
 import { diverge, type Times, type Verdict } from '@nib/sync-core/diverge'
@@ -92,7 +92,7 @@ export function seedOf(shape: Shape, id: string, epoch: number, text: string): U
  *  file with nothing in it is no plane either: every canvas written has its braces, and
  *  an empty one is a save caught between emptying the file and writing it. */
 export function readable(shape: Shape, text: string): boolean {
-  return shape !== 'plane' || (text.trim() !== '' && canvasIn(text) !== null)
+  return shape !== 'plane' || holdsCanvas(text)
 }
 
 /** Turns a document that reads `from` into one that reads `to`, as the few operations the

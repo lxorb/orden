@@ -1988,6 +1988,7 @@ export const mr: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'हे {device}',
   '{name} is back: {device} was writing in it': '{name} परत आली: {device} त्यात लिहित होते',
+  'Changes to {name} are not syncing': '{name} मधील बदल सिंक होत नाहीत',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'उघडणे',
   Pressing: 'दाबणे',

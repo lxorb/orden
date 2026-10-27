@@ -7,6 +7,7 @@
   import { back } from './sync2/resurrected.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
+  import { unsynced } from './sync2/unsynced.svelte'
   import { failed } from './views/failed.svelte'
   import { workspace } from './workspace.svelte'
 
@@ -43,6 +44,7 @@
     unread.dismiss()
     failed.dismiss()
     back.dismiss()
+    unsynced.dismiss()
   })
 </script>
 
@@ -91,6 +93,18 @@
         device: back.said.device,
       })}
     </p>
+  </div>
+{/if}{#if unsynced.said}
+  <!-- A file whose edits here do not sync: its name and its kind disagree since a
+       rename. See sync2/unsynced.svelte.ts. -->
+  <div
+    class="toast"
+    role="status"
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    onpointerenter={() => unsynced.hold()}
+    onpointerleave={() => unsynced.linger()}
+  >
+    <p>{t('Changes to {name} are not syncing', { name: unsynced.said })}</p>
   </div>
 {/if}
 

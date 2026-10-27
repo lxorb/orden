@@ -2006,6 +2006,7 @@ export const kn: Dictionary = {
   'This {device}': 'ಈ {device}',
   '{name} is back: {device} was writing in it':
     '{name} ಮರಳಿ ಬಂದಿದೆ: {device} ಅದರಲ್ಲಿ ಬರೆಯುತ್ತಿತ್ತು',
+  'Changes to {name} are not syncing': '{name} ನಲ್ಲಿನ ಬದಲಾವಣೆಗಳು ಸಿಂಕ್ ಆಗುತ್ತಿಲ್ಲ',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'ತೆರೆಯುವಿಕೆ',
   Pressing: 'ಒತ್ತುವಿಕೆ',

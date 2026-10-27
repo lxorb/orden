@@ -23,7 +23,7 @@ import {
 } from './spaces/space'
 import { laterOf, pokeSpace } from './hub/poke'
 import { ingestInto } from './rooms'
-import { noteKind } from './rooms/kind'
+import { noteKind, readsAs } from './rooms/kind'
 import { deviceOf } from './sync2/device'
 import { createByPath, deleteById, moveByPath } from './sync2/ops'
 import { DOCUMENT_KINDS, kindOfName } from './sync2/tree'
@@ -788,6 +788,9 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   const device = await deviceOf(context)
 
   let written = 0
+  // Versions the note cannot take back: words, for a note that is a canvas now. Said
+  // apart from what was written, and not left for the sheet to ask about again.
+  let refused = 0
   for (const one of changed) {
     let note = await noteById(context.env, one.note_id)
     if (!note) continue
@@ -827,15 +830,16 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
       name: asking,
       device,
     })
-    if (saved !== null && saved !== MOVED) written += 1
+    if (saved === UNREADABLE) refused += 1
+    else if (saved !== null && saved !== MOVED) written += 1
   }
 
   // What is left is what was not reached this time: the rows beyond the ceiling,
   // plus anything this pass could not write (a note somebody took away while it
   // ran). A client that asks again gets the next four hundred.
-  const left = Math.max(held - written, 0)
+  const left = Math.max(held - written - refused, 0)
 
-  return context.json({ notes: written, partial: left > 0, left })
+  return context.json({ notes: written, refused, partial: left > 0, left })
 })
 
 /** How many of the paths a rollback would touch it names. Enough to recognise
@@ -904,6 +908,10 @@ notes.put('/notes/:id', async (context) => {
     if (noteKind({ path, kind: note.kind, epoch: note.epoch }) !== 'plane') {
       return await conflict(context, note.id)
     }
+    // And never with a side that is not a canvas: read as an empty plane, the merge
+    // keeps the server's copy and the save is gone with a 200. Refused as a fresh
+    // save of the same text is; see `readsAs`.
+    if (!readsAs('plane', content)) return context.json({ error: NOT_A_CANVAS }, 422)
 
     const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
     content = mergeCanvasFiles(content, object ? await object.text() : '')

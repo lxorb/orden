@@ -1989,6 +1989,7 @@ export const fa: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'این {device}',
   '{name} is back: {device} was writing in it': '{name} برگشت: {device} در آن می‌نوشت',
+  'Changes to {name} are not syncing': 'تغییرات {name} همگام‌سازی نمی‌شوند',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'گشودن',
   Pressing: 'فشردن',

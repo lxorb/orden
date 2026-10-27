@@ -81,8 +81,15 @@ export interface Resurrected {
   device: string
 }
 
+/** A file whose edits here do not sync, because its entry's kind cannot hold them. */
+interface Unsynced {
+  id: string
+  name: string
+}
+
 export interface EngineEvents {
   resurrected: Resurrected
+  unsynced: Unsynced
   /** A pass wrote a row to the store's log. */
   pass: LogRow
 }
@@ -165,6 +172,7 @@ class Asking {
     this.clear = overlays.depth === 0
     const watching = overlays.watch(() => (this.clear = overlays.depth === 0))
     const heard = engine.on('resurrected', (event) => void resurrected(event))
+    const unheard = engine.on('unsynced', (event) => void unsyncedToast(event.name))
 
     const watched = $effect.root(() => {
       // The sheet and the mark are fetched the first time anything is held.
@@ -189,6 +197,7 @@ class Asking {
     return () => {
       watched()
       heard()
+      unheard()
       watching()
       typing.cancel()
       window.removeEventListener('keydown', typed, true)
@@ -269,6 +278,14 @@ async function resurrected(event: Resurrected) {
   await undoToastNotice.ask()
   const { back } = await import('./resurrected.svelte')
   back.show(event)
+}
+
+/** The toast for a file whose edits here do not sync; see unsynced.svelte.ts. */
+export async function unsyncedToast(name: string) {
+  if (__EVEN_PLUGIN__) return
+  await undoToastNotice.ask()
+  const { unsynced } = await import('./unsynced.svelte')
+  unsynced.show(name)
 }
 
 export const asking = new Asking()

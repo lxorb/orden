@@ -1969,6 +1969,7 @@ export const my: Dictionary = {
   'This {device}': 'ဤ {device}',
   '{name} is back: {device} was writing in it':
     '{name} ပြန်ရောက်လာပါပြီ: {device} က ၎င်းထဲတွင် ရေးနေခဲ့သည်',
+  'Changes to {name} are not syncing': '{name} ရှိ ပြောင်းလဲမှုများကို စင့်ခ်မလုပ်ပါ',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'ဖွင့်နေသည်',
   Pressing: 'နှိပ်နေသည်',

@@ -2028,6 +2028,7 @@ export const fil: Dictionary = {
   'This {device}': 'Itong {device}',
   '{name} is back: {device} was writing in it':
     'Bumalik ang {name}: may isinusulat dito ang {device}',
+  'Changes to {name} are not syncing': 'Hindi nagsi-sync ang mga pagbabago sa {name}',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Pagbubukas',
   Pressing: 'Pagpindot',
