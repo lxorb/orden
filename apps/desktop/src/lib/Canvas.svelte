@@ -147,6 +147,8 @@
   /** And past this many cards in view, whatever the zoom: about what a page of them
    *  lays out within a frame or two. */
   const MOST_CARDS = 300
+  /** How many cards round the page are made in one frame; see `drawnCards`. */
+  const MADE_A_FRAME = 60
 
   /** How long a pointer has to be still before it means something else: the menu
    *  under a finger, a tidied shape under a pen. */
@@ -177,7 +179,7 @@
    *  a 2d context and cannot read a custom property. */
   let palette = $state.raw<Record<string, string>>({})
   /** Whether the plane has been put in view yet; see `measure`. */
-  let placed = false
+  let placed = $state(false)
   /** Where the pointer last was on the plane, so a paste and a new card land
    *  where the reader is looking. */
   let at: Point = { x: 0, y: 0 }
@@ -500,10 +502,64 @@
    *  canvas rather than as cards (CanvasFar.svelte, #535): zoomed out past reading, or
    *  more cards in view than a page of elements carries without stalling. The card
    *  being written in stays a card either way. */
-  const far = $derived(camera.scale < FAR_SCALE || cards.length > MOST_CARDS)
+  const far = $derived(
+    camera.scale < FAR_SCALE ||
+      cards.length > MOST_CARDS ||
+      // And a large plane not placed yet, which its first measure is about to frame
+      // whole: its first frame is not made of cards at a view nobody will see.
+      (!placed && !store.framed && shown.nodes.length > MOST_CARDS),
+  )
 
-  /** The cards drawn as cards. */
-  const drawnCards = $derived(far ? cards.filter((node) => node.id === store.editing) : cards)
+  /** The cards wanted as cards: near, those in view; far, only the one being written in. */
+  const wanted = $derived(far ? cards.filter((node) => node.id === store.editing) : cards)
+
+  /** The part of the plane actually on screen, give or take how far the view moves before
+   *  `inView` is worked out again: what `inView` is without its slack. */
+  const onPage = $derived.by(() => {
+    const scale = 2 ** (roughZoom / 4)
+    const across = spanX / scale + 2 * QUANTUM
+    const down = spanY / scale + 2 * QUANTUM
+    return {
+      x: roughX * QUANTUM - across / 2,
+      y: roughY * QUANTUM - down / 2,
+      width: across,
+      height: down,
+    }
+  })
+
+  /** The cards in the slack round the page already made, for those made a few at a time;
+   *  see `drawnCards`. */
+  let madeAround = $state.raw<ReadonlySet<string>>(new Set())
+
+  /** The cards drawn as cards. Those on the page at once; those only in the slack round
+   *  it - there for a pan to find already made - at once where they are few, and else
+   *  `MADE_A_FRAME` a frame after it (#535). An undo that brought eight thousand back,
+   *  or a zoom into reading distance, made a page and a screenful of slack round it in
+   *  one go: two hundred cards to make where thirty are seen. */
+  const drawnCards = $derived.by(() => {
+    const waiting = wanted.filter(
+      (node) => !madeAround.has(node.id) && !overlaps(boxOf(node), onPage),
+    )
+    if (waiting.length <= MADE_A_FRAME) return wanted
+    const late = new Set(waiting.map((node) => node.id))
+    return wanted.filter((node) => !late.has(node.id))
+  })
+
+  // The slack's cards made, `MADE_A_FRAME` at a time, until none waits.
+  $effect(() => {
+    const all = wanted
+    const made = madeAround
+    const waiting = all.filter((node) => !made.has(node.id) && !overlaps(boxOf(node), onPage))
+    if (waiting.length <= MADE_A_FRAME) return
+    const frame = requestAnimationFrame(() => {
+      const still = new Set(all.map((node) => node.id))
+      madeAround = new Set([
+        ...[...made].filter((id) => still.has(id)),
+        ...waiting.slice(0, MADE_A_FRAME).map((node) => node.id),
+      ])
+    })
+    return () => cancelAnimationFrame(frame)
+  })
 
   /** The connectors drawn as connectors: none from far away, and near, only those with
    *  an end on a card in view - every other one is off the page. */
