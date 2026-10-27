@@ -216,6 +216,12 @@ vi.mock('./workspace.svelte', () => ({
       world.opened.push({ id: item.id, name: item.name, path: item.path, text }),
     closeShared: (id: string) => world.closed.push(id),
     showingShared: (id: string) => world.showing.includes(id),
+    // What pairing a space somebody shared asks of the workspace: a folder of its
+    // own, named for the space.
+    adoptSpace: (name: string) => Promise.resolve(name),
+    applyIcon: () => null,
+    applySpaceOrder: () => false,
+    bookmarks: { adopt: () => null },
   },
 }))
 
@@ -246,6 +252,7 @@ import {
   trustsHtmlAt,
   trustsHtmlIn,
 } from './sharing.svelte'
+import { pairSpaces, type Pairing } from './space-pairing'
 import type { RemoteSpace, SharedItem } from './api'
 import type { NoteDoc } from './workspace/documents.svelte'
 import { memoryStorage } from '../../test/disk'
@@ -545,6 +552,39 @@ describe('what may be done before the account has listed its spaces', () => {
     account.listed = true
 
     expect(reachedByOthers('Team/weekly.md')).toBe(true)
+    expect(reachedByOthers('Local/plan.md')).toBe(false)
+  })
+
+  /** A space joined in this session: the listing that names it comes before the
+   *  pairing that gives it a folder. Quit before the next listing, and the next
+   *  launch, offline, still has to know the folder is somebody else's. */
+  test('keeps what the listing said of a space paired after it, for the next launch', async () => {
+    world.mirrors = { Local: 'space-0' }
+    account.spaces = [
+      remote('space-0', 'owner'),
+      { ...remote('space-1', 'write', true), name: 'Team' },
+    ]
+    await account.loadSpaces()
+
+    const pairing: Pairing = {
+      pairs: () =>
+        Object.entries(world.mirrors).map(([root, spaceId]) => ({ root, spaceId, shared: false })),
+      pair: (root, spaceId) => void (world.mirrors[root] = spaceId),
+      unpair: (root) => void delete world.mirrors[root],
+      share: () => undefined,
+    }
+    await pairSpaces('session', pairing)
+    expect(world.mirrors).toEqual({ Local: 'space-0', Team: 'space-1' })
+
+    account.spaces = []
+    account.listed = false
+    account.user = null
+    world.mirrors = {}
+    world.locals = ['Team', 'Local']
+
+    expect(roleOf('Team')).toBe('write')
+    expect(reachedByOthers('Team/weekly.md')).toBe(true)
+    expect(trustsHtmlAt('Team/weekly.md')).toBe(false)
     expect(reachedByOthers('Local/plan.md')).toBe(false)
   })
 
