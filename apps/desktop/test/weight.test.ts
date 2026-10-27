@@ -875,8 +875,15 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-27, to 3,386,300, for B498 to B500: the save listeners are one set
  *  for every index, and a plane's cards are asked by their path (`hearing`, and the
  *  gate in `retargetIn`, in link-index.svelte.ts; the rest is in canvas-rewrite.ts,
- *  which is fetched). Measured 3,385,484. */
-const BUDGET = 3_386_300
+ *  which is fetched). Measured 3,385,484.
+ *
+ *  Raised 2026-10-27, to 3,389,500, for B503 and B519: who else may have written a
+ *  note is asked of the note, a share of it on its own and what the last listing kept
+ *  included (`reachedByOthers` and the kept `{ role, shared, items }` in
+ *  sharing.svelte.ts), and an embed or a canvas file card is trusted by its own note
+ *  (`embedNote` in link-index.svelte.ts, `EmbeddedNote` in @nib/markdown). Measured
+ *  3,388,683 with main as of this raise. */
+const BUDGET = 3_389_500
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

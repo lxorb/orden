@@ -239,9 +239,11 @@ import {
   looksLikeAddress,
   originOfDocument,
   othersIn,
+  reachedByOthers,
   roleOf,
   share,
   sharedWithYou,
+  trustsHtmlAt,
   trustsHtmlIn,
 } from './sharing.svelte'
 import type { RemoteSpace, SharedItem } from './api'
@@ -501,6 +503,62 @@ describe('what may be done before the account has listed its spaces', () => {
     expect(canWriteAt('Mine/plan.md')).toBe(true)
   })
 
+  /** Offline, or in the seconds before the account answers, nothing is paired yet
+   *  and the role kept for the reader's own space is `owner`. Who else is in it is
+   *  what the last listing said, kept beside the role. */
+  test('counts the reader’s own shared space as shared, from what the last listing kept', async () => {
+    world.mirrors = { Team: 'space-1', Solo: 'space-2', Items: 'space-3' }
+    world.notes = { 'Items/plan.md': 'n1', 'Items/other.md': 'n2' }
+    account.spaces = [
+      remote('space-1', 'owner', true),
+      remote('space-2', 'owner'),
+      remote('space-3', 'owner', false, ['n1']),
+    ]
+    await account.loadSpaces()
+
+    account.spaces = []
+    account.listed = false
+    account.user = null
+    world.mirrors = {}
+    world.locals = ['Team', 'Solo', 'Items']
+
+    expect(roleOf('Team')).toBe('owner')
+    expect(reachedByOthers('Team/weekly.md')).toBe(true)
+    expect(trustsHtmlAt('Team/weekly.md')).toBe(false)
+    expect(reachedByOthers('Solo/plan.md')).toBe(false)
+    expect(reachedByOthers('Items/plan.md')).toBe(true)
+    expect(reachedByOthers('Items/other.md')).toBe(false)
+    // A note the store cannot name yet could be the one that was shared.
+    expect(reachedByOthers('Items/new.md')).toBe(true)
+  })
+
+  /** The listing can answer before the sync has paired anything, which is an ordinary
+   *  launch: the listing then names no folder, and what the last one kept still says. */
+  test('counts it as shared while the listing is in and nothing is paired yet', async () => {
+    world.mirrors = { Team: 'space-1' }
+    account.spaces = [remote('space-1', 'owner', true)]
+    await account.loadSpaces()
+
+    world.mirrors = {}
+    world.locals = ['Team', 'Local']
+    account.spaces = [remote('space-1', 'owner', true)]
+    account.listed = true
+
+    expect(reachedByOthers('Team/weekly.md')).toBe(true)
+    expect(reachedByOthers('Local/plan.md')).toBe(false)
+  })
+
+  test('takes a role an older build kept, which says nothing of who else is in, as shared', () => {
+    world.locals = ['Team', 'Local']
+    account.user = null
+    storage.setItem('nib:space-roles', JSON.stringify({ Team: 'owner' }))
+
+    expect(roleOf('Team')).toBe('owner')
+    expect(reachedByOthers('Team/weekly.md')).toBe(true)
+    // A folder nothing was ever kept for is the reader's own, signed in or not.
+    expect(reachedByOthers('Local/plan.md')).toBe(false)
+  })
+
   test('and forgets that with the session', async () => {
     world.mirrors = { Theirs: 'space-1' }
     account.spaces = [remote('space-1', 'read', true)]
@@ -630,6 +688,42 @@ describe('where a document’s words came from', () => {
     } finally {
       rooms.present = {}
     }
+  })
+
+  /** A note of the reader's own space handed to somebody on its own, with leave to
+   *  write by default: the space has nobody else in it, the note does. */
+  test('is the space, for a note of the reader’s own shared on its own', () => {
+    world.mirrors = { Notes: 'space-1' }
+    world.notes = { 'Notes/plan.md': 'n1' }
+    account.spaces = [remote('space-1', 'owner', false, ['n1'])]
+    account.listed = true
+
+    expect(originOfDocument(document('Notes/plan.md'))).toBe('space')
+    expect(trustsHtmlAt('Notes/plan.md')).toBe(false)
+    expect(reachedByOthers('Notes/plan.md')).toBe(true)
+    expect(reachedByOthers('Notes/other.md')).toBe(false)
+  })
+
+  /** Before the listing is in, a paired space kept as the reader's own may still be
+   *  shared with somebody: the role is kept on this device, who else is in it is not. */
+  test('is the space, for a paired space of the reader’s own before the listing is in', () => {
+    world.mirrors = { Notes: 'space-1' }
+    world.kept = { Notes: 'owner' }
+
+    expect(roleOf('Notes')).toBe('owner')
+    expect(originOfDocument(document('Notes/plan.md'))).toBe('space')
+    expect(trustsHtmlAt('Notes/plan.md')).toBe(false)
+    expect(reachedByOthers('Notes/plan.md')).toBe(true)
+
+    account.spaces = [remote('space-1', 'owner')]
+    account.listed = true
+    expect(reachedByOthers('Notes/plan.md')).toBe(false)
+  })
+
+  test('is the reader’s own, for a folder that mirrors nothing, before any listing', () => {
+    world.locals = ['Local']
+
+    expect(reachedByOthers('Local/plan.md')).toBe(false)
   })
 
   /** The other device in a room is this same person's, unless somebody else can

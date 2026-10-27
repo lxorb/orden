@@ -541,7 +541,10 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   // The notes inside embeds, rendered after the document around them so that
   // nothing re-enters the parser mid-parse.
   embeds.sections.forEach((section, at) => {
-    const embedded = renderMarkdown(section, inside(options))
+    const embedded = renderMarkdown(section.text, {
+      ...inside(options),
+      ...(section.escapeHtml ? { escapeHtml: true } : {}),
+    })
     html = html.replace(embeds.marker(at), () => embedded)
   })
 
@@ -662,3 +665,4 @@ export { MOST_EMS } from './engines'
  *  a note usually also asks what it links to, and because taking them out of a
  *  package's own entry point is a rename of two dozen call sites for nothing. */
 export { findLinks, type FoundLink, type Wikilink } from './links'
+export type { EmbeddedNote } from './wikilinks'

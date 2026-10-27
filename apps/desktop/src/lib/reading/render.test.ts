@@ -31,9 +31,14 @@ vi.mock('../link-index.svelte', () => ({
 
       return found?.path ?? null
     },
-    embedSource: (target: string) => {
+    // The note an embed names, with whether its own HTML is words: a note in a space
+    // somebody else can reach, here `Theirs`.
+    embedNote: (target: string) => {
       asked.embeds.push(target)
-      return Promise.resolve(bodies[`${target}.md`] ?? null)
+      const text = bodies[`${target}.md`]
+      return Promise.resolve(
+        text === undefined ? null : { text, escapeHtml: target.startsWith('Theirs') },
+      )
     },
   },
 }))
@@ -230,6 +235,18 @@ describe('the HTML in a note', () => {
 
     expect(html).not.toContain('<script>')
     expect(html).toContain('&lt;script&gt;')
+  })
+
+  /** And the other way round: a note the reader wrote can embed one somebody else
+   *  did, whose HTML is words wherever it is shown. */
+  test('is escaped inside an embedded note somebody else wrote, in a note that is not', async () => {
+    bodies['Theirs.md'] = '<form action="https://evil.example">x</form>\n'
+    const html = await readingHtml(note('<b>mine</b>\n\n![[Theirs]]\n'), 'light', true)
+    delete bodies['Theirs.md']
+
+    expect(html).toContain('<b>mine</b>')
+    expect(html).not.toContain('<form')
+    expect(html).toContain('&lt;form')
   })
 })
 

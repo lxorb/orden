@@ -1,6 +1,6 @@
 import { escapeAll } from '@nib/markdown/html'
 import { CODE_PALETTES } from '@nib/editor'
-import { frontMatterValue, renderMarkdown, type Wikilink } from '@nib/markdown'
+import { type EmbeddedNote, frontMatterValue, renderMarkdown, type Wikilink } from '@nib/markdown'
 import { sourcesOf } from '@nib/markdown/sources'
 import { exportCss, themeCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from './accents'
@@ -48,9 +48,9 @@ export interface HtmlOptions {
   fence?: Fence
   /** Reads the note a `![[…]]` names, so the embeds in a document can be
    *  gathered before it is rendered - the renderer cannot wait on a disk. */
-  readNote?: (target: string) => Promise<string | null>
+  readNote?: (target: string) => Promise<string | EmbeddedNote | null>
   /** The notes an embed names, already read; see `prepareEmbeds`. */
-  embed?: (link: Wikilink) => string | null
+  embed?: (link: Wikilink) => string | EmbeddedNote | null
   /** Show the note's raw HTML as the characters it is made of rather than as
    *  markup. The same question the reading view asks, and asked of the same note:
    *  a page of somebody else's words is not made trustworthy by being printed.

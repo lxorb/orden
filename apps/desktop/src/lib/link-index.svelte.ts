@@ -31,6 +31,7 @@ import {
   type SpaceTag,
   type TaskHelp,
 } from '@nib/editor'
+import type { EmbeddedNote } from '@nib/markdown'
 import { door } from '@nib/markdown/door'
 import { oneEdit } from '@nib/markdown/edits'
 import {
@@ -1930,23 +1931,54 @@ class Links {
     from: string | null,
     inSpaceOf: string | null = from,
   ): Promise<string | null> {
+    return (await this.embedded(target, from, inSpaceOf))?.text ?? null
+  }
+
+  /** The same, with whether that note's own HTML is words, which is asked of the
+   *  note and not of the page it is shown in: a note somebody else wrote stays
+   *  words inside one the reader did. What a reading view, a deck, an export and a
+   *  canvas file card render an embed with. */
+  async embedNote(
+    target: string,
+    from: string | null,
+    inSpaceOf: string | null = from,
+  ): Promise<EmbeddedNote | null> {
+    const [found, { trustsHtmlAt }] = await Promise.all([
+      this.embedded(target, from, inSpaceOf),
+      import('./sharing.svelte'),
+    ])
+    return found && { text: found.text, escapeHtml: !trustsHtmlAt(found.path) }
+  }
+
+  private async embedded(
+    target: string,
+    from: string | null,
+    inSpaceOf: string | null,
+  ): Promise<{ path: string; text: string } | null> {
     // A note of another space embeds that space's notes, read once its notes are.
     // `inSpaceOf` names the space when `from` cannot: a canvas card is resolved from
     // the top of the canvas's space rather than from beside it.
     const other = inSpaceOf === null ? null : this.otherHolding(inSpaceOf)
+    let root = this.root
+    let found: string | null
     if (inSpaceOf !== null && other !== null) {
       await this.otherRead(other)
       const index = this.otherIndex(other, inSpaceOf)
       const at = from === null ? '' : (within(other, from) ?? '')
-      const found = resolvedIn({ ...index, path: at }, { kind: 'wikilink', target })
-      if (found === null) return null
-      return invoke<string>('read_note', { path: insideSpace(other, found) }).catch(() => null)
+      found = resolvedIn({ ...index, path: at }, { kind: 'wikilink', target })
+      root = other
+    } else {
+      const source = from === null ? null : this.relative(from)
+      found = this.resolveFrom(source ?? '', { kind: 'wikilink', target })
     }
+    if (found === null || root === null) return null
 
-    const source = from === null ? null : this.relative(from)
-    const found = this.resolveFrom(source ?? '', { kind: 'wikilink', target })
-
-    return found === null ? null : this.readNote(found)
+    const path = insideSpace(root, found)
+    const text =
+      root === other
+        ? await invoke<string>('read_note', { path }).catch(() => null)
+        : await this.readNote(found)
+    return text === null ? null : { path, text }
   }
 
   /** Where a `[[wikilink]]` points, as a path relative to the note it is written

@@ -71,10 +71,10 @@ export function roleOf(root: string): SpaceRole | null {
 /** Where the roles the last listing gave are kept, by folder. */
 const ROLES_KEY = 'nib:space-roles'
 
-/** The role the last listing gave the space at this folder, as an earlier launch
- *  wrote it down. Parsed again only when the text changes, since this is asked for
- *  every row of the tree. */
-function remembered(root: string): SpaceRole | null {
+/** What the last listing said of the space at this folder, as an earlier launch
+ *  wrote it down: `{ role, shared, items }`, or a bare role from an older build.
+ *  Parsed again only when the text changes, since this is asked for every row. */
+function kept(root: string): unknown {
   const text = storedText(ROLES_KEY)
   if (text !== rolesText) {
     rolesText = text
@@ -82,7 +82,20 @@ function remembered(root: string): SpaceRole | null {
     rolesRead = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
   }
 
-  return roleIn(rolesRead[root])
+  return rolesRead[root]
+}
+
+/** The role in what was kept. */
+function remembered(root: string): SpaceRole | null {
+  const one = kept(root)
+  return roleIn(one && typeof one === 'object' ? (one as Kept).role : one)
+}
+
+interface Kept {
+  role: SpaceRole
+  shared: boolean
+  /** Absent in what a build between the two formats wrote. */
+  items?: string[]
 }
 
 let rolesText: string | null = null
@@ -97,14 +110,15 @@ function roleIn(value: unknown): SpaceRole | null {
  *  while no folder is paired yet, which is how a listing looks when it comes back
  *  before the sync has started: writing then would wipe what the last launch knew. */
 export function rememberRoles(): void {
-  const roles: Record<string, SpaceRole> = {}
+  const roles: Record<string, Kept> = {}
   let paired = false
   for (const space of workspace.spaces) {
     const id = sync.remoteIdFor(space.root)
     if (!id) continue
     paired = true
-    const role = account.spaces.find((one) => one.id === id)?.role
-    if (role) roles[space.root] = role
+    const one = account.spaces.find((listed) => listed.id === id)
+    if (one)
+      roles[space.root] = { role: one.role, shared: one.shared, items: one.sharedItems ?? [] }
   }
 
   if (paired) keep(ROLES_KEY, JSON.stringify(roles))
@@ -207,16 +221,36 @@ export function canWriteIn(
   return note.path === null || canWriteAt(note.path)
 }
 
-/** Whether the space a note sits in is one somebody else can reach: shared with
- *  anybody, or somebody else's to begin with. A note in no space at all is this
- *  machine's own. */
-function sharedAt(path: string | null): boolean {
+/** Whether somebody else may have written the note at this path: its space is shared
+ *  or somebody else's, or the note was shared on its own. Decides raw HTML (below) and
+ *  a collaborator's commands and AGENTS.md (ai/commands/found.ts). Until the listing
+ *  is in, a paired space it has not named counts as shared: a kept `owner` role says
+ *  nothing about who else is in it. */
+export function reachedByOthers(path: string | null): boolean {
   if (path === null) return false
 
   const space = workspace.spaces.find((one) => within(one.root, path) !== null)
   if (!space) return false
+  if (isSharedItem(path)) return true
+
+  const unknown = !account.listed || sync.remoteIdFor(space.root) === null
+  if (unknown && !remoteOf(space.root) && keptShared(space.root, path)) return true
 
   return isShared(space.root) || roleOf(space.root) !== 'owner'
+}
+
+/** Before the listing, or before the folder is paired: whether what the last one kept, or not knowing, says somebody
+ *  else may be in the space or the note. A bare role kept by an older build says
+ *  nothing of who else is in, and neither does a pairing nothing was kept for. */
+function keptShared(root: string, path: string): boolean {
+  const one = kept(root)
+  if (one === undefined) return sync.remoteIdFor(root) !== null
+  if (!one || typeof one !== 'object') return true
+  const { shared, items } = one as Kept
+  if (shared) return true
+  if (!items?.length) return false
+  const id = sync.tracked(path)?.id
+  return !id || items.includes(id)
 }
 
 /** Where a document's words came from, as much as this side of the wire knows:
@@ -231,7 +265,7 @@ export function originOfDocument(note: NoteDoc): Origin {
   return originOf({
     guest: account.guest !== null,
     pasted: note.pasted,
-    shared: note.shared !== null || sharedAt(note.path),
+    shared: note.shared !== null || reachedByOthers(note.path),
     peers: (rooms.present[note.key] ?? 0) > 0,
   })
 }
@@ -259,7 +293,7 @@ export function trustsHtmlAt(path: string | null): boolean {
     originOf({
       guest: account.guest !== null,
       pasted: false,
-      shared: sharedAt(path),
+      shared: reachedByOthers(path),
       peers: false,
     }),
   )

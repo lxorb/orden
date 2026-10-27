@@ -5,12 +5,13 @@
  *  The panel's engine setup appends `instructionsFor(thread)` to the space's own
  *  instructions (6.5), so every road gets the same lines: nib's own loop as part of the
  *  system prompt, Claude Code and Codex as the fixed style slot the crate appends.
- *  Nothing here is text from a page: a style or a profile is a note of the reader's,
- *  and the rest is nib's own. Not translated: nobody reads it but the model. */
+ *  Nothing here is text from a page: a style or a profile is a note in the thread's
+ *  space the reader picked by name, and the rest is nib's own. One from a space
+ *  somebody else can reach goes inside the untrusted mark, as its words are theirs. Not translated: nobody reads it but the model. */
 
 import { isBoolean, keep, stored } from '../../stored'
 import type { Thread } from '../chat/types'
-import { foundNamed } from './found'
+import { foundNamed, rootOfSpace, wordsOf } from './found'
 import { actsAlone } from '../modes'
 
 /** The fields the commands keep on a thread, beside lane 1's. Written down with it:
@@ -56,20 +57,23 @@ const REMEMBERING = [
   '(make the heading, or the note, if there is none), with edit_note. Never keep it anywhere else.',
 ].join(' ')
 
-/** A style's line: a built-in's, or a style note's body. */
-async function styleLine(style: string | undefined): Promise<string> {
+/** A style's line: a built-in's, or a style note's body, from the thread's own space. */
+async function styleLine(style: string | undefined, root: string | null): Promise<string> {
   if (!style) return ''
   if (style in STYLES) return STYLES[style] ?? ''
-  return (await foundNamed('output-style', style))?.body ?? ''
+  return root ? await wordsOf(await foundNamed('output-style', style, root)) : ''
 }
 
-/** Everything the commands add for this thread, or nothing. */
+/** Everything the commands add for this thread, or nothing. A profile or a style is
+ *  looked up by name in the thread's own space, not the one in front, and one from a
+ *  space somebody else can reach is sent as their words (`wordsOf`). */
 export async function instructionsFor(thread: Thread): Promise<string> {
   const held = thread as Held
-  const profile = held.agent ? await foundNamed('agent', held.agent) : null
+  const root = rootOfSpace(thread.space)
+  const profile = held.agent && root ? await foundNamed('agent', held.agent, root) : null
   const lines = [
-    profile?.body ?? '',
-    await styleLine(held.style),
+    await wordsOf(profile),
+    await styleLine(held.style, root),
     remembers() && actsAlone(thread.mode) ? REMEMBERING : '',
   ]
   return lines.filter(Boolean).join('\n\n')
