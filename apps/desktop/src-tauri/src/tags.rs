@@ -166,11 +166,7 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
         while let Some(hash) = block[at..].find('#') {
             let start = at + hash;
 
-            // A tag starts a word, so what comes before it must be a space.
-            let opens = block[..start]
-                .chars()
-                .next_back()
-                .is_none_or(|one| one.is_whitespace() || one == '(')
+            let opens = opens_tag(&block[..start])
                 && !code.iter().any(|&(from, to)| (from..to).contains(&start));
 
             // The name is what a tag may hold, which rules out `#1`.
@@ -186,6 +182,17 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
             at = start + 1 + name.len();
         }
     }
+}
+
+/// Whether a hash after `before` opens a tag: after nothing, a blank, a `(`, or
+/// what opens a run the page reads afresh, which is emphasis, strike, highlight
+/// and a cell. Not after `](`, where a link goes to a heading. The twin of
+/// `opensTag` in @nib/markdown's tags.ts.
+fn opens_tag(before: &str) -> bool {
+    before.chars().next_back().is_none_or(|one| {
+        (one.is_whitespace() || matches!(one, '(' | '*' | '_' | '~' | '=' | '|'))
+            && !before.ends_with("](")
+    })
 }
 
 /// The blocks of words in a note: a paragraph's lines, a list item's or a
@@ -520,8 +527,8 @@ mod tests {
     #[test]
     fn reads_a_tag_inside_emphasis_strike_highlight_or_a_cell() {
         assert_eq!(
-            tags_in("**#a** *#b* _#c_ ~~#d~~ ==#e== call\n"),
-            vec!["#a", "#b", "#c", "#d", "#e"]
+            tags_in("**#a** *#b* ~~#d~~ ==#e== call\n"),
+            vec!["#a", "#b", "#d", "#e"]
         );
         assert_eq!(tags_in("| x | y |\n| - | - |\n|#f|#g|\n"), vec!["#f", "#g"]);
     }

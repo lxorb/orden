@@ -718,7 +718,8 @@ export function tagsIn(text: string): string[] {
   const out: string[] = []
   const code = codeSpans(text)
   for (const found of text.matchAll(TAG)) {
-    if (!opensTag(text.charAt(found.index - 1)) || inCode(code, found.index)) continue
+    const before = text.slice(Math.max(0, found.index - 2), found.index)
+    if (!opensTag(before) || inCode(code, found.index)) continue
     const name = found[1] ?? ''
     if (!out.includes(name)) out.push(name)
   }

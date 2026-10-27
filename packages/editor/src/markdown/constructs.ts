@@ -150,7 +150,7 @@ const Hashtag: MarkdownConfig = {
         if (next !== HASH) return -1
 
         // Nothing before the section's first character: a paragraph opening on a tag.
-        const before = pos === cx.offset ? '' : cx.slice(pos - 1, pos)
+        const before = cx.slice(Math.max(cx.offset, pos - 2), pos)
         if (!opensTag(before)) return -1
 
         const name = tagNameAt(cx.text, pos - cx.offset)

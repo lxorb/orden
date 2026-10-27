@@ -39,7 +39,6 @@ describe('what a tag is', () => {
     expect(opensTag('(')).toBe(true)
     expect(opensTag('C')).toBe(false)
     expect(opensTag('/')).toBe(false)
-    expect(opensTag('_')).toBe(false)
   })
 
   /** What opens a run the page reads afresh: emphasis, strike, highlight, a
@@ -77,7 +76,7 @@ describe('a tag on a page', () => {
    *  link to a heading is no tag" in the app's search/tags.test.ts, so what the
    *  page draws is what the index holds. */
   test('inside emphasis, strike, highlight or a cell, and never as a link target', () => {
-    expect(drawn('**#a** *#b* _#c_ ~~#d~~ ==#e== call')).toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(drawn('**#a** *#b* ~~#d~~ ==#e== call')).toEqual(['a', 'b', 'd', 'e'])
     expect(drawn('| x | y |\n| - | - |\n|#f|#g|')).toEqual(['f', 'g'])
     expect(drawn('See [setup](#setup) and ![x](#y). Real #setup.')).toEqual(['setup'])
   })

@@ -99,9 +99,16 @@ const NAME_AT = new RegExp(TAG_NAME, 'uy')
 
 const HASH = '#'
 
-/** Whether a hash after this character opens a word: nothing, a blank, a `(`. */
+/** What a hash may follow and open a tag: a blank, a `(`, and what opens a run
+ *  the page reads afresh, which is emphasis, strike, highlight and a cell. */
+const OPENS = /[\s(*_~=|]$/u
+
+/** Whether a hash after `before` opens a tag. `before` is what is written in front
+ *  of the hash, of which the last character counts, or the last two for a `(`: a
+ *  `](#heading)` is where a link goes, not a tag. The renderer, the editor and the
+ *  index (search/tags.ts, tags.rs) read tags by this one rule. */
 export function opensTag(before: string): boolean {
-  return before === '' || before === '(' || /\s/u.test(before)
+  return before === '' || (OPENS.test(before) && !before.endsWith(']('))
 }
 
 /** The name of the tag whose hash is at `at`, or null. The character before is the
@@ -132,9 +139,9 @@ export type TagHref = (tag: string) => string | null
  *  it could. `tag` is the class Obsidian's pages and their themes already use.
  *
  *  Never in a link's words. At the start of a run there is no token before to ask,
- *  and a run opens a paragraph, heading, cell or item nearly always; so `**#tag**`
- *  is drawn here and left as words in the editor. The token carries its words as
- *  `text` for readers that never heard of a tag - a Word document, the glasses. */
+ *  and a run opens a paragraph, heading, cell, item or emphasis nearly always,
+ *  which `opensTag` takes as well, so `**#tag**` is one everywhere. The token
+ *  carries its words as `text` for readers that never heard of a tag - a Word document, the glasses. */
 export function hashtags(href?: TagHref): MarkedExtension {
   /** What was left of each run the last time it asked. */
   const seen = new WeakMap<Token[], string>()

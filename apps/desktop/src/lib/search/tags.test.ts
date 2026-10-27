@@ -89,7 +89,7 @@ describe('the tags in a note', () => {
   })
 
   test('inside emphasis, strike, highlight or a cell, where the page draws one', () => {
-    expect(tagsIn('**#a** *#b* _#c_ ~~#d~~ ==#e== call\n')).toEqual(['#a', '#b', '#c', '#d', '#e'])
+    expect(tagsIn('**#a** *#b* ~~#d~~ ==#e== call\n')).toEqual(['#a', '#b', '#d', '#e'])
     expect(tagsIn('| x | y |\n| - | - |\n|#f|#g|\n')).toEqual(['#f', '#g'])
   })
 

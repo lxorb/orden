@@ -20,7 +20,7 @@
 
 import { CodeBlocks, WORDS } from '@nib/markdown/fences'
 import { type FrontMatterBlock, frontMatterBlock } from '@nib/markdown/front-matter'
-import { codeSpans, inCode, TAG_NAME } from '@nib/markdown/tags'
+import { codeSpans, inCode, opensTag, TAG_NAME } from '@nib/markdown/tags'
 
 /** Where one use of a tag sits: the offsets of its name, the hash not included,
  *  so a rename splices a new path in and leaves whatever hung off the old one. */
@@ -34,7 +34,8 @@ export interface TagUse {
 /** What a tag's name may hold: the grammar `@nib/markdown` reads tags with. */
 const NAME = new RegExp(`^${TAG_NAME}$`, 'u')
 
-const TAG = new RegExp(String.raw`(^|[\s(])#(${TAG_NAME})`, 'gu')
+/** A hash and a name; whether the hash opens a tag is `opensTag`'s to say. */
+const TAG = new RegExp(`#(${TAG_NAME})`, 'gu')
 
 /** `tags:` or `tag:` at the left margin of the front matter, and what follows
  *  it on the line. Both spellings, because Obsidian takes both. */
@@ -222,11 +223,13 @@ function readInline(body: string, front: FrontMatterBlock | null, out: TagUse[])
 
     const code = codeSpans(block)
     for (const found of block.matchAll(TAG)) {
-      const [, before = '', name] = found
-      if (name === undefined || inCode(code, found.index + before.length)) continue
+      const [, name] = found
+      const at = found.index
+      if (name === undefined || inCode(code, at)) continue
+      if (!opensTag(block.slice(Math.max(0, at - 2), at))) continue
 
-      // Past what opened the word and past the hash, so the span is the name.
-      const start = from + found.index + before.length + 1
+      // Past the hash, so the span is the name.
+      const start = from + at + 1
       out.push({ tag: name, from: start, to: start + name.length })
     }
   }
