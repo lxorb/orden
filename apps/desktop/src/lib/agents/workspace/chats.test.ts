@@ -124,11 +124,17 @@ describe('the chats an agent sees', () => {
     store.speak(twin, ME, 'the other thesis')
     const { answerThreadSpaces } = await import('../../automation/caller')
     answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
-    const grant = { id: 'claude', name: 'Claude Code', scopes: ['chats.read'], spaces: 'all', mode: 'confirm' }
+    const grant = {
+      id: 'claude',
+      name: 'Claude Code',
+      scopes: ['chats.read'],
+      spaces: 'all',
+      mode: 'confirm',
+    }
     try {
-      expect(said(await call('read_chat', { chat: 'thesis' }, callerOf(grant, 'in-secret')))).toContain(
-        'the other thesis',
-      )
+      expect(
+        said(await call('read_chat', { chat: 'thesis' }, callerOf(grant, 'in-secret'))),
+      ).toContain('the other thesis')
       expect(said(await call('read_chat', { chat: 'thesis' }, callerOf(grant)))).toContain(
         'Draft of chapter 3',
       )

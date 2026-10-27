@@ -1670,16 +1670,20 @@ describe('a panel thread works in its own space', () => {
   })
 
   test('a page captured goes to the thread’s space, and the answer says so', async () => {
-    const answered = await call('capture_to_note', { tab: 'w1', as: 'clip', note: 'Kept' }, fromHome())
+    const answered = await call(
+      'capture_to_note',
+      { tab: 'w1', as: 'clip', note: 'Kept' },
+      fromHome(),
+    )
     expect(answered).toMatchObject({ result: { path: 'Kept.md', space: 'home' } })
     expect(files.has('/s/Home/Kept.md')).toBe(true)
   })
 
   test('a thread whose space is gone from this device is refused, not sent to the front', async () => {
     answerThreadSpaces(() => 'left-long-ago')
-    expect(
-      await call('write_note', { path: 'Broth', content: 'x' }, fromHome()),
-    ).toMatchObject({ code: 'no_such_space' })
+    expect(await call('write_note', { path: 'Broth', content: 'x' }, fromHome())).toMatchObject({
+      code: 'no_such_space',
+    })
     expect(files.has('/s/Work/Broth.md')).toBe(false)
   })
 
