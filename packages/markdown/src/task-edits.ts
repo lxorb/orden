@@ -452,16 +452,30 @@ function ordered(edits: TextEdit[]): TextEdit[] {
 
 const DATES = ['due', 'start', 'scheduled', 'deadline'] as const
 
+/** Whether a date a change gives is one it takes away: null or nothing. `undefined`
+ *  leaves the date as it is, as everywhere in `writeTask`. */
+const takes = (value: string | null | undefined) => value === null || value === ''
+
+/** Whether the change takes away the last date the task had. */
+export function lastDateTaken(fields: TaskFields, change: TaskChange): boolean {
+  if (!DATES.some((date) => fields[date] !== undefined)) return false
+  return !DATES.some((date) => {
+    const said = change[date]
+    return said === undefined ? fields[date] !== undefined : !takes(said)
+  })
+}
+
 /** The change, with a repeat and a time taken away where it takes away the last date
  *  the task had: they belong to that date, and Todoist holds no repeat without one. A
- *  task that never had a date keeps them. */
+ *  task that never had a date keeps them, and so does a change that gives them itself
+ *  (the agent refuses that one; see `editedTask`). */
 function withoutOrphans(fields: TaskFields, change: TaskChange): TaskChange {
   if (fields.recurrence === undefined && fields.time === undefined) return change
-  if (!DATES.some((date) => fields[date] !== undefined)) return change
-  const left = DATES.some((date) =>
-    date in change ? change[date] != null : fields[date] !== undefined,
-  )
-  return left ? change : { ...change, recurrence: null, time: null }
+  if (!lastDateTaken(fields, change)) return change
+  const out = { ...change }
+  if (change.recurrence === undefined) out.recurrence = null
+  if (change.time === undefined) out.time = null
+  return out
 }
 
 /** The line with the change made. */

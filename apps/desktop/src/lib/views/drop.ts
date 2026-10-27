@@ -77,7 +77,7 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
     // moves the deadline there, as Todoist's drag reschedules an overdue task: it
     // leaves Overdue and shows on that day. Its start, where it has one, moves with it;
     // one with a deadline alone gets no start date. Upcoming's days, its week strip,
-    // the calendar and the agenda all drop here.
+    // the calendar's days and hours (`hourDrop`) and the agenda all drop here.
     const deadline = deadlineOf(task, reads)
     const late = field === 'date' && day !== null && !task.done && !task.cancelled
     if (late && deadline !== undefined && deadline < today) {
@@ -137,6 +137,22 @@ export function dropInto(
   const next = Array.isArray(now) ? swapped(now, key, from) : key
   if (JSON.stringify(now) === JSON.stringify(next)) return null
   return { change: { note: { [name]: next } } }
+}
+
+/** A row let go on an hour of a calendar placed by `property`: the drop on that day,
+ *  and the time where it was let go when the day is the one the task starts on, is
+ *  scheduled for or is due (a deadline has no time). */
+export function hourDrop(
+  property: string,
+  day: string,
+  time: string,
+  row: Row,
+  today: string,
+): Drop | null {
+  const drop = dropInto(property, day, row, today)
+  const timed = ['task.date', 'task.start', 'task.due', 'task.scheduled'].includes(property)
+  if (!drop || !('change' in drop) || !drop.change.task || !timed) return drop
+  return { change: { ...drop.change, task: { ...drop.change.task, time } } }
 }
 
 /** A list with the member it was carried out of (`from`) swapped for `key`: taken out

@@ -272,8 +272,8 @@ describe('code in a task', () => {
 
   test('reads a date given as undefined as left, and one given as nothing as taken', () => {
     const line = '- [ ] Pay 🔁 every week 📅 2026-10-01'
-    expect(changedTask(line, { due: undefined, priority: 2 } as TaskChange)).toBe(
-      '- [ ] Pay 🔁 every week ⏫ 📅 2026-10-01',
+    expect(changedTask(line, { due: undefined, priority: 2 } as unknown as TaskChange)).toBe(
+      '- [ ] Pay ⏫ 🔁 every week 📅 2026-10-01',
     )
     expect(changedTask(line, { due: '' })).toBe('- [ ] Pay')
   })
