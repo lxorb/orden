@@ -662,3 +662,59 @@ describe('the quota', () => {
     expect(response.status).toBe(507)
   })
 })
+
+/** #784: a writer in a shared space puts a page note's paper there, so the bytes are the
+ *  writer's row; the writer deleting their account handed the space's files and
+ *  pictures to its owner but not the paper, and the night's sweep took it out of the
+ *  bucket. A paper is named by its note's own column, and is handed on like the rest. */
+describe('a writer who deletes their account', () => {
+  test('leaves the paper they gave the owner’s page note, handed to the owner', async () => {
+    const owner = await signIn(env, 'owner@b.dev')
+    const theirs = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', {
+        token: owner,
+        body: { name: 'Theirs' },
+      })
+    ).json.space.id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: owner,
+        body: { email: 'a@b.dev', role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+    const lecture = (
+      await call<{ note: { id: string } }>(env, `/v1/spaces/${theirs}/notes`, {
+        token: owner,
+        body: { path: 'Lecture.pages', content: '{}' },
+      })
+    ).json.note.id
+    const pdf = new TextEncoder().encode('%PDF-1.4\nthe lecture\n%%EOF\n')
+    const paper = createHash('sha256').update(pdf).digest('hex')
+    expect((await upload({ bytes: pdf, hash: paper }, { type: 'application/pdf' })).status).toBe(
+      201,
+    )
+    await call(env, `/v1/notes/${lecture}/paper`, { method: 'PUT', token, body: { hash: paper } })
+    expect((await call(env, `/v1/notes/${lecture}/paper`, { token: owner })).status).toBe(200)
+
+    const writer = env.db.prepare("select id, email from users where email = 'a@b.dev'").get() as {
+      id: string
+      email: string
+    }
+    const { eraseAccount } = await import('../src/erase')
+    const { sweepLeftovers } = await import('../src/leftovers')
+    await eraseAccount(env, { id: writer.id, email: writer.email, name: null, created_at: 1 })
+    await sweepLeftovers(env)
+
+    expect((await call(env, `/v1/notes/${lecture}/paper`, { token: owner })).status).toBe(200)
+    const ownerId = env.db.prepare("select id from users where email = 'owner@b.dev'").get() as {
+      id: string
+    }
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(paper)).toEqual([
+      { user_id: ownerId.id },
+    ])
+  })
+})
