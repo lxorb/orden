@@ -5,6 +5,7 @@ import {
   insideItsSpace,
   nameOf,
   noteName,
+  notePath,
   placesOf,
   relativePath,
   relativeTo,
@@ -191,5 +192,27 @@ describe('the places a file a note names could be', () => {
   test('nothing named is nowhere to look', () => {
     expect(placesOf('', '/Work/Paper.pages', '/Work')).toEqual([])
     expect(placesOf('Paper.pdf', null, null)).toEqual(['Paper.pdf'])
+  })
+})
+
+describe('the note a name means', () => {
+  test('a markdown path is itself, and a name without an ending gets one', () => {
+    expect(notePath('Plan.md')).toBe('Plan.md')
+    expect(notePath('Notes/Plan.markdown')).toBe('Notes/Plan.markdown')
+    expect(notePath('Plan')).toBe('Plan.md')
+    expect(notePath('v1.2 plan')).toBe('v1.2 plan.md')
+    expect(notePath('folder.d/Plan')).toBe('folder.d/Plan.md')
+  })
+
+  test('digits after a dot are part of the name', () => {
+    expect(notePath('Meeting 10.27')).toBe('Meeting 10.27.md')
+    expect(notePath('Reading 2026.10')).toBe('Reading 2026.10.md')
+  })
+
+  test('a name ending in another kind of file is no note', () => {
+    expect(notePath('Board.canvas')).toBeNull()
+    expect(notePath('Ledger.base')).toBeNull()
+    expect(notePath('Book.pages')).toBeNull()
+    expect(notePath('files/report.pdf')).toBeNull()
   })
 })

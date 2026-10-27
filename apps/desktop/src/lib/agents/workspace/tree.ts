@@ -15,7 +15,7 @@
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@nib/markdown/links'
 import type { AgentAnswer } from '../../automation/caller'
 import { movedIn, movedPath } from '../../automation/acts'
-import { isMarkdownPath, nameOf, relativeTo } from '../../space-paths'
+import { isMarkdownPath, notePath, relativeTo } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { entryAt } from '../../tree-edits'
 import { coveredBy } from '../../workspace/archive.svelte'
@@ -76,7 +76,7 @@ async function named(place: Place, asked: string): Promise<{ relative: string; e
   const entry = await entryIn(place, relative)
   if (entry) return { relative, entry }
 
-  const note = nameOf(relative).includes('.') ? null : `${relative}.md`
+  const note = isMarkdownPath(relative) ? null : notePath(relative)
   const found = note === null ? null : await entryIn(place, note)
   if (note !== null && found) return { relative: note, entry: found }
 

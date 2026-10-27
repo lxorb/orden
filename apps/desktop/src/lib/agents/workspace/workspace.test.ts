@@ -1528,3 +1528,38 @@ describe('a tab and a space named together', () => {
     expect(files.has('/s/Home/Plan.md')).toBe(false)
   })
 })
+
+describe('a note an agent names with a dot in it', () => {
+  test('a capture into a name with digits after a dot makes that name a markdown note', async () => {
+    expect(
+      await call('capture_to_note', { tab: 'a1', as: 'clip', note: 'Meeting 10.27' }),
+    ).toMatchObject({ result: { path: 'Meeting 10.27.md', created: true } })
+    expect(files.get('/s/Work/Meeting 10.27.md')).toContain('Words of the page.')
+    expect(files.has('/s/Work/Meeting 10.27')).toBe(false)
+  })
+
+  test('a capture into a canvas is refused before any picture is kept', async () => {
+    reads({ html: undefined, png: btoa('PNG bytes') })
+    expect(
+      await call('capture_to_note', { tab: 'a1', as: 'screenshot', note: 'Board.canvas' }),
+    ).toMatchObject({ code: 'bad_arguments' })
+    expect(files.has('/s/Work/Board.canvas')).toBe(false)
+    expect(asked.some((one) => one.command === 'save_asset')).toBe(false)
+  })
+
+  test('the log of a session goes into a note, never a canvas', async () => {
+    expect(
+      await call('attach_agent_log', { note: 'Board.canvas', session: '2026-09-30' }),
+    ).toMatchObject({ code: 'bad_arguments' })
+    expect(files.has('/s/Work/Board.canvas')).toBe(false)
+  })
+
+  test('the note verbs read the same name as the capture does', async () => {
+    expect(await call('create_note', { path: 'Reading 2026.10', content: '# R\n' })).toMatchObject({
+      result: { path: 'Reading 2026.10.md', created: true },
+    })
+    expect(await call('read_note', { path: 'Reading 2026.10' })).toMatchObject({
+      result: { path: 'Reading 2026.10.md' },
+    })
+  })
+})

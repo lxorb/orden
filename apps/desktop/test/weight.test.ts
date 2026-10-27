@@ -882,8 +882,12 @@ function holds(tail: string): boolean {
  *  included (`reachedByOthers` and the kept `{ role, shared, items }` in
  *  sharing.svelte.ts), and an embed or a canvas file card is trusted by its own note
  *  (`embedNote` in link-index.svelte.ts, `EmbeddedNote` in @nib/markdown). Measured
- *  3,388,683 with main as of this raise. */
-const BUDGET = 3_389_500
+ *  3,388,683 with main as of this raise.
+ *
+ *  Raised 2026-10-27, to 3,390,900, for B565: the note an agent names is read by one
+ *  rule (`notePath` in space-paths.ts), which keeps digits after a dot as words of the
+ *  name and refuses another kind of file. Measured 3,390,058. */
+const BUDGET = 3_390_900
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

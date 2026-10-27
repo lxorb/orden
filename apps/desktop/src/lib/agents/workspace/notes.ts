@@ -15,7 +15,7 @@ import { taskAt } from '@nib/markdown/tasks'
 import { flowItem, scalar } from '@nib/markdown/yaml'
 import type { AgentAnswer } from '../../automation/caller'
 import { onDisk as there } from '../../on-disk'
-import { isMarkdownPath, nameOf } from '../../space-paths'
+import { notePath } from '../../space-paths'
 import { writeFile } from '../../workspace/write-file'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { isDraft } from '../../workspace/drafts'
@@ -70,10 +70,8 @@ export function noteOf(
   const place = placeFor(call, maybe(call, 'space'))
   const asked = need(call, 'path')
   const safe = writing ? judgedForWriting(asked) : judged(asked)
-  const relative = nameOf(safe).includes('.') ? safe : `${safe}.md`
-  if (!isMarkdownPath(relative)) {
-    throw new Refused('bad_arguments', `${relative} is not a markdown note`)
-  }
+  const relative = notePath(safe)
+  if (relative === null) throw new Refused('bad_arguments', `${safe} is not a markdown note`)
 
   if (writing) writableAt(place, onDisk(place, relative))
 
