@@ -232,14 +232,14 @@ class Helpers {
 
   /** `child` runs work for `parent`, started by `run_agent` or by a command
    *  (`/subtask`, `/fork`, `/batch`, `/deep-research`), until `endedUnder`: one tree for
-   *  every kind. Every thread above takes it into its review; one above the parent is
-   *  written down now, the parent with the turn or command that started it. */
+   *  every kind. Every thread above takes it into its review and is written down now:
+   *  a command writes its parent before this, and a relaunch is not to lose it. */
   startedUnder(parent: Thread, child: Thread): void {
     this.under.set(child.id, { parent, child })
     for (let above: Helped | undefined = parent; above; above = this.under.get(above.id)?.parent) {
       if (above.helpers?.includes(child.id)) continue
       above.helpers = [...(above.helpers ?? []), child.id]
-      if (above !== parent) void keepThread(above).catch(() => undefined)
+      void keepThread(above).catch(() => undefined)
     }
   }
 
