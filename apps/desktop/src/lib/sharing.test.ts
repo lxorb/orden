@@ -569,8 +569,14 @@ describe('what may be done before the account has listed its spaces', () => {
     const pairing: Pairing = {
       pairs: () =>
         Object.entries(world.mirrors).map(([root, spaceId]) => ({ root, spaceId, shared: false })),
-      pair: (root, spaceId) => void (world.mirrors[root] = spaceId),
-      unpair: (root) => void delete world.mirrors[root],
+      pair: (root, spaceId) => {
+        world.mirrors = { ...world.mirrors, [root]: spaceId }
+      },
+      unpair: (root) => {
+        world.mirrors = Object.fromEntries(
+          Object.entries(world.mirrors).filter(([one]) => one !== root),
+        )
+      },
       share: () => undefined,
     }
     await pairSpaces('session', pairing)

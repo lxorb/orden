@@ -36,9 +36,20 @@ const inTheAir = new WeakMap<Pairing, Promise<void>>()
 export function pairSpaces(token: string, pairing: Pairing): Promise<void> {
   const running = inTheAir.get(pairing)
   if (running) return running
-  const now = pairOnce(token, pairing).finally(() => inTheAir.delete(pairing))
+  const now = pairOnce(token, pairing)
+    .finally(rolesPaired)
+    .finally(() => inTheAir.delete(pairing))
   inTheAir.set(pairing, now)
   return now
+}
+
+/** Writes down the roles again, now with the folders this pairing just made. The
+ *  listing wrote them before the pairing, and a space joined since had no folder to
+ *  be written under: quit before the next listing, and the next launch, offline, read
+ *  it as the reader's own. Imported here, as the account does, since the sharing
+ *  store reads the sync that reads this. */
+async function rolesPaired(): Promise<void> {
+  ;(await import('./sharing.svelte')).rememberRoles()
 }
 
 async function pairOnce(token: string, pairing: Pairing): Promise<void> {
