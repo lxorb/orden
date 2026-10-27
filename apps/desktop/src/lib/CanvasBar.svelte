@@ -116,8 +116,13 @@
     if (!row) return
     // Measured again when the bar stands on its end, since that is the other way.
     follows(standing)
-    measure()
-    if (typeof ResizeObserver === 'undefined') return
+    // By the observer, which reports once as it starts watching, after layout. Measured
+    // here and now, the bar laid the page out as it mounted: with a canvas of three
+    // thousand cards opening under it, a seventh of a second (#535).
+    if (typeof ResizeObserver === 'undefined') {
+      measure()
+      return
+    }
     const watcher = new ResizeObserver(measure)
     watcher.observe(row)
     for (const one of row.children) watcher.observe(one)

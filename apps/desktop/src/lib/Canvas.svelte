@@ -488,7 +488,7 @@
    *  which is the order they stack in. */
   const cards = $derived(shown.nodes.filter((node) => overlaps(boxOf(node), inView)))
 
-  const picked = $derived(new Set(store.picked))
+  const picked = $derived(store.pickedSet)
 
   /** Whether a resize holds the shape of the box without being asked: a picture under
    *  a thumb, where there is no Shift to hold and a stretched photograph is not the
@@ -600,11 +600,14 @@
     if (gesture) return []
 
     const out: { key: string; at: Point }[] = []
+    // By id, once: after Ctrl+A every edge is picked, and looking each end up along the
+    // cards was two walks of the plane per edge (#535).
+    const byId = new Map(shown.nodes.map((node) => [node.id, node]))
     for (const edge of shown.edges) {
       if (!store.isPicked(edge.id)) continue
 
-      const from = shown.nodes.find((one) => one.id === edge.fromNode)
-      const to = shown.nodes.find((one) => one.id === edge.toNode)
+      const from = byId.get(edge.fromNode)
+      const to = byId.get(edge.toNode)
       if (!from || !to) continue
 
       const ends = edgeEnds(edge, boxOf(from), boxOf(to))
@@ -1929,7 +1932,7 @@
       <CanvasEdges
         edges={shown.edges}
         nodes={shown.nodes}
-        picked={store.picked}
+        picked={store.pickedSet}
         provisional={drawing}
       />
 

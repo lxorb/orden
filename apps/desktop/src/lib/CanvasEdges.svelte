@@ -22,7 +22,7 @@
     /** The nodes an edge can end on, as the plane currently shows them, so an
      *  edge follows the cards it joins while they are being dragged. */
     nodes: readonly CanvasNode[]
-    picked: readonly string[]
+    picked: ReadonlySet<string>
     /** The connector being dragged out of a card's side, while one is: where it
      *  starts, where the pointer is, and which side it left by. */
     provisional?: {
@@ -96,7 +96,7 @@
         id: edge.id,
         path: edgePath(ends),
         colour: shownColour(edge.color),
-        picked: picked.includes(edge.id),
+        picked: picked.has(edge.id),
         heads,
         label: middle && edge.label !== undefined ? { ...middle, text: edge.label } : null,
       })

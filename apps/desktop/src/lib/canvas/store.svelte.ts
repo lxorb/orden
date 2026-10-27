@@ -39,7 +39,7 @@ import {
   takeParsed,
 } from './format'
 import { changesBetween, type Written, written } from './written'
-import { pickedBox } from './edits'
+import { idSet, pickedBox } from './edits'
 import { type KeptView, viewKept, viewOf } from './place'
 import { bounds } from './geometry'
 import { strokeBox } from './ink'
@@ -80,6 +80,9 @@ export class CanvasStore implements PlaneSurface {
    *  Delete and the colour dots mean whatever is picked. Replaced whole, like
    *  the canvas, and raw for the same reason. */
   picked = $state.raw<string[]>([])
+  /** The same, as a set: what `isPicked` asks, once per card or edge of a plane that
+   *  may hold thousands while thousands are picked (#535). */
+  readonly pickedSet = $derived(idSet(this.picked))
 
   /** The text node being written in, while one is. One at a time: an editor is
    *  mounted only for this node, which is what keeps five hundred cards cheap. */
@@ -584,7 +587,7 @@ export class CanvasStore implements PlaneSurface {
   }
 
   isPicked(id: string): boolean {
-    return this.picked.includes(id)
+    return this.pickedSet.has(id)
   }
 
   /** A plain click picks one thing; Shift or Ctrl adds to what is picked and

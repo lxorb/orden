@@ -69,9 +69,6 @@
   let wide = $state(0)
   let room = $state(0)
 
-  /** Reads values for their own sake, so the effect around them follows them. */
-  const follows = (..._values: unknown[]) => undefined
-
   /** How far the bar keeps from either side of the plane, in pixels. */
   const MARGIN = 8
 
@@ -85,11 +82,25 @@
     return Math.min(Math.max(at.x, wide / 2 + MARGIN), room - wide / 2 - MARGIN)
   })
 
-  // The plane is the bar's own parent, measured whenever the bar moves or changes
-  // size: often enough, since a plane that changes width moves what is picked too.
+  // The bar and the plane it stands on, its parent, as the browser lays them out:
+  // told by an observer once layout is done, never read. Reading a width asks the
+  // browser to lay the page out there and then, and the bar comes up as Ctrl+A has
+  // just marked three thousand cards picked and moves as they are nudged - the
+  // plane laid out on the spot, the better part of a second each time (#535).
   $effect(() => {
-    follows(at.x, wide)
-    room = over?.parentElement?.clientWidth ?? 0
+    const bar = over
+    const plane = bar?.parentElement
+    if (!bar || !plane || typeof ResizeObserver === 'undefined') return
+    const watcher = new ResizeObserver((entries) => {
+      for (const one of entries) {
+        const size = one.borderBoxSize[0]?.inlineSize ?? one.contentRect.width
+        if (one.target === bar) wide = size
+        else room = one.contentBoxSize[0]?.inlineSize ?? one.contentRect.width
+      }
+    })
+    watcher.observe(bar)
+    watcher.observe(plane)
+    return () => watcher.disconnect()
   })
 
   function pick(next: string | null) {
@@ -118,7 +129,6 @@
   class="over"
   class:below
   bind:this={over}
-  bind:offsetWidth={wide}
   style:left="{left}px"
   style:top="{at.y}px"
   onpointerdown={(event) => event.stopPropagation()}
