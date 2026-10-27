@@ -629,11 +629,11 @@ describe('chats', () => {
         statement.bind = (...values: unknown[]) => {
           const bound = bind(...values)
           const run = bound.run.bind(bound)
-          bound.run = async () => {
+          bound.run = (async () => {
             const done = await run()
             await hangUp(logs.of(chat), laptop)
             return done
-          }
+          }) as typeof bound.run
           return bound
         }
         return statement

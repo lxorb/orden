@@ -1620,12 +1620,12 @@ describe('somebody who stops being in the space while the file is open', () => {
       statement.bind = (...values: unknown[]) => {
         const bound = bind(...values)
         const run = bound.run.bind(bound)
-        bound.run = async () => {
+        bound.run = (async () => {
           const done = await run()
           await made.webSocketClose(laptop as unknown as WebSocket)
           state.drop(laptop)
           return done
-        }
+        }) as typeof bound.run
         return bound
       }
       return statement
@@ -1688,9 +1688,14 @@ describe('somebody who stops being in the space while the file is open', () => {
     env.db
       .prepare("update space_members set role = 'read' where space_id = ? and email = ?")
       .run(spaceId, WRITER)
-    await aMinuteLater(() => typeInto(socket))
+    await aMinuteLater(async () => {
+      await typeInto(socket)
+      await live.of(noteId).room.alarm()
+    })
     expect(socket.closed).toBe(false)
     expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
+    const read = await call(env, `/v1/notes/${noteId}`, { token: owner })
+    expect(read.json.content).toBe(OPENING)
   })
 
   test('has the socket closed when the owner takes them out', async () => {

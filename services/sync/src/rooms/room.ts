@@ -72,6 +72,7 @@ import {
   type RoomKind,
 } from './kind'
 import { RoomState, TOO_LARGE_IN_A_ROOM } from './state'
+import { accessOf } from './access'
 
 /** How long after the last keystroke the words are written into the note store.
  *  The same pause the app waits before it writes a note to disk, so somebody who
@@ -521,6 +522,28 @@ export class NoteRoom implements DurableObject {
       ...(joining.login ? { login: joining.login } : {}),
     } satisfies Attached)
 
+    // And written again now the socket is in the room. The wait on the first write
+    // lets other events in, and the close of another device of this person landing
+    // there saw none of theirs left and took the row away, leaving this socket in the
+    // room with no row to reach it by. A socket that cannot be written down is not
+    // left in the room either.
+    try {
+      await this.remember(held, joining.who)
+    } catch (error) {
+      server.close(1011, 'try again')
+      throw error
+    }
+
+    // Rows nothing will take away are cleared after the join rather than before it:
+    // the join waits on none of the rooms that asks, and fails for none of them.
+    if (joining.who) {
+      this.ctx.waitUntil(
+        this.sweep(held).catch((error: unknown) => {
+          noted(`room ${held.noteId} sweep`, error, null)
+        }),
+      )
+    }
+
     // The greeting, both halves at once: what this room holds, and who is in it.
     server.send(syncStep1(this.state.doc))
     const present = awarenessState(this.awareness)
@@ -588,23 +611,24 @@ export class NoteRoom implements DurableObject {
   /** This person has this file open. */
   private async remember(held: Held, who: string): Promise<void> {
     if (!who) return
-
-    // Rows a close never came for - an object the runtime dropped, a socket the
-    // network took - are cleared as new ones arrive; but only once the room a row
-    // names says nobody of theirs is in it, since the socket may simply have been
-    // open for days. See opened.ts.
-    await sweepOpened(this.env, { name: 'room_sockets', key: 'note_id' }, (noteId, them) =>
-      noteId === held.noteId
-        ? Promise.resolve(this.hasSocketOf(them))
-        : roomHolds(this.env, noteId, them),
-    )
-
     await this.env.DB.prepare(
       `insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, ?)
        on conflict(note_id, who) do update set opened_at = excluded.opened_at`,
     )
       .bind(held.noteId, held.spaceId, who, Date.now())
       .run()
+  }
+
+  /** Rows a close never came for - an object the runtime dropped, a socket the network
+   *  took - cleared as new ones arrive; but only once the room a row names says nobody
+   *  of theirs is in it, since the socket may simply have been open for days. See
+   *  opened.ts. */
+  private async sweep(held: Held): Promise<void> {
+    await sweepOpened(this.env, { name: 'room_sockets', key: 'note_id' }, (noteId, them) =>
+      noteId === held.noteId
+        ? Promise.resolve(this.hasSocketOf(them))
+        : roomHolds(this.env, noteId, them),
+    )
   }
 
   /** Whether this person has a socket here; see opened.ts. */
@@ -629,7 +653,8 @@ export class NoteRoom implements DurableObject {
   }
 
   /** Every socket whose sign-in has ended - run out, most of all, which nothing else
-   *  announces - closed, at most once a minute (#520). Asked when something is about to
+   *  announces - closed, at most once a minute (#520); and every socket whose person is
+   *  no longer in the space closed, or made a reader, in the same minute. Asked when something is about to
    *  be said to the sockets here, which is the only time a socket that outlived its
    *  sign-in could hear or say anything: a room nobody types in is never woken for it.
    *  A socket let in before the door said which sign-in it came with is left as it is. */
@@ -653,6 +678,23 @@ export class NoteRoom implements DurableObject {
       forget(this.awareness, announcedBy(socket), socket)
       socket.close(SIGNED_OUT, 'signed out')
       closed.add(socket)
+    }
+
+    // And what each sign-in still alive may still do to this file, which catches a
+    // revocation that did not reach this room: closed where they are no longer in
+    // the space, a reader where that is all they are now. See access.ts.
+    const noteOf = (this.held ?? heldIn(await this.ctx.storage.get('note')))?.noteId
+    const access = noteOf ? await accessOf(this.env, noteOf, [...live]).catch(() => null) : null
+    for (const socket of sockets) {
+      const login = loginOf(socket)
+      const may = login === undefined || closed.has(socket) ? undefined : access?.get(login)
+      if (may === 'none') {
+        forget(this.awareness, announcedBy(socket), socket)
+        socket.close(1008, 'no longer in this space')
+        closed.add(socket)
+      } else if (may === 'read' && mayWrite(socket)) {
+        attach(socket, { mayWrite: false })
+      }
     }
 
     // A close this side asked for brings no close handler with it, so the rows go from
@@ -747,6 +789,8 @@ export class NoteRoom implements DurableObject {
     // Whatever this says is heard by every socket here, so none whose sign-in has
     // ended - this one included - is left to say it or to hear it.
     if ((await this.askSignIns()).has(socket)) return
+    // Which may have just made this socket a reader; see `askSignIns`.
+    if (!mayWrite(socket) && isEdit(said)) return
 
     // And a document at its ceiling takes no more keystrokes from anybody. Refused
     // before `receive` rather than after: an update applied is in the document and
