@@ -57,6 +57,20 @@ interface Form {
   confirmed: boolean
 }
 
+const FIELDS = [
+  'subdomain',
+  'domain',
+  'address',
+  'note',
+  'rules',
+  'description',
+  'password',
+  'counter',
+  'counterDomain',
+  'themeName',
+  'confirmed',
+] as const satisfies readonly (keyof Form)[]
+
 function formOf(blog: Blog | undefined): Form {
   const site = blog?.site
   return {
@@ -232,19 +246,9 @@ class Publish {
     const next = formOf(blog)
     const was = fresh ? null : this.filledWith
     const now = this.form()
-    const keep = (key: keyof Form) => was !== null && !same(now[key], was[key])
-
-    this.subdomain = keep('subdomain') ? now.subdomain : next.subdomain
-    this.domain = keep('domain') ? now.domain : next.domain
-    this.address = keep('address') ? now.address : next.address
-    this.note = keep('note') ? now.note : next.note
-    this.rules = keep('rules') ? now.rules : copyRules(next.rules)
-    this.description = keep('description') ? now.description : next.description
-    this.password = keep('password') ? now.password : next.password
-    this.counter = keep('counter') ? now.counter : next.counter
-    this.counterDomain = keep('counterDomain') ? now.counterDomain : next.counterDomain
-    this.themeName = keep('themeName') ? now.themeName : next.themeName
-    this.confirmed = keep('confirmed') ? now.confirmed : next.confirmed
+    const typed = was ? FIELDS.filter((key) => !same(now[key], was[key])) : []
+    Object.assign(this, next, { rules: copyRules(next.rules) })
+    for (const key of typed) Object.assign(this, { [key]: now[key] })
     // Not the reader's to type: whether the account holds a password.
     this.hasPassword = holdsPassword(blog)
 
@@ -254,35 +258,13 @@ class Publish {
 
   /** What the form holds right now, in the shape a fill compares. */
   private form(): Form {
-    return {
-      subdomain: this.subdomain,
-      domain: this.domain,
-      address: this.address,
-      note: this.note,
-      rules: this.rules,
-      description: this.description,
-      password: this.password,
-      counter: this.counter,
-      counterDomain: this.counterDomain,
-      themeName: this.themeName,
-      confirmed: this.confirmed,
-    }
+    return Object.fromEntries(FIELDS.map((key) => [key, this[key]])) as unknown as Form
   }
 
   /** Fills the form from what the account holds. */
   fill(blog: Blog | undefined) {
-    const next = formOf(blog)
-    this.subdomain = next.subdomain
-    this.domain = next.domain
-    this.address = next.address
-    this.note = next.note
-    this.rules = copyRules(next.rules)
-    this.description = next.description
+    Object.assign(this, { ...formOf(blog), confirmed: this.confirmed })
     this.hasPassword = holdsPassword(blog)
-    this.password = next.password
-    this.counter = next.counter
-    this.counterDomain = next.counterDomain
-    this.themeName = next.themeName
   }
 
   /** The themes this device has, for the sheet to offer: the app's own first,
