@@ -202,3 +202,18 @@ describe('skip and finish', () => {
     expect(task && nextOccurrence(task, '2026-10-04')).toBeNull()
   })
 })
+
+describe('a repeat counted from a deadline alone', () => {
+  test('moves the deadline on, in both forms', () => {
+    expect(
+      ticked('- [ ] Pay [repeat:: every month] [deadline:: 2026-10-01]\n', 0, '2026-10-04'),
+    ).toBe(
+      '- [ ] Pay [repeat:: every month] [deadline:: 2026-11-01]\n' +
+        '- [x] Pay [repeat:: every month] [deadline:: 2026-10-01] [completion:: 2026-10-04]\n',
+    )
+    const line = '- [ ] Pay [repeat:: every month] [deadline:: 2026-10-01]'
+    expect(appliedEdits(line, skip(line, '2026-10-04'))).toBe(
+      '- [ ] Pay [repeat:: every month] [deadline:: 2026-11-01]',
+    )
+  })
+})

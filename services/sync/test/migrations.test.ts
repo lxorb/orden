@@ -360,3 +360,27 @@ describe('0060, what a note or a space emptied for good still named', () => {
     database.close()
   })
 })
+
+describe('0064, the versions kept as they are', () => {
+  test('holds the rows from just before it, and no older one', () => {
+    const database = upTo('0063_purged_answers.sql')
+    seed(database)
+    database.exec(
+      `insert into notes (id, space_id, path, seq, updated_at, deleted, size, hash)
+       values ('n', 'sp', 'n.md', 1, 1, 0, 2, 'abc')`,
+    )
+    const now = Date.now()
+    database.exec(
+      `insert into note_versions (note_id, at, hash, size)
+       values ('n', ${now - 60 * 60 * 1000}, 'old', 2), ('n', ${now - 60 * 1000}, 'new', 2)`,
+    )
+
+    database.exec(sql('0064_held_versions.sql'))
+
+    expect(database.prepare('select hash, held from note_versions order by at').all()).toEqual([
+      { hash: 'old', held: 0 },
+      { hash: 'new', held: 1 },
+    ])
+    database.close()
+  })
+})

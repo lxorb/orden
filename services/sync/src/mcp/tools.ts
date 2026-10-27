@@ -357,13 +357,18 @@ async function listBacklinks(
 /** Writes through the same two limits the sync API applies: a note is at most
  *  so large, and an account holds at most so much. A connector that skipped
  *  them would be the way around the quota. */
-async function writeNote(env: Env, space: Space, args: Record<string, unknown>): Promise<string> {
+async function writeNote(
+  env: Env,
+  space: Space,
+  args: Record<string, unknown>,
+  device: string | undefined,
+): Promise<string> {
   const path = cleanPath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
   const asked = text(args, 'content')
   if (asked === null) return 'The content has to be text.'
-  return (await putNote(env, space, path, asked ?? '')) ?? `Saved ${path}.`
+  return (await putNote(env, space, path, asked ?? '', device)) ?? `Saved ${path}.`
 }
 
 /** A note's words written, made where there is none: null when it was, else the
@@ -373,6 +378,7 @@ export async function putNote(
   space: Pick<Space, 'id' | 'user_id'>,
   path: string,
   content: string,
+  device?: string,
 ): Promise<string | null> {
   const size = byteLength(content)
   if (size > MAX_NOTE_BYTES) return 'That note is too large.'
@@ -397,12 +403,15 @@ export async function putNote(
   // A note with a document is written by its room, which takes the text in as the
   // operations it differs by (docs/sync-v2.md section 5.3); see `writeWords`.
   if (existing) {
-    const saved = await writeWords(env, existing, content, path, { name: '' })
+    const saved = await writeWords(env, existing, content, path, {
+      name: '',
+      ...(device === undefined ? {} : { device }),
+    })
     if (saved === null) return `${path} could not be written just now. Try again.`
     if (saved === MOVED) return `${path} changed while I was writing it. Read it again first.`
   } else {
     try {
-      await addNote(env, space.id, path, content)
+      await addNote(env, space.id, path, content, '', device)
     } catch (error) {
       // A space whose tree is rows holds one name per folder as Windows and a Mac
       // compare names, so another spelling of a note that is there is that note.
@@ -467,7 +476,7 @@ export async function callTool(
       if (typeof space === 'string') return space
       if (space.role === 'read') return `${space.name} was shared with you to read, not to write.`
 
-      return writeNote(env, space, args)
+      return writeNote(env, space, args, token.device)
     }
 
     default:

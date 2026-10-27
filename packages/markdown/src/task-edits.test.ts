@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { changedTask, taskLine, type TaskChange, writeTask } from './task-edits'
+import { changedTask, lastDateTaken, taskLine, type TaskChange, writeTask } from './task-edits'
 import { readTask } from './task-line'
 
 /** Lines already in nib's order, which a read and a whole write give back byte for
@@ -253,4 +253,43 @@ describe('code in a task', () => {
   test('is not cut into when a tag is taken away', () => {
     expect(changedTask('- [ ] run `a #foo` now #foo', { tags: [] })).toBe('- [ ] run `a #foo` now')
   })
+
+  test('takes the repeat and the time away with the last date the task had', () => {
+    expect(changedTask('- [ ] Pay 🔁 every month 📅 2026-10-01', { due: null })).toBe('- [ ] Pay')
+    expect(
+      changedTask('- [ ] Pay [time:: 09:00] [repeat:: every month] [deadline:: 2026-10-01]', {
+        deadline: null,
+      }),
+    ).toBe('- [ ] Pay')
+    // A date left on the line keeps them, and so does a task that never had one.
+    expect(changedTask('- [ ] Pay 🔁 every month 🛫 2026-09-28 📅 2026-10-01', { due: null })).toBe(
+      '- [ ] Pay 🔁 every month 🛫 2026-09-28',
+    )
+    expect(
+      changedTask('- [ ] Pay [repeat:: every week when done] [time:: 09:00]', { priority: 1 }),
+    ).toBe('- [ ] Pay [priority:: highest] [repeat:: every week when done] [time:: 09:00]')
+  })
+
+  test('reads a date given as undefined as left, and one given as nothing as taken', () => {
+    const line = '- [ ] Pay 🔁 every week 📅 2026-10-01'
+    expect(changedTask(line, { due: undefined, priority: 2 } as unknown as TaskChange)).toBe(
+      '- [ ] Pay ⏫ 🔁 every week 📅 2026-10-01',
+    )
+    expect(changedTask(line, { due: '' })).toBe('- [ ] Pay')
+  })
+
+  test('keeps a repeat and a time the change itself gives, with its last date taken', () => {
+    expect(lastDateTaken(readTaskOf('- [ ] Pay 🔁 every week 📅 2026-10-01'), { due: null })).toBe(
+      true,
+    )
+    expect(
+      changedTask('- [ ] Pay 🔁 every week 📅 2026-10-01', { due: null, recurrence: 'every day' }),
+    ).toBe('- [ ] Pay 🔁 every day')
+  })
 })
+
+function readTaskOf(line: string) {
+  const found = readTask(line)
+  if (!found) throw new Error('not a task')
+  return found
+}

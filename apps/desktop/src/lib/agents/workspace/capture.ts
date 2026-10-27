@@ -38,7 +38,7 @@ import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, writerOf } from './call'
 import { made } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, type Place, placeFor, writableAt } from './spaces'
+import { judgedForWriting, onDisk, type Place, placeFor, placeOf, writableAt } from './spaces'
 import { treeOf } from './tree'
 
 const SHAPES = [...CAPTURE_AS, 'link'] as const
@@ -212,7 +212,7 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const shape = maybe(call, 'as') ?? 'clip'
   if (!isShape(shape)) throw new Refused('bad_arguments', `as is one of ${SHAPES.join(', ')}`)
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const page = await pageIn(call, need(call, 'tab'), shape)
   if (!page.url) throw new Refused('failed', 'that tab has no page to capture')
 
@@ -238,7 +238,10 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const there = (await workspace.noteText(path)) !== null
   if (!there) {
     await made(place, relative, words, false)
-    return done({ path: relative, source: page.url, created: true }, page.url)
+    return done(
+      { path: relative, space: place.space.id, source: page.url, created: true },
+      page.url,
+    )
   }
 
   const under = maybe(call, 'under')
@@ -248,7 +251,7 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
     { at: under === null ? { end: true } : { heading: under }, insert_after: section },
   ])
 
-  return done({ path: relative, source: page.url, created: false }, page.url)
+  return done({ path: relative, space: place.space.id, source: page.url, created: false }, page.url)
 }
 
 /** A picture or a PDF kept beside a note the way a pasted picture is: in the folder the

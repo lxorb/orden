@@ -18,7 +18,7 @@
 
 import { may, type Message, type Who } from '@nib/chats'
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@nib/chats/agent'
-import type { AgentAnswer } from '../../automation/caller'
+import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
 import type { ChatEntry, Chats } from '../../chats/api'
 import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'
@@ -57,17 +57,21 @@ function seenBy(call: Call, store: Chats): Seen[] {
   })
 }
 
-/** The chat a call names, by its id or its name (with or without `#`): the space in
- *  front's first where two spaces have one by the name. */
+/** The chat a call names, by its id or its name (with or without `#`): where two spaces
+ *  have one by the name, the one of the space its AI panel thread works in, then the
+ *  space in front's. */
 function chatFor(call: Call, store: Chats): Seen {
   const named = need(call, 'chat')
   const folded = named.replace(/^#/, '').trim().toLowerCase()
   const seen = seenBy(call, store)
+  const byName = seen.filter((one) => one.name.toLowerCase() === folded)
+  const home = workspace.spaces.find((one) => one.id === threadSpaceOf(call.caller))?.root
   const front = workspace.activeSpace?.root
   const found =
     seen.find((one) => one.entry.id === named) ??
-    seen.find((one) => one.name.toLowerCase() === folded && one.entry.root === front) ??
-    seen.find((one) => one.name.toLowerCase() === folded)
+    byName.find((one) => one.entry.root === home) ??
+    byName.find((one) => one.entry.root === front) ??
+    byName[0]
   if (!found)
     throw new Refused('not_found', `there is no chat called ${named}: list_chats names them`)
   return found

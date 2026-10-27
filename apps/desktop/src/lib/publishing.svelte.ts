@@ -41,6 +41,72 @@ type Address = 'subdomain' | 'domain'
 /** What the account holds about a space's blog. */
 type Blog = RemoteSpace['blog']
 
+/** The fields of the form a reader can change, as a fill would set them. */
+interface Form {
+  subdomain: string
+  domain: string
+  address: Address
+  note: string
+  rules: SiteSettings['rules']
+  description: string
+  password: string
+  counter: string
+  counterDomain: string
+  themeName: string
+  /** The "becomes public" tick, which a published space starts with. */
+  confirmed: boolean
+}
+
+const FIELDS = [
+  'subdomain',
+  'domain',
+  'address',
+  'note',
+  'rules',
+  'description',
+  'password',
+  'counter',
+  'counterDomain',
+  'themeName',
+  'confirmed',
+] as const satisfies readonly (keyof Form)[]
+
+function formOf(blog: Blog | undefined): Form {
+  const site = blog?.site
+  return {
+    subdomain: blog?.subdomain ?? '',
+    domain: blog?.domain ?? '',
+    address: blog?.domain ? 'domain' : 'subdomain',
+    note: blog?.note ?? '',
+    rules: copyRules(site?.rules),
+    description: site?.description ?? '',
+    password: '',
+    counter: site?.analytics?.url ?? '',
+    counterDomain: site?.analytics?.domain ?? '',
+    themeName: site?.theme?.name ?? '',
+    confirmed: !!blog?.enabled,
+  }
+}
+
+/** Whether the account holds a password for the site. A space that was never
+ *  published may come with no site at all. */
+function holdsPassword(blog: Blog | undefined): boolean {
+  const site = blog?.site
+  return !!site?.password
+}
+
+function copyRules(rules: SiteSettings['rules'] | undefined): SiteSettings['rules'] {
+  return {
+    include: [...(rules?.include ?? [])],
+    exclude: [...(rules?.exclude ?? [])],
+    otherwise: rules?.otherwise ?? 'all',
+  }
+}
+
+/** Whether a field still holds what was put in it: rules are compared by what
+ *  they say, since a tick in the sheet makes a new list. */
+const same = (one: unknown, other: unknown) => JSON.stringify(one) === JSON.stringify(other)
+
 class Publish {
   open = $state(false)
   /** The folder the sheet is about, and the space on the account behind it. */
@@ -148,6 +214,7 @@ class Publish {
     this.answers = []
     this.kept = null
     this.open = true
+    this.refill(true)
   }
 
   close() {
@@ -155,25 +222,49 @@ class Publish {
     this.stopWatchingDomain()
   }
 
+  /** The blog the form was last filled from, as text, so a listing that hands
+   *  back the same blog in a new object is told apart from one that changed it. */
+  private filledFrom: string | null = null
+  /** What that fill put in each field, so a field the reader has changed since
+   *  is told apart from one they left alone. */
+  private filledWith: Form | null = null
+
+  /** Fills the form again when the blog under it changed: publishing, taking the
+   *  password off, another device. Only the fields the reader has not touched
+   *  follow it, the way a settings page in Google Docs or Notion keeps what you
+   *  are typing while the rest of the page updates. Every listing of the
+   *  account's spaces makes new objects, the five-minute reconcile among them,
+   *  so the same blog handed back changes nothing.
+   *
+   *  `fresh` takes everything from the account: the sheet just opened, or its
+   *  own publish has just said what the blog now is. */
+  refill(fresh = false) {
+    const blog = this.blog
+    const from = JSON.stringify(blog ?? null)
+    if (!fresh && from === this.filledFrom) return
+
+    const next = formOf(blog)
+    const was = fresh ? null : this.filledWith
+    const now = this.form()
+    const typed = was ? FIELDS.filter((key) => !same(now[key], was[key])) : []
+    Object.assign(this, next, { rules: copyRules(next.rules) })
+    for (const key of typed) Object.assign(this, { [key]: now[key] })
+    // Not the reader's to type: whether the account holds a password.
+    this.hasPassword = holdsPassword(blog)
+
+    this.filledFrom = from
+    this.filledWith = next
+  }
+
+  /** What the form holds right now, in the shape a fill compares. */
+  private form(): Form {
+    return Object.fromEntries(FIELDS.map((key) => [key, this[key]])) as unknown as Form
+  }
+
   /** Fills the form from what the account holds. */
   fill(blog: Blog | undefined) {
-    this.subdomain = blog?.subdomain ?? ''
-    this.domain = blog?.domain ?? ''
-    this.address = blog?.domain ? 'domain' : 'subdomain'
-    this.note = blog?.note ?? ''
-
-    const site = blog?.site
-    this.rules = {
-      include: [...(site?.rules.include ?? [])],
-      exclude: [...(site?.rules.exclude ?? [])],
-      otherwise: site?.rules.otherwise ?? 'all',
-    }
-    this.description = site?.description ?? ''
-    this.hasPassword = !!site?.password
-    this.password = ''
-    this.counter = site?.analytics?.url ?? ''
-    this.counterDomain = site?.analytics?.domain ?? ''
-    this.themeName = site?.theme?.name ?? ''
+    Object.assign(this, { ...formOf(blog), confirmed: this.confirmed })
+    this.hasPassword = holdsPassword(blog)
   }
 
   /** The themes this device has, for the sheet to offer: the app's own first,
@@ -463,6 +554,8 @@ class Publish {
       const result = await api.publish(account.accountToken, id, settings)
       this.dns = result.dns
       await account.loadSpaces()
+      // What was typed is now what the account holds, so the form starts clean.
+      this.refill(true)
     } catch (error) {
       this.error = message(error, 'could not publish')
     } finally {
@@ -482,6 +575,7 @@ class Publish {
       this.dns = []
       this.status = null
       await account.loadSpaces()
+      this.refill(true)
     } catch (error) {
       // Said out loud, the way publishing says it. Taking a space back off the
       // web is the half of the pair somebody is anxious about, and a button that

@@ -8,7 +8,7 @@
  *  or touch the tabs in front of them (docs/agent-native.md 8.6). */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { callerOf, type Caller, READER } from '../../automation/caller'
+import { answerThreadSpaces, callerOf, type Caller, READER } from '../../automation/caller'
 import { AGENT_WINDOW_VERBS } from '../verbs'
 import { type FileOp, FileOps, type Kind } from '../../workspace/file-ops'
 
@@ -380,6 +380,12 @@ vi.mock('../../versions', () => ({
 }))
 
 vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
+
+/** The PDFs opened for reading, by their path on this disk; none of them reads. */
+const openDocument = vi.hoisted(() =>
+  vi.fn((_path: string) => Promise.reject(new Error('no PDF here'))),
+)
+vi.mock('../../pdf/document', () => ({ openDocument }))
 
 vi.mock('../../terminal/shells.svelte', () => ({
   shells: { ask: () => Promise.resolve([]), chosen: { id: 'pwsh', name: 'PowerShell' } },
@@ -1561,5 +1567,138 @@ describe('a note an agent names with a dot in it', () => {
     expect(await call('read_note', { path: 'Reading 2026.10' })).toMatchObject({
       result: { path: 'Reading 2026.10.md' },
     })
+  })
+})
+
+/** An AI panel thread works in the space it was started in (docs/ai-sidebar.md 4.11), so
+ *  a call of it that names no space is about that space, not the one in front: a
+ *  `/batch` helper of a Home thread keeps to Home's notes when the reader moves to Work. */
+describe('a panel thread works in its own space', () => {
+  const fromHome = () =>
+    callerOf(
+      { id: 'nib-anthropic', name: 'Claude', scopes: EVERY, spaces: 'all', mode: 'unsupervised' },
+      'thread-home',
+    )
+
+  beforeEach(() => {
+    answerThreadSpaces((thread) => (thread === 'thread-home' ? 'home' : null))
+  })
+
+  test('a note named without a space is the thread’s space’s', async () => {
+    files.set('/s/Work/Soup.md', '# Work soup\n')
+    expect(await call('read_note', { path: 'Soup' }, fromHome())).toMatchObject({
+      result: { space: 'home', text: expect.stringContaining('- [ ] Buy milk') },
+    })
+    await call('write_note', { path: 'Broth', content: '# Broth\n' }, fromHome())
+    expect(files.get('/s/Home/Broth.md')).toBe('# Broth\n')
+    expect(files.has('/s/Work/Broth.md')).toBe(false)
+    expect(await call('create_note', { path: 'Fresh' }, fromHome())).toMatchObject({
+      result: { path: 'Fresh.md', created: true, space: 'home' },
+    })
+  })
+
+  test('a space it names still wins', async () => {
+    await call('write_note', { space: 'Work', path: 'Broth', content: '# Broth\n' }, fromHome())
+    expect(files.get('/s/Work/Broth.md')).toBe('# Broth\n')
+  })
+
+  test('a tab in front is still the tab’s own note', async () => {
+    await call('write_note', { tab: 't1', content: '# Over\n' }, fromHome())
+    expect(docs.writeNote.mock.calls.at(-1)?.[1]).toEqual({ path: 'Plan.md', space: 'work' })
+  })
+
+  test('a thread nobody knows, or no thread, is the space in front', async () => {
+    await call('write_note', { path: 'Broth', content: '# Broth\n' })
+    expect(files.get('/s/Work/Broth.md')).toBe('# Broth\n')
+  })
+
+  /** A tab's file is in the tab's space, the one in front: said by its tab alone from a
+   *  thread in another space, it is never the thread space's file at the same path. */
+  describe('a tab of the space in front, named by its id', () => {
+    const away = [
+      { ...tabs[0], id: 'c9', kind: 'canvas', path: '/s/Work/board.canvas', shown: 'board' },
+      { ...tabs[0], id: 'p9', kind: 'pdf', path: '/s/Work/paper.pdf', shown: 'paper' },
+    ] as (typeof tabs)[number][]
+
+    beforeEach(() => {
+      tabs.push(...away)
+      files.set('/s/Work/board.canvas', '{"nodes":[],"edges":[]}')
+      return () => void tabs.splice(tabs.length - away.length, away.length)
+    })
+
+    test('a canvas is read and edited in the tab’s space', async () => {
+      expect(await call('read_canvas', { tab: 'c9' }, fromHome())).toMatchObject({ ok: true })
+      await call('edit_canvas', { tab: 'c9', ops: [{ op: 'add_card', text: 'Hi' }] }, fromHome())
+      expect(files.get('/s/Work/board.canvas')).toContain('Hi')
+      expect(files.get('/s/Home/board.canvas')).not.toContain('Hi')
+    })
+
+    test('a PDF is read from the tab’s space', async () => {
+      openDocument.mockClear()
+      await call('read_pdf', { tab: 'p9' }, fromHome())
+      expect(openDocument).toHaveBeenCalledWith('/s/Work/paper.pdf')
+    })
+
+    test('a file tab renamed is the tab’s file renamed', async () => {
+      expect(
+        await call('workspace_tabs', { op: 'rename', tab: 't1', name: 'Roadmap' }, fromHome()),
+      ).toMatchObject({ result: { from: 'Plan.md', to: 'Roadmap.md', space: 'work' } })
+      expect(workspace.rename).toHaveBeenCalledWith('/s/Work/Plan.md', 'Roadmap.md')
+    })
+  })
+
+  test('the context says the thread’s space, and the space each tab is in', async () => {
+    expect(await call('get_context', {}, fromHome())).toMatchObject({
+      result: {
+        space: 'Home',
+        selected: { id: 't1', path: 'Plan.md', space: 'Work' },
+        tabs: [{ id: 't1', space: 'Work' }, { id: 't2', space: 'Work' }, { id: 'w1' }],
+      },
+    })
+    const reader = (await call('get_context', {})) as { result: { selected: object } }
+    expect(reader.result.selected).not.toHaveProperty('space')
+  })
+
+  test('the context of a grant that reaches the thread’s space alone names it, and no tab', async () => {
+    const onlyHome = callerOf(
+      { id: 'x', name: 'X', scopes: EVERY, spaces: ['Home'], mode: 'unsupervised' },
+      'thread-home',
+    )
+    expect(await call('get_context', {}, onlyHome)).toMatchObject({
+      result: { space: 'Home', selected: null, tabs: [] },
+    })
+  })
+
+  test('a page captured goes to the thread’s space, and the answer says so', async () => {
+    const answered = await call(
+      'capture_to_note',
+      { tab: 'w1', as: 'clip', note: 'Kept' },
+      fromHome(),
+    )
+    expect(answered).toMatchObject({ result: { path: 'Kept.md', space: 'home' } })
+    expect(files.has('/s/Home/Kept.md')).toBe(true)
+  })
+
+  test('a thread whose space is gone from this device is refused, not sent to the front', async () => {
+    answerThreadSpaces(() => 'left-long-ago')
+    expect(await call('write_note', { path: 'Broth', content: 'x' }, fromHome())).toMatchObject({
+      code: 'no_such_space',
+    })
+    expect(files.has('/s/Work/Broth.md')).toBe(false)
+  })
+
+  test('a thread whose space the grant does not reach is refused, not sent to the front', async () => {
+    answerThreadSpaces(() => 'secret')
+    expect(
+      await call(
+        'write_note',
+        { path: 'Broth', content: 'x' },
+        callerOf(
+          { id: 'x', name: 'X', scopes: EVERY, spaces: ['Work'], mode: 'unsupervised' },
+          'thread-home',
+        ),
+      ),
+    ).toMatchObject({ code: 'no_such_space' })
+    expect(files.has('/s/Work/Broth.md')).toBe(false)
   })
 })

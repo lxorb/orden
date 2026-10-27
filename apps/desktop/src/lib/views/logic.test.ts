@@ -1,11 +1,12 @@
 import { answer, builtinView, readBase, writeBase } from '@nib/bases'
+import { changedTask } from '@nib/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
 import { daysShown, occurrences, place, placedByDay, stepped, timeOf } from './calendar'
 import { donutPaths, heights, linePath, seriesOf, settingsOf, totalOf } from './chart'
 import { changeOf, columnsOf, defaultColumns, editorOf, knownProperties } from './columns'
 import { contextFor } from './context'
 import { dayOf, nextMonday, nowOf, weekStart } from './days'
-import { dropInto } from './drop'
+import { dropInto, hourDrop } from './drop'
 import {
   addView,
   freeViewName,
@@ -246,6 +247,67 @@ describe('a drop into a group', () => {
     })
     expect(dropInto('note.tags', 'b', noteRow('Bug.md', 'tags: [b]'), TODAY)).toBeNull()
     expect(dropInto('file.size', 3, bank, TODAY)).toBeNull()
+  })
+
+  test('an overdue task dropped on a day is due that day, so it leaves overdue', () => {
+    const day = { kind: 'date' as const, iso: '2026-10-09' }
+    const vault = (line: string) => {
+      const row = taskRow('Bills.md', line, 1)
+      if (row.task) row.task.dueReads = 'deadline'
+      return row
+    }
+    // Its deadline is what made it late, and that is the day it now shows on.
+    expect(dropInto('formula.day', day, vault('- [ ] Pay bill 📅 2026-10-01'), TODAY)).toEqual({
+      change: { task: { due: '2026-10-09' } },
+    })
+    const nib = taskRow('Bills.md', '- [ ] Pay bill [deadline:: 2026-10-01]', 1)
+    expect(dropInto('formula.day', day, nib, TODAY)).toEqual({
+      change: { task: { deadline: '2026-10-09' } },
+    })
+    // A start date moves with it, so the task is on that day and not before.
+    const started = vault('- [ ] Pay bill 🛫 2026-09-28 📅 2026-10-01')
+    expect(dropInto('formula.day', day, started, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09', due: '2026-10-09' } },
+    })
+    const drop = dropInto('formula.day', day, started, TODAY)
+    const change = drop && 'change' in drop ? drop.change.task : undefined
+    expect(change && changedTask('- [ ] Pay bill 🛫 2026-09-28 📅 2026-10-01', change)).toBe(
+      '- [ ] Pay bill 🛫 2026-10-09 📅 2026-10-09',
+    )
+    // The same on Upcoming's week strip, the calendar and the agenda, which drop on the
+    // task's date.
+    expect(
+      dropInto('task.date', '2026-10-09', vault('- [ ] Pay bill 📅 2026-10-01'), TODAY),
+    ).toEqual({ change: { task: { due: '2026-10-09' } } })
+    expect(dropInto('task.date', '2026-10-09', started, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09', due: '2026-10-09' } },
+    })
+    // And on an hour of the calendar's week or day, with the time where it was let go.
+    const bill = vault('- [ ] Pay bill 🔁 every month 📅 2026-10-01')
+    expect(hourDrop('task.date', '2026-10-09', '10:00', bill, TODAY)).toEqual({
+      change: { task: { due: '2026-10-09', time: '10:00' } },
+    })
+    expect(hourDrop('task.date', '2026-10-09', '10:00', started, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09', due: '2026-10-09', time: '10:00' } },
+    })
+    // A calendar placed by another date moves that one, and a time only with a start.
+    expect(hourDrop('task.deadline', '2026-10-09', '10:00', started, TODAY)).toEqual({
+      change: { task: { due: '2026-10-09' } },
+    })
+    expect(hourDrop('note.when', '2026-10-09', '10:00', bill, TODAY)).toEqual({
+      change: { note: { when: '2026-10-09' } },
+    })
+    // A done task is late no longer, and Completed's days are the days it was done.
+    const paid = vault('- [x] Pay bill 📅 2026-09-01 ✅ 2026-09-03')
+    expect(dropInto('formula.day', day, paid, TODAY)).toBeNull()
+    expect(dropInto('task.date', '2026-10-09', paid, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09' } },
+    })
+    // A deadline still to come stays where it is.
+    const later = vault('- [ ] Pay bill 🛫 2026-10-02 📅 2026-10-20')
+    expect(dropInto('formula.day', day, later, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09' } },
+    })
   })
 
   test("carries one member of a list from its column to another's, and no other", () => {

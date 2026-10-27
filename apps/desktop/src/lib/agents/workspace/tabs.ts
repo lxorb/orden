@@ -44,6 +44,8 @@ import {
   onDisk,
   type Place,
   placeFor,
+  placeOf,
+  reachable,
   sharedSource,
   writableAt,
 } from './spaces'
@@ -152,16 +154,29 @@ async function selectionIn(tab: Tab): Promise<unknown> {
 }
 
 export async function getContext(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, null)
+  // The space the caller's calls that name none work in: an AI panel thread's own, which
+  // the tabs in front are not in when the reader has moved on, so each row then says its
+  // space and the model names it to reach the note a tab shows.
+  const place = placeOf(call)
+  const open = workspace.activeSpace
+  // The tabs are the space in front's: none of them for a grant that does not reach it,
+  // which still hears where its own thread works.
+  if (open?.id !== place.space.id && !reachable(call).some((one) => one.id === open?.id)) {
+    const nothing = { space: place.space.name, selected: null, selection: null, tabs: [] }
+    return done({ ...nothing, typing: false }, sharedSource(place))
+  }
+  const front = placeFor(call, null)
+  const away = place.space.id !== front.space.id
+  const rowOf = (one: Tab) => (away ? { ...tabOf(one), space: front.space.name } : tabOf(one))
   const tab = workspace.active
   const last = tab?.note.live.readerAt ?? null
   const named = namedOutside()
 
   const context = {
     space: place.space.name,
-    selected: tab ? tabOf(tab) : null,
+    selected: tab ? rowOf(tab) : null,
     selection: tab ? await selectionIn(tab) : null,
-    tabs: workspace.tabs.map(tabOf),
+    tabs: workspace.tabs.map(rowOf),
     typing: last !== null && Date.now() - last < TYPING,
   }
 
@@ -169,7 +184,7 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
   // writes in are not the reader's words.
   const outside =
     tab?.kind === 'terminal' ? 'tab titles and terminal output' : named ? 'tab titles' : null
-  return done(context, sharedSource(place) ?? outside)
+  return done(context, sharedSource(place) ?? sharedSource(front) ?? outside)
 }
 
 /** Whether a tab's title is somebody else's words: a page's, or the program a terminal
@@ -276,7 +291,7 @@ async function openSomething(call: Call): Promise<AgentAnswer> {
   if (view === 'settings') return showSettings(call)
   if (view !== null) throw new Refused('bad_arguments', 'view is graph, scratchpad or settings')
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const relative = judged(need(call, 'path'))
   const path = onDisk(place, relative)
   const back = behind(call)
@@ -396,7 +411,7 @@ async function renameTab(call: Call): Promise<AgentAnswer> {
     const relative = relativeTo(place.space.root, tab.path)
     const folder = folderOf(relative)
     const to = folder ? `${folder}/${name}` : name
-    return moveFile({ ...call, args: { path: relative, to } })
+    return moveFile({ ...call, args: { path: relative, to, space: place.space.id } })
   }
 
   if (!isDraft(tab.note) && tab.kind !== 'terminal') {

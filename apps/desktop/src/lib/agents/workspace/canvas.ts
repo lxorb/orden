@@ -34,7 +34,7 @@ import { readablePages } from './pages-ops'
 import { Refused } from './problem'
 import { namedTab, tabsOwnSpace } from './tab-target'
 import { kindsWhere } from '../../workspace/tab-kinds'
-import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
+import { judged, judgedForWriting, onDisk, type Place, placeOf, sharedSource } from './spaces'
 
 /** A canvas a call names: a `.canvas` or `.pages` file of a space it may reach, by its
  *  path, or by `tab` - which also reaches one drawn in a tab and not saved yet. */
@@ -51,7 +51,7 @@ interface Target {
 function canvasOf(call: Call, writing: boolean): Target {
   if (maybe(call, 'tab') !== null) return canvasInTab(call, writing)
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const asked = need(call, 'path')
   const relative = writing ? judgedForWriting(asked) : judged(asked)
   if (!isCanvasTarget(relative) && !isPagesTarget(relative)) {
@@ -74,7 +74,9 @@ const PLANES = kindsWhere((one) => one.plane)
 function canvasInTab(call: Call, writing: boolean): Target {
   const { tab, place, relative } = namedTab(call, PLANES, 'a canvas or page note')
   if (relative !== null) {
-    return canvasOf({ ...call, args: { ...call.args, tab: null, path: relative } }, writing)
+    // The tab's own space, said: one the call names none of is the thread's otherwise.
+    const args = { ...call.args, tab: null, path: relative, space: place.space.id }
+    return canvasOf({ ...call, args }, writing)
   }
   if (tab.path !== null) throw new Refused('by_hand', `tab ${tab.id} is outside every space`)
   if (tab.note.shared !== null) {

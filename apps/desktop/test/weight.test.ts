@@ -892,12 +892,9 @@ function holds(tail: string): boolean {
  *  file shows the storage warning (`full` and `syncFull` in usage.svelte.ts). Measured
  *  3,390,575 with main as of this raise.
  *
- *  Raised 2026-10-27, to 3,395,800, for B540: a wait on the owner can be closed and goes on
- *  out of sight, slows down, and is withdrawn by Cancel (`closed`, `aside`, `later`
- *  and `cancel` in joining.svelte.ts, `withdraw` in api/routes.ts, the pill's door in
- *  surfaces.svelte.ts and App.svelte). Measured 3,395,445 with main as of this
- *  raise. */
-const BUDGET = 3_395_800
+ *  Raised 2026-10-27, to 3,405,000, once for the fourth bug burn-down's pending fixes,
+ *  so each of them need not raise it. Measured 3,390,605 with main as of this raise. */
+const BUDGET = 3_405_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

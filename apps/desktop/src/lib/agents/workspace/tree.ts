@@ -30,7 +30,7 @@ import {
   judgedForWriting,
   onDisk,
   type Place,
-  placeFor,
+  placeOf,
   sharedSource,
   writableAt,
 } from './spaces'
@@ -84,7 +84,7 @@ async function named(place: Place, asked: string): Promise<{ relative: string; e
 }
 
 export async function listNotes(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const asked = maybe(call, 'folder')
   const folder = asked === null ? null : judged(asked)
   const kind = maybe(call, 'kind')
@@ -128,7 +128,7 @@ export async function listNotes(call: Call): Promise<AgentAnswer> {
 }
 
 export async function moveFile(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const { relative: from, entry } = await named(place, need(call, 'path'))
   const to = movedPath(from, judgedForWriting(need(call, 'to')), entry.is_dir)
 
@@ -171,7 +171,7 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
 }
 
 export async function trashFile(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const { relative, entry } = await named(place, need(call, 'path'))
   const path = onDisk(place, relative)
 
@@ -209,7 +209,7 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
 }
 
 export async function createFolder(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const relative = judgedForWriting(need(call, 'path'))
   if (await entryIn(place, relative)) return done({ path: relative, made: false })
 

@@ -1207,7 +1207,14 @@ export class NoteRoom implements DurableObject {
       await this.keptBeside(file, settled, held.kind)
     }
 
-    const saved = await saveNote(this.env, file, settled, file.path, this.settling)
+    const saved = await saveNote(
+      this.env,
+      file,
+      settled,
+      file.path,
+      this.settling,
+      this.settlingDevice === undefined ? {} : { versionBy: this.settlingDevice },
+    )
     if (!saved) {
       await this.settleSoon()
       return false

@@ -91,6 +91,15 @@ describe('a call says its thread', () => {
       args: { tool: 'edit_note', thread: 'thread-1' },
     })
   })
+
+  test('and so does the context of its turn, which is told the space the thread works in', async () => {
+    answer = []
+    await crateTools.context(CLAUDE, 'thread-1')
+    expect(asked.at(-1)).toMatchObject({
+      command: 'ai_agent_context',
+      args: { thread: 'thread-1' },
+    })
+  })
 })
 
 describe('an answer, as nib mcp writes it', () => {

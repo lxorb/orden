@@ -88,6 +88,7 @@ vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
 const calls: { name: string; args: unknown; mode: Mode }[] = []
 let onCall: () => unknown = () => undefined
 let where = ''
+const contextFor: (string | undefined)[] = []
 const tools: Tools = {
   list: () =>
     Promise.resolve({
@@ -101,7 +102,10 @@ const tools: Tools = {
         },
       ],
     }),
-  context: () => Promise.resolve(where),
+  context: (_provider, thread) => {
+    contextFor.push(thread)
+    return Promise.resolve(where)
+  },
   call: async (_provider, mode, name, args): Promise<ToolOutput> => {
     calls.push({ name, args, mode })
     await onCall()
@@ -331,6 +335,14 @@ describe('where the reader is', () => {
       '<reader-context>\nSpace: Birds. In front: Herons.md. Open: Herons.md, Egrets.md.\n</reader-context>\n\nWhat is this note about?',
       '<reader-context>\nSpace: Birds. In front: Egrets.md.\n</reader-context>\n\nAnd this one?',
     ])
+  })
+
+  test('is asked for the thread, so it names the space the thread works in', async () => {
+    answers = [stream('anthropic-2')]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    contextFor.length = 0
+    await send(thread, 'What is this note about?')
+    expect(contextFor).toEqual([thread.id])
   })
 })
 

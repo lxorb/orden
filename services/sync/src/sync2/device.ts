@@ -19,15 +19,22 @@ export async function deviceOf(
 ): Promise<string> {
   const who = context.get('who')
   if (who.kind === 'guest') return `guest:${who.guest.id}`
-  if (who.program) return `program:${who.user.id}`
-
   const header = context.req.header('authorization')
+  if (who.program) return await programDevice(tokenIn(header) ?? '')
+
   const device = await deviceOfSession(context.env, who.user.id, header)
   if (device) return device
 
   // Short: it is written beside every change, and sixteen hex digits of a hash tell
   // a person's sessions apart without saying anything about the token.
   return `session:${(await sha256(tokenIn(header) ?? '')).slice(0, 16)}`
+}
+
+/** A program's token as a device: one per token rather than one per account, so
+ *  two scripts writing one note are two devices. Sixteen hex digits of its hash,
+ *  the way a session is named. */
+export async function programDevice(token: string): Promise<string> {
+  return `program:${(await sha256(token)).slice(0, 16)}`
 }
 
 /** Whose ceilings a request counts against: the account's, or the guest's. */

@@ -14,7 +14,7 @@ import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'
 import { type Call, done, maybe, need } from './call'
 import { Refused } from './problem'
-import { judged, type Place, placeFor } from './spaces'
+import { judged, type Place, placeOf } from './spaces'
 import { entryIn } from './tree'
 
 /** The bookmark a call describes: a search by its query, a heading by its note and its
@@ -48,7 +48,7 @@ function shown(mark: Bookmark) {
 }
 
 export async function bookmarks(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const root = place.space.root
   const held = workspace.bookmarks.of(root)
 

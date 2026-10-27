@@ -1,4 +1,5 @@
 import { taskRowsOfText } from '@nib/bases/tasks'
+import { changedTask } from '@nib/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
 import { changeOf, prefillFor } from './task-edit'
 
@@ -100,5 +101,32 @@ describe('a task in quick add’s field and back', () => {
     expect(changeOf(one, { text, fields: { tags: [], remind: [] } }).text).toBe(
       'run `git tag #v2` extra',
     )
+  })
+
+  test('saving a task with a deadline and no start date keeps its repeat and its time', () => {
+    const save = (line: string, reads?: 'deadline') => {
+      const one = task(line)
+      if (reads) one.dueReads = reads
+      const fields = { tags: [], remind: [], ...prefillFor(one, null).fields }
+      return changedTask(line, changeOf(one, { text: 'Pay rent', fields }))
+    }
+    // A vault's `📅` is a deadline, and the line stays as it was.
+    expect(save('- [ ] Pay rent 🔁 every month 📅 2026-11-01', 'deadline')).toBe(
+      '- [ ] Pay rent 🔁 every month 📅 2026-11-01',
+    )
+    expect(save('- [ ] Pay rent [repeat:: every month] [deadline:: 2026-11-01]')).toBe(
+      '- [ ] Pay rent [repeat:: every month] [deadline:: 2026-11-01]',
+    )
+    expect(save('- [ ] Pay rent [time:: 09:00] [deadline:: 2026-11-01]')).toBe(
+      '- [ ] Pay rent [time:: 09:00] [deadline:: 2026-11-01]',
+    )
+  })
+
+  test('taking its only date away takes the repeat and the time with it', () => {
+    const line = '- [ ] Pay rent [time:: 09:00] [repeat:: every month] [deadline:: 2026-11-01]'
+    const one = task(line)
+    const fields = { tags: [], remind: [], ...prefillFor(one, null).fields }
+    delete fields.deadline
+    expect(changedTask(line, changeOf(one, { text: 'Pay rent', fields }))).toBe('- [ ] Pay rent')
   })
 })
