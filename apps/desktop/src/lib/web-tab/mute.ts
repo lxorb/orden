@@ -6,7 +6,7 @@
 import { invoke } from '../tauri'
 import { type Page, pages } from './pages.svelte'
 import { siteOf } from './permissions.svelte'
-import { setMuted } from './sites'
+import { asideFor, setMuted } from './sites'
 
 /** Mutes one tab's page, or lets it be heard, and says so on the tab at once rather
  *  than when the engine answers: the speaker on the tab is what the reader watches. */
@@ -21,6 +21,15 @@ export function mute(tabId: string, page: Page, muted: boolean): void {
 export async function muteSite(tabId: string, muted: boolean): Promise<void> {
   const site = siteOf(pages.addressOf(tabId))
   if (!site) return
+
+  // A private tab mutes the site for itself, and writes nothing down: see sites.ts.
+  const page = pages.of(tabId)
+  const aside = asideFor(tabId, page)
+  if (aside !== undefined) {
+    setMuted(site, muted, aside)
+    mute(tabId, page, muted)
+    return
+  }
 
   setMuted(site, muted)
   const { workspace } = await import('../workspace.svelte')

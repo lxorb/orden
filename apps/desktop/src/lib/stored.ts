@@ -84,6 +84,50 @@ function lost() {
   log('warn', 'storage would take no more, so some of what this machine knows is not kept')
 }
 
+/** One key's value, read and kept in memory, for a store that every window of the app
+ *  shares. Each window is a copy of the app over one storage, so a value read once and
+ *  written back whole was the other window's undoing: its visits lost to this one's
+ *  next, a history deleted there written back from here. So it is read again whenever
+ *  the text under the key is no longer what this window last read or wrote, and a
+ *  change is made to what is there now rather than to what was there at the first
+ *  read. Comparing the text is one read of storage, and the parse only happens when
+ *  another window wrote.
+ *
+ *  A write storage refused is still true in memory, as with `keep`: the text this
+ *  window remembers stays the one on disk, so what it holds is not thrown away. */
+export class Shared<T> {
+  /** The text this window last read or wrote, or undefined before the first read. */
+  private text: string | null | undefined = undefined
+  private value: T | undefined = undefined
+
+  constructor(
+    readonly key: string,
+    private readonly read: (value: unknown) => T,
+  ) {}
+
+  /** What is under the key now. */
+  get(): T {
+    const now = storedText(this.key)
+    if (this.text === undefined || now !== this.text || this.value === undefined) {
+      this.text = now
+      this.value = this.read(parsed(now))
+    }
+    return this.value
+  }
+
+  /** Writes `value` down, as `text`. */
+  set(value: T, text: string): void {
+    this.value = value
+    this.text = keep(this.key, text) ? text : storedText(this.key)
+  }
+
+  /** Forgets what was read, so the next `get` reads again. */
+  drop(): void {
+    this.text = undefined
+    this.value = undefined
+  }
+}
+
 /** And forgetting one, which fails the same three ways and matters even less: a
  *  value that could not be removed is a value the next launch reads and drops. */
 export function forget(key: string): void {

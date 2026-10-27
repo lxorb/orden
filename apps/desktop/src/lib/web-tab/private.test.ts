@@ -63,7 +63,13 @@ test('a site muted in a private tab is muted there and written nowhere', () => {
 })
 
 test('a private page answered is remembered for its tab and written nowhere', () => {
-  grants.heard({ id: 1, tab: 'priv', site: 'secret.example', ask: 'notifications', inPrivate: true })
+  grants.heard({
+    id: 1,
+    tab: 'priv',
+    site: 'secret.example',
+    ask: 'notifications',
+    inPrivate: true,
+  })
   grants.answer(grants.asking[0]!, false)
 
   expect(localStorage.getItem('nib:web-grants')).toBeNull()
@@ -71,7 +77,13 @@ test('a private page answered is remembered for its tab and written nowhere', ()
   expect(grants.said('secret.example', 'notifications', 'priv')).toBe('block')
 
   // Asked again in the same tab: answered from what was said.
-  grants.heard({ id: 2, tab: 'priv', site: 'secret.example', ask: 'notifications', inPrivate: true })
+  grants.heard({
+    id: 2,
+    tab: 'priv',
+    site: 'secret.example',
+    ask: 'notifications',
+    inPrivate: true,
+  })
   expect(grants.asking).toEqual([])
 
   // A tab that is not private is asked.

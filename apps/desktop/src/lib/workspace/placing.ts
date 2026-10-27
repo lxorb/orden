@@ -46,7 +46,8 @@ type Claim = (path: string, run: () => Promise<NoteDoc | null>) => Promise<NoteD
  *  same instant were once handed the same name. The name is asked for against what is
  *  open as well as what is listed and claimed before the write begins, which is
  *  `claim`; see open.ts.
- *  A web note kept over keeps its own web data, if it had any. */
+ *  A web note kept over keeps its own web data, if it had any, and a tab with web
+ *  data of its own (`apart`) gives it to the note it becomes. */
 export async function keepWeb(
   ws: Places,
   claim: Claim,
@@ -77,7 +78,10 @@ export async function keepWeb(
   }
 
   const kept = await claim(target, async () => {
-    const own = over ? (readWebFile(target, over.text)?.own ?? null) : null
+    // The note's own web data where the file kept over has some, else the tab's: a tab
+    // with no file made at a Separate note's page (a link out of it) is signed in where
+    // that note is, and a save that dropped it built the page again in the shared store.
+    const own = (over ? readWebFile(target, over.text)?.own : null) ?? tab.apart ?? null
     const fresh = writeShortcut(url, title, new Date(), undefined, page.kept ?? undefined, own)
     const text = over ? settleShortcuts(target, over.text, fresh, true) : fresh
 

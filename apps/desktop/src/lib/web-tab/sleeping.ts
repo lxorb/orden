@@ -9,6 +9,7 @@ import type { Page } from './pages.svelte'
 import { grants, siteOf } from './permissions.svelte'
 import { FROZEN_AFTER, overCap, rest as judged, type Resting } from './resting'
 import { saver } from './saver.svelte'
+import { asideFor } from './sites'
 
 /** As much of the pages store as this needs. */
 export interface Held {
@@ -21,7 +22,7 @@ function resting(pages: Held): Resting[] {
   return pages.each().map(([id, page]) => {
     const site = siteOf(page.url)
     const allowed = (ask: 'camera' | 'microphone' | 'notifications') =>
-      grants.said(site, ask) === 'allow'
+      grants.said(site, ask, asideFor(id, page)) === 'allow'
     return {
       id,
       live: page.live,
