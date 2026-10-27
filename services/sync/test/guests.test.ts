@@ -488,6 +488,23 @@ describe('a wait the reader ends', () => {
     )
   })
 
+  test('ends with the link: turning it off leaves nobody waiting to be let in', async () => {
+    const link = await shareLink('read', 'approval')
+    await follow(link, { body: { name: 'Ada' } })
+    const stranger = await signIn(env, STRANGER)
+    await follow(link, { as: stranger })
+    expect((await shareView()).json.requests).toHaveLength(2)
+
+    await call(env, `/v1/spaces/${space}/share/link`, { method: 'DELETE', token: owner })
+
+    expect((await shareView()).json.requests).toEqual([])
+    const accepted = await call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, {
+      method: 'POST',
+      token: owner,
+    })
+    expect(accepted.status).toBe(404)
+  })
+
   test("is nobody's to end without a session", async () => {
     const link = await shareLink('read', 'approval')
     expect((await withdraw(link)).status).toBe(401)

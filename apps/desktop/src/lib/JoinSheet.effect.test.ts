@@ -98,6 +98,15 @@ test('a line that only says something is done with on Escape', () => {
   expect(store.dismiss).toHaveBeenCalledOnce()
 })
 
+test('a link put aside before it was answered can be let go of from its pill', () => {
+  store.aside = true
+  store.shown = false
+  draw(JoinPending, 'asking')
+
+  target.querySelector<HTMLButtonElement>('button[aria-label="Dismiss"]')?.click()
+  expect(store.dismiss).toHaveBeenCalledOnce()
+})
+
 test('a wait put aside says so at the foot of the window, and opens again', () => {
   store.aside = true
   store.shown = false
