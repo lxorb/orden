@@ -91,6 +91,23 @@ test('far away, draws its cards on one canvas: no card an element, no markdown m
   expect(made).toEqual([])
 })
 
+/** #535: the layer comes up in the frame the cards go, zooming out past reading. Its
+ *  first paint waited for the next frame, so the frame between showed neither cards nor
+ *  boxes: a blink of an empty plane. It paints as it appears. */
+test('paints the boxes the moment it comes up, not a frame later', () => {
+  const frames = vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0)
+  const painted = vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
+  try {
+    const { target } = opened(400)
+    const far = target.querySelector('canvas[data-far]')
+    expect(far).not.toBeNull()
+    expect(painted.mock.contexts).toContain(far)
+  } finally {
+    frames.mockRestore()
+    painted.mockRestore()
+  }
+})
+
 test('near, draws them as cards, and an undo makes none of them again', () => {
   const { target, host } = opened(6)
 
