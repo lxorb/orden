@@ -115,7 +115,7 @@ export function versionKey(hash: string): string {
 }
 
 export function presentVersion(version: Version) {
-  return { at: version.at, size: version.size, by: version.by }
+  return { at: version.at, size: version.size, by: version.by, hash: version.hash }
 }
 
 /** The name a device sent for itself, as far as it is worth keeping.
