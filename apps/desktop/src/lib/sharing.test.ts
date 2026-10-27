@@ -155,6 +155,13 @@ vi.mock('./api', async (importOriginal) => {
       declineRequest: (_token: string, _id: string, email: string, item = '') =>
         answer(`decline ${email}${about(item)}`),
       listSpaces: () => Promise.resolve({ spaces: account.spaces, deleted: [] }),
+      trustSpace: (_token: string, id: string) => {
+        world.asked.push(`trust ${id}`)
+        for (const one of account.spaces) {
+          if (one.id === id) Object.assign(one, { onceShared: false, onceSharedItems: [] })
+        }
+        return Promise.resolve({ ok: true as const })
+      },
       signOut: () => Promise.resolve({ ok: true as const }),
 
       // The files other people shared on their own, and the two things that can
@@ -245,6 +252,7 @@ import {
   addressesIn,
   canShare,
   canShareItem,
+  canTrustAgain,
   canWriteAt,
   isShared,
   isSharedItem,
@@ -258,6 +266,7 @@ import {
   sharedWithYou,
   trustsHtmlAt,
   trustsHtmlIn,
+  trustAgain,
 } from './sharing.svelte'
 import { pairSpaces, type Pairing } from './space-pairing'
 import type { RemoteSpace, SharedItem } from './api'
@@ -863,6 +872,102 @@ describe('where a document’s words came from', () => {
     } finally {
       rooms.present = {}
     }
+  })
+})
+
+/** Somebody who could write in the reader's own space wrote into it and then left, or
+ *  was taken out. What they wrote is still there, so the space is still reached by
+ *  others until its owner says it is theirs again. */
+describe('a space somebody has left', () => {
+  test('stays reached by others, as the account says it once was', () => {
+    world.mirrors = { Home: 'space-1' }
+    account.spaces = [{ ...remote('space-1', 'owner'), onceShared: true }]
+    account.listed = true
+
+    expect(isShared('Home')).toBe(false)
+    expect(reachedByOthers('Home/evil.md')).toBe(true)
+    expect(trustsHtmlAt('Home/evil.md')).toBe(false)
+  })
+
+  test('and a note handed back stays reached, the one beside it does not', () => {
+    world.mirrors = { Home: 'space-1' }
+    world.notes = { 'Home/shared.md': 'n1', 'Home/other.md': 'n2' }
+    account.spaces = [{ ...remote('space-1', 'owner'), onceSharedItems: ['n1'] }]
+    account.listed = true
+
+    expect(isSharedItem('Home/shared.md')).toBe(false)
+    expect(reachedByOthers('Home/shared.md')).toBe(true)
+    expect(reachedByOthers('Home/other.md')).toBe(false)
+  })
+
+  test('stays reached once this device saw it shared, whatever a later listing says', async () => {
+    world.mirrors = { Home: 'space-1' }
+    world.notes = { 'Home/shared.md': 'n1' }
+    account.spaces = [remote('space-1', 'owner', true, ['n1'])]
+    await account.loadSpaces()
+
+    account.spaces = [remote('space-1', 'owner')]
+    await account.loadSpaces()
+    expect(reachedByOthers('Home/evil.md')).toBe(true)
+    expect(reachedByOthers('Home/shared.md')).toBe(true)
+
+    // And on a launch before the listing.
+    account.spaces = []
+    account.listed = false
+    world.mirrors = {}
+    world.locals = ['Home']
+    expect(reachedByOthers('Home/evil.md')).toBe(true)
+  })
+
+  test('takes what an older build kept as shared as once shared', async () => {
+    world.mirrors = { Home: 'space-1' }
+    storage.setItem(
+      'nib:space-roles',
+      JSON.stringify({ Home: { role: 'owner', shared: true, items: [] } }),
+    )
+    account.spaces = [remote('space-1', 'owner')]
+    await account.loadSpaces()
+
+    expect(reachedByOthers('Home/evil.md')).toBe(true)
+  })
+
+  test('is the reader’s own again once its owner says so, here and on the account', async () => {
+    world.mirrors = { Home: 'space-1' }
+    account.spaces = [remote('space-1', 'owner', true)]
+    await account.loadSpaces()
+    account.spaces = [{ ...remote('space-1', 'owner'), onceShared: true }]
+    await account.loadSpaces()
+
+    const space = local('Home')
+    expect(canTrustAgain(space)).toBe(true)
+    await trustAgain(space)
+
+    expect(world.asked).toContain('trust space-1')
+    expect(reachedByOthers('Home/evil.md')).toBe(false)
+    expect(canTrustAgain(space)).toBe(false)
+
+    // And stays so on the next listing and the next launch.
+    await account.loadSpaces()
+    expect(reachedByOthers('Home/evil.md')).toBe(false)
+    account.spaces = []
+    account.listed = false
+    world.mirrors = {}
+    world.locals = ['Home']
+    expect(reachedByOthers('Home/evil.md')).toBe(false)
+  })
+
+  test('is not offered to be trusted while somebody is still in it, or for somebody else’s', () => {
+    world.mirrors = { Home: 'space-1', Theirs: 'space-2', Solo: 'space-3' }
+    account.spaces = [
+      { ...remote('space-1', 'owner', true), onceShared: true },
+      remote('space-2', 'write', true),
+      remote('space-3', 'owner'),
+    ]
+    account.listed = true
+
+    expect(canTrustAgain(local('Home'))).toBe(false)
+    expect(canTrustAgain(local('Theirs'))).toBe(false)
+    expect(canTrustAgain(local('Solo'))).toBe(false)
   })
 })
 
