@@ -802,6 +802,26 @@ describe('the folder watcher', () => {
   })
 })
 
+/** What a pairing says before the store has it. The roles the reader keeps for the next
+ *  launch are written with the pairing (space-pairing.ts), ahead of the commit that
+ *  stores it, so the folder a space is at has to be the core's word in the same moment
+ *  it is paired or moved. */
+describe('a pairing not committed yet', () => {
+  test('is already the folder the space is at, joined and then renamed', async () => {
+    const here = await device()
+    const core = here.engine.core
+
+    const joined = core.addSpace('team', '/device/Team', 'write')
+    expect(core.spaces.get('team')?.row.root).toBe('/device/Team')
+
+    const moved = core.rootMoved('team', '/device/Crew')
+    expect(core.spaces.get('team')?.row).toMatchObject({ root: '/device/Crew', role: 'write' })
+
+    await core.commit([...joined, ...moved])
+    expect(core.spaces.get('team')?.row.root).toBe('/device/Crew')
+  })
+})
+
 /** A copy another sync tool made beside a note: never made on the account, never
  *  written onto a disk that does not have it, never sent when it changes, and never
  *  taken off a disk when the account lets go of one - which happens only when somebody
