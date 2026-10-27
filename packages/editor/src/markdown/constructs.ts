@@ -1,7 +1,7 @@
 import { tags } from '@lezer/highlight'
 import type { BlockContext, Line, MarkdownConfig } from '@lezer/markdown'
 import { parseWikilink, shownSpan } from '@nib/markdown/links'
-import { opensTag, tagNameAt } from '@nib/markdown/tags'
+import { tagAt } from '@nib/markdown/tags'
 import { markTags } from './tags'
 import {
   BACKSLASH,
@@ -150,10 +150,7 @@ const Hashtag: MarkdownConfig = {
         if (next !== HASH) return -1
 
         // Nothing before the section's first character: a paragraph opening on a tag.
-        const before = pos === cx.offset ? '' : cx.slice(pos - 1, pos)
-        if (!opensTag(before)) return -1
-
-        const name = tagNameAt(cx.text, pos - cx.offset)
+        const name = tagAt(cx.text, pos - cx.offset)
         if (name === null) return -1
 
         return cx.addElement(cx.elt('Hashtag', pos, pos + 1 + name.length))

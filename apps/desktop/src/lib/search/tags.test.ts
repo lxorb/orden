@@ -82,6 +82,36 @@ describe('the tags in a note', () => {
     expect(tagsIn('```a`a\n#yes')).toEqual(['#yes'])
   })
 
+  test('and a link to a heading is no tag, though a tag next to it is', () => {
+    expect(tagsIn('## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n')).toEqual([
+      '#setup',
+    ])
+  })
+
+  /** The rows of `PARITY` in @nib/markdown's tags.test.ts, which the page is held
+   *  to, and of `reads_the_parity_rows` in tags.rs. */
+  test('alike on the page and in the index, row by row', () => {
+    const rows: [string, string[]][] = [
+      ['see https://x.test/?q=#x', []],
+      ['[link](https://x.test/?q=#x)', []],
+      ['<https://x.test/#a> <https://x.test/?a=#b>', []],
+      ['plain a|#b text', []],
+      ['code-ish a=#b prose and color=#ff8800', []],
+      ['snake_#x 3*#y a~#z', []],
+      ['[[Note|#alias]]', []],
+      ['[s](#setup) ![i](#img) and [s](#open', []],
+      ['**#a** ~~#d~~ ==#e== x **#f**', ['#a', '#d', '#e', '#f']],
+      ['_#u_ and __#todo__ and _#snake_case_', ['#u', '#todo', '#snake_case']],
+      ['| x | y |\n| - | - |\n|#f|#g|', ['#f', '#g']],
+    ]
+    for (const [source, tags] of rows) expect(tagsIn(`${source}\n`), source).toEqual(tags)
+  })
+
+  test('inside emphasis, strike, highlight or a cell, where the page draws one', () => {
+    expect(tagsIn('**#a** *#b* ~~#d~~ ==#e== call\n')).toEqual(['#a', '#b', '#d', '#e'])
+    expect(tagsIn('| x | y |\n| - | - |\n|#f|#g|\n')).toEqual(['#f', '#g'])
+  })
+
   test('a fence in a quote ends with the quote', () => {
     expect(tagsIn('> ```\n> #no\n#yes')).toEqual(['#yes'])
   })
@@ -122,6 +152,11 @@ describe('the tags in the front matter', () => {
 
   test('and both halves of a note count', () => {
     expect(tagsIn('---\ntags: [work]\n---\n\nwords #nib\n')).toEqual(['#work', '#nib'])
+  })
+
+  test('in a note written with CRLF endings, as tags.rs reads it', () => {
+    expect(tagsIn('---\r\ntags: [a, b]\r\n---\r\nx\r\n')).toEqual(['#a', '#b'])
+    expect(tagsIn('---\r\ntags:\r\n  - a\r\n  - b\r\n---\r\nx #c\r\n')).toEqual(['#a', '#b', '#c'])
   })
 })
 

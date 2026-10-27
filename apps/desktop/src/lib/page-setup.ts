@@ -46,7 +46,7 @@ export function pageSetupFor(source: string, base: PageSetup = DEFAULT_PAGE_SETU
   const block = frontMatter(source)
   if (!block) return base
 
-  const lines = block.split('\n')
+  const lines = block.split(/\r?\n/)
   const start = lines.findIndex((line) => /^export\s*:\s*$/.test(line))
   if (start < 0) return base
 

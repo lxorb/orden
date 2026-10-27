@@ -99,13 +99,48 @@ const NAME_AT = new RegExp(TAG_NAME, 'uy')
 
 const HASH = '#'
 
-/** Whether a hash after this character opens a word: nothing, a blank, a `(`. */
-export function opensTag(before: string): boolean {
-  return before === '' || before === '(' || /\s/u.test(before)
+/** What emphasis, strike and highlight are written with. */
+const MARKS = '*_~='
+
+/** A whole name, to check one cut short by `tagAt`. */
+const NAME = new RegExp(`^${TAG_NAME}$`, 'u')
+
+/** Whether a hash at `at` opens a tag: one rule for the renderer, the editor and the
+ *  index (search/tags.ts, tags.rs).
+ *
+ *  It opens a word: after nothing, a blank or a `(`, though not the `](` of a link,
+ *  where `#heading` is where the link goes. A run of marks in between is the start of
+ *  emphasis, strike or highlight, which the page reads afresh, so `**#tag**` is one;
+ *  but marks in the middle of a word open nothing, so `a=#b` and `?q=#x` are words.
+ *  A `|` opens one in a table row, a line that starts with one. */
+export function opensTagAt(text: string, at: number): boolean {
+  let start = at
+  while (start > 0 && MARKS.includes(text.charAt(start - 1))) start--
+
+  const before = text.charAt(start - 1)
+  if (before === '' || /\s/u.test(before)) return true
+  if (before === '(') return text.charAt(start - 2) !== ']'
+  if (before === '|') return rowAt(text, start - 1)
+  return false
 }
 
-/** The name of the tag whose hash is at `at`, or null. The character before is the
- *  caller's to ask, through `opensTag`. */
+/** Whether a hash after `before` opens a tag; see `opensTagAt`. */
+export function opensTag(before: string): boolean {
+  return opensTagAt(before, before.length)
+}
+
+/** Whether the line holding `at` starts, past its indent, with a `|`. */
+function rowAt(text: string, at: number): boolean {
+  let start = at
+  while (start > 0 && text.charAt(start - 1) !== '\n') start--
+  return text
+    .slice(start, at + 1)
+    .trimStart()
+    .startsWith('|')
+}
+
+/** The name of the tag whose hash is at `at`, or null. Whether the hash opens a
+ *  tag is the caller's to ask, through `opensTag`, or `tagAt` asks both. */
 export function tagNameAt(text: string, at: number): string | null {
   if (text.charAt(at) !== HASH) return null
 
@@ -113,12 +148,43 @@ export function tagNameAt(text: string, at: number): string | null {
   return NAME_AT.exec(text)?.[0] ?? null
 }
 
+/** The tag whose hash is at `at`, or null where none opens there. */
+export function tagAt(text: string, at: number): string | null {
+  if (!opensTagAt(text, at)) return null
+  return closedBy(tagNameAt(text, at), underscoresBefore(text, at))
+}
+
+/** The tag `src` opens with, after the words `before`, or null. */
+function tagAfter(before: string, src: string): string | null {
+  if (!opensTag(before)) return null
+  return closedBy(tagNameAt(src, 0), underscoresBefore(before, before.length))
+}
+
+/** How many `_` stand right in front of `at`. */
+function underscoresBefore(text: string, at: number): number {
+  let count = 0
+  while (text.charAt(at - count - 1) === '_') count++
+  return count
+}
+
+/** A name opened by `_` emphasis ends where the emphasis does: `_#urgent_` is the
+ *  tag `urgent`, as the page draws it, and `__#todo__` is `todo`. */
+function closedBy(name: string | null, underscores: number): string | null {
+  if (name === null || underscores === 0) return name
+
+  const close = '_'.repeat(underscores)
+  if (!name.endsWith(close)) return name
+
+  const cut = name.slice(0, -underscores)
+  return NAME.test(cut) ? cut : null
+}
+
 /** Where marked should stop a run of text for a tag. Marked hands this the text
  *  from its second character, so a hash at 0 is offered and the tokenizer asks the
  *  token before it. */
 function nextTag(src: string): number | undefined {
   for (let at = src.indexOf(HASH); at !== -1; at = src.indexOf(HASH, at + 1)) {
-    if ((at === 0 || opensTag(src.charAt(at - 1))) && tagNameAt(src, at) !== null) return at
+    if (tagAt(src, at) !== null) return at
   }
 
   return undefined
@@ -131,10 +197,9 @@ export type TagHref = (tag: string) => string | null
  *  a `<span>` elsewhere, since a page that cannot go anywhere should not look as if
  *  it could. `tag` is the class Obsidian's pages and their themes already use.
  *
- *  Never in a link's words. At the start of a run there is no token before to ask,
- *  and a run opens a paragraph, heading, cell or item nearly always; so `**#tag**`
- *  is drawn here and left as words in the editor. The token carries its words as
- *  `text` for readers that never heard of a tag - a Word document, the glasses. */
+ *  Never in a link's words. Where a tag opens is `opensTagAt`'s to say, the same
+ *  rule the editor and the index read by. The token carries its words as `text`
+ *  for readers that never heard of a tag - a Word document, the glasses. */
 export function hashtags(href?: TagHref): MarkedExtension {
   /** What was left of each run the last time it asked. */
   const seen = new WeakMap<Token[], string>()
@@ -150,17 +215,15 @@ export function hashtags(href?: TagHref): MarkedExtension {
           seen.set(tokens, src)
           if (this.lexer.state.inLink || !src.startsWith(HASH)) return undefined
 
-          // The character before, read from what was left the last time this run
-          // asked, which is this tail and more. Reading it off the token before
-          // flattened that token's text, which marked grows a piece at a time:
-          // once per break in a paragraph, and quadratic (#546).
-          const last =
+          // What is before, read from what was left the last time this run asked,
+          // which is this tail and more. Reading it off the token before flattened
+          // that token's text, which marked grows a piece at a time: once per break
+          // in a paragraph, and quadratic (#546). At the start of a run, the raw
+          // words of the token before, read from their end and never copied.
+          const name =
             before !== undefined && before.length > src.length
-              ? before.charAt(before.length - src.length - 1)
-              : (tokens.at(-1)?.raw.slice(-1) ?? '')
-          if (!opensTag(last)) return undefined
-
-          const name = tagNameAt(src, 0)
+              ? tagAt(before, before.length - src.length)
+              : tagAfter(tokens.at(-1)?.raw ?? '', src)
           if (name === null) return undefined
 
           const raw = `${HASH}${name}`

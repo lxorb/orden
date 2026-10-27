@@ -166,18 +166,17 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
         while let Some(hash) = block[at..].find('#') {
             let start = at + hash;
 
-            // A tag starts a word, so what comes before it must be a space.
-            let opens = block[..start]
-                .chars()
-                .next_back()
-                .is_none_or(|one| one.is_whitespace() || one == '(')
-                && !code.iter().any(|&(from, to)| (from..to).contains(&start));
+            let before = &block[..start];
+            let opens =
+                opens_tag(before) && !code.iter().any(|&(from, to)| (from..to).contains(&start));
 
             // The name is what a tag may hold, which rules out `#1`.
             let rest = &block[start + 1..];
-            let name = rest
-                .find(|one: char| !name_char(one))
-                .map_or(rest, |end| &rest[..end]);
+            let name = closed_by(
+                rest.find(|one: char| !name_char(one))
+                    .map_or(rest, |end| &rest[..end]),
+                before.len() - before.trim_end_matches('_').len(),
+            );
 
             if opens && named(name) {
                 found.push(block[start..start + 1 + name.len()].to_string());
@@ -185,6 +184,53 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
 
             at = start + 1 + name.len();
         }
+    }
+}
+
+/// What emphasis, strike and highlight are written with.
+const MARKS: &[char] = &['*', '_', '~', '='];
+
+/// Whether a hash after `before` opens a tag. The twin of `opensTagAt` in
+/// @nib/markdown's tags.ts, which the renderer and the editor read tags by too.
+///
+/// It opens a word: after nothing, a blank or a `(`, though not the `](` of a
+/// link, where `#heading` is where the link goes. A run of marks in between is
+/// the start of emphasis, strike or highlight, so `**#tag**` is one; but marks in
+/// the middle of a word open nothing, so `a=#b` and `?q=#x` are words. A `|`
+/// opens one in a table row, a line that starts with one.
+fn opens_tag(before: &str) -> bool {
+    let bare = before.trim_end_matches(MARKS);
+    let Some(one) = bare.chars().next_back() else {
+        return true;
+    };
+    let ahead = &bare[..bare.len() - one.len_utf8()];
+    match one {
+        '(' => !ahead.ends_with(']'),
+        '|' => {
+            let line = ahead.rfind('\n').map_or(ahead, |at| &ahead[at + 1..]);
+            line.trim_start().is_empty() || line.trim_start().starts_with('|')
+        }
+        _ => one.is_whitespace(),
+    }
+}
+
+/// A name opened by `_` emphasis ends where the emphasis does: `_#urgent_` is the
+/// tag `urgent`, as the page draws it. Cut short to nothing a tag may be called,
+/// it is no tag. The twin of `closedBy` in tags.ts.
+fn closed_by(name: &str, underscores: usize) -> &str {
+    if underscores == 0 || name.len() < underscores {
+        return name;
+    }
+    // Checked as bytes first, so the cut lands between characters.
+    let at = name.len() - underscores;
+    if !name.as_bytes()[at..].iter().all(|&one| one == b'_') {
+        return name;
+    }
+    let cut = &name[..at];
+    if named(cut) {
+        cut
+    } else {
+        ""
     }
 }
 
@@ -490,5 +536,64 @@ mod tests {
             tags_in("---\ntags: [work]\n---\n\nwords #nib\n"),
             vec!["#work", "#nib"]
         );
+    }
+
+    /// Twin of the CRLF case in scan-note.test.ts: the launch scan and a save
+    /// read the same tags out of a note written with Windows endings.
+    #[test]
+    fn reads_front_matter_tags_in_a_crlf_note() {
+        assert_eq!(
+            tags_in("---\r\ntags: [work]\r\n---\r\nx\r\n"),
+            vec!["#work"]
+        );
+        assert_eq!(
+            tags_in("---\r\ntags:\r\n  - work\r\n---\r\nx #nib\r\n"),
+            vec!["#work", "#nib"]
+        );
+    }
+
+    /// Twin of "a link to a heading is no tag" in search/tags.test.ts.
+    #[test]
+    fn a_link_to_a_heading_is_no_tag() {
+        assert_eq!(
+            tags_in("## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n"),
+            vec!["#setup"]
+        );
+    }
+
+    /// Twin of "inside emphasis, strike, highlight or a cell" in
+    /// search/tags.test.ts: where the page draws a tag, the index has one.
+    #[test]
+    fn reads_a_tag_inside_emphasis_strike_highlight_or_a_cell() {
+        assert_eq!(
+            tags_in("**#a** *#b* ~~#d~~ ==#e== call\n"),
+            vec!["#a", "#b", "#d", "#e"]
+        );
+        assert_eq!(tags_in("| x | y |\n| - | - |\n|#f|#g|\n"), vec!["#f", "#g"]);
+    }
+
+    /// The rows of `PARITY` in @nib/markdown's tags.test.ts, which the page is
+    /// held to, and of "alike on the page and in the index" in search/tags.test.ts.
+    #[test]
+    fn reads_the_parity_rows() {
+        let rows: [(&str, &[&str]); 11] = [
+            ("see https://x.test/?q=#x", &[]),
+            ("[link](https://x.test/?q=#x)", &[]),
+            ("<https://x.test/#a> <https://x.test/?a=#b>", &[]),
+            ("plain a|#b text", &[]),
+            ("code-ish a=#b prose and color=#ff8800", &[]),
+            ("snake_#x 3*#y a~#z", &[]),
+            ("[[Note|#alias]]", &[]),
+            ("[s](#setup) ![i](#img) and [s](#open", &[]),
+            ("**#a** ~~#d~~ ==#e== x **#f**", &["#a", "#d", "#e", "#f"]),
+            (
+                "_#u_ and __#todo__ and _#snake_case_",
+                &["#u", "#todo", "#snake_case"],
+            ),
+            ("| x | y |\n| - | - |\n|#f|#g|", &["#f", "#g"]),
+        ];
+        for (source, tags) in rows {
+            assert_eq!(tags_in(&format!("{source}\n")), tags, "{source}");
+        }
     }
 }

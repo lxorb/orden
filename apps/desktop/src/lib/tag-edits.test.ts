@@ -110,3 +110,58 @@ describe('across a space', () => {
     expect(made).toEqual([])
   })
 })
+
+describe('in a note written with CRLF endings', () => {
+  const crlf = (text: string) => text.replace(/\n/g, '\r\n')
+
+  test('a rename reaches the front matter and keeps the endings', () => {
+    const made = change('work', 'job', crlf('---\ntags: [work, other]\n---\n\nx #work\n'))
+    expect(made?.after).toBe(crlf('---\ntags: [job, other]\n---\n\nx #job\n'))
+  })
+
+  test('taking a tag away cuts it from the list on the key', () => {
+    const made = change('work', null, crlf('---\ntags: [work, other]\n---\nx\n'))
+    expect(made?.after).toBe(crlf('---\ntags: [other]\n---\nx\n'))
+  })
+
+  test('and an item that held nothing else goes with its whole line', () => {
+    const made = change('work', null, crlf('---\ntags:\n  - work\n  - other\n---\nx\n'))
+    expect(made?.after).toBe(crlf('---\ntags:\n  - other\n---\nx\n'))
+  })
+})
+
+describe('next to a link to a heading', () => {
+  const note = '## Setup\n\nSee [setup](#setup). Tagged #setup and **#setup**.\n'
+
+  test('a rename leaves the link and reaches the tag in bold', () => {
+    expect(change('setup', 'install', note)?.after).toBe(
+      '## Setup\n\nSee [setup](#setup). Tagged #install and **#install**.\n',
+    )
+  })
+
+  test('and so does taking the tag away', () => {
+    const after = change('setup', null, note)?.after ?? ''
+    expect(after).toContain('See [setup](#setup). Tagged and')
+    expect(after.match(/#setup/g)).toHaveLength(1)
+  })
+})
+
+describe('next to an address and inside marks', () => {
+  test('a rename leaves a link that only names the tag in its query', () => {
+    const note = 'see [docs](https://x.test/app?tab=#setup) #setup\n'
+    expect(change('setup', 'install', note)?.after).toBe(
+      'see [docs](https://x.test/app?tab=#setup) #install\n',
+    )
+  })
+
+  test('a rename keeps the marks round a tag, underscores included', () => {
+    expect(change('urgent', 'later', '_#urgent_ call\n')?.after).toBe('_#later_ call\n')
+  })
+
+  test('taking a tag away takes the marks it was the whole of', () => {
+    expect(change('todo', null, 'Shipped\n~~#todo~~\nMore #a\n')?.after).toBe(
+      'Shipped\n\nMore #a\n',
+    )
+    expect(change('todo', null, 'Done ==#todo== and **#todo** now\n')?.after).toBe('Done and now\n')
+  })
+})
