@@ -334,7 +334,7 @@ describe('a row', () => {
   })
 
   test('found by the note rather than by a line has no words to replace', () => {
-    const [hit] = new Matcher(parseQuery('path:Note')).hits(note({ body: 'beta\n' }), 10)
+    const [hit] = new Matcher(parseQuery('path:Meeting')).hits(note({ body: 'beta\n' }), 10)
     expect(hit?.bare).toBe(true)
   })
 

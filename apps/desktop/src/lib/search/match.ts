@@ -80,6 +80,11 @@ export interface Hit {
   /** Where in `text` the match sits. Empty for a note found by its path, its
    *  name or a tag, which no line of it says. */
   ranges: Range[]
+  /** True when no words on the line answer the query, so a replacement has nothing
+   *  to go into: a note found by its path, its name or a tag, or a task found by
+   *  `task-todo:` alone. Absent otherwise, which keeps the usual hit's shape. Not
+   *  the same as empty `ranges`, which a match past the cut also leaves. */
+  bare?: true
   /** What a loose match was worth, when the hit is one; see fuzzy.ts. Absent on
    *  a hit that answers the query exactly, which is what tells the two apart in
    *  the list and what keeps an exact hit's shape unchanged on the wire. */
@@ -538,7 +543,9 @@ export class Matcher {
       if (start < end) moved.push({ from: start, to: end })
     }
 
-    return { path: note.path, name: note.name, line, text, ranges: moved }
+    const hit: Hit = { path: note.path, name: note.name, line, text, ranges: moved }
+    if (!ranges.some((range) => range.from < range.to)) hit.bare = true
+    return hit
   }
 
   private walk(query: Query, facts: Facts, region: Range): Span[] | null {
@@ -622,7 +629,8 @@ export class Matcher {
         let answered = false
         // `task-todo:` on its own asks which notes have one, so the unit is the
         // answer: a span of no width at the task's own words, which puts the row on
-        // the task rather than on the note's first line and highlights nothing.
+        // the task rather than on the note's first line and highlights nothing. It is
+        // a place for a row, never words to replace; see `replaceIn`.
         const bare = isEmpty(query.of)
 
         for (const unit of unitsOf(facts, query.unit)) {

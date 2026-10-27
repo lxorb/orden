@@ -65,6 +65,12 @@ pub struct Hit {
     line: usize,
     text: String,
     ranges: Vec<Range>,
+    /// No words on the line answer the query, so a replacement has nothing to go
+    /// into: a note found by its path, its name or a tag, or a task found by
+    /// `task-todo:` alone. Left out of the JSON when false, as search/match.ts
+    /// leaves it out of the usual hit.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    bare: bool,
 }
 
 /// One note as the matcher reads it.
@@ -783,7 +789,8 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
                 if let Some(mut found) = walk(of, note, facts, within) {
                     answered = true;
                     // A unit asked for with nothing in it is answered by the unit,
-                    // so the row is the task rather than the note's first line.
+                    // so the row is the task rather than the note's first line. The
+                    // span marks the row and is never words to replace.
                     if *bare {
                         out.push(Span {
                             from: within.from,
@@ -988,6 +995,7 @@ fn row(note: &Note, starts: &[usize], line: usize, spans: &[Span]) -> Hit {
         line,
         text,
         ranges,
+        bare: !spans.iter().any(|span| span.from < span.to),
     }
 }
 
@@ -1570,7 +1578,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            shape(&all(&[task_todo.clone(), text("milk")])),
+            shape(&all(&[task_todo, text("milk")])),
             [
                 serde_json::json!(["- [ ] buy milk", null]),
                 serde_json::json!(["- [ ] call Ana", true]),
