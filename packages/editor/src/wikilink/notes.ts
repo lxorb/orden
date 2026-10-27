@@ -364,8 +364,9 @@ function folderOf(path: string): string {
 /** A folded target as what it asks for: the path, and whether it was written from
  *  the top of the space. See `resolveNote`. */
 function targetOf(folded: string): { wanted: string; anchored: boolean } {
-  const wanted = folded.replace(/^\/+/, '')
-  return { wanted, anchored: wanted !== folded }
+  // One slash: `//Road` is no path from the top, and names nothing, as on a site.
+  const anchored = folded.startsWith('/')
+  return { wanted: anchored ? folded.slice(1) : folded, anchored }
 }
 
 /** Which of several notes a link means: the one beside the note the link was
@@ -434,8 +435,11 @@ export function resolveRelative(index: NoteIndex, target: string): NoteRef | nul
   if (!parts.length) return null
   // The path it names first, and only then a note whose path ends with it: read as
   // the end of a path alone, `../Road.md` in `B/x.md` opened `B/Road.md` rather than
-  // the `Road.md` at the top it names (B543).
-  return resolveNote(index, `/${parts.join('/')}`) ?? resolveNote(index, parts.join('/'))
+  // the `Road.md` at the top it names (B543). A path from the top names that path
+  // or nothing: `[About](/about)` is no `C/about.md`.
+  const whole = resolveNote(index, `/${parts.join('/')}`)
+  if (whole || target.replace(/\\/g, '/').startsWith('/')) return whole
+  return resolveNote(index, parts.join('/'))
 }
 
 /** A relative target as the path it points at, from the folder the note it was

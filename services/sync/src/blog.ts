@@ -352,11 +352,10 @@ function decoded(target: string): string | null {
 /** One path resolved against the note it was written in: the folder that note is
  *  in, plus the road the link takes out of it, with `.` and `..` walked. */
 function against(from: string, target: string): string {
-  const written = target.replace(/\\/g, '/')
-  // A leading slash starts at the top of the space, as the app reads one.
-  const out = written.startsWith('/') ? [] : from.replace(/\\/g, '/').split('/').slice(0, -1)
+  const here = from.replace(/\\/g, '/').split('/').slice(0, -1)
+  const out: string[] = [...here]
 
-  for (const step of written.split('/')) {
+  for (const step of target.replace(/\\/g, '/').split('/')) {
     if (step === '' || step === '.') continue
     if (step === '..') out.pop()
     else out.push(step)

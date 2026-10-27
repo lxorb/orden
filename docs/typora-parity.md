@@ -685,11 +685,12 @@ Features Typora does not have, which are the reason this exists.
 - [x] A rename onto a name another note already has keeps its links on the note
       renamed: a bare link takes as much of the path as reaches it, and
       `[[/Road]]`, a path from the top of the space, where nothing shorter does. A
-      leading slash means that whole path in a wikilink and in a markdown link, in
-      the app, on a published page and in the connector, as in Obsidian. A relative
-      markdown link means the path it names before a note whose path ends with it,
-      so since 2026-10-27 `[x](../Road.md)` in `B/x.md` opens the `Road.md` at the
-      top rather than a `B/Road.md` beside it (B543)
+      leading slash means that whole path and nothing else, as in Obsidian: in a
+      wikilink in the app, on a published page and in the connector, and in a
+      markdown link in the app, where a rename keeps it written from the top. A
+      relative markdown link means the path it names before a note whose path ends
+      with it, so since 2026-10-27 `[x](../Road.md)` in `B/x.md` opens the
+      `Road.md` at the top rather than a `B/Road.md` beside it (B543)
 - [x] Files a note embeds, in Obsidian's spelling, so the note travels. A
       recording (`![[take.mp3]]`) and a film (`![[demo.mp4]]`) are the browser's
       own player, plainly, with no frame around them and nothing playing until

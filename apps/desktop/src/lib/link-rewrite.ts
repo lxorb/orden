@@ -79,6 +79,8 @@ export function retargetLinks(
 function targetFor(link: FoundLink, source: string, placed: string | Placed): string {
   const to = typeof placed === 'string' ? placed : placed.path
   if (link.kind === 'markdown') {
+    // Written from the top of the space, it stays so.
+    if (link.target.startsWith('/')) return encodeTarget(`/${to}`)
     return encodeTarget(relativePath(folderOf(source), to))
   }
 

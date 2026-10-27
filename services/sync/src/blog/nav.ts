@@ -217,7 +217,7 @@ export function linkedFrom(pages: readonly Listed[], page: Listed): Listed[] {
   // A leading slash is a path from the top of the space, and names its whole path
   // alone (B543).
   const reaches = (link: string) =>
-    link.startsWith('/') ? link.replace(/^\/+/, '') === names[0] : known.has(link)
+    link.startsWith('/') ? link.slice(1) === names[0] : known.has(link)
 
   return ordered(
     pages.filter((one) => one.slug !== page.slug && (one.front.links ?? []).some(reaches)),

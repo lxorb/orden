@@ -4612,6 +4612,8 @@ class Workspace {
     source: string | null,
   ): Promise<string | null> {
     const slashed = target.replace(/[\\]/g, '/')
+    // Two slashes are no path from the top and name nothing; see `resolveNote`.
+    if (slashed.trimStart().startsWith('//')) return null
     const clean = slashed.replace(/^\/+|\/+$/g, '')
     if (!clean) return null
 

@@ -232,13 +232,15 @@ function stillReaches(
       if (part !== '..') parts.push(part)
     }
     const written = parts.join('/')
-    return loose && isMarkdownPath(at) ? ends(at, written) : at === written
+    // A path from the top is that path, never the end of another; see `resolveRelative`.
+    const whole = !loose || target.startsWith('/')
+    return !whole && isMarkdownPath(at) ? ends(at, written) : at === written
   }
 
   const written = spelled(link.target)
   // From the top of the space, the whole path or nothing; see `resolveNote`.
   if (written.startsWith('/')) {
-    const whole = written.replace(/^\/+/, '')
+    const whole = written.slice(1)
     return at === whole || shownName(at) === whole
   }
   return ends(at, written) || ends(shownName(at), written)
