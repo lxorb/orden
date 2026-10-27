@@ -496,7 +496,10 @@ mod tests {
     /// read the same tags out of a note written with Windows endings.
     #[test]
     fn reads_front_matter_tags_in_a_crlf_note() {
-        assert_eq!(tags_in("---\r\ntags: [work]\r\n---\r\nx\r\n"), vec!["#work"]);
+        assert_eq!(
+            tags_in("---\r\ntags: [work]\r\n---\r\nx\r\n"),
+            vec!["#work"]
+        );
         assert_eq!(
             tags_in("---\r\ntags:\r\n  - work\r\n---\r\nx #nib\r\n"),
             vec!["#work", "#nib"]

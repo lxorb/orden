@@ -126,11 +126,7 @@ describe('the tags in the front matter', () => {
 
   test('in a note written with CRLF endings, as tags.rs reads it', () => {
     expect(tagsIn('---\r\ntags: [a, b]\r\n---\r\nx\r\n')).toEqual(['#a', '#b'])
-    expect(tagsIn('---\r\ntags:\r\n  - a\r\n  - b\r\n---\r\nx #c\r\n')).toEqual([
-      '#a',
-      '#b',
-      '#c',
-    ])
+    expect(tagsIn('---\r\ntags:\r\n  - a\r\n  - b\r\n---\r\nx #c\r\n')).toEqual(['#a', '#b', '#c'])
   })
 })
 

@@ -154,7 +154,8 @@ function readFront(body: string, front: FrontMatterBlock, out: TagUse[]) {
   while (at > 0 && at < front.close) {
     const end = body.indexOf('\n', at)
     const stop = end === -1 || end > front.close ? front.close : end
-    const line = body.slice(at, stop)
+    // A CRLF line's `\r`, which `KEY` cannot match, ends past every name.
+    const line = body.slice(at, stop).replace(/\r$/, '')
     const found = KEY.exec(line)
 
     if (found) {
@@ -178,7 +179,7 @@ function readItems(body: string, from: number, front: FrontMatterBlock, out: Tag
   while (at > 0 && at < front.close) {
     const end = body.indexOf('\n', at)
     const stop = end === -1 || end > front.close ? front.close : end
-    const line = body.slice(at, stop)
+    const line = body.slice(at, stop).replace(/\r$/, '')
     const item = ITEM.exec(line)
     if (!item) return at
 

@@ -41,8 +41,12 @@ pub struct Block {
 pub fn block(body: &str) -> Option<Block> {
     let first = body.find('\n')?;
     // Space after the fence is nothing; space before it is a fence that is not at
-    // the margin, which no reader of a markdown file takes for metadata.
-    if body[..first].trim_end() != "---" {
+    // the margin, which no reader of a markdown file takes for metadata. A byte
+    // order mark in front of it is how Notepad saves a file, and is not text.
+    let opening = body[..first]
+        .strip_prefix('\u{feff}')
+        .unwrap_or(&body[..first]);
+    if opening.trim_end() != "---" {
         return None;
     }
 
@@ -234,6 +238,22 @@ mod tests {
         assert!(block("---").is_none());
         // A block that never closes is a note that opens with a rule.
         assert!(block("---\nicon: rocket\n\n# Plan").is_none());
+    }
+
+    /// A file saved by Notepad opens with a byte order mark. The twin of "a byte
+    /// order mark in front of the fence" in front-matter.test.ts.
+    #[test]
+    fn a_byte_order_mark_in_front_of_the_fence() {
+        let note = "\u{feff}---\naliases: [Proj]\nicon: star\n---\nbody\n";
+        let found = block(note).expect("a block");
+
+        assert_eq!(
+            &note[found.from..found.close],
+            "aliases: [Proj]\nicon: star\n"
+        );
+        assert_eq!(&note[found.end..], "\nbody\n");
+        assert_eq!(icon(note).as_deref(), Some("star"));
+        assert_eq!(aliases(note), vec!["Proj"]);
     }
 
     /// The opening fence stands at the left margin, which is where Obsidian and
