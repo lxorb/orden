@@ -1,11 +1,9 @@
-import { freePath } from '@nib/markdown/paths'
 import { Hono } from 'hono'
 import { chunks, places } from './bound'
 import { now } from './crypto'
-import { atNextSeq, noteKey, presentNote, TAKEN_SEQ } from './notes'
+import { noteKey, presentNote, restoreNote } from './notes'
 import { snapshotKey } from './rooms/epoch'
 import { deviceOf } from './sync2/device'
-import { deleteById } from './sync2/ops'
 import { presentSpace } from './spaces/space'
 import type { Env, Note, Space, Variables } from './types'
 import { forgetWords } from './blog/words'
@@ -461,45 +459,8 @@ trash.post('/notes/:id/restore', async (context) => {
   if (!note) return context.json({ error: 'nothing to restore' }, 404)
   if (note.space_deleted) return context.json({ error: 'restore its space first' }, 409)
 
-  // In a space whose tree is rows, a restore the tree says: the note back where it
-  // was, with the folders it was in, numbered if its name was taken meanwhile.
-  if (note.name_key) {
-    await deleteById(env, note.space_id, await deviceOf(context), note.id, true)
-    const back = await env.DB.prepare('select * from notes where id = ?')
-      .bind(note.id)
-      .first<Note>()
-    if (back) return context.json({ note: presentNote(back) })
-  }
-
-  const live = await env.DB.prepare('select path from notes where space_id = ? and deleted = 0')
-    .bind(note.space_id)
-    .all<{ path: string }>()
-  const taken = new Set(live.results.map((one) => one.path))
-  const path = freePath(note.path, (candidate) => taken.has(candidate))
-
-  const at = now()
-  // The number taken and the row written as one; see `atNextSeq`.
-  const { seq } = await atNextSeq(
-    env,
-    note.space_id,
-    env.DB.prepare(
-      `update notes set deleted = 0, deleted_at = null, path = ?2, seq = ${TAKEN_SEQ},
-                        version = version + 1, updated_at = ?3
-        where id = ?4`,
-    ).bind(note.space_id, path, at, note.id),
-  )
-
-  return context.json({
-    note: presentNote({
-      ...note,
-      deleted: 0,
-      deleted_at: null,
-      path,
-      seq,
-      version: note.version + 1,
-      updated_at: at,
-    }),
-  })
+  const back = await restoreNote(env, note, await deviceOf(context))
+  return context.json({ note: presentNote(back) })
 })
 
 trash.delete('/notes/:id', async (context) => {

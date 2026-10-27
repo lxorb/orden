@@ -49,7 +49,9 @@
    *  effect: turning the horizon down from a year must not leave the field asking
    *  for a year, and a derived cannot be out of date the way a written copy can. */
   const chosen = $derived(back.includes(days) ? days : (back.at(-1) ?? 1))
-  let asked = $state<{ notes: number; paths: string[]; more: boolean } | null>(null)
+  /** What the look found, and the moment it asked about: the rollback asks about the
+   *  same one, so what it puts back is what the pane said it would. */
+  let asked = $state<{ notes: number; paths: string[]; more: boolean; at: number } | null>(null)
   let rolling = $state(false)
   let rolled = $state<number | null>(null)
   let wrong = $state<string | null>(null)
@@ -138,13 +140,15 @@
     rolled = null
 
     try {
-      const said = await api.rollback(token, spaceId, moment(), '', true)
+      const at = moment()
+      const said = await api.rollback(token, spaceId, at, '', true)
       asked = {
         // What it would change in all, which is more than one request puts back
         // where a space is big; the pane says the number, the loop does the rest.
         notes: said.notes + (said.left ?? 0),
         paths: said.paths ?? [],
         more: said.more === true,
+        at,
       }
     } catch (error) {
       wrong = error instanceof Error ? error.message : t('That did not work.')
@@ -174,8 +178,8 @@
       // One moment for every round, so each asks the same question. A round that
       // writes nothing while more is left is a note the server cannot put back
       // (its version is gone, say): asking again would get the same answer, so
-      // the loop stops there and says it did not all go back.
-      const at = moment()
+      // the loop stops there and says how many did not go back.
+      const at = asked?.at ?? moment()
       let put = 0
       let left = 0
       for (let round = 0; round < ROUNDS; round++) {
@@ -187,7 +191,7 @@
         if (!done.partial || done.notes === 0) break
       }
 
-      asked = null
+      asked = left > 0 ? { notes: left, paths: [], more: false, at } : null
       if (left > 0) wrong = t('That did not work.')
       // The notes are on the account; this is what brings them down here.
       sync.nudge()

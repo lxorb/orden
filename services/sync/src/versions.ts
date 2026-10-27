@@ -346,7 +346,14 @@ function folderPrefix(under: string): string {
  *  before it, for the notes that have one.
  *
  *  Deleted notes are in, because a note that was deleted after that moment is
- *  one of the things a rollback is for. A note that already says what it said
+ *  one of the things a rollback is for - also when its words never changed, since
+ *  a delete leaves the hash as it was. Only one deleted after it, though: a note
+ *  already in Recently deleted at that moment was not part of the space then, and
+ *  stays where it is. History records no deletes, so `deleted_at` is the only
+ *  clock, and it says the last delete: a note deleted before the moment, restored
+ *  and deleted again since reads as deleted since, and comes back. A note purged
+ *  from Recently deleted is not in at all: its words are gone for good. A live
+ *  note that already says what it said
  *  then is out: it has nothing to put back, and left in it would hold a place
  *  in the page, so that once the first four hundred were back every later page
  *  was those four hundred again and the rest of the space was never reached.
@@ -364,7 +371,8 @@ export async function versionsAt(
        from note_versions v
        join notes n on n.id = v.note_id
       where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
-        and v.hash != n.hash
+        and (v.hash != n.hash or n.deleted = 1)
+        and (n.deleted = 0 or (n.deleted_at is not null and n.deleted_at > ?3))
         and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)
       order by n.path
       limit ?4`,
@@ -551,7 +559,8 @@ export async function countVersionsAt(
     `select count(*) as held from note_versions v
        join notes n on n.id = v.note_id
       where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
-        and v.hash != n.hash
+        and (v.hash != n.hash or n.deleted = 1)
+        and (n.deleted = 0 or (n.deleted_at is not null and n.deleted_at > ?3))
         and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)`,
   )
     .bind(spaceId, prefix, at)
