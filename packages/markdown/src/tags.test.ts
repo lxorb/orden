@@ -39,7 +39,18 @@ describe('what a tag is', () => {
     expect(opensTag('(')).toBe(true)
     expect(opensTag('C')).toBe(false)
     expect(opensTag('/')).toBe(false)
-    expect(opensTag('*')).toBe(false)
+    expect(opensTag('_')).toBe(false)
+  })
+
+  /** What opens a run the page reads afresh: emphasis, strike, highlight, a
+   *  cell. The same rule as search/tags.ts and tags.rs. */
+  test('and inside emphasis, strike, highlight or a cell', () => {
+    for (const before of ['*', '_', '~', '=', '|']) expect(opensTag(before)).toBe(true)
+  })
+
+  test('but not as the target of a link, which is a heading in the note', () => {
+    expect(opensTag('](')).toBe(false)
+    expect(opensTag(' (')).toBe(true)
   })
 })
 
@@ -60,6 +71,15 @@ describe('a tag on a page', () => {
     expect(drawn('- #item\n- two')).toEqual(['item'])
     expect(drawn('| a |\n| - |\n| #cell |')).toEqual(['cell'])
     expect(drawn('words (#aside) more')).toEqual(['aside'])
+  })
+
+  /** The same notes as "inside emphasis, strike, highlight or a cell" and "a
+   *  link to a heading is no tag" in the app's search/tags.test.ts, so what the
+   *  page draws is what the index holds. */
+  test('inside emphasis, strike, highlight or a cell, and never as a link target', () => {
+    expect(drawn('**#a** *#b* _#c_ ~~#d~~ ==#e== call')).toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(drawn('| x | y |\n| - | - |\n|#f|#g|')).toEqual(['f', 'g'])
+    expect(drawn('See [setup](#setup) and ![x](#y). Real #setup.')).toEqual(['setup'])
   })
 
   test('left alone in code, maths, addresses, links, headings and mid-word', () => {

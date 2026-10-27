@@ -505,4 +505,24 @@ mod tests {
             vec!["#work", "#nib"]
         );
     }
+
+    /// Twin of "a link to a heading is no tag" in search/tags.test.ts.
+    #[test]
+    fn a_link_to_a_heading_is_no_tag() {
+        assert_eq!(
+            tags_in("## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n"),
+            vec!["#setup"]
+        );
+    }
+
+    /// Twin of "inside emphasis, strike, highlight or a cell" in
+    /// search/tags.test.ts: where the page draws a tag, the index has one.
+    #[test]
+    fn reads_a_tag_inside_emphasis_strike_highlight_or_a_cell() {
+        assert_eq!(
+            tags_in("**#a** *#b* _#c_ ~~#d~~ ==#e== call\n"),
+            vec!["#a", "#b", "#c", "#d", "#e"]
+        );
+        assert_eq!(tags_in("| x | y |\n| - | - |\n|#f|#g|\n"), vec!["#f", "#g"]);
+    }
 }

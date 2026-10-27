@@ -129,3 +129,19 @@ describe('in a note written with CRLF endings', () => {
     expect(made?.after).toBe(crlf('---\ntags:\n  - other\n---\nx\n'))
   })
 })
+
+describe('next to a link to a heading', () => {
+  const note = '## Setup\n\nSee [setup](#setup). Tagged #setup and **#setup**.\n'
+
+  test('a rename leaves the link and reaches the tag in bold', () => {
+    expect(change('setup', 'install', note)?.after).toBe(
+      '## Setup\n\nSee [setup](#setup). Tagged #install and **#install**.\n',
+    )
+  })
+
+  test('and so does taking the tag away', () => {
+    const after = change('setup', null, note)?.after ?? ''
+    expect(after).toContain('See [setup](#setup). Tagged and')
+    expect(after.match(/#setup/g)).toHaveLength(1)
+  })
+})

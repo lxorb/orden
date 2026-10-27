@@ -82,6 +82,17 @@ describe('the tags in a note', () => {
     expect(tagsIn('```a`a\n#yes')).toEqual(['#yes'])
   })
 
+  test('and a link to a heading is no tag, though a tag next to it is', () => {
+    expect(tagsIn('## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n')).toEqual([
+      '#setup',
+    ])
+  })
+
+  test('inside emphasis, strike, highlight or a cell, where the page draws one', () => {
+    expect(tagsIn('**#a** *#b* _#c_ ~~#d~~ ==#e== call\n')).toEqual(['#a', '#b', '#c', '#d', '#e'])
+    expect(tagsIn('| x | y |\n| - | - |\n|#f|#g|\n')).toEqual(['#f', '#g'])
+  })
+
   test('a fence in a quote ends with the quote', () => {
     expect(tagsIn('> ```\n> #no\n#yes')).toEqual(['#yes'])
   })
