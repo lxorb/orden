@@ -1,6 +1,6 @@
 import { documentOf, EditorState, SharedDoc, type TransactionSpec } from '@nib/editor'
 import { describe, expect, test } from 'vitest'
-import { viewShowing, WhenShown } from './when-shown'
+import { viewShowing, WhenShown } from './views.svelte'
 
 /** A pane's one view, without a DOM, joined to whichever note it shows. */
 class Surface {
