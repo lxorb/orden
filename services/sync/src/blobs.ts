@@ -6,9 +6,17 @@ import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
 import { allows, reachedSpace } from './spaces/space'
-import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
+import {
+  BYTES,
+  hashOfBytes,
+  held,
+  holdsItsName,
+  spellsADiagramName,
+  WRONG_BYTES,
+} from './sync2/files'
 import { fits, fitsSql } from './storage'
 import type { Env, Space, Variables, Whoever } from './types'
+import { handedTo, ownOtherwise, type Reading, reading, unreadUses, usedElsewhere } from './used'
 
 /** What may be stored, and how much of each.
  *
@@ -41,6 +49,9 @@ const LIMITS: Record<string, number> = {
 const DOCUMENTS = new Set(['application/pdf'])
 
 const HASH = /^[a-f0-9]{64}$/
+
+/** A give-back that cannot be answered yet; see `letGo`. */
+const STILL_READING = 'that file may still be in a note - try again tomorrow'
 
 /** The type a request declares, with any parameters after it left off:
  *  `application/pdf; charset=binary` is a PDF. */
@@ -86,8 +97,9 @@ blobs.put('/:hash', async (context) => {
   // sends what it hashed beside the drawing, so that name is checked too, and only
   // for a space this account may write in. An app from before that sends nothing
   // and is taken at its word, under a name no page prints, until it is too old to
-  // sign in (#518).
-  const verified = (await hashOfBytes(body)) === hash
+  // sign in (#518). And what such a name is the hash of is not bytes that are their
+  // name: it is the name, and would take the drawing's place.
+  const verified = (await hashOfBytes(body)) === hash && !spellsADiagramName(body)
   if (!verified && type !== 'image/svg+xml') return context.json({ error: WRONG_BYTES }, 400)
   const said = context.req.header('x-nib-diagram')
   if (
@@ -153,7 +165,7 @@ async function drawnFrom(env: Env, who: Whoever, hash: string, said: string): Pr
 }
 
 /** Gives a file back and stops keeping it. The object survives while any other
- *  account still references it. */
+ *  account still references it, or any other account's space still uses it. */
 blobs.delete('/:hash', async (context) => {
   const user = context.get('user')
   const hash = context.req.param('hash').toLowerCase()
@@ -161,21 +173,76 @@ blobs.delete('/:hash', async (context) => {
   // stored cannot become a delete against the bucket.
   if (!HASH.test(hash)) return context.json({ error: NOT_A_HASH }, 400)
 
-  await letGo(context.env, user.id, hash)
+  if (!(await letGo(context.env, user.id, hash))) {
+    return context.json({ error: STILL_READING }, 409)
+  }
   return context.json({ ok: true })
 })
 
 /** One account stops keeping a file: its row goes, and the object with it once no
  *  other account keeps the same bytes. What a face that was replaced is given back
- *  through as well; see people/routes.ts. */
-export async function letGo(env: Env, userId: string, hash: string): Promise<void> {
-  await env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId).run()
+ *  through as well; see people/routes.ts.
+ *
+ *  Unless somebody else's space still uses the bytes - a picture in a note, a paper, a
+ *  file: then that space's owner is handed a row of their own first, as they would be
+ *  if this account were deleted (see used.ts), and the asker's row goes and stops
+ *  counting against them. Whether or not another account holds the same bytes too,
+ *  because that one may hold them as something else and give them back in turn. Giving
+ *  a file back is not a way to take it out of a note in a space that is not yours.
+ *
+ *  With `own`, a use in this account's own spaces keeps its row: a face is let go of
+ *  without anybody asking about the notes, and its bytes may be a picture in them.
+ *
+ *  Answers false, and keeps the row, while a space this account is in has more notes
+ *  written before their pictures were than one request reads: whether one of them
+ *  shows the picture cannot be told yet, and neither deleting it nor handing it over
+ *  on a guess is right. The nightly sweep reads them (blog/fill.ts). `done` is what a
+ *  caller asking about many has read already; see `Reading` in used.ts. */
+export async function letGo(
+  env: Env,
+  userId: string,
+  hash: string,
+  own = false,
+  done: Reading = reading(),
+): Promise<boolean> {
+  const owed = await usedElsewhere(env, userId, new Set([hash]), own)
+  if (owed.has(userId)) return true
+
+  const mine = await env.DB.prepare(
+    'select u.email, b.type from blobs b join users u on u.id = b.user_id where b.hash = ? and b.user_id = ?',
+  )
+    .bind(hash, userId)
+    .first<{ email: string; type: string }>()
+  const picture = mine?.type.startsWith('image/') ?? false
+
+  // Counting its own uses, the two of its own that hold a blob without a note - its
+  // face and a site's theme - keep the row too, and a picture that one of its own notes
+  // written before their pictures were might show cannot be decided yet.
+  if (own) {
+    const otherwise = await ownOtherwise(env, userId, hash, picture)
+    if (otherwise === 'used') return true
+    if (otherwise === 'unknown') return false
+  }
+
+  // And the notes written before their pictures were, read the way an erase reads
+  // them, if the bytes are a picture this account holds. Without guessing: a picture
+  // not found in the notes that could be read is kept rather than handed over on a
+  // chance, until the sweep has read the rest.
+  if (mine && picture) {
+    const user = { id: userId, email: mine.email }
+    if (!(await unreadUses(env, user, new Set([hash]), owed, false, done))) return false
+  }
+
+  await env.DB.batch([
+    ...handedTo(env, userId, owed, now()),
+    env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId),
+  ])
 
   const others = await env.DB.prepare('select 1 from blobs where hash = ? limit 1')
     .bind(hash)
     .first()
-
   if (!others) await env.NOTES.delete(key(hash))
+  return true
 }
 
 /** Serving, which carries no session: a note is read by whoever it was shared

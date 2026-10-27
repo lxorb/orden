@@ -9,13 +9,14 @@
  *  same edit, as the editor's box does. A move of whole lines is this lane's own, in
  *  lines.ts. */
 
-import { finish, skip, taskHash, tick } from '@nib/bases'
+import { finish, skip, tick } from '@nib/bases'
 import type { Row, TaskChange } from '@nib/bases'
 import { appliedEdits, oneEdit } from '@nib/markdown/edits'
 import { blockIds, freeBlockId } from '@nib/markdown/links'
 import { taskLine as lineWords } from '@nib/markdown/task-edits'
 import type { TaskFields } from '@nib/markdown/task-line'
 import { rows } from '../rows/rows.svelte'
+import { canWriteAt } from '../sharing.svelte'
 import { changed, type RowChange } from '../rows/write'
 import type { Change } from '../search/apply'
 import { changeOf } from '../search/replace'
@@ -38,7 +39,7 @@ import {
   withLines,
   withoutBlock,
 } from './lines'
-import { withComment, withDescription, withoutComment, withSubtask } from './task-body'
+import { editedTask, withComment, withDescription, withoutComment, withSubtask } from './task-body'
 
 /** Where a row's note is on this disk, or null for a space no longer here. */
 function pathOf(row: Row): string | null {
@@ -59,8 +60,7 @@ async function rewrite(
   if (next === null) return false
   const edit = oneEdit(before, next)
   if (!edit) return false
-  await replaced([changeOf(path, before, [edit])], said)
-  return true
+  return replaced([changeOf(path, before, [edit])], said)
 }
 
 /** Notes (on this disk) each written from what it said to what `after` makes of it, as
@@ -69,6 +69,7 @@ async function rewrite(
 export async function rewriteNotes(
   edits: readonly { path: string; after: (before: string) => string | null }[],
   said?: Said,
+  together = false,
 ): Promise<boolean> {
   const changes = []
   for (const { path, after } of edits) {
@@ -79,16 +80,23 @@ export async function rewriteNotes(
     if (edit) changes.push(changeOf(path, before, [edit]))
   }
   if (!changes.length) return false
-  await replaced(changes, said)
-  return true
+  return replaced(changes, said, together)
 }
 
 /** A write of notes, as one undo; `said` is the word the undo toast offers it back
- *  under, where it is one a view's tasks were given (undo-toast.svelte.ts). */
-async function replaced(changes: readonly Change[], said?: Said): Promise<void> {
-  await replaceInNotes(workspace, changes)
+ *  under, where it is one a view's tasks were given (undo-toast.svelte.ts). Answers
+ *  whether any note was written: none is in a space shared to be read, which the
+ *  replacement passes over, and every write here answers that rather than true, so a
+ *  box drawn ticked in Today goes back to what its note still says. */
+async function replaced(
+  changes: readonly Change[],
+  said?: Said,
+  together = false,
+): Promise<boolean> {
+  if (!(await replaceInNotes(workspace, changes, { together }))) return false
   const last = workspace.undone.last
   if (said && last) undoToast.tell(last, said, workspace.undone.stack)
+  return true
 }
 
 /** Writes made one after another as one undo: a card carried to another column writes
@@ -139,7 +147,7 @@ export async function writeEach(
     if (edit) changes.push(changeOf(path, before, [edit]))
   }
   if (!changes.length) return false
-  await replaced(changes, said)
+  if (!(await replaced(changes, said))) return false
   if (join) (await import('../workspace/undo-join')).joinLast(workspace.undone)
   return true
 }
@@ -219,8 +227,7 @@ async function rewriteEach(
     if (edit) changes.push(changeOf(path, before, [edit]))
   }
   if (!changes.length) return false
-  await replaced(changes, said)
-  return true
+  return replaced(changes, said)
 }
 
 /** Many tasks ticked as one write, from the last of each note up, so a recurring task's
@@ -305,6 +312,10 @@ export function duplicateRows(many: readonly Row[]): Promise<boolean> {
  *  The note has to be there. Every note written as one write, so one undo puts all of
  *  them back. */
 export async function moveRowsTo(many: readonly Row[], target: string): Promise<boolean> {
+  // Both ends asked first: a cut without its arrival loses the task, and an arrival
+  // without its cut, from a space shared to be read, is a copy that says it moved.
+  const from = many.map(pathOf).filter((path) => path !== null)
+  if (![target, ...from].every((path) => canWriteAt(path))) return false
   const was = await noteText(workspace, target)
   if (was === null) return false
   let there = was
@@ -329,8 +340,7 @@ export async function moveRowsTo(many: readonly Row[], target: string): Promise<
   const arrive = oneEdit(was, there)
   if (arrive) changes.push(changeOf(target, was, [arrive]))
   if (!changes.length) return false
-  await replaced(changes, 'moved')
-  return true
+  return replaced(changes, 'moved', true)
 }
 
 /** The link to a task, Obsidian's block reference: the task's block name, given it the
@@ -350,7 +360,8 @@ export async function linkToRow(row: Row): Promise<string | null> {
   const after = changed(before, row, { task: { block: id } })
   if (after === null) return null
   const edit = oneEdit(before, after)
-  if (edit) await replaceInNotes(workspace, [changeOf(path, before, [edit])])
+  // No link to an id nothing wrote, which a note in a space shared to be read is.
+  if (edit && !(await replaceInNotes(workspace, [changeOf(path, before, [edit])]))) return null
   return `[[${note}#^${id}]]`
 }
 
@@ -391,8 +402,7 @@ async function moveRowTo(row: Row, to: { path?: string; heading?: string }): Pro
   const arrive = oneEdit(there ?? '', after)
   if (leave) changes.push(changeOf(from, before, [leave]))
   if (arrive) changes.push(changeOf(target, there ?? '', [arrive]))
-  await replaced(changes, 'moved')
-  return true
+  return replaced(changes, 'moved')
 }
 
 /** The note a move names, in the row's own space: by path, or by a note's name, which
@@ -491,15 +501,7 @@ export async function editTask(
   change: TaskChange,
   description: string | null,
 ): Promise<boolean> {
-  const anchor = row.anchor
   const path = pathOf(row)
-  if (!anchor || path === null || !row.task) return false
-  const words = change.text ?? row.task.text
-  return rewrite(path, (before) => {
-    const after = changed(before, row, { task: change }) ?? before
-    if (description === null) return after
-    return (
-      withDescription(after, { line: anchor.line, hash: taskHash(words) }, description) ?? after
-    )
-  })
+  if (path === null) return false
+  return rewrite(path, (before) => editedTask(before, row, change, description))
 }

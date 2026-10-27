@@ -7,6 +7,8 @@
 import { isCanvasTarget, isPagesTarget, isWebTarget } from '@nib/markdown/links'
 import type { AgentAnswer } from '../../automation/caller'
 import { shownName } from '../../note-name'
+import { onDisk as exists } from '../../on-disk'
+import { pairOf } from '../../pages/held'
 import { canWriteAt } from '../../sharing.svelte'
 import { nameOf } from '../../space-paths'
 import { isWebAddress } from '../../web-tab/address'
@@ -68,7 +70,7 @@ export async function createFile(
   call: Call,
   place: Place,
   kind: Exclude<FileKind, 'note'>,
-  make: (place: Place, relative: string, words: string, open: boolean) => Promise<unknown>,
+  make: (place: Place, relative: string, words: string, open: boolean) => Promise<object>,
 ): Promise<AgentAnswer> {
   const relative = fileNamed(judgedForWriting(need(call, 'path')), kind)
   const path = onDisk(place, relative)
@@ -78,10 +80,24 @@ export async function createFile(
   if ((await workspace.noteText(path)) !== null) {
     throw new Refused('exists', `${relative} is already there, and nothing is written over`)
   }
+  // A page note made beside a PDF named as its paper takes that PDF for its own: hidden
+  // from the file list, and trashed with the note. The PDF is no note, so `noteText`
+  // does not see it; the disk is asked.
+  const paper = pairOf(path)
+  if (paper !== null && (await exists(paper))) {
+    throw new Refused(
+      'exists',
+      `${nameOf(paper)} is already there, and would be taken for its paper`,
+    )
+  }
 
   const words = await firstWords(call, kind, nameOf(relative))
   const question = await asked(call, null, `Make ${relative} in ${place.space.name}`)
   if (question) return question
 
-  return done(await make(place, relative, words, flag(call, 'open')))
+  // Said with the space, which a call that named none does not know (notes.ts).
+  return done({
+    ...(await make(place, relative, words, flag(call, 'open'))),
+    space: place.space.id,
+  })
 }

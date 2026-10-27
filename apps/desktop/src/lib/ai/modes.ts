@@ -56,6 +56,24 @@ export function nextMode(mode: Mode): Mode {
   return CYCLE[(CYCLE.indexOf(mode) + 1) % CYCLE.length] ?? FIRST_MODE
 }
 
+/** The modes each one holds within it (`supervised`, `in_mode` in ai_agent.rs). Auto
+ *  has every tool and asks as the grant does, so it holds Approve (asks more) and Plan
+ *  (fewer tools); Full holds all. Plan and Approve hold neither: Plan makes notes
+ *  unasked, Approve opens and steers pages unasked. */
+const HOLDS: Record<Mode, readonly Mode[]> = {
+  approve: ['approve'],
+  plan: ['plan'],
+  auto: ['auto', 'approve', 'plan'],
+  full: MODES,
+}
+
+/** The mode something not the reader's own asks for, where `held` holds it, or null
+ *  where it would let anything happen that `held` does not: a command from a shared
+ *  space may make a thread more careful, never less (docs/agent-native.md 9.6). */
+export function noMoreThan(asked: Mode, held: Mode): Mode | null {
+  return HOLDS[held].includes(asked) ? asked : null
+}
+
 /** Whether a mode makes changes without the reader's Approve first. */
 export function actsAlone(mode: Mode): boolean {
   return mode === 'auto' || mode === 'full'

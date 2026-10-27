@@ -13,7 +13,7 @@
  *  Each refusal is a `Refusal` code; the app says it in the reader's language. */
 
 import { apply, chatState, mayEvent } from '@nib/chats'
-import type { Event, FileRef, Logged, Mention, Message, Meta, Role, Who } from '@nib/chats'
+import type { Event, FileRef, Logged, Mention, Message, Meta, Preview, Role, Who } from '@nib/chats'
 import { BURST_POSTS, BURST_SECONDS, EVENTS_A_MINUTE } from '@nib/chats/limits'
 import type { Refusal } from '@nib/chats/wire'
 
@@ -31,7 +31,7 @@ export interface Asker {
 
 /** What a placed event set going that is not the log's: the people a post calls (and
  *  the author of the message a reply answers), the files it brought, and the files a
- *  delete let go of. */
+ *  delete or an edit let go of. */
 export interface Effects {
   called: Mention[]
   answered: Who | null
@@ -265,10 +265,34 @@ export function place(
     effects: {
       called: event.kind === 'post' ? (event.mentions ?? []) : [],
       answered: answered === asker.who ? null : answered,
-      files: event.kind === 'post' || event.kind === 'edit' ? (event.files ?? []) : [],
-      freed: event.kind === 'delete' && before && !before.deleted ? before.files : [],
+      files:
+        event.kind === 'post'
+          ? namedBy(event.files, event.preview)
+          : event.kind === 'edit'
+            ? (event.files ?? [])
+            : [],
+      freed: before && !before.deleted && frees(event) ? namedBy(before.files, before.preview) : [],
     },
   }
+}
+
+/** The files a message names: its own, and its link preview's picture, which is a blob
+ *  its members fetch as they fetch the others and a use of it as theirs is (the erase
+ *  hands it on, docs/chats.md 4.18). The picture has no name or size of its own; it is
+ *  served as bytes, whatever its type. */
+function namedBy(files: readonly FileRef[] | undefined, preview: Preview | undefined): FileRef[] {
+  const picture = preview?.picture
+  const named = [...(files ?? [])]
+  if (picture) named.push({ hash: picture, name: preview.title, size: 0, type: 'image/webp' })
+  return named
+}
+
+/** Whether an event can take files off the message it names: a delete, and an edit
+ *  that names files of its own, since the history an edit keeps is words alone and the
+ *  files it replaced are shown in no version of the message any more. Which of them no
+ *  message names now is the object's to ask (`freeFiles`), after the message is kept. */
+function frees(event: Event): boolean {
+  return event.kind === 'delete' || (event.kind === 'edit' && event.files !== undefined)
 }
 
 /** These messages as the reducer makes them from every event about them. */

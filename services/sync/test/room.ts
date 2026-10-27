@@ -189,7 +189,16 @@ export function running(env: Env): {
   const made = new Map<string, { room: NoteRoom; state: FakeState }>()
 
   const of = (noteId: string) => {
-    const held = made.get(noteId) ?? room(env)
+    let held = made.get(noteId) ?? room(env)
+    // An object that asked to be ended is made again over the same storage, which is
+    // what the runtime does with the next request for it; see `crossed`.
+    if (held.state.aborted !== null) {
+      held.state.aborted = null
+      held = {
+        room: new NoteRoom(held.state as unknown as DurableObjectState, env),
+        state: held.state,
+      }
+    }
     made.set(noteId, held)
     return held
   }

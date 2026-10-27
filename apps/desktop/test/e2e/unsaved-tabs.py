@@ -14,7 +14,8 @@ What it proves, in order, and photographs:
   the root of the space to put it in; another place is picked by typing, and Enter
   writes the file there. The dot goes.
 * **Dropped on the list**: a tab carried off its strip and let go of below the file
-  list's rows is saved at the root of the space, under its first line.
+  list's rows is saved at the root of the space, under its first line - even where the
+  code that follows a carried tab arrives only after the hand has stopped moving.
 * **Close and reopen**: a new note with words asks before it closes (#359): Cancel keeps
   it, Don't save closes it with its words in Recently deleted, and Ctrl+Shift+T brings
   the tab back with them - and out of the trash again. Save asks where, in the layer
@@ -33,7 +34,7 @@ Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go beside this file
 
 from __future__ import annotations
 
-from playwright.sync_api import Browser, Page
+from playwright.sync_api import Browser, Page, Route
 
 from harness import Drive
 
@@ -65,6 +66,22 @@ def state(page: Page) -> dict:
     return page.evaluate(STATE)  # type: ignore[no-any-return]
 
 
+#: How late the code that follows a carried tab (tab-strip/carrying.ts) is let arrive.
+#: It is fetched with the first press on a tab, and the drag below is this drive's first;
+#: a hand that had stopped over the list before it arrived found nothing lit, and the tab
+#: let go of there went home unsaved. Seen on a busy runner as a drop that never came, in
+#: WebKit, on 2026-10-20 and 10-27; held open here so it is seen every time.
+LATE = 400
+
+
+def late(page: Page) -> None:
+    def held(route: Route) -> None:
+        page.wait_for_timeout(LATE)
+        route.continue_()
+
+    page.route("**/assets/carrying-*.js", held)
+
+
 def typed(page: Page, words: str) -> None:
     """A new note, with words typed into it the way a hand types them."""
     page.evaluate("() => window.nibApp.workspace.openBlank()")
@@ -76,6 +93,7 @@ def typed(page: Page, words: str) -> None:
 
 def drive(browser: Browser, scheme: str) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
+    late(page)
     DRIVE.open(page)
     DRIVE.seed(page, "# Trips\n\nWhere we went.\n")
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")

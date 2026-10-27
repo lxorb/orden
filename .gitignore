@@ -55,3 +55,6 @@ __pycache__/
 # one to exercise the second factor and takes it away again.
 .dev.vars
 
+
+# Local codebase graph built by graphify.
+graphify-out/

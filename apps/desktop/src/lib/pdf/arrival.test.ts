@@ -46,3 +46,17 @@ test('with no space open the first takes it, and with none at all nothing does',
   })
   expect(arrivalOf('/tmp/a.pdf', [], null)).toBeNull()
 })
+
+test('a space shared to be read takes nothing: the first that may be written in does', () => {
+  const mine = (root: string) => root !== work.root
+  expect(arrivalOf('/tmp/a.pdf', spaces, 'work', mine)).toEqual({
+    kind: 'bring',
+    spaceId: 'home',
+    root: home.root,
+  })
+  expect(arrivalOf('/tmp/a.pdf', spaces, 'work', () => false)).toBeNull()
+  // One already inside such a space still opens where it is: nothing is copied.
+  expect(arrivalOf('C:\\Users\\me\\Documents\\Nib\\Work\\a.pdf', spaces, 'home', mine)?.kind).toBe(
+    'open',
+  )
+})

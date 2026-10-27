@@ -1,15 +1,18 @@
 import { escapeAll } from '@nib/markdown/html'
 import { CODE_PALETTES } from '@nib/editor'
-import { frontMatterValue, renderMarkdown, type Wikilink } from '@nib/markdown'
+import { type EmbeddedNote, frontMatterValue, renderMarkdown, type Wikilink } from '@nib/markdown'
 import { sourcesOf } from '@nib/markdown/sources'
 import { exportCss, themeCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from './accents'
+import { busy } from './busy.svelte'
 import { type Fence, prepareEmbeds, prepareFences } from './before-render'
 import { titleOf } from './export/document'
 import { inlinePictures, type Picture, swapSources } from './export/pictures'
 import { chooseTarget } from './export/save'
 import { PANDOC_FORMATS, type PandocFormat } from './export-formats'
+import type { PandocPicture } from './import/pandoc-pictures'
 import { paletteCss } from './highlight'
+import { plural } from './i18n.svelte'
 import { mathCss } from './math-fonts'
 import { type PaperInches, pageCss, pageSetupFor, runningDate, withRunningText } from './page-setup'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from './paper'
@@ -45,9 +48,9 @@ export interface HtmlOptions {
   fence?: Fence
   /** Reads the note a `![[…]]` names, so the embeds in a document can be
    *  gathered before it is rendered - the renderer cannot wait on a disk. */
-  readNote?: (target: string) => Promise<string | null>
+  readNote?: (target: string) => Promise<string | EmbeddedNote | null>
   /** The notes an embed names, already read; see `prepareEmbeds`. */
-  embed?: (link: Wikilink) => string | null
+  embed?: (link: Wikilink) => string | EmbeddedNote | null
   /** Show the note's raw HTML as the characters it is made of rather than as
    *  markup. The same question the reading view asks, and asked of the same note:
    *  a page of somebody else's words is not made trustworthy by being printed.
@@ -309,8 +312,14 @@ export async function pandocAvailable(): Promise<boolean> {
   return invoke<boolean>('has_pandoc').catch(() => false)
 }
 
-/** Reads a Word, ODT, EPUB, RST or similar file in as markdown. */
-export async function importDocument(): Promise<{ name: string; markdown: string } | null> {
+/** Reads a Word, ODT, EPUB, RST or similar file in as markdown, with the
+ *  pictures inside it for the caller to keep in the note's space; see
+ *  import/pandoc-pictures.ts. */
+export async function importDocument(): Promise<{
+  name: string
+  markdown: string
+  pictures: PandocPicture[]
+} | null> {
   if (!isDesktop) return null
 
   const { open } = await import('@tauri-apps/plugin-dialog')
@@ -325,20 +334,36 @@ export async function importDocument(): Promise<{ name: string; markdown: string
 
   if (typeof picked !== 'string') return null
 
-  const markdown = await invoke<string>('import_document', { path: picked })
+  // `leftOut` says why the pictures stayed behind, on a pandoc that cannot be
+  // trusted to copy them; see `copying` in pandoc.rs.
+  const { markdown, leftOut, pictures } = await invoke<{
+    markdown: string
+    leftOut: string | null
+    pictures: PandocPicture[]
+  }>('import_document', { path: picked })
+  if (leftOut) busy.failed(leftOut)
   const name =
     picked
       .split(/[\\/]/)
       .pop()
       ?.replace(/\.[^.]+$/, '') ?? 'Imported'
 
-  return { name: `${name}.md`, markdown }
+  return { name: `${name}.md`, markdown, pictures }
 }
 
 /** The formats that are pandoc's rather than ours, for a machine that has it.
  *  Orden writes its own Word, RTF and ePub, so those are not here: two roads to
- *  one format would mean a note came out differently depending on the machine. */
-export async function exportPandoc(source: string, name: string, format: PandocFormat) {
+ *  one format would mean a note came out differently depending on the machine.
+ *
+ *  `note` is where the note is, whose folder its pictures are found in. A picture
+ *  pandoc could not find is left out of the file with pandoc still calling it done,
+ *  so the reader is told how many. */
+export async function exportPandoc(
+  source: string,
+  name: string,
+  format: PandocFormat,
+  note: string | null = null,
+) {
   if (!isDesktop) return
 
   const spec = PANDOC_FORMATS.find((entry) => entry.id === format)
@@ -347,6 +372,14 @@ export async function exportPandoc(source: string, name: string, format: PandocF
   const target = await chooseTarget(name, spec.extension, spec.label)
   if (!target) return
 
-  await invoke('run_pandoc', { source, output: target, format })
+  const missing = await invoke<string[]>('run_pandoc', { source, output: target, format, note })
+  if (missing.length) {
+    busy.failed(
+      plural(missing.length, {
+        one: '{count} attachment was missing from the export or could not be read',
+        other: '{count} attachments were missing from the export or could not be read',
+      }),
+    )
+  }
   return target
 }

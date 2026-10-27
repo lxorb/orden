@@ -15,7 +15,7 @@ import type { EditorView } from '@nib/editor'
 import { insideOnly } from '../../automation/inside'
 import type { Change } from '../../search/apply'
 import type { Edit } from '../../search/replace'
-import { insideSpace, isMarkdownPath, nameOf } from '../../space-paths'
+import { insideSpace, nameOf, notePath } from '../../space-paths'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Keeping } from '../../workspace/note-text'
 import { DocError } from './problem'
@@ -124,9 +124,9 @@ export function located(desk: Desk, at: NoteAt): Located {
     throw new DocError('no_such_note', at.path, `${at.path} is not a path inside the space`)
   }
 
-  const relative = nameOf(judged).includes('.') ? judged : `${judged}.md`
-  if (!isMarkdownPath(relative)) {
-    throw new DocError('not_a_note', at.path, `${relative} is not a markdown note`)
+  const relative = notePath(judged)
+  if (relative === null) {
+    throw new DocError('not_a_note', at.path, `${judged} is not a markdown note`)
   }
 
   return { space, relative, path: insideSpace(space.root, relative) }

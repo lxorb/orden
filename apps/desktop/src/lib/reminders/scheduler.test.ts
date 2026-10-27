@@ -7,6 +7,8 @@ import { type Host, QUIET, Scheduler } from './scheduler'
 const NOW = new Date(2026, 9, 4, 12, 0).getTime()
 
 interface Rig {
+  /** Whether the system throws rather than take what it is handed. */
+  fail(on: boolean): void
   handed: Reminder[][]
   rung: Reminder[][]
   waiting: boolean[]
@@ -18,7 +20,7 @@ interface Rig {
 
 /** A scheduler over rows set by hand, a clock moved by hand, and a system that rings
  *  (or not) and says what it was handed. */
-function rig(system = true): Rig {
+function rig(system: boolean | 'fails' = true): Rig {
   let rows: Row[] = []
   let ready = true
   let now = NOW
@@ -39,6 +41,7 @@ function rig(system = true): Rig {
     now: () => now,
     hand(plan) {
       handed.push([...plan])
+      if (system === 'fails') return Promise.reject(new Error('not taken'))
       return Promise.resolve(system)
     },
     ring: (plan) => rung.push([...plan]),
@@ -57,6 +60,9 @@ function rig(system = true): Rig {
   }
 
   return {
+    fail(on: boolean) {
+      system = on ? 'fails' : true
+    },
     handed,
     rung,
     waiting,
@@ -90,6 +96,21 @@ const hours = (plans: Reminder[][]) =>
   plans.map((plan) => plan.map((one) => new Date(one.at).getHours()))
 
 describe('Scheduler', () => {
+  /** A phone whose activity has not said its word yet drops the plan (B456). Taken
+   *  for handed, the same plan was never handed again and nothing rang this launch. */
+  test('a plan the system did not take is rung in the page and handed again', async () => {
+    const one = rig('fails')
+    one.set(call('16:00'))
+    await one.advance(QUIET)
+    expect(hours(one.rung)).toEqual([[16]])
+
+    one.fail(false)
+    one.set(call('16:00'))
+    await one.advance(QUIET)
+    expect(hours(one.handed)).toEqual([[16], [16]])
+    expect(one.rung.at(-1)).toEqual([])
+  })
+
   test('hands nothing until every space is read', async () => {
     const one = rig()
     one.ready(false)

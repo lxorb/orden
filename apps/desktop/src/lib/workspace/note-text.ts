@@ -19,7 +19,7 @@ import type { SpaceTag } from '@nib/editor'
 import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
 import { lineStarts } from '../search/lines'
-import { samePath } from '../space-paths'
+import { isMarkdownPath, samePath } from '../space-paths'
 import { applied, changeOf, type Edit, reverse } from '../search/replace'
 import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
@@ -83,10 +83,10 @@ export async function retagNotes(ws: HoldsNotes, from: string, to: string | null
     (path) => noteText(ws, path),
   )
 
-  await replaceInNotes(ws, changes)
+  const written = await replaceInNotes(ws, changes)
   // The tree the tags are drawn as is now a tree of the tags that were.
   await loadTags(ws)
-  return changes.length
+  return written
 }
 
 /** A note's words as they stand: what is on screen when it is open, and what
@@ -131,8 +131,8 @@ export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): 
   const edits = tick(before, line, todayOf())
   if (!edits.length) return false
 
-  await replaceInNotes(ws, [changeOf(path, before, edits)])
-  return true
+  // No, too, in a space shared to be read, which the replacement passes over.
+  return (await replaceInNotes(ws, [changeOf(path, before, edits)])) > 0
 }
 
 /** Writes the whole of one note, from words somebody typed somewhere other than a
@@ -157,7 +157,8 @@ export async function writeNoteText(
   const edit = oneEdit(before, after)
   if (!edit) return
 
-  await replaceInNotes(ws, [changeOf(path, before, [edit])], keeping)
+  // The whole of the file, as the caller wrote it: a base's own source comes this way.
+  await replaceInNotes(ws, [changeOf(path, before, [edit])], { ...keeping, anyFile: true })
 }
 
 /** One note's share of a replacement, as it is put back later. */
@@ -174,6 +175,14 @@ export interface Keeping {
   /** Who it was kept for, written beside it and shown in the versions list. */
   source?: string
   undoable?: boolean
+  /** Whether the changes stand or fall as one: a move writes the cut from one note and
+   *  the arrival in another, and a cut written without its arrival loses what it cut.
+   *  So where any of them is in a space shared to be read, none is written. */
+  together?: boolean
+  /** Whether a file that is not a note may be written. A word edit is a note's; a
+   *  caller that knows another file's shape - a canvas's icon, a base's source - says
+   *  so, and nothing else spoils a shortcut's or a canvas's lines as words. */
+  anyFile?: boolean
 }
 
 /** Keeps the version a write is about to replace, as `keeping` says. */
@@ -187,7 +196,14 @@ async function keep(path: string, content: string, keeping: Keeping) {
 /** Writes a replacement across the space. Every note keeps a snapshot of
  *  what it said before it is written, a note open in a pane takes the change
  *  as the words that changed so no caret moves, and however many notes were
- *  touched it is one thing to undo.
+ *  touched it is one thing to undo. Answers how many notes were written.
+ *
+ *  A note in a space shared with this account to be read is passed over and not
+ *  counted: the copy here would stop being the space's, and the sync refuses it on
+ *  every pass. Asked here rather than of each caller, because every write of words
+ *  into a note nobody has open comes through here - a search's Replace all, a tag
+ *  renamed, a task ticked from Today or a query, an icon or a cover chosen.
+ *  Fetched, as sharing.svelte.ts reads the workspace this belongs to.
  *
  *  Each change was worked out against the words as they were read, and the reader
  *  may have typed since: between the read and this call, and inside the writes of
@@ -198,12 +214,18 @@ export async function replaceInNotes(
   ws: HoldsNotes,
   changes: readonly Change[],
   keeping: Keeping = {},
-): Promise<void> {
-  if (!changes.length) return
+): Promise<number> {
+  const notes =
+    keeping.anyFile === true ? changes : changes.filter((one) => isMarkdownPath(one.path))
+  if (!notes.length) return 0
+
+  const { canWriteAt } = await import('../sharing.svelte')
+  const writable = notes.filter((change) => canWriteAt(change.path))
+  if (!writable.length || (keeping.together && writable.length < notes.length)) return 0
 
   const done: Undone[] = []
 
-  for (const change of changes) {
+  for (const change of writable) {
     const open = ws.documentAt(change.path)
     const wrote = open
       ? await writeOpen(open, change, keeping)
@@ -219,6 +241,7 @@ export async function replaceInNotes(
   // the two would import each other. Same as the writing beside it.
   const { sync } = await import('../sync.svelte')
   sync.nudge()
+  return done.length
 }
 
 /** A note that is open: the edits carried onto the words it holds now and applied in

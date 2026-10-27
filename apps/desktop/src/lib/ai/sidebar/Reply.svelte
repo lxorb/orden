@@ -27,7 +27,7 @@
   import { dur } from '../../motion'
   import { howFor, tabAsk } from '../../new-tab'
   import { followHref, followNote, MIDDLE, opensLink } from '../../open-link'
-  import { insideSpace } from '../../space-paths'
+  import { insideSpace, withinSpace } from '../../space-paths'
   import { viewport } from '../../viewport.svelte'
   import { views } from '../../views.svelte'
   import { when } from '../../when'
@@ -78,7 +78,12 @@
       source,
       (link) => {
         const found = link.target
-          ? links.targetOf(workspace.panelNote, { kind: 'wikilink', target: link.target })
+          ? // The panel's note as the path a tab holds, which is what `targetOf` reads:
+            // a note of another space resolves in its own space, where following goes.
+            links.targetOf(workspace.panelTab?.path ?? null, {
+              kind: 'wikilink',
+              target: link.target,
+            })
           : null
         return found === null ? null : { href: found }
       },
@@ -97,7 +102,8 @@
   })
 
   async function openAt(source: Source, press: MouseEvent) {
-    const root = workspace.activeSpace?.root
+    // A source is a path in the thread's own space; see `root` in chat.svelte.ts.
+    const root = chat.root
     if (!root) return
     const ask = tabAsk(press)
     if (viewport.drawer) workspace.closePanel('right')
@@ -123,29 +129,43 @@
       return
     }
     if (event.button === MIDDLE && !anchor.classList.contains('wikilink')) return
-    followNote({ path: href, target: href, heading: null, block: null, page: null }, event)
+    // In the panel note's space, where `drawn` resolved it.
+    followNote(
+      { path: href, target: href, heading: null, block: null, page: null },
+      event,
+      workspace.panelTab?.path ?? null,
+    )
   }
 
   const asNote = $derived(linkedAnswer(words, sources))
   const view = $derived<EditorView | undefined>(views.of(workspace.panes.focusedId))
 
+  /** What Insert writes in the focused note: `asNote`, whose wikilinks find the notes
+   *  cited, where that note is in the thread's own space; in another one they would
+   *  find its note of the same name or none, so there each citation is the name alone. */
+  function inserted(): string {
+    const root = chat.root
+    const into = workspace.active?.path ?? null
+    const here = root !== null && into !== null && withinSpace(root, into) !== null
+    return here ? asNote : linkedAnswer(words, sources, (one) => one.name)
+  }
+
   function insert() {
     const editor = view
     if (!editor || editor.state.readOnly) return
+    const text = inserted()
     const { from, to } = editor.state.selection.main
     editor.dispatch({
-      changes: { from, to, insert: asNote },
-      selection: { anchor: from + asNote.length },
+      changes: { from, to, insert: text },
+      selection: { anchor: from + text.length },
       scrollIntoView: true,
       userEvent: 'input.paste',
     })
     editor.focus()
   }
 
-  async function saveAsNote() {
-    const path = await workspace.noteFrom(asNote)
-    if (path) await workspace.open(path)
-  }
+  // In the thread's own space, where the sources `asNote` links to are.
+  const saveAsNote = () => chat.noteFrom(asNote)
 
   let copied = $state(false)
   let copying: ReturnType<typeof setTimeout> | undefined

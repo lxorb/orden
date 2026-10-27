@@ -1997,6 +1997,7 @@ export const gsw: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} (das Grät)',
   '{name} is back: {device} was writing in it': '{name} isch zrugg: {device} het drin gschribe',
+  'Changes to {name} are not syncing': 'Änderige a {name} wärded nöd synchronisiert',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Ufmache',
   Pressing: 'Drücke',

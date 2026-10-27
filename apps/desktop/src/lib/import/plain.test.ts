@@ -116,6 +116,74 @@ describe('a folder of markdown', () => {
 
     expect(plan.files[0]?.path).toBe('Note.md')
   })
+
+  /** Plain text never meant markdown: Tomboy, Keep and Apple's own exporters write
+   *  it, and its words have to read back as the characters they are. */
+  test("and a text file's words read back as themselves, not as markdown", async () => {
+    const plan = await readPlain([
+      file('Note.txt', 'Costs $5-$10\nFine <img src=x onerror=alert(1)>\nTitle\n---\n'),
+    ])
+
+    const text = noteAt(plan, 'Note.md')
+    expect(text).toContain('\\$5-\\$10')
+    expect(text).not.toMatch(/(?<!\\)<img/)
+    expect(text).not.toMatch(/^---$/m)
+  })
+
+  /** iA Writer, Ulysses, Simplenote, nvALT and Drafts all write markdown into a
+   *  `.txt`, so a text file that reads as markdown stays markdown. */
+  test('but a text file written in markdown keeps its markdown', async () => {
+    const draft =
+      '# Chapter one\n\nIt was *quiet*. See [notes](Notes.txt) and [[Notes]].\n\n> A quote\n'
+    const plan = await readPlain([file('Draft.txt', draft)])
+
+    expect(noteAt(plan, 'Draft.md')).toBe(draft)
+  })
+
+  /** Simplenote, Drafts and nvALT checklists often have nothing else markdown in
+   *  them, and escaped boxes would be bullets that are no longer tasks. */
+  test.each([
+    ['a checklist', 'Groceries\n\n- [ ] milk\n- [x] eggs\n'],
+    ['a nested task', 'Todo\n  * [X] call #work\n'],
+    ['struck words', 'Plans\n\nGo ~~Monday~~ Tuesday.\n'],
+    ['words in underscores', 'It was _quiet_.\n'],
+    ['an empty task', 'Todo\n- [ ]\n'],
+    ['numbered tasks', 'Todo\n1. [ ] milk\n2) [x] eggs\n'],
+    ['a quoted task', '> - [ ] milk\n'],
+    ['underscores in quotes', 'It was "_quiet_", (_calm_) and _well_-kept.\n'],
+    ['a strike in brackets', 'Go (~~Monday~~) Tuesday.\n'],
+  ])('and so does a text file with only %s for markdown', async (_, draft) => {
+    const plan = await readPlain([file('Draft.txt', draft)], { format: 'markdown' })
+
+    expect(noteAt(plan, 'Draft.md')).toBe(draft)
+  })
+
+  test.each([
+    ['snake case', 'Open file_name_here.txt for $5.\n'],
+    ['a tilde', 'About ~5 min for $5, or ~~ 10.\n'],
+    ['brackets', '- [a] first for $5\n- [ ]missing space\n'],
+    ['tildes inside words', 'a~~b~~c, ~~5~~10 for $5\n'],
+    ['a cheer', 'Done for $5 _o_ yay\n'],
+    ['snake case in quotes', 'Open "_init_x" or (some_var_) for $5\n'],
+  ])('while one with only %s is still plain text', async (_, words) => {
+    const plan = await readPlain([file('Note.txt', words)])
+
+    expect(noteAt(plan, 'Note.md')).toContain('\\$5')
+  })
+
+  test('and an export that only ever writes plain text has its words escaped', async () => {
+    const plan = await readPlain([file('Note.txt', '# not a heading\n\n*stars*\n')], {
+      format: 'apple-notes',
+    })
+
+    expect(noteAt(plan, 'Note.md')).toBe('\\# not a heading\n\n\\*stars\\*\n')
+  })
+
+  test('while a markdown file keeps its markdown', async () => {
+    const plan = await readPlain([file('Note.md', 'Costs $x$\n\n<u>under</u>\n')])
+
+    expect(noteAt(plan, 'Note.md')).toBe('Costs $x$\n\n<u>under</u>\n')
+  })
 })
 
 describe('a TextBundle', () => {
@@ -152,5 +220,14 @@ describe('a folder of HTML', () => {
     ])
 
     expect(noteAt(plan, 'A.md')).toContain('[[B|to B]]')
+  })
+
+  test('a video in a page is a link to the file that arrived beside it', async () => {
+    const plan = await readPlain([
+      file('Page.html', '<h1>Page</h1><video src="media/clip.mp4" controls></video>'),
+      file('media/clip.mp4', 'MP4'),
+    ])
+
+    expect(noteAt(plan, 'Page.md')).toContain('[clip.mp4](media/clip.mp4)')
   })
 })

@@ -10,6 +10,8 @@
  *  under the task, as 5.1 has it. */
 
 import type { TextEdit } from '@nib/markdown/edits'
+import { CodeBlocks, WORDS } from '@nib/markdown/fences'
+import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { taskLine } from '@nib/markdown/task-edits'
 import type { TaskFields } from '@nib/markdown/task-line'
 import type { QuickFields } from '../language/parse'
@@ -70,6 +72,24 @@ export interface Placed {
 const HEADING = /^(#{1,6})[ \t]+(.*?)[ \t#]*$/
 const ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 
+/** For each line of a note, its heading's level and words, or null for a line that is
+ *  none: a `# comment` in a fenced block or in the front matter is code and YAML, and
+ *  a task put under it would be code too, gone from every view. Code as the page reads
+ *  it (`CodeBlocks`), so a block closes on its own mark only. */
+function headingsOf(
+  note: string,
+  all: readonly string[],
+): ({ level: number; text: string } | null)[] {
+  const block = frontMatterBlock(note)
+  const wordsFrom = block ? note.slice(0, block.close).split('\n').length : 0
+  const code = new CodeBlocks()
+  return all.map((line, index) => {
+    if (index < wordsFrom || code.line(line) !== WORDS) return null
+    const found = HEADING.exec(line)
+    return found ? { level: found[1]?.length ?? 1, text: found[2] ?? '' } : null
+  })
+}
+
 /** Whether the run of lines ending at `last` (a run being the lines since the blank
  *  line above) is a list a new item can join. */
 function endsInList(lines: readonly string[], first: number, last: number): boolean {
@@ -108,18 +128,17 @@ export function placeIn(note: string, lines: readonly string[], heading?: string
   let end = all.length
   if (heading !== undefined) {
     const wanted = heading.trim().toLowerCase()
-    const at = all.findIndex((line) => HEADING.exec(line)?.[2]?.toLowerCase() === wanted)
+    const headings = headingsOf(note, all)
+    const at = headings.findIndex((one) => one?.text.toLowerCase() === wanted)
     if (at === -1) {
       const last = lastWords(all, 0, all.length)
       const opening = `## ${heading.trim()}`
       if (last === -1) return { at: 0, insert: `${opening}${eol}${block}${eol}`, line: 1 }
       return { at: endOf(last), insert: `${eol}${eol}${opening}${eol}${block}`, line: last + 3 }
     }
-    const level = HEADING.exec(all[at] ?? '')?.[1]?.length ?? 1
+    const level = headings[at]?.level ?? 1
     first = at + 1
-    const next = all.findIndex(
-      (line, index) => index > at && (HEADING.exec(line)?.[1]?.length ?? 7) <= level,
-    )
+    const next = headings.findIndex((one, index) => index > at && (one?.level ?? 7) <= level)
     end = next === -1 ? all.length : next
     const last = lastWords(all, first, end)
     if (last === -1) return { at: endOf(at), insert: `${eol}${block}`, line: at + 1 }

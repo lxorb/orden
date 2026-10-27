@@ -7,7 +7,7 @@
  *  the right place, or refused where the task is gone. */
 
 import { appliedEdits, type TextEdit } from '@nib/markdown/edits'
-import { type TaskChange, writeTask } from '@nib/markdown/task-edits'
+import { lastDateTaken, type TaskChange, writeTask } from '@nib/markdown/task-edits'
 import { taskRowsOfText } from '../task-rows'
 import { tick } from '../occurrence'
 import type { Row } from '../types'
@@ -65,6 +65,15 @@ export function editedTask(
   const row = taskIn(text, space, path, anchor)
   const line = row.anchor?.line ?? 0
   const from = lineStart(text, line)
+  // A repeat and a time belong to a date: taking the last one away takes them with it,
+  // so asking for one in the same change is asking for two things that cannot both be.
+  const asked = (change.recurrence ?? null) !== null || (change.time ?? null) !== null
+  if (asked && row.task && lastDateTaken(row.task, change)) {
+    throw new AgentError(
+      'bad_arguments',
+      'a repeat or a time needs a date: keep one of its dates, or take recurrence and time away too',
+    )
+  }
   const edits: TextEdit[] = writeTask(lineAt(text, from), change).map((edit) => ({
     from: edit.from + from,
     to: edit.to + from,

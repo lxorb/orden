@@ -21,8 +21,21 @@
   const channel = new BroadcastChannel(CHANNEL)
   const say = (said: Said) => channel.postMessage(said)
 
+  /** The tasks handed to the app and not yet answered, by the number each went with. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  const waiting = new Map<number, (ok: boolean) => void>()
+  let next = 0
+  /** How long the app may take to write a task, in milliseconds: long enough for an
+   *  inbox made the first time and a note open in a pane taking the line. */
+  const ANSWER_WITHIN = 10_000
+
   channel.onmessage = (event: MessageEvent) => {
     const said = heard(event.data)
+    if (said?.kind === 'added') {
+      waiting.get(said.id)?.(said.ok)
+      waiting.delete(said.id)
+      return
+    }
     if (said?.kind !== 'world') return
     notes = said.notes
     langs = [said.lang]
@@ -31,9 +44,26 @@
 
   const hide = (raise = false) => void invoke('quick_add_hide', { raise }).catch(() => undefined)
 
-  function added(entry: Entry, open: boolean) {
-    say({ kind: 'task', entry, open })
-    hide(open)
+  /** Put away once the app says the task is in, and not before: one it could put
+   *  nowhere - every space shared to be read - stays in the field, and so does one no
+   *  window of the app was there to take. */
+  async function added(entry: Entry, open: boolean): Promise<boolean> {
+    const id = next++
+    const ok = await new Promise<boolean>((resolve) => {
+      // No window of the app answering is a task not taken: the field keeps it, and
+      // Enter tries again, rather than the window waiting on nobody for ever.
+      const unanswered = setTimeout(() => {
+        waiting.delete(id)
+        resolve(false)
+      }, ANSWER_WITHIN)
+      waiting.set(id, (ok) => {
+        clearTimeout(unanswered)
+        resolve(ok)
+      })
+      say({ kind: 'task', id, entry, open })
+    })
+    if (ok) hide(open)
+    return ok
   }
 
   onMount(() => {

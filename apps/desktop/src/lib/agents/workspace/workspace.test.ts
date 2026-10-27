@@ -8,7 +8,7 @@
  *  or touch the tabs in front of them (docs/agent-native.md 8.6). */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { callerOf, type Caller, READER } from '../../automation/caller'
+import { answerThreadSpaces, callerOf, type Caller, READER } from '../../automation/caller'
 import { AGENT_WINDOW_VERBS } from '../verbs'
 import { type FileOp, FileOps, type Kind } from '../../workspace/file-ops'
 
@@ -39,6 +39,9 @@ const secret = { id: 'secret', name: 'Secret', root: '/s/Secret' }
 /** Every file of every space, by its path on this disk. */
 const files = new Map<string, string>()
 const folders = new Set<string>()
+/** Files that are there and will not read as text: written in Windows-1252 by another
+ *  program, over the size the crate reads, or held by a cloud that is offline. */
+const unreadable = new Set<string>()
 
 interface Entry {
   name: string
@@ -189,7 +192,11 @@ function crate(command: string, args: Record<string, unknown> = {}): Promise<unk
     case 'read_tree':
       return Promise.resolve(treeOf(String(args.root)))
     case 'read_note':
+      if (unreadable.has(path))
+        return Promise.reject(new Error('stream did not contain valid UTF-8'))
       return files.has(path) ? Promise.resolve(files.get(path)) : Promise.reject(new Error('gone'))
+    case 'path_exists':
+      return Promise.resolve(files.has(path) || unreadable.has(path) || folders.has(path))
     case 'write_note':
       files.set(path, String(args.content))
       return Promise.resolve()
@@ -223,8 +230,27 @@ vi.mock('../../tauri', async (original) => ({
 
 vi.mock('../../sharing.svelte', () => ({
   isShared: (root: string) => root === '/s/Home',
-  canWriteAt: () => true,
+  reachedByOthers: (path: string | null) =>
+    path !== null && (path.startsWith('/s/Home/') || othersWrite.has(path)),
+  reachedAs: (path: string | null) =>
+    path === null
+      ? null
+      : path.startsWith('/s/Home/')
+        ? 'space'
+        : othersWrite.has(path)
+          ? 'note'
+          : null,
+  reachedByOthersIn: (root: string) =>
+    root === '/s/Home' || [...othersWrite].some((path) => path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
 }))
+
+/** Notes of a space nobody else is in that somebody else can write all the same: one
+ *  shared on its own, set by a test. */
+const othersWrite = new Set<string>()
+
+/** The roots of the spaces shared with this account to read, set by a test. */
+const readOnly = new Set<string>()
 
 /** What each space's index was asked, by root. */
 const indexed: { root: string; asked: string; args: unknown[] }[] = []
@@ -371,6 +397,12 @@ vi.mock('../../versions', () => ({
 
 vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
+/** The PDFs opened for reading, by their path on this disk; none of them reads. */
+const openDocument = vi.hoisted(() =>
+  vi.fn((_path: string) => Promise.reject(new Error('no PDF here'))),
+)
+vi.mock('../../pdf/document', () => ({ openDocument }))
+
 vi.mock('../../terminal/shells.svelte', () => ({
   shells: { ask: () => Promise.resolve([]), chosen: { id: 'pwsh', name: 'PowerShell' } },
 }))
@@ -434,6 +466,8 @@ function call(verb: string, args: Record<string, unknown>, caller: Caller = agen
 beforeEach(() => {
   files.clear()
   folders.clear()
+  unreadable.clear()
+  readOnly.clear()
   files.set('/s/Work/Plan.md', '# Plan\n')
   files.set('/s/Work/Pinned.md', '# Pinned\n')
   files.set('/s/Home/Recipes.md', '# Recipes\n\nSee [[Soup]] tonight.\n')
@@ -557,7 +591,10 @@ describe('another space, without switching', () => {
   })
 
   test('the space that is open takes the tree own rename', async () => {
-    await call('move_file', { path: 'Plan.md', to: 'Old plan' })
+    // Said with the space it ran in, which a later Undo moves it back in.
+    expect(await call('move_file', { path: 'Plan.md', to: 'Old plan' })).toMatchObject({
+      result: { from: 'Plan.md', to: 'Old plan.md', space: 'work' },
+    })
     expect(workspace.rename).toHaveBeenCalledWith('/s/Work/Plan.md', 'Old plan.md')
   })
 
@@ -628,7 +665,7 @@ describe('the tree', () => {
       code: 'rev_changed',
     })
     expect(await call('trash_file', { space: 'Home', path: 'Soup' })).toMatchObject({
-      result: { path: 'Soup.md', trashed: true },
+      result: { path: 'Soup.md', trashed: true, space: 'home' },
     })
     expect(workspace.remove).toHaveBeenCalledWith('/s/Home/Soup.md', false, 'Claude Code')
   })
@@ -875,6 +912,26 @@ describe('the notes, on the road', () => {
     expect(await call('read_note', { path: 'Plan' })).not.toHaveProperty('untrusted')
   })
 
+  /** Work is nobody else's, but its plan was shared on its own, so somebody else writes
+   *  in it: the verbs ask who can reach the note, not whether the space is shared. */
+  test('a note shared on its own is read as data, and so is a listing of its space', async () => {
+    othersWrite.add('/s/Work/Plan.md')
+    try {
+      expect(await call('read_note', { path: 'Plan' })).toMatchObject({
+        untrusted: 'shared note Plan.md',
+      })
+      expect(await call('list_notes', {})).toMatchObject({ untrusted: 'shared space Work' })
+      expect(await call('list_versions', { path: 'Plan' })).toMatchObject({
+        untrusted: 'shared note Plan.md',
+      })
+      expect(await call('list_tasks', { space: 'Work' })).toMatchObject({
+        untrusted: 'shared space Work',
+      })
+    } finally {
+      othersWrite.clear()
+    }
+  })
+
   test('a property is one edit of the whole note against the words it was worked out from', async () => {
     await call('set_property', {
       space: 'Home',
@@ -890,6 +947,45 @@ describe('the notes, on the road', () => {
     )
   })
 
+  test('a property given as words is written as those words, not what YAML reads bare', async () => {
+    // `yes` bare is a boolean, `012` a number, and `a, b` two members of the list.
+    await call('set_property', { space: 'Home', path: 'Soup', key: 'status', value: 'yes' })
+    expect(docs.writeNote).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.anything(),
+      "---\nstatus: 'yes'\n---\n# Soup\n\n- [ ] Buy milk\n",
+      'r1',
+    )
+
+    await call('set_property', {
+      space: 'Home',
+      path: 'Soup',
+      key: 'tags',
+      value: ['012', 'salt, pepper', 3, true],
+    })
+    expect(docs.writeNote).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.anything(),
+      "---\ntags: ['012', 'salt, pepper', 3, true]\n---\n# Soup\n\n- [ ] Buy milk\n",
+      'r1',
+    )
+  })
+
+  test('a property key is any name front matter reads back as one, and nothing else', async () => {
+    await call('set_property', { space: 'Home', path: 'Soup', key: 'priorität', value: 'Hoch' })
+    expect(docs.writeNote).toHaveBeenCalledWith(
+      { id: 'claude-code', name: 'Claude Code' },
+      { path: 'Soup.md', space: 'home' },
+      '---\npriorität: Hoch\n---\n# Soup\n\n- [ ] Buy milk\n',
+      'r1',
+    )
+    // Names front matter would read as a shorter key, a comment and a list item.
+    for (const key of ['a: b', '#tags', '- tags'])
+      expect(
+        await call('set_property', { space: 'Home', path: 'Soup', key, value: 'x' }),
+      ).toMatchObject({ code: 'bad_arguments' })
+  })
+
   test('a task is ticked on its own line', async () => {
     await call('set_task', { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true })
     expect(docs.editNote).toHaveBeenCalledWith(
@@ -898,6 +994,42 @@ describe('the notes, on the road', () => {
       [{ at: { task: 'Buy milk' }, replace: '- [x] Buy milk' }],
       'r1',
     )
+  })
+
+  /** Every thread of a provider writes as one agent, so the edit says which thread
+   *  asked: the review takes it back with that thread's rewind and no other's. */
+  test('an edit says the AI panel thread that asked for it', async () => {
+    const asker = callerOf(
+      {
+        id: 'nib-anthropic',
+        name: 'Claude',
+        scopes: EVERY,
+        spaces: 'all',
+        mode: 'unsupervised',
+        programs: [],
+      },
+      'thread-1',
+    )
+    await call(
+      'set_task',
+      { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true },
+      asker,
+    )
+    expect(docs.editNote).toHaveBeenCalledWith(
+      { id: 'nib-anthropic', name: 'Claude', thread: 'thread-1' },
+      { path: 'Soup.md', space: 'home' },
+      [{ at: { task: 'Buy milk' }, replace: '- [x] Buy milk' }],
+      'r1',
+    )
+  })
+
+  test('a new note says the space it was made in, the one in front where none was named', async () => {
+    expect(await call('create_note', { path: 'Fresh' })).toMatchObject({
+      result: { path: 'Fresh.md', created: true, space: 'work' },
+    })
+    expect(await call('create_note', { path: 'boards/Map.canvas', space: 'home' })).toMatchObject({
+      result: { path: 'boards/Map.canvas', created: true, space: 'home' },
+    })
   })
 
   test('a new note is never written over one, and write_note makes one that is not there', async () => {
@@ -910,6 +1042,20 @@ describe('the notes, on the road', () => {
       result: { path: 'Broth.md', created: true },
     })
     expect(files.get('/s/Home/Broth.md')).toBe('# Broth\n')
+  })
+
+  test('a note that is there and will not read is refused, and never made again over itself', async () => {
+    unreadable.add('/s/Home/Inbox.md')
+    const calls: [string, Record<string, unknown>][] = [
+      ['write_note', { space: 'Home', path: 'Inbox', content: 'New.' }],
+      ['append_note', { space: 'Home', path: 'Inbox', content: 'More.' }],
+      ['create_note', { space: 'Home', path: 'Inbox' }],
+      ['add_task', { space: 'Home', text: 'Call mum' }],
+    ]
+    for (const [verb, args] of calls) {
+      expect(await call(verb, args), verb).toMatchObject({ code: 'exists' })
+    }
+    expect(asked.filter((one) => one.command === 'write_note')).toEqual([])
   })
 })
 
@@ -1304,5 +1450,291 @@ describe('to-dos and bases', () => {
       code: 'not_granted',
     })
     expect(await dispatch('list_tasks', {}, [], 'here', reader)).toMatchObject({ status: 'ok' })
+  })
+})
+
+describe('a space shared to be read', () => {
+  /** The files as they are, to say afterwards that none of them changed. */
+  const before = () => new Map(files)
+  const writes = () =>
+    asked.filter((one) => ['write_note', 'save_asset', 'snapshot_note'].includes(one.command))
+
+  beforeEach(() => readOnly.add('/s/Home'))
+
+  test('edit_base refuses, and the base keeps its views', async () => {
+    files.set('/s/Home/Books.base', 'views:\n  - type: table\n    name: All\n')
+    const was = before()
+    expect(
+      await call('edit_base', {
+        space: 'Home',
+        path: 'Books.base',
+        ops: [{ op: 'add_view', name: 'Board', type: 'kanban' }],
+      }),
+    ).toMatchObject({ code: 'read_only' })
+    expect(files).toEqual(was)
+    expect(writes()).toEqual([])
+  })
+
+  test('add_row refuses, and no row note is made', async () => {
+    files.set(
+      '/s/Home/Books.base',
+      'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n',
+    )
+    const was = before()
+    expect(
+      await call('add_row', { space: 'Home', base: 'Books.base', title: 'Emma' }),
+    ).toMatchObject({ code: 'read_only' })
+    expect(files).toEqual(was)
+    expect(writes()).toEqual([])
+  })
+
+  test('capture_to_note refuses before the picture is kept, new note or old', async () => {
+    reads({ html: undefined, png: btoa('PNG bytes') })
+    const was = before()
+    expect(
+      await call('capture_to_note', { space: 'Home', tab: 'a1', as: 'screenshot' }),
+    ).toMatchObject({ code: 'read_only' })
+    expect(
+      await call('capture_to_note', { space: 'Home', tab: 'a1', as: 'clip', note: 'Soup' }),
+    ).toMatchObject({ code: 'read_only' })
+    expect(files).toEqual(was)
+    expect(writes()).toEqual([])
+    expect(docs.editNote).not.toHaveBeenCalled()
+  })
+
+  test('attach_agent_log refuses, new note or old', async () => {
+    log = [
+      {
+        at: Date.parse('2026-09-30T09:00:01Z'),
+        agent: 'claude-code',
+        verb: 'read_note',
+        args: { path: 'Soup.md' },
+        status: 'ok',
+      },
+    ]
+    const was = before()
+    for (const note of ['Session', 'Soup']) {
+      expect(
+        await call('attach_agent_log', { space: 'Home', note, session: '2026-09-30' }),
+        note,
+      ).toMatchObject({ code: 'read_only' })
+    }
+    expect(files).toEqual(was)
+    expect(writes()).toEqual([])
+    expect(docs.editNote).not.toHaveBeenCalled()
+  })
+
+  test('restore_version refuses, closed note or open', async () => {
+    readOnly.add('/s/Work')
+    const was = before()
+    for (const [space, path] of [
+      ['Home', 'Soup'],
+      ['Work', 'Plan'],
+    ]) {
+      expect(
+        await call('restore_version', { space, path, version: 'device:1000' }),
+        path,
+      ).toMatchObject({ code: 'read_only' })
+    }
+    expect(files).toEqual(was)
+    expect(writes()).toEqual([])
+    expect(docs.writeNote).not.toHaveBeenCalled()
+  })
+})
+
+describe('a tab and a space named together', () => {
+  const verbs: [string, Record<string, unknown>][] = [
+    ['read_note', {}],
+    ['write_note', { content: '# Over\n' }],
+    ['edit_note', { edits: [{ at: { end: true }, insert_after: 'x' }] }],
+    ['append_note', { content: 'x' }],
+    ['set_property', { key: 'status', value: 'done' }],
+    ['set_task', { at: { task: 'Buy milk' }, done: true }],
+  ]
+
+  test.each(verbs)('%s refuses a space that is not the tab’s own', async (verb, args) => {
+    files.set('/s/Home/Plan.md', '# Home plan, kept\n')
+    expect(await call(verb, { ...args, space: 'Home', tab: 't1' })).toMatchObject({
+      code: 'bad_arguments',
+    })
+    expect(files.get('/s/Home/Plan.md')).toBe('# Home plan, kept\n')
+    expect(files.get('/s/Work/Plan.md')).toBe('# Plan\n')
+    for (const verb of [docs.readNote, docs.writeNote, docs.editNote]) {
+      expect(verb).not.toHaveBeenCalled()
+    }
+  })
+
+  test('the tab’s own space, named, is the tab’s note', async () => {
+    await call('write_note', { space: 'Work', tab: 't1', content: '# Over\n' })
+    expect(docs.writeNote.mock.calls.at(-1)?.[1]).toEqual({ path: 'Plan.md', space: 'work' })
+    expect(files.has('/s/Home/Plan.md')).toBe(false)
+  })
+})
+
+describe('a note an agent names with a dot in it', () => {
+  test('a capture into a name with digits after a dot makes that name a markdown note', async () => {
+    expect(
+      await call('capture_to_note', { tab: 'a1', as: 'clip', note: 'Meeting 10.27' }),
+    ).toMatchObject({ result: { path: 'Meeting 10.27.md', created: true } })
+    expect(files.get('/s/Work/Meeting 10.27.md')).toContain('Words of the page.')
+    expect(files.has('/s/Work/Meeting 10.27')).toBe(false)
+  })
+
+  test('a capture into a canvas is refused before any picture is kept', async () => {
+    reads({ html: undefined, png: btoa('PNG bytes') })
+    expect(
+      await call('capture_to_note', { tab: 'a1', as: 'screenshot', note: 'Board.canvas' }),
+    ).toMatchObject({ code: 'bad_arguments' })
+    expect(files.has('/s/Work/Board.canvas')).toBe(false)
+    expect(asked.some((one) => one.command === 'save_asset')).toBe(false)
+  })
+
+  test('the log of a session goes into a note, never a canvas', async () => {
+    expect(
+      await call('attach_agent_log', { note: 'Board.canvas', session: '2026-09-30' }),
+    ).toMatchObject({ code: 'bad_arguments' })
+    expect(files.has('/s/Work/Board.canvas')).toBe(false)
+  })
+
+  test('the note verbs read the same name as the capture does', async () => {
+    expect(await call('create_note', { path: 'Reading 2026.10', content: '# R\n' })).toMatchObject({
+      result: { path: 'Reading 2026.10.md', created: true },
+    })
+    expect(await call('read_note', { path: 'Reading 2026.10' })).toMatchObject({
+      result: { path: 'Reading 2026.10.md' },
+    })
+  })
+})
+
+/** An AI panel thread works in the space it was started in (docs/ai-sidebar.md 4.11), so
+ *  a call of it that names no space is about that space, not the one in front: a
+ *  `/batch` helper of a Home thread keeps to Home's notes when the reader moves to Work. */
+describe('a panel thread works in its own space', () => {
+  const fromHome = () =>
+    callerOf(
+      { id: 'nib-anthropic', name: 'Claude', scopes: EVERY, spaces: 'all', mode: 'unsupervised' },
+      'thread-home',
+    )
+
+  beforeEach(() => {
+    answerThreadSpaces((thread) => (thread === 'thread-home' ? 'home' : null))
+  })
+
+  test('a note named without a space is the thread’s space’s', async () => {
+    files.set('/s/Work/Soup.md', '# Work soup\n')
+    expect(await call('read_note', { path: 'Soup' }, fromHome())).toMatchObject({
+      result: { space: 'home', text: expect.stringContaining('- [ ] Buy milk') },
+    })
+    await call('write_note', { path: 'Broth', content: '# Broth\n' }, fromHome())
+    expect(files.get('/s/Home/Broth.md')).toBe('# Broth\n')
+    expect(files.has('/s/Work/Broth.md')).toBe(false)
+    expect(await call('create_note', { path: 'Fresh' }, fromHome())).toMatchObject({
+      result: { path: 'Fresh.md', created: true, space: 'home' },
+    })
+  })
+
+  test('a space it names still wins', async () => {
+    await call('write_note', { space: 'Work', path: 'Broth', content: '# Broth\n' }, fromHome())
+    expect(files.get('/s/Work/Broth.md')).toBe('# Broth\n')
+  })
+
+  test('a tab in front is still the tab’s own note', async () => {
+    await call('write_note', { tab: 't1', content: '# Over\n' }, fromHome())
+    expect(docs.writeNote.mock.calls.at(-1)?.[1]).toEqual({ path: 'Plan.md', space: 'work' })
+  })
+
+  test('a thread nobody knows, or no thread, is the space in front', async () => {
+    await call('write_note', { path: 'Broth', content: '# Broth\n' })
+    expect(files.get('/s/Work/Broth.md')).toBe('# Broth\n')
+  })
+
+  /** A tab's file is in the tab's space, the one in front: said by its tab alone from a
+   *  thread in another space, it is never the thread space's file at the same path. */
+  describe('a tab of the space in front, named by its id', () => {
+    const away = [
+      { ...tabs[0], id: 'c9', kind: 'canvas', path: '/s/Work/board.canvas', shown: 'board' },
+      { ...tabs[0], id: 'p9', kind: 'pdf', path: '/s/Work/paper.pdf', shown: 'paper' },
+    ] as (typeof tabs)[number][]
+
+    beforeEach(() => {
+      tabs.push(...away)
+      files.set('/s/Work/board.canvas', '{"nodes":[],"edges":[]}')
+      return () => void tabs.splice(tabs.length - away.length, away.length)
+    })
+
+    test('a canvas is read and edited in the tab’s space', async () => {
+      expect(await call('read_canvas', { tab: 'c9' }, fromHome())).toMatchObject({ ok: true })
+      await call('edit_canvas', { tab: 'c9', ops: [{ op: 'add_card', text: 'Hi' }] }, fromHome())
+      expect(files.get('/s/Work/board.canvas')).toContain('Hi')
+      expect(files.get('/s/Home/board.canvas')).not.toContain('Hi')
+    })
+
+    test('a PDF is read from the tab’s space', async () => {
+      openDocument.mockClear()
+      await call('read_pdf', { tab: 'p9' }, fromHome())
+      expect(openDocument).toHaveBeenCalledWith('/s/Work/paper.pdf')
+    })
+
+    test('a file tab renamed is the tab’s file renamed', async () => {
+      expect(
+        await call('workspace_tabs', { op: 'rename', tab: 't1', name: 'Roadmap' }, fromHome()),
+      ).toMatchObject({ result: { from: 'Plan.md', to: 'Roadmap.md', space: 'work' } })
+      expect(workspace.rename).toHaveBeenCalledWith('/s/Work/Plan.md', 'Roadmap.md')
+    })
+  })
+
+  test('the context says the thread’s space, and the space each tab is in', async () => {
+    expect(await call('get_context', {}, fromHome())).toMatchObject({
+      result: {
+        space: 'Home',
+        selected: { id: 't1', path: 'Plan.md', space: 'Work' },
+        tabs: [{ id: 't1', space: 'Work' }, { id: 't2', space: 'Work' }, { id: 'w1' }],
+      },
+    })
+    const reader = (await call('get_context', {})) as { result: { selected: object } }
+    expect(reader.result.selected).not.toHaveProperty('space')
+  })
+
+  test('the context of a grant that reaches the thread’s space alone names it, and no tab', async () => {
+    const onlyHome = callerOf(
+      { id: 'x', name: 'X', scopes: EVERY, spaces: ['Home'], mode: 'unsupervised' },
+      'thread-home',
+    )
+    expect(await call('get_context', {}, onlyHome)).toMatchObject({
+      result: { space: 'Home', selected: null, tabs: [] },
+    })
+  })
+
+  test('a page captured goes to the thread’s space, and the answer says so', async () => {
+    const answered = await call(
+      'capture_to_note',
+      { tab: 'w1', as: 'clip', note: 'Kept' },
+      fromHome(),
+    )
+    expect(answered).toMatchObject({ result: { path: 'Kept.md', space: 'home' } })
+    expect(files.has('/s/Home/Kept.md')).toBe(true)
+  })
+
+  test('a thread whose space is gone from this device is refused, not sent to the front', async () => {
+    answerThreadSpaces(() => 'left-long-ago')
+    expect(await call('write_note', { path: 'Broth', content: 'x' }, fromHome())).toMatchObject({
+      code: 'no_such_space',
+    })
+    expect(files.has('/s/Work/Broth.md')).toBe(false)
+  })
+
+  test('a thread whose space the grant does not reach is refused, not sent to the front', async () => {
+    answerThreadSpaces(() => 'secret')
+    expect(
+      await call(
+        'write_note',
+        { path: 'Broth', content: 'x' },
+        callerOf(
+          { id: 'x', name: 'X', scopes: EVERY, spaces: ['Work'], mode: 'unsupervised' },
+          'thread-home',
+        ),
+      ),
+    ).toMatchObject({ code: 'no_such_space' })
+    expect(files.has('/s/Work/Broth.md')).toBe(false)
   })
 })

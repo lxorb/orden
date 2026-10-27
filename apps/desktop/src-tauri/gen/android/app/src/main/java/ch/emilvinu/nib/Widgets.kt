@@ -133,7 +133,7 @@ class NotesWidget : AppWidgetProvider() {
       pending(context, intent(context).putExtra(MainActivity.EXTRA_OPEN, path), at)
 
     private fun intent(context: Context): Intent =
-      Intent(context, MainActivity::class.java)
+      MainActivity.sealed(context, Intent(context, MainActivity::class.java))
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
     private fun pending(context: Context, intent: Intent, at: Int): PendingIntent =

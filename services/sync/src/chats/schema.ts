@@ -7,8 +7,8 @@
  *  the event, so a page of current state is one indexed read; `words` is its full-text
  *  index, kept by triggers (FTS5 runs in a Durable Object's SQLite, proved under workerd
  *  before this was written). The rest is the object's bookkeeping: the chat's settings,
- *  each person's read place and the posts that call them, posts waiting for their time,
- *  hub pokes being coalesced, and the pace each person posts at.
+ *  each person's read place and the posts that call them, posts waiting for their time
+ *  and when one that failed to go is tried again, hub pokes being coalesced, and the pace each person posts at.
  *
  *  Made on every wake with `if not exists`, so a fresh object and one the account
  *  emptied are the same thing. */
@@ -68,6 +68,11 @@ create table if not exists scheduled (
   send_at integer not null,
   post text not null,
   refused text
+);
+create table if not exists scheduled_tries (
+  id text primary key,
+  tries integer not null,
+  next_at integer not null
 );
 create table if not exists pokes (
   id text primary key,

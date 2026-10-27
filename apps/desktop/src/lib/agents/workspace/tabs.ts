@@ -18,7 +18,7 @@
 
 import { documentOf } from '@nib/editor'
 import type { AgentAnswer } from '../../automation/caller'
-import { folderOf, nameOf, relativeTo } from '../../space-paths'
+import { folderOf, nameOf, relativeTo, within } from '../../space-paths'
 import { type Section, settings } from '../../settings.svelte'
 import { ptyOf } from '../../terminal/running'
 import { views } from '../../views.svelte'
@@ -38,7 +38,18 @@ import { notes } from '../docs'
 import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, text, writerOf } from './call'
 import { Refused } from './problem'
-import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
+import {
+  docSource,
+  judged,
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeFor,
+  placeOf,
+  reachable,
+  sharedSource,
+  writableAt,
+} from './spaces'
 import { tabWithId } from './tab-target'
 import { entryIn, moveFile } from './tree'
 
@@ -70,7 +81,11 @@ function tabOf(tab: Tab) {
     id: tab.id,
     kind: tab.kind,
     title: tab.shown,
-    ...(tab.path !== null && root && !outside ? { path: relativeTo(root, tab.path) } : {}),
+    // Relative to the active space, which a tab of another space is not in: its path
+    // from here would be this machine's whole one.
+    ...(tab.path !== null && root && !outside && within(root, tab.path) !== null
+      ? { path: relativeTo(root, tab.path) }
+      : {}),
     ...(url ? { url } : {}),
     pane: tab.paneId,
     front: front(tab),
@@ -140,16 +155,29 @@ async function selectionIn(tab: Tab): Promise<unknown> {
 }
 
 export async function getContext(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, null)
+  // The space the caller's calls that name none work in: an AI panel thread's own, which
+  // the tabs in front are not in when the reader has moved on, so each row then says its
+  // space and the model names it to reach the note a tab shows.
+  const place = placeOf(call)
+  const open = workspace.activeSpace
+  // The tabs are the space in front's: none of them for a grant that does not reach it,
+  // which still hears where its own thread works.
+  if (open?.id !== place.space.id && !reachable(call).some((one) => one.id === open?.id)) {
+    const nothing = { space: place.space.name, selected: null, selection: null, tabs: [] }
+    return done({ ...nothing, typing: false }, sharedSource(place))
+  }
+  const front = placeFor(call, null)
+  const away = place.space.id !== front.space.id
+  const rowOf = (one: Tab) => (away ? { ...tabOf(one), space: front.space.name } : tabOf(one))
   const tab = workspace.active
   const last = tab?.note.live.readerAt ?? null
   const named = namedOutside()
 
   const context = {
     space: place.space.name,
-    selected: tab ? tabOf(tab) : null,
+    selected: tab ? rowOf(tab) : null,
     selection: tab ? await selectionIn(tab) : null,
-    tabs: workspace.tabs.map(tabOf),
+    tabs: workspace.tabs.map(rowOf),
     typing: last !== null && Date.now() - last < TYPING,
   }
 
@@ -157,7 +185,10 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
   // writes in are not the reader's words.
   const outside =
     tab?.kind === 'terminal' ? 'tab titles and terminal output' : named ? 'tab titles' : null
-  return done(context, sharedSource(place) ?? outside)
+  return done(
+    context,
+    (tab ? sourceOfTab(tab) : null) ?? sharedSource(place) ?? sharedSource(front) ?? outside,
+  )
 }
 
 /** Whether a tab's title is somebody else's words: a page's, or the program a terminal
@@ -179,7 +210,15 @@ function behind(call: Call): boolean {
 
 /** A tab made or opened, answered as its row; null where nothing came of it. */
 function answered(tab: Tab | null | undefined, place?: Place): AgentAnswer {
-  return done(tab ? tabOf(tab) : null, place ? sharedSource(place) : null)
+  return done(
+    tab ? tabOf(tab) : null,
+    (tab ? sourceOfTab(tab) : null) ?? (place ? sharedSource(place) : null),
+  )
+}
+
+/** Where a tab's words came from, by its own note rather than the space in front. */
+function sourceOfTab(tab: Tab): string | null {
+  return docSource({ path: tab.path, shared: tab.note.shared })
 }
 
 /** The site rule that denies an address to this agent, as the crate matches one: the
@@ -264,7 +303,7 @@ async function openSomething(call: Call): Promise<AgentAnswer> {
   if (view === 'settings') return showSettings(call)
   if (view !== null) throw new Refused('bad_arguments', 'view is graph, scratchpad or settings')
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const relative = judged(need(call, 'path'))
   const path = onDisk(place, relative)
   const back = behind(call)
@@ -384,7 +423,7 @@ async function renameTab(call: Call): Promise<AgentAnswer> {
     const relative = relativeTo(place.space.root, tab.path)
     const folder = folderOf(relative)
     const to = folder ? `${folder}/${name}` : name
-    return moveFile({ ...call, args: { path: relative, to } })
+    return moveFile({ ...call, args: { path: relative, to, space: place.space.id } })
   }
 
   if (!isDraft(tab.note) && tab.kind !== 'terminal') {
@@ -415,6 +454,7 @@ async function saveTab(call: Call): Promise<AgentAnswer> {
   const relative = judgedForWriting(need(call, 'path'))
   const folder = folderOf(relative)
   const file = fileNamed(nameOf(relative), tab.kind)
+  writableAt(place, onDisk(place, relative))
 
   const question = await asked(call, null, `Save ${tab.shown} as ${relative}`)
   if (question) return question

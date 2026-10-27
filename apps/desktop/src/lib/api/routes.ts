@@ -339,12 +339,13 @@ export interface RemoteSession {
   current: boolean
 }
 
-/** One version the account holds: when it was written, how big it was, and the
- *  device that sent it. */
+/** One version the account holds: when it was written, how big it was, the
+ *  device that sent it, and the sha256 of its words (absent from an older server). */
 export interface RemoteVersion {
   at: number
   size: number
   by: string
+  hash?: string
 }
 
 export interface SpaceFile {
@@ -944,10 +945,17 @@ export const routes = {
    *  what comes back is one: an invitation opens the account it was written to,
    *  and the space's own link hands out a guest. `device` is what to call that
    *  guest, and `name` or `email` is the one field a link that asks first asks
-   *  for. */
+   *  for. `again` is a page that is waiting asking again: a request that is gone
+   *  by then is answered 410 rather than made anew. */
   join: (
     key: string,
-    options: { token?: string; device?: string; name?: string; email?: string } = {},
+    options: {
+      token?: string
+      device?: string
+      name?: string
+      email?: string
+      again?: boolean
+    } = {},
   ) =>
     request<Joined>(`/v1/join/${key}`, {
       method: 'POST',
@@ -956,8 +964,13 @@ export const routes = {
         ...(options.device ? { device: options.device } : {}),
         ...(options.name ? { name: options.name } : {}),
         ...(options.email ? { email: options.email } : {}),
+        ...(options.again ? { again: true } : {}),
       },
     }),
+
+  /** Taking back a request still waiting on the owner. */
+  withdraw: (key: string, token: string) =>
+    request<{ ok: true }>(`/v1/join/${key}`, { method: 'DELETE', token }),
 
   changes: (token: string, spaceId: string, since: number) =>
     request<{ notes: RemoteNote[]; cursor: number; more: boolean }>(

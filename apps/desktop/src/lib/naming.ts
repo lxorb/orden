@@ -90,7 +90,9 @@ export function nameFault({ typed, extension, taken }: Naming): NameFault | null
   // the folder-note layout and a pair that is meant to exist. Case-insensitively,
   // because two of the three platforms this runs on say those are one file.
   const written = foldName(nameToWrite(name, extension))
-  return taken.some((one) => foldName(one) === written) ? 'taken' : null
+  // And a page note and its paper, `X.pages.pdf`, take each other's name.
+  const paired = written.replace(/\.pages(\.pdf)?$/i, (_, pdf) => (pdf ? '.pages' : '.pages.pdf'))
+  return taken.some((one) => [written, paired].includes(foldName(one))) ? 'taken' : null
 }
 
 /** The name a commit writes: what was typed with the file's own ending put back.

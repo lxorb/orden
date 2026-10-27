@@ -19,6 +19,7 @@
 //! so does the tree the app draws, so the characters a tag may hold are what
 //! decides how deep that tree can go.
 
+use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter;
 use icu_properties::props::{ExtendedPictographic, GeneralCategory, GeneralCategoryGroup};
 use icu_properties::{CodePointMapData, CodePointSetData};
@@ -146,47 +147,206 @@ fn name_char(one: char) -> bool {
 
 /// Every `#tag` in the note's own words. The front matter is left out of this
 /// pass: a hash there is a YAML comment, and the tags it holds have been read
-/// already. Fenced code is left out too, where a `#` is a comment or a heading
-/// in some other language.
+/// already. Code is left out too, fenced or indented, where a `#` is a comment or a heading
+/// in some other language, and so is inline code, which shows what is in it as
+/// written. A code span runs on across the lines of a paragraph, so the spans are
+/// cut a block at a time. Raw HTML and autolinks, which `CommonMark` reads before a
+/// backtick, are not looked for: a backtick in an attribute can hide a tag.
 fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
-    let mut in_fence = false;
-
-    for line in body[front..].lines() {
-        let trimmed = line.trim_start();
-        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
-            in_fence = !in_fence;
-            continue;
-        }
-        if in_fence {
-            continue;
-        }
-
-        // Read through the line as it is written rather than as a list of
+    for block in blocks(&body[front..]) {
+        // Read through the block as it is written rather than as a list of
         // characters: this runs over every line of every note in a space, and an
-        // array of one line's letters is an allocation a tag does not need.
+        // array of one block's letters is an allocation a tag does not need. Nor
+        // are its code spans, where it holds no hash.
+        if !block.contains('#') {
+            continue;
+        }
+        let code = code_spans(block);
         let mut at = 0;
-        while let Some(hash) = line[at..].find('#') {
+        while let Some(hash) = block[at..].find('#') {
             let start = at + hash;
 
-            // A tag starts a word, so what comes before it must be a space.
-            let opens = line[..start]
-                .chars()
-                .next_back()
-                .is_none_or(|one| one.is_whitespace() || one == '(');
+            let before = &block[..start];
+            let opens =
+                opens_tag(before) && !code.iter().any(|&(from, to)| (from..to).contains(&start));
 
             // The name is what a tag may hold, which rules out `#1`.
-            let rest = &line[start + 1..];
-            let name = rest
-                .find(|one: char| !name_char(one))
-                .map_or(rest, |end| &rest[..end]);
+            let rest = &block[start + 1..];
+            let name = closed_by(
+                rest.find(|one: char| !name_char(one))
+                    .map_or(rest, |end| &rest[..end]),
+                before.len() - before.trim_end_matches('_').len(),
+            );
 
             if opens && named(name) {
-                found.push(line[start..start + 1 + name.len()].to_string());
+                found.push(block[start..start + 1 + name.len()].to_string());
             }
 
             at = start + 1 + name.len();
         }
     }
+}
+
+/// What emphasis, strike and highlight are written with.
+const MARKS: &[char] = &['*', '_', '~', '='];
+
+/// Whether a hash after `before` opens a tag. The twin of `opensTagAt` in
+/// @nib/markdown's tags.ts, which the renderer and the editor read tags by too.
+///
+/// It opens a word: after nothing, a blank or a `(`, though not the `](` of a
+/// link, where `#heading` is where the link goes. A run of marks in between is
+/// the start of emphasis, strike or highlight, so `**#tag**` is one; but marks in
+/// the middle of a word open nothing, so `a=#b` and `?q=#x` are words. A `|`
+/// opens one in a table row, a line that starts with one.
+fn opens_tag(before: &str) -> bool {
+    let bare = before.trim_end_matches(MARKS);
+    let Some(one) = bare.chars().next_back() else {
+        return true;
+    };
+    let ahead = &bare[..bare.len() - one.len_utf8()];
+    match one {
+        '(' => !ahead.ends_with(']'),
+        '|' => {
+            let line = ahead.rfind('\n').map_or(ahead, |at| &ahead[at + 1..]);
+            line.trim_start().is_empty() || line.trim_start().starts_with('|')
+        }
+        _ => one.is_whitespace(),
+    }
+}
+
+/// A name opened by `_` emphasis ends where the emphasis does: `_#urgent_` is the
+/// tag `urgent`, as the page draws it. Cut short to nothing a tag may be called,
+/// it is no tag. The twin of `closedBy` in tags.ts.
+fn closed_by(name: &str, underscores: usize) -> &str {
+    if underscores == 0 || name.len() < underscores {
+        return name;
+    }
+    // Checked as bytes first, so the cut lands between characters.
+    let at = name.len() - underscores;
+    if !name.as_bytes()[at..].iter().all(|&one| one == b'_') {
+        return name;
+    }
+    let cut = &name[..at];
+    if named(cut) {
+        cut
+    } else {
+        ""
+    }
+}
+
+/// The blocks of words in a note: a paragraph's lines, a list item's or a
+/// heading's, which no code span reaches out of. A blank line, a line of code and
+/// a line that opens a block end one, and code is in none. What is code is
+/// judged as the renderer judges it, fences in quotes and list items and indented
+/// code included; see `code_blocks`.
+fn blocks(words: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let mut code = CodeBlocks::default();
+    let mut start: Option<usize> = None;
+    let mut at = 0;
+
+    for whole in words.split_inclusive('\n') {
+        let line = whole.trim_end_matches(['\n', '\r']);
+        let words_line = code.line(line) == CodeLine::Words;
+        let blank = line.trim_start().is_empty();
+
+        if !words_line || blank || opens_block(line) {
+            if let Some(from) = start.take() {
+                out.push(words[from..at].trim_end_matches(['\n', '\r']));
+            }
+        }
+        if words_line && !blank {
+            let from = *start.get_or_insert(at);
+            if heading(line) {
+                out.push(&words[from..at + line.len()]);
+                start = None;
+            }
+        }
+
+        at += whole.len();
+    }
+    if let Some(from) = start {
+        out.push(words[from..].trim_end_matches(['\n', '\r']));
+    }
+    out
+}
+
+/// Whether a line opens a block of its own: a list item, a quote or a heading.
+fn opens_block(line: &str) -> bool {
+    let rest = line.trim_start_matches(' ');
+    if line.len() - rest.len() > 3 {
+        return false;
+    }
+    let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+    let marker = if rest.starts_with(['-', '*', '+']) {
+        Some(&rest[1..])
+    } else if (1..=9).contains(&digits) && rest[digits..].starts_with(['.', ')']) {
+        Some(&rest[digits + 1..])
+    } else {
+        None
+    };
+    marker.is_some_and(ends_marker) || rest.starts_with('>') || heading(line)
+}
+
+/// Whether a line is a heading, which is one line long.
+fn heading(line: &str) -> bool {
+    let rest = line.trim_start_matches(' ');
+    let hashes = rest.bytes().take_while(|&one| one == b'#').count();
+    line.len() - rest.len() <= 3 && (1..=6).contains(&hashes) && ends_marker(&rest[hashes..])
+}
+
+/// Whether what follows a block's marker lets it open one: a blank or nothing.
+fn ends_marker(after: &str) -> bool {
+    after.is_empty() || after.starts_with([' ', '\t'])
+}
+
+/// Where the code spans in a line start and end, in bytes, cut the way
+/// `codeAndWords` in tags.ts cuts them: a run of backticks opens a span that
+/// the next run of the same length closes, one with no such run after it is
+/// backticks, and a backtick behind a backslash opens nothing. Every mark this
+/// looks for is ASCII, so reading bytes never lands inside a character.
+fn code_spans(line: &str) -> Vec<(usize, usize)> {
+    let bytes = line.as_bytes();
+    let mut spans = Vec::new();
+    let mut at = 0;
+    while at < bytes.len() {
+        match bytes[at] {
+            b'\\' if bytes.get(at + 1).is_some_and(u8::is_ascii_punctuation) => at += 2,
+            b'`' => {
+                let run = backticks_at(bytes, at);
+                if let Some(close) = closing_run(bytes, at + run, run) {
+                    spans.push((at, close + run));
+                    at = close + run;
+                } else {
+                    at += run;
+                }
+            }
+            _ => at += 1,
+        }
+    }
+    spans
+}
+
+/// How many backticks stand in a row from `at`.
+fn backticks_at(bytes: &[u8], at: usize) -> usize {
+    bytes[at..].iter().take_while(|&&one| one == b'`').count()
+}
+
+/// Where the run of exactly `length` backticks closing a span starts, from `from`.
+fn closing_run(bytes: &[u8], from: usize, length: usize) -> Option<usize> {
+    let mut at = from;
+    while at < bytes.len() {
+        if bytes[at] == b'`' {
+            let run = backticks_at(bytes, at);
+            if run == length {
+                return Some(at);
+            }
+            at += run;
+        } else {
+            at += 1;
+        }
+    }
+    None
 }
 
 #[cfg(test)]
@@ -233,6 +393,80 @@ mod tests {
     #[test]
     fn ignores_anything_inside_a_fence() {
         assert_eq!(tags_in("```\n#notatag\n```\n#real"), vec!["#real"]);
+    }
+
+    #[test]
+    fn ignores_anything_inside_inline_code() {
+        assert_eq!(
+            tags_in("run `a #no` and #yes, `#not` ``x `#b` y`` #also"),
+            vec!["#yes", "#also"]
+        );
+    }
+
+    #[test]
+    fn inline_code_runs_on_across_the_lines_of_a_paragraph() {
+        assert_eq!(tags_in("`a\nb` #x `c`"), vec!["#x"]);
+        assert_eq!(tags_in("`a\n#b\nc`"), Vec::<String>::new());
+    }
+
+    #[test]
+    fn but_not_past_the_end_of_a_block() {
+        assert_eq!(tags_in("a `b\n\nc` #t"), vec!["#t"]);
+        assert_eq!(tags_in("- a `x\n- b` #t"), vec!["#t"]);
+        assert_eq!(tags_in("# A `x\nb` #t"), vec!["#t"]);
+    }
+
+    #[test]
+    fn reads_on_past_a_backtick_that_opens_no_code() {
+        assert_eq!(tags_in("\\` #yes ` #too"), vec!["#yes", "#too"]);
+    }
+
+    #[test]
+    fn ignores_a_fence_inside_a_quote_or_a_callout() {
+        assert_eq!(
+            tags_in("> [!example] Button\n> ```css\n> .button { color: #fff; }\n> ```\n> #after\n"),
+            vec!["#after"]
+        );
+        assert_eq!(tags_in("> ```\n> #no\n\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("- item\n\n  ```\n  #no\n  ```\n#yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn ignores_indented_code() {
+        assert_eq!(
+            tags_in("Notes\n\n    #include <stdio.h>\n\n#yes"),
+            vec!["#yes"]
+        );
+        assert_eq!(tags_in("- item\n\n      #define X\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("> words\n>\n>     #no"), Vec::<String>::new());
+    }
+
+    #[test]
+    fn but_reads_an_indented_line_that_carries_a_paragraph_on() {
+        assert_eq!(tags_in("words\n    #yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn closes_a_fence_only_on_the_same_mark_at_least_as_long() {
+        assert_eq!(tags_in("````md\n```\n#todo\n```\n````\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("```\n~~~\n#no\n```\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("```\n``` ts\n#no\n```\n#yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn opens_a_fence_at_three_spaces_of_indent_but_not_four() {
+        assert_eq!(tags_in("   ```\n#no\n```\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("words\n    ```\n#yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn opens_no_fence_on_backticks_with_a_backtick_after_them() {
+        assert_eq!(tags_in("```a`a\n#yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn ends_a_quoted_fence_with_the_quote() {
+        assert_eq!(tags_in("> ```\n> #no\n#yes"), vec!["#yes"]);
     }
 
     #[test]
@@ -302,5 +536,64 @@ mod tests {
             tags_in("---\ntags: [work]\n---\n\nwords #nib\n"),
             vec!["#work", "#nib"]
         );
+    }
+
+    /// Twin of the CRLF case in scan-note.test.ts: the launch scan and a save
+    /// read the same tags out of a note written with Windows endings.
+    #[test]
+    fn reads_front_matter_tags_in_a_crlf_note() {
+        assert_eq!(
+            tags_in("---\r\ntags: [work]\r\n---\r\nx\r\n"),
+            vec!["#work"]
+        );
+        assert_eq!(
+            tags_in("---\r\ntags:\r\n  - work\r\n---\r\nx #nib\r\n"),
+            vec!["#work", "#nib"]
+        );
+    }
+
+    /// Twin of "a link to a heading is no tag" in search/tags.test.ts.
+    #[test]
+    fn a_link_to_a_heading_is_no_tag() {
+        assert_eq!(
+            tags_in("## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n"),
+            vec!["#setup"]
+        );
+    }
+
+    /// Twin of "inside emphasis, strike, highlight or a cell" in
+    /// search/tags.test.ts: where the page draws a tag, the index has one.
+    #[test]
+    fn reads_a_tag_inside_emphasis_strike_highlight_or_a_cell() {
+        assert_eq!(
+            tags_in("**#a** *#b* ~~#d~~ ==#e== call\n"),
+            vec!["#a", "#b", "#d", "#e"]
+        );
+        assert_eq!(tags_in("| x | y |\n| - | - |\n|#f|#g|\n"), vec!["#f", "#g"]);
+    }
+
+    /// The rows of `PARITY` in @nib/markdown's tags.test.ts, which the page is
+    /// held to, and of "alike on the page and in the index" in search/tags.test.ts.
+    #[test]
+    fn reads_the_parity_rows() {
+        let rows: [(&str, &[&str]); 11] = [
+            ("see https://x.test/?q=#x", &[]),
+            ("[link](https://x.test/?q=#x)", &[]),
+            ("<https://x.test/#a> <https://x.test/?a=#b>", &[]),
+            ("plain a|#b text", &[]),
+            ("code-ish a=#b prose and color=#ff8800", &[]),
+            ("snake_#x 3*#y a~#z", &[]),
+            ("[[Note|#alias]]", &[]),
+            ("[s](#setup) ![i](#img) and [s](#open", &[]),
+            ("**#a** ~~#d~~ ==#e== x **#f**", &["#a", "#d", "#e", "#f"]),
+            (
+                "_#u_ and __#todo__ and _#snake_case_",
+                &["#u", "#todo", "#snake_case"],
+            ),
+            ("| x | y |\n| - | - |\n|#f|#g|", &["#f", "#g"]),
+        ];
+        for (source, tags) in rows {
+            assert_eq!(tags_in(&format!("{source}\n")), tags, "{source}");
+        }
     }
 }

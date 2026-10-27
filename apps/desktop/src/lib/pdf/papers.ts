@@ -22,10 +22,12 @@
  *  paper as in a note. Only the rows are built here: a page has no lines, so the
  *  words around the match are what a row shows. */
 
-import { holderOf } from '../pages/held'
+import { isPagesTarget } from '@nib/markdown/links'
+import { holderOf, paperOf } from '../pages/held'
 import { type Hit, Matcher } from '../search/match'
 import type { Query } from '../search/query'
 import { warm } from '../search/warm.svelte'
+import { folderOf, pathKey, pathKeys } from '../space-paths'
 import { afterQuiet } from '../timing'
 import { forgetPaperText, keepPaperText, paperFiles, paperText, paperTextOf } from './text-cache'
 
@@ -90,7 +92,29 @@ let hydrated: { root: string; at: number; done: Promise<void> } | null = null
  *  A number rather than the root, for the same reason as everywhere else in this
  *  round: a space opened, closed and opened again is two listings under one name,
  *  and the files may have changed in between. */
-let listing: { root: string; at: number; modified: Map<string, number> } | null = null
+let listing: {
+  root: string
+  at: number
+  modified: Map<string, number>
+  /** What the list walked, where it said: see `Walked`. */
+  walked: { notes: Set<string>; folders: Set<string> } | null
+} | null = null
+
+/** The page notes a listing has, and the folders it read to find them.
+ *
+ *  A paper a page note holds is not in the list itself, so this is what says whether
+ *  it still has a note: one whose note has gone is a record nobody will ever let go
+ *  of, because no operation is left to name it. Records an older build left behind a
+ *  renamed or deleted page note are exactly that.
+ *
+ *  The folders are what makes a missing note mean something. A folder the list could
+ *  not read, or one it leaves out (a hidden one), says nothing about the notes in it,
+ *  and a list that failed altogether is not said at all: a disk that is not mounted
+ *  is not a space whose page notes have all been deleted. */
+export interface Walked {
+  notes: readonly string[]
+  folders: readonly string[]
+}
 let listings = 0
 
 /** When the file list last said one of a space's papers was written, or nothing
@@ -98,6 +122,21 @@ let listings = 0
  *  that lands while a walk is in the air is held against the rest of it. */
 function listedAt(root: string, path: string): number | undefined {
   return listing?.root === root ? listing.modified.get(path) : undefined
+}
+
+/** Whether the list has said that the paper at `path` belongs to a page note that is
+ *  no longer there. Nothing for a PDF the list has as a file of its own (a paper whose
+ *  note has gone is a PDF again; see pages/held.ts), for one in a folder the list did
+ *  not read, or where the list has not said. */
+function orphaned(root: string, path: string): boolean {
+  const holder = holderOf(path)
+  const walked = listing?.root === root ? listing.walked : null
+  if (holder === null || !walked || listing?.modified.has(path)) return false
+
+  const inside = root.endsWith('/') ? root : `${root}/`
+  if (!path.startsWith(inside) || !walked.folders.has(pathKey(folderOf(path)))) return false
+
+  return !walked.notes.has(pathKey(holder))
 }
 
 /** Paths whose paper has been let go of while a read-back was walking the store.
@@ -221,11 +260,29 @@ export async function writePapers(): Promise<void> {
  *  read-back, which is the other half of the same door: a read-back skips a paper it
  *  already holds, and the walk that put those words in memory may have had nothing to
  *  hold them against. */
-export function papersListed(root: string, modified: Map<string, number>): void {
-  listing = { root, at: ++listings, modified }
+export function papersListed(
+  root: string,
+  modified: Map<string, number>,
+  walked?: Walked | null,
+): void {
+  listing = {
+    root,
+    at: ++listings,
+    modified,
+    walked: walked ? { notes: pathKeys(walked.notes), folders: pathKeys(walked.folders) } : null,
+  }
 
   let dropped = false
   for (const [path, paper] of [...held]) {
+    // The paper of a page note the list no longer has: read back before the list
+    // said anything, and nothing else will ever name it. It has left its path.
+    if (orphaned(root, path)) {
+      letGo(path)
+      void forgetPaperText(path)
+      dropped = true
+      continue
+    }
+
     // Only a paper whose words came out of a named file. One nobody has named is
     // held for the sitting and written nowhere, and there is nothing to hold it
     // against; see `paperOpened`.
@@ -273,6 +330,13 @@ export async function papersFor(root: string): Promise<void> {
         if (characters() + file.size > IN_MEMORY) break
         if (held.get(file.path)?.pages.size) continue
 
+        // A paper whose page note has gone is no paper of the space's any more, and
+        // its record goes rather than answering searches on a row that opens nothing.
+        if (orphaned(root, file.path)) {
+          void forgetPaperText(file.path)
+          continue
+        }
+
         const record = await paperText(file.path)
         if (!record) continue
 
@@ -306,21 +370,61 @@ export async function papersFor(root: string): Promise<void> {
   return done
 }
 
-/** Forgets a paper, for one that has been renamed, moved or deleted. Its words go
- *  from the store as well: they were that path's words, and the path has gone. */
+/** Forgets a paper, or a folder or a space of them, for one that has been deleted.
+ *  Its words go from the store as well: they were that path's words, and the path
+ *  has gone.
+ *
+ *  A page note goes with the paper it holds: the delete names the note, and the
+ *  paper beside it goes with it on disk without anything naming it; see
+ *  pages/held.ts. */
 export function paperGone(path: string): void {
-  letGo(path)
+  for (const one of withPaper(path)) {
+    for (const inside of heldUnder(one)) letGo(inside)
+    letGo(one)
+    void forgetPaperText(one)
+    void forgetStored(one)
+  }
   told()
-  void forgetPaperText(path)
 }
 
-/** A paper, or a folder of them, that has moved.
+/** A path, and the paper it holds where it is a page note. */
+function withPaper(path: string): string[] {
+  return isPagesTarget(path) ? [path, paperOf(path)] : [path]
+}
+
+/** Whether `path` is `at` or inside it. */
+function under(path: string, at: string): boolean {
+  return path === at || path.startsWith(`${at}/`)
+}
+
+/** The papers held at a path or inside it. */
+function heldUnder(at: string): string[] {
+  return [...held.keys()].filter((path) => under(path, at))
+}
+
+/** The records the store has inside a folder that has gone, which nothing in memory
+ *  names: a sitting that never read them back has nothing to let go of. */
+async function forgetStored(at: string): Promise<void> {
+  for (const file of await paperFiles()) {
+    if (file.path !== at && under(file.path, at)) await forgetPaperText(file.path)
+  }
+}
+
+/** A paper, or a folder or a space of them, that has moved.
  *
  *  The words follow the file, because they are the file's: what was read out of
  *  those bytes is still what is in them wherever they sit. The record moves with
  *  them, the way a PDF's highlights follow it; see `move_highlights` in paths.rs. */
 export function paperMoved(from: string, to: string): void {
-  const moving = [...held.keys()].filter((path) => path === from || path.startsWith(`${from}/`))
+  // A page note moves the paper it holds, which keeps the note's name with `.pdf`
+  // after it; the move names only the note. See pages/held.ts.
+  if (isPagesTarget(from)) paperMoved(paperOf(from), paperOf(to))
+
+  // A rename that only changes the case, on a disk that does not tell the two apart:
+  // the store keys both names the same, so forgetting the old one after the new one
+  // was written would forget the new one.
+  const same = pathKey(from) === pathKey(to)
+  const moving = heldUnder(from)
 
   for (const path of moving) {
     const paper = held.get(path)
@@ -328,7 +432,7 @@ export function paperMoved(from: string, to: string): void {
 
     held.delete(path)
     held.set(to + path.slice(from.length), { ...paper, unwritten: true })
-    void forgetPaperText(path)
+    if (!same) void forgetPaperText(path)
   }
 
   // Written down whether or not anything moved, and after the move rather than
@@ -337,10 +441,26 @@ export function paperMoved(from: string, to: string): void {
   // rename took away.
   letGo(from)
 
+  if (!same) void moveStored(from, to, new Set(moving))
   if (!moving.length) return
 
   told()
   void writePapers()
+}
+
+/** The records of the papers that moved which only the store has, from a sitting
+ *  this one has not read back (or one held to `IN_MEMORY`): moved to the new path,
+ *  or nothing would ever let go of them at the old one and nothing would read them
+ *  at the new one. */
+async function moveStored(from: string, to: string, moved: ReadonlySet<string>): Promise<void> {
+  for (const file of await paperFiles()) {
+    if (moved.has(file.path) || !under(file.path, from)) continue
+
+    const record = await paperText(file.path)
+    const there = to + file.path.slice(from.length)
+    if (record && !held.has(there)) await keepPaperText({ ...record, path: there })
+    await forgetPaperText(file.path)
+  }
 }
 
 /** Says what is held, so that the panel's diagnostics line says both halves of

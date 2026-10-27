@@ -22,7 +22,11 @@ vi.mock('../settings.svelte', () => ({ settings: { page: undefined, exportAppear
 vi.mock('../theme.svelte', () => ({ theme: { accent: 'violet', active: { path: null } } }))
 vi.mock('../modes.svelte', () => ({ modes: { codeTheme: 'auto' } }))
 vi.mock('../link-index.svelte', () => ({
-  links: { embedSource: () => null, relativeTarget: () => null },
+  links: {
+    embedSource: () => null,
+    relativeTarget: () => null,
+    spaceRead: () => Promise.resolve(),
+  },
 }))
 vi.mock('../images', () => ({ imagePath: () => null }))
 vi.mock('../tauri', () => ({ invoke: () => Promise.resolve(''), isNative: false }))

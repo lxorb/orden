@@ -7,7 +7,7 @@
  *  taking the snapshots and remembering how to undo the lot is the workspace's
  *  job, which is the one that owns files. */
 
-import { relativeTo } from '../space-paths'
+import { isMarkdownPath, relativeTo } from '../space-paths'
 import { type Hit, Matcher } from './match'
 import type { Query } from './query'
 import { changeOf, type Edit, replaceIn } from './replace'
@@ -47,6 +47,10 @@ export async function changesFor(
   const out: Change[] = []
 
   for (const [path, lines] of linesPerNote(hits)) {
+    // The desktop's search reads a website shortcut's words too, and a shortcut is
+    // `key=value` lines: a replacement in one renames its keys or breaks its address.
+    if (!isMarkdownPath(path)) continue
+
     const before = await textOf(path)
     if (before === null) continue
 

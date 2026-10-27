@@ -2049,6 +2049,7 @@ export const it: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'Questo {device}',
   '{name} is back: {device} was writing in it': '{name} è tornata: {device} ci stava scrivendo',
+  'Changes to {name} are not syncing': 'Le modifiche a {name} non vengono sincronizzate',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Apertura',
   Pressing: 'Pressione',

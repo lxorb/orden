@@ -9,6 +9,7 @@
  *  and pages themselves, which is where the links go. */
 
 import type { AgentAnswer } from '../../automation/caller'
+import { notePath } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { workspace } from '../../workspace.svelte'
 import { notes } from '../docs'
@@ -16,7 +17,7 @@ import { asked } from './asks'
 import { type Call, done, maybe, need, writerOf } from './call'
 import { made } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, placeFor } from './spaces'
+import { judgedForWriting, onDisk, placeOf, writableAt } from './spaces'
 
 /** One line of the log, as far as a note needs it. */
 interface Line {
@@ -79,9 +80,12 @@ export async function attachAgentLog(call: Call): Promise<AgentAnswer> {
     throw new Refused('bad_arguments', 'session is a day, like 2026-09-30')
   }
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const named = judgedForWriting(need(call, 'note'))
-  const relative = named.includes('.') ? named : `${named}.md`
+  const relative = notePath(named)
+  if (relative === null) throw new Refused('bad_arguments', `${named} is not a markdown note`)
+  // A new note or a section on an old one, neither goes into a space shared to be read.
+  writableAt(place, onDisk(place, relative))
 
   const read: unknown[] = await invoke<unknown[]>('agents_log', { day }).catch(() => [])
   const lines = read.filter(isLine).filter((one) => one.agent === agent)

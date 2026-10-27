@@ -36,18 +36,20 @@ import type { PlaneSurface } from '../canvas/shared'
 import type { Watched } from './watching'
 import { rooms } from '../rooms.svelte'
 import * as Y from 'yjs'
-import { asking, type Held, type HeldAnswer } from './asking.svelte'
+import { asking, type Held, type HeldAnswer, unsyncedToast } from './asking.svelte'
 import { attach, attachPlane, type PlaneJoin } from './binding'
 import { carry, uncarry } from './carry'
 import { kindOfName } from './create'
 import { Engine } from './engine'
+import { type Holding, spend } from '../sync/holding'
 import type { Carried } from '../pages/carried'
-import { holdsDocument } from './kinds'
+import { holdsDocument, joinsAs, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put } from './store'
 import { Refused } from './transport'
 import { pairsFromV1 } from './v1-pairs'
+import { usage } from '../usage.svelte'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
@@ -80,9 +82,30 @@ function v1Spaces(accountId: string): Map<string, V1Space> {
   const held = isRecord(saved.mirrors) ? saved.mirrors : saved
   for (const [root, one] of Object.entries(held)) {
     const mirror: Mirror | null = readMirror(root, one)
-    if (mirror) out.set(mirror.spaceId, { cursor: mirror.cursor, notes: mirror.notes })
+    if (mirror) {
+      out.set(mirror.spaceId, {
+        cursor: mirror.cursor,
+        notes: mirror.notes,
+        ...(mirror.moving ? { moving: mirror.moving } : {}),
+        ...(mirror.untold ? { untold: mirror.untold } : {}),
+      })
+    }
   }
   return out
+}
+
+/** v1's record of a space with what a pass of its left half done settled first: a
+ *  note waiting aside from a swap, which the first pass would read as deleted here.
+ *  v1's pass is fetched only for a record that has one; see `asidesBack`. */
+async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null> {
+  const waiting = (path: string) => (path.split('/').pop() ?? '').startsWith('.nib-moving-')
+  if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(waiting))) return v1
+  const { asidesBack } = await import('../sync/pass')
+  return {
+    cursor: v1.cursor,
+    notes: await asidesBack(root, v1.notes, v1.moving),
+    ...(v1.untold ? { untold: v1.untold } : {}),
+  }
 }
 
 class Runner {
@@ -102,6 +125,8 @@ class Runner {
   }
   private stops: (() => void)[] = []
   private due = new Set<string>()
+  /** The spaces whose last pass heard the account had no room for a file. */
+  private readonly full = new Set<string>()
   private passing_: Promise<void> | null = null
   private timer: ReturnType<typeof setTimeout> | undefined
   private quiet = 0
@@ -222,6 +247,8 @@ class Runner {
     for (const stop of this.stops.splice(0)) stop()
     for (const key of this.carried) uncarry(key)
     this.carried.clear()
+    this.full.clear()
+    usage.syncFull(false)
     for (const one of this.bound.values()) one.part()
     this.bound.clear()
     clearTimeout(this.timer)
@@ -435,7 +462,10 @@ class Runner {
         const space = engine.core.spaces.get(id)
         if (!space) continue
         if (!(await this.firstDone(engine, id))) {
-          const v1 = this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null
+          const v1 = await wholeV1(
+            space.row.root,
+            this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null,
+          )
           if (!(await firstPass(engine.core, space, v1))) {
             offline = true
             await engine.core.commit([
@@ -449,6 +479,10 @@ class Runner {
           this.watched?.follow()
         }
         const passed = await engine.pass(id)
+        if (passed?.full) this.full.add(id)
+        else if (passed?.finished) this.full.delete(id)
+        for (const one of this.full) if (!engine.core.spaces.has(one)) this.full.delete(one)
+        usage.syncFull(this.full.size > 0)
         if (!passed?.finished) offline = true
         if (passed && (passed.pulled || passed.pushed)) moved = true
         if (passed?.pulled && id === this.spaceOnScreen(engine)) await workspace.loadTree()
@@ -656,6 +690,15 @@ class Runner {
     return null
   }
 
+  /** The role the sync store kept for the space a folder is, as the account last
+   *  said it: what may be done there before the account is asked again. */
+  roleKept(root: string): string | null {
+    for (const space of this.engine?.core.spaces.values() ?? []) {
+      if (space.row.root === root) return space.row.role
+    }
+    return null
+  }
+
   /** The file on this disk an entry of the account is, by its id: null for one that is
    *  not on this disk, or in no space this device syncs. */
   fileOf(id: string): string | null {
@@ -677,6 +720,41 @@ class Runner {
       version: engine.core.numbers.get(entry.id)?.seq ?? 0,
       hash: entry.written_hash ?? '',
     }
+  }
+
+  /** Whether the account holds what is at a path on this disk now, so a delete can be
+   *  left to it; see `holds` in sync.svelte.ts.
+   *
+   *  An entry with a number has been handed over once, and that is all it says. A note
+   *  with words not acknowledged, or whose file another program wrote since nib did, is
+   *  ahead of the account. A file another program changed (`touched`), one whose bytes
+   *  the account names differently from the ones last on this disk, and one held in a
+   *  conflict - whose bytes here were never sent (`holdFile` in files.ts) - are too. Each
+   *  is read and hashed against what was last written, since the watcher's word on a
+   *  change can come a moment after the change. */
+  async holds(path: string, how: Holding = {}): Promise<boolean> {
+    const engine = this.engine
+    const entry = engine?.entryAt(path)
+    if (!engine || entry?.seq == null || entry.deleted || !entry.written_hash) {
+      return false
+    }
+    const core = engine.core
+    if (core.isHeld(entry.id)) return false
+
+    if (holdsDocument(entry.kind)) {
+      if (core.hasPending(entry.id)) return false
+      const words = await core.world.disk.read(path)
+      if (words === null || !spend(how, words.length)) return false
+      return (await core.world.digest(unixLines(words))) === entry.written_hash
+    }
+
+    if (core.touched.has(entry.id) || entry.file_key !== entry.written_hash) return false
+    const blobs = core.world.blobs
+    // What is larger than a folder check may still read is not read at all.
+    if (!blobs || (how.budget && (entry.size ?? Infinity) > how.budget.left)) return false
+    const bytes = await blobs.read(path)
+    if (!bytes || !spend(how, bytes.byteLength)) return false
+    return (await blobs.hash(bytes)) === entry.written_hash
   }
 
   /** A space deleted here: its rows go with it. */
@@ -738,8 +816,15 @@ class Runner {
       if (!one.path) continue
       const note = one.note
       const surface = rooms.planes.get(one.key)
-      const on: On | null = note.kind === 'note' ? { note } : surface ? { surface } : null
-      const entry = on && engine.entryAt(one.path)
+      const entry = engine.entryAt(one.path)
+      const joins = entry && joinsAs(note.kind, entry.kind)
+      // A tab whose name and entry disagree about the shape, after a rename across
+      // `.md` and `.canvas`, is left unjoined, and the reader is told once: what is
+      // typed there that the entry's kind cannot hold does not sync.
+      if (entry && engine.core.hasDoc(entry.id) && joins === null)
+        this.mismatched(one.key, one.path)
+      const on: On | null =
+        joins === 'views' ? { note } : joins === 'surface' && surface ? { surface } : null
       if (on && entry && engine.core.hasDoc(entry.id))
         wanted.set(one.key, { id: entry.id, on, arrivals: () => note.arrivals })
     }
@@ -780,6 +865,16 @@ class Runner {
       this.bound.set(key, { id: one.id, part, plane: typeof joined === 'function' ? null : joined })
       this.enter(engine, key, one.id, one.on)
     }
+  }
+
+  /** Tabs already told that their file syncs as another kind; see `bindNow`. */
+  private readonly told = new Set<string>()
+
+  private mismatched(key: string, path: string) {
+    if (this.told.has(key)) return
+    this.told.add(key)
+    log('warn', `sync2: ${path} is open as another kind than it syncs as`)
+    void unsyncedToast(path.split(/[\\/]/).pop() ?? path)
   }
 
   /** Open notes whose documents a room is carrying, by document key. */

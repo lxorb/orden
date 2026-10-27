@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { readProperties } from './properties'
 import {
+  addProperty,
+  propertyNamed,
   removeProperty,
   renameProperty,
   withItem,
@@ -66,6 +68,17 @@ describe('a value typed into a row', () => {
 })
 
 describe('a checkbox and a number', () => {
+  test('a quoted value edited in its row keeps its quotes', () => {
+    const note = '---\nzip: \'007\'\nflag: "true"\n---\n'
+    const rows = readProperties(note) ?? []
+    const zip = rows.find((one) => one.key === 'zip')
+    const flag = rows.find((one) => one.key === 'flag')
+    expect(applied(note, writeProperty(note, 'zip', '0071', zip?.kind))).toContain("zip: '0071'")
+    expect(applied(note, writeProperty(note, 'flag', 'false', flag?.kind))).toContain(
+      "flag: 'false'",
+    )
+  })
+
   test('are the words YAML reads as a boolean and a number', () => {
     const ticked = applied(NOTE, writeProperty(NOTE, 'done', 'true', 'checkbox'))
     expect(ticked).toContain('done: true')
@@ -125,7 +138,7 @@ describe('a list', () => {
     const tags = readProperties(NOTE)?.find((one) => one.key === 'tags')
     expect(tags).toBeDefined()
     // Asserted on the line above.
-    expect(withItem(tags!, 'three')).toEqual(['one', 'two', 'three'])
+    expect(writtenList(withItem(tags!, 'three') ?? [])).toBe('[one, two, three]')
     expect(withItem(tags!, 'one')).toBeNull()
     expect(withItem(tags!, '  ')).toBeNull()
   })
@@ -134,7 +147,7 @@ describe('a list', () => {
     const tags = readProperties(NOTE)?.find((one) => one.key === 'tags')
     expect(tags).toBeDefined()
     // Asserted on the line above.
-    expect(withoutItem(tags!, 'one')).toEqual(['two'])
+    expect(writtenList(withoutItem(tags!, 'one') ?? [])).toBe('[two]')
     expect(withoutItem(tags!, 'three')).toBeNull()
   })
 
@@ -147,7 +160,7 @@ describe('a list', () => {
 
     // Asserted on the line above.
     const written = applied(quoted, writeList(quoted, 'tags', withoutItem(tags!, 'c') ?? []))
-    expect(written).toBe("---\ntags: ['a, b']\n---\n\nWords.\n")
+    expect(written).toBe('---\ntags: ["a, b"]\n---\n\nWords.\n')
     expect(readProperties(written)?.find((one) => one.key === 'tags')?.items).toEqual(['a, b'])
 
     const again = applied(written, writeList(written, 'tags', ['a, b', "It's, here"]))
@@ -155,6 +168,149 @@ describe('a list', () => {
       'a, b',
       "It's, here",
     ])
+  })
+
+  test('a chip taken off a list of numbers leaves the others numbers', () => {
+    const note = '---\nscores: [1, 2, 10]\n---\n'
+    const scores = readProperties(note)?.find((one) => one.key === 'scores')
+    expect(scores).toBeDefined()
+    // Asserted on the line above.
+    const written = applied(note, writeList(note, 'scores', withoutItem(scores!, '2') ?? []))
+    expect(written).toBe('---\nscores: [1, 10]\n---\n')
+  })
+
+  test('each item keeps its type: bare where it is a number, a yes or nothing', () => {
+    expect(writtenList([1, 2.5, -3, true, false, null, 'one'])).toBe(
+      '[1, 2.5, -3, true, false, null, one]',
+    )
+    // Words that YAML would read as something else stay words.
+    expect(writtenList(['1', 'true', 'null', '~', ''])).toBe("['1', 'true', 'null', '~', '']")
+  })
+
+  test('a chip off a mixed list leaves quoted items quoted and plain ones plain', () => {
+    const note = "---\nmixed: [1, '2', true, 'false', null, x, y]\n---\n"
+    const mixed = readProperties(note)?.find((one) => one.key === 'mixed')
+    expect(mixed).toBeDefined()
+    // Asserted on the line above.
+    const written = applied(note, writeList(note, 'mixed', withoutItem(mixed!, 'y') ?? []))
+    expect(written).toBe("---\nmixed: [1, '2', true, 'false', null, x]\n---\n")
+  })
+
+  test('a chip added to a list keeps the items before it as they were', () => {
+    const note = '---\nscores:\n  - 1\n  - true\n---\n'
+    const scores = readProperties(note)?.find((one) => one.key === 'scores')
+    expect(scores).toBeDefined()
+    // Asserted on the line above.
+    const written = applied(note, writeList(note, 'scores', withItem(scores!, 'more') ?? []))
+    expect(written).toBe('---\nscores: [1, true, more]\n---\n')
+  })
+
+  test('a chip typed into a list is written the way it would be typed bare', () => {
+    const note = '---\nscores: [1, 10]\n---\n'
+    const scores = readProperties(note)?.find((one) => one.key === 'scores')
+    expect(scores).toBeDefined()
+    // Asserted on the line above.
+    const added = (typed: string) =>
+      applied(note, writeList(note, 'scores', withItem(scores!, typed) ?? []))
+
+    expect(added('3')).toBe('---\nscores: [1, 10, 3]\n---\n')
+    expect(added('-2.5')).toBe('---\nscores: [1, 10, -2.5]\n---\n')
+    expect(added('true')).toBe('---\nscores: [1, 10, true]\n---\n')
+    // Bare, each of these would read back as something other than what was typed.
+    expect(added('007')).toBe("---\nscores: [1, 10, '007']\n---\n")
+    expect(added('1e3')).toBe("---\nscores: [1, 10, '1e3']\n---\n")
+    expect(added('yes')).toBe("---\nscores: [1, 10, 'yes']\n---\n")
+    expect(added('null')).toBe("---\nscores: [1, 10, 'null']\n---\n")
+    expect(added('True')).toBe("---\nscores: [1, 10, 'True']\n---\n")
+    expect(added('a: b')).toBe("---\nscores: [1, 10, 'a: b']\n---\n")
+    expect(added('#x')).toBe("---\nscores: [1, 10, '#x']\n---\n")
+    expect(added('more')).toBe('---\nscores: [1, 10, more]\n---\n')
+  })
+
+  test('a chip taken off leaves every other member exactly as it was written', () => {
+    const note = '---\nids: [1234567890123456789, 5, 1.10, 2.0, 007, -0]\n---\n'
+    const ids = readProperties(note)?.find((one) => one.key === 'ids')
+    expect(ids).toBeDefined()
+    // Asserted on the line above.
+    const written = applied(note, writeList(note, 'ids', withoutItem(ids!, '5') ?? []))
+    expect(written).toBe('---\nids: [1234567890123456789, 1.10, 2.0, 007, -0]\n---\n')
+
+    const quoted = `---\ntags: ["a", 'b', c, "it's"]\n---\n`
+    const tags = readProperties(quoted)?.find((one) => one.key === 'tags')
+    expect(tags).toBeDefined()
+    // Asserted on the line above.
+    expect(applied(quoted, writeList(quoted, 'tags', withoutItem(tags!, 'c') ?? []))).toBe(
+      `---\ntags: ["a", 'b', "it's"]\n---\n`,
+    )
+  })
+
+  test('a chip added to a block list keeps its members as written, in a flow list', () => {
+    const note = "---\nids:\n  - 007\n  - 1.10\n  - 'x'\n  - a, b\n---\n"
+    const ids = readProperties(note)?.find((one) => one.key === 'ids')
+    expect(ids).toBeDefined()
+    // Asserted on the line above. A plain member holding a comma is one member in a
+    // block list and two in a flow one, so that one alone is quoted.
+    const written = applied(note, writeList(note, 'ids', withItem(ids!, '3') ?? []))
+    expect(written).toBe("---\nids: [007, 1.10, 'x', 'a, b', 3]\n---\n")
+    expect(readProperties(written)?.find((one) => one.key === 'ids')?.items).toEqual([
+      '007',
+      '1.10',
+      'x',
+      'a, b',
+      '3',
+    ])
+  })
+
+  test('a block list whose members are not flow members is still written as YAML', () => {
+    const added = (note: string) => {
+      const ids = readProperties(note)?.find((one) => one.key === 'ids')
+      expect(ids).toBeDefined()
+      // Asserted on the line above.
+      return applied(note, writeList(note, 'ids', withItem(ids!, 'z') ?? []))
+    }
+    // An empty member is nothing, which a flow list says as `null`, not as `[, b]`.
+    expect(added('---\nids:\n  - a\n  -\n  - b\n---\n')).toBe('---\nids: [a, null, b, z]\n---\n')
+    // A comment would close a flow list early, and a list in a list would be words; a
+    // list holding either stays a block list, each member as it was.
+    expect(added('---\nids:\n  - a\n  - e # note\n---\n')).toBe(
+      '---\nids:\n  - a\n  - e # note\n  - z\n---\n',
+    )
+    expect(added('---\nids:\n- - x\n- b\n---\n')).toBe('---\nids:\n  - - x\n  - b\n  - z\n---\n')
+    // A quoted member is no flow member either where a comment follows its quotes.
+    expect(added('---\nids:\n  - "x" # see "y"\n  - b\n---\n')).toBe(
+      '---\nids:\n  - "x" # see "y"\n  - b\n  - z\n---\n',
+    )
+  })
+
+  test('a list is written over the key the note spells in another case', () => {
+    const note = '---\nTags:\n  - x\n  - y\ntitle: a\n---\n'
+    expect(applied(note, writeList(note, 'tags', ['x', 'z']))).toBe(
+      '---\nTags: [x, z]\ntitle: a\n---\n',
+    )
+  })
+
+  test('a list in a note whose lines end in CRLF keeps its members and its line ends', () => {
+    for (const note of [
+      '---\r\nids: [007, "x"]\r\ntitle: t\r\n---\r\n',
+      '---\r\nids:\r\n  - 007\r\n  - "x"\r\ntitle: t\r\n---\r\n',
+    ]) {
+      const ids = readProperties(note)?.find((one) => one.key === 'ids')
+      expect(ids?.items, note).toEqual(['007', 'x'])
+      // Asserted on the line above.
+      expect(applied(note, writeList(note, 'ids', withItem(ids!, 'z') ?? [])), note).toBe(
+        '---\r\nids: [007, "x", z]\r\ntitle: t\r\n---\r\n',
+      )
+    }
+  })
+
+  test('a block list written into a CRLF note ends its lines the way the note does', () => {
+    const note = '---\r\nids:\r\n  - a\r\n  - e # note\r\ntitle: t\r\n---\r\n'
+    const ids = readProperties(note)?.find((one) => one.key === 'ids')
+    expect(ids).toBeDefined()
+    // Asserted on the line above.
+    expect(applied(note, writeList(note, 'ids', withItem(ids!, 'z') ?? []))).toBe(
+      '---\r\nids:\r\n  - a\r\n  - e # note\r\n  - z\r\ntitle: t\r\n---\r\n',
+    )
   })
 
   test('the last chip off leaves the key with an empty list rather than no key', () => {
@@ -177,12 +333,51 @@ describe('a key renamed from the side panel', () => {
     expect(applied(NOTE, edit)).toBe(NOTE.replace('done:', 'finished:'))
   })
 
+  test('takes any name front matter reads back as a key', () => {
+    for (const name of ['priorität', 'due date', 'Size (cm)', '💰'])
+      expect(applied(NOTE, renameProperty(NOTE, 'done', name))).toBe(
+        NOTE.replace('done:', `${name}:`),
+      )
+  })
+
   test('refuses a name that is not a key, the same name, and one the block already has', () => {
-    expect(renameProperty(NOTE, 'done', 'two words')).toBeNull()
+    expect(renameProperty(NOTE, 'done', 'two: words')).toBeNull()
+    expect(renameProperty(NOTE, 'done', '#done')).toBeNull()
     expect(renameProperty(NOTE, 'done', '')).toBeNull()
     expect(renameProperty(NOTE, 'done', 'done')).toBeNull()
     expect(renameProperty(NOTE, 'done', 'Title')).toBeNull()
     expect(renameProperty(NOTE, 'missing', 'other')).toBeNull()
+  })
+})
+
+describe('a key added from the side panel', () => {
+  test('is written with nothing after it, in a block or in a new one', () => {
+    expect(applied(NOTE, addProperty(NOTE, ' status '))).toBe(
+      NOTE.replace('---\n\n', "status: ''\n---\n\n"),
+    )
+    expect(applied('Words.\n', addProperty('Words.\n', 'status'))).toBe(
+      "---\nstatus: ''\n---\nWords.\n",
+    )
+  })
+
+  /** Writing it anyway was setting the key the note already had to nothing: its list,
+   *  or `Status: open` reached through the key in another case. */
+  test('refuses a name the block already has, in any case, and an empty one', () => {
+    const held = '---\ntags:\n  - a\n  - b\nStatus: open\n---\nWords.\n'
+
+    expect(addProperty(held, 'tags')).toBeNull()
+    expect(addProperty(held, 'status')).toBeNull()
+    expect(addProperty(held, '  ')).toBeNull()
+    expect(propertyNamed(held, ' STATUS ')?.key).toBe('Status')
+    expect(propertyNamed(held, 'due')).toBeNull()
+  })
+
+  /** A name the block cannot read back as a key: `a: b` wrote `a: b: ''`, which no
+   *  reader takes as YAML, and the rest left a line that sent the panel to source. */
+  test('refuses a name no reader could take back as a key', () => {
+    for (const name of ['a: b', '- x', '#x', '[x]', 'k #c']) {
+      expect(addProperty(NOTE, name), name).toBeNull()
+    }
   })
 })
 

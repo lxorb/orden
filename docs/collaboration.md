@@ -577,9 +577,22 @@ request; the owner is mailed, and the guest waits on a page that is one line and
 a slow pulse. Accepting sets `joined_at` and the page turns into the space;
 declining stamps `declined_at` and the page says so, rather than only stopping.
 Asking again is the same request as walking through, so the wait is one endpoint
-polled every three seconds and no second protocol. The link is remembered under
-`nib:waiting`, so closing the tab while the owner thinks about it goes back to
-waiting rather than to nothing.
+polled and no second protocol: every three seconds for two minutes, then at the
+pace syncing keeps (`pollDelay`), slower while the tab is hidden. A poll says
+`again`, and a request that is gone by then (the month a request lasts ran out)
+is answered 410 rather than made anew, so the owner is not knocked on twice. The
+link is remembered under `nib:waiting`, so closing the tab while the owner thinks
+about it goes back to waiting rather than to nothing, out of sight.
+
+The wait is never a lock. Close, Escape or the scrim put the sheet aside and a
+pill at the foot of the window (`JoinPending.svelte`) says "Waiting for Emil"
+until there is an answer, and opens it again; Slack's pending invitation and
+Google Docs' "request sent" are the model. Cancel takes the request back with
+`DELETE /v1/join/:token`, which removes only the reader's own row still waiting,
+so an Accept afterwards finds nobody, and a guest the request was all of goes
+with it. Turning the link off, and so Reset link too, ends every request made
+through it the same way: a request through a link that no longer exists is not
+one to accept. Signing out ends the wait too.
 
 **A guest persists, and can be claimed.** The guest token lives in the same
 store as an account's - `nib:session`, and the plugin's vault with it - so a guest

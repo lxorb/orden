@@ -764,6 +764,8 @@ describe('the bubble a sentence appears in', () => {
       // A feature pointed at, once, beside the control it is about.
       'lib/HintCard.svelte',
       'lib/NameField.svelte',
+      // A property's name that the note already has, said as a name field says it.
+      'lib/PropertiesPanel.svelte',
       // A program asking to become an agent: a site's question, asked of the app.
       'lib/agents/ui/PairingBubble.svelte',
       // Another device asking for the AI accounts, in the same shape as a program.

@@ -64,6 +64,29 @@ export interface Mirror {
    *  sharing must go, where one of the account's own that is merely missing is
    *  uploaded again. */
   shared: boolean
+  /** A rename a round of moves was about to make, written down before it: what lets
+   *  the next pass tell, after a quit, whether it was made. See `movedThere` in
+   *  pass.ts. Absent nearly always. */
+  moving?: Moving
+  /** Renames the account missed, by id; see `movedOne` in pass.ts. Absent nearly
+   *  always. */
+  untold?: Record<string, Untold>
+}
+
+/** One rename of a note's file, by the note's id and the paths in the space. */
+export interface Moving {
+  id: string
+  from: string
+  to: string
+}
+
+/** Paths in the space, how often the account has refused it, and since when and
+ *  how often the account has failed to answer about it without refusing. */
+export interface Untold {
+  from: string
+  to: string
+  tries: number
+  failing?: { since: number; times: number }
 }
 
 /** A folder just paired with a space, which knows nothing about it yet. One
@@ -157,7 +180,31 @@ export function readMirror(root: string, value: unknown): Mirror | null {
     // Written by every version since sharing; an older entry is the account's
     // own space, which is what every space was before there were shared ones.
     shared: value.shared === true,
+    ...(isRecord(value.moving) &&
+    isString(value.moving.id) &&
+    isString(value.moving.from) &&
+    isString(value.moving.to)
+      ? { moving: { id: value.moving.id, from: value.moving.from, to: value.moving.to } }
+      : {}),
+    ...readUntold(value.untold),
   }
+}
+
+function readUntold(value: unknown): { untold?: Record<string, Untold> } {
+  if (!isRecord(value)) return {}
+
+  const out: Record<string, Untold> = {}
+  for (const [id, one] of Object.entries(value)) {
+    if (!isRecord(one) || !isString(one.from) || !isString(one.to)) continue
+
+    const failing =
+      isRecord(one.failing) && isNumber(one.failing.since) && isNumber(one.failing.times)
+        ? { failing: { since: one.failing.since, times: one.failing.times } }
+        : {}
+    out[id] = { from: one.from, to: one.to, tries: isNumber(one.tries) ? one.tries : 0, ...failing }
+  }
+
+  return Object.keys(out).length ? { untold: out } : {}
 }
 
 /** The PDFs the last pass knew about. An entry that no longer reads as one is

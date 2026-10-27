@@ -19,8 +19,10 @@
 import { parseRule, ruleText } from '@nib/bases'
 import { taskLine } from '@nib/markdown/task-edits'
 import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@nib/markdown/task-line'
+import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
 import { key } from '../i18n.svelte'
 import { readCsv } from './csv'
+import { dayOf } from './meta'
 import { safeName } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
@@ -143,7 +145,7 @@ function linesOf(
   const { duration } = task
 
   const fields: TaskFields = {
-    text: oneLine(task.text).replace(/(^|\s)@([\p{L}\p{N}_/-]+)/gu, '$1#$2'),
+    text: asWords(oneLine(task.text)).replace(/(^|\s)@([\p{L}\p{N}_/-]+)/gu, '$1#$2'),
     status: task.done ? 'x' : ' ',
     done: !!task.done,
     cancelled: false,
@@ -160,14 +162,14 @@ function linesOf(
     ...(rule ? { recurrence: rule } : {}),
     ...(task.deadline ? { deadline: task.deadline } : {}),
     ...(duration ? { duration } : {}),
-    ...(task.assignee ? { assignee: task.assignee } : {}),
+    ...(task.assignee ? { assignee: asWords(task.assignee) } : {}),
     ...(task.done ? { completed: task.done } : {}),
   }
   const under = `${pad}  `
   const lines = [taskLine(fields, `${pad}- `)]
   for (const line of task.description.split(/\r?\n/))
     if (line.trim()) lines.push(`${under}${inert(line.trimEnd())}`)
-  if (task.repeats && !rule) lines.push(`${under}Todoist: ${task.repeats}`)
+  if (task.repeats && !rule) lines.push(`${under}Todoist: ${asWords(task.repeats)}`)
   for (const comment of task.comments) {
     const [first = '', ...rest] = comment.text.split(/\r?\n/)
     lines.push(`${under}${comment.at ? `${comment.at}: ` : ''}${inert(first.trimEnd())}`)
@@ -183,7 +185,27 @@ const oneLine = (said: string) => said.replace(/\s*[\r\n]+\s*/g, ' ').trim()
 
 /** A line of words that is not to be a task: a checkbox written in a description or a
  *  comment is shown as written, so no task appears that Todoist did not have. */
-const inert = (line: string) => line.replace(/^(\s*(?:[-*+]|\d+[.)])\s+)\[(.)\]/, '$1\\[$2]')
+const inert = (line: string) =>
+  wordsOf(line).replace(/^(\s*(?:[-*+]|\d+[.)])\s+)\[(.)\]/, '$1\\[$2]')
+
+/** A line with no tag in it. Todoist shows one in a description or a comment as text,
+ *  and a comment can come from anybody the project is shared with, so it stays words
+ *  rather than markup the note would render; the markdown Todoist does read is left as
+ *  it is. A link written `[name](<address>)`, the way an attachment comes (`linkTo`),
+ *  keeps its address: there it is a link's target, which markdown never reads as a
+ *  tag, so only its name is words. */
+function wordsOf(line: string): string {
+  let out = ''
+  let at = 0
+  for (const found of line.matchAll(ANGLED_LINK)) {
+    out += `${asWords(line.slice(at, found.index))}[${asWords(found[1] ?? '')}](<${found[2]}>)`
+    at = found.index + found[0].length
+  }
+  return out + asWords(line.slice(at))
+}
+
+/** A whole link with its target in angle brackets: the name, then the address. */
+const ANGLED_LINK = /\[((?:\\.|[^\\[\]\n])*)\]\(<([^<>\n]*)>\)/g
 
 /** What is said about a project or a section, as paragraphs under its head. */
 function aboutLines(about: readonly string[] | undefined): string[] {
@@ -273,7 +295,7 @@ export function planOf(account: Account, into = 'Projects'): ImportPlan & { inbo
     }
     for (const section of sections) {
       if (lines.length && lines.at(-1) !== '') lines.push('')
-      lines.push(`## ${oneLine(section.name)}`, '')
+      lines.push(`## ${asWords(oneLine(section.name))}`, '')
       const about = aboutLines(section.about)
       if (about.length) lines.push(...about, '')
       for (const task of own.filter((one) => one.section === section.id))
@@ -339,8 +361,14 @@ function linkTo(file: Json): string {
   if (!url) return ''
   const name = text(file.file_name) || text(file.title) || url
   const target = /[\s()<>]/.test(url) ? `<${url.replace(/[<>]/g, encodeURIComponent)}>` : url
-  return `[${name.replace(/([[\]\\])/g, '\\$1')}](${target})`
+  return `[${name.replace(LITERAL, '\\$&')}](${target})`
 }
+
+/** What a link's name escapes itself: a bracket, which would end it, and a
+ *  backslash, which would escape what comes after it. Not the run of backslashes in
+ *  front of a tag, which `asWords` doubles on the name's way into the note, and
+ *  doubling it here as well would show two backslashes for the one it had. */
+const LITERAL = new RegExp(`\\\\(?!\\\\*${OPENS_MARKUP.source})|[[\\]]`, 'g')
 
 /** A person as the CSV names one, `Lucile (14781400)`, by their name. */
 const personOf = (said: string) => said.replace(/\s*\(\d+\)\s*$/, '').trim()
@@ -548,7 +576,8 @@ function taskOf(
     ? Number(row.duration.amount) * (text(row.duration.unit) === 'day' ? 1440 : 1)
     : 0
   const assignee = people.get(id(row.responsible_uid))
-  const done = text(row.completed_at).slice(0, 10)
+  // Said in UTC, and done on the day it was where the reader is; see `dayOf`.
+  const done = dayOf(text(row.completed_at))
   return {
     id: id(row.id),
     project: id(row.project_id),
@@ -589,7 +618,7 @@ function remindOf(row: Json): Remind | null {
 function commentOf(row: Json): Comment {
   const file = isRecord(row.file_attachment) ? linkTo(row.file_attachment) : ''
   const link = file ? ` ${file}` : ''
-  const at = text(row.posted_at).slice(0, 10)
+  const at = dayOf(text(row.posted_at))
   return { text: `${text(row.content)}${link}`.trim(), ...(at ? { at } : {}) }
 }
 

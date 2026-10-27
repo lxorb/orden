@@ -23,6 +23,13 @@
 /** Quotes around a whole value, which YAML reads as one string. */
 const QUOTED = /^(["'])([\s\S]*)\1$/
 
+/** Whether a value is written in quotes, which makes it a string to YAML whatever
+ *  it says: `'007'` is the characters, not the number seven. Asked of the value as
+ *  written, because once `unquoted` has had it the difference is gone. */
+export function isQuoted(value: string): boolean {
+  return QUOTED.test(value.trim())
+}
+
 /** A value with the quotes YAML would take off taken off, its escapes read - a
  *  doubled apostrophe, JSON's backslashes - and the blanks around it gone. A
  *  backslash JSON cannot read keeps its characters rather than losing the value. */
@@ -71,11 +78,17 @@ const FLOW = /^\[([\s\S]*)\]$/
 
 /** The items of a flow sequence, or null when the value is not one. */
 export function flowItems(value: string): string[] | null {
+  return writtenFlowItems(value)?.map(unquoted) ?? null
+}
+
+/** The items of a flow sequence as written, quotes still on, for a reader that has
+ *  to know which of them were quoted. Null when the value is not one. */
+export function writtenFlowItems(value: string): string[] | null {
   const found = FLOW.exec(value.trim())
   if (!found) return null
 
   const inside = (found[1] ?? '').trim()
-  return inside === '' ? [] : members(inside).map(unquoted)
+  return inside === '' ? [] : members(inside).map((one) => one.trim())
 }
 
 /** A flow sequence's inside, cut at the commas outside quotes: `flowItem` quotes a
@@ -120,8 +133,15 @@ const ITEM = /^[ \t]*-(?=[ \t]|$)[ \t]*(.*)$/
 
 /** What a list item on the line says, or null when the line is not one. */
 export function listItem(line: string): string | null {
+  const written = writtenListItem(line)
+  return written === null ? null : unquoted(written)
+}
+
+/** What a list item on the line says as written, quotes still on, or null when
+ *  the line is not one. */
+export function writtenListItem(line: string): string | null {
   const found = ITEM.exec(line)
-  return found === null ? null : unquoted(found[1] ?? '')
+  return found === null ? null : (found[1] ?? '').trim()
 }
 
 /** One line, however many arrived.

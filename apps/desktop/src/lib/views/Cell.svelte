@@ -14,14 +14,25 @@
   import { cellValue } from '@nib/bases'
   import { tick } from 'svelte'
   import type { Property } from '@nib/markdown/properties'
+  import type { ListItem } from '@nib/markdown/property-edits'
   import { t } from '../i18n.svelte'
   import PropertyValue from '../properties/PropertyValue.svelte'
   import { valueText } from './chips'
-  import { bare, changeOf, type Editor, formatOf, optionsOf, toneOf } from './columns'
+  import {
+    bare,
+    changeOf,
+    type Editor,
+    formatOf,
+    holdsLists,
+    isNoteProperty,
+    optionsOf,
+    toneOf,
+  } from './columns'
   import { formatted } from './format'
   import { toneColour } from './chips'
   import { openExternal } from '../tauri'
   import type { Kit } from './kit'
+  import type { ListChange } from '../rows/write'
   import TaskBox from './TaskBox.svelte'
   import { dayIn, isDateValue } from './values'
   import Words from './Words.svelte'
@@ -63,10 +74,13 @@
       return { words, colour: toneColour(toneOf(base, property, words)) }
     })
   })
+  // Not a row of a space shared to be read either, which Today and a base across every
+  // space show beside the reader's own: its cells are read, never edited.
   const writable = $derived(
     editor !== 'none' &&
       editor !== 'button' &&
-      (row.kind === 'task' || !property.startsWith('task.')),
+      (row.kind === 'task' || !property.startsWith('task.')) &&
+      kit.writes(row),
   )
 
   function write(next: Value | null) {
@@ -74,19 +88,29 @@
     if (change) kit.write(row, change)
   }
 
-  /** The value as a property row, for the shared control. */
+  /** Whether the cell is edited as a list: a list column, and one with options whose
+   *  value is a list, or whose column holds lists. Options make a column a select, and
+   *  a select is one value - picking `b` for `tags: [a, c]` would write `tags: b`. */
+  const listed = $derived(
+    editor === 'list' ||
+      (editor === 'select' && (Array.isArray(value) || holdsLists(property, kit.live.rows))),
+  )
+
+  /** The value as a property row, for the shared control. Its items are the members
+   *  as shown, which is all a cell holds: a note's list is changed a chip at a time
+   *  (`onchip`), against the members as the note writes them, so a link stays a link
+   *  and a date a date rather than the words `Beta` or `Today`. */
   const asProperty = $derived.by((): Property => {
     const items = Array.isArray(value) ? value.map((one) => valueText(one, kit.live.today)) : []
-    const kind =
-      editor === 'list'
-        ? 'list'
-        : editor === 'number'
-          ? 'number'
-          : editor === 'date'
-            ? 'date'
-            : editor === 'checkbox'
-              ? 'checkbox'
-              : 'text'
+    const kind = listed
+      ? 'list'
+      : editor === 'number'
+        ? 'number'
+        : editor === 'date'
+          ? 'date'
+          : editor === 'checkbox'
+            ? 'checkbox'
+            : 'text'
     const said =
       value === null
         ? ''
@@ -97,10 +121,23 @@
             : Array.isArray(value)
               ? ''
               : shown
-    return { key: bare(property), kind, value: said, items, from: 0, to: 0 }
+    return {
+      key: bare(property),
+      kind,
+      value: said,
+      items,
+      from: 0,
+      to: 0,
+    }
   })
 
   const choices = $derived(kit.live.base ? optionsOf(kit.live.base, property) : [])
+
+  /** A member of a list the control wrote whole, which is a task's tags: one it left
+   *  alone comes back as the words it was shown as. */
+  function shownMember(item: ListItem): Value {
+    return item !== null && typeof item === 'object' ? item.asWritten : item
+  }
 
   /** Words written from the shared control, as the value the field holds. */
   function fromWords(words: string | null): Value | null {
@@ -133,8 +170,13 @@
 
 {#if property === 'task.text' && row.task}
   <span class="task">
-    <TaskBox task={row.task} label={plain(row.task.text)} ontick={() => kit.tick(row)} />
-    {#if editing}
+    <TaskBox
+      task={row.task}
+      label={plain(row.task.text)}
+      ontick={() => kit.tick(row)}
+      disabled={!kit.writes(row)}
+    />
+    {#if editing && writable}
       <input
         class="edit"
         value={row.task.text}
@@ -228,7 +270,10 @@
         choices={choices.length ? choices : null}
         autofocus
         onwrite={(words: string | null) => write(fromWords(words))}
-        onitems={(items: string[]) => write(items)}
+        onitems={(items: ListItem[]) => write(items.map(shownMember))}
+        onchip={isNoteProperty(property)
+          ? (chip: ListChange) => kit.write(row, { list: { [bare(property)]: chip } })
+          : undefined}
       />
     {/if}
   </span>
@@ -240,7 +285,7 @@
     disabled={!writable}
     aria-label={bare(property)}
     onchange={(event) => {
-      if (property === 'task.done') kit.tick(row)
+      if (property === 'task.done') void kit.tick(row)
       else write(event.currentTarget.checked)
     }}
   />
@@ -248,6 +293,7 @@
   <button
     type="button"
     class="nib-chip press"
+    disabled={!kit.writes(row)}
     onclick={(event) => {
       event.stopPropagation()
       kit.press(row, property)

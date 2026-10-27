@@ -13,6 +13,7 @@
  *  The loop is written against `GoalRoad`, so the test drives it with a fake turn and a
  *  fake evaluator; index.ts hands it the panel's turn and the provider's evaluator. */
 
+import { untrusted } from '../chat/transcript'
 import type { Goal, GoalState, Thread, Usage } from '../chat/types'
 import { compactsAt } from '../chat/usage'
 import { GOAL_CLEAR } from './table'
@@ -84,10 +85,12 @@ export function fatal(ended: Pick<Ended, 'error' | 'limit'>): boolean {
 
 /** What the next turn is told after a verdict of not yet. Not translated: it is the
  *  model's to read. */
-export function guidance(condition: string, reason: string): string {
-  return reason
-    ? `Keep working toward the goal: ${condition}\nNot met yet: ${reason}`
-    : `Keep working toward the goal: ${condition}`
+export function guidance(condition: string, reason: string, outside = false): string {
+  if (!reason) return `Keep working toward the goal: ${condition}`
+  // The evaluator read the thread, words from outside included, so its reason may be
+  // somebody else's: data, never what to do (docs/agent-native.md 9.6).
+  const said = outside ? untrusted('goal evaluator', reason) : reason
+  return `Keep working toward the goal: ${condition}\nNot met yet: ${said}`
 }
 
 function finish(goal: Goal, state: GoalState, road: GoalRoad, why: string): GoalState {
@@ -111,6 +114,7 @@ export async function pursue(
   let text = first
   let idle = 0
   let failed = 0
+  let outside = false
   // Asked through a call: the signal changes while a turn is awaited.
   const stopped = () => signal.aborted
   for (;;) {
@@ -119,6 +123,7 @@ export async function pursue(
     if (stopped()) return goal.state
     goal.turns++
     goal.tokens += spent(ended.usage)
+    outside ||= !!ended.outside
 
     if (ended.stop === 'stopped') return finish(goal, 'paused', road, '')
     let verdict: Verdict | null = null
@@ -157,6 +162,6 @@ export async function pursue(
     if (idle >= IDLE) return finish(goal, 'paused', road, verdict.reason)
 
     road.changed()
-    text = guidance(goal.condition, verdict.reason)
+    text = guidance(goal.condition, verdict.reason, outside)
   }
 }

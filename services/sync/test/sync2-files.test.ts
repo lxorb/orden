@@ -42,10 +42,10 @@ async function upload(data: Uint8Array, type = 'audio/webm', as = token) {
 }
 
 let counter = 0
-async function place(name: string, hash: string, as = token): Promise<OpsResponse> {
+async function place(name: string, hash: string, as = token, into = space): Promise<OpsResponse> {
   counter += 1
   const id = `file-${String(counter)}`
-  const answer = await call<OpsResponse>(env, `/v2/spaces/${space}/ops`, {
+  const answer = await call<OpsResponse>(env, `/v2/spaces/${into}/ops`, {
     token: as,
     body: {
       ops: [{ op: `op-${id}`, t: 'create', id, kind: 'file', parent: null, name, hash, seen: 0 }],
@@ -242,6 +242,79 @@ describe('a file replaced', () => {
       body: { hash: await hashOf(data), base: await hashOf(data) },
     })
     expect(answer.status).toBe(403)
+  })
+})
+
+/** The owner's bytes are not all one space's: somebody who writes in one space names
+ *  only bytes of their own, or bytes this space already holds, and never what the
+ *  owner keeps for another space - its hash is all they would need to read it. */
+describe('the bytes an editor names', () => {
+  async function elsewhere(): Promise<string> {
+    const other = (await call(env, '/v1/spaces', { token, body: { name: 'Private' } })).json.space
+      .id
+    await call(env, `/v2/spaces/${other}/prepare`, { token, method: 'POST' })
+    const data = bytes(256, 11)
+    await upload(data, 'application/pdf')
+    const hash = await hashOf(data)
+    expect((await place('private.pdf', hash, token, other)).results[0]).toHaveProperty('id')
+    return hash
+  }
+
+  test('are never what the owner keeps for another space, as a new entry', async () => {
+    const hash = await elsewhere()
+    const editor = await invited(env, token, space, 'editor@example.com', 'write')
+
+    expect((await place('theirs.pdf', hash, editor)).results[0]).toMatchObject({
+      refused: 'gone',
+    })
+  })
+
+  test('nor as the bytes an entry is replaced by', async () => {
+    const hash = await elsewhere()
+    const editor = await invited(env, token, space, 'editor@example.com', 'write')
+    const mine = bytes(64, 12)
+    await upload(mine, 'application/octet-stream', editor)
+    const placed = await place('mine.bin', await hashOf(mine), editor)
+    const id = (placed.results[0] as { id: string }).id
+
+    const answer = await call(env, `/v2/files/${space}/${id}`, {
+      method: 'PUT',
+      token: editor,
+      body: { hash, base: await hashOf(mine) },
+    })
+    expect(answer.status).toBe(404)
+    expect((await call(env, `/v2/files/${space}/${id}`, { token: editor })).text).not.toBe(
+      new TextDecoder().decode(bytes(256, 11)),
+    )
+  })
+
+  test('may be bytes of their own', async () => {
+    const editor = await invited(env, token, space, 'editor@example.com', 'write')
+    const mine = bytes(64, 13)
+    await upload(mine, 'application/octet-stream', editor)
+
+    expect((await place('mine.bin', await hashOf(mine), editor)).results[0]).toHaveProperty('id')
+  })
+
+  test('or bytes this space already holds, as a file of it', async () => {
+    const data = bytes(64, 14)
+    await upload(data)
+    await place('ours.bin', await hashOf(data))
+    const editor = await invited(env, token, space, 'editor@example.com', 'write')
+
+    expect((await place('ours again.bin', await hashOf(data), editor)).results[0]).toHaveProperty(
+      'id',
+    )
+    const other = bytes(64, 15)
+    await upload(other, 'application/octet-stream', editor)
+    const id = ((await place('swap.bin', await hashOf(other), editor)).results[0] as { id: string })
+      .id
+    const answer = await call(env, `/v2/files/${space}/${id}`, {
+      method: 'PUT',
+      token: editor,
+      body: { hash: await hashOf(data), base: await hashOf(other) },
+    })
+    expect(answer.json).toMatchObject({ ok: true })
   })
 })
 

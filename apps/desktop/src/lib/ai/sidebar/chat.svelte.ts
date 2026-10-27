@@ -16,6 +16,7 @@
  *
  *  Fetched with the panel, never in the first paint; see surfaces.svelte.ts. */
 
+import { answerThreadSpaces } from '../../automation/caller'
 import { message, t } from '../../i18n.svelte'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
@@ -27,6 +28,8 @@ import { nextEffort, within } from '../chat/effort'
 import {
   branchThread,
   deleteThread,
+  isDeleted,
+  staysDeleted,
   keepThread,
   listEveryThread,
   type Listed,
@@ -49,7 +52,8 @@ import { nextMode } from '../modes'
 import type { Provider } from '../providers'
 import { ai } from '../store.svelte'
 import { threadMarkdown } from './export'
-import { draftOf, type Front } from './gather'
+import { readOutside } from '../chat/transcript'
+import { draftOf, type Front, type Picked } from './gather'
 import type { Mention } from './mentions'
 import { OLD_KEY, oldSpaces, threadFromAsk } from './migrate'
 import {
@@ -109,6 +113,8 @@ export type Host = 'side' | 'tab'
 interface Around {
   front: Front | null
   selection: string
+  /** The document the selection is in, which says whose words it may be. */
+  picked?: Picked | null
 }
 
 function headOf(thread: Thread): Head {
@@ -176,6 +182,9 @@ class Chat implements Panel {
   private live = new Map<string, Thread>()
   private open: Thread | null = null
   private stoppers = new Map<string, AbortController>()
+  /** Fresh threads sent in while on the provider Ask uses, which they follow again
+   *  should the send come to nothing. */
+  private following = new Set<string>()
   /** One timer a thread waiting for its plan to reset. */
   private timers = new Map<string, ReturnType<typeof setTimeout>>()
   /** Which turns changed since the last frame drew the open thread. */
@@ -187,6 +196,15 @@ class Chat implements Panel {
   /** The thread open, raw: what an action changes. */
   get thread(): Thread | null {
     return this.open
+  }
+
+  /** The folder of the space the open thread works in, which its sources and its
+   *  changes are paths in: a thread stays in the space it was started in when the
+   *  reader moves to another. The space in front where it names none this device has. */
+  get root(): string | null {
+    return this.open
+      ? (spaceOfThread(this.open)?.root ?? null)
+      : (workspace.activeSpace?.root ?? null)
   }
 
   /** A thread this run has held, by id: what a helper is started under. */
@@ -244,11 +262,14 @@ class Chat implements Panel {
 
   /** The space in front, which is where the next new thread starts. The open thread
    *  stays open whatever it is; one nothing has been sent in yet is not anybody's, so it
-   *  moves to the space in front with the reader. */
+   *  moves to the space in front with the reader. A first message on its way (gathered,
+   *  or asked, before its turn is in the thread) was sent in its space, which stays. */
   here(space: string): void {
     this.space = space
     const open = this.open
-    if (open && !open.turns.length && space && open.space !== space) open.space = space
+    if (!open || open.turns.length || !space || open.space === space) return
+    if (this.running.includes(open.id)) return
+    open.space = space
   }
 
   private async arrive(opening: boolean): Promise<void> {
@@ -306,10 +327,12 @@ class Chat implements Panel {
 
   /** A thread nothing has been sent in follows Settings > AI > Used for > Ask, so a
    *  provider set up or changed while the panel is open is the one it asks. Called from
-   *  an effect with the provider, so it reads only the plain thread. */
+   *  an effect with the provider, so it reads only the plain thread. A first message on
+   *  its way is asked of the provider it was sent to. */
   follow(provider: Provider | null): void {
     const thread = this.open
     if (!thread || thread.turns.length || !provider || thread.provider === provider.id) return
+    if (this.running.includes(thread.id)) return
     thread.provider = provider.id
     thread.model = modelFor(provider)
     thread.effort = effortFor(provider.id, thread.model)
@@ -319,8 +342,13 @@ class Chat implements Panel {
   }
 
   private show(thread: Thread): void {
+    // An edit is the open thread's: another thread in front lets it go, and the field
+    // gets back what it held, so Enter there never sends one thread's change in another.
+    const left = thread !== this.open && this.changing ? this.letGo() : null
     this.open = thread
     this.live.set(thread.id, thread)
+    // Its queue goes on once the other thread is in front, so nothing of it lands here.
+    if (left) this.drain(left)
     this.trouble = null
     this.dropped = []
     this.everything = true
@@ -434,10 +462,8 @@ class Chat implements Panel {
     if (event.type === 'turn') {
       this.changed.add(event.turn.id)
       if (event.turn.role === 'you') {
-        if (event.turn.steered) {
-          const left = (this.steering[thread.id] ?? []).slice(1)
-          this.steering = { ...this.steering, [thread.id]: left }
-        } else this.pending = without(this.pending, thread.id)
+        if (event.turn.steered) this.tookSteered(thread, event.turn.draft?.text ?? '')
+        else this.pending = without(this.pending, thread.id)
       }
     } else if (event.type === 'part') {
       this.changed.add(event.turn)
@@ -454,14 +480,13 @@ class Chat implements Panel {
     const text = this.text.trim()
     const chips = this.chips
     if (!text && !chips.length) return
-    this.text = ''
-    this.chips = []
     const edited = this.editing
+    this.chips = []
+    this.taken()
     const thread = this.open
     if (edited && thread) {
       // An old message changed: the notes and the conversation go back to before it,
       // what followed is kept as a branch, and the words are sent in its place.
-      this.editing = null
       void editMessage(thread, edited, text, this)
       return
     }
@@ -471,6 +496,30 @@ class Chat implements Panel {
   /** The reader's message being changed in the field, by its id (Up, or its pencil). */
   editing = $state<string | null>(null)
 
+  /** What the field held when an earlier or a queued message was put in it to change:
+   *  given back once that message is sent, or the edit is let go (Escape). */
+  private aside: { text: string; chips: Mention[] } | null = null
+
+  /** A queued message taken into the field to change, its thread, and where it stood in
+   *  the queue: put back there if the change is let go. */
+  private requeue = $state.raw<{ one: Queued; at: number; thread: Thread } | null>(null)
+
+  /** Threads that ended an answer with nothing to send next while their queued message
+   *  was in the field: what is put back in their queue is sent, since no answer ending
+   *  will send it. A stop is not among them; it pauses the queue. */
+  private owed = new Set<string>()
+
+  /** Whether the field holds a message being changed, an earlier one or a queued one:
+   *  what Escape and the pencil over the field let go. */
+  get changing(): boolean {
+    return this.editing !== null || this.requeue !== null
+  }
+
+  /** The field's words and chips set aside, the first time an edit takes the field. */
+  private setAside(): void {
+    this.aside ??= { text: this.text, chips: this.chips }
+  }
+
   /** A message into the field to change and send again: the one named, else the last
    *  (Up on an empty field). */
   startEdit(turn?: string): void {
@@ -478,14 +527,76 @@ class Chat implements Panel {
     if (!thread || this.running.includes(thread.id)) return
     const message = turn ? thread.turns.find((one) => one.id === turn) : lastMessage(thread)
     if (!message?.draft) return
+    // A queued message in the field goes back first, as changed so far. It waits there
+    // for this change: sent or let go, the queue goes on after it.
+    this.putBack(this.requeue, true)
+    this.setAside()
     this.editing = message.id
     this.text = message.draft.text
+    this.chips = []
     this.focus()
   }
 
   cancelEdit(): void {
+    const thread = this.letGo()
+    if (thread) this.drain(thread)
+  }
+
+  /** The edit let go, a queued message back in its own words: the thread whose queue
+   *  may go on now. */
+  private letGo(): Thread | null {
+    const held = this.requeue
+    const thread = held?.thread ?? this.open
+    // The field first, so a message that cannot go out comes back in front of the draft.
+    this.taken()
+    this.putBack(held, false)
+    return thread
+  }
+
+  /** The field taken by the review (a rewind, its Redo): a queued message there goes
+   *  back as changed so far, to wait its turn, and an edit of an earlier one is over. */
+  release(): void {
+    this.putBack(this.requeue, true)
+    this.taken()
+  }
+
+  /** The field's words gone from it (sent, steered, run as a command): an edit they
+   *  were is over, and the field gets back what it held before the edit took it. */
+  taken(): void {
     this.editing = null
-    this.text = ''
+    this.requeue = null
+    this.text = this.aside?.text ?? ''
+    if (this.aside) this.chips = this.aside.chips
+    this.aside = null
+  }
+
+  /** A queued message being changed back where it stood, in the words it had (or, with
+   *  `changed`, the field's words now). */
+  private putBack(held: typeof this.requeue, changed: boolean): void {
+    if (!held) return
+    if (this.requeue === held) this.requeue = null
+    // A field emptied keeps the words it had: an empty message is never queued.
+    const words = this.text.trim()
+    const one =
+      changed && (words || this.chips.length)
+        ? { ...held.one, text: words, chips: this.chips }
+        : held.one
+    const { thread } = held
+    const list = (this.queued[thread.id] ?? []).slice()
+    list.splice(Math.min(held.at, list.length), 0, one)
+    this.queued = { ...this.queued, [thread.id]: list }
+  }
+
+  /** A queue no answer ending will send, sent now: in order, from its first. Not for a
+   *  chat deleted or archived meanwhile. */
+  private drain(thread: Thread): void {
+    if (!this.owed.has(thread.id) || this.running.includes(thread.id)) return
+    this.owed.delete(thread.id)
+    if (this.live.get(thread.id) !== thread || thread.archived) return
+    // Where nothing can answer, it waits in its own queue rather than coming back in
+    // the field of another chat.
+    if (thread !== this.open && !ai.provider(thread.provider)) return
+    this.next(thread)
   }
 
   /** The rewind sheet (Esc Esc on an empty field, or a message's clock). */
@@ -556,7 +667,7 @@ class Chat implements Panel {
       const words = t('Add an AI provider in Settings first.')
       if (thread === this.open) {
         this.trouble = words
-        if (!send.settle) this.text ||= text
+        if (!send.settle) this.giveBack(text)
       }
       send.settle?.({ stop: 'error', error: words, turn: null, usage: null })
       return
@@ -574,14 +685,23 @@ class Chat implements Panel {
     })
     let ended: Ended
     try {
-      const draft: Draft = await draftOf(text, chips, thread.mode, around.front, around.selection)
+      const draft: Draft = await draftOf(
+        text,
+        chips,
+        thread.mode,
+        around.front,
+        around.selection,
+        spaceOfThread(thread),
+        around.picked ?? null,
+      )
       ended = await this.sendDraft(thread, provider, draft, stopper)
+      if (readOutside(thread.turns)) ended = { ...ended, outside: true }
     } catch (error) {
       const words = message(error, t('The model did not answer.'))
       ended = { stop: 'error', error: words, turn: null, usage: null }
       if (thread === this.open) {
         this.trouble = words
-        if (!send.settle && !this.text) this.text = text
+        if (!send.settle) this.giveBack(text)
       }
     } finally {
       once?.signal?.removeEventListener('abort', stop)
@@ -593,12 +713,24 @@ class Chat implements Panel {
     if (!stopper.signal.aborted) this.next(thread)
   }
 
+  /** A message that could not be sent, back in the field: in front of what the field
+   *  holds now (a draft an edit set aside, words typed since), so neither is lost. */
+  private giveBack(text: string): void {
+    const now = this.text.trim()
+    if (now === text.trim()) return
+    this.text = now ? `${text}\n\n${this.text}` : text
+  }
+
   /** A thread starts answering: its stop, its mark in the list, its message drawn. */
   private begin(thread: Thread, text?: string): AbortController {
     const stopper = new AbortController()
     // Whatever the thread does now takes the place of waiting for its plan to reset.
     this.unwait(thread.id)
+    // An answer that ends goes on to the queue itself.
+    this.owed.delete(thread.id)
     this.stoppers.set(thread.id, stopper)
+    if (!thread.turns.length && thread.provider === this.providerForNew()?.id)
+      this.following.add(thread.id)
     this.running = [...this.running, thread.id]
     if (text !== undefined) this.pending = { ...this.pending, [thread.id]: text }
     return stopper
@@ -609,13 +741,33 @@ class Chat implements Panel {
     this.stoppers.delete(thread.id)
     this.running = this.running.filter((one) => one !== thread.id)
     this.pending = without(this.pending, thread.id)
+    // Words steered in that the answer never took (sent before it was ready for them, or
+    // after its last step) are the next message, first in the queue: never lost.
+    const untaken = this.steering[thread.id] ?? []
     this.steering = without(this.steering, thread.id)
+    this.queueFirst(thread, untaken)
+    const followed = this.following.delete(thread.id)
     this.everything = true
     if (thread === this.open) this.redraw()
-    if (!thread.turns.length) return
+    if (!thread.turns.length) {
+      // Nothing was sent after all: it follows the reader's space again, and the
+      // provider Ask uses where it did before the send (not one picked for it).
+      if (thread === this.open) {
+        this.here(this.space)
+        if (followed) this.follow(this.providerForNew())
+      }
+      return
+    }
     await keepThread(thread).catch(() => undefined)
     if (thread === this.open) rememberOpen(thread.id)
     await this.refreshHeads()
+  }
+
+  /** An answer other than a send's (Ask again, a compaction) done: what was queued
+   *  meanwhile goes next, as after a send, unless it was stopped. */
+  private async ended(thread: Thread, stopper: AbortController): Promise<void> {
+    await this.finish(thread)
+    if (!stopper.signal.aborted) this.next(thread)
   }
 
   /** One send through the engine, and how it ended, in the commands' terms. */
@@ -625,6 +777,10 @@ class Chat implements Panel {
     draft: Draft,
     stopper: AbortController,
   ): Promise<Ended> {
+    // Deleted while its message was gathered: nothing is asked. A stop is the engine's,
+    // which keeps the message and says it was stopped, as does a delete that failed.
+    if (isDeleted(thread.id) && (await staysDeleted(thread.id)))
+      return { stop: 'stopped', turn: null, usage: null }
     const engine = await engineOf(provider.kind)
     const ended: Ended = { stop: 'end', turn: null, usage: null }
     await engine.send(
@@ -655,22 +811,23 @@ class Chat implements Panel {
 
   private next(thread: Thread): void {
     const [first, ...rest] = this.queued[thread.id] ?? []
-    if (!first) return
+    if (!first) {
+      // Nothing left to send, while a queued message is out in the field.
+      if (this.requeue?.thread === thread) this.owed.add(thread.id)
+      return
+    }
     this.queued = { ...this.queued, [thread.id]: rest }
     void this.run(thread, first)
   }
 
   /** Words into the running turn (Ctrl+Enter): taken after the call in flight. With
-   *  nothing running it is an ordinary send. */
-  steer(around: Around): void {
+   *  nothing running the field sends them itself, as Enter does (its chips, a typed
+   *  command), so they stay in the field here. */
+  steer(): void {
     const thread = this.open
     const text = this.text.trim()
-    if (!text) return
-    if (!thread || !this.running.includes(thread.id)) {
-      this.submit(around)
-      return
-    }
-    this.text = ''
+    if (!text || !thread || !this.running.includes(thread.id)) return
+    this.taken()
     this.steerWords(thread, text)
   }
 
@@ -678,7 +835,38 @@ class Chat implements Panel {
     const provider = ai.provider(thread.provider)
     if (!provider) return
     this.steering = { ...this.steering, [thread.id]: [...(this.steering[thread.id] ?? []), text] }
-    void engineOf(provider.kind).then((engine) => engine.steer(thread, text))
+    void engineOf(provider.kind)
+      .then((engine) => engine.steer(thread, text))
+      .catch(() => false)
+      .then((took) => {
+        // Not ready for them yet (still gathered, compacted, set up): the next message,
+        // first in the queue, rather than words the answer never hears.
+        if (!took && this.tookSteered(thread, text)) this.queueFirst(thread, [text])
+      })
+  }
+
+  /** Steered words out of those shown waiting: these words, not the first. False
+   *  where they are not there (the answer ended and queued them already). */
+  private tookSteered(thread: Thread, text: string): boolean {
+    const list = this.steering[thread.id] ?? []
+    const at = list.indexOf(text)
+    if (at < 0) return false
+    const left = list.slice()
+    left.splice(at, 1)
+    this.steering = { ...this.steering, [thread.id]: left }
+    return true
+  }
+
+  /** Words sent next in a thread, before what was queued there. */
+  private queueFirst(thread: Thread, texts: readonly string[]): void {
+    if (!texts.length || isDeleted(thread.id)) return
+    const sends: Queued[] = texts.map((text) => ({
+      id: crypto.randomUUID(),
+      text,
+      chips: [],
+      around: { front: null, selection: '' },
+    }))
+    this.queued = { ...this.queued, [thread.id]: [...sends, ...(this.queued[thread.id] ?? [])] }
   }
 
   /** Stops the open thread's turn, and every helper it started; what arrived stays. */
@@ -715,9 +903,21 @@ class Chat implements Panel {
 
   /** A queued message back in the field, to change before it goes. */
   editQueued(id: string): void {
-    const one = this.queue.find((each) => each.id === id)
+    const thread = this.open
+    if (!thread || !this.queue.some((each) => each.id === id)) return
+    // One message being changed at a time: a queued one there goes back, as changed,
+    // and an earlier one is let go, so Enter never sends these words in its place.
+    this.putBack(this.requeue, true)
+    this.editing = null
+    const at = this.queue.findIndex((each) => each.id === id)
+    const one = this.queue[at]
     if (!one) return
     this.unqueue(id)
+    this.setAside()
+    // Back in the queue without what a command waited on: `unqueue` told it already.
+    const back: Queued = { ...one }
+    delete back.settle
+    this.requeue = { one: back, at, thread }
     this.text = one.text
     this.chips = one.chips
     this.focus()
@@ -754,15 +954,23 @@ class Chat implements Panel {
     while (at >= 0 && (thread.turns[at]?.role !== 'you' || thread.turns[at]?.steered)) at--
     const asked = thread.turns[at]
     if (!asked?.draft) return
-    thread.turns.splice(at)
+    // Nothing is taken back where nothing can ask again.
+    const provider = ai.provider(thread.provider)
+    if (!provider) {
+      if (thread === this.open) this.trouble = t('Add an AI provider in Settings first.')
+      return
+    }
+    const taken = thread.turns.splice(at)
     this.everything = true
     this.redraw()
-    const provider = ai.provider(thread.provider)
-    if (!provider) return
     const stopper = this.begin(thread, asked.draft.text)
     void this.sendDraft(thread, provider, asked.draft, stopper)
-      .catch((error: unknown) => (this.trouble = message(error, t('The model did not answer.'))))
-      .finally(() => void this.finish(thread))
+      .catch((error: unknown) => {
+        // Refused before any turn: the message and its answer back as they were.
+        if (thread.turns.length === at) thread.turns.push(...taken)
+        if (thread === this.open) this.trouble = message(error, t('The model did not answer.'))
+      })
+      .finally(() => void this.ended(thread, stopper))
   }
 
   /** The open thread's last message again a little after its plan resets (the button
@@ -884,11 +1092,11 @@ class Chat implements Panel {
     const thread = this.open
     const provider = this.provider
     if (!thread?.turns.length || !provider || this.running.includes(thread.id)) return
-    this.begin(thread)
+    const stopper = this.begin(thread)
     void engineOf(provider.kind)
       .then((engine) => engine.compact(thread, focus))
       .catch((error: unknown) => (this.trouble = message(error, t('The model did not answer.'))))
-      .finally(() => void this.finish(thread))
+      .finally(() => void this.ended(thread, stopper))
   }
 
   openContext(): void {
@@ -959,8 +1167,25 @@ class Chat implements Panel {
   async exportThread(): Promise<void> {
     const thread = this.open
     if (!thread?.turns.length) return
-    const path = await workspace.noteFrom(threadMarkdown(thread, t('Untitled')))
-    if (path) await workspace.open(path)
+    await this.noteFrom(threadMarkdown(thread, t('Untitled')))
+  }
+
+  /** A note made of the open thread's words (Save as a note), opened: in the thread's
+   *  own space, whose notes its citations name, and never in the space in front. Where
+   *  that space is not on this device or may only be read, no note, and a line in the
+   *  thread that says why. */
+  async noteFrom(text: string): Promise<void> {
+    const thread = this.open
+    if (!thread) return
+    const root = workspace.spaces.find((one) => one.id === thread.space)?.root
+    const path = root ? await workspace.noteFrom(text, root) : null
+    if (path) {
+      await workspace.open(path)
+      return
+    }
+    const why = root ? t('you can only read this space') : t('no such space')
+    const { hostOf } = await import('../commands/host')
+    hostOf(this).line(thread, `${t('Save as a note')} · ${why}`)
   }
 
   archive(id = this.open?.id): void {
@@ -978,8 +1203,20 @@ class Chat implements Panel {
     if (archived) thread.archived = true
     else delete thread.archived
     await keepThread(thread).catch(() => undefined)
+    if (archived) this.forgetEdit(thread.id, true)
     if (archived && thread === this.open) this.newThread()
     await this.refreshHeads()
+  }
+
+  /** A chat gone from the list: nothing more of its queue is sent once it is done, and
+   *  the field gets back what it held. A queued message of it in the field is back in
+   *  its queue where the chat is `kept` (archived), with the rest, else dropped. */
+  private forgetEdit(id: string, kept = false): void {
+    this.owed.delete(id)
+    const held = this.requeue
+    if (held?.thread.id !== id) return
+    this.taken()
+    if (kept) this.putBack(held, false)
   }
 
   async remove(id = this.open?.id): Promise<void> {
@@ -990,9 +1227,26 @@ class Chat implements Panel {
       danger: true,
     })
     if (!sure) return
+    // Marked deleted before its answer is stopped, so a message still being gathered
+    // asks nothing.
+    const deleting = deleteThread(this.spaceOf(id), id).then(
+      () => true,
+      () => false,
+    )
     this.stoppers.get(id)?.abort()
+    void import('../helpers/helpers.svelte').then(({ helpers }) => {
+      helpers.stopUnder(id)
+    })
     this.unwait(id)
-    await deleteThread(this.spaceOf(id), id).catch(() => undefined)
+    this.forgetEdit(id)
+    for (const one of this.queued[id] ?? [])
+      one.settle?.({ stop: 'stopped', turn: null, usage: null })
+    this.queued = without(this.queued, id)
+    // A delete the crate refused leaves the chat as it is, in the list.
+    if (!(await deleting)) {
+      await this.refreshHeads()
+      return
+    }
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()
     await this.refreshHeads()
@@ -1000,3 +1254,15 @@ class Chat implements Panel {
 }
 
 export const chat = new Chat()
+
+// A call of a thread's that names no space works in the thread's space, not the one in
+// front (docs/ai-sidebar.md 4.11): its helpers' too, which are threads of their own.
+answerThreadSpaces(
+  (id) => chat.threadOf(id)?.space ?? chat.heads.find((one) => one.id === id)?.space ?? null,
+)
+
+/** The space a thread works in: its own, and the one in front where it names none this
+ *  device has. What its message is gathered in and its sources are paths in. */
+function spaceOfThread(thread: Thread): { id: string; root: string } | null {
+  return workspace.spaces.find((one) => one.id === thread.space) ?? workspace.activeSpace ?? null
+}

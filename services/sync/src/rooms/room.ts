@@ -52,7 +52,8 @@ import * as Y from 'yjs'
 import { byteLength, sha256 } from '../crypto'
 import { note as noted } from '../failed'
 import { pokeSpace } from '../hub/poke'
-import { MAX_NOTE_BYTES, noteBeside, noteKey, saveNote } from '../notes'
+import { MAX_NOTE_BYTES, noteBeside, noteKey, saveNote, UNREADABLE } from '../notes'
+import { OPEN_HEADER, openAnswer, openIn, sweepOpened } from '../opened'
 import { fits } from '../storage'
 import { revive } from '../sync2/ops'
 import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
@@ -65,12 +66,14 @@ import {
   kindOf,
   leavesAPlane,
   neverHeld,
-  roomKind,
+  noteKind,
+  readsAs,
   takeInto,
   writesOf,
   type RoomKind,
 } from './kind'
 import { RoomState, TOO_LARGE_IN_A_ROOM } from './state'
+import { accessOf } from './access'
 
 /** How long after the last keystroke the words are written into the note store.
  *  The same pause the app waits before it writes a note to disk, so somebody who
@@ -156,10 +159,6 @@ export interface Joining {
    *  holds; see `caughtUpWithEpoch`. */
   epoch?: number
 }
-
-/** How long a row saying somebody has a file open is believed. Well past any
- *  sitting a room stays awake for, and a bound on rows a close never came for. */
-const OPEN_FOR = 24 * 60 * 60 * 1000
 
 /** What a socket is closed with when the room will take no more keystrokes: the web
  *  socket's own "message too big", which is what this is. The client knows the code
@@ -443,6 +442,11 @@ export class NoteRoom implements DurableObject {
   async fetch(request: Request): Promise<Response> {
     if (request.headers.get('x-nib-erase')) return await this.erase()
 
+    // Whether a row a day old still has a socket behind it, which needs nothing of
+    // the document; see opened.ts.
+    const openOf = request.headers.get(OPEN_HEADER)
+    if (openOf) return openAnswer(this.hasSocketOf(openOf))
+
     const revoked = request.headers.get('x-nib-revoked')
     if (revoked) return await this.revoke(revoked, request.headers.get('x-nib-role') === 'read')
 
@@ -462,7 +466,7 @@ export class NoteRoom implements DurableObject {
       // What a push or a whole text brings is said to every socket here; none whose
       // sign-in has ended hears it.
       await this.askSignIns()
-      await this.open(held)
+      await this.arrive(held)
       await this.caughtUpWithEpoch(epochIn(request.headers.get('x-nib-epoch')))
       if (asked === 'push') return octets(await this.push(body))
       if (asked === 'pull') return octets(await this.pull(body))
@@ -493,8 +497,7 @@ export class NoteRoom implements DurableObject {
     held: Held,
     joining: Joining = { writes: true, who: '' },
   ): Promise<void> {
-    await this.crossed(held.kind)
-    await this.open(held)
+    await this.arrive(held)
     await this.caughtUpWithEpoch(joining.epoch)
 
     // Written down where a revocation can find it, and written before the socket
@@ -519,10 +522,43 @@ export class NoteRoom implements DurableObject {
       ...(joining.login ? { login: joining.login } : {}),
     } satisfies Attached)
 
+    // And written again now the socket is in the room. The wait on the first write
+    // lets other events in, and the close of another device of this person landing
+    // there saw none of theirs left and took the row away, leaving this socket in the
+    // room with no row to reach it by. A socket that cannot be written down is not
+    // left in the room either.
+    try {
+      await this.remember(held, joining.who)
+    } catch (error) {
+      server.close(1011, 'try again')
+      throw error
+    }
+
+    // Rows nothing will take away are cleared after the join rather than before it:
+    // the join waits on none of the rooms that asks, and fails for none of them.
+    if (joining.who) {
+      this.ctx.waitUntil(
+        this.sweep(held).catch((error: unknown) => {
+          noted(`room ${held.noteId} sweep`, error, null)
+        }),
+      )
+    }
+
     // The greeting, both halves at once: what this room holds, and who is in it.
     server.send(syncStep1(this.state.doc))
     const present = awarenessState(this.awareness)
     if (present) server.send(present)
+  }
+
+  /** The room opened for somebody arriving, a socket or a request, with the shape the
+   *  door read off the note's row reconciled with the shape the room holds first. One
+   *  road for all of them: a push, a pull or a whole text handed in that skipped the
+   *  reconciling took the door's shape over the stored one, and read the words a room
+   *  held through the serialiser of the other kind - which for a note renamed to a
+   *  canvas was a settle writing an empty canvas over every word (A26-S1). */
+  private async arrive(held: Held): Promise<void> {
+    await this.crossed(held.kind)
+    await this.open(held)
   }
 
   /** The file behind this room was renamed from a note into a canvas, or back,
@@ -562,8 +598,25 @@ export class NoteRoom implements DurableObject {
     // object the runtime woke is a read.
     await this.open(held)
 
-    if (!(await this.settle(true))) {
+    // Written down only where the room carries something the file does not have. A
+    // room level with what it last settled has nothing of its own, and the file is the
+    // truth as it stands - which, for a room an older build wrote down as the wrong
+    // kind, is the words that room never held at all: a crossing settle there would
+    // write its empty serialisation over them.
+    if ((await this.carried(held)) !== null && !(await this.settle(true))) {
       throw new Error(`this room still holds the ${held.kind} its file was`)
+    }
+
+    // A note on sync v2 starts its next epoch from the file, as the new kind. The
+    // document the devices and the bucket's snapshot hold at this epoch is the old
+    // shape's, and the room about to be built from the file cannot merge with it; at
+    // the next epoch every device starts the new document from nothing.
+    if ((held.epoch ?? 0) >= 1) {
+      await this.env.DB.prepare(
+        'update notes set epoch = epoch + 1, epoch_base = hash where id = ? and epoch = ?',
+      )
+        .bind(held.noteId, held.epoch)
+        .run()
     }
 
     // The row saying somebody has this file open goes with the sockets: a close
@@ -576,6 +629,10 @@ export class NoteRoom implements DurableObject {
     }
 
     await this.ctx.storage.deleteAll()
+    // Nothing held about a room that is gone: whatever this object still answers
+    // before the runtime ends it opens the room again from storage.
+    this.held = null
+    this.opened = null
     this.ctx.abort('the file behind this room is another kind of file now')
 
     // `abort` ends the object rather than this function, so the join is refused
@@ -586,20 +643,29 @@ export class NoteRoom implements DurableObject {
   /** This person has this file open. */
   private async remember(held: Held, who: string): Promise<void> {
     if (!who) return
-
-    // Rows a close never came for - an object the runtime dropped, a socket the
-    // network took - are cleared by age as new ones arrive, the way the sessions
-    // and the sign-in codes are.
-    await this.env.DB.prepare('delete from room_sockets where opened_at < ?')
-      .bind(Date.now() - OPEN_FOR)
-      .run()
-
     await this.env.DB.prepare(
       `insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, ?)
        on conflict(note_id, who) do update set opened_at = excluded.opened_at`,
     )
       .bind(held.noteId, held.spaceId, who, Date.now())
       .run()
+  }
+
+  /** Rows a close never came for - an object the runtime dropped, a socket the network
+   *  took - cleared as new ones arrive; but only once the room a row names says nobody
+   *  of theirs is in it, since the socket may simply have been open for days. See
+   *  opened.ts. */
+  private async sweep(held: Held): Promise<void> {
+    await sweepOpened(this.env, { name: 'room_sockets', key: 'note_id' }, (noteId, them) =>
+      noteId === held.noteId
+        ? Promise.resolve(this.hasSocketOf(them))
+        : roomHolds(this.env, noteId, them),
+    )
+  }
+
+  /** Whether this person has a socket here; see opened.ts. */
+  private hasSocketOf(who: string): boolean {
+    return this.ctx.getWebSockets().some((socket) => whoOf(socket) === who)
   }
 
   /** And this person no longer has, unless another of their devices still does:
@@ -619,7 +685,8 @@ export class NoteRoom implements DurableObject {
   }
 
   /** Every socket whose sign-in has ended - run out, most of all, which nothing else
-   *  announces - closed, at most once a minute (#520). Asked when something is about to
+   *  announces - closed, at most once a minute (#520); and every socket whose person is
+   *  no longer in the space closed, or made a reader, in the same minute. Asked when something is about to
    *  be said to the sockets here, which is the only time a socket that outlived its
    *  sign-in could hear or say anything: a room nobody types in is never woken for it.
    *  A socket let in before the door said which sign-in it came with is left as it is. */
@@ -643,6 +710,23 @@ export class NoteRoom implements DurableObject {
       forget(this.awareness, announcedBy(socket), socket)
       socket.close(SIGNED_OUT, 'signed out')
       closed.add(socket)
+    }
+
+    // And what each sign-in still alive may still do to this file, which catches a
+    // revocation that did not reach this room: closed where they are no longer in
+    // the space, a reader where that is all they are now. See access.ts.
+    const noteOf = (this.held ?? heldIn(await this.ctx.storage.get('note')))?.noteId
+    const access = noteOf ? await accessOf(this.env, noteOf, [...live]).catch(() => null) : null
+    for (const socket of sockets) {
+      const login = loginOf(socket)
+      const may = login === undefined || closed.has(socket) ? undefined : access?.get(login)
+      if (may === 'none') {
+        forget(this.awareness, announcedBy(socket), socket)
+        socket.close(1008, 'no longer in this space')
+        closed.add(socket)
+      } else if (may === 'read' && mayWrite(socket)) {
+        attach(socket, { mayWrite: false })
+      }
     }
 
     // A close this side asked for brings no close handler with it, so the rows go from
@@ -737,6 +821,8 @@ export class NoteRoom implements DurableObject {
     // Whatever this says is heard by every socket here, so none whose sign-in has
     // ended - this one included - is left to say it or to hear it.
     if ((await this.askSignIns()).has(socket)) return
+    // Which may have just made this socket a reader; see `askSignIns`.
+    if (!mayWrite(socket) && isEdit(said)) return
 
     // And a document at its ceiling takes no more keystrokes from anybody. Refused
     // before `receive` rather than after: an update applied is in the document and
@@ -924,15 +1010,15 @@ export class NoteRoom implements DurableObject {
     if (held.version === undefined || held.hash === undefined) return
 
     const row = await this.env.DB.prepare(
-      'select version, path from notes where id = ? and deleted = 0',
+      'select version, path, kind, epoch from notes where id = ? and deleted = 0',
     )
       .bind(held.noteId)
-      .first<{ version: number; path: string }>()
+      .first<{ version: number; path: string; kind: string | null; epoch: number | null }>()
 
     if (!row || row.version === held.version) return
     // A file renamed across the two kinds while the room slept is not a note to take
     // the bytes of; that is `crossed`, and it runs before this.
-    if (roomKind(row.path) !== held.kind) return
+    if (noteKind(row) !== held.kind) return
 
     const mine = fileOf(held.kind, this.state.doc)
     if ((await sha256(mine)) !== held.hash) return
@@ -942,6 +1028,8 @@ export class NoteRoom implements DurableObject {
     // Nothing to take from a read that came back empty: a note whose bytes are not
     // there is not a note that says nothing. See `neverHeld` for the same line.
     if (!file) return
+    // Nor from one that does not read as this room's kind: see `readsAs`.
+    if (!readsAs(held.kind, file)) return
 
     if (file !== mine) takeInto(held.kind, this.state.doc, mine, file)
 
@@ -1075,10 +1163,10 @@ export class NoteRoom implements DurableObject {
     // came to be written over with nothing. What the room holds stays in the room,
     // where the next join's changeover writes it; see `crossed`, whose own settle
     // is the one that is meant to cross.
-    if (!crossing && roomKind(file.path) !== held.kind) {
+    if (!crossing && noteKind(file) !== held.kind) {
       noted(
         `room ${held.noteId}`,
-        new Error(`the file is a ${roomKind(file.path)} room now and this one holds ${held.kind}`),
+        new Error(`the file is a ${noteKind(file)} room now and this one holds ${held.kind}`),
         null,
       )
       return false
@@ -1153,7 +1241,14 @@ export class NoteRoom implements DurableObject {
       await this.keptBeside(file, settled, held.kind)
     }
 
-    const saved = await saveNote(this.env, file, settled, file.path, this.settling)
+    const saved = await saveNote(
+      this.env,
+      file,
+      settled,
+      file.path,
+      this.settling,
+      this.settlingDevice === undefined ? {} : { versionBy: this.settlingDevice },
+    )
     if (!saved) {
       await this.settleSoon()
       return false
@@ -1361,8 +1456,8 @@ export class NoteRoom implements DurableObject {
     }
 
     // The same four refusals as a v1 settle, for the same reasons; see below.
-    if (!crossing && roomKind(file.path) !== held.kind) {
-      noted(`room ${held.noteId}`, new Error(`the file is a ${roomKind(file.path)} room now`), null)
+    if (!crossing && noteKind(file) !== held.kind) {
+      noted(`room ${held.noteId}`, new Error(`the file is a ${noteKind(file)} room now`), null)
       return false
     }
     const settled = fileOf(held.kind, this.state.doc)
@@ -1540,6 +1635,9 @@ export class NoteRoom implements DurableObject {
       .first<Note>()
     if (!row) return { refused: 'gone' }
     if (asked.base !== undefined && row.version !== asked.base) return { conflict: true }
+    // Prose handed to a plane is refused and said to be, never taken for an empty
+    // canvas over every card; see `readsAs`.
+    if (!readsAs(held.kind, asked.text)) return { refused: UNREADABLE }
 
     const current = fileOf(held.kind, this.state.doc)
     const update = ingested(held.kind, this.state.doc, held.noteId, current, asked.text)
@@ -1632,4 +1730,21 @@ interface AwarenessChange {
 
 function isSocket(value: unknown): value is WebSocket {
   return typeof value === 'object' && value !== null && 'serializeAttachment' in value
+}
+
+/** Whether the room of `noteId` has a socket of `who`, or null where it could not be
+ *  asked; see opened.ts. */
+async function roomHolds(env: Env, noteId: string, who: string): Promise<boolean | null> {
+  const namespace = env.ROOMS
+  if (!namespace) return null
+  try {
+    const room = namespace.get(namespace.idFromName(noteId))
+    return await openIn(
+      await room.fetch(
+        new Request(`https://rooms.invalid/${noteId}`, { headers: { [OPEN_HEADER]: who } }),
+      ),
+    )
+  } catch {
+    return null
+  }
 }

@@ -17,9 +17,9 @@
  *  door, which is built on `frontMatterEdit` so that whatever a control does to a
  *  note, the note stays plain front matter that every other reader can read. */
 
-import { frontMatterBlock } from './front-matter'
+import { frontMatterBlock, isPropertyName } from './front-matter'
 import { escape } from './html'
-import { flowItems, listItem, uncommented, unquoted } from './yaml'
+import { isQuoted, uncommented, unquoted, writtenFlowItems, writtenListItem } from './yaml'
 
 /** What a surface does with a note's front matter. Three answers, and every
  *  surface that shows a whole note reads the same one, so a reader who asked for
@@ -55,6 +55,18 @@ export interface Property {
   value: string
   /** A list's items. Empty for everything else. */
   items: string[]
+  /** Set where the value was written in quotes. YAML reads `zip: '007'` as the
+   *  characters and `zip: 007` as the number seven, and with the quotes off `value`
+   *  no longer says which, so a reader that turns values into numbers and booleans
+   *  asks this first. */
+  quoted?: true
+  /** The same for each of a list's items, or each pair's value in a map, in the
+   *  order of `items`. Set only where at least one of them was quoted. */
+  quotedItems?: boolean[]
+  /** A list's items as written, quotes on, set with `quotedItems`: a plain item is
+   *  written as `items` says it, and a quoted one is what a rewrite of the list puts
+   *  back, in the quotes it had, rather than quoting it again its own way. */
+  writtenItems?: string[]
   /** Where the key's own line sits in the note, so a click can put the caret on
    *  it rather than somewhere near it. */
   from: number
@@ -62,12 +74,21 @@ export interface Property {
 }
 
 /** A top-level `key:`. Indented lines belong to the key above them, and a line
- *  that is only a value is part of a list. */
-const KEY = /^([A-Za-z_][\w-]*)[ \t]*:(.*)$/
+ *  that is only a value is part of a list. Up to the first colon with a blank or
+ *  nothing after it, as front-matter.ts reads a key, and only a name `isPropertyName`
+ *  takes is one: the rows read every key the writers write, and a key they would not
+ *  write is a shape the block goes back to source for. */
+const KEY = /^([^\s#-].*?)[ \t]*:(?=[ \t]|$)(.*)$/
 
 /** A `key: value` line indented under another key: the shape `export:` uses to
- *  say what paper a note prints on. */
-const NESTED = /^[ \t]+([A-Za-z_][\w-]*)[ \t]*:[ \t]*(.*)$/
+ *  say what paper a note prints on. Its key is read the way `KEY` reads one. */
+const NESTED = /^[ \t]+([^\s#-].*?)[ \t]*:(?=[ \t]|$)[ \t]*(.*)$/
+
+/** The key and the rest of the line, where the line is a key `isPropertyName` takes. */
+function keyed(pattern: RegExp, text: string): RegExpExecArray | null {
+  const found = pattern.exec(text)
+  return found && isPropertyName(found[1] ?? '') ? found : null
+}
 
 /** `true` and `false`, which is how Obsidian writes a checkbox. YAML 1.1 also
  *  reads `yes` and `no` as booleans, and this deliberately does not: a note whose
@@ -85,8 +106,12 @@ const DATE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?$/
  *  thousand lines between two fences is left as the source it is. */
 const MOST_KEYS = 64
 
-/** What a value on the line is. */
-function kindOf(value: string): PropertyKind {
+/** What a value on the line is. A quoted value is a string to YAML, so it is never
+ *  a checkbox or a number however it reads: `zip: '007'` drawn as a number field
+ *  would write back `7`. A date stays a date, because YAML reads a written date as
+ *  a string either way and the quotes change nothing about what it means. */
+function kindOf(value: string, quoted: boolean): PropertyKind {
+  if (quoted) return DATE.test(value) ? 'date' : 'text'
   if (YES_NO.test(value)) return 'checkbox'
   if (NUMBER.test(value)) return 'number'
   if (DATE.test(value)) return 'date'
@@ -133,7 +158,7 @@ export function readProperties(source: string): Property[] | null {
     // is keeping notes in. Left as source rather than silently dropped.
     if (line.text.trimStart().startsWith('#')) return null
 
-    const found = KEY.exec(line.text)
+    const found = keyed(KEY, line.text)
     if (!found) return null
 
     // Asked before the row is made rather than after, so that every shape of row
@@ -145,16 +170,33 @@ export function readProperties(source: string): Property[] | null {
     const written = (found[2] ?? '').trim()
     // Nor is one after a value, which a row would show as part of it.
     if (uncommented(written) !== written) return null
-    const listed = flowItems(written)
+    const listed = writtenFlowItems(written)
 
     if (listed !== null) {
-      out.push({ key, kind: 'list', value: '', items: listed, from: line.from, to: line.to })
+      out.push({
+        key,
+        kind: 'list',
+        value: '',
+        items: listed.map(unquoted),
+        ...quotes(listed, true),
+        from: line.from,
+        to: line.to,
+      })
       continue
     }
 
     if (written) {
       const value = unquoted(written)
-      out.push({ key, kind: kindOf(value), value, items: [], from: line.from, to: line.to })
+      const quoted = isQuoted(written)
+      out.push({
+        key,
+        kind: kindOf(value, quoted),
+        value,
+        items: [],
+        ...(quoted ? { quoted } : {}),
+        from: line.from,
+        to: line.to,
+      })
       continue
     }
 
@@ -164,6 +206,8 @@ export function readProperties(source: string): Property[] | null {
     // get rows. Anything else indented is a shape nobody here can name, and the
     // block goes back to being source.
     const items: string[] = []
+    // Each item's value as written, quotes on, so the row can say which were quoted.
+    const writtenItems: string[] = []
     let mapped = false
     let last = line.to
 
@@ -172,24 +216,27 @@ export function readProperties(source: string): Property[] | null {
       if (!next) break
       if (next.text.trim() === '') break
 
-      const item = listItem(next.text)
+      const item = writtenListItem(next.text)
       // What belongs to the key above is indented under it - except a list,
       // which YAML lets sit at the key's own margin. Read by the same helper
       // `frontMatterList` uses, so the rows and the values agree about that.
       const indented = next.text.startsWith(' ') || next.text.startsWith('\t')
       if (item === null && !indented) break
 
-      const pair = item === null ? NESTED.exec(next.text) : null
+      const pair = item === null ? keyed(NESTED, next.text) : null
       if (item === null && !pair) return null
       // One or the other, never both: a key with a list and a map under it is
       // not something YAML means either.
       if (item !== null && mapped) return null
       if (pair && items.length && !mapped) return null
 
-      if (item !== null) items.push(item)
-      else {
+      if (item !== null) {
+        items.push(unquoted(item))
+        writtenItems.push(item)
+      } else {
         mapped = true
         items.push(`${pair?.[1] ?? ''}: ${unquoted(pair?.[2] ?? '')}`.trim())
+        writtenItems.push(pair?.[2] ?? '')
       }
 
       last = next.to
@@ -201,12 +248,33 @@ export function readProperties(source: string): Property[] | null {
       kind: mapped ? 'map' : items.length ? 'list' : 'text',
       value: '',
       items,
+      ...quotes(writtenItems, !mapped),
       from: line.from,
       to: last,
     })
   }
 
   return out
+}
+
+/** The row for a key, read the way a key is set (`frontMatterEdit`): in its own
+ *  spelling where the note has it, else the first in another case, so a base's
+ *  `tags` column is the `Tags:` a note writes. Where the note has both they are two
+ *  keys, as they are to YAML. */
+export function keyCalled(rows: readonly Property[], key: string): Property | undefined {
+  const wanted = key.toLowerCase()
+  return rows.find((one) => one.key === key) ?? rows.find((one) => one.key.toLowerCase() === wanted)
+}
+
+/** `quotedItems` for items as written, and for a list `writtenItems`, or nothing
+ *  where none of them is quoted. */
+function quotes(
+  written: readonly string[],
+  list: boolean,
+): { quotedItems?: boolean[]; writtenItems?: string[] } {
+  const quoted = written.map(isQuoted)
+  if (!quoted.includes(true)) return {}
+  return list ? { quotedItems: quoted, writtenItems: [...written] } : { quotedItems: quoted }
 }
 
 /** The rows as markup, for the editor's block and for the reading view, so the

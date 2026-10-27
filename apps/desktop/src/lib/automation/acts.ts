@@ -12,18 +12,20 @@
  *  What is deliberately not here: anything that would delete or overwrite without
  *  being asked twice. `confirms` in verbs.ts is what asks. */
 
-import { frontMatterEdit } from '@nib/markdown/front-matter'
+import type { TextEdit } from '@nib/markdown/edits'
+import { typedItem, writeList, writeProperty } from '@nib/markdown/property-edits'
+import { isQuoted, unquoted, writtenFlowItems } from '@nib/markdown/yaml'
 import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
 import { extensionOf, nameToWrite } from '../naming'
 import { search } from '../search.svelte'
-import { folderOf, insideSpace, nameOf, relativeTo } from '../space-paths'
+import { folderOf, insideSpace, isMarkdownPath, nameOf, relativeTo } from '../space-paths'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
 import { waited } from '../timing'
-import { insidePath, noteFor, relativeIn, spaceFor } from './space'
+import { insidePath, noteFor, relativeIn, spaceFor, spaceToWrite } from './space'
 
 /** What a note's name may end in for the app to treat it as one. */
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
@@ -110,7 +112,7 @@ async function named(asked: string): Promise<string | null> {
  *  overwritten. A link that could replace a note is a link nobody should be able
  *  to send somebody. */
 export async function newNote(args: Said): Promise<unknown> {
-  const space = await spaceFor(args)
+  const space = await spaceToWrite(args)
   const content = words(args, 'content') ?? ''
   const silent = yes(args, 'silent')
   const append = yes(args, 'append')
@@ -290,7 +292,7 @@ export function runCommand(args: Said, road: Road = 'here'): unknown {
 /** Writes a note, words and all. The one verb that replaces what a note said, so
  *  it is behind a confirmation and out of reach of a link. */
 export async function writeFile(args: Said): Promise<unknown> {
-  const space = await spaceFor(args)
+  const space = await spaceToWrite(args)
   const relative = relativeIn(args)
   const path = insideSpace(space.root, relative)
   const content = words(args, 'content')
@@ -303,15 +305,19 @@ export async function writeFile(args: Said): Promise<unknown> {
     return { path: relative, written: content.length }
   }
 
-  await workspace.replaceInNotes([
-    {
-      path,
-      before,
-      after: content,
-      edits: [{ from: 0, to: before.length, insert: content }],
-      back: [{ from: 0, to: content.length, insert: before }],
-    },
-  ])
+  // Whatever kind of file the caller named: the words are the whole of it, as asked.
+  await workspace.replaceInNotes(
+    [
+      {
+        path,
+        before,
+        after: content,
+        edits: [{ from: 0, to: before.length, insert: content }],
+        back: [{ from: 0, to: content.length, insert: before }],
+      },
+    ],
+    { anyFile: true },
+  )
 
   return { path: relative, written: content.length }
 }
@@ -320,7 +326,7 @@ export async function writeFile(args: Said): Promise<unknown> {
  *  it is. Every link to it is rewritten, because that is what the workspace's own
  *  rename does. */
 export async function moveFile(args: Said): Promise<unknown> {
-  const space = await spaceFor(args)
+  const space = await spaceToWrite(args)
   const from = relativeIn(args, 'path')
   const to = relativeIn(args, 'to')
 
@@ -373,7 +379,7 @@ export function movedPath(from: string, to: string, folder = false): string {
 /** Takes a file away. It goes to Recently deleted, which is where every other
  *  delete in the app puts one, so a mistake is one row away from being undone. */
 export async function deleteFile(args: Said): Promise<unknown> {
-  const space = await spaceFor(args)
+  const space = await spaceToWrite(args)
   const relative = relativeIn(args)
   const path = insideSpace(space.root, relative)
 
@@ -388,18 +394,63 @@ export async function deleteFile(args: Said): Promise<unknown> {
   return { path: relative, deleted: true }
 }
 
+/** A number as the property rows write one bare: no leading zero, because `012`
+ *  bare reads back as twelve and somebody's code is not a number. */
+const BARE_NUMBER = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/
+
+/** One wikilink, or several said with commas between them: `[[A]]`, `[[A]], [[B]]`. */
+const LINKS = /^\[\[[^[\]]+\]\](?:\s*,\s*\[\[[^[\]]+\]\])*$/
+
+/** The edit that sets a key to words said in a link or on the command line.
+ *
+ *  Written the way a property row writes them, rather than handed to the block edit
+ *  as they stand: that edit puts whatever it is given after the colon, and
+ *  `Meeting: notes`, `#tag` or `yes` written bare would read back as a mapping, a
+ *  comment or a boolean, and a line break would end the block. Everything said is
+ *  words, so the type is read off them the way the rows read a value: `true` is a
+ *  checkbox, `3` a number and `[work, home]` a list, and those keep their type
+ *  rather than arriving in quotes as text. `[[Plan]]` is a link, which is words. */
+function propertyEdit(text: string, key: string, value: string | null): TextEdit | null {
+  if (value === null) return writeProperty(text, key, null)
+
+  // A link opens with the bracket a list does, and read as one it would come out as
+  // a list of `[Project X]`. One link is the words of a link, and several are a list
+  // of them, which is what a property row writes for each.
+  if (LINKS.test(value)) {
+    const links = value.split(/\s*,\s*/)
+    return links.length > 1 ? writeList(text, key, links) : writeProperty(text, key, value)
+  }
+
+  // Each member of a list as a chip typed into it: `[1, true, x]` is a number, a yes
+  // and a word, where handed on as words they came out as `['1', 'true', x]`. A
+  // member said in quotes is the words, as it is in a note.
+  const items = writtenFlowItems(value)
+  if (items)
+    return writeList(
+      text,
+      key,
+      items.map((one) => (isQuoted(one) ? unquoted(one) : typedItem(one))),
+    )
+  if (/^(true|false)$/i.test(value)) return writeProperty(text, key, value, 'checkbox')
+  if (BARE_NUMBER.test(value)) return writeProperty(text, key, value, 'number')
+  return writeProperty(text, key, value)
+}
+
 /** Sets one front matter key, or takes it away when the caller says no value.
  *
  *  Through the same single edit the icon picker writes, so the block is edited
  *  rather than rebuilt: every other key keeps its place and its spelling, and a
  *  caret in the words below the block does not move. */
 export async function setProperty(args: Said): Promise<unknown> {
-  const note = await noteFor(args)
+  const note = await noteFor(args, 'path', true)
+  // Front matter is Markdown's: a block of YAML on top of a canvas, a board or any
+  // other file is that file broken. The agents' twin refuses the same way.
+  if (!isMarkdownPath(note.path)) throw new Error(`${note.relative} is not a markdown note`)
   const key = said(args, 'key')
   if (!key) throw new Error('say which key')
 
   const value = said(args, 'value')
-  const edit = frontMatterEdit(note.text, key, value)
+  const edit = propertyEdit(note.text, key, value)
   if (!edit) return { path: note.relative, key, value, changed: false }
 
   const after = note.text.slice(0, edit.from) + edit.insert + note.text.slice(edit.to)

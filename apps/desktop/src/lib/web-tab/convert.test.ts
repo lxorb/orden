@@ -26,10 +26,12 @@ vi.mock('../tauri', () => ({
       const held = disk.get(path)
       return held === undefined ? Promise.reject(new Error('no such note')) : Promise.resolve(held)
     }
+    if (command === 'path_exists') return Promise.resolve(disk.has(path))
     if (command === 'write_note') disk.set(path, content)
     if (command === 'delete_note' || command === 'trash_item') disk.delete(path)
     return Promise.resolve('')
   },
+  isNative: false,
   joinPath: (dir: string, relative: string) => (dir ? `${dir}/${relative}` : relative),
 }))
 
@@ -66,6 +68,8 @@ function urlNote(url: string, title: string, extra = ''): string {
 }
 
 /** A store over the disk, with the tree-edit calls recorded. */
+const binned: string[] = []
+
 function store(notes: Record<string, string>) {
   disk.clear()
   for (const [path, text] of Object.entries(notes)) disk.set(path, text)
@@ -76,7 +80,7 @@ function store(notes: Record<string, string>) {
     activeSpace: { id: 's', name: 'Space', root: SPACE },
     entryAt: (path: string) => (disk.has(path) ? ({ path } as Entry) : null),
     documentAt: (path: string) => (open.has(path) ? ({ path } as unknown as NoteDoc) : null),
-    freeName: (dir: string, wanted: string) => {
+    freeNameOnDisk: async (dir: string, wanted: string) => {
       // The store's own numbering, in one line: `Name 2.url`, `Name 3.url`.
       let at = 1
       let name = wanted
@@ -95,6 +99,11 @@ function store(notes: Record<string, string>) {
       return Promise.resolve()
     },
     loadTree: () => Promise.resolve(),
+    bin: (path: string) => {
+      binned.push(path)
+      disk.delete(path)
+      return Promise.resolve(null)
+    },
   }
 
   return { ws: ws as unknown as Converts, shown }
@@ -127,15 +136,34 @@ describe('a note that is a website', () => {
     expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`, `gone ${NOTE}`])
   })
 
-  test('and its file is deleted when signed in, trashed when not', async () => {
+  /** Signed in, the account's Recently deleted gives back only a note it holds in a
+   *  space this account owns; a writer's note, or one made offline, went for good
+   *  with its front matter. So the note goes the way any delete does (`bin`). */
+  test('and its file goes the way a deleted note goes', async () => {
+    binned.length = 0
     const made = store({ [NOTE]: urlNote('https://svelte.dev', 'Svelte docs') })
     await asShortcut(made.ws, NOTE)
-    expect(sent.map((one) => one.command)).toContain('delete_note')
 
-    signedIn = false
-    const again = store({ [NOTE]: urlNote('https://svelte.dev', 'Svelte docs') })
-    await asShortcut(again.ws, NOTE)
-    expect(sent.map((one) => one.command)).toContain('trash_item')
+    expect(binned).toEqual([NOTE])
+    expect(sent.map((one) => one.command)).not.toContain('delete_note')
+  })
+})
+
+describe('a note in a space that is not on screen', () => {
+  const NOTE = `${SPACE}/Svelte docs.md`
+
+  test('steps past a file of the same name the listing here has not read', async () => {
+    const { ws } = store({
+      [NOTE]: urlNote('https://svelte.dev', 'Svelte docs'),
+      [`${SPACE}/Svelte docs.url`]: "somebody else's file",
+    })
+    // The listing on screen is another space's, so it has no row for either file.
+    const away = { ...ws, entryAt: () => null } as Converts
+
+    const target = await asShortcut(away, NOTE)
+
+    expect(target).toBe(`${SPACE}/Svelte docs 2.url`)
+    expect(disk.get(`${SPACE}/Svelte docs.url`)).toBe("somebody else's file")
   })
 })
 

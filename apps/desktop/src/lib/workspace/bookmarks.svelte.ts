@@ -12,6 +12,7 @@
 import { movedTo, relativeTo, samePath, within } from '../space-paths'
 import { type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { isRecord, isString, keep } from '../stored'
+import { carried, moving } from './file-ops'
 
 const STORAGE_KEY = 'nib:bookmarks'
 
@@ -86,6 +87,15 @@ function freeGroupId(taken: readonly Bookmark[]): string {
   }
 }
 
+/** A bookmark in another group, or at the top of the list without one. Copied
+ *  whole, so a graph bookmark keeps its view and a newer build's field stays. */
+export function filedUnder(mark: Bookmark, parent?: string | null): Bookmark {
+  const row = { ...mark }
+  if (parent) row.parent = parent
+  else delete row.parent
+  return row
+}
+
 /** The bookmarks in an unknown, with whatever is not one left out. A list
  *  written by a newer build may hold a kind this one has never heard of, and
  *  that is a row it cannot draw. */
@@ -108,6 +118,13 @@ export function bookmarkList(value: unknown): Bookmark[] {
  *  row of its group. See Bookmarks.svelte. */
 export function isTile(mark: Bookmark): boolean {
   return mark.kind === 'note' && !mark.parent
+}
+
+/** The note or folder a bookmark points at. A block bookmark names its note and the
+ *  block together; the note is the part in front of the `#`. See forBlock. */
+function fileOf(mark: Bookmark): string {
+  const cut = mark.kind === 'block' ? mark.path.indexOf('#') : -1
+  return cut === -1 ? mark.path : mark.path.slice(0, cut)
 }
 
 /** Two bookmarks are the same one when they point at the same thing.
@@ -269,16 +286,8 @@ export class Bookmarks {
       held
         .filter((one) => !sameBookmark(one, mark))
         .map((one) =>
-          mark.kind === 'group' && one.parent === mark.path
-            ? { ...one, ...(freed ? { parent: freed } : { parent: undefined }) }
-            : one,
-        )
-        .map(({ kind, path, text, parent }) => ({
-          kind,
-          path,
-          text,
-          ...(parent ? { parent } : {}),
-        })),
+          mark.kind === 'group' && one.parent === mark.path ? filedUnder(one, freed) : one,
+        ),
     )
   }
 
@@ -293,11 +302,7 @@ export class Bookmarks {
 
     this.put(
       root,
-      this.of(root).map((one) =>
-        sameBookmark(one, mark)
-          ? { kind: one.kind, path: one.path, text: one.text, ...(parent ? { parent } : {}) }
-          : one,
-      ),
+      this.of(root).map((one) => (sameBookmark(one, mark) ? filedUnder(one, parent) : one)),
     )
   }
 
@@ -307,22 +312,44 @@ export class Bookmarks {
    *  without this one pointed at a name nothing answered to and its row was gone.
    *
    *  A bookmark that lands on one already held is the same bookmark twice, so only
-   *  the first of the two stays. */
-  moved(from: string, to: string, root = this.root()) {
+   *  the first of the two stays. Into another space, `into`, the bookmarks go to the
+   *  end of that space's list, out of any group, which is that list's own. */
+  moved(from: string, to: string, root = this.root(), into: string | null = root) {
     if (root === null || from === to) return
 
-    const was = relativeTo(root, from)
-    const now = relativeTo(root, to)
+    const move = moving(from, to, root, into)
+    const { was } = move
     if (!was) return
 
     const held = this.of(root)
+    if (move.across) {
+      const { left, went } = carried(
+        held,
+        move,
+        (one) => (POINTS_AT_A_FILE.has(one.kind) ? fileOf(one) : null),
+        ({ parent: _, ...one }, file) => ({
+          ...one,
+          path: file + one.path.slice(fileOf(one).length),
+        }),
+      )
+      if (left.length === held.length) return
+      this.put(root, left)
+      if (!went.length) return
+      const there = this.of(move.there)
+      const fresh = went.filter(
+        (one, at) =>
+          !there.some((other) => sameBookmark(one, other)) &&
+          went.findIndex((other) => sameBookmark(one, other)) === at,
+      )
+      this.put(move.there, [...there, ...fresh].slice(0, Math.max(there.length, MOST_BOOKMARKS)))
+      return
+    }
+
+    const now = move.now ?? ''
     const next = held.map((one) => {
       if (!POINTS_AT_A_FILE.has(one.kind)) return one
 
-      // A block bookmark names its note and the block together; the note is the
-      // part in front of the `#`. See forBlock.
-      const cut = one.kind === 'block' ? one.path.indexOf('#') : -1
-      const file = cut === -1 ? one.path : one.path.slice(0, cut)
+      const file = fileOf(one)
       const moved = movedTo(file, was, now, root)
       return moved === null ? one : { ...one, path: moved + one.path.slice(file.length) }
     })

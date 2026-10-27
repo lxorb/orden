@@ -311,6 +311,13 @@ export class Doc {
     this.replaced?.(fresh)
   }
 
+  /** What is pending will never go up: the document is the account's confirmed words
+   *  again, at the version it was, under a new client id so nothing made later reuses
+   *  the clocks of the updates let go. */
+  letPendingGo(client: number) {
+    this.restart(this.confirmedNow(), this.seq, this.epoch, client)
+  }
+
   /** A new client id, for a device that exited uncleanly. */
   rotate(client: number) {
     this.client = client

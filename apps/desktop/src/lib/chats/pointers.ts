@@ -42,7 +42,9 @@ export async function makePointer(folder: string, name: string): Promise<Place |
   const pointer = await makeChat(remote)
   if (!pointer) return null
 
-  const path = joinPath(folder, workspace.freeName(folder, `${name}${CHAT_EXTENSION}`))
+  // The folder is the note's, which can be in a space that is not on screen: asked of
+  // the disk, or another chat's pointer there is written over.
+  const path = joinPath(folder, await workspace.freeNameOnDisk(folder, `${name}${CHAT_EXTENSION}`))
   const text = chatText(pointer)
   await writeFile(path, text)
   await workspace.fileCame(path, 'file')

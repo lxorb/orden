@@ -14,7 +14,7 @@
  *
  *  Everything else in the engine speaks files - text in, text out - and asks here. */
 
-import { readCanvas, writeCanvas } from '@nib/markdown/canvas'
+import { holdsCanvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { TEXT } from '@nib/rooms'
 import { pushPlane, readPlane } from '@nib/rooms/plane'
 import { diverge, type Times, type Verdict } from '@nib/sync-core/diverge'
@@ -49,6 +49,18 @@ export function holdsDocument(kind: string): boolean {
   return shapeOf(kind) !== null
 }
 
+/** How an open tab joins an entry's document: a note's tab through its views, a canvas's
+ *  through its surface, and neither where the tab and the entry disagree about the shape.
+ *  The tab is opened by the file's name and the document is the entry's kind, which a
+ *  rename never changes: `Plan.md` renamed to `Plan.canvas` opens on a surface over a
+ *  document that is still words, and a plane bound into words is drawn into nothing the
+ *  file ever shows. Unjoined, the tab writes its file and the pass carries that. */
+export function joinsAs(tab: string, kind: string): 'views' | 'surface' | null {
+  const plane = shapeOf(kind) === 'plane'
+  if (tab === 'note') return plane ? null : 'views'
+  return plane ? 'surface' : null
+}
+
 /** Line endings as the editor holds them: what a document is compared and seeded in. A
  *  file keeps its own on disk (`as_written` in src-tauri/src/notes.rs). */
 export function unixLines(text: string): string {
@@ -72,6 +84,15 @@ export function fileOfUpdates(shape: Shape, ...updates: readonly Uint8Array[]): 
 /** The seed of an epoch from a file: the same bytes on every device (section 5.3). */
 export function seedOf(shape: Shape, id: string, epoch: number, text: string): Uint8Array {
   return shape === 'plane' ? seedPlane(id, epoch, readCanvas(text)) : seedUpdate(id, epoch, text)
+}
+
+/** Whether text read off the disk says what a document of this shape can hold. Only a
+ *  plane can fail: `readCanvas` reads text that is not a canvas as one with nothing on
+ *  it, and a document turned to that deletes every node there was, on every device. A
+ *  file with nothing in it is no plane either: every canvas written has its braces, and
+ *  an empty one is a save caught between emptying the file and writing it. */
+export function readable(shape: Shape, text: string): boolean {
+  return shape !== 'plane' || holdsCanvas(text)
 }
 
 /** Turns a document that reads `from` into one that reads `to`, as the few operations the

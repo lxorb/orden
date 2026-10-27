@@ -299,6 +299,24 @@ describe('which note a name means', () => {
     expect(resolveNote(top, 'Plan')?.path).toBe('Plan.md')
   })
 
+  /** The one spelling that reaches a note at the top of the space from beside a
+   *  namesake, which a rename writes where nothing shorter does (B543). */
+  test('a path from the top of the space, written with a leading slash, means that path', () => {
+    const here = index([note('Road.md'), note('B/Road.md'), note('X/B/Road.md')], 'B/x.md')
+    expect(resolveNote(here, 'Road')?.path).toBe('B/Road.md')
+    expect(resolveNote(here, '/Road')?.path).toBe('Road.md')
+    expect(resolveNote(here, '/Road.md')?.path).toBe('Road.md')
+    expect(
+      resolveNote(index([note('X/B/Road.md'), note('B/Road.md')], 'X/B/x.md'), '/B/Road')?.path,
+    ).toBe('B/Road.md')
+    expect(resolveNote(index([note('X/Road.md')]), '/Road')).toBeNull()
+
+    const files = { ...index([]), path: 'B/x.md', files: ['B/paper.pdf', 'paper.pdf'] }
+    expect(resolveFile(files, '/paper.pdf', 'wikilink')).toBe('paper.pdf')
+    expect(resolveFile(files, '/B/paper.pdf', 'wikilink')).toBe('B/paper.pdf')
+    expect(resolveFile({ ...files, files: ['B/paper.pdf'] }, '/paper.pdf', 'wikilink')).toBeNull()
+  })
+
   test('nothing at all is nothing', () => {
     expect(resolveNote(SPACE, 'Nowhere')).toBeNull()
     expect(resolveNote(SPACE, '   ')).toBeNull()
@@ -338,6 +356,31 @@ describe('which note a name means', () => {
     expect(resolveRelative(here, '../Spark.md')?.path).toBe('ideas/Spark.md')
     expect(resolveRelative(here, '../../Plan.md')?.path).toBe('Plan.md')
     expect(resolveRelative(here, './Nothing.md')).toBeNull()
+  })
+
+  test('the path it names wins over a namesake beside it, and a slash starts at the top', () => {
+    const here = index([note('Road.md'), note('B/Road.md')], 'B/x.md', {}, ['pic.png', 'B/pic.png'])
+    expect(resolveRelative(here, 'Road.md')?.path).toBe('B/Road.md')
+    expect(resolveRelative(here, '../Road.md')?.path).toBe('Road.md')
+    expect(resolveRelative(here, '/Road.md')?.path).toBe('Road.md')
+    expect(resolveRelative(here, '/B/Road.md')?.path).toBe('B/Road.md')
+    expect(resolveFile(here, '/pic.png', 'markdown')).toBe('pic.png')
+    expect(resolveFile(here, 'pic.png', 'markdown')).toBe('B/pic.png')
+  })
+
+  /** A slash names one path, and a note somewhere else whose path ends the same
+   *  is not it: `[About](/about)` from a website is no `C/about.md`. */
+  test('a path from the top names that path or nothing', () => {
+    const here = index([note('C/about.md'), note('X/notes/a.md')], 'B/x.md')
+    expect(resolveRelative(here, '/about')).toBeNull()
+    expect(resolveRelative(here, '/notes/a.md')).toBeNull()
+    expect(resolveRelative(here, '/C/about.md')?.path).toBe('C/about.md')
+  })
+
+  test('two slashes are no path from the top', () => {
+    const here = index([note('Road.md')], 'B/x.md', {}, ['paper.pdf'])
+    expect(resolveNote(here, '//Road')).toBeNull()
+    expect(resolveFile(here, '//paper.pdf', 'wikilink')).toBeNull()
   })
 })
 

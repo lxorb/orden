@@ -97,6 +97,7 @@ import tempfile
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from collections.abc import Callable, Iterator, Mapping, Sequence
@@ -233,11 +234,37 @@ HARMLESS = (
 )
 
 
-def harmless(error: Any) -> bool:
+#: WebKit's words for a fetch it did not let finish. A fetch of the page's own origin
+#: started while the page is going - a reload, a navigation - is called off with
+#: exactly these, and WebKit hands them to Playwright as an uncaught page error even
+#: where the page caught the failure, which Chromium does not: canvas-paste went red on
+#: the app asking its own `/` (reload-when.ts) as a reload cancelled the chunk it was
+#: fetching. Only for the page's own origin: across origins the same words are a CORS
+#: refusal, which stays an error.
+CANCELLED = re.compile(r"^Fetch API cannot load (\w+):/*(\S+) due to access control checks\.$")
+
+
+def harmless(error: Any, origin: str | None = None) -> bool:
     """Whether a page error is the engine's notice about a resize observer, which is
-    not a failure of the app's; see `HARMLESS`."""
+    not a failure of the app's; see `HARMLESS`. Or, given the page's origin, WebKit's
+    word for a fetch of that origin called off as the page went; see `CANCELLED`."""
     said = str(getattr(error, "message", None) or error).strip()
-    return said.startswith(HARMLESS)
+    if said.startswith(HARMLESS):
+        return True
+    if not (WEBKIT and origin):
+        return False
+    # Playwright reads the words up to the first colon as the error's name, which here
+    # is the middle of the address, and drops a slash after it; put back together.
+    name = getattr(error, "name", None)
+    cancelled = CANCELLED.match(f"{name}:{said}" if name else said)
+    if not cancelled:
+        return False
+    return _origin(f"{cancelled.group(1)}://{cancelled.group(2)}") == _origin(origin)
+
+
+def _origin(url: str) -> str:
+    parts = urllib.parse.urlsplit(url)
+    return f"{parts.scheme}://{parts.netloc}"
 
 
 #: Which engine a drive's browser is: Playwright's Chromium, which is what WebView2
@@ -561,9 +588,10 @@ def _hear_no_harmless() -> None:
     def on(self: Any, event: str, handler: Any) -> Any:
         if event == "pageerror":
             heard = handler
+            page = self
 
             def handler(error: Any) -> Any:
-                return None if harmless(error) else heard(error)
+                return None if harmless(error, page.url) else heard(error)
 
         return listen(self, event, handler)
 

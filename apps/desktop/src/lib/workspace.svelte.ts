@@ -13,6 +13,7 @@ import {
 import { freePath } from '@nib/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index.svelte'
+import { onDisk } from './on-disk'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
 import {
@@ -89,7 +90,7 @@ import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
 import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
-import { FileActions, type Kept } from './workspace/undo.svelte'
+import { type Binning, FileActions, type Kept } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -125,6 +126,8 @@ export interface Entry {
   children: Entry[]
   /** Taken off this Mac by iCloud; see icloud.svelte.ts. */
   evicted?: boolean
+  /** A folder the listing did not read into; see `walk` in tree.rs. */
+  unlisted?: boolean
 }
 
 /** What the listing itself is asked for. One field, because the order the rows are
@@ -500,8 +503,10 @@ class Workspace {
       this.fileOps.follow(keeping(store))
     }
     this.fileOps.follow((op) => links.follow(op))
+    // A paper's words follow it, and a page note's paper follows the note; a space
+    // renamed or deleted takes every paper under its root. See pdf/papers.ts.
     this.fileOps.follow((op) => {
-      if (op.op === 'moved' && op.kind !== 'space') {
+      if (op.op === 'moved') {
         void papers().then(({ paperMoved }) => paperMoved(op.from, op.to), unfetched)
       } else if (op.op === 'removed') {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
@@ -938,12 +943,21 @@ class Workspace {
             made.push(null)
             continue
           }
-          const path = await this.pageNoteForPdf(draft.path)
-          if (!path) {
+          // In a space shared to be read the paper comes back as it opens there: the
+          // note holding it if there is one, and the paper as itself where there is not.
+          // Elsewhere turning it answers the note holding it, and takes in one beside it.
+          const writable = await this.mayTurn(draft.path)
+          const held = writable ? null : await this.heldBy(draft.path)
+          const turned = writable || held !== null
+          const path = held ?? (writable ? await this.pageNoteForPdf(draft.path) : draft.path)
+          const doc = turned ? '' : await this.paperText(draft.path)
+          if (!path || doc === null) {
             made.push(null)
             continue
           }
-          draft = { ...draft, kind: 'pages', path, name: nameOf(path), dirty: false, doc: '' }
+          draft = turned
+            ? { ...draft, kind: 'pages', path, name: nameOf(path), dirty: false, doc }
+            : { ...draft, dirty: false, doc }
         }
 
         // Never a tab: an older nib's goes, its unwritten words written first.
@@ -1027,6 +1041,13 @@ class Workspace {
       (await ahead.noteAhead(path)) ??
       (await invoke<string>('read_note', { path }).catch(() => null))
     if (text === null) return null
+    // A canvas or a page note whose text stopped being one while nib was closed is
+    // not put back as a blank plane, which its first stroke would write over the
+    // file: it is refused as its open refuses it (`openCanvas`, `openDeck`).
+    if (draft.kind === 'canvas' || draft.kind === 'pages') {
+      const { parseAhead } = await import('./canvas/format')
+      if (!parseAhead(text)) return unread(path).then(() => null)
+    }
 
     return this.opened.make({
       kind: draft.kind,
@@ -1357,15 +1378,15 @@ class Workspace {
   }
 
   /** A new note, a tab until it is given a place (workspace/drafts.ts); one arriving
-   *  with words and a name, an import, is a file from the start. */
-  openBlank(name = UNTITLED, doc = '') {
+   *  with words and a name, an import, is a file from the start, in the space `home`. */
+  openBlank(name = UNTITLED, doc = '', home: string | null = this.activeSpaceId) {
     const note = this.document({
       kind: 'note',
       path: null,
       name,
       text: doc,
       dirty: !!doc,
-      home: this.activeSpaceId,
+      home,
     })
     this.add(new Tab(note, this.panes.focusedId))
     this.showNote()
@@ -1743,13 +1764,81 @@ class Workspace {
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
-    const pageNote = isPagesTarget(path) ? path : await this.pageNoteForPdf(path)
+    // A page note holding the paper already is the one to open, wherever it is: a
+    // search hit or a link names the paper, and the ink is on the note.
+    const held = isPagesTarget(path) ? path : await this.heldBy(path)
+    if (held) {
+      await this.openPages(held, page, how)
+      return
+    }
+    // A space shared to be read may not have the page note written into it, nor the
+    // paper renamed under one: the paper opens as itself instead, in memory.
+    if (!(await this.mayTurn(path))) {
+      await this.openPaper(path, page, how)
+      return
+    }
+    const pageNote = await this.pageNoteForPdf(path)
     // A paper pdf.js will not read, broken or behind a password: no tab, and the reader told.
     if (!pageNote) {
       await unread(path)
       return
     }
     await this.openPages(pageNote, page, how)
+  }
+
+  /** The page note on disk holding a PDF, or null; see `noteHolding` in from-pdf.ts. */
+  private async heldBy(path: string): Promise<string | null> {
+    const [{ noteHolding }, { onDisk }] = await Promise.all([
+      import('./pages/from-pdf'),
+      import('./on-disk'),
+    ])
+    return noteHolding(path, {
+      root: this.rootHolding(path),
+      exists: onDisk,
+      read: (one) => invoke<string>('read_note', { path: one }).catch(() => null),
+    })
+  }
+
+  /** Whether a PDF may be turned into its page note where it lies, which writes a note
+   *  and renames the paper. Fetched rather than imported: sharing.svelte.ts reaches
+   *  this module through the sync. */
+  private async mayTurn(path: string): Promise<boolean> {
+    const { canWriteAt } = await import('./sharing.svelte')
+    return canWriteAt(path)
+  }
+
+  /** A PDF read as itself, in a space it may not be turned in: a tab of kind `pdf`
+   *  holding the pages its note would have, which the pages surface draws. That kind
+   *  holds no words of a file's, so it is never saved and joins no room. */
+  private async openPaper(path: string, page: number | null, how: OpenHow) {
+    const tab = this.showTab(
+      await this.opened.opening(path, async () => {
+        const text = await this.paperText(path)
+        if (text === null) return unread(path).then(() => null)
+
+        const file = this.document({ kind: 'pdf', path, name: nameOf(path), text, dirty: false })
+        const tab = new Tab(file, this.panes.focusedId)
+        if (page !== null) tab.page = page
+        this.arrive(tab, how)
+        this.remember(path)
+        this.persist()
+        return file
+      }),
+      how,
+    )
+    if (tab && page !== null && tab.page !== page) this.gotoPage = { path, page }
+  }
+
+  /** The pages a PDF read as itself shows, or null where pdf.js could not read it. */
+  private async paperText(path: string): Promise<string | null> {
+    const [{ asItself }, { pageSizes }] = await Promise.all([
+      import('./pages/from-pdf'),
+      import('./pdf/document'),
+    ])
+    return asItself(path, pageSizes).catch((error: unknown) => {
+      log('error', `open PDF as itself: ${path} - ${String(error)}`)
+      return null
+    })
   }
 
   /** The page note a PDF is, or null where it could not be read. One at a time per
@@ -1773,11 +1862,16 @@ class Workspace {
   /** pages/from-pdf.ts, and this space for it to turn a PDF in: moved through
    *  `renameFile`, so what is kept by path follows the paper. */
   private async turning(path: string) {
+    // Every road that turns a PDF comes through here, so a space shared to be read is
+    // refused once for all of them rather than at each door.
+    if (!(await this.mayTurn(path))) throw new Error(`${path} is in a space shared to be read`)
     const [from, { turningIn }] = await Promise.all([
       import('./pages/from-pdf'),
       import('./pages/turning'),
     ])
-    const how = turningIn(this.rootHolding(path), (one, to) => this.renameFile(one, to, false))
+    const how = turningIn(this.rootHolding(path), (one, to) =>
+      this.renameFile(one, to, false, true),
+    )
     return { from, how }
   }
 
@@ -1963,6 +2057,13 @@ class Workspace {
     // be one - somebody took the line out - opens as the note it is. The conversion
     // is fetched by the first such note rather than carried: only a space an older
     // nib wrote has any, and a window opens on a note. See test/weight.test.ts.
+    // Not in a space shared to be read, where writing the shortcut and putting the note
+    // in the trash would both change what the owner left (B288): the note stays as it
+    // is, and the page it points at opens in a tab with no file, which writes nothing.
+    if (!isWebTarget(path) && !(await this.writableAt(path))) {
+      await this.browseOldWebsite(path, how)
+      return
+    }
     const opening = isWebTarget(path)
       ? path
       : await import('./web-tab/convert').then(({ asShortcut }) => asShortcut(this, path))
@@ -1972,6 +2073,22 @@ class Workspace {
     }
 
     this.showTab(await this.opened.opening(opening, () => this.openSite(opening, how)), how)
+  }
+
+  /** A website written in the old format, in a space shared to be read: the address
+   *  read out of the note and opened as a page with no file, or the note itself where
+   *  it says none. Off the desktop app the browser has the page, as for a shortcut. */
+  private async browseOldWebsite(path: string, how: OpenHow) {
+    const text = await invoke<string>('read_note', { path }).catch(() => null)
+    // Fetched, with the conversion it stands in for; see test/weight.test.ts.
+    const { webUrlOf } = await import('./web-tab/note')
+    const url = webUrlOf(text)
+    if (url === null) {
+      await this.open(path, how)
+      return
+    }
+    this.remember(path)
+    if (!isDesktop || this.openPage(url) === null) await openExternal(url)
   }
 
   /** A web note's address given to the browser off the desktop app; whether it was. */
@@ -2032,6 +2149,10 @@ class Workspace {
   /** Every website still written as a note, converted where it stands; see
    *  web-tab/convert. Answers how many there were, for the palette. */
   async convertWebsites(): Promise<number> {
+    // Not a space shared to be read: each note would gain a shortcut beside it and go
+    // to the trash (B288). The palette greys the row there; this is for any other caller.
+    const root = this.activeSpace?.root
+    if (!root || !(await this.writableAt(root))) return 0
     const { convertWebsites } = await import('./web-tab/convert')
     return convertWebsites(this)
   }
@@ -2137,7 +2258,7 @@ class Workspace {
     if (__EVEN_PLUGIN__ || viewport.touch) return
 
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return
+    if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('web', dir)) return
 
     const { newSite } = await import('./web-tab/new-site')
@@ -2201,7 +2322,7 @@ class Workspace {
     this.keeping.add(tab.id)
     try {
       const dir = folder ?? (await this.draftHome(tab.note.home))
-      if (dir === null) return null
+      if (dir === null || !(await this.writableAt(dir))) return null
       await this.nestFor(dir, [])
 
       const saved =
@@ -2247,6 +2368,8 @@ class Workspace {
   private async holdPaperBeside(path: string) {
     const pdf = path.replace(/\.pages$/i, '.pdf')
     if (this.opened.at(path) || !this.files.some((one) => samePath(one.path, pdf))) return
+    // Taking the PDF in renames it, which a space shared to be read may not have.
+    if (!(await this.mayTurn(path))) return
 
     await this.turning(path)
       .then(({ from, how }) => from.adoptBeside(path, how))
@@ -2262,6 +2385,11 @@ class Workspace {
     // Gone, or unreadable. A page note that cannot be read is not blank paper to
     // write on: saving one over it would take the file with it.
     if (text === null) return unread(path).then(() => null)
+    // Nor is one whose text is not a canvas, which it is with pages in it: a stray
+    // comma or a truncated save reads as no pages at all, and the first stroke would
+    // write that over its pages, its ink and its paper, as `openCanvas` says.
+    const { parseAhead } = await import('./canvas/format')
+    if (!parseAhead(text)) return unread(path).then(() => null)
 
     const file = this.document({
       kind: 'pages',
@@ -2288,7 +2416,7 @@ class Workspace {
    *  where there is a list to ask in, exactly as a note's and a canvas's do. */
   async createPages(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return
+    if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('pages', dir)) return
 
     // What an empty stack of paper says, fetched with the first one asked for. The
@@ -2303,7 +2431,7 @@ class Workspace {
     // the sync pass in workspace/note-text.ts.
     const { modes } = await import('./modes.svelte')
 
-    const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.pages))
+    const path = joinPath(dir, await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.pages))
     const content = blankPages(modes.pagesPaper)
 
     this.showEntry(this.freshEntry(path, false))
@@ -2548,7 +2676,11 @@ class Workspace {
       // Imported here rather than at the top, so that a window which never opens a
       // PDF never loads the module that reads one.
       const listed = this.files
-      void import('./pdf/extract').then(({ readPapers }) => readPapers(root, listed), unfetched)
+      const tree = this.tree
+      void import('./pdf/extract').then(
+        ({ readPapers }) => readPapers(root, listed, tree),
+        unfetched,
+      )
     }
   }
 
@@ -2578,6 +2710,15 @@ class Workspace {
     const target = joinPath(intoFolder, name)
 
     if (samePath(target, from) || within(from, intoFolder) !== null) return
+    // Out of a space shared to be read is a delete there, and into one a write.
+    if (!(await this.writableAt(from, intoFolder))) return
+
+    // Into another space, the chats a pointer names move first; see chat-leaving.ts.
+    const leaving = this.spaces.find((one) => within(one.root, from) !== null)
+    let back = () => Promise.resolve()
+    if (leaving && within(leaving.root, intoFolder) === null) {
+      back = await (await import('./workspace/chat-leaving')).chatsCarried(from, intoFolder)
+    }
 
     // The row is in its new folder as soon as the drop lands.
     const kind = this.kindAt(from)
@@ -2597,6 +2738,7 @@ class Workspace {
         try {
           await invoke('rename_note', { from, to: target })
         } catch (error) {
+          await back()
           await this.loadTree()
           throw error
         }
@@ -2810,8 +2952,10 @@ class Workspace {
   /** A note named the way the space speaks of it, which is how the link index and
    *  the graph name them, opened the way a row in the file list opens: a look on
    *  one click, a tab of its own on two or with a modifier. */
-  openRelative(relative: string, how: OpenHow) {
-    const root = this.activeSpace?.root
+  openRelative(relative: string, how: OpenHow, from: string | null = null) {
+    // Relative to the space of `from` where one is given: a link in a chat of another
+    // space names that space's note.
+    const root = this.rootHolding(from)
     if (!root) return
 
     void this.openEntry(insideSpace(root, relative), how)
@@ -3261,8 +3405,15 @@ class Workspace {
     this.saving.replace(text, target)
   }
 
-  /** A version put back from the history, which a canvas takes whole (#533). */
-  restoreVersion(text: string, target?: Tab) {
+  /** A version put back from the history, which a canvas takes whole (#533).
+   *
+   *  Refused for a note in a space shared to be read: putting a version back is an
+   *  edit, and the autosave would write it into the owner's space. The write itself
+   *  cannot refuse it, because the owner's own changes reach an open note there and
+   *  are written by that same autosave; see read-only-files.test.ts. */
+  async restoreVersion(text: string, target?: Tab) {
+    const path = (target ?? this.active)?.path
+    if (path && !(await this.writableAt(path))) return
     this.saving.restoreVersion(text, target)
   }
 
@@ -3399,6 +3550,13 @@ class Workspace {
   }
 
   async moveMany(paths: string[], intoFolder: string) {
+    // All or nothing, and before the folder a drop on a note makes: a move that left
+    // half a selection behind, or nested a note it then put nothing in, is not one
+    // anybody asked for. `move` refuses each of them as well.
+    if (!(await this.writableAt(intoFolder, ...paths))) {
+      this.clearSelection()
+      return
+    }
     await this.undone.batch(async () => {
       await this.nestFor(intoFolder, paths)
       for (const path of outermost(paths)) await this.move(path, intoFolder)
@@ -3427,6 +3585,7 @@ class Workspace {
    *  means is workspace/copying.ts, fetched with the first copy: a window that
    *  never copies anything never reads it. */
   async copyMany(paths: string[], intoFolder: string) {
+    if (!(await this.writableAt(intoFolder))) return
     await this.nestFor(intoFolder, paths)
     const { copyRows } = await import('./workspace/copying')
     const rows = outermost(paths).map((from) => ({ from, into: intoFolder }))
@@ -3436,19 +3595,25 @@ class Workspace {
   /** A second copy of each row, beside the first. */
   async duplicateMany(paths: string[]) {
     const { copyRows } = await import('./workspace/copying')
-    const rows = outermost(paths).map((from) => ({ from, into: folderOf(from) }))
+    const rows = outermost(await this.writableOf(paths)).map((from) => ({
+      from,
+      into: folderOf(from),
+    }))
     await this.copied(await copyRows(this, rows), null)
   }
 
   /** Files dropped on the list from outside the app, copied into a folder. */
   async bringIn(files: readonly Picked[], intoFolder: string) {
+    if (!(await this.writableAt(intoFolder))) return
     await this.nestFor(intoFolder, [])
     const { bringIn } = await import('./workspace/copying')
     await this.copied(await bringIn(this, files, intoFolder), intoFolder)
   }
 
-  /** Where a PDF opened with nib is once in the space; see pdf/handed.ts. */
+  /** Where a PDF opened with nib is once in the space; see pdf/handed.ts. Null for a
+   *  space shared to be read, which the copy would be written into. */
   async bringInPdf(from: string, root: string): Promise<string | null> {
+    if (!(await this.writableAt(root))) return null
     const { broughtPdf } = await import('./workspace/copying')
     const landed = await broughtPdf(this, from, root)
     if (landed) await this.copied([landed], root)
@@ -3472,13 +3637,31 @@ class Workspace {
   }
 
   async removeMany(paths: string[]) {
+    const writable = await this.writableOf(this.deletable(paths))
     await this.undone.batch(async () => {
-      for (const path of this.deletable(paths)) {
+      for (const path of writable) {
         const entry = this.entryAt(path)
         if (entry) await this.remove(path, entry.is_dir)
       }
     })
     this.clearSelection()
+  }
+
+  /** Whether a file may be written at every one of these paths: none of them in a
+   *  space shared with this account to be read. Writing there would make the copy
+   *  here stop being the space's, and the sync refuses it on every pass, so every
+   *  call below that makes, renames, moves, copies or deletes asks this first rather
+   *  than trusting each menu and key to have looked. Fetched, as sharing.svelte.ts
+   *  reads this store. */
+  private async writableAt(...paths: string[]): Promise<boolean> {
+    const { canWriteAt } = await import('./sharing.svelte')
+    return paths.every((path) => canWriteAt(path))
+  }
+
+  /** The paths of these that may be written at; see `writableAt`. */
+  private async writableOf(paths: readonly string[]): Promise<string[]> {
+    const { canWriteAt } = await import('./sharing.svelte')
+    return paths.filter((path) => canWriteAt(path))
   }
 
   /** The rows of a selection that may be deleted, which is what its menu counts. */
@@ -3685,9 +3868,10 @@ class Workspace {
   }
 
   /** Writes a replacement across the space, as one thing to undo. `keeping` says
-   *  which versions are kept on the way; see workspace/note-text.ts. */
-  async replaceInNotes(changes: readonly Change[], keeping?: text.Keeping) {
-    await text.replaceInNotes(this, changes, keeping)
+   *  which versions are kept on the way; see workspace/note-text.ts, including why a
+   *  note in a space shared to be read is passed over. Answers how many were written. */
+  async replaceInNotes(changes: readonly Change[], keeping?: text.Keeping): Promise<number> {
+    return text.replaceInNotes(this, changes, keeping)
   }
 
   /** Writes the whole of one note that nobody has open, as the one span it changed
@@ -3706,12 +3890,13 @@ class Workspace {
    *  that made nothing at all would read as one that failed. */
   async createNote(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return
+    if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('note', dir)) return
 
     // Opens with its own name as the title, so there is something to write
-    // under rather than an empty page.
-    const name = this.freeName(dir, named ?? PLACEHOLDER.note)
+    // under rather than an empty page. The one wait is a stamp of the name: the
+    // listing is not the disk; see `freeNameOnDisk`.
+    const name = await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.note)
     const path = joinPath(dir, name)
     const content = `# ${shownName(name)}\n\n`
 
@@ -3745,13 +3930,16 @@ class Workspace {
    *
    *  No tab and no renaming: the card it came from is still what the reader is
    *  looking at, and a note that opened over the plane would take them away from
-   *  it. The name is stepped like every other new file's. */
+   *  it. The name is stepped like every other new file's.
+   *
+   *  Null too in a space shared to be read; see `writableAt`. */
   async noteFrom(text: string, folder?: string): Promise<string | null> {
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return null
+    if (!dir || !(await this.writableAt(dir))) return null
 
     const stem = nameFromContent(text) ?? UNTITLED
-    const path = joinPath(dir, this.freeName(dir, `${stem}.md`))
+    // A card's folder can be one in a space that is not on screen.
+    const path = joinPath(dir, await this.freeNameOnDisk(dir, `${stem}.md`))
     this.showEntry(this.freshEntry(path, false))
 
     await writeFile(path, text)
@@ -3767,7 +3955,7 @@ class Workspace {
    *  disk say the same thing from the first frame. */
   async createCanvas(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return
+    if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('canvas', dir)) return
 
     // What an empty plane says, fetched with the first one asked for: the reader and
@@ -3776,7 +3964,7 @@ class Workspace {
     // and the index reads a plane through scan-canvas.ts, which is fetched the same way.
     const { blankCanvas } = await import('./canvas/format')
 
-    const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.canvas))
+    const path = joinPath(dir, await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.canvas))
     const content = blankCanvas()
 
     this.showEntry(this.freshEntry(path, false))
@@ -3814,7 +4002,7 @@ class Workspace {
    *  another kind, from the row's submenu. */
   async createInside(path: string, make = (folder: string): unknown => this.createNote(folder)) {
     const entry = this.entryAt(path)
-    if (!entry) return
+    if (!entry || !(await this.writableAt(path))) return
 
     const folder = entry.is_dir ? path : folderFor(path)
     if (samePath(folder, path) && !entry.is_dir) return
@@ -3840,7 +4028,48 @@ class Workspace {
     // the one is taken by the other, and writing it would be writing over it.
     const taken = pathKeys(this.everyPath(), dir)
     if (except !== undefined) taken.delete(pathKey(except, dir))
-    return freePath(wanted, (candidate) => taken.has(pathKey(joinPath(dir, candidate), dir)))
+    const has = (name: string) => taken.has(pathKey(joinPath(dir, name), dir))
+    // A page note's paper lands beside it as `<name>.pdf`, and a PDF already there is
+    // somebody's own (#538), so that name is taken too. And the other way round: a PDF
+    // `<name>.pages.pdf` beside a page note `<name>.pages` is taken for its paper.
+    return freePath(
+      wanted,
+      (candidate) =>
+        has(candidate) ||
+        (/\.pages$/i.test(candidate) && has(`${candidate}.pdf`)) ||
+        (/\.pages\.pdf$/i.test(candidate) && has(candidate.slice(0, -'.pdf'.length))),
+    )
+  }
+
+  /** `freeName`, with the disk asked too: the name every gesture that writes a new
+   *  file takes. `freeName` knows only the listing on screen, and that is not the
+   *  disk. Tabs outlive a space switch, so `Ideas.md` in the other space came back
+   *  free and was written over; and the listing leaves out what is named with a dot
+   *  unless hidden files are shown, so `.notes/Plan.md` did too. Stepped like a
+   *  draft's place; see `claim` in saving.svelte.ts.
+   *
+   *  A name is taken by the other half of its pair as well. A page note landing
+   *  beside a PDF named as its paper takes that PDF for its own, and deleting the
+   *  note deletes the PDF; a paper landing beside a page note of its name is hidden
+   *  in it the same way. The listing that would have shown either is not there for
+   *  a dot folder or another space, so the disk is asked for both. */
+  async freeNameOnDisk(dir: string, wanted: string): Promise<string> {
+    // Fetched here rather than imported at the top, as `claim` fetches it: this file
+    // is in the first paint, and a new file is not.
+    const { pairOf } = await import('./pages/held')
+    const found: string[] = []
+    for (;;) {
+      const name = freePath(
+        wanted,
+        (candidate) => found.includes(candidate) || this.freeName(dir, candidate) !== candidate,
+      )
+      const other = pairOf(name)
+      const taken =
+        (await onDisk(joinPath(dir, name))) ||
+        (other !== null && (await onDisk(joinPath(dir, other))))
+      if (taken) found.push(name)
+      else if (this.freeName(dir, name) === name) return name
+    }
   }
 
   /** Every path in the open space. `notes` holds only files; this counts the
@@ -3974,7 +4203,7 @@ class Workspace {
     // Spelled the same, not the same file: a name that only changes its case is a
     // rename, and the crate respells it; see `respell` in notes.rs.
     const target = joinPath(folderOf(path), clean)
-    if (sameSpelling(target, path)) return
+    if (sameSpelling(target, path) || !(await this.writableAt(path))) return
 
     // After whatever write of it is in the air, so the write cannot put the old name
     // back beside the new one - and of everything open inside it, for a folder.
@@ -3990,8 +4219,9 @@ class Workspace {
   /** One file under another name in the same folder, and everything that owes: the
    *  row, the links to it, and what everything kept by path hears; see `fileMoved`.
    *  `undoable` is whether somebody did it - a row renamed - or the note's own words
-   *  did; only the first is a step to undo and a heading to rewrite. */
-  private async renameFile(path: string, target: string, undoable: boolean) {
+   *  did; only the first is a step to undo and a heading to rewrite. `hold`: a PDF
+   *  turned into its page note; see `rename_note`. */
+  private async renameFile(path: string, target: string, undoable: boolean, hold = false) {
     const kind = this.kindAt(path)
 
     // The new name is on the row before the rename has happened; the listing
@@ -4005,7 +4235,7 @@ class Workspace {
     // which is the same file to Windows and to a Mac - and the row wore a name
     // nothing answered to until the next listing. See `move` and `remove`.
     try {
-      await invoke('rename_note', { from: path, to: target })
+      await invoke('rename_note', { from: path, to: target, ...(hold ? { hold } : {}) })
     } catch (error) {
       await this.loadTree()
       throw error
@@ -4063,7 +4293,8 @@ class Workspace {
    *  own space, which an agent's may not be (8.6 in docs/agent-native.md). */
   async fileMoved(from: string, to: string, kind: Kind) {
     const root = kind === 'space' ? from : this.rootHolding(from)
-    await this.fileOps.tell({ op: 'moved', from, to, kind, root })
+    const into = kind === 'space' ? to : this.rootHolding(to)
+    await this.fileOps.tell({ op: 'moved', from, to, kind, root, into })
   }
 
   async fileGone(path: string, kind: Kind) {
@@ -4075,16 +4306,21 @@ class Workspace {
     await this.fileOps.tell({ op: 'created', path, kind, root, ...(key ? { key } : {}) })
   }
 
-  private rootHolding(path: string): string | null {
+  /** The root of the space holding `path`, else the active one's. Asked by anything
+   *  that writes a path relative to a space on behalf of a file that may not be in the
+   *  active one: tabs are shared across spaces, so a canvas of one space stays open
+   *  while another is active, and its cards are relative to its own. */
+  rootHolding(path: string | null): string | null {
+    if (path === null) return this.activeSpace?.root ?? null
     const holding = this.spaces.find((one) => within(one.root, path) !== null)
     return holding?.root ?? this.activeSpace?.root ?? null
   }
 
   /** `source`: an agent the last version is kept for (docs/agent-native.md 8.5). */
   async remove(path: string, isFolder: boolean, source?: string) {
-    // Nothing archived is deleted; the menus and keys never ask, and this is for a
-    // caller that did not look.
-    if (this.keepsArchived(path)) return
+    // Nothing archived is deleted, and nothing in a space shared to be read; the
+    // menus and keys never ask, and this is for a caller that did not look.
+    if (this.keepsArchived(path) || !(await this.writableAt(path))) return
 
     await this.undone.batch(async () => {
       // Gone from the tree before the snapshot has been taken and the file has
@@ -4092,7 +4328,7 @@ class Workspace {
       // looking as though the delete had not registered.
       this.hideEntry(path)
 
-      const kept = await this.bin(path, isFolder, source)
+      const kept = await this.bin(path, isFolder, { source })
       if (kept) this.undone.record({ kind: 'delete', path, ...kept })
 
       await this.fileGone(path, isFolder ? 'folder' : 'file')
@@ -4102,8 +4338,9 @@ class Workspace {
     })
   }
 
-  /** Deletes, answering what puts it back; recorded by the caller. */
-  async bin(path: string, isFolder: boolean, source?: string): Promise<Kept | null> {
+  /** Deletes, answering what puts it back; recorded by the caller. See `Binning`. */
+  async bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
+    const { source, madeHere = false } = how
     // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
     // is bytes and not words: there is no snapshot of one, so the only thing that
     // can put it back is the trash.
@@ -4119,7 +4356,15 @@ class Workspace {
     const unread = words && content === null
     // Signed in, the account keeps a copy for 14 days; signed out, this
     // device does, in its own trash folder (see trash.svelte.ts).
-    const toAccount = account.signedIn && !unread && !(!isFolder && isPagesTarget(path))
+    // But only of what it was handed, which a space on no account, a file made
+    // offline or since the last push, or a dotfile is not. Those go to this device's
+    // trash: a folder's notes and a paper have no snapshot, and outright they were lost.
+    const toAccount =
+      account.signedIn &&
+      !madeHere &&
+      !unread &&
+      !(!isFolder && isPagesTarget(path)) &&
+      (await this.accountHolds(path, isFolder))
     const held =
       toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(path) : null
 
@@ -4141,6 +4386,27 @@ class Workspace {
       await this.loadTree()
       throw error
     }
+  }
+
+  /** Whether the account holds a copy of what a path is, so a delete can go to it.
+   *  The space being on the account is not enough: a file dropped in offline or
+   *  since the last push, and a dotfile, which sync never hands it, are on this
+   *  device alone, and so is what was written since. A folder counts only if
+   *  everything under it is held, and only a note goes: the account's Recently
+   *  deleted gives back nothing else, so a paper or a picture goes to the trash.
+   *  Nor from a space somebody else owns: theirs is the Recently deleted it lands in. */
+  private async accountHolds(path: string, isFolder: boolean): Promise<boolean> {
+    if (!isFolder && !isMarkdownPath(path)) return false
+    const root = this.rootHolding(path)
+    if (!root) return false
+    const { sync } = await import('./sync.svelte')
+    const id = sync.remoteIdFor(root)
+    // Asked of the listing rather than of `roleOf`, which takes a space it cannot
+    // find for this account's own: a space not listed yet is nobody's to leave to.
+    if (account.spaces.find((one) => one.id === id)?.role !== 'owner') return false
+    if (!isFolder) return sync.holds(path)
+    const { accountHoldsAll } = await import('./workspace/undoing')
+    return accountHoldsAll(path, (one, how) => sync.holds(one, how))
   }
 
   /** Puts the last file operation back; what each kind means going back is
@@ -4196,7 +4462,9 @@ class Workspace {
    *  Answers how many notes were touched, so a caller can record whether there is
    *  anything to put back. */
   async retarget(from: string, to: string, how: Retargeting = {}): Promise<number> {
-    const root = this.activeSpace?.root
+    // The space the note is in, which an undo or a redo done after switching spaces,
+    // or a rename from a tab of another space, is not the active one.
+    const root = this.rootHolding(from)
     if (!root) return 0
 
     const touched = await links.retarget(from, to, root, (path) => this.documentAt(path), how)
@@ -4239,11 +4507,16 @@ class Workspace {
    *  `ask` is what the press held down: with a modifier the file opens in a tab
    *  beside this one, behind it or in front, and with Alt as well in a pane to the
    *  right; see new-tab.ts. */
-  async followLink(jump: NoteJump, ask: LinkAsk = 'plain') {
-    const root = this.activeSpace?.root
+  async followLink(jump: NoteJump, ask: LinkAsk = 'plain', from?: string | null) {
+    // The note the link sits in, which its path is relative to the space of. Not
+    // always the tab in front - a scratchpad, a task's description in the task view, a
+    // chat - and not always in the active space, since tabs are shared across spaces.
+    // The front tab only where a caller cannot say.
+    const source = from === undefined ? (this.active?.path ?? null) : from
+    const root = this.rootHolding(source)
     if (!root) return
     if (ask === 'aside') {
-      await this.followAside(jump, root)
+      await this.followAside(jump, root, source)
       return
     }
     const how = howFor(ask)
@@ -4267,7 +4540,9 @@ class Workspace {
       return
     }
 
-    const path = jump.path ? insideSpace(root, jump.path) : await this.makeLinked(jump.target, root)
+    const path = jump.path
+      ? insideSpace(root, jump.path)
+      : await this.linkedOrMade(jump, root, source)
     if (!path) return
 
     // A website opens as the page it points at, which is what its row in the file
@@ -4288,12 +4563,12 @@ class Workspace {
    *  the link's own menu offers: the same note, made where the link would make it,
    *  and the same heading, through `openAside`. A PDF opens there at its first page,
    *  which is where a file carried into a pane opens. */
-  private async followAside(jump: NoteJump, root: string) {
+  private async followAside(jump: NoteJump, root: string, source: string | null) {
     const path = jump.path
       ? insideSpace(root, jump.path)
       : isTabFile(jump.target)
         ? null
-        : await this.makeLinked(jump.target, root)
+        : await this.linkedOrMade(jump, root, source)
     if (!path) return
 
     await this.openAside(path)
@@ -4317,11 +4592,34 @@ class Workspace {
   /** The note a link names but the space has not got. Made where a link would
    *  look for it: in the folder the link says, or beside the note that links to
    *  it when it says none. */
-  private async makeLinked(target: string, root: string): Promise<string | null> {
-    const clean = target.replace(/[\\]/g, '/').replace(/^\/+|\/+$/g, '')
+  /** A link the index answered nothing for: the note it names once the space it was
+   *  written in has been read, else made. A note of another space still open is
+   *  resolved against an index read the first time it asks, and a press before that
+   *  lands would otherwise make a note over the one that is there. */
+  private async linkedOrMade(
+    jump: NoteJump,
+    root: string,
+    source: string | null,
+  ): Promise<string | null> {
+    const known = await links.targetWhenRead(source, { kind: 'wikilink', target: jump.target })
+    return known === null ? this.makeLinked(jump.target, root, source) : insideSpace(root, known)
+  }
+
+  /** A note made for a link to nothing, beside `source`, the note the link is in. */
+  private async makeLinked(
+    target: string,
+    root: string,
+    source: string | null,
+  ): Promise<string | null> {
+    const slashed = target.replace(/[\\]/g, '/')
+    // Two slashes are no path from the top and name nothing; see `resolveNote`.
+    if (slashed.trimStart().startsWith('//')) return null
+    const clean = slashed.replace(/^\/+|\/+$/g, '')
     if (!clean) return null
 
-    const here = this.active?.path ? folderOf(relativeTo(root, this.active.path)) : ''
+    // A path from the top of the space, `[[/Road]]`, is made there (B543).
+    const inside = source === null ? null : withinSpace(root, source)
+    const here = inside === null || slashed.trimStart().startsWith('/') ? '' : folderOf(inside)
     const relative = clean.includes('/') || !here ? clean : `${here}/${clean}`
 
     // What a link says is somebody's prose. A note out of a shared space, a room,
@@ -4334,7 +4632,16 @@ class Workspace {
     const safe = insideOnly(isMarkdownPath(relative) ? relative : `${relative}.md`)
     if (safe === null) return null
 
+    // A link in a space shared to be read names a note only its owner may make, so
+    // following it there opens nothing rather than writing into their space.
     const path = insideSpace(root, safe)
+    // The index's miss is not the disk's: a dot folder is never scanned, and a note
+    // that is not UTF-8 or too big to read is skipped. So the disk is asked, and a
+    // note that is there is opened - or refused by the open, if it would not read -
+    // rather than written over with a heading.
+    if (await onDisk(path)) return path
+
+    if (!(await this.writableAt(path))) return null
     const content = `# ${noteName(relative)}\n\n`
     await writeFile(path, content)
     await this.loadTree()
@@ -4364,13 +4671,13 @@ class Workspace {
    *  see note-id.ts and the Editor settings. */
   async createUniqueNote(format: string, folder?: string) {
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return
+    if (!dir || !(await this.writableAt(dir))) return
 
     // Two notes made in the same minute is the one way a moment can be taken, and
     // it steps aside the way every other name in the app does - `Name 2.md`,
     // through `freePath`. Its own numbering said `Name-2.md`, a spelling nothing
     // else in the app writes.
-    const name = this.freeName(dir, `${noteId(format)}.md`)
+    const name = await this.freeNameOnDisk(dir, `${noteId(format)}.md`)
 
     // Opens with an empty heading and the caret in it: the name is settled, so
     // the only thing left to do is say what the note is about.
@@ -4802,3 +5109,4 @@ export const workspace = new Workspace()
 
 // Handed over rather than imported: the index and the workspace read each other.
 links.archivedIn = (root) => workspace.archive.keysOf(root)
+links.spaceOf = (path) => workspace.rootHolding(path)

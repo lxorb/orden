@@ -132,10 +132,10 @@ describe('the built-in views', () => {
         group.rows.map((row) => row.task?.text ?? row.file.basename),
       ]),
     ).toEqual([
-      // Review PR starts tomorrow.
-      ['Errands', ['Fix the bug']],
-      ['Thesis', ['Thesis']],
-      ['Work', ['Ship it']],
+      // Review PR starts tomorrow. Grouped by path, so two notes of one name stay apart.
+      ['Errands.md', ['Fix the bug']],
+      ['Projects/Thesis.md', ['Thesis']],
+      ['Work.md', ['Ship it']],
     ])
   })
 

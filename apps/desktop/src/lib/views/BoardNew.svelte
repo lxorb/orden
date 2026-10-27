@@ -75,8 +75,9 @@
     }
     making = true
     words = ''
+    let path: string | null = null
     try {
-      const path = await addNote(
+      path = await addNote(
         base,
         kit.live.at,
         kit.file,
@@ -84,11 +85,23 @@
         { title, open: false, properties: valued() },
       )
       if (path) onmade?.(path)
+    } catch {
+      // The card was emptied for the next title before the note was written, so a write
+      // that failed would take the title typed with it. It goes back into the card, still
+      // open, which is the sign nothing was made, unless a next title is already there.
+      // Focus is left where it went, so a blur that failed does not pull it back.
+      if (!words) words = title
+      typing = true
+      return
     } finally {
       making = false
+      // No note made, where the space or the folder may not be written in, or the write
+      // failed: the title goes back in the card, which stays open, rather than being
+      // lost with nothing said (B284). Words typed since are the reader's own.
+      if (!path) words ||= title
     }
     if (again) field?.focus()
-    else typing = false
+    else if (path) typing = false
   }
 </script>
 

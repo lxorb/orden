@@ -416,7 +416,14 @@
     }
     if (event.button !== 0 || drag.pressing) return
     if (!Chip) void import('./tab-strip/TabChip.svelte').then((one) => (Chip = one.default))
-    if (!carry) void import('./tab-strip/carrying').then((one) => (carry = one))
+    if (!carry) {
+      void import('./tab-strip/carrying').then((one) => {
+        carry = one
+        // A hand quicker than the fetch is already out, and may have stopped: nothing
+        // moves again to light what it is over, and let go of there the tab went home.
+        if (drag.on) one.follow(drag, paneId)
+      })
+    }
     if (!picks.loaded) void loadPicking()
 
     const finger = event.pointerType === 'touch'

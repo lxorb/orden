@@ -9,6 +9,7 @@
  *  load, rather than being carried inside the document. */
 
 import { renderMarkdown, type Wikilink } from '@nib/markdown'
+import { escapeAll } from '@nib/markdown/html'
 import { mapSources } from '@nib/markdown/sources'
 import type { TagHref } from '@nib/markdown/tags'
 import { t } from '../i18n.svelte'
@@ -90,6 +91,9 @@ export async function readingHtml(
   // its own half megabyte along - the print stylesheets among it, for a surface with
   // a stylesheet of its own. See before-render.ts.
   const { prepareEmbeds, prepareFences } = await import('../before-render')
+  // The space the note is in, which its fences ask about: a note still open from
+  // another space is not the active one's.
+  const root = note.path === null ? null : links.spaceOf(note.path)
 
   const [fence, embed] = await Promise.all([
     // A query fence is answered here, which is the one surface besides the editor
@@ -98,12 +102,12 @@ export async function readingHtml(
     prepareFences(note.text, scheme, {
       query: async (code, language) =>
         language === 'tasks' && !__EVEN_PLUGIN__
-          ? (await import('../tasks-block')).tasksRowsHtml(code, t('Nothing found'))
-          : queryRowsHtml(code, t('Nothing found')),
+          ? (await import('../tasks-block')).tasksRowsHtml(code, t('Nothing found'), root)
+          : queryRowsHtml(code, t('Nothing found'), root),
       // A base fence is a box the reading view draws the view into; see views/mount.ts.
       base: true,
     }),
-    prepareEmbeds(note.text, (target) => links.embedSource(target, note.path)),
+    prepareEmbeds(note.text, (target) => links.embedNote(target, note.path)),
   ])
 
   const at = performance.now()
@@ -131,4 +135,10 @@ export async function readingHtml(
   performance.measure(MEASURE, { start: at, detail: { bytes: note.text.length } })
 
   return html
+}
+
+/** What the page shows when the renderer throws on a note: its words, as they are
+ *  written, rather than a page left blank or still showing the note before. */
+export function unreadableHtml(text: string): string {
+  return `<pre class="unreadable">${escapeAll(text)}</pre>`
 }

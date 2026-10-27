@@ -64,8 +64,10 @@ export function sourceOf(call: Call): string | undefined {
 /** Who writes, as a note's caret and its versions name it. The reader's own command
  *  line writes as itself. */
 export function writerOf(call: Call): Writer {
-  const agent = call.caller.agent
-  return agent ? { id: agent.id, name: agent.name } : { id: 'cli', name: 'nib' }
+  const caller = call.caller
+  if (!caller.agent) return { id: 'cli', name: 'nib' }
+  const { id, name } = caller.agent
+  return caller.thread ? { id, name, thread: caller.thread } : { id, name }
 }
 
 /** The agent's hold on a scope beyond the one its verb's row checked. */

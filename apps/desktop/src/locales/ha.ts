@@ -2016,6 +2016,7 @@ export const ha: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'Wannan {device}',
   '{name} is back: {device} was writing in it': '{name} ya dawo: {device} yana rubutu a ciki',
+  'Changes to {name} are not syncing': 'Ba a daidaita canje-canjen {name}',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Buɗewa',
   Pressing: 'Dannawa',

@@ -118,3 +118,11 @@ describe('the caret', () => {
     expect(made?.caret).toBe(NOTE.length - 1)
   })
 })
+
+describe('a section drag keeps code whole', () => {
+  test('the fences of a block holding a shorter one move with it', () => {
+    expect(moved('# A\n````md\n```js\n# not\n```\n````\n# B\nb\n', 1, 0)).toBe(
+      '# B\nb\n# A\n````md\n```js\n# not\n```\n````\n',
+    )
+  })
+})

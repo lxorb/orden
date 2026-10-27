@@ -790,7 +790,7 @@ function decoded(target: string): string {
  *  heading, and a bracket, since a `)` the name holds alone would end the link
  *  there, and every reader takes the encoded one the same. Nothing else, so a
  *  reader who opens the note sees the file name they would see in the file list. */
-function encodeTarget(path: string): string {
+export function encodeTarget(path: string): string {
   return path
     .replace(/%/g, '%25')
     .replace(/#/g, '%23')

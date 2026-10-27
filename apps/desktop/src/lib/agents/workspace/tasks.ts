@@ -39,7 +39,8 @@ import { taskLine } from '@nib/markdown/task-edits'
 import { taskHash } from '@nib/bases'
 import type { AgentAnswer } from '../../automation/caller'
 import { modes } from '../../modes.svelte'
-import { isShared } from '../../sharing.svelte'
+import { onDisk as there } from '../../on-disk'
+import { reachedByOthersIn } from '../../sharing.svelte'
 import { folderOf, nameOf } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { workspace } from '../../workspace.svelte'
@@ -49,7 +50,15 @@ import { asked } from './asks'
 import { type Call, done, flag, maybe, need, writerOf } from './call'
 import { at, made, noteOf } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, type Place, placeFor, reachable } from './spaces'
+import {
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeFor,
+  placeOf,
+  reachable,
+  writableAt,
+} from './spaces'
 
 /** The rows store, fetched with the first of these verbs: importing it starts it. */
 async function rowsStore() {
@@ -84,7 +93,7 @@ function spacesOf(call: Call): Place[] {
 
 /** Where a call's words come from when somebody else can write them too. */
 function sourceOf(places: readonly Place[]): string | null {
-  const shared = places.filter((place) => isShared(place.space.root))
+  const shared = places.filter((place) => reachedByOthersIn(place.space.root))
   return shared.length ? `shared space ${shared.map((one) => one.space.name).join(', ')}` : null
 }
 
@@ -93,7 +102,7 @@ async function baseAt(
   call: Call,
   name = 'path',
 ): Promise<{ place: Place; relative: string; text: string; base: Base }> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const relative = judgedForWriting(need(call, name))
   if (!/\.base$/i.test(relative))
     throw new Refused('bad_arguments', `${relative} is not a .base file`)
@@ -165,7 +174,7 @@ function writableNote(call: Call, path: string) {
 }
 
 export async function addTask(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const { rows } = await import('../../rows/rows.svelte')
   // Quick add's grammar over the words, in the reader's language and then every other it
   // reads (`quickWords`), knowing the space's notes for `>Note`.
@@ -207,7 +216,7 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
 }
 
 export async function updateTask(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const anchor = (() => {
     try {
       return readAt(call.args.at)
@@ -319,7 +328,7 @@ export async function queryBase(call: Call): Promise<AgentAnswer> {
       ? await baseAt(call)
       : (() => {
           try {
-            return { place: placeFor(call, maybe(call, 'space')), base: readBase(yaml) }
+            return { place: placeOf(call), base: readBase(yaml) }
           } catch (error) {
             throw new Refused('bad_arguments', `the yaml does not read: ${String(error)}`)
           }
@@ -343,7 +352,10 @@ async function freePath(place: Place, folder: string, name: string): Promise<str
   for (let counter = 1; counter < 100; counter++) {
     const file = counter === 1 ? `${name}.md` : `${name} ${counter}.md`
     const relative = folder ? `${folder}/${file}` : file
-    if ((await workspace.noteText(onDisk(place, relative))) === null) return relative
+    // Free means nothing is there, which a failed read does not say: a note that
+    // would not read is there all the same, and the name is taken.
+    const path = onDisk(place, relative)
+    if ((await workspace.noteText(path)) === null && !(await there(path))) return relative
   }
   throw new Refused('exists', `${name} is taken a hundred times over in ${folder || 'the space'}`)
 }
@@ -378,6 +390,7 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   const template = await templateOf(place, base, rows.of(place.space.name))
   const name = noteName(maybe(call, 'title') ?? 'Untitled')
   const path = await freePath(place, folder === '.' ? '' : folder, name)
+  writableAt(place, onDisk(place, path))
 
   const question = await asked(call, null, `Make ${path} in ${place.space.name}`)
   if (question) return question
@@ -429,6 +442,8 @@ export async function editRows(call: Call): Promise<AgentAnswer> {
 
 export async function editBase(call: Call): Promise<AgentAnswer> {
   const { place, relative, text, base } = await baseAt(call)
+  // `baseAt` serves the verbs that only read a base too, so the write is checked here.
+  writableAt(place, onDisk(place, relative))
   const next = (() => {
     try {
       return editedBase(base, call.args.ops)

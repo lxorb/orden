@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { changedTask, taskLine, type TaskChange, writeTask } from './task-edits'
+import { changedTask, lastDateTaken, taskLine, type TaskChange, writeTask } from './task-edits'
 import { readTask } from './task-line'
 
 /** Lines already in nib's order, which a read and a whole write give back byte for
@@ -190,6 +190,22 @@ describe('a change', () => {
     expect(changedTask('- [ ] a #x b #x c', { tags: [] })).toBe('- [ ] a b c')
   })
 
+  test('of new words keeps a tag the words held and the change still holds', () => {
+    // The task edit field reads `#milk` out of the words and hands it back as a tag.
+    expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] })).toBe(
+      '- [ ] Buy now #milk',
+    )
+    expect(
+      readTask(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] })),
+    ).toMatchObject({ text: 'Buy now', tags: ['milk'] })
+    // Written once: not again where the new words or the fields at the end hold it.
+    expect(
+      changedTask('- [ ] Buy #milk now #shop', { text: 'Get #milk', tags: ['milk', 'shop'] }),
+    ).toBe('- [ ] Get #milk #shop')
+    // One the change takes away stays away.
+    expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: [] })).toBe('- [ ] Buy now')
+  })
+
   test('is nothing for a line that is not a task', () => {
     expect(writeTask('- a', { due: '2026-10-06' })).toEqual([])
   })
@@ -224,3 +240,56 @@ describe('unknown fields an object would answer from its prototype', () => {
     )
   })
 })
+
+describe('code in a task', () => {
+  test('keeps a hash at its end when the words change', () => {
+    const line = '- [ ] run `git tag #v2`'
+
+    expect(changedTask(line, { text: 'run `git tag #v2` extra' })).toBe(
+      '- [ ] run `git tag #v2` extra',
+    )
+  })
+
+  test('is not cut into when a tag is taken away', () => {
+    expect(changedTask('- [ ] run `a #foo` now #foo', { tags: [] })).toBe('- [ ] run `a #foo` now')
+  })
+
+  test('takes the repeat and the time away with the last date the task had', () => {
+    expect(changedTask('- [ ] Pay 🔁 every month 📅 2026-10-01', { due: null })).toBe('- [ ] Pay')
+    expect(
+      changedTask('- [ ] Pay [time:: 09:00] [repeat:: every month] [deadline:: 2026-10-01]', {
+        deadline: null,
+      }),
+    ).toBe('- [ ] Pay')
+    // A date left on the line keeps them, and so does a task that never had one.
+    expect(changedTask('- [ ] Pay 🔁 every month 🛫 2026-09-28 📅 2026-10-01', { due: null })).toBe(
+      '- [ ] Pay 🔁 every month 🛫 2026-09-28',
+    )
+    expect(
+      changedTask('- [ ] Pay [repeat:: every week when done] [time:: 09:00]', { priority: 1 }),
+    ).toBe('- [ ] Pay [priority:: highest] [repeat:: every week when done] [time:: 09:00]')
+  })
+
+  test('reads a date given as undefined as left, and one given as nothing as taken', () => {
+    const line = '- [ ] Pay 🔁 every week 📅 2026-10-01'
+    expect(changedTask(line, { due: undefined, priority: 2 } as unknown as TaskChange)).toBe(
+      '- [ ] Pay ⏫ 🔁 every week 📅 2026-10-01',
+    )
+    expect(changedTask(line, { due: '' })).toBe('- [ ] Pay')
+  })
+
+  test('keeps a repeat and a time the change itself gives, with its last date taken', () => {
+    expect(lastDateTaken(readTaskOf('- [ ] Pay 🔁 every week 📅 2026-10-01'), { due: null })).toBe(
+      true,
+    )
+    expect(
+      changedTask('- [ ] Pay 🔁 every week 📅 2026-10-01', { due: null, recurrence: 'every day' }),
+    ).toBe('- [ ] Pay 🔁 every day')
+  })
+})
+
+function readTaskOf(line: string) {
+  const found = readTask(line)
+  if (!found) throw new Error('not a task')
+  return found
+}

@@ -16,7 +16,7 @@ const NOTE = [
 
 describe('a project as Todoist’s CSV', () => {
   const rows = taskRowsOfText('Notes', 'Projects/Launch.md', NOTE)
-  const csv = todoistCsv(rows, (line) => (line === 1 ? ['Called on Monday.'] : []))
+  const csv = todoistCsv(rows, NOTE)
 
   test('has Todoist’s columns, a row per task, section and comment', () => {
     const lines = csv.trim().split('\r\n')
@@ -44,5 +44,31 @@ describe('a project as Todoist’s CSV', () => {
     expect(text).toMatch(/\n {2}- \[ \] Ask about chairs/)
     expect(text).toContain('## Press')
     expect(text).toContain('every week')
+  })
+})
+
+describe('a task’s description in Todoist’s CSV', () => {
+  const NOTE = [
+    '# Launch',
+    '- [ ] Book the room',
+    '  First line, with a comma.',
+    '  Second line "quoted".',
+    '',
+    `  ${'long '.repeat(80).trim()}`,
+    '- [ ] Next',
+  ].join('\n')
+  const rows = taskRowsOfText('Notes', 'Projects/Launch.md', NOTE)
+  const csv = todoistCsv(rows, NOTE)
+  const said = ['First line, with a comma.', 'Second line "quoted".', '', 'long '.repeat(80).trim()]
+
+  test('is written whole, its lines inside one quoted cell', () => {
+    expect(csv).toContain(`"${said.join('\n').replace(/"/g, '""')}"`)
+  })
+
+  test('comes back through nib’s own importer whole', () => {
+    const plan = planOf(csvProject('Launch', csv, 0))
+    const file = plan.files[0]
+    const text = file?.kind === 'note' ? file.text : ''
+    for (const line of said.filter(Boolean)) expect(text).toContain(line)
   })
 })

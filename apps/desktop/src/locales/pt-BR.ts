@@ -2026,6 +2026,7 @@ export const ptBR: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'Este {device}',
   '{name} is back: {device} was writing in it': '{name} voltou: {device} estava escrevendo nela',
+  'Changes to {name} are not syncing': 'As alterações em {name} não estão sendo sincronizadas',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Abertura',
   Pressing: 'Clique',

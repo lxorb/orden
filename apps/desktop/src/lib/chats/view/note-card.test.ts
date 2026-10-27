@@ -34,3 +34,12 @@ describe('which note a message is about', () => {
     expect(cardTarget('no link')).toBeNull()
   })
 })
+
+describe('a card past code', () => {
+  test('a tilde line inside a backtick block does not close it', () => {
+    expect(cardLines('```\n~~~\nnot words\n```\nFirst\nSecond\n', 'Note')).toEqual([
+      'First',
+      'Second',
+    ])
+  })
+})

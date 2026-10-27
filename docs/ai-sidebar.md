@@ -1124,9 +1124,13 @@ change a line once it lands, and none of it is in the first paint.
 which draws a thread changed outside a send again and writes it down: a rewind cuts its
 turns, and Redo and a branch put turns back. Lane 5's `Panel` already has this shape.
 
-Underneath: an edit's thread is the one that was answering for its provider when it was
-made (`lib/ai/chat/sends.ts`, written by `engineFor`); its checkpoint is the reader's latest
-message before it. Undo is a selective take out of the agent's own steps
+Underneath: an edit's thread is the one its call said it runs for (`ai_agent_call` and
+`nib mcp` both carry it, and the agent's step keeps it), since two threads of one provider
+can run at once as one agent; only an edit whose call said none goes by the thread that was
+answering for its provider when it was made (`lib/ai/chat/sends.ts`, written by
+`engineFor`). Its checkpoint is the reader's latest message before it. A note made, moved
+or deleted is taken back in the space the verb's answer says it ran in, which for a call
+that named none is the space that was in front, not the thread's. Undo is a selective take out of the agent's own steps
 (`Steps.take` in `lib/agents/docs/steps.ts`), so the palette's "Undo edits by" and the
 review never disagree. An engine that keeps a conversation of its own (Claude Code, Codex)
 forgets it when the turns are cut (`Engine.rewound`) and is reseeded at the next send.

@@ -327,6 +327,7 @@ describe('what hides a web page', () => {
     'lib/FeedbackSheet.svelte': 'dialog',
     'lib/GuestCorner.svelte': "a guest's name and Sign in, under their corner",
     'lib/History.svelte': 'sheet',
+    'lib/JoinSheet.svelte': 'sheet',
     'lib/IconPicker.svelte': 'sheet',
     'lib/Palette.svelte': 'dialog',
     'lib/PromptSheet.svelte': 'dialog',
@@ -374,6 +375,7 @@ describe('what hides a web page', () => {
     'lib/RenameNotice.svelte',
     'lib/StorageWarning.svelte',
     'lib/RecordingPill.svelte',
+    'lib/JoinPending.svelte',
   ]
 
   function sources(): string[] {

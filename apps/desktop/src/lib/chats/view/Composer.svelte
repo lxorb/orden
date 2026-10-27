@@ -16,7 +16,7 @@
    *  the composer's words and nothing else. */
   import type { FileRef, Member, Poll } from '@nib/chats'
   import { ASK_EVERYONE_PAST } from '@nib/chats/limits'
-  import { createEditor, EditorView, modeEffects } from '@nib/editor'
+  import { createEditor, EditorView, modeEffects, setNoteIndex } from '@nib/editor'
   import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { chooseFiles } from '../../choose-files'
@@ -26,7 +26,7 @@
   import { DIVIDER, menu } from '../../menu.svelte'
   import { modes } from '../../modes.svelte'
   import { dur } from '../../motion'
-  import { followHref, followNote } from '../../open-link'
+  import { followHref, followNoteFrom } from '../../open-link'
   import { PROPERTY_CHOICES } from '../../property-choices'
   import { shortcuts } from '../../shortcuts.svelte'
   import { insideSpace } from '../../space-paths'
@@ -97,7 +97,8 @@
 
   function linkedNote(words: string): string | null {
     const target = /\[\[([^\]|#^]+)/.exec(words)?.[1]?.trim()
-    const root = workspace.activeSpace?.root
+    // Resolved in the chat's own space, which `targetOf` answers for too.
+    const root = workspace.rootHolding(path)
     const found = target ? links.targetOf(path, { kind: 'wikilink', target }) : null
     return found && root ? insideSpace(root, found) : null
   }
@@ -136,7 +137,7 @@
         mentionLit = 0
       },
       notes: links.index(path),
-      openNote: followNote,
+      openNote: followNoteFrom(path),
       openLink: followHref,
       writeLink: pickedLink,
       shortcuts: shortcuts.forEditor,
@@ -168,6 +169,14 @@
       made.destroy()
       attachments.clear()
     }
+  })
+
+  // The chat's space's links, kept up to date the way a pane's are (Editor.svelte):
+  // handed once as the field came, a note made since was a link to nothing, and one
+  // the scan had not reached yet was too.
+  $effect(() => {
+    const index = links.index(path)
+    if (editor) setNoteIndex(editor, index)
   })
 
   // An edit takes the composer over with the message's words; leaving it gives the

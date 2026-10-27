@@ -30,6 +30,91 @@ describe('the tags in a note', () => {
   test('and code fences hold none', () => {
     expect(tagsIn('#yes\n```\n#no\n```\n#also')).toEqual(['#yes', '#also'])
   })
+
+  test('and nor does inline code', () => {
+    expect(tagsIn('run `a #no` and #yes, `#not` ``x `#b` y`` #also')).toEqual(['#yes', '#also'])
+  })
+
+  test('and inline code runs on across the lines of a paragraph', () => {
+    expect(tagsIn('`a\nb` #x `c`')).toEqual(['#x'])
+    expect(tagsIn('`a\n#b\nc`')).toEqual([])
+  })
+
+  test('but not past the end of a block', () => {
+    expect(tagsIn('a `b\n\nc` #t')).toEqual(['#t'])
+    expect(tagsIn('- a `x\n- b` #t')).toEqual(['#t'])
+    expect(tagsIn('# A `x\nb` #t')).toEqual(['#t'])
+  })
+
+  test('though a backtick that opens no code is just a backtick', () => {
+    expect(tagsIn('\\` #yes ` #too')).toEqual(['#yes', '#too'])
+  })
+
+  test('nor does a fence inside a quote or a callout', () => {
+    const note = '> [!example] Button\n> ```css\n> .button { color: #fff; }\n> ```\n> #after\n'
+    expect(tagsIn(note)).toEqual(['#after'])
+    expect(tagsIn('> ```\n> #no\n\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('- item\n\n  ```\n  #no\n  ```\n#yes')).toEqual(['#yes'])
+  })
+
+  test('nor does indented code', () => {
+    expect(tagsIn('Notes\n\n    #include <stdio.h>\n\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('- item\n\n      #define X\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('> words\n>\n>     #no')).toEqual([])
+  })
+
+  test('but a paragraph runs on over an indented line, which is no code', () => {
+    expect(tagsIn('words\n    #yes')).toEqual(['#yes'])
+  })
+
+  test('a fence closes only on the same mark, at least as long, with nothing after it', () => {
+    expect(tagsIn('````md\n```\n#todo\n```\n````\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('```\n~~~\n#no\n```\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('```\n``` ts\n#no\n```\n#yes')).toEqual(['#yes'])
+  })
+
+  test('a fence opens at three spaces of indent but not four', () => {
+    expect(tagsIn('   ```\n#no\n```\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('words\n    ```\n#yes')).toEqual(['#yes'])
+  })
+
+  test('backticks with a backtick after them open no fence', () => {
+    expect(tagsIn('```a`a\n#yes')).toEqual(['#yes'])
+  })
+
+  test('and a link to a heading is no tag, though a tag next to it is', () => {
+    expect(tagsIn('## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n')).toEqual([
+      '#setup',
+    ])
+  })
+
+  /** The rows of `PARITY` in @nib/markdown's tags.test.ts, which the page is held
+   *  to, and of `reads_the_parity_rows` in tags.rs. */
+  test('alike on the page and in the index, row by row', () => {
+    const rows: [string, string[]][] = [
+      ['see https://x.test/?q=#x', []],
+      ['[link](https://x.test/?q=#x)', []],
+      ['<https://x.test/#a> <https://x.test/?a=#b>', []],
+      ['plain a|#b text', []],
+      ['code-ish a=#b prose and color=#ff8800', []],
+      ['snake_#x 3*#y a~#z', []],
+      ['[[Note|#alias]]', []],
+      ['[s](#setup) ![i](#img) and [s](#open', []],
+      ['**#a** ~~#d~~ ==#e== x **#f**', ['#a', '#d', '#e', '#f']],
+      ['_#u_ and __#todo__ and _#snake_case_', ['#u', '#todo', '#snake_case']],
+      ['| x | y |\n| - | - |\n|#f|#g|', ['#f', '#g']],
+    ]
+    for (const [source, tags] of rows) expect(tagsIn(`${source}\n`), source).toEqual(tags)
+  })
+
+  test('inside emphasis, strike, highlight or a cell, where the page draws one', () => {
+    expect(tagsIn('**#a** *#b* ~~#d~~ ==#e== call\n')).toEqual(['#a', '#b', '#d', '#e'])
+    expect(tagsIn('| x | y |\n| - | - |\n|#f|#g|\n')).toEqual(['#f', '#g'])
+  })
+
+  test('a fence in a quote ends with the quote', () => {
+    expect(tagsIn('> ```\n> #no\n#yes')).toEqual(['#yes'])
+  })
 })
 
 describe('the tags in the front matter', () => {
@@ -67,6 +152,11 @@ describe('the tags in the front matter', () => {
 
   test('and both halves of a note count', () => {
     expect(tagsIn('---\ntags: [work]\n---\n\nwords #nib\n')).toEqual(['#work', '#nib'])
+  })
+
+  test('in a note written with CRLF endings, as tags.rs reads it', () => {
+    expect(tagsIn('---\r\ntags: [a, b]\r\n---\r\nx\r\n')).toEqual(['#a', '#b'])
+    expect(tagsIn('---\r\ntags:\r\n  - a\r\n  - b\r\n---\r\nx #c\r\n')).toEqual(['#a', '#b', '#c'])
   })
 })
 
@@ -141,6 +231,12 @@ describe('what taking a tag away has to cut', () => {
     expect(without('---\ntags:\n  - work\n  - other\n---\n', 'work')).toBe(
       '---\ntags:\n  - other\n---\n',
     )
+  })
+
+  test('but never cuts into code', () => {
+    const note = '> ```css\n> .button { color: #fff; }\n> ```\n'
+    expect(without(note, 'fff')).toBe(note)
+    expect(tagSpans('    #include <stdio.h>\n', 'include')).toEqual([])
   })
 
   test('while one of several on a line leaves the line', () => {

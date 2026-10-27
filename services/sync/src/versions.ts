@@ -17,8 +17,10 @@
  *  What is deliberately not kept:
  *
  *  Every save. At most one version per note per five minutes, which is the same
- *  interval the device's own keeper defaults to. The newest state of a note is
- *  the note, so a version from thirty seconds ago says nothing the file does not.
+ *  interval the device's own keeper defaults to, plus the newest: a save inside
+ *  the five minutes is folded into the newest version rather than dropped, so the
+ *  last save of a session is always one. Dropped, it was the version a rollback
+ *  needed and nowhere on the account once the rollback had written over it.
  *
  *  Forever. A month by default, or a year for an account that asks - and thinned
  *  as it ages, the way a backup is: everything from the first day, one an hour
@@ -113,7 +115,7 @@ export function versionKey(hash: string): string {
 }
 
 export function presentVersion(version: Version) {
-  return { at: version.at, size: version.size, by: version.by }
+  return { at: version.at, size: version.size, by: version.by, hash: version.hash }
 }
 
 /** The name a device sent for itself, as far as it is worth keeping.
@@ -154,45 +156,111 @@ export function deviceIn(header: string | undefined): string {
  *  room settled between four devices is kept the same way a note one device
  *  pushed is. Best effort by design: a version that could not be written is not a
  *  reason to fail the save that carried it, and the note itself is already
- *  safely stored by the time this runs. */
+ *  safely stored by the time this runs.
+ *
+ *  A save less than five minutes after the newest version replaces it, as long as
+ *  that version is itself less than five minutes after the one before: the newest
+ *  version slides along with the session, and stays where it is once it is five
+ *  minutes clear of the last one kept. So one version every five minutes or so,
+ *  and the newest is always what the note last said. A version kept by name
+ *  (`held`) is never replaced, and neither is one another device sent: folded,
+ *  somebody else's words in between two saves of this one's were on no version.
+ *  The device is the one the session proves (`device`, see sync2/device.ts), not
+ *  the name it sends: two Macs send the same name. A save with none never folds,
+ *  and neither does one into a row with none. */
 export async function keepVersion(
   env: Env,
   note: Pick<Note, 'id' | 'hash' | 'size'>,
   content: string,
   by = '',
+  device: string | null = null,
 ): Promise<void> {
-  const newest = await env.DB.prepare(
-    'select at, hash from note_versions where note_id = ? order by at desc limit 1',
-  )
-    .bind(note.id)
-    .first<{ at: number; hash: string }>()
-
-  // Nothing new to say, or too soon to say it again.
-  if (newest?.hash === note.hash) return
-  if (newest && now() - newest.at < VERSION_EVERY) return
-
   // The bytes before the row, so a row never names a body that is not there. A
   // hash another note already keeps needs neither.
-  const held = await env.DB.prepare('select 1 as one from note_versions where hash = ? limit 1')
-    .bind(note.hash)
-    .first<{ one: number }>()
+  let stored = false
 
-  if (!held) await env.NOTES.put(versionKey(note.hash), content)
+  // Read, then written on the condition that what was read is still there: a save
+  // folding into the same row at the same time moves it, and this one then reads
+  // again rather than writing nowhere, which left the newest version one save
+  // behind the note.
+  for (let tries = 0; tries < 3; tries++) {
+    const last = await env.DB.prepare(
+      'select at, hash from note_versions where note_id = ? order by at desc limit 1',
+    )
+      .bind(note.id)
+      .first<{ at: number; hash: string }>()
 
-  await env.DB.prepare(
-    'insert or ignore into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
-  )
-    .bind(note.id, now(), note.hash, note.size, by)
-    .run()
+    // Nothing new to say.
+    if (last?.hash === note.hash) break
 
-  await keepAtMost(env, note.id)
+    if (!stored) {
+      const held = await env.DB.prepare('select 1 as one from note_versions where hash = ? limit 1')
+        .bind(note.hash)
+        .first<{ one: number }>()
+      if (!held) await env.NOTES.put(versionKey(note.hash), content)
+      stored = true
+    }
+
+    // This device's own newest version, and the moment of the one before it,
+    // whoever sent that. Its own rather than the newest, so two people typing in
+    // one room each slide a version of their own instead of adding one a settle.
+    const mine = await env.DB.prepare(
+      `select v.at as at, v.hash as hash, v.held as held,
+              (select max(at) from note_versions where note_id = v.note_id and at < v.at) as before
+         from note_versions v
+        where v.note_id = ? and v.device is ?
+        order by v.at desc limit 1`,
+    )
+      .bind(note.id, device)
+      .first<{ at: number; hash: string; held: number; before: number | null }>()
+
+    const at = now()
+    const folds =
+      mine !== null &&
+      !mine.held &&
+      at - mine.at < VERSION_EVERY &&
+      mine.before !== null &&
+      mine.at - mine.before < VERSION_EVERY
+
+    if (folds) {
+      // After the newest, which is where the last save belongs. Or ignore: a
+      // version kept meanwhile at that moment would otherwise throw, and the save
+      // would be on no version at all.
+      const to = mine.at === last?.at ? Math.max(at, mine.at) : Math.max(at, (last?.at ?? 0) + 1)
+      const folded = await env.DB.prepare(
+        `update or ignore note_versions set at = ?4, hash = ?5, size = ?6, by = ?7
+          where note_id = ?1 and at = ?2 and hash = ?3 and held = 0 and device is ?8`,
+      )
+        .bind(note.id, mine.at, mine.hash, to, note.hash, note.size, by, device)
+        .run()
+      if (!folded.meta.changes) continue
+
+      await forgetBodies(env, [mine.hash])
+      return
+    }
+
+    const kept = await env.DB.prepare(
+      `insert or ignore into note_versions (note_id, at, hash, size, by, device)
+       values (?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(note.id, Math.max(at, (last?.at ?? 0) + 1), note.hash, note.size, by, device)
+      .run()
+    if (!kept.meta.changes) continue
+
+    await keepAtMost(env, note.id)
+    return
+  }
+
+  // Not written after all: the bytes put above for it are nobody's.
+  if (stored) await forgetBodies(env, [note.hash])
 }
 
 /** Keeps a text as a version of a note now, whatever else it has kept lately: the
  *  words that lost a modal answer in sync v2 (docs/sync-v2.md section 5.4), which are
- *  the one version somebody asked for by name and so are never thinned into the next
- *  one. A moment of its own, after the newest, so two kept in one millisecond are
- *  both kept. */
+ *  the one version somebody asked for by name. Held, so no later save folds it away
+ *  and the sweep's thinning passes it by; it still goes with the horizon and the
+ *  ceilings, like every version. A moment of its own, after the newest, so two kept
+ *  in one millisecond are both kept. */
 export async function keepVersionNow(
   env: Env,
   noteId: string,
@@ -210,7 +278,7 @@ export async function keepVersionNow(
     .first<{ at: number | null }>()
 
   await env.DB.prepare(
-    'insert or ignore into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
+    'insert or ignore into note_versions (note_id, at, hash, size, by, held) values (?, ?, ?, ?, ?, 1)',
   )
     .bind(noteId, Math.max(now(), (newest?.at ?? 0) + 1), hash, byteLength(content), deviceIn(by))
     .run()
@@ -218,32 +286,85 @@ export async function keepVersionNow(
   await keepAtMost(env, noteId)
 }
 
+/** Keeps what a note says now as a version no later save folds away: the words a
+ *  rollback is about to write over, so that the rollback can be undone. The newest
+ *  version is held instead where it already says them, so the same words are not
+ *  kept twice in a row. */
+export async function holdVersion(
+  env: Env,
+  note: Pick<Note, 'id' | 'hash'>,
+  content: string,
+  by: string,
+): Promise<void> {
+  const newest = await env.DB.prepare(
+    'select at, hash from note_versions where note_id = ? order by at desc limit 1',
+  )
+    .bind(note.id)
+    .first<{ at: number; hash: string }>()
+
+  if (newest?.hash === note.hash) {
+    await env.DB.prepare('update note_versions set held = 1 where note_id = ? and at = ?')
+      .bind(note.id, newest.at)
+      .run()
+    return
+  }
+
+  await keepVersionNow(env, note.id, content, by)
+}
+
 /** The ceiling on one note's history, held where the version is written.
  *
  *  Counted rather than read, because almost every save is nowhere near the
- *  ceiling and a count on the note's own index is one seek. Over it, the oldest
- *  go - which is the same answer the month gives, arrived at sooner. */
+ *  ceiling and a count on the note's own index is one seek. Over it, what goes is
+ *  what the thinning would take anyway, crowded runs first, and the oldest only
+ *  after that: four people typing in one note for an afternoon reach the ceiling,
+ *  and taking the oldest then took a year of history with it, and the words a
+ *  rollback had kept. */
 async function keepAtMost(env: Env, noteId: string): Promise<void> {
   const held = await env.DB.prepare('select count(*) as many from note_versions where note_id = ?')
     .bind(noteId)
     .first<{ many: number }>()
 
-  const over = (held?.many ?? 0) - MOST_KEPT
-  if (over <= 0) return
+  let over = (held?.many ?? 0) - MOST_KEPT
+  const freed: string[] = []
 
-  const { results } = await env.DB.prepare(
-    `delete from note_versions
-      where note_id = ?1
-        and at in (select at from note_versions where note_id = ?1 order by at limit ?2)
-      returning hash`,
-  )
-    .bind(noteId, over)
-    .all<{ hash: string }>()
+  // The crowded first: a version with another close behind it says least, so the
+  // ones a five minute run, an hour, a day and a week cover go before any of the
+  // rest. Then the oldest, still sparing the held; the held last of all. Never the
+  // newest, which is what the note says.
+  for (const close of [VERSION_EVERY, HOUR, DAY, WEEK, null]) {
+    if (over <= 0) break
+    const { results } = await env.DB.prepare(
+      `delete from note_versions
+        where note_id = ?1
+          and at in (select at from (select at, held, lead(at) over (order by at) as next
+                                       from note_versions where note_id = ?1)
+                      where next is not null and held = ?4
+                        and (?3 is null or next - at < ?3)
+                      order by at limit ?2)
+        returning hash`,
+    )
+      .bind(noteId, over, close, 0)
+      .all<{ hash: string }>()
+    over -= results.length
+    for (const one of results) freed.push(one.hash)
+  }
 
-  await forgetBodies(
-    env,
-    results.map((one) => one.hash),
-  )
+  if (over > 0) {
+    const { results } = await env.DB.prepare(
+      `delete from note_versions
+        where note_id = ?1
+          and at in (select at from note_versions where note_id = ?1
+                      and at < (select max(at) from note_versions where note_id = ?1)
+                      order by at limit ?2)
+        returning hash`,
+    )
+      .bind(noteId, over)
+      .all<{ hash: string }>()
+    for (const one of results) freed.push(one.hash)
+  }
+
+  await forgetBodies(env, freed)
 }
 
 /** The bodies of versions that have gone, for the hashes no row names any more.
@@ -346,26 +467,42 @@ function folderPrefix(under: string): string {
  *  before it, for the notes that have one.
  *
  *  Deleted notes are in, because a note that was deleted after that moment is
- *  one of the things a rollback is for. */
+ *  one of the things a rollback is for - also when its words never changed, since
+ *  a delete leaves the hash as it was. Only one deleted after it, though: a note
+ *  already in Recently deleted at that moment was not part of the space then, and
+ *  stays where it is. History records no deletes, so `deleted_at` is the only
+ *  clock, and it says the last delete: a note deleted before the moment, restored
+ *  and deleted again since reads as deleted since, and comes back. A note purged
+ *  from Recently deleted is not in at all: its words are gone for good. A live
+ *  note not written since the moment is out as well, whatever its newest version
+ *  says: what it says now is what it said then, also where that was a save no
+ *  version kept. A live note that already says what it said
+ *  then is out: it has nothing to put back, and left in it would hold a place
+ *  in the page, so that once the first four hundred were back every later page
+ *  was those four hundred again and the rest of the space was never reached.
+ *  `countVersionsAt` asks the same question and has to keep the same filter. */
 export async function versionsAt(
   env: Env,
   spaceId: string,
   under: string,
   at: number,
-): Promise<{ note_id: string; path: string; hash: string; live: string }[]> {
+): Promise<{ note_id: string; path: string; hash: string }[]> {
   const prefix = folderPrefix(under)
 
   const { results } = await env.DB.prepare(
-    `select v.note_id as note_id, n.path as path, v.hash as hash, n.hash as live
+    `select v.note_id as note_id, n.path as path, v.hash as hash
        from note_versions v
        join notes n on n.id = v.note_id
       where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
+        and (v.hash != n.hash or n.deleted = 1)
+        and (n.updated_at > ?3 or n.deleted = 1)
+        and (n.deleted = 0 or (n.deleted_at is not null and n.deleted_at > ?3))
         and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)
       order by n.path
       limit ?4`,
   )
     .bind(spaceId, prefix, at, AT_ONCE)
-    .all<{ note_id: string; path: string; hash: string; live: string }>()
+    .all<{ note_id: string; path: string; hash: string }>()
 
   return results
 }
@@ -425,6 +562,11 @@ export async function sweepVersions(env: Env, at: number): Promise<number> {
   // busy notes the month thinned to one an hour was simply not what the account
   // held, and every night began the same distance behind. A statement a note is
   // 400 notes a night instead, and a note is only ever behind by one run.
+  //
+  // A held version is not thinned, and does not count as an hour's survivor
+  // either: it is milliseconds older than the write that followed it (a rollback
+  // writing over it), so as the hour's newest it would lose to that write the
+  // first night it was a day old.
   const { results: busy } = await env.DB.prepare(
     'select distinct note_id from note_versions where at < ? limit ?',
   )
@@ -435,8 +577,9 @@ export async function sweepVersions(env: Env, at: number): Promise<number> {
     const thinned = await env.DB.prepare(
       `delete from note_versions
         where note_id = ?1 and at < ?2
+          and held = 0
           and at not in (select max(at) from note_versions
-                          where note_id = ?1 and at < ?2
+                          where note_id = ?1 and at < ?2 and held = 0
                           group by ${SHELF}, cast(at / (${SHELF}) as integer))
         returning hash`,
     )
@@ -546,7 +689,9 @@ export async function countVersionsAt(
     `select count(*) as held from note_versions v
        join notes n on n.id = v.note_id
       where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
-        and v.hash != n.hash
+        and (v.hash != n.hash or n.deleted = 1)
+        and (n.updated_at > ?3 or n.deleted = 1)
+        and (n.deleted = 0 or (n.deleted_at is not null and n.deleted_at > ?3))
         and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)`,
   )
     .bind(spaceId, prefix, at)

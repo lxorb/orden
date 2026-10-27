@@ -18,7 +18,7 @@
  *  This file is that difference and nothing more: what fills an empty document, what
  *  the settle writes, and the two questions a settle asks before it writes at all. */
 
-import { readCanvas, writeCanvas } from '@nib/markdown/canvas'
+import { holdsCanvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { TEXT } from '@nib/rooms'
 import { fold } from '@nib/rooms/fold'
@@ -39,8 +39,38 @@ const KINDS: readonly RoomKind[] = ['words', 'plane']
  *  all: the room keeps its plane, the settle keeps writing it, and nothing is lost
  *  in either direction. See `crossed` in room.ts for what a real crossing costs,
  *  and rooms/kind.ts in the app, which states this same rule for the other end. */
-export function roomKind(path: string): RoomKind {
+function roomKind(path: string): RoomKind {
   return isCanvasTarget(path) || isPagesTarget(path) ? 'plane' : 'words'
+}
+
+/** Which shape the room for a note has: the one function every road into a room asks.
+ *
+ *  On sync v2 that is the entry's kind, not its name. A rename there moves a name and
+ *  nothing else - the tree keeps the kind the entry was made as - and every device goes
+ *  on holding the document in that shape (`shapeOf` in the app's sync2/kinds.ts), so a
+ *  room that read the shape off a renamed name held a different document from all of
+ *  them. A `Plan.md` renamed to `Plan.canvas` is still words on every device, and its
+ *  file is still the words; the room is words too. A note not on an epoch yet has no
+ *  entry kind worth the name (the column says `note` for every row written before the
+ *  tree), and is read off its name as it always was; see `crossed` in room.ts for what
+ *  a room does when the two disagree. */
+export function noteKind(note: {
+  path: string
+  kind?: string | null | undefined
+  epoch?: number | null | undefined
+}): RoomKind {
+  if ((note.epoch ?? 0) < 1 || !note.kind) return roomKind(note.path)
+  return note.kind === 'canvas' || note.kind === 'pages' ? 'plane' : 'words'
+}
+
+/** Whether a whole text says what a room of this kind can hold. Only a plane can fail:
+ *  `readCanvas` reads text that is not a canvas as one with nothing on it, and a plane
+ *  turned to that deletes every card it had. A canvas entry renamed to `.md` is still a
+ *  plane, and prose written into it - by a v1 app, the connector, a version put back -
+ *  is refused rather than taken for an empty canvas. The app asks the same question of
+ *  what it reads off the disk (`readable` in its sync2/kinds.ts). */
+export function readsAs(kind: RoomKind, text: string): boolean {
+  return kind !== 'plane' || holdsCanvas(text)
 }
 
 /** What a website is doing in neither list: nothing, because no client asks for a

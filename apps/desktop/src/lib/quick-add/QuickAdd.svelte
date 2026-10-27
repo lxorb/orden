@@ -19,7 +19,8 @@
    *  question. The same field edits a task where a view asks it to (`mode: 'edit'`),
    *  holding what the task says in its controls; a field in a list (`oncancel`) has the
    *  Cancel beside its button. What happens to the task is the caller's (`onsubmit`): the
-   *  sheet writes it, a view writes or changes it, the global window hands it to the app. */
+   *  sheet writes it, a view writes or changes it, the global window hands it to the app.
+   *  A caller that answers `false` took nothing, and the field keeps what was typed. */
   import type { Priority } from '@nib/markdown/task-line'
   import { parseQuickAdd, type QuickFields } from '@nib/bases/language'
   import { todayOf } from '@nib/bases'
@@ -79,7 +80,8 @@
     smart?: boolean
     /** Adding a task, or changing the one the prefill says. */
     mode?: 'add' | 'edit'
-    onsubmit: (entry: Entry, open: boolean) => void | Promise<void>
+    /** `false` where the task went nowhere, so the field keeps it. */
+    onsubmit: (entry: Entry, open: boolean) => unknown
     onclose: () => void
     /** A field standing in a list: Cancel beside its button. */
     oncancel?: () => void
@@ -95,7 +97,9 @@
   let text = $state(untrack(() => prefill.text ?? ''))
   let description = $state<string | null>(untrack(() => prefill.description ?? null))
   /** Spans turned back into words. */
-  let keep = $state<Span[]>([])
+  let keep = $state<Span[]>(untrack(() => [...(prefill.keep ?? [])]))
+  /** What the task's line escaped, which stays words as the words around it change. */
+  let escaped = $state<Span[]>(untrack(() => [...(prefill.escaped ?? [])]))
   /** What the controls picked, over whatever the words say. `null` takes a field away. */
   let picked = $state<{
     due?: string | null
@@ -116,12 +120,12 @@
   let pasted = $state<string[] | null>(null)
 
   /** The line as last seen, so the spans turned back follow an edit. */
-  let seen = ''
+  let seen = untrack(() => prefill.text ?? '')
 
   const today = $derived(todayOf())
   const read = $derived(
     smart
-      ? parseQuickAdd(text, langs, new Date(), { keep, notes })
+      ? parseQuickAdd(text, langs, new Date(), { keep, escaped, notes })
       : { text: text.trim(), fields: { tags: [], remind: [] }, chips: [] },
   )
   const pieces = $derived(piecesOf(text, read.chips))
@@ -167,6 +171,7 @@
     const now = text
     if (now === seen) return
     keep = carried(keep, seen, now)
+    escaped = carried(escaped, seen, now)
     seen = now
   })
 
@@ -381,6 +386,7 @@
     text = ''
     seen = ''
     keep = []
+    escaped = []
     picked = {}
     description = null
     input?.focus()
@@ -388,17 +394,34 @@
 
   /** Add with AI waiting for the model's answer. */
   let thinking = $state(false)
+  /** A task handed over and not yet answered: the global window waits on the app, which
+   *  can take a while, and the words are still in the field all that time. */
+  let sending = false
+
+  /** Hands the task over, once. The field is emptied only once the task is in, so one
+   *  refused - in a space shared to be read - stays where it was typed rather than
+   *  going nowhere; and only where it still holds the words handed over, so whatever
+   *  was typed during the wait is not wiped with them. */
+  async function handOver(entry: Entry, open: boolean, typed: string) {
+    sending = true
+    try {
+      if ((await onsubmit(entry, open)) !== false && mode === 'add' && text === typed) clear()
+    } finally {
+      sending = false
+    }
+  }
 
   async function submit(open: boolean) {
     const entry = entryOf(read.text, fields)
-    if (!entry || thinking) return
-    if (mode === 'add') clear()
-    await onsubmit(entry, open)
+    if (!entry || thinking || sending) return
+    await handOver(entry, open, text)
   }
 
   /** Add with AI (#328): the task the model makes of the line, with the field's labels and
    *  its note where it has one; the plain task where the model makes none. */
   async function submitAi(asked: Provider) {
+    if (thinking || sending) return
+    const typed = text
     thinking = true
     const { askedEntry } = await import('./ai-entry')
     const made = await askedEntry(asked, text.trim(), tags, notes).catch(() => null)
@@ -409,22 +432,31 @@
     const entry = entryOf(made.text, own)
     if (!entry) return
     if (note === undefined && made.note !== undefined) entry.note = made.note
-    clear()
-    await onsubmit(entry, false)
+    await handOver(entry, false, typed)
   }
 
   /** Several lines pasted: one task each, read the way a typed line is, with what the
    *  controls picked for all of them. */
   async function submitEach() {
+    if (sending) return
     const lines = pasted ?? []
     pasted = null
-    for (const line of lines) {
-      const said = smart ? parseQuickAdd(line, langs, new Date(), { notes }) : null
-      const own: QuickFields = said
-        ? { ...fields, ...said.fields, tags: [...new Set([...fields.tags, ...said.fields.tags])] }
-        : fields
-      const entry = entryOf(said ? said.text || line : line, own)
-      if (entry) await onsubmit(entry, false)
+    sending = true
+    try {
+      for (const [index, line] of lines.entries()) {
+        const said = smart ? parseQuickAdd(line, langs, new Date(), { notes }) : null
+        const own: QuickFields = said
+          ? { ...fields, ...said.fields, tags: [...new Set([...fields.tags, ...said.fields.tags])] }
+          : fields
+        const entry = entryOf(said ? said.text || line : line, own)
+        // The lines not yet in are asked about again rather than dropped.
+        if (entry && (await onsubmit(entry, false)) === false) {
+          pasted = lines.slice(index)
+          return
+        }
+      }
+    } finally {
+      sending = false
     }
     clear()
   }

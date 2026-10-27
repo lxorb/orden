@@ -28,7 +28,7 @@ import { joinPath } from '../tauri'
 import { waited } from '../timing'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
-import { answer, method, onTheActivity } from './bridge'
+import { answer, frameWord, method, onTheActivity, wordSaid } from './bridge'
 import {
   type Arrived,
   arrivedFrom,
@@ -36,6 +36,7 @@ import {
   sharedPlan,
   sharedTask,
   sharedTitle,
+  sharedMarkdown,
   sharedWords,
   type SharedItem,
 } from './shared'
@@ -59,6 +60,12 @@ interface Asked {
   tickSpace: string
 }
 
+/** The commands a tile or a widget row sends (Tiles.kt, Widgets.kt, TodayWidget.kt),
+ *  and the only ones a press runs. The activity is exported and opens on a `nib://`
+ *  link, so a web page could name any id in the registry: one tap started dictation
+ *  or signed the reader out. test/android.test.ts holds the senders to this list. */
+export const HANDED: ReadonlySet<string> = new Set(['new', 'search-space', 'record', 'quick-add'])
+
 /** Reads what the activity said about the press that started this. */
 export function askedFrom(json: string): Asked {
   const nothing: Asked = { command: '', open: '', tick: '', tickSpace: '' }
@@ -76,7 +83,7 @@ export function askedFrom(json: string): Asked {
 
   const words = (value: unknown) => (typeof value === 'string' ? value : '')
   return {
-    command: words(held.command),
+    command: HANDED.has(words(held.command)) ? words(held.command) : '',
     open: words(held.open),
     tick: words(held.tick),
     tickSpace: words(held.tickSpace),
@@ -116,17 +123,31 @@ export function openable(said: string): string | null {
   return found
 }
 
+/** A take waits for the word; one is enough. */
+let retaking = false
+
 /** Everything one intent was carrying, in the order it matters: the note a widget
  *  row named, then the command a tile asked for, then whatever was shared. */
 async function take(): Promise<void> {
-  const asked = askedFrom(method('handed')?.() ?? '')
+  // The word, because the bridge is in every frame; see `frameWord`.
+  const word = await frameWord()
+  // The activity keeps what it holds until asked with the word: asked again once it
+  // is said, or the share that started the app is never read (B467).
+  if (!word) {
+    if (!retaking) {
+      retaking = true
+      void wordSaid().then(() => take())
+    }
+    return
+  }
+  const asked = askedFrom(method('handed')?.(word) ?? '')
 
   const open = asked.open ? openable(asked.open) : null
   if (open) await workspace.open(open).catch(() => undefined)
   if (asked.command) run(asked.command)
   if (asked.tick) await ticked(asked.tick, asked.tickSpace)
 
-  await taken()
+  await taken(word)
 }
 
 /** A box of the Today widget: the task ticked in its note, through the one write path.
@@ -141,30 +162,38 @@ async function ticked(at: string, space: string): Promise<void> {
 }
 
 /** The share, from what the activity holds to what the space holds. */
-async function taken(): Promise<void> {
-  const arrived = arrivedFrom(method('shared')?.() ?? '')
+async function taken(word: string): Promise<void> {
+  const arrived = arrivedFrom(method('shared')?.(word) ?? '')
   if (!arrived) return
 
+  let answered = true
   try {
-    const bytes = await carried(arrived)
-    const where = await ask(arrived)
+    const bytes = await carried(arrived, word)
+    const root = await landing()
+    const where = await ask(arrived, root)
 
-    if (where === 'here') await intoTheOpenNote(arrived, bytes)
-    else if (where === 'new') await intoANewNote(arrived, bytes)
-    else if (where === 'task') await asATask(arrived)
+    if (where === 'kept') {
+      // Nowhere it could go: every space is shared to be read and no note is open
+      // to write in. Letting go of it here would lose it with nothing made, so the
+      // activity keeps it, and the next time the page asks it is offered again.
+      answered = false
+      log('error', 'shared: no space may be written in, so the share is kept')
+    } else if (where === 'here') await intoTheOpenNote(arrived, bytes)
+    else if (where === 'new' && root !== null) await intoANewNote(arrived, bytes, root)
+    else if (where === 'task' && root !== null) await asATask(arrived, root)
   } catch (error) {
     log('error', `shared: ${error instanceof Error ? error.message : String(error)}`)
   } finally {
     // Either way the copies in the cache have been answered for. A share nobody
     // took is a share that was dismissed, which always means do nothing.
-    method('sharedDone')?.()
+    if (answered) method('sharedDone')?.(word)
   }
 }
 
 /** The bytes of everything that came over as a file, by where it sat in the
  *  share. Asked for in slices, yielding between them, so a photograph does not
  *  hold the page still while it crosses. */
-async function carried(arrived: Arrived): Promise<Map<number, Uint8Array>> {
+async function carried(arrived: Arrived, word: string): Promise<Map<number, Uint8Array>> {
   const read = method('sharedBytes')
   const held = new Map<number, Uint8Array>()
   if (!read) return held
@@ -176,7 +205,7 @@ async function carried(arrived: Arrived): Promise<Map<number, Uint8Array>> {
     let got = 0
 
     while (got < item.size) {
-      const text = read(at, got, SLICE)
+      const text = read(word, at, got, SLICE)
       if (!text) break
 
       const bytes = fromBase64(text)
@@ -203,28 +232,44 @@ async function carried(arrived: Arrived): Promise<Map<number, Uint8Array>> {
   return held
 }
 
-/** Which way this share should land, or null for none.
+/** The space a new note or a task from a share goes into: the open one where it may
+ *  be written in, else the first that may, as a PDF from outside is (pdf/arrival.ts),
+ *  else none. Never one shared with this account to be read, which the sync refuses
+ *  on every pass. Fetched, as sharing.svelte.ts reads the workspace. */
+async function landing(): Promise<string | null> {
+  const { canWriteAt } = await import('../sharing.svelte')
+  const open = workspace.activeSpace?.root
+  if (open !== undefined && canWriteAt(open)) return open
+  return workspace.spaces.find((one) => canWriteAt(one.root))?.root ?? null
+}
+
+/** Which way this share should land, null for none, or kept where it has nowhere to go.
  *
  *  Asked only where there is a choice: a note open to write in, for a share that is
  *  nothing but words and pictures, which are the two things that can go into a note
  *  that already exists; and a task in the inbox, for a share that is words alone (a
  *  link, a sentence). Anything else makes its own note without asking, because there
  *  is nothing to choose between. */
-async function ask(arrived: Arrived): Promise<'new' | 'here' | 'task' | null> {
+async function ask(
+  arrived: Arrived,
+  root: string | null,
+): Promise<'new' | 'here' | 'task' | 'kept' | null> {
   const tab = workspace.active
   const view = views.of(workspace.panes.focusedId)
   const fits = arrived.items.every((one) => one.text !== null || isPicture(one))
   const into = tab?.kind === 'note' && !!view && !view.state.readOnly && fits ? tab : null
   const words = arrived.items.every((one) => one.text !== null)
-  if (!into && !words) return 'new'
+  // With no space to make a note or a task in, the open note is the only way in.
+  if (root === null && !into) return 'kept'
+  if (root !== null && !into && !words) return 'new'
 
   const chosen = await prompt.choose({
     title: t('Shared'),
     detail: summary(arrived),
     options: [
-      { id: 'new', label: t('New note'), primary: true },
+      ...(root !== null ? [{ id: 'new', label: t('New note'), primary: true }] : []),
       ...(into ? [{ id: 'here', label: t('Add to {name}', { name: into.shown }) }] : []),
-      ...(words ? [{ id: 'task', label: t('As a task') }] : []),
+      ...(root !== null && words ? [{ id: 'task', label: t('As a task') }] : []),
     ],
   })
 
@@ -232,10 +277,11 @@ async function ask(arrived: Arrived): Promise<'new' | 'here' | 'task' | null> {
   return null
 }
 
-/** A line in the open space's inbox, the share's title linked to where it came from. */
-async function asATask(arrived: Arrived) {
+/** A line in the inbox of the space it lands in, the share's title linked to where it
+ *  came from. */
+async function asATask(arrived: Arrived, root: string) {
   const { addTask } = await import('../task-actions')
-  await addTask(sharedTask(arrived))
+  await addTask(sharedTask(arrived), { root, typed: false })
 }
 
 /** What arrived, in one line, so the question is about something the reader can
@@ -250,25 +296,26 @@ function summary(arrived: Arrived): string {
     .join(', ')
 }
 
-/** A note of its own, written the way an import is written. */
-async function intoANewNote(arrived: Arrived, bytes: ReadonlyMap<number, Uint8Array>) {
-  const space = workspace.activeSpace
-  if (!space) return
-
+/** A note of its own, written the way an import is written, in the space `landing`
+ *  chose: never one shared with this account to be read, which the import itself
+ *  refuses too. */
+async function intoANewNote(
+  arrived: Arrived,
+  bytes: ReadonlyMap<number, Uint8Array>,
+  root: string,
+) {
   // Where the pictures and the files go, which is the reader's own Attachments
   // setting, worked out for the note this is about to write.
   const folder = attachmentFolder(
     modes.attachments,
-    joinPath(space.root, `${sharedTitle(arrived)}.md`),
-    space.root,
+    joinPath(root, `${sharedTitle(arrived)}.md`),
+    root,
   )
 
   const plan = sharedPlan(arrived, bytes, new Date(), folder)
   if (!plan.files.length) return
 
-  const landed = await busy.run(t('Importing'), () =>
-    applyImport(plan, { root: space.root, folder: '' }),
-  )
+  const landed = await busy.run(t('Importing'), () => applyImport(plan, { root, folder: '' }))
 
   // The note is first in the plan, so it is the first path back - a page note, where
   // what was shared is a PDF on its own.
@@ -282,7 +329,7 @@ async function intoTheOpenNote(arrived: Arrived, bytes: ReadonlyMap<number, Uint
   const view = views.of(workspace.panes.focusedId)
   if (!view) return
 
-  const words = sharedWords(arrived)
+  const words = sharedMarkdown(arrived)
   if (words) writeAtCaret(view, words)
 
   for (const [at, item] of arrived.items.entries()) {

@@ -14,8 +14,9 @@
  *  the rows engine all ask it about the same line. `taskAt` (tasks.ts) still answers
  *  the narrower question of where the box is. */
 
+import { plainWords } from './escapes'
 import { taskAt } from './tasks'
-import { TAG_NAME, opensTag } from './tags'
+import { codeAndWords, codeSpans, inCode, opensTag, opensTagAt, tagAt } from './tags'
 
 /** p1 to p4 as Todoist numbers them, then the Tasks plugin's two low ones: sorting
  *  ascending puts the most urgent first and the low ones after the ones with none. */
@@ -308,6 +309,9 @@ interface Found {
  *  the last closing mark of its kind stands, so such an opening is turned away
  *  without a scan at all. */
 function fieldAt(text: string, at: number, last: number): Found | null {
+  // A bracket behind a backslash is a bracket, which is how `escapeText` and every
+  // importer write somebody's `[due:: 2026-01-01]` that was never a field.
+  if (escaped(text, at)) return null
   const open = text[at] === '[' ? '[' : '('
   const key = FIELD_KEY[open]
   key.lastIndex = at
@@ -323,6 +327,13 @@ function fieldAt(text: string, at: number, last: number): Found | null {
   return { index: at, 0: text.slice(at, end + 1), 1: found[1], 2: text.slice(from, to) }
 }
 
+/** Whether the character at `at` stands behind an odd run of backslashes. */
+function escaped(text: string, at: number): boolean {
+  let before = at
+  while (before > 0 && text[before - 1] === '\\') before--
+  return (at - before) % 2 === 1
+}
+
 function isBlank(character: string | undefined): boolean {
   return character === ' ' || character === '\t'
 }
@@ -336,7 +347,9 @@ function fieldAtEnd(head: string): Found | null {
   const end = head.length - 1
   const open = shut === ']' ? '[' : '('
   let at = head.indexOf(open, head.lastIndexOf(shut, end - 1) + 1)
+  const code = codeSpans(head)
   for (; at !== -1 && at < end; at = head.indexOf(open, at + 1)) {
+    if (inCode(code, at)) continue
     const found = fieldAt(head, at, end)
     if (found) return found
   }
@@ -347,8 +360,8 @@ function fieldAtEnd(head: string): Found | null {
 /** Where the next field could open in `text`, at or after `at`. */
 const OPENS = /[[(]/g
 
-/** A tag anywhere, nib's grammar (tags.ts). */
-const TAG = new RegExp(`#(${TAG_NAME})`, 'gu')
+/** A hash, which may open a tag; see `tagAt` in tags.ts. */
+const HASH = /#/g
 
 /** The Tasks plugin gives up after this many fields; so does this. */
 const MOST_FIELDS = 40
@@ -626,7 +639,7 @@ function trailingTokens(
     } else if ((found = AT_END.onCompletion.exec(head))) {
       read('onCompletion', found[1] ?? '')
       take(found, 'onCompletion', 'emoji', 1)
-    } else if ((found = AT_END.tag.exec(head))) {
+    } else if ((found = AT_END.tag.exec(head)) && !inCode(codeSpans(head), found.index)) {
       take(found, 'tag', 'tag', 0)
     } else if ((found = AT_END.id.exec(head))) {
       read('id', found[1] ?? '')
@@ -661,9 +674,16 @@ function inlineTokens(
   const words = line.slice(from, to)
 
   const last = { '[': words.lastIndexOf(']'), '(': words.lastIndexOf(')') }
+  const code = codeSpans(words)
 
   for (OPENS.lastIndex = 0; OPENS.exec(words);) {
     const at = OPENS.lastIndex - 1
+    // Code holds no field: it is shown as written. Read on after it.
+    const inside = code.find(([from, to]) => at >= from && at < to)
+    if (inside) {
+      OPENS.lastIndex = inside[1]
+      continue
+    }
     const found = fieldAt(words, at, words[at] === '[' ? last['['] : last['('])
     if (!found) continue
     OPENS.lastIndex = at + found[0].length
@@ -696,10 +716,10 @@ function inlineTokens(
 /** Every tag in a run of text, without its `#`, in the order written. */
 export function tagsIn(text: string): string[] {
   const out: string[] = []
-  for (const found of text.matchAll(TAG)) {
-    if (!opensTag(text.charAt(found.index - 1))) continue
-    const name = found[1] ?? ''
-    if (!out.includes(name)) out.push(name)
+  const code = codeSpans(text)
+  for (const found of text.matchAll(HASH)) {
+    const name = inCode(code, found.index) ? null : tagAt(text, found.index)
+    if (name !== null && !out.includes(name)) out.push(name)
   }
   return out
 }
@@ -742,4 +762,61 @@ export function parseTask(line: string): ParsedTask | null {
 /** The fields of a task line, or null for a line that is not one. */
 export function readTask(line: string): TaskFields | null {
   return parseTask(line)?.fields ?? null
+}
+
+/** The emoji the Tasks plugin reads a field from: the priorities, the dates, a
+ *  recurrence, what happens on completion, an id and what a task waits on. */
+const FIELD_EMOJI = /(🔺|⏫|🔼|🔽|⏬|✅|❌|📅|📆|🗓|⏳|⌛|🛫|➕|🔁|🏁|🆔|⛔)\uFE0F?/gu
+
+/** Words somebody else wrote, as a task line's text that reads back as exactly
+ *  those words: the escapes `plainWords` would write are the caller's, and this adds
+ *  what only the task reader would take apart. A `#` that would open a tag is
+ *  escaped, as is the second colon of a `[key:: value]` field, and every field emoji
+ *  is followed by a word joiner, which draws nothing and leaves the emoji, the date
+ *  or the words after it read as none of the patterns at the end of a line. */
+export function taskWords(words: string): string {
+  // Code shows what is in it as written and the reader takes nothing out of it, so it
+  // is passed over: an escape there would be drawn as a backslash.
+  let before = ''
+  return codeAndWords(words)
+    .map((one) => {
+      const written = one.code ? one.text : taskWordsAfter(one.text, before)
+      before = one.text.at(-1) ?? before
+      return written
+    })
+    .join('')
+}
+
+/** `taskWords` for words that are not code, `before` the character in front of them. */
+function taskWordsAfter(words: string, before: string): string {
+  let out = ''
+  for (let at = 0; at < words.length; at++) {
+    const char = words.charAt(at)
+    const prior = at > 0 ? words.charAt(at - 1) : before
+    const opens = () => (at > 0 ? opensTagAt(words, at) : opensTag(before))
+    if (char === '#' && prior !== '\\' && opens()) out += '\\#'
+    else if (char === ':' && prior === ':' && endsKey(words, at - 1)) out += '\\:'
+    else out += char
+  }
+  return out.replace(FIELD_EMOJI, '$&\u2060')
+}
+
+/** Whether the colon at `colon` closes a field's key: a bracket that opens one before
+ *  it, not escaped, and a key between with no colon or bracket in it. An address's
+ *  `https://a/x::y` has a colon of its own in the way, so it is left as written. */
+function endsKey(words: string, colon: number): boolean {
+  for (let back = colon - 1; back >= 0; back--) {
+    const char = words.charAt(back)
+    if (char === '[' || char === '(') return back < colon - 1 && !escaped(words, back)
+    if (char === ']' || char === ')' || char === ':') return false
+  }
+  return false
+}
+
+/** Plain words typed in another app, as a task line's text that reads back as them:
+ *  `plainWords` for what a note would read in them, then `taskWords` for what only
+ *  the task reader would. The one way in for every importer's checklist item and a
+ *  task shared from another app, so none of them can miss half of it. */
+export function plainTaskWords(words: string): string {
+  return taskWords(plainWords(words))
 }

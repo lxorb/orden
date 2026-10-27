@@ -77,9 +77,10 @@ export async function storeAttachment(file: File, notePath: string | null): Prom
   const written = await storeBeside(await file.arrayBuffer(), notePath, file.name)
   if (!written) return null
 
-  const root = workspace.activeSpace?.root
-  const relative = root === undefined ? null : spaceRelative(root, notePath, written)
-  if (relative) links.fileAdded(relative)
+  // The note's own space, which a note still open from another one is not the active.
+  const root = workspace.rootHolding(notePath)
+  const relative = root === null ? null : spaceRelative(root, notePath, written)
+  if (root !== null && relative) links.fileWritten(root, relative)
   void workspace.loadTree()
 
   return written
@@ -106,7 +107,8 @@ export function storeBeside(
 ): Promise<string | null> {
   // The folder is decided here and checked there: the command joins it onto the
   // note's own folder and refuses one that would leave the space.
-  const folder = attachmentFolder(modes.attachments, notePath, workspace.activeSpace?.root ?? null)
+  // The note's own space's assets folder, not the active space's.
+  const folder = attachmentFolder(modes.attachments, notePath, workspace.rootHolding(notePath))
 
   return invoke<string>('save_asset', {
     notePath,

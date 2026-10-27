@@ -8,12 +8,14 @@
   import { plain } from './inline'
   import type { Kit } from './kit'
   import TaskBox from './TaskBox.svelte'
-  import { groupLabel, propertyName } from './words'
+  import { groupLabel, noteNames, propertyName } from './words'
 
   const { kit }: { kit: Kit } = $props()
 
   const live = $derived(kit.live)
   const property = $derived(live.view?.groupBy?.property)
+  /** The groups' note names, for what each group is called. */
+  const names = $derived(noteNames((live.answer?.groups ?? []).map((group) => group.key)))
   const shown = $derived(
     live.columns
       .filter((one) => one !== 'task.text' && one !== 'file.name' && one !== 'file.basename')
@@ -25,13 +27,18 @@
   {#each live.answer?.groups ?? [] as group (groupName(group.key))}
     {#if property !== undefined}
       <p class="nib-section">
-        {groupLabel(property, group.key, live.today)}<span>{group.rows.length}</span>
+        {groupLabel(property, group.key, live.today, names)}<span>{group.rows.length}</span>
       </p>
     {/if}
     {#each group.rows as row (`${row.space}:${rowId(row)}`)}
       {@const title = row.task ? plain(row.task.text) : row.file.basename}
       <div class="row">
-        {#if row.task}<TaskBox task={row.task} label={title} ontick={() => kit.tick(row)} />{/if}
+        {#if row.task}<TaskBox
+            task={row.task}
+            label={title}
+            ontick={() => kit.tick(row)}
+            disabled={!kit.writes(row)}
+          />{/if}
         <button type="button" class="body" onclick={() => kit.choose(row, !row.task)}>
           <span class="title">{title}</span>
           {#each shown as one (one)}

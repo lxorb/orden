@@ -52,6 +52,8 @@ const DOCUMENTED: [string, Value][] = [
   ['(2.1).ceil()', 3],
   ['(2.9).floor()', 2],
   ['5.isEmpty()', false],
+  ['0.isEmpty()', false],
+  ['false.isEmpty()', false],
   ['(2.5).round()', 3],
   ['(2.3333).round(2)', 2.33],
   ['(3.14159).toFixed(2)', '3.14'],

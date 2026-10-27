@@ -1,13 +1,14 @@
 import { type Context, Hono } from 'hono'
 import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
-import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
-import { conflictPath, numbered } from '@nib/markdown/paths'
+import { isPagesTarget } from '@nib/markdown/links'
+import { conflictPath, freePath, numbered } from '@nib/markdown/paths'
 import { objectBody, readBody } from './body'
 import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
 import { keepWords } from './blog/words'
 import { linkPointer } from './chats/pointer'
+import { keepPictures } from './pictures'
 import { keepReminders } from './push/reminders'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
@@ -22,6 +23,7 @@ import {
 } from './spaces/space'
 import { laterOf, pokeSpace } from './hub/poke'
 import { ingestInto } from './rooms'
+import { noteKind, readsAs } from './rooms/kind'
 import { deviceOf } from './sync2/device'
 import { createByPath, deleteById, moveByPath } from './sync2/ops'
 import { DOCUMENT_KINDS, kindOfName } from './sync2/tree'
@@ -29,6 +31,7 @@ import type { Env, Note, Variables, Whoever } from './types'
 import {
   countVersionsAt,
   deviceIn,
+  holdVersion,
   keepVersion,
   ROLLBACK_AT_ONCE,
   presentVersion,
@@ -215,6 +218,9 @@ export async function addNote(
   // same reason: the note is stored, and an index is rebuildable. See
   // blog/words.ts.
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
+  // And its pictures, so a deleted account knows which spaces still show the ones it
+  // held; see pictures.ts.
+  await keepPictures(env, note, content)
   // And its reminders, for a phone that has not opened nib since; see push/reminders.ts.
   await keepReminders(env, note, content).catch(() => undefined)
   // And, for a chat's pointer, the chat it names; see chats/pointer.ts.
@@ -255,6 +261,7 @@ async function placeNote(
   await env.NOTES.put(noteKey(spaceId, note.id), content)
   await keepVersion(env, note, content, by).catch(() => undefined)
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
+  await keepPictures(env, note, content)
   await keepReminders(env, note, content).catch(() => undefined)
   await linkPointer(env, note, content).catch(() => undefined)
   return note
@@ -346,6 +353,10 @@ export async function noteBeside(
 export interface Saving {
   docBy?: string
   epoch?: number
+  /** The device a version of these words is kept for where it is not `docBy`: a
+   *  room settling a note with no document, which does not write who settled it
+   *  into the note but does tell its versions apart by it. See versions.ts. */
+  versionBy?: string
 }
 
 export async function saveNote(
@@ -424,13 +435,16 @@ export async function saveNote(
   // arrives through - a push, or a room settling what four devices wrote. Best
   // effort: the note is already stored, and a version that could not be written
   // is not a reason to answer the save with a failure. See versions.ts.
-  await keepVersion(env, updated, content, by).catch(() => undefined)
+  await keepVersion(env, updated, content, by, saving.docBy ?? saving.versionBy ?? null).catch(
+    () => undefined,
+  )
 
   // And the paths this note has just stopped answering on - it was renamed, or
   // its permalink or its aliases changed - so that a link somebody else wrote
   // still lands on it. Best effort for the same reason. See blog/paths.ts.
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
   await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
+  await keepPictures(env, updated, content)
   await keepReminders(env, updated, content).catch(() => undefined)
   await linkPointer(env, updated, content).catch(() => undefined)
 
@@ -635,11 +649,18 @@ notes.get('/notes/:id/paper', async (context) => {
 /** The paper a page note holds, named by the hash of bytes already uploaded to
  *  `/v1/blobs`. Somebody who can write in the space only: what a note is made of is
  *  the space's to say, and somebody handed the one note writes on its pages, not under
- *  them. The bytes have to be the asker's or the space owner's already, so nobody can
- *  hang a paper they could not upload onto a note. */
+ *  them. The bytes have to be the asker's own already, so nobody can hang a paper they
+ *  could not upload onto a note - or the space owner's and already in this space, as a
+ *  paper or a file of it, which is bytes everybody here can read anyway. Not every blob
+ *  the owner keeps: a hash can be learned without the file, and somebody who writes in
+ *  one of the owner's spaces would otherwise read a PDF the owner keeps for another. */
 notes.put('/notes/:id/paper', async (context) => {
   const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
-  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
+  // A note in Recently deleted, or purged down to its tombstone, takes no paper. A
+  // device that read the note while it was live can still be carrying one, and a paper
+  // hung on a tombstone is bytes the purge let go of, held again for ever. The space
+  // reaches a deleted note too, so it is refused here and not by `reachedNote`.
+  if (!found || found.note.deleted) return context.json({ error: NO_SUCH_NOTE }, 404)
   if (found.only || !allows(found.space.role, 'write')) {
     return context.json({ error: refusal('write') }, 403)
   }
@@ -654,9 +675,17 @@ notes.put('/notes/:id/paper', async (context) => {
 
   const who = context.get('who')
   const kept = await context.env.DB.prepare(
-    'select 1 as one from blobs where hash = ?1 and user_id in (?2, ?3) limit 1',
+    `select 1 as one from blobs
+      where hash = ?1
+        and (user_id = ?2
+             or (user_id = ?3
+                 and (exists (select 1 from notes where space_id = ?4
+                                and (paper = ?1 or (kind = 'file' and hash = ?1)))
+                      or exists (select 1 from spaces s, json_each(s.files) f
+                                  where s.id = ?4 and json_extract(f.value, '$.hash') = ?1))))
+      limit 1`,
   )
-    .bind(hash, who.kind === 'user' ? who.user.id : '', space.user_id)
+    .bind(hash, who.kind === 'user' ? who.user.id : '', space.user_id, space.id)
     .first<{ one: number }>()
   if (!kept) return context.json({ error: NO_PAPER }, 409)
 
@@ -734,13 +763,15 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   if (at === undefined || at <= 0) return context.json({ error: 'when to go back to' }, 400)
 
   const folder = under.replace(/^\/+/, '')
-  const found = await versionsAt(context.env, space.id, folder, at)
-  const changed = found.filter((one) => one.hash !== one.live)
+  // Only notes that differ from what they said then, or were deleted since: one
+  // that already matches would take a place in the page every round and push the
+  // rest out of reach.
+  const changed = await versionsAt(context.env, space.id, folder, at)
 
   // The listing above stops at its ceiling, so a full page of rows may be a
   // whole answer or the first of several. Counted only then, and the count is
   // what lets the sheet say "four hundred of twelve hundred".
-  const cut = found.length >= ROLLBACK_AT_ONCE
+  const cut = changed.length >= ROLLBACK_AT_ONCE
   const held = cut ? await countVersionsAt(context.env, space.id, folder, at) : changed.length
 
   if (dry) {
@@ -757,12 +788,39 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   const device = await deviceOf(context)
 
   let written = 0
+  // Versions the note cannot take back: words, for a note that is a canvas now. Said
+  // apart from what was written, and not left for the sheet to ask about again.
+  let refused = 0
   for (const one of changed) {
-    const note = await noteById(context.env, one.note_id)
+    let note = await noteById(context.env, one.note_id)
     if (!note) continue
 
-    const object = await context.env.NOTES.get(versionKey(one.hash))
-    if (!object) continue
+    // A note whose words are what they were then only needs to come back; one whose
+    // words moved needs them too, and is left as it is when they are gone.
+    const words = note.hash !== one.hash
+    const object = words ? await context.env.NOTES.get(versionKey(one.hash)) : null
+    if (words && !object) continue
+
+    // Deleted since: back out of Recently deleted first, the way its restore puts
+    // it, so a note that took its name meanwhile keeps it and this one is
+    // numbered next to it. Writing the words alone would bring it back onto a
+    // path somebody else holds. Write in the space is enough, unlike Recently
+    // deleted's restore, which is the owner's list: whoever may write here can
+    // already bring a deleted note back by writing it (PUT /notes/:id), and the
+    // rollback reaches only notes deleted after the moment it goes back to.
+    if (note.deleted) {
+      note = await restoreNote(context.env, note, device)
+      if (note.deleted) continue
+    }
+    if (!object) {
+      written += 1
+      continue
+    }
+
+    // What it says now, as a version the rollback's own write cannot fold away, so
+    // that what the rollback writes over is still on the account.
+    const current = await context.env.NOTES.get(noteKey(note.space_id, note.id))
+    if (current) await holdVersion(context.env, note, await current.text(), '')
 
     // The device that asked, like any other write: a rollback is an edit, and the
     // history saying which machine made it is the same answer to the same
@@ -772,15 +830,16 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
       name: asking,
       device,
     })
-    if (saved !== null && saved !== MOVED) written += 1
+    if (saved === UNREADABLE) refused += 1
+    else if (saved !== null && saved !== MOVED) written += 1
   }
 
   // What is left is what was not reached this time: the rows beyond the ceiling,
   // plus anything this pass could not write (a note somebody took away while it
   // ran). A client that asks again gets the next four hundred.
-  const left = Math.max(held - written, 0)
+  const left = Math.max(held - written - refused, 0)
 
-  return context.json({ notes: written, partial: left > 0, left })
+  return context.json({ notes: written, refused, partial: left > 0, left })
 })
 
 /** How many of the paths a rollback would touch it names. Enough to recognise
@@ -843,7 +902,16 @@ notes.put('/notes/:id', async (context) => {
   let base = baseVersion
 
   if (baseVersion !== undefined && baseVersion !== note.version) {
-    if (!isCanvasTarget(path)) return await conflict(context, note.id)
+    // Merged as a canvas only where the note is one, which on sync v2 is its entry's
+    // kind and not its name: words named `.canvas` read as an empty plane on both
+    // sides, and the merge kept the server's copy without a word about the save.
+    if (noteKind({ path, kind: note.kind, epoch: note.epoch }) !== 'plane') {
+      return await conflict(context, note.id)
+    }
+    // And never with a side that is not a canvas: read as an empty plane, the merge
+    // keeps the server's copy and the save is gone with a 200. Refused as a fresh
+    // save of the same text is; see `readsAs`.
+    if (!readsAs('plane', content)) return context.json({ error: NOT_A_CANVAS }, 422)
 
     const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
     content = mergeCanvasFiles(content, object ? await object.text() : '')
@@ -889,6 +957,7 @@ notes.put('/notes/:id', async (context) => {
   // that did not match gets, because it is the same thing to the client: what
   // it edited is not what is held, and here is what is.
   if (written === MOVED) return await conflict(context, note.id)
+  if (written === UNREADABLE) return context.json({ error: NOT_A_CANVAS }, 422)
 
   let saved = written
   if (placed && path !== note.path) {
@@ -947,6 +1016,11 @@ notes.delete('/notes/:id', async (context) => {
     return context.json({ ok: true })
   }
 
+  // Deleted already, as the tree answers too: a second delete would start the 14 days
+  // of Recently deleted again, and on a purged tombstone it would put an empty note
+  // back there for somebody to restore.
+  if (note.deleted) return context.json({ ok: true })
+
   const at = now()
   await atNextSeq(
     context.env,
@@ -966,8 +1040,58 @@ function noteById(env: Env, id: string): Promise<Note | null> {
   return env.DB.prepare('select * from notes where id = ?').bind(id).first<Note>()
 }
 
+/** A note out of Recently deleted, as the note it now is.
+ *
+ *  In a space whose tree is rows, a restore the tree says: the note back where it
+ *  was, with the folders it was in, numbered if its name was taken meanwhile. On the
+ *  v1 tree it goes back to its path, or the first free one next to it, because a
+ *  note that took the name while this one was away is not this one's to replace.
+ *  What Recently deleted's restore does, and a rollback to before the delete. */
+export async function restoreNote(env: Env, note: Note, device: string | undefined): Promise<Note> {
+  if (note.name_key) {
+    await deleteById(env, note.space_id, device, note.id, true)
+    const back = await noteById(env, note.id)
+    if (back) return back
+  }
+
+  const live = await env.DB.prepare('select path from notes where space_id = ? and deleted = 0')
+    .bind(note.space_id)
+    .all<{ path: string }>()
+  const taken = new Set(live.results.map((one) => one.path))
+  const path = freePath(note.path, (candidate) => taken.has(candidate))
+
+  const at = now()
+  // The number taken and the row written as one; see `atNextSeq`.
+  const { seq } = await atNextSeq(
+    env,
+    note.space_id,
+    env.DB.prepare(
+      `update notes set deleted = 0, deleted_at = null, path = ?2, seq = ${TAKEN_SEQ},
+                        version = version + 1, updated_at = ?3
+        where id = ?4`,
+    ).bind(note.space_id, path, at, note.id),
+  )
+
+  return {
+    ...note,
+    deleted: 0,
+    deleted_at: null,
+    path,
+    seq,
+    version: note.version + 1,
+    updated_at: at,
+  }
+}
+
 /** What `writeWords` answers for a note that moved past the version the writer named. */
 export const MOVED = 'moved'
+
+/** A text the note's room cannot hold: prose written into a canvas entry, which a
+ *  rename gave a name that says words. See `readsAs` in rooms/kind.ts. */
+export const UNREADABLE = 'unreadable'
+
+/** What a v1 save of such a text is answered. */
+const NOT_A_CANVAS = 'this note is a canvas - write a canvas into it'
 
 /** Who is writing a whole text, and the version they read, where they read one. */
 export interface Writer {
@@ -982,7 +1106,8 @@ export interface Writer {
  *  section 5.3), so the text goes to the room, which takes it in as the operations it
  *  differs by and settles at once; see `ingest` in rooms/room.ts. Before, it is a save
  *  like it always was. Answers the note as it now stands, `MOVED` where the note moved
- *  past the version the writer read, and null where its room could not be reached.
+ *  past the version the writer read, `UNREADABLE` where the text is not the kind of
+ *  thing the note is, and null where its room could not be reached.
  *
  *  `path` is where a note without a tree goes; a note with one is moved by the tree,
  *  and its words never move it. */
@@ -992,9 +1117,10 @@ export async function writeWords(
   text: string,
   path: string,
   writer: Writer,
-): Promise<Note | typeof MOVED | null> {
+): Promise<Note | typeof MOVED | typeof UNREADABLE | null> {
   if ((note.epoch ?? 0) >= 1) {
     const answer = await ingestInto(env, note, text, writer)
+    if (answer && 'refused' in answer && answer.refused === UNREADABLE) return UNREADABLE
     if (!answer || 'refused' in answer) return null
     return 'conflict' in answer ? MOVED : answer.note
   }

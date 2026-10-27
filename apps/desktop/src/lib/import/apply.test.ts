@@ -70,13 +70,22 @@ vi.mock('../link-index.svelte', () => ({
 }))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
+/** The roots of the spaces shared with this account to be read. */
+const readOnly = new Set<string>()
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) =>
+    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+}))
+
 const { applyImport, restamped } = await import('./apply')
+const { sha256 } = await import('../bytes')
 
 beforeEach(() => {
   wrote.length = 0
   heard.length = 0
   recorded.length = 0
   refusing = null
+  readOnly.clear()
   onDisk.clear()
   said.clear()
 })
@@ -226,6 +235,47 @@ describe('a name that is already taken', () => {
     expect(canvas?.kind === 'file' && new TextDecoder().decode(canvas.bytes)).toBe(
       board.replace('Plan.md', 'Plan 2.md'),
     )
+  })
+
+  test('a folder note and its folder step aside together', () => {
+    const base = '```base\nfilters:\n  and:\n    - file.folder + ".md" == this.file.path\n```\n'
+    const stamped = restamped(
+      planOf([
+        note('Home.md', 'See [[Tasks]] and [[Buy milk]].'),
+        note('Tasks/Buy milk.md', '# Buy milk'),
+        note('Tasks.md', base),
+        note('Tasks/Sub.md', '# Sub'),
+        note('Tasks/Sub/Deep.md', '# Deep'),
+      ]),
+      new Set(['tasks.md', 'tasks/buy milk.md']),
+      '',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual([
+      'Home.md',
+      'Tasks 2/Buy milk.md',
+      'Tasks 2.md',
+      'Tasks 2/Sub.md',
+      'Tasks 2/Sub/Deep.md',
+    ])
+    expect(textAt(stamped.files, 'Home.md')).toBe('See [[Tasks 2]] and [[Buy milk]].')
+  })
+
+  test('a folder the space already fills moves its folder note aside with it', () => {
+    const stamped = restamped(
+      planOf([note('Tasks.md', '# Tasks'), note('Tasks/Buy milk.md', '# Buy milk')]),
+      new Set(['tasks/old.md']),
+      'In',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual(['In/Tasks.md', 'In/Tasks/Buy milk.md'])
+
+    const filled = restamped(
+      planOf([note('Tasks.md', '# Tasks'), note('Tasks/Buy milk.md', '# Buy milk')]),
+      new Set(['tasks/old.md']),
+      '',
+    )
+    expect(filled.files.map((one) => one.path)).toEqual(['Tasks 2.md', 'Tasks 2/Buy milk.md'])
   })
 
   test('two of the import1s own notes cannot land on one name', () => {
@@ -386,6 +436,61 @@ describe('an import into a space that already holds an earlier copy', () => {
   })
 })
 
+describe('a page note and its paper', () => {
+  // A page note `X.pages` holds `X.pages.pdf` beside it as its paper: hidden from the
+  // file list, and trashed with the note. Either landing beside the other paired them.
+  test('a PDF named as a page note’s paper steps aside from the note already there', () => {
+    const stamped = restamped(planOf([file('Report.pages.pdf')]), new Set(['Report.pages']), '')
+
+    expect(stamped.files[0]?.path).toBe('Report.pages 2.pdf')
+    expect(stamped.stepped).toBe(1)
+  })
+
+  test('a page note steps aside from a PDF already there under its paper’s name', () => {
+    const stamped = restamped(planOf([file('Report.pages')]), new Set(['report.pages.pdf']), '')
+
+    expect(stamped.files[0]?.path).toBe('Report 2.pages')
+  })
+
+  test('a note and its paper that come together stay together', () => {
+    const stamped = restamped(
+      planOf([file('Report.pages.pdf'), file('Report.pages')]),
+      new Set(['Report.pages']),
+      '',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual(['Report 2.pages.pdf', 'Report 2.pages'])
+  })
+
+  test('a pair inside a folder note’s folder goes with the folder, and stays a pair', () => {
+    const stamped = restamped(
+      planOf([
+        file('Tasks/Report.pages.pdf'),
+        note('Tasks.md', '# Tasks'),
+        file('Tasks/Report.pages'),
+      ]),
+      new Set(['Tasks.md']),
+      '',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual([
+      'Tasks 2/Report.pages.pdf',
+      'Tasks 2.md',
+      'Tasks 2/Report.pages',
+    ])
+  })
+
+  test('a PDF steps aside from a page note the file list does not show', async () => {
+    onDisk.add('/Other/Report.pages')
+    const landed = await applyImport(planOf([file('Report.pages.pdf')]), {
+      root: '/Other',
+      folder: '',
+    })
+
+    expect(landed.paths).toEqual(['/Other/Report.pages 2.pdf'])
+  })
+})
+
 /** The write site judges what it is about to write, whatever the reader handed
  *  it. Every format reader puts each part of a name through `safeName`, so a path
  *  that climbs out of the space means a reader forwarded a zip entry's own name -
@@ -457,6 +562,28 @@ describe('an import that fails partway', () => {
       }),
     ).rejects.toThrow('the disk is full')
 
-    expect(recorded).toEqual([{ kind: 'import', paths: ['/Space/A.md', '/Space/B.md'] }])
+    expect(recorded).toEqual([
+      {
+        kind: 'import',
+        paths: ['/Space/A.md', '/Space/B.md'],
+        wrote: { '/Space/A.md': await sha256('a'), '/Space/B.md': await sha256('b') },
+      },
+    ])
+  })
+})
+
+/** A space shared with this account to be read takes no import: the copy here would
+ *  stop being the space's, and the sync refuses it on every pass (B280). Asked here, as
+ *  every import lands through here: the sheet, a browser's spaces, a share on a phone. */
+describe('a space shared to be read', () => {
+  test('is refused before a single file is written', async () => {
+    readOnly.add('/Theirs')
+    const plan = planOf([note('Plan.md', '# Plan'), file('assets/x.png')])
+
+    await expect(applyImport(plan, { root: '/Theirs', folder: 'In' })).rejects.toThrow(
+      /could not be written/,
+    )
+    expect(wrote).toEqual([])
+    expect(recorded).toEqual([])
   })
 })

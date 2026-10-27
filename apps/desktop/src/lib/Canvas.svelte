@@ -728,7 +728,7 @@
   $effect(() => {
     rooms.drawing(tab.note.key, store)
     return () => {
-      store.part()
+      store.gone()
       rooms.drawing(tab.note.key, null)
     }
   })
@@ -977,7 +977,8 @@
         if (store.editing !== null) store.editing = null
         break
       case 'edit':
-        store.editing = effect.id
+        // Not on a plane that may not be written in: the store drops what is typed.
+        if (!store.readOnly) store.editing = effect.id
         break
       case 'move':
       case 'resize':
@@ -1937,10 +1938,11 @@
           {node}
           canvasPath={tab.path}
           trusted={trustsHtmlIn(tab.note)}
-          root={workspace.activeSpace?.root ?? null}
+          root={workspace.rootHolding(tab.path)}
           picked={picked.has(node.id)}
           dimmed={narrowed && !picked.has(node.id)}
           editing={store.editing === node.id}
+          readOnly={store.readOnly}
           offset={STILL}
           ontext={(text: string) => store.edit(withText(store.canvas, node.id, text))}
           onleave={() => (store.editing = null)}

@@ -8,18 +8,17 @@
 
 import { imageUrl } from './images'
 import { links } from './link-index.svelte'
-import { assetUrl, joinPath } from './tauri'
-import { workspace } from './workspace.svelte'
+import { assetUrl } from './tauri'
 
 export function notePicture(src: string, notePath: string | null, source: string): string {
-  const root = workspace.activeSpace?.root
-  const found = root && !src.includes('/') ? links.fileNamed(src) : null
+  // Looked for in the note's own space, which a note still open from another space
+  // is not the active one.
+  const found = !src.includes('/') ? links.fileFor(src, notePath) : null
 
-  // A name the space answered to is already a whole path, from the space's own
-  // root. It is handed straight on: put back through the arithmetic for a path
-  // written beside a note, it would be joined onto the note's folder a second
-  // time and `![[x.png]]` would name nowhere.
-  if (found && root) return assetUrl(joinPath(root, found))
+  // A name the space answered to is already a whole path. It is handed straight on:
+  // put back through the arithmetic for a path written beside a note, it would be
+  // joined onto the note's folder a second time and `![[x.png]]` would name nowhere.
+  if (found) return assetUrl(found)
 
   return imageUrl(src, notePath, source)
 }

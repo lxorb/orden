@@ -6,13 +6,13 @@
  *  The devices are the app's own engine (apps/desktop/src/lib/sync2/test-device.ts),
  *  reached by its path for the reason sync2-engine.test.ts gives. */
 
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import app from '../src/index'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { type Live, live } from './sync2'
 
 interface Core {
-  spaces: Map<string, unknown>
+  spaces: Map<string, { outbox: unknown[]; entries: Map<string, { name: string }> }>
   held: Map<string, unknown>
   addSpace(id: string, root: string, role: string): unknown[]
   commit(changes: unknown[]): Promise<void>
@@ -20,16 +20,24 @@ interface Core {
 
 interface Device {
   root: string
+  store: { rows(table: 'log'): { failed: string | null }[] }
   disk: {
     bytes: Map<string, Uint8Array>
+    files: Map<string, string>
     writeBytes(path: string, bytes: Uint8Array): Promise<void>
+    write(path: string, text: string): Promise<void>
+    remove(path: string): Promise<void>
+    mkdir(path: string): Promise<void>
+    move(from: string, to: string): Promise<void>
   }
   engine: {
     core: Core
-    pass(space: string): Promise<{ finished: boolean } | null>
-    created(path: string, dir: boolean): Promise<string | null>
+    pass(space: string): Promise<{ finished: boolean; full: boolean } | null>
+    created(path: string, dir: boolean, text?: string): Promise<string | null>
     foreign(path: string): Promise<void>
     removed(path: string): Promise<void>
+    moved(from: string, to: string): Promise<void>
+    waiting(space: string): boolean
     held: {
       notes: readonly { id: string }[]
       answer(id: string, answer: string): Promise<string | undefined>
@@ -74,17 +82,21 @@ afterEach(() => env.close())
 const picture = (seed: number) =>
   new Uint8Array(Array.from({ length: 4096 }, (_, at) => (at * seed) % 251))
 
-async function device(name: string, files: Record<string, Uint8Array> = {}): Promise<Device> {
+async function device(
+  name: string,
+  files: Record<string, string | Uint8Array> = {},
+  as = { token, role: 'owner' },
+): Promise<Device> {
   const made = await (
     await kit()
   ).testDevice({
     fetch: async (request) => await app.fetch(request, env),
-    token,
+    token: as.token,
     name,
     files,
   })
   const core = made.engine.core
-  await core.commit(core.addSpace(space, made.root, 'owner'))
+  await core.commit(core.addSpace(space, made.root, as.role))
   expect(await (await kit()).firstPass(core, core.spaces.get(space), null)).toBe(true)
   await rooms.settle()
   return made
@@ -202,6 +214,54 @@ describe('a file that is not a note, under v2', () => {
     expect(bytesAt(laptop, 'photo.png')).toEqual(picture(7))
   })
 
+  test('fetched onto a file this device has not read yet, it waits and both are kept', async () => {
+    // The app was closed when a different Scan.pdf was dropped here, and the launch
+    // pass ran before the scan made it an entry: the laptop's was written over it.
+    const laptop = await device('laptop')
+    const desktop = await device('desktop')
+    await laptop.disk.writeBytes(`${laptop.root}/Scan.pdf`, picture(3))
+    await laptop.engine.created(`${laptop.root}/Scan.pdf`, false)
+    await desktop.disk.writeBytes(`${desktop.root}/Scan.pdf`, picture(7))
+    await laptop.engine.pass(space)
+    await rooms.settle()
+    await desktop.engine.pass(space)
+    await rooms.settle()
+
+    expect(bytesAt(desktop, 'Scan.pdf')).toEqual(picture(7))
+
+    await desktop.engine.created(`${desktop.root}/Scan.pdf`, false)
+    await passed(laptop, desktop)
+    for (const one of [laptop, desktop]) {
+      const kept = [...one.disk.bytes.values()].map((bytes) => bytes[1])
+      expect(kept.sort()).toEqual([picture(3)[1], picture(7)[1]].sort())
+    }
+  })
+
+  test('one the disk refuses to write waits for the next pass, and the rest arrive', async () => {
+    // Refused, the write threw, and the pass stopped before anything after it came.
+    const laptop = await device('laptop', { 'a.png': picture(3), 'b.png': picture(5) })
+    const desktop = await device('desktop')
+    const real = desktop.disk.writeBytes.bind(desktop.disk)
+    let locked = true
+    desktop.disk.writeBytes = async (path, bytes) => {
+      if (locked && path.endsWith('/a.png')) throw new Error(`${path} is open in another program`)
+      await real(path, bytes)
+    }
+    await passed(laptop, desktop)
+
+    expect(bytesAt(desktop, 'a.png')).toBeUndefined()
+    expect(bytesAt(desktop, 'b.png')).toEqual(picture(5))
+
+    locked = false
+    await passed(laptop, desktop)
+    expect(bytesAt(desktop, 'a.png')).toEqual(picture(3))
+    expect(desktop.engine.held.notes).toHaveLength(0)
+    expect([...desktop.disk.bytes.keys()].sort()).toEqual([
+      `${desktop.root}/a.png`,
+      `${desktop.root}/b.png`,
+    ])
+  })
+
   test('deleted on one device, it is gone from the other', async () => {
     const laptop = await device('laptop', { 'photo.png': picture(3) })
     const phone = await device('phone')
@@ -212,5 +272,257 @@ describe('a file that is not a note, under v2', () => {
     await passed(laptop, phone)
 
     expect(bytesAt(phone, 'photo.png')).toBeUndefined()
+  })
+})
+
+describe('an account too full for a file', () => {
+  /** A laptop whose account answers every upload of bytes `status` (507, no room) while
+   *  `full` says so. */
+  async function filling(files: Record<string, string | Uint8Array>) {
+    const state = { full: false, status: 507 }
+    const made = await (
+      await kit()
+    ).testDevice({
+      fetch: async (request) => {
+        if (state.full && request.method === 'PUT' && request.url.includes('/v2/blobs/'))
+          return Response.json({ error: 'refused' }, { status: state.status })
+        return await app.fetch(request, env)
+      },
+      token,
+      name: 'laptop',
+      files,
+    })
+    const core = made.engine.core
+    await core.commit(core.addSpace(space, made.root, 'owner'))
+    expect(await (await kit()).firstPass(core, core.spaces.get(space), null)).toBe(true)
+    await passed(made)
+    return { made, state }
+  }
+
+  afterEach(() => vi.restoreAllMocks())
+
+  /** The clock, past the wait before refused bytes go again. */
+  function later() {
+    const real = Date.now
+    vi.spyOn(Date, 'now').mockImplementation(() => real() + 10 * 60_000)
+  }
+
+  test('keeps a new file back, says so, and the rest of the space still syncs', async () => {
+    const { made, state } = await filling({ 'Plan.md': 'one' })
+    const phone = await device('phone')
+    await passed(phone)
+
+    state.full = true
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
+    await made.engine.created(`${made.root}/photo.png`, false)
+    await made.disk.write(`${made.root}/Notes.md`, 'a new note')
+    await made.engine.created(`${made.root}/Notes.md`, false, 'a new note')
+    for (let round = 0; round < 2; round += 1) {
+      const one = await made.engine.pass(space)
+      expect(one?.finished).toBe(true)
+      expect(one?.full).toBe(true)
+      await rooms.settle()
+    }
+    await passed(phone)
+    expect(phone.disk.files.get(`${phone.root}/Notes.md`)).toBe('a new note')
+    expect(bytesAt(phone, 'photo.png')).toBeUndefined()
+    // Kept, not dropped: the file goes once there is room.
+    expect(made.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
+
+    // Tried again only after a while: every try sends every byte.
+    state.full = false
+    expect((await made.engine.pass(space))?.full).toBe(true)
+    later()
+    const freed = await made.engine.pass(space)
+    expect(freed?.full).toBe(false)
+    await rooms.settle()
+    await passed(phone)
+    expect(bytesAt(phone, 'photo.png')).toEqual(picture(3))
+  })
+
+  test.each([
+    ['moved into a new folder', 'G/photo.png'],
+    ['moved into a new folder and renamed', 'G/pic.png'],
+  ])('kept back and then %s, it lands there once there is room', async (_said, to) => {
+    const { made, state } = await filling({ 'Plan.md': 'one' })
+    const phone = await device('phone')
+    await passed(phone)
+
+    state.full = true
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
+    await made.engine.created(`${made.root}/photo.png`, false)
+    expect((await made.engine.pass(space))?.full).toBe(true)
+    await made.disk.mkdir(`${made.root}/G`)
+    await made.engine.created(`${made.root}/G`, true)
+    await made.disk.move(`${made.root}/photo.png`, `${made.root}/G/photo.png`)
+    await made.engine.moved(`${made.root}/photo.png`, `${made.root}/G/photo.png`)
+    if (to !== 'G/photo.png') {
+      await made.disk.move(`${made.root}/G/photo.png`, `${made.root}/${to}`)
+      await made.engine.moved(`${made.root}/G/photo.png`, `${made.root}/${to}`)
+    }
+    expect((await made.engine.pass(space))?.full).toBe(true)
+    await rooms.settle()
+
+    state.full = false
+    later()
+    await passed(made, phone)
+    for (const one of [made, phone]) {
+      expect(bytesAt(one, to)).toEqual(picture(3))
+      expect(bytesAt(one, 'photo.png')).toBeUndefined()
+    }
+    expect(made.engine.waiting(space)).toBe(false)
+  })
+
+  test('kept back, then changed here, its new bytes go at once rather than after the wait', async () => {
+    const { made, state } = await filling({ 'Plan.md': 'one' })
+    const phone = await device('phone')
+    await passed(phone)
+
+    state.full = true
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
+    await made.engine.created(`${made.root}/photo.png`, false)
+    expect((await made.engine.pass(space))?.full).toBe(true)
+
+    state.full = false
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(7))
+    await made.engine.foreign(`${made.root}/photo.png`)
+    await passed(made, phone)
+    expect(bytesAt(phone, 'photo.png')).toEqual(picture(7))
+  })
+
+  test('bytes refused for another reason wait too, said once in the log and not as full', async () => {
+    const { made, state } = await filling({ 'Plan.md': 'one' })
+    state.full = true
+    state.status = 400
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
+    await made.engine.created(`${made.root}/photo.png`, false)
+    for (let round = 0; round < 2; round += 1) {
+      const one = await made.engine.pass(space)
+      expect(one?.finished).toBe(true)
+      expect(one?.full).toBe(false)
+    }
+    const said = made.store.rows('log').filter((row) => row.failed?.includes('photo.png'))
+    expect(said.map((row) => row.failed)).toEqual(['the account would not take photo.png'])
+    expect(made.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
+  })
+
+  test('keeps a replacement back, and the rest of the space still syncs', async () => {
+    const { made, state } = await filling({ 'photo.png': picture(3) })
+    const phone = await device('phone')
+    await passed(phone)
+
+    state.full = true
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(5))
+    await made.engine.foreign(`${made.root}/photo.png`)
+    await made.disk.write(`${made.root}/Notes.md`, 'a new note')
+    await made.engine.created(`${made.root}/Notes.md`, false, 'a new note')
+    const one = await made.engine.pass(space)
+    expect(one?.finished).toBe(true)
+    expect(one?.full).toBe(true)
+    await rooms.settle()
+    await passed(phone)
+    expect(phone.disk.files.get(`${phone.root}/Notes.md`)).toBe('a new note')
+    expect(bytesAt(phone, 'photo.png')).toEqual(picture(3))
+
+    state.full = false
+    later()
+    await passed(made, phone)
+    expect(made.engine.held.notes).toHaveLength(0)
+    expect(bytesAt(phone, 'photo.png')).toEqual(picture(5))
+  })
+})
+
+describe('a file in a space this account may only read', () => {
+  /** Somebody the space is shared with to read, on a device of their own. */
+  async function reader(): Promise<Device> {
+    const theirs = await signIn(env, 'reader@example.com')
+    env.db
+      .prepare(
+        "insert into space_members (space_id, email, role, created_at) values (?, 'reader@example.com', 'read', 1)",
+      )
+      .run(space)
+    return await device('reader', {}, { token: theirs, role: 'read' })
+  }
+
+  /** Every path the disk takes away, to this device's trash in the app. */
+  function trashed(one: Device): string[] {
+    const taken: string[] = []
+    const remove = one.disk.remove.bind(one.disk)
+    one.disk.remove = async (path) => {
+      taken.push(path)
+      await remove(path)
+    }
+    return taken
+  }
+
+  test('changed by another program, goes to the trash, the owner’s bytes come back, and the pass goes on', async () => {
+    const owner = await device('laptop', { 'photo.png': picture(3), 'a.md': 'one\n' })
+    const here = await reader()
+    await passed(owner, here)
+    expect(bytesAt(here, 'photo.png')).toEqual(picture(3))
+
+    await owner.disk.write(`${owner.root}/a.md`, 'one\ntwo\n')
+    await owner.engine.foreign(`${owner.root}/a.md`)
+    await owner.engine.pass(space)
+    await rooms.settle()
+
+    const taken = trashed(here)
+    await here.disk.writeBytes(`${here.root}/photo.png`, picture(10))
+    await here.engine.foreign(`${here.root}/photo.png`)
+    expect((await here.engine.pass(space))?.finished).toBe(true)
+    await rooms.settle()
+
+    expect(taken).toContain(`${here.root}/photo.png`)
+    expect(bytesAt(here, 'photo.png')).toEqual(picture(3))
+    expect(here.disk.files.get(`${here.root}/a.md`)).toBe('one\ntwo\n')
+  })
+
+  test('changed by another program and locked, waits for the next pass and the pass goes on', async () => {
+    const owner = await device('laptop', { 'photo.png': picture(3), 'a.md': 'one\n' })
+    const here = await reader()
+    await passed(owner, here)
+
+    await owner.disk.write(`${owner.root}/a.md`, 'one\ntwo\n')
+    await owner.engine.foreign(`${owner.root}/a.md`)
+    await owner.engine.pass(space)
+    await rooms.settle()
+
+    const remove = here.disk.remove.bind(here.disk)
+    here.disk.remove = () => Promise.reject(new Error('the file is being used by another process'))
+    await here.disk.writeBytes(`${here.root}/photo.png`, picture(10))
+    await here.engine.foreign(`${here.root}/photo.png`)
+    expect((await here.engine.pass(space))?.finished).toBe(true)
+    await rooms.settle()
+    expect(here.disk.files.get(`${here.root}/a.md`)).toBe('one\ntwo\n')
+    expect(bytesAt(here, 'photo.png')).toEqual(picture(10))
+
+    // Let go of, it goes the way an unlocked one does.
+    here.disk.remove = remove
+    await here.engine.pass(space)
+    await rooms.settle()
+    expect(bytesAt(here, 'photo.png')).toEqual(picture(3))
+  })
+
+  test('made by another program, stays on this disk as it is and is not asked about again', async () => {
+    const owner = await device('laptop', { 'a.md': 'one\n' })
+    const here = await reader()
+    await passed(owner, here)
+
+    const taken = trashed(here)
+    await here.disk.writeBytes(`${here.root}/mine.png`, picture(9))
+    await here.engine.created(`${here.root}/mine.png`, false)
+    await here.disk.write(`${here.root}/mine.md`, 'my words\n')
+    await here.engine.created(`${here.root}/mine.md`, false)
+    for (let round = 0; round < 3; round += 1) {
+      expect((await here.engine.pass(space))?.finished).toBe(true)
+      await rooms.settle()
+    }
+
+    expect(taken).toEqual([])
+    expect(bytesAt(here, 'mine.png')).toEqual(picture(9))
+    expect(here.disk.files.get(`${here.root}/mine.md`)).toBe('my words\n')
+    const theirs = here.engine.core.spaces.get(space)
+    expect(theirs?.outbox).toEqual([])
+    expect([...(theirs?.entries.values() ?? [])].map((entry) => entry.name)).toEqual(['a.md'])
   })
 })

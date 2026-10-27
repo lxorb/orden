@@ -144,6 +144,45 @@ describe('what another app may share with nib', () => {
   })
 })
 
+describe('the press that started the app', () => {
+  /** Read once. An activity made again (after the process died) or opened from
+   *  Recents is handed the intent it started with, and reading it again started the
+   *  recording again, or brought a share back as a second note. */
+  test('is not read again when the activity comes back', () => {
+    const created = /override fun onCreate\([\s\S]*?\n {2}\}/.exec(activity)?.[0] ?? ''
+    expect(created).toMatch(/savedInstanceState == null/)
+    expect(created).toContain('FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY')
+    expect(created).toContain('if (fresh) read(intent)')
+  })
+
+  /** The activity is exported and opens on a `nib://` link, so a web page or any
+   *  app could hand it `record` or a task to tick. What a tile, a widget or a
+   *  reminder carries is only taken with the seal the app put on it itself. */
+  test('is only acted on when the app sealed it', () => {
+    const reading = /private fun read\(intent: Intent\?\)[\s\S]*?\n {2}\}/.exec(activity)?.[0] ?? ''
+    const ours = reading.indexOf('sealedBy(this, intent)')
+    expect(ours).toBeGreaterThan(-1)
+    for (const extra of ['EXTRA_COMMAND', 'EXTRA_OPEN', 'EXTRA_TICK', 'Reminders.carried']) {
+      expect(reading.indexOf(extra), extra).toBeGreaterThan(ours)
+    }
+
+    const senders = {
+      tiles,
+      widgets,
+      today: read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'TodayWidget.kt'),
+      reminders: read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Reminders.kt'),
+    }
+    for (const [name, text] of Object.entries(senders)) {
+      const made = text.match(/Intent\(\w+, MainActivity::class\.java\)/g) ?? []
+      const sealed =
+        text.match(/MainActivity\.sealed\(\s*\w+,\s*Intent\(\w+, MainActivity::class\.java\)/g) ??
+        []
+      expect(made.length, name).toBeGreaterThan(0)
+      expect(sealed.length, name).toBe(made.length)
+    }
+  })
+})
+
 describe('the quick settings tiles', () => {
   const declared = [
     ...manifest.matchAll(/<service\s+android:name="\.(\w+Tile)"([\s\S]*?)<\/service>/g),
@@ -179,6 +218,19 @@ describe('the quick settings tiles', () => {
     for (const [, name, body = ''] of declared) {
       expect(body.includes('android:enabled="false"'), name).toBe(false)
     }
+  })
+
+  /** And the page runs from a press only the ids a tile or a widget sends, so every
+   *  one they send is on that list (`HANDED` in mobile/handed.ts). */
+  test('send only ids the page will run from a press', () => {
+    const today = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'TodayWidget.kt')
+    const sent = [
+      ...[...tiles.matchAll(/override val command = "([\w.-]+)"/g)].map((one) => one[1]),
+      ...[...`${widgets}${today}`.matchAll(/command\(context, "([\w.-]+)"/g)].map((one) => one[1]),
+    ]
+    const handed = read(SOURCE, 'lib', 'mobile', 'handed.ts')
+    const list = /HANDED[^[]*\[([^\]]*)\]/.exec(handed)?.[1] ?? ''
+    expect(new Set(sent)).toEqual(new Set([...list.matchAll(/'([\w.-]+)'/g)].map((one) => one[1])))
   })
 
   /** And nothing beside them says otherwise. The comment in the manifest, and the
@@ -293,6 +345,28 @@ describe('the bridge the page talks over', () => {
   const kotlin = [...activity.matchAll(/@JavascriptInterface\s+fun\s+(\w+)/g)].map((one) => one[1])
   const typed = [...bridge.matchAll(/^ {2}(\w+)\(/gm)].map((one) => one[1])
 
+  /** Every method but the few that only say how the window looks or open one of the
+   *  system's own screens: the rest read what was shared or handed in, or write what
+   *  the home screen draws, and a framed page may do none of it. */
+  const HARMLESS = ['insets', 'askForTheFrame', 'bars', 'dictates', 'exactAlarms', 'askExactAlarms']
+  const GUARDED = kotlin.filter((name) => name !== undefined && !HARMLESS.includes(name))
+
+  test('wants the word for everything but how the window looks', () => {
+    expect(GUARDED).toEqual(
+      expect.arrayContaining(['handed', 'shared', 'sharedBytes', 'sharedDone', 'widgets']),
+    )
+    expect(GUARDED).toContain('remindersTaken')
+    for (const name of GUARDED) {
+      expect(bridge, `${name} is typed with the word first`).toMatch(
+        new RegExp(`^ {2}${name}\\(said: string`, 'm'),
+      )
+      // A call that carries nothing is a call the activity refuses.
+      expect(page, `${name} is never called without the word`).not.toMatch(
+        new RegExp(`method\\('${name}'\\)\\?\\.\\(\\)`),
+      )
+    }
+  })
+
   test('is the same list on both sides', () => {
     expect(kotlin.length).toBeGreaterThan(5)
     expect([...kotlin].sort()).toEqual([...typed].sort())
@@ -311,7 +385,7 @@ describe('the bridge the page talks over', () => {
     expect(activity).toContain('fun askForTheFrame()')
     expect(activity).toContain('window.__nibFrame?.(')
 
-    for (const name of ['secretRead', 'secretWrite', 'secretForget', 'listen']) {
+    for (const name of GUARDED) {
       const found = new RegExp(`fun ${name}\\(\\s*said: String`).test(activity)
       expect(found, `${name} takes the word first`).toBe(true)
       expect(activity, `${name} checks the word`).toMatch(
@@ -320,12 +394,14 @@ describe('the bridge the page talks over', () => {
     }
 
     // And the page asks for it rather than guessing: every call from this side
-    // carries what `frameWord` answered.
+    // carries what `frameWord` answered, and none is made without it (B456).
     expect(page).toContain(`answer('__nibFrame'`)
     for (const call of [
-      'secretRead(await frameWord(), id)',
-      'secretWrite(await frameWord(), id, secret)',
-      'secretForget(await frameWord(), id)',
+      'const said = await frameWord()',
+      'if (!said) throw new NoWord()',
+      'secretRead(await word(), id)',
+      'secretWrite(await word(), id, secret)',
+      'secretForget(await word(), id)',
     ]) {
       expect(page, call).toContain(call)
     }

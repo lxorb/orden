@@ -3,6 +3,7 @@
  *  what they run on. */
 
 import { t } from '../../i18n.svelte'
+import { readOutside } from '../chat/transcript'
 import type { Goal, GoalState, Thread } from '../chat/types'
 import { tokens } from './account'
 import { evaluatorMessages, shown, verdictIn } from './evaluate'
@@ -88,7 +89,12 @@ export function goal(host: Host, thread: Thread, args: string): void {
       return
     case 'resume':
       if (held?.state === 'paused')
-        start(host, thread, held, guidance(held.condition, held.reason ?? ''))
+        start(
+          host,
+          thread,
+          held,
+          guidance(held.condition, held.reason ?? '', readOutside(thread.turns)),
+        )
       return
     case 'clear':
       tasks.stop(thread.id, 'goal')

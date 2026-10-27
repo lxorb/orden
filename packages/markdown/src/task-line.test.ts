@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { readDuration, readRemind, readTask, readTime, type TaskFields } from './task-line'
+import {
+  readDuration,
+  readRemind,
+  readTask,
+  readTime,
+  taskWords,
+  type TaskFields,
+} from './task-line'
 
 /** The Tasks plugin's own documented lines (docs/Reference/Task Formats/Tasks Emoji
  *  Format.md and Dataview Format.md), and what each one says. */
@@ -293,4 +300,71 @@ describe('a line built to make the reader backtrack', () => {
     expect(quick(`- [ ] x [a::${' '.repeat(10_000)}y  ]`)?.fields).toEqual({ a: 'y' })
     expect(quick('- [ ] x [a:: [b] (c:: d [e:: f]')?.fields).toEqual({ a: '[b', e: 'f' })
   })
+})
+
+describe('words written as a task that no field is read from', () => {
+  test('read back as the words', () => {
+    const said = 'Plan #tips [due:: 2026-11-01] (priority:: high) 📅 2026-11-01 ⏫ 🔁 every month'
+    const task = readTask(`- [ ] ${taskWords(said)}`)
+    expect(task?.tags).toEqual([])
+    expect(task?.due).toBeUndefined()
+    expect(task?.recurrence).toBeUndefined()
+    expect(task?.fields).toEqual({})
+    expect(task?.text.replace(/\u2060/g, '').replace(/\\(.)/g, '$1')).toBe(said)
+  })
+})
+
+/** `\[due:: 2026-01-01\]` is what an importer and `escapeText` write for somebody's
+ *  words that look like a field: brackets meant as brackets. Read as a field, the
+ *  task got a due date its writer never set and its text a stray backslash. */
+describe('an escaped bracket in a task', () => {
+  test('opens no field', () => {
+    const task = readTask('- [ ] a \\[due:: 2026-01-01\\]')
+
+    expect(task?.due).toBeUndefined()
+    expect(task?.fields).toEqual({})
+    expect(task?.text).toBe('a \\[due:: 2026-01-01\\]')
+  })
+
+  test('while one that is not escaped still does', () => {
+    expect(readTask('- [ ] a [due:: 2026-01-01]')?.due).toBe('2026-01-01')
+  })
+})
+
+/** Code in a task shows what is in it as written, backslashes and all, and reads as
+ *  no field and no tag. So nothing in it needs an escape, and none is written. */
+describe('code in a task', () => {
+  test('is left as it is by taskWords', () => {
+    expect(taskWords('use `std::move` on `x #b` now')).toBe('use `std::move` on `x #b` now')
+  })
+
+  test('holds no field', () => {
+    const task = readTask('- [ ] `[due:: 2026-01-01]` x')
+
+    expect(task?.due).toBeUndefined()
+    expect(task?.fields).toEqual({})
+    expect(task?.text).toBe('`[due:: 2026-01-01]` x')
+  })
+
+  test('holds no tag at the end of the line', () => {
+    const task = readTask('- [ ] run `git tag #v2`')
+
+    expect(task?.tags).toEqual([])
+    expect(task?.text).toBe('run `git tag #v2`')
+  })
+
+  test('holds no tag among the words', () => {
+    expect(readTask('- [ ] run `a #foo` now')?.tags).toEqual([])
+    expect(readTask('- [ ] `#a` #b `#c` #d')?.tags).toEqual(['b', 'd'])
+  })
+
+  test('while the words around it are still escaped', () => {
+    expect(taskWords('`a` #b [due:: 2026-01-01]')).toBe('`a` \\#b [due:\\: 2026-01-01]')
+  })
+})
+
+/** Two colons that open no field: an address's, after a colon of its own. Escaping
+ *  one there kept a backslash in the address the note links to. */
+test('an address with two colons in it is left as it is by taskWords', () => {
+  expect(taskWords('see https://example.com/a::b')).toBe('see https://example.com/a::b')
 })

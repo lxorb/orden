@@ -51,7 +51,11 @@ DAYS = """() => {
     const two = (v) => String(v).padStart(2, '0')
     return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`
   }
-  return { today: day(0), yesterday: day(-1), lastweek: day(-6), soon: day(2), later: day(5) }
+  // The calendar shows the weeks of today's month and no more, so the card carried on
+  // it is due on a day of this month: five days on, or five back near the month's end.
+  const month = (iso) => iso.slice(0, 7)
+  const near = month(day(5)) === month(day(0)) ? day(5) : day(-5)
+  return { today: day(0), yesterday: day(-1), lastweek: day(-6), soon: day(2), later: day(5), near }
 }"""
 
 ERRANDS = """# Errands
@@ -72,7 +76,7 @@ THESIS = """# Thesis
 """
 
 SYNC = "---\nstatus: Doing\ndue: {soon}\npoints: 3\n---\n# Sync loses a rename\n"
-GLASS = "---\nstatus: To do\ndue: {later}\npoints: 5\n---\n# Glass on Linux\n"
+GLASS = "---\nstatus: To do\ndue: {near}\npoints: 5\n---\n# Glass on Linux\n"
 
 BASE = """filters: 'file.inFolder("Bugs")'
 nib:

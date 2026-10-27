@@ -50,8 +50,14 @@ async function tell(env: Env, chat: string, ask: ChatAsk, headers: Record<string
   return answer?.ok === true
 }
 
-/** How many chats one revocation tells, at most. */
+/** How many chats one round of a revocation tells. */
 const MOST_OPEN = 200
+
+/** How many rounds it does: four thousand chats, far past what anybody has open. A bound
+ *  on the request rather than on how much of somebody's access ends - one round alone
+ *  left a member with 201 chats of the space open reading and posting on the rest, as
+ *  `MOST_ROUNDS` in rooms/index.ts says of rooms. */
+const MOST_ROUNDS = 20
 
 /** Somebody's access to a space ended, or narrowed to reading, and they may have its
  *  chats open: each chat they have open there is told, in the same request, as each
@@ -65,19 +71,30 @@ export async function chatsRevoked(
   item = '',
 ): Promise<void> {
   if (!env.CHATS) return
-  const { results } = await env.DB.prepare(
-    `select s.chat_id as chat from chat_sockets s join chats c on c.id = s.chat_id
-      where s.space_id = ?1 and s.who = ?2 and (?3 = '' or c.file_id = ?3) limit ?4`,
-  )
-    .bind(spaceId, who, item, MOST_OPEN)
-    .all<{ chat: string }>()
 
-  for (const round of chunks(results, AT_ONCE)) {
-    await Promise.all(
-      round.map((one) =>
-        tell(env, one.chat, 'revoke', { 'x-nib-revoked': who, 'x-nib-role': role }),
-      ),
+  // One page of rows at a time, ordered by the chat so the next starts where this
+  // ended; a page that came back short is the last.
+  let after = ''
+  for (let round = 0; round < MOST_ROUNDS; round++) {
+    const { results } = await env.DB.prepare(
+      `select s.chat_id as chat from chat_sockets s join chats c on c.id = s.chat_id
+        where s.space_id = ?1 and s.who = ?2 and (?3 = '' or c.file_id = ?3)
+          and s.chat_id > ?4
+        order by s.chat_id limit ?5`,
     )
+      .bind(spaceId, who, item, after, MOST_OPEN)
+      .all<{ chat: string }>()
+
+    for (const some of chunks(results, AT_ONCE)) {
+      await Promise.all(
+        some.map((one) =>
+          tell(env, one.chat, 'revoke', { 'x-nib-revoked': who, 'x-nib-role': role }),
+        ),
+      )
+    }
+
+    if (results.length < MOST_OPEN) return
+    after = results[results.length - 1]?.chat ?? ''
   }
 }
 

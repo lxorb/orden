@@ -80,7 +80,7 @@
   import { priorityTone } from '../quick-add/labels'
   import { rowKey } from './row-keys'
   import { runKey } from './task-actions'
-  import { dayHead, groupLabel, propertyName, summaryName } from './words'
+  import { dayHead, groupLabel, noteNames, propertyName, summaryName } from './words'
   import {
     addSection,
     projectOf,
@@ -115,10 +115,15 @@
   const hidden = $derived(view?.nib.hidden ?? [])
   const kinds = $derived(view?.nib.rows ?? 'notes')
   const notes = $derived(kinds === 'notes')
-  /** A board in a note's fence has no room for adding: the base's own tab has. */
-  const adds = $derived(!kit.compact)
-  /** Pages are added in every board, a block's too; a new group only where there is room. */
-  const pages = true
+  /** Pages are added in every board, a block's too, unless what is added would land in a
+   *  space shared with this account to be read: nothing added there would be kept (B284),
+   *  so no column offers it, as the view's own New does not (ViewHead.svelte). That is
+   *  `adds` and not `writable`: a board of tasks in a view of no file may be changed,
+   *  while its tasks go into the open space's inbox, which may be read only (B293). */
+  const pages = $derived(kit.adds)
+  /** A board in a note's fence has no room for a new group or section: the base's own
+   *  tab has, where the base may be written. */
+  const grows = $derived(!kit.compact && kit.writable)
   const sorted = $derived((view?.sort.length ?? 0) > 0)
   /** Whether a card can be carried to another column at all. */
   const carries = $derived(droppableBy(property, kinds))
@@ -175,6 +180,9 @@
 
   /** The swimlanes: every sub-group key any column has, in the order they first come. */
   const lanes = $derived(sub === undefined ? [] : laneKeys(shownGroups))
+  /** The columns' and the lanes' note names, for what each is called. */
+  const noteCounts = $derived(noteNames(groups.map((one) => one.key)))
+  const laneNames = $derived(noteNames(lanes))
   /** The lanes the keyboard walks: a board without them is one lane of no key. */
   const walked = $derived<(Value | undefined)[]>(lanes.length ? lanes : [undefined])
   /** Whether the lane property holds lists, so a new card holds a list of its lane's one. */
@@ -225,7 +233,7 @@
     if (project && sectionOf(group) === null) return t('None')
     if (days) return dayHead(group.key, live.today)
     if (group.key === null || group.key === '') return nothing
-    return groupLabel(property, group.key, live.today)
+    return groupLabel(property, group.key, live.today, noteCounts)
   }
 
   /** The tone a column's head wears: its option's, a task's box's or its priority's. */
@@ -724,6 +732,7 @@
       // The board's own add, which the view's Q would otherwise make a second of.
       event.preventDefault()
       event.stopPropagation()
+      if (!pages) return
       if (notes) askNew(name, laneName)
       else kit.add(property ? { property, key: group.key } : undefined)
       return
@@ -770,7 +779,7 @@
     )
   }
   /** Whether the board's columns are a property's options, which a new one can join. */
-  const groupable = $derived(!project && !days && adds && property?.startsWith('note.') === true)
+  const groupable = $derived(!project && !days && grows && property?.startsWith('note.') === true)
 </script>
 
 {#snippet card(row: Row, group: Group, lane: string | null)}
@@ -921,7 +930,7 @@
         {/each}
       </div>
       {#each lanes as lane (groupName(lane))}
-        <p class="nib-section lane">{groupLabel(sub, lane, live.today)}</p>
+        <p class="nib-section lane">{groupLabel(sub, lane, live.today, laneNames)}</p>
         <div class="row">
           {#each shownGroups as group (groupName(group.key))}
             {@render column(group, lane, rowsOf(group, lane))}
@@ -935,7 +944,7 @@
     {/each}
   {/if}
 
-  {#if project && adds && !phone}
+  {#if project && grows && !phone}
     <button
       type="button"
       class="add-column"

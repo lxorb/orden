@@ -11,16 +11,29 @@ import type { Command } from './commands'
 import { t } from './i18n.svelte'
 import type { MenuEntry } from './menu.svelte'
 import { shownName } from './note-name'
+import { canWriteAt, canWriteIn } from './sharing.svelte'
+import { isMarkdownPath } from './space-paths'
+import { carvable, mergeable } from './workspace/composing'
 import { workspace } from './workspace.svelte'
+
+/** The notes the one at `exclude` may be merged into: the other markdown notes.
+ *  `workspace.notes` leaves out the files a tab of their own opens, but not a
+ *  chat's pointer, and not a picture either; words appended to a chat's pointer
+ *  would leave the chat unreachable. The merge refuses those itself, so this is
+ *  only so the sheet offers nothing it would refuse. */
+function mergeTargets(exclude: string) {
+  return workspace.notes.filter((note) => note.path !== exclude && isMarkdownPath(note.path))
+}
 
 /** The note to merge into, found by typing its name in the prompt sheet - which
  *  is the same sheet every other question uses, and the only shape that works
  *  for a space holding thousands of answers. */
 async function askForNote(exclude: string): Promise<string | null> {
   const { prompt } = await import('./prompt.svelte')
-  const options = workspace.notes
-    .filter((note) => note.path !== exclude)
-    .map((note) => ({ id: note.path, label: shownName(note.name) }))
+  const options = mergeTargets(exclude).map((note) => ({
+    id: note.path,
+    label: shownName(note.name),
+  }))
 
   if (!options.length) return null
 
@@ -39,6 +52,30 @@ function hasRest(view?: EditorView): boolean {
   return view.state.doc.sliceString(at).trim().length > 0
 }
 
+/** Whether the note in front of the reader may be merged into another: a
+ *  markdown note the open space holds and that may be written, in an editor that
+ *  may be typed in.
+ *  The note it goes into is asked the same by the merge itself. */
+function canMerge(path: string | null, view?: EditorView): boolean {
+  if (!path || !mergeTargets(path).length || !typable(view)) return false
+  return mergeable(workspace.activeSpace?.root ?? null, path, canWriteAt)
+}
+
+/** Whether the file in front of the reader is a markdown note that may be written,
+ *  in an editor that may be typed in. A split and an extraction each write a `.md`
+ *  beside the file and a `[[link]]` into it, which in `snippets.json`, `custom.css`
+ *  or a code file breaks the file and leaves a stray note beside it. A note of a
+ *  space not on screen is fine: the new note goes beside it, in its own space. */
+function canWrite(path: string | null, view?: EditorView): path is string {
+  if (!path || !typable(view)) return false
+  return carvable(path, canWriteAt)
+}
+
+/** An editor that may be typed in, showing a note that may be written. */
+function typable(view?: EditorView): boolean {
+  return !view?.state.readOnly && canWriteIn(workspace.active?.note)
+}
+
 export function composerCommands(view?: EditorView): Command[] {
   const path = workspace.active?.path ?? null
 
@@ -46,7 +83,7 @@ export function composerCommands(view?: EditorView): Command[] {
     {
       id: 'merge-into',
       label: t('Merge into…'),
-      disabled: !path || workspace.notes.length < 2,
+      disabled: !canMerge(path, view),
       run: () => {
         if (path) void merge(path)
       },
@@ -54,7 +91,7 @@ export function composerCommands(view?: EditorView): Command[] {
     {
       id: 'split-at-caret',
       label: t('Split at caret'),
-      disabled: !path || !hasRest(view),
+      disabled: !canWrite(path, view) || !hasRest(view),
       run: () => {
         if (view) void workspace.splitAtCaret(view.state.selection.main.head)
       },
@@ -62,7 +99,7 @@ export function composerCommands(view?: EditorView): Command[] {
     {
       id: 'extract-selection',
       label: t('Extract selection'),
-      disabled: !path || !hasSelection(view),
+      disabled: !canWrite(path, view) || !hasSelection(view),
       run: () => {
         if (!view) return
         const range = view.state.selection.main

@@ -1946,6 +1946,7 @@ export const th: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} เครื่องนี้',
   '{name} is back: {device} was writing in it': '{name} กลับมาแล้ว: {device} กำลังเขียนอยู่ในนั้น',
+  'Changes to {name} are not syncing': 'การเปลี่ยนแปลงใน {name} ไม่ได้ซิงค์',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'เปิด',
   Pressing: 'กด',

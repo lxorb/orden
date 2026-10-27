@@ -7,7 +7,16 @@
  *  the tab answers the new one afresh. Pure, so each is a line of a test. */
 
 import { bare } from './columns'
-import type { Base, Filter, NibBase, NibProperty, NibView, Sort, View } from '@nib/bases'
+import {
+  type Base,
+  type Filter,
+  type NibBase,
+  type NibProperty,
+  type NibView,
+  renamedLiteral,
+  type Sort,
+  type View,
+} from '@nib/bases'
 
 /** The base with one of its views replaced. A place past the end changes nothing. */
 function withView(base: Base, at: number, change: (view: View) => View): Base {
@@ -284,10 +293,10 @@ export function renamedGroup(
   const swap = (list: readonly string[]) => [
     ...new Set(list.map((one) => (one === from ? to : one))),
   ]
-  const quoted = (words: string) => JSON.stringify(words)
+  // Only the literals compared with this property follow: the same words may be
+  // another property's value in the same filter, and that one must stay.
   const literal = (filter: Filter): Filter => {
-    if (typeof filter === 'string')
-      return filter.includes(name) ? filter.split(quoted(from)).join(quoted(to)) : filter
+    if (typeof filter === 'string') return renamedLiteral(filter, name, from, to)
     if ('and' in filter) return { and: filter.and.map(literal) }
     if ('or' in filter) return { or: filter.or.map(literal) }
     return { not: filter.not.map(literal) }

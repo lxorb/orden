@@ -26,6 +26,10 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./account.svelte')
+const { links } = await import('./link-index.svelte')
+const { pages } = await import('./web-tab/pages.svelte')
+type RemoteSpace = import('./api').RemoteSpace
+const { sync } = await import('./sync.svelte')
 
 /** The disk, which is there: it was made above. */
 function files(): Map<string, string> {
@@ -69,6 +73,156 @@ describe('a draft saved into a space that is not on screen', () => {
     expect(files().get('/home/Plan.md')).toBe('# Plan\nwords that were here first\n')
     expect(files().get('/home/Plan 2.md')).toBe('# Plan\nthe draft\n')
   })
+
+  test('steps past a PDF there that a page note of its name would take for its paper', async () => {
+    // A page note holds `<name>.pdf` beside it as its paper, so landing beside the
+    // person's own `Report.pages.pdf` hid that PDF in the note and trashed it with it.
+    files().set('/home/Report.pages.pdf', '%PDF-1.7\n')
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    await workspace.selectSpace('away')
+
+    const landed = await workspace.save(tab, '/home', 'Report.pages')
+    await workspace.writesSettled()
+
+    expect(landed).toBe('/home/Report 2.pages')
+    expect(files().has('/home/Report.pages')).toBe(false)
+  })
+})
+
+describe('a website kept into a space that is not on screen', () => {
+  beforeEach(async () => {
+    files().set('/home/Example.url', '[InternetShortcut]\r\nURL=https://other.org/mine\r\n')
+    files().set('/away/Other.md', '# Other\n')
+    workspace.spaces = [
+      { id: 'away', name: 'Away', root: '/away' },
+      { id: 'home', name: 'Home', root: '/home' },
+    ]
+    workspace.activeSpaceId = 'home'
+    await workspace.loadTree()
+  })
+
+  test('steps past a web note of the same name on another site there', async () => {
+    // The tab keeps the space it was opened in, so Save keeps it there; the listing
+    // that names it is the other space's, which has no Example.url in it.
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    tab.address = 'https://example.com/a'
+    pages.of(tab.id).title = 'Example'
+    await workspace.selectSpace('away')
+
+    const landed = await workspace.save(tab)
+    await workspace.writesSettled()
+
+    expect(landed).toBe('/home/Example 2.url')
+    expect(files().get('/home/Example.url')).toBe(
+      '[InternetShortcut]\r\nURL=https://other.org/mine\r\n',
+    )
+  })
+})
+
+describe('a note made beside a tab from a space that is not on screen', () => {
+  beforeEach(async () => {
+    files().set('/home/Ideas.md', 'my ideas\n')
+    files().set('/home/Plan.md', '# Plan\n')
+    files().set('/away/Other.md', '# Other\n')
+    workspace.spaces = [
+      { id: 'away', name: 'Away', root: '/away' },
+      { id: 'home', name: 'Home', root: '/home' },
+    ]
+    workspace.activeSpaceId = 'home'
+    await workspace.loadTree()
+    await workspace.open('/home/Plan.md')
+    // Tabs are kept across spaces, so Plan.md stays in front while the listing is
+    // the other space's, which has no Ideas.md in it.
+    await workspace.selectSpace('away')
+  })
+
+  test('extracted, steps past a note of the same name there', async () => {
+    const tab = workspace.active
+    if (tab?.path !== '/home/Plan.md') throw new Error('Plan.md is not in front')
+    const text = '# Plan\n\n# Ideas\n\nnew\n'
+    tab.note.replace(text, false)
+    await workspace.extractSelection(text.indexOf('# Ideas'), text.length)
+
+    expect(files().get('/home/Ideas.md')).toBe('my ideas\n')
+    expect(files().get('/home/Ideas 2.md')).toContain('new')
+  })
+
+  test('out of a canvas card, steps past a note of the same name there', async () => {
+    const landed = await workspace.noteFrom('# Ideas\ncard\n', '/home')
+
+    expect(landed).toBe('/home/Ideas 2.md')
+    expect(files().get('/home/Ideas.md')).toBe('my ideas\n')
+  })
+})
+
+describe('a file made beside one the list does not show', () => {
+  // The list leaves out what is named with a dot unless hidden files are shown, so
+  // a name it calls free can be a file that is there.
+  beforeEach(() => {
+    workspace.spaces = [{ id: 'home', name: 'Home', root: '/home' }]
+    workspace.activeSpaceId = 'home'
+  })
+
+  test('a note made in a dot folder steps past the hidden note there', async () => {
+    files().set('/home/.notes/Plan.md', 'precious\n')
+    await workspace.loadTree()
+
+    // What the palette makes for `.notes/Plan`.
+    await workspace.createNote('/home/.notes', 'Plan.md')
+    await workspace.writesSettled()
+
+    expect(files().get('/home/.notes/Plan.md')).toBe('precious\n')
+    expect(files().has('/home/.notes/Plan 2.md')).toBe(true)
+  })
+
+  test('a dotfile dropped from outside steps past the hidden one there', async () => {
+    files().set('/home/.gitignore', 'secrets/\n')
+    await workspace.loadTree()
+
+    const words = new TextEncoder().encode('node_modules/\n')
+    const picked = {
+      name: '.gitignore',
+      webkitRelativePath: '',
+      arrayBuffer: async () => words.buffer,
+    }
+    await workspace.bringIn([picked], '/home')
+
+    expect(files().get('/home/.gitignore')).toBe('secrets/\n')
+    expect(files().get('/home/.gitignore 2')).toBe('node_modules/\n')
+  })
+
+  test('a page note made in a dot folder steps past a PDF there it would take for its paper', async () => {
+    // A page note holds `<name>.pdf` beside it as its paper. Landing beside the
+    // person's own `Untitled.pages.pdf` hid that PDF in the note, and deleting the
+    // note deleted it too.
+    files().set('/home/.dir/Untitled.pages.pdf', '%PDF-1.7\n')
+    await workspace.loadTree()
+
+    await workspace.createPages('/home/.dir', 'Untitled.pages')
+    await workspace.writesSettled()
+
+    expect(files().has('/home/.dir/Untitled.pages')).toBe(false)
+    expect(files().has('/home/.dir/Untitled 2.pages')).toBe(true)
+  })
+
+  test('a paper dropped into a dot folder steps past the page note there it would belong to', async () => {
+    files().set('/home/.dir/Lecture.pages', '{}\n')
+    await workspace.loadTree()
+
+    const bytes = new TextEncoder().encode('%PDF-1.7\n')
+    const picked = {
+      name: 'Lecture.pages.pdf',
+      webkitRelativePath: '',
+      arrayBuffer: async () => bytes.buffer,
+    }
+    await workspace.bringIn([picked], '/home/.dir')
+
+    expect(files().has('/home/.dir/Lecture.pages.pdf')).toBe(false)
+  })
 })
 
 describe('a delete undone after a note took its name', () => {
@@ -78,13 +232,20 @@ describe('a delete undone after a note took its name', () => {
     workspace.activeSpaceId = 's'
     await workspace.loadTree()
 
-    // Signed in, a delete is not this device's to keep: the note goes outright and
-    // the undo writes back the words read on the way out.
+    // Signed in, with the note on the account, a delete is not this device's to keep:
+    // the note goes outright and the undo writes back the words read on the way out.
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
+    // Owned by this account: a writer's delete in somebody else's space is not
+    // theirs to get back from the account.
+    account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
   })
 
   afterEach(() => {
     Reflect.deleteProperty(account, 'signedIn')
+    account.spaces = []
+    vi.restoreAllMocks()
   })
 
   test('puts the old note back beside the new one, which keeps its words', async () => {
@@ -106,10 +267,17 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
     workspace.activeSpaceId = 's'
     await workspace.loadTree()
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
+    // Owned by this account: a writer's delete in somebody else's space is not
+    // theirs to get back from the account.
+    account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
   })
 
   afterEach(() => {
     Reflect.deleteProperty(account, 'signedIn')
+    account.spaces = []
+    vi.restoreAllMocks()
   })
 
   test('with nothing made since, puts its notes back where they were', async () => {
@@ -123,16 +291,19 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
     expect(files().get('/space/Journal/2026-10-19.md')).toBe('# Today\nthe old words\n')
   })
 
-  test('holding a picture, is left to Recently deleted rather than put back without it', async () => {
+  test('holding a picture, goes to the trash, which keeps the picture with it', async () => {
     files().set('/space/Journal/shot.png', 'not words')
     disk.current?.unreadable.add('/space/Journal/shot.png')
     await workspace.loadTree()
 
     await workspace.remove('/space/Journal', true)
 
-    // The file list leaves the picture out, and an undo read from it put the note
-    // back and said nothing of the picture.
-    expect(workspace.undone.stack).toEqual([])
+    // An undo read from the file list put the note back and said nothing of the
+    // picture, and the account's Recently deleted gives back notes, never a picture.
+    // Only this device's trash keeps the folder whole.
+    expect(workspace.undone.stack).toEqual([
+      { kind: 'delete', path: '/space/Journal', content: '', folder: true, trashId: 'trash-1' },
+    ])
   })
 
   test("holding a Finder's .DS_Store and a desktop.ini, is still put back", async () => {
@@ -158,5 +329,35 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
 
     expect(files().get('/space/Journal/2026-10-19.md')).toBe('# Today\nwritten since\n')
     expect(files().get('/space/Journal/2026-10-19 2.md')).toBe('# Today\nthe old words\n')
+  })
+})
+
+describe('a block of a note open in another tab, named from a link', () => {
+  beforeEach(async () => {
+    files().set('/home/A.md', '# A\n')
+    files().set('/home/B.md', '# B\n\nfirst para\n\nsecond\n')
+    workspace.spaces = [{ id: 'home', name: 'Home', root: '/home' }]
+    workspace.activeSpaceId = 'home'
+    await workspace.loadTree()
+  })
+
+  test('keeps its name through the next save of that tab', async () => {
+    await workspace.open('/home/B.md')
+    const b = workspace.active
+    if (!b) throw new Error('no tab')
+    await workspace.open('/home/A.md')
+
+    // `[[B#^` typed in A, and the first paragraph of B picked.
+    const id = await links.nameBlock('B.md', 2, '/home')
+    expect(files().get('/home/B.md')).toContain(`first para ^${id ?? ''}`)
+
+    // Back in B, the reader types on.
+    workspace.activate(b.id)
+    b.note.live.replace(`${b.note.text}\nmore\n`, true)
+    await workspace.save(b)
+    await workspace.writesSettled()
+
+    expect(files().get('/home/B.md')).toContain(`first para ^${id ?? ''}`)
+    expect(files().get('/home/B.md')).toContain('more')
   })
 })

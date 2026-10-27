@@ -25,6 +25,7 @@
   import { nodesIn, tagTree } from './tag-tree'
   import TagTree from './TagTree.svelte'
   import { isScratchpad } from './scratchpad/is.svelte'
+  import { canWriteAt } from './sharing.svelte'
   import { type Entry, workspace } from './workspace.svelte'
   import { dur } from './motion'
 
@@ -38,6 +39,10 @@
   const SWAP = 'M1.8 4h7.4M7.4 2.2 9.2 4 7.4 5.8M11.2 9H3.8M5.6 7.2 3.8 9l1.8 1.8'
 
   const TICK = 'M2.6 6.6 5 9l5.4-5.4'
+
+  /** Whether the space searched may be written in: one shared to be read takes no
+   *  replacement. */
+  const writable = $derived(canWriteAt(workspace.activeSpace?.root ?? ''))
 
   let field = $state<HTMLInputElement>()
 
@@ -366,16 +371,20 @@
       {/if}
     </div>
 
-    <button
-      class="swap"
-      class:active={search.replacing}
-      title={t('Replace')}
-      aria-label={t('Replace')}
-      aria-pressed={search.replacing}
-      onclick={() => search.toggleReplace()}
-    >
-      <svg viewBox="0 0 13 13"><path d={SWAP} /></svg>
-    </button>
+    <!-- No replacing in a space shared to be read, which takes no write; see
+         `replaceInNotes` in workspace/note-text.ts, which passes its notes over. -->
+    {#if writable}
+      <button
+        class="swap"
+        class:active={search.replacing}
+        title={t('Replace')}
+        aria-label={t('Replace')}
+        aria-pressed={search.replacing}
+        onclick={() => search.toggleReplace()}
+      >
+        <svg viewBox="0 0 13 13"><path d={SWAP} /></svg>
+      </button>
+    {/if}
 
     <!-- The archive, asked too. Only in a space that has one. -->
     {#if workspace.archive.any || search.archived}
@@ -392,7 +401,7 @@
     {/if}
   </div>
 
-  {#if search.replacing}
+  {#if search.replacing && writable}
     <div class="row" transition:fly={{ y: -6, duration: dur(130), easing: cubicOut }}>
       <input
         class="nib-field query"
@@ -446,7 +455,8 @@
         {#each group.hits as hit (hit.line)}
           {@const task = hit.tab === undefined ? taskOf(hit) : null}
           <div class="line">
-            {#if search.replacing && hit.tab === undefined}
+            <!-- A bare row has no words to replace, so nothing to tick. -->
+            {#if search.replacing && hit.tab === undefined && !hit.bare}
               <button
                 class="tick"
                 class:on={search.keeps(hit)}

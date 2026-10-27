@@ -166,15 +166,20 @@ def brought(browser: Browser) -> None:
         return
     shot(new, "01-row")
 
+    # The page as it is before the press, marked, so the page it starts again as is
+    # the one without the mark.
+    new.evaluate("() => { window.driveBefore = true }")
     with new.expect_popup() as asked:
         row.locator("button").click()
     popup = asked.value
     if not popup.url.startswith(f"{OLD}/handoff"):
         wrong(f"the popup went to {popup.url}")
 
-    # The page starts again once the notes are written: the handle it had is gone and
-    # a new one comes up.
-    wait_for(new, "localStorage.getItem('nib:font-size') === '19' && !window.nibApp", "the page to start again")
+    # The page starts again once the notes are written. Waited for as a page without
+    # the mark rather than as one without the app's handle: the new page has its handle
+    # back within moments, and a runner that looked a little late missed the moment
+    # between and waited for it to the end (WebKit, 2026-10-20 and 10-27).
+    wait_for(new, "localStorage.getItem('nib:font-size') === '19' && !window.driveBefore", "the page to start again")
     DRIVE.ready(new)
 
     after = files(new)

@@ -1977,6 +1977,7 @@ export const gu: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'આ {device}',
   '{name} is back: {device} was writing in it': '{name} પાછી આવી: {device} તેમાં લખી રહ્યું હતું',
+  'Changes to {name} are not syncing': '{name} માં થયેલા ફેરફારો સિંક થતા નથી',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'ખોલવું',
   Pressing: 'દબાવવું',

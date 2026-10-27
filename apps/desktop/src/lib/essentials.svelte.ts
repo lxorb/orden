@@ -11,8 +11,14 @@ import { chorded } from './keys'
 import { reading } from './direction'
 import type { OpenHow } from './new-tab'
 import { moving } from './list-landing.svelte'
+import { canWriteAt } from './sharing.svelte'
 import { folderOf, insideSpace, samePath } from './space-paths'
-import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from './workspace/bookmarks.svelte'
+import {
+  type Bookmark,
+  filedUnder,
+  MOST_BOOKMARKS,
+  sameBookmark,
+} from './workspace/bookmarks.svelte'
 import { workspace, type Entry } from './workspace.svelte'
 
 /** Where something carried over the bookmarks would land: the bookmark it is beside,
@@ -123,7 +129,7 @@ export function placed(held: readonly Bookmark[], marks: readonly Bookmark[], at
 
   const come = marks
     .filter((mark, index) => marks.findIndex((other) => sameBookmark(mark, other)) === index)
-    .map(({ kind, path, text, view }) => ({ kind, path, text, ...(view ? { view } : {}) }))
+    .map((mark) => filedUnder(mark, null))
     .slice(0, MOST_BOOKMARKS - rest.length)
 
   return [...rest.slice(0, ahead), ...come, ...rest.slice(ahead)]
@@ -155,12 +161,16 @@ export async function unkeepInto(at: number, folder: string) {
   if (root === undefined || mark?.kind !== 'note') return
 
   const path = insideSpace(root, mark.path)
+  const moves = !samePath(folderOf(path), folder)
+  // Refused before the tile goes: the move would be, and the note then had neither its
+  // tile nor its new folder.
+  if (moves && !(canWriteAt(path) && canWriteAt(folder))) return
   await workspace.undone.batch(async () => {
     keepAs(
       root,
       held.filter((_, index) => index !== at),
     )
-    if (!samePath(folderOf(path), folder)) await workspace.move(path, folder)
+    if (moves) await workspace.move(path, folder)
   })
   if (!samePath(folder, root)) workspace.device.expand(folder)
 }

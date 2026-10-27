@@ -22,12 +22,13 @@
  *  three by name, the way everything on this bridge is asked for. They are in the
  *  list because the list is what the activity publishes, not what this file uses.
  *
- *  Four of them take a word first. `addJavascriptInterface` injects the object into
+ *  All but the few that only say how the window looks take a word first. `addJavascriptInterface` injects the object into
  *  every frame of the webview - an embedded page, a block of a note's own HTML - and
  *  tells the activity nothing about which of them called. Those frames are sandboxed
  *  so the app is out of their reach, and the bridge was the way round it: a framed
- *  page could read every AI key or turn the microphone on. So the calls that matter
- *  want the word only the page can have; see `frameWord` and `frame` in
+ *  page could read every AI key, turn the microphone on, read or drop what was shared
+ *  in, or plant a widget row. So every call that reads or writes anything wants the
+ *  word only the page can have; see `frameWord` and `frame` in
  *  MainActivity.kt. */
 export interface NibSystem {
   /** The four edges the system bars keep, as JSON; see insets.ts. */
@@ -38,15 +39,15 @@ export interface NibSystem {
   /** Which way round the system bars' own icons go. */
   bars(dark: boolean): void
   /** What a tile or a widget row asked for, once, as JSON; see handed.ts. */
-  handed(): string
+  handed(said: string): string
   /** What another app shared, without the bytes, as JSON; see shared.ts. */
-  shared(): string
+  shared(said: string): string
   /** One slice of one shared file, as base64. */
-  sharedBytes(at: number, offset: number, length: number): string
+  sharedBytes(said: string, at: number, offset: number, length: number): string
   /** The page has written what it was given; the copies may go. */
-  sharedDone(): void
+  sharedDone(said: string): void
   /** The rows the home screen draws, as JSON; see widgets.ts. */
-  widgets(json: string): void
+  widgets(said: string, json: string): void
   /** Whether this phone has a speech recogniser at all. */
   dictates(): boolean
   /** Turns dictation on or off; answers whether it is listening. */
@@ -59,7 +60,7 @@ export interface NibSystem {
    *  see reminders/platform.ts and Reminders.kt. */
   reminders(said: string, json: string): void
   /** Done and presses on a reminder since the page last asked, as JSON, once. */
-  remindersTaken(): string
+  remindersTaken(said: string): string
   /** Whether the phone rings an alarm at its minute rather than within a few. */
   exactAlarms(): boolean
   /** The system's own switch for exact alarms, opened once. */
@@ -83,7 +84,8 @@ export function onTheActivity(): boolean {
   return !!method('insets')
 }
 
-/** This launch's word, asked for once and kept for as long as the page lives.
+/** This launch's word, asked for until the activity says it and kept for as long
+ *  as the page lives.
  *
  *  Asked for rather than pushed, because the page is what needs it and the page
  *  knows when. The activity answers by running a line in the main frame, so a frame
@@ -94,27 +96,55 @@ export function onTheActivity(): boolean {
  *  One promise, shared: two features asking at the same moment are one question. */
 let word: Promise<string> | undefined
 
-/** How long the activity has to answer before the page gives up on it. An answer is
- *  one line run in the page and is there within a frame; a wait with no end would be
- *  a key field that never settles on an older build of the app. */
+/** The word once said; an answer that lands after its caller gave up still counts. */
+let known: string | undefined
+let heard: (word: string) => void = () => undefined
+const spoken = new Promise<string>((said) => (heard = said))
+
+/** How long a caller waits before it goes on with no word, which is never kept: the
+ *  UI thread can be busy for longer on a cold start (B456). */
 const PATIENCE = 2000
 
 export function frameWord(): Promise<string> {
+  if (known) return Promise.resolve(known)
   if (word) return word
 
   const ask = method('askForTheFrame')
   if (!ask) return Promise.resolve('')
 
-  word = new Promise<string>((said) => {
+  const asking = new Promise<string>((said) => {
     const timer = setTimeout(() => said(''), PATIENCE)
+    // Left on the window, so a late answer is still heard.
     answer('__nibFrame', (text: string) => {
+      if (!text) return
+      known = text
+      heard(text)
       clearTimeout(timer)
       said(text)
     })
-    ask()
+    try {
+      ask()
+    } catch {
+      clearTimeout(timer)
+      said('')
+    }
   })
+  word = asking
+  void asking.then(() => {
+    if (word === asking) word = undefined
+  })
+  return asking
+}
 
-  return word
+/** The word, once said: a caller whose call went without it redoes it then. */
+export function wordSaid(): Promise<string> {
+  return spoken
+}
+
+/** Thrown where a call dropped without the word would look done. */
+export class NoWord extends Error {
+  override readonly name = 'NoWord'
+  override readonly message = 'the phone app is still starting; try again in a moment'
 }
 
 /** What the activity calls back on. Kotlin cannot hold a reference to a function,

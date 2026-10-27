@@ -19,6 +19,7 @@
 import { insideItsSpace, movedTo, relativeTo, samePath, within } from '../space-paths'
 import { isString, keep } from '../stored'
 import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
+import { carried, moving } from './file-ops'
 
 export const STORAGE_KEY = 'nib:excluded'
 
@@ -151,18 +152,43 @@ export class Excluded {
 
   /** A note or a folder that has been renamed or moved, with everything under it.
    *  The one thing a marker inside the file would have got for free, and the reason
-   *  every path that changes has to say so. */
-  moved(from: string, to: string, root = this.root()) {
+   *  every path that changes has to say so. Into another space, `into`, what was left
+   *  out stays left out there: a private folder moved across is not suddenly read by
+   *  the search or the assistant of the space it went to. */
+  moved(from: string, to: string, root = this.root(), into: string | null = root) {
     if (root === null || from === to) return
 
-    const was = relativeTo(root, from)
-    const now = relativeTo(root, to)
+    const move = moving(from, to, root, into)
+    const { was, now } = move
     if (!was) return
 
     const held = this.of(root)
-    const next = held.map((one) => movedTo(one, was, now, root) ?? one)
+    if (move.across) {
+      const { left, went } = carried(
+        held,
+        move,
+        (one) => one,
+        (_, path) => path,
+      )
+      if (!went.length && left.length === held.length) return
+      this.put(root, left)
+      if (went.length) this.leaveOut(move.there, went)
+      return
+    }
 
+    const next = held.map((one) => movedTo(one, was, now ?? '', root) ?? one)
     if (!same(held, next)) this.put(root, next)
+  }
+
+  /** Paths a move brought into a space, left out there as `toggle` leaves one out. */
+  private leaveOut(root: string, paths: readonly string[]) {
+    let held = this.of(root)
+    for (const at of paths) {
+      if (held.length >= MOST_EXCLUDED) break
+      if (held.some((one) => under(at, one, root))) continue
+      held = [...held.filter((one) => !under(one, at, root)), at]
+    }
+    if (!same(held, this.of(root))) this.put(root, held)
   }
 
   /** A note or a folder that has gone, with everything under it. */

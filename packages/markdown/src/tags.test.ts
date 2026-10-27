@@ -39,9 +39,42 @@ describe('what a tag is', () => {
     expect(opensTag('(')).toBe(true)
     expect(opensTag('C')).toBe(false)
     expect(opensTag('/')).toBe(false)
-    expect(opensTag('*')).toBe(false)
+  })
+
+  /** What opens a run the page reads afresh: emphasis, strike, highlight, a
+   *  cell. The same rule as search/tags.ts and tags.rs. */
+  test('and inside emphasis, strike, highlight or a cell', () => {
+    for (const before of ['*', '_', '~~', '==', 'x **', '(**']) expect(opensTag(before)).toBe(true)
+  })
+
+  test('but a mark in the middle of a word opens nothing', () => {
+    for (const before of ['a*', 'a=', 'color=', 'snake_', '3*', 'a~', 'a|', '?q=', 'Note|']) {
+      expect(opensTag(before)).toBe(false)
+    }
+  })
+
+  test('but not as the target of a link, which is a heading in the note', () => {
+    expect(opensTag('](')).toBe(false)
+    expect(opensTag(' (')).toBe(true)
   })
 })
+
+/** What the page draws, row by row. The same rows are asked of the index in the
+ *  app's search/tags.test.ts and of tags.rs (`reads_the_parity_rows`), so the
+ *  page, the index and a rename agree on every one. */
+const PARITY: [string, string[]][] = [
+  ['see https://x.test/?q=#x', []],
+  ['[link](https://x.test/?q=#x)', []],
+  ['<https://x.test/#a> <https://x.test/?a=#b>', []],
+  ['plain a|#b text', []],
+  ['code-ish a=#b prose and color=#ff8800', []],
+  ['snake_#x 3*#y a~#z', []],
+  ['[[Note|#alias]]', []],
+  ['[s](#setup) ![i](#img) and [s](#open', []],
+  ['**#a** ~~#d~~ ==#e== x **#f**', ['a', 'd', 'e', 'f']],
+  ['_#u_ and __#todo__ and _#snake_case_', ['u', 'todo', 'snake_case']],
+  ['| x | y |\n| - | - |\n|#f|#g|', ['f', 'g']],
+]
 
 describe('a tag on a page', () => {
   test('is drawn as a tag, the hash with it', () => {
@@ -60,6 +93,19 @@ describe('a tag on a page', () => {
     expect(drawn('- #item\n- two')).toEqual(['item'])
     expect(drawn('| a |\n| - |\n| #cell |')).toEqual(['cell'])
     expect(drawn('words (#aside) more')).toEqual(['aside'])
+  })
+
+  /** The same notes as "inside emphasis, strike, highlight or a cell" and "a
+   *  link to a heading is no tag" in the app's search/tags.test.ts, so what the
+   *  page draws is what the index holds. */
+  test('inside emphasis, strike, highlight or a cell, and never as a link target', () => {
+    expect(drawn('**#a** *#b* ~~#d~~ ==#e== call')).toEqual(['a', 'b', 'd', 'e'])
+    expect(drawn('| x | y |\n| - | - |\n|#f|#g|')).toEqual(['f', 'g'])
+    expect(drawn('See [setup](#setup) and ![x](#y). Real #setup.')).toEqual(['setup'])
+  })
+
+  test('alike on the page and in the index, row by row', () => {
+    for (const [source, tags] of PARITY) expect(drawn(source), source).toEqual(tags)
   })
 
   test('left alone in code, maths, addresses, links, headings and mid-word', () => {

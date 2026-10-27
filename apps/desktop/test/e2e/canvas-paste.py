@@ -145,7 +145,12 @@ def written_before(page: Page, label: str, signed: bool) -> None:
 
 def drive(browser: Browser, token: str) -> None:
     for label, signed in (("signed in", True), ("signed out", False)):
-        context = browser.new_context(viewport={"width": 1280, "height": 820})
+        context = browser.new_context(
+            viewport={"width": 1280, "height": 820},
+            # Signed out, the pasted picture is the space's own file, which the asset
+            # worker answers; see WEBKIT_WORKERS in harness.py. Nothing here is routed.
+            service_workers="allow",
+        )
         if signed:
             context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
         page = context.new_page()

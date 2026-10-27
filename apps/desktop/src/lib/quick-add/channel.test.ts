@@ -8,21 +8,26 @@ describe('what the global window and the app say', () => {
 
   test('is heard when it is one of ours', () => {
     expect(heard({ kind: 'hello' })).toEqual({ kind: 'hello' })
-    expect(heard({ kind: 'task', entry: task, open: false })).toEqual({
+    expect(heard({ kind: 'task', id: 3, entry: task, open: false })).toEqual({
       kind: 'task',
+      id: 3,
       entry: task,
       open: false,
     })
+    expect(heard({ kind: 'added', id: 3, ok: false })).toEqual({ kind: 'added', id: 3, ok: false })
     expect(heard({ kind: 'world', notes: ['Inbox'], lang: 'de', smart: true })?.kind).toBe('world')
   })
 
   test('and nothing else is', () => {
     expect(heard(null)).toBeNull()
     expect(heard('task')).toBeNull()
-    expect(heard({ kind: 'task', entry: { text: 1, fields: {} }, open: false })).toBeNull()
+    expect(heard({ kind: 'task', id: 1, entry: { text: 1, fields: {} }, open: false })).toBeNull()
+    expect(heard({ kind: 'task', entry: task, open: false })).toBeNull()
+    expect(heard({ kind: 'added', id: '1', ok: true })).toBeNull()
     expect(
       heard({
         kind: 'task',
+        id: 1,
         entry: { ...task, fields: { ...task.fields, priority: 9 } },
         open: true,
       }),

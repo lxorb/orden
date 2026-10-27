@@ -392,6 +392,55 @@ describe('whether anything is at a path', () => {
   })
 })
 
+describe('a file the app reads as words, written as bytes', () => {
+  // What sync hands a file it carries as a blob - a PDF's highlights, a base, a plane
+  // dropped in - and what it reads back to send one: bytes on both sides, words in
+  // between, so the two stores have to agree on where those words are.
+  const base64 = (text: string) => Buffer.from(text, 'utf8').toString('base64')
+  const bytesOf = async (path: string) => {
+    const uri = await webInvoke<string>('read_asset', { path })
+    return Buffer.from(uri.slice(uri.indexOf(',') + 1), 'base64').toString('utf8')
+  }
+  const PDF = '/Notes/Paper.pdf'
+  const SIDE = '/Notes/Paper.pdf.highlights.json'
+
+  test('is read as words: a PDF’s highlights, a base and a plane', async () => {
+    await webInvoke('write_bytes', { path: SIDE, base64: base64('{"v":1,"from":"desktop"}') })
+    await webInvoke('write_bytes', { path: '/Notes/Bugs.base', base64: base64('views: []\n') })
+    await webInvoke('write_bytes', { path: '/Notes/Board.canvas', base64: base64('{"nodes":[]}') })
+
+    expect(await webInvoke('read_highlights', { path: PDF })).toBe('{"v":1,"from":"desktop"}')
+    expect(await read('/Notes/Bugs.base')).toBe('views: []\n')
+    expect(await read('/Notes/Board.canvas')).toBe('{"nodes":[]}')
+  })
+
+  test('is read back as the bytes of the words written here since', async () => {
+    await webInvoke('write_bytes', { path: SIDE, base64: base64('{"v":1,"old":true}') })
+    await webInvoke('write_highlights', { path: PDF, content: '{"v":1,"new":true}' })
+
+    expect(await bytesOf(SIDE)).toBe('{"v":1,"new":true}')
+  })
+
+  test('left among the pictures by an earlier build, is read as words', async () => {
+    disk.assets.set(SIDE, {
+      path: SIDE,
+      type: 'application/octet-stream',
+      data: base64('{"v":1,"kept":true}'),
+      modified: 5,
+    })
+
+    expect(await webInvoke('read_highlights', { path: PDF })).toBe('{"v":1,"kept":true}')
+    expect(disk.assets.has(SIDE)).toBe(false)
+    expect(disk.files.get(SIDE)?.content).toBe('{"v":1,"kept":true}')
+  })
+
+  test('a picture is still a picture', async () => {
+    await webInvoke('write_bytes', { path: '/Notes/shot.png', base64: 'AAEC' })
+    expect(disk.assets.get('/Notes/shot.png')?.data).toBe('AAEC')
+    expect(disk.files.has('/Notes/shot.png')).toBe(false)
+  })
+})
+
 describe('the trash', () => {
   test('holds what was deleted and puts it back where it came from', async () => {
     await write('/Notes/Idea.md', '# Idea')
@@ -644,12 +693,46 @@ describe("a page note's paper", () => {
     expect(disk.files.has('/Notes/Week 1.pages.pdf.highlights.json')).toBe(true)
   })
 
+  test('follows the note when sync moves it, and leaves its highlights', async () => {
+    // Sync carries the paper with the note and never as an entry of its own (#551), and
+    // the paper's highlights as one of their own, moved by their own move.
+    await webInvoke('write_highlights', { path: paper, content: '{"version":1}' })
+
+    await webInvoke('rename_note', { from: note, to: '/Notes/Week 1.pages', alone: true })
+
+    expect(disk.files.has('/Notes/Week 1.pages')).toBe(true)
+    expect(disk.assets.has(paper)).toBe(false)
+    expect(disk.assets.get('/Notes/Week 1.pages.pdf')?.data).toBe('JVBERg==')
+    expect(disk.files.has('/Notes/Lecture.pages.pdf.highlights.json')).toBe(true)
+    expect(disk.files.has('/Notes/Week 1.pages.pdf.highlights.json')).toBe(false)
+  })
+
+  test('is never taken from somebody else, however the note moves', async () => {
+    // A PDF of a page note's paper name is somebody's own: sync never moves a paper on
+    // its own, so it is not this note's either when sync moves the note.
+    disk.assets.set('/Notes/Report.pages.pdf', held('/Notes/Report.pages.pdf'))
+    for (const alone of [false, true])
+      await expect(
+        webInvoke('rename_note', { from: note, to: '/Notes/Report.pages', alone }),
+      ).rejects.toThrow('already there')
+  })
+
   test('goes to the trash and comes back with it', async () => {
     const entry = await webInvoke<{ id: string }>('trash_item', { path: note, kind: 'note' })
     expect(disk.assets.has(paper)).toBe(false)
 
     await webInvoke('restore_trash', { id: entry.id })
     expect(disk.assets.get(paper)?.data).toBe('JVBERg==')
+  })
+
+  test('goes to the trash with the note when sync deletes it, without its highlights', async () => {
+    await webInvoke('write_highlights', { path: paper, content: '{"version":1}' })
+
+    await webInvoke('trash_item', { path: note, kind: 'note', alone: true })
+
+    expect(disk.files.has(note)).toBe(false)
+    expect(disk.assets.has(paper)).toBe(false)
+    expect(disk.files.has('/Notes/Lecture.pages.pdf.highlights.json')).toBe(true)
   })
 
   test('is copied with it, and goes when it goes', async () => {
@@ -660,6 +743,18 @@ describe("a page note's paper", () => {
     await webInvoke('delete_note', { path: '/Notes/Lecture copy.pages' })
     expect(disk.assets.has('/Notes/Lecture copy.pages.pdf')).toBe(false)
     expect(disk.assets.has(paper)).toBe(true)
+  })
+
+  test('is where a PDF beside the note goes when sync holds it there', async () => {
+    // Another device turned the PDF into this note; sync carries the move with `hold`,
+    // and the browser takes it as the crate does.
+    disk.assets.delete(paper)
+    disk.assets.set('/Notes/Lecture.pdf', held('/Notes/Lecture.pdf'))
+
+    await webInvoke('rename_note', { from: '/Notes/Lecture.pdf', to: paper, hold: true })
+
+    expect(disk.assets.has(paper)).toBe(true)
+    expect(disk.assets.has('/Notes/Lecture.pdf')).toBe(false)
   })
 })
 
@@ -706,6 +801,54 @@ describe("a PDF's highlights", () => {
     expect(disk.files.has(sidecar)).toBe(false)
   })
 
+  test('stay where they are when sync moves the PDF alone', async () => {
+    // Sync carries the highlights as a file of their own, moved by their own entry, and
+    // in whichever order the two arrive. The PDF's move takes nothing along, and leaves
+    // highlights already moved ahead of it where they landed.
+    disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
+    await webInvoke('write_highlights', { path: '/Notes/moved.pdf', content: '{"version":2}' })
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+
+    await webInvoke('rename_note', { from: pdf, to: '/Notes/moved.pdf', alone: true })
+
+    expect(disk.assets.has('/Notes/moved.pdf')).toBe(true)
+    expect(disk.files.get(sidecar)?.content).toBe('{"version":1}')
+    expect(disk.files.get('/Notes/moved.pdf.highlights.json')?.content).toBe('{"version":2}')
+  })
+
+  test('stay where they are when sync deletes the PDF', async () => {
+    // Sync carries the highlights as an entry of their own, which its delete leaves.
+    disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+
+    await webInvoke('trash_item', { path: pdf, kind: 'note', alone: true })
+
+    expect(disk.assets.has(pdf)).toBe(false)
+    expect(disk.files.get(sidecar)?.content).toBe('{"version":1}')
+  })
+
+  test('are rejoined by their PDF when sync deleted the two apart and they came back first', async () => {
+    // Each is an entry of its own to sync, deleted and restored on its own. The PDF
+    // stepped aside from highlights at its name as another PDF's, and left them alone.
+    disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+    const paper = await webInvoke<{ id: string }>('trash_item', {
+      path: pdf,
+      kind: 'note',
+      alone: true,
+    })
+    const marks = await webInvoke<{ id: string }>('trash_item', {
+      path: sidecar,
+      kind: 'note',
+      alone: true,
+    })
+
+    await webInvoke('restore_trash', { id: marks.id })
+    expect(await webInvoke<string>('restore_trash', { id: paper.id })).toBe(pdf)
+
+    expect(disk.files.get(sidecar)?.content).toBe('{"version":1}')
+  })
+
   test('go when the PDF goes', async () => {
     disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
     await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
@@ -721,6 +864,52 @@ describe("a PDF's highlights", () => {
     await expect(
       webInvoke('write_highlights', { path: '/Notes/Idea.md', content: '{}' }),
     ).rejects.toThrow()
+  })
+})
+
+/** A page note's paper is `<name>.pages.pdf` beside it, held out of the list, so a
+ *  rename or a copy never puts a page note where its paper would go over somebody's
+ *  PDF, nor a PDF where a page note would take it for its paper (#538), as the
+ *  desktop's `paper_in_the_way` has it. */
+describe('a page note and a PDF of its paper’s name', () => {
+  const pdf = (path: string) => webInvoke('write_bytes', { path, base64: btoa('%PDF mine') })
+
+  beforeEach(async () => {
+    await write('/Notes/A/Report.pages', '{}')
+    await pdf('/Notes/B/Report.pages.pdf')
+    await write('/Notes/B/Blank.pages', '{}')
+    await pdf('/Notes/B/slides.pdf')
+  })
+
+  test('a page note is not renamed or copied where its paper would go', async () => {
+    for (const command of ['rename_note', 'copy_path']) {
+      await expect(
+        webInvoke(command, { from: '/Notes/A/Report.pages', to: '/Notes/B/Report.pages' }),
+        command,
+      ).rejects.toThrow(/already there/)
+    }
+    expect(disk.files.has('/Notes/A/Report.pages')).toBe(true)
+    expect(disk.files.has('/Notes/B/Report.pages')).toBe(false)
+  })
+
+  test('nor a PDF where a page note would take it for its paper', async () => {
+    for (const command of ['rename_note', 'copy_path']) {
+      await expect(
+        webInvoke(command, { from: '/Notes/B/slides.pdf', to: '/Notes/B/Blank.pages.pdf' }),
+        command,
+      ).rejects.toThrow(/already there/)
+    }
+    expect(disk.assets.has('/Notes/B/slides.pdf')).toBe(true)
+    expect(disk.assets.has('/Notes/B/Blank.pages.pdf')).toBe(false)
+  })
+
+  test('unless it is a PDF being turned into its page note, which says so', async () => {
+    await webInvoke('rename_note', {
+      from: '/Notes/B/slides.pdf',
+      to: '/Notes/B/Blank.pages.pdf',
+      hold: true,
+    })
+    expect(disk.assets.has('/Notes/B/Blank.pages.pdf')).toBe(true)
   })
 })
 
@@ -752,6 +941,50 @@ describe('a pasted picture', () => {
     await expect(save('/Notes/Read me.md', '../../elsewhere')).rejects.toThrow()
     await expect(save('/Notes/Work/Plan.md', '../../Other/assets')).rejects.toThrow()
     expect([...disk.assets.keys()]).toEqual([])
+  })
+
+  /** A page note's paper is `<name>.pages.pdf` beside it: a PDF of that name dropped
+   *  beside a page note with no paper yet would become its paper, and be deleted with it. */
+  test('steps aside from a name a page note would take for its paper', async () => {
+    await webInvoke('write_note', { path: '/Notes/Report.pages', content: '{}' })
+    const written = await webInvoke<string>('save_asset', {
+      notePath: '/Notes/Read me.md',
+      folder: '',
+      name: 'Report.pages.pdf',
+      bytes: [1],
+    })
+
+    expect(written).toBe('Report.pages 2.pdf')
+    expect([...disk.assets.keys()]).toEqual(['/Notes/Report.pages 2.pdf'])
+  })
+
+  const drop = (name: string, bytes = [1]) =>
+    webInvoke<string>('save_asset', { notePath: '/Notes/Read me.md', folder: '', name, bytes })
+
+  test('keeps both of two pictures of one name', async () => {
+    expect(await drop('scan.pdf', [1])).toBe('scan.pdf')
+    expect(await drop('scan.pdf', [2])).toBe('scan 2.pdf')
+    expect(await drop('scan.pdf', [2])).toBe('scan 2.pdf')
+    expect(disk.assets.size).toBe(2)
+  })
+
+  test('is the one copy dropped twice, wherever it stepped aside to', async () => {
+    await webInvoke('write_note', { path: '/Notes/Report.pages', content: '{}' })
+    expect(await drop('Report.pages.pdf')).toBe('Report.pages 2.pdf')
+    expect(await drop('Report.pages.pdf')).toBe('Report.pages 2.pdf')
+  })
+
+  /** Highlights a gone PDF left are still a PDF's, and `CON.png` is a device on
+   *  Windows; see `taken` in paths.rs and `safe_name` in assets.rs. */
+  test('steps past leftover highlights and a device name', async () => {
+    await webInvoke('write_note', { path: '/Notes/X.pdf.highlights.json', content: '[]' })
+    expect(await drop('X.pdf')).toBe('X 2.pdf')
+    expect(await drop('CON.png')).toBe('_CON.png')
+  })
+
+  test('never names a folder with a slash in its name', async () => {
+    expect(await drop('a/b.png')).toBe('a-b.png')
+    expect([...disk.assets.keys()]).toEqual(['/Notes/a-b.png'])
   })
 
   test('keeps the folder an older build wrote when none is sent', async () => {

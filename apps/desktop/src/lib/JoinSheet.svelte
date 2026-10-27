@@ -14,6 +14,7 @@
   import { joining } from './joining.svelte'
   import { t } from './i18n.svelte'
   import { dur, LAYER } from './motion'
+  import { overlays } from './overlays'
   import { trap } from './trap'
 
   const invitation = $derived(joining.invitation)
@@ -29,10 +30,22 @@
       ? t('{who} shared {space} with you', { who, space: invitation.note ?? invitation.space })
       : null,
   )
+
+  /** Escape, the scrim and Close. A wait goes on out of sight, the way a request
+   *  for access does in Google Docs or Slack, and the field keeps what was typed;
+   *  the pill at the foot of the window opens either again (JoinPending.svelte). A
+   *  line that only says something is done with. */
+  function close() {
+    if (joining.step === 'waiting' || joining.step === 'asking') joining.close()
+    else joining.dismiss()
+  }
+
+  $effect(() => (joining.shown ? overlays.show(close) : undefined))
 </script>
 
-{#if joining.step}
-  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }}></div>
+{#if joining.shown}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={close}></div>
 
   <div
     class="nib-screen panel"
@@ -75,6 +88,15 @@
         <span class="pulse"></span>
         {t('Waiting for {who}', { who })}
       </p>
+      <!-- Slack's pending request: Cancel takes it back, Close leaves it asking. -->
+      <div class="actions">
+        <button type="button" class="nib-button is-quiet" onclick={() => void joining.cancel()}
+          >{t('Cancel')}</button
+        >
+        <button type="button" class="nib-button is-quiet" onclick={() => joining.close()}
+          >{t('Close')}</button
+        >
+      </div>
     {:else if joining.step === 'declined'}
       <p class="quiet">{t('{who} did not let you in', { who })}</p>
       <button type="button" class="nib-button is-quiet" onclick={() => joining.dismiss()}
@@ -189,6 +211,13 @@
   /* Both buttons are `.nib-button` in the themes package: the one thing this
      asks, and `is-quiet` for the word that only closes it. `Done` used to wear a
      filled `--surface-2` of its own, which made it a third kind of button. */
+
+  /* The two halves of the panel's width, as the one button elsewhere has all of it. */
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
 
   .wrong {
     margin: 0;

@@ -16,7 +16,7 @@
     type LinkPress,
     modeEffects,
     type NoteIndex,
-    type NoteOpener,
+    type NoteJump,
     noteIndexEffect,
     placeAt,
     type PreviewNote,
@@ -67,8 +67,9 @@
     onselection?: (view: EditorView) => void
     /** The space around a note, so `[[links]]` can be drawn and completed. */
     notes?: (tab: Tab) => NoteIndex
-    opennote?: NoteOpener
-    nameblock?: (path: string, line: number) => Promise<string | null>
+    /** Follows a link, given the note it is in so it is followed in that note's space. */
+    opennote?: (jump: NoteJump, press: LinkPress | undefined, from: string | null) => void
+    nameblock?: (path: string, line: number, from: Tab) => Promise<string | null>
     /** Ctrl+F and Ctrl+H, which are keys in the editor and a bar in the pane;
      *  null when something in the editor closed it. See find.ts. */
     onfind?: (ask: FindAsk | null) => void
@@ -88,10 +89,12 @@
   function previewCard(host: HTMLElement, note: PreviewNote): (() => void) | null {
     if (workspace.activeSpace?.root === undefined) return null
 
+    // The note the link is in, read now: the card's path is relative to its space.
+    const from = tab.path
     let release: (() => void) | null = null
     let gone = false
     void import('./preview-card').then(({ mountPreview }) => {
-      if (!gone) release = mountPreview(host, note)
+      if (!gone) release = mountPreview(host, note, from)
     })
 
     return () => {
@@ -125,10 +128,14 @@
       ...(openlink ? { openLink: openlink } : {}),
       ...(onselection ? { onSelection: onselection } : {}),
       ...(notes ? { notes: notes(one) } : {}),
-      ...(opennote ? { openNote: opennote } : {}),
+      ...(opennote
+        ? { openNote: (jump: NoteJump, press?: LinkPress) => opennote(jump, press, one.path) }
+        : {}),
       // A pressed `#tag` searches the space; see tag-search.ts.
       openTag: (tag: string) => void import('./tag-search').then(({ searchTag }) => searchTag(tag)),
-      ...(nameblock ? { nameBlock: nameblock } : {}),
+      ...(nameblock
+        ? { nameBlock: (path: string, line: number) => nameblock(path, line, one) }
+        : {}),
       // How a link the `[[` popup writes is spelled: the app's one writer, so the
       // Links setting reaches the popup the way it reaches the grip's Copy link.
       // See composer.ts.

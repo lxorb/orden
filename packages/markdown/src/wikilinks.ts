@@ -33,8 +33,15 @@ import { remembering } from './tags'
  *  a caller that knows a better name for the note than the target it was given. */
 export type LinkResolver = (link: Wikilink) => { href: string | null; text?: string } | null
 
-/** The markdown of the note an embed names, or null when there is none. */
-export type EmbedResolver = (link: Wikilink) => string | null
+/** The markdown of the note an embed names, or null when there is none. Given with
+ *  `escapeHtml` where that note's own HTML is words even in a page whose HTML is
+ *  markup: a note somebody else wrote, embedded in one the reader did. */
+export type EmbedResolver = (link: Wikilink) => string | EmbeddedNote | null
+
+export interface EmbeddedNote {
+  text: string
+  escapeHtml: boolean
+}
 
 /** An embed's content is rendered after the document around it, the way a
  *  `[toc]` is: this is what stands in its place until then.
@@ -42,8 +49,9 @@ export type EmbedResolver = (link: Wikilink) => string | null
  *  Stamped with a number nobody could have written, so that raw HTML in a note -
  *  which an export passes through unescaped - cannot claim to be an embed. */
 export interface Embeds {
-  /** The sections found, in the order they were met. */
-  sections: string[]
+  /** The sections found, in the order they were met, each with whether its own HTML
+   *  is words whatever the page's is. */
+  sections: { text: string; escapeHtml: boolean }[]
   /** What marks each one's place. */
   marker: (at: number) => string
 }
@@ -248,13 +256,14 @@ function frame(
   link: Wikilink,
   options: { resolveEmbed?: EmbedResolver; embeds: Embeds },
 ): string | null {
-  const source = options.resolveEmbed?.(link) ?? null
-  if (source === null) return null
+  const found = options.resolveEmbed?.(link) ?? null
+  if (found === null) return null
 
-  const section = sectionOf(source, link)
+  const note = typeof found === 'string' ? { text: found, escapeHtml: false } : found
+  const section = sectionOf(note.text, link)
   if (section === null) return null
 
-  const at = options.embeds.sections.push(section) - 1
+  const at = options.embeds.sections.push({ text: section, escapeHtml: note.escapeHtml }) - 1
   const name = escape(shownText(link))
 
   return `<figure class="embed">\n<div class="embed-body">${options.embeds.marker(

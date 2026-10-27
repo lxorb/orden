@@ -7,12 +7,13 @@ import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
+import { canWriteAt } from '../sharing.svelte'
 import { insideSpace, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { noteText } from '../workspace/note-text'
 import { rewriteNotes } from './act'
 import type { Kit } from './kit'
-import { placeEntries } from './project-actions'
+import { offersPlaces, placeEntries } from './project-actions'
 import {
   cutSection,
   duplicatedSection,
@@ -101,17 +102,21 @@ export function sectionMenu(
       label: t('Duplicate'),
       run: () => write((text) => duplicatedSection(text, name, t('{name} (copy)', { name }))),
     },
-    {
-      label: t('Move to'),
-      run: () => undefined,
-      more: () =>
-        Promise.resolve(
-          placeEntries(
-            (target) => void moveSection(path, name, target),
-            (note) => samePath(note, path),
-          ),
-        ),
-    },
+    ...(offersPlaces()
+      ? [
+          {
+            label: t('Move to'),
+            run: () => undefined,
+            more: () =>
+              Promise.resolve(
+                placeEntries(
+                  (target) => void moveSection(path, name, target),
+                  (note) => samePath(note, path),
+                ),
+              ),
+          },
+        ]
+      : []),
     ...extra,
     DIVIDER,
     {
@@ -127,7 +132,9 @@ export function sectionMenu(
 /** A section and its tasks taken to the end of another note, both written as one. */
 async function moveSection(from: string, name: string, to: string): Promise<boolean> {
   // Read first: a note that will not read would take the section and keep nothing.
-  if (samePath(from, to) || (await noteText(workspace, to)) === null) return false
+  // And both ends asked: a cut whose arrival is refused loses the section.
+  if (samePath(from, to) || !canWriteAt(from) || !canWriteAt(to)) return false
+  if ((await noteText(workspace, to)) === null) return false
   let block: string[] | null = null
   return rewriteNotes(
     [
@@ -142,6 +149,7 @@ async function moveSection(from: string, name: string, to: string): Promise<bool
       { path: to, after: (text) => (block ? withBlock(text, block) : null) },
     ],
     'moved',
+    true,
   )
 }
 

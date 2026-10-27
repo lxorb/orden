@@ -7,10 +7,11 @@
  *  workspace.svelte.ts. Fetched with the first address typed. */
 
 import { shownName } from '../note-name'
+import { canWriteAt } from '../sharing.svelte'
 import { nameOf } from '../space-paths'
 import type { Tab } from '../workspace/documents.svelte'
 import { writeFile } from '../workspace/write-file'
-import { readWebFile, WEBLOC_URL, writeShortcut } from './shortcut'
+import { aimWebloc, readWebFile, writeShortcut } from './shortcut'
 
 export async function aimed(
   ws: { keep(id: string): void; persist(): void },
@@ -21,6 +22,10 @@ export async function aimed(
   // was only being previewed stays; see used.ts.
   ws.keep(tab.id)
   if (tab.kind !== 'web' || tab.path === null) return
+  // A website in a space shared to be read goes where it was told without the file
+  // following: nothing may be written there (B288). The session keeps where the tab
+  // is, as it does for a link followed inside the page.
+  if (!canWriteAt(tab.path)) return
 
   const was = readWebFile(tab.path, tab.doc)
   if (was?.url === url) return
@@ -28,15 +33,10 @@ export async function aimed(
   const title = was?.title ?? shownName(nameOf(tab.path))
   // A `.webloc` keeps its plist, and every other key in it: only the address changes.
   const content = /\.webloc$/i.test(tab.path.trim())
-    ? tab.doc.replace(WEBLOC_URL, () => escaped(url))
+    ? aimWebloc(tab.doc, url)
     : writeShortcut(url, title, new Date(), null, null, was?.own)
   tab.note.replace(content, false)
 
   await writeFile(tab.path, content).catch(() => undefined)
   ws.persist()
-}
-
-/** An address as a plist's string: the three marks XML text cannot hold bare. */
-function escaped(url: string): string {
-  return url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }

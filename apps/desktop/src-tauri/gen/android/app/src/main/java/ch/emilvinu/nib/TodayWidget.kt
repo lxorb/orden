@@ -96,7 +96,7 @@ class TodayWidget : AppWidgetProvider() {
     }
 
     private fun intent(context: Context): Intent =
-      Intent(context, MainActivity::class.java)
+      MainActivity.sealed(context, Intent(context, MainActivity::class.java))
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
     private fun command(context: Context, id: String, at: Int): PendingIntent {

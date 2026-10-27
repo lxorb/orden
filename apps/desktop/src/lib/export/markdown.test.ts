@@ -125,3 +125,17 @@ describe('both rewrites at once', () => {
     expect(toMarkdown(source, { link: resolve, picture: () => 'x' })).toBe(source)
   })
 })
+
+describe('pictures and code', () => {
+  const picture = () => 'assets/cat.png'
+
+  test('a picture after a block holding a shorter fence is pointed at its copy', () => {
+    const source = '````md\n```\n````\n\n![A cat](cat.png)\n'
+    expect(toMarkdown(source, { picture })).toBe('````md\n```\n````\n\n![A cat](assets/cat.png)\n')
+  })
+
+  test('a picture in quoted code is left as the code wrote it', () => {
+    const source = '> ```md\n> ![A cat](cat.png)\n> ```\n'
+    expect(toMarkdown(source, { picture })).toBe(source)
+  })
+})

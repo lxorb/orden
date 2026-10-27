@@ -60,6 +60,25 @@ interface KeyLine {
  *  a comment and a `- ` line is part of a list. */
 const KEY = /^([^\s#-].*?)[ \t]*:(?=\s|$)/
 
+/** A name `KEY` reads back as that same key, and YAML as a plain word: the one rule
+ *  every writer of a key asks and the rows read by, so a key one of them writes is a
+ *  key the others find. Anything else goes - `priorität`, `Size (cm)`, `R&D`, `💰`.
+ *
+ *  What it keeps out is a name that would come back as something else. A blank at
+ *  the end is trimmed off, so `tags ` is a twin of `tags`, and one in front indents
+ *  the line under the key above. A colon before
+ *  a blank or at the end ends the key early, a blank before `#` starts a comment, and
+ *  a line break or another control character is a second line. A first character
+ *  `KEY` passes over (`#`, `-`) or YAML reads as more than a letter (a quote, a
+ *  bracket, an anchor, a tag, a block scalar, a reserved sign, `?`, `:`, `,`) makes
+ *  the line a comment, a list item or a YAML shape that is not this key. */
+const NAME = /^(?![\s#\-?:,[\]{}&*!|>'"%@`])(?!.*:(?:\s|$))(?!.*\s#)[^\p{Cc}\p{Zl}\p{Zp}]+(?<!\s)$/u
+
+/** Whether a key may be written under this name; see `NAME`. */
+export function isPropertyName(name: string): boolean {
+  return NAME.test(name)
+}
+
 /** Where the front matter block sits, or null when the note opens with anything
  *  else - which is most notes.
  *
@@ -205,6 +224,20 @@ export function frontMatterValue(source: string, key: string): string | null {
   return unquoted(value) || null
 }
 
+/** Every top-level key the block holds, as written and in its order, or none
+ *  where the note has no block. What a writer adding keys to a note's own block
+ *  asks first, so that it adds none the note already says. */
+export function frontMatterKeys(source: string): string[] {
+  const block = frontMatterBlock(source)
+  if (!block) return []
+
+  return source
+    .slice(block.body.from, block.body.to)
+    .split('\n')
+    .map((line) => KEY.exec(line.replace(/\r$/, ''))?.[1])
+    .filter((key): key is string => key !== undefined)
+}
+
 /** The line a key is written on, or null when the block has no such key. The
  *  first one wins, the way YAML reads a duplicated key. A key in another case is
  *  read where the note has none in this one; where it has both they are two keys,
@@ -279,7 +312,10 @@ export function frontMatterEdits(
  *    pair of fences at the top of a note is litter rather than metadata.
  *
  *  The line ending is whatever the note already uses, so a file written on
- *  Windows does not come back with one line in the other convention. */
+ *  Windows does not come back with one line in the other convention.
+ *
+ *  The value is written after the colon as it is given, so it is YAML already: a
+ *  caller holding somebody's words quotes them with `scalar` first. */
 export function frontMatterEdit(
   source: string,
   key: string,
@@ -310,7 +346,7 @@ export function frontMatterEdit(
 
   if (line) {
     const said = source.slice(line.value.from, line.value.to).trim()
-    if (unquoted(said) === value) return null
+    if (readAs(said) === readAs(value)) return null
 
     const to = source[line.value.to - 1] === '\r' ? line.value.to - 1 : line.value.to
     return { from: line.value.from, to, insert: ` ${value}` }
@@ -319,17 +355,32 @@ export function frontMatterEdit(
   return { from: block.close, to: block.close, insert: `${key}: ${value}${nl}` }
 }
 
+/** What a value on a line reads as, so two spellings of it can be compared: the
+ *  same words are no change whichever quotes each is in, and `"rocket"` is the
+ *  `rocket` written bare, while `yes` bare is a boolean and `3` bare a number.
+ *  Comparing the words alone would call `done: "true"` the checkbox `true` and
+ *  write nothing, leaving the note saying text where it was asked for a tick. */
+function readAs(value: string): string {
+  const said = value.trim()
+  const words = unquoted(said)
+  return words !== said || scalar(said) === said ? `words ${words}` : `bare ${said}`
+}
+
 /** A key's line through what is written under it: the indented lines and the
- *  `- item` lines after it, up to a blank line or the next key. They are the key's
- *  value as much as its own line is, so a value written over it replaces them and
- *  taking it away takes them, rather than leaving them hanging under the key above. */
+ *  `- item` lines after it, up to the next key. They are the key's value as much as
+ *  its own line is, so a value written over it replaces them and taking it away takes
+ *  them, rather than leaving them hanging under the key above. A blank line is part of
+ *  it only where more of it follows: inside a `|` or `>` value it is one of the value's
+ *  own lines, and what is indented after it is still the value. */
 function withUnder(source: string, block: FrontMatterBlock, line: KeyLine): KeyLine {
   let to = line.to
-  while (to + 1 < block.body.to) {
-    const stop = source.indexOf('\n', to + 1)
-    const text = source.slice(to + 1, stop).trimEnd()
-    if (!text || (!/^[ \t]/.test(text) && listItem(text) === null)) break
-    to = stop
+  let at = line.to
+  while (at + 1 < block.body.to) {
+    const stop = source.indexOf('\n', at + 1)
+    const text = source.slice(at + 1, stop).trimEnd()
+    if (text && !/^[ \t]/.test(text) && listItem(text) === null) break
+    at = stop
+    if (text) to = stop
   }
   return to === line.to ? line : { ...line, to, value: { ...line.value, to } }
 }

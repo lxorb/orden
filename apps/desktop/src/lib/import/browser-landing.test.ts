@@ -59,6 +59,8 @@ vi.mock('./apply', () => ({
 }))
 
 vi.mock('../busy.svelte', () => ({ busy: { failed: (line: string) => void said.push(line) } }))
+// Every space here is the reader's own; one shared to be read is zen-landing.test.ts's.
+vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 
 vi.mock('../workspace.svelte', () => {
   let active: string | null = null

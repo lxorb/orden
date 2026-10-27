@@ -10,11 +10,12 @@
  *  off that space's own index. The four verbs past the first three are anchored edits
  *  too, so each is one undo step with the agent's caret, like any other. */
 
-import { frontMatterEdit } from '@nib/markdown/front-matter'
+import { frontMatterEdit, isPropertyName } from '@nib/markdown/front-matter'
 import { taskAt } from '@nib/markdown/tasks'
+import { flowItem, scalar } from '@nib/markdown/yaml'
 import type { AgentAnswer } from '../../automation/caller'
-import { canWriteAt } from '../../sharing.svelte'
-import { isMarkdownPath, nameOf } from '../../space-paths'
+import { onDisk as there } from '../../on-disk'
+import { notePath } from '../../space-paths'
 import { writeFile } from '../../workspace/write-file'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { isDraft } from '../../workspace/drafts'
@@ -26,8 +27,17 @@ import { type Call, done, flag, maybe, need, text, writerOf } from './call'
 import { heldIndex, indexOf } from './links'
 import { Refused } from './problem'
 import { createFile, fileKindOf } from './new-files'
-import { namedTab } from './tab-target'
-import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
+import { namedTab, tabsOwnSpace } from './tab-target'
+import {
+  judged,
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeFor,
+  placeOf,
+  sharedSource,
+  writableAt,
+} from './spaces'
 
 /** The note a call names, in a space it may reach: its place, and its path as the
  *  space speaks of it, with `.md` where the name has no ending - or `tab`, any note tab
@@ -41,7 +51,7 @@ export function noteOf(
 ): { place: Place; relative: string; tab?: string } {
   if (maybe(call, 'tab') === SCRATCHPAD_TAB) {
     return {
-      place: placeFor(call, maybe(call, 'space')),
+      place: placeOf(call),
       relative: SCRATCHPAD,
       tab: SCRATCHPAD_TAB,
     }
@@ -50,23 +60,23 @@ export function noteOf(
   if (maybe(call, 'tab') !== null) {
     const named = namedTab(call, ['note'], 'a note')
     if (named.relative !== null) {
-      return noteOf({ ...call, args: { ...call.args, tab: null, path: named.relative } }, writing)
+      // The tab's own space, said: one the call names none of is the thread's otherwise.
+      const args = { ...call.args, tab: null, path: named.relative, space: named.place.space.id }
+      return noteOf({ ...call, args }, writing)
     }
 
-    return { place: placeFor(call, spaceOfTab(named.tab)), relative: '', tab: named.tab.id }
+    const place = placeFor(call, spaceOfTab(named.tab))
+    tabsOwnSpace(call, named.tab, place)
+    return { place, relative: '', tab: named.tab.id }
   }
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const asked = need(call, 'path')
   const safe = writing ? judgedForWriting(asked) : judged(asked)
-  const relative = nameOf(safe).includes('.') ? safe : `${safe}.md`
-  if (!isMarkdownPath(relative)) {
-    throw new Refused('bad_arguments', `${relative} is not a markdown note`)
-  }
+  const relative = notePath(safe)
+  if (relative === null) throw new Refused('bad_arguments', `${safe} is not a markdown note`)
 
-  if (writing && !canWriteAt(onDisk(place, relative))) {
-    throw new Refused('read_only', `${place.space.name} is shared with you to read`)
-  }
+  if (writing) writableAt(place, onDisk(place, relative))
 
   return { place, relative }
 }
@@ -107,7 +117,7 @@ export async function readNote(call: Call): Promise<AgentAnswer> {
     if (read.backlinks !== undefined) read.backlinks = index.backlinks(path)
   }
 
-  return done(read, sharedSource(place))
+  return done(read, sharedSource(place, relative))
 }
 
 export async function editNote(call: Call): Promise<AgentAnswer> {
@@ -161,18 +171,25 @@ export async function appendNote(call: Call): Promise<AgentAnswer> {
 function yamlOf(value: unknown): string | null {
   if (value === null) return null
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
-  if (Array.isArray(value)) return `[${value.map((one) => yamlOf(String(one))).join(', ')}]`
+  if (Array.isArray(value)) return `[${value.map(memberOf).join(', ')}]`
 
-  const words = typeof value === 'string' ? value.replace(/[\r\n]+/g, ' ').trim() : ''
-  const plain = /^[^\s\-?:,[\]{}#&*!|>'"%@`][^:#]*$/.test(words) && !/\s$/.test(words)
-  return plain ? words : JSON.stringify(words)
+  // Through the package's own quoting rather than a guess at what reads bare: words
+  // like `yes`, `012` or `1e3` pass any test of their characters and still come back
+  // as a boolean or a number.
+  return scalar(typeof value === 'string' ? value : '')
+}
+
+/** One member of a list, where a comma or a bracket in the words would also end it. */
+function memberOf(value: unknown): string {
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  return flowItem(String(value))
 }
 
 export async function setProperty(call: Call): Promise<AgentAnswer> {
   const named = noteOf(call, true)
   const { relative } = named
   const key = need(call, 'key')
-  if (!/^[\w-][\w -]*$/.test(key)) throw new Refused('bad_arguments', `${key} is not a key`)
+  if (!isPropertyName(key)) throw new Refused('bad_arguments', `${key} is not a key`)
   if (!('value' in call.args)) throw new Refused('bad_arguments', 'say the value, or null')
   const value = yamlOf(call.args.value)
 
@@ -237,7 +254,7 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
 
   // A canvas, a page note or a web note is a file of its own kind; see new-files.ts.
   const kind = fileKindOf(call)
-  if (kind !== 'note') return createFile(call, placeFor(call, maybe(call, 'space')), kind, made)
+  if (kind !== 'note') return createFile(call, placeOf(call), kind, made)
 
   const { place, relative } = noteOf(call, true)
   if ((await workspace.noteText(onDisk(place, relative))) !== null) {
@@ -247,13 +264,28 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Make ${relative} in ${place.space.name}`)
   if (question) return question
 
-  return done(await made(place, relative, wordsSent(call) ?? '', flag(call, 'open')))
+  // Said with the space it was made in: one the call did not name is the one in front,
+  // which a rewind of the thread later finds here rather than in the thread's own.
+  const answer = await made(place, relative, wordsSent(call) ?? '', flag(call, 'open'))
+  return done({ ...answer, space: place.space.id })
 }
 
 /** A new note, written where it goes. Opened behind the tab in front when asked, and
- *  only in the space the reader is in: opening one in another would move them. */
+ *  only in the space the reader is in: opening one in another would move them. Refused
+ *  in a space shared to be read: the verbs that come here ask first, but this is the
+ *  one place every new note passes, so it does not rely on them. */
 export async function made(place: Place, relative: string, words: string, open: boolean) {
   const path = onDisk(place, relative)
+  writableAt(place, path)
+  // Every caller makes the note because a read of it failed, and a read also fails for
+  // a note that is there and would not read. The disk is asked rather than the read
+  // trusted, so such a note is refused and kept instead of emptied.
+  if (await there(path)) {
+    throw new Refused(
+      'exists',
+      `${relative} is there and would not read, and nothing is written over it`,
+    )
+  }
   await writeFile(path, words)
 
   if (place.open) {

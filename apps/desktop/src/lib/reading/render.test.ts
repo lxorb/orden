@@ -20,6 +20,7 @@ const asked: { embeds: string[]; from: (string | null)[] } = { embeds: [], from:
  *  tested in link-index.test.ts. */
 vi.mock('../link-index.svelte', () => ({
   links: {
+    spaceOf: () => null,
     targetOf: (from: string | null, link: { target: string }) => {
       asked.from.push(from)
       const wanted = link.target.toLowerCase().replace(/\.md$/, '')
@@ -30,9 +31,14 @@ vi.mock('../link-index.svelte', () => ({
 
       return found?.path ?? null
     },
-    embedSource: (target: string) => {
+    // The note an embed names, with whether its own HTML is words: a note in a space
+    // somebody else can reach, here `Theirs`.
+    embedNote: (target: string) => {
       asked.embeds.push(target)
-      return Promise.resolve(bodies[`${target}.md`] ?? null)
+      const text = bodies[`${target}.md`]
+      return Promise.resolve(
+        text === undefined ? null : { text, escapeHtml: target.startsWith('Theirs') },
+      )
     },
   },
 }))
@@ -43,7 +49,7 @@ vi.mock('../note-images', () => ({
   notePicture: (src: string) => `asset://${src}`,
 }))
 
-const { readingHtml } = await import('./render')
+const { readingHtml, unreadableHtml } = await import('./render')
 
 /** The reading view asks for the exporter the first time it renders a note: the
  *  diagram drawers, the syntax parsers, KaTeX, most of what the app can load.
@@ -229,5 +235,25 @@ describe('the HTML in a note', () => {
 
     expect(html).not.toContain('<script>')
     expect(html).toContain('&lt;script&gt;')
+  })
+
+  /** And the other way round: a note the reader wrote can embed one somebody else
+   *  did, whose HTML is words wherever it is shown. */
+  test('is escaped inside an embedded note somebody else wrote, in a note that is not', async () => {
+    bodies['Theirs.md'] = '<form action="https://evil.example">x</form>\n'
+    const html = await readingHtml(note('<b>mine</b>\n\n![[Theirs]]\n'), 'light', true)
+    delete bodies['Theirs.md']
+
+    expect(html).toContain('<b>mine</b>')
+    expect(html).not.toContain('<form')
+    expect(html).toContain('&lt;form')
+  })
+})
+
+describe('a note the renderer cannot read', () => {
+  test('is shown as the words it is, escaped, rather than a blank page', () => {
+    const html = unreadableHtml('> [!note] <b>x</b> & y\n')
+
+    expect(html).toBe('<pre class="unreadable">&gt; [!note] &lt;b&gt;x&lt;/b&gt; &amp; y\n</pre>')
   })
 })

@@ -15,7 +15,7 @@ import { rows as store } from '../rows/rows.svelte'
 import { relativeTo, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { noteText } from '../workspace/note-text'
-import { commentsOf } from './task-body'
+import { commentsOf, descriptionOf } from './task-body'
 
 const HEADER = [
   'TYPE',
@@ -39,9 +39,9 @@ function line(fields: Partial<Record<(typeof HEADER)[number], string>>): string[
   return HEADER.map((name) => fields[name] ?? '')
 }
 
-/** A note's tasks, in the order they are written, as Todoist's CSV. `comments` answers
- *  the words of the comments under the task on a line. */
-export function todoistCsv(tasks: readonly Row[], comments: (line: number) => string[]): string {
+/** A note's tasks, in the order they are written, as Todoist's CSV. `text` is the note
+ *  they are in, for each task's whole description and its comments. */
+export function todoistCsv(tasks: readonly Row[], text: string): string {
   const ordered = [...tasks]
     .filter((row) => row.task && row.anchor)
     .sort((a, b) => (a.anchor?.line ?? 0) - (b.anchor?.line ?? 0))
@@ -50,8 +50,9 @@ export function todoistCsv(tasks: readonly Row[], comments: (line: number) => st
   let section: string | undefined
   for (const row of ordered) {
     const task = row.task
-    const at = row.anchor?.line
-    if (!task || at === undefined) continue
+    const anchor = row.anchor
+    const at = anchor?.line
+    if (!task || !anchor || at === undefined) continue
     const parent = task.parent === undefined ? undefined : depth.get(task.parent)
     const level = parent === undefined ? 1 : parent + 1
     depth.set(at, level)
@@ -73,7 +74,9 @@ export function todoistCsv(tasks: readonly Row[], comments: (line: number) => st
       line({
         TYPE: 'task',
         CONTENT: [task.text, ...labels.map((tag) => `@${tag}`)].join(' '),
-        DESCRIPTION: task.description ?? '',
+        // The whole description, not the scan's first line of it: csvText quotes a
+        // cell with lines in it, which Todoist and nib's importer read back whole.
+        DESCRIPTION: descriptionOf(text, anchor)?.text ?? task.description ?? '',
         PRIORITY: String(Math.min(Math.max(task.priority, 1), 4)),
         INDENT: String(level),
         DATE: task.recurrence ?? (day ? `${day}${task.time ? ` ${task.time}` : ''}` : ''),
@@ -84,7 +87,9 @@ export function todoistCsv(tasks: readonly Row[], comments: (line: number) => st
         DEADLINE_LANG: deadline ? 'en' : '',
       }),
     )
-    for (const words of comments(at)) out.push(line({ TYPE: 'note', CONTENT: words }))
+    for (const comment of commentsOf(text, anchor)) {
+      out.push(line({ TYPE: 'note', CONTENT: comment.text }))
+    }
   }
   return csvText(HEADER, out)
 }
@@ -96,9 +101,6 @@ export async function saveProjectCsv(note: string, name: string): Promise<void> 
   const relative = relativeTo(space.root, note)
   const tasks = store.of(space.name).filter((row) => row.task && samePath(row.path, relative))
   const text = (await noteText(workspace, note)) ?? ''
-  const csv = todoistCsv(tasks, (line) => {
-    const row = tasks.find((one) => one.anchor?.line === line)
-    return row?.anchor ? commentsOf(text, row.anchor).map((one) => one.text) : []
-  })
+  const csv = todoistCsv(tasks, text)
   await deliver(name, 'csv', t('Spreadsheet'), { text: csv, mime: 'text/csv' })
 }

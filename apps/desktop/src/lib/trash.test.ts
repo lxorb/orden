@@ -98,6 +98,14 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
+/** Spaces shared with this account to be read; see sharing.svelte.ts. */
+const readOnly = vi.hoisted(() => new Set<string>())
+vi.mock('./sharing.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sharing.svelte')>()),
+  canWriteAt: (path: string) =>
+    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+}))
+
 const remote = {
   spaces: [] as { id: string; name: string; deletedAt: number; purgeAt: number; notes: number }[],
   notes: [] as {
@@ -158,8 +166,10 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./account.svelte')
+type RemoteSpace = import('./api').RemoteSpace
 const { trash } = await import('./trash.svelte')
 const { prompt } = await import('./prompt.svelte')
+const { sync } = await import('./sync.svelte')
 
 beforeEach(() => {
   notes.clear()
@@ -178,6 +188,7 @@ beforeEach(() => {
   account.user = null
   trash.items = []
   trash.loaded = false
+  readOnly.clear()
 })
 
 afterEach(() => {
@@ -316,6 +327,61 @@ describe('signed out', () => {
     expect(trash.items).toEqual([])
   })
 
+  /** The owner deleted a note of a space shared with this account to be read, and the
+   *  sync here put the copy of it into this device's trash. Putting it back would be
+   *  writing into a space this account may only read, which the sync refuses on every
+   *  pass, so the row stays where it is and only Delete now takes it. */
+  test('a note of a space shared to be read is not put back', async () => {
+    await workspace.remove('/space/Idea.md', false)
+    await trash.load()
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted note is not in the list')
+    readOnly.add('/space')
+    calls.length = 0
+
+    expect(trash.restorable(only)).toBe(false)
+    await trash.restore(only)
+
+    expect(calls).not.toContain('restore_trash')
+    expect(notes.has('/space/Idea.md')).toBe(false)
+    expect(trash.items).toHaveLength(1)
+
+    const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
+    await trash.purge(only)
+    expect(calls).toContain('purge_trash')
+    expect(trash.items).toEqual([])
+    asked.mockRestore()
+  })
+
+  /** The crate writes where a thing was from the notes folder, the folder every space
+   *  is in (`manifest_place` in trash.rs), not as a path on this disk. */
+  test('even said the way the crate says it, from the notes folder', async () => {
+    await workspace.loadSpaces()
+    readOnly.add('/space')
+    const row = {
+      id: 'device:t9',
+      ref: 't9',
+      kind: 'note' as const,
+      name: 'Idea.md',
+      detail: 'space',
+      from: 'space/Idea.md',
+      deletedAt: Date.now(),
+      purgeAt: null,
+      source: 'device' as const,
+    }
+
+    expect(trash.restorable(row as never)).toBe(false)
+  })
+
+  test('and one of a space that may be written is', async () => {
+    await workspace.remove('/space/Idea.md', false)
+    await trash.load()
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted note is not in the list')
+
+    expect(trash.restorable(only)).toBe(true)
+  })
+
   test('the sweep drops what is older than 14 days', async () => {
     await workspace.remove('/space/Idea.md', false)
     onlyTrashed().trashedAt = Date.now() - 15 * DAY
@@ -331,6 +397,19 @@ describe('signed in', () => {
   beforeEach(() => {
     account.token = 'token'
     account.user = { id: 'u', email: 'a@b.dev', name: null }
+    // And the space on the account, which is what keeps a copy of what goes.
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    // Owned by this account: a writer's delete in somebody else's space is not
+    // theirs to get back from the account.
+    account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
+    // And every file in it held by the account as it is here, which a delete there
+    // leans on.
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
+  })
+
+  afterEach(() => {
+    account.spaces = []
+    vi.restoreAllMocks()
   })
 
   test('deleting removes the local copy; the account keeps it', async () => {

@@ -62,6 +62,7 @@
     quickSheet,
     recordingPill,
     renameNotice,
+    joinPending,
     rewriteSheet,
     settingsSheet,
     shareSheet,
@@ -71,7 +72,7 @@
     menuBarDoor,
     undoToastNotice,
   } from './lib/surfaces.svelte'
-  import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
+  import { canWriteAt, canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
   import { startup } from './lib/startup.svelte'
   import { sync } from './lib/sync.svelte'
@@ -83,7 +84,7 @@
   import { usage } from './lib/usage.svelte'
   import { invoke, isDesktop, isNative, platform } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
-  import { views } from './lib/views.svelte'
+  import { type ShownTab, views, viewShowing, WhenShown } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
   import { sidebarKey, used } from './lib/workspace/undo.svelte'
   import { saveFront } from './lib/save-place/door'
@@ -183,6 +184,7 @@
     if (menu.open) void contextMenu.ask()
     if (account.open) void signInSheet.ask()
     if (joining.step) void joinSheet.ask()
+    if (joining.aside) void joinPending.ask()
     // A phone's strip over the keys is up whenever the note is being written in,
     // selection or none; see FormatBar.svelte.
     if (viewport.touch && viewport.typing) void formatBarDoor.ask()
@@ -304,13 +306,17 @@
   // down to one pane with one document in it. See `workspace.oneDocument`.
   $effect(() => workspace.oneDocument())
 
-  // Where a task added from Shortcuts lands: the inbox of the space in front. Only a
+  // Where a task added from Shortcuts lands: the inbox of the space in front, or of
+  // the first one that can be written in where that one is shared to be read. Only a
   // Mac has the action, and the module is fetched rather than in the first paint.
   $effect(() => {
-    const root = workspace.activeSpace?.root ?? null
+    const active = workspace.activeSpace?.root ?? null
+    const roots = workspace.spaces.map((one) => one.root)
+    // Read here, inside the effect, so a role that changes says the inbox again.
+    const writable = new Set(roots.filter(canWriteAt))
     if (!isDesktop || platform() !== 'macos') return
     void import('./lib/rows/inbox').then(
-      (one) => one.rememberInbox(root),
+      (one) => one.rememberInbox(one.inboxSpace(active, roots, (root) => writable.has(root))),
       () => undefined,
     )
   })
@@ -718,15 +724,46 @@
     else workspace.goForward()
   }
 
-  function goto(line: number) {
-    if (!view) return
+  /** What waits for a note to come to the front of its pane before it is acted on:
+   *  a pane has one editor, and until the note is swapped in that editor holds
+   *  another. See `viewShowing` in views.svelte.ts. */
+  const shown = new WhenShown(
+    (id) => workspace.tabs.find((tab) => tab.id === id),
+    (paneId) => views.of(paneId),
+  )
 
+  /** Raised while an action waits in `shown`; an effect further down settles it. */
+  let settling = $state(false)
+
+  /** Acts on a tab's note through its pane's editor and never through the note in
+   *  front of it: a tab behind another one is brought to the front, and the action
+   *  waits until the pane is showing it. */
+  function onNote(tab: ShownTab, act: (on: EditorView) => void) {
+    if (tab.id !== workspace.activeTabId) workspace.activate(tab.id)
+    if (!shown.run(tab, act)) settling = true
+  }
+
+  /** Takes the reader to a line of the active note. */
+  function goto(line: number) {
+    const tab = workspace.active
+    if (tab && view && !viewShowing(tab, () => view)) {
+      // The pane has only just been asked for this note - a held outline's
+      // heading pressed while another tab was in front - and still shows the
+      // other one.
+      onNote(tab, (on) => land(on, line))
+      return
+    }
+
+    if (view) land(view, line)
+  }
+
+  function land(on: EditorView, line: number) {
     // Going somewhere in the note means wanting to see it, and a drawer is in
     // the way. A sidebar docked beside the note is not, and stays.
     if (viewport.drawer) workspace.closePanel()
 
-    const target = view.state.doc.line(Math.min(line + 1, view.state.doc.lines))
-    view.dispatch({
+    const target = on.state.doc.line(Math.min(line + 1, on.state.doc.lines))
+    on.dispatch({
       selection: { anchor: target.from },
       // The block it landed on says so for a moment: a caret is a pixel wide and
       // the eye was somewhere else. See landing.ts in @nib/editor.
@@ -735,7 +772,7 @@
         landed.of(target.from),
       ],
     })
-    view.focus()
+    on.focus()
   }
 
   /** A whole section moved, from the outline. One transaction, so it is one
@@ -743,21 +780,26 @@
    *  note open in another pane keeps every caret outside them where it was; see
    *  sections.ts and shared.ts. */
   function moveSectionTo(from: number, to: number) {
-    // The pane holding the note the outline is about, which is the one being
-    // worked in unless a panel is held on another; see panelTab in
-    // workspace.svelte.ts. Dragging a section moves the note the rows came from.
-    const view = views.of(workspace.panelTab?.paneId ?? workspace.panes.focusedId)
-    if (!view || view.state.readOnly) return
+    // The note the outline is about, which is the one being worked in unless a
+    // panel is held on another; see panelTab in workspace.svelte.ts. Dragging a
+    // section moves the note the rows came from - through its own pane's editor,
+    // which is another note's while a tab is in front of it there.
+    const tab = workspace.panelTab
+    if (!tab) return
 
-    const text = view.state.doc.toString()
-    const made = moveSection(text, scanHeadings(text), from, to, view.state.selection.main.head)
-    if (!made) return
+    onNote(tab, (on) => {
+      if (on.state.readOnly) return
 
-    view.dispatch({
-      changes: made.changes,
-      selection: { anchor: made.caret },
-      scrollIntoView: true,
-      userEvent: 'move.section',
+      const text = on.state.doc.toString()
+      const made = moveSection(text, scanHeadings(text), from, to, on.state.selection.main.head)
+      if (!made) return
+
+      on.dispatch({
+        changes: made.changes,
+        selection: { anchor: made.caret },
+        scrollIntoView: true,
+        userEvent: 'move.section',
+      })
     })
   }
 
@@ -782,6 +824,16 @@
     // for. The frame is harmless on its own - `goto` needs a view.
     workspace.goto = null
     requestAnimationFrame(() => goto(asked.line))
+  })
+
+  // What waits in `shown` is run on the frame after, for the reason the jump
+  // above waits for one: by then the pane has swapped the note in and given it
+  // its remembered place, and the action lands on top of that.
+  $effect(() => {
+    if (!settling) return
+
+    settling = false
+    requestAnimationFrame(() => shown.settle())
   })
 
   /** What is showing in the pane that has the focus, as the caret rule reads it. */
@@ -1182,6 +1234,11 @@
     {#if recordingPill.asked}
       {#await recordingPill.asked then RecordingPill}
         <RecordingPill />
+      {/await}
+    {/if}
+    {#if joining.aside && joinPending.asked}
+      {#await joinPending.asked then JoinPending}
+        <JoinPending />
       {/await}
     {/if}
     {#if renamed.showing && renameNotice.asked}

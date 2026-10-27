@@ -1970,6 +1970,7 @@ export const jv: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} iki',
   '{name} is back: {device} was writing in it': '{name} bali: {device} lagi nulis ing kono',
+  'Changes to {name} are not syncing': 'Owah-owahan ing {name} ora disinkronake',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Mbukak',
   Pressing: 'Mencet',

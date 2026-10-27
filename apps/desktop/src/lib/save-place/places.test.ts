@@ -35,6 +35,15 @@ describe('where Save offers to put a tab', () => {
     ])
   })
 
+  /** Nothing can be saved into a space shared to be read (B295). */
+  test('but none in a space shared to be read, and starts where it can be saved', () => {
+    const writable = (path: string) => !path.startsWith('/work')
+    const places = placesFor(tree, spaces, '/space', writable)
+
+    expect(places.map((one) => one.id)).not.toContain('/work')
+    expect(startingPlace(places, '/work')?.id).toBe('/space')
+  })
+
   test('starts on the root of the tab’s own space', () => {
     const places = placesFor(tree, spaces, '/space')
 

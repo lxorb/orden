@@ -62,11 +62,24 @@ describe('the rows as records', () => {
     expect(rows).toEqual([{ Name: 'Plan', Status: 'Done', Pages: '12' }])
   })
 
-  test('leaves out a blank line and a column with no name', () => {
-    const { columns, rows } = recordsOf('Name,,Status\nPlan,x,Done\n\n')
+  test('leaves out a blank line and a column with no name and nothing in it', () => {
+    const { columns, rows } = recordsOf('Name,,Status,\nPlan,,Done,\n\n')
 
     expect(columns).toEqual(['Name', 'Status'])
-    expect(rows).toHaveLength(1)
+    expect(rows).toEqual([{ Name: 'Plan', Status: 'Done' }])
+  })
+
+  test('names a column with no name but something in it after where it stands', () => {
+    const { columns, rows } = recordsOf('Name,,Notes\nPlan,secret,n\n')
+    expect(columns).toEqual(['Name', 'Column 2', 'Notes'])
+    expect(rows).toEqual([{ Name: 'Plan', 'Column 2': 'secret', Notes: 'n' }])
+
+    const trailing = recordsOf('Name,Cost,\nPlan,1,extra\nKit,2,\n')
+    expect(trailing.columns).toEqual(['Name', 'Cost', 'Column 3'])
+    expect(trailing.rows).toEqual([
+      { Name: 'Plan', Cost: '1', 'Column 3': 'extra' },
+      { Name: 'Kit', Cost: '2', 'Column 3': '' },
+    ])
   })
 
   test('a row with fewer cells than the header says still answers for each', () => {

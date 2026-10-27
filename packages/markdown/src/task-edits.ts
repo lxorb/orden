@@ -18,7 +18,7 @@
  *  format. See task-line.ts for the reading. */
 
 import { appliedEdits, type TextEdit } from './edits'
-import { tagNameAt } from './tags'
+import { codeSpans, inCode, tagAt } from './tags'
 import {
   DEPENDS_EMOJI,
   EMOJI_BY_DATE,
@@ -36,6 +36,7 @@ import {
   parseTask,
   RECURRENCE_EMOJI,
   TASKS_FIELDS,
+  tagsIn,
   type TaskFields,
   WORD_BY_PRIORITY,
   writeDuration,
@@ -217,9 +218,10 @@ interface Arrival {
 /** The edits that turn `line` into the line with `change` made, smallest first,
  *  in line order, never overlapping, offsets into the line. None for a line that is
  *  not a task, or a change that changes nothing. */
-export function writeTask(line: string, change: TaskChange): TextEdit[] {
+export function writeTask(line: string, asked: TaskChange): TextEdit[] {
   const parsed = parseTask(line)
   if (!parsed) return []
+  const change = withoutOrphans(parsed.fields, asked)
 
   const { fields, tokens } = parsed
   const edits: TextEdit[] = []
@@ -236,12 +238,15 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     edits.push({ from: parsed.box + 1, to: parsed.box + 1 + fields.status.length, insert: status })
 
   const textChanges = change.text != null && change.text !== fields.text
+  /** The new words, the tokens among the old ones that stay included. */
+  let newWords = ''
   if (textChanges) {
     const inline = tokens.filter((token) => token.inline)
     const kept = inline
       .filter((token) => !touches(change, token))
       .map((token) => line.slice(token.from, token.to))
     const words = [change.text, ...kept].filter((part) => part !== '').join(' ')
+    newWords = words
     // Words where there were none stand between the box and a field, a blank apart
     // from each.
     const open = words !== '' && /\S/.test(line.charAt(parsed.wordsFrom - 1)) ? ' ' : ''
@@ -271,6 +276,23 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     taking.push(...spans)
     for (const tag of next.filter((one) => !fields.tags.includes(one))) {
       arriving.push({ rank: RANK.tag, text: `#${tag}` })
+    }
+  }
+
+  // A tag written among the old words goes with them, so one the change still holds
+  // is put back at the end where the new words and the fields there do not hold it:
+  // the task edit field reads `Buy #milk now` as `Buy now` and the tag `milk`.
+  if (textChanges && change.tags != null) {
+    const onLine = new Set([
+      ...tagsIn(newWords),
+      ...tokens
+        .filter((token) => token.field === 'tag' && !token.inline && !gone.has(token))
+        .map((token) => line.slice(token.from + 1, token.to)),
+    ])
+    for (const tag of change.tags) {
+      if (fields.tags.includes(tag) && !onLine.has(tag)) {
+        arriving.push({ rank: RANK.tag, text: `#${tag}` })
+      }
     }
   }
 
@@ -374,12 +396,11 @@ function unknownFieldEdits(
 /** Where each time a tag is written among the words starts. */
 function tagsAmongWords(line: string, tag: string, from: number, to: number): number[] {
   const words = line.slice(from, to)
+  const code = codeSpans(words)
   const found: number[] = []
   let at = words.indexOf(`#${tag}`)
   while (at !== -1) {
-    const before = words.charAt(at - 1)
-    if ((before === '' || /\s|\(/.test(before)) && tagNameAt(words, at) === tag)
-      found.push(from + at)
+    if (!inCode(code, at) && tagAt(words, at) === tag) found.push(from + at)
     at = words.indexOf(`#${tag}`, at + 1)
   }
   return found
@@ -425,6 +446,34 @@ function arrivals(
 /** Edits in line order, an insertion before a removal at the same place. */
 function ordered(edits: TextEdit[]): TextEdit[] {
   return edits.sort((a, b) => a.from - b.from || a.to - a.from - (b.to - b.from))
+}
+
+const DATES = ['due', 'start', 'scheduled', 'deadline'] as const
+
+/** Whether a date a change gives is one it takes away: null or nothing. `undefined`
+ *  leaves the date as it is, as everywhere in `writeTask`. */
+const takes = (value: string | null | undefined) => value === null || value === ''
+
+/** Whether the change takes away the last date the task had. */
+export function lastDateTaken(fields: TaskFields, change: TaskChange): boolean {
+  if (!DATES.some((date) => fields[date] !== undefined)) return false
+  return !DATES.some((date) => {
+    const said = change[date]
+    return said === undefined ? fields[date] !== undefined : !takes(said)
+  })
+}
+
+/** The change, with a repeat and a time taken away where it takes away the last date
+ *  the task had: they belong to that date, and Todoist holds no repeat without one. A
+ *  task that never had a date keeps them, and so does a change that gives them itself
+ *  (the agent refuses that one; see `editedTask`). */
+function withoutOrphans(fields: TaskFields, change: TaskChange): TaskChange {
+  if (fields.recurrence === undefined && fields.time === undefined) return change
+  if (!lastDateTaken(fields, change)) return change
+  const out = { ...change }
+  if (change.recurrence === undefined) out.recurrence = null
+  if (change.time === undefined) out.time = null
+  return out
 }
 
 /** The line with the change made. */

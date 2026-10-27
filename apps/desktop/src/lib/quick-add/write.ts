@@ -11,6 +11,9 @@ import { insideOnly } from '../automation/inside'
 import { changeOf } from '../search/replace'
 import { insideSpace, isMarkdownPath, relativeTo, withoutExtension } from '../space-paths'
 import { links } from '../link-index.svelte'
+import { onDisk } from '../on-disk'
+import { readIfThere, toldIfUnreadable } from '../read-if-there'
+import { canWriteAt } from '../sharing.svelte'
 import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
 import { writeFile } from '../workspace/write-file'
@@ -33,16 +36,19 @@ export function headingsOf(root: string, said: string): readonly string[] {
   return links.held().find((one) => one.path === relative)?.headings ?? []
 }
 
-/** The note a `>` names: one whose path or name is the words, case aside. */
+/** The note a `>` names: one whose path or name is the words, case aside. Only a
+ *  note: a task line written into a chat, a canvas or a shortcut spoils it.
+ *
+ *  And composed alike: a Mac keeps `Café` with the accent as a character of its
+ *  own and a keyboard types it inside the letter, and compared as written the
+ *  note was not found and made again, empty, over itself. */
 function named(root: string, said: string): string | null {
-  const wanted = said.replace(/\.md$/i, '').toLowerCase()
+  const key = (words: string) => words.normalize('NFC').toLowerCase()
+  const wanted = key(said.replace(/\.md$/i, ''))
+  const notes = workspace.notes.filter((one) => isMarkdownPath(one.path))
   const found =
-    workspace.notes.find(
-      (one) => withoutExtension(relativeTo(root, one.path)).toLowerCase() === wanted,
-    ) ??
-    workspace.notes.find(
-      (one) => withoutExtension(one.name).toLowerCase() === wanted.split('/').at(-1),
-    )
+    notes.find((one) => key(withoutExtension(relativeTo(root, one.path))) === wanted) ??
+    notes.find((one) => key(withoutExtension(one.name)) === wanted.split('/').at(-1))
   return found?.path ?? null
 }
 
@@ -59,24 +65,52 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
   const relative = insideOnly(`${entry.note.replace(/\.md$/i, '')}.md`)
   if (relative === null) return null
   const path = insideSpace(root, relative)
+  // The listing is a round trip behind the disk, and a name it misses can still be
+  // a note with words in it: writing the empty file then replaced them, with no
+  // version kept. So the disk is asked first, and a note that is there is used.
+  if (await onDisk(path)) return path
   await writeFile(path, '')
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')
   return path
 }
 
-/** Writes the task; answers where it went, or null where it went nowhere. */
+/** The space a task goes to. A space shared to be read takes nothing, not even the
+ *  inbox the add would make: the copy here would stop being the space's, and the sync
+ *  refuses it on every pass. So a task that names no note, typed while such a space is
+ *  in front, goes to the inbox of the first space that takes it, the rule a task from
+ *  Shortcuts follows; one that names a note, or was handed its space by an add button,
+ *  meant that space and no other, and goes nowhere. */
+async function spaceFor(entry: Entry, given: string | undefined): Promise<string | null> {
+  const root = given ?? workspace.activeSpace?.root
+  if (root === undefined) return null
+  if (canWriteAt(root)) return root
+  if (given !== undefined || entry.note !== undefined) return null
+  const { inboxSpace } = await import('../rows/inbox')
+  const roots = workspace.spaces.map((one) => one.root)
+  return inboxSpace(root, roots, canWriteAt)
+}
+
+/** Writes the task; answers where it went, or null where it went nowhere, which is
+ *  also the answer where no space shared with this account may take it. */
 export async function addTask(
   entry: Entry,
   options: { open?: boolean; root?: string } = {},
 ): Promise<{ path: string; line: number } | null> {
-  const root = options.root ?? workspace.activeSpace?.root
-  if (root === undefined) return null
+  const root = await spaceFor(entry, options.root)
+  if (root === null) return null
 
   const path = await targetOf(entry, root)
   if (path === null) return null
 
-  const before = (await noteText(workspace, path)) ?? ''
+  // A note that would not read is not an empty one: the read is asked again of the
+  // disk, which throws for one that is there, and the reader is told it was kept.
+  let before: string
+  try {
+    before = (await noteText(workspace, path)) ?? (await readIfThere(path)) ?? ''
+  } catch (error) {
+    return toldIfUnreadable(error)
+  }
   const placed = placeIn(before, linesOf(entry), entry.heading)
   await replaceInNotes(workspace, [
     changeOf(path, before, [{ from: placed.at, to: placed.at, insert: placed.insert }]),

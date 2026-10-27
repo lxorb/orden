@@ -1348,7 +1348,10 @@ describe('the connector in a shared space', () => {
     writer = await invite(WRITER, 'write')
     const said = await tool(await connector(writer), 'list_spaces', {})
 
-    expect(said.json.result.content[0]?.text).toBe(`Notes\n${SHARED}`)
+    // Its name is the owner's words, so it comes marked (docs/agent-native.md 9.6).
+    expect(said.json.result.content[0]?.text).toBe(
+      `Notes\n<untrusted source="spaces shared with you">\n${SHARED}\n</untrusted>`,
+    )
   })
 
   test('reads a note in it', async () => {
@@ -1358,7 +1361,9 @@ describe('the connector in a shared space', () => {
       path: 'plan.md',
     })
 
-    expect(said.json.result.content[0]?.text).toBe('# Plan\n')
+    expect(said.json.result.content[0]?.text).toBe(
+      `<untrusted source="shared space ${SHARED}">\n# Plan\n\n</untrusted>`,
+    )
   })
 
   test('writes in one that was shared to write in', async () => {

@@ -62,6 +62,30 @@ function foldersNotes(root: string, path: string): string[] {
   return found
 }
 
+/** The notes a database inside a moved folder could stand in, where they are once it
+ *  moved: the folder's own, and each folder's under it, at any depth. Every one of them
+ *  names its cards by the old path. */
+function movedFoldersNotes(tree: Entry, from: string, to: string): string[] {
+  // The tree the app hands over has the move in it already (`showMove` draws it
+  // first), and one read before the move does not: either way it is the same folder.
+  const moved = entryAt(tree, to) ?? entryAt(tree, from)
+  if (!moved?.is_dir) return [folderNotePath(to), `${to}.md`]
+  const found: string[] = []
+  const walk = (dir: Entry) => {
+    const now = movedPath(dir.path, from, to)
+    found.push(folderNotePath(now), `${now}.md`)
+    for (const one of dir.children) if (one.is_dir) walk(one)
+  }
+  walk(moved)
+  return found
+}
+
+function entryAt(entry: Entry, path: string): Entry | null {
+  if (entry.path === path) return entry
+  const next = entry.children.find((one) => path === one.path || path.startsWith(`${one.path}/`))
+  return next ? entryAt(next, path) : null
+}
+
 const FENCE = /^(```+|~~~+)base[^\n]*\n([\s\S]*?)^\1[^\S\n]*$/gm
 
 /** The words of a `.base` file, or of a note's base fences, with the move made; null
@@ -89,8 +113,8 @@ export function movedWords(text: string, fenced: boolean, was: string, now: stri
   return changed ? after : null
 }
 
-/** A move told to the bases of the space it happened in (`tree`, that space's, as it
- *  stood before the move): every `.base` file, where it is now, and the notes a
+/** A move told to the bases of the space it happened in (`tree`, that space's, with
+ *  the move drawn in it or not yet): every `.base` file, where it is now, and the notes a
  *  database's fence could be in. Read and written the way every note is, so an open
  *  board and an open note take the change. */
 export async function orderMoved(
@@ -103,8 +127,9 @@ export async function orderMoved(
   const now = relativeTo(root, to)
   if (!was || !now || was === now) return
   const files = basesIn(tree).map((path) => ({ path: movedPath(path, from, to), fenced: false }))
-  // A folder moved is a database renamed as often as not: its own note too.
-  const own = [folderNotePath(to), `${to}.md`, `${from}.md`]
+  // A folder moved is a database renamed as often as not: its own note too, and those
+  // of the folders it holds.
+  const own = [...movedFoldersNotes(tree, from, to), `${from}.md`]
   const notes = [...new Set([...own, ...foldersNotes(root, to)])].map((path) => ({
     path,
     fenced: true,

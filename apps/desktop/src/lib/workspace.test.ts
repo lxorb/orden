@@ -3873,17 +3873,37 @@ describe('following a link to a note the space has not got', () => {
     workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
     workspace.activeSpaceId = 'one'
     workspace.tabs = []
-    notes['/space/Plan.md'] = '# Plan\n\n'
     sent.length = 0
   })
 
   afterEach(() => {
-    delete notes['/space/Plan.md']
+    delete notes['/space/.github/CONTRIBUTING.md']
   })
 
   test('makes it where the link would look for it', async () => {
     await workspace.followLink(asked('Plan'))
     expect(sent.find((one) => one.command === 'write_note')?.path).toBe('/space/Plan.md')
+  })
+
+  test('beside the note the link is in, or at the top for a path from the top', async () => {
+    await workspace.followLink(asked('Road'), 'plain', '/space/B/x.md')
+    expect(sent.find((one) => one.command === 'write_note')?.path).toBe('/space/B/Road.md')
+
+    sent.length = 0
+    workspace.tabs = []
+    await workspace.followLink(asked('/Road'), 'plain', '/space/B/x.md')
+    expect(sent.find((one) => one.command === 'write_note')?.path).toBe('/space/Road.md')
+  })
+
+  /** The index misses notes that are there: a dot folder is never scanned, and a note
+   *  that is not UTF-8 or too big to read is skipped. A miss is not an absence, and a
+   *  note made over one of those would be the end of what it held. */
+  test('opens a note the index never read, and writes nothing over it', async () => {
+    notes['/space/.github/CONTRIBUTING.md'] = '# How to contribute\n\nWhat the team wrote.\n'
+    await workspace.followLink(asked('.github/CONTRIBUTING'))
+
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/.github/CONTRIBUTING.md'])
   })
 
   /** What a link says is somebody's prose: a note out of a shared space, a room, a
@@ -5117,5 +5137,53 @@ describe('an essential asked for in a tab', () => {
 
     expect(strip()).toEqual(['/space/a.md'])
     expect(workspace.tabs).toHaveLength(2)
+  })
+})
+
+/** B515: a page note's paper is on disk beside it and in no operation, so what search
+ *  holds of its words has to hear of it through the note. See pdf/papers.ts. */
+describe('the words of the paper a page note holds', () => {
+  const papers = () => import('./pdf/papers')
+  const hits = async (root: string) => {
+    const { searchPapers } = await papers()
+    const { parseQuery } = await import('./search/query')
+    return searchPapers(root, parseQuery('entropy'), 20).map((hit) => hit.path)
+  }
+  const settled = () => new Promise((done) => setTimeout(done, 0))
+
+  beforeEach(async () => {
+    const { forgetPapers, paperRead } = await papers()
+    forgetPapers()
+    paperRead('/space/Lecture.pages.pdf', 1, ['entropy', 'of', 'a', 'system'])
+  })
+
+  afterEach(async () => (await papers()).forgetPapers())
+
+  test('follow the note renamed', async () => {
+    await workspace.fileMoved('/space/Lecture.pages', '/space/Physics.pages', 'file')
+    await settled()
+
+    expect(await hits('/space')).toEqual(['/space/Physics.pages.pdf'])
+  })
+
+  test('go with the note deleted', async () => {
+    await workspace.fileGone('/space/Lecture.pages', 'file')
+    await settled()
+
+    expect(await hits('/space')).toEqual([])
+  })
+
+  test('follow the space renamed', async () => {
+    await workspace.fileOps.tell({
+      op: 'moved',
+      from: '/space',
+      to: '/renamed',
+      kind: 'space',
+      root: '/space',
+      into: '/renamed',
+    })
+    await settled()
+
+    expect(await hits('/renamed')).toEqual(['/renamed/Lecture.pages.pdf'])
   })
 })

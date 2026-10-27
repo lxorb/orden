@@ -9,7 +9,7 @@
    *  note writes it (the panel into the open document, a view through the rows' one
    *  write path). */
   import type { Property } from '@nib/markdown/properties'
-  import { withItem, withoutItem } from '@nib/markdown/property-edits'
+  import { type ListItem, withItem, withoutItem } from '@nib/markdown/property-edits'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
 
@@ -19,21 +19,32 @@
     choices = null,
     onwrite,
     onitems,
+    onchip,
     onsearch,
     autofocus = false,
   }: {
     property: Property
     writable: boolean
-    /** The fixed answers, where the property has them. */
+    /** The fixed answers, where the property has them: a menu for one value, and for
+     *  a list the words its add field offers. */
     choices?: readonly string[] | null
     /** A scalar written: the words as the file writes them, or null to empty it. */
     onwrite: (value: string | null) => void
     /** A list written whole. */
-    onitems: (items: string[]) => void
+    onitems: (items: ListItem[]) => void
+    /** A chip put on or taken off, in place of the list written whole: for a holder
+     *  whose items are the members as shown rather than as the note writes them (a
+     *  table's cell), which has to make the list from the note's own members. */
+    onchip?: ((change: { add: string } | { remove: number }) => void) | undefined
     /** A tag pressed, which asks the space about it. */
     onsearch?: ((text: string) => void) | undefined
     autofocus?: boolean
   } = $props()
+
+  const uid = $props.id()
+
+  /** The answers a list's add field offers: those it does not hold yet. */
+  const offered = $derived(choices?.filter((one) => !property.items.includes(one)) ?? [])
 
   /** A field commits on Enter as well as on leaving it. */
   function commitOnEnter(event: KeyboardEvent) {
@@ -58,6 +69,10 @@
   function addItem(field: HTMLInputElement) {
     const said = field.value
     field.value = ''
+    if (onchip) {
+      if (said.trim()) onchip({ add: said.trim() })
+      return
+    }
     const items = withItem(property, said)
     if (items) onitems(items)
   }
@@ -72,7 +87,7 @@
 
 <span class="value">
   {#if property.kind === 'list' || property.kind === 'map'}
-    {#each property.items as item (item)}
+    {#each property.items as item, at (`${at}:${item}`)}
       <span class="chip">
         {#if tagged && onsearch}
           <button class="chip-word" onclick={() => onsearch(`tag:${item}`)}>{item}</button>
@@ -85,6 +100,7 @@
             title={t('Remove')}
             aria-label={t('Remove')}
             onclick={() => {
+              if (onchip) return onchip({ remove: at })
               const items = withoutItem(property, item)
               if (items) onitems(items)
             }}><Cross small /></button
@@ -97,6 +113,7 @@
         class="field add"
         placeholder={t('Add')}
         aria-label={t('Add')}
+        list={offered.length ? `${uid}-offered` : undefined}
         use:focusOnMount
         onkeydown={(event) => {
           if (event.key !== 'Enter' || event.isComposing) return
@@ -105,6 +122,11 @@
         }}
         onblur={(event) => addItem(event.currentTarget)}
       />
+      {#if offered.length}
+        <datalist id="{uid}-offered">
+          {#each offered as one (one)}<option value={one}></option>{/each}
+        </datalist>
+      {/if}
     {/if}
   {:else if property.kind === 'checkbox'}
     <input

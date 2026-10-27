@@ -108,8 +108,31 @@ export function propertyName(property: string, displayName?: string): string {
  *  and `p6`. A name rather than a word, the way Todoist writes it in every language. */
 export const priorityName = (priority: number): string => `p${priority}`
 
-/** What a group of a view is called. */
-export function groupLabel(property: string | undefined, value: Value, today: string): string {
+/** Each name a view's note groups have, and how many groups have it. */
+export type NoteNames = ReadonlyMap<string, number>
+
+const nameOf = (path: string) => (path.split('/').pop() ?? path).replace(/\.md$/i, '')
+
+/** The view's note groups (their keys, paths) counted by name, once for every head,
+ *  so a note's group is called by its folder too where two names clash. */
+export function noteNames(keys: readonly Value[]): NoteNames {
+  const counts = new Map<string, number>()
+  for (const key of keys) {
+    if (typeof key !== 'string') continue
+    const name = nameOf(key)
+    counts.set(name, (counts.get(name) ?? 0) + 1)
+  }
+  return counts
+}
+
+/** What a group of a view is called. `names` counts the view's note groups by name
+ *  (`noteNames`), where it groups by note. */
+export function groupLabel(
+  property: string | undefined,
+  value: Value,
+  today: string,
+  names?: NoteNames,
+): string {
   if (property === 'formula.overdue') return value === true ? t('Overdue') : t('Today')
   if (value === 'overdue') return t('Overdue')
   if (value === null || value === '') return t('None')
@@ -119,10 +142,20 @@ export function groupLabel(property: string | undefined, value: Value, today: st
   }
   if (property === 'task.priority' && typeof value === 'number') return priorityName(value)
   if (typeof value === 'boolean') return value ? '✓' : '–'
+  if ((property === 'file.path' || property === 'file.basename') && typeof value === 'string')
+    return noteLabel(value, names)
   const day = dayIn(value)
   if (day !== null && (typeof value !== 'string' || value.length === 10))
     return dayWords(day, today)
   return groupName(value)
+}
+
+/** A note's group by its name, and its folder where another group's note has that name. */
+function noteLabel(path: string, names: NoteNames | undefined): string {
+  const name = nameOf(path)
+  if ((names?.get(name) ?? 0) < 2) return name
+  const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '/'
+  return `${name} · ${folder}`
 }
 
 /** A day of Upcoming said the way Todoist heads it: the date and its weekday, and Today

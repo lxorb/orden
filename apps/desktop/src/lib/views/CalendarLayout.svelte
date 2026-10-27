@@ -9,7 +9,6 @@
    *  left is what has no date, Todoist's no-date sidebar: carried out of it a task gets
    *  one. A repeating task's next occurrences are drawn faded, and today wears the
    *  accent. */
-  import { startField } from '@nib/markdown/task-dates'
   import { cellValue, type Row, rowId, type TaskChange } from '@nib/bases'
   import { untrack } from 'svelte'
   import { i18n, t } from '../i18n.svelte'
@@ -24,6 +23,7 @@
     timeOf,
   } from './calendar'
   import { dateAt } from './days'
+  import { hourDrop } from './drop'
   import { draggable, droppable, type Point } from './drag.svelte'
   import { plain } from './inline'
   import type { Kit } from './kit'
@@ -99,9 +99,10 @@
     }
     const box = place.getBoundingClientRect()
     const minutes = Math.round((((at.y - box.top) / HOUR) * 60) / 15) * 15
-    // The day it starts, where the line already holds that day (#371).
-    const field = startField(row.task, row.task.dueReads)
-    kit.write(row, { task: { [field]: day, time: timeOf(minutes) } })
+    // The drop on that day the calendar is placed by, an overdue deadline moved with it
+    // (drop.ts), and the time.
+    const drop = hourDrop(dateProperty, day, timeOf(minutes), row, live.today)
+    if (drop && 'change' in drop) kit.write(row, drop.change)
   }
 
   /** A task's length as the change that writes it. Set rather than spelled as a key:

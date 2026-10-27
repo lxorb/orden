@@ -1,8 +1,8 @@
 import type { MarkedExtension, Token, Tokens } from 'marked'
 import { blockMath, definitionList } from './blocks'
-import { calloutChevron, calloutIcon, calloutOf } from './callouts'
+import { calloutChevron, calloutIcon, calloutOf, opensCallout } from './callouts'
 import { emojiTable, loadEmoji, loadMaths, MOST_EMS, mathsEngine } from './engines'
-import { closesFence, fenceMark } from './fences'
+import { CodeBlocks, WORDS } from './fences'
 import { highlightTone, readHighlight } from './highlights'
 import { escape, fragment } from './html'
 import { firstStart, lineStart, matchesAt } from './starts'
@@ -249,13 +249,17 @@ function afterMarker(tokens: Token[], cut: number): Token[] {
 export const callouts: MarkedExtension = {
   renderer: {
     blockquote(token: Tokens.Blockquote) {
+      // Only an opening paragraph, or the setext heading one becomes over a rule,
+      // can be the marker line: code or a `#` heading that starts with `[!note]`
+      // is that code or heading, and code has no inline tokens to cut it out of.
       const first = token.tokens[0]
-      const raw = first && 'text' in first ? String(first.text) : ''
-      const found = calloutOf(raw)
+      const opening = first && opensCallout(first) ? (first as Tokens.Paragraph) : null
+      const found = opening ? calloutOf(opening.text) : null
 
-      if (!found) return `<blockquote>\n${this.parser.parse(token.tokens)}</blockquote>\n`
+      if (!opening || !found) {
+        return `<blockquote>\n${this.parser.parse(token.tokens)}</blockquote>\n`
+      }
 
-      const opening = first as Tokens.Paragraph
       const inside = afterMarker(opening.tokens, found.taken)
       const rest: Token[] = inside.length
         ? [{ ...opening, text: found.rest, tokens: inside }, ...token.tokens.slice(1)]
@@ -377,7 +381,8 @@ const ABBREV_DEF = /^\*\[([^\]\n]+)\]:[ \t]*(.*)$/
  *  definition looks like would otherwise teach itself the word. What a fence is
  *  and what closes one comes from fences.ts, which is what makes the two agree -
  *  the reading here used to take ```` ```ts ```` for a closing fence, and read
- *  the code after it as prose. */
+ *  the code after it as prose. It is `CodeBlocks` there, which keeps the quote or
+ *  the list item a fence is in, so a fence that ends with its item ends here too. */
 export function collectAbbreviations(source: string): Map<string, string> {
   const found = new Map<string, string>()
   // One scan of the bytes for a note that defines none, which is nearly every
@@ -385,19 +390,10 @@ export function collectAbbreviations(source: string): Map<string, string> {
   // read line by line at all. This runs on every render of every note.
   if (!source.includes('*[')) return found
 
-  let fence: string | null = null
+  const code = new CodeBlocks()
 
   for (const line of source.split('\n')) {
-    if (fence !== null) {
-      if (closesFence(line, fence)) fence = null
-      continue
-    }
-
-    const mark = fenceMark(line)
-    if (mark) {
-      fence = mark
-      continue
-    }
+    if (code.line(line) !== WORDS) continue
 
     const match = ABBREV_DEF.exec(line)
     if (!match) continue

@@ -141,7 +141,7 @@ describe('the mark that says shared', () => {
     // A round few pixels filled with the accent is the shape it had. Two
     // surfaces still draw one, and neither is about other people: the tab's
     // saving dot, which is what a dot means from now on, and the pulse on a
-    // request waiting to be let in. The foot's sync light went too (#206), and
+    // request waiting to be let in, in its sheet and in its pill. The foot's sync light went too (#206), and
     // the switcher, which is where the shared dot was, is not among them.
     const dots = components
       .filter((one) => {
@@ -158,7 +158,7 @@ describe('the mark that says shared', () => {
       .map((one) => one.name)
       .sort()
 
-    expect(dots).toEqual(['lib/JoinSheet.svelte', 'lib/Tabs.svelte'])
+    expect(dots).toEqual(['lib/JoinPending.svelte', 'lib/JoinSheet.svelte', 'lib/Tabs.svelte'])
   })
 
   test('and the file list says it on the note itself', () => {

@@ -84,7 +84,11 @@ function start(view: EditorView): void {
     // What it answers is false where the microphone has still to be asked for; the
     // words arrive through `__nibHeard` either way.
     void frameWord().then((word) => {
-      if (listening) phone(word, true)
+      if (!listening) return
+      // No word is a microphone the activity will not turn on, so the row says
+      // "dictate" again rather than "listening" to nothing.
+      if (word) phone(word, true)
+      else stop()
     })
     return
   }

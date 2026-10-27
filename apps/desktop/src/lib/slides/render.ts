@@ -58,7 +58,7 @@ export async function deckHtml(
 
   const [fence, embed] = await Promise.all([
     prepareFences(note.text, scheme),
-    prepareEmbeds(note.text, (target) => links.embedSource(target, note.path)),
+    prepareEmbeds(note.text, (target) => links.embedNote(target, note.path)),
   ])
 
   const at = performance.now()

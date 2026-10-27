@@ -7,6 +7,7 @@
  *  picture as a file too and is copied in beside the notes as any file is; see
  *  `isLinkDrop` in drag-paths.ts. Fetched with the first drop. */
 
+import { canWriteAt } from '../sharing.svelte'
 import { droppedAddress } from '../tab-strip/dropped'
 import type { Sites } from './new-site'
 import { newSite } from './new-site'
@@ -47,6 +48,8 @@ export async function siteDropped(
   list: string,
   html: string,
 ): Promise<string | null> {
+  // Not into a space shared to be read, which nothing may be written in (B288).
+  if (!canWriteAt(folder)) return null
   const url = droppedAddress((type) => (type === 'text/uri-list' ? list : ''))
   if (url === null) return null
 

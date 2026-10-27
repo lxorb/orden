@@ -2011,6 +2011,7 @@ export const ml: Dictionary = {
   'This {device}': 'ഈ {device}',
   '{name} is back: {device} was writing in it':
     '{name} തിരിച്ചെത്തി: {device} അതിൽ എഴുതുകയായിരുന്നു',
+  'Changes to {name} are not syncing': '{name}-ലെ മാറ്റങ്ങൾ സമന്വയിപ്പിക്കപ്പെടുന്നില്ല',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'തുറക്കൽ',
   Pressing: 'അമർത്തൽ',

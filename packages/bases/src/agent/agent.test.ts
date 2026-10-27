@@ -18,7 +18,7 @@ import {
   taskOut,
   withProperties,
 } from '.'
-import { taskLine } from '@nib/markdown/task-edits'
+import { type TaskChange, taskLine } from '@nib/markdown/task-edits'
 
 const context = { today: '2026-10-04', now: '2026-10-04T09:00:00' }
 
@@ -179,6 +179,15 @@ describe('a task changed', () => {
     expect(edited.next && readAt(edited.next).line).toBe(4)
   })
 
+  test('refused where it takes the last date away and asks for a repeat or a time', () => {
+    const at = anchor('Water the plants')
+    const asked = (change: TaskChange) => () =>
+      editedTask(NOTE, 'Home', 'Errands.md', at, change, undefined, context.today)
+    expect(asked({ due: null, recurrence: 'every day' })).toThrow(/needs a date/)
+    expect(asked({ due: null, time: '10:00' })).toThrow(/needs a date/)
+    expect(asked({ due: null })().text.split('\n')[4]).toBe('- [ ] Water the plants')
+  })
+
   test('found again where lines above it moved, refused where it is gone', () => {
     const moved = `Intro\n\n${NOTE}`
     const edited = editedTask(
@@ -288,7 +297,21 @@ describe('bases', () => {
       withProperties('Words', { status: 'done', pages: 3, read: true, tags: ['a', 'b'] }),
     ).toBe('---\nstatus: done\npages: 3\nread: true\ntags: [a, b]\n---\nWords')
     expect(withProperties('---\nstatus: done\n---\nWords', { status: null })).toBe('Words')
-    expect(() => withProperties('', { 'a:b': 1 })).toThrow(AgentError)
+    expect(() => withProperties('', { 'a: b': 1 })).toThrow(AgentError)
+  })
+
+  test('a key is whatever front matter reads back as one, and a note. one is the bare key', () => {
+    expect(withProperties('Words', { priorität: 'Hoch', 'a.b': 1, 'Size (cm)': 2, '💰': 3 })).toBe(
+      '---\npriorität: Hoch\na.b: 1\nSize (cm): 2\n💰: 3\n---\nWords',
+    )
+    expect(withProperties('---\nstatus: open\n---\nWords', { 'note.status': 'done' })).toBe(
+      '---\nstatus: done\n---\nWords',
+    )
+    for (const key of ['', ' a', '-a', '#a', 'a: b', 'a\nb', 'a ', 'file.name', 'formula.cost'])
+      expect(() => withProperties('', { [key]: 1 })).toThrow(AgentError)
+    expect(withProperties('Words', { scores: [1, 10, true, null, '2'] })).toBe(
+      "---\nscores: [1, 10, true, null, '2']\n---\nWords",
+    )
   })
 
   test('a base edited: a view added, a filter set, a formula, a view gone', () => {

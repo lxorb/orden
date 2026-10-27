@@ -1,9 +1,9 @@
-//! A note is a file. This module owns the ten things the window can ask of one:
+//! A note is a file. This module owns the eleven things the window can ask of one:
 //! read it, write it back as text, write it back as bytes, rename or move it,
-//! copy it, delete it, ask when it was last written and how long it is, make the folder it
-//! is going to live in, take that folder away, and take it away only if nothing
-//! whatever is left in it. Whether a path is allowed at all is decided by `paths`,
-//! not here.
+//! copy it, delete it, ask when it was last written and how long it is, ask whether
+//! anything is at its name at all, make the folder it is going to live in, take that
+//! folder away, and take it away only if nothing whatever is left in it. Whether a
+//! path is allowed at all is decided by `paths`, not here.
 
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
@@ -18,8 +18,8 @@ pub mod icloud;
 use crate::carry::{copy_whole, move_whole};
 use crate::clock;
 use crate::paths::{
-    at_most, at_most_stamped, cannot, chosen, copy_held, drop_held, in_spaces, made, move_held,
-    openable, paper_in_the_way, write_in_place,
+    at_most, at_most_stamped, cannot, chosen, copy_held, drop_held, in_spaces, is_pdf, made,
+    move_held, move_paper, openable, paper_in_the_way, write_in_place,
 };
 
 /// The most a note may be for nib to read it: 64 MiB.
@@ -197,23 +197,51 @@ pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
 
 /// Renames a note, which is also how it is moved: the new path can name a folder
 /// that does not exist yet. A folder is renamed and moved the same way.
+///
+/// `hold` is a PDF being turned into its page note (pages/from-pdf.ts): moved, in its
+/// own folder, to the paper of the note just made for it or made for it before. Only
+/// that move may put a PDF where a page note takes it for its paper.
+///
+/// `alone` is sync's move (sync2/app-world.ts), which leaves what the account holds as
+/// an entry of its own: a PDF's highlights, moved by a move of their own, in whichever
+/// order the two come. Highlights that came ahead of their PDF were otherwise cleared
+/// as left by another (#733). A page note's paper is no entry (#551) and still goes
+/// with the note, though not the paper's highlights, which are one.
 #[tauri::command(async)]
-pub fn rename_note(app: AppHandle, from: String, to: String) -> Result<(), String> {
+pub fn rename_note(
+    app: AppHandle,
+    from: String,
+    to: String,
+    hold: Option<bool>,
+    alone: Option<bool>,
+) -> Result<(), String> {
     let source = in_spaces(&app, &from)?;
     let target = in_spaces(&app, &to)?;
-    let respelling = respelled(&source, &target, same_entry);
+    renamed(&source, &target, hold == Some(true), alone == Some(true))
+}
+
+/// `rename_note` past its gate, which wants an app around it.
+fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), String> {
+    let respelling = respelled(source, target, same_entry);
 
     // A page note brings its paper, `<name>.pages.pdf`, and a file of that name already
-    // there is somebody's own: it was moved over, or hidden as held (#538).
-    if let Some(there) = paper_in_the_way(&source, &target, same_entry) {
+    // there is somebody's own: it was moved over, or hidden as held (#538). And a PDF
+    // put where a page note takes it for its paper is somebody's own as well, unless
+    // it is being turned into that note.
+    let holding = hold && is_pdf(target) && source.parent() == target.parent();
+    if let Some(there) = paper_in_the_way(source, target, same_entry).filter(|_| !holding) {
         return Err(format!("{} is already there", there.display()));
     }
 
-    move_entry(&source, &target, respelling)?;
+    move_entry(source, target, respelling)?;
 
     // A PDF's highlights follow it, and a page note's paper follows the note, so a
     // rename or a move keeps them.
-    move_held(&source, &target);
+    if alone {
+        move_paper(source, target);
+    } else {
+        move_held(source, target);
+    }
     Ok(())
 }
 
@@ -346,6 +374,13 @@ fn copied(source: &Path, target: &Path) -> Result<(), String> {
         return Err(format!("{} cannot be copied into itself", source.display()));
     }
 
+    // A page note's copy brings its paper, and a PDF's copy beside a page note of its
+    // name would be taken for that note's paper: either way the file in the way is
+    // somebody's own (#538).
+    if let Some(there) = paper_in_the_way(source, target, same_entry) {
+        return Err(format!("{} is already there", there.display()));
+    }
+
     if let Some(parent) = target.parent() {
         made(parent)?;
     }
@@ -417,6 +452,27 @@ pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String>
     Ok(stamp_of(&openable(&app, &path)?))
 }
 
+/// Whether anything at all - a file, a folder, a link - is at a path the reader
+/// may write to. What an export asks before it writes a picture or a page beside
+/// the file the save dialog was given: the dialog asked about that one file, so
+/// a picture of the same name already in the folder is somebody else's, and the
+/// new one steps aside instead of writing over it; see `writeBeside` in
+/// export/save.ts.
+///
+/// Behind `chosen` rather than `openable`, because the folder an export goes to is
+/// usually outside every space, and a yes or no about a name there reads nothing.
+#[tauri::command(async)]
+pub fn path_taken(app: AppHandle, path: String) -> Result<bool, String> {
+    Ok(taken(&chosen(&app, &path)?))
+}
+
+/// The same once the path has been judged. `symlink_metadata`, so a link that
+/// points nowhere still counts: writing through it would make a file where the
+/// link points, which is not a free name either.
+fn taken(target: &Path) -> bool {
+    fs::symlink_metadata(target).is_ok()
+}
+
 /// The stamp of one file, for the crate's own use: the command above, and the
 /// search asking whether the note it is holding is still the note on disk.
 ///
@@ -468,6 +524,17 @@ mod tests {
     }
 
     #[test]
+    fn a_name_is_taken_by_a_file_or_a_folder_and_free_otherwise() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        fs::write(dir.path().join("image.png"), PNG).expect("the picture");
+        fs::create_dir(dir.path().join("assets")).expect("the folder");
+
+        assert!(super::taken(&dir.path().join("image.png")));
+        assert!(super::taken(&dir.path().join("assets")));
+        assert!(!super::taken(&dir.path().join("image 2.png")));
+    }
+
+    #[test]
     fn copies_a_file_byte_for_byte() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let source = dir.path().join("picture.png");
@@ -516,6 +583,59 @@ mod tests {
 
         copied(&source, &dir.path().join("paper copy.pdf")).expect("the copy");
         assert!(dir.path().join("paper copy.pdf.highlights.json").exists());
+    }
+
+    /// `Report.pages.pdf` is what macOS Pages names a PDF it saves, and a page note
+    /// copied in as `Report.pages` would take it for its paper (#538).
+    #[test]
+    fn a_page_note_copied_never_takes_a_pdf_already_there() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        fs::create_dir_all(dir.path().join("A")).expect("A");
+        fs::create_dir_all(dir.path().join("B")).expect("B");
+        let source = dir.path().join("A/Report.pages");
+        fs::write(&source, "{}").expect("the page note");
+        fs::write(dir.path().join("A/Report.pages.pdf"), b"%PDF ours").expect("its paper");
+        let theirs = dir.path().join("B/Report.pages.pdf");
+        fs::write(&theirs, b"%PDF theirs").expect("somebody's PDF");
+
+        let error = copied(&source, &dir.path().join("B/Report.pages"))
+            .expect_err("a name whose paper is taken to be refused");
+        assert!(error.contains("already there"), "{error}");
+        assert!(!dir.path().join("B/Report.pages").exists());
+        assert_eq!(fs::read(&theirs).expect("theirs"), b"%PDF theirs");
+    }
+
+    /// `Report.pages.pdf` is what macOS Pages names a PDF it saves, and one copied in
+    /// beside a page note `Report.pages` with no paper yet would become its paper, and
+    /// go with the note when it is deleted.
+    #[test]
+    fn a_pdf_copied_never_becomes_a_page_notes_paper() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        fs::create_dir_all(dir.path().join("A")).expect("A");
+        fs::create_dir_all(dir.path().join("B")).expect("B");
+        let source = dir.path().join("A/Report.pages.pdf");
+        fs::write(&source, b"%PDF mine").expect("somebody's PDF");
+        fs::write(dir.path().join("B/Report.pages"), "{}").expect("a page note");
+
+        let error = copied(&source, &dir.path().join("B/Report.pages.pdf"))
+            .expect_err("a PDF a page note would hold to be refused");
+        assert!(error.contains("already there"), "{error}");
+        assert!(!dir.path().join("B/Report.pages.pdf").exists());
+    }
+
+    /// And in the note's own folder too: `Old.pdf` copied to `Report.pages.pdf` beside
+    /// a blank `Report.pages` would become that note's paper, and go with it.
+    #[test]
+    fn a_pdf_copied_beside_a_page_note_of_its_name_is_refused() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = dir.path().join("Old.pdf");
+        fs::write(&source, b"%PDF old").expect("a PDF");
+        fs::write(dir.path().join("Report.pages"), "{}").expect("a page note");
+
+        let error = copied(&source, &dir.path().join("Report.pages.pdf"))
+            .expect_err("a PDF a page note would hold to be refused");
+        assert!(error.contains("already there"), "{error}");
+        assert!(!dir.path().join("Report.pages.pdf").exists());
     }
 
     #[test]
@@ -929,5 +1049,86 @@ mod tests {
 
         assert_eq!(names(dir.path()).len(), 1);
         assert_eq!(fs::read_to_string(&composed).expect("the note"), "overview");
+    }
+
+    /// Sync moves every file on its own: a PDF's highlights and a page note's paper are
+    /// entries of their own in the account, moved by their own moves and in whichever
+    /// order those come. Highlights that came ahead of their PDF were cleared by the
+    /// PDF's move as leftovers, and the next scan sent that delete to every device.
+    #[test]
+    fn a_pdf_moved_alone_keeps_the_highlights_that_came_ahead_of_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let was = dir.path().join("A.pdf");
+        let now = dir.path().join("B.pdf");
+        fs::write(&was, "%PDF").expect("the PDF");
+        fs::write(dir.path().join("B.pdf.highlights.json"), "{}").expect("its highlights");
+
+        super::renamed(&was, &now, false, true).expect("the move");
+
+        assert!(now.exists());
+        assert_eq!(
+            fs::read_to_string(dir.path().join("B.pdf.highlights.json")).expect("highlights"),
+            "{}"
+        );
+    }
+
+    /// Sync's move leaves what sync carries as an entry of its own, a PDF's highlights,
+    /// and takes what it does not: a page note's paper goes with the note (#551,
+    /// pages/carried.ts). A paper left behind was downloaded again under the new name
+    /// and the old one listed as a new PDF, which spread to every device.
+    #[test]
+    fn a_file_moved_alone_takes_only_what_sync_does_not_carry() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let pdf = dir.path().join("A.pdf");
+        fs::write(&pdf, "%PDF").expect("the PDF");
+        fs::write(dir.path().join("A.pdf.highlights.json"), "{}").expect("its highlights");
+        let note = dir.path().join("Lecture.pages");
+        fs::write(&note, "{}").expect("the page note");
+        fs::write(dir.path().join("Lecture.pages.pdf"), "%PDF").expect("its paper");
+        fs::write(dir.path().join("Lecture.pages.pdf.highlights.json"), "{}")
+            .expect("the paper's highlights");
+
+        super::renamed(&pdf, &dir.path().join("B.pdf"), false, true).expect("the PDF");
+        super::renamed(&note, &dir.path().join("Week.pages"), false, true).expect("the note");
+
+        assert!(dir.path().join("A.pdf.highlights.json").exists());
+        assert!(!dir.path().join("B.pdf.highlights.json").exists());
+        assert!(!dir.path().join("Lecture.pages.pdf").exists());
+        assert!(dir.path().join("Week.pages.pdf").exists());
+        assert!(dir
+            .path()
+            .join("Lecture.pages.pdf.highlights.json")
+            .exists());
+        assert!(!dir.path().join("Week.pages.pdf.highlights.json").exists());
+    }
+
+    #[test]
+    fn a_file_moved_by_hand_takes_what_it_holds() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let pdf = dir.path().join("A.pdf");
+        fs::write(&pdf, "%PDF").expect("the PDF");
+        fs::write(dir.path().join("A.pdf.highlights.json"), "{}").expect("its highlights");
+
+        super::renamed(&pdf, &dir.path().join("B.pdf"), false, false).expect("the move");
+
+        assert!(!dir.path().join("A.pdf.highlights.json").exists());
+        assert!(dir.path().join("B.pdf.highlights.json").exists());
+    }
+
+    /// A page note's paper is never moved by sync on its own: it goes with the note
+    /// (pages/carried.ts). So a PDF where the note's paper would go is somebody's own,
+    /// for sync's move as for one by hand, and taking it for the note's paper would put
+    /// their PDF under the note (#538).
+    #[test]
+    fn a_page_note_is_refused_over_a_pdf_of_its_paper_name_however_it_moves() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let was = dir.path().join("X.pages");
+        fs::write(&was, "{}").expect("the page note");
+        fs::write(dir.path().join("Y.pages.pdf"), "%PDF").expect("somebody's own PDF");
+
+        for alone in [false, true] {
+            assert!(super::renamed(&was, &dir.path().join("Y.pages"), false, alone).is_err());
+            assert!(was.exists());
+        }
     }
 }

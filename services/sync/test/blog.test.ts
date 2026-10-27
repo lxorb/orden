@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { asIsland, slugFor } from '../src/blog'
+import { FRONT_REV } from '../src/blog/front'
 import { call, file, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -131,6 +132,24 @@ describe('publishing', () => {
 
     const response = await call(env, '/nothing-here', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('Not found')
+  })
+
+  /** Addresses once dropped every letter outside ASCII, so `Über mich.md` was
+   *  `/ber-mich`. That address is in feeds and other people's links. */
+  test('the address a page had before its letters were kept redirects to it', async () => {
+    await addNote('Über mich.md', '# Über mich\n')
+    await addNote('Team.md', '---\npermalink: Über uns\naliases:\n  - Für Presse\n---\n\n# Team\n')
+    await publish({ subdomain: 'field' })
+
+    for (const [old, now] of [
+      ['/ber-mich', '/%C3%BCber-mich'],
+      ['/ber-uns', '/%C3%BCber-uns'],
+      ['/f-r-presse', '/%C3%BCber-uns'],
+    ]) {
+      const response = await call(env, old!, { host: 'field.nibeditor.com' })
+      expect(response.status).toBe(301)
+      expect(response.headers.get('location')).toBe(`https://field.nibeditor.com${now}`)
+    }
   })
 
   test('front matter is not printed', async () => {
@@ -402,6 +421,43 @@ describe('links between notes on a published page', () => {
     expect(response.text).toContain('href="/notes/deep-idea"')
   })
 
+  /** A leading slash is a path from the top of the space: what a rename writes
+   *  where nothing shorter reaches the note it renamed (B543). */
+  test('a path from the top of the space finds the note there, and is linked from it', async () => {
+    await addNote('Road.md', '# Road\n')
+    await addNote('B/Road.md', '# Other road\n')
+    await addNote('B/x.md', '# X\n\nsee [[/Road]] and [[/B/Road|the other]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/b/x', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('<a class="wikilink" href="/road">/Road</a>')
+    expect(response.text).toContain('<a class="wikilink" href="/b/road">the other</a>')
+
+    const road = await call(env, '/road', { host: 'field.nibeditor.com' })
+    expect(road.text).toContain('Linked from')
+    expect(road.text).toContain('href="/b/x"')
+  })
+
+  test('and the graph under the page draws it', async () => {
+    await addNote('Road.md', '# Road\n')
+    await addNote('B/Road.md', '# Other road\n')
+    await addNote('B/x.md', '# X\n\nsee [[/Road]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/b/x', { host: 'field.nibeditor.com' })
+    const island = /<script type="application\/json">(.*?)<\/script>/s.exec(response.text)?.[1]
+    const graph = JSON.parse(island ?? '{}') as {
+      nodes: { id: string }[]
+      edges: { a: number; b: number }[]
+    }
+    const ids = graph.nodes.map((one) => one.id)
+    expect(ids).toContain('road')
+    expect(graph.edges.map((one) => [ids[one.a], ids[one.b]].sort())).toContainEqual([
+      'b/x',
+      'road',
+    ])
+  })
+
   /** The other half of the same question. A wikilink names a note; a markdown
    *  link names a path, written relative to the note it sits in - and that path
    *  is not where the site serves anything. It used to be published exactly as
@@ -476,6 +532,15 @@ describe('an embed on a published page', () => {
     expect(response.text).toContain('<figure class="embed">')
     expect(response.text).toContain('The words themselves.')
     expect(response.text).toContain('<figcaption>quote</figcaption>')
+  })
+
+  test('a path from the top of the space names that note', async () => {
+    await addNote('quote.md', '# Quote\n\nThe words themselves.\n')
+    await addNote('B/holder.md', '# Holder\n\n![[/quote]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/b/holder', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('The words themselves.')
   })
 
   test('a heading names the section, and only that one', async () => {
@@ -1243,6 +1308,25 @@ describe('a drawing in a published space', () => {
       expect(listing.text, path).not.toContain('board')
     }
   })
+  test('is not a page under a name that says words, once a rename gave it one', async () => {
+    const made = await addNote('Board.canvas', DRAWING)
+    const id = made.json.note.id
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+    const renamed = await call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [{ op: 'r1', t: 'rename', id, name: 'Board.md', seen: 1e9 }] },
+    })
+    expect(renamed.status, renamed.text).toBe(200)
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/board', { host: 'field.nibeditor.com' })
+    expect(response.status).toBe(404)
+    expect(response.text).not.toContain('the private bit')
+    for (const path of ['/', '/feed.xml', '/sitemap.xml']) {
+      const listing = await call(env, path, { host: 'field.nibeditor.com' })
+      expect(listing.text, path).not.toContain('board')
+    }
+  })
 })
 
 /** A snippet is the note's own prose with the index's marks in it, and the words
@@ -1357,12 +1441,49 @@ describe('what a writer commented out', () => {
     await fillFronts(env, null)
 
     expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({
-      front_rev: 1,
+      front_rev: FRONT_REV,
     })
     const found = await call(env, '/search?q=quokka', { host: 'field.nibeditor.com' })
     expect(found.text).toContain('Nothing matches.')
     const tagged = await call(env, '/search?q=%23secret-tag', { host: 'field.nibeditor.com' })
     expect(tagged.text).toContain('Nothing matches.')
+  })
+
+  /** The pictures of a note written before they were written down, which a deleted
+   *  account asks about (src/pictures.ts), are picked up by the same sweep. */
+  test('writes down the pictures of a note read before they were', async () => {
+    const hash = 'ab'.repeat(32)
+    await addNote('Post.md', `![](https://nibeditor.com/i/${hash}.png)`)
+    env.db.exec("delete from note_pictures; update notes set front_rev = 1 where path = 'Post.md'")
+
+    const { fillFronts } = await import('../src/blog/fill')
+    await fillFronts(env, null)
+
+    expect(env.db.prepare('select hash from note_pictures').all()).toEqual([{ hash }])
+  })
+
+  test('and of a note in Recently deleted, which can still come back', async () => {
+    const hash = 'ab'.repeat(32)
+    const id = (await addNote('Post.md', `![](https://nibeditor.com/i/${hash}.png)`)).json.note.id
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    env.db.exec("delete from note_pictures; update notes set front_rev = 1 where path = 'Post.md'")
+
+    const { fillFronts } = await import('../src/blog/fill')
+    await fillFronts(env, null)
+
+    expect(env.db.prepare('select hash from note_pictures').all()).toEqual([{ hash }])
+  })
+
+  test('and reads a note again whose pictures it could not write down', async () => {
+    await addNote('Post.md', POST)
+    env.db.exec("update notes set front_rev = 1 where path = 'Post.md'; drop table note_pictures")
+
+    const { fillFronts } = await import('../src/blog/fill')
+    await fillFronts(env, null)
+
+    expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({
+      front_rev: 0,
+    })
   })
 })
 

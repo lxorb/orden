@@ -28,7 +28,7 @@ import { escape, type Head, headOf } from './blog/head'
 import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from './blog/math'
 import { answers, asked as readQuery, hasWords, matching } from './blog/find'
 import { linkedFrom, type Listed } from './blog/nav'
-import { pageOf, pathsOf, rememberedNote } from './blog/paths'
+import { legacyPathsOf, pageOf, pathsOf, rememberedNote } from './blog/paths'
 import { SITE_JS, SITE_JS_PATH, THEME_JS, THEME_JS_HASH } from './blog/script'
 import { type Around, aside, bar, contents, counter, ownFiles, underneath } from './blog/shell'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
@@ -36,6 +36,7 @@ import { askInChunks, places } from './bound'
 import { blogRootOf, sameOriginPath } from './hosts'
 import { machineOf, mayGuess, maySendAnswer, mayTakeAnswer } from './limits'
 import { noteKey } from './notes'
+import { noteKind } from './rooms/kind'
 import { keepAnswer } from './spaces/answers'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
 import { publishes, readSite, type Site, type SitePassword, SVG_POLICY } from './blog/site'
@@ -185,6 +186,9 @@ function pages(listed: readonly Page[]): Map<string, string> {
 
     for (let at = 0; at < parts.length; at++) byName.set(parts.slice(at).join('/'), url)
     byName.set(whole, url)
+    // And from the top of the space, `[[/Road]]`, which names this path alone: what
+    // a rename writes where nothing shorter reaches the note (B543).
+    byName.set(`/${whole}`, url)
   }
 
   return byName
@@ -220,6 +224,7 @@ function fileUrls(files: readonly SpaceFile[]): Map<string, string> {
     // it was never recorded; see `wrong` in spaces/files.ts.
     const parts = file.path.toLowerCase().split('/')
     for (let at = 0; at < parts.length; at++) byName.set(parts.slice(at).join('/'), url)
+    byName.set(`/${parts.join('/')}`, url)
   }
 
   return byName
@@ -369,7 +374,10 @@ async function embedded(
   source: string,
 ): Promise<(link: Wikilink) => string | null> {
   const byName = new Map<string, Note>()
-  for (const note of notes) byName.set(nameOf(note.path), note)
+  for (const note of notes) {
+    byName.set(nameOf(note.path), note)
+    byName.set(`/${nameOf(note.path)}`, note)
+  }
 
   const wanted = new Set<string>()
   for (const link of findLinks(source)) {
@@ -699,7 +707,10 @@ async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
 
   const listed: Page[] = []
   for (const note of listing.results) {
+    // A drawing, by its name or by its kind: a canvas entry renamed to `.md` is still
+    // one (see `noteKind`), and its JSON published as a post would say every card.
     if (isCanvasTarget(note.path) || isPagesTarget(note.path)) continue
+    if (noteKind(note) === 'plane') continue
 
     const front = readFront(note.front)
     if (!publishes(site.rules, note.path, front)) continue
@@ -834,6 +845,8 @@ function graphOf(pages: readonly Page[], only?: Set<string>): string {
     const whole = nameOf(page.note.path)
     const parts = whole.split('/')
     for (let one = 0; one < parts.length; one++) byName.set(parts.slice(one).join('/'), page.slug)
+    // From the top of the space too, `[[/Road]]`; see `pages`.
+    byName.set(`/${whole}`, page.slug)
     for (const alias of page.front.aliases ?? []) byName.set(alias, page.slug)
   }
 
@@ -925,6 +938,7 @@ function near(pages: readonly Page[], page: Page): Set<string> {
   const byName = pages.reduce((map, one) => {
     const parts = nameOf(one.note.path).split('/')
     for (let at = 0; at < parts.length; at++) map.set(parts.slice(at).join('/'), one.slug)
+    map.set(`/${parts.join('/')}`, one.slug)
     for (const alias of one.front.aliases ?? []) map.set(alias, one.slug)
     return map
   }, new Map<string, string>())
@@ -1507,6 +1521,14 @@ async function served(
     const was = await rememberedNote(env, space.id, decodedSlug)
     const moved = was ? pageList.find((one) => one.note.id === was) : null
     if (moved) return Response.redirect(new URL(`/${moved.slug}`, url).toString(), 301)
+
+    // A path this site answered on before it kept letters outside ASCII, which no
+    // rename wrote down; see `legacyPathsOf`. Only once nothing else has it, so a
+    // page that answers on it now keeps it.
+    const before = pageList.find((one) =>
+      legacyPathsOf(one.note.path, one.front).includes(decodedSlug),
+    )
+    if (before) return Response.redirect(new URL(`/${before.slug}`, url).toString(), 301)
 
     return missing()
   }

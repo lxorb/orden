@@ -356,7 +356,11 @@ depends on the file's.
   nobody has posted in it) asks the account for the list again, since no poke says so.
 - **Moving and copying.** Move to space moves the pointer and re-homes the chat,
   `PATCH /v2/chats/:id {space}` by a writer of both spaces, so its history goes with it and
-  its audience changes. Duplicate makes a new, empty chat beside it, never a second pointer to
+  its audience changes. Writing in the space it leaves means the space, not a share of its
+  pointer alone, and a writer who is not the space's owner moves it only into another space
+  of that owner, since a move leaves nothing in the owner's Recently deleted. The app offers
+  only the spaces the account would take and asks it before the pointer's file moves, so a
+  refusal leaves both where they were (`workspace/chat-carry.ts`). Duplicate makes a new, empty chat beside it, never a second pointer to
   one log. Deleting the pointer sends it to Recently deleted; emptying the trash ends the chat:
   the account erases its log 30 days later with the other leftovers. While the pointer is in
   Recently deleted the account does not list the chat (`GET /v2/chats` leaves out a chat
@@ -1065,7 +1069,8 @@ says so and the lane picks the next free one.
   and nowhere else; no GIF service; no analytics on messages; pictures without metadata.
 - **Deleting a message** removes it from the object, its file rows when no other message
   names the hash, and every device's store at its next catch-up; the blob
-  goes with the other unreferenced blobs.
+  goes with the other unreferenced blobs. An edit that replaces a message's files lets go of
+  the ones it took off the same way, since the history an edit keeps is words alone.
 - **Deleting your account** deletes the chats of your own spaces with them; your messages in
   other people's spaces stay, shown as "Deleted account" without an avatar (Discord's way,
   decision 7.8). `erase.ts` and its test cover every new table.

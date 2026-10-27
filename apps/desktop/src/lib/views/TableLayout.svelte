@@ -26,7 +26,7 @@
   import { setColumns, setSort, setViewOption } from './edit'
   import { plain } from './inline'
   import type { Kit } from './kit'
-  import { groupLabel, propertyName, summaryName } from './words'
+  import { groupLabel, noteNames, propertyName, summaryName } from './words'
 
   const { kit }: { kit: Kit } = $props()
 
@@ -45,13 +45,15 @@
     | { kind: 'sums'; id: string; group: Group }
   const lines = $derived.by((): Line[] => {
     const out: Line[] = []
-    for (const group of live.answer?.groups ?? []) {
+    const groups = live.answer?.groups ?? []
+    const names = noteNames(groups.map((group) => group.key))
+    for (const group of groups) {
       const key = groupName(group.key)
       if (property !== undefined) {
         out.push({
           kind: 'head',
           id: `head:${key}`,
-          label: groupLabel(property, group.key, live.today),
+          label: groupLabel(property, group.key, live.today, names),
           count: group.rows.length,
         })
       }

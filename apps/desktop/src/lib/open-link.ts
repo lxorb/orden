@@ -11,7 +11,7 @@
  *  an issue tracker and somebody's account page all want the browser they are already
  *  signed in to; those still call `openExternal` where they stand. */
 
-import type { LinkPress, NoteJump } from '@nib/editor'
+import type { LinkPress, NoteJump, NoteOpener } from '@nib/editor'
 import { howFor, linkAsk, type TabAsk, tabAsk } from './new-tab'
 import { isPlugin } from './plugin'
 import { isOpenable, openExternal } from './tauri'
@@ -112,8 +112,13 @@ export function followHref(href: string, press: LinkPress): void {
  *  in the same place, so the two kinds of link in one note never disagree - and Alt
  *  with the modifier for a pane to the right, which only a note has. Nothing pressed
  *  is a link followed from the keyboard. */
-export function followNote(jump: NoteJump, press?: LinkPress): void {
-  void workspace.followLink(jump, press ? linkAsk(press) : 'plain')
+export function followNote(jump: NoteJump, press?: LinkPress, from?: string | null): void {
+  void workspace.followLink(jump, press ? linkAsk(press) : 'plain', from)
+}
+
+/** The same for a link in `from`, followed in that note's own space; see `followLink`. */
+export function followNoteFrom(from: string | null): NoteOpener {
+  return (jump, press) => followNote(jump, press, from)
 }
 
 /** Nothing held down, for the places a link is opened by something that is not a click

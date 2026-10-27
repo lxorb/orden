@@ -12,6 +12,7 @@ import { fileBytes, sha256, toBase64 } from '../bytes'
 import { deviceName } from '../device'
 import { links } from '../link-index.svelte'
 import { onDisk } from '../on-disk'
+import { holderOf } from '../pages/held'
 import { scanSpace } from '../space-watch'
 import { invoke, isDesktop, joinPath, platform } from '../tauri'
 import { classifier } from './classify'
@@ -61,7 +62,16 @@ function diskOf(telling: Telling): Disk {
       telling.touching(from)
       telling.touching(to)
       await invoke('create_folder', { path: parentOf(to) }).catch(() => undefined)
-      await invoke('rename_note', { from, to })
+      // A file the account holds as a page note's paper, `X.pages.pdf` beside
+      // `X.pages`: a PDF another device turned into that note. The crate refuses a PDF
+      // put where a page note takes it for its paper unless it is held there on
+      // purpose, and this move only completes a pairing the account already has.
+      const hold = kind === 'file' && holderOf(to) !== null
+      // The one file and nothing it holds: a PDF's highlights and a page note's paper
+      // are entries of their own, moved by moves of their own in whichever order those
+      // come. Taking them along, a PDF moved after its highlights found none and cleared
+      // the ones that had just arrived, and the next scan deleted them everywhere.
+      await invoke('rename_note', { from, to, alone: true, ...(hold ? { hold } : {}) })
       await telling.moved(from, to, kind)
     },
     async remove(path, kind) {
@@ -80,8 +90,17 @@ function diskOf(telling: Telling): Disk {
       // does not hold goes to this device's: a folder, which may hold files that never
       // travel; a page note, whose paper only this trash keeps beside it; and any other
       // file, whose bytes the account keeps only as a version.
+      // That trash leaves what the account holds as an entry of its own, a PDF's
+      // highlights, for that entry's own move or delete: a PDF turned into its page note
+      // elsewhere comes as this delete, run first, and a move of its highlights, which
+      // found none.
       if (syncDeletes(path, kind)) await invoke('delete_note', { path })
-      else await invoke('trash_item', { path, kind: kind === 'folder' ? 'folder' : 'note' })
+      else
+        await invoke('trash_item', {
+          path,
+          kind: kind === 'folder' ? 'folder' : 'note',
+          alone: true,
+        })
       await telling.gone(path, kind)
     },
     mkdir: (path) => invoke('create_folder', { path }).then(() => undefined),

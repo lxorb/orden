@@ -75,6 +75,33 @@ export async function asPageNote(pdf: string, how: Turning): Promise<string> {
   return note
 }
 
+/** The page note on disk that already holds `pdf`, or null: the note a held paper is
+ *  the paper of, or the one an older build made beside it. Asks and never writes, so
+ *  it is the first question wherever a PDF is opened, a space shared to be read too:
+ *  that note is what the owner drew and wrote on, and the paper alone is not. */
+export async function noteHolding(
+  pdf: string,
+  how: Pick<Turning, 'root' | 'exists' | 'read'>,
+): Promise<string | null> {
+  const holder = holderOf(pdf)
+  if (holder) return (await how.exists(holder)) ? holder : null
+
+  const note = pdf.replace(/\.pdf$/i, '.pages')
+  if (!(await how.exists(note)) || (await how.exists(paperOf(note)))) return null
+  const text = await how.read(note)
+  return text !== null && besideIts(text, note, pdf, how.root) ? note : null
+}
+
+/** The page note a PDF would be, as words held in memory and never written: what a
+ *  PDF in a space shared to be read opens as, where it may not be turned. Its pages
+ *  name the paper by its own name, which from the PDF's own path is the PDF itself. */
+export async function asItself(
+  pdf: string,
+  sizes: (path: string) => Promise<{ width: number; height: number }[]>,
+): Promise<string> {
+  return writeCanvas(pagesFromPdf(nameOf(pdf), await sizes(pdf)))
+}
+
 /** A page note an older build made beside its PDF, given the PDF to hold: what
  *  opening one does, so the pair the file list showed becomes the one note it is.
  *  Answers whether `note` was one. */

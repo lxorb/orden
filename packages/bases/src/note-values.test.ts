@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import { noteValues, scalarValue, taskHash } from './note-values'
+import { compile } from './expr/compile'
+import { contextAt, noteRow } from './fixtures/rows'
+import { readProperties } from '@nib/markdown/properties'
+import { withItem, writeList } from '@nib/markdown/property-edits'
+import { parse } from 'yaml'
+import { listAsWritten, noteValues, scalarValue, taskHash } from './note-values'
 
 describe('front matter as values', () => {
   test('reads every kind the Properties panel draws', () => {
@@ -52,6 +57,34 @@ describe('front matter as values', () => {
     expect(noteValues('---\n# c\nkind: date\n---\n')).toEqual({ kind: 'date' })
   })
 
+  test('a quoted value is the string it says, as YAML reads it', () => {
+    const quoted = [
+      "zip: '007'",
+      'flag: "true"',
+      "nothing: 'null'",
+      'ids: [\'01\', "false", 2]',
+      'more:',
+      "  - '3'",
+      'author: "[[Frank Herbert]]"',
+    ]
+    const expected = {
+      zip: '007',
+      flag: 'true',
+      nothing: 'null',
+      ids: ['01', 'false', 2],
+      more: ['3'],
+      author: { kind: 'link', target: 'Frank Herbert' },
+    }
+    expect(noteValues(`---\n${quoted.join('\n')}\n---\n`)).toEqual(expected)
+    // The same block with a comment in it goes the YAML way, and has to agree.
+    expect(noteValues(`---\n# c\n${quoted.join('\n')}\n---\n`)).toEqual(expected)
+  })
+
+  test('a filter on a quoted zip code finds it', () => {
+    const row = noteRow('A.md', "---\nzip: '007'\n---\n")
+    expect(compile('zip == "007"').evaluate(row, contextAt(), {})).toBe(true)
+  })
+
   test('scalars', () => {
     expect(scalarValue('~')).toBeNull()
     expect(scalarValue('-3.5')).toBe(-3.5)
@@ -70,5 +103,40 @@ describe('a task hash', () => {
     expect(taskHash('Call the bank')).toBe(taskHash('Call the bank'))
     expect(taskHash('Call the bank')).not.toBe(taskHash('Call the bunk'))
     expect(taskHash('')).toMatch(/^[0-9a-z]+$/)
+  })
+})
+
+describe('a block list rewritten with a chip', () => {
+  /** The note with `z` put on `ids`, as YAML reads it back. */
+  function readBack(note: string): unknown {
+    const ids = readProperties(note)?.find((one) => one.key === 'ids')
+    const items = ids ? withItem(ids, 'z') : null
+    const edit = writeList(note, 'ids', items ?? [])
+    const after = edit ? note.slice(0, edit.from) + edit.insert + note.slice(edit.to) : note
+    const body = after.split('---\n')[1] ?? ''
+    return (parse(body) as { ids?: unknown }).ids
+  }
+
+  test('is YAML that holds the members it held and the one put on', () => {
+    expect(readBack('---\nids:\n  - a\n  -\n  - b\n---\n')).toEqual(['a', null, 'b', 'z'])
+    expect(readBack('---\nids:\n  - a\n  - e # note\n  - 007\n---\n')).toEqual(['a', 'e', 7, 'z'])
+    expect(readBack('---\nids:\n- - x\n- b\n---\n')).toEqual([['x'], 'b', 'z'])
+    expect(readBack('---\nids:\n  - a, b\n  - c: d\n---\n')).toEqual(['a, b', { c: 'd' }, 'z'])
+    // A quoted member with a comment after it: the quotes do not end the member.
+    expect(readBack('---\nids:\n  - "x" # see "y"\n  - b\n---\n')).toEqual(['x', 'b', 'z'])
+    expect(readBack("---\nids:\n  - 'x' # it's 'y'\n  - b\n---\n")).toEqual(['x', 'b', 'z'])
+  })
+})
+
+describe('a list in a block the rows cannot draw', () => {
+  test('is read in a note whose lines end in CRLF, its span short of the line break', () => {
+    const note = '---\r\n# kept\r\nids:\r\n  - 007\r\n  - "x"\r\ntitle: t\r\n---\r\n'
+    const found = listAsWritten(note, 'ids')
+    expect(found).not.toBeNull()
+    expect(found).not.toBe('absent')
+    if (!found || found === 'absent') return
+    expect(note.slice(found.from, found.to)).toBe('ids:\r\n  - 007\r\n  - "x"')
+    expect(found.property.items).toEqual(['007', 'x'])
+    expect(found.property.writtenItems).toEqual(['007', '"x"'])
   })
 })

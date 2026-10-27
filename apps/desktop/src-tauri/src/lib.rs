@@ -78,6 +78,8 @@ mod assets;
 mod bundle_name;
 mod carry;
 mod clock;
+// Which lines of a note are code, for the tag index; see code_blocks.rs.
+mod code_blocks;
 #[cfg(desktop)]
 mod default_browser;
 #[cfg(desktop)]
@@ -326,6 +328,7 @@ macro_rules! commands {
             notes::delete_folder,
             notes::remove_empty_folder,
             notes::file_stamp,
+            notes::path_taken,
             tree::read_tree,
             assets::read_asset,
             assets::read_file,

@@ -58,7 +58,11 @@
           <span class="title">{rowName(item.name, item.kind !== 'note')}</span>
           <small>{meta(item)}</small>
         </div>
-        <button class="quiet" disabled={trash.busy} onclick={() => void trash.restore(item)}>
+        <button
+          class="quiet"
+          disabled={trash.busy || !trash.restorable(item)}
+          onclick={() => void trash.restore(item)}
+        >
           {t('Restore')}
         </button>
         <button class="quiet danger" disabled={trash.busy} onclick={() => void trash.purge(item)}>

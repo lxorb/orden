@@ -122,6 +122,17 @@ describe('what links to a page', () => {
     expect(backlinks(pages, page('Notes/Two.md'))).toBe('')
   })
 
+  test('a path from the top of the space names only the note there', () => {
+    const pages = [
+      page('Plan.md'),
+      page('Notes/Plan.md'),
+      page('Notes/One.md', { links: ['/plan'] }),
+    ]
+
+    expect(backlinks(pages, pages[0]!)).toContain('href="/notes/one"')
+    expect(backlinks(pages, pages[1]!)).toBe('')
+  })
+
   test('and an alias counts as a name for it', () => {
     const pages = [
       page('Plan.md', { aliases: ['the-plan'] }),
@@ -533,6 +544,40 @@ describe('a site with forms on it', () => {
     const answer = await call(env, '/hello', { host: HOST })
     expect(answer.text).toContain(`/i/${hash}.css`)
     expect(answer.text.indexOf(`/i/${hash}.css`)).toBeGreaterThan(answer.text.indexOf('/s/'))
+  })
+
+  /** A stranger's message is the note's: emptied from Recently deleted for good, the
+   *  note takes its answers with it, and the old addresses it answered on too. */
+  test('a note emptied for good takes its answers and its old paths with it', async () => {
+    const sent = await call(env, `/form/${note}`, {
+      host: HOST,
+      method: 'POST',
+      raw: 'your-name=Ada',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    expect(sent.status).toBe(303)
+    const version = (await call(env, `/v1/notes/${note}`, { token })).json.note.version
+    await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token,
+      body: { path: 'Renamed.md', content: `# Hello\n\n${FENCE}\n`, baseVersion: version },
+    })
+    expect(
+      env.db.prepare('select count(*) as n from blog_paths where note_id = ?').get(note),
+    ).toEqual({ n: 1 })
+
+    await call(env, `/v1/notes/${note}`, { method: 'DELETE', token })
+    expect((await call(env, `/v1/trash/notes/${note}`, { method: 'DELETE', token })).status).toBe(
+      200,
+    )
+
+    expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toEqual([])
+    for (const table of ['form_answers', 'blog_paths']) {
+      expect(
+        env.db.prepare(`select count(*) as n from ${table} where note_id = ?`).get(note),
+        table,
+      ).toEqual({ n: 0 })
+    }
   })
 })
 

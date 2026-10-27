@@ -51,6 +51,39 @@ export function pathsOf(path: string, front: NoteFront): string[] {
   return [...new Set([where, ...(front.aliases ?? [])])].filter(Boolean)
 }
 
+/** The paths this note answered on before addresses kept letters outside ASCII
+ *  (#460), when every one of them was dropped: `Über mich.md` was `/ber-mich`.
+ *  Nothing wrote those down, because nothing moved as far as the note knew, and
+ *  they are still in feeds and other people's links. So they are worked out
+ *  again rather than remembered. The path's exactly, from the path; a
+ *  permalink's and an alias's from what the row holds now, which was the same
+ *  words with those letters kept. */
+export function legacyPathsOf(path: string, front: NoteFront): string[] {
+  const asAscii = (slug: string) =>
+    slug
+      .replace(/[^a-z0-9/_-]+/g, '-')
+      .split('/')
+      .map((part) => part.replace(/^-+|-+$/g, ''))
+      .filter(Boolean)
+      .join('/')
+
+  const where = front.permalink
+    ? asAscii(front.permalink)
+    : path
+        .replace(/\.(md|markdown|mdown|mkd)$/i, '')
+        .split('/')
+        .map((part) =>
+          part
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, ''),
+        )
+        .filter(Boolean)
+        .join('/')
+
+  return [...new Set([where, ...(front.aliases ?? []).map(asAscii)])].filter(Boolean)
+}
+
 /** Where this note lives. */
 export function pageOf(path: string, front: NoteFront): string {
   return pathsOf(path, front)[0] ?? slugFor(path)

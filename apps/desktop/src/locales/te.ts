@@ -1996,6 +1996,7 @@ export const te: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'ఈ {device}',
   '{name} is back: {device} was writing in it': '{name} తిరిగి వచ్చింది: {device} దానిలో రాస్తోంది',
+  'Changes to {name} are not syncing': '{name}లో మార్పులు సింక్ కావడం లేదు',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'తెరవడం',
   Pressing: 'నొక్కడం',

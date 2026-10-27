@@ -38,9 +38,8 @@ export interface Provenance {
   guest: boolean
   /** Whether markup has been pasted into this document from outside the app. */
   pasted: boolean
-  /** Whether anybody else can reach the space it sits in. A folder in no space,
-   *  and a space on a machine that is signed out, are both the reader's own; see
-   *  `isShared` in sharing.svelte.ts. */
+  /** Whether anybody else can reach the space it sits in, or the note itself; see
+   *  `reachedByOthers` in sharing.svelte.ts. */
   shared: boolean
   /** Whether somebody else is in the file at this moment. Only ever asked of a
    *  shared space: in a space nobody else is in, the other device in the room is

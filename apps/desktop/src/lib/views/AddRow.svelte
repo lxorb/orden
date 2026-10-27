@@ -96,50 +96,55 @@
     const said = words
     if (!plain || !said.trim()) return
     words = ''
-    await addTyped(said, plain)
+    // A task that was not written keeps its words in the field, unless more were typed
+    // while it was being tried.
+    if (!(await addTyped(said, plain)) && !words) words = said
   }
 </script>
 
-<div class="add-row">
-  {#if plain}
-    <div class="nib-row adding">
-      <span class="plus" aria-hidden="true">
-        <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
-      </span>
-      <input
-        bind:this={field}
-        bind:value={words}
-        class="field"
-        aria-label={t('Add task')}
-        placeholder={t('Add task')}
-        onkeydown={(event) => {
-          if (event.isComposing) return
-          if (event.key === 'Enter') {
-            event.preventDefault()
-            void write()
-          } else if (event.key === 'Escape') {
-            event.preventDefault()
-            event.stopPropagation()
-            close()
-          }
-        }}
-        onblur={() => {
-          if (!words.trim()) close()
-        }}
-      />
-    </div>
-  {:else}
-    <button type="button" class="nib-row adder" onclick={start}>
-      <span class="plus" aria-hidden="true">
-        <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
-      </span>
-      <span class="nib-row-label">{label}</span>
-    </button>
-  {/if}
-  {#if editing}
-    <TaskEditor {kit} prefill={editing} {onsize} onclose={close} />
-  {/if}
-</div>
+<!-- None where the task or note would land in a space shared to be read. -->
+{#if kit.adds}
+  <div class="add-row">
+    {#if plain}
+      <div class="nib-row adding">
+        <span class="plus" aria-hidden="true">
+          <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
+        </span>
+        <input
+          bind:this={field}
+          bind:value={words}
+          class="field"
+          aria-label={t('Add task')}
+          placeholder={t('Add task')}
+          onkeydown={(event) => {
+            if (event.isComposing) return
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              void write()
+            } else if (event.key === 'Escape') {
+              event.preventDefault()
+              event.stopPropagation()
+              close()
+            }
+          }}
+          onblur={() => {
+            if (!words.trim()) close()
+          }}
+        />
+      </div>
+    {:else}
+      <button type="button" class="nib-row adder" onclick={start}>
+        <span class="plus" aria-hidden="true">
+          <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
+        </span>
+        <span class="nib-row-label">{label}</span>
+      </button>
+    {/if}
+    {#if editing}
+      <TaskEditor {kit} prefill={editing} {onsize} onclose={close} />
+    {/if}
+  </div>
+{/if}
 
 <style>
   .add-row {

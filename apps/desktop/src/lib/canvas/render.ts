@@ -10,7 +10,7 @@
  *  five hundred on every pan is a frozen surface, and a canvas that is only being
  *  looked at renders nothing at all. */
 
-import { hardBreaks, renderMarkdown } from '@nib/markdown'
+import { type EmbeddedNote, hardBreaks, renderMarkdown } from '@nib/markdown'
 import { BASE } from '../api'
 import { accountAddress } from '../assets'
 import { isPicturePath } from '../space-paths'
@@ -90,7 +90,13 @@ export function keptByAccount(file: string, signedIn: boolean): string | null {
 
 /** The markdown of the note a file node names, or null when the space holds
  *  none. Read through the index, which keeps the last handful in hand so a
- *  screenful of cards on the same note costs one read. */
-export function fileSource(file: string): Promise<string | null> {
-  return links.embedSource(file, null)
+ *  screenful of cards on the same note costs one read. The space is the canvas's,
+ *  which a canvas still open from another space is not the active one. With whether
+ *  that note's HTML is words: a card shows another file, and is trusted only where
+ *  both the canvas and that file are. */
+export function fileSource(
+  file: string,
+  canvasPath: string | null = null,
+): Promise<EmbeddedNote | null> {
+  return links.embedNote(file, null, canvasPath)
 }

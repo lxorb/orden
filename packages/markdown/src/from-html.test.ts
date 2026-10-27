@@ -116,6 +116,44 @@ describe('a page as markdown', () => {
     )
   })
 
+  /** An export's video, recording or embedded paper is a file that arrives beside the
+   *  note, and the note is the one place left that says where it was. */
+  test('and a video, a recording or an embedded file is a link for the caller that keeps them', () => {
+    const html = [
+      '<p>Before</p>',
+      '<video src="media/clip.mp4" controls>No player</video>',
+      '<audio controls><source src="media/Voice%20memo.m4a"></audio>',
+      '<embed src="media/paper.pdf">',
+      '<object data="media/sheet.pdf"></object>',
+      '<iframe src="media/page.html"></iframe>',
+      '<video src="javascript:alert(1)"></video>',
+    ].join('')
+
+    expect(htmlToMarkdown(html)).toBe('Before')
+    expect(htmlToMarkdown(html, { mediaLinks: true })).toBe(
+      [
+        'Before',
+        '[clip.mp4](media/clip.mp4)',
+        '[Voice memo.m4a](media/Voice%20memo.m4a)',
+        '[paper.pdf](media/paper.pdf)',
+        '[sheet.pdf](media/sheet.pdf)',
+        '[page.html](media/page.html)',
+      ].join('\n\n'),
+    )
+  })
+
+  /** The name is somebody else's words: an export can call a file anything, and
+   *  `%3C` and `%0A` decode to a tag and a line break the note would read as its own. */
+  test('and the name such a link shows opens no markup and breaks no line', () => {
+    const html =
+      '<video src="media/%3Cstyle%3E*%7Bdisplay:none%7D%3C%2Fstyle%3E%0A%0A%23 x.mp4"></video>'
+    const written = htmlToMarkdown(html, { mediaLinks: true })
+
+    expect(written).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+    expect(written).not.toContain('\n')
+    expect(written).toMatch(/^\[.*\]\(media\/.*\)$/)
+  })
+
   test('while that caller still gets no target a note could never follow', () => {
     expect(htmlToMarkdown('<a href="javascript:alert(1)">x</a>', { fileTargets: true })).toBe('x')
     expect(
@@ -148,6 +186,46 @@ describe('a page as markdown', () => {
    *  picture of its own - and their text has been escaped on the way, backslash
    *  and brackets together. So they are written as they came, and a page cannot
    *  close the brackets early from inside them. */
+  /** Nothing autolinks inside a link's brackets, so an address there is words like
+   *  any other and is escaped like them. */
+  test("an address as a link's own text is drawn as its characters", () => {
+    const cases = [
+      'https://github.com/x/y/blob/main/pkg/__init__.py',
+      'https://a.test/~al/~bo',
+      'https://a.test/x/_y_/z',
+      'https://a.test/?a=$x$',
+    ]
+    for (const address of cases) {
+      const link = htmlToMarkdown(`<p><a href="${address}">${address}</a></p>`)
+      const shown = address.replace(/&/g, '&amp;')
+      expect(renderMarkdown(link)).toBe(`<p><a class="url" href="${shown}">${shown}</a></p>\n`)
+    }
+    expect(htmlToMarkdown('<a href="https://a.test/~al/~bo">https://a.test/~al/~bo</a>')).toBe(
+      '[https://a.test/\\~al/\\~bo](https://a.test/~al/~bo)',
+    )
+  })
+
+  test('a bare address beside a link is still kept as it was written', () => {
+    const page = htmlToMarkdown(
+      '<p>See <a href="https://x.test/">the site</a> or https://a.test/~al/_y_/ here</p>',
+    )
+    expect(page).toBe('See [the site](https://x.test/) or https://a.test/~al/_y_/ here')
+    expect(renderMarkdown(page)).toBe(
+      '<p>See <a href="https://x.test/">the site</a> or ' +
+        '<a class="url" href="https://a.test/~al/_y_/">https://a.test/~al/_y_/</a> here</p>\n',
+    )
+  })
+
+  test('an address as a link text cannot close its brackets', () => {
+    const link = htmlToMarkdown(
+      '<a href="https://x.test/ok">https://a.test/](https://evil.test)[b</a>',
+    )
+    expect(link).toBe('[https://a.test/\\](https://evil.test)\\[b](https://x.test/ok)')
+    expect(renderMarkdown(link)).toBe(
+      '<p><a href="https://x.test/ok">https://a.test/](https://evil.test)[b</a></p>\n',
+    )
+  })
+
   test('a backslash in a link text cannot close its brackets', () => {
     expect(htmlToMarkdown('<a href="https://x.test/ok">a\\](https://evil.test)[b</a>')).toBe(
       '[a\\\\\\](https://evil.test)\\[b](https://x.test/ok)',
@@ -382,9 +460,85 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>x<sup>2</sup> and H<sub>2</sub>O</p>')).toBe('x^2^ and H~2~O')
   })
 
+  test('a bare web address stays a link to where it says', () => {
+    const page = htmlToMarkdown(
+      '<p>See https://www.cs.cmu.edu/~bob/ and https://ex.com/page#:~:text=hi or https://ex.com/_next/x?b=[1].</p>',
+    )
+    expect(page).toBe(
+      'See https://www.cs.cmu.edu/~bob/ and https://ex.com/page#:~:text=hi or https://ex.com/_next/x?b=\\[1\\].',
+    )
+    expect(renderMarkdown(page)).toBe(
+      '<p>See <a class="url" href="https://www.cs.cmu.edu/~bob/">https://www.cs.cmu.edu/~bob/</a>' +
+        ' and <a class="url" href="https://ex.com/page#:~:text=hi">https://ex.com/page#:~:text=hi</a>' +
+        ' or <a class="url" href="https://ex.com/_next/x?b=%5B1%5D">https://ex.com/_next/x?b=[1]</a>.</p>\n',
+    )
+  })
+
+  /** What the renderer leaves off the end of an address is words again, and an
+   *  underscore or a star there is escaped as words are: the escape is no part of
+   *  the address, so neither is its backslash. */
+  test('an escape right after a bare web address stays out of the link', () => {
+    const page = htmlToMarkdown('<p>(see https://a.test/a_b_) and *https://a.test/x*</p>')
+    expect(page).toBe('(see https://a.test/a_b\\_) and \\*https://a.test/x\\*')
+    expect(renderMarkdown(page)).toBe(
+      '<p>(see <a class="url" href="https://a.test/a_b">https://a.test/a_b</a>_) and ' +
+        '*<a class="url" href="https://a.test/x">https://a.test/x</a>*</p>\n',
+    )
+  })
+
+  test('two equals signs in words mark nothing', () => {
+    const code = htmlToMarkdown('<p>if a==b or c==d then, and **x==y** too</p>')
+    expect(code).toBe('if a=\\=b or c=\\=d then, and \\*\\*x=\\=y\\*\\* too')
+    expect(renderMarkdown(code)).toBe('<p>if a==b or c==d then, and **x==y** too</p>\n')
+    // A line through still needs both of its tildes, and neither is left to it.
+    const struck = htmlToMarkdown('<p>a ~~b~~ c</p>')
+    expect(renderMarkdown(struck)).toBe('<p>a ~~b~~ c</p>\n')
+  })
+
+  test('two percent signs in words hide nothing as a comment', () => {
+    const code = htmlToMarkdown('<p>printf("%%d") and then printf("%%s") again</p>')
+    expect(code).toBe('printf("%\\%d") and then printf("%\\%s") again')
+    expect(renderMarkdown(code)).toBe(
+      '<p>printf(&quot;%%d&quot;) and then printf(&quot;%%s&quot;) again</p>\n',
+    )
+  })
+
+  test('dollars in words draw no maths', () => {
+    const prices = htmlToMarkdown('<p>Tickets cost $5-$10 each</p>')
+    expect(prices).toBe('Tickets cost \\$5-\\$10 each')
+    expect(renderMarkdown(prices)).toBe('<p>Tickets cost $5-$10 each</p>\n')
+  })
+
+  /** The converter's own formula is written as `$…$` and is not the page's words,
+   *  so it stays maths with the page's dollars escaped on either side of it. */
+  test('a formula between dollars in words stays a formula', () => {
+    const both = htmlToMarkdown('<p>$5 for <math alttext="x^2"><mi>x</mi></math> or $10</p>')
+    expect(both).toBe('\\$5 for $x^2$ or \\$10')
+    const drawn = renderMarkdown(both)
+    expect(drawn).toContain('<span class="math-inline" data-tex="x^2">')
+    expect(drawn.match(/math-inline/g)).toHaveLength(1)
+    expect(drawn).toMatch(/^<p>\$5 for <span/)
+    expect(drawn).toMatch(/<\/span> or \$10<\/p>\n$/)
+  })
+
+  test('a tilde or a caret in words opens no lowered or raised text', () => {
+    const about = htmlToMarkdown('<p>It takes ~5 min or ~10 min.</p>')
+    expect(about).toBe('It takes \\~5 min or \\~10 min.')
+    expect(renderMarkdown(about)).toBe('<p>It takes ~5 min or ~10 min.</p>\n')
+
+    const powers = htmlToMarkdown('<p>2^10 and 3^4</p>')
+    expect(powers).toBe('2\\^10 and 3\\^4')
+    expect(renderMarkdown(powers)).toBe('<p>2^10 and 3^4</p>\n')
+
+    // Nor a line through, which two of them would otherwise draw.
+    const doubled = htmlToMarkdown('<p>~~kept~~ and a ~ b</p>')
+    expect(doubled).toBe('\\~\\~kept\\~~ and a ~ b')
+    expect(renderMarkdown(doubled)).toBe('<p>~~kept~~ and a ~ b</p>\n')
+  })
+
   test('a body the marker cannot hold keeps the tag instead', () => {
-    expect(htmlToMarkdown('<p>a<sup>b^c</sup></p>')).toBe('a<sup>b^c</sup>')
-    expect(htmlToMarkdown('<p>a<sub>b~c</sub></p>')).toBe('a<sub>b~c</sub>')
+    expect(htmlToMarkdown('<p>a<sup>b^c</sup></p>')).toBe('a<sup>b\\^c</sup>')
+    expect(htmlToMarkdown('<p>a<sub>b~c</sub></p>')).toBe('a<sub>b\\~c</sub>')
   })
 
   test('a raised footnote mark keeps the link it wraps', () => {
@@ -831,5 +985,56 @@ describe('a page as markdown', () => {
    *  them off made the two lines one. */
   test('a line break inside a paragraph is still a line break', () => {
     expect(htmlToMarkdown('<p>line one<br>line two</p>')).toBe('line one  \nline two')
+  })
+})
+
+/** A to-do from another app - a Notion page's, an Evernote note's - is somebody's
+ *  words, and the task reader takes more apart than a note does: an emoji and a
+ *  date after it are a field, a `#` a tag. An importer that knows its words are plain
+ *  says so, and they come in as words. A rendered task list pasted back is the
+ *  opposite case: what it draws as a tag or a field is one. */
+describe('a checked list item', () => {
+  test('reads none of its words as a field of the task', async () => {
+    const { readTask } = await import('./task-line')
+    const html =
+      '<ul><li><input type="checkbox">task 📅 2026-11-01 ⏫ 🔁 every week #tag [due:: 2026-01-01]</li></ul>'
+    const line = htmlToMarkdown(html, { plainTasks: true }).trim()
+    const task = readTask(line)
+
+    expect(task).toMatchObject({ tags: [] })
+    expect(task?.due).toBeUndefined()
+    expect(task?.recurrence).toBeUndefined()
+    expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
+    expect(task?.fields).toEqual({})
+  })
+})
+
+test('a to-do keeps its code as it was written', () => {
+  const html =
+    '<ul><li><input type="checkbox"> use <code>std::move</code> on <code>x #b</code></li></ul>'
+
+  expect(htmlToMarkdown(html).trim()).toBe('- [ ] use `std::move` on `x #b`')
+})
+
+describe('a rendered task list pasted back', () => {
+  test('keeps its tags, dates, priority and fields', async () => {
+    const { readTask } = await import('./task-line')
+    const source = [
+      '- [ ] Pay rent #home 📅 2026-11-01',
+      '- [x] Call [due:: 2026-10-01] ⏫',
+      '- [ ] Keep \\[a:: b\\](see) words',
+    ]
+    const html = renderMarkdown(source.join('\n'), { tagHref: (tag) => `#${tag}` })
+    const lines = htmlToMarkdown(html).split('\n')
+    for (const [at, line] of source.entries()) {
+      const before = readTask(line)
+      const after = readTask(lines[at] ?? '')
+      expect(after?.tags).toEqual(before?.tags)
+      expect(after?.due).toBe(before?.due)
+      expect(after?.priority).toBe(before?.priority)
+      expect(after?.fields).toEqual(before?.fields)
+    }
+    // An escaped bracket that a link would follow stays escaped.
+    expect(lines[2]).toContain('\\[a:: b\\](see)')
   })
 })

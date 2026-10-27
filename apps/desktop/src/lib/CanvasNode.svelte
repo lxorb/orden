@@ -15,9 +15,12 @@
     createEditor,
     type EditorView,
     embedClicks,
-    type NoteOpener,
+    type LinkPress,
+    type NoteJump,
+    setReadOnlyMode,
     type Text,
   } from '@nib/editor'
+  import type { EmbeddedNote } from '@nib/markdown'
   import type { CanvasNode } from './canvas/format'
   import { cardHtml, fileSource, fileUrl, isPicture, keptByAccount } from './canvas/render'
   import { account } from './account.svelte'
@@ -39,6 +42,7 @@
     picked,
     dimmed = false,
     editing,
+    readOnly = false,
     offset,
     ontext,
     onleave,
@@ -59,11 +63,14 @@
     dimmed?: boolean
     /** Whether this card is the one being written in. */
     editing: boolean
+    /** Whether the plane may not be written in, so the card's editor is for reading. */
+    readOnly?: boolean
     /** How far a drag has carried it since the pointer went down. */
     offset: { x: number; y: number }
     ontext?: (text: string) => void
     onleave?: () => void
-    onfollow?: NoteOpener
+    /** Follows a link in a card, given the canvas so it is followed in its space. */
+    onfollow?: (jump: NoteJump, press: LinkPress | undefined, from: string | null) => void
   } = $props()
 
   /** The card's own colour, as a border and a wash. Null for one with none,
@@ -72,14 +79,14 @@
 
   /** The words of the note a file node names, once they have arrived. Null until
    *  then, and for a file the space no longer holds. */
-  let source = $state<string | null>(null)
+  let source = $state<EmbeddedNote | null>(null)
 
   $effect(() => {
     if (node.type !== 'file' || isPicture(node.file)) return
 
     const wanted = node.file
     let mine = true
-    void fileSource(wanted).then((text) => {
+    void fileSource(wanted, canvasPath).then((text) => {
       if (mine) source = text
     })
 
@@ -91,12 +98,14 @@
   /** The words this node holds, whichever kind it is: a card's own, a shape's, or the
    *  note a file card names once it has arrived. */
   const words = $derived(
-    node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source,
+    node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source?.text,
   )
+  /** A file card shows another note, so it is markup only where that note is too. */
+  const markup = $derived(trusted && !(node.type === 'file' && source?.escapeHtml !== false))
 
   /** The card's markdown as HTML. Read from the cache next door, so a card that
    *  has not changed costs nothing however often the plane moves. */
-  const html = $derived(words ? cardHtml(words, canvasPath, trusted) : '')
+  const html = $derived(words ? cardHtml(words, canvasPath, markup) : '')
 
   /** The shape's own corners, in the box's own coordinates, so the svg scales with
    *  the node and the arithmetic stays in one place. Through the same geometry the hit
@@ -210,10 +219,15 @@
       // The plane's own answer about its HTML, which is the surface's; see
       // trust.ts.
       trustedMarkup: trusted,
-      ...(onfollow ? { openNote: onfollow } : {}),
+      ...(onfollow
+        ? { openNote: (jump: NoteJump, press?: LinkPress) => onfollow(jump, press, canvasPath) }
+        : {}),
       openLink: followHref,
       shortcuts: shortcuts.forEditor,
     })
+    // The surface opens no card for typing on a plane that may not be written in;
+    // should one open anyway, it is for reading, since the store drops what is typed.
+    if (readOnly) setReadOnlyMode(editor, true)
     editor.focus()
     cardWriting(hand)
 

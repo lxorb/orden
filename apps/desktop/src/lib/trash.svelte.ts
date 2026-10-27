@@ -10,8 +10,9 @@ import { account } from './account.svelte'
 import { api } from './api'
 import { message, plural, t } from './i18n.svelte'
 import { prompt } from './prompt.svelte'
+import { canWriteAt } from './sharing.svelte'
 import { sync } from './sync.svelte'
-import { folderOf } from './space-paths'
+import { folderOf, insideSpace, samePath, within } from './space-paths'
 import { invoke } from './tauri'
 import { workspace } from './workspace.svelte'
 
@@ -29,7 +30,9 @@ export interface TrashItem {
   source: 'account' | 'device'
   /** The id the source knows it by. */
   ref: string
-  /** A device entry's place in the notes folder. */
+  /** Where a thing in this device's trash goes back to, from the notes folder with
+   *  forward slashes. The account's own restore is the server's to allow, so its rows
+   *  have none. */
   from?: string
 }
 
@@ -119,9 +122,20 @@ class Trash {
     return [...spaces, ...notes]
   }
 
+  /** Whether one thing may be put back where it was. Not into a space shared with this
+   *  account to be read: the owner deleting a note there is what put this device's copy
+   *  in the trash, and writing it back would be a change the sync refuses on every
+   *  pass. Deleting it for good stays, since that only takes away this device's copy. */
+  restorable(item: TrashItem): boolean {
+    if (item.from === undefined) return true
+    const at = whereFrom(item.from)
+    return at === null || canWriteAt(at)
+  }
+
   /** Puts one thing back. From the account, the next sync pass brings it down;
    *  from the device, the tree is re-read at once. */
   async restore(item: TrashItem) {
+    if (!this.restorable(item)) return
     await this.act(async () => {
       if (item.source === 'device') {
         const at = await invoke<string>('restore_trash', { id: item.ref })
@@ -222,3 +236,15 @@ class Trash {
 }
 
 export const trash = new Trash()
+
+/** Where a device row was, as a path on this disk. The crate says it from the notes
+ *  folder, the folder every space is in (`manifest_place` in trash.rs); the browser
+ *  build keeps the whole path. Null where it names no space here. */
+function whereFrom(from: string): string | null {
+  if (from.startsWith('/') || /^[A-Za-z]:[\\/]/.test(from)) return from
+  for (const space of workspace.spaces) {
+    const path = insideSpace(folderOf(space.root), from)
+    if (samePath(path, space.root) || within(space.root, path) !== null) return path
+  }
+  return null
+}

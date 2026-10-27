@@ -26,9 +26,10 @@ export interface OccurrenceOptions {
   created?: boolean
 }
 
-/** The date a rule counts from: due, else scheduled, else start, the plugin's order. */
+/** The date a rule counts from: due, else scheduled, else start, the plugin's order,
+ *  else a deadline, which a task with no other date repeats by. */
 function referenceOf(task: TaskFields): string | undefined {
-  return task.due ?? task.scheduled ?? task.start
+  return task.due ?? task.scheduled ?? task.start ?? task.deadline
 }
 
 const later = (a: string, b: string) => (a > b ? a : b)

@@ -1963,6 +1963,7 @@ export const am: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'ይህ {device}',
   '{name} is back: {device} was writing in it': '{name} ተመልሷል: {device} በውስጡ እየጻፈ ነበር',
+  'Changes to {name} are not syncing': 'በ{name} ላይ ያሉ ለውጦች እየተመሳሰሉ አይደሉም',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'መክፈት',
   Pressing: 'መጫን',

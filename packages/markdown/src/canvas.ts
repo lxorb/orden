@@ -723,6 +723,26 @@ export function readCanvas(text: string): Canvas {
   return canvasIn(text) ?? emptyCanvas()
 }
 
+/** Whether a whole text is a canvas to write over a plane with: JSON whose object has
+ *  `nodes` or `edges` as lists, and neither as anything else. Blank text is not one,
+ *  and nor is any other JSON object: `canvasIn` reads both as a plane with nothing on
+ *  it, which is right for a reader and the end of every card for a writer. */
+export function holdsCanvas(text: string): boolean {
+  if (!text.trim()) return false
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text) as unknown
+  } catch {
+    return false
+  }
+  if (!isRecord(parsed)) return false
+  const { nodes, edges } = parsed
+  if (nodes === undefined && edges === undefined) return false
+  return (
+    (nodes === undefined || Array.isArray(nodes)) && (edges === undefined || Array.isArray(edges))
+  )
+}
+
 /** The canvas in the text of a file, or null for text that is not one: JSON that
  *  does not parse, or that parses to something other than an object. Blank text is
  *  a new plane, and is one. `readCanvas` is this, with the refusal turned into an

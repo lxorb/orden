@@ -27,7 +27,8 @@ use serde::Serialize;
 use tauri::{AppHandle, Manager, Url};
 
 use crate::paths::{
-    a_space, at_most, cannot, files_in, folded, free_spot, inside, is_pdf, write_atomically,
+    a_space, at_most, cannot, files_in, folded, free_spot, inside, is_pdf, is_reserved,
+    write_atomically,
 };
 
 /// The longest argument read as a path: the longest command line Windows starts a
@@ -167,6 +168,12 @@ fn landed(from: &Path, root: &Path) -> Result<Landed, String> {
         .ok_or_else(|| format!("{} names no file", from.display()))?;
     let Some(bytes) = at_most(from, crate::assets::FILE_LIMIT)? else {
         return Err(format!("{} is too large to open", from.display()));
+    };
+    // A name Windows keeps for a device, which a Mac or Linux allows, is one the space
+    // cannot sync to every machine; see `is_reserved`.
+    let name = match name.to_str() {
+        Some(said) if is_reserved(said) => format!("_{said}").into(),
+        _ => name.to_os_string(),
     };
     let target = free_spot(&root.join(name), true);
     write_atomically(&target, &bytes)?;
@@ -333,6 +340,39 @@ mod tests {
         assert!(handed.holds(&paper));
         assert!(!handed.holds(&dir.path().join("b.pdf")));
         assert!(!handed.holds(dir.path()));
+    }
+
+    /// A PDF macOS Pages saved, `Report.pages.pdf`, handed over to a space with a page
+    /// note `Report.pages` in it lands under a name of its own: under that one the note
+    /// would take it for its paper.
+    #[test]
+    fn a_pdf_handed_over_never_becomes_a_page_notes_paper() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let space = dir.path().join("Space");
+        file(&space.join("Report.pages"), b"{}");
+        let from = dir.path().join("Downloads").join("Report.pages.pdf");
+        file(&from, b"%PDF mine");
+
+        let put = landed(&from, &space).expect("brought in");
+        assert_eq!(
+            Path::new(&put.path),
+            space.join("Report.pages 2.pdf").as_path()
+        );
+    }
+
+    /// A PDF called `CON.pdf`, which a Mac or Linux allows, lands under a name Windows
+    /// can hold too: the space syncs to every machine the reader has.
+    #[cfg(not(windows))]
+    #[test]
+    fn a_pdf_handed_over_never_takes_a_device_name() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let space = dir.path().join("Space");
+        fs::create_dir_all(&space).expect("the space");
+        let from = dir.path().join("Downloads").join("CON.pdf");
+        file(&from, b"%PDF");
+
+        let put = landed(&from, &space).expect("brought in");
+        assert_eq!(Path::new(&put.path), space.join("_CON.pdf").as_path());
     }
 
     #[test]

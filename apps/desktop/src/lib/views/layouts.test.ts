@@ -21,7 +21,7 @@ vi.mock('../rows/rows.svelte', () => ({
 }))
 
 const { contextFor } = await import('./context')
-const { columnsOf } = await import('./columns')
+const { columnsOf, editorOf } = await import('./columns')
 const { noteRow, taskRow } = await import('./fixture')
 const { kitFor } = await import('./kit')
 const ListLayout = (await import('./ListLayout.svelte')).default
@@ -37,6 +37,7 @@ const PhoneRows = (await import('./PhoneRows.svelte')).default
 const FormLayout = (await import('./FormLayout.svelte')).default
 const { toneColour } = await import('./chips')
 const ViewFrame = (await import('./ViewFrame.svelte')).default
+const Cell = (await import('./Cell.svelte')).default
 
 const TODAY = '2026-10-04'
 
@@ -180,6 +181,49 @@ views:
   })
 })
 
+describe('a cell being edited', () => {
+  const TAGGED = readBase(`nib:
+  properties:
+    tags:
+      options:
+        - { value: a }
+        - { value: b }
+        - { value: c }
+views:
+  - type: table
+    order: [file.name, note.tags]
+`)
+
+  test('keeps a list with options a list: its chips, and the options offered to add', () => {
+    const row = noteRow('One.md', 'tags: [a, c]')
+    const rows = [row]
+    const kit = kitOf(TAGGED, rows)
+    const editor = editorOf(TAGGED, 'note.tags', rows)
+    const html = render(Cell, {
+      props: { row, property: 'note.tags', editor, kit, editing: true },
+    }).body
+    expect(html).not.toContain('<select')
+    expect(html.match(/class="chip[ "]/g)).toHaveLength(2)
+    // Only the options the list does not hold yet.
+    const offered = /<datalist[^>]*>(.*)<\/datalist>/s.exec(html)?.[1] ?? ''
+    expect([...offered.matchAll(/value="([^"]*)"/g)].map(([, one]) => one)).toEqual(['b'])
+  })
+
+  test('keeps a single choice a menu', () => {
+    const row = noteRow('One.md', 'tags: a')
+    const html = render(Cell, {
+      props: {
+        row,
+        property: 'note.tags',
+        editor: 'select',
+        kit: kitOf(TAGGED, [row]),
+        editing: true,
+      },
+    }).body
+    expect(html).toContain('<select')
+  })
+})
+
 describe('the form', () => {
   test('is a field per property under a name, and a button that sends it', () => {
     const base = readBase(`views:
@@ -193,6 +237,15 @@ describe('the form', () => {
     expect(html).toMatch(/class="needed/)
     expect(html).toContain('type="date"')
     expect(html).toContain('Send')
+  })
+
+  test('offers no Send where the note would land in a space shared to be read', () => {
+    const base = readBase('views:\n  - type: form\n')
+    const kit = Object.create(kitOf(base, NOTES), { adds: { value: false } }) as ReturnType<
+      typeof kitOf
+    >
+    const html = render(FormLayout, { props: { kit } }).body
+    expect(html).toMatch(/<button type="submit"[^>]*disabled/)
   })
 })
 

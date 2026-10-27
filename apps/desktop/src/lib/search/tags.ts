@@ -18,8 +18,9 @@
  *  slashes, so the characters that may appear in one are what decides how deep a
  *  tree can go. */
 
+import { CodeBlocks, WORDS } from '@nib/markdown/fences'
 import { type FrontMatterBlock, frontMatterBlock } from '@nib/markdown/front-matter'
-import { TAG_NAME } from '@nib/markdown/tags'
+import { codeSpans, inCode, TAG_NAME, tagAt } from '@nib/markdown/tags'
 
 /** Where one use of a tag sits: the offsets of its name, the hash not included,
  *  so a rename splices a new path in and leaves whatever hung off the old one. */
@@ -33,9 +34,8 @@ export interface TagUse {
 /** What a tag's name may hold: the grammar `@nib/markdown` reads tags with. */
 const NAME = new RegExp(`^${TAG_NAME}$`, 'u')
 
-const TAG = new RegExp(String.raw`(^|[\s(])#(${TAG_NAME})`, 'gu')
-
-const FENCE = /^\s*(```|~~~)/
+/** A hash; whether it opens a tag, and how long its name is, is `tagAt`'s to say. */
+const HASH = /#/g
 
 /** `tags:` or `tag:` at the left margin of the front matter, and what follows
  *  it on the line. Both spellings, because Obsidian takes both. */
@@ -115,28 +115,47 @@ export function tagCuts(body: string, path: string): { from: number; to: number 
  *  eaten is whichever side there is one on, the following comma first, because
  *  that is the one a list would otherwise be left holding. */
 function widened(body: string, use: TagUse): { from: number; to: number } {
-  const from = body.charAt(use.from - 1) === '#' ? use.from - 1 : use.from
+  const hash = body.charAt(use.from - 1) === '#' ? use.from - 1 : use.from
+  // The marks round a tag they are the whole of go with it: `~~#todo~~` taken
+  // away is nothing, not a `~~~~` that would open a fence.
+  const marks = pairOf(body, hash, use.to)
+  const from = hash - marks
+  const to = use.to + marks
   const line = body.lastIndexOf('\n', from - 1) + 1
-  const end = body.indexOf('\n', use.to)
+  const end = body.indexOf('\n', to)
   const after = end === -1 ? body.length : end
 
   // A list item that held nothing but this tag is a line with nothing left to
   // say, so the line goes with it.
-  if (/^\s*-\s*$/.test(body.slice(line, from)) && body.slice(use.to, after).trim() === '') {
+  if (/^\s*-\s*$/.test(body.slice(line, from)) && body.slice(to, after).trim() === '') {
     return { from: line, to: end === -1 ? body.length : end + 1 }
   }
 
   // The comma this tag was in front of, and the space after it.
-  if (body.charAt(use.to) === ',') {
-    return { from, to: use.to + 1 + spaces(body, use.to + 1, after) }
+  if (body.charAt(to) === ',') {
+    return { from, to: to + 1 + spaces(body, to + 1, after) }
   }
 
   // Or the separator behind it: the space, and the comma the space followed.
   const before = /(,?[ \t]+|,)$/.exec(body.slice(line, from))
-  if (before) return { from: from - before[0].length, to: use.to }
+  if (before) return { from: from - before[0].length, to }
 
   // Or, for a tag that opened its line, the space in front of what follows it.
-  return { from, to: use.to + spaces(body, use.to, after) }
+  return { from, to: to + spaces(body, to, after) }
+}
+
+/** How many marks of emphasis, strike or highlight stand on both sides of
+ *  `from`..`to`, the same ones mirrored, or 0. */
+function pairOf(body: string, from: number, to: number): number {
+  let count = 0
+  while (
+    from - count > 0 &&
+    '*_~='.includes(body.charAt(from - count - 1)) &&
+    body.charAt(from - count - 1) === body.charAt(to + count)
+  ) {
+    count++
+  }
+  return count
 }
 
 /** How many spaces or tabs run from `at`, without leaving the line. */
@@ -155,7 +174,8 @@ function readFront(body: string, front: FrontMatterBlock, out: TagUse[]) {
   while (at > 0 && at < front.close) {
     const end = body.indexOf('\n', at)
     const stop = end === -1 || end > front.close ? front.close : end
-    const line = body.slice(at, stop)
+    // A CRLF line's `\r`, which `KEY` cannot match, ends past every name.
+    const line = body.slice(at, stop).replace(/\r$/, '')
     const found = KEY.exec(line)
 
     if (found) {
@@ -179,7 +199,7 @@ function readItems(body: string, from: number, front: FrontMatterBlock, out: Tag
   while (at > 0 && at < front.close) {
     const end = body.indexOf('\n', at)
     const stop = end === -1 || end > front.close ? front.close : end
-    const line = body.slice(at, stop)
+    const line = body.slice(at, stop).replace(/\r$/, '')
     const item = ITEM.exec(line)
     if (!item) return at
 
@@ -210,30 +230,69 @@ function readValues(from: number, text: string, out: TagUse[]) {
 
 /** Every `#tag` in the note's own words. The front matter is left out of this
  *  pass: a hash there is a YAML comment, and the tags it holds have been read
- *  already. Fenced code is left out too, where a `#` is a comment or a heading
- *  in some other language. */
+ *  already. Code is left out too, fenced or indented, where a `#` is a comment or a heading
+ *  in some other language, and so is inline code, which shows what is in it as
+ *  written. A code span runs on across the lines of a paragraph, so the spans are
+ *  cut a block at a time. Raw HTML and autolinks, which CommonMark reads before a
+ *  backtick, are not looked for: a backtick in an attribute can hide a tag. */
 function readInline(body: string, front: FrontMatterBlock | null, out: TagUse[]) {
-  let at = front ? front.to : 0
-  let fenced = false
+  for (const [from, to] of blocksOf(body, front ? front.to : 0)) {
+    const block = body.slice(from, to)
+    if (!block.includes('#')) continue
+
+    const code = codeSpans(block)
+    for (const found of block.matchAll(HASH)) {
+      const at = found.index
+      if (inCode(code, at)) continue
+      const name = tagAt(block, at)
+      if (name === null) continue
+
+      // Past the hash, so the span is the name.
+      const start = from + at + 1
+      out.push({ tag: name, from: start, to: start + name.length })
+    }
+  }
+}
+
+/** A line that opens a block of its own, which no code span reaches into: a list
+ *  item, a quote or a heading. */
+const OPENS_BLOCK = /^ {0,3}(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|>|#{1,6}(?:[ \t]|$))/
+
+/** A heading, which is one line long. */
+const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/
+
+/** Where each block of words from `at` on starts and ends: a paragraph's lines, a
+ *  list item's or a heading's. A blank line, a line of code and a line that opens
+ *  a block end one, and code is in none. What is code is judged as the renderer
+ *  judges it, fences in quotes and list items and indented code included; see
+ *  `CodeBlocks` in @nib/markdown's fences.ts. */
+function blocksOf(body: string, at: number): [number, number][] {
+  const out: [number, number][] = []
+  const code = new CodeBlocks()
+  let start = -1
 
   while (at <= body.length) {
     const end = body.indexOf('\n', at)
     const stop = end === -1 ? body.length : end
     const line = body.slice(at, stop)
+    const words = code.line(line) === WORDS
+    const blank = line.trim() === ''
 
-    if (FENCE.test(line)) fenced = !fenced
-    else if (!fenced) {
-      for (const found of line.matchAll(TAG)) {
-        const [, before = '', name] = found
-        if (name === undefined) continue
-
-        // Past what opened the word and past the hash, so the span is the name.
-        const start = at + found.index + before.length + 1
-        out.push({ tag: name, from: start, to: start + name.length })
+    if (start !== -1 && (!words || blank || OPENS_BLOCK.test(line))) {
+      out.push([start, at - 1])
+      start = -1
+    }
+    if (words && !blank) {
+      if (start === -1) start = at
+      if (HEADING.test(line)) {
+        out.push([start, stop])
+        start = -1
       }
     }
 
     if (end === -1) break
     at = end + 1
   }
+  if (start !== -1) out.push([start, body.length])
+  return out
 }

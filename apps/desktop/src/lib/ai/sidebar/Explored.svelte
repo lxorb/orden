@@ -32,7 +32,8 @@
   />
   {#if open}
     <div class="inner" transition:slide={{ duration: dur(150), easing: cubicOut }}>
-      {#each rows as one (one.id)}
+      <!-- By place: a provider that sends no ids gets the same few in each answer. -->
+      {#each rows as one, at (at)}
         <PartRow part={one} {live} />
       {/each}
     </div>

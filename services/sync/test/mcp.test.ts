@@ -203,6 +203,18 @@ describe('the notes that link to one note', () => {
     expect(text).toContain('one.md:5')
   })
 
+  test('a path from the top of the space names only the note there', async () => {
+    await addNote('one.md', 'see [[/plan]]\n')
+    await addNote('two.md', 'see [[/notes/plan]]\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'plan.md',
+    })
+    expect(text).toContain('one.md:1')
+    expect(text).not.toContain('two.md')
+  })
+
   test('a note nothing links to says so', async () => {
     const text = await tool(await connector(), 'list_backlinks', {
       space: 'Work',
@@ -300,6 +312,22 @@ describe('writing through it', () => {
     ).toContain('Saved')
 
     expect(await tool(key, 'read_note', { space: 'Work', path: 'new.md' })).toBe('hello')
+  })
+
+  test('and a model writing one note over and over keeps a version a few minutes', async () => {
+    const key = await connector(false)
+    for (let round = 0; round < 20; round++) {
+      await tool(key, 'write_note', { space: 'Work', path: 'plan.md', content: `round ${round}` })
+    }
+
+    const kept = env.db
+      .prepare(
+        `select v.hash as hash, v.device as device from note_versions v
+           join notes n on n.id = v.note_id where n.path = 'plan.md' order by v.at`,
+      )
+      .all() as { hash: string; device: string | null }[]
+    expect(kept.length).toBeLessThan(4)
+    expect(kept.at(-1)?.device).toMatch(/^program:[0-9a-f]{16}$/)
   })
 
   test('replaces one that is already there', async () => {

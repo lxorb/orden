@@ -37,6 +37,7 @@
  *  Code, fenced or inline, is kept exactly as it was written. */
 
 import { foldName } from '@nib/markdown/links'
+import { asWords } from '@nib/markdown/words'
 
 import { key } from '../i18n.svelte'
 
@@ -79,9 +80,6 @@ const ALONE = new RegExp(`^\\s*${BLOCK_EMBED.source}\\s*$`)
 
 /** An embed of a whole page. */
 const PAGE_EMBED = new RegExp(`${EMBED}\\[\\[([^\\]\\n]+)\\]\\]\\s*\\}\\}`, 'g')
-
-/** Code, fenced or inline, where Roam's spellings are words to keep. */
-const CODE = /```[\s\S]*?```|`[^`\n]*`/g
 
 interface RoamBlock {
   string?: unknown
@@ -279,8 +277,11 @@ export function roamText(
   // A daily page is named by its date now, so a link to it says that date.
   const page = (name: string) => dayName(name.trim()) ?? name
 
+  // Roam shows a tag in a block as text, so it is words here too rather than markup
+  // the note would render. Roam's own spellings below make none of their own, and an
+  // embedded block's words are made words on their own way through.
   return outsideCode(said, (text) =>
-    text
+    asWords(text)
       .replace(/\{\{(?:\[\[)?TODO(?:\]\])?\}\}\s*/g, '[ ] ')
       .replace(/\{\{(?:\[\[)?DONE(?:\]\])?\}\}\s*/g, '[x] ')
       .replace(/\^\^([^^]+)\^\^/g, '==$1==')
@@ -304,11 +305,59 @@ export function roamText(
 function outsideCode(text: string, change: (text: string) => string): string {
   let out = ''
   let at = 0
-  for (const found of text.matchAll(CODE)) {
-    out += change(text.slice(at, found.index)) + found[0]
-    at = found.index + found[0].length
+  for (const [from, to] of codeIn(text)) {
+    out += change(text.slice(at, from)) + text.slice(from, to)
+    at = to
   }
   return out + change(text.slice(at))
+}
+
+/** Where the code is in a block's words, fenced or inline, read the way the note
+ *  will read it: a run of backticks opens code only where no backslash escapes it,
+ *  and the code ends at the next run just as long. A regex that only looked for
+ *  backticks would call `` \`<b>` `` code and leave the tag in it, where the note
+ *  shows a backtick and then renders the tag. */
+function codeIn(text: string): [number, number][] {
+  const found: [number, number][] = []
+  let at = 0
+  while (at < text.length) {
+    if (text[at] === '\\') {
+      at += 2
+      continue
+    }
+    if (text[at] !== '`') {
+      at += 1
+      continue
+    }
+
+    const opens = runAt(text, at)
+    let end = at + opens
+    let closes = -1
+    while ((end = text.indexOf('`', end)) >= 0) {
+      const run = runAt(text, end)
+      if (run === opens) {
+        closes = end + run
+        break
+      }
+      end += run
+    }
+
+    // A run nothing closes is backticks, and what comes after it is words again.
+    if (closes < 0) {
+      at += opens
+      continue
+    }
+    found.push([at, closes])
+    at = closes
+  }
+  return found
+}
+
+/** How many backticks there are in a row from `at`. */
+function runAt(text: string, at: number): number {
+  let end = at
+  while (text[end] === '`') end += 1
+  return end - at
 }
 
 /** A Roam daily page's name as the date it is, or null for a page somebody

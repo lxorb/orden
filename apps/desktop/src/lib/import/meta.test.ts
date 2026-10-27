@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'vitest'
+import { renderMarkdown } from '@nib/markdown'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
 import { dayOf, frontMatterFor, noteText, tagName } from './meta'
 
@@ -40,6 +41,51 @@ describe('front matter for an imported note', () => {
     expect(block).toContain('when: today')
   })
 
+  test('writes each key once, a column that folds into one already written under a name of its own', () => {
+    const block = frontMatterFor({
+      date: '2026-01-02',
+      tags: ['work'],
+      extra: [
+        ['Status', 'Doing'],
+        ['status', 'Done'],
+        ['Date', 'May 1, 2026 → May 3, 2026'],
+        ['Tags', 'loose'],
+      ],
+    })
+
+    expect(block.match(/^status:/gm)).toHaveLength(1)
+    expect(block.match(/^date:/gm)).toHaveLength(1)
+    expect(block.match(/^tags:/gm)).toHaveLength(1)
+    expect(block).toContain('status: Doing')
+    expect(block).toContain('status-2: Done')
+    expect(block).toContain('date: 2026-01-02')
+    expect(block).toContain('date-2: May 1, 2026 → May 3, 2026')
+    expect(block).toContain('tags-2: loose')
+  })
+
+  test('keeps a column whose name has nothing in it to keep, under its place', () => {
+    const block = frontMatterFor({
+      extra: [
+        ['Due', 'soon'],
+        ['⭐', '5'],
+      ],
+    })
+
+    expect(block).toContain('due: soon')
+    expect(block).toContain("property-2: '5'")
+  })
+
+  test('keeps every tag the app can hold, and the words of a label that cannot be one', () => {
+    const block = frontMatterFor({
+      tags: ['🔥', 'C++', 'C#', 'work', 'café', '2026', 'half-done!'],
+    })
+
+    expect(block).toContain('tags: [🔥, work, café]\n')
+    expect(block).toContain('labels:')
+    for (const words of ['C++', 'C#', '2026', 'half-done!']) expect(block).toContain(words)
+    expect(block).not.toMatch(/tags: .*\bC\b/)
+  })
+
   test('a note with nothing to say carries no fence at all', () => {
     expect(frontMatterFor({})).toBe('')
     expect(frontMatterFor({ tags: [], extra: [['Empty', '  ']] })).toBe('')
@@ -63,6 +109,59 @@ describe('a whole note', () => {
     )
   })
 
+  test('a note that opens with its own properties keeps one block, its own keys first', () => {
+    expect(
+      noteText(
+        'Trip',
+        '---\ntitle: Trip\nDate: 2020-01-01\nstatus: draft\n---\nWords.\n',
+        {
+          date: '2024-01-02',
+          updated: '2024-02-03',
+          extra: [['Status', 'done']],
+        },
+        true,
+      ),
+    ).toBe(
+      '---\ntitle: Trip\nDate: 2020-01-01\nstatus: draft\nupdated: 2024-02-03\n---\n\n# Trip\n\nWords.\n',
+    )
+  })
+
+  test('a rule at the top of a note is a rule, not properties', () => {
+    expect(
+      noteText('Trip', '---\n\nIntro paragraph.\n\n---\n\nRest\n', {
+        date: '2024-01-02',
+        tags: ['travel'],
+      }),
+    ).toBe(
+      '---\ndate: 2024-01-02\ntags: [travel]\n---\n\n# Trip\n\n---\n\nIntro paragraph.\n\n---\n\nRest\n',
+    )
+    expect(noteText(null, '---\n---\nWords.\n')).toBe('---\n---\nWords.\n')
+  })
+
+  test('words an import made are never a block of the note’s own', () => {
+    const meta = { date: '2024-01-02' }
+    for (const body of [
+      '---\n\nNote: this page is a draft.\n\n---\n\nBody text',
+      '---\nIngredients:\n- flour\n---\nMix well.',
+      '---\nWhen: Tuesday\nWhere: Office\n---\nAgenda below',
+    ]) {
+      expect(noteText('Trip', body, meta)).toBe(`---\ndate: 2024-01-02\n---\n\n# Trip\n\n${body}\n`)
+    }
+  })
+
+  test('a block of the note’s own opens with a key, right under its fence', () => {
+    const body = '---\n\nNote: this page is a draft.\n\n---\n\nBody text'
+    expect(noteText('Trip', body, { date: '2024-01-02' }, true)).toBe(
+      `---\ndate: 2024-01-02\n---\n\n# Trip\n\n${body}\n`,
+    )
+  })
+
+  test('a note whose own block is all it says still opens with it', () => {
+    expect(noteText('Trip', '---\nstatus: draft\n---', {}, true)).toBe(
+      '---\nstatus: draft\n---\n\n# Trip\n\n',
+    )
+  })
+
   test('a note with no words at all is its heading, the way a new note is', () => {
     expect(noteText('Empty', '   \n\n')).toBe('# Empty\n\n')
   })
@@ -79,6 +178,8 @@ describe('a tag out of a label', () => {
 
   test('keeps letters that are not English ones', () => {
     expect(tagName('Zürich')).toBe('Zürich')
+    expect(tagName('🔥')).toBe('🔥')
+    expect(tagName('Zu\u0308rich')).toBe('Zu\u0308rich')
     expect(tagName('日本語')).toBe('日本語')
   })
 })
@@ -101,5 +202,53 @@ describe('the day a date lands on', () => {
     expect(dayOf('soon')).toBeNull()
     expect(dayOf(0)).toBeNull()
     expect(dayOf('0001-01-01')).toBeNull()
+  })
+})
+
+/** Half past six in the evening in Los Angeles, which is already the next day in UTC.
+ *  Every shape of that one instant is the evening's day, as Keep's count of it is. */
+describe('the day an instant lands on, west of Greenwich', () => {
+  beforeAll(() => {
+    vi.stubEnv('TZ', 'America/Los_Angeles')
+  })
+  afterAll(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('is the local day whichever shape the instant is written in', () => {
+    expect(dayOf(1767321000000000)).toBe('2026-01-01')
+    expect(dayOf('20260102T023000Z')).toBe('2026-01-01')
+    expect(dayOf('2026-01-02T02:30:00Z')).toBe('2026-01-01')
+    expect(dayOf('2026-01-02T02:30:00.000Z')).toBe('2026-01-01')
+    expect(dayOf('2026-01-02T03:30:00.0000000+01:00')).toBe('2026-01-01')
+  })
+
+  test('a day or a wall clock with no zone is the day it says', () => {
+    expect(dayOf('2026-01-02')).toBe('2026-01-02')
+    expect(dayOf('2026-01-02T23:30:00')).toBe('2026-01-02')
+    expect(dayOf('2026-01-02 00:30')).toBe('2026-01-02')
+    expect(dayOf('20260102T003000')).toBe('2026-01-02')
+  })
+})
+
+/** A title another app kept is somebody's words, typed where nothing read markdown,
+ *  and the heading it becomes reads markdown: dollars as maths, `==` as a highlight,
+ *  `#work` as a tag, `[[Other]]` as a link, tildes as a subscript, a `#` at the end
+ *  as the heading's own closing mark. Each title reads back as itself. */
+describe('a title as the note heading', () => {
+  const TITLES = [
+    'Tickets $5-$10',
+    'a==b and c==d',
+    'Ideas #work',
+    'See [[Other]]',
+    'H~2~O',
+    'Issue #',
+  ]
+
+  test.each(TITLES)('%s is its words', (title) => {
+    const html = renderMarkdown(noteText(title, 'Words.'))
+    const shown = title.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+
+    expect(html).toContain(`<h1>${shown}</h1>`)
   })
 })

@@ -65,12 +65,15 @@ export async function look(): Promise<
 /** Everything a render needs beyond the note itself: paper, colours, where the
  *  pictures it names actually are, and where its links point. */
 export async function renderOptions(target: Target): Promise<RunOptions> {
+  // A note of another space resolves its links in that space, read before the
+  // renderer asks, since it asks synchronously.
+  await links.spaceRead(target.path)
   return {
     page: settings.page,
     resolveImage: (src: string) => imagePath(src, target.path, target.source) ?? src,
     // An `![[Note]]` in the document brings that note into it, the way it shows in
     // the editor. Read here rather than in the renderer, which is sync.
-    readNote: (name: string) => links.embedSource(name, target.path),
+    readNote: (name: string) => links.embedNote(name, target.path),
     // A wikilink written out as markdown points at the file it named, relative to
     // this note, so the export reads in any other editor.
     link: (link) => links.relativeTarget(link, target.path),

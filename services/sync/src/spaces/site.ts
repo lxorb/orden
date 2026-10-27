@@ -13,6 +13,7 @@ import { now } from '../crypto'
 import { fits } from './columns'
 import type { Env, Space, Variables } from '../types'
 import { isCanvasTarget } from '@nib/markdown/links'
+import { noteKind } from '../rooms/kind'
 import { fillFronts } from '../blog/fill'
 import { readFront } from '../blog/front'
 import { readSpaceFiles } from './files'
@@ -74,11 +75,11 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   }
 
   const { results } = await context.env.DB.prepare(
-    `select path, front, size from notes where space_id = ? and deleted = 0 and kind != 'file'
+    `select path, front, size, kind, epoch from notes where space_id = ? and deleted = 0 and kind != 'file'
       order by path limit ?`,
   )
     .bind(space.id, MOST_LISTED)
-    .all<{ path: string; front: string | null; size: number }>()
+    .all<{ path: string; front: string | null; size: number; kind: string; epoch: number }>()
 
   const adds: string[] = []
   const removes: string[] = []
@@ -89,7 +90,8 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   let bytes = 0
 
   for (const row of results) {
-    if (isCanvasTarget(row.path)) continue
+    // A drawing by its name or by its kind; see `sitePages` in blog.ts.
+    if (isCanvasTarget(row.path) || noteKind(row) === 'plane') continue
 
     const front = readFront(row.front)
     // What the site shows now, which for a space that has never been published

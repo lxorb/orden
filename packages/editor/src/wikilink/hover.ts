@@ -1,4 +1,4 @@
-import { Facet } from '@codemirror/state'
+import { type EditorState, Facet } from '@codemirror/state'
 import {
   activateHover,
   closeHoverTooltip,
@@ -68,7 +68,16 @@ export interface PreviewNote {
   /** Where in those words the link pointed: the heading it named, the block it
    *  named, or the top of the note. */
   at: number
+  /** Whether the note under the card is read-only, so the card is too. */
+  readOnly: boolean
 }
+
+export const previewNoteOf = (
+  state: EditorState,
+  path: string,
+  text: string,
+  section: string,
+): PreviewNote => ({ path, text, at: anchorOf(text, section), readOnly: state.readOnly })
 
 /** Mounts an editor on another note's words inside the card that previewed it, and
  *  answers with what takes it down again - or null where the app would rather the
@@ -240,11 +249,10 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
         // named; see `PreviewNote`.
         if (source.length <= MOST_EDITED) {
           const host = document.createElement('div')
-          release = view.state.facet(previewEditor)(host, {
-            path,
-            text: source,
-            at: anchorOf(source, section),
-          })
+          release = view.state.facet(previewEditor)(
+            host,
+            previewNoteOf(view.state, path, source, section),
+          )
 
           if (release) {
             body.dataset.written = 'yes'

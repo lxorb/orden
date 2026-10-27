@@ -16,24 +16,40 @@
  *  and, where the words have moved, the nearest line with the same words is the one. */
 
 import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@nib/bases'
-import { taskHash, tick, todayOf } from '@nib/bases'
+import { listAsWritten, noteValues, taskHash, tick, todayOf } from '@nib/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@nib/markdown/edits'
-import { writeList, writeProperty } from '@nib/markdown/property-edits'
+import { type Property, keyCalled, readProperties } from '@nib/markdown/properties'
+import {
+  type ListItem,
+  listItems,
+  listLines,
+  withItem,
+  writeList,
+  writeProperty,
+} from '@nib/markdown/property-edits'
 import { writeTask } from '@nib/markdown/task-edits'
 import { readTask } from '@nib/markdown/task-line'
 import { changeOf } from '../search/replace'
 import { type HoldsNotes, noteText, replaceInNotes } from '../workspace/note-text'
 
 /** What a write changes: properties of the note (null takes one away), fields of the
- *  task (null takes one away), or both. */
+ *  task (null takes one away), chips put on or taken off the note's lists, or several. */
 export interface RowChange {
   note?: Record<string, Value | null>
   task?: TaskChange
+  list?: Record<string, ListChange>
 }
 
+/** One chip of a list: words typed onto its end, or the member at a place taken off.
+ *  Said as the gesture rather than as the list it leaves, because a cell only holds
+ *  the members as they are shown - a link as its words, a date as `Today` - and the
+ *  list written back has to be the members as the note writes them. */
+export type ListChange = { add: string } | { remove: number }
+
 /** Writes one change to the note a row is in. Answers whether anything was written:
- *  false for a task whose line is no longer in the note, and for a change the note
- *  already says. */
+ *  false for a task whose line is no longer in the note, for a change the note
+ *  already says, and for a note in a space shared to be read, which the replacement
+ *  passes over (note-text.ts) - so a view never draws as done what nothing wrote. */
 export async function writeRow(
   ws: HoldsNotes,
   path: string,
@@ -49,8 +65,7 @@ export async function writeRow(
   const edit = oneEdit(before, after)
   if (!edit) return false
 
-  await replaceInNotes(ws, [changeOf(path, before, [edit])])
-  return true
+  return (await replaceInNotes(ws, [changeOf(path, before, [edit])])) > 0
 }
 
 /** The note's words with the change made, or null where the change cannot be made. */
@@ -61,6 +76,16 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
     const edit = propertyEdit(after, key, value)
     if (edit === undefined) return null
     if (edit) after = appliedEdits(after, [edit])
+  }
+
+  for (const [key, edit] of Object.entries(change.list ?? {})) {
+    const list = asList(after, key)
+    // A list that cannot be written back whole is refused, never written over.
+    if (!list) return null
+    const items = listChanged(list.property, edit)
+    if (!items) continue
+    const written = list.write(items)
+    if (written) after = appliedEdits(after, [written])
   }
 
   if (change.task && Object.keys(change.task).length) {
@@ -134,15 +159,78 @@ export function taskLine(
   return null
 }
 
+/** A key of the note's front matter as a list row, and how members are written back
+ *  in its place: its members as written, a single value as a list of one, and nothing
+ *  for a key the note does not hold. Null for a map, which a chip must not turn into a
+ *  list, and for a list in a block the rows cannot draw that cannot be rewritten
+ *  without losing something (`listAsWritten`): a chip there is refused rather than
+ *  written over the members the cell showed. */
+function asList(
+  text: string,
+  key: string,
+): { property: Property; write: (items: ListItem[]) => TextEdit | null } | null {
+  const empty: Property = { key, kind: 'list', value: '', items: [], from: 0, to: 0 }
+  const whole = (property: Property) => ({
+    property,
+    write: (items: ListItem[]) => writeList(text, key, items),
+  })
+  const rows = readProperties(text)
+  if (!rows) {
+    const found = listAsWritten(text, key)
+    if (found === null) return null
+    if (found === 'absent') return whole(empty)
+    return {
+      property: found.property,
+      write: (items) => ({
+        from: found.from,
+        to: found.to,
+        insert: listLines(found.property.key, items, text),
+      }),
+    }
+  }
+  // The key in the note's own spelling where it is in another case, as `writeList`
+  // and `frontMatterEdit` find it: taken as missing, a chip wrote a list of one over it.
+  const found = keyCalled(rows, key)
+  if (found?.kind === 'map') return null
+  if (!found) return whole(empty)
+  if (found.kind === 'list') return whole(found)
+  if (found.value === '') return whole({ ...empty, key: found.key })
+  return whole({
+    ...empty,
+    key: found.key,
+    items: [found.value],
+    ...(found.quoted ? { quotedItems: [true] } : {}),
+  })
+}
+
+/** The members a chip leaves, or null where it changes nothing. */
+function listChanged(property: Property, edit: ListChange): ListItem[] | null {
+  if ('add' in edit) return withItem(property, edit.add)
+  if (edit.remove < 0 || edit.remove >= property.items.length) return null
+  return listItems(property).filter((_, at) => at !== edit.remove)
+}
+
 /** One property's edit: null where the note already says it, undefined for a value no
  *  front matter line can hold (a map). */
 function propertyEdit(text: string, key: string, value: Value): TextEdit | null | undefined {
   if (value === null) return writeProperty(text, key, null)
   if (Array.isArray(value)) {
+    // Each member as what it is: a number, a yes or no and nothing stay themselves,
+    // where turning them into words would write `[1, 10]` back as `['1', '10']`. And
+    // a member the note already holds is put back as the note wrote it: the value a
+    // row holds for `1.10` or `1234567890123456789` is a number that writes itself
+    // as `1.1` or `1234567890123456800`.
+    const kept = keptMembers(text, key)
     return writeList(
       text,
       key,
-      value.map((one) => written(one) ?? ''),
+      value.map(
+        (one) =>
+          kept(one) ??
+          (one === null || typeof one === 'number' || typeof one === 'boolean'
+            ? one
+            : (written(one) ?? '')),
+      ),
     )
   }
   if (typeof value === 'boolean') return writeProperty(text, key, String(value), 'checkbox')
@@ -150,6 +238,24 @@ function propertyEdit(text: string, key: string, value: Value): TextEdit | null 
   const said = written(value)
   if (said === null) return undefined
   return writeProperty(text, key, said, hasKind(value, 'date') ? 'date' : 'text')
+}
+
+/** For a list the note holds under `key`, a lookup from a member's value to that
+ *  member as written, each written member handed out once, in order. Nothing for a
+ *  key that holds no list. */
+function keptMembers(text: string, key: string): (value: Value) => ListItem | null {
+  const list = asList(text, key)?.property
+  const values = list ? noteValues(text)[list.key] : undefined
+  if (!list || !Array.isArray(values) || values.length !== list.items.length) return () => null
+  const members = listItems(list)
+  const left = values.map((one, at) => ({ said: JSON.stringify(one), member: members[at] }))
+  return (value) => {
+    const said = JSON.stringify(value)
+    const at = left.findIndex((one) => one.said === said)
+    if (at === -1) return null
+    const [found] = left.splice(at, 1)
+    return found?.member ?? null
+  }
 }
 
 /** Whether a value is one of the shapes that say what they are by `kind`. */

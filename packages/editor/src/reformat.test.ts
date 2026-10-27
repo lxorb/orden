@@ -104,3 +104,40 @@ describe('tidying a document', () => {
     expect(reformat(source)).toBe(source)
   })
 })
+
+describe('code and blocks the parser keeps, wherever they sit', () => {
+  test('leaves code in a quote or a callout as written', () => {
+    const source = '> [!note]\n> ```py\n> x = __name__ + 1\n> * star\n> ```\n'
+    expect(reformat(source)).toBe(source)
+  })
+
+  test('leaves code in a nested list item as written, blank lines and all', () => {
+    const source =
+      '- a\n  - b\n\n    ```py\n    * star\n    y = _x_ or __dunder__ \n\n\n    z\n    ```\n'
+    expect(reformat(source)).toBe(source)
+  })
+
+  test('a pipe table in indented code stays code', () => {
+    const source = 'Text\n\n    | a | b |\n    |-|-|\n'
+    expect(reformat(source)).toBe(source)
+  })
+
+  test('a pipe table in a comment, maths or an HTML block stays as written', () => {
+    for (const source of [
+      '<!--\n|a|b|\n|-|-|\n-->\n',
+      '$$\n|a|b|\n|-|-|\n$$\n',
+      '<div>\n|a|b|\n|-|-|\n</div>\n',
+    ]) {
+      expect(reformat(source)).toBe(source)
+    }
+  })
+
+  test('a table in a list item keeps its indent, so it stays in the item', () => {
+    const source = '- x\n\n  |a|b|\n  |-|-|\n'
+    expect(reformat(source)).toBe(source)
+  })
+
+  test('a table in prose is still re-aligned, inline code in its cells and all', () => {
+    expect(reformat('|a|`b`|\n|-|-|\n')).toBe('| a   | `b` |\n| --- | --- |\n')
+  })
+})

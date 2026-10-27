@@ -23,6 +23,8 @@ export function quoteSelection(): void {
     id: label,
     label,
     text: doc.sliceString(range.from, range.to),
+    ...(tab.path ? { from: tab.path } : {}),
+    ...(tab.note.shared !== null ? { theirs: true } : {}),
   }
   if (!chat.chips.some((one) => sameMention(one, chip))) chat.chips = [...chat.chips, chip]
   revealChat()

@@ -96,7 +96,8 @@ export async function planFor(read: AppleNotes): Promise<ImportPlan> {
 
       // The heading is `noteText`'s to add, and it only adds one where the note
       // does not open with its own: a note whose first line Notes styled as the
-      // title arrives with that line as a heading already.
+      // title arrives with that line as a heading already. The crate escapes the
+      // words but not the title it lists, which `noteText` writes as words.
       return { to, read: (text) => ({ text, title: said.title, meta: said.meta }) }
     },
   })

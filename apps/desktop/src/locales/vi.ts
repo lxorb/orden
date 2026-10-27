@@ -1963,6 +1963,7 @@ export const vi: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} này',
   '{name} is back: {device} was writing in it': '{name} đã quay lại: {device} đang viết trong đó',
+  'Changes to {name} are not syncing': 'Các thay đổi trong {name} không được đồng bộ',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Mở',
   Pressing: 'Nhấn',

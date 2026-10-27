@@ -715,6 +715,33 @@ describe('links', () => {
     ])
   })
 
+  /** A conversion escapes the brackets and backticks in a bare address, because
+   *  the same words can be a link's text; the reading view takes the escapes back
+   *  off, and so does the link here, so both open the page the address names. */
+  test('a bare address is followed without the escapes written into it', () => {
+    expect(linkMarks('see https://a.test/?b=\\[1\\] now')).toEqual([
+      { text: 'https://a.test/?b=\\[1\\]', href: 'https://a.test/?b=[1]' },
+    ])
+    expect(linkMarks('see https://a.test/a\\`b now')).toEqual([
+      { text: 'https://a.test/a\\`b', href: 'https://a.test/a`b' },
+    ])
+  })
+
+  /** The escape after an address is the words' after it, not the address's. */
+  test('a bare address is followed without an escape that comes right after it', () => {
+    expect(linkMarks('(see https://a.test/a_b\\_) now')).toEqual([
+      { text: 'https://a.test/a_b\\', href: 'https://a.test/a_b' },
+    ])
+  })
+
+  /** Between angle brackets nothing is an escape, in CommonMark and in the
+   *  reading view alike: the address is every character written. */
+  test('an autolink keeps its backslashes', () => {
+    expect(linkMarks('see <https://a.test/\\[1\\]> now')).toEqual([
+      { text: 'https://a.test/\\[1\\]', href: 'https://a.test/\\[1\\]' },
+    ])
+  })
+
   test('an autolink hides its brackets and shows the address', () => {
     const doc = 'see <https://angle.dev> now'
     expect(concealed(doc)).toEqual(['<', '>'])

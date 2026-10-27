@@ -1,11 +1,12 @@
 import { answer, builtinView, readBase, writeBase } from '@nib/bases'
+import { changedTask } from '@nib/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
 import { daysShown, occurrences, place, placedByDay, stepped, timeOf } from './calendar'
 import { donutPaths, heights, linePath, seriesOf, settingsOf, totalOf } from './chart'
-import { changeOf, columnsOf, defaultColumns, editorOf, knownProperties } from './columns'
+import { changeOf, columnsOf, defaultColumns, editorOf, holdsOf, knownProperties } from './columns'
 import { contextFor } from './context'
 import { dayOf, nextMonday, nowOf, weekStart } from './days'
-import { dropInto } from './drop'
+import { dropInto, hourDrop } from './drop'
 import {
   addView,
   freeViewName,
@@ -248,6 +249,67 @@ describe('a drop into a group', () => {
     expect(dropInto('file.size', 3, bank, TODAY)).toBeNull()
   })
 
+  test('an overdue task dropped on a day is due that day, so it leaves overdue', () => {
+    const day = { kind: 'date' as const, iso: '2026-10-09' }
+    const vault = (line: string) => {
+      const row = taskRow('Bills.md', line, 1)
+      if (row.task) row.task.dueReads = 'deadline'
+      return row
+    }
+    // Its deadline is what made it late, and that is the day it now shows on.
+    expect(dropInto('formula.day', day, vault('- [ ] Pay bill 📅 2026-10-01'), TODAY)).toEqual({
+      change: { task: { due: '2026-10-09' } },
+    })
+    const nib = taskRow('Bills.md', '- [ ] Pay bill [deadline:: 2026-10-01]', 1)
+    expect(dropInto('formula.day', day, nib, TODAY)).toEqual({
+      change: { task: { deadline: '2026-10-09' } },
+    })
+    // A start date moves with it, so the task is on that day and not before.
+    const started = vault('- [ ] Pay bill 🛫 2026-09-28 📅 2026-10-01')
+    expect(dropInto('formula.day', day, started, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09', due: '2026-10-09' } },
+    })
+    const drop = dropInto('formula.day', day, started, TODAY)
+    const change = drop && 'change' in drop ? drop.change.task : undefined
+    expect(change && changedTask('- [ ] Pay bill 🛫 2026-09-28 📅 2026-10-01', change)).toBe(
+      '- [ ] Pay bill 🛫 2026-10-09 📅 2026-10-09',
+    )
+    // The same on Upcoming's week strip, the calendar and the agenda, which drop on the
+    // task's date.
+    expect(
+      dropInto('task.date', '2026-10-09', vault('- [ ] Pay bill 📅 2026-10-01'), TODAY),
+    ).toEqual({ change: { task: { due: '2026-10-09' } } })
+    expect(dropInto('task.date', '2026-10-09', started, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09', due: '2026-10-09' } },
+    })
+    // And on an hour of the calendar's week or day, with the time where it was let go.
+    const bill = vault('- [ ] Pay bill 🔁 every month 📅 2026-10-01')
+    expect(hourDrop('task.date', '2026-10-09', '10:00', bill, TODAY)).toEqual({
+      change: { task: { due: '2026-10-09', time: '10:00' } },
+    })
+    expect(hourDrop('task.date', '2026-10-09', '10:00', started, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09', due: '2026-10-09', time: '10:00' } },
+    })
+    // A calendar placed by another date moves that one, and a time only with a start.
+    expect(hourDrop('task.deadline', '2026-10-09', '10:00', started, TODAY)).toEqual({
+      change: { task: { due: '2026-10-09' } },
+    })
+    expect(hourDrop('note.when', '2026-10-09', '10:00', bill, TODAY)).toEqual({
+      change: { note: { when: '2026-10-09' } },
+    })
+    // A done task is late no longer, and Completed's days are the days it was done.
+    const paid = vault('- [x] Pay bill 📅 2026-09-01 ✅ 2026-09-03')
+    expect(dropInto('formula.day', day, paid, TODAY)).toBeNull()
+    expect(dropInto('task.date', '2026-10-09', paid, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09' } },
+    })
+    // A deadline still to come stays where it is.
+    const later = vault('- [ ] Pay bill 🛫 2026-10-02 📅 2026-10-20')
+    expect(dropInto('formula.day', day, later, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09' } },
+    })
+  })
+
   test("carries one member of a list from its column to another's, and no other", () => {
     const card = noteRow('Bug.md', 'tags: [iOS, Sync]')
     expect(dropInto('note.tags', 'Mac', card, TODAY, 'iOS')).toEqual({
@@ -393,7 +455,11 @@ describe('the filter builder', () => {
       op: 'tag',
       value: 'work',
     })
-    expect(rowOf('!note.cover')).toEqual({ property: 'note.cover', op: 'empty', value: '' })
+    expect(rowOf('note.cover.isEmpty()')).toEqual({
+      property: 'note.cover',
+      op: 'empty',
+      value: '',
+    })
     expect(rowOf('(now() - file.ctime).days > 3')).toEqual({
       kept: '(now() - file.ctime).days > 3',
     })
@@ -413,6 +479,96 @@ describe('the filter builder', () => {
     expect(filterOf(rows)).toEqual({ or: ['note.a == 1', { and: ['x', 'y'] }] })
     expect(filterOf({ join: 'and', rows: [] })).toBeUndefined()
     expect(filterOf(rowsOf('task.done'))).toBe('task.done')
+  })
+})
+
+describe('the filter builder on empty values', () => {
+  const notes = [
+    noteRow('Zero.md', 'estimate: 0\nbillable: false'),
+    noteRow('Blank.md', 'estimate: ""\ntags: []'),
+    noteRow('Missing.md', 'other: 1'),
+    noteRow('Full.md', 'estimate: 3\nbillable: true\ntags: [a]'),
+  ]
+  const holds = holdsOf(readBase('views: []\n'), notes)
+  const shown = (row: { property: string; op: 'empty' | 'filled'; value: string }) => {
+    const base = readBase(
+      `filters: ${JSON.stringify(expressionOf(row, holds))}\nviews:\n  - type: table\n    name: T\n`,
+    )
+    const context = contextFor({ rows: notes, today: '2026-10-13', now: '2026-10-13T09:00:00' })
+    return answer(base, 0, notes, context)
+      .groups.flatMap((group) => group.rows.map((one) => one.file.basename))
+      .sort()
+  }
+
+  test('counts 0 and false as values, and only missing, blank and empty lists as empty', () => {
+    expect(shown({ property: 'note.estimate', op: 'filled', value: '' })).toEqual(['Full', 'Zero'])
+    expect(shown({ property: 'note.estimate', op: 'empty', value: '' })).toEqual([
+      'Blank',
+      'Missing',
+    ])
+    expect(shown({ property: 'note.billable', op: 'empty', value: '' })).toEqual([
+      'Blank',
+      'Missing',
+    ])
+    expect(shown({ property: 'note.tags', op: 'empty', value: '' })).toEqual([
+      'Blank',
+      'Missing',
+      'Zero',
+    ])
+  })
+
+  test('reads both shapes back as rows', () => {
+    for (const property of ['note.estimate', 'estimate']) {
+      for (const op of ['empty', 'filled'] as const) {
+        expect(rowOf(expressionOf({ property, op, value: '' }))).toEqual({
+          property,
+          op,
+          value: '',
+        })
+      }
+    }
+    // A bare property asks whether it is true, not whether it is empty.
+    expect(rowOf('!note.cover')).toEqual({ kept: '!note.cover' })
+    expect(rowOf('note.cover')).toEqual({ kept: 'note.cover' })
+  })
+
+  test('asks a checkbox whether it is there, the way Obsidian reads every type', () => {
+    expect(holds('note.billable')).toBe('truth')
+    const empty = expressionOf({ property: 'note.billable', op: 'empty', value: '' }, holds)
+    expect(empty).toBe('note.billable == null')
+    expect(rowOf(empty, holds)).toEqual({ property: 'note.billable', op: 'empty', value: '' })
+    const filled = expressionOf({ property: 'note.billable', op: 'filled', value: '' }, holds)
+    expect(filled).toBe('note.billable != null')
+    expect(rowOf(filled, holds)).toEqual({ property: 'note.billable', op: 'filled', value: '' })
+    expect(shown({ property: 'note.billable', op: 'filled', value: '' })).toEqual(['Full', 'Zero'])
+  })
+
+  test('reads an older row back where truth and emptiness agree, and keeps it where not', () => {
+    const notes = [
+      noteRow('A.md', 'cover: a.png\nestimate: 0\ndone: false'),
+      noteRow('B.md', 'cover: ""\nwhen: 2026-10-01'),
+    ]
+    const typed = readBase('properties: {}\nviews: []\n')
+    const holds = holdsOf(
+      { ...typed, nib: { ...typed.nib, properties: { size: { format: 'percent', kept: {} } } } },
+      notes,
+    )
+    // Text, a date or a list: the old rows mean what new ones do.
+    expect(rowOf('!note.cover', holds)).toEqual({ property: 'note.cover', op: 'empty', value: '' })
+    expect(rowOf('note.when', holds)).toEqual({ property: 'note.when', op: 'filled', value: '' })
+    expect(rowOf('!task.due', holds)).toEqual({ property: 'task.due', op: 'empty', value: '' })
+    // A number or a checkbox, where 0 and false are not true but are there: kept as written.
+    expect(rowOf('note.estimate', holds)).toEqual({ kept: 'note.estimate' })
+    expect(rowOf('!note.done', holds)).toEqual({ kept: '!note.done' })
+    expect(rowOf('note.size', holds)).toEqual({ kept: 'note.size' })
+    // A property no note has a value for may yet hold a number: kept as written.
+    expect(rowOf('note.nothing', holds)).toEqual({ kept: 'note.nothing' })
+    expect(rowOf('!task.done', holds)).toEqual({ kept: '!task.done' })
+    expect(rowOf('task.priority', holds)).toEqual({ kept: 'task.priority' })
+    expect(rowOf('formula.x', holds)).toEqual({ kept: 'formula.x' })
+    // Saved again, an older row is written the new way.
+    const rows = rowsOf({ and: ['!note.cover', 'note.estimate'] }, holds)
+    expect(filterOf(rows, holds)).toEqual({ and: ['note.cover.isEmpty()', 'note.estimate'] })
   })
 })
 

@@ -12,7 +12,7 @@
   import { t } from '../../i18n.svelte'
   import { links } from '../../link-index.svelte'
   import { modes } from '../../modes.svelte'
-  import { followHref, followNote } from '../../open-link'
+  import { followHref, followNoteFrom } from '../../open-link'
   import { PROPERTY_CHOICES } from '../../property-choices'
   import { shortcuts } from '../../shortcuts.svelte'
   import { afterQuiet } from '../../timing'
@@ -24,22 +24,31 @@
   const {
     path,
     anchor,
+    writable = true,
   }: {
     /** The note, on this disk. */
     path: string
     /** Where the task is now, asked at every write: its words may have changed. */
     anchor: () => { line: number; hash: string } | null
+    /** Whether the note may be written. A task of a space shared with this account to
+     *  be read has its description read here and never typed into: what was typed would
+     *  be turned away by the store a moment later, and lost (B285). */
+    writable?: boolean
   } = $props()
 
   let host = $state<HTMLDivElement>()
   let view: EditorView | null = null
   let empty = $state(true)
   let focused = $state(false)
+  /** Whether anything has been typed since the last write: a focus moving on or the view
+   *  closing writes only what is owed. */
+  let owed = false
 
   function flush() {
     save.cancel()
     const at = anchor()
-    if (!view || !at) return
+    if (!view || !at || !writable || !owed) return
+    owed = false
     void describe(path, at, view.state.doc.toString())
   }
   const save = afterQuiet(flush, 400)
@@ -57,17 +66,21 @@
         doc: words,
         onChange: (doc) => {
           empty = doc.length === 0
+          owed = true
           save()
         },
         notes: links.index(path),
-        openNote: followNote,
+        openNote: followNoteFrom(path),
         openLink: followHref,
         writeLink: pickedLink,
         shortcuts: shortcuts.forEditor,
         propertyChoices: PROPERTY_CHOICES,
         trustedMarkup: false,
       })
-      made.dispatch({ effects: modeEffects(modes.settings) })
+      const settings = writable
+        ? modes.settings
+        : { ...modes.settings, readOnly: true, source: false }
+      made.dispatch({ effects: modeEffects(settings) })
       view = made
     })()
     return () => {

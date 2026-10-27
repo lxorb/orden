@@ -868,10 +868,79 @@ function holds(tail: string): boolean {
  *  is held where its store keeps it, so nothing that writes the store moves it, and the
  *  stores that tell the account leave a declared value out (settings/held.ts, read by
  *  modes, shortcuts, the kinds and recovery; `setFor` and `builtIns` in
- *  theme.svelte.ts). Measured 3,291,407, from 3,289,169 at 6ac1ef69b. */
-const BUDGET = 3_292_000
+ *  theme.svelte.ts). Measured 3,291,407, from 3,289,169 at 6ac1ef69b.
+ *
+ *  Raised 2026-10-24, to 3,285,000, for #921: a clash waiting for an answer follows
+ *  its note's renames and deletes and is answered where its note is by id
+ *  (`follow` and `notes` in sync/record.svelte.ts, `pathOf` in sync.svelte.ts).
+ *  Measured 3,283,700.
+ *
+ *  Raised 2026-10-24, to 3,350,000, for the second bug burn-down landed together
+ *  (#681 to #948): each fix raised this for itself, and these are what they come to
+ *  in one build. Measured 3,349,056.
+ *
+ *  Raised 2026-10-25, to 3,355,700, for the third bug burn-down's first fixes (#952 to
+ *  #960). Main with #955, #957, #958, #959 and #960 in it measured 3,350,728, already
+ *  over. On top of that, B449 and B450 (#956): a `#` in inline code is no tag, in the
+ *  search index as in a task line, so the index's tag reader cuts the note into its
+ *  blocks and each block into its code spans, which run on across a paragraph's lines
+ *  (`blocksOf` in search/tags.ts; `codeAndWords`, moved from escapes.ts to tags.ts so
+ *  no module is added). Measured 3,354,867 and 381 modules.
+ *
+ *  Raised 2026-10-26, to 3,362,800, for B482: code is never a tag, in a quote, a
+ *  callout, a list item or indented, as the renderer judges it, and a comment marker
+ *  there hides nothing (`CodeBlocks`, added to fences.ts in @nib/markdown so no
+ *  module is added, and read by search/tags.ts and comments.ts). Measured 3,362,016.
+ *
+ *  Raised 2026-10-26, to 3,364,000, for the round 4 fixes landed together: main with
+ *  #963, #964, #966, #967 and #970 in it measured 3,363,280, over by what #963 to #967
+ *  added beside #970. #965 (B472) adds nothing to the first paint.
+ *
+ *  Raised 2026-10-27, to 3,374,300, for B476 and B477: a folder renamed or moved
+ *  rewrites the links into it, and a note moved to another folder its own relative
+ *  links and pictures (`retargetIn`, `stillReaches`, `filesByName`, `fileNamed` and
+ *  `notesByPath` in link-index.svelte.ts, `retargetLinks` in link-rewrite.ts).
+ *  Measured 3,373,513 on main with #972.
+ *
+ *  Raised 2026-10-27, to 3,380,900, for B484: what a space keeps by path follows a
+ *  note or folder moved into another space (`moving` and `carried` in
+ *  workspace/file-ops.ts, used by the excluded, folder icons, arranged, bookmarks and
+ *  archive stores). Measured 3,380,079.
+ *
+ *  Raised 2026-10-27, to 3,384,900, for B516: what a held outline does reaches its
+ *  own note, never the one in front of it in the pane (`viewShowing` and `WhenShown`
+ *  in views.svelte.ts, `onNote` in App.svelte). Measured 3,384,041.
+ *
+ *  Raised 2026-10-27, to 3,386,300, for B498 to B500: the save listeners are one set
+ *  for every index, and a plane's cards are asked by their path (`hearing`, and the
+ *  gate in `retargetIn`, in link-index.svelte.ts; the rest is in canvas-rewrite.ts,
+ *  which is fetched). Measured 3,385,484.
+ *
+ *  Raised 2026-10-27, to 3,389,500, for B503 and B519: who else may have written a
+ *  note is asked of the note, a share of it on its own and what the last listing kept
+ *  included (`reachedByOthers` and the kept `{ role, shared, items }` in
+ *  sharing.svelte.ts), and an embed or a canvas file card is trusted by its own note
+ *  (`embedNote` in link-index.svelte.ts, `EmbeddedNote` in @nib/markdown). Measured
+ *  3,388,683 with main as of this raise.
+ *
+ *  Raised 2026-10-27, to 3,390,900, for B565: the note an agent names is read by one
+ *  rule (`notePath` in space-paths.ts), which keeps digits after a dot as words of the
+ *  name and refuses another kind of file. Measured 3,390,058.
+ *
+ *  Raised 2026-10-27, to 3,391,400, for B562: sync hearing the account has no room for a
+ *  file shows the storage warning (`full` and `syncFull` in usage.svelte.ts). Measured
+ *  3,390,575 with main as of this raise.
+ *
+ *  Raised 2026-10-27, to 3,405,000, once for the fourth bug burn-down's pending fixes,
+ *  so each of them need not raise it. Measured 3,390,605 with main as of this raise.
+ *
+ *  Raised 2026-10-27, to 3,431,000, for main's burn-down fixes merged into unstable: the
+ *  two lists above, each raised without the other's fixes, measured 3,416,876 and 381
+ *  modules together. The headroom is the 14,000 main kept for the fourth burn-down's
+ *  pending fixes. */
+const BUDGET = 3_431_000
 /** Raised 2026-10-26, to 383, for settings/held.ts (#673): measured 382, from 381 at
- *  6ac1ef69b. */
+ *  6ac1ef69b. Main's fixes merged into unstable measured 381 on 2026-10-27. */
 const MOST_FILES = 383
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

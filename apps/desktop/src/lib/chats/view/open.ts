@@ -10,6 +10,7 @@ import { chatLinkOf } from '@nib/chats/links'
 import { account } from '../../account.svelte'
 import { busy } from '../../busy.svelte'
 import type { OpenHow } from '../../new-tab'
+import { canWriteAt } from '../../sharing.svelte'
 import { nameOf as fileName, samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import { t } from '../../i18n.svelte'
@@ -85,14 +86,20 @@ export async function makeChat(folder?: string, named?: string): Promise<void> {
     return
   }
   const dir = folder ?? workspace.activeSpace?.root
-  if (!dir) return
+  // Before the name is asked for: a chat is a pointer written into the space, and the
+  // account refuses one in a space shared to be read.
+  if (!dir || !canWriteAt(dir)) return
   if (named === undefined) {
     workspace.showPanel('tree')
     if (workspace.startNaming('chat', dir)) return
   }
 
   const name = chatName(named ?? workspace.freeName(dir, `${t('Chat')}.chat`))
-  const path = await store().make(dir, name)
+  // A refusal from the account is thrown rather than answered, and the name typed was
+  // otherwise lost without a word.
+  const path = await store()
+    .make(dir, name)
+    .catch(() => null)
   if (!path) {
     busy.failed(t('{name} could not be written.', { name }))
     return

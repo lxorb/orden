@@ -125,6 +125,26 @@ describe('carrying a page note’s paper', () => {
     }
   })
 
+  // Carrying runs beside the next pass, and a rename there moved no paper while this
+  // one was coming down: it landed at the old name beside no note, was sent everywhere
+  // as a PDF of its own, and the renamed note's came down again.
+  test.each([
+    ['renamed', '/s/Renamed.pages'],
+    ['deleted', null],
+  ])('writes nothing for a note %s while its paper came down', async (_, to) => {
+    const { disk, how } = world({ '/s/Lecture.pages': WITH_PAPER }, { n1: PDF })
+    how.down = () => {
+      disk.delete('/s/Lecture.pages')
+      if (to) disk.set(to, WITH_PAPER)
+      return Promise.resolve(PDF)
+    }
+
+    await carryPapers([{ path: '/s/Lecture.pages', id: 'n1', writes: true }], how)
+
+    expect(disk.has('/s/Lecture.pages.pdf')).toBe(false)
+    expect(how.carried.has('n1')).toBe(false)
+  })
+
   test('goes on past a note that fails', async () => {
     const { sent, how } = world({
       '/s/A.pages': WITH_PAPER,
@@ -154,6 +174,16 @@ describe('the paper of a page that opens before it came', () => {
     const { disk, how } = world({ '/s/Lecture.pages': WITH_PAPER }, { n1: PDF })
     expect(await paperFor('n1', '/s/Lecture.pages', how)).toBe(PDF)
     expect(disk.get('/s/Lecture.pages.pdf')).toBe(PDF)
+  })
+
+  test('is not written where the note left while it came, but still shown', async () => {
+    const { disk, how } = world({ '/s/Lecture.pages': WITH_PAPER })
+    how.down = () => {
+      disk.delete('/s/Lecture.pages')
+      return Promise.resolve(PDF)
+    }
+    expect(await paperFor('n1', '/s/Lecture.pages', how)).toBe(PDF)
+    expect([...disk.keys()]).toEqual([])
   })
 
   test('is held in memory only for a note shared on its own', async () => {

@@ -22,6 +22,7 @@
     "./door": "./src/door.ts",
     "./eager": "./src/eager.ts",
     "./engines": "./src/engines.ts",
+    "./escapes": "./src/escapes.ts",
     "./edits": "./src/edits.ts",
     "./fences": "./src/fences.ts",
     "./front-matter": "./src/front-matter.ts",
@@ -50,7 +51,8 @@
     "./task-reminders": "./src/task-reminders.ts",
     "./tasks": "./src/tasks.ts",
     "./web-embed": "./src/web-embed.ts",
-    "./words": "./src/words.ts"
+    "./words": "./src/words.ts",
+    "./yaml": "./src/yaml.ts"
   },
   "scripts": {
     "test": "vitest run",

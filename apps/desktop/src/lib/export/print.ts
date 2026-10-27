@@ -94,7 +94,8 @@ export async function printOpen(): Promise<void> {
     text: target.source,
     name: target.name,
     path: target.path,
-    root: workspace.activeSpace?.root ?? null,
+    // The space the document is in, which its cards are relative to.
+    root: workspace.rootHolding(target.path),
   }
 
   if (kind === 'canvas') {

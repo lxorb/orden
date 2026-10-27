@@ -135,6 +135,15 @@ export interface Callout {
   rest: string
 }
 
+/** Whether a quote's first block can hold the line that opens a callout: a
+ *  paragraph, or the setext heading marked makes of one when `---` or `===` stands
+ *  under it. Never code or a `#` heading, which start with something else and only
+ *  read like a marker. */
+export function opensCallout(block: { type: string; raw: string }): boolean {
+  if (block.type === 'paragraph') return true
+  return block.type === 'heading' && !/^ {0,3}#/.test(block.raw)
+}
+
 /** The callout a blockquote's first line opens, or nothing at all.
  *
  *  Given the quote's own text with the `>` marks already off it - which is what

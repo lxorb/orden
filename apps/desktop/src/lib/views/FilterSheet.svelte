@@ -5,6 +5,7 @@
   import Sheet from '../Sheet.svelte'
   import { amount, i18n, t } from '../i18n.svelte'
   import { rows } from '../rows/rows.svelte'
+  import { canWriteAt } from '../sharing.svelte'
   import { folderOf } from '../space-paths'
   import { joinPath } from '../tauri'
   import { workspace } from '../workspace.svelte'
@@ -50,6 +51,9 @@
     if ('error' in counted(query, [], reading)) return
     close()
     let path = asked.path
+    // A filter in a space shared to be read is not renamed, so it is not written under
+    // the name the refused rename would have given it either.
+    if (path !== null && !canWriteAt(path)) return
     // A filter named again is its file named again, so links and favourites follow.
     if (path !== null && name.trim() !== asked.name) {
       await workspace.rename(path, `${name.trim()}.base`)

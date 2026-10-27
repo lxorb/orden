@@ -8,13 +8,13 @@
  *  graph views are the reader's arrangement of the list and are left to them. */
 
 import type { AgentAnswer } from '../../automation/caller'
-import { nameOf } from '../../space-paths'
+import { notePath } from '../../space-paths'
 import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from '../../workspace/bookmarks.svelte'
 import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'
 import { type Call, done, maybe, need } from './call'
 import { Refused } from './problem'
-import { judged, type Place, placeFor } from './spaces'
+import { judged, type Place, placeOf } from './spaces'
 import { entryIn } from './tree'
 
 /** The bookmark a call describes: a search by its query, a heading by its note and its
@@ -26,7 +26,8 @@ async function bookmarkOf(call: Call, place: Place): Promise<Bookmark> {
   const path = judged(need(call, 'path'))
   const heading = maybe(call, 'heading')
   if (heading !== null) {
-    const note = nameOf(path).includes('.') ? path : `${path}.md`
+    const note = notePath(path)
+    if (note === null) throw new Refused('bad_arguments', `${path} is not a markdown note`)
     return { kind: 'heading', path: note, text: heading }
   }
 
@@ -47,7 +48,7 @@ function shown(mark: Bookmark) {
 }
 
 export async function bookmarks(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const root = place.space.root
   const held = workspace.bookmarks.of(root)
 

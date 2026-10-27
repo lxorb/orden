@@ -99,3 +99,24 @@ describe('where it goes', () => {
     expect(placed('- [ ] Pay rent\r\n', TASK).after).toBe('- [ ] Pay rent\r\n- [ ] Call mum\r\n')
   })
 })
+
+describe('where it goes, past code', () => {
+  const TASK = ['- [ ] New']
+  const NOTE = '## Setup\n- [ ] Clone\n\n```bash\n# install\nnpm i\n```\n\n## Later\n'
+
+  test('a comment in a fence does not end the section', () => {
+    expect(placed(NOTE, TASK, 'Setup').after).toBe(
+      '## Setup\n- [ ] Clone\n\n```bash\n# install\nnpm i\n```\n\n- [ ] New\n\n## Later\n',
+    )
+  })
+
+  test('a comment in a fence is no heading to land under', () => {
+    expect(placed(NOTE, TASK, 'install').after).toBe(`${NOTE}\n## install\n- [ ] New\n`)
+  })
+
+  test('a comment in the front matter is no heading either', () => {
+    expect(placed('---\n# c\n---\nText\n', TASK, 'c').after).toBe(
+      '---\n# c\n---\nText\n\n## c\n- [ ] New\n',
+    )
+  })
+})

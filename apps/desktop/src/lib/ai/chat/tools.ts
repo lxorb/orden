@@ -27,8 +27,9 @@ export interface Tools {
     args: unknown,
     thread?: string,
   ): Promise<ToolOutput>
-  /** Where the reader is now: the space, the tab in front, every open tab. */
-  context(provider: Provider): Promise<string>
+  /** Where the reader is now: the space, the tab in front, every open tab. `thread` is
+   *  the thread the loop runs for, whose space is the one its calls work in. */
+  context(provider: Provider, thread?: string): Promise<string>
 }
 
 /** What the crate lists: the tools, and the instructions `nib mcp` gives every outside
@@ -91,9 +92,12 @@ export const crateTools: Tools = {
     }
   },
 
-  async context(provider) {
+  async context(provider, thread) {
     if (!isDesktop) return ''
-    const said = await invoke<unknown>('ai_agent_context', { agent: agentOf(provider) })
+    const said = await invoke<unknown>('ai_agent_context', {
+      agent: agentOf(provider),
+      ...(thread ? { thread } : {}),
+    })
     return Array.isArray(said)
       ? said
           .map(outputIn)
@@ -117,6 +121,8 @@ export const crateTools: Tools = {
         mode,
         tool: name,
         args: typeof args === 'object' && args !== null ? args : {},
+        // Whose an edit it makes is: every thread of the provider is one grant.
+        ...(thread ? { thread } : {}),
       })
       return outputIn(answered)
     } catch (error) {

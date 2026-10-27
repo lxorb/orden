@@ -9,7 +9,7 @@ import { insideSpace, samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import type { FileAction } from '../../workspace/undo.svelte'
 import type { Thread } from '../chat/types'
-import type { FileChange } from './files'
+import { type FileChange, spaceNamed } from './files'
 
 /** A file moved the way an agent's move moves it. */
 async function moved(root: string, from: string, to: string): Promise<void> {
@@ -17,12 +17,12 @@ async function moved(root: string, from: string, to: string): Promise<void> {
   await movedIn(root, from, to)
 }
 
-/** The folder of the space a change was made in: the one the call named, else the
- *  thread's. */
+/** The folder of the space a change was made in: the one the call said, else the
+ *  thread's, for a call of before calls said it. */
 function rootOf(change: FileChange, thread: Pick<Thread, 'space'>): string | null {
   const named = change.space
   const space =
-    (named ? workspace.spaces.find((one) => one.id === named || one.name === named) : undefined) ??
+    (named ? spaceNamed(workspace.spaces, named) : undefined) ??
     workspace.spaces.find((one) => one.id === thread.space)
   return space?.root ?? null
 }

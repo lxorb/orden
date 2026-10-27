@@ -55,14 +55,19 @@
 
   const head = $derived(chat.head)
   const busy = $derived(chat.busy)
-  const space = $derived(workspace.activeSpace)
+  /** The folder of the space the thread works in, which is not the one in front once a
+   *  thread with turns is carried to another (`root` in chat.svelte.ts): what goes with
+   *  a message is that space's, so its citations open there. */
+  const root = $derived(chat.root)
+  /** Whether the space in front is the thread's, which is the space the `@` list's
+   *  notes, folders and tags are read from. */
+  const home = $derived(root !== null && root === workspace.activeSpace?.root)
 
   // ── What goes along on its own ─────────────────────────
 
   /** The note in front, while it is a note of this space. */
   const front = $derived.by((): (Front & { key: string }) | null => {
     const tab = workspace.panelTab
-    const root = space?.root
     if (tab?.kind !== 'note' || !tab.path || !root) return null
     const path = withinSpace(root, tab.path)
     if (path === null) return null
@@ -79,9 +84,13 @@
     const on = front && !chat.dropped.includes(front.key) ? front : null
     const picked = views.chosen > 0 ? views.selectedText() : ''
     const pickedOn = !!picked.trim() && !chat.dropped.includes(`selection:${picked.slice(0, 60)}`)
+    const holder = pickedOn
+      ? workspace.tabs.find((tab) => tab.note.live === views.selectedIn())
+      : null
     return {
       front: on ? { path: on.path, name: on.name, text: on.text } : null,
       selection: pickedOn ? picked : '',
+      picked: holder ? { path: holder.path, shared: holder.note.shared } : null,
     }
   }
   chat.around = around
@@ -137,12 +146,14 @@
     }
     out.push({ kind: 'web', id: 'web', label: t('Web search'), word: 'web' })
     out.push({ kind: 'scratchpad', id: 'scratchpad', label: t('Scratchpad'), word: 'scratchpad' })
-    for (const note of workspace.notes) out.push(mentionOf(note))
-    for (const folder of folders()) out.push(mentionOf(folder))
-    for (const { tag } of links.spaceTags) out.push({ kind: 'tag', id: tag, label: `#${tag}` })
+    if (home) {
+      for (const note of workspace.notes) out.push(mentionOf(note))
+      for (const folder of folders()) out.push(mentionOf(folder))
+      for (const { tag } of links.spaceTags) out.push({ kind: 'tag', id: tag, label: `#${tag}` })
+    }
     for (const one of chat.heads) {
       if (one.id !== head?.id && one.title)
-        out.push({ kind: 'thread', id: one.id, label: one.title })
+        out.push({ kind: 'thread', id: one.id, label: one.title, space: one.space })
     }
     return out
   }
@@ -195,7 +206,6 @@
 
   /** A note's folder inside the space, or nothing for one at its root. */
   function folderIn(path: string): string {
-    const root = space?.root
     const inside = root ? withinSpace(root, path) : null
     const at = inside?.lastIndexOf('/') ?? -1
     return inside && at > 0 ? inside.slice(0, at) : ''
@@ -238,7 +248,7 @@
         place(chat.text.length)
         return
       }
-      chat.text = ''
+      chat.taken()
       void command.run({ args: '', thread: chat.thread, panel: chat })
       return
     }
@@ -270,7 +280,7 @@
     if (!commands.length) commands = await commandsFor(chat)
     const named = rowNamed(commands, typed.name)
     if (named?.row.available(chat.provider?.kind ?? 'compatible') !== true) return false
-    chat.text = ''
+    chat.taken()
     void named.row.run({
       args: typed.args,
       thread: chat.thread,
@@ -317,7 +327,9 @@
     if (shortcuts.pressed('ai.model', event))
       return run(() => (chat.popover = chat.popover === 'model' ? null : 'model'))
     if (shortcuts.pressed('ai.effort', event)) return run(() => chat.setEffort('next'))
-    if (shortcuts.pressed('ai.steer', event)) return run(() => chat.steer(around()))
+    // Into the running answer; with nothing running, the field's own send, as Enter.
+    if (shortcuts.pressed('ai.steer', event))
+      return run(() => (busy ? chat.steer() : void submit()))
     if (shortcuts.pressed('ai.unfold', event)) return run(() => chat.toggleFolded())
     if (shortcuts.pressed('ai.new', event)) return run(() => chat.newThread())
     if (shortcuts.pressed('ai.stop', event) && (busy || chat.popover)) {
@@ -333,7 +345,7 @@
       return run(() => chat.startEdit())
     // Escape: out of an edit; on an empty field of a thread with messages, twice is the
     // rewind sheet, so the first is held for the second rather than leaving the panel.
-    if (event.key === 'Escape' && chat.editing) return run(() => chat.cancelEdit())
+    if (event.key === 'Escape' && chat.changing) return run(() => chat.cancelEdit())
     if (event.key === 'Escape' && empty && head?.kept) {
       const now = Date.now()
       if (now - escaped < 500) {
@@ -506,7 +518,7 @@
     <Rewinding {thread} panel={chat} />
   {/if}
 
-  {#if chat.editing}
+  {#if chat.changing}
     <div class="editing" transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}>
       <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
       <button
@@ -595,7 +607,9 @@
               >
             </span>
           {/if}
-          {#each chat.chips as chip (`${chip.kind}:${chip.id}`)}
+          <!-- Keyed by the chip itself: two can name one thing, a command's words sent as
+               two chips of one label (B505). -->
+          {#each chat.chips as chip (chip)}
             <span
               class="chip"
               class:refused={chip.kind === 'picture' && chat.model?.images === false}

@@ -13,7 +13,7 @@ import { MemoryStore } from './memory-store'
 import { put, scan, StoreError, type Change } from './store'
 import { numbersRow, wantedRow } from './records'
 import { seedUpdate } from '@nib/sync-core/seed'
-import type { World } from './world'
+import type { Disk, World } from './world'
 import type { SpaceNews } from '../space-watch'
 import * as Y from 'yjs'
 
@@ -144,6 +144,16 @@ const PLAN = 'n1'
 /** Long enough for what an answer sets going to have landed. */
 function settled(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 20))
+}
+
+/** Every text the disk keeps as a version on this device, from now on. */
+function keptOn(disk: Disk): string[] {
+  const kept: string[] = []
+  disk.keep = (_path, text) => {
+    kept.push(text)
+    return Promise.resolve()
+  }
+  return kept
 }
 
 async function textOn(account: ReferenceAccount, id: string): Promise<string> {
@@ -277,6 +287,35 @@ describe('an open note', () => {
     expect(arrived).toEqual([
       [{ from: SEEDED[0]?.text.length, to: SEEDED[0]?.text.length, insert: 'From there.' }],
     ])
+  })
+
+  test('meeting a document that moved too, the side a small overlap loses is kept as a version', async () => {
+    // The note and the document each changed the same word: the rule settles it without
+    // asking, one side's word stands, and the other's was in no version at all.
+    const one = await device()
+    one.online = false
+    const seeded = SEEDED[0]?.text ?? ''
+    const theirs = seeded.replace('Monday', 'Friday')
+    const doc = await one.engine.hold(PLAN)
+    const live = doc?.live
+    live?.transact(() => {
+      const text = live.getText(TEXT)
+      text.delete(0, text.length)
+      text.insert(0, theirs)
+    }, HERE)
+    await one.engine.letGo(PLAN)
+
+    const mine = seeded.replace('Monday', 'Tuesday')
+    const note = new SharedDoc(mine)
+    const part = await attach(one.engine, PLAN, { live: note, latest: mine }, () => true)
+    expect(one.engine.core.isHeld(PLAN)).toBe(false)
+    expect(note.text.toString()).toBe(mine)
+
+    const kept = (one.engine.core.spaces.get(SPACE)?.outbox ?? []).flatMap(({ record }) =>
+      record.t === 'keep' ? [record.keep.text] : [],
+    )
+    expect(kept).toEqual([theirs])
+    part?.()
   })
 })
 
@@ -448,11 +487,11 @@ describe('a push the account refuses', () => {
   }
 
   test('waits longer each time instead of asking every pass, and says so once', async () => {
-    const { one, pushes, logged, later } = await refusing('role')
+    const { one, pushes, logged, later } = await refusing('large')
     await one.engine.pass(SPACE)
     expect(pushes()).toBe(1)
     expect(one.engine.waiting(SPACE)).toBe(false)
-    expect(await logged()).toEqual(['you can only read this space'])
+    expect(await logged()).toEqual(['that note is too large'])
 
     await one.engine.pass(SPACE)
     expect(pushes()).toBe(1)
@@ -469,6 +508,53 @@ describe('a push the account refuses', () => {
     expect(await logged()).toHaveLength(1)
     // The words never left.
     expect((await one.engine.core.doc(PLAN))?.text().startsWith('kept ')).toBe(true)
+  })
+
+  test('in a space this device may only read lets the edit go, kept as a version, and takes the owner’s words again', async () => {
+    // Another program changed a reader's file. The account refuses it with `role` for as
+    // long as the space is read only, and a pull never lands on pending edits, so kept
+    // pending it would have stood between this device and every later word of the owner's.
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const reader = await device(account, 'd0')
+    const owner = await device(account, 'd1')
+    const world = reader.engine.core.world
+    const ask = world.account.ask.bind(world.account)
+    world.account.ask = async (route, body, space) => {
+      if (route !== 'push') return await ask(route, body, space)
+      return { docs: (body as PushRequest).docs.map((doc) => ({ id: doc.id, refused: 'role' })) }
+    }
+    const kept = keptOn(reader.disk)
+
+    const file = `${ROOT}/Plan.md`
+    reader.disk.files.set(file, 'Changed in another editor.\n')
+    await reader.engine.foreign(file)
+    await reader.engine.pass(SPACE)
+    expect(kept).toContain('Changed in another editor.\n')
+    expect(reader.engine.core.hasPending(PLAN)).toBe(false)
+
+    const doc = await owner.engine.hold(PLAN)
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'From the owner. '), HERE)
+    await owner.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
+    await owner.engine.pass(SPACE)
+
+    await reader.engine.pass(SPACE)
+    expect(reader.disk.files.get(file)).toBe(await textOn(account, PLAN))
+    expect(reader.disk.files.get(file)?.startsWith('From the owner. ')).toBe(true)
+  })
+
+  test('lowered to reading while offline with an edit, keeps the edit as a version and the owner’s words', async () => {
+    const { one, pushes, logged } = await refusing('role')
+    const kept = keptOn(one.disk)
+    await one.engine.pass(SPACE)
+    expect(pushes()).toBe(1)
+    expect(kept.some((text) => text.startsWith('kept '))).toBe(true)
+    expect(one.disk.files.get(`${ROOT}/Plan.md`)).toBe(await textOn(one.account, PLAN))
+    expect(await logged()).toEqual(['you can only read this space'])
+
+    // Nothing is left to push, so nothing waits.
+    await one.engine.pass(SPACE)
+    expect(pushes()).toBe(1)
+    expect(one.engine.waiting(SPACE)).toBe(false)
   })
 
   test('goes up once the account takes it, and the wait is over', async () => {
@@ -517,6 +603,39 @@ describe('an outbox folded while offline', () => {
     expect(names).toEqual(['Ideas.md'])
     expect(here.engine.waiting(SPACE)).toBe(false)
     expect(here.store.rows('outbox')).toEqual([])
+  })
+
+  test('a note made in a new folder in the same millisecond keeps its folder across a relaunch', async () => {
+    // The folder's mkdir and the note's create are queued in one step, at one clock
+    // reading. Read back after a relaunch they must still come in the order they were
+    // made, whatever their ids: ids that sort the create first make it refused `gone`
+    // and made again at the top of the space. The ids here are chosen to sort that way.
+    let drawn = 0
+    const random = vi.spyOn(Math, 'random').mockImplementation(() => (drawn += 1) * 1e-6)
+    try {
+      const account = new ReferenceAccount(new Clock(), SEEDED)
+      const here = await device(account)
+      here.online = false
+      await here.disk.write(`${ROOT}/New/Idea.md`, 'hello')
+      await here.engine.created(`${ROOT}/New/Idea.md`, false, 'hello')
+      await here.engine.quit()
+      here.engine.stop()
+      await here.launch()
+
+      here.online = true
+      await here.engine.pass(SPACE)
+      await here.engine.pass(SPACE)
+
+      const entries = (await account.view()).entries
+      const folder = entries.find((entry) => entry.name === 'New')
+      const note = entries.find((entry) => entry.name === 'Idea.md')
+      expect(folder).toBeDefined()
+      expect(note?.parent).toBe(folder?.id)
+      expect(here.disk.files.has(`${ROOT}/New/Idea.md`)).toBe(true)
+      expect(here.disk.files.has(`${ROOT}/Idea.md`)).toBe(false)
+    } finally {
+      random.mockRestore()
+    }
   })
 })
 
@@ -716,6 +835,26 @@ describe('the folder watcher', () => {
   })
 })
 
+/** What a pairing says before the store has it. The roles the reader keeps for the next
+ *  launch are written with the pairing (space-pairing.ts), ahead of the commit that
+ *  stores it, so the folder a space is at has to be the core's word in the same moment
+ *  it is paired or moved. */
+describe('a pairing not committed yet', () => {
+  test('is already the folder the space is at, joined and then renamed', async () => {
+    const here = await device()
+    const core = here.engine.core
+
+    const joined = core.addSpace('team', '/device/Team', 'write')
+    expect(core.spaces.get('team')?.row.root).toBe('/device/Team')
+
+    const moved = core.rootMoved('team', '/device/Crew')
+    expect(core.spaces.get('team')?.row).toMatchObject({ root: '/device/Crew', role: 'write' })
+
+    await core.commit([...joined, ...moved])
+    expect(core.spaces.get('team')?.row.root).toBe('/device/Crew')
+  })
+})
+
 /** A copy another sync tool made beside a note: never made on the account, never
  *  written onto a disk that does not have it, never sent when it changes, and never
  *  taken off a disk when the account lets go of one - which happens only when somebody
@@ -792,5 +931,79 @@ describe('another sync tool’s copy', () => {
 
     expect(await names(account)).toEqual(['Plan.md', 'Ideas.md'])
     expect(here.engine.core.spaces.get(SPACE)?.entries.get(PLAN)?.local_path).toBe('Plan.md')
+  })
+})
+
+/** Another program's copy of a plane that does not parse - cut short mid-write, or left
+ *  with a merge's conflict markers - is not a plane with nothing on it: folded in, every
+ *  node would go out as deleted, to every device. It is left for its program to finish,
+ *  and the document keeps what it held (as v1's merge counts an unreadable side for
+ *  nothing, and `openCanvas` refuses to open one). */
+describe('another program’s unreadable canvas', () => {
+  test('is not folded in as an empty plane', async () => {
+    const one = await device()
+    const path = `${ROOT}/Board.canvas`
+    const good = JSON.stringify({
+      nodes: [{ id: 'a', type: 'text', text: 'keep me', x: 0, y: 0, width: 100, height: 50 }],
+      edges: [],
+    })
+    await one.disk.write(path, good)
+    await one.engine.created(path, false, good)
+    const id = one.engine.entryAt(path)?.id ?? ''
+    expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
+
+    await one.disk.write(path, good.slice(0, -12))
+    await one.engine.foreign(path)
+
+    expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
+  })
+
+  /** Words another program wrote into a canvas - or into a canvas entry renamed to
+   *  `.md`, which is still one - cannot go into its plane. They are not dropped without
+   *  a word: the file is kept as a version on this device, and the reader is told once
+   *  that it is not syncing. */
+  test('keeps words written into it, and says once that they do not sync', async () => {
+    const one = await device()
+    const path = `${ROOT}/Board.canvas`
+    const good = JSON.stringify({
+      nodes: [{ id: 'a', type: 'text', text: 'keep me', x: 0, y: 0, width: 100, height: 50 }],
+      edges: [],
+    })
+    await one.disk.write(path, good)
+    await one.engine.created(path, false, good)
+    const id = one.engine.entryAt(path)?.id ?? ''
+    const told: string[] = []
+    one.engine.on('unsynced', (event) => told.push(event.name))
+
+    for (const prose of ['# Board\n\nprose\n', '# Board\n\nprose\n', '{"title":"x"}']) {
+      await one.disk.write(path, prose)
+      await one.engine.foreign(path)
+    }
+
+    expect(one.disk.kept).toEqual([
+      { path, text: '# Board\n\nprose\n' },
+      { path, text: '{"title":"x"}' },
+    ])
+    expect(told).toEqual(['Board.canvas'])
+    expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
+  })
+
+  /** A program that saves by emptying the file before it writes it leaves it with
+   *  nothing in it for a moment, and a watcher can hear that moment. */
+  test('nor is one emptied for a moment by a save', async () => {
+    const one = await device()
+    const path = `${ROOT}/Board.canvas`
+    const good = JSON.stringify({
+      nodes: [{ id: 'a', type: 'text', text: 'keep me', x: 0, y: 0, width: 100, height: 50 }],
+      edges: [],
+    })
+    await one.disk.write(path, good)
+    await one.engine.created(path, false, good)
+    const id = one.engine.entryAt(path)?.id ?? ''
+
+    await one.disk.write(path, '')
+    await one.engine.foreign(path)
+
+    expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
   })
 })

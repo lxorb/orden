@@ -6,6 +6,7 @@
  *  index and the composer all need them. */
 
 import { insideOnly } from './automation/inside'
+import { endingOf } from './note-name'
 import { invoke, isNative, joinPath, platform } from './tauri'
 
 /** One file is one path, however it was spelled.
@@ -338,6 +339,18 @@ export function withoutExtension(relative: string): string {
 
 export function isMarkdownPath(path: string): boolean {
   return MARKDOWN.test(path)
+}
+
+/** The note a name means where `.md` may be left off, the way a link names one: the
+ *  name itself where it is a markdown path, else the name with `.md` after it. Digits
+ *  after a dot are words of the name, so `Meeting 10.27` is `Meeting 10.27.md`. A name
+ *  ending in any other kind of file, `Board.canvas` or `report.pdf`, is not a note:
+ *  null, for the caller to refuse rather than write a note's words into. */
+export function notePath(named: string): string | null {
+  if (isMarkdownPath(named)) return named
+  const ending = endingOf(nameOf(named))
+  if (ending !== null && !/^\.\d+$/.test(ending)) return null
+  return `${named}.md`
 }
 
 /** The pictures the app draws, by name. */

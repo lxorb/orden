@@ -79,7 +79,7 @@ import { spacePicker } from './space-picker.svelte'
 import { askQuickly } from './ai/quick-door'
 import { switchableAccounts, switchAccount } from './ai/switching'
 import { toggleScratchpad } from './scratchpad/is.svelte'
-import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
+import { canPublish, canShare, canShareItem, canWriteAt, shareThisFile } from './sharing.svelte'
 import { archiveEntry, DIVIDER } from './menu.svelte'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
@@ -97,7 +97,7 @@ import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
-import { samePath } from './space-paths'
+import { isMarkdownPath, samePath } from './space-paths'
 import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/door'
 import { pages, type Step } from './web-tab/pages.svelte'
@@ -197,7 +197,8 @@ export function exportCommands(): Command[] {
       text: source(),
       name: name(),
       path: note()?.path ?? null,
-      root: workspace.activeSpace?.root ?? null,
+      // The space the canvas is in, which its cards are relative to.
+      root: workspace.rootHolding(note()?.path ?? null),
       trusted: target().trusted,
     })
 
@@ -215,7 +216,7 @@ export function exportCommands(): Command[] {
       text: source(),
       name: name(),
       path: note()?.path ?? null,
-      root: workspace.activeSpace?.root ?? null,
+      root: workspace.rootHolding(note()?.path ?? null),
     })
 
     if (id === 'pdf') await out.exportPagesPdf(about)
@@ -288,7 +289,7 @@ export function exportCommands(): Command[] {
       run: () =>
         busy.start(t('Exporting'), async () => {
           const m = await import('./export')
-          await m.exportPandoc(source(), name(), format.id)
+          await m.exportPandoc(source(), name(), format.id, note()?.path ?? null)
         }),
     })
   }
@@ -501,7 +502,9 @@ function tabCommands(): Command[] {
       id: 'rename',
       label: t('Rename'),
       hint: shortcuts.hint('tabs.rename'),
-      disabled: !tab || !workspace.canRenameFromTab(tab),
+      // Not a file in a space shared to be read, whose name is the space's to keep.
+      disabled:
+        !tab || !workspace.canRenameFromTab(tab) || (tab.path !== null && !canWriteAt(tab.path)),
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
     },
     // Left out with one space; see tab-strip/to-space.ts, fetched with the press.
@@ -990,14 +993,16 @@ function stepSlide(view: EditorView, direction: number) {
 function moveCommand(): Command | null {
   const note = workspace.active
   const path = note?.path
-  if (!path) return null
+  // A note in a space shared to be read stays where its owner put it, and nothing
+  // moves into one either: both are writes the sync would refuse.
+  if (!path || !canWriteAt(path)) return null
 
   const targets = moveTargets({
     moving: path,
     tree: workspace.tree,
     spaces: workspace.shownSpaces,
     here: workspace.activeSpace?.root ?? null,
-  })
+  }).filter((target) => canWriteAt(target.id))
   if (!targets.length) return null
 
   // Into another space the tab goes with the note, as Move to space takes it; see
@@ -1086,10 +1091,24 @@ function sendToChatCommand(view?: EditorView): Command[] {
   return [{ id: 'send-to-chat', label: t('Send to chat'), run }]
 }
 
+/** Whether "Tidy up this note" may rewrite the document at `path` as markdown: a note,
+ *  or one nobody has saved yet. The editor opens a stylesheet, a snippet list or a text
+ *  file too, and tidying one of those as markdown spoils it. */
+export function tidies(path: string | null): boolean {
+  return path === null || isMarkdownPath(path)
+}
+
 export function appCommands(view?: EditorView): Command[] {
   const imported = importCommand()
 
   const unsaved = workspace.active && isUnsaved(workspace.active.note) ? workspace.active : null
+  // The rows below that make a file make it in the space in front, and one shared with
+  // this account to be read takes none: the copy here would stop being the space's, and
+  // the sync refuses it on every pass. The file list's menus and keys offer nothing that
+  // writes there either, and the workspace's own calls refuse it for any caller that
+  // did not look; see `writableAt` in workspace.svelte.ts.
+  const space = workspace.activeSpace
+  const readOnly = space ? !canWriteAt(space.root) : false
 
   return without([
     // Only for a tab with no file, which is the one thing Save still means: where it
@@ -1126,18 +1145,31 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'new-unique',
       label: t('New unique note'),
+      disabled: readOnly,
       run: () => void workspace.createUniqueNote(settings.noteIdFormat),
     },
-    { id: 'new-canvas', label: t('New canvas'), run: () => void workspace.createCanvas() },
-    { id: 'new-pages', label: t('New page note'), run: () => void workspace.createPages() },
+    {
+      id: 'new-canvas',
+      label: t('New canvas'),
+      disabled: readOnly,
+      run: () => void workspace.createCanvas(),
+    },
+    {
+      id: 'new-pages',
+      label: t('New page note'),
+      disabled: readOnly,
+      run: () => void workspace.createPages(),
+    },
     {
       id: 'new-database',
       label: t('New database'),
+      disabled: readOnly,
       run: () => void import('./views/new-database').then((one) => one.createDatabase()),
     },
     {
       id: 'new-from-template',
       label: t('New note from template'),
+      disabled: readOnly,
       run: () => void import('./views/templates').then((one) => one.pickTemplate()),
     },
     ...(viewport.touch
@@ -1150,6 +1182,7 @@ export function appCommands(view?: EditorView): Command[] {
             // web-tab/shortcut.ts and docs/web-tabs.md.
             id: 'new-web-note',
             label: t('New web note'),
+            disabled: readOnly,
             run: () => void workspace.createWebsite(),
           },
           {
@@ -1214,12 +1247,14 @@ export function appCommands(view?: EditorView): Command[] {
         ]),
     // Only where there is something to convert, which is a space that was written in
     // an older nib: a row that did nothing would be a row that read as broken. See
-    // workspace.convertWebsites.
+    // workspace.convertWebsites. Greyed in a space shared to be read, which a shortcut
+    // written beside each note would change (B288).
     ...(links.websiteNotes
       ? [
           {
             id: 'convert-website-notes',
             label: t('Convert website notes'),
+            disabled: readOnly,
             run: () => void workspace.convertWebsites(),
           },
         ]
@@ -1238,6 +1273,8 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'convert-syntax',
       label: t('Convert syntax'),
+      // Rewrites notes of the space in front, which one shared to be read refuses.
+      disabled: readOnly,
       run: () => void import('./convert-syntax').then((m) => m.convertSyntax()),
     },
     ...(canPrint
@@ -1400,7 +1437,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'reformat',
       label: t('Tidy up this note'),
       // Rewriting the whole note is an edit, whatever it is called.
-      disabled: !view || view.state.readOnly,
+      disabled: !view || view.state.readOnly || !tidies(workspace.active?.path ?? null),
       run: () =>
         view &&
         reformatDocument({

@@ -15,8 +15,7 @@
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@nib/markdown/links'
 import type { AgentAnswer } from '../../automation/caller'
 import { movedIn, movedPath } from '../../automation/acts'
-import { canWriteAt } from '../../sharing.svelte'
-import { isMarkdownPath, nameOf, relativeTo } from '../../space-paths'
+import { isMarkdownPath, notePath, relativeTo } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { entryAt } from '../../tree-edits'
 import { coveredBy } from '../../workspace/archive.svelte'
@@ -26,7 +25,15 @@ import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need, needScope, sourceOf } from './call'
 import { indexOf } from './links'
 import { Refused } from './problem'
-import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
+import {
+  judged,
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeOf,
+  sharedSource,
+  writableAt,
+} from './spaces'
 
 /** What a file is, as `list_notes` says it and filters by. */
 const KINDS = ['note', 'canvas', 'page', 'pdf', 'web', 'file'] as const
@@ -69,22 +76,15 @@ async function named(place: Place, asked: string): Promise<{ relative: string; e
   const entry = await entryIn(place, relative)
   if (entry) return { relative, entry }
 
-  const note = nameOf(relative).includes('.') ? null : `${relative}.md`
+  const note = isMarkdownPath(relative) ? null : notePath(relative)
   const found = note === null ? null : await entryIn(place, note)
   if (note !== null && found) return { relative: note, entry: found }
 
   throw new Refused('no_such_file', `there is nothing at ${asked} in ${place.space.name}`)
 }
 
-/** Refuses a write in a space shared with this account to read. */
-function writable(place: Place, path: string): void {
-  if (!canWriteAt(path)) {
-    throw new Refused('read_only', `${place.space.name} is shared with you to read`)
-  }
-}
-
 export async function listNotes(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const asked = maybe(call, 'folder')
   const folder = asked === null ? null : judged(asked)
   const kind = maybe(call, 'kind')
@@ -128,11 +128,12 @@ export async function listNotes(call: Call): Promise<AgentAnswer> {
 }
 
 export async function moveFile(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const { relative: from, entry } = await named(place, need(call, 'path'))
   const to = movedPath(from, judgedForWriting(need(call, 'to')), entry.is_dir)
 
-  if (to === from) return done({ from, to })
+  // Said with the space, so a later Undo moves it back there (lib/ai/review/files.ts).
+  if (to === from) return done({ from, to, space: place.space.id })
   if (entry.is_dir && to.startsWith(`${from}/`)) {
     throw new Refused('bad_arguments', `${from} cannot go inside itself`)
   }
@@ -141,7 +142,7 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   }
 
   const source = onDisk(place, from)
-  writable(place, source)
+  writableAt(place, source)
 
   const question = await asked(call, null, `Move ${from} to ${to} in ${place.space.name}`)
   if (question) return question
@@ -149,7 +150,7 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   if (place.open) await movedIn(place.space.root, from, to)
   else await movedAway(place, source, onDisk(place, to), entry.is_dir)
 
-  return done({ from, to })
+  return done({ from, to, space: place.space.id })
 }
 
 /** A move in a space the reader is not in: the same obligations the tree's own rename
@@ -170,14 +171,14 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
 }
 
 export async function trashFile(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const { relative, entry } = await named(place, need(call, 'path'))
   const path = onDisk(place, relative)
 
   if (workspace.keepsArchived(path)) {
     throw new Refused('archived', `${relative} is archived, and archived files are kept`)
   }
-  writable(place, path)
+  writableAt(place, path)
 
   // What the agent read is what it meant to throw away: a note the reader has written
   // in since is not that note any more.
@@ -204,16 +205,16 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
 
   await workspace.remove(path, entry.is_dir, sourceOf(call))
 
-  return done({ path: relative, trashed: true })
+  return done({ path: relative, trashed: true, space: place.space.id })
 }
 
 export async function createFolder(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const relative = judgedForWriting(need(call, 'path'))
   if (await entryIn(place, relative)) return done({ path: relative, made: false })
 
   const path = onDisk(place, relative)
-  writable(place, path)
+  writableAt(place, path)
 
   const question = await asked(call, null, `Make the folder ${relative} in ${place.space.name}`)
   if (question) return question

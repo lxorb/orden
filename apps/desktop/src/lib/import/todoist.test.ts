@@ -3,7 +3,8 @@
  *  examples: `{results, next_cursor}` pages, `due {date, string, is_recurring,
  *  timezone}`, `deadline {date}`, `duration {amount, unit}`, priority 4 as p1). */
 
-import { describe, expect, test } from 'vitest'
+import { renderMarkdown } from '@nib/markdown'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { sourceOf } from './sources'
 import {
   clockOf,
@@ -336,6 +337,73 @@ describe('from the account', () => {
   })
 })
 
+describe('a task done and a comment posted in the evening, west of Greenwich', () => {
+  beforeAll(() => {
+    vi.stubEnv('TZ', 'America/Los_Angeles')
+  })
+  afterAll(() => {
+    vi.unstubAllEnvs()
+  })
+
+  /** Seven in the evening of the 30th and eight in the evening of the 1st in Los
+   *  Angeles, both already the next day in UTC. */
+  const LATE: Record<string, unknown> = {
+    '/projects': { results: [{ id: 'p-1', name: 'Home' }], next_cursor: null },
+    '/sections': { results: [], next_cursor: null },
+    '/tasks': {
+      results: [
+        {
+          id: 't-1',
+          project_id: 'p-1',
+          content: 'Fix the tap',
+          priority: 1,
+          labels: [],
+          note_count: 1,
+        },
+      ],
+      next_cursor: null,
+    },
+    '/reminders': { results: [], next_cursor: null },
+    '/comments?task_id=t-1': {
+      results: [{ content: 'The plumber said', posted_at: '2026-10-02T03:00:00.000000Z' }],
+      next_cursor: null,
+    },
+    '/tasks/completed/by_completion_date': {
+      items: [
+        {
+          id: 't-2',
+          project_id: 'p-1',
+          content: 'Pack the boxes',
+          priority: 1,
+          labels: [],
+          completed_at: '2026-10-01T02:00:00.000000Z',
+        },
+      ],
+      next_cursor: null,
+    },
+  }
+  const late: Fetch = (url) => {
+    const path = url
+      .replace('https://api.todoist.com/api/v1', '')
+      .replace(/[?&](limit|since|until)=[^&]*/g, '')
+      .replace(/\?$/, '')
+    const page = LATE[path]
+    return Promise.resolve({
+      ok: !!page,
+      status: page ? 200 : 404,
+      json: () => Promise.resolve(page),
+    })
+  }
+
+  test("are dated by that evening's day, not by the UTC day after it", async () => {
+    const plan = planOf(await readTodoistAccount(late, 'secret', { completed: true, now: NOW }))
+    const home = plan.files.find((one) => one.path === 'Projects/Home.md')
+    const text = home?.kind === 'note' ? home.text : ''
+    expect(text).toContain('  2026-10-01: The plumber said')
+    expect(text).toContain('- [x] Pack the boxes ✅ 2026-09-30')
+  })
+})
+
 /** Todoist's documented CSV, as a project export writes it. */
 const CSV = [
   'TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE,DURATION,DURATION_UNIT,DEADLINE,DEADLINE_LANG',
@@ -496,6 +564,55 @@ describe('words that look like something else', () => {
         '',
       ].join('\n'),
     )
+  })
+
+  test('a tag in what a task, a comment, a section or an assignee says stays words, since Todoist shows it as text', () => {
+    const img = '<img src=https://t.example/p.gif>'
+    const plan = planOf({
+      projects: [{ id: 'p', name: 'Lists', inbox: false, about: [`About ${img}`] }],
+      sections: [
+        { id: 's', project: 'p', name: 'Room <style>body{}</style>', order: 1, about: [img] },
+      ],
+      tasks: [
+        {
+          id: 't',
+          project: 'p',
+          section: 's',
+          text: `Shop **now** ${img}`,
+          description: `- [ ] milk ${img}`,
+          priority: 4,
+          labels: [],
+          order: 1,
+          repeats: `every blue moon ${img}`,
+          assignee: 'Eve <iframe src=https://t.example/>',
+          remind: [],
+          comments: [
+            { text: `Seen ${img}\n<style>p{}</style>`, at: '2026-10-01' },
+            { text: `[a ${img}](<https://t.example/a b.pdf>)` },
+          ],
+        },
+      ],
+    })
+    const note = plan.files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).not.toMatch(/(?<!\\)<\/?(img|style|iframe)/)
+    expect(text).toContain('Shop **now** \\<img src=https://t.example/p.gif>')
+    expect(text).toContain('## Room \\<style>')
+    expect(text).toContain('  - \\[ ] milk \\<img')
+    expect(text).toContain('[assignee:: Eve \\<iframe')
+    expect(text).toContain('  [a \\<img src=https://t.example/p.gif>](<https://t.example/a b.pdf>)')
+  })
+
+  test("a backslash in front of a tag in an attachment's name is still one backslash", () => {
+    const csv = [
+      'TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE,DURATION,DURATION_UNIT,meta,DEADLINE,DEADLINE_LANG,IS_COLLAPSED',
+      'task,Move the piano,,4,1,,,,,,,,,,,',
+      'note,"[[file {""file_name"":""a\\\\<b> [c].pdf"",""file_url"":""https://files.todoist.com/a.pdf""}]]",,,,,,,,,,,,,,',
+    ].join('\r\n')
+    const note = planOf(csvProject('Moving', csv, 0)).files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).toContain('  [a\\\\\\<b> \\[c\\].pdf](https://files.todoist.com/a.pdf)')
+    expect(renderMarkdown(text)).toContain('>a\\&lt;b&gt; [c].pdf</a>')
   })
 })
 

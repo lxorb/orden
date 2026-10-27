@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest'
 
+import { renderMarkdown } from '@nib/markdown'
+import { readTask } from '@nib/markdown/task-line'
+
 import { readKeep } from './keep'
 import type { ImportPlan } from './plan'
 import { sourceOf, type Source } from './sources'
@@ -38,6 +41,25 @@ describe('a Google Keep export', () => {
     expect(text).toContain('date: 2026-01-02')
     expect(text).toContain('tags: [Home, to-do]')
     expect(text).toContain('Bread and milk')
+  })
+
+  test("a note's dollars, tildes and percent signs are its words", async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/Prices.json',
+        keepNote({
+          title: 'Prices',
+          textContent: 'Tickets $5-$10\nwait ~5 min or ~10 min, format is %%d\nrest',
+          listContent: [{ text: 'Pay $5-$10', isChecked: false }],
+        }),
+      ),
+    ])
+
+    const html = renderMarkdown(noteAt(plan, 'Prices.md'))
+    expect(html).toContain('Tickets $5-$10\nwait ~5 min or ~10 min, format is %%d\nrest')
+    expect(html).toContain('Pay $5-$10')
+    expect(html).not.toContain('<sub>')
+    expect(html).not.toContain('math')
   })
 
   test('a list is a task list, in the state it was left in', async () => {
@@ -216,4 +238,125 @@ describe('what a real Takeout does', () => {
     expect(text).toContain('- [Cloudflare \\[CDN\\]](<https://www.cloudflare.com/>)')
     expect(text.match(/example\.com\/a/g)).toHaveLength(1)
   })
+  test("a shared page's title opens no markup, since Keep took it from the page", async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/Card.json',
+        keepNote({
+          title: 'Card',
+          textContent: 'x',
+          annotations: [
+            {
+              source: 'WEBLINK',
+              title: 'Fine <img src=https://t.example/p.gif><style>body{display:none}</style>',
+              url: 'https://example.com/',
+            },
+          ],
+        }),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Card.md')
+    expect(text).toContain('Fine \\<img src=https://t.example/p.gif>')
+    expect(text).not.toMatch(/(?<!\\)<\/?(img|style)/)
+  })
+
+  test("a note's words and a list's items open no markup, since Keep shows them as text", async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/Typed.json',
+        keepNote({
+          title: 'Typed',
+          textContent: 'Seen <img src=https://t.example/p.gif> and <iframe src=https://t.example/>',
+          listContent: [{ text: 'Buy <style>body{display:none}</style>', isChecked: false }],
+        }),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Typed.md')
+    expect(text).toContain('Seen \\<img src=https://t.example/p.gif>')
+    expect(text).toContain('- [ ] Buy \\<style>')
+    expect(text).not.toMatch(/(?<!\\)<\/?(img|style|iframe)/)
+  })
+
+  test("a backslash in a shared page's title is shown as it was written", async () => {
+    const card = (title: string, page: string) => ({
+      source: 'WEBLINK',
+      title,
+      url: `https://example.com/${page}`,
+    })
+    const plan = await readKeep([
+      file(
+        'Keep/Slashes.json',
+        keepNote({
+          title: 'Slashes',
+          textContent: 'x',
+          annotations: [card('a\\<b>', 'a'), card('end\\', 'b'), card('x\\[y]', 'c')],
+        }),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Slashes.md')
+    expect(text).toContain('- [a\\\\\\<b>](<https://example.com/a>)')
+    expect(text).toContain('- [end\\\\](<https://example.com/b>)')
+    expect(text).toContain('- [x\\\\\\[y\\]](<https://example.com/c>)')
+  })
+})
+
+/** An item is words typed into Keep, and the task reader takes more apart than a note
+ *  does: an emoji and a date after it are a field, a `#` a tag. None of it was. */
+describe('a Keep list item', () => {
+  test('reads none of its words as a field of the task', async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/List.json',
+        keepNote({
+          title: 'Chores',
+          listContent: [
+            {
+              text: 'task 📅 2026-11-01 ⏫ 🔁 every week #tag [due:: 2026-01-01]',
+              isChecked: false,
+            },
+          ],
+        }),
+      ),
+    ])
+
+    const line = noteAt(plan, 'Chores.md')
+      .split('\n')
+      .find((one) => one.startsWith('- [ ]'))
+    const task = readTask(line ?? '')
+
+    expect(task).toMatchObject({ tags: [] })
+    expect(task?.due).toBeUndefined()
+    expect(task?.recurrence).toBeUndefined()
+    expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
+    expect(task?.fields).toEqual({})
+  })
+})
+
+describe('a Keep title', () => {
+  test('is its words in the heading, maths, tags and links aside', async () => {
+    const plan = await readKeep([
+      file('Keep/A.json', keepNote({ title: 'Tickets $5-$10 #work', textContent: 'Words' })),
+    ])
+    const [note] = plan.files.filter((one) => one.kind === 'note')
+    if (note?.kind !== 'note') throw new Error('no note')
+
+    expect(renderMarkdown(note.text)).toContain('<h1>Tickets $5-$10 #work</h1>')
+  })
+})
+
+test('a Keep list item keeps its code as it was written', async () => {
+  const plan = await readKeep([
+    file(
+      'Keep/List.json',
+      keepNote({
+        title: 'Code',
+        listContent: [{ text: 'use `std::vector` now', isChecked: false }],
+      }),
+    ),
+  ])
+
+  expect(noteAt(plan, 'Code.md')).toContain('- [ ] use `std::vector` now')
 })

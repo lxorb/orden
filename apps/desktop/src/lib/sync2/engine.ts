@@ -25,11 +25,12 @@ import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { holdsDocument } from './kinds'
 import { holderOf } from '../pages/held'
+import { waitsForBytes } from './files'
 import { foldIn } from './ingest'
 import { settle, type SpaceState } from './places'
 import { pass, type Passed, resting } from './pass'
 import { project, wrote } from './project'
-import { rejoin } from './rejoin'
+import { keepLosers, rejoin } from './rejoin'
 import { againstBytes } from './records'
 import { put, type Change, type EntryRow, type LogRow, type SyncStore } from './store'
 import type { World } from './world'
@@ -52,7 +53,11 @@ export interface Placed {
 
 export class Engine implements AskedEngine {
   readonly held: HeldList
-  private readonly listeners: Listeners = { resurrected: new Set(), pass: new Set() }
+  private readonly listeners: Listeners = {
+    resurrected: new Set(),
+    pass: new Set(),
+    unsynced: new Set(),
+  }
 
   private constructor(
     readonly core: Core,
@@ -60,6 +65,7 @@ export class Engine implements AskedEngine {
   ) {
     this.held = new HeldList(core, names)
     core.events.resurrected = (event) => this.emit('resurrected', event)
+    core.events.unsynced = (event) => this.emit('unsynced', event)
     core.events.held = () => {
       void this.held.refresh()
       for (const [id, told] of [...this.unheld]) {
@@ -148,7 +154,8 @@ export class Engine implements AskedEngine {
   waiting(spaceId: string): boolean {
     const space = this.core.spaces.get(spaceId)
     if (!space) return false
-    if (space.outbox.length) return true
+    // A file waiting for room for its bytes is tried again in a while, not soon.
+    if (space.outbox.some((one) => !waitsForBytes(this.core, space, one))) return true
     for (const entry of space.entries.values()) {
       if (
         this.core.hasPending(entry.id) &&
@@ -340,6 +347,22 @@ export class Engine implements AskedEngine {
     // One that is not - a canvas, a note before its document arrived - takes the file's
     // words the way it takes another program's, three ways against nib's last write.
     await this.core.commit(await foldIn(this.core, placed.space, entry))
+  }
+
+  /** The side a small overlap between an open note and its document lost, kept as a
+   *  version the way a pass keeps one (rejoin.ts): the rule settled it without asking,
+   *  and the words it did not keep are in the history, never gone (binding.ts). */
+  keepLost(
+    id: string,
+    lost: { local: boolean; remote: boolean },
+    local: string,
+    remote: string,
+  ): Promise<void> {
+    return this.core.use(async () => {
+      const space = this.core.spaceOf(id)
+      if (!space) return
+      await this.core.commit(keepLosers(this.core, space, id, lost, local, remote))
+    })
   }
 
   /** A note whose words in a tab and in its document both moved past what nib last

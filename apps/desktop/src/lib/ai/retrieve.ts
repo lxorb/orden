@@ -418,26 +418,45 @@ function linkTo(source: { path: string; name: string }): string {
 
 /** An answer as it goes into a note or onto the clipboard: every citation the
  *  wikilink to the note it cited, so what the answer was built from stays one press
- *  away there too, and the same link twice in a row once. */
+ *  away there too, and the same link twice in a row once. `cite` writes a citation
+ *  otherwise: as the note's name alone, for a note in another space, where a wikilink
+ *  would find that space's note of the name or none. */
 export function linkedAnswer(
   answer: string,
   sources: readonly { path: string; name: string }[],
+  cite: (source: { path: string; name: string }) => string = linkTo,
 ): string {
   return answer
     .split(CODE)
-    .map((part, at) =>
-      at % 2
-        ? part
-        : part
-            .replace(CITATION, (whole, numbers: string) => {
-              const notes = numbers
-                .split(',')
-                .map((one) => sources[Number(one.trim()) - 1])
-                .filter((one) => one !== undefined)
-                .map(linkTo)
-              return notes.length ? [...new Set(notes)].join(' ') : whole
-            })
-            .replace(/(\[\[[^\]]+\]\])(?:\s*\1)+/g, '$1'),
-    )
+    .map((part, at) => {
+      if (at % 2) return part
+      // Each citation first as a mark of what it says, so only citations next to each
+      // other fold, never the answer's own words that happen to read like a name.
+      const said: string[] = []
+      const mark = (words: string) => {
+        if (!said.includes(words)) said.push(words)
+        return `\uE000${said.indexOf(words)}\uE001`
+      }
+      const marked = part.replace(CITATION, (whole, numbers: string) => {
+        const notes = numbers
+          .split(',')
+          .map((one) => sources[Number(one.trim()) - 1])
+          .filter((one) => one !== undefined)
+          .map(cite)
+        return notes.length ? [...new Set(notes)].map(mark).join(' ') : whole
+      })
+      const folded = marked.replace(/(\uE000(\d+)\uE001)(?:\s*\uE000\2\uE001)+/g, '$1')
+      // A citation right after the answer says its name, the name once: "about Herons".
+      return said
+        .reduce((out, words, at) => {
+          const name = words.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          return out.replace(
+            new RegExp(`(?<![\\p{L}\\p{N}_])(${name})\\s*\uE000${at}\uE001`, 'gu'),
+            '$1',
+          )
+        }, folded)
+        .replace(/\uE000(\d+)\uE001/g, (whole, at: string) => said[Number(at)] ?? whole)
+        .replace(/(\[\[[^\]]+\]\])(?:\s*\1)+/g, '$1')
+    })
     .join('')
 }

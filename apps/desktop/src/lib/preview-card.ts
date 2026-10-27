@@ -24,7 +24,7 @@ import { links } from './link-index.svelte'
 import { modes } from './modes.svelte'
 import { notePicture } from './note-images'
 import { PROPERTY_CHOICES } from './property-choices'
-import { trustsHtmlAt } from './sharing.svelte'
+import { canWriteAt, trustsHtmlAt } from './sharing.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { insideSpace } from './space-paths'
 import { followHref } from './open-link'
@@ -39,15 +39,32 @@ import { workspace } from './workspace.svelte'
 const SETTLES_AFTER = 900
 
 /** Mounts the editor, or answers null where there is nothing to write back to: a
- *  note outside any open space has no path the app can write. */
-export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void) | null {
-  const root = workspace.activeSpace?.root
-  if (root === undefined) return null
+ *  note outside any open space has no path the app can write.
+ *
+ *  `from` is the note the link was written in. The card's path is relative to that
+ *  note's space, which is not always the active one: tabs are shared across spaces, and
+ *  a card over `[[Plan]]` in a note of A shows A's Plan however B is the space open. */
+export function mountPreview(
+  host: HTMLElement,
+  note: PreviewNote,
+  from: string | null = null,
+): (() => void) | null {
+  const root = workspace.rootHolding(from)
+  if (root === null) return null
 
   const path = insideSpace(root, note.path)
+  // Read-only where nothing typed here could be kept: the linked note sits in a
+  // space shared to be read, where the write below is refused without a word, or
+  // the note the card was opened over is read-only, which covers the window's own
+  // Read-only switch. An editor that took the words and dropped them would be worse
+  // than a card that does not take them.
+  const locked = note.readOnly || !canWriteAt(path)
 
-  /** What the card says now, and the timer that will write it. */
+  /** What the card says now, whether anybody typed it, and the timer that will
+   *  write it. Only typing writes: a card opened and closed is a glance, and the words
+   *  it opened on are no reason to touch the file. */
   let said = note.text
+  let typed = false
   let settling: ReturnType<typeof setTimeout> | undefined
 
   /** The words in the card, into the file. Read again first rather than remembered
@@ -55,6 +72,7 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
    *  is there, and something else may have written it while the card was up. */
   const write = async () => {
     settling = undefined
+    if (!typed || locked) return
     const after = said
     const before = await workspace.noteText(path)
     if (before === null || before === after) return
@@ -71,6 +89,7 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
     selection: { anchor: caretFor(note) },
     onChange: (doc) => {
       said = doc.toString()
+      typed = true
       clearTimeout(settling)
       settling = setTimeout(() => void write(), SETTLES_AFTER)
     },
@@ -102,7 +121,12 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
 
   // The reader's own modes, which is what makes this the same surface as the pane
   // behind it rather than a second editor with its own defaults.
-  view.dispatch({ effects: modeEffects(modes.settings) })
+  // Source mode off when locked, since modeEffects lets source mode win over
+  // read-only.
+  const settings = modes.settings
+  view.dispatch({
+    effects: modeEffects(locked ? { ...settings, readOnly: true, source: false } : settings),
+  })
   scrollTo(view, note.at)
 
   return () => {
@@ -128,7 +152,7 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
  *  Only the caret moves. Where the card is scrolled to is still where the link
  *  pointed, so a card over `[[Note]]` opens at the top of the note with its
  *  metadata as rows, which is what the note itself shows. */
-export function caretFor(note: PreviewNote): number {
+export function caretFor(note: Omit<PreviewNote, 'readOnly'>): number {
   const at = Math.min(Math.max(0, note.at), note.text.length)
   const matter = frontMatterBlock(note.text)
 

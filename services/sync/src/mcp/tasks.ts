@@ -38,7 +38,7 @@ import { objectIn } from '../body'
 import { cleanPath } from '../notes'
 import { blobKey } from '../sync2/files'
 import type { Env } from '../types'
-import { askedSpace, noteBody, putNote, type Space, spacesFor } from './tools'
+import { askedSpace, marked, noteBody, putNote, type Space, spaceSource, spacesFor } from './tools'
 import type { TokenRow } from './tokens'
 
 /** How many notes one call reads the words of, across every space it looks in. A list
@@ -249,17 +249,18 @@ async function undatedInToday(env: Env, user: string): Promise<boolean> {
   return objectIn(row?.settings)?.undatedInToday === true
 }
 
-async function list(env: Env, token: TokenRow, args: Args): Promise<unknown> {
+async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
   const spaces =
     args.space === undefined || args.space === null
       ? await spacesFor(env, token.user_id)
-      : [await spaceOf(env, token, args)]
+      : [await spaceOf(env, token, args, seen)]
+  seen.push(...spaces)
   const view = words(args, 'view')
   const filter = words(args, 'filter')
   const { rows, partial } = await rowsOf(env, spaces)
   const base =
     view && /\.base$/i.test(view)
-      ? await readBaseAt(env, await spaceOf(env, token, args), view)
+      ? await readBaseAt(env, await spaceOf(env, token, args, seen), view)
       : null
   const names = new Set(
     rows.filter((row) => row.kind === 'note').map((row) => row.file.basename.toLowerCase()),
@@ -281,25 +282,27 @@ async function list(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   return partial ? { ...answer, partial } : answer
 }
 
-/** The space a call names, refused in a sentence where it names none it reaches. */
-async function spaceOf(env: Env, token: TokenRow, args: Args): Promise<Space> {
+/** The space a call names, refused in a sentence where it names none it reaches.
+ *  Kept in `seen`, which is what decides whether the answer comes marked. */
+async function spaceOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<Space> {
   const space = await askedSpace(env, token.user_id, args)
   if (typeof space === 'string') throw new Said(space)
+  seen.push(space)
   return space
 }
 
 /** The space a write names, refused where the token or the share may not write. */
-async function writableSpace(env: Env, token: TokenRow, args: Args): Promise<Space> {
+async function writableSpace(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<Space> {
   if (token.read_only)
     throw new Said('This token may only read. Allow writing in Orden’s settings first.')
-  const space = await spaceOf(env, token, args)
+  const space = await spaceOf(env, token, args, seen)
   if (space.role === 'read')
     throw new Said(`${space.name} was shared with you to read, not to write.`)
   return space
 }
 
-async function add(env: Env, token: TokenRow, args: Args): Promise<unknown> {
-  return addTaskTo(env, await writableSpace(env, token, args), args)
+async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
+  return addTaskTo(env, await writableSpace(env, token, args, seen), args)
 }
 
 /** The space a task goes to. */
@@ -324,8 +327,8 @@ async function addTaskTo(
   return { at: `${path}#${placed.line}:${taskHash(fields.text)}`, space: space.name, path }
 }
 
-async function update(env: Env, token: TokenRow, args: Args): Promise<unknown> {
-  const space = await writableSpace(env, token, args)
+async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
+  const space = await writableSpace(env, token, args, seen)
   const anchor = readAt(args.at)
   const path = notePath(anchor.path)
   const text = await wordsAt(env, space, path)
@@ -364,8 +367,8 @@ async function update(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   return { ...said, at: `${into}#${placed.line}:${readAt(edited.at).hash}` }
 }
 
-async function query(env: Env, token: TokenRow, args: Args): Promise<unknown> {
-  const space = await spaceOf(env, token, args)
+async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
+  const space = await spaceOf(env, token, args, seen)
   const yaml = typeof args.yaml === 'string' ? args.yaml : undefined
   const path = words(args, 'path')
   let base
@@ -385,8 +388,8 @@ async function query(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   return partial ? { ...answer, partial } : answer
 }
 
-async function addRow(env: Env, token: TokenRow, args: Args): Promise<unknown> {
-  const space = await writableSpace(env, token, args)
+async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
+  const space = await writableSpace(env, token, args, seen)
   const { path: basePath, base } = await readBaseAt(env, space, words(args, 'base') ?? '')
   const properties = args.properties ?? {}
   if (typeof properties !== 'object' || Array.isArray(properties)) {
@@ -416,7 +419,10 @@ async function addRow(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   throw new Said(`${name} is taken a hundred times over.`)
 }
 
-const RUNS: Record<string, (env: Env, token: TokenRow, args: Args) => Promise<unknown>> = {
+const RUNS: Record<
+  string,
+  (env: Env, token: TokenRow, args: Args, seen: Space[]) => Promise<unknown>
+> = {
   list_tasks: list,
   add_task: add,
   update_task: update,
@@ -429,7 +435,16 @@ function refusalOf(error: unknown): string | null {
   return error instanceof Said || error instanceof AgentError ? error.message : null
 }
 
-/** Runs one of the five, answering JSON, or a sentence where it cannot. */
+/** Where the words of an answer came from: every space it read or wrote that somebody
+ *  else may write in, or null where there is none. Rows, task text, a base's columns
+ *  and the paths a write answers with all come out of those notes. */
+function sourceOf(seen: readonly Space[]): string | null {
+  const sources = [...new Set(seen.map(spaceSource).filter((one) => one !== null))]
+  return sources.length ? sources.join(', ') : null
+}
+
+/** Runs one of the five, answering JSON, or a sentence where it cannot: inside the
+ *  untrusted mark where a space somebody else may write in was read. */
 export async function callTaskTool(
   env: Env,
   token: TokenRow,
@@ -438,11 +453,13 @@ export async function callTaskTool(
 ): Promise<string> {
   const run = RUNS[name]
   if (!run) return `No tool called ${name}.`
+  const seen: Space[] = []
   try {
-    return JSON.stringify(await run(env, token, args))
+    const answer = JSON.stringify(await run(env, token, args, seen))
+    return marked(sourceOf(seen), answer)
   } catch (error) {
     const said = refusalOf(error)
-    if (said !== null) return said
+    if (said !== null) return marked(sourceOf(seen), said)
     throw error
   }
 }

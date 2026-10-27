@@ -261,6 +261,31 @@ describe('headings and the table of contents', () => {
     expect(html.match(/<p>After<\/p>/g)).toHaveLength(1)
     expect(html.match(/<p>Before<\/p>/g)).toHaveLength(1)
   })
+
+  /** A note the reader trusts can embed one somebody else wrote: that one's HTML is
+   *  words, whatever the page around it is. */
+  test('show the HTML of an embedded note that asks for it as words, and only there', () => {
+    const html = renderMarkdown('<b>mine</b>\n\n![[Theirs]]\n\n![[Mine]]', {
+      resolveEmbed: (link) =>
+        link.target === 'Theirs'
+          ? { text: '<form action="https://evil.example">x</form>', escapeHtml: true }
+          : '<i>own</i>',
+    })
+
+    expect(html).toContain('<b>mine</b>')
+    expect(html).toContain('<i>own</i>')
+    expect(html).not.toContain('<form')
+    expect(html).toContain('&lt;form')
+  })
+
+  test('never trust an embed more than the page around it', () => {
+    const html = renderMarkdown('![[Mine]]', {
+      escapeHtml: true,
+      resolveEmbed: () => ({ text: '<i>own</i>', escapeHtml: false }),
+    })
+
+    expect(html).not.toContain('<i>')
+  })
 })
 
 describe('code fences', () => {
@@ -503,6 +528,36 @@ describe('Typora extensions', () => {
     const html = renderMarkdown('> Just a quote.\n')
     expect(html).toContain('<blockquote>')
     expect(html).not.toContain('callout')
+  })
+
+  /** Only an opening paragraph names a type: code that starts with the marker
+   *  is code, and has no inline tokens to cut the marker out of. It used to
+   *  throw, which took the whole note down with it. */
+  test.each([
+    ['indented code', '>     [!note] T\n'],
+    ['tab-indented code', '> \t[!note] T\n'],
+    ['a backtick fence', '> ```md\n> [!note] x\n> ```\n'],
+    ['a tilde fence', '> ~~~\n> [!note] x\n> ~~~\n'],
+    ['a heading', '> ## [!note] x\n'],
+  ])('a quote opening with %s that reads like a marker stays a quote', (_, source) => {
+    const html = renderMarkdown(source)
+    expect(html).toContain('<blockquote>')
+    expect(html).toContain('[!note]')
+    expect(html).not.toContain('callout')
+  })
+
+  /** marked reads a marker line with `---` or `===` under it as a setext heading,
+   *  and that heading is still the line that opens the callout. */
+  test.each([
+    ['a rule under the title', '> [!note] Title\n> ---\n> body\n', 'Title'],
+    ['a heading under the marker', '> [!note]\n> Heading\n> ---\n> body\n', 'Note'],
+    ['a double rule under the title', '> [!note] Title\n> ===\n', 'Title'],
+  ])('a callout with %s is still a callout', (_, source, title) => {
+    const html = renderMarkdown(source)
+    expect(html).toContain('data-callout="note"')
+    expect(html).toContain(`<span>${title}</span>`)
+    expect(html).not.toContain('[!note]')
+    expect(html).not.toContain('<blockquote>')
   })
 
   test('footnotes link both ways', () => {
@@ -795,6 +850,15 @@ describe('abbreviations', () => {
     expect(html).toContain('Tom &amp; Jerry')
     expect(html).toContain('<abbr title="ampersand">amp</abbr> on its own')
     expect(html.match(/<abbr/g)).toHaveLength(1)
+  })
+
+  test('is defined after a fence that ended with the list item it was in', () => {
+    // The fence is the item's, so the line at the margin ends both: the
+    // definition under them is words, and the page reads it as one.
+    const html = renderMarkdown(
+      '- a\n  ```\n  code\n\n*[HTML]: HyperText Markup Language\n\nI write HTML.\n',
+    )
+    expect(html).toContain('<abbr title="HyperText Markup Language">HTML</abbr>')
   })
 
   test('leaves code alone', () => {

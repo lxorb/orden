@@ -27,7 +27,7 @@ import { attachmentFolder } from '../../attachments'
 import { modes } from '../../modes.svelte'
 import { paperInches } from '../../page-setup'
 import { settings } from '../../settings.svelte'
-import { nameOf, relativeTo } from '../../space-paths'
+import { notePath, relativeTo } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { pages } from '../../web-tab/pages.svelte'
 import { clipNote } from '../../web-tab/note'
@@ -38,7 +38,7 @@ import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, writerOf } from './call'
 import { made } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, type Place, placeFor } from './spaces'
+import { judgedForWriting, onDisk, type Place, placeFor, placeOf, writableAt } from './spaces'
 import { treeOf } from './tree'
 
 const SHAPES = [...CAPTURE_AS, 'link'] as const
@@ -212,7 +212,7 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const shape = maybe(call, 'as') ?? 'clip'
   if (!isShape(shape)) throw new Refused('bad_arguments', `as is one of ${SHAPES.join(', ')}`)
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const page = await pageIn(call, need(call, 'tab'), shape)
   if (!page.url) throw new Refused('failed', 'that tab has no page to capture')
 
@@ -221,21 +221,27 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const relative =
     target === null
       ? await freshPath(place, maybe(call, 'folder'), page.title || page.url)
-      : nameOf(target).includes('.')
-        ? target
-        : `${target}.md`
+      : notePath(target)
+  if (relative === null) throw new Refused('bad_arguments', `${target} is not a markdown note`)
+
+  // Before the question and before any picture is kept beside the note: a space shared
+  // to be read takes neither a new note nor a section added to one there.
+  const path = onDisk(place, relative)
+  writableAt(place, path)
 
   const question = await asked(call, null, `Capture ${page.url} into ${relative}`)
   if (question) return question
 
-  const path = onDisk(place, relative)
   const embed = page.file ? await attachment(place, path, page.file) : null
   const words = await wordsFor(page, shape, embed)
 
   const there = (await workspace.noteText(path)) !== null
   if (!there) {
     await made(place, relative, words, false)
-    return done({ path: relative, source: page.url, created: true }, page.url)
+    return done(
+      { path: relative, space: place.space.id, source: page.url, created: true },
+      page.url,
+    )
   }
 
   const under = maybe(call, 'under')
@@ -245,13 +251,14 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
     { at: under === null ? { end: true } : { heading: under }, insert_after: section },
   ])
 
-  return done({ path: relative, source: page.url, created: false }, page.url)
+  return done({ path: relative, space: place.space.id, source: page.url, created: false }, page.url)
 }
 
 /** A picture or a PDF kept beside a note the way a pasted picture is: in the folder the
  *  reader's Attachments setting says, under a name of its own. Answers what the note
  *  embeds. */
 async function attachment(place: Place, notePath: string, file: Kept): Promise<string> {
+  writableAt(place, notePath)
   const bytes = Uint8Array.from(atob(file.base64), (character) => character.charCodeAt(0))
   const saved = await invoke<string>('save_asset', {
     notePath,

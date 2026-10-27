@@ -13,6 +13,13 @@ describe('reading page setup from a note', () => {
     expect(pageSetupFor(withMatter('title: Note'))).toEqual(DEFAULT_PAGE_SETUP)
   })
 
+  test('reads a note written with CRLF endings', () => {
+    const setup = pageSetupFor('---\r\nexport:\r\n  paper: Letter\r\n  margin: 15mm\r\n---\r\n')
+
+    expect(setup.paper).toBe('Letter')
+    expect(setup.margin).toBe('15mm')
+  })
+
   test('reads paper, orientation and margin', () => {
     const setup = pageSetupFor(
       withMatter('export:\n  paper: Letter\n  orientation: landscape\n  margin: 15mm'),

@@ -32,8 +32,9 @@ import { insideOnly } from '../automation/inside'
 import { key } from '../i18n.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
+import { holderOf, pairOf, paperOf } from '../pages/held'
 import { joinPath } from '../tauri'
-import { toBase64 } from '../bytes'
+import { sha256, toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { writeBytes, writeFile } from '../workspace/write-file'
 
@@ -72,16 +73,30 @@ export async function applyImport(
   target: ImportTarget,
   options: Writing = {},
 ): Promise<Landed> {
+  // Not into a space shared with this account to be read: the copy here would stop
+  // being the space's, and the sync refuses it on every pass. Asked here because every
+  // import lands through here - the sheet, a browser's spaces, a share on a phone -
+  // and before anything is written, as a path that escapes is. Fetched, as
+  // sharing.svelte.ts reads the workspace this writes into.
+  const { canWriteAt } = await import('../sharing.svelte')
+  const into = target.folder ? joinPath(target.root, target.folder) : target.root
+  if (!canWriteAt(into)) throw new Error(UNWRITABLE)
+
   const { files, stepped } = await restampedOnDisk(plan, target)
   const paths: string[] = []
+  // What each note was written with, by its hash: what undoing the import checks a
+  // note against before it takes it away.
+  const wrote: Record<string, string> = {}
   let done = 0
 
   try {
     for (const file of files) {
       const path = joinPath(target.root, file.path)
 
-      if (file.kind === 'note') await writeFile(path, file.text)
-      else await writeBytes(path, toBase64(file.bytes))
+      if (file.kind === 'note') {
+        await writeFile(path, file.text)
+        wrote[path] = await sha256(file.text)
+      } else await writeBytes(path, toBase64(file.bytes))
 
       paths.push(...(file.kind === 'file' && file.pages ? await asPages(path) : [path]))
       done += 1
@@ -92,7 +107,7 @@ export async function applyImport(
     // write partway through failed. The failure still reaches the sheet, which says
     // so; before, the half that had landed was on the disk with no undo that could
     // take it back, and trying again put a `Plan 2.md` beside every one of them.
-    if (paths.length) await landed(paths)
+    if (paths.length) await landed(paths, wrote)
   }
 
   return { paths, stepped }
@@ -107,8 +122,8 @@ async function asPages(path: string): Promise<string[]> {
 }
 
 /** What an import that wrote something owes the rest of the app. */
-async function landed(paths: string[]) {
-  workspace.undone.record({ kind: 'import', paths })
+async function landed(paths: string[], wrote: Record<string, string>) {
+  workspace.undone.record({ kind: 'import', paths, wrote })
   // Each file made, said once like any other (workspace/file-ops.ts), so sync v2 has an
   // entry for it where no watcher reads the folder - the browser, a phone - and an
   // imported paper's page note reaches the account at all (#551). Said where a watcher
@@ -140,6 +155,8 @@ function judged(files: readonly Planned[]): Planned[] {
   })
 }
 
+const UNWRITABLE = key('That import could not be written.')
+
 const ESCAPING = key('That import would have landed outside the space, so nothing was written.')
 
 /** The plan restamped, its paths judged, and nothing landing on a file that is
@@ -159,11 +176,26 @@ async function restampedOnDisk(
     const stamped = restamped(plan, taken, target.folder)
     const files = judged(stamped.files)
 
-    const asking = [...new Set(files.map((file) => file.path))].filter((path) => !there.has(path))
+    // The other half of a page note's pair too: a PDF landing beside a page note there
+    // becomes its paper, and a page note beside a PDF takes it for its own. One that
+    // comes with the import is not asked about, since that pair is meant.
+    const coming = new Set(files.map((file) => nameKey(file.path)))
+    const partner = (path: string) => {
+      const other = pairOf(path)
+      return other !== null && !coming.has(nameKey(other)) ? other : null
+    }
+    const asked = files.flatMap((file) => {
+      const other = partner(file.path)
+      return other === null ? [file.path] : [file.path, other]
+    })
+    const asking = [...new Set(asked)].filter((path) => !there.has(path))
     const answers = await Promise.all(asking.map((path) => onDisk(joinPath(target.root, path))))
     asking.forEach((path, at) => there.set(path, answers[at] === true))
 
-    const held = files.filter((file) => there.get(file.path))
+    const held = files.filter((file) => {
+      const other = partner(file.path)
+      return there.get(file.path) === true || (other !== null && there.get(other) === true)
+    })
     if (!held.length) return { files, stepped: stamped.stepped }
     for (const file of held) taken.add(nameKey(file.path))
   }
@@ -202,21 +234,90 @@ export function restamped(
   // Keyed on the way in, because two names that differ only in case are one name on
   // Windows and on a Mac, and two that differ only in how an accent is composed are
   // one name on a Mac.
-  const held = new Set([...taken].map(nameKey))
+  const there = new Set([...taken].map(nameKey))
+  const held = new Set(there)
   const moved = new Map<string, string>()
-  const placed: { file: Planned; was: string; now: string }[] = []
+  const placed = new Map<Planned, string>()
+  const inside = (path: string) => (under ? `${under}/${path}` : path)
 
+  // A page note `X.pages` holds `X.pages.pdf` beside it as its paper, so a name whose
+  // other half is already there is taken as well: landed, the PDF was hidden in that
+  // note and trashed with it, or the note took the PDF for its own. Only what was
+  // there counts, since a note and its paper that come with the import are a pair.
+  const clashes = (candidate: string) => {
+    const other = pairOf(candidate)
+    return held.has(nameKey(candidate)) || (other !== null && there.has(nameKey(other)))
+  }
+
+  // A folder note and its folder are one thing: a database's note shows the notes
+  // in the folder of its name, and a page's subpages are in the folder of its name.
+  // So where either name is taken the two step aside together, `Tasks 2.md` with
+  // `Tasks 2/`, rather than the note alone, which would leave a new database showing
+  // nothing and its pages among the ones already there. They are named first, the
+  // outermost first, so every file in the folder lands in the folder they were
+  // given, wherever it stands in the plan.
+  const filled = new Set<string>()
   for (const file of plan.files) {
-    const wanted = under ? `${under}/${file.path}` : file.path
-    const free = freePath(wanted, (candidate) => held.has(nameKey(candidate)))
+    const parts = file.path.split('/').slice(0, -1)
+    parts.forEach((_, at) => filled.add(nameKey(parts.slice(0, at + 1).join('/'))))
+  }
+  const holds = (folder: string) => {
+    const key = `${nameKey(folder)}/`
+    return [...held].some((one) => one.startsWith(key))
+  }
+  const folders = new Map<string, string>()
+  const into = (path: string) => {
+    const parts = path.split('/')
+    for (let at = parts.length - 1; at > 0; at -= 1) {
+      const folder = folders.get(nameKey(parts.slice(0, at).join('/')))
+      if (folder !== undefined) return [folder, ...parts.slice(at)].join('/')
+    }
+    return path
+  }
+  const notes = new Map<Planned, string>()
+  const folderNotes = plan.files
+    .filter((file) => file.kind === 'note' && filled.has(nameKey(file.path.replace(/\.md$/i, ''))))
+    .sort((one, two) => one.path.split('/').length - two.path.split('/').length)
+  for (const file of folderNotes) {
+    const wanted = into(inside(file.path))
+    const free = freePath(
+      wanted,
+      (candidate) => clashes(candidate) || holds(candidate.replace(/\.md$/i, '')),
+    )
     held.add(nameKey(free))
+    notes.set(file, free)
+    folders.set(nameKey(inside(file.path).replace(/\.md$/i, '')), free.replace(/\.md$/i, ''))
+  }
+
+  // And a page note's pair keeps together: a paper whose note comes with it is placed
+  // after the note, under its name, wherever the note stepped.
+  const coming = new Set(plan.files.map((file) => nameKey(file.path)))
+  const following = (file: Planned) => {
+    const holder = holderOf(file.path)
+    return holder !== null && coming.has(nameKey(holder))
+  }
+  const landedAt = new Map<string, string>()
+
+  for (const file of [
+    ...plan.files.filter((one) => !following(one)),
+    ...plan.files.filter(following),
+  ]) {
+    const wanted = inside(file.path)
+    const holder = holderOf(file.path)
+    const note = holder === null ? undefined : landedAt.get(nameKey(holder))
+    const free =
+      notes.get(file) ?? freePath(note === undefined ? into(wanted) : paperOf(note), clashes)
+    held.add(nameKey(free))
+    landedAt.set(nameKey(file.path), free)
 
     if (free !== wanted) moved.set(file.path, under ? free.slice(under.length + 1) : free)
-    placed.push({ file, was: file.path, now: free })
+    placed.set(file, free)
   }
 
   const paths = plan.files.map((file) => file.path)
-  const files = placed.map(({ file, was, now }) => {
+  const files = plan.files.map((file) => {
+    const was = file.path
+    const now = placed.get(file) ?? was
     if (file.kind === 'file') {
       // A canvas's cards follow the same way, since they name the import's files too.
       const bytes = moved.size && isCanvas(was) ? canvasFollowed(file.bytes, moved) : file.bytes

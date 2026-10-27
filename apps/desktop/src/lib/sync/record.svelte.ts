@@ -22,6 +22,7 @@ import { log } from '../log'
 import { insideSpace, withinSpace } from '../space-paths'
 import { forget, isRecord, keep, stored } from '../stored'
 import { invoke } from '../tauri'
+import type { FileOp } from '../workspace/file-ops'
 import type { Answer, Clash } from './conflicts'
 
 const STORAGE_KEY = 'nib:sync-log'
@@ -95,12 +96,49 @@ class Record {
     this.persist()
   }
 
-  /** A note whose copies disagree, waiting for an answer. One per path: a
-   *  second pass finding the same disagreement is the same disagreement. */
+  /** A note whose copies disagree, waiting for an answer. One per note: a second
+   *  pass finding it is the same question, with the newest of the other copy. Kept as
+   *  first asked, the answer wrote older words, or this device's, over the newer. */
   clash(clash: Clash) {
-    if (this.clashes.some((one) => one.path === clash.path)) return
+    const same = (one: Clash) => one.id === clash.id || one.path === clash.path
+    this.clashes = this.clashes.some(same)
+      ? this.clashes.map((one) => (same(one) ? clash : one))
+      : [...this.clashes, clash]
+    this.persist()
+  }
 
-    this.clashes = [...this.clashes, clash]
+  /** Where the notes on this device are, by id and by path, handed in by the sync
+   *  store (sync.svelte.ts), which is restored after this one. Null until then. */
+  notes: {
+    at(id: string): string | null
+    of(path: string): string | null
+    /** A rename the account was not told of, told again. */
+    moved?(from: string, to: string): unknown
+  } | null = null
+
+  /** A file operation, heard the way everything kept by path hears one; see
+   *  workspace/file-ops.ts. A clash is about a note, and the note can be renamed,
+   *  moved or deleted while its question waits: held under the old name, the pass
+   *  went on holding a path nothing was at, the renamed note was sent as though
+   *  nothing were waiting, and the answer was written to whatever file had the old
+   *  name by then. A note deleted here has nothing left to settle. */
+  follow(op: FileOp) {
+    if (op.op === 'created') return
+    const from = op.op === 'moved' ? op.from : op.path
+    const under = (path: string) => {
+      const was = from.replace(/\\/g, '/')
+      const one = path.replace(/\\/g, '/')
+      return one === was ? '' : one.startsWith(`${was}/`) ? one.slice(was.length) : null
+    }
+    if (!this.clashes.some((one) => under(one.path) !== null)) return
+
+    this.clashes =
+      op.op === 'moved'
+        ? this.clashes.map((one) => {
+            const rest = under(one.path)
+            return rest === null ? one : { ...one, path: op.to + rest }
+          })
+        : this.clashes.filter((one) => under(one.path) === null)
     this.persist()
   }
 
@@ -128,9 +166,43 @@ class Record {
     // Judged here rather than in `restore`, because the log is restored before the
     // spaces have been listed and there would be nothing to judge it against; see
     // start.ts. Nothing else reads a clash's path onto disk.
-    const path = await placed(clash.path)
+    // Where the note is now, by its id: a rename the store did not hear of, a swap
+    // pulled from another device. And never another note's file: one that has the
+    // name by now keeps its own words, and the other copy is kept beside it.
+    //
+    // Except where the question followed its file and the record is behind: a rename
+    // the account could not be told of leaves the entry at the old name. There the
+    // file is the note, and the rename is told again once answered.
+    const recorded = this.notes?.at(clash.id) ?? null
+    const judged = await placed(clash.path)
+    const followed =
+      recorded !== null &&
+      judged !== null &&
+      recorded !== judged &&
+      this.notes?.of(judged) === null &&
+      (await invoke<string>('read_note', { path: judged }).then(
+        () => true,
+        () => false,
+      ))
+    const now = followed ? null : recorded
+    const there = now === null && !followed ? (this.notes?.of(clash.path) ?? null) : null
+    const elsewhere = there !== null && there !== clash.id
+    const path = await placed(now ?? clash.path)
     if (path === null) {
       log('warn', 'sync: a note waiting to be settled is in no space, so it was let go of')
+      this.forget(clash.path)
+      return
+    }
+
+    if (elsewhere) {
+      log('warn', 'sync: a note waiting to be settled has gone, so its other copy is kept beside')
+      if (answer !== 'mine') {
+        const [{ conflictPath }, { writeDown }] = await Promise.all([
+          import('@nib/markdown/paths'),
+          import('./write-down'),
+        ])
+        await writeDown(conflictPath(path), clash.theirs)
+      }
       this.forget(clash.path)
       return
     }
@@ -174,6 +246,7 @@ class Record {
     }
 
     this.forget(clash.path)
+    if (followed) void this.notes?.moved?.(recorded, path)
   }
 
   forget(path: string) {
