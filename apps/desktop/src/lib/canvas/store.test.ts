@@ -668,3 +668,23 @@ describe('what is picked, asked by id', () => {
     expect([...store.pickedSet]).toEqual([])
   })
 })
+
+/** #535: a card drawn only while it is written in - from far away, CanvasFar.svelte -
+ *  goes with its editor, before it can hand its words over. Leaving it asks for them
+ *  first, whoever leaves it. */
+describe('leaving the card being written in', () => {
+  test('asks it for its words first', async () => {
+    const { cardWriting } = await import('./writing')
+    const { store } = opened(writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('a')] }))
+    const handed: string[] = []
+    cardWriting(() => handed.push('handed'))
+    try {
+      store.editing = 'a'
+      expect(handed).toEqual([])
+      store.editing = null
+      expect(handed).toEqual(['handed'])
+    } finally {
+      cardWriting(null)
+    }
+  })
+})

@@ -94,3 +94,21 @@ describe('what a point is on, over something locked in place', () => {
     expect(hitAt(where({ canvas }), { x: 300, y: 200 }).node).toBeNull()
   })
 })
+
+/** #535: far out a card is a few pixels across, and the handles round a picked box are
+ *  a fixed size on screen: they covered the whole card, so a double press meant to open
+ *  it took a handle, found no card, and made a new one. A box that small carries no
+ *  handles; near, the same press on the same corner is a handle. */
+describe('a picked card too small on screen for its handles', () => {
+  const box = { x: 0, y: 0, width: 250, height: 60 }
+
+  test('is the card under a press in its middle, not a handle', () => {
+    const far = where({ picked: ['a'], box, scale: 0.09 })
+    expect(hitAt(far, { x: 125, y: 30 })).toMatchObject({ node: 'a', handle: null })
+  })
+
+  test('and near, the corner is the handle it always was', () => {
+    const near = where({ picked: ['a'], box, scale: 1 })
+    expect(hitAt(near, { x: 250, y: 60 }).handle).not.toBeNull()
+  })
+})
