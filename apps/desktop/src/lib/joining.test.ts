@@ -40,6 +40,12 @@ interface World {
   opened: { id: string; holding: boolean }[]
   /** Whether the link is still held, asked of this test's own store. */
   holding: () => boolean
+  /** The links whose request was withdrawn, and with which session. */
+  withdrawn: { key: string; token: string | undefined }[]
+  /** Set to hold every walk through until it is let go, the way a slow network does. */
+  gate: Promise<void> | null
+  /** Set to make withdrawing fail: a dropped request, or the service's own status. */
+  withdrawFails: 'network' | number | null
 }
 
 const world = vi.hoisted((): World => ({
@@ -54,6 +60,9 @@ const world = vi.hoisted((): World => ({
   shared: [],
   opened: [],
   holding: () => false,
+  withdrawn: [],
+  gate: null,
+  withdrawFails: null,
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -66,13 +75,23 @@ vi.mock('./api', async (importOriginal) => {
         world.about
           ? Promise.resolve(world.about)
           : Promise.reject(new original.ApiError(404, 'that link has expired')),
-      join: (key: string, options: Record<string, unknown> = {}) => {
+      join: async (key: string, options: Record<string, unknown> = {}) => {
         world.asked.push({ key, options })
+        if (world.gate) await world.gate
         if (world.unreachable) return Promise.reject(new Error('the network is not there'))
         if (world.refuse) return Promise.reject(new original.ApiError(404, world.refuse))
 
         return Promise.resolve(world.through)
       },
+      withdraw: (key: string, token?: string) => {
+        world.withdrawn.push({ key, token })
+        if (world.withdrawFails === 'network') return Promise.reject(new Error('offline'))
+        if (world.withdrawFails) {
+          return Promise.reject(new original.ApiError(world.withdrawFails, 'that link has expired'))
+        }
+        return Promise.resolve()
+      },
+      signOut: () => Promise.resolve(),
       me: () => Promise.resolve({ guest: { id: 'g1', name: 'Windows wren' } }),
       listSpaces: () => Promise.resolve({ spaces: [], deleted: [] }),
       shared: () => Promise.resolve({ shared: world.shared }),
@@ -168,6 +187,9 @@ beforeEach(async () => {
   world.path = `/join/${TOKEN}`
   world.shared = []
   world.opened = []
+  world.withdrawn = []
+  world.gate = null
+  world.withdrawFails = null
 
   vi.resetModules()
   ;({ joining } = await import('./joining.svelte'))
@@ -390,6 +412,32 @@ describe('a link that asks first', () => {
     await joining.start()
     expect(joining.step).toBe('waiting')
     expect(world.asked[0]?.key).toBe(TOKEN)
+    // Asking again, so a request that ran out while the app was closed is not
+    // made anew and the owner is not mailed about it a second time.
+    expect(world.asked[0]?.options.again).toBe(true)
+    // Out of sight: a wait the reader already left does not cover the app again.
+    expect(joining.shown).toBe(false)
+  })
+
+  test('goes on asking after a launch whose first ask did not arrive', async () => {
+    vi.useFakeTimers()
+    try {
+      localStorage.setItem('nib:session', 'guest-session')
+      localStorage.setItem('nib:waiting', TOKEN)
+      world.path = '/'
+      world.unreachable = true
+
+      await account.restore()
+      await joining.start()
+      expect(joining.step).toBe('waiting')
+
+      world.unreachable = false
+      const asks = world.asked.length
+      await vi.advanceTimersByTimeAsync(3000)
+      expect(world.asked.length).toBe(asks + 1)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 
@@ -440,6 +488,99 @@ describe('waiting on the owner', () => {
     expect(localStorage.getItem('nib:waiting')).toBeNull()
   })
 
+  test('covers the app while it is new', () => {
+    expect(joining.shown).toBe(true)
+  })
+
+  test('can be closed, and goes on asking out of sight', async () => {
+    joining.close()
+
+    expect(joining.shown).toBe(false)
+    expect(joining.step).toBe('waiting')
+    expect(localStorage.getItem('nib:waiting')).toBe(TOKEN)
+
+    world.through = { guest: { id: 'g1', name: 'Ada' }, space }
+    await joining.walkThrough()
+
+    expect(joining.step).toBeNull()
+    expect(world.shown).toBe('here')
+  })
+
+  test('says so when the owner declines a wait that was closed', async () => {
+    joining.close()
+    world.through = { guest: { id: 'g1', name: 'Ada' }, declined: true }
+    await joining.walkThrough()
+
+    expect(joining.step).toBe('declined')
+    expect(joining.shown).toBe(true)
+  })
+
+  test('can be cancelled, which takes the request back from the owner', async () => {
+    await joining.cancel()
+
+    expect(joining.step).toBeNull()
+    expect(joining.shown).toBe(false)
+    expect(localStorage.getItem('nib:waiting')).toBeNull()
+    expect(world.withdrawn).toEqual([{ key: TOKEN, token: 'guest-session' }])
+  })
+
+  test('is still waiting when the request could not be taken back', async () => {
+    world.withdrawFails = 'network'
+    await joining.cancel()
+
+    expect(joining.step).toBe('waiting')
+    expect(joining.shown).toBe(true)
+    expect(localStorage.getItem('nib:waiting')).toBe(TOKEN)
+    expect(joining.error).toBe('offline')
+  })
+
+  test('is over when the link that made the request has gone', async () => {
+    world.withdrawFails = 404
+    await joining.cancel()
+
+    expect(joining.step).toBeNull()
+    expect(localStorage.getItem('nib:waiting')).toBeNull()
+  })
+
+  test('says it is still waiting while closed, and opens again from there', () => {
+    expect(joining.aside).toBe(false)
+    joining.close()
+    expect(joining.aside).toBe(true)
+
+    joining.reopen()
+    expect(joining.aside).toBe(false)
+    expect(joining.shown).toBe(true)
+  })
+
+  test('asks again as asking again, so a request that ran out is not made anew', async () => {
+    expect(world.asked[0]?.options.again).toBeUndefined()
+
+    await joining.walkThrough()
+    expect(world.asked.at(-1)?.options.again).toBe(true)
+  })
+
+  test('stays cancelled when an ask was already on its way', async () => {
+    let letGo: () => void = () => undefined
+    world.gate = new Promise<void>((done) => (letGo = done))
+    const asking = joining.walkThrough()
+
+    void joining.cancel()
+    world.through = { guest: { id: 'g1', name: 'Ada' }, space }
+    letGo()
+    await asking
+
+    expect(joining.step).toBeNull()
+    expect(joining.shown).toBe(false)
+    expect(world.shown).toBeNull()
+  })
+
+  test('ends with the session it was asked under', async () => {
+    await account.signOut()
+
+    expect(joining.step).toBeNull()
+    expect(localStorage.getItem('nib:waiting')).toBeNull()
+  })
+
   test('asks once at a time, however often it is asked', async () => {
     // The timer and the button reach the same method, and two asks in flight
     // together would land twice: two sessions handed out, and the second answer
@@ -448,6 +589,77 @@ describe('waiting on the owner', () => {
     await Promise.all([joining.walkThrough(), joining.walkThrough()])
 
     expect(world.asked.length).toBe(asks + 1)
+  })
+})
+
+/** Asking on a timer that slows down: quick while the owner is likely looking, then
+ *  down to the pace syncing keeps, so a wait nobody answers is not a request every
+ *  three seconds for a month. */
+describe('the asking behind a wait', () => {
+  beforeEach(async () => {
+    vi.useFakeTimers()
+    world.about = approval
+    world.through = { token: 'guest-session', guest: { id: 'g1', name: 'Ada' }, waiting: true }
+
+    await joining.start()
+    joining.told = 'Ada'
+    await joining.tell()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    // Only this file's own stand-in: the storage and the window stay stubbed.
+    Reflect.deleteProperty(globalThis, 'document')
+  })
+
+  test('asks at once when the tab is back on screen', async () => {
+    const page = Object.assign(new EventTarget(), { visibilityState: 'hidden' })
+    Object.defineProperty(globalThis, 'document', { value: page, configurable: true })
+    // Into the slow pace, which a hidden tab keeps for minutes at a time.
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+
+    const asks = world.asked.length
+    page.visibilityState = 'visible'
+    page.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(world.asked.length).toBe(asks + 1)
+  })
+
+  test('is quick for the first minutes', async () => {
+    const asks = world.asked.length
+    await vi.advanceTimersByTimeAsync(60_000)
+
+    expect(world.asked.length - asks).toBe(20)
+  })
+
+  test('is a few dozen asks in an hour, not a thousand', async () => {
+    const asks = world.asked.length
+    await vi.advanceTimersByTimeAsync(3_600_000)
+
+    expect(world.asked.length - asks).toBeLessThan(90)
+  })
+})
+
+describe('a link that asks first, put aside before anything is typed', () => {
+  beforeEach(() => {
+    world.about = approval
+    world.through = { token: 'guest-session', guest: { id: 'g1', name: 'Ada' }, waiting: true }
+  })
+
+  test('keeps the name and the link for when it is opened again', async () => {
+    await joining.start()
+    joining.told = 'Ada'
+    joining.close()
+
+    expect(joining.shown).toBe(false)
+    expect(joining.aside).toBe(true)
+
+    joining.reopen()
+    expect(joining.told).toBe('Ada')
+    await joining.tell()
+    expect(world.asked[0]?.key).toBe(TOKEN)
+    expect(joining.step).toBe('waiting')
   })
 })
 

@@ -267,6 +267,9 @@ export const scratchpadCard = held(() =>
  *  recorder asks for it as it starts. See StatusBar.svelte and recorder/recording.svelte.ts. */
 export const recordingPill = latched(() => import('./RecordingPill.svelte'))
 
+/** A join sheet put aside, at the foot of the window; see JoinPending.svelte. */
+export const joinPending = latched(() => import('./JoinPending.svelte'))
+
 /** The line that says the app's name changed, fetched only for the one launch that
  *  says it; see RenameNotice.svelte. */
 export const renameNotice = latched(() => import('./RenameNotice.svelte'))

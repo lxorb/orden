@@ -62,6 +62,7 @@
     quickSheet,
     recordingPill,
     renameNotice,
+    joinPending,
     rewriteSheet,
     settingsSheet,
     shareSheet,
@@ -183,6 +184,7 @@
     if (menu.open) void contextMenu.ask()
     if (account.open) void signInSheet.ask()
     if (joining.step) void joinSheet.ask()
+    if (joining.aside) void joinPending.ask()
     // A phone's strip over the keys is up whenever the note is being written in,
     // selection or none; see FormatBar.svelte.
     if (viewport.touch && viewport.typing) void formatBarDoor.ask()
@@ -1232,6 +1234,11 @@
     {#if recordingPill.asked}
       {#await recordingPill.asked then RecordingPill}
         <RecordingPill />
+      {/await}
+    {/if}
+    {#if joining.aside && joinPending.asked}
+      {#await joinPending.asked then JoinPending}
+        <JoinPending />
       {/await}
     {/if}
     {#if renamed.showing && renameNotice.asked}

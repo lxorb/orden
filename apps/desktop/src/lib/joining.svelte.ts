@@ -24,6 +24,7 @@
 
 import { api, ApiError, type Invitation, type Joined } from './api'
 import { account } from './account.svelte'
+import { pollDelay } from './backoff'
 import { message, t } from './i18n.svelte'
 import { deviceName } from './rooms/who'
 import { forget, keep, storedText } from './stored'
@@ -43,6 +44,17 @@ const WAITING_KEY = 'nib:waiting'
 /** How often to ask whether the owner has answered. Slow enough to be nothing
  *  on either end, quick enough that being let in feels like being let in. */
 const ASK_EVERY = 3000
+
+/** How many asks go at that pace: two minutes of it, which is while the owner is
+ *  most likely looking at the mail. After that the wait asks at the pace syncing
+ *  keeps, and slower still while the tab is not on screen, so a wait nobody
+ *  answers is not a request every three seconds for a month. */
+const QUICK_ASKS = 40
+
+function askDelay(asked: number, hidden: boolean): number {
+  if (asked < QUICK_ASKS && !hidden) return ASK_EVERY
+  return pollDelay(Math.max(0, asked - QUICK_ASKS), hidden)
+}
 
 /** What the join page is showing. Null for every link that needs no page at
  *  all, which is every link but one that asks and one that has run out. */
@@ -76,9 +88,25 @@ class Joining {
   busy = $state(false)
   /** What went wrong, in the app's own voice, under the line. */
   error = $state<string | null>(null)
+  /** The sheet put aside: the link still asking one field, or a wait that asks on
+   *  out of sight while being let in still lands. */
+  closed = $state(false)
+
+  /** Put aside, and still something to come back to: what the pill at the foot
+   *  of the window says, and what it opens again. */
+  get aside(): boolean {
+    return this.closed && (this.step === 'asking' || this.step === 'waiting')
+  }
+
+  /** Whether the sheet is up: not while it is put aside, but for any answer. */
+  get shown(): boolean {
+    return this.step !== null && !this.aside
+  }
 
   private token: string | null = null
-  private asking: ReturnType<typeof setInterval> | undefined
+  private asking: ReturnType<typeof setTimeout> | undefined
+  /** How many times the timer has asked since the wait began. */
+  private asks = 0
 
   /** Reads the address bar, once, as the app starts. The token is taken out of
    *  the address straight away: a link is followed once, and one left in the
@@ -117,6 +145,11 @@ class Joining {
     }
 
     this.token = held
+    // Picked back up out of sight, not over the app at every launch, and as the
+    // wait it is: the ask is asking again, so a request that ran out while the app
+    // was closed is not made anew and the owner is not mailed about it twice.
+    this.closed = true
+    this.step = 'waiting'
     this.invitation = await api.invitation(held).catch(() => null)
     await this.walkThrough()
   }
@@ -132,6 +165,7 @@ class Joining {
    *  answer, so there is one request here and not two. */
   async walkThrough() {
     const token = this.token
+    const again = this.step === 'waiting'
     // One ask at a time: the timer behind the wait and the button both reach
     // here, and two in flight together would be two sessions handed out with the
     // second answer applied over the first.
@@ -149,21 +183,31 @@ class Joining {
         // question: which of these is which.
         device: deviceName('Browser'),
         ...(this.told.trim() ? said(this.told.trim()) : {}),
+        ...(again ? { again } : {}),
       })
     } catch (error) {
+      // Cancelled, or signed out, while it was on its way.
+      if (this.token !== token) return
       this.error = message(error, t('Ask for another one.'))
       // A wait survives anything but a refusal. The owner may be about to
       // answer, the next ask is three seconds away, and the link is still
       // written down for the launch after this one.
-      if (this.step === 'waiting' && !refused(error)) return
+      if (this.step === 'waiting' && !refused(error)) {
+        if (!this.asking) this.later()
+        return
+      }
 
       this.stopAsking()
+      this.closed = false
       this.step = 'gone'
       return
     } finally {
       this.busy = false
     }
 
+    // An answer to a wait that was cancelled while it was on its way is not one
+    // to act on: Cancel is the last word, even over the owner's Accept.
+    if (this.token !== token) return
     await this.landed(joined)
   }
 
@@ -193,6 +237,7 @@ class Joining {
 
     if (joined.declined) {
       this.stopAsking()
+      this.closed = false
       this.step = 'declined'
       return
     }
@@ -227,22 +272,57 @@ class Joining {
   private arrived() {
     this.stopAsking()
     this.step = null
+    this.closed = false
     this.token = null
     this.invitation = null
   }
 
   /** The calm page, and the asking behind it. */
   private wait() {
+    if (this.step !== 'waiting') this.asks = 0
     this.step = 'waiting'
     if (this.token) keep(WAITING_KEY, this.token)
-    if (this.asking) return
-
-    this.asking = setInterval(() => void this.walkThrough(), ASK_EVERY)
+    if (!this.asking) this.later()
   }
 
-  private stopAsking() {
-    clearInterval(this.asking)
+  /** The next ask, unless one is already planned. */
+  private laterOnce() {
+    if (!this.asking) this.later()
+  }
+
+  /** The next ask, however the one before it ended. */
+  private later() {
+    const page = typeof document === 'undefined' ? null : document
+    if (page && !this.watching) page.addEventListener('visibilitychange', this.seen)
+    this.watching = page
+    this.asking = setTimeout(
+      () => this.askNow(),
+      askDelay(this.asks, page?.visibilityState === 'hidden'),
+    )
+  }
+
+  private askNow() {
+    clearTimeout(this.asking)
     this.asking = undefined
+    this.asks += 1
+    void this.walkThrough().finally(() => {
+      if (this.step === 'waiting' && !this.asking) this.later()
+    })
+  }
+
+  /** The tab back on screen: a hidden tab asks every few minutes, and the owner
+   *  may have answered in the meantime. */
+  private readonly seen = () => {
+    if (this.watching?.visibilityState === 'visible' && this.asking) this.askNow()
+  }
+
+  private watching: Document | null = null
+
+  private stopAsking() {
+    clearTimeout(this.asking)
+    this.asking = undefined
+    this.watching?.removeEventListener('visibilitychange', this.seen)
+    this.watching = null
     forget(WAITING_KEY)
   }
 
@@ -253,9 +333,49 @@ class Joining {
     this.step = 'gone'
   }
 
-  /** The line is read, and the app underneath it is what is left. */
+  /** The sheet out of sight: a wait still asking, a field still holding what was
+   *  typed in it. The pill brings it back. */
+  close() {
+    this.closed = true
+  }
+
+  reopen() {
+    this.closed = false
+  }
+
+  /** Cancel on a wait: the request is taken back from the owner, so an Accept
+   *  afterwards lets nobody in, and nothing asks again. */
+  async cancel() {
+    const token = this.token
+    if (this.step === 'waiting' && token && account.token) {
+      // No ask while the request is being taken back, or its answer would race it.
+      clearTimeout(this.asking)
+      this.asking = undefined
+      try {
+        await api.withdraw(token, account.token)
+      } catch (error) {
+        if (this.token !== token) return
+        // Gone with its link, which takes the request with it: nothing to take back.
+        // Anything else leaves the request with the owner, so the wait stays, on
+        // screen and still asking, and Cancel is there to press again.
+        if (!(error instanceof ApiError && error.status === 404)) {
+          this.error = message(error, t('Try again'))
+          this.closed = false
+          // An ask that was on its way may have scheduled the next one already.
+          this.laterOnce()
+          return
+        }
+      }
+      if (this.token !== token) return
+    }
+    this.dismiss()
+  }
+
+  /** The line is read, and the app underneath it is what is left. Also how a
+   *  wait is stopped. */
   dismiss() {
     this.stopAsking()
+    this.closed = false
     this.step = null
     this.token = null
     this.invitation = null
@@ -265,3 +385,7 @@ class Joining {
 }
 
 export const joining = new Joining()
+
+// A wait is asked under the session that made it. Signed out, it is nobody's, and
+// the next account in this tab is not to be put on the owner's list in its place.
+account.forgetWithSession(() => joining.dismiss())
