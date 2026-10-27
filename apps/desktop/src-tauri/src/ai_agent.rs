@@ -284,12 +284,14 @@ pub fn ai_agent_call(
 const CONTEXT: &str = "get_context";
 
 /// The reader's context for a turn, as the model reads it: nothing where the grant does
-/// not reach it.
+/// not reach it. Asked for the thread the turn is in, so it names the space the thread's
+/// calls work in, which stays where the thread was started when the reader moves on.
 #[tauri::command(async)]
 pub fn ai_agent_context(
     webview: tauri::Webview,
     app: AppHandle,
     agent: Builtin,
+    thread: Option<String>,
 ) -> Result<Vec<Value>, String> {
     crate::agents::from_the_app(&webview)?;
     let grant = grant_for(&app, &agent)?;
@@ -303,7 +305,7 @@ pub fn ai_agent_context(
         .filter(|verb| reached.contains(*verb))
         .map(|verb| {
             let args = json!({});
-            let asked = json!({ "verb": verb, "args": args, "rest": [] });
+            let asked = asked_for(verb, &args, thread.as_deref());
             let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
             host::rendered(verb, &args, status, &body)
         })

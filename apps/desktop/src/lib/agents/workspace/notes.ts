@@ -34,6 +34,7 @@ import {
   onDisk,
   type Place,
   placeFor,
+  placeOf,
   sharedSource,
   writableAt,
 } from './spaces'
@@ -50,7 +51,7 @@ export function noteOf(
 ): { place: Place; relative: string; tab?: string } {
   if (maybe(call, 'tab') === SCRATCHPAD_TAB) {
     return {
-      place: placeFor(call, maybe(call, 'space')),
+      place: placeOf(call),
       relative: SCRATCHPAD,
       tab: SCRATCHPAD_TAB,
     }
@@ -59,7 +60,9 @@ export function noteOf(
   if (maybe(call, 'tab') !== null) {
     const named = namedTab(call, ['note'], 'a note')
     if (named.relative !== null) {
-      return noteOf({ ...call, args: { ...call.args, tab: null, path: named.relative } }, writing)
+      // The tab's own space, said: one the call names none of is the thread's otherwise.
+      const args = { ...call.args, tab: null, path: named.relative, space: named.place.space.id }
+      return noteOf({ ...call, args }, writing)
     }
 
     const place = placeFor(call, spaceOfTab(named.tab))
@@ -67,7 +70,7 @@ export function noteOf(
     return { place, relative: '', tab: named.tab.id }
   }
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const asked = need(call, 'path')
   const safe = writing ? judgedForWriting(asked) : judged(asked)
   const relative = notePath(safe)
@@ -251,7 +254,7 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
 
   // A canvas, a page note or a web note is a file of its own kind; see new-files.ts.
   const kind = fileKindOf(call)
-  if (kind !== 'note') return createFile(call, placeFor(call, maybe(call, 'space')), kind, made)
+  if (kind !== 'note') return createFile(call, placeOf(call), kind, made)
 
   const { place, relative } = noteOf(call, true)
   if ((await workspace.noteText(onDisk(place, relative))) !== null) {

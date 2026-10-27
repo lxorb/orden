@@ -10,11 +10,12 @@
  *  And a space the grant does not reach does not exist: it is absent from every list
  *  and every lookup of it fails exactly as a name nobody has would (9.6). */
 
+import { threadSpaceOf } from '../../automation/caller'
 import { insideOnly } from '../../automation/inside'
 import { canWriteAt, isShared } from '../../sharing.svelte'
 import { insideSpace } from '../../space-paths'
 import { type Space, workspace } from '../../workspace.svelte'
-import type { Call } from './call'
+import { type Call, maybe } from './call'
 import { Refused } from './problem'
 
 /** A space as a verb works in it. */
@@ -54,6 +55,27 @@ export function placeFor(call: Call, named: string | null): Place {
   if (!found) throw new Refused('no_such_space', `there is no space called ${named}`)
 
   return { space: found, open: found.id === open?.id }
+}
+
+/** The space a verb about notes and files works in: the one it names, else the one its AI
+ *  panel thread works in, which stays where it was started when the reader moves to
+ *  another (docs/ai-sidebar.md 4.11), else the one in the window. A verb about the tabs
+ *  in the window asks `placeFor(call, null)` instead: those are the front space's. */
+export function placeOf(call: Call): Place {
+  const named = maybe(call, 'space')
+  if (named !== null) return placeFor(call, named)
+
+  const id = threadSpaceOf(call.caller)
+  if (!id) return placeFor(call, null)
+  // A thread's space deleted or left since it started is no reason to write in the one
+  // in front, whose notes of the same name are somebody else's work.
+  const home = workspace.spaces.find((one) => one.id === id)
+  if (!home)
+    throw new Refused('no_such_space', 'the space this thread works in is gone: say which space')
+  if (!reaches(call, home)) {
+    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
+  }
+  return { space: home, open: home.id === workspace.activeSpace?.id }
 }
 
 /** A path an agent named, judged the way every path from outside the app is: relative,
