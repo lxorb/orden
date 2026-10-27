@@ -29,8 +29,8 @@ interface Device {
   }
   engine: {
     core: Core
-    pass(space: string): Promise<{ finished: boolean } | null>
-    created(path: string, dir: boolean): Promise<string | null>
+    pass(space: string): Promise<{ finished: boolean; full: boolean } | null>
+    created(path: string, dir: boolean, text?: string): Promise<string | null>
     foreign(path: string): Promise<void>
     removed(path: string): Promise<void>
     held: {
@@ -267,6 +267,84 @@ describe('a file that is not a note, under v2', () => {
     await passed(laptop, phone)
 
     expect(bytesAt(phone, 'photo.png')).toBeUndefined()
+  })
+})
+
+describe('an account too full for a file', () => {
+  /** A laptop whose account answers every upload of bytes 507 while `full` says so. */
+  async function filling(files: Record<string, string | Uint8Array>) {
+    const state = { full: false }
+    const made = await (
+      await kit()
+    ).testDevice({
+      fetch: async (request) => {
+        if (state.full && request.method === 'PUT' && request.url.includes('/v2/blobs/'))
+          return Response.json({ error: 'out of space' }, { status: 507 })
+        return await app.fetch(request, env)
+      },
+      token,
+      name: 'laptop',
+      files,
+    })
+    const core = made.engine.core
+    await core.commit(core.addSpace(space, made.root, 'owner'))
+    expect(await (await kit()).firstPass(core, core.spaces.get(space), null)).toBe(true)
+    await passed(made)
+    return { made, state }
+  }
+
+  test('keeps a new file back, says so, and the rest of the space still syncs', async () => {
+    const { made, state } = await filling({ 'Plan.md': 'one' })
+    const phone = await device('phone')
+    await passed(phone)
+
+    state.full = true
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
+    await made.engine.created(`${made.root}/photo.png`, false)
+    await made.disk.write(`${made.root}/Notes.md`, 'a new note')
+    await made.engine.created(`${made.root}/Notes.md`, false, 'a new note')
+    for (let round = 0; round < 2; round += 1) {
+      const one = await made.engine.pass(space)
+      expect(one?.finished).toBe(true)
+      expect(one?.full).toBe(true)
+      await rooms.settle()
+    }
+    await passed(phone)
+    expect(phone.disk.files.get(`${phone.root}/Notes.md`)).toBe('a new note')
+    expect(bytesAt(phone, 'photo.png')).toBeUndefined()
+    // Kept, not dropped: the file goes once there is room.
+    expect(made.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
+
+    state.full = false
+    const freed = await made.engine.pass(space)
+    expect(freed?.full).toBe(false)
+    await rooms.settle()
+    await passed(phone)
+    expect(bytesAt(phone, 'photo.png')).toEqual(picture(3))
+  })
+
+  test('keeps a replacement back, and the rest of the space still syncs', async () => {
+    const { made, state } = await filling({ 'photo.png': picture(3) })
+    const phone = await device('phone')
+    await passed(phone)
+
+    state.full = true
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(5))
+    await made.engine.foreign(`${made.root}/photo.png`)
+    await made.disk.write(`${made.root}/Notes.md`, 'a new note')
+    await made.engine.created(`${made.root}/Notes.md`, false, 'a new note')
+    const one = await made.engine.pass(space)
+    expect(one?.finished).toBe(true)
+    expect(one?.full).toBe(true)
+    await rooms.settle()
+    await passed(phone)
+    expect(phone.disk.files.get(`${phone.root}/Notes.md`)).toBe('a new note')
+    expect(bytesAt(phone, 'photo.png')).toEqual(picture(3))
+
+    state.full = false
+    await passed(made, phone)
+    expect(made.engine.held.notes).toHaveLength(0)
+    expect(bytesAt(phone, 'photo.png')).toEqual(picture(5))
   })
 })
 
