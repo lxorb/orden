@@ -22,6 +22,7 @@ import { insideSpace, relativeTo, within, withinSpace } from '../../space-paths'
 import { pages } from '../../web-tab/pages.svelte'
 import { workspace } from '../../workspace.svelte'
 import { readThread } from '../chat/threads'
+import { readOutside } from '../chat/transcript'
 import { fromOthers, fromOthersIn } from '../commands/found'
 import type { Attachment, Draft, Mode } from '../chat/types'
 import { fitted, retrieve } from '../retrieve'
@@ -36,6 +37,25 @@ const SELECTION = 4_000
 const THREAD = 3_000
 /** How many notes a folder or a tag lists by name. */
 const LISTED = 200
+
+/** The document the selection is in, as the panel saw it when the message was sent:
+ *  its path, and its share where somebody shared it with the reader. */
+export interface Picked {
+  path: string | null
+  shared: string | null
+}
+
+/** Whether the selection's words may be somebody else's: judged by the document it is
+ *  in, which a tab kept across a space switch makes another space's than the one in
+ *  front. Not knowing which document, the one in front, and then the window's space. */
+async function pickedFromOthers(picked: Picked | null): Promise<boolean> {
+  const active = workspace.active
+  const from = picked ?? (active ? { path: active.path, shared: active.note.shared } : null)
+  if (from?.shared != null) return true
+  if (from?.path) return await fromOthers(from.path)
+  const open = workspace.activeSpace?.root
+  return !!open && (await fromOthersIn(open))
+}
 
 /** The note in front, as the panel offers it. */
 export interface Front {
@@ -108,7 +128,12 @@ async function threadAttachment(
           : turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join(''),
       )
       .join('\n\n')
-  return { label, text: fitted(words, THREAD) }
+  // Its model's words may have been steered by what it read from outside.
+  return {
+    label,
+    text: fitted(words, THREAD),
+    ...(readOutside(thread.turns) ? { untrusted: true } : {}),
+  }
 }
 
 /** One chip, read. */
@@ -116,6 +141,7 @@ async function attachmentOf(
   chip: Mention,
   space: { id: string; root: string },
   selection: string,
+  picked: Picked | null,
 ): Promise<Attachment | null> {
   const { root } = space
   switch (chip.kind) {
@@ -139,14 +165,8 @@ async function attachmentOf(
       return await pageAttachment(chip.id, chip.label)
     case 'selection': {
       if (!selection.trim()) return null
-      // Which note the selection is in is not said: it is the window's, so a document
-      // somebody shared with the reader, or any note there somebody else may have
-      // written, marks it.
-      const open = workspace.activeSpace?.root
       const one = { label: 'selection', text: fitted(selection, SELECTION) }
-      const theirs =
-        (workspace.active?.note.shared ?? null) !== null || (!!open && (await fromOthersIn(open)))
-      return theirs ? { ...one, untrusted: true } : one
+      return (await pickedFromOthers(picked)) ? { ...one, untrusted: true } : one
     }
     case 'scratchpad': {
       const path = await scratchpad.where().catch(() => '')
@@ -181,6 +201,7 @@ export async function draftOf(
   front: Front | null,
   selection: string,
   space: { id: string; root: string } | null,
+  picked: Picked | null = null,
 ): Promise<Draft> {
   const attachments: Attachment[] = []
   if (space) {
@@ -206,7 +227,9 @@ export async function draftOf(
       const one = { label: front.path, text: fitted(front.text, NOTE) }
       attachments.push((await markedFrom(one, [insideSpace(space.root, front.path)])) ?? one)
     }
-    const read = await Promise.all(chips.map((chip) => attachmentOf(chip, space, selection)))
+    const read = await Promise.all(
+      chips.map((chip) => attachmentOf(chip, space, selection, picked)),
+    )
     attachments.push(...read.filter((one): one is Attachment => one !== null))
   }
   return { text, attachments, ...(chips.some((one) => one.kind === 'web') ? { web: true } : {}) }

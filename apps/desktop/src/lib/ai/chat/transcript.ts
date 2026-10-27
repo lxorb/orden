@@ -64,6 +64,25 @@ export function untrusted(source: string, words: string): string {
   return `<${MARK} source="${attribute(source)}">\n${inert(words)}\n</${MARK}>`
 }
 
+/** The opening of a mark, as nib and the crate write it; inside one it is made text. */
+const OPENED = `<${MARK} source="`
+
+/** Whether a thread's turns carried words from outside: an attachment or a tool's
+ *  answer inside the mark, or the provider's web search. What its model wrote after
+ *  may have been steered by them, so those words are passed on marked as well. */
+export function readOutside(turns: readonly Turn[]): boolean {
+  return turns.some((turn) =>
+    turn.role === 'you'
+      ? turn.draft?.web === true ||
+        (turn.draft?.attachments ?? []).some(
+          (one) => one.untrusted === true || (one.text?.includes(OPENED) ?? false),
+        )
+      : turn.parts.some(
+          (part) => part.kind === 'tool' && (part.result?.text.includes(OPENED) ?? false),
+        ),
+  )
+}
+
 /** One attachment's words, labelled, and marked where they came from outside. */
 function attached(one: Attachment): string {
   if (!one.text) return ''

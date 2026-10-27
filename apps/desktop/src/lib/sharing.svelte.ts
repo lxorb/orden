@@ -247,44 +247,54 @@ export function canWriteIn(
  *  is in, a paired space it has not named counts as shared: a kept `owner` role says
  *  nothing about who else is in it. */
 export function reachedByOthers(path: string | null): boolean {
-  if (path === null) return false
+  return reachedAs(path) !== null
+}
+
+/** The same, saying how: the whole space is somebody else's or shared, or only notes
+ *  of it were shared on their own. What an agent's answer names its source by. */
+export function reachedAs(path: string | null): Reach {
+  if (path === null) return null
 
   const space = workspace.spaces.find((one) => within(one.root, path) !== null)
-  return !!space && reached(space.root, path)
+  return space ? reached(space.root, path) : null
 }
+
+/** How somebody else reaches a note or a space, or null where nobody does. */
+export type Reach = 'space' | 'note' | null
 
 /** The same for a space as a whole: whether somebody else may have written anything
  *  in it, a note shared on its own included. What an answer that names many notes of
  *  the space asks, an agent's search or its list of the tree. */
 export function reachedByOthersIn(root: string): boolean {
   const space = workspace.spaces.find((one) => samePath(one.root, root))
-  return !!space && reached(space.root, null)
+  return !!space && reached(space.root, null) !== null
 }
 
 /** `reachedByOthers` for one note of the space at `root`, or for any of them. */
-function reached(root: string, path: string | null): boolean {
-  if (path === null ? !!remoteOf(root)?.sharedItems?.length : isSharedItem(path)) return true
-
+function reached(root: string, path: string | null): Reach {
   const unknown = !account.listed || sync.remoteIdFor(root) === null
-  if (unknown && !remoteOf(root) && keptShared(root, path)) return true
+  const guess = unknown && !remoteOf(root) ? keptShared(root, path) : null
+  if (guess === 'space' || isShared(root) || roleOf(root) !== 'owner') return 'space'
+  if (guess === 'note') return 'note'
 
-  return isShared(root) || roleOf(root) !== 'owner'
+  const item = path === null ? !!remoteOf(root)?.sharedItems?.length : isSharedItem(path)
+  return item ? 'note' : null
 }
 
 /** Before the listing, or before the folder is paired: whether what the last one kept, or not knowing, says somebody
  *  else may be in the space or the note, any note of it where `path` is null.
  *  A bare role kept by an older build says
  *  nothing of who else is in, and neither does a pairing nothing was kept for. */
-function keptShared(root: string, path: string | null): boolean {
+function keptShared(root: string, path: string | null): Reach {
   const one = kept(root)
-  if (one === undefined) return sync.remoteIdFor(root) !== null
-  if (!one || typeof one !== 'object') return true
+  if (one === undefined) return sync.remoteIdFor(root) !== null ? 'space' : null
+  if (!one || typeof one !== 'object') return 'space'
   const { shared, items } = one as Kept
-  if (shared) return true
-  if (!items?.length) return false
-  if (path === null) return true
+  if (shared) return 'space'
+  if (!items?.length) return null
+  if (path === null) return 'note'
   const id = sync.tracked(path)?.id
-  return !id || items.includes(id)
+  return !id || items.includes(id) ? 'note' : null
 }
 
 /** Where a document's words came from, as much as this side of the wire knows:

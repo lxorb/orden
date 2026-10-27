@@ -21,6 +21,7 @@
  *  panel. */
 
 import { newThread } from '../chat/threads'
+import { untrusted } from '../chat/transcript'
 import type { Effort, Mode, Thread } from '../chat/types'
 import type { Ended } from '../commands/types'
 import { type Offered, routed } from './route'
@@ -49,6 +50,8 @@ export interface Helper {
   state: HelperState
   /** Its last words, once it has ended. */
   answer: string
+  /** It read words from outside, so its words may be somebody else's to steer. */
+  outside?: boolean
   error?: string
   started: number
 }
@@ -83,6 +86,13 @@ function wordsOf(ended: Ended): string {
       .join('')
       .trim() ?? ''
   )
+}
+
+/** A helper's words as the model that asked for them gets them: inside the untrusted
+ *  mark where the helper read words from outside (docs/agent-native.md 9.6). */
+export function answerFor(helper: Pick<Helper, 'answer' | 'description' | 'outside'>): string {
+  if (!helper.outside || !helper.answer) return helper.answer
+  return untrusted(`helper ${helper.description}`, helper.answer)
 }
 
 class Helpers {
@@ -177,6 +187,7 @@ class Helpers {
             this.set(helper.id, {
               state,
               answer: wordsOf(ended),
+              ...(ended.outside ? { outside: true } : {}),
               ...(ended.error ? { error: ended.error } : {}),
             })
           },

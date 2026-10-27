@@ -63,6 +63,11 @@ class Views {
       .join('\n')
   }
 
+  /** The document the selected words are in, or null while no view has reported. */
+  selectedIn(): SharedDoc | null {
+    return this.reporting ? documentOf(this.reporting) : null
+  }
+
   /** A pane reporting that its selection moved. */
   moved(view: EditorView) {
     this.reporting = view

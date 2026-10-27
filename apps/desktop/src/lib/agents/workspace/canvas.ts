@@ -34,7 +34,15 @@ import { readablePages } from './pages-ops'
 import { Refused } from './problem'
 import { namedTab, tabsOwnSpace } from './tab-target'
 import { kindsWhere } from '../../workspace/tab-kinds'
-import { judged, judgedForWriting, onDisk, type Place, placeOf, sharedSource } from './spaces'
+import {
+  docSource,
+  judged,
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeOf,
+  sharedSource,
+} from './spaces'
 
 /** A canvas a call names: a `.canvas` or `.pages` file of a space it may reach, by its
  *  path, or by `tab` - which also reaches one drawn in a tab and not saved yet. */
@@ -139,7 +147,7 @@ export async function readCanvas(call: Call): Promise<AgentAnswer> {
   const read = isPages(target) ? readablePages(canvas) : readable(canvas)
   return done(
     { path: target.relative, ...read },
-    sharedSource(target.place, target.relative, target.draft),
+    target.draft ? docSource(target.draft) : sharedSource(target.place, target.relative),
   )
 }
 

@@ -52,7 +52,8 @@ import { nextMode } from '../modes'
 import type { Provider } from '../providers'
 import { ai } from '../store.svelte'
 import { threadMarkdown } from './export'
-import { draftOf, type Front } from './gather'
+import { readOutside } from '../chat/transcript'
+import { draftOf, type Front, type Picked } from './gather'
 import type { Mention } from './mentions'
 import { OLD_KEY, oldSpaces, threadFromAsk } from './migrate'
 import {
@@ -112,6 +113,8 @@ export type Host = 'side' | 'tab'
 interface Around {
   front: Front | null
   selection: string
+  /** The document the selection is in, which says whose words it may be. */
+  picked?: Picked | null
 }
 
 function headOf(thread: Thread): Head {
@@ -689,8 +692,10 @@ class Chat implements Panel {
         around.front,
         around.selection,
         spaceOfThread(thread),
+        around.picked ?? null,
       )
       ended = await this.sendDraft(thread, provider, draft, stopper)
+      if (readOutside(thread.turns)) ended = { ...ended, outside: true }
     } catch (error) {
       const words = message(error, t('The model did not answer.'))
       ended = { stop: 'error', error: words, turn: null, usage: null }
