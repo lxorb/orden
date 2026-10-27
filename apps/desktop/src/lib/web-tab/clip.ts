@@ -13,12 +13,16 @@
  *  the rest, so the same page clips to the same note from here and from the
  *  extension. Where it is written is the workspace's, which knows the space. */
 
+import { t } from '../i18n.svelte'
 import { workspace } from '../workspace.svelte'
 import { plainOrigin } from './address'
 import { clipNote, clipSource } from './note'
 import { pages } from './pages.svelte'
 
-/** Clips what the tab is showing into the space, and answers where it landed.
+/** Clips what the tab is showing into the tab's own space, `space` (see `spaceOf` in
+ *  workspace.svelte.ts), and answers where it landed. Never the space on screen: tabs
+ *  stay in the strip across a switch, and a page of one space clipped into another put
+ *  its words where people the other space is shared with read them.
  *
  *  No tab of its own: the page is still what the reader is looking at, and a note
  *  that opened over it would take them away from what they were reading. The row
@@ -26,9 +30,12 @@ import { pages } from './pages.svelte'
  *
  *  What is selected wins over the article, which is what the reader asked for by
  *  selecting it, so the app never has to offer the choice as a row. Null where
- *  nothing could be written: no space open, or a page that said nothing at all. */
+ *  nothing could be written: a page that said nothing at all, or a space that is not on
+ *  this device or may only be read, which the tab says in a line, as a thread does for
+ *  its own Save as a note (see `noteFrom` in ai/sidebar/chat.svelte.ts). */
 export async function clipPage(
   tabId: string,
+  space: string | null,
   fallback: { url: string | null; title: string },
 ): Promise<string | null> {
   const read = await pages.read(tabId, true)
@@ -46,5 +53,11 @@ export async function clipPage(
   const named = (read?.title ?? fallback.title).trim()
   const page = { url, title: named.length ? named : plainOrigin(url), html: read?.html ?? '' }
 
-  return workspace.noteFrom(await clipNote(page, new Date()))
+  const root = workspace.spaces.find((one) => one.id === space)?.root
+  const path = root ? await workspace.noteFrom(await clipNote(page, new Date()), root) : null
+  if (path === null) {
+    const why = root ? t('you can only read this space') : t('no such space')
+    pages.of(tabId).notice = `${t('Save as a note')} · ${why}`
+  }
+  return path
 }

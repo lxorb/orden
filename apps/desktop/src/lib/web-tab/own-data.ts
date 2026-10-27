@@ -21,6 +21,7 @@ import { t } from '../i18n.svelte'
 import { menu } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
 import { canWriteAt } from '../sharing.svelte'
+import { samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
@@ -29,7 +30,7 @@ import { keepNow } from './keep'
 import { pages } from './pages.svelte'
 import { withOwn } from './own-file'
 import { readWebFile } from './shortcut'
-import { freshOwn, ownStore, webData } from './web-data.svelte'
+import { freshOwn, isCopying, ownStore, webData } from './web-data.svelte'
 
 /** The two places a web note's pages may keep what websites store. */
 type Where = 'global' | 'separate'
@@ -41,6 +42,28 @@ async function textOf(path: string): Promise<string | null> {
   const open = workspace.documentAt(path)
   if (open) return open.text
   return invoke<string>('read_note', { path }).catch(() => null)
+}
+
+/** Whether a web note other than `path` names the store `own`: one open in a tab, or
+ *  one in the file list. A store two notes name is both of theirs, so setting one of
+ *  them back to Global must not clear it, or the other is signed out and loses what it
+ *  kept with nothing said. Save never gives two notes one id (see `ownFor` in
+ *  workspace/placing.ts), but a copied file does. */
+async function namedElsewhere(path: string, own: string): Promise<boolean> {
+  // A tab saved out of this note has its store copied out of this one right now.
+  if (isCopying(own)) return true
+  const others = new Set<string>()
+  for (const tab of workspace.tabs) {
+    if (tab.kind === 'web' && tab.path !== null) others.add(tab.path)
+  }
+  for (const one of workspace.files) {
+    if (/\.url$/i.test(one.path)) others.add(one.path)
+  }
+  for (const other of others) {
+    if (samePath(other, path)) continue
+    if (readWebFile(other, await textOf(other))?.own === own) return true
+  }
+  return false
 }
 
 /** The choice in place of the row that asked, the one in force ticked: the shared web
@@ -73,7 +96,9 @@ async function choose(path: string, where: Where): Promise<void> {
   const was = readWebFile(path, text)?.own ?? null
   if ((was !== null) === (where === 'separate')) return
 
-  if (where === 'global') {
+  // A store another note still names is left as it is, so there is nothing to ask.
+  const shared = was !== null && where === 'global' && (await namedElsewhere(path, was))
+  if (where === 'global' && !shared) {
     const sure = await prompt.confirm({
       title: t('Share this note’s web data again?'),
       detail: t('What its pages are signed in to on this computer is deleted.'),
@@ -95,14 +120,14 @@ async function choose(path: string, where: Where): Promise<void> {
   // The note's tabs, and the tabs with no file that took its web data with them.
   for (const tab of workspace.tabs) {
     if (tab.kind !== 'web') continue
-    const copy = tab.path === null && was !== null && tab.apart === was
+    const copy = !shared && tab.path === null && was !== null && tab.apart === was
     if (copy) tab.apart = own
     if (copy || tab.path === path) await pages.rehouse(tab.id, own, said)
   }
 
   // Every site the history knows, for nib's own Chromium, which clears a site's data
   // only where it is named; the history is not kept per store. See `sitesSince`.
-  if (was !== null && own === null) {
+  if (was !== null && own === null && !shared) {
     await invoke('web_clear', {
       stores: [ownStore(was)],
       clearing: { since: 0, site: true, cache: true },

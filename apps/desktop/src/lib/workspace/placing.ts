@@ -5,7 +5,7 @@
 
 import { nameFromTitle, shownName } from '../note-name'
 import { nameOf } from '../space-paths'
-import { invoke, joinPath } from '../tauri'
+import { invoke, isDesktop, joinPath } from '../tauri'
 import { pages } from '../web-tab/pages.svelte'
 import { sameSite, settleShortcuts } from '../web-tab/settle'
 import { readWebFile, writeShortcut } from '../web-tab/shortcut'
@@ -46,7 +46,9 @@ type Claim = (path: string, run: () => Promise<NoteDoc | null>) => Promise<NoteD
  *  same instant were once handed the same name. The name is asked for against what is
  *  open as well as what is listed and claimed before the write begins, which is
  *  `claim`; see open.ts.
- *  A web note kept over keeps its own web data, if it had any. */
+ *  A web note kept over keeps its own choice of web data, Global or Separate, whatever
+ *  the tab had. A new note from a tab with web data of its own (`apart`) is Separate;
+ *  see `ownFor`. */
 export async function keepWeb(
   ws: Places,
   claim: Claim,
@@ -77,7 +79,7 @@ export async function keepWeb(
   }
 
   const kept = await claim(target, async () => {
-    const own = over ? (readWebFile(target, over.text)?.own ?? null) : null
+    const own = over ? (readWebFile(target, over.text)?.own ?? null) : await ownFor(tab, url)
     const fresh = writeShortcut(url, title, new Date(), undefined, page.kept ?? undefined, own)
     const text = over ? settleShortcuts(target, over.text, fresh, true) : fresh
 
@@ -93,6 +95,47 @@ export async function keepWeb(
   })
   if (kept !== tab.note) return null
   return target
+}
+
+/** The web data of a new note made of `tab`, on `url`: none for a tab on the shared
+ *  store, and for a tab that kept another note's pages apart (a link out of a Separate
+ *  note) a fresh id, whose store is a copy of the one the tab was in. Never that note's
+ *  id: a note set back to Global clears its store, and two notes naming one store meant
+ *  either of them signed the other out and deleted what it kept.
+ *
+ *  Copied before the file is written, since the file is what moves the page into the
+ *  new store, so the page is built again there still signed in (`web_copy`,
+ *  src-tauri/src/web_state.rs): the cookies, and the storage of the site it is on. A
+ *  copy that fails leaves the new store empty, which is a note signed out rather than a
+ *  note that is not saved. */
+async function ownFor(tab: Tab, url: string): Promise<string | null> {
+  if (!tab.apart) return null
+  const { copyingOut, freshOwn, ownStore } = await import('../web-tab/web-data.svelte')
+  const own = freshOwn()
+  const from = tab.apart
+  if (isDesktop) {
+    const origins = originOf(url)
+    await copyingOut(from, () =>
+      invoke('web_copy', {
+        from: ownStore(from),
+        into: ownStore(own),
+        origins: origins ? [origins] : [],
+      }),
+    ).catch((error: unknown) => {
+      console.warn('nib: a saved tab’s web data could not be copied', error)
+    })
+  }
+  return own
+}
+
+/** The origin of a web address, or null for one that is not on the web. */
+function originOf(url: string): string | null {
+  try {
+    const at = new URL(url)
+    return at.protocol === 'https:' || at.protocol === 'http:' ? at.origin : null
+  } catch {
+    return null
+  }
 }
 
 /** The web note already at the name a tab is being kept under, where it is the same

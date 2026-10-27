@@ -1297,6 +1297,7 @@ class Pages {
     clearTimeout(page.resting)
     void history().then((visited) => visited.left(tabId))
     this.asked.delete(tabId)
+    if (page.inPrivate) void import('./sites').then(({ forgetAside }) => forgetAside(tabId))
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
@@ -1394,7 +1395,9 @@ class Pages {
       const { grants, readAsked } = await pagePermissions()
       await listen('nib://web-ask', (event) => {
         const said = readAsked(event.payload)
-        if (said && this.held.has(said.tab)) grants.heard(said)
+        // A private page's answer is kept for its tab and never written down.
+        const page = said ? this.held.get(said.tab) : undefined
+        if (said && page) grants.heard({ ...said, inPrivate: page.inPrivate })
       })
 
       // A page has opened `alert`, `confirm` or `prompt`, or asks before it is left. Its

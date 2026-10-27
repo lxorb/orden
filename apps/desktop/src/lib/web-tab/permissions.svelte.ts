@@ -26,7 +26,7 @@
 
 import { invoke, isDesktop } from '../tauri'
 import { withOrWithout } from '../records'
-import { isRecord, keep, stored } from '../stored'
+import { isRecord, Shared } from '../stored'
 import { plainOrigin } from './address'
 
 const STORAGE_KEY = 'nib:web-grants'
@@ -85,6 +85,33 @@ export interface Asking {
   /** The origin, as the bubble shows it. */
   site: string
   ask: Ask
+  /** Whether the page that asked is a private tab's, whose answers are kept for that tab
+   *  in memory and never written down; see private.ts. */
+  inPrivate?: boolean
+}
+
+/** The private tab an answer to `said` is kept to, or none for every other tab. */
+function asideOf(said: Asking): string | undefined {
+  return said.inPrivate ? said.tab : undefined
+}
+
+type Table = Record<string, Partial<Record<Ask, Answer>>>
+
+/** What storage holds, read rather than trusted. */
+function readTable(read: unknown): Table {
+  if (!isRecord(read)) return {}
+
+  const out: Table = {}
+  for (const [site, value] of Object.entries(read)) {
+    if (!isRecord(value)) continue
+
+    const said: Partial<Record<Ask, Answer>> = {}
+    for (const [kind, answer] of Object.entries(value)) {
+      if (isAsk(kind) && isAnswer(answer)) said[kind] = answer
+    }
+    if (Object.keys(said).length) out[site] = said
+  }
+  return out
 }
 
 /** What the crate says when a site asks for something. Read rather than trusted: an
@@ -100,56 +127,77 @@ export function readAsked(value: unknown): Asking | null {
 }
 
 class Grants {
-  /** What each site was told, by origin and then by what it asked for. */
-  private by = $state<Record<string, Partial<Record<Ask, Answer>>>>({})
+  /** What each site was told, by origin and then by what it asked for: read again
+   *  whenever another window wrote it, so Reset permissions there is not undone by an
+   *  answer here. See `Shared` in stored.ts. */
+  private readonly kept = new Shared(STORAGE_KEY, readTable)
+
+  /** Counted up as what is kept changes, here or in another window, so what is drawn
+   *  from it is drawn again. */
+  private changed = $state(0)
+
+  /** What each private tab was told, by tab: in memory only, and gone with the tab. A
+   *  private tab is asked afresh, the way an Incognito window starts with nothing. */
+  private asides = $state<Record<string, Table>>({})
 
   /** The requests waiting for an answer, oldest first: one bubble at a time, like a
    *  browser, and the next one appears as the last is answered. */
   asking = $state<Asking[]>([])
 
   constructor() {
-    const read = stored(STORAGE_KEY)
-    if (!isRecord(read)) return
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
+    window.addEventListener('storage', (event) => {
+      if (event.key === STORAGE_KEY || event.key === null) this.changed++
+    })
+  }
 
-    const out: Record<string, Partial<Record<Ask, Answer>>> = {}
-    for (const [site, value] of Object.entries(read)) {
-      if (!isRecord(value)) continue
+  private table(aside?: string): Table {
+    if (aside !== undefined) return this.asides[aside] ?? {}
+    this.heardChange()
+    return this.kept.get()
+  }
 
-      const said: Partial<Record<Ask, Answer>> = {}
-      for (const [kind, answer] of Object.entries(value)) {
-        if (isAsk(kind) && isAnswer(answer)) said[kind] = answer
-      }
-      if (Object.keys(said).length) out[site] = said
-    }
-    this.by = out
+  /** Reads the count, so what reads the table is drawn again when it moves. */
+  private heardChange(): number {
+    return this.changed
   }
 
   /** Everything this site has been told, which is nothing until it asked. */
-  of(site: string): Partial<Record<Ask, Answer>> {
-    return this.by[site] ?? {}
+  of(site: string, aside?: string): Partial<Record<Ask, Answer>> {
+    return this.table(aside)[site] ?? {}
   }
 
   /** What this site was told about one thing, or null for one nobody has decided. */
-  said(site: string, ask: Ask): Answer | null {
-    return this.of(site)[ask] ?? null
+  said(site: string, ask: Ask, aside?: string): Answer | null {
+    return this.of(site, aside)[ask] ?? null
   }
 
   /** Remembers an answer. A site with nothing left is taken out, so the store holds the
    *  sites somebody has decided about and no others. */
-  remember(site: string, ask: Ask, answer: Answer | null) {
+  remember(site: string, ask: Ask, answer: Answer | null, aside?: string) {
     if (!site) return
 
     const kept = Object.fromEntries(
-      Object.entries(this.of(site)).filter(([one]) => one !== ask),
+      Object.entries(this.of(site, aside)).filter(([one]) => one !== ask),
     ) as Partial<Record<Ask, Answer>>
     if (answer !== null) kept[ask] = answer
 
-    const all = withOrWithout(this.by, site, Object.keys(kept).length ? kept : null)
-    this.by = all
+    this.write(
+      withOrWithout(this.table(aside), site, Object.keys(kept).length ? kept : null),
+      aside,
+    )
+  }
 
-    // A device that cannot keep this asks again next time, which is the answer that
-    // matters; it just forgets what was said.
-    keep(STORAGE_KEY, JSON.stringify(all))
+  /** The table written: a private tab's in memory, else to this device's storage. A
+   *  device that cannot keep it asks again next time, which is the answer that matters;
+   *  it just forgets what was said. */
+  private write(all: Table, aside?: string) {
+    if (aside !== undefined) {
+      this.asides = { ...this.asides, [aside]: all }
+      return
+    }
+    this.kept.set(all, JSON.stringify(all))
+    this.changed++
   }
 
   /** A site has asked for something. Either the reader has already said what this site
@@ -159,7 +207,7 @@ class Grants {
    *  A second request for the same thing while the bubble is up is the same question:
    *  one bubble, and both requests answered by the one press. */
   heard(said: Asking) {
-    const already = this.said(said.site, said.ask)
+    const already = this.said(said.site, said.ask, asideOf(said))
     if (already !== null) {
       void this.tell(said.id, already === 'allow')
       return
@@ -172,9 +220,12 @@ class Grants {
    *  remembered for this site, and every other request the same press answers goes with
    *  it - a page that asked for the camera twice asked one question. */
   answer(said: Asking, allow: boolean) {
-    this.remember(said.site, said.ask, allow ? 'allow' : 'block')
+    const aside = asideOf(said)
+    this.remember(said.site, said.ask, allow ? 'allow' : 'block', aside)
 
-    const same = this.asking.filter((one) => one.site === said.site && one.ask === said.ask)
+    const same = this.asking.filter(
+      (one) => one.site === said.site && one.ask === said.ask && asideOf(one) === aside,
+    )
     this.asking = this.asking.filter((one) => !same.includes(one))
     for (const one of same) void this.tell(one.id, allow)
   }
@@ -190,8 +241,11 @@ class Grants {
 
   /** The tab has gone, so its questions have. A request nobody let go of is a promise
    *  the page is still waiting on, which is what a browser leaves behind for a bubble
-   *  somebody dismissed - but a closed tab has no page to wait. */
+   *  somebody dismissed - but a closed tab has no page to wait. A private tab's answers
+   *  go with it. */
   dropped(tab: string) {
+    if (this.asides[tab]) this.asides = withOrWithout(this.asides, tab, null)
+
     const gone = this.asking.filter((one) => one.tab === tab)
     if (!gone.length) return
 
@@ -207,12 +261,11 @@ class Grants {
   /** Everything this site was told, forgotten - Chrome's Reset permissions. The page
    *  goes on running: what it already holds it keeps until it asks again, which is
    *  what happens in a browser too. */
-  forget(site: string) {
-    if (!this.by[site]) return
+  forget(site: string, aside?: string) {
+    const all = this.table(aside)
+    if (!all[site]) return
 
-    const all = withOrWithout(this.by, site, null)
-    this.by = all
-    keep(STORAGE_KEY, JSON.stringify(all))
+    this.write(withOrWithout<Partial<Record<Ask, Answer>>>(all, site, null), aside)
   }
 }
 
