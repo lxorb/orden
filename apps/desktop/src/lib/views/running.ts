@@ -16,6 +16,7 @@ import { writeFile } from '../workspace/write-file'
 import { writeEach } from './act'
 import { type HeldBase, planned } from './automate'
 import { contextFor } from './context'
+import { landing, onLanded } from './moving'
 import { nowHere, todayHere } from './days'
 import { templatesFolder, templateWords } from './templates'
 
@@ -32,8 +33,19 @@ export function basesAre(paths: readonly string[]) {
 const running = (): boolean => held.size > 0
 /** Notes the runner just wrote, whose next change is its own. */
 const ours = new Set<string>()
-/** Notes waiting for their quiet moment, with the rows they had before it. */
-const waiting = new Map<string, { removed: readonly Row[]; timer: ReturnType<typeof setTimeout> }>()
+/** Notes waiting for their quiet moment, with the rows they had before it. One written
+ *  where a move under way is going has no timer yet: it waits at `at`, its path on
+ *  disk, for the move to be told or to be over (moving.ts). */
+const waiting = new Map<
+  string,
+  {
+    space: string
+    path: string
+    removed: readonly Row[]
+    timer?: ReturnType<typeof setTimeout>
+    at?: string
+  }
+>()
 
 /** How long a note is left to settle before its bases look at it: long enough for the
  *  write that changed it to have finished recording its undo, so the runner's write can
@@ -122,17 +134,43 @@ export function heardChange(change: RowsChange) {
   if (change.path === null || !running()) return
   if (!change.added.some((row) => row.kind === 'note')) return
   if (change.from) heard(change.space, change.path, change.from.rows, change.from)
-  else heard(change.space, change.path, change.removed)
+  else {
+    const at = insideSpace(change.root, change.path)
+    heard(change.space, change.path, change.removed, undefined, landing(at) ? at : undefined)
+  }
 }
+
+/** Looks at a note once it has settled. */
+function settling(key: string, space: string, path: string, before: readonly Row[]) {
+  waiting.set(key, {
+    space,
+    path,
+    removed: before,
+    timer: setTimeout(() => {
+      waiting.delete(key)
+      void run(space, path, before)
+    }, SETTLE),
+  })
+}
+
+// A move that is over without telling where a note waiting for it went: the note is
+// looked at as what it is.
+onLanded(() => {
+  for (const [key, one] of waiting) {
+    if (one.at !== undefined && !landing(one.at)) settling(key, one.space, one.path, one.removed)
+  }
+})
 
 /** A note's rows changed: looked at once they settle, unless the change is the runner's.
  *  `from` is where a moved note was: what it was there, still waiting to be looked at,
- *  is what it was before, and what a save at its new path told first is not. */
+ *  is what it was before, and what a save at its new path told first is not. `at` is
+ *  the note's path on disk where a move under way is going there: it waits for it. */
 export function heard(
   space: string,
   path: string,
   removed: readonly Row[],
   from?: { space: string; path: string },
+  at?: string,
 ) {
   const key = keyOf(space, path)
   const left = from && keyOf(from.space, from.path)
@@ -145,13 +183,8 @@ export function heard(
   const was = waiting.get(key)
   if (was) clearTimeout(was.timer)
   const before = there?.removed ?? (from ? removed : (was?.removed ?? removed))
-  waiting.set(key, {
-    removed: before,
-    timer: setTimeout(() => {
-      waiting.delete(key)
-      void run(space, path, before)
-    }, SETTLE),
-  })
+  if (at === undefined) settling(key, space, path, before)
+  else waiting.set(key, { space, path, removed: before, at })
 }
 
 // ---- repeating templates ------------------------------------------------------------

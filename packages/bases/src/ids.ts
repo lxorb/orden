@@ -4,8 +4,8 @@
  *  The next id is one more than the highest the rows hold, so an id is never handed out
  *  twice while its row exists. Two devices offline can both make 45; whoever looks
  *  first after the second sync renumbers one of them (`idRepairs`). Which one is decided
- *  by the note's path, the only thing about it both devices are sure to agree on: a
- *  file's creation time is each disk's own and sync does not carry it (B552). Pure. */
+ *  by the note's path, spelled the same way on every disk: a file's creation time is
+ *  each disk's own and sync does not carry it (B552). Pure. */
 
 import type { Row, Value } from './types'
 
@@ -36,9 +36,33 @@ export function nextId(rows: readonly Row[], property: string, prefix: string): 
   return idText(prefix, highest + 1)
 }
 
-/** By path, compared by code unit rather than by this device's locale, so every device
- *  orders them alike. */
-const byPath = (a: Row, b: Row) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0)
+/** What Windows holds in no name, beside the control characters. */
+const FORBIDDEN = '<>:"\\|?*'
+
+/** A path as every device spells it: each disk writes a name it cannot hold its own
+ *  way (a `:` as `_` on a Mac, `<>:"\|?*` and a trailing dot or space as `_` on
+ *  Windows; sync2/places.ts `localName`), a Mac may hold it decomposed, and a disk may
+ *  fold case. Without its `.md`, so a copy, `Crash copy` or `Crash 2`, comes after the
+ *  note it was copied from (`Crash`). */
+function spelledAlike(path: string): string {
+  return path
+    .replace(/\.md$/i, '')
+    .normalize('NFC')
+    .split('/')
+    .map((name) =>
+      Array.from(name, (char) => (char < ' ' || FORBIDDEN.includes(char) ? '_' : char))
+        .join('')
+        .replace(/[. ]+$/, (tail) => '_'.repeat(tail.length)),
+    )
+    .join('/')
+    .toLowerCase()
+}
+
+/** By that spelling, compared by code unit rather than by this device's locale, so every
+ *  device orders them alike; the path as this disk has it only breaks a tie. */
+const byCode = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
+const byPath = (a: Row, b: Row) =>
+  byCode(spelledAlike(a.path), spelledAlike(b.path)) || byCode(a.path, b.path)
 /** Older first on this disk, for rows only this device numbers. */
 const older = (a: Row, b: Row) => a.file.ctime - b.file.ctime || byPath(a, b)
 

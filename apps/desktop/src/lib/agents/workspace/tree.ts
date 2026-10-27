@@ -24,6 +24,7 @@ import { revOf } from '../docs/rev'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need, needScope, sourceOf } from './call'
 import { indexOf } from './links'
+import { moving } from '../../views/moving'
 import { Refused } from './problem'
 import {
   judged,
@@ -165,9 +166,12 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
 async function movedAway(place: Place, from: string, to: string, folder: boolean): Promise<void> {
   const index = await indexOf(place)
 
-  await invoke('rename_note', { from, to })
-  await index.retarget(from, to, place.space.root, undefined, { moved: true })
-  await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
+  // Under way until it is told; see `move` in workspace.svelte.ts.
+  await moving(to, async () => {
+    await invoke('rename_note', { from, to })
+    await index.retarget(from, to, place.space.root, undefined, { moved: true })
+    await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
+  })
 }
 
 export async function trashFile(call: Call): Promise<AgentAnswer> {
