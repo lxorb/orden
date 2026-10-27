@@ -14,6 +14,8 @@ import {
   withOnly,
   withSorting,
 } from './display'
+import { dropInto } from './drop'
+import { groupLabel } from './words'
 
 const TODAY = '2026-10-13'
 const ROWS = taskRowsOfText(
@@ -84,5 +86,44 @@ describe('the Display menu', () => {
     expect(words(withOnly(today, 0, { project: 'Elsewhere.md' }))).toEqual([])
     expect(notesIn(ROWS)).toEqual([{ path: 'Errands.md', name: 'Errands' }])
     expect(withOnly(narrowed, 0, {}).views[0]?.nib.kept.only).toBeUndefined()
+  })
+})
+
+describe('a view grouped by note', () => {
+  const rows = [
+    ...taskRowsOfText('Notes', 'Alpha/Tasks.md', '- [ ] Alpha one 📅 2026-10-13'),
+    ...taskRowsOfText('Notes', 'Beta/Tasks.md', '- [ ] Beta one 📅 2026-10-13'),
+    ...taskRowsOfText('Notes', 'Inbox.md', '- [ ] Inbox one 📅 2026-10-13'),
+  ]
+  const today = builtinView('today')
+  const byNote = withGrouping(today, 0, 'note', today.views[0] ?? null)
+  const context = contextFor({ rows, today: TODAY, now: `${TODAY}T09:00:00` })
+  const groups = answer(displayed(byNote, 0), 0, rows, context).groups
+  const keys = groups.map((group) => group.key)
+
+  test('keeps notes of the same name in other folders apart', () => {
+    expect(groupingOf(byNote.views[0] ?? today.views[0]!, today.views[0] ?? null)).toBe('note')
+    expect(groups.map((group) => group.rows.map((row) => row.task?.text))).toEqual([
+      ['Alpha one'],
+      ['Beta one'],
+      ['Inbox one'],
+    ])
+  })
+
+  test('names each group by its note, with the folder where two names clash', () => {
+    const property = byNote.views[0]?.groupBy?.property
+    expect(keys.map((key) => groupLabel(property, key, TODAY, keys))).toEqual([
+      'Tasks · Alpha',
+      'Tasks · Beta',
+      'Inbox',
+    ])
+  })
+
+  test('a task dropped on a group moves to that note, not one of the same name', () => {
+    const property = byNote.views[0]?.groupBy?.property ?? ''
+    const inbox = rows[2]!
+    expect(dropInto(property, keys[1] ?? null, inbox, TODAY)).toEqual({
+      move: { path: 'Beta/Tasks.md' },
+    })
   })
 })

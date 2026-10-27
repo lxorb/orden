@@ -416,6 +416,49 @@ describe('the filter builder', () => {
   })
 })
 
+describe('the filter builder on empty values', () => {
+  const notes = [
+    noteRow('Zero.md', 'estimate: 0\nbillable: false'),
+    noteRow('Blank.md', 'estimate: ""\ntags: []'),
+    noteRow('Missing.md', 'other: 1'),
+    noteRow('Full.md', 'estimate: 3\nbillable: true\ntags: [a]'),
+  ]
+  const shown = (row: { property: string; op: 'empty' | 'filled'; value: string }) => {
+    const base = readBase(`filters: ${JSON.stringify(expressionOf(row))}\nviews:\n  - type: table\n    name: T\n`)
+    const context = contextFor({ rows: notes, today: '2026-10-13', now: '2026-10-13T09:00:00' })
+    return answer(base, 0, notes, context).groups.flatMap((group) =>
+      group.rows.map((one) => one.file.basename),
+    )
+  }
+
+  test('counts 0 and false as values, and only missing, blank and empty lists as empty', () => {
+    expect(shown({ property: 'note.estimate', op: 'filled', value: '' })).toEqual(['Full', 'Zero'])
+    expect(shown({ property: 'note.estimate', op: 'empty', value: '' })).toEqual([
+      'Blank',
+      'Missing',
+    ])
+    expect(shown({ property: 'note.billable', op: 'empty', value: '' })).toEqual([
+      'Blank',
+      'Missing',
+    ])
+    expect(shown({ property: 'note.tags', op: 'empty', value: '' })).toEqual([
+      'Blank',
+      'Missing',
+      'Zero',
+    ])
+  })
+
+  test('reads both shapes back as rows', () => {
+    for (const property of ['note.estimate', 'estimate']) {
+      for (const op of ['empty', 'filled'] as const) {
+        expect(rowOf(expressionOf({ property, op, value: '' }))).toEqual({ property, op, value: '' })
+      }
+    }
+    expect(rowOf('!note.cover')).toEqual({ property: 'note.cover', op: 'empty', value: '' })
+    expect(rowOf('note.cover')).toEqual({ property: 'note.cover', op: 'filled', value: '' })
+  })
+})
+
 describe('the calendar', () => {
   test('shows whole weeks for a month, and a week, three days or a day', () => {
     const month = daysShown('month', '2026-10-14', 1)
