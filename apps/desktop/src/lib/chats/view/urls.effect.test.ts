@@ -1,6 +1,7 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import type { Chats, Who } from '../api'
+import type { Who } from '@nib/chats'
+import type { Chats } from '../api'
 import { computed, root, watch } from '../../../../test/effects/runes.svelte'
 
 /** A file whose fetch failed is asked again while a row still draws it (B545). The store
