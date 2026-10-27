@@ -147,7 +147,7 @@
         >
           {#if attachedOf(index).length}
             <div class="went">
-              {#each attachedOf(index) as label (label)}
+              {#each attachedOf(index) as label, at (at)}
                 <span>{label}</span>
               {/each}
             </div>
