@@ -233,12 +233,13 @@ export function reachedByOthers(path: string | null): boolean {
   if (!space) return false
   if (isSharedItem(path)) return true
 
-  if (!account.listed && !remoteOf(space.root) && keptShared(space.root, path)) return true
+  const unknown = !account.listed || sync.remoteIdFor(space.root) === null
+  if (unknown && !remoteOf(space.root) && keptShared(space.root, path)) return true
 
   return isShared(space.root) || roleOf(space.root) !== 'owner'
 }
 
-/** Before the listing: whether what the last one kept, or not knowing, says somebody
+/** Before the listing, or before the folder is paired: whether what the last one kept, or not knowing, says somebody
  *  else may be in the space or the note. A bare role kept by an older build says
  *  nothing of who else is in, and neither does a pairing nothing was kept for. */
 function keptShared(root: string, path: string): boolean {

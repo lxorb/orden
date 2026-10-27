@@ -532,6 +532,22 @@ describe('what may be done before the account has listed its spaces', () => {
     expect(reachedByOthers('Items/new.md')).toBe(true)
   })
 
+  /** The listing can answer before the sync has paired anything, which is an ordinary
+   *  launch: the listing then names no folder, and what the last one kept still says. */
+  test('counts it as shared while the listing is in and nothing is paired yet', async () => {
+    world.mirrors = { Team: 'space-1' }
+    account.spaces = [remote('space-1', 'owner', true)]
+    await account.loadSpaces()
+
+    world.mirrors = {}
+    world.locals = ['Team', 'Local']
+    account.spaces = [remote('space-1', 'owner', true)]
+    account.listed = true
+
+    expect(reachedByOthers('Team/weekly.md')).toBe(true)
+    expect(reachedByOthers('Local/plan.md')).toBe(false)
+  })
+
   test('takes a role an older build kept, which says nothing of who else is in, as shared', () => {
     world.locals = ['Team', 'Local']
     account.user = null
