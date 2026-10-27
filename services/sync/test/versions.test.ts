@@ -1,4 +1,4 @@
-import { beforeEach, afterEach, describe, expect, test } from 'vitest'
+import { beforeEach, afterEach, describe, expect, test, vi } from 'vitest'
 
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import {
@@ -161,6 +161,51 @@ describe('the account keeps what a note said', () => {
     }
 
     expect(rows(env, note).map((one) => one.by)).toEqual(['', 'the laptop', 'Bob', 'the laptop'])
+  })
+
+  test('nor of another device that calls itself by the same name', async () => {
+    // Two Macs: the name a device sends is its kind, not which one it is.
+    const other = await signIn(env, 'a@b.dev')
+    for (const [content, baseVersion, who] of [
+      ['# Mine', 1, token],
+      ['# Bob words', 2, other],
+      ['# Mine again', 3, token],
+    ] as const) {
+      await call(env, `/v1/notes/${note}`, {
+        method: 'PUT',
+        token: who,
+        body: { content, baseVersion },
+        headers: { 'x-nib-device': 'Mac desktop' },
+      })
+    }
+
+    expect(rows(env, note).map((one) => one.hash)).toContain(await sha256('# Bob words'))
+  })
+
+  test('and a fold onto a moment another version took meanwhile keeps the save', async () => {
+    await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token,
+      body: { content: '# Two', baseVersion: 1 },
+    })
+    const at = Date.now() + 60 * 1000
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(at)
+    env.justBefore(/^update or ignore note_versions set at|^update note_versions set at/, () => {
+      env.db
+        .prepare("insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'x', 1, '')")
+        .run(note, at)
+    })
+    try {
+      await call(env, `/v1/notes/${note}`, {
+        method: 'PUT',
+        token,
+        body: { content: '# Three', baseVersion: 2 },
+      })
+    } finally {
+      clock.mockRestore()
+    }
+
+    expect(rows(env, note).at(-1)?.hash).toBe(await sha256('# Three'))
   })
 
   test('but not the same words twice', async () => {
