@@ -258,6 +258,19 @@ describe('the panel’s chats', () => {
     await vi.waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['Book the dentist']))
   })
 
+  test('say which space a running thread works in, for its calls that name none', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    void chat.startAside('home', 'Book the dentist', 'auto', 'Do this task')
+    const { callerOf, threadSpaceOf } = await import('../../automation/caller')
+    const task = chat.running[0] ?? ''
+    const agent = { id: 'nib-anthropic', name: 'Claude' }
+    expect(threadSpaceOf(callerOf(agent, task))).toBe('home')
+    expect(threadSpaceOf(callerOf(agent, 'nobody'))).toBeNull()
+    expect(threadSpaceOf(callerOf(agent))).toBeNull()
+  })
+
   test('at the plan’s limit, send the message again once it resets, in another chat too', async () => {
     engine.send.mockClear()
     const chat = await launched()
