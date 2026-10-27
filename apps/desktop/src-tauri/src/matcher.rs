@@ -1547,6 +1547,45 @@ mod tests {
         assert!(first.ranges.is_empty());
     }
 
+    /// The twin of "a row with no words to replace says so" in
+    /// search/match.test.ts: what Replace counts is the rows that are not bare.
+    #[test]
+    fn a_row_with_no_words_to_replace_says_so() {
+        let body = "- [ ] buy milk\n- [ ] call Ana\nmilk here\n";
+        let shape = |json: &str| -> Vec<serde_json::Value> {
+            matcher(json)
+                .hits(&note(body), 50)
+                .iter()
+                .map(|hit| serde_json::to_value(hit).expect("a hit as JSON"))
+                .map(|hit| serde_json::json!([hit["text"], hit.get("bare").cloned()]))
+                .collect()
+        };
+        let task_todo = scope("task-todo", &all(&[]));
+
+        assert_eq!(
+            shape(&task_todo),
+            [
+                serde_json::json!(["- [ ] buy milk", true]),
+                serde_json::json!(["- [ ] call Ana", true]),
+            ]
+        );
+        assert_eq!(
+            shape(&all(&[task_todo.clone(), text("milk")])),
+            [
+                serde_json::json!(["- [ ] buy milk", null]),
+                serde_json::json!(["- [ ] call Ana", true]),
+                serde_json::json!(["milk here", null]),
+            ]
+        );
+        let path = r#"{"kind":"path","text":"Meeting","fold":true}"#;
+        assert_eq!(shape(path), [serde_json::json!(["- [ ] buy milk", true])]);
+
+        // Cut short past its match, a row still has words to replace.
+        let long = format!("{} beta\n", "x".repeat(400));
+        let hits = matcher(&text("beta")).hits(&note(&long), 10);
+        assert!(!hits.first().expect("a hit").bare);
+    }
+
     #[test]
     fn a_row_counts_its_line_from_zero_and_stops_where_it_is_told() {
         let hits = matcher(&text("gamma")).hits(&note(NOTE), 10);

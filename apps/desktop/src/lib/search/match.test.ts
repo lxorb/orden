@@ -330,6 +330,12 @@ describe('a row', () => {
     const [hit] = new Matcher(parseQuery('beta')).hits(note({ body }), 10)
     expect(hit?.text).toHaveLength(200)
     expect(hit?.ranges).toEqual([])
+    expect(hit?.bare).toBeUndefined()
+  })
+
+  test('found by the note rather than by a line has no words to replace', () => {
+    const [hit] = new Matcher(parseQuery('path:Note')).hits(note({ body: 'beta\n' }), 10)
+    expect(hit?.bare).toBe(true)
   })
 
   test('counts lines from zero', () => {
@@ -368,6 +374,26 @@ describe('tasks', () => {
   test('and with nothing said about them at all', () => {
     expect(asked('task-todo:')).toEqual(['- [ ] write the plan', '- [ ] send the ledger'])
     expect(asked('task:').length).toBe(4)
+  })
+
+  /** What Replace counts and replaces: a row with no words of the query on it has
+   *  nothing to put a replacement into. */
+  test('and a row with no words to replace says so', () => {
+    const rows = (source: string) =>
+      new Matcher(parseQuery(source))
+        .hits(note({ body: `${TASKS}milk here\n` }), 50)
+        .map((hit) => [hit.text, hit.bare ?? false])
+
+    expect(rows('task-todo:')).toEqual([
+      ['- [ ] write the plan', true],
+      ['- [ ] send the ledger', true],
+    ])
+    expect(rows('task-todo: milk')).toEqual([
+      ['- [ ] write the plan', true],
+      ['- [ ] send the ledger', true],
+      ['milk here', false],
+    ])
+    expect(rows('task:plan')).toEqual([['- [ ] write the plan', false]])
   })
 
   test('where a nested one is still a task', () => {
