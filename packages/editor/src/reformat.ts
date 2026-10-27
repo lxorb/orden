@@ -15,8 +15,7 @@ import { parseTable, serializeTable } from './table/model'
  *  `tidy` is kept away from the characters these are spelled with. */
 const VERBATIM = new Set([
   'CodeBlock',
-  // A fence in a quote, a callout or a list item: the walk below only sees the ones
-  // at the top of the note.
+  // In a quote or a list item, where the walk below does not look.
   'FencedCode',
   'InlineCode',
   'BlockMath',
@@ -112,9 +111,8 @@ function readFrontMatter(lines: readonly string[]): number | null {
   return null
 }
 
-/** The lines a table starts on, as the parser finds them: not in code, maths, a
- *  comment or an HTML block, where a row of pipes is what it says, and not in a quote
- *  or a list item, whose markers and indent the serialiser would drop. */
+/** The lines the parser starts a table on: not in code, a comment or HTML, and not
+ *  in a quote or a list item, whose markers the serialiser would drop. */
 function tableStarts(tree: Tree, lines: readonly string[]): Set<number> {
   const starts = new Set<number>()
   tree.iterate({

@@ -18,11 +18,8 @@ export interface Heading {
 const HEADING = /^(#{1,6})\s+(.*)$/
 
 /** Every ATX heading in `text`, in order, skipping code and the front matter - a
- *  `# ` in a shell snippet or a YAML block is a comment, not a heading.
- *
- *  Which lines are code is `lines` in @nib/markdown/links, the reading the page and
- *  `[[Note#Heading]]` agree on: a block closes on its own mark only, so a `~~~` in a
- *  ``` block, or a ``` in a ```` block, is code being shown and not the end of it. */
+ *  `# ` in a shell snippet or a YAML block is a comment, not a heading. Code as
+ *  `lines` in links.ts reads it: a block closes on its own mark only. */
 export function scanHeadings(text: string): Heading[] {
   const found: Heading[] = []
   if (!text) return found

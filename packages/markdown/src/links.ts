@@ -408,8 +408,7 @@ interface Row {
   /** True inside a fence, and on both of its delimiters: neither a link nor a
    *  block name can live in any of those. */
   code: boolean
-  /** True on the front matter's lines, closing fence and all: YAML, which the page
-   *  leaves out, so a `# comment` there is not a heading. */
+  /** True on the front matter's lines: YAML, where `#` opens no heading. */
   matter: boolean
 }
 
