@@ -14,7 +14,9 @@
 //! off without taking away - an uninstall takes an extension's stored data with it, and a
 //! password manager turned off is not a password manager signed out - and removes. So nib
 //! keeps one page of `chrome://extensions` nobody sees, in the browsing profile, and asks
-//! it. The files are read where Chromium keeps them: `<profile>/Extensions/<id>` for one
+//! it. Removing is the exception: asked from that page, Chromium wants a gesture and then
+//! shows a dialog of its own whatever it is told, and only an extension taking itself
+//! away is spared both - so an extension is removed from a page of its own (see `remove`). The files are read where Chromium keeps them: `<profile>/Extensions/<id>` for one
 //! from a store, and the folder it was loaded from for one loaded unpacked - developer
 //! mode's Load unpacked, or `--load-extension` - which only `chrome.developerPrivate`,
 //! on the same page, can say. Read from the store's folder alone, an unpacked one had
@@ -37,11 +39,17 @@ use super::link::Store;
 /// The page nobody sees that the management API is asked through.
 const CONTROL: &str = "web-extensions-control";
 
+/// The page nobody sees of the extension being removed, which it removes itself from.
+const LEAVING: &str = "web-extension-leaving";
+
 /// How long one question to the engine may take.
 const PATIENCE: Duration = Duration::from_secs(20);
 
 /// One page built at a time.
 static BUILDING: Mutex<()> = Mutex::new(());
+
+/// One extension removed at a time: each is removed from a page of the same label.
+static REMOVING: Mutex<()> = Mutex::new(());
 
 /// What the engine has installed, with the folder each is unpacked in. From a thread
 /// that is not the window's: the page's answers arrive on that one.
@@ -119,17 +127,63 @@ pub fn enable(app: &AppHandle, id: &str, on: bool) -> Result<(), String> {
 }
 
 /// Takes one away, with what it stored.
+///
+/// Asked of the control page, `chrome.management.uninstall` refuses without a gesture and,
+/// given one, shows Chromium's own dialog whatever `showConfirmDialog` says: only an
+/// extension removing itself is spared both. On Linux that dialog came up as a window of
+/// its own with no buttons and the app stopped answering until it was closed, so Remove
+/// in Settings took nothing away (#789). Instead one of the extension's own pages - its
+/// `manifest.json`, which every extension has - is opened where nobody sees it, and the
+/// extension is asked from there to take itself away. One turned off has no pages, so it
+/// is turned on for the moment it takes. Whether it went is the control page's to say:
+/// the extension's page closes as it goes, and answers nothing.
 pub fn remove(app: &AppHandle, id: &str) -> Result<(), String> {
+    if id.len() != 32 || !id.bytes().all(|byte| (b'a'..=b'p').contains(&byte)) {
+        return Err("that is not an extension".to_string());
+    }
+    let _removing = REMOVING.lock().unwrap_or_else(PoisonError::into_inner);
     let page = control(app).ok_or("the engine's extensions could not be reached")?;
-    asked(
-        &page,
-        &format!(
-            "chrome.management.uninstall({}, {{ showConfirmDialog: false }}).then(() => true)",
-            json!(id)
-        ),
-    )
-    .map(|_| ())
-    .ok_or_else(|| "the engine did not remove it".to_string())
+    let held = |expression: &str| asked(&page, &expression.replace("ID", &json!(id).to_string()));
+    let was_on = held("chrome.management.get(ID).then((one) => one.enabled)")
+        .and_then(|on| on.as_bool())
+        .ok_or("the engine does not have it")?;
+    if !was_on {
+        enable(app, id, true)?;
+    }
+
+    if let Some(left) = app.get_webview(LEAVING) {
+        devtools::let_go_of(LEAVING);
+        let _ = left.close();
+    }
+    let address = format!("chrome-extension://{id}/manifest.json");
+    if let Some(own) = hidden(app, LEAVING, &address) {
+        for _ in 0..50 {
+            let ready = asked(
+                &own,
+                "typeof chrome.management?.uninstallSelf === 'function'",
+            );
+            if ready == Some(Value::Bool(true)) {
+                let _ = asked(&own, "(chrome.management.uninstallSelf(), true)");
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        devtools::let_go_of(LEAVING);
+        let _ = own.close();
+    }
+
+    for _ in 0..50 {
+        if held("chrome.management.get(ID).then(() => true, () => false)")
+            == Some(Value::Bool(false))
+        {
+            return Ok(());
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    if !was_on {
+        let _ = enable(app, id, false);
+    }
+    Err("the engine did not remove it".to_string())
 }
 
 /// The page that asks the management API, built the first time it is needed and kept,
@@ -139,9 +193,24 @@ fn control(app: &AppHandle) -> Option<Webview> {
     if let Some(page) = app.get_webview(CONTROL) {
         return Some(page);
     }
+    let page = hidden(app, CONTROL, "chrome://extensions/")?;
+    // Ready once the management API answers.
+    for _ in 0..50 {
+        if asked(&page, "typeof chrome.management === 'object'").and_then(|said| said.as_bool())
+            == Some(true)
+        {
+            return Some(page);
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    None
+}
+
+/// A page nobody sees, in the browsing profile, at `address`.
+fn hidden(app: &AppHandle, label: &str, address: &str) -> Option<Webview> {
     let window = app.get_window("main")?;
-    let address: tauri::Url = "chrome://extensions/".parse().ok()?;
-    let builder = WebviewBuilder::new(CONTROL, WebviewUrl::External(address))
+    let address: tauri::Url = address.parse().ok()?;
+    let builder = WebviewBuilder::new(label, WebviewUrl::External(address))
         .focused(false)
         // A drop is the page's, and never a pick; see `window_builder` in launch.rs.
         .disable_drag_drop_handler();
@@ -157,17 +226,7 @@ fn control(app: &AppHandle) -> Option<Webview> {
         let _ = made.try_send(built.ok());
     })
     .ok()?;
-    let page = waiting.recv_timeout(PATIENCE).ok().flatten()?;
-    // Ready once the management API answers.
-    for _ in 0..50 {
-        if asked(&page, "typeof chrome.management === 'object'").and_then(|said| said.as_bool())
-            == Some(true)
-        {
-            return Some(page);
-        }
-        std::thread::sleep(Duration::from_millis(100));
-    }
-    None
+    waiting.recv_timeout(PATIENCE).ok().flatten()
 }
 
 /// What a promise the page evaluates comes to.
