@@ -142,10 +142,13 @@ vi.mock('../../tauri', async (original) => ({
 let readOnly = false
 vi.mock('../../sharing.svelte', () => ({
   isShared: () => false,
-  reachedByOthers: () => false,
+  reachedByOthers: (path: string | null) => path !== null && othersWrite.has(path),
+  reachedAs: (path: string | null) => (path !== null && othersWrite.has(path) ? 'space' : null),
   reachedByOthersIn: () => false,
   canWriteAt: () => !readOnly,
 }))
+/** Notes somebody else can write, set by a test. */
+const othersWrite = new Set<string>()
 vi.mock('../../web-tab/pages.svelte', () => ({ pages: { addressOf: () => null } }))
 vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
@@ -382,6 +385,18 @@ describe('where the reader is', () => {
     tabs.push(theirs)
     workspace.activeTabId = 'theirs'
     expect(await call('get_context', {})).toMatchObject({ untrusted: 'note shared with you' })
+  })
+
+  /** Tabs outlive a space switch: the tab in front is judged by its own note. */
+  test('a tab of a shared space, in front of the reader’s own, is read as data', async () => {
+    tabs.push(tab('team', 'note', '/s/Team/Plan.md', { shown: 'Plan' }))
+    workspace.activeTabId = 'team'
+    othersWrite.add('/s/Team/Plan.md')
+    try {
+      expect(await call('get_context', {})).toMatchObject({ untrusted: 'shared note Plan.md' })
+    } finally {
+      othersWrite.clear()
+    }
   })
 })
 

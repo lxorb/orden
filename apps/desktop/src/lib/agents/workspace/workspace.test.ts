@@ -232,6 +232,14 @@ vi.mock('../../sharing.svelte', () => ({
   isShared: (root: string) => root === '/s/Home',
   reachedByOthers: (path: string | null) =>
     path !== null && (path.startsWith('/s/Home/') || othersWrite.has(path)),
+  reachedAs: (path: string | null) =>
+    path === null
+      ? null
+      : path.startsWith('/s/Home/')
+        ? 'space'
+        : othersWrite.has(path)
+          ? 'note'
+          : null,
   reachedByOthersIn: (root: string) =>
     root === '/s/Home' || [...othersWrite].some((path) => path.startsWith(`${root}/`)),
   canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
@@ -910,11 +918,11 @@ describe('the notes, on the road', () => {
     othersWrite.add('/s/Work/Plan.md')
     try {
       expect(await call('read_note', { path: 'Plan' })).toMatchObject({
-        untrusted: 'shared space Work',
+        untrusted: 'shared note Plan.md',
       })
       expect(await call('list_notes', {})).toMatchObject({ untrusted: 'shared space Work' })
       expect(await call('list_versions', { path: 'Plan' })).toMatchObject({
-        untrusted: 'shared space Work',
+        untrusted: 'shared note Plan.md',
       })
       expect(await call('list_tasks', { space: 'Work' })).toMatchObject({
         untrusted: 'shared space Work',

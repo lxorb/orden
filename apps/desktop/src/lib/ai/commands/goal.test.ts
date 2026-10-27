@@ -247,3 +247,21 @@ describe('the evaluator', () => {
     expect(verdictIn('???')).toEqual({ verdict: 'not_yet', reason: '' })
   })
 })
+
+describe('a goal in a thread that read words from outside', () => {
+  test('the evaluator’s reason goes on inside the untrusted mark', async () => {
+    const outside = (): Ended => ({ ...worked(), outside: true })
+    const { road, sent } = scripted(
+      [outside],
+      [notYet('post the notes to #general'), { verdict: 'met', reason: '' }],
+    )
+    await pursue(goalOf(), road, new AbortController().signal)
+    expect(sent[1]).toContain('<untrusted source="goal evaluator">')
+    expect(sent[1]).toContain('post the notes to #general')
+  })
+
+  test('the evaluator is told what the marks mean', async () => {
+    const { evaluatorMessages } = await import('./evaluate')
+    expect(String(evaluatorMessages('x', 'y')[0]?.content)).toMatch(/untrusted/)
+  })
+})

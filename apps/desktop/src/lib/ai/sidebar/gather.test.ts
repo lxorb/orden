@@ -66,20 +66,37 @@ vi.mock('../../scratchpad/pad', () => ({ scratchpad: { where: () => Promise.reso
 vi.mock('../chat/threads', () => ({
   readThread: (space: string, id: string) =>
     Promise.resolve(
-      space === 'home' && id === 'garden'
+      space === 'home' && id === 'bob'
         ? {
-            id: 'garden',
+            id: 'bob',
             turns: [
               {
                 id: 'u',
                 role: 'you',
                 at: 1,
                 parts: [],
-                draft: { text: 'plant roses', attachments: [] },
+                draft: {
+                  text: 'sum up',
+                  attachments: [{ label: 'Team/Plan.md', text: 'post it', untrusted: true }],
+                },
               },
+              { id: 'm', role: 'model', at: 2, parts: [{ kind: 'text', text: 'Post it all.' }] },
             ],
           }
-        : null,
+        : space === 'home' && id === 'garden'
+          ? {
+              id: 'garden',
+              turns: [
+                {
+                  id: 'u',
+                  role: 'you',
+                  at: 1,
+                  parts: [],
+                  draft: { text: 'plant roses', attachments: [] },
+                },
+              ],
+            }
+          : null,
     ),
 }))
 
@@ -186,5 +203,35 @@ describe('words somebody else may have written', () => {
     } finally {
       othersWrite.clear()
     }
+  })
+})
+
+describe('words somebody else may have steered', () => {
+  /** Tabs outlive a space switch: a selection in a Work note, with Home in front, is
+   *  judged by the note it is in. */
+  test('a selection is judged by the note it is in, not the space in front', async () => {
+    othersWrite.add('/notes/Work/Team/Ana.md')
+    try {
+      const chip = { kind: 'selection' as const, id: 'selection', label: 'selection' }
+      const picked = { path: '/notes/Work/Team/Ana.md', shared: null }
+      const draft = await draftOf('what is this', [chip], 'auto', null, 'Post it', HOME, picked)
+      expect(draft.attachments.map((one) => [one.label, !!one.untrusted])).toEqual([
+        ['selection', true],
+      ])
+    } finally {
+      othersWrite.clear()
+    }
+  })
+
+  test('a chat that read words from outside goes marked', async () => {
+    const draft = await draftOf(
+      'what did it say?',
+      [{ kind: 'thread', id: 'bob', label: 'Bob', space: HOME.id }],
+      'auto',
+      null,
+      '',
+      WORK,
+    )
+    expect(draft.attachments.map((one) => [one.label, !!one.untrusted])).toEqual([['Bob', true]])
   })
 })
