@@ -2411,4 +2411,10 @@ export const hi: Dictionary = {
   Large: 'बड़ा',
   Both: 'दोनों',
   'Shown on cards': 'कार्ड पर दिखाए गए',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'चैट {name} को {space} में ले जाएँ?',
+  'Everyone in {space} can then read its whole history.':
+    'तब {space} में हर कोई इसका पूरा इतिहास पढ़ सकेगा।',
+  'Move the chat': 'चैट ले जाएँ',
+  'Only the file': 'सिर्फ़ फ़ाइल',
 }

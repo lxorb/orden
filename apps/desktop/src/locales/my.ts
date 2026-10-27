@@ -2393,4 +2393,10 @@ export const my: Dictionary = {
   Large: 'ကြီး',
   Both: 'နှစ်ခုလုံး',
   'Shown on cards': 'ကတ်များပေါ်တွင် ပြသ',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ချတ် {name} ကို {space} သို့ ရွှေ့မလား',
+  'Everyone in {space} can then read its whole history.':
+    'ထို့နောက် {space} ရှိ လူတိုင်း ၎င်း၏ မှတ်တမ်းအားလုံးကို ဖတ်နိုင်မည်။',
+  'Move the chat': 'ချတ်ကို ရွှေ့ရန်',
+  'Only the file': 'ဖိုင်သာ',
 }

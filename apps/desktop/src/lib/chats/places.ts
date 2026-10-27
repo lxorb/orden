@@ -3,57 +3,72 @@
  *  (workspace/chat-leaving.ts, B542).
  *
  *  A copy of a pointer is the same bytes as the original, so nothing on the disk tells
- *  the two apart. The pointer the chats store lists a chat at is the chat's own, and it
- *  is kept here across launches: after a relaunch a duplicate beside its original sorts
- *  first in the tree, and taken for the original it would carry the chat away. What the
- *  device does not know it never guesses: no pointer kept means no carry.
+ *  the two apart. The device keeps which one is the chat's own, per account and across
+ *  launches: the pointer it made, or found alone in the chat's space, or that pointer
+ *  where it was moved to. Two pointers in the chat's space and neither kept is not
+ *  decided by their order in the tree, where `Plans copy.chat` sorts before
+ *  `Plans.chat`: the own pointer is unknown then, and a move of either asks.
  *
  *  The space a chat lives in is the account's listing; a move this device has just made
  *  is kept too, in memory, for when the listing cannot be heard yet: an undo straight
  *  after a move would otherwise go by where the chat was. */
 
+import { account } from '../account.svelte'
 import { keep, stored } from '../stored'
 
 const KEY = 'nib:chat-own-pointers'
 
-/** Chat id to the path of its own pointer, read once and written through. Held in
- *  memory as well, so a storage that refuses keeps it for the run. */
-let own: Map<string, string> | null = null
+/** Whom the chats were last started for: the store says, and a move asked before it
+ *  has started goes by whoever is signed in. */
+let current: string | null = null
 
-function owned(): Map<string, string> {
-  if (own) return own
-  own = new Map()
-  const kept = stored(KEY)
+export function startedFor(id: string): void {
+  current = id
+}
+
+function who(): string | null {
+  return current ?? account.user?.id ?? account.guest?.id ?? null
+}
+
+/** Chat id to the path of its own pointer, for each account, read once and written
+ *  through. Held in memory as well, so a storage that refuses keeps it for the run. */
+const own = new Map<string, Map<string, string>>()
+
+function owned(id: string): Map<string, string> {
+  const held = own.get(id)
+  if (held) return held
+  const map = new Map<string, string>()
+  const kept = stored(`${KEY}:${id}`)
   if (kept && typeof kept === 'object' && !Array.isArray(kept)) {
     for (const [chat, path] of Object.entries(kept)) {
-      if (typeof path === 'string') own.set(chat, path)
+      if (typeof path === 'string') map.set(chat, path)
     }
   }
-  return own
+  own.set(id, map)
+  return map
 }
 
-function write(): void {
-  keep(KEY, JSON.stringify(Object.fromEntries(owned())))
-}
-
-/** The pointer that is the chat's own on this device, or null where it never placed it. */
+/** The pointer that is the chat's own on this device, or null where that is not known. */
 export function ownPointer(chat: string): string | null {
-  return owned().get(chat) ?? null
+  const id = who()
+  return id ? (owned(id).get(chat) ?? null) : null
 }
 
-/** The chats store's places, as it has them now. `all` for a scan of every space, which
- *  lets go of a chat it found no pointer for. */
-export function keepOwnPointers(places: Iterable<[string, string]>, all = false): void {
-  const map = owned()
-  const next = new Map(places)
-  if (all) for (const chat of [...map.keys()]) if (!next.has(chat)) map.delete(chat)
-  let changed = all
-  for (const [chat, path] of next) {
-    if (map.get(chat) === path) continue
-    map.set(chat, path)
-    changed = true
-  }
-  if (changed) write()
+/** Every chat's own pointer this device keeps, for the account signed in. */
+export function ownPointers(): [string, string][] {
+  const id = who()
+  return id ? [...owned(id)] : []
+}
+
+/** The chat's own pointer is this one now, or, given null, is not known any more. */
+export function keepOwnPointer(chat: string, path: string | null): void {
+  const id = who()
+  if (!id) return
+  const map = owned(id)
+  if ((map.get(chat) ?? null) === path) return
+  if (path === null) map.delete(chat)
+  else map.set(chat, path)
+  keep(`${KEY}:${id}`, JSON.stringify(Object.fromEntries(map)))
 }
 
 /** Where this device last moved a chat on the account, this run. */

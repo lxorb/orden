@@ -2379,4 +2379,10 @@ export const ko: Dictionary = {
   Large: '크게',
   Both: '둘 다',
   'Shown on cards': '카드에 표시',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '채팅 {name}을(를) {space}(으)로 옮길까요?',
+  'Everyone in {space} can then read its whole history.':
+    '그러면 {space}의 모든 사람이 전체 기록을 읽을 수 있어요.',
+  'Move the chat': '채팅 옮기기',
+  'Only the file': '파일만',
 }

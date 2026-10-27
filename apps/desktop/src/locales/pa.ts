@@ -2419,4 +2419,10 @@ export const pa: Dictionary = {
   Large: 'ਵੱਡਾ',
   Both: 'ਦੋਵੇਂ',
   'Shown on cards': 'ਕਾਰਡਾਂ ਉੱਤੇ ਦਿਖਾਇਆ',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ਚੈਟ {name} ਨੂੰ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
+  'Everyone in {space} can then read its whole history.':
+    'ਫਿਰ {space} ਵਿੱਚ ਹਰ ਕੋਈ ਇਸਦਾ ਪੂਰਾ ਇਤਿਹਾਸ ਪੜ੍ਹ ਸਕੇਗਾ।',
+  'Move the chat': 'ਚੈਟ ਭੇਜੋ',
+  'Only the file': 'ਸਿਰਫ਼ ਫ਼ਾਈਲ',
 }

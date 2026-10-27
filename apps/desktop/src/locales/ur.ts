@@ -2412,4 +2412,10 @@ export const ur: Dictionary = {
   Large: 'بڑا',
   Both: 'دونوں',
   'Shown on cards': 'کارڈز پر دکھائے گئے',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'چیٹ {name} کو {space} میں منتقل کریں؟',
+  'Everyone in {space} can then read its whole history.':
+    'پھر {space} میں ہر کوئی اس کی پوری تاریخ پڑھ سکے گا۔',
+  'Move the chat': 'چیٹ منتقل کریں',
+  'Only the file': 'صرف فائل',
 }

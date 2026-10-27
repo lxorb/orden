@@ -2425,4 +2425,10 @@ export const te: Dictionary = {
   Large: 'పెద్దది',
   Both: 'రెండూ',
   'Shown on cards': 'కార్డులపై చూపబడేవి',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'చాట్ {name} ను {space} కి తరలించాలా?',
+  'Everyone in {space} can then read its whole history.':
+    'అప్పుడు {space} లోని అందరూ దాని పూర్తి చరిత్రను చదవగలరు.',
+  'Move the chat': 'చాట్‌ను తరలించు',
+  'Only the file': 'ఫైల్ మాత్రమే',
 }

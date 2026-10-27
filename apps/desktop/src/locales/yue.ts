@@ -2352,4 +2352,9 @@ export const yue: Dictionary = {
   Large: '大',
   Both: '兩樣都要',
   'Shown on cards': '喺卡片上面顯示',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '將傾偈 {name} 移去 {space}？',
+  'Everyone in {space} can then read its whole history.': '咁 {space} 入面每個人都睇到佢成個紀錄。',
+  'Move the chat': '移傾偈',
+  'Only the file': '淨係個檔案',
 }

@@ -2417,4 +2417,10 @@ export const ps: Dictionary = {
   Large: 'لوی',
   Both: 'دواړه',
   'Shown on cards': 'په کارتونو ښودل شوي',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'خبرې اترې {name} {space} ته وخوځول شي؟',
+  'Everyone in {space} can then read its whole history.':
+    'بیا به په {space} کې هرڅوک د هغې ټول تاریخ ولولي.',
+  'Move the chat': 'خبرې اترې وخوځوه',
+  'Only the file': 'یوازې فایل',
 }

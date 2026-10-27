@@ -2497,4 +2497,10 @@ export const uk: Dictionary = {
   Large: 'Велике',
   Both: 'Обидва',
   'Shown on cards': 'Показано на картках',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Перемістити чат {name} до {space}?',
+  'Everyone in {space} can then read its whole history.':
+    'Тоді всі в {space} зможуть прочитати всю його історію.',
+  'Move the chat': 'Перемістити чат',
+  'Only the file': 'Лише файл',
 }

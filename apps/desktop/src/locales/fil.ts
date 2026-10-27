@@ -2457,4 +2457,10 @@ export const fil: Dictionary = {
   Large: 'Malaki',
   Both: 'Pareho',
   'Shown on cards': 'Ipinapakita sa mga card',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Ilipat ang chat na {name} sa {space}?',
+  'Everyone in {space} can then read its whole history.':
+    'Mababasa na ng lahat sa {space} ang buong kasaysayan nito.',
+  'Move the chat': 'Ilipat ang chat',
+  'Only the file': 'Ang file lang',
 }

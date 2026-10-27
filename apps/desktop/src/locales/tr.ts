@@ -2425,4 +2425,10 @@ export const tr: Dictionary = {
   Large: 'Büyük',
   Both: 'İkisi de',
   'Shown on cards': 'Kartlarda gösterilen',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '{name} sohbeti {space} alanına taşınsın mı?',
+  'Everyone in {space} can then read its whole history.':
+    'Bundan sonra {space} içindeki herkes tüm geçmişini okuyabilir.',
+  'Move the chat': 'Sohbeti taşı',
+  'Only the file': 'Yalnızca dosya',
 }

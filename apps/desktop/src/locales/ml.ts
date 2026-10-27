@@ -2441,4 +2441,10 @@ export const ml: Dictionary = {
   Large: 'വലുത്',
   Both: 'രണ്ടും',
   'Shown on cards': 'കാർഡുകളിൽ കാണിക്കുന്നവ',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ചാറ്റ് {name} {space}-ലേക്ക് നീക്കണോ?',
+  'Everyone in {space} can then read its whole history.':
+    'അപ്പോൾ {space}-ലെ എല്ലാവർക്കും അതിന്റെ മുഴുവൻ ചരിത്രവും വായിക്കാം.',
+  'Move the chat': 'ചാറ്റ് നീക്കുക',
+  'Only the file': 'ഫയൽ മാത്രം',
 }

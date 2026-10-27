@@ -2369,4 +2369,10 @@ export const th: Dictionary = {
   Large: 'ใหญ่',
   Both: 'ทั้งสองแบบ',
   'Shown on cards': 'แสดงบนการ์ด',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ย้ายแชต {name} ไปยัง {space} ไหม',
+  'Everyone in {space} can then read its whole history.':
+    'ทุกคนใน {space} จะอ่านประวัติทั้งหมดของแชตนี้ได้',
+  'Move the chat': 'ย้ายแชต',
+  'Only the file': 'เฉพาะไฟล์',
 }

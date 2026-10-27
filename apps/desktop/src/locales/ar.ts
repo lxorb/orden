@@ -2535,4 +2535,10 @@ export const ar: Dictionary = {
   Large: 'كبير',
   Both: 'كلاهما',
   'Shown on cards': 'معروضة على البطاقات',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'أتنقل المحادثة {name} إلى {space}؟',
+  'Everyone in {space} can then read its whole history.':
+    'سيتمكن كل من في {space} من قراءة سجلها كاملًا.',
+  'Move the chat': 'انقل المحادثة',
+  'Only the file': 'الملف فقط',
 }

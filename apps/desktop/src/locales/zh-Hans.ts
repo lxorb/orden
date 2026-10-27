@@ -2354,4 +2354,10 @@ export const zhHans: Dictionary = {
   Large: '大',
   Both: '两者',
   'Shown on cards': '在卡片上显示',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '将对话 {name} 移动到 {space}？',
+  'Everyone in {space} can then read its whole history.':
+    '之后 {space} 中的所有人都能阅读它的全部历史。',
+  'Move the chat': '移动对话',
+  'Only the file': '仅文件',
 }

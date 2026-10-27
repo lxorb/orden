@@ -2458,4 +2458,10 @@ export const ptBR: Dictionary = {
   Large: 'Grande',
   Both: 'Ambos',
   'Shown on cards': 'Exibido nos cartões',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Mover a conversa {name} para {space}?',
+  'Everyone in {space} can then read its whole history.':
+    'Todos em {space} poderão ler todo o histórico dela.',
+  'Move the chat': 'Mover a conversa',
+  'Only the file': 'Só o arquivo',
 }

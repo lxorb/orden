@@ -2459,4 +2459,10 @@ export const de: Dictionary = {
   Large: 'Groß',
   Both: 'Beides',
   'Shown on cards': 'Auf Karten gezeigt',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Chat {name} nach {space} verschieben?',
+  'Everyone in {space} can then read its whole history.':
+    'Alle in {space} können dann seinen ganzen Verlauf lesen.',
+  'Move the chat': 'Chat verschieben',
+  'Only the file': 'Nur die Datei',
 }

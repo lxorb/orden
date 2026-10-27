@@ -3,6 +3,7 @@
  *  pointing at it. The rule it is held to, and why, is chat-carry.ts. */
 
 import { ApiError } from '../api'
+import { t } from '../i18n.svelte'
 import { onDisk } from '../on-disk'
 import { nameOf, samePath } from '../space-paths'
 import { sync } from '../sync.svelte'
@@ -27,8 +28,8 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
 
   const [
     { listChats, moveChat },
-    { readPointer },
-    { keepOwnPointers, lastMoved, movedHere, ownPointer },
+    { chatName, readPointer },
+    { keepOwnPointer, lastMoved, movedHere, ownPointer },
   ] = await Promise.all([
     import('../chats/http'),
     import('../chats/pointers'),
@@ -42,7 +43,7 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
     for (const chat of moved) {
       if (await moveChat(chat, home).catch(() => false)) movedHere(chat, home)
     }
-    keepOwnPointers(owned)
+    for (const [chat, pointer] of owned) keepOwnPointer(chat, pointer)
   }
   const refuse = async (error: Error): Promise<never> => {
     await back()
@@ -69,16 +70,21 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
     const chat = await readPointer(pointer)
     if (!chat) continue
     // Only the chat's own pointer carries it: one in the space the chat lives in on the
-    // account, and the one this device lists it at. A copy - in another space, or beside
-    // it - carries nothing, and neither does a pointer to a chat the account does not
-    // list: the file moves and the chat stays where it lives (B542). Where the device
-    // cannot tell, it does not guess: the move is refused, to be tried again.
+    // account, and the one this device keeps as its own (chats/places.ts). A copy - in
+    // another space, or beside it - carries nothing, and neither does a pointer to a
+    // chat the account does not list: the file moves and the chat stays where it lives
+    // (B542). Where the device cannot tell, it does not guess: with the account not
+    // heard the move is refused, to be tried again, and with the own pointer not known
+    // - a fresh device, two pointers beside each other - the owner is asked.
     const lives = spaces ? (spaces.get(chat) ?? null) : lastMoved(chat)
     if (lives === null && !spaces) await refuse(new Error('the account could not be reached'))
     if (lives !== home) continue
     const own = ownPointer(chat)
-    if (own === null) await refuse(new Error('the chat is not listed on this device yet'))
-    if (!pointers.some((one) => samePath(one, own))) continue
+    if (own === null) {
+      const answer = await carryAsked(chatName(pointer), to.name)
+      if (answer === null) await refuse(new Error('not moved'))
+      if (answer === 'file') continue
+    } else if (!pointers.some((one) => samePath(one, own))) continue
     // Not heard is not moved either: the file would be in the new space with its chat
     // still in the old one, which is what this is here to never leave behind.
     const answer = await moveChat(chat, space).catch((error: unknown) =>
@@ -90,8 +96,24 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
     movedHere(chat, space)
     // Its own pointer is where the move puts it, before the file operation is heard, so
     // an undo straight after carries it back.
-    keepOwnPointers([[chat, joinPath(folder, nameOf(path)) + pointer.slice(path.length)]])
+    keepOwnPointer(chat, joinPath(folder, nameOf(path)) + pointer.slice(path.length))
     owned.push([chat, pointer])
   }
   return back
+}
+
+/** A chat whose own pointer this device does not know, carried into another space: the
+ *  owner says whether the chat goes with this pointer, or only the file does. Null for
+ *  the question put away, and then nothing moves. */
+async function carryAsked(name: string, to: string): Promise<'chat' | 'file' | null> {
+  const { prompt } = await import('../prompt.svelte')
+  const answer = await prompt.choose({
+    title: t('Move the chat {name} to {space}?', { name, space: to }),
+    detail: t('Everyone in {space} can then read its whole history.', { space: to }),
+    options: [
+      { id: 'chat', label: t('Move the chat'), danger: true },
+      { id: 'file', label: t('Only the file'), primary: true },
+    ],
+  })
+  return answer === 'chat' || answer === 'file' ? answer : null
 }

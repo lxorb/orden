@@ -2445,4 +2445,10 @@ export const ha: Dictionary = {
   Large: 'Babba',
   Both: 'Duka biyu',
   'Shown on cards': 'Ana nunawa a katuna',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'A matsar da hira {name} zuwa {space}?',
+  'Everyone in {space} can then read its whole history.':
+    'Duk wanda ke cikin {space} zai iya karanta dukan tarihinta.',
+  'Move the chat': 'Matsar da hirar',
+  'Only the file': 'Fayil kaɗai',
 }

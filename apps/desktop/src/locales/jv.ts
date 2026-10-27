@@ -2393,4 +2393,10 @@ export const jv: Dictionary = {
   Large: 'Gedhe',
   Both: 'Loro-lorone',
   'Shown on cards': 'Ditampilake ing kertu',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Pindhah obrolan {name} menyang {space}?',
+  'Everyone in {space} can then read its whole history.':
+    'Kabeh wong ing {space} banjur bisa maca kabeh riwayate.',
+  'Move the chat': 'Pindhah obrolan',
+  'Only the file': 'Mung berkase',
 }

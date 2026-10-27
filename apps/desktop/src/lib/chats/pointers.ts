@@ -73,9 +73,13 @@ function pointerPaths(entry: Entry, out: string[]): string[] {
  *  two pointers (a copy pasted beside it, or into another space) keeps the one `rank`
  *  puts highest, and the first of those: the store ranks the pointer in the chat's own
  *  space on the account first, so neither the order of the spaces nor a copy's name
- *  decides where a chat is (B542). */
+ *  decides where a chat is (B542). `rank` is asked of every pointer of a chat named
+ *  more than once, and of no other, which is how the store tells a tie (places.ts).
+ *  `unread` hears of a space whose tree would not read, so what was found in it before
+ *  is not taken for gone. */
 export async function findPointers(
   rank: (chat: string, place: Place) => number = () => 0,
+  unread: (root: string) => void = () => undefined,
 ): Promise<Map<string, Place>> {
   const found = new Map<string, Place>()
   for (const space of workspace.spaces) {
@@ -83,7 +87,10 @@ export async function findPointers(
       root: space.root,
       options: { showHidden: false },
     }).catch(() => null)
-    if (!tree) continue
+    if (!tree) {
+      unread(space.root)
+      continue
+    }
     for (const path of pointerPaths(tree, [])) {
       const chat = await readPointer(path)
       if (!chat) continue
