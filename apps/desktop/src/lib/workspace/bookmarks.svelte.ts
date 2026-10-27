@@ -87,6 +87,15 @@ function freeGroupId(taken: readonly Bookmark[]): string {
   }
 }
 
+/** A bookmark in another group, or at the top of the list without one. Copied
+ *  whole, so a graph bookmark keeps its view and a newer build's field stays. */
+export function filedUnder(mark: Bookmark, parent?: string | null): Bookmark {
+  const row = { ...mark }
+  if (parent) row.parent = parent
+  else delete row.parent
+  return row
+}
+
 /** The bookmarks in an unknown, with whatever is not one left out. A list
  *  written by a newer build may hold a kind this one has never heard of, and
  *  that is a row it cannot draw. */
@@ -277,16 +286,8 @@ export class Bookmarks {
       held
         .filter((one) => !sameBookmark(one, mark))
         .map((one) =>
-          mark.kind === 'group' && one.parent === mark.path
-            ? { ...one, ...(freed ? { parent: freed } : { parent: undefined }) }
-            : one,
-        )
-        .map(({ kind, path, text, parent }) => ({
-          kind,
-          path,
-          text,
-          ...(parent ? { parent } : {}),
-        })),
+          mark.kind === 'group' && one.parent === mark.path ? filedUnder(one, freed) : one,
+        ),
     )
   }
 
@@ -301,11 +302,7 @@ export class Bookmarks {
 
     this.put(
       root,
-      this.of(root).map((one) =>
-        sameBookmark(one, mark)
-          ? { kind: one.kind, path: one.path, text: one.text, ...(parent ? { parent } : {}) }
-          : one,
-      ),
+      this.of(root).map((one) => (sameBookmark(one, mark) ? filedUnder(one, parent) : one)),
     )
   }
 

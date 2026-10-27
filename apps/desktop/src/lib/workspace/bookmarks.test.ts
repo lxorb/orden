@@ -254,3 +254,61 @@ describe('dragging a row somewhere else', () => {
     expect(marks.list).toEqual([note('a.md'), note('b.md'), note('c.md')])
   })
 })
+
+describe('changing the list around a graph view', () => {
+  const graph: Bookmark = {
+    kind: 'graph',
+    path: '',
+    text: 'Work only',
+    view: '{"filter":"tag:work"}',
+  }
+  const viewOf = (marks: InstanceType<typeof Bookmarks>) =>
+    marks.list.find((one) => one.kind === 'graph')?.view
+
+  test('keeps the view when another bookmark is removed', () => {
+    const marks = store()
+    marks.toggle(graph)
+    marks.toggle(note('a.md'))
+
+    marks.remove(note('a.md'))
+
+    expect(viewOf(marks)).toBe(graph.view)
+  })
+
+  test('keeps the view when the view goes into a group and out again', () => {
+    const marks = store()
+    marks.toggle(graph)
+    const group = marks.addGroup('Views')!
+
+    marks.moveInto(graph, group.path)
+    expect(viewOf(marks)).toBe(graph.view)
+
+    marks.moveInto(graph, null)
+    expect(viewOf(marks)).toBe(graph.view)
+    expect(marks.list.find((one) => one.kind === 'graph')?.parent).toBeUndefined()
+  })
+
+  test('keeps the view when the group it sits in is removed', () => {
+    const marks = store()
+    const group = marks.addGroup('Views')!
+    marks.toggle(graph)
+    marks.moveInto(graph, group.path)
+
+    marks.remove(group)
+
+    expect(viewOf(marks)).toBe(graph.view)
+    expect(marks.list.find((one) => one.kind === 'graph')?.parent).toBeUndefined()
+  })
+
+  test('keeps a field this build does not know about', () => {
+    const marks = store()
+    const newer = { ...note('a.md'), later: 'kept' } as Bookmark
+    marks.put('/Notes', [newer, note('b.md')])
+    const group = marks.addGroup('Group')!
+
+    marks.moveInto(newer, group.path)
+    marks.remove(note('b.md'))
+
+    expect(marks.list[0]).toEqual({ ...newer, parent: group.path })
+  })
+})

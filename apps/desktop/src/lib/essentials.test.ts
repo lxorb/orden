@@ -214,6 +214,12 @@ describe('rows let go of over the bookmarks', () => {
     expect(list[0]).toEqual(note('c.md'))
   })
 
+  test('bring one out of its group with everything else it carries', () => {
+    const view = { kind: 'graph', path: '', text: 'Work', view: '{"filter":"tag:work"}' } as const
+    const newer = { ...view, parent: 'g1', later: 'kept' } as Bookmark
+    expect(placed(three, [newer], 0)[0]).toEqual({ ...view, later: 'kept' })
+  })
+
   test('take a selection in once, in its own order', () => {
     const list = placed(three, [note('x.md'), note('y.md'), note('x.md')], 0)
     expect(paths(list)).toEqual(['x.md', 'y.md', 'a.md', 'b.md', 'c.md'])
