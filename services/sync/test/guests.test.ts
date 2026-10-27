@@ -505,6 +505,18 @@ describe('a wait the reader ends', () => {
     expect(accepted.status).toBe(404)
   })
 
+  test('leaves no guest behind that the request was all of', async () => {
+    const link = await shareLink('read', 'approval')
+    const asked = (await follow(link, { body: { name: 'Ada' } })).json
+    const other = (await follow(link, { body: { name: 'Bo' } })).json
+
+    await withdraw(link, asked.token)
+    await call(env, `/v1/spaces/${space}/share/link`, { method: 'DELETE', token: owner })
+
+    expect(env.db.prepare('select count(*) as n from guests').get()).toEqual({ n: 0 })
+    expect((await call(env, '/v1/me', { token: other.token })).status).toBe(401)
+  })
+
   test("is nobody's to end without a session", async () => {
     const link = await shareLink('read', 'approval')
     expect((await withdraw(link)).status).toBe(401)
