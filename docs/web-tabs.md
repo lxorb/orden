@@ -2110,7 +2110,12 @@ because everything the engine hands out there belongs to the window's thread, so
 requests waiting for an answer live in a thread local on it and `web_answer` posts
 itself there; and the window deciding, because what a site was allowed belongs where
 the reader's other choices live. Grants are per origin and per kind, on the device and
-never on the account, in `nib:web-grants`.
+never on the account, in `nib:web-grants`. A private tab's answers are not among them
+(#787): they are kept in memory for the private session, every private tab of the run,
+and forgotten when the last private tab closes, and they never answer a normal tab. A
+private tab is given what a normal one blocked and not what it allowed, Chrome's rule
+for Incognito. On nib's own Chromium the engine asks with its own prompt instead, in a
+private tab's off-the-record profile, which writes nothing to the regular one.
 
 **Clipboard write and paste need no prompt**, because they need none in Chrome: a
 page may write to the clipboard on a gesture, and a paste is the reader pressing

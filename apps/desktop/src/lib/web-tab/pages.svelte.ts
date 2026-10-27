@@ -72,9 +72,11 @@ function pagePermissions(): Promise<typeof import('./permissions.svelte')> {
   return import('./permissions.svelte')
 }
 
-/** A closed tab's questions, dropped; never in the glasses' plugin, as above. */
-function dropGrants(tab: string): void {
-  if (!__EVEN_PLUGIN__) void pagePermissions().then(({ grants }) => grants.dropped(tab))
+/** A closed tab's questions, dropped, and the private session's answers with them once
+ *  no private tab is left; never in the glasses' plugin, as above. */
+function dropGrants(tab: string, privateLeft: boolean): void {
+  if (!__EVEN_PLUGIN__)
+    void pagePermissions().then(({ grants }) => grants.dropped(tab, privateLeft))
 }
 
 /** What becomes of a page out of sight, fetched with the first one; see sleeping.ts. */
@@ -1287,6 +1289,11 @@ class Pages {
     page.notice = said
   }
 
+  /** Whether a private tab's page is still open: the private session lasts as long. */
+  private anyPrivate(): boolean {
+    return [...this.held.values()].some((page) => page.inPrivate)
+  }
+
   /** The tab has closed. The webview goes with it, and so does the trail: a tab
    *  somebody closed is not a tab anybody is coming back to. Where the reading got to
    *  stays on the device, because the note can be opened again. */
@@ -1300,7 +1307,7 @@ class Pages {
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
-      dropGrants(tabId)
+      dropGrants(tabId, this.anyPrivate())
       dropDialogs(tabId)
       if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       return
@@ -1323,7 +1330,7 @@ class Pages {
     await this.look(tabId)
 
     this.held.delete(tabId)
-    dropGrants(tabId)
+    dropGrants(tabId, this.anyPrivate())
     dropDialogs(tabId)
     await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
@@ -1393,8 +1400,11 @@ class Pages {
       // something rather than in a menu beforehand; see permissions.svelte.ts.
       const { grants, readAsked } = await pagePermissions()
       await listen('nib://web-ask', (event) => {
+        // Whether the page that asked is private is the page's to say: the answer is
+        // then the private session's, and kept nowhere (#787).
         const said = readAsked(event.payload)
-        if (said && this.held.has(said.tab)) grants.heard(said)
+        const page = said ? this.held.get(said.tab) : undefined
+        if (said && page) grants.heard({ ...said, privately: page.inPrivate })
       })
 
       // A page has opened `alert`, `confirm` or `prompt`, or asks before it is left. Its

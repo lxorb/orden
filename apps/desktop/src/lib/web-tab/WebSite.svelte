@@ -28,7 +28,15 @@
     site,
     tab,
     onclose,
-  }: { url: string | null; site: string; tab: string; onclose: () => void } = $props()
+    privately = false,
+  }: {
+    url: string | null
+    site: string
+    tab: string
+    onclose: () => void
+    /** A private tab's site, whose answers are the private session's; see permissions.svelte.ts. */
+    privately?: boolean
+  } = $props()
 
   /** Whom a certificate names; see web_certificate.rs. */
   interface Party {
@@ -83,7 +91,7 @@
   const named = (party: Party) =>
     [party.name, ...party.organization].filter((one) => one !== '').join(' · ')
   const day = (at: number) => i18n.when(at, { dateStyle: 'long' })
-  const said = $derived(grants.of(site))
+  const said = $derived(grants.of(site, privately))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
 
   // Closed by Escape, a press past it and the window losing the focus - which is also
@@ -144,7 +152,8 @@
                pressing the word is the other answer. -->
           <button
             class="nib-button is-quiet"
-            onclick={() => grants.remember(site, ask, said[ask] === 'allow' ? 'block' : 'allow')}
+            onclick={() =>
+              grants.remember(site, ask, said[ask] === 'allow' ? 'block' : 'allow', privately)}
           >
             {said[ask] === 'allow' ? t('Allowed') : t('Blocked')}
           </button>
@@ -155,7 +164,7 @@
     <button
       class="nib-button is-quiet reset"
       onclick={() => {
-        grants.forget(site)
+        grants.forget(site, privately)
         onclose()
       }}
     >

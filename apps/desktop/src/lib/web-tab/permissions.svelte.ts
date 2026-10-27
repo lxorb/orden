@@ -22,7 +22,16 @@
  *  By origin, because that is what a permission is about - a grant to `docs.example` is
  *  not a grant to every page that links to it - and this device's, because it is about
  *  this machine's camera. So it lives in local storage beside the other things a device
- *  decides for itself, and never on the account. */
+ *  decides for itself, and never on the account.
+ *
+ *  **A private tab's answers are kept nowhere** (#787). They were written to the same
+ *  store, so a camera allowed in a private tab was allowed in every normal tab after it,
+ *  without a word, and the site's info named a site visited privately. So a private
+ *  tab's answers live in memory, for the private session - every private tab of the run,
+ *  which is what `WebView2`'s InPrivate profile shares (see private.ts) - and are gone
+ *  when the last private tab closes. A private tab is not given what a normal one
+ *  allowed, only what it blocked, which is Chrome's rule for Incognito: a choice to be
+ *  more careful carries over, and an allow does not follow anybody into private. */
 
 import { invoke, isDesktop } from '../tauri'
 import { withOrWithout } from '../records'
@@ -85,6 +94,9 @@ export interface Asking {
   /** The origin, as the bubble shows it. */
   site: string
   ask: Ask
+  /** Asked by a private tab: answered for the private session only. The crate does not
+   *  say so; the page that asked does, as the request arrives. */
+  privately: boolean
 }
 
 /** What the crate says when a site asks for something. Read rather than trusted: an
@@ -96,12 +108,15 @@ export function readAsked(value: unknown): Asking | null {
   if (typeof tab !== 'string' || typeof id !== 'number') return null
   if (typeof origin !== 'string' || typeof kind !== 'string' || !isAsk(kind)) return null
 
-  return { id, tab, site: plainOrigin(origin) || origin, ask: kind }
+  return { id, tab, site: plainOrigin(origin) || origin, ask: kind, privately: false }
 }
 
 class Grants {
   /** What each site was told, by origin and then by what it asked for. */
   private by = $state<Record<string, Partial<Record<Ask, Answer>>>>({})
+
+  /** What each site was told in a private tab: memory, never the store. */
+  private privately = $state<Record<string, Partial<Record<Ask, Answer>>>>({})
 
   /** The requests waiting for an answer, oldest first: one bubble at a time, like a
    *  browser, and the next one appears as the last is answered. */
@@ -124,25 +139,35 @@ class Grants {
     this.by = out
   }
 
-  /** Everything this site has been told, which is nothing until it asked. */
-  of(site: string): Partial<Record<Ask, Answer>> {
-    return this.by[site] ?? {}
+  /** Everything this site has been told, which is nothing until it asked. In a private
+   *  tab: what it was told there, over what a normal tab blocked. */
+  of(site: string, privately = false): Partial<Record<Ask, Answer>> {
+    if (!privately) return this.by[site] ?? {}
+
+    const blocked = Object.entries(this.by[site] ?? {}).filter(([, said]) => said === 'block')
+    return { ...Object.fromEntries(blocked), ...this.privately[site] }
   }
 
   /** What this site was told about one thing, or null for one nobody has decided. */
-  said(site: string, ask: Ask): Answer | null {
-    return this.of(site)[ask] ?? null
+  said(site: string, ask: Ask, privately = false): Answer | null {
+    return this.of(site, privately)[ask] ?? null
   }
 
   /** Remembers an answer. A site with nothing left is taken out, so the store holds the
    *  sites somebody has decided about and no others. */
-  remember(site: string, ask: Ask, answer: Answer | null) {
+  remember(site: string, ask: Ask, answer: Answer | null, privately = false) {
     if (!site) return
 
+    const before = (privately ? this.privately : this.by)[site] ?? {}
     const kept = Object.fromEntries(
-      Object.entries(this.of(site)).filter(([one]) => one !== ask),
+      Object.entries(before).filter(([one]) => one !== ask),
     ) as Partial<Record<Ask, Answer>>
     if (answer !== null) kept[ask] = answer
+
+    if (privately) {
+      this.privately = withOrWithout(this.privately, site, Object.keys(kept).length ? kept : null)
+      return
+    }
 
     const all = withOrWithout(this.by, site, Object.keys(kept).length ? kept : null)
     this.by = all
@@ -159,7 +184,7 @@ class Grants {
    *  A second request for the same thing while the bubble is up is the same question:
    *  one bubble, and both requests answered by the one press. */
   heard(said: Asking) {
-    const already = this.said(said.site, said.ask)
+    const already = this.said(said.site, said.ask, said.privately)
     if (already !== null) {
       void this.tell(said.id, already === 'allow')
       return
@@ -172,9 +197,11 @@ class Grants {
    *  remembered for this site, and every other request the same press answers goes with
    *  it - a page that asked for the camera twice asked one question. */
   answer(said: Asking, allow: boolean) {
-    this.remember(said.site, said.ask, allow ? 'allow' : 'block')
+    this.remember(said.site, said.ask, allow ? 'allow' : 'block', said.privately)
 
-    const same = this.asking.filter((one) => one.site === said.site && one.ask === said.ask)
+    const same = this.asking.filter(
+      (one) => one.site === said.site && one.ask === said.ask && one.privately === said.privately,
+    )
     this.asking = this.asking.filter((one) => !same.includes(one))
     for (const one of same) void this.tell(one.id, allow)
   }
@@ -190,8 +217,11 @@ class Grants {
 
   /** The tab has gone, so its questions have. A request nobody let go of is a promise
    *  the page is still waiting on, which is what a browser leaves behind for a bubble
-   *  somebody dismissed - but a closed tab has no page to wait. */
-  dropped(tab: string) {
+   *  somebody dismissed - but a closed tab has no page to wait. With no private tab left
+   *  open, the private session has ended, and what was said in it goes with it. */
+  dropped(tab: string, privateLeft = true) {
+    if (!privateLeft) this.privately = {}
+
     const gone = this.asking.filter((one) => one.tab === tab)
     if (!gone.length) return
 
@@ -207,7 +237,11 @@ class Grants {
   /** Everything this site was told, forgotten - Chrome's Reset permissions. The page
    *  goes on running: what it already holds it keeps until it asks again, which is
    *  what happens in a browser too. */
-  forget(site: string) {
+  forget(site: string, privately = false) {
+    if (privately) {
+      this.privately = withOrWithout(this.privately, site, null)
+      return
+    }
     if (!this.by[site]) return
 
     const all = withOrWithout(this.by, site, null)

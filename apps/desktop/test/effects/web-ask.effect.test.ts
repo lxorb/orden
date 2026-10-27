@@ -47,7 +47,7 @@ let next = 1
 
 /** A site asking, the way the crate says it, with the bubble for it on screen. */
 function asked(site: string) {
-  const asking = { id: next++, tab: 'tab-1', site, ask: 'notifications' as const }
+  const asking = { id: next++, tab: 'tab-1', site, ask: 'notifications' as const, privately: false }
   grants.heard(asking)
   const app = mount(WebAsk, { target, props: { asking, icon: null } })
   flushSync()
