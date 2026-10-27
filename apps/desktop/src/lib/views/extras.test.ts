@@ -58,7 +58,7 @@ describe('a base at work on a change', () => {
     expect(out.writes).toEqual([{ row: made, change: { note: { status: 'To do', id: 'BUG-2' } } }])
   })
 
-  test('two rows two devices both numbered 2: the younger is renumbered', () => {
+  test('two rows two devices both numbered 2: the later by path is renumbered', () => {
     const first = noteRow('Bugs/A.md', 'id: BUG-2', { ctime: day('2026-03-01') })
     const second = noteRow('Bugs/B.md', 'id: BUG-2', { ctime: day('2026-03-02') })
     const out = plan([], [second], [older, first, second])

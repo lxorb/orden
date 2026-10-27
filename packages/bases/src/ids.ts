@@ -3,9 +3,9 @@
  *
  *  The next id is one more than the highest the rows hold, so an id is never handed out
  *  twice while its row exists. Two devices offline can both make 45; whoever looks
- *  first after the second sync renumbers one of them (`idRepairs`), always the younger
- *  row, so both devices pick the same one and the older row keeps the id people may
- *  already have written down. Pure. */
+ *  first after the second sync renumbers one of them (`idRepairs`). Which one is decided
+ *  by the note's path, the only thing about it both devices are sure to agree on: a
+ *  file's creation time is each disk's own and sync does not carry it (B552). Pure. */
 
 import type { Row, Value } from './types'
 
@@ -36,12 +36,15 @@ export function nextId(rows: readonly Row[], property: string, prefix: string): 
   return idText(prefix, highest + 1)
 }
 
-/** Older first: created earlier, then by path, so every device orders them alike. */
-const older = (a: Row, b: Row) => a.file.ctime - b.file.ctime || a.path.localeCompare(b.path)
+/** By path, compared by code unit rather than by this device's locale, so every device
+ *  orders them alike. */
+const byPath = (a: Row, b: Row) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0)
+/** Older first on this disk, for rows only this device numbers. */
+const older = (a: Row, b: Row) => a.file.ctime - b.file.ctime || byPath(a, b)
 
-/** The ids to write so that every row has one and no two share one: a row without
- *  one gets the next, in the order the rows were made, and of two rows sharing one
- *  the younger gets the next. `missing` false leaves rows without one alone, which is
+/** The ids to write so that every row has one and no two share one: of two rows
+ *  sharing one the later by path gets the next, in path order, so every device writes
+ *  the same; then a row without one gets the next, in the order the rows were made. `missing` false leaves rows without one alone, which is
  *  what looking does; turning ids on gives every row one. */
 export function idRepairs(
   rows: readonly Row[],
@@ -49,18 +52,18 @@ export function idRepairs(
   prefix: string,
   missing = true,
 ): { row: Row; id: string }[] {
-  const notes = rows.filter((row) => row.kind === 'note').sort(older)
+  const notes = rows.filter((row) => row.kind === 'note').sort(byPath)
   let next = idNumber(nextId(notes, property, prefix), prefix) ?? 1
   const seen = new Set<number>()
-  const out: { row: Row; id: string }[] = []
+  const twins: Row[] = []
+  const without: Row[] = []
   for (const row of notes) {
     const number = idNumber(row.note[property], prefix)
-    if (number !== null && !seen.has(number)) {
-      seen.add(number)
-      continue
-    }
-    if (number === null && !missing) continue
-    out.push({ row, id: idText(prefix, next++) })
+    if (number === null) without.push(row)
+    else if (seen.has(number)) twins.push(row)
+    else seen.add(number)
   }
+  const out = twins.map((row) => ({ row, id: idText(prefix, next++) }))
+  if (missing) for (const row of without.sort(older)) out.push({ row, id: idText(prefix, next++) })
   return out
 }

@@ -7,6 +7,7 @@ import { withProperties } from '@nib/bases/agent'
 import { insideOnly } from '../automation/inside'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'
+import type { RowsChange } from '../rows/store'
 import { canWriteAt } from '../sharing.svelte'
 import { insideSpace, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
@@ -114,13 +115,36 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   }
 }
 
-/** A note's rows changed: looked at once they settle, unless the change is the runner's. */
-export function heard(space: string, path: string, removed: readonly Row[]) {
+/** A change the rows store told: a note's, with a note row after it, is heard. A note
+ *  renamed or moved is heard as it was where it came from, so its bases see a move,
+ *  not a note just made (B551). */
+export function heardChange(change: RowsChange) {
+  if (change.path === null || !running()) return
+  if (!change.added.some((row) => row.kind === 'note')) return
+  if (change.from) heard(change.space, change.path, change.from.rows, change.from)
+  else heard(change.space, change.path, change.removed)
+}
+
+/** A note's rows changed: looked at once they settle, unless the change is the runner's.
+ *  `from` is where a moved note was: what it was there, still waiting to be looked at,
+ *  is what it was before, and what a save at its new path told first is not. */
+export function heard(
+  space: string,
+  path: string,
+  removed: readonly Row[],
+  from?: { space: string; path: string },
+) {
   const key = keyOf(space, path)
+  const left = from && keyOf(from.space, from.path)
+  const there = left === undefined ? undefined : waiting.get(left)
+  if (left !== undefined && there) {
+    clearTimeout(there.timer)
+    waiting.delete(left)
+  }
   if (ours.delete(key)) return
   const was = waiting.get(key)
   if (was) clearTimeout(was.timer)
-  const before = was?.removed ?? removed
+  const before = there?.removed ?? (from ? removed : (was?.removed ?? removed))
   waiting.set(key, {
     removed: before,
     timer: setTimeout(() => {

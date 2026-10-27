@@ -1,6 +1,6 @@
 /** What a base does by itself when one of its rows changes (docs/tasks.md 5.12, 5.13):
  *  its automations, and its ids - the next one for a row just made without one, and a
- *  fresh one for the younger of two rows two devices numbered alike while offline.
+ *  fresh one for the later by path of two rows two devices numbered alike offline.
  *
  *  Pure: handed the bases of the space, the one note's rows before and after, every row
  *  of the space and the clock, it answers what to write, what to move and what to say.
