@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest'
-import { decodePDFRawStream, PDFDocument, type PDFRawStream } from 'pdf-lib'
+import { decodePDFRawStream, PDFDocument, PDFName, type PDFRawStream, StandardFonts } from 'pdf-lib'
 import { added, emptyPages } from '@nib/markdown/pages'
 import { type Canvas, type CanvasNode, type PageNode, writeCanvas } from '../canvas/format'
 
@@ -20,33 +20,44 @@ const raster = vi.hoisted(() => ({
     (one) => one.charCodeAt(0),
   ),
 }))
-/** How wide text is set, stood in for with widths a real face has: a CJK character
- *  is a full em, the wide Cyrillic letters most of one, everything else a little over
- *  half. */
-const emOf = (one: string) =>
-  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}。、]/u.test(one)
-    ? 1
-    : /[ЖЩШЮМжщшюм]/.test(one)
-      ? 0.85
-      : 0.55
-/** And a run of kana as a browser measures it: wider as a whole than its characters
- *  one by one, as Chromium's are by up to seven per cent - so a breaker that adds up
- *  single characters overruns the card. */
-const widthOf = (text: string, size: number) => {
-  const sum = Array.from(text).reduce((all, one) => all + emOf(one) * size, 0)
-  if (Array.from(text).length < 2) return sum
-  if (/\p{Script=Hiragana}/u.test(text)) return sum * 1.07
-  // And Arabic the other way: a letter alone is its wide isolated form, so a run is
-  // narrower whole than its letters one by one, about 0.72 of them in Chromium.
-  if (/\p{Script=Arabic}/u.test(text)) return sum * 0.72
-  return sum
-}
+/** The browser's layout of a card, stood in for: jsdom lays nothing out. Each line of
+ *  a card's text is one run 20px under the last, at 7px a character - or whatever a
+ *  test puts in `layouts` for a card. */
+const layout = vi.hoisted(() => ({
+  runs: new Map<string, unknown[]>(),
+  asked: [] as string[],
+}))
+vi.mock('./laid', () => ({
+  laidOut: (cards: { id: string; text: string; bare?: boolean }[]) => {
+    const laid = new Map<string, unknown[]>()
+    for (const card of cards) {
+      layout.asked.push(card.id)
+      laid.set(
+        card.id,
+        layout.runs.get(card.id) ??
+          card.text.split('\n').map((text, at) => ({
+            text,
+            x: 6,
+            y: 20 + at * 20,
+            width: text.length * 7,
+            size: 16,
+            family: '"iA Writer Quattro", "Orden Arabic", ui-sans-serif',
+            weight: 400,
+            italic: false,
+            mono: false,
+            colour: 'rgb(26, 29, 35)',
+          })),
+      )
+    }
+    return Promise.resolve(laid)
+  },
+  localFaces: () => '',
+}))
 vi.mock('./raster', () => ({
   svgToPng: (svg: string) => {
     raster.drawn.push(svg)
     return Promise.resolve(raster.refuse ? null : raster.png)
   },
-  textWidth: (text: string, size: number) => widthOf(text, size),
   cssColour: (colour: string) => colour,
 }))
 vi.mock('../link-index.svelte', () => ({
@@ -57,7 +68,7 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-const { pagesOutOf, pagesPdf, pageSvg } = await import('./out')
+const { laidOf, pagesOutOf, pagesPdf, pageSvg } = await import('./out')
 
 const out = (canvas: Canvas) => ({ canvas, palette: {}, name: 'P', path: '/s/P.pages', root: '/s' })
 
@@ -100,6 +111,21 @@ async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
 const hex = (text: string) =>
   Array.from(text, (one) => one.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase()).join('')
 
+/** One run a test lays out itself. */
+const run = (text: string, more: Record<string, unknown> = {}) => ({
+  text,
+  x: 6,
+  y: 20,
+  width: 150,
+  size: 16,
+  family: 'ui-sans-serif',
+  weight: 400,
+  italic: false,
+  mono: false,
+  colour: 'rgb(26, 29, 35)',
+  ...more,
+})
+
 describe('words typed on a page', () => {
   test('reach its sheet of the PDF as real text, and only that sheet', async () => {
     const bytes = (await pagesPdf(out(note())))!
@@ -112,59 +138,48 @@ describe('words typed on a page', () => {
     expect(second).toContain(hex('Second sheet'))
   })
 
-  test('wrap to the width of their box in the PDF', async () => {
+  test('are drawn on the lines the browser set them on, as wide as it set them', async () => {
+    layout.runs.set('w1', [
+      run('Exam on', { x: 6, y: 20, width: 70 }),
+      run('Friday', { x: 6, y: 44.8, width: 50 }),
+    ])
     const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text = 'one two three four five six seven eight nine ten eleven twelve'
-    card.height = 200
+    const page = canvas.nodes[0] as PageNode
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+    layout.runs.clear()
 
-    expect(first.match(/Tj/g)?.length ?? 0).toBeGreaterThan(1)
+    const helvetica = await (await PDFDocument.create()).embedFont(StandardFonts.Helvetica)
+    // The card is 40px into its page, so its lines are at 46 and 60 and 84.8 down it.
+    expect(first).toMatch(/^1 0 0 1 46 -60 Tm$/m)
+    expect(first).toMatch(/^1 0 0 1 46 -84\.8 Tm$/m)
+    const squeeze = Number(/^([\d.]+) Tz$/m.exec(first)?.[1])
+    expect((squeeze / 100) * helvetica.widthOfTextAtSize('Exam on', 16)).toBeCloseTo(70, 1)
+    expect(page).toBeTruthy()
   })
 
-  test('that the PDF font cannot spell go onto the sheet as a picture of the card', async () => {
-    raster.drawn = []
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text = 'Kolokwium w środę 試験 ✓'
-    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+  test('in bold, in italics and in code keep their face', async () => {
+    layout.runs.set('w1', [
+      run('bold', { weight: 700 }),
+      run('slanted', { italic: true, y: 40 }),
+      run('code', { mono: true, y: 60 }),
+    ])
+    const doc = await PDFDocument.load((await pagesPdf(out(note())))!)
+    layout.runs.clear()
 
-    expect(raster.drawn).toHaveLength(1)
-    expect(setLines(raster.drawn[0] ?? '').lines.join(' ')).toBe('Kolokwium w środę 試験 ✓')
-    expect(first).toMatch(/ Do$/m)
-    expect(first).not.toContain(hex('Kolokwium'))
-    // The other sheet's words are still text.
-    expect(await contentOf((await pagesPdf(out(canvas)))!, 1)).toContain(hex('Second sheet'))
+    const faces = doc.context
+      .enumerateIndirectObjects()
+      .map(([, one]) =>
+        String((one as { get?: (k: unknown) => unknown }).get?.(PDFName.of('BaseFont')) ?? ''),
+      )
+    expect(faces).toContain('/Helvetica-Bold')
+    expect(faces).toContain('/Helvetica-Oblique')
+    expect(faces).toContain('/Courier')
   })
 
-  test('are never lost: a refused picture leaves the letters the font has', async () => {
-    raster.refuse = true
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text = 'Kolokwium w środę'
-    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
-    raster.refuse = false
-
-    expect(first).toContain(hex('Kolokwium w'))
-  })
-
-  test('keep a tab as space, which needs no picture', async () => {
-    raster.drawn = []
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text = 'Exam\tFriday'
-    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
-
-    expect(raster.drawn).toHaveLength(0)
-    expect(first).toContain(hex('Exam'))
-    expect(first).toContain(hex('Friday'))
-  })
-
-  test('in a colour the theme gives as rgb() print in that colour', async () => {
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { color?: string }
-    card.color = 'rgb(255, 0, 0)'
-    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+  test('in a colour the browser gives as rgb() print in that colour', async () => {
+    layout.runs.set('w1', [run('Exam', { colour: 'rgb(255, 0, 0)' })])
+    const first = await contentOf((await pagesPdf(out(note())))!, 0)
+    layout.runs.clear()
 
     expect(first).toMatch(/^1 0 0 rg$/m)
   })
@@ -172,43 +187,71 @@ describe('words typed on a page', () => {
   test('in a colour of three hex digits print in that colour', async () => {
     const canvas = note()
     const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { color?: string }
+    card.bare = false
     card.color = '#f00'
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
 
-    expect(first).toMatch(/^1 0 0 rg$/m)
+    // The frame's edge.
+    expect(first).toMatch(/^1 0 0 RG$/m)
   })
 
-  test('of a long paragraph are set without freezing the app', async () => {
+  test('that the PDF font cannot spell go onto the sheet as a picture of the card', async () => {
+    raster.drawn = []
+    layout.runs.set('w1', [
+      run('Kolokwium w środę', { x: 6, y: 20, width: 140 }),
+      run('試験 ✓', { y: 44.8, width: 40 }),
+    ])
     const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text = Array.from({ length: 2000 }, (_, at) => `word${at}`).join(' ')
-    card.height = 4000
-    const began = performance.now()
-    await pagesPdf(out(canvas))
-
-    expect(performance.now() - began).toBeLessThan(400)
-  })
-
-  test('are set only as far as their card shows them', async () => {
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text = Array.from({ length: 2000 }, (_, at) => `word${at}`).join(' ')
+    const card = canvas.nodes.find((node) => node.id === 'w1')!
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+    layout.runs.clear()
 
-    // A card 60px tall shows three lines of 24.8px; one more is clipped half way.
-    expect(first.match(/Tj/g)?.length).toBeLessThanOrEqual(4)
+    expect(raster.drawn).toHaveLength(1)
+    const svg = raster.drawn[0] ?? ''
+    expect(svg).toContain(`<tspan x="${card.x + 6}" y="${card.y + 20}">Kolokwium w środę</tspan>`)
+    expect(svg).toContain(`<tspan x="${card.x + 6}" y="${card.y + 44.8}">試験 ✓</tspan>`)
+    // As wide as the browser set it, whatever face the picture finds.
+    expect(svg).toMatch(/textLength="140"/)
+    expect(first).toMatch(/ Do$/m)
+    expect(first).not.toContain(hex('Kolokwium'))
   })
 
-  test('reach the SVG of their page, and the PNG picture of it', () => {
+  test('are never lost: a refused picture leaves the letters the font has', async () => {
+    raster.refuse = true
+    layout.runs.set('w1', [run('Kolokwium w środę')])
+    const first = await contentOf((await pagesPdf(out(note())))!, 0)
+    raster.refuse = false
+    layout.runs.clear()
+
+    expect(first).toContain(hex('Kolokwium w'))
+  })
+
+  test('reach the SVG of their page, and the PNG picture of it', async () => {
     const canvas = note()
     const pages = canvas.nodes.filter((node): node is PageNode => node.type === 'page')
-    const svg = pageSvg(out(canvas), pages[0]!, 1)
-    const plain = pageSvg(out(canvas), pages[0]!, 1, true)
+    const laid = await laidOf(out(canvas))
+    const svg = pageSvg(laid, pages[0]!, 1)
+    const plain = pageSvg(laid, pages[0]!, 1, true)
 
     expect(svg).toContain('Exam on Friday')
     expect(svg).not.toContain('Second sheet')
     expect(plain).toContain('Exam on Friday')
     expect(plain).not.toContain('foreignObject')
+  })
+
+  test('stay inside their card in the PNG picture of the page', async () => {
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1')!
+    const pages = canvas.nodes.filter((node): node is PageNode => node.type === 'page')
+    const svg = pageSvg(await laidOf(out(canvas)), pages[0]!, 1, true)
+
+    const doc = new DOMParser().parseFromString(svg, 'image/svg+xml')
+    const box = doc.querySelector('tspan')?.closest('text')?.parentElement?.closest('svg')
+    expect(box).not.toBe(doc.documentElement)
+    expect(box?.getAttribute('x')).toBe(String(card.x))
+    expect(box?.getAttribute('y')).toBe(String(card.y))
+    expect(box?.getAttribute('width')).toBe(String(card.width))
+    expect(box?.getAttribute('height')).toBe(String(card.height))
   })
 })
 
@@ -275,182 +318,7 @@ describe('ink in the pen with no colour of its own (B571)', () => {
   })
 })
 
-/** The lines a browser sets a paragraph in: as many parts as fit, measured whole. */
-function greedy(text: string, between: string, room: number, size: number): string[] {
-  const parts = between ? text.split(between) : Array.from(text)
-  const lines: string[] = []
-  let now = ''
-  for (const part of parts) {
-    const next = now ? `${now}${between}${part}` : part
-    if (!now || widthOf(next, size) <= room) now = next
-    else {
-      lines.push(now)
-      now = part
-    }
-  }
-  lines.push(now)
-  return lines
-}
-
-/** The lines of words a picture sets, and the size they are set at. */
-function setLines(svg: string): { lines: string[]; size: number } {
-  const size = Number(/<text[^>]*font-size="([\d.]+)"/.exec(svg)?.[1])
-  const lines = [...svg.matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)].map((one) =>
-    (one[1] ?? '').replace(/&amp;/g, '&'),
-  )
-  return { lines, size }
-}
-
-describe('words set as a picture', () => {
-  const japanese =
-    '今日は大学で日本語の授業がありました。先生はとても親切でした。宿題は明日までです。'
-  const russian = 'Широкий шрифт: Жжж Щщщ Шшш Ююю Ммм широкий шрифт Жжж Щщщ'
-
-  test.each([japanese, russian])('fit the card and lose nothing: %s', async (text) => {
-    raster.drawn = []
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & {
-      text: string
-      bare?: boolean
-    }
-    card.bare = false
-    card.text = text
-    card.width = 300
-    card.height = 400
-    await pagesPdf(out(canvas))
-
-    const { lines, size } = setLines(raster.drawn[0] ?? '')
-    expect(lines.length).toBeGreaterThan(1)
-    for (const line of lines) expect(widthOf(line, size)).toBeLessThanOrEqual(300 - 24)
-    expect(lines.join('').replace(/ /g, '')).toBe(text.replace(/ /g, ''))
-  })
-
-  test('fit the card in the PNG picture of the page too', () => {
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text = japanese
-    const pages = canvas.nodes.filter((node): node is PageNode => node.type === 'page')
-    const svg = pageSvg(out(canvas), pages[0]!, 1, true)
-
-    const { lines, size } = setLines(svg.slice(svg.indexOf('<text')))
-    for (const line of lines) expect(widthOf(line, size)).toBeLessThanOrEqual(220 - 12)
-    expect(lines.join('')).toBe(japanese)
-  })
-
-  test('fit the card when a run is wider than its characters', async () => {
-    raster.drawn = []
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text =
-      'ましたしてもらいましたけれどもそういうことでしたらまたあしたにしましょうね。わかりました。それではまたあした。'
-    card.width = 300
-    card.height = 400
-    await pagesPdf(out(canvas))
-
-    const { lines, size } = setLines(raster.drawn[0] ?? '')
-    for (const line of lines) expect(widthOf(line, size)).toBeLessThanOrEqual(300 - 12)
-    expect(lines.join('')).toBe(card.text)
-  })
-
-  test.each([
-    [
-      'Persian, narrower whole',
-      'این یک متن فارسی طولانی است که باید در داخل کارت بپیچد و از مرزهای آن خارج نشود',
-      ' ',
-    ],
-    [
-      'Urdu, narrower whole',
-      'یہ ایک لمبا اردو جملہ ہے جو کارڈ کے اندر لپیٹا جانا چاہیے اور باہر نہیں جانا چاہیے',
-      ' ',
-    ],
-    [
-      'kana, wider whole',
-      'ましたしてもらいましたけれどもそういうことでしたらまたあしたにしましょうね。わかりました。',
-      '',
-    ],
-  ])('take as many lines as the screen does: %s', async (_name, text, between) => {
-    raster.drawn = []
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & {
-      text: string
-      bare?: boolean
-    }
-    card.bare = false
-    card.text = text
-    card.width = 260
-    card.height = 400
-    await pagesPdf(out(canvas))
-
-    const { lines, size } = setLines(raster.drawn[0] ?? '')
-    expect(lines).toHaveLength(greedy(text, between, 260 - 24, size).length)
-    for (const line of lines) expect(widthOf(line, size)).toBeLessThanOrEqual(260 - 24)
-  })
-
-  test('break Thai between its words, which it writes without spaces', async () => {
-    raster.drawn = []
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text = 'ภาษาไทยเป็นภาษาที่ไม่มีช่องว่างระหว่างคำและต้องตัดคำตามพจนานุกรม'
-    card.width = 120
-    card.height = 400
-    await pagesPdf(out(canvas))
-
-    const { lines } = setLines(raster.drawn[0] ?? '')
-    const ends = new Set(
-      Array.from(
-        new Intl.Segmenter('th', { granularity: 'word' }).segment(card.text),
-        (one) => one.index + one.segment.length,
-      ),
-    )
-    expect(lines.length).toBeGreaterThan(1)
-    let at = 0
-    for (const line of lines.slice(0, -1)) {
-      at += line.length
-      expect(ends.has(at)).toBe(true)
-    }
-  })
-
-  test('never split an emoji made of several', async () => {
-    raster.drawn = []
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text = Array.from({ length: 12 }, () => '👨‍👩‍👧‍👦🇩🇪').join('')
-    card.width = 80
-    card.height = 2000
-    await pagesPdf(out(canvas))
-
-    const { lines } = setLines(raster.drawn[0] ?? '')
-    expect(lines.length).toBeGreaterThan(1)
-    for (const line of lines) {
-      expect(line).not.toMatch(/^\u200d|\u200d$/u)
-      expect(line).not.toMatch(/^\u{1F1EA}/u)
-    }
-    expect(lines.join('')).toBe(card.text)
-  })
-
-  test('stay inside their card in the PNG picture of the page', () => {
-    const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & {
-      text: string
-      bare?: boolean
-    }
-    card.bare = false
-    card.text = Array.from({ length: 40 }, () => 'overflowing').join(' ')
-    card.width = 300
-    card.height = 60
-    const pages = canvas.nodes.filter((node): node is PageNode => node.type === 'page')
-    const svg = pageSvg(out(canvas), pages[0]!, 1, true)
-
-    const doc = new DOMParser().parseFromString(svg, 'image/svg+xml')
-    const text = doc.querySelector('tspan')?.closest('text')
-    const box = text?.parentElement?.closest('svg')
-    expect(box).not.toBe(doc.documentElement)
-    expect(box?.getAttribute('x')).toBe(String(card.x))
-    expect(box?.getAttribute('y')).toBe(String(card.y))
-    expect(box?.getAttribute('width')).toBe('300')
-    expect(box?.getAttribute('height')).toBe('60')
-  })
-
+describe('a group', () => {
   test("keep a group's name, which sits above its box", async () => {
     raster.drawn = []
     const canvas = note()
