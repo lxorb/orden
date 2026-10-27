@@ -18,7 +18,7 @@ import {
   taskOut,
   withProperties,
 } from '.'
-import { taskLine } from '@nib/markdown/task-edits'
+import { type TaskChange, taskLine } from '@nib/markdown/task-edits'
 
 const context = { today: '2026-10-04', now: '2026-10-04T09:00:00' }
 
@@ -177,6 +177,15 @@ describe('a task changed', () => {
     expect(lines[5]).toBe('- [x] Water the plants 🔁 every 3 days 📅 2026-10-03 ✅ 2026-10-04')
     expect(readAt(edited.at).line).toBe(5)
     expect(edited.next && readAt(edited.next).line).toBe(4)
+  })
+
+  test('refused where it takes the last date away and asks for a repeat or a time', () => {
+    const at = anchor('Water the plants')
+    const asked = (change: TaskChange) => () =>
+      editedTask(NOTE, 'Home', 'Errands.md', at, change, undefined, context.today)
+    expect(asked({ due: null, recurrence: 'every day' })).toThrow(/needs a date/)
+    expect(asked({ due: null, time: '10:00' })).toThrow(/needs a date/)
+    expect(asked({ due: null })().text.split('\n')[4]).toBe('- [ ] Water the plants')
   })
 
   test('found again where lines above it moved, refused where it is gone', () => {

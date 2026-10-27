@@ -6,7 +6,7 @@ import { donutPaths, heights, linePath, seriesOf, settingsOf, totalOf } from './
 import { changeOf, columnsOf, defaultColumns, editorOf, knownProperties } from './columns'
 import { contextFor } from './context'
 import { dayOf, nextMonday, nowOf, weekStart } from './days'
-import { dropInto } from './drop'
+import { dropInto, hourDrop } from './drop'
 import {
   addView,
   freeViewName,
@@ -281,6 +281,21 @@ describe('a drop into a group', () => {
     ).toEqual({ change: { task: { due: '2026-10-09' } } })
     expect(dropInto('task.date', '2026-10-09', started, TODAY)).toEqual({
       change: { task: { start: '2026-10-09', due: '2026-10-09' } },
+    })
+    // And on an hour of the calendar's week or day, with the time where it was let go.
+    const bill = vault('- [ ] Pay bill 🔁 every month 📅 2026-10-01')
+    expect(hourDrop('task.date', '2026-10-09', '10:00', bill, TODAY)).toEqual({
+      change: { task: { due: '2026-10-09', time: '10:00' } },
+    })
+    expect(hourDrop('task.date', '2026-10-09', '10:00', started, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09', due: '2026-10-09', time: '10:00' } },
+    })
+    // A calendar placed by another date moves that one, and a time only with a start.
+    expect(hourDrop('task.deadline', '2026-10-09', '10:00', started, TODAY)).toEqual({
+      change: { task: { due: '2026-10-09' } },
+    })
+    expect(hourDrop('note.when', '2026-10-09', '10:00', bill, TODAY)).toEqual({
+      change: { note: { when: '2026-10-09' } },
     })
     // A done task is late no longer, and Completed's days are the days it was done.
     const paid = vault('- [x] Pay bill 📅 2026-09-01 ✅ 2026-09-03')

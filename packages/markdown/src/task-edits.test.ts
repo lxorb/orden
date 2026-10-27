@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { changedTask, taskLine, type TaskChange, writeTask } from './task-edits'
+import { changedTask, lastDateTaken, taskLine, type TaskChange, writeTask } from './task-edits'
 import { readTask } from './task-line'
 
 /** Lines already in nib's order, which a read and a whole write give back byte for
@@ -269,4 +269,27 @@ describe('code in a task', () => {
       changedTask('- [ ] Pay [repeat:: every week when done] [time:: 09:00]', { priority: 1 }),
     ).toBe('- [ ] Pay [priority:: highest] [repeat:: every week when done] [time:: 09:00]')
   })
+
+  test('reads a date given as undefined as left, and one given as nothing as taken', () => {
+    const line = '- [ ] Pay 🔁 every week 📅 2026-10-01'
+    expect(changedTask(line, { due: undefined, priority: 2 } as TaskChange)).toBe(
+      '- [ ] Pay 🔁 every week ⏫ 📅 2026-10-01',
+    )
+    expect(changedTask(line, { due: '' })).toBe('- [ ] Pay')
+  })
+
+  test('keeps a repeat and a time the change itself gives, with its last date taken', () => {
+    expect(lastDateTaken(readTaskOf('- [ ] Pay 🔁 every week 📅 2026-10-01'), { due: null })).toBe(
+      true,
+    )
+    expect(
+      changedTask('- [ ] Pay 🔁 every week 📅 2026-10-01', { due: null, recurrence: 'every day' }),
+    ).toBe('- [ ] Pay 🔁 every day')
+  })
 })
+
+function readTaskOf(line: string) {
+  const found = readTask(line)
+  if (!found) throw new Error('not a task')
+  return found
+}
