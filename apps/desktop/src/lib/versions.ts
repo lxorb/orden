@@ -9,6 +9,7 @@
 
 import { account } from './account.svelte'
 import { api } from './api'
+import { deviceName } from './device'
 import { sync } from './sync.svelte'
 import { invoke } from './tauri'
 
@@ -31,15 +32,19 @@ export interface Version {
 }
 
 /** How close two versions have to be to be the same one seen twice. A push follows
- *  the write that caused it by a pass at most. */
+ *  the write that caused it by a pass at most. Only this device's own pushes are
+ *  matched this way: a pass keeps a copy of the words it is about to replace at the
+ *  moment another device's words arrive, so a version from elsewhere is near a local
+ *  one exactly when it matters most. */
 const TOGETHER = 60 * 1000
 
 /** Both histories as one list, newest first.
  *
  *  A version the device kept and then pushed is one moment, and it is in both lists;
  *  the device's copy wins, because reading it costs nothing. Anything the account
- *  holds that this machine does not - written on the phone, or written here before the
- *  disk was wiped - comes after it in time order like any other version. */
+ *  holds that this machine did not push - written on the phone, by Bob, or by a
+ *  connected app - is listed in time order like any other version, however near a
+ *  copy kept here it is. So is what this machine pushed before the disk was wiped. */
 export async function versionsOf(path: string): Promise<Version[]> {
   const mine = await invoke<Snapshot[]>('list_snapshots', { path }).catch(() => [])
   const here: Version[] = mine.map((one) => ({
@@ -54,8 +59,9 @@ export async function versionsOf(path: string): Promise<Version[]> {
   if (!token || !id) return here
 
   const theirs = await api.noteVersions(token, id).catch(() => ({ versions: [] }))
+  const me = deviceName()
   const fromAccount = theirs.versions
-    .filter((one) => !here.some((ours) => Math.abs(ours.at - one.at) < TOGETHER))
+    .filter((one) => one.by !== me || !here.some((ours) => Math.abs(ours.at - one.at) < TOGETHER))
     .map((one) => ({ at: one.at, size: one.size, path: null, by: one.by }))
 
   return [...here, ...fromAccount].sort((one, other) => other.at - one.at)
