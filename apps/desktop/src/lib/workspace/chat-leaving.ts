@@ -3,13 +3,13 @@
  *  pointing at it. The rule it is held to, and why, is chat-carry.ts. */
 
 import { ApiError } from '../api'
-import { t } from '../i18n.svelte'
 import { onDisk } from '../on-disk'
 import { nameOf, samePath, within } from '../space-paths'
 import { sync } from '../sync.svelte'
 import { joinPath } from '../tauri'
 import { failed } from '../views/failed.svelte'
 import { workspace } from '../workspace.svelte'
+import { carryQuestion } from './carry-question'
 import { mayCarry, pointersMoving, spaceHolding } from './chat-carry'
 
 /** Before `path` moves into `folder`: the chats it carries into another space, moved
@@ -114,29 +114,6 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
     owned.push([chat, pointer])
   }
   return back
-}
-
-/** The question a carry puts: whether the chats go with their pointers into `to`, or
- *  only the files do. The safe answer comes first and takes the keyboard, so Enter keeps
- *  the history where it is. */
-export function carryQuestion(names: readonly string[], from: string, to: string) {
-  return {
-    title:
-      names.length === 1
-        ? t('Move the chat {name} to {space}?', { name: names[0] ?? '', space: to })
-        : t('Move the chats {names} to {space}?', { names: names.join(', '), space: to }),
-    detail: t(
-      'Everyone in {space} can then read the whole history, and the people in {from} lose it.',
-      {
-        space: to,
-        from,
-      },
-    ),
-    options: [
-      { id: 'file', label: t('Only the file'), primary: true, lands: true },
-      { id: 'chat', label: t('Move the chat'), danger: true },
-    ],
-  }
 }
 
 /** The owner's answer: the chats too, the files only, or null for the question put
