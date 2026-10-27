@@ -67,7 +67,12 @@ export async function versionsOf(path: string): Promise<Version[]> {
     let held = hashes.get(copy)
     if (!held) {
       held = invoke<string>('read_snapshot', { path: copy, notePath: path }).then(
-        (words) => Promise.all([sha256(words), sha256(words.replace(/\r\n?/g, '\n'))]),
+        (words) => {
+          // The editor keeps LF and a v1 push sends the file as written, which may be
+          // CRLF, so a copy is tried as kept and with either line ending.
+          const lf = words.replace(/\r\n?/g, '\n')
+          return Promise.all([sha256(words), sha256(lf), sha256(lf.replace(/\n/g, '\r\n'))])
+        },
         () => [],
       )
       hashes.set(copy, held)

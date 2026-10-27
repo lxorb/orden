@@ -58,6 +58,18 @@ test('a push of the words kept here is that copy, listed once, whoever named it'
   expect(listed).toEqual([{ at: 1_000_000_000, size: 9, path: '/h/1.md', by: '' }])
 })
 
+test('a CRLF push of words kept here with LF is that copy', async () => {
+  held.snapshots = [{ taken_at: 1_000_000_000, size: 8, path: '/h/1.md' }]
+  held.words = new Map([['/h/1.md', 'one\ntwo\n']])
+  held.account = [
+    { at: 1_000_010_000, size: 10, by: 'Windows desktop', hash: await sha256('one\r\ntwo\r\n') },
+  ]
+
+  const listed = await versionsOf('/s/Team/Plan.md')
+
+  expect(listed.map((one) => one.path)).toEqual(['/h/1.md'])
+})
+
 test('the same words long after anything kept here are listed', async () => {
   held.snapshots = [{ taken_at: 1_000_000_000, size: 9, path: '/h/1.md' }]
   held.words = new Map([['/h/1.md', 'the owner']])
