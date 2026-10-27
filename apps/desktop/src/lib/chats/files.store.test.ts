@@ -53,15 +53,6 @@ test('a file the server does not know yet is asked again: a post names it before
   expect(server.asked).toBe(2)
 })
 
-test('a file this device put up is drawn from its own bytes, without a round trip', async () => {
-  server.asked = 0
-  const hash = await chats.upload(new TextEncoder().encode('my picture'))
-  expect(hash).toBeTruthy()
-  const url = await chats.fileUrl('c5', hash ?? '')
-  expect(url).toMatch(/^blob:/)
-  expect(server.asked).toBe(0)
-})
-
 test("a reader who just signed in is never handed the last one's address", async () => {
   server.answers = [new Blob(['guest']), new Blob(['user'])]
   account.guest = { id: 'g1' } as typeof account.guest
@@ -86,4 +77,18 @@ test('signing out lets go of the files it drew', async () => {
   const revoke = vi.spyOn(URL, 'revokeObjectURL')
   await chats.forget()
   expect(revoke).toHaveBeenCalledWith(url)
+})
+
+test('letting go of the addresses is told, so a view asks again', async () => {
+  const was = chats.fileEpoch
+  await chats.forget()
+  expect(chats.fileEpoch).toBeGreaterThan(was)
+})
+
+test('a file put up keeps no copy of its bytes here: one taken off the composer is not held (review of #990, L1)', async () => {
+  server.asked = 0
+  server.answers = [new Blob(['x'])]
+  const hash = await chats.upload(new TextEncoder().encode('a video dropped by mistake'))
+  expect(await chats.fileUrl('c7', hash ?? '')).toMatch(/^blob:/)
+  expect(server.asked).toBe(1)
 })

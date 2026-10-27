@@ -236,3 +236,25 @@ test('letting one file go redraws only the rows of that file (review of #990, L3
   failing.close()
   close()
 })
+
+test('signing out and back in as the same reader asks again: the last addresses were let go (review of #990, M1)', async () => {
+  let n = 0
+  const ask = vi.fn<Ask>(() => Promise.resolve(`blob:${++n}`))
+  const fake = { me: 'user:a' as Who | null, fileEpoch: 0, fileUrl: ask }
+  useStore(fake as unknown as Chats)
+  const before = row('c1', 'h14')
+  await wait(0)
+  expect(before.shown()).toBe('blob:1')
+  before.close()
+
+  // sign-out: the store revokes what it made, and says so
+  fake.me = null
+  fake.fileEpoch++
+  fake.me = 'user:a'
+
+  const after = row('c1', 'h14')
+  await wait(0)
+  expect(after.shown()).toBe('blob:2')
+  expect(ask).toHaveBeenCalledTimes(2)
+  after.close()
+})
