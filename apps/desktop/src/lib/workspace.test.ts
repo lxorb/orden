@@ -2809,6 +2809,24 @@ describe('a new tab', () => {
     }
   })
 
+  /** A tab with no file opened from a Separate web note (a link out of it) is signed in
+   *  where that note is. Saving it makes a web note of the same web data: it used to be
+   *  written with none, and the page was built again in the shared store. */
+  test('a tab with its note’s own web data keeps it when saved', async () => {
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+    tab.address = 'https://example.org/b'
+    tab.apart = '0123456789abcdef'
+    const before = written().length
+    try {
+      await workspace.save(tab, '/space', 'Apart.url')
+      expect(written()[before]!.content).toContain('Nib-Data=0123456789abcdef')
+    } finally {
+      delete notes['/space/Apart.url']
+    }
+  })
+
   /** A browser brings back the tabs it had, and so does this: the words of a document
    *  with no file exist in the session and nowhere else. See `draftOf`. */
   test('an untouched one comes back after a restart', async () => {
