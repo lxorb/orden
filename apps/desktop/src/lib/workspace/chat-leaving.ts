@@ -25,7 +25,11 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   const pointers = await pointersMoving(path)
   if (!pointers.length) return none
 
-  const [{ listChats, moveChat }, { readPointer }, places] = await Promise.all([
+  const [
+    { listChats, moveChat },
+    { readPointer },
+    { keepOwnPointers, lastMoved, movedHere, ownPointer },
+  ] = await Promise.all([
     import('../chats/http'),
     import('../chats/pointers'),
     import('../chats/places'),
@@ -36,9 +40,9 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   const back = async () => {
     if (!home) return
     for (const chat of moved) {
-      if (await moveChat(chat, home).catch(() => false)) places.movedHere(chat, home)
+      if (await moveChat(chat, home).catch(() => false)) movedHere(chat, home)
     }
-    places.keepOwnPointers(owned)
+    keepOwnPointers(owned)
   }
   const refuse = async (error: Error): Promise<never> => {
     await back()
@@ -69,10 +73,10 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
     // it - carries nothing, and neither does a pointer to a chat the account does not
     // list: the file moves and the chat stays where it lives (B542). Where the device
     // cannot tell, it does not guess: the move is refused, to be tried again.
-    const lives = spaces ? (spaces.get(chat) ?? null) : places.lastMoved(chat)
+    const lives = spaces ? (spaces.get(chat) ?? null) : lastMoved(chat)
     if (lives === null && !spaces) await refuse(new Error('the account could not be reached'))
     if (lives !== home) continue
-    const own = places.ownPointer(chat)
+    const own = ownPointer(chat)
     if (own === null) await refuse(new Error('the chat is not listed on this device yet'))
     if (!pointers.some((one) => samePath(one, own))) continue
     // Not heard is not moved either: the file would be in the new space with its chat
@@ -83,10 +87,10 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
     if (answer instanceof Error) await refuse(answer)
     if (answer === false) await refuse(new Error('the account could not be reached'))
     moved.push(chat)
-    places.movedHere(chat, space)
+    movedHere(chat, space)
     // Its own pointer is where the move puts it, before the file operation is heard, so
     // an undo straight after carries it back.
-    places.keepOwnPointers([[chat, joinPath(folder, nameOf(path)) + pointer.slice(path.length)]])
+    keepOwnPointers([[chat, joinPath(folder, nameOf(path)) + pointer.slice(path.length)]])
     owned.push([chat, pointer])
   }
   return back
