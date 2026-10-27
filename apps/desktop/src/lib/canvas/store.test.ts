@@ -603,6 +603,33 @@ describe('a plane with something on it this app does not read', () => {
     expect(written.metadata).toEqual({ version: '1.0-1.0' })
   })
 
+  /** #781: another app moved its own node twice while the reader had the plane open
+   *  and had drawn on it, so the file's words are merged with the reader's each time.
+   *  Both moves count the same generation from what the app last wrote, so only the
+   *  file can say which is newer: nothing in the app changes such a node. */
+  test('takes what another app changed in the file, even with the reader’s edits open', () => {
+    const { store, note } = opened(vault())
+    store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card('b', 600)] })
+    store.part()
+
+    const written = note.text
+    const movedTo = (x: number) => {
+      const file = JSON.parse(written) as { nodes: { id: string; x: number }[] }
+      const drawing = file.nodes.find((one) => one.id === 'x')
+      if (drawing) drawing.x = x
+      return `${JSON.stringify(file, null, '\t')}\n`
+    }
+    store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card('c', 900)] })
+    // 25 sorts before 50, so a tie between the two moves would keep the first.
+    note.replace(movedTo(25))
+    store.follow()
+    note.replace(movedTo(50))
+    store.follow()
+
+    expect(store.canvas.extras?.nodes.get('x')?.x).toBe(50)
+    expect(ids(store.canvas).sort()).toEqual(['a', 'b', 'c'])
+  })
+
   test('and lets a card taken away take its own fields and its edges with it', () => {
     const { store, note } = opened(vault())
     store.edit({ ...store.canvas, nodes: [] })
