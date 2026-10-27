@@ -478,6 +478,21 @@ describe('a change', () => {
   })
 })
 
+describe('a helper on another provider', () => {
+  /** `run_agent` routes a helper to any provider in use: its edits are its parent's. */
+  test('is in the review of the thread that started it', async () => {
+    fake.desk = deskWith({ 'x.md': 'one two' })
+    fake.documents = Object.values(fake.desk.panes).map((pane) => pane.note)
+    const thread = aThread()
+    const helper = aThread()
+    ;(thread as Thread & { helpers?: string[] }).helpers = [helper.id]
+    await message(thread, 'ask', [])
+    await message(helper, 'go', [{ path: 'x.md', at: { quote: 'two' }, replace: 'TWO' }])
+
+    expect(review.changes(thread).map((one) => one.agent)).toEqual([`nib-${helper.provider}`])
+  })
+})
+
 describe('Follow', () => {
   test('brings a note the thread edits to the front, only while it is on', async () => {
     fake.desk = deskWith({ 'f.md': 'one', 'g.md': 'two' })

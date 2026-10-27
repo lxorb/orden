@@ -837,6 +837,42 @@ describe('a chat while it answers', () => {
     return chat
   }
 
+  /** `/batch`, `/subtask`, `/fork`, a goal, a loop: everything a chat started ends with
+   *  it, and what its helpers started too, and the chat is not written again. */
+  test('a deleted chat stops all the work it started', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const { tasks } = await import('../commands/tasks.svelte')
+    const batch = vi.fn()
+    const under = vi.fn()
+    const other = vi.fn()
+    tasks.add({ thread: id, kind: 'batch', label: 'Inbox/a.md', helper: 'h1', stop: batch })
+    tasks.add({ thread: 'h1', kind: 'subtask', label: 'deeper', helper: 'h2', stop: under })
+    tasks.add({ thread: 'elsewhere', kind: 'loop', label: 'keep on', stop: other })
+
+    await chat.remove(id)
+
+    await vi.waitFor(() => expect(batch).toHaveBeenCalled())
+    expect(under).toHaveBeenCalled()
+    expect(other).not.toHaveBeenCalled()
+    expect(tasks.of(id)).toEqual([])
+    expect(deleted).toEqual([`work/${id}`])
+    tasks.stop('elsewhere')
+  })
+
+  test('Stop stops the work the open chat started', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const { tasks } = await import('../commands/tasks.svelte')
+    const fork = vi.fn()
+    tasks.add({ thread: id, kind: 'fork', label: 'a copy', helper: 'h3', stop: fork })
+
+    chat.stop()
+
+    await vi.waitFor(() => expect(fork).toHaveBeenCalled())
+    expect(tasks.of(id)).toEqual([])
+  })
+
   test('stays deleted once deleted while it answers', async () => {
     const chat = await asked()
     const id = String(chat.thread?.id)
