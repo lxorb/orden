@@ -4,7 +4,7 @@
 
 import { beforeEach, expect, test, vi } from 'vitest'
 
-const files: Record<string, string> = {}
+const files = new Map<string, string>()
 const cleared: unknown[] = []
 const asked: string[] = []
 let rows: { label: string; run: () => void }[] = []
@@ -13,7 +13,7 @@ vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'read_note') {
-      const text = files[String(args.path)]
+      const text = files.get(String(args.path))
       return text === undefined ? Promise.reject(new Error('missing')) : Promise.resolve(text)
     }
     if (command === 'web_clear') cleared.push(args.stores)
@@ -34,7 +34,7 @@ vi.mock('../prompt.svelte', () => ({
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 vi.mock('../workspace/write-file', () => ({
   writeFile: (path: string, text: string) => {
-    files[path] = text
+    files.set(path, text)
     return Promise.resolve()
   },
 }))
@@ -69,12 +69,12 @@ const SEPARATE =
 async function setGlobal(path: string) {
   await showWebData(path)
   rows.find((one) => one.label === 'Global')!.run()
-  await vi.waitFor(() => expect(files[path]).not.toContain('Nib-Data'))
+  await vi.waitFor(() => expect(files.get(path)).not.toContain('Nib-Data'))
   await new Promise((done) => setTimeout(done, 0))
 }
 
 beforeEach(() => {
-  for (const key of Object.keys(files)) delete files[key]
+  files.clear()
   cleared.length = 0
   asked.length = 0
   tabs.length = 0
@@ -82,7 +82,7 @@ beforeEach(() => {
 })
 
 test('a note set back to Global clears the store only it named', async () => {
-  files['/s/A.url'] = SEPARATE
+  files.set('/s/A.url', SEPARATE)
   listed.push({ path: '/s/A.url', name: 'A.url' })
 
   await setGlobal('/s/A.url')
@@ -92,8 +92,8 @@ test('a note set back to Global clears the store only it named', async () => {
 })
 
 test('a note set back to Global leaves a store another listed note still names', async () => {
-  files['/s/A.url'] = SEPARATE
-  files['/s/B.url'] = SEPARATE.replace('Mail', 'Mail 2')
+  files.set('/s/A.url', SEPARATE)
+  files.set('/s/B.url', SEPARATE.replace('Mail', 'Mail 2'))
   listed.push({ path: '/s/A.url', name: 'A.url' }, { path: '/s/B.url', name: 'B.url' })
 
   await setGlobal('/s/B.url')
@@ -104,8 +104,8 @@ test('a note set back to Global leaves a store another listed note still names',
 })
 
 test('a note set back to Global leaves a store a note open in a tab still names', async () => {
-  files['/s/A.url'] = SEPARATE
-  files['/other/B.url'] = SEPARATE.replace('Mail', 'Mail 2')
+  files.set('/s/A.url', SEPARATE)
+  files.set('/other/B.url', SEPARATE.replace('Mail', 'Mail 2'))
   tabs.push({ kind: 'web', path: '/other/B.url', apart: null, id: 't' })
   listed.push({ path: '/s/A.url', name: 'A.url' })
 

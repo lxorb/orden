@@ -46,8 +46,9 @@ type Claim = (path: string, run: () => Promise<NoteDoc | null>) => Promise<NoteD
  *  same instant were once handed the same name. The name is asked for against what is
  *  open as well as what is listed and claimed before the write begins, which is
  *  `claim`; see open.ts.
- *  A web note kept over keeps its own web data, if it had any, and a tab with web
- *  data of its own (`apart`) gives it to the note it becomes. */
+ *  A web note kept over keeps its own choice of web data, Global or Separate, whatever
+ *  the tab had. A new note from a tab with web data of its own (`apart`) is Separate;
+ *  see `ownFor`. */
 export async function keepWeb(
   ws: Places,
   claim: Claim,
@@ -78,10 +79,7 @@ export async function keepWeb(
   }
 
   const kept = await claim(target, async () => {
-    // The note's own web data where the file kept over has some, else the tab's: a tab
-    // with no file made at a Separate note's page (a link out of it) is signed in where
-    // that note is, and a save that dropped it built the page again in the shared store.
-    const own = (over ? readWebFile(target, over.text)?.own : null) ?? tab.apart ?? null
+    const own = over ? (readWebFile(target, over.text)?.own ?? null) : await ownFor(tab)
     const fresh = writeShortcut(url, title, new Date(), undefined, page.kept ?? undefined, own)
     const text = over ? settleShortcuts(target, over.text, fresh, true) : fresh
 
@@ -97,6 +95,18 @@ export async function keepWeb(
   })
   if (kept !== tab.note) return null
   return target
+}
+
+/** The web data of a new note made of `tab`: none for a tab on the shared store, and a
+ *  fresh id for a tab that kept another note's pages apart (a link out of a Separate
+ *  note). Never that note's id: a note set back to Global clears its store, and two
+ *  notes naming one store meant either of them signed the other out and deleted what
+ *  it kept. The page is built again in the new, empty store, which is what Separate
+ *  does to a note; see own-data.ts. */
+async function ownFor(tab: Tab): Promise<string | null> {
+  if (!tab.apart) return null
+  const { freshOwn } = await import('../web-tab/web-data.svelte')
+  return freshOwn()
 }
 
 /** The web note already at the name a tab is being kept under, where it is the same
