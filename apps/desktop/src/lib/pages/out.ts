@@ -50,6 +50,7 @@ import { zipOf } from '../export/zip'
 import { PDF_TO_CSS } from '../pdf/pages'
 import { isDesktop } from '../tauri'
 import { paperPlaces } from './held'
+import { svgToPng } from './raster'
 
 /** What an export of a page note is about. */
 export interface PagesOut {
@@ -211,36 +212,6 @@ function moved(stroke: InkStroke, byX: number, byY: number): InkStroke {
   return {
     ...stroke,
     points: stroke.points.map((point) => ({ ...point, x: point.x + byX, y: point.y + byY })),
-  }
-}
-
-/** One SVG rasterised by the browser, which is how the canvas's PNG is made too.
- *  Null where the browser refused the picture, which is a page nothing could be
- *  drawn from rather than an error worth a dialog. */
-async function svgToPng(svg: string, width: number, height: number): Promise<Uint8Array | null> {
-  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
-
-  try {
-    const image = new Image()
-    image.decoding = 'sync'
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve()
-      image.onerror = () => reject(new Error('that page could not be drawn'))
-      image.src = url
-    })
-
-    const paper = document.createElement('canvas')
-    paper.width = Math.max(1, Math.round(width * 2))
-    paper.height = Math.max(1, Math.round(height * 2))
-
-    const ctx = paper.getContext('2d')
-    if (!ctx) return null
-
-    ctx.drawImage(image, 0, 0, paper.width, paper.height)
-    const blob = await new Promise<Blob | null>((resolve) => paper.toBlob(resolve, 'image/png'))
-    return blob ? new Uint8Array(await blob.arrayBuffer()) : null
-  } finally {
-    URL.revokeObjectURL(url)
   }
 }
 

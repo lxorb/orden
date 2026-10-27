@@ -2,12 +2,30 @@
 import { describe, expect, test, vi } from 'vitest'
 import { decodePDFRawStream, PDFDocument, type PDFRawStream } from 'pdf-lib'
 import { added, emptyPages } from '@nib/markdown/pages'
-import type { Canvas, CanvasNode, PageNode } from '../canvas/format'
+import { type Canvas, type CanvasNode, type PageNode, writeCanvas } from '../canvas/format'
 
 /** What is on a page besides the ink (B541): the words typed onto it and the ruling it
  *  is printed with. The reader sees both on the page, so every way out shows both. */
 
 vi.mock('../bytes', () => ({ fileBytes: () => Promise.resolve(null) }))
+/** The browser's rasteriser, stood in for: jsdom draws no pictures. It answers with a
+ *  one pixel PNG, or with nothing where a test says the browser refused. */
+const raster = vi.hoisted(() => ({
+  drawn: [] as string[],
+  refuse: false,
+  png: Uint8Array.from(
+    atob(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+    ),
+    (one) => one.charCodeAt(0),
+  ),
+}))
+vi.mock('./raster', () => ({
+  svgToPng: (svg: string) => {
+    raster.drawn.push(svg)
+    return Promise.resolve(raster.refuse ? null : raster.png)
+  },
+}))
 vi.mock('../link-index.svelte', () => ({
   links: {
     version: 1,
@@ -16,7 +34,7 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-const { pagesPdf, pageSvg } = await import('./out')
+const { pagesOutOf, pagesPdf, pageSvg } = await import('./out')
 
 const out = (canvas: Canvas) => ({ canvas, palette: {}, name: 'P', path: '/s/P.pages', root: '/s' })
 
@@ -81,13 +99,62 @@ describe('words typed on a page', () => {
     expect(first.match(/Tj/g)?.length ?? 0).toBeGreaterThan(1)
   })
 
-  test('keep going when a character has no glyph in the PDF font', async () => {
+  test('that the PDF font cannot spell go onto the sheet as a picture of the card', async () => {
+    raster.drawn = []
     const canvas = note()
     const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
-    card.text = 'Exam 試験 on Friday ✓'
+    card.text = 'Kolokwium w środę 試験 ✓'
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
 
+    expect(raster.drawn).toHaveLength(1)
+    expect(raster.drawn[0]).toContain('Kolokwium w środę 試験 ✓')
+    expect(first).toMatch(/ Do$/m)
+    expect(first).not.toContain(hex('Kolokwium'))
+    // The other sheet's words are still text.
+    expect(await contentOf((await pagesPdf(out(canvas)))!, 1)).toContain(hex('Second sheet'))
+  })
+
+  test('are never lost: a refused picture leaves the letters the font has', async () => {
+    raster.refuse = true
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
+    card.text = 'Kolokwium w środę'
+    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+    raster.refuse = false
+
+    expect(first).toContain(hex('Kolokwium w'))
+  })
+
+  test('keep a tab as space, which needs no picture', async () => {
+    raster.drawn = []
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
+    card.text = 'Exam\tFriday'
+    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+
+    expect(raster.drawn).toHaveLength(0)
     expect(first).toContain(hex('Exam'))
+    expect(first).toContain(hex('Friday'))
+  })
+
+  test('in a colour of three hex digits print in that colour', async () => {
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { color?: string }
+    card.color = '#f00'
+    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+
+    expect(first).toMatch(/^1 0 0 rg$/m)
+  })
+
+  test('of a long paragraph are set without freezing the app', async () => {
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
+    card.text = Array.from({ length: 2000 }, (_, at) => `word${at}`).join(' ')
+    card.height = 4000
+    const began = performance.now()
+    await pagesPdf(out(canvas))
+
+    expect(performance.now() - began).toBeLessThan(400)
   })
 
   test('reach the SVG of their page, and the PNG picture of it', () => {
@@ -119,5 +186,49 @@ describe('the ruling of a page', () => {
 
     expect((ruled.match(/ re$/gm) ?? []).length).toBeGreaterThan(20)
     expect((blank.match(/ re$/gm) ?? []).length).toBeLessThan(3)
+  })
+})
+
+describe('what else is on a page', () => {
+  test('goes into the PDF as a picture: a shape, a link, a picture', async () => {
+    raster.drawn = []
+    const canvas = note()
+    const page = canvas.nodes[0] as PageNode
+    const at = { x: page.x + 40, y: page.y + 300, width: 120, height: 80 }
+    canvas.nodes.push(
+      { id: 's', type: 'shape', shape: 'rect', ...at } as CanvasNode,
+      { id: 'l', type: 'link', url: 'https://example.com', ...at, y: at.y + 100 } as CanvasNode,
+    )
+    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+
+    expect(raster.drawn).toHaveLength(2)
+    expect(first.match(/ Do$/gm)).toHaveLength(2)
+  })
+})
+
+describe('ink in the pen with no colour of its own (B571)', () => {
+  test('is the dark ink of white paper, whatever theme is on', () => {
+    const sheet = document.createElement('style')
+    sheet.textContent = [
+      "[data-theme='dark'] { --text-strong: #f4f7fb; --text: #dde2ea; --canvas-dot: #2b323d }",
+      "[data-theme='light'] { --text-strong: #0b0d10; --text: #1a1d23; --canvas-dot: #d5dce5 }",
+    ].join('\n')
+    document.head.append(sheet)
+    document.documentElement.dataset.theme = 'dark'
+
+    const canvas = note('lines')
+    const page = canvas.nodes[0] as PageNode
+    const point = { x: page.x + 50, y: page.y + 50, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }
+    canvas.ink = [{ id: 'i', tool: 'pen', color: 'ink', size: 3, points: [point] }]
+    const open = pagesOutOf({ text: writeCanvas(canvas), name: 'P', path: null, root: null })
+    const svg = pageSvg(open, page, 1)
+
+    sheet.remove()
+    delete document.documentElement.dataset.theme
+
+    expect(svg).toContain('#0b0d10')
+    expect(svg).not.toContain('#f4f7fb')
+    expect(svg).toContain('#d5dce5')
+    expect(svg).not.toContain('#2b323d')
   })
 })
