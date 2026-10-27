@@ -162,7 +162,12 @@ describe('the account keeps what a note said', () => {
       })
     }
 
-    expect(rows(env, note).map((one) => one.by)).toEqual(['', 'the laptop', 'Bob', 'the laptop'])
+    // Each slides a version of its own: the laptop's last words, and Bob's.
+    expect(rows(env, note).map((one) => one.hash)).toEqual([
+      await sha256('# One'),
+      await sha256('# Bob'),
+      await sha256('# Mine again'),
+    ])
   })
 
   test('nor of another device that calls itself by the same name', async () => {

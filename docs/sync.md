@@ -54,13 +54,16 @@ and the history sheet then shows the moment with nothing beside it, which is wha
 the device's own snapshots look like.
 
 **About one every five minutes, and the newest.** The same interval the device's
-own keeper defaults to. A save inside the five minutes is folded into the newest
-version, when the same device sent that one (the device as its session proves it,
-not the name it sends, which is its kind), rather than dropped, so the last save of a session is always a version:
-dropped, it was the one a rollback needed, and nowhere on the account once the
-rollback had written over it. A version kept by name (the words that lost a modal
-answer, the words a rollback writes over) is never folded away, and the thinning
-below passes it by; the horizon and the ceiling still take it in time.
+own keeper defaults to, per device. A save inside the five minutes is folded into
+that device's own newest version rather than dropped, so the last save of a session
+is always a version. The device is the one its session proves, or a program's
+token, not the name it sends, which is its kind; two people typing in one note each
+slide a version of their own, and somebody else's words in between are kept. Saves
+that name no device at all slide one version between them. Dropped, the last save
+was the one a rollback needed, and nowhere on the account once the rollback had
+written over it. A version kept by name (the words that lost a modal answer, the
+words a rollback writes over) is never folded away, and the thinning below passes
+it by; the horizon and the ceiling still take it in time.
 
 **A month, or a year, and thinned as it ages.** How far back is the account's own
 choice - `Keep versions` in Sync, a month or a year, and nothing in between,
@@ -95,7 +98,11 @@ had accumulated. A note now falls behind by at most one run of the sweep.
 **And at most 1024 versions of any one note**, held where the version is written
 rather than left to the sweep. A month under the two rules above comes to 984, so
 nothing anybody does reaches this by accident; what it does is put a number on what
-one note can cost, which a ceiling waiting on a nightly job cannot.
+one note can cost, which a ceiling waiting on a nightly job cannot. Over it, the
+crowded go first (a version with another within five minutes, then an hour, a day,
+a week), the oldest after that, and a version kept by name last: an afternoon of
+four people typing in one note is enough to reach it, and taking the oldest first
+took the year of history with it.
 
 **And at most two gigabytes of history per account, swept oldest-first.** Version
 bytes are not counted against the account's 1 GiB quota - they are the service's

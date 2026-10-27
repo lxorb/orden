@@ -184,12 +184,11 @@ export async function keepVersion(
   // again rather than writing nowhere, which left the newest version one save
   // behind the note.
   for (let tries = 0; tries < 3; tries++) {
-    const { results: newest } = await env.DB.prepare(
-      'select at, hash, held, device from note_versions where note_id = ? order by at desc limit 2',
+    const last = await env.DB.prepare(
+      'select at, hash from note_versions where note_id = ? order by at desc limit 1',
     )
       .bind(note.id)
-      .all<{ at: number; hash: string; held: number; device: string | null }>()
-    const [last, before] = newest
+      .first<{ at: number; hash: string }>()
 
     // Nothing new to say.
     if (last?.hash === note.hash) break
@@ -202,28 +201,41 @@ export async function keepVersion(
       stored = true
     }
 
+    // This device's own newest version, and the moment of the one before it,
+    // whoever sent that. Its own rather than the newest, so two people typing in
+    // one room each slide a version of their own instead of adding one a settle.
+    const mine = await env.DB.prepare(
+      `select v.at as at, v.hash as hash, v.held as held,
+              (select max(at) from note_versions where note_id = v.note_id and at < v.at) as before
+         from note_versions v
+        where v.note_id = ? and v.device is ?
+        order by v.at desc limit 1`,
+    )
+      .bind(note.id, device)
+      .first<{ at: number; hash: string; held: number; before: number | null }>()
+
     const at = now()
     const folds =
-      last !== undefined &&
-      !last.held &&
-      device !== null &&
-      last.device === device &&
-      at - last.at < VERSION_EVERY &&
-      before !== undefined &&
-      last.at - before.at < VERSION_EVERY
+      mine !== null &&
+      !mine.held &&
+      at - mine.at < VERSION_EVERY &&
+      mine.before !== null &&
+      mine.at - mine.before < VERSION_EVERY
 
     if (folds) {
-      // Or ignore: a version kept meanwhile at the moment this one moves to would
-      // otherwise throw, and the save would be on no version at all.
+      // After the newest, which is where the last save belongs. Or ignore: a
+      // version kept meanwhile at that moment would otherwise throw, and the save
+      // would be on no version at all.
+      const to = mine.at === last?.at ? Math.max(at, mine.at) : Math.max(at, (last?.at ?? 0) + 1)
       const folded = await env.DB.prepare(
         `update or ignore note_versions set at = ?4, hash = ?5, size = ?6, by = ?7
-          where note_id = ?1 and at = ?2 and hash = ?3 and held = 0 and device = ?8`,
+          where note_id = ?1 and at = ?2 and hash = ?3 and held = 0 and device is ?8`,
       )
-        .bind(note.id, last.at, last.hash, Math.max(at, last.at), note.hash, note.size, by, device)
+        .bind(note.id, mine.at, mine.hash, to, note.hash, note.size, by, device)
         .run()
       if (!folded.meta.changes) continue
 
-      await forgetBodies(env, [last.hash])
+      await forgetBodies(env, [mine.hash])
       return
     }
 
@@ -303,29 +315,56 @@ export async function holdVersion(
 /** The ceiling on one note's history, held where the version is written.
  *
  *  Counted rather than read, because almost every save is nowhere near the
- *  ceiling and a count on the note's own index is one seek. Over it, the oldest
- *  go - which is the same answer the month gives, arrived at sooner. */
+ *  ceiling and a count on the note's own index is one seek. Over it, what goes is
+ *  what the thinning would take anyway, crowded runs first, and the oldest only
+ *  after that: four people typing in one note for an afternoon reach the ceiling,
+ *  and taking the oldest then took a year of history with it, and the words a
+ *  rollback had kept. */
 async function keepAtMost(env: Env, noteId: string): Promise<void> {
   const held = await env.DB.prepare('select count(*) as many from note_versions where note_id = ?')
     .bind(noteId)
     .first<{ many: number }>()
 
-  const over = (held?.many ?? 0) - MOST_KEPT
-  if (over <= 0) return
+  let over = (held?.many ?? 0) - MOST_KEPT
+  const freed: string[] = []
 
-  const { results } = await env.DB.prepare(
-    `delete from note_versions
-      where note_id = ?1
-        and at in (select at from note_versions where note_id = ?1 order by at limit ?2)
-      returning hash`,
-  )
-    .bind(noteId, over)
-    .all<{ hash: string }>()
+  // The crowded first: a version with another close behind it says least, so the
+  // ones a five minute run, an hour, a day and a week cover go before any of the
+  // rest. Then the oldest, still sparing the held; the held last of all. Never the
+  // newest, which is what the note says.
+  for (const close of [VERSION_EVERY, HOUR, DAY, WEEK, null]) {
+    if (over <= 0) break
+    const { results } = await env.DB.prepare(
+      `delete from note_versions
+        where note_id = ?1
+          and at in (select at from (select at, held, lead(at) over (order by at) as next
+                                       from note_versions where note_id = ?1)
+                      where next is not null and held = ?4
+                        and (?3 is null or next - at < ?3)
+                      order by at limit ?2)
+        returning hash`,
+    )
+      .bind(noteId, over, close, 0)
+      .all<{ hash: string }>()
+    over -= results.length
+    for (const one of results) freed.push(one.hash)
+  }
 
-  await forgetBodies(
-    env,
-    results.map((one) => one.hash),
-  )
+  if (over > 0) {
+    const { results } = await env.DB.prepare(
+      `delete from note_versions
+        where note_id = ?1
+          and at in (select at from note_versions where note_id = ?1
+                      and at < (select max(at) from note_versions where note_id = ?1)
+                      order by at limit ?2)
+        returning hash`,
+    )
+      .bind(noteId, over)
+      .all<{ hash: string }>()
+    for (const one of results) freed.push(one.hash)
+  }
+
+  await forgetBodies(env, freed)
 }
 
 /** The bodies of versions that have gone, for the hashes no row names any more.
