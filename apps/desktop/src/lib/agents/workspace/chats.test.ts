@@ -116,6 +116,27 @@ beforeEach(() => {
 })
 
 describe('the chats an agent sees', () => {
+  test('by name from a panel thread, are its own space’s first, then the front’s', async () => {
+    const twin = store.add('thesis', [{ who: ME, name: 'Emil', role: 'owner' }], {
+      root: '/spaces/Secret',
+      path: '/spaces/Secret/thesis.chat',
+    })
+    store.speak(twin, ME, 'the other thesis')
+    const { answerThreadSpaces } = await import('../../automation/caller')
+    answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
+    const grant = { id: 'claude', name: 'Claude Code', scopes: ['chats.read'], spaces: 'all', mode: 'confirm' }
+    try {
+      expect(said(await call('read_chat', { chat: 'thesis' }, callerOf(grant, 'in-secret')))).toContain(
+        'the other thesis',
+      )
+      expect(said(await call('read_chat', { chat: 'thesis' }, callerOf(grant)))).toContain(
+        'Draft of chapter 3',
+      )
+    } finally {
+      answerThreadSpaces(() => null)
+    }
+  })
+
   test('are those of the spaces it reaches', async () => {
     const listed = said(await call('list_chats', {}))
     expect(listed).toContain('#thesis')
