@@ -2809,10 +2809,12 @@ describe('a new tab', () => {
     }
   })
 
-  /** A tab with no file opened from a Separate web note (a link out of it) is signed in
-   *  where that note is. Saving it makes a web note of the same web data: it used to be
-   *  written with none, and the page was built again in the shared store. */
-  test('a tab with its note’s own web data keeps it when saved', async () => {
+  /** A tab with no file opened from a Separate web note (a link out of it) keeps its
+   *  pages apart. Saved as a new note it stays Separate, with web data of its own: it
+   *  used to be written with none, and the page was built again in the shared store.
+   *  Never with the source note's id, since a note set back to Global clears its store,
+   *  and that would sign the other note out and delete what it kept. */
+  test('a tab with its note’s own web data is saved Separate, under an id of its own', async () => {
     workspace.openWebsite()
     const tab = workspace.active
     if (!tab) throw new Error('nothing opened')
@@ -2821,9 +2823,32 @@ describe('a new tab', () => {
     const before = written().length
     try {
       await workspace.save(tab, '/space', 'Apart.url')
-      expect(written()[before]!.content).toContain('Nib-Data=0123456789abcdef')
+      const wrote = written()[before]!.content
+      expect(wrote).toMatch(/Nib-Data=[0-9a-f]{16}/)
+      expect(wrote).not.toContain('Nib-Data=0123456789abcdef')
     } finally {
       delete notes['/space/Apart.url']
+    }
+  })
+
+  /** Kept over a web note of the same site, the note's own choice stands: a Global
+   *  note is not made Separate by the tab that was saved over it. */
+  test('a tab with web data of its own saved over a Global note leaves it Global', async () => {
+    notes['/space/Global.url'] =
+      '[InternetShortcut]\r\nURL=https://example.org/\r\nTitle=Global\r\n'
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+    tab.address = 'https://example.org/b'
+    tab.apart = '0123456789abcdef'
+    const before = written().length
+    try {
+      await workspace.save(tab, '/space', 'Global.url')
+      const wrote = written()[before]!
+      expect(wrote.path).toBe('/space/Global.url')
+      expect(wrote.content).not.toContain('Nib-Data')
+    } finally {
+      delete notes['/space/Global.url']
     }
   })
 

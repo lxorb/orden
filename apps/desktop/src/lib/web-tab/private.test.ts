@@ -4,10 +4,17 @@
 
 import { beforeEach, expect, test, vi } from 'vitest'
 
+const told: { tab: string; muted: boolean }[] = []
+
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
-  invoke: () => Promise.resolve(undefined),
+  invoke: (command: string, args: Record<string, unknown>) => {
+    if (command === 'web_mute') told.push({ tab: String(args.tab), muted: args.muted === true })
+    return Promise.resolve(undefined)
+  },
 }))
+
+const tabs: { id: string; kind: string }[] = []
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -30,6 +37,16 @@ const { heard } = await import('./heard')
 const { Page } = await import('./pages.svelte')
 const sites = await import('./sites')
 const { grants } = await import('./permissions.svelte')
+const { pages } = await import('./pages.svelte')
+// mute.ts fetches the workspace with the press; only its tabs are asked for here.
+vi.doMock('../workspace.svelte', () => ({
+  workspace: {
+    get tabs() {
+      return tabs
+    },
+  },
+}))
+const { muteSite } = await import('./mute')
 
 beforeEach(() => {
   localStorage.clear()
@@ -94,4 +111,25 @@ test('a private page answered is remembered for its tab and written nowhere', ()
   // The tab closed: what it was told is gone with it.
   grants.dropped('priv')
   expect(grants.said('secret.example', 'notifications', 'priv')).toBeNull()
+})
+
+test('a site muted from a tab that is not private leaves a private tab’s own choice', async () => {
+  for (const [id, inPrivate] of [
+    ['open', false],
+    ['priv', true],
+  ] as const) {
+    tabs.push({ id, kind: 'web' })
+    const page = pages.of(id)
+    page.url = 'https://loud.example/'
+    page.inPrivate = inPrivate
+  }
+  // The private tab let the site be heard, for itself.
+  sites.setMuted('loud.example', false, 'priv')
+
+  await muteSite('open', true)
+
+  expect(pages.of('open').muted).toBe(true)
+  expect(pages.of('priv').muted).toBe(false)
+  expect(sites.isMuted('loud.example')).toBe(true)
+  expect(told.find((one) => one.tab === 'priv')?.muted ?? false).toBe(false)
 })
