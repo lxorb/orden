@@ -30,7 +30,7 @@ export function answerOf(part: Tool): Record<string, unknown> | null {
   }
 }
 
-export function argsOf(part: Tool): Record<string, unknown> {
+function argsOf(part: Tool): Record<string, unknown> {
   return typeof part.args === 'object' && part.args !== null
     ? (part.args as Record<string, unknown>)
     : {}
