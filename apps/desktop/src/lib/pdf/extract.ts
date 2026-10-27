@@ -30,7 +30,7 @@ import { startup } from '../startup.svelte'
 import { mark } from '../trace'
 import type { Entry } from '../workspace.svelte'
 import { openDocument, textOf } from './document'
-import { paperOpened, paperRead, papersFor, papersListed, writePapers } from './papers'
+import { paperOpened, paperRead, papersFor, papersListed, type Walked, writePapers } from './papers'
 import { paperText } from './text-cache'
 
 /** How many pages of one paper are worth taking down. A book is a book; past this
@@ -48,19 +48,45 @@ function sparing(): boolean {
   return connection?.saveData === true
 }
 
+/** The page notes a space's list has, and the folders it actually read, for telling
+ *  a paper whose note has gone from one whose folder nobody looked in. A folder the
+ *  crate could not read is in the list as `unlisted`, with nothing under it, and says
+ *  nothing about what is in it. See `Walked` in papers.ts. */
+export function walkedOf(root: string, tree: Entry): Walked {
+  const notes: string[] = []
+  const folders: string[] = [root]
+  const walk = (entry: Entry) => {
+    for (const child of entry.children) {
+      if (!child.is_dir) {
+        if (isPagesTarget(child.name)) notes.push(child.path)
+      } else if (!child.unlisted) {
+        folders.push(child.path)
+        walk(child)
+      }
+    }
+  }
+  walk(tree)
+  return { notes, folders }
+}
+
 /** What a space's papers answer, made ready: what was taken down before comes
  *  back, and what has never been read is read.
  *
  *  Called where the file list lands, beside the note cache's own warming, and
- *  never awaited by anything on screen. */
-export async function readPapers(root: string, files: readonly Entry[]): Promise<void> {
+ *  never awaited by anything on screen. `tree` is null where the list could not be
+ *  read, which says nothing about which page notes are there. */
+export async function readPapers(
+  root: string,
+  files: readonly Entry[],
+  tree: Entry | null,
+): Promise<void> {
   reading = root
   const papers = files.filter((one) => isPdfTarget(one.name))
   const stamps = new Map(papers.map((one) => [one.path, one.modified]))
   // And which page notes there are, so the paper of one that has gone - renamed or
   // deleted in a sitting that did not let go of its words - is dropped rather than
   // read back. See `papersListed`.
-  const notes = files.filter((one) => isPagesTarget(one.name)).map((one) => one.path)
+  const notes = tree ? walkedOf(root, tree) : null
 
   // Said before the turn is waited for, not after it. This is the one thing in the
   // app that knows when each of these files was last written, and a search asked
