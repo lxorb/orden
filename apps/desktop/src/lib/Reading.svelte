@@ -67,7 +67,11 @@
     let stop: (() => void) | null = null
     let stopped = false
     void import('./views/mount').then(({ mountBases }) => {
-      if (!stopped) stop = mountBases(page, from)
+      if (stopped) return
+      stop = mountBases(page, from)
+      // The placeholders the find bar may have read are gone from the page now.
+      changed()
+      if (untrack(() => finding)) reveal()
     })
     return () => {
       stopped = true
@@ -106,8 +110,7 @@
     // words only once it is there: the find bar comes before the page, so anything
     // that asked in the flush that put the new page in would read the old one.
     await tick()
-    words = null
-    drawnPage++
+    changed()
     requestAnimationFrame(() => {
       if (mine !== latest) return
       show(untrack(() => tab.anchor) ?? 0)
@@ -491,6 +494,12 @@
 
   /** Which page is in the DOM, counted once it is there; `words` belongs to it. */
   let drawnPage = $state(0)
+
+  /** The page in the DOM is not the one its words were read from. */
+  function changed() {
+    words = null
+    drawnPage++
+  }
 
   function wording(): Words {
     const page = surface

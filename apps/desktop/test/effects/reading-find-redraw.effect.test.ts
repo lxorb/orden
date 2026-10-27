@@ -22,6 +22,13 @@ vi.mock('../../src/lib/reading/render', () => ({
   tagAnchor: (tag: string) => `#${tag}`,
 }))
 vi.mock('../../src/lib/reading/drawn', () => ({ inlineFiles: () => () => undefined }))
+// A base drawn as its view, in place of the fence the renderer left.
+vi.mock('../../src/lib/views/mount', () => ({
+  mountBases: (page: HTMLElement) => {
+    for (const host of page.querySelectorAll('[data-base-code]')) host.replaceChildren('view')
+    return () => undefined
+  },
+}))
 vi.mock('../../src/lib/scrollbar', () => ({ scrollbar: () => ({ destroy: () => undefined }) }))
 vi.mock('../../src/lib/sharing.svelte', () => ({ trustsHtmlIn: () => false }))
 vi.mock('../../src/lib/link-index.svelte', () => ({ links: { version: 0, index: () => null } }))
@@ -110,13 +117,13 @@ function openBar(target: HTMLElement) {
 
 const tally = (target: HTMLElement) => target.querySelector('.tally')?.textContent
 
-async function redrawn(target: HTMLElement, doc: string) {
+async function redrawn(target: HTMLElement, doc: string, shows = doc.replaceAll('\n', '')) {
   note.doc = doc
   note.revision++
   flushSync()
   await wait(400)
   flushSync()
-  expect(target.querySelector('article')?.textContent).toBe(doc.replaceAll('\n', ''))
+  expect(target.querySelector('article')?.textContent).toBe(shows)
 }
 
 test('the tally counts the page that is showing after a redraw', async () => {
@@ -152,4 +159,15 @@ test('a bar opened again after a redraw it was open for searches the new page', 
   openBar(target)
   find(target, 'beta')
   expect(tally(target)).toBe('1 of 2')
+})
+
+test('a base drawn after the page is not counted by the fence it replaced', async () => {
+  const target = await opened()
+  openBar(target)
+  find(target, 'beta')
+  await wait(50)
+  expect(tally(target)).toBe('1 of 1')
+
+  await redrawn(target, 'beta\n<div data-base-code="beta">beta</div>', 'betaview')
+  expect(tally(target)).toBe('1 of 1')
 })
