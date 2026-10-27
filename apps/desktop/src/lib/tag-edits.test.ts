@@ -110,3 +110,22 @@ describe('across a space', () => {
     expect(made).toEqual([])
   })
 })
+
+describe('in a note written with CRLF endings', () => {
+  const crlf = (text: string) => text.replace(/\n/g, '\r\n')
+
+  test('a rename reaches the front matter and keeps the endings', () => {
+    const made = change('work', 'job', crlf('---\ntags: [work, other]\n---\n\nx #work\n'))
+    expect(made?.after).toBe(crlf('---\ntags: [job, other]\n---\n\nx #job\n'))
+  })
+
+  test('taking a tag away cuts it from the list on the key', () => {
+    const made = change('work', null, crlf('---\ntags: [work, other]\n---\nx\n'))
+    expect(made?.after).toBe(crlf('---\ntags: [other]\n---\nx\n'))
+  })
+
+  test('and an item that held nothing else goes with its whole line', () => {
+    const made = change('work', null, crlf('---\ntags:\n  - work\n  - other\n---\nx\n'))
+    expect(made?.after).toBe(crlf('---\ntags:\n  - other\n---\nx\n'))
+  })
+})

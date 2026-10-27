@@ -123,6 +123,15 @@ describe('the tags in the front matter', () => {
   test('and both halves of a note count', () => {
     expect(tagsIn('---\ntags: [work]\n---\n\nwords #nib\n')).toEqual(['#work', '#nib'])
   })
+
+  test('in a note written with CRLF endings, as tags.rs reads it', () => {
+    expect(tagsIn('---\r\ntags: [a, b]\r\n---\r\nx\r\n')).toEqual(['#a', '#b'])
+    expect(tagsIn('---\r\ntags:\r\n  - a\r\n  - b\r\n---\r\nx #c\r\n')).toEqual([
+      '#a',
+      '#b',
+      '#c',
+    ])
+  })
 })
 
 describe('where a tag sits', () => {

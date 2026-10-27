@@ -34,6 +34,16 @@ describe('reading a note for the index', () => {
     expect(aliases('---\naliases: ["One", \'Two\']\n---\n')).toEqual(['One', 'Two'])
   })
 
+  /** Twin of `reads_front_matter_tags_in_a_crlf_note` in tags.rs, so the launch
+   *  scan and a save give a CRLF note the same tags. */
+  test('reads the front matter tags of a note written with CRLF endings', () => {
+    expect(scanNote('N.md', '---\r\ntags: [work]\r\n---\r\nx\r\n').tags).toEqual(['work'])
+    expect(scanNote('N.md', '---\r\ntags:\r\n  - work\r\n---\r\nx #nib\r\n').tags).toEqual([
+      'work',
+      'nib',
+    ])
+  })
+
   test('gives a note that names none an empty list rather than nothing at all', () => {
     expect(scanNote('Plan.md', '# Plan\n').aliases).toEqual([])
     expect(scanNote('Plan.md', '---\ntitle: Plan\n---\n').aliases).toEqual([])
