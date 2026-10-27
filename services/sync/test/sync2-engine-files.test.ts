@@ -20,12 +20,15 @@ interface Core {
 
 interface Device {
   root: string
+  store: { rows(table: 'log'): { failed: string | null }[] }
   disk: {
     bytes: Map<string, Uint8Array>
     files: Map<string, string>
     writeBytes(path: string, bytes: Uint8Array): Promise<void>
     write(path: string, text: string): Promise<void>
     remove(path: string): Promise<void>
+    mkdir(path: string): Promise<void>
+    move(from: string, to: string): Promise<void>
   }
   engine: {
     core: Core
@@ -33,6 +36,8 @@ interface Device {
     created(path: string, dir: boolean, text?: string): Promise<string | null>
     foreign(path: string): Promise<void>
     removed(path: string): Promise<void>
+    moved(from: string, to: string): Promise<void>
+    waiting(space: string): boolean
     held: {
       notes: readonly { id: string }[]
       answer(id: string, answer: string): Promise<string | undefined>
@@ -271,15 +276,16 @@ describe('a file that is not a note, under v2', () => {
 })
 
 describe('an account too full for a file', () => {
-  /** A laptop whose account answers every upload of bytes 507 while `full` says so. */
+  /** A laptop whose account answers every upload of bytes `status` (507, no room) while
+   *  `full` says so. */
   async function filling(files: Record<string, string | Uint8Array>) {
-    const state = { full: false }
+    const state = { full: false, status: 507 }
     const made = await (
       await kit()
     ).testDevice({
       fetch: async (request) => {
         if (state.full && request.method === 'PUT' && request.url.includes('/v2/blobs/'))
-          return Response.json({ error: 'out of space' }, { status: 507 })
+          return Response.json({ error: 'refused' }, { status: state.status })
         return await app.fetch(request, env)
       },
       token,
@@ -332,6 +338,72 @@ describe('an account too full for a file', () => {
     await rooms.settle()
     await passed(phone)
     expect(bytesAt(phone, 'photo.png')).toEqual(picture(3))
+  })
+
+  test.each([
+    ['moved into a new folder', 'G/photo.png'],
+    ['moved into a new folder and renamed', 'G/pic.png'],
+  ])('kept back and then %s, it lands there once there is room', async (_said, to) => {
+    const { made, state } = await filling({ 'Plan.md': 'one' })
+    const phone = await device('phone')
+    await passed(phone)
+
+    state.full = true
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
+    await made.engine.created(`${made.root}/photo.png`, false)
+    expect((await made.engine.pass(space))?.full).toBe(true)
+    await made.disk.mkdir(`${made.root}/G`)
+    await made.engine.created(`${made.root}/G`, true)
+    await made.disk.move(`${made.root}/photo.png`, `${made.root}/G/photo.png`)
+    await made.engine.moved(`${made.root}/photo.png`, `${made.root}/G/photo.png`)
+    if (to !== 'G/photo.png') {
+      await made.disk.move(`${made.root}/G/photo.png`, `${made.root}/${to}`)
+      await made.engine.moved(`${made.root}/G/photo.png`, `${made.root}/${to}`)
+    }
+    expect((await made.engine.pass(space))?.full).toBe(true)
+    await rooms.settle()
+
+    state.full = false
+    later()
+    await passed(made, phone)
+    for (const one of [made, phone]) {
+      expect(bytesAt(one, to)).toEqual(picture(3))
+      expect(bytesAt(one, 'photo.png')).toBeUndefined()
+    }
+    expect(made.engine.waiting(space)).toBe(false)
+  })
+
+  test('kept back, then changed here, its new bytes go at once rather than after the wait', async () => {
+    const { made, state } = await filling({ 'Plan.md': 'one' })
+    const phone = await device('phone')
+    await passed(phone)
+
+    state.full = true
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
+    await made.engine.created(`${made.root}/photo.png`, false)
+    expect((await made.engine.pass(space))?.full).toBe(true)
+
+    state.full = false
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(7))
+    await made.engine.foreign(`${made.root}/photo.png`)
+    await passed(made, phone)
+    expect(bytesAt(phone, 'photo.png')).toEqual(picture(7))
+  })
+
+  test('bytes refused for another reason wait too, said once in the log and not as full', async () => {
+    const { made, state } = await filling({ 'Plan.md': 'one' })
+    state.full = true
+    state.status = 400
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
+    await made.engine.created(`${made.root}/photo.png`, false)
+    for (let round = 0; round < 2; round += 1) {
+      const one = await made.engine.pass(space)
+      expect(one?.finished).toBe(true)
+      expect(one?.full).toBe(false)
+    }
+    const said = made.store.rows('log').filter((row) => row.failed?.includes('photo.png'))
+    expect(said.map((row) => row.failed)).toEqual(['the account would not take photo.png'])
+    expect(made.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
   })
 
   test('keeps a replacement back, and the rest of the space still syncs', async () => {

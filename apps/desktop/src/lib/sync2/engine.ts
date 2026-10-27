@@ -149,8 +149,8 @@ export class Engine implements AskedEngine {
   waiting(spaceId: string): boolean {
     const space = this.core.spaces.get(spaceId)
     if (!space) return false
-    // A file's create waiting for room for its bytes is tried again in a while, not soon.
-    if (space.outbox.some((one) => !waitsForBytes(this.core, one))) return true
+    // A file waiting for room for its bytes is tried again in a while, not soon.
+    if (space.outbox.some((one) => !waitsForBytes(this.core, space, one))) return true
     for (const entry of space.entries.values()) {
       if (
         this.core.hasPending(entry.id) &&

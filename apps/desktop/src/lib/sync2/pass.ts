@@ -134,8 +134,10 @@ async function sendKeeps(core: Core, space: SpaceState, alive: () => boolean): P
 // ---------------------------------------------------------------------------
 // 2. The tree
 
-/** `unsent` is the files whose creates wait for their bytes (`sendMade`): every other op
- *  goes. */
+/** `unsent` is the files whose creates wait for their bytes (`sendMade`). Nothing on
+ *  them goes before the create: a move or rename that could not fold into it, sent
+ *  first, is refused `gone` and dropped, and the file lands where it was made. Every
+ *  other op goes. */
 async function sendOps(
   core: Core,
   space: SpaceState,
@@ -143,8 +145,7 @@ async function sendOps(
   unsent: ReadonlySet<string>,
 ): Promise<boolean> {
   const going = (one: Outboxed) =>
-    one.record.t === 'op' &&
-    !(one.record.op.t === 'create' && !one.record.sent && unsent.has(one.record.op.id))
+    one.record.t === 'op' && !(!one.record.sent && unsent.has(one.record.op.id))
   for (let round = 0; round < 1000; round += 1) {
     if (!space.outbox.some(going)) return true
 

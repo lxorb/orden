@@ -99,9 +99,9 @@ export class Core {
    *  were last read: what the next pass hashes (files.ts). Memory only - the launch
    *  scan says them again. */
   readonly touched = new Set<string>()
-  /** Files whose bytes the account last refused, when, and whether for want of room:
+  /** Files whose bytes the account last refused, which, when, and whether for want of room:
    *  they wait a while before going again (files.ts). Memory only. */
-  readonly refusedBytes = new Map<string, { at: number; full: boolean }>()
+  readonly refusedBytes = new Map<string, { at: number; hash: string; full: boolean }>()
   readonly events: Partial<CoreEvents> = {}
   /** Bumped when the engine stops, so work still in the air can tell it is too late. */
   life = 0

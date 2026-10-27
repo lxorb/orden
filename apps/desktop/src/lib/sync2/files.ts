@@ -109,17 +109,17 @@ export async function sendMade(
     if (op.t !== 'create' || op.kind !== 'file') continue
     const entry = space.entries.get(op.id)
     if (!entry) continue
+    const read = await readBytes(core, space, entry)
+    if (!read) continue
     // Sent without its bytes, the create would be refused `gone` and the file forgotten:
     // it waits, and the rest of the outbox goes.
-    if (resting(core, op.id, room)) {
+    if (resting(core, op.id, read.hash, room)) {
       waiting.add(op.id)
       continue
     }
-    const read = await readBytes(core, space, entry)
-    if (!read) continue
     const stored = await blobs.up(read.hash, read.bytes)
     if (!alive() || stored === null) return null
-    if (!taken(core, op.id, stored, room)) {
+    if (!(await taken(core, space, entry, read.hash, stored, room))) {
       waiting.add(op.id)
       continue
     }
@@ -173,13 +173,13 @@ export async function settleFiles(
     }
     if (changedHere) {
       // Bytes the account refused a moment ago go again once the wait is over.
-      if (resting(core, entry.id, room)) {
+      if (resting(core, entry.id, here.hash, room)) {
         core.touched.add(entry.id)
         continue
       }
       const stored = await blobs.up(here.hash, here.bytes)
       if (!alive() || stored === null) return false
-      if (!taken(core, entry.id, stored, room)) {
+      if (!(await taken(core, space, entry, here.hash, stored, room))) {
         // Bytes the account would not take, no room for them, say: this file waits, and
         // the rest of the space settles.
         core.touched.add(entry.id)
@@ -244,11 +244,15 @@ export async function settleFiles(
   return true
 }
 
-/** Whether a file's bytes were refused too lately to go again yet. Says the account is
- *  still full meanwhile, as it last said. */
-function resting(core: Core, id: string, room: Room): boolean {
+/** Whether these bytes of a file were refused too lately to go again yet: bytes changed
+ *  since go at once. Says the account is still full meanwhile, as it last said. */
+function resting(core: Core, id: string, hash: string, room: Room): boolean {
   const refused = core.refusedBytes.get(id)
   if (!refused) return false
+  if (refused.hash !== hash) {
+    core.refusedBytes.delete(id)
+    return false
+  }
   const was = core.world.now() - refused.at
   if (was >= 0 && was < REFUSED_WAIT) {
     if (refused.full) room.full = true
@@ -258,26 +262,43 @@ function resting(core: Core, id: string, room: Room): boolean {
   return false
 }
 
-/** Whether the account took a file's bytes, writing down when it did not. */
-function taken(core: Core, id: string, stored: boolean | 'full', room: Room): boolean {
+/** Whether the account took a file's bytes, writing down when it did not, and saying
+ *  so in the log the first time it refuses these bytes: a refusal other than for room
+ *  shows no warning, and the file would wait unremarked. */
+async function taken(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  hash: string,
+  stored: boolean | 'full',
+  room: Room,
+): Promise<boolean> {
+  const before = core.refusedBytes.get(entry.id)
   if (stored === true) {
-    core.refusedBytes.delete(id)
+    core.refusedBytes.delete(entry.id)
     return true
   }
   const full = stored === 'full'
-  core.refusedBytes.set(id, { at: core.world.now(), full })
+  core.refusedBytes.set(entry.id, { at: core.world.now(), hash, full })
   if (full) room.full = true
+  if (before?.hash !== hash || before.full !== full) {
+    const failed = full
+      ? `no room on the account for ${entry.name}`
+      : `the account would not take ${entry.name}`
+    const row = { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed }
+    await core.commit([put('log', row)])
+  }
   return false
 }
 
-/** Whether an outbox row is a file's create that waits for the account to take its
- *  bytes: nothing a pass can send now, so nothing to pass again for soon. */
-export function waitsForBytes(core: Core, one: Outboxed): boolean {
+/** Whether an outbox row is an op on a file whose create waits for the account to take
+ *  its bytes: nothing a pass can send now, so nothing to pass again for soon. */
+export function waitsForBytes(core: Core, space: SpaceState, one: Outboxed): boolean {
   return (
     one.record.t === 'op' &&
-    one.record.op.t === 'create' &&
     !one.record.sent &&
-    core.refusedBytes.has(one.record.op.id)
+    core.refusedBytes.has(one.record.op.id) &&
+    waitingCreate(space, one.record.op.id)
   )
 }
 
