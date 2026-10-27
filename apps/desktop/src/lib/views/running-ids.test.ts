@@ -8,11 +8,19 @@ vi.mock('../workspace.svelte', () => ({
 }))
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
-  invoke: async () => `filters:
+  invoke: async (_command: string, args: { path: string }) =>
+    args.path.endsWith('Bugs.base')
+      ? `filters:
   and:
     - file.inFolder("Bugs")
 nib:
   id: { property: id, prefix: BUG }
+`
+      : `filters:
+  and:
+    - file.inFolder("Lit")
+nib:
+  id: { property: id, prefix: "" }
 `,
 }))
 vi.mock('../rows/rows.svelte', () => ({ rows: { ready: true, of: () => [] } }))
@@ -33,4 +41,17 @@ test("a copy is written without the ids its space's bases number by, and nothing
   expect(withoutIds('/s/Notes/A.md', '---\nid: TASK-2\n---\n')).toBeNull()
   expect(withoutIds('/s/Notes/A.md', '---\nstatus: Doing\n---\n')).toBeNull()
   expect(withoutIds('/s/Other/A.md', '---\nid: BUG-2\n---\n')).toBeNull()
+})
+
+test('a copy that lands outside every base keeps its id', async () => {
+  await readHeld('/s/Notes/Bugs.base')
+  await readHeld('/s/Notes/Reading.base')
+
+  // Into a folder the numbering base does not cover.
+  expect(withoutIds('/s/Notes/Archive/A.md', '---\nid: BUG-2\n---\n')).toBeNull()
+  // A base without a prefix reads any number as one of its ids, but only its own rows.
+  expect(withoutIds('/s/Notes/Papers/Smith.md', '---\nid: 2019\n---\n')).toBeNull()
+  expect(withoutIds('/s/Notes/Lit/Smith.md', '---\nid: 2019\ntitle: S\n---\n')).toBe(
+    '---\ntitle: S\n---\n',
+  )
 })

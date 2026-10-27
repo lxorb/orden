@@ -9,7 +9,8 @@ import type { Entry } from '../workspace.svelte'
  *  numbers its rows comes without the original's id, so the runner gives it the next and
  *  the original keeps its own: no order of paths tells a copy from its original (B552). */
 
-const { told, disk } = vi.hoisted(() => ({
+const { told, disk, reads } = vi.hoisted(() => ({
+  reads: [] as string[],
   told: [] as string[],
   disk: new Map<string, string>(),
 }))
@@ -20,7 +21,10 @@ vi.mock('../tauri', async (importOriginal) => ({
     command: string,
     args: { from: string; to: string; path: string; content: string },
   ) => {
-    if (command === 'read_note') return disk.get(args.path) ?? null
+    if (command === 'read_note') {
+      reads.push(args.path)
+      return disk.get(args.path) ?? null
+    }
     if (command === 'write_note') {
       disk.set(args.path, args.content)
       return void told.push(`write ${args.path}`)
@@ -39,6 +43,7 @@ vi.mock('./write-file', () => ({
   writeFile: async () => undefined,
 }))
 vi.mock('../views/copied', () => ({
+  numbersAt: (path: string) => path.startsWith('/s/Bugs/'),
   // The runner's own rule, for a space whose bases number by `id: BUG-`.
   withoutIds: (path: string, text: string) =>
     path.startsWith('/s/Bugs/') && /^id: BUG-/m.test(text) ? text.replace(/^id: .*\n/m, '') : null,
@@ -57,6 +62,7 @@ const entry = (path: string, children: Entry[] = []): Entry => ({
 
 function rig(entries: Entry[]) {
   told.length = 0
+  reads.length = 0
   return {
     undone: { record: () => undefined },
     entryAt: (path: string) => entries.find((one) => one.path === path) ?? null,
@@ -77,6 +83,8 @@ describe('a copied folder note', () => {
     const ws = rig([entry('/s/Trip', [entry('/s/Trip/Trip.md')])])
     await copyRows(ws as never, [{ from: '/s/Trip', into: '/s' }])
 
+    // No base numbers anything there, so nothing copied is read.
+    expect(reads).toEqual([])
     expect(told).toEqual([
       'copy /s/Trip -> /s/Trip copy',
       'rename_note /s/Trip copy/Trip.md -> /s/Trip copy/Trip copy.md',
