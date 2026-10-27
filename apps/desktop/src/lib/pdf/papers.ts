@@ -27,7 +27,7 @@ import { holderOf, paperOf } from '../pages/held'
 import { type Hit, Matcher } from '../search/match'
 import type { Query } from '../search/query'
 import { warm } from '../search/warm.svelte'
-import { pathKey } from '../space-paths'
+import { pathKey, pathKeys } from '../space-paths'
 import { afterQuiet } from '../timing'
 import { forgetPaperText, keepPaperText, paperFiles, paperText, paperTextOf } from './text-cache'
 
@@ -118,9 +118,7 @@ function orphaned(root: string, path: string): boolean {
   const holder = holderOf(path)
   const notes = listing?.root === root ? listing.notes : null
   const inside = root.endsWith('/') ? root : `${root}/`
-  return (
-    holder !== null && notes !== null && path.startsWith(inside) && !notes.has(pathKey(holder))
-  )
+  return holder !== null && notes !== null && path.startsWith(inside) && !notes.has(pathKey(holder))
 }
 
 /** Paths whose paper has been let go of while a read-back was walking the store.
@@ -249,7 +247,7 @@ export function papersListed(
   modified: Map<string, number>,
   notes?: readonly string[],
 ): void {
-  listing = { root, at: ++listings, modified, notes: notes ? new Set(notes.map(pathKey)) : null }
+  listing = { root, at: ++listings, modified, notes: notes ? pathKeys(notes) : null }
 
   let dropped = false
   for (const [path, paper] of [...held]) {
