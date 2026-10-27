@@ -555,6 +555,9 @@ macro_rules! desktop_commands {
             downloads::web_download_cancel,
             // A store a space kept, folded into the shared one (#239); see web_state.rs.
             web_state::web_merge,
+            // A tab saved out of a Separate web note keeps its sign-in in the new note's
+            // own store; see web_state.rs.
+            web_state::web_copy,
             // Whether somebody is at this computer, and what it is called; see
             // presence.rs.
             presence::input_idle,

@@ -32,8 +32,10 @@ const pathOf = (args?: Record<string, unknown>) => (typeof args?.path === 'strin
 
 /** Every command the store sent, in order, so a test can say what was written
  *  and what was kept before it. */
-const sent: { command: string; path: string; content: string; args?: Record<string, unknown> }[] =
-  []
+const sent: { command: string; path: string; content: string }[] = []
+
+/** What each command was given, for the few tests that need more than its path. */
+const given: { command: string; args: Record<string, unknown> | undefined }[] = []
 
 /** A write held open, for a test about what happens while one is in the air:
  *  writing a file is a round trip, and somebody may type during it. */
@@ -60,8 +62,8 @@ vi.mock('./tauri', async (importOriginal) => ({
       command,
       path: pathOf(args),
       content: typeof args?.content === 'string' ? args.content : '',
-      args,
     })
+    given.push({ command, args })
 
     // The crate's judge: nib opens nothing from outside its spaces but its own two
     // settings files, and the stamp is where the window asks; see `openable`.
@@ -2838,7 +2840,7 @@ describe('a new tab', () => {
       )
       expect(copy).toBeGreaterThanOrEqual(0)
       expect(copy).toBeLessThan(write)
-      expect(sent[copy]!.args).toEqual({
+      expect(given.find((one) => one.command === 'web_copy')?.args).toEqual({
         from: 'note_0123456789abcdef',
         into: `note_${own}`,
         origins: ['https://example.org'],

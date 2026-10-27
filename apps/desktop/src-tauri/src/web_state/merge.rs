@@ -153,18 +153,19 @@ pub(crate) fn last_used(folder: &Path) -> Option<SystemTime> {
     newest(folder, 5, &mut 0)
 }
 
-/// Folds the store `from` into the global one: its cookies, and the storage of each of
-/// `origins` the global store has none of. `from_used_last` is whether `from` was used
-/// more recently than the global store.
+/// Folds the store `from` into `into` (the global one where that is none): its cookies,
+/// and the storage of each of `origins` `into` has none of. `from_used_last` is whether
+/// `from` was used more recently than `into`.
 pub(crate) async fn merge(
     caller: &Webview,
     from: &str,
+    into: Option<&str>,
     origins: &[String],
     from_used_last: bool,
 ) -> Result<Merged, String> {
     let window = caller.window();
     let mut old = Hidden::open(&window, Some(from)).await?;
-    let mut global = Hidden::open(&window, None).await?;
+    let mut global = Hidden::open(&window, into).await?;
 
     let theirs = cookies::every(old.view()).await?;
     let ours = cookies::every(global.view()).await?;
