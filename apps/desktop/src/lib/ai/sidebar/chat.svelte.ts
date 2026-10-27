@@ -27,6 +27,7 @@ import { nextEffort, within } from '../chat/effort'
 import {
   branchThread,
   deleteThread,
+  isDeleted,
   keepThread,
   listEveryThread,
   type Listed,
@@ -730,10 +731,29 @@ class Chat implements Panel {
     this.stoppers.delete(thread.id)
     this.running = this.running.filter((one) => one !== thread.id)
     this.pending = without(this.pending, thread.id)
+    // Words steered in that the answer never took (sent before it was ready for them, or
+    // after its last step) are the next message, first in the queue: never lost.
+    const untaken = this.steering[thread.id] ?? []
     this.steering = without(this.steering, thread.id)
+    if (untaken.length && !isDeleted(thread.id)) {
+      const sends: Queued[] = untaken.map((text) => ({
+        id: crypto.randomUUID(),
+        text,
+        chips: [],
+        around: { front: null, selection: '' },
+      }))
+      this.queued = { ...this.queued, [thread.id]: [...sends, ...(this.queued[thread.id] ?? [])] }
+    }
     this.everything = true
     if (thread === this.open) this.redraw()
-    if (!thread.turns.length) return
+    if (!thread.turns.length) {
+      // Nothing was sent after all: it follows the reader's space and provider again.
+      if (thread === this.open) {
+        this.here(this.space)
+        this.follow(this.providerForNew())
+      }
+      return
+    }
     await keepThread(thread).catch(() => undefined)
     if (thread === this.open) rememberOpen(thread.id)
     await this.refreshHeads()
@@ -753,8 +773,9 @@ class Chat implements Panel {
     draft: Draft,
     stopper: AbortController,
   ): Promise<Ended> {
-    // Stopped (or deleted) while its message was gathered: nothing is asked.
-    if (stopper.signal.aborted) return { stop: 'stopped', turn: null, usage: null }
+    // Deleted while its message was gathered: nothing is asked. A stop is the engine's,
+    // which keeps the message and says it was stopped.
+    if (isDeleted(thread.id)) return { stop: 'stopped', turn: null, usage: null }
     const engine = await engineOf(provider.kind)
     const ended: Ended = { stop: 'end', turn: null, usage: null }
     await engine.send(
@@ -1170,6 +1191,9 @@ class Chat implements Panel {
       danger: true,
     })
     if (!sure) return
+    // Marked deleted before its answer is stopped, so a message still being gathered
+    // asks nothing.
+    const deleting = deleteThread(this.spaceOf(id), id).catch(() => undefined)
     this.stoppers.get(id)?.abort()
     void import('../helpers/helpers.svelte').then(({ helpers }) => {
       helpers.stopUnder(id)
@@ -1179,7 +1203,7 @@ class Chat implements Panel {
     for (const one of this.queued[id] ?? [])
       one.settle?.({ stop: 'stopped', turn: null, usage: null })
     this.queued = without(this.queued, id)
-    await deleteThread(this.spaceOf(id), id).catch(() => undefined)
+    await deleting
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()
     await this.refreshHeads()

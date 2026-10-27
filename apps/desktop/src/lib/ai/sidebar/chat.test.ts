@@ -432,12 +432,16 @@ describe('the field while a message is changed', () => {
     expect(chat.text).toBe('second\n\ntyped since')
   })
 
+  /** What the answer running hears, for a steer the engine takes. */
+  let hearing: ((event: EngineEvent) => void) | null = null
+
   /** "first" answering until `answer`, or until stopped, and "second" queued behind it. */
   async function queuedBehind(chat: Awaited<ReturnType<typeof asked>>) {
     let answer: () => void = () => undefined
     engine.send.mockImplementationOnce(
-      (_thread: Thread, _draft: Draft, _on: unknown, signal?: AbortSignal) =>
+      (_thread: Thread, _draft: Draft, on: (event: EngineEvent) => void, signal?: AbortSignal) =>
         new Promise<void>((resolve) => {
+          hearing = on
           answer = resolve
           signal?.addEventListener('abort', () => resolve())
         }),
@@ -495,7 +499,20 @@ describe('the field while a message is changed', () => {
 
   test('ends the change of a queued message steered into the running answer', async () => {
     const chat = await asked()
-    const steer = vi.fn(() => Promise.resolve())
+    // The engine takes the words into the answer as a message of their own.
+    const steer = vi.fn((thread: Thread, text: string) => {
+      const turn = {
+        id: crypto.randomUUID(),
+        role: 'you' as const,
+        at: 1,
+        parts: [],
+        steered: true,
+        draft: { text, attachments: [] },
+      }
+      thread.turns.push(turn)
+      hearing?.({ type: 'turn', turn })
+      return Promise.resolve()
+    })
     ;(engine as unknown as { steer: unknown }).steer = steer
     const answer = await queuedBehind(chat)
     chat.text = 'my draft'
@@ -783,7 +800,9 @@ describe('a chat while it answers', () => {
     kept.clear()
     deleted.length = 0
     localStorage.clear()
-    engine.send.mockClear()
+    engine.send.mockReset()
+    // An engine that takes no steered words, whatever an earlier test made it.
+    engine.steer = vi.fn(() => Promise.resolve())
   })
 
   const around = { front: null, selection: '' }

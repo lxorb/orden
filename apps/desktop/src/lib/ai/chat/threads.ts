@@ -332,10 +332,25 @@ export async function writeThread(thread: Thread): Promise<void> {
  *  while it answers stays deleted. Ids are never reused. */
 const removed = new Set<string>()
 
-/** Deletes a thread for good (`/delete`), once a write of it on its way is done. */
+/** Whether a thread was deleted this run, or is being deleted. */
+export function isDeleted(id: string): boolean {
+  return removed.has(id)
+}
+
+/** Deletes a thread for good (`/delete`), once a write of it on its way is done. A
+ *  delete that fails leaves the thread kept, and written again as it changes. */
 export async function deleteThread(space: string, id: string): Promise<void> {
   removed.add(id)
-  await writing.get(id)?.done.catch(() => undefined)
+  try {
+    await writing.get(id)?.done.catch(() => undefined)
+    await deleted(space, id)
+  } catch (error) {
+    removed.delete(id)
+    throw error
+  }
+}
+
+async function deleted(space: string, id: string): Promise<void> {
   if (isNative) {
     await invoke<null>('ai_thread_delete', { space, id })
     return
