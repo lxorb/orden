@@ -58,7 +58,8 @@ own keeper defaults to. A save inside the five minutes is folded into the newest
 version rather than dropped, so the last save of a session is always a version:
 dropped, it was the one a rollback needed, and nowhere on the account once the
 rollback had written over it. A version kept by name (the words that lost a modal
-answer, the words a rollback writes over) is never folded away.
+answer, the words a rollback writes over) is never folded away, and the thinning
+below passes it by; the horizon and the ceiling still take it in time.
 
 **A month, or a year, and thinned as it ages.** How far back is the account's own
 choice - `Keep versions` in Sync, a month or a year, and nothing in between,
