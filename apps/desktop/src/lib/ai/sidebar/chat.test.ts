@@ -866,6 +866,64 @@ describe('a chat while it answers', () => {
     tasks.stop('elsewhere')
   })
 
+  /** A `run_agent` helper on the road run.ts starts it on: the panel's own thread and
+   *  turn. Stop ends it, the chat is written down with it for its review, and a delete
+   *  ends one started after. */
+  test('Stop and delete end a run_agent helper on the panel’s road', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await settled()
+    const { helpers } = await import('../helpers/helpers.svelte')
+    const parent = chat.threadOf(id)
+    if (!parent) throw new Error('held')
+    const signals: AbortSignal[] = []
+    engine.send.mockImplementation(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void, signal?: AbortSignal) =>
+        new Promise<void>((resolve) => {
+          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          if (signal) signals.push(signal)
+          signal?.addEventListener('abort', () => {
+            on({ type: 'done', stop: 'stopped' })
+            resolve()
+          })
+        }),
+    )
+    const provider = { id: 'p', kind: 'compatible', model: 'm', name: 'Fake' } as const
+    const roads = {
+      offered: () => Promise.resolve([{ provider, models: [] }]),
+      run: (thread: Thread, text: string, signal: AbortSignal) => {
+        chat.adopt(thread)
+        return chat.turn(thread, text, { signal })
+      },
+    }
+    const ask = {
+      parent,
+      space: 'work',
+      prompt: 'Fix every note in Inbox',
+      description: 'inbox',
+      model: '',
+      mode: parent.mode,
+    }
+    try {
+      const first = await helpers.start(ask, roads)
+      if ('refused' in first) throw new Error(first.refused)
+      await vi.waitFor(() => expect(signals).toHaveLength(1))
+
+      chat.stop()
+      await vi.waitFor(() => expect(signals[0]?.aborted).toBe(true))
+      expect((parent as Thread & { helpers?: string[] }).helpers).toEqual([first.id])
+
+      const second = await helpers.start(ask, roads)
+      if ('refused' in second) throw new Error(second.refused)
+      await vi.waitFor(() => expect(signals).toHaveLength(2))
+      await chat.remove(id)
+      await vi.waitFor(() => expect(signals[1]?.aborted).toBe(true))
+    } finally {
+      engine.send.mockReset()
+    }
+  })
+
   test('a delete refused leaves the work the chat started running', async () => {
     const chat = await asked()
     const id = String(chat.thread?.id)

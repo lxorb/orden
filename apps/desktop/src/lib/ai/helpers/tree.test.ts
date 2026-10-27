@@ -37,7 +37,8 @@ vi.mock('../../search/space', () => ({
 }))
 
 const { helpers } = await import('./helpers.svelte')
-const { batch, subtask } = await import('../commands/helpers')
+const { batch, fork, subtask } = await import('../commands/helpers')
+const { branchThread } = await import('../chat/threads')
 const { changesOf } = await import('../review/changes')
 type Roads = Parameters<typeof helpers.start>[1]
 type Tree = Thread & { helpers?: string[] }
@@ -55,13 +56,18 @@ const CODEX: Provider = { id: 'codex', kind: 'codex', name: '', model: '' }
 const stopped: Ended = { stop: 'stopped', turn: null, usage: null }
 
 /** Turns that run until they are stopped, each heard with its thread and signal. */
-const turns: { thread: Thread; signal: AbortSignal | undefined }[] = []
+const turns: {
+  thread: Thread
+  signal: AbortSignal | undefined
+  end: (ended: Ended) => void
+}[] = []
 function held(thread: Thread, signal?: AbortSignal): Promise<Ended> {
-  turns.push({ thread, signal })
   return new Promise((resolve) => {
+    turns.push({ thread, signal, end: resolve })
     signal?.addEventListener('abort', () => resolve(stopped), { once: true })
   })
 }
+const finished: Ended = { stop: 'end', turn: null, usage: null }
 
 const roads: Roads = {
   offered: () =>
@@ -169,5 +175,63 @@ describe('stopping the top thread', () => {
 
     expect(turns.map((one) => one.signal?.aborted)).toEqual([true, true])
     expect(thread.helpers).toEqual([note.id, helper.id])
+  })
+})
+
+describe('work the reader starts later', () => {
+  /** A `/fork` copy is a chat of the reader's own, and a helper thread whose task has
+   *  ended is one they may carry on: what they start there is not the top thread's. */
+  test('in a /fork copy is not the top thread’s to stop or review', async () => {
+    const thread = top()
+    thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
+    fork(host, thread, '')
+    const copy = vi.mocked(host.adopt).mock.calls.at(-1)?.[0]
+    if (!copy) throw new Error('forked')
+    const helper = await helpers.start(asked(copy), roads)
+    if ('refused' in helper) throw new Error(helper.refused)
+    await started(1)
+
+    helpers.stopUnder(thread.id)
+
+    expect(turns[0]?.signal?.aborted).toBe(false)
+    expect(thread.helpers ?? []).toEqual([])
+    helpers.stopUnder(copy.id)
+  })
+
+  test('in a /subtask thread once its task ended is not the top thread’s', async () => {
+    const thread = top()
+    const asking = subtask(host, thread, 'tidy')
+    const sub = await started(1)
+    turns[0]?.end(finished)
+    await asking
+    const helper = await helpers.start(asked(sub), roads)
+    if ('refused' in helper) throw new Error(helper.refused)
+    await started(2)
+
+    helpers.stopUnder(thread.id)
+
+    expect(turns[1]?.signal?.aborted).toBe(false)
+    expect(thread.helpers).toEqual([sub.id])
+    helpers.stopUnder(sub.id)
+  })
+
+  test('under a deleted thread is not walked up to it', async () => {
+    const thread = top()
+    const first = await helpers.start(asked(thread), roads)
+    if ('refused' in first) throw new Error(first.refused)
+    const under = await started(1)
+    helpers.stopUnder(thread.id)
+    helpers.forget(thread.id)
+    const second = await helpers.start(asked(under), roads)
+    if (!('refused' in second)) expect(thread.helpers).toEqual([first.id])
+  })
+})
+
+describe('a branch', () => {
+  test('of a thread has started nothing', () => {
+    const thread: Tree = { ...top(), turns: [{ id: 'u1', role: 'you', at: 1, parts: [] }] }
+    thread.helpers = ['h1']
+    const copy: Tree = branchThread(thread, 'u1')
+    expect(copy.helpers).toBeUndefined()
   })
 })
