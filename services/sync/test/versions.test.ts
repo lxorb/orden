@@ -9,6 +9,7 @@ import {
   sweepVersions,
   versionKey,
 } from '../src/versions'
+import { sha256 } from '../src/crypto'
 
 interface VersionView {
   versions?: { at: number; size: number; by: string }[]
@@ -348,6 +349,99 @@ describe('putting a space back to a moment', () => {
     expect(asked.json.partial).toBe(true)
     expect(asked.json.left).toBe(1)
   })
+
+  /** Notes under `Big/`, each with a version from before `at` whose body the
+   *  account holds. `changed` says which of them have moved on since; the rest
+   *  still say what their version says. */
+  async function bigSpace(count: number, changed: (made: number) => boolean): Promise<string> {
+    const at = Date.now() - 10 * 60 * 1000
+    const then = await sha256('then words')
+    const now = await sha256('now words')
+    await env.NOTES.put(versionKey(then), 'then words')
+    for (let made = 0; made < count; made++) {
+      const id = `big-${made}`
+      const differs = changed(made)
+      const name = String(made).padStart(4, '0')
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+           values (?, ?, ?, ?, 1, ?, 0, 10, ?)`,
+        )
+        .run(id, space, `Big/${name}.md`, 100 + made, at, differs ? now : then)
+      await env.NOTES.put(`spaces/${space}/${id}`, differs ? 'now words' : 'then words')
+      env.db
+        .prepare("insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, 10, '')")
+        .run(id, at - 1000, then)
+    }
+    return now
+  }
+
+  /** Asks the way the pane does, until the answer says there is nothing more. */
+  async function rollAll(): Promise<VersionView[]> {
+    const answers: VersionView[] = []
+    const at = Date.now() - 60 * 1000
+    for (let round = 0; round < 10; round++) {
+      const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+        token,
+        body: { at, under: 'Big' },
+      })
+      answers.push(done.json)
+      if (!done.json.partial || done.json.notes === 0) break
+    }
+    return answers
+  }
+
+  test('puts back every note of a space bigger than one request, across rounds', async () => {
+    const now = await bigSpace(401, () => true)
+
+    const answers = await rollAll()
+
+    expect(answers.map((one) => [one.notes, one.partial, one.left])).toEqual([
+      [400, true, 1],
+      [1, false, 0],
+    ])
+    const left = env.db.prepare('select count(*) as n from notes where hash = ?').get(now) as {
+      n: number
+    }
+    expect(left.n).toBe(0)
+  }, 60000)
+
+  test('and reaches the changed notes past the first four hundred that have not', async () => {
+    const now = await bigSpace(1000, (made) => made >= 995)
+
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: Date.now() - 60 * 1000, under: 'Big', dry: true },
+    })
+    expect(asked.json.notes).toBe(5)
+    expect(asked.json.partial).toBe(false)
+
+    const answers = await rollAll()
+
+    expect(answers.map((one) => one.notes)).toEqual([5])
+    const left = env.db.prepare('select count(*) as n from notes where hash = ?').get(now) as {
+      n: number
+    }
+    expect(left.n).toBe(0)
+  }, 60000)
+
+  test('and ends, saying what is left, when a note cannot be put back', async () => {
+    // The first note by path has a version whose body the account no longer
+    // holds, so every round lists it and none can write it.
+    const now = await bigSpace(402, () => true)
+    const gone = await sha256('gone words')
+    env.db.prepare("update note_versions set hash = ? where note_id = 'big-0'").run(gone)
+
+    const answers = await rollAll()
+
+    expect(answers.map((one) => [one.notes, one.left])).toEqual([
+      [399, 3],
+      [2, 1],
+      [0, 1],
+    ])
+    const left = env.db.prepare('select id from notes where hash = ?').all(now)
+    expect(left).toEqual([{ id: 'big-0' }])
+  }, 60000)
 
   test('and nothing of the sort when it fits', async () => {
     const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {

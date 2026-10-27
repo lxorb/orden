@@ -346,26 +346,31 @@ function folderPrefix(under: string): string {
  *  before it, for the notes that have one.
  *
  *  Deleted notes are in, because a note that was deleted after that moment is
- *  one of the things a rollback is for. */
+ *  one of the things a rollback is for. A note that already says what it said
+ *  then is out: it has nothing to put back, and left in it would hold a place
+ *  in the page, so that once the first four hundred were back every later page
+ *  was those four hundred again and the rest of the space was never reached.
+ *  `countVersionsAt` asks the same question and has to keep the same filter. */
 export async function versionsAt(
   env: Env,
   spaceId: string,
   under: string,
   at: number,
-): Promise<{ note_id: string; path: string; hash: string; live: string }[]> {
+): Promise<{ note_id: string; path: string; hash: string }[]> {
   const prefix = folderPrefix(under)
 
   const { results } = await env.DB.prepare(
-    `select v.note_id as note_id, n.path as path, v.hash as hash, n.hash as live
+    `select v.note_id as note_id, n.path as path, v.hash as hash
        from note_versions v
        join notes n on n.id = v.note_id
       where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
+        and v.hash != n.hash
         and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)
       order by n.path
       limit ?4`,
   )
     .bind(spaceId, prefix, at, AT_ONCE)
-    .all<{ note_id: string; path: string; hash: string; live: string }>()
+    .all<{ note_id: string; path: string; hash: string }>()
 
   return results
 }

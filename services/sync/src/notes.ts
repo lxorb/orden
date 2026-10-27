@@ -755,13 +755,14 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   if (at === undefined || at <= 0) return context.json({ error: 'when to go back to' }, 400)
 
   const folder = under.replace(/^\/+/, '')
-  const found = await versionsAt(context.env, space.id, folder, at)
-  const changed = found.filter((one) => one.hash !== one.live)
+  // Only notes that differ from what they said then: one that already matches
+  // would take a place in the page every round and push the rest out of reach.
+  const changed = await versionsAt(context.env, space.id, folder, at)
 
   // The listing above stops at its ceiling, so a full page of rows may be a
   // whole answer or the first of several. Counted only then, and the count is
   // what lets the sheet say "four hundred of twelve hundred".
-  const cut = found.length >= ROLLBACK_AT_ONCE
+  const cut = changed.length >= ROLLBACK_AT_ONCE
   const held = cut ? await countVersionsAt(context.env, space.id, folder, at) : changed.length
 
   if (dry) {
