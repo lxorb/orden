@@ -22,7 +22,7 @@ vi.mock('../../src/lib/reading/render', () => ({
   tagAnchor: (tag: string) => `#${tag}`,
 }))
 vi.mock('../../src/lib/reading/drawn', () => ({ inlineFiles: () => () => undefined }))
-vi.mock('../../src/lib/scrollbar', () => ({ scrollbar: () => ({ destroy() {} }) }))
+vi.mock('../../src/lib/scrollbar', () => ({ scrollbar: () => ({ destroy: () => undefined }) }))
 vi.mock('../../src/lib/sharing.svelte', () => ({ trustsHtmlIn: () => false }))
 vi.mock('../../src/lib/link-index.svelte', () => ({ links: { version: 0, index: () => null } }))
 vi.mock('../../src/lib/workspace.svelte', () => ({
@@ -45,14 +45,14 @@ vi.mock('../../src/lib/shortcuts.svelte', () => ({
 Element.prototype.animate = function () {
   return {
     finished: Promise.resolve(),
-    cancel() {},
-    play() {},
-    pause() {},
+    cancel: () => undefined,
+    play: () => undefined,
+    pause: () => undefined,
     set onfinish(done: () => void) {
       setTimeout(done, 0)
     },
   } as never
-} as never
+}
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
 const Reading = (await import('../../src/lib/Reading.svelte')).default
@@ -82,7 +82,7 @@ async function opened() {
       get revision() {
         return note.revision
       },
-      flush() {},
+      flush: () => undefined,
     },
   }
   const target = document.createElement('div')
@@ -96,7 +96,7 @@ async function opened() {
 }
 
 function find(target: HTMLElement, what: string) {
-  const input = target.querySelector('input') as HTMLInputElement
+  const input = target.querySelector('input')!
   input.value = what
   input.dispatchEvent(new Event('input', { bubbles: true }))
   flushSync()
@@ -105,7 +105,7 @@ function find(target: HTMLElement, what: string) {
 function openBar(target: HTMLElement) {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f' }))
   flushSync()
-  return target.querySelector('input') as HTMLInputElement
+  return target.querySelector('input')!
 }
 
 const tally = (target: HTMLElement) => target.querySelector('.tally')?.textContent

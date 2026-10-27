@@ -101,10 +101,13 @@
     if (mine !== latest) return
 
     html = next
-    words = null
 
-    // The page is measured only once the browser has laid it out.
+    // The page is measured only once the browser has laid it out. And read for its
+    // words only once it is there: the find bar comes before the page, so anything
+    // that asked in the flush that put the new page in would read the old one.
     await tick()
+    words = null
+    drawnPage++
     requestAnimationFrame(() => {
       if (mine !== latest) return
       show(untrack(() => tab.anchor) ?? 0)
@@ -475,12 +478,19 @@
 
   // ── Finding ────────────────────────────────────────────────────────
 
+  /** Who this pane's highlights belong to, so another pane finding at the same
+   *  time leaves them alone; see `paint` in reading/find.ts. */
+  const painter = {}
+
   let finding = $state(false)
   let query = $state('')
   let current = $state(0)
 
   /** The page's words, read once per render; see reading/find.ts. */
   let words: Words | null = null
+
+  /** Which page is in the DOM, counted once it is there; `words` belongs to it. */
+  let drawnPage = $state(0)
 
   function wording(): Words {
     const page = surface
@@ -489,9 +499,9 @@
   }
 
   const found = $derived.by(() => {
-    // The words come off the page rather than out of `html`, but it is `html` that
-    // says the page has changed under them.
-    if (!finding || !query || !html) return []
+    // The words come off the page rather than out of `html`, and it is the page
+    // being in the DOM, not `html` changing, that says they have changed.
+    if (!finding || !query || !drawnPage) return []
     return placesIn(wording(), query)
   })
 
@@ -526,8 +536,8 @@
     if (current >= ranges.length) current = 0
     const here = ranges[current]
 
-    paint('nib-find', ranges)
-    paint('nib-find-here', here ? [here] : [])
+    paint(painter, 'nib-find', ranges)
+    paint(painter, 'nib-find-here', here ? [here] : [])
 
     const box = scroller
     if (!here || !box) return
@@ -553,16 +563,16 @@
     query = ''
     cancelAnimationFrame(painting)
     painting = 0
-    paint('nib-find', [])
-    paint('nib-find-here', [])
+    paint(painter, 'nib-find', [])
+    paint(painter, 'nib-find-here', [])
     scroller?.focus({ preventScroll: true })
   }
 
   // A page that has gone has no matches to paint, and no frame to paint them on.
   $effect(() => () => {
     cancelAnimationFrame(painting)
-    paint('nib-find', [])
-    paint('nib-find-here', [])
+    paint(painter, 'nib-find', [])
+    paint(painter, 'nib-find-here', [])
   })
 
   /** The reader's own find key, read off the window because there is no editor

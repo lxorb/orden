@@ -338,6 +338,10 @@
     offset: number
   }
 
+  /** Who this pane's highlights belong to, so another pane finding at the same
+   *  time leaves them alone; see `paint` in reading/find.ts. */
+  const painter = {}
+
   let finding = $state(false)
   let query = $state('')
   let current = $state(0)
@@ -409,8 +413,8 @@
 
     const document = doc
     if (!wanted || !document) {
-      paint('nib-find', [])
-      paint('nib-find-here', [])
+      paint(painter, 'nib-find', [])
+      paint(painter, 'nib-find-here', [])
       return
     }
 
@@ -481,8 +485,8 @@
       .filter((one) => one.page === match.page)
       .flatMap((one) => rangeOf(page, one.offset, query.length) ?? [])
 
-    paint('nib-find', all)
-    paint('nib-find-here', here ? [here] : [])
+    paint(painter, 'nib-find', all)
+    paint(painter, 'nib-find-here', here ? [here] : [])
     if (!here) return
 
     // Into the middle, by the box's own scroll rather than scrollIntoView, which
@@ -511,15 +515,15 @@
     query = ''
     searching++
     matches = []
-    paint('nib-find', [])
-    paint('nib-find-here', [])
+    paint(painter, 'nib-find', [])
+    paint(painter, 'nib-find-here', [])
     scroller?.focus({ preventScroll: true })
   }
 
   // A pane that has gone has no matches to paint.
   $effect(() => () => {
-    paint('nib-find', [])
-    paint('nib-find-here', [])
+    paint(painter, 'nib-find', [])
+    paint(painter, 'nib-find-here', [])
   })
 
   // ── Selecting, and marking ─────────────────────────────────────────
