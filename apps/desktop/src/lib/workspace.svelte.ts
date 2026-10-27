@@ -128,6 +128,8 @@ export interface Entry {
   evicted?: boolean
   /** A folder the listing did not read into; see `walk` in tree.rs. */
   unlisted?: boolean
+  /** A page note holding a paper, made from a PDF; see `paper` in tree.rs. */
+  paper?: boolean
 }
 
 /** What the listing itself is asked for. One field, because the order the rows are

@@ -11,7 +11,7 @@ use tauri::AppHandle;
 use crate::clock;
 use crate::paths::{
     cannot, held_paper, in_spaces, inside, is_base, is_canvas, is_chat, is_markdown, is_pages,
-    is_pdf, is_shortcut, space_root, spaces_dir, Seen, MAX_DEPTH,
+    is_pdf, is_shortcut, paper_of, space_root, spaces_dir, Seen, MAX_DEPTH,
 };
 
 /// How many notes and folders one read may put in the tree.
@@ -31,6 +31,10 @@ pub const MAX_ENTRIES: usize = 100_000;
 
 /// A note or a folder, and everything under it if it is a folder.
 #[derive(Serialize)]
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "four separate facts the window reads off the listing, each its own JSON field, three of them left out when false"
+)]
 pub struct Entry {
     name: String,
     path: String,
@@ -51,6 +55,10 @@ pub struct Entry {
     /// lib/workspace/undoing.ts.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     unlisted: bool,
+    /// A page note that holds a paper: one made from a PDF, which wears the PDF's mark
+    /// in the list rather than the page note's (#676). See `held_paper`.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    paper: bool,
 }
 
 /// How the window would like the tree read, which is whatever its own settings
@@ -214,6 +222,7 @@ fn walk(
                     let dataless = false;
                     let mut one = listed(&child, name, false, meta);
                     one.evicted = evicted || dataless;
+                    one.paper = is_pages(&child) && paper_of(&child).is_file();
                     children.push(one);
                 }
             }
@@ -267,6 +276,7 @@ fn listed(path: &Path, name: String, is_dir: bool, meta: Option<fs::Metadata>) -
         children: Vec::new(),
         evicted: false,
         unlisted: false,
+        paper: false,
     }
 }
 
@@ -329,6 +339,7 @@ mod tests {
             children: Vec::new(),
             evicted: false,
             unlisted: false,
+            paper: false,
         }
     }
 
@@ -409,6 +420,8 @@ mod tests {
 
         let top = read(here, &options());
         assert_eq!(names(&top.children), ["Lecture.pages", "Orphan.pages.pdf"]);
+        // Made from a PDF, so it wears the PDF's mark (#676).
+        assert!(top.children[0].paper);
 
         let every = read(
             here,

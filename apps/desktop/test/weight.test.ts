@@ -936,8 +936,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-27, to 3,418,000, for main and unstable merged into one: each had
  *  raised this for its own fixes alone, and these are what they come to in one build.
- *  Measured 3,416,826 and 381 modules. */
-const BUDGET = 3_418_000
+ *  Measured 3,416,826 and 381 modules.
+ *
+ *  Raised 2026-10-28, to 3,419,600, for #676: a page note made from a PDF wears the
+ *  PDF's mark, asked of the listing (`holdsPaper` in chosen-icon.ts, `shown` in
+ *  FileMark.svelte). Measured 3,418,727 with unstable as of this raise. */
+const BUDGET = 3_419_600
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

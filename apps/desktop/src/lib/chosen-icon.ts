@@ -61,6 +61,14 @@ export function chosenIcon(path: string): string | null {
   return elsewhere.of(path)?.icon ?? workspace.folderIcons.iconOf(mapKey(path), away)
 }
 
+/** Whether the page note at `path` holds a paper - was made from a PDF - and so wears
+ *  the PDF's mark rather than the page note's (#676). Read off the open space's listing,
+ *  which says so for each page note (`paper` in tree.rs); a page note in another space
+ *  wears the page note's mark. */
+export function holdsPaper(path: string): boolean {
+  return workspace.entryAt(path)?.paper === true
+}
+
 /** A website's own mark, as an address, or null for anything that is not one or has
  *  none yet: `siteMark` with the mark its open tab wears now first, then the cache for
  *  where the `.url` points (or `url`, for a row that is an address and no file), then

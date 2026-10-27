@@ -37,6 +37,8 @@ interface Entry {
   modified: number
   created: number
   children: Entry[]
+  /** A page note holding a paper; see `paper` in the desktop's tree.rs. */
+  paper?: boolean
 }
 
 interface TreeOptions {
@@ -204,6 +206,7 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
       modified: row.modified,
       created: row.created,
       children: [],
+      ...(present.has(paperOf(row.path)) && isPages(row.path) ? { paper: true } : {}),
     })
   }
 
