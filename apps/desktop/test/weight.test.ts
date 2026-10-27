@@ -870,8 +870,15 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-27, to 3,384,900, for B516: what a held outline does reaches its
  *  own note, never the one in front of it in the pane (`viewShowing` and `WhenShown`
- *  in views.svelte.ts, `onNote` in App.svelte). Measured 3,384,041. */
-const BUDGET = 3_384_900
+ *  in views.svelte.ts, `onNote` in App.svelte). Measured 3,384,041.
+ *
+ *  Raised 2026-10-27, to 3,388,000, for B503 and B519: who else may have written a
+ *  note is asked of the note, a share of it on its own and what the last listing kept
+ *  included (`reachedByOthers` and the kept `{ role, shared, items }` in
+ *  sharing.svelte.ts), and an embed or a canvas file card is trusted by its own note
+ *  (`embedNote` in link-index.svelte.ts, `EmbeddedNote` in @nib/markdown). Measured
+ *  3,387,257. */
+const BUDGET = 3_388_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

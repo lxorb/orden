@@ -94,7 +94,8 @@ function remembered(root: string): SpaceRole | null {
 interface Kept {
   role: SpaceRole
   shared: boolean
-  items: string[]
+  /** Absent in what a build between the two formats wrote. */
+  items?: string[]
 }
 
 let rolesText: string | null = null
