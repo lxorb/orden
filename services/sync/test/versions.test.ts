@@ -91,6 +91,25 @@ describe('the account keeps what a note said', () => {
     expect(rows(env, note)).toHaveLength(2)
   })
 
+  test('and the last of a session, folded into the newest rather than dropped', async () => {
+    // Two saves a minute apart: the second is the one the session ended on, and a
+    // throttle that dropped it left the account with no copy of those words.
+    for (const [content, baseVersion] of [
+      ['# Two', 1],
+      ['# Three', 2],
+    ] as const) {
+      await call(env, `/v1/notes/${note}`, { method: 'PUT', token, body: { content, baseVersion } })
+    }
+
+    const held = rows(env, note)
+    expect(held).toHaveLength(2)
+    expect(held[0]?.hash).toBe(await sha256('# One'))
+    expect(held.at(-1)?.hash).toBe(await sha256('# Three'))
+    expect(env.keys()).toContain(versionKey(await sha256('# Three')))
+    // The words it replaced are no row's any more, and neither are their bytes.
+    expect(env.keys()).not.toContain(versionKey(await sha256('# Two')))
+  })
+
   test('but not the same words twice', async () => {
     agedBy(env, 6 * 60 * 1000)
     await call(env, `/v1/notes/${note}`, {
@@ -579,6 +598,116 @@ describe('putting a space back to a moment', () => {
     })
     expect(asked.json.notes).toBe(2)
     expect(noteRow(id).deleted).toBe(1)
+  })
+
+  /** A note that said `draft`, then a minute later what the session ended on, and
+   *  nothing since: an hour ago, all of it. */
+  async function leftAlone(path: string): Promise<string> {
+    const made = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path, content: 'draft' },
+    })
+    const id = made.json.note?.id ?? ''
+    await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'draft and the important paragraph', baseVersion: 1 },
+    })
+    const ago = 60 * 60 * 1000
+    env.db.prepare('update note_versions set at = at - ? where note_id = ?').run(ago, id)
+    env.db.prepare('update notes set updated_at = updated_at - ? where id = ?').run(ago, id)
+    return id
+  }
+
+  test('leaves alone a note that did not change after the moment', async () => {
+    const id = await leftAlone('three.md')
+    const at = Date.now() - 30 * 60 * 1000
+
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at, dry: true },
+    })
+    expect(asked.json.paths).not.toContain('three.md')
+
+    await call(env, `/v1/spaces/${space}/rollback`, { token, body: { at } })
+    const now = await call<VersionView>(env, `/v1/notes/${id}`, { token })
+    expect(now.json.content).toBe('draft and the important paragraph')
+  })
+
+  test('also when what it said then never became a version', async () => {
+    // What the account holds from before versions kept the last save of a session.
+    const id = await leftAlone('three.md')
+    env.db
+      .prepare('delete from note_versions where note_id = ? and hash = ?')
+      .run(id, await sha256('draft and the important paragraph'))
+    const at = Date.now() - 30 * 60 * 1000
+
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at, dry: true },
+    })
+    expect(asked.json.paths).not.toContain('three.md')
+
+    await call(env, `/v1/spaces/${space}/rollback`, { token, body: { at } })
+    const now = await call<VersionView>(env, `/v1/notes/${id}`, { token })
+    expect(now.json.content).toBe('draft and the important paragraph')
+  })
+
+  test('and keeps the words it writes over as a version', async () => {
+    const made = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'three.md', content: 'draft' },
+    })
+    const id = made.json.note?.id ?? ''
+    env.db.prepare('update note_versions set at = at - ? where note_id = ?').run(20 * 60 * 1000, id)
+    // Two saves since, the second of them the newest version and still open to
+    // being folded into the next save.
+    for (const [content, baseVersion] of [
+      ['one', 1],
+      ['two', 2],
+    ] as const) {
+      await call(env, `/v1/notes/${id}`, { method: 'PUT', token, body: { content, baseVersion } })
+    }
+
+    const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: Date.now() - 10 * 60 * 1000 },
+    })
+    expect(done.json.notes).toBe(1)
+
+    const now = await call<VersionView>(env, `/v1/notes/${id}`, { token })
+    expect(now.json.content).toBe('draft')
+    const hashes = rows(env, id).map((one) => one.hash)
+    expect(hashes).toContain(await sha256('two'))
+    expect(hashes.at(-1)).toBe(await sha256('draft'))
+  })
+
+  test('also words that never became a version', async () => {
+    const made = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'three.md', content: 'draft' },
+    })
+    const id = made.json.note?.id ?? ''
+    env.db.prepare('update note_versions set at = at - ? where note_id = ?').run(20 * 60 * 1000, id)
+    await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'unkept', baseVersion: 1 },
+    })
+    const unkept = await sha256('unkept')
+    env.db.prepare('delete from note_versions where note_id = ? and hash = ?').run(id, unkept)
+
+    await call(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: Date.now() - 10 * 60 * 1000 },
+    })
+
+    const now = await call<VersionView>(env, `/v1/notes/${id}`, { token })
+    expect(now.json.content).toBe('draft')
+    expect(rows(env, id).map((one) => one.hash)).toContain(unkept)
+    const kept = rows(env, id).find((one) => one.hash === unkept)
+    const back = await call<VersionView>(env, `/v1/notes/${id}/versions/${kept?.at}`, { token })
+    expect(back.json.content).toBe('unkept')
   })
 
   test('and nothing of the sort when it fits', async () => {
