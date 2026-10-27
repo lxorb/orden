@@ -269,7 +269,7 @@
   $effect(() => {
     rooms.drawing(tab.note.key, store)
     return () => {
-      store.part()
+      store.gone()
       rooms.drawing(tab.note.key, null)
     }
   })

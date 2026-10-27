@@ -870,8 +870,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-27, to 3,384,900, for B516: what a held outline does reaches its
  *  own note, never the one in front of it in the pane (`viewShowing` and `WhenShown`
- *  in views.svelte.ts, `onNote` in App.svelte). Measured 3,384,041. */
-const BUDGET = 3_384_900
+ *  in views.svelte.ts, `onNote` in App.svelte). Measured 3,384,041.
+ *
+ *  Raised 2026-10-27, to 3,386,300, for B498 to B500: the save listeners are one set
+ *  for every index, and a plane's cards are asked by their path (`hearing`, and the
+ *  gate in `retargetIn`, in link-index.svelte.ts; the rest is in canvas-rewrite.ts,
+ *  which is fetched). Measured 3,385,484. */
+const BUDGET = 3_386_300
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

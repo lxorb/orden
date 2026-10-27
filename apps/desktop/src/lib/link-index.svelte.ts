@@ -163,6 +163,9 @@ const TASKS = __EVEN_PLUGIN__ ? undefined : taskLines()
  *  space the editor is handed. */
 let queryBlock: typeof import('./query-block') | null = null
 
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- listeners, never rendered
+const hearing = new Set<(path: string, content: string) => void>()
+
 /** How `retarget` runs. */
 export interface Retargeting {
   /** The note itself went, by a rename or a move; not by a merge. */
@@ -778,7 +781,7 @@ class Links {
    *  A canvas counts, because the notes its file nodes name are links out of it;
    *  see `canvasRead`. */
   noteSaved(path: string, content: string) {
-    for (const hear of this.hearing) hear(path, content)
+    if (this === links) for (const hear of hearing) hear(path, content)
     const relative = this.relative(path)
     // A file of another space, which this index is not of: what it wears is kept
     // beside it, for its tab and its row; see chosen-icon.ts.
@@ -827,12 +830,11 @@ class Links {
 
   /** Whoever else reads every file the app writes, in any space: the rows of every
    *  space (rows/start.svelte.ts), which arrive after the launch order. Every write
-   *  already says itself here, so they hear it here rather than at every writer. */
-  private readonly hearing = new Set<(path: string, content: string) => void>()
-
+   *  already says itself here, so they hear it here rather than at every writer:
+   *  this index, and the rewrites of every other (B498). */
   hearSaves(hear: (path: string, content: string) => void): () => void {
-    this.hearing.add(hear)
-    return () => this.hearing.delete(hear)
+    hearing.add(hear)
+    return () => hearing.delete(hear)
   }
 
   /** The open space's notes as the index holds them: its scan, which the rows of the
@@ -1719,32 +1721,48 @@ class Links {
         return stillReaches(source, link, there, !shifted, kept) ? null : there
       }
 
-      // Whether this note is worth reading at all, decided from the index.
-      const candidates = note.links.filter(
-        (link) => named(link) || (shifted && link.kind === 'markdown'),
-      )
-      if (!candidates.some((link) => to(link) !== null)) continue
+      // Whether this note is worth reading at all, decided from the index; a plane's
+      // links are its cards, see `cardsMoving`.
+      const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
+      const rewrite = plane ? await import('./canvas-rewrite') : null
+      const card = rewrite?.cardsMoving(note.path, moving) ?? null
+      const worth = card
+        ? note.links.some((link) => card(link.target) !== null)
+        : note.links.some(
+            (link) => (named(link) || (shifted && link.kind === 'markdown')) && to(link) !== null,
+          )
+      if (!worth) continue
 
       const absolute = insideSpace(root, note.path)
       const target = went === null ? absolute : insideSpace(root, went)
+      // A drawn canvas, fetched before its words are read; see `relinked`.
+      const doc = open(absolute)
+      const drawn =
+        doc && rewrite && !isPagesTarget(note.path) ? await rewrite.drawnPlane(doc) : null
       const before = await this.wordsOf(absolute, target, open)
       if (before === null) continue
       // In the same tick as the words: the entry that describes them.
       const read = listed?.(note.path) ?? note
 
       // A plane is JSON, and is rewritten as JSON; see canvas-rewrite.ts.
-      const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
-      const after = plane
-        ? (await import('./canvas-rewrite')).retargetCanvas(before, source, moving, to)
+      const file = card ?? moving
+      let after = rewrite
+        ? rewrite.retargetCanvas(before, source, file, to)
         : retargetLinks(before, source, to)
       if (after === null || after === before) continue
 
       // Taken by the document in the same breath as its words were read, so no
       // keystroke falls between the two; one landing while the write is in the air
       // is the document's own, and marks it for its next write.
-      const doc = open(absolute)
-      const edit = oneEdit(before, after)
-      if (doc && edit) doc.edited([edit], after)
+      const relinked =
+        drawn !== null &&
+        rewrite !== null &&
+        drawn.relinked((canvas) => rewrite.retargetPlane(canvas, source, file, to))
+      if (relinked && doc) after = doc.text
+      else {
+        const edit = oneEdit(before, after)
+        if (doc && edit) doc.edited([edit], after)
+      }
 
       await invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
       // A note that cannot be written - read-only, held by another program, a full
@@ -1759,7 +1777,8 @@ class Links {
         },
       )
       if (!wrote) continue
-      for (const hear of this.hearing) hear(target, after)
+      if (relinked) doc?.wroteAs(after)
+      for (const hear of hearing) hear(target, after)
       told?.push(target)
 
       rewritten(read, after)
