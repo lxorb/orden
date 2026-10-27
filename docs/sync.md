@@ -53,9 +53,12 @@ a connected app writing through the connector, a client that sends no header -
 and the history sheet then shows the moment with nothing beside it, which is what
 the device's own snapshots look like.
 
-**At most one every five minutes.** The same interval the device's own keeper
-defaults to. The newest state of a note is the note itself, so a version from
-thirty seconds ago says nothing the file does not.
+**About one every five minutes, and the newest.** The same interval the device's
+own keeper defaults to. A save inside the five minutes is folded into the newest
+version rather than dropped, so the last save of a session is always a version:
+dropped, it was the one a rollback needed, and nowhere on the account once the
+rollback had written over it. A version kept by name (the words that lost a modal
+answer, the words a rollback writes over) is never folded away.
 
 **A month, or a year, and thinned as it ages.** How far back is the account's own
 choice - `Keep versions` in Sync, a month or a year, and nothing in between,
@@ -132,6 +135,11 @@ once it is a year. Not further, because a step asking for a moment before the fi
 version there is would answer "nothing has changed since then", which is a wrong
 answer rather than a refusal. Choosing the year above is what puts the year in the
 row; see `rollbackSteps` in `modes.svelte.ts`.
+
+A note not written since that moment is left alone, whatever its newest version
+says: what it says now is what it said then. Before a note is written over, what it
+says is kept as a version that no later save folds away, so the rollback itself can
+be undone from the history sheet.
 
 A note written after that moment with no version at or before it is left alone:
 there is nothing to put back. So is one whose body the sweep has already taken -

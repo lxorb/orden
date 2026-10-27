@@ -17,8 +17,10 @@
  *  What is deliberately not kept:
  *
  *  Every save. At most one version per note per five minutes, which is the same
- *  interval the device's own keeper defaults to. The newest state of a note is
- *  the note, so a version from thirty seconds ago says nothing the file does not.
+ *  interval the device's own keeper defaults to, plus the newest: a save inside
+ *  the five minutes is folded into the newest version rather than dropped, so the
+ *  last save of a session is always one. Dropped, it was the version a rollback
+ *  needed and nowhere on the account once the rollback had written over it.
  *
  *  Forever. A month by default, or a year for an account that asks - and thinned
  *  as it ages, the way a backup is: everything from the first day, one an hour
@@ -154,22 +156,37 @@ export function deviceIn(header: string | undefined): string {
  *  room settled between four devices is kept the same way a note one device
  *  pushed is. Best effort by design: a version that could not be written is not a
  *  reason to fail the save that carried it, and the note itself is already
- *  safely stored by the time this runs. */
+ *  safely stored by the time this runs.
+ *
+ *  A save less than five minutes after the newest version replaces it, as long as
+ *  that version is itself less than five minutes after the one before: the newest
+ *  version slides along with the session, and stays where it is once it is five
+ *  minutes clear of the last one kept. So one version every five minutes or so,
+ *  and the newest is always what the note last said. A version kept by name
+ *  (`held`) is never replaced. */
 export async function keepVersion(
   env: Env,
   note: Pick<Note, 'id' | 'hash' | 'size'>,
   content: string,
   by = '',
 ): Promise<void> {
-  const newest = await env.DB.prepare(
-    'select at, hash from note_versions where note_id = ? order by at desc limit 1',
+  const { results: newest } = await env.DB.prepare(
+    'select at, hash, held from note_versions where note_id = ? order by at desc limit 2',
   )
     .bind(note.id)
-    .first<{ at: number; hash: string }>()
+    .all<{ at: number; hash: string; held: number }>()
+  const [last, before] = newest
 
-  // Nothing new to say, or too soon to say it again.
-  if (newest?.hash === note.hash) return
-  if (newest && now() - newest.at < VERSION_EVERY) return
+  // Nothing new to say.
+  if (last?.hash === note.hash) return
+
+  const at = now()
+  const folds =
+    last !== undefined &&
+    !last.held &&
+    at - last.at < VERSION_EVERY &&
+    before !== undefined &&
+    last.at - before.at < VERSION_EVERY
 
   // The bytes before the row, so a row never names a body that is not there. A
   // hash another note already keeps needs neither.
@@ -179,10 +196,20 @@ export async function keepVersion(
 
   if (!held) await env.NOTES.put(versionKey(note.hash), content)
 
+  if (folds) {
+    await env.DB.prepare(
+      'update note_versions set at = ?3, hash = ?4, size = ?5, by = ?6 where note_id = ?1 and at = ?2',
+    )
+      .bind(note.id, last.at, Math.max(at, last.at), note.hash, note.size, by)
+      .run()
+    await forgetBodies(env, [last.hash])
+    return
+  }
+
   await env.DB.prepare(
     'insert or ignore into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
   )
-    .bind(note.id, now(), note.hash, note.size, by)
+    .bind(note.id, Math.max(at, (last?.at ?? 0) + 1), note.hash, note.size, by)
     .run()
 
   await keepAtMost(env, note.id)
@@ -210,12 +237,38 @@ export async function keepVersionNow(
     .first<{ at: number | null }>()
 
   await env.DB.prepare(
-    'insert or ignore into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
+    'insert or ignore into note_versions (note_id, at, hash, size, by, held) values (?, ?, ?, ?, ?, 1)',
   )
     .bind(noteId, Math.max(now(), (newest?.at ?? 0) + 1), hash, byteLength(content), deviceIn(by))
     .run()
 
   await keepAtMost(env, noteId)
+}
+
+/** Keeps what a note says now as a version no later save folds away: the words a
+ *  rollback is about to write over, so that the rollback can be undone. The newest
+ *  version is held instead where it already says them, so the same words are not
+ *  kept twice in a row. */
+export async function holdVersion(
+  env: Env,
+  note: Pick<Note, 'id' | 'hash'>,
+  content: string,
+  by: string,
+): Promise<void> {
+  const newest = await env.DB.prepare(
+    'select at, hash from note_versions where note_id = ? order by at desc limit 1',
+  )
+    .bind(note.id)
+    .first<{ at: number; hash: string }>()
+
+  if (newest?.hash === note.hash) {
+    await env.DB.prepare('update note_versions set held = 1 where note_id = ? and at = ?')
+      .bind(note.id, newest.at)
+      .run()
+    return
+  }
+
+  await keepVersionNow(env, note.id, content, by)
 }
 
 /** The ceiling on one note's history, held where the version is written.
@@ -353,7 +406,9 @@ function folderPrefix(under: string): string {
  *  clock, and it says the last delete: a note deleted before the moment, restored
  *  and deleted again since reads as deleted since, and comes back. A note purged
  *  from Recently deleted is not in at all: its words are gone for good. A live
- *  note that already says what it said
+ *  note not written since the moment is out as well, whatever its newest version
+ *  says: what it says now is what it said then, also where that was a save no
+ *  version kept. A live note that already says what it said
  *  then is out: it has nothing to put back, and left in it would hold a place
  *  in the page, so that once the first four hundred were back every later page
  *  was those four hundred again and the rest of the space was never reached.
@@ -372,6 +427,7 @@ export async function versionsAt(
        join notes n on n.id = v.note_id
       where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
         and (v.hash != n.hash or n.deleted = 1)
+        and (n.updated_at > ?3 or n.deleted = 1)
         and (n.deleted = 0 or (n.deleted_at is not null and n.deleted_at > ?3))
         and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)
       order by n.path
@@ -560,6 +616,7 @@ export async function countVersionsAt(
        join notes n on n.id = v.note_id
       where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
         and (v.hash != n.hash or n.deleted = 1)
+        and (n.updated_at > ?3 or n.deleted = 1)
         and (n.deleted = 0 or (n.deleted_at is not null and n.deleted_at > ?3))
         and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)`,
   )

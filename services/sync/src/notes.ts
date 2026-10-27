@@ -30,6 +30,7 @@ import type { Env, Note, Variables, Whoever } from './types'
 import {
   countVersionsAt,
   deviceIn,
+  holdVersion,
   keepVersion,
   ROLLBACK_AT_ONCE,
   presentVersion,
@@ -805,6 +806,11 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
       written += 1
       continue
     }
+
+    // What it says now, as a version the rollback's own write cannot fold away, so
+    // that what the rollback writes over is still on the account.
+    const current = await context.env.NOTES.get(noteKey(note.space_id, note.id))
+    if (current) await holdVersion(context.env, note, await current.text(), '')
 
     // The device that asked, like any other write: a rollback is an edit, and the
     // history saying which machine made it is the same answer to the same

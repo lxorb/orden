@@ -1847,7 +1847,7 @@ browser (a Web Locks leader) rather than one per tab.
         the account did not: the account's body is the ancestor, so the seed of it plus
         `textops(ancestor, file)` as this device's pending edits;
       - both moved: the ancestor is the tracked hash's body from `versions/<hash>` when the
-        account kept that version (it keeps one every five minutes, so usually), and the
+        account kept that version (it keeps one every five minutes and the newest, so usually), and the
         file goes through the classifier like any other offline edit. With no ancestor, a
         two-way rule: a text that contains the other whole wins silently, otherwise the note
         is held and asks;

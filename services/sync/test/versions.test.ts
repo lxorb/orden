@@ -70,25 +70,33 @@ describe('the account keeps what a note said', () => {
     expect(env.keys()).toContain(versionKey(rows(env, note)[0]?.hash ?? ''))
   })
 
-  test('and every push after it, at most one every five minutes', async () => {
-    // Too soon: the note itself is the newest state, so a version of it says
-    // nothing the file does not.
-    await call(env, `/v1/notes/${note}`, {
-      method: 'PUT',
-      token,
-      body: { content: '# Two', baseVersion: 1 },
-    })
-
-    expect(rows(env, note)).toHaveLength(1)
-
-    agedBy(env, 6 * 60 * 1000)
-    await call(env, `/v1/notes/${note}`, {
-      method: 'PUT',
-      token,
-      body: { content: '# Three', baseVersion: 2 },
-    })
+  test('and every push after it, at most one every five minutes and the newest', async () => {
+    // Soon after, so it becomes the newest and is folded into by the next save.
+    for (const [content, baseVersion] of [
+      ['# Two', 1],
+      ['# Three', 2],
+    ] as const) {
+      await call(env, `/v1/notes/${note}`, { method: 'PUT', token, body: { content, baseVersion } })
+    }
 
     expect(rows(env, note)).toHaveLength(2)
+
+    // Five minutes clear of the one before, the newest stays as it is.
+    agedBy(env, 6 * 60 * 1000)
+    env.db
+      .prepare('update note_versions set at = at + ? where note_id = ? and hash = ?')
+      .run(6 * 60 * 1000, note, await sha256('# Three'))
+    await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token,
+      body: { content: '# Four', baseVersion: 3 },
+    })
+
+    expect(rows(env, note).map((one) => one.hash)).toEqual([
+      await sha256('# One'),
+      await sha256('# Three'),
+      await sha256('# Four'),
+    ])
   })
 
   test('and the last of a session, folded into the newest rather than dropped', async () => {
@@ -351,7 +359,7 @@ describe('putting a space back to a moment', () => {
           `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
            values (?, ?, ?, ?, 1, ?, 0, 4, 'now')`,
         )
-        .run(id, space, `Big/${made}.md`, 100 + made, at)
+        .run(id, space, `Big/${made}.md`, 100 + made, Date.now())
       env.db
         .prepare(
           "insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'then', 4, '')",
@@ -361,7 +369,7 @@ describe('putting a space back to a moment', () => {
 
     const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
       token,
-      body: { at: Date.now(), under: 'Big', dry: true },
+      body: { at, under: 'Big', dry: true },
     })
 
     expect(asked.json.notes).toBe(400)
@@ -386,7 +394,7 @@ describe('putting a space back to a moment', () => {
           `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
            values (?, ?, ?, ?, 1, ?, 0, 10, ?)`,
         )
-        .run(id, space, `Big/${name}.md`, 100 + made, at, differs ? now : then)
+        .run(id, space, `Big/${name}.md`, 100 + made, Date.now(), differs ? now : then)
       await env.NOTES.put(`spaces/${space}/${id}`, differs ? 'now words' : 'then words')
       env.db
         .prepare("insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, 10, '')")
@@ -761,7 +769,7 @@ describe('putting a space back to a moment', () => {
           `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
            values (?, ?, ?, ?, 1, ?, 0, 4, 'now')`,
         )
-        .run(id, space, path, 500, at)
+        .run(id, space, path, 500, Date.now())
       env.db
         .prepare(
           "insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'then', 4, '')",
@@ -771,7 +779,7 @@ describe('putting a space back to a moment', () => {
 
     const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
       token,
-      body: { at: Date.now(), under: 'a_b', dry: true },
+      body: { at, under: 'a_b', dry: true },
     })
 
     expect(asked.json.paths).toEqual(['a_b/x.md'])
