@@ -540,10 +540,11 @@ function plainWords(card: CanvasNode & { type: 'text' }, palette: Palette): stri
     Math.ceil(card.height / line) + 1,
   )
   const colour = card.color === undefined ? (palette.text ?? '') : inkColour(card.color, palette)
-  const edge = card.color === undefined ? (palette.line ?? '') : colour
-  const frame = card.bare
-    ? ''
-    : `<rect x="${card.x}" y="${card.y}" width="${card.width}" height="${card.height}" rx="8" fill="#ffffff" stroke="${edge}"/>`
+  const look = frameOf(card, palette)
+  const d = framePath(card.x, card.y, card.width, card.height)
+  const frame = look
+    ? `<path d="${d}" fill="#ffffff"/>${look.wash ? `<path d="${d}" fill="${look.wash}" fill-opacity="0.09"/>` : ''}<path d="${d}" fill="none" stroke="${look.edge}"/>`
+    : ''
   const spans = lines
     .map(
       (one, index) =>
@@ -551,7 +552,35 @@ function plainWords(card: CanvasNode & { type: 'text' }, palette: Palette): stri
     )
     .join('')
 
-  return `<g>${frame}<text font-family="${FACE}" font-size="${type.size}" font-weight="400" fill="${card.bare ? colour : (palette.text ?? '')}">${spans}</text></g>`
+  // Cut to the card, as the plane cuts a card's overflow: a nested viewport clips what
+  // runs past it, so a paragraph too long for its card never lands on the one below.
+  return `<g>${frame}<svg x="${card.x}" y="${card.y}" width="${card.width}" height="${card.height}" viewBox="${card.x} ${card.y} ${card.width} ${card.height}" overflow="hidden"><text font-family="${FACE}" font-size="${type.size}" font-weight="400" fill="${card.bare ? colour : (palette.text ?? '')}">${spans}</text></svg></g>`
+}
+
+/** How a framed card's frame looks, as the plane draws it: its edge in the card's
+ *  colour, or the theme's line where it has none, and a faint wash of the colour inside.
+ *  Null for bare words, which have no frame. */
+function frameOf(
+  card: CanvasNode & { type: 'text' },
+  palette: Palette,
+): { edge: string; wash: string | null } | null {
+  if (card.bare) return null
+  if (card.color === undefined) return { edge: palette.line ?? '', wash: null }
+  const colour = inkColour(card.color, palette)
+  return { edge: colour, wash: colour }
+}
+
+/** A card's frame as a path: its rounded box, half a pixel inside its edge so the
+ *  whole of a one pixel stroke is inside the card and inside its picture. */
+function framePath(x: number, y: number, width: number, height: number): string {
+  const r = 8
+  const [l, t, rt, b] = [x + 0.5, y + 0.5, x + width - 0.5, y + height - 0.5]
+  return [
+    `M ${l + r} ${t} L ${rt - r} ${t} Q ${rt} ${t} ${rt} ${t + r}`,
+    `L ${rt} ${b - r} Q ${rt} ${b} ${rt - r} ${b}`,
+    `L ${l + r} ${b} Q ${l} ${b} ${l} ${b - r}`,
+    `L ${l} ${t + r} Q ${l} ${t} ${l + r} ${t} Z`,
+  ].join(' ')
 }
 
 /** A card's text as the lines it is set in: its markdown read as plain lines, each
@@ -619,17 +648,22 @@ function wordsPdf(
     lib.endPath(),
   )
 
-  if (!card.bare) {
-    const edge = hexOf(palette.line ?? '#d6d9de')
-    sheet.drawRectangle({
-      x: left,
-      y: -(top + card.height),
-      width: card.width,
-      height: card.height,
-      color: rgb1(lib, hexOf('#ffffff')),
-      borderColor: rgb1(lib, edge),
-      borderWidth: 1,
-    })
+  const look = frameOf(card, palette)
+  if (look) {
+    // The frame the picture of a card has (see `plainWords`), in the page's frame: an
+    // SVG path is drawn with `y` down about the origin it is given, which is the page's.
+    const d = framePath(left, top, card.width, card.height)
+    sheet.drawSvgPath(d, { x: 0, y: 0, color: rgb1(lib, hexOf('#ffffff')), borderWidth: 0 })
+    if (look.wash) {
+      sheet.drawSvgPath(d, {
+        x: 0,
+        y: 0,
+        color: rgb1(lib, hexOf(look.wash)),
+        opacity: 0.09,
+        borderWidth: 0,
+      })
+    }
+    sheet.drawSvgPath(d, { x: 0, y: 0, borderColor: rgb1(lib, hexOf(look.edge)), borderWidth: 1 })
   }
 
   for (const [index, text] of lines.entries()) {
@@ -658,46 +692,63 @@ function rgb1(lib: PdfLib, colour: { r: number; g: number; b: number }) {
 const OPEN =
   /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Extended_Pictographic}\u3000-\u303f\uff00-\uffef]/u
 
+/** The characters of a line as a reader sees them: a family emoji, a flag or a letter
+ *  with its accents is one, so a line is never broken inside it. */
+const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+
 /** One line broken to a width, at most `most` lines: at a space where there is one,
  *  either side of a CJK character, and inside a run that is wider than the line where
  *  nothing else will do - which is what the plane's `overflow-wrap` does.
  *
- *  Character by character, adding up widths that are each measured once: a paragraph
- *  costs its length and not its length cubed - which, measuring every shorter prefix of
- *  the rest of the paragraph for each line, froze the app for minutes on a long one. */
+ *  Character by character, adding up widths that are each measured once, so a
+ *  paragraph costs its length and not its length cubed - which, measuring every
+ *  shorter prefix of the rest of the paragraph for each line, froze the app for
+ *  minutes on a long one. The sum is only where to look, though: a run of kana is
+ *  set wider as a whole than its characters one by one, so each line is measured
+ *  whole once it is chosen and given back a break at a time while it does not fit. */
 function broken(
   line: string,
   width: number,
   fits: (text: string) => number,
   most: number,
 ): string[] {
-  const chars = Array.from(line.trimEnd())
+  const chars = Array.from(graphemes.segment(line.trimEnd()), (one) => one.segment)
   const sizes = chars.map((one) => fits(one))
+  const breaks = (at: number) =>
+    chars[at] === ' ' || OPEN.test(chars[at] ?? '') || OPEN.test(chars[at - 1] ?? '')
   const out: string[] = []
   let from = 0
   let wide = 0
-  let cut = -1
 
-  for (let at = 0; at < chars.length; at += 1) {
-    const one = chars[at] ?? ''
-    if (at > from && (one === ' ' || OPEN.test(one) || OPEN.test(chars[at - 1] ?? ''))) cut = at
-
-    if (at > from && wide + (sizes[at] ?? 0) > width && one !== ' ') {
-      const end = cut > from ? cut : at
-      out.push(chars.slice(from, end).join('').trimEnd())
-      if (out.length >= most) return out
-
-      from = end
-      while (chars[from] === ' ') from += 1
-      wide = 0
-      for (let back = from; back < at; back += 1) wide += sizes[back] ?? 0
-      cut = -1
+  // The line from `from` up to `end`, given back to an earlier break - or a character,
+  // where it has none - until it fits when measured whole. Pushed, and where the next
+  // line begins handed back.
+  const close = (end: number): number => {
+    let text = chars.slice(from, end).join('').trimEnd()
+    while (end - from > 1 && fits(text) > width) {
+      let back = end - 1
+      while (back > from && !breaks(back)) back -= 1
+      end = back > from ? back : end - 1
+      text = chars.slice(from, end).join('').trimEnd()
     }
-
-    if (at >= from) wide += sizes[at] ?? 0
+    out.push(text)
+    while (chars[end] === ' ') end += 1
+    return end
   }
 
-  out.push(chars.slice(from).join(''))
+  for (let at = 0; at < chars.length && out.length < most; at += 1) {
+    if (at > from && wide + (sizes[at] ?? 0) > width && chars[at] !== ' ') {
+      let cut = at
+      while (cut > from && !breaks(cut)) cut -= 1
+      from = close(cut > from ? cut : at)
+      wide = 0
+      for (let back = from; back < at; back += 1) wide += sizes[back] ?? 0
+    }
+    wide += sizes[at] ?? 0
+  }
+
+  // What is left, which can still be wider whole than its sum.
+  while (from < chars.length && out.length < most) from = close(chars.length)
   return out
 }
 

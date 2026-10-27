@@ -326,7 +326,7 @@ describe('words set as a picture', () => {
     const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
     card.text = Array.from({ length: 12 }, () => '👨‍👩‍👧‍👦🇩🇪').join('')
     card.width = 80
-    card.height = 400
+    card.height = 2000
     await pagesPdf(out(canvas))
 
     const { lines } = setLines(raster.drawn[0] ?? '')

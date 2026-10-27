@@ -429,8 +429,11 @@ rasterised by the browser as the PNG export is: a shape, a link, a picture, and
 words in a script Helvetica has no glyphs for (Polish, Cyrillic, Greek, CJK,
 emoji). In that picture a text card's words are broken by the width the browser
 sets them at (`measureText`, in the same face), at a space or either side of a CJK
-character, at the plane's weight and line height, so a line of Japanese fits the
-card rather than running off its edge. Those words are a picture rather than
+character and never inside an emoji or a flag, at the plane's weight and line
+height; each line is measured whole once it is chosen, since a run of kana is set
+wider than its characters one by one, so a line of Japanese fits the card rather
+than running off its edge. Like the plane, a card's words are cut at its edge in
+every format, and a framed card has the same rounded, washed frame in all of them. Those words are a picture rather than
 searchable text, but they are on paper; only where the browser refuses the picture does a card of words fall back
 to the letters Helvetica has. Ink, words and rules are in the theme's light
 colours whatever theme is on, because the sheet is white paper: a dark theme's
