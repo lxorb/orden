@@ -503,6 +503,46 @@ describe('what may be done before the account has listed its spaces', () => {
     expect(canWriteAt('Mine/plan.md')).toBe(true)
   })
 
+  /** Offline, or in the seconds before the account answers, nothing is paired yet
+   *  and the role kept for the reader's own space is `owner`. Who else is in it is
+   *  what the last listing said, kept beside the role. */
+  test('counts the reader’s own shared space as shared, from what the last listing kept', async () => {
+    world.mirrors = { Team: 'space-1', Solo: 'space-2', Items: 'space-3' }
+    world.notes = { 'Items/plan.md': 'n1', 'Items/other.md': 'n2' }
+    account.spaces = [
+      remote('space-1', 'owner', true),
+      remote('space-2', 'owner'),
+      remote('space-3', 'owner', false, ['n1']),
+    ]
+    await account.loadSpaces()
+
+    account.spaces = []
+    account.listed = false
+    account.user = null
+    world.mirrors = {}
+    world.locals = ['Team', 'Solo', 'Items']
+
+    expect(roleOf('Team')).toBe('owner')
+    expect(reachedByOthers('Team/weekly.md')).toBe(true)
+    expect(trustsHtmlAt('Team/weekly.md')).toBe(false)
+    expect(reachedByOthers('Solo/plan.md')).toBe(false)
+    expect(reachedByOthers('Items/plan.md')).toBe(true)
+    expect(reachedByOthers('Items/other.md')).toBe(false)
+    // A note the store cannot name yet could be the one that was shared.
+    expect(reachedByOthers('Items/new.md')).toBe(true)
+  })
+
+  test('takes a role an older build kept, which says nothing of who else is in, as shared', () => {
+    world.locals = ['Team', 'Local']
+    account.user = null
+    storage.setItem('nib:space-roles', JSON.stringify({ Team: 'owner' }))
+
+    expect(roleOf('Team')).toBe('owner')
+    expect(reachedByOthers('Team/weekly.md')).toBe(true)
+    // A folder nothing was ever kept for is the reader's own, signed in or not.
+    expect(reachedByOthers('Local/plan.md')).toBe(false)
+  })
+
   test('and forgets that with the session', async () => {
     world.mirrors = { Theirs: 'space-1' }
     account.spaces = [remote('space-1', 'read', true)]

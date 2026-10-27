@@ -96,3 +96,13 @@ test("tells a thread its profile and style from the thread's own space, marked w
     ].join('\n\n'),
   )
 })
+
+test('reads a space that is not in front again, since the link index follows only the front', async () => {
+  expect((await foundNamed('output-style', 'terse', '/team'))?.body).toBe('One line.')
+  TEXTS['/team/terse.md'] = '---\noutput-style: terse\n---\nTwo lines.'
+  try {
+    expect((await foundNamed('output-style', 'terse', '/team'))?.body).toBe('Two lines.')
+  } finally {
+    TEXTS['/team/terse.md'] = '---\noutput-style: terse\n---\nOne line.'
+  }
+})

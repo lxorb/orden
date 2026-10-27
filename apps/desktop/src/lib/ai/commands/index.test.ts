@@ -16,7 +16,7 @@ vi.mock('./found', () => ({
     Promise.resolve(notes.find((one) => one.kind === kind && one.name === name) ?? null),
   // What a collaborator may have written, asked each time a note is used.
   fromOthers: (path: string) => Promise.resolve(path.startsWith('team/')),
-  rootOfSpace: () => null,
+  rootOfSpace: (space: string) => (space === 'space' ? '/space' : null),
   wordsOf: (note: NoteCommand | null) => Promise.resolve(note?.body ?? ''),
 }))
 
@@ -205,7 +205,7 @@ describe('the menu', () => {
     const base = { path: 'team/c.md', arguments: [], tools: [] }
     notes.push(
       { ...base, kind: 'command', name: 'weekly', body: 'Publish.', mode: 'full', effort: 'low' },
-      // Plan asks as the grant does and makes notes, so it is more than Approve.
+      // Plan asks as the grant does and makes notes unasked, which Approve does not.
       { ...base, kind: 'command', name: 'look', body: 'Look.', mode: 'plan' },
       { ...base, kind: 'command', name: 'careful', body: 'Ask.', mode: 'approve' },
       { ...base, path: 'own/m.md', kind: 'command', name: 'mine', body: 'Mine.', mode: 'full' },
@@ -219,12 +219,19 @@ describe('the menu', () => {
     thread.mode = 'auto'
     await run(rows, 'look', '', panel)
     await run(rows, 'careful', '', panel)
+    // Plan and Approve are not one inside the other: Approve has the browser, unasked.
+    thread.mode = 'plan'
+    await run(rows, 'careful', '', panel)
+    thread.mode = 'full'
+    await run(rows, 'look', '', panel)
     expect(calls.filter((one) => /^(turn|setMode|send)\(/.test(one))).toEqual([
       'turn(open,"Publish.",{"effort":"low"})',
       'send("Look.")',
       'turn(open,"Mine.",{"mode":"full"})',
       'turn(open,"Look.",{"mode":"plan"})',
       'turn(open,"Ask.",{"mode":"approve"})',
+      'send("Ask.")',
+      'turn(open,"Look.",{"mode":"plan"})',
     ])
   })
 
@@ -242,6 +249,21 @@ describe('the menu', () => {
     await run(rows, 'agents', 'reader', panel)
     expect(thread).toMatchObject({ agent: 'reader' })
     expect(calls.filter((one) => one.startsWith('setMode('))).toEqual([])
+  })
+
+  test('chooses no profile in a thread whose space is not on this device', async () => {
+    notes.push({
+      kind: 'agent',
+      name: 'researcher',
+      path: 'r.md',
+      body: 'Cite.',
+      arguments: [],
+      tools: [],
+    })
+    thread = newThread('elsewhere', 'p', 'm')
+    const { panel } = fakePanel(thread)
+    await run(commands(panel), 'agents', 'researcher', panel)
+    expect(thread).not.toHaveProperty('agent')
   })
 
   test('says /goal and /jobs as lines in the thread', async () => {

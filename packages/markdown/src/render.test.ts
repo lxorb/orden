@@ -261,6 +261,31 @@ describe('headings and the table of contents', () => {
     expect(html.match(/<p>After<\/p>/g)).toHaveLength(1)
     expect(html.match(/<p>Before<\/p>/g)).toHaveLength(1)
   })
+
+  /** A note the reader trusts can embed one somebody else wrote: that one's HTML is
+   *  words, whatever the page around it is. */
+  test('show the HTML of an embedded note that asks for it as words, and only there', () => {
+    const html = renderMarkdown('<b>mine</b>\n\n![[Theirs]]\n\n![[Mine]]', {
+      resolveEmbed: (link) =>
+        link.target === 'Theirs'
+          ? { text: '<form action="https://evil.example">x</form>', escapeHtml: true }
+          : '<i>own</i>',
+    })
+
+    expect(html).toContain('<b>mine</b>')
+    expect(html).toContain('<i>own</i>')
+    expect(html).not.toContain('<form')
+    expect(html).toContain('&lt;form')
+  })
+
+  test('never trust an embed more than the page around it', () => {
+    const html = renderMarkdown('![[Mine]]', {
+      escapeHtml: true,
+      resolveEmbed: () => ({ text: '<i>own</i>', escapeHtml: false }),
+    })
+
+    expect(html).not.toContain('<i>')
+  })
 })
 
 describe('code fences', () => {

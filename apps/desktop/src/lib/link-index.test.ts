@@ -100,9 +100,12 @@ vi.mock('./tauri', async (importOriginal) => ({
 /** The spaces shared with this account to be read, by root. What may be written
  *  where is sharing.svelte.ts's, which wants an account a unit test has none of. */
 const readOnly = new Set<string>()
+/** The notes somebody else may have written, by path: shared on their own, say. */
+const theirs = new Set<string>()
 vi.mock('./sharing.svelte', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./sharing.svelte')>()),
   canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
+  trustsHtmlAt: (path: string | null) => path === null || !theirs.has(path),
 }))
 
 /** The space search, stood in for. The index asks it for the mentions of a note,
@@ -1013,6 +1016,28 @@ describe('naming a block of another note', () => {
       expect(snapshots).toEqual([])
     } finally {
       readOnly.clear()
+    }
+  })
+})
+
+/** What an embed, a canvas file card and an export bring in: the note's words, and
+ *  whether its own HTML is words, which is the note's answer and not the page's. */
+describe('the note an embed names', () => {
+  test('says whether its HTML is words, by where it sits', async () => {
+    await space({ 'Plan.md': '<b>mine</b>', 'Shared/Theirs.md': '<form>x</form>' })
+    theirs.add(`${ROOT}/Shared/Theirs.md`)
+    try {
+      expect(await links.embedNote('Plan', `${ROOT}/Today.md`)).toEqual({
+        text: '<b>mine</b>',
+        escapeHtml: false,
+      })
+      expect(await links.embedNote('Theirs', `${ROOT}/Today.md`)).toEqual({
+        text: '<form>x</form>',
+        escapeHtml: true,
+      })
+      expect(await links.embedNote('Missing', `${ROOT}/Today.md`)).toBeNull()
+    } finally {
+      theirs.clear()
     }
   })
 })
