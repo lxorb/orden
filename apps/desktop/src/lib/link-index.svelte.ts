@@ -207,6 +207,8 @@ function resolvedIn(index: NoteIndex, link: { kind: LinkKind; target: string }):
 function stillReaches(
   source: string,
   link: { kind: LinkKind; target: string },
+  /** Where the link reached before the move, and where that is now. */
+  found: string,
   there: string,
   loose: boolean,
   folded: boolean,
@@ -232,8 +234,10 @@ function stillReaches(
       if (part !== '..') parts.push(part)
     }
     const written = parts.join('/')
-    // A path from the top is that path, never the end of another; see `resolveRelative`.
-    const whole = !loose || target.startsWith('/')
+    // A path from the top is that path, never the end of another, and so is a link
+    // that named its note's whole path: `resolveRelative` reads the path first, so
+    // `../Road.md` in `B/x.md` left alone once `Road.md` moved opened `B/Road.md`.
+    const whole = !loose || target.startsWith('/') || comparable(found) === comparable(written)
     return !whole && isMarkdownPath(at) ? ends(at, written) : at === written
   }
 
@@ -1767,7 +1771,7 @@ class Links {
         const there = moving(found) ?? found
         if (there === found && !(shifted && link.kind === 'markdown')) return null
         const kept = nameOf(there) === nameOf(found)
-        if (stillReaches(source, link, there, !shifted, kept)) return null
+        if (stillReaches(source, link, found, there, !shifted, kept)) return null
         return link.kind === 'wikilink' ? { path: there, reaches: reaching(source, there) } : there
       }
 

@@ -841,6 +841,8 @@ function graphOf(pages: readonly Page[], only?: Set<string>): string {
     const whole = nameOf(page.note.path)
     const parts = whole.split('/')
     for (let one = 0; one < parts.length; one++) byName.set(parts.slice(one).join('/'), page.slug)
+    // From the top of the space too, `[[/Road]]`; see `pages`.
+    byName.set(`/${whole}`, page.slug)
     for (const alias of page.front.aliases ?? []) byName.set(alias, page.slug)
   }
 
@@ -932,6 +934,7 @@ function near(pages: readonly Page[], page: Page): Set<string> {
   const byName = pages.reduce((map, one) => {
     const parts = nameOf(one.note.path).split('/')
     for (let at = 0; at < parts.length; at++) map.set(parts.slice(at).join('/'), one.slug)
+    map.set(`/${parts.join('/')}`, one.slug)
     for (const alias of one.front.aliases ?? []) map.set(alias, one.slug)
     return map
   }, new Map<string, string>())
