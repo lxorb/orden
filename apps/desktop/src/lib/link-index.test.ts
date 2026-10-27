@@ -18,6 +18,9 @@ let written: string[] = []
  *  index exists so that a surface drawn from the whole space does not read it again;
  *  a count says whether one did, where a clock says what the machine was doing. */
 let reads = 0
+/** Something that happens the moment a note is written: a save landing while a
+ *  rewrite is still going through the space. */
+let afterWrite: ((relative: string) => void) | null = null
 /** Every note a snapshot was taken of, so "one snapshot per touched note" is a
  *  thing the test can see rather than a thing the comment claims. */
 let snapshots: string[] = []
@@ -82,6 +85,7 @@ vi.mock('./tauri', async (importOriginal) => ({
         if (unwritable.has(relative)) throw new Error(`permission denied: ${path}`)
         notes[relative] = stringOf(args, 'content')
         written.push(relative)
+        afterWrite?.(relative)
         return undefined
       }
       case 'snapshot_note':
@@ -1210,5 +1214,216 @@ describe('resolving a page of links', () => {
         )
       }
     }
+  })
+})
+
+/** A folder renamed or moved takes every note in it along, and a link that spelled
+ *  out a path through the folder used to be left on the old one: `retarget` only
+ *  asked which links named the folder itself, and no link does. */
+describe('a folder renamed', () => {
+  test('rewrites the links that spell out a path through it, and no others', async () => {
+    const card = { x: 0, y: 0, width: 10, height: 10 }
+    const board = JSON.stringify({
+      nodes: [
+        { id: 'a', type: 'file', file: 'Projects/Plan.md', ...card },
+        { id: 'b', type: 'file', file: 'Projects/shot.png', ...card },
+      ],
+      edges: [],
+    })
+    await import('./scan-canvas')
+    await space(
+      {
+        'Projects/Plan.md': '# Plan',
+        'One.md': 'see [[Projects/Plan]] and [p](Projects/Plan.md) and ![](Projects/shot.png)\n',
+        'Bare.md': 'see [[Plan]] and [p](Plan.md)\n',
+      },
+      ['Projects/shot.png', 'Board.canvas'],
+    )
+    notes['Board.canvas'] = board
+    links.canvasRead(at('Board.canvas'), board)
+    await vi.waitFor(() =>
+      expect(links.backlinks(at('Projects/Plan.md')).map((one) => one.path)).toContain(
+        'Board.canvas',
+      ),
+    )
+
+    const touched = await links.retarget(at('Projects'), at('Work'), ROOT, () => null, {
+      moved: true,
+    })
+
+    expect(touched).toBe(2)
+    expect(notes['One.md']).toBe('see [[Work/Plan]] and [p](Work/Plan.md) and ![](Work/shot.png)\n')
+    // A bare name still finds the note wherever its folder went.
+    expect(notes['Bare.md']).toBe('see [[Plan]] and [p](Plan.md)\n')
+    const after = JSON.parse(notes['Board.canvas'] ?? '') as { nodes: Record<string, string>[] }
+    expect(after.nodes.map((one) => one.file)).toEqual(['Work/Plan.md', 'Work/shot.png'])
+  })
+
+  test('moved deeper, its notes point out of it from where they now are', async () => {
+    await space({
+      'Projects/Plan.md': 'see [o](../Other.md), [s](Sub.md) and [[Projects/Sub]]\n',
+      'Projects/Sub.md': '# Sub',
+      'Other.md': '# Other',
+    })
+    notes['Area/Projects/Plan.md'] = notes['Projects/Plan.md'] ?? ''
+
+    await links.retarget(at('Projects'), at('Area/Projects'), ROOT, () => null, { moved: true })
+
+    expect(notes['Area/Projects/Plan.md']).toBe(
+      // The wikilink still names its note by the end of its path.
+      'see [o](../../Other.md), [s](Sub.md) and [[Projects/Sub]]\n',
+    )
+  })
+})
+
+/** A note moved to another folder took its relative links with it unchanged, and
+ *  each then named a path beside its new folder that held nothing. */
+describe('a note moved to another folder', () => {
+  test('keeps its pictures and markdown links reaching their files', async () => {
+    await space(
+      {
+        'Plan.md': '# Plan\n\n![shot](assets/abc.png)\n\nsee [Other](Other.md) and [[Other]]\n',
+        'Other.md': '# Other',
+      },
+      ['assets/abc.png'],
+    )
+    notes['Projects/Plan.md'] = notes['Plan.md'] ?? ''
+
+    await links.retarget(at('Plan.md'), at('Projects/Plan.md'), ROOT, () => null, { moved: true })
+
+    expect(notes['Projects/Plan.md']).toBe(
+      '# Plan\n\n![shot](../assets/abc.png)\n\nsee [Other](../Other.md) and [[Other]]\n',
+    )
+  })
+
+  test('and moved back to the top, climbs no further than it has to', async () => {
+    await space(
+      { 'Projects/Plan.md': '![shot](../assets/abc.png) [o](../Other.md)\n', 'Other.md': '#' },
+      ['assets/abc.png'],
+    )
+    notes['Plan.md'] = notes['Projects/Plan.md'] ?? ''
+
+    await links.retarget(at('Projects/Plan.md'), at('Plan.md'), ROOT, () => null, { moved: true })
+
+    expect(notes['Plan.md']).toBe('![shot](assets/abc.png) [o](Other.md)\n')
+  })
+
+  test('renamed in its own folder, its own links are left as they were', async () => {
+    await space({ 'Plan.md': '![shot](assets/abc.png) [o](Other.md)\n', 'Other.md': '#' }, [
+      'assets/abc.png',
+    ])
+    notes['Goal.md'] = notes['Plan.md'] ?? ''
+
+    expect(
+      await links.retarget(at('Plan.md'), at('Goal.md'), ROOT, () => null, { moved: true }),
+    ).toBe(0)
+    expect(notes['Goal.md']).toBe('![shot](assets/abc.png) [o](Other.md)\n')
+  })
+})
+
+/** A note with one link to rewrite has every link in it read again, and the others
+ *  pointing into what moved were written over as well: an alias as the filename, a
+ *  name in another case in the case of the file. */
+describe('a folder renamed, in a note that also links into it by other names', () => {
+  test('rewrites the path and leaves an alias and another case as written', async () => {
+    await space({
+      'Projects/Plan.md': '---\naliases: [The Goal]\n---\n# Plan',
+      'One.md': '[[Projects/Plan]] [[The Goal]] [[plan]] [p](projects/plan.md)\n',
+    })
+
+    await links.retarget(at('Projects'), at('Work'), ROOT, () => null, { moved: true })
+
+    expect(notes['One.md']).toBe('[[Work/Plan]] [[The Goal]] [[plan]] [p](Work/Plan.md)\n')
+  })
+
+  test('and a note renamed leaves an alias to it as written', async () => {
+    await space({
+      'Plan.md': '---\naliases: [The Goal]\n---\n# Plan',
+      'One.md': '[[Plan]] [[The Goal]]\n',
+    })
+
+    await links.retarget(at('Plan.md'), at('Roadmap.md'), ROOT)
+
+    expect(notes['One.md']).toBe('[[Roadmap]] [[The Goal]]\n')
+  })
+})
+
+/** The resolver reads a target trimmed and a markdown path without its trailing
+ *  slash; the rewrite asked about the target as written, so it never found these. */
+describe('a link written with spaces inside its brackets or a slash at its end', () => {
+  test('is rewritten when the picture it names is renamed', async () => {
+    await space({ 'One.md': '![[ abc.png ]] ![](assets/abc.png/)\n' }, ['assets/abc.png'])
+
+    await links.retarget(at('assets/abc.png'), at('assets/def.png'), ROOT, () => null, {
+      moved: true,
+    })
+
+    expect(notes['One.md']).toBe('![[ def.png ]] ![](assets/def.png)\n')
+  })
+
+  test('is rewritten when the note it names is renamed', async () => {
+    await space({ 'Plan.md': '# Plan', 'One.md': 'see [[ Plan ]]\n' })
+
+    await links.retarget(at('Plan.md'), at('Goal.md'), ROOT)
+
+    expect(notes['One.md']).toBe('see [[ Goal ]]\n')
+  })
+})
+
+/** A rewrite tells the index what it wrote once it has gone through the whole space,
+ *  and a note saved after it was rewritten and before the pass ended had its newer
+ *  words put back to what the pass wrote: its new links went missing from the index. */
+describe('a note saved while a folder rename is still rewriting the space', () => {
+  test('keeps what was saved in the index', async () => {
+    await space({
+      'Journal/A.md': '# A',
+      'Foo.md': '# Foo',
+      'T0.md': 'see [[Journal/A]]\n',
+    })
+    afterWrite = (relative) => {
+      if (relative === 'T0.md') links.noteSaved(at('T0.md'), 'see [[Diary/A]] [[Foo]]\n')
+    }
+
+    try {
+      await links.retarget(at('Journal'), at('Diary'), ROOT, () => null, { moved: true })
+    } finally {
+      afterWrite = null
+    }
+
+    expect(links.backlinks(at('Foo.md')).map((one) => one.path)).toEqual(['T0.md'])
+  })
+
+  test('and a note saved before the pass reached it is rewritten in the index too', async () => {
+    await space({
+      'Journal/A.md': '# A',
+      'T0.md': 'see [[Journal/A]]\n',
+      'T1.md': 'see [[Journal/A]]\n',
+    })
+    afterWrite = (relative) => {
+      if (relative !== 'T0.md') return
+      notes['T1.md'] = 'see [[Journal/A]] more\n'
+      links.noteSaved(at('T1.md'), 'see [[Journal/A]] more\n')
+    }
+
+    try {
+      await links.retarget(at('Journal'), at('Diary'), ROOT, () => null, { moved: true })
+    } finally {
+      afterWrite = null
+    }
+    links.notesMoved(at('Journal'), at('Diary'))
+
+    expect(notes['T1.md']).toBe('see [[Diary/A]] more\n')
+    expect(links.backlinks(at('Diary/A.md')).map((one) => one.path)).toEqual(['T0.md', 'T1.md'])
+  })
+})
+
+describe('a folder renamed, in a note inside it that is rewritten', () => {
+  test('keeps a relative link that still reaches as it was written', async () => {
+    await space({ 'Journal/A.md': '[[Journal/B]] [b2](./B.md)\n', 'Journal/B.md': '# B' })
+    notes['Diary/A.md'] = notes['Journal/A.md'] ?? ''
+
+    await links.retarget(at('Journal'), at('Diary'), ROOT, () => null, { moved: true })
+
+    expect(notes['Diary/A.md']).toBe('[[Diary/B]] [b2](./B.md)\n')
   })
 })

@@ -855,8 +855,14 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-26, to 3,364,000, for the round 4 fixes landed together: main with
  *  #963, #964, #966, #967 and #970 in it measured 3,363,280, over by what #963 to #967
- *  added beside #970. #965 (B472) adds nothing to the first paint. */
-const BUDGET = 3_364_000
+ *  added beside #970. #965 (B472) adds nothing to the first paint.
+ *
+ *  Raised 2026-10-27, to 3,374,300, for B476 and B477: a folder renamed or moved
+ *  rewrites the links into it, and a note moved to another folder its own relative
+ *  links and pictures (`retargetIn`, `stillReaches`, `filesByName`, `fileNamed` and
+ *  `notesByPath` in link-index.svelte.ts, `retargetLinks` in link-rewrite.ts).
+ *  Measured 3,373,513 on main with #972. */
+const BUDGET = 3_374_300
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

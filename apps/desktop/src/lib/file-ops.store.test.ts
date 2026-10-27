@@ -489,3 +489,86 @@ describe('the stores the app keeps by path', () => {
     }
   })
 })
+
+describe('a folder renamed, with a note open that links into it', () => {
+  test('rewrites the link in the open note, typing and all, and the undo puts it back', async () => {
+    const linking = 'see [[Work/Notes]] and [n](Work/Notes.md)\n'
+    disk.current?.files.set(`${ROOT}/Other.md`, linking)
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/Work/Notes.md`, '# Notes\n')
+    links.noteSaved(`${ROOT}/Other.md`, linking)
+    await workspace.open(`${ROOT}/Other.md`)
+    const note = workspace.active?.note
+    note?.live.replace(`${linking}typed and waiting\n`, true)
+
+    await workspace.rename(`${ROOT}/Work`, 'Desk')
+    await workspace.writesSettled()
+
+    const after = 'see [[Desk/Notes]] and [n](Desk/Notes.md)\ntyped and waiting\n'
+    expect(note?.text).toBe(after)
+    expect(disk.current?.files.get(`${ROOT}/Other.md`)).toBe(after)
+
+    await workspace.undoFileAction()
+    await workspace.writesSettled()
+
+    expect(disk.current?.files.get(`${ROOT}/Other.md`)).toBe(`${linking}typed and waiting\n`)
+  })
+})
+
+describe('a note open with typing, moved into a folder', () => {
+  test('keeps its picture and its markdown link, and leaves nothing where it was', async () => {
+    const words = '![shot](assets/abc.png) see [i](Idea.md)\n'
+    disk.current?.files.set(`${ROOT}/Plan.md`, words)
+    disk.current?.files.set(`${ROOT}/assets/abc.png`, '')
+    disk.current?.folders.add(`${ROOT}/assets`)
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/Plan.md`, words)
+    links.noteSaved(`${ROOT}/Idea.md`, '# Idea\n')
+    links.fileAdded('assets/abc.png')
+    await workspace.open(`${ROOT}/Plan.md`)
+    const note = workspace.active?.note
+    note?.live.replace(`${words}typed and waiting\n`, true)
+
+    await workspace.move(`${ROOT}/Plan.md`, `${ROOT}/Work`)
+    await workspace.writesSettled()
+
+    const after = '![shot](../assets/abc.png) see [i](../Idea.md)\ntyped and waiting\n'
+    expect(disk.current?.files.has(`${ROOT}/Plan.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Work/Plan.md`)).toBe(after)
+    expect(note?.text).toBe(after)
+
+    await workspace.undoFileAction()
+    await workspace.writesSettled()
+
+    expect(disk.current?.files.has(`${ROOT}/Work/Plan.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Plan.md`)).toBe(`${words}typed and waiting\n`)
+  })
+})
+
+describe('a folder moved into another, with a note open inside it', () => {
+  test('points the open note out of the folder from where it now is', async () => {
+    const words = 'back to [p](../Plan.md)\n'
+    disk.current?.files.set(`${ROOT}/Work/Notes.md`, words)
+    disk.current?.folders.add(`${ROOT}/Archive`)
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/Plan.md`, '# Plan\n')
+    links.noteSaved(`${ROOT}/Work/Notes.md`, words)
+    await workspace.open(`${ROOT}/Work/Notes.md`)
+    const note = workspace.active?.note
+    note?.live.replace(`${words}typed\n`, true)
+
+    await workspace.move(`${ROOT}/Work`, `${ROOT}/Archive`)
+    await workspace.writesSettled()
+
+    const after = 'back to [p](../../Plan.md)\ntyped\n'
+    expect(disk.current?.files.has(`${ROOT}/Work/Notes.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Archive/Work/Notes.md`)).toBe(after)
+    expect(note?.text).toBe(after)
+  })
+})
