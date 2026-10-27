@@ -118,6 +118,34 @@ describe('the account keeps what a note said', () => {
     expect(env.keys()).not.toContain(versionKey(await sha256('# Two')))
   })
 
+  test('and the newest is the last save, also when another save folds into it at once', async () => {
+    await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token,
+      body: { content: '# Two', baseVersion: 1 },
+    })
+    // Another save folds into the newest version between this one reading it and
+    // writing it.
+    const two = await sha256('# Two')
+    env.justBefore(/^update note_versions set at/, () => {
+      env.db
+        .prepare(
+          "update note_versions set at = at + 1, hash = 'other' where note_id = ? and hash = ?",
+        )
+        .run(note, two)
+    })
+    await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token,
+      body: { content: '# Three', baseVersion: 2 },
+    })
+
+    expect(rows(env, note).map((one) => one.hash)).toEqual([
+      await sha256('# One'),
+      await sha256('# Three'),
+    ])
+  })
+
   test('but not the same words twice', async () => {
     agedBy(env, 6 * 60 * 1000)
     await call(env, `/v1/notes/${note}`, {
@@ -688,6 +716,10 @@ describe('putting a space back to a moment', () => {
     const hashes = rows(env, id).map((one) => one.hash)
     expect(hashes).toContain(await sha256('two'))
     expect(hashes.at(-1)).toBe(await sha256('draft'))
+
+    // And still after the sweep has thinned that hour, days later.
+    await sweepVersions(env, Date.now() + 2 * 24 * 60 * 60 * 1000)
+    expect(rows(env, id).map((one) => one.hash)).toContain(await sha256('two'))
   })
 
   test('also words that never became a version', async () => {
@@ -911,6 +943,27 @@ describe('thinning to one an hour', () => {
 
     expect(kept(one)).toEqual([from - hour + 100, from + 600])
     expect(kept(two)).toEqual([from + 500])
+  })
+
+  test('but never a version kept by name', async () => {
+    const hour = 60 * 60 * 1000
+    const from = Math.floor((Date.now() - 2 * 24 * hour) / hour) * hour
+
+    const one = await noteWithVersionsAt('one.md', [
+      from + 100,
+      from + 300,
+      from + 600,
+      from + hour + 100,
+      from + hour + 200,
+    ])
+    env.db
+      .prepare('update note_versions set held = 1 where note_id = ? and at in (?, ?)')
+      .run(one, from + 300, from + hour + 200)
+
+    await sweepVersions(env, Date.now())
+
+    // Each hour keeps what was kept by name, and the newest of the rest.
+    expect(kept(one)).toEqual([from + 300, from + 600, from + hour + 100, from + hour + 200])
   })
 
   test('and nothing where every version is already an hour apart', async () => {
