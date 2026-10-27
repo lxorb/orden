@@ -59,7 +59,14 @@ vi.mock('./api', async (importOriginal) => {
       site: (_token: string, id: string, settings: Record<string, unknown>) =>
         answer(`site ${id} ${JSON.stringify(settings)}`, { space: {}, site: {} }),
       sitePreview: (_token: string, id: string) =>
-        answer(`preview ${id}`, { pages: 0, before: 0, adds: [], removes: [], more: false, dressing: {} }),
+        answer(`preview ${id}`, {
+          pages: 0,
+          before: 0,
+          adds: [],
+          removes: [],
+          more: false,
+          dressing: {},
+        }),
       domainStatus: (_token: string, id: string) => answer(`status ${id}`, world.domain),
       answers: (_token: string, id: string) =>
         answer(`answers ${id}`, { answers: [], more: false, keptDays: 180, full: false }),
@@ -88,14 +95,32 @@ import { publish } from './publishing.svelte'
 import PublishSheet from './PublishSheet.svelte'
 import type { RemoteSpace } from './api'
 
-globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as never
+const nothing = () => undefined
+vi.stubGlobal(
+  'ResizeObserver',
+  class {
+    observe = nothing
+    unobserve = nothing
+    disconnect = nothing
+  },
+)
 Element.prototype.animate = () =>
-  ({ cancel() {}, pause() {}, play() {}, finished: Promise.resolve(), currentTime: 0, startTime: 0,
-     playState: 'finished', effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) } }) as unknown as Animation
+  ({
+    cancel: nothing,
+    pause: nothing,
+    play: nothing,
+    finished: Promise.resolve(),
+    currentTime: 0,
+    startTime: 0,
+    playState: 'finished',
+    effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
+  }) as unknown as Animation
 
 function remote(): RemoteSpace {
   return {
-    id: 'space-1', name: 'Notes', role: 'owner',
+    id: 'space-1',
+    name: 'Notes',
+    role: 'owner',
     blog: { enabled: false, subdomain: null, domain: null, title: null, note: null, dns: [] },
   } as unknown as RemoteSpace
 }
@@ -103,12 +128,12 @@ function remote(): RemoteSpace {
 function open() {
   world.mirrors = { Notes: 'space-1' }
   account.token = 'session'
-  account.user = { id: 'u1', email: 'o@example.com', name: 'E' } as never
+  account.user = { id: 'u1', email: 'o@example.com', name: 'E' }
   account.spaces = [remote()]
   const host = document.createElement('div')
   document.body.append(host)
   const shown = mount(PublishSheet, { target: host })
-  publish.show({ id: 'Notes', name: 'Notes', root: 'Notes' } as never)
+  publish.show({ id: 'Notes', name: 'Notes', root: 'Notes' })
   flushSync()
   publish.confirmed = true
   publish.subdomain = 'my-notes'
@@ -136,28 +161,43 @@ test('a space listing while the sheet is open keeps what was typed', () => {
   account.spaces = [remote()]
   flushSync()
   const kept = typed()
-  unmount(shown)
-  expect(kept).toEqual({ confirmed: true, subdomain: 'my-notes', description: 'About me', otherwise: 'none' })
+  void unmount(shown)
+  expect(kept).toEqual({
+    confirmed: true,
+    subdomain: 'my-notes',
+    description: 'About me',
+    otherwise: 'none',
+  })
 })
 
 test('a blog that changed under the open sheet is what the form shows', () => {
   const shown = open()
   const now = remote()
-  now.blog = { ...now.blog, enabled: true, subdomain: 'theirs', site: { rules: { include: [], exclude: [], otherwise: 'all' }, description: 'Theirs' } } as never
+  now.blog = {
+    ...now.blog,
+    enabled: true,
+    subdomain: 'theirs',
+    site: { rules: { include: [], exclude: [], otherwise: 'all' }, description: 'Theirs' },
+  } as never
   account.spaces = [now]
   flushSync()
   const shownNow = typed()
-  unmount(shown)
-  expect(shownNow).toEqual({ confirmed: true, subdomain: 'theirs', description: 'Theirs', otherwise: 'all' })
+  void unmount(shown)
+  expect(shownNow).toEqual({
+    confirmed: true,
+    subdomain: 'theirs',
+    description: 'Theirs',
+    otherwise: 'all',
+  })
 })
 
 test('the sheet opened again on the same space starts from what the account holds', () => {
   const shown = open()
   publish.close()
   flushSync()
-  publish.show({ id: 'Notes', name: 'Notes', root: 'Notes' } as never)
+  publish.show({ id: 'Notes', name: 'Notes', root: 'Notes' })
   flushSync()
   const again = typed()
-  unmount(shown)
+  void unmount(shown)
   expect(again).toEqual({ confirmed: false, subdomain: '', description: '', otherwise: 'all' })
 })

@@ -147,12 +147,30 @@ class Publish {
     // does not know about.
     this.answers = []
     this.kept = null
+    this.filledFrom = null
     this.open = true
   }
 
   close() {
     this.open = false
     this.stopWatchingDomain()
+  }
+
+  /** The blog the form was last filled from, as text, so a listing that hands
+   *  back the same blog in a new object is told apart from one that changed it. */
+  private filledFrom: string | null = null
+
+  /** Fills the form again, but only when the blog itself is new: the sheet just
+   *  opened, or publishing changed it under the form. Every listing of the
+   *  account's spaces makes new objects, the five-minute reconcile among them,
+   *  and filling on each would throw away whatever was typed meanwhile. */
+  refill() {
+    const blog = this.blog
+    const from = JSON.stringify(blog ?? null)
+    if (from === this.filledFrom) return
+    this.filledFrom = from
+    this.fill(blog)
+    this.confirmed = this.published
   }
 
   /** Fills the form from what the account holds. */

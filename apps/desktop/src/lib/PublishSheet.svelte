@@ -144,11 +144,11 @@
   let markBox = $state<HTMLElement | null>(null)
 
   // Filled from what the account holds, and again whenever it answers with
-  // something new: publishing changes the blog under the form.
+  // something new: publishing changes the blog under the form. A listing that
+  // only hands the same blog back leaves the form alone; see `refill`.
   $effect(() => {
     if (!publish.open) return
-    publish.fill(blog)
-    publish.confirmed = published
+    publish.refill()
   })
 
   // And asked what those rules would put on the site, once, when the sheet opens
