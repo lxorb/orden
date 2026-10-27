@@ -18,7 +18,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 const CHAT = `c_${'1'.repeat(32)}`
 const POINTER = '/space/Plans.chat'
 
-const account = vi.hoisted(() => ({ chats: [] as string[] }))
+const account = vi.hoisted(() => ({ chats: [] as string[], space: 'space-1', heard: true }))
 const moves = vi.hoisted(() => [] as string[])
 const disk = vi.hoisted(() => ({ pointers: new Map<string, string>() }))
 
@@ -42,22 +42,24 @@ vi.mock('../tauri', async (importOriginal) => ({
 vi.mock('./http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./http')>()),
   listChats: () =>
-    Promise.resolve({
-      chats: account.chats.map((id) => ({
-        id,
-        space: 'space-1',
-        role: 'owner',
-        members: 1,
-        lastSeq: 0,
-        lastAt: null,
-        lastBy: null,
-        readSeq: 0,
-        mentions: 0,
-        notify: null,
-        mutedUntil: null,
-        meta: { topic: '', posting: 'writers', slowmode: 0 },
-      })),
-    }),
+    account.heard
+      ? Promise.resolve({
+          chats: account.chats.map((id) => ({
+            id,
+            space: account.space,
+            role: 'owner',
+            members: 1,
+            lastSeq: 0,
+            lastAt: null,
+            lastBy: null,
+            readSeq: 0,
+            mentions: 0,
+            notify: null,
+            mutedUntil: null,
+            meta: { topic: '', posting: 'writers', slowmode: 0 },
+          })),
+        })
+      : Promise.reject(new Error('offline')),
   eventsOf: () => Promise.resolve(null),
   moveChat: (chat: string, space: string) => {
     moves.push(`${chat} ${space}`)
@@ -97,6 +99,8 @@ const { workspace } = await import('../workspace.svelte')
 const { chatsCarried } = await import('../workspace/chat-leaving')
 
 beforeEach(async () => {
+  account.space = 'space-1'
+  account.heard = true
   workspace.spaces = [
     { id: 'space-1', name: 'Space', root: '/space' },
     { id: 'space-2', name: 'Other', root: '/other' },
@@ -220,5 +224,87 @@ test('a copy in another space carried on, its original deleted, never moves the 
   await rescan()
   await chatsCarried('/other/Plans.chat', '/third')
 
+  expect(moves).toEqual([])
+})
+
+/** What the device knows is all it goes by, and where it does not know it does not
+ *  carry: before the chats have started, after a relaunch, and before the account's
+ *  listing has heard of a move just made (review of #991). */
+
+test('before the chats have started, a copy in another space carried on moves nothing', async () => {
+  await came('/other/Plans.chat')
+  await chats.forget()
+  await chatsCarried('/other/Plans.chat', '/third')
+
+  expect(moves).toEqual([])
+})
+
+test('after a relaunch, a duplicate beside its original carried away moves nothing', async () => {
+  await came('/space/Plans copy.chat')
+  await rescan()
+  await chats.forget()
+  await chats.start('account-1')
+  await chatsCarried('/space/Plans copy.chat', '/other')
+
+  expect(chats.placedAt(CHAT)).toBe(POINTER)
+  expect(moves).toEqual([])
+})
+
+test('after a relaunch, the original beside a duplicate carried away carries its chat', async () => {
+  await came('/space/Plans copy.chat')
+  await chats.forget()
+  await chats.start('account-1')
+  await chatsCarried(POINTER, '/other')
+
+  expect(moves).toEqual([`${CHAT} space-2`])
+})
+
+test('a move into another space undone before the listing has heard brings the chat back', async () => {
+  await chatsCarried(POINTER, '/other')
+  account.space = 'space-2'
+  account.heard = false
+  await moved(POINTER, '/other/Plans.chat')
+  // As workspace/undoing.ts asks it: from where the pointer is, back to where it was.
+  await chatsCarried('/other/Plans.chat', '/space')
+
+  expect(moves).toEqual([`${CHAT} space-2`, `${CHAT} space-1`])
+})
+
+test('a move on into a third space before the listing has heard takes the chat along', async () => {
+  await chatsCarried(POINTER, '/other')
+  account.space = 'space-2'
+  account.heard = false
+  await moved(POINTER, '/other/Plans.chat')
+  await chatsCarried('/other/Plans.chat', '/third')
+
+  expect(moves).toEqual([`${CHAT} space-2`, `${CHAT} space-3`])
+})
+
+test('a chat the listing had not heard of yet is carried by its pointer', async () => {
+  account.chats = []
+  await chats.forget()
+  await chats.start('account-1')
+  disk.pointers.set('/space/New.chat', CHAT)
+  account.chats = [CHAT]
+  await chats.pointerMoved(null, '/space/New.chat')
+  await chatsCarried('/space/New.chat', '/other')
+
+  expect(moves).toEqual([`${CHAT} space-2`])
+})
+
+test('a pointer this device has never placed is not carried, and the move is refused', async () => {
+  // Come by the sync a moment ago, before any scan: nothing says it is the chat's own.
+  const fresh = `c_${'2'.repeat(32)}`
+  account.chats = [CHAT, fresh]
+  disk.pointers.set('/space/Fresh.chat', fresh)
+
+  await expect(chatsCarried('/space/Fresh.chat', '/other')).rejects.toThrow()
+  expect(moves).toEqual([])
+})
+
+test('the account not heard and no move of its own to go by, the move is refused', async () => {
+  account.heard = false
+
+  await expect(chatsCarried(POINTER, '/other')).rejects.toThrow()
   expect(moves).toEqual([])
 })
