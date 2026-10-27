@@ -869,7 +869,8 @@ class Chat implements Panel {
     this.queued = { ...this.queued, [thread.id]: [...sends, ...(this.queued[thread.id] ?? [])] }
   }
 
-  /** Stops the open thread's turn, and every helper it started; what arrived stays. */
+  /** Stops the open thread's turn, and everything it started (helpers.stopUnder); what
+   *  arrived stays. */
   stop(): void {
     const id = this.open?.id
     if (!id) return

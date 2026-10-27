@@ -23,6 +23,7 @@
 import { newThread } from '../chat/threads'
 import { untrusted } from '../chat/transcript'
 import type { Effort, Mode, Thread } from '../chat/types'
+import { tasks } from '../commands/tasks.svelte'
 import type { Ended } from '../commands/types'
 import { type Offered, routed } from './route'
 
@@ -100,6 +101,8 @@ class Helpers {
   all = $state.raw<Helper[]>([])
 
   private stops = new Map<string, AbortController>()
+  /** The thread each helper was started under, as it is held this run. */
+  private above = new Map<string, Thread>()
   private ends = new Map<string, Promise<void>>()
 
   get(id: string): Helper | null {
@@ -167,6 +170,14 @@ class Helpers {
       started: Date.now(),
     }
     this.all = [...this.all, helper]
+    // Its changes are reviewed with the thread that started it and every one above
+    // (review/changes.ts), as a command's helper's are; the list is written down with
+    // the thread when its turn ends.
+    for (let above = parent; above; above = this.above.get(above.id) ?? null) {
+      const held = above as Thread & { helpers?: string[] }
+      held.helpers = [...(held.helpers ?? []), helper.id]
+    }
+    if (parent) this.above.set(helper.id, parent)
 
     const stopper = new AbortController()
     this.stops.set(helper.id, stopper)
@@ -225,11 +236,16 @@ class Helpers {
     this.stopUnder(id)
   }
 
-  /** Stops every helper a thread started, and theirs: what stopping a thread does. */
+  /** Stops everything a thread started, and what that started: its helpers and its
+   *  work on the task list (`/batch`, `/subtask`, `/fork`, a goal, a loop). What
+   *  stopping or deleting a thread does. */
   stopUnder(thread: string): void {
     for (const one of this.all) {
       if (one.parent === thread && one.state === 'running') this.stop(one.id)
     }
+    const under = tasks.of(thread).flatMap((one) => (one.helper ? [one.helper] : []))
+    tasks.stop(thread)
+    for (const one of under) this.stopUnder(one)
   }
 }
 

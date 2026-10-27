@@ -172,7 +172,10 @@ class Review {
 
   /** A thread's changes the reader has not kept, oldest first. */
   changes(thread: Reviewed): Change[] {
-    return changesOf(thread, this.edits(providersOf(thread).map(agentOf)), answeringAt, this.kept)
+    // A helper works on any provider in use (`run_agent`), so a thread with helpers reads
+    // every built-in agent's edits; `changesOf` keeps those of its own threads.
+    const agents = thread.helpers?.length ? undefined : providersOf(thread).map(agentOf)
+    return changesOf(thread, this.edits(agents), answeringAt, this.kept)
   }
 
   /** The same by note. */
