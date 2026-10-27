@@ -23,6 +23,8 @@ interface World {
   sheet: string
   /** What was sent up as a blob, by its hash. */
   blobs: Record<string, string>
+  /** Set to make only publishing the address fail. */
+  refusePublish: string | null
 }
 
 const world = vi.hoisted((): World => ({
@@ -35,6 +37,7 @@ const world = vi.hoisted((): World => ({
   full: false,
   sheet: '',
   blobs: {},
+  refusePublish: null,
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -52,10 +55,12 @@ vi.mock('./api', async (importOriginal) => {
       subdomainAvailable: (_token: string, name: string, space?: string) =>
         answer(`available ${name} for ${space ?? 'nobody'}`, world.available),
       publish: (_token: string, id: string, settings: Record<string, unknown>) =>
-        answer(`publish ${id} ${JSON.stringify(settings)}`, {
-          space: {},
-          dns: [{ type: 'CNAME', name: 'notes', value: 'cname.orden.so' }],
-        }),
+        world.refusePublish
+          ? Promise.reject(new original.ApiError(409, world.refusePublish))
+          : answer(`publish ${id} ${JSON.stringify(settings)}`, {
+              space: {},
+              dns: [{ type: 'CNAME', name: 'notes', value: 'cname.orden.so' }],
+            }),
       site: (_token: string, id: string, settings: Record<string, unknown>) =>
         answer(`site ${id} ${JSON.stringify(settings)}`, { space: {}, site: {} }),
       sitePreview: (_token: string, id: string) =>
@@ -170,24 +175,115 @@ test('a space listing while the sheet is open keeps what was typed', () => {
   })
 })
 
-test('a blog that changed under the open sheet is what the form shows', () => {
-  const shown = open()
-  const now = remote()
-  now.blog = {
-    ...now.blog,
-    enabled: true,
-    subdomain: 'theirs',
-    site: { rules: { include: [], exclude: [], otherwise: 'all' }, description: 'Theirs' },
+/** The space as a listing hands it back, with the blog put together from parts. */
+function listed(blog: Record<string, unknown>, site: Record<string, unknown> | null = null) {
+  const space = remote()
+  space.blog = {
+    ...space.blog,
+    ...blog,
+    ...(site
+      ? {
+          site: {
+            rules: { include: [], exclude: [], otherwise: 'all' },
+            description: '',
+            password: false,
+            analytics: null,
+            theme: null,
+            ...site,
+          },
+        }
+      : {}),
   } as never
-  account.spaces = [now]
+  return space
+}
+
+/** What the account answers the next time it is asked for its spaces. */
+function serve(space: RemoteSpace) {
+  vi.spyOn(account, 'loadSpaces').mockImplementation(() => {
+    account.spaces = [space]
+    return Promise.resolve()
+  })
+}
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  world.refusePublish = null
+})
+
+test('a change from elsewhere reaches the fields nobody touched and leaves the typed ones', () => {
+  const shown = open()
+  account.spaces = [
+    listed(
+      { subdomain: 'theirs' },
+      { description: 'Theirs', analytics: { url: 'https://count.example' } },
+    ),
+  ]
   flushSync()
-  const shownNow = typed()
+  const now = { ...typed(), counter: publish.counter }
   void unmount(shown)
-  expect(shownNow).toEqual({
+  expect(now).toEqual({
     confirmed: true,
-    subdomain: 'theirs',
-    description: 'Theirs',
-    otherwise: 'all',
+    subdomain: 'my-notes',
+    description: 'About me',
+    otherwise: 'none',
+    counter: 'https://count.example',
+  })
+})
+
+test('taking the password off keeps everything else that was typed', async () => {
+  account.spaces = [listed({}, { password: true })]
+  const shown = open()
+  serve(listed({}, { password: false }))
+  await publish.removePassword()
+  flushSync()
+  const now = { ...typed(), hasPassword: publish.hasPassword }
+  void unmount(shown)
+  expect(now).toEqual({
+    confirmed: true,
+    subdomain: 'my-notes',
+    description: 'About me',
+    otherwise: 'none',
+    hasPassword: false,
+  })
+})
+
+test('a site saved under an address that was refused keeps the address and the tick', async () => {
+  const shown = open()
+  world.refusePublish = 'taken'
+  await publish.publish()
+  flushSync()
+  // The site went up before the address was turned away; the next listing has it.
+  account.spaces = [
+    listed({}, { description: 'About me', rules: { include: [], exclude: [], otherwise: 'none' } }),
+  ]
+  flushSync()
+  const now = typed()
+  void unmount(shown)
+  expect(now).toEqual({
+    confirmed: true,
+    subdomain: 'my-notes',
+    description: 'About me',
+    otherwise: 'none',
+  })
+})
+
+test('after a publish the form is what the account holds, and follows it from there', async () => {
+  const shown = open()
+  const site = { description: 'About me', rules: { include: [], exclude: [], otherwise: 'none' } }
+  serve(listed({ enabled: true, subdomain: 'my-notes' }, site))
+  await publish.publish()
+  flushSync()
+  account.spaces = [
+    listed({ enabled: true, subdomain: 'moved' }, { ...site, description: 'Moved' }),
+  ]
+  flushSync()
+  const now = typed()
+  void unmount(shown)
+  expect(now).toEqual({
+    confirmed: true,
+    subdomain: 'moved',
+    description: 'Moved',
+    otherwise: 'none',
   })
 })
 
@@ -195,6 +291,15 @@ test('the sheet opened again on the same space starts from what the account hold
   const shown = open()
   publish.close()
   flushSync()
+  publish.show({ id: 'Notes', name: 'Notes', root: 'Notes' })
+  flushSync()
+  const again = typed()
+  void unmount(shown)
+  expect(again).toEqual({ confirmed: false, subdomain: '', description: '', otherwise: 'all' })
+})
+
+test('the sheet asked for again while it is open starts from what the account holds', () => {
+  const shown = open()
   publish.show({ id: 'Notes', name: 'Notes', root: 'Notes' })
   flushSync()
   const again = typed()
