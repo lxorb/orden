@@ -444,6 +444,75 @@ describe('a link that asks first', () => {
   })
 })
 
+/** Somebody waiting who stops, and a wait that has run out (B540). Cancel is a
+ *  withdrawal the owner can no longer accept, and a page that goes on asking
+ *  after the month a request lasts does not knock on the door again. */
+describe('a wait the reader ends', () => {
+  function withdraw(token: string, as?: string) {
+    return call(env, `/v1/join/${token}`, { method: 'DELETE', ...(as ? { token: as } : {}) })
+  }
+
+  test('takes a guest off the owner\'s list, and Accept finds nobody', async () => {
+    const link = await shareLink('write', 'approval')
+    const { json } = await follow(link, { body: { name: 'Ada' } })
+    const guest = (await shareView()).json.requests[0]?.guest ?? ''
+
+    expect((await withdraw(link, json.token)).status).toBe(200)
+    expect((await shareView()).json.requests).toEqual([])
+
+    const accepted = await call(env, `/v1/spaces/${space}/share/guests/${guest}`, {
+      method: 'POST',
+      token: owner,
+    })
+    expect(accepted.status).toBe(404)
+    expect((await follow(link, { as: json.token, body: { again: true } })).json.space).toBeUndefined()
+  })
+
+  test('takes an account off the owner\'s list, and Accept finds nobody', async () => {
+    const link = await shareLink('read', 'approval')
+    const stranger = await signIn(env, STRANGER)
+    await follow(link, { as: stranger })
+
+    expect((await withdraw(link, stranger)).status).toBe(200)
+    expect((await shareView()).json.requests).toEqual([])
+
+    const accepted = await call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, {
+      method: 'POST',
+      token: owner,
+    })
+    expect(accepted.status).toBe(404)
+    expect((await rail(stranger)).json.spaces.map((one: { id: string }) => one.id)).not.toContain(
+      space,
+    )
+  })
+
+  test('is nobody\'s to end without a session', async () => {
+    const link = await shareLink('read', 'approval')
+    expect((await withdraw(link)).status).toBe(401)
+  })
+
+  test('a guest asking again after the request ran out is not put back', async () => {
+    const link = await shareLink('read', 'approval')
+    const { json } = await follow(link, { body: { name: 'Ada' } })
+    env.db.prepare('delete from guest_members where space_id = ?').run(space)
+
+    const again = await follow(link, { as: json.token, body: { again: true } })
+    expect(again.status).toBe(410)
+    expect((await shareView()).json.requests).toEqual([])
+  })
+
+  test('an account asking again after the request ran out is not put back', async () => {
+    const link = await shareLink('read', 'approval')
+    const stranger = await signIn(env, STRANGER)
+    await follow(link, { as: stranger })
+    env.db.prepare('delete from space_requests where space_id = ?').run(space)
+
+    const again = await follow(link, { as: stranger, body: { again: true } })
+    expect(again.status).toBe(410)
+    expect((await shareView()).json.requests).toEqual([])
+  })
+})
+
 /* ── What a guest may reach ───────────────────────────────────────────── */
 
 describe('a guest session', () => {
