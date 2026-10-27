@@ -11,7 +11,7 @@ import { oneEdit } from '@nib/markdown/edits'
 import { plan, readEdits, type Replacement } from '../../agents/docs/edits'
 import { type Row, lineDiff, trimmed } from '../../diff'
 import { applied } from '../../search/replace'
-import { insideSpace, nameOf } from '../../space-paths'
+import { insideSpace, notePath } from '../../space-paths'
 import { spaceNamed, verbOf } from './files'
 
 /** A note's words as they stand, by its path on this disk; null for none. */
@@ -83,7 +83,7 @@ export async function previewOf(
   const space = named ? spaceNamed(spaces, named) : spaces.find((one) => one.id === open)
   if (!space) return null
 
-  const relative = nameOf(path).includes('.') ? path : `${path}.md`
+  const relative = notePath(path) ?? path
   const at = insideSpace(space.root, relative)
   const before = verb === 'create_note' ? '' : ((await words(at)) ?? '').replace(/\r\n?/g, '\n')
   const edits = editsOf(verb, given, before)

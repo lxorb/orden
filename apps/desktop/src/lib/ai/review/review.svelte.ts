@@ -23,7 +23,7 @@ import {
 } from '@nib/editor/review'
 import { onTracks, putBackIn, trackedAgents, tracksOf, undoSomeIn } from '../../agents/docs'
 import { plural } from '../../i18n.svelte'
-import { insideSpace, nameOf, withinSpace } from '../../space-paths'
+import { insideSpace, notePath, withinSpace } from '../../space-paths'
 import { dur } from '../../motion'
 import { onDisk } from '../../on-disk'
 import { onceAFrame } from '../../timing'
@@ -423,7 +423,7 @@ class Review {
         (one.space ? spaceNamed(workspace.spaces, one.space) : undefined) ??
         workspace.spaces.find((each) => each.id === thread.space)
       if (!space) continue
-      const relative = nameOf(one.path).includes('.') ? one.path : `${one.path}.md`
+      const relative = notePath(one.path) ?? one.path
       const path = insideSpace(space.root, relative)
       const words = await workspace.noteText(path).catch(() => null)
       if (words === null) continue

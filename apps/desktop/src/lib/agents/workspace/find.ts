@@ -17,7 +17,7 @@ import type { AgentAnswer } from '../../automation/caller'
 import type { Hit } from '../../search/match'
 import { parseQuery } from '../../search/query'
 import { searchSpace } from '../../search/space'
-import { nameOf, relativeTo } from '../../space-paths'
+import { notePath, relativeTo } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import { type Call, count, done, maybe, need } from './call'
 import { indexOf } from './links'
@@ -91,7 +91,7 @@ export async function searchNotes(call: Call): Promise<AgentAnswer> {
 export async function listBacklinks(call: Call): Promise<AgentAnswer> {
   const place = placeFor(call, maybe(call, 'space'))
   const asked = judged(need(call, 'path'))
-  const relative = nameOf(asked).includes('.') ? asked : `${asked}.md`
+  const relative = notePath(asked) ?? asked
 
   const index = await indexOf(place)
   const rows = index.backlinks(onDisk(place, relative)).map((one) => ({

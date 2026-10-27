@@ -9,6 +9,7 @@
  *  and pages themselves, which is where the links go. */
 
 import type { AgentAnswer } from '../../automation/caller'
+import { notePath } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { workspace } from '../../workspace.svelte'
 import { notes } from '../docs'
@@ -81,7 +82,8 @@ export async function attachAgentLog(call: Call): Promise<AgentAnswer> {
 
   const place = placeFor(call, maybe(call, 'space'))
   const named = judgedForWriting(need(call, 'note'))
-  const relative = named.includes('.') ? named : `${named}.md`
+  const relative = notePath(named)
+  if (relative === null) throw new Refused('bad_arguments', `${named} is not a markdown note`)
   // A new note or a section on an old one, neither goes into a space shared to be read.
   writableAt(place, onDisk(place, relative))
 
