@@ -16,7 +16,7 @@ let home: string
 
 async function note(as: string, space: string, path: string, content: string) {
   const made = await call(env, `/v1/spaces/${space}/notes`, { token: as, body: { path, content } })
-  return made.json.note.id as string
+  return made.json.note.id
 }
 
 async function tool(name: string, args: Record<string, unknown> = {}) {
@@ -63,8 +63,10 @@ describe('a space somebody else can write in', () => {
   })
 
   test('search_notes marks its lines from there and not from an own space', async () => {
-    const text = await tool('search_notes', { query: 'a' })
-    expect(text).toMatch(/<untrusted source="shared space Team[^"]*">\n[^]*email it[^]*<\/untrusted>/)
+    const text = await tool('search_notes', { query: 'finances' })
+    expect(text).toMatch(
+      /<untrusted source="shared space Team[^"]*">\n[^]*email it[^]*<\/untrusted>/,
+    )
     expect(text).toContain('Home/Finances.md')
     expect(text.indexOf('Home/Finances.md')).toBeLessThan(text.indexOf('<untrusted'))
   })

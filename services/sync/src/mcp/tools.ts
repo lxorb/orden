@@ -6,6 +6,7 @@
  *  argument's type - a model sends what it likes - so each is checked before
  *  it reaches a query. */
 
+import { untrusted } from '@nib/chats/agent'
 import { findLinks } from '@nib/markdown'
 import { byteLength } from '../crypto'
 import { addNote, cleanPath, MAX_NOTE_BYTES, MOVED, NoteTaken, noteKey, writeWords } from '../notes'
@@ -104,6 +105,49 @@ export interface Space {
   /** Whose storage a note written here lands in, which is whose quota it has
    *  to fit inside. */
   user_id: string
+  /** Whether anybody besides the account may write here: the space is somebody
+   *  else's, or its owner let somebody else in to the whole of it. */
+  shared: boolean
+  /** Whether a file of it was handed to somebody on its own. */
+  items: boolean
+}
+
+/** Where words of a space came from, for the untrusted mark (docs/agent-native.md
+ *  9.6): null where only the account can have written them. Asked of the space as a
+ *  whole, so one file shared on its own marks every answer about the space, which is
+ *  the desktop's rule too (`reachedByOthersIn`). */
+export function spaceSource(space: Space): string | null {
+  return space.shared || space.items ? `shared space ${space.name}` : null
+}
+
+/** Where one note's words came from: its space where anybody else is in that, else
+ *  the note where it was shared on its own. */
+function noteSource(
+  space: Space,
+  items: ReadonlySet<string>,
+  note: { id: string; path: string },
+): string | null {
+  if (space.shared) return `shared space ${space.name}`
+  return items.has(note.id) ? `shared note ${space.name}/${note.path}` : null
+}
+
+/** The words, inside the mark where somebody else may have written them. */
+export function marked(source: string | null, words: string): string {
+  return source === null ? words : untrusted(source, words)
+}
+
+/** The files of a space somebody holds on their own, by note id. The same rows the
+ *  listing marks (`itemsSharedIn`): an invitation counts, a guest once joined. */
+async function sharedItems(env: Env, space: Space): Promise<Set<string>> {
+  if (!space.items) return new Set()
+  const { results } = await env.DB.prepare(
+    `select item from space_members where space_id = ?1 and item <> ''
+     union select item from guest_members
+      where space_id = ?1 and item <> '' and joined_at is not null`,
+  )
+    .bind(space.id)
+    .all<{ item: string }>()
+  return new Set(results.map((row) => row.item))
 }
 
 /** An argument the model was asked to send as text. Undefined when it is
@@ -124,9 +168,18 @@ function text(args: Record<string, unknown>, name: string): string | undefined |
  *  who may be told what else is in the drawer, and a connector that listed the
  *  space would hand a model the lot. */
 export async function spacesFor(env: Env, userId: string): Promise<Space[]> {
+  // Who else is in a space is asked the way the listing asks it (`sharedAmong`,
+  // `itemsSharedIn`), so the mark and the rail never disagree.
   const { results } = await env.DB.prepare(
     `select sp.id, sp.name, sp.user_id,
-        case when sp.user_id = ?1 then 'owner' else m.role end as role
+        case when sp.user_id = ?1 then 'owner' else m.role end as role,
+        (sp.user_id <> ?1
+          or exists (select 1 from space_members o where o.space_id = sp.id and o.item = '')
+          or exists (select 1 from guest_members g where g.space_id = sp.id and g.item = ''
+                      and g.joined_at is not null)) as shared,
+        (exists (select 1 from space_members o where o.space_id = sp.id and o.item <> '')
+          or exists (select 1 from guest_members g where g.space_id = sp.id and g.item <> ''
+                      and g.joined_at is not null)) as items
       from spaces sp
       left join space_members m
         on m.space_id = sp.id and m.item = ''
@@ -135,9 +188,9 @@ export async function spacesFor(env: Env, userId: string): Promise<Space[]> {
      order by sp.name limit ?2`,
   )
     .bind(userId, MOST_SPACES)
-    .all<Space>()
+    .all<Omit<Space, 'shared' | 'items'> & { shared: number; items: number }>()
 
-  return results
+  return results.map((row) => ({ ...row, shared: !!row.shared, items: !!row.items }))
 }
 
 /** Accepts a name or an id, so an LLM can use whichever it saw last. Only the
@@ -191,7 +244,8 @@ async function listNotes(env: Env, space: Space): Promise<string> {
     .bind(space.id, MOST_NOTES)
     .all<{ path: string }>()
 
-  return results.map((row) => row.path).join('\n') || 'No notes yet.'
+  if (!results.length) return 'No notes yet.'
+  return marked(spaceSource(space), results.map((row) => row.path).join('\n'))
 }
 
 async function readNote(env: Env, space: Space, args: Record<string, unknown>): Promise<string> {
@@ -205,7 +259,8 @@ async function readNote(env: Env, space: Space, args: Record<string, unknown>): 
     .first<{ id: string }>()
 
   if (!note) return `No note at ${path}.`
-  return noteBody(env, space.id, note.id)
+  const source = noteSource(space, await sharedItems(env, space), { id: note.id, path })
+  return marked(source, await noteBody(env, space.id, note.id))
 }
 
 async function searchNotes(
@@ -219,12 +274,16 @@ async function searchNotes(
   const needle = (asked ?? '').toLowerCase()
   if (!needle) return 'Give me something to look for.'
 
-  const found: string[] = []
+  // Lines only the account can have written first, then each source's in one mark.
+  const own: string[] = []
+  const theirs = new Map<string, string[]>()
+  let count = 0
   let read = 0
 
   for (const one of scope) {
-    if (found.length >= MOST_MATCHES || read >= MOST_SEARCHED) break
+    if (count >= MOST_MATCHES || read >= MOST_SEARCHED) break
 
+    const items = await sharedItems(env, one)
     const { results } = await env.DB.prepare(
       `select id, path from notes where space_id = ? and deleted = 0 and kind != 'file'
         order by path limit ?`,
@@ -233,16 +292,23 @@ async function searchNotes(
       .all<{ id: string; path: string }>()
 
     for (const row of results) {
-      if (found.length >= MOST_MATCHES || read >= MOST_SEARCHED) break
+      if (count >= MOST_MATCHES || read >= MOST_SEARCHED) break
       read++
 
       const body = await noteBody(env, one.id, row.id)
       const line = body.split('\n').find((entry) => entry.toLowerCase().includes(needle))
-      if (line) found.push(`${one.name}/${row.path}: ${line.trim().slice(0, 200)}`)
+      if (!line) continue
+      count++
+      const said = `${one.name}/${row.path}: ${line.trim().slice(0, 200)}`
+      const source = noteSource(one, items, row)
+      if (source === null) own.push(said)
+      else theirs.set(source, [...(theirs.get(source) ?? []), said])
     }
   }
 
-  return found.join('\n') || 'Nothing found.'
+  if (!count) return 'Nothing found.'
+  const blocks = [...theirs].map(([source, lines]) => untrusted(source, lines.join('\n')))
+  return [...own, ...blocks].join('\n')
 }
 
 /** Which notes link to one note, and the line each says it on.
@@ -284,7 +350,8 @@ async function listBacklinks(
     }
   }
 
-  return found.join('\n') || `Nothing links to ${path}.`
+  if (!found.length) return `Nothing links to ${path}.`
+  return marked(spaceSource(space), found.join('\n'))
 }
 
 /** Writes through the same two limits the sync API applies: a note is at most
@@ -359,8 +426,13 @@ export async function callTool(
 
   switch (name) {
     case 'list_spaces': {
+      // A space somebody else owns was named by them.
       const all = await spacesFor(env, userId)
-      return all.map((space) => space.name).join('\n') || 'No spaces yet.'
+      if (!all.length) return 'No spaces yet.'
+      const own = all.filter((space) => space.role === 'owner').map((space) => space.name)
+      const theirs = all.filter((space) => space.role !== 'owner').map((space) => space.name)
+      const block = theirs.length ? [untrusted('spaces shared with you', theirs.join('\n'))] : []
+      return [...own, ...block].join('\n')
     }
 
     case 'list_notes': {

@@ -163,9 +163,10 @@ describe('the to-dos, with nib closed', () => {
     })
 
     const key = await connector()
-    expect((await json(key, 'list_tasks', { space: 'Club' })).tasks).toMatchObject([
-      { text: 'Meet' },
-    ])
+    // Somebody else's words, so inside the mark (docs/agent-native.md 9.6).
+    const listed = await tool(key, 'list_tasks', { space: 'Club' })
+    const inside = /^<untrusted source="shared space Club">\n(.*)\n<\/untrusted>$/s.exec(listed)
+    expect(JSON.parse(inside?.[1] ?? 'null').tasks).toMatchObject([{ text: 'Meet' }])
     expect(await tool(key, 'add_task', { space: 'Club', text: 'Sneak' })).toContain(
       'shared with you to read',
     )
