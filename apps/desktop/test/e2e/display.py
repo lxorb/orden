@@ -150,7 +150,9 @@ def upcoming_board(page: Page, days: dict[str, str]) -> None:
         page.mouse.move(water["x"] + 20, water["y"] + 10)
         page.mouse.down()
         page.mouse.move(water["x"] + 40, water["y"] + 20, steps=4)
-        page.mouse.move(third["x"] + 60, third["y"] + 120, steps=10)
+        # Into the column's head end: an empty column is only as tall as its head and
+        # its add row, so a fixed depth below its top can miss it.
+        page.mouse.move(third["x"] + 60, third["y"] + min(60, third["height"] / 2), steps=10)
         page.mouse.up()
         wait_for(
             page,
