@@ -676,13 +676,22 @@ class Workspace {
    *  not the editor: that one only catches up when the typing pauses, which is
    *  as often as an outline needs to move. Lazy as every derived is, so a
    *  closed outline panel costs nothing at all. */
-  readonly headings = $derived.by(() => scanHeadings(this.panelTab?.doc ?? ''))
+  readonly headings = $derived.by(() => scanHeadings(this.markdownOfPanel))
 
   /** The note's footnotes, under its headings in the outline panel: both are the
    *  shape of the note being read rather than anything about the space around it,
    *  and both jump within it. Lazy for the same reason the headings are, and it
    *  gives up on the first pass over a note with no `[^` in it at all. */
-  readonly footnotes = $derived.by(() => scanFootnotes(this.panelTab?.doc ?? ''))
+  readonly footnotes = $derived.by(() => scanFootnotes(this.markdownOfPanel))
+
+  /** The text of the panel's note where it is markdown, which is all the outline reads.
+   *  A canvas or a page note is JSON, whose every edit had its whole file walked for
+   *  headings it cannot have: a tenth of a second per nudge, on a plane of eight
+   *  thousand cards (#535). */
+  private get markdownOfPanel(): string {
+    const tab = this.panelTab
+    return tab?.kind === 'note' ? tab.doc : ''
+  }
 
   /** Every file in the space, flattened: the notes, and the PDFs and canvases
    *  beside them, which are the three things a tab can hold. What quick open
