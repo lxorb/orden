@@ -16,7 +16,7 @@
 
 import { plainWords } from './escapes'
 import { taskAt } from './tasks'
-import { codeAndWords, codeSpans, inCode, opensTag, TAG_NAME } from './tags'
+import { codeAndWords, codeSpans, inCode, opensTag, opensTagAt, tagAt } from './tags'
 
 /** p1 to p4 as Todoist numbers them, then the Tasks plugin's two low ones: sorting
  *  ascending puts the most urgent first and the low ones after the ones with none. */
@@ -360,8 +360,8 @@ function fieldAtEnd(head: string): Found | null {
 /** Where the next field could open in `text`, at or after `at`. */
 const OPENS = /[[(]/g
 
-/** A tag anywhere, nib's grammar (tags.ts). */
-const TAG = new RegExp(`#(${TAG_NAME})`, 'gu')
+/** A hash, which may open a tag; see `tagAt` in tags.ts. */
+const HASH = /#/g
 
 /** The Tasks plugin gives up after this many fields; so does this. */
 const MOST_FIELDS = 40
@@ -717,11 +717,9 @@ function inlineTokens(
 export function tagsIn(text: string): string[] {
   const out: string[] = []
   const code = codeSpans(text)
-  for (const found of text.matchAll(TAG)) {
-    const before = text.slice(Math.max(0, found.index - 2), found.index)
-    if (!opensTag(before) || inCode(code, found.index)) continue
-    const name = found[1] ?? ''
-    if (!out.includes(name)) out.push(name)
+  for (const found of text.matchAll(HASH)) {
+    const name = inCode(code, found.index) ? null : tagAt(text, found.index)
+    if (name !== null && !out.includes(name)) out.push(name)
   }
   return out
 }
@@ -795,7 +793,8 @@ function taskWordsAfter(words: string, before: string): string {
   for (let at = 0; at < words.length; at++) {
     const char = words.charAt(at)
     const prior = at > 0 ? words.charAt(at - 1) : before
-    if (char === '#' && opensTag(prior) && prior !== '\\') out += '\\#'
+    const opens = () => (at > 0 ? opensTagAt(words, at) : opensTag(before))
+    if (char === '#' && prior !== '\\' && opens()) out += '\\#'
     else if (char === ':' && prior === ':' && endsKey(words, at - 1)) out += '\\:'
     else out += char
   }

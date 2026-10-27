@@ -97,7 +97,7 @@ describe('the tags in a note', () => {
       ['<https://x.test/#a> <https://x.test/?a=#b>', []],
       ['plain a|#b text', []],
       ['code-ish a=#b prose and color=#ff8800', []],
-      ['snake_#x 3*#y ~#z', []],
+      ['snake_#x 3*#y a~#z', []],
       ['[[Note|#alias]]', []],
       ['[s](#setup) ![i](#img) and [s](#open', []],
       ['**#a** ~~#d~~ ==#e== x **#f**', ['#a', '#d', '#e', '#f']],

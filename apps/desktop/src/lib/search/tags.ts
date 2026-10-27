@@ -20,7 +20,7 @@
 
 import { CodeBlocks, WORDS } from '@nib/markdown/fences'
 import { type FrontMatterBlock, frontMatterBlock } from '@nib/markdown/front-matter'
-import { codeSpans, inCode, opensTag, TAG_NAME } from '@nib/markdown/tags'
+import { codeSpans, inCode, TAG_NAME, tagAt } from '@nib/markdown/tags'
 
 /** Where one use of a tag sits: the offsets of its name, the hash not included,
  *  so a rename splices a new path in and leaves whatever hung off the old one. */
@@ -34,8 +34,8 @@ export interface TagUse {
 /** What a tag's name may hold: the grammar `@nib/markdown` reads tags with. */
 const NAME = new RegExp(`^${TAG_NAME}$`, 'u')
 
-/** A hash and a name; whether the hash opens a tag is `opensTag`'s to say. */
-const TAG = new RegExp(`#(${TAG_NAME})`, 'gu')
+/** A hash; whether it opens a tag, and how long its name is, is `tagAt`'s to say. */
+const HASH = /#/g
 
 /** `tags:` or `tag:` at the left margin of the front matter, and what follows
  *  it on the line. Both spellings, because Obsidian takes both. */
@@ -115,28 +115,47 @@ export function tagCuts(body: string, path: string): { from: number; to: number 
  *  eaten is whichever side there is one on, the following comma first, because
  *  that is the one a list would otherwise be left holding. */
 function widened(body: string, use: TagUse): { from: number; to: number } {
-  const from = body.charAt(use.from - 1) === '#' ? use.from - 1 : use.from
+  const hash = body.charAt(use.from - 1) === '#' ? use.from - 1 : use.from
+  // The marks round a tag they are the whole of go with it: `~~#todo~~` taken
+  // away is nothing, not a `~~~~` that would open a fence.
+  const marks = pairOf(body, hash, use.to)
+  const from = hash - marks
+  const to = use.to + marks
   const line = body.lastIndexOf('\n', from - 1) + 1
-  const end = body.indexOf('\n', use.to)
+  const end = body.indexOf('\n', to)
   const after = end === -1 ? body.length : end
 
   // A list item that held nothing but this tag is a line with nothing left to
   // say, so the line goes with it.
-  if (/^\s*-\s*$/.test(body.slice(line, from)) && body.slice(use.to, after).trim() === '') {
+  if (/^\s*-\s*$/.test(body.slice(line, from)) && body.slice(to, after).trim() === '') {
     return { from: line, to: end === -1 ? body.length : end + 1 }
   }
 
   // The comma this tag was in front of, and the space after it.
-  if (body.charAt(use.to) === ',') {
-    return { from, to: use.to + 1 + spaces(body, use.to + 1, after) }
+  if (body.charAt(to) === ',') {
+    return { from, to: to + 1 + spaces(body, to + 1, after) }
   }
 
   // Or the separator behind it: the space, and the comma the space followed.
   const before = /(,?[ \t]+|,)$/.exec(body.slice(line, from))
-  if (before) return { from: from - before[0].length, to: use.to }
+  if (before) return { from: from - before[0].length, to }
 
   // Or, for a tag that opened its line, the space in front of what follows it.
-  return { from, to: use.to + spaces(body, use.to, after) }
+  return { from, to: to + spaces(body, to, after) }
+}
+
+/** How many marks of emphasis, strike or highlight stand on both sides of
+ *  `from`..`to`, the same ones mirrored, or 0. */
+function pairOf(body: string, from: number, to: number): number {
+  let count = 0
+  while (
+    from - count > 0 &&
+    '*_~='.includes(body.charAt(from - count - 1)) &&
+    body.charAt(from - count - 1) === body.charAt(to + count)
+  ) {
+    count++
+  }
+  return count
 }
 
 /** How many spaces or tabs run from `at`, without leaving the line. */
@@ -222,11 +241,11 @@ function readInline(body: string, front: FrontMatterBlock | null, out: TagUse[])
     if (!block.includes('#')) continue
 
     const code = codeSpans(block)
-    for (const found of block.matchAll(TAG)) {
-      const [, name] = found
+    for (const found of block.matchAll(HASH)) {
       const at = found.index
-      if (name === undefined || inCode(code, at)) continue
-      if (!opensTag(block.slice(Math.max(0, at - 2), at))) continue
+      if (inCode(code, at)) continue
+      const name = tagAt(block, at)
+      if (name === null) continue
 
       // Past the hash, so the span is the name.
       const start = from + at + 1

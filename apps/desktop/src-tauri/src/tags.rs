@@ -166,14 +166,17 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
         while let Some(hash) = block[at..].find('#') {
             let start = at + hash;
 
-            let opens = opens_tag(&block[..start])
-                && !code.iter().any(|&(from, to)| (from..to).contains(&start));
+            let before = &block[..start];
+            let opens =
+                opens_tag(before) && !code.iter().any(|&(from, to)| (from..to).contains(&start));
 
             // The name is what a tag may hold, which rules out `#1`.
             let rest = &block[start + 1..];
-            let name = rest
-                .find(|one: char| !name_char(one))
-                .map_or(rest, |end| &rest[..end]);
+            let name = closed_by(
+                rest.find(|one: char| !name_char(one))
+                    .map_or(rest, |end| &rest[..end]),
+                before.len() - before.trim_end_matches('_').len(),
+            );
 
             if opens && named(name) {
                 found.push(block[start..start + 1 + name.len()].to_string());
@@ -184,15 +187,51 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
     }
 }
 
-/// Whether a hash after `before` opens a tag: after nothing, a blank, a `(`, or
-/// what opens a run the page reads afresh, which is emphasis, strike, highlight
-/// and a cell. Not after `](`, where a link goes to a heading. The twin of
-/// `opensTag` in @nib/markdown's tags.ts.
+/// What emphasis, strike and highlight are written with.
+const MARKS: &[char] = &['*', '_', '~', '='];
+
+/// Whether a hash after `before` opens a tag. The twin of `opensTagAt` in
+/// @nib/markdown's tags.ts, which the renderer and the editor read tags by too.
+///
+/// It opens a word: after nothing, a blank or a `(`, though not the `](` of a
+/// link, where `#heading` is where the link goes. A run of marks in between is
+/// the start of emphasis, strike or highlight, so `**#tag**` is one; but marks in
+/// the middle of a word open nothing, so `a=#b` and `?q=#x` are words. A `|`
+/// opens one in a table row, a line that starts with one.
 fn opens_tag(before: &str) -> bool {
-    before.chars().next_back().is_none_or(|one| {
-        (one.is_whitespace() || matches!(one, '(' | '*' | '_' | '~' | '=' | '|'))
-            && !before.ends_with("](")
-    })
+    let bare = before.trim_end_matches(MARKS);
+    let Some(one) = bare.chars().next_back() else {
+        return true;
+    };
+    let ahead = &bare[..bare.len() - one.len_utf8()];
+    match one {
+        '(' => !ahead.ends_with(']'),
+        '|' => {
+            let line = ahead.rfind('\n').map_or(ahead, |at| &ahead[at + 1..]);
+            line.trim_start().is_empty() || line.trim_start().starts_with('|')
+        }
+        _ => one.is_whitespace(),
+    }
+}
+
+/// A name opened by `_` emphasis ends where the emphasis does: `_#urgent_` is the
+/// tag `urgent`, as the page draws it. Cut short to nothing a tag may be called,
+/// it is no tag. The twin of `closedBy` in tags.ts.
+fn closed_by(name: &str, underscores: usize) -> &str {
+    if underscores == 0 || name.len() < underscores {
+        return name;
+    }
+    // Checked as bytes first, so the cut lands between characters.
+    let at = name.len() - underscores;
+    if !name.as_bytes()[at..].iter().all(|&one| one == b'_') {
+        return name;
+    }
+    let cut = &name[..at];
+    if named(cut) {
+        cut
+    } else {
+        ""
+    }
 }
 
 /// The blocks of words in a note: a paragraph's lines, a list item's or a
@@ -543,7 +582,7 @@ mod tests {
             ("<https://x.test/#a> <https://x.test/?a=#b>", &[]),
             ("plain a|#b text", &[]),
             ("code-ish a=#b prose and color=#ff8800", &[]),
-            ("snake_#x 3*#y ~#z", &[]),
+            ("snake_#x 3*#y a~#z", &[]),
             ("[[Note|#alias]]", &[]),
             ("[s](#setup) ![i](#img) and [s](#open", &[]),
             ("**#a** ~~#d~~ ==#e== x **#f**", &["#a", "#d", "#e", "#f"]),
