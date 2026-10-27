@@ -1017,6 +1017,66 @@ describe('a note renamed on this machine', () => {
     expect(mirror.notes['One.md']?.id).not.toBe(id)
   })
 
+  test('and one renamed back outside the app before the account heard is still that note', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    const writing = fake.api.writeNote
+    fake.api.writeNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    try {
+      renameOnDisk('One.md', 'Meeting.md')
+      await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Meeting.md`)
+    } finally {
+      fake.api.writeNote = writing
+    }
+    // Back under its old name by another program, which nothing here hears of.
+    renameOnDisk('Meeting.md', 'One.md')
+    fake.calls.length = 0
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls.filter((one) => /^(deleteNote|createNote|writeNote)/.test(one))).toEqual([])
+    expect(fake.remote.get(id)).toMatchObject({ path: 'One.md', content: HERE, deleted: false })
+    expect(mirror.notes['One.md']?.id).toBe(id)
+    expect(mirror.untold).toBeUndefined()
+  })
+
+  test('and a new note at the name, the renamed note deleted, is let go of when the account keeps failing the delete', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    const writing = fake.api.writeNote
+    fake.api.writeNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    try {
+      renameOnDisk('One.md', 'Meeting.md')
+      await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Meeting.md`)
+      fake.disk.set(`${ROOT}/One.md`, '# Ideas\nnew\n')
+      fake.disk.delete(`${ROOT}/Meeting.md`)
+    } finally {
+      fake.api.writeNote = writing
+    }
+
+    fake.refusing.delete = new ApiError(500, 'boom', {})
+    {
+      using time = clock()
+      await pull(mirror, 'token', NOBODY)
+      await push(mirror, 'token', NOBODY)
+      expect(mirror.untold?.[id]?.failing?.times).toBe(1)
+      for (let one = 0; one < 30 && mirror.untold; one++) {
+        time.on(5 * 60_000)
+        await pull(mirror, 'token', NOBODY)
+        await push(mirror, 'token', NOBODY)
+      }
+    }
+    expect(mirror.untold).toBeUndefined()
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    // Nothing anybody wrote is lost: the new note's words are on the disk and on
+    // the account, and the renamed note's words with them.
+    expect(fake.disk.get(`${ROOT}/One.md`)).toBe('# Ideas\nnew\n')
+    const alive = [...fake.remote.values()].filter((one) => !one.deleted)
+    expect(alive.map((one) => one.content)).toContain('# Ideas\nnew\n')
+    expect([...fake.remote.values()].map((one) => one.content)).toContain(HERE)
+  })
+
   test('and a new note at the name, the renamed note moved to another space before the account heard, is not that note', async () => {
     const { mirror, id } = await paired('One.md', HERE)
     const writing = fake.api.writeNote
