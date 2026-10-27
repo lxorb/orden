@@ -159,8 +159,11 @@ export class CanvasStore implements PlaneSurface {
     const kept = this.restored
     if (kept) this.tab.camera = { x: kept.x, y: kept.y, scale: kept.scale }
 
-    drawn.add(new WeakRef(this))
+    drawn.add(this.mine)
   }
+
+  /** How `drawn` holds this surface, so it can let go of it; see `gone`. */
+  private readonly mine = new WeakRef(this)
 
   /** The plane drawn for a document in one of these tabs, while there is one: what an
    *  agent's edit of a canvas goes through, so that it is one more edit on the surface
@@ -295,6 +298,25 @@ export class CanvasStore implements PlaneSurface {
     this.soon()
   }
 
+  /** The plane with the paths on it pointed somewhere else, by a rename or a move:
+   *  one edit like any other, so what it changed is stamped as changed now and goes
+   *  into the room, and written into the document at once, since the rewrite writes
+   *  the file in the same breath. Answers whether there was anything to change. Given
+   *  through the plane rather than its file, so a card dragged and not written yet
+   *  keeps its place, and a plane that keeps no times still takes the new paths; see
+   *  `retargetIn` in link-index.svelte.ts. */
+  relinked(change: (canvas: Canvas) => Canvas): boolean {
+    if (this.readOnly) return false
+    // Up to the document first, so what arrived under the plane is never written over.
+    this.follow()
+    const next = change(this.canvas)
+    if (next === this.canvas) return false
+
+    this.edit(next)
+    this.writing.flush()
+    return true
+  }
+
   undo() {
     // In a room, taking something back is the room's own history: what this device
     // drew and never what somebody else did. See rooms/plane-bind.ts.
@@ -370,6 +392,16 @@ export class CanvasStore implements PlaneSurface {
    *  itself again. */
   private stackChanged() {
     this.local = { undo: this.history.canUndo, redo: this.history.canRedo }
+  }
+
+  /** The surface taken down: a tab closed, or sent to the back of its pane. What it
+   *  owes is written, and it is no longer the plane drawn for its document, which it
+   *  stops following. Kept in `drawn`, a rename or an agent's edit went through it
+   *  while its tab was in the back, onto a plane that had missed what arrived since,
+   *  and wrote that over the document. */
+  gone() {
+    this.part()
+    drawn.delete(this.mine)
   }
 
   /** Anything owing, written now: the room is being left, or the last tab on this

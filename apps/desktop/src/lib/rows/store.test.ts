@@ -173,6 +173,33 @@ describe('the rows of every space', () => {
     expect(store.of()[0]?.file.mtime).toBe(42)
   })
 
+  test('a note written where it is going before its move is told keeps those rows', async () => {
+    const { store, disk, settled } = rig(
+      { [`${WORK}/A/Plan.md`]: '- [ ] Read [s](Spec.md)\n' },
+      WORK,
+    )
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+
+    // A link rewrite writes the moved note at its new path, and says so, before the
+    // move is told; see `retargetIn` in link-index.svelte.ts.
+    const after = '- [ ] Read [s](../A/Spec.md)\n'
+    disk.delete(`${WORK}/A/Plan.md`)
+    disk.set(`${WORK}/B/Plan.md`, after)
+    store.saved(`${WORK}/B/Plan.md`, after)
+    void store.follow({
+      op: 'moved',
+      from: `${WORK}/A/Plan.md`,
+      to: `${WORK}/B/Plan.md`,
+      kind: 'file',
+      root: WORK,
+    })
+
+    expect(tasks(store.of())).toEqual(['Work:B/Plan.md:Read [s](../A/Spec.md)'])
+    // Made when the note was, not when the rewrite wrote it.
+    expect(store.of().map((row) => row.file.ctime)).toEqual([1, 1])
+  })
+
   test('a note made, moved into a folder and removed takes its rows each way', async () => {
     const { store, disk, settled } = rig({}, WORK)
     store.spacesAre([{ root: WORK, name: 'Work' }])

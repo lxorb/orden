@@ -307,7 +307,12 @@ export class RowsStore {
 
       const rest = within(at, path, was.root) ?? ''
       const moved = rest ? (there ? `${there}/${rest}` : rest) : there
-      this.edit(now, pathKey(moved, now.root), () => movedRows(rows, moved, now.name))
+      // Rows already where it went are a save since the rename, newer than what moved:
+      // a link rewrite is told before the move (B498). A case-only rename's own key
+      // was emptied just above.
+      this.edit(now, pathKey(moved, now.root), (saved) =>
+        saved?.length ? bornWhen(saved, rows) : movedRows(rows, moved, now.name),
+      )
     }
     return true
   }
@@ -420,4 +425,13 @@ function readOf(note: ScannedNote): NoteRead {
     tags: note.tags,
     links: note.links,
   }
+}
+
+/** Rows from a save, made when the rows it had were; see `moved`. */
+function bornWhen(saved: readonly Row[], had: readonly Row[]): Row[] {
+  const first = saved[0]
+  const ctime = had[0]?.file.ctime
+  if (!first || ctime === undefined || first.file.ctime === ctime) return [...saved]
+  const file = { ...first.file, ctime }
+  return saved.map((row) => ({ ...row, file }))
 }

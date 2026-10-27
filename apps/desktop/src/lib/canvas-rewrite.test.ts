@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { rewriteCanvasLinks } from './canvas-rewrite'
+import { retargetCanvas, rewriteCanvasLinks } from './canvas-rewrite'
 
 /** A note renamed, and a canvas another app wrote that links it (B416). The rename
  *  changes the paths that named the note and nothing else: the canvas was read as
@@ -74,5 +74,32 @@ describe('a canvas linking a renamed note', () => {
 
   test('leaves a file that is not JSON alone', () => {
     expect(rewriteCanvasLinks('{"nodes": [', 'Board.canvas', move, namesOld)).toBeNull()
+  })
+})
+
+describe('a plane that keeps times, linking a renamed note', () => {
+  const plane = (at: string) =>
+    `{"nodes":[{"id":"a","type":"file","file":"Old.md","x":0,"y":0,"width":1,"height":1},` +
+    `{"id":"b","type":"text","text":"see [[Old]]","x":0,"y":0,"width":1,"height":1},` +
+    `{"id":"c","type":"text","text":"hi","x":0,"y":0,"width":1,"height":1}],` +
+    `"edges":[],"nib":{"version":1,"at":${at}}}`
+  const times = (text: string | null) =>
+    (JSON.parse(text ?? '{}') as { nib: { at: Record<string, number> } }).nib.at
+  const rewrite = (text: string) =>
+    retargetCanvas(
+      text,
+      'Board.canvas',
+      (file) => (file === 'Old.md' ? 'New.md' : null),
+      (link) => (namesOld(link) ? 'New.md' : null),
+      500,
+    )
+
+  test('stamps the cards it changed as changed now, and no other', () => {
+    expect(times(rewrite(plane('{"a": 1, "b": 2, "c": 3}')))).toEqual({ a: 500, b: 500, c: 3 })
+  })
+
+  test('gives a card that had no time one', () => {
+    expect(times(rewrite(plane('{"c": 3}')))).toEqual({ a: 500, b: 500, c: 3 })
+    expect(times(rewrite(plane('{}')))).toEqual({ a: 500, b: 500 })
   })
 })

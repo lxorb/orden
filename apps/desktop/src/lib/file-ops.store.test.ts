@@ -666,3 +666,308 @@ describe('a folder moved into another, with a note open inside it', () => {
     expect(note?.text).toBe(after)
   })
 })
+
+/** The space read the way these tests read one: this disk answers no scan, so the
+ *  index hears of every file it holds the way it hears of a file written. */
+async function indexed() {
+  await workspace.loadTree()
+  void startup.shown()
+  await links.build(ROOT)
+  for (const [path, words] of disk.current?.files ?? []) links.noteSaved(path, words)
+}
+
+describe('a canvas showing a file that moves', () => {
+  const card = { x: 0, y: 0, width: 250, height: 60 }
+  const board = (file: string) =>
+    JSON.stringify({ nodes: [{ id: 'f', type: 'file', file, ...card }], edges: [] })
+  const cards = () =>
+    (
+      JSON.parse(disk.current?.files.get(`${ROOT}/Board.canvas`) ?? '{}') as {
+        nodes: { file?: string }[]
+      }
+    ).nodes.map((node) => node.file)
+  const shown = async (path: string) =>
+    vi.waitFor(() => expect(links.backlinks(path).map((one) => one.path)).toContain('Board.canvas'))
+
+  test('follows a note moved from the top of the space into a folder', async () => {
+    disk.current?.files.set(`${ROOT}/Board.canvas`, board('Plan.md'))
+    await indexed()
+    await shown(`${ROOT}/Plan.md`)
+
+    await workspace.move(`${ROOT}/Plan.md`, `${ROOT}/Work`)
+    await workspace.writesSettled()
+
+    // A card is a path from the top of the space, and `Plan.md` was taken for a
+    // wikilink that still reaches `Work/Plan.md` by its name.
+    expect(cards()).toEqual(['Work/Plan.md'])
+  })
+
+  test('follows a folder moved into another folder', async () => {
+    disk.current?.files.set(`${ROOT}/Board.canvas`, board('Work/Notes.md'))
+    disk.current?.folders.add(`${ROOT}/Archive`)
+    await indexed()
+    await shown(`${ROOT}/Work/Notes.md`)
+
+    await workspace.move(`${ROOT}/Work`, `${ROOT}/Archive`)
+    await workspace.writesSettled()
+
+    expect(cards()).toEqual(['Archive/Work/Notes.md'])
+  })
+
+  test('follows a picture in a folder moved into another folder', async () => {
+    disk.current?.files.set(`${ROOT}/Work/shot.png`, '')
+    disk.current?.unreadable.add(`${ROOT}/Work/shot.png`)
+    disk.current?.files.set(`${ROOT}/Board.canvas`, board('Work/shot.png'))
+    disk.current?.folders.add(`${ROOT}/Archive`)
+    await indexed()
+
+    await workspace.move(`${ROOT}/Work`, `${ROOT}/Archive`)
+    await workspace.writesSettled()
+
+    expect(cards()).toEqual(['Archive/Work/shot.png'])
+  })
+})
+
+describe('a note renamed while a canvas showing it is open and drawn on', () => {
+  test('keeps the new path on the card, on screen and in the file', async () => {
+    const { CanvasStore } = await import('./canvas/store.svelte')
+    const text = { id: 'a', type: 'text', text: 'a', x: 0, y: 0, width: 250, height: 60 }
+    const file = { id: 'f', type: 'file', file: 'Plan.md', x: 0, y: 200, width: 250, height: 60 }
+    disk.current?.files.set(
+      `${ROOT}/Board.canvas`,
+      JSON.stringify({ nodes: [text, file], edges: [] }),
+    )
+    await indexed()
+    await vi.waitFor(() =>
+      expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'),
+    )
+    await workspace.open(`${ROOT}/Board.canvas`)
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    const store = new CanvasStore(tab)
+
+    // A card moved: a step to undo, so what arrives under the plane is merged.
+    store.edit({
+      ...store.canvas,
+      nodes: store.canvas.nodes.map((one) => (one.id === 'a' ? { ...one, x: 40 } : one)),
+    })
+    store.part()
+    await workspace.writeNow()
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
+    store.follow()
+    store.part()
+    await workspace.writeNow()
+    await workspace.writesSettled()
+
+    // The rewrite kept the card's old time, the merge took the two for one edit and
+    // broke the tie by the words, and `Plan.md` sorts before `Road.md`.
+    const card = (nodes: readonly { id: string }[]) =>
+      (nodes.find((one) => one.id === 'f') as { file?: string } | undefined)?.file
+    const saved = JSON.parse(disk.current?.files.get(`${ROOT}/Board.canvas`) ?? '{}') as {
+      nodes: { id: string }[]
+    }
+    expect([card(store.canvas.nodes), card(saved.nodes)]).toEqual(['Road.md', 'Road.md'])
+    expect(store.canvas.nodes.find((one) => one.id === 'a')?.x).toBe(40)
+  })
+})
+
+describe('a note renamed while a canvas showing it is drawn on and not yet written', () => {
+  const card = { x: 0, y: 0, width: 250, height: 60 }
+  async function drawn(plane: object) {
+    const { CanvasStore } = await import('./canvas/store.svelte')
+    disk.current?.files.set(`${ROOT}/Board.canvas`, JSON.stringify(plane))
+    await indexed()
+    await vi.waitFor(() =>
+      expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'),
+    )
+    await workspace.open(`${ROOT}/Board.canvas`)
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    return new CanvasStore(tab)
+  }
+  const settled = async (store: { follow(): boolean; part(): void }) => {
+    store.follow()
+    store.part()
+    await workspace.writeNow()
+    await workspace.writesSettled()
+  }
+  const saved = () =>
+    (
+      JSON.parse(disk.current?.files.get(`${ROOT}/Board.canvas`) ?? '{}') as {
+        nodes: { id: string; file?: string; x: number }[]
+      }
+    ).nodes
+
+  test('keeps the card where it was dragged, with its new path', async () => {
+    const store = await drawn({
+      nodes: [{ id: 'f', type: 'file', file: 'Plan.md', ...card }],
+      edges: [],
+      nib: { version: 1, at: { f: 1 } },
+    })
+    store.edit({
+      ...store.canvas,
+      nodes: store.canvas.nodes.map((one) => (one.id === 'f' ? { ...one, x: 40 } : one)),
+    })
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
+    await settled(store)
+
+    // Merged from the file, the card took the rewrite whole and its drag was lost.
+    const shown = store.canvas.nodes.find((one) => one.id === 'f') as { file?: string; x: number }
+    expect([shown.file, shown.x]).toEqual(['Road.md', 40])
+    expect(saved().map((one) => [one.file, one.x])).toEqual([['Road.md', 40]])
+  })
+
+  test('and a plane another app wrote, with no times in it, takes the new path', async () => {
+    const store = await drawn({
+      nodes: [
+        { id: 'a', type: 'text', text: 'a', ...card },
+        { id: 'f', type: 'file', file: 'Plan.md', ...card },
+      ],
+      edges: [],
+    })
+    store.edit({
+      ...store.canvas,
+      nodes: store.canvas.nodes.map((one) => (one.id === 'a' ? { ...one, x: 40 } : one)),
+    })
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
+    await settled(store)
+
+    // Both sides had no time for the card, and the tie went to `Plan.md`.
+    const shown = store.canvas.nodes.find((one) => one.id === 'f') as { file?: string }
+    expect(shown.file).toBe('Road.md')
+    expect(saved().map((one) => one.file)).toEqual([undefined, 'Road.md'])
+  })
+})
+
+describe('a page note at the top of the space, its paper moved', () => {
+  const page = (file: string) =>
+    JSON.stringify({
+      nodes: [{ id: 'f', type: 'file', file, x: 0, y: 0, width: 250, height: 60 }],
+      edges: [],
+    })
+  const pages = () =>
+    (
+      JSON.parse(disk.current?.files.get(`${ROOT}/Doc.pages`) ?? '{}') as {
+        nodes: { file?: string }[]
+      }
+    ).nodes.map((node) => node.file)
+
+  test('follows a paper moved into a folder', async () => {
+    disk.current?.files.set(`${ROOT}/Ref.pdf`, '')
+    disk.current?.unreadable.add(`${ROOT}/Ref.pdf`)
+    disk.current?.files.set(`${ROOT}/Doc.pages`, page('Ref.pdf'))
+    disk.current?.folders.add(`${ROOT}/Archive`)
+    await indexed()
+
+    await workspace.move(`${ROOT}/Ref.pdf`, `${ROOT}/Archive`)
+    await workspace.writesSettled()
+
+    expect(pages()).toEqual(['Archive/Ref.pdf'])
+  })
+
+  test('and a folder holding it moved into another', async () => {
+    disk.current?.files.set(`${ROOT}/Work/Ref.pdf`, '')
+    disk.current?.unreadable.add(`${ROOT}/Work/Ref.pdf`)
+    disk.current?.files.set(`${ROOT}/Doc.pages`, page('Work/Ref.pdf'))
+    disk.current?.folders.add(`${ROOT}/Archive`)
+    await indexed()
+
+    await workspace.move(`${ROOT}/Work`, `${ROOT}/Archive`)
+    await workspace.writesSettled()
+
+    expect(pages()).toEqual(['Archive/Work/Ref.pdf'])
+  })
+})
+
+describe('a note renamed while a canvas showing it is open in the back of its pane', () => {
+  const card = { x: 0, y: 0, width: 250, height: 60 }
+  const saved = () =>
+    (
+      JSON.parse(disk.current?.files.get(`${ROOT}/Board.canvas`) ?? '{}') as {
+        nodes: { id: string; file?: string; x: number }[]
+      }
+    ).nodes
+  async function opened(plane: object) {
+    const { CanvasStore } = await import('./canvas/store.svelte')
+    disk.current?.files.set(`${ROOT}/Board.canvas`, JSON.stringify(plane))
+    await indexed()
+    await vi.waitFor(() =>
+      expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'),
+    )
+    await workspace.open(`${ROOT}/Board.canvas`)
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    return { CanvasStore, tab }
+  }
+
+  test('keeps what reached the document since, and lets go of the surface', async () => {
+    const { CanvasStore, tab } = await opened({
+      nodes: [{ id: 'f', type: 'file', file: 'Plan.md', ...card }],
+      edges: [],
+      nib: { version: 1, at: { f: 1 } },
+    })
+    const back = new CanvasStore(tab)
+    // Taken down with the tab still open; the plane stopped following the document.
+    back.part()
+    // Another device's card arrives, and the open document takes it.
+    tab.note.replace(
+      JSON.stringify({
+        nodes: [
+          { id: 'f', type: 'file', file: 'Plan.md', ...card },
+          { id: 'n', type: 'text', text: 'theirs', ...card },
+        ],
+        edges: [],
+        nib: { version: 1, at: { f: 1, n: 5 } },
+      }),
+      false,
+    )
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
+    // Written by the rewrite, so not owed again by the document.
+    expect(tab.note.dirty).toBe(false)
+    await workspace.writeNow()
+    await workspace.writesSettled()
+
+    // The rename went through the plane as it was when the tab went back, and wrote
+    // it over the document: the other device's card was gone, here and for them.
+    expect(saved().map((one) => [one.id, one.file])).toEqual([
+      ['f', 'Road.md'],
+      ['n', undefined],
+    ])
+
+    back.gone()
+    expect(CanvasStore.drawing(tab.note, workspace.tabs)).toBeNull()
+  })
+
+  test('and the surface made when the tab comes back is the one drawn on', async () => {
+    const { CanvasStore, tab } = await opened({
+      nodes: [
+        { id: 'f', type: 'file', file: 'Plan.md', ...card },
+        { id: 'g', type: 'text', text: 'g', ...card },
+      ],
+      edges: [],
+      nib: { version: 1, at: { f: 1, g: 1 } },
+    })
+    new CanvasStore(tab).gone()
+    const now = new CanvasStore(tab)
+    expect(CanvasStore.drawing(tab.note, workspace.tabs)).toBe(now)
+    now.edit({
+      ...now.canvas,
+      nodes: now.canvas.nodes.map((one) => (one.id === 'g' ? { ...one, x: 40 } : one)),
+    })
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
+    now.follow()
+    now.part()
+    await workspace.writeNow()
+    await workspace.writesSettled()
+
+    expect(saved().map((one) => [one.id, one.file, one.x])).toEqual([
+      ['f', 'Road.md', 0],
+      ['g', undefined, 40],
+    ])
+  })
+})
