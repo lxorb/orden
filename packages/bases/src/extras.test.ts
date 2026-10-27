@@ -69,6 +69,51 @@ describe('unique ids', () => {
     expect(idRepairs(seenOn('B'), 'id', 'BUG', false)).toEqual([])
   })
 
+  test('a duplicate is renumbered, not the note it was copied from', () => {
+    const repairs = idRepairs(
+      [
+        noteRow('Bugs/Crash.md', 'id: BUG-45', { ctime: 1 }),
+        noteRow('Bugs/Crash copy.md', 'id: BUG-45', { ctime: 9 }),
+        noteRow('Bugs/Crash 2.md', 'id: BUG-45', { ctime: 9 }),
+      ],
+      'id',
+      'BUG',
+      false,
+    )
+    expect(repairs.map((one) => [one.row.path, one.id])).toEqual([
+      ['Bugs/Crash 2.md', 'BUG-46'],
+      ['Bugs/Crash copy.md', 'BUG-47'],
+    ])
+  })
+
+  test('devices that spell a name differently on disk still pick the same twin', () => {
+    // A `:` is `_` on a Mac and on Windows, and a Mac may hold a name decomposed.
+    const spelled = {
+      linux: { X: 'Bugs/Meeting: Q3.md', Y: 'Bugs/MeetingA.md', Z: 'Bugs/\u00dcbel.md' },
+      mac: { X: 'Bugs/Meeting_ Q3.md', Y: 'Bugs/MeetingA.md', Z: 'Bugs/U\u0308bel.md' },
+    }
+    let ids: Record<string, string> = { X: 'BUG-45', Y: 'BUG-45', Z: 'BUG-45' }
+    const seenOn = (device: 'linux' | 'mac') =>
+      (['X', 'Y', 'Z'] as const).map((note) =>
+        noteRow(spelled[device][note], { id: ids[note] ?? '' }, { ctime: 1 }),
+      )
+    const noteOf = (device: 'linux' | 'mac', path: string) =>
+      (['X', 'Y', 'Z'] as const).find((note) => spelled[device][note] === path)
+
+    for (let round = 0; round < 3; round++) {
+      const linux = idRepairs(seenOn('linux'), 'id', 'BUG', false)
+      const mac = idRepairs(seenOn('mac'), 'id', 'BUG', false)
+      const named = (device: 'linux' | 'mac', out: typeof linux) =>
+        out.map((one) => [noteOf(device, one.row.path), one.id])
+      expect(named('linux', linux)).toEqual(named('mac', mac))
+      const next = { ...ids }
+      for (const [note, id] of [...named('linux', linux), ...named('mac', mac)])
+        if (note && id) next[note] = id
+      ids = next
+    }
+    expect(new Set(Object.values(ids)).size).toBe(3)
+  })
+
   test('turned on, every row without one is numbered in the order they were made', () => {
     const rows = [
       noteRow('Bugs/Late.md', '', { ctime: day('2026-05-02') }),

@@ -74,6 +74,7 @@ vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 
 const { heard, heardChange, readHeld, repeatTemplates } = await import('./running')
+const { moving } = await import('./moving')
 
 beforeEach(() => {
   before.length = 0
@@ -124,6 +125,8 @@ describe('a note renamed or moved', () => {
   const was = { kind: 'note', space: 'Shared', path: 'Inbox/old.md', note: { status: 'Doing' } }
   const now = { ...was, path: 'Inbox/a.md' }
   const settle = () => new Promise((done) => setTimeout(done, 150))
+  const change = { root: '/s/Shared', space: 'Shared', path: 'Inbox/a.md' }
+  const from = { space: 'Shared', path: 'Inbox/old.md', rows: [was] as never }
 
   test('is looked at with the rows it had where it was, not as a note just made', async () => {
     plan.folder = '../Private'
@@ -144,32 +147,58 @@ describe('a note renamed or moved', () => {
   test('written where it goes before the move is told, is still a move (B498)', async () => {
     plan.folder = '../Private'
     await readHeld('/s/Shared/Tasks.base')
-    // An edit at the old path, then the link rewrite's save at the new one, then the move.
+    // The link rewrite's save at the new path, then the move with the rows it had.
+    heardChange({ ...change, removed: [], added: [now] as never })
+    heardChange({ ...change, removed: [now] as never, added: [now] as never, from })
+    await settle()
+
+    expect(before).toEqual([[was]])
+  })
+
+  test('an edit at the old path still waiting is what it was before', async () => {
+    plan.folder = '../Private'
+    await readHeld('/s/Shared/Tasks.base')
+    const edited = { ...was, note: { status: 'Done' } }
     heardChange({
-      root: '/s/Shared',
-      space: 'Shared',
+      ...change,
       path: 'Inbox/old.md',
       removed: [was] as never,
-      added: [was] as never,
+      added: [edited] as never,
     })
     heardChange({
-      root: '/s/Shared',
-      space: 'Shared',
-      path: 'Inbox/a.md',
+      ...change,
       removed: [],
       added: [now] as never,
-    })
-    heardChange({
-      root: '/s/Shared',
-      space: 'Shared',
-      path: 'Inbox/a.md',
-      removed: [now] as never,
-      added: [now] as never,
-      from: { space: 'Shared', path: 'Inbox/old.md', rows: [] },
+      from: { ...from, rows: [edited] as never },
     })
     await settle()
 
-    // Looked at once, as it was before the edit at its old path.
     expect(before).toEqual([[was]])
+  })
+
+  test('however long the rewrite takes before the move is told, the move is not an add', async () => {
+    plan.folder = '../Private'
+    await readHeld('/s/Shared/Tasks.base')
+    await moving('/s/Shared/Inbox/a.md', async () => {
+      heardChange({ ...change, removed: [], added: [now] as never })
+      await settle()
+      expect(before).toEqual([])
+      heardChange({ ...change, removed: [now] as never, added: [now] as never, from })
+    })
+    await settle()
+
+    expect(before).toEqual([[was]])
+  })
+
+  test('a save at a path a move never reached is looked at once the move is over', async () => {
+    plan.folder = '../Private'
+    await readHeld('/s/Shared/Tasks.base')
+    await moving('/s/Shared/Inbox/a.md', async () => {
+      heardChange({ ...change, removed: [], added: [now] as never })
+      await settle()
+    }).catch(() => undefined)
+    await settle()
+
+    expect(before).toEqual([[]])
   })
 })

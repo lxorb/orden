@@ -67,6 +67,23 @@ describe('a base at work on a change', () => {
     ])
   })
 
+  test('a note moved into the base is added to it: it gets an id and fires added', () => {
+    const was = noteRow('Inbox/Crash.md', '', { ctime: day('2026-02-01') })
+    const now = noteRow('Bugs/Crash.md', '', { ctime: day('2026-02-01') })
+    expect(plan([was], [now], [older, now]).writes).toEqual([
+      { row: now, change: { note: { status: 'To do', id: 'BUG-2' } } },
+    ])
+    // From another space, it is new to this one's base as well.
+    const away = noteRow('Bugs/Crash.md', '', { ctime: day('2026-02-01') }, 'Elsewhere')
+    expect(plan([away], [now], [older, now]).writes).toHaveLength(1)
+  })
+
+  test('a note renamed or moved within the base is not added again', () => {
+    const was = noteRow('Bugs/Crash.md', 'id: BUG-2\nstatus: Doing')
+    const now = noteRow('Bugs/2026/Crash v2.md', 'id: BUG-2\nstatus: Doing')
+    expect(plan([was], [now], [older, now]).writes).toEqual([])
+  })
+
   test('a note outside the base is none of its business', () => {
     const film = noteRow('Films/Heat.md', 'status: Done')
     expect(plan([noteRow('Films/Heat.md', 'status: Doing')], [film], [film]).writes).toEqual([])
