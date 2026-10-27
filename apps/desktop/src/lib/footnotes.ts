@@ -13,6 +13,8 @@
  *  doing, so the mark is what a press answers; the definition is a second press for
  *  the times you came looking for what it says. */
 
+import { lines } from '@nib/markdown/links'
+
 export interface Footnote {
   /** The label between the brackets, which is what the note shows as a raised
    *  number: `1`, or `why` for somebody who names them. */
@@ -37,14 +39,12 @@ const DEFINITION = /^\[\^([^\]\s]+)\]:[ \t]*(.*)$/
  *  definition is filtered out by where it sits. */
 const REFERENCE = /\[\^([^\]\s]+)\]/g
 
-const FENCE = /^\s*(```|~~~)/
-
 /** Every footnote the note holds, in the order the note refers to them, with
  *  the ones nothing refers to after. A definition written twice is read once,
  *  the way the renderer reads it.
  *
- *  Walked with indexOf rather than split, so a large note is not copied into an
- *  array of lines only to be thrown away again. */
+ *  Code is skipped as the page reads it (`lines` in @nib/markdown/links): a block
+ *  closes on its own mark only, and a fence in a quote or a list item is code too. */
 export function scanFootnotes(text: string): Footnote[] {
   if (!text.includes('[^')) return []
 
@@ -53,42 +53,30 @@ export function scanFootnotes(text: string): Footnote[] {
   const order: string[] = []
   const usedAt = new Map<string, number>()
 
-  let fenced = false
-  let line = 0
-  let from = 0
+  for (const { text: row, line, code } of lines(text)) {
+    if (code) continue
 
-  for (;;) {
-    const end = text.indexOf('\n', from)
-    const row = text.slice(from, end === -1 ? text.length : end)
-
-    if (FENCE.test(row)) fenced = !fenced
-    else if (!fenced) {
-      const defined = DEFINITION.exec(row)
-      if (defined) {
-        const id = defined[1] ?? ''
-        // The first definition wins, which is how the renderer reads a label
-        // written twice.
-        if (!said.has(id)) {
-          said.set(id, (defined[2] ?? '').trim())
-          definedAt.set(id, line)
-        }
-      }
-
-      for (const found of row.matchAll(REFERENCE)) {
-        const id = found[1] ?? ''
-        // The `[^1]` that opens a definition is the definition, not a mention
-        // of it.
-        if (defined && found.index === 0) continue
-        if (!usedAt.has(id)) {
-          usedAt.set(id, line)
-          order.push(id)
-        }
+    const defined = DEFINITION.exec(row)
+    if (defined) {
+      const id = defined[1] ?? ''
+      // The first definition wins, which is how the renderer reads a label
+      // written twice.
+      if (!said.has(id)) {
+        said.set(id, (defined[2] ?? '').trim())
+        definedAt.set(id, line)
       }
     }
 
-    if (end === -1) break
-    from = end + 1
-    line++
+    for (const found of row.matchAll(REFERENCE)) {
+      const id = found[1] ?? ''
+      // The `[^1]` that opens a definition is the definition, not a mention
+      // of it.
+      if (defined && found.index === 0) continue
+      if (!usedAt.has(id)) {
+        usedAt.set(id, line)
+        order.push(id)
+      }
+    }
   }
 
   // Referred to first, in the order the words reach them; then the ones defined

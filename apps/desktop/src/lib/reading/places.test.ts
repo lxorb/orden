@@ -107,3 +107,14 @@ describe('where the headings of a note are', () => {
     expect(headingOffsets('')).toEqual([])
   })
 })
+
+describe('headings past code', () => {
+  test('a tilde line inside a backtick block does not close it', () => {
+    const note = '# A\n```\n~~~\n```\n# B\n'
+    expect(headingOffsets(note)).toEqual([0, note.indexOf('# B')])
+  })
+
+  test('a heading in quoted code is code', () => {
+    expect(headingOffsets('> ```\n> # not\n> ```\n# B\n')).toEqual([20])
+  })
+})

@@ -2,6 +2,7 @@
  *  lines as they read, without the front matter, the marks of markdown or a heading
  *  that only says the note's name again. Pure, so a test reads it. */
 
+import { CodeBlocks, WORDS } from '@nib/markdown/fences'
 import { stripFrontMatter } from '@nib/markdown/front-matter'
 
 /** The lines a card shows. */
@@ -26,13 +27,10 @@ function plain(line: string): string {
 /** The first lines of a note, for a card under its name. */
 export function cardLines(text: string, name: string): string[] {
   const lines: string[] = []
-  let fenced = false
+  // Code as the page reads it: a block closes on its own mark only.
+  const code = new CodeBlocks()
   for (const raw of stripFrontMatter(text).split('\n')) {
-    if (/^\s{0,3}(```|~~~)/.test(raw)) {
-      fenced = !fenced
-      continue
-    }
-    if (fenced) continue
+    if (code.line(raw) !== WORDS) continue
     const line = plain(raw)
     if (!line || (lines.length === 0 && line.toLowerCase() === name.toLowerCase())) continue
     lines.push(line.length > LONGEST ? `${line.slice(0, LONGEST)}…` : line)

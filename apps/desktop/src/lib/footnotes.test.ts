@@ -99,3 +99,16 @@ describe('where the definition is', () => {
     expect(scanFootnotes(note)[0]?.defined).toBe(2)
   })
 })
+
+describe('footnotes and code', () => {
+  test('a shorter fence inside a longer one does not hide the definition', () => {
+    const note = 'Text[^1]\n\n````md\n```\n````\n\n[^1]: The note'
+    expect(scanFootnotes(note)).toEqual([
+      { id: '1', text: 'The note', line: 0, defined: 6, used: true },
+    ])
+  })
+
+  test('a mark in quoted code is code', () => {
+    expect(scanFootnotes('> ```\n> a[^1]\n> ```\n')).toEqual([])
+  })
+})

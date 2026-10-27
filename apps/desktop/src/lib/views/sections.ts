@@ -9,6 +9,8 @@
  *
  *  Pure: a note's words in, its words after out, or null where the section is not there. */
 
+import { lines as rowsOf } from '@nib/markdown/links'
+
 interface Section {
   /** The heading's line. */
   at: number
@@ -21,22 +23,22 @@ interface Section {
 const HEADING = /^(#{1,6})[ \t]+(.*?)[ \t]*#*[ \t]*$/
 const FENCE = /^[ \t]*(`{3,}|~{3,})/
 
-/** Every heading of a note with what it holds, in order. */
+/** Every heading of a note with what it holds, in order. Code and the front matter
+ *  hold none: which lines are code is `lines` in @nib/markdown/links, the reading the
+ *  page agrees with, so a block closes on its own mark only. */
 function sectionsOf(lines: readonly string[]): Section[] {
   const out: Section[] = []
-  let fence: string | null = null
-  lines.forEach((line, at) => {
-    const opens = FENCE.exec(line)?.[1]
-    if (opens !== undefined) {
-      if (fence === null) fence = opens[0] ?? null
-      else if (opens.startsWith(fence)) fence = null
-      return
-    }
-    if (fence !== null) return
-    const found = HEADING.exec(line)
+  for (const row of rowsOf(lines.join('\n'))) {
+    if (row.code || row.matter) continue
+    const found = HEADING.exec(row.text)
     if (found)
-      out.push({ at, end: lines.length, level: found[1]?.length ?? 1, text: found[2] ?? '' })
-  })
+      out.push({
+        at: row.line,
+        end: lines.length,
+        level: found[1]?.length ?? 1,
+        text: found[2] ?? '',
+      })
+  }
   for (const [index, one] of out.entries()) {
     const next = out.slice(index + 1).find((other) => other.level <= one.level)
     if (next) one.end = next.at
