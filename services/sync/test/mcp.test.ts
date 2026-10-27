@@ -203,6 +203,18 @@ describe('the notes that link to one note', () => {
     expect(text).toContain('one.md:5')
   })
 
+  test('a path from the top of the space names only the note there', async () => {
+    await addNote('one.md', 'see [[/plan]]\n')
+    await addNote('two.md', 'see [[/notes/plan]]\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'plan.md',
+    })
+    expect(text).toContain('one.md:1')
+    expect(text).not.toContain('two.md')
+  })
+
   test('a note nothing links to says so', async () => {
     const text = await tool(await connector(), 'list_backlinks', {
       space: 'Work',

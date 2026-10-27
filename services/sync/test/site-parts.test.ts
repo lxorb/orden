@@ -122,6 +122,17 @@ describe('what links to a page', () => {
     expect(backlinks(pages, page('Notes/Two.md'))).toBe('')
   })
 
+  test('a path from the top of the space names only the note there', () => {
+    const pages = [
+      page('Plan.md'),
+      page('Notes/Plan.md'),
+      page('Notes/One.md', { links: ['/plan'] }),
+    ]
+
+    expect(backlinks(pages, pages[0]!)).toContain('href="/notes/one"')
+    expect(backlinks(pages, pages[1]!)).toBe('')
+  })
+
   test('and an alias counts as a name for it', () => {
     const pages = [
       page('Plan.md', { aliases: ['the-plan'] }),

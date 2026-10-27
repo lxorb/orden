@@ -268,6 +268,19 @@ describe('backlinks', () => {
     expect(links.backlinks(at('Plan.md'))).toEqual([])
   })
 
+  /** `/Road.md` is a path from the top of the space, as the reading view follows
+   *  it, and as Obsidian and every markdown reader read one. */
+  test('a markdown link from the top of the space reaches the note there', async () => {
+    await space({
+      'Road.md': '# Road',
+      'B/Road.md': '# Other road',
+      'B/x.md': 'see [r](/Road.md)',
+      'C/y.md': 'see [r](/Road.md)',
+    })
+    expect(links.backlinks(at('Road.md')).map((one) => one.path)).toEqual(['B/x.md', 'C/y.md'])
+    expect(links.backlinks(at('B/Road.md'))).toEqual([])
+  })
+
   test('a path-qualified link reaches past the nearer note', async () => {
     await space({
       'Plan.md': 'the one at the top',

@@ -357,6 +357,16 @@ describe('which note a name means', () => {
     expect(resolveRelative(here, '../../Plan.md')?.path).toBe('Plan.md')
     expect(resolveRelative(here, './Nothing.md')).toBeNull()
   })
+
+  test('the path it names wins over a namesake beside it, and a slash starts at the top', () => {
+    const here = index([note('Road.md'), note('B/Road.md')], 'B/x.md', {}, ['pic.png', 'B/pic.png'])
+    expect(resolveRelative(here, 'Road.md')?.path).toBe('B/Road.md')
+    expect(resolveRelative(here, '../Road.md')?.path).toBe('Road.md')
+    expect(resolveRelative(here, '/Road.md')?.path).toBe('Road.md')
+    expect(resolveRelative(here, '/B/Road.md')?.path).toBe('B/Road.md')
+    expect(resolveFile(here, '/pic.png', 'markdown')).toBe('pic.png')
+    expect(resolveFile(here, 'pic.png', 'markdown')).toBe('B/pic.png')
+  })
 })
 
 /** A name a note gave itself in its own front matter. A file always wins: the
