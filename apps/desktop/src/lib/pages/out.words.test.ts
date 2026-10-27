@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest'
-import { decodePDFRawStream, PDFDocument, PDFName, type PDFRawStream, StandardFonts } from 'pdf-lib'
+import {
+  decodePDFRawStream,
+  PDFDict,
+  PDFDocument,
+  PDFName,
+  type PDFRawStream,
+  StandardFonts,
+} from 'pdf-lib'
 import { added, emptyPages } from '@nib/markdown/pages'
 import { type Canvas, type CanvasNode, type PageNode, writeCanvas } from '../canvas/format'
 
@@ -168,9 +175,8 @@ describe('words typed on a page', () => {
 
     const faces = doc.context
       .enumerateIndirectObjects()
-      .map(([, one]) =>
-        String((one as { get?: (k: unknown) => unknown }).get?.(PDFName.of('BaseFont')) ?? ''),
-      )
+      .map(([, one]) => (one instanceof PDFDict ? one.get(PDFName.of('BaseFont')) : undefined))
+      .map((one) => (one instanceof PDFName ? one.asString() : ''))
     expect(faces).toContain('/Helvetica-Bold')
     expect(faces).toContain('/Helvetica-Oblique')
     expect(faces).toContain('/Courier')
@@ -186,7 +192,10 @@ describe('words typed on a page', () => {
 
   test('in a colour of three hex digits print in that colour', async () => {
     const canvas = note()
-    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { color?: string }
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & {
+      color?: string
+      bare?: boolean
+    }
     card.bare = false
     card.color = '#f00'
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)

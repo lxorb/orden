@@ -48,9 +48,7 @@ function colourOf(node: { color?: string }, palette: Palette, fallback: string):
 }
 
 /** How the words inside a card are set, since an SVG carries no stylesheet of
- *  its own and a `foreignObject` inherits nothing from the page it came from.
- *  Exported for the pages of a page note, which put the same cards on a sheet; see
- *  pages/out.ts. */
+ *  its own and a `foreignObject` inherits nothing from the page it came from. */
 export function styles(palette: Palette): string {
   return `
     .card { box-sizing: border-box; width: 100%; height: 100%; padding: 8px 12px;
@@ -64,7 +62,6 @@ export function styles(palette: Palette): string {
     .card img { max-width: 100% }
     .card code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92em }
     .card a { color: ${palette.accent ?? '#4c6ef5'}; text-decoration: none }
-    .card.bare { padding: 4px 6px; font-size: 16px }
     .label { font: 550 13px/1 ui-sans-serif, system-ui, sans-serif }
   `
 }
@@ -85,8 +82,8 @@ function asXml(html: string): string {
 }
 
 /** Markdown as the lines a reader would see, with the marks taken off. What a
- *  card says when it cannot be set as HTML, and what a page note's PDF sets as text. */
-export function plainLines(text: string): string[] {
+ *  card says when it cannot be set as HTML. */
+function plainLines(text: string): string[] {
   return text.split('\n').map((line) =>
     line
       .replace(/^\s{0,3}#{1,6}\s+/, '')
@@ -108,16 +105,9 @@ const PER_CHARACTER = 0.52
 const LINE = 17
 const CARD_FONT = 13
 
-/** How the words of a card are set, as the plane sets them: a card at 13px inside
- *  8px and 12px of padding, and words with no card round them (#421) at the 16px a
- *  line of a note is, inside 4px and 6px. See `.card` and `.bare` in CanvasNode. */
-export function cardType(bare: boolean) {
-  return bare ? { size: 16, padX: 6, padY: 4 } : { size: CARD_FONT, padX: 12, padY: 8 }
-}
-
 /** The lines of a card, broken to its width. */
-function fitted(text: string, width: number, size: number, pad: number): string[] {
-  const most = Math.max(4, Math.floor((width - 2 * pad) / (size * PER_CHARACTER)))
+function fitted(text: string, width: number): string[] {
+  const most = Math.max(4, Math.floor((width - 24) / (CARD_FONT * PER_CHARACTER)))
   const out: string[] = []
 
   for (const line of plainLines(text)) {
@@ -136,56 +126,28 @@ function fitted(text: string, width: number, size: number, pad: number): string[
   return out
 }
 
-/** A card's words as SVG text, for the picture a browser can rasterise. Bare words
- *  are set at their own size and in their own colour, as the plane shows them. */
-function plainCard(
-  text: string,
-  box: Box,
-  palette: Palette,
-  bare = false,
-  colour = palette.text ?? '#111',
-): string {
-  const type = cardType(bare)
-  const line = bare ? type.size * 1.55 : LINE
-  const lines = fitted(text, box.width, type.size, type.padX).slice(
-    0,
-    Math.floor((box.height - 1.5 * type.padY) / line),
-  )
+/** A card's words as SVG text, for the picture a browser can rasterise. */
+function plainCard(text: string, box: Box, palette: Palette): string {
+  const lines = fitted(text, box.width).slice(0, Math.floor((box.height - 12) / LINE))
   if (!lines.length) return ''
 
-  // The baseline a little under the middle of each line box.
   const spans = lines
     .map(
-      (one, index) =>
-        `<tspan x="${box.x + type.padX}" y="${box.y + type.padY + (line + type.size) / 2 - 3 + index * line}">${escapeAll(one)}</tspan>`,
+      (line, index) =>
+        `<tspan x="${box.x + 12}" y="${box.y + 20 + index * LINE}">${escapeAll(line)}</tspan>`,
     )
     .join('')
 
-  // The class sets the 13px a card's words are in; bare words say their own size.
-  const own = bare ? ` style="font:400 ${type.size}px/1 ui-sans-serif,system-ui,sans-serif"` : ''
-  return `<text font-size="${type.size}" fill="${colour}" class="label"${own}>${spans}</text>`
+  return `<text font-size="${CARD_FONT}" fill="${palette.text ?? '#111'}" class="label">${spans}</text>`
 }
 
-function cardBody(
-  node: CanvasNode,
-  canvasPath: string | null,
-  trusted: boolean,
-  palette: Palette,
-): string {
+function cardBody(node: CanvasNode, canvasPath: string | null, trusted: boolean): string {
   switch (node.type) {
-    case 'text': {
+    case 'text':
       // The question the plane on screen asks of the same card: an SVG opened on
       // its own is a document, and a PDF is printed from a window of the app's
       // own, so somebody else's HTML in a card is still theirs. See trust.ts.
-      //
-      // Bare words wear their own colour where they have one, as on the plane.
-      const kind = node.bare ? 'card bare' : 'card'
-      const colour =
-        node.bare && node.color !== undefined
-          ? ` style="color:${escapeAll(colourOf(node, palette, ''))}"`
-          : ''
-      return `<div class="${kind}"${colour} xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath, trusted))}</div>`
-    }
+      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath, trusted))}</div>`
     case 'link':
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"><strong>${escapeAll(hostOf(node.url))}</strong><br/><span style="opacity:.6">${escapeAll(node.url)}</span></div>`
     case 'file':
@@ -229,8 +191,7 @@ function hostOf(url: string): string {
 }
 
 /** One node as SVG. A group is a dashed frame with its name above it, a shape is
- *  itself, a picture is the picture, and everything else is a card. Exported for the
- *  pages of a page note, whose cards are these same cards; see pages/out.ts. */
+ *  itself, a picture is the picture, and everything else is a card. */
 export function drawnNode(
   node: CanvasNode,
   palette: Palette,
@@ -293,12 +254,10 @@ export function drawnNode(
       : `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${paper}"${wash} stroke="${line}"/>`
 
   if (plain) {
-    const bare = node.type === 'text' && !!node.bare
-    const colour = bare ? colourOf(node, palette, palette.text ?? '#111') : undefined
-    return `<g>${card}${plainCard(saidBy(node), box, palette, bare, colour)}</g>`
+    return `<g>${card}${plainCard(saidBy(node), box, palette)}</g>`
   }
 
-  return `<g>${card}<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}">${cardBody(node, canvasPath, trusted, palette)}</foreignObject></g>`
+  return `<g>${card}<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}">${cardBody(node, canvasPath, trusted)}</foreignObject></g>`
 }
 
 /** What a card says, as words. */
@@ -464,8 +423,7 @@ async function readySvg(drawing: Drawing, plain = false): Promise<string> {
   )
 }
 
-/** An SVG with every picture in it inlined. Exported for the pages of a page note,
- *  whose pictures are the plane's; see pages/out.ts. */
+/** An SVG with every picture in it inlined. Also a page note's; see pages/out.ts. */
 export function inlinedSvg(svg: string): Promise<string> {
   // `inlineImages` matches `<img src>`, which is what a card's markdown holds;
   // an `<image href>` is swapped the same way by asking for the same resolver.

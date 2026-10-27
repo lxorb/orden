@@ -46,17 +46,6 @@ function context(): CanvasRenderingContext2D | null {
   return measuring
 }
 
-/** How wide the browser sets a run of text at a size in a face: what a pictured card's
- *  lines are broken by, so they fit the card in the picture the browser then draws in
- *  the same face. Zero where there is no 2d context, which breaks nothing. */
-export function textWidth(text: string, size: number, face: string): number {
-  const ctx = context()
-  if (!ctx) return 0
-
-  ctx.font = `400 ${size}px ${face}`
-  return ctx.measureText(text).width
-}
-
 /** A CSS colour as the browser says it back, which is hex or `rgb()` whatever form it
  *  was written in - `hsl()`, a name, a theme's `rgb(...)` - so the PDF, which wants
  *  numbers, can read it. Unchanged where there is no 2d context. */

@@ -120,12 +120,19 @@ function runsOf(host: HTMLElement): Run[] {
     }
     const ascent = ascentOf(style)
 
-    let run: { text: string; left: number; right: number; top: number } | null = null
+    let run: {
+      text: string
+      left: number
+      right: number
+      top: number
+      start: number
+      end: number
+    } | null = null
     const close = () => {
       if (run?.text.trim()) {
         runs.push({
           ...font,
-          text: run.text.replace(/\s+/g, ' ').trim(),
+          text: inContext(run.text.replace(/\s+/g, ' ').trim(), text.data, run.start, run.end),
           x: run.left - origin.left,
           y: run.top - origin.top + ascent,
           width: run.right - run.left,
@@ -146,9 +153,17 @@ function runsOf(host: HTMLElement): Run[] {
       if (run && Math.abs(rect.top - run.top) > size / 2) close()
       if (!run) {
         if (blank) continue
-        run = { text: '', left: rect.left, right: rect.right, top: rect.top }
+        run = {
+          text: '',
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          start: one.index,
+          end: one.index,
+        }
       }
       run.text += one.segment
+      run.end = one.index + one.segment.length
       if (!blank) {
         run.left = Math.min(run.left, rect.left)
         run.right = Math.max(run.right, rect.right)
@@ -159,6 +174,33 @@ function runsOf(host: HTMLElement): Run[] {
   }
 
   return [...runs, ...markersOf(card, origin)]
+}
+
+/** A letter of a script written right to left, and any letter at all. */
+const RTL = /[\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}]/u
+const LETTER = /\p{L}/u
+
+/** Whether the strong letter nearest one end of some text is right to left: null
+ *  where there is no letter. */
+function rtlAt(text: string, last: boolean): boolean | null {
+  const letters = Array.from(text).filter((one) => LETTER.test(one))
+  const one = last ? letters[letters.length - 1] : letters[0]
+  return one === undefined ? null : RTL.test(one)
+}
+
+/** A line's run with the direction its ends had in the paragraph. The browser orders a
+ *  line by the whole paragraph, so a comma or a full stop between two Arabic words
+ *  runs right to left even where the line breaks after it; cut out on its own, the
+ *  same mark sits at the line's other end. A right-to-left mark (U+200F) where the
+ *  paragraph went on, or came in, right to left gives it that direction back. */
+function inContext(run: string, paragraph: string, start: number, end: number): string {
+  const rlm = '\u200f'
+  let out = run
+  if (/\P{L}$/u.test(run) && rtlAt(run, true) && rtlAt(paragraph.slice(end), false)) out += rlm
+  if (/^\P{L}/u.test(run) && rtlAt(run, false) && rtlAt(paragraph.slice(0, start), true)) {
+    out = rlm + out
+  }
+  return out
 }
 
 let measuring: CanvasRenderingContext2D | null | undefined
@@ -189,10 +231,8 @@ function markersOf(card: HTMLElement, origin: DOMRect): Run[] {
     const style = getComputedStyle(item)
     const size = Number.parseFloat(style.fontSize)
     const ordered = list.tagName === 'OL'
-    const start = Number((list as HTMLOListElement).start) || 1
-    const text = ordered
-      ? `${start + Array.from(list.children).indexOf(item)}.`
-      : '•'
+    const start = list instanceof HTMLOListElement ? list.start : 1
+    const text = ordered ? `${start + Array.from(list.children).indexOf(item)}.` : '•'
     const width = text.length * size * 0.55
     runs.push({
       text,
@@ -224,4 +264,28 @@ function firstLine(element: Element): DOMRect | null {
     if (rect) return rect
   }
   return null
+}
+
+/** The document's own faces that name only fonts on the machine (`local()`), as CSS
+ *  for a picture: an SVG drawn as an image sees no stylesheet of the page, and
+ *  `Orden Arabic` - the face Arabic, Persian and Urdu are set in - is one of these. */
+export function localFaces(): string {
+  if (typeof document === 'undefined') return ''
+  const faces: string[] = []
+
+  for (const sheet of Array.from(document.styleSheets)) {
+    let rules: CSSRuleList
+    try {
+      rules = sheet.cssRules
+    } catch {
+      continue
+    }
+    for (const rule of Array.from(rules)) {
+      if (!(rule instanceof CSSFontFaceRule)) continue
+      const source = rule.style.getPropertyValue('src')
+      if (source && !/url\(/i.test(source)) faces.push(rule.cssText)
+    }
+  }
+
+  return faces.join('')
 }
