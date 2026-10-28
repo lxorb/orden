@@ -239,6 +239,16 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #477: a name Windows keeps for a device is given to no note or folder, on Linux too.
+      - name: A device's name refused for a note and a folder, under sway
+        if: always()
+        env:
+          OUT: wayland-out/reserved
+          RESERVED: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #676: a page note made from a PDF wears the PDF's mark.
       - name: A page note made from a PDF wears the PDF's mark, under sway
         if: always()
