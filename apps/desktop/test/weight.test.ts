@@ -1403,7 +1403,7 @@ describe('what the app evaluates before it draws anything', () => {
       pnpm?: { overrides?: Record<string, string> }
     }
 
-    expect(manifest.pnpm?.overrides?.[OVERRIDE]).toBe('workspace:@nib/lang-html@*')
+    expect(manifest.pnpm?.overrides?.[OVERRIDE]).toBe('workspace:@orden/lang-html@*')
     expect(existsSync(DOOR)).toBe(true)
   })
 

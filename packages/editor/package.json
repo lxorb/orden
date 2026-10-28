@@ -43,7 +43,7 @@
     "mermaid": "^11.17.2"
   },
   "devDependencies": {
-    "@nib/lang-html": "workspace:*",
+    "@orden/lang-html": "workspace:*",
     "@types/node": "^24.13.3",
     "jsdom": "^28.1.0",
     "typescript": "^5.9.3",

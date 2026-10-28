@@ -3,7 +3,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState, type Transaction } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { classHighlighter, highlightTree } from '@lezer/highlight'
-import { htmlGrammar } from '@nib/lang-html'
+import { htmlGrammar } from '@orden/lang-html'
 import { nibMarkdownExtensions } from './extensions'
 import { parsed } from '../../test/parsed'
 
