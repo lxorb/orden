@@ -1020,7 +1020,7 @@ fn ready(
                 Some(colour) => building.background_color(colour),
                 None => building,
             };
-            let window = building.visible(at_once).build()?;
+            let window = placement::settled(building.visible(at_once))?;
             top_edge::mind(&window.as_ref().window());
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());

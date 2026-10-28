@@ -18,7 +18,11 @@
 //! the window was on. That is what `tauri.conf.json` says a window's size in, and it
 //! is what tao turns back into pixels with the scale of the screen the position falls
 //! on - so a window on a 150% laptop screen beside a 100% monitor reopens the size it
-//! was on either.
+//! was on either. With that scale beside them, since two screens at two scales put
+//! logical pixels in two different spaces: the place is judged in the desk's own -
+//! physical pixels on Windows and X11, points on a Mac - and on Windows the window is put
+//! back to the pixel once built, where tao's turning a logical place into pixels landed it
+//! on the wrong one of the two (#479; see `onto` and `settled`).
 //!
 //! **Onto a screen that is still there.** A laptop that was docked last night is not
 //! this morning, and a window placed where the second monitor used to be is a window
@@ -66,8 +70,16 @@ const OFF: f64 = -32000.0;
 /// Where this run's windows were sent, once the first of them was; see `away`.
 static AWAY: OnceLock<(f64, f64)> = OnceLock::new();
 
+/// Where the window was put back, in physical pixels, for `settle`.
+static PUT: OnceLock<(f64, f64)> = OnceLock::new();
+
 /// Where a window is: its top left corner and its inner size, in logical pixels, and
 /// whether it is maximised over them.
+///
+/// And the scale of the screen it was on, which is what those logical pixels were
+/// measured in: two screens at two scales put logical pixels in two different spaces, so
+/// without it a place cannot be told which screen it is on (#479). A file written before
+/// this has none, and is read as it always was.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Placement {
     x: f64,
@@ -75,24 +87,58 @@ pub struct Placement {
     width: f64,
     height: f64,
     maximized: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    scale: Option<f64>,
 }
 
 /// A screen's working area, the part the taskbar and the dock leave, in logical
-/// pixels at that screen's own scale.
+/// pixels at that screen's own scale, and that scale.
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Area {
     x: f64,
     y: f64,
     width: f64,
     height: f64,
+    scale: f64,
 }
 
+/// Whether the desktop's screens share one space of physical pixels, which is where two
+/// screens at two scales are compared: Windows' and X11's, where a screen's logical
+/// pixels are its physical ones over its own scale, so two of them overlap in logical
+/// pixels that are nowhere near each other on the desk (#479). A Mac's screens share
+/// one space of points, which its logical pixels already are.
+const DESK_IN_PIXELS: bool = cfg!(not(target_os = "macos"));
+
 impl Area {
-    /// How much of `placed` lies on this screen, as an area.
+    /// How much of `placed` lies on this screen, as an area of the desk.
     fn overlap(&self, placed: &Placement) -> f64 {
-        let wide = (self.x + self.width).min(placed.x + placed.width) - self.x.max(placed.x);
-        let tall = (self.y + self.height).min(placed.y + placed.height) - self.y.max(placed.y);
+        let (mine, its) = scales(self, placed);
+        let (x, y, width, height) = (
+            self.x * mine,
+            self.y * mine,
+            self.width * mine,
+            self.height * mine,
+        );
+        let (px, py, pw, ph) = (
+            placed.x * its,
+            placed.y * its,
+            placed.width * its,
+            placed.height * its,
+        );
+        let wide = (x + width).min(px + pw) - x.max(px);
+        let tall = (y + height).min(py + ph) - y.max(py);
         wide.max(0.0) * tall.max(0.0)
+    }
+}
+
+/// What a screen's logical pixels and a place's are each multiplied by to put both on
+/// the desk: their own scales where the desk is in physical pixels and the place says
+/// what it was measured in; one, both of them, otherwise - a Mac's points, and a place
+/// from before the scale was written down, which is compared as it always was.
+fn scales(screen: &Area, placed: &Placement) -> (f64, f64) {
+    match placed.scale {
+        Some(its) if DESK_IN_PIXELS && its > 0.0 && screen.scale > 0.0 => (screen.scale, its),
+        _ => (1.0, 1.0),
     }
 }
 
@@ -255,6 +301,7 @@ fn under_the_menu_bar(screen: &Area, width: f64, height: f64) -> Placement {
         width,
         height,
         maximized: false,
+        scale: None,
     }
 }
 
@@ -275,10 +322,48 @@ fn last_place(app: &AppHandle) -> Option<Placement> {
     }
     let screens = areas(app);
     Some(if positions() {
-        onto(placed, &screens)
+        let back = onto(placed, &screens);
+        if let Some(scale) = back.scale {
+            let _ = PUT.set((back.x * scale, back.y * scale));
+        }
+        back
     } else {
         sized_for_any(placed, &screens)
     })
+}
+
+/// The main window built where it was put back, and put there to the pixel where the
+/// system put it elsewhere (#479). On Windows a window is built at a place in logical pixels, which tao turns
+/// into pixels with the scale of the first screen that place falls on at that screen's
+/// scale - and beside a screen at another scale, that can be the wrong one: a place on a
+/// laptop panel at 200% is also a place on the monitor at 100% beside it, which comes
+/// first. Moved there in pixels, which mean one place on the desk; the system then sizes
+/// it for that screen's scale. A Mac's places are points, and Linux's screens share one
+/// scale, so there it is where it was asked to be already.
+pub fn settled<R: Runtime, M: Manager<R>>(
+    building: WebviewWindowBuilder<'_, R, M>,
+) -> tauri::Result<WebviewWindow<R>> {
+    let window = building.build()?;
+    settle(&window);
+    Ok(window)
+}
+
+/// See `settled`.
+fn settle<R: Runtime>(window: &WebviewWindow<R>) {
+    #[cfg(windows)]
+    {
+        let Some(&(x, y)) = PUT.get() else {
+            return;
+        };
+        let Ok(at) = window.outer_position() else {
+            return;
+        };
+        if (f64::from(at.x) - x).abs() > 1.0 || (f64::from(at.y) - y).abs() > 1.0 {
+            let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
+        }
+    }
+    #[cfg(not(windows))]
+    let _ = window;
 }
 
 /// Where the compositor places the window and never says on which screen - Wayland's
@@ -581,6 +666,7 @@ fn area_of(screen: &Monitor) -> Area {
         y: f64::from(work.position.y) / scale,
         width: f64::from(work.size.width) / scale,
         height: f64::from(work.size.height) / scale,
+        scale,
     }
 }
 
@@ -603,6 +689,17 @@ fn onto(placed: Placement, screens: &[Area]) -> Placement {
         });
     let Some((screen, overlap)) = best else {
         return placed;
+    };
+
+    // Into the logical pixels of the screen it goes onto, the ones the clamp below is in
+    // and the ones it is built in there; the size is what it was, as a screen of another
+    // scale keeps a window's logical size.
+    let (mine, its) = scales(screen, &placed);
+    let placed = Placement {
+        x: placed.x * its / mine,
+        y: placed.y * its / mine,
+        scale: placed.scale.map(|_| screen.scale),
+        ..placed
     };
 
     let width = placed.width.min(screen.width);
@@ -629,6 +726,7 @@ fn onto(placed: Placement, screens: &[Area]) -> Placement {
         width,
         height,
         maximized: placed.maximized,
+        scale: placed.scale,
     }
 }
 
@@ -691,6 +789,7 @@ fn bounds(window: &Window) -> Option<Placement> {
         width: size.width,
         height: size.height,
         maximized: false,
+        scale: Some(scale),
     };
     sane(&placed).then_some(placed)
 }
@@ -728,7 +827,7 @@ fn keep(window: &Window) {
 mod tests {
     use super::{
         named, names_its_place, onto, sane, sized_for_any, under_the_menu_bar, Area, Followed,
-        Placement, OFF,
+        Placement, DESK_IN_PIXELS, OFF,
     };
     use tauri::utils::config::WindowConfig;
 
@@ -739,6 +838,7 @@ mod tests {
             width,
             height,
             maximized: false,
+            scale: None,
         }
     }
 
@@ -747,6 +847,7 @@ mod tests {
         y: 0.0,
         width: 1440.0,
         height: 860.0,
+        scale: 1.0,
     };
 
     /// A monitor to the right of the laptop, the way a desk has one.
@@ -755,6 +856,7 @@ mod tests {
         y: -200.0,
         width: 2560.0,
         height: 1400.0,
+        scale: 1.0,
     };
 
     #[test]
@@ -818,6 +920,7 @@ mod tests {
             y: 0.0,
             width: 813.0,
             height: 1446.0,
+            scale: 1.0,
         };
         let was = placed(0.0, 0.0, 1180.0, 760.0);
         assert_eq!(sized_for_any(was, &[portrait, MONITOR]), was);
@@ -1104,6 +1207,7 @@ mod tests {
             y: 25.0,
             width: 1440.0,
             height: 875.0,
+            scale: 2.0,
         };
         assert_eq!(
             under_the_menu_bar(&screen, 1180.0, 760.0),
@@ -1115,10 +1219,88 @@ mod tests {
             y: 25.0,
             width: 1024.0,
             height: 640.0,
+            scale: 2.0,
         };
         assert_eq!(
             under_the_menu_bar(&small, 1180.0, 760.0),
             placed(0.0, 25.0, 1024.0, 640.0)
         );
+    }
+
+    /// #479: an external display at 100% as the primary screen, and a laptop panel at
+    /// 200% to its right - 2880 by 1800 pixels, 1440 by 900 of its own logical pixels,
+    /// which start at 960 because 1920 pixels over its scale is 960. In logical pixels
+    /// the laptop overlaps the primary screen though it is beside it on the desk.
+    const PRIMARY: Area = Area {
+        x: 0.0,
+        y: 0.0,
+        width: 1920.0,
+        height: 1040.0,
+        scale: 1.0,
+    };
+    const PANEL: Area = Area {
+        x: 960.0,
+        y: 0.0,
+        width: 1440.0,
+        height: 860.0,
+        scale: 2.0,
+    };
+
+    fn at_scale(scale: f64, x: f64, y: f64, width: f64, height: f64) -> Placement {
+        Placement {
+            scale: Some(scale),
+            ..placed(x, y, width, height)
+        }
+    }
+
+    /// A window left wholly on the laptop panel - at 1960 by 200 pixels, which is 980 by
+    /// 100 at the panel's scale - goes back onto the panel, where it was, and not onto the
+    /// primary screen its logical pixels lie on as much: compared in logical pixels the two
+    /// tied, and the primary screen, first, was chosen.
+    #[test]
+    fn a_window_on_a_screen_of_another_scale_stays_on_it() {
+        let was = at_scale(2.0, 980.0, 100.0, 900.0, 600.0);
+        if DESK_IN_PIXELS {
+            assert_eq!(
+                onto(was, &[PRIMARY, PANEL]),
+                was,
+                "on the panel, where it was"
+            );
+            assert_eq!(PRIMARY.overlap(&was), 0.0, "nowhere on the primary screen");
+        }
+        let logical = placed(980.0, 100.0, 900.0, 600.0);
+        assert!(PRIMARY.overlap(&logical) >= PANEL.overlap(&logical));
+    }
+
+    /// And one on the primary screen stays there, beside a panel of another scale.
+    #[test]
+    fn a_window_on_the_primary_screen_beside_a_panel_stays_on_it() {
+        let was = at_scale(1.0, 100.0, 80.0, 1180.0, 760.0);
+        assert_eq!(onto(was, &[PRIMARY, PANEL]), was);
+    }
+
+    /// A window left on a panel that has gone comes back to the screen there is, in that
+    /// screen's logical pixels and at the logical size it had.
+    #[test]
+    fn a_window_from_a_panel_that_has_gone_comes_back_at_its_size() {
+        let was = at_scale(2.0, 1100.0, 100.0, 1000.0, 600.0);
+        let back = onto(was, &[PRIMARY]);
+        assert_eq!((back.width, back.height), (1000.0, 600.0));
+        assert_eq!(back.scale, Some(1.0));
+        assert!(back.x >= PRIMARY.x && back.x + back.width <= PRIMARY.x + PRIMARY.width);
+    }
+
+    /// A place written before the scale was is read as it always was.
+    #[test]
+    fn a_place_from_before_the_scale_is_compared_as_it_was() {
+        let was = placed(100.0, 80.0, 1180.0, 760.0);
+        assert_eq!(onto(was, &[PRIMARY, PANEL]), was);
+        let read: Placement =
+            serde_json::from_str(r#"{"x":1,"y":2,"width":800,"height":600,"maximized":false}"#)
+                .expect("an older place");
+        assert_eq!(read.scale, None);
+        assert!(!serde_json::to_string(&read)
+            .expect("written")
+            .contains("scale"));
     }
 }
