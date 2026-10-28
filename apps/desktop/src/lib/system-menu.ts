@@ -9,9 +9,9 @@
  *  not a browser's but the Mac's own, and it is the only way to a set of things
  *  every Mac app offers in a field: Look Up, Translate, the spelling suggestions,
  *  Writing Tools, Services, Speech. Bear, Typora and TextEdit all keep it, and a
- *  field of nib's has no menu of its own to lose.
+ *  field of Orden's has no menu of its own to lose.
  *
- *  The note keeps nib's menu, deliberately. It is where the block moves, the
+ *  The note keeps Orden's menu, deliberately. It is where the block moves, the
  *  formatting, the rewrite and the dictionary rows are, and a right click cannot
  *  show two menus; the system's items for a note are out of scope until the note's
  *  menu can carry them. Windows and Linux keep what they had: a field's menu there

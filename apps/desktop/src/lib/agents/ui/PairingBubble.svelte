@@ -1,6 +1,6 @@
 <script lang="ts">
   /** A program asking to become an agent (docs/agent-native.md 9.1): the first time a
-   *  client connects through `nib mcp`, nib asks once, and Allow makes its token.
+   *  client connects through `nib mcp`, Orden asks once, and Allow makes its token.
    *
    *  The bubble a site's question is asked in (web-tab/WebAsk.svelte), with the same two
    *  answers in the same words: a new kind of question in an old shape is one nobody has

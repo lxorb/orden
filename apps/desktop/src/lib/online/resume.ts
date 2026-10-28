@@ -5,7 +5,7 @@
  *  above a fresh prompt. The agents keep their own conversations in the home, and each has
  *  a command that picks the last one up: so when the program in front as the screen was
  *  saved was one of them, the tab offers that command, typed for the reader. Nothing of
- *  nib's holds the conversation. */
+ *  Orden's holds the conversation. */
 
 /** The command that continues each agent's last conversation, by the program's name. */
 const CONTINUE: Readonly<Record<string, string>> = {

@@ -1,5 +1,5 @@
 /** A ` ```tasks ` fence: the Tasks plugin's own query block, answered by the rows
- *  engine where it stands, so a note written for Obsidian's Tasks shows its list in nib
+ *  engine where it stands, so a note written for Obsidian's Tasks shows its list in Orden
  *  too (docs/tasks.md 5.7).
  *
  *  The block is read as a view (`readTasksQuery` in @orden/bases: `not done`, `due before

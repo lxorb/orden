@@ -10,7 +10,7 @@
  *  undoable, synced.
  *
  *  Every answer is the contract's (src-tauri/src/agents/verbs.rs `Answer`): done with
- *  where its words came from when that is outside nib, a question put to the reader, or
+ *  where its words came from when that is outside Orden, a question put to the reader, or
  *  a refusal with a code an agent can act on. */
 
 import type { Said } from '../../automation/args'

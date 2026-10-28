@@ -290,7 +290,7 @@ export interface SiteSettings {
 }
 
 /** What a publish would change: how many pages the site would have, which
- *  appear, which disappear. A nib site is live - the page is the note - so this
+ *  appear, which disappear. An Orden site is live - the page is the note - so this
  *  is the only thing a publish can change and the only honest thing to show
  *  before one. */
 export interface SiteChanges {

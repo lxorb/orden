@@ -334,7 +334,7 @@ const APP_ENTRIES: Shortcut[] = [
   {
     // Chrome's Ctrl+Shift+N, a new Incognito window, is a private tab here: a page that
     // writes nothing down and forgets everything with its last tab; see
-    // web-tab/private.ts. A desktop's alone, which is where a web tab is a page of nib's.
+    // web-tab/private.ts. A desktop's alone, which is where a web tab is a page of Orden's.
     id: 'app.new-private',
     label: () => t('New private tab'),
     category: 'file',
@@ -665,7 +665,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   // Emil, 2026-10-03: the same in every pane, and the key again brings them all back.
   // On Ctrl+Shift+D under every keyboard: none of the four binds it - VS Code's Run and
-  // Debug is a view nib has not got - and it is answered in a page and a terminal as
+  // Debug is a view Orden has not got - and it is answered in a page and a terminal as
   // the window answers it; see web_opens.rs and terminal/keys.ts.
   {
     id: 'app.deselect-all',

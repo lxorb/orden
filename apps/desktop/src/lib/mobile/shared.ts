@@ -1,4 +1,4 @@
-/** What another app shared with nib, as a note.
+/** What another app shared with Orden, as a note.
  *
  *  A share is the phone's version of the clipper: somebody found something
  *  somewhere else and wants a note about it. So it lands the way a clip and an

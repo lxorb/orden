@@ -383,7 +383,7 @@ class Modes {
   spellcheck = $state(DEFAULTS.spellcheck)
   /** The dictionaries a note is checked against, several at once (#771), as they were
    *  chosen; none chosen is the reader's own language. Read and written through
-   *  spell-languages.ts, which only the spelling pane and nib's own Chromium need. */
+   *  spell-languages.ts, which only the spelling pane and Orden's own Chromium need. */
   spellLanguages = $state<string[]>([])
   /** The words the reader has said are words: names, terms, a project. The
    *  checker is turned off over each of them wherever it appears, which is what
@@ -533,7 +533,7 @@ class Modes {
   canvasTurnSnaps = $state(DEFAULTS.canvasTurnSnaps)
 
   /** Which colour the highlight button writes, as the palette tone it names, or
-   *  null for a highlight with no colour of its own - which is what nib has always
+   *  null for a highlight with no colour of its own - which is what Orden has always
    *  written and so is where this starts.
    *
    *  The last colour chosen sticks, because marking up a paper is one colour a
@@ -565,7 +565,7 @@ class Modes {
    *  Nothing, which is where every note starts: the metadata at the top of a file
    *  is what the app reads - the icon a note wears, its cover - and not something
    *  to read on the way into the note. Somebody who wants to edit it in rows says
-   *  so here, and somebody whose metadata holds a shape nib cannot read asks for
+   *  so here, and somebody whose metadata holds a shape Orden cannot read asks for
    *  the source. The one answer is read by the editor and by the reading view, so a
    *  note cannot say one thing written and another read; see properties.ts in
    *  @orden/markdown and hidden-front-matter.ts in the editor. */
@@ -681,7 +681,7 @@ class Modes {
     if (this.alwaysOnTop) this.applyAlwaysOnTop()
 
     // The window's own, so it is put on before the first paint rather than after it: a
-    // window that came up with nib's frame and grew the system's a moment later is a
+    // window that came up with Orden's frame and grew the system's a moment later is a
     // window that jumped.
     this.applyFrame()
     this.applyHand()

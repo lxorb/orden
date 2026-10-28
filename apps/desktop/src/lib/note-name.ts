@@ -36,13 +36,13 @@ export function isReserved(name: string): boolean {
 /** The endings a document is known by rather than named after: markdown's four, a
  *  canvas, a page note, the two a website is written as, and a chat's pointer.
  *
- *  These are the kinds nib writes and titles from the inside, so the ending is the
+ *  These are the kinds Orden writes and titles from the inside, so the ending is the
  *  file's own business: the reader named the document, the app chose what to keep it
  *  in, and which kind a row holds is drawn beside the name rather than spelled out
  *  after it; see file-mark.ts. Emil, 2026-09-13: *"I don't want filename endings,
  *  e.g. .url"*.
  *
- *  A PDF, a picture and anything else nib did not write keep theirs, the way
+ *  A PDF, a picture and anything else Orden did not write keep theirs, the way
  *  Obsidian does: their name *is* the file's name, there is no title behind it, and a
  *  row reading `report.pdf` is a paper somebody was sent where `report` is a note
  *  somebody wrote. Emil, 2026-09-14: *"report.pdf stays report.pdf"*.

@@ -1,7 +1,7 @@
 /** Whether a press asked for a tab of its own, and whether to go there: Chrome's rule,
  *  kept the same on every surface that opens something. Ctrl+click (Cmd on a Mac) and
  *  the middle button open a tab behind, beside this one; with Shift, in front. Shift
- *  alone does too where it means nothing else, since a nib window is a second
+ *  alone does too where it means nothing else, since an Orden window is a second
  *  workspace rather than one page. A plain click is the surface's own. See
  *  docs/web-tabs.md, "A link in a tab of its own". */
 

@@ -1,14 +1,14 @@
 /** Whether somebody is at this computer: the dot on this person's face that the others
  *  see, and whether a chat's notice is wanted here (people/here.ts).
  *
- *  Active while a key was pressed or the pointer moved in nib in the last five minutes;
+ *  Active while a key was pressed or the pointer moved in Orden in the last five minutes;
  *  idle otherwise. The hub is told on the change and only then.
  *
  *  Two ears, because one would miss most of it. The app's own page hears its own keys
  *  and pointer, and nothing that goes to a web page: a page is a webview of its own, so
  *  somebody typing a mail for ten minutes is ten minutes of silence here. So the system
- *  is asked as well, every half minute, when it last had any input and whether a nib
- *  window is in front (src-tauri/src/presence.rs) - which together are input to nib -
+ *  is asked as well, every half minute, when it last had any input and whether an Orden
+ *  window is in front (src-tauri/src/presence.rs) - which together are input to Orden -
  *  and where the system cannot say, the app's own page is what is gone on. */
 
 import { IDLE_AFTER, INPUT_EVERY } from '../backoff'

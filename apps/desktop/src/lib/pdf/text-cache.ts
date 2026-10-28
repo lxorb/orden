@@ -1,7 +1,7 @@
 /** A paper's words, kept where they can be found again after a restart.
  *
  *  A PDF's words are not on disk as text. Getting at them is pdf.js, a worker and
- *  a page at a time, which is why nib used to search only the papers somebody had
+ *  a page at a time, which is why Orden used to search only the papers somebody had
  *  opened in this sitting: a search that read a thirty megabyte paper to answer a
  *  word would not be a search. So a page's words are written down the first time
  *  anything reads them, and from then on the paper answers whether it has been

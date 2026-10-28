@@ -6,9 +6,9 @@
  *  another device did - so the engine never writes under a hand that is typing; it hears
  *  that the write happened (`saved`) and records it the same way.
  *
- *  What is recorded is what the next foreign edit is measured against: the words nib
+ *  What is recorded is what the next foreign edit is measured against: the words Orden
  *  last wrote (`written`, the ancestor of section 5.5's three-way merge) and their
- *  digest on the entry, which is how a watcher's news is told apart from nib's own
+ *  digest on the entry, which is how a watcher's news is told apart from Orden's own
  *  write. Compared with line endings as the editor holds them, because a file keeps its
  *  own on disk (`as_written` in src-tauri/src/notes.rs). */
 
@@ -18,7 +18,7 @@ import { unixLines } from './kinds'
 import { type SpaceState } from './places'
 import { put, type Change, type EntryRow } from './store'
 
-/** What recording that nib wrote `text` to an entry's file changes. */
+/** What recording that Orden wrote `text` to an entry's file changes. */
 export async function wrote(core: Core, entry: EntryRow, text: string): Promise<Change[]> {
   entry.written_hash = await core.world.digest(unixLines(text))
   return [put('written', { id: entry.id, text: unixLines(text) }), put('entries', { ...entry })]

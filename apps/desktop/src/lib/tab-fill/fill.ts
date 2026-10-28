@@ -1,4 +1,4 @@
-/** Full window: the tab being worked in fills nib's window, and the window comes back.
+/** Full window: the tab being worked in fills Orden's window, and the window comes back.
  *
  *  One command, `app.fill-tab` - Shift+F11, Ctrl+Shift+Cmd+F on a Mac - from the key, the
  *  palette, the View menu and the tab's own menu. Not the system's full screen: the window

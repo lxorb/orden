@@ -57,7 +57,7 @@
   const tab = $derived(workspace.panelTab?.kind === 'note' ? workspace.panelTab : null)
   const doc = $derived(tab?.doc ?? null)
   const block = $derived(doc === null ? null : frontMatterBlock(doc))
-  /** The rows, or null for a note with no block or one nib cannot read without
+  /** The rows, or null for a note with no block or one Orden cannot read without
    *  guessing; `block` tells those two apart. */
   const rows = $derived(doc === null ? null : readProperties(doc))
   /** Front matter is Markdown's, and an unknown file opens as a note tab too; a draft
@@ -181,7 +181,7 @@
   <p class="nib-section">{t('Properties')}<span>{rows?.length ?? 0}</span></p>
 
   {#if block && rows === null}
-    <!-- A block nib cannot read without guessing: a comment, a nested shape. Shown as
+    <!-- A block Orden cannot read without guessing: a comment, a nested shape. Shown as
          it is written, and edited where it is written. -->
     <button class="yaml" onclick={editSource}
       >{doc?.slice(block.body.from, block.body.to).trimEnd()}</button

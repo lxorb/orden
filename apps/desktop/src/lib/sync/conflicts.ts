@@ -12,7 +12,7 @@
  *  rooms/apart.ts, and `conflictPath` in @orden/markdown/paths for the name the copy
  *  takes wherever it is written.
  *
- *  `both` is what nib has always done, and the default. The other copy is
+ *  `both` is what Orden has always done, and the default. The other copy is
  *  written beside the note as `Plan (from another device 2026-09-12).md` and the
  *  reader sorts it out with the diff in front of them. Nothing is ever lost, and
  *  the cost is a second file in the list.

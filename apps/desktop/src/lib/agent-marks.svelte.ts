@@ -52,7 +52,7 @@ export const agentMarks = new AgentMarks()
 /** Listens for agents, once the space is open. Answers how to stop. */
 export async function listenForAgents(): Promise<() => void> {
   // The glasses' plugin is never a desktop, and says so first so its package leaves the
-  // agents' interface out: an agent reaches nib through the installed app's own program.
+  // agents' interface out: an agent reaches Orden through the installed app's own program.
   if (__EVEN_PLUGIN__ || !isDesktop) return () => undefined
 
   const { listen } = await import('@tauri-apps/api/event')

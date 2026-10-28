@@ -162,7 +162,7 @@ describe('the name a document is listed under', () => {
     expect(shownName('Team.chat')).toBe('Team')
   })
 
-  /** A paper, a picture and anything else nib did not write are files from
+  /** A paper, a picture and anything else Orden did not write are files from
    *  somewhere else with no title behind them, so the name is the file's own -
    *  which is what Obsidian shows and what Emil asked for on 2026-09-14. The mark
    *  beside the row says which kind it is either way. */
@@ -246,7 +246,7 @@ describe('the ending a name wears', () => {
 })
 
 /** The one rule, read from both ends. Whatever a list leaves off a name, a rename
- *  puts back, so every name nib lists survives being shown and typed back
+ *  puts back, so every name Orden lists survives being shown and typed back
  *  unchanged - which is what keeps an ending from doubling up or going missing. The
  *  pair is `shownName` and `endingOf` here, and `nameToWrite` in naming.ts. */
 describe('what a list leaves off and a rename puts back', () => {

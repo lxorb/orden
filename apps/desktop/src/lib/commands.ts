@@ -1345,7 +1345,7 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: !isDesktop,
       run: () => void closeWindow(),
     },
-    // A desktop's alone, where a web tab is a page of nib's; see web-tab/private.ts.
+    // A desktop's alone, where a web tab is a page of Orden's; see web-tab/private.ts.
     {
       id: 'new-private',
       label: t('New private tab'),
@@ -1484,7 +1484,7 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.typewriter'),
       run: () => modes.toggleTypewriter(view),
     },
-    // The tab alone in nib's window, which stays a window; see lib/tab-fill. Not on a
+    // The tab alone in Orden's window, which stays a window; see lib/tab-fill. Not on a
     // phone or a tablet, which show one document and nothing beside it already.
     ...(viewport.touch
       ? []

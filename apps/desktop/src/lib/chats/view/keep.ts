@@ -9,7 +9,7 @@
  *    tab.
  *
  *  The link is the message's own, `nib://chat/<chat>/<message>`, which opens the chat at
- *  it from anywhere in nib. */
+ *  it from anywhere in Orden. */
 
 import type { Message } from '@orden/chats'
 import { isWho } from '@orden/chats/wire'

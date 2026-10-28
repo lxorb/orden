@@ -26,7 +26,7 @@ describe('what a web tab may open', () => {
     expect(isWebAddress('nib://open')).toBe(false)
   })
 
-  /** A tab holding nib inside nib is a page whose script sits beside the app's. The
+  /** A tab holding Orden inside Orden is a page whose script sits beside the app's. The
    *  crate says the same thing again on every navigation; see web_tabs.rs. */
   test('refuses the app itself', () => {
     expect(isWebAddress('http://tauri.localhost/index.html')).toBe(false)

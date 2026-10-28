@@ -1,6 +1,6 @@
 /** The machines a remote terminal reaches, as one list: the hosts of the reader's own
  *  `~/.ssh/config`, read by the crate and never written, and the hosts made in nib,
- *  with what nib knows about each - a colour, a group, a pin, when it was last
+ *  with what Orden knows about each - a colour, a group, a pin, when it was last
  *  connected to. See src-tauri/src/terminal/remote.rs and docs/terminal.md.
  *
  *  Pure: what the crate answered goes in, the list and its orders come out, and the
@@ -21,7 +21,7 @@ export interface ConfigHost {
   group?: string
 }
 
-/** A host made in nib. Its id starts with `n-` and is made once, so renaming it keeps
+/** A host made in Orden. Its id starts with `n-` and is made once, so renaming it keeps
  *  every tab that connects to it; see `is_own_id` in remote.rs. */
 export interface Own {
   id: string
@@ -54,7 +54,7 @@ export const NOTHING_KEPT: Kept = { own: [], about: {}, order: [], groups: [] }
 export interface Host {
   id: string
   name: string
-  /** Made in nib, and so editable; a config's host is a mirror. */
+  /** Made in Orden, and so editable; a config's host is a mirror. */
   own: boolean
   /** Other names it is found by: the config's other names on its line, its address. */
   also: string[]
@@ -267,7 +267,7 @@ export function said(wanted: Destination): string {
 /** Fields to change, where one set to undefined is taken out. */
 export type Change<T> = { [K in keyof T]?: T[K] | undefined }
 
-/** What nib knows about one host, changed. */
+/** What Orden knows about one host, changed. */
 export function withAbout(kept: Kept, id: string, change: Change<About>): Kept {
   const merged = { ...kept.about[id], ...change }
   const about = Object.fromEntries(
@@ -299,7 +299,7 @@ export function withOwn(kept: Kept, id: string, change: Change<Omit<Own, 'id'>>)
   }
 }
 
-/** A host made here, gone, with everything nib knew about it. */
+/** A host made here, gone, with everything Orden knew about it. */
 export function withoutOwn(kept: Kept, id: string): Kept {
   const about = Object.fromEntries(Object.entries(kept.about).filter(([one]) => one !== id))
   return {

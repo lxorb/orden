@@ -444,7 +444,7 @@ async function pullDocs(
 }
 
 /** A file written with a document's words - after any change another program made to it
- *  since nib last wrote it has been folded in, so nothing is written over. */
+ *  since Orden last wrote it has been folded in, so nothing is written over. */
 async function foldedThenProjected(
   core: Core,
   space: SpaceState,

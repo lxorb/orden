@@ -100,7 +100,7 @@ void wordSaid().then(() => {
   void answerAll()
 })
 
-// The automatic reminder, and whether nib stays in the tray, followed as they change.
+// The automatic reminder, and whether Orden stays in the tray, followed as they change.
 // Handed on untracked, so nothing the scheduler or the crate reads is this effect's.
 $effect.root(() => {
   $effect(() => {
@@ -110,7 +110,7 @@ $effect.root(() => {
       scheduler.changed()
     })
   })
-  // The quick add key from any app needs nib running, so it keeps nib in the tray too:
+  // The quick add key from any app needs Orden running, so it keeps Orden in the tray too:
   // the key the system holds, not the switch, which asks for one it may not get.
   $effect(() => {
     const held = quickAdd.held

@@ -1,7 +1,7 @@
 /** A tab's own menu: what a right click, a held finger or the menu key on a tab
  *  offers.
  *
- *  Chrome's rows, VS Code's and Obsidian's, where nib has the thing behind them, in
+ *  Chrome's rows, VS Code's and Obsidian's, where Orden has the thing behind them, in
  *  groups that read top to bottom as the tab, the strip around it, and the panes:
  *
  *  | group | rows |

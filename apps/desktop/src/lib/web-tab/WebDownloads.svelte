@@ -2,7 +2,7 @@
   /** What the web tabs have downloaded: the bubble under the glyph at the right of the
    *  bar.
    *
-   *  Chrome's download bubble, in nib's shapes. One row a file, newest first: its name,
+   *  Chrome's download bubble, in Orden's shapes. One row a file, newest first: its name,
    *  a hairline that fills while it is on its way, and one glyph at the end - stop while
    *  it is going, the folder once it is there. Pressing a finished row opens the file,
    *  which is what pressing a download in a browser does. A file that did not arrive

@@ -1,7 +1,7 @@
 <script lang="ts">
   /** The bubble a site is answered in: *"example.com wants to use your camera."*
    *
-   *  Chrome's shape, in nib's clothes, because this is a question everybody has already
+   *  Chrome's shape, in Orden's clothes, because this is a question everybody has already
    *  been asked a hundred times and a new shape for it would only make it harder to
    *  answer: under the address bar, at the left, with the site's own mark, one sentence,
    *  and Chrome's own two answers. It appears when the page asks - the request is held open in the

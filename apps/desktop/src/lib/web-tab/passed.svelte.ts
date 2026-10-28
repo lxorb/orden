@@ -64,7 +64,7 @@ export function answer(tab: string, page: Page, key: Passed): void {
   // Said only while the app holds the screen; see `nib-escape` in web_opens.rs.
   else if (key === 'escape') void fullscreen.leave()
   else if (key === 'find' || key === 'next' || key === 'previous') sought(tab, page, key)
-  // The store's own install button, pressed on an extension's page: nib installs it,
+  // The store's own install button, pressed on an extension's page: Orden installs it,
   // since neither engine installs from a store for a host. See extensions.svelte.ts.
   else if (key === 'install' && page.url)
     void import('./extensions.svelte').then(({ extensions }) => extensions.install(page.url ?? ''))

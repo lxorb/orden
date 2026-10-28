@@ -9,7 +9,7 @@
  *  there, which is an anchored edit like every other agent write.
  *
  *  The page is read by the crate (`agents_capture`), a reader's tab and an agent's own
- *  out-of-sight one alike: through the gate every browser verb goes through, in nib's
+ *  out-of-sight one alike: through the gate every browser verb goes through, in Orden's
  *  own world rather than the page's, every filled secret field painted over in a
  *  picture and a page holding one never printed (9.4). Where the engine has no road to
  *  a page, a reader's tab is clipped the clip button's own way, and nothing is

@@ -10,7 +10,7 @@
  *  at it as a report: Emil, 2026-10-01, a PowerShell prompt filling with `C"1C%0C` and
  *  on after Claude Code.
  *
- *  So the shells nib starts mark each prompt with FinalTerm's prompt mark, OSC 133;A, the
+ *  So the shells Orden starts mark each prompt with FinalTerm's prompt mark, OSC 133;A, the
  *  one Windows Terminal, iTerm2, kitty and WezTerm read (VS Code's own is 633;A, read too),
  *  and a prompt mark switches off whatever was left on - before the prompt is drawn, and
  *  before the line editor sets up what it wants for the line: bash, zsh, fish and

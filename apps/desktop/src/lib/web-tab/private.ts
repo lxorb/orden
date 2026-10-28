@@ -8,7 +8,7 @@
  *  **What it keeps is nothing.** The page runs in the engine's own private mode - the
  *  InPrivate profile of `WebView2`, a data store of the page's own that nothing writes
  *  to disk on a Mac and on Linux - so
- *  its cookies, storage and cache are in memory and go with it. And nib writes nothing
+ *  its cookies, storage and cache are in memory and go with it. And Orden writes nothing
  *  about it either: no history, no favicon, no place on the page, no `.url`, no session
  *  that would bring it back after a restart, no closed tab that Ctrl+Shift+T would
  *  bring back. Memory saver never parks one, because a page built again would have

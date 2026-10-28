@@ -50,7 +50,7 @@ export interface World {
   now(): number
   /** A number in [0, 1): client ids and op ids. */
   random(): number
-  /** A digest of a file's words: what tells nib's own last write from another
+  /** A digest of a file's words: what tells Orden's own last write from another
    *  program's. */
   digest(text: string): Promise<string>
   /** Joins a space's root and a local path. */

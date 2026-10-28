@@ -198,7 +198,7 @@ export function wantedRow(space: string, wanted: ReadonlyMap<string, Wanted>): M
  *    room's words; `update` is what the account sent, which brings the confirmed
  *    state to version `seq`, last changed at `at` on the account's clock.
  *  - `file`: another program changed the file while the document had moved too; the
- *    file's text is `local`, the words nib last wrote are `base`, and the document is
+ *    file's text is `local`, the words Orden last wrote are `base`, and the document is
  *    the other side.
  *  - `blob`: a file that is not a document, replaced here (`mine`, a hash) and on the
  *    account (`theirs`) while apart; see files.ts.

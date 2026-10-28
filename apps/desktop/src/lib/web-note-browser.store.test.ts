@@ -1,7 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
 /** A web note opened anywhere but the desktop app hands its address to the browser:
- *  a new tab beside nib's own in a browser build, the system's from the phone and
+ *  a new tab beside Orden's own in a browser build, the system's from the phone and
  *  tablet app. Only a shortcut with no address yet opens in a tab, for its bar.
  *  Issue #206; see `openSite` in workspace.svelte.ts and docs/web-tabs.md. */
 

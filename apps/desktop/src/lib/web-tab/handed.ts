@@ -1,4 +1,4 @@
-/** Web pages another program handed nib, because nib is the browser.
+/** Web pages another program handed Orden, because Orden is the browser.
  *
  *  A link clicked in a mail, a chat, a PDF or a terminal reaches the crate as a launch
  *  or a second launch (see src-tauri/src/web_handed.rs), and the crate hands it to one

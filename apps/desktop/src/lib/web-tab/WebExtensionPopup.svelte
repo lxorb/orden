@@ -1,7 +1,7 @@
 <script lang="ts">
   /** An extension's popup, in a bubble under its button.
    *
-   *  The bubble is nib's and the page in it is the extension's: a webview of its own on
+   *  The bubble is Orden's and the page in it is the extension's: a webview of its own on
    *  `chrome-extension://<id>/<popup>`, built in the tab's store by the crate and placed
    *  over the bubble's inside; see src-tauri/src/extensions/popup.rs. It is on the overlay
    *  stack like every bubble under the bar, so the tab's page steps out of sight while it

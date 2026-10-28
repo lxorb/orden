@@ -8,7 +8,7 @@
  *  the platform admits to is used; nothing here assumes which one that will be.
  *
  *  The extension matters more than it looks. `![[take.webm]]` is a *film* to every
- *  surface in nib and to Obsidian both - a `.webm` usually holds one, and
+ *  surface in Orden and to Obsidian both - a `.webm` usually holds one, and
  *  `packages/markdown/src/links.ts` says so - and a film embed draws a black
  *  rectangle with a play button over sound that has no picture. `.weba` is the
  *  spelling that says sound, so that is what a recording is called and what makes

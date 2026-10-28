@@ -11,7 +11,7 @@
    *  last connected to at a row's end, quietly. See hosts.ts for the order.
    *
    *  An address typed that no host has - `emil@10.0.0.5`, `box:2222` - is a row of its
-   *  own, and choosing it keeps it as a host made in nib. With no hosts at all, the one
+   *  own, and choosing it keeps it as a host made in Orden. With no hosts at all, the one
    *  row is Add host, which is Settings, Remote. A right click on a host pins it or goes
    *  to Settings. */
   import { cubicOut } from 'svelte/easing'

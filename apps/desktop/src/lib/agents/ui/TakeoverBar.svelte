@@ -1,7 +1,7 @@
 <script lang="ts">
   /** An agent waiting for the reader to do one step in this tab (docs/agent-native.md
    *  7.3): a sign-in, a captcha, a payment, the steps that are only ever the reader's.
-   *  Said as quietly as nib says anything: the agent's mark, the one line it gave, and
+   *  Said as quietly as Orden says anything: the agent's mark, the one line it gave, and
    *  Done.
    *
    *  A line under the bar and not a bubble over the page, because the page is the thing

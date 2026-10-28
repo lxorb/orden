@@ -15,11 +15,11 @@
  *  strong character - so a note with both in it reads right line by line without
  *  anybody setting anything.
  *
- *  The four are the ones nib has catalogues for. Hebrew, Divehi, Kurdish and the
+ *  The four are the ones Orden has catalogues for. Hebrew, Divehi, Kurdish and the
  *  rest read right to left too, and a catalogue for one of them would need adding
  *  here as well - which is why this is a list of language ids rather than a guess
  *  from the script: `Intl.Locale.prototype.getTextInfo` would answer for every
- *  language, and is a year from being in every browser nib runs in. */
+ *  language, and is a year from being in every browser Orden runs in. */
 
 /** The languages the app is written in that read right to left. */
 export const RIGHT_TO_LEFT: readonly string[] = ['ar', 'fa', 'ps', 'ur']

@@ -673,7 +673,7 @@ function footnotesOf(doc: Doc, writer: Writer): Record<string, { children: Parag
  *
  *  Nothing here was written at all before: the section went out with no properties, and
  *  a Word document with no page properties is a Word document on US Letter with an inch
- *  of margin. So a reader on nib's A4 default got Letter, and A5, landscape and a 33 mm
+ *  of margin. So a reader on Orden's A4 default got Letter, and A5, landscape and a 33 mm
  *  margin were dropped in silence. */
 /** The text column in pixels: the sheet as it is printed, less both margins. An
  *  inch at the very least, so a setup with a margin wider than its own paper still

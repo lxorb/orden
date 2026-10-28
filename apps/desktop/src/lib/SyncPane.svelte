@@ -6,7 +6,7 @@
    *  is waiting for an answer, which is the only thing here that is urgent; and
    *  what the last few passes did, which is what somebody reads when syncing
    *  looks stuck. Between the last two, only while there are some, the copies other
-   *  sync tools made that the account holds from before nib left them alone.
+   *  sync tools made that the account holds from before Orden left them alone.
    *
    *  And, at the foot, the one rescue: a space put back to how it read at a
    *  moment. It is last because it is the thing nobody wants and somebody
@@ -335,7 +335,7 @@
   </div>
 {/if}
 
-<!-- Copies other sync tools made that the account still holds from before nib left
+<!-- Copies other sync tools made that the account still holds from before Orden left
      them alone: one press takes them off it, into Recently deleted, and every file
      stays where it is. Only while there are some. See foreign/synced.ts. -->
 {#if copies.count && !copiesGone}

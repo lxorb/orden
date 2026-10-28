@@ -73,7 +73,7 @@ describe('a row that chose an icon of its own', () => {
     expect(body).not.toContain(strokes(MARKS.canvas)[0])
   })
 
-  /** Nib writes Lucide's plain name; a vault out of Obsidian's Iconize writes a
+  /** Orden writes Lucide's plain name; a vault out of Obsidian's Iconize writes a
    *  prefix per pack. Both reach the same drawing, for a canvas and a folder's map
    *  entry as much as for a note. */
   test('however the name was spelled in the file or the map', () => {

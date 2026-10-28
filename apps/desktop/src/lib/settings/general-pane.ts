@@ -218,7 +218,7 @@ function dnsGroups(): Group[] {
 
 /** When a task reminds of itself, and what keeps the reminders ringing: the tray on a
  *  desktop that has one, the exact alarms on a phone. One line on Linux, where nothing
- *  rings with nib closed. See docs/tasks.md 5.10. */
+ *  rings with Orden closed. See docs/tasks.md 5.10. */
 /** The folders at the top of a space a Tasks panel can take its projects from, the one
  *  in force among them even before it is made. */
 function projectFolderChoices(root: string): { value: string; label: string }[] {

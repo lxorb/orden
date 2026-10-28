@@ -444,7 +444,7 @@ describe('pandoc formats', () => {
     }
   })
 
-  /** Nib writes its own Word, RTF and ePub, with the diagrams drawn, the code
+  /** Orden writes its own Word, RTF and ePub, with the diagrams drawn, the code
    *  coloured and the pictures carried. Offering pandoc's as well would mean one
    *  format came out two ways depending on the machine, and a row that appeared
    *  only where pandoc happened to be installed. */

@@ -1,7 +1,7 @@
 <script lang="ts">
   /** What this site is: the popover behind the mark at the left of the address field.
    *
-   *  Chrome's site information bubble, kept to what nib can honestly say: whether the
+   *  Chrome's site information bubble, kept to what Orden can honestly say: whether the
    *  connection is the secure kind, the certificate it was made with where the engine
    *  says (#776), what the site has been allowed or refused, and one row that forgets
    *  all of it. A site that has never asked for anything shows the first

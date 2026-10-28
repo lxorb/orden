@@ -70,7 +70,7 @@ export async function written(): Promise<void> {
   while (underway.size) await Promise.all(underway)
 }
 
-/** What puts the window in the tray rather than closing it, while something keeps nib
+/** What puts the window in the tray rather than closing it, while something keeps Orden
  *  there: the reminders, while one is waiting or the reader asked (docs/tasks.md
  *  decision 6; see reminders/residency.svelte.ts). Said here for the reason everything
  *  else here is, so the close handler loads nothing to ask. Null while nothing does.
@@ -78,7 +78,7 @@ export async function written(): Promise<void> {
  *  both share (agents/shell.rs). */
 let tray: (() => Promise<boolean>) | null = null
 
-/** Said by whoever keeps nib in the tray, and taken back with null. */
+/** Said by whoever keeps Orden in the tray, and taken back with null. */
 export function keptInTray(hide: (() => Promise<boolean>) | null): void {
   tray = hide
 }

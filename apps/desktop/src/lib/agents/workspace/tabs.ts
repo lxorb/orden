@@ -127,7 +127,7 @@ function inNote(tab: Tab) {
 /** What is selected inside the tab the reader has selected, in that kind's own terms:
  *  words and the caret in a note, the objects picked on a canvas or a page note, the
  *  words selected in a terminal, the page a PDF is on. Null for a kind with nothing to
- *  select that nib can see - a web page's selection is the page's, which `browser_`
+ *  select that Orden can see - a web page's selection is the page's, which `browser_`
  *  tools read. */
 async function selectionIn(tab: Tab): Promise<unknown> {
   switch (TAB_KINDS[tab.kind].selection) {

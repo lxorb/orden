@@ -12,7 +12,7 @@
  *    opened for an address that names such a page is watched, and when it lands there
  *    the request is made on the machine instead (`callback`); once the program has
  *    answered, the tab goes and the terminal comes back to the front, where the program
- *    says it is signed in. Only nib's own tabs can be watched, so a phone and a browser
+ *    says it is signed in. Only Orden's own tabs can be watched, so a phone and a browser
  *    build do not open such an address at all, and the program's printed one stands.
  *  - **Bounds.** Only the web, six a minute a terminal, and the same address once in a
  *    few seconds: a program in a loop is a few tabs, never a wall of them. */
@@ -23,7 +23,7 @@ import { openExternal } from '../tauri'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'
 
-/** Where an address goes: a web tab of nib's, the system's browser, the bar's offer, or
+/** Where an address goes: a web tab of Orden's, the system's browser, the bar's offer, or
  *  nowhere. */
 export type Where = 'tab' | 'system' | 'offer' | 'none'
 

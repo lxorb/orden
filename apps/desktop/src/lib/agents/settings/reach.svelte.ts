@@ -1,6 +1,6 @@
 /** Where Settings > Agents is offered, and which crate it asks.
  *
- *  A desktop's alone: an agent reaches nib through `nib mcp`, the installed app's own
+ *  A desktop's alone: an agent reaches Orden through `nib mcp`, the installed app's own
  *  binary, and a phone or a page in a browser has neither that nor the crate that keeps
  *  the grants. The one exception is a stand-in (`fake.ts`), which a test or a drive puts
  *  in front of the pane so it can be seen and pressed where there is no crate.

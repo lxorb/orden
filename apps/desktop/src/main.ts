@@ -43,7 +43,7 @@ if (isMobile) {
 
 // index.html carries it, so a missing one means the page itself is wrong -
 // worth saying outright rather than mounting into nothing.
-// nib's own Chromium on Linux draws overlay scrollbars of its own, which a styled bar is
+// Orden's own Chromium on Linux draws overlay scrollbars of its own, which a styled bar is
 // never drawn as; so the stylesheet leaves its bars alone there (#775). Before anything
 // is mounted, since the engine settles a scroller's bar as the scroller is made. See
 // `cef_runtime` in src-tauri/src/engine.rs and packages/themes/src/base.css.

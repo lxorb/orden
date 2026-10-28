@@ -9,7 +9,7 @@
  *  the space it is in, since a note dropped on a note nests; the space itself,
  *  which is what dropping onto the empty room under the last row means; and any
  *  other space there is, which is what carrying a note onto another space used to
- *  mean. No folders, because nib has none to offer - a folder out of somebody's
+ *  mean. No folders, because Orden has none to offer - a folder out of somebody's
  *  vault is a note that has not been written yet and is offered as that row; see
  *  folder-notes.ts and docs/tree.md. Its own place is left out, because a move to
  *  where it already is is not a move, and so is anything inside a row being

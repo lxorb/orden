@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** The arrow a swipe brings in from the side of a pane: Chrome's, in nib's own
+  /** The arrow a swipe brings in from the side of a pane: Chrome's, in Orden's own
    *  colours. A circle with an arrow in it slides in with the fingers, pixel for pixel,
    *  from behind the side to where letting go would go, and past that a little further
    *  against a growing pull, so it stops. A ring round its edge fills with the accent as

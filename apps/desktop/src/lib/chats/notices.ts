@@ -8,7 +8,7 @@
  *  The store hands over every new message by others once the device holds it
  *  (`chats.heard`), in the one window that holds the hub's socket so a message pings once
  *  a device; its list says where the reader has read to on every device, which takes a
- *  notification back, and whether the account has any chat, which keeps nib in the tray.
+ *  notification back, and whether the account has any chat, which keeps Orden in the tray.
  *  A chat tab says it is on screen (./on-screen.ts); a press opens the chat at the message
  *  as a link to it would (view/open.ts). */
 

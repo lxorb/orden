@@ -134,7 +134,7 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
   /** The guard the whole idea hangs on. Two actions on one key means one of
    *  them never fires, and a preset is a map nobody checked by hand. Walks
    *  every action there is, not only the ones the preset mentions: taking a
-   *  key for Notion's inline code is how Nib's reading view loses one. */
+   *  key for Notion's inline code is how Orden's reading view loses one. */
   test.each(PLATFORMS)('leaves nothing on a key something else is on (%s)', (platform) => {
     const keys = keysOf()
     const held = new Map<string, string>()
@@ -266,14 +266,14 @@ describe('the Obsidian keyboard', () => {
     const keys = presets.presetById('obsidian')?.keys ?? {}
 
     // Ctrl+E reading, Ctrl+W close, Ctrl+Shift+F search, Ctrl+K link: all of them are
-    // Nib's own already. New note is left where Nib has it too.
+    // Orden's own already. New note is left where Orden has it too.
     for (const id of ['app.reading', 'app.new', 'app.close', 'format.link']) {
       expect(keys[id], id).toBeUndefined()
     }
   })
 
   /** Obsidian's two: the quick switcher on Ctrl+O and the command palette on Ctrl+P,
-   *  which are Nib's one palette, and the same palette narrowed to the commands. Shift
+   *  which are Orden's one palette, and the same palette narrowed to the commands. Shift
    *  twice stays its first key, and Ctrl+O is its second, which a Mac's menu shows. */
   test('opens the palette on Ctrl+O and narrows it to the commands on Ctrl+P', () => {
     const keys = presets.presetById('obsidian')?.keys ?? {}
@@ -363,7 +363,7 @@ describe('Ctrl+D', () => {
   })
 })
 
-/** Nib indents on Ctrl+[ and outdents on Ctrl+], which is Typora's order. VS Code,
+/** Orden indents on Ctrl+[ and outdents on Ctrl+], which is Typora's order. VS Code,
  *  Obsidian and CodeMirror have it the other way round, and so do their keyboards
  *  here; the default is left as Typora's. */
 describe('the brackets', () => {
@@ -396,7 +396,7 @@ describe('the VS Code keyboard', () => {
     }
   })
 
-  /** Already Nib's own, so the preset says nothing about them and they reach it. */
+  /** Already Orden's own, so the preset says nothing about them and they reach it. */
   test('grows and shrinks the selection on Shift+Alt and an arrow, as Nib already does', () => {
     expect(keys()['edit.expand-selection']).toBeUndefined()
     expect(keyUnder(keys(), 'edit.expand-selection', 'win')).toBe('Shift-Alt-ArrowRight')
@@ -439,7 +439,7 @@ describe('the Notion keyboard', () => {
 
     expect(keys['format.code']).toBe('Mod-e')
     expect(keys['app.sidebar']).toBe('Mod-\\')
-    // Which leaves the two Nib actions that were on those keys without one.
+    // Which leaves the two Orden actions that were on those keys without one.
     expect(keys['app.reading']).toBeNull()
     expect(keys['format.clear']).toBeNull()
   })

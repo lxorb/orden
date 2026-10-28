@@ -1,7 +1,7 @@
 /** The dots on a web tab's bar: Chrome's rows, in Chrome's order.
  *
  *  Worth a test for two reasons. The order is the whole point - a reader who knows
- *  Chrome's menu should find nib's in the same shape - and the zoom rows are the one
+ *  Chrome's menu should find Orden's in the same shape - and the zoom rows are the one
  *  place in the app where a row keeps the menu open and says a number that has to be
  *  true. See menu.ts. */
 
@@ -129,7 +129,7 @@ test('stops at a dozen rows however long the reading was', () => {
   expect(back[11]).toEqual({ url: '27', by: 12 })
 })
 
-/** nib's own History page is no site: the rows about a site are there and greyed. */
+/** Orden's own History page is no site: the rows about a site are there and greyed. */
 test('on the History page nothing about a site is offered', () => {
   const rows = webRows(page('nib://history'), 1, actions).flatMap((one) =>
     one === null ? [] : [one],

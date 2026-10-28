@@ -46,8 +46,8 @@ class IconLibrary {
    *  caller be a row of a list rather than the list.
    *
    *  A set this build has never heard of is not fetched and not remembered as
-   *  asked: a file may name one a newer nib ships, and it should start working the
-   *  moment that nib is installed rather than after a restart.
+   *  asked: a file may name one a newer Orden ships, and it should start working the
+   *  moment that Orden is installed rather than after a restart.
    *
    *  Asked for, on the launch, after the file list is on screen. A set is a
    *  fetch - a chunk this build carries, or a file off the network - and the first

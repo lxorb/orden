@@ -1108,7 +1108,7 @@ describe('the keys that move the keyboard about', () => {
  *  text size, they fire on the window after the surface has had the press, and one
  *  key doing both would resize the words and the paper at once. So they are one
  *  modifier over, which is the trade `canvas.fit` already made. */
-/** Full window: the tab alone in nib's window, which stays a window.
+/** Full window: the tab alone in Orden's window, which stays a window.
  *
  *  Full screen's own key with Shift on it - F11 and Ctrl+Cmd+F are the screen, Shift+F11
  *  and Ctrl+Shift+Cmd+F the window - which is Sublime Text's pair for the same two jobs.

@@ -130,7 +130,7 @@ export async function firstPass(
     }
     return null
   }
-  // A document's file, matched to its entry. What nib last wrote is the file as v1 left
+  // A document's file, matched to its entry. What Orden last wrote is the file as v1 left
   // it: the words the next pull is measured against, so a file v1 merely fell behind on
   // is written over and not read as edits.
   const match = async (entry: EntryRow, file: string, tracked: Tracked | undefined) => {

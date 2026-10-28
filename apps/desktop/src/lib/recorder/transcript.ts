@@ -8,7 +8,7 @@
  *
  *  1. **A transcript under an embed is a callout.** It is an annotation in the middle
  *     of somebody's own prose, and a callout is one block with a line to say whose
- *     words are in it - Obsidian folds it, nib folds it, and nothing of the reader's
+ *     words are in it - Obsidian folds it, Orden folds it, and nothing of the reader's
  *     own writing is now sitting in a paragraph beside a machine's.
  *  2. **Whatever a model wrote says so, in one quiet line.** Naming the model rather
  *     than "AI": `*Written by whisper*`. It is italic and it is one line, because the
@@ -67,7 +67,7 @@ function quoted(text: string): string {
 
 /** The transcript of one recording, as the callout that goes under its embed.
  *
- *  `[!quote]` rather than a type of nib's own: it is the type Obsidian ships, it
+ *  `[!quote]` rather than a type of Orden's own: it is the type Obsidian ships, it
  *  says what the block is without a word of explanation, and a space that travels
  *  to another app keeps its shape. */
 export function transcriptCallout(text: string, language: string, model: string): string {

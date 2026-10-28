@@ -27,7 +27,7 @@ import { forgetWeb, leadSync, openWeb } from './sync-store'
 
 /** The browser's sync store against the same behaviour the crate's is held to in
  *  src-tauri/src/sync_store/store.rs, row for row: a new store, the clean-exit flag, a
- *  batch that fails, every operation, bytes, what nib wrote, the log's ceiling and
+ *  batch that fails, every operation, bytes, what Orden wrote, the log's ceiling and
  *  signing out. Then the election that keeps it to one engine per browser. */
 
 let accounts = 0

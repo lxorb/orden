@@ -3170,7 +3170,7 @@ describe('reopening the tab that was closed last', () => {
  *  A browser opens it because a first visit has nothing else to read. Signing in
  *  changes that, and nothing was watching: the workspace restores seconds before
  *  the account does, so somebody who signed in was left looking at "Welcome to
- *  Nib" with their own notes in the sidebar beside it. */
+ *  Orden" with their own notes in the sidebar beside it. */
 describe('the welcome note, once there are real notes', () => {
   const WELCOME = '/Notes/Read me.md'
 
@@ -4383,7 +4383,7 @@ describe('a preview landing on a note that is already open', () => {
 })
 
 /** The rows of a tab's own menu that act on more than the tab: Chrome's, VS Code's
- *  and Obsidian's, which nib's menu had only two of. See tab-strip/menu.ts. */
+ *  and Obsidian's, which Orden's menu had only two of. See tab-strip/menu.ts. */
 describe('what a tab s own menu does to the strip', () => {
   const entry = (path: string, children: Entry[] = [], isDir = false): Entry => ({
     name: path.split('/').pop() ?? path,

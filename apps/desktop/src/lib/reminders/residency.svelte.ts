@@ -1,4 +1,4 @@
-/** Whether nib stays in the tray when its window is closed (docs/tasks.md decision 6,
+/** Whether Orden stays in the tray when its window is closed (docs/tasks.md decision 6,
  *  docs/chats.md 4.11).
  *
  *  Todoist's way: on by default while there is a reason, a reminder waiting, the global
@@ -25,7 +25,7 @@ function choiceOf(text: string | null): Choice {
 }
 
 /** Hides the window into the tray; false where the crate would not, because nothing
- *  keeps nib there any more. */
+ *  keeps Orden there any more. */
 const hide = (): Promise<boolean> =>
   invoke<boolean>('agents_hold', { hide: true }).catch(() => false)
 
@@ -39,11 +39,11 @@ class Residency {
   /** Whether the global quick add key is held: the quick add says. */
   quickAdd = $state(false)
 
-  /** Whether the account has any chat, whose messages ping only while nib runs: the
+  /** Whether the account has any chat, whose messages ping only while Orden runs: the
    *  chats' notifications say (chats/notices.ts). */
   chats = $state(false)
 
-  /** Whether nib stays in the tray now. */
+  /** Whether Orden stays in the tray now. */
   get on(): boolean {
     if (!hasTray) return false
     if (this.choice !== 'auto') return this.choice === 'on'

@@ -88,8 +88,8 @@ describe('asking for a set', () => {
     expect(iconLibrary.loading('refuses')).toBe(false)
   })
 
-  /** A file may name a set a newer nib ships. Not remembering it as asked is what lets
-   *  it start working the moment that nib is installed, rather than after a restart. */
+  /** A file may name a set a newer Orden ships. Not remembering it as asked is what lets
+   *  it start working the moment that Orden is installed, rather than after a restart. */
   test('and a set nothing here knows is never asked for at all', async () => {
     asked = []
     iconLibrary.load('nothing-here')

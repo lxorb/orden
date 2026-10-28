@@ -985,7 +985,7 @@
   oncontextmenucapture={(event: MouseEvent) => {
     // A Mac's text field keeps the system's own menu, which has Look Up and the
     // spelling in it as well as the four; see system-menu.ts. Every other field gets
-    // nib's.
+    // Orden's.
     if (!keepsSystemMenu(event.target, platform())) onFieldMenu(event)
   }}
   oncontextmenu={(event: MouseEvent) => {

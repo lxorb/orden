@@ -4,7 +4,7 @@ import { render } from 'svelte/server'
 /** The badge in front of a space's name, drawn rather than described.
  *
  *  One thing only rendering can show: that the badge is never empty. A space keeps
- *  whatever icon it was given, and a name no set holds - one a newer nib wrote, one
+ *  whatever icon it was given, and a name no set holds - one a newer Orden wrote, one
  *  somebody typed, one out of a set this build leaves out of its bundle - draws
  *  nothing at all, so asking whether an icon was chosen is not the same question as
  *  asking whether anything can be drawn. Asking the first was a square with nothing

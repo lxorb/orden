@@ -2,7 +2,7 @@
   /** A page's own dialog: what it says with `alert`, asks with `confirm` and `prompt`,
    *  and asks as it is left.
    *
-   *  Chrome's shape, in nib's clothes, because everybody has answered these a thousand
+   *  Chrome's shape, in Orden's clothes, because everybody has answered these a thousand
    *  times: a card at the top of the page, naming the site, with the page's own words and
    *  the answers a browser gives - OK alone for an alert, Cancel and OK for the others,
    *  Cancel and Leave for a page that would rather not be left. The page's script waits

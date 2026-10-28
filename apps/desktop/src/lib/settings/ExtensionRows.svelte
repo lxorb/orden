@@ -1,7 +1,7 @@
 <!-- The extensions, in Settings > General > Browser: one row each, with its switch, and
      what it may do and the way to take it away a press on its name away.
 
-     chrome://extensions in nib's rows. A row is the extension's picture, its name, its
+     chrome://extensions in Orden's rows. A row is the extension's picture, its name, its
      version, and the switch; pressing the name opens the row, which lists what the
      extension asks to be allowed in Chromium's own words and holds Options and Remove.
      Under the rows, the field a store link is pasted into. What the engine said when an

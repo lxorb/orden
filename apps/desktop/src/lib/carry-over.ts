@@ -1,4 +1,4 @@
-/** Puts an app's habits into nib's settings, through the same setters the Settings
+/** Puts an app's habits into Orden's settings, through the same setters the Settings
  *  sheet uses, so each answer is saved and shared with the account exactly as if
  *  the reader had chosen it. What is decided, and why, is import/carry.ts. */
 

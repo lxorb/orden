@@ -100,7 +100,7 @@ async function choose(path: string, where: Where): Promise<void> {
     if (copy || tab.path === path) await pages.rehouse(tab.id, own, said)
   }
 
-  // Every site the history knows, for nib's own Chromium, which clears a site's data
+  // Every site the history knows, for Orden's own Chromium, which clears a site's data
   // only where it is named; the history is not kept per store. See `sitesSince`.
   if (was !== null && own === null) {
     await invoke('web_clear', {

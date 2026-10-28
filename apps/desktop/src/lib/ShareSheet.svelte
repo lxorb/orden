@@ -7,7 +7,7 @@
    *  naming somebody is what sharing usually means, and the link second, since it
    *  is one switch about everybody at once. That is Proton Drive's shape; the
    *  clarity inside each row - a face, a name, an address under it, and what they
-   *  may do as a menu at the far end - is Google's. Both are drawn in nib's own
+   *  may do as a menu at the far end - is Google's. Both are drawn in Orden's own
    *  rows, tokens and motion, so it is one design on a desktop and under a thumb
    *  rather than two.
    *

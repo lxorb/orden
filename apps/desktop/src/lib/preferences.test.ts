@@ -429,7 +429,7 @@ describe('the spelling dictionaries', () => {
     expect([...DICTIONARIES]).toEqual(inLanguageOrder(DICTIONARIES))
   })
 
-  /** Only nib's own Chromium has a list of them to write (#771); this build is a browser,
+  /** Only Orden's own Chromium has a list of them to write (#771); this build is a browser,
    *  whose checker reads its own languages, and the pane says so rather than offering
    *  switches that turn nothing. */
   test('are the platform’s where nib cannot choose them, and the pane says so', () => {

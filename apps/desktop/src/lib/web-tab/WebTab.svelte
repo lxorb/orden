@@ -142,7 +142,7 @@
   /** Where the page goes in the hole at `box`, and what of it the app's own layers are
    *  over there, or null for none of it.
    *
-   *  A native webview draws above every pixel of HTML in the window: nothing of nib's
+   *  A native webview draws above every pixel of HTML in the window: nothing of Orden's
    *  can be drawn on top of a page. So a layer over the page is cut out of it in its own
    *  shape, and a sheet's scrim covers all of it, with the still picture of the page
    *  standing in under the scrim - see covers.ts, and `cover` in pages.svelte.ts.
@@ -257,7 +257,7 @@
       : null
 
   // The hole, watched for as long as it is in the pane: from the mount, and from the
-  // moment a tab on nib's own page is sent to a site, which is when the page is asked for.
+  // moment a tab on Orden's own page is sent to a site, which is when the page is asked for.
   // Its size by the resize observer, and where it is by `watchShifts`: the panes moved
   // across the window without changing size are a page left behind otherwise (#246).
   $effect(() => {
@@ -351,7 +351,7 @@
    *  a web note is a browser tab and the file says so. See web-tab/keep.ts. */
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
 
-  /** Whether the tab is on one of nib's own pages - History - which the pane draws
+  /** Whether the tab is on one of Orden's own pages - History - which the pane draws
    *  itself, with no webview behind it; see own-pages.ts. */
   const own = $derived(isOwnPage(address))
 
@@ -360,7 +360,7 @@
    *  see `newTab` and `isNewTab` in workspace.svelte.ts. */
   const choosing = $derived(workspace.isNewTab(tab))
 
-  // nib's own page names itself and wears its own mark, as Chrome's History does; and the
+  // Orden's own page names itself and wears its own mark, as Chrome's History does; and the
   // address is held as the page's, so the bar and the strip read it before anything
   // else has.
   $effect(() => {
@@ -941,7 +941,7 @@
          address is typed, so nothing native is over them. See NewHere.svelte. -->
     <NewHere paneId={tab.paneId} chosenOn={tab.id} />
   {:else if own}
-    <!-- nib's own page, drawn here where a site's would be: History. See own-pages.ts. -->
+    <!-- Orden's own page, drawn here where a site's would be: History. See own-pages.ts. -->
     {#await import('./WebHistory.svelte') then history}
       <history.default
         {book}

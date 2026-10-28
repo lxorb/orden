@@ -1,4 +1,4 @@
-/** Another sync tool's copies the account already holds: carried before nib knew to
+/** Another sync tool's copies the account already holds: carried before Orden knew to
  *  leave them alone, and on every device since (Emil's seven `(# Name clash … #)`
  *  copies, 2026-10-05).
  *

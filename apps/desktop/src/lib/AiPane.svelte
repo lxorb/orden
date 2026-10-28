@@ -518,7 +518,7 @@
 {/if}
 
 <!-- The two things worth a sentence: where a key goes, and that an answer can be
-     wrong. The second is Anthropic's condition for Claude Code inside nib, and true of
+     wrong. The second is Anthropic's condition for Claude Code inside Orden, and true of
      every provider; see docs/ai.md, Your own plan. -->
 <p class="hint caption">
   {#if vault.standing === 'open'}

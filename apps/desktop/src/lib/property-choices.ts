@@ -2,7 +2,7 @@
  *  offers a menu rather than a field somebody has to spell something into.
  *
  *  Only keys the app itself writes and reads, and only where the set really is
- *  fixed: a colour nib does not draw is not a colour, and a paper size no printer
+ *  fixed: a colour Orden does not draw is not a colour, and a paper size no printer
  *  has is not a size. Everything else is anybody's to write, which is what a note's
  *  metadata mostly is - a tag, a title, a date.
  *
@@ -17,7 +17,7 @@ import { ORIENTATIONS, PAPER_SIZES } from './paper'
 
 export const PROPERTY_CHOICES: Record<string, readonly string[]> = {
   [ICON_COLOUR_KEY]: ACCENTS.map((one) => one.id),
-  // The two nib's own `export:` page setup names. Written at the top level as well
+  // The two Orden's own `export:` page setup names. Written at the top level as well
   // as under `export:` by notes that came from Typora, and a row is a row either
   // way; the nested pairs of a map are chips and stay chips, because what a key two
   // deep means belongs to whoever wrote it.

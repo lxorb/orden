@@ -1,5 +1,5 @@
-/** `run_agent` and `agent_result` for an agent that reaches nib through `nib mcp`: the
- *  AI panel's own Claude Code and Codex, and an agent the reader runs outside nib. The
+/** `run_agent` and `agent_result` for an agent that reaches Orden through `nib mcp`: the
+ *  AI panel's own Claude Code and Codex, and an agent the reader runs outside Orden. The
  *  helpers themselves are lib/ai/helpers', fetched with the first call; this only reads
  *  who asked and says the answer the contract's way.
  *

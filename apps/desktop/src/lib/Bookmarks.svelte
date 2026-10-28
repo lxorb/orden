@@ -95,7 +95,7 @@
       note: named ? rowName(entry.name, entry.is_dir) : null,
       path: entry.path,
       // The mark the file list gives the same row: a folder that a reader
-      // bookmarked is a folder with no note of its own - one nib nested would have
+      // bookmarked is a folder with no note of its own - one Orden nested would have
       // been bookmarked as its note - so it wears the page with nothing written on
       // it, quietly, exactly as it does in the tree. See file-mark.ts.
       kind: entry.is_dir ? 'file' : fileMark(entry.name),

@@ -2350,7 +2350,7 @@ describe('a web note’s old copies', () => {
 describe('another sync tool’s copy', () => {
   const CLASH = 'Plan (# Name clash 2026-10-05 a1b2c3C #).md'
 
-  /** A mirror from before nib knew better: it tracks the copy as a note. */
+  /** A mirror from before Orden knew better: it tracks the copy as a note. */
   async function tracking() {
     const id = fake.addRemote(CLASH, 'theirs\n')
     fake.disk.set(`${ROOT}/${CLASH}`, 'theirs\n')

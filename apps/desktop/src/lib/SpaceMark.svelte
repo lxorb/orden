@@ -38,7 +38,7 @@
 
   /** Whether anything will actually be drawn. Asking whether an icon was chosen is
    *  not the same question: a space keeps whatever name it was given, and a name no
-   *  set holds - one a newer nib writes, one somebody typed, one out of a set this
+   *  set holds - one a newer Orden writes, one somebody typed, one out of a set this
    *  build leaves out - draws nothing at all. That was a badge with an empty square
    *  in it, which is what `shapeFor` in icons.ts says must never happen: three cases
    *  look the same to a reader and all three wear the space's letter. */

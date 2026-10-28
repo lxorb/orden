@@ -16,7 +16,7 @@ import {
 } from './shared'
 import { plain } from '../views/inline'
 
-/** What another app hands nib, and what that becomes.
+/** What another app hands Orden, and what that becomes.
  *
  *  Everything crossing the bridge is a string written by Kotlin, so the first
  *  half of this is about strings that are not what they claim to be: a page that

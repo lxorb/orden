@@ -13,7 +13,7 @@ const SOURCE = /^view-source:/i
 
 /** Whether an address is one a web tab may open: the web, and not the app.
  *
- *  The app's own origins are refused because a tab holding nib inside nib is a
+ *  The app's own origins are refused because a tab holding Orden inside Orden is a
  *  page whose script sits beside the app's, and every other scheme is refused
  *  because a tab is a browser and not a way to reach this machine. The crate says
  *  the same thing again on every navigation, which is what makes it true for the
@@ -52,7 +52,7 @@ export function plainOrigin(url: string): string {
     return url
   }
 
-  // nib's own pages read as their whole address, as `chrome://history` does; see
+  // Orden's own pages read as their whole address, as `chrome://history` does; see
   // own-pages.ts.
   if (parsed.protocol === 'nib:') return url
 

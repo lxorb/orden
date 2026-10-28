@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Where a message is written (docs/chats.md 4.15): a small nib editor, the notes'
+  /** Where a message is written (docs/chats.md 4.15): a small Orden editor, the notes'
    *  own live preview, one line that grows to a third of the chat and then scrolls,
    *  with the chat's name faint in it while it is empty.
    *

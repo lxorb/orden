@@ -1,7 +1,7 @@
 /** The strip's own menu: what a right click or a held finger on the empty stretch
  *  of a tab strip offers, beside the tabs rather than on any one of them.
  *
- *  Chrome's rows there, trimmed to what nib has behind them: a new tab, the tab
+ *  Chrome's rows there, trimmed to what Orden has behind them: a new tab, the tab
  *  closed last back, and every tab in the strip closed. Emil, 2026-09-30: *"when you
  *  click on the bar here there should be the option: reopen closed tab"*.
  *

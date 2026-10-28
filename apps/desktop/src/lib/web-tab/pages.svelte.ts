@@ -1200,7 +1200,7 @@ class Pages {
   }
 
   /** The engine's own print dialog for the page - the one the reader knows from their
-   *  browser, rather than anything of nib's, which is about a note. */
+   *  browser, rather than anything of Orden's, which is about a note. */
   async print(tabId: string): Promise<void> {
     if (!isDesktop || !this.held.get(tabId)?.live) return
     await invoke('web_print', { tab: tabId }).catch(() => undefined)

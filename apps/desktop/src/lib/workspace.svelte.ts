@@ -971,7 +971,7 @@ class Workspace {
             : { ...draft, dirty: false, doc }
         }
 
-        // Never a tab: an older nib's goes, its unwritten words written first.
+        // Never a tab: an older Orden's goes, its unwritten words written first.
         if (isScratchpad(draft.path)) {
           if (draft.dirty && draft.path)
             await writeFile(draft.path, draft.doc).catch(() => undefined)
@@ -1052,7 +1052,7 @@ class Workspace {
       (await ahead.noteAhead(path)) ??
       (await invoke<string>('read_note', { path }).catch(() => null))
     if (text === null) return null
-    // A canvas or a page note whose text stopped being one while nib was closed is
+    // A canvas or a page note whose text stopped being one while Orden was closed is
     // not put back as a blank plane, which its first stroke would write over the
     // file: it is refused as its open refuses it (`openCanvas`, `openDeck`).
     if (draft.kind === 'canvas' || draft.kind === 'pages') {
@@ -2044,7 +2044,7 @@ class Workspace {
 
     const path = this.spelled(asked)
     // Already open, before anything is written: the conversion below makes a file. Off
-    // the desktop app such a tab is an older sitting's frame inside nib (#206): it goes.
+    // the desktop app such a tab is an older sitting's frame inside Orden (#206): it goes.
     const held = this.opened.at(path)
     if (held) {
       if (await this.handedOut(path)) {
@@ -4003,7 +4003,7 @@ class Workspace {
    *
    *  The row's own gesture for what a drag does: `A.md` becomes `A/A.md` and the
    *  new note arrives beside it, waiting for a name. A row that is already a
-   *  folder - one nib nested, or one out of somebody's vault - only gets the new
+   *  folder - one Orden nested, or one out of somebody's vault - only gets the new
    *  note, and a row that can hold nothing gets nothing: a PDF or a picture is not
    *  a place.
    *

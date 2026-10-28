@@ -652,7 +652,7 @@ class Links {
    *  A website is a shortcut file now - `Svelte docs.url` - and its name says so,
    *  which is why no list asks this any more. What is left in here is the old format:
    *  a `.md` note with `url:` in its front matter, from a space written by an older
-   *  nib. So this map is what says a note wants converting, and the only thing it
+   *  Orden. So this map is what says a note wants converting, and the only thing it
    *  says; see web-tab/shortcut.ts and `workspace.asShortcut`.
    *
    *  The same shape as the icons above and for the same reason: a space of a

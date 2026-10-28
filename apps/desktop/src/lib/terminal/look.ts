@@ -1,4 +1,4 @@
-/** A terminal dressed in nib's own tokens, so it reads as part of the window and not as
+/** A terminal dressed in Orden's own tokens, so it reads as part of the window and not as
  *  a black box dropped into it.
  *
  *  The ground and the ink are the note's, the cursor is the accent, a selection is the

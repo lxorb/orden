@@ -1,5 +1,5 @@
 /** Reminders the page rings itself, while it runs: where nothing on the device would ring
- *  them with nib closed (Linux, the browser build, an iPhone for now), or where the
+ *  them with Orden closed (Linux, the browser build, an iPhone for now), or where the
  *  system refused the plan (docs/tasks.md 5.10).
  *
  *  A timer each, for the ones inside the next three weeks (a timer cannot wait longer;

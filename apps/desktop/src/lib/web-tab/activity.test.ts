@@ -69,7 +69,7 @@ describe('activity', () => {
     await one.check()
     expect(one.active).toBe(true)
 
-    // The same input with another program in front was not nib's.
+    // The same input with another program in front was not Orden's.
     now += IDLE_AFTER + 1
     system = { idleMs: 2_000, front: false }
     await one.check()

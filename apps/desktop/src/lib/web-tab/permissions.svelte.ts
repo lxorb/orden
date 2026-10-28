@@ -45,7 +45,7 @@ const STORAGE_KEY = 'nib:web-grants'
  *  The list is the engine's, not a choice: these are the permission kinds `WebView2`
  *  raises a request for, which is also the list Chrome's own site settings show. What
  *  is **not** here is the hardware buses - Bluetooth, USB, serial, HID - and the
- *  credential store: the engine raises no request for those, and nothing of nib's
+ *  credential store: the engine raises no request for those, and nothing of Orden's
  *  hides them from a page either, since a page is handed nothing of the app's (see
  *  src-tauri/src/web_worlds.rs). A device chooser or a passkey is the engine's and the
  *  system's to ask about, at the moment the page asks. */

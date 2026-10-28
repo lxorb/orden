@@ -4,7 +4,7 @@
  *
  *  The engine used to do it for us, and it was turned off (b3162238) because it
  *  cannot do it here: the runtime hides the pointer from one browser process and
- *  only that process shows it again, while nib's window holds several - its own
+ *  only that process shows it again, while Orden's window holds several - its own
  *  page and every web page's - so typing an address over a page left the pointer
  *  gone until it wandered back over the app. This is the same behaviour done inside
  *  the app's own page, as a style, so nothing another process does can leave it

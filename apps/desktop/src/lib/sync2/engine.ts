@@ -180,7 +180,7 @@ export class Engine implements AskedEngine {
   }
 
   /** The entry a file on this disk is. None for another sync tool's copy, even one the
-   *  account has from before nib knew better: nothing heard about one is sent, and no
+   *  account has from before Orden knew better: nothing heard about one is sent, and no
    *  tab holding one joins a room (@orden/sync-core/foreign). */
   entryAt(path: string) {
     const placed = this.placed(path)
@@ -345,7 +345,7 @@ export class Engine implements AskedEngine {
       return
     }
     // One that is not - a canvas, a note before its document arrived - takes the file's
-    // words the way it takes another program's, three ways against nib's last write.
+    // words the way it takes another program's, three ways against Orden's last write.
     await this.core.commit(await foldIn(this.core, placed.space, entry))
   }
 
@@ -365,7 +365,7 @@ export class Engine implements AskedEngine {
     })
   }
 
-  /** A note whose words in a tab and in its document both moved past what nib last
+  /** A note whose words in a tab and in its document both moved past what Orden last
    *  wrote, too far to merge quietly: held, like another program's edit (binding.ts). */
   holdFile(id: string, base: string, local: string): Promise<void> {
     const against = { t: 'file', base, local } as const

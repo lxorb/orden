@@ -1,4 +1,4 @@
-<!-- Whether nib is the default browser, and the press that asks the system to make it
+<!-- Whether Orden is the default browser, and the press that asks the system to make it
      one: the control on the Default browser row. Chrome's and Edge's shape - a button
      while it is not, the tick the app's menus mark a choice with once it is - and
      nothing at all until the system has answered, so a button never turns into a tick

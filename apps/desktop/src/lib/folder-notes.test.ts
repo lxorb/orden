@@ -91,7 +91,7 @@ describe('the note a folder is drawn as', () => {
   })
 
   /** The other convention in the wild, read so a vault that uses it reads as
-   *  nested here too. nib never writes one. */
+   *  nested here too. Orden never writes one. */
   test('or the index note a vault or a site generator put there', () => {
     expect(folderNote(folder('/s/A', [note('/s/A/index.md')]))?.path).toBe('/s/A/index.md')
     expect(folderNote(folder('/s/A', [note('/s/A/INDEX.md')]))?.path).toBe('/s/A/INDEX.md')
@@ -193,9 +193,9 @@ describe('the way back out', () => {
     expect(unnesting(folder('/s/A'))).toBeNull()
   })
 
-  /** nib undoes what nib did. A folder whose note is an `index.md` is somebody
+  /** Orden undoes what Orden did. A folder whose note is an `index.md` is somebody
    *  else's layout, and taking it apart because a reader moved the last note out
-   *  of it would be rearranging a vault nib was asked to show. */
+   *  of it would be rearranging a vault Orden was asked to show. */
   test('and a folder holding only an index note is left exactly as it is', () => {
     expect(unnesting(folder('/s/A', [note('/s/A/index.md')]))).toBeNull()
   })

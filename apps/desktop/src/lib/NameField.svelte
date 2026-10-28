@@ -6,7 +6,7 @@
    *  font, the row's colour, the row's ground, no box of its own and nothing that
    *  moves the words by a pixel - so renaming happens where the name is, with the
    *  mark and the indentation and the twist still beside it. That is what Finder,
-   *  Explorer and VS Code all do; nib used to put a full-width field over the
+   *  Explorer and VS Code all do; Orden used to put a full-width field over the
    *  whole row instead, which is what this replaces.
    *
    *  What is not here is what a commit means. Renaming a note rewrites every link

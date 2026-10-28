@@ -7,7 +7,7 @@
  *
  *  Every width here is a tab's pitch - how far the next tab starts after this one.
  *  Chrome counts its widths with the eighteen pixels two neighbours overlap by,
- *  because its tabs share their feet; nib's sit edge to edge and draw the feet
+ *  because its tabs share their feet; Orden's sit edge to edge and draw the feet
  *  outside the box, so each of Chrome's widths is eighteen less here.
  *
  *  Everything counts along the strip, in the direction the interface reads: the

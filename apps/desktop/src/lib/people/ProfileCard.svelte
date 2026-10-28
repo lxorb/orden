@@ -2,7 +2,7 @@
   /** A person's card: their face, their name, their pronouns and status, the time where
    *  they are when it is not the reader's, and the few words they wrote about
    *  themselves. Slack's card, with nothing that is not about the person: no Message
-   *  (nib's chats are channels in spaces, never direct), no menu.
+   *  (Orden's chats are channels in spaces, never direct), no menu.
    *
    *  A layer beside what was pressed, closed by Escape, a press anywhere else and back.
    *  On the reader's own card the one button is Edit, which is where all of it is

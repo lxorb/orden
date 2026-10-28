@@ -21,7 +21,7 @@ import { workspace } from './workspace.svelte'
 
 /** Where a pressed link ends up: in front of the reader, in the strip without taking
  *  them there, out in the browser this app is not, or nowhere at all - which is what
- *  a note asking for a scheme nib hands nobody deserves. */
+ *  a note asking for a scheme Orden hands nobody deserves. */
 export type LinkPlace = 'here' | 'behind' | 'system' | 'nowhere'
 
 /** The buttons a link answers, in the DOM's numbering. Said once, because the surfaces
@@ -36,7 +36,7 @@ export function opensLink(press: LinkPress): boolean {
 
 /** The page a link means, or null when it is not one a tab may hold: a `mailto:` and a
  *  `tel:` address something that is not a browser, every other scheme is one a tab
- *  would have to stop being a browser to show, and the app's own origins would put nib
+ *  would have to stop being a browser to show, and the app's own origins would put Orden
  *  inside a tab with a site's script beside it. The rule the address field is held to,
  *  asked of one link; the crate says it again in Rust because the links inside a page
  *  are judged by it too. See web-tab/address.ts and `allowed` in web_tabs.rs. */
@@ -59,14 +59,14 @@ function holdsPages(): boolean {
 /** Where one press on one link goes: the whole of the decision, and pure, so which
  *  modifier means what has tests rather than five surfaces that might disagree.
  *
- *  * A scheme nib hands nobody goes nowhere, and anything that is not a page goes to
+ *  * A scheme Orden hands nobody goes nowhere, and anything that is not a page goes to
  *    the system whatever is held down. No modifier turns an email address into a page.
  *  * Otherwise it is the browser's rule every surface keeps, in new-tab.ts: the middle
  *    button and the modifier open it behind, the modifier with Shift and Shift alone
  *    in front. The way out to the system browser is the link's own right-click row;
  *    see `linkEntries` in editor-menu.ts.
  *  * A plain press opens it in front. A browser would use the tab the link was in;
- *    nib will not, because that tab is a note somebody is reading and replacing it
+ *    Orden will not, because that tab is a note somebody is reading and replacing it
  *    loses their place. A tab in front is as near as that gets - the page is what they
  *    are looking at, and the note is one tab away. */
 export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkPlace {
