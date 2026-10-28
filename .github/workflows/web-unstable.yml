@@ -82,7 +82,9 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       # In a worktree of its own, outside this one, so that nothing either build looks up
-      # on the way - a lockfile, a config - is the other's.
+      # on the way - a lockfile, a config - is the other's. Its packages are named by
+      # their folders below, never by their names: main may still call them by the old
+      # ones (#367).
       - name: Check out that main
         if: steps.live.outputs.main
         run: |
@@ -101,14 +103,14 @@ jobs:
         if: steps.live.outputs.main
         working-directory: ${{ runner.temp }}/main
         run: |
-          pnpm --filter @orden/desktop build
+          pnpm --filter ./apps/desktop build
           bash scripts/web-channels.sh apps/desktop/dist "$GITHUB_WORKSPACE/apps/desktop/dist"
 
       # The Worker's bundle carries nibd for the machines it hands it to, as main's does.
       - name: Build nibd for the Worker's bundle
         if: steps.live.outputs.main
         working-directory: ${{ runner.temp }}/main
-        run: pnpm --filter @orden/machine build
+        run: pnpm --filter ./services/machine build
 
       # No migration: main's ran when main deployed this Worker. And no containers: the
       # machines' image is main's, built and rolled out by main's deploy, and nothing
@@ -117,7 +119,7 @@ jobs:
         if: steps.live.outputs.main
         working-directory: ${{ runner.temp }}/main
         run: |
-          pnpm --filter @nib/sync run deploy \
+          pnpm --filter ./services/sync run deploy \
             --containers-rollout none \
             --tag "main-${MAIN::12}" \
             --message "main $MAIN unstable ${GITHUB_SHA::12}"
