@@ -328,7 +328,7 @@ which is in the repository:
    Apple Push Notifications service): `wrangler secret put APNS_KEY` with the `.p8`, and
    the vars `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_TOPIC` (the bundle id) and, for a
    development build, `APNS_SANDBOX=true`.
-4. `pnpm --filter @nib/sync migrate:remote` for `0044_push.sql`, and a deploy, which also
+4. `pnpm --filter @orden/sync migrate:remote` for `0044_push.sql`, and a deploy, which also
    adds the minute's cron.
 
 What is not built, by Emil's decision (docs/chats.md 7.4: none of the keys exist): the

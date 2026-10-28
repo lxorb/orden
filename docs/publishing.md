@@ -715,7 +715,7 @@ because the drawing is a publish-time pass over the space.
   asked its browser for and fails if one of them is somebody else's; on 12.09.2026
   that list was the page, its two stylesheets, the three KaTeX faces its equations
   are set in, and the one picture the fixture names and the space does not hold.
-- `pnpm --filter @nib/sync test` covers the rest: the stylesheet is the one the
+- `pnpm --filter @orden/sync test` covers the rest: the stylesheet is the one the
   generator writes, it is served and cached, every class the page uses has a rule
   in it, the fences are coloured, the headings have ids, nothing runs, and the
   maths sheet and its faces are served from the blog with nothing left on the page

@@ -26,7 +26,7 @@
 
 - [ ] Migration: `alter table notes add column deleted_at integer; alter table spaces add column deleted_at integer;`
 - [ ] Tests (harness from `test/harness.ts`): after `DELETE /v1/notes/:id` the R2 object still exists and the row has `deleted = 1`, `deleted_at` set, `size`/`hash` unchanged; after `DELETE /v1/spaces/:id` its notes and objects still exist and the space has `deleted_at`.
-- [ ] Implement; run `pnpm --filter @nib/sync test`; commit `feat: deleted notes and spaces are kept`.
+- [ ] Implement; run `pnpm --filter @orden/sync test`; commit `feat: deleted notes and spaces are kept`.
 
 ### Task 2: Listing and restoring
 

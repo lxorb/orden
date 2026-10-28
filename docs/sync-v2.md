@@ -1669,7 +1669,7 @@ here as they were planned.
 
 | where | what | lane |
 | --- | --- | --- |
-| `@orden/sync-core` (`packages/sync-core`, beside `packages/rooms`; `@nib/sync` is already the Worker's name) | `merge3`, `diverge`, `textops`, `seed`, `tree`, `outbox`, `wire`, `plane-diverge`; pure, shared by app and Worker | core |
+| `@orden/sync-core` (`packages/sync-core`, beside `packages/rooms`; `@orden/sync` is already the Worker's name) | `merge3`, `diverge`, `textops`, `seed`, `tree`, `outbox`, `wire`, `plane-diverge`; pure, shared by app and Worker | core |
 | `src-tauri/src/sync_store.rs` | the sync store (SQLite through `rusqlite`, bundled, now on every target) and its batched commands | store |
 | `src-tauri/src/space_watch.rs` | the space folder watcher (`notify`), debounced, with file identities | store |
 | `lib/web/sync-store.ts` | the same store over IndexedDB for the browser build | store |

@@ -165,7 +165,7 @@ and the container application, which the first `wrangler deploy` of the machines
 3. **The bucket** (EU):
    `wrangler r2 bucket create nib-homes --jurisdiction eu`
 4. **The migration** on the real database:
-   `pnpm --filter @nib/sync migrate:remote` (applies `0045_machines.sql`; Emil's account
+   `pnpm --filter @orden/sync migrate:remote` (applies `0045_machines.sql`; Emil's account
    `78180341-d10b-4bea-92dc-f327035ebfac` is on the allow-list and is the admin from it).
 5. **Move the machines into the deployed config** (done 2026-10-05): the `MACHINES`
    binding, the `v3` migration tag, the `containers` block, the `HOMES` bucket and
