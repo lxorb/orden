@@ -95,7 +95,8 @@ function workspaceFile(specifier: string): string | null {
   const name = WORKSPACE.find((one) => specifier === one || specifier.startsWith(`${one}/`))
   if (!name) return null
 
-  const folder = join(ROOT, 'packages', name.slice('@nib/'.length))
+  // The folder is the name after its scope, whichever scope the package is in now (#367).
+  const folder = join(ROOT, 'packages', name.slice(name.indexOf('/') + 1))
   const manifest = JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8')) as {
     exports?: Record<string, string>
   }
