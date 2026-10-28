@@ -14,8 +14,8 @@
  *  on the server checks the same, and `nibd` takes it only with the machine's secret. */
 
 import type { Env } from '../types'
-import type { MachineHost } from '@nib/online'
-import type { Refusal } from '@nib/online/wire'
+import type { MachineHost } from '@orden/online'
+import type { Refusal } from '@orden/online/wire'
 import { audit, type Place } from './audit'
 import { bundleSha } from './bundle'
 import { cloudInit, sshKeyOf } from './cloudinit'

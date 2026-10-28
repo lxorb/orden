@@ -17,9 +17,9 @@ import { audit } from './audit'
 import { NOT_FOUND } from './door'
 import { whyNotWake } from './gate'
 import { mayMakeSession, mayStart } from './limits'
-import { ALLOWANCE, type HostKind, resetAt } from '@nib/online'
+import { ALLOWANCE, type HostKind, resetAt } from '@orden/online'
 import { usedOf } from './meter'
-import { MOST_SESSIONS, type Refusal, type SessionNow } from '@nib/online/wire'
+import { MOST_SESSIONS, type Refusal, type SessionNow } from '@orden/online/wire'
 import { allowed, serviceOf } from './service'
 
 interface Online {
@@ -111,7 +111,7 @@ function serverOf(machine: MachineRow) {
   }
 }
 
-/** A refusal as the app reads it: one of `@nib/online`'s codes, which the app turns into
+/** A refusal as the app reads it: one of `@orden/online`'s codes, which the app turns into
  *  words, rather than a sentence of the Worker's. */
 const refused = (error: Refusal) => ({ error })
 

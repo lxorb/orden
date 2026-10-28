@@ -24,7 +24,7 @@
 import { spawn } from 'node:child_process'
 import { existsSync, lstatSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { type ImageKind, isImageId, MOST_IMAGE } from '@nib/online/wire'
+import { type ImageKind, isImageId, MOST_IMAGE } from '@orden/online/wire'
 import { asUser, SETPRIV, type User } from './limits'
 
 /** Pictures on their way at once; a fifth forgets the oldest. */

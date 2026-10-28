@@ -23,7 +23,7 @@
  *  terminal expects and wrapping the text in the brackets when the shell asked for
  *  them. */
 
-import type { ImageKind } from '@nib/online/wire'
+import type { ImageKind } from '@orden/online/wire'
 
 /** The pictures an agent reads, by their type. */
 const KINDS: Record<string, ImageKind> = {

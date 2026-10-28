@@ -11,7 +11,7 @@
  *
  *  Pure of the page: the clock is the world's, so the tests drive it with a fake. */
 
-import type { DownReason } from '@nib/online/wire'
+import type { DownReason } from '@orden/online/wire'
 import { t } from '../i18n.svelte'
 import type { Machine } from '../terminal/source'
 import { refusalWords } from './words'

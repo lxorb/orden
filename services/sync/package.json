@@ -31,7 +31,7 @@
     "@nib/bases": "workspace:*",
     "@nib/chats": "workspace:*",
     "@nib/markdown": "workspace:*",
-    "@nib/online": "workspace:*",
+    "@orden/online": "workspace:*",
     "@nib/rooms": "workspace:*",
     "@nib/sync-core": "workspace:*",
     "hono": "^4.13.5",

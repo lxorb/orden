@@ -12,7 +12,7 @@
  *  The pty's source is here; the socket's is lib/online/source.ts, fetched with the
  *  first online terminal and never before. */
 
-import type { DownReason, ImageKind } from '@nib/online/wire'
+import type { DownReason, ImageKind } from '@orden/online/wire'
 import { toBase64 } from '../bytes'
 import { Channel } from '../native'
 import { isNumber, isRecord } from '../stored'

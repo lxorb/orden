@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { type ClientFrame, IMAGE_PART, type ServerFrame } from '@nib/online/wire'
+import { type ClientFrame, IMAGE_PART, type ServerFrame } from '@orden/online/wire'
 import { ApiError } from '../api'
 import type { Said } from '../terminal/source'
 import { termSession } from './calls'

@@ -12,7 +12,7 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
-import { MOST_IMAGE } from '@nib/online/wire'
+import { MOST_IMAGE } from '@orden/online/wire'
 import { AS_USER_SCRIPT, Images, NAMED, type Run, runChild } from './images'
 import type { User } from './limits'
 

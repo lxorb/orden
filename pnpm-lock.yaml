@@ -82,7 +82,7 @@ importers:
       '@nib/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown
-      '@nib/online':
+      '@orden/online':
         specifier: workspace:*
         version: link:../../packages/online
       '@nib/rooms':
@@ -515,7 +515,7 @@ importers:
 
   services/machine:
     dependencies:
-      '@nib/online':
+      '@orden/online':
         specifier: workspace:*
         version: link:../../packages/online
       '@xterm/addon-serialize':
@@ -606,7 +606,7 @@ importers:
       '@nib/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown
-      '@nib/online':
+      '@orden/online':
         specifier: workspace:*
         version: link:../../packages/online
       '@nib/rooms':

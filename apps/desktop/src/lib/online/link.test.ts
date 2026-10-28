@@ -1,4 +1,4 @@
-import { outFrame, text } from '@nib/online/wire'
+import { outFrame, text } from '@orden/online/wire'
 import { describe, expect, test } from 'vitest'
 import { BEAT_EVERY } from '../backoff'
 import { type Heard, Link, type LinkWorld, OPEN_WITHIN, PROBE_WITHIN } from './link'

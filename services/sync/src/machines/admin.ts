@@ -15,7 +15,7 @@ import { sshKeyOf } from './cloudinit'
 import { Hetzner } from './hetzner'
 import { firewallRules, hetznerMissing } from './hetzner-host'
 import { NOT_FOUND } from './door'
-import { monthOf } from '@nib/online'
+import { monthOf } from '@orden/online'
 import { serviceOf, setService } from './service'
 
 interface Admin {

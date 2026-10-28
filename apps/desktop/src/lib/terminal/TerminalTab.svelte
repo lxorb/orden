@@ -27,7 +27,7 @@
   import FindBar from '../FindBar.svelte'
   import { t } from '../i18n.svelte'
   import { dur } from '../motion'
-  import { hostOf } from '@nib/online/urls'
+  import { hostOf } from '@orden/online/urls'
   import OnlineStatus from '../online/OnlineStatus.svelte'
   import type { Tab } from '../workspace.svelte'
   import { sessionOf } from './sessions.svelte'

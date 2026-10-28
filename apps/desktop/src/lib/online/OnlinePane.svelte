@@ -20,7 +20,7 @@
    *
    *  Fetched as it is opened, never before. */
   import { i18n, t } from '../i18n.svelte'
-  import { diskNear, diskShare, shares } from '@nib/online'
+  import { diskNear, diskShare, shares } from '@orden/online'
   import { prompt } from '../prompt.svelte'
   import { settings } from '../settings.svelte'
   import { within } from '../space-paths'

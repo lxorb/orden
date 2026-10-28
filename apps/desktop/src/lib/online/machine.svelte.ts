@@ -6,7 +6,7 @@
  *  Settings agree without either polling. Fetched with the first online terminal or the
  *  Settings pane, never at launch. */
 
-import { type MachineState, near } from '@nib/online'
+import { type MachineState, near } from '@orden/online'
 import { type Online, online, refusedOf, type Refused, startStop } from './calls'
 
 class OnlineMachine {

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, test } from 'vitest'
-import type { NibdFrame } from '@nib/online/wire'
+import type { NibdFrame } from '@orden/online/wire'
 import { Nibd } from './nibd'
 
 const made: { nibd: Nibd; state: string }[] = []

@@ -1,7 +1,7 @@
 /** A link to a running `nibd`, as `Machine` holds one: for the drives of a real process. */
 
 import { WebSocket } from 'ws'
-import { linkFrame, nibdFrameOf, type MachineFrame, type NibdFrame } from '@nib/online/wire'
+import { linkFrame, nibdFrameOf, type MachineFrame, type NibdFrame } from '@orden/online/wire'
 
 export interface Link {
   frames: NibdFrame[]

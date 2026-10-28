@@ -370,7 +370,7 @@ async function main() {
   )
   log('a sign-in callback was made on the machine')
 
-  // 7. A paste of 200 000 bytes, in the app's frames (inputChunks in @nib/online/wire),
+  // 7. A paste of 200 000 bytes, in the app's frames (inputChunks in @orden/online/wire),
   //    read by `head` in raw mode so no line limit of the terminal's stands in the way.
   back.type('stty -icanon; head -c 200000 > /tmp/big; stty icanon; echo big-$(wc -c < /tmp/big)\r')
   await pause(1000)

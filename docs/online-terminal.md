@@ -290,7 +290,7 @@ A machine is **asleep** (nothing billed but storage), **starting**, **awake**, o
 Cloudflare stops an instance "shortly after the Durable Object becomes inactive" unless told to
 wait, up to 6 hours (`setInactivityTimeout`, [lifetime][cf-sb-life]); `Machine` keeps that wait
 at 20 minutes and decides itself, on an alarm every minute while awake, with one pure function
-(`awake` in `@nib/online`, 6.1). The machine stays awake while **any** of:
+(`awake` in `@orden/online`, 6.1). The machine stays awake while **any** of:
 
 - **somebody is using one of its terminals**: a socket is open from a device whose person is
   **active** by the hub's own rule - a key or the pointer in nib in the last 5 minutes
@@ -419,7 +419,7 @@ terminal's selection is a local thing.
 - **Taken out** of a space, or `typing` turned off, closes or downgrades their sockets in the
   same request, as `roomsRevoked` does for notes.
 
-**The wire**, typed in `@nib/online/wire` and framed with `@nib/sync-core/wire`:
+**The wire**, typed in `@orden/online/wire` and framed with `@nib/sync-core/wire`:
 
 - `GET /v2/online/:term/socket`, upgraded; subprotocols `nib.token.<token>` and
   `nib.device.<id>`, as the hub's. From the app: `hello {since?, cols, rows}`, `in {data}`
@@ -669,7 +669,7 @@ on the person's computer, port forwarding for the sign-in's way back, and the cl
   {session, url}` up the link; `Machine` sends `browse {url}` to **one** socket of the
   machine's owner on that session - the device that typed there last, else the one seen
   last - and to nobody else: a watcher is never sent a page by somebody else's machine.
-  Only `http` and `https` (`isWebUrl` in `@nib/online/urls`), at most ten a minute at
+  Only `http` and `https` (`isWebUrl` in `@orden/online/urls`), at most ten a minute at
   `nibd` and at `Machine`, six a minute a terminal in the app. With no nib connected,
   `nib-open` fails and the program prints the address, as it does on any headless box.
 - **Where it opens** is where a link from the terminal opens (`lib/online/opening.svelte.ts`):
@@ -946,7 +946,7 @@ Six lanes in three waves, at most six agents at once. Each lane reads this docum
 `docs/conventions.md` and the rules for every nib agent first, writes tests for its logic, adds
 every new string to every catalogue in `apps/desktop/src/locales`, and never raises the
 first-paint budget. Files in the app are relative to `apps/desktop/src`, in the Worker to
-`services/sync/src`; the new package is packages/online, `@nib/online`; the machine's own code
+`services/sync/src`; the new package is packages/online, `@orden/online`; the machine's own code
 is services/machine/.
 
 **Nothing in the cloud until Emil says go.** A push to main deploys the Worker (`check.yml`'s
@@ -957,7 +957,7 @@ everything is tested against a fake host and a local `nibd`. Going live is the c
 
 ### 6.1 The interfaces the lanes meet at
 
-Written first, by lane 1, in `@nib/online`'s `types.ts`:
+Written first, by lane 1, in `@orden/online`'s `types.ts`:
 
 ```ts
 type MachineState = 'asleep' | 'starting' | 'awake' | 'stopping'
@@ -981,7 +981,7 @@ function mayType(role: 'read' | 'write' | 'owner' | null, guest: boolean, ownsMa
   typing: Typing): boolean
 ```
 
-`@nib/online/wire` types every frame of 4.6, both links, with codecs and their tests.
+`@orden/online/wire` types every frame of 4.6, both links, with codecs and their tests.
 
 The host behind `Machine` is one interface, so the SDK (or Fly) is one file:
 

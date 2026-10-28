@@ -1,7 +1,7 @@
 /** The budget breaker (docs/online-terminal.md, 4.8, 4.9 and 4.15): the whole service's
  *  estimated spend this month, against Emil's ceiling.
  *
- *  Two kinds of cost. Cloudflare machines are priced by `@nib/online`'s `spend`, at list
+ *  Two kinds of cost. Cloudflare machines are priced by `@orden/online`'s `spend`, at list
  *  prices before any free allowance, so the estimate is above the bill and the breaker
  *  trips early rather than late; past the ceiling none wakes, and an awake one gets ten
  *  minutes and a line on its screens (`Machine`). Hetzner servers cost the same every
@@ -10,7 +10,7 @@
  *  the link to one that is already paid for. The dashboard's own budget alert at the
  *  same number is the second breaker (6.3). */
 
-import { budgetLeft as left, spend } from '@nib/online'
+import { budgetLeft as left, spend } from '@orden/online'
 import type { Env } from '../types'
 import { serviceMonth } from './meter'
 

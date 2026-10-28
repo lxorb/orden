@@ -3,7 +3,7 @@
  *  that needs no words - typing refused (the screen still shows), a frame too fast or too
  *  large, a rate a second press will not hit. */
 
-import type { Refusal } from '@nib/online/wire'
+import type { Refusal } from '@orden/online/wire'
 import { t } from '../i18n.svelte'
 import type { Refused } from './calls'
 

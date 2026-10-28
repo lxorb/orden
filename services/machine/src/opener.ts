@@ -15,7 +15,7 @@
 import { chmodSync, mkdirSync, rmSync } from 'node:fs'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { dirname } from 'node:path'
-import { isWebUrl } from '@nib/online/urls'
+import { isWebUrl } from '@orden/online/urls'
 
 /** Where `nib-open` finds `nibd`. */
 export const OPEN_SOCKET = '/run/nibd/open.sock'

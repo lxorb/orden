@@ -17,7 +17,7 @@
  *  - **Bounds.** Only the web, six a minute a terminal, and the same address once in a
  *    few seconds: a program in a loop is a few tabs, never a wall of them. */
 
-import { callbacksIn, isCallbackOf, isWebUrl } from '@nib/online/urls'
+import { callbacksIn, isCallbackOf, isWebUrl } from '@orden/online/urls'
 import { untrack } from 'svelte'
 import { openExternal } from '../tauri'
 import { pages } from '../web-tab/pages.svelte'

@@ -13,7 +13,7 @@
  *  docs/online-terminal-live.md. */
 
 import type { Env } from '../types'
-import type { HostKind, MachineHost } from '@nib/online'
+import type { HostKind, MachineHost } from '@orden/online'
 import { mayCost } from './budget'
 import { HetznerHost, setupOf } from './hetzner-host'
 import { serviceOf } from './service'

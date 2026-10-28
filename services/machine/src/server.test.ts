@@ -1,7 +1,7 @@
 import type { AddressInfo } from 'node:net'
 import { afterEach, expect, test } from 'vitest'
 import { WebSocket } from 'ws'
-import { linkFrame, nibdFrameOf, type MachineFrame, type NibdFrame } from '@nib/online/wire'
+import { linkFrame, nibdFrameOf, type MachineFrame, type NibdFrame } from '@orden/online/wire'
 import type { Nibd } from './nibd'
 import { serve } from './server'
 

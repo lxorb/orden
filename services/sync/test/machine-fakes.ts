@@ -3,8 +3,8 @@
  *  makes one real `Machine` per id. The state is the hub's stand-in (hub-fakes.ts), the
  *  clock Vitest's. */
 
-import type { MachineHost } from '@nib/online'
-import { linkFrame, type MachineFrame, type NibdFrame } from '@nib/online/wire'
+import type { MachineHost } from '@orden/online'
+import { linkFrame, type MachineFrame, type NibdFrame } from '@orden/online/wire'
 import { unframe } from '@nib/sync-core/wire'
 import { Machine, type Viewer } from '../src/machines/machine'
 import type { Env } from '../src/types'

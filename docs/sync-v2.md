@@ -1401,7 +1401,7 @@ The online terminal (`docs/online-terminal.md`, lane `online-machine`,
 - `GET /v2/online/:term/socket`, upgraded, ahead of the guard like the hub: `nib.token.<token>`
   and `nib.device.<id>`. One query (`machines/reach.ts`) decides the role from the `.term`
   file's id and its space, never its text; the machine's owner reaches their own session
-  from a trashed file too. Frames are `@nib/online/wire`'s.
+  from a trashed file too. Frames are `@orden/online/wire`'s.
 - Behind the guard, accounts only (no guest, no program): `GET /v2/online/machine` (state,
   month, allowance, reset); `POST /v2/online/machine/start` and `/stop`; `POST
   /v2/online/terms {term}` (answers the `.term`'s `{v, machine, session}`; `409 sessions`

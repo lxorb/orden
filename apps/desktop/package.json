@@ -23,7 +23,7 @@
     "@nib/editor": "workspace:*",
     "@orden/glasses": "workspace:*",
     "@nib/markdown": "workspace:*",
-    "@nib/online": "workspace:*",
+    "@orden/online": "workspace:*",
     "@nib/rooms": "workspace:*",
     "@nib/sync-core": "workspace:*",
     "@orden/themes": "workspace:*",

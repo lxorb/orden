@@ -34,7 +34,7 @@ import {
   serverFrameOf,
   socketPath,
   text,
-} from '@nib/online/wire'
+} from '@orden/online/wire'
 import { BEAT } from '@nib/sync-core/wire'
 import { BEAT_EVERY, linkDelay } from '../backoff'
 

@@ -6,7 +6,7 @@
  *  the home but what a shell does and the pictures pasted into a session, which it writes
  *  to `~/.cache/nib/images` as the user, never as root (images.ts): no file of the agents' (`~/.claude`, `~/.codex`)
  *  is read by any code of nib's (4.7). Its whole vocabulary is the link's, from
- *  `@nib/online/wire`.
+ *  `@orden/online/wire`.
  *
  *  It owns no pty itself: every shell is in a holder of its own (hold.ts), which outlives
  *  `nibd`, so a restart of `nibd` - a deploy it picks up, the owner's Restart, its own
@@ -14,9 +14,9 @@
 
 import { mkdirSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Activity } from '@nib/online/types'
-import { isLoopbackUrl } from '@nib/online/urls'
-import type { MachineFrame, NibdFrame, SessionNow } from '@nib/online/wire'
+import type { Activity } from '@orden/online/types'
+import { isLoopbackUrl } from '@orden/online/urls'
+import type { MachineFrame, NibdFrame, SessionNow } from '@orden/online/wire'
 import { diskOf, Meter, homeSize } from './activity'
 import { Held, socketOf } from './held'
 import { Images } from './images'

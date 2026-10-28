@@ -13,7 +13,7 @@ import {
   type MachineState,
   type Term,
   termOf,
-} from '@nib/online'
+} from '@orden/online'
 import { account } from '../account.svelte'
 import { ApiError, request } from '../api'
 import { isNumber, isRecord, isString } from '../stored'

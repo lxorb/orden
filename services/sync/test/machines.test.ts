@@ -2,12 +2,12 @@
  *  and the door against real SQL, and `Machine` driven through a fake host with the
  *  alarm moved by the clock. */
 
-import { mayType } from '@nib/online'
+import { mayType } from '@orden/online'
 import { subprotocol } from '@nib/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { askMachine } from '../src/machines/ask'
-import { PING_EVERY, QUIET_FOR } from '@nib/online/wire'
+import { PING_EVERY, QUIET_FOR } from '@orden/online/wire'
 import { Machine, resumeOf } from '../src/machines/machine'
 import { reachAgain } from '../src/machines/reach'
 import { eraseAccount } from '../src/erase'

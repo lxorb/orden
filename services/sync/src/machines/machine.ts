@@ -60,7 +60,7 @@ import {
   type Typed,
   type Typing,
   type Watcher,
-} from '@nib/online'
+} from '@orden/online'
 import {
   type ClientFrame,
   clientFrameOf,
@@ -80,7 +80,7 @@ import {
   type ServerFrame,
   type SessionNow,
   text,
-} from '@nib/online/wire'
+} from '@orden/online/wire'
 import { reachAgain } from './reach'
 import { stillSignedIn } from '../signins'
 import { serviceOf } from './service'

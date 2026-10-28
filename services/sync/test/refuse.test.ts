@@ -1,7 +1,7 @@
 /** A socket the door turns away for good (refuse.ts): let in, told why, and closed, so
  *  the app reads a refusal rather than a drop it would try again. */
 
-import { serverFrameOf } from '@nib/online/wire'
+import { serverFrameOf } from '@orden/online/wire'
 import { expect, test } from 'vitest'
 import { REFUSED_CLOSE, refuse } from '../src/machines/refuse'
 
