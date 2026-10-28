@@ -1,5 +1,5 @@
 /** What the files of the spaces that are not open wear: a note's chosen icon and its
- *  colour, a website's mark and where it points.
+ *  colour, a website's mark and where it points, and whether a page note holds its PDF.
  *
  *  The link index holds these for the open space and no other - it is a scan of one
  *  space - so a tab, a bookmark or a search hit from another space asked it and got
@@ -28,9 +28,11 @@ interface Worn {
   iconColor: string | null
   favicon: string | null
   address: string | null
+  /** A page note made from a PDF, which wears its mark (#676). */
+  paper: boolean
 }
 
-const NOTHING: Worn = { icon: null, iconColor: null, favicon: null, address: null }
+const NOTHING: Worn = { icon: null, iconColor: null, favicon: null, address: null, paper: false }
 
 /** Whether a file can wear anything at all: a folder, a picture and a PDF cannot,
  *  and are never read. */
@@ -71,6 +73,12 @@ async function wornBy(path: string, content: string): Promise<Worn> {
   }
 }
 
+/** Whether a page note's paper is on the disk; fetched, so the first paint carries none. */
+async function holdsItsPaper(path: string): Promise<boolean> {
+  const [{ onDisk }, { paperOf }] = await Promise.all([import('./on-disk'), import('./pages/held')])
+  return onDisk(paperOf(path))
+}
+
 class Elsewhere {
   /** By `pathKey`, so two spellings of one file are one entry. */
   private readonly held = new SvelteMap<string, Worn>()
@@ -99,9 +107,13 @@ class Elsewhere {
   }
 
   private async read(path: string, key: string, round: number) {
-    const content = await invoke<string>('read_note', { path }).catch(() => null)
+    const [content, paper] = await Promise.all([
+      invoke<string>('read_note', { path }).catch(() => null),
+      // The glasses' plugin opens no page note.
+      !__EVEN_PLUGIN__ && isPagesTarget(path) ? holdsItsPaper(path) : false,
+    ])
     const worn = content === null ? NOTHING : await wornBy(path, content)
-    if (round === this.round) this.held.set(key, worn)
+    if (round === this.round) this.held.set(key, { ...worn, paper })
   }
 
   /** A file outside the open space written by this app: what it wears now. Only for
@@ -111,8 +123,9 @@ class Elsewhere {
     if (!this.held.has(key) || !wears(path)) return
 
     const round = this.round
+    const paper = this.held.get(key)?.paper ?? false
     void wornBy(path, content).then((worn) => {
-      if (round === this.round) this.held.set(key, worn)
+      if (round === this.round) this.held.set(key, { ...worn, paper })
     })
   }
 
