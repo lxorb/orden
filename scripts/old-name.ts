@@ -19,7 +19,8 @@ const WORD = /(?<![A-Za-z])nib(?![a-z])/gi
 
 /** What each one is, by what is written from where it starts; the first that fits. */
 const KINDS: readonly (readonly [Kind, RegExp])[] = [
-  // The workspace's packages, `@nib/markdown`, and everything that imports them.
+  // The workspace's packages, `@nib/markdown`, and everything that imports them. Not a
+  // handle inside an address, `tiktok.com/@nib/video/1`: see `inText`.
   ['package', /^@nib\//],
   // The app's identifier, `ch.emilvinu.nib`: folders, keychains, the phones' ids.
   ['identifier', /^ch[./]emilvinu[./]nib/i],
@@ -78,7 +79,11 @@ export function inText(path: string, text: string): Found[] {
         ? found.index - 1
         : found.index
     const ahead = text.slice(from, from + 60)
-    const [kind] = KINDS.find(([, shape]) => shape.test(ahead)) ?? ['word']
+    // An `@nib/` after a `/` or a `.` is somebody's handle in an address, not a package.
+    const inAddress = text[from] === '@' && /[/.]/.test(text[from - 1] ?? '')
+    const [kind] = inAddress
+      ? (['word'] as const)
+      : (KINDS.find(([, shape]) => shape.test(ahead)) ?? ['word'])
     const line = text.slice(0, found.index).split('\n').length
     const name = /^[@\w./:-]+/.exec(ahead)?.[0] ?? 'nib'
     out.push({ path, line, kind, name })

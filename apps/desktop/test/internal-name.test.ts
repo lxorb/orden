@@ -49,7 +49,7 @@ describe('the old name inside the repo', () => {
       "import { readTask } from '@nib/markdown/task-line'",
       "const KEY = 'nib:ai-sidebar' // stored by nib's own window",
       'listen(\'nib://agent\'); env.NIB_MCP_TOKEN; class="nib-row"; ch.emilvinu.nib',
-      'a nibble is not one',
+      'a nibble is not one, nor https://www.tiktok.com/@nib/video/1',
     ].join('\n')
     expect(inText('a.ts', text).map(({ line, kind, name }) => [line, kind, name])).toEqual([
       [1, 'package', '@nib/markdown/task-line'],
@@ -59,6 +59,7 @@ describe('the old name inside the repo', () => {
       [3, 'variable', 'NIB_MCP_TOKEN'],
       [3, 'dashed', 'nib-row'],
       [3, 'identifier', 'ch.emilvinu.nib'],
+      [4, 'word', '@nib/video/1'],
     ])
   })
 })
