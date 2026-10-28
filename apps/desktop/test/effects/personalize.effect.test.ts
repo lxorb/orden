@@ -10,23 +10,6 @@ import Personalize from '../../src/lib/Personalize.svelte'
 import { modes } from '../../src/lib/modes.svelte'
 import { settings } from '../../src/lib/settings.svelte'
 
-/** jsdom has no animations, and the card flies in. */
-Element.prototype.animate = () => {
-  const animation = {
-    cancel: () => undefined,
-    pause: () => undefined,
-    play: () => undefined,
-    finished: Promise.resolve(),
-    currentTime: 0,
-    startTime: 0,
-    playState: 'finished',
-    effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
-    onfinish: null as (() => void) | null,
-  }
-  setTimeout(() => animation.onfinish?.(), 0)
-  return animation as unknown as Animation
-}
-
 let host: HTMLElement
 let shown: ReturnType<typeof mount> | undefined
 

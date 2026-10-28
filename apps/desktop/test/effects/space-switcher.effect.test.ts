@@ -16,25 +16,6 @@ import { workspace } from '../../src/lib/workspace.svelte'
  *
  *  In the jsdom project because mounting a component needs a document. */
 
-/** The list arrives and leaves with a transition, and Svelte plays one through the
- *  Web Animations API, which jsdom does not implement. This one finishes as soon as
- *  it is asked for, so a list on its way out is gone a moment later. */
-Element.prototype.animate = () => {
-  const animation = {
-    cancel: () => undefined,
-    pause: () => undefined,
-    play: () => undefined,
-    finished: Promise.resolve(),
-    currentTime: 0,
-    startTime: 0,
-    playState: 'finished',
-    effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
-    onfinish: null as (() => void) | null,
-  }
-  setTimeout(() => animation.onfinish?.(), 0)
-  return animation as unknown as Animation
-}
-
 /** The row the keyboard lands on is kept in view, and jsdom has no view. */
 Element.prototype.scrollIntoView = () => undefined
 

@@ -146,23 +146,6 @@ Object.defineProperty(document, 'fonts', {
   configurable: true,
   value: { load: () => Promise.resolve([]) },
 })
-/** Svelte plays a transition through the Web Animations API, which jsdom has not got;
- *  this one is over as soon as it starts, so the bar can go. */
-Element.prototype.animate = () => {
-  const animation = {
-    cancel: () => undefined,
-    pause: () => undefined,
-    play: () => undefined,
-    finished: Promise.resolve(),
-    currentTime: 0,
-    startTime: 0,
-    playState: 'finished',
-    effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
-    onfinish: null as (() => void) | null,
-  }
-  setTimeout(() => animation.onfinish?.(), 0)
-  return animation as unknown as Animation
-}
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')

@@ -38,24 +38,6 @@ await Promise.all([
  *
  *  In the jsdom project because it mounts components into a document. */
 
-/** Svelte plays a transition through the Web Animations API, which jsdom does not
- *  implement. This one is over as soon as it is asked for. */
-Element.prototype.animate = () => {
-  const animation = {
-    cancel: () => undefined,
-    pause: () => undefined,
-    play: () => undefined,
-    finished: Promise.resolve(),
-    currentTime: 0,
-    startTime: 0,
-    playState: 'finished',
-    effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
-    onfinish: null as (() => void) | null,
-  }
-  setTimeout(() => animation.onfinish?.(), 0)
-  return animation as unknown as Animation
-}
-
 /** The card the keys land on is kept in view, and jsdom has no view. */
 Element.prototype.scrollIntoView = () => undefined
 
