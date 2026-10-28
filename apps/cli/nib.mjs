@@ -20,7 +20,7 @@
  *  ship a command at all. Node is already this repository's answer for driving nib
  *  without the app - see scripts/nib-sync.mjs - so this is a Node script beside it.
  *  Run it as `node apps/cli/nib.mjs ...`, or put it on the path with
- *  `pnpm --filter @nib/cli link --global`.
+ *  `pnpm --filter @orden/cli link --global`.
  *
  *  There is no browser build of this and there never will be: a tab has no socket
  *  to listen on. `orden` against the web app says so rather than failing to connect.

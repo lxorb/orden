@@ -12,7 +12,7 @@ import { inText, oldNames } from '../../../scripts/old-name'
 
 /** The workspace's packages already named `@orden/…`, by the name after the scope. One
  *  is added in the change that moves it. */
-const MOVED_PACKAGES: readonly string[] = []
+const MOVED_PACKAGES: readonly string[] = ['cli']
 
 /** This file, and the counter, which say the old names they look for. */
 const SAYING = ['apps/desktop/test/internal-name.test.ts', 'scripts/old-name.ts']

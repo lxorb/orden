@@ -105,7 +105,7 @@ Nothing else, deliberately; see below.
 
 ```sh
 node apps/cli/nib.mjs files list
-pnpm --filter @nib/cli link --global && orden files list
+pnpm --filter @orden/cli link --global && orden files list
 ```
 
 `nib` is the same command under the name it had before, so a script that calls it
