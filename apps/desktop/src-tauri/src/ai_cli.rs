@@ -505,6 +505,11 @@ pub struct Opening {
     /// The nib thread it is for, which the helpers it starts belong to.
     #[serde(default)]
     thread: Option<String>,
+    /// The tools the thread is not given, whatever its mode lists: a task done with AI
+    /// without the ones its settings turned off (#325). Left out of what the program is
+    /// shown, the way a mode leaves its own out (`args::tools_of`).
+    #[serde(default)]
+    without: Vec<String>,
 }
 
 /// Opens a session named `id`: a Claude Code of its own, or a thread on the window's
@@ -577,6 +582,7 @@ pub fn ai_cli_open(
             let from = codex_app::From {
                 fork_of: opening.fork_of.as_deref(),
                 thread: opening.thread.as_deref(),
+                without: &opening.without,
             };
             host.open(&id, output, opening.mode, model, opening.effort, from)?;
             On::Codex(host)
@@ -615,6 +621,7 @@ fn claude_command(
         mode: opening.mode,
         model,
         effort: opening.effort,
+        without: &opening.without,
     };
     let mut command = command(
         program,
@@ -1213,6 +1220,7 @@ exec node '{}' {name} \"$@\"
             mode: Some(Mode::Plan),
             model: Some("opus"),
             effort: Some(Effort::High),
+            without: &[],
         };
         let (claude, heard) = claude_session("answer", shape, dir.path());
 
@@ -1362,6 +1370,7 @@ exec node '{}' {name} \"$@\"
             codex_app::From {
                 fork_of: None,
                 thread: Some("nib-thread-1"),
+                without: &[],
             },
         )
         .expect("opened");
@@ -1515,6 +1524,7 @@ exec node '{}' {name} \"$@\"
             mode: Some(Mode::Full),
             model: Some("opus"),
             effort: Some(Effort::Low),
+            without: &[],
         };
         let two = Shape {
             model: Some("sonnet[1m]"),

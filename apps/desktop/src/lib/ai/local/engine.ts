@@ -184,6 +184,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           model: thread.model || null,
           effort: levelOf(kind, thread.effort),
           thread: thread.id,
+          ...(thread.without?.length ? { without: thread.without } : {}),
         },
         (said) => {
           if (box.live?.hear) box.live.hear(said)

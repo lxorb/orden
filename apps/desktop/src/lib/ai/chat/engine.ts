@@ -134,6 +134,20 @@ function lastModel(thread: Thread): string {
   return ''
 }
 
+/** A thread's listing without the tools it is not given (#325). */
+function given<T extends { tools: ToolDef[] }>(thread: Thread, listing: T): T {
+  const out = thread.without
+  return out?.length
+    ? { ...listing, tools: listing.tools.filter((one) => !out.includes(one.name)) }
+    : listing
+}
+
+/** What a model that calls a tool its thread is not given is told: it was never listed,
+ *  so this is a model that guessed one. In English, for the model. */
+function keptOut(name: string): ToolOutput {
+  return { text: `${name} is not available in this chat.`, images: [], error: true }
+}
+
 /** Builds the API engine. */
 export function createApiEngine(setup: Setup): Engine {
   const tools = setup.tools ?? crateTools
@@ -222,7 +236,7 @@ export function createApiEngine(setup: Setup): Engine {
 
     let listing = { instructions: '', tools: [] as ToolDef[] }
     if (learnt(provider.id, model.id).tools !== false) {
-      listing = await tools.list(provider, thread.mode).catch(() => listing)
+      listing = given(thread, await tools.list(provider, thread.mode).catch(() => listing))
     }
     const system = await systemFor(thread, listing.instructions)
     const perMessage = api === 'anthropic' && learnt(provider.id, model.id).perMessage !== false
@@ -414,7 +428,10 @@ export function createApiEngine(setup: Setup): Engine {
     }
     return await Promise.all(
       calls.map(async (call) => {
-        const ask = () => tools.call(provider, thread.mode, call.name, call.args, thread.id)
+        const ask = (): Promise<ToolOutput> =>
+          thread.without?.includes(call.name)
+            ? Promise.resolve(keptOut(call.name))
+            : tools.call(provider, thread.mode, call.name, call.args, thread.id)
         let output = await ask()
         // Allowed, the same call goes through on the allowance; asked again (a second
         // question the first one stood in front of), it waits again, a few times at most.
@@ -441,9 +458,10 @@ export function createApiEngine(setup: Setup): Engine {
     const provider = providerOf(thread)
     const api = apiOf(provider.kind) ?? 'completions'
     const model = await modelOf(provider, thread.model)
-    const listing = await tools
-      .list(provider, thread.mode)
-      .catch(() => ({ instructions: '', tools: [] }))
+    const listing = given(
+      thread,
+      await tools.list(provider, thread.mode).catch(() => ({ instructions: '', tools: [] })),
+    )
     const system = await systemFor(thread, listing.instructions)
     await compactThread({
       thread,

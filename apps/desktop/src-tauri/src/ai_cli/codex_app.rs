@@ -83,6 +83,8 @@ struct State {
 pub struct From<'a> {
     pub fork_of: Option<&'a str>,
     pub thread: Option<&'a str>,
+    /// The tools the nib thread is not given, whatever its mode lists.
+    pub without: &'a [String],
 }
 
 /// One running app-server.
@@ -189,7 +191,7 @@ impl Host {
         if state.routes.contains_key(id) {
             return Err(format!("{id} is already open"));
         }
-        let mut params = codex_thread(mode, model, &self.nib, &self.folder);
+        let mut params = codex_thread(mode, model, from.without, &self.nib, &self.folder);
         if let (Some(thread), Some(_)) = (from.thread, mode) {
             with_thread(&mut params, thread);
         }

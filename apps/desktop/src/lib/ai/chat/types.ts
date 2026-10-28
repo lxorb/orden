@@ -231,6 +231,9 @@ export interface Thread {
   mode: Mode
   /** The tools the reader said Always to in Approve: asked no more in this thread. */
   always?: string[]
+  /** The tools this thread is not given, whatever its mode lists: a task done with AI
+   *  without the switches Settings › AI › Do with AI turned off (#325). */
+  without?: string[]
   turns: Turn[]
   goal?: Goal
   /** The last request's counts: what the ring draws. */
