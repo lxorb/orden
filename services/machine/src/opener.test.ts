@@ -60,7 +60,7 @@ test('answers only its own path', async () => {
   expect(opened).toEqual([])
 })
 
-test('says so when no nib hears it, so the program prints the address instead', async () => {
+test('says so when no Orden hears it, so the program prints the address instead', async () => {
   const { post } = await started(false)
   expect(await post({ url: 'https://a.b/' })).toBe(503)
 })

@@ -17,7 +17,7 @@
  *  Where it ships: nowhere, on purpose, and that is the lightest thing it could be.
  *  A sidecar would be a second compiled binary in every installer on every platform
  *  for something almost nobody runs, and a sidecar is the only way an installer can
- *  ship a command at all. Node is already this repository's answer for driving nib
+ *  ship a command at all. Node is already this repository's answer for driving Orden
  *  without the app - see scripts/nib-sync.mjs - so this is a Node script beside it.
  *  Run it as `node apps/cli/nib.mjs ...`, or put it on the path with
  *  `pnpm --filter @orden/cli link --global`.

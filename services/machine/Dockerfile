@@ -1,5 +1,5 @@
 # A person's machine on Cloudflare (docs/online-terminal.md 4.2): Ubuntu 24.04 with what a
-# coding agent and its person reach for, `nibd`, and nothing of nib's beyond it.
+# coding agent and its person reach for, `nibd`, and nothing of Orden's beyond it.
 #
 # What is installed is install.sh's, which a Hetzner server runs too (4.15), so the two
 # hosts never drift apart. Built from this folder after `pnpm --filter @orden/machine

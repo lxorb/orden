@@ -58,7 +58,7 @@ function main(): void {
     SHELL: shell,
     TERM: 'xterm-256color',
     COLORTERM: 'truecolor',
-    // As every terminal nib starts on a computer says (src-tauri/src/terminal/shells.rs).
+    // As every terminal Orden starts on a computer says (src-tauri/src/terminal/shells.rs).
     TERM_PROGRAM: 'nib',
     LANG: 'C.UTF-8',
     // A program that asks for a browser gets its owner's own; see opener.ts.

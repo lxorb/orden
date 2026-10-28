@@ -5,7 +5,7 @@
  *  --web`, Claude Code's sign-in, Python's `webbrowser` - is asking for one on its
  *  owner's computer: VS Code Remote's `BROWSER` helper, here. The script posts the
  *  address and the session it was asked in to a socket in the machine's own
- *  filesystem, and `nibd` says it up the link; the `Machine` hands it to its owner's nib
+ *  filesystem, and `nibd` says it up the link; the `Machine` hands it to its owner's Orden
  *  alone. Only the web, a few a minute, and nothing while no link is there to hear it,
  *  which the script answers with a failure so the program prints the address instead.
  *

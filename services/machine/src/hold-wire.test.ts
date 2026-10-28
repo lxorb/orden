@@ -92,7 +92,7 @@ test('a hello that says what no hello is, or a newer kind, is passed over', () =
   expect(said({ ...hello, end: 299 })).toBeNull()
   expect(said({ ...hello, shell: -1 })).toBeNull()
   expect(said({ ...hello, exited: { code: 'no' } })).toBeNull()
-  // A holder from a later nib speaks every word this one knows.
+  // A holder from a later Orden speaks every word this one knows.
   expect(said({ ...hello, v: HOLD_VERSION + 1, more: true })).toMatchObject({ v: 2 })
   expect(fromHolderOf({ kind: 99, body: bytes('{}') })).toBeNull()
   expect(toHolderOf({ kind: 99, body: bytes('{}') })).toBeNull()

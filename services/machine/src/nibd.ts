@@ -1,11 +1,11 @@
 /** `nibd`: every session on the machine, and what it says over the link to `Machine`
  *  (docs/online-terminal.md 4.6).
  *
- *  It knows nothing of nib's accounts, spaces or roles - `Machine` is the door and has
+ *  It knows nothing of Orden's accounts, spaces or roles - `Machine` is the door and has
  *  decided all of that before a frame reaches here - and it never opens anything under
  *  the home but what a shell does and the pictures pasted into a session, which it writes
  *  to `~/.cache/nib/images` as the user, never as root (images.ts): no file of the agents' (`~/.claude`, `~/.codex`)
- *  is read by any code of nib's (4.7). Its whole vocabulary is the link's, from
+ *  is read by any code of Orden's (4.7). Its whole vocabulary is the link's, from
  *  `@orden/online/wire`.
  *
  *  It owns no pty itself: every shell is in a holder of its own (hold.ts), which outlives

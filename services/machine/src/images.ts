@@ -8,8 +8,8 @@
  *  takes one dragged onto a terminal.
  *
  *  The file is the machine's user's, in their own cache, `~/.cache/nib/images`, never
- *  read by anything of nib's again; a day later the next picture clears it away - only
- *  pictures of nib's naming, never anything else that is there. Each part is held in
+ *  read by anything of Orden's again; a day later the next picture clears it away - only
+ *  pictures of Orden's naming, never anything else that is there. Each part is held in
  *  memory until the last, a picture at most `MOST_IMAGE`, four on their way at once, and
  *  one that stops arriving is forgotten after a minute.
  *
@@ -39,10 +39,10 @@ const WRITE_WITHIN = 15_000
 /** The end of a picture's file name, by its kind. */
 const ENDS: Record<ImageKind, string> = { png: 'png', jpeg: 'jpg', gif: 'gif', webp: 'webp' }
 
-/** A picture's file as nib names it, and the only kind of file the clearing removes. */
+/** A picture's file as Orden names it, and the only kind of file the clearing removes. */
 export const NAMED = /^[a-z0-9]{16,64}\.(png|jpg|gif|webp)$/
 
-/** What runs as the user: the folder made, private; pictures of nib's naming older than a
+/** What runs as the user: the folder made, private; pictures of Orden's naming older than a
  *  day gone; the bytes on standard input into `$1`, never through a file already there
  *  (`set -C`); and the path said back. */
 export const AS_USER_SCRIPT = [
@@ -177,7 +177,7 @@ export class Images {
     return path
   }
 
-  /** Pictures of nib's naming older than a day, gone; nothing else. */
+  /** Pictures of Orden's naming older than a day, gone; nothing else. */
   private clear(folder: string): void {
     const before = this.now() - KEPT
     for (const name of readdirSync(folder)) {
