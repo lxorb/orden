@@ -2,7 +2,7 @@ import type { Row } from '@nib/bases'
 import { expect, test, vi } from 'vitest'
 
 vi.mock('../workspace.svelte', () => ({ workspace: { spaces: [] } }))
-const { askOf, keptOut } = await import('./do-task')
+const { askOf, keptOut, lastWords } = await import('./do-task')
 
 const row = { space: 'Home', path: 'Errands.md', anchor: { line: 3, hash: 'abc' } } as Row
 
@@ -44,4 +44,24 @@ test('a switch turned off keeps its tools out, and never the task’s own note o
 
   const all = keptOut(['browser', 'notes', 'edits'])
   for (const own of ['read_note', 'list_tasks', 'update_task']) expect(all).not.toContain(own)
+})
+
+test('it is told a reply in the chat alone is never read', () => {
+  expect(askOf(row, 'Book the dentist')).toContain(
+    'Always end with one of these two update_task calls',
+  )
+})
+
+test('the chat’s last words are its last text, whatever it called after', () => {
+  expect(lastWords(null)).toBe('')
+  const turn = {
+    id: 't',
+    role: 'model',
+    parts: [
+      { kind: 'text', text: 'Reading it.' },
+      { kind: 'tool', id: 'c', verb: 'read_note', args: {}, state: 'ok' },
+      { kind: 'text', text: ' Which landlord? \n' },
+    ],
+  } as unknown as Parameters<typeof lastWords>[0]
+  expect(lastWords(turn)).toBe('Which landlord?')
 })

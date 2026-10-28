@@ -299,6 +299,27 @@ export function withoutNeedsInput(text: string, anchor: Anchor): string {
   return lines.join('\n')
 }
 
+/** The note with the task left asking (#325): `words` written under it as a comment, and
+ *  the task flagged `needs-input`. What nib does itself when a chat doing the task with
+ *  AI ended with it neither ticked nor asked about, as the button promised it would be.
+ *  Null where there is nothing to do: the task gone, done, cancelled or flagged already. */
+export function askedFor(
+  text: string,
+  anchor: Anchor,
+  words: string,
+  stamp: string,
+): string | null {
+  const at = lineOfAnchor(text, anchor)
+  if (at === null) return null
+  const fields = readTask((text.split('\n')[at] ?? '').replace(/\r$/, ''))
+  if (!fields || fields.done || fields.cancelled || fields.tags.includes(NEEDS_INPUT)) return null
+  // The comment goes under the task, so the task's own line is where it was.
+  const commented = withComment(text, anchor, words, stamp) ?? text
+  const lines = commented.split('\n')
+  lines[at] = changedTask(lines[at] ?? '', { tags: [...fields.tags, NEEDS_INPUT] })
+  return lines.join('\n')
+}
+
 /** The note with a comment added under the task, after the last one it has (or at the
  *  end of what it holds), stamped with when it was written. Lines after its first go
  *  under it, so it stays one comment. */

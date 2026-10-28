@@ -6,6 +6,8 @@
 
 import type { Row } from '@nib/bases'
 import { atOf } from '@nib/bases/tasks'
+import type { Turn } from './chat/types'
+import type { Ended } from './commands/types'
 import { AGENT_WINDOW_VERBS, BROWSER_VERBS } from '../agents/verbs'
 import { NEEDS_INPUT } from '../views/task-body'
 import { plain } from '../views/inline'
@@ -28,6 +30,7 @@ const FINISH = [
   'When it is done and you are sure it is, tick it with update_task (done: true) at the place below.',
   'If you are not sure, or what it asks is unclear, or you need something from me, leave it open:',
   `call update_task at the place below with a comment that says what you need, and with its tags plus "${NEEDS_INPUT}".`,
+  'Always end with one of these two update_task calls: words in this chat alone are never read.',
 ].join(' ')
 
 /** The words a task is handed over in: what to do, how to leave it, then where it is. */
@@ -62,6 +65,25 @@ export async function doWithAi(row: Row, words: string): Promise<boolean> {
   if (!space) return false
   const { chat } = await import('./sidebar/chat.svelte')
   const without = keptOut(TASK_TOOLS.filter((one) => !taskUses(one)))
-  void chat.startAside(space.id, plain(words), taskMode(), askOf(row, words, taskAsk()), without)
+  void chat
+    .startAside(space.id, plain(words), taskMode(), askOf(row, words, taskAsk()), without)
+    .then((ended) => heldToIt(row, ended))
+    .catch(() => undefined)
   return true
+}
+
+/** The button's promise kept whatever the model did (#325): a chat that ended on its own
+ *  with the task neither ticked nor asked about leaves it asking, in the chat's last words.
+ *  One the reader stopped, or that failed, is left as it is: it says so in the panel. */
+async function heldToIt(row: Row, ended: Ended): Promise<void> {
+  if (ended.stop !== 'end') return
+  const { leaveAsked } = await import('../views/act')
+  await leaveAsked(row, lastWords(ended.turn))
+}
+
+/** What a model turn last said in words, or nothing. */
+export function lastWords(turn: Turn | null): string {
+  const said = (turn?.parts ?? []).filter((part) => part.kind === 'text')
+  const last = said.at(-1)
+  return last?.kind === 'text' ? last.text.trim() : ''
 }

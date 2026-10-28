@@ -6,6 +6,7 @@ import {
   commentsOf,
   descriptionOf,
   editedTask,
+  askedFor,
   withComment,
   withoutNeedsInput,
   withDescription,
@@ -427,5 +428,36 @@ describe('a task flagged as needing input', () => {
   test('and a task without the flag is left as it is', () => {
     const note = '- [ ] Book the room #work\n'
     expect(withoutNeedsInput(note, at(0, 'Book the room'))).toBe(note)
+  })
+})
+
+/** #325: a chat that ended with its task neither ticked nor asked about leaves it asking
+ *  in the chat's last words, as the button promised; one already settled is left alone. */
+describe('a task left asking', () => {
+  test('gets the words as a comment, and the flag beside its other tags', () => {
+    const note = '- [ ] Write to the landlord #home\n- [ ] Next\n'
+    expect(
+      askedFor(
+        note,
+        at(0, 'Write to the landlord'),
+        'Which landlord, and about what?',
+        '2026-10-28T09:00',
+      ),
+    ).toBe(
+      '- [ ] Write to the landlord #home #needs-input\n' +
+        '  - Which landlord, and about what? [at:: 2026-10-28T09:00]\n- [ ] Next\n',
+    )
+  })
+
+  test('is flagged without a comment where the chat said nothing', () => {
+    expect(askedFor('- [ ] Call\n', at(0, 'Call'), '  ', '2026-10-28T09:00')).toBe(
+      '- [ ] Call #needs-input\n',
+    )
+  })
+
+  test('is left alone where it is done, cancelled or asking already', () => {
+    for (const line of ['- [x] Call', '- [-] Call', '- [ ] Call #needs-input']) {
+      expect(askedFor(`${line}\n`, at(0, 'Call'), 'Words', '2026-10-28T09:00')).toBeNull()
+    }
   })
 })

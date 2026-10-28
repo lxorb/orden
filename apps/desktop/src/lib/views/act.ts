@@ -40,6 +40,7 @@ import {
   withoutBlock,
 } from './lines'
 import {
+  askedFor,
   editedTask,
   withComment,
   withDescription,
@@ -496,6 +497,17 @@ export async function addComment(row: Row, words: string): Promise<boolean> {
     const commented = withComment(before, anchor, words, stamp)
     return commented === null ? null : withoutNeedsInput(commented, anchor)
   })
+}
+
+/** A task done with AI left asking (#325): the chat's last words under it as a comment,
+ *  and the task flagged `needs-input`, where the chat ended with the task neither ticked
+ *  nor asked about. A model told to do one of the two, and saying it had, did neither. */
+export async function leaveAsked(row: Row, words: string): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return false
+  const stamp = nowOf(new Date()).slice(0, 16)
+  return rewrite(path, (before) => askedFor(before, anchor, words, stamp))
 }
 
 /** A task's comment deleted, the one on that line of its note. */
