@@ -83,8 +83,19 @@ fn idle(one: &Process) -> bool {
     IDLE.contains(&one.name.to_ascii_lowercase().as_str())
 }
 
+/// When a process was started, as a number that grows with time, or None where it cannot
+/// be said - one that has gone, or one this user may not ask about.
+type Born<'a> = &'a dyn Fn(u32) -> Option<u64>;
+
 /// The first process below `root`, nearest first, that `stop` answers for, walking down
 /// only through the processes `through` lets by.
+///
+/// A process counts as below its parent only where it was started after it. The list
+/// says which process started each one by its id, and Windows hands a dead process's id
+/// to the next one started: a program whose parent went long ago can name an id the
+/// shell holds now, and was taken for something running in it - a shell at its prompt
+/// called busy, now and then, on a runner starting and ending processes all the time
+/// (#446). Where `born` cannot say, the list is believed.
 #[cfg_attr(
     not(windows),
     allow(
@@ -92,21 +103,24 @@ fn idle(one: &Process) -> bool {
         reason = "only Windows lists processes; the kernel answers elsewhere"
     )
 )]
-fn first_below(
+fn first_below<'a>(
     root: u32,
-    processes: &[Process],
+    processes: &'a [Process],
     through: impl Fn(&Process) -> bool,
     stop: impl Fn(&Process) -> bool,
-) -> Option<&Process> {
+    born: Born<'_>,
+) -> Option<&'a Process> {
     let mut below = vec![root];
     let mut at = 0;
 
     while let Some(&parent) = below.get(at) {
         at += 1;
-        for one in processes
-            .iter()
-            .filter(|one| one.parent == parent && one.id != parent)
-        {
+        let parent_born = born(parent);
+        for one in processes.iter().filter(|one| {
+            one.parent == parent
+                && one.id != parent
+                && !matches!((parent_born, born(one.id)), (Some(then), Some(now)) if now < then)
+        }) {
             if below.contains(&one.id) {
                 continue;
             }
@@ -132,13 +146,13 @@ fn first_below(
         reason = "only Windows lists processes; the kernel answers elsewhere"
     )
 )]
-pub fn front_below(root: u32, processes: &[Process]) -> Option<&Process> {
-    let front = first_below(root, processes, idle, |one| !idle(one))?;
+pub fn front_below<'a>(root: u32, processes: &'a [Process], born: Born<'_>) -> Option<&'a Process> {
+    let front = first_below(root, processes, idle, |one| !idle(one), born)?;
     let agent = |one: &Process| AGENTS.contains(&one.name.to_ascii_lowercase().as_str());
     if agent(front) {
         return Some(front);
     }
-    Some(first_below(front.id, processes, |_| true, agent).unwrap_or(front))
+    Some(first_below(front.id, processes, |_| true, agent, born).unwrap_or(front))
 }
 
 /// Whether anything but a shell runs below `root` in a list of processes.
@@ -149,8 +163,8 @@ pub fn front_below(root: u32, processes: &[Process]) -> Option<&Process> {
         reason = "only Windows lists processes; the kernel answers elsewhere"
     )
 )]
-pub fn busy_below(root: u32, processes: &[Process]) -> bool {
-    first_below(root, processes, idle, |one| !idle(one)).is_some()
+pub fn busy_below(root: u32, processes: &[Process], born: Born<'_>) -> bool {
+    first_below(root, processes, idle, |one| !idle(one), born).is_some()
 }
 
 /// A program's name as a tab says it: the file's, without Windows' `.exe`.
@@ -166,7 +180,7 @@ fn program_name(file: &str) -> String {
 /// Whether something besides the shell is running in a terminal.
 #[cfg(windows)]
 pub fn busy(shell: Option<u32>, _master: &dyn MasterPty) -> bool {
-    shell.is_some_and(|root| busy_below(root, &processes()))
+    shell.is_some_and(|root| busy_below(root, &processes(), &started()))
 }
 
 /// Whether something besides the shell is running in a terminal: the terminal's
@@ -184,7 +198,7 @@ pub fn busy(shell: Option<u32>, master: &dyn MasterPty) -> bool {
 #[cfg(windows)]
 pub fn program(shell: Option<u32>, _master: &dyn MasterPty) -> Option<String> {
     let processes = processes();
-    front_below(shell?, &processes).map(|one| program_name(&one.name))
+    front_below(shell?, &processes, &started()).map(|one| program_name(&one.name))
 }
 
 /// The program in front of the shell, by name: the terminal's foreground group, where
@@ -285,6 +299,48 @@ pub(crate) fn processes() -> Vec<Process> {
     found
 }
 
+/// When each process was started, asked of Windows as the walk below a shell comes to
+/// it and kept for the walk: the handful of processes under one shell, never the
+/// whole list. See `first_below`.
+#[cfg(windows)]
+#[allow(
+    unsafe_code,
+    reason = "a process's start time is Win32's own call and has no safe wrapper"
+)]
+fn started() -> impl Fn(u32) -> Option<u64> {
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+    use windows::Win32::Foundation::{CloseHandle, FILETIME};
+    use windows::Win32::System::Threading::{
+        GetProcessTimes, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
+    };
+
+    let known = RefCell::new(HashMap::<u32, Option<u64>>::new());
+    move |pid| {
+        *known.borrow_mut().entry(pid).or_insert_with(|| {
+            let mut created = FILETIME::default();
+            let mut exited = FILETIME::default();
+            let mut kernel = FILETIME::default();
+            let mut user = FILETIME::default();
+            // SAFETY: the handle is this closure's own and closed before it returns; the
+            // four times are ours, outlive the call, and are all it writes.
+            unsafe {
+                let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
+                let read = GetProcessTimes(
+                    handle,
+                    std::ptr::from_mut(&mut created),
+                    std::ptr::from_mut(&mut exited),
+                    std::ptr::from_mut(&mut kernel),
+                    std::ptr::from_mut(&mut user),
+                );
+                let _ = CloseHandle(handle);
+                read.ok()?;
+            }
+            Some((u64::from(created.dwHighDateTime) << 32) | u64::from(created.dwLowDateTime))
+        })
+    }
+}
+
 /// Which folder the shell is in, where the kernel can say: Linux's `/proc`.
 #[cfg(target_os = "linux")]
 pub fn folder(shell: Option<u32>) -> Option<String> {
@@ -344,6 +400,9 @@ pub fn folder(_shell: Option<u32>) -> Option<String> {
 mod tests {
     use super::*;
 
+    /// A list that says nothing of when anything started, which is believed as it is.
+    const UNKNOWN: fn(u32) -> Option<u64> = |_| None;
+
     fn process(id: u32, parent: u32, name: &str) -> Process {
         Process {
             id,
@@ -359,7 +418,7 @@ mod tests {
             process(11, 10, "conhost.exe"),
             process(20, 10, "pwsh.exe"),
         ];
-        assert!(!busy_below(20, &listed));
+        assert!(!busy_below(20, &listed, &UNKNOWN));
     }
 
     /// Git Bash is a launcher with the real bash under it, and PowerShell may have a
@@ -371,10 +430,10 @@ mod tests {
             process(21, 20, "bash.exe"),
             process(30, 5, "node.exe"),
         ];
-        assert!(!busy_below(20, &listed));
+        assert!(!busy_below(20, &listed, &UNKNOWN));
 
         let nested = [process(20, 10, "pwsh.exe"), process(22, 20, "CMD.EXE")];
-        assert!(!busy_below(20, &nested));
+        assert!(!busy_below(20, &nested, &UNKNOWN));
     }
 
     #[test]
@@ -384,7 +443,7 @@ mod tests {
             process(22, 20, "cmd.exe"),
             process(23, 22, "node.exe"),
         ];
-        assert!(busy_below(20, &listed));
+        assert!(busy_below(20, &listed, &UNKNOWN));
     }
 
     #[test]
@@ -396,8 +455,11 @@ mod tests {
             process(23, 22, "node.exe"),
             process(24, 23, "esbuild.exe"),
         ];
-        assert_eq!(front_below(20, &listed).map(|one| one.id), Some(23));
-        assert_eq!(front_below(20, &listed[..3]), None);
+        assert_eq!(
+            front_below(20, &listed, &UNKNOWN).map(|one| one.id),
+            Some(23)
+        );
+        assert_eq!(front_below(20, &listed[..3], &UNKNOWN), None);
     }
 
     /// npm's Codex is Node starting `codex.exe`, and Claude Code's `.cmd` is a Command
@@ -410,7 +472,10 @@ mod tests {
             process(31, 30, "codex.exe"),
             process(32, 31, "git.exe"),
         ];
-        assert_eq!(front_below(20, &codex).map(|one| one.id), Some(31));
+        assert_eq!(
+            front_below(20, &codex, &UNKNOWN).map(|one| one.id),
+            Some(31)
+        );
 
         let claude = [
             process(20, 10, "pwsh.exe"),
@@ -418,7 +483,10 @@ mod tests {
             process(41, 40, "claude.exe"),
             process(42, 41, "node.exe"),
         ];
-        assert_eq!(front_below(20, &claude).map(|one| one.id), Some(41));
+        assert_eq!(
+            front_below(20, &claude, &UNKNOWN).map(|one| one.id),
+            Some(41)
+        );
     }
 
     #[test]
@@ -438,7 +506,7 @@ mod tests {
             process(0, 0, "System Idle Process"),
             process(20, 0, "pwsh.exe"),
         ];
-        assert!(!busy_below(20, &listed));
+        assert!(!busy_below(20, &listed, &UNKNOWN));
     }
 
     /// The kernel's own answer, on the two systems that have one: a process started in a
@@ -460,5 +528,33 @@ mod tests {
         let wanted = dir.path().canonicalize().unwrap();
         assert_eq!(found.map(std::path::PathBuf::from), Some(wanted));
         assert_eq!(folder(None), None);
+    }
+
+    /// #446: a program whose parent went long ago names an id the shell holds now - which
+    /// Windows hands out again - and was taken for something running in the shell. One
+    /// started before the shell is not the shell's.
+    #[test]
+    fn a_process_older_than_the_shell_is_not_running_in_it() {
+        let listed = [
+            process(20, 10, "cmd.exe"),
+            process(31, 20, "svchost.exe"),
+            process(32, 20, "node.exe"),
+        ];
+        let born = |pid: u32| match pid {
+            20 => Some(500),
+            31 => Some(100),
+            32 => Some(900),
+            _ => None,
+        };
+        assert_eq!(
+            front_below(20, &listed, &born).map(|one| one.id),
+            Some(32),
+            "the one started after it"
+        );
+        assert!(!busy_below(20, &listed[..2], &born), "only the stale one");
+        assert!(
+            busy_below(20, &listed[..2], &UNKNOWN),
+            "believed where nothing is known"
+        );
     }
 }
