@@ -602,7 +602,9 @@ jobs:
           cd "$RUNNER_TEMP/unstable"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           pnpm install --frozen-lockfile
-          VITE_ORDEN_CHANNEL=unstable pnpm --filter @orden/desktop build
+          # By its folder, not its name: this runs in unstable's tree with main's workflow,
+          # and the two may name the package differently while a rename is between them (#367).
+          VITE_ORDEN_CHANNEL=unstable pnpm --filter ./apps/desktop build
 
       # Refused only before the unstable pages are in place, so the release is whole either way.
       - name: Put the two builds together
