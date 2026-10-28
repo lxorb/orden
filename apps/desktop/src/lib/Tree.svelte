@@ -149,6 +149,37 @@
   let standing = $state<string | null>(null)
   let reaching = $state<string | null>(null)
 
+  /** Where in the list the row the keyboard is on was, so a row deleted under the
+   *  keyboard hands it on to the row that comes up into its place. */
+  let standingAt = -1
+
+  // The row the keyboard was on, gone from the list - deleted from its menu, or by a
+  // shortcut while it had the keyboard. The engine leaves the keyboard on the page's
+  // body when the element that had it goes, with no blur to say so, so the row now in
+  // its place takes it, or the last row where it was the last: what a file list does
+  // with the keyboard after a delete (#523). Only while the keyboard is still nowhere:
+  // a press that has since put it somewhere else is left where it put it.
+  $effect(() => {
+    const gone = standing !== null && !at.has(standing)
+    if (!gone) return
+    untrack(() => {
+      const was = standing ?? ''
+      standing = null
+      const index = Math.min(standingAt, flat.length - 1)
+      const next = flat[index]
+      const nowhere = document.activeElement === null || document.activeElement === document.body
+      // A row of the same space: one switched to has a list of its own, and the
+      // keyboard is not handed across.
+      if (
+        next &&
+        nowhere &&
+        workspace.rootHolding(next.entry.path) === workspace.rootHolding(was)
+      ) {
+        stand(next.entry.path)
+      }
+    })
+  })
+
   /** The rows the window must keep whatever the scroll says: the name being typed,
    *  the keyboard, and whatever a key or an open has just asked for. Three at the
    *  very most, and usually the same one three times over. */
@@ -1080,6 +1111,7 @@
   function onFocus(event: FocusEvent) {
     const from = event.target instanceof Element ? event.target.closest('.row') : null
     standing = from instanceof HTMLElement ? (from.dataset.path ?? null) : null
+    standingAt = standing === null ? -1 : (at.get(standing) ?? -1)
   }
 
   function onBlur(event: FocusEvent) {
