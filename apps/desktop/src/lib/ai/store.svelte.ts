@@ -51,6 +51,7 @@ import { COPY, hearChanges, readKept, STALE, writeKept } from './accounts-file'
 import { transcribersAre } from './hears'
 import { accountsAre } from './switching'
 import { type Provider, type ProviderKind, transcribes, usable } from './providers'
+import { stuck } from './stuck'
 
 /** What the window kept before the accounts were a file: the rows a first run moves. */
 const EARLIER = 'nib:ai'
@@ -217,6 +218,11 @@ class Ai {
   private took(state: Accounts) {
     this.state = state
     keep(COPY, accountsText(state))
+    // An account kept on a model nobody can talk to is moved off it (mend.ts). The
+    // glasses ask no chat of a model, and carry none of it.
+    if (!__EVEN_PLUGIN__ && state.accounts.some(stuck)) {
+      void import('./mend').then(({ mend }) => mend(this, state))
+    }
   }
 
   /** One change, made at once in this window and then written over the file's newest
