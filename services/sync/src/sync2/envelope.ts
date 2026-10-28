@@ -1,13 +1,13 @@
 /** What a v2 request carries, and what it is answered in.
  *
  *  Two shapes, one meaning. Anything with a Yjs update or a state vector in it travels
- *  as `@nib/sync-core`'s framed envelope (`application/octet-stream`: a JSON header,
+ *  as `@orden/sync-core`'s framed envelope (`application/octet-stream`: a JSON header,
  *  then the bytes, because base64 would cost a third more on every update); a request
  *  with nothing binary in it may be plain JSON. A request is answered in the shape it
  *  arrived in, or asked for with `accept`, so a device that frames everything and a
  *  script that speaks JSON both read their own answer. See docs/sync-v2.md section 7. */
 
-import { frame, type Framed, unframe } from '@nib/sync-core'
+import { frame, type Framed, unframe } from '@orden/sync-core'
 import type { Context } from 'hono'
 import { MOST_BODY_BYTES } from '../body'
 

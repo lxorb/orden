@@ -5,7 +5,7 @@
  *  replaced it too. */
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import type { OpsResponse } from '@nib/sync-core'
+import type { OpsResponse } from '@orden/sync-core'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { invited, live } from './sync2'
 

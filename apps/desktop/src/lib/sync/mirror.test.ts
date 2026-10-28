@@ -2346,7 +2346,7 @@ describe('a web note’s old copies', () => {
 /** A copy another sync tool made beside a note is never carried, either way, and
  *  never deleted from a disk: Proton Drive syncing the same folder once wrote seven
  *  `(# Name clash … #)` copies of one note and this pass spread them to every device.
- *  See @nib/sync-core/foreign. */
+ *  See @orden/sync-core/foreign. */
 describe('another sync tool’s copy', () => {
   const CLASH = 'Plan (# Name clash 2026-10-05 a1b2c3C #).md'
 

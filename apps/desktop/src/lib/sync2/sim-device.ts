@@ -1,4 +1,4 @@
-/** The engine as a device of `@nib/sync-core`'s simulator (docs/sync-v2.md section 12).
+/** The engine as a device of `@orden/sync-core`'s simulator (docs/sync-v2.md section 12).
  *
  *  The simulator drives devices over an unkind network and judges what everybody ends up
  *  holding. This hands it the engine that runs in the window - the same passes, the same
@@ -12,10 +12,10 @@
  *
  *  So a seed that fails here is the engine failing, and replays as one. */
 
-import { nameKey } from '@nib/sync-core/tree'
-import { hash32, seedUpdate } from '@nib/sync-core/seed'
-import { textops } from '@nib/sync-core/textops'
-import { frame, unframe } from '@nib/sync-core/wire'
+import { nameKey } from '@orden/sync-core/tree'
+import { hash32, seedUpdate } from '@orden/sync-core/seed'
+import { textops } from '@orden/sync-core/textops'
+import { frame, unframe } from '@orden/sync-core/wire'
 import type {
   Action,
   Answer,
@@ -28,7 +28,7 @@ import type {
   Random,
   Seeded,
   View,
-} from '@nib/sync-core/sim'
+} from '@orden/sync-core/sim'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { HERE } from './docs'

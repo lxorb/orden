@@ -17,7 +17,7 @@
  *  - create.ts - this device's own tree operations;
  *  - migrate.ts - the first v2 pass of a space that v1 kept, and the way back. */
 
-import { foreignCopy, inForeignCopy } from '@nib/sync-core/foreign'
+import { foreignCopy, inForeignCopy } from '@orden/sync-core/foreign'
 import type { EngineEvents, Engine as AskedEngine } from './asking.svelte'
 import { Core } from './core'
 import { atOrUnder, made, moved, removed, unsynced } from './create'
@@ -181,7 +181,7 @@ export class Engine implements AskedEngine {
 
   /** The entry a file on this disk is. None for another sync tool's copy, even one the
    *  account has from before nib knew better: nothing heard about one is sent, and no
-   *  tab holding one joins a room (@nib/sync-core/foreign). */
+   *  tab holding one joins a room (@orden/sync-core/foreign). */
   entryAt(path: string) {
     const placed = this.placed(path)
     if (!placed || inForeignCopy(placed.path)) return null

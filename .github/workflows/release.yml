@@ -26,7 +26,7 @@ on:
       - '**/*.md'
       - '**/*.test.ts'
       - 'apps/desktop/test/**'
-      # Not every package's: `@nib/sync-core/sim` is a folder of its tests that the
+      # Not every package's: `@orden/sync-core/sim` is a folder of its tests that the
       # package exports.
       - 'packages/editor/test/**'
       - 'packages/glasses/test/**'

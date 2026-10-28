@@ -393,7 +393,7 @@ create table events (
   device text,
   at integer not null,              -- when it arrived here: the time everybody is shown
   made_at integer,                  -- when it was written, if more than a minute earlier
-  body blob not null                -- the event's fields, framed (@nib/sync-core/wire)
+  body blob not null                -- the event's fields, framed (@orden/sync-core/wire)
 );
 create table messages (             -- every message as it stands, kept by the same writes
   id text primary key, seq integer not null, author text not null, at integer not null,

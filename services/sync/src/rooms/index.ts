@@ -18,7 +18,7 @@
 import { Hono } from 'hono'
 import { NO_SUCH_NOTE, ROOM_AWAY, SIGN_IN } from '../refused'
 import { subprotocol, tokenOf } from '@orden/rooms'
-import { ROOM_V2 } from '@nib/sync-core'
+import { ROOM_V2 } from '@orden/sync-core'
 import { chunks } from '../bound'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'

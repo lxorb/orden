@@ -16,7 +16,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nib/sync-core": "workspace:*"
+    "@orden/sync-core": "workspace:*"
   },
   "devDependencies": {
     "fast-check": "^4.10.2",

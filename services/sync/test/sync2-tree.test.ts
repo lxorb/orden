@@ -6,7 +6,7 @@
  *  carries all of it in one order. */
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import type { FeedPage, OpResult, OpsResponse } from '@nib/sync-core'
+import type { FeedPage, OpResult, OpsResponse } from '@orden/sync-core'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { invited, live } from './sync2'
 

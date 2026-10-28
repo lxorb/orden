@@ -1,13 +1,13 @@
 /** A contested passage as the question draws it: stretches of plain words and
  *  stretches in the highlight ink, in order.
  *
- *  The marks come from the classifier (`excerpt` in @nib/sync-core/diverge) and are
+ *  The marks come from the classifier (`excerpt` in @orden/sync-core/diverge) and are
  *  offsets into the passage, but they crossed a boundary to get here - the engine, a
  *  store, a test's fake - so they are read as they are rather than as they should
  *  be: out of order, overlapping, past the end or empty, each is put right here,
  *  once, and the sheet draws whatever this answers. */
 
-import type { Excerpt } from '@nib/sync-core/diverge'
+import type { Excerpt } from '@orden/sync-core/diverge'
 
 interface Run {
   text: string

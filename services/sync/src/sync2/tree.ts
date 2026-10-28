@@ -2,7 +2,7 @@
  *
  *  In sync v2 folders are rows with ids and a note's place is a folder and a name
  *  (docs/sync-v2.md section 5.9). The rules every change is made by are
- *  `@nib/sync-core/tree`, shared with the app, which applies its own operations by the
+ *  `@orden/sync-core/tree`, shared with the app, which applies its own operations by the
  *  same function; this file is what puts those rules over D1: the space read into a
  *  `TreeState`, the rules run on it in memory, and what moved written back in one
  *  batch, which D1 runs as one transaction.
@@ -41,7 +41,7 @@ import {
   type TreeEntry,
   type TreeState,
   treeState,
-} from '@nib/sync-core'
+} from '@orden/sync-core'
 import { chunks } from '../bound'
 import { newId, now } from '../crypto'
 import type { Env } from '../types'

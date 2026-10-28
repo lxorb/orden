@@ -11,7 +11,7 @@
  *  next request goes out, so a crash at any await loses nothing a step had finished:
  *  the simulator crashes devices at exactly those moments. */
 
-import type { Times } from '@nib/sync-core/diverge'
+import type { Times } from '@orden/sync-core/diverge'
 import { Doc } from './docs'
 import { holdsDocument, shapeOf, type Shape } from './kinds'
 import { SpaceState, type Outboxed } from './places'

@@ -1,12 +1,12 @@
-/** The Worker as `@nib/sync-core`'s simulator's account (docs/sync-v2.md section 12):
+/** The Worker as `@orden/sync-core`'s simulator's account (docs/sync-v2.md section 12):
  *  its routes, its rooms and its SQL behind the kit's `AccountAdapter`, so the same
  *  seeds that judge the reference account judge this one. Used by the runs with the
  *  kit's reference devices (sync2-sim.test.ts) and with the app's own engine
  *  (sync2-engine.test.ts). */
 
 import { TEXT } from '@orden/rooms'
-import type { AccountAdapter, AccountView, Route, Seeded } from '@nib/sync-core/sim'
-import { frame, nameKey } from '@nib/sync-core'
+import type { AccountAdapter, AccountView, Route, Seeded } from '@orden/sync-core/sim'
+import { frame, nameKey } from '@orden/sync-core'
 import * as Y from 'yjs'
 import { sha256 } from '../src/crypto'
 import { documentOf } from '../src/sync2/docs'
@@ -93,7 +93,7 @@ export class WorkerAccount implements AccountAdapter {
 
     let request: Request
     if (route === 'feed') {
-      const { unframe } = await import('@nib/sync-core')
+      const { unframe } = await import('@orden/sync-core')
       const since = (unframe(body) as { since?: number } | null)?.since ?? 0
       request = new Request(
         `https://nibeditor.com/v2/spaces/${this.space}/feed?since=${String(since)}`,

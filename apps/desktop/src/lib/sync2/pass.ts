@@ -18,7 +18,7 @@
  *  socket carries is the socket's: a pass neither pulls nor pushes it. */
 
 import { recoverLost, sendMade, settleFiles } from './files'
-import { coalesce } from '@nib/sync-core/outbox'
+import { coalesce } from '@orden/sync-core/outbox'
 import {
   type DocRefusal,
   feedPageOf,
@@ -32,7 +32,7 @@ import {
   type Op,
   type PullDoc,
   type PushDoc,
-} from '@nib/sync-core/wire'
+} from '@orden/sync-core/wire'
 import * as Y from 'yjs'
 import { Core, type Holding } from './core'
 import type { Doc } from './docs'

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { type PullResponse, type PushResponse, seedUpdate } from '@nib/sync-core'
+import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-core'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { MOST_MEMBERS } from '../src/spaces/share'

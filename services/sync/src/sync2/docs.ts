@@ -26,7 +26,7 @@ import {
   type PushDoc,
   type SnapshotDoc,
   unframe,
-} from '@nib/sync-core'
+} from '@orden/sync-core'
 import { byteLength, sha256 } from '../crypto'
 import { noteKey } from '../notes'
 import { askRoom } from '../rooms'

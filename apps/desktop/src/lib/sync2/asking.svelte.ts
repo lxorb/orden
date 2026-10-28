@@ -23,7 +23,7 @@
 
 import { mount, untrack } from 'svelte'
 import { door } from '@nib/markdown/door'
-import type { Excerpt } from '@nib/sync-core/diverge'
+import type { Excerpt } from '@orden/sync-core/diverge'
 import { message, t } from '../i18n.svelte'
 import { howFor } from '../new-tab'
 import { overlays } from '../overlays'
@@ -43,7 +43,7 @@ export interface Side {
   /** When this side last wrote in the note, in milliseconds. */
   at: number
   /** The first contested passage as it reads on this side; `excerpt` in
-   *  @nib/sync-core/diverge. */
+   *  @orden/sync-core/diverge. */
   excerpt: Excerpt
   /** A canvas or a page note: the contested cards as this side has them, as JSON
    *  Canvas text, drawn instead of the excerpt. */

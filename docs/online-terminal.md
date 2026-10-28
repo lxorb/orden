@@ -419,7 +419,7 @@ terminal's selection is a local thing.
 - **Taken out** of a space, or `typing` turned off, closes or downgrades their sockets in the
   same request, as `roomsRevoked` does for notes.
 
-**The wire**, typed in `@orden/online/wire` and framed with `@nib/sync-core/wire`:
+**The wire**, typed in `@orden/online/wire` and framed with `@orden/sync-core/wire`:
 
 - `GET /v2/online/:term/socket`, upgraded; subprotocols `nib.token.<token>` and
   `nib.device.<id>`, as the hub's. From the app: `hello {since?, cols, rows}`, `in {data}`

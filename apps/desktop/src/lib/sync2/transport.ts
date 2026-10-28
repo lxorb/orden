@@ -1,5 +1,5 @@
 /** The engine's requests, as HTTP: the routes of docs/sync-v2.md section 7, in the
- *  framed envelope both ends speak (`frame` in @nib/sync-core/wire), so a Yjs update
+ *  framed envelope both ends speak (`frame` in @orden/sync-core/wire), so a Yjs update
  *  travels as its bytes.
  *
  *  What a pass needs to hear is one of three things. An answer. No answer - the network
@@ -9,7 +9,7 @@
  *  out the way every other request does), or something the account will not do for
  *  this person (403, 404), which the step that asked decides about. */
 
-import { frame, unframe } from '@nib/sync-core/wire'
+import { frame, unframe } from '@orden/sync-core/wire'
 import type { Blobs, Replaced } from './files'
 import type { Account, Route } from './world'
 

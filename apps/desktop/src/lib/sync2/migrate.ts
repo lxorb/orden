@@ -43,7 +43,7 @@ import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
 import { project, wrote } from './project'
 import type { Change, EntryRow } from './store'
-import { pullResponseOf, PULL_BATCH, type FeedItem, type Op } from '@nib/sync-core/wire'
+import { pullResponseOf, PULL_BATCH, type FeedItem, type Op } from '@orden/sync-core/wire'
 import * as Y from 'yjs'
 
 /** What v1 knew of a space: its feed cursor and the notes it tracked, by path. */

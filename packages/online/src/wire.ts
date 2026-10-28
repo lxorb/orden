@@ -1,7 +1,7 @@
 /** Everything the online terminal says over its two sockets, as types, as checks and
  *  as bytes (docs/online-terminal.md, 4.6).
  *
- *  Two links, one module, for the reason `@nib/sync-core/wire` gives: every end reads
+ *  Two links, one module, for the reason `@orden/sync-core/wire` gives: every end reads
  *  what another end wrote, and a shape spelled twice is two shapes a year later.
  *
  *  - **The app's socket**, `GET /v2/online/:term/socket`, between a nib and the
@@ -10,7 +10,7 @@
  *    and JSON would escape a third of it. Raw input (a paste of bytes, a key the
  *    terminal encodes itself) may go up as a binary frame too.
  *  - **The link**, one socket between `Machine` and the machine's `nibd`, every frame
- *    naming its session. Each frame is a `@nib/sync-core/wire` envelope, which carries
+ *    naming its session. Each frame is a `@orden/sync-core/wire` envelope, which carries
  *    a little JSON and raw bytes side by side, so input and output cross it unescaped.
  *
  *  A session's output is one stream of bytes, and `seq` is an offset into it: an
@@ -22,7 +22,7 @@
  *
  *  Nothing is coerced: a frame that does not check is dropped, as the hub drops one. */
 
-import { frame, unframe } from '@nib/sync-core/wire'
+import { frame, unframe } from '@orden/sync-core/wire'
 import type { Activity, MachineState, SleepReason } from './types'
 import { isLoopbackUrl, isWebUrl } from './urls'
 

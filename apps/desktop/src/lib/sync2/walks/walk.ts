@@ -9,7 +9,7 @@
  *  its seed, and `SIM_FROM=<seed> SIM_SEEDS=1` replays it. */
 
 import { describe, expect, test } from 'vitest'
-import { simulate } from '@nib/sync-core/sim'
+import { simulate } from '@orden/sync-core/sim'
 import { EngineDevice } from '../sim-device'
 
 /** The seeds from `from`, `count` of them, and what failed, at most five. */

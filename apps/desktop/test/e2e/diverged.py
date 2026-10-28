@@ -92,7 +92,7 @@ HOLD = """
     ],
     edges: [{ id: 'e', fromNode: 'a', toNode: 'b' }],
   })
-  // Marked by the words that differ, the way `excerpt` in @nib/sync-core marks them.
+  // Marked by the words that differ, the way `excerpt` in @orden/sync-core marks them.
   const marked = (text, words) => ({
     text,
     marks: words.map((word) => [text.indexOf(word), text.indexOf(word) + word.length]),

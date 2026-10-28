@@ -20,7 +20,7 @@ import {
   unwatchSpaces,
   watchSpaces,
 } from '../space-watch'
-import { inForeignCopy } from '@nib/sync-core/foreign'
+import { inForeignCopy } from '@orden/sync-core/foreign'
 import { t } from '../i18n.svelte'
 import { syncMark } from '../surfaces.svelte'
 import type { Engine } from './engine'
@@ -40,7 +40,7 @@ function hidden(path: string): boolean {
 }
 
 /** Whether a path is another sync tool's copy, which the engine never keeps
- *  (@nib/sync-core/foreign). Hearing one is what fetches the mark the file list gives
+ *  (@orden/sync-core/foreign). Hearing one is what fetches the mark the file list gives
  *  it, once. */
 function foreign(path: string): boolean {
   if (!inForeignCopy(path)) return false

@@ -6,7 +6,7 @@
  *  routes); the simulator hands in a map of files and its network. So the engine that
  *  runs in the window is the engine the simulator's seeds judge, line for line. */
 
-import type { Framed } from '@nib/sync-core/wire'
+import type { Framed } from '@orden/sync-core/wire'
 import type { Classify } from './classify'
 import type { Blobs } from './files'
 

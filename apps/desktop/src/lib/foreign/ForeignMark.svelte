@@ -3,8 +3,8 @@
    *  marks beside it, and the row it is on drawn faint the way a row left out of the
    *  space is. The file is the person's and stays; nib only says it does not carry it.
    *  Which tool made it is in the tooltip, because that is who to ask about it. See
-   *  @nib/sync-core/foreign and docs/sync.md "Other sync tools". */
-  import { foreignCopy } from '@nib/sync-core/foreign'
+   *  @orden/sync-core/foreign and docs/sync.md "Other sync tools". */
+  import { foreignCopy } from '@orden/sync-core/foreign'
   import CloudOff from 'lucide/dist/esm/icons/cloud-off.mjs'
   import { t } from '../i18n.svelte'
   import SharedMark from '../SharedMark.svelte'

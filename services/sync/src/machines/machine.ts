@@ -32,7 +32,7 @@
  *  answering, is waited for on the alarm (`waitForNibd`), and one that does not come
  *  back is power-cycled through the host's API. */
 
-import { BEAT, BEAT_ANSWER } from '@nib/sync-core/wire'
+import { BEAT, BEAT_ANSWER } from '@orden/sync-core/wire'
 import { randomToken } from '../crypto'
 import { note } from '../failed'
 import { askHub } from '../hub/reach'

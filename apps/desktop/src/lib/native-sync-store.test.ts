@@ -1,4 +1,4 @@
-import { frame, unframe } from '@nib/sync-core/wire'
+import { frame, unframe } from '@orden/sync-core/wire'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { get, put, scan } from './sync2/store'
 

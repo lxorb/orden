@@ -25,7 +25,7 @@
     "@nib/markdown": "workspace:*",
     "@orden/online": "workspace:*",
     "@orden/rooms": "workspace:*",
-    "@nib/sync-core": "workspace:*",
+    "@orden/sync-core": "workspace:*",
     "@orden/themes": "workspace:*",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.3",

@@ -3,7 +3,7 @@
  *  guest and a program token may reach is said in guests.ts and programs.ts. Every
  *  request is answered in the shape it arrived in; see envelope.ts. */
 
-import { keepRequestOf, opsRequestOf, pullRequestOf, pushRequestOf } from '@nib/sync-core'
+import { keepRequestOf, opsRequestOf, pullRequestOf, pushRequestOf } from '@orden/sync-core'
 import { Hono } from 'hono'
 import { laterOf, pokeSpace } from '../hub/poke'
 import { mayChangeTree, mayKeepVersions, mayPushDocuments } from '../limits'

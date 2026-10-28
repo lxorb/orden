@@ -304,7 +304,7 @@ So a pass never carries one, in either direction, and never takes one off a disk
   is not renamed on the account; the note keeps its name and the file that arrives
   there is the note again.
 
-Which names those are is one matcher, `@nib/sync-core/foreign`, which the v2 engine
+Which names those are is one matcher, `@orden/sync-core/foreign`, which the v2 engine
 and the file list read too; docs/sync-v2.md, "Other sync tools", has the table and
 the names deliberately left out (`Plan (1).md`, `Plan 2.md`). In the file list such a
 file is faint, with a struck-through cloud whose tooltip names the tool, and its menu

@@ -14,7 +14,7 @@ import {
   seedPlane,
   seedUpdate,
   type SnapshotPage,
-} from '@nib/sync-core'
+} from '@orden/sync-core'
 import { receive, syncStep1, syncUpdate, TEXT } from '@orden/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'

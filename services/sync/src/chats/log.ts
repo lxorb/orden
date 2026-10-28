@@ -23,7 +23,7 @@
 import type { Event, Logged, Message, Post, Who } from '@nib/chats'
 import { MOST_BEHIND, MOST_PAGE, RECEIPTS_UP_TO, TYPING_EVERY } from '@nib/chats/limits'
 import { clientFrameOf, isWho, type Refusal, type ServerFrame } from '@nib/chats/wire'
-import { BEAT, BEAT_ANSWER } from '@nib/sync-core/wire'
+import { BEAT, BEAT_ANSWER } from '@orden/sync-core/wire'
 import { places } from '../bound'
 import { OPEN_HEADER, openAnswer, openIn, sweepOpened } from '../opened'
 import { note } from '../failed'

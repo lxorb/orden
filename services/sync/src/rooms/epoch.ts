@@ -18,7 +18,7 @@
 import { readCanvas } from '@nib/markdown/canvas'
 import { TEXT } from '@orden/rooms'
 import { pushPlane } from '@orden/rooms/plane'
-import { hash32, seedPlane, seedUpdate, textops } from '@nib/sync-core'
+import { hash32, seedPlane, seedUpdate, textops } from '@orden/sync-core'
 import * as Y from 'yjs'
 import { readsAs, type RoomKind } from './kind'
 

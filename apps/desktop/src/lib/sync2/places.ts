@@ -3,7 +3,7 @@
  *  Two trees are kept in one table. What the account has said - the feed, and the
  *  answers to this device's own ops - is each entry's row. What the person sees is
  *  that, with every op still waiting in the outbox applied on top by the very rules the
- *  account applies them by (`applyOp` in @nib/sync-core/tree), so a rename made offline
+ *  account applies them by (`applyOp` in @orden/sync-core/tree), so a rename made offline
  *  is a rename at once and the account's answer only ever corrects it (section 5.9).
  *
  *  Where an entry is on the disk is its `local_path`, relative to the space's root.
@@ -13,9 +13,9 @@
  *  tree: moves, folders made, and files the account deleted taken away - unless this
  *  device has written in them since, when the edit beats the delete and they stay. */
 
-import { type OpResult, type Op } from '@nib/sync-core/wire'
-import { inForeignCopy } from '@nib/sync-core/foreign'
-import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@nib/sync-core/tree'
+import { type OpResult, type Op } from '@orden/sync-core/wire'
+import { inForeignCopy } from '@orden/sync-core/foreign'
+import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@orden/sync-core/tree'
 import { isReserved } from '../naming'
 import type { Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
@@ -182,7 +182,7 @@ export class SpaceState {
   }
 
   /** Whether an entry is another sync tool's copy, or inside one: sync v2 never carries
-   *  one either way (@nib/sync-core/foreign, docs/sync-v2.md "Other sync tools"). By
+   *  one either way (@orden/sync-core/foreign, docs/sync-v2.md "Other sync tools"). By
    *  where it is shown, else where it last was on this disk. */
   foreign(id: string): boolean {
     const path = this.paths().get(id) ?? this.entries.get(id)?.local_path ?? ''

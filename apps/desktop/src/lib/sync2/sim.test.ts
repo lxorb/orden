@@ -6,7 +6,7 @@
  *  `pnpm --filter @orden/desktop sim:long` (walks/walk.ts). */
 
 import { describe, expect, test } from 'vitest'
-import { CALM, markersIn, type Report, simulate, type Step } from '@nib/sync-core/sim'
+import { CALM, markersIn, type Report, simulate, type Step } from '@orden/sync-core/sim'
 import { EngineDevice } from './sim-device'
 import { walked } from './walks/walk'
 

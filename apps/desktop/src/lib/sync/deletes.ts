@@ -17,7 +17,7 @@
  *  note's words - a picture, a PDF - which the account keeps only as a version. */
 
 import { isPagesTarget } from '@nib/markdown/links'
-import { kindOfName } from '@nib/sync-core/tree'
+import { kindOfName } from '@orden/sync-core/tree'
 import type { FileKind } from '../sync2/world'
 
 /** Whether sync deletes this outright rather than putting it in this device's trash. */

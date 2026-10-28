@@ -5,7 +5,7 @@
 
 import type { MachineHost } from '@orden/online'
 import { linkFrame, type MachineFrame, type NibdFrame } from '@orden/online/wire'
-import { unframe } from '@nib/sync-core/wire'
+import { unframe } from '@orden/sync-core/wire'
 import { Machine, type Viewer } from '../src/machines/machine'
 import type { Env } from '../src/types'
 import { HubState } from './hub-fakes'

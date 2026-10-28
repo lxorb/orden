@@ -9,7 +9,7 @@
  *  an edit against, so it goes to Recently deleted exactly as it always has) - so the
  *  rows, the paths and every v2 device's feed stay one story whichever app wrote. */
 
-import type { CreateOp, Op, OpContext, OpResult } from '@nib/sync-core'
+import type { CreateOp, Op, OpContext, OpResult } from '@orden/sync-core'
 import { newId } from '../crypto'
 import type { Env } from '../types'
 import type { Reached } from '../spaces/space'

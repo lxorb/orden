@@ -13,7 +13,7 @@
 
 import { setPeers, type SharedDoc } from '@nib/editor'
 import { readSync, receive, syncStep1Of, syncStep2Of, TEXT } from '@orden/rooms'
-import { NEW_EPOCH, roomNews, ROOM_V2 } from '@nib/sync-core/wire'
+import { NEW_EPOCH, roomNews, ROOM_V2 } from '@orden/sync-core/wire'
 import * as Y from 'yjs'
 import type { InkStroke } from '../canvas/format'
 import type { Point } from '../canvas/geometry'

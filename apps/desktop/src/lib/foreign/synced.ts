@@ -10,7 +10,7 @@
  *  (`inForeignCopy` in sync/pass.ts, `settle` in sync2/places.ts), so every file stays
  *  exactly where it is. See docs/sync.md "Other sync tools". */
 
-import { inForeignCopy } from '@nib/sync-core/foreign'
+import { inForeignCopy } from '@orden/sync-core/foreign'
 import { account } from '../account.svelte'
 import { api, ApiError } from '../api'
 import { log } from '../log'

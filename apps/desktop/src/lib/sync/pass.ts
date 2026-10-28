@@ -21,7 +21,7 @@
 
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@nib/markdown/links'
 import { conflictPath } from '@nib/markdown/paths'
-import { inForeignCopy } from '@nib/sync-core/foreign'
+import { inForeignCopy } from '@orden/sync-core/foreign'
 import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
 import { sha256 } from '../bytes'
 import { log } from '../log'

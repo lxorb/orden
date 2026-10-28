@@ -557,7 +557,7 @@ and the version it comes to, instead of applying them. The device then has three
 - **R**, remote: confirmed plus what the account sent;
 
 and computes **M**, the CRDT merge of both, in a scratch document. The classifier
-(`@nib/sync-core/diverge`) diffs B to L and B to R at character level with semantic cleanup,
+(`@orden/sync-core/diverge`) diffs B to L and B to R at character level with semantic cleanup,
 widens every edit that cuts into a word to the whole word (so `noon` changed to `one` is one
 changed word, not two letters deleted beside the other side's change), works in B's
 coordinates, and looks at the edits that meet:
@@ -617,7 +617,7 @@ modal is answered).
 **The three answers**, precisely:
 
 - **Keep (this device)**: apply R to the live document, then the operations that turn M's
-  text into L's (`@nib/sync-core/textops`, a character diff to Yjs operations), and send pending
+  text into L's (`@orden/sync-core/textops`, a character diff to Yjs operations), and send pending
   plus those, naming R's version. Every device ends at L. R is a version.
 - **Keep (the other device)**: drop pending (it was never sent), set the live document to
   confirmed plus R. L is written to this device's history first and pushed to the account as
@@ -662,7 +662,7 @@ file. Syncing that copy is how one clash on one machine became a stray file on e
 (Emil, 2026-10-05: seven `Hackathon List (# Name clash 2026-10-05 …C #).md`). So such a
 name is never carried, either way, and never taken off a disk by nib. One matcher says
 which names those are, for both engines and the file list: `foreignCopy` and
-`inForeignCopy` in `@nib/sync-core/foreign`.
+`inForeignCopy` in `@orden/sync-core/foreign`.
 
 | Tool | The name it writes | Source |
 | --- | --- | --- |
@@ -761,7 +761,7 @@ space cursor the device had seen (`seen`):
 
 The account applies them in arrival order and answers each with the result (final name and
 parent, or a refusal), and devices apply the account's feed the same way, so every device
-converges on the account's order. The rules, all in `@nib/sync-core/tree` and shared by the
+converges on the account's order. The rules, all in `@orden/sync-core/tree` and shared by the
 Worker and the client (which applies its own ops optimistically):
 
 - **Names are unique per folder, case-insensitively and after NFC normalisation**
@@ -1170,7 +1170,7 @@ Phones and the browser build never hold the web key: they have no web tabs.
 All routes are under `/v2`, behind the session guard like `/v1`, and every refusal a
 person can cause is an English sentence with a row in every catalogue. Binary payloads
 (Yjs updates, state vectors, blobs, bundles) travel as `application/octet-stream` inside a
-small framed envelope (`@nib/sync-core/wire`: a JSON header, then length-prefixed binary
+small framed envelope (`@orden/sync-core/wire`: a JSON header, then length-prefixed binary
 parts), because base64 would cost a third more on every update.
 
 ### Tree and feed
@@ -1509,7 +1509,7 @@ device) cannot both keep theirs under `name_key`: the later one is numbered in t
 as a rename every device then applies. `path` is kept current by every op that moves
 something, in the same batch. The nightly job sweeps `tree_ops` after 30 days.
 `updated_by`, `doc_by` and `deleted_in` are `TreeEntry`'s `by`, `docBy` and `deletedIn` in
-`@nib/sync-core/tree`: which device made the latest change and the latest content change
+`@orden/sync-core/tree`: which device made the latest change and the latest content change
 (a device's own writing never stands against its own delete), and which delete took an
 entry (so a folder restored brings back what went with it).
 
@@ -1669,7 +1669,7 @@ here as they were planned.
 
 | where | what | lane |
 | --- | --- | --- |
-| `@nib/sync-core` (`packages/sync-core`, beside `packages/rooms`; `@nib/sync` is already the Worker's name) | `merge3`, `diverge`, `textops`, `seed`, `tree`, `outbox`, `wire`, `plane-diverge`; pure, shared by app and Worker | core |
+| `@orden/sync-core` (`packages/sync-core`, beside `packages/rooms`; `@nib/sync` is already the Worker's name) | `merge3`, `diverge`, `textops`, `seed`, `tree`, `outbox`, `wire`, `plane-diverge`; pure, shared by app and Worker | core |
 | `src-tauri/src/sync_store.rs` | the sync store (SQLite through `rusqlite`, bundled, now on every target) and its batched commands | store |
 | `src-tauri/src/space_watch.rs` | the space folder watcher (`notify`), debounced, with file identities | store |
 | `lib/web/sync-store.ts` | the same store over IndexedDB for the browser build | store |
@@ -1944,7 +1944,7 @@ routes.
 
 ### A deterministic multi-device simulator
 
-`test/sim/` in `@nib/sync-core`: N devices, one account, one network, one clock, all in one
+`test/sim/` in `@orden/sync-core`: N devices, one account, one network, one clock, all in one
 process and all driven by a seeded random generator, so a failure is a seed and a seed is a
 replay.
 
@@ -2023,7 +2023,7 @@ first, lands on main behind the flags, and keeps v1 green.
 
 | lane | owns | depends on | wave |
 | --- | --- | --- | --- |
-| `sync-core` | `@nib/sync-core` | nothing | 1 |
+| `sync-core` | `@orden/sync-core` | nothing | 1 |
 | `sync-server-hub` | the Worker's `src/hub/`, `0039`, `wrangler.jsonc`, web state, device and web-store routes | nothing (this document is the protocol) | 1 |
 | `sync-client-store` | `sync_store.rs`, `space_watch.rs`, `web/sync-store.ts` | nothing (section 9.2 is the schema) | 1 |
 | `web-state` | `src-tauri/src/web_state/`, the scripts, the crypto | nothing for capture, restore and crypto; the hub's routes for upload | 1 |
@@ -2038,12 +2038,12 @@ then `web_sync`.
 
 ### 13.1 The interfaces the lanes meet at
 
-- `@nib/sync-core` exports exactly: `merge3`, `diverge` (with `Verdict`, `Overlap`,
+- `@orden/sync-core` exports exactly: `merge3`, `diverge` (with `Verdict`, `Overlap`,
   `CONTESTED = 80`), `textops`, `seedUpdate(noteId, epoch, text)`, `seedPlane(noteId, epoch,
   canvas)`, `applyOp`/`TreeState` and the rules of 5.9, `coalesce` for the outbox, and the
   wire types and codecs of section 7; with them `excerpt` for the modal, `hash32` for the
   room's own client id, `divergePlane` for 5.6, and `nameKey`, `treeState` and
-  `contentChanged` for the tree. The simulator kit of section 12 is `@nib/sync-core/sim`,
+  `contentChanged` for the tree. The simulator kit of section 12 is `@orden/sync-core/sim`,
   with the `AccountAdapter` and `DeviceAdapter` the Worker's and the engine's lanes plug
   their code into.
 - The engine exposes to the UX lane:

@@ -88,7 +88,7 @@ importers:
       '@orden/rooms':
         specifier: workspace:*
         version: link:../../packages/rooms
-      '@nib/sync-core':
+      '@orden/sync-core':
         specifier: workspace:*
         version: link:../../packages/sync-core
       '@orden/themes':
@@ -446,7 +446,7 @@ importers:
 
   packages/online:
     dependencies:
-      '@nib/sync-core':
+      '@orden/sync-core':
         specifier: workspace:*
         version: link:../sync-core
     devDependencies:
@@ -612,7 +612,7 @@ importers:
       '@orden/rooms':
         specifier: workspace:*
         version: link:../../packages/rooms
-      '@nib/sync-core':
+      '@orden/sync-core':
         specifier: workspace:*
         version: link:../../packages/sync-core
       hono:

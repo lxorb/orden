@@ -1,8 +1,8 @@
 /** What the sync v2 tests share: the Worker's rooms running under the routes, their
  *  settles fired on demand, and requests made the way a v2 device makes them, in the
- *  framed envelope of @nib/sync-core. */
+ *  framed envelope of @orden/sync-core. */
 
-import { frame, type Framed, unframe } from '@nib/sync-core'
+import { frame, type Framed, unframe } from '@orden/sync-core'
 import app from '../src/index'
 import { call, mail, signIn, type TestEnv } from './harness'
 import { running } from './room'

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { unframe } from '@nib/sync-core/wire'
+import { unframe } from '@orden/sync-core/wire'
 import { testDevice } from './test-device'
 import { Refused, remoteFiles } from './transport'
 

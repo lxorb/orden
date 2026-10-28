@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { SharedDoc } from '@nib/editor'
 import { readSync, receive, syncStep1, TEXT } from '@orden/rooms'
-import { ackFrame, epochFrame, NEW_EPOCH } from '@nib/sync-core/wire'
+import { ackFrame, epochFrame, NEW_EPOCH } from '@orden/sync-core/wire'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { Carrying } from './carried'

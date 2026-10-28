@@ -47,7 +47,7 @@ import {
   NEW_EPOCH,
   type PushAnswer,
   unframe,
-} from '@nib/sync-core'
+} from '@orden/sync-core'
 import * as Y from 'yjs'
 import { byteLength, sha256 } from '../crypto'
 import { note as noted } from '../failed'
@@ -246,7 +246,7 @@ function attach(socket: WebSocket, change: Partial<Attached>) {
 const PUSHED = 'push'
 
 /** How many pushes a room remembers the answer to, so one whose answer was lost is
- *  answered the same way when it comes again; see `PushDoc` in @nib/sync-core. A device
+ *  answered the same way when it comes again; see `PushDoc` in @orden/sync-core. A device
  *  resends only its latest, so a few dozen covers every device a note has. */
 const REMEMBERED_PUSHES = 64
 
