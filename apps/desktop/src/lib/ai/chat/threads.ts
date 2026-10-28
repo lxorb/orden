@@ -7,7 +7,7 @@
  *  holds the Ask panel's forty turns and is too small for a history.
  *
  *  Reading is careful and writing is not: a thread comes back from a file some version
- *  of nib wrote, possibly one cut short, so it is checked on the way in and what is not a
+ *  of Orden wrote, possibly one cut short, so it is checked on the way in and what is not a
  *  thread is left out rather than trusted. See `threadIn`. */
 
 import { without } from '../../records'

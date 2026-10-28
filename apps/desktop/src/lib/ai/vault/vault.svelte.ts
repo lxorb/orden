@@ -1,4 +1,4 @@
-/** The AI accounts on every device of the reader's nib account (docs/ai.md, "Every
+/** The AI accounts on every device of the reader's Orden account (docs/ai.md, "Every
  *  device"): connected once, there on each device they sign in to.
  *
  *  Five standings. **Open**: this device holds the vault key, so it reads the sealed

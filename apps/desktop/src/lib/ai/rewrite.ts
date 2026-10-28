@@ -67,7 +67,7 @@ export function languageNames(): { id: string; name: string }[] {
 }
 
 /** The language a rewrite translates into unless another is picked: the one the app
- *  is set to. English where the app is following a system language nib has no
+ *  is set to. English where the app is following a system language Orden has no
  *  dictionary for, since that is what the interface is showing anyway. */
 export function defaultLanguage(appLanguage: string): string {
   const found = languageNames().find((one) => one.id === appLanguage)

@@ -1,11 +1,11 @@
 /** A Notion database, as a base over its rows.
  *
  *  Notion's own table is a view over pages, each row a page with its properties
- *  on it. nib's is the same thing: a base whose rows are notes and whose columns
+ *  on it. Orden's is the same thing: a base whose rows are notes and whose columns
  *  are their front matter (docs/tasks.md 2.3). So the CSV Notion wrote is read for
  *  two things only - the order the columns stood in, and what each column held -
  *  and the table itself is a ` ```base ` fence in the database's folder note, over
- *  the notes in the folder beside it. A row edited in nib is the note edited, and
+ *  the notes in the folder beside it. A row edited in Orden is the note edited, and
  *  the table follows, which a markdown table in the folder note never would.
  *
  *  What a column held is not in the export: Notion writes every value out as

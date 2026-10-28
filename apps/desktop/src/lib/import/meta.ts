@@ -1,4 +1,4 @@
-/** What a note knows about itself, written the way nib writes it.
+/** What a note knows about itself, written the way Orden writes it.
  *
  *  Dates are the reason this exists. Every one of these exports knows when each
  *  note was written, and the moment it is imported every file on disk says it
@@ -6,7 +6,7 @@
  *  file's own timestamps are the import's from then on. So what the export knew
  *  goes into the note, where it survives sync, a copy and another import.
  *
- *  `date` is the key nib already reads - an export uses it for the document's
+ *  `date` is the key Orden already reads - an export uses it for the document's
  *  date - and it holds the day the note was made. `updated` is only written when
  *  the export knew a different last-edited day, and it is the export's own fact
  *  rather than a feature: nothing in the app reads it, and a note that never
@@ -187,7 +187,7 @@ export function freeKey(wanted: string, taken: Set<string>): string {
  *  digits. */
 const TAG = new RegExp(`^${TAG_NAME}$`, 'u')
 
-/** What another app called a label, as a tag nib can hold: no spaces, no hash in
+/** What another app called a label, as a tag Orden can hold: no spaces, no hash in
  *  front, and the slashes kept, because a nested tag is a nested tag in both. A
  *  character the app's tags cannot hold is a hyphen; one they can, an accent
  *  written as a mark or a `🔥`, stays. */

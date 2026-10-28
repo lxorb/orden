@@ -2,7 +2,7 @@
  *
  *  Notion writes a folder per page that has pages under it, a file per page, and
  *  an id on the end of every single name: `Plan 1a2b...7890.md` beside
- *  `Plan 1a2b...7890/`. Take the ids off and that is exactly nib's own shape - a
+ *  `Plan 1a2b...7890/`. Take the ids off and that is exactly Orden's own shape - a
  *  note and a folder of the same name, the note standing for the folder - so a
  *  Notion workspace arrives as the tree it looked like in Notion, with nothing
  *  rearranged.
@@ -16,7 +16,7 @@
  *  view is a question somebody asked on a Tuesday and the rows are the data.
  *
  *  Each page carries its properties as lines under the title, which become front
- *  matter: that is where nib keeps a note's properties, and it is what makes them
+ *  matter: that is where Orden keeps a note's properties, and it is what makes them
  *  searchable with `[key:value]`. A row's values are written as what their column
  *  holds - a date as a date, a checkbox as a yes-or-no, a relation as links - so
  *  the base can sort, sum and group them. */
@@ -247,7 +247,7 @@ function viewsFollowed(text: string, from: string, paths: ReadonlySet<string>): 
 }
 
 /** The rows the CSV has and no page of the export stands for, as notes of their
- *  own, so that a row is never in Notion's table and missing from nib's. A page
+ *  own, so that a row is never in Notion's table and missing from Orden's. A page
  *  is matched to its row by name, the way Notion named the file after the row's
  *  title; Notion writes a page for every row, so this is usually nothing.
  *
@@ -311,7 +311,7 @@ function matchable(name: string): string {
 }
 
 /** The key each column is written under, the same in every row's front matter and
- *  in the base: the page's own dates and its labels under nib's names for them,
+ *  in the base: the page's own dates and its labels under Orden's names for them,
  *  every other column under its own.
  *
  *  The page's own date is the column that says when each row was made, the
@@ -420,7 +420,7 @@ function propertiesOf(
   const lines = text.split('\n').map((line) => line.replace(/\r$/, ''))
   let at = 0
 
-  // The title is already the file's name, and nib keeps it as the heading.
+  // The title is already the file's name, and Orden keeps it as the heading.
   const title = lines[at]?.startsWith('# ') ? lines[at] : null
   if (title !== null) at += 1
 
@@ -473,7 +473,7 @@ function propertyIn(line: string, kinds?: ReadonlyMap<string, Kind>): [string, s
   return found ? [found[1] ?? '', found[2] ?? ''] : null
 }
 
-/** A page's properties as front matter: its own dates and labels under nib's
+/** A page's properties as front matter: its own dates and labels under Orden's
  *  names, and every other one as what its column holds. A row of a database read
  *  here is written under its columns' keys (see `keysOf`); a page that is not one
  *  has its values judged one by one.

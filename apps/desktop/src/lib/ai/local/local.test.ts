@@ -1,5 +1,5 @@
 /** The pure half of the programs on this machine: a conversation as one prompt, a run
- *  that did not answer as nib's sentence, and whether a program is signed in, from its
+ *  that did not answer as Orden's sentence, and whether a program is signed in, from its
  *  own answer. */
 
 import { describe, expect, test } from 'vitest'

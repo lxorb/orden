@@ -1,4 +1,4 @@
-/** The one place nib asks a model anything.
+/** The one place Orden asks a model anything.
  *
  *  Every AI surface goes through this: the ```` ```ai ```` block in a note, the four
  *  rewrites on a selection, the Ask panel, and whatever comes after them. One function, so there is one place that knows how a request is made, one place
@@ -136,7 +136,7 @@ async function refusal(response: Response, provider: Provider): Promise<string> 
   return t('The provider answered {status}.', { status: response.status })
 }
 
-/** A ChatGPT plan's refusal in nib's words - its limit, a sign-in gone - or null for
+/** A ChatGPT plan's refusal in Orden's words - its limit, a sign-in gone - or null for
  *  any other provider and any other refusal. */
 async function planSaid(provider: Provider, status: number, body: unknown): Promise<string | null> {
   if (__EVEN_PLUGIN__ || provider.kind !== 'chatgpt') return null

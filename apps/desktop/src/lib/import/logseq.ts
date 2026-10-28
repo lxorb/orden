@@ -8,17 +8,17 @@
  *  Three things are Logseq's own:
  *
  *  `key:: value` at the top of a note is a property, which becomes front matter -
- *  that is where nib keeps a note's properties and what `[key:value]` searches.
- *  `alias::` is the other names a page answers to, which nib calls `aliases`.
+ *  that is where Orden keeps a note's properties and what `[key:value]` searches.
+ *  `alias::` is the other names a page answers to, which Orden calls `aliases`.
  *
- *  `((a-uuid))` is a reference to one block somewhere else in the graph. nib has
+ *  `((a-uuid))` is a reference to one block somewhere else in the graph. Orden has
  *  block links of its own, but they point at a block in one note by a name that
  *  note carries, and a Logseq uuid is not that name. So a reference is replaced
  *  with what the block said, which is what the reader was looking at anyway, and
  *  the count is said out loud. A reference to a block nothing exported is left as
  *  it was written rather than emptied. An embed of a block, `{{embed ((uuid))}}`,
  *  is the same words, and a reference with words of its own, `[these](((uuid)))`,
- *  is those words. An embed of a page, `{{embed [[Page]]}}`, is nib's `![[Page]]`.
+ *  is those words. An embed of a page, `{{embed [[Page]]}}`, is Orden's `![[Page]]`.
  *
  *  `TODO`, `DOING`, `NOW`, `LATER` and `DONE` in front of a bullet are Logseq's
  *  task markers, as are the rarer `WAITING` and its kin, and they become task list
@@ -510,7 +510,7 @@ const CODE_LANGUAGE: Record<string, string> = { EXAMPLE: '', QUERY: 'clojure' }
 
 /** The blocks Logseq borrowed from Org mode, `#+BEGIN_NOTE` to `#+END_NOTE`, in the
  *  spellings everything else reads: a quote is a quote, a note or a warning is a
- *  callout of that kind, and source code or a query is a fenced code block. One nib has no
+ *  callout of that kind, and source code or a query is a fenced code block. One Orden has no
  *  spelling for is left as it was written. And the clock Logseq keeps on a task in
  *  a `:LOGBOOK:` drawer is its own bookkeeping, which does not come. */
 function blocksOf(lines: readonly string[]): string[] {

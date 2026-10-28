@@ -1,10 +1,10 @@
-/** Signing in to Claude Code or Codex: their own login, in a terminal tab of nib's.
+/** Signing in to Claude Code or Codex: their own login, in a terminal tab of Orden's.
  *
- *  nib never signs anybody in to either. Anthropic's terms say a Claude sign-in must go
+ *  Orden never signs anybody in to either. Anthropic's terms say a Claude sign-in must go
  *  through Anthropic's own flow, and the one honest way to hand somebody the flow a
  *  program has is to run the program: so a terminal tab opens, the program's own login
  *  is typed into it (`claude auth login`, `codex login`), and the reader finishes it in
- *  their browser the way the program asks them to. nib then asks the program, every few
+ *  their browser the way the program asks them to. Orden then asks the program, every few
  *  seconds, whether it is signed in yet; see status.svelte.ts.
  *
  *  The tab is an ordinary terminal made through the terminal's own door, `openTerminal`,
@@ -58,7 +58,7 @@ export function loginLine(
 }
 
 /** Opens a terminal running the program's login, in the account's home where it has one
- *  of nib's, and says whether the line was typed. */
+ *  of Orden's, and says whether the line was typed. */
 export async function signIn(
   kind: LocalKind,
   program: string,

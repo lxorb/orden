@@ -1,4 +1,4 @@
-/** Zen's spaces written into nib's: each into the space of its name, made where
+/** Zen's spaces written into Orden's: each into the space of its name, made where
  *  there is none, and an import that has been done before bringing only what is new.
  *
  *  A space of the same name is the same space. Somebody who imports their Zen,

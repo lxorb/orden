@@ -1,4 +1,4 @@
-/** How a run of Claude Code or Codex that did not answer is said, in nib's words.
+/** How a run of Claude Code or Codex that did not answer is said, in Orden's words.
  *
  *  The plan is the reader's own, so its limit is said as theirs, with when it resets
  *  where the program said; a program that is not signed in is told apart from one that

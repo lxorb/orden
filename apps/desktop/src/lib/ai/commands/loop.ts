@@ -5,7 +5,7 @@
  *  ending each answer with when it wants to look again, or that nothing is left; without
  *  a prompt it carries on with what the thread was doing. It stops on `/stop`, on the
  *  model saying it is done, on an error the reader has to fix, and with the window: a
- *  loop is the part of a schedule that runs while nib does, never a cloud runner. */
+ *  loop is the part of a schedule that runs while Orden does, never a cloud runner. */
 
 import type { Thread } from '../chat/types'
 import { fatal } from './goal'

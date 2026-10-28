@@ -15,7 +15,7 @@
  *  `<en-todo>` is a checkbox, which becomes a task list, because that is what it
  *  was for.
  *
- *  `<en-crypt>` is text encrypted with a passphrase nib does not have and never
+ *  `<en-crypt>` is text encrypted with a passphrase Orden does not have and never
  *  will. Those are counted and said out loud rather than quietly dropped. */
 
 import { fromBase64 } from '../bytes'

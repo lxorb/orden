@@ -40,7 +40,7 @@ describe('a Notion export', () => {
     ])
 
     expect(pathsOf(plan)).toEqual(['Plan.md', 'Plan/Kit list.md', 'Plan/tent.png'])
-    // A note and a folder of the same name is how nib nests, so the page that
+    // A note and a folder of the same name is how Orden nests, so the page that
     // had pages under it still stands for them.
     expect(noteAt(plan, 'Plan.md')).toContain('[[Kit list]]')
   })
@@ -71,7 +71,7 @@ describe('a Notion export', () => {
     ])
 
     // Two, which has no page of its own in the export, is a note all the same,
-    // so no row is in Notion's table and missing from nib's.
+    // so no row is in Notion's table and missing from Orden's.
     expect(pathsOf(plan)).toEqual(['Tasks.md', 'Tasks/One.md', 'Tasks/Two.md'])
 
     const base = readBase(fenced(noteAt(plan, 'Tasks.md')))

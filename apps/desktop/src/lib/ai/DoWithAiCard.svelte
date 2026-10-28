@@ -92,8 +92,8 @@
       ></span>
     </div>
   {/each}
-  <!-- The words the task is asked in. nib's own are the placeholder, in the language
-       the model is asked in, so an empty field is nib's words back. -->
+  <!-- The words the task is asked in. Orden's own are the placeholder, in the language
+       the model is asked in, so an empty field is Orden's words back. -->
   <label class="nib-setting setting asking">
     <span class="name"
       ><span class="nib-named"

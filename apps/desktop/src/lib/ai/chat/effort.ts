@@ -1,4 +1,4 @@
-/** nib's one scale of effort, and what each provider is sent for a level (4.9).
+/** Orden's one scale of effort, and what each provider is sent for a level (4.9).
  *
  *  The scale is Auto, Off, Minimal, Low, Medium, High, Extra, Max. A model offers the
  *  levels its provider says it has, `auto` always first; a level the provider then

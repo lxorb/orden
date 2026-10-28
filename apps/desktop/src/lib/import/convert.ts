@@ -11,7 +11,7 @@
  *  code.
  *
  *  A Zettelkasten id link - `[[202201011200]]` - points at a note by the
- *  timestamp it was made at. nib names such a note `202201011200 The title.md`,
+ *  timestamp it was made at. Orden names such a note `202201011200 The title.md`,
  *  the way Obsidian's own unique-note command does, and a link to the bare id then
  *  points at nothing. So where a note's name begins with that id, the link is
  *  written out in full and starts working.

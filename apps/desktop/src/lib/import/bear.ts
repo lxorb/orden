@@ -5,7 +5,7 @@
  *  that is Bear's own is how it writes a tag with a space in it - `#two words#`,
  *  closed with a second hash - which nothing else reads as a tag at all.
  *
- *  Those become nib's tags, which have no spaces in them: `#two-words`. A tag is
+ *  Those become Orden's tags, which have no spaces in them: `#two-words`. A tag is
  *  a thing you click, and a space in one is why Bear had to invent the closing
  *  hash in the first place.
  *
@@ -112,12 +112,12 @@ export async function readBear(sources: readonly Source[]): Promise<ImportPlan> 
   return plan
 }
 
-/** Bear's closed tags as nib's, leaving every fenced block exactly as written. */
+/** Bear's closed tags as Orden's, leaving every fenced block exactly as written. */
 export function bearTags(text: string): string {
   return convertTags(text).text
 }
 
-/** Bear's underline, a single tilde either side, which nib reads as lowered text:
+/** Bear's underline, a single tilde either side, which Orden reads as lowered text:
  *  `~underlined~`. It becomes the `<u>` the Apple Notes import writes one as. Held
  *  to a pair that opens and closes words, so the tildes in an address,
  *  `example.com/~me/~notes`, stay part of it. */
@@ -133,7 +133,7 @@ const NOTE_LINK = /\]\((bear:\/\/x-callback-url\/open-note\?[^)\s]*)\)/g
 /** A wikilink, whose target Bear may write as `Note/Heading`. */
 const WIKILINK = /(?<!\\)(!?)\[\[([^\]\n|#]+)((?:\|[^\]\n]*)?)\]\]/g
 
-/** A note's words with Bear's own spellings made nib's: its closed tags, its
+/** A note's words with Bear's own spellings made Orden's: its closed tags, its
  *  underline and its old highlight, and a link into Bear that names a note in the
  *  export pointed at that note, so the import's own rewriting makes it a wikilink.
  *  Bear links to a heading with a slash, `[[Note/Heading]]`, which nib reads as a

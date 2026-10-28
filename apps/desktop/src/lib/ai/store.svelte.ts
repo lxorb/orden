@@ -338,6 +338,6 @@ accountsAre(
 // used to call this, and surfaces.svelte.ts for the doors it now comes through.
 ai.restore()
 
-// The accounts on every device of the reader's nib account, end to end: started with the
+// The accounts on every device of the reader's Orden account, end to end: started with the
 // store, after the first paint, and not in the glasses' plugin. See vault/start.svelte.ts.
 if (!__EVEN_PLUGIN__) void import('./vault/start.svelte').then((one) => one.startVault())

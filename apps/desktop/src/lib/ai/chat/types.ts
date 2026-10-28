@@ -13,7 +13,7 @@ import type { Provider, ProviderKind } from '../providers'
 /** What the agent may do in a thread, and how much it asks first (../modes.ts). */
 export type { Mode }
 
-/** nib's one scale of effort (4.9). `auto` is the model's own default and is sent as
+/** Orden's one scale of effort (4.9). `auto` is the model's own default and is sent as
  *  nothing; `off` is OpenAI's `none`; `xhigh` is the chip's Extra. A model offers only
  *  the levels it has. */
 export type Effort = 'auto' | 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
@@ -58,7 +58,7 @@ export interface Usage {
 /** Where a tool call stands. `asking` is `needs_approval`: the reader was asked. */
 export type ToolState = 'running' | 'ok' | 'error' | 'asking'
 
-/** What a tool's answer was: the text a model reads, with nib's marks round words from
+/** What a tool's answer was: the text a model reads, with Orden's marks round words from
  *  outside, and any pictures. The crate writes it, the way `nib mcp` writes it for an
  *  outside agent (src-tauri/src/mcp/results.rs). */
 export interface ToolOutput {
@@ -70,7 +70,7 @@ export interface ToolOutput {
 }
 
 /** Why the engine says something between the words: a code the panel words, and the
- *  provider's or the model's own text where there is any. Never a sentence of nib's: the
+ *  provider's or the model's own text where there is any. Never a sentence of Orden's: the
  *  catalogues are the panel's (lane 4). */
 export type NoticeCode =
   /** The older turns became a summary. */
@@ -118,7 +118,7 @@ export interface Attachment {
   label: string
   text?: string
   image?: { mime: string; data: string }
-  /** Words from outside (a web page, a shared space): sent inside nib's untrusted marks. */
+  /** Words from outside (a web page, a shared space): sent inside Orden's untrusted marks. */
   untrusted?: boolean
 }
 
@@ -143,7 +143,7 @@ export interface Replay {
   messages: unknown[]
 }
 
-/** The three shapes of API nib runs a loop over itself. */
+/** The three shapes of API Orden runs a loop over itself. */
 export type Api = 'anthropic' | 'responses' | 'completions'
 
 /** One thing said. A `you` turn is the reader's message; a `model` turn is everything
@@ -201,12 +201,12 @@ export type GoalTo =
   | { do: 'clear' }
 
 /** The older turns as a summary (5.1): the provider's own block where it compacts, or
- *  nib's own summary where it does not. Turns up to `upTo` are kept for the reader and
+ *  Orden's own summary where it does not. Turns up to `upTo` are kept for the reader and
  *  no longer sent. */
 export interface Compaction {
   /** The last turn the summary covers. */
   upTo: string
-  /** `anthropic` and `responses` are the provider's own; `summary` is nib's turn. */
+  /** `anthropic` and `responses` are the provider's own; `summary` is Orden's turn. */
   kind: Api | 'summary'
   model: string
   /** The words of the summary, where anybody can read them. */
@@ -277,7 +277,7 @@ export type EngineEvent =
 /** How a send ended. */
 export type Stop = 'end' | 'stopped' | 'max_tokens' | 'refusal' | 'steps' | 'error'
 
-/** One engine per road: nib's own loop for the APIs, Claude Code's and Codex's sessions
+/** One engine per road: Orden's own loop for the APIs, Claude Code's and Codex's sessions
  *  for the programs (lane 2). Every one writes into the thread it is handed, in place,
  *  and says so through `on`; the thread store writes it down once it is done. */
 export interface Engine {

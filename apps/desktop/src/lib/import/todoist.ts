@@ -528,7 +528,7 @@ function dueOf(due: unknown): Pick<Task, 'due' | 'time' | 'zone' | 'repeats'> {
   const zone = text(due.timezone)
   if (date.endsWith('Z') && zone) {
     // A fixed time is said in UTC with the zone it was set in: written as that zone's
-    // wall clock and the zone after it, as nib writes a time that does not float.
+    // wall clock and the zone after it, as Orden writes a time that does not float.
     const local = wallClock(new Date(date), zone)
     if (local) return { due: local.day, time: local.time, zone, ...repeats }
   }

@@ -1,4 +1,4 @@
-/** What an app's habits say about nib's own settings, for an import that makes a
+/** What an app's habits say about Orden's own settings, for an import that makes a
  *  new space.
  *
  *  Chrome's first run, which brings the search engine and the bookmarks bar over

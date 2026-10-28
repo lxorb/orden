@@ -1,6 +1,6 @@
 /** `run_agent` and `agent_result`, answered in the window: the helpers' rules
  *  (helpers.svelte.ts) on the panel's own roads. Reached two ways, with one answer: an
- *  agent in a program's session or outside nib calls them through `nib mcp` and the
+ *  agent in a program's session or outside Orden calls them through `nib mcp` and the
  *  dispatcher (agents/workspace/helpers.ts); the API loop calls them here directly
  *  (chat/tools.ts), since it is already in the window.
  *

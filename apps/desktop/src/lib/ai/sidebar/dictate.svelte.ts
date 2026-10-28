@@ -1,4 +1,4 @@
-/** Dictation into the panel's field, behind "+": nib's own road from sound to words
+/** Dictation into the panel's field, behind "+": Orden's own road from sound to words
  *  (recorder/microphone.ts records, recorder/transcribe.ts hears it with the reader's
  *  provider or the account). Pressed once it listens, pressed again it
  *  stops, and the words land at the end of what is already in the field, for the reader

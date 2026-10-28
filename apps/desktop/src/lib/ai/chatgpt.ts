@@ -1,5 +1,5 @@
 /** The ChatGPT plan's half of a request: the access token, asked of the crate for each
- *  request the way a key is read for each, and a refusal said in nib's words.
+ *  request the way a key is read for each, and a refusal said in Orden's words.
  *
  *  The crate holds the refresh token in the keychain and the access token of the hour in
  *  memory; the page never holds more than the hour's. See src-tauri/src/chatgpt.rs, and

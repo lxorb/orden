@@ -14,7 +14,7 @@
  *  A version without partial messages prints the `assistant` message and no deltas, so
  *  that message is the answer where no delta came before it, and skipped where one did.
  *  An event of a subagent's (`parent_tool_use_id` set) is never the answer; with no tool
- *  but nib's there are none, and the rule costs nothing. */
+ *  but Orden's there are none, and the rule costs nothing. */
 
 import {
   type Counted,
@@ -141,7 +141,7 @@ function textOf(content: unknown): string {
     .join('')
 }
 
-/** A call of one of nib's tools in an `assistant` message. */
+/** A call of one of Orden's tools in an `assistant` message. */
 function toolUse(content: unknown): ToolHeard | null {
   if (!Array.isArray(content)) return null
   for (const block of content) {

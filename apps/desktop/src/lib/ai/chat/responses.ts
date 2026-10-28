@@ -115,7 +115,7 @@ export function itemsOf(steps: readonly Step[]): unknown[] {
 /** The tools, as functions, inside a namespace for a plan.
  *
  *  Never strict. The Responses API makes a function strict unless told otherwise, and
- *  strict holds every property required: nib's verbs take most arguments as optional,
+ *  strict holds every property required: Orden's verbs take most arguments as optional,
  *  so a model made to fill each one sent `tab: "scratchpad"` beside the path it meant
  *  and empty strings for the rest, and read the scratchpad for the note (#325). */
 function toolsOf(tools: readonly ToolDef[], plan: boolean, web: boolean): unknown[] {

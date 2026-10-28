@@ -38,7 +38,7 @@ export interface Found {
 export type Resolver = (target: string, from: string) => Found | null
 
 /** Answers whether a wikilink naming `found`, written in the note at `from` (where
- *  that note is going), is read by nib as that very file. */
+ *  that note is going), is read by Orden as that very file. */
 export type Reaching = (found: Found, from: string) => boolean
 
 /** A markdown link or embed. The target is read as everything between the
@@ -59,7 +59,7 @@ const LINK =
 
 /** A wikilink, which Bear, Logseq, Roam and Obsidian all write. A backslash in
  *  front makes `\[[Plan]]` words about a link rather than one, in Obsidian and in
- *  nib alike, so it is left as it was written. */
+ *  Orden alike, so it is left as it was written. */
 const WIKILINK = /(?<!\\)!?\[\[([^\]\n|]+)(\|[^\]\n]*)?\]\]/g
 
 /** A link reference definition, `[w]: Why%3F.png` on a line of its own, which is
@@ -146,7 +146,7 @@ export function rewriteLinks(
     // the app that writes a link to a note and this is the app writing one.
     // A name a wikilink cannot hold keeps the markdown link it came in, which is
     // the one way Obsidian could link to it either.
-    // So does a name nib would read as another note from where this one is going:
+    // So does a name Orden would read as another note from where this one is going:
     // a note at the top of the vault is named by its name alone, and a note of the
     // same name beside the link is nearer.
     // And so do words a wikilink cannot show: a `]` in them would end it, and a
@@ -210,7 +210,7 @@ export function rewriteLinks(
       if (!found) return whole
 
       // A link that found its file only by ignoring case keeps the case it was
-      // written in: those are words in a sentence, and nib reads a name without
+      // written in: those are words in a sentence, and Orden reads a name without
       // regard to case just as Obsidian does. Its accents too, whole or apart, since
       // a Mac names a file with them apart and the link was typed with them whole.
       const name = foldName(found.name) === foldName(path) ? path : found.name
@@ -223,7 +223,7 @@ export function rewriteLinks(
       // one there stays one: a markdown link would be only words, and the relation
       // it made would be gone.
       const property = offset < properties
-      // A note nib would read the bare name as another one from here keeps the path
+      // A note Orden would read the bare name as another one from here keeps the path
       // the link went by, as a markdown link from this note: `[[../Plan]]` in
       // `Projects/` meant the root `Plan.md`, and `[[Plan]]` there is the one beside it.
       // Its whole path from the top of the vault is the first try, though, which
@@ -506,7 +506,7 @@ function tableRanges(text: string): [number, number][] {
 
 /** A link written into a table cell. A bare `|` there ends the cell, which would cut
  *  a wikilink's shown words off into a cell of their own, so it is written `\|`, the
- *  way Obsidian writes it and nib reads it. */
+ *  way Obsidian writes it and Orden reads it. */
 function inCell(link: string): string {
   return link.replace(/(?<!\\)\|/g, '\\|')
 }
@@ -527,7 +527,7 @@ function splitFragment(target: string): { path: string; fragment: string | null 
  *
  *  So is raw HTML whose words are not Markdown: a `<pre>` block, whose sample is
  *  shown exactly as written, and a comment, which is hidden and which nothing in
- *  nib ever rewrites. */
+ *  Orden ever rewrites. */
 function codeRanges(text: string): [number, number][] {
   const code = codeOnly(text)
   return [...code, ...htmlRanges(text, code)]
@@ -886,7 +886,7 @@ export class ExportFiles {
     const cleaned = target.replace(/^\.\//, '').replace(/^\/+|\/+$/g, '')
     if (!cleaned) return null
 
-    // A bare name is read the way nib reads it once it arrives: the file of that
+    // A bare name is read the way Orden reads it once it arrives: the file of that
     // name beside the link, then the shallowest. The spelling it was written in
     // goes first, wherever that file is: `[[bookfusion]]` in `People/BookFusion.md`
     // means `Plugins/bookfusion.md`, not the note it is written in.
@@ -974,7 +974,7 @@ export class ExportFiles {
  *
  *  Accents are one spelling however they are composed: a Mac writes `Résumé.pdf`
  *  with its accents apart, a link typed or completed holds them together, and
- *  Obsidian and nib both read the two as one name. */
+ *  Obsidian and Orden both read the two as one name. */
 class Spellings {
   private readonly exactly = new Map<string, Found>()
   private readonly folded = new Map<string, Found>()

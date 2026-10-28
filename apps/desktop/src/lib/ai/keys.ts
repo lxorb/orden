@@ -1,6 +1,6 @@
 /** Where a provider's API key lives on a device.
  *
- *  A key is the reader's own and worth money to whoever takes it, so nib puts it
+ *  A key is the reader's own and worth money to whoever takes it, so Orden puts it
  *  where the platform puts secrets and keeps it out of everything that can be
  *  copied: not in the note, not in the space, never in a log or an error. It reaches
  *  the reader's other devices only sealed end to end, inside the AI vault, which the
@@ -22,7 +22,7 @@
  *    plainly that the browser is holding it.
  *
  *  Read back rather than write-only, because the request is made by the page: a
- *  store that could not be read would mean nib could not ask anything. */
+ *  store that could not be read would mean Orden could not ask anything. */
 
 import { frameWord, NoWord } from '../mobile/bridge'
 import { isMobile, isNative, invoke } from '../tauri'

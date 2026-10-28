@@ -3,7 +3,7 @@
  *  The menu is the same for every provider (docs/ai-sidebar.md 3): a command that cannot
  *  run here is listed dimmed with its reason rather than left out, so a reader who moves
  *  between Claude Code and a key finds every name where they left it. Nearly every row
- *  runs everywhere, because where a provider has no road of its own nib does it; what is
+ *  runs everywhere, because where a provider has no road of its own Orden does it; what is
  *  left is the provider's own tier, and the rows waiting on another lane's half. */
 
 import { t } from '../../i18n.svelte'

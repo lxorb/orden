@@ -5,7 +5,7 @@
  *  pause of its own (`thread/goal/set`), and sets it without starting a turn, so a goal
  *  set or resumed is followed by the turn that starts the work. Claude Code keeps one per
  *  session, set or cleared and never paused, and setting it starts the turn itself
- *  (`/goal` typed as a message). So on Claude Code a pause clears the program's goal, nib
+ *  (`/goal` typed as a message). So on Claude Code a pause clears the program's goal, Orden
  *  keeps the condition, and a resume sets it again. */
 
 import type { GoalTo } from '../chat/types'

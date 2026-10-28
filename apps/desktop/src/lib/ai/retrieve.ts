@@ -11,7 +11,7 @@
  *  There is no index. Obsidian's assistants build one of embeddings over the whole
  *  vault, and that is what their readers complain about: a launch that hangs while it
  *  builds, a bill for embedding notes nobody asked about, an index that is stale the
- *  moment a note changes. nib asks its own search instead, the one the Search panel
+ *  moment a note changes. Orden asks its own search instead, the one the Search panel
  *  runs - the crate's walk over the bodies it already holds, or the browser build's
  *  worker - once per question and never before one. It is bounded three ways: the
  *  words asked for, the lines it may answer with, and a deadline after which the

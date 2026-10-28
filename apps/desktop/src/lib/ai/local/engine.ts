@@ -6,7 +6,7 @@
  *  later send is a turn in it, so the program keeps the conversation, its cache and its
  *  compaction. A session that ended - idle for ten minutes, the program gone, the mode
  *  changed (a mode is the tools the program was started with) - is opened again at the
- *  next send and seeded from nib's own transcript, written into that first message
+ *  next send and seeded from Orden's own transcript, written into that first message
  *  together with the space's instructions. Model, effort and Fast are said to the live
  *  session as they change.
  *

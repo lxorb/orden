@@ -1,6 +1,6 @@
 /** The thread engine for the providers nib asks itself: a Claude or OpenAI key, a
  *  ChatGPT plan, an OpenAI-compatible server (5.1). One loop for all four, an adapter
- *  per API under it, and nib's own tools on top.
+ *  per API under it, and Orden's own tools on top.
  *
  *  A send is: compact first if the window would overflow, the reader's message as a
  *  turn, then rounds - a request, its stream, the tools it asked for, their answers -
@@ -207,7 +207,7 @@ export function createApiEngine(setup: Setup): Engine {
     }
 
     const switched = lastModel(thread)
-    // Where the reader is, said by nib's own verbs for every message, so "this", "the
+    // Where the reader is, said by Orden's own verbs for every message, so "this", "the
     // tab I have open" and "this space" mean what they mean on screen; asked for the
     // thread, whose own space is the one its calls work in.
     const context = await tools.context(provider, thread.id).catch(() => '')

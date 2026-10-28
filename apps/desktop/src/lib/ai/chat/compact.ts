@@ -8,7 +8,7 @@
  *    nib decides when, so the ring's tick is where it happens.
  *  - **OpenAI, `/responses/compact`**, with a key: the conversation comes back as the
  *    opaque items that stand for it, sent back whole.
- *  - **nib's own summary turn** everywhere else, a ChatGPT plan and every compatible
+ *  - **Orden's own summary turn** everywhere else, a ChatGPT plan and every compatible
  *    server among them: the model is asked for a summary, and the summary is what is
  *    sent from then on. The simple compaction Anthropic recommends: nothing of the old
  *    turns is replayed beside it.
@@ -78,7 +78,7 @@ export async function compactThread(job: Compacting, signal?: AbortSignal): Prom
 /** A compaction made, and what making it spent where the provider said. */
 type Made = Omit<Compaction, 'upTo'> & { spent?: { input: number; output: number } }
 
-/** The provider's own compaction where it has one, nib's summary where not. */
+/** The provider's own compaction where it has one, Orden's summary where not. */
 async function compacted(job: Compacting, signal?: AbortSignal): Promise<Made> {
   if (job.api === 'anthropic' && job.model.compaction) {
     const own = await anthropicCompaction(job, signal).catch(() => null)
@@ -160,7 +160,7 @@ async function responsesCompaction(
   return { kind: 'responses', model: job.model.id, summary: '', block: output }
 }
 
-/** nib's own: the model asked for a summary, with no tools, in a round of its own. */
+/** Orden's own: the model asked for a summary, with no tools, in a round of its own. */
 async function ownSummary(
   job: Compacting,
   signal?: AbortSignal,

@@ -3,7 +3,7 @@
  *  of, what the next message is about to add (estimated here, the ≈), and where
  *  compaction happens on its own.
  *
- *  The provider counts the whole and nothing finer, so the bands are the parts nib can
+ *  The provider counts the whole and nothing finer, so the bands are the parts Orden can
  *  say on its own (the instructions it sent, the chips that went) with the rest called
  *  the conversation. Pure. */
 
@@ -49,7 +49,7 @@ export function bandsOf(
 ): Bands {
   const used = filled(usage)
   const told = used ? estimateText(instructions) : 0
-  // The provider's whole is the truth; the parts nib estimated are fitted inside it.
+  // The provider's whole is the truth; the parts Orden estimated are fitted inside it.
   const sent = Math.min(attached, Math.max(0, used - told))
   const fraction = window ? Math.min(1, (used + next) / window) : null
   return {

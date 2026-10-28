@@ -23,7 +23,7 @@ export type TaskTool = 'browser' | 'notes' | 'edits'
 export const TASK_TOOLS: readonly TaskTool[] = ['browser', 'notes', 'edits']
 
 /** What the model is asked to do before the task, where the reader wrote nothing of their
- *  own in Settings: the placeholder of that field (AiPane.svelte), so it is nib's words they replace. In
+ *  own in Settings: the placeholder of that field (AiPane.svelte), so it is Orden's words they replace. In
  *  English, for the model. */
 export const DEFAULT_ASK = [
   'Do this task from my notes for me.',
@@ -33,7 +33,7 @@ export const DEFAULT_ASK = [
 interface Prefs {
   mode: Mode
   task: Mode
-  /** The words a task done with AI is asked in, empty for nib's own. */
+  /** The words a task done with AI is asked in, empty for Orden's own. */
   taskAsk: string
   /** The tools a task done with AI is not given; every one is, until one is turned off. */
   taskOff: TaskTool[]
@@ -122,7 +122,7 @@ export function rememberTaskMode(mode: Mode): void {
   save()
 }
 
-/** The words a task done with AI is asked in: the reader's own, or nothing for nib's. */
+/** The words a task done with AI is asked in: the reader's own, or nothing for Orden's. */
 export function taskAsk(): string {
   return held().taskAsk
 }
