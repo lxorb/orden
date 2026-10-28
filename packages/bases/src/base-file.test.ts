@@ -89,7 +89,7 @@ describe('reading', () => {
     expect(base.views[3]?.filters).toEqual({ and: ['!task.done'] })
   })
 
-  test("a board's own keys, and a card size nib does not know left as written", () => {
+  test("a board's own keys, and a card size Orden does not know left as written", () => {
     const source =
       'views:\n  - type: kanban\n    name: B\n    cardSize: 180\n    nib:\n      cardSize: large\n      groups: [Done, To do]\n      noneFirst: true\n      hideEmpty: true\n      colourColumns: false\n'
     const base = readBase(source)
@@ -165,7 +165,7 @@ describe('writing a change', () => {
     expect(written).toContain('    - categories.contains(link("Books"))\n')
   })
 
-  test('filters set on a base whose own nib could not read replace them, once', () => {
+  test('filters set on a base whose own Orden could not read replace them, once', () => {
     // The unreadable filters are kept only until the base is given filters of its
     // own: kept after them, they would be written over the new ones.
     const source = 'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n'
@@ -180,9 +180,9 @@ describe('writing a change', () => {
     expect(writeBase(readBase(source))).toBe(source)
   })
 
-  test("a view's filters and limit nib cannot read stay as written when another key changes", () => {
+  test("a view's filters and limit Orden cannot read stay as written when another key changes", () => {
     // A filter of a shape the reader does not know, and a limit written as text,
-    // are not nib's to understand but are the file's own: dropping them on the
+    // are not Orden's to understand but are the file's own: dropping them on the
     // next write would widen what the view shows in Obsidian too.
     const source =
       'views:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - a\n    limit: "10"\n'

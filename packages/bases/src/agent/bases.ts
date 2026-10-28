@@ -161,7 +161,7 @@ function viewWith(view: View, said: Args): View {
   if (said.type !== undefined) next.type = words(said.type, 'type')
   if (said.name !== undefined) next.name = words(said.name, 'name')
   if (said.filters !== undefined) {
-    // Filters nib could not read are kept as written only until the view is given
+    // Filters Orden could not read are kept as written only until the view is given
     // its own, and none is its own too; see `viewPlain` in base-file.ts.
     delete next.options.filters
     if (said.filters === null) delete next.filters

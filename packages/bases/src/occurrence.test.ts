@@ -127,7 +127,7 @@ describe('ticking', () => {
     )
   })
 
-  test('nib fields come along and reminders at a moment move with the dates', () => {
+  test("Orden's fields come along and reminders at a moment move with the dates", () => {
     const line =
       '- [ ] Call [time:: 16:00] [remind:: 15m, 2026-10-04 09:00] 🔁 every week 📅 2026-10-04'
     expect(ticked(line, 0, '2026-10-04').split('\n')[0]).toBe(

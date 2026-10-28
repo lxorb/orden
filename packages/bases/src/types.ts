@@ -146,7 +146,7 @@ export interface SelectOption {
   tone?: string
 }
 
-/** What nib adds about a property, under `nib.properties`. */
+/** What Orden adds about a property, under `nib.properties`. */
 export interface NibProperty {
   options?: SelectOption[]
   /** `number`, `percent`, `currency:EUR`, `progress`, `url`, `email`, `phone`... */
@@ -204,7 +204,7 @@ export interface NibView {
   /** A form's fields that must be filled before it is sent. */
   required?: string[]
   /** How tall a board's cards are: the title's lines and the property lines under it.
-   *  nib's own, beside Obsidian's numeric `cardSize`, which Cards reads in pixels. */
+   *  Orden's own, beside Obsidian's numeric `cardSize`, which Cards reads in pixels. */
   cardSize?: CardSize
   /** A board's columns in this view's own order, by group key as text; a group it does
    *  not name follows in the options' order. */
@@ -220,7 +220,7 @@ export interface NibView {
 }
 
 export interface View {
-  /** `table`, `cards`, `list`, `kanban`, `map`, and nib's `calendar`, `timeline`,
+  /** `table`, `cards`, `list`, `kanban`, `map`, and Orden's `calendar`, `timeline`,
    *  `chart`, `form`. */
   type: string
   name: string

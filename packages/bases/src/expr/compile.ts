@@ -179,7 +179,7 @@ function compileNode(node: Node, facts: Facts): Fn {
     case 'index': {
       // `formula["My tasks"]`: a formula whose name is not a word, as `note["a key"]`
       // is a property's. Bases writes either; a rollup over a reverse column named
-      // after a folder with a space in it is the one nib writes.
+      // after a folder with a space in it is the one Orden writes.
       if (
         node.object.type === 'name' &&
         node.object.name === 'formula' &&

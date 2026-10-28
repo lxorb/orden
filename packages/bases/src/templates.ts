@@ -3,11 +3,11 @@
  *  on a schedule (docs/tasks.md 5.13).
  *
  *  `{{title}}`, `{{date}}`, `{{time}}` and `{{date:YYYY-MM-DD}}` are Obsidian's;
- *  `{{date+7d}}` (and `-`, with `d`, `w`, `M`, `y`) is nib's, so a project template
+ *  `{{date+7d}}` (and `-`, with `d`, `w`, `M`, `y`) is Orden's, so a project template
  *  can write its tasks' dates relative to the day it is used: `📅 {{date+7d}}`.
  *
  *  A repeating template says `repeat: every Monday` in its front matter. Whoever runs
- *  nib on a day the rule names makes the note; a stretch nib was closed for makes one
+ *  Orden on a day the rule names makes the note; a stretch Orden was closed for makes one
  *  note, not one per missed week, with the missed days listed in it. The template
  *  keeps the last day it made a note for in `made:`, which syncs, so two devices agree
  *  on whether this week's is made. Pure: the day and the time come in. */

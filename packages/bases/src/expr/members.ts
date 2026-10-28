@@ -2,8 +2,8 @@
  *  answers when it is asked for a part of itself.
  *
  *  `file.*` is Bases' list (name, basename, path, folder, ext, size, ctime, mtime,
- *  properties, tags, links, embeds, backlinks, file) and two of nib's (space,
- *  shared). `task.*` is nib's: a task row's fields, and the few answers views ask
+ *  properties, tags, links, embeds, backlinks, file) and two of Orden's (space,
+ *  shared). `task.*` is Orden's: a task row's fields, and the few answers views ask
  *  of every task (`open`, `date`, `at`, `started`, `subtask`). */
 
 import { dayOf, deadlineOf, hasStarted, startOf } from '@orden/markdown/task-dates'

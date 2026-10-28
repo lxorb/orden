@@ -240,7 +240,7 @@ function bare(text: string): TaskFields {
   }
 }
 
-/** Reads a line of words into a task's fields. The Tasks plugin's own marks and nib's
+/** Reads a line of words into a task's fields. The Tasks plugin's own marks and Orden's
  *  bracket fields are read as they are written (`Call 📅 2026-10-06 ⏫ #admin`); quick
  *  add's grammar reads the rest when it is handed in. */
 export type ReadWords = (text: string) => Read
