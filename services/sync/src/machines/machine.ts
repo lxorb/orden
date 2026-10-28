@@ -662,7 +662,7 @@ export class Machine implements DurableObject {
     if (chosen) this.say(chosen.socket, { t: 'browse', url })
   }
 
-  /** A tab the owner's nib opened landed on the program's own sign-in callback: that
+  /** A tab the owner's Orden opened landed on the program's own sign-in callback: that
    *  request, made on the machine, where the program listens. The owner's alone. */
   private callback(socket: WebSocket, viewer: Viewer, url: string): void {
     if (!viewer.owns) {

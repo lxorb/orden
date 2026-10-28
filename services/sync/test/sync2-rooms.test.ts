@@ -381,7 +381,7 @@ describe('an epoch starting', () => {
     return { words: await body(id), paths: paths.map((one) => one.path) }
   }
 
-  test('keeps no copy of words the note already holds, which is nib’s own echo', async () => {
+  test('keeps no copy of words the note already holds, which is Orden’s own echo', async () => {
     const after = await startedOver('one\nunsettled\nand more from the same hand\n')
     expect(after.paths).toEqual(['Plan.md'])
     expect(after.words).toBe('one\nunsettled\nand more from the same hand\n')

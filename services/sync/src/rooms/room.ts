@@ -1345,7 +1345,7 @@ export class NoteRoom implements DurableObject {
 
     // Written in before the note was last written by somebody else: kept beside it,
     // since there is no ancestor to fold it in against. Unless one of the two holds
-    // every word of the other, which is what nib's own echo looks like - the same
+    // every word of the other, which is what Orden's own echo looks like - the same
     // words reaching the note by another road a keystroke apart - and then the fuller
     // one is the note, and a copy would be a copy of nobody's words but its own. The
     // same test as `keptBeside`, for the same reason.

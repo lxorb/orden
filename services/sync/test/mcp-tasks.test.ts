@@ -1,4 +1,4 @@
-/** The connector's to-dos and bases, with nib closed: a list read off the account's
+/** The connector's to-dos and bases, with Orden closed: a list read off the account's
  *  notes, a task added to the inbox, one ticked and moved, a base queried and a row
  *  added where it looks, and every write refused to a token that may only read and in
  *  a space shared to read (docs/tasks.md 5.15). */
@@ -66,7 +66,7 @@ async function json(key: string, name: string, args: Record<string, unknown> = {
 
 const read = async (key: string, path: string) => tool(key, 'read_note', { space: 'Work', path })
 
-describe('the to-dos, with nib closed', () => {
+describe('the to-dos, with Orden closed', () => {
   test('are listed with the tools', async () => {
     const response = await call<RpcView>(env, '/mcp', {
       token: await connector(),
@@ -181,7 +181,7 @@ const BOOKS = [
   '',
 ].join('\n')
 
-describe('bases, with nib closed', () => {
+describe('bases, with Orden closed', () => {
   test('a view queried, and a row added in the folder it looks in', async () => {
     await baseFile('Books.base', BOOKS)
     const key = await connector()

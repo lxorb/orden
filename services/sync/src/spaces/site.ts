@@ -42,7 +42,7 @@ const MOST_LISTED = 2000
 
 /** What a publish would change, before anything changes.
  *
- *  A nib site is live: the page is the note, so there is no upload to hold back
+ *  An Orden site is live: the page is the note, so there is no upload to hold back
  *  and no "publish" that copies anything anywhere. What can change, then, is
  *  which notes are on the site - and that is exactly what somebody is about to
  *  decide when they are looking at the rules. So this answers the only honest

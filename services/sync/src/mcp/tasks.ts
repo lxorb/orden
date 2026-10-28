@@ -3,7 +3,7 @@
  *  a prompt written against one works against the other (docs/tasks.md 5.15).
  *
  *  What a call means is `@orden/bases/agent`, the same module the app's own verbs use,
- *  over rows read off the account's notes with nib closed: each note's words through
+ *  over rows read off the account's notes with Orden closed: each note's words through
  *  `rowsOfText`, the one reader of a task line there is. A change is the note written
  *  whole through `putNote`, the connector's `write_note`, so it is a version like any
  *  other and a room merges it with whoever is typing. The answers are the same JSON

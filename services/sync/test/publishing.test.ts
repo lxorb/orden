@@ -1,6 +1,6 @@
 /** A published note is the note.
  *
- *  One fixture with every construct nib renders in it - everything.md, which the
+ *  One fixture with every construct Orden renders in it - everything.md, which the
  *  browser drive in apps/desktop/test/e2e/publishing.py opens in the reading view
  *  and on a published page side by side - read here through the real routes.
  *
@@ -251,7 +251,7 @@ describe("the sheet an equation is set with, and KaTeX's faces", () => {
   })
 })
 
-/** The classes no stylesheet anywhere in nib says anything about, on a page or in
+/** The classes no stylesheet anywhere in Orden says anything about, on a page or in
  *  the app: a name for what a thing is, which takes its look from what it is
  *  inside. `language-ts` is on a fence for anybody reading the markup, a chart's
  *  bars and a web card's name are coloured by attributes the renderer writes, and

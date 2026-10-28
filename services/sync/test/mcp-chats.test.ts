@@ -1,4 +1,4 @@
-/** The connector's chats, with nib closed (docs/chats.md 4.14): the chats listed by their
+/** The connector's chats, with Orden closed (docs/chats.md 4.14): the chats listed by their
  *  pointers' names, a chat read with somebody else's words inside an untrusted mark and
  *  the account's own outside one, a search, a post and a reaction that land in the log
  *  marked as the connector's, and every write refused to a token that may only read and

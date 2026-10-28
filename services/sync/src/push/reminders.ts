@@ -1,4 +1,4 @@
-/** Reminders pushed from here, so a phone that has not opened nib since a task was
+/** Reminders pushed from here, so a phone that has not opened Orden since a task was
  *  written elsewhere still rings (docs/tasks.md 5.10 and decision 5).
  *
  *  **Kept from the notes as they arrive.** Every note is written through one place

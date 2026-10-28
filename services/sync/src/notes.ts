@@ -221,7 +221,7 @@ export async function addNote(
   // And its pictures, so a deleted account knows which spaces still show the ones it
   // held; see pictures.ts.
   await keepPictures(env, note, content)
-  // And its reminders, for a phone that has not opened nib since; see push/reminders.ts.
+  // And its reminders, for a phone that has not opened Orden since; see push/reminders.ts.
   await keepReminders(env, note, content).catch(() => undefined)
   // And, for a chat's pointer, the chat it names; see chats/pointer.ts.
   await linkPointer(env, note, content).catch(() => undefined)

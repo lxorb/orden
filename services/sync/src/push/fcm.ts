@@ -2,7 +2,7 @@
  *
  *  Sent as data rather than as a notification, so the app decides what to show: a phone
  *  that already set the alarm for this reminder itself (Reminders.kt) knows its id and
- *  stays quiet, and one that has not opened nib since the task was written rings it.
+ *  stays quiet, and one that has not opened Orden since the task was written rings it.
  *  Signed in as the project's service account, whose key is the Worker's secret
  *  `FCM_SERVICE_ACCOUNT` (the JSON Google hands out); the hour's access token is kept
  *  for the isolate's life and asked again a minute before it runs out. */

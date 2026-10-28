@@ -68,12 +68,12 @@ export function wire(given: Wiring): void {
 /** How a machine's traffic leaves it (4.8).
  *
  *  `web`: the internet off, so nothing leaves but HTTP and HTTPS, and those go through
- *  nib's outbound gateway (entry.ts), which refuses private and metadata addresses and
+ *  Orden's outbound gateway (entry.ts), which refuses private and metadata addresses and
  *  forwards the rest. With Sandbox SDK 1.0 that gateway is the only way HTTPS leaves a
  *  container whose internet is off, and it holds the cleartext while it forwards it -
  *  which is what 4.8's rule forbids for the AI providers' traffic.
  *
- *  `open`: the internet on and no handler at all, so no code of nib's ever sees a
+ *  `open`: the internet on and no handler at all, so no code of Orden's ever sees a
  *  byte; nothing but Cloudflare's own figures meter it, and other ports are open.
  *
  *  The design's rule is "never the other way round", so `open` is the default and

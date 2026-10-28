@@ -10,7 +10,7 @@
  *  back - no third party, and nothing about the reader kept beyond what they
  *  typed.
  *
- *  Obsidian has no form block, so there is no key to borrow and this is nib's
+ *  Obsidian has no form block, so there is no key to borrow and this is Orden's
  *  own. It is written to read as a note rather than as a config file: a title, a
  *  word on the button, and one line per field.
  *

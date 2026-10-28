@@ -1033,7 +1033,7 @@ async function diagramsIn(env: Env, space: Space, source: string): Promise<Map<s
  *
  *  The one hook the renderer offers, so all three live here rather than the
  *  renderer learning about any of them. A ` ```form ` fence nobody can read stays
- *  a fence: see blog/form.ts for the grammar and why it is nib's own. */
+ *  a fence: see blog/form.ts for the grammar and why it is Orden's own. */
 function fencesOf(noteId: string, url: URL, request: Request, drawn: ReadonlyMap<string, string>) {
   const sent = url.searchParams.get('sent') === noteId
   const wrong = url.searchParams.get('wrong')
