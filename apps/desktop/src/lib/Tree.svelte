@@ -115,6 +115,22 @@
    *  number the window and the walk speak in. */
   const at = $derived(rowIndex(flat))
 
+  /** Where each row stands among the rows of its own note, and how many there are: what a
+   *  tree tells a screen reader, which the list's one flat column of rows does not say
+   *  on its own (#523). By index, beside `flat`. */
+  const among = $derived.by(() => {
+    const groups: Record<string, number[]> = {}
+    flat.forEach((row, index) => {
+      const parent = row.entry.path.slice(0, row.entry.path.lastIndexOf('/'))
+      ;(groups[parent] ??= []).push(index)
+    })
+    const out: { position: number; size: number }[] = []
+    for (const group of Object.values(groups)) {
+      group.forEach((index, place) => (out[index] = { position: place + 1, size: group.length }))
+    }
+    return out
+  })
+
   /** The list, and the scroller it is in. The scroller is the panel's own body,
    *  which holds the bookmarks above this list and the empty stretch below it, so
    *  it is found rather than passed: the drawer on a phone and the panel on a
@@ -1127,9 +1143,11 @@
      list arrives at the note being read rather than at the top of the space.
      `long` is what tells the walk the list is longer than the page: End and a
      spelled name reach a row that is not mounted yet. -->
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <ul
   bind:this={list}
+  role="tree"
+  aria-label={t('Files')}
+  aria-multiselectable="true"
   onkeydown={onKey}
   onfocusin={onFocus}
   onfocusout={onBlur}
@@ -1174,14 +1192,13 @@
     class:cut={cut < rowHeight}
     style:top={one.away ? `${offsetOf(one.index, rows)}px` : undefined}
     style:height={cut < rowHeight ? `${cut}px` : undefined}
-    aria-setsize={flat.length}
-    aria-posinset={one.index + 1}
+    role="none"
   >
-    {@render inner(one.row)}
+    {@render inner(one.row, one.index)}
   </li>
 {/snippet}
 
-{#snippet inner(one: FlatRow)}
+{#snippet inner(one: FlatRow, index: number)}
   {@const entry = one.entry}
   {@const depth = one.depth}
   <!-- The note a folder holds of its own name, which is the row the folder is
@@ -1255,6 +1272,11 @@
       class:is-on={workspace.active?.path === opens}
       class:is-picked={workspace.isSelected(entry.path)}
       style:--level={depth}
+      role="treeitem"
+      aria-level={depth + 1}
+      aria-setsize={among[index]?.size}
+      aria-posinset={among[index]?.position}
+      aria-selected={workspace.isSelected(entry.path)}
       aria-expanded={entry.is_dir ? workspace.isExpanded(entry.path) : undefined}
       draggable="true"
       onclick={(event) => openRowAt(event, entry)}
