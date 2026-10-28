@@ -1,6 +1,6 @@
 """Does `capture_to_note` put a page into a note from an agent's own tab nobody sees - the
 clip the clip button would write, a password field grey in the picture, a PDF only where
-nothing secret would print - with nothing of nib in front of anybody?
+nothing secret would print - with nothing of Orden in front of anybody?
 
 The agent is a real client of `nib mcp` over pipes, paired the way any client is, against
 a probe build started by `run_probe` (scripts/probe_app.py). Its pages are served here:
@@ -8,7 +8,7 @@ a probe build started by `run_probe` (scripts/probe_app.py). Its pages are serve
     clip        an agent tab on a page with a filled password field: the note's words are
                 `browser_read`'s article words (the clip button's script and converter),
                 with `source:`, and no field's value; the page never saw a script of
-                nib's, nor a global of it
+                Orden's, nor a global of it
     screenshot  the same tab: a picture kept beside the note, the password field flat
                 grey pixel for pixel and the field beside it untouched
     pdf         refused on that page (`password_field`), printed on a page with no field
@@ -99,8 +99,8 @@ FIELDS = """<!doctype html><title>Field notes</title>
   <p id="seen">untouched</p>
 </article>
 <script>
-  // What the page itself can see: a script of nib's run in the page's world would call
-  // these, and a global of nib's would be one more name on the window.
+  // What the page itself can see: a script of Orden's run in the page's world would call
+  // these, and a global of Orden's would be one more name on the window.
   const before = new Set(Object.getOwnPropertyNames(window))
   const say = (what) => { document.getElementById('seen').textContent = what }
   for (const [proto, name] of [[Node.prototype, 'cloneNode'], [Document.prototype, 'querySelectorAll'], [Element.prototype, 'querySelectorAll']]) {
@@ -236,7 +236,7 @@ class Drive(mcp.Drive):
 
     def untouched(self, agent: Any, tab: str) -> None:
         line = self.said_by_the_page(agent, tab)
-        self.check("the clip ran no script of nib's in the page and left no global", line == "untouched", line)
+        self.check("the clip ran no script of Orden's in the page and left no global", line == "untouched", line)
 
     def seen_by_the_picture(self, agent: Any, tab: str) -> None:
         # Not a check: the picture's secret scan is browser_screenshot's own, and runs in

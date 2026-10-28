@@ -237,7 +237,7 @@ def wipe(identifier: str) -> None:
 def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str, int]:
     """The port, the secret and the process listening on them.
 
-    The process matters. nib is single instance, so a launch while a nib is already
+    The process matters. Orden is single instance, so a launch while an Orden is already
     running hands the arguments over and exits - and a probe that did not look would
     then be driving somebody else's window, on somebody else's space, and reporting
     that no page ever arrived. See `launch`."""
@@ -253,7 +253,7 @@ def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str
             pass
         time.sleep(0.2)
     raise SystemExit(
-        f"the app never wrote {path} - if a nib is already running, close it first:"
+        f"the app never wrote {path} - if an Orden is already running, close it first:"
         " this is a single instance app and a second launch hands over and exits"
     )
 
@@ -399,7 +399,7 @@ def launch(
     port, secret, listening = endpoint(identifier, 90, unlike)
     if listening and listening != app.pid:
         raise SystemExit(
-            f"another nib is already listening (pid {listening}, not {app.pid}): close it first."
+            f"another Orden is already listening (pid {listening}, not {app.pid}): close it first."
             " A second launch of a single instance app hands over and exits, and every number"
             " below would be about that window and its space rather than this one's."
         )

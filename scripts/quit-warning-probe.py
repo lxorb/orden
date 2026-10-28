@@ -1,4 +1,4 @@
-"""Quitting with a terminal running something, in the packaged app: nib's own question
+"""Quitting with a terminal running something, in the packaged app: Orden's own question
 names the busy terminal and not the idle one, Cancel and a row keep the app running,
 Quit anyway ends it with every shell, and the next launch puts both terminals back - and
 quits without a word, since nothing runs in them yet.

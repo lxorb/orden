@@ -11,7 +11,7 @@ asks again from the normal tab: the bubble has to come up there, since nothing a
 private tab said may answer a normal one.
 
 The request arrives as the crate sends it, `nib://web-ask`, emitted from the app's own
-page: on nib's own Chromium the engine asks with its own prompt and the crate sends
+page: on Orden's own Chromium the engine asks with its own prompt and the crate sends
 none, while on `WebView2` and a Mac this event is the request, and the window's answer
 to it is what this proves.
 

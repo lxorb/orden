@@ -10,12 +10,12 @@ and in a frame from another site (where a challenge runs), and fails on any of i
     the console domain     a DevTools client with `Runtime` on serialises what a page
                            logs, and a getter on what it logs says so: the best-known
                            sign of a driven page
-    nib's globals          anything of nib's or the runtime's on the page's `window`
+    Orden's globals          anything of Orden's or the runtime's on the page's `window`
     window.name            nib's channel names (`nib-...`) left behind on a window
 
 A worker that frame starts has to run, too. Emil, 2026-10-13: *"login button just wasn't
 clickable on cloudflare."* Turnstile's frame starts its challenge in a worker, and a frame's
-session, asked by nib to hold what it follows at its start, held that worker too and never
+session, asked by Orden to hold what it follows at its start, held that worker too and never
 attached it, so nothing let it go (src-tauri/src/web_worlds.rs): no answer, a sign in
 button that stayed disabled, and a minute later *"There was a problem with verification"*.
 
@@ -27,7 +27,7 @@ the challenge (web_cookies/twins.rs).
 
 `EmbeddedBrowserWebView` on `window` and `Microsoft Edge WebView2` among the client
 hints' brands are `WebView2`'s own, in every app built on it, and are reported but not
-failed on: nib cannot take them away without lying about the engine.
+failed on: Orden cannot take them away without lying about the engine.
 
     python scripts/web-bot-probe.py --exe path/to/nib.exe \\
       --identifier ch.emilvinu.nib.probe.<name>

@@ -4,7 +4,7 @@ What it asks, each against a page served on the loopback that counts its own req
 
 * **F6 inside the page** reaches the address field: the crate takes it before the page
   sees it (`web_keys.rs`) and the bar reads it as Chrome's way out of the page.
-* **F5 inside the page** is the engine's own reload, which needs nothing of nib's.
+* **F5 inside the page** is the engine's own reload, which needs nothing of Orden's.
 * **F5, Ctrl+R and Ctrl+Shift+R in the app** reload the page in front and never
   present anything; the last goes past the cache, which the request says
   (`Cache-Control: no-cache`).

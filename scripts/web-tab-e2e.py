@@ -259,7 +259,7 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
 
     # 2. A website written when a website was a note. Opening it writes the shortcut
     #    beside it and takes the note away, and what opens is the shortcut: a space
-    #    that came from an older nib converts itself a row at a time. See
+    #    that came from an older Orden converts itself a row at a time. See
     #    docs/web-tabs.md.
     open_row(page, "A page written as a note")
     page.wait_for_timeout(1500)

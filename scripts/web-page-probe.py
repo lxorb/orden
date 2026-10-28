@@ -8,7 +8,7 @@ docs/web-tabs.md.
 * **find** - Ctrl+F on the pane opens the find bar, a word typed into it comes back as
   the engine's tally (`1 of 3`), Enter and Shift+Enter walk it, and Escape closes it.
 * **page first** - Ctrl+F and Ctrl+L pressed inside a page are the page's first, as in
-  Chrome: a page with no answer of its own gets nib's find bar and its address field,
+  Chrome: a page with no answer of its own gets Orden's find bar and its address field,
   and one that answers them itself keeps them. The keys are pressed in the page through
   the engine's own devtools protocol, which is a trusted key in that page and nothing on
   the screen.
@@ -189,7 +189,7 @@ def endpoint(identifier: str, unlike: int = 0) -> tuple[int, str, int]:
         except (OSError, ValueError):
             pass
         time.sleep(0.2)
-    raise SystemExit(f"the app never wrote {path}; close any nib running under this identifier")
+    raise SystemExit(f"the app never wrote {path}; close any Orden running under this identifier")
 
 
 def allow_eval(identifier: str) -> None:
@@ -369,7 +369,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     running = run_probe(exe, env=env, quiet=True)
     port, secret, pid = endpoint(identifier, unlike)
     if pid and pid != running.pid:
-        raise SystemExit(f"another nib (pid {pid}) is listening under {identifier}: close it first")
+        raise SystemExit(f"another Orden (pid {pid}) is listening under {identifier}: close it first")
     until = time.perf_counter() + 90
     while time.perf_counter() < until and not main_window(running.pid):
         time.sleep(0.2)
@@ -463,7 +463,7 @@ def main() -> int:
 """,
         )
 
-        # Ctrl+F inside a page with no find of its own: nib's bar, with the keyboard.
+        # Ctrl+F inside a page with no find of its own: Orden's bar, with the keyboard.
         shut = step(app, "return { shut: !document.querySelector('.findbar') }")
         pressed = press_in_page(args.identifier, "/find")
         opened = step(

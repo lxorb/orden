@@ -308,7 +308,7 @@ def drive(apps: list[pathlib.Path], given: list[str]) -> None:
 
     finally:
         for _label, process, _held in running:
-            # Only the ones this drive started. Never by name: somebody's own nib may be
+            # Only the ones this drive started. Never by name: somebody's own Orden may be
             # running, and it is not this drive's to close.
             process.terminate()
         time.sleep(1.0)

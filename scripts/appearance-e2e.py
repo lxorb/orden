@@ -2,7 +2,7 @@
 
 What it proves:
 
-    the window starts with nib's own frame and no material behind it
+    the window starts with Orden's own frame and no material behind it
     the system's frame is the system's: a titlebar appears, which is a client area
       that no longer fills the window
     the glass theme asks the compositor for the window's material (Mica Alt), and the
@@ -281,7 +281,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         say(f"its window is {hwnd}")
 
         # ── as it comes up ─────────────────────────────────────────────────
-        # What the window measures with nib's own frame on it. Not nought: an undecorated
+        # What the window measures with Orden's own frame on it. Not nought: an undecorated
         # window still has the invisible border the compositor gives every window to grab,
         # which is a few pixels the app neither draws nor sees. It is the *difference* a
         # titlebar makes that says whether the system is drawing one.
@@ -313,13 +313,13 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         if ran(held, "!!document.querySelector('header .controls')"):
             wrong("nib is still drawing its own window buttons under the system's titlebar")
         else:
-            say("and nib's own window buttons are gone from the bar")
+            say("and Orden's own window buttons are gone from the bar")
 
         shot(process.pid, "02-system-frame")
 
         framed_as(held, "nib")
         if frame_of(hwnd) != bare:
-            wrong(f"going back to nib's own frame left {frame_of(hwnd) - bare}px of the system's")
+            wrong(f"going back to Orden's own frame left {frame_of(hwnd) - bare}px of the system's")
 
         # ── the material, which is the glass theme ─────────────────────────
         translucent_as(held, True)
@@ -384,7 +384,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         translucent_as(held, True)
 
     finally:
-        # Only this drive's own process, by its pid. Never by name: somebody's own nib
+        # Only this drive's own process, by its pid. Never by name: somebody's own Orden
         # may be running, and it is not this drive's to close.
         process.terminate()
         process.wait(timeout=30)

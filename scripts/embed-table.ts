@@ -1,7 +1,7 @@
 /** The broad list of places a note can show rather than link to, written out as
  *  packages/markdown/src/embeddable.ts.
  *
- *  The list nib used to have was nine rows long, each one a frame somebody had
+ *  The list Orden used to have was nine rows long, each one a frame somebody had
  *  driven both ways round. Nine is a short list to hold up against Notion, which
  *  shows about forty places, so this is the rest of them - and the question that
  *  had to be answered first was where a list like that comes from without turning

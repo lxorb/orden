@@ -226,7 +226,7 @@ def go(identifier: str, address: str, seconds: float = 20) -> object:
     raise SystemExit(f"the site's page would not go to {address}")
 
 
-#: The open web note's words with its last line of nib's own data replaced by `%s`.
+#: The open web note's words with its last line of Orden's own data replaced by `%s`.
 OWN = r"""
 const web = ws.tabs.find((one) => one.kind === 'web')
 const doc = ws.documentAt(web.path)

@@ -18,7 +18,7 @@ the app, and the app's own watch never saw one (docs/agent-native.md 6.5). A dri
 wants the window a size of its own gives it one with `sized`, which leaves it where it is.
 
 **A probe build never updates.** A release build looks for a new version as it starts,
-downloads it, and runs the installer as it closes - over the reader's own nib, which is
+downloads it, and runs the installer as it closes - over the reader's own Orden, which is
 what probes that ignored this did on 2026-09-27. So a probe is built as a version no
 release passes, looking for updates on a loopback port nothing listens on:
 

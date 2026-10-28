@@ -9,7 +9,7 @@ What it was: `WebView2`'s Chromium hides the pointer while somebody types, honou
 Windows' *Hide pointer while typing* (`SPI_GETMOUSEVANISH`, on by default). It hides with
 `ShowCursor(FALSE)` on its own UI thread and shows it again on the next mouse event *it*
 receives. The count `ShowCursor` moves is the input queue's, and every thread with a
-window in nib's window shares one queue: the window's own, the app page's browser
+window in Orden's window shares one queue: the window's own, the app page's browser
 process and the web pages' browser process - two processes, because the pages keep a
 profile the app's session is not in. So a hide in one process is a pointer gone over the
 whole window, and only a mouse event over that same process brings it back. Type an

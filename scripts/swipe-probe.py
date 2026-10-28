@@ -343,7 +343,7 @@ def main() -> int:
     try:
         endpoint, secret, pid = page_probe.endpoint(args.identifier, unlike=first)
         if pid and pid != running.pid:
-            raise SystemExit(f"another nib (pid {pid}) is listening under {args.identifier}")
+            raise SystemExit(f"another Orden (pid {pid}) is listening under {args.identifier}")
         app = page_probe.App(endpoint, secret)
         window = 0
         until = time.perf_counter() + 90

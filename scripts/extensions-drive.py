@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A real extension, on Linux where nib's own Chromium runs it: seen in the web bar and in
+"""A real extension, on Linux where Orden's own Chromium runs it: seen in the web bar and in
 Settings, and removed from them both and from the engine. #789: an extension could be
 installed there and then neither seen nor removed, the bar's button, its bubble and the
 list in Settings being Windows' alone.

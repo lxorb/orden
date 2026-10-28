@@ -1,6 +1,6 @@
 """A stand-in for `ssh`, for the remote terminal's probe: it never reaches a machine.
 
-nib starts the system's `ssh` in a terminal's pseudo console (docs/terminal.md, _Another
+Orden starts the system's `ssh` in a terminal's pseudo console (docs/terminal.md, _Another
 machine_). A probe cannot connect anywhere real - not to a reader's own hosts, not to the
 internet - and this machine has no `sshd` to connect to, so `NIB_SSH` points the crate at
 this instead, through a one-line `.cmd` the probe writes beside its own temp files.

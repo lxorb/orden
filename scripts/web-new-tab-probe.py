@@ -283,7 +283,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     app = run_probe(exe, quiet=True)
     port, secret, listening = endpoint(identifier, 90, unlike)
     if listening and listening != app.pid:
-        raise SystemExit(f"another nib is already listening (pid {listening}): close it first")
+        raise SystemExit(f"another Orden is already listening (pid {listening}): close it first")
 
     until = time.perf_counter() + 90
     while time.perf_counter() < until and not main_window(app.pid):

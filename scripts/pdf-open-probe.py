@@ -1,11 +1,11 @@
-"""PDFs opened with nib, driven on a Windows probe build.
+"""PDFs opened with Orden, driven on a Windows probe build.
 
 Emil, 2026-10-13: *"open with nib should be possible for pdfs"*. This probe registers
 nothing with Windows and changes no default: it drives what "Open with" does once it
 has chosen nib, which is the command line the installer registers for a PDF, `nib.exe
-"<path>"`, handed to a nib that is not running and to one that is:
+"<path>"`, handed to an Orden that is not running and to one that is:
 
-* **cold** - a launch for a PDF from outside every space opens nib with it in the
+* **cold** - a launch for a PDF from outside every space opens Orden with it in the
   viewer, in front, after copying it to the top of the space that is open.
 * **warm** - a second PDF handed to the running app is a second tab, in front.
 * **again** - the same paper handed over again is the copy the space already has: no
@@ -146,7 +146,7 @@ def main() -> int:
         running.wait(timeout=30)
         browser.allow_eval(options.identifier)
 
-        # Cold: Explorer starts nib for a PDF in Downloads.
+        # Cold: Explorer starts Orden for a PDF in Downloads.
         running = run_probe(options.exe, quiet=True, args=[str(first)])
         port, secret = browser.endpoint(options.identifier, 90, running.pid)
         browser.shown(running.pid)

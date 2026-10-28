@@ -1,13 +1,13 @@
-"""Links handed to nib as the browser, driven on a Windows probe build.
+"""Links handed to Orden as the browser, driven on a Windows probe build.
 
 Emil, 2026-09-30: nib as the default browser, set up with one press. This probe never
-makes nib the default of anything, and cannot: a probe runs under an identifier of its
+makes Orden the default of anything, and cannot: a probe runs under an identifier of its
 own, so the crate refuses the press and never registers (see `ships` in
 src-tauri/src/default_browser.rs). What it drives is everything after the choice, which
 needs no default at all - the command line Windows writes for a link, `nib.exe --url
-"<address>"`, handed to a nib that is not running and to one that is:
+"<address>"`, handed to an Orden that is not running and to one that is:
 
-* **cold** - a launch for a link opens nib with that page in a web tab.
+* **cold** - a launch for a link opens Orden with that page in a web tab.
 * **warm** - two links handed to the running app are two tabs beside the one in front,
   in the order they came, the last one in front.
 * **refused** - a `file:` address and a path open nothing, and a path smuggled after a
@@ -118,7 +118,7 @@ def wipe(identifier: str) -> None:
 
 
 def endpoint(identifier: str, seconds: float, pid: int) -> tuple[int, str]:
-    """The port and secret of the app this probe launched, and no other: a nib that is
+    """The port and secret of the app this probe launched, and no other: an Orden that is
     already running would take every link below and exit this one."""
 
     path = config_dir(identifier) / "automation.json"
@@ -230,7 +230,7 @@ def shown(pid: int) -> None:
 
 
 def hand_over(exe: pathlib.Path, *args: str) -> None:
-    """A second launch, the way Windows starts nib for a link: it hands its command line
+    """A second launch, the way Windows starts Orden for a link: it hands its command line
     to the running app and exits."""
 
     second = run_probe(exe, quiet=True, args=args)
@@ -301,7 +301,7 @@ def main() -> int:
         running.wait(timeout=30)
         allow_eval(options.identifier)
 
-        # Cold: nib is not running, and Windows starts it for a link. How soon the tab
+        # Cold: Orden is not running, and Windows starts it for a link. How soon the tab
         # is there is the launch trace's to say (NIB_TRACE_STARTUP): a question asked
         # before the window listens is never answered and waits out the endpoint's whole
         # timeout, so this asks only once the window has had time to restore.
@@ -354,7 +354,7 @@ def main() -> int:
         if not isinstance(press, dict) or press.get("made") == "made":
             wrong.append(f"a probe was allowed to ask to be the default browser: {press}")
         if isinstance(press, dict) and not isinstance(press.get("is"), bool):
-            wrong.append(f"whether nib is the default browser was not answered: {press}")
+            wrong.append(f"whether Orden is the default browser was not answered: {press}")
 
         # The row, photographed off the screen.
         ask(port_, secret, "nib.settings.show('general')")

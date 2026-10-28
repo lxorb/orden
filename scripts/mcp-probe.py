@@ -77,7 +77,7 @@ CLIENT = {"name": "nib-mcp-probe", "title": "MCP probe", "version": "1"}
 REFUSED = {"name": "nib-mcp-probe-refused", "title": "MCP probe refused", "version": "1"}
 CLAUDE = {"name": "claude-code", "title": "Claude Code", "version": "probe"}
 
-#: What the drive asks for, which nib answers as it is.
+#: What the drive asks for, which Orden answers as it is.
 PROTOCOL = "2025-06-18"
 
 #: Where the contract's answer rides on a result, out of any model's sight.
@@ -664,7 +664,7 @@ class Drive:
         print("  " + subprocess.list2cmdline(run), flush=True)
         done = subprocess.run(run, cwd=room, capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=300, shell=False)
         said = done.stdout.strip()
-        self.check("Claude Code called nib and read the page", "Save" in said and "Dismiss" in said, said.replace("\n", " | "))
+        self.check("Claude Code called Orden and read the page", "Save" in said and "Dismiss" in said, said.replace("\n", " | "))
         shutil.rmtree(room, ignore_errors=True)
 
     def quit(self) -> None:
