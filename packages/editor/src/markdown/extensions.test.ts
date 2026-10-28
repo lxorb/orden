@@ -67,6 +67,13 @@ describe('inline math', () => {
   test('ignores a dollar at end of line', () => {
     expect(names('a $ b')).not.toContain('InlineMath')
   })
+
+  // #498: Pandoc's rule, so the editor marks what the page draws.
+  test('ignores a range of prices, whose second dollar is before a digit', () => {
+    expect(names('from $5-$10 a head')).not.toContain('InlineMath')
+    expect(names('$x$1 is not')).not.toContain('InlineMath')
+    expect(names('$x$ 1 is')).toContain('InlineMath')
+  })
 })
 
 describe('block math', () => {
