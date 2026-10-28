@@ -6,7 +6,7 @@ settings:
 
 overrides:
   '@codemirror/lang-markdown>@codemirror/lang-html': workspace:@nib/lang-html@*
-  '@codemirror/lang-markdown>@codemirror/autocomplete': workspace:@nib/autocomplete@*
+  '@codemirror/lang-markdown>@codemirror/autocomplete': workspace:@orden/autocomplete@*
 
 patchedDependencies:
   '@lezer/markdown@1.7.2':

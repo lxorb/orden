@@ -1428,7 +1428,7 @@ describe('what the app evaluates before it draws anything', () => {
       pnpm?: { overrides?: Record<string, string> }
     }
 
-    expect(manifest.pnpm?.overrides?.[POPUP]).toBe('workspace:@nib/autocomplete@*')
+    expect(manifest.pnpm?.overrides?.[POPUP]).toBe('workspace:@orden/autocomplete@*')
     expect(existsSync(POPUP_DOOR)).toBe(true)
     expect(asked(POPUP_DOOR)).not.toContain('@codemirror/autocomplete')
   })
