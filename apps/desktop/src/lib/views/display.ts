@@ -2,7 +2,7 @@
  *  which way, whether done tasks stay, and what it is narrowed to - a priority, a label,
  *  a day. Each answer is a new base, so the change is kept where the view keeps its
  *  changes (a built-in view in its tab, a base in its file), and Obsidian reads every key
- *  it knows: the grouping and the sorting are Bases' own, the narrowing nib's under the
+ *  it knows: the grouping and the sorting are Bases' own, the narrowing Orden's under the
  *  view's `nib:` key (`only`), which Obsidian leaves alone.
  *
  *  Pure. `displayed` is what the engine is asked with: the view's own filters and the

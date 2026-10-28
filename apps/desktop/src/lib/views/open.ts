@@ -38,7 +38,7 @@ function openSpec(spec: ViewSpec, name: string, path: string | null = null, how:
   return workspace.openView(writeSpec(spec), name, path, how)
 }
 
-/** A view nib ships: Inbox, Today, Upcoming, Completed. */
+/** A view Orden ships: Inbox, Today, Upcoming, Completed. */
 export function openBuiltin(builtin: Builtin, how: OpenHow = {}) {
   return openSpec({ builtin }, builtinName(builtin), null, how)
 }

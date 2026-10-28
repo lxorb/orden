@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** The Tasks panel, Todoist's sidebar the nib way: where things are, with how many, in
+  /** The Tasks panel, Todoist's sidebar the Orden way: where things are, with how many, in
    *  one glance. The add row, Inbox, Today (its count in the danger tone while something
    *  is overdue), Upcoming and Completed; the saved views; the favourites (bookmarked
    *  projects, notes and views); the projects - the notes in the space's projects folder,
@@ -269,7 +269,7 @@
 
   let panel = $state<HTMLElement>()
 
-  /** The plus's own menu, Todoist's project templates the nib way: a new project made
+  /** The plus's own menu, Todoist's project templates the Orden way: a new project made
    *  from a note of the space's templates folder, named as the reader types. */
   function templateMenu(event: MouseEvent) {
     event.preventDefault()

@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Todoist's scheduler, nib's shapes: a field that reads a typed date with quick add's
+  /** Todoist's scheduler, Orden's shapes: a field that reads a typed date with quick add's
    *  grammar and says what it understood; Today, Tomorrow, Later this week, This weekend,
    *  Next week and No date, each with its day; a month with today ringed, the day picked
    *  filled and a dot under every day that already holds tasks; and the time, the

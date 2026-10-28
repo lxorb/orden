@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** A task in a list, Todoist's row in nib's shapes: the box, the words with their
+  /** A task in a list, Todoist's row in Orden's shapes: the box, the words with their
    *  inline marks, the first line of the description under them, and a meta line - the
    *  day in the colour of how near it is, ↻, the deadline, the duration, the bell, how
    *  many sub-tasks are done, how many comments, the labels - with where it lives at its

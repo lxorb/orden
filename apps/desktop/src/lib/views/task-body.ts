@@ -226,7 +226,7 @@ export function withSubtask(text: string, anchor: Anchor, line: string): string 
 }
 
 /** One of a task's comments: a list item straight under it that is no task, Todoist's
- *  comment the nib way, with the moment it was written where the composer stamped one
+ *  comment the Orden way, with the moment it was written where the composer stamped one
  *  (`[at:: …]`). */
 export interface Comment {
   /** Its line in the note, counting from zero. */
@@ -300,7 +300,7 @@ export function withoutNeedsInput(text: string, anchor: Anchor): string {
 }
 
 /** The note with the task left asking (#325): `words` written under it as a comment, and
- *  the task flagged `needs-input`. What nib does itself when a chat doing the task with
+ *  the task flagged `needs-input`. What Orden does itself when a chat doing the task with
  *  AI ended with it neither ticked nor asked about, as the button promised it would be.
  *  Null where there is nothing to do: the task gone, done, cancelled or flagged already. */
 export function askedFor(

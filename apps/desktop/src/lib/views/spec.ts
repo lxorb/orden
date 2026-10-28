@@ -13,7 +13,7 @@
 
 import { isRecord, isString, parsed } from '../stored'
 
-/** The views nib ships; see `builtinView` in @orden/bases. */
+/** The views Orden ships; see `builtinView` in @orden/bases. */
 const BUILTINS = ['inbox', 'today', 'upcoming', 'logbook', 'project', 'label'] as const
 export type Builtin = (typeof BUILTINS)[number]
 
@@ -72,7 +72,7 @@ export function sameView(a: ViewSpec, b: ViewSpec): boolean {
   )
 }
 
-/** The view a spec names as nib ships it: what it asks, without what its tab changed. */
+/** The view a spec names as Orden ships it: what it asks, without what its tab changed. */
 export function asShipped(spec: ViewSpec): ViewSpec {
   const out: ViewSpec = {}
   if (spec.builtin) out.builtin = spec.builtin

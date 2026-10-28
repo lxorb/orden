@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** A task's description, edited the way a note is: nib's own editor, live preview and
+  /** A task's description, edited the way a note is: Orden's own editor, live preview and
    *  all, over the prose written under the task (task-body.ts). What is typed is written
    *  back into the note a moment after the typing stops, as one edit, indented to be the
    *  task's own; the note's other words are never touched.

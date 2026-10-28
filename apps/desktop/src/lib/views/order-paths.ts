@@ -51,7 +51,7 @@ function movedPath(path: string, from: string, to: string): string {
 }
 
 /** The notes a database's board could stand in, as a fence: the note of each folder
- *  the moved note is in, `A/A.md` as nib writes it and `A.md` beside `A/` as an
+ *  the moved note is in, `A/A.md` as Orden writes it and `A.md` beside `A/` as an
  *  import from Notion does. Only these are read, so a rename reads a handful of notes
  *  and not the space. */
 function foldersNotes(root: string, path: string): string[] {

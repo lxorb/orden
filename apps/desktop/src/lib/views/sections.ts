@@ -1,4 +1,4 @@
-/** A project's sections, the nib way: a section is a heading of the project's note, and
+/** A project's sections, the Orden way: a section is a heading of the project's note, and
  *  what it holds is every line under it up to the next heading as high or higher. So a
  *  section added, renamed, duplicated, moved up or down, taken to another project or
  *  deleted is a heading and its lines, written as the note's words; the writer turns the

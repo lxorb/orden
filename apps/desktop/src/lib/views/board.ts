@@ -93,7 +93,7 @@ export function isDoneGroup(base: Base | null, property: string | undefined, key
 }
 
 /** Whether a drop into a group of this grouping can be written: a note's property, a
- *  task's field, the days and halves of the views nib ships. A formula, a rollup or a
+ *  task's field, the days and halves of the views Orden ships. A formula, a rollup or a
  *  file's facts cannot. */
 export function droppableBy(
   property: string | undefined,

@@ -1,10 +1,10 @@
 /** Where a view's base comes from and where a change to it goes, for each of the four
  *  places a view stands:
  *
- *  - a built-in view in a tab (Today, a project): the base nib ships, or the one the
+ *  - a built-in view in a tab (Today, a project): the base Orden ships, or the one the
  *    tab changed it into, kept in the tab's words (spec.ts);
  *  - a `.base` file in a tab, or embedded with `![[Bugs.base#Board]]`: the file, read
- *    and written back with every key nib does not know kept (`writeBase`), through
+ *    and written back with every key Orden does not know kept (`writeBase`), through
  *    the same write a note takes, so a change is one undo;
  *  - a ` ```base ` fence: the fence's own words in the note it stands in.
  *
@@ -27,7 +27,7 @@ function today(): Base {
   return builtinView('today', { undated: modes.undatedInToday })
 }
 
-/** The base a built-in spec asks for: as the tab changed it, else as nib ships it. */
+/** The base a built-in spec asks for: as the tab changed it, else as Orden ships it. */
 export function builtinBase(spec: ViewSpec): Base {
   if (spec.yaml !== undefined) {
     const base = readBase(spec.yaml)

@@ -1,6 +1,6 @@
 /** A project written out as Todoist writes one (docs/tasks.md 5.17): the CSV Todoist
  *  imports into a project and exports from one, so a project made here can be taken to
- *  Todoist, shared as a template, and brought back by nib's own importer unchanged.
+ *  Todoist, shared as a template, and brought back by Orden's own importer unchanged.
  *
  *  A section a `section` row, a task a `task` row indented as deep as it sits, its labels
  *  `@label` in its words, its priority as people count it, its day (or its repeat in
@@ -75,7 +75,7 @@ export function todoistCsv(tasks: readonly Row[], text: string): string {
         TYPE: 'task',
         CONTENT: [task.text, ...labels.map((tag) => `@${tag}`)].join(' '),
         // The whole description, not the scan's first line of it: csvText quotes a
-        // cell with lines in it, which Todoist and nib's importer read back whole.
+        // cell with lines in it, which Todoist and Orden's importer read back whole.
         DESCRIPTION: descriptionOf(text, anchor)?.text ?? task.description ?? '',
         PRIORITY: String(Math.min(Math.max(task.priority, 1), 4)),
         INDENT: String(level),

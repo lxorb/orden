@@ -87,7 +87,7 @@ describe('a base changed from the head', () => {
     expect(setSort(base, 0, []).views[0]?.sort).toEqual([])
   })
 
-  /** Filters nib cannot read are kept as written until the view is given its own,
+  /** Filters Orden cannot read are kept as written until the view is given its own,
    *  and taking a view's filters away is giving it none: the old ones must not
    *  come back on the next write. */
   test('takes away filters it could not read, and does not bring them back', () => {

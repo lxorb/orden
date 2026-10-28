@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** A task, whole (Todoist's task view in nib's shapes): where it lives, its box and its
+  /** A task, whole (Todoist's task view in Orden's shapes): where it lives, its box and its
    *  words, its description in the editor every note is written in, its sub-tasks, and a
    *  column of what it is - its note, its day, its deadline, its priority, its labels and
    *  its reminders - each a press away from being changed. The arrows walk the list it

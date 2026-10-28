@@ -15,7 +15,7 @@ import { readSpec, writeSpec } from './spec'
 const nameOf = (path: string) => path.replace(/^.*\//, '').replace(/\.md$/i, '')
 
 /** A project's view as its tab changed it, about the note at `to` in space `there`
- *  instead of `from` in `space`: the filter and the name nib gave it follow, and
+ *  instead of `from` in `space`: the filter and the name Orden gave it follow, and
  *  whatever the reader changed stays. */
 function followed(yaml: string, space: string, from: string, to: string, there = space): string {
   const was = builtinView('project', { note: { space, path: from } }).views[0]

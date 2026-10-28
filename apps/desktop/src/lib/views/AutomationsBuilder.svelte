@@ -2,7 +2,7 @@
   /** A base's automations, Notion's (docs/tasks.md 5.13), each with a switch: when a row
    *  is added, or when a property changes (to a value, where one is said), set
    *  properties, move the note into a folder, and tell the reader. They run wherever
-   *  nib runs (runner.svelte.ts); each fires once per change, and what it writes is one
+   *  Orden runs (runner.svelte.ts); each fires once per change, and what it writes is one
    *  undo with the edit that fired it. */
   import { type Automation, readAutomations, withAutomations } from '@orden/bases'
   import Cross from '../Cross.svelte'

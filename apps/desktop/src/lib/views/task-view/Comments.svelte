@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** A task's comments in its view, Todoist's way the nib way: the list items under the
+  /** A task's comments in its view, Todoist's way the Orden way: the list items under the
    *  task that are no tasks (task-body.ts), each with when it was written, and a field
    *  under them that writes one more, stamped. Enter sends, Shift and Enter is a new line,
    *  and a comment's cross takes it away again; each is one edit of the note, one undo.

@@ -137,7 +137,7 @@ interface Dated {
 }
 
 /** The task's start date as a pick changes it (#371): written to the field that already
- *  holds its day - `🛫`, a `⏳` it is kept by, an old `📅` in a space of nib's own - so
+ *  holds its day - `🛫`, a `⏳` it is kept by, an old `📅` in a space of Orden's own - so
  *  nothing else on the line moves, else as a new `🛫`. No date takes the day, its time
  *  and its repeat away and leaves the duration and the deadline, as Todoist does. */
 export function changeFor(task: Dated | null, picked: Scheduled): TaskChange {

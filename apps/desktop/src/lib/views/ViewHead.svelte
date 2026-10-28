@@ -150,7 +150,7 @@
 
   const toggle = (which: NonNullable<typeof open>) => (open = open === which ? null : which)
 
-  /** A view nib ships, the way it came. */
+  /** A view Orden ships, the way it came. */
   function reset() {
     open = null
     kit.change(() => builtinBase(asShipped(kit.spec)))
