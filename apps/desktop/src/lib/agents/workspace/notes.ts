@@ -50,6 +50,7 @@ export function noteOf(
   writing: boolean,
 ): { place: Place; relative: string; tab?: string } {
   if (maybe(call, 'tab') === SCRATCHPAD_TAB) {
+    namedOnce(call, SCRATCHPAD)
     return {
       place: placeOf(call),
       relative: SCRATCHPAD,
@@ -59,6 +60,7 @@ export function noteOf(
 
   if (maybe(call, 'tab') !== null) {
     const named = namedTab(call, ['note'], 'a note')
+    namedOnce(call, named.relative)
     if (named.relative !== null) {
       // The tab's own space, said: one the call names none of is the thread's otherwise.
       const args = { ...call.args, tab: null, path: named.relative, space: named.place.space.id }
@@ -79,6 +81,20 @@ export function noteOf(
   if (writing) writableAt(place, onDisk(place, relative))
 
   return { place, relative }
+}
+
+/** Refuses a call whose `path` names another note than its `tab` does. The two are
+ *  each other's alternative, and a model handed both a note to read and the scratchpad
+ *  to name got the scratchpad's empty page back as though it were the note (#325): one
+ *  note said twice is that note, two are a call nobody can answer without guessing. */
+function namedOnce(call: Call, relative: string | null): void {
+  const path = maybe(call, 'path')
+  if (path === null) return
+  if (relative !== null && notePath(judged(path)) === relative) return
+  throw new Refused(
+    'bad_arguments',
+    `path ${path} and tab ${maybe(call, 'tab')} name different notes: pass path for a note by its path, or tab alone for a tab or the scratchpad`,
+  )
 }
 
 /** The space of a note tab with no file: the draft's own. */

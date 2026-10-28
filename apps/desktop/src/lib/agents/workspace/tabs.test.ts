@@ -613,6 +613,24 @@ describe('a note and a canvas, by their tab', () => {
     expect(workspace.open).not.toHaveBeenCalled()
   })
 
+  /** A model asked to read Inbox.md called read_note with that path and
+   *  `tab: "scratchpad"`, and read the scratchpad's empty page as the note (#325). */
+  test('a path and a tab that name two notes are refused, and one note named twice is read', async () => {
+    docs.readNote.mockClear()
+    for (const tab of ['scratchpad', 'n1', 'd1']) {
+      expect(await call('read_note', { path: 'Inbox.md', tab })).toMatchObject({
+        code: 'bad_arguments',
+        message: expect.stringContaining('name different notes'),
+      })
+    }
+    expect(docs.readNote).not.toHaveBeenCalled()
+
+    await call('read_note', { path: 'Plan.md', tab: 'n1' })
+    expect(docs.readNote).toHaveBeenLastCalledWith({ path: 'Plan.md', space: 'work' }, undefined)
+    await call('read_note', { path: 'Plan', tab: 'n1' })
+    expect(docs.readNote).toHaveBeenLastCalledWith({ path: 'Plan.md', space: 'work' }, undefined)
+  })
+
   test('a canvas drawn and never saved is read and edited by its tab, on the surface', async () => {
     expect(await call('read_canvas', { tab: 'c1' })).toMatchObject({
       result: { path: '', nodes: [card], ink: 0 },
