@@ -243,7 +243,11 @@
               onclick={(event) => {
                 event.stopPropagation()
                 onselect?.()
-                void import('../ai/do-task').then((one) => one.doWithAi(row, task.text))
+                const button = event.currentTarget
+                void import('../ai/do-task').then(async (one) => {
+                  // Where the chat went, once it is there: it starts out of sight.
+                  if (await one.doWithAi(row, task.text)) one.sentOff(button)
+                })
               }}><Glyph icon={Sparkles} /></button
             >
           {/if}

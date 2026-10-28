@@ -1592,6 +1592,18 @@ export const bn: Dictionary = {
   'answered by {model}, {date}': '{model}-এর উত্তর, {date}',
   'AI block': 'AI ব্লক',
   'Do with AI': 'AI দিয়ে করুন',
+  'Use the browser': 'ব্রাউজার ব্যবহার করুন',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI দিয়ে করা কাজকে ওয়েব পেজ খুলতে ও তাতে কাজ করতে দেয়।',
+  'Look through notes': 'নোট ঘেঁটে দেখুন',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI দিয়ে করা কাজকে নিজের নোট ছাড়াও আপনার অন্য নোট খুঁজতে ও পড়তে দেয়।',
+  'Change other notes': 'অন্য নোট বদলান',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI দিয়ে করা কাজকে কাজটি ছাড়া অন্য নোট লিখতে, সরাতে ও মুছতে দেয়।',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI দিয়ে করা কাজকে কী করতে বলা হয়। শেষ হলে এটি তবুও কাজটি টিক দেয়, নয়তো একটি মন্তব্যে জিজ্ঞেস করে।',
+  'Started in the AI panel': 'AI প্যানেলে শুরু হয়েছে',
   'Highlight colour': 'হাইলাইটের রং',
   'A single newline breaks the line': 'একটি নতুন লাইনই লাইন ভাঙে',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

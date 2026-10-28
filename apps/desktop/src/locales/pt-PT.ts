@@ -1637,6 +1637,18 @@ export const ptPT: Dictionary = {
   'answered by {model}, {date}': 'respondido por {model}, {date}',
   'AI block': 'Bloco de IA',
   'Do with AI': 'Fazer com IA',
+  'Use the browser': 'Usar o navegador',
+  'Lets a task done with AI open web pages and act on them.':
+    'Permite que uma tarefa feita com IA abra páginas web e aja nelas.',
+  'Look through notes': 'Pesquisar nas notas',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Permite que uma tarefa feita com IA pesquise e leia as suas outras notas, além da própria.',
+  'Change other notes': 'Alterar outras notas',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Permite que uma tarefa feita com IA escreva, mova e elimine notas além da tarefa.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'O que se pede a uma tarefa feita com IA. Continua a marcar a tarefa quando concluída, ou pergunta num comentário.',
+  'Started in the AI panel': 'Iniciado no painel de IA',
   'Highlight colour': 'Cor do destaque',
   'A single newline breaks the line': 'Uma única mudança de linha quebra a linha',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

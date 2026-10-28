@@ -1577,6 +1577,18 @@ export const ja: Dictionary = {
   'answered by {model}, {date}': '{model} が {date} に回答',
   'AI block': 'AI ブロック',
   'Do with AI': 'AI で実行',
+  'Use the browser': 'ブラウザを使う',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI で実行するタスクが Web ページを開いて操作できるようにします。',
+  'Look through notes': 'ノートを調べる',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI で実行するタスクが、自分のノートのほかに他のノートを検索して読めるようにします。',
+  'Change other notes': '他のノートを変更する',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI で実行するタスクが、タスク以外のノートを書き込み、移動、削除できるようにします。',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI で実行するタスクに頼む内容。完了したらタスクにチェックを入れ、そうでなければコメントで質問します。',
+  'Started in the AI panel': 'AI パネルで開始しました',
   'Highlight colour': 'ハイライトの色',
   'A single newline breaks the line': '改行１つで行を分ける',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

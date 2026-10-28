@@ -1617,6 +1617,18 @@ export const ta: Dictionary = {
   'answered by {model}, {date}': '{model} பதிலளித்தது, {date}',
   'AI block': 'AI தொகுதி',
   'Do with AI': 'AI மூலம் செய்',
+  'Use the browser': 'உலாவியைப் பயன்படுத்து',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI மூலம் செய்யப்படும் பணி வலைப்பக்கங்களைத் திறந்து அவற்றில் செயல்பட அனுமதிக்கிறது.',
+  'Look through notes': 'குறிப்புகளைப் பார்',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI மூலம் செய்யப்படும் பணி தன் குறிப்புடன் உங்கள் மற்ற குறிப்புகளைத் தேடிப் படிக்க அனுமதிக்கிறது.',
+  'Change other notes': 'மற்ற குறிப்புகளை மாற்று',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI மூலம் செய்யப்படும் பணி அந்தப் பணியைத் தவிர மற்ற குறிப்புகளை எழுத, நகர்த்த, நீக்க அனுமதிக்கிறது.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI மூலம் செய்யப்படும் பணியிடம் கேட்கப்படுவது. முடிந்ததும் அது பணியைக் குறிக்கும், இல்லையெனில் ஒரு கருத்தில் கேட்கும்.',
+  'Started in the AI panel': 'AI பலகத்தில் தொடங்கியது',
   'Highlight colour': 'ஹைலைட் நிறம்',
   'A single newline breaks the line': 'ஒரு புதிய வரி வரியை முறிக்கும்',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

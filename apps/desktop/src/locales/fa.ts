@@ -1596,6 +1596,18 @@ export const fa: Dictionary = {
   'answered by {model}, {date}': 'پاسخ از {model}، {date}',
   'AI block': 'بلوک هوش مصنوعی',
   'Do with AI': 'انجام با هوش مصنوعی',
+  'Use the browser': 'استفاده از مرورگر',
+  'Lets a task done with AI open web pages and act on them.':
+    'به کاری که با هوش مصنوعی انجام می‌شود اجازه می‌دهد صفحه‌های وب را باز کند و در آن‌ها کار کند.',
+  'Look through notes': 'مرور یادداشت‌ها',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'به کاری که با هوش مصنوعی انجام می‌شود اجازه می‌دهد علاوه بر یادداشت خودش، یادداشت‌های دیگر شما را جست‌وجو کند و بخواند.',
+  'Change other notes': 'تغییر یادداشت‌های دیگر',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'به کاری که با هوش مصنوعی انجام می‌شود اجازه می‌دهد یادداشت‌هایی جز خود کار را بنویسد، جابه‌جا کند و حذف کند.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'آنچه از کاری که با هوش مصنوعی انجام می‌شود خواسته می‌شود. همچنان پس از انجام، کار را تیک می‌زند یا در یک نظر می‌پرسد.',
+  'Started in the AI panel': 'در پنل هوش مصنوعی شروع شد',
   'Highlight colour': 'رنگ پُررنگ',
   'A single newline breaks the line': 'یک خط تازه خط را می‌شکند',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

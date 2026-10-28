@@ -16,9 +16,27 @@ const STORAGE_KEY = 'nib:ai-sidebar'
 /** The mode a task done with AI works in before anybody picked one (#325). */
 const FIRST_TASK_MODE: Mode = 'auto'
 
+/** What a task done with AI may reach, beside its own note and the task itself (#325):
+ *  the web, the reader's other notes to look through, and other notes to change. */
+export type TaskTool = 'browser' | 'notes' | 'edits'
+
+export const TASK_TOOLS: readonly TaskTool[] = ['browser', 'notes', 'edits']
+
+/** What the model is asked to do before the task, where the reader wrote nothing of their
+ *  own in Settings: the placeholder of that field (AiPane.svelte), so it is nib's words they replace. In
+ *  English, for the model. */
+export const DEFAULT_ASK = [
+  'Do this task from my notes for me.',
+  'Read its note first: what is written around and under the task may be what it needs.',
+].join(' ')
+
 interface Prefs {
   mode: Mode
   task: Mode
+  /** The words a task done with AI is asked in, empty for nib's own. */
+  taskAsk: string
+  /** The tools a task done with AI is not given; every one is, until one is turned off. */
+  taskOff: TaskTool[]
   efforts: Record<string, Effort>
   /** The thread open last, whichever space it is in. */
   last: string | null
@@ -35,6 +53,8 @@ function read(): Prefs {
   const out: Prefs = {
     mode: FIRST_MODE,
     task: FIRST_TASK_MODE,
+    taskAsk: '',
+    taskOff: [],
     efforts: {},
     last: null,
     open: {},
@@ -45,6 +65,10 @@ function read(): Prefs {
   if (saved.rail === false) out.rail = false
   out.mode = modeIn(saved.mode) ?? FIRST_MODE
   out.task = modeIn(saved.task) ?? FIRST_TASK_MODE
+  if (isString(saved.taskAsk)) out.taskAsk = saved.taskAsk
+  if (Array.isArray(saved.taskOff)) {
+    out.taskOff = TASK_TOOLS.filter((one) => (saved.taskOff as unknown[]).includes(one))
+  }
   if (isRecord(saved.efforts)) {
     for (const [model, effort] of Object.entries(saved.efforts)) {
       if (isEffort(effort)) out.efforts[model] = effort
@@ -95,6 +119,27 @@ export function taskMode(): Mode {
 
 export function rememberTaskMode(mode: Mode): void {
   held().task = mode
+  save()
+}
+
+/** The words a task done with AI is asked in: the reader's own, or nothing for nib's. */
+export function taskAsk(): string {
+  return held().taskAsk
+}
+
+export function rememberTaskAsk(words: string): void {
+  held().taskAsk = words.trim() ? words : ''
+  save()
+}
+
+/** Whether a task done with AI is given `tool`. */
+export function taskUses(tool: TaskTool): boolean {
+  return !held().taskOff.includes(tool)
+}
+
+export function rememberTaskUses(tool: TaskTool, on: boolean): void {
+  const off = held().taskOff.filter((one) => one !== tool)
+  held().taskOff = on ? off : [...off, tool]
   save()
 }
 

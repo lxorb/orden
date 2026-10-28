@@ -1574,6 +1574,18 @@ export const am: Dictionary = {
   'answered by {model}, {date}': '{model} መለሰ፣ {date}',
   'AI block': 'የAI ብሎክ',
   'Do with AI': 'በAI አድርግ',
+  'Use the browser': 'አሳሹን ተጠቀም',
+  'Lets a task done with AI open web pages and act on them.':
+    'በAI የሚሠራ ተግባር ድረ-ገጾችን እንዲከፍትና በእነሱ ላይ እንዲሠራ ይፈቅዳል።',
+  'Look through notes': 'ማስታወሻዎችን ፈልግ',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'በAI የሚሠራ ተግባር ከራሱ ማስታወሻ በተጨማሪ ሌሎች ማስታወሻዎችዎን እንዲፈልግና እንዲያነብ ይፈቅዳል።',
+  'Change other notes': 'ሌሎች ማስታወሻዎችን ቀይር',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'በAI የሚሠራ ተግባር ከተግባሩ ውጭ ያሉ ማስታወሻዎችን እንዲጽፍ፣ እንዲያንቀሳቅስና እንዲሰርዝ ይፈቅዳል።',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'በAI የሚሠራ ተግባር እንዲያደርግ የሚጠየቀው። ሲጨርስ አሁንም ተግባሩን ምልክት ያደርጋል፣ አለበለዚያ በአስተያየት ይጠይቃል።',
+  'Started in the AI panel': 'በAI ፓነል ውስጥ ተጀምሯል',
   'Highlight colour': 'የማጉላት ቀለም',
   'A single newline breaks the line': 'አንድ አዲስ መስመር መስመሩን ይሰብራል',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

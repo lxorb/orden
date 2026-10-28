@@ -1571,6 +1571,18 @@ export const vi: Dictionary = {
   'answered by {model}, {date}': '{model} trả lời, {date}',
   'AI block': 'Khối AI',
   'Do with AI': 'Làm bằng AI',
+  'Use the browser': 'Dùng trình duyệt',
+  'Lets a task done with AI open web pages and act on them.':
+    'Cho phép việc làm bằng AI mở trang web và thao tác trên đó.',
+  'Look through notes': 'Xem qua ghi chú',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Cho phép việc làm bằng AI tìm và đọc các ghi chú khác của bạn, ngoài ghi chú của nó.',
+  'Change other notes': 'Thay đổi ghi chú khác',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Cho phép việc làm bằng AI viết, di chuyển và xoá các ghi chú khác ngoài việc đó.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Điều được yêu cầu ở việc làm bằng AI. Nó vẫn đánh dấu việc khi xong, hoặc hỏi trong một bình luận.',
+  'Started in the AI panel': 'Đã bắt đầu trong bảng AI',
   'Highlight colour': 'Màu đánh dấu',
   'A single newline breaks the line': 'Một lần xuống dòng là ngắt dòng',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

@@ -1667,6 +1667,18 @@ export const uk: Dictionary = {
   'answered by {model}, {date}': 'відповіла {model}, {date}',
   'AI block': 'Блок ШІ',
   'Do with AI': 'Зробити з ШІ',
+  'Use the browser': 'Використовувати браузер',
+  'Lets a task done with AI open web pages and act on them.':
+    'Дозволяє завданню, яке виконує ШІ, відкривати вебсторінки й діяти на них.',
+  'Look through notes': 'Переглядати нотатки',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Дозволяє завданню, яке виконує ШІ, шукати й читати інші ваші нотатки, окрім власної.',
+  'Change other notes': 'Змінювати інші нотатки',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Дозволяє завданню, яке виконує ШІ, писати, переміщувати й видаляти нотатки, крім самого завдання.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Що доручають завданню, яке виконує ШІ. Воно все одно позначає завдання виконаним або питає в коментарі.',
+  'Started in the AI panel': 'Запущено на панелі ШІ',
   'Highlight colour': 'Колір виділення',
   'A single newline breaks the line': 'Один перенос рядка розриває рядок',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

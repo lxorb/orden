@@ -1613,6 +1613,18 @@ export const sw: Dictionary = {
   'answered by {model}, {date}': 'ilijibiwa na {model}, {date}',
   'AI block': 'Kizuizi cha AI',
   'Do with AI': 'Fanya kwa AI',
+  'Use the browser': 'Tumia kivinjari',
+  'Lets a task done with AI open web pages and act on them.':
+    'Huruhusu kazi inayofanywa kwa AI kufungua kurasa za wavuti na kufanya kazi juu yake.',
+  'Look through notes': 'Pitia madokezo',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Huruhusu kazi inayofanywa kwa AI kutafuta na kusoma madokezo yako mengine, pamoja na lake.',
+  'Change other notes': 'Badilisha madokezo mengine',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Huruhusu kazi inayofanywa kwa AI kuandika, kuhamisha na kufuta madokezo mengine zaidi ya kazi hiyo.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Kile kazi inayofanywa kwa AI inaombwa kufanya. Bado huiweka alama kazi ikikamilika, au huuliza kwenye maoni.',
+  'Started in the AI panel': 'Imeanzishwa kwenye paneli ya AI',
   'Highlight colour': 'Rangi ya angazio',
   'A single newline breaks the line': 'Mstari mpya mmoja huvunja mstari',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

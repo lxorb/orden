@@ -1672,6 +1672,18 @@ export const ru: Dictionary = {
   'answered by {model}, {date}': 'ответил {model}, {date}',
   'AI block': 'Блок ИИ',
   'Do with AI': 'Сделать с ИИ',
+  'Use the browser': 'Использовать браузер',
+  'Lets a task done with AI open web pages and act on them.':
+    'Позволяет задаче, выполняемой ИИ, открывать веб-страницы и действовать на них.',
+  'Look through notes': 'Просматривать заметки',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Позволяет задаче, выполняемой ИИ, искать и читать другие ваши заметки, помимо своей.',
+  'Change other notes': 'Изменять другие заметки',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Позволяет задаче, выполняемой ИИ, писать, перемещать и удалять заметки, кроме самой задачи.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Что поручается задаче, выполняемой ИИ. Она всё равно отмечает задачу выполненной или спрашивает в комментарии.',
+  'Started in the AI panel': 'Запущено в панели ИИ',
   'Highlight colour': 'Цвет выделения',
   'A single newline breaks the line': 'Один перевод строки разрывает строку',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

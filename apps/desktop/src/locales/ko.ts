@@ -1569,6 +1569,18 @@ export const ko: Dictionary = {
   'answered by {model}, {date}': '{model} 답변, {date}',
   'AI block': 'AI 블록',
   'Do with AI': 'AI로 하기',
+  'Use the browser': '브라우저 사용',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI로 하는 할 일이 웹 페이지를 열고 그 위에서 동작할 수 있게 합니다.',
+  'Look through notes': '노트 살펴보기',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI로 하는 할 일이 자기 노트 외에 다른 노트를 검색하고 읽을 수 있게 합니다.',
+  'Change other notes': '다른 노트 변경',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI로 하는 할 일이 할 일 외의 노트를 쓰고, 옮기고, 삭제할 수 있게 합니다.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI로 하는 할 일에 요청하는 내용. 끝나면 여전히 할 일을 체크하고, 아니면 댓글로 묻습니다.',
+  'Started in the AI panel': 'AI 패널에서 시작됨',
   'Highlight colour': '형광펜 색',
   'A single newline breaks the line': '줄바꿈 한 번으로 줄이 나뉨',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

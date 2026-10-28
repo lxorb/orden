@@ -1635,6 +1635,18 @@ export const es: Dictionary = {
   'answered by {model}, {date}': 'respondido por {model}, {date}',
   'AI block': 'Bloque de IA',
   'Do with AI': 'Hacer con IA',
+  'Use the browser': 'Usar el navegador',
+  'Lets a task done with AI open web pages and act on them.':
+    'Permite que una tarea hecha con IA abra páginas web y actúe en ellas.',
+  'Look through notes': 'Buscar en las notas',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Permite que una tarea hecha con IA busque y lea tus otras notas, además de la suya.',
+  'Change other notes': 'Cambiar otras notas',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Permite que una tarea hecha con IA escriba, mueva y elimine notas distintas de la tarea.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Lo que se pide a una tarea hecha con IA. Aun así marca la tarea al terminar, o pregunta en un comentario.',
+  'Started in the AI panel': 'Iniciado en el panel de IA',
   'Highlight colour': 'Color de resaltado',
   'A single newline breaks the line': 'Un solo salto de línea rompe la línea',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

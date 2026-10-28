@@ -1600,6 +1600,18 @@ export const te: Dictionary = {
   'answered by {model}, {date}': '{model} బదులిచ్చింది, {date}',
   'AI block': 'AI బ్లాక్',
   'Do with AI': 'AI తో చేయండి',
+  'Use the browser': 'బ్రౌజర్ వాడండి',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI తో చేసే పనికి వెబ్ పేజీలు తెరిచి వాటిపై పనిచేయడానికి అనుమతిస్తుంది.',
+  'Look through notes': 'నోట్స్ చూడండి',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI తో చేసే పనికి దాని నోట్‌తో పాటు మీ ఇతర నోట్స్ వెతకడానికి, చదవడానికి అనుమతిస్తుంది.',
+  'Change other notes': 'ఇతర నోట్స్ మార్చండి',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI తో చేసే పనికి ఆ పని కాకుండా ఇతర నోట్స్ రాయడానికి, తరలించడానికి, తొలగించడానికి అనుమతిస్తుంది.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI తో చేసే పనిని ఏమి చేయమని అడుగుతారో అది. పూర్తయితే అది పనిని టిక్ చేస్తుంది, లేదంటే వ్యాఖ్యలో అడుగుతుంది.',
+  'Started in the AI panel': 'AI ప్యానెల్‌లో ప్రారంభమైంది',
   'Highlight colour': 'హైలైట్ రంగు',
   'A single newline breaks the line': 'ఒక కొత్త పంక్తి పంక్తిని విరుస్తుంది',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

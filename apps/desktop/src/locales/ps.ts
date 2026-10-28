@@ -1596,6 +1596,18 @@ export const ps: Dictionary = {
   'answered by {model}, {date}': 'ځواب له {model}، {date}',
   'AI block': 'د مصنوعي ځيرکتيا بلاک',
   'Do with AI': 'د مصنوعي ځيرکتيا سره يې وکړئ',
+  'Use the browser': 'براوزر وکاروئ',
+  'Lets a task done with AI open web pages and act on them.':
+    'هغې دندې ته چې د مصنوعي ځيرکتيا سره کېږي اجازه ورکوي چې وېب پاڼې پرانيزي او پرې کار وکړي.',
+  'Look through notes': 'يادښتونه وګورئ',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'هغې دندې ته چې د مصنوعي ځيرکتيا سره کېږي اجازه ورکوي چې د خپل يادښت تر څنګ ستاسو نور يادښتونه ولټوي او ولولي.',
+  'Change other notes': 'نور يادښتونه بدل کړئ',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'هغې دندې ته چې د مصنوعي ځيرکتيا سره کېږي اجازه ورکوي چې له دندې پرته نور يادښتونه وليکي، ولېږدوي او ړنګ کړي.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'هغه څه چې له هغې دندې غوښتل کېږي چې د مصنوعي ځيرکتيا سره کېږي. کله چې بشپړه شي بيا هم دنده نښه کوي، يا په يوه تبصره کې پوښتنه کوي.',
+  'Started in the AI panel': 'د مصنوعي ځيرکتيا په پينل کې پيل شو',
   'Highlight colour': 'د ځلاند رنګ',
   'A single newline breaks the line': 'يوه نوې کرښه کرښه ماتوي',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

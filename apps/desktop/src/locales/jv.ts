@@ -1575,6 +1575,18 @@ export const jv: Dictionary = {
   'answered by {model}, {date}': 'diwangsuli {model}, {date}',
   'AI block': 'Blok AI',
   'Do with AI': 'Garap nganggo AI',
+  'Use the browser': 'Nganggo browser',
+  'Lets a task done with AI open web pages and act on them.':
+    'Ngidini tugas sing digarap AI mbukak kaca web lan tumindak ing kono.',
+  'Look through notes': 'Nggoleki cathetan',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Ngidini tugas sing digarap AI nggoleki lan maca cathetan liyane, saliyane cathetane dhewe.',
+  'Change other notes': 'Ngowahi cathetan liya',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Ngidini tugas sing digarap AI nulis, mindhah, lan mbusak cathetan saliyane tugas kuwi.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Apa sing dijaluk saka tugas sing digarap AI. Tugas tetep dicenthang yen rampung, utawa AI takon ing komentar.',
+  'Started in the AI panel': 'Diwiwiti ing panel AI',
   'Highlight colour': 'Warna sorot',
   'A single newline breaks the line': 'Siji larik anyar wis misahake larike',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

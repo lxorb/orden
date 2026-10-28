@@ -1581,6 +1581,18 @@ export const ms: Dictionary = {
   'answered by {model}, {date}': 'dijawab {model}, {date}',
   'AI block': 'Blok AI',
   'Do with AI': 'Lakukan dengan AI',
+  'Use the browser': 'Guna pelayar',
+  'Lets a task done with AI open web pages and act on them.':
+    'Membenarkan tugasan yang dilakukan AI membuka halaman web dan bertindak padanya.',
+  'Look through notes': 'Lihat nota',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Membenarkan tugasan yang dilakukan AI mencari dan membaca nota anda yang lain, selain notanya sendiri.',
+  'Change other notes': 'Ubah nota lain',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Membenarkan tugasan yang dilakukan AI menulis, memindah dan memadam nota selain tugasan itu.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Apa yang diminta daripada tugasan yang dilakukan AI. Ia tetap menanda tugasan apabila selesai, atau bertanya dalam komen.',
+  'Started in the AI panel': 'Dimulakan dalam panel AI',
   'Highlight colour': 'Warna sorotan',
   'A single newline breaks the line': 'Satu baris baharu memutuskan baris',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

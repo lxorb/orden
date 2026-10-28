@@ -1598,6 +1598,18 @@ export const tr: Dictionary = {
   'answered by {model}, {date}': '{model} yanıtladı, {date}',
   'AI block': 'YZ bloğu',
   'Do with AI': 'YZ ile yap',
+  'Use the browser': 'Tarayıcıyı kullan',
+  'Lets a task done with AI open web pages and act on them.':
+    'YZ ile yapılan bir görevin web sayfalarını açıp üzerinde işlem yapmasına izin verir.',
+  'Look through notes': 'Notlara göz at',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'YZ ile yapılan bir görevin kendi notunun yanında diğer notlarınızı aramasına ve okumasına izin verir.',
+  'Change other notes': 'Diğer notları değiştir',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'YZ ile yapılan bir görevin, görev dışındaki notları yazmasına, taşımasına ve silmesine izin verir.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'YZ ile yapılan bir görevden istenen. Bitince görevi yine işaretler ya da bir yorumda sorar.',
+  'Started in the AI panel': 'YZ panelinde başlatıldı',
   'Highlight colour': 'Vurgu rengi',
   'A single newline breaks the line': 'Tek bir satır sonu satırı böler',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

@@ -1551,6 +1551,18 @@ export const zhHans: Dictionary = {
   'answered by {model}, {date}': '由{model}回答，{date}',
   'AI block': 'AI块',
   'Do with AI': '用AI完成',
+  'Use the browser': '使用浏览器',
+  'Lets a task done with AI open web pages and act on them.':
+    '允许用AI完成的任务打开网页并在其中操作。',
+  'Look through notes': '浏览笔记',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    '允许用AI完成的任务在自身笔记之外搜索和阅读你的其他笔记。',
+  'Change other notes': '更改其他笔记',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    '允许用AI完成的任务写入、移动和删除任务以外的笔记。',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    '要求用AI完成的任务做什么。完成后它仍会勾选任务，否则在评论中提问。',
+  'Started in the AI panel': '已在AI面板中开始',
   'Highlight colour': '高亮颜色',
   'A single newline breaks the line': '单个换行符即断行',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

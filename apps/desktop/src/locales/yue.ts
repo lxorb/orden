@@ -1549,6 +1549,17 @@ export const yue: Dictionary = {
   'answered by {model}, {date}': '由{model}回答，{date}',
   'AI block': 'AI區塊',
   'Do with AI': '用AI做',
+  'Use the browser': '用瀏覽器',
+  'Lets a task done with AI open web pages and act on them.': '畀用AI做嘅任務開網頁同喺上面操作。',
+  'Look through notes': '睇吓筆記',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    '畀用AI做嘅任務喺自己筆記以外搜尋同閱讀你其他筆記。',
+  'Change other notes': '改其他筆記',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    '畀用AI做嘅任務寫、搬同刪除任務以外嘅筆記。',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    '叫用AI做嘅任務做乜。做完佢都會剔咗個任務，唔係就喺留言度問。',
+  'Started in the AI panel': '已經喺AI面板開始咗',
   'Highlight colour': '突出顯示顏色',
   'A single newline breaks the line': '單一換行即斷行',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

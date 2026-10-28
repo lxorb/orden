@@ -1612,6 +1612,18 @@ export const ml: Dictionary = {
   'answered by {model}, {date}': '{model} മറുപടി നൽകി, {date}',
   'AI block': 'AI ബ്ലോക്ക്',
   'Do with AI': 'AI ഉപയോഗിച്ച് ചെയ്യുക',
+  'Use the browser': 'ബ്രൗസർ ഉപയോഗിക്കുക',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI ഉപയോഗിച്ച് ചെയ്യുന്ന ജോലിക്ക് വെബ് പേജുകൾ തുറന്ന് അവയിൽ പ്രവർത്തിക്കാൻ അനുവദിക്കുന്നു.',
+  'Look through notes': 'കുറിപ്പുകൾ നോക്കുക',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI ഉപയോഗിച്ച് ചെയ്യുന്ന ജോലിക്ക് സ്വന്തം കുറിപ്പിന് പുറമെ നിങ്ങളുടെ മറ്റ് കുറിപ്പുകൾ തിരയാനും വായിക്കാനും അനുവദിക്കുന്നു.',
+  'Change other notes': 'മറ്റ് കുറിപ്പുകൾ മാറ്റുക',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI ഉപയോഗിച്ച് ചെയ്യുന്ന ജോലിക്ക് ആ ജോലിയല്ലാത്ത കുറിപ്പുകൾ എഴുതാനും നീക്കാനും ഇല്ലാതാക്കാനും അനുവദിക്കുന്നു.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI ഉപയോഗിച്ച് ചെയ്യുന്ന ജോലിയോട് ആവശ്യപ്പെടുന്നത്. പൂർത്തിയായാൽ അത് ജോലി ടിക്ക് ചെയ്യും, അല്ലെങ്കിൽ ഒരു കമന്റിൽ ചോദിക്കും.',
+  'Started in the AI panel': 'AI പാനലിൽ ആരംഭിച്ചു',
   'Highlight colour': 'ഹൈലൈറ്റ് നിറം',
   'A single newline breaks the line': 'ഒരു പുതിയ വരി വരി മുറിക്കും',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

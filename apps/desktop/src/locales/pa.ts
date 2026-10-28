@@ -1598,6 +1598,18 @@ export const pa: Dictionary = {
   'answered by {model}, {date}': '{model} ਦਾ ਜਵਾਬ, {date}',
   'AI block': 'AI ਬਲਾਕ',
   'Do with AI': 'AI ਨਾਲ ਕਰੋ',
+  'Use the browser': 'ਬ੍ਰਾਊਜ਼ਰ ਵਰਤੋ',
+  'Lets a task done with AI open web pages and act on them.':
+    "AI ਨਾਲ ਕੀਤੇ ਜਾਂਦੇ ਕੰਮ ਨੂੰ ਵੈੱਬ ਪੰਨੇ ਖੋਲ੍ਹਣ ਅਤੇ ਉਨ੍ਹਾਂ 'ਤੇ ਕਾਰਵਾਈ ਕਰਨ ਦਿੰਦਾ ਹੈ।",
+  'Look through notes': 'ਨੋਟ ਵੇਖੋ',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI ਨਾਲ ਕੀਤੇ ਜਾਂਦੇ ਕੰਮ ਨੂੰ ਆਪਣੇ ਨੋਟ ਤੋਂ ਇਲਾਵਾ ਤੁਹਾਡੇ ਹੋਰ ਨੋਟ ਖੋਜਣ ਅਤੇ ਪੜ੍ਹਨ ਦਿੰਦਾ ਹੈ।',
+  'Change other notes': 'ਹੋਰ ਨੋਟ ਬਦਲੋ',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI ਨਾਲ ਕੀਤੇ ਜਾਂਦੇ ਕੰਮ ਨੂੰ ਕੰਮ ਤੋਂ ਇਲਾਵਾ ਹੋਰ ਨੋਟ ਲਿਖਣ, ਹਿਲਾਉਣ ਅਤੇ ਮਿਟਾਉਣ ਦਿੰਦਾ ਹੈ।',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    "AI ਨਾਲ ਕੀਤੇ ਜਾਂਦੇ ਕੰਮ ਨੂੰ ਕੀ ਕਰਨ ਲਈ ਕਿਹਾ ਜਾਂਦਾ ਹੈ। ਪੂਰਾ ਹੋਣ 'ਤੇ ਇਹ ਫਿਰ ਵੀ ਕੰਮ 'ਤੇ ਨਿਸ਼ਾਨ ਲਾਉਂਦਾ ਹੈ, ਜਾਂ ਕਿਸੇ ਟਿੱਪਣੀ ਵਿੱਚ ਪੁੱਛਦਾ ਹੈ।",
+  'Started in the AI panel': 'AI ਪੈਨਲ ਵਿੱਚ ਸ਼ੁਰੂ ਹੋਇਆ',
   'Highlight colour': 'ਉਭਾਰ ਦਾ ਰੰਗ',
   'A single newline breaks the line': 'ਇੱਕੋ ਨਵੀਂ ਲਾਈਨ ਲਾਈਨ ਤੋੜ ਦਿੰਦੀ ਹੈ',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

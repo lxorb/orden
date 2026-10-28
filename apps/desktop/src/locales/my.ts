@@ -1576,6 +1576,18 @@ export const my: Dictionary = {
   'answered by {model}, {date}': '{model} ဖြေသည်၊ {date}',
   'AI block': 'AI ဘလောက်',
   'Do with AI': 'AI ဖြင့် လုပ်ရန်',
+  'Use the browser': 'ဘရောက်ဇာ သုံးရန်',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI ဖြင့် လုပ်သော အလုပ်ကို ဝဘ်စာမျက်နှာများ ဖွင့်ပြီး ၎င်းတို့ပေါ်တွင် လုပ်ဆောင်ခွင့်ပေးသည်။',
+  'Look through notes': 'မှတ်စုများ ကြည့်ရန်',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI ဖြင့် လုပ်သော အလုပ်ကို ၎င်း၏ မှတ်စုအပြင် သင်၏ အခြားမှတ်စုများကို ရှာဖွေဖတ်ရှုခွင့်ပေးသည်။',
+  'Change other notes': 'အခြားမှတ်စုများ ပြောင်းရန်',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI ဖြင့် လုပ်သော အလုပ်ကို ထိုအလုပ်မှလွဲ၍ အခြားမှတ်စုများကို ရေး၊ ရွှေ့၊ ဖျက်ခွင့်ပေးသည်။',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI ဖြင့် လုပ်သော အလုပ်ကို လုပ်ခိုင်းသည့်အရာ။ ပြီးလျှင် အလုပ်ကို အမှန်ခြစ်ဆဲဖြစ်ပြီး မဟုတ်လျှင် မှတ်ချက်တွင် မေးသည်။',
+  'Started in the AI panel': 'AI အကန့်တွင် စတင်ပြီး',
   'Highlight colour': 'မီးမောင်းအရောင်',
   'A single newline breaks the line': 'လိုင်းအသစ်တစ်ခုတည်းဖြင့် လိုင်းပြတ်သည်',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

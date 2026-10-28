@@ -1606,6 +1606,18 @@ export const kn: Dictionary = {
   'answered by {model}, {date}': '{model} ಉತ್ತರಿಸಿದೆ, {date}',
   'AI block': 'AI ಬ್ಲಾಕ್',
   'Do with AI': 'AI ಮೂಲಕ ಮಾಡಿ',
+  'Use the browser': 'ಬ್ರೌಸರ್ ಬಳಸಿ',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI ಮೂಲಕ ಮಾಡುವ ಕಾರ್ಯಕ್ಕೆ ವೆಬ್ ಪುಟಗಳನ್ನು ತೆರೆದು ಅವುಗಳ ಮೇಲೆ ಕೆಲಸ ಮಾಡಲು ಅನುಮತಿಸುತ್ತದೆ.',
+  'Look through notes': 'ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಿ',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI ಮೂಲಕ ಮಾಡುವ ಕಾರ್ಯಕ್ಕೆ ತನ್ನ ಟಿಪ್ಪಣಿಯ ಜೊತೆಗೆ ನಿಮ್ಮ ಇತರ ಟಿಪ್ಪಣಿಗಳನ್ನು ಹುಡುಕಿ ಓದಲು ಅನುಮತಿಸುತ್ತದೆ.',
+  'Change other notes': 'ಇತರ ಟಿಪ್ಪಣಿಗಳನ್ನು ಬದಲಿಸಿ',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI ಮೂಲಕ ಮಾಡುವ ಕಾರ್ಯಕ್ಕೆ ಆ ಕಾರ್ಯವಲ್ಲದ ಟಿಪ್ಪಣಿಗಳನ್ನು ಬರೆಯಲು, ಸರಿಸಲು ಮತ್ತು ಅಳಿಸಲು ಅನುಮತಿಸುತ್ತದೆ.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI ಮೂಲಕ ಮಾಡುವ ಕಾರ್ಯಕ್ಕೆ ಏನು ಮಾಡಲು ಹೇಳಲಾಗುತ್ತದೆ. ಮುಗಿದಾಗ ಅದು ಕಾರ್ಯವನ್ನು ಟಿಕ್ ಮಾಡುತ್ತದೆ, ಇಲ್ಲವೇ ಒಂದು ಕಾಮೆಂಟ್‌ನಲ್ಲಿ ಕೇಳುತ್ತದೆ.',
+  'Started in the AI panel': 'AI ಫಲಕದಲ್ಲಿ ಪ್ರಾರಂಭವಾಯಿತು',
   'Highlight colour': 'ಹೈಲೈಟ್ ಬಣ್ಣ',
   'A single newline breaks the line': 'ಒಂದೇ ಹೊಸ ಸಾಲು ಸಾಲನ್ನು ಮುರಿಯುತ್ತದೆ',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

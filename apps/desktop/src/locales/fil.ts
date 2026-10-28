@@ -1621,6 +1621,18 @@ export const fil: Dictionary = {
   'answered by {model}, {date}': 'sinagot ng {model}, {date}',
   'AI block': 'AI block',
   'Do with AI': 'Gawin gamit ang AI',
+  'Use the browser': 'Gamitin ang browser',
+  'Lets a task done with AI open web pages and act on them.':
+    'Hinahayaan ang gawaing ginagawa ng AI na magbukas ng mga web page at kumilos doon.',
+  'Look through notes': 'Hanapin sa mga tala',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Hinahayaan ang gawaing ginagawa ng AI na hanapin at basahin ang iba mong tala, bukod sa sarili nito.',
+  'Change other notes': 'Baguhin ang ibang tala',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Hinahayaan ang gawaing ginagawa ng AI na magsulat, maglipat, at magbura ng mga tala maliban sa gawain.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Ang ipinagagawa sa gawaing ginagawa ng AI. Tsine-check pa rin nito ang gawain kapag tapos na, o nagtatanong sa isang komento.',
+  'Started in the AI panel': 'Sinimulan sa AI panel',
   'Highlight colour': 'Kulay ng tampok',
   'A single newline breaks the line': 'Isang bagong linya lang ay humahati ng linya',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
