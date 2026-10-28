@@ -3,7 +3,7 @@
    *  composer before the message goes: their faces, and Share where the reader owns the
    *  note, which lets them read it in one press. Slack's prompt when a file's link goes
    *  where some cannot follow it. Sending without it sends the link alone. */
-  import type { Member } from '@nib/chats'
+  import type { Member } from '@orden/chats'
   import { fade } from 'svelte/transition'
   import { t } from '../../i18n.svelte'
   import { dur } from '../../motion'

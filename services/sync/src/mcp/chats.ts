@@ -1,6 +1,6 @@
 /** The connector's chats: `list_chats`, `read_chat`, `search_chats`, `post_message`
  *  and `react`, under the names and arguments `nib mcp` gives them, answered in the same
- *  words (`@nib/chats/agent`), so a prompt written against one reads the other the same
+ *  words (`@orden/chats/agent`), so a prompt written against one reads the other the same
  *  way (docs/chats.md 4.14). `draft_message` is the app's alone: there is no composer
  *  here to put words in.
  *
@@ -12,8 +12,8 @@
  *  that may, so nothing waits for a question here, and every message says it came by
  *  way of the connector. */
 
-import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@nib/chats'
-import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@nib/chats/agent'
+import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@orden/chats'
+import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { accountById } from '../auth'
 import { askChat } from '../chats/ask'
 import { reachChat, type Reached } from '../chats/reach'

@@ -1,12 +1,12 @@
 /** Chats on the Worker (docs/chats.md 4.2 to 4.6): the routes against real SQL, and each
  *  chat's `ChatLog` against Node's SQLite, which has FTS5 as a Durable Object's does.
  *  Five people hold the space - its owner, a writer, a reader, and a guest at each role -
- *  and a sixth holds nothing. Every shape is `@nib/chats/wire`'s, read back through its
+ *  and a sixth holds nothing. Every shape is `@orden/chats/wire`'s, read back through its
  *  own checks where the app would read it. */
 
-import { chatText } from '@nib/chats'
-import { MOST_BEHIND } from '@nib/chats/limits'
-import { chatListOf, eventsPageOf, resultsOf, statePageOf } from '@nib/chats/wire'
+import { chatText } from '@orden/chats'
+import { MOST_BEHIND } from '@orden/chats/limits'
+import { chatListOf, eventsPageOf, resultsOf, statePageOf } from '@orden/chats/wire'
 import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { reachAs } from '../src/chats/reach'

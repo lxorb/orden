@@ -13,8 +13,8 @@
  *  Pure: what the rows are is arithmetic over the messages, the reader and their
  *  calendar, which a test reads as a list. */
 
-import type { Message, Who } from '@nib/chats'
-import { GROUP_WITHIN } from '@nib/chats/limits'
+import type { Message, Who } from '@orden/chats'
+import { GROUP_WITHIN } from '@orden/chats/limits'
 
 export type Item<M extends Message = Message> =
   | { kind: 'day'; key: string; day: string; at: number }

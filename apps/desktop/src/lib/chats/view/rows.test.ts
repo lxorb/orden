@@ -1,4 +1,4 @@
-import type { Message, Who } from '@nib/chats'
+import type { Message, Who } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
 import { type Item, rowsOf, type Rowing } from './rows'
 

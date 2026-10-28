@@ -9,7 +9,7 @@
  *  Share where the reader owns it. Fetched by the first press; never in the glasses'
  *  plugin. */
 
-import { may } from '@nib/chats'
+import { may } from '@orden/chats'
 import { account } from '../account.svelte'
 import { hiddenKinds } from '../settings.svelte'
 import { t } from '../i18n.svelte'

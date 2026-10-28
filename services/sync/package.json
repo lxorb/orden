@@ -29,7 +29,7 @@
     "@lezer/xml": "^1.0.6",
     "@lezer/yaml": "^1.0.4",
     "@nib/bases": "workspace:*",
-    "@nib/chats": "workspace:*",
+    "@orden/chats": "workspace:*",
     "@nib/markdown": "workspace:*",
     "@orden/online": "workspace:*",
     "@orden/rooms": "workspace:*",

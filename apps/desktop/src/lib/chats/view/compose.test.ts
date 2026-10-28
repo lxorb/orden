@@ -1,4 +1,4 @@
-import type { Member } from '@nib/chats'
+import type { Member } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
 import { enterDoes, mentionAt, mentionChoices, mentionText, nibAsked, trimmed } from './compose'
 

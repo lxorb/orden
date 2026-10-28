@@ -3,7 +3,7 @@
  *  made small first, so the message names it by hash and nobody who reads the message
  *  ever asks the site. A desktop's alone; elsewhere a message has no preview. */
 
-import type { Preview } from '@nib/chats'
+import type { Preview } from '@orden/chats'
 import { isRecord, isString } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 

@@ -8,8 +8,8 @@
  *  jump landed on. The tab's components read this and call it; none of them builds an
  *  event. */
 
-import type { FileRef, Member, Message, Poll, Preview, Who } from '@nib/chats'
-import { chatLink } from '@nib/chats/links'
+import type { FileRef, Member, Message, Poll, Preview, Who } from '@orden/chats'
+import { chatLink } from '@orden/chats/links'
 import { copyText } from '../../clipboard'
 import { t } from '../../i18n.svelte'
 import { paletteWords } from '../../surfaces.svelte'

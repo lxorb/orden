@@ -7,7 +7,7 @@
    *  composer and for reactions), the lightbox, a new poll, the bubble. A file dropped
    *  anywhere on the chat lands in the composer, and a row of the file list as a link. Ctrl+J goes to the New line and
    *  Escape to the bottom (4.16). On a phone the replies are the page. */
-  import { chatOf, type FileRef, type Message, type Poll } from '@nib/chats'
+  import { chatOf, type FileRef, type Message, type Poll } from '@orden/chats'
   import { onDestroy, untrack } from 'svelte'
   import { draggedTab, isTreeDrag } from '../../drag-paths'
   import { pages } from '../../web-tab/pages.svelte'

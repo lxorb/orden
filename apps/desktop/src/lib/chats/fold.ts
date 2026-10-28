@@ -1,7 +1,7 @@
 /** A chat's events folded into the messages a device keeps, one at a time and in the
  *  log's order (docs/chats.md 4.5, 4.17).
  *
- *  `apply` in `@nib/chats` is the reducer, and it holds every event about every message
+ *  `apply` in `@orden/chats` is the reducer, and it holds every event about every message
  *  in memory, which is what lets it take events in any order. A device cannot: it keeps
  *  a chat of 100,000 messages in its store and at most a window of them in memory. But a
  *  device never needs any order but the log's: it asks for the events after the place it
@@ -15,7 +15,7 @@
  *  saying the same event - is folded once. The property test holds this to `apply`: the
  *  same events in order give the same messages. */
 
-import type { Logged, Message, Who } from '@nib/chats'
+import type { Logged, Message, Who } from '@orden/chats'
 
 /** When each standing reaction and vote of a message was set, in that order. */
 export interface Marks {

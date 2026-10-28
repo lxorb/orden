@@ -4,7 +4,7 @@
    *  count on the last. Each is the sender's 480 px preview at the size the sender
    *  stated, so the row is already the right height before anything loads; a press opens
    *  the lightbox. A video plays in place over its first frame. */
-  import type { FileRef } from '@nib/chats'
+  import type { FileRef } from '@orden/chats'
   import { amount } from '../../i18n.svelte'
   import { fitted, gallery, isVideo } from './media'
   import { fileUrl } from './urls.svelte'

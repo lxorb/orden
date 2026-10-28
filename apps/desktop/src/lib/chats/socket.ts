@@ -13,8 +13,8 @@
  *  device holds by then. A close the log made on purpose (the reader was taken out of
  *  the space, or the chat is gone) is not reconnected after. */
 
-import type { Logged, Who } from '@nib/chats'
-import { serverFrameOf, socketPath, text, type ClientFrame } from '@nib/chats/wire'
+import type { Logged, Who } from '@orden/chats'
+import { serverFrameOf, socketPath, text, type ClientFrame } from '@orden/chats/wire'
 import { subprotocol } from '@orden/rooms'
 import { BEAT, DEVICE_PROTOCOL } from '@orden/sync-core/wire'
 import { BASE } from '../api'

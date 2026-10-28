@@ -32,7 +32,7 @@ export type FromHub =
   /** The account's AI accounts moved on another device: read them again
    *  (ai/vault/vault.svelte.ts). */
   | { t: 'ai' }
-  /** A chat moved on (`ChatPoke` in @nib/chats/wire): handed on unread, because the
+  /** A chat moved on (`ChatPoke` in @orden/chats/wire): handed on unread, because the
    *  chats read it with their own check, fetched with them after the launch. */
   | { t: 'chat'; said: Record<string, unknown> }
 

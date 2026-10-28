@@ -3,7 +3,7 @@
  *  steers (docs/chats.md 6.2, lane 5).
  *
  *  It keeps the promises the real one makes, by the same code where there is code to
- *  share: every event goes through `apply` from `@nib/chats`, so an edit, a delete, a
+ *  share: every event goes through `apply` from `@orden/chats`, so an edit, a delete, a
  *  reaction, a pin or a vote looks here as it will look from the account; a post waits
  *  in the outbox for a moment before it is placed, drawn as sending; a chat's view is a
  *  window of at most a thousand messages, paged two hundred at a time; a search reads
@@ -30,7 +30,7 @@ import {
   type SearchQuery,
   ulid,
   type Who,
-} from '@nib/chats'
+} from '@orden/chats'
 import { SvelteMap } from 'svelte/reactivity'
 import type {
   ChatEntry,

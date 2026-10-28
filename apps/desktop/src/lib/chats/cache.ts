@@ -7,8 +7,8 @@
  *  and the browser build use. The browser keeps no history between visits: it is online
  *  whenever it is open, and the account is its store, as Slack's web client's is. */
 
-import { type Event, type Has, hasOf, type Message, type Who } from '@nib/chats'
-import type { ChatRow, Refusal } from '@nib/chats/wire'
+import { type Event, type Has, hasOf, type Message, type Who } from '@orden/chats'
+import type { ChatRow, Refusal } from '@orden/chats/wire'
 import type { Kept } from './fold'
 
 /** One chat as the device holds it: the log's place every message here is current to,
@@ -101,7 +101,7 @@ export function hasColumn(message: Message): string {
   return ` ${hasOf(message).join(' ')} `
 }
 
-/** Text as a search compares it: no case, no accents, as `@nib/chats` and FTS5's
+/** Text as a search compares it: no case, no accents, as `@orden/chats` and FTS5's
  *  `remove_diacritics` both fold it. */
 function folded(text: string): string {
   return text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()

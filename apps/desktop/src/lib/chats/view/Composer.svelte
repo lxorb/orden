@@ -14,8 +14,8 @@
    *
    *  Nothing here costs anything per keystroke that grows with the chat: the editor is
    *  the composer's words and nothing else. */
-  import type { FileRef, Member, Poll } from '@nib/chats'
-  import { ASK_EVERYONE_PAST } from '@nib/chats/limits'
+  import type { FileRef, Member, Poll } from '@orden/chats'
+  import { ASK_EVERYONE_PAST } from '@orden/chats/limits'
   import { createEditor, EditorView, modeEffects, setNoteIndex } from '@nib/editor'
   import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'

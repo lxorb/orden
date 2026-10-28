@@ -459,7 +459,7 @@ are `lib/task-actions.ts`.
 space the grant does not reach does not exist. Every message the reader did not write
 comes back inside an untrusted mark naming the chat and the person, `<untrusted
 source="chat:thesis from:Lucile">`, so another person's words are never an agent's
-instructions (9.6); the words are `@nib/chats/agent`'s, the account connector's too.
+instructions (9.6); the words are `@orden/chats/agent`'s, the account connector's too.
 
 | tool | arguments | what it does |
 | --- | --- | --- |

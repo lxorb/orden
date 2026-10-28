@@ -3,7 +3,7 @@
    *  and the name the chat calls them, then @nib (the reader's own agent, at the start
    *  of a message), @here and @everyone. The composer keeps
    *  the keys; this draws the list and takes a press. */
-  import type { Member } from '@nib/chats'
+  import type { Member } from '@orden/chats'
   import type { Special } from './compose'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'

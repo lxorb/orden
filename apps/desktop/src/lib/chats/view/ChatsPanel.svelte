@@ -14,7 +14,7 @@
   import ChatMark from './ChatMark.svelte'
   import Glyph from './Glyph.svelte'
   import { makeChat, openChat } from './open'
-  import type { Who } from '@nib/chats'
+  import type { Who } from '@orden/chats'
   import Avatar from '../../people/Avatar.svelte'
   import { firstLine } from './body'
   import { faceOf, nameOf } from './people'

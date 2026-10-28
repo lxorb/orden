@@ -13,7 +13,7 @@ create table chats (id text primary key, space text not null,
                     oldest integer, complete integer not null default 0, row text);
 
 -- Every message as it stands. `main` is whether the chat itself shows it (not a reply,
--- or a reply also sent to the chat); `has` is `hasOf` in @nib/chats, each word between
+-- or a reply also sent to the chat); `has` is `hasOf` in @orden/chats, each word between
 -- spaces, so a filter and a column mean one thing; `upto` is the log's place this copy
 -- is current to; `json` is the message, `marks` what the in-order fold keeps beside it.
 create table messages (chat text not null, id text not null, seq integer not null,

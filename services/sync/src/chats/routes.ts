@@ -8,11 +8,11 @@
  *
  *  Everything a chat holds is its `ChatLog`'s; these routes decide who may ask, and ask
  *  it. The listing reads D1 alone, which the object keeps current within a second, so
- *  the Chats panel wakes no object. Every shape here is `@nib/chats/wire`'s. */
+ *  the Chats panel wakes no object. Every shape here is `@orden/chats/wire`'s. */
 
-import { type Event, type Message, matches, parseSearch, type Who } from '@nib/chats'
-import { EVENTS_A_MINUTE } from '@nib/chats/limits'
-import { newChatOf, postEventsOf } from '@nib/chats/wire'
+import { type Event, type Message, matches, parseSearch, type Who } from '@orden/chats'
+import { EVENTS_A_MINUTE } from '@orden/chats/limits'
+import { newChatOf, postEventsOf } from '@orden/chats/wire'
 import { Hono } from 'hono'
 import { newId, now } from '../crypto'
 import { within } from '../limits'
@@ -518,7 +518,7 @@ function dayIn(zone: string | undefined): (at: number) => string {
   return (at) => format.format(new Date(at))
 }
 
-/** One search over some chats: the query as `@nib/chats` reads it, the candidates each
+/** One search over some chats: the query as `@orden/chats` reads it, the candidates each
  *  chat's words index gives, answered with `matches`, newest first (4.12). */
 export async function searched(
   env: Env,

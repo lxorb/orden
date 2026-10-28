@@ -12,8 +12,8 @@
    *  Keyboard first: Tab from the composer lands on the rows, ↑ and ↓ walk them, and R,
    *  Q, E, P, S, Delete and + act on the lit one (4.16). A screen reader hears it as a
    *  log, arrivals spoken politely. */
-  import type { Message } from '@nib/chats'
-  import { may } from '@nib/chats'
+  import type { Message } from '@orden/chats'
+  import { may } from '@orden/chats'
   import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { amount, t } from '../../i18n.svelte'

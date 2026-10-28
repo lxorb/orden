@@ -2,7 +2,7 @@
  *  changes, in one synchronous step the object runs inside a transaction
  *  (docs/chats.md 4.3, 4.5 and 4.6).
  *
- *  Nothing here decides a rule of its own. Who may is `mayEvent` from `@nib/chats`,
+ *  Nothing here decides a rule of its own. Who may is `mayEvent` from `@orden/chats`,
  *  the table the app hides its buttons by; what an event does to a message is `apply`,
  *  the reducer every device runs. A placed event is applied by replaying every event
  *  about the messages it touches - a post's own, the edits, reactions, pins, votes and
@@ -12,10 +12,20 @@
  *
  *  Each refusal is a `Refusal` code; the app says it in the reader's language. */
 
-import { apply, chatState, mayEvent } from '@nib/chats'
-import type { Event, FileRef, Logged, Mention, Message, Meta, Preview, Role, Who } from '@nib/chats'
-import { BURST_POSTS, BURST_SECONDS, EVENTS_A_MINUTE } from '@nib/chats/limits'
-import type { Refusal } from '@nib/chats/wire'
+import { apply, chatState, mayEvent } from '@orden/chats'
+import type {
+  Event,
+  FileRef,
+  Logged,
+  Mention,
+  Message,
+  Meta,
+  Preview,
+  Role,
+  Who,
+} from '@orden/chats'
+import { BURST_POSTS, BURST_SECONDS, EVENTS_A_MINUTE } from '@orden/chats/limits'
+import type { Refusal } from '@orden/chats/wire'
 
 /** The refusals a route or the object names outside `admit`: an event or a body that
  *  does not check, a person who may not, and a ceiling. */

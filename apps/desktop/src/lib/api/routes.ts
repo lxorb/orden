@@ -424,7 +424,7 @@ export interface AccountSettings {
   /** What pings for every chat at once (docs/chats.md 4.11): words that call for the
    *  reader as their name does, the hours pings are let through (null for every hour),
    *  and whether a notification shows the words and makes a sound. See
-   *  chats/hush.svelte.ts and `Hours` in @nib/chats/notify. */
+   *  chats/hush.svelte.ts and `Hours` in @orden/chats/notify. */
   chatKeywords?: string[]
   chatHours?: { days: number[]; from: number; to: number } | null
   chatPreviews?: boolean

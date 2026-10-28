@@ -4,7 +4,7 @@
  *  `eventOf`, so a row a newer nib wrote that this one cannot read is left out rather
  *  than trusted. */
 
-import { chatRowOf, eventOf, messageOf, REFUSALS } from '@nib/chats/wire'
+import { chatRowOf, eventOf, messageOf, REFUSALS } from '@orden/chats/wire'
 import { isRecord } from '../stored'
 import { invoke } from '../tauri'
 import {

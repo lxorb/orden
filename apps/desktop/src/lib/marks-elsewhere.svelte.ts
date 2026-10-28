@@ -56,7 +56,7 @@ async function wornBy(path: string, content: string): Promise<Worn> {
   // The glasses' plugin carries no chats, nor their reader.
   if (isChatTarget(path)) {
     if (__EVEN_PLUGIN__) return NOTHING
-    const pointer = (await import('@nib/chats/pointer')).chatOf(content)
+    const pointer = (await import('@orden/chats/pointer')).chatOf(content)
     return { ...NOTHING, icon: pointer?.icon ?? null, iconColor: pointer?.iconColor ?? null }
   }
 

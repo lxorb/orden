@@ -103,7 +103,7 @@ async function chatIconEdit(
   colour: string | null,
 ): Promise<TextEdit | null> {
   if (__EVEN_PLUGIN__) return null
-  const { chatOf, chatText, withIcon } = await import('@nib/chats')
+  const { chatOf, chatText, withIcon } = await import('@orden/chats')
   const pointer = chatOf(before)
   return pointer && oneEdit(before, chatText(withIcon(pointer, icon, colour)))
 }

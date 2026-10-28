@@ -4,7 +4,7 @@
  *  post where others read asks first in Approve mode and never in Agent mode, a chat
  *  with yourself and a draft never ask, and a reader of the space may say nothing. */
 
-import type { Who } from '@nib/chats'
+import type { Who } from '@orden/chats'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf, type Caller, READER } from '../../automation/caller'
 import { FixtureChats } from '../../chats/view/fixture.svelte'

@@ -324,7 +324,7 @@ depends on the file's.
   `{v: 1, chat: "c_<32 hex>"}` and writes the `chats` row (4.3) with that `space_id`. The id
   is the account's and is never derived from a path, a v1 note id or a v2 tree id.
 - **The space holds a pointer.** The app writes `Thesis/thesis.chat`, one line of JSON and a
-  newline, read strictly as a `.term` is (`chatOf` and `chatText` in `@nib/chats/pointer`):
+  newline, read strictly as a `.term` is (`chatOf` and `chatText` in `@orden/chats/pointer`):
 
   ```json
   {"v":1,"chat":"c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"}
@@ -421,7 +421,7 @@ create table meta (key text primary key, value text);   -- topic, posting, slowm
   `schedule` (a post to place later, placed by the object's alarm). The object applies each
   to `messages` in the transaction that appends it, so a page of current state is one
   indexed read. Every device applies the same events with the same reducer, `apply` in
-  `@nib/chats`, which gives one state for the same set of placed events in any order
+  `@orden/chats`, which gives one state for the same set of placed events in any order
   (4.5).
 - **Limits**: 16,000 characters of words (Discord's 2,000 is too few for code, Slack's 40,000
   is cut in practice); ten files a message; 600 events a minute per account; 10 posts in 10 s
@@ -470,7 +470,7 @@ phone push is off (decision 7.4).
 and `nib.device.<id>` in the subprotocol as a room's socket has. The door is the rooms' door
 (`rooms/index.ts`): one query for the session, the chat's reach (the role in `chats.space_id`,
 or an item share of its pointer, 4.2) and whether this person may post, passed to the object
-in headers. Frames, every one JSON text and typed and checked in `@nib/chats/wire`; a chat
+in headers. Frames, every one JSON text and typed and checked in `@orden/chats/wire`; a chat
 carries no bytes of its own (files go up as blobs), so nothing needs the framed envelope:
 
 | from the device | from `ChatLog` |
@@ -485,7 +485,7 @@ The socket hibernates as a room's does, and the object keeps nothing in fields.
 
 **Every other chat** hears through the account's hub (`docs/sync-v2.md` 5.12): on a post,
 `ChatLog` tells the hub of each member with no socket open to it `{t: 'chat', chat, seq, at,
-by, mention}` (`ChatPoke` in `@nib/chats/wire`, which the hub's frames and the app's read),
+by, mention}` (`ChatPoke` in `@orden/chats/wire`, which the hub's frames and the app's read),
 coalesced per member to one frame every two seconds. The hub is every signed-in device's,
 on sync v1 as on v2, so the pokes reach both. The app moves that
 chat's count and badge, and, if the reader should be told (4.11), shows a notification. A
@@ -568,7 +568,7 @@ The space's roles (`docs/collaboration.md`, Sharing) answer it, with one setting
   read is a chat to read.
 - A guest is a person at their role (`guestMayReach` gains the chat routes), named by their
   device's name, with their initial for a face.
-- The table is `may` in `@nib/chats/roles`: the object decides by it and the app hides what
+- The table is `may` in `@orden/chats/roles`: the object decides by it and the app hides what
   it says no to, so the two never disagree.
 - People added to a space later read the chat's whole history, as Slack's channels do.
 - Taking somebody out of a space or a chat closes their sockets in the same request, as
@@ -720,7 +720,7 @@ Settings, and one function decides.
   default.
 - **Do not disturb** is the reader's status (`status.quiet`, 4.10): while it stands nothing
   pings, on every device, until its time.
-- **The decision** is `decide` in `@nib/chats/notify`, a pure function of the message (its
+- **The decision** is `decide` in `@orden/chats/notify`, a pure function of the message (its
   author, words, mentions and the author it replies to), the chat's level and mute, the
   keywords, the hours, Do not disturb, whether somebody is at the device, and whether the
   chat is on screen in a window in front. It answers `show` or the first reason it does not,
@@ -763,7 +763,7 @@ Settings, and one function decides.
   never in files: nothing of a chat is written into the space but its pointer. A hit is a
   row with the chat's mark, the message's first line, the chat and who wrote it, and
   opens the chat at it.
-- **Modifiers** (Slack's [search][sl-search]), parsed by `parseSearch` in `@nib/chats` and
+- **Modifiers** (Slack's [search][sl-search]), parsed by `parseSearch` in `@orden/chats` and
   answered from the device's store of messages: `from:@Lucile` (or `from:me`),
   `in:#thesis`, `has:link`, `has:file`, `has:image`, `has:video`, `has:voice`, `has:poll`,
   `has:pin`, `has:reaction`, `is:reply`, `mentions:me` (or `mentions:@Lucile`), `before:`,
@@ -840,7 +840,7 @@ the note verbs are) and, where marked, the account connector (`services/sync/src
   A space the agent was not granted has no chats to it. The six tools cost the table 2,101
   characters, about 530 tokens, and are listed only to a grant holding the scopes; the
   table's ceiling went from 31,000 to 33,000 for them.
-- **The connector** answers in the same words (`@nib/chats/agent`) and has no reader to
+- **The connector** answers in the same words (`@orden/chats/agent`) and has no reader to
   ask: posting and reacting through it need a token that may write, which is the account
   saying yes to an agent writing as it, and every message it sends says it came by way of
   the connector. It has no `draft_message`, there being no composer there.
@@ -993,7 +993,7 @@ says so and the lane picks the next free one.
 ### 4.17 Fast
 
 - **Out of the first paint.** The Chats panel, the chat view, the composer's editor, the
-  emoji data and `@nib/chats` are fetched when first asked for; `GET /v2/chats` runs after the
+  emoji data and `@orden/chats` are fetched when first asked for; `GET /v2/chats` runs after the
   launch order; `apps/desktop/test/weight.test.ts` is not raised.
 - **The device's store** is a file of its own beside the sync store, `sync/<account>.chats.db`
   (`src-tauri/src/sync_store/chats.rs`), opened the first time a chat asks, on a v1 account as
@@ -1077,7 +1077,7 @@ says so and the lane picks the next free one.
 - **Agents** (4.14): other people's words are untrusted; posting asks.
 - **Ceilings**: a chat holds the space's 200 people; 600 events a minute per account; 10
   posts in 10 s per person per chat; uploads count against storage. The numbers are
-  `@nib/chats/limits`, which the object enforces and the composer warns by.
+  `@orden/chats/limits`, which the object enforces and the composer warns by.
 
 ### 4.19 The phone and the glasses
 
@@ -1115,11 +1115,11 @@ Seven lanes in three waves, at most six at once. Each lane reads this document,
 adds every new string to every catalogue in `apps/desktop/src/locales`, and never raises the
 first-paint budget. New files in the app are named relative to `apps/desktop/src` (or
 `src-tauri/src`), in the Worker relative to `services/sync/src`; the new package is
-packages/chats, published in the workspace as `@nib/chats`.
+packages/chats, published in the workspace as `@orden/chats`.
 
 ### 6.1 The interfaces the lanes meet at
 
-Written first, by lane 1, in `@nib/chats` (`packages/chats/src`), before any other lane
+Written first, by lane 1, in `@orden/chats` (`packages/chats/src`), before any other lane
 builds on them; the others code against fixtures until it lands. Every shape is spelled once,
 in `types.ts`, and every module beside it is pure.
 
@@ -1192,7 +1192,7 @@ function chatOf(text: string): Pointer | null; function chatText(pointer: Pointe
 function chatLink(chat: string, message?: string): string   // nib://chat/<chat>/<message>
 ```
 
-The wire of 4.4 is `@nib/chats/wire`: `ClientFrame` and `ServerFrame` for the socket, as
+The wire of 4.4 is `@orden/chats/wire`: `ClientFrame` and `ServerFrame` for the socket, as
 JSON text, with `clientFrameOf` and `serverFrameOf`; `eventOf` and `loggedOf`, which every
 end checks an event with before anything trusts it; the HTTP shapes (`ChatRow`,
 `EventsPage`, `StatePage`, `PostEvents` and its `Results`) with a check each; and
@@ -1206,8 +1206,8 @@ which every surface showing a person reads.
 
 | lane | owns | builds | tests | wave |
 | --- | --- | --- | --- | --- |
-| **1 `chats-core`** | packages/chats (new, `@nib/chats`); the `chat` kind: `packages/sync-core/src/tree.ts` and `wire.ts`, and the kind lists that name every kind (`services/sync/src/sync2/tree.ts`, `feed.ts`, `apps/desktop/src/lib/sync2/kinds.ts`), as the `term` kind was added | the types above; the reducer for every event and the conflict rules of 4.5; the search language (4.12) and what a message has; mention parsing; ULIDs; the pointer and message links; the roles table of 4.6; the limits; the wire frames, HTTP shapes and the hub's poke, each with its check | the reducer against every ordering of posts, replies, edits, deletes, reactions, pins and votes (property tests: any order of placed events gives one state); the search parser per modifier; codec round trips and refusals; `tree.test.ts` with chat entries moved, renamed and deleted | 1 |
-| **2 `chats-server`** | `chats/` in the Worker (new): `ChatLog`, its routes and door; the Durable Object binding and migration tag in `wrangler.jsonc`; the next free migration (the chat tables of 4.3); `NOTE_PATH` and `rooms/kind.ts` for the `.chat` pointer under v1, and linking `chats.file_id` when a pointer arrives by either sync; the hub's `chat` frame (`hub/frames.ts`, `hub/poke.ts`, reading `ChatPoke`); `guestMayReach`; `erase.ts` and `leftovers` for the new tables | 4.3's object (events, messages, FTS5, members, scheduled posts on its alarm, `apply` and `may` from `@nib/chats`), 4.4's routes and socket for v1 and v2 accounts alike, `POST /v2/chats {space}` and Move to space, the door through the rooms' one query with item shares by `file_id`, pokes coalesced per member, `chat_reads` and heads coalesced to D1, file access through `chat_files`, limits | route tests against real SQL as the Worker's are: the role table of 4.6 for five holders (two guests); idempotent resend; a reader's socket refused a post; revocation closes sockets; a pointer copied into another space reaching nothing; a v1 account making, posting and listing; `erase.test.ts` green with every new table; `wrangler deploy --dry-run` with the new class; FTS5 proved in a SQLite-backed object on day one (fallback: a words table) | 1 |
+| **1 `chats-core`** | packages/chats (new, `@orden/chats`); the `chat` kind: `packages/sync-core/src/tree.ts` and `wire.ts`, and the kind lists that name every kind (`services/sync/src/sync2/tree.ts`, `feed.ts`, `apps/desktop/src/lib/sync2/kinds.ts`), as the `term` kind was added | the types above; the reducer for every event and the conflict rules of 4.5; the search language (4.12) and what a message has; mention parsing; ULIDs; the pointer and message links; the roles table of 4.6; the limits; the wire frames, HTTP shapes and the hub's poke, each with its check | the reducer against every ordering of posts, replies, edits, deletes, reactions, pins and votes (property tests: any order of placed events gives one state); the search parser per modifier; codec round trips and refusals; `tree.test.ts` with chat entries moved, renamed and deleted | 1 |
+| **2 `chats-server`** | `chats/` in the Worker (new): `ChatLog`, its routes and door; the Durable Object binding and migration tag in `wrangler.jsonc`; the next free migration (the chat tables of 4.3); `NOTE_PATH` and `rooms/kind.ts` for the `.chat` pointer under v1, and linking `chats.file_id` when a pointer arrives by either sync; the hub's `chat` frame (`hub/frames.ts`, `hub/poke.ts`, reading `ChatPoke`); `guestMayReach`; `erase.ts` and `leftovers` for the new tables | 4.3's object (events, messages, FTS5, members, scheduled posts on its alarm, `apply` and `may` from `@orden/chats`), 4.4's routes and socket for v1 and v2 accounts alike, `POST /v2/chats {space}` and Move to space, the door through the rooms' one query with item shares by `file_id`, pokes coalesced per member, `chat_reads` and heads coalesced to D1, file access through `chat_files`, limits | route tests against real SQL as the Worker's are: the role table of 4.6 for five holders (two guests); idempotent resend; a reader's socket refused a post; revocation closes sockets; a pointer copied into another space reaching nothing; a v1 account making, posting and listing; `erase.test.ts` green with every new table; `wrangler deploy --dry-run` with the new class; FTS5 proved in a SQLite-backed object on day one (fallback: a words table) | 1 |
 | **3 `profiles`** | `lib/people/` (new: `Avatar.svelte`, `AvatarSheet.svelte`, `ProfileCard.svelte`, the people store); the profile and presence routes in `services/sync/src/account.ts` and `presence.ts` (new) in the Worker (new); its own migration for the `users` columns, `presence` and `space_nicks`; the hub's presence writes (`hub/hub.ts`, agreed with lane 2); the surfaces of 4.9's table outside chats (the share sheet, the panel's foot, `rooms/who.ts` and the caret label in `packages/editor/src/carets.ts`, the tab's people, the versions list, the switcher) | the avatar from file, drop, paste and camera; the crop sheet; two WebP sizes with metadata stripped; pronouns, bio, status with its clearing, accent, nickname per space; presence from the hub; Settings > Account's rows; `Avatar` in every place of 4.9 | crop maths and the WebP output's sizes; EXIF stripped (a fixture with GPS); status clears at its time; presence transitions written once; a drive: set an avatar, see it in the share sheet and on a caret in a second browser on the same space; `weight.test.ts` unchanged | 1 |
 | **4 `chats-client`** | `lib/chats/` (new: the store, socket, outbox, catch-up, search, the pointer made and read); `src-tauri/src/sync_store.rs` (the tables of 4.17, opened on a v1 account too) and `lib/web/sync-store.ts`; the link index reading messages' links out of the store (beside the notes' own); the link preview fetch in `src-tauri/src` (new file) | the store and its one write path; the socket with `hello since`, pages and `behind`; the outbox with placing, refusal and retry; first copies newest first; the search modifiers over FTS5 and the browser build's route; backlinks from messages; the link preview made by the crate; drafts kept and synced through account settings | simulator tests in the style of `sync2/sim.test.ts`: three devices, offline posts, edits and deletes crossing, every device ending with one state; the outbox across a crash; a v1 account and a v2 account in one chat; cargo tests for the store's tables and FTS5; a perf test: 100,000 messages, the window around a read place under 10 ms; a draft-PR CI for the crate | 2 |
 | **5 `chats-ui`** | `lib/chats/view/` (new); the `'chats'` panel in `apps/desktop/src/lib/workspace.svelte.ts` and `workspace/panels.ts`; the chat kind in `lib/new-kinds.ts`, `lib/openers.ts` and `lib/file-mark.ts`; the emoji picker (new, `lib/emoji/`); the chat keys in `lib/shortcuts/registry.ts` | the Chats panel, the chat tab, the measured window, grouping and separators, the new line and pills, the hover bar and menus, the composer on `@nib/editor` with mentions, `[[`, `:` and `/` completion, attachments, galleries and the lightbox, the voice recorder and player, polls, the replies pane, members, pins, Saved and Activity, the Ctrl+T card, the phone's layout, motion and the screen reader's log | component tests per surface; a drive `test/e2e/chats.py`: two browsers on one shared space, a message, a reply, a reaction and an edit seen on the other within a second, a picture and a voice message, the new line and Ctrl+J, a search hit opening the message; the same at phone width; 100,000 seeded messages scrolled at 60 fps | 2 |

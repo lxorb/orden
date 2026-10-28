@@ -6,7 +6,7 @@
  *  place partway through so the New line shows; and `big` is a chat of as many messages
  *  as a test asks for. Times are counted back from `now`. */
 
-import type { Who } from '@nib/chats'
+import type { Who } from '@orden/chats'
 import type { ChatMember } from '../api'
 import { FixtureChats, fixtureFile } from './fixture.svelte'
 

@@ -4,7 +4,7 @@
  *  Named by the chat's id, SQLite-backed, hibernating. Everything about who may come in
  *  is decided at the door (door.ts) and by the routes (routes.ts), where the database
  *  is: the object is told who each socket and request is and at what role, and decides
- *  only what that role may do to the log, by `@nib/chats`' own table and reducer
+ *  only what that role may do to the log, by `@orden/chats`' own table and reducer
  *  (placing.ts). Its SQLite holds the log, every message as it stands with a full-text
  *  index, the chat's settings, each person's read place, scheduled posts and its
  *  bookkeeping (schema.ts); nothing lives in fields but caches.
@@ -20,9 +20,9 @@
  *  One alarm carries all three of its waits: the next write to D1, the next poke owed,
  *  and the next scheduled post. */
 
-import type { Event, Logged, Message, Post, Who } from '@nib/chats'
-import { MOST_BEHIND, MOST_PAGE, RECEIPTS_UP_TO, TYPING_EVERY } from '@nib/chats/limits'
-import { clientFrameOf, isWho, type Refusal, type ServerFrame } from '@nib/chats/wire'
+import type { Event, Logged, Message, Post, Who } from '@orden/chats'
+import { MOST_BEHIND, MOST_PAGE, RECEIPTS_UP_TO, TYPING_EVERY } from '@orden/chats/limits'
+import { clientFrameOf, isWho, type Refusal, type ServerFrame } from '@orden/chats/wire'
 import { BEAT, BEAT_ANSWER } from '@orden/sync-core/wire'
 import { places } from '../bound'
 import { OPEN_HEADER, openAnswer, openIn, sweepOpened } from '../opened'
@@ -808,7 +808,7 @@ export class ChatLog implements DurableObject {
 
   /** What a search may match, newest first: the messages that have every word as the
    *  start of one of theirs (the words index), or the newest messages where it names no
-   *  words. The route answers the query over them with `matches` from `@nib/chats`. */
+   *  words. The route answers the query over them with `matches` from `@orden/chats`. */
   candidates(asked: unknown): Message[] {
     const words = (
       Array.isArray((asked as { words?: unknown } | null)?.words)
@@ -1265,7 +1265,7 @@ function personOf(headers: Headers): Person | null {
   }
 }
 
-/** An answer as `POST /v2/chats/:chat/events` says it (`Result` in `@nib/chats/wire`). */
+/** An answer as `POST /v2/chats/:chat/events` says it (`Result` in `@orden/chats/wire`). */
 function resultOf(answer: Answer) {
   return answer.t === 'placed'
     ? { id: answer.id, seq: answer.seq, at: answer.at }

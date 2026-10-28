@@ -7,7 +7,7 @@ import { keyState } from './ask/key'
 import type { Env, Variables } from './types'
 import { KEEP_DAYS } from './versions'
 import { REMIND_BEFORE } from './push/reminders'
-import { isHours, isKeywords, LONGEST_KEYWORD, MOST_KEYWORDS } from '@nib/chats/notify'
+import { isHours, isKeywords, LONGEST_KEYWORD, MOST_KEYWORDS } from '@orden/chats/notify'
 
 /** The settings that follow the account from machine to machine, and what
  *  each may be. Anything else in a request is refused, so the column never
@@ -258,7 +258,7 @@ const KNOWN: Record<string, Check> = {
   // What pings for every chat at once (docs/chats.md 4.11): the words that call for the
   // reader as their name does, the hours pings are let through, and whether a
   // notification shows the words and makes a sound. On the account, so every device
-  // holds back the same pings; the checks are @nib/chats/notify's, which the decision
+  // holds back the same pings; the checks are @orden/chats/notify's, which the decision
   // reads them by.
   chatKeywords: (value) =>
     isKeywords(value)

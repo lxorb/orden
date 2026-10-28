@@ -2,7 +2,7 @@
  *  both directions to its ceiling, draws what the reader says at once and keeps it
  *  through its placing, and keeps replies out of the chat itself. */
 
-import { ulid, type Who } from '@nib/chats'
+import { ulid, type Who } from '@orden/chats'
 import { afterEach, describe, expect, test } from 'vitest'
 import { MemoryCache } from './cache'
 import { ChatEngine } from './engine'

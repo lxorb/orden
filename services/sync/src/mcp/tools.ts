@@ -6,7 +6,7 @@
  *  argument's type - a model sends what it likes - so each is checked before
  *  it reaches a query. */
 
-import { untrusted } from '@nib/chats/agent'
+import { untrusted } from '@orden/chats/agent'
 import { findLinks } from '@nib/markdown'
 import { byteLength } from '../crypto'
 import {

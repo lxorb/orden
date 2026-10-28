@@ -5,8 +5,8 @@
    *  (lib/recorder), Opus where the platform has it, and it stops itself at twenty
    *  minutes. Sending works out the length and the 64 bars here, once, and puts the
    *  sound up as a blob. */
-  import type { FileRef } from '@nib/chats'
-  import { MOST_VOICE_SECONDS } from '@nib/chats/limits'
+  import type { FileRef } from '@orden/chats'
+  import { MOST_VOICE_SECONDS } from '@orden/chats/limits'
   import { onMount } from 'svelte'
   import { message as errorWords, t } from '../../i18n.svelte'
   import { record, type Recording } from '../../recorder/microphone'

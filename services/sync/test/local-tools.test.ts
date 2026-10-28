@@ -8,7 +8,7 @@
  *  the same name and type, and never needs an argument this one does not. The local tool
  *  may take more, and may need less - the open space stands in for `space` there. Its
  *  table is apps/desktop/src-tauri/src/mcp/tools.json; the six notes' answers' words are held
- *  in src-tauri/src/mcp/shared.rs, the chats' in `@nib/chats/agent`, and the five others
+ *  in src-tauri/src/mcp/shared.rs, the chats' in `@orden/chats/agent`, and the five others
  *  answer the same JSON on both. */
 
 import { readFileSync } from 'node:fs'

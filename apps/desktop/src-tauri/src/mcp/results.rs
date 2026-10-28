@@ -27,7 +27,7 @@ use crate::agents::verbs::Dialog;
 /// Where the contract's answer is, under a result's `_meta`.
 pub const META: &str = "ch.emilvinu.nib/answer";
 
-/// The chats' tools, whose window answers the text itself (`@nib/chats/agent`, the
+/// The chats' tools, whose window answers the text itself (`@orden/chats/agent`, the
 /// account connector's words too), each message of somebody else's inside its own
 /// untrusted mark naming the chat and the person: passed through as it is.
 const CHATS: [&str; 6] = [

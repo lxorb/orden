@@ -4,8 +4,8 @@
  *  marked as the connector's, and every write refused to a token that may only read and
  *  to somebody the space was shared with to read. */
 
-import { chatText } from '@nib/chats'
-import { resultsOf } from '@nib/chats/wire'
+import { chatText } from '@orden/chats'
+import { resultsOf } from '@orden/chats/wire'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { chatLogs, fire } from './chat-fakes'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'

@@ -7,7 +7,7 @@
  *  anywhere else, or a second one beside the first, links nothing and reaches nothing.
  *  Best effort: the note is written either way, and the next write of it tries again. */
 
-import { chatOf, CHAT_EXTENSION } from '@nib/chats'
+import { chatOf, CHAT_EXTENSION } from '@orden/chats'
 import type { Env, Note } from '../types'
 
 export async function linkPointer(env: Env, note: Note, content: string): Promise<void> {

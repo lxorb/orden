@@ -3,7 +3,7 @@
    *  three reactions the reader gives most, the picker, Reply, Quote, and ⋯ for the
    *  rest, which is the row's own menu. One bar for the whole chat, moved to the row
    *  being pointed at, rather than one built into every row. */
-  import type { Message } from '@nib/chats'
+  import type { Message } from '@orden/chats'
   import { fade } from 'svelte/transition'
   import { t } from '../../i18n.svelte'
   import { dur } from '../../motion'

@@ -5,7 +5,7 @@
  *  Enter sends, as in every chat; inside a fenced block or a list it goes on writing
  *  it, as in a note, and Ctrl+Enter sends from anywhere. Shift+Enter is a new line. */
 
-import type { Member, Who } from '@nib/chats'
+import type { Member, Who } from '@orden/chats'
 
 export type EnterDoes = 'send' | 'line' | 'editor'
 

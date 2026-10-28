@@ -3,7 +3,7 @@
  *  `events` is the log and the truth: every event with the place it was given here and
  *  nowhere else, and for a post the message it makes and the message it answers, so the
  *  events about one message are an indexed read. `messages` is every message as it
- *  stands, as `apply` from `@nib/chats` makes it, kept by the same write that appends
+ *  stands, as `apply` from `@orden/chats` makes it, kept by the same write that appends
  *  the event, so a page of current state is one indexed read; `words` is its full-text
  *  index, kept by triggers (FTS5 runs in a Durable Object's SQLite, proved under workerd
  *  before this was written). The rest is the object's bookkeeping: the chat's settings,

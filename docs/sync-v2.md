@@ -1418,7 +1418,7 @@ The online terminal (`docs/online-terminal.md`, lane `online-machine`,
 
 Chats (`docs/chats.md`, lane `chats-server`, `services/sync/src/chats/`) answer every
 account alike, on sync v1 or v2; no route asks `sync_version`. Every shape is
-`@nib/chats/wire`'s, and every refusal of an event is a `Refusal` code the app words.
+`@orden/chats/wire`'s, and every refusal of an event is a `Refusal` code the app words.
 
 - `GET /v2/chats/:chat/socket`, upgraded, ahead of the guard like the hub: `nib.token.<token>`
   and `nib.device.<id>`. One query (`chats/reach.ts`) decides the role: the chat's space
@@ -1613,7 +1613,7 @@ are gone, and the web tables below stay unread (section 6).
   `machines/<id>` and `homes/<key>` in `leftovers`.
 
 - `ChatLog` (chats, migration tag `v4`, `new_sqlite_classes`): one per chat, named by its id.
-  Its SQLite holds the log (`events`), every message as `apply` from `@nib/chats` makes it
+  Its SQLite holds the log (`events`), every message as `apply` from `@orden/chats` makes it
   (`messages`, replayed per message from the events about it), an FTS5 index over their
   words (proved under workerd on day one), each person's read place and the posts that call
   them, held posts and its own pace counters. An alarm coalesces its writes to D1 (once a

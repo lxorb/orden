@@ -1,5 +1,5 @@
 /** A chat's desktop notifications (docs/chats.md 4.11): a message that arrives while
- *  the chat is not in front of the reader is decided by `decide` in @nib/chats/notify,
+ *  the chat is not in front of the reader is decided by `decide` in @orden/chats/notify,
  *  the one function the Worker will ask too the day phones are pushed to, and shown
  *  through the system's own notifications (../notify.ts).
  *
@@ -18,8 +18,8 @@
  *  Everything outside is the world's, so the rules are tested here without a socket, a
  *  window or a clock; the app's world is ./notices.ts. */
 
-import type { Message, Notify, Who } from '@nib/chats'
-import { decide, type Hush } from '@nib/chats/notify'
+import type { Message, Notify, Who } from '@orden/chats'
+import { decide, type Hush } from '@orden/chats/notify'
 import type { Notice } from '../notify'
 
 /** One chat, as much as a notification reads of it. */

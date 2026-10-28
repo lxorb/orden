@@ -1,4 +1,4 @@
-import { chatText } from '@nib/chats'
+import { chatText } from '@orden/chats'
 import { beforeEach, expect, test, vi } from 'vitest'
 
 /** A chat's pointer carried into another space (B193).

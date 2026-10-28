@@ -3,8 +3,8 @@
  *  Slack's three levels and Discord's mute lengths, in one menu. Pure, so the menu's
  *  rows are tested without drawing it. */
 
-import type { Notify } from '@nib/chats'
-import { isMuted, levelOf, MUTED_FOR_GOOD } from '@nib/chats/notify'
+import type { Notify } from '@orden/chats'
+import { isMuted, levelOf, MUTED_FOR_GOOD } from '@orden/chats/notify'
 
 const HOUR = 60 * 60 * 1000
 

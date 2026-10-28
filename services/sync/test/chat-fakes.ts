@@ -7,7 +7,7 @@
  *  for real. The clock is Vitest's; the alarm fires when a test says so. */
 
 import { DatabaseSync } from 'node:sqlite'
-import type { ServerFrame } from '@nib/chats/wire'
+import type { ServerFrame } from '@orden/chats/wire'
 import { ChatLog, type Person } from '../src/chats/log'
 import type { Env } from '../src/types'
 

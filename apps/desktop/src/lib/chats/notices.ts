@@ -12,7 +12,7 @@
  *  A chat tab says it is on screen (./on-screen.ts); a press opens the chat at the message
  *  as a link to it would (view/open.ts). */
 
-import { MUTED_FOR_GOOD } from '@nib/chats/notify'
+import { MUTED_FOR_GOOD } from '@orden/chats/notify'
 import { account } from '../account.svelte'
 import { t } from '../i18n.svelte'
 import { show, unshow } from '../notify'

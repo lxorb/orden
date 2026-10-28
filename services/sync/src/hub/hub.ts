@@ -17,7 +17,7 @@
  *  travel: what a hub kept for them in its storage is left there, unread, and goes
  *  with the rest when the account is erased. */
 
-import { isWho } from '@nib/chats/wire'
+import { isWho } from '@orden/chats/wire'
 import { note } from '../failed'
 import { rollOn } from '../sync2/rollout'
 import type { Env } from '../types'

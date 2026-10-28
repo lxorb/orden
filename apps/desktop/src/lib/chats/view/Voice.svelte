@@ -5,8 +5,8 @@
    *  first press. Transcribe turns it into words on this device's road (the provider
    *  the reader set up, or the account's, as a recording in a note is), shown under it
    *  and never sent. */
-  import type { FileRef } from '@nib/chats'
-  import { WAVE_BARS } from '@nib/chats/limits'
+  import type { FileRef } from '@orden/chats'
+  import { WAVE_BARS } from '@orden/chats/limits'
   import { message as errorWords, t } from '../../i18n.svelte'
   import { clock, seekAt } from './media'
   import Glyph from './Glyph.svelte'

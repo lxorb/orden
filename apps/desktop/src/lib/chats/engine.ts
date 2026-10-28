@@ -20,8 +20,8 @@
  *
  *  Everything it learns it says once, through `listen`, as which messages changed. */
 
-import type { Event, Logged, Message, Meta, Who } from '@nib/chats'
-import { MOST_BEHIND } from '@nib/chats/limits'
+import type { Event, Logged, Message, Meta, Who } from '@orden/chats'
+import { MOST_BEHIND } from '@orden/chats/limits'
 import {
   type ChatList,
   type ChatPoke,
@@ -29,7 +29,7 @@ import {
   type EventsPage,
   type Results,
   type StatePage,
-} from '@nib/chats/wire'
+} from '@orden/chats/wire'
 import { roomDelay } from '../backoff'
 import type { CacheChange, CachedChat, ChatCache, OutboxRow } from './cache'
 import { foldAll, type Kept, type Lookup, marksOf } from './fold'

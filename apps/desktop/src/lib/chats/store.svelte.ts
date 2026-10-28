@@ -22,9 +22,9 @@ import {
   matches,
   ulid,
   type Who,
-} from '@nib/chats'
-import { MOST_FILES, UNSEND_WITHIN } from '@nib/chats/limits'
-import { chatPokeOf } from '@nib/chats/wire'
+} from '@orden/chats'
+import { MOST_FILES, UNSEND_WITHIN } from '@orden/chats/limits'
+import { chatPokeOf } from '@orden/chats/wire'
 import { account } from '../account.svelte'
 import { within } from '../space-paths'
 import { keep, storedText } from '../stored'

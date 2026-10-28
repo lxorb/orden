@@ -3,7 +3,7 @@
    *  original as it arrives over the preview already drawn, ← and → (or a swipe) between
    *  them, a press to see it at its own size and again to fit it, Save, and Escape, back
    *  or the scrim to leave. */
-  import type { FileRef } from '@nib/chats'
+  import type { FileRef } from '@orden/chats'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../../backstack.svelte'

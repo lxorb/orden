@@ -339,7 +339,7 @@ Worker keeps and sends nothing.
 
 **Chats ping the desktop only, for now.** A chat's notification is the desktop's own
 (docs/chats.md 4.11): the hub pokes every signed-in device, the window decides by
-`decide` in `@nib/chats/notify` and shows it through the crate (`notices.rs`), with
+`decide` in `@orden/chats/notify` and shows it through the crate (`notices.rs`), with
 Reply in the notification on Windows and a Mac. A phone hears nothing of a chat while
 the app is closed, and nothing while it is open either: its notifications are the
 activity's, and the page does not ring them. The seam is kept for the day the keys
