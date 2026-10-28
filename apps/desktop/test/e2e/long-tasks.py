@@ -184,10 +184,15 @@ def main() -> int:
         return 1
 
     scale = bench / REFERENCE
-    line = LONG * scale
+    # Never under Chrome's own line: Chrome reports no task shorter than fifty
+    # milliseconds, so on a machine quicker than the reference a scaled line under it
+    # was a line nothing could cross that was not over fifty already, and said a check
+    # it could not make (#444).
+    line = max(LONG, LONG * scale)
     say(
         f"the fixed work took {bench:.1f} ms against {REFERENCE:.1f} on the reference machine,"
         f" so a long task here is one over {line:.0f} ms"
+        + (f" (Chrome's own line; {LONG * scale:.0f} ms is under what it reports)" if LONG * scale < LONG else "")
     )
     say(
         f"first frame at {start:.0f} ms, launch order finished at {end:.0f} ms"
