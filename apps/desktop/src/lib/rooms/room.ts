@@ -21,7 +21,7 @@
  *  a second file to go and find. */
 
 import { setPeers, type SharedDoc } from '@nib/editor'
-import { TEXT } from '@nib/rooms'
+import { TEXT } from '@orden/rooms'
 import type { Settling } from './apart'
 import { bind, replace } from './bind'
 import { HERE } from './door'

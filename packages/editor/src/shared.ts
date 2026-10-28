@@ -32,7 +32,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import { fold } from '@nib/rooms/fold'
+import { fold } from '@orden/rooms/fold'
 import { external } from './external'
 
 /** As much of a view as a document needs: the state it is holding, and a way to

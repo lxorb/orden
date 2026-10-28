@@ -612,7 +612,7 @@ function pageOfSubpath(subpath: string | undefined): number | null {
  *  single object saying everything about the page, `page` and all.
  *
  *  What a room reads a stored page back through, the way `nodeOf` does for a card;
- *  see plane.ts in @nib/rooms. A file writes a page in two halves instead, and
+ *  see plane.ts in @orden/rooms. A file writes a page in two halves instead, and
  *  `readCanvas` puts those together before anything else sees them. */
 function readPage(value: unknown): PageNode | null {
   if (!isRecord(value) || !isString(value.id) || !value.id) return null
@@ -708,7 +708,7 @@ export type Thing = CanvasNode | CanvasEdge | InkStroke
  *  A file keeps the four the spec names in `nodes` and the shapes under `nib`, so
  *  reading a whole file knows which reader to use from where the record was. A
  *  reader handed one record on its own does not, and asks this. What a room reads
- *  a stored object back through; see plane.ts in @nib/rooms. */
+ *  a stored object back through; see plane.ts in @orden/rooms. */
 export function nodeOf(value: unknown): CanvasNode | null {
   if (isRecord(value) && value.type === 'shape') return readShape(value)
   if (isRecord(value) && value.type === 'page') return readPage(value)

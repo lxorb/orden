@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { SharedDoc } from '@nib/editor'
-import { TEXT } from '@nib/rooms'
+import { TEXT } from '@orden/rooms'
 import { hash32 } from '@nib/sync-core/seed'
 import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@nib/sync-core/sim'
 import { type DocRefusal, frame, type PushRequest, unframe } from '@nib/sync-core/wire'

@@ -24,7 +24,7 @@
  *  `fold`, the same trim a room's fold uses, so a word changed in a hundred kilobytes
  *  is a diff of a word. */
 
-import { fold } from '@nib/rooms/fold'
+import { fold } from '@orden/rooms/fold'
 import {
   DIFF_DELETE,
   DIFF_EQUAL,

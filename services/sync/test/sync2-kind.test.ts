@@ -10,9 +10,9 @@
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { type Canvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
-import { pushPlane, readPlane } from '@nib/rooms/plane'
+import { pushPlane, readPlane } from '@orden/rooms/plane'
 import { type PullResponse, type PushResponse, seedPlane, seedUpdate } from '@nib/sync-core'
-import { subprotocol, TEXT } from '@nib/rooms'
+import { subprotocol, TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { NoteRoom } from '../src/rooms/room'
 import { call, type RpcView, signIn, type TestEnv, testEnv } from './harness'

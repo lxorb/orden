@@ -29,7 +29,7 @@ import type {
   Seeded,
   View,
 } from '@nib/sync-core/sim'
-import { TEXT } from '@nib/rooms'
+import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { HERE } from './docs'
 import { Engine } from './engine'

@@ -15,7 +15,7 @@
 
 import type { Logged, Who } from '@nib/chats'
 import { serverFrameOf, socketPath, text, type ClientFrame } from '@nib/chats/wire'
-import { subprotocol } from '@nib/rooms'
+import { subprotocol } from '@orden/rooms'
 import { BEAT, DEVICE_PROTOCOL } from '@nib/sync-core/wire'
 import { BASE } from '../api'
 import { BEAT_EVERY, roomDelay } from '../backoff'

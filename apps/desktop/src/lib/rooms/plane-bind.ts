@@ -33,7 +33,7 @@
  *  be replaced by the room's before the two have been compared. */
 
 import { merged } from '@nib/markdown/canvas-merge'
-import { planeIsEmpty, pushPlane, readPlane, rootsOf } from '@nib/rooms/plane'
+import { planeIsEmpty, pushPlane, readPlane, rootsOf } from '@orden/rooms/plane'
 import * as Y from 'yjs'
 import type { Canvas } from '../canvas/format'
 import type { PlaneSurface } from '../canvas/shared'
@@ -49,7 +49,7 @@ const STACK = ['stack-item-added', 'stack-item-popped', 'stack-cleared'] as cons
 
 export class PlaneBinding {
   private readonly history: Y.UndoManager
-  /** The two root maps the plane lives in; see plane.ts in @nib/rooms. Watched
+  /** The two root maps the plane lives in; see plane.ts in @orden/rooms. Watched
    *  together, so one gesture that moved a card and deleted another is one step. */
   private readonly watched: Y.Map<unknown>[]
   private readonly heard: (events: Y.YEvent<Y.AbstractType<unknown>>[]) => void

@@ -12,7 +12,7 @@
  *  applied to the note in the way the note does not report back. */
 
 import type { ChangeSet, SharedDoc } from '@nib/editor'
-import type { Replacement } from '@nib/rooms/fold'
+import type { Replacement } from '@orden/rooms/fold'
 import * as Y from 'yjs'
 import { HERE } from './door'
 

@@ -8,7 +8,7 @@
  *
  *  `plant` breaks one rule on purpose, so a test can prove the simulator catches it. */
 
-import { TEXT } from '@nib/rooms'
+import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { seedUpdate } from '../../src/seed'
 import { applyOp, contentChanged, type TreeState, treeState } from '../../src/tree'

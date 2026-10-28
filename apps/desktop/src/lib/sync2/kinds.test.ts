@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { writeShortcut } from '../web-tab/shortcut'
-import { TEXT } from '@nib/rooms'
+import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { MINE } from './docs'
 import { joinsAs, judge, readable, turn } from './kinds'

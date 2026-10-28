@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { readPlane, seedPlane } from '@nib/rooms/plane'
+import { readPlane, seedPlane } from '@orden/rooms/plane'
 import * as Y from 'yjs'
 import { stamped } from '@nib/markdown/canvas-merge'
 import {

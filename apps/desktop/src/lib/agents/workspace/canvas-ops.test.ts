@@ -4,7 +4,7 @@
 
 import { type Canvas, type CanvasNode, emptyCanvas } from '@nib/markdown/canvas'
 import { merged, stamped } from '@nib/markdown/canvas-merge'
-import { pushPlane, readPlane, seedPlane } from '@nib/rooms/plane'
+import { pushPlane, readPlane, seedPlane } from '@orden/rooms/plane'
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
 import { movedBy } from '../../canvas/edits'

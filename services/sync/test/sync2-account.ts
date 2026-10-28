@@ -4,7 +4,7 @@
  *  kit's reference devices (sync2-sim.test.ts) and with the app's own engine
  *  (sync2-engine.test.ts). */
 
-import { TEXT } from '@nib/rooms'
+import { TEXT } from '@orden/rooms'
 import type { AccountAdapter, AccountView, Route, Seeded } from '@nib/sync-core/sim'
 import { frame, nameKey } from '@nib/sync-core'
 import * as Y from 'yjs'

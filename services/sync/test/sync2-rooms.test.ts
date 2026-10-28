@@ -15,7 +15,7 @@ import {
   seedUpdate,
   type SnapshotPage,
 } from '@nib/sync-core'
-import { receive, syncStep1, syncUpdate, TEXT } from '@nib/rooms'
+import { receive, syncStep1, syncUpdate, TEXT } from '@orden/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { call, type RpcView, signIn, type TestEnv, testEnv } from './harness'

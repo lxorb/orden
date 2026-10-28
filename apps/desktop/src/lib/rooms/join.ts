@@ -26,7 +26,7 @@
  *  Written as a rule rather than as steps, so that it can be read on its own and
  *  tested against pairs of texts. Carrying it out is the room's; see room.ts. */
 
-import { fold, type Replacement } from '@nib/rooms/fold'
+import { fold, type Replacement } from '@orden/rooms/fold'
 
 export type Meeting =
   /** The two already say the same thing. */

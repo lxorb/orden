@@ -6,7 +6,7 @@
  *  them on a train - end up with the same content and nobody is asked to choose.
  *
  *  Three things happen here and nothing else does. Sockets are joined and their
- *  messages handed to the protocol (see @nib/rooms, which is the wire). Updates
+ *  messages handed to the protocol (see @orden/rooms, which is the wire). Updates
  *  are written down and folded into a snapshot when the pile grows, so waking a
  *  room is one read. And the content is settled into the note store a moment after
  *  the typing stops, as an ordinary save with the version moved on, so everything
@@ -37,8 +37,8 @@ import {
   receive,
   syncStep1,
   syncUpdate,
-} from '@nib/rooms'
-import { fold } from '@nib/rooms/fold'
+} from '@orden/rooms'
+import { fold } from '@orden/rooms/fold'
 import {
   ackFrame,
   epochFrame,

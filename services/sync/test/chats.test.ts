@@ -7,7 +7,7 @@
 import { chatText } from '@nib/chats'
 import { MOST_BEHIND } from '@nib/chats/limits'
 import { chatListOf, eventsPageOf, resultsOf, statePageOf } from '@nib/chats/wire'
-import { subprotocol } from '@nib/rooms'
+import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { reachAs } from '../src/chats/reach'
 import { sha256 } from '../src/crypto'

@@ -15,8 +15,8 @@
  *  Everything else in the engine speaks files - text in, text out - and asks here. */
 
 import { holdsCanvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
-import { TEXT } from '@nib/rooms'
-import { pushPlane, readPlane } from '@nib/rooms/plane'
+import { TEXT } from '@orden/rooms'
+import { pushPlane, readPlane } from '@orden/rooms/plane'
 import { diverge, type Times, type Verdict } from '@nib/sync-core/diverge'
 import { divergePlane } from '@nib/sync-core/plane-diverge'
 import { seedPlane, seedUpdate } from '@nib/sync-core/seed'

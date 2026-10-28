@@ -13,7 +13,7 @@
  *  an agent has written in. */
 
 import { ChangeSet, type Heard, type Mark, Text } from '@nib/editor'
-import { fold } from '@nib/rooms/fold'
+import { fold } from '@orden/rooms/fold'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Replacement } from './edits'
 import { Steps } from './steps'

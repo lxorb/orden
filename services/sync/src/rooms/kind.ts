@@ -5,7 +5,7 @@
  *  one `Y.Text` and two people typing in a paragraph get their letters
  *  interleaved. A canvas is not prose: everything on it has an id, and two people
  *  drawing want both drawings whole, so its document is a map of objects by id;
- *  see plane.ts in @nib/rooms.
+ *  see plane.ts in @orden/rooms.
  *
  *  The file's name is what decides the shape of a room that holds nothing yet, so
  *  the door can say it in one header. After that the shape belongs to the document:
@@ -20,9 +20,9 @@
 
 import { holdsCanvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
-import { TEXT } from '@nib/rooms'
-import { fold } from '@nib/rooms/fold'
-import { planeIsEmpty, pushPlane, readPlane, seedExtras, seedPlane } from '@nib/rooms/plane'
+import { TEXT } from '@orden/rooms'
+import { fold } from '@orden/rooms/fold'
+import { planeIsEmpty, pushPlane, readPlane, seedExtras, seedPlane } from '@orden/rooms/plane'
 import type * as Y from 'yjs'
 
 /** The two shapes a room's document comes in. */
@@ -110,7 +110,7 @@ export function fill(kind: RoomKind, doc: Y.Doc, stored: string) {
     const canvas = readCanvas(stored)
     seedPlane(doc, canvas)
     // And what the file held that the format does not read, which the room writes back
-    // at every settle; see `EXTRAS` in @nib/rooms' plane.ts (#780).
+    // at every settle; see `EXTRAS` in @orden/rooms' plane.ts (#780).
     seedExtras(doc, canvas)
     return
   }

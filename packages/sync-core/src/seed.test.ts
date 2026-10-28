@@ -1,6 +1,6 @@
 import { emptyCanvas, readCanvas, writeCanvas, type Canvas } from '@nib/markdown/canvas'
-import { readPlane } from '@nib/rooms/plane'
-import { TEXT } from '@nib/rooms'
+import { readPlane } from '@orden/rooms/plane'
+import { TEXT } from '@orden/rooms'
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'

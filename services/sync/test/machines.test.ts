@@ -3,7 +3,7 @@
  *  alarm moved by the clock. */
 
 import { mayType } from '@orden/online'
-import { subprotocol } from '@nib/rooms'
+import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { askMachine } from '../src/machines/ask'

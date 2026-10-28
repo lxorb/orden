@@ -23,8 +23,8 @@
  *  had that the document did not goes in as this device's. */
 
 import type { SharedDoc } from '@nib/editor'
-import { TEXT } from '@nib/rooms'
-import { fold } from '@nib/rooms/fold'
+import { TEXT } from '@orden/rooms'
+import { fold } from '@orden/rooms/fold'
 import type * as Y from 'yjs'
 import type { InkStroke } from '../canvas/format'
 import type { Point } from '../canvas/geometry'

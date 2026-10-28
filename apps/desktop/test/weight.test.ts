@@ -88,7 +88,13 @@ const ENTRY = fileURLToPath(new URL('../src/main.ts', import.meta.url))
 /** The workspace packages, by the name an import asks for them under. Resolved
  *  through each one's own `exports` map, so a subpath reaches the module that subpath
  *  exists for - which is the whole point of having them. */
-const WORKSPACE = ['@nib/editor', '@orden/glasses', '@nib/markdown', '@nib/rooms', '@orden/themes']
+const WORKSPACE = [
+  '@nib/editor',
+  '@orden/glasses',
+  '@nib/markdown',
+  '@orden/rooms',
+  '@orden/themes',
+]
 
 /** Where a workspace import lands, or null when the specifier is not one of ours. */
 function workspaceFile(specifier: string): string | null {

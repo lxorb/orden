@@ -18,7 +18,7 @@
 
 import { describe, expect, test, vi } from 'vitest'
 import { EditorState } from '@nib/editor'
-import { receive, syncUpdate, TEXT } from '@nib/rooms'
+import { receive, syncUpdate, TEXT } from '@orden/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 

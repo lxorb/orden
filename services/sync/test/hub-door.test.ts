@@ -2,7 +2,7 @@
  *  namespace here leads nowhere and keeps what the door told it, the way the room
  *  door's tests watch it decide; see room.ts `doorway`. */
 
-import { subprotocol } from '@nib/rooms'
+import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 

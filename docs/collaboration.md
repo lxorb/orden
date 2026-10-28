@@ -683,7 +683,7 @@ can reach, and what they may do there - and passes the room two: `x-nib-write`,
 which is the bit, and `x-nib-who`, which is an id and nothing else. The room keeps
 both on the socket, beside the carets that socket announced, so an object that
 slept still knows. A message that would change the text is then dropped before it
-reaches the protocol; `isEdit` in `@nib/rooms` is what tells one apart, and a
+reaches the protocol; `isEdit` in `@orden/rooms` is what tells one apart, and a
 reader may still ask what the room holds and say where their caret is. The room
 learns nothing else about anybody: the id is a string it cannot look anything up
 with, and the one thing it is for is below.

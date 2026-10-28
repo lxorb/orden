@@ -32,7 +32,7 @@
     "@nib/chats": "workspace:*",
     "@nib/markdown": "workspace:*",
     "@orden/online": "workspace:*",
-    "@nib/rooms": "workspace:*",
+    "@orden/rooms": "workspace:*",
     "@nib/sync-core": "workspace:*",
     "hono": "^4.13.5",
     "y-protocols": "^1.0.7",

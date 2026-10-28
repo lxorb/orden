@@ -16,7 +16,7 @@
 
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { emptyCanvas } from '@nib/markdown/canvas'
-import { receive, syncUpdate, TEXT } from '@nib/rooms'
+import { receive, syncUpdate, TEXT } from '@orden/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { PlaneSurface } from '../canvas/shared'

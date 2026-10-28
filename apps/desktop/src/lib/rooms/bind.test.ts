@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { EditorState, SharedDoc, type Text } from '@nib/editor'
-import { TEXT } from '@nib/rooms'
+import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { bind, replace, replacements } from './bind'
 import { type Base, meeting } from './join'

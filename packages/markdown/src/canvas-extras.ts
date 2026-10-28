@@ -10,7 +10,7 @@
  *  a newer Orden wrote. So `readCanvas` keeps them on the canvas it reads (`extras`),
  *  every edit of a canvas carries them along as it carries everything it did not touch,
  *  and `writeCanvas` puts them back: an edit on the plane, a merge of two copies, a
- *  room's settle (`readPlane` in @nib/rooms keeps them in the room), an agent's edit.
+ *  room's settle (`readPlane` in @orden/rooms keeps them in the room), an agent's edit.
  *  A merge takes everything either side holds, each unknown thing by its id.
  *
  *  Which side's version of one of them a merge keeps, and whether one that is gone
@@ -379,7 +379,7 @@ export function withExtras(text: string, extras: Extras | undefined): string {
 
 /** The extras as one JSON string, the same for the same extras whatever order they were
  *  gathered in: the unread things and the fields sorted by id. What a room keeps them as
- *  (`EXTRAS` in @nib/rooms' plane.ts), compared before it is written so an edit that
+ *  (`EXTRAS` in @orden/rooms' plane.ts), compared before it is written so an edit that
  *  left them alone writes nothing. */
 export function extrasText(extras: Extras): string {
   const sorted = (map: Map<string, Fields>) =>
