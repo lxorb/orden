@@ -58,7 +58,7 @@ function unixLines(text: string): string {
 }
 
 /** A throwaway document under the seed's client id. Garbage collection stays on, as
- *  it is everywhere else nib makes a document, so the bytes are the ones any other
+ *  it is everywhere else Orden makes a document, so the bytes are the ones any other
  *  device makes. */
 function seedDoc(noteId: string, epoch: number): Y.Doc {
   const doc = new Y.Doc()

@@ -354,7 +354,7 @@ export { ackFrame, epochFrame, frame, type Framed, roomNews, unframe } from './f
 /** The longest id, op id, key or device name anything here carries. */
 const LONGEST_ID = 200
 
-/** The longest name of one file or folder, in code units: what every filesystem nib
+/** The longest name of one file or folder, in code units: what every filesystem Orden
  *  runs on holds. */
 export const LONGEST_NAME = 255
 

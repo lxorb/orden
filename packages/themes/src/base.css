@@ -1166,7 +1166,7 @@ select option {
 
 /* A word in capitals over a group of rows, on the same left edge as the rows
    under it. What Notion, Obsidian and Discord all use to stop a long list being
-   a wall, and what nib had in exactly one panel. */
+   a wall, and what Orden had in exactly one panel. */
 .nib-section {
   display: flex;
   align-items: center;
@@ -2170,7 +2170,7 @@ select:focus-visible,
    touch scrollbars are already transient overlays, and styling them would make
    them permanent and reserve layout width on a screen with none to give.
 
-   And not where the engine draws overlay bars of its own (`data-engine-bars`, nib's
+   And not where the engine draws overlay bars of its own (`data-engine-bars`, Orden's
    own Chromium on Linux; see main.ts and `cef_runtime` in src-tauri/src/engine.rs),
    because a bar styled here is never drawn as one: Chromium makes every styled bar a
    classic one, a gutter and a thumb standing the whole time the content runs past -
@@ -2566,8 +2566,8 @@ select:focus-visible,
 /* ── Callouts ────────────────────────────────────────────────────── */
 
 /* The type as the writer wrote it rides on `data-callout`, so a theme can dress
-   a type nib has never heard of - `[data-callout='recipe']` - without anything
-   being registered anywhere first. The look nib does know is a class, so these
+   a type Orden has never heard of - `[data-callout='recipe']` - without anything
+   being registered anywhere first. The look Orden does know is a class, so these
    rules need the fifteen names rather than every other word for them. See
    packages/markdown/src/callouts.ts. */
 #write .callout {

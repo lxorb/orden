@@ -834,7 +834,7 @@ describe('diverge', () => {
 
   test('a line one side wrote that the other wrote too and went on from is not asked about', () => {
     // Found by the conflict drive under v2: a note closed offline and opened again
-    // against a file nib wrote before the line, so one side is the line and the other
+    // against a file Orden wrote before the line, so one side is the line and the other
     // the line and what came after it.
     const base = '# Plan\n\nthe line both of them start from\n'
     const line = '\nMachine one, from the train: the platform moved to track nine.\n'

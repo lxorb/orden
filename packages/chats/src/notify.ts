@@ -86,7 +86,7 @@ export type Ping = 'show' | 'own' | 'seen' | 'muted' | 'level' | 'dnd' | 'hours'
 export type Call = 'name' | 'everyone' | 'here' | 'reply' | 'keyword'
 
 /** Keywords a reader may keep, and the longest. Slack's list is a line of words;
- *  more than this is a filter, which nib does not offer. */
+ *  more than this is a filter, which Orden does not offer. */
 export const MOST_KEYWORDS = 50
 export const LONGEST_KEYWORD = 60
 

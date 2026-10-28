@@ -2,8 +2,8 @@
  *  (docs/chats.md 4.13).
  *
  *  What Copy link puts on the clipboard and what a task made from a message points
- *  back with. In a note it is an address like any other, and nib opens the chat at the
- *  message; outside nib nothing opens it, which is honest, because the message lives in
+ *  back with. In a note it is an address like any other, and Orden opens the chat at the
+ *  message; outside Orden nothing opens it, which is honest, because the message lives in
  *  the account and not in a file. */
 
 import { isChatId } from './pointer'

@@ -534,7 +534,7 @@
      tone and a custom property is substituted where it is used - so a light
      theme's own `--canvas-1` is what a light page mixes. There is no `--mark-3`:
      Obsidian writes no yellow emoji, because a plain highlight is already its
-     yellow, and a colour nib could write but Obsidian could not read is not a
+     yellow, and a colour Orden could write but Obsidian could not read is not a
      colour. */
   --mark-1: color-mix(in srgb, var(--canvas-1) 22%, transparent);
   --mark-2: color-mix(in srgb, var(--canvas-2) 22%, transparent);
@@ -669,7 +669,7 @@
   --surface-picked: var(--surface-3);
 
   /* Callout looks, so a theme can restate them like any other colour. Fifteen,
-     which is the thirteen Obsidian has plus the two nib had first; the other
+     which is the thirteen Obsidian has plus the two Orden had first; the other
      words for them - `tldr`, `hint`, `error` - resolve to one of these before
      any markup is written. See packages/markdown/src/callouts.ts.
 

@@ -4,7 +4,7 @@
  *  Two links, one module, for the reason `@orden/sync-core/wire` gives: every end reads
  *  what another end wrote, and a shape spelled twice is two shapes a year later.
  *
- *  - **The app's socket**, `GET /v2/online/:term/socket`, between a nib and the
+ *  - **The app's socket**, `GET /v2/online/:term/socket`, between an Orden and the
  *    Worker's `Machine`. Control frames are JSON text. Output is a binary frame, eight
  *    bytes of `seq` and then the bytes, because output is nearly all a socket carries
  *    and JSON would escape a third of it. Raw input (a paste of bytes, a key the
@@ -157,7 +157,7 @@ export type ClientFrame =
   | { t: 'size'; cols: number; rows: number }
   | { t: 'start' }
   | { t: 'resume' }
-  /** A tab this nib opened for the machine landed on the loopback page the opened
+  /** A tab this Orden opened for the machine landed on the loopback page the opened
    *  address sent it back to: that request, made on the machine instead (urls.ts). */
   | { t: 'callback'; url: string }
   /** A part of a picture pasted into the session, base64, at most `IMAGE_PART` bytes; the

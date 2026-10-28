@@ -3,7 +3,7 @@
  *  Never edited by hand, so it is read strictly: anything but the three fields with
  *  the right shapes is not a terminal, and the tab says the file is damaged rather
  *  than opening a session nobody asked for. Extra fields are dropped, so a later
- *  version may add one an older nib ignores; a version it does not know is refused. */
+ *  version may add one an older Orden ignores; a version it does not know is refused. */
 
 import type { Term } from './types'
 

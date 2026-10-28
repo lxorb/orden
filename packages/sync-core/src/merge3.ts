@@ -1,7 +1,7 @@
 /** Two sets of edits to one text, laid side by side against the text they were both
  *  made on.
  *
- *  This is the half of `diff3` nib needs: not a merge to trust - the CRDT merges,
+ *  This is the half of `diff3` Orden needs: not a merge to trust - the CRDT merges,
  *  character by character, with nothing fuzzy about it - but the map of where two
  *  sides wrote, so the classifier can say whether a merge is silent, quietly settled,
  *  or a question (docs/sync-v2.md section 5.4). Each side is diffed against the

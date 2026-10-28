@@ -463,7 +463,7 @@ export class ReferenceDevice implements DeviceAdapter {
     }
   }
 
-  /** Another program changed a note's file: folded in three ways against what nib last
+  /** Another program changed a note's file: folded in three ways against what Orden last
    *  wrote (section 5.5). */
   private foreign(action: Extract<Action, { t: 'edit-file' }>) {
     const id = this.writable(action.note)

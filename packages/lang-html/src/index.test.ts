@@ -40,7 +40,7 @@ test('a parse before the grammar is here parses nothing, and asks for it', async
   expect(parsed(TAG, { matchClosingTags: false })).toEqual([])
 
   // Nothing is offered inside a tag either, rather than an error: the source is asked
-  // once, by the tag completion `markdown()` installs, and it is never reached in nib.
+  // once, by the tag completion `markdown()` installs, and it is never reached in Orden.
   expect(htmlCompletionSource(null as never)).toBeNull()
 
   // One fetch, kept: a note of twenty tags asks once, and so does a second pane.
@@ -65,7 +65,7 @@ test('and once it is here the same language parses it for real', () => {
 })
 
 test('and the support is the close-tag handler and nothing else', () => {
-  // Three of the four extensions the real support holds are completion sources nib's
+  // Three of the four extensions the real support holds are completion sources Orden's
   // popup never asks - it is built with `override`, which is the whole list of sources -
   // and the fourth is what closes a tag. The door carries that one, in the
   // configuration from the start, so the grammar arriving reconfigures nothing.

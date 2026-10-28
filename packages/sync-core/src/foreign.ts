@@ -2,7 +2,7 @@
  *
  *  A space's folder is often inside Proton Drive, Dropbox, OneDrive or Syncthing as
  *  well, and each of those keeps both sides of a clash by writing one of them under
- *  a new name beside the file. nib syncing that copy is how one clash on one machine
+ *  a new name beside the file. Orden syncing that copy is how one clash on one machine
  *  becomes a stray file on every device (Emil, 2026-10-05: seven `Hackathon List (#
  *  Name clash … #).md` on his account). So sync leaves such a file where it is and
  *  never carries it, and the file list shows it quietly as what it is.
@@ -11,7 +11,7 @@
  *  source or its documentation, down to the stamp it writes. Google Drive's `Plan
  *  (1).md`, iCloud's `Plan 2.md` and a OneDrive copy named after a computer somebody
  *  renamed are left out on purpose: those are also names people give their own
- *  notes, and reading one wrongly would stop a real note from syncing. nib's own
+ *  notes, and reading one wrongly would stop a real note from syncing. Orden's own
  *  `(from another device …)` copy is not here either; it is a note like any other
  *  (`conflictPath` in @orden/markdown/paths).
  *

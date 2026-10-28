@@ -1369,7 +1369,7 @@
    these any more: it is a row of the pane, drawn as FindBar.svelte, on the
    design system - the library's own panel was two bare inputs, three checkboxes
    labelled in its own English and an `x`, and there is no dressing a control
-   like that into nib. What is left here is the frame, for whatever panel the
+   like that into Orden. What is left here is the frame, for whatever panel the
    library puts up next. */
 .cm-panels {
   border: none;
@@ -1896,7 +1896,7 @@
 /* ── Callouts ────────────────────────────────────────────────────── */
 
 /* Every line of a callout carries the look, so the accent runs its full height,
-   and the type as written as an attribute, so a theme reaches a type nib has
+   and the type as written as an attribute, so a theme reaches a type Orden has
    never heard of here the same way it does in the reading view. A callout with
    no look at all keeps the quote's own grey bar, which is what an unknown type
    should read as until somebody styles it. */
@@ -2820,7 +2820,7 @@
 }
 
 /* The body of the card carries `#write`, the one scope every prose rule in
-   nib - and in a reader's own theme, which the validator holds to it - is
+   Orden - and in a reader's own theme, which the validator holds to it - is
    written against. CodeMirror hangs a tooltip off the editor element rather than
    inside its content, so the card sits outside the writing surface and would
    otherwise get none of them: an uncoloured fence with no frame, a callout with

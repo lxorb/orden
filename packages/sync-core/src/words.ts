@@ -7,7 +7,7 @@
  *  spaces between its words. Chinese and Japanese do not, so each of their characters
  *  counts as a word of its own: taking a whole run of them as one word would make one
  *  changed character a changed sentence. Deliberately not `Intl.Segmenter`, whose
- *  dictionaries differ between the engines nib runs on, so the same two texts would
+ *  dictionaries differ between the engines Orden runs on, so the same two texts would
  *  classify differently on a Mac and in the Worker. */
 
 const LETTERS = /^[\p{L}\p{N}\p{M}_]$/u

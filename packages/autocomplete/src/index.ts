@@ -14,7 +14,7 @@ import type { EditorState } from '@codemirror/state'
  *  registers in the language's own data, and that source builds a `CompletionContext`
  *  in order to ask HTML's own source what the tags are.
  *
- *  Nothing in nib reaches it. The popup is built with `override`, which is the whole
+ *  Nothing in Orden reaches it. The popup is built with `override`, which is the whole
  *  list of sources rather than an addition to it, so a source offered through language
  *  data is never asked - see `completing` in packages/editor/src/completing.ts, which is
  *  that list. And the source it would reach is packages/lang-html's, which answers
