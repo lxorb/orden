@@ -510,4 +510,49 @@ describe('the bulk read and the kept side', () => {
     const held = env.db.prepare('select count(*) as many from note_versions where note_id = ?')
     expect(held.get(id)).toEqual({ many: 1 })
   })
+
+  // #471: a kept side is a whole note, written whatever the five minute rule says, and
+  // seven hundred of them a minute all landed, every one a version the night's sweep
+  // was the first thing to count.
+  test('kept sides are held to a number an hour of their own', async () => {
+    const id = await made('Plan.md', 'one\n')
+    await prepare()
+    const user = env.db.prepare('select id from users').get() as { id: string }
+    env.db
+      .prepare('insert into limits (scope, key, count, until) values (?, ?, ?, ?)')
+      .run('doc-keep', user.id, 200, Date.now() + 60 * 60 * 1000)
+
+    const over = await call(env, '/v2/docs/keep', {
+      token,
+      body: { id, text: 'one too many this hour\n', device: 'Laptop' },
+    })
+    expect(over.status).toBe(429)
+    const held = env.db.prepare('select count(*) as many from note_versions where note_id = ?')
+    expect(held.get(id)).toEqual({ many: 1 })
+  })
+
+  test('a kept side past the account’s ceiling on versions is refused where it is written', async () => {
+    const id = await made('Plan.md', 'one\n')
+    await prepare()
+    const { MOST_VERSION_BYTES } = await import('../src/versions')
+    // Every version the account has comes to four bytes under its ceiling.
+    env.db.prepare('update note_versions set size = 0').run()
+    env.db
+      .prepare('update note_versions set size = ? where note_id = ?')
+      .run(MOST_VERSION_BYTES - 4, id)
+
+    const over = await call(env, '/v2/docs/keep', {
+      token,
+      body: { id, text: 'past the ceiling\n', device: 'Laptop' },
+    })
+    expect(over.status).toBe(507)
+    const held = env.db.prepare('select count(*) as many from note_versions where note_id = ?')
+    expect(held.get(id)).toEqual({ many: 1 })
+
+    const fits = await call(env, '/v2/docs/keep', {
+      token,
+      body: { id, text: 'ok\n', device: 'Laptop' },
+    })
+    expect(fits.status).toBe(200)
+  })
 })
