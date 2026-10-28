@@ -312,6 +312,37 @@ async function uploadOf(env: Env, id: string, user: string): Promise<Upload | nu
   return { user: owner, hash, size: Number(size), type: decodeURIComponent(type), staging }
 }
 
+/** The most hashes one question about them names: D1 binds at most a hundred values to
+ *  a statement, and the account's id is one of them. */
+const MOST_ASKED = 90
+
+/** Which of these hashes the account keeps: the question a device asks of the files it
+ *  holds in step, so that bytes the account has lost - the nightly `sweepMisnamed` takes
+ *  the rows of a misnamed copy away with it, rows of an upload that was answered
+ *  `stored` over that copy among them - are sent again from the device that still has
+ *  them, rather than waiting for its next edit of the file (#517). The account's own
+ *  rows only: a hash somebody else keeps is no promise that this account's file stays. */
+v2Blobs.post('/have', async (context) => {
+  const user = context.get('user')
+  const body: unknown = await context.req.json().catch(() => null)
+  const hashes =
+    typeof body === 'object' && body !== null ? (body as { hashes?: unknown }).hashes : null
+  if (
+    !Array.isArray(hashes) ||
+    hashes.length > MOST_ASKED ||
+    !hashes.every((one): one is string => typeof one === 'string' && HASH.test(one))
+  ) {
+    return context.json({ error: NOT_A_HASH }, 400)
+  }
+  if (!hashes.length) return context.json({ kept: [] })
+  const { results } = await context.env.DB.prepare(
+    `select distinct hash from blobs where user_id = ? and hash in (${hashes.map(() => '?').join(', ')})`,
+  )
+    .bind(user.id, ...hashes)
+    .all<{ hash: string }>()
+  return context.json({ kept: results.map((one) => one.hash) })
+})
+
 /** A large file, started: answers the upload to send parts to, and how big a part is;
  *  or that nothing needs sending. */
 v2Blobs.post('/parts', async (context) => {

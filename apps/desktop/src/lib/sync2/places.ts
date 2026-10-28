@@ -64,6 +64,9 @@ function localName(name: string, platform: World['platform']): string {
 export class SpaceState {
   entries: Map<string, EntryRow>
   outbox: Outboxed[]
+  /** When the files held in step here were last checked against what the account
+   *  keeps; see `recoverLost` in files.ts. Never, at launch. */
+  lostCheckedAt = -Infinity
   private shownCache: TreeState | null = null
   private pathsCache: Map<string, string> | null = null
 

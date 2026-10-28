@@ -101,7 +101,7 @@ export function accountOver(reaching: Reaching): Account {
  *  refusal of the bytes is `false`, and `full` when the account has no room for them
  *  (507), and the file waits. A 507 is an answer, not an account too busy to give one:
  *  read as none, it stopped every pass of the space at that one file. */
-export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 'replace'> {
+export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 'replace' | 'have'> {
   /** `full` says whether a 507 is the answer it is to this request, rather than none. */
   const send = async (path: string, init: RequestInit, full = false): Promise<Response | null> => {
     const token = reaching.token()
@@ -142,6 +142,20 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
       if (response === null) return null
       if (!response.ok) return 'gone'
       return new Uint8Array(await response.arrayBuffer())
+    },
+    async have(hashes) {
+      const response = await send('/v2/blobs/have', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ hashes }),
+      })
+      // No answer, or an account from before the question (a 404): not asked again until
+      // the next check, and nothing is sent on the strength of it.
+      if (!response?.ok) return null
+      const said: unknown = await response.json().catch(() => null)
+      const kept =
+        typeof said === 'object' && said !== null ? (said as { kept?: unknown }).kept : null
+      return Array.isArray(kept) ? new Set(kept.filter((one) => typeof one === 'string')) : null
     },
     async replace(space, id, hash, base) {
       const response = await send(

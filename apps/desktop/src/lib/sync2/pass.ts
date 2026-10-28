@@ -17,7 +17,7 @@
  *  the next one starts where the store says this one got to. A document a live room's
  *  socket carries is the socket's: a pass neither pulls nor pushes it. */
 
-import { sendMade, settleFiles } from './files'
+import { recoverLost, sendMade, settleFiles } from './files'
 import { coalesce } from '@nib/sync-core/outbox'
 import {
   type DocRefusal,
@@ -78,6 +78,7 @@ export async function pass(core: Core, space: SpaceState): Promise<Passed> {
   await settleDisk(core, space)
   if (!alive()) return passed
   if (!(await settleFiles(core, space, alive, passed))) return passed
+  if (!(await recoverLost(core, space, alive, passed))) return passed
   for (let round = 0; round < ROUNDS; round += 1) {
     const pulled = await pullDocs(core, space, alive)
     if (pulled === null) return passed
