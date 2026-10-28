@@ -940,8 +940,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-28, to 3,419,600, for #676: a page note made from a PDF wears the
  *  PDF's mark, asked of the listing (`holdsPaper` in chosen-icon.ts, `shown` in
- *  FileMark.svelte). Measured 3,418,727 with unstable as of this raise. */
-const BUDGET = 3_419_600
+ *  FileMark.svelte). Measured 3,418,727 with unstable as of this raise.
+ *
+ *  Raised 2026-10-28, to 3,420,400, for #325: a comment written in the task view takes
+ *  `#needs-input` off its task (`withoutNeedsInput` in task-body.ts, read by act.ts).
+ *  Measured 3,419,653 with #676's second part beside it. */
+const BUDGET = 3_420_400
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
