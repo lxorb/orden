@@ -26,7 +26,7 @@
     "@nib/online": "workspace:*",
     "@nib/rooms": "workspace:*",
     "@nib/sync-core": "workspace:*",
-    "@nib/themes": "workspace:*",
+    "@orden/themes": "workspace:*",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.3",
     "@tauri-apps/plugin-opener": "^2.5.5",

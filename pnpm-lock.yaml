@@ -91,7 +91,7 @@ importers:
       '@nib/sync-core':
         specifier: workspace:*
         version: link:../../packages/sync-core
-      '@nib/themes':
+      '@orden/themes':
         specifier: workspace:*
         version: link:../../packages/themes
       '@tauri-apps/api':

@@ -4,7 +4,7 @@
  *  blink over another app carries the field and none of the app: no workspace, no
  *  editor, no session. See lib/quick-add/Window.svelte. */
 
-import '@nib/themes'
+import '@orden/themes'
 import { mount } from 'svelte'
 import { i18n } from './lib/i18n.svelte'
 import Window from './lib/quick-add/Window.svelte'

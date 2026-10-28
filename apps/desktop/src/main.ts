@@ -1,6 +1,6 @@
 // First, before anything of this run is written; see RenameNotice.svelte.
 import './lib/renamed.svelte'
-import '@nib/themes'
+import '@orden/themes'
 import { mount } from 'svelte'
 import App from './App.svelte'
 import { mark, markPainted, watchFirstInput } from './lib/trace'

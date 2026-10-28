@@ -10,7 +10,7 @@
  *  after the last such news, and kept per address so a tab opened again is its colour at
  *  once (grounds.ts). */
 
-import { glassCss } from '@nib/themes/glass'
+import { glassCss } from '@orden/themes/glass'
 import { untrack } from 'svelte'
 import { accentColour } from '../accents'
 import { hexOf, type Rgb, rgbOf } from '../legibility'

@@ -94,7 +94,7 @@ export function scopedRoots(css: string, scope = `.${FRAME}`): string {
  *  only when the gallery is first opened - the rules arrive as text, which is
  *  tens of kilobytes nobody who never opens the gallery should have to load. */
 export async function miniatureCss(): Promise<string> {
-  const { proseCss, tokensCss } = await import('@nib/themes/raw')
+  const { proseCss, tokensCss } = await import('@orden/themes/raw')
 
   // The app's rules first and the frame's after them, so what the frame says
   // about the page it holds wins. The prose rules are written for a pane with a

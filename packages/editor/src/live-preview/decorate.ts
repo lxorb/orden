@@ -790,7 +790,7 @@ class Decorator {
    *  rather than code, and the first of them carries the language and the copy
    *  button. Nothing here depends on the mode - only the stylesheet draws any of
    *  it, and only while the mode is on, so turning the numbers on and off
-   *  rebuilds no decorations at all. See editor.css in @nib/themes. */
+   *  rebuilds no decorations at all. See editor.css in @orden/themes. */
   private numberLines(from: number, to: number, fenced: boolean) {
     const doc = this.state.doc
     const opening = doc.lineAt(from).number

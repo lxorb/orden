@@ -46,7 +46,7 @@ const THEMES = new URL('packages/themes/src/', ROOT)
 const BLOG = new URL('services/sync/src/blog/', ROOT)
 
 /** KaTeX's own files, in the package the app renders equations with: it is a
- *  dependency of @nib/themes, of the editor and of the markdown renderer, all at
+ *  dependency of @orden/themes, of the editor and of the markdown renderer, all at
  *  the one version, and it is resolved here rather than named so that the release
  *  a page is dressed in cannot drift from the release that drew the markup. */
 const KATEX = new URL(

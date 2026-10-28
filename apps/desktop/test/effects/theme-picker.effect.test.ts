@@ -13,7 +13,7 @@ import { picking, pickTheme } from '../../src/lib/theme-picker/picking.svelte'
 // three gates took longer over them than a poll waits, and an arrow that tried glass on
 // left its follower still loading once the file was torn down.
 await Promise.all([
-  import('@nib/themes/glass'),
+  import('@orden/themes/glass'),
   import('../../src/lib/glass/settings'),
   import('../../src/lib/glass/follow.svelte'),
   import('../../src/lib/wallpaper/sheet'),
@@ -22,7 +22,7 @@ await Promise.all([
   import('../../src/lib/material'),
   import('../../src/lib/themes/declared'),
   import('../../src/lib/theme-picker/ThemePicker.svelte'),
-  import('@nib/themes/tokens.css?raw'),
+  import('@orden/themes/tokens.css?raw'),
 ])
 
 /** The theme picker, which Emil asked for in as many words: *"It should be openable

@@ -88,7 +88,7 @@ const ENTRY = fileURLToPath(new URL('../src/main.ts', import.meta.url))
 /** The workspace packages, by the name an import asks for them under. Resolved
  *  through each one's own `exports` map, so a subpath reaches the module that subpath
  *  exists for - which is the whole point of having them. */
-const WORKSPACE = ['@nib/editor', '@orden/glasses', '@nib/markdown', '@nib/rooms', '@nib/themes']
+const WORKSPACE = ['@nib/editor', '@orden/glasses', '@nib/markdown', '@nib/rooms', '@orden/themes']
 
 /** Where a workspace import lands, or null when the specifier is not one of ours. */
 function workspaceFile(specifier: string): string | null {
@@ -161,7 +161,7 @@ function asked(file: string): string[] {
  *  asked for that way.
  *
  *  This is where a hundred and twenty-six kilobytes were hiding. `raw.ts` in
- *  @nib/themes holds seven stylesheets as text for what an export and a deck bake into
+ *  @orden/themes holds seven stylesheets as text for what an export and a deck bake into
  *  the file they write, the shell wanted one of them - the contrast palette, three
  *  kilobytes - and a module is the unit a chunk is made of, so the shell got all seven.
  *  The module's own source is a dozen lines of comment, so the budget above saw nothing
@@ -1540,7 +1540,7 @@ describe('what reading a note fetches', () => {
       // an export carries its own CSS because it lands in a file somebody else opens,
       // and a surface on screen is already wearing the app's.
       //
-      // By the file rather than by the specifier: `@nib/themes/raw` is one of ours and
+      // By the file rather than by the specifier: `@orden/themes/raw` is one of ours and
       // resolves through the package's own exports map, so it is a module in the graph
       // and never a name in `packages`. Asked the other way this read as green whatever
       // the surface imported.

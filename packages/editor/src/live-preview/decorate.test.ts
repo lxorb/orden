@@ -200,7 +200,7 @@ describe('code', () => {
 
 /** The gutter beside a code block. What the stylesheet draws is a pseudo-element
  *  per line reading these, so the numbers are never text of the document; the
- *  rules are in editor.css in @nib/themes. */
+ *  rules are in editor.css in @orden/themes. */
 describe('code line numbers', () => {
   /** Each line of code, as the number it is given and the width of the column
    *  it is drawn in. A line with no number is one of the block's own fences. */

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { wallpaperCss } from '@nib/themes/wallpaper'
+import { wallpaperCss } from '@orden/themes/wallpaper'
 import { describe, expect, test } from 'vitest'
 import { ACCENTS } from '../accents'
 import { AA, type Lift, over, ratio, type Rgb, rgbOf, type Span } from '../legibility'

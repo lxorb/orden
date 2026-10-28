@@ -1,6 +1,6 @@
 import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
 import { CODE_PALETTES, type CodePalette, fenceLanguages } from '@nib/editor'
-import { everySurface } from '@nib/themes/write'
+import { everySurface } from '@orden/themes/write'
 
 export type Parser = LanguageSupport['language']['parser']
 

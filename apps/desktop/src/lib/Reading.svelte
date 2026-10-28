@@ -7,7 +7,7 @@
    *  writing surface is Typora's `#write` and so is this, which is what puts every
    *  rule in the theme - and in a reader's own custom.css - on both faces of a note
    *  at once. The class on every page, the id only on the one in the focused pane;
-   *  see write.ts in @nib/themes.
+   *  see write.ts in @orden/themes.
    *
    *  Nothing here writes to the note. The tab it is given is the pane's view of
    *  the document, and the document may be being typed into in another pane; when
@@ -636,7 +636,7 @@
     <!-- A piece of writing, and an `article` says so: everything under here is the
          note's own headings and paragraphs, and a reader landing in a `div` has
          nothing telling it where the document starts or what it is called. Typora's
-         `#write` is what every theme selects on; see write.ts in @nib/themes. -->
+         `#write` is what every theme selects on; see write.ts in @orden/themes. -->
     <article
       id={focused ? 'write' : undefined}
       class="page nib-write"

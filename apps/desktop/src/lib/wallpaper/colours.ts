@@ -5,7 +5,7 @@
  *  off the page in each scheme (scheme-tokens.ts). The accent is the reader's, in each
  *  side's shade. */
 
-import { wallpaperCss } from '@nib/themes/wallpaper'
+import { wallpaperCss } from '@orden/themes/wallpaper'
 import { accentColour } from '../accents'
 import { linkOf, type PaperInks } from '../content-ground'
 import { over, type Rgb, rgbOf, type Span } from '../legibility'

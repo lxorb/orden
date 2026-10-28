@@ -7,7 +7,7 @@
    *  kept as a file in the themes folder, where any other theme is. Both lists are
    *  read as the row appears, so a browser with nothing to bring is a button that
    *  says so by being out of reach. */
-  import tokens from '@nib/themes/tokens.css?raw'
+  import tokens from '@orden/themes/tokens.css?raw'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../i18n.svelte'

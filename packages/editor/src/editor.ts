@@ -210,7 +210,7 @@ export function editorState(options: StateOptions): EditorState {
       // The writing surface is Typora's `#write`, so a theme written for Typora
       // styles this editor directly. As a class: a window has several of these
       // pages at once and an id is one element, so the host gives the id to the
-      // one in front; see write.ts in @nib/themes.
+      // one in front; see write.ts in @orden/themes.
       EditorView.contentAttributes.of({ class: 'nib-write' }),
       syntaxHighlighting(nibHighlightStyle),
       codeThemeExtension(options.codeTheme),

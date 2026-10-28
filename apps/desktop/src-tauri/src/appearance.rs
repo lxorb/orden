@@ -106,7 +106,7 @@ pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
 /// one gets the nearest it has.
 ///
 /// Answers the material by name, which the page writes on its root so the theme can
-/// know what it is standing on; see glass.css in @nib/themes. An error where there is
+/// know what it is standing on; see glass.css in @orden/themes. An error where there is
 /// nothing to turn on, which the theme answers by standing on a colour of its own.
 /// Turning it off never fails: a window with no material to clear is a window with no
 /// material.

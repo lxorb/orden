@@ -101,7 +101,7 @@ class Shape implements LayerMarker {
 const shapes = layer({
   // Under the text, where the view puts its own selection: what lifts it over a
   // block with a background of its own is the theme, and blends it there. See
-  // editor.css in @nib/themes.
+  // editor.css in @orden/themes.
   above: false,
   class: 'cm-nib-selection',
   update: (update) => update.docChanged || update.selectionSet || update.viewportChanged,

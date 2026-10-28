@@ -27,7 +27,7 @@ export interface CodePalette {
  *  follows a token any theme restates.
  *
  *  The hex behind each is still the colour it has always been, for a page wearing
- *  this editor without @nib/themes under it - this package does not depend on
+ *  this editor without @orden/themes under it - this package does not depend on
  *  that one. */
 const FOLLOW: CodePalette = {
   id: 'follow',

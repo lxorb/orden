@@ -693,7 +693,7 @@ theme mean by it. The rules reach every page because the app reads each of them 
 `:is(#write, .nib-write)` where it puts them on the page - its own sheets in the
 build, a theme, custom.css and the code palette as they are injected - and `:is()`
 weighs what its heaviest argument weighs whichever one matched, so no rule wins or
-loses by it. See `write.ts` in @nib/themes; `test/write.test.ts` holds it.
+loses by it. See `write.ts` in @orden/themes; `test/write.test.ts` holds it.
 
 ### The surfaces a row wears
 

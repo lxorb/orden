@@ -41,7 +41,7 @@
    *  with the picker rather than carried by the app, and null for the frame or two
    *  before it lands, in which the cards are their bare shape. */
   let tokens = $state<string | null>(null)
-  void import('@nib/themes/tokens.css?raw').then((one) => (tokens = one.default))
+  void import('@orden/themes/tokens.css?raw').then((one) => (tokens = one.default))
 
   /** custom.css, which sits on top of every theme on the page and so on every card.
    *  Read as the picker opens: it is a sheet on the page, and not a reactive one. */

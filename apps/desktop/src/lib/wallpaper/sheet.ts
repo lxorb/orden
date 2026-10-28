@@ -4,7 +4,7 @@
  *  pictures, their floors and the dials as well, and that frame needs nothing of this
  *  theme but what every theme with a door already has. */
 
-import { wallpaperCss } from '@nib/themes/wallpaper'
+import { wallpaperCss } from '@orden/themes/wallpaper'
 import { theme } from '../theme.svelte'
 import { valueOf } from '../themes/settings'
 import { coloursOf, fieldFloors } from './colours'

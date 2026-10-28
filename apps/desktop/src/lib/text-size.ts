@@ -40,7 +40,7 @@ export function sizeStepFor(
 
 /** Whether what the wheel was over is the note: a page a note is written or read
  *  on, which the editor, the reading view and a slide all are; see write.ts in
- *  @nib/themes. */
+ *  @orden/themes. */
 function overNote(target: EventTarget | null): boolean {
   return target instanceof Element && !!target.closest('.nib-write')
 }

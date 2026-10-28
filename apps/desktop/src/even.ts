@@ -16,7 +16,7 @@
 // plugin - which is what "I don't see the icons of the spaces" was. See
 // lib/even/first.ts, which says it at length.
 import { filling } from './lib/even/first'
-import '@nib/themes'
+import '@orden/themes'
 import { mount } from 'svelte'
 import App from './App.svelte'
 import { account } from './lib/account.svelte'
