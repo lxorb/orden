@@ -9,6 +9,8 @@
 
 import type { Row, TaskChange } from '@nib/bases'
 import { CODE, type CodeLine, CodeBlocks, OPENS, WORDS } from '@nib/markdown/fences'
+import { changedTask } from '@nib/markdown/task-edits'
+import { readTask } from '@nib/markdown/task-line'
 import { changed } from '../rows/write'
 import { lineOfAnchor } from './lines'
 
@@ -278,6 +280,23 @@ export function commentsOf(text: string, anchor: Anchor): Comment[] {
     } else open = null
   }
   return out
+}
+
+/** The tag an agent doing a task with AI flags it with when it needs the reader: it has
+ *  asked something in a comment under it (#325). */
+export const NEEDS_INPUT = 'needs-input'
+
+/** `text` with the task at `anchor` no longer flagged as needing input: what a comment
+ *  the reader writes under it does, since it is the answer (#325). */
+export function withoutNeedsInput(text: string, anchor: Anchor): string {
+  const at = lineOfAnchor(text, anchor)
+  if (at === null) return text
+  const lines = text.split('\n')
+  const line = lines[at] ?? ''
+  const fields = readTask(line.replace(/\r$/, ''))
+  if (!fields?.tags.includes(NEEDS_INPUT)) return text
+  lines[at] = changedTask(line, { tags: fields.tags.filter((one) => one !== NEEDS_INPUT) })
+  return lines.join('\n')
 }
 
 /** The note with a comment added under the task, after the last one it has (or at the

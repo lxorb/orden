@@ -7,6 +7,7 @@ import {
   descriptionOf,
   editedTask,
   withComment,
+  withoutNeedsInput,
   withDescription,
   withoutComment,
   withSubtask,
@@ -410,5 +411,21 @@ describe('the task edit field writes its words and its description together', ()
     if (!row?.task) throw new Error('no task')
     const change = changeOf(row.task, { text: 'Email Ann', fields: { tags: [], remind: [] } })
     expect(editedTask('- [ ] Call Sam\n', row, change, 'New words.')).toBeNull()
+  })
+})
+
+/** #325: an agent that could not finish a task asks in a comment under it and flags it
+ *  `needs-input`; the reader's comment is the answer, and the flag comes off with it. */
+describe('a task flagged as needing input', () => {
+  test('loses the flag, and keeps every other tag', () => {
+    const note = '- [ ] Book the room #work #needs-input\n- [ ] Next\n'
+    expect(withoutNeedsInput(note, at(0, 'Book the room'))).toBe(
+      '- [ ] Book the room #work\n- [ ] Next\n',
+    )
+  })
+
+  test('and a task without the flag is left as it is', () => {
+    const note = '- [ ] Book the room #work\n'
+    expect(withoutNeedsInput(note, at(0, 'Book the room'))).toBe(note)
   })
 })

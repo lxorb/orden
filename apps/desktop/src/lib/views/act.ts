@@ -39,7 +39,14 @@ import {
   withLines,
   withoutBlock,
 } from './lines'
-import { editedTask, withComment, withDescription, withoutComment, withSubtask } from './task-body'
+import {
+  editedTask,
+  withComment,
+  withDescription,
+  withoutComment,
+  withoutNeedsInput,
+  withSubtask,
+} from './task-body'
 
 /** Where a row's note is on this disk, or null for a space no longer here. */
 function pathOf(row: Row): string | null {
@@ -477,13 +484,18 @@ export async function addSubtask(row: Row, line: string): Promise<boolean> {
   return rewrite(path, (before) => withSubtask(before, anchor, line))
 }
 
-/** A comment written under a task, stamped with this moment: the task view's composer. */
+/** A comment written under a task, stamped with this moment: the task view's composer.
+ *  It answers what a task flagged as needing input asked, so the flag comes off in the
+ *  same edit (#325). */
 export async function addComment(row: Row, words: string): Promise<boolean> {
   const anchor = row.anchor
   const path = pathOf(row)
   if (!anchor || path === null) return false
   const stamp = nowOf(new Date()).slice(0, 16)
-  return rewrite(path, (before) => withComment(before, anchor, words, stamp))
+  return rewrite(path, (before) => {
+    const commented = withComment(before, anchor, words, stamp)
+    return commented === null ? null : withoutNeedsInput(commented, anchor)
+  })
 }
 
 /** A task's comment deleted, the one on that line of its note. */
