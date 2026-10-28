@@ -12,6 +12,7 @@ import {
   DOLLAR,
   EQUALS,
   HASH,
+  isDigit,
   isSpace,
   NEWLINE,
   PERCENT,
@@ -159,7 +160,8 @@ const Hashtag: MarkdownConfig = {
   ],
 }
 
-/** `$x$`. Requires non-space just inside the delimiters, so prices survive. */
+/** `$x$`. Requires non-space just inside the delimiters, so prices survive, and no
+ *  digit after the closing one, Pandoc's rule: `$5-$10` is two prices (#498). */
 const InlineMath: MarkdownConfig = {
   defineNodes: [
     { name: 'InlineMath', style: markTags.math },
@@ -181,6 +183,7 @@ const InlineMath: MarkdownConfig = {
             continue
           }
           if (code === DOLLAR && !isSpace(cx.char(i - 1))) {
+            if (isDigit(cx.char(i + 1))) return -1
             return cx.addElement(
               cx.elt('InlineMath', pos, i + 1, [
                 cx.elt('MathMark', pos, pos + 1),

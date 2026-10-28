@@ -21,6 +21,11 @@ export const BANG = 33
 export const HASH = 35
 export const NEWLINE = 10
 
+/** Whether a code is a digit. */
+export function isDigit(code: number): boolean {
+  return code >= 48 && code <= 57
+}
+
 /** Whether a code is whitespace, a line break, or the end of the input, which
  *  is what -1 means. */
 export function isSpace(code: number): boolean {

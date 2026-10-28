@@ -630,7 +630,9 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
   // Code, tags, and character references: `&amp;` is one character written as a
   // word, and an abbreviation wrapped around the word would break it in two.
   const skip = /<(code|pre|abbr|script|style)\b[\s\S]*?<\/\1>|<[^>]+>|&[#\w]+;/g
-  const word = new RegExp(`\\b(${pattern})\\b`, 'g')
+  // Not inside a longer word of any script: `\b` is ASCII's, and missed `C++` and
+  // `日本` (#498).
+  const word = new RegExp(`(?<![\\p{L}\\p{N}_])(${pattern})(?![\\p{L}\\p{N}_])`, 'gu')
 
   let out = ''
   let last = 0
