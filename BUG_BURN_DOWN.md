@@ -839,8 +839,8 @@ Carried in the unstable integration PR instead: #986 (B511-B514), #991 (B542), #
 B538), #995 (B541, B571), #997 (B551, B552), #1015 (B570) and the second budgets PR #1017.
 
 Each fix was reviewed by an independent agent and reworked until a review found no
-Critical, High or Medium, except the third rework of #992 and #1015, which were not
-reviewed again. The reviews caught one High (in #1008) and many Mediums in the fixes
+Critical, High or Medium, except #992, reviewed through round 3 with its round-4 fix
+still under re-review. The reviews caught one High (in #1008) and many Mediums in the fixes
 themselves, all fixed before merge and folded into the rows above, and found six older
 Mediums (B531, B532, B568, B570, B571, B572).
 
