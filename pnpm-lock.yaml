@@ -76,7 +76,7 @@ importers:
       '@nib/editor':
         specifier: workspace:*
         version: link:../../packages/editor
-      '@nib/glasses':
+      '@orden/glasses':
         specifier: workspace:*
         version: link:../../packages/glasses
       '@nib/markdown':

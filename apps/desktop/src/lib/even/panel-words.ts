@@ -20,7 +20,7 @@
  *  at 31% and more. A catalogue in a script the firmware gains is drawable the day
  *  the metrics say so, and a hand list would still say no. */
 
-import { drawsScript, undrawable } from '@nib/glasses'
+import { drawsScript, undrawable } from '@orden/glasses'
 import { i18n, t } from '../i18n.svelte'
 
 /** How much of a catalogue may be undrawable before the panel gives up on it.

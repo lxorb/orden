@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { undrawable } from '@nib/glasses'
+import { undrawable } from '@orden/glasses'
 import { serverWords, stringsIn } from '../../../even-catalogues'
 import {
   APP_FOLDERS,

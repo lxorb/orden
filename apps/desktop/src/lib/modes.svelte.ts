@@ -46,7 +46,7 @@ import {
   isCompaction,
   MARKS,
   type Marks,
-} from '@nib/glasses/choices'
+} from '@orden/glasses/choices'
 import { glassesKey } from './even/key.svelte'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
@@ -447,11 +447,11 @@ class Modes {
    *  it is turned on from the hold modal on the glasses, or here. */
   glassesVoice = $state(DEFAULTS.glassesVoice)
   /** How much of a note's own white space reaches the panel; see `Compaction` in
-   *  @nib/glasses. One break between blocks, which is Emil's answer having read on a
+   *  @orden/glasses. One break between blocks, which is Emil's answer having read on a
    *  pair; the default is said once, in that package. */
   glassesCompaction = $state<Compaction>(DEFAULTS.glassesCompaction)
   /** Which of a note's markers are drawn. Rule one as it stands, until a reader
-   *  overrules it per construct; see `Marks` in @nib/glasses. */
+   *  overrules it per construct; see `Marks` in @orden/glasses. */
   glassesMarks = $state<Marks>({ ...MARKS })
   /** The phrases each spoken command answers to, where the reader has changed
    *  them. Only the differences travel, the way the shortcuts do: a full dump

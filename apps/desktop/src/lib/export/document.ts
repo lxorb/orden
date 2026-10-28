@@ -471,7 +471,7 @@ export function documentOf(source: string, name: string, options: DocumentOption
  *  Off - which is CommonMark, and the default - a paragraph hard wrapped in the
  *  file is one paragraph and a single newline in the middle of it is a space. That
  *  is what a browser does with it, so it is what the reading view, every published
- *  page and the HTML export already say, and `flowing` in @nib/glasses says the
+ *  page and the HTML export already say, and `flowing` in @orden/glasses says the
  *  same out loud. These blocks are what Word, RTF and plain text are written from,
  *  and they kept the newline: a note wrapped at eighty columns arrived broken at
  *  eighty columns.

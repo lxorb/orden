@@ -1,4 +1,4 @@
-import { BODY_INNER, BODY_ROWS } from '@nib/glasses'
+import { BODY_INNER, BODY_ROWS } from '@orden/glasses'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { Session } from './session'
 import { type Option, type SettingRow, type Settings, Shell, type Words, type World } from './shell'

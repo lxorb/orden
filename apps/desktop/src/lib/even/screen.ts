@@ -20,7 +20,14 @@
  *  last given, which is what makes a keystroke cost nothing when the page it
  *  changed is not the page in front of the reader. */
 
-import { type Band, type BandName, bandsOf, BRIGHT, PANEL_HEIGHT, PANEL_WIDTH } from '@nib/glasses'
+import {
+  type Band,
+  type BandName,
+  bandsOf,
+  BRIGHT,
+  PANEL_HEIGHT,
+  PANEL_WIDTH,
+} from '@orden/glasses'
 import type { Container, Glasses, Made } from './sdk'
 import type { View } from './shell'
 

@@ -1,4 +1,4 @@
-import { BODY_INNER, BODY_ROWS } from '@nib/glasses'
+import { BODY_INNER, BODY_ROWS } from '@orden/glasses'
 import { describe, expect, test } from 'vitest'
 import { type OpenNote, Session } from './session'
 

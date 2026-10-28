@@ -523,7 +523,7 @@ them:
 reader wrote are the lines they meant. `aggressive` is what the plugin did before
 there was a choice - markdown says a soft wrap inside a paragraph is a space, and
 that is still true of it - and it is one setting away. The default is declared once,
-as `DEFAULT_COMPACTION` in `@nib/glasses`, and the mapping, the schema's initial and
+as `DEFAULT_COMPACTION` in `@orden/glasses`, and the mapping, the schema's initial and
 the store's default all read it; a device that has already saved a value keeps it.
 
 **A line number is the line of the file at every level.** That is the whole point of

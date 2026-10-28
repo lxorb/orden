@@ -21,7 +21,7 @@
     "@nib/bases": "workspace:*",
     "@nib/chats": "workspace:*",
     "@nib/editor": "workspace:*",
-    "@nib/glasses": "workspace:*",
+    "@orden/glasses": "workspace:*",
     "@nib/markdown": "workspace:*",
     "@nib/online": "workspace:*",
     "@nib/rooms": "workspace:*",

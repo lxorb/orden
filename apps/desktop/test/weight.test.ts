@@ -88,7 +88,7 @@ const ENTRY = fileURLToPath(new URL('../src/main.ts', import.meta.url))
 /** The workspace packages, by the name an import asks for them under. Resolved
  *  through each one's own `exports` map, so a subpath reaches the module that subpath
  *  exists for - which is the whole point of having them. */
-const WORKSPACE = ['@nib/editor', '@nib/glasses', '@nib/markdown', '@nib/rooms', '@nib/themes']
+const WORKSPACE = ['@nib/editor', '@orden/glasses', '@nib/markdown', '@nib/rooms', '@nib/themes']
 
 /** Where a workspace import lands, or null when the specifier is not one of ours. */
 function workspaceFile(specifier: string): string | null {
@@ -999,7 +999,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['@replit/codemirror-vim', 'the vim keymap'],
     // The firmware font metrics, because the app's mode settings read the glasses'
     // compaction names off the package that also holds its text engine. Those names
-    // are @nib/glasses/choices now.
+    // are @orden/glasses/choices now.
     ['@evenrealities/pretext', 'the firmware font metrics'],
     // These four were already behind a boundary and must stay there: the diagram
     // drawers, the PDF viewer, and the writers an export loads.

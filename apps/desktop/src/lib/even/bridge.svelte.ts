@@ -17,7 +17,7 @@
  *  None of it runs in the plain web build, because nothing in the plain web build
  *  imports it. */
 
-import { BODY_INNER, BODY_ROWS, GUTTER, type Page, type Paging } from '@nib/glasses'
+import { BODY_INNER, BODY_ROWS, GUTTER, type Page, type Paging } from '@orden/glasses'
 import { account } from '../account.svelte'
 import { api } from '../api'
 import { bestOf, type Command, commandIn, commandWords, settled } from './commands'
@@ -404,7 +404,7 @@ class Bridge {
    *
    *  The body is the whole width on every screen; the line numbers are a column laid
    *  over its left, and the note's own rows carry a constant indent to clear it. See
-   *  panel.ts in @nib/glasses for why that is the shape. */
+   *  panel.ts in @orden/glasses for why that is the shape. */
   private paging(): Paging {
     return {
       breakAt: modes.glassesBreak,

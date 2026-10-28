@@ -391,7 +391,7 @@ export interface AccountSettings {
      there is no setting; a value an older build saved is ignored. The service still
      accepts the field so an older build's patch is not refused. */
   /** How much of a note's own white space reaches the panel: `none`, `collapse`
-   *  or `aggressive`; see `Compaction` in @nib/glasses. */
+   *  or `aggressive`; see `Compaction` in @orden/glasses. */
   glassesCompaction?: string
   /** Which of a note's markers are drawn on the panel, by construct. */
   glassesMarks?: Record<string, boolean>

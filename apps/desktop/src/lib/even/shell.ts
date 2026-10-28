@@ -36,7 +36,7 @@ import {
   spread,
   width,
   wrap,
-} from '@nib/glasses'
+} from '@orden/glasses'
 import type { Session } from './session'
 
 /** One row of a list on the glasses. */
@@ -170,7 +170,7 @@ export type Screen =
   | { kind: 'answer'; question: string; rows: readonly string[]; at: number }
 
 /** The five bands of the panel, filled. What the app writes to the glasses; see
- *  `panel.ts` in @nib/glasses for where each one sits. */
+ *  `panel.ts` in @orden/glasses for where each one sits. */
 export interface View {
   head: string
   rule: string
