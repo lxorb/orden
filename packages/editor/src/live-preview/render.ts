@@ -176,7 +176,7 @@ export class DiagramWidget extends PictureWidget {
  *  with the keystroke that finishes it rather than a moment later.
  *
  *  A fence whose body is not a chart gets no widget at all - blocks.ts asks first
- *  - and stays code, which is what says nib could not read it. */
+ *  - and stays code, which is what says Orden could not read it. */
 export class ChartWidget extends PictureWidget {
   constructor(private readonly code: string) {
     super()

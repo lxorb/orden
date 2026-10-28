@@ -59,7 +59,7 @@ export function noteLinkOfNode(state: EditorState, node: SyntaxNode): LinkSpan |
 
   // `#^a1b2c3` names a block and `#Some Heading` names a heading, in a markdown
   // link exactly as in a wikilink - Obsidian writes both that way, and so does
-  // nib now that the Links setting can ask for markdown links; see
+  // Orden now that the Links setting can ask for markdown links; see
   // link-format.ts. Without this a block link written as a markdown link went
   // looking for a heading called `^a1b2c3` and found nothing.
   const block = fragment.startsWith('^') ? fragment.slice(1) : null

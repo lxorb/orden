@@ -203,7 +203,7 @@ export function editorState(options: StateOptions): EditorState {
       bracketMatching(),
       highlightActiveLine(),
       // Finding words, with the app drawing the bar: the library's engine and
-      // nib's surface. See find.ts.
+      // Orden's surface. See find.ts.
       findExtensions(options.onFind),
       EditorView.lineWrapping,
       ...(options.coveredBelow ? [coveredBelow(options.coveredBelow)] : []),

@@ -8,7 +8,7 @@
  *  order rather than before the window is on screen; see find.ts, which is the door,
  *  and open-views.ts for how it reaches the editors already up.
  *
- *  Nothing here is the bar. The bar is the app's - a row of the pane, in nib's own
+ *  Nothing here is the bar. The bar is the app's - a row of the pane, in Orden's own
  *  fields, translated - and the seam between the two is find.ts: the effect that asks
  *  for it, the field that says it is up, and the term the caret was on. Those are what
  *  every editor carries, because a key pressed before this module lands has to put the

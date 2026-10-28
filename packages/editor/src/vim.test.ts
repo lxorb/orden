@@ -152,7 +152,7 @@ describe("Vim's undo", () => {
   })
 })
 
-describe('the keys Nib keeps for itself', () => {
+describe('the keys Orden keeps for itself', () => {
   /** `unmap` answers true while it is still finding a binding to remove, so a
    *  second sweep finding nothing is the proof that the first one was
    *  complete. This is what catches a Ctrl chord the library adds in a later
@@ -163,7 +163,7 @@ describe('the keys Nib keeps for itself', () => {
   test('are gone from Vim by the time anything imports it, and Ctrl+Q is not one', () => {
     expect(takeBackNibKeys()).toEqual([])
 
-    // Vim binds Ctrl+Q because a terminal eats Ctrl+V, and Nib spends Ctrl+V
+    // Vim binds Ctrl+Q because a terminal eats Ctrl+V, and Orden spends Ctrl+V
     // the same way: the settings say the clipboard belongs to the system. So
     // that one is left alone, and visual block lives there.
     expect(unmap('<C-q>')).toBe(true)

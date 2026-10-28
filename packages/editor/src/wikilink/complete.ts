@@ -39,7 +39,7 @@ import {
  *
  *  Neither is Obsidian's; both are the same popup, the same keys and the same
  *  brackets. A note written with one travels as `[[Note#Heading]]`, which is
- *  Obsidian's own spelling, so nothing about the file is nib's.
+ *  Obsidian's own spelling, so nothing about the file is Orden's.
  *
  *  What every row here actually writes is the app's business rather than this
  *  file's: a space set to markdown links gets `[Note](folder/Note.md#heading)` out

@@ -9,11 +9,11 @@ import { parsed } from '../../test/parsed'
 
 /** A note's HTML before the HTML grammar is here, and after.
  *
- *  Raw HTML blocks and inline tags are part of nib's markdown, and the grammar that
+ *  Raw HTML blocks and inline tags are part of Orden's markdown, and the grammar that
  *  colours them is fetched when a note first turns out to have one rather than before
  *  the window has drawn anything: `@codemirror/lang-markdown` used to bring it, and the
  *  CSS and JavaScript grammars nested inside it for `<style>` and `<script>`, whether
- *  or not the reader ever opened such a note. What it asks for now is nib's own door;
+ *  or not the reader ever opened such a note. What it asks for now is Orden's own door;
  *  see packages/lang-html, and `overrides` in the root manifest, which is what puts the
  *  door where the grammar was.
  *
@@ -174,7 +174,7 @@ test('and a tag typed inside a raw block still closes itself', async () => {
   await htmlGrammar()
 
   // The `>` that finishes `<em` inside a raw block, which is where the one extension in
-  // the HTML support that a note can feel puts `</em>`. nib's door is in the
+  // the HTML support that a note can feel puts `</em>`. Orden's door is in the
   // configuration from the start and delegates to that handler once the grammar is
   // here, so nothing had to be reconfigured when it landed. The block's own closing tag
   // is deliberately not below the caret: a tag something else already closes is closed.

@@ -189,7 +189,7 @@ describe('the chips', () => {
       dependsOn: [],
       fields: {},
     }
-    // A `📅` is the start date in a space of nib's own: come, it says nothing, and is
+    // A `📅` is the start date in a space of Orden's own: come, it says nothing, and is
     // never late. In a vault it is the deadline, and late once past (#371).
     expect(chipsOf(base, '2026-10-01')).toEqual([])
     expect(chipsOf(base, '2026-10-01', 'deadline')[0]).toMatchObject({

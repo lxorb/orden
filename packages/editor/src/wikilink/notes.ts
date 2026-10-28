@@ -343,7 +343,7 @@ export function fuzzy(text: string, needle: string): boolean {
  *
  *  `[[Svelte docs]]` resolves to `Svelte docs.url` the way `[[Plan]]` resolves to
  *  `Plan.md`, because both are documents this app writes and names by their title -
- *  the extension is nib's business rather than the writer's. A canvas and a PDF are
+ *  the extension is Orden's business rather than the writer's. A canvas and a PDF are
  *  deliberately not here: those carry their extension in the link, since that is how
  *  Obsidian writes them and this grammar is Obsidian's. A link that does carry
  *  `.url` still resolves, through the files rather than the notes; see `isTabFile`. */

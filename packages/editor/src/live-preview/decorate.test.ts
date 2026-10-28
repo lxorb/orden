@@ -423,7 +423,7 @@ describe('images', () => {
   test('draws a chart fence, and leaves one holding no chart as code', () => {
     const chart = '```chart\nseries:\n  - data: [1, 2]\n```'
     expect(blocks(chart)).toEqual([chart])
-    // Nothing to draw: it stays code, which is how nib says it could not read one.
+    // Nothing to draw: it stays code, which is how Orden says it could not read one.
     expect(blocks('```chart\nnot a chart\n```')).toEqual([])
   })
 

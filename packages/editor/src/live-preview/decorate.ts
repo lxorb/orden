@@ -463,7 +463,7 @@ class Decorator {
 
     // Every line needs the look, not just the header, so the accent runs the
     // full height of the callout. The type as written rides along as an
-    // attribute, so a theme can dress a type nib has never heard of.
+    // attribute, so a theme can dress a type Orden has never heard of.
     this.markLines(node, 'nib-callout')
     if (found.look) this.markLines(node, `nib-callout-${found.look}`)
     this.markLines(node, '', false, { 'data-callout': found.type })

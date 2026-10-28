@@ -321,7 +321,7 @@ describe('folds written down and put back', () => {
 })
 
 /** The one fold the file itself carries: Obsidian's `-` after a callout's type.
- *  Nib never writes the sign and never rewrites it, so it says how the note
+ *  Orden never writes the sign and never rewrites it, so it says how the note
  *  opens rather than how it is. */
 describe('a callout the note says is shut', () => {
   const SHUT = [

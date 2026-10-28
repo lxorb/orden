@@ -92,7 +92,7 @@ function offsetOf(lines: readonly string[], line: number): number {
 
 /** The quiet line over an answer. `label` is the wording the app translated, with
  *  `{model}` and `{date}` already filled in; this only puts it in italics, which
- *  is what makes it quiet in every renderer rather than only in nib's. */
+ *  is what makes it quiet in every renderer rather than only in Orden's. */
 function attribution(label: string): string {
   return `*${label}*`
 }

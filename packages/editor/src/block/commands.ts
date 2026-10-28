@@ -7,7 +7,7 @@
  *
  *  Every one of them works on the whole selection when there is one, so a selection
  *  lying across four paragraphs duplicates, deletes, indents, moves, turns or links
- *  to all four. A selection in nib is a selection of text and never a mode; the
+ *  to all four. A selection in Orden is a selection of text and never a mode; the
  *  blocks it touches are simply the blocks it touches, and this is where that is
  *  read off.
  *

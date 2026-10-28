@@ -8,7 +8,7 @@
  *  What is not the library's any more is the bar. CodeMirror ships a panel -
  *  two bare inputs, three checkboxes labelled "match case", "regexp", "by word"
  *  in whatever language the library was written in, and a `x` for a close
- *  button - and it was the one surface in nib that was not nib's: no
+ *  button - and it was the one surface in Orden that was not Orden's: no
  *  `.nib-field`, no row scale, no touch sizes, nothing translated, and a
  *  different shape again from the bar the reading view and a PDF already shared.
  *  So the panel is gone and the app draws the bar; see FindBar.svelte.
@@ -215,7 +215,7 @@ export function findTally(state: EditorState): FindTally {
 /** A step through the matches, or the bar if there is nothing to step through.
  *
  *  The guard is the point. The library pairs every one of these with "and open
- *  the search panel if the query is empty", which would put the panel nib just
+ *  the search panel if the query is empty", which would put the panel Orden just
  *  replaced back on the screen the first time somebody pressed F3.
  *
  *  With the engine still on its way there is certainly nothing to step through -
@@ -283,10 +283,10 @@ function lazilyOnState(pick: (found: typeof import('./finding')) => StateCommand
 }
 
 /** The line somebody typed a number for. The library's own dialog, which is the one
- *  surface of its own nib still uses; see keymap.ts. */
+ *  surface of its own Orden still uses; see keymap.ts. */
 export const gotoLine = lazily((found) => found.gotoLine)
 
 /** The next occurrence of what is selected, and every occurrence of it. Both are the
- *  library's, named by nib and bound to nib's own keys. */
+ *  library's, named by Orden and bound to Orden's own keys. */
 export const selectNextOccurrence = lazilyOnState((found) => found.selectNextOccurrence)
 export const selectSelectionMatches = lazilyOnState((found) => found.selectSelectionMatches)

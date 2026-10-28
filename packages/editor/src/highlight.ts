@@ -2,7 +2,7 @@
  *
  *  `toggleWrap('==')` in commands.ts already puts the marks on and takes them off
  *  again; what it cannot do is the colour, which lives inside the marks -
- *  `==🔴 careful==` is how Obsidian 1.14 writes one and so is how nib writes one;
+ *  `==🔴 careful==` is how Obsidian 1.14 writes one and so is how Orden writes one;
  *  see highlights.ts in @orden/markdown.
  *
  *  So this is `toggleWrap` with one more question asked. Pressing the same colour

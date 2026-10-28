@@ -3,10 +3,10 @@
  *    ◯ Call the bank about the card   Mon 16:00 · 🔔 · ⏫
  *
  *  A task's fields are marks the way `**` is: written so another app can read them,
- *  and not what the reader wants to look at. So every field the Tasks plugin or nib
+ *  and not what the reader wants to look at. So every field the Tasks plugin or Orden
  *  writes is hidden like a mark, and comes back with the caret on its line, dimmed the
  *  way marks are; a chip after the words says what they said. Tags stay where they
- *  were written: they are words, and already wear their own pill. An inline field nib
+ *  were written: they are words, and already wear their own pill. An inline field Orden
  *  has no name for stays too, because nothing would say what it held.
  *
  *  A chip pressed opens its field's choices as the app draws them (`taskHelp.pick`),

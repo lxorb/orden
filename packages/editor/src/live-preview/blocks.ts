@@ -262,7 +262,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
 
           const code = fenceCode(state, node.node)
 
-          // A chart fence with no chart in it stays code, which is how nib says
+          // A chart fence with no chart in it stays code, which is how Orden says
           // it could not read one. Asked here rather than inside the widget so
           // the fence keeps its colouring instead of becoming an empty box.
           if (language === 'chart' && readChart(code) === null) return false

@@ -526,7 +526,7 @@ function calloutAt(state: EditorState): { line: Line; at: number; callout: Callo
 /** Whether the callout the caret is in carries a fold sign, and which one - or null
  *  when the caret is not in a callout at all.
  *
- *  What the two rows in the menu are ticked by. A callout folds in nib whatever it
+ *  What the two rows in the menu are ticked by. A callout folds in Orden whatever it
  *  says, because the chevron in the margin folds any block; the sign is what the file
  *  carries, which is what Obsidian reads and what says the callout opens shut. */
 export function calloutSign(state: EditorState): '+' | '-' | '' | null {

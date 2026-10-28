@@ -535,7 +535,7 @@ describe('a footnote', () => {
  *  `insertCallout` writes no sign and should not: most callouts are not folded, and a
  *  sign in every one of them would be punctuation nobody asked for. So the two rows in
  *  the menu put one there - `+` for a callout that may be folded, which is what
- *  Obsidian reads, and `-` for one that opens shut, which nib reads on the way in. See
+ *  Obsidian reads, and `-` for one that opens shut, which Orden reads on the way in. See
  *  callouts.ts in @orden/markdown. */
 describe('a callout is asked to fold', () => {
   const CALLOUT = '> [!note] Mind the gap\n> and the step.\n'

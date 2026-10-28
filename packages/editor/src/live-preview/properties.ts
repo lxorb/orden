@@ -162,7 +162,7 @@ function control(
     return
   }
 
-  // A map is nib's own `export:` page setup, whose pairs are two keys deep. Left as
+  // A map is Orden's own `export:` page setup, whose pairs are two keys deep. Left as
   // the chips it is drawn as: what a nested key means is the surface's business that
   // wrote it, and a control that guessed would write a shape the rows cannot read.
   if (property.kind === 'map') return
