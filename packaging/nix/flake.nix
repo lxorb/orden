@@ -527,7 +527,7 @@
             buildInputs = runtimeInputsFor pkgs;
 
             preBuild = ''
-              pnpm --filter @nib/desktop build
+              pnpm --filter @orden/desktop build
             '';
 
             # Everything the profile gets is named after this package, so it never

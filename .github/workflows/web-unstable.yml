@@ -95,13 +95,13 @@ jobs:
 
       - name: Build the unstable web app
         if: steps.live.outputs.main
-        run: VITE_ORDEN_CHANNEL=unstable pnpm --filter @nib/desktop build
+        run: VITE_ORDEN_CHANNEL=unstable pnpm --filter @orden/desktop build
 
       - name: Build the release's web app and put the two together
         if: steps.live.outputs.main
         working-directory: ${{ runner.temp }}/main
         run: |
-          pnpm --filter @nib/desktop build
+          pnpm --filter @orden/desktop build
           bash scripts/web-channels.sh apps/desktop/dist "$GITHUB_WORKSPACE/apps/desktop/dist"
 
       # The Worker's bundle carries nibd for the machines it hands it to, as main's does.

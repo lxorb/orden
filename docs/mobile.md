@@ -137,7 +137,7 @@ stopped by UIKit before its first frame, and tao takes the scene road only when
 multiple scenes are on. `test/apple.test.ts` holds both.
 
 Run `tauri android init` again through the package manager, as
-`pnpm --filter @nib/desktop exec tauri android init`, never as `node` and a path
+`pnpm --filter @orden/desktop exec tauri android init`, never as `node` and a path
 to the CLI. The gradle task that builds the crate is generated with whatever
 command started the CLI written into it, so the second way bakes one machine's
 node into the project and the build then works nowhere else. Compare
@@ -869,13 +869,13 @@ and the iOS half needs a macOS runner.
 
 ```sh
 # Android, with ANDROID_HOME and NDK_HOME set and a device or emulator attached
-pnpm --filter @nib/desktop exec tauri android dev
+pnpm --filter @orden/desktop exec tauri android dev
 
 # iOS, on a Mac with xcodegen and CocoaPods from Homebrew. The icons go in after
 # init, which fills the asset catalog with Tauri's own mark
-pnpm --filter @nib/desktop exec tauri ios init
+pnpm --filter @orden/desktop exec tauri ios init
 cp apps/desktop/src-tauri/icons/ios/*.png apps/desktop/src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
-pnpm --filter @nib/desktop exec tauri ios build --target aarch64-sim --debug
+pnpm --filter @orden/desktop exec tauri ios build --target aarch64-sim --debug
 ```
 
 `tauri ios dev` wants a signing identity even for the simulator, so without an Apple

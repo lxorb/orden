@@ -36,4 +36,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Ten thousand new seeds
-        run: SIM_FROM=$(( $(date +%s) / 86400 * 10000 )) pnpm --filter @nib/desktop sim:long
+        run: SIM_FROM=$(( $(date +%s) / 86400 * 10000 )) pnpm --filter @orden/desktop sim:long

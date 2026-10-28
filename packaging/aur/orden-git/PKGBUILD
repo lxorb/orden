@@ -34,12 +34,12 @@ pkgver() {
 prepare() {
   cd orden
   # Only the desktop app and what it is built from, as the Flatpak does.
-  pnpm install --frozen-lockfile --filter '@nib/desktop...'
+  pnpm install --frozen-lockfile --filter '@orden/desktop...'
 }
 
 build() {
   cd orden
-  pnpm --filter @nib/desktop exec tauri build --bundles deb \
+  pnpm --filter @orden/desktop exec tauri build --bundles deb \
     --config '{"bundle":{"createUpdaterArtifacts":false}}'
 }
 

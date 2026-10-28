@@ -3,7 +3,7 @@
  *  cannot come back, then the random walks on the unkind network, all against the kit's
  *  reference account. The same scripts against the Worker's own routes and rooms are in
  *  services/sync/test/sync2-engine.test.ts, and ten thousand seeds are
- *  `pnpm --filter @nib/desktop sim:long` (walks/walk.ts). */
+ *  `pnpm --filter @orden/desktop sim:long` (walks/walk.ts). */
 
 import { describe, expect, test } from 'vitest'
 import { CALM, markersIn, type Report, simulate, type Step } from '@nib/sync-core/sim'

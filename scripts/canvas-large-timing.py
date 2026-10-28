@@ -9,7 +9,7 @@ of each step beside it.
 Run against the web build under Vite's dev server, which serves the app's own modules
 by path so the drive can make a plane through them:
 
-    pnpm --filter @nib/desktop exec vite --port 5535 --strictPort --host 127.0.0.1
+    pnpm --filter @orden/desktop exec vite --port 5535 --strictPort --host 127.0.0.1
     python3 scripts/canvas-large-timing.py <cards> [profile prefix] [near]
 
 with Playwright's Chromium (the drives ran it headless in Playwright's own image, on

@@ -1,6 +1,6 @@
 /** The simulator's random walks with the engine as every device (docs/sync-v2.md
  *  section 12). `pnpm test` walks three hundred of them (sim.test.ts); `pnpm --filter
- *  @nib/desktop sim:long` walks ten thousand in four quarters at once, one file each, so
+ *  @orden/desktop sim:long` walks ten thousand in four quarters at once, one file each, so
  *  the run takes the few minutes of a CI job rather than the ten of one core.
  *
  *  `SIM_FROM` says where the walk starts: the CI job walks 1 to 10,000 every time, so a

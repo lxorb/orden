@@ -123,7 +123,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Ten thousand seeds
-        run: pnpm --filter @nib/desktop sim:long
+        run: pnpm --filter @orden/desktop sim:long
 
   # Whether a person could write in it at all.
   #
@@ -209,7 +209,7 @@ jobs:
       # config that asks for it. A plain build, no mode, exactly what ships.
       - name: A release carries no handle
         run: |
-          pnpm --filter @nib/desktop build
+          pnpm --filter @orden/desktop build
           if grep -rq nibApp apps/desktop/dist/assets; then
             echo "a release bundle carries window.nibApp" >&2
             exit 1
@@ -387,7 +387,7 @@ jobs:
       - name: Frontend
         run: |
           pnpm install --frozen-lockfile
-          pnpm --filter @nib/desktop build
+          pnpm --filter @orden/desktop build
 
       - name: Format
         run: |
@@ -521,7 +521,7 @@ jobs:
       # This builds the frontend itself, through the config's beforeBuildCommand.
       - name: Assemble the release APK, R8 and all
         run: |
-          pnpm --filter @nib/desktop exec tauri android build --apk \
+          pnpm --filter @orden/desktop exec tauri android build --apk \
             --target aarch64 --target x86_64
 
       - name: Say what came out
@@ -586,7 +586,7 @@ jobs:
       # The Worker serves the built app from its assets binding, so the build
       # has to exist before the deploy reads it.
       - name: Build the web app
-        run: pnpm --filter @nib/desktop build
+        run: pnpm --filter @orden/desktop build
 
       # The edge of `unstable`, as it stands, beside it: in a worktree of its own, outside
       # this one, so that nothing either build looks up on the way - a lockfile, a
@@ -602,7 +602,7 @@ jobs:
           cd "$RUNNER_TEMP/unstable"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           pnpm install --frozen-lockfile
-          VITE_ORDEN_CHANNEL=unstable pnpm --filter @nib/desktop build
+          VITE_ORDEN_CHANNEL=unstable pnpm --filter @orden/desktop build
 
       # Refused only before the unstable pages are in place, so the release is whole either way.
       - name: Put the two builds together

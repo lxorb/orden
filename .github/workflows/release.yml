@@ -174,7 +174,7 @@ jobs:
               --ignore-version-mismatches \
               --config '{"version":"${{ needs.version.outputs.version }}"}'
           else
-            pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} \
+            pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} \
               --config '{"version":"${{ needs.version.outputs.version }}"}'
           fi
 
@@ -225,7 +225,7 @@ jobs:
           ROLLING: ${{ needs.version.outputs.rolling }}
         run: |
           source scripts/edge-profile.sh
-          pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} --no-bundle \
+          pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --no-bundle \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -323,7 +323,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
         run: |
-          pnpm --filter @nib/desktop exec tauri bundle --target universal-apple-darwin \
+          pnpm --filter @orden/desktop exec tauri bundle --target universal-apple-darwin \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
           lipo -info "$UNIVERSAL/bundle/macos/Orden.app/Contents/MacOS/"*
 

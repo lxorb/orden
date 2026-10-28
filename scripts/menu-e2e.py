@@ -13,7 +13,7 @@ Run it with the repository's own Chromium:
 
     python scripts/menu-e2e.py
 
-It builds nothing. `pnpm --filter @nib/desktop build` first, then this."""
+It builds nothing. `pnpm --filter @orden/desktop build` first, then this."""
 
 import functools
 import http.server
@@ -238,7 +238,7 @@ def photograph(page, scheme: str) -> list[str]:
 
 def main() -> int:
     if not DIST.is_dir():
-        raise SystemExit(f"no build at {DIST}; run pnpm --filter @nib/desktop build")
+        raise SystemExit(f"no build at {DIST}; run pnpm --filter @orden/desktop build")
 
     shutil.rmtree(OUT, ignore_errors=True)
     OUT.mkdir(parents=True, exist_ok=True)

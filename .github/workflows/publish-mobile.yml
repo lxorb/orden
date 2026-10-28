@@ -143,7 +143,7 @@ jobs:
       # unstable build is named after the build it came from.
       - name: Build the APK
         run: |
-          pnpm --filter @nib/desktop exec tauri android build --apk \
+          pnpm --filter @orden/desktop exec tauri android build --apk \
             --target aarch64 --target x86_64 \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
 
@@ -213,7 +213,7 @@ jobs:
           # account behind this one, and nothing below signs anything, so the
           # placeholder is only a field being filled in.
           APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM || 'AAAAAAAAAA' }}
-        run: pnpm --filter @nib/desktop exec tauri ios init
+        run: pnpm --filter @orden/desktop exec tauri ios init
 
       # The CLI fills the asset catalog with Tauri's own mark, and the project is
       # made afresh on every run, so the app's icons go in after it: the ones
@@ -227,7 +227,7 @@ jobs:
         env:
           APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM || 'AAAAAAAAAA' }}
         run: |
-          pnpm --filter @nib/desktop exec tauri ios build --target aarch64-sim \
+          pnpm --filter @orden/desktop exec tauri ios build --target aarch64-sim \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
 
       # What a real phone would run, as far as it can be taken without an Apple

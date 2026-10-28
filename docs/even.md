@@ -1247,7 +1247,7 @@ keys nothing has written this launch.
 
 ### What goes into the package, and why it is a build of its own
 
-`pnpm --filter @nib/desktop build:even` runs `vite.even.config.ts`, whose only
+`pnpm --filter @orden/desktop build:even` runs `vite.even.config.ts`, whose only
 page is `even.html`, then stages `apps/desktop/dist-even` through
 `scripts/even-stage.mjs`. In that folder **`index.html` and `even.html` are the
 same page, and that page is the plugin**; the editor's own `index.html` is not in
@@ -1454,7 +1454,7 @@ To point it at a laptop instead of at production, serve the app on the LAN and
 pass that address:
 
 ```sh
-pnpm --filter @nib/desktop exec vite --host 0.0.0.0 --port 5173
+pnpm --filter @orden/desktop exec vite --host 0.0.0.0 --port 5173
 npx @evenrealities/evenhub-cli qr --http --port 5173
 ```
 
@@ -1505,7 +1505,7 @@ firmware.
 By hand, if CI is not an option:
 
 ```sh
-pnpm --filter @nib/desktop build:even
+pnpm --filter @orden/desktop build:even
 pnpm even:pack
 ```
 
@@ -1635,7 +1635,7 @@ character is within a pixel of where the glasses will put it, the wrapping, the
 bands, the gutter and the rules are exact, and only the letterforms are borrowed.
 
 ```sh
-pnpm --filter @nib/desktop build:even
+pnpm --filter @orden/desktop build:even
 python scripts/even-e2e.py
 ```
 
@@ -1783,7 +1783,7 @@ In rough order of how much rests on it:
 The whole drive, in a browser, against a bridge that answers like the device:
 
 ```sh
-pnpm --filter @nib/desktop build:even
+pnpm --filter @orden/desktop build:even
 python scripts/even-e2e.py
 ```
 
@@ -1793,7 +1793,7 @@ there.
 Against the official simulator, with the real SDK doing the talking:
 
 ```sh
-pnpm --filter @nib/desktop exec vite --port 5173
+pnpm --filter @orden/desktop exec vite --port 5173
 npx @evenrealities/evenhub-simulator --automation-port 1438 http://localhost:5173/even.html
 ```
 

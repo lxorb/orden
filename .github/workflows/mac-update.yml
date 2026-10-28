@@ -91,7 +91,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build
         run: |
-          pnpm --filter @nib/desktop exec tauri build --bundles app --config '{"identifier":"ch.emilvinu.nib.probe.mac-move","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          pnpm --filter @orden/desktop exec tauri build --bundles app --config '{"identifier":"ch.emilvinu.nib.probe.mac-move","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
       - name: Stuck on the disk image, moved to Applications
         run: bash scripts/mac-move-check.sh "$(ls -d apps/desktop/src-tauri/target/release/bundle/macos/*.app | head -1)"
 
@@ -124,7 +124,7 @@ jobs:
       # but the top. The window's own config whole, as a merge patch replaces a list.
       - name: Build
         run: |
-          pnpm --filter @nib/desktop exec tauri build --bundles app --config '{"identifier":"ch.emilvinu.nib.probe.mac-window","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}},"app":{"windows":[{"title":"Orden","width":700,"height":450,"minWidth":520,"minHeight":400,"decorations":false,"transparent":true,"dragDropEnabled":false,"visible":false}]}}'
+          pnpm --filter @orden/desktop exec tauri build --bundles app --config '{"identifier":"ch.emilvinu.nib.probe.mac-window","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}},"app":{"windows":[{"title":"Orden","width":700,"height":450,"minWidth":520,"minHeight":400,"decorations":false,"transparent":true,"dragDropEnabled":false,"visible":false}]}}'
       - name: Under the menu bar, across the middle, and where it was left
         run: bash scripts/mac-window-check.sh "$(ls -d apps/desktop/src-tauri/target/release/bundle/macos/*.app | head -1)"
       - if: always()

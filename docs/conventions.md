@@ -954,7 +954,7 @@ short of a row, carries one nothing asks for, has the wrong count forms for its
 language, loses a placeholder, or holds an em dash. Run it alone with
 
 ```sh
-pnpm --filter @nib/desktop exec vitest run src/lib/i18n.test.ts
+pnpm --filter @orden/desktop exec vitest run src/lib/i18n.test.ts
 ```
 
 Rules the tests enforce:

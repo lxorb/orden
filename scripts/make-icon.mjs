@@ -67,9 +67,12 @@ writeFileSync(
 
 // pnpm runs the command inside apps/desktop, so every path it gets is absolute.
 const fan = (input, out) =>
-  execSync(`pnpm --filter @nib/desktop exec tauri icon "${resolve(input)}" -o "${resolve(out)}"`, {
-    stdio: 'inherit',
-  })
+  execSync(
+    `pnpm --filter @orden/desktop exec tauri icon "${resolve(input)}" -o "${resolve(out)}"`,
+    {
+      stdio: 'inherit',
+    },
+  )
 const desktop = join(work, 'desktop')
 const mac = join(work, 'mac')
 const mobile = join(work, 'mobile')

@@ -15,7 +15,7 @@ are drawn with the firmware's metrics and a stand-in face; see
 
 Run it with the repository's own Chromium, after the plugin's own build:
 
-    pnpm --filter @nib/desktop build:even
+    pnpm --filter @orden/desktop build:even
     python scripts/even-e2e.py
 """
 
@@ -604,7 +604,7 @@ class Report:
 
 def main() -> int:
     if not (DIST / "even.html").exists():
-        raise SystemExit("no dist-even/even.html: pnpm --filter @nib/desktop build:even first")
+        raise SystemExit("no dist-even/even.html: pnpm --filter @orden/desktop build:even first")
 
     OUT.mkdir(parents=True, exist_ok=True)
     report = Report()

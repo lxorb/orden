@@ -135,7 +135,7 @@ jobs:
 
       # The same two commands docs/even.md gives for doing this by hand.
       - name: Build the plugin
-        run: pnpm --filter @nib/desktop build:even
+        run: pnpm --filter @orden/desktop build:even
 
       # Out of the lockfile, which is the difference between a version and a
       # tarball. `npx --yes @evenrealities/evenhub-cli@0.1.14` named a version and ran
