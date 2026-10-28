@@ -1,4 +1,4 @@
-//! What nib was doing when it stopped answering, said in nib.log.
+//! What Orden was doing when it stopped answering, said in nib.log.
 //!
 //! Emil, 2026-10-04: *"nib still freezes pretty often."* A freeze on somebody else's
 //! machine is a freeze nobody can fix unless the machine says what it was doing, so
@@ -388,7 +388,7 @@ fn pumps(thread: u32, within: Duration) -> Answer {
 }
 
 /// Says in the log when the engine behind the window's own page stops answering or goes,
-/// which from outside looks exactly like nib freezing: `WebView2`'s `ProcessFailed`,
+/// which from outside looks exactly like Orden freezing: `WebView2`'s `ProcessFailed`,
 /// whose "unresponsive" kind is raised after the page has not answered input for a few
 /// seconds. The kind is all that is said.
 #[cfg(all(windows, not(feature = "cef")))]

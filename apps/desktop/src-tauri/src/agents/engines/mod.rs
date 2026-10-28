@@ -4,7 +4,7 @@
 //! | build | an agent's own tab | a reader's tab | the verbs |
 //! | --- | --- | --- | --- |
 //! | `WebView2` | a child webview outside the window's client area (`tabs.rs`) | its webview | the `DevTools` Protocol, all of them |
-//! | nib's own Chromium | a windowless browser with no native window at all (`cef.rs`) | its webview, through `engine/devtools.rs` | the same protocol, all of them |
+//! | Orden's own Chromium | a windowless browser with no native window at all (`cef.rs`) | its webview, through `engine/devtools.rs` | the same protocol, all of them |
 //! | `WKWebView`, `WebKitGTK` | none yet: measured by scripts/webkit-agent-probe, see docs/agent-native.md 12 | - | `unsupported_on_this_engine` |
 //!
 //! **The reader's logins, never the reader's extensions.** Emil, 2026-10-03: an agent's
@@ -90,7 +90,7 @@ pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
 pub enum View {
     /// A webview of the app's: a reader's tab, or an agent's own on `WebView2`.
     Webview(Webview),
-    /// An agent's own tab on nib's own Chromium: a browser with no window.
+    /// An agent's own tab on Orden's own Chromium: a browser with no window.
     #[cfg(feature = "cef")]
     Windowless(cef::Windowless),
 }

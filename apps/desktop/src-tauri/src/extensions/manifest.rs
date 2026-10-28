@@ -17,7 +17,7 @@ use std::path::Path;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-/// What nib needs to know about an extension, out of its manifest.
+/// What Orden needs to know about an extension, out of its manifest.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct About {

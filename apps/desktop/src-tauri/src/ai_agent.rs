@@ -1,4 +1,4 @@
-//! The AI sidebar's agent: nib's own tools, called by the loop the window runs for a
+//! The AI sidebar's agent: Orden's own tools, called by the loop the window runs for a
 //! Claude or `OpenAI` key, a `ChatGPT` plan or a compatible server (docs/ai-sidebar.md 4.4).
 //!
 //! **An agent like any other.** Each provider gets a built-in grant, named after it
@@ -20,7 +20,7 @@
 //!
 //! The same three hold for every engine the sidebar runs: its own loop for a key or a
 //! plan, and Claude Code and Codex, which are started with none of their own tools and
-//! their own prompts off, so every change they can make is one of nib's, asked about
+//! their own prompts off, so every change they can make is one of Orden's, asked about
 //! here. A helper (`run_agent`) works in its parent's mode.
 //!
 //! The sidebar's Claude Code and Codex call the same tools through `nib mcp`, with a token
@@ -277,7 +277,7 @@ pub fn ai_agent_call(
 
 /// What every turn is sent about where the reader is (docs/ai-sidebar.md 4.2): the
 /// space, the tab in front and every open tab, with their kinds and paths or addresses,
-/// as `get_context` answers the provider's agent. Asked by nib for the turn rather than
+/// as `get_context` answers the provider's agent. Asked by Orden for the turn rather than
 /// by the model, so in every mode; only as far as the grant reaches, and written for the
 /// model with its marks like any answer. One verb: `get_context` lists every tab, so a
 /// `workspace_tabs` list beside it would say each one twice.

@@ -1,6 +1,6 @@
 //! The keys an AI provider is reached with, kept in the machine's own keychain.
 //!
-//! A provider key is the one secret nib holds that is worth money to whoever takes
+//! A provider key is the one secret Orden holds that is worth money to whoever takes
 //! it, and it is the reader's own. No log ever prints one, and the account never sees
 //! one: it reaches the reader's other devices only sealed end to end, in the AI vault
 //! the window seals (src/lib/ai/vault), which the account holds as ciphertext.

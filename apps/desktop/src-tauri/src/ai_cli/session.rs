@@ -10,7 +10,7 @@
 //! front, which Claude Code then reads as words (measured).
 //!
 //! Every line Claude Code prints goes to the window as it is, for `lib/ai/local` to read,
-//! except the answers to nib's own control requests, which go back as a `Reply` to what
+//! except the answers to Orden's own control requests, which go back as a `Reply` to what
 //! was asked. A control request of Claude Code's own - a permission it would ask about -
 //! is refused here: with `--permission-prompts none` it never should, and nobody is there
 //! to answer it.
@@ -207,7 +207,7 @@ fn message(content: Value) -> String {
 }
 
 /// What one printed line comes to for the window: the line itself, the reply to one of
-/// nib's requests, or nothing for one of Claude Code's own requests, which is refused.
+/// Orden's requests, or nothing for one of Claude Code's own requests, which is refused.
 fn read(line: &str, held: &Waiting, writer: Option<&Running>) -> Option<Message> {
     let event: Value = match serde_json::from_str(line) {
         Ok(event) => event,

@@ -1,4 +1,4 @@
-//! An extension's popup: its own page, in a webview of its own, inside nib's bubble.
+//! An extension's popup: its own page, in a webview of its own, inside Orden's bubble.
 //!
 //! What a browser does when the extension's button is pressed - a small window under the
 //! button holding `chrome-extension://<id>/<popup>`, sized to what the page lays out, at

@@ -4,7 +4,7 @@
 
 use tauri::AppHandle;
 
-/// Whether the Shortcuts row is shown: only where Shortcuts lists nib's actions. Off
+/// Whether the Shortcuts row is shown: only where Shortcuts lists Orden's actions. Off
 /// the window's thread, since the first answer reads the app's signature off the disk.
 #[tauri::command(async)]
 pub fn shortcuts_offered() -> bool {

@@ -59,7 +59,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
         // A link clicked in another program, once nib is the browser, and a PDF opened
         // with nib: a Mac never puts either on the command line. `nib://` links arrive
         // here too, and are the deep-link plugin's; see uris.rs. Any other document the
-        // Finder hands over was forced on nib - no other file type is declared - and it
+        // Finder hands over was forced on Orden - no other file type is declared - and it
         // is nothing to open; see launch.rs.
         #[cfg(target_os = "macos")]
         RunEvent::Opened { urls } => {
@@ -110,7 +110,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             crate::terminal::end_all(app);
             // Nor any Claude Code or Codex a question started; see ai_cli.rs.
             crate::ai_cli::end_all(app);
-            // And no notice left on the screen to answer into a nib that has gone; see
+            // And no notice left on the screen to answer into an Orden that has gone; see
             // notices.rs.
             crate::notices::clear_all(app);
         }

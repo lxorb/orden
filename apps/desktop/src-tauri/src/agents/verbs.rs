@@ -1138,7 +1138,7 @@ pub struct Closed {
     pub tab: TabId,
 }
 
-/// What a question is about (9.3), and the questions nib asks for itself.
+/// What a question is about (9.3), and the questions Orden asks for itself.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Category {
@@ -1146,7 +1146,7 @@ pub enum Category {
     Paying,
     /// Send, post, reply, publish or submit on a mail, messaging or social site.
     Sending,
-    /// Anything in nib that puts words where somebody else can read them.
+    /// Anything in Orden that puts words where somebody else can read them.
     Publishing,
     /// Delete, remove, erase: for good.
     Deleting,
@@ -1234,7 +1234,7 @@ pub struct Status {
 }
 
 /// `agent_pair`, once the reader allowed it. The token is said once and kept by the
-/// client; nib keeps only its hash.
+/// client; Orden keeps only its hash.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Paired {
     /// The agent's id.

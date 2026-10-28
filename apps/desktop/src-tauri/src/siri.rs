@@ -1,5 +1,5 @@
-//! The Mac's App Intents (swift/AddTask.swift): what Shortcuts calls into nib with. The
-//! intent runs in the app's own process, started in the background where nib is not
+//! The Mac's App Intents (swift/AddTask.swift): what Shortcuts calls into Orden with. The
+//! intent runs in the app's own process, started in the background where Orden is not
 //! running, so this answers without a window or a page: the task goes straight onto the
 //! disk, and a space open in a window sees the note change like any other.
 //!
@@ -34,7 +34,7 @@ const INBOX: &str = "Inbox.md";
 /// The file in the settings folder that holds the inbox of the space in front.
 const FRONT: &str = "inbox.txt";
 
-/// Whether the system offers nib's actions: an ad-hoc build (a probe, a build from
+/// Whether the system offers Orden's actions: an ad-hoc build (a probe, a build from
 /// source) has no team, and Shortcuts lists nothing of it. Asked once, since a running
 /// app's signature does not change under it.
 pub fn offered() -> bool {

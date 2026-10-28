@@ -14,7 +14,7 @@
 //! engine lost before the app reads a thing. The page is not changed: `kept.js` is put in
 //! front of it, as the window is made, and sees every write whoever makes it.
 //!
-//! Only on nib's own Chromium, where it was measured; the system's engines commit on
+//! Only on Orden's own Chromium, where it was measured; the system's engines commit on
 //! their own schedule and are not touched by this.
 
 use std::collections::BTreeMap;

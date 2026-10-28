@@ -2,7 +2,7 @@
 //! names the folder the running app keeps its endpoint file in, and the version it says
 //! it is. Read from the same files and the same `TAURI_CONFIG` tauri-build reads, so a
 //! probe built with an identifier of its own is a probe whose `nib mcp` finds that probe
-//! and never the reader's own nib. See src/mcp/home.rs.
+//! and never the reader's own Orden. See src/mcp/home.rs.
 //!
 //! A file of its own because two build scripts say them: the app's (`build.rs`) and the
 //! Chromium build's (`cef/build.rs`), which compiles the same library and so needs the

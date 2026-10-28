@@ -69,7 +69,7 @@
 //!
 //! **Ctrl+D, the same way, as a key.** Chrome bookmarks on it only when the page let it
 //! go by - Google Sheets fills down with it, Figma and Excalidraw duplicate, VS Code on
-//! the web selects the next one - and nib puts the tab down (Deselect tab). What it
+//! the web selects the next one - and Orden puts the tab down (Deselect tab). What it
 //! means is the reader's own binding rather than an ask of the tab's, so it comes back
 //! under an eighth name, `nib-ctrl-d`, and is said to the window as the key it was on
 //! `web_keys.rs`'s own event: played there, it does whatever Ctrl+D does in the app,
@@ -100,7 +100,7 @@
 //! (`full_screen.rs`): anywhere else it is nothing, and the keyboard stays in the page.
 //! All a page gets by asking is the screen given back, which its reader's own key did.
 //!
-//! `WebView2`'s, and nib's own Chromium's, which hands the host no window name: there the
+//! `WebView2`'s, and Orden's own Chromium's, which hands the host no window name: there the
 //! script asks through a function only nib's world has (`BINDING`). Elsewhere nothing is
 //! known, and every tab a page asks for opens in front, as before.
 
@@ -121,7 +121,7 @@ pub enum Asked {
 const BEHIND: &str = "nib-behind";
 const FRONT: &str = "nib-front";
 
-/// And the ones it asks for nib's answer to a key the page let go by.
+/// And the ones it asks for Orden's answer to a key the page let go by.
 const FIND: &str = "nib-find";
 const FIND_NEXT: &str = "nib-find-next";
 const FIND_PREVIOUS: &str = "nib-find-previous";
@@ -171,7 +171,7 @@ pub enum Passed {
     CtrlTwice,
     #[serde(rename = "alt-alt")]
     AltTwice,
-    /// The store's own "Add to Chrome" or "Get", pressed: nib installs the extension the
+    /// The store's own "Add to Chrome" or "Get", pressed: Orden installs the extension the
     /// page is about (extensions.rs).
     Install,
     /// Escape the page let go by, while the app holds the screen.
@@ -256,7 +256,7 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 ///
 /// Ctrl+F, Ctrl+G and F3 (Shift for the one before), Ctrl+L, Alt+D, Ctrl+D, Ctrl+H,
 /// Ctrl+Shift+Delete, and Ctrl+0 on the row or the number pad, that nothing in the page
-/// took ask for nib's
+/// took ask for Orden's
 /// answer by name, and are taken so the engine does not answer them too. By Windows' key
 /// code, which is what the engine and Chrome read a chord by, so a layout whose letters
 /// are not Latin still has them. Ctrl+Alt types a character on half the keyboards in
@@ -413,7 +413,7 @@ pub const SCRIPT: &str = r"(function () {
 const STORE_PART: &str = "  var here = typeof location";
 const STORE_END: &str = "    }, true)\n  }\n";
 
-/// `script` without the part that takes the store's own install button: nib's own
+/// `script` without the part that takes the store's own install button: Orden's own
 /// Chromium's, whose store installs for itself (extensions.rs). Pure, so it has a test.
 #[cfg_attr(
     not(feature = "cef"),
@@ -444,7 +444,7 @@ pub fn chord(name: &str) -> Option<Pressed> {
     }
 }
 
-/// What a window asked for under `name` asks of nib, or `None` for a window. Pure, and
+/// What a window asked for under `name` asks of Orden, or `None` for a window. Pure, and
 /// the only reading of those names.
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub fn sought(name: &str) -> Option<Passed> {
@@ -741,7 +741,7 @@ mod heard {
     }
 }
 
-/// The name of the one function nib's world in a page has on nib's own Chromium: what
+/// The name of the one function nib's world in a page has on Orden's own Chromium: what
 /// `SCRIPT` asks through there, in place of a window name. The engine's `DevTools`
 /// protocol puts it in nib's world alone (`Runtime.addBinding` by the world's name), so
 /// the page's own world never has it, and says each call to this app as
@@ -749,7 +749,7 @@ mod heard {
 #[cfg(feature = "cef")]
 pub const BINDING: &str = "nibAsked";
 
-/// `SCRIPT` as nib's own Chromium runs it: the engine hands the host no window name, so
+/// `SCRIPT` as Orden's own Chromium runs it: the engine hands the host no window name, so
 /// the script asks through `BINDING` instead, with the address and the name it would
 /// have opened a window under - and through a window after all where the binding is not
 /// there, which opens the link as a tab in front rather than not at all.
@@ -832,7 +832,7 @@ mod tests {
         alt: false,
     };
 
-    /// The one line nib's own Chromium swaps for its binding is there to swap: a script
+    /// The one line Orden's own Chromium swaps for its binding is there to swap: a script
     /// that no longer opened its windows through it would ask through nothing there.
     #[test]
     fn the_script_opens_its_windows_through_the_line_chromium_swaps() {
@@ -1056,7 +1056,7 @@ mod tests {
         }
     }
 
-    /// On nib's own Chromium the store's own button installs, so nothing takes it there;
+    /// On Orden's own Chromium the store's own button installs, so nothing takes it there;
     /// everything else in the script is the same.
     #[test]
     fn chromium_leaves_the_store_s_button_to_the_store() {

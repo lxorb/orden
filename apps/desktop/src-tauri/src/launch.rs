@@ -1,7 +1,7 @@
 //! Starting up and opening windows: what the app is handed, and the extra windows
 //! someone asks for while it is running.
 //!
-//! What is handed to the app is web pages, because nib can be the browser, and PDFs,
+//! What is handed to the app is web pages, because Orden can be the browser, and PDFs,
 //! because nib reads them: a link clicked in another program or a PDF opened with nib
 //! arrives on a command line, which is how Windows and Linux hand one over; as a second
 //! launch, which is the same thing reaching an app that is already open; and on a Mac
@@ -39,7 +39,7 @@ const MAIN: &str = "main";
 pub enum Handed {
     /// Web pages to show in tabs of their own; see `web_handed.rs`.
     Pages,
-    /// PDFs to read in nib's own viewer; see `handed_pdfs.rs`.
+    /// PDFs to read in Orden's own viewer; see `handed_pdfs.rs`.
     Pdfs,
 }
 
@@ -182,7 +182,7 @@ pub fn take_startup_pdfs(window: tauri::Window, pending: tauri::State<'_, Pendin
 }
 
 /// A second launch of the app, as the single instance plugin hears it: inside the window
-/// procedure its message arrived in. On nib's own Chromium a question to a window from in
+/// procedure its message arrived in. On Orden's own Chromium a question to a window from in
 /// there - is it focused? - is answered by running the event loop's handler again inside
 /// the one already running, which never returns (measured: the running app stopped
 /// answering, and the second launch never ended, since it waits for the message to be

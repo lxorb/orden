@@ -13,7 +13,7 @@
 //! own road to it - `print()` in a frame - is one `WKWebView` ignores; see
 //! `print_page`.
 //!
-//! And on nib's own Chromium - the `cef` feature, off in everything that ships -
+//! And on Orden's own Chromium - the `cef` feature, off in everything that ships -
 //! neither system engine is there any more, so the one call this module makes into
 //! it is not there to make: the printer here says no and the window falls back to
 //! the panel, exactly as it does on Linux. Chromium's own `PrintToPDF` is the answer

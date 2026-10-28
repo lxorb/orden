@@ -2,10 +2,10 @@
 //! Claude Code and Codex, run headless on this machine, signed in by the reader through
 //! the programs' own sign-in.
 //!
-//! **Why a program and not a login of nib's own.** Anthropic does not let an app sign
+//! **Why a program and not a login of Orden's own.** Anthropic does not let an app sign
 //! somebody in to Claude.ai, route requests through a Pro or Max plan's credentials, or
 //! collect, store or pass on its tokens; what it does allow is a person running the
-//! unmodified Claude Code they installed and signed in to themselves. So nib starts that
+//! unmodified Claude Code they installed and signed in to themselves. So Orden starts that
 //! program, asks it a question, and reads the answer: it never opens `~/.claude` or
 //! `~/.codex`, never reads a token, and learns whether somebody is signed in only by
 //! asking the program (`claude auth status`, `codex login status`). See docs/ai.md,
@@ -44,7 +44,7 @@
 //! | `codex_app` | the window's Codex app-server: the JSON-RPC client, its threads |
 //! | `program` | where each program is, and the `PATH` it runs with |
 //! | `family` | a program and everything it starts, ended together |
-//! | `enroll` | nib added to the agent programs on this computer, as they add a server |
+//! | `enroll` | Orden added to the agent programs on this computer, as they add a server |
 //! | `home` | where a program keeps one account's sign-in |
 //! | `run` | one run: stdin in, lines out, its end |
 
@@ -288,7 +288,7 @@ fn caps_of(program: &Program, folder: &Path) -> args::Caps {
 pub struct Status {
     /// The program, for the line a terminal types to sign in with it.
     program: String,
-    /// The account's home where it is one of nib's, for the same line.
+    /// The account's home where it is one of Orden's, for the same line.
     home: Option<String>,
     #[serde(flatten)]
     said: Said,
@@ -321,19 +321,19 @@ pub fn ai_cli_status(
     }))
 }
 
-/// After the window: nib added to the agent programs on this computer; see enroll.rs.
+/// After the window: Orden added to the agent programs on this computer; see enroll.rs.
 pub fn keep_enrolled(app: &AppHandle) {
     enroll::keep_enrolled(app);
 }
 
-/// Whether nib connects itself to the agents on this computer, for Access's switch.
+/// Whether Orden connects itself to the agents on this computer, for Access's switch.
 #[tauri::command]
 pub fn ai_cli_enroll_read(webview: Webview) -> Result<enroll::Standing, String> {
     owner(&webview)?;
     Ok(enroll::standing(webview.app_handle()))
 }
 
-/// The switch turned: nib connected to every agent program, or let go of.
+/// The switch turned: Orden connected to every agent program, or let go of.
 #[tauri::command(async)]
 pub fn ai_cli_enroll_write(webview: Webview, on: bool) -> Result<(), String> {
     owner(&webview)?;
@@ -502,7 +502,7 @@ pub struct Opening {
     /// The account the thread's provider answers with: its home, where it has one.
     #[serde(default)]
     account: Option<String>,
-    /// The nib thread it is for, which the helpers it starts belong to.
+    /// The Orden thread it is for, which the helpers it starts belong to.
     #[serde(default)]
     thread: Option<String>,
     /// The tools the thread is not given, whatever its mode lists: a task done with AI
@@ -599,7 +599,7 @@ pub fn ai_cli_open(
     Ok(())
 }
 
-/// Claude Code's command for a session: its flags, nib's server where the shape has a
+/// Claude Code's command for a session: its flags, Orden's server where the shape has a
 /// mode, and the environment that keeps the reader's `CLAUDE.md` out and hands `nib mcp`
 /// its token.
 fn claude_command(
@@ -1230,7 +1230,7 @@ exec node '{}' {name} \"$@\"
             .iter()
             .find(|one| line_has(one, "\"subtype\":\"init\""))
             .expect("init");
-        // The stand-in says what it was started with: nib alone, its token, the mode's
+        // The stand-in says what it was started with: Orden alone, its token, the mode's
         // tools, the model and the effort.
         for told in [
             "\"mcp_servers\":[{\"name\":\"orden\",\"status\":\"connected\"}]",
@@ -1596,7 +1596,7 @@ exec node '{}' {name} \"$@\"
         host.stop();
     }
 
-    /// The reader's own Claude Code, asked "say ok" with the arguments nib uses and no
+    /// The reader's own Claude Code, asked "say ok" with the arguments Orden uses and no
     /// tool, once as a question and twice in one session - only where it is installed
     /// and already signed in, and never signing anything in or out. Run by hand:
     /// `cargo test real_claude -- --ignored --nocapture`.

@@ -139,7 +139,7 @@ pub fn gpu_choose(app: tauri::AppHandle<crate::Engine>, on: bool) -> Result<(), 
 
 /// What draws the app's pages, as the log said it, for Settings to show under Hardware
 /// acceleration: `None` until the first page has said, which on Windows is never, since
-/// the page's script runs on nib's own Chromium only.
+/// the page's script runs on Orden's own Chromium only.
 #[tauri::command(async)]
 pub fn gpu_line() -> Option<String> {
     seen().map(Seen::said)

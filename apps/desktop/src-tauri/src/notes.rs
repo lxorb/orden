@@ -23,7 +23,7 @@ use crate::paths::{
     write_in_place,
 };
 
-/// The most a note may be for nib to read it: 64 MiB.
+/// The most a note may be for Orden to read it: 64 MiB.
 ///
 /// Not a limit anybody writing notes meets. The account keeps a note to 4 MiB
 /// (`MAX_NOTE_BYTES` in services/sync/src/notes.ts), and the editor stops parsing

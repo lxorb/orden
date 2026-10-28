@@ -3,7 +3,7 @@
 //!
 //! **Answered at once, worked on beside.** `initialize` and `ping` are answered on the
 //! reading thread in microseconds; each `tools/list` and `tools/call` gets a thread of its
-//! own, because a call may wait two minutes for a page and a list may wait for nib to start,
+//! own, because a call may wait two minutes for a page and a list may wait for Orden to start,
 //! and neither may hold up the next line. The one writer (`rpc::Out`) keeps their answers
 //! whole.
 //!
@@ -14,7 +14,7 @@
 //!
 //! **The instructions** are what every client puts before its model: what the marks mean,
 //! the snapshot and its refs, what `needs_approval` asks of an agent, and that this server
-//! is the one to use while nib runs rather than the account connector.
+//! is the one to use while Orden runs rather than the account connector.
 
 use std::collections::HashSet;
 use std::io::Stdout;
@@ -71,7 +71,7 @@ struct Session {
     me: Weak<Session>,
 }
 
-/// Reads stdin to its end, answering as it goes, and says goodbye to nib when the
+/// Reads stdin to its end, answering as it goes, and says goodbye to Orden when the
 /// client has gone.
 pub fn run() -> i32 {
     let session = Arc::new_cyclic(|me| Session {
@@ -224,7 +224,7 @@ impl Session {
             return rpc::failure(id, rpc::BAD_PARAMS, &format!("Unknown tool: {name}"));
         }
         let link = self.link_for(params);
-        // Every call waits for nib to start and the reader to answer the pairing, but the
+        // Every call waits for Orden to start and the reader to answer the pairing, but the
         // one that asks where that stands.
         let seen = link.seen(CALL_WAIT, name != "agent_status");
         if seen.standing != Standing::Paired {

@@ -30,7 +30,7 @@
 //! and because a remote origin matches no capability here (see
 //! capabilities/default.json); and the page's own world is handed nothing at all - no
 //! global, no script, no channel - because every script the runtime registered is taken
-//! back before the page is sent to the site and nib's own run in a world of their own.
+//! back before the page is sent to the site and Orden's own run in a world of their own.
 //! See `web_worlds.rs`.
 
 use std::collections::{HashMap, HashSet};
@@ -623,7 +623,7 @@ pub enum Step {
 ///
 /// Only the web, and never the app: `file:` would read this machine, a scheme the
 /// system knows would hand the page to another application, and the app's own
-/// origins would put nib inside the tab with the site's script beside it. What
+/// origins would put Orden inside the tab with the site's script beside it. What
 /// somebody typed is turned into an address by the window (see
 /// `lib/web-tab/typed.ts`); this is the rule that cannot be talked round,
 /// because it is also what every link inside the page is judged by, and every
@@ -653,7 +653,7 @@ pub(crate) fn allowed(url: &Url) -> bool {
 
 /// Whether a tab may be on `url`: the web, or a page of an extension that is installed -
 /// its options page, opened as a tab, and the pages it opens from there. Only for a tab's
-/// own navigation; another program handing nib an address is held to `allowed` alone.
+/// own navigation; another program handing Orden an address is held to `allowed` alone.
 pub(crate) fn tab_may_open(url: &Url) -> bool {
     allowed(url) || crate::extensions::ours(url)
 }
@@ -861,7 +861,7 @@ fn opening(place: Option<Place>, url: &str) -> String {
 /// thread. The first environment is captured in `listening`, once, as the page is
 /// built.
 ///
-/// The system engine's only: under nib's own Chromium there is nothing to share, because
+/// The system engine's only: under Orden's own Chromium there is nothing to share, because
 /// that runtime is one browser process by construction. See src/engine.rs.
 ///
 /// **One per store.** A space that keeps its web data apart has stores of its own (see
@@ -1110,7 +1110,7 @@ pub(crate) fn warm(_app: &AppHandle) {}
 /// own thread, because that is where a page is built and the only thread the engine's own
 /// objects may be touched from.
 ///
-/// The system engine's only, like `session` itself: under nib's own Chromium there is no
+/// The system engine's only, like `session` itself: under Orden's own Chromium there is no
 /// environment to hand round - that runtime is one browser process by construction - and
 /// `tauri::Wry` is not even a type there. See src/engine.rs.
 #[cfg(all(windows, not(feature = "cef")))]
@@ -1144,7 +1144,7 @@ pub struct Profile {
     /// A private tab's page, which keeps nothing anywhere: the engine's own private mode -
     /// `WebView2`'s `InPrivate` profile on the shared session, a data store of the page's
     /// own that nothing writes to disk on a Mac and on Linux, a profile with no folder on
-    /// nib's own Chromium - in the store every space shares, which it reads nothing of and
+    /// Orden's own Chromium - in the store every space shares, which it reads nothing of and
     /// writes nothing to. See lib/web-tab/private.ts.
     #[serde(default)]
     private: bool,
@@ -1223,8 +1223,8 @@ pub async fn web_open(
     // engine history that is empty.
     tabs.restore(&tab, revived.trail, revived.at);
 
-    // nib's own scripts for the page, and where the page is built: on the blank page, and
-    // sent to the site once the runtime's scripts are off it and these are in nib's own
+    // Orden's own scripts for the page, and where the page is built: on the blank page, and
+    // sent to the site once the runtime's scripts are off it and these are in Orden's own
     // world, on either engine (see `listening` and web_worlds.rs).
     let scripts = crate::page_style::with(opening(revived.place, &url));
     let (built_on, onward) = (
@@ -1261,7 +1261,7 @@ pub async fn web_open(
     // on rather than here: a store the app's own session is not in under the system
     // engine, in the folder web tabs have always used and unchanged to the byte; the
     // browsing profile, which is a different Chromium profile from the interface's,
-    // under nib's own engine. One call, so this file no longer knows which platform
+    // under Orden's own engine. One call, so this file no longer knows which platform
     // or which engine it is. See src/engine.rs.
     // A private page is in memory and gone with the last of them; see `Profile`.
     let builder = crate::engine::web_store(builder, &app, store.as_deref())?.incognito(private);
@@ -1269,14 +1269,14 @@ pub async fn web_open(
     let opening = app.clone();
     let asking = tab.clone();
     let holder = webview.window().label().to_string();
-    // What the page asked for, unnamed: the type is the runtime's, and on nib's
+    // What the page asked for, unnamed: the type is the runtime's, and on Orden's
     // own Chromium it carries two type parameters where the system's engine's
     // carries none. The closure infers it either way; naming it would compile on
     // one engine only. See src/engine.rs and docs/browser.md.
     let builder = builder.on_new_window(move |url: Url, features| {
         // A window the page asks for - `target="_blank"`, `window.open`, a Ctrl+click
         // or the middle button on a link - becomes a tab in this window, which is what
-        // a browser answers it with and the whole of nib being one. It used to leave
+        // a browser answers it with and the whole of Orden being one. It used to leave
         // for the system browser, which made a browser that sent you to another
         // browser on the commonest link on the web.
         //
@@ -1430,7 +1430,7 @@ fn reporting(
                 }
             });
         }
-        // nib's own Chromium asks in nib's world, from a thread of its own; see
+        // Orden's own Chromium asks in nib's world, from a thread of its own; see
         // web_worlds.rs.
         #[cfg(feature = "cef")]
         {
@@ -1461,7 +1461,7 @@ fn reporting(
 ///
 /// The system's engine answers `url()` from the webview at once, and does so for a page
 /// that moved without loading (an address a site's own script wrote), so it is asked.
-/// nib's own Chromium runs a page's events on the thread that `url()` would wait on - a
+/// Orden's own Chromium runs a page's events on the thread that `url()` would wait on - a
 /// question that never comes back, and a window that never answers again: measured on
 /// Windows as the whole app wedged a second after its first web tab, on a fresh profile
 /// every time. There the page's last load says where it is instead.
@@ -1485,7 +1485,7 @@ fn address_now(view: &Webview, seen: &Mutex<String>) -> String {
 /// been made, and on the window's thread, because that is the only thread the engine's
 /// objects may be touched from. See `ask`.
 ///
-/// `onward` is the site and nib's own scripts for it. Listening first and sending
+/// `onward` is the site and Orden's own scripts for it. Listening first and sending
 /// second, both in one turn of the window's thread and in that order: a `WebView2` page
 /// whose permission request finds nothing listening waits for ever, so nothing may reach
 /// the site before the listeners are on; and clearing the page runs a nested message
@@ -1501,7 +1501,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         return;
     };
 
-    // nib's own Chromium clears the page and sends it on from a thread of its own, since
+    // Orden's own Chromium clears the page and sends it on from a thread of its own, since
     // every step waits for the page's agent, which answers on the window's thread.
     #[cfg(feature = "cef")]
     if let Some((address, scripts)) = onward.clone() {
@@ -1556,7 +1556,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         // The site's own mark, followed for as long as the page is open; see
         // web_icons.rs.
         crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
-        // Its `alert`, `confirm` and `prompt`, in nib's own card; see web_dialogs.rs.
+        // Its `alert`, `confirm` and `prompt`, in Orden's own card; see web_dialogs.rs.
         crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
 
@@ -1578,7 +1578,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
 /// file was written, and nothing was said, because nothing had gone wrong yet.
 ///
 /// The app's own page is allowed outright. Pressing Record *is* the answer: a second
-/// bubble inside nib asking whether nib may use the microphone would be the app asking
+/// bubble inside Orden asking whether Orden may use the microphone would be the app asking
 /// the reader to confirm what they just pressed, and the permission that matters - the
 /// one the system keeps - is not this one. Anything else in this webview is refused,
 /// which is what the whole webview did before: a site inside a note is in an iframe
@@ -1996,7 +1996,7 @@ pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> 
 ///
 /// `window.print()` rather than anything of the app's: what a page prints as is the
 /// engine's business, the dialog is the one the reader knows from their browser, and
-/// nib's own printing is about a note.
+/// Orden's own printing is about a note.
 ///
 /// Except on a Mac, where `window.print()` is not the engine's at all: Tauri replaces it
 /// in every webview with a call into the app, `plugin:webview|print`, and a site's
@@ -2025,7 +2025,7 @@ pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
 
 /// The engine's developer tools for the page in the tab: F12 and Ctrl+Shift+I pressed
 /// in the app rather than in the page, which the engine already answers itself. Only
-/// the pages have them; nib's own window does not in a build that ships.
+/// the pages have them; Orden's own window does not in a build that ships.
 #[tauri::command]
 pub fn web_devtools(app: AppHandle, tab: String) -> Result<(), String> {
     found(&app, &tab)?.open_devtools();
@@ -2098,7 +2098,7 @@ async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value>
         .cloned()
 }
 
-/// The two `WebKit` engines put nib's scripts in a world of nib's own as the page is
+/// The two `WebKit` engines put Orden's scripts in a world of Orden's own as the page is
 /// built, and offer no way to run one there afterwards through what wry hands out; see
 /// `web_worlds.rs`. A clip there is read in the page's world.
 #[cfg(all(not(windows), not(feature = "cef")))]
@@ -2312,7 +2312,7 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
     }
 }
 
-/// What nib's own Chromium keeps about a page it speaks to, let go of as the page closes,
+/// What Orden's own Chromium keeps about a page it speaks to, let go of as the page closes,
 /// so a tab opened again under the same label is a new page to it; see
 /// `engine/devtools.rs`.
 #[cfg(feature = "cef")]
@@ -2351,7 +2351,7 @@ pub(crate) fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
 ///   choices live - this device's own storage, per origin - so the crate asks and does
 ///   not remember. See `lib/web-tab/permissions.svelte.ts`.
 //
-// `WebView2`'s own, reached through its controller - so not on nib's own Chromium,
+// `WebView2`'s own, reached through its controller - so not on Orden's own Chromium,
 // where the webview `with_webview` hands out is the runtime's erased one and has no
 // controller to ask. Under that flag the stub below answers instead, the way it does on
 // a Mac, and Chromium's own prompt is what replaces it; see src/engine.rs, and section
@@ -2591,7 +2591,7 @@ mod ask {
 // calls the decision handler with `WKPermissionDecisionGrant` for every origin and
 // every frame, so a site in a web tab was handed the camera and the microphone without
 // a word, and so was a frame inside somebody's note in the window's own page. The only
-// prompt anybody saw was the system's, once, for nib itself. See `request_media_
+// prompt anybody saw was the system's, once, for Orden itself. See `request_media_
 // capture_permission` in wry's `wry_web_view_ui_delegate.rs`.
 //
 // wry has no setting for it and no hook to answer it through, so the webview is given a
@@ -2881,7 +2881,7 @@ mod ask {
     }
 }
 
-// Every build but the two system engines that can be asked: Linux, and nib's own
+// Every build but the two system engines that can be asked: Linux, and Orden's own
 // Chromium, where the erased webview has no controller to reach through. See the two
 // above.
 #[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
@@ -2905,7 +2905,7 @@ mod ask {
 }
 
 // `CapturePreview` is `WebView2`'s, reached through its controller, so this is the
-// same story as `ask` above: not on nib's own Chromium, where the stub answers `None`
+// same story as `ask` above: not on Orden's own Chromium, where the stub answers `None`
 // and the window keeps its own ground under an overlay. Chromium can photograph a page
 // over the DevTools Protocol, which is batch 8's; see docs/browser.md.
 #[cfg(all(windows, not(feature = "cef")))]
@@ -3345,11 +3345,11 @@ mod tests {
         );
     }
 
-    /// nib's own scripts for a page declare nothing and touch nothing of the page's
+    /// Orden's own scripts for a page declare nothing and touch nothing of the page's
     /// world: no global written, deleted or redefined, no prototype patched, none of the
     /// runtime's names. Each is a function called on the spot, so it leaves no name
     /// behind at the top level of whichever world it runs in - the page's own, under
-    /// nib's own Chromium. What a browser asks about - the camera, the
+    /// Orden's own Chromium. What a browser asks about - the camera, the
     /// microphone, the hardware buses, the credential store - is the engine's to raise
     /// and the window's to answer, never a script's to hide; see `ask`.
     #[test]
@@ -3394,7 +3394,7 @@ mod tests {
         );
     }
 
-    /// nib's own Chromium hands a page the same script, asking through its binding.
+    /// Orden's own Chromium hands a page the same script, asking through its binding.
     #[cfg(feature = "cef")]
     #[test]
     fn a_page_on_chromium_is_handed_the_keys_script_and_nothing_else() {

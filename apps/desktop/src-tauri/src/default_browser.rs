@@ -14,17 +14,17 @@
 //!   registration below, written by both installers and put back at launch.
 //! - **A Mac** asks with a dialog of its own when a program asks to open `http` and
 //!   `https`, which the bundle declares; see tauri.macos.conf.json.
-//! - **Linux** asks nobody: the press writes nib's handler and makes it the default
+//! - **Linux** asks nobody: the press writes Orden's handler and makes it the default
 //!   for the two schemes.
 //!
 //! Only the two schemes, everywhere. Not `.htm`, `.html`, `public.html` or `text/html`,
 //! which a browser usually claims as well, because nib opens no file from outside its
 //! spaces and a saved page is one. What that costs on Windows 11: its one-press Set
-//! default button is for programs that claim all four, so nib's page may ask for HTTP
+//! default button is for programs that claim all four, so Orden's page may ask for HTTP
 //! and HTTPS one at a time instead.
 //!
 //! A build that is not the one shipped - a development build, a probe under an
-//! identifier of its own - never registers and never asks. It would list a copy of nib
+//! identifier of its own - never registers and never asks. It would list a copy of Orden
 //! that is about to be deleted, over the one somebody installed.
 
 use tauri::AppHandle;
@@ -33,7 +33,7 @@ use tauri::AppHandle;
 const SHIPPED: &str = "ch.emilvinu.nib";
 
 /// What `http` and `https` point at on Windows: the kind of document a web address is
-/// to nib, which says how to start it.
+/// to Orden, which says how to start it.
 #[cfg_attr(
     not(any(windows, test)),
     allow(dead_code, reason = "only Windows keeps a registry of programs")
@@ -50,7 +50,7 @@ const PROG_ID: &str = "NibURL";
 )]
 const OLD_NAMES: [&str; 2] = ["Nib", "nibeditor"];
 
-/// What Default apps says about nib, beside its name.
+/// What Default apps says about Orden, beside its name.
 #[cfg_attr(
     not(any(windows, test)),
     allow(dead_code, reason = "only Windows keeps a registry of programs")
@@ -64,7 +64,7 @@ pub fn default_browser(app: AppHandle) -> bool {
     platform::is_default(&app)
 }
 
-/// Asks the system to make nib the default browser, the way that system asks; see the
+/// Asks the system to make Orden the default browser, the way that system asks; see the
 /// top of this file. Answers once the question is up, not once it is answered: the
 /// window asks `default_browser` again when it has the keyboard back.
 #[tauri::command(async)]
@@ -76,7 +76,7 @@ pub fn make_default_browser(app: AppHandle) -> Result<(), String> {
     platform::make_default(&app)
 }
 
-/// Puts nib back among the browsers when the registration is missing or names a copy
+/// Puts Orden back among the browsers when the registration is missing or names a copy
 /// that is gone: a portable copy moved, Scoop's new version in a new folder, an MSI
 /// installed by another person on this machine. And takes away the ones under the old
 /// names, which a copy no installer ran over (Scoop's, a portable one) still has. On a
@@ -116,7 +116,7 @@ struct Value {
     data: String,
 }
 
-/// Everything Windows reads to list nib among the browsers, for the copy at `exe`,
+/// Everything Windows reads to list Orden among the browsers, for the copy at `exe`,
 /// under the product's name `app`.
 ///
 /// Chrome's shape, read off an installed Chrome: a client under `StartMenuInternet`
@@ -257,7 +257,7 @@ fn kept(
         .any(|dir| there(&dir.join("applications").join(entry.trim())))
 }
 
-/// Whether a desktop entry the system named is nib's.
+/// Whether a desktop entry the system named is Orden's.
 #[cfg_attr(
     not(any(target_os = "linux", test)),
     allow(dead_code, reason = "only Linux names a program by its desktop entry")
@@ -443,7 +443,7 @@ mod platform {
         })
     }
 
-    /// Asks for both schemes, which the system turns into its one question: use nib, or
+    /// Asks for both schemes, which the system turns into its one question: use Orden, or
     /// keep the browser there is. Only from an app bundle, which is what the system
     /// files a handler under; a bare binary has nothing to name.
     pub fn make_default(_app: &AppHandle) -> Result<(), String> {
@@ -988,7 +988,7 @@ mod tests {
 
     /// The shell answers which program opens a scheme: the one a scheme of the test's own
     /// names, and nothing for a scheme nothing registered. Asked of a scheme the test
-    /// writes rather than of `https`, whose answer is the machine's - nib, on a machine
+    /// writes rather than of `https`, whose answer is the machine's - Orden, on a machine
     /// where somebody made it the default browser.
     #[cfg(windows)]
     #[test]

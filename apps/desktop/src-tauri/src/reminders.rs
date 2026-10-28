@@ -1,11 +1,11 @@
-//! Reminders that ring with nib closed (docs/tasks.md 5.10): the plan the page makes,
+//! Reminders that ring with Orden closed (docs/tasks.md 5.10): the plan the page makes,
 //! handed to the system's own scheduler, and the presses on what rings handed back.
 //!
 //! **The plan is the page's.** The window reads every space's tasks and works out the
 //! next 64 moments (src/lib/reminders); this module only makes the system hold them:
 //! scheduled toasts on Windows (toasts.rs), notification requests on a Mac (macos.rs).
 //! Linux has no scheduler a notification can be handed to, so there the answer is no,
-//! and the page rings them itself while nib runs, in the tray where it keeps running.
+//! and the page rings them itself while Orden runs, in the tray where it keeps running.
 //!
 //! **A press comes back as a link.** Done and a press on the notification are
 //! `nib://reminder` links (link.rs) carrying a nonce made here, kept in `reminders.json`
@@ -385,7 +385,7 @@ pub fn answer_link(app: &AppHandle, url: &str) -> bool {
 }
 
 /// The window has answered what a quiet launch was for (`quiet_launch`): with its window
-/// still out of sight and nothing keeping nib in the tray, the app goes again, the way
+/// still out of sight and nothing keeping Orden in the tray, the app goes again, the way
 /// Quit in the tray ends it. On a thread of the runtime's, as a quit writes down where
 /// each window was.
 #[tauri::command(async)]

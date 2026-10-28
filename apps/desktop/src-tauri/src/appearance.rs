@@ -30,7 +30,7 @@ fn ours(app: &AppHandle) -> Vec<Window> {
         .collect()
 }
 
-/// A window built with nib's own frame, the way the first one is in tauri.conf.json.
+/// A window built with Orden's own frame, the way the first one is in tauri.conf.json.
 ///
 /// Everywhere but a Mac that is no frame at all, and the bar draws the three buttons.
 /// A Mac keeps its own traffic lights over the bar instead, the way VS Code and
@@ -52,9 +52,9 @@ pub fn own_frame<R: tauri::Runtime, M: Manager<R>>(
 }
 
 /// Who draws the frame. `system` asks for the platform's titlebar and border; false is
-/// nib's own, which is what every window starts as.
+/// Orden's own, which is what every window starts as.
 ///
-/// A Mac never loses its frame: nib's own is the system's titlebar made transparent
+/// A Mac never loses its frame: Orden's own is the system's titlebar made transparent
 /// under the bar, with the traffic lights left where they are, and the system's is that
 /// titlebar drawn above it.
 #[tauri::command]
@@ -72,7 +72,7 @@ pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
 
         changed.map_err(|error| format!("the frame could not be changed: {error}"))?;
 
-        // Nib's own frame back means a new top edge strip from Tauri, made as if the
+        // Orden's own frame back means a new top edge strip from Tauri, made as if the
         // window were in its own size; see top_edge.rs.
         #[cfg(not(target_os = "macos"))]
         crate::top_edge::mind(&window);

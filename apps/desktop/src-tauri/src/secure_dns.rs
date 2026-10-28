@@ -11,7 +11,7 @@
 //!
 //! Kept in the app's own settings folder (`dns.json`) and told to the engine as the
 //! app starts and the moment it changes: Chromium reads both preferences live. Only on
-//! nib's own Chromium; elsewhere Settings does not offer it.
+//! Orden's own Chromium; elsewhere Settings does not offer it.
 
 use std::path::Path;
 
@@ -85,7 +85,7 @@ fn kept(config: &Path) -> Dns {
         .unwrap_or_default()
 }
 
-/// The DNS Settings shows, or `None` where the engine is not nib's own Chromium and
+/// The DNS Settings shows, or `None` where the engine is not Orden's own Chromium and
 /// cannot be told.
 #[tauri::command(async)]
 pub fn dns_chosen(app: tauri::AppHandle<crate::Engine>) -> Result<Option<Dns>, String> {

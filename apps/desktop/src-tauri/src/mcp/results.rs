@@ -216,7 +216,7 @@ pub fn rendered(tool: &str, args: &Value, outcome: &Outcome) -> Value {
     })
 }
 
-/// A result that is only a sentence of nib's own: the state of the pairing, or why a
+/// A result that is only a sentence of Orden's own: the state of the pairing, or why a
 /// call could not be made at all.
 pub fn said(sentence: &str, error: bool) -> Value {
     json!({ "content": [text(sentence)], "isError": error })

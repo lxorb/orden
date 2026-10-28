@@ -1,4 +1,4 @@
-//! Who may drive nib, and how far: an agent is a grant (docs/agent-native.md 9.1).
+//! Who may drive Orden, and how far: an agent is a grant (docs/agent-native.md 9.1).
 //!
 //! A grant is made the first time a client pairs through `nib mcp`, or by hand in
 //! Settings > Agents for a client somewhere else, and it is kept in `<config>/agents.json`
@@ -6,7 +6,7 @@
 //! settings pane shows: the scopes, the spaces, the rules per site, the mode, the
 //! questions it always asks and its limits.
 //!
-//! **The token is never kept.** A client is handed 32 random bytes as hex, once, and nib
+//! **The token is never kept.** A client is handed 32 random bytes as hex, once, and Orden
 //! keeps their SHA-256. A copy of the file is then a list of what each agent may do and
 //! not a way to be one. A token that arrives is hashed and compared with every grant's
 //! hash in constant time, all of them, so how long the answer takes says nothing about
@@ -229,7 +229,7 @@ impl Grant {
     /// A grant for one of the reader's own clients, paired on this machine, with Emil's
     /// defaults (9.1): everything but scripts, the reader's storage and settings; every
     /// space; unsupervised; every question on. The terminal and helpers are in since
-    /// 2026-10-12, so an agent outside nib does what the AI panel's own agent does.
+    /// 2026-10-12, so an agent outside Orden does what the AI panel's own agent does.
     pub fn own(id: String, client: &str) -> Self {
         Grant {
             id,
@@ -843,7 +843,7 @@ mod tests {
         assert!(!own.holds(Scope::BrowserStorage));
         assert!(!own.holds(Scope::Settings));
         // What the AI panel's own agent has, terminal and all (Emil, 2026-10-12: an agent
-        // outside nib does "exactly the same thing as an agent that I am running IN nib").
+        // outside Orden does "exactly the same thing as an agent that I am running IN Orden").
         assert!(own.holds(Scope::Terminal));
         assert!(own.holds(Scope::ChatsRead) && own.holds(Scope::ChatsWrite));
         assert!(own.holds(Scope::Agents));

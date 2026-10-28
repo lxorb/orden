@@ -13,17 +13,17 @@
 //!
 //! **The two profiles.** Chromium serves many profiles from one browser process, and an
 //! extension is installed into a profile - so two profiles is what keeps an extension a
-//! reader installed for the web out of nib's own interface. It is not a precaution: with
+//! reader installed for the web out of Orden's own interface. It is not a precaution: with
 //! one profile the spike's test extension read the app's own document, in a screenshot,
 //! on the first try (docs/browser.md section 9). The browsing profile is the engine's
 //! *primary* one, which is where an extension installed by the command line or by
-//! Chromium's policies lands, and nib's interface is the named one beside it. A space
+//! Chromium's policies lands, and Orden's interface is the named one beside it. A space
 //! that keeps its web data apart has a profile of its own too.
 //!
 //! ```text
 //! <config>/chromium/                Chromium's user data directory, one lock on it
 //! <config>/chromium/Default         the browsing profile. Cookies, logins, extensions
-//! <config>/chromium/app             nib's own interface. No extensions, nothing granted
+//! <config>/chromium/app             Orden's own interface. No extensions, nothing granted
 //! <config>/chromium/store-<name>    a space's or a site's own store; see web_stores.rs
 //! ```
 //!
@@ -44,7 +44,7 @@ use crate::paths::{config_dir, made};
 #[cfg(not(feature = "cef"))]
 const ROOT: &str = "web";
 
-/// And nib's own Chromium's user data directory, a folder of its own beside it: two
+/// And Orden's own Chromium's user data directory, a folder of its own beside it: two
 /// engines on one machine, each with its own profiles. A profile is a direct child of
 /// it, which is the only shape CEF accepts. `cef_root` names the same place before Tauri has started.
 #[cfg(feature = "cef")]
@@ -54,7 +54,7 @@ const ROOT: &str = "chromium";
 #[cfg(feature = "cef")]
 const STORE_PROFILE: &str = "store-";
 
-/// The profile nib's own interface is in, as a folder name.
+/// The profile Orden's own interface is in, as a folder name.
 ///
 /// Only the `cef` feature has profiles; the name is here rather than beside its one
 /// caller so that the layout in this file's comment is the layout in this file.
@@ -88,7 +88,7 @@ const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
 /// mouse event that same browser process receives. That is sound in a browser, which
 /// is one process under one window. Here it is two or more: the app's page and the web
 /// pages keep separate profiles, so separate browser processes, and every thread with a
-/// window in nib's window shares one input queue and so one pointer count. Type an
+/// window in Orden's window shares one input queue and so one pointer count. Type an
 /// address with the pointer resting on the page, and the app's process hides the pointer
 /// over the whole window; moving it about the page reaches only the page's process,
 /// which never hid it, so it stays gone until it crosses into the app's own page. The
@@ -96,7 +96,7 @@ const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
 /// `scripts/web-cursor-probe.py`.
 ///
 /// The engine offers no way to show a pointer another process hid, so the hiding goes:
-/// the pointer stays where it was while somebody types, as it always had in nib until the
+/// the pointer stays where it was while somebody types, as it always had in Orden until the
 /// runtime started hiding it. One `--disable-features`, because Chromium reads only the
 /// last of a repeated switch. Every webview on one user data folder must be started with
 /// the same switches, which is why there is one list and not one per caller.
@@ -130,8 +130,8 @@ pub(crate) fn browser_args(_app: &AppHandle) -> String {
 }
 
 /// Chromium's own swipe between pages, which both of Windows' engines would run beside
-/// nib's: the feature that is its touchpad half, and the switch, with its value, that is
-/// the whole of it. Written into [`BROWSER_ARGS`] for `WebView2` and handed to nib's own
+/// Orden's: the feature that is its touchpad half, and the switch, with its value, that is
+/// the whole of it. Written into [`BROWSER_ARGS`] for `WebView2` and handed to Orden's own
 /// Chromium as it starts (`cef_runtime`); a test holds
 /// the first to these names.
 #[cfg_attr(not(any(test, feature = "cef")), allow(dead_code))]
@@ -144,7 +144,7 @@ pub(crate) const ENGINE_SWIPE: (&str, &str, &str) = (
 /// The engine Linux runs on, configured before anything of it starts: CEF, with
 /// Chromium's user data directory in the app's own settings folder (see this file's
 /// comment), `nib://` links heard by the browser process when a second launch carries
-/// one, and the engine's own swipe off so only nib's runs ([`ENGINE_SWIPE`]).
+/// one, and the engine's own swipe off so only Orden's runs ([`ENGINE_SWIPE`]).
 ///
 /// What a run can ask for through its environment, for the drives and for somebody
 /// chasing a crash, none of it read by a launch that sets nothing:
@@ -188,7 +188,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
             Some(crate::page_scale::SWITCH.1),
         )])
         .command_line_args(switches(&std::env::var("NIB_CEF_ARGS").unwrap_or_default()))
-        // A web tab's developer tools in the build that ships, as in a browser; nib's own
+        // A web tab's developer tools in the build that ships, as in a browser; Orden's own
         // window turns its own off outside a development build (`ui_window`).
         .devtools(DevToolsPolicy::Allowed)
         .remote_debugging(debugging);
@@ -270,7 +270,7 @@ pub(crate) fn root(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-/// Where nib's own interface keeps what a webview keeps.
+/// Where Orden's own interface keeps what a webview keeps.
 ///
 /// A profile of its own, so an extension installed for the web cannot reach the
 /// app's own document: an extension is installed into a profile, and this is not
@@ -286,7 +286,7 @@ pub(crate) fn app_profile(app: &AppHandle) -> Result<PathBuf, String> {
 ///
 /// **This is the seam.** One call for every engine, so `web_tabs.rs` says where a
 /// page's storage goes once rather than once per platform per engine, and so the
-/// answer for nib's own Chromium is in the module that knows about engines.
+/// answer for Orden's own Chromium is in the module that knows about engines.
 ///
 /// `store` is the store the tab was asked to be in, already checked by
 /// `web_stores::named`: `None` for the one every space shares, a name for a space or a
@@ -296,9 +296,9 @@ pub(crate) fn app_profile(app: &AppHandle) -> Result<PathBuf, String> {
 ///   as a user data folder on Windows and Linux and as a data store identifier on a
 ///   Mac, unchanged to the byte from what shipped. For a store of its own, a folder of
 ///   its own under `web-stores`, or sixteen bytes of its own on a Mac.
-/// - nib's own Chromium: nothing, deliberately, and for every store. A web tab is in
+/// - Orden's own Chromium: nothing, deliberately, and for every store. A web tab is in
 ///   the engine's primary profile, which is where an extension installed by the
-///   command line or by policy lands, and nib's own interface is the named profile
+///   command line or by policy lands, and Orden's own interface is the named profile
 ///   beside it; see this file's comment. A space that asks for a store of its own
 ///   shares that one there, until the runtime can be asked for a profile per tab.
 #[cfg(all(desktop, not(feature = "cef")))]
@@ -342,7 +342,7 @@ pub(crate) fn web_store<R: Runtime>(
     Ok(builder)
 }
 
-/// Where a web tab's site data goes on nib's own Chromium: the engine's primary
+/// Where a web tab's site data goes on Orden's own Chromium: the engine's primary
 /// profile for the store every space shares - asked for as the user data directory
 /// itself, which is how the runtime is told "the primary one" rather than a profile named
 /// after it - and a profile of its own beside it for a store of its own. See above.
@@ -355,7 +355,7 @@ pub(crate) fn web_store<R: Runtime>(
     Ok(builder.data_directory(profile(app, store)?))
 }
 
-/// The folder a store's profile is on nib's own Chromium: the user data directory itself
+/// The folder a store's profile is on Orden's own Chromium: the user data directory itself
 /// for the store every space shares, which is how the engine is told "the primary
 /// profile", and a profile of its own beside it for a store of its own. An agent's page
 /// is put in a store's profile by this folder too (agents/engines/cef.rs).
@@ -415,14 +415,14 @@ pub(crate) fn take_ui_window(
     Some(windows.remove(0))
 }
 
-/// The builder of nib's own window, on the engine this build runs on: everything the
+/// The builder of Orden's own window, on the engine this build runs on: everything the
 /// window needs from the engine, and nothing about where it goes or when it shows,
 /// which is the same on both and is `ready`'s in lib.rs.
 ///
-/// - The system's engine: developer tools in a development build only, as nib's own
+/// - The system's engine: developer tools in a development build only, as Orden's own
 ///   window always had, and the switches every page of this app starts with; see
 ///   [`BROWSER_ARGS`].
-/// - nib's own Chromium: the interface in a profile of its own, so an extension
+/// - Orden's own Chromium: the interface in a profile of its own, so an extension
 ///   installed for the web cannot reach the app's own document; see this file's comment.
 pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     manager: &'a M,
@@ -619,7 +619,7 @@ mod tests {
         assert_ne!(APP_PROFILE, ROOT, "the interface is not the whole of it");
     }
 
-    /// A store of its own is a profile beside nib's interface and never the interface:
+    /// A store of its own is a profile beside Orden's interface and never the interface:
     /// a store is named `space_` or `site_` something, and the interface is `app`.
     #[cfg(feature = "cef")]
     #[test]

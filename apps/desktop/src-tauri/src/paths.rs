@@ -418,7 +418,7 @@ pub(crate) fn folder_named(said: Option<&OsStr>) -> Option<PathBuf> {
 }
 
 /// The folder a new install keeps its spaces in, inside the app's own data. Emil,
-/// 2026-10-17 (#376), in German: the default nib sync folder belongs in app data rather
+/// 2026-10-17 (#376), in German: the default Orden sync folder belongs in app data rather
 /// than in Documents - it is nothing a person should reach directly, but through Orden.
 #[cfg(desktop)]
 pub(crate) const SPACES: &str = "Spaces";

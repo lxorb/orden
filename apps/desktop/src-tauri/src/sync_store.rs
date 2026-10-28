@@ -1,5 +1,5 @@
 //! The device's half of sync v2: one SQLite file per account, holding what the account
-//! has confirmed of every document, what this device has not sent yet, what nib last
+//! has confirmed of every document, what this device has not sent yet, what Orden last
 //! wrote to each file, the tree ops waiting to go up and the notes held for a question.
 //! docs/sync-v2.md section 9.2 is the schema; this module is the storage and nothing of
 //! the sync itself, which is the engine's in `src/lib/sync2`.

@@ -8,11 +8,11 @@
 //! its window is left and restoring it as the window comes back; the page keeps its own
 //! focused element meanwhile, in the renderer.
 //!
-//! **Why nib lost it.** A window here holds several webviews: the app's own page and one
+//! **Why Orden lost it.** A window here holds several webviews: the app's own page and one
 //! per web tab. On Windows every activation hands the keyboard to the window itself, and
 //! wry answers that by moving it into the window's *own* page, always - and does the same
 //! at the start of every drag of the window. So a web tab's page never had the keyboard
-//! back after Alt+Tab, whatever it held before. nib's own Chromium is worse off: nothing
+//! back after Alt+Tab, whatever it held before. Orden's own Chromium is worse off: nothing
 //! there hands the window's keyboard to any page at all.
 //!
 //! **One record per window**: which of its web pages has the keyboard, or none, which is
@@ -20,7 +20,7 @@
 //! engine says so, or it is found there as the app's page lets go of it, or as the window
 //! is left), or a person takes it into the app's page, which the page says itself
 //! (`keyboard_here`, from lib/keyboard-home.ts). Never by the window's own activation, and
-//! never by nib handing a browser chord back to its own page. The element inside a page is
+//! never by Orden handing a browser chord back to its own page. The element inside a page is
 //! the engine's to keep - the site's input with its caret and selection, the note, the
 //! terminal - and the app's page keeps the other half of this record for its own elements.
 //!
@@ -294,7 +294,7 @@ pub fn keyboard_went(webview: Webview) -> bool {
 
 /// One of the app's layers closed with the keyboard nowhere. True when a page has it back
 /// or will as it comes into sight; false leaves it to the app's own page. Never while
-/// another program is in front: nib only ever gives the keyboard back to itself.
+/// another program is in front: Orden only ever gives the keyboard back to itself.
 ///
 /// With a tab, that tab's page is where it goes: a web tab's find bar closing, which was
 /// opened from the page and gives the page its keyboard back, as Chrome's does.
@@ -595,7 +595,7 @@ mod native {
     }
 }
 
-/// The same on nib's own Chromium on Windows, through each browser's host, which is CEF's
+/// The same on Orden's own Chromium on Windows, through each browser's host, which is CEF's
 /// own way to give a browser the keyboard. There the app's own page is a browser like any
 /// other and nothing hands it the keyboard as the window comes back, so this does.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]

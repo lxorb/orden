@@ -4,14 +4,14 @@
 //! (-10000, -10000) in the window's own coordinates: a child is clipped to its parent, so
 //! no pixel of it reaches a screen, and to the engine it is a visible page at a desktop
 //! size, which paints, runs its timers at full speed and takes input. The spike measured
-//! it (section 3); `scripts/agent-tab-probe.py` keeps measuring it. On nib's own Chromium
+//! it (section 3); `scripts/agent-tab-probe.py` keeps measuring it. On Orden's own Chromium
 //! it is better still: a browser with no window at all (`engines/cef.rs`), and everything
 //! below but how it is built is the same.
 //!
 //! **Where they live.** In the reader's first window, and not in a window of their own
 //! that nobody sees. Measured both ways: a page in a window that is hidden keeps running
 //! just as a page in a minimised one does, so the choice is not about the engine. It is
-//! about the app's own life: nib ends with its last window, a quit asks every window
+//! about the app's own life: Orden ends with its last window, a quit asks every window
 //! about its unsaved notes, and a window of the agents' own would be a window that never
 //! answers and an app that never ends. The design's answer to "the window closed while an
 //! agent works" is the window hiding into the tray instead (6.1, open question 6), which
@@ -423,7 +423,7 @@ fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String
     Ok(())
 }
 
-/// Builds a tab's page on nib's own Chromium: a browser with no window.
+/// Builds a tab's page on Orden's own Chromium: a browser with no window.
 #[cfg(feature = "cef")]
 fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     super::engines::cef::build(
@@ -740,7 +740,7 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// On nib's own Chromium an agent's page has no window to put in the pane: it was never
+/// On Orden's own Chromium an agent's page has no window to put in the pane: it was never
 /// a view, only pictures (`engines/cef.rs`). So Show opens its address as the reader's
 /// tab, which loads it again (the window builds it the ordinary way when this answers
 /// no page), and the agent's own tab closes; the agent acts on in the reader's tab by

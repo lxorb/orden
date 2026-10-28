@@ -1,4 +1,4 @@
-//! An agent's own tab on nib's own Chromium: a browser with no window at all
+//! An agent's own tab on Orden's own Chromium: a browser with no window at all
 //! (docs/agent-native.md 12).
 //!
 //! **Windowless, not out of sight.** On `WebView2` an agent's page is a window clipped to
@@ -121,7 +121,7 @@ impl Page {
     }
 }
 
-/// An agent's page on nib's own Chromium, as the verbs hold it.
+/// An agent's page on Orden's own Chromium, as the verbs hold it.
 #[derive(Clone)]
 pub struct Windowless {
     label: String,

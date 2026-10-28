@@ -17,7 +17,7 @@
 //!
 //! On `WebView2` all of it is the engine's own events on the page's own engine, set on
 //! the window's thread on a page that is still `about:blank`, so none of it can be too
-//! late. On nib's own Chromium it is the handlers of the agent's own browser, which has
+//! late. On Orden's own Chromium it is the handlers of the agent's own browser, which has
 //! no window to put anything in front of anybody anyway (`engines/cef.rs`); what is kept
 //! here - the dialogs held, the downloads, where a download goes - is both engines'.
 
@@ -728,7 +728,7 @@ fn sign_ins(core: &ICoreWebView2, owner: &Owner) {
     }
 }
 
-/// A line of nib's own in the page's console, which is where the agent reads what the
+/// A line of Orden's own in the page's console, which is where the agent reads what the
 /// page tried.
 pub(super) fn say(label: &str, level: &str, text: String) {
     cdp::heard(label)

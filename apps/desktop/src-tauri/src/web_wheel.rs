@@ -16,8 +16,8 @@
 //!
 //! Chrome never meets it. Its legacy window is on the thread that holds the keyboard, and
 //! Windows hands a wheel over it to that thread's focus - the browser's own window - which
-//! handles it once: one event a notch, the notch Chrome is known for. A page in nib is a
-//! window of another process inside nib's window, on a thread that holds the keyboard only
+//! handles it once: one event a notch, the notch Chrome is known for. A page in Orden is a
+//! window of another process inside Orden's window, on a thread that holds the keyboard only
 //! after a click in the page. Anywhere else - the address field, the sidebar, a note, a
 //! tab just switched to - the wheel is delivered to the window under the pointer, the
 //! legacy window, and the page scrolls double. That much is read off the two ends rather
@@ -27,7 +27,7 @@
 //!
 //! **What this does.** It sends the wheel where Chrome's goes. A low-level mouse hook
 //! sees each wheel before Windows delivers it; one over a legacy window inside one of
-//! nib's own windows is taken and posted to that legacy window's parent, the page's own
+//! Orden's own windows is taken and posted to that legacy window's parent, the page's own
 //! window, with the delta, the point and the keys held exactly as Windows would have
 //! written them. The engine handles it there once, reroutes nothing, and scrolls one
 //! notch with its own animation. Every other wheel, and every other mouse message, goes
@@ -265,7 +265,7 @@ mod hook {
         String::from_utf16_lossy(&name[..usize::try_from(length).unwrap_or(0)])
     }
 
-    /// Whether the window a window sits in is one of this process's own: a page in nib,
+    /// Whether the window a window sits in is one of this process's own: a page in Orden,
     /// never a browser or anything else on the machine that also runs Chromium.
     fn ours(window: HWND) -> bool {
         let mut owner = 0u32;

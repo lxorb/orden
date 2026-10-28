@@ -14,7 +14,7 @@
 //! in the Linux kernel and are not on that list, so a WSL tab closes without asking.
 //!
 //! **The folder** is what brings a terminal back where it was after a restart. The shells
-//! nib starts say it themselves (see shells.rs); on Linux and on a Mac the kernel is asked
+//! Orden starts say it themselves (see shells.rs); on Linux and on a Mac the kernel is asked
 //! as well, for the shells that do not - zsh and fish, a Mac's own among them.
 
 use portable_pty::MasterPty;

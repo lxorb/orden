@@ -10,7 +10,7 @@
 //! catch up with once a launch and whenever the watcher says it lost track. `space_unwatch`
 //! stops. `file_identity` answers one path's identity.
 //!
-//! Everything is reported, nib's own writes included: the engine knows what it wrote
+//! Everything is reported, Orden's own writes included: the engine knows what it wrote
 //! (the store's `written_hash`), and a watcher that guessed which writes were whose would
 //! guess wrong the one time two programs wrote at once.
 //!

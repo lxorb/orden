@@ -1,4 +1,4 @@
-//! Codex on its app-server: one `codex app-server` per window, a Codex thread per nib
+//! Codex on its app-server: one `codex app-server` per window, a Codex thread per Orden
 //! thread, over JSON-RPC on stdio (docs/ai-sidebar.md 5.2; the protocol read from
 //! `codex app-server generate-ts`, 0.160.0). JSON lines without the `jsonrpc` field, as
 //! the app-server writes them.
@@ -9,9 +9,9 @@
 //! with its id, its thread and every setting that keeps Codex inside the answer
 //! (`args::codex_thread`). A request the app-server makes of its client is answered here
 //! too, and always no: an approval declined, an elicitation declined, a token refresh
-//! refused, since nib reads no token and asks its own questions at its own verbs.
+//! refused, since Orden reads no token and asks its own questions at its own verbs.
 //!
-//! **What goes to the window**: every notification, routed to the nib thread whose Codex
+//! **What goes to the window**: every notification, routed to the Orden thread whose Codex
 //! thread it names, and one with no thread (the plan's limits, a warning) to all of them;
 //! the answer to anything the window said, as a `Reply`; and the end. The window reads
 //! the events in `lib/ai/local/codex.ts`.
@@ -30,10 +30,10 @@ use super::args::{codex_thread, with_thread, Effort, Mode, Tool};
 use super::run::{self, Ended, Heard, Running};
 use super::say::{GoalSay, Image, Message, Say};
 
-/// Where a nib thread's words go.
+/// Where an Orden thread's words go.
 pub type Output = Arc<dyn Fn(Message) + Send + Sync>;
 
-/// One nib thread on the app-server.
+/// One Orden thread on the app-server.
 struct Route {
     output: Output,
     /// Its Codex thread, once `thread/start` answered.
@@ -53,9 +53,9 @@ struct Route {
 enum Waiter {
     /// `initialize`, before which nothing else is sent.
     Init,
-    /// `thread/start` or `thread/fork`, for this nib thread.
+    /// `thread/start` or `thread/fork`, for this Orden thread.
     Started(String),
-    /// The window of this nib thread, as a `Reply` to this.
+    /// The window of this Orden thread, as a `Reply` to this.
     Reply(String, &'static str),
     /// The crate itself.
     Crate(mpsc::Sender<Result<Value, String>>),
@@ -71,19 +71,19 @@ struct State {
     /// Requests written before it was.
     backlog: Vec<String>,
     waiting: HashMap<u64, Waiter>,
-    /// By nib thread.
+    /// By Orden thread.
     routes: HashMap<String, Route>,
-    /// The nib thread of each Codex thread.
+    /// The Orden thread of each Codex thread.
     threads: HashMap<String, String>,
 }
 
-/// Where a nib thread comes from: a copy of another's Codex thread, and the nib thread
+/// Where an Orden thread comes from: a copy of another's Codex thread, and the Orden thread
 /// whose `nib mcp` it is, for the helpers it starts.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct From<'a> {
     pub fork_of: Option<&'a str>,
     pub thread: Option<&'a str>,
-    /// The tools the nib thread is not given, whatever its mode lists.
+    /// The tools the Orden thread is not given, whatever its mode lists.
     pub without: &'a [String],
 }
 
@@ -175,8 +175,8 @@ impl Host {
         self.running.stop();
     }
 
-    /// A nib thread, on a Codex thread of its own or, with `from.fork_of`, on a copy of
-    /// the Codex thread another nib thread is on.
+    /// An Orden thread, on a Codex thread of its own or, with `from.fork_of`, on a copy of
+    /// the Codex thread another Orden thread is on.
     pub fn open(
         &self,
         id: &str,
@@ -241,7 +241,7 @@ impl Host {
         say_now(&mut state, &self.running, id, say)
     }
 
-    /// A nib thread let go of: its Codex thread is unsubscribed from, and the window
+    /// An Orden thread let go of: its Codex thread is unsubscribed from, and the window
     /// hears the end. The app-server stays for the window's other threads, and ends on
     /// its own once nobody has said anything for its idle time.
     pub fn close(&self, id: &str) {
@@ -447,13 +447,13 @@ fn heard_line(state: &Mutex<State>, running: &Running, line: &str) {
     }
 }
 
-/// The nib thread a message's `threadId` names.
+/// The Orden thread a message's `threadId` names.
 fn nib_of(state: &State, params: &Value) -> Option<String> {
     let thread = params["threadId"].as_str()?;
     state.threads.get(thread).cloned()
 }
 
-/// A line, to the nib thread it is about, or to all of them for one about none.
+/// A line, to the Orden thread it is about, or to all of them for one about none.
 fn route_line(state: &State, params: &Value, line: &str) {
     let message = || Message::Line {
         line: line.to_owned(),
@@ -509,7 +509,7 @@ fn answered(state: &mut State, running: &Running, id: u64, message: &Value) {
     }
 }
 
-/// A nib thread's Codex thread started, or did not.
+/// An Orden thread's Codex thread started, or did not.
 fn started(state: &mut State, running: &Running, nib: &str, result: Value, error: Option<String>) {
     let thread = result["thread"]["id"].as_str().map(str::to_owned);
     let Some(thread) = thread.filter(|_| error.is_none()) else {

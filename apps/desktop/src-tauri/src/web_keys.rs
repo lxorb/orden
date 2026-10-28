@@ -9,8 +9,8 @@
 //! Chrome's rule is the one kept here. A handful of chords are the browser's and a page
 //! is never offered them: a new tab, closing one, going round them, moving one along,
 //! reopening the last, a new window - and F6, which a hand in a browser presses to get
-//! out of the page to the address field. And nib's own Alt and a digit, the tabs by
-//! number, which Chrome keeps from a page on Linux, and Shift+F11, the tab filling nib's
+//! out of the page to the address field. And Orden's own Alt and a digit, the tabs by
+//! number, which Chrome keeps from a page on Linux, and Shift+F11, the tab filling Orden's
 //! window, which no browser binds and so no site is used to having. And F11, full screen,
 //! which is Chrome's own as well - except while a video in the page holds the screen,
 //! when F11 gives it back, which `web_page.rs` hears first. Everything else is
@@ -24,9 +24,9 @@
 //! asks the page first: Google Docs, Notion and VS Code on the web have a find of their
 //! own on Ctrl+F, and many a site its own Ctrl+L. The browser's answer comes only when
 //! the page let the key go by. So the page has Ctrl+F, Ctrl+G, F3, Ctrl+L and Alt+D, and
-//! a line of script in it asks for nib's answer when nothing in the page took them; see
+//! a line of script in it asks for Orden's answer when nothing in the page took them; see
 //! `web_opens.rs`. Ctrl+D too, Chrome's bookmark and nib's Deselect tab: Sheets fills
-//! down with it and Figma duplicates. And Ctrl+Space and Ctrl+Shift+Space, nib's space
+//! down with it and Figma duplicates. And Ctrl+Space and Ctrl+Shift+Space, Orden's space
 //! switcher, which Sheets selects a column and everything with.
 //!
 //! **How they get out.** `WebView2` tells the host about every key pressed with Ctrl or
@@ -47,7 +47,7 @@
 //! is the engine's, raised in this process, and nothing in the page can raise it.
 //!
 //! `WebView2`'s alone. `WebKitGTK` has no such event reachable through what wry hands
-//! out, and on nib's own Chromium the webview has no controller to ask; on those a page
+//! out, and on Orden's own Chromium the webview has no controller to ask; on those a page
 //! keeps every key, as it did.
 //!
 //! **A Mac needs none of this.** There the chords are rows of the menu bar across the
@@ -141,7 +141,7 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
         return Some(pressed("F6", "F6"));
     }
 
-    // F11, full screen, and Shift+F11, the tab filling nib's window: F11 is Chrome's own,
+    // F11, full screen, and Shift+F11, the tab filling Orden's window: F11 is Chrome's own,
     // the second is bound by no browser, and neither is a character, so a page loses
     // nothing a site relies on. A page whose video holds the screen is the exception, and
     // the caller asks about it; see `listen`.
@@ -149,7 +149,7 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
         return Some(pressed("F11", "F11"));
     }
 
-    // Alt and a digit, nib's own way to the tabs by number, and Chrome's and Firefox's on
+    // Alt and a digit, Orden's own way to the tabs by number, and Chrome's and Firefox's on
     // Linux. Alt alone is not a character on Windows - AltGr is Ctrl and Alt together,
     // which is the page's below - so the one thing a page loses is a digit `accesskey`,
     // as it does in those two.
@@ -766,7 +766,7 @@ mod tests {
     #[test]
     fn ctrl_d_is_the_page_s_first_as_in_chrome() {
         // Chrome reserves only the tab and window chords, so Sheets fills down, Figma
-        // duplicates and vscode.dev selects the next one on Ctrl+D. nib's Deselect tab
+        // duplicates and vscode.dev selects the next one on Ctrl+D. Orden's Deselect tab
         // comes after the page, by way of web_opens.rs.
         assert_eq!(down(0x44, false), None);
         assert_eq!(down(0x44, true), None);

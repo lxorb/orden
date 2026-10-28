@@ -250,10 +250,10 @@ impl Started {
 /// Ctrl+C, reaching the programs a shell runs.
 ///
 /// Windows keeps a flag on every process that says whether Ctrl+C is ignored, and a
-/// process starts with its parent's. Whatever started nib may have set it - a launcher
+/// process starts with its parent's. Whatever started Orden may have set it - a launcher
 /// that starts its children in a group of their own, which is how an MSYS shell starts
 /// a Windows program - and every shell and every program in every terminal would then
-/// have ignored the interrupt: `ping` ran on through Ctrl+C. So nib says, once, that it
+/// have ignored the interrupt: `ping` ran on through Ctrl+C. So Orden says, once, that it
 /// processes Ctrl+C as a process normally does, which costs a window with no console
 /// nothing and is what its shells inherit.
 #[cfg(windows)]

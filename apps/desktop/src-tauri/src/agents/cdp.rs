@@ -134,7 +134,7 @@ fn asked(
             .map_err(|error| format!("the page could not be reached: {error}"))?;
             Ok(answer)
         }
-        // A reader's page on nib's own Chromium: the runtime's own door, which waits on
+        // A reader's page on Orden's own Chromium: the runtime's own door, which waits on
         // the caller's thread, so a thread of its own waits here and a caller can give up.
         #[cfg(feature = "cef")]
         View::Webview(view) => {
@@ -494,7 +494,7 @@ impl Heard {
         self.frames.get(number.checked_sub(1)?).cloned().flatten()
     }
 
-    /// A line of nib's own in the console: what the page tried that nib refused.
+    /// A line of Orden's own in the console: what the page tried that Orden refused.
     pub fn say(&mut self, level: &str, text: String) {
         self.line(level, text, Some("nib".to_string()));
     }

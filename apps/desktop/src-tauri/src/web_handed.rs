@@ -1,13 +1,13 @@
-//! Web pages another program hands nib, because nib is the browser.
+//! Web pages another program hands Orden, because Orden is the browser.
 //!
 //! A link clicked in a mail, a chat, a PDF or a terminal goes to whichever program the
-//! system keeps for `http` and `https`. When that is nib (see `default_browser.rs`), the
+//! system keeps for `http` and `https`. When that is Orden (see `default_browser.rs`), the
 //! address arrives on a command line on Windows and Linux - a launch of its own, or a
 //! second launch handed to the one already open - and as the system's "open these" on
 //! a Mac. This module says which of what arrived is a page; launch.rs says which window
 //! shows it.
 //!
-//! Only a page. The system hands over whatever string the other program wrote, and nib
+//! Only a page. The system hands over whatever string the other program wrote, and Orden
 //! opens no file from outside its spaces: a path, a `file:` address, `javascript:`,
 //! another program's scheme and the app's own origins are all refused here, before any
 //! window hears of them. What is left is judged again by the tab on every navigation;

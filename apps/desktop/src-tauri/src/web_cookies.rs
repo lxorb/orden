@@ -17,7 +17,7 @@
 //! quits and not others, depending on whether the pages or the process went first.
 //! A login that is kept on three restarts out of five is a login that is not kept.
 //!
-//! So nib does what the setting does, with the engine's own cookie store rather than
+//! So Orden does what the setting does, with the engine's own cookie store rather than
 //! a file of its own: a cookie that would end with the session is given an expiry
 //! instead, in the profile's own cookie database, where the engine keeps and reloads
 //! it like any other. The site never sees the difference - an expiry is not sent with
@@ -37,7 +37,7 @@
 //!
 //! On Windows the store is reached through the `DevTools` Protocol - every cookie out of
 //! `Network.getAllCookies`, each session one back through `Network.setCookie` - and not
-//! through `ICoreWebView2CookieManager`, the COM manager nib used first. That one knows
+//! through `ICoreWebView2CookieManager`, the COM manager Orden used first. That one knows
 //! nothing of partitions (CHIPS): a partitioned cookie, which its site may read only
 //! under the one top-level site it was set under, came back from it as an unpartitioned
 //! copy that the site could read under every other. The protocol hands a cookie over
@@ -105,7 +105,7 @@ pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'st
 }
 
 /// What keeping a store's logins asks the engine for, given every cookie in it: each
-/// twin an earlier nib made taken away, then each session cookie written back as it is -
+/// twin an earlier Orden made taken away, then each session cookie written back as it is -
 /// its partition first of all - with an expiry four hundred days out.
 ///
 /// One `setCookie` a cookie rather than one `setCookies` for them all, because the

@@ -3,7 +3,7 @@
 //! Chrome's and Arc's first run, which list the browsers already on the machine by
 //! name rather than asking for a profile folder nobody has ever looked for. Obsidian
 //! keeps its own list in `obsidian.json` beside its settings - the vault chooser's
-//! rows - so nib reads that list and offers each vault by its name.
+//! rows - so Orden reads that list and offers each vault by its name.
 //!
 //! This is a narrow way past paths.rs, which keeps the crate to the spaces folder: a
 //! folder is read here only when Obsidian itself lists it as a vault, and every file

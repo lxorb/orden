@@ -1,6 +1,6 @@
 //! Where the window was, so the next launch opens it there.
 //!
-//! Every desktop app does this and nib did not: the window came up at 1180 by 760 in
+//! Every desktop app does this and Orden did not: the window came up at 1180 by 760 in
 //! the middle of the primary screen however it had been left. So the window's place
 //! is written down as it closes, and `ready` in lib.rs puts it into the window's
 //! config before the window is built - built there, not moved there afterwards, so

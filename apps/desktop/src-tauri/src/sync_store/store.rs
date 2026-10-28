@@ -57,7 +57,7 @@ pub struct Opened {
 pub enum Refused {
     /// The file is not a store this build can read: damaged, or not SQLite at all.
     Damaged(String),
-    /// A newer nib has been here and moved the schema past what this one knows. Nothing
+    /// A newer Orden has been here and moved the schema past what this one knows. Nothing
     /// is changed; a newer nib is the one that can open it.
     Newer(usize),
     /// Anything else: a folder that cannot be made, a disk that is full.
@@ -137,7 +137,7 @@ impl Store {
     /// A file that cannot be read as a store is set aside, not deleted, and a new
     /// store is made where it was: sync can be rebuilt from the account and the files,
     /// and an app that will not start because of a cache is worse than one that
-    /// rebuilds it. VS Code does the same with its state database. A store a newer nib
+    /// rebuilds it. VS Code does the same with its state database. A store a newer Orden
     /// wrote is refused instead, because nothing about it is wrong.
     pub fn open(path: &Path) -> Result<Self, Refused> {
         if let Some(folder) = path.parent() {
@@ -629,7 +629,7 @@ mod tests {
     }
 
     /// Forward only: a second migration runs once, over the first one's rows, and a
-    /// store written by a newer nib is left exactly as it is.
+    /// store written by a newer Orden is left exactly as it is.
     #[test]
     fn a_migration_runs_once_and_keeps_what_was_there() {
         let dir = tempfile::tempdir().expect("a folder");

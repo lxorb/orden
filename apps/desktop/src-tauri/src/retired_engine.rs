@@ -1,7 +1,7 @@
-//! What nib's own Chromium left on a machine, now that every launch is on the system's
+//! What Orden's own Chromium left on a machine, now that every launch is on the system's
 //! engine.
 //!
-//! Up to 0.15 a reader on Windows could choose nib's own Chromium in Settings: the choice
+//! Up to 0.15 a reader on Windows could choose Orden's own Chromium in Settings: the choice
 //! was a file, and a launch that read `chromium` there handed itself to a second build of
 //! the app fetched into the app's local data folder. That build is gone (#305, #313).
 //! Nothing reads the choice any more, so a launch whatever it says - `chromium`, a word

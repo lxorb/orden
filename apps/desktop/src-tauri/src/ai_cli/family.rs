@@ -3,13 +3,13 @@
 //! Claude Code and Codex are rarely one process: an npm install is `cmd.exe` starting
 //! `node` starting the real program, and the program may start more. Ending the first
 //! of them leaves the rest running with nobody reading them - the zombie that other apps
-//! doing this are reported for. So what is ended is the family, by what nib itself
+//! doing this are reported for. So what is ended is the family, by what Orden itself
 //! started and never by a name:
 //!
 //! - **Windows**: a job object the child is put in as it starts, which ends every process
-//!   in it when asked, and on its own when nib lets go of it - including when nib itself
+//!   in it when asked, and on its own when Orden lets go of it - including when Orden itself
 //!   ends in a way nobody planned, since the system closes the handle then. The child is
-//!   started with no console window of its own, and with nib's own standard handles kept
+//!   started with no console window of its own, and with Orden's own standard handles kept
 //!   out of it (`keep_the_pipes`, the fix `nib mcp` needed for the same reason).
 //! - **A Mac and Linux**: a process group of its own, led by the child, and the whole
 //!   group killed while the leader is still there to name it.
@@ -63,7 +63,7 @@ impl Family {
                 end_job(job);
                 return;
             }
-            // A job could not be made - nib itself in a job that allows no other - so the
+            // A job could not be made - Orden itself in a job that allows no other - so the
             // family is found by its head's number instead.
             let _ =
                 quiet(Command::new("taskkill").args(["/T", "/F", "/PID", &self.pid.to_string()]))

@@ -20,7 +20,7 @@
 //! a tray icon or a notification is on the screen of whoever is at the machine: neither
 //! is made there (`placement::away`).
 //!
-//! **The one tray.** Reminders keep nib in the same tray (docs/tasks.md decision 6): the
+//! **The one tray.** Reminders keep Orden in the same tray (docs/tasks.md decision 6): the
 //! window asks for it with `tray_keep` while a reminder waits or the reader turned it on,
 //! and the tray is then up with Open and Quit, and the stop as well while an agent is
 //! connected. Closing the window hides it while either wants the tray.
@@ -105,7 +105,7 @@ struct Shell {
     hidden: Option<String>,
     /// Whether closing the window has been said this run.
     told_hidden: bool,
-    /// Whether the window keeps nib in the tray for its own sake: a reminder waiting,
+    /// Whether the window keeps Orden in the tray for its own sake: a reminder waiting,
     /// or the reader's choice (`tray_keep`).
     kept: bool,
 }
@@ -221,14 +221,14 @@ fn settle(app: &AppHandle) {
     });
 }
 
-/// The rows of the tray the window keeps nib in, in the reader's words.
+/// The rows of the tray the window keeps Orden in, in the reader's words.
 #[derive(Debug, Deserialize)]
 pub struct TrayWords {
     show: String,
     quit: String,
 }
 
-/// Whether the window keeps nib in the tray for its own sake: a reminder is waiting, or
+/// Whether the window keeps Orden in the tray for its own sake: a reminder is waiting, or
 /// the reader asked for it (docs/tasks.md decision 6). With it, closing the window hides
 /// it, and Quit is in the tray.
 #[tauri::command]
@@ -248,7 +248,7 @@ pub fn tray_keep(
     Ok(())
 }
 
-/// Whether anything keeps nib in the tray now.
+/// Whether anything keeps Orden in the tray now.
 pub fn in_tray() -> bool {
     with(|shell| shell.kept || !shell.said.is_empty())
 }

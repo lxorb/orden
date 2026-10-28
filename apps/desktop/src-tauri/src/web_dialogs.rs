@@ -1,5 +1,5 @@
 //! What a page says with `alert`, asks with `confirm` and `prompt`, and asks as it is
-//! left: in nib's own card over the page, answered the way the reader answers it.
+//! left: in Orden's own card over the page, answered the way the reader answers it.
 //!
 //! **What it was.** The dialog plugin writes its own `alert` and `confirm` into every
 //! webview the app builds, a web tab's included, and those two call into the app - which
@@ -10,7 +10,7 @@
 //! back: `confirm()` blocks the page's script until it is answered and answers a
 //! boolean, `prompt()` a string or `null`, and `alert()` shows.
 //!
-//! **What they look like is nib's.** A browser draws these itself, in the page's own
+//! **What they look like is Orden's.** A browser draws these itself, in the page's own
 //! tab, never as a window of the system's: Chrome's is a card at the top of the page.
 //! `WebView2`'s own is a window, drawn in the engine's style and not the app's, and it
 //! comes forward to be answered. So the engine is told to leave them to the app

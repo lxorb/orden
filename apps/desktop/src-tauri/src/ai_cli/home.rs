@@ -1,19 +1,19 @@
 //! Where a program keeps its sign-in for one account: the reader's own home for the first
-//! account of each program, and a folder of nib's for every one after it.
+//! account of each program, and a folder of Orden's for every one after it.
 //!
-//! **What nib does and does not do.** Both programs document one variable for staying
+//! **What Orden does and does not do.** Both programs document one variable for staying
 //! signed in to several accounts at once: `CLAUDE_CONFIG_DIR` ("give each account its own
 //! configuration directory", code.claude.com/docs/en/authentication) and `CODEX_HOME`.
-//! nib sets that variable on the unmodified program it starts and on the program's own
+//! Orden sets that variable on the unmodified program it starts and on the program's own
 //! login, typed into a terminal; the program signs the reader in through its maker's own
 //! flow and keeps the login there, refreshing it as it always does. nib never opens what
-//! the program writes. A Codex home of nib's is told to keep its login in the system's
+//! the program writes. A Codex home of Orden's is told to keep its login in the system's
 //! own store (`cli_auth_credentials_store = "keyring"`, keyed by the home); Claude Code
 //! keeps its own file in the folder on Windows and Linux and its Keychain entry, keyed by
 //! the folder, on a Mac.
 //!
 //! **The reader's shell does not decide the account.** A key in the environment outranks
-//! a sign-in in both programs, so for a home of nib's the variables that would say who is
+//! a sign-in in both programs, so for a home of Orden's the variables that would say who is
 //! signed in are taken out of what the program is started with. The first account keeps
 //! the environment as it always had it.
 
@@ -32,10 +32,10 @@ const CLAUDE_OVERRIDES: [&str; 3] = [
 ];
 const CODEX_OVERRIDES: [&str; 2] = ["OPENAI_API_KEY", "CODEX_API_KEY"];
 
-/// What a Codex home of nib's starts with: its login in the system's own store.
+/// What a Codex home of Orden's starts with: its login in the system's own store.
 const CODEX_CONFIG: &str = "cli_auth_credentials_store = \"keyring\"\n";
 
-/// A home of nib's for one account.
+/// A home of Orden's for one account.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Home {
     tool: Tool,
@@ -110,7 +110,7 @@ pub fn of(app: &AppHandle, tool: Tool, account: Option<&str>) -> Result<Option<H
     under(&crate::ai_accounts::root(app)?, tool, account)
 }
 
-/// A home of nib's let go of, once its program has signed out of it: the folder and what
+/// A home of Orden's let go of, once its program has signed out of it: the folder and what
 /// is in it. Nothing for the reader's own home, which is theirs.
 pub fn removed(home: &Home) -> Result<(), String> {
     match std::fs::remove_dir_all(&home.dir) {

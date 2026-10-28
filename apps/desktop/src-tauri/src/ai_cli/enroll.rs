@@ -59,7 +59,7 @@ const OLD_NAME: &str = "nib";
 /// the reader's.
 const TEST_HOME: &str = "NIB_ENROLL_HOME";
 
-/// What the window's switch keeps: whether nib connects itself.
+/// What the window's switch keeps: whether Orden connects itself.
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct Kept {
     #[serde(default)]

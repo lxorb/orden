@@ -4,7 +4,7 @@
 //! use, which the installer writes onto the Start menu's shortcut. Each toast is tagged
 //! with its notice's tag and grouped under one name, so a second one with the same tag
 //! replaces the first and the history is taken apart by tag and group. A press is the
-//! toast's own `Activated`, raised on a thread of the system's while nib runs: a press
+//! toast's own `Activated`, raised on a thread of the system's while Orden runs: a press
 //! on Send carries what was typed in the toast's field as its user input.
 //!
 //! A probe's toast goes straight into the action centre (`SuppressPopup`), where the

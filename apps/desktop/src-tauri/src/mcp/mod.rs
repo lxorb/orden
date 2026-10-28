@@ -1,12 +1,12 @@
 //! `nib mcp`: the app's own binary as a Model Context Protocol server over stdio, which
-//! is the whole of setting nib up in an agent's client (docs/agent-native.md 10):
+//! is the whole of setting Orden up in an agent's client (docs/agent-native.md 10):
 //!
 //! ```text
 //! claude mcp add --scope user orden -- "%LOCALAPPDATA%\Orden\nib.exe" mcp
 //! ```
 //!
 //! **Nothing of the app starts.** `main.rs` reads its arguments before Tauri does and
-//! hands `mcp` here: no window, no webview, no hand-off to a nib that is running, no
+//! hands `mcp` here: no window, no webview, no hand-off to an Orden that is running, no
 //! updater, and nothing on stdout but the protocol. The running app is reached through
 //! the endpoint the `nib` command uses (`automation.json`), with the agent's own token,
 //! so what an agent may do is decided where it always is, in the crate and the window

@@ -1,5 +1,5 @@
 //! Windows' own schedule of toasts: a reminder handed to the system rings at its minute
-//! with nib not running at all (docs/tasks.md 5.10).
+//! with Orden not running at all (docs/tasks.md 5.10).
 //!
 //! `ToastNotifier.AddToSchedule` under the app's own id, the one the notification plugin
 //! already shows toasts under and the installer writes onto the Start menu's shortcut.

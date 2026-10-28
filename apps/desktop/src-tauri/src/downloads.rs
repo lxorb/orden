@@ -26,7 +26,7 @@
 //! One mechanism on every desktop. `WebviewBuilder::on_download` is the same hook on
 //! `WebView2`, `WKWebView` and `WebKitGTK`; the one thing it does not say is how far
 //! along a file is, and `progress` adds that - and Cancel - where the engine's own
-//! download can be reached, which is `WebView2`, `WKWebView` and nib's own Chromium,
+//! download can be reached, which is `WebView2`, `WKWebView` and Orden's own Chromium,
 //! through the page's `DevTools` protocol. A phone has no web
 //! tabs - a site there opens in the system browser, whose downloads are its own.
 
@@ -50,7 +50,7 @@ const MOVED: &str = "nib://web-download";
 /// scripts/web-downloads-probe.py.
 const DOWNLOADS_DIR: &str = "NIB_DOWNLOADS_DIR";
 
-/// The longest name a file is saved under, in characters. Every file system nib runs on
+/// The longest name a file is saved under, in characters. Every file system Orden runs on
 /// allows 255 bytes, and a name that is mostly one server's idea of a title is still
 /// read as that title at this length.
 const LONGEST_NAME: usize = 180;
@@ -548,7 +548,7 @@ pub fn web_download_show(app: AppHandle, id: u64) -> Result<(), String> {
 
 /// Stops a download on its way. The engine's own operation is touched on the window's
 /// thread, the only one it may be touched from, where this sends it; see `progress`.
-/// Off that thread itself, since nib's own Chromium is told through the page's agent.
+/// Off that thread itself, since Orden's own Chromium is told through the page's agent.
 #[tauri::command(async)]
 pub fn web_download_cancel(webview: tauri::Webview, id: u64) {
     let app = webview.app_handle();
@@ -1059,7 +1059,7 @@ mod progress {
     pub fn cancel(_id: u64) {}
 }
 
-/// How far a download has got on nib's own Chromium, and Cancel, through the page's
+/// How far a download has got on Orden's own Chromium, and Cancel, through the page's
 /// `DevTools` protocol: the runtime hands out a download's start and end and nothing
 /// between, and keeps the engine's own handle on it to itself.
 ///
@@ -1223,7 +1223,7 @@ mod progress {
     }
 }
 
-/// Follows how far each download of a web tab's page has got, on nib's own Chromium;
+/// Follows how far each download of a web tab's page has got, on Orden's own Chromium;
 /// see `progress`.
 #[cfg(feature = "cef")]
 pub fn follow(view: &tauri::Webview, app: &AppHandle, window: &str) {

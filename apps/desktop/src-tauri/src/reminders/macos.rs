@@ -1,5 +1,5 @@
 //! A Mac's own schedule: each reminder a notification request with a calendar trigger,
-//! which the system delivers at its minute with nib quit (docs/tasks.md 5.10).
+//! which the system delivers at its minute with Orden quit (docs/tasks.md 5.10).
 //!
 //! `UNUserNotificationCenter`, under the app's bundle. A request's identifier is its
 //! reminder's id, so the schedule is read back and taken apart by id (schedule.rs); a
@@ -65,7 +65,7 @@ pub fn bundled() -> bool {
 
 define_class!(
     /// What the notification centre tells about a reminder: a press on it or on one of
-    /// its buttons, and one arriving while nib is in front, which is shown all the same.
+    /// its buttons, and one arriving while Orden is in front, which is shown all the same.
     #[unsafe(super(NSObject))]
     #[name = "NibReminders"]
     struct Delegate;

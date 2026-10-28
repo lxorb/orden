@@ -2,7 +2,7 @@
 //! With, a file manager on Linux, or `nib paper.pdf` in a terminal.
 //!
 //! Emil, 2026-10-13: *"open with nib should be possible for pdfs"*. The one kind of
-//! file from outside the spaces nib takes, and taken the way Apple Books and `GoodNotes`
+//! file from outside the spaces Orden takes, and taken the way Apple Books and `GoodNotes`
 //! take a PDF opened with them: one already in a space opens where it is, and one from
 //! anywhere else is brought into the space that is open and opens from there. So what
 //! the viewer reads is always a file of a space - its highlights, its words and its
@@ -35,7 +35,7 @@ use crate::paths::{
 /// program with.
 const LONGEST: usize = 32 * 1024;
 
-/// The PDFs handed to nib this run, by where they are.
+/// The PDFs handed to Orden this run, by where they are.
 #[derive(Default)]
 pub struct Handed(Mutex<HashSet<PathBuf>>);
 

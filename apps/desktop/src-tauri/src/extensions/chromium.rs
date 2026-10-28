@@ -1,18 +1,18 @@
-//! The extensions nib's own Chromium runs: the engine's own, read and changed through
+//! The extensions Orden's own Chromium runs: the engine's own, read and changed through
 //! Chromium's management API.
 //!
 //! On this engine the Chrome Web Store installs for itself, in the browsing profile: its
 //! own "Add to Chrome", Chromium's own prompt, Chromium's own updates. What a host cannot
 //! do is install an unpacked folder - the protocol's `Extensions.loadUnpacked` answers a
 //! page's own `DevTools` session "Not allowed", and only a browser-wide session, which is
-//! a debugging port nib keeps closed, may call it (measured with
-//! scripts/extensions-probe.py, 2026-10-03). So the list here is the engine's, and nib
+//! a debugging port Orden keeps closed, may call it (measured with
+//! scripts/extensions-probe.py, 2026-10-03). So the list here is the engine's, and Orden
 //! draws it: the bar's buttons, the popup in its bubble, the rows in Settings. A link
 //! pasted into nib opens the store's own page, where the store's own button installs.
 //!
 //! `chrome.management`, which `chrome://extensions` has, is the one door: it lists, turns
 //! off without taking away - an uninstall takes an extension's stored data with it, and a
-//! password manager turned off is not a password manager signed out - and removes. So nib
+//! password manager turned off is not a password manager signed out - and removes. So Orden
 //! keeps one page of `chrome://extensions` nobody sees, in the browsing profile, and asks
 //! it. Removing is the exception: asked from that page, Chromium wants a gesture and then
 //! shows a dialog of its own whatever it is told, and only an extension taking itself
