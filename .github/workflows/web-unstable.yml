@@ -108,7 +108,7 @@ jobs:
       - name: Build nibd for the Worker's bundle
         if: steps.live.outputs.main
         working-directory: ${{ runner.temp }}/main
-        run: pnpm --filter @nib/machine build
+        run: pnpm --filter @orden/machine build
 
       # No migration: main's ran when main deployed this Worker. And no containers: the
       # machines' image is main's, built and rolled out by main's deploy, and nothing

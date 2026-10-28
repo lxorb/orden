@@ -814,7 +814,7 @@ killed, and the warning that a firewall change can lock its owner out).
   Cloudflare image; cloud-init runs it with `--server`, which adds `cloudflared` from
   Cloudflare's signed repository, the systemd units, unattended security upgrades (never an
   automatic reboot), 4 GB of swap, and SSH shut: no root, no passwords, off unless a key is set.
-- **`nibd` reaches the server reproducibly.** `pnpm --filter @nib/machine build` writes,
+- **`nibd` reaches the server reproducibly.** `pnpm --filter @orden/machine build` writes,
   beside `nibd.cjs`, `dist/machine.bin`: `nibd`, `install.sh`, the scripts and the units as one
   deterministic gzipped tar. The Worker **carries it inside itself** (a Data module of
   `entry.ts`) and serves it at `/v2/online/machine/<sha256>.bin`, its hash at

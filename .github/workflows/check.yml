@@ -622,7 +622,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Build nibd for the machine image
-        run: pnpm --filter @nib/machine build
+        run: pnpm --filter @orden/machine build
 
       # The version says which main it is, in full, because a push to `unstable` deploys
       # the Worker again with the edge's new pages and has to deploy this same main to do

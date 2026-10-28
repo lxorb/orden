@@ -17,7 +17,7 @@ import {
   type DirectoryBackupRecord,
 } from '@cloudflare/sandbox'
 import { WorkerEntrypoint } from 'cloudflare:workers'
-// The machine's bundle, written by `pnpm --filter @nib/machine build` (4.15).
+// The machine's bundle, written by `pnpm --filter @orden/machine build` (4.15).
 import machine from '../../../machine/dist/machine.bin'
 import worker from '../index'
 import type { Env } from '../types'
