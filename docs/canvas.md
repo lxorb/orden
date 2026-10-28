@@ -160,7 +160,7 @@ carries the card. See `onHeld` and `armed` in `canvas/pointer.ts`, `held` in
 `Pages.svelte`.
 
 **Three pens, always three.** A pen is a thing you own rather than a setting you
-pick, so a favourite is the whole pen: which nib, how wide, how much of the
+pick, so a favourite is the whole pen: which Orden, how wide, how much of the
 colour lands, and which colour. Three slots, never more and never fewer, so there
 is no adding, no putting away, no dragging them into order and no row that
 outgrows the bar. Press one to take it, press it again to open it up.
@@ -189,7 +189,7 @@ with a number and a minus and a plus, and switches under them. A tool takes the
 rows it has something to put in them: the lasso has neither a width nor a line
 to show, so its panel is the shape choice and one switch and nothing else. The pen's preview
 is the line it will write, drawn by the same outliner that paints the plane, so
-what the panel shows is what the nib does. The eraser's is its nib at its real
+what the panel shows is what the Orden does. The eraser's is its Orden at its real
 width on the paper.
 
 There is one row of colours in the app: the six the theme names, the ones used
@@ -304,13 +304,13 @@ closes while it is moving it. A corner handle wears the arrow that says which wa
 pulls, and a connector's anchor wears the finger that says it can be grabbed.
 
 Two of them are drawn rather than named, because no cursor keyword can say "this
-wide, in this colour": the pen is a dot at the width the nib will really draw, in
+wide, in this colour": the pen is a dot at the width the Orden will really draw, in
 the ink it will really draw in, and the eraser is a ring exactly as wide on screen
 as the hole it will rub. Turning the width dial redraws them while the slider is
 still moving.
 
 A touch screen has no cursor and is given none. There the eraser draws its ring on
-the page instead, under the finger or the nib, while it is rubbing.
+the page instead, under the finger or the Orden, while it is rubbing.
 
 ## The pattern behind it
 
@@ -414,7 +414,7 @@ The rules a tablet is held to, all of them in `canvas/pointer.ts` and all of the
 tested there rather than tried by hand:
 
 - **A pen writes and a hand moves the page.** The first time a pen touches this
-  glass the finger stops being a nib, whichever pen the bar is holding, because a
+  glass the finger stops being a Orden, whichever pen the bar is holding, because a
   palm resting on a page while the other hand writes must not leave a mark. A
   phone has no pen, so there the finger draws.
 - **Two fingers are the page, in every tool.** Wherever a second finger lands it
@@ -429,7 +429,7 @@ tested there rather than tried by hand:
 - **A press held still means something once.** Under a finger it is the menu, and
   on the bare plane a lasso as well if the finger moves on (#349).
   Under a pen that is drawing it is the stroke asking to be straightened, and only
-  when the pen's own switch says so. Never a menu under a pen: a nib resting on the
+  when the pen's own switch says so. Never a menu under a pen: a Orden resting on the
   page is a hand thinking.
 - **A pen with its button held rubs out**, whatever the bar says, set the way the
   eraser is set. A button pressed halfway through a line rubs out too, from where it
@@ -437,7 +437,7 @@ tested there rather than tried by hand:
   the button while it is writing is a hand that wants to rub out, and a stub of a
   stroke it never meant to leave is worse than nothing. Nothing is on the plane until
   the pen lifts, so there is nothing to take back either. This is the one rule taken
-  back from Samsung Notes, which settles what a stroke is when the nib lands: on the
+  back from Samsung Notes, which settles what a stroke is when the Orden lands: on the
   tablet that read as the pen going dead, because the line stopped and nothing was
   rubbed out.
 
@@ -457,14 +457,14 @@ context menu, and on a tablet that has seen one nothing opens it that way at all
 there the menu is what a finger held still opens.
 
 The browser also takes the contact away when it starts its own context-menu gesture
-for that button: a `pointercancel` arrives while the nib is still on the glass and
+for that button: a `pointercancel` arrives while the Orden is still on the glass and
 still reporting. So a cancelled pen contact is doubted rather than ended - another
 event with the same id inside a moment means it never left, and only silence ends
 the gesture.
 
 Samsung's S Pen reports the first event of a contact as a finger on some
 devices. A pointer that says pen a moment later is a pen from its first sample:
-the gesture the finger started is thrown away and the stroke begins where the nib
+the gesture the finger started is thrown away and the stroke begins where the Orden
 landed. Without that, the first press after picking the tablet up draws nothing
 and pans instead.
 
@@ -514,7 +514,7 @@ a millionth off nought instead agrees with all five to the degree, in one line.
 were already feature-detected, 18.2 brought both, and neither is needed: a stroke there is whatever fitted into a
 frame, and the ink draws the curve through those samples rather than the straight
 lines between them. `smoothed` in `canvas/ink.ts` puts points on any step longer than
-the nib is wide, along a centripetal Catmull-Rom spline, and leaves a dense stroke
+the Orden is wide, along a centripetal Catmull-Rom spline, and leaves a dense stroke
 exactly as it came - the fast path is one comparison a point. Centripetal rather than
 uniform because a uniform spline loops back on itself at a sharp turn, and a loop in
 the middle of a letter is worse than the corner it was drawn to hide. The samples
@@ -531,12 +531,12 @@ and the table is the one place to change it.
 
 **A pressure that never changes is not a pressure.** Some USI pens report exactly one
 half for every sample of every stroke, and some report a fixed sliver near nought -
-which, handed to a nib that thins with pressure, draws everything anybody ever draws
+which, handed to a Orden that thins with pressure, draws everything anybody ever draws
 as a hairline. So `Stylus` watches the first fifth of a second of writing, and a pen
 that has held one number across it stops being believed: the ink draws at the width
-the nib is set to. Any variation at all settles it the other way for good.
+the Orden is set to. Any variation at all settles it the other way for good.
 
-**Tilt is recorded and never painted.** No tool reads it - the flat nib is held at a
+**Tilt is recorded and never painted.** No tool reads it - the flat Orden is held at a
 fixed angle - so a pen that reports no tilt draws exactly what a pen that reports it
 draws, and a tool that one day does read it degrades to the fixed angle rather than
 to nothing.
@@ -548,15 +548,15 @@ whether it is touching or not, is a line right across the drawing. Nothing press
 nothing touching: `hovering` is `buttons === 0`, and a move that is hovering, or whose
 contact the surface never heard land, contributes no samples, repairs no pen and keeps
 no cancelled stroke alive. That last one was a real hole: a `pointercancel` is doubted
-for a moment in case the nib never left, and a hover inside that moment used to count
-as the nib still writing.
+for a moment in case the Orden never left, and a hover inside that moment used to count
+as the Orden still writing.
 
-**One nib must not arrive twice.** Windows hands pen input to anything that does not
+**One Orden must not arrive twice.** Windows hands pen input to anything that does not
 ask for it as mouse input, and a graphics tablet's driver will do the same on any
-desktop if it is set up to. A mouse contact while a nib is on the glass is that nib
+desktop if it is set up to. A mouse contact while a Orden is on the glass is that Orden
 again, not a second hand, and it is dropped.
 
-**Windows reads a nib held still as a right click.** It waits half a second, draws its
+**Windows reads a Orden held still as a right click.** It waits half a second, draws its
 own ring, and then sends a context menu - and the wait is a delay before the page
 hears anything at all. `touch-action: none` on the plane is what turns that off, and
 there is no other way; the menu that arrives anyway is refused, for a pen that is
@@ -621,14 +621,14 @@ with the Pencil and write into it - Scribble is welcome there.
 
 **A Surface, or any Windows machine with a pen.** The profile should say `windows g1
 coalesced predicted`. Hold the barrel button and draw: it must rub out, and no menu may
-open. Turn the pen over and draw with the eraser end: the same. Hold the nib still on
+open. Turn the pen over and draw with the eraser end: the same. Hold the Orden still on
 the plane for a second: Windows' own ring may appear, but no menu may open and the
 stroke must carry on. Hover with the barrel held: nothing may happen. Draw, then click
 with the mouse: one contact, one gesture.
 
 **A Wacom, a Huion or an XP-Pen on a desktop.** The profile should say `desktop g1`.
 Lift the pen, move it right across the tablet and put it down: the stroke must begin
-where the nib landed, with no line from where the pen was last seen. Right-click with
+where the Orden landed, with no line from where the pen was last seen. Right-click with
 the pen: it rubs out. Press whatever the driver has on the middle button: the plane
 pans. Draw fast: no gaps, whatever the tablet's report rate is.
 
@@ -638,14 +638,14 @@ says `flat`, the ink is deliberately ignoring the pen's pressure - which is righ
 the line looks even and wrong if the pen really does have pressure, and either way it
 is one word to report.
 
-## The line under the nib
+## The line under the Orden
 
 A browser will guess where the pen is going next, and the guess is worth having: the
 compositor is a frame or two behind the digitiser, and drawing a little ahead is what
-puts the ink under the nib rather than trailing it. What it is not worth is what it
+puts the ink under the Orden rather than trailing it. What it is not worth is what it
 does on a turn. `getPredictedEvents` hands over a fan of points twenty or thirty
 milliseconds ahead, and on every change of direction that fan is still pointing the
-old way: the tail of the stroke flicks forward past the nib and snaps back on the
+old way: the tail of the stroke flicks forward past the Orden and snaps back on the
 next event, which is what "the current stroke flashes a bit further, just for a sec"
 was.
 
@@ -681,7 +681,7 @@ shape somebody made, and a shape that catches up with itself is the wrong shape.
 | `canvas/cursor.ts` | what the pointer looks like over the plane |
 | `canvas/geometry.ts` | the plane's arithmetic: boxes, shapes, edges |
 | `canvas/lattice.ts` | the pattern behind the plane: which level a zoom asks for, and the fade to it |
-| `canvas/ink.ts` | outlines, erasing, lassoing, what a wobbly shape was aiming at, how far ahead of the nib the ink may reach, and what one pen event means whichever browser sent it |
+| `canvas/ink.ts` | outlines, erasing, lassoing, what a wobbly shape was aiming at, how far ahead of the Orden the ink may reach, and what one pen event means whichever browser sent it |
 | `canvas/paint.ts` | a stroke's outline, a kind of ink and one fill of them: the one picture of a stroke the tiles, the pen's own layer and a page's thumbnail share |
 | `canvas/tiles.ts` | the ink as tiles of pixels kept between repaints, so a pan copies them and a stroke fills only the tiles it crosses |
 | `canvas/ink-grid.ts` | which strokes are near a part of the plane, without walking the whole plane |

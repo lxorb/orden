@@ -114,7 +114,7 @@ keeps working.
 It ships in no installer, on purpose. The only way an installer can carry a command
 is as a sidecar, which is a second compiled binary in every bundle on every
 platform for something almost nobody runs; a Node script adds nothing to any
-download. Node is already this repository's answer for driving nib without the app
+download. Node is already this repository's answer for driving Orden without the app
 (`scripts/nib-sync.mjs`), so this sits beside it.
 
 There is no browser build of `orden` and there will not be: a tab has no socket to
@@ -189,7 +189,7 @@ Three things the Windows capture is careful about, and each of them was wrong:
   listed first, which is a coin toss the moment somebody runs a build they are working
   on beside the one they use - and on the machine this was written on it went further
   than that and photographed another application's window, into a file named after
-  nib's own overlay. A picture of the wrong window is worse than no picture: it can
+  Orden's own overlay. A picture of the wrong window is worse than no picture: it can
   hold a stranger's screen, and nothing in the file says it is not ours. Every caller
   passes a pid, and `apps/desktop/test/capture-by-pid.test.ts` is what keeps it that
   way.
@@ -383,12 +383,12 @@ the answer never changes under somebody's notes:
 | `spaces-folder` there already | the folder it names, whatever appears in Documents later; a path written into it by hand is where the spaces are from the next launch |
 | a phone | `Documents/Nib` as before, which is inside the app's own container there |
 
-Every space is in the one folder, synced ones included: a space nib sync brings to this
+Every space is in the one folder, synced ones included: a space Orden sync brings to this
 device is made there like any other. See `SPACES_DIR` and `spaces_named` in
 `src-tauri/src/paths.rs`, and `scripts/web-session-probe.py` for a drive that does it.
 
 **A probe never updates.** A build looks for a new version as it starts and runs the
-installer as it closes, over the reader's own nib; probes did exactly that on
+installer as it closes, over the reader's own Orden; probes did exactly that on
 2026-09-27. So a probe is also built as version `99.0.0`, looking for updates at
 `https://127.0.0.1:9/latest.json`, and every drive refuses an exe of any other version.
 It closes only the app's own window, never the one tao keeps for its event loop, whose

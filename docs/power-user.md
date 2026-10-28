@@ -16,7 +16,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Web | Ctrl+F finds in the page: nib's find bar over the engine's find, plus a Find row in the dots | Chrome | done a2eb354f, the page's first 555612bf | `edit.find` is editor-scoped and a web tab has no editor; `docs/web-tabs.md:1123` "Find wants an in-page find bar" | M | high |
+| Web | Ctrl+F finds in the page: Orden's find bar over the engine's find, plus a Find row in the dots | Chrome | done a2eb354f, the page's first 555612bf | `edit.find` is editor-scoped and a web tab has no editor; `docs/web-tabs.md:1123` "Find wants an in-page find bar" | M | high |
 | Web | Ctrl+click or middle-click on a link in a page opens a tab behind; Ctrl+Shift+click opens it in front | Chrome | done d68541d7 (agent `ctrl-click`) | every window a page asks for opens in front: `lib/web-tab/pages.svelte.ts:810` passes `behind = false`, and `rs/web_tabs.rs:912` drops the features | M | high |
 | Web | Fullscreen video (YouTube `f`) fills the screen | Chrome | done a2eb354f (not driven natively: it would take the screen) | no `ContainsFullScreenElementChanged` handling in `rs/web_tabs.rs`, so the element only fills the pane | M | high |
 | Web | Ctrl+L, Alt+D and F6 reach the address field while the page has the keyboard | Chrome | done c228c9eb (with batch 6), Ctrl+L and Alt+D the page's first a0f0070a | `rs/web_keys.rs:86-99` reserves only T/W/N/Tab/PgUp/PgDn/digits; Ctrl+L stays the site's (`docs/web-tabs.md:604`) | S | high |
@@ -129,7 +129,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | Editor | On a note link: Open in new tab, Open to the right, Copy link | Obsidian | done a60e7d71; "Open to the side", the file list's word for it, and not on a phone | same; note links get no rows at all (the new-tab path comes from `ctrl-click`) | S | med |
 | Editor | Ctrl+Alt+click on a note link opens it to the right | Obsidian | done a60e7d71; `linkAsk` in `lib/new-tab.ts`, so `follow.ts` is unchanged | `noteClicks` (`ed/wikilink/follow.ts:63-78`) reads button 0 plus the modifier only | S | med |
 | Editor | On a picture: Copy picture, Open picture, Show in file list, Delete | Typora, Obsidian, Chrome | done 67fa46a5, but for Show in file list: skipped, the file list shows no pictures (`rs/tree.rs` lists notes, PDFs, canvases, page notes and shortcuts) | `lib/editor-menu.ts` has no picture rows | M | med |
-| Editor | Dropping any file (PDF, audio, zip) from Explorer into a note copies it beside the note and links it | Obsidian, Typora | done 61a8e008 for what a note can show (PDF, sound, film, canvas) as `![[name]]`; a zip or anything else is left alone, since nothing in nib opens it | `ed/images.ts:108-121` accepts pictures only | M | med |
+| Editor | Dropping any file (PDF, audio, zip) from Explorer into a note copies it beside the note and links it | Obsidian, Typora | done 61a8e008 for what a note can show (PDF, sound, film, canvas) as `![[name]]`; a zip or anything else is left alone, since nothing in Orden opens it | `ed/images.ts:108-121` accepts pictures only | M | med |
 
 ## Batch 9: file list menu, reveal, drag into a note
 

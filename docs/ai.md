@@ -1,6 +1,6 @@
 # AI
 
-nib asks models. It does not sell you one.
+Orden asks models. It does not sell you one.
 
 Every provider is yours: you add it, you give it a key, an address or your own
 plan, and the requests go from your device straight to it. The account is not in
@@ -27,9 +27,9 @@ See **Sound, as words** below.
 ## Your own plan
 
 A Claude or ChatGPT plan you already pay for can answer all five, on the desktop app,
-by the roads their makers allow and no other. What each maker says, and so what nib
+by the roads their makers allow and no other. What each maker says, and so what Orden
 does and does not do. **Read this before changing any of it**: the obvious "improvement"
-- reusing the token a CLI keeps, or pasting a setup token into nib - is the one thing
+- reusing the token a CLI keeps, or pasting a setup token into Orden - is the one thing
 both of these pages rule out.
 
 ### Claude: the reader's own Claude Code
@@ -49,10 +49,10 @@ product ("Can customers offer Claude Code in their products?") asks three things
 product's maker agrees to Anthropic's Commercial Terms, the binary is unmodified with no
 auth method removed, and every end user signs in with their own credentials.
 
-So nib runs the Claude Code **the reader installed**, as it is, headless (`claude -p
+So Orden runs the Claude Code **the reader installed**, as it is, headless (`claude -p
 --output-format stream-json`), with the question on stdin. The reader signs in through
-Claude Code's own login (`claude auth login`), which **Sign in** types into a nib
-terminal tab for them. nib never reads `~/.claude`, the keychain entry or any token, and
+Claude Code's own login (`claude auth login`), which **Sign in** types into a Orden
+terminal tab for them. Orden never reads `~/.claude`, the keychain entry or any token, and
 knows whether somebody is signed in only because `claude auth status --json` says so.
 What OpenClaw and others did - reuse the CLI's stored token, or take a `claude
 setup-token` and keep it - is exactly the collecting and intermediating the quote
@@ -60,9 +60,9 @@ forbids, and is not built. OpenCode had its Claude Pro and Max support taken out
 Anthropic's lawyers asked.
 
 Emil accepted Anthropic's Commercial Terms for nibeditor on 2026-10-01, so every build
-offers the row, releases and `edge` included. What nib keeps to, and why none of the
+offers the row, releases and `edge` included. What Orden keeps to, and why none of the
 above may change: the binary is the reader's own and unmodified, no auth method is
-removed, everybody signs in with their own credentials, and nib never reads a token.
+removed, everybody signs in with their own credentials, and Orden never reads a token.
 The terms also ask that a reader be told an answer can be wrong, which Settings > AI
 says under the providers ("AI can be wrong. Check the facts."). The row stays behind a
 build switch, on by default, off with `NIB_CLAUDE_CODE=off` (read by `vite.config.ts` as
@@ -105,7 +105,7 @@ effort, a mode and a thread, and sends words, never an argument or a protocol me
 - **Claude Code, a question**: no tools (`--tools ""`), none of the reader's MCP servers
   (`--strict-mcp-config`), nothing written to its history (`--no-session-persistence`),
   and where the installed version has them, `--safe-mode` (no hooks, plugins or
-  `CLAUDE.md`, sign-in and model as always) and `--permission-prompts none`. nib's own
+  `CLAUDE.md`, sign-in and model as always) and `--permission-prompts none`. Orden's own
   one-line system prompt replaces the coding agent's.
 - **Claude Code, a sidebar thread**: the same, kept open with turns on stdin
   (`--input-format stream-json`), with one tool: `nib mcp` (`--mcp-config`), only the
@@ -118,7 +118,7 @@ effort, a mode and a thread, and sends words, never an argument or a protocol me
   never one of Claude Code's commands.
 - **Codex**: `app-server`, read-only and asking nobody (`sandbox_mode`,
   `approval_policy`), the shell tool, web search and MCP servers off, `AGENTS.md`
-  unread, nothing in its history; each thread ephemeral, with nib's instructions, and
+  unread, nothing in its history; each thread ephemeral, with Orden's instructions, and
   for a sidebar thread `nib mcp` alone with the mode's verbs (`enabled_tools`), sent on
   stdin. The crate is the app-server's only client: every request is written there,
   and every request the app-server makes of its client (an approval, an elicitation, a
@@ -128,29 +128,29 @@ effort, a mode and a thread, and sends words, never an argument or a protocol me
   provider and mode, made once per run of the app, kept in memory, and handed over in the
   program's environment (`NIB_MCP_TOKEN`), never on a command line or in a file. The
   endpoint knows the mode by it, so Agent asks nothing and Approve asks before every
-  change, at nib's own verbs; in Approve `nib mcp` holds the call open while the reader
+  change, at Orden's own verbs; in Approve `nib mcp` holds the call open while the reader
   answers in the thread (docs/ai-sidebar.md 4.4). It stands in for pairing, so the
   reader's own pairing of their own Claude Code is never read or touched.
-- **Agent mode** gives a program nothing more than nib's verbs: never `bypassPermissions`,
+- **Agent mode** gives a program nothing more than Orden's verbs: never `bypassPermissions`,
   `--dangerously-skip-permissions` or Codex's Full Access, which would only matter for
   the program's own shell and files, and those stay off. "Anything" is every verb the
   grant reaches, asked about by nobody.
-- All: started with no console window and none of nib's handles, in an empty folder of
+- All: started with no console window and none of Orden's handles, in an empty folder of
   the app's own (never a space), and ended with everything they started - a job object
-  on Windows, a process group elsewhere - on a stop, when their window goes and when nib
+  on Windows, a process group elsewhere - on a stop, when their window goes and when Orden
   quits. A question runs at most five minutes; a session ends after ten minutes with
-  nothing said either way, and the next message starts it again from nib's transcript.
+  nothing said either way, and the next message starts it again from Orden's transcript.
   A reload leaves a running answer to finish or time out unread.
 
 The Ask panel hands a question the passages it found itself, so no question needs a
-program to read the notes. The sidebar's agent reads them with nib's own MCP server
+program to read the notes. The sidebar's agent reads them with Orden's own MCP server
 (`nib mcp`) under the grant Settings > Agents gives it, never a folder.
 
 ### Honest about whose plan it is
 
 The row says which plan the program or OpenAI says it is signed in with (Max, Pro,
 ChatGPT), and **Using ChatGPT plan** under the ChatGPT one, as OpenAI's guidelines ask. A
-plan near its limit says so on its row; one at its limit is said in nib's words wherever
+plan near its limit says so on its row; one at its limit is said in Orden's words wherever
 the question was asked - "Your Claude plan is at its limit until 15:05." - with when it
 resets where Claude Code's `rate_limit_event` or Codex's message said, and **Manage
 usage** on the row goes to the plan's own page.
@@ -205,7 +205,7 @@ each one not in use; the palette lists `AI account: Claude · Work` for each, th
 use ticked.
 
 The accounts are one file, `<local data>/ai/accounts.json` (`src-tauri/src/ai_accounts.rs`),
-not the page's storage, which is one browsing profile's: while the app could run on nib's
+not the page's storage, which is one browsing profile's: while the app could run on Orden's
 own Chromium as well, the two engines were two profiles, and before this file an engine
 switch started with no providers while every key was still in the keychain. Every window
 and every space read the same file; a write names the stamp of the text it changed, is refused over a newer one
@@ -221,18 +221,18 @@ is the same grant and every thread still names it. A second profile that kept ro
 own adds the ones the file lacks, once.
 
 **A second sign-in to a program** is an account whose program keeps its login in a home
-of nib's, `<local data>/ai/homes/<id>`; the first Claude Code and the first Codex are the
+of Orden's, `<local data>/ai/homes/<id>`; the first Claude Code and the first Codex are the
 reader's own `~/.claude` and `~/.codex`, as they always were. Both programs document the
 one variable for this - Anthropic: "To stay signed in to multiple accounts at once ...
 give each account its own configuration directory" with `CLAUDE_CONFIG_DIR`
 ([authentication](https://code.claude.com/docs/en/authentication)), and Codex's
-`CODEX_HOME` - so nib sets it on the unmodified program it starts and on the program's
+`CODEX_HOME` - so Orden sets it on the unmodified program it starts and on the program's
 own login, which **Sign in** types into a terminal tab as `set "CLAUDE_CONFIG_DIR=..." &&
 claude auth login`. The program signs the reader in through its maker's flow, keeps the
-login there and refreshes it itself; nib names the folder and never opens what is in it,
+login there and refreshes it itself; Orden names the folder and never opens what is in it,
 which keeps everything under "Your own plan" true. The window names an account, never the
 folder: the crate finds the account in the file and derives its home
-(`src-tauri/src/ai_cli/home.rs`). A Codex home of nib's starts with
+(`src-tauri/src/ai_cli/home.rs`). A Codex home of Orden's starts with
 `cli_auth_credentials_store = "keyring"`, so its login is in the system's own store,
 keyed by the home; Claude Code keeps its own `.credentials.json` in the folder on
 Windows and Linux (mode 0600), and a Keychain entry keyed by the folder on a Mac. For
@@ -241,7 +241,7 @@ such a home the variables that would outrank its login (`ANTHROPIC_API_KEY`,
 taken out of the program's environment, or the reader's shell would pick the account.
 Switching is instant - the next start names another folder - and a thread's session is
 the account's it was opened in: after a switch the next message opens one in the new
-account, seeded from nib's transcript. **Remove** on a second sign-in runs the program's
+account, seeded from Orden's transcript. **Remove** on a second sign-in runs the program's
 own sign-out in its home (`claude auth logout`, `codex logout`) and deletes the folder.
 
 Claude Code and Codex are found where their installers put them - the `PATH`,
@@ -252,12 +252,12 @@ Not found, the row offers **Install**, the maker's own page, and **Check again**
 
 The base URL is forgiving about `/v1`. `http://localhost:11434`,
 `http://localhost:11434/v1` and `http://localhost:11434/v1/` are the same
-server; nib adds exactly one `/v1` and never two.
+server; Orden adds exactly one `/v1` and never two.
 
 It is also forgiving about how you spell this machine. `http://127.0.0.1:11434`
 and `http://[::1]:11434` are rewritten to `http://localhost:11434`, which is the
 same server to every network stack and a different host to a content security
-policy. nib's policy names `http://localhost:*` and no other plain-http origin,
+policy. Orden's policy names `http://localhost:*` and no other plain-http origin,
 on purpose: plain http to this machine is what a local model is, and plain http
 to anywhere else is what the policy exists to forbid. Without the rewrite, an
 address typed with digits would be refused by the webview before it left, and the
@@ -266,7 +266,7 @@ think to open. See `src/csp.ts`.
 
 The model list is fetched, never written down. A table of model names in the
 source is wrong within weeks, and a model on your own machine has a name only
-your machine knows. Press **List models** and nib asks. That press is also the
+your machine knows. Press **List models** and Orden asks. That press is also the
 first thing that tells you a key works.
 
 One provider is the default. It is the one a block and a rewrite use without
@@ -278,7 +278,7 @@ The AI pane shows one thing it does not own: the OpenAI key on your account,
 under **Used by the glasses**, as "set, ends in …abcd" and never as a key.
 
 That key is a different key for a different thing. The glasses ask their
-question through nib's own Worker, because a pair of glasses has no keyboard to
+question through Orden's own Worker, because a pair of glasses has no keyboard to
 type a key on and no store to keep one in; the Worker holds the key sealed and
 `api.openai.com` is the one origin the plugin's manifest lets it reach. See
 `services/sync/src/ask` and `docs/even.md`. It is set in Settings > Glasses, and
@@ -315,7 +315,7 @@ goes in IndexedDB and the pane says, in one line, that the browser is holding
 it. The app keeps them in the secure store instead.
 
 On Linux with no keyring daemon running, writing a key fails and the pane says
-so. nib does not fall back to a file: a key in a file that the pane called
+so. Orden does not fall back to a file: a key in a file that the pane called
 secure would be worse than a key that could not be saved.
 
 Keys are read back, because the request is made by the page. They are never
@@ -325,7 +325,7 @@ never put in an error message.
 ### Every device
 
 Emil, 2026-10-13: "ai should be connected once and then keep connected across nib
-sessions." So the accounts reach every device the reader signs in to with their nib
+sessions." So the accounts reach every device the reader signs in to with their Orden
 account, end to end (`lib/ai/vault`, `services/sync/src/ai/vault.ts`):
 
 - **What travels**: the accounts, the one in use per provider, what each feature asks,
@@ -422,7 +422,7 @@ client to use it.
 Emil, 2026-10-12: "claude can create subagents of openai models. e.g. claude opus 5.5
 creating an astra subagent in the same way as it would create a subagent of claude."
 
-`run_agent` is one of nib's tools, shaped like Claude Code's own `Agent` tool and Codex's
+`run_agent` is one of Orden's tools, shaped like Claude Code's own `Agent` tool and Codex's
 `spawn_agent`: a few words of `description`, the whole task as `prompt`, a `model` (`opus`,
 `sonnet`, `gpt-6-astra`, `astra`, or nothing for the asking agent's own), an `effort`, and
 a `subagent_type` naming an agent profile (a note whose front matter says `agent:`, 4.7 in
@@ -455,7 +455,7 @@ subagent tool of its own (`--tools ""`), so this is its subagent tool.
 
 The prompt is the body of a ```` ```ai ```` fence. The answer is ordinary
 markdown under it. That is the whole format, and it was chosen so a note written
-in nib reads in Obsidian with no plugin at all: the question is a code block,
+in Orden reads in Obsidian with no plugin at all: the question is a code block,
 and the answer below it is prose.
 
 ````markdown
@@ -483,7 +483,7 @@ What each part is for:
 - **The two comments.** `<!--nib:ai-->` and `<!--/nib:ai-->` mark where the
   answer begins and ends, so asking again replaces it instead of stacking a
   second one under it. They are HTML comments, which every renderer hides;
-  nib strips both spellings of a comment before rendering anything, so they show
+  Orden strips both spellings of a comment before rendering anything, so they show
   on no surface at all. See `withoutComments` in `@orden/markdown`.
 - **The italic line.** Which model answered and on what day. A date and not a
   timestamp: a re-run should not change a line for no reader's benefit. It is
@@ -529,14 +529,14 @@ press is a rumour, which is why the number is the passage itself rather than a n
 look up. Under the answer, the notes it cited, each a press away.
 
 Obsidian's assistants, Notion's Q&A, Mem and Reflect all answer from your notes with
-sources; what nib does differently is what it does not do first.
+sources; what Orden does differently is what it does not do first.
 
 ### No index
 
 Obsidian Copilot and Smart Connections embed the whole vault before they can answer,
 and that is what their readers complain about: a launch that hangs while it builds, a
 bill for embedding notes nobody asked about, an index stale the moment a note changes.
-nib builds nothing. A question asks the app's own search - the crate's walk over the
+Orden builds nothing. A question asks the app's own search - the crate's walk over the
 bodies it already holds, the browser build's worker - once, when it is asked, and never
 before. Nothing is indexed at start and nothing is sent in the background.
 
@@ -636,7 +636,7 @@ rows the version history draws. **Replace** writes it over the selection;
 **Discard** leaves the note alone.
 
 A diff and not a replacement with an undo behind it. A model rewriting a
-paragraph is the one AI gesture in nib that can lose work, and by the time you
+paragraph is the one AI gesture in Orden that can lose work, and by the time you
 have read what an undo would put back, the paragraph is off the screen.
 
 Only on a selection. The row is not in the menu otherwise, because four verbs
@@ -679,7 +679,7 @@ this means with no signal.
 
 ## Costs
 
-nib charges nothing and knows nothing about your bill. What it does do is make
+Orden charges nothing and knows nothing about your bill. What it does do is make
 the size of a request visible rather than surprising:
 
 - A block sends the prompt, and the whole note when the prompt says `@note`. A
@@ -699,7 +699,7 @@ the size of a request visible rather than surprising:
   pane that offers the press: a key removed leaves the provider chosen, with its
   model still set.
 - A local model through an OpenAI-compatible provider costs electricity.
-- A plan costs what your plan costs, and spends its limits: a question from nib is a
+- A plan costs what your plan costs, and spends its limits: a question from Orden is a
   question in Claude Code or Codex, counted the same. OpenClaw's own docs say the same
   of theirs.
 
@@ -716,9 +716,9 @@ only the provider knows.
 | `packages/editor/src/ai/run.ts` | The fence, the answer's span, the stream, the stop |
 | `apps/desktop/src/lib/ai/providers.ts` | The six kinds, and the wire of the four that are asked over it |
 | `apps/desktop/src/lib/ai/stream.ts` | Server-sent events, split safely |
-| `apps/desktop/src/lib/ai/complete.ts` | The one request nib makes, down whichever road |
+| `apps/desktop/src/lib/ai/complete.ts` | The one request Orden makes, down whichever road |
 | `apps/desktop/src/lib/ai/keys.ts` | Where a key lives, per platform |
-| `apps/desktop/src/lib/ai/chatgpt.ts` | A ChatGPT plan's token of the hour, and its refusals in nib's words |
+| `apps/desktop/src/lib/ai/chatgpt.ts` | A ChatGPT plan's token of the hour, and its refusals in Orden's words |
 | `apps/desktop/src/lib/ai/local/` | Claude Code and Codex: a question put, their lines read, their state, their sign-in |
 | `apps/desktop/src/lib/ai/accounts.ts` | What an account is: providers, the one in use, ids, the move from the window's own rows |
 | `apps/desktop/src/lib/ai/accounts-file.ts` | Where the accounts are kept: the crate's file, or a browser's storage |

@@ -66,7 +66,7 @@ tell them apart at a glance and without reading a word.
 **Categories in capitals.** `CHAT`, `PLANNING`, `VOICE CHANNEL` - the same trick
 Notion uses, on a screen where it matters more.
 
-## What nib gets right
+## What Orden gets right
 
 The editor. `desktop-light-files.png`: the measure, the heading scale, the
 padding, the syntax characters bleeding in as they are typed. Nothing in this
@@ -81,11 +81,11 @@ inventing a second way.
 
 The structure. One document at a time on a handheld, the sidebar as a drawer
 over the note, and a panel that is a place with a name at the top of it. That is
-Discord's structure, and it is the correct one for what nib is - all of it
+Discord's structure, and it is the correct one for what Orden is - all of it
 except the rail, which is where a place with a hundred servers keeps its
-identity and nib has three spaces. See "The rail is gone".
+identity and Orden has three spaces. See "The rail is gone".
 
-## What nib gets wrong
+## What Orden gets wrong
 
 **The list panel has no subject.** `desktop-light-files.png` and
 `phone-files.png`: four unlabelled icon tabs float in the top-left corner, and
@@ -95,18 +95,18 @@ Discord's first move - name the place - is simply missing.
 
 **Nothing can be searched from where you are.** Search is one of four icons that
 look like the other three. Discord gives it a pill under the header because it
-is the one thing you can always do; nib buries it in a tab strip with no labels.
+is the one thing you can always do; Orden buries it in a tab strip with no labels.
 
 **The marks are too small, and Emil is right about it.** 13px marks at 0.75
 opacity beside 12.5px names. Notion is 18 against 15, Obsidian 16 against 13.
-nib is the only one of the three where the mark is smaller than the word it
+Orden is the only one of the three where the mark is smaller than the word it
 belongs to and faded on top of that. In `phone-files.png` the rows are 56px tall
 and the mark inside them is 15px, which is a thumb-sized row with a pointer-sized
 mark in it.
 
 **No row is ever filled.** The open note is bold text and an accent-coloured
 mark. In `desktop-dark-files.png` that is nearly invisible. All three references
-fill the row; nib is the only one that does not, on the surface people look at
+fill the row; Orden is the only one that does not, on the surface people look at
 most.
 
 **Six lists, six rows.** `Tree.svelte`, `Bookmarks.svelte`, the outline in
@@ -258,7 +258,7 @@ how wide it is in the space it sits in, and nothing else.
 
 `is-quiet` is the row that is a name with nothing written under it yet: muted ink
 for the mark and the words together. The file list is the one place it appears -
-a folder out of somebody's vault, which nib draws as the note nobody has written.
+a folder out of somebody's vault, which Orden draws as the note nobody has written.
 That the list has one kind of row at all, and what a click, a twist and a drag on
 it each mean, is `docs/tree.md`.
 
@@ -285,7 +285,7 @@ the app's look, and the system's own Transparency effects or Reduce transparency
 it off everywhere. So the glass theme is the translucent one; a reader who had the row on
 under the built-in theme is given glass once.
 
-And glass is what nib opens in: a first launch is glass, in green, following the system
+And glass is what Orden opens in: a first launch is glass, in green, following the system
 (Emil, 2026-10-12; green since 2026-10-13, yellow the day before). The theme is not
 written down until somebody chooses one, so an install that never has stays on that look
 and can still be offered the contrast theme; the accent is, because it follows the
@@ -323,7 +323,7 @@ browser, `readFrame` on a frame of the app's own origin), else - where the top i
 or the points disagree - the top rows of the still the window already took as the page
 landed. The frame is that colour over the material, and the web bar and the open tab are it
 solid, so tab, bar and page are one surface: the active web tab does take the page's colour,
-as Safari's compact tab does, because in nib the bar between the tab and the page takes it
+as Safari's compact tab does, because in Orden the bar between the tab and the page takes it
 too, and a neutral tab over a coloured bar would cut the one surface in two. A site's favicon,
 while its page has said nothing, is Chrome's and Arc's: a tone of it mixed into the scheme's
 own chrome. Orden's spaces have no colour of their own, so there is no space step.
@@ -413,7 +413,7 @@ typed into on the built-in theme, glass and the wallpaper, all at a median of on
 
 Glass is offered on every platform: Windows puts Mica Alt, Mica or Acrylic under the colour;
 macOS (whose webview is opaque without the private API), Linux, the browser and a phone stand
-it on the paper. Nothing scrolls under nib's frame, so no `backdrop-filter` is spent anywhere.
+it on the paper. Nothing scrolls under Orden's frame, so no `backdrop-filter` is spent anywhere.
 
 Two tokens carry it. `--window-ground` is `--bg` in every window there has ever been,
 and `transparent` over the material; `html` and `body` are painted with it.
@@ -967,7 +967,7 @@ at 22%, which is the strength `--accent-soft` is - a highlight has to be read
 through. Said once and not per scheme, because each is written in terms of a
 canvas tone and a custom property is substituted where it is used. There is no
 `--mark-3`: Obsidian writes no yellow emoji, because a plain highlight is already
-its yellow, and a colour nib could write but Obsidian could not read is not a
+its yellow, and a colour Orden could write but Obsidian could not read is not a
 colour.
 
 And it is asked the same way wherever it is asked: a row of dots, the chosen one
@@ -1005,7 +1005,7 @@ field taking the keyboard puts the system's own over half the sheet.
 
 ### Hints
 
-nib explains nothing in its own text, so a feature somebody has not found gets a card
+Orden explains nothing in its own text, so a feature somebody has not found gets a card
 beside the control it lives behind, the way Google Docs and Notion point at theirs:
 one line saying what it does, pressed to do it, and a cross to put it away. At most
 one a session, not before the window has been open twenty seconds, never again once
@@ -1137,7 +1137,7 @@ checkbox, chips for a list, a menu where the app has fixed answers - and a row t
 one. A key is renamed by a double click on it or from its menu, and removed from its
 menu. Every change is one edit of exactly the characters that change, through
 `property-edits.ts` in @orden/markdown, into the note's own document: the note's own
-undo takes it back, and every pane showing the note has it at once. A block nib cannot
+undo takes it back, and every pane showing the note has it at once. A block Orden cannot
 read without guessing - a comment, a nested shape - is shown as the YAML it is and not
 turned into rows. A tag in a `tags` list asks the space about itself, as a tag does
 everywhere else.
@@ -1278,7 +1278,7 @@ in Help.
 ### The theme picker
 
 A right click on the light and dark switch, a finger held on it, or Switch theme in
-the palette: every theme as a card of nib in its own colours, a theme with both
+the palette: every theme as a card of Orden in its own colours, a theme with both
 schemes cut on the diagonal the way a Mac draws Auto, the three schemes as marks at
 the top and the accents as dots at the foot. Pointing - the pointer or the arrows -
 puts that theme, scheme or accent on the whole app at once and writes nothing down;
@@ -1330,7 +1330,7 @@ dress the table in the editor, on paper and on a published page; see
 ### On a phone
 
 Modelled on Discord, because the structure is already the same - minus the rail,
-which Discord earns and nib does not:
+which Discord earns and Orden does not:
 
 - The drawer is the list panel, the whole width of the screen, with the same
   four rows the desktop has at the touch scale: the head, the tabs, the search
@@ -1340,7 +1340,7 @@ which Discord earns and nib does not:
   the same corner of the screen, so the top left means one thing whether the
   drawer is open or shut.
 - **No bottom bar.** Discord earns one because it has three unrelated app-level
-  places: servers, notifications, and you. nib has one place - your notes - and
+  places: servers, notifications, and you. Orden has one place - your notes - and
   the other two candidates are already where they belong: search is the pill at
   the top of the list, and "you" is the first thing in the panel's own foot. A
   bar of three tabs where one is always selected would spend 56px of a phone

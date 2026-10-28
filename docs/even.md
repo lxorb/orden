@@ -689,7 +689,7 @@ both undocumented and inert - and a flick only turned a page the reader could no
 So the app scrolled it instead, a line at a time, which is the app turning pages of
 one row: the same mechanism with a worse page, no page number worth showing, and a
 second answer to a question that has one. Emil, on 0.8.1: *"please remove the
-scrolling 'nib turns the pages / glasses scroll' setting from the glasses section of
+scrolling 'Orden turns the pages / glasses scroll' setting from the glasses section of
 the settings. Effectively it should be always nib who turns the pages."* So the row,
 the field, the stored key, the mode and the code path behind it are all out, and the
 page number means something on every page again.

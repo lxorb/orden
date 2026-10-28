@@ -109,7 +109,7 @@ another unit would be one conversion away from every sum in the app.
 
 `long` is the infinite-height mode. It grows downwards in whole screenfuls when
 writing reaches within a screenful of the bottom, after an edit and never during
-one, so the paper does not move under the nib. A4 never grows: writing past the
+one, so the paper does not move under the Orden. A4 never grows: writing past the
 bottom of a sheet of A4 is writing off the sheet, and the page that grows instead
 of ending is the one somebody chose for exactly that.
 
@@ -311,7 +311,7 @@ paper.
 Every road in ends in the same place. The Import door's detector recognises a picked
 file that is nothing but PDFs and offers "A PDF, as pages to write on" - one row on
 the existing sheet, not a second door. A PDF dropped onto the file list on its own,
-and one another program opened with nib, are the same the moment they land. And a
+and one another program opened with Orden, are the same the moment they land. And a
 PDF that was already in the space becomes one the first time it is opened, in the
 folder it was in and under its name. What comes out is one thing:
 
@@ -445,7 +445,7 @@ and none of them for the same reason twice.
 | App | Format | Documented? | Verdict |
 | --- | --- | --- | --- |
 | Samsung Notes | `.snb`, `.sdoc`/`.sdocx` | No published specification. `.snb` is Samsung's own container; the newer `.sdoc` family replaced it and is undocumented too. Samsung Notes itself exports PDF, Word, PowerPoint, images. | **Cannot.** Nothing to write against but a reverse-engineering effort we would have to do and then maintain against an app that has already changed format once. Import a PDF instead - which is what Samsung Notes exports. |
-| Apple Notes | `NoteStore.sqlite` + protobuf in the app's group container | No specification; what everybody does instead is read the database, which is what nib's own Apple Notes import does on macOS (see `import/apple.ts`). The *words* therefore already come over. A **drawing** in a note is a separate proprietary blob in that database and is not read by it. | **The prose, yes, already. The handwriting, no.** Nothing documents the drawing blob, so a scribble in Apple Notes arrives as a note without its scribble. The road for that one is Apple's own PDF-per-note, imported as pages. |
+| Apple Notes | `NoteStore.sqlite` + protobuf in the app's group container | No specification; what everybody does instead is read the database, which is what Orden's own Apple Notes import does on macOS (see `import/apple.ts`). The *words* therefore already come over. A **drawing** in a note is a separate proprietary blob in that database and is not read by it. | **The prose, yes, already. The handwriting, no.** Nothing documents the drawing blob, so a scribble in Apple Notes arrives as a note without its scribble. The road for that one is Apple's own PDF-per-note, imported as pages. |
 | OneNote | `.one` (MS-ONE / MS-ONESTORE) | *Genuinely published* by Microsoft as an Open Specification - the one on this list that is. But it is a large binary revision-store format, and the ink in it is `PictureContainer`/ink-stroke structures that would need their own reader and writer. | **Not attempted.** Possible in principle; a batch of its own, not a row in this one. The HTML export path already exists (`import/read.ts` detects OneNote HTML). |
 | GoodNotes | `.goodnotes` / `.note` | No published specification. | **Cannot.** GoodNotes exports PDF. |
 | Notability | `.note` | No published specification. | **Cannot.** Notability exports PDF. |
@@ -472,8 +472,8 @@ strokes whole; presence and remote pointers through `CanvasHands`; undo per devi
 The same bar, drawn bigger where a thumb has to land on it - there is no second UI,
 because `CanvasBar` already answered that question for the canvas. Palm rejection
 is the canvas's rule in the canvas's own code: once a pen has touched this glass
-the finger stops being a nib and goes back to moving the paper, and a finger that
-lands while a nib is down does nothing at all rather than dragging the page out
+the finger stops being a Orden and goes back to moving the paper, and a finger that
+lands while a Orden is down does nothing at all rather than dragging the page out
 from under the pen. A phone that has never seen a pen draws with a finger, because
 nothing else can. See `inks` in `canvas/pointer.ts` and `hand.svelte.ts`.
 

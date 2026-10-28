@@ -1,7 +1,7 @@
 # The online terminal
 
-A design and a plan. It decides how nib gets a terminal whose shell runs on a Linux machine in
-the cloud rather than on the reader's computer: the same terminal on every nib that opens it,
+A design and a plan. It decides how Orden gets a terminal whose shell runs on a Linux machine in
+the cloud rather than on the reader's computer: the same terminal on every Orden that opens it,
 watched and typed in by the people of a space, and still running - an agent included - when
 every window is closed. Section 6 is the plan the lanes build from.
 
@@ -19,7 +19,7 @@ Read with `docs/terminal.md` (the local terminal and Remote, whose surface, name
 keys this reuses), `docs/sync-v2.md` (the hub, rooms, devices and the Durable Objects this
 builds on), `docs/chats.md` (the other new document kind that lives in a space and is shared
 through its roles), `docs/sharing.md` and `docs/collaboration.md` (the roles), `docs/ai.md`
-(what nib may and may not do with somebody's Claude or ChatGPT login) and
+(what Orden may and may not do with somebody's Claude or ChatGPT login) and
 `docs/agent-native.md` (the agent's verbs). Nothing here loosens any of them. Prices and limits
 were read from each provider's own pages on 2026-10-04 (Sources).
 
@@ -27,7 +27,7 @@ were read from each provider's own pages on 2026-10-04 (Sources).
 
 Each has a recommendation, and the design below assumes it.
 
-1. **Provider: Cloudflare Containers**, through Cloudflare's Sandbox SDK, on the account nib
+1. **Provider: Cloudflare Containers**, through Cloudflare's Sandbox SDK, on the account Orden
    already runs on. Fly.io Machines stays the fallback behind the same interface (6.1).
    **Since 2026-10-06: a Hetzner Cloud CX43 per person, always on (4.15)**; the containers
    stay behind the same interface for now.
@@ -45,7 +45,7 @@ Each has a recommendation, and the design below assumes it.
 7. **Watching, not typing, by default.** Others in a shared space watch; the machine's owner
    switches typing on per terminal. Link guests only ever watch.
 8. **Claude Code and Codex preinstalled, unmodified**; each person signs in with their own
-   login inside their machine, and nib never reads it.
+   login inside their machine, and Orden never reads it.
 9. **A home is kept 90 days after its machine was last awake**, with a mail at 60, then deleted.
 
 ## The short version
@@ -56,7 +56,7 @@ Each has a recommendation, and the design below assumes it.
    account, in the EU.
 2. **An online terminal is a document in a space**, `Build.term`, made from a new tab's card (Ctrl+T or the plus)
    (**O**), renamed, moved, bookmarked and trashed like a note. It names one shell session on
-   its owner's machine. Every nib that opens it - another computer of the same person, a phone,
+   its owner's machine. Every Orden that opens it - another computer of the same person, a phone,
    the browser at orden.so, a colleague in the space - shows the same session.
 3. **One shell, many screens.** In the machine, a small daemon, `nibd`, owns every session's
    pty and keeps its screen in a headless xterm.js, so a late joiner is sent the screen as it
@@ -85,7 +85,7 @@ Each has a recommendation, and the design below assumes it.
 
 Three things a local terminal cannot do:
 
-- **Keep working when nib is closed.** An agent given a task at night is still running in the
+- **Keep working when Orden is closed.** An agent given a task at night is still running in the
   morning, on a machine that is its own, with no laptop left open.
 - **Be the same terminal everywhere.** The session started on the desktop is the one on the
   phone on the train and in the browser on somebody else's computer, mid-command, with its
@@ -93,7 +93,7 @@ Three things a local terminal cannot do:
 - **Be shared.** Two people look at, and when the owner lets them, type into one shell: pair
   debugging, watching an agent work, showing a teammate a failure.
 
-And one it does that nib did not: **a terminal on a phone and in the browser build**, which have
+And one it does that Orden did not: **a terminal on a phone and in the browser build**, which have
 no shell of their own to give (`docs/terminal.md`).
 
 What matters to a person using it, in order: it is there at once and looks like the terminal
@@ -116,12 +116,12 @@ machine can never reach theirs.
 | **E2B, Daytona, Modal** (section 3) | sandboxes for agents, by API | pause and resume with memory (E2B, Daytona's VMs, Modal's experimental snapshots) | session caps of 1 to 24 hours; priced for short runs |
 | **tmux** | sessions that outlive their client | `window-size latest`: the size of the client used last | needs a machine of your own |
 
-### 2.2 What nib takes, and what it leaves
+### 2.2 What Orden takes, and what it leaves
 
 - **Takes** Codespaces' idle stop with output counting as activity, and its kept disk; Replit's
   server-side screen; Live Share's read-only default and "only the owner starts one";
   tmux's `latest` size; sshx's presence; Codespaces' VM per person.
-- **Leaves** Codespaces' lost screen (nib's terminals already keep theirs, `docs/terminal.md`);
+- **Leaves** Codespaces' lost screen (Orden's terminals already keep theirs, `docs/terminal.md`);
   tmate's typing-by-default link; Replit's smallest-pane size; any lifetime cap on a machine
   that is working; any idle rule that only counts keystrokes, which would stop an agent.
 
@@ -147,7 +147,7 @@ runs Claude Code and a node build comfortably.
 | free | 25 GiB-h, 375 vCPU-min, 200 GB-h a month per account on Workers Paid (already paid) | a 2-hour or 7-day trial, then none | $100 once ([pricing][e2b-price]) | $200 once | $30 a month | 120 core-hours (GitHub Free) | none |
 | limits | instance types to 4 vCPU, 12 GiB, 20 GB disk; at least 3 GiB per vCPU; 1,500 vCPU and 6 TiB per account ([limits][cf-limits]) | suspend needs ≤ 2 GB, no swap | 20 (Hobby) or 100 (Pro, $150/month) at once | org quotas | - | - | the box |
 | regions near Zurich | `eu` jurisdiction (WEUR, EEUR) ([placement][cf-place]); a container may start away from its object | fra, ams, cdg; no Swiss region ([regions][fly-regions]) | EU on Pro, by support | `eu` | multiplier 1.15-1.75× when pinned | - | Falkenstein, Nuremberg, Helsinki |
-| another vendor for nib | no: same account, same Worker, D1, R2 and Durable Objects | yes | yes | yes | yes | not offerable to others | yes, and the ops |
+| another vendor for Orden | no: same account, same Worker, D1, R2 and Durable Objects | yes | yes | yes | yes | not offerable to others | yes, and the ops |
 
 ### 3.2 Isolation, and how often it broke
 
@@ -156,7 +156,7 @@ runs Claude Code and a node build comfortably.
   symlink in the jailer that could overwrite a host file (GHSA-36j2-f825-qvgc, January) and an
   out-of-bounds write in the virtio-pci transport (CVE-2026-5747, April), which needs the
   opt-in `--enable-pci`; "the legacy MMIO transport is the default and is not affected"
-  ([AWS bulletin][fc-bulletin], [advisories][fc-adv]). Both fixed by the operators, not by nib.
+  ([AWS bulletin][fc-bulletin], [advisories][fc-adv]). Both fixed by the operators, not by Orden.
 - **gVisor** (Modal; self-hosted on a VPS): one escape, CVE-2018-16359; the recent ones
   (CVE-2024-10026, CVE-2024-10603, CVE-2025-2713) are leaks, not escapes ([gVisor][gvisor-sec]).
   A kernel written again in Go, so a kernel bug in Linux is not an escape.
@@ -165,7 +165,7 @@ runs Claude Code and a node build comfortably.
   CVE-2025-31133, -52565 and -52881 ([Sysdig][runc-2025]). Not enough for strangers' code.
 
 Emil asked that you "can't break out of it". A VM per person, run by a company that patches
-it, is the strongest of these that nib can afford; a container of nib's own on a VPS is the
+it, is the strongest of these that Orden can afford; a container of Orden's own on a VPS is the
 weakest, and makes Emil the one who patches it at night.
 
 ### 3.3 What one machine costs
@@ -190,7 +190,7 @@ hours a month: two hours a day at the keyboard and two of an agent working alone
 
 **Cloudflare Containers through the Sandbox SDK**, because:
 
-- **It is where nib already is.** The `Machine` is a Durable Object beside `NoteRoom` and
+- **It is where Orden already is.** The `Machine` is a Durable Object beside `NoteRoom` and
   `AccountHub`, in the same Worker; the door asks the same D1 for the same roles; the home's
   backups go to the same R2; the account is already on Workers Paid; and the bill is one bill.
   Every other host is a second vendor, account, card, abuse inbox and deploy.
@@ -201,9 +201,9 @@ hours a month: two hours a day at the keyboard and two of an agent working alone
 - **Pay for CPU used**, not CPU reserved: an agent waiting on the model costs memory, not CPU.
 - **In the EU** by configuration, near Zurich.
 - **The SDK already has** a WebSocket PTY behind the object, snapshots, R2 directory backups and
-  an outbound policy, so nib writes the product, not the platform.
+  an outbound policy, so Orden writes the product, not the platform.
 
-What it costs nib in design, and how each is met:
+What it costs Orden in design, and how each is met:
 
 - **No memory across a sleep.** Processes end; files are kept by snapshot and backup (4.3),
   screens by `nibd` (4.6), and an agent's conversation by the agent itself (`claude --continue`,
@@ -255,7 +255,7 @@ services/machine/Dockerfile, around 1.5 GB, so a cold start stays in Cloudflare'
   every sign-in method left in, as Anthropic's terms for "preinstalling or running Claude Code
   in your products or services (e.g. in hosted sandboxes ...)" require - terms Emil accepted
   for nibeditor on 2026-10-01 ([Anthropic][cc-legal]).
-- **`nibd`** (4.6), the one program of nib's in the machine, as root, started by the image's
+- **`nibd`** (4.6), the one program of Orden's in the machine, as root, started by the image's
   entrypoint, which also puts Cloudflare's per-instance CA into the trust store (4.8) and sets
   `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE` and `REQUESTS_CA_BUNDLE` for everything after it.
 
@@ -293,7 +293,7 @@ at 20 minutes and decides itself, on an alarm every minute while awake, with one
 (`awake` in `@orden/online`, 6.1). The machine stays awake while **any** of:
 
 - **somebody is using one of its terminals**: a socket is open from a device whose person is
-  **active** by the hub's own rule - a key or the pointer in nib in the last 5 minutes
+  **active** by the hub's own rule - a key or the pointer in Orden in the last 5 minutes
   (`docs/sync-v2.md`, 6.2) - and that terminal is on their screen. A tab left open on a second
   monitor overnight does not keep a machine awake;
 - **something in it is working**: in the last 15 minutes a session printed anything, or the
@@ -453,19 +453,19 @@ in ChatGPT's security settings, [auth][codex-auth]). The address is a link in th
 Ctrl+click opens it in a web tab beside it, as any link does. The credentials land in the
 person's home (`~/.claude`, `~/.codex/auth.json`), which is theirs as a laptop's would be.
 
-What this is, in Anthropic's words, and why nib may do it ([legal][cc-legal]): the same page
+What this is, in Anthropic's words, and why Orden may do it ([legal][cc-legal]): the same page
 that forbids developers to "collect, store, or intermediate Claude.ai credentials" says it does
 not "prevent an end user from signing in to the unmodified Claude Code binary with their own
-Claude subscription, including where a platform hosts Claude Code". So nib keeps to the four
+Claude subscription, including where a platform hosts Claude Code". So Orden keeps to the four
 things it keeps to on the desktop:
 
 - the binary is Anthropic's, unmodified, with every sign-in method left in;
-- every person signs in with their own credentials, and nib never pays for, resells or routes
+- every person signs in with their own credentials, and Orden never pays for, resells or routes
   anybody's usage;
-- **no code of nib's reads a token**: `nibd` never opens anything under `~/.claude` or
+- **no code of Orden's reads a token**: `nibd` never opens anything under `~/.claude` or
   `~/.codex`, the Worker never sees the providers' traffic decrypted (4.8), and the backups are
-  bytes nib stores and never parses;
-- nib says "runs Claude Code" in plain words, and never uses its name or logo as its own.
+  bytes Orden stores and never parses;
+- Orden says "runs Claude Code" in plain words, and never uses its name or logo as its own.
 
 OpenAI says to treat `auth.json` "like a password". It is one: whoever can type in a session
 can read it, which is why typing is the owner's alone by default (4.6).
@@ -473,19 +473,19 @@ can read it, which is why typing is the owner's alone by default (4.6).
 **Resume.** When a machine wakes and a session's saved program was `claude` or `codex`, the tab
 shows one quiet bar under the restored screen, **Resume**, which types `claude --continue` or
 `codex resume --last` into the fresh shell. Enter is Resume too. The agents keep their own
-conversations in the home, so nothing of nib's holds them.
+conversations in the home, so nothing of Orden's holds them.
 
 **Notifications.** An agent that stops to ask, or finishes, sets its title (Claude Code does),
 and the owner's devices are told through the push module `docs/chats.md` lane 6 builds, once it
 exists: _Build is waiting._ Until then the tab's mark shows it.
 
-**Later**: nib's own agent verbs (`run_terminal`, `docs/agent-native.md`) reaching an online
+**Later**: Orden's own agent verbs (`run_terminal`, `docs/agent-native.md`) reaching an online
 terminal under the same grant and questions as a local one.
 
 ### 4.8 Security
 
 **Isolation.** A Firecracker microVM per machine (3.2). Nothing privileged runs outside it on
-nib's behalf: there is no host of nib's, no Docker socket, no shared volume between machines.
+Orden's behalf: there is no host of Orden's, no Docker socket, no shared volume between machines.
 Inside, the user is root by `sudo`, which is the point; the VM is the boundary. Machines cannot
 reach each other: no private network is configured, and `deniedHosts` holds every private
 range and the metadata addresses.
@@ -499,11 +499,11 @@ fork bomb ends in its own session.
 ([outbound][cf-out]). HTTP and HTTPS go anywhere not in `deniedHosts` (private ranges, metadata
 addresses, a maintained list of mining pools). HTTPS through the host needs `interceptHttps`
 and the per-instance CA Cloudflare puts at `/etc/cloudflare/certs/`, whose key "never leaves
-the container runtime sidecar" ([egress][cf-egress-src]). **The rule nib holds to**: the AI
+the container runtime sidecar" ([egress][cf-egress-src]). **The rule Orden holds to**: the AI
 providers' traffic is forwarded by Cloudflare's sidecar and never handed to a Worker handler of
-nib's, because a handler would hold the person's token in the clear (4.7). The infra lane proves on day one
+Orden's, because a handler would hold the person's token in the clear (4.7). The infra lane proves on day one
 which configuration gives that (an allow-list forward with no catch-all handler; or handlers by
-host only for what nib meters); if none does, nib installs no outbound handler at all and
+host only for what Orden meters); if none does, Orden installs no outbound handler at all and
 meters egress from Cloudflare's own figures.
 
 **Rate limits**, as `limits` rows: machine starts 6 an hour, sessions made 30 a day, sockets per
@@ -520,11 +520,11 @@ session 25, input 100 frames a second a person; egress 20 GB a month on the free
   it go (`/admin/machines/:id`). Reports reach `abuse@orden.so`.
 
 **Secrets.** Cloudflare's advice is to "assume that the code uses everything it can reach"
-([security][cf-sb-sec]), so nib puts none of its own in a machine: no Worker secret, no
-account token, no key of nib's. `nibd`'s link secret is per boot and opens only `nibd`. A
+([security][cf-sb-sec]), so Orden puts none of its own in a machine: no Worker secret, no
+account token, no key of Orden's. `nibd`'s link secret is per boot and opens only `nibd`. A
 person's own secrets are theirs, in their home; Settings never offers to inject any (Codespaces' secrets are a
 later feature, if ever). Backups are encrypted at rest by R2; the operator could read a home,
-as any host could, and nib's code never does - stated in the terms, as chats state their own.
+as any host could, and Orden's code never does - stated in the terms, as chats state their own.
 
 **Kill switches**, each one request:
 
@@ -542,9 +542,9 @@ sees their machine's in Settings, Emil sees all.
 
 **Who gets one** (decision 4): the allow-list (`users.online`), signed in; later any account
 with a second factor on (a stolen session would be a machine holding somebody's agent login)
-and at least seven days old. **Terms**: nib has none published yet. Before anybody outside the
+and at least seven days old. **Terms**: Orden has none published yet. Before anybody outside the
 allow-list: a page at orden.so/terms with the online terminal's part - no mining, mail,
-scanning, attacks or illegal content; no getting round the limits; nib may stop a machine and
+scanning, attacks or illegal content; no getting round the limits; Orden may stop a machine and
 reads its metadata (the audit above), never its contents unless the law makes it; homes are
 deleted 90 days after the machine was last awake; no promise it is always there; a machine is
 for its owner's use, as the agents' own plans are.
@@ -568,14 +568,14 @@ home, egress) and the reset date; the machine's mark on a tab turns amber at 80%
 
 **Options for Emil, later** (none built in this round):
 
-- **a paid tier**, through Stripe (nib takes no payment today): for example CHF 6 a month for
+- **a paid tier**, through Stripe (Orden takes no payment today): for example CHF 6 a month for
   150 awake hours, 20 GB of home, a 1 vCPU / 4 GiB machine, and **Keep awake** for CHF 20 more
   (a small machine always on costs about $17.70, 3.3);
 - **bring your own machine**: `nibd` installed on a server of the person's own, dialling out to
-  their `Machine`, so sharing and every screen work the same at no cost to nib. Remote (SSH)
+  their `Machine`, so sharing and every screen work the same at no cost to Orden. Remote (SSH)
   already covers using one's own server alone;
 - **bring your own cloud key**: the person's own Cloudflare or Fly account running their
-  machine. Possible behind `MachineHost`, but a key of theirs held by nib is a secret nib would
+  machine. Possible behind `MachineHost`, but a key of theirs held by Orden is a secret Orden would
   have to keep; the least attractive of the three.
 
 ### 4.10 In the app
@@ -614,7 +614,7 @@ home, egress) and the reset date; the machine's mark on a tab turns amber at 80%
   connects when looked at. Split and Open another make a new `.term` beside it.
 - **Closing** an online terminal's tab never asks: nothing ends.
 - **Later: the machine's files as a space**, a space whose folder is the machine's home, so a
-  note written by the agent is a note in nib. It needs the same remote file operations
+  note written by the agent is a note in Orden. It needs the same remote file operations
   `docs/terminal.md` leaves for the SFTP space, and is designed with it.
 - **Later: ports**: a server the person runs in the machine opened in a web tab through the
   Sandbox SDK's preview address, behind the owner's session.
@@ -670,7 +670,7 @@ on the person's computer, port forwarding for the sign-in's way back, and the cl
   machine's owner on that session - the device that typed there last, else the one seen
   last - and to nobody else: a watcher is never sent a page by somebody else's machine.
   Only `http` and `https` (`isWebUrl` in `@orden/online/urls`), at most ten a minute at
-  `nibd` and at `Machine`, six a minute a terminal in the app. With no nib connected,
+  `nibd` and at `Machine`, six a minute a terminal in the app. With no Orden connected,
   `nib-open` fails and the program prints the address, as it does on any headless box.
 - **Where it opens** is where a link from the terminal opens (`lib/online/opening.svelte.ts`):
   a web tab beside the terminal on a desktop - in front while the terminal is what the
@@ -706,7 +706,7 @@ on the person's computer, port forwarding for the sign-in's way back, and the cl
   `/etc` and a check before the write is a race, so the folder, the clearing and the write
   are one `sh` run through the shells' own `setpriv` (`asUser` in limits.ts), the bytes on
   its input and the path said back, and nothing of root's touches the home. The file is
-  `0600`, never written through (`set -C`), and only pictures of nib's own naming
+  `0600`, never written through (`set -C`), and only pictures of Orden's own naming
   (`NAMED`) are cleared after a day; `services/machine/src/images.ts`. `nibd` then
   answers `image {id, path}`, which `Machine` sends to the sockets that may type. The app
   pastes the path, which the agent takes as an image. 16 MB at most (`MOST_IMAGE`). See
@@ -810,7 +810,7 @@ killed, and the warning that a firewall change can lock its owner out).
   cannot name a tunnel made for one person at run time.
 - **What is installed is said once.** `services/machine/install.sh` installs the system (apt's
   signed repositories, gh's, node from its tarball against `SHASUMS256.txt`, uv against its
-  `.sha256`), the user `nib` with sudo, and nib's own files. The Dockerfile runs it for the
+  `.sha256`), the user `nib` with sudo, and Orden's own files. The Dockerfile runs it for the
   Cloudflare image; cloud-init runs it with `--server`, which adds `cloudflared` from
   Cloudflare's signed repository, the systemd units, unattended security upgrades (never an
   automatic reboot), 4 GB of swap, and SSH shut: no root, no passwords, off unless a key is set.
@@ -930,12 +930,12 @@ tmux started from a service dies with it unless it is moved to a scope of its ow
 - **The first restart after this is deployed** still ends the shells there are: a `nibd`
   without holders started them.
 
-## 5. What nib does not do
+## 5. What Orden does not do
 
 - **Machines per space**, or machines several people pay for (4.1).
 - **Memory across a sleep** on Cloudflare (3.4); Fly behind `MachineHost` if it is ever needed.
-- **SSH into the machine from outside**, or inbound ports: the way in is nib.
-- **Secrets injected by nib**, or nib's own login for any agent (4.7).
+- **SSH into the machine from outside**, or inbound ports: the way in is Orden.
+- **Secrets injected by Orden**, or Orden's own login for any agent (4.7).
 - **Typing by link guests** (4.6).
 - **Recording keystrokes or screens** for anybody but the person's own screen cache (4.8).
 - **GPUs, Windows machines, several machines per person.** Later, if ever.
@@ -943,7 +943,7 @@ tmux started from a service dies with it unless it is moved to a scope of its ow
 ## 6. The implementation plan
 
 Six lanes in three waves, at most six agents at once. Each lane reads this document,
-`docs/conventions.md` and the rules for every nib agent first, writes tests for its logic, adds
+`docs/conventions.md` and the rules for every Orden agent first, writes tests for its logic, adds
 every new string to every catalogue in `apps/desktop/src/locales`, and never raises the
 first-paint budget. Files in the app are relative to `apps/desktop/src`, in the Worker to
 `services/sync/src`; the new package is packages/online, `@orden/online`; the machine's own code
@@ -1004,7 +1004,7 @@ interface MachineHost {
 `ContainerHost` and `DevHost` are in `machines/host.ts`, `HetznerHost` in
 `machines/hetzner-host.ts`; `hostOf` picks one by `machines.host`.
 
-`nibd` is told nothing of nib's accounts: it speaks the link protocol and nothing else.
+`nibd` is told nothing of Orden's accounts: it speaks the link protocol and nothing else.
 
 ### 6.2 The lanes
 
@@ -1045,8 +1045,8 @@ section _An online terminal_), `docs/keyboard.md`, `docs/design.md` and `docs/mo
 - **The Sandbox SDK is young.** Everything goes through `MachineHost`; the version is pinned;
   lane 3 proves start, link, snapshot, backup and restore on day one against Cloudflare's
   local runner where Docker is available, and documents what could not be proved locally.
-- **HTTPS egress and the providers' tokens.** If no configuration keeps them out of nib's
-  handlers, nib runs with no handler and meters from Cloudflare's figures (4.8). Never the
+- **HTTPS egress and the providers' tokens.** If no configuration keeps them out of Orden's
+  handlers, Orden runs with no handler and meters from Cloudflare's figures (4.8). Never the
   other way round.
 - **Restarts nobody asked for** kill a working agent. Saving on SIGTERM and Resume make it an
   interruption, not a loss; if it proves frequent, Fly's suspend behind `MachineHost`.

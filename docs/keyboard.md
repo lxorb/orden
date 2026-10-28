@@ -208,7 +208,7 @@ which loses nothing, where a copy made by a key meant for the tab is a file nobo
 for (and Explorer's own Ctrl+D deletes). It can be given Finder's Cmd+D in the list.
 
 The file list is a list of buttons and not an ARIA `tree`. The roles were left
-off on purpose: nib's markup puts what a row holds beside the row rather than
+off on purpose: Orden's markup puts what a row holds beside the row rather than
 inside it - one flat column, in which what a note holds is the rows under it - and
 a `tree` built that way announces worse than no tree at all. The keys are the tree
 keys either way. Each row does say how many rows there are and which of them it is
@@ -240,12 +240,12 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+Alt+click on a link to a note | the same, from the note: the linked note in a pane to the right, made first if the space has none by that name. A pointer gesture rather than a chord, so it is not in the registry |
 | `>`, `#`, `:` in the palette | never needed, for a hand that knows them: `>` narrows to the commands, the ones run lately first; `#` lists the headings of the note in front; `:42` goes to its line 42 - VS Code's `>`, `@` and `:` |
 | Ctrl+Shift+P | the same palette narrowed to the commands, for the hand that learned VS Code: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to everything. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
-| Ctrl+O | the palette, a second key after Shift Shift: Obsidian's quick switcher, and what a hand reaching to open something finds, since nib opens nothing from outside its spaces. It was Open file, which is gone |
+| Ctrl+O | the palette, a second key after Shift Shift: Obsidian's quick switcher, and what a hand reaching to open something finds, since Orden opens nothing from outside its spaces. It was Open file, which is gone |
 | Ctrl+P | print the note, the key every program prints with; Cmd+P on a Mac. A web tab's page has it first, as in a browser (web_keys.rs never takes it), and a terminal hands it to the shell, whose history it walks |
 | Ctrl+S | put it on the disk, which means one thing for each kind of tab. A note with a file writes itself a moment after it changes, so the key writes what is waiting at once and keeps the note in front as a version, with no question and no file picker. A tab with no file yet - a new note, plane or page note, or a web tab nobody has kept - is asked where it goes and under what name, in the small layer under its tab; see `save-place/ask.ts`. A command somebody puts on it answers instead; see `writeKey` in `shortcuts.svelte.ts` |
 | Ctrl+Shift+W | close the window; whatever is waiting to be written goes down first, and nothing is asked. On a Mac, Cmd+W in a window with nothing left open closes it too, as in Safari and VS Code |
 | Ctrl+Shift+? | every key there is, which is the Shortcuts pane in Settings. Not on a Mac, where Shift+Cmd+? is the search field every app's Help menu has; there the list is the first row of Help |
-| Ctrl+Alt+Space | **quick add**: one line over the note, its recognised words drawn as chips, landing in the space's Inbox. Once nib is running the same key opens a small window of its own over every other app (Settings, General, From any app switches that off), and moving the key in Settings moves both. Ctrl+Option+Space on a Mac, where Cmd+Ctrl+Space is the emoji picker. See docs/tasks.md 5.6 |
+| Ctrl+Alt+Space | **quick add**: one line over the note, its recognised words drawn as chips, landing in the space's Inbox. Once Orden is running the same key opens a small window of its own over every other app (Settings, General, From any app switches that off), and moving the key in Settings moves both. Ctrl+Option+Space on a Mac, where Cmd+Ctrl+Space is the emoji picker. See docs/tasks.md 5.6 |
 | Enter, Shift+Enter, Ctrl+Enter, Escape in quick add | add and keep the field for the next task (Todoist's habit); a second line for the description; add and open the note at the task; put it away. A chip clicked is words again |
 | Q | quick add, where no field has the keyboard: the Tasks panel and a view read it (`tasks.quick-add`), as Todoist's own key |
 | Tab after a date typed at the end of a task | takes the day offered quietly after the caret: the words go and `📅` and the date are written where the Tasks plugin reads them. Anything else leaves the words as typed, and Enter is the next task as always |
@@ -460,7 +460,7 @@ cards and nothing closes; the same key again, while no pane shows a tab, brings 
 pane's back - the one it showed last - and the pane being worked in stays the one being
 worked in. While any pane still shows a tab, the key puts them all down. The same chord
 under every keyboard: none of the four binds it, and VS Code's own Ctrl+Shift+D opens a
-Run and Debug view nib has not got. A page has it first, as it has Ctrl+D; a terminal
+Run and Debug view Orden has not got. A page has it first, as it has Ctrl+D; a terminal
 gives it to the app, since a shell cannot tell it from Ctrl+D. See `deselectAll` in
 `workspace.svelte.ts`.
 
@@ -499,7 +499,7 @@ window over one: the crate keeps what was asked and leaves the window where it i
 
 | | |
 | --- | --- |
-| Shift+F11 | the tab being worked in fills nib's window, and again gives the window back. Ctrl+Shift+Cmd+F on a Mac |
+| Shift+F11 | the tab being worked in fills Orden's window, and again gives the window back. Ctrl+Shift+Cmd+F on a Mac |
 
 Emil, 2026-09-30: *"a shortcut to make the current tab full screen (to toggle that). I mean
 by full screen the full window of nib, not F11 behaviour."* Both sides, the strip, the
@@ -508,7 +508,7 @@ whether it is maximised, and a web tab keeps its own bar. It is F11's key with S
 it: F11 is the screen and Shift+F11 the window, which is Sublime Text's pair for the same
 two jobs, and on a Mac the same Shift on full screen's Ctrl+Cmd+F. No browser binds
 Shift+F11, so no page is used to having it; VS Code's own (Ctrl+K Ctrl+M) is a chord,
-which nib has none of, and JetBrains' Ctrl+Shift+F12 is three keys in a corner and a
+which Orden has none of, and JetBrains' Ctrl+Shift+F12 is three keys in a corner and a
 volume key on a Mac. It is also a row of View, of the palette and of a tab's own menu.
 
 The window's bar is out of sight, and the pointer at the top edge brings it down over the
@@ -531,7 +531,7 @@ come back exactly as they were. See `lib/tab-fill`.
 
 What VS Code, Sublime and Obsidian taught every hand that writes, in the editor. Each is
 in the registry and the palette like the rest; the ones with no key have none in VS Code
-either, or want a key nib already spends.
+either, or want a key Orden already spends.
 
 | | |
 | --- | --- |
@@ -573,7 +573,7 @@ they show in Settings, show in the palette and can be rebound.
 | Ctrl+1 to 9 | the tab at that place along the strip, the ninth the last; over a note it is Ctrl+Alt, because Ctrl and a digit is a heading level there. Alt+1 to 9 and Alt+0 as everywhere |
 | Alt+Enter in the address field | the address in a tab of its own |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's own history (already there) |
-| Ctrl+F | find in page: nib's find bar over the engine's own find. Enter, Shift+Enter, Ctrl+G and F3 step, Escape closes |
+| Ctrl+F | find in page: Orden's find bar over the engine's own find. Enter, Shift+Enter, Ctrl+G and F3 step, Escape closes |
 | F12, Ctrl+Shift+I | the engine's developer tools for the page (Cmd+Alt+I on a Mac): `web.devtools` |
 | Escape, F11 | give the screen back from a video in full screen |
 | none | Mute site, which Chrome gives no key either: `web.mute`, for a reader to bind |
@@ -589,7 +589,7 @@ inside the page is Chrome's way back to the address field.
 **The browser's own chords work while the page has the keyboard.** Emil, 2026-09-27:
 *"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
 rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
-Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, nib's own Alt+0
+Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, Orden's own Alt+0
 to 9, F6 to the address field, F11, full screen, and Shift+F11, the tab filling the window,
 are never offered to the page - F11 only while no video in it holds the screen, which F11
 gives back first. F11 and Shift+F11 leave the page the keyboard: filling the screen or the
@@ -600,7 +600,7 @@ The find keys - Ctrl+F, Ctrl+G, Ctrl+Shift+G, F3 and Shift+F3 - and the address
 field's other two, Ctrl+L and Alt+D, are the page's first, as they are in Chrome, so a
 site with its own find (Google Docs, Notion, VS Code on the web) or its own Ctrl+L keeps
 them; a line of script in the page
-asks for nib's answer when nothing in it took the key (`src-tauri/src/web_opens.rs`).
+asks for Orden's answer when nothing in it took the key (`src-tauri/src/web_opens.rs`).
 **Ctrl+D is the page's first too**, as it is in Chrome, which reserves the tab and
 window chords and not its bookmark: Google Sheets fills down with it, Figma and
 Excalidraw duplicate, VS Code on the web selects the next one. When nothing in the page
@@ -635,7 +635,7 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | Ctrl+Shift+C, Ctrl+Shift+V, Shift+Insert | copy, paste. Ctrl+V pastes too on Windows, as in Windows Terminal. Cmd+C and Cmd+V on a Mac, and a selection is copied as it is made |
 | Alt and a letter no app command is on | **the shell's**, as ESC and the letter, which ConPTY hands a Windows program as the Alt chord Windows Terminal's would be: Claude Code's Alt+P, Alt+T and **Alt+V, which pastes an image** (Alt+K, which Ask about the selection is on, is asked about once) it reads off the clipboard itself (Ctrl+V on Linux and a Mac, which is the shell's there too) |
 | Alt+V, Ctrl+V off Windows, or a paste with a picture and no text, in a Remote or online terminal | **the picture carried over**: that machine's clipboard is not this one's, so the picture is written to a file there and its path pasted, which Claude Code and Codex take as an image. With no picture on the clipboard the key goes to the shell as it would have. See *Pictures* in docs/terminal.md |
-| Ctrl+F | find, in nib's find bar |
+| Ctrl+F | find, in Orden's find bar |
 | Ctrl+=, Ctrl+-, Ctrl+0 | the terminal's type, larger, smaller, as it was; the same size as Settings, General, Terminal |
 | Cmd+A, Cmd+K | select all, clear, on a Mac (Terminal's own) |
 | Enter, under a dropped or refused online terminal, or after its machine's restart stopped an agent | Reconnect, or Resume (`claude --continue`, `codex resume --last`), as the bar at its foot says. After its shell ended, a new shell in the same session |
@@ -699,7 +699,7 @@ Discord switches servers with Ctrl+Alt and an arrow, which is the same shape of
 thing. Here both of those arrows are the panes', so the two keys every app uses
 for "the one before" and "the one after" take it instead. The switcher is on the
 space bar because that is where the word is written. Arc goes to a space with Ctrl
-and its number, which in nib is the tabs, as in every browser; Slack's and
+and its number, which in Orden is the tabs, as in every browser; Slack's and
 Discord's switchers are Ctrl+K, which is a site's own palette (GitHub, Linear,
 Notion) and nib's link. Ctrl+Space is bound by no browser (Emil, 2026-10-04: *"when
 you press Ctrl+Space it should open a modal"*), and where something else wants it,
@@ -963,7 +963,7 @@ into the app's own page, never into a web tab's. So each window keeps one record
 which of its pages had the keyboard, or none, which is the app's own page; it is written
 only when the keyboard really moves - a site taking it, or a person taking it into the
 app's page with a key or into a place one types in - and never by the window's own
-activation or by nib handing a browser chord back to itself. A button pressed with the
+activation or by Orden handing a browser chord back to itself. A button pressed with the
 pointer on the way to a menu is not a place, the way Chrome's toolbar never takes the
 keyboard from the page. The window takes the record back inside the message that gives
 it the keyboard, so a click that brought it forward still lands where it clicked; only a

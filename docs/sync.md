@@ -173,7 +173,7 @@ It happens for one reason: two devices had the note, and both changed it. Nothin
 can decide which words the reader meant, so the only question is what the app does,
 and `Sync` in the settings offers the three honest answers.
 
-**Keep both copies** is what nib has always done, and the default. The other
+**Keep both copies** is what Orden has always done, and the default. The other
 device's copy lands beside the note as `Plan (from another device 2026-09-12).md`
 and the reader sorts it out with the diff in front of them. Nothing is ever lost;
 the cost is a second file in the list.
@@ -350,7 +350,7 @@ So, in `Account`: ask for a code from an authenticator app as well. Six digits,
 thirty seconds, the thing every authenticator app already does.
 
 **Why not passkeys**, which are stronger and nicer to use: a passkey is bound to
-one origin, and nib runs at `tauri://localhost` on the desktop, at
+one origin, and Orden runs at `tauri://localhost` on the desktop, at
 `http://127.0.0.1:<a fresh port every launch>` inside the glasses plugin, and at
 its own domain on the web. There is no single relying party those three can agree
 on, so a passkey would work on the web and refuse to exist on the other two. That

@@ -12,13 +12,13 @@ back/forward, and a NOTE TYPE for it so a website is a document in the space."_
 Chromium is half right, and the half that is wrong matters enough to say in the
 first paragraph: on Windows the engine is WebView2, which **is** Chromium; on
 macOS it is WKWebView, which is **WebKit** and is what Safari is built on; on
-Linux it is WebKitGTK. nib does not ship a browser engine and never will - a
+Linux it is WebKitGTK. Orden does not ship a browser engine and never will - a
 second Chromium is 150 MB and its own update channel - so a web tab is the
 system's engine, and a page that behaves differently on a Mac is behaving the way
 Safari behaves.
 
 For a while that was not true. From 2026-09-30 to 0.15 a reader on Windows could choose
-nib's own Chromium in Settings, a second build of the app on CEF fetched beside the
+Orden's own Chromium in Settings, a second build of the app on CEF fetched beside the
 first. It is gone (#305, #313): every page is on the system's engine again, and
 `src-tauri/src/retired_engine.rs` clears what that build left on a machine - the choice,
 its lock and the fetched builds - once the window is up. Chromium's profiles in
@@ -40,8 +40,8 @@ Nib-Icon=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0...
 The format is nobody's invention. `.url` is the Windows Internet Shortcut, which is
 what Explorer writes when a page is dragged out of a browser onto the desktop, and
 double-clicking one opens that page in the reader's own browser on a machine that
-has never heard of nib. It is an INI file, so a reader for it is twenty lines, and
-every program that reads one steps over a key it has no use for - which is why nib's
+has never heard of Orden. It is an INI file, so a reader for it is twenty lines, and
+every program that reads one steps over a key it has no use for - which is why Orden's
 own two keys sit in the same block rather than in a section of their own.
 
 `URL` is the format's own key and the only one it requires. `Title` is here rather
@@ -117,7 +117,7 @@ place is the device's.**
 **`.webloc` is read too, and never written.** That is the same idea on macOS - a
 plist with a `URL` string in it - and it is what Safari makes when a page is dragged
 into a folder. A space that has one in it opens it as a website rather than as a
-file nib has no use for. Only the XML kind: a binary plist is a format this app has
+file Orden has no use for. Only the XML kind: a binary plist is a format this app has
 no business carrying a parser for, and Safari writes XML.
 
 ### What it was, and why it changed
@@ -141,7 +141,7 @@ A shortcut is a document of a kind, the way a canvas and a PDF are. Its name say
 what it is, so nothing reads it to draw a row; it is not a note anywhere; and it is
 a file two dozen other programs already know. What Obsidian shows for it is a row
 that is not there - which is what Obsidian shows for a `.canvas` file in a vault
-where nobody has turned the setting on, and nib has lived with that for as long as
+where nobody has turned the setting on, and Orden has lived with that for as long as
 it has had canvases.
 
 Everything else about a website in the space is unchanged, and the name is what
@@ -197,7 +197,7 @@ would."_ Which is one model for all four kinds: see `newCanvas` and `newPages` b
 `openWebsite` in `workspace.svelte.ts`. Since 2026-09-30 all four wait for a place: a new
 note, plane or deck is a tab with a dot after its name until it is saved, with its words
 kept in the session the whole time; see `workspace/drafts.ts`. Emil, 2026-09-30: _"When I
-open a new tab or note on nib it should be in an unsaved state (with no saving location)
+open a new tab or note on Orden it should be in an unsaved state (with no saving location)
 and there should be a dot behind it (indicating that). For web tabs there should not be
 the dot behind them if they're unsaved."_ A restart brings a tab with no file back the way
 a browser does - in its place in the strip, with its words, its space and the site's
@@ -219,7 +219,7 @@ points.
 ### One tab per web note
 
 **A web note is open in one tab of one window.** Emil, 2026-09-30: _"it should NEVER be
-possible that we have the same web note open multiple times within one nib session. it
+possible that we have the same web note open multiple times within one Orden session. it
 just leads to confusion."_ Two tabs of one are two live pages writing where the reading got
 to into one file.
 
@@ -249,7 +249,7 @@ Notes, planes and page notes may still be shown in two panes, as they always cou
 | Windows           | a child webview: WebView2, Chromium                           | the only embedding that renders a site the way a browser does                            |
 | macOS             | a child webview: WKWebView, WebKit                            | same, with Safari's engine                                                               |
 | Linux             | a child webview: WebKitGTK                                    | same                                                                                     |
-| the browser build | a web note: a browser tab of its own; a tab with no file: a card, and a sandboxed `<iframe>` once the reader presses it | the browser nib is in is the best place for a page; a frame is all a pane can hold, with no way to know whether it will work |
+| the browser build | a web note: a browser tab of its own; a tab with no file: a card, and a sandboxed `<iframe>` once the reader presses it | the browser Orden is in is the best place for a page; a frame is all a pane can hold, with no way to know whether it will work |
 | Android and iOS   | the system browser, not a tab                                 | see below                                                                                |
 
 ### A desktop: a webview over the pane
@@ -263,7 +263,7 @@ The one thing to know about the mechanism is that multi-webview support is behin
 Tauri's `unstable` Cargo feature, which this crate now turns on. Unstable there
 means the Rust API may be renamed in a minor release - not that the engine
 underneath is experimental; it is the same WebView2 or WKWebView the app itself
-runs in. What nib calls of it is `Window::add_child`, `Manager::get_webview` and a
+runs in. What Orden calls of it is `Window::add_child`, `Manager::get_webview` and a
 handful of methods on the webview it hands back, all in one file, so an upstream
 rename is one file to follow. See `apps/desktop/src-tauri/src/web_tabs.rs` and the
 comment in `Cargo.toml`.
@@ -422,7 +422,7 @@ page costs here - about 180 MB on this machine - and against Chrome's and Edge's
 | Maximum | 30 minutes | 6 pages, about 1.1 GB | 2 hours | efficiency mode sleeps after 5 minutes |
 
 Chrome's strengths are time alone, and a day of reading never leaves a page four hours
-out of sight, so a count stands beside the first two; Maximum is what nib did before
+out of sight, so a count stands beside the first two; Maximum is what Orden did before
 there was a choice. Memory saver never takes the page on screen or any in a pane on
 screen, nor one under a menu, nor any page that is never frozen, nor a pinned one or one
 with something typed into a field and not sent - which the page says each time its tab
@@ -635,7 +635,7 @@ Every web tab of a store is drawn by one `WebView2` browser process, and showing
 hiding it and building a new one are calls into that process the window's thread waits
 on - with a message loop under the wait, so the window repaints, and nothing the app has
 queued runs: no command, no event, no save. A browser busy for seconds with one heavy site
-stopped all of nib with it. Measured 2026-10-04 with the probe's browser held still from
+stopped all of Orden with it. Measured 2026-10-04 with the probe's browser held still from
 outside: a press on a web tab sat in `web_place` for as long as the browser was held, 47 to
 89 seconds.
 
@@ -643,7 +643,7 @@ So the browser is asked first, the way Windows asks a window whether it responds
 message sent to the browser's own window under the page, waited for 150 ms at most and
 not at all once Windows calls it hung. A page whose browser does not answer is not shown
 (the window asks again a second later), not told it is hidden (its holder, which is
-nib's own window, is moved out of the window's room instead, which waits on nobody), not
+Orden's own window, is moved out of the window's room instead, which waits on nobody), not
 closed (it is put away and closed once its browser answers), and no new page is built on
 it (asked for again a second later). The rest of the app goes on; the log says it once a
 minute. See `apps/desktop/src-tauri/src/web_answers.rs` and
@@ -722,7 +722,7 @@ one, and every symptom shared it. A page goes where the hole's box is, and the b
 one source of that: what the crate does on its own in a resize is a bridge to the
 window's next word, never an answer of its own. Chrome and Arc never meet the question -
 their page is a view in the same layout pass as everything round it - and Electron's
-views and Tauri's meet it exactly as nib does. So the window has to hear every change of
+views and Tauri's meet it exactly as Orden does. So the window has to hear every change of
 the box, and the crate must invent nothing between two of them. Neither held:
 
 - **A move is a change.** The pane heard its hole through a resize observer, which hears
@@ -867,10 +867,10 @@ The engine did it, for a Windows setting that is on by default: _Hide pointer wh
 typing_. `WebView2`'s Chromium honours it now - `ShowCursor(FALSE)` on its own thread when
 a key types into something editable, `ShowCursor(TRUE)` on the next mouse event that same
 browser process receives. In a browser that is one process under one window, so any move
-brings the pointer back. In nib it is two at least: the app's own page and the web pages
+brings the pointer back. In Orden it is two at least: the app's own page and the web pages
 keep separate profiles, so separate browser processes, and a store of a space's own is
 one more. And the count `ShowCursor` moves is not the process's, it is the **input
-queue's**, which every thread with a window in nib's window shares - a child window from
+queue's**, which every thread with a window in Orden's window shares - a child window from
 another thread attaches the two. So typing an address with the pointer resting on the page
 (Ctrl+L, Ctrl+T) hid it over the whole window, and moving about the page reached only the
 page's process, which had never hidden it. Only crossing into the app's own page - the bar,
@@ -891,16 +891,16 @@ the moves to the engine windows themselves. Before, and after:
 | ... then switched to a note and moved about it             | **-1** | 0     |
 | ... then back on the page and moved about it               | 0      | 0     |
 
-Below nought is no pointer anywhere over nib's window; two runs of each build, the same
+Below nought is no pointer anywhere over Orden's window; two runs of each build, the same
 numbers. The address field held what was typed and the page heard its own, so the keys
 arrived either way. The same thing was seen from outside in the installed app while Emil
 used it: a page opened from the Ctrl+T dialog under a resting pointer, and the pointer
 stayed hidden while it moved about the new page.
 
-The engine has no way to show a pointer another process hid, and nothing nib can call
+The engine has no way to show a pointer another process hid, and nothing Orden can call
 would put it back short of faking mouse moves into the other process - so the hiding goes:
-every `WebView2` page nib starts has `HideCursorWhileTyping` switched off. The pointer
-stays where it was while somebody types, which is how nib always behaved until the runtime
+every `WebView2` page Orden starts has `HideCursorWhileTyping` switched off. The pointer
+stays where it was while somebody types, which is how Orden always behaved until the runtime
 began hiding it. See `BROWSER_ARGS` in `src-tauri/src/engine.rs`: one list, because every
 webview on one user data folder has to be started with the same switches or the engine
 refuses the second one.
@@ -926,13 +926,13 @@ legacy window gives it to `DefWindowProc`, which bubbles a wheel up to the same 
 wheel events for one notch, in a bare wry window and in upstream Chromium (Electron 33)
 alike. Chrome never meets it, because its legacy window is on the thread that holds the
 keyboard and Windows hands a wheel over it to that thread's focus, the browser's own
-window. A page in nib is another process's window inside nib's, holding the keyboard only
+window. A page in Orden is another process's window inside Orden's, holding the keyboard only
 after a click in it, so a wheel over it with the keyboard anywhere else - the address
 field, the sidebar, a note, a tab just switched to - goes to the legacy window.
 
 So a wheel over a page is sent where Chrome's goes. A low-level mouse hook, installed with
 the first page of a run on a thread of its own, takes a wheel over a legacy window inside
-one of nib's own windows and posts it to that window's parent, with the turn, the point
+one of Orden's own windows and posts it to that window's parent, with the turn, the point
 and the keys held as Windows writes them; every other wheel and every other program's
 window is left alone. The distance is still the engine's own, from the reader's _lines to
 scroll_, and a precision touchpad never comes this way: it pans the page through Direct
@@ -1014,20 +1014,20 @@ It is Chrome's and Edge's gesture, numbers and all (Chromium's
 without it: `TouchpadOverscrollHistoryNavigation` disabled and
 `--overscroll-history-navigation=0` (`ENGINE_SWIPE` in src-tauri/src/engine.rs, in
 `BROWSER_ARGS`). Emil,
-2026-10-08 (#209): _"edge supports it for some sites while nib supports it as well ...
+2026-10-08 (#209): _"edge supports it for some sites while Orden supports it as well ...
 sometimes both triggers"_. `IsSwipeNavigationEnabled`, which wry leaves off, is documented
 for a finger on a screen, and #209 is two fingers on a touchpad going back with it off:
 that is Chromium's touchpad overscroll navigation, which a switch reaches and the setting
 did not. The engine's swipe walks the engine's history, and
 a tab revived after a relaunch has none - its trail is the crate's (`Trail` in
 web_tabs.rs) - so it did nothing on most tabs after a restart, went the wrong way after any
-step the crate made itself, and on the pages where it did go, went as well as nib's. A
+step the crate made itself, and on the pages where it did go, went as well as Orden's. A
 Mac's and Linux's engines have their gesture off too (wry's `allowsBackForwardNavigationGestures`
-and WebKitGTK's own, which Tauri never turns on), and nib draws none there. So the page
-says what it saw and the window decides, the same way as for a note: a script in nib's
+and WebKitGTK's own, which Tauri never turns on), and Orden draws none there. So the page
+says what it saw and the window decides, the same way as for a note: a script in Orden's
 world in every page and frame (`src-tauri/src/web_swipe.js`) hears each sideways scroll,
 asks whether anything in the page would take it, and says it a frame at a time; every
-listener is passive and reads, so the page scrolls as it did. It says it the way nib's
+listener is passive and reads, so the page scrolls as it did. It says it the way Orden's
 world already asks for the find: on `WebView2` as a window asked for under a name that
 carries it, which the crate reads and never opens. Not a binding: the engine puts one in a world
 only while the protocol's runtime domain is on, and turning that on for every page is
@@ -1064,7 +1064,7 @@ a HID digitizer, and Windows hands any program that asks for them its raw report
 frame says how many contacts it holds and whether each one is touching. A thread of the
 crate's own, with a window that is only a mailbox, puts the reports back into frames and
 says one number as it changes - the fingers on the pad - as `nib://touchpad`, and only
-while nib is in front, but for a lift. Nothing else about the hand leaves the crate. From
+while Orden is in front, but for a lift. Nothing else about the hand leaves the crate. From
 the first time it says so, a touchpad's stream is the time two fingers are down, and only
 their lift decides it (`told` in `gesture.ts`). The same for both of Windows' engines, since
 the reports are the app's and not the engine's.
@@ -1076,7 +1076,7 @@ touchpad's own coasting after a flick, a run of steadily shrinking steps.
 Proved by `src/lib/back-swipe/gesture.test.ts` (the numbers, and a hand that says when it
 lifts), `edge.test.ts`, `slid.test.ts`, `test/effects/swipe.effect.test.ts` (the wiring, the arrow, a
 page's swipe, the setting, and every gesture in `test/effects/swipe-replays.json`),
-`touchpad.rs`'s own tests (frames put back together, and what is said while nib is behind),
+`touchpad.rs`'s own tests (frames put back together, and what is said while Orden is behind),
 `test/e2e/swipe.py` (Chromium's own precise scroll gestures over a note, and the page script
 in a page), and `scripts/swipe-probe.py`, which posts sideways wheel messages to the probe's
 own window, off every screen, over a note and over a page in a web tab, and plays the
@@ -1147,7 +1147,7 @@ asked for in a bar and there is no bar.
 
 **A tablet is a phone here.** It used to get the bar, the frame and the card, because
 it has the room, and the frame was the trouble: a link pressed in a note, or a new web
-tab, drew the page inside nib in a frame most sites refuse, with none of the reader's
+tab, drew the page inside Orden in a frame most sites refuse, with none of the reader's
 logins. So a tablet hands every page to the system browser exactly as a phone does -
 a link and a web note both - and has no web tab of its own: no web note to make, no
 browsing history, and Ctrl+T is the kinds in the pane, as on a phone.
@@ -1156,17 +1156,17 @@ desktop is unchanged (`holdsPages` in `open-link.ts`, `openPage` and `openWebsit
 `workspace.svelte.ts`, `kindsHere`).
 
 **A web note in a browser build opens a browser tab.** Emil, 2026-10-06 (#206): _"on
-mobile web notes should just open in your default browser - also when nib is open in
+mobile web notes should just open in your default browser - also when Orden is open in
 a browser, clicking on them should just open a new tab."_ So only the desktop app
 draws a web note's page; everywhere else its address is handed to the browser - the
-system's from the phone and tablet app, a new tab beside nib's own from a browser.
+system's from the phone and tablet app, a new tab beside Orden's own from a browser.
 Links in a note and a new web tab keep the card and the frame above, on a desktop. See
 `openSite` in `workspace.svelte.ts`.
 
 And a web note's tab that an older sitting left goes the same way. Emil, 2026-10-13:
-_"clicking on web notes in the mobile app still opens them inside nib"_. The one way
+_"clicking on web notes in the mobile app still opens them inside Orden"_. The one way
 left for that was a tab of the note already held - put back from a sitting before the
-change - which opening the note showed, the page in a frame inside nib. Now a web note opened where a tab of it is held is
+change - which opening the note showed, the page in a frame inside Orden. Now a web note opened where a tab of it is held is
 handed to the browser and the tab goes (`handedOut`), and a sitting put back off the
 desktop app leaves its web notes' tabs out (`tabsAlong`).
 
@@ -1263,19 +1263,19 @@ showing a page has no editor to shadow. It is in the registry like every other k
 browser's own.** After a click into a site the app never sees the press: that is what a
 webview of its own means. The exception is Chrome's: the chords a browser never offers
 a page - a new tab, closing one, reopening the last, going round them and moving one
-along, a new window, Ctrl+1 to 9, nib's own Alt+0 to 9, and F6 back to the address
+along, a new window, Ctrl+1 to 9, Orden's own Alt+0 to 9, and F6 back to the address
 field - are taken before the page sees them and played on the app's own window, and the
-keyboard goes back to the app with them. So is nib's Shift+F11, the tab filling the
+keyboard goes back to the app with them. So is Orden's Shift+F11, the tab filling the
 window, which no browser binds - but the keyboard stays in the page, since filling the
 window is no reason to take the caret out of what fills it; see docs/keyboard.md. F5 and Ctrl+R in a page are the engine's own reload, as in Chrome, and
 need nothing. The find keys, Ctrl+F, Ctrl+G and F3, and the address field's other two,
 Ctrl+L and Alt+D, are the page's first, as in Chrome: a site with its own find or its own
 Ctrl+L keeps it, and the app answers only when the page lets the key go by; see "The page
-itself". So is Ctrl+D, which is Chrome's bookmark and nib's Deselect tab: Sheets fills
+itself". So is Ctrl+D, which is Chrome's bookmark and Orden's Deselect tab: Sheets fills
 down with it and Figma duplicates, and what a page lets go by is played on the window as
 the key it was. Shift pressed twice on its own opens the palette over a page as over a
-note: the engine never tells the host about a lone Shift, so nib's script in the page, in
-nib's own world there, counts the taps and asks, the page keeping every Shift and one it
+note: the engine never tells the host about a lone Shift, so Orden's script in the page, in
+Orden's own world there, counts the taps and asks, the page keeping every Shift and one it
 answered itself not counting,
 and the crate takes the ask only while that page has the keyboard and a key was just
 pressed. On `WebView2` only; see `docs/keyboard.md`, `src-tauri/src/web_keys.rs` and
@@ -1296,9 +1296,9 @@ asked for exactly that: _"Our browser related menu structure should be very simi
 to that of chrome. And in general we don't want to reinvent how a browser works."_
 New tab, New private tab, History, Essentials, Delete browsing data, Zoom out / the size /
 Zoom in, Full screen, Print, Find, Save as a note, Share, Copy link, Open in the browser,
-Settings - each bent onto what nib has where the two differ: Chrome's Incognito window is
+Settings - each bent onto what Orden has where the two differ: Chrome's Incognito window is
 a tab here, a bookmark is the space's own kept files, Chrome's Save page is Save as a
-note, the clipper, and Share is nib's share sheet. The three zoom rows keep the menu open the
+note, the clipper, and Share is Orden's share sheet. The three zoom rows keep the menu open the
 way a browser's do, which is the one thing a row in this app may now ask for; see
 `keep` in `lib/menu-item.ts`.
 
@@ -1319,7 +1319,7 @@ were the ones still missing. Each is Chrome's shape, in Chrome's words, and each
 translations are Chromium's own.
 
 **History is a page in a tab, as `chrome://history` is.** Its address is `nib://history`,
-nib's own scheme, which no tab may open as a site: a web tab on it draws the History page
+Orden's own scheme, which no tab may open as a site: a web tab on it draws the History page
 where a site would be and builds no webview (`web-tab/own-pages.ts`). Ctrl+H (Cmd+Y on a
 Mac, where Cmd+H hides the app), the dots' History row and the palette's Browsing history
 open it - the one already open if there is one, the new tab nobody has sent anywhere if
@@ -1364,7 +1364,7 @@ the history alone.
 **A private tab is Chrome's Incognito window as a tab** (`web-tab/private.ts`): Ctrl+Shift+N
 (docs/backlog.md, Q3), a new tab's New private tab card (I), the dots and the palette. Its
 page runs in the engine's own private mode - `WebView2`'s InPrivate profile, a data store
-of the page's own on a Mac and on Linux - so nothing it stores reaches the disk. And nib writes nothing of it either: no history, no
+of the page's own on a Mac and on Linux - so nothing it stores reaches the disk. And Orden writes nothing of it either: no history, no
 favicon, no place on the page, no session that would bring it back after a restart, no
 closed tab for Ctrl+Shift+T, no web note - Save is refused for it. Memory saver never
 parks it, because a page built again would have forgotten everything. A link out of it
@@ -1402,14 +1402,14 @@ link in a note, a row of the file list, a bookmark, a search hit, the Links pane
 node of the graph, the palette, the arrows over a note or a page): Ctrl+click (Cmd on
 a Mac) and the middle button open it in a tab beside the one it was pressed in and
 leave the reader where they are; with Shift as well the tab comes forward. Shift alone
-on a web link is Chrome's new window, and a nib window is a second workspace rather
+on a web link is Chrome's new window, and a Orden window is a second workspace rather
 than one page, so it is a tab in front too; in the file list Shift picks a run of rows
 and Alt picks one row at a time, since Ctrl is the tab's. Ctrl+Enter in the palette is
 the keyboard's Ctrl+click. A tab asked for this way is never the preview. The rule is
 `lib/new-tab.ts`.
 
 Inside a page every such link is a window the page asks the app for, and `WebView2`
-does not say how it was pressed. So `src-tauri/src/web_opens.rs` has a script in nib's
+does not say how it was pressed. So `src-tauri/src/web_opens.rs` has a script in Orden's
 own world in the page answer the press itself - the middle button, and Ctrl or Shift
 with the main one - and open the link under a window name that says where its tab goes,
 read off the press rather than the keyboard. Ctrl and Shift are read off the keyboard
@@ -1427,15 +1427,15 @@ other engines it is a tab, as before.
 
 ## A link from another program
 
-nib can be the machine's browser, so a link clicked in a mail, a chat, a PDF or a
+Orden can be the machine's browser, so a link clicked in a mail, a chat, a PDF or a
 terminal opens as a web tab. Settings > General > Browser has one row: a Make default
-button while nib is not the browser, the tick once it is, asked again whenever the
+button while Orden is not the browser, the tick once it is, asked again whenever the
 window gets the keyboard back. No system lets a program make itself the default, so the
 press does what Chrome's does: Windows opens nib's own page under Settings > Default
 apps, a Mac asks its own question, and Linux sets the handler for the two schemes.
 
-nib claims `http` and `https` and nothing else - not `.htm`, `.html` or `text/html`,
-because a saved page is a local file and nib opens none. On Windows the registration
+Orden claims `http` and `https` and nothing else - not `.htm`, `.html` or `text/html`,
+because a saved page is a local file and Orden opens none. On Windows the registration
 (`StartMenuInternet`, the `NibURL` ProgID, `RegisteredApplications`) is written by the
 NSIS installer and the MSI, taken away by their uninstallers, and put back at launch
 when a portable or Scoop copy moved; `src-tauri/src/default_browser.rs` holds all three
@@ -1467,7 +1467,7 @@ engines say nothing, and what each one does there is said with it.
   F3 step; Escape closes it and the marks go. It is also a row in the dots and in the
   palette. Inside the page the keys are the page's first, which is Chrome's order: Google
   Docs, Notion, VS Code on the web and Figma have a find of their own on Ctrl+F and keep
-  it. A line of script in every page - in nib's own world there, which the page cannot
+  it. A line of script in every page - in Orden's own world there, which the page cannot
   see - listens last and, when nothing in the page took the
   key, asks for the bar under one of the window names `web_opens.rs` reads - find, next,
   previous, and the address field for Ctrl+L and Alt+D - for that tab alone, said to the
@@ -1527,7 +1527,7 @@ engines say nothing, and what each one does there is said with it.
 - **Developer tools.** F12, Ctrl+Shift+I (Cmd+Alt+I on a Mac) and the page menu's
   Inspect open the engine's own tools for the page, from inside it or from the bar. The
   build that ships has them for web tabs only - the `devtools` feature, on desktops -
-  and nib's own window keeps them to a development build.
+  and Orden's own window keeps them to a development build.
 - **Its dialogs.** A page's `alert`, `confirm` and `prompt`, and the question a page asks
   before it is left, are a card at the top of the page, as in Chrome: the site's mark and
   name, what the page said, and a browser's answers - OK alone for an alert, Cancel and OK
@@ -1577,7 +1577,7 @@ desktop engines.
   listens to the operation the engine hands out a second time, after wry's handler, and
   matches it by the path that handler chose; it is also what Cancel reaches. On macOS wry
   keeps the `WKDownload` to itself, so the tab's navigation delegate is given one of
-  nib's own in front of wry's: `didBecomeDownload` is passed to wry's delegate first,
+  Orden's own in front of wry's: `didBecomeDownload` is passed to wry's delegate first,
   unchanged, and the download is then kept and matched to the list by its address, the
   way wry's word that it ended is matched. Its `NSProgress` is read a few times a second
   while anything is going, and Cancel is its own `cancel:`. On Linux a file says when it
@@ -1592,7 +1592,7 @@ desktop engines.
   it, so the list would have turned for ever. `web_close` hides such a page instead
   (`downloads::linger`), and it closes when its last file ends.
 - **An inline PDF stays in the tab**, in the engine's own viewer, the way a browser shows
-  one; its download button is a download like any other. nib's PDF viewer is for a file
+  one; its download button is a download like any other. Orden's PDF viewer is for a file
   in a space, and a page's PDF is the page's.
 - **Several files at once from one page without a press** is the engine's "automatic
   downloads" question, asked in the bubble like any other permission.
@@ -1626,8 +1626,8 @@ names is kept, `js` and `mermaid` included: a clipped page of documentation is t
 commonest clip there is. See `THE_APP_S_OWN` in `packages/markdown/src/from-html.ts`.
 
 On a desktop the page writes itself down and the window does the rest. The crate
-runs `src-tauri/src/web_tabs/reader.js` in the page - in nib's own world on
-`WebView2` and nib's Chromium, so a page that has wrapped `cloneNode` or
+runs `src-tauri/src/web_tabs/reader.js` in the page - in Orden's own world on
+`WebView2` and Orden's Chromium, so a page that has wrapped `cloneNode` or
 `getSelection` neither sees the read nor changes it, and in the page's world on the
 two `WebKit` engines - and it answers a snapshot of the document as the reader sees
 it: what a script wrote into it included, no scripts, styles or field values, the
@@ -1717,14 +1717,14 @@ rows were always true and are what the `web` folder on disk is for.
 off".** Emil, 2026-09-27: *"on moodle-app2.let.ethz.ch every time i reopen nib I have to
 reloggin."* The last row was the whole of it. Moodle's `MoodleSession`, Shibboleth's
 `_shibsession_...` and the identity provider's session at `aai-logon.ethz.ch` are all
-session cookies - no expiry - and `WebView2` threw them away when nib quit, while the
+session cookies - no expiry - and `WebView2` threw them away when Orden quit, while the
 lasting cookies and `localStorage` beside them came back off disk as they always had.
 
 `WebView2` has no setting for it. Chromium's own switch for the same thing,
 `--restore-last-session`, was tried and measured and is not enough: under it the engine
 writes session cookies to its database, but a quit that closes the pages before the
 process ends still ends the session and deletes them, so a login came back on some
-restarts and not others. What nib does instead is what the setting does: a session cookie
+restarts and not others. What Orden does instead is what the setting does: a session cookie
 is given an expiry, four hundred days out, in the profile's own cookie store, where the
 engine keeps and reloads it like any other cookie. The site never sees the difference
 (an expiry is not sent with a cookie) and keeps every say it had - a new value replaces
@@ -1766,10 +1766,10 @@ says: there was a problem with verification, please reload and try again, every 
 want to log in."_ The window ends where the COM manager went now, and
 `scripts/web-bot-probe.py` sets such a cookie twice and fails if a load takes one away.
 The same drive fails on anything a page could tell a driven browser by -
-`navigator.webdriver`, a DevTools client with the console domain on, nib's globals, a
-window name of nib's - in the page and in a frame from another site, which is where a
-challenge runs. Measured on the probe, both clean: nib attaches the `DevTools` Protocol to
-a reader's page for nib's own world (`Page` and `Target`, never `Runtime.enable`), and an
+`navigator.webdriver`, a DevTools client with the console domain on, Orden's globals, a
+window name of Orden's - in the page and in a frame from another site, which is where a
+challenge runs. Measured on the probe, both clean: Orden attaches the `DevTools` Protocol to
+a reader's page for Orden's own world (`Page` and `Target`, never `Runtime.enable`), and an
 agent turns `Runtime` on only for the console it asked for. What a page does see is
 `WebView2`'s own and in every app built on it: `EmbeddedBrowserWebView` on `window` and
 `Microsoft Edge WebView2` among the client hints' brands.
@@ -1777,7 +1777,7 @@ agent turns `Runtime` on only for the console it asked for. What a page does see
 **A worker a challenge starts runs.** Emil, 2026-10-13: _"login button just wasn't
 clickable on cloudflare."_ Cloudflare's sign in button stays disabled until its Turnstile
 widget has an answer, and the widget's frame - from `challenges.cloudflare.com`, so a
-process of its own - works the answer out in a worker it starts. nib follows such a frame
+process of its own - works the answer out in a worker it starts. Orden follows such a frame
 to give it nib's world before its first document: it is held at its start, and let go once
 the world is in, and its own session is asked to follow its frames the same way
 (`web_worlds.rs`). Asked that, a frame's session holds every worker the frame starts as
@@ -1787,11 +1787,11 @@ pale, and a minute later the widget gave up with _"There was a problem with veri
 A frame's session follows its workers too now, and each is let go the moment it is
 attached. Measured on the probe, a worker in a frame from another site and in a frame
 inside that: before, neither ran, and Cloudflare had no answer in 30 s on three loads out
-of three; after, both ran and the answer came in 9 to 13 s, as it does with nib following
+of three; after, both ran and the answer came in 9 to 13 s, as it does with Orden following
 no frames at all. `scripts/web-bot-probe.py` has its frame start a worker and fails if it
 never runs.
 
-**What it costs, said plainly: once nib has opened one website, it keeps one `WebView2`
+**What it costs, said plainly: once Orden has opened one website, it keeps one `WebView2`
 browser process until you quit, the way a browser does.** That is the price of a web note
 being a browser tab you can close and open again without signing in each time, and it is
 paid once rather than per tab - the pages in the tabs are the part that costs a
@@ -1819,7 +1819,7 @@ store on disk - a lasting cookie survives, a session-only one does not, a restar
 included - until the same seam exists for `WebKitGTK`: wry hands out no cookie store
 there, so there is nothing yet to give an expiry through.
 
-**No nib IPC reaches the site**, three times over:
+**No Orden IPC reaches the site**, three times over:
 
 1. The capabilities name the app's own **webviews** rather than the windows they
    sit in. A capability that names a window grants every webview in that window,
@@ -1843,7 +1843,7 @@ set for a web note / tab when right clicking on it that gives it independent web
 Firefox's Multi-Account Containers are the model - a cookie jar of its own, the history
 shared - and so are their two faults, which this does not repeat: the choice is in the menu
 of the thing it is about, ticked where it stands, and undone where it was made. Arc and Edge
-keep a profile per space, which is what nib had and what #239 took away.
+keep a profile per space, which is what Orden had and what #239 took away.
 
 - **Global**, which every note is until asked: the one store, signed in once, signed in
   everywhere.
@@ -1908,7 +1908,7 @@ before its first page is built (`web-tab/merged.ts`, `web_merge` in
 - **cookies one by one** - a cookie is its name, domain, path and partition: one the shared
   store lacks is copied as it is, HttpOnly, partition and expiry included; of two copies
   the one set last wins, and since no engine says when a cookie was set the later expiry
-  stands for it (a site sets the same lifetime again from a later moment, and nib's four
+  stands for it (a site sets the same lifetime again from a later moment, and Orden's four
   hundred days for a session cookie run from the last time it kept one); two without an
   expiry go to the store whose folder changed last;
 - **an origin's storage whole or not at all** - localStorage and every IndexedDB database
@@ -1929,7 +1929,7 @@ back, where the shared login is waiting. Two runs, the same.
 
 ### What a page is given: nothing
 
-**A page in a web tab is handed nothing of nib's: no global, no script in its own world,
+**A page in a web tab is handed nothing of Orden's: no global, no script in its own world,
 no channel to the app.** Emil, 2026-09-30, on Google Sheets in a web tab, which is every
 sheet he opens: _"Loading issue - Troubleshoot this issue by clearing application
 resources. Step 1: Follow these instructions to clear your cache and cookies. Step 2:
@@ -1970,7 +1970,7 @@ old scripts back into the page's own world one at a time and loading the sheet a
 | wry's `ipc`, but `configurable: true`                | loads                                  |
 | Tauri's `isTauri` and `__TAURI_INTERNALS__`          | loads                                  |
 | the plugins' internals                               | loads                                  |
-| nib's old guard, the middle-button script, the place | loads                                  |
+| Orden's old guard, the middle-button script, the place | loads                                  |
 
 So `ipc` alone breaks Google, and the rest is taken away for the other reason: a browser
 gives a page nothing of itself, and any of those names is one bundle away from being the
@@ -1982,7 +1982,7 @@ opener plugin took every Ctrl+click, Shift+click and `target="_blank"` link away
 page to hand it to the system browser, which a site is never granted either, so those
 opened nothing at all.
 
-**What a browser does, and what nib does now.** A browser runs nothing of its own in a
+**What a browser does, and what Orden does now.** A browser runs nothing of its own in a
 page's world. What an extension or a test tool runs in a page runs in a world of its own -
 Chrome's content scripts, Electron's context isolation, Puppeteer's utility world, Safari's
 `WKContentWorld` - which shares the page's document and events and none of its globals or
@@ -1990,7 +1990,7 @@ prototypes, so neither side can see or break the other. A web tab is built that 
 (see `apps/desktop/src-tauri/src/web_worlds.rs`):
 
 1. **The tab is built on `about:blank`, and every script the runtime registered is taken
-   back before it is sent to the site.** None of it is needed: every event nib follows on a
+   back before it is sent to the site.** None of it is needed: every event Orden follows on a
    page is the engine's own, and every question it asks a page comes back through the
    engine's own script callback. On `WebView2` a script is taken back only by the
    identifier the engine handed out, which wry and Tauri throw away; it numbers them from
@@ -2001,7 +2001,7 @@ prototypes, so neither side can see or break the other. A web tab is built that 
 2. **The message channel goes too** - `window.chrome.webview` on `WebView2`, the handler
    behind `window.webkit.messageHandlers` on the other two - so the page has nothing to
    post to the app, and nothing to tell it that it is inside one.
-3. **nib's own page scripts run in a world named `nib`**: a link pressed for a tab of its
+3. **Orden's own page scripts run in a world named `nib`**: a link pressed for a tab of its
    own, the keys a page lets go by - Ctrl+D among them - and a modifier tapped twice (see
    "A link in a tab of its own", "The bar" and `web_opens.rs`), and a revived tab's
    place. On `WebView2` the world is registered through the engine's `DevTools`
@@ -2009,12 +2009,12 @@ prototypes, so neither side can see or break the other. A web tab is built that 
    sites - which run in a process of their own, out of the page's registration's reach -
    are followed and given the same world before their first document. The page's
    `window`, `window.open`, `addEventListener` and prototypes are its own.
-4. **What nib reads out of a page on its own account is read in that world too** on
+4. **What Orden reads out of a page on its own account is read in that world too** on
    `WebView2`: the site's mark (see `web_icons.rs`), so a page that wraps `fetch` neither
    sees the read nor changes its answer.
 5. **A page's dialogs are the page's again.** `confirm()` stops the page's script until
    it is answered and gives back `true` or `false`, `prompt()` the words or `null`, and
-   `alert()` shows - in nib's own card rather than a window of the engine's; see "The page
+   `alert()` shows - in Orden's own card rather than a window of the engine's; see "The page
    itself".
 
 Measured on the probe on 2026-09-30, `scripts/web-globals-probe.py --real`, on the build
@@ -2025,12 +2025,12 @@ before and after:
 | a classic script may declare `let ipc` at the top level | no                                                                                                           | **yes**                                                 |
 | what is on `window` of the app's                       | `ipc`, `isTauri`, `__TAURI_INTERNALS__`, `__TAURI_OS_PLUGIN_INTERNALS__`, `__TAURI_EVENT_PLUGIN_INTERNALS__` | **nothing**                                             |
 | `window.chrome.webview`                                | deleted by the guard, in the page's own world                                                                | **never there**                                         |
-| nib's listeners                                        | on the page's own `window`                                                                                   | **in nib's world**: the page, a same-site frame, and a frame from another site |
+| Orden's listeners                                        | on the page's own `window`                                                                                   | **in nib's world**: the page, a same-site frame, and a frame from another site |
 | Google Sheets, a public sheet                          | "Loading issue", six uncaught exceptions                                                                     | **loads, none**                                         |
 | Google Docs, Slides and the sign-in page               | load, with the app's globals on `window`                                                                     | load, nothing                                           |
 | YouTube, GitHub, Proton Mail, Moodle's sign-in         | load, with the app's globals on `window`                                                                     | load, nothing, no exceptions                            |
 | a site's `confirm()`, answered Cancel                  | a promise at once, before anybody was asked                                                                  | **`false`, after the answer**                           |
-| a site's `prompt()`, answered with a word              | the engine's own window                                                                                      | **the word, from nib's card**                           |
+| a site's `prompt()`, answered with a word              | the engine's own window                                                                                      | **the word, from Orden's card**                           |
 
 **A profile the old build broke needs no cleaning.** The probe profile that had just shown
 the dialog opened the sheet in the new build with no exception and nothing cleared: the
@@ -2114,7 +2114,7 @@ never on the account, in `nib:web-grants`. A private tab's answers are not among
 (#787): they are kept in memory for the private session, every private tab of the run,
 and forgotten when the last private tab closes, and they never answer a normal tab. A
 private tab is given what a normal one blocked and not what it allowed, Chrome's rule
-for Incognito. On nib's own Chromium the engine asks with its own prompt instead, in a
+for Incognito. On Orden's own Chromium the engine asks with its own prompt instead, in a
 private tab's off-the-record profile, which writes nothing to the regular one.
 
 **Clipboard write and paste need no prompt**, because they need none in Chrome: a
@@ -2138,8 +2138,8 @@ yet. Dictation was the same press and the same silence.
 
 `hearing` in `web_tabs.rs` attaches it at setup, before the window is shown, and the
 answer there is not a bubble: the app's own origin is allowed outright for the microphone
-and the camera, because pressing Record _is_ the answer and a second bubble inside nib
-asking whether nib may use the microphone would be the app asking somebody to confirm
+and the camera, because pressing Record _is_ the answer and a second bubble inside Orden
+asking whether Orden may use the microphone would be the app asking somebody to confirm
 what they just pressed. The permission that matters - the one the system keeps - is not
 this one. Every other origin in that webview is refused, which is what the whole webview
 did before: a site inside a note is an iframe there rather than a tab of its own, and a
@@ -2160,7 +2160,7 @@ never settles is.
 
 **Nothing is refused outright any more.** The buses a page can reach hardware over -
 Bluetooth, USB, serial, HID - and the credential store used to be taken off
-`Navigator.prototype` before the page's first script. That was nib changing what a page
+`Navigator.prototype` before the page's first script. That was Orden changing what a page
 sees, which a browser does not do, and the engine raises no request for them that the
 bubble would answer: a device chooser and a passkey are the engine's and the system's
 to ask about. See "What a page is given: nothing".
@@ -2170,8 +2170,8 @@ before said a Mac site got the engine's own prompt, and that was not true: wry s
 delegate on every `WKWebView` whose capture handler answers `WKPermissionDecisionGrant`
 for every origin and every frame, so a site in a web tab was handed the camera without a
 word, and so was a frame inside a note in the window's own page. The only prompt anybody
-saw was the system's, once, for nib itself. wry has no setting and no hook for it, so each
-webview is given a UI delegate of nib's own in front of wry's
+saw was the system's, once, for Orden itself. wry has no setting and no hook for it, so each
+webview is given a UI delegate of Orden's own in front of wry's
 (`webView:requestMediaCapturePermissionForOrigin:...`), which holds the decision handler
 open while the window asks, exactly as the `WebView2` deferral is held, and passes every
 other question - the file picker, a window the page asked for - to wry's delegate by
@@ -2190,7 +2190,7 @@ out.
 
 **Only http and https, and never the app itself.** `file:` would read this
 machine, a scheme the system knows would hand the page to another application, and
-`tauri://localhost` would put nib inside a tab with the site's script beside it.
+`tauri://localhost` would put Orden inside a tab with the site's script beside it.
 The rule is in the crate as well as in the app, because it is what every link
 inside the page is judged by, not only what somebody types. A window the page asks
 for leaves the app the way every other link does: the system browser - and it is
@@ -2212,7 +2212,7 @@ versions and goes to the trash like every other document.
 |                                                       |                                                                                                                                                                                                                                                        |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the things the window may ask of a page, where a page may be built, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
-| `apps/desktop/src-tauri/src/web_worlds.rs` | what a page is handed: the runtime's scripts taken back, the channel off, nib's own in a world of their own on each engine, and what nib reads in that world. Unit tested |
+| `apps/desktop/src-tauri/src/web_worlds.rs` | what a page is handed: the runtime's scripts taken back, the channel off, Orden's own in a world of their own on each engine, and what Orden reads in that world. Unit tested |
 | `apps/desktop/src-tauri/src/web_dialogs.rs` | a page's `alert`, `confirm`, `prompt` and leave, held open for the window's card. Unit tested |
 | `apps/desktop/src-tauri/src/web_reload.rs` | stopping a page, and loading it past the cache |
 | `apps/desktop/src-tauri/src/web_wheel.rs` | a wheel over a page sent to the page's own window, so a notch is one notch. Unit tested, with windows of its own |
@@ -2222,7 +2222,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/web_find.rs` | finding in the page: the engine's find, and the page's own where there is none. Unit tested |
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |
 | `apps/desktop/src-tauri/src/web_handed.rs` | which of what another program handed over is a page: `http` and `https` with a host, never the app, never a path. Unit tested |
-| `apps/desktop/src-tauri/src/default_browser.rs` | nib among the browsers: the Windows registration and its repair, whether nib is the default and the press that asks each system. Unit tested |
+| `apps/desktop/src-tauri/src/default_browser.rs` | Orden among the browsers: the Windows registration and its repair, whether Orden is the default and the press that asks each system. Unit tested |
 | `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` (through the `DevTools` Protocol, partitions kept) and `WKWebView`. Unit tested |
 | `apps/desktop/src-tauri/src/web_cookies/twins.rs` | the copies without a partition that the COM cookie manager made of partitioned cookies, found so each keep takes them away. Unit tested |
 | `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
@@ -2257,7 +2257,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/omnibox.ts`             | what the field offers: the rest of an address and the pages worth listing, ranked. Pure, tested                                                                                                                                                        |
 | `apps/desktop/src/lib/web-tab/visits.ts`              | the history's rows and what a visit does to them, bounded. Pure, tested                                                                                                                                                                                |
 | `apps/desktop/src/lib/web-tab/visited.ts` | this device's history, one per space kept apart, read on first use. Tested |
-| `apps/desktop/src/lib/web-tab/own-pages.ts` | nib's own pages in a web tab: History's address and mark. Pure |
+| `apps/desktop/src/lib/web-tab/own-pages.ts` | Orden's own pages in a web tab: History's address and mark. Pure |
 | `apps/desktop/src/lib/web-tab/history-list.ts` | the History page's rows: newest first under each day, the search, which rows are on screen. Pure, tested |
 | `apps/desktop/src/lib/web-tab/WebHistory.svelte` | the History page |
 | `apps/desktop/src/lib/web-tab/history-open.ts` | Ctrl+H: the History tab already open, the new tab in front, or a tab of its own |
@@ -2268,7 +2268,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/engines.ts` | the search engines: Chrome's list for the region, a custom one with `%s`. Pure, tested |
 | `apps/desktop/src/lib/web-tab/search-engine.svelte.ts` | the search engine this device chose. Tested |
 | `apps/desktop/src/lib/web-tab/dropped-site.ts` | a link dragged out of a page onto the file list, kept as a web note. Tested |
-| `scripts/web-bot-probe.py` | the drive for a bot check: what a page and a frame from another site can see of nib, and a cookie set twice kept twice |
+| `scripts/web-bot-probe.py` | the drive for a bot check: what a page and a frame from another site can see of Orden, and a cookie set twice kept twice |
 | `scripts/browser-parity-probe.py` | the drive for History, Delete browsing data, a private tab, the search engine and a link dropped on the list |
 | `apps/desktop/src/lib/web-tab/web-data.ts` | what a site is, and the names of the stores a space kept before #239. Pure, tested |
 | `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which store a page goes in: the shared one, or its web note's own. Tested |
@@ -2298,9 +2298,9 @@ versions and goes to the trash like every other document.
 | `scripts/web-switch-probe.py`                         | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost                                                                                                                                          |
 | `scripts/no-reload-probe.py` | the drive for Ctrl+Tab round ten pages: loads, the freeze, typed fields, memory, and Memory saver |
 | `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1`                                                                                                |
-| `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one, a `localStorage` token and a partitioned cookie a widget from another site set, read back out of the page, all four kept; the widget's own site never sees its cookie, and a planted copy without the partition is gone after the next page; and an `IndexedDB` record, a service worker, a notification permission granted in nib's bubble and the site's zoom, all still there after the restart |
+| `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one, a `localStorage` token and a partitioned cookie a widget from another site set, read back out of the page, all four kept; the widget's own site never sees its cookie, and a planted copy without the partition is gone after the next page; and an `IndexedDB` record, a service worker, a notification permission granted in Orden's bubble and the site's zoom, all still there after the restart |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
-| `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, what of the app's is on its `window`, whether nib's listeners are in nib's world in every frame, what a page's dialogs give back, and with `--real` Google's editors and the regression sites, read over the `DevTools` protocol. See "What a page is given: nothing" |
+| `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, what of the app's is on its `window`, whether Orden's listeners are in nib's world in every frame, what a page's dialogs give back, and with `--real` Google's editors and the regression sites, read over the `DevTools` protocol. See "What a page is given: nothing" |
 | `scripts/devtools.py` | the `DevTools` protocol with the standard library, for a drive to read a page's own console without pressing anything in it |
 | `scripts/web-bar-probe.py` | the drive for the bar and its keys: F6 and F5 inside the page, F5 and the reload keys in the app with the request's cache header, the cross and Stop, the history under Back, Alt+Enter, the middle button on reload and Ctrl+1 |
 | `scripts/web-cursor-probe.py` | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types" |
@@ -2313,14 +2313,14 @@ versions and goes to the trash like every other document.
 
 ## What is left
 
-- **Windows 11's one-press Set default button may not be offered for nib.** Microsoft
-  gives it to programs that claim `http`, `https`, `.htm` and `.html`, and nib claims
+- **Windows 11's one-press Set default button may not be offered for Orden.** Microsoft
+  gives it to programs that claim `http`, `https`, `.htm` and `.html`, and Orden claims
   only the first two, so its page under Default apps may ask for HTTP and HTTPS one at
-  a time. Claiming the file types would hand nib every saved page on the disk.
-- **A Mac may not list nib in its own default browser menu.** Launch Services files a
+  a time. Claiming the file types would hand Orden every saved page on the disk.
+- **A Mac may not list Orden in its own default browser menu.** Launch Services files a
   program as a browser only when it also claims HTML documents; the press asks for the
   two schemes directly and does not need the menu. Not yet seen on a real Mac.
-- **Linux packages list nib as a browser only once it has been made one.** The press
+- **Linux packages list Orden as a browser only once it has been made one.** The press
   writes its own handler; the desktop entries under `packaging/` still say `%F` and
   markdown, and change with the file types.
 - **The history is one row per page**, at its last visit, so the History page lists a
@@ -2337,14 +2337,14 @@ versions and goes to the trash like every other document.
 - **Clearing a page is measured on Windows only.** On a Mac and on Linux it is built
   against each engine's documented calls and held to by the compiler; no drive runs there
   yet. See "What a page is given: nothing".
-- **A page's dialogs are nib's card on Windows only.** A Mac's `WKWebView` answers them
+- **A page's dialogs are Orden's card on Windows only.** A Mac's `WKWebView` answers them
   itself without a delegate - `alert()` shows nothing, `confirm()` is `false` - and Linux
   draws `WebKitGTK`'s own. A delegate beside the capture prompt's (see `ask` in
   `web_tabs.rs`) is where the card would come from on a Mac.
 - **The place and a step read the page in its own world**, and so does the clip on the two
   `WebKit` engines. They are questions asked when somebody presses something, they leave
   nothing behind, and a page that has wrapped `querySelector` or `history.go` sees them; the
-  site's mark and the clip are read in nib's world on `WebView2` (and the clip on nib's
+  site's mark and the clip are read in nib's world on `WebView2` (and the clip on Orden's
   Chromium too) and in the page's own elsewhere.
 - **A page's still picture is Windows and macOS only.** `CapturePreview` and
   `WKWebView`'s `takeSnapshot` are reachable; WebKitGTK's equivalent is not through what

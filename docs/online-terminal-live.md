@@ -141,9 +141,9 @@ and the container application, which the first `wrangler deploy` of the machines
 1. **Egress.** Sandbox SDK 1.0 has no host allow-list of its own: with the internet off,
    HTTP and HTTPS leave a container only through an outbound handler the Worker registers,
    and for HTTPS that handler holds the cleartext while it forwards it. That breaks 4.8's
-   rule that no handler of nib's sees the AI providers' traffic. The design's answer ("never
+   rule that no handler of Orden's sees the AI providers' traffic. The design's answer ("never
    the other way round") is the default here: `MACHINE_EGRESS = "open"`, the internet on and
-   no handler at all, so nothing of nib's sees a byte, at the price of other ports being open
+   no handler at all, so nothing of Orden's sees a byte, at the price of other ports being open
    (mail, SSH, raw TCP). `"web"` is one variable away: internet off, HTTP and HTTPS through
    `Egress` (src/machines/entry.ts), which reads the hostname only and refuses private and
    metadata addresses. With the allow-list being Emil alone, `open` costs nothing in abuse;

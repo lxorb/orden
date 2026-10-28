@@ -145,7 +145,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] ` ```chart ` - bar, line, pie and donut, drawn without a library, so a
       published page gets one too. See section 17
 - [x] A diagram on a published page, which Typora has no notion of and Obsidian
-      Publish draws in the reader's browser out of a megabyte of library. nib
+      Publish draws in the reader's browser out of a megabyte of library. Orden
       draws it in the app instead - the side that has a DOM, which is what mermaid
       needs to measure text in - and sends the SVG up as a blob named by a hash of
       the fence, the way the favicon and the author's theme already travel. The
@@ -218,7 +218,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] A PDF, a recording or a film dropped or pasted from the file manager is kept
       beside the note, where a pasted picture goes, and written as `![[paper.pdf]]`,
       which is what Obsidian writes; see `images.ts` in the editor and
-      `storeAttachment`. A zip or anything else nib cannot show is left alone:
+      `storeAttachment`. A zip or anything else Orden cannot show is left alone:
       a link nothing in the app can open is a dead end in the note
 - [-] Custom image uploader integration - a hook for third-party upload CLIs
       (PicGo, uPic). Sync already carries images; a second upload path would be
@@ -235,7 +235,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Outline panel, with the note's footnotes under its headings, and a heading
       draggable to move its whole section; see section 17
 - [x] Create, rename, duplicate, delete files and folders
-- [ ] Reveal in Explorer / Finder - not built, on purpose: nib is a notes app
+- [ ] Reveal in Explorer / Finder - not built, on purpose: Orden is a notes app
       rather than a file manager, and the folder a note sits in is how the app
       finds it rather than something the reader is asked to hold. What still
       reaches the file manager is an export the reader just made, which is
@@ -252,14 +252,14 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Auto-save, where it is not an option but the way every document works: a
       note, a canvas and a page note are written a moment after they change, a new
       tab becomes a file on its first word, and there is no Save to press
-- [ ] ~~A file opened from outside every space is watched~~ - nib opens nothing
+- [ ] ~~A file opened from outside every space is watched~~ - Orden opens nothing
       from outside its spaces (Emil, 2026-09-30), so there is nothing to watch
 - [x] The line endings a file already had are the ones it is written back with
 - [x] Version history and recovery
 
 ## 10. Search
 
-- [x] Find `Ctrl+F`, find next/previous. nib's own bar rather than CodeMirror's
+- [x] Find `Ctrl+F`, find next/previous. Orden's own bar rather than CodeMirror's
       panel: one `.nib-field` under the tab strip with the three flags inside it,
       a live count beside it, the two steps and a cross, at the row scale so a
       thumb gets a finger-sized target. The same component the reading view and a
@@ -305,7 +305,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 
 - [x] Auto-pair brackets, quotes, markdown symbols
 - [x] Smart punctuation, toggleable, and off out of the box. Typora has it on;
-      nib would rather hand back the characters that were typed, because a note
+      Orden would rather hand back the characters that were typed, because a note
       is a file other tools read. It never touches a line that is a thematic
       break, a setext underline or a front-matter fence: `---` typed on its own
       line stays `---`, so a rule, a slide break and a metadata block can all be
@@ -339,7 +339,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
       keeps its single breaks whatever the switch says, because a slide is a poster
       and its lines are placed rather than flowed
 - [x] One setting for how a link to a note is written: `[[wikilinks]]`, which is
-      what nib has always written and the default, or markdown links with the
+      what Orden has always written and the default, or markdown links with the
       shortest name, a path from this note's folder, or a path from the top of the
       space - the same four answers Obsidian gives across two settings. It decides
       only what is written: both spellings are read whatever it says, so a space
@@ -447,9 +447,9 @@ Still pandoc's, and offered only where pandoc is installed:
 - [x] Multiple windows, and a window that stays over every other application
 - [x] Open from the shell: `nib://` links and the `orden` command, which name a note
       inside a space. A path on the command line is not read (Emil, 2026-09-30:
-      nib opens nothing from outside its spaces)
+      Orden opens nothing from outside its spaces)
 - [ ] ~~File association for `.md`~~ - taken away on purpose, and an install over an
-      older nib removes the one it wrote
+      older Orden removes the one it wrote
 - [ ] ~~Taskbar Jump List~~ - a recent document there is a file handed back from
       outside; the palette keeps the notes opened lately
 - [x] Application logs
@@ -461,7 +461,7 @@ Still pandoc's, and offered only where pandoc is installed:
       in place as the app closes. Which stream it follows is one setting in
       General; the updater key is in tauri.conf.json and the private half is a
       release secret.
-- [x] Android share target - anything shared to nib becomes a note: the words
+- [x] Android share target - anything shared to Orden becomes a note: the words
       under a heading with `date` and `source` in the front matter, pictures and
       files beside it in the folder the Attachments setting names, and a shared
       `.md` as itself. Through `applyImport`, which is the road every import
@@ -469,7 +469,7 @@ Still pandoc's, and offered only where pandoc is installed:
       one undo. Where a note is open and the share is words and pictures, the
       same small sheet the app asks every question with asks whether it goes
       there instead, and the words land at the caret. A shared `.md` comes in the
-      same way; nib is in no file manager's "Open with"
+      same way; Orden is in no file manager's "Open with"
 - [x] Quick settings tiles on Android - New note, Search, and Record for the
       recorder, each carrying the id of a row in the app's own command registry
       and nothing else, so a tile cannot drift from the row it is named after.
@@ -512,7 +512,7 @@ Features Typora does not have, which are the reason this exists.
       never folded out of sight: it comes up to the line that owns the fold.
       What is folded is remembered per note per device and never written into
       the note, with one exception that is not ours. Obsidian's `-` after a
-      callout's type says that callout opens shut, so nib reads it, folds it on
+      callout's type says that callout opens shut, so Orden reads it, folds it on
       the way in and never rewrites it. Every chevron stands in one column beside
       the writing, never on the block it folds: a fence, a callout and a heading
       all inset their own text by different amounts, and the mark backs out by
@@ -644,7 +644,7 @@ Features Typora does not have, which are the reason this exists.
       starting with the ones that already answer to a name and then the lines the
       words themselves find. Picking one writes `[[Note#Heading]]` or
       `[[Note#^id]]`, so the file is Obsidian's spelling and nothing in it is
-      nib's, and a block that had no name is given one by the same writer the
+      Orden's, and a block that had no name is given one by the same writer the
       grip's Copy link uses. Neither reads a space: the headings and the names are
       already in the index, and the words are found through the app's own search -
       one question, once two characters are in, and the popup filters what came
@@ -736,7 +736,7 @@ Features Typora does not have, which are the reason this exists.
       scale rounds to numbers somebody would have chosen. Chart.js's other hundred
       options are not read: a bar chart always starts at zero and a chart is
       always the width of the column. A fence holding no chart stays code, and so
-      does one asking for a kind nib does not draw - which used to come out as a
+      does one asking for a kind Orden does not draw - which used to come out as a
       bar chart, silently, saying the wrong thing about the right numbers. On the
       glasses a titled chart is its title
 - [x] Page covers: a wide band of picture across the top of a note, before its
@@ -785,7 +785,7 @@ Features Typora does not have, which are the reason this exists.
       `hidden-front-matter.ts`. Hidden is not gone: the Properties panel on the right
       side is Obsidian's File properties view, the same rows and controls beside the
       note, with a key renamed or removed from its menu; see docs/design.md
-      One rule for everything else: if any line of the block is a shape nib cannot
+      One rule for everything else: if any line of the block is a shape Orden cannot
       read - a Dataview query, a comment - the **whole** block stays source, because
       half a table is a table that lies about the file. Nowhere outside the app,
       whichever answer: front matter is about the note rather than part of it, and
@@ -795,12 +795,12 @@ Features Typora does not have, which are the reason this exists.
       device: the list follows the account. Settings has it under Spelling, to
       read and to take words back from.
 
-      What it is not, said plainly: nib does not spell-check - the webview does,
+      What it is not, said plainly: Orden does not spell-check - the webview does,
       and no browser on any platform lets a page ask which words its checker
       thinks are wrong, read its suggestions, or add one to a dictionary. So what
       this does is turn the checker off over the words you have added, which is
       the whole of what adding a word is for, and nothing more. The word is not
-      learned by the system, so another app still underlines it, and nib cannot
+      learned by the system, so another app still underlines it, and Orden cannot
       offer a correction for a word that really is misspelled
 - [x] Dragging a heading in the Outline moves its whole section: the heading and
       everything under it, to where it was dropped. Two edits and never a
@@ -1021,7 +1021,7 @@ Features Typora does not have, which are the reason this exists.
       asked nicely. See docs/import.md
 - [x] A Notion export arrives as the tree it looked like in Notion. Notion writes
       a folder per page that has pages under it and an id on the end of every
-      name; take the ids off and that is exactly nib's own shape, a note and a
+      name; take the ids off and that is exactly Orden's own shape, a note and a
       folder of the same name. A page's properties, which it writes as lines under
       the title, become front matter. A database is the folder's own note, holding
       the table, with the rows as the notes they already were - and of the two
@@ -1042,7 +1042,7 @@ Features Typora does not have, which are the reason this exists.
       from is a fact about where the note used to live
 - [x] What the export knew about a note goes into the note. Every file on disk says
       it was written today the moment it is imported, so the day it was made is
-      written as `date`, which is the key nib already reads, and the last-edited
+      written as `date`, which is the key Orden already reads, and the last-edited
       day as `updated` only where the export knew a different one. Tags become
       `tags`, tidied to what a tag can be
 - [x] Apple Journal, through the export Journal itself writes:
@@ -1078,7 +1078,7 @@ Features Typora does not have, which are the reason this exists.
       a friend. Two rewrites, which are the two that actually break something -
       Bear's `#two words#` becomes `#two-words`, and a Zettelkasten id link is
       written out as the note whose name begins with that id, which is the shape
-      nib's own unique-note command writes. In this note or in the whole space,
+      Orden's own unique-note command writes. In this note or in the whole space,
       with the count shown before anything is written and one thing to undo
       afterwards. Roam's `[[page]]` is deliberately not in the list: it is already
       a wikilink and already means what it says here
@@ -1099,7 +1099,7 @@ Features Typora does not have, which are the reason this exists.
       each - so a rollback is an edit like any other and can itself be undone
 - [x] One choice about the same note being written in two places, on the account
       rather than on the device because it is a decision about the notes: keep both
-      copies, which is what nib has always done and still the default; let the
+      copies, which is what Orden has always done and still the default; let the
       newest win, which is only safe because the words that lose are in the
       histories above; or be asked, which leaves the note alone, holds the other
       copy, and does not push until somebody answers. A canvas is none of the three
@@ -1124,7 +1124,7 @@ Features Typora does not have, which are the reason this exists.
       server would be a write per pass for something almost nobody looks at
 - [x] A second code when signing in, from an authenticator app, with ten one-shot
       recovery codes shown once. Not passkeys, and the reason is written down: a
-      passkey is bound to one origin, and nib runs at `tauri://localhost`, at
+      passkey is bound to one origin, and Orden runs at `tauri://localhost`, at
       `127.0.0.1` on a fresh port every launch inside the glasses plugin, and at
       its own domain on the web - so a passkey would work on the web and refuse to
       exist on the other two, which is a second class of reader rather than a
@@ -1149,13 +1149,13 @@ Features Typora does not have, which are the reason this exists.
       pretending. The model list is asked for, never written down. And a plan the
       reader already pays for, on the desktop, by the roads its maker allows: their
       own Claude Code or Codex run on this machine, or Sign in with ChatGPT; never a
-      token nib collects. See `docs/ai.md`, *Your own plan*
+      token Orden collects. See `docs/ai.md`, *Your own plan*
 - [x] A question as a block of the note: a ` ```ai ` fence holding the prompt, a
       triangle on its header row that asks it and becomes a square that stops it,
       and the answer streamed in as ordinary markdown underneath, under a quiet
       italic line saying which model said it and on what day. Two HTML comments
       around the answer are what a second press replaces, so asking again does not
-      stack answers; every renderer hides a comment and nib strips both spellings
+      stack answers; every renderer hides a comment and Orden strips both spellings
       before rendering anything, so they show nowhere. Which means the note opens
       in Obsidian with no plugin at all: the question is a code block and the
       answer is prose. `@note` in the prompt sends the note as context, and a
@@ -1182,7 +1182,7 @@ Features Typora does not have, which are the reason this exists.
       five things and nothing else, and a test pins the list: writing over a note,
       moving one, deleting one and running code are out of a link's reach, `new`
       refuses a note that is already there unless it was asked to append, and a
-      callback goes to `http(s)` or back into nib and nowhere else. A row in the
+      callback goes to `http(s)` or back into Orden and nowhere else. A row in the
       palette copies a correct link to what is open, with the heading the caret is
       in on it, which is also how anybody finds out the scheme is there
 - [x] A command line that drives the app that is running, the way Obsidian's does:
@@ -1225,7 +1225,7 @@ Features Typora does not have, which are the reason this exists.
       reader sees it, through the engine's own script callback rather than through the
       app's IPC, so the page is read without being given anything to call
 - [x] A page in a tab gets none of the app and none of this machine: its own cookie
-      store, no nib command reachable from it, and the camera, the microphone, the
+      store, no Orden command reachable from it, and the camera, the microphone, the
       clipboard, the location and every hardware bus taken away before its first
       script runs. Two of them can be allowed by hand, per site. In a browser build the
       pane shows a card - favicon, title, origin - with a row that frames the page
@@ -1243,7 +1243,7 @@ Features Typora does not have, which are the reason this exists.
       wrote in the file is not overridden by a row in a pane
 - [x] What a publish will change, before it changes anything: how many pages the
       site will have, which appear and which disappear, by name. Not Obsidian's
-      upload dialog, because there is nothing to upload - a nib page is the note,
+      upload dialog, because there is nothing to upload - a Orden page is the note,
       live - so the only thing a publish can change is which pages exist, and that
       is what the sheet shows
 - [x] `permalink:` sets where a page lives and `aliases:` are the other paths that

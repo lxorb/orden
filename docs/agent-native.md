@@ -1,4 +1,4 @@
-# Agent-native nib
+# Agent-native Orden
 
 A design, a spike and a plan. It decides how an agent - Claude Code, Claude Desktop, Codex,
 anything that speaks the Model Context Protocol - works inside nib: in the reader's web
@@ -23,7 +23,7 @@ And later the same day:
 
 ## The short version
 
-1. **One agent surface for all of nib**, served on this machine by the app itself: the
+1. **One agent surface for all of Orden**, served on this machine by the app itself: the
    browser, the notes (open ones with their unsaved words, their selection and what is on
    screen), the tree, the tabs, canvases, PDFs, versions and a short list of settings. It is
    an MCP server reached as `nib mcp`, which is the installed app's own binary speaking
@@ -62,10 +62,10 @@ And later the same day:
    in, publishing and sharing, settings. Unsupervised mode asks for nothing else; confirm
    mode asks for every write.
 8. **Page content is data.** Every word that came from a page or from a shared note comes
-   back marked untrusted, credentials are only ever typed by the reader, and nib's own
+   back marked untrusted, credentials are only ever typed by the reader, and Orden's own
    window is never a page an agent can reach.
 9. **One stop for everything**: a key that works from any app, the stop on every
-   indicator, and a row in the tray. An audit log of every call, readable in nib and
+   indicator, and a row in the tray. An audit log of every call, readable in Orden and
    attachable to a note.
 10. **Zero cost when no agent is connected.** No webview, no thread, no listener and no
     byte of the first paint. The agent's interface arrives with the first agent.
@@ -83,7 +83,7 @@ true, in this order:
    is the complaint every browser agent collects: Claude in Chrome's yellow "started
    debugging this browser" bar on every tab ([#69287][cic-banner]) and its tab groups left
    behind ([#15436][cic-groups]), Comet's agent loops eating CPU ([eesel][comet-reviews]).
-   nib's rule for its own probes is the same rule for agents: nothing of it is ever on
+   Orden's rule for its own probes is the same rule for agents: nothing of it is ever on
    screen or in front unless the reader asked.
 2. **It can do the real thing.** The reader's logins, the reader's open tabs, the note the
    reader has open with the words they have not saved yet. An agent that can only work in
@@ -92,7 +92,7 @@ true, in this order:
 3. **It is visible where it acts and stoppable at once.** Where it works in something the
    reader can see, the reader can see that it is, and one press ends it. Nothing
    irreversible happens without being asked for, and afterwards the whole run can be read.
-4. **It costs nothing until it is used.** nib opens in under a second, and its first paint
+4. **It costs nothing until it is used.** Orden opens in under a second, and its first paint
    is held under 3,279,000 bytes and 376 modules by a test; agents get none of it.
 
 ---
@@ -115,30 +115,30 @@ Read on 2026-09-30 from the products' own documentation and issue trackers.
 | **Apple App Intents and App Schemas** ([WWDC26][app-schemas]) | an app's own actions and entities, typed | the system runs them | Shortcuts, Siri | the app decides what it exposes |
 | **WebMCP** ([cheat sheet][webmcp]) | a page registers typed tools on `document.modelContext` | - | - | the page decides what it exposes |
 
-What that adds up to, and what nib takes from each:
+What that adds up to, and what Orden takes from each:
 
 - **Refs from the accessibility tree beat screenshots** for cost and precision (Playwright,
-  DevTools MCP); screenshots stay for what the tree cannot say. nib's refs are the engine's
+  DevTools MCP); screenshots stay for what the tree cannot say. Orden's refs are the engine's
   own node ids, so a ref outlives a snapshot for as long as the element does, which is
   better than Playwright's "until the page changes".
 - **Typed actions beat driving an interface** wherever the app owns the thing (App
-  Intents). nib owns its notes, so the notes are typed tools, never an agent clicking about
+  Intents). Orden owns its notes, so the notes are typed tools, never an agent clicking about
   in the editor.
 - **Credentials are the reader's** (Operator): the agent never types a password; the reader
-  does, in the tab. What nib does not take from Operator and Atlas is the mode switch
+  does, in the tab. What Orden does not take from Operator and Atlas is the mode switch
   around it - "take control", then hand back - which leaves either the reader or the agent
   waiting on the other; Claude in Chrome, Comet, Browser Use and Playwright MCP's extension
-  all share the tab instead and re-read the page every step, and so does nib (7.3).
+  all share the tab instead and re-read the page every step, and so does Orden (7.3).
 - **A visible mark on what the agent is touching** is universal (Comet's outline, Atlas's
   highlight, Claude's tab group) and the thing people complain about is when it is loud
   (Chrome's debugging bar) or left behind (orphaned groups).
 - **Background tabs in the reader's own browser are either visible** (Claude's tab group,
   in the strip) **or remote** (Operator). Nobody has tabs that are the reader's own
-  browser, signed in, and invisible. That is nib's opening, and it is possible only because
-  nib owns the window the engine draws in.
+  browser, signed in, and invisible. That is Orden's opening, and it is possible only because
+  Orden owns the window the engine draws in.
 - **Page content steering the agent is the unsolved problem** (Brave, OpenAI, Anthropic).
   Nobody claims to have fixed it; everybody layers marking, confirmation and limits on
-  what an agent can reach. nib does the same, and the one structural thing it adds is that
+  what an agent can reach. Orden does the same, and the one structural thing it adds is that
   credentials and irreversible acts never depend on the model behaving.
 
 ---
@@ -498,7 +498,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `approval_status` | `id` | what the reader answered (9.3) |
 
 `capture_to_note` is the one no browser agent has, and it is the reason to do research in
-nib rather than beside it: the page, the screenshot and the source land in the space the
+Orden rather than beside it: the page, the screenshot and the source land in the space the
 reader is working in, as files that sync.
 
 **As built** (`lib/agents/workspace/capture.ts`, and the crate's `agents_capture` in
@@ -534,7 +534,7 @@ denied site and the stop answer exactly as they do for a press.
 - **Measured** by `scripts/capture-probe.py`, end to end over `nib mcp`: a clip 35 to
   45 ms, a picture 120 to 145 ms, a PDF 115 to 130 ms, a refusal 8 to 12 ms. It proves
   the note's words are `browser_read`'s article words with no field's value, that the
-  page saw no script and no global of nib's while it was clipped, the password field grey
+  page saw no script and no global of Orden's while it was clipped, the password field grey
   pixel for pixel in a picture of an agent's tab and of the reader's, the PDF on A4, and
   another agent's tab not there. It also shows what is still to do: the picture's secret
   scan is `browser_screenshot`'s own, which looks for the fields from the page's world,
@@ -570,7 +570,7 @@ Three things follow and are part of the design, not the spike:
   (never activated, never on a screen): the page kept `requestAnimationFrame` at 54 to 58
   and the 10 ms interval at 100 a second, `visible`, and answered presses; minimised, 57
   and 100. Screenshots answered in all three, in 60 to 580 ms.
-  So the engine does not decide it; the app's own life does. nib ends with its last
+  So the engine does not decide it; the app's own life does. Orden ends with its last
   window and a quit asks every window about its unsaved notes, and a window of the
   agents' own would be a window that never answers and an app that never ends - where
   hiding the reader's window into the tray (above) keeps the pages alive with none of
@@ -665,7 +665,7 @@ The activity panel (9.5) shows each agent tab as a live thumbnail: the engine's 
 (`Page.startScreencast`, JPEG, a frame at most every 200 ms, 480 pixels wide) drawn into an
 `<img>` while the panel is open and not at all when it is closed. A picture, because a
 picture takes no input: watching can never be interacting by accident, and the reader's
-pointer over it is the reader's pointer over nib. The page keeps rendering out of sight, so
+pointer over it is the reader's pointer over Orden. The page keeps rendering out of sight, so
 the frames are real; a hidden page would have none (section 3).
 
 ### 6.7 Showing
@@ -689,7 +689,7 @@ While an agent is acting in a tab the reader can see:
 - **A thin frame round the page, in the accent**, 2 pixels, drawn by the pane around the
   hole: the page's bounds shrink by the frame and nothing is drawn over the page, because
   nothing of the app's can be (`web-tabs.md`, "A native webview draws above every pixel").
-  Comet's outline and Atlas's highlight, said as quietly as nib says anything.
+  Comet's outline and Atlas's highlight, said as quietly as Orden says anything.
 - **The agent's mark on the tab**, in place of the site's while it acts, turning like the
   loading mark; the tab's menu holds **Stop**, which stops that agent, and **Resume** once
   it is stopped. No words.
@@ -915,7 +915,7 @@ machine, which is more than everything else in this document put together.
 
 **The reader's own terminals** are tabs like any other (`lib/agents/workspace/
 terminal-tab.ts`), what "look at my terminal" and "restart the server" are about. VS Code's
-agent reads a terminal's output and JetBrains' asks before every command it types; nib does
+agent reads a terminal's output and JetBrains' asks before every command it types; Orden does
 both. `read_terminal` is the screen as words, under `context` because it is what the reader
 sees. `type_terminal` is the reader's shell, so it is `terminal` and asks the same way: one
 line whose program is on the agent's list, ended with Enter and nothing else, goes; a
@@ -959,7 +959,7 @@ are.
 ### 9.1 An agent is a grant
 
 **Settings > Agents** lists them. An agent is added the first time a client connects
-through `nib mcp`: a bubble in nib - the client's name as it gives it (`Claude Code`), its
+through `nib mcp`: a bubble in Orden - the client's name as it gives it (`Claude Code`), its
 mark, **Don't allow** and **Allow** - the same bubble a site's question is asked in. Allow
 makes a token for that client, kept by `nib mcp` in the app's config folder under the
 client's name, so the question is asked once per client. A pasted token (for a client on
@@ -983,7 +983,7 @@ the reader's own (it holds `context`); once the file has been written with them,
 taken away stays away. "Always in this chat" is kept the way "Always on this site" is, under
 `chat:<id>`.
 
-The AI sidebar's own agents (one built-in grant per provider, "nib · Claude") ask as the
+The AI sidebar's own agents (one built-in grant per provider, "Orden · Claude") ask as the
 thread's mode says rather than as the grant does (docs/ai-sidebar.md 4.4), so Settings >
 Agents shows them no "Asks first": Approve lays `confirm` with every category on over the
 grant for each call, and Agent a third mode, `autonomous`, that asks for nothing but
@@ -1005,7 +1005,7 @@ sidebar's Agent mode, `autonomous`, only paying):
 | --- | --- |
 | **paying** | a press in a form with a card number, expiry or security code field (`autocomplete="cc-*"`, or a field whose label reads as one), or a press whose accessible name reads as paying (`Pay`, `Buy`, `Place order`, `Checkout`, `Confirm purchase`, in every language nib has a catalogue for), or a request to a known payment processor's host |
 | **sending** | from the page, on any site: a press named `Send`, `Post`, `Reply`, `Publish`, `Comment` (every language) beside a message box - a `<textarea>` or an editable region that is no search box - or beside somebody to send to (an address or phone field, a field labelled To, Cc or recipient, an @-mention in the box); `Submit` beside a message box; any submit of a form that holds both; Enter or Control+Enter in a box that calls itself a message, a reply, a comment or a chat. A site on the mail, messaging and social list is one more signal. A search, a sign-in and a newsletter's Subscribe are none of these, and the tests hold them apart |
-| **publishing and sharing** | anything in nib that puts words where somebody else can read them: publishing a space or a note, sharing a space, a room's door, a guest link; the palette's rows for them through `run_command` |
+| **publishing and sharing** | anything in Orden that puts words where somebody else can read them: publishing a space or a note, sharing a space, a room's door, a guest link; the palette's rows for them through `run_command` |
 | **deleting for good** | a press named `Delete`, `Remove`, `Erase` on a site; emptying Recently deleted; `restore_version` over a note |
 | **signing in** | any password field - by its type, its `autocomplete`, or masked by the page, so a show-password toggle is no way round - or a sign-in form: a takeover (7.3), never typed and never submitted. A press that submits one, Enter in one, and a press named `Sign in` beside a password field answer `password_field` |
 | **settings** | `write_setting` |
@@ -1061,7 +1061,7 @@ not filled in behind the agent's back either.
 
 ### 9.6 Page content is data
 
-Prompt injection is unsolved, and nib does not pretend otherwise. What it does:
+Prompt injection is unsolved, and Orden does not pretend otherwise. What it does:
 
 - **Everything that came from outside comes back marked**: page text, snapshot names,
   console lines, network rows, downloads, PDF text, and the words of a note in a shared
@@ -1075,7 +1075,7 @@ Prompt injection is unsolved, and nib does not pretend otherwise. What it does:
   for the sites that matter.
 - **The irreversible does not depend on the model**: 9.3 and 9.4 are recognised from the
   page, and a denied site is denied in the crate.
-- **nib's own window is not a page.** The protocol reaches `agent-` and `web-` webviews and
+- **Orden's own window is not a page.** The protocol reaches `agent-` and `web-` webviews and
   nothing else - `main`, a second window, the presenter's window, the page that holds the
   session open are refused by label in the crate - so an agent can never script the app
   that holds every note. What the app does for an agent it does through typed verbs.
@@ -1088,18 +1088,18 @@ Prompt injection is unsolved, and nib does not pretend otherwise. What it does:
 
 | | the local server (`nib mcp`) | the account connector (`services/sync/src/mcp`) |
 | --- | --- | --- |
-| runs | on this machine, while nib runs | on the Worker, always |
+| runs | on this machine, while Orden runs | on the Worker, always |
 | reaches | everything above: live notes, the browser, the workspace | the account's notes: `list_spaces`, `list_notes`, `read_note`, `search_notes`, `list_backlinks`, `write_note`, and the to-dos and bases: `list_tasks`, `add_task`, `update_task`, `query_base`, `add_row` |
 | sees unsaved words | yes | no |
-| for | Claude Code, Claude Desktop, Codex on this machine | claude.ai, a phone, a machine where nib is closed |
+| for | Claude Code, Claude Desktop, Codex on this machine | claude.ai, a phone, a machine where Orden is closed |
 | auth | a grant made by the bubble in 9.1 | OAuth or a pasted `nib_` token, as today |
 
 **Connected on their own** (Emil, 2026-10-12: "[Claude Code] running on my machine should
-be able to connect to nib without me having to set up anything ... and do exactly the same
-thing as an agent that I am running IN nib"). After every launch the installed app adds
+be able to connect to Orden without me having to set up anything ... and do exactly the same
+thing as an agent that I am running IN Orden"). After every launch the installed app adds
 itself to each agent program it finds, through the program's own command - `claude mcp
 add --scope user nib -- <nib> mcp`, `codex mcp add nib -- <nib> mcp` - the line below, run
-for the reader; the program writes its own config and nib never opens it. A program that
+for the reader; the program writes its own config and Orden never opens it. A program that
 already has a server called `nib` is left alone, whatever it points at; the switch in
 Settings > AI > Access ("Agents on this computer connect on their own", on by default)
 takes the entry out again, only where it names this app's program. Only the app somebody
@@ -1114,7 +1114,7 @@ keep their terminal as they were. See `src-tauri/src/ai_cli/enroll.rs`.
 arguments before anything of Tauri starts, and `mcp` is a loop over stdin and stdout that
 forwards each call to the running app's endpoint (the port and pid from `automation.json`,
 as `orden screenshot` finds them). It starts in a few milliseconds and opens no webview. If
-nib is not running it starts it minimised and waits for the endpoint. So the installed app
+Orden is not running it starts it minimised and waits for the endpoint. So the installed app
 is the whole of it: `claude mcp add orden -- "%LOCALAPPDATA%\Orden\nib.exe" mcp` (an
 install from before a rename keeps `%LOCALAPPDATA%\Nib` or `%LOCALAPPDATA%\nibeditor`,
 so a line pasted then still works), which Settings > Agents offers to copy. Not the Node CLI, which ships in no installer
@@ -1127,24 +1127,24 @@ depends on it.
 `list_tasks`, `add_task`, `update_task`, `query_base` and `add_row`, are the
 connector's eleven, with the same arguments, and the local ones only add to them - so a
 prompt or a skill written against one works against the other, and the local server's
-instructions say to prefer it while nib runs, because it sees the words on screen. Under
+instructions say to prefer it while Orden runs, because it sees the words on screen. Under
 sync v2 a note with a document is written only by its room (`sync-v2.md` 5.3), and the
 connector's `write_note` hands its text to the room's `ingest`, so a cloud agent and a
 local one writing one note merge instead of overwriting each other.
 
 **As built** (`src-tauri/src/mcp/`, std and serde only):
 
-- **The line** is `claude mcp add --scope user nib -- "<nib.exe>" mcp` (user scope, so nib is
+- **The line** is `claude mcp add --scope user nib -- "<nib.exe>" mcp` (user scope, so Orden is
   there in every folder Claude Code starts in), `codex mcp add nib -- "<nib.exe>" mcp`, or
   the `mcpServers` entry for a client configured by file; `src/lib/agents/mcp.ts` writes
   all three for Settings > Agents from the crate's `mcp_program` (the installed exe, or an
   AppImage's own path).
-- **Which nib.** The identifier comes from the build (build.rs reads the config the way
+- **Which Orden.** The identifier comes from the build (build.rs reads the config the way
   tauri-build does), so a probe's `nib mcp` reaches that probe and never the reader's own
-  nib. A port in `automation.json` is asked once with no credential, and only nib's own 401
+  Orden. A port in `automation.json` is asked once with no credential, and only Orden's own 401
   counts, before a secret or a token goes to it.
 - **Pairing without holding anybody up.** `initialize` is answered at once with the
-  instructions and `tools.listChanged`; the link to nib runs on a thread. A client with a
+  instructions and `tools.listChanged`; the link to Orden runs on a thread. A client with a
   token under `<config>/agents/clients/<client>` proves it with `agent_status`; one without
   asks through `agent_pair` twenty seconds at a time, looking between the waits for a token
   a second run of the same client was given. Until the reader answers, the one tool listed
@@ -1164,10 +1164,10 @@ local one writing one note merge instead of overwriting each other.
   its code, its sentence and, where it is not obvious, the next step. The contract's answer
   rides under `_meta["ch.emilvinu.nib/answer"]` for scripts and the harness; no model is
   shown `_meta`. The six tools shared with the connector answer in its words.
-- **Starting nib**: on Windows through `cmd /c start /min` with no console, so the app's
+- **Starting Orden**: on Windows through `cmd /c start /min` with no console, so the app's
   first window takes `SW_SHOWMINNOACTIVE` and none of the client's pipes; on a Mac `open -g
   -j`; on Linux a plain detached launch. Only at the start of a session: a reader who quits
-  nib later has ended the job, and a call says so.
+  Orden later has ended the job, and a call says so.
 - `scripts/mcp-probe.py` drives all of it over real pipes against a probe build.
 
 **The endpoint stays what it is**, with two changes: a request may carry an agent's token
@@ -1219,9 +1219,9 @@ is still off, and an agent's token never reaches it.
 Every tool answers `unsupported_on_this_engine` where it has no honest implementation,
 rather than a weaker one pretending.
 
-### 12.1 nib's own Chromium, while there was one
+### 12.1 Orden's own Chromium, while there was one
 
-Up to 0.15 the app could also run on nib's own Chromium, where an agent's tab was a
+Up to 0.15 the app could also run on Orden's own Chromium, where an agent's tab was a
 windowless browser with no native window at all (`agents/engines/cef.rs`), measured at 60
 frames and 100 ticks a second on Windows and never built on a Mac. That build is gone
 (#305, #313), and with it that row of the table; the history keeps what was measured.
@@ -1256,7 +1256,7 @@ What that says:
   it, and `inactiveSchedulingPolicy` - which governs a page WebKit thinks is *inactive* - does
   nothing for one it thinks is *hidden*: set late or from the start, the same zero. A window
   of the page's own off every screen is occluded and stops at once. So on a Mac an agent's
-  page would be the reader's window's, and pause whenever the reader minimises nib.
+  page would be the reader's window's, and pause whenever the reader minimises Orden.
 - **On Linux the page belongs in an off-screen window**, where it runs at full rate whatever
   the reader's window does; as a child placed outside the window it gets no frames.
 - **Isolated worlds work on both**: a script in a `WKContentWorld` or a script world reads and
@@ -1264,7 +1264,7 @@ What that says:
   script's (`isTrusted` false), which some sites refuse.
 - **On a Mac, `NSEvent`s sent to the view itself are trusted** (`isTrusted` true for the click
   and the key), outside the window's content and from an off-screen window alike, and the key
-  window did not change. On the runner nib's window was the key window throughout, so that is
+  window did not change. On the runner Orden's window was the key window throughout, so that is
   not yet proof that it holds for a window behind somebody else's.
 - **Pictures work everywhere it was asked**: 1280 by 800, out of sight, and on a Mac with the
   window minimised.
@@ -1275,7 +1275,7 @@ the engine's delegate, which wry holds for the app's webviews - on a Mac an `<in
 type=file>` opens a file panel (`runOpenPanel`), a camera request is a system prompt
 (`requestMediaCapture`), `alert` returns at once unseen, a window the page opens is wry's to
 make - and `WebKitGTK`'s `run-file-chooser`, `permission-request`, `script-dialog` and `create`
-signals the same. An agent's page needs a delegate of nib's own on each before it can be opened without one of those reaching the reader, and
+signals the same. An agent's page needs a delegate of Orden's own on each before it can be opened without one of those reaching the reader, and
 then the subset: the accessibility snapshot as a script in the isolated world (the logic of
 Playwright's `ariaSnapshot`, Apache-2.0), presses and keys as `NSEvent`s on a Mac and as
 script events on Linux (said in the answer: `isTrusted` false), pictures, navigation, waits,
@@ -1333,7 +1333,7 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
   (0600) with each token's SHA-256 beside it and never the token, read and written by the
   settings pane through `agents_read` and `agents_write`; `agents_mint` makes one by hand
   and answers its token once.
-- **The window's commands**, each answering only nib's own window: `agents_stop`,
+- **The window's commands**, each answering only Orden's own window: `agents_stop`,
   `agents_resume {agent?}`, `agents_answer {id, allow, always}`, `agents_ask {agent, category, summary, key}` for a window verb
   that asks first, `agents_state` for everything the activity panel draws at once,
   `agents_log {day}` with `agents_log_days` (the days there are, newest first) and
@@ -1380,8 +1380,8 @@ Each has a recommendation, and the design above assumes it.
    app**, first press pauses everything, second closes the agents' tabs.
 5. **When you click into a tab an agent is using.** Decided 2026-10-05: **nothing
    happens to the agent**; you and it share the tab, and the stop is how you stop it (7.3).
-6. **Closing nib's last window while an agent works.** Recommendation: **the window hides
-   and nib keeps working in the tray**, said once; Quit in the tray ends it. Otherwise
+6. **Closing Orden's last window while an agent works.** Recommendation: **the window hides
+   and Orden keeps working in the tray**, said once; Quit in the tray ends it. Otherwise
    closing the window ends the job and its tabs.
 7. **Agent edits in an open note under Ctrl+Z.** Recommendation: **yes, each agent edit is
    its own ordinary undo step**, plus "Undo the agent's edits" for everything one agent did

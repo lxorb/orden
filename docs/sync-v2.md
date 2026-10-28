@@ -1,6 +1,6 @@
 # Sync, version 2
 
-A design, not a build. It decides how nib moves notes, files and web logins between
+A design, not a build. It decides how Orden moves notes, files and web logins between
 devices for the next several years, and it ends in a plan that eight agents can build in
 parallel. `docs/sync.md` and `docs/collaboration.md` describe what ships today; this is
 what replaces the parts of them that hand people conflict files.
@@ -38,7 +38,7 @@ Emil, 2026-09-30:
 ## The short version
 
 1. **Every document is a CRDT on every device, not only while a room is open.** The Yjs
-   document nib already uses for live editing is kept on disk beside the note, and the
+   document Orden already uses for live editing is kept on disk beside the note, and the
    markdown file is what that document writes. Offline edits merge character by character
    on the way back, the way live keystrokes already do. Conflict files are gone.
 2. **Confirmed and pending.** Each device keeps what the account has acknowledged and what
@@ -49,7 +49,7 @@ Emil, 2026-09-30:
    (more than a sentence of overlap) or one side deleted a paragraph the other rewrote. Keep
    mine, keep the other device's, keep both. Nothing else ever produces a second file.
 4. **Files edited by other programs** are folded in with a three-way merge against the text
-   nib last wrote, so git, Obsidian and a text editor are ordinary writers.
+   Orden last wrote, so git, Obsidian and a text editor are ordinary writers.
 5. **The tree gets ids.** Folders are rows with ids; rename and move are operations on an
    id, applied by the account in arrival order. An edit beats a delete, a rename never
    loses history, two creates of one name become two names (or one day's note).
@@ -93,7 +93,7 @@ Emil, 2026-09-30:
 | versions | every push is a version (one per 5 min), bodies in R2 by hash, thinned with age | `services/sync/src/versions.ts` |
 | the account's notes | D1 `notes` (id, path, seq, version, hash) and R2 `spaces/<space>/<id>` | `services/sync/src/notes.ts` |
 | files that are not notes | PDFs and `publish.css/js` go up as blobs for publishing and never come down; pasted pictures go to the account's blob store when signed in, beside the note otherwise; sound and dropped files stay beside the note and never travel | `mirror.ts` `pushFiles`, `assets.ts` |
-| files changed by other programs | nothing is watched: nib opens nothing from outside its spaces, and a space's notes follow a pass (`refresh` in `sync.svelte.ts`) | - |
+| files changed by other programs | nothing is watched: Orden opens nothing from outside its spaces, and a space's notes follow a pass (`refresh` in `sync.svelte.ts`) | - |
 | web data | a WebView2 user data folder (or WebKit store) per Global, Space or Site store, on this device only; session cookies given a 400-day expiry | `web_stores.rs`, `web_cookies.rs`, `web-tab/web-data.ts` |
 | web notes | a `.url` file (`URL`, which follows the reading two seconds after it settles, `Title`, `Nib-Added`, `Nib-Home`, `Nib-Icon` as a `data:` PNG); syncs as a small note and is never in a room; the scroll and the trail stay on the device (`nib:web-places`) | `web-tab/shortcut.ts`, `web-tab/keep.ts`, `web-tab/place.ts` |
 
@@ -199,7 +199,7 @@ and does no merging at all ([Joplin][joplin]); its tracker has users with every 
 Conflicts ([Joplin forum][joplin-all]). **Dropbox** and **Syncthing** write `conflicted
 copy` and `.sync-conflict-<date>-<time>-<device>` files, and the older file is the one
 renamed ([Dropbox][dropbox], [Syncthing][syncthing]). **Lesson:** this row is the product
-nib must not be.
+Orden must not be.
 
 **Google Docs** serialises everything through a server with operational transformation;
 **Figma** serialises through a server with last-writer-wins per property and says text
@@ -214,7 +214,7 @@ confirmed apart from what is pending, and rebase the second on the first.
 
 ### CRDTs for text
 
-**Yjs** is already nib's engine for rooms (`collaboration.md` has the reasoning): runs of
+**Yjs** is already Orden's engine for rooms (`collaboration.md` has the reasoning): runs of
 typing are one item, deleted content is discarded under garbage collection, and "the deleted
 set size in a snapshot is only 4.5Kb" for a 260,000-operation trace ([Yjs
 internals][yjs-internals]). **Automerge 3** (July 2025) now keeps its columnar format in
@@ -224,7 +224,7 @@ memory and cut memory "by over 10x", Moby Dick from 700 MB to 1.3 MB ([Automerge
 ([Eg-walker][eg]).
 
 **Decision: Yjs, everywhere.** It is in the bundle, the Worker and the tests already; the
-binding to nib's shared document exists (`rooms/bind.ts`); the deleted-set cost is small;
+binding to Orden's shared document exists (`rooms/bind.ts`); the deleted-set cost is small;
 and a second library would be a second format on disk for years. Loro's movable tree was
 the one real temptation, for the file tree, and the tree is better served by the account
 serialising operations (section 5.9) than by a tree CRDT, because the account is the one
@@ -241,7 +241,7 @@ Section 5.3 uses the second.
 
 `diff3` merges two texts against their common ancestor and marks overlapping hunks as
 conflicts; diff-match-patch diffs characters with a semantic cleanup and applies patches
-fuzzily. nib needs both halves: a character diff to turn a file into operations
+fuzzily. Orden needs both halves: a character diff to turn a file into operations
 (`diff-match-patch-es`, maintained, Apache-2.0), and a three-way analysis to decide
 whether two sets of edits overlap. Fuzzy patching is what duplicates Obsidian's text, so it
 is not used: operations go through the CRDT, and the three-way analysis only decides
@@ -312,7 +312,7 @@ liveness clock that cost nothing while nobody asks.
 ## 3. Principles
 
 The promise, in one sentence: **nothing anybody writes is lost, nobody is handed a file to
-sort out, and the one question nib ever asks is asked only when two people really wrote two
+sort out, and the one question Orden ever asks is asked only when two people really wrote two
 different things in the same place.**
 
 - **Merge by default, ask by exception.** Silence is the normal outcome of every sync. The
@@ -354,7 +354,7 @@ different things in the same place.**
 | both renamed it | the later rename wins | nothing |
 | both created `Untitled.md` | two notes: `Untitled.md` and `Untitled 2.md` | the second device's row renames itself |
 | both appended to a day's note that did not exist yet (a shortcut, the append action) | one note, both lines kept | nothing |
-| a file edited by git or another editor | merged three-way against what nib last wrote | nothing |
+| a file edited by git or another editor | merged three-way against what Orden last wrote | nothing |
 | the app crashed | at most the last 0.4 s of typing is lost from the file (the session keeps it and the next launch writes it), as with any autosave; everything written is resent | nothing |
 | a picture, recording or PDF added | uploaded once by content; other devices fetch it (large ones when opened) | the embed draws |
 | the same picture file replaced on two devices while apart | cannot merge: the modal, when opened | as below |
@@ -461,7 +461,7 @@ Join (6.6).
 Every markdown note, canvas and page note in a synced space has a Yjs document on every
 device that holds the space, persisted in the device's sync store (section 9.2), and on the
 account in the note's Durable Object (the existing `NoteRoom`) with a snapshot in R2. The
-file on disk is the document's projection: nib writes it whenever the document changes and
+file on disk is the document's projection: Orden writes it whenever the document changes and
 autosave's pause has passed, exactly as it writes today.
 
 What this changes, in one line: **a room is no longer something a note is in while two
@@ -632,15 +632,15 @@ kept by Keep (the other device) and Keep both, and are a version under Keep (thi
 ### 5.5 Files edited by other programs
 
 Space folders are watched (`notify`: ReadDirectoryChangesW, FSEvents, inotify), debounced,
-and read once in full after each launch in the background. Each file's last write by nib is
-known (hash, size, modification time, file identity). A file whose hash is not nib's last
+and read once in full after each launch in the background. Each file's last write by Orden is
+known (hash, size, modification time, file identity). A file whose hash is not Orden's last
 write was changed by something else. Its new text F is folded in as a three-way merge:
 
-- ancestor: the text nib last wrote or read (kept as the store's `written` for that note);
+- ancestor: the text Orden last wrote or read (kept as the store's `written` for that note);
 - theirs: F;
 - ours: the live document's text now (which may have moved since, from the account).
 
-If ours is still the ancestor (the common case: nib was closed, or nobody else wrote), the
+If ours is still the ancestor (the common case: Orden was closed, or nobody else wrote), the
 change is simply `textops(ancestor, F)` applied as this device's operations. Otherwise the
 classifier above runs with B = ancestor, L = F, R = ours, and a `diverged` verdict holds the
 note with the same modal. After a `git checkout` of another branch this is many notes at
@@ -651,7 +651,7 @@ file identity, new path) is a move. File identity is the volume and file id on W
 (`GetFileInformationByHandle`) and the device and inode elsewhere; a move across volumes
 is recognised by hash against what was deleted in the same scan.
 
-With `no-local-files` shipping, nib opens nothing outside a space, so `watch.svelte.ts`'s
+With `no-local-files` shipping, Orden opens nothing outside a space, so `watch.svelte.ts`'s
 clash for outside files is retired and this is the only road for foreign edits.
 
 #### Other sync tools
@@ -660,7 +660,7 @@ A space folder is often inside Proton Drive, Dropbox, OneDrive or Syncthing as w
 each of those keeps both sides of its own clash by writing one under a new name beside the
 file. Syncing that copy is how one clash on one machine became a stray file on every device
 (Emil, 2026-10-05: seven `Hackathon List (# Name clash 2026-10-05 …C #).md`). So such a
-name is never carried, either way, and never taken off a disk by nib. One matcher says
+name is never carried, either way, and never taken off a disk by Orden. One matcher says
 which names those are, for both engines and the file list: `foreignCopy` and
 `inForeignCopy` in `@orden/sync-core/foreign`.
 
@@ -679,7 +679,7 @@ out because people name their own notes that way, and so is a OneDrive copy name
 computer somebody renamed: the name is a word, and `Plan-A.md` is a note. OneDrive is matched
 only for the names Windows gives a computer itself (`DESKTOP-` or `LAPTOP-` and seven or
 eight random characters). A folder with such a name is a copy, and so is everything in it.
-nib's own `(from another device …)` is not on the list; it is a note.
+Orden's own `(from another device …)` is not on the list; it is a note.
 
 What the engine does with one:
 
@@ -694,7 +694,7 @@ What the engine does with one:
   (`pullable`), never written (`project`), and its bytes neither go up nor come down
   (`settleFiles`). A device that does not have the file never gets it.
 - **Let go of by the account**: `settle` forgets the entry and leaves the file. The tool
-  that made it syncs the folder too, and would carry nib's delete to every disk.
+  that made it syncs the folder too, and would carry Orden's delete to every disk.
 - **Taken off on request**: the Sync pane counts them (`Engine.foreignCopies`, a folder once)
   and offers *Remove from sync*, which queues an ordinary `delete` for each (`unsynced`):
   Recently deleted on the account, restorable, and every file stays where it is. Nothing
@@ -918,7 +918,7 @@ computers is two clients presenting one refresh token (section 2). So the lease 
 - **store**: the store the page is in, named as `web-data.ts` names it (`global`,
   `space_<id>`, `site_<id>_<site>`);
 - **site**: the registrable domain of the page's top-level address (`siteOf`, public suffix
-  list), which is already where nib draws the line between strangers.
+  list), which is already where Orden draws the line between strangers.
 
 Every page of that site in that store on a device, whether a web note or an ephemeral tab,
 needs the lease; one device holds it for all of its tabs. Opening a Calendar note while the
@@ -940,7 +940,7 @@ sites anybody is logged in to.
 **Heartbeat.** The device sends the text frame `beat` every 10 s; the hub has
 `setWebSocketAutoResponse(beat, ok)`, so beats never wake it. A device is **alive** while its
 socket is open and `getWebSocketAutoResponseTimestamp` is under 30 s old: three missed beats.
-A device is **active** while somebody has pressed a key or moved the pointer in nib within
+A device is **active** while somebody has pressed a key or moved the pointer in Orden within
 the last 5 minutes, or a page of the site is playing sound; the device says `active` and
 `idle` on transitions only.
 
@@ -1003,7 +1003,7 @@ without a lease; there is nobody to ask, and a page that needs the network will 
 anyway. When it reconnects it acquires; if the fence moved while it was away, the newer
 state wins and its pages reload. That window is the one place two computers can run one
 session at once, and it is bounded by how long a computer is online to a site but not to
-nib.
+Orden.
 
 **Rates.** Acquisitions are limited to 30 a minute per device (a flapping tab), uploads to
 60 an hour per site; both are rows in the existing `limits` machinery.
@@ -1021,7 +1021,7 @@ continues where it left off. Each row, and whether it travels:
 | IndexedDB, per origin | yes | **yes, up to 16 MB per database**; larger ones are left and noted | WhatsApp's keys, offline apps; the limit keeps a mail cache from being a hundred megabytes a handover |
 | the tab's back and forward trail and scroll position | yes | **yes, for web notes** (`place.ts`) | "the exact same page you had open" |
 | zoom per site | yes | **yes** (`sites.ts`) | |
-| site permissions nib granted | yes | **yes** (`nib:web-grants`) | asked once, not per computer |
+| site permissions Orden granted | yes | **yes** (`nib:web-grants`) | asked once, not per computer |
 | Cache Storage, service workers | yes | no | the site registers and fills them again on its next visit |
 | the HTTP cache | yes | no | a cache |
 | Origin Private File System | yes | no, for now | rare; the same page-script route can add it |
@@ -1043,7 +1043,7 @@ also makes it portable between a Windows WebView2 and a Mac WebKit.
 | localStorage, sessionStorage, IndexedDB out | a script in an **isolated world** of a page on the origin (`Page.createIsolatedWorld` + `Runtime.evaluate`) | a script in a `WKContentWorld` | a script in an isolated world (`webkit_script_world_new`) |
 | the same in | a hidden restore view in the same store, navigated to `https://<origin>/__nib_restore`, answered with an empty page by `WebResourceRequested`, then the script writes | a hidden view given `loadHTMLString("", baseURL: origin)`, which runs as that origin | `webkit_web_view_load_html("", origin)` |
 | sessionStorage in | a document-created script on the tab's first load after a restore, guarded by origin | the same with a `WKUserScript` at document start | a user script |
-| trail and scroll | nib's own (`place.ts`) | nib's own (`interactionState` is WebKit-only and opaque, so not used) | nib's own |
+| trail and scroll | Orden's own (`place.ts`) | Orden's own (`interactionState` is WebKit-only and opaque, so not used) | Orden's own |
 
 The dump script walks `indexedDB.databases()`, each store's schema (key path,
 auto-increment, indexes) and its records by cursor, and encodes values with a tagged
@@ -1301,7 +1301,7 @@ the files beside it), where it adds to or decides what sections 4 and 6 leave op
   fact. A tab of a site that was taken from this computer asks again when it is looked at,
   at most every 30 s, because the hub tells only waiting computers `free`.
 - **Somebody at this computer** is input to the app's own page, or the system's last input
-  (`GetLastInputInfo`, CoreGraphics' idle time) while a nib window is the one in front,
+  (`GetLastInputInfo`, CoreGraphics' idle time) while a Orden window is the one in front,
   which is how typing into a web page counts (`src-tauri/src/presence.rs`); a page playing
   sound; an agent at work. Linux has only the app's own page.
 - **Moving the state.** A capture's files cross the bridge by the folder's name, never a
@@ -2086,7 +2086,7 @@ stopped travelling (#393, section 6).
    (the site in its store), because two notes on one site share one session and running it
    on two computers gets it revoked. The message still appears in the tab you opened.
 2. **How long before an unused lock lets go.** Recommendation: **5 minutes without a key
-   press or pointer move in nib** (and 30 s after a crash, sleep or quit). Shorter hands the
+   press or pointer move in Orden** (and 30 s after a crash, sleep or quit). Shorter hands the
    session over while you read; longer makes you press Use here after switching computers.
 3. **The Global / Space / Site choice travels with the space** instead of staying per
    computer. Recommendation: **yes**, or the same space signs in to different stores on your

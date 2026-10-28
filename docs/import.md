@@ -74,13 +74,13 @@ came in, and lands in it.
   that file. Read and never written, while Zen runs; the crate hands over those few
   files of a listed profile and nothing else (`zen_profiles.rs`), the app unpacks
   Mozilla's LZ4 (`import/mozlz4.ts`) and reads the lists (`import/zen.ts`). Each Zen
-  space becomes the nib space of its name, with its icon (an emoji as it is, Zen's
+  space becomes the Orden space of its name, with its icon (an emoji as it is, Zen's
   drawings as Lucide's) and its colour as the nearest accent; each tab a web note in
   the place the sidebar has it and that order kept as the list's arranged order; a
   folder a folder, an empty one an empty note; a pinned tab's address it goes back
   to the note's home; the Essentials web notes at the top of the first space (or of
   their container's) and bookmarks of it. Pages that are not on the web stay behind,
-  and so do containers, which nib's one browsing profile has nothing to become; the
+  and so do containers, which Orden's one browsing profile has nothing to become; the
   line says so. Importing again brings only what is new: a space of the same name is
   the same space, and a web note already there pointing at the same page is not
   written twice. Cookies and logins are not read. See `import/zen-plan.ts` and
@@ -184,7 +184,7 @@ and three thousand rows in the trash would bury whatever is actually in there.
 
 ## What a link becomes
 
-A link to another note becomes a wikilink. That is nib's own way of pointing at a
+A link to another note becomes a wikilink. That is Orden's own way of pointing at a
 note, it survives the reader renaming it afterwards where a path does not, and it
 is what the graph, the backlinks and the unlinked mentions read.
 
@@ -204,7 +204,7 @@ asking; see `appHref` in @orden/markdown.
 ## What each format becomes
 
 **Notion.** A folder per page that has pages under it, a file per page, and an id
-on the end of every name. Take the ids off and that is exactly nib's own shape, a
+on the end of every name. Take the ids off and that is exactly Orden's own shape, a
 note and a folder of the same name, so a Notion workspace arrives as the tree it
 looked like in Notion. A page's properties, which Notion writes as lines under
 the title, become front matter. A database is a CSV beside a folder of its rows'
@@ -224,16 +224,16 @@ are the data.
 **Evernote.** One `.enex` per notebook, holding a note each: title, body, dates,
 tags, and every attachment as base64 in the same file. Two notebooks become two
 folders; one becomes none, since one file is the import itself. `<en-media>`
-points at an attachment by the MD5 of its bytes, which is why nib computes MD5:
+points at an attachment by the MD5 of its bytes, which is why Orden computes MD5:
 without it, a note with two pictures gets them in whatever order they were
 stored. `<en-todo>` becomes a task list, because that is what it was drawn as.
-`<en-crypt>` is text encrypted with a passphrase nib does not have and never
+`<en-crypt>` is text encrypted with a passphrase Orden does not have and never
 will: those are marked with an ellipsis and counted out loud.
 
 **Google Keep.** Takeout writes a JSON, an HTML copy and the attachments per
 note. The JSON is read. A list becomes a task list with the boxes in the state
 they were left in, labels become tags, and the dates come over. Colours do not: a
-colour is how a note was found on the Keep wall, and the wall is what nib's
+colour is how a note was found on the Keep wall, and the wall is what Orden's
 search, tags and picture of the space are for. What was in the bin stays in the
 bin - Keep would have thrown it away within the week - and the count is said.
 Archived notes go to a folder called Archive, because an archive is a place
@@ -245,7 +245,7 @@ which nothing else reads as a tag at all. Those become `#two-words`.
 
 **Logseq.** A graph folder: `pages/`, `journals/`, `assets/`, and `logseq/` for
 the app's own settings, which are not notes. `key:: value` becomes front matter.
-`((a-uuid))` is a reference to one block: nib has block links of its own, but they
+`((a-uuid))` is a reference to one block: Orden has block links of its own, but they
 point at a block by a name that note carries, and a Logseq uuid is not that name,
 so a reference is replaced with what the block said and the count is given. `TODO`
 and `DONE` in front of a bullet become boxes. A journal is renamed to the date it
@@ -257,7 +257,7 @@ out the same way Logseq's is, `{{[[TODO]]}}` becomes a box, `^^text^^` becomes
 `==text==`, and a daily page called `September 11th, 2026` becomes `2026-09-11`,
 in a folder of its own.
 
-**Obsidian.** A vault is markdown in folders, which is nib's own spelling already:
+**Obsidian.** A vault is markdown in folders, which is Orden's own spelling already:
 wikilinks, embeds, callouts, block ids, `%%comments%%`, `==highlights==`, `.canvas`
 and `.base` files all read as they are, so the notes go through the plain reader
 below untouched. The files are the reader's own rather than an export's, so none
@@ -319,7 +319,7 @@ deadline, the duration, the reminders, the assignee by name, and the rule read a
 the Tasks plugin's grammar: `every!` is `when done`, `every other week` every two
 weeks. A rule it cannot read stays as words under its task and the sheet says so. The
 Inbox becomes the space's inbox where the space has none yet (rows/inbox.ts), so Todoist's
-inbox is nib's. The token never touches anything but the requests, and the tests read a
+inbox is Orden's. The token never touches anything but the requests, and the tests read a
 recorded answer, never the API.
 
 **Apple Journal.** Journal's own export, which the app writes under Settings:
@@ -363,7 +363,7 @@ where a reader will see it. A note's body on that row is a gzipped protobuf: the
 note's plain text once, and a run per stretch of it saying what that stretch is.
 Headings, boxes, lists, quotes, code, bold, links and highlights all come over;
 the highlight arrives as `==marked==` without the coloured circle Obsidian writes,
-because nib has one highlight. A link from one note to another becomes a wikilink
+because Orden has one highlight. A link from one note to another becomes a wikilink
 the way every other export's links do. A tag or a mention is a run of its own in
 Notes, and arrives as the words it drew.
 
@@ -392,10 +392,10 @@ a reader to find the pane themselves.
 
 Every one of these exports knows when each note was written, and the moment it is
 imported every file on disk says it was written today. So what the export knew
-goes into the note: `date` for the day it was made, which is the key nib already
+goes into the note: `date` for the day it was made, which is the key Orden already
 reads, and `updated` only where the export knew a different last-edited day.
 
-Tags come over as `tags` in front matter, which is where nib's search reads them,
+Tags come over as `tags` in front matter, which is where Orden's search reads them,
 tidied to something a tag can be: no spaces, no punctuation on the ends, and the
 slashes kept, because a nested tag is nested in both apps.
 
@@ -424,7 +424,7 @@ written and one thing to undo afterwards.
 
 Three rewrites, which are the ones that actually break something. Bear's closed tags
 become tags. A Zettelkasten id link, `[[202201011200]]`, points at a note by the
-timestamp it was made at; nib names such a note `202201011200 The title.md`, the
+timestamp it was made at; Orden names such a note `202201011200 The title.md`, the
 way its own unique-note command does, so a link to the bare id points at nothing
 until it is written out in full.
 
@@ -452,4 +452,4 @@ notebook at a time.
 
 A note's own formatting survives as far as markdown goes, and no further. What
 was a coloured table cell in Notion is a table cell; what was a Keep note's
-colour is nothing. This is the trade markdown makes everywhere else in nib too.
+colour is nothing. This is the trade markdown makes everywhere else in Orden too.
