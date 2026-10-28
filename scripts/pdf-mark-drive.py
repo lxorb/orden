@@ -6,7 +6,10 @@ the list said which of them was the paper somebody brought in.
 Run with Orden up (PDFMARK=1 in scripts/wayland-launch.sh). Two PDFs and a blank page
 note are put in the open space, and one of the PDFs is opened, which makes it a page
 note holding its paper (pages/from-pdf.ts). Its row and its tab have to wear the mark
-the other PDF's row wears, and the blank page note's row has to wear another.
+the other PDF's row wears, and the blank page note's row has to wear another. Then a
+second space is made and opened, and the page note opened from it, in a tab of that
+space: the tab has to wear the PDF's mark still, though the list in front is another
+space's and says nothing of it.
 
     python3 scripts/pdf-mark-drive.py <out folder>
 """
@@ -148,6 +151,40 @@ elif tab_mark != pdf_mark:
     failures.append("the page note's tab does not wear the PDF's mark")
 else:
     print("pdf mark: its tab wears the PDF's mark too")
+
+# Another space in front, whose list says nothing of the note: the tab it is opened in
+# there has to know it all the same. Its tab here is closed first, or opening it would
+# bring this space back to show the tab it already has.
+run(f"(() => {{ for (const tab of nib.workspace.tabs) if (tab.path === {json.dumps(made)}) nib.workspace.close(tab.id); return true }})()")
+time.sleep(1)
+run("void nib.workspace.addSpace('Elsewhere'), true")
+if not until("nib.workspace.activeSpace && nib.workspace.activeSpace.name === 'Elsewhere'"):
+    failures.append("the second space never opened")
+else:
+    run(f"void nib.workspace.openPdf({json.dumps(made)}), true")
+    elsewhere_tab = until(
+        f"(() => {{ const tab = nib.workspace.active; return tab && tab.path === {json.dumps(made)} && tab.id }})()"
+    )
+    away_mark = None
+    for _ in range(40):
+        away_mark = run(
+            f"(() => {{ const tab = document.querySelector('.pick[data-tab=\"{elsewhere_tab}\"] .mark svg');"
+            " return tab ? tab.innerHTML : null })()"
+        )
+        if away_mark == pdf_mark:
+            break
+        time.sleep(0.25)
+    subprocess.run(["grim", str(OUT / "pdf-mark-elsewhere.png")], check=False)
+    front = run("nib.workspace.activeSpace && nib.workspace.activeSpace.name")
+    listed = run(f"!!nib.workspace.entryAt({json.dumps(made)})")
+    print(f"pdf mark: {front!r} is in front, and its list holds the note: {listed}")
+    if front != "Elsewhere" or listed:
+        failures.append(f"the note did not open in a tab of the other space: {front!r} in front, listed {listed}")
+    print(f"pdf mark: opened from another space, its tab wears the PDF's mark: {away_mark == pdf_mark}")
+    if not elsewhere_tab:
+        failures.append("the page note never opened in a tab of the other space")
+    elif away_mark != pdf_mark:
+        failures.append("opened from another space, the page note's tab does not wear the PDF's mark")
 
 for failure in failures:
     print(f"::error::pdf mark: {failure}")

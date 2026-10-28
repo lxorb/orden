@@ -54,7 +54,8 @@
 #     scripts/grants-drive.py);
 #   - with PDFMARK=1, two PDFs and a blank page note put in the space and one PDF
 #     opened, which makes it a page note: its row and its tab have to wear the PDF's
-#     mark and the blank one's another (#676, scripts/pdf-mark-drive.py);
+#     mark and the blank one's another, and so does its tab opened from another
+#     space (#676, scripts/pdf-mark-drive.py);
 #   - with WATCH=1, a space holding a folder nobody may read and four hundred more: a
 #     note written into it by another program has to be heard, at its top and deep in
 #     it, and again under a lowered limit of watched folders, which the watch has to say
