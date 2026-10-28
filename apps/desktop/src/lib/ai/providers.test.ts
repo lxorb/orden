@@ -5,6 +5,7 @@ import {
   bodyFor,
   deltaIn,
   headersFor,
+  firstModel,
   isLocal,
   type Message,
   modelsIn,
@@ -227,6 +228,53 @@ describe('the models a provider listed', () => {
     for (const body of [null, {}, { data: 'nope' }, { data: [{}, { id: 5 }, { id: '' }] }]) {
       expect(modelsIn(body), JSON.stringify(body)).toEqual([])
     }
+  })
+})
+
+/** #325: a key given to OpenAI started on babbage-002, the first name its list sorts to,
+ *  which cannot call a tool, so a task done with AI could do nothing. */
+describe('the model a provider starts on', () => {
+  const OPENAI = [
+    'babbage-002',
+    'davinci-002',
+    'gpt-4.1',
+    'gpt-4.1-mini',
+    'gpt-5-pro',
+    'gpt-5.4',
+    'gpt-5.4-mini',
+    'gpt-5.5',
+    'gpt-5.5-2026-04-23',
+    'gpt-5.5-pro',
+    'gpt-5.3-chat-latest',
+    'gpt-5.3-codex',
+    'gpt-5-search-api',
+    'omni-moderation-latest',
+    'text-embedding-3-large',
+    'tts-1',
+    'whisper-1',
+  ]
+
+  test('is OpenAI’s newest GPT, its full model, never babbage', () => {
+    expect(firstModel('openai', OPENAI)).toBe('gpt-5.5')
+    expect(firstModel('openai', ['babbage-002', 'gpt-5.4-mini', 'gpt-4.1'])).toBe('gpt-5.4-mini')
+    expect(firstModel('openai', ['babbage-002', 'davinci-002', 'tts-1'])).toBeNull()
+  })
+
+  test('is Anthropic’s newest Sonnet, its alias before a dated one', () => {
+    expect(
+      firstModel('anthropic', [
+        'claude-haiku-4-5',
+        'claude-opus-5-5',
+        'claude-sonnet-4-5-20250929',
+        'claude-sonnet-5',
+        'claude-sonnet-5-20260101',
+      ]),
+    ).toBe('claude-sonnet-5')
+  })
+
+  test('is another server’s first, nib knowing nothing of its names', () => {
+    expect(firstModel('compatible', ['llama3', 'babbage-like'])).toBe('llama3')
+    expect(firstModel('compatible', [])).toBeNull()
   })
 })
 

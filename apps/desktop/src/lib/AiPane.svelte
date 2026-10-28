@@ -36,6 +36,7 @@
   import { browserVault, keepBrowserInVault, vault } from './ai/vault/start.svelte'
   import PlanRows from './ai/PlanRows.svelte'
   import {
+    firstModel,
     isLocal,
     KIND_NAMES,
     offeredKinds,
@@ -151,9 +152,11 @@
     try {
       const found = await listModels(provider)
       models = { ...models, [provider.id]: found }
-      // The first one where nothing has been chosen, so a provider that has just
-      // been given a key is usable without a second decision.
-      if (!provider.model && found[0]) ai.update(provider.id, { model: found[0] })
+      // One where nothing has been chosen, so a provider that has just been given a key
+      // is usable without a second decision: one that can use tools, never merely the
+      // first by name (#325).
+      const first = firstModel(provider.kind, found)
+      if (!provider.model && first) ai.update(provider.id, { model: first })
     } catch (error) {
       trouble = { ...trouble, [provider.id]: message(error, t('Could not read the models.')) }
     } finally {

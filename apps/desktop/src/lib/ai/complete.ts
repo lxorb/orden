@@ -30,6 +30,7 @@ import {
   modelsUrl,
   type Provider,
   reachable,
+  talkable,
   troubleIn,
   usable,
 } from './providers'
@@ -234,5 +235,5 @@ export async function listModels(provider: Provider, signal?: AbortSignal): Prom
   })
 
   if (!response.ok) throw new Error(await refusal(response, provider))
-  return modelsIn(sseJson(await response.text()))
+  return talkable(provider.kind, modelsIn(sseJson(await response.text())))
 }
