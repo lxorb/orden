@@ -20,9 +20,10 @@
  *  and list the models are handed in (`Roads`), so the rules are tested apart from the
  *  panel. */
 
-import { newThread } from '../chat/threads'
+import { keepThread, newThread } from '../chat/threads'
 import { untrusted } from '../chat/transcript'
 import type { Effort, Mode, Thread } from '../chat/types'
+import { tasks } from '../commands/tasks.svelte'
 import type { Ended } from '../commands/types'
 import { type Offered, routed } from './route'
 
@@ -95,11 +96,19 @@ export function answerFor(helper: Pick<Helper, 'answer' | 'description' | 'outsi
   return untrusted(`helper ${helper.description}`, helper.answer)
 }
 
+/** What a thread keeps of the work started under it, written down with it: every thread
+ *  started under it at any depth, what its review covers (review/changes.ts). */
+type Helped = Thread & { helpers?: string[] }
+
 class Helpers {
   /** Every helper of this run, newest last. */
   all = $state.raw<Helper[]>([])
 
   private stops = new Map<string, AbortController>()
+  /** The work running under a thread, by its helper thread's id: only while the turn
+   *  or task that started it runs. A thread whose work ended (a `/fork` copy, a finished
+   *  `/subtask` the reader carries on) is a thread of its own again. */
+  private under = new Map<string, { parent: Helped; child: Thread }>()
   private ends = new Map<string, Promise<void>>()
 
   get(id: string): Helper | null {
@@ -167,6 +176,7 @@ class Helpers {
       started: Date.now(),
     }
     this.all = [...this.all, helper]
+    if (parent) this.startedUnder(parent, thread)
 
     const stopper = new AbortController()
     this.stops.set(helper.id, stopper)
@@ -203,6 +213,7 @@ class Helpers {
           this.stops.delete(helper.id)
           // A helper's own helpers end with it.
           this.stopUnder(helper.id)
+          this.endedUnder(helper.id)
         }),
     )
     return helper
@@ -219,17 +230,43 @@ class Helpers {
     return this.get(id)
   }
 
+  /** `child` runs work for `parent`, started by `run_agent` or by a command
+   *  (`/subtask`, `/fork`, `/batch`, `/deep-research`), until `endedUnder`: one tree for
+   *  every kind. Every thread above takes it into its review and is written down now:
+   *  a command writes its parent before this, and a relaunch is not to lose it. */
+  startedUnder(parent: Thread, child: Thread): void {
+    this.under.set(child.id, { parent, child })
+    for (let above: Helped | undefined = parent; above; above = this.under.get(above.id)?.parent) {
+      if (above.helpers?.includes(child.id)) continue
+      above.helpers = [...(above.helpers ?? []), child.id]
+      void keepThread(above).catch(() => undefined)
+    }
+  }
+
+  /** The work `child` ran for its parent is over. What it started in it stays in the
+   *  reviews above; what is started there later is its own. */
+  endedUnder(child: string): void {
+    this.under.delete(child)
+  }
+
+  /** A thread deleted: out of the tree, with what ran under it. */
+  forget(id: string): void {
+    this.under.delete(id)
+    for (const [child, one] of [...this.under]) if (one.parent.id === id) this.forget(child)
+  }
+
   /** Stops one helper, and every helper under it. */
   stop(id: string): void {
     this.stops.get(id)?.abort()
     this.stopUnder(id)
   }
 
-  /** Stops every helper a thread started, and theirs: what stopping a thread does. */
+  /** Stops everything a thread started, down its tree: its work on the task list
+   *  (`/batch`, `/subtask`, `/fork`, a goal, a loop), its helpers, and theirs. What
+   *  stopping or deleting a thread does. */
   stopUnder(thread: string): void {
-    for (const one of this.all) {
-      if (one.parent === thread && one.state === 'running') this.stop(one.id)
-    }
+    tasks.stop(thread)
+    for (const [child, one] of [...this.under]) if (one.parent.id === thread) this.stop(child)
   }
 }
 

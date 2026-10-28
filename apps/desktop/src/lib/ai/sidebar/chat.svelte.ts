@@ -869,7 +869,8 @@ class Chat implements Panel {
     this.queued = { ...this.queued, [thread.id]: [...sends, ...(this.queued[thread.id] ?? [])] }
   }
 
-  /** Stops the open thread's turn, and every helper it started; what arrived stays. */
+  /** Stops the open thread's turn, and everything it started (helpers.stopUnder); what
+   *  arrived stays. */
   stop(): void {
     const id = this.open?.id
     if (!id) return
@@ -1234,9 +1235,6 @@ class Chat implements Panel {
       () => false,
     )
     this.stoppers.get(id)?.abort()
-    void import('../helpers/helpers.svelte').then(({ helpers }) => {
-      helpers.stopUnder(id)
-    })
     this.unwait(id)
     this.forgetEdit(id)
     for (const one of this.queued[id] ?? [])
@@ -1247,6 +1245,11 @@ class Chat implements Panel {
       await this.refreshHeads()
       return
     }
+    // What it started ends with it, once it is gone: a refused delete leaves it running.
+    void import('../helpers/helpers.svelte').then(({ helpers }) => {
+      helpers.stopUnder(id)
+      helpers.forget(id)
+    })
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()
     await this.refreshHeads()
