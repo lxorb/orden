@@ -226,9 +226,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The catalogues' raised on 2026-10-24, from 850,000 to 950,000, for #768: every
  *  setting the plugin's own Settings shows says what it does behind a `?`, and those
  *  sentences are rows the plugin asks for, in each of the 24 catalogues it ships.
- *  Measured 922,538, from 779,615 at 7a57b7518. */
+ *  Measured 922,538, from 779,615 at 7a57b7518. *
+ *  The code raised on 2026-10-28, to 5,733,000, for #523: the file list, which the
+ *  plugin carries, is a tree to a screen reader and hands the keyboard on from a row
+ *  deleted under it (Tree.svelte). Measured 5,732,608, from 5,731,862 at 0168bd709.
+ */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_732_000,
+  code: 5_733_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

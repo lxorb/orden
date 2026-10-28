@@ -951,8 +951,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-28, to 3,420,400, for #325: a comment written in the task view takes
  *  `#needs-input` off its task (`withoutNeedsInput` in task-body.ts, read by act.ts).
- *  Measured 3,419,653 with #676's second part beside it. */
-const BUDGET = 3_421_100
+ *  Measured 3,419,653 with #676's second part beside it.
+ *
+ *  Raised 2026-10-28, to 3,423,400, for #523: the file list is a tree to a screen reader,
+ *  each row a treeitem with its level and its place among its own (`among` in
+ *  Tree.svelte), and a row deleted under the keyboard hands it on. Measured 3,423,327,
+ *  from 3,421,029 at 0168bd709. */
+const BUDGET = 3_423_400
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
