@@ -47,6 +47,8 @@ import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'
 import { DocError, notes } from '../docs'
 import { asked } from './asks'
+import { nowOf } from '../../views/days'
+import { withComment } from '../../views/task-body'
 import { type Call, done, flag, maybe, need, writerOf } from './call'
 import { at, made, noteOf } from './notes'
 import { Refused } from './problem'
@@ -239,6 +241,9 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   const { today } = clockOf(new Date())
+  // A comment under it (#325): what an agent asks about a task it could not finish, or
+  // what it did; the task view's own kind of comment, stamped now. In the same edit.
+  const comment = typeof call.args.comment === 'string' ? call.args.comment.trim() : ''
   try {
     let said = await rewritten(call, note, (text) => {
       const edited = editedTask(
@@ -250,8 +255,11 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
         ticking,
         today,
       )
+      const commented = comment
+        ? withComment(edited.text, readAt(edited.at), comment, nowOf(new Date()).slice(0, 16))
+        : null
       return {
-        text: edited.text,
+        text: commented ?? edited.text,
         said: { at: edited.at, ...(edited.next ? { next: edited.next } : {}) },
       }
     })

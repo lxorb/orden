@@ -703,7 +703,7 @@
   },
   {
     "name": "update_task",
-    "description": "Change one to-do by its `at`. `done` ticks it, and a recurring one writes its next line (`next`). Dates are YYYY-MM-DD, `\"\"` takes a field off, priority is 1 (p1) to 4, `move_to` moves it with its sub-tasks.",
+    "description": "Change one to-do by its `at`. `done` ticks it, and a recurring one writes its next line (`next`). Dates are YYYY-MM-DD, `\"\"` takes a field off, priority is 1 (p1) to 4, `move_to` moves it with its sub-tasks. `comment` writes a comment under it.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -732,6 +732,10 @@
         "duration": { "type": "string", "description": "45m, 1h30m" },
         "assignee": { "type": "string" },
         "tags": { "type": "array", "items": { "type": "string" } },
+        "comment": {
+          "type": "string",
+          "description": "A comment written under the task, as the reader writes one in the task view: what to ask about it, or what was done."
+        },
         "move_to": {
           "type": "object",
           "properties": {

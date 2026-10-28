@@ -1390,6 +1390,23 @@ describe('to-dos and bases', () => {
     ])
   })
 
+  /** #325: an agent doing a task with AI asks about it on the task itself, as the
+   *  reader comments on one, and flags it; the comment is in the same edit. */
+  test('a comment written under the task, with its tag, in one edit', async () => {
+    const { taskHash } = await import('@nib/bases')
+    const at = `Thesis.md#1:${taskHash('Write the intro')}`
+    await call('update_task', {
+      space: 'Work',
+      at,
+      tags: ['needs-input'],
+      comment: 'Which chapter is the intro for?',
+    })
+    expect(written()).toHaveLength(1)
+    const lines = written()[0]?.split('\n') ?? []
+    expect(lines[1]).toMatch(/^- \[ \] Write the intro .*#needs-input/)
+    expect(lines[2]).toMatch(/^ {2}- .*Which chapter is the intro for\?/)
+  })
+
   test('a space the grant does not reach, an anchor that is not there', async () => {
     expect(
       await call('update_task', { space: 'Secret', at: 'Diary.md#1:x', done: true }),
