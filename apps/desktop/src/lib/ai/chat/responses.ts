@@ -112,13 +112,19 @@ export function itemsOf(steps: readonly Step[]): unknown[] {
   return out
 }
 
-/** The tools, as functions, inside a namespace for a plan. */
+/** The tools, as functions, inside a namespace for a plan.
+ *
+ *  Never strict. The Responses API makes a function strict unless told otherwise, and
+ *  strict holds every property required: nib's verbs take most arguments as optional,
+ *  so a model made to fill each one sent `tab: "scratchpad"` beside the path it meant
+ *  and empty strings for the rest, and read the scratchpad for the note (#325). */
 function toolsOf(tools: readonly ToolDef[], plan: boolean, web: boolean): unknown[] {
   const functions = tools.map((one) => ({
     type: 'function',
     name: one.name,
     description: one.description,
     parameters: one.inputSchema,
+    strict: false,
   }))
   const search = web ? [{ type: 'web_search' }] : []
   if (!functions.length) return search

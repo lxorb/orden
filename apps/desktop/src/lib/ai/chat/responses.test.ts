@@ -98,6 +98,8 @@ describe('the request', () => {
           name: 'read_note',
           description: 'Reads a note.',
           parameters: { type: 'object' },
+          // Its optional arguments stay optional (#325).
+          strict: false,
         },
       ],
     })
@@ -129,6 +131,7 @@ describe('the request', () => {
             name: 'read_note',
             description: 'Reads a note.',
             parameters: { type: 'object' },
+            strict: false,
           },
         ],
       }),
