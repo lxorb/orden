@@ -71,6 +71,23 @@ function machine(pidsMax = 4096): Machine & { frames: NibdFrame[] } {
   }
 }
 
+/** Processes as the kernel has them: id, state and parent, the first twenty. */
+function described(pids: number[]): string {
+  return pids
+    .slice(0, 20)
+    .map((pid) => {
+      try {
+        const stat = readFileSync(`/proc/${String(pid)}/stat`, 'utf8')
+        const [state, parent] = stat.slice(stat.lastIndexOf(')') + 2).split(' ')
+        return `${String(pid)} ${state ?? '?'} under ${parent ?? '?'}`
+      } catch {
+        return `${String(pid)} gone`
+      }
+    })
+    .join(', ')
+    .concat(pids.length > 20 ? `, and ${String(pids.length - 20)} more` : '')
+}
+
 function session(on: Machine, id = 's_test', saved?: Saved): Session {
   const one = new Session(id, COLS, ROWS, on, saved)
   ended.push(one)
@@ -245,7 +262,13 @@ describe.runIf(linux)('a session', () => {
     expect(spawnSync('true').status).toBe(0)
 
     one.end()
-    await until(() => sessionProcesses(shell).length === 0)
+    // What is left if it is not all gone, said rather than a bare "timed out": the bomb's
+    // own processes still forking, zombies nobody has reaped, or one stuck in the kernel
+    // are three different faults, and which it was is what the next failure has to say
+    // (#446).
+    await until(() => sessionProcesses(shell).length === 0).catch((error: unknown) => {
+      throw new Error(`${String(error)}; left: ${described(sessionProcesses(shell))}`)
+    })
 
     const next = machine(limit)
     const after = session(next, 's_after')
