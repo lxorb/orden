@@ -1228,9 +1228,12 @@ mod tests {
     }
 
     /// #479: an external display at 100% as the primary screen, and a laptop panel at
-    /// 200% to its right - 2880 by 1800 pixels, 1440 by 900 of its own logical pixels,
-    /// which start at 960 because 1920 pixels over its scale is 960. In logical pixels
-    /// the laptop overlaps the primary screen though it is beside it on the desk.
+    /// 200% to its right - 2880 by 1800 pixels, 1440 by 900 of its own logical pixels.
+    /// Where those start is the platform's to say. On Windows and X11 a screen's logical
+    /// pixels are its pixels over its own scale, so the panel's start at 960, 1920 pixels
+    /// over two, and in logical pixels the panel overlaps the primary screen though it is
+    /// beside it on the desk. A Mac lays every screen out in points, so there the panel
+    /// starts where the primary screen ends, at 1920.
     const PRIMARY: Area = Area {
         x: 0.0,
         y: 0.0,
@@ -1239,7 +1242,7 @@ mod tests {
         scale: 1.0,
     };
     const PANEL: Area = Area {
-        x: 960.0,
+        x: if DESK_IN_PIXELS { 960.0 } else { 1920.0 },
         y: 0.0,
         width: 1440.0,
         height: 860.0,
@@ -1253,23 +1256,24 @@ mod tests {
         }
     }
 
-    /// A window left wholly on the laptop panel - at 1960 by 200 pixels, which is 980 by
-    /// 100 at the panel's scale - goes back onto the panel, where it was, and not onto the
-    /// primary screen its logical pixels lie on as much: compared in logical pixels the two
+    /// A window left wholly on the laptop panel - on Windows at 1960 by 200 pixels, which
+    /// is 980 by 100 at the panel's scale - goes back onto the panel, where it was, and
+    /// nowhere on the primary screen. Where the desk is in pixels, its logical pixels lie
+    /// on the primary screen as much as on the panel: compared in logical pixels the two
     /// tied, and the primary screen, first, was chosen.
     #[test]
     fn a_window_on_a_screen_of_another_scale_stays_on_it() {
-        let was = at_scale(2.0, 980.0, 100.0, 900.0, 600.0);
+        let was = at_scale(2.0, PANEL.x + 20.0, 100.0, 900.0, 600.0);
+        assert_eq!(
+            onto(was, &[PRIMARY, PANEL]),
+            was,
+            "on the panel, where it was"
+        );
+        assert_eq!(PRIMARY.overlap(&was), 0.0, "nowhere on the primary screen");
         if DESK_IN_PIXELS {
-            assert_eq!(
-                onto(was, &[PRIMARY, PANEL]),
-                was,
-                "on the panel, where it was"
-            );
-            assert_eq!(PRIMARY.overlap(&was), 0.0, "nowhere on the primary screen");
+            let logical = placed(was.x, was.y, was.width, was.height);
+            assert!(PRIMARY.overlap(&logical) >= PANEL.overlap(&logical));
         }
-        let logical = placed(980.0, 100.0, 900.0, 600.0);
-        assert!(PRIMARY.overlap(&logical) >= PANEL.overlap(&logical));
     }
 
     /// And one on the primary screen stays there, beside a panel of another scale.
@@ -1283,7 +1287,8 @@ mod tests {
     /// screen's logical pixels and at the logical size it had.
     #[test]
     fn a_window_from_a_panel_that_has_gone_comes_back_at_its_size() {
-        let was = at_scale(2.0, 1100.0, 100.0, 1000.0, 600.0);
+        let was = at_scale(2.0, PANEL.x + 140.0, 100.0, 1000.0, 600.0);
+        assert_eq!(PRIMARY.overlap(&was), 0.0, "nowhere on the screen there is");
         let back = onto(was, &[PRIMARY]);
         assert_eq!((back.width, back.height), (1000.0, 600.0));
         assert_eq!(back.scale, Some(1.0));
