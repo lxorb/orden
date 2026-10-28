@@ -37,7 +37,7 @@ describe('a callout’s opening line', () => {
     }
   })
 
-  /** These two were nib's own looks before nib had any of the others, and an
+  /** These two were Orden's own looks before Orden had any of the others, and an
    *  `[!important]` came out violet here where Obsidian draws it green. Obsidian's
    *  thirteen types with Obsidian's aliases is one list, so these are in it: the word
    *  survives in `data-callout`, and what it wears is what it wears over there. */

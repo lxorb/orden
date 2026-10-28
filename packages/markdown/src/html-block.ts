@@ -2,15 +2,15 @@
  *  something: a `<div>` and the `<script>` that fills it in.
  *
  *  Raw HTML is the form, not a ` ```html ` fence, and that is a decision about
- *  the file rather than about nib. Obsidian and Typora both render raw HTML where
+ *  the file rather than about Orden. Obsidian and Typora both render raw HTML where
  *  it stands and both drop the scripts out of it; an `html` fence is a code block
- *  in both, and in nib too - a fence says "show me these characters", every other
+ *  in both, and in Orden too - a fence says "show me these characters", every other
  *  fence keeps that promise, and one that quietly became a running program would
  *  make a note read differently depending on which editor opened it. So a block
  *  written the way the other two already render it is the block that runs here,
  *  and a note carrying one still shows its markup in them, minus the script.
  *
- *  What nib adds is that the script is not silently dropped. It is not run in the
+ *  What Orden adds is that the script is not silently dropped. It is not run in the
  *  app either: it runs in a frame with an opaque origin, once the reader has asked
  *  for it, and that frame knows nothing about the note it sits in. The card is
  *  built here and the frame is built by the editor's web-frame.ts, which is the

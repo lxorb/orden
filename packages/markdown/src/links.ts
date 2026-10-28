@@ -151,14 +151,14 @@ export function isPagesTarget(target: string): boolean {
   return /\.pages$/i.test(target.trim())
 }
 
-/** Whether a target names a website: a shortcut file, which nib opens as a page in
+/** Whether a target names a website: a shortcut file, which Orden opens as a page in
  *  a tab rather than as words.
  *
- *  Two extensions because two systems already wrote them, and neither is nib's.
+ *  Two extensions because two systems already wrote them, and neither is Orden's.
  *  `.url` is the Windows Internet Shortcut - an INI file with an address in it,
  *  which is what Explorer and every browser make when a page is dragged out onto
- *  the desktop - and it is the one nib writes. `.webloc` is the same idea on macOS,
- *  a plist, which is what Safari makes; nib reads one and never writes one. See
+ *  the desktop - and it is the one Orden writes. `.webloc` is the same idea on macOS,
+ *  a plist, which is what Safari makes; Orden reads one and never writes one. See
  *  `web-tab/shortcut.ts`. */
 export function isWebTarget(target: string): boolean {
   return /\.(url|webloc)$/i.test(target.trim())
@@ -489,7 +489,7 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
     const from = offset + match.index
     const targetFrom = from + whole.indexOf(written, label.length + bang.length + 2)
     // `#^a1b2c3` names a block in a markdown link exactly as in a wikilink, which
-    // is how Obsidian writes one and how nib writes one when the Links setting
+    // is how Obsidian writes one and how Orden writes one when the Links setting
     // asks for markdown links; see link-format.ts in the app.
     const block = fragment.startsWith('^') ? fragment.slice(1) : null
 

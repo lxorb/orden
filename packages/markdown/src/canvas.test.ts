@@ -279,7 +279,7 @@ describe('writing a canvas', () => {
       icon: null,
       iconColor: null,
     })
-    // Nothing of Nib's in a canvas that has none of Nib's in it.
+    // Nothing of Orden's in a canvas that has none of Orden's in it.
     expect(blankCanvas()).not.toContain('nib')
     expect(blankCanvas().endsWith('\n')).toBe(true)
   })
@@ -316,7 +316,7 @@ describe('a fresh id', () => {
   })
 })
 
-/** What Nib keeps beyond the spec, and where.
+/** What Orden keeps beyond the spec, and where.
  *
  *  Obsidian's own reader was checked to settle this: an unknown top-level key is
  *  kept whole through a load and a save, an unknown key on a node is swept into
@@ -324,7 +324,7 @@ describe('a fresh id', () => {
  *  skipped on load and gone from the file on the next save, taking its edges
  *  with it. So ink and shapes go under one top-level key and never into `nodes`,
  *  and these tests hold that line. */
-describe('what Nib keeps beyond the spec', () => {
+describe('what Orden keeps beyond the spec', () => {
   const drawn: Canvas = {
     nodes: [
       { id: 'card', type: 'text', x: 0, y: 0, width: 100, height: 50, text: 'hello' },

@@ -4,15 +4,15 @@
  *  is a change of one field, and each comes out as an edit of the characters that
  *  field is written in. A field that is there has its value rewritten and keeps its
  *  key and its form; a field that goes takes the blank before it with it; a field
- *  that comes is put where nib's order says it belongs, which is the order the Tasks
+ *  that comes is put where Orden's order says it belongs, which is the order the Tasks
  *  plugin reads in:
  *
- *    words, nib's bracket fields, tags, then the Tasks plugin's fields in its own
+ *    words, Orden's bracket fields, tags, then the Tasks plugin's fields in its own
  *    order (id, depends on, priority, repeat, on completion, created, start,
  *    scheduled, due, cancelled, done), then a block id.
  *
  *  The plugin reads its fields from the end of the line and stops at the first
- *  thing it does not know, so nib's brackets stand before its fields and never
+ *  thing it does not know, so Orden's brackets stand before its fields and never
  *  after them. A line written in Dataview's format (its Tasks fields in brackets
  *  and none as emoji) gets new Tasks fields in brackets too, so it stays one
  *  format. See task-line.ts for the reading. */
@@ -352,7 +352,7 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
   return ordered(edits)
 }
 
-/** The edits for Dataview fields nib has no name for. The ones taken off are put
+/** The edits for Dataview fields Orden has no name for. The ones taken off are put
  *  among `taking`, to go with the rest; see `writeTask`. */
 function unknownFieldEdits(
   parsed: ParsedTask,
@@ -481,7 +481,7 @@ export function changedTask(line: string, change: TaskChange): string {
   return appliedEdits(line, writeTask(line, change))
 }
 
-/** A whole task line, written in nib's order: the shape a new line takes. */
+/** A whole task line, written in Orden's order: the shape a new line takes. */
 export function taskLine(fields: TaskFields, prefix = '- '): string {
   const parts = [fields.text]
   for (const field of NIB_FIELDS) {

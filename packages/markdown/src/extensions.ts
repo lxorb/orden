@@ -238,7 +238,7 @@ function afterMarker(tokens: Token[], cut: number): Token[] {
  *  Which types there are, what each is called and which icon it wears is
  *  callouts.ts - the one place that knows. Here is only what the markup looks
  *  like: the type as written on `data-callout`, so a theme can reach any of
- *  them including one nib has never heard of, and the look nib does know as a
+ *  them including one Orden has never heard of, and the look Orden does know as a
  *  class, so a stylesheet needs the fifteen names rather than the thirty.
  *
  *  A fold sign in the note makes it a `<details>`, open unless the sign was the

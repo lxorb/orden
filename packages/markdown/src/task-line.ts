@@ -1,5 +1,5 @@
 /** What a task line says beyond its box: the dates, the priority, the rule it
- *  repeats by, and the fields nib adds, read the way the Obsidian Tasks plugin
+ *  repeats by, and the fields Orden adds, read the way the Obsidian Tasks plugin
  *  reads them so a space opened in either app means the same thing.
  *
  *  The Tasks plugin reads a line from its end backwards, taking one field at a time
@@ -66,7 +66,7 @@ export interface TaskFields {
   dependsOn: string[]
   /** A block id, `^abc`, without its caret. */
   block?: string
-  /** Inline fields nib has no name for, by key as written, so nothing read is lost. */
+  /** Inline fields Orden has no name for, by key as written, so nothing read is lost. */
   fields: Record<string, string>
 }
 
@@ -97,7 +97,7 @@ export type FieldForm = 'emoji' | 'bracket' | 'paren' | 'tag' | 'caret'
 /** One field as it stands on the line. Offsets are into the line. `from` is where
  *  the field's first character is, never the blank before it. */
 export interface FieldToken {
-  /** The field's name, `tag` for a trailing tag, or `other` for a field nib does
+  /** The field's name, `tag` for a trailing tag, or `other` for a field Orden does
    *  not know. */
   field: FieldName | 'tag' | 'other'
   form: FieldForm
@@ -183,7 +183,7 @@ const DATE_BY_EMOJI: ReadonlyMap<string, FieldName> = new Map(
   } satisfies Record<string, FieldName>),
 )
 
-/** The emoji nib writes for each date field. */
+/** The emoji Orden writes for each date field. */
 export const EMOJI_BY_DATE: Partial<Record<FieldName, string>> = {
   completed: '✅',
   cancelledOn: '❌',
@@ -242,7 +242,7 @@ export const KEY_BY_FIELD: Record<FieldName, string> = {
   block: 'block',
 }
 
-/** The fields only nib writes, always as brackets: the Tasks plugin has no emoji
+/** The fields only Orden writes, always as brackets: the Tasks plugin has no emoji
  *  for them. */
 export const NIB_FIELDS: readonly FieldName[] = [
   'time',
@@ -374,7 +374,7 @@ function keyOf(written: string): string {
     .replace(/[\s_-]+/g, '')
 }
 
-/** The field a bracket field's key names, if nib knows one by it. */
+/** The field a bracket field's key names, if Orden knows one by it. */
 export function fieldOfKey(key: string): FieldName | undefined {
   return FIELD_BY_KEY.get(keyOf(key))
 }
@@ -407,7 +407,7 @@ export function readDuration(value: string): number | null {
   return Math.round(hours * 60) + Number(found[2] ?? '0')
 }
 
-/** Minutes as nib writes them: `45m`, `2h`, `1h30m`. */
+/** Minutes as Orden writes them: `45m`, `2h`, `1h30m`. */
 export function writeDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60

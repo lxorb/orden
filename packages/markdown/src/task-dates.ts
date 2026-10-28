@@ -11,8 +11,8 @@
  *
  *  - in an Obsidian vault - a space with `.obsidian` at its root - `📅` is the Tasks
  *    plugin's due date, which is a deadline: said under the task, and overdue once past;
- *  - in a space of nib's own, where a deadline has always been `[deadline:: ]`, a `📅`
- *    is the date nib wrote before it said start dates, and is read as one - unless the
+ *  - in a space of Orden's own, where a deadline has always been `[deadline:: ]`, a `📅`
+ *    is the date Orden wrote before it said start dates, and is read as one - unless the
  *    line has a `🛫` of its own, which makes it a line written the plugin's way, start
  *    and due, and its `📅` the deadline.
  *
