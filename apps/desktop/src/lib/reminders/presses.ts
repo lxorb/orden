@@ -7,7 +7,7 @@
  *  is the same write a box ticked in a view is: the done date, the open sub-tasks, and a
  *  recurring task's next line, as one edit. */
 
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 
 export interface Pressed {
   act: 'done' | 'open'

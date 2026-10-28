@@ -7,7 +7,7 @@
  *  kept, which is the most iOS holds for an app and plenty everywhere else; the list
  *  moves on as each one passes. */
 
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 import { momentOf, plainWords, reminderId, remindTimes } from '@nib/markdown/task-reminders'
 
 /** How many reminders a device holds at once. */

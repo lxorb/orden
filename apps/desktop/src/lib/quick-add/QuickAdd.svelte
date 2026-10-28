@@ -22,8 +22,8 @@
    *  sheet writes it, a view writes or changes it, the global window hands it to the app.
    *  A caller that answers `false` took nothing, and the field keeps what was typed. */
   import type { Priority } from '@nib/markdown/task-line'
-  import { parseQuickAdd, type QuickFields } from '@nib/bases/language'
-  import { todayOf } from '@nib/bases'
+  import { parseQuickAdd, type QuickFields } from '@orden/bases/language'
+  import { todayOf } from '@orden/bases'
   import { keepFocus } from '../focus'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar.mjs'

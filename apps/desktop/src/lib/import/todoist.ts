@@ -16,7 +16,7 @@
  *  read holds it. The reading is two halves, so a test hands over a recorded answer:
  *  the API's pages or the CSV become `Account`, and `planOf` writes the notes. */
 
-import { parseRule, ruleText } from '@nib/bases'
+import { parseRule, ruleText } from '@orden/bases'
 import { taskLine } from '@nib/markdown/task-edits'
 import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@nib/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@nib/markdown/words'

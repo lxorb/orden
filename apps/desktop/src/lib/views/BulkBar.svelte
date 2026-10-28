@@ -4,7 +4,7 @@
    *  priority, and the rest in ⋯ (task-actions.ts). Each is one write of all of them,
    *  so one undo takes it back. It stands at the foot of the list while the list is on
    *  screen. */
-  import type { Row } from '@nib/bases'
+  import type { Row } from '@orden/bases'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
   import Flag from 'lucide/dist/esm/icons/flag.mjs'

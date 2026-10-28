@@ -2,7 +2,7 @@
  *  filter, a column, a view added, renamed or taken away.
  *
  *  Never in place. The engine keeps a compiled view per base object (see `answer` in
- *  @nib/bases), so a base that changed under it would answer with the filter it had
+ *  @orden/bases), so a base that changed under it would answer with the filter it had
  *  before; every edit here makes a new base, sharing whatever it did not touch, and
  *  the tab answers the new one afresh. Pure, so each is a line of a test. */
 
@@ -16,7 +16,7 @@ import {
   renamedLiteral,
   type Sort,
   type View,
-} from '@nib/bases'
+} from '@orden/bases'
 
 /** The base with one of its views replaced. A place past the end changes nothing. */
 function withView(base: Base, at: number, change: (view: View) => View): Base {
@@ -60,7 +60,7 @@ export const setSubGroup = (base: Base, at: number, sub: Sort | undefined): Base
 
 /** Filters nib could not read are kept among the options as written, only until the
  *  view is given its own - and none is its own too, so both drop them. See
- *  `viewPlain` in @nib/bases. */
+ *  `viewPlain` in @orden/bases. */
 export const setFilter = (base: Base, at: number, filters: Filter | undefined): Base =>
   withView(base, at, (view) => {
     const options = { ...view.options }

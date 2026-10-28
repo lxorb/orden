@@ -1,4 +1,4 @@
-import { readBase } from '@nib/bases'
+import { readBase } from '@orden/bases'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 

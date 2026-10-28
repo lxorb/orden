@@ -1,4 +1,4 @@
-import { type Group, orderId, type Row } from '@nib/bases'
+import { type Group, orderId, type Row } from '@orden/bases'
 import { describe, expect, it } from 'vitest'
 import {
   cardKey,

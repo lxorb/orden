@@ -4,7 +4,7 @@
  *  change to the task, which the editor writes as one edit of the characters that
  *  change. */
 
-import { todayOf } from '@nib/bases'
+import { todayOf } from '@orden/bases'
 import {
   deadlineField,
   deadlineOf,

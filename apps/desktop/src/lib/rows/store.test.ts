@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 import { scanNote, type ScannedNote, type SpaceLinks } from '../scan-note'
-import { scanRows } from '@nib/bases/scan'
+import { scanRows } from '@orden/bases/scan'
 import { type Host, type RowsChange, RowsStore } from './store'
 
 /** The rows of every space, driven by a stand-in for the app: disks of words, a link

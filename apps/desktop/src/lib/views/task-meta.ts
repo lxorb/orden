@@ -8,7 +8,7 @@
  *  Pure, and in its own file because the row, the board's card and the list's
  *  arithmetic all ask it the same question and have to get one answer. */
 
-import { dayNumber, type Row, type TaskRow } from '@nib/bases'
+import { dayNumber, type Row, type TaskRow } from '@orden/bases'
 import { dayWords, timeWords } from '@orden/editor/task-days'
 import { deadlineOf, startOf } from '@nib/markdown/task-dates'
 

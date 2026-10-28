@@ -7,7 +7,7 @@
  *  answer to `set` and nothing else. A day nobody has a row for is the system's own
  *  calendar (`askNative`), as a date property's field is. */
 
-import { addDays, weekday } from '@nib/bases'
+import { addDays, weekday } from '@orden/bases'
 import type { Priority, Remind } from '@nib/markdown/task-line'
 import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu-item'

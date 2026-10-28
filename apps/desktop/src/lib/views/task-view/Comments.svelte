@@ -4,7 +4,7 @@
    *  under them that writes one more, stamped. Enter sends, Shift and Enter is a new line,
    *  and a comment's cross takes it away again; each is one edit of the note, one undo.
    *  Read again whenever the task's row changes, which is when its note was written. */
-  import type { Row } from '@nib/bases'
+  import type { Row } from '@orden/bases'
   import { i18n, t } from '../../i18n.svelte'
   import Cross from '../../Cross.svelte'
   import { workspace } from '../../workspace.svelte'

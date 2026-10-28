@@ -9,7 +9,7 @@
    *  left is what has no date, Todoist's no-date sidebar: carried out of it a task gets
    *  one. A repeating task's next occurrences are drawn faded, and today wears the
    *  accent. */
-  import { cellValue, type Row, rowId, type TaskChange } from '@nib/bases'
+  import { cellValue, type Row, rowId, type TaskChange } from '@orden/bases'
   import { untrack } from 'svelte'
   import { i18n, t } from '../i18n.svelte'
   import { linkModifier } from '@orden/editor'

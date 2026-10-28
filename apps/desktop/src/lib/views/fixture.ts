@@ -2,7 +2,14 @@
  *  a note's front matter through `noteValues`, a task line through `readTask`. Only
  *  the tests import this. */
 
-import { type FileInfo, noteValues, type Row, type TaskRow, taskHash, type Value } from '@nib/bases'
+import {
+  type FileInfo,
+  noteValues,
+  type Row,
+  type TaskRow,
+  taskHash,
+  type Value,
+} from '@orden/bases'
 import { readTask } from '@nib/markdown/task-line'
 
 function fileAt(path: string, extra: Partial<FileInfo> = {}): FileInfo {

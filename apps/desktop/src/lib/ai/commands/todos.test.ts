@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { rowsOfText } from '@nib/bases/rows'
+import { rowsOfText } from '@orden/bases/rows'
 import type { Thread } from '../chat/types'
 import type { Host } from './host'
 

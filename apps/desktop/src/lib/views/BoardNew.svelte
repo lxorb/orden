@@ -8,7 +8,7 @@
    *  `asked` counts the times a key asked for it rather than a press; only a count
    *  higher than the one it was drawn with opens it, so a card drawn again opens
    *  nothing on its own. In a swimlane the note is given the lane's value too. */
-  import type { Group, Value } from '@nib/bases'
+  import type { Group, Value } from '@orden/bases'
   import { untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { ADD_MARK } from './marks'

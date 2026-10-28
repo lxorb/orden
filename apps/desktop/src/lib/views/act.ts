@@ -9,8 +9,8 @@
  *  same edit, as the editor's box does. A move of whole lines is this lane's own, in
  *  lines.ts. */
 
-import { finish, skip, tick } from '@nib/bases'
-import type { Row, TaskChange } from '@nib/bases'
+import { finish, skip, tick } from '@orden/bases'
+import type { Row, TaskChange } from '@orden/bases'
 import { appliedEdits, oneEdit } from '@nib/markdown/edits'
 import { blockIds, freeBlockId } from '@nib/markdown/links'
 import { taskLine as lineWords } from '@nib/markdown/task-edits'

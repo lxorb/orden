@@ -4,7 +4,7 @@
    *  template's placeholders allowed), adds a task to the row's note, runs a palette
    *  command and opens an address, whichever of them it says. Kept under the base's
    *  `nib.buttons`; the column is `button.<name>` in the view. */
-  import { BUTTON, type Button, readButtons, withButton } from '@nib/bases'
+  import { BUTTON, type Button, readButtons, withButton } from '@orden/bases'
   import { appCommands } from '../commands'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'

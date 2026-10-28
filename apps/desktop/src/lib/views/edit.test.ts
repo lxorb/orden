@@ -1,4 +1,4 @@
-import { readBase } from '@nib/bases'
+import { readBase } from '@orden/bases'
 import { describe, expect, test } from 'vitest'
 import { renamedGroup } from './edit'
 

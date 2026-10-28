@@ -3,7 +3,7 @@
    *  note's name. Pressing the words opens the note at the line beside the view
    *  (Ctrl or Cmd: in a tab); pressing where it lives does the same. Carried by the
    *  pointer onto another group, which writes what that group is (drop.ts). */
-  import type { Row } from '@nib/bases'
+  import type { Row } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import { linkModifier } from '@orden/editor'
   import Twist from '../Twist.svelte'

@@ -8,7 +8,7 @@
  *  Every write is the views' one write path (act.ts): one edit of each note it touches,
  *  one undo. */
 
-import type { Priority, Row } from '@nib/bases'
+import type { Priority, Row } from '@orden/bases'
 import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'

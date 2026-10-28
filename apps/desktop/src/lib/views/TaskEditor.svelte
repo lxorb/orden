@@ -7,7 +7,7 @@
    *  Adding keeps it up for the next task, the way quick add does; a task's own words and
    *  fields saved put it away. Every write is quick add's own (quick-add/write.ts) or the
    *  views' one write path (act.ts). */
-  import type { Row } from '@nib/bases'
+  import type { Row } from '@orden/bases'
   import { ai } from '../ai/store.svelte'
   import { onMount } from 'svelte'
   import { i18n } from '../i18n.svelte'

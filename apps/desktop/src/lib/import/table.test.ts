@@ -1,4 +1,4 @@
-import { readBase } from '@nib/bases'
+import { readBase } from '@orden/bases'
 import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 

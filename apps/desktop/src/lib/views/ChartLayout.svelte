@@ -3,7 +3,7 @@
    *  measured by a count, a sum, an average, the earliest or the latest, with a running
    *  total where asked (docs/tasks.md 5.9). Drawn as SVG in the theme's six tones, and
    *  read-only, as Notion's are; its settings are kept under the view's `nib:`. */
-  import { groupName } from '@nib/bases'
+  import { groupName } from '@orden/bases'
   import { amount, t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import {

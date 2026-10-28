@@ -10,7 +10,7 @@
    *
    *  Moved to the right, beside the note being written, it is Today's list itself, so
    *  the day can be worked through without leaving the note. */
-  import { answer, readBase, type Row } from '@nib/bases'
+  import { answer, readBase, type Row } from '@orden/bases'
   import { tick, untrack } from 'svelte'
   import FileMark from '../FileMark.svelte'
   import { chosenIcon } from '../chosen-icon'

@@ -523,7 +523,7 @@ class Modes {
    *  (#408). Off, which is Todoist's Today: a start date or a deadline that has come.
    *  On the account, because it is how somebody plans their day rather than which
    *  machine they plan it on; the connector's Today reads it too. See `undated` in
-   *  @nib/bases' builtins.ts. */
+   *  @orden/bases' builtins.ts. */
   undatedInToday = $state(DEFAULTS.undatedInToday)
 
   /** Whether two fingers turn a canvas (#351). */

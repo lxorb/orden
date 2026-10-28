@@ -446,7 +446,7 @@ session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 
 The task tools are the agent's own edits of a note, read off it as it is on screen and
 written with `writeNote`, so the review keeps or undoes them and one undo takes a tick
-and its next occurrence back together. What a call means is `@nib/bases/agent`, which
+and its next occurrence back together. What a call means is `@orden/bases/agent`, which
 the account connector shares (`services/sync/src/mcp/tasks.ts`); the list, add and
 tick the reader's own surfaces use (the AI sidebar, the glasses, the widget, a share)
 are `lib/task-actions.ts`.

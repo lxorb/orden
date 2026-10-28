@@ -2,7 +2,7 @@
   /** The calendar on a phone: an agenda, the days that have something down the page
    *  from today, and what has no date at the end (docs/tasks.md 5.9, Phone). A row
    *  held and moved onto another day's head is given that day. */
-  import { cellValue, type Row, rowId } from '@nib/bases'
+  import { cellValue, type Row, rowId } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import { droppable } from './drag.svelte'
   import type { Kit } from './kit'

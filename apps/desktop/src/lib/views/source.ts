@@ -10,7 +10,7 @@
  *
  *  Each answers a `Source` (live.svelte.ts), so the view on screen never knows which. */
 
-import { type Base, builtinView, readBase, type Row, todayAs, writeBase } from '@nib/bases'
+import { type Base, builtinView, readBase, type Row, todayAs, writeBase } from '@orden/bases'
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
 import { rows } from '../rows/rows.svelte'

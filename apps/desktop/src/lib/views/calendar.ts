@@ -15,7 +15,7 @@ import {
   nextDate,
   parseRule,
   type Row,
-} from '@nib/bases'
+} from '@orden/bases'
 import { weekStart } from './days'
 import { dayIn } from './values'
 

@@ -8,7 +8,7 @@
  *  Pure. `displayed` is what the engine is asked with: the view's own filters and the
  *  narrowing together. */
 
-import type { Base, Row, View } from '@nib/bases'
+import type { Base, Row, View } from '@orden/bases'
 
 export type Grouping = 'default' | 'none' | 'note' | 'section' | 'date' | 'deadline' | 'priority'
 export type Sorting = 'default' | 'manual' | 'name' | 'date' | 'deadline' | 'priority' | 'note'

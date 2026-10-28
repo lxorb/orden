@@ -7,7 +7,7 @@
  *  (a formula somebody wrote, a group inside a group) is kept as it was written and
  *  shown as its words, so opening the builder never loses a filter. Pure. */
 
-import type { Filter } from '@nib/bases'
+import type { Filter } from '@orden/bases'
 
 export type Operator =
   '==' | '!=' | '<' | '>' | '<=' | '>=' | 'contains' | 'empty' | 'filled' | 'tag'

@@ -9,7 +9,7 @@
    *  The card is one stop of the board's roving focus; its ⋯ beside it opens what the
    *  right button does. A card carried to another column and not written yet is drawn
    *  there already, a little faded. */
-  import { cellValue, type Row } from '@nib/bases'
+  import { cellValue, type Row } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
   import { t } from '../i18n.svelte'
   import { priorityTone } from '../quick-add/labels'

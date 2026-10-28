@@ -7,7 +7,7 @@
  *  which Obsidian keeps without reading. Pure: the series and the shapes, as numbers;
  *  the layout draws them as SVG in the six tones. */
 
-import { type Answer, type Base, cellValue, type Context, dayNumber, type View } from '@nib/bases'
+import { type Answer, type Base, cellValue, type Context, dayNumber, type View } from '@orden/bases'
 import { dayIn } from './values'
 
 export type ChartKind = 'bar' | 'hbar' | 'line' | 'donut' | 'number'

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import type { Row } from '@nib/bases'
-import { taskRowsOfText } from '@nib/bases/tasks'
+import type { Row } from '@orden/bases'
+import { taskRowsOfText } from '@orden/bases/tasks'
 import {
   changeFor,
   loadByDay,

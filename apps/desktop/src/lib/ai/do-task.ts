@@ -4,8 +4,8 @@
  *  otherwise it asks in a comment under it and flags it `needs-input`, which the
  *  reader's own comment there takes off again (views/act.ts). */
 
-import type { Row } from '@nib/bases'
-import { atOf } from '@nib/bases/tasks'
+import type { Row } from '@orden/bases'
+import { atOf } from '@orden/bases/tasks'
 import type { Turn } from './chat/types'
 import type { Ended } from './commands/types'
 import { AGENT_WINDOW_VERBS, BROWSER_VERBS } from '../agents/verbs'

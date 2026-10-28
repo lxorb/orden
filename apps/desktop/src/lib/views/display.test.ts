@@ -1,5 +1,5 @@
-import { answer, builtinView } from '@nib/bases'
-import { taskRowsOfText } from '@nib/bases/tasks'
+import { answer, builtinView } from '@orden/bases'
+import { taskRowsOfText } from '@orden/bases/tasks'
 import { describe, expect, test } from 'vitest'
 import { contextFor } from './context'
 import {

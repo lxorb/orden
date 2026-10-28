@@ -3,7 +3,7 @@
  *  view itself. A layout draws the engine's answer and calls these; it never filters,
  *  sorts or writes a file of its own (docs/tasks.md 5.9). */
 
-import { type Base, BUTTON, groupName, type Row, type Value } from '@nib/bases'
+import { type Base, BUTTON, groupName, type Row, type Value } from '@orden/bases'
 import type { RowChange } from '../rows/write'
 import { canWriteAt } from '../sharing.svelte'
 import { insideSpace } from '../space-paths'

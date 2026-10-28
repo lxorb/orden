@@ -10,7 +10,7 @@
  *  edit. Everything here is fetched when first asked for: nothing of it is in the first
  *  paint, and the glasses carry the add and the tick but not the list. */
 
-import type { TaskOut } from '@nib/bases/tasks'
+import type { TaskOut } from '@orden/bases/tasks'
 import { modes } from './modes.svelte'
 import { changeOf } from './search/replace'
 import { canWriteAt } from './sharing.svelte'
@@ -39,7 +39,7 @@ export async function addTask(
     return write.addTask({ text: said, fields: { tags: [], remind: [] } }, { root })
   }
   const [{ parseQuickAdd }, { i18n }, write] = await Promise.all([
-    import('@nib/bases/language'),
+    import('@orden/bases/language'),
     import('./i18n.svelte'),
     import('./quick-add/write'),
   ])
@@ -65,7 +65,7 @@ export async function tickTask(at: string, space: string, done: boolean): Promis
   const root = workspace.spaces.find((one) => one.name === space)?.root
   if (root === undefined) return false
   const [{ clockOf, editedTask, readAt }, { oneEdit }] = await Promise.all([
-    import('@nib/bases/tasks'),
+    import('@orden/bases/tasks'),
     import('@nib/markdown/edits'),
   ])
   const anchor = readAt(at)
@@ -97,12 +97,12 @@ export async function listed(filter?: string): Promise<{ total: number; tasks: T
   if (__EVEN_PLUGIN__) throw new Error('no rows store on the glasses')
   const { rows } = await import('./rows/rows.svelte')
   if (!filter) {
-    const { clockOf, taskOut, todayTasks } = await import('@nib/bases/tasks')
+    const { clockOf, taskOut, todayTasks } = await import('@orden/bases/tasks')
     const today = todayTasks(rows.of(), clockOf(new Date()).today, modes.undatedInToday)
     return { total: today.length, tasks: today.slice(0, 50).map(taskOut) }
   }
 
-  const { clockOf, listTasks } = await import('@nib/bases/agent')
+  const { clockOf, listTasks } = await import('@orden/bases/agent')
   const names = new Set(
     rows
       .of()

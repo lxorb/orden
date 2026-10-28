@@ -6,7 +6,7 @@
  *  workspace's (`openView`); which view a tab is, and so whether one is open already,
  *  is the spec's (spec.ts). */
 
-import { writeBase } from '@nib/bases'
+import { writeBase } from '@orden/bases'
 import type { OpenHow } from '../new-tab'
 import { nameOf, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'

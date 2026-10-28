@@ -6,7 +6,7 @@
  *  engine's own readers (`readTask`, `noteValues`, `taskHash`), never here: the
  *  crate and the browser hand over raw lines (see scan.ts and `scan_links` in
  *  links.rs), and this is where they meet the one parser there is. Its own entry,
- *  `@nib/bases/rows`. See docs/tasks.md 5.3. */
+ *  `@orden/bases/rows`. See docs/tasks.md 5.3. */
 
 import { findLinks } from '@nib/markdown/links'
 import { tagsIn } from '@nib/markdown/task-line'

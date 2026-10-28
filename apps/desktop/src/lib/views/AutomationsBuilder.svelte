@@ -4,7 +4,7 @@
    *  properties, move the note into a folder, and tell the reader. They run wherever
    *  nib runs (runner.svelte.ts); each fires once per change, and what it writes is one
    *  undo with the edit that fired it. */
-  import { type Automation, readAutomations, withAutomations } from '@nib/bases'
+  import { type Automation, readAutomations, withAutomations } from '@orden/bases'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'

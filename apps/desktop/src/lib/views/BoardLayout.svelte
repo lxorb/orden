@@ -28,7 +28,7 @@
     type Row,
     rowId,
     type Value,
-  } from '@nib/bases'
+  } from '@orden/bases'
   import { tick, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { menu, type MenuEntry } from '../menu.svelte'

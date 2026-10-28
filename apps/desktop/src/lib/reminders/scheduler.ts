@@ -13,7 +13,7 @@
  *  Plain rather than reactive, with its links to the app as a `Host`, so it is tested
  *  without one; see start.svelte.ts for the app's. */
 
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 import { plan, type Reminder, samePlan } from './plan'
 
 /** How long the rows have to be still before planning again: a save is several

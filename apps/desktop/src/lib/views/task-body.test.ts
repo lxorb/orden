@@ -1,5 +1,5 @@
-import { taskHash } from '@nib/bases'
-import { taskRowsOfText } from '@nib/bases/tasks'
+import { taskHash } from '@orden/bases'
+import { taskRowsOfText } from '@orden/bases/tasks'
 import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 import {

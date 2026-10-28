@@ -61,7 +61,7 @@ const LONGEST_TASK: usize = 2000;
 const LONGEST_DESCRIPTION: usize = 300;
 
 /// One task line of a note, raw. The rows of a space are built from these in the
-/// window, which reads the fields with the one parser it has (`@nib/bases`), so the
+/// window, which reads the fields with the one parser it has (`@orden/bases`), so the
 /// crate and the window cannot disagree about what a date or a priority is. See
 /// docs/tasks.md 5.3. The twin of `ScannedTask` in packages/bases/src/scan.ts.
 #[derive(Serialize)]
@@ -602,7 +602,7 @@ fn note_tags(body: &str) -> Vec<String> {
 /// block name. What is code is judged as the renderer judges it, by
 /// `code_blocks`: a fence closes on its own mark only, and a fence in a quote or
 /// a list item and code indented with no fence are code too. The same walk as
-/// `lines` in links.ts and `scanRows` in @nib/bases, so the desktop's index and
+/// `lines` in links.ts and `scanRows` in @orden/bases, so the desktop's index and
 /// the browser's read the same links and tasks out of a note.
 ///
 /// The lines above `words_from`, the front matter's, are handed on as they are and

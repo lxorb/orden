@@ -30,7 +30,7 @@ beforeAll(async () => {
 })
 
 /** A stand-in for the app's help: a recurring task's tick written by hand, the way
- *  occurrence.ts in @nib/bases writes it, and `tomorrow` read as a day. */
+ *  occurrence.ts in @orden/bases writes it, and `tomorrow` read as a day. */
 const HELP: TaskHelp = {
   tick(note, line) {
     const lines = note.split('\n')

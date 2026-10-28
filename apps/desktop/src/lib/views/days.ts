@@ -6,7 +6,7 @@
  *  (`addDays`, `weekday`), so the views and the filters cannot disagree about when
  *  next Monday is. */
 
-import { addDays, weekday } from '@nib/bases'
+import { addDays, weekday } from '@orden/bases'
 
 const two = (value: number) => String(value).padStart(2, '0')
 

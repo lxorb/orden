@@ -2,7 +2,7 @@
  *  engine where it stands, so a note written for Obsidian's Tasks shows its list in nib
  *  too (docs/tasks.md 5.7).
  *
- *  The block is read as a view (`readTasksQuery` in @nib/bases: `not done`, `due before
+ *  The block is read as a view (`readTasksQuery` in @orden/bases: `not done`, `due before
  *  tomorrow`, `group by heading`, `sort by priority`, `limit 10`) and answered over the
  *  rows of the space in front. Drawn in the query fence's shapes, for the reason that
  *  file gives: the same rows, the same live box, and one reading of a press
@@ -10,7 +10,7 @@
  *  at its line. A line the engine cannot read is said under the list rather than
  *  guessed at, and the fence keeps its source either way. */
 
-import type { Answer, Row } from '@nib/bases'
+import type { Answer, Row } from '@orden/bases'
 import { escapeAll } from '@nib/markdown/html'
 import { shownName } from './note-name'
 import { insideSpace } from './space-paths'
@@ -95,9 +95,9 @@ export async function tasksRowsHtml(
   root: string | null = null,
 ): Promise<string | null> {
   const [{ answer, groupName }, { readTasksQuery }, { todayOf }, space] = await Promise.all([
-    import('@nib/bases/answer'),
-    import('@nib/bases/tasks-query'),
-    import('@nib/bases'),
+    import('@orden/bases/answer'),
+    import('@orden/bases/tasks-query'),
+    import('@orden/bases'),
     rowsOfSpace(root),
   ])
   if (!space) return null

@@ -1,5 +1,5 @@
-import type { Row } from '@nib/bases'
-import { taskRowsOfText } from '@nib/bases/tasks'
+import type { Row } from '@orden/bases'
+import { taskRowsOfText } from '@orden/bases/tasks'
 import { describe, expect, test } from 'vitest'
 import { dayTone, hasMeta, lineCount, metaOf, subtaskCounts, taskKey } from './task-meta'
 

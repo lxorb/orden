@@ -4,7 +4,7 @@
  *  the way links to it are (`retarget` in link-index.svelte.ts). Without it a renamed
  *  card would lose its place in its column. Fetched with the first move. */
 
-import { type Base, readBase, writeBase } from '@nib/bases'
+import { type Base, readBase, writeBase } from '@orden/bases'
 import { folderNotePath } from '../folder-notes'
 import { folderOf, relativeTo } from '../space-paths'
 import { type Entry, workspace } from '../workspace.svelte'

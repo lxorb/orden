@@ -7,8 +7,8 @@
  *
  *  Pure. The layer that draws it is Scheduler.svelte. */
 
-import { addDays, parseRule, type Row, ruleText, type TaskChange, weekday } from '@nib/bases'
-import { parseQuickAdd } from '@nib/bases/language'
+import { addDays, parseRule, type Row, ruleText, type TaskChange, weekday } from '@orden/bases'
+import { parseQuickAdd } from '@orden/bases/language'
 import { dayOf, type DueReads, startField, startOf } from '@nib/markdown/task-dates'
 
 /** What a pick says about a task's day: null takes the field away, absent leaves it.

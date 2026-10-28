@@ -18,7 +18,7 @@
     "@codemirror/language": "^6.12.4",
     "@evenrealities/even_hub_sdk": "^0.0.15",
     "@iconify-json/flat-color-icons": "^1.2.3",
-    "@nib/bases": "workspace:*",
+    "@orden/bases": "workspace:*",
     "@orden/chats": "workspace:*",
     "@orden/editor": "workspace:*",
     "@orden/glasses": "workspace:*",

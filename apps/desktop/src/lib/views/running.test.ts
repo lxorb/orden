@@ -14,8 +14,8 @@ const { written, template, moved, plan } = vi.hoisted(() => ({
   plan: { folder: '' },
 }))
 
-vi.mock('@nib/bases', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@nib/bases')>()),
+vi.mock('@orden/bases', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@orden/bases')>()),
   repeatDue: () => ({ day: '2026-10-24', missed: [] }),
   // Every base is one worth running.
   readBase: () => ({ nib: { id: 'tasks' } }),

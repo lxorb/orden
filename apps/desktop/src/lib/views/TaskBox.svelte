@@ -6,7 +6,7 @@
    *  once and the row follows when the note is written; and goes back where nothing
    *  was, a note in a space shared to be read, so a task is never drawn done that is
    *  not. */
-  import type { TaskRow } from '@nib/bases'
+  import type { TaskRow } from '@orden/bases'
   import { priorityTone } from '../quick-add/labels'
 
   const {

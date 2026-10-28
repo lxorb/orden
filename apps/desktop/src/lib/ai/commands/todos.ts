@@ -58,7 +58,7 @@ async function listed(filter: string | undefined): Promise<Listed> {
 /** `/tasks [filter or words]`. */
 export async function showTasks(host: Host, thread: Thread, args: string): Promise<void> {
   const asked = args.trim()
-  const { AgentError } = await import('@nib/bases/agent')
+  const { AgentError } = await import('@orden/bases/agent')
   let answer: Listed
   try {
     answer = await listed(asked || undefined)

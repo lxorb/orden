@@ -1,4 +1,4 @@
-import { answer, builtinView, readBase, writeBase } from '@nib/bases'
+import { answer, builtinView, readBase, writeBase } from '@orden/bases'
 import { changedTask } from '@nib/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
 import { daysShown, occurrences, place, placedByDay, stepped, timeOf } from './calendar'
@@ -400,7 +400,7 @@ describe('Upcoming as a board', () => {
 describe('a repeating task', () => {
   test('is skipped to its next day, or done for good, each line on its own', async () => {
     const { editedLines } = await import('./lines')
-    const { finish, skip } = await import('@nib/bases')
+    const { finish, skip } = await import('@orden/bases')
     const note = '- [ ] Water 🔁 every week 📅 2026-10-12\n- [ ] Read\n'
     const water = taskRow('P.md', '- [ ] Water 🔁 every week 📅 2026-10-12', 0).anchor
     if (!water) throw new Error('fixture')

@@ -12,7 +12,7 @@
  *  words. It is judged from every row of the column at once, because one row's
  *  `12` is a number or a code, and forty rows of numbers are numbers. */
 
-import { type Base, type PropertyConfig, writeBase } from '@nib/bases'
+import { type Base, type PropertyConfig, writeBase } from '@orden/bases'
 import { recordsOf } from './csv'
 import type { Property } from './meta'
 import { safeName, withoutNotionId } from './names'

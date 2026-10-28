@@ -5,7 +5,7 @@
  *  values rather than words (Today groups by whether a task is overdue), and this is
  *  where a value becomes what the reader reads, in their language. */
 
-import { addDays, groupName, type Value } from '@nib/bases'
+import { addDays, groupName, type Value } from '@orden/bases'
 import { i18n, key, t } from '../i18n.svelte'
 import { dateAt } from './days'
 import { bare } from './columns'

@@ -583,7 +583,7 @@ which every app is checked for on its root page.
   front of each (`□`, `■` once ticked), eight lines like every list. A tap ticks the
   task under the cursor in its note; the row stays, its box filled, until the list is
   left, so a mis-tap is a second tap away. A double tap closes it. It is answered
-  without the rows engine (`todayTasks` in `@nib/bases/tasks`, held to the engine's
+  without the rows engine (`todayTasks` in `@orden/bases/tasks`, held to the engine's
   own Today by a test), which is what keeps the package under 8 MiB; see
   `even/today.ts` and docs/tasks.md 5.18.
 - **Switch space** is the spaces; a tap confirms **and goes straight into that

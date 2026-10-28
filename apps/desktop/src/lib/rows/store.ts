@@ -15,13 +15,13 @@
  *  rest of the app come in as a `Host`, so the store is tested without one; see
  *  start.svelte.ts for the app's. */
 
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 import type { ScannedNote, SpaceLinks } from '../scan-note'
 import { scanNote } from '../scan-note'
-import { scanRows } from '@nib/bases/scan'
+import { scanRows } from '@orden/bases/scan'
 import { insideSpace, isMarkdownPath, pathKey, samePath, within } from '../space-paths'
 import { type FileOp } from '../workspace/file-ops'
-import { movedRows, type NoteRead, rowsOf } from '@nib/bases/rows'
+import { movedRows, type NoteRead, rowsOf } from '@orden/bases/rows'
 
 /** A space as the store is told of it. */
 export interface SpaceName {

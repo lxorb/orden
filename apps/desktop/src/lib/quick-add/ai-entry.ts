@@ -3,8 +3,8 @@
  *  and answers in JSON, of which only what checks out is kept: a label the space has, a
  *  note it has, a real date, a priority there is. */
 
-import { todayOf } from '@nib/bases'
-import type { QuickFields } from '@nib/bases/language'
+import { todayOf } from '@orden/bases'
+import type { QuickFields } from '@orden/bases/language'
 import { isDate } from '@nib/markdown/task-line'
 import { complete } from '../ai/complete'
 import type { Message, Provider } from '../ai/providers'

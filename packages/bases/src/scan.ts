@@ -6,14 +6,14 @@
  *  mark, and one in a quote or a list item, or code indented with no fence, is code
  *  too), below the front matter, every line a task is with the heading path
  *  the walk has come past. Raw rather than parsed, because the rows parse the fields
- *  with the one reader they have (`@nib/bases`), so the crate and the window cannot
+ *  with the one reader they have (`@orden/bases`), so the crate and the window cannot
  *  disagree about what a date is. The cases in scan.test.ts are the twins of the
  *  crate's.
  *
  *  A task also says what is written under it, as much as a row shows without the note:
  *  the first line of its description and how many comments it has (docs/tasks.md 5.1).
  *
- *  Its own entry, `@nib/bases/scan`, with nothing of the engine behind it, rather
+ *  Its own entry, `@orden/bases/scan`, with nothing of the engine behind it, rather
  *  than a part of the app's scan-note.ts, which the first paint carries: nothing
  *  before the launch order is over asks a note for its tasks. The browser's scan
  *  reads it for every note (web/commands.ts), the rows for a note just saved

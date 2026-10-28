@@ -7,7 +7,7 @@
  *  disagree. The notes and labels are one pass over the open tasks. Pure: the panel
  *  hands in the rows and the day, and draws the answer. */
 
-import { answer, type Base, builtinView, type Row } from '@nib/bases'
+import { answer, type Base, builtinView, type Row } from '@orden/bases'
 import { contextFor } from './context'
 
 interface Project {

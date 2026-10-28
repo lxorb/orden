@@ -4,7 +4,7 @@
    *  moves both its dates; an edge dragged moves one. A task blocked by another (`⛔`)
    *  has an arrow from the end of the one it waits for. The scale is days, weeks,
    *  months or quarters, and today is a line in the accent. */
-  import { addDays, cellValue, type Row, rowId, type Value } from '@nib/bases'
+  import { addDays, cellValue, type Row, rowId, type Value } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
   import { i18n, t } from '../i18n.svelte'
   import type { RowChange } from '../rows/write'

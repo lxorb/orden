@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { readBase } from '@nib/bases'
+import { readBase } from '@orden/bases'
 import { freePath } from '@nib/markdown/paths'
 
 /** Where a base's plus puts the note it makes: the folder its filter points at,

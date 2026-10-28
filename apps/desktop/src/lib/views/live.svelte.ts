@@ -1,7 +1,7 @@
 /** One view on screen: its base, which of the base's views it shows, what it answers
  *  over the rows, and how a change to it is kept.
  *
- *  The answer is the engine's (`answer` in @nib/bases) over the rows store's rows, and
+ *  The answer is the engine's (`answer` in @orden/bases) over the rows store's rows, and
  *  it is asked again when the rows say something changed, when the day turns over and
  *  when the view's own search stops being typed into. Never per keystroke anywhere
  *  else, and never by reading a file: the rows are in memory, and the engine keeps
@@ -19,7 +19,7 @@ import {
   type Context,
   type Row,
   type View,
-} from '@nib/bases'
+} from '@orden/bases'
 import { rows as store } from '../rows/rows.svelte'
 import { afterQuiet } from '../timing'
 import { toneColour } from './chips'

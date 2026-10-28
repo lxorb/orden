@@ -8,7 +8,7 @@
  *  is the field the bar's edge was read from, so moving a bar moves the dates the task
  *  actually has and gives it none it did not. */
 
-import { addDays, dayNumber, type Row, type Value } from '@nib/bases'
+import { addDays, dayNumber, type Row, type Value } from '@orden/bases'
 import { deadlineOf, startOf } from '@nib/markdown/task-dates'
 import { dayIn } from './values'
 

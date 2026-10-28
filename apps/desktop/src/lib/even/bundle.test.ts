@@ -512,7 +512,7 @@ describe('the bundle a package is made of', () => {
     // there), with Today and a spoken task on the glasses in it. The import sheet, which
     // the plugin never opens, is behind `__EVEN_PLUGIN__` now (and Todoist's reader with
     // it), and Today is read off the link index's scan and answered without the rows
-    // store or the engine (even/today-tasks.ts, `todayTasks` in @nib/bases/tasks).
+    // store or the engine (even/today-tasks.ts, `todayTasks` in @orden/bases/tasks).
     //
     // **6,617,351 bytes** on 2026-10-07, from 8,387,810 for main at 094363246, which
     // was 798 under: 1.69 MiB of room, and the parts' budgets in even-contents.ts are

@@ -4,7 +4,7 @@
    *  the properties and functions the word under the caret could be, and shows what the
    *  first row of the view makes of it; words that do not read as an expression show
    *  that by the field's edge, and are kept rather than written. */
-  import { cellValue, compile, GLOBALS } from '@nib/bases'
+  import { cellValue, compile, GLOBALS } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import { valueText } from './chips'
   import { knownProperties } from './columns'

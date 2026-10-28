@@ -10,7 +10,7 @@ import {
   type Row,
   rowId,
   type Value,
-} from '@nib/bases'
+} from '@orden/bases'
 import { bare, isNoteProperty } from './columns'
 
 /** The size a board's cards are where its view says none: Notion's own default. */

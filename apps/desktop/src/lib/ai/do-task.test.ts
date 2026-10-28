@@ -1,4 +1,4 @@
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 import { expect, test, vi } from 'vitest'
 
 vi.mock('../workspace.svelte', () => ({ workspace: { spaces: [] } }))

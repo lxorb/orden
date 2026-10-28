@@ -13,7 +13,7 @@ import {
   type Row,
   type SelectOption,
   type Value,
-} from '@nib/bases'
+} from '@orden/bases'
 import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'

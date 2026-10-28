@@ -11,7 +11,7 @@
  *    rows.write(row, change)    a property or a task field, one edit, one undo
  *    rows.inbox(root?)          the space's inbox note, made the first time it is asked */
 
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 import { untrack } from 'svelte'
 import { breathe } from '../breathe'
 import { links } from '../link-index.svelte'

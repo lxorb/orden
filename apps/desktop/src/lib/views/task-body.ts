@@ -7,7 +7,7 @@
  *  put on again: the list item's content column, the width of its marker. Pure; the
  *  task's line is found again by its anchor, as every other edit of a view finds it. */
 
-import type { Row, TaskChange } from '@nib/bases'
+import type { Row, TaskChange } from '@orden/bases'
 import { CODE, type CodeLine, CodeBlocks, OPENS, WORDS } from '@nib/markdown/fences'
 import { changedTask } from '@nib/markdown/task-edits'
 import { readTask } from '@nib/markdown/task-line'

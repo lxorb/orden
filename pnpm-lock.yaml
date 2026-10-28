@@ -67,7 +67,7 @@ importers:
       '@iconify-json/flat-color-icons':
         specifier: ^1.2.3
         version: 1.2.3
-      '@nib/bases':
+      '@orden/bases':
         specifier: workspace:*
         version: link:../../packages/bases
       '@orden/chats':
@@ -597,7 +597,7 @@ importers:
       '@lezer/yaml':
         specifier: ^1.0.4
         version: 1.0.4
-      '@nib/bases':
+      '@orden/bases':
         specifier: workspace:*
         version: link:../../packages/bases
       '@orden/chats':

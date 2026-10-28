@@ -8,8 +8,8 @@
  *  status is more than quick add can carry, and there the view's own add row writes
  *  the words as they were typed, with the prefill's fields, through `addTask`. */
 
-import { type Base, inBase, nextId, type Priority, type Value } from '@nib/bases'
-import { noteName, plainValue, rowPlace, withProperties } from '@nib/bases/agent'
+import { type Base, inBase, nextId, type Priority, type Value } from '@orden/bases'
+import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
 import { joinPath } from '../tauri'
 import { insideOnly } from '../automation/inside'
 import { folderOf, insideSpace, within, withinSpace } from '../space-paths'

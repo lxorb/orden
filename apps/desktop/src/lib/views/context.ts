@@ -6,7 +6,7 @@
  *  file. The lookups are built the first time an expression asks one of them and not
  *  at all for a view that never does, which is nearly every task view. */
 
-import type { Context, Row } from '@nib/bases'
+import type { Context, Row } from '@orden/bases'
 
 interface Lookups {
   byPath: Map<string, Row>

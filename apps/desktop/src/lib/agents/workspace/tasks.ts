@@ -1,7 +1,7 @@
 /** The tasks' and bases' verbs: `list_tasks`, `add_task`, `update_task`, `query_base`,
  *  `add_row`, `edit_rows` and `edit_base` (docs/tasks.md 5.15).
  *
- *  What a call means is `@nib/bases/agent`, the half the account connector shares; this
+ *  What a call means is `@orden/bases/agent`, the half the account connector shares; this
  *  is the rest, on the road every note verb takes. A list reads the rows of the spaces
  *  the grant reaches, every one of them unless a space is named, because Today has to
  *  see a task wherever it was written. A change is read off the note as it is on screen
@@ -11,7 +11,7 @@
  *  together. A space the grant does not reach does not exist, and one shared to read is
  *  refused before anything is asked. */
 
-import type { Base, Context, Row } from '@nib/bases'
+import type { Base, Context, Row } from '@orden/bases'
 import {
   AgentError,
   clockOf,
@@ -33,10 +33,10 @@ import {
   taskIn,
   withProperties,
   writeBase,
-} from '@nib/bases/agent'
+} from '@orden/bases/agent'
 import { appliedEdits } from '@nib/markdown/edits'
 import { taskLine } from '@nib/markdown/task-edits'
-import { taskHash } from '@nib/bases'
+import { taskHash } from '@orden/bases'
 import type { AgentAnswer } from '../../automation/caller'
 import { modes } from '../../modes.svelte'
 import { onDisk as there } from '../../on-disk'

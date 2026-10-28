@@ -37,7 +37,7 @@ Nothing here loosens any of them.
    carries every task line and every note's front matter back with the links; the window
    keeps them as rows and re-reads only the note that changed. 10,000 tasks answer a view in
    a frame.
-4. **One engine for tasks and databases**, a new pure package, `@nib/bases`: rows, Obsidian's
+4. **One engine for tasks and databases**, a new pure package, `@orden/bases`: rows, Obsidian's
    Bases expression language, filters, formulas, sort, group, summaries. A note is a row whose
    columns are its front matter; a task is a row whose columns are its fields. Todoist's
    filter language (`today & #work | overdue`) compiles to the same tree.
@@ -594,7 +594,7 @@ Ticking a recurring task does what the Tasks plugin does, so both apps agree on 
 One edit to the document per tick, so one Ctrl+Z restores both lines. The rule's grammar is
 the Tasks plugin's (`every 2 weeks on Monday, Friday`, `every month on the last Friday`,
 `every year on 3 March`, `every weekday`, `until`, `when done`), parsed into an RRULE-shaped
-value inside `@nib/bases` and written back as the same English words.
+value inside `@orden/bases` and written back as the same English words.
 
 ### 5.3 The index
 
@@ -635,8 +635,8 @@ added to the scan, under 4 MB of rows, under 2 ms to update one note's rows afte
 null), `tasks` (`{ line, indent, mark, text, section }`, `text` being everything after
 the box, outside code and front matter, at most 5,000 a note and 2,000 characters a line)
 and `stamp` (`{ size, mtime, ctime }` in milliseconds, off the handle the note was read
-through); `@nib/bases/scan` (`packages/bases/src/scan.ts`) is the browser's twin, and its tests are the crate's cases. The
-rows store is `lib/rows/`: `@nib/bases/rows` makes a note's rows (`readTask`, `noteValues`,
+through); `@orden/bases/scan` (`packages/bases/src/scan.ts`) is the browser's twin, and its tests are the crate's cases. The
+rows store is `lib/rows/`: `@orden/bases/rows` makes a note's rows (`readTask`, `noteValues`,
 `taskHash`; `parent` is the nearest less indented task above under the same heading),
 `store.ts` keeps them per space and file, `write.ts` is the one write path and `inbox.ts`
 the inbox. `rows.svelte.ts` is the app's instance, fetched at the launch order's last turn:
@@ -651,7 +651,7 @@ reaches the link index, and no other way: the rows add no watcher of their own.
 
 ### 5.4 One engine: rows, queries, views
 
-`@nib/bases` (new package, pure, no DOM) is the one place a question about rows is answered.
+`@orden/bases` (new package, pure, no DOM) is the one place a question about rows is answered.
 
 - **A row** is a note or a task. Its columns: `file.*` (Bases' own list), `note.*` (the front
   matter; for a task, its note's), `task.*` for a task (`text`, `status`, `done`, `due`,
@@ -777,7 +777,7 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
   after `>` its notes, after `>Note/` that note's headings (Todoist's `#`, `@` and `/`);
   ↑ ↓ walk them, Enter or Tab takes one, Escape puts them away (`tokenAt` in
   `quick-add/field.ts`).
-- **The grammar**, English and German, one table per language in `@nib/bases`:
+- **The grammar**, English and German, one table per language in `@orden/bases`:
 
   | what     | English                                                                                                                                                                                        | German                                                                                                                                                                                      |
   | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -821,7 +821,7 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
   into several tasks shown as rows to keep or drop (Ramble's correction by speech comes free:
   the words are editable before Enter).
 
-**As built** (lane 3). The grammar is `@nib/bases/language`, its own entry so nothing that
+**As built** (lane 3). The grammar is `@orden/bases/language`, its own entry so nothing that
 never adds a task loads it: `grammar.ts` is a table's shape, `en.ts` and `de.ts` are the two
 tables, `when.ts` reads a day and a time, `repeat.ts` a rule (English handed to the Tasks
 plugin's own reader after Todoist's ways of saying one are said its way, German built into the
@@ -897,7 +897,7 @@ The editor draws a task line as words and chips, hiding its fields the way it hi
 so does an inline field nib has no name for. The module and the grammar behind it are fetched
 the first time a line on screen has a field, and the note is drawn again when they land, as an
 emoji is. Days are `task-days.ts`, shared with quick add. What only the app can do comes in on
-the note index as `tasks` (`TaskHelp`): `tick`, the engine's (`tick` in `@nib/bases`, now
+the note index as `tasks` (`TaskHelp`): `tick`, the engine's (`tick` in `@orden/bases`, now
 exported), used by the box, by Ctrl+Enter (`task-tick.ts`, one transaction, so one undo takes
 back the done line and the next occurrence), by `rows.write({ task: { done } })` and by every
 box in search and fence rows (`toggleTaskAt`); `pick`, a chip's choices in the app's menu out
@@ -910,7 +910,7 @@ open space's rows) in the query fence's own rows and boxes, in the editor and th
 
 ### 5.8 Filters: Todoist's language on the engine
 
-A view's filter field takes Todoist's language as typed, and `@nib/bases` compiles it to the
+A view's filter field takes Todoist's language as typed, and `@orden/bases` compiles it to the
 expression tree; the toolbar's Filter button shows the same tree as rows to click. Saved, it
 is written as Bases YAML, so Obsidian reads the filter as well.
 
@@ -1281,7 +1281,7 @@ fence as code, for the reason a ` ```query ` fence stays code (`apps/desktop/src
   one into 46 the first time a reader looks (a merge of ids, not of notes).
 - **Created by, edited by** wait for sync v2 to keep an author per version of each file.
 
-**As built** (lane 7, 2026-10-05). The engine's halves are `@nib/bases`'s `rollup.ts`,
+**As built** (lane 7, 2026-10-05). The engine's halves are `@orden/bases`'s `rollup.ts`,
 `ids.ts`, `colour.ts` and `csv.ts`; the app's are `lib/views/`'s builders, each a layer
 the view's head holds under its name (`live.builder`), opened from a column's menu
 (`column-menu.ts`, the table's header and a form's field alike) or the name's menu.
@@ -1342,7 +1342,7 @@ the view's head holds under its name (`live.builder`), opened from a column's me
 
 **As built** (lane 7, 2026-10-05).
 
-- **Templates**: `@nib/bases`'s `templates.ts` fills `{{title}}`, `{{date}}`, `{{time}}`,
+- **Templates**: `@orden/bases`'s `templates.ts` fills `{{title}}`, `{{date}}`, `{{time}}`,
   `{{date:FORMAT}}` (Moment's tokens, `formatDate`) and `{{date+7d}}` (`d`, `w`, `M`,
   `y`), and takes the template's own keys (`repeat`, `made`, `folder`) off the note. The
   folder is `.obsidian/templates.json`'s, else `Templates` (`views/templates.ts`). The
@@ -1451,20 +1451,20 @@ its table test reads. Decision 8.3.
 only add a line to an inbox.
 
 **As built** (lane 6). The verbs are `lib/agents/workspace/tasks.ts` in the window and
-`services/sync/src/mcp/tasks.ts` on the Worker, both over `@nib/bases/agent`: a task
+`services/sync/src/mcp/tasks.ts` on the Worker, both over `@orden/bases/agent`: a task
 goes out as the fields it has with `at` (`path#line:hash`), found again in the note as
 it is by the hash nearest its line, and a change is the note written back whole as the
 agent's own edit (`writeNote`, the connector's `write_note`). `edit_rows` and
 `edit_base` are the local server's alone. The seven rows cost the tools table 3,767
 characters, about 950 tokens, and its ceiling went from 28,000 to 31,000. The rows of a
-note are `@nib/bases/rows` (`rowsOfText` on the Worker), so both servers read a task
+note are `@orden/bases/rows` (`rowsOfText` on the Worker), so both servers read a task
 one way. `/tasks` draws its rows as a notice with live boxes (`ai/sidebar/TaskRows.svelte`)
 and `/today` is a turn in Agent mode; the reader's own surfaces add, tick and list
 through `lib/task-actions.ts`, which writes the way quick add does (`quick-add/write.ts`).
 `add_task` reads its words with quick add's grammar (`quickWords`: the reader's language
 and English in the app, English and German on the Worker), the Tasks plugin's own marks
 written in them winning, and `>Note /Heading` choosing where it goes; every way a task
-comes in places its line with one function (`placeIn`, `@nib/bases/tasks`). The CLI's verbs are the same verbs asked as the reader, and `nib://add-task`
+comes in places its line with one function (`placeIn`, `@orden/bases/tasks`). The CLI's verbs are the same verbs asked as the reader, and `nib://add-task`
 takes the words and a space and nothing else.
 
 ### 5.16 Keys
@@ -1584,13 +1584,13 @@ Seven lanes in three waves, at most six at once. Each lane reads this document,
 `docs/conventions.md` and the rules for every nib agent first, writes tests for its logic,
 and adds every new string to every catalogue in `apps/desktop/src/locales`. New files in the
 app are named relative to `apps/desktop/src` (or `src-tauri/src`); the new package is
-packages/bases, published in the workspace as `@nib/bases`.
+packages/bases, published in the workspace as `@orden/bases`.
 
 ### 7.1 The interfaces the lanes meet at
 
 Written first, by lane 1: the shapes are in `packages/bases/src/types.ts` (exported from
-`@nib/bases`), the task line's in `packages/markdown/src/task-line.ts` (re-exported by
-`@nib/bases`, because the search and the editor read task lines without the engine). This
+`@orden/bases`), the task line's in `packages/markdown/src/task-line.ts` (re-exported by
+`@orden/bases`, because the search and the editor read task lines without the engine). This
 section is the summary; the comments in those files are the contract.
 
 ```ts
@@ -1616,7 +1616,7 @@ function writeTask(line: string, change: TaskChange): TextEdit[]
 function changedTask(line: string, change: TaskChange): string
 function taskLine(fields: TaskFields, prefix?: string): string        // a new line, nib's order
 
-// @nib/bases: types.ts
+// @orden/bases: types.ts
 type Value = null | boolean | number | string
   | { kind: 'date'; iso: string; time?: string; zone?: string }
   | { kind: 'duration'; ms: number; months: number }
@@ -1644,7 +1644,7 @@ interface Context { today: string; now: string; this?: Row; me?: string; search?
 interface Group { key: Value; rows: Row[]; summaries: Record<string, Value>; sub?: Group[] }
 interface Answer { groups: Group[]; total: number; summaries: Record<string, Value> }
 
-// @nib/bases: functions
+// @orden/bases: functions
 function noteValues(frontMatter: string): Record<string, Value>    // the note, or its block
 function taskHash(text: string): string
 function readBase(yaml: string): Base
@@ -1691,13 +1691,13 @@ reads a file. The reminders store (lane 5) reads `rows.watch` and nothing else.
 
 | lane                         | owns                                                                                                                                                                                                                                                                                                                                                       | builds                                                                                                                                                                                                                                                                                                                                                                                                                                     | tests                                                                                                                                                                                                                                                                                                                                                 | wave |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| **1 `rows-engine`**          | `@nib/bases` (new, in packages/bases); `packages/markdown/src/tasks.ts` and its test; the `tasks` fence's reading                                                                                                                                                                                                                                          | the types above; the task line reader and writer (5.1), canonical order, every Tasks and Dataview field; recurrence (5.2) with next occurrence; Bases YAML read and write with every unknown key kept; the expression language (parser, compiler, every function and method of the functions page); filters, sort, group, sub-group, limit, summaries (the defaults and custom); Todoist's filter language (5.8); the built-in views (5.4) | the Tasks plugin's documented examples round-trip byte for byte; Bases' documented example reads and writes unchanged; every function against Obsidian's documented results; 10,000 rows answered under 20 ms in a perf test; Todoist's documented filters compile to the expected trees; recurrence over month ends, leap days, `when done`, `until` | 1    |
+| **1 `rows-engine`**          | `@orden/bases` (new, in packages/bases); `packages/markdown/src/tasks.ts` and its test; the `tasks` fence's reading                                                                                                                                                                                                                                          | the types above; the task line reader and writer (5.1), canonical order, every Tasks and Dataview field; recurrence (5.2) with next occurrence; Bases YAML read and write with every unknown key kept; the expression language (parser, compiler, every function and method of the functions page); filters, sort, group, sub-group, limit, summaries (the defaults and custom); Todoist's filter language (5.8); the built-in views (5.4) | the Tasks plugin's documented examples round-trip byte for byte; Bases' documented example reads and writes unchanged; every function against Obsidian's documented results; 10,000 rows answered under 20 ms in a perf test; Todoist's documented filters compile to the expected trees; recurrence over month ends, leap days, `when done`, `until` | 1    |
 | **2 `rows-index`**           | `lib/rows/` (new); `apps/desktop/src-tauri/src/links.rs` (the scan's two new fields); `apps/desktop/src/lib/scan-note.ts`; the space's `inbox` setting                                                                                                                                                                                                     | task lines and raw front matter on the scan (crate and browser); rows built and kept current through `file-ops.ts` and saves; every space scanned after the launch order; the one write path (`lib/rows/write.ts`) for properties and task fields; the inbox note; the cache only if 5.3's measure says so                                                                                                                                 | cargo tests for the scan's fields; store tests for created, moved, removed, saved and a note open with unsaved words; a perf test with 5,000 notes and 10,000 tasks (scan cost, memory, update time); `weight.test.ts` unchanged; a draft-PR CI for the crate                                                                                         | 1    |
-| **3 `quick-add-and-editor`** | `@nib/bases`'s `language/` folder (new); `lib/quick-add/` (new); `packages/editor/src/live-preview/` task chips (a new file, a hook in `decorate.ts`); the quick add window in `src-tauri/src` (new file)                                                                                                                                                  | the en and de grammar tables and the parser (5.6), chips in the field, the pickers; the quick add sheet, palette row, panel row and global window with its key; the editor's chips, pickers, completion of a typed date and the tick with recurrence (5.7); the ` ```tasks ` fence drawn by the engine                                                                                                                                     | parser tests per table row in both languages and the ambiguous cases; editor state tests for chips hidden and shown with the caret, a pick as one edit, a recurring tick as one undo; a drive: quick add from the palette into the Inbox, a chip pressed back to words; the global key tested on a probe through `run_probe` only                     | 2    |
+| **3 `quick-add-and-editor`** | `@orden/bases`'s `language/` folder (new); `lib/quick-add/` (new); `packages/editor/src/live-preview/` task chips (a new file, a hook in `decorate.ts`); the quick add window in `src-tauri/src` (new file)                                                                                                                                                  | the en and de grammar tables and the parser (5.6), chips in the field, the pickers; the quick add sheet, palette row, panel row and global window with its key; the editor's chips, pickers, completion of a typed date and the tick with recurrence (5.7); the ` ```tasks ` fence drawn by the engine                                                                                                                                     | parser tests per table row in both languages and the ambiguous cases; editor state tests for chips hidden and shown with the caret, a pick as one edit, a recurring tick as one undo; a drive: quick add from the palette into the Inbox, a chip pressed back to words; the global key tested on a probe through `run_probe` only                     | 2    |
 | **4 `views`**                | `lib/views/` (new); the `'tasks'` panel in `apps/desktop/src/lib/workspace.svelte.ts` and `apps/desktop/src/lib/workspace/panels.ts`; the view tab's kind in `apps/desktop/src/lib/openers.ts`; the base fence and embed; `apps/desktop/src/lib/PropertiesPanel.svelte` (its controls lifted into shared ones)                                             | the Tasks panel (5.5); the view tab and its head; list, table, cards, board, calendar, Upcoming, timeline and chart layouts (5.9); inline editing through `rows.write`; drag on every layout; the filter, sort and group builders; saving a view as a `.base`; ` ```base ` and `![[x.base#View]]`; the phone layouts                                                                                                                       | component tests per layout; a drive `test/e2e/tasks.py`: seed tasks and notes, Today and Upcoming right, a board drag writing the property, a calendar drag writing the date, a table cell edit undone with Ctrl+Z, an embedded base in a note; the same at phone width; 2,000-card board scroll measured                                             | 2    |
 | **5 `reminders`**            | `lib/reminders/` (new); `src-tauri/src` reminders module (new); the Android alarm and boot receiver (new Kotlin beside `Widgets.kt`); the tray residency setting                                                                                                                                                                                           | the scheduler (5.10); Windows scheduled toasts and macOS triggers; the notification actions starting nib in the background; Linux and the tray; Android alarms, actions and reboot; the settings rows; the Worker push (8.5)                                                                                                                                                                                                               | scheduler tests (a moved task moves its reminder, a ticked one cancels, a recurring one schedules the next, 64 kept); cargo tests for the scheduling calls behind a trait; a probe with an identifier of its own, never Emil's nib, that a scheduled toast is registered; Android unit tests for the alarm list                                       | 2    |
 | **6 `tasks-everywhere`**     | `apps/desktop/src-tauri/src/mcp/tools.json` and the window's handlers (`lib/agents/workspace/tasks.ts`, new); `services/sync/src/mcp/tools.ts`; `apps/desktop/src/lib/ai/commands/table.ts` and `docs/ai-sidebar.md` 3.1; the CLI's verbs; `lib/import/todoist.ts` (new); the Even Today screen in `apps/desktop/src/lib/even/`; the widget's Today layout | the verbs of 5.15 on both servers; `/tasks`, `/today` and the `/jobs` rename; the CLI verbs and `nib://add-task`; the Todoist importer from the API and CSV (5.17); the glasses' Today and spoken add (5.18); the share sheet's                                                                                                                                                                              | verb tests through the MCP harness, a grant without the space refused; the AI command table test green with the new rows; importer tests on a recorded API answer and Todoist's documented CSV, with priorities turned round and recurrences re-parsed; Even screen tests within the panel's eight lines                                              | 2    |
-| **7 `database-extras`**      | `lib/views/` additions agreed with lane 4 (the form layout, the button cell, the rollup picker); `@nib/bases`'s `automations` (new)                                                                                                                                                                                                                        | relations' reverse columns and the rollup picker (5.12); unique ids; select options with tones; conditional colour; forms; buttons; templates and repeating templates; automations; locking; CSV export and CSV import as a base                                                                                                                                                                                                           | engine tests for rollups, id collisions, automations firing once per change and undoing as one; a drive: a form makes a note, a button sets a property, a rollup counts                                                                                                                                                                               | 3    |
+| **7 `database-extras`**      | `lib/views/` additions agreed with lane 4 (the form layout, the button cell, the rollup picker); `@orden/bases`'s `automations` (new)                                                                                                                                                                                                                        | relations' reverse columns and the rollup picker (5.12); unique ids; select options with tones; conditional colour; forms; buttons; templates and repeating templates; automations; locking; CSV export and CSV import as a base                                                                                                                                                                                                           | engine tests for rollups, id collisions, automations firing once per change and undoing as one; a drive: a form makes a note, a button sets a property, a rollup counts                                                                                                                                                                               | 3    |
 
 **Wave 1** is lanes 1 and 2 together: one is a pure package, the other the crate and the
 store, meeting at 7.1's types. **Wave 2** is lanes 3, 4, 5 and 6 together once lane 1's

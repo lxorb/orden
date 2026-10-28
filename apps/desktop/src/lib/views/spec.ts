@@ -13,7 +13,7 @@
 
 import { isRecord, isString, parsed } from '../stored'
 
-/** The views nib ships; see `builtinView` in @nib/bases. */
+/** The views nib ships; see `builtinView` in @orden/bases. */
 const BUILTINS = ['inbox', 'today', 'upcoming', 'logbook', 'project', 'label'] as const
 export type Builtin = (typeof BUILTINS)[number]
 

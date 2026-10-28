@@ -1,4 +1,4 @@
-import { taskRowsOfText } from '@nib/bases/tasks'
+import { taskRowsOfText } from '@orden/bases/tasks'
 import { changedTask } from '@nib/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
 import { changeOf, prefillFor } from './task-edit'

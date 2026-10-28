@@ -15,8 +15,8 @@
  *  edited since the row was drawn, so the anchor's line is checked by its words' hash
  *  and, where the words have moved, the nearest line with the same words is the one. */
 
-import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@nib/bases'
-import { listAsWritten, noteValues, taskHash, tick, todayOf } from '@nib/bases'
+import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@orden/bases'
+import { listAsWritten, noteValues, taskHash, tick, todayOf } from '@orden/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@nib/markdown/edits'
 import { type Property, keyCalled, readProperties } from '@nib/markdown/properties'
 import {
@@ -109,7 +109,7 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
 
 /** The note with the task whose line starts at `from` ticked, or opened again. Ticking
  *  is the engine's (`tick`): the done date, the open sub-tasks under it, and a recurring
- *  task's next occurrence above it, as one write; see occurrence.ts in @nib/bases. A
+ *  task's next occurrence above it, as one write; see occurrence.ts in @orden/bases. A
  *  task already as asked is left as it is. */
 function ticked(text: string, from: number, done: boolean): string {
   const end = text.indexOf('\n', from)

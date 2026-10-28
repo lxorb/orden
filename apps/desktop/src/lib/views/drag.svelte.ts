@@ -11,7 +11,7 @@
  *  Escape, or a release over nothing that takes it, puts the row back where it was:
  *  nothing is written until a drop lands. */
 
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 
 /** Where a drop landed, in the window's pixels. */
 export interface Point {

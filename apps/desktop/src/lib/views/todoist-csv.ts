@@ -7,7 +7,7 @@
  *  words), its duration and its deadline, and each comment a `note` row under it. Pure,
  *  but for `saveProjectCsv`, which reads the note and hands the file over. */
 
-import { csvText, type Row } from '@nib/bases'
+import { csvText, type Row } from '@orden/bases'
 import { deadlineOf, startOf } from '@nib/markdown/task-dates'
 import { deliver } from '../export/save'
 import { t } from '../i18n.svelte'

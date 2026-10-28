@@ -2,8 +2,8 @@
  *  looked at once it settles, and the repeating templates. Plain state, kept apart from
  *  the runes that wire it to the app. See runner.svelte.ts for the why. */
 
-import { readBase, readAutomations, repeatDue, type Row } from '@nib/bases'
-import { withProperties } from '@nib/bases/agent'
+import { readBase, readAutomations, repeatDue, type Row } from '@orden/bases'
+import { withProperties } from '@orden/bases/agent'
 import { insideOnly } from '../automation/inside'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'

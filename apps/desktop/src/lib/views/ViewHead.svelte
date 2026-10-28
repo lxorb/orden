@@ -11,7 +11,7 @@
    *  (`live.builder`), whichever layout asked. A locked view shows its padlock, which
    *  shakes when a change is turned away and opens the lock when pressed. The plus's
    *  own menu makes a note from a template. */
-  import { type Base, writeBase } from '@nib/bases'
+  import { type Base, writeBase } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
   import { ORDER_MARK } from '../panel-marks'
