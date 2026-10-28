@@ -10,7 +10,7 @@
    *  right button does. A card carried to another column and not written yet is drawn
    *  there already, a little faded. */
   import { cellValue, type Row } from '@nib/bases'
-  import { linkModifier } from '@nib/editor'
+  import { linkModifier } from '@orden/editor'
   import { t } from '../i18n.svelte'
   import { priorityTone } from '../quick-add/labels'
   import { cardLine, type CardLine } from './board'

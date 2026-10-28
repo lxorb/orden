@@ -9,7 +9,7 @@
  *  Here rather than in the editor package, because which answers are fixed is the
  *  app's business: the accents are accents.ts, the paper is page-setup.ts, and the
  *  editor knows about neither. Handed over when a view is built; see
- *  `propertyChoices` in @nib/editor. */
+ *  `propertyChoices` in @orden/editor. */
 
 import { ACCENTS } from './accents'
 import { ICON_COLOUR_KEY } from './icons'

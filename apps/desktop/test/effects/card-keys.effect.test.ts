@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { EditorView } from '@nib/editor'
+import { EditorView } from '@orden/editor'
 import CanvasNode from '../../src/lib/CanvasNode.svelte'
 import { flushCardEdits } from '../../src/lib/canvas/writing'
 

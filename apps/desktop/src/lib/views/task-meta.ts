@@ -9,7 +9,7 @@
  *  arithmetic all ask it the same question and have to get one answer. */
 
 import { dayNumber, type Row, type TaskRow } from '@nib/bases'
-import { dayWords, timeWords } from '@nib/editor/task-days'
+import { dayWords, timeWords } from '@orden/editor/task-days'
 import { deadlineOf, startOf } from '@nib/markdown/task-dates'
 
 /** How near a day is, which is the colour its words are drawn in: Todoist's red for

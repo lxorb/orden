@@ -52,8 +52,8 @@ vi.mock('./tauri', async (importOriginal) => ({
 
 /** Every file a link to a file was compared with. */
 let compared = 0
-vi.mock('@nib/editor', async (importOriginal) => {
-  const real = await importOriginal<typeof import('@nib/editor')>()
+vi.mock('@orden/editor', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@orden/editor')>()
   return {
     ...real,
     resolveFile: (...args: Parameters<typeof real.resolveFile>) => {

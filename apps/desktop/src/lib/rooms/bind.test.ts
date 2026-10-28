@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { EditorState, SharedDoc, type Text } from '@nib/editor'
+import { EditorState, SharedDoc, type Text } from '@orden/editor'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { bind, replace, replacements } from './bind'

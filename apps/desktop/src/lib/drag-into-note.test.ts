@@ -5,7 +5,7 @@ import type { Entry } from './workspace.svelte'
 
 /** A row of the file list dragged into a note's words: which rows the drag carries,
  *  and the file a link to each of them names. The editor's half, the link at the
- *  drop, is wikilink/note-links.test.ts in @nib/editor. */
+ *  drop, is wikilink/note-links.test.ts in @orden/editor. */
 
 function note(path: string): Entry {
   return {

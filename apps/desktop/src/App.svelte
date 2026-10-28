@@ -6,7 +6,7 @@
   import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
   import { takesCaret } from './lib/caret'
-  import { EditorView, landed, setVimCommands, showLine, topLine } from '@nib/editor'
+  import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
   import { iconChoice } from './lib/icon-choice.svelte'
   import { menu, textFieldOf } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
@@ -766,7 +766,7 @@
     on.dispatch({
       selection: { anchor: target.from },
       // The block it landed on says so for a moment: a caret is a pixel wide and
-      // the eye was somewhere else. See landing.ts in @nib/editor.
+      // the eye was somewhere else. See landing.ts in @orden/editor.
       effects: [
         EditorView.scrollIntoView(target.from, { y: 'start', yMargin: 72 }),
         landed.of(target.from),

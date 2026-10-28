@@ -1,4 +1,4 @@
-import { documentOf, EditorState, SharedDoc, type TransactionSpec } from '@nib/editor'
+import { documentOf, EditorState, SharedDoc, type TransactionSpec } from '@orden/editor'
 import { describe, expect, test } from 'vitest'
 import { viewShowing, WhenShown } from './views.svelte'
 

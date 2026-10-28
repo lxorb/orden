@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte'
-  import type { EditorView } from '@nib/editor'
+  import type { EditorView } from '@orden/editor'
   import type { MenuGroup } from './menu-item'
   import { appMenuPanel, appMenuRows } from './surfaces.svelte'
   import { t } from './i18n.svelte'

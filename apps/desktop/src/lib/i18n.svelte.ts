@@ -1,4 +1,4 @@
-import { englishLabel, LABEL_KEYS, setLabels } from '@nib/editor'
+import { englishLabel, LABEL_KEYS, setLabels } from '@orden/editor'
 import { setChartLocale } from '@nib/markdown/chart'
 import { type Direction, directionOf, factorOf, isolated } from './direction'
 import { keep, storedText } from './stored'

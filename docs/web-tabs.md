@@ -1116,7 +1116,7 @@ the frame is up, typing another address re-points it.
 That is the gesture the app already has for a page embedded in a note, for the same
 two reasons - the card cannot know whether the frame will work, and nothing should
 be loaded from a site before the reader asks for it. See `web-embed.ts` in
-`@nib/markdown` and `web-frame.ts` in `@nib/editor`.
+`@nib/markdown` and `web-frame.ts` in `@orden/editor`.
 
 **A HEAD request through the Worker would get rid of the press**, and is the only
 thing that would: ask `services/sync` to fetch the headers and report. It was not

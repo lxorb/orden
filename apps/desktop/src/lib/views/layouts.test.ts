@@ -1,5 +1,5 @@
 import { answer, type Base, builtinView, cellValue, readBase, type Row } from '@nib/bases'
-import { timeWords } from '@nib/editor/task-days'
+import { timeWords } from '@orden/editor/task-days'
 import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 

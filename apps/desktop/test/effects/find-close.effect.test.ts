@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { closeFind, createEditor, type EditorView, openFind } from '@nib/editor'
+import { closeFind, createEditor, type EditorView, openFind } from '@orden/editor'
 
 /** The find bar closed, and then a selection.
  *

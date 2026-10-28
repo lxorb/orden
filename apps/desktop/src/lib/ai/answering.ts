@@ -9,7 +9,7 @@
  *  to somebody's server, so a module fetched from beside the page is not something
  *  anybody can see. See ask.ts, which is the stub that gets here. */
 
-import type { AiAsk } from '@nib/editor'
+import type { AiAsk } from '@orden/editor'
 import { busy } from '../busy.svelte'
 import { message, t } from '../i18n.svelte'
 import { complete, wasStopped } from './complete'

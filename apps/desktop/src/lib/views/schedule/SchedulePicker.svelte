@@ -9,7 +9,7 @@
    *  duration are kept as they are changed, as every other setting in the app is, and
    *  it stays up for the next. Arrows walk the rows, Enter takes one, Escape closes. */
   import { addDays, addMonths } from '@nib/bases'
-  import { dayWords, timeWords } from '@nib/editor/task-days'
+  import { dayWords, timeWords } from '@orden/editor/task-days'
   import ArrowRight from 'lucide/dist/esm/icons/arrow-right.mjs'
   import Briefcase from 'lucide/dist/esm/icons/briefcase.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'

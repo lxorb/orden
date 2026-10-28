@@ -1,4 +1,4 @@
-import { EditorState } from '@nib/editor'
+import { EditorState } from '@orden/editor'
 import { describe, expect, test } from 'vitest'
 import { selectedWords } from './seed'
 

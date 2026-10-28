@@ -74,7 +74,7 @@
    never picks one - a published note, which has no app to pick in - still gets a
    coloured fence rather than a grey one. That is the whole reason they are here
    and not only in the app: see paletteCss in apps/desktop/src/lib/highlight.ts,
-   and FOLLOW in code-theme.ts in @nib/editor, which are the other two readings
+   and FOLLOW in code-theme.ts in @orden/editor, which are the other two readings
    of this same list. */
 :where(#write) .hl-keyword {
   color: var(--accent);

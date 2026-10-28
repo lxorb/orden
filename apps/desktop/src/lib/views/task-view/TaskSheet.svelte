@@ -12,7 +12,7 @@
   import type { Priority, Row } from '@nib/bases'
   import { parseQuickAdd } from '@nib/bases/language'
   import { linesOf } from '@nib/bases/tasks'
-  import { dayWords } from '@nib/editor/task-days'
+  import { dayWords } from '@orden/editor/task-days'
   import { editedWords, shownWords } from '@nib/markdown/escapes'
   import { deadlineOf, startOf } from '@nib/markdown/task-dates'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'

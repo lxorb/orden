@@ -89,7 +89,7 @@ const ENTRY = fileURLToPath(new URL('../src/main.ts', import.meta.url))
  *  through each one's own `exports` map, so a subpath reaches the module that subpath
  *  exists for - which is the whole point of having them. */
 const WORKSPACE = [
-  '@nib/editor',
+  '@orden/editor',
   '@orden/glasses',
   '@nib/markdown',
   '@orden/rooms',
@@ -481,7 +481,7 @@ function holds(tail: string): boolean {
  *
  *  The editor's right-click menu went behind a door as it learned a link's and a
  *  picture's rows (the power-user list's eighth batch), and so did what it asks of
- *  the editor (`@nib/editor/menu`): fetched at the launch's last turn, like a tab's
+ *  the editor (`@orden/editor/menu`): fetched at the launch's last turn, like a tab's
  *  menu. With its rows and a dropped PDF's keeping, measured 3,279,919 and 378 modules,
  *  against 3,298,741 and 380 on the main it landed on.
  *
@@ -542,7 +542,7 @@ function holds(tail: string): boolean {
  *  window shows as it opens: the right-click menu, the bar over a selection, the
  *  sign-in and join sheets (all mounted at the launch's last turn, see `warmDoors`), a
  *  phone's drawer drag (drawer-follow.ts), a block's menu commands
- *  (`@nib/editor/menu`), the Run button's sandbox (run/door.ts), the `[[` popup's rows
+ *  (`@orden/editor/menu`), the Run button's sandbox (run/door.ts), the `[[` popup's rows
  *  (behind the completion library's door already, once the facet every editor carries
  *  was apart from them), the matcher behind a query fence's two helpers
  *  (search/lines.ts, search/task.ts), and a deck's renderer behind the one question
@@ -804,7 +804,7 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-19, to 3,255,000, for #544: words from the room are held while an
  *  input method composes in a view and taken in when it ends, with what is typed
  *  meanwhile carried past them (`held`, `settle` and the compositionend handler in
- *  @nib/editor's shared.ts). Measured 3,254,393.
+ *  @orden/editor's shared.ts). Measured 3,254,393.
  *
  *  Raised 2026-10-19, to 3,256,000, for #533: a version put back from the history is
  *  said to be one (`restoreVersion` on the workspace and in saving.svelte.ts,
@@ -1312,7 +1312,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/search/warm.svelte.ts', "the search's hold on the space"],
     // And the renderer itself, which no window needs to draw its first frame: what the
     // launch read off it is in breaks.ts and engines.ts, and the copy, the hover and
-    // the reading view fetch it (copy.ts and wikilink/preview.ts in @nib/editor).
+    // the reading view fetch it (copy.ts and wikilink/preview.ts in @orden/editor).
     ['/markdown/src/index.ts', 'the renderer'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
@@ -1515,7 +1515,7 @@ describe('what reading a note fetches', () => {
 
   /** What a graph costs that the app has not already read.
    *
-   *  The marginal weight, not the whole graph: both of these reach `@nib/editor` for
+   *  The marginal weight, not the whole graph: both of these reach `@orden/editor` for
    *  the two lists of languages the renderer draws rather than colours, and the editor
    *  is on screen before either surface is asked for, so the bundler has it in a chunk
    *  the page already has. What a reader waits for is the part that is new. */

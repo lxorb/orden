@@ -4,8 +4,8 @@
  *  in the first paint; see `tasks` in link-index.svelte.ts, which stands in for it until
  *  then. */
 
-import type { TaskHelp } from '@nib/editor'
-import { dayWords, todayHere } from '@nib/editor/task-days'
+import type { TaskHelp } from '@orden/editor'
+import { dayWords, todayHere } from '@orden/editor/task-days'
 import { tick, todayOf } from '@nib/bases'
 import { parseQuickAdd } from '@nib/bases/language'
 import { i18n } from '../i18n.svelte'

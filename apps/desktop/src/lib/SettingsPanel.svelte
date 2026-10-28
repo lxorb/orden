@@ -3,7 +3,7 @@
   import { overlays } from './overlays'
   import { fade, fly, scale, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import type { EditorView } from '@nib/editor'
+  import type { EditorView } from '@orden/editor'
   import Swatches from './Swatches.svelte'
   import { account } from './account.svelte'
   import { exportCommands } from './commands'

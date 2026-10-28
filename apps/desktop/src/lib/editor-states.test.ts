@@ -7,7 +7,7 @@ import {
   StateEffect,
   type StateView,
   type TransactionSpec,
-} from '@nib/editor'
+} from '@orden/editor'
 import { describe, expect, test } from 'vitest'
 import { EditorStates, type NoteTab } from './editor-states'
 

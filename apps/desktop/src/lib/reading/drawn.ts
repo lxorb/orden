@@ -27,7 +27,7 @@
  *  paper that turns out to be broken, a plane with nothing on it - the card is
  *  left exactly as it was found. A card is never replaced by an empty box. */
 
-import type { FileDrawing } from '@nib/editor'
+import type { FileDrawing } from '@orden/editor'
 import { nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 

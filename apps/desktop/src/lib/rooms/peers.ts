@@ -11,7 +11,7 @@
  *  be readable on white is not the shade it needs on black, so which shade is
  *  the reader's business and not the writer's; see accents.ts. */
 
-import type { Peer } from '@nib/editor'
+import type { Peer } from '@orden/editor'
 import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { accentColour, accentFor } from '../accents'

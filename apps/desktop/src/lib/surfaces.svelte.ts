@@ -29,7 +29,7 @@
  *    markup can read. `ask()` is called from a command, a gesture or an effect -
  *    never from the markup, which would be a write during a render. */
 
-import { loadFind, loadLineCommands, setBlocks } from '@nib/editor'
+import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
 import { door } from '@nib/markdown/door'
 import { warmCalls } from './api'
 import { breathe } from './breathe'
@@ -452,7 +452,7 @@ export const firstSpaceDoor = () =>
  *  occurrences of whatever is selected. A double-click is not a request for a search
  *  engine, so it is here before any hand could have double-clicked. The keys are bound
  *  from the first frame either way, and a Control+F in front of this opens the bar and
- *  is looked for as the engine lands; see find.ts in @nib/editor.
+ *  is looked for as the engine lands; see find.ts in @orden/editor.
  *
  *  The five surfaces above are not here, and deliberately: a canvas, a PDF, a deck of
  *  pages, the graph and a website are each hundreds of kilobytes and each is a kind of
@@ -472,7 +472,7 @@ export async function warmDoors(): Promise<void> {
     () => loadFind(),
     // The line, case and grow-the-selection commands, so that the first Ctrl+J or
     // Shift+Alt+Right is answered in the frame it is pressed; see line-door.ts in
-    // @nib/editor.
+    // @orden/editor.
     () => loadLineCommands(),
     // The blocks the editor's `/` menu offers, which are the app's rows rather than a
     // list the editor keeps: handed over as a function so the words follow the
@@ -480,7 +480,7 @@ export async function warmDoors(): Promise<void> {
     // the launch, because they are rows of the command list, and the command list
     // reaches half the app - exports, printing, the recorder, dictation - for a `/`
     // nobody has typed yet. Until it lands a `/` offers nothing; see slash.ts in
-    // @nib/editor.
+    // @orden/editor.
     () => import('./commands').then(({ blockRows }) => setBlocks(blockRows)),
     () => spacePickerDialog.ask(),
     () => spacesMenu(),

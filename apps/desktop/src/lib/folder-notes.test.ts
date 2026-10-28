@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { resolveNote } from '@nib/editor'
+import { resolveNote } from '@orden/editor'
 import {
   folderFor,
   folderNote,

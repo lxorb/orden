@@ -5,7 +5,7 @@
  *  workspace rather than one page. A plain click is the surface's own. See
  *  docs/web-tabs.md, "A link in a tab of its own". */
 
-import { linkModifier } from '@nib/editor'
+import { linkModifier } from '@orden/editor'
 
 /** A `MouseEvent` or a `KeyboardEvent`; a key has no button, and is the main one. */
 export interface Press {

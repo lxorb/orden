@@ -50,7 +50,7 @@ import {
   undoEdit,
   unfoldEverything,
   upperCase,
-} from '@nib/editor'
+} from '@orden/editor'
 import { deckOf, slideAt } from '@nib/markdown/slides'
 import { present } from './slides/present.svelte'
 import { account } from './account.svelte'
@@ -728,7 +728,7 @@ function foldingCommands(view?: EditorView): Command[] {
       if (!view) return
       // The view itself, not a state and a dispatch made out of it: a fold moves
       // the lines it hides out of sight before it lands, and only something
-      // holding the view can move anything. See fold-motion.ts in @nib/editor.
+      // holding the view can move anything. See fold-motion.ts in @orden/editor.
       command(view)
       view.focus()
     },

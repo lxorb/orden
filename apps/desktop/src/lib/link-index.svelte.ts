@@ -30,7 +30,7 @@ import {
   type SpaceBlock,
   type SpaceTag,
   type TaskHelp,
-} from '@nib/editor'
+} from '@orden/editor'
 import type { EmbeddedNote } from '@nib/markdown'
 import { door } from '@nib/markdown/door'
 import { oneEdit } from '@nib/markdown/edits'

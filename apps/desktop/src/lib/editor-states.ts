@@ -17,7 +17,7 @@
  *  shared.ts) and this no longer asks it to. */
 
 import { untrack } from 'svelte'
-import { HeldState, letGo, type SharedDoc, type StateEffect, type StateView } from '@nib/editor'
+import { HeldState, letGo, type SharedDoc, type StateEffect, type StateView } from '@orden/editor'
 
 /** As much of a tab as a pane's states need: the document it is a view of, and
  *  how many notes that document has held.

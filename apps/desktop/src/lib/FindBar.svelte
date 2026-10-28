@@ -7,7 +7,7 @@
    *  was the only control in the app wearing none of the design: bare inputs,
    *  three checkboxes labelled in the library's own English, a `x` for a close
    *  button, and no idea what a finger is. So the panel is gone (see find.ts in
-   *  @nib/editor) and this is what all three draw.
+   *  @orden/editor) and this is what all three draw.
    *
    *  What each surface can do differs, and the bar is what it is given rather
    *  than three bars: the three flags appear only where something can honour them,
@@ -26,7 +26,7 @@
    *  where it was. Tab is not swallowed - the bar is a
    *  bar, not a dialog, and the steps beside the field are where Tab should go. */
 
-  import type { FindSpec } from '@nib/editor'
+  import type { FindSpec } from '@orden/editor'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import CaseSensitive from 'lucide/dist/esm/icons/case-sensitive.mjs'

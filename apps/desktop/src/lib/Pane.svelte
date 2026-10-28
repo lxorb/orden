@@ -25,7 +25,7 @@
     setDeck,
     setFind,
     setReadOnlyMode,
-  } from '@nib/editor'
+  } from '@orden/editor'
   import { untrack } from 'svelte'
   import { alone } from './alone.svelte'
   import { isDeck } from '@nib/markdown/slide-breaks'
@@ -155,7 +155,7 @@
    *
    *  The query itself lives in the document's own search state, which is where
    *  the library keeps it; what is here is the copy the field is drawn from and
-   *  whether the second row is out. See find.ts in @nib/editor. */
+   *  whether the second row is out. See find.ts in @orden/editor. */
   /** The three the bar's flags stand for, which are three of the query's own. */
   type FindFlags = Pick<FindSpec, 'caseSensitive' | 'regexp' | 'wholeWord'>
 
@@ -178,7 +178,7 @@
    *  Awaited, because the search engine is fetched rather than carried: the bar can go
    *  up in the frame before it lands, and a count read in front of it would be a count
    *  of nothing. Only the first call of a session waits, and only for a fetch from
-   *  beside the page; see find.ts in @nib/editor. */
+   *  beside the page; see find.ts in @orden/editor. */
   async function look(next: FindSpec) {
     spec = next
     // Held, because the await below is a frame the pane could have been given another

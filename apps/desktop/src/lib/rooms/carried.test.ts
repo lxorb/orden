@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { SharedDoc } from '@nib/editor'
+import { SharedDoc } from '@orden/editor'
 import { readSync, receive, syncStep1, TEXT } from '@orden/rooms'
 import { ackFrame, epochFrame, NEW_EPOCH } from '@orden/sync-core/wire'
 import { Awareness } from 'y-protocols/awareness'

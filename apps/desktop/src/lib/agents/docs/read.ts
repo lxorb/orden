@@ -14,7 +14,7 @@
  *  note use, links and backlinks off the index, the same answers the automation
  *  verbs give (`automation/answers.ts`). */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { blocksOf, lines } from '@nib/markdown/links'
 import { type Property, readProperties } from '@nib/markdown/properties'
 import { taskAt } from '@nib/markdown/tasks'

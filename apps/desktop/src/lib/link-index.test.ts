@@ -1385,7 +1385,7 @@ describe('resolving a page of links', () => {
   })
 
   test('answers what walking the whole space answers', async () => {
-    const { resolveNote } = await import('@nib/editor')
+    const { resolveNote } = await import('@orden/editor')
 
     await space({
       'Plan.md': '# Plan',

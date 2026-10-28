@@ -20,7 +20,7 @@ import {
   toggleWrap,
   undoEdit,
   unfoldEverything,
-} from '@nib/editor'
+} from '@orden/editor'
 import { HIGHLIGHT_COLOURS } from '@nib/markdown/highlights'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
@@ -95,7 +95,7 @@ function run(view: EditorView | undefined, command: StateCommand) {
 
   // The view rather than a pair made out of it, so a command that can do more
   // with one does: folding moves the lines it hides before it hides them, which
-  // needs something that can measure them. See fold-motion.ts in @nib/editor.
+  // needs something that can measure them. See fold-motion.ts in @orden/editor.
   command(view)
   view.focus()
 }

@@ -5,7 +5,7 @@
    *  pointer onto another group, which writes what that group is (drop.ts). */
   import type { Row } from '@nib/bases'
   import { t } from '../i18n.svelte'
-  import { linkModifier } from '@nib/editor'
+  import { linkModifier } from '@orden/editor'
   import Twist from '../Twist.svelte'
   import { blockerOf, chipsOf } from './chips'
   import { draggable } from './drag.svelte'

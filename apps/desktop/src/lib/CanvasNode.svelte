@@ -19,7 +19,7 @@
     type NoteJump,
     setReadOnlyMode,
     type Text,
-  } from '@nib/editor'
+  } from '@orden/editor'
   import type { EmbeddedNote } from '@nib/markdown'
   import type { CanvasNode } from './canvas/format'
   import { cardHtml, fileSource, fileUrl, isPicture, keptByAccount } from './canvas/render'
@@ -251,7 +251,7 @@
    *
    *  The same listener the reading view and the editor's live preview use, so what a
    *  card does is decided in one place and a canvas is not a surface with a bargain
-   *  of its own; see web-frame.ts in @nib/editor.
+   *  of its own; see web-frame.ts in @orden/editor.
    *
    *  The press has to be taken from the surface to arrive at all. The plane asks to
    *  be sent the rest of every contact that lands on it - a stroke has to keep

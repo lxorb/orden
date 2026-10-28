@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { type DOMWindow, JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
-import { htmlFrameDocument } from '@nib/editor'
+import { htmlFrameDocument } from '@orden/editor'
 
 /** The frame script, run the way a sandboxed frame runs it: in the document
  *  `htmlFrameDocument` writes, once that document has been read.

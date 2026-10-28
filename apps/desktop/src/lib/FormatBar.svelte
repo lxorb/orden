@@ -5,7 +5,7 @@
     type EditorView,
     type StateCommand,
     type Transaction,
-  } from '@nib/editor'
+  } from '@orden/editor'
   import { HIGHLIGHT_COLOURS, type HighlightColour } from '@nib/markdown/highlights'
   import type { IconNode } from 'lucide'
   import { keepFocus } from './focus'

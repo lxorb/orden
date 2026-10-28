@@ -17,7 +17,7 @@ import {
   nibBindings,
   standardBindings,
   tableBindings,
-} from '@nib/editor'
+} from '@orden/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../export/offer'
 import { revealPanel, stepRegionFocus } from '../focus'
 import { t } from '../i18n.svelte'
@@ -387,7 +387,7 @@ const APP_ENTRIES: Shortcut[] = [
   {
     // The key every browser goes back with, and the one the editor's own syntax
     // motion was quietly holding on Windows and Linux until this took it; see
-    // keymap.ts in @nib/editor.
+    // keymap.ts in @orden/editor.
     //
     // A Mac cannot have either pair. Alt and an arrow there is a word at a time
     // and has been for forty years, and Cmd and a bracket - which is what a Mac

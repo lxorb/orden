@@ -1,4 +1,4 @@
-import { caretLine, documentOf, type EditorView, foldLines, topLine } from '@nib/editor'
+import { caretLine, documentOf, type EditorView, foldLines, topLine } from '@orden/editor'
 import { untrack } from 'svelte'
 import { onceAFrame } from './timing'
 import { type Tab, workspace } from './workspace.svelte'

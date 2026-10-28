@@ -20,7 +20,7 @@
     "@iconify-json/flat-color-icons": "^1.2.3",
     "@nib/bases": "workspace:*",
     "@orden/chats": "workspace:*",
-    "@nib/editor": "workspace:*",
+    "@orden/editor": "workspace:*",
     "@orden/glasses": "workspace:*",
     "@nib/markdown": "workspace:*",
     "@orden/online": "workspace:*",

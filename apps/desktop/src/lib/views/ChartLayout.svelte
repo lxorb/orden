@@ -20,7 +20,7 @@
   import { displayName, knownProperties, toneOf } from './columns'
   import { setNibOption } from './edit'
   import type { Kit } from './kit'
-  import { dayWords } from '@nib/editor/task-days'
+  import { dayWords } from '@orden/editor/task-days'
   import { chartName, groupLabel, measureName, noteNames, propertyName } from './words'
 
   const { kit }: { kit: Kit } = $props()

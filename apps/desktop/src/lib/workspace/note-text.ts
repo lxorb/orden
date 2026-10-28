@@ -15,7 +15,7 @@
 
 import { oneEdit } from '@nib/markdown/edits'
 import { taskAt } from '@nib/markdown/tasks'
-import type { SpaceTag } from '@nib/editor'
+import type { SpaceTag } from '@orden/editor'
 import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
 import { lineStarts } from '../search/lines'
@@ -137,7 +137,7 @@ export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): 
 
 /** Writes the whole of one note, from words somebody typed somewhere other than a
  *  pane: the editor mounted in a hover card, which is a note being written in without
- *  being opened. See wikilink/hover.ts in @nib/editor and preview-card.ts.
+ *  being opened. See wikilink/hover.ts in @orden/editor and preview-card.ts.
  *
  *  The whole note in, one span of characters out: `oneEdit` is the smallest change the
  *  two versions differ by, so a pane that happens to be showing the same note takes

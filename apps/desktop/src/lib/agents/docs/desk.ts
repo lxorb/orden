@@ -11,7 +11,7 @@
  *  working in another space while the reader writes in this one must not change the
  *  reader's screen (8.6). */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { insideOnly } from '../../automation/inside'
 import type { Change } from '../../search/apply'
 import type { Edit } from '../../search/replace'

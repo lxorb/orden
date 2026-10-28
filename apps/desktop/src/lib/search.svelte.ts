@@ -6,7 +6,7 @@
  *  to show what it asked. */
 
 import { SvelteSet } from 'svelte/reactivity'
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { revealPanel } from './focus'
 import { isScratchpad } from './scratchpad/is.svelte'
 import type { Hit } from './search/match'

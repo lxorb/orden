@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { SharedDoc } from '@nib/editor'
+import { SharedDoc } from '@orden/editor'
 import { TEXT } from '@orden/rooms'
 import { hash32 } from '@orden/sync-core/seed'
 import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@orden/sync-core/sim'

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest'
-import { defaultKeyFor } from '@nib/editor'
+import { defaultKeyFor } from '@orden/editor'
 import { parseCombination, type Platform, sameCombination } from '../keys'
 
 /** The registry reaches the stores, which write to the browser's storage and

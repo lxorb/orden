@@ -214,7 +214,7 @@
 
    Written over the syntax theme, which paints every highlight `--accent-soft`
    and goes on painting the ones with no colour of their own; see
-   `markTags.highlight` in theme.ts in @nib/editor. Two classes and an element
+   `markTags.highlight` in theme.ts in @orden/editor. Two classes and an element
    deep, so it wins over that one rule wherever CodeMirror puts the two. */
 .cm-content span.nib-mark.tone-1 {
   background: var(--mark-1);
@@ -254,7 +254,7 @@
 
 /* The selection is one block per range, traced around the rectangles CodeMirror
    measures and clipped to that outline; the shape is in selection/shape.ts in
-   @nib/editor and the colour is `--selection`. CodeMirror's own layer is here
+   @orden/editor and the colour is `--selection`. CodeMirror's own layer is here
    too: it shows nothing, but a phone's drag handles are its, and both layers
    behave the same way.
 
@@ -467,7 +467,7 @@
    line, not a CSS counter: only the lines in the viewport are in the DOM, and a
    counter would start again at one wherever the reader had scrolled to. Which
    line is which, and how many digits the column needs, are decided in
-   live-preview/decorate.ts in @nib/editor.
+   live-preview/decorate.ts in @orden/editor.
 
    Absolutely positioned inside the line, so the number sits level with the
    line's first row while the padding holds every row of a wrapped line clear of
@@ -852,7 +852,7 @@
 }
 
 /* A task's fields, said again after its words while their marks are hidden: quiet, a
-   size down, each one pressable for its picker. See task-chips.ts in @nib/editor. */
+   size down, each one pressable for its picker. See task-chips.ts in @orden/editor. */
 .nib-task-chips {
   display: inline-flex;
   gap: 0.5em;
@@ -1716,7 +1716,7 @@
 
 /* The turn takes as long as the block takes to go, and starts with it, so the
    two read as one movement rather than a mark that changed its mind and a block
-   that followed. What moves the block is fold-motion.ts in @nib/editor. */
+   that followed. What moves the block is fold-motion.ts in @orden/editor. */
 .nib-fold-hinge svg {
   width: 13px;
   height: 13px;
@@ -1790,7 +1790,7 @@
    long enough to find and then let go of. The hold is a delay and the fade is
    the movement, so somebody who asked for less movement still sees the mark and
    simply does not see it fade. What takes it out of the state again, so a line
-   redrawn later cannot tint itself, is landing.ts in @nib/editor. */
+   redrawn later cannot tint itself, is landing.ts in @orden/editor. */
 .cm-line.nib-landed {
   animation: nib-landed var(--dur-slower) var(--ease-out) 520ms both;
 }
@@ -1814,7 +1814,7 @@
    Nothing until the pointer is on the line, and nothing at all where there is no
    pointer: a finger has no hover to bring it out with and the margin is a thumb
    wide, so a long press opens the same menu instead. See block/handle.ts in
-   @nib/editor. */
+   @orden/editor. */
 .nib-block-slot {
   position: relative;
   display: inline;

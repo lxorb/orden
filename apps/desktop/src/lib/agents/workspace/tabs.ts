@@ -16,7 +16,7 @@
  *  `edit_canvas`), a terminal's (`read_terminal`, `type_terminal`) and a web tab's (every
  *  `browser_` tool). */
 
-import { documentOf } from '@nib/editor'
+import { documentOf } from '@orden/editor'
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, nameOf, relativeTo, within } from '../../space-paths'
 import { type Section, settings } from '../../settings.svelte'

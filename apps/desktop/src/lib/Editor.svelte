@@ -24,7 +24,7 @@
     type StateOptions,
     shortcutEffect,
     trustedMarkupEffect,
-  } from '@nib/editor'
+  } from '@orden/editor'
   import { pickedLink } from './composer'
   import { EditorStates } from './editor-states'
   import { firstScreen } from './first-screen.svelte'

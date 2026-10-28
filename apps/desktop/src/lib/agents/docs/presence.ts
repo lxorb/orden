@@ -12,7 +12,7 @@
  *  put back into the list when another agent's moves is where its agent left it
  *  rather than where the words were three seconds ago. */
 
-import { type Peer, setAgents } from '@nib/editor'
+import { type Peer, setAgents } from '@orden/editor'
 import { accentColour, accentFor } from '../../accents'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 

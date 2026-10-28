@@ -13,14 +13,14 @@
  *  it is in the first paint. */
 
 import { SvelteSet } from 'svelte/reactivity'
-import { carryIntoEditors, type SharedDoc, StateEffect } from '@nib/editor'
+import { carryIntoEditors, type SharedDoc, StateEffect } from '@orden/editor'
 import {
   type ReviewMark,
   reviewMarks,
   setReviewActions,
   setReviewMarks,
   setReviewSource,
-} from '@nib/editor/review'
+} from '@orden/editor/review'
 import { onTracks, putBackIn, trackedAgents, tracksOf, undoSomeIn } from '../../agents/docs'
 import { plural } from '../../i18n.svelte'
 import { insideSpace, notePath, withinSpace } from '../../space-paths'

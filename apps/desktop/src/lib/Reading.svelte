@@ -30,7 +30,7 @@
   import { tabAsk } from './new-tab'
   import { theme } from './theme.svelte'
   import { workspace, type Tab } from './workspace.svelte'
-  import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@nib/editor'
+  import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
   import { decodeFragment, isTabFile, pageFragment } from '@nib/markdown/links'
   import { links } from './link-index.svelte'
   import { pressRow } from './query-block'

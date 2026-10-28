@@ -28,7 +28,7 @@ import { escape } from './html'
 
 /** Fence languages that are a picture rather than code.
  *
- *  The one list, imported by @nib/editor for the widget that draws them in the
+ *  The one list, imported by @orden/editor for the widget that draws them in the
  *  editor and by the exporter that draws them into a document. `chart` is not
  *  here: a chart is numbers and is built as a string of SVG on any surface,
  *  including the Worker, so it never needed a blob. */

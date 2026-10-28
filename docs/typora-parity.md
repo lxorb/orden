@@ -264,7 +264,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
       a live count beside it, the two steps and a cross, at the row scale so a
       thumb gets a finger-sized target. The same component the reading view and a
       PDF already used, which is what makes finding one thing wherever you are
-      reading. See FindBar.svelte and find.ts in @nib/editor
+      reading. See FindBar.svelte and find.ts in @orden/editor
 - [x] Replace `Ctrl+H`, replace all, on a second row the chevron opens
 - [x] Regex, case-sensitive and whole-word toggles, inside the field
 - [x] Quick open / fuzzy finder `Ctrl+P`

@@ -11,7 +11,7 @@
  *  Only sync v2 reaches this module, after the launch (sync2/carry.ts), so none of it is
  *  in front of the first paint or in the glasses' plugin. */
 
-import { setPeers, type SharedDoc } from '@nib/editor'
+import { setPeers, type SharedDoc } from '@orden/editor'
 import { readSync, receive, syncStep1Of, syncStep2Of, TEXT } from '@orden/rooms'
 import { NEW_EPOCH, roomNews, ROOM_V2 } from '@orden/sync-core/wire'
 import * as Y from 'yjs'

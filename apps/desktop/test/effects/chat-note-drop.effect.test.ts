@@ -2,7 +2,7 @@
  *  the words a drop on a note writes. Against the chats' store in memory; the transfer
  *  is the type a drag out of the list carries (drag-paths.ts), since jsdom has none. */
 
-import { EditorView } from '@nib/editor'
+import { EditorView } from '@orden/editor'
 import { mount, unmount } from 'svelte'
 import { expect, test, vi } from 'vitest'
 

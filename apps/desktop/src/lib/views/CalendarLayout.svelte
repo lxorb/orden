@@ -12,7 +12,7 @@
   import { cellValue, type Row, rowId, type TaskChange } from '@nib/bases'
   import { untrack } from 'svelte'
   import { i18n, t } from '../i18n.svelte'
-  import { linkModifier } from '@nib/editor'
+  import { linkModifier } from '@orden/editor'
   import {
     type CalendarMode,
     CALENDAR_MODES,

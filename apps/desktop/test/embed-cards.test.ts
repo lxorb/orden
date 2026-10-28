@@ -6,7 +6,7 @@ import { describe, expect, test } from 'vitest'
  *
  *  `![](https://youtube.com/watch?v=…)` renders as a card the size the frame will
  *  be, and the frame arrives when the card is pressed - one piece of markup out of
- *  @nib/markdown, one loader in @nib/editor's web-frame.ts, one set of rules in
+ *  @nib/markdown, one loader in @orden/editor's web-frame.ts, one set of rules in
  *  packages/themes/src/document.css. Four surfaces show it: the reading view, the
  *  editor's live preview, a canvas card and a slide.
  *
@@ -66,7 +66,7 @@ describe('the rules a web card is drawn with', () => {
 })
 
 describe('the press that loads the frame', () => {
-  test('is the one loader in @nib/editor, on all four surfaces', () => {
+  test('is the one loader in @orden/editor, on all four surfaces', () => {
     // The editor's live preview, through the widget that draws the card.
     expect(WEB_WIDGET).toContain('embedClicks')
     // A canvas card, on the card itself, so the surface's gestures are untouched.

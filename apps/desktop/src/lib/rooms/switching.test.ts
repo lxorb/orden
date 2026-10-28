@@ -17,7 +17,7 @@
  *  must never fail: each note's room holds that note's words and nobody else's. */
 
 import { describe, expect, test, vi } from 'vitest'
-import { EditorState } from '@nib/editor'
+import { EditorState } from '@orden/editor'
 import { receive, syncUpdate, TEXT } from '@orden/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'

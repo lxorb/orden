@@ -1,4 +1,4 @@
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { t } from '../i18n.svelte'
 import { DEFAULTS, modes } from '../modes.svelte'
 import { PROPERTIES_MODES } from '@nib/markdown/properties'

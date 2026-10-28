@@ -147,7 +147,7 @@
   --row-indent: 14px;
   /* The corner a selected block is drawn with. Its own token because it is read
      back as a number and traced into the outline rather than declared on a box;
-     see selection/shape.ts in @nib/editor. A plain length, no calc. */
+     see selection/shape.ts in @orden/editor. A plain length, no calc. */
   --selection-radius: 6px;
 
   /* The ring a keyboard leaves behind it, and the one thing that says where the
@@ -174,7 +174,7 @@
   /* The gutter of line numbers beside a code block: the digits, the hairline
      that separates them from the code, and the space either side of that
      hairline. How wide the column is comes from the block's own line count and
-     is written onto its lines - see live-preview/decorate.ts in @nib/editor -
+     is written onto its lines - see live-preview/decorate.ts in @orden/editor -
      so what is left here is what a theme might want to restate. */
   --code-number-color: var(--muted);
   --code-number-rule: var(--line-strong);
@@ -500,7 +500,7 @@
      Named `--syntax-*` and not `--code-*` on purpose: every `--code-` name in
      this file is the furniture around a block rather than the code in it, and
      `--code-number` beside `--code-number-color` would have been two unrelated
-     colours one hyphen apart. See FOLLOW in code-theme.ts in @nib/editor, which
+     colours one hyphen apart. See FOLLOW in code-theme.ts in @orden/editor, which
      reads them, and note that it is read only while Highlighting follows the
      theme: choosing GitHub or Dracula pins that palette's own colours. */
   --syntax-number: #e0a233;

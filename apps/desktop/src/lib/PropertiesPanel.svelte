@@ -12,13 +12,13 @@
    *  draws too. Every control writes through property-edits.ts in @nib/markdown, whose answer is
    *  one edit of the characters that change and nothing else in the file. It goes into
    *  the note's own document, so it is the note's undo step and every pane showing the
-   *  note has it at once; see `edit` in @nib/editor's shared.ts.
+   *  note has it at once; see `edit` in @orden/editor's shared.ts.
    *
    *  Follows the panel's note - the note in front, or the one the panel is held on -
    *  and reads `tab.doc`, which catches up when the typing pauses, as the outline does:
    *  nothing here runs per keystroke. Fetched the first time the panel is shown; see
    *  surfaces.svelte.ts. */
-  import { documentOf, insertFrontMatter } from '@nib/editor'
+  import { documentOf, insertFrontMatter } from '@orden/editor'
   import type { TextEdit } from '@nib/markdown/edits'
   import { frontMatterBlock } from '@nib/markdown/front-matter'
   import { type Property, readProperties } from '@nib/markdown/properties'

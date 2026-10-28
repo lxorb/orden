@@ -12,7 +12,7 @@
  *  it. What it is sent with is quick.ts; the sheet is QuickQuestion.svelte, fetched by
  *  the first press through the door in surfaces.svelte.ts. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { message, t } from '../i18n.svelte'
 import { quickSheet } from '../surfaces.svelte'
 import { views } from '../views.svelte'

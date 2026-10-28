@@ -6,7 +6,7 @@
    *
    *  Read once as it opens and never again while it is up: the words in it are the
    *  reader's own, and a write coming back from the note would only move the caret. */
-  import { createEditor, type EditorView, modeEffects } from '@nib/editor'
+  import { createEditor, type EditorView, modeEffects } from '@orden/editor'
   import { onMount } from 'svelte'
   import { pickedLink } from '../../composer'
   import { t } from '../../i18n.svelte'

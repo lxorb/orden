@@ -8,7 +8,7 @@
  *  offers it is a regular expression over one line, and that stays where the menus can
  *  read it; see commands.ts. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { busy } from '../busy.svelte'
 import { i18n, key, message, t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'

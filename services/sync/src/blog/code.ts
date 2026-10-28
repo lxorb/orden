@@ -53,7 +53,7 @@ const indentedSass = sass.configure({ dialect: 'indented' })
  *
  *  The spellings are the editor's own: a language's name, the aliases
  *  `@codemirror/language-data` knows it by, and the file extensions people
- *  actually type, which is `SPELLINGS` in @nib/editor. Kept as one flat table
+ *  actually type, which is `SPELLINGS` in @orden/editor. Kept as one flat table
  *  because that is what the lookup is - a fence says one word. */
 const GRAMMARS: Readonly<Record<string, Parser>> = {
   javascript,

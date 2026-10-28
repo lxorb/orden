@@ -15,7 +15,7 @@
  *  surface that has a stylesheet of its own. See before-render.weight.test.ts, which
  *  is what keeps the two apart. */
 
-import { DIAGRAM_LANGUAGES, RENDERED_LANGUAGES } from '@nib/editor'
+import { DIAGRAM_LANGUAGES, RENDERED_LANGUAGES } from '@orden/editor'
 import { codeBlocks, type EmbeddedNote, findLinks, type Wikilink } from '@nib/markdown'
 import { loadFor } from '@nib/markdown/engines'
 import { highlightedFence } from '@nib/markdown/highlight'

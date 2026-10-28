@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'vitest'
-import { createEditor, type EditorView } from '@nib/editor'
+import { createEditor, type EditorView } from '@orden/editor'
 
 /** The controls that move, add and delete a table's rows, as the first column's
  *  cells are written in.

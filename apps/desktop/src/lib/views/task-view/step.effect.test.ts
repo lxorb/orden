@@ -76,7 +76,7 @@ vi.mock('../../rows/rows.svelte', () => ({
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
-const { EditorView } = await import('@nib/editor')
+const { EditorView } = await import('@orden/editor')
 const { refOf, viewing } = await import('./viewing.svelte')
 const TaskView = (await import('./TaskView.svelte')).default
 

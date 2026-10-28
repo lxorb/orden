@@ -6,7 +6,7 @@
  *  reader sees when it goes wrong. All of which is answering.ts, fetched by the first
  *  press; this file is only the seam. */
 
-import { setAiRunner } from '@nib/editor'
+import { setAiRunner } from '@orden/editor'
 
 /** Installed once, at startup, so the glyph on a fence works from the first note.
  *  With no provider set up it still installs: a press then says where to add one,

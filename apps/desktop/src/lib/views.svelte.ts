@@ -5,7 +5,7 @@
  *  can ask for the one in the pane that has the focus without every component
  *  passing it down through the tree. */
 
-import { documentOf, type DocView, type EditorView, type SharedDoc } from '@nib/editor'
+import { documentOf, type DocView, type EditorView, type SharedDoc } from '@orden/editor'
 import { SvelteMap } from 'svelte/reactivity'
 
 class Views {

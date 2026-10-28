@@ -20,7 +20,7 @@ import { escape } from './html'
 
 /** Every group a fence is coloured in: the class is `hl-` and the group's name.
  *
- *  The same groups the editor colours; see code-theme.ts in @nib/editor, which
+ *  The same groups the editor colours; see code-theme.ts in @orden/editor, which
  *  says the same thing in styles rather than classes and explains the order. A
  *  name where it is given sits above the function rule, so a function's name
  *  stays a function. */

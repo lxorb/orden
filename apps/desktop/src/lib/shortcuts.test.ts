@@ -7,7 +7,7 @@ import {
   nibKeymap,
   standardBindings,
   tableBindings,
-} from '@nib/editor'
+} from '@orden/editor'
 import { parseCombination, sameCombination } from './keys'
 import { BROWSER_KEYS, SYSTEM_KEYS } from './shortcuts/registry'
 

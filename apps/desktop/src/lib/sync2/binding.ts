@@ -22,7 +22,7 @@
  *  has an id and a time, so both sides are kept whichever is ahead, and what the plane
  *  had that the document did not goes in as this device's. */
 
-import type { SharedDoc } from '@nib/editor'
+import type { SharedDoc } from '@orden/editor'
 import { TEXT } from '@orden/rooms'
 import { fold } from '@orden/rooms/fold'
 import type * as Y from 'yjs'

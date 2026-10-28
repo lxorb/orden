@@ -5,7 +5,7 @@
    *  has an arrow from the end of the one it waits for. The scale is days, weeks,
    *  months or quarters, and today is a line in the accent. */
   import { addDays, cellValue, type Row, rowId, type Value } from '@nib/bases'
-  import { linkModifier } from '@nib/editor'
+  import { linkModifier } from '@orden/editor'
   import { i18n, t } from '../i18n.svelte'
   import type { RowChange } from '../rows/write'
   import { priorityTone } from '../quick-add/labels'

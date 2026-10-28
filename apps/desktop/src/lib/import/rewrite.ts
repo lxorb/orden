@@ -858,7 +858,7 @@ export class ExportFiles {
   /** Whether nib reads a wikilink naming `found`, written in the note at `from`, as
    *  that very note. It takes a name as the end of a path and picks the nearest note
    *  that fits: the one beside the link, then the shallowest, then the first by path.
-   *  See `resolveNote` in @nib/editor, whose reading this is. */
+   *  See `resolveNote` in @orden/editor, whose reading this is. */
   readonly reaches: Reaching = (found, from) => {
     const wanted = foldName(found.name)
     const fits = (this.arriving.get(wanted.split('/').pop() ?? '') ?? []).filter((path) => {

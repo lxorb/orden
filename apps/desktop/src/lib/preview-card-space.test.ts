@@ -41,7 +41,7 @@ vi.mock('./link-index.svelte', () => ({
   },
 }))
 
-const { EditorView } = await import('@nib/editor')
+const { EditorView } = await import('@orden/editor')
 const { mountPreview } = await import('./preview-card')
 
 const settle = () => new Promise((done) => setTimeout(done, 0))

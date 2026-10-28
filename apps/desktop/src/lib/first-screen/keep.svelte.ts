@@ -13,7 +13,7 @@
  *  Fetched at the launch's last turn, like the other doors; never in the glasses'
  *  plugin, which has no room in its package for a note it draws on a pair of glasses. */
 
-import { documentOf, type EditorView } from '@nib/editor'
+import { documentOf, type EditorView } from '@orden/editor'
 import {
   KEY,
   type Kept,

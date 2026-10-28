@@ -9,7 +9,7 @@
   import RowLine from './RowLine.svelte'
   import { dayIn } from './values'
   import { agendaOf } from './calendar'
-  import { dayWords } from '@nib/editor/task-days'
+  import { dayWords } from '@orden/editor/task-days'
 
   const { kit }: { kit: Kit } = $props()
 

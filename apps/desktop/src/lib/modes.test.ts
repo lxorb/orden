@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { familyName, glassesBreak, KEEP_MONTH, KEEP_YEAR, rollbackSteps } from './modes.svelte'
 
 /** The store writes to the browser's storage the moment anything is toggled,
@@ -49,8 +49,8 @@ const told = vi.hoisted(() => ({
   views: [] as { view: unknown; mode: string; on: boolean }[],
 }))
 
-vi.mock('@nib/editor', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@nib/editor')>()),
+vi.mock('@orden/editor', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@orden/editor')>()),
   setReadOnlyMode: (view: unknown, on: boolean) => {
     told.calls.push({ mode: 'read-only', on })
     told.views.push({ view, mode: 'read-only', on })

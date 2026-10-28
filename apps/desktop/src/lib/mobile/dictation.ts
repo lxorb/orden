@@ -12,7 +12,7 @@
  *  thing that listens has arrived. A capability rather than a build: one bundle, and a
  *  desktop with no recogniser simply never offers the row. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { workspace } from '../workspace.svelte'
 import { method } from './bridge'
 

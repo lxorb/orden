@@ -6,7 +6,7 @@
  *  sentence you were in the middle of writing. Obsidian's hover is editable for the
  *  same reason.
  *
- *  Here rather than in @nib/editor because both halves of it are the app's. The modes
+ *  Here rather than in @orden/editor because both halves of it are the app's. The modes
  *  live in the app, and so does the one path a note nobody has open is written by: a
  *  snapshot kept, the words that changed handed to any pane showing that same note so
  *  no caret moves, and one thing to undo. The card itself - when it opens, what keeps
@@ -17,7 +17,7 @@
  *  canvas card's is: five hundred links must not be five hundred editors, and the one
  *  that exists is the size of the card it is in. */
 
-import { createEditor, EditorView, modeEffects, type PreviewNote } from '@nib/editor'
+import { createEditor, EditorView, modeEffects, type PreviewNote } from '@orden/editor'
 import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { pickedLink } from './composer'
 import { links } from './link-index.svelte'

@@ -6,7 +6,7 @@
  *  one, and a default that changed later would never reach anybody. A preset is
  *  the same thing, written by somebody else; see shortcuts/presets.ts. */
 
-import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@nib/editor'
+import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@orden/editor'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { t } from './i18n.svelte'

@@ -12,7 +12,7 @@
    *  As tall as its lines, exactly (`lines`, worked out by the list from task-meta.ts),
    *  so the list places every row by arithmetic and measures none. */
   import type { Row } from '@nib/bases'
-  import { linkModifier } from '@nib/editor'
+  import { linkModifier } from '@orden/editor'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
   import Check from 'lucide/dist/esm/icons/check.mjs'

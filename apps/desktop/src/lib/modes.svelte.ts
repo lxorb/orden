@@ -28,7 +28,7 @@ import {
   type LigatureScope,
   type VimMode,
   type EditorView,
-} from '@nib/editor'
+} from '@orden/editor'
 import { setHardBreaks } from '@nib/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@nib/markdown/highlights'
 import { type PropertiesMode, propertiesMode } from '@nib/markdown/properties'

@@ -1,4 +1,4 @@
-import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@nib/editor'
+import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account } from './account.svelte'
 import { hiddenKinds, settings } from './settings.svelte'
 import { arriving } from './arriving.svelte'

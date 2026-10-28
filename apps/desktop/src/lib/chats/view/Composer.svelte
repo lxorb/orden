@@ -16,7 +16,7 @@
    *  the composer's words and nothing else. */
   import type { FileRef, Member, Poll } from '@orden/chats'
   import { ASK_EVERYONE_PAST } from '@orden/chats/limits'
-  import { createEditor, EditorView, modeEffects, setNoteIndex } from '@nib/editor'
+  import { createEditor, EditorView, modeEffects, setNoteIndex } from '@orden/editor'
   import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { chooseFiles } from '../../choose-files'
@@ -224,7 +224,7 @@
   /** Rows of the file list dropped on the chat, as links at the caret (#416), the
    *  words a drop on a note writes. */
   export function addNotes(paths: readonly string[]): void {
-    void import('@nib/editor/note-links').then(({ noteLinks }) =>
+    void import('@orden/editor/note-links').then(({ noteLinks }) =>
       insert(`${noteLinks(links.index(path), paths, pickedLink)} `),
     )
   }

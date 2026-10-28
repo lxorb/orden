@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { EditorState } from '@nib/editor'
+import { EditorState } from '@orden/editor'
 
 /** Writing across a space without opening it, driven by a stand-in store.
  *
@@ -397,7 +397,7 @@ describe("the space's tags", () => {
 /** The editor in a hover card hands back the whole note it was given, because that is
  *  what an editor holds. What reaches the file is the one span that changed, so a pane
  *  showing the same note keeps every caret in it. See preview-card.ts and hover.ts in
- *  @nib/editor. */
+ *  @orden/editor. */
 describe('a note written from a hover card', () => {
   test('goes in as the one span it changed by, not as the note again', async () => {
     const { ws, edits } = space({ [`${SPACE}/a.md`]: 'the plan for monday' }, `${SPACE}/a.md`)

@@ -19,7 +19,7 @@
  *  search/scratchpad.ts and ai/quick.svelte.ts. Whether the card is up is is.svelte.ts,
  *  the column it slides in PadColumn.svelte, the card ScratchpadCard.svelte. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { onDisk } from '../on-disk'
 import { applied, type Edit } from '../search/replace'
 import { invoke } from '../tauri'

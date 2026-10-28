@@ -1,8 +1,8 @@
 /** A task's fields said the reader's way, short: what a control and a picker's row show
- *  beside the day (`dayWords` in @nib/editor, which a chip in a note says too): `45
+ *  beside the day (`dayWords` in @orden/editor, which a chip in a note says too): `45
  *  min`, `30 min` before, p1's tone. */
 
-import { dayWords, timeWords } from '@nib/editor/task-days'
+import { dayWords, timeWords } from '@orden/editor/task-days'
 import type { Remind } from '@nib/markdown/task-line'
 import { t } from '../i18n.svelte'
 

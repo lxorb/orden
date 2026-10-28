@@ -1,5 +1,5 @@
 import { escapeAll } from '@nib/markdown/html'
-import { CODE_PALETTES } from '@nib/editor'
+import { CODE_PALETTES } from '@orden/editor'
 import { type EmbeddedNote, frontMatterValue, renderMarkdown, type Wikilink } from '@nib/markdown'
 import { sourcesOf } from '@nib/markdown/sources'
 import { exportCss, themeCss } from '@orden/themes/raw'

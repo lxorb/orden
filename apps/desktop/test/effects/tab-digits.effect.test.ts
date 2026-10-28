@@ -9,7 +9,7 @@
  *  In the jsdom project because the editor is a real one, and the press has to get past
  *  it the way it does in the window. */
 
-import { createEditor, type EditorView } from '@nib/editor'
+import { createEditor, type EditorView } from '@orden/editor'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const NAMES = ['One', 'Two', 'Three', 'Four', 'Five']

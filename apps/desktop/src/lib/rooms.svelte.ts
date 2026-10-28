@@ -14,7 +14,7 @@
  *
  *  What joining one room means is next door, in rooms/room.ts and rooms/plane.ts. */
 
-import { documentOf, type EditorView } from '@nib/editor'
+import { documentOf, type EditorView } from '@orden/editor'
 import { account } from './account.svelte'
 import type { PlaneSurface } from './canvas/shared'
 import { busy } from './busy.svelte'

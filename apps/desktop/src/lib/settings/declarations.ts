@@ -4,7 +4,7 @@
  *  engine. The schema is made from these (file-schema.ts) and the file is put in force
  *  through them (file.ts). Fetched with the file, never at the launch. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { declaredPanes } from '../preferences'

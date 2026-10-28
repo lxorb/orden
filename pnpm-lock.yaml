@@ -73,7 +73,7 @@ importers:
       '@orden/chats':
         specifier: workspace:*
         version: link:../../packages/chats
-      '@nib/editor':
+      '@orden/editor':
         specifier: workspace:*
         version: link:../../packages/editor
       '@orden/glasses':

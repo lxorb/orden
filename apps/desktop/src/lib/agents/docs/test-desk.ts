@@ -10,7 +10,7 @@ import {
   type EditorView,
   remoteCarets,
   undoEdit,
-} from '@nib/editor'
+} from '@orden/editor'
 import type { Change } from '../../search/apply'
 import { applied } from '../../search/replace'
 import { NoteDoc } from '../../workspace/documents.svelte'

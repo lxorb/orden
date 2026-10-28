@@ -11,7 +11,7 @@
  *  text carries a mark saying it came from here, and a change that arrives is
  *  applied to the note in the way the note does not report back. */
 
-import type { ChangeSet, SharedDoc } from '@nib/editor'
+import type { ChangeSet, SharedDoc } from '@orden/editor'
 import type { Replacement } from '@orden/rooms/fold'
 import * as Y from 'yjs'
 import { HERE } from './door'

@@ -20,7 +20,7 @@
  *  into the room as the edit it was. Neither case loses a word, and neither leaves
  *  a second file to go and find. */
 
-import { setPeers, type SharedDoc } from '@nib/editor'
+import { setPeers, type SharedDoc } from '@orden/editor'
 import { TEXT } from '@orden/rooms'
 import type { Settling } from './apart'
 import { bind, replace } from './bind'

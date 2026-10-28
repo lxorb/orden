@@ -18,7 +18,7 @@ import {
   DECK_WIDTH,
   deckBody,
 } from '@nib/markdown/deck'
-import { CODE_PALETTES } from '@nib/editor'
+import { CODE_PALETTES } from '@orden/editor'
 import { proseCss, slidesCss, tokensCss } from '@orden/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../accents'
 import { inlineImages, printInFrame } from '../export'

@@ -2,7 +2,7 @@
   /** The first screen of the note a window was left on, drawn where its editor will
    *  be until the editor has drawn itself; see first-screen.svelte.ts. Inside the
    *  panes area, which is what it was measured against. */
-  import { documentOf, parsedOnScreen } from '@nib/editor'
+  import { documentOf, parsedOnScreen } from '@orden/editor'
   import { firstScreen, type Kept, sameNote } from './first-screen.svelte'
   import { mark } from './trace'
   import { views } from './views.svelte'
@@ -110,7 +110,7 @@
 
     // The editor's own first frames go under the drawing: measured, scrolled to the
     // place, and parsed as far as it shows, which on a slow machine takes a few (see
-    // parse-ahead.ts in @nib/editor). Then one more for what the parse decorated to be
+    // parse-ahead.ts in @orden/editor). Then one more for what the parse decorated to be
     // drawn, lined up with the drawing, and one for that to be drawn before it goes.
     let frame = 0
     let waited = 0

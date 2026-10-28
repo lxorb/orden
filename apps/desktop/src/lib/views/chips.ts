@@ -12,7 +12,7 @@ import type { Row, TaskRow, Value } from '@nib/bases'
 import { amount } from '../i18n.svelte'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
 import { plain } from './inline'
-import { dayWords } from '@nib/editor/task-days'
+import { dayWords } from '@orden/editor/task-days'
 import { deadlineOf, startOf } from '@nib/markdown/task-dates'
 
 export interface Chip {

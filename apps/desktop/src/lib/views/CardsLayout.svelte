@@ -8,7 +8,7 @@
    *  keeps the space for it and says whose it is. A card pressed opens its note beside
    *  the view; carried to another group it is written into it. */
   import { cellValue, groupName, type Row, rowId } from '@nib/bases'
-  import { linkModifier } from '@nib/editor'
+  import { linkModifier } from '@orden/editor'
   import { imageUrl } from '../images'
   import { valueText } from './chips'
   import { displayName } from './columns'

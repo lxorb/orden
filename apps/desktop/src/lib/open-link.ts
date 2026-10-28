@@ -11,7 +11,7 @@
  *  an issue tracker and somebody's account page all want the browser they are already
  *  signed in to; those still call `openExternal` where they stand. */
 
-import type { LinkPress, NoteJump, NoteOpener } from '@nib/editor'
+import type { LinkPress, NoteJump, NoteOpener } from '@orden/editor'
 import { howFor, linkAsk, type TabAsk, tabAsk } from './new-tab'
 import { isPlugin } from './plugin'
 import { isOpenable, openExternal } from './tauri'

@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { SharedDoc, setPeers } from '@nib/editor'
+import { SharedDoc, setPeers } from '@orden/editor'
 import { awarenessUpdate, receive, TEXT } from '@orden/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
