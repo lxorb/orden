@@ -1,5 +1,11 @@
+import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { inText, oldNames } from '../../../scripts/old-name'
+
+const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
 /** The old name, inside the repo (#367).
  *
@@ -10,9 +16,17 @@ import { inText, oldNames } from '../../../scripts/old-name'
  *  has not moved yet is not held to anything, since its old name is still the one to
  *  write; `node scripts/old-name.ts` counts what is left of each kind. */
 
-/** The workspace's packages already named `@orden/…`, by the name after the scope. One
- *  is added in the change that moves it. */
-const MOVED_PACKAGES: readonly string[] = ['cli']
+/** The workspace's packages already named `@orden/…`, by the name after the scope: read
+ *  off their manifests, so the change that renames a package is all it takes. */
+const MOVED_PACKAGES: readonly string[] = execFileSync('git', ['ls-files', '*package.json'], {
+  cwd: ROOT,
+  encoding: 'utf8',
+})
+  .split('\n')
+  .filter(Boolean)
+  .map((path) => (JSON.parse(readFileSync(join(ROOT, path), 'utf8')) as { name?: unknown }).name)
+  .filter((name): name is string => typeof name === 'string' && name.startsWith('@orden/'))
+  .map((name) => name.slice('@orden/'.length))
 
 /** This file, and the counter, which say the old names they look for. */
 const SAYING = ['apps/desktop/test/internal-name.test.ts', 'scripts/old-name.ts']
