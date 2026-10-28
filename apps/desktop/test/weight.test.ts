@@ -28,7 +28,7 @@ import { describe, expect, test } from 'vitest'
  *  the raw blocks and inline tags in a note, which brings the CSS and JavaScript
  *  grammars and the LR parser runtime with it - a hundred and sixty-seven kilobytes,
  *  fourteen milliseconds of the launch measured in Chrome, for the notes that have a
- *  tag in them. What that package asks for now is a door of nib's own, said once in the
+ *  tag in them. What that package asks for now is a door of Orden's own, said once in the
  *  root manifest; see packages/lang-html. Which is why the last two tests here are
  *  about a manifest and a dynamic import rather than about this graph: the edge that
  *  holds those five packages out is inside a dependency, where no walk of our own
@@ -47,7 +47,7 @@ import { describe, expect, test } from 'vitest'
  *  Batch 120 took 1.29 megabytes to 1.23, over five edges of five different kinds, and
  *  the largest of them was a dependency's again: `@codemirror/lang-markdown` imports the
  *  completion library at the top of its module, for the tag names a `<` offers through a
- *  source nib never asks, and that held the whole popup - thirty-five kilobytes - in
+ *  source Orden never asks, and that held the whole popup - thirty-five kilobytes - in
  *  front of the first paint. The others were the crate's own IPC, held there by one line
  *  of JavaScript asking for the platform's name; everything the app knows about talking
  *  to a model, for a glyph nobody had pressed; the phone's share intent and its speech
@@ -61,7 +61,7 @@ import { describe, expect, test } from 'vitest'
  *  adopt Find, its two steps and goto-line off the library's own keymap, and reading
  *  that array is importing the engine - fifteen kilobytes of query, cursor and
  *  replacement for a bar nobody has opened. The four keys are declared by hand now and
- *  run nib's own commands through a door, the library's keymap is not spread underneath
+ *  run Orden's own commands through a door, the library's keymap is not spread underneath
  *  them any more (every one of its seven keys was already adopted, claimed or dead, and
  *  `unclaimedKeymap` says which is which), and the engine arrives in a compartment at
  *  the launch's last turn - because one thing it carries happens unasked, the faint
@@ -328,7 +328,7 @@ function holds(tail: string): boolean {
  *  bundler chunked it. Anything not in that list is behind a dynamic import.
  *
  *  Raised 2026-09-18 for open-link.ts, which is where a pressed link goes now that
- *  nib has pages of its own to put one in. 5,800 bytes of it, and it cannot be lazy:
+ *  Orden has pages of its own to put one in. 5,800 bytes of it, and it cannot be lazy:
  *  the pane hands the editor its link opener as the editor is built, and a module
  *  fetched on the first press would be a press that did nothing for a frame. Nor is
  *  it a subsystem arriving early - it is one pure decision and four lines of act, and
@@ -397,7 +397,7 @@ function holds(tail: string): boolean {
  *  default (12,506, which is the commit that went over), a web note's doubled ending
  *  (2,039) and the renames the bookmarks follow (6,461). None of that was a door left
  *  open; it is the workspace, the link index and the editor doing more. What had no
- *  business here went behind a door: the conversion of a website an older nib wrote
+ *  business here went behind a door: the conversion of a website an older Orden wrote
  *  as a note, with the reader of that format and the word counter under it
  *  (web-tab/convert.ts, note.ts, words.ts in @orden/markdown - 15,080 bytes and three
  *  files), fetched by the first such note opened. Measured 3,325,127.
@@ -853,7 +853,7 @@ function holds(tail: string): boolean {
  *  anything is mounted (`data-engine-bars` in main.ts). Measured 3,283,984.
  *
  *  Raised 2026-10-24, to 3,285,000, for #771: the dictionaries spelling is checked in are
- *  a list now, several at once (`spellLanguages` in modes.svelte.ts), told to nib's own
+ *  a list now, several at once (`spellLanguages` in modes.svelte.ts), told to Orden's own
  *  Chromium from a module fetched at the launch rather than carried in front of it
  *  (spell-languages.ts). Measured 3,284,888, from 3,283,984 at 65b6bd1a9.
  *
@@ -1086,7 +1086,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/wallpaper/floors.ts', "the wallpaper's scrim"],
     ['/lib/wallpaper/kept.ts', "the wallpaper's copy"],
     ['/themes/src/wallpaper.ts', "the wallpaper's sheet"],
-    // Nib as the browser: the row that makes it one, behind the settings sheet, and
+    // Orden as the browser: the row that makes it one, behind the settings sheet, and
     // the listener for links from other programs, with the roads in after the space.
     ['/lib/settings/DefaultBrowser.svelte', 'the default browser row'],
     ['/lib/web-tab/handed.ts', 'the pages other programs hand over'],
@@ -1222,7 +1222,7 @@ describe('what the app evaluates before it draws anything', () => {
     // scans a plane's cards for links and the sync mirror merges two versions of one,
     // so both reach it before anything is drawn. See workspace.createPages.
     ['/markdown/src/pages.ts', 'the pages engine'],
-    // The websites an older nib wrote as notes, turned into shortcuts: only a space
+    // The websites an older Orden wrote as notes, turned into shortcuts: only a space
     // from before shortcuts has any, and the first one opened fetches it. See
     // workspace.openWeb.
     ['/lib/web-tab/convert.ts', 'the old websites, converted'],
@@ -1417,7 +1417,7 @@ describe('what the app evaluates before it draws anything', () => {
    *
    *  `@codemirror/lang-markdown` also imports the completion library outright - one
    *  class, to build a context with, in order to offer the names of HTML tags when a `<`
-   *  is typed. That source is registered in the language's own data and nib never asks
+   *  is typed. That source is registered in the language's own data and Orden never asks
    *  it: the popup is built with `override`, which is the whole list of sources rather
    *  than an addition to one. So thirty-five kilobytes of popup were evaluated before
    *  the window had drawn anything, for a source nothing reaches.
@@ -1454,7 +1454,7 @@ describe('what the app evaluates before it draws anything', () => {
    *  `@tauri-apps/plugin-os` - one line of JavaScript over a global, asked for the
    *  platform's name - imports it too.
    *
-   *  So there is a door of nib's own again: src/lib/native.ts names the package and
+   *  So there is a door of Orden's own again: src/lib/native.ts names the package and
    *  nothing else does, the platform's name is read off the page where the plugin's
    *  Rust half writes it, and a browser build fetches neither. */
   const CRATE = join(ROOT, 'apps/desktop/src/lib/native.ts')

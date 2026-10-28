@@ -123,7 +123,7 @@ describe('what a space offers', () => {
 
 /** The folder behind a note is not something a menu talks about.
  *
- *  Nib is a notes app, not a file manager: the path a note is written at is how
+ *  Orden is a notes app, not a file manager: the path a note is written at is how
  *  the app finds it, not something the reader is asked to hold. Both rows -
  *  "Reveal in Explorer" and "Copy path" - are gone from every menu and from the
  *  palette, and this is what says so if one comes back. What still reaches the

@@ -2,7 +2,7 @@ import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 /** The question before quitting, as the reader meets it: nothing asked while every shell
- *  waits at its prompt, the busy ones named in nib's own sheet when one runs something,
+ *  waits at its prompt, the busy ones named in Orden's own sheet when one runs something,
  *  and each answer going back to the crate - Quit anyway, Cancel, Don't ask again, a row
  *  pressed. And a window's own close, and an AI turn in flight, which are rows too.
  *

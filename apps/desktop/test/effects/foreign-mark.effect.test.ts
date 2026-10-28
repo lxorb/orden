@@ -1,5 +1,5 @@
 /** The mark a row and a tab give another sync tool's copy: a struck-through cloud whose
- *  label says which tool made it and that nib does not carry it, on that copy and
+ *  label says which tool made it and that Orden does not carry it, on that copy and
  *  nowhere else. Through the one door both marks of sync share, so a held note's mark
  *  is still drawn beside it. See foreign/ForeignMark.svelte and @orden/sync-core/foreign.
  *

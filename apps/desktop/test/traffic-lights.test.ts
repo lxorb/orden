@@ -7,7 +7,7 @@ import { describe, expect, test } from 'vitest'
  *
  *  The lights are the system's and sit at the window's left edge whichever way the
  *  app's words run: the bundle carries no right-to-left localisation, so AppKit lays
- *  its titlebar out left to right however the reader set nib's language. They are
+ *  its titlebar out left to right however the reader set Orden's language. They are
  *  about the screen rather than about reading, which docs/design.md says stays
  *  physical. The room left for them used to be `padding-inline-start`, so in Arabic,
  *  Persian, Pashto or Urdu it went to the right: the sidebar's head, docked on the

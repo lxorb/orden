@@ -57,7 +57,7 @@ describe('the editor package', () => {
    *  This is the edge that keeps fifteen kilobytes out of the first paint, and the
    *  keymap is where it was: `keymap.ts` used to read `searchKeymap` in order to adopt
    *  Find, the two steps and goto-line off it, and reading that array is importing the
-   *  engine. Those four are declared by hand now and the keys run nib's own commands
+   *  engine. Those four are declared by hand now and the keys run Orden's own commands
    *  through a door; see find.ts. One import of the package anywhere else in this
    *  package - a helper reaching for `getSearchQuery`, a keymap adopting a binding
    *  again - and the engine is back in front of the window.

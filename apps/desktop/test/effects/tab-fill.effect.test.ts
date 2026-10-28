@@ -1,4 +1,4 @@
-/** Full window: a tab filling nib's window, and the window coming back as it was.
+/** Full window: a tab filling Orden's window, and the window coming back as it was.
  *
  *  Emil, 2026-09-30: *"a shortcut to make the current tab full screen (to toggle that).
  *  I mean by full screen the full window of nib, not F11 behaviour."* The window itself is

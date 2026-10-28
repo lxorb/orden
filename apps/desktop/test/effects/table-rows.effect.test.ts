@@ -14,7 +14,7 @@ import { createEditor, type EditorView } from '@orden/editor'
  *
  *  In the jsdom project because the table is a widget in a real editor. */
 
-/** Laid out the way Nib writes a table back, so a move is the only change. */
+/** Laid out the way Orden writes a table back, so a move is the only change. */
 const NOTE = '| What  | Where |\n| ----- | ----- |\n| Notes | here  |\n| Ideas | there |\n'
 
 let editor: EditorView | undefined

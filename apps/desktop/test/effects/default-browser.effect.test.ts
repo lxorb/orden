@@ -1,7 +1,7 @@
 /** The Default browser row, pressed through.
  *
  *  Three states and the moments between them: nothing until the system has answered,
- *  so a button never turns into a tick in front of somebody; the button while nib is
+ *  so a button never turns into a tick in front of somebody; the button while Orden is
  *  not the browser; the tick once it is. And the press itself answers nothing - the
  *  system asks in a page or a dialog of its own - so what has to be right is that the
  *  row asks again when the window has the keyboard back, and that a press the build
@@ -135,7 +135,7 @@ test('the press asks the system, and the row asks again when the window comes ba
   // The system's own page is up: nothing has changed yet, so the button stays.
   expect(button()).not.toBeNull()
 
-  // Somebody chose nib there and came back.
+  // Somebody chose Orden there and came back.
   world.is = true
   world.focus?.({ payload: true })
   await settled()

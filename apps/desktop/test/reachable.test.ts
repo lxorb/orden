@@ -116,7 +116,7 @@ describe('the note, where the list is the floor', () => {
 
   /** At the narrow end the note is what slides, off the side to uncover the list,
    *  and off the side it is as out of reach as a shut drawer. It was not inert,
-   *  and the note taking the focus as Nib started had WebKit scroll the page
+   *  and the note taking the focus as Orden started had WebKit scroll the page
    *  across to show it: the list the phone was opened on was covered by the note,
    *  with the sidebar button still saying the list was out. */
   test('is inert while it is slid off to uncover the list', () => {
