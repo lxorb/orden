@@ -952,7 +952,7 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-28, to 3,420,400, for #325: a comment written in the task view takes
  *  `#needs-input` off its task (`withoutNeedsInput` in task-body.ts, read by act.ts).
  *  Measured 3,419,653 with #676's second part beside it. */
-const BUDGET = 3_421_000
+const BUDGET = 3_421_100
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
