@@ -110,7 +110,7 @@ class Quick {
     const read = await pages.read(tabId, true)
     if (!read?.html.trim() || round !== this.round) return
 
-    const { htmlToMarkdown } = await import('@nib/markdown/from-html')
+    const { htmlToMarkdown } = await import('@orden/markdown/from-html')
     const text = fitted(htmlToMarkdown(read.html).trim(), PAGE_TOKENS)
     if (round === this.round && text) {
       this.context = { kind: 'page', name: read.title || shown, text }

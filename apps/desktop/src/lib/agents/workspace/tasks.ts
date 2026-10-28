@@ -34,8 +34,8 @@ import {
   withProperties,
   writeBase,
 } from '@orden/bases/agent'
-import { appliedEdits } from '@nib/markdown/edits'
-import { taskLine } from '@nib/markdown/task-edits'
+import { appliedEdits } from '@orden/markdown/edits'
+import { taskLine } from '@orden/markdown/task-edits'
 import { taskHash } from '@orden/bases'
 import type { AgentAnswer } from '../../automation/caller'
 import { modes } from '../../modes.svelte'

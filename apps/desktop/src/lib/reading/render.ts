@@ -8,10 +8,10 @@
  *  picture keeps the path the note wrote, resolved to something the webview will
  *  load, rather than being carried inside the document. */
 
-import { renderMarkdown, type Wikilink } from '@nib/markdown'
-import { escapeAll } from '@nib/markdown/html'
-import { mapSources } from '@nib/markdown/sources'
-import type { TagHref } from '@nib/markdown/tags'
+import { renderMarkdown, type Wikilink } from '@orden/markdown'
+import { escapeAll } from '@orden/markdown/html'
+import { mapSources } from '@orden/markdown/sources'
+import type { TagHref } from '@orden/markdown/tags'
 import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
@@ -121,7 +121,7 @@ export async function readingHtml(
       properties: modes.properties,
       // And the note's cover, where it names one: the wide picture across the top
       // of it, exactly as the editor's live preview draws it a pane away. See
-      // cover.ts in @nib/markdown.
+      // cover.ts in @orden/markdown.
       cover: true,
       toc: true,
       escapeHtml: !trusted,

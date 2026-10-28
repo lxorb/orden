@@ -16,7 +16,7 @@
  *  note, whose paper only this device's trash keeps beside it; and a file that is not a
  *  note's words - a picture, a PDF - which the account keeps only as a version. */
 
-import { isPagesTarget } from '@nib/markdown/links'
+import { isPagesTarget } from '@orden/markdown/links'
 import { kindOfName } from '@orden/sync-core/tree'
 import type { FileKind } from '../sync2/world'
 

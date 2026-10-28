@@ -12,7 +12,7 @@
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
   import { scale } from 'svelte/transition'
-  import { door } from '@nib/markdown/door'
+  import { door } from '@orden/markdown/door'
   import BookmarkTile from './BookmarkTile.svelte'
   import { fileMark, type FileMark as Mark } from './file-mark'
   import FileMark from './FileMark.svelte'

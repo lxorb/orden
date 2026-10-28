@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Row } from '@orden/bases'
-import { readTask } from '@nib/markdown/task-line'
+import { readTask } from '@orden/markdown/task-line'
 import { rowsOf } from '@orden/bases/rows'
 import { scanNote } from '../scan-note'
 import { scanRows } from '@orden/bases/scan'

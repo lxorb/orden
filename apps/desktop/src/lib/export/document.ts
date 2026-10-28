@@ -17,10 +17,10 @@ import {
   lexMarkdown,
   type Wikilink,
   withoutComments,
-} from '@nib/markdown'
-import { calloutOf } from '@nib/markdown/callouts'
-import { coverOf } from '@nib/markdown/cover'
-import { embedKind, embedSize, shownText, withoutBlockIds } from '@nib/markdown/links'
+} from '@orden/markdown'
+import { calloutOf } from '@orden/markdown/callouts'
+import { coverOf } from '@orden/markdown/cover'
+import { embedKind, embedSize, shownText, withoutBlockIds } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
 
 /** A run of text, and everything that can be true of it at once. Absent means
@@ -34,7 +34,7 @@ export interface Span {
   code?: boolean
   mark?: boolean
   /** Which of the six palette tones a `==highlight==` was written in - `1` for the
-   *  red one and so on, exactly as highlights.ts in @nib/markdown numbers them.
+   *  red one and so on, exactly as highlights.ts in @orden/markdown numbers them.
    *  Absent for the plain highlight, which named no colour of its own and is drawn
    *  the way it always was; only meaningful beside `mark`. */
   tone?: number
@@ -140,7 +140,7 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
     case 'del':
       return inner({ strike: true })
     // The tone comes off the token as the number it is; see highlights.ts in
-    // @nib/markdown. Absent for the plain highlight, so a span carries only the
+    // @orden/markdown. Absent for the plain highlight, so a span carries only the
     // marks it actually has.
     case 'highlight':
       return inner(
@@ -239,7 +239,7 @@ function alignOf(value: string | null | undefined): Align {
 /** A quote turned into a callout: what it is called, and its body with the
  *  marker line gone.
  *
- *  What a callout is comes from @nib/markdown/callouts, the one place that
+ *  What a callout is comes from @orden/markdown/callouts, the one place that
  *  knows; only the cutting is here. Taken off the spans rather than off the
  *  source, because by the time a quote is read the marker is the first few
  *  characters of an inline token and cutting the string would leave the tokens

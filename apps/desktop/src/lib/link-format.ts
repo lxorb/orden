@@ -17,7 +17,7 @@
  *  Pure, and the only place a link's text is decided: `linkTo` in composer.ts is
  *  the one caller, and every writer in the app goes through that. */
 
-import { slugify } from '@nib/markdown/links'
+import { slugify } from '@orden/markdown/links'
 import { encodeTarget } from './link-rewrite'
 import { folderOf, nameOf, relativePath } from './space-paths'
 

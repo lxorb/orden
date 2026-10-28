@@ -17,7 +17,7 @@
  *
  *  Nothing here knows about a disk or a socket; a caller persists or sends the bytes. */
 
-import type { Canvas } from '@nib/markdown/canvas'
+import type { Canvas } from '@orden/markdown/canvas'
 import { seedExtras, seedPlane as planted } from '@orden/rooms/plane'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'

@@ -199,7 +199,7 @@ link rather than arriving as the words with the address thrown away. Nothing ren
 one as a link, because nothing should: what survives is the address in the file,
 which is where the reader can see it and another app can read it. The two schemes
 that run code and the three that serve a document of their own are dropped whoever is
-asking; see `appHref` in @nib/markdown.
+asking; see `appHref` in @orden/markdown.
 
 ## What each format becomes
 

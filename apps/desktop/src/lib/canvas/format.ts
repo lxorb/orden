@@ -1,12 +1,12 @@
 /** The canvas file, as the app sees it.
  *
- *  The format itself lives in `@nib/markdown/canvas`, next to the wikilink
+ *  The format itself lives in `@orden/markdown/canvas`, next to the wikilink
  *  grammar and for the same reason: three parts of Orden read it, and one of them
  *  is a worker that has no app around it. This file is what the surface imports,
  *  so nothing in the app has to know where the format went, and it is where the
  *  handful of things only a surface needs are kept. */
 
-import { type Canvas as Plane, canvasIn } from '@nib/markdown/canvas'
+import { type Canvas as Plane, canvasIn } from '@orden/markdown/canvas'
 
 export {
   blankCanvas,
@@ -38,9 +38,9 @@ export {
   type Shape,
   type Side,
   writeCanvas,
-} from '@nib/markdown/canvas'
+} from '@orden/markdown/canvas'
 
-export { merged, stamped } from '@nib/markdown/canvas-merge'
+export { merged, stamped } from '@orden/markdown/canvas-merge'
 
 /** A plane parsed before the surface that will show it is built, handed over once.
  *

@@ -4,13 +4,13 @@ import { everySurface } from '@orden/themes/write'
 
 export type Parser = LanguageSupport['language']['parser']
 
-/** The groups, the classes and the colouring itself are @nib/markdown/highlight:
+/** The groups, the classes and the colouring itself are @orden/markdown/highlight:
  *  the Worker that publishes a note colours a fence with the same list, and one
  *  list is what keeps a published page and the reading view the same page. What
  *  is left here is the app's own half - finding a parser among the hundred and
  *  forty-three the editor can load, and putting the reader's chosen palette on
  *  the screen. */
-export { highlightCode } from '@nib/markdown/highlight'
+export { highlightCode } from '@orden/markdown/highlight'
 
 /** A parser for each language named, loaded once. The list is the editor's
  *  own, so an exported document is coloured by whatever coloured it on screen:

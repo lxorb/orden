@@ -170,7 +170,7 @@ const CONFLICT_RULES = ['both', 'newest', 'ask']
 const LINK_FORMATS = ['wikilink', 'shortest', 'relative', 'absolute']
 
 /** What a note's front matter is drawn as, which the app asks with three words;
- *  see properties.ts in @nib/markdown. */
+ *  see properties.ts in @orden/markdown. */
 const PROPERTIES_MODES = ['properties', 'source', 'hidden']
 
 /** One of a list of numbers, said the way the app would say it. */
@@ -245,7 +245,7 @@ const KNOWN: Record<string, Check> = {
   // Which colour the highlight button writes. A palette tone by number, or null
   // for a highlight with no colour of its own; the app decides what a tone it has
   // never heard of means, which is the plain one. See highlights.ts in
-  // @nib/markdown.
+  // @orden/markdown.
   highlightTone: (value) =>
     value === null || (typeof value === 'number' && Number.isInteger(value) && value >= 0)
       ? null

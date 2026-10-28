@@ -23,7 +23,7 @@
     "sim:long": "vitest run --config vitest.long.config.ts"
   },
   "dependencies": {
-    "@nib/markdown": "workspace:*",
+    "@orden/markdown": "workspace:*",
     "@orden/rooms": "workspace:*",
     "diff-match-patch-es": "^2.0.1",
     "yjs": "^13.6.32"

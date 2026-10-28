@@ -3,11 +3,18 @@
  *  A page note is a canvas with pages among its objects (docs/pages.md), so a card, a
  *  connection and a stroke are canvas-ops.ts's. What a canvas has no word for is the
  *  column: which page an object is on, and a page put in, taken out or moved in the
- *  order. Those are `@nib/markdown/pages`' own four, the ones the page menu makes, so an
+ *  order. Those are `@orden/markdown/pages`' own four, the ones the page menu makes, so an
  *  agent's new page has the size and ruling of the one it follows, a page taken out takes
  *  what was written on it, and the last page is never taken away. Pure. */
 
-import { added, moved, onPage, pagesOf, removed as pageRemoved, settled } from '@nib/markdown/pages'
+import {
+  added,
+  moved,
+  onPage,
+  pagesOf,
+  removed as pageRemoved,
+  settled,
+} from '@orden/markdown/pages'
 import type { Canvas, CanvasNode, PageNode } from '../../canvas/format'
 import { Refused } from './problem'
 

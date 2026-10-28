@@ -21,7 +21,7 @@
  *  holds - a date as a date, a checkbox as a yes-or-no, a relation as links - so
  *  the base can sort, sum and group them. */
 
-import { htmlToMarkdown } from '@nib/markdown/from-html'
+import { htmlToMarkdown } from '@orden/markdown/from-html'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk } from './folder'

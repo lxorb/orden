@@ -1,5 +1,5 @@
-import { appliedEdits } from '@nib/markdown/edits'
-import { readTask } from '@nib/markdown/task-line'
+import { appliedEdits } from '@orden/markdown/edits'
+import { readTask } from '@orden/markdown/task-line'
 import { describe, expect, test } from 'vitest'
 import { finish, nextOccurrence, skip, tick } from './occurrence'
 

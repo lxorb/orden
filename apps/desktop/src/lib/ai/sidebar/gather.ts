@@ -104,7 +104,7 @@ async function tagged(root: string, tag: string): Promise<string[]> {
 async function pageAttachment(tabId: string, label: string): Promise<Attachment | null> {
   const read = await pages.read(tabId, true).catch(() => null)
   if (!read?.html.trim()) return null
-  const { htmlToMarkdown } = await import('@nib/markdown/from-html')
+  const { htmlToMarkdown } = await import('@orden/markdown/from-html')
   return {
     label: read.title || label,
     text: fitted(htmlToMarkdown(read.html).trim(), PAGE),

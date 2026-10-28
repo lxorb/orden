@@ -1,4 +1,4 @@
-import { renderMarkdown } from '@nib/markdown'
+import { renderMarkdown } from '@orden/markdown'
 import { expect, test } from 'vitest'
 import { plain } from './inline'
 

@@ -14,7 +14,7 @@
  *
  *  Pure: a list of answers. The store that applies them is carry-over.ts. */
 
-import type { PropertiesMode } from '@nib/markdown/properties'
+import type { PropertiesMode } from '@orden/markdown/properties'
 import type { AttachmentFolder } from '../attachments'
 import type { LinkFormat } from '../link-format'
 import type { FormatId } from './plan'

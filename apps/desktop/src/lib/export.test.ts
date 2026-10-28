@@ -2,8 +2,8 @@ import { type DOMWindow, JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 // Both heavy libraries handed over outright. In the app a formula is set by a render
 // that has awaited them - `prepareFences` and `runExport` do - and these render
-// synchronously; see @nib/markdown/engines.
-import '@nib/markdown/eager'
+// synchronously; see @orden/markdown/engines.
+import '@orden/markdown/eager'
 import {
   buildHtml,
   localSources,
@@ -198,7 +198,7 @@ describe('a styled export', () => {
 /** A document that has left the app takes the colours with it: the class the
  *  renderer writes and the rules that dress it are both in the sheet baked into
  *  the page, so a highlight is the same colour on paper as on screen. See
- *  highlights.ts in @nib/markdown and `--mark-*` in tokens.css. */
+ *  highlights.ts in @orden/markdown and `--mark-*` in tokens.css. */
 describe('a coloured highlight in an exported document', () => {
   const html = buildHtml('Be ==\u{1F534} careful== here.\n', 'x.md')
 

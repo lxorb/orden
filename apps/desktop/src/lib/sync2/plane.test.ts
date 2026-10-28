@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { type Canvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
+import { type Canvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { pushPlane, readPlane } from '@orden/rooms/plane'
 import { hash32, seedPlane } from '@orden/sync-core/seed'
 import * as Y from 'yjs'

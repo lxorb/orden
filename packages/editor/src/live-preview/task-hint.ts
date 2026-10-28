@@ -16,7 +16,7 @@
 
 import { type EditorState, StateField, type Transaction } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
-import { taskAt } from '@nib/markdown/tasks'
+import { taskAt } from '@orden/markdown/tasks'
 import { type DayTyped, noteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
 
@@ -82,10 +82,10 @@ const hinted = StateField.define<Hint | null>({
 async function write(view: EditorView, hint: Hint) {
   const [{ appliedEdits, oneEdit }, { writeTask }, { readTask }, { startField }] =
     await Promise.all([
-      import('@nib/markdown/edits'),
-      import('@nib/markdown/task-edits'),
-      import('@nib/markdown/task-line'),
-      import('@nib/markdown/task-dates'),
+      import('@orden/markdown/edits'),
+      import('@orden/markdown/task-edits'),
+      import('@orden/markdown/task-line'),
+      import('@orden/markdown/task-dates'),
     ])
   // Typed over while the writer was on its way: the hint it was is gone.
   if (view.state.field(hinted, false) !== hint) return

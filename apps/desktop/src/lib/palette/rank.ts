@@ -39,7 +39,7 @@
  *
  *  Pure, and per keystroke: every name was folded once, when the palette opened. */
 
-import { foldName } from '@nib/markdown/links'
+import { foldName } from '@orden/markdown/links'
 import { fuzzyFolded, nearly } from './match'
 
 export type Kind = 'tab' | 'note' | 'bookmark' | 'host' | 'command' | 'page' | 'heading' | 'setting'

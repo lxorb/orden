@@ -18,7 +18,7 @@
  *  that exists is the size of the card it is in. */
 
 import { createEditor, EditorView, modeEffects, type PreviewNote } from '@orden/editor'
-import { frontMatterBlock } from '@nib/markdown/front-matter'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { pickedLink } from './composer'
 import { links } from './link-index.svelte'
 import { modes } from './modes.svelte'

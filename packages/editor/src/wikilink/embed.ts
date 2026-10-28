@@ -1,6 +1,6 @@
 import type { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { DOCUMENT, PLANE } from '@nib/markdown/icons'
+import { DOCUMENT, PLANE } from '@orden/markdown/icons'
 import {
   embedKind,
   embedSize,
@@ -8,7 +8,7 @@ import {
   pageFragment,
   parseWikilink,
   sectionOf,
-} from '@nib/markdown/links'
+} from '@orden/markdown/links'
 import { iconElement } from '../icon'
 import { imageResolver } from '../images'
 import { label } from '../labels'

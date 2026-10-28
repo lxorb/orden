@@ -1,6 +1,6 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
-import { loadFor } from '@nib/markdown/engines'
+import { loadFor } from '@orden/markdown/engines'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { copiedFlavours, readyToCopy } from './copy'
@@ -12,7 +12,7 @@ import { linkedPaste } from './paste-link'
 // has none, so it waits for it here.
 beforeAll(() => readyToCopy())
 
-/** The conversion itself is `@nib/markdown/from-html`, tested there. What is
+/** The conversion itself is `@orden/markdown/from-html`, tested there. What is
  *  tested here is the choosing: a clipboard carries two flavours at once, and
  *  which of them a paste reads decides what lands in the note.
  *

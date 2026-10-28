@@ -6,7 +6,7 @@
  *  with an `x` each and a field to add one for a list, and a menu where the key is
  *  one the app has a fixed set of answers for. What every one of them writes is
  *  plain front matter - `tags: [one, two]`, `done: true`, `due: 2026-09-14` - through
- *  property-edits.ts in @nib/markdown, which is built on `frontMatterEdit`. So the
+ *  property-edits.ts in @orden/markdown, which is built on `frontMatterEdit`. So the
  *  file stays a file every other reader can read, and nothing here can write a shape
  *  the rows could not read back.
  *
@@ -15,22 +15,22 @@
  *  YAML it is written in. What has changed is that somebody who only wants to tick a
  *  box no longer has to go through the YAML to do it. The reader who wants the source
  *  all the time, or none of it, says so once in Settings; see `propertiesMode` in
- *  blocks.ts and properties.ts in @nib/markdown.
+ *  blocks.ts and properties.ts in @orden/markdown.
  *
  *  One document change per gesture, on the change rather than per keystroke for a
  *  field, so a value typed into a row is one thing to undo. A block holding a shape
- *  @nib/markdown cannot read stays source, whole; see properties.ts there. */
+ *  @orden/markdown cannot read stays source, whole; see properties.ts there. */
 
 import { EditorSelection, Facet } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { type Property, propertiesTable, readProperties } from '@nib/markdown/properties'
+import { type Property, propertiesTable, readProperties } from '@orden/markdown/properties'
 import {
   type ListItem,
   withItem,
   withoutItem,
   writeList,
   writeProperty,
-} from '@nib/markdown/property-edits'
+} from '@orden/markdown/property-edits'
 import { label } from '../labels'
 import { applied, clearOfBlock } from './front-matter'
 import { pressedByKey } from '../press'
@@ -64,7 +64,7 @@ export class PropertiesWidget extends NibWidget {
     if (properties === null) return host
 
     // The renderer's own markup, out of escaped text; see properties.ts in
-    // @nib/markdown. The reading view draws the same rows from the same string, and
+    // @orden/markdown. The reading view draws the same rows from the same string, and
     // the controls below are put into the cells it left.
     host.innerHTML = propertiesTable(properties)
 

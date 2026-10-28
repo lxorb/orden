@@ -6,8 +6,8 @@
  *  shared). `task.*` is nib's: a task row's fields, and the few answers views ask
  *  of every task (`open`, `date`, `at`, `started`, `subtask`). */
 
-import { dayOf, deadlineOf, hasStarted, startOf } from '@nib/markdown/task-dates'
-import { writeRemind } from '@nib/markdown/task-line'
+import { dayOf, deadlineOf, hasStarted, startOf } from '@orden/markdown/task-dates'
+import { writeRemind } from '@orden/markdown/task-line'
 import { dateAt, wallClock } from '../dates'
 import type { DateValue, Row, Value } from '../types'
 import {

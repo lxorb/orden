@@ -59,7 +59,7 @@ rule too: they are lines of the same file, typed the same way.
 Nothing else changes. The reading view, an export, a document and the published
 page of a note that is not being presented all keep CommonMark's space, so the
 file still reads the way every other renderer reads it. The flag is `breaks` on
-`RenderOptions` in `@nib/markdown`, set in one place per surface: `deckHtml` in
+`RenderOptions` in `@orden/markdown`, set in one place per surface: `deckHtml` in
 `apps/desktop/src/lib/slides/render.ts` for the app and both exports, and
 `publishedDeck` in `services/sync/src/blog.ts` for `?slides`.
 

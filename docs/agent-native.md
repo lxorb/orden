@@ -373,7 +373,7 @@ web tab of any space the grant reaches, on screen or not. A reader's tab needs
 | `browser_wait` | `tab`, `for`: `load`, `network_idle`, `{text}`, `{ref}`, `{url}`; `timeout_ms` | network idle is no request in flight for 500 ms, counted from the engine's own network events |
 | `browser_snapshot` | `tab`, `ref`? (a subtree), `max_chars`? | the accessibility tree as text: `- button "Save" [ref=e4812]`; refs are the engine's node ids, stable for as long as the element lives, `f2e17` inside a frame |
 | `browser_find` | `tab`, `text` or `role` and `name` | the refs that match |
-| `browser_read` | `tab`, `as`: `text`, `markdown` (default), `article`; `max_chars`? | the page as words, through the clipper's own converter (`@nib/markdown/from-html`), which the crate asks the window for (`agent.markdown`); the page's text when no window answers |
+| `browser_read` | `tab`, `as`: `text`, `markdown` (default), `article`; `max_chars`? | the page as words, through the clipper's own converter (`@orden/markdown/from-html`), which the crate asks the window for (`agent.markdown`); the page's text when no window answers |
 | `browser_click` | `tab`, `ref` or `x` and `y`, `button`?, `count`?, `modifiers`? | scrolled into view, the engine's highlight for a beat, then pressed where it shows: its middle, or the middle of a quarter of it where something small sits over the middle. Or a point in the tab's viewport in CSS pixels (a pixel of `browser_screenshot` at its own scale), judged by the element there (#373) |
 | `browser_type` | `tab`, `ref`, `text`, `submit`?, `replace`? | into a field, as text rather than keys (`Input.insertText`); a date, time or colour field set through the page; refused on a password field and on every field of a sign-in form (9.4) |
 | `browser_press` | `tab`, `keys` (`Enter`, `Control+A`) | keys pressed **inside that page**: through the engine (`Input.dispatchKeyEvent`) in an agent's own tab, measured to move neither the window in front nor the keyboard; as the page's own key events in a reader's tab, whose page-first keys would hand an engine key to the window (7.2). Never through the system, never into the window, never a key that opens a picker |
@@ -892,7 +892,7 @@ binding a room uses, and it merges with the reader's own drawing object by objec
 with pages among its objects (docs/pages.md), so it is read as its pages in order - their
 paper, ruling, a PDF page behind one, how much ink - and every other object with the page it
 starts on, laid out in the column the reader sees. Its pages are the page menu's own three
-operations (`@nib/markdown/pages`): a page put in after another takes that one's size and
+operations (`@orden/markdown/pages`): a page put in after another takes that one's size and
 ruling, a page taken out takes what is written on it, and the last page is never taken
 away; a card given a `page` is measured from that page's corner and lands under what the
 page holds when it says no place (`lib/agents/workspace/pages-ops.ts`). A canvas or page

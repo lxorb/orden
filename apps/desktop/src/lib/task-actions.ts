@@ -66,7 +66,7 @@ export async function tickTask(at: string, space: string, done: boolean): Promis
   if (root === undefined) return false
   const [{ clockOf, editedTask, readAt }, { oneEdit }] = await Promise.all([
     import('@orden/bases/tasks'),
-    import('@nib/markdown/edits'),
+    import('@orden/markdown/edits'),
   ])
   const anchor = readAt(at)
   const path = insideSpace(root, anchor.path)

@@ -12,9 +12,9 @@
  *  What is deliberately not here: anything that would delete or overwrite without
  *  being asked twice. `confirms` in verbs.ts is what asks. */
 
-import type { TextEdit } from '@nib/markdown/edits'
-import { typedItem, writeList, writeProperty } from '@nib/markdown/property-edits'
-import { isQuoted, unquoted, writtenFlowItems } from '@nib/markdown/yaml'
+import type { TextEdit } from '@orden/markdown/edits'
+import { typedItem, writeList, writeProperty } from '@orden/markdown/property-edits'
+import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'
 import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
 import { extensionOf, nameToWrite } from '../naming'

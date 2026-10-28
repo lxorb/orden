@@ -12,14 +12,14 @@
  *  rather than a feature: nothing in the app reads it, and a note that never
  *  changed after it was written does not carry it. */
 
-import { plainWords } from '@nib/markdown/escapes'
+import { plainWords } from '@orden/markdown/escapes'
 import {
   frontMatterBlock,
   frontMatterKeys,
   type FrontMatterRow,
   writeFrontMatter,
-} from '@nib/markdown/front-matter'
-import { TAG_NAME } from '@nib/markdown/tags'
+} from '@orden/markdown/front-matter'
+import { TAG_NAME } from '@orden/markdown/tags'
 
 export interface Meta {
   /** The day it was made, `YYYY-MM-DD`. */
@@ -38,7 +38,7 @@ export type Property = FrontMatterRow[1]
 
 /** A front matter block, or nothing at all when there is nothing to say. Which
  *  rows there are is decided here - only what the export knew - and how each value
- *  is spelled is @nib/markdown/front-matter's, shared with a web tab's clip so that a
+ *  is spelled is @orden/markdown/front-matter's, shared with a web tab's clip so that a
  *  clipped page and an imported note say the same thing the same way. */
 export function frontMatterFor(meta: Meta): string {
   const rows: FrontMatterRow[] = []
@@ -101,7 +101,7 @@ export function noteText(title: string | null, body: string, meta: Meta = {}, ow
   return `${props}${head}${words}${words ? '\n' : ''}`
 }
 
-/** A key's line, as @nib/markdown/front-matter reads one: an unindented line up to
+/** A key's line, as @orden/markdown/front-matter reads one: an unindented line up to
  *  its first colon with a blank or nothing after it. */
 const KEY_LINE = /^[^\s#-].*?[ \t]*:(?:\s|$)/
 
@@ -125,7 +125,7 @@ function ownBlock(body: string): ReturnType<typeof frontMatterBlock> {
 
 /** A note's own block with the rows of `meta` it does not say added in front of
  *  its closing fence, and up to that fence: a key in another case is the same key,
- *  since that is how the app reads one (see @nib/markdown/front-matter). */
+ *  since that is how the app reads one (see @orden/markdown/front-matter). */
 function withMeta(note: string, close: number, meta: Meta): string {
   const says = new Set(frontMatterKeys(note).map((key) => key.toLowerCase()))
   const nl = note.includes('\r\n') ? '\r\n' : '\n'

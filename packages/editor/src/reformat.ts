@@ -1,10 +1,10 @@
 import type { Tree } from '@lezer/common'
 import type { StateCommand } from '@codemirror/state'
-import { closesFence, fenceMark } from '@nib/markdown/fences'
+import { closesFence, fenceMark } from '@orden/markdown/fences'
 import { nibMarkdownParser } from './markdown/extensions'
 import { parseTable, serializeTable } from './table/model'
 
-/** Which lines are code comes from @nib/markdown/fences, the same reading the
+/** Which lines are code comes from @orden/markdown/fences, the same reading the
  *  renderer and the comment stripper use. The mark matters, not just the shape: a
  *  `~~~` in the middle of a ``` block is code, and reading it as a fence would
  *  end the block early and let the rest of it be rewritten as prose. */

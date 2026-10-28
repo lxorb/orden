@@ -3,7 +3,7 @@
  *  services. See src/push. */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { momentOf } from '@nib/markdown/task-reminders'
+import { momentOf } from '@orden/markdown/task-reminders'
 import { base64url, fromBase64url } from '../src/push/keys'
 import { remindersIn, sendDue } from '../src/push/reminders'
 import { forgetAccess } from '../src/push/fcm'

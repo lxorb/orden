@@ -28,7 +28,7 @@
  *  folder of five hundred notes renamed is five hundred rows but not five hundred
  *  statements. */
 
-import { freePath } from '@nib/markdown/paths'
+import { freePath } from '@orden/markdown/paths'
 import {
   applyOp,
   contentChanged,

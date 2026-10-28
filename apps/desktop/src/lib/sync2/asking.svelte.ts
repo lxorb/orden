@@ -22,7 +22,7 @@
  *  until a v2 engine runs, and the v1 app never carries any of it. */
 
 import { mount, untrack } from 'svelte'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import type { Excerpt } from '@orden/sync-core/diverge'
 import { message, t } from '../i18n.svelte'
 import { howFor } from '../new-tab'

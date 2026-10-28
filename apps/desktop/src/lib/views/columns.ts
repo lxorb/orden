@@ -7,7 +7,7 @@
  *  a note's own property and a task's own field are written through the one write
  *  path, and `file.*` and `formula.*` are what the files and the formulas say. */
 
-import { deadlineField, startField } from '@nib/markdown/task-dates'
+import { deadlineField, startField } from '@orden/markdown/task-dates'
 import {
   type Base,
   isButton,

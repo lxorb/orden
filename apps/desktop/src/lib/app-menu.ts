@@ -21,7 +21,7 @@ import {
   undoEdit,
   unfoldEverything,
 } from '@orden/editor'
-import { HIGHLIGHT_COLOURS } from '@nib/markdown/highlights'
+import { HIGHLIGHT_COLOURS } from '@orden/markdown/highlights'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { copySelection, cutSelection } from './clipboard'
@@ -356,7 +356,7 @@ export function appMenu(context: Context): MenuGroup[] {
           // highlights the selection and sticks: the row above, the bar's own
           // button and the shortcut all write that colour from then on. Five
           // colours, which is what Obsidian encodes in the markdown, plus the
-          // plain highlight; see highlights.ts in @nib/markdown.
+          // plain highlight; see highlights.ts in @orden/markdown.
           label: t('Highlight colour'),
           disabled: !writable,
           rows: HIGHLIGHT_COLOURS.map((colour) => ({

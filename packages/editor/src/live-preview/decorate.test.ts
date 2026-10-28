@@ -3,8 +3,8 @@ import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 // The emoji table handed over outright: in the app it is fetched the first time a note
 // turns out to have a `:shortcode:` in it, and what is being built here is one pass of
-// decorations with no frame after it to fill anything in. See @nib/markdown/engines.
-import '@nib/markdown/eager'
+// decorations with no frame after it to fill anything in. See @orden/markdown/engines.
+import '@orden/markdown/eager'
 import { buildDecorations } from './decorate'
 import { FenceHeaderWidget } from './widgets'
 import { buildBlockDecorations } from './blocks'
@@ -321,7 +321,7 @@ describe('an <iframe> in the text', () => {
 /** A backslash before a character is how markdown says "this one is a
  *  character, not a marker". It is a marker itself, so it is hidden the way
  *  every other marker is, and shown again when the caret is on it. A pasted tag
- *  arrives written this way - see `from-html` in @nib/markdown - so a page
+ *  arrives written this way - see `from-html` in @orden/markdown - so a page
  *  copied into a note used to read back with a backslash in front of every tag. */
 describe('escapes', () => {
   test('hides the backslash and keeps the character', () => {
@@ -487,7 +487,7 @@ describe('extensions', () => {
   })
 
   test('and hides the fences of a block it cannot draw as rows', () => {
-    // A shape @nib/markdown will not guess at stays source, and source is
+    // A shape @orden/markdown will not guess at stays source, and source is
     // decorated here the way it always was.
     const note = '---\njust some words\n---\n\nbody'
     expect(blocks(note)).toEqual([])
@@ -523,7 +523,7 @@ describe('extensions', () => {
   })
 
   /** A note to the writer, hidden here the way it is hidden in the reading view,
-   *  in every export and on a published page; see comments.ts in @nib/markdown. */
+   *  in every export and on a published page; see comments.ts in @orden/markdown. */
   test('hides an HTML comment, block or inline', () => {
     expect(concealed('<!-- a note -->')).toEqual(['<!-- a note -->'])
     expect(concealed('words <!-- aside --> more')).toEqual(['<!-- aside -->'])

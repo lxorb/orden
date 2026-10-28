@@ -15,7 +15,7 @@
  *  The other end of the socket is the same protocol module both ends use. */
 
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
-import { emptyCanvas } from '@nib/markdown/canvas'
+import { emptyCanvas } from '@orden/markdown/canvas'
 import { receive, syncUpdate, TEXT } from '@orden/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'

@@ -10,7 +10,7 @@ import {
   taskHash,
   type Value,
 } from '@orden/bases'
-import { readTask } from '@nib/markdown/task-line'
+import { readTask } from '@orden/markdown/task-line'
 
 function fileAt(path: string, extra: Partial<FileInfo> = {}): FileInfo {
   const name = path.slice(path.lastIndexOf('/') + 1)

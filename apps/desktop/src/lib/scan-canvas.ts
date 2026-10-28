@@ -15,7 +15,7 @@ import type { ScannedNote } from './scan-note'
 
 /** Where this app writes what the index reads: `nib` after the cards, and the icon
  *  and its colour straight after the version inside it, ahead of the pages and the
- *  ink (see `canvasRuns` in @nib/markdown/canvas, which has written them there since
+ *  ink (see `canvasRuns` in @orden/markdown/canvas, which has written them there since
  *  planes first wore icons). So a plane in that order is read as far as its icon
  *  and no further, and its ink - all but a few hundred characters of it - is never
  *  walked at all: every write of a plane is read here, and the walk was tens of

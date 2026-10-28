@@ -6,10 +6,10 @@
  *  the answer, so a change here is a change to all three: keep it small and say
  *  why. Nothing in this file runs. */
 
-import type { TaskFields } from '@nib/markdown/task-line'
+import type { TaskFields } from '@orden/markdown/task-line'
 
-export type { FieldName, Priority, Remind, TaskFields } from '@nib/markdown/task-line'
-export type { TaskChange } from '@nib/markdown/task-edits'
+export type { FieldName, Priority, Remind, TaskFields } from '@orden/markdown/task-line'
+export type { TaskChange } from '@orden/markdown/task-edits'
 
 /** A date, or a date and a time. Floating: the wall clock wherever the reader is,
  *  unless a zone is written. `time` is `HH:mm` or `HH:mm:ss`. */
@@ -100,7 +100,7 @@ export interface TaskRow extends TaskFields {
   comments?: number
   /** What a `📅` on it means: a deadline in an Obsidian vault, else - absent - a start
    *  date. Said by whatever made the rows, which knows the space; see
-   *  `@nib/markdown/task-dates`. */
+   *  `@orden/markdown/task-dates`. */
   dueReads?: 'deadline'
 }
 

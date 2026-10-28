@@ -15,7 +15,7 @@
  *  through the space, to its members only: `/i/<hash>` serves what a published page
  *  points at and nothing else. */
 
-import { DIAGRAM_NAMED } from '@nib/markdown/diagrams'
+import { DIAGRAM_NAMED } from '@orden/markdown/diagrams'
 import { Hono } from 'hono'
 import { now } from '../crypto'
 import { laterOf, pokeSpace } from '../hub/poke'

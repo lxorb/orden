@@ -7,11 +7,11 @@
  *  is stored, the manifest, the spine, and above all whether each part is XML a
  *  parser will take. */
 
-import { renderMarkdown } from '@nib/markdown'
+import { renderMarkdown } from '@orden/markdown'
 // Both heavy libraries handed over outright. In the app a formula is set by a render
 // that has awaited them - `prepareFences` and `runExport` do - and these render
-// synchronously; see @nib/markdown/engines.
-import '@nib/markdown/eager'
+// synchronously; see @orden/markdown/engines.
+import '@orden/markdown/eager'
 import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
 import { type EpubOptions, forReading, sectionsOf, toEpub, toXhtml } from './epub'
@@ -567,7 +567,7 @@ describe('every part of the book', () => {
   })
 
   /** A comment is a note to the writer and never reaches a rendered page at all;
-   *  see `withoutComments` in @nib/markdown. What the writer of an ePub does with a
+   *  see `withoutComments` in @orden/markdown. What the writer of an ePub does with a
    *  comment handed to it in markup - XML cannot hold `--` inside one - is tested
    *  against `toXhtml` below. */
   test('puts none of the writer’s own comments in the book', () => {

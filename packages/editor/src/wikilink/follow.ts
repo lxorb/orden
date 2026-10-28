@@ -1,6 +1,6 @@
 import type { EditorState } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import { isTabFile, linkTarget, type Wikilink } from '@nib/markdown/links'
+import { isTabFile, linkTarget, type Wikilink } from '@orden/markdown/links'
 import { label } from '../labels'
 import { type LinkPress, MAC, modifier } from '../links'
 import { linkAt } from './at'

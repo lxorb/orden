@@ -26,7 +26,7 @@ describe('the document a note comes to', () => {
 
   /** The shape every export that is not HTML stands on, so this is where a comment
    *  is kept out of Word, RTF, ePub and plain text at once; see comments.ts in
-   *  @nib/markdown for the rest of the paths. */
+   *  @orden/markdown for the rest of the paths. */
   test('leaves a comment the writer wrote out of the blocks', () => {
     const commented = documentOf('# Head\n\n<!-- to myself -->\n\nWords.\n', 'Note.md')
     const said = commented.blocks
@@ -93,7 +93,7 @@ describe('the marks on a run', () => {
 /** A `==highlight==` is one of six colours - the plain one and the five Obsidian
  *  writes an emoji for - and the blocks every document format is written from have
  *  to say which, or Word and RTF can only guess. See highlights.ts in
- *  @nib/markdown, the one place that knows the six. */
+ *  @orden/markdown, the one place that knows the six. */
 describe('the colour a highlight was written in', () => {
   const marks = (source: string) =>
     documentOf(source, 'Note.md')

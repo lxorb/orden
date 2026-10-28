@@ -17,8 +17,8 @@
  *  and Keep would have thrown them away within the week; importing them would be
  *  the one act of this whole feature that nobody asked for. The count is said. */
 
-import { escapeText, plainWords } from '@nib/markdown/escapes'
-import { plainTaskWords } from '@nib/markdown/task-line'
+import { escapeText, plainWords } from '@orden/markdown/escapes'
+import { plainTaskWords } from '@orden/markdown/task-line'
 import { key } from '../i18n.svelte'
 
 import { dayOf, noteText, type Meta } from './meta'

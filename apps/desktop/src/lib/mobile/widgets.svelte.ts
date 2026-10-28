@@ -16,7 +16,7 @@
  *  resources cannot reach the page's dictionaries. See res/values/strings.xml for
  *  what stands there before the app has ever run. */
 
-import { shownWords } from '@nib/markdown/escapes'
+import { shownWords } from '@orden/markdown/escapes'
 import { t } from '../i18n.svelte'
 import { shownName } from '../note-name'
 import { insideSpace } from '../space-paths'

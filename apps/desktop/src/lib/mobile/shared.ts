@@ -28,9 +28,9 @@
  *  line is a pure answer to "what would this share become", which is the part
  *  worth testing, and the Kotlin side is in Shared.kt. */
 
-import { escapeText, plainWords } from '@nib/markdown/escapes'
-import { plainTaskWords, taskWords } from '@nib/markdown/task-line'
-import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
+import { escapeText, plainWords } from '@orden/markdown/escapes'
+import { plainTaskWords, taskWords } from '@orden/markdown/task-line'
+import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
 
 import { dayOf, noteText } from '../import/meta'
 import { safeName, titleFrom } from '../import/names'

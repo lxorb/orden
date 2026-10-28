@@ -7,8 +7,8 @@
  *  folder `file.inFolder()` names, the tags `file.hasTag()` names and the values a
  *  `prop == "value"` names, so the row it makes is a row of the view it was made from. */
 
-import { isPropertyName } from '@nib/markdown/front-matter'
-import { type ListItem, writeList, writeProperty } from '@nib/markdown/property-edits'
+import { isPropertyName } from '@orden/markdown/front-matter'
+import { type ListItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { readFilter } from '../filter'
 import type { Base, Filter, Sort, View } from '../types'
 import { AgentError } from './tasks'

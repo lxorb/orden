@@ -31,7 +31,7 @@
   import { theme } from './theme.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
-  import { decodeFragment, isTabFile, pageFragment } from '@nib/markdown/links'
+  import { decodeFragment, isTabFile, pageFragment } from '@orden/markdown/links'
   import { links } from './link-index.svelte'
   import { pressRow } from './query-block'
 
@@ -162,7 +162,7 @@
       asks ? links.version : 0,
       // Whether a single newline breaks the line: the renderer's own answer rather
       // than an option passed in, so the page it built is no longer the page it
-      // would build. See `setHardBreaks` in @nib/markdown.
+      // would build. See `setHardBreaks` in @orden/markdown.
       modes.hardBreaks,
     ]
     if (!reasons.length) return

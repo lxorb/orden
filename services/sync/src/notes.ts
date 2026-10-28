@@ -1,8 +1,8 @@
 import { type Context, Hono } from 'hono'
 import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
-import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
-import { isPagesTarget } from '@nib/markdown/links'
-import { conflictPath, freePath, numbered } from '@nib/markdown/paths'
+import { mergeCanvasFiles } from '@orden/markdown/canvas-merge'
+import { isPagesTarget } from '@orden/markdown/links'
+import { conflictPath, freePath, numbered } from '@orden/markdown/paths'
 import { objectBody, readBody } from './body'
 import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
@@ -288,7 +288,7 @@ function noteAt(env: Env, spaceId: string, path: string): Promise<Note | null> {
  *  the room had written. The room cannot merge those two - it has no history for
  *  words it never saw - and the answer the app gives for exactly the same question is
  *  to keep the other copy beside the note. So does this, under the same name, so a
- *  reader who has seen one has seen both; see `conflictPath` in @nib/markdown/paths
+ *  reader who has seen one has seen both; see `conflictPath` in @orden/markdown/paths
  *  and `keptBeside` in rooms/room.ts.
  *
  *  Null when there is nowhere free to put it, which is twenty copies of one note in

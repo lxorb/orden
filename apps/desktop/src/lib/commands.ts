@@ -51,7 +51,7 @@ import {
   unfoldEverything,
   upperCase,
 } from '@orden/editor'
-import { deckOf, slideAt } from '@nib/markdown/slides'
+import { deckOf, slideAt } from '@orden/markdown/slides'
 import { present } from './slides/present.svelte'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
@@ -83,7 +83,7 @@ import { canPublish, canShare, canShareItem, canWriteAt, shareThisFile } from '.
 import { archiveEntry, DIVIDER } from './menu.svelte'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
-import { PROPERTIES_MODES } from '@nib/markdown/properties'
+import { PROPERTIES_MODES } from '@orden/markdown/properties'
 import { PROPERTIES_WORDS } from './properties-words'
 import { type KindName, settings } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'

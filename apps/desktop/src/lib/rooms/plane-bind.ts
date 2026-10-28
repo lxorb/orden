@@ -32,7 +32,7 @@
  *  is watched until that has happened: a plane somebody has been drawing on must not
  *  be replaced by the room's before the two have been compared. */
 
-import { merged } from '@nib/markdown/canvas-merge'
+import { merged } from '@orden/markdown/canvas-merge'
 import { planeIsEmpty, pushPlane, readPlane, rootsOf } from '@orden/rooms/plane'
 import * as Y from 'yjs'
 import type { Canvas } from '../canvas/format'

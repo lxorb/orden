@@ -12,7 +12,7 @@
  *  reader thinks. Then it is one thing to undo, however many notes it touched -
  *  the same road a replacement across the space takes. */
 
-import { oneEdit } from '@nib/markdown/edits'
+import { oneEdit } from '@orden/markdown/edits'
 
 import { plural, t } from './i18n.svelte'
 import { converted } from './import/convert'

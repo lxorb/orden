@@ -510,7 +510,7 @@ picked, typed or said is `🛫`. A `📅` is read by where it stands, and never 
 
 A date set again is written to the field that already holds it, so an old `📅` moves in
 place. `⏳` stays the plugin's scheduled date: it places a task on a day the way a start
-date does, and never makes it late. The rules are `@nib/markdown/task-dates`; the rows say
+date does, and never makes it late. The rules are `@orden/markdown/task-dates`; the rows say
 which way a space reads its `📅` (`dueReads`), and so does the editor's note index.
 
 **Order on the line**: words, then nib's bracket fields, then tags, then the emoji fields in
@@ -605,7 +605,7 @@ saved. The rows ride on that pass:
 
 - the crate adds, per note, its **raw front matter block** and its **task lines** (the line
   number, the indentation, the box's character, the text, and the heading path above it).
-  Raw, because one parser is enough: the window parses fields with `@nib/markdown` and
+  Raw, because one parser is enough: the window parses fields with `@orden/markdown` and
   properties with `packages/markdown/src/properties.ts`, so the crate and the window cannot
   disagree about a field. `apps/desktop/src/lib/scan-note.ts` does the same for the browser
   build;
@@ -1130,7 +1130,7 @@ reading reminder times), and Emil decided to build it (8.5).
 
 **As built** (lane 5, 2026-10-04):
 
-- **When**: `remindTimes` and `momentOf` in `@nib/markdown/task-reminders`, shared by the
+- **When**: `remindTimes` and `momentOf` in `@orden/markdown/task-reminders`, shared by the
   app and the Worker so both agree on the minute. A relative `[remind:: 15m]` counts back
   on the wall clock from the task's time on the day it starts (else is scheduled); a
   deadline rings nothing (5.1.1); a bare time is
@@ -1594,7 +1594,7 @@ Written first, by lane 1: the shapes are in `packages/bases/src/types.ts` (expor
 section is the summary; the comments in those files are the contract.
 
 ```ts
-// @nib/markdown/task-line: one line, read the way the Tasks plugin reads it
+// @orden/markdown/task-line: one line, read the way the Tasks plugin reads it
 type Priority = 1 | 2 | 3 | 4 | 5 | 6   // p1 🔺, p2 ⏫, p3 🔼, 4 none (p4), 5 🔽, 6 ⏬
 type Remind = { before: number } | { time: string } | { at: string; time: string }
 interface TaskFields {
@@ -1610,7 +1610,7 @@ interface TaskFields {
 function readTask(line: string): TaskFields | null
 function parseTask(line: string): ParsedTask | null   // the fields and where each is written
 
-// @nib/markdown/task-edits: the smallest edits, offsets into the line
+// @orden/markdown/task-edits: the smallest edits, offsets into the line
 type TaskChange = { [K in keyof TaskFields]?: TaskFields[K] | null }  // null removes
 function writeTask(line: string, change: TaskChange): TextEdit[]
 function changedTask(line: string, change: TaskChange): string

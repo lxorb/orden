@@ -7,7 +7,7 @@
 //! note's text; here each file is read once, its links and headings are taken out
 //! of it, and only that comes back.
 //!
-//! The grammar is Obsidian's, and it is the same grammar `@nib/markdown/links`
+//! The grammar is Obsidian's, and it is the same grammar `@orden/markdown/links`
 //! reads on the other side. Two languages cannot share one parser, so the tests
 //! at the bottom are what keep the two readings from drifting: every case here
 //! has a twin in `packages/markdown/src/links.test.ts`.
@@ -251,11 +251,11 @@ pub struct Note {
     /// read, and the row's own menu has to know whether there is a cover to change
     /// or to take away. Where the band is taken from - `cover-position:` - is not
     /// read, because no list asks it; the surface that draws the banner reads it
-    /// out of the note itself. See cover.ts in @nib/markdown.
+    /// out of the note itself. See cover.ts in @orden/markdown.
     cover: Option<String>,
     /// The note's front matter as written, the lines between the fences, or None for
     /// a note that opens with anything else. Raw, because the window reads properties
-    /// with the parser it already has (properties.ts in @nib/markdown) and the rows
+    /// with the parser it already has (properties.ts in @orden/markdown) and the rows
     /// are built there; see docs/tasks.md 5.3.
     front: Option<String>,
     /// Every task line outside code and the front matter, with the headings above it.
@@ -379,7 +379,7 @@ fn note_at(relative: String, body: &str) -> Note {
         address: None,
         cover: said("cover"),
         // The last line's break is the fence's, not the block's: the twin of
-        // `frontMatter` in @nib/markdown, which takes one off and no more.
+        // `frontMatter` in @orden/markdown, which takes one off and no more.
         front: block.as_ref().and_then(|one| {
             let lines = body.get(one.from..one.close)?;
             let lines = lines.strip_suffix('\n').unwrap_or(lines);
@@ -1190,7 +1190,7 @@ mod tests {
     /// The picture across the top of a note, read on the same pass as the icon: the
     /// row's own menu has to know whether there is a cover to change or to take away,
     /// and asking the disk per row would be a read per row. The twin of `scanNote` in
-    /// the app; see cover.ts in @nib/markdown for what the key means.
+    /// the app; see cover.ts in @orden/markdown for what the key means.
     #[test]
     fn a_note_says_which_picture_is_across_the_top_of_it() {
         let read = note_at(

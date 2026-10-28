@@ -10,7 +10,7 @@
  *  a machine with one screen - answers no, and the notes are then a sheet in the
  *  presenting window instead. */
 
-import type { SlideShape } from '@nib/markdown/slides'
+import type { SlideShape } from '@orden/markdown/slides'
 import type { Scheme } from '../theme.svelte'
 import { invoke, isDesktop } from '../tauri'
 

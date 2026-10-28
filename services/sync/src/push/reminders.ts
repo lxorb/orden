@@ -4,7 +4,7 @@
  *  **Kept from the notes as they arrive.** Every note is written through one place
  *  (`saveNote` and the two that make a note, notes.ts), and each hands its words here:
  *  the task lines are read the way the app reads them, their reminders worked out by the
- *  same code (`@nib/markdown/task-reminders`) in the time zone the account's newest
+ *  same code (`@orden/markdown/task-reminders`) in the time zone the account's newest
  *  device said it is in, and the note's rows of `push_reminders` rewritten. Only for an
  *  account with a device to push to, so a save costs nothing for everybody else.
  *
@@ -16,8 +16,8 @@
  *  alarm itself knows this push and stays quiet; see Reminders.kt. */
 
 import { taskHash } from '@orden/bases'
-import { readTask } from '@nib/markdown/task-line'
-import { momentOf, plainWords, reminderId, remindTimes } from '@nib/markdown/task-reminders'
+import { readTask } from '@orden/markdown/task-line'
+import { momentOf, plainWords, reminderId, remindTimes } from '@orden/markdown/task-reminders'
 import type { Env } from '../types'
 import { liveTarget } from './live'
 import { type Message, push, type Target } from './send'

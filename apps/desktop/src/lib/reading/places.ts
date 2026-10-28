@@ -19,7 +19,7 @@
  *  pixel measured over estimates. So the page's half is a `scrollIntoView` on the
  *  heading itself, in Reading.svelte, where the elements are. */
 
-import { CodeBlocks, WORDS } from '@nib/markdown/fences'
+import { CodeBlocks, WORDS } from '@orden/markdown/fences'
 
 /** A place in the note as the two faces both understand it: which heading it is
  *  under, and how far from that heading to the next.

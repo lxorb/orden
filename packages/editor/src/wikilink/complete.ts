@@ -1,6 +1,6 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import type { EditorView } from '@codemirror/view'
-import { blocksOf, foldName } from '@nib/markdown/links'
+import { blocksOf, foldName } from '@orden/markdown/links'
 import { label } from '../labels'
 import { blockNamer } from './block-namer'
 import {

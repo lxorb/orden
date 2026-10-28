@@ -9,7 +9,7 @@
  *  empty canvas over them (A26-S1). */
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { type Canvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
+import { type Canvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { pushPlane, readPlane } from '@orden/rooms/plane'
 import { type PullResponse, type PushResponse, seedPlane, seedUpdate } from '@orden/sync-core'
 import { subprotocol, TEXT } from '@orden/rooms'

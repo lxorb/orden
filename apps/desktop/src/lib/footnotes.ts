@@ -13,7 +13,7 @@
  *  doing, so the mark is what a press answers; the definition is a second press for
  *  the times you came looking for what it says. */
 
-import { lines } from '@nib/markdown/links'
+import { lines } from '@orden/markdown/links'
 
 export interface Footnote {
   /** The label between the brackets, which is what the note shows as a raised
@@ -43,7 +43,7 @@ const REFERENCE = /\[\^([^\]\s]+)\]/g
  *  the ones nothing refers to after. A definition written twice is read once,
  *  the way the renderer reads it.
  *
- *  Code is skipped as the page reads it (`lines` in @nib/markdown/links): a block
+ *  Code is skipped as the page reads it (`lines` in @orden/markdown/links): a block
  *  closes on its own mark only, and a fence in a quote or a list item is code too. */
 export function scanFootnotes(text: string): Footnote[] {
   if (!text.includes('[^')) return []

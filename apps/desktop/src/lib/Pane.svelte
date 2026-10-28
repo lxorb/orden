@@ -28,7 +28,7 @@
   } from '@orden/editor'
   import { untrack } from 'svelte'
   import { alone } from './alone.svelte'
-  import { isDeck } from '@nib/markdown/slide-breaks'
+  import { isDeck } from '@orden/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
   import type { Pane } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'

@@ -69,7 +69,7 @@ out of the same renderer and were already the same markup.
   so they outrank it.
 - **Coloured fences, server side.** `services/sync/src/blog/code.ts` carries
   thirteen Lezer grammars - the very parsers the editor loads through
-  `@codemirror/lang-*` - and colours a fence with `@nib/markdown/highlight`, the
+  `@codemirror/lang-*` - and colours a fence with `@orden/markdown/highlight`, the
   module the export uses too. Same `hl-` classes, same tree, character for
   character. The colours are in document.css now, written with `:where(#write)`
   so a reader's chosen palette still wins in the app.

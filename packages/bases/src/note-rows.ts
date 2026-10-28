@@ -8,8 +8,8 @@
  *  links.rs), and this is where they meet the one parser there is. Its own entry,
  *  `@orden/bases/rows`. See docs/tasks.md 5.3. */
 
-import { findLinks } from '@nib/markdown/links'
-import { tagsIn } from '@nib/markdown/task-line'
+import { findLinks } from '@orden/markdown/links'
+import { tagsIn } from '@orden/markdown/task-line'
 import { noteValues } from './note-values'
 import { type ScannedTask, scanRows, type Stamp } from './scan'
 import { fileInfo, taskRowsOf } from './task-rows'

@@ -9,7 +9,7 @@
  *  Pure. What a wikilink resolves to and where the pictures went are the
  *  caller's answers; this only writes them down. */
 
-import { findLinks, type FoundLink, lines, shownText } from '@nib/markdown/links'
+import { findLinks, type FoundLink, lines, shownText } from '@orden/markdown/links'
 import { encodeTarget } from '../link-rewrite'
 
 /** A stretch of the source, and what goes in its place. */

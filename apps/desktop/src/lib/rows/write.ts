@@ -17,8 +17,8 @@
 
 import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@orden/bases'
 import { listAsWritten, noteValues, taskHash, tick, todayOf } from '@orden/bases'
-import { appliedEdits, oneEdit, type TextEdit } from '@nib/markdown/edits'
-import { type Property, keyCalled, readProperties } from '@nib/markdown/properties'
+import { appliedEdits, oneEdit, type TextEdit } from '@orden/markdown/edits'
+import { type Property, keyCalled, readProperties } from '@orden/markdown/properties'
 import {
   type ListItem,
   listItems,
@@ -26,9 +26,9 @@ import {
   withItem,
   writeList,
   writeProperty,
-} from '@nib/markdown/property-edits'
-import { writeTask } from '@nib/markdown/task-edits'
-import { readTask } from '@nib/markdown/task-line'
+} from '@orden/markdown/property-edits'
+import { writeTask } from '@orden/markdown/task-edits'
+import { readTask } from '@orden/markdown/task-line'
 import { changeOf } from '../search/replace'
 import { type HoldsNotes, noteText, replaceInNotes } from '../workspace/note-text'
 

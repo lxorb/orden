@@ -9,7 +9,7 @@
 
 import { addDays, parseRule, type Row, ruleText, type TaskChange, weekday } from '@orden/bases'
 import { parseQuickAdd } from '@orden/bases/language'
-import { dayOf, type DueReads, startField, startOf } from '@nib/markdown/task-dates'
+import { dayOf, type DueReads, startField, startOf } from '@orden/markdown/task-dates'
 
 /** What a pick says about a task's day: null takes the field away, absent leaves it.
  *  `due` is the day picked, which is the day the task starts (#371). */

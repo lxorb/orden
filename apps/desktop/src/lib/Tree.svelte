@@ -27,7 +27,7 @@
 
   import { tick, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { door } from '@nib/markdown/door'
+  import { door } from '@orden/markdown/door'
   // The kind of file a row is, under a name of its own: `FileMark` here is the
   // component that draws one.
   import { fileMark, type FileMark as Mark } from './file-mark'

@@ -20,7 +20,7 @@
  *  address into the app it came from is a fact about where the note used to live,
  *  and rewriting it to nothing would lose that. */
 
-import { foldName } from '@nib/markdown/links'
+import { foldName } from '@orden/markdown/links'
 
 import { linkTo } from '../composer'
 import { folderOf, isMarkdownPath, relativePath } from '../space-paths'

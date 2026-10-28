@@ -38,7 +38,7 @@ import {
   type StateCommand,
 } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import { enrolled, openViews } from './open-views'
 
 /** What the bar is asking of the document. The four the library's query has,
@@ -126,7 +126,7 @@ let loaded: typeof import('./finding') | null = null
 
 /** Fetches the engine, and puts it into whatever is open when it arrives. Idempotent,
  *  and the promise is kept: a note of twenty words is one fetch. One that failed is
- *  not kept; see door.ts in @nib/markdown.
+ *  not kept; see door.ts in @orden/markdown.
  *
  *  Exported because two callers wait on it. The launch asks for it at its last turn, so
  *  that the marks under a selected word are there before any hand could have selected

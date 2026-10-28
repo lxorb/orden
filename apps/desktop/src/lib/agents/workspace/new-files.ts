@@ -4,7 +4,7 @@
  *  anything (docs/agent-native.md 5.3). Which kind is the path's ending, or `kind` where
  *  the path has none; a note is notes.ts's. */
 
-import { isCanvasTarget, isPagesTarget, isWebTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import type { AgentAnswer } from '../../automation/caller'
 import { shownName } from '../../note-name'
 import { onDisk as exists } from '../../on-disk'
@@ -48,7 +48,7 @@ async function firstWords(call: Call, kind: Exclude<FileKind, 'note'>, name: str
     }
 
     case 'pages': {
-      const { blankPages } = await import('@nib/markdown/pages')
+      const { blankPages } = await import('@orden/markdown/pages')
       const { modes } = await import('../../modes.svelte')
       return blankPages(modes.pagesPaper)
     }

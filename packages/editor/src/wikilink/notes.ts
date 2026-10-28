@@ -1,7 +1,7 @@
 import { type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
-import type { TextEdit } from '@nib/markdown/edits'
-import type { TaskChange } from '@nib/markdown/task-edits'
-import type { TaskFields } from '@nib/markdown/task-line'
+import type { TextEdit } from '@orden/markdown/edits'
+import type { TaskChange } from '@orden/markdown/task-edits'
+import type { TaskFields } from '@orden/markdown/task-line'
 import type { EditorView } from '@codemirror/view'
 import {
   foldName,
@@ -9,7 +9,7 @@ import {
   type LinkKind,
   pageFragment,
   type Wikilink,
-} from '@nib/markdown/links'
+} from '@orden/markdown/links'
 import type { LinkPress } from '../links'
 
 /** What the editor knows about the space around the open note, and what it does
@@ -94,7 +94,7 @@ export interface NoteIndex {
    *  yet. */
   path: string | null
   /** What a task's `📅` means in this space: a deadline in an Obsidian vault, else -
-   *  absent - a start date (`@nib/markdown/task-dates`). */
+   *  absent - a start date (`@orden/markdown/task-dates`). */
   dueReads?: 'deadline'
   /** Every tag of the space, most used first, for the `#` popup. Empty where the
    *  editor is standing on its own, which offers nothing rather than nothing
@@ -192,7 +192,7 @@ export interface TaskHelp {
    *  offsets into `note`, in order, one undo. */
   tick(note: string, line: number): Promise<readonly TextEdit[]>
   /** A chip pressed: its field's choices over `at`, the pick handed to `change`. `due`
-   *  is what a `📅` means in the note's space (`@nib/markdown/task-dates`). */
+   *  is what a `📅` means in the note's space (`@orden/markdown/task-dates`). */
   pick(
     field: string,
     fields: TaskFields,

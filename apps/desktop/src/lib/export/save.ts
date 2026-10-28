@@ -17,7 +17,7 @@ import { keep, storedText } from '../stored'
 import { folderOf, nameOf } from '../space-paths'
 import { invoke, isDesktop, isMobile, isNative, joinPath } from '../tauri'
 import { writeBytes, writeFile as writeText } from '../workspace/write-file'
-import { numbered } from '@nib/markdown/paths'
+import { numbered } from '@orden/markdown/paths'
 import { fileNameFor, freeName, stemOf } from './naming'
 
 /** What a converter produced. Text where the format is text, so a note that is
@@ -141,7 +141,7 @@ async function freeBeside(folder: string, path: string, claimed: Set<string>): P
  *  written over. The rest are named after it - pages two and three of `Trip.png`
  *  saved as `Holiday.png` are `Holiday 2.png` and `Holiday 3.png` - and each one
  *  whose name is taken steps aside, by the rule every copy in the app is numbered
- *  by (`numbered` in @nib/markdown/paths). They are written before the first file, so it
+ *  by (`numbered` in @orden/markdown/paths). They are written before the first file, so it
  *  can be told where they landed. One after another rather than all at once, since
  *  they share a folder and two writes racing to create it is a race for nothing. */
 async function writeBeside(

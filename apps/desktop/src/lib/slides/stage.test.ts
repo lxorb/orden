@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { deckOf } from '@nib/markdown/slides'
+import { deckOf } from '@orden/markdown/slides'
 import {
   axesOf,
   back,

@@ -11,7 +11,7 @@
  *  about what a page looks like. Nothing here reads the database or the bucket:
  *  it is given the list and the page, and it writes markup. */
 
-import { tableOfContents, type Heading } from '@nib/markdown'
+import { tableOfContents, type Heading } from '@orden/markdown'
 import { escape } from './head'
 import { searchBox } from './find'
 import { backlinks, beforeAndAfter, type Listed, navigation } from './nav'

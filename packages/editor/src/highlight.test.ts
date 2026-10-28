@@ -5,7 +5,7 @@ import {
   type StateCommand,
   type Transaction,
 } from '@codemirror/state'
-import { highlightTone } from '@nib/markdown/highlights'
+import { highlightTone } from '@orden/markdown/highlights'
 import { describe, expect, test } from 'vitest'
 import { highlightSelection, setHighlightColour, toggleHighlight } from './highlight'
 

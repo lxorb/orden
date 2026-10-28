@@ -13,7 +13,7 @@ import type { Palette } from './paint'
 
 /** What a pen with no colour of its own writes in. A name rather than a value,
  *  because the value is whatever the theme says it is. The format allows it, so
- *  it is said there and read from there; see canvas.ts in @nib/markdown. */
+ *  it is said there and read from there; see canvas.ts in @orden/markdown. */
 export { DEFAULT_INK } from './format'
 
 /** The colour as CSS, or null for a card with no colour of its own, which wears

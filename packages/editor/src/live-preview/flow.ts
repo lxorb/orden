@@ -10,7 +10,7 @@
  *  The live preview and an export both draw through here, so the two cannot
  *  disagree about what a fence may do. */
 
-import { safeHref } from '@nib/markdown/html'
+import { safeHref } from '@orden/markdown/html'
 
 /** The source with every `:$hook` taken out of it.
  *

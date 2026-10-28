@@ -18,7 +18,7 @@ import {
   isPagesTarget,
   isPdfTarget,
   isWebTarget,
-} from '@nib/markdown/links'
+} from '@orden/markdown/links'
 import type { IconNode } from 'lucide'
 // One file per shape rather than seven names off the library's index, because the
 // index re-exports every icon there is: a static import from it puts the whole set

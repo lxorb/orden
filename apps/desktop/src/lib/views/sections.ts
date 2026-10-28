@@ -9,7 +9,7 @@
  *
  *  Pure: a note's words in, its words after out, or null where the section is not there. */
 
-import { lines as rowsOf } from '@nib/markdown/links'
+import { lines as rowsOf } from '@orden/markdown/links'
 
 interface Section {
   /** The heading's line. */
@@ -24,7 +24,7 @@ const HEADING = /^(#{1,6})[ \t]+(.*?)[ \t]*#*[ \t]*$/
 const FENCE = /^[ \t]*(`{3,}|~{3,})/
 
 /** Every heading of a note with what it holds, in order. Code and the front matter
- *  hold none: which lines are code is `lines` in @nib/markdown/links, the reading the
+ *  hold none: which lines are code is `lines` in @orden/markdown/links, the reading the
  *  page agrees with, so a block closes on its own mark only. */
 function sectionsOf(lines: readonly string[]): Section[] {
   const out: Section[] = []

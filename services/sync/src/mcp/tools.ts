@@ -7,7 +7,7 @@
  *  it reaches a query. */
 
 import { untrusted } from '@orden/chats/agent'
-import { findLinks } from '@nib/markdown'
+import { findLinks } from '@orden/markdown'
 import { byteLength } from '../crypto'
 import {
   addNote,

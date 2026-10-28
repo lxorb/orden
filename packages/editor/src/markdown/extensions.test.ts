@@ -119,7 +119,7 @@ describe('block math', () => {
    *  It is not a convention. CommonMark lets fenced code and an ATX heading
    *  interrupt a paragraph, @lezer/markdown gives both of them an `endLeaf` for
    *  it, and the renderer this package has to agree with already had the same
-   *  rule - see `blockMath` in @nib/markdown's blocks.ts, whose `start` hook is
+   *  rule - see `blockMath` in @orden/markdown's blocks.ts, whose `start` hook is
    *  marked's way of saying the same thing. So the note read one way while it was
    *  written and another way once it was published, which is worse than either. */
   test('ends the paragraph above it, in both shapes', () => {

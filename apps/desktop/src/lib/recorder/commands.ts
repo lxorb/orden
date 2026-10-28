@@ -17,7 +17,7 @@
  *  to draw itself: whether the rows are worth offering, and what they are called. */
 
 import type { EditorView } from '@orden/editor'
-import { embedKind, parseWikilink } from '@nib/markdown/links'
+import { embedKind, parseWikilink } from '@orden/markdown/links'
 import { t } from '../i18n.svelte'
 import { canWriteAt } from '../sharing.svelte'
 import { isMarkdownPath } from '../space-paths'

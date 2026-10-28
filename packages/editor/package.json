@@ -30,7 +30,7 @@
     "@lezer/highlight": "^1.2.3",
     "@lezer/javascript": "^1.5.4",
     "@lezer/markdown": "^1.7.2",
-    "@nib/markdown": "workspace:*",
+    "@orden/markdown": "workspace:*",
     "@orden/rooms": "workspace:*",
     "@replit/codemirror-lang-nix": "^6.0.1",
     "@replit/codemirror-lang-solidity": "^6.0.2",

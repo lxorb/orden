@@ -8,7 +8,7 @@
  *  but for `saveProjectCsv`, which reads the note and hands the file over. */
 
 import { csvText, type Row } from '@orden/bases'
-import { deadlineOf, startOf } from '@nib/markdown/task-dates'
+import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { deliver } from '../export/save'
 import { t } from '../i18n.svelte'
 import { rows as store } from '../rows/rows.svelte'

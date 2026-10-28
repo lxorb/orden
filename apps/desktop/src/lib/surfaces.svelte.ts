@@ -30,7 +30,7 @@
  *    never from the markup, which would be a write during a render. */
 
 import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import { warmCalls } from './api'
 import { breathe } from './breathe'
 import { startup } from './startup.svelte'

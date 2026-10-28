@@ -19,7 +19,7 @@
  *  front of it, is the open space's, which is the only space a caller holding one can
  *  mean. Every mark in the app asks here, so each of them follows. */
 
-import { isChatTarget, isPagesTarget } from '@nib/markdown/links'
+import { isChatTarget, isPagesTarget } from '@orden/markdown/links'
 import { isFolderNote } from './folder-notes'
 import { links } from './link-index.svelte'
 import { elsewhere } from './marks-elsewhere.svelte'

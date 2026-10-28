@@ -12,7 +12,7 @@
 
 import type { ChangeSpec, Text } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import type { TextEdit } from '@nib/markdown/edits'
+import type { TextEdit } from '@orden/markdown/edits'
 import type { TaskHelp } from './wikilink/notes'
 
 /** Ticks the task on each of these lines (numbered from one) of the note as it was

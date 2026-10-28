@@ -55,8 +55,8 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from '@codemirror/view'
-import { calloutOf } from '@nib/markdown/callouts'
-import { CHEVRON } from '@nib/markdown/icons'
+import { calloutOf } from '@orden/markdown/callouts'
+import { CHEVRON } from '@orden/markdown/icons'
 import {
   foldMovement,
   type FoldRange,
@@ -452,7 +452,7 @@ export function foldsChanged(update: ViewUpdate): boolean {
 
 /** The fold mark, turned by the stylesheet when the fold is open. The same
  *  drawing a foldable callout carries beside its title in the reading view, on
- *  paper and on a published page; see @nib/markdown/icons. */
+ *  paper and on a published page; see @orden/markdown/icons. */
 function chevron(): SVGElement {
   return iconElement(CHEVRON)
 }

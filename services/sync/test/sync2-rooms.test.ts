@@ -5,7 +5,7 @@
  *  held, and taking whole texts in as operations under its own id. */
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { type Canvas, type CanvasNode, readCanvas, writeCanvas } from '@nib/markdown/canvas'
+import { type Canvas, type CanvasNode, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import {
   hash32,
   type PullResponse,

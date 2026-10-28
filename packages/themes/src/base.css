@@ -2264,7 +2264,7 @@ select:focus-visible,
 
 /* A code block that says what it is: the words after the language in its own
    fence line - a file name, most of the time - written over the block the way
-   the editor writes them on its top row. See code.ts in @nib/markdown. */
+   the editor writes them on its top row. See code.ts in @orden/markdown. */
 #write figure.code {
   margin: 1.5em 0;
 }

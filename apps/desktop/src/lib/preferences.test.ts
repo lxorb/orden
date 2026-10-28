@@ -1,5 +1,5 @@
 import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
-import { inLanguageOrder } from '@nib/markdown/language-order'
+import { inLanguageOrder } from '@orden/markdown/language-order'
 import type { Pane } from './preferences'
 
 /** The declarations the settings panes are drawn from.

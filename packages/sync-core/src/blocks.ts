@@ -6,11 +6,11 @@
  *  ends: a paragraph, a list item with its continuation lines, a heading, a fenced
  *  block from fence to fence, one row of a table, a quote, and the front matter. A
  *  walk over lines answers that, reading fences and front matter the way
- *  `@nib/markdown` reads them, so the classifier and the renderer agree about where
+ *  `@orden/markdown` reads them, so the classifier and the renderer agree about where
  *  code starts and stops. */
 
-import { closesFence, fenceMark } from '@nib/markdown/fences'
-import { frontMatterBlock } from '@nib/markdown/front-matter'
+import { closesFence, fenceMark } from '@orden/markdown/fences'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 
 type BlockKind = 'front-matter' | 'heading' | 'paragraph' | 'item' | 'fence' | 'row' | 'quote'
 

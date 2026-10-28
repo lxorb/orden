@@ -30,7 +30,7 @@ import {
 import type { Kit } from './kit'
 import { offersPlaces, placeEntries } from './project-actions'
 import type { RowKey } from './row-keys'
-import { deadlineField, deadlineOf, startOf } from '@nib/markdown/task-dates'
+import { deadlineField, deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { changeFor, loadByDay } from './schedule/schedule'
 import { type Box, showScheduler } from './schedule/scheduling.svelte'
 import { labelsOf } from './task-meta'

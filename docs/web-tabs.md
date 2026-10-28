@@ -1116,7 +1116,7 @@ the frame is up, typing another address re-points it.
 That is the gesture the app already has for a page embedded in a note, for the same
 two reasons - the card cannot know whether the frame will work, and nothing should
 be loaded from a site before the reader asks for it. See `web-embed.ts` in
-`@nib/markdown` and `web-frame.ts` in `@orden/editor`.
+`@orden/markdown` and `web-frame.ts` in `@orden/editor`.
 
 **A HEAD request through the Worker would get rid of the press**, and is the only
 thing that would: ask `services/sync` to fetch the headers and report. It was not
@@ -1608,9 +1608,9 @@ the one way in from a web tab: the scissors that did the same from the bar went 
 every platform when Emil asked for them gone (#405, *"und entferne bitte diese komische
 schere um browser tabs als note zu speichern"*), and a press on the dots is one more
 than a press on the bar for something nobody does every minute. It goes through
-three things: the article extractor (`@nib/markdown/article`,
+three things: the article extractor (`@orden/markdown/article`,
 Mozilla's Readability, which is Firefox's reader mode), the converter
-(`@nib/markdown/from-html`) and the note's shape (`@nib/markdown/clip-note`:
+(`@orden/markdown/from-html`) and the note's shape (`@orden/markdown/clip-note`:
 `source:`, `title:`, `clipped:` and `tags:`, then the title as a heading). A page
 clipped from a tab is the note the extractor makes of the same page read live, and
 `lib/web-tab/reader.test.ts` holds the two to it over a news article, a page of
@@ -1632,7 +1632,7 @@ runs `src-tauri/src/web_tabs/reader.js` in the page - in nib's own world on
 two `WebKit` engines - and it answers a snapshot of the document as the reader sees
 it: what a script wrote into it included, no scripts, styles or field values, the
 page's base resolved, and a doctype in front, which is how the window tells a
-snapshot from a fragment (`@nib/markdown/snapshot`). What somebody has selected
+snapshot from a fragment (`@orden/markdown/snapshot`). What somebody has selected
 wins: the snapshot's body is then the selection, and the root says so. The window
 parses the snapshot with `DOMParser`, which runs nothing and fetches nothing, and
 hands it to the extractor. An agent's `capture_to_note` and `browser_read` as an

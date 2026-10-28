@@ -13,9 +13,9 @@
  *  order and never overlapping, so the caller applies them as one transaction and
  *  one undo takes them all back. */
 
-import type { TextEdit } from '@nib/markdown/edits'
-import { changedTask, type TaskChange, writeTask } from '@nib/markdown/task-edits'
-import { parseTask, readTask, type TaskFields } from '@nib/markdown/task-line'
+import type { TextEdit } from '@orden/markdown/edits'
+import { changedTask, type TaskChange, writeTask } from '@orden/markdown/task-edits'
+import { parseTask, readTask, type TaskFields } from '@orden/markdown/task-line'
 import { addDays, dayNumber, todayOf } from './dates'
 import { nextDate, parseRule } from './recurrence'
 

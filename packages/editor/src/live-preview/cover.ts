@@ -16,8 +16,8 @@
  *  picture nobody can drag is a picture nobody can place. */
 
 import type { EditorView } from '@codemirror/view'
-import { COVER_MIDDLE, COVER_POSITION_KEY, type Cover, coverOf } from '@nib/markdown/cover'
-import { frontMatterEdit } from '@nib/markdown/front-matter'
+import { COVER_MIDDLE, COVER_POSITION_KEY, type Cover, coverOf } from '@orden/markdown/cover'
+import { frontMatterEdit } from '@orden/markdown/front-matter'
 import { imageResolver } from '../images'
 import { label } from '../labels'
 import { applied, clearOfBlock } from './front-matter'

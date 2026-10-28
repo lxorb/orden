@@ -22,7 +22,7 @@ const LINK = 3
 const SHADE = 4
 const WASH = 5
 
-/** The five coloured highlights, in the order highlights.ts in @nib/markdown
+/** The five coloured highlights, in the order highlights.ts in @orden/markdown
  *  names them, as the indices they take in the table above.
  *
  *  A tone rather than a name: `==🔴 careful==` is drawn in `--canvas-1` on every

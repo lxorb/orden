@@ -5,8 +5,8 @@
 
 import type { TaskChange, TaskRow } from '@orden/bases'
 import type { Entry, Prefill } from '../quick-add/entry'
-import { editedWords, shownWords, unescapedAt } from '@nib/markdown/escapes'
-import { deadlineField, deadlineOf, startOf } from '@nib/markdown/task-dates'
+import { editedWords, shownWords, unescapedAt } from '@orden/markdown/escapes'
+import { deadlineField, deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { changeFor } from './schedule/schedule'
 
 /** The field's prefill for a task as it stands, and its description's words. */

@@ -6,7 +6,7 @@
     type StateCommand,
     type Transaction,
   } from '@orden/editor'
-  import { HIGHLIGHT_COLOURS, type HighlightColour } from '@nib/markdown/highlights'
+  import { HIGHLIGHT_COLOURS, type HighlightColour } from '@orden/markdown/highlights'
   import type { IconNode } from 'lucide'
   import { keepFocus } from './focus'
   import { tick } from 'svelte'

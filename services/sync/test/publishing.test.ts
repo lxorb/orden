@@ -13,8 +13,8 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { codeBlocks } from '@nib/markdown'
-import { diagramKey } from '@nib/markdown/diagrams'
+import { codeBlocks } from '@orden/markdown'
+import { diagramKey } from '@orden/markdown/diagrams'
 import { blogMath, blogStyle } from '../../../scripts/blog-css'
 import { COLOURED } from '../src/blog/code'
 import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from '../src/blog/math'
@@ -34,7 +34,7 @@ const RED = '\u{1F534}'
 let env: TestEnv
 let token: string
 /** The space the fixture is published from. Held out here because the diagram a
- *  page shows is named after it; see @nib/markdown/diagrams. */
+ *  page shows is named after it; see @orden/markdown/diagrams. */
 let space: string
 
 beforeEach(async () => {
@@ -322,7 +322,7 @@ describe('a published note', () => {
     expect(answer.text).toContain('data-callout="recipe"')
     // `[!caution]` wears `warning`, the way Obsidian folds it in, and still says the
     // word it was written with. The `-` after it is what makes a callout a `<details>`
-    // that opens shut, here and in the app both; see callouts.ts in @nib/markdown.
+    // that opens shut, here and in the app both; see callouts.ts in @orden/markdown.
     expect(answer.text).toContain('<details class="callout callout-warning"')
     expect(answer.text).toContain('data-callout="caution"')
     expect(answer.text).toContain('data-callout="important"')
@@ -358,7 +358,7 @@ describe('a published note', () => {
   /** A coloured highlight on a published page. The emoji is the colour, not a word
    *  of the note, so it never reaches a stranger's screen; the class is the one
    *  the reading view and an export wear, and the sheet the Worker serves dresses
-   *  it. See highlights.ts in @nib/markdown. */
+   *  it. See highlights.ts in @orden/markdown. */
   test('colours a highlight the way the app does, and hides the emoji', async () => {
     const answer = await published()
 

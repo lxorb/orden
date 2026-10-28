@@ -1,11 +1,11 @@
 /** An icon as elements.
  *
- *  The parts and the dressing both come from @nib/markdown/icons, so what the
+ *  The parts and the dressing both come from @orden/markdown/icons, so what the
  *  editor builds is the same drawing the renderer writes as markup rather than a
  *  second one that looks like it. Here, once, because three widgets draw one: the
  *  fold chevron, a callout's mark, and the card an embedded file becomes. */
 
-import { ICON_ATTRIBUTES, type IconParts } from '@nib/markdown/icons'
+import { ICON_ATTRIBUTES, type IconParts } from '@orden/markdown/icons'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 

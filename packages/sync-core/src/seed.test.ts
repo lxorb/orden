@@ -1,4 +1,4 @@
-import { emptyCanvas, readCanvas, writeCanvas, type Canvas } from '@nib/markdown/canvas'
+import { emptyCanvas, readCanvas, writeCanvas, type Canvas } from '@orden/markdown/canvas'
 import { readPlane } from '@orden/rooms/plane'
 import { TEXT } from '@orden/rooms'
 import fc from 'fast-check'

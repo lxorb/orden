@@ -19,9 +19,9 @@
  *  reads it for every note (web/commands.ts), the rows for a note just saved
  *  (rows/store.ts), and the account connector for every note it answers about. */
 
-import { CodeBlocks, WORDS } from '@nib/markdown/fences'
-import { frontMatterBlock } from '@nib/markdown/front-matter'
-import { taskAt } from '@nib/markdown/tasks'
+import { CodeBlocks, WORDS } from '@orden/markdown/fences'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { taskAt } from '@orden/markdown/tasks'
 
 /** One task line, as written. */
 export interface ScannedTask {

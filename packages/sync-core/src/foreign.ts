@@ -13,7 +13,7 @@
  *  renamed are left out on purpose: those are also names people give their own
  *  notes, and reading one wrongly would stop a real note from syncing. nib's own
  *  `(from another device …)` copy is not here either; it is a note like any other
- *  (`conflictPath` in @nib/markdown/paths).
+ *  (`conflictPath` in @orden/markdown/paths).
  *
  *  Pure, so both engines and the file list read one rule. */
 

@@ -16,11 +16,11 @@
  *  is what keeps the two apart. */
 
 import { DIAGRAM_LANGUAGES, RENDERED_LANGUAGES } from '@orden/editor'
-import { codeBlocks, type EmbeddedNote, findLinks, type Wikilink } from '@nib/markdown'
-import { loadFor } from '@nib/markdown/engines'
-import { highlightedFence } from '@nib/markdown/highlight'
-import { escapeAll } from '@nib/markdown/html'
-import { embedKind } from '@nib/markdown/links'
+import { codeBlocks, type EmbeddedNote, findLinks, type Wikilink } from '@orden/markdown'
+import { loadFor } from '@orden/markdown/engines'
+import { highlightedFence } from '@orden/markdown/highlight'
+import { escapeAll } from '@orden/markdown/html'
+import { embedKind } from '@orden/markdown/links'
 import { drawDiagram } from './diagrams'
 import { loadParsers, type Parser } from './highlight'
 import type { Scheme } from './theme.svelte'
@@ -69,7 +69,7 @@ export type Drawer = (code: string, language: string, scheme: Scheme) => Promise
  *  note turns out to want either. They are not fences, but they are the same
  *  bargain - heavy, loaded on demand, and needed by a render that cannot wait -
  *  and every surface that renders a whole note already awaits this one call. See
- *  @nib/markdown/engines. */
+ *  @orden/markdown/engines. */
 /** The fences the space answers: a search, and the Tasks plugin's query block. */
 const ANSWERED = new Set(['query', 'tasks'])
 

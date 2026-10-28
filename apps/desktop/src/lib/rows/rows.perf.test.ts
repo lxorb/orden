@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import * as taskLine from '@nib/markdown/task-line'
+import * as taskLine from '@orden/markdown/task-line'
 import { scanNote, type ScannedNote } from '../scan-note'
 import { scanRows } from '@orden/bases/scan'
 import { type Host, RowsStore } from './store'
@@ -17,7 +17,7 @@ import { type Host, RowsStore } from './store'
  *  `--expose-gc`, of which the engine's task fields are 6.2, the notes' `file.*` 1.8,
  *  their front matter 1.1 and the rows themselves 1.3. */
 
-vi.mock('@nib/markdown/task-line', { spy: true })
+vi.mock('@orden/markdown/task-line', { spy: true })
 
 /** Whether the clock may be asserted on at all: only where somebody is measuring and
  *  set `NIB_PERF=1`, for the reason search/fuzzy.perf.test.ts gives. The counts are the

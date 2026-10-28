@@ -6,19 +6,19 @@ import {
   renderMarkdown,
   type Wikilink,
   withoutComments,
-} from '@nib/markdown'
-import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
-import { diagramAlt, diagramFigure, diagramKey, isDiagram } from '@nib/markdown/diagrams'
+} from '@orden/markdown'
+import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@orden/markdown/deck'
+import { diagramAlt, diagramFigure, diagramKey, isDiagram } from '@orden/markdown/diagrams'
 // The formula engine and the emoji table, imported outright rather than loaded when a
 // note turns out to want one. The app does the opposite, because it has a first paint
 // to make and a session to spread the loading over; an isolate answers one request and
 import { objectIn } from './body'
 // is gone, so waiting for either would be waiting per request. See
-// @nib/markdown/engines.
-import '@nib/markdown/eager'
-import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
-import { isDeck } from '@nib/markdown/slide-breaks'
-import { deckOf } from '@nib/markdown/slides'
+// @orden/markdown/engines.
+import '@orden/markdown/eager'
+import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@orden/markdown/links'
+import { isDeck } from '@orden/markdown/slide-breaks'
+import { deckOf } from '@orden/markdown/slides'
 import { blogFence } from './blog/code'
 import { feed, type FeedPage, newestFirst, robots, rss, sitemap } from './blog/feed'
 import { answersFrom, formHtml, formOf } from './blog/form'
@@ -589,7 +589,7 @@ function counterUrl(tag: string): string {
  *  The same two sheets the app presents from - the prose of a note, and the stage
  *  it is read on - plus the two things a page with no app around it adds: how big
  *  the stage is, and that a slide which is not the one being read is not drawn.
- *  Both come from `@nib/markdown/deck`, along with the markup and the handful of
+ *  Both come from `@orden/markdown/deck`, along with the markup and the handful of
  *  lines that turn the pages, so the app, an exported deck and this one are one
  *  deck rather than three that look alike. */
 function deckPage(head: Head, body: string): Response {
@@ -660,7 +660,7 @@ function publishedDeck(source: string, options: Parameters<typeof renderMarkdown
  *  web is the whole thing the setting is there to prevent. One key out of a blob
  *  this module has no other business in, so it is read here rather than through the
  *  settings module - and read per request, never into a global, because one isolate
- *  serves many spaces. See `setHardBreaks` in @nib/markdown and the Markdown
+ *  serves many spaces. See `setHardBreaks` in @orden/markdown and the Markdown
  *  settings in the app.
  *
  *  Off for an unreadable blob, a row that is not there, or an account that has
@@ -696,7 +696,7 @@ function titleOf(page: Page): string {
  *  said its ink's coordinates, its cards' words and the address of every file it
  *  embedded, to anybody who guessed the slug - the thing the sentence above exists
  *  to prevent, missing only because the reading asked about one extension of the
- *  two. See `isPagesTarget` in @nib/markdown/links. */
+ *  two. See `isPagesTarget` in @orden/markdown/links. */
 async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
   const listing = await env.DB.prepare(
     `select * from notes where space_id = ? and deleted = 0 and kind != 'file'
@@ -1314,7 +1314,7 @@ async function served(
       breaks,
       // The note's cover, drawn as the banner the app draws. The same key this page
       // has always read as its `og:image`, and the picture beside the note is
-      // served the way every other picture in it is; see cover.ts in @nib/markdown.
+      // served the way every other picture in it is; see cover.ts in @orden/markdown.
       cover: true,
       locale: PAGE_LANGUAGE,
       // One note is the whole site, so `linkResolver` has no other note to point

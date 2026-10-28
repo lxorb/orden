@@ -1,5 +1,5 @@
 import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 
 /** Every language a fence may name - and nothing of any of them until a fence does.
  *
@@ -31,7 +31,7 @@ let here: readonly LanguageDescription[] | null = null
 /** The whole list, fetched once.
  *
  *  Kept, so a note of twenty fences is one list, unless it failed; see door.ts in
- *  @nib/markdown.
+ *  @orden/markdown.
  *
  *  Exported for the two callers that want all of it rather than one language: the
  *  export, which colours a document with whatever coloured it on screen, and the

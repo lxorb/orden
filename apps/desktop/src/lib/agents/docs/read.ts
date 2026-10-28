@@ -10,14 +10,14 @@
  *  this paragraph" is about the paragraph they mean. See docs/agent-native.md 8.1.
  *
  *  The outline, the tasks and the blocks are read by the grammar the link index and
- *  the editor read them by (@nib/markdown), properties by the reader the rows above a
+ *  the editor read them by (@orden/markdown), properties by the reader the rows above a
  *  note use, links and backlinks off the index, the same answers the automation
  *  verbs give (`automation/answers.ts`). */
 
 import type { EditorView } from '@orden/editor'
-import { blocksOf, lines } from '@nib/markdown/links'
-import { type Property, readProperties } from '@nib/markdown/properties'
-import { taskAt } from '@nib/markdown/tasks'
+import { blocksOf, lines } from '@orden/markdown/links'
+import { type Property, readProperties } from '@orden/markdown/properties'
+import { taskAt } from '@orden/markdown/tasks'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import { type Anchor, headingPath, headingsIn, taskWords } from './anchors'
 import { type Desk, located, type NoteAt, openNote, wordsOf } from './desk'

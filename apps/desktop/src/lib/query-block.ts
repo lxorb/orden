@@ -18,7 +18,7 @@
  *  Nothing here writes and nothing here is reactive: it is asked, it answers, and
  *  the surface that asked draws the answer. */
 
-import { escapeAll } from '@nib/markdown/html'
+import { escapeAll } from '@orden/markdown/html'
 import { shownName } from './note-name'
 import type { Hit } from './search/match'
 import { taskOf } from './search/task'

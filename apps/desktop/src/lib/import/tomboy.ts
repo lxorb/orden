@@ -13,8 +13,8 @@
  *  A notebook is a tag of the form `system:notebook:Work`, which becomes a folder,
  *  because that is what a notebook is. Every other tag is a tag. */
 
-import { plainWords } from '@nib/markdown/escapes'
-import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
+import { plainWords } from '@orden/markdown/escapes'
+import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
 
 import { key } from '../i18n.svelte'
 

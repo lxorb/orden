@@ -8,7 +8,7 @@
  *
  *  So the Worker carries the grammars themselves. They are the very parsers the
  *  editor uses - `@codemirror/lang-javascript` is a wrapper around
- *  `@lezer/javascript` - and the colouring is @nib/markdown/highlight, the same
+ *  `@lezer/javascript` - and the colouring is @orden/markdown/highlight, the same
  *  module the export calls, writing the same `hl-` classes that themes/document.css
  *  colours. A fence on a published page is therefore the fence in the reading
  *  view, character for character.
@@ -39,7 +39,7 @@ import { parser as rust } from '@lezer/rust'
 import { parser as sass } from '@lezer/sass'
 import { parser as xml } from '@lezer/xml'
 import { parser as yaml } from '@lezer/yaml'
-import { highlightedFence } from '@nib/markdown/highlight'
+import { highlightedFence } from '@orden/markdown/highlight'
 
 /** TypeScript and JSX are the JavaScript grammar in another dialect, which is
  *  exactly what `@codemirror/lang-javascript` asks it for. */

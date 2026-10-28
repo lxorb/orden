@@ -7,7 +7,7 @@
 //! own - `[-]` for cancelled, `[/]` for started - all of which mean a task nobody
 //! is waiting on any more.
 //!
-//! The twin of this is tasks.ts in `@nib/markdown`, and the tests at the bottom
+//! The twin of this is tasks.ts in `@orden/markdown`, and the tests at the bottom
 //! are the twin of tasks.test.ts: the same lines, the same answers. Read by hand
 //! rather than with a pattern, because the `task:` operator asks it of every line
 //! of every note in a space.

@@ -24,7 +24,7 @@
  *
  *  Pure except for `retrieve`, which is the one function here that searches. */
 
-import { frontMatterBlock } from '@nib/markdown/front-matter'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import type { Hit } from '../search/match'
 import type { Query } from '../search/query'
 import { searchSpace } from '../search/space'

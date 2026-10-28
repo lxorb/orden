@@ -350,7 +350,7 @@ describe('purging', () => {
   })
 })
 
-/** A restored note's path is numbered by @nib/markdown/paths, which is where
+/** A restored note's path is numbered by @orden/markdown/paths, which is where
  *  that rule is now tested; what is left here is the space name, whose numbering
  *  has no extension to step around. */
 describe('the numbering', () => {

@@ -13,7 +13,7 @@ import { amount } from '../i18n.svelte'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
 import { plain } from './inline'
 import { dayWords } from '@orden/editor/task-days'
-import { deadlineOf, startOf } from '@nib/markdown/task-dates'
+import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 
 export interface Chip {
   kind: 'date' | 'time' | 'repeat' | 'duration' | 'deadline' | 'remind' | 'assignee'

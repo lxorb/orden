@@ -9,7 +9,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import type { TextEdit } from '@nib/markdown/edits'
+import type { TextEdit } from '@orden/markdown/edits'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
 import { nibMarkdownExtensions } from '../markdown/extensions'

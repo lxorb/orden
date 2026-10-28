@@ -35,7 +35,7 @@
  *  whose name the import could not keep as its file name, or that named itself with
  *  `title::`, answers to that name as an alias, so the links to it still find it. */
 
-import { foldName } from '@nib/markdown/links'
+import { foldName } from '@orden/markdown/links'
 
 import { key } from '../i18n.svelte'
 import { encodeTarget } from '../link-rewrite'

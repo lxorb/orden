@@ -33,7 +33,7 @@
  *  Nothing here reads a clock or a disk. The state is plain data the Worker loads for
  *  a batch and writes back, and the only numbers that move are the space's cursor. */
 
-import { freePath } from '@nib/markdown/paths'
+import { freePath } from '@orden/markdown/paths'
 import type { EntryKind, Op, OpResult } from './wire'
 
 export interface TreeEntry {

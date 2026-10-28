@@ -17,7 +17,7 @@
 
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { blankPages } from '@nib/markdown/pages'
+import { blankPages } from '@orden/markdown/pages'
 import CanvasBar from '../../src/lib/CanvasBar.svelte'
 import { blankCanvas, type CanvasNode } from '../../src/lib/canvas/format'
 import { CanvasStore } from '../../src/lib/canvas/store.svelte'

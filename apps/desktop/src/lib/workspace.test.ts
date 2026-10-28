@@ -3793,7 +3793,7 @@ describe('a click in the file list landing inside a gesture that re-reads the no
 
 /** The number goes before the extension, and the extension is the last dot of the
  *  file's own name. Not this store's rule any more but `freePath`'s, the one every
- *  other part of the app steps a taken name aside with; see @nib/markdown/paths. */
+ *  other part of the app steps a taken name aside with; see @orden/markdown/paths. */
 describe('a new file stepping aside from a name the folder already has', () => {
   const row = (path: string, children?: Entry[]): Entry => ({
     name: path.split('/').pop()!,

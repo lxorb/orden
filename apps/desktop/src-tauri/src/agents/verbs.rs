@@ -1402,7 +1402,7 @@ pub mod window {
     pub const STORE_FOR: &str = "agent.store_for";
 
     /// A page's HTML as markdown, through the clipper's own converter
-    /// (`@nib/markdown/from-html`). Takes `Convert`, answers a string.
+    /// (`@orden/markdown/from-html`). Takes `Convert`, answers a string.
     pub const MARKDOWN: &str = "agent.markdown";
 
     /// `STORE_FOR`'s arguments.

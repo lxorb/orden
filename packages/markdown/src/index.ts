@@ -417,7 +417,7 @@ const publishing = renderer({ escapeHtml: true }, [], embedSink())
 /** The note's metadata block lives in front-matter.ts, which knows how to change
  *  a key as well as how to read one. Named here as well because a renderer, an
  *  export and a document title are all callers of this module and all ask about
- *  it, and one import of `@nib/markdown` is what they should need. */
+ *  it, and one import of `@orden/markdown` is what they should need. */
 export { frontMatter, frontMatterList, frontMatterValue, stripFrontMatter } from './front-matter'
 
 /** The first heading, or null when the note has none. */
@@ -661,7 +661,7 @@ export { withoutComments } from './comments'
  *  they are this renderer's own parts. */
 export { MOST_EMS } from './engines'
 
-/** The link grammar is its own module - `@nib/markdown/links` - so the editor can
+/** The link grammar is its own module - `@orden/markdown/links` - so the editor can
  *  have it without the renderer that stands on it, and everything that wants the
  *  grammar imports it from there. These two are here because a caller that renders
  *  a note usually also asks what it links to, and because taking them out of a

@@ -14,7 +14,7 @@
  *     than "AI": `*Written by whisper*`. It is italic and it is one line, because the
  *     reader came for the words and not for a disclaimer. */
 
-import { formatWikilink } from '@nib/markdown/links'
+import { formatWikilink } from '@orden/markdown/links'
 import { t } from '../i18n.svelte'
 
 /** The embed for a recording: `![[recording-2026-09-12-1432.weba]]`.

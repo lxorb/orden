@@ -10,8 +10,8 @@
  *  A caret the reader put outside the block is left exactly where it is. */
 
 import type { EditorView } from '@codemirror/view'
-import type { TextEdit } from '@nib/markdown/edits'
-import { frontMatterBlock } from '@nib/markdown/front-matter'
+import type { TextEdit } from '@orden/markdown/edits'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 
 /** The note as an edit leaves it. */
 export function applied(source: string, edit: TextEdit): string {

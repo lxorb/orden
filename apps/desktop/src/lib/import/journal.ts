@@ -21,7 +21,7 @@
  *  the file list the way Logseq's and Roam's journals do, and the media land in
  *  `assets/` beside them, which is where a picture pasted into a note goes. */
 
-import { destination, htmlToMarkdown } from '@nib/markdown/from-html'
+import { destination, htmlToMarkdown } from '@orden/markdown/from-html'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk } from './folder'

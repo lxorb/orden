@@ -21,21 +21,21 @@ import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
 import { bareTarget, hrefOf, linkTitle } from '../links'
 import { enclosingNamed } from '../nodes'
 import { tagTitle } from '../tag-press'
-import { calloutOf } from '@nib/markdown/callouts'
-import { readChart } from '@nib/markdown/chart'
-import { onEngines } from '@nib/markdown/engines'
-import { readHighlight } from '@nib/markdown/highlights'
-import { blockIdOf, embedKind, linkTarget } from '@nib/markdown/links'
-import { readProperties } from '@nib/markdown/properties'
+import { calloutOf } from '@orden/markdown/callouts'
+import { readChart } from '@orden/markdown/chart'
+import { onEngines } from '@orden/markdown/engines'
+import { readHighlight } from '@orden/markdown/highlights'
+import { blockIdOf, embedKind, linkTarget } from '@orden/markdown/links'
+import { readProperties } from '@orden/markdown/properties'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
 import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
 import { trustChanged } from '../markup'
 import { archivedLink, noteIndex, resolves } from '../wikilink/notes'
-import { iframeCard, webCard } from '@nib/markdown/web-embed'
+import { iframeCard, webCard } from '@orden/markdown/web-embed'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
 import { WebEmbedWidget } from './web'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import {
   BulletWidget,
   CalloutWidget,
@@ -195,7 +195,7 @@ class Decorator {
       case 'PercentComment':
         // A note to the writer rather than to the reader. Hidden here the way it
         // is hidden in the reading view, in every export and on a published page
-        // - see `withoutComments` in @nib/markdown - and shown again the moment
+        // - see `withoutComments` in @orden/markdown - and shown again the moment
         // the caret is inside it, so it stays as editable as anything else.
         this.conceal(node.from, node.to, overlaps(this.state, node.from, node.to))
         return false
@@ -214,7 +214,7 @@ class Decorator {
         // backslash is syntax like any other, so it goes the way `*` does and
         // comes back when the caret is on it. What is escaped stays: only the
         // first of the two characters is hidden. A page pasted into a note
-        // writes its tags this way - see `from-html` in @nib/markdown - and
+        // writes its tags this way - see `from-html` in @orden/markdown - and
         // reading it back with a backslash in front of every one of them is
         // reading the markup rather than the words.
         this.conceal(node.from, node.from + 1, overlaps(this.state, node.from, node.to))
@@ -456,7 +456,7 @@ class Decorator {
 
     const first = this.state.doc.lineAt(node.from)
     // The quote marks are the editor's own to take off; what is left is the
-    // line as `calloutOf` reads it everywhere else. See @nib/markdown/callouts.
+    // line as `calloutOf` reads it everywhere else. See @orden/markdown/callouts.
     const opened = first.text.indexOf('[!')
     const found = opened < 0 ? null : calloutOf(first.text.slice(opened))
     if (!found) return
@@ -888,7 +888,7 @@ export function buildDecorations(
  *  with it. The emoji table is the one that needs this: a `:shortcode:` with no table
  *  behind it is left as the characters it was written with and gets no widget at all,
  *  so there is nothing on screen to fill in later the way a formula's box is filled.
- *  See @nib/markdown/engines. */
+ *  See @orden/markdown/engines. */
 const enginesLanded = StateEffect.define()
 
 export const livePreviewDecorations = ViewPlugin.fromClass(

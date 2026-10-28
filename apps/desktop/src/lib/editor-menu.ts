@@ -220,7 +220,7 @@ function blockEntries(
  *  block - so what these write is what the file carries, which is the half Obsidian
  *  reads and the half nib reads on the way in: `+` says the callout may be folded,
  *  `-` says it opens shut. Written here rather than typed by hand, which is the whole
- *  reason for the rows; see callouts.ts in @nib/markdown and fold.ts in @orden/editor. */
+ *  reason for the rows; see callouts.ts in @orden/markdown and fold.ts in @orden/editor. */
 function calloutEntries(view: EditorView): MenuEntry[] {
   const sign = calloutSign(view.state)
   if (sign === null) return []

@@ -21,7 +21,7 @@
  *  The pages go through papers.ts, which is what a search reads and what writes
  *  them down. */
 
-import { isPagesTarget, isPdfTarget } from '@nib/markdown/links'
+import { isPagesTarget, isPdfTarget } from '@orden/markdown/links'
 import { breathe } from '../breathe'
 import { holderOf } from '../pages/held'
 import { pathKey } from '../space-paths'

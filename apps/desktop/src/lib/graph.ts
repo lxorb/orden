@@ -14,7 +14,7 @@
  *  Pure, so the shape of a graph is a thing tests can state. Where the nodes end
  *  up is `graph-layout.ts`. */
 
-import { embedKind, foldName, type LinkKind } from '@nib/markdown/links'
+import { embedKind, foldName, type LinkKind } from '@orden/markdown/links'
 import type { ScannedNote } from './scan-note'
 
 export interface GraphNode {

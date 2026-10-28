@@ -8,7 +8,7 @@
  *  calendar (`askNative`), as a date property's field is. */
 
 import { addDays, weekday } from '@orden/bases'
-import type { Priority, Remind } from '@nib/markdown/task-line'
+import type { Priority, Remind } from '@orden/markdown/task-line'
 import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu-item'
 import { dayWords, durationLabel, remindLabel } from './labels'

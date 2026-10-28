@@ -18,7 +18,7 @@ import {
   taskOut,
   withProperties,
 } from '.'
-import { type TaskChange, taskLine } from '@nib/markdown/task-edits'
+import { type TaskChange, taskLine } from '@orden/markdown/task-edits'
 
 const context = { today: '2026-10-04', now: '2026-10-04T09:00:00' }
 

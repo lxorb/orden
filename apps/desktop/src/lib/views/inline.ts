@@ -11,7 +11,7 @@
  *  the forms are looked for and given back after (`heldEscapes`), as the characters, or
  *  as written inside code, which shows its backslashes. */
 
-import { heldEscapes, released } from '@nib/markdown/escapes'
+import { heldEscapes, released } from '@orden/markdown/escapes'
 
 export interface Piece {
   text: string

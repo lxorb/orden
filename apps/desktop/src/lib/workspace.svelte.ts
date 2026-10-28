@@ -9,8 +9,8 @@ import {
   isPdfTarget,
   isTabFile,
   isWebTarget,
-} from '@nib/markdown/links'
-import { freePath } from '@nib/markdown/paths'
+} from '@orden/markdown/links'
+import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index.svelte'
 import { onDisk } from './on-disk'
@@ -1432,7 +1432,7 @@ class Workspace {
   }
 
   async newPages() {
-    const { blankPages } = await import('@nib/markdown/pages')
+    const { blankPages } = await import('@orden/markdown/pages')
     // The paper the reader chose, which the workspace has no opinion about.
     const { modes } = await import('./modes.svelte')
     this.openUnsaved('pages', blankPages(modes.pagesPaper))
@@ -2434,7 +2434,7 @@ class Workspace {
     // pages engine is a surface's worth of code, and a window that opens on a note has
     // no stack of paper to read; see surfaces.svelte.ts, where the surface itself comes
     // through.
-    const { blankPages } = await import('@nib/markdown/pages')
+    const { blankPages } = await import('@orden/markdown/pages')
     // And the paper the reader chose, which the workspace has no opinion about: A4
     // outside North America and Letter inside it are both right, so the store is asked
     // rather than a size assumed. Fetched here rather than imported at the top because

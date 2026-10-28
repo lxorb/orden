@@ -14,7 +14,7 @@
  *  the caller passes in `css`. Handing the layout back to a reader as MathML
  *  would hand it to something that mostly cannot do it. */
 
-import { mapSources } from '@nib/markdown/sources'
+import { mapSources } from '@orden/markdown/sources'
 import { claimName } from './naming'
 import { type Picture, suffixFor } from './pictures'
 import { type Entry, zipOf } from './zip'

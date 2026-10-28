@@ -7,7 +7,7 @@ import {
   type LinkKind,
   parseWikilink,
   type Wikilink,
-} from '@nib/markdown/links'
+} from '@orden/markdown/links'
 import { enclosingNamed } from '../nodes'
 
 /** Reading a link out of the document, wherever it is asked about.

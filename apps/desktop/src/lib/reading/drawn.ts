@@ -4,7 +4,7 @@
  *  the file, the mark of what kind of thing it is, one click - because that is the
  *  only markup that is right everywhere. A published page runs no script and an
  *  exported document has no space behind it, so neither could ever draw a page of
- *  a paper; see `card` in @nib/markdown/wikilinks. Inside the app there is a
+ *  a paper; see `card` in @orden/markdown/wikilinks. Inside the app there is a
  *  script and a disk, and here the card is where the drawing goes.
  *
  *  One drawer for both faces of a note. The editor's live preview reaches it

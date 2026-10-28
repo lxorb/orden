@@ -3,7 +3,7 @@
  *  `toggleWrap('==')` in commands.ts already puts the marks on and takes them off
  *  again; what it cannot do is the colour, which lives inside the marks -
  *  `==🔴 careful==` is how Obsidian 1.14 writes one and so is how nib writes one;
- *  see highlights.ts in @nib/markdown.
+ *  see highlights.ts in @orden/markdown.
  *
  *  So this is `toggleWrap` with one more question asked. Pressing the same colour
  *  twice takes the highlight off, the way pressing bold twice does; pressing a
@@ -18,7 +18,7 @@ import {
   highlightTone,
   readHighlight,
   writeHighlight,
-} from '@nib/markdown/highlights'
+} from '@orden/markdown/highlights'
 
 const MARK = '=='
 

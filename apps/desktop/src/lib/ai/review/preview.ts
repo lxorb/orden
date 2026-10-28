@@ -7,7 +7,7 @@
  *  does. Calls it cannot work out (a property, a task, a call that names a tab) show
  *  no diff and keep the question's own line. */
 
-import { oneEdit } from '@nib/markdown/edits'
+import { oneEdit } from '@orden/markdown/edits'
 import { plan, readEdits, type Replacement } from '../../agents/docs/edits'
 import { type Row, lineDiff, trimmed } from '../../diff'
 import { applied } from '../../search/replace'

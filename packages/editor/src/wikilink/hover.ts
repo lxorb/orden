@@ -7,7 +7,7 @@ import {
   type Tooltip,
   type TooltipView,
 } from '@codemirror/view'
-import { isTabFile, linkTarget, sectionOf } from '@nib/markdown/links'
+import { isTabFile, linkTarget, sectionOf } from '@orden/markdown/links'
 import { label } from '../labels'
 import { modifierHeld } from '../links'
 import { type LinkSpan, linkAt } from './at'

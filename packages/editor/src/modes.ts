@@ -17,7 +17,7 @@ import type { SyntaxNode } from '@lezer/common'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { isExternal } from './external'
 import { fenceLanguage } from './languages'
-import type { PropertiesMode } from '@nib/markdown/properties'
+import type { PropertiesMode } from '@orden/markdown/properties'
 import { livePreview } from './live-preview'
 import { noReveal, quietMarks } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
@@ -45,7 +45,7 @@ const punctuation = new Compartment()
 const language = new Compartment()
 const equations = new Compartment()
 /** Which of the three answers the note's front matter gets; see properties.ts in
- *  @nib/markdown and live-preview/properties.ts here. */
+ *  @orden/markdown and live-preview/properties.ts here. */
 const metadata = new Compartment()
 const spelling = new Compartment()
 const spellWords = new Compartment()

@@ -1,11 +1,11 @@
-import { MOST_EMS } from '@nib/markdown/engines'
-import { chartFigure } from '@nib/markdown/chart'
-import { DIAGRAM_LANGUAGES } from '@nib/markdown/diagrams'
-import { loadMaths, mathsEngine } from '@nib/markdown/engines'
+import { MOST_EMS } from '@orden/markdown/engines'
+import { chartFigure } from '@orden/markdown/chart'
+import { DIAGRAM_LANGUAGES } from '@orden/markdown/diagrams'
+import { loadMaths, mathsEngine } from '@orden/markdown/engines'
 import type { BaseAsk, NoteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
 // The engine itself, chemistry pack and all, is loaded when a note turns out to have
-// a formula in it; see @nib/markdown/engines, which is the one holder for it. Its
+// a formula in it; see @orden/markdown/engines, which is the one holder for it. Its
 // stylesheet stays here and stays eager: a rule is not a module, the faces inside it
 // are fetched only once something on the page wears one, and a formula appearing
 // before the CSS that sets it would be a formula in the wrong font for a frame.
@@ -109,14 +109,14 @@ export class MathWidget extends PictureWidget {
       strict: false,
       // The same ceiling the renderer uses, and for the same reason: a note is
       // not always the reader's own, and `\rule{99999em}{99999em}` is one line
-      // of TeX that leaves nothing else on screen. See @nib/markdown.
+      // of TeX that leaves nothing else on screen. See @orden/markdown.
       maxSize: MOST_EMS,
     })
   }
 }
 
 /** Fence languages Typora renders as pictures rather than code. The list itself
- *  is @nib/markdown's, because a published page has to know it too - it decides
+ *  is @orden/markdown's, because a published page has to know it too - it decides
  *  which fences the app drew a picture for; see packages/markdown/src/diagrams.ts. */
 export { DIAGRAM_LANGUAGES }
 

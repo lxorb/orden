@@ -4,7 +4,7 @@
  *  Here rather than in fuzzy.ts, which every list that finds anything reads and which is
  *  in front of the first paint: these are the palette's, and it is fetched later. */
 
-import { foldName } from '@nib/markdown/links'
+import { foldName } from '@orden/markdown/links'
 import { walked } from '../fuzzy'
 
 /** Where `fuzzy` counts a word as starting. */

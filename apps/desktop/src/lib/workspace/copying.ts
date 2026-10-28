@@ -21,7 +21,7 @@
  *
  *  However many rows one copy made, it is one thing to undo. */
 
-import { isPdfTarget } from '@nib/markdown/links'
+import { isPdfTarget } from '@orden/markdown/links'
 import { toBase64 } from '../bytes'
 import { folderNote, isFolderNote } from '../folder-notes'
 import type { Picked } from '../import/sources'

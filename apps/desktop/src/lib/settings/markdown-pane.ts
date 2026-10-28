@@ -1,7 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { t } from '../i18n.svelte'
 import { DEFAULTS, modes } from '../modes.svelte'
-import { PROPERTIES_MODES } from '@nib/markdown/properties'
+import { PROPERTIES_MODES } from '@orden/markdown/properties'
 import { PROPERTIES_WORDS } from '../properties-words'
 import type { Pane } from './fields'
 

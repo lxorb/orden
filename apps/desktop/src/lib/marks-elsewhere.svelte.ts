@@ -14,8 +14,8 @@
  *  website, the `nib` key for a plane - never the space. And a chat's pointer in any
  *  space, open or not, since no scan reads one: a line of JSON each. */
 
-import { frontMatterValue } from '@nib/markdown/front-matter'
-import { isCanvasTarget, isChatTarget, isPagesTarget, isWebTarget } from '@nib/markdown/links'
+import { frontMatterValue } from '@orden/markdown/front-matter'
+import { isCanvasTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import { SvelteMap } from 'svelte/reactivity'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
 import { isMarkdownPath, pathKey, within } from './space-paths'

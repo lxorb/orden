@@ -54,7 +54,7 @@ export interface Host {
   /** Milliseconds since the epoch, for a note just written. */
   now(): number
   /** Whether a space is an Obsidian vault - `.obsidian` at its root - where a `📅` is a
-   *  deadline rather than a start date (#371, `@nib/markdown/task-dates`). */
+   *  deadline rather than a start date (#371, `@orden/markdown/task-dates`). */
   vault(root: string): Promise<boolean>
 }
 

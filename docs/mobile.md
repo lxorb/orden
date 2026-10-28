@@ -293,7 +293,7 @@ the rule against a second sync implementation.
   (`window.__nibReminders`), and a press opens nib to do it. A Done pressed with nib
   closed is ticked the next time nib opens; the notification goes at once.
 - **One ring per reminder.** A reminder's id is the one every device and the Worker make
-  for it (`reminderId` in `@nib/markdown/task-reminders`), and the phone remembers the
+  for it (`reminderId` in `@orden/markdown/task-reminders`), and the phone remembers the
   ids it rang for a week (`AlarmList.known`), so a push from the Worker for one the phone
   already rings stays quiet once the push client is in (below).
 - **Tests**: `AlarmListTest.kt` on the JVM - what a plan sets and cancels, the 64, the

@@ -64,7 +64,7 @@
   import { tick } from './canvas/tick'
   import { tools } from './canvas/tools.svelte'
   import { type Point } from './canvas/geometry'
-  import { pageAt } from '@nib/markdown/pages'
+  import { pageAt } from '@orden/markdown/pages'
   import { longPress } from './longpress'
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { stillness } from './motion'

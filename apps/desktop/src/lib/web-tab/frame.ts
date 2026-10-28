@@ -20,7 +20,7 @@
  *  same gesture the app already uses for a page embedded in a note: a card that says
  *  what it stands for, and a press that swaps the frame in. One press per tab, not
  *  per page - once the reader has said yes, the frame stays. See web-embed.ts in
- *  @nib/markdown and web-frame.ts in @orden/editor, which are that pattern, and
+ *  @orden/markdown and web-frame.ts in @orden/editor, which are that pattern, and
  *  docs/web-tabs.md for the decision.
  *
  *  A `HEAD` through the app's own Worker would answer it reliably, and is written

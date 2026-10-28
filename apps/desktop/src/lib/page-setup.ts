@@ -1,5 +1,5 @@
-import { escapeAll } from '@nib/markdown/html'
-import { frontMatter, frontMatterValue } from '@nib/markdown'
+import { escapeAll } from '@orden/markdown/html'
+import { frontMatter, frontMatterValue } from '@orden/markdown'
 import { DEFAULT_PAGE_SETUP, type PageSetup, type Paper, PAPER_SIZES } from './paper'
 
 /** The units a stylesheet and a printer both understand, and how many of each

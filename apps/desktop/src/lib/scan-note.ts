@@ -6,9 +6,9 @@
  *  function, so a note re-read after a save cannot come back looking different
  *  from the same note read by the first scan. */
 
-import { COVER_KEY } from '@nib/markdown/cover'
-import { frontMatterList, frontMatterValue } from '@nib/markdown/front-matter'
-import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
+import { COVER_KEY } from '@orden/markdown/cover'
+import { frontMatterList, frontMatterValue } from '@orden/markdown/front-matter'
+import { blockIds, findLinks, headingsOf, type LinkKind } from '@orden/markdown/links'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
 import type { ScannedTask, Stamp } from '@orden/bases/scan'
 import { tagsIn } from './search/tags'
@@ -79,7 +79,7 @@ export interface ScannedNote {
    *  row's own menu has to know whether there is a cover to change or to take
    *  away. Where the band is taken from is not read: no list asks it, and the
    *  surface that draws the banner reads it out of the note. See cover.ts in
-   *  @nib/markdown. */
+   *  @orden/markdown. */
   cover: string | null
   /** The rows of a space ride on the same pass (docs/tasks.md 5.3): the front matter
    *  as written, the task lines with the headings above them, and the file's size and

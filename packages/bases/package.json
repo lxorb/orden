@@ -21,7 +21,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nib/markdown": "workspace:*",
+    "@orden/markdown": "workspace:*",
     "yaml": "^2.9.0"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { calloutIconParts } from '@nib/markdown/callouts'
+import { calloutIconParts } from '@orden/markdown/callouts'
 import { NibWidget } from './widget'
 import { EditorView } from '@codemirror/view'
 // Aliased: `label` is already a local variable in more than one widget here.

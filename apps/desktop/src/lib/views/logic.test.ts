@@ -1,5 +1,5 @@
 import { answer, builtinView, readBase, writeBase } from '@orden/bases'
-import { changedTask } from '@nib/markdown/task-edits'
+import { changedTask } from '@orden/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
 import { daysShown, occurrences, place, placedByDay, stepped, timeOf } from './calendar'
 import { donutPaths, heights, linePath, seriesOf, settingsOf, totalOf } from './chart'

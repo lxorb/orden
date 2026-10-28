@@ -12,7 +12,7 @@
  *  keeps the last day it made a note for in `made:`, which syncs, so two devices agree
  *  on whether this week's is made. Pure: the day and the time come in. */
 
-import { writeProperty } from '@nib/markdown/property-edits'
+import { writeProperty } from '@orden/markdown/property-edits'
 import { addDays, addMonths, formatDate } from './dates'
 import { nextDate, parseRule } from './recurrence'
 import type { Value } from './types'

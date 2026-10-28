@@ -13,7 +13,7 @@
  *  from `arguments:` for its place. A body that asks for none gets them on the end. Pure:
  *  found.ts is what finds the notes. */
 
-import { frontMatterList, frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
+import { frontMatterList, frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { isEffort } from '../chat/effort'
 import type { Effort } from '../chat/types'
 import { type Mode, modeIn } from '../modes'

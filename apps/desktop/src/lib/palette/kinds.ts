@@ -13,7 +13,7 @@
  *  used, and where the reader is - is worked out here too. Pure: the palette hands in
  *  what the stores hold. */
 
-import { foldName } from '@nib/markdown/links'
+import { foldName } from '@orden/markdown/links'
 import type { Command } from '../commands'
 import { fileMark } from '../file-mark'
 import { shownName, rowName } from '../note-name'

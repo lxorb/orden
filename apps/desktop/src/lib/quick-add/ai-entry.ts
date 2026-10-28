@@ -5,7 +5,7 @@
 
 import { todayOf } from '@orden/bases'
 import type { QuickFields } from '@orden/bases/language'
-import { isDate } from '@nib/markdown/task-line'
+import { isDate } from '@orden/markdown/task-line'
 import { complete } from '../ai/complete'
 import type { Message, Provider } from '../ai/providers'
 import { isPriority } from '../views/drop'

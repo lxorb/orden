@@ -36,8 +36,8 @@
  *
  *  Code, fenced or inline, is kept exactly as it was written. */
 
-import { foldName } from '@nib/markdown/links'
-import { asWords } from '@nib/markdown/words'
+import { foldName } from '@orden/markdown/links'
+import { asWords } from '@orden/markdown/words'
 
 import { key } from '../i18n.svelte'
 

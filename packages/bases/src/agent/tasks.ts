@@ -7,7 +7,7 @@
  *  in from another program, so every one is read here once and refused in a sentence
  *  the model can act on. Pure: the servers read and write the notes. */
 
-import type { TaskChange } from '@nib/markdown/task-edits'
+import type { TaskChange } from '@orden/markdown/task-edits'
 import {
   isDate,
   NO_PRIORITY,
@@ -17,7 +17,7 @@ import {
   readTask,
   readTime,
   type TaskFields,
-} from '@nib/markdown/task-line'
+} from '@orden/markdown/task-line'
 import { parseRule } from '../recurrence'
 import type { Row } from '../types'
 

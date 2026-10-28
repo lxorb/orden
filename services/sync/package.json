@@ -30,7 +30,7 @@
     "@lezer/yaml": "^1.0.4",
     "@orden/bases": "workspace:*",
     "@orden/chats": "workspace:*",
-    "@nib/markdown": "workspace:*",
+    "@orden/markdown": "workspace:*",
     "@orden/online": "workspace:*",
     "@orden/rooms": "workspace:*",
     "@orden/sync-core": "workspace:*",

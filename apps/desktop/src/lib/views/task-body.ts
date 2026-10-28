@@ -8,9 +8,9 @@
  *  task's line is found again by its anchor, as every other edit of a view finds it. */
 
 import type { Row, TaskChange } from '@orden/bases'
-import { CODE, type CodeLine, CodeBlocks, OPENS, WORDS } from '@nib/markdown/fences'
-import { changedTask } from '@nib/markdown/task-edits'
-import { readTask } from '@nib/markdown/task-line'
+import { CODE, type CodeLine, CodeBlocks, OPENS, WORDS } from '@orden/markdown/fences'
+import { changedTask } from '@orden/markdown/task-edits'
+import { readTask } from '@orden/markdown/task-line'
 import { changed } from '../rows/write'
 import { lineOfAnchor } from './lines'
 

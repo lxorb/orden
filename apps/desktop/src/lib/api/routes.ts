@@ -469,7 +469,7 @@ export interface AccountSettings {
   conflicts?: string
   /** Which colour the highlight button writes, as the palette tone it names, or
    *  null for a highlight with no colour of its own; see highlights.ts in
-   *  @nib/markdown. How somebody marks up, not which machine they are at. */
+   *  @orden/markdown. How somebody marks up, not which machine they are at. */
   highlightTone?: number | null
   /** Whether a single newline breaks the line. On the account because it is about
    *  how the notes read, and read by the blog as well, so a published page reads
@@ -480,7 +480,7 @@ export interface AccountSettings {
   linkFormat?: string
   /** What a note's front matter is drawn as: its rows, its source, or nothing. On
    *  the account because it is about how metadata is read rather than about which
-   *  machine is reading it; see properties.ts in @nib/markdown. */
+   *  machine is reading it; see properties.ts in @orden/markdown. */
   properties?: string
   /** Whether the formatting marks stay out of sight while writing. How somebody
    *  likes to write, so the same on every device; see `quietMarks` in modes.svelte.ts. */

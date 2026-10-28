@@ -3,14 +3,14 @@
  *  reads.
  *
  *  The front matter is read the cheap way first, by the properties reader the
- *  Properties panel already uses (`@nib/markdown/properties`), which is a regex
+ *  Properties panel already uses (`@orden/markdown/properties`), which is a regex
  *  per line. Only a block that reader will not draw (a comment in it, a nested
  *  list, a shape it cannot name) is handed to a real YAML parser, so five thousand
  *  ordinary notes cost five thousand small regex passes and the odd note still
  *  gets its values. */
 
-import { frontMatterBlock } from '@nib/markdown/front-matter'
-import { type Property, readProperties } from '@nib/markdown/properties'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { type Property, readProperties } from '@orden/markdown/properties'
 import { isScalar, isSeq, parse, parseDocument, type Scalar, visit } from 'yaml'
 import type { Value } from './types'
 

@@ -1,7 +1,7 @@
 /** What a pen leaves on the plane: the arithmetic of a stroke.
  *
  *  The stroke itself - its points, its pressure, its tilt and its
- *  timestamps - is part of the file format and lives in `@nib/markdown/canvas`.
+ *  timestamps - is part of the file format and lives in `@orden/markdown/canvas`.
  *  What is here is everything a surface does with one: the outline it paints as,
  *  how a tool behaves, what an eraser cuts out of it, what a lasso caught, and
  *  what a held pen meant to draw.

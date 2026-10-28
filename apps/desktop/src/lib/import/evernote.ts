@@ -20,7 +20,7 @@
 
 import { fromBase64 } from '../bytes'
 import { key } from '../i18n.svelte'
-import { htmlToMarkdown } from '@nib/markdown/from-html'
+import { htmlToMarkdown } from '@orden/markdown/from-html'
 
 import { dayOf, noteText, type Meta } from './meta'
 import { md5 } from './md5'

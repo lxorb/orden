@@ -1,10 +1,10 @@
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete'
-import { emojiTable, loadEmoji } from '@nib/markdown/engines'
+import { emojiTable, loadEmoji } from '@orden/markdown/engines'
 
 /** `:smile:` → 😄, or null when the name is not one - and null while the table is
  *  still on its way, which reads the same: the shortcode stays as the characters it
  *  was written with. The live preview draws it again when the table lands; see
- *  live-preview/decorate.ts and @nib/markdown/engines. */
+ *  live-preview/decorate.ts and @orden/markdown/engines. */
 export function emojiFor(shortcode: string): string | null {
   const table = emojiTable()
   if (!table) {

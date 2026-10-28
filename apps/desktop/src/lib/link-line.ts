@@ -6,7 +6,7 @@
  *  notes". A link is its shown words here, marked as a link, the way the reading
  *  view draws it; the rest of the line is left as it is. */
 
-import { findLinks, shownText } from '@nib/markdown/links'
+import { findLinks, shownText } from '@orden/markdown/links'
 
 /** A run of the line: words, or the words a link shows. */
 interface LinePiece {

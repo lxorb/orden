@@ -67,7 +67,7 @@
 
 /* The groups a fence is coloured in, in the theme's own colours - which is the
    palette called "Follow the theme", said in CSS rather than in TypeScript. The
-   classes are written by @nib/markdown/highlight.
+   classes are written by @orden/markdown/highlight.
 
    Through `:where`, so these rules carry no weight at all: a reader who has
    chosen GitHub or Dracula has those colours written over these, and a page that
@@ -238,7 +238,7 @@
    has the same top and a tall photograph does not push the words off the screen.
    `object-fit: cover` crops it to that band, and `object-position`, which the note
    itself writes, says which part of the picture the band is taken from - see
-   cover.ts in @nib/markdown. Drawn here rather than per surface so the editor, the
+   cover.ts in @orden/markdown. Drawn here rather than per surface so the editor, the
    reading view, an exported document and a published page all draw one cover. */
 #write .nib-cover {
   margin: 0 0 1.8em;

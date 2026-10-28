@@ -11,7 +11,7 @@
  *  from another device fall into line: two people who added a page at the same
  *  moment have two pages, and where they sit is worked out from the list rather than
  *  from what either device wrote down, so neither ends up under the other. See
- *  laidOut in @nib/markdown/pages. */
+ *  laidOut in @orden/markdown/pages. */
 
 import {
   added,
@@ -23,7 +23,7 @@ import {
   pagesOf,
   pageShowing,
   settled,
-} from '@nib/markdown/pages'
+} from '@orden/markdown/pages'
 import { type Camera, clampScale, zoomed } from '../camera'
 import { type Canvas, canvasRuns, type PageNode, readCanvas, takeParsed } from '../canvas/format'
 import { strokeBox } from '../canvas/ink'

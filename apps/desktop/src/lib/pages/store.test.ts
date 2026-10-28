@@ -27,7 +27,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
 const { PagesStore, PEEK } = await import('./store.svelte')
-const { blankPages, GUTTER, pagesOf } = await import('@nib/markdown/pages')
+const { blankPages, GUTTER, pagesOf } = await import('@orden/markdown/pages')
 const { readCanvas } = await import('../canvas/format')
 
 /** A4 at 96 to the inch, which is what `PAPERS` says and what every sum below is

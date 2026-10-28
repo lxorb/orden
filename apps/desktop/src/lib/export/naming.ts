@@ -5,12 +5,12 @@
  *  package, and the file written straight into a folder on a phone where there
  *  is no dialog to ask in.
  *
- *  The numbering itself is not the export's own: `freePath` in @nib/markdown/paths
+ *  The numbering itself is not the export's own: `freePath` in @orden/markdown/paths
  *  is what every part of the app steps a taken name aside with, so `Note 2.docx`
  *  here and a copy in the file list are numbered by one rule. What belongs to the
  *  export is the shape its callers ask in - a set of the names they already hold. */
 
-import { freePath } from '@nib/markdown/paths'
+import { freePath } from '@orden/markdown/paths'
 
 /** The note's name without whatever extension it had. */
 export function stemOf(name: string): string {

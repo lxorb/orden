@@ -1,5 +1,5 @@
 import { englishLabel, LABEL_KEYS, setLabels } from '@orden/editor'
-import { setChartLocale } from '@nib/markdown/chart'
+import { setChartLocale } from '@orden/markdown/chart'
 import { type Direction, directionOf, factorOf, isolated } from './direction'
 import { keep, storedText } from './stored'
 
@@ -335,7 +335,7 @@ class I18n {
       document.documentElement.dir = directionOf(wanted)
     }
     // A chart's numbers are grouped the way this language groups them, on every
-    // surface that draws one; see `setChartLocale` in @nib/markdown/chart.
+    // surface that draws one; see `setChartLocale` in @orden/markdown/chart.
     setChartLocale(wanted)
 
     const fetching = CATALOGUES[wanted]

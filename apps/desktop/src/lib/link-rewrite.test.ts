@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { FoundLink } from '@nib/markdown/links'
+import type { FoundLink } from '@orden/markdown/links'
 import { rewriteLinks } from './link-rewrite'
 
 /** Rewrites every link whose target names `wanted`, which is what the index

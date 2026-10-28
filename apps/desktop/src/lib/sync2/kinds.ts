@@ -14,7 +14,7 @@
  *
  *  Everything else in the engine speaks files - text in, text out - and asks here. */
 
-import { holdsCanvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
+import { holdsCanvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { TEXT } from '@orden/rooms'
 import { pushPlane, readPlane } from '@orden/rooms/plane'
 import { diverge, type Times, type Verdict } from '@orden/sync-core/diverge'

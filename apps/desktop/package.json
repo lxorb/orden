@@ -22,7 +22,7 @@
     "@orden/chats": "workspace:*",
     "@orden/editor": "workspace:*",
     "@orden/glasses": "workspace:*",
-    "@nib/markdown": "workspace:*",
+    "@orden/markdown": "workspace:*",
     "@orden/online": "workspace:*",
     "@orden/rooms": "workspace:*",
     "@orden/sync-core": "workspace:*",

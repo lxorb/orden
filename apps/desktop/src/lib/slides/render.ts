@@ -11,8 +11,8 @@
  *  once for the whole deck rather than once per slide, because all of it is
  *  asked of the disk and none of it is per page. */
 
-import { renderMarkdown, type RenderOptions } from '@nib/markdown'
-import { deckOf, type SlideShape } from '@nib/markdown/slides'
+import { renderMarkdown, type RenderOptions } from '@orden/markdown'
+import { deckOf, type SlideShape } from '@orden/markdown/slides'
 import { type Note, pointer, withPictures } from '../reading/render'
 import type { Scheme } from '../theme.svelte'
 

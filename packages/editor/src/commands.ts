@@ -6,9 +6,9 @@ import {
   type Line,
   type StateCommand,
 } from '@codemirror/state'
-import { type Callout, calloutOf } from '@nib/markdown/callouts'
-import { closesFence } from '@nib/markdown/fences'
-import { taskAt } from '@nib/markdown/tasks'
+import { type Callout, calloutOf } from '@orden/markdown/callouts'
+import { closesFence } from '@orden/markdown/fences'
+import { taskAt } from '@orden/markdown/tasks'
 import { EditorView } from '@codemirror/view'
 import { inCode } from './code'
 import { noteIndex } from './wikilink/notes'
@@ -167,7 +167,7 @@ export function shiftHeading(delta: number): StateCommand {
  *  list item under the one above it, so it stays where it is either way: only the
  *  marker after it is traded or taken off. And a task's box goes with the bullet
  *  when the list is taken off, since `[ ]` left in front of the words is neither a
- *  task nor prose; see tasks.ts in @nib/markdown for where the box ends. */
+ *  task nor prose; see tasks.ts in @orden/markdown for where the box ends. */
 function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
   return ({ state, dispatch }) => {
     const lines = selectedLines(state)
@@ -280,7 +280,7 @@ export const toggleTask: StateCommand = (target) => {
       continue
     }
     if (task) {
-      // One character, inside the brackets: see tasks.ts in @nib/markdown, which
+      // One character, inside the brackets: see tasks.ts in @orden/markdown, which
       // is what says where they are.
       const at = line.from + task.box + 1
       changes.push({ from: at, to: at + 1, insert: task.done ? ' ' : 'x' })
@@ -473,7 +473,7 @@ export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }
  *  nobody guesses: three keys, one of them a list of lists. An empty fence would
  *  send the writer to the documentation, and a chart with numbers in it is a
  *  chart they can edit into theirs. The caret lands on the title, which is the
- *  first thing they will want to change. See chart.ts in @nib/markdown. */
+ *  first thing they will want to change. See chart.ts in @orden/markdown. */
 export const insertChart = insertBlock(() => ({
   text: '```chart\ntype: bar\ntitle: \nlabels: [one, two, three]\nseries:\n  - data: [1, 2, 3]\n```\n',
   caret: 26,
@@ -493,7 +493,7 @@ export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4
  *  twelve are a word away. No fold sign, because most callouts are not folded and a
  *  sign written into every one of them would be a note full of punctuation nobody
  *  asked for; the two rows below are how one gets its sign without being typed by
- *  hand. See `callouts` in @nib/markdown. */
+ *  hand. See `callouts` in @orden/markdown. */
 export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 12 }))
 
 /** The callout the caret is in: its marker line, where in that line the brackets
@@ -505,7 +505,7 @@ export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 
  *  all, which is where the callout ends.
  *
  *  Read by the one grammar, with the quote marks taken off the front the way every
- *  other reader of a callout takes them off; see callouts.ts in @nib/markdown. */
+ *  other reader of a callout takes them off; see callouts.ts in @orden/markdown. */
 function calloutAt(state: EditorState): { line: Line; at: number; callout: Callout } | null {
   const doc = state.doc
 
@@ -643,7 +643,7 @@ export const insertFootnote: StateCommand = ({ state, dispatch }) => {
 /** An HTML comment around the selection. Markdown has no comment of its own, and
  *  this is the one every editor uses for one; it is hidden wherever the note is
  *  read, so what it holds is between the writer and the file. See comments.ts in
- *  @nib/markdown. */
+ *  @orden/markdown. */
 export const insertComment = toggleWrap('<!-- ', ' -->')
 
 /** A new slide: the rule that breaks a deck, and the caret on the empty slide

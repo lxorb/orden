@@ -484,7 +484,7 @@ What each part is for:
   answer begins and ends, so asking again replaces it instead of stacking a
   second one under it. They are HTML comments, which every renderer hides;
   nib strips both spellings of a comment before rendering anything, so they show
-  on no surface at all. See `withoutComments` in `@nib/markdown`.
+  on no surface at all. See `withoutComments` in `@orden/markdown`.
 - **The italic line.** Which model answered and on what day. A date and not a
   timestamp: a re-run should not change a line for no reader's benefit. It is
   written in whatever language the app was set to at the time and then left

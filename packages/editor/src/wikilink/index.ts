@@ -12,7 +12,7 @@ import { notePreviews } from './hover'
  *
  *  Which part is where:
  *
- *  - The grammar is not here at all. It lives in `@nib/markdown/links`, because
+ *  - The grammar is not here at all. It lives in `@orden/markdown/links`, because
  *    the renderer, the app and the sync service read the same links, and four
  *    readings of one grammar would drift.
  *  - markdown/constructs.ts teaches the parser to see one, so a wikilink is a

@@ -1,4 +1,4 @@
-import { isCanvasTarget, isChatTarget, isPagesTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isChatTarget, isPagesTarget } from '@orden/markdown/links'
 import { DIVIDER, type MenuEntry } from './menu-item'
 import { chosenIcon } from './chosen-icon'
 import { iconChoice } from './icon-choice.svelte'

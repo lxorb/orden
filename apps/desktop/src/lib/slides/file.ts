@@ -9,7 +9,7 @@
  *  its own at the stage's size, so one route builds both.
  */
 
-import { escapeAll } from '@nib/markdown/html'
+import { escapeAll } from '@orden/markdown/html'
 import {
   DECK_HEIGHT,
   DECK_LAYOUT_SCRIPT,
@@ -17,7 +17,7 @@ import {
   DECK_SCRIPT,
   DECK_WIDTH,
   deckBody,
-} from '@nib/markdown/deck'
+} from '@orden/markdown/deck'
 import { CODE_PALETTES } from '@orden/editor'
 import { proseCss, slidesCss, tokensCss } from '@orden/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../accents'

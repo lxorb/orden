@@ -8,7 +8,7 @@ import {
   type StateCommand,
   type TransactionSpec,
 } from '@codemirror/state'
-import type { PropertiesMode } from '@nib/markdown/properties'
+import type { PropertiesMode } from '@orden/markdown/properties'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { insertFrontMatter } from '../commands'
 import { external } from '../external'

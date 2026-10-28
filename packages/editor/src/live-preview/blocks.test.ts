@@ -1,6 +1,6 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { Compartment, EditorSelection, EditorState } from '@codemirror/state'
-import type { PropertiesMode } from '@nib/markdown/properties'
+import type { PropertiesMode } from '@orden/markdown/properties'
 import { describe, expect, test } from 'vitest'
 import { blockDecorations } from './blocks'
 import { propertiesMode } from './hidden-front-matter'
@@ -623,7 +623,7 @@ describe('a note cover', () => {
 })
 
 /** The three answers a reader can give about a note's front matter, asked once in
- *  Settings and read here; see properties.ts in @nib/markdown. */
+ *  Settings and read here; see properties.ts in @orden/markdown. */
 describe('what the front matter is drawn as', () => {
   const NOTE = '---\ntitle: A note\ntags: [one]\n---\n\n# Head\n'
 

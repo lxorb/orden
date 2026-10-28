@@ -14,7 +14,7 @@
  *  fields it does have. */
 
 import type { FoldLines } from '@orden/editor'
-import { isBaseTarget, isChatTarget, isPagesTarget, isWebTarget } from '@nib/markdown/links'
+import { isBaseTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import { identifier } from '../identifier'
 import { roomKind } from '../rooms/kind'
 import { isNumber, isRecord, isString, keep, stringList } from '../stored'

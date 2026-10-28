@@ -113,7 +113,7 @@ export const CRATE_ASKS = {
   /** Takes `StoreAsk`, answers `StoreSaid`: which store the reader's tabs of a space
    *  use for an address, as `web-data.ts` decides. */
   storeFor: 'agent.store_for',
-  /** Takes `{ html, url }`, answers the markdown `@nib/markdown/from-html` makes. */
+  /** Takes `{ html, url }`, answers the markdown `@orden/markdown/from-html` makes. */
   markdown: 'agent.markdown',
 } as const
 

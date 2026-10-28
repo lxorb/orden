@@ -20,7 +20,7 @@
     setReadOnlyMode,
     type Text,
   } from '@orden/editor'
-  import type { EmbeddedNote } from '@nib/markdown'
+  import type { EmbeddedNote } from '@orden/markdown'
   import type { CanvasNode } from './canvas/format'
   import { cardHtml, fileSource, fileUrl, isPicture, keptByAccount } from './canvas/render'
   import { account } from './account.svelte'

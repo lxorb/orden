@@ -7,7 +7,7 @@
  *
  *  A task whose start date has not come is in none of them but Upcoming, which is where
  *  the days ahead are, and a project's own list, which is its note; and only a deadline
- *  makes a task overdue (#371, `@nib/markdown/task-dates`). A task with no start date
+ *  makes a task overdue (#371, `@orden/markdown/task-dates`). A task with no start date
  *  is in Today only when the reader says so, as one whose start date has come (#408). */
 
 import type { Base, Filter, View } from './types'

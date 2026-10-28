@@ -21,7 +21,7 @@
    *  Cancel beside its button. What happens to the task is the caller's (`onsubmit`): the
    *  sheet writes it, a view writes or changes it, the global window hands it to the app.
    *  A caller that answers `false` took nothing, and the field keeps what was typed. */
-  import type { Priority } from '@nib/markdown/task-line'
+  import type { Priority } from '@orden/markdown/task-line'
   import { parseQuickAdd, type QuickFields } from '@orden/bases/language'
   import { todayOf } from '@orden/bases'
   import { keepFocus } from '../focus'

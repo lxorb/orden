@@ -20,10 +20,10 @@
  *  drawn from, the version before it is snapshotted, and one undo puts it back.
  *  See tag-edits.ts, which is the same shape of change. */
 
-import { frontMatterEdits } from '@nib/markdown/front-matter'
-import { scalar } from '@nib/markdown/yaml'
-import { isCanvasTarget, isChatTarget, isPagesTarget } from '@nib/markdown/links'
-import { oneEdit, type TextEdit } from '@nib/markdown/edits'
+import { frontMatterEdits } from '@orden/markdown/front-matter'
+import { scalar } from '@orden/markdown/yaml'
+import { isCanvasTarget, isChatTarget, isPagesTarget } from '@orden/markdown/links'
+import { oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { isFolderNote } from './folder-notes'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
 import { key, message } from './i18n.svelte'
@@ -79,7 +79,7 @@ export async function setFileIcon(
   const edit = isChatTarget(path)
     ? await chatIconEdit(before, value, colour)
     : isCanvasTarget(path) || isPagesTarget(path)
-      ? (await import('@nib/markdown/canvas')).canvasIconEdit(before, value, colour)
+      ? (await import('@orden/markdown/canvas')).canvasIconEdit(before, value, colour)
       : frontMatterEdits(before, [
           [ICON_KEY, value === null ? null : scalar(value)],
           [ICON_COLOUR_KEY, colour],

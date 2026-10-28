@@ -1,7 +1,7 @@
 /** Whether a space is an Obsidian vault: `.obsidian` at its root, which Obsidian makes
  *  with its settings in it the first time it opens a folder. In a vault a task's `📅` is
  *  the Tasks plugin's due date, a deadline; in a space of nib's own it is a start date
- *  (#371, `@nib/markdown/task-dates`).
+ *  (#371, `@orden/markdown/task-dates`).
  *
  *  Asked of the files Obsidian always writes there, by whether they are there - nothing
  *  in the app lists a hidden folder - once per root, and answered no where none can be read: the

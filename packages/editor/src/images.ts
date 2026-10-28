@@ -1,6 +1,6 @@
 import { EditorSelection, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { embedKind, formatWikilink } from '@nib/markdown/links'
+import { embedKind, formatWikilink } from '@orden/markdown/links'
 
 /** Stores a file a note was handed and returns the path to write into the document,
  *  relative to the note. Supplied by the host so the editor package stays free of

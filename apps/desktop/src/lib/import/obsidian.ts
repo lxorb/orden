@@ -11,7 +11,7 @@
  *  vault: which panes were open, the plugins' code, and Obsidian's own trash. And
  *  `app.json` is read on the way past, for the habits it records; see carry.ts. */
 
-import type { PropertiesMode } from '@nib/markdown/properties'
+import type { PropertiesMode } from '@orden/markdown/properties'
 import type { AttachmentFolder } from '../attachments'
 import { key } from '../i18n.svelte'
 import type { LinkFormat } from '../link-format'

@@ -124,7 +124,7 @@
   /* How tall a note's cover is. One number, so the editor, the reading view, an
      exported document and a published page all give a note the same top; a theme
      may say otherwise like any other token. Shorter on a hand's width of screen,
-     where the words are what somebody came for. See cover.ts in @nib/markdown. */
+     where the words are what somebody came for. See cover.ts in @orden/markdown. */
   --cover-height: 200px;
 
   /* Icons, one size per context, so how big a glyph is says what kind of thing
@@ -523,7 +523,7 @@
   /* A coloured highlight, as a wash of the tone it named. A colour emoji at the
      start of the highlight is how Obsidian 1.14 says which colour, and these are
      the five it can say; the emoji themselves are in highlights.ts in
-     @nib/markdown, which is where they belong - a stylesheet is baked into every
+     @orden/markdown, which is where they belong - a stylesheet is baked into every
      exported document, and none of those bytes should be an emoji in a comment.
 
      The same strength as `--accent-soft`, which is what a highlight with no

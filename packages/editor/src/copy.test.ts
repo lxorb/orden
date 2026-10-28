@@ -37,7 +37,7 @@ describe('what a copy leaves on the clipboard', () => {
   })
 
   /** A comment is hidden wherever a note is read, and a copy into a word processor
-   *  is a note being read; see comments.ts in @nib/markdown. */
+   *  is a note being read; see comments.ts in @orden/markdown. */
   test('a comment is in the markdown and not in the HTML', () => {
     const doc = 'words <!-- to myself --> more'
     const flavours = copiedFlavours(state(doc, 0, doc.length))

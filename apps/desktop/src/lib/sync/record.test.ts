@@ -2,7 +2,7 @@
  *  of. A clash holds the other device's whole note, so this store is the one
  *  place on the device where somebody else's words are written outside the vault. */
 
-import { conflictPath } from '@nib/markdown/paths'
+import { conflictPath } from '@orden/markdown/paths'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import type { Clash } from './conflicts'

@@ -13,8 +13,8 @@
  *  Its own module because none of it is about what is open: `noteText` prefers an
  *  open document over the disk and that is the whole of its dealings with them. */
 
-import { oneEdit } from '@nib/markdown/edits'
-import { taskAt } from '@nib/markdown/tasks'
+import { oneEdit } from '@orden/markdown/edits'
+import { taskAt } from '@orden/markdown/tasks'
 import type { SpaceTag } from '@orden/editor'
 import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'

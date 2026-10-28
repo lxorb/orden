@@ -1,4 +1,4 @@
-import { renderMarkdown } from '@nib/markdown'
+import { renderMarkdown } from '@orden/markdown'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
 import { dayOf, frontMatterFor, noteText, tagName } from './meta'

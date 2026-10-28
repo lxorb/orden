@@ -22,7 +22,7 @@
  *  paper as in a note. Only the rows are built here: a page has no lines, so the
  *  words around the match are what a row shows. */
 
-import { isPagesTarget } from '@nib/markdown/links'
+import { isPagesTarget } from '@orden/markdown/links'
 import { holderOf, paperOf } from '../pages/held'
 import { type Hit, Matcher } from '../search/match'
 import type { Query } from '../search/query'

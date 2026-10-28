@@ -12,7 +12,7 @@
  *  Nothing here deletes for good: there is no verb for it. Archived files are hidden
  *  from the list unless asked for, and are never trashed. */
 
-import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import type { AgentAnswer } from '../../automation/caller'
 import { movedIn, movedPath } from '../../automation/acts'
 import { isMarkdownPath, notePath, relativeTo } from '../../space-paths'

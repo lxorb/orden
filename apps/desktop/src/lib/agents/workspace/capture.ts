@@ -19,9 +19,9 @@
  *  is in, and an agent's own tab `browser`, as reading either does. The answer is
  *  marked as the page's: the note is named after what the page calls itself. */
 
-import { freePath } from '@nib/markdown/paths'
-import { writeFrontMatter } from '@nib/markdown/front-matter'
-import { asWords } from '@nib/markdown/words'
+import { freePath } from '@orden/markdown/paths'
+import { writeFrontMatter } from '@orden/markdown/front-matter'
+import { asWords } from '@orden/markdown/words'
 import type { AgentAnswer } from '../../automation/caller'
 import { attachmentFolder } from '../../attachments'
 import { modes } from '../../modes.svelte'

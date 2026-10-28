@@ -15,8 +15,8 @@
  *  pages the site publishes, and the index is joined to that list. A private
  *  note is in the index and never in an answer; see blog/find.ts. */
 
-import { withoutComments } from '@nib/markdown'
-import { stripFrontMatter } from '@nib/markdown/front-matter'
+import { withoutComments } from '@orden/markdown'
+import { stripFrontMatter } from '@orden/markdown/front-matter'
 import type { Env } from '../types'
 
 /** How much of a note is indexed. A long essay is twenty thousand characters,

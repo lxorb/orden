@@ -13,7 +13,7 @@
 import type { Entry } from './zip'
 import type { Picture } from './pictures'
 import { toMarkdown } from './markdown'
-import { type FoundLink } from '@nib/markdown/links'
+import { type FoundLink } from '@orden/markdown/links'
 
 /** Where the pictures go inside the bundle, as the spec names it. */
 const ASSETS = 'assets'

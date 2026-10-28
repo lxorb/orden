@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { LanguageDescription, StringStream, type StreamParser } from '@codemirror/language'
 import { tags } from '@lezer/highlight'
 import { languages as stock } from '@codemirror/language-data'
-import { htmlToMarkdown } from '@nib/markdown/from-html'
+import { htmlToMarkdown } from '@orden/markdown/from-html'
 import { fenceLanguages } from './languages'
 import { SPELLINGS } from './language-spellings'
 import { DIAGRAM_LANGUAGES } from './live-preview/render'
@@ -246,7 +246,7 @@ describe('what a fence is besides code', () => {
    *  What is deliberately not refused: the drawn fences and the runnable ones. A
    *  clipped page of documentation is the commonest clip there is and its fences say
    *  `js` and `mermaid`; the Run glyph wants a press and runs in a frame sandboxed
-   *  with `allow-scripts` alone. See `THE_APP_S_OWN` in @nib/markdown's from-html.ts,
+   *  with `allow-scripts` alone. See `THE_APP_S_OWN` in @orden/markdown's from-html.ts,
    *  which carries the whole of the reasoning. */
   test('the two a clipped page may not choose are the two that need no press', () => {
     const fenced = (language: string) =>

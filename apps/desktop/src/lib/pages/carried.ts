@@ -19,8 +19,8 @@
  *  a held paper over, so the bytes are read and hashed once per note, not once per
  *  pass. */
 
-import { readCanvas } from '@nib/markdown/canvas'
-import { pagesOf } from '@nib/markdown/pages'
+import { readCanvas } from '@orden/markdown/canvas'
+import { pagesOf } from '@orden/markdown/pages'
 import { paperOf } from './held'
 
 /** A page note the account holds: where it is here, and its id there. */

@@ -8,7 +8,7 @@
  *  moves on as each one passes. */
 
 import type { Row } from '@orden/bases'
-import { momentOf, plainWords, reminderId, remindTimes } from '@nib/markdown/task-reminders'
+import { momentOf, plainWords, reminderId, remindTimes } from '@orden/markdown/task-reminders'
 
 /** How many reminders a device holds at once. */
 export const MOST = 64

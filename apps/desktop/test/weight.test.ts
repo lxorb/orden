@@ -91,7 +91,7 @@ const ENTRY = fileURLToPath(new URL('../src/main.ts', import.meta.url))
 const WORKSPACE = [
   '@orden/editor',
   '@orden/glasses',
-  '@nib/markdown',
+  '@orden/markdown',
   '@orden/rooms',
   '@orden/themes',
 ]
@@ -399,7 +399,7 @@ function holds(tail: string): boolean {
  *  open; it is the workspace, the link index and the editor doing more. What had no
  *  business here went behind a door: the conversion of a website an older nib wrote
  *  as a note, with the reader of that format and the word counter under it
- *  (web-tab/convert.ts, note.ts, words.ts in @nib/markdown - 15,080 bytes and three
+ *  (web-tab/convert.ts, note.ts, words.ts in @orden/markdown - 15,080 bytes and three
  *  files), fetched by the first such note opened. Measured 3,325,127.
  *
  *  The palette learned recent notes, folders, making a note, headings and lines (the
@@ -568,7 +568,7 @@ function holds(tail: string): boolean {
  *
  *  Not raised 2026-09-30 for a chunk that did not arrive, from a main at 3,214,640 and
  *  376 to 3,210,758 and 378. What had to come in is the door every lazy part is fetched
- *  through (door.ts in @nib/markdown) and the page's ear for a failed fetch
+ *  through (door.ts in @orden/markdown) and the page's ear for a failed fetch
  *  (reloading.svelte.ts), both here before a deploy can take a chunk away; what the page
  *  then does about it (reload-when.ts) is fetched at the launch's last turn. What paid
  *  for them is page-setup.ts, 8,977 bytes the settings held in front of the first paint
@@ -630,7 +630,7 @@ function holds(tail: string): boolean {
  *
  *  Lowered the same day, to 3,195,000, from that main, which every queued pull request
  *  was failing by a hundred bytes to seven kilobytes before the raise. Not a raise for
- *  any of them: room, made by taking the renderer out of the first paint. `@nib/markdown`'s
+ *  any of them: room, made by taking the renderer out of the first paint. `@orden/markdown`'s
  *  own entry and what only it reads - marked's extensions, the block grammars, the
  *  comments, the wikilinks and the starts they read with, sixty-six kilobytes of source
  *  over six modules, and the whole of marked in the built figure - was there for five
@@ -788,7 +788,7 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-19, to 3,250,000, for the bug fixes after #419: the version row in
  *  Settings (#490), and markdown's lookups by Map and CommonMark's fence rule (#492,
- *  #493), had taken the room down to 17 bytes, and fixes in @nib/markdown land beside
+ *  #493), had taken the room down to 17 bytes, and fixes in @orden/markdown land beside
  *  the app's in parallel. Measured 3,244,983.
  *
  *  Raised 2026-10-19, to 3,251,000, for #548: Send feedback's bug at the foot of the
@@ -896,7 +896,7 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-26, to 3,362,800, for B482: code is never a tag, in a quote, a
  *  callout, a list item or indented, as the renderer judges it, and a comment marker
- *  there hides nothing (`CodeBlocks`, added to fences.ts in @nib/markdown so no
+ *  there hides nothing (`CodeBlocks`, added to fences.ts in @orden/markdown so no
  *  module is added, and read by search/tags.ts and comments.ts). Measured 3,362,016.
  *
  *  Raised 2026-10-26, to 3,364,000, for the round 4 fixes landed together: main with
@@ -927,7 +927,7 @@ function holds(tail: string): boolean {
  *  note is asked of the note, a share of it on its own and what the last listing kept
  *  included (`reachedByOthers` and the kept `{ role, shared, items }` in
  *  sharing.svelte.ts), and an embed or a canvas file card is trusted by its own note
- *  (`embedNote` in link-index.svelte.ts, `EmbeddedNote` in @nib/markdown). Measured
+ *  (`embedNote` in link-index.svelte.ts, `EmbeddedNote` in @orden/markdown). Measured
  *  3,388,683 with main as of this raise.
  *
  *  Raised 2026-10-27, to 3,390,900, for B565: the note an agent names is read by one
@@ -996,7 +996,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['lucide', 'the icon library'],
     // The formula engine, its chemistry pack and the emoji table, because the renderer
     // imported all three outright. Loaded when a note turns out to have a formula or a
-    // `:shortcode:` in it; see @nib/markdown/engines.
+    // `:shortcode:` in it; see @orden/markdown/engines.
     ['katex', 'the formula engine'],
     ['katex/contrib/mhchem', 'the chemistry pack'],
     ['node-emoji', 'the emoji table'],

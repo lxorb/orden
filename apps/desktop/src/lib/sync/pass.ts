@@ -19,8 +19,8 @@
  *  is settled too, the newer copy standing: it is a tab written down, and a copy of
  *  a bookmark is clutter rather than safety. See web-tab/settle.ts. */
 
-import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@nib/markdown/links'
-import { conflictPath } from '@nib/markdown/paths'
+import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
+import { conflictPath } from '@orden/markdown/paths'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
 import { sha256 } from '../bytes'
@@ -115,7 +115,7 @@ async function settled(
   theirsNewer: () => Promise<boolean>,
 ): Promise<string | null> {
   if (isCanvasTarget(path) || isPagesTarget(path)) {
-    return (await import('@nib/markdown/canvas-merge')).mergeCanvasFiles(ours, theirs)
+    return (await import('@orden/markdown/canvas-merge')).mergeCanvasFiles(ours, theirs)
   }
 
   if (isWebTarget(path)) return settleShortcuts(path, ours, theirs, await theirsNewer())

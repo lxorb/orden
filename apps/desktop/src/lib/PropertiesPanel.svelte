@@ -9,7 +9,7 @@
    *  the rows are here, beside the note, one press away and out of the words.
    *
    *  Each value is drawn by properties/PropertyValue.svelte, the control a table's cell
-   *  draws too. Every control writes through property-edits.ts in @nib/markdown, whose answer is
+   *  draws too. Every control writes through property-edits.ts in @orden/markdown, whose answer is
    *  one edit of the characters that change and nothing else in the file. It goes into
    *  the note's own document, so it is the note's undo step and every pane showing the
    *  note has it at once; see `edit` in @orden/editor's shared.ts.
@@ -19,9 +19,9 @@
    *  nothing here runs per keystroke. Fetched the first time the panel is shown; see
    *  surfaces.svelte.ts. */
   import { documentOf, insertFrontMatter } from '@orden/editor'
-  import type { TextEdit } from '@nib/markdown/edits'
-  import { frontMatterBlock } from '@nib/markdown/front-matter'
-  import { type Property, readProperties } from '@nib/markdown/properties'
+  import type { TextEdit } from '@orden/markdown/edits'
+  import { frontMatterBlock } from '@orden/markdown/front-matter'
+  import { type Property, readProperties } from '@orden/markdown/properties'
   import {
     addProperty,
     propertyNamed,
@@ -30,7 +30,7 @@
     renameProperty,
     writeList,
     writeProperty,
-  } from '@nib/markdown/property-edits'
+  } from '@orden/markdown/property-edits'
   import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'

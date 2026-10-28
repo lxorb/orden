@@ -12,7 +12,7 @@
  *  `[[Note#^blockid]]`, `![[Note]]` for the note's content rather than a link
  *  to it, and `^blockid` at the end of a paragraph to give it a name.
  *
- *  Imported on its own - `@nib/markdown/links` - by the editor, which wants the
+ *  Imported on its own - `@orden/markdown/links` - by the editor, which wants the
  *  grammar and not the renderer that stands on it. */
 
 import { closingTicks, CodeBlocks, WORDS } from './fences'

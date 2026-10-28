@@ -25,7 +25,7 @@
  *  as its own source in the HTML flavour - which is what the markdown flavour beside
  *  it says anyway, and it only happens where nothing has drawn a formula yet, since
  *  the live preview loads the engine the moment a note has one. See
- *  @nib/markdown/engines.
+ *  @orden/markdown/engines.
  *
  *  The renderer itself is the same kind of thing one size up: marked and everything a
  *  note can hold, which no window needs to draw its first frame. It is fetched as the
@@ -35,7 +35,7 @@
 
 import type { EditorState, Extension } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 
 /** What the HTML flavour says about itself: that this app drew it, and that the
  *  markdown beside it on the clipboard is what it was drawn from.
@@ -59,7 +59,7 @@ const OURS = 'data-nib="markdown"'
 let render: ((source: string) => string) | null = null
 
 const fetchRenderer = door(async () => {
-  render = (await import('@nib/markdown')).renderMarkdown
+  render = (await import('@orden/markdown')).renderMarkdown
 })
 
 /** The renderer a copy writes its HTML with, fetched once. A test awaits it; the

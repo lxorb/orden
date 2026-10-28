@@ -11,7 +11,7 @@
  *  through the engine where the answer is "done", so a recurring task dropped on Done
  *  makes its next occurrence as a tick in the editor would. */
 
-import { deadlineField, deadlineOf, startField, startOf } from '@nib/markdown/task-dates'
+import { deadlineField, deadlineOf, startField, startOf } from '@orden/markdown/task-dates'
 import { groupName, type Priority, type Row, type TaskChange, type Value } from '@orden/bases'
 import type { RowChange } from '../rows/write'
 import { bare, isNoteProperty } from './columns'

@@ -3,7 +3,7 @@
  *  examples: `{results, next_cursor}` pages, `due {date, string, is_recurring,
  *  timezone}`, `deadline {date}`, `duration {amount, unit}`, priority 4 as p1). */
 
-import { renderMarkdown } from '@nib/markdown'
+import { renderMarkdown } from '@orden/markdown'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { sourceOf } from './sources'
 import {

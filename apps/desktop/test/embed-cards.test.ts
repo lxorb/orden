@@ -6,7 +6,7 @@ import { describe, expect, test } from 'vitest'
  *
  *  `![](https://youtube.com/watch?v=…)` renders as a card the size the frame will
  *  be, and the frame arrives when the card is pressed - one piece of markup out of
- *  @nib/markdown, one loader in @orden/editor's web-frame.ts, one set of rules in
+ *  @orden/markdown, one loader in @orden/editor's web-frame.ts, one set of rules in
  *  packages/themes/src/document.css. Four surfaces show it: the reading view, the
  *  editor's live preview, a canvas card and a slide.
  *

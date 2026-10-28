@@ -11,7 +11,7 @@
  *  guessed at, and the fence keeps its source either way. */
 
 import type { Answer, Row } from '@orden/bases'
-import { escapeAll } from '@nib/markdown/html'
+import { escapeAll } from '@orden/markdown/html'
 import { shownName } from './note-name'
 import { insideSpace } from './space-paths'
 

@@ -15,7 +15,7 @@
 import { syntaxTree } from '@codemirror/language'
 import { Compartment, type EditorState, type Extension } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import { fenceCode, fenceLanguage } from '../fence'
 import { enclosingNamed } from '../nodes'
 import { openViews } from '../open-views'

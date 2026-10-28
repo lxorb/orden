@@ -20,7 +20,7 @@
    *  Reordering is a drag, the way moving a section in the outline is. Dropping a
    *  page between two others moves the page and everything written on it. */
 
-  import { moved, removed, reshaped } from '@nib/markdown/pages'
+  import { moved, removed, reshaped } from '@orden/markdown/pages'
   import type { Canvas } from './canvas/format'
   import { PAPER_NAMES, PATTERNS, type PageNode, type Paper, type Pattern } from './canvas/format'
   import { paintInk } from './canvas/paint'

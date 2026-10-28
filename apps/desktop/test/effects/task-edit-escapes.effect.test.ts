@@ -16,7 +16,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
 import type { Entry } from '../../src/lib/quick-add/entry'
 import QuickAdd from '../../src/lib/quick-add/QuickAdd.svelte'
-import { changedTask } from '@nib/markdown/task-edits'
+import { changedTask } from '@orden/markdown/task-edits'
 import { changeOf, prefillFor } from '../../src/lib/views/task-edit'
 
 let shown: ReturnType<typeof mount> | undefined

@@ -385,7 +385,7 @@ async function newTab(call: Call): Promise<AgentAnswer> {
     }
 
     case 'pages': {
-      const { blankPages } = await import('@nib/markdown/pages')
+      const { blankPages } = await import('@orden/markdown/pages')
       const { modes } = await import('../../modes.svelte')
       const made = workspace.openUnsaved(
         'pages',

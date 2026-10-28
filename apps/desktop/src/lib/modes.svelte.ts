@@ -29,15 +29,15 @@ import {
   type VimMode,
   type EditorView,
 } from '@orden/editor'
-import { setHardBreaks } from '@nib/markdown/breaks'
-import { highlightTone, type HighlightColour } from '@nib/markdown/highlights'
-import { type PropertiesMode, propertiesMode } from '@nib/markdown/properties'
+import { setHardBreaks } from '@orden/markdown/breaks'
+import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
+import { type PropertiesMode, propertiesMode } from '@orden/markdown/properties'
 import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { viewport } from './viewport.svelte'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
-import { isPaper, type Paper } from '@nib/markdown/papers'
+import { isPaper, type Paper } from '@orden/markdown/papers'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from './link-format'
 import { type ConflictRule, conflictRule, DEFAULT_RULE } from './sync/conflicts'
 import {
@@ -500,7 +500,7 @@ class Modes {
    *
    *  Only what a page note *starts* as. A page added to a note takes the size of the one
    *  it follows, and a page already written on is changed from its own menu; see
-   *  `added` and `reshaped` in @nib/markdown/pages. */
+   *  `added` and `reshaped` in @orden/markdown/pages. */
   pagesPaper = $state<Paper>(DEFAULTS.pagesPaper)
 
   /** What a device does when the same note was written in two places. On the
@@ -539,7 +539,7 @@ class Modes {
    *  The last colour chosen sticks, because marking up a paper is one colour a
    *  dozen times rather than a fresh decision each time. On the account: it is
    *  about how somebody marks up, not about the machine they are at. See
-   *  highlights.ts in @nib/markdown for which tone each emoji is. */
+   *  highlights.ts in @orden/markdown for which tone each emoji is. */
   highlightTone = $state<number | null>(DEFAULTS.highlightTone)
 
   /** Whether a single newline breaks the line instead of being the space
@@ -550,7 +550,7 @@ class Modes {
    *  reads the way it is typed. Either way it is the one renderer that answers, so
    *  the reading view, an export, a card on a canvas and a published page all say
    *  the same thing; a deck keeps its single breaks whatever this says, because a
-   *  slide is a poster. See `RenderOptions.breaks` in @nib/markdown. */
+   *  slide is a poster. See `RenderOptions.breaks` in @orden/markdown. */
   hardBreaks = $state(DEFAULTS.hardBreaks)
 
   /** How a link to another note is written: `[[wikilinks]]`, or markdown links
@@ -568,7 +568,7 @@ class Modes {
    *  so here, and somebody whose metadata holds a shape nib cannot read asks for
    *  the source. The one answer is read by the editor and by the reading view, so a
    *  note cannot say one thing written and another read; see properties.ts in
-   *  @nib/markdown and hidden-front-matter.ts in the editor. */
+   *  @orden/markdown and hidden-front-matter.ts in the editor. */
   properties = $state<PropertiesMode>(DEFAULTS.properties)
 
   constructor() {
@@ -673,7 +673,7 @@ class Modes {
     }
     // The renderer and the one link writer are told once, here and in the setters
     // below, rather than asked by every caller; see `setHardBreaks` in
-    // @nib/markdown and `setLinkWriting` in link-format.ts.
+    // @orden/markdown and `setLinkWriting` in link-format.ts.
     setHardBreaks(this.hardBreaks)
     setLinkWriting(this.linkFormat)
     setHighlightColour(this.highlight)

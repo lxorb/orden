@@ -2,8 +2,8 @@
  *  a room through the plane's Yjs document, object by object, and in a file through
  *  the merge two devices' copies get. See docs/agent-native.md 8.7. */
 
-import { type Canvas, type CanvasNode, emptyCanvas } from '@nib/markdown/canvas'
-import { merged, stamped } from '@nib/markdown/canvas-merge'
+import { type Canvas, type CanvasNode, emptyCanvas } from '@orden/markdown/canvas'
+import { merged, stamped } from '@orden/markdown/canvas-merge'
 import { pushPlane, readPlane, seedPlane } from '@orden/rooms/plane'
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'

@@ -10,9 +10,9 @@
  *  off that space's own index. The four verbs past the first three are anchored edits
  *  too, so each is one undo step with the agent's caret, like any other. */
 
-import { frontMatterEdit, isPropertyName } from '@nib/markdown/front-matter'
-import { taskAt } from '@nib/markdown/tasks'
-import { flowItem, scalar } from '@nib/markdown/yaml'
+import { frontMatterEdit, isPropertyName } from '@orden/markdown/front-matter'
+import { taskAt } from '@orden/markdown/tasks'
+import { flowItem, scalar } from '@orden/markdown/yaml'
 import type { AgentAnswer } from '../../automation/caller'
 import { onDisk as there } from '../../on-disk'
 import { notePath } from '../../space-paths'

@@ -3,7 +3,7 @@
  *  min`, `30 min` before, p1's tone. */
 
 import { dayWords, timeWords } from '@orden/editor/task-days'
-import type { Remind } from '@nib/markdown/task-line'
+import type { Remind } from '@orden/markdown/task-line'
 import { t } from '../i18n.svelte'
 
 export { dayWords }

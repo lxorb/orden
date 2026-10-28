@@ -5,7 +5,7 @@
  *  (docs/even.md). today.test.ts holds it to the engine's answer for the same rows, so
  *  the two cannot drift. What the dates mean is task-dates' (#371). */
 
-import { dayOf, deadlineOf, hasStarted, isLate, startOf } from '@nib/markdown/task-dates'
+import { dayOf, deadlineOf, hasStarted, isLate, startOf } from '@orden/markdown/task-dates'
 import type { Row } from '../types'
 
 /** Whether a row is on Today; with `undated`, a task with no day of its own to wait for

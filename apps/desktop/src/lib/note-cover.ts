@@ -5,7 +5,7 @@
  *  machine had. Obsidian shows neither key and changes neither, so a note with a
  *  cover opens there as the note it is, and a published page has read `cover:` as
  *  its `og:image` since before there was a banner to draw. See cover.ts in
- *  @nib/markdown, which is the one place that knows the two keys.
+ *  @orden/markdown, which is the one place that knows the two keys.
  *
  *  The picture is chosen through the browser's own file chooser and stored the way a
  *  pasted one is - `storeImage`, addressed by the hash of its bytes - so a picture
@@ -18,9 +18,9 @@
  *  in its editor rather than off the disk under its reader's caret, and one undo puts
  *  it back. */
 
-import { COVER_KEY, COVER_POSITION_KEY } from '@nib/markdown/cover'
-import { frontMatterEdits } from '@nib/markdown/front-matter'
-import { scalar } from '@nib/markdown/yaml'
+import { COVER_KEY, COVER_POSITION_KEY } from '@orden/markdown/cover'
+import { frontMatterEdits } from '@orden/markdown/front-matter'
+import { scalar } from '@orden/markdown/yaml'
 import { storeImage } from './assets'
 import { busy } from './busy.svelte'
 import { chooseFiles, PICTURES } from './choose-files'

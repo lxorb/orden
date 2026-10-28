@@ -2,8 +2,8 @@
  *  a card put on a page by the page's own corner, and the three page operations the page
  *  menu makes (docs/pages.md). */
 
-import { type Canvas, type CanvasNode } from '@nib/markdown/canvas'
-import { emptyPages, pagesOf } from '@nib/markdown/pages'
+import { type Canvas, type CanvasNode } from '@orden/markdown/canvas'
+import { emptyPages, pagesOf } from '@orden/markdown/pages'
 import { describe, expect, test } from 'vitest'
 import { applied } from './canvas-ops'
 import { readablePages } from './pages-ops'

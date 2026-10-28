@@ -13,17 +13,17 @@
  *  and the pick is one edit of exactly the characters that change (`writeTask`). */
 
 import type { EditorView } from '@codemirror/view'
-import { writeTask } from '@nib/markdown/task-edits'
+import { writeTask } from '@orden/markdown/task-edits'
 import {
   type FieldToken,
   type ParsedTask,
   parseTask,
   type Priority,
   type TaskFields,
-} from '@nib/markdown/task-line'
+} from '@orden/markdown/task-line'
 import { label } from '../labels'
 import { dayWords, timeWords, todayHere } from '../task-days'
-import { deadlineOf, type DueReads, startOf } from '@nib/markdown/task-dates'
+import { deadlineOf, type DueReads, startOf } from '@orden/markdown/task-dates'
 import { noteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
 

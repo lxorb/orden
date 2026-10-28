@@ -12,11 +12,11 @@ import {
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { isExternal } from '../external'
 import { fenceCode, fenceLanguage } from '../fence'
-import { readChart } from '@nib/markdown/chart'
-import { htmlBlockCard } from '@nib/markdown/html-block'
-import { type EmbedKind, embedKind } from '@nib/markdown/links'
-import { coverOf } from '@nib/markdown/cover'
-import { readProperties } from '@nib/markdown/properties'
+import { readChart } from '@orden/markdown/chart'
+import { htmlBlockCard } from '@orden/markdown/html-block'
+import { type EmbedKind, embedKind } from '@orden/markdown/links'
+import { coverOf } from '@orden/markdown/cover'
+import { readProperties } from '@orden/markdown/properties'
 import { CoverWidget } from './cover'
 import { drawnAs, propertiesMode, shownChanged } from './hidden-front-matter'
 import { PropertiesWidget } from './properties'
@@ -199,7 +199,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
 
         // The note's own metadata, as the rows it says. A block like any other:
         // the caret in it shows the YAML, which is the only editor it needs.
-        // A block holding a shape @nib/markdown cannot read stays source, whole;
+        // A block holding a shape @orden/markdown cannot read stays source, whole;
         // see properties.ts there and beside this file.
         case 'FrontMatter': {
           const span = found(node.from, node.to)

@@ -24,7 +24,7 @@
  *  pdf-lib is loaded when an export runs and not before, like the rest of the
  *  export's libraries. */
 
-import { onPage, pagesOf } from '@nib/markdown/pages'
+import { onPage, pagesOf } from '@orden/markdown/pages'
 import { type Canvas, type InkStroke, type PageNode, readCanvas } from '../canvas/format'
 import { INK_STYLES, inkOpacity, outlineOf } from '../canvas/ink'
 import { inkColour, type Palette } from '../canvas/paint'

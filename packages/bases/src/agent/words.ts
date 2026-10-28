@@ -3,7 +3,7 @@
  *  Tasks plugin's marks written in the words are read first and win; quick add's
  *  grammar reads the rest (`tomorrow 4pm`, `p1`, `every sunday`, `>Note /Heading`). */
 
-import { readTask, type TaskFields } from '@nib/markdown/task-line'
+import { readTask, type TaskFields } from '@orden/markdown/task-line'
 import { parseQuickAdd } from '../language/parse'
 import { taskOf } from './entry'
 import type { ReadWords } from './tasks'

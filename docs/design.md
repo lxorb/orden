@@ -957,7 +957,7 @@ of a note and of a space.
 Six colours, once, named by number: `--canvas-1` to `--canvas-6` in
 `tokens.css`, restated per scheme like any other colour. They are Obsidian's own
 canvas palette, so a board coloured in either app reads the same in the other, and
-a chart in a note is drawn out of the same six (`chart.ts` in `@nib/markdown`,
+a chart in a note is drawn out of the same six (`chart.ts` in `@orden/markdown`,
 which carries a hex beside each token for the one surface that has no stylesheet -
 a picture pulled out of a document and looked at on its own).
 
@@ -1136,7 +1136,7 @@ keys as rows, each with the control its value asks for - a field, a number, a da
 checkbox, chips for a list, a menu where the app has fixed answers - and a row to add
 one. A key is renamed by a double click on it or from its menu, and removed from its
 menu. Every change is one edit of exactly the characters that change, through
-`property-edits.ts` in @nib/markdown, into the note's own document: the note's own
+`property-edits.ts` in @orden/markdown, into the note's own document: the note's own
 undo takes it back, and every pane showing the note has it at once. A block nib cannot
 read without guessing - a comment, a nested shape - is shown as the YAML it is and not
 turned into rows. A tag in a `tags` list asks the space about itself, as a tag does

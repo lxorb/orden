@@ -18,8 +18,8 @@
  *  This file is that difference and nothing more: what fills an empty document, what
  *  the settle writes, and the two questions a settle asks before it writes at all. */
 
-import { holdsCanvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
-import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
+import { holdsCanvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
+import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import { TEXT } from '@orden/rooms'
 import { fold } from '@orden/rooms/fold'
 import { planeIsEmpty, pushPlane, readPlane, seedExtras, seedPlane } from '@orden/rooms/plane'

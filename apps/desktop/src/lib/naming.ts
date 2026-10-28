@@ -14,7 +14,7 @@
  *  Pure, so the whole rule reads as a list of names and the field is left with
  *  nothing to decide; see naming.test.ts. */
 
-import { foldName } from '@nib/markdown/links'
+import { foldName } from '@orden/markdown/links'
 import { endingOf, isReserved } from './note-name'
 
 export { isReserved }

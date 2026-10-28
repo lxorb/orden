@@ -7,7 +7,7 @@
  *  icon picker has no use for: which emoji take a skin tone. Both arrive with the first
  *  picker opened, never in front of the first paint. */
 
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import { setNamed, tonedEmoji } from '../icon-sets'
 import { EMOJI_SET, type IconEntry, rankIcons } from '../icons'
 

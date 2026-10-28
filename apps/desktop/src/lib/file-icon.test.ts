@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { readCanvas } from '@nib/markdown/canvas'
+import { readCanvas } from '@orden/markdown/canvas'
 
 /** Choosing an icon writes the file's own words, which means it goes through
  *  everything a write goes through: the version before it is kept, a note open in

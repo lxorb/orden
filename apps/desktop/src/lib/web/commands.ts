@@ -22,7 +22,7 @@ import {
   spaceOf,
   within,
 } from './paths'
-import { isBaseTarget, isChatTarget, isWebTarget } from '@nib/markdown/links'
+import { isBaseTarget, isChatTarget, isWebTarget } from '@orden/markdown/links'
 import { assetType } from './asset-route'
 import { isReserved } from '../naming'
 import { assets, type FileRow, files, KEEP, meta, snapshots, stats } from './store'

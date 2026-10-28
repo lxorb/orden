@@ -1,4 +1,4 @@
-import { diagramKey } from '@nib/markdown/diagrams'
+import { diagramKey } from '@orden/markdown/diagrams'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { createHash } from 'node:crypto'
 import { call, file, mail, signIn, testEnv, type TestEnv } from './harness'

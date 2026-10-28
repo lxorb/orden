@@ -9,11 +9,11 @@
  *  not have yet is made at its end. A description is the first indented paragraph
  *  under the task, as 5.1 has it. */
 
-import type { TextEdit } from '@nib/markdown/edits'
-import { CodeBlocks, WORDS } from '@nib/markdown/fences'
-import { frontMatterBlock } from '@nib/markdown/front-matter'
-import { taskLine } from '@nib/markdown/task-edits'
-import type { TaskFields } from '@nib/markdown/task-line'
+import type { TextEdit } from '@orden/markdown/edits'
+import { CodeBlocks, WORDS } from '@orden/markdown/fences'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { taskLine } from '@orden/markdown/task-edits'
+import type { TaskFields } from '@orden/markdown/task-line'
 import type { QuickFields } from '../language/parse'
 
 /** One task, as the reader typed it and the grammar read it. */

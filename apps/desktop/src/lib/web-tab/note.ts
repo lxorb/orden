@@ -1,7 +1,7 @@
 /** The two notes a web tab has anything to do with.
  *
  *  **A clip**, which is a note this app composes out of a page: the page's words,
- *  under front matter that says `source:` and `clipped:`, in `@nib/markdown/clip-note`'s
+ *  under front matter that says `source:` and `clipped:`, in `@orden/markdown/clip-note`'s
  *  shape. A clip is the words as they were rather than a window on the
  *  site, so it is a note and always will be. See clip.ts.
  *
@@ -16,8 +16,8 @@
  *  know about. Until then they cost one front-matter read on a pass that was reading
  *  the file anyway. */
 
-import type { ClipOrigin } from '@nib/markdown/clip-note'
-import { frontMatterEdit, frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
+import type { ClipOrigin } from '@orden/markdown/clip-note'
+import { frontMatterEdit, frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { isWebAddress } from './address'
 
 /** The key that made a note a website. */
@@ -97,7 +97,7 @@ interface Read {
 /** What a page's HTML holds worth keeping, and what the page is called and tagged.
  *
  *  A web tab's page hands over a snapshot of itself (see
- *  `@nib/markdown/snapshot`), and the snapshot goes through the article
+ *  `@orden/markdown/snapshot`), and the snapshot goes through the article
  *  extractor - the article, or the selection the page marked - which a live page's DOM
  *  goes through too, so a page clips to the same words however it was read. Anything else is already
  *  the part worth keeping: a page an agent read whole, or the nothing a browser
@@ -106,10 +106,10 @@ interface Read {
  *  The extractor is Readability and most of a hundred kilobytes, so it is fetched
  *  here, when a snapshot has arrived to be read, and never on the way to a window. */
 export async function articleOf(page: Read): Promise<ClipOrigin & { html: string }> {
-  const { isSnapshot } = await import('@nib/markdown/snapshot')
+  const { isSnapshot } = await import('@orden/markdown/snapshot')
   if (!isSnapshot(page.html)) return { kind: 'page', ...page, tags: [] }
 
-  const { readSnapshot } = await import('@nib/markdown/article')
+  const { readSnapshot } = await import('@orden/markdown/article')
   const read = readSnapshot(page.html, page.url)
 
   return { ...read, title: read.title.trim() || page.title }
@@ -117,7 +117,7 @@ export async function articleOf(page: Read): Promise<ClipOrigin & { html: string
 
 /** A page as a note: where it came from, when, and what it said.
  *
- *  The shape is `@nib/markdown/clip-note`'s, which the clipper extension writes
+ *  The shape is `@orden/markdown/clip-note`'s, which the clipper extension writes
  *  through too, after the same extractor (`articleOf`) and the same converter - so a
  *  folder of clips reads the same whichever of the two saved it, and the same page
  *  clipped from both is the same note. The title is settled there, so the front
@@ -132,8 +132,8 @@ export async function articleOf(page: Read): Promise<ClipOrigin & { html: string
 export async function clipNote(page: Read, when: Date): Promise<string> {
   const [read, { htmlToMarkdown }, { clipNoteText }] = await Promise.all([
     articleOf(page),
-    import('@nib/markdown/from-html'),
-    import('@nib/markdown/clip-note'),
+    import('@orden/markdown/from-html'),
+    import('@orden/markdown/clip-note'),
   ])
 
   const words = read.html.trim() ? htmlToMarkdown(read.html) : ''

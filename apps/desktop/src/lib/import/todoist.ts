@@ -17,9 +17,9 @@
  *  the API's pages or the CSV become `Account`, and `planOf` writes the notes. */
 
 import { parseRule, ruleText } from '@orden/bases'
-import { taskLine } from '@nib/markdown/task-edits'
-import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@nib/markdown/task-line'
-import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
+import { taskLine } from '@orden/markdown/task-edits'
+import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@orden/markdown/task-line'
+import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
 import { key } from '../i18n.svelte'
 import { readCsv } from './csv'
 import { dayOf } from './meta'

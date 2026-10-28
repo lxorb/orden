@@ -1,6 +1,6 @@
 //! Which lines of a note are code, judged the way the renderer judges them.
 //!
-//! The twin of `CodeBlocks` in fences.ts in `@nib/markdown`, which the browser build and
+//! The twin of `CodeBlocks` in fences.ts in `@orden/markdown`, which the browser build and
 //! the renderer's own comment stripper read with; the tests hold the two to the
 //! same answers. A fence inside a quote or a callout carries `> ` in front of
 //! it, one inside a list item is indented under the item, and a line indented
