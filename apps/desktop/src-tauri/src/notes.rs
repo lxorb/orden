@@ -19,7 +19,8 @@ use crate::carry::{copy_whole, move_whole};
 use crate::clock;
 use crate::paths::{
     at_most, at_most_stamped, cannot, chosen, copy_held, drop_held, in_spaces, is_pdf, made,
-    move_held, move_paper, openable, paper_in_the_way, write_in_place,
+    move_held, move_paper, named_for_every_machine, openable, paper_in_the_way, spaces_dir,
+    write_in_place,
 };
 
 /// The most a note may be for nib to read it: 64 MiB.
@@ -79,7 +80,13 @@ pub fn words_stamped(target: &Path) -> Result<(String, fs::Metadata), String> {
 /// The line endings the file already had are kept; see `as_written`.
 #[tauri::command(async)]
 pub fn write_note(app: AppHandle, path: String, content: String) -> Result<(), String> {
-    note_written(&chosen(&app, &path)?, &path, &content)
+    let target = chosen(&app, &path)?;
+    // A note made in a space is held to a name every machine can hold (#477); one already
+    // there, and a file outside the spaces, are written as they are.
+    if !target.exists() && target.starts_with(spaces_dir(&app)?) {
+        named_for_every_machine(&target)?;
+    }
+    note_written(&target, &path, &content)
 }
 
 /// The text writer once the path has been judged.
@@ -223,6 +230,11 @@ pub fn rename_note(
 /// `rename_note` past its gate, which wants an app around it.
 fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), String> {
     let respelling = respelled(source, target, same_entry);
+    // A new name is held to what every machine can hold (#477); a move that keeps the
+    // name is not a new name.
+    if source.file_name() != target.file_name() {
+        named_for_every_machine(target)?;
+    }
 
     // A page note brings its paper, `<name>.pages.pdf`, and a file of that name already
     // there is somebody's own: it was moved over, or hidden as held (#538). And a PDF
@@ -369,6 +381,8 @@ pub fn copy_path(app: AppHandle, from: String, to: String) -> Result<(), String>
 /// The copy itself, with the two paths already judged. Whole or not at all, and
 /// never over anything; see `copy_whole`.
 fn copied(source: &Path, target: &Path) -> Result<(), String> {
+    named_for_every_machine(target)?;
+
     // A folder copied into itself would go on finding the copy it is making.
     if target.starts_with(source) {
         return Err(format!("{} cannot be copied into itself", source.display()));
@@ -398,7 +412,16 @@ fn copied(source: &Path, target: &Path) -> Result<(), String> {
 #[tauri::command(async)]
 pub fn create_folder(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
-    made(&target)
+    folder_made(&target)
+}
+
+/// `create_folder` past its gate: every folder it makes held to a name every machine can
+/// hold (#477), and the ones already there left as they are.
+fn folder_made(target: &Path) -> Result<(), String> {
+    for folder in target.ancestors().take_while(|folder| !folder.exists()) {
+        named_for_every_machine(folder)?;
+    }
+    made(target)
 }
 
 /// Removes a folder and everything under it.
@@ -494,7 +517,7 @@ pub fn stamp_of(target: &Path) -> Option<Stamp> {
 
 #[cfg(test)]
 mod tests {
-    use super::{copied, move_entry, respelled, Stamp};
+    use super::{copied, folder_made, move_entry, renamed, respelled, Stamp};
     use std::path::Path;
     // The trait the encoding method hangs off. The module above reaches it
     // through what it imports; a test module is its own scope and has to say so.
@@ -1130,5 +1153,37 @@ mod tests {
             assert!(super::renamed(&was, &dir.path().join("Y.pages"), false, alone).is_err());
             assert!(was.exists());
         }
+    }
+
+    /// #477: a name Windows keeps for a device is refused where a note or a folder is
+    /// given it - renamed, copied to, made - on every platform, since the note syncs to
+    /// the reader's Windows machine too. One that already has it is still moved.
+    #[test]
+    fn a_device_name_is_never_given_to_a_note_or_a_folder() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let note = dir.path().join("Plan.md");
+        std::fs::write(&note, "words").expect("a note");
+
+        for name in ["nul.md", "CON .md", "COM¹.md", "conin$.md"] {
+            assert!(
+                renamed(&note, &dir.path().join(name), false, false).is_err(),
+                "{name}"
+            );
+            assert!(copied(&note, &dir.path().join(name)).is_err(), "{name}");
+        }
+        assert!(note.exists(), "left where it was");
+
+        assert!(folder_made(&dir.path().join("Work/NUL/Notes")).is_err());
+        assert!(!dir.path().join("Work").exists(), "nothing made on the way");
+        folder_made(&dir.path().join("Work/Notes")).expect("an ordinary folder");
+
+        // A note that arrived under such a name is still moved, under the name it has.
+        let arrived = dir.path().join("aux.md");
+        std::fs::write(&arrived, "kept").expect("a note from elsewhere");
+        renamed(&arrived, &dir.path().join("Work/aux.md"), false, false).expect("moved");
+        assert_eq!(
+            std::fs::read_to_string(dir.path().join("Work/aux.md")).expect("there"),
+            "kept"
+        );
     }
 }

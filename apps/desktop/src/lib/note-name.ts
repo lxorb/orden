@@ -8,6 +8,31 @@
  *  The strip, the file list, the palette, the menus and the window title all ask
  *  here, so a document is called one thing wherever it is listed. */
 
+/** Names Windows keeps for devices, whatever the extension is: `NUL.md` names
+ *  the device as surely as `NUL`, and Windows reads the superscripts `¹²³` as
+ *  digits, so `COM¹` is a port as surely as `COM1`. The crate's own list (`RESERVED` in
+ *  src-tauri/src/paths.rs), said again here because a field answers between two
+ *  keystrokes and cannot wait for a round trip to the one place that has it; and here
+ *  rather than in naming.ts because a name made from a title is held to it too. */
+const RESERVED = [
+  'CON',
+  'PRN',
+  'AUX',
+  'NUL',
+  'CONIN$',
+  'CONOUT$',
+  ...Array.from('0123456789¹²³', (digit) => [`COM${digit}`, `LPT${digit}`]).flat(),
+]
+
+/** Whether the name is one of the device names, going by the part in front of
+ *  the first dot, which is where Windows looks, and without the spaces that part
+ *  ends with, which Windows drops: `CON .md` is `CON.md`. Every module that asks
+ *  asks this, so there is one list in the app to keep beside the crate's. */
+export function isReserved(name: string): boolean {
+  const stem = (name.split('.')[0] ?? name).replace(/ +$/, '')
+  return RESERVED.includes(stem.toUpperCase())
+}
+
 /** The endings a document is known by rather than named after: markdown's four, a
  *  canvas, a page note, the two a website is written as, and a chat's pointer.
  *
@@ -160,6 +185,11 @@ export function nameFromTitle(title: string): string | null {
     .replace(/[<>:"/\\|?* -]/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[.\s]+|[.\s]+$/g, '')
+    .slice(0, MOST)
 
-  return text ? text.slice(0, MOST) : null
+  // And a device's name stepped aside from, as sync and the import step aside: a note
+  // headed `NUL` would otherwise be saved as the device on the reader's Windows machine
+  // (#477).
+  if (!text) return null
+  return isReserved(text) ? `_${text}` : text
 }

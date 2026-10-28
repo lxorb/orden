@@ -73,6 +73,19 @@ pub fn is_reserved(name: &str) -> bool {
     RESERVED.contains(&stem.to_ascii_uppercase().as_str())
 }
 
+/// Refuses a name a note or a folder is about to be given - made, renamed, copied to -
+/// where it is one of those (#477). A name already on the disk is left alone: a note
+/// that arrived under one is still written and moved, so nothing anybody wrote is lost
+/// for the name it came with; only a new name is held to what every machine can hold.
+pub fn named_for_every_machine(target: &Path) -> Result<(), String> {
+    match target.file_name().and_then(OsStr::to_str) {
+        Some(name) if is_reserved(name) => Err(format!(
+            "{name} is a name Windows keeps for a device, so a note or folder cannot be called it"
+        )),
+        _ => Ok(()),
+    }
+}
+
 /// Whether a path names a note, in whichever case the extension is written.
 pub fn is_markdown(path: &Path) -> bool {
     path.extension()

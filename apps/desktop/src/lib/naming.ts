@@ -15,7 +15,9 @@
  *  nothing to decide; see naming.test.ts. */
 
 import { foldName } from '@nib/markdown/links'
-import { endingOf } from './note-name'
+import { endingOf, isReserved } from './note-name'
+
+export { isReserved }
 
 /** Why a name will not do. One per sentence a row can show, which is why a
  *  slash and a colon are two of them: what the row says is what to change, not
@@ -25,21 +27,6 @@ import { endingOf } from './note-name'
  *  mistake and is never shown as one; it is here because it is still a name
  *  that cannot be written. */
 export type NameFault = 'empty' | 'separator' | 'illegal' | 'trailing' | 'reserved' | 'taken'
-
-/** Names Windows keeps for devices, whatever the extension is: `NUL.md` names
- *  the device as surely as `NUL`, and Windows reads the superscripts `¹²³` as
- *  digits, so `COM¹` is a port as surely as `COM1`. The crate's own list, said
- *  again here because the field answers between two keystrokes and cannot wait
- *  for a round trip to the one place that has it. */
-const RESERVED = [
-  'CON',
-  'PRN',
-  'AUX',
-  'NUL',
-  'CONIN$',
-  'CONOUT$',
-  ...Array.from('0123456789¹²³', (digit) => [`COM${digit}`, `LPT${digit}`]).flat(),
-]
 
 /** The characters Windows reserves. The separators are asked about on their own,
  *  because "a name cannot hold a slash" is a sentence and this list is not. */
@@ -62,15 +49,6 @@ export interface Naming {
   /** What else is in that folder, this row's own name left out - keeping it
    *  would make every name its own duplicate. */
   taken: readonly string[]
-}
-
-/** Whether the name is one of the device names, going by the part in front of
- *  the first dot, which is where Windows looks, and without the spaces that part
- *  ends with, which Windows drops: `CON .md` is `CON.md`. Every module that asks
- *  asks this, so there is one list in the app to keep beside the crate's. */
-export function isReserved(name: string): boolean {
-  const stem = (name.split('.')[0] ?? name).replace(/ +$/, '')
-  return RESERVED.includes(stem.toUpperCase())
 }
 
 /** Why this name cannot be written, or null when it can. */
