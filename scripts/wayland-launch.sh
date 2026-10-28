@@ -14,9 +14,11 @@
 #     there is none (SECOND names the command that starts a second copy) - quick add's
 #     window comes up either way, floating, as a compositor floats a fixed-size window;
 #   - with DRIVE=1, Orden opened on a page of one colour in a web tab, and
-#     scripts/wayland-drive.py reading where that page is drawn on every screen, with
-#     the tab's menu over it and after a resize, clicking with the compositor's own
-#     pointer (scripts/wayland-pointer.py); and with COLD=n as well, Orden quit and
+#     no process of the app running with GPU compositing turned off (#390,
+#     scripts/compositing-check.py), and scripts/wayland-drive.py reading where that
+#     page is drawn on every screen, with the tab's menu over it and after a resize,
+#     clicking with the compositor's own pointer (scripts/wayland-pointer.py); and
+#     with COLD=n as well, Orden quit and
 #     started again n times, each on another screen and with no address, and the drive
 #     run on the web tab it came back to;
 #   - with IDLE=1, what the app costs the CPU while nothing happens, before anything
@@ -190,6 +192,12 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
+# With DRIVE=1, Chromium's DevTools port, which says how Chromium runs (#390,
+# scripts/compositing-check.py).
+if [ "${DRIVE:-0}" = 1 ]; then
+  NIB_CEF_DEBUG_PORT=${NIB_CEF_DEBUG_PORT:-9339}
+  export NIB_CEF_DEBUG_PORT
+fi
 if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ] || [ "${GRANTS:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
@@ -414,6 +422,9 @@ if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
 fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
+  # Every page, the window's own and the web tab's, put together on the card as far as
+  # the app decides it (#390, scripts/compositing-check.py), and then where it is drawn.
+  python3 "$here/compositing-check.py" "$NIB_CEF_DEBUG_PORT" || status=1
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
 fi
 
