@@ -27,14 +27,14 @@ import {
   type SnapshotDoc,
   unframe,
 } from '@nib/sync-core'
-import { sha256 } from '../crypto'
+import { byteLength, sha256 } from '../crypto'
 import { noteKey } from '../notes'
 import { askRoom } from '../rooms'
 import { seedOf, seedsAnything, snapshotKey } from '../rooms/epoch'
 import { noteKind } from '../rooms/kind'
 import { allows, reachedItem, reachedSpace, type Role } from '../spaces/space'
 import type { Env, Note, Whoever } from '../types'
-import { keepVersionNow } from '../versions'
+import { keepVersionNow, versionsFit } from '../versions'
 import { prepareSpace } from './prepare'
 import { DOCUMENT_KINDS, DOCUMENTS_SQL } from './tree'
 
@@ -257,10 +257,11 @@ export async function keepDoc(
   env: Env,
   who: Whoever,
   request: KeepRequest,
-): Promise<'kept' | 'gone' | 'role'> {
+): Promise<'kept' | 'gone' | 'role' | 'full'> {
   const found = (await reachedNotes(env, who, [request.id])).get(request.id)
   if (!found || !DOCUMENT_KINDS.has(found.note.kind ?? 'note')) return 'gone'
   if (!allows(found.role, 'write')) return 'role'
+  if (!(await versionsFit(env, found.note.id, byteLength(request.text)))) return 'full'
 
   await keepVersionNow(env, found.note.id, request.text, request.device)
   return 'kept'

@@ -6,8 +6,8 @@
 import { keepRequestOf, opsRequestOf, pullRequestOf, pushRequestOf } from '@nib/sync-core'
 import { Hono } from 'hono'
 import { laterOf, pokeSpace } from '../hub/poke'
-import { mayChangeTree, mayPushDocuments } from '../limits'
-import { NO_SUCH_NOTE, TOO_MANY_CHANGES } from '../refused'
+import { mayChangeTree, mayKeepVersions, mayPushDocuments } from '../limits'
+import { NO_SUCH_NOTE, OUT_OF_SPACE, TOO_MANY_CHANGES } from '../refused'
 import { atLeast, refusal, spaceOf } from '../spaces/space'
 import type { Env, Variables } from '../types'
 import { deviceIn } from '../versions'
@@ -118,12 +118,18 @@ v2Docs.post('/keep', async (context) => {
   const request = keepRequestOf(await requestBody(context))
   if (!request) return context.json({ error: NOT_A_REQUEST }, 400)
   const who = context.get('who')
-  if (!(await mayPushDocuments(context.env, whoseId(who)))) {
+  if (
+    !(await mayPushDocuments(context.env, whoseId(who))) ||
+    !(await mayKeepVersions(context.env, whoseId(who)))
+  ) {
     return context.json({ error: TOO_MANY_CHANGES }, 429)
   }
 
   const kept = await keepDoc(context.env, who, request)
   if (kept === 'gone') return context.json({ error: NO_SUCH_NOTE }, 404)
   if (kept === 'role') return context.json({ error: refusal('write') }, 403)
+  // A device of any age reads this as a refusal and lets the words go from its outbox;
+  // they stay in its own history, where they were kept first.
+  if (kept === 'full') return context.json({ error: OUT_OF_SPACE }, 507)
   return answer(context, { ok: true })
 })

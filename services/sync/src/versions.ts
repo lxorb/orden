@@ -255,6 +255,25 @@ export async function keepVersion(
   if (stored) await forgetBodies(env, [note.hash])
 }
 
+/** Whether `incoming` more bytes of versions fit under `MOST_VERSION_BYTES` for the
+ *  account that owns the note: the ceiling held where a kept side is written, as well
+ *  as by the night's sweep. A side kept on purpose is written whatever the five minute
+ *  rule says, so a script keeping eight megabytes at a time was past the ceiling by
+ *  gigabytes before the sweep came round to it (#471). */
+export async function versionsFit(env: Env, noteId: string, incoming: number): Promise<boolean> {
+  const row = await env.DB.prepare(
+    `select coalesce(sum(v.size), 0) as bytes
+       from note_versions v
+       join notes n on n.id = v.note_id
+       join spaces s on s.id = n.space_id
+      where s.user_id = (select s2.user_id from notes n2 join spaces s2 on s2.id = n2.space_id
+                          where n2.id = ?1)`,
+  )
+    .bind(noteId)
+    .first<{ bytes: number }>()
+  return (row?.bytes ?? 0) + incoming <= MOST_VERSION_BYTES
+}
+
 /** Keeps a text as a version of a note now, whatever else it has kept lately: the
  *  words that lost a modal answer in sync v2 (docs/sync-v2.md section 5.4), which are
  *  the one version somebody asked for by name. Held, so no later save folds it away
