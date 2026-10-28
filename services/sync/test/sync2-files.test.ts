@@ -478,3 +478,29 @@ describe('the quota, for bytes that went up in parts', () => {
     expect(await env.NOTES.get(`blobs/${await hashOf(data)}`)).toBeNull()
   })
 })
+
+/** #517: which of a device's hashes the account keeps, so that bytes it lost are sent
+ *  again by the device that has them. */
+describe('the bytes an account keeps, asked', () => {
+  test('answers its own rows only, and no more than ninety at once', async () => {
+    const data = bytes(3000, 21)
+    const hash = await hashOf(data)
+    expect((await upload(data)).status).toBe(201)
+    const other = await signIn(env, 'someone-else@example.com')
+    const theirs = bytes(3000, 22)
+    expect((await upload(theirs, 'audio/webm', other)).status).toBe(201)
+
+    const asked = await call(env, '/v2/blobs/have', {
+      token,
+      body: { hashes: [hash, await hashOf(theirs), 'b'.repeat(64)] },
+    })
+    expect(asked.status).toBe(200)
+    expect((asked.json as unknown as { kept: string[] }).kept).toEqual([hash])
+
+    const many = Array.from({ length: 91 }, (_, at) => at.toString(16).padStart(64, '0'))
+    expect((await call(env, '/v2/blobs/have', { token, body: { hashes: many } })).status).toBe(400)
+    expect(
+      (await call(env, '/v2/blobs/have', { token, body: { hashes: ['not a hash'] } })).status,
+    ).toBe(400)
+  })
+})

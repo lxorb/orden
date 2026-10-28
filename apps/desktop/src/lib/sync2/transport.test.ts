@@ -87,4 +87,11 @@ describe('a file’s bytes over the network', () => {
     // Only the upload says the account is full; anywhere else a 507 is a failing account.
     expect(await over(507).down('s', 'f')).toBeNull()
   })
+
+  // #517: an account from before the question cannot say which bytes it keeps, and
+  // nothing is sent again on the strength of a silence.
+  test('an account that cannot say which bytes it keeps says nothing', async () => {
+    expect(await over(404).have?.(['h'])).toBeNull()
+    expect(await over(503).have?.(['h'])).toBeNull()
+  })
 })
