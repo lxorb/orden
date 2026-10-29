@@ -23,6 +23,12 @@
  *  table the app adds or hide that table. The title, which GitHub draws as text, has
  *  every at sign broken.
  *
+ *  Once open, the issue goes on the project board `FEEDBACK_PROJECT` names, as Todo, so a
+ *  report is in the same queue as the rest of the work. The board is public; an issue
+ *  of a private repository shows on it only to those who may read that repository. A
+ *  board that did not take it is tried again from the cron, apart from the issue, which
+ *  stays open whatever the board does.
+ *
  *  Deleting the account a report came from deletes the report (erase.ts), and the issue
  *  goes with it as far as this token can take it: closed, and its title and body
  *  written over with nothing of the report, from the list of what an account leaves
@@ -170,6 +176,8 @@ function asked(to: Github, path: string, init: RequestInit = {}): Promise<Respon
 interface Issue {
   number: number
   html_url: string
+  /** What GitHub's GraphQL knows it by, for putting it on the board. */
+  node_id: string
   body?: string | null
 }
 
@@ -221,13 +229,14 @@ interface Row {
   log: string
   created_at: number
   issue_tries: number
+  board_tries: number
   email: string | null
 }
 
 async function reportOf(env: Env, id: string): Promise<Row | null> {
   return await env.DB.prepare(
     `select f.id, f.user_id, f.text, f.version, f.platform, f.log, f.created_at,
-            f.issue_tries, u.email
+            f.issue_tries, f.board_tries, u.email
        from feedback f left join users u on u.id = f.user_id
       where f.id = ?`,
   )
@@ -269,9 +278,10 @@ export async function openIssue(env: Env, id: string, at = now()): Promise<boole
     const issue =
       (row.issue_tries > 0 ? await openedBefore(to, report) : null) ?? (await opened(to, report))
     const written = await env.DB.prepare(
-      'update feedback set issue_number = ?2, issue_url = ?3, issue_claim = null where id = ?1',
+      `update feedback set issue_number = ?2, issue_url = ?3, issue_node = ?4, issue_claim = null
+        where id = ?1`,
     )
-      .bind(id, issue.number, issue.html_url)
+      .bind(id, issue.number, issue.html_url, issue.node_id)
       .run()
     // The report went while GitHub was opening it: its account was deleted, and the
     // erase found no issue to withdraw yet. So this run withdraws the one it opened,
@@ -286,6 +296,7 @@ export async function openIssue(env: Env, id: string, at = now()): Promise<boole
       }
       return false
     }
+    await putOnBoard(env, id, issue.node_id, row.board_tries, at)
     return true
   } catch (error) {
     const tries = row.issue_tries + 1
@@ -300,7 +311,8 @@ export async function openIssue(env: Env, id: string, at = now()): Promise<boole
   }
 }
 
-/** The reports still waiting for their issue, tried again: what the cron runs. */
+/** The reports still waiting for their issue, tried again, and the issues still off the
+ *  board: what the cron runs. */
 export async function openWaitingIssues(env: Env, at = now()): Promise<void> {
   if (!github(env)) return
   const waiting = await env.DB.prepare(
@@ -312,6 +324,157 @@ export async function openWaitingIssues(env: Env, at = now()): Promise<void> {
     .bind(at, at - CLAIM, AT_ONCE)
     .all<{ id: string }>()
   for (const { id } of waiting.results) await openIssue(env, id, at)
+
+  if (!board(env)) return
+  const off = await env.DB.prepare(
+    `select id, issue_number, issue_node, board_tries from feedback
+      where issue_number is not null and board_at is null and board_next_at <= ?1
+      order by created_at limit ?2`,
+  )
+    .bind(at, AT_ONCE)
+    .all<{ id: string; issue_number: number; issue_node: string | null; board_tries: number }>()
+  for (const row of off.results) {
+    const node = row.issue_node ?? (await nodeOf(env, row.issue_number))
+    if (node) await putOnBoard(env, row.id, node, row.board_tries, at)
+  }
+}
+
+/** The board's owner and number, from `FEEDBACK_PROJECT` (`user/number`), or null. */
+function board(env: Env): { owner: string; number: number } | null {
+  const named = /^([A-Za-z0-9-]+)\/(\d+)$/.exec(env.FEEDBACK_PROJECT?.trim() ?? '')
+  return named?.[1] && named[2] ? { owner: named[1], number: Number(named[2]) } : null
+}
+
+/** An issue's node id, for one opened before the issue's node was kept (0065). */
+async function nodeOf(env: Env, number: number): Promise<string | null> {
+  const to = github(env)
+  if (!to) return null
+  try {
+    const response = await asked(to, `/repos/${to.repo}/issues/${String(number)}`)
+    if (!response.ok) return null
+    return (await response.json<{ node_id?: string }>()).node_id ?? null
+  } catch {
+    return null
+  }
+}
+
+async function graphql<T>(to: Github, query: string, variables: object): Promise<T> {
+  const response = await asked(to, '/graphql', {
+    method: 'POST',
+    body: JSON.stringify({ query, variables }),
+  })
+  if (!response.ok) throw new Error(`GitHub answered ${String(response.status)}`)
+  const answer = await response.json<{ data?: T; errors?: { message: string }[] }>()
+  if (answer.errors?.length || !answer.data) {
+    throw new Error(answer.errors?.map((one) => one.message).join('; ') ?? 'no answer')
+  }
+  return answer.data
+}
+
+interface Board {
+  project: string
+  status: string
+  todo: string
+}
+
+/** The board's id, its Status field's and that field's Todo option's. */
+async function boardOf(to: Github, owner: string, number: number): Promise<Board> {
+  const data = await graphql<{
+    user: {
+      projectV2: {
+        id: string
+        field: { id: string; options: { id: string; name: string }[] } | null
+      } | null
+    } | null
+  }>(
+    to,
+    `
+      query ($owner: String!, $number: Int!) {
+        user(login: $owner) {
+          projectV2(number: $number) {
+            id
+            field(name: "Status") {
+              ... on ProjectV2SingleSelectField {
+                id
+                options {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    `,
+    { owner, number },
+  )
+  const project = data.user?.projectV2
+  const todo = project?.field?.options.find((one) => one.name === 'Todo')
+  if (!project?.field || !todo) throw new Error('the board has no Status with Todo')
+  return { project: project.id, status: project.field.id, todo: todo.id }
+}
+
+/** Puts an issue on the board as Todo, and writes down that it is there. Never throws: a
+ *  try that fails is written down and tried again from the cron. Putting it there twice
+ *  is one item, so a try whose answer was lost does no harm. */
+async function putOnBoard(
+  env: Env,
+  id: string,
+  node: string,
+  tries: number,
+  at: number,
+): Promise<void> {
+  const to = github(env)
+  const where = board(env)
+  if (!to || !where) return
+  try {
+    const on = await boardOf(to, where.owner, where.number)
+    const added = await graphql<{ addProjectV2ItemById: { item: { id: string } } }>(
+      to,
+      `
+        mutation ($project: ID!, $content: ID!) {
+          addProjectV2ItemById(input: { projectId: $project, contentId: $content }) {
+            item {
+              id
+            }
+          }
+        }
+      `,
+      { project: on.project, content: node },
+    )
+    await graphql(
+      to,
+      `
+        mutation ($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+          updateProjectV2ItemFieldValue(
+            input: {
+              projectId: $project
+              itemId: $item
+              fieldId: $field
+              value: { singleSelectOptionId: $option }
+            }
+          ) {
+            projectV2Item {
+              id
+            }
+          }
+        }
+      `,
+      {
+        project: on.project,
+        item: added.addProjectV2ItemById.item.id,
+        field: on.status,
+        option: on.todo,
+      },
+    )
+    await env.DB.prepare('update feedback set board_at = ?2 where id = ?1').bind(id, at).run()
+  } catch (error) {
+    const wait = Math.min(LONGEST_WAIT, FIRST_WAIT * 2 ** Math.min(tries, 20))
+    console.warn(`feedback ${id}: not on the board yet (${String(error)})`)
+    await env.DB.prepare('update feedback set board_tries = ?2, board_next_at = ?3 where id = ?1')
+      .bind(id, tries + 1, at + wait)
+      .run()
+  }
 }
 
 /** How an issue is named on the list of what a deleted account leaves behind (0038):

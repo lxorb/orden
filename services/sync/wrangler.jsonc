@@ -160,6 +160,9 @@
     // lxorbs-minion (src/feedback-issues.ts); its token, set by hand:
     //   wrangler secret put GITHUB_FEEDBACK_TOKEN
     "FEEDBACK_REPO": "lxorb/orden-feedback",
+    // The board each of those issues goes on as Todo, as `user/number`; the token
+    // above needs the `project` scope for it.
+    "FEEDBACK_PROJECT": "lxorb/2",
     // How a machine's traffic leaves it: `open` or `web`; see machines/host.ts.
     "MACHINE_EGRESS": "open",
     // The account the Hetzner machines' Cloudflare Tunnels are made in (4.15). Their
