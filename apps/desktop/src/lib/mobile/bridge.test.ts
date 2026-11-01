@@ -119,3 +119,18 @@ test('the word said late is heard by whoever waits for it', async () => {
   await vi.advanceTimersByTimeAsync(0)
   expect(heard).toBe('the word')
 })
+
+// Android's Java bridge refuses a call whose `this` is not the injected object, with
+// "Java bridge method can't be invoked on a non-injected object": a blank app on launch.
+test('a method handed out of the bridge is still called on the bridge', async () => {
+  const bridge = {
+    insets(this: unknown) {
+      if (this !== bridge) throw new Error('non-injected object')
+      return '{}'
+    },
+  }
+  vi.stubGlobal('__NIB_SYSTEM__', bridge)
+  const { method } = await import('./bridge')
+
+  expect(method('insets')?.()).toBe('{}')
+})
