@@ -5,7 +5,7 @@
  *  dev server they started and the build they are watching, which is what "look at my
  *  terminal" and "restart the server" mean. VS Code's agent reads a terminal's output
  *  (`getTerminalOutput`, `terminalLastCommand`) and JetBrains' asks before every command
- *  it types; nib does both.
+ *  it types; Orden does both.
  *
  *  - **Reading** is the reader's screen as words: the scrollback and the screen, wrapped
  *    lines joined, its colours gone, marked as the terminal's and never the reader's

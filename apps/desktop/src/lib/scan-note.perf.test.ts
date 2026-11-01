@@ -8,7 +8,7 @@ import { scanNote } from './scan-note'
  *  walk that was descheduled halfway through says nothing about the walk.
  *
  *  The count is how many times the scan looks for a newline, which is how a pass
- *  down a note is taken here - see `lines` in @nib/markdown/links, walked with
+ *  down a note is taken here - see `lines` in @orden/markdown/links, walked with
  *  indexOf rather than split so a long note is not copied into an array. Each pass
  *  down a note is one look per line of it, so the count says how many passes the
  *  scan took: a handful, whatever the note holds, or one per link.

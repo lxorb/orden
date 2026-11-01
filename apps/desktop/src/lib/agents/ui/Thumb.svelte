@@ -2,7 +2,7 @@
   /** One of an agent's own tabs, as a picture (docs/agent-native.md 6.6).
    *
    *  A picture because a picture takes no input: watching can never be interacting by
-   *  accident, and the pointer over it is the reader's pointer over nib. The engine's
+   *  accident, and the pointer over it is the reader's pointer over Orden. The engine's
    *  own screencast, a frame at most every fifth of a second, only while the panel is
    *  open. Show makes it a tab of the reader's, beside the one in front, without
    *  loading it again (6.7); a press anywhere on the picture is the same press. */

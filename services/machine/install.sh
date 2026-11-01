@@ -3,7 +3,7 @@
 # this to build the Cloudflare image, and cloud-init runs it with --server on a Hetzner
 # server, so the two can never drift apart.
 #
-#   install.sh            the system, the user and nib's own files (the image)
+#   install.sh            the system, the user and Orden's own files (the image)
 #   install.sh --server   all of that, and what a server of its own needs besides:
 #                         cloudflared, the systemd units, security updates, swap, SSH shut
 #   install.sh --files    nib's own files alone: what nib-update puts in place before
@@ -100,7 +100,7 @@ user() {
   chmod 440 /etc/sudoers.d/nib
 }
 
-# nib's own files: nibd with node-pty built here for this system, the browser shims, the
+# Orden's own files: nibd with node-pty built here for this system, the browser shims, the
 # agents' installer, the login shells' settings, and on a server the units and the updater.
 files() {
   local nibd="$here/nibd.cjs"

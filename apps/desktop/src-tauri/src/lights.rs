@@ -1,4 +1,4 @@
-//! Where a Mac's traffic lights sit over nib's own bar, and keeping them there.
+//! Where a Mac's traffic lights sit over Orden's own bar, and keeping them there.
 //!
 //! Every titlebar `AppKit` draws centres its three buttons in its own height, with
 //! the same margin on the left as above them: nine points in the plain 32 point
@@ -68,7 +68,7 @@ fn spot(
 }
 
 /// Puts the window's lights in the bar and keeps them there for as long as the
-/// window lives. Called once, on the main thread, as each window with nib's own
+/// window lives. Called once, on the main thread, as each window with Orden's own
 /// frame is built.
 #[cfg(target_os = "macos")]
 pub fn hold(window: &tauri::WebviewWindow) {
@@ -88,9 +88,9 @@ pub fn hold(window: &tauri::WebviewWindow) {
 }
 
 /// Lays the window's titlebar out afresh after its frame has been switched, so the
-/// lights are where the new frame wants them: centred in nib's own bar, or where
+/// lights are where the new frame wants them: centred in Orden's own bar, or where
 /// `AppKit` keeps them in the system's titlebar. Switching the style alone moves
-/// nothing, and the lights stayed where nib's frame had put them, three points low
+/// nothing, and the lights stayed where Orden's frame had put them, three points low
 /// in a titlebar of `AppKit`'s own.
 #[cfg(target_os = "macos")]
 pub fn refresh(window: &tauri::Window) {
@@ -138,7 +138,7 @@ mod native {
 
     /// What one window keeps for its lights: the observers they are kept in place by,
     /// given back to the notification centre when the window goes, and where `AppKit`
-    /// had them before nib moved them, which is where they go back to under the
+    /// had them before Orden moved them, which is where they go back to under the
     /// system's frame.
     struct Held {
         observers: Vec<Retained<ProtocolObject<dyn NSObjectProtocol>>>,
@@ -225,7 +225,7 @@ mod native {
         ])
     }
 
-    /// Whether the window wears nib's own frame: a transparent titlebar with the page
+    /// Whether the window wears Orden's own frame: a transparent titlebar with the page
     /// running up under it. The system's frame is an opaque one, whichever way the
     /// content view is laid out, since Tauri switches to it at runtime by making the
     /// titlebar opaque and leaves the page where it was.
@@ -236,7 +236,7 @@ mod native {
                 .contains(NSWindowStyleMask::FullSizeContentView)
     }
 
-    /// Where the lights go in nib's own bar: centred in it, see `spot`.
+    /// Where the lights go in Orden's own bar: centred in it, see `spot`.
     fn centred(
         window: &NSWindow,
         lights: &[Retained<NSView>; 3],
@@ -265,7 +265,7 @@ mod native {
         })
     }
 
-    /// Puts the lights where the window's frame wants them: centred in nib's own bar,
+    /// Puts the lights where the window's frame wants them: centred in Orden's own bar,
     /// or back where `AppKit` had them under the system's titlebar, which a change of
     /// style does not do by itself. A window in full screen lends its lights to a
     /// titlebar window of `AppKit`'s own, which slides down over the page, and they
@@ -499,7 +499,7 @@ mod native {
 mod tests {
     use super::{spot, BAR, LEFT};
 
-    /// The widest distance from one light to the next of the systems nib runs on:
+    /// The widest distance from one light to the next of the systems Orden runs on:
     /// 23 points on macOS 26, where each button is 14 points with nine between.
     const WIDEST_PITCH: f64 = 23.0;
     const LIGHT: f64 = 14.0;

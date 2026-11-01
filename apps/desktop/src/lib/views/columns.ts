@@ -2,12 +2,12 @@
  *  called, what a cell of it is edited with, and the change an edit writes.
  *
  *  A column is a property as Bases names one: `file.name`, `note.status` (or a
- *  bare `status`, which is the same), `formula.age`, and nib's `task.*`. Who may
+ *  bare `status`, which is the same), `formula.age`, and Orden's `task.*`. Who may
  *  write a cell follows from that name alone, so a table, a card and a board agree:
  *  a note's own property and a task's own field are written through the one write
  *  path, and `file.*` and `formula.*` are what the files and the formulas say. */
 
-import { deadlineField, startField } from '@nib/markdown/task-dates'
+import { deadlineField, startField } from '@orden/markdown/task-dates'
 import {
   type Base,
   isButton,
@@ -18,7 +18,7 @@ import {
   type RowKinds,
   type TaskChange,
   type Value,
-} from '@nib/bases'
+} from '@orden/bases'
 import type { RowChange } from '../rows/write'
 import type { Holds, HoldsOf } from './filter-rows'
 import { isLinkValue } from './values'

@@ -1,5 +1,5 @@
-import { glassCss } from '@nib/themes/glass'
-import { wallpaperCss } from '@nib/themes/wallpaper'
+import { glassCss } from '@orden/themes/glass'
+import { wallpaperCss } from '@orden/themes/wallpaper'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** The theme and the scheme, which are two choices and not one.
@@ -192,7 +192,7 @@ const { stamped } = await import('./themes/stamp')
 // first that wears one: `settled` below counts turns, and compiling a module cold on a
 // loaded machine took more of them than it allows.
 await Promise.all([
-  import('@nib/themes/glass'),
+  import('@orden/themes/glass'),
   import('./glass/settings'),
   import('./glass/follow.svelte'),
   import('./wallpaper/sheet'),

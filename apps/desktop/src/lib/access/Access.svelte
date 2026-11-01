@@ -2,7 +2,7 @@
   /** Settings > AI > Access: everything that can reach the notes, in one list, and one
    *  way to connect one more (docs/agent-native.md 9.1, 9.5, 10; docs/ai.md).
    *
-   *  Settings used to split this by plumbing - Agents for what reaches nib on this
+   *  Settings used to split this by plumbing - Agents for what reaches Orden on this
    *  computer through `nib mcp`, LLM access for what reaches the account's notes through
    *  its connector - and the reader had to know which road a client took to find it. So
    *  both are rows of one list: an agent on this computer opens its grant (what it may
@@ -109,7 +109,7 @@
 
   let root = $state<HTMLElement>()
 
-  /** Whether nib adds itself to the agent programs on this computer, so they reach it
+  /** Whether Orden adds itself to the agent programs on this computer, so they reach it
    *  with nothing to set up (src-tauri/src/ai_cli/enroll.rs); null where this app may
    *  not, which is anything but the app somebody installed. */
   let enrolled = $state<boolean | null>(null)
@@ -125,7 +125,7 @@
     )
   })
 
-  /** Whether Shortcuts lists nib's actions, which only a build signed by a developer
+  /** Whether Shortcuts lists Orden's actions, which only a build signed by a developer
    *  team gets (src-tauri/src/siri.rs). */
   let shortcuts = $state(false)
 

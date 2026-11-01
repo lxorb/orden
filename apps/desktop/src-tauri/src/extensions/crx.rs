@@ -1,5 +1,5 @@
 //! A CRX file, checked: the format the Chrome Web Store and Edge Add-ons hand an
-//! extension out in, and the only one nib takes.
+//! extension out in, and the only one Orden takes.
 //!
 //! A CRX3 file is `Cr24`, the version, a header and a zip. The header is a small protobuf
 //! of signatures over that zip, each beside the public key it was made with, and a

@@ -2,7 +2,7 @@
  *  filter, a column, a view added, renamed or taken away.
  *
  *  Never in place. The engine keeps a compiled view per base object (see `answer` in
- *  @nib/bases), so a base that changed under it would answer with the filter it had
+ *  @orden/bases), so a base that changed under it would answer with the filter it had
  *  before; every edit here makes a new base, sharing whatever it did not touch, and
  *  the tab answers the new one afresh. Pure, so each is a line of a test. */
 
@@ -16,7 +16,7 @@ import {
   renamedLiteral,
   type Sort,
   type View,
-} from '@nib/bases'
+} from '@orden/bases'
 
 /** The base with one of its views replaced. A place past the end changes nothing. */
 function withView(base: Base, at: number, change: (view: View) => View): Base {
@@ -27,7 +27,7 @@ function withView(base: Base, at: number, change: (view: View) => View): Base {
   return { ...base, views }
 }
 
-/** The view with some of nib's own keys changed; undefined takes one away. */
+/** The view with some of Orden's own keys changed; undefined takes one away. */
 function withNib(view: View, change: { [K in keyof NibView]?: NibView[K] | undefined }): View {
   const nib: NibView = { ...view.nib }
   // `Object.entries` widens the keys to string; they are the change's own, which are
@@ -58,9 +58,9 @@ export const setGroup = (base: Base, at: number, group: Sort | undefined): Base 
 export const setSubGroup = (base: Base, at: number, sub: Sort | undefined): Base =>
   withView(base, at, (view) => withNib(view, { subGroupBy: sub }))
 
-/** Filters nib could not read are kept among the options as written, only until the
+/** Filters Orden could not read are kept among the options as written, only until the
  *  view is given its own - and none is its own too, so both drop them. See
- *  `viewPlain` in @nib/bases. */
+ *  `viewPlain` in @orden/bases. */
 export const setFilter = (base: Base, at: number, filters: Filter | undefined): Base =>
   withView(base, at, (view) => {
     const options = { ...view.options }
@@ -201,7 +201,7 @@ export function setViewOption(base: Base, at: number, key: string, value: unknow
   })
 }
 
-/** One of nib's own keys of a view (`lines`, `freeze`, `colour`, `template`, `required`,
+/** One of Orden's own keys of a view (`lines`, `freeze`, `colour`, `template`, `required`,
  *  `locked`), set or, with undefined, taken away. */
 export function setViewNib<K extends Exclude<keyof NibView, 'kept'>>(
   base: Base,
@@ -232,7 +232,7 @@ export function setFormula(base: Base, name: string, source: string | null): Bas
   return { ...base, formulas }
 }
 
-/** What nib says about one property (`nib.properties.<key>`): its options, its format. */
+/** What Orden says about one property (`nib.properties.<key>`): its options, its format. */
 export function setProperty(
   base: Base,
   key: string,

@@ -12,7 +12,7 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
-import { MOST_IMAGE } from '@nib/online/wire'
+import { MOST_IMAGE } from '@orden/online/wire'
 import { AS_USER_SCRIPT, Images, NAMED, type Run, runChild } from './images'
 import type { User } from './limits'
 
@@ -89,7 +89,7 @@ describe('where nibd is the user already', () => {
     expect([...readFileSync(path)]).toEqual([2])
   })
 
-  test('the clearing takes only old pictures of nib’s naming, and nothing else there', async () => {
+  test('the clearing takes only old pictures of Orden’s naming, and nothing else there', async () => {
     const { home, pictures } = images()
     mkdirSync(folderIn(home), { recursive: true })
     const mine = join(folderIn(home), `${OTHER}.png`)
@@ -212,7 +212,7 @@ describe('where nibd is root', () => {
       expect(readFileSync(target, 'utf8')).toBe('kept')
     })
 
-    test('clears only old pictures of nib’s naming', async () => {
+    test('clears only old pictures of Orden’s naming', async () => {
       const home = aHome()
       mkdirSync(folderIn(home), { recursive: true })
       const mine = join(folderIn(home), `${OTHER}.webp`)

@@ -9,7 +9,7 @@
 //!
 //! | category | recognised by |
 //! | --- | --- |
-//! | paying | a press in a form with a card field, a press whose name reads as paying in any of nib's languages, a submit on a page that talks to a payment processor, a page going to one |
+//! | paying | a press in a form with a card field, a press whose name reads as paying in any of Orden's languages, a submit on a page that talks to a payment processor, a page going to one |
 //! | sending | see `sends`: a press named send, post, reply, publish or comment beside a message box or an address, or on a mail, messaging or social site; a submit of a form that holds both; Enter in a message box |
 //! | deleting | a press named delete, remove or erase |
 //! | signing in | a credential field, or any field of a form with one: never typed, never submitted, a takeover |
@@ -565,7 +565,7 @@ const CARD: &[&str] = &[
     "nomor kartu",
 ];
 
-/// Presses that pay, in every language nib has a catalogue for.
+/// Presses that pay, in every language Orden has a catalogue for.
 pub const PAYING: &[&str] = &[
     // English
     "pay", "pay now", "buy", "buy now", "place order", "place your order", "checkout",
@@ -633,7 +633,7 @@ pub const PAYING: &[&str] = &[
     "\u{4fbe}\u{9322}", "\u{843d}\u{55ae}",
 ];
 
-/// Presses that send, post, reply, publish or comment, in every language nib has a catalogue
+/// Presses that send, post, reply, publish or comment, in every language Orden has a catalogue
 /// for; found inside a longer name (`Send message`, `Post comment`).
 const SENDING: &[&str] = &[
     // English
@@ -839,7 +839,7 @@ const SUBMITTING: &[&str] = &[
     "\u{c81c}\u{cd9c}",
 ];
 
-/// What a field a message goes to is called, in every language nib has a catalogue for.
+/// What a field a message goes to is called, in every language Orden has a catalogue for.
 const RECIPIENTS: &[&str] = &[
     "recipient",
     "recipients",
@@ -912,7 +912,7 @@ const ADDRESSED_ALONE: &[&str] = &[
 ];
 
 /// What a message box calls itself (`Type a message`, `Write a reply`, `Message #general`),
-/// in every language nib has a catalogue for.
+/// in every language Orden has a catalogue for.
 const MESSAGES: &[&str] = &[
     "message",
     "reply",
@@ -1014,7 +1014,7 @@ const MESSAGES: &[&str] = &[
     "\u{8a55}\u{8ad6}",
 ];
 
-/// Presses that sign in, in every language nib has a catalogue for.
+/// Presses that sign in, in every language Orden has a catalogue for.
 const SIGNING_IN: &[&str] = &[
     "sign in",
     "log in",
@@ -1068,7 +1068,7 @@ const SIGNING_IN: &[&str] = &[
     "\u{767b}\u{9304}",
 ];
 
-/// Presses that delete, in every language nib has a catalogue for.
+/// Presses that delete, in every language Orden has a catalogue for.
 pub const DELETING: &[&str] = &[
     "delete",
     "remove",

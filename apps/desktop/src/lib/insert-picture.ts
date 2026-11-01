@@ -15,7 +15,7 @@
  *  Android webview answers that with the camera app rather than the picker, and a
  *  phone browser does the same, so one input is both rows. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { storeImage } from './assets'
 import { busy } from './busy.svelte'
 import { chooseFiles, PICTURES } from './choose-files'

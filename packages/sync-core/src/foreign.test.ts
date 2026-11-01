@@ -62,7 +62,7 @@ describe('foreignCopy', () => {
     'Trip-DESKTOP.md',
     'Trip-desktop-4f2k9qx.md',
     'Report-DESKTOP-4F2K9QX-notes.md',
-    // nib's own copy is a note.
+    // Orden's own copy is a note.
     'Plan (from another device 2026-09-12).md',
     // Close, but not the tool's spelling.
     'Plan (# Name clash 2026-10-05 #).md',

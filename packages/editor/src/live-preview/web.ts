@@ -2,7 +2,7 @@
  *  preview: the same card the reading view and a published page show, drawn from
  *  the same markup.
  *
- *  The card is built by @nib/markdown rather than assembled here. That is the
+ *  The card is built by @orden/markdown rather than assembled here. That is the
  *  point: one design and one set of permissions, however a note is being looked
  *  at. What the editor adds is the click, which loads the frame in place instead
  *  of following the card's link out. */

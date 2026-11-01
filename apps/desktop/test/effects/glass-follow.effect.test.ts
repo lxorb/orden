@@ -31,7 +31,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 
 // This project hands a stylesheet imported as text over empty; glass's sides are read
 // out of the sheet itself, so it is handed the file.
-vi.mock('@nib/themes/glass', () => ({
+vi.mock('@orden/themes/glass', () => ({
   glassCss: readFileSync(resolve('../../packages/themes/src/glass.css'), 'utf8'),
 }))
 

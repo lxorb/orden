@@ -18,7 +18,7 @@
 
 import type { Awareness } from 'y-protocols/awareness'
 import type * as Y from 'yjs'
-import { packed, strokeOf } from '@nib/markdown/canvas'
+import { packed, strokeOf } from '@orden/markdown/canvas'
 import { accentColour } from '../accents'
 import type { InkStroke } from '../canvas/format'
 import type { Point } from '../canvas/geometry'

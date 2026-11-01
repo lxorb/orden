@@ -16,7 +16,14 @@ const FILES: Record<string, string> = {
   '/Home/Plain.chat': '{"v":1,"chat":"c_0f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"}\n',
   '/Home/Docs.url':
     '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nNib-Icon=data:image/png;base64,AA\r\n',
+  '/Home/Lecture.pages': '{"nodes":[],"edges":[]}',
+  '/Home/Sketch.pages': '{"nodes":[],"edges":[]}',
 }
+
+/** The papers on the disk: a page note made from a PDF holds one beside it. */
+const PAPERS = new Set(['/Home/Lecture.pages.pdf'])
+/** Every path the disk was asked whether anything is at. */
+const asked: string[] = []
 
 /** What the open space's index says, by the path as that space speaks it - which
  *  is all the index ever holds. */
@@ -32,7 +39,12 @@ const relative = (path: string) =>
 
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
-  invoke: (command: string, args: { path?: string } = {}) => {
+  invoke: (command: string, args: { path?: string; root?: string } = {}) => {
+    if (command === 'file_stamp' || command === 'path_exists') {
+      asked.push(String(args.path))
+      const there = PAPERS.has(String(args.path))
+      return Promise.resolve(command === 'path_exists' ? there : there ? {} : null)
+    }
     if (command !== 'read_note') return Promise.resolve(undefined)
     reads.push(String(args.path))
     const held = FILES[String(args.path)]
@@ -73,10 +85,17 @@ vi.mock('./workspace.svelte', () => ({
     },
     folderIcons: { iconOf: () => null, tintOf: () => null },
     tabs,
+    /** The open space's listing: what tree.rs says of each file it lists. */
+    entryAt: (path: string) =>
+      path === '/Work/Made.pages'
+        ? { path, paper: true }
+        : path === '/Work/Blank.pages'
+          ? { path }
+          : null,
   },
 }))
 
-const { chosenIcon, chosenTint, faviconFor } = await import('./chosen-icon')
+const { chosenIcon, chosenTint, faviconFor, holdsPaper } = await import('./chosen-icon')
 const { elsewhere } = await import('./marks-elsewhere.svelte')
 const { NoteDoc, Tab } = await import('./workspace/documents.svelte')
 
@@ -194,5 +213,48 @@ describe('a chat', () => {
 
     await vi.waitFor(() => expect(chosenIcon('/Work/Team.chat')).toBeNull())
     expect(chosenTint('/Work/Team.chat')).toBeNull()
+  })
+})
+
+/** #676: a page note made from a PDF wears the PDF's mark, and the open space's listing
+ *  says which those are only for its own files. A tab, a bookmark or a search hit from
+ *  another space wore the page note's mark, though it was the same note. */
+describe('a page note made from a PDF', () => {
+  test('in the open space is known from its listing, with nothing asked of the disk', () => {
+    open('/Work')
+    asked.length = 0
+
+    expect(holdsPaper('/Work/Made.pages')).toBe(true)
+    expect(holdsPaper('/Work/Blank.pages')).toBe(false)
+    expect(asked).toEqual([])
+  })
+
+  test('in another space is asked of the disk, once', async () => {
+    open('/Work')
+    asked.length = 0
+
+    holdsPaper('/Home/Lecture.pages')
+    await vi.waitFor(() => expect(holdsPaper('/Home/Lecture.pages')).toBe(true))
+    holdsPaper('/Home/Lecture.pages')
+    expect(asked.filter((one) => one === '/Home/Lecture.pages.pdf')).toHaveLength(1)
+  })
+
+  test('and one started blank there wears its own mark', async () => {
+    open('/Work')
+    asked.length = 0
+
+    holdsPaper('/Home/Sketch.pages')
+    await vi.waitFor(() => expect(asked).toContain('/Home/Sketch.pages.pdf'))
+    await vi.waitFor(() => expect(reads).toContain('/Home/Sketch.pages'))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(holdsPaper('/Home/Sketch.pages')).toBe(false)
+  })
+
+  test('a file that is not a page note is never asked about', () => {
+    open('/Work')
+    asked.length = 0
+
+    expect(holdsPaper('/Home/Plan.md')).toBe(false)
+    expect(asked).toEqual([])
   })
 })

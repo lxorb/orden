@@ -46,7 +46,7 @@ export const FROZEN_AFTER = 5 * 60_000
  *  Chrome's strengths are time alone: six hours, four and two. The first two are taken
  *  as they are, with a count beside them, because a page here costs about 180 MB
  *  (`scripts/web-switch-probe.py`) and a day of reading never reaches four hours out of
- *  sight: sixteen pages is about 2.9 GB, ten about 1.8. Maximum is what nib did before
+ *  sight: sixteen pages is about 2.9 GB, ten about 1.8. Maximum is what Orden did before
  *  there was a choice, half an hour and six at a gigabyte, because a strength that never
  *  takes a page in a working day would not be the most it can do. */
 export const SAVING: Record<Exclude<Saver, 'off'>, { live: number; after: number }> = {

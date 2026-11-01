@@ -9,7 +9,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import type { TextEdit } from '@nib/markdown/edits'
+import type { TextEdit } from '@orden/markdown/edits'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
 import { nibMarkdownExtensions } from '../markdown/extensions'
@@ -30,7 +30,7 @@ beforeAll(async () => {
 })
 
 /** A stand-in for the app's help: a recurring task's tick written by hand, the way
- *  occurrence.ts in @nib/bases writes it, and `tomorrow` read as a day. */
+ *  occurrence.ts in @orden/bases writes it, and `tomorrow` read as a day. */
 const HELP: TaskHelp = {
   tick(note, line) {
     const lines = note.split('\n')
@@ -189,7 +189,7 @@ describe('the chips', () => {
       dependsOn: [],
       fields: {},
     }
-    // A `📅` is the start date in a space of nib's own: come, it says nothing, and is
+    // A `📅` is the start date in a space of Orden's own: come, it says nothing, and is
     // never late. In a vault it is the deadline, and late once past (#371).
     expect(chipsOf(base, '2026-10-01')).toEqual([])
     expect(chipsOf(base, '2026-10-01', 'deadline')[0]).toMatchObject({

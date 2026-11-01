@@ -27,7 +27,7 @@ use crate::agents::verbs::Dialog;
 /// Where the contract's answer is, under a result's `_meta`.
 pub const META: &str = "ch.emilvinu.nib/answer";
 
-/// The chats' tools, whose window answers the text itself (`@nib/chats/agent`, the
+/// The chats' tools, whose window answers the text itself (`@orden/chats/agent`, the
 /// account connector's words too), each message of somebody else's inside its own
 /// untrusted mark naming the chat and the person: passed through as it is.
 const CHATS: [&str; 6] = [
@@ -216,7 +216,7 @@ pub fn rendered(tool: &str, args: &Value, outcome: &Outcome) -> Value {
     })
 }
 
-/// A result that is only a sentence of nib's own: the state of the pairing, or why a
+/// A result that is only a sentence of Orden's own: the state of the pairing, or why a
 /// call could not be made at all.
 pub fn said(sentence: &str, error: bool) -> Value {
     json!({ "content": [text(sentence)], "isError": error })

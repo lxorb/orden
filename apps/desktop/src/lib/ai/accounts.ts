@@ -60,7 +60,7 @@ const FIRST: Record<Exclude<ProviderKind, 'compatible'>, string> = {
 }
 
 /** The kinds that may be added more than once: keys, servers and programs, whose second
- *  sign-in keeps its login in a home of nib's. A ChatGPT sign-in is one per installation
+ *  sign-in keeps its login in a home of Orden's. A ChatGPT sign-in is one per installation
  *  until the crate keeps a token per account. */
 export function repeatable(kind: ProviderKind): boolean {
   return kind !== 'chatgpt'
@@ -244,7 +244,7 @@ export function added(state: Accounts, kind: ProviderKind): { state: Accounts; a
     name: '',
     ...(kind === 'compatible' ? { baseUrl: '' } : {}),
     model: '',
-    // The program's own home is the first account's; every later one is a home of nib's.
+    // The program's own home is the first account's; every later one is a home of Orden's.
     ...(isLocal(kind) && state.accounts.some((one) => one.kind === kind)
       ? { own: true as const }
       : {}),

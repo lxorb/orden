@@ -1,9 +1,9 @@
 /** What kind of value a property holds, asked the one way: a date, a span of time,
  *  a link, or a day written as words. Values are the engine's (`Value` in
- *  @nib/bases), and a map that happens to have a `kind` key is still a map, so the
+ *  @orden/bases), and a map that happens to have a `kind` key is still a map, so the
  *  question is asked of the shape and not of the key alone. */
 
-import type { DateValue, DurationValue, LinkValue, Value } from '@nib/bases'
+import type { DateValue, DurationValue, LinkValue, Value } from '@orden/bases'
 
 function kindOf(value: Value | undefined): string | null {
   if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value))

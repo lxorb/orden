@@ -21,8 +21,8 @@ import type {
   Role,
   SearchQuery,
   Who,
-} from '@nib/chats'
-import type { Refusal } from '@nib/chats/wire'
+} from '@orden/chats'
+import type { Refusal } from '@orden/chats/wire'
 
 /** A message as a surface draws it: as it stands, with what this device has said about
  *  it that the account has not placed yet drawn over it. `sending` while any of that is
@@ -46,7 +46,7 @@ export interface ChatEntry {
    *  `.chat`); null until the pointer has synced here. */
   path: string | null
   name: string | null
-  /** The reader's role in the chat's space: what `may` in `@nib/chats` decides by. */
+  /** The reader's role in the chat's space: what `may` in `@orden/chats` decides by. */
   role: Role
   members: number
   /** The log's head, when it moved and by whom. */

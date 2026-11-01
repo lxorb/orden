@@ -1575,6 +1575,18 @@ export const jv: Dictionary = {
   'answered by {model}, {date}': 'diwangsuli {model}, {date}',
   'AI block': 'Blok AI',
   'Do with AI': 'Garap nganggo AI',
+  'Use the browser': 'Nganggo browser',
+  'Lets a task done with AI open web pages and act on them.':
+    'Ngidini tugas sing digarap AI mbukak kaca web lan tumindak ing kono.',
+  'Look through notes': 'Nggoleki cathetan',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Ngidini tugas sing digarap AI nggoleki lan maca cathetan liyane, saliyane cathetane dhewe.',
+  'Change other notes': 'Ngowahi cathetan liya',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Ngidini tugas sing digarap AI nulis, mindhah, lan mbusak cathetan saliyane tugas kuwi.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Apa sing dijaluk saka tugas sing digarap AI. Tugas tetep dicenthang yen rampung, utawa AI takon ing komentar.',
+  'Started in the AI panel': 'Diwiwiti ing panel AI',
   'Highlight colour': 'Warna sorot',
   'A single newline breaks the line': 'Siji larik anyar wis misahake larike',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2618,6 +2630,9 @@ export const jv: Dictionary = {
     'Ing kene kaca web nggoleki alamat kaya sistem; DNS-e disetel ing setelan sistem dhewe.',
   'Set by the settings file': 'Disetel dening file setelan',
   'The settings file has a problem': 'File setelan ana masalah',
+  'Some changes may not be noticed': 'Sawetara owah-owahan bisa uga ora katon',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Sistem wis tekan wates folder sing dipantau, dadi Orden bisa uga ora weruh saben owah-owahan sing digawe program liya ing ruang sampeyan. Ngundhakake fs.inotify.max_user_watches ndandani iki.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Pindhah obrolan {name} menyang {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

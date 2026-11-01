@@ -18,7 +18,7 @@ import {
   taskOut,
   withProperties,
 } from '.'
-import { type TaskChange, taskLine } from '@nib/markdown/task-edits'
+import { type TaskChange, taskLine } from '@orden/markdown/task-edits'
 
 const context = { today: '2026-10-04', now: '2026-10-04T09:00:00' }
 
@@ -367,9 +367,9 @@ describe('Today without the engine', () => {
   })
 })
 
-/** Filters and a limit nib cannot read are kept as written, but only until the
+/** Filters and a limit Orden cannot read are kept as written, but only until the
  *  base or the view is given its own; clearing them is giving it none. */
-describe('a base edited where nib could not read it', () => {
+describe('a base edited where Orden could not read it', () => {
   const SOURCE =
     'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - b\n    limit: "10"\n'
 

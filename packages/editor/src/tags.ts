@@ -34,7 +34,7 @@
 
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import { syntaxTree } from '@codemirror/language'
-import { TAG_NAME } from '@nib/markdown/tags'
+import { TAG_NAME } from '@orden/markdown/tags'
 import { enclosingNamed } from './nodes'
 import { fuzzy, noteIndex, type SpaceTag } from './wikilink/notes'
 

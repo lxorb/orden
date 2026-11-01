@@ -12,7 +12,7 @@ import { richPaste } from './paste'
 beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
-  return import('@nib/markdown/from-html')
+  return import('@orden/markdown/from-html')
 })
 
 /** The note after `text` (and `html`, where there is some) is pasted at the `|`. */

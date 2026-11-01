@@ -10,11 +10,18 @@
  *  `outbox` in the order it was made. And what a held note was held against, in the
  *  `held` row's `remote`.
  *
- *  All of it framed the way sync v2 frames a request (`frame` in @nib/sync-core), so a
+ *  All of it framed the way sync v2 frames a request (`frame` in @orden/sync-core), so a
  *  Yjs update inside a record is bytes and not a list of numbers, and read back through
  *  a check: a row is unknown until it has been looked at. */
 
-import { frame, type CreateOp, type KeepRequest, type Op, opOf, unframe } from '@nib/sync-core/wire'
+import {
+  frame,
+  type CreateOp,
+  type KeepRequest,
+  type Op,
+  opOf,
+  unframe,
+} from '@orden/sync-core/wire'
 import type { MetaRow } from './store'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -26,7 +33,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 /** A push sent and not answered yet: its own id, and how many of the pending updates it
  *  carried. Written before it goes, so one whose answer was lost - to the network or to
  *  a crash - goes again as it was, the same id and the same bytes, and the account
- *  answers it the way it answered the first time (`PushDoc` in @nib/sync-core/wire). */
+ *  answers it the way it answered the first time (`PushDoc` in @orden/sync-core/wire). */
 export interface Flight {
   push: string
   count: number
@@ -191,7 +198,7 @@ export function wantedRow(space: string, wanted: ReadonlyMap<string, Wanted>): M
  *    room's words; `update` is what the account sent, which brings the confirmed
  *    state to version `seq`, last changed at `at` on the account's clock.
  *  - `file`: another program changed the file while the document had moved too; the
- *    file's text is `local`, the words nib last wrote are `base`, and the document is
+ *    file's text is `local`, the words Orden last wrote are `base`, and the document is
  *    the other side.
  *  - `blob`: a file that is not a document, replaced here (`mine`, a hash) and on the
  *    account (`theirs`) while apart; see files.ts.

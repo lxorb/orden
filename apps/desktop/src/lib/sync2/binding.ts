@@ -9,12 +9,12 @@
  *  The moment of joining is the one to get right, because the two may not agree:
  *
  *  - the note was typed in during the moment the document took to arrive, or the file
- *    was written by another program while nib was closed: the note is ahead, and what
+ *    was written by another program while Orden was closed: the note is ahead, and what
  *    it says goes into the document as this device's edits;
  *  - the document has words the file had not been written with yet (another device's,
  *    pulled while this note was closed and its file not yet written): the document is
  *    ahead, and its words go into the note;
- *  - both moved: the three-way rule another program's edit gets, against the words nib
+ *  - both moved: the three-way rule another program's edit gets, against the words Orden
  *    last wrote (ingest.ts).
  *
  *  A canvas or a page note is joined through the binding a canvas's room uses
@@ -22,9 +22,9 @@
  *  has an id and a time, so both sides are kept whichever is ahead, and what the plane
  *  had that the document did not goes in as this device's. */
 
-import type { SharedDoc } from '@nib/editor'
-import { TEXT } from '@nib/rooms'
-import { fold } from '@nib/rooms/fold'
+import type { SharedDoc } from '@orden/editor'
+import { TEXT } from '@orden/rooms'
+import { fold } from '@orden/rooms/fold'
 import type * as Y from 'yjs'
 import type { InkStroke } from '../canvas/format'
 import type { Point } from '../canvas/geometry'
@@ -53,7 +53,7 @@ function arrive(note: Held, from: string, to: string) {
  *  question went up: the note is held, and the next meeting is against those (#543).
  *
  *  `given` is the words both sides last shared, where the caller knows them better than
- *  the file nib last wrote: after a hold, what the note said when it was asked. */
+ *  the file Orden last wrote: after a hold, what the note said when it was asked. */
 async function agree(
   engine: Engine,
   id: string,

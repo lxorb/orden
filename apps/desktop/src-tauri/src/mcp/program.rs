@@ -1,7 +1,7 @@
 //! The program an agent's client runs as `nib mcp`: this binary, where it is installed.
 //! The settings pane asks for it to write the line a reader pastes into their client
 //! (`src/lib/agents/mcp.ts`), the app writes it into the clients it finds itself
-//! (`ai_cli/enroll.rs`), and `nib mcp` starts the app with it when nib is closed. So it
+//! (`ai_cli/enroll.rs`), and `nib mcp` starts the app with it when Orden is closed. So it
 //! has to be a path that is still there tomorrow, and on Linux the running binary is
 //! not always one.
 //!

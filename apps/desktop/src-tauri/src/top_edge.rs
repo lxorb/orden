@@ -1,6 +1,6 @@
 //! The window's top edge, which offers to resize the window only where it can.
 //!
-//! nib draws its own frame on Windows, and Tauri gives a frameless window back its top
+//! Orden draws its own frame on Windows, and Tauri gives a frameless window back its top
 //! edge with a strip a few pixels tall laid over the page - `TAURI_DRAG_RESIZE_WINDOW`,
 //! in tauri-runtime-wry's `undecorated_resizing.rs` - while the other three edges are the
 //! system's own, outside the window, under its shadow. Every pointer over that strip

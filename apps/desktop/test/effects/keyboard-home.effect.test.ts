@@ -7,7 +7,7 @@
  *  asking the crate for a site's page before its own element when one of its layers
  *  closes. In the jsdom project because the editor is a real one. */
 
-import { createEditor, type EditorView } from '@nib/editor'
+import { createEditor, type EditorView } from '@orden/editor'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 /** What the crate was asked, in order, and whether a site in a web tab has the keyboard,

@@ -3,7 +3,7 @@
    *  measured by a count, a sum, an average, the earliest or the latest, with a running
    *  total where asked (docs/tasks.md 5.9). Drawn as SVG in the theme's six tones, and
    *  read-only, as Notion's are; its settings are kept under the view's `nib:`. */
-  import { groupName } from '@nib/bases'
+  import { groupName } from '@orden/bases'
   import { amount, t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import {
@@ -20,7 +20,7 @@
   import { displayName, knownProperties, toneOf } from './columns'
   import { setNibOption } from './edit'
   import type { Kit } from './kit'
-  import { dayWords } from '@nib/editor/task-days'
+  import { dayWords } from '@orden/editor/task-days'
   import { chartName, groupLabel, measureName, noteNames, propertyName } from './words'
 
   const { kit }: { kit: Kit } = $props()

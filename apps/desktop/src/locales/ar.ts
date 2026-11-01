@@ -1699,6 +1699,18 @@ export const ar: Dictionary = {
   'answered by {model}, {date}': 'أجاب {model}، {date}',
   'AI block': 'كتلة ذكاء اصطناعي',
   'Do with AI': 'نفّذ بالذكاء الاصطناعي',
+  'Use the browser': 'استخدام المتصفح',
+  'Lets a task done with AI open web pages and act on them.':
+    'يسمح لمهمة تُنفَّذ بالذكاء الاصطناعي بفتح صفحات الويب والتصرّف فيها.',
+  'Look through notes': 'تصفّح الملاحظات',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'يسمح لمهمة تُنفَّذ بالذكاء الاصطناعي بالبحث في ملاحظاتك الأخرى وقراءتها، إلى جانب ملاحظتها.',
+  'Change other notes': 'تغيير ملاحظات أخرى',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'يسمح لمهمة تُنفَّذ بالذكاء الاصطناعي بكتابة ملاحظات غير المهمة ونقلها وحذفها.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'ما يُطلب من مهمة تُنفَّذ بالذكاء الاصطناعي. تظل تضع علامة على المهمة عند إنجازها، أو تسأل في تعليق.',
+  'Started in the AI panel': 'بدأت في لوحة الذكاء الاصطناعي',
   'Highlight colour': 'لون التظليل',
   'A single newline breaks the line': 'سطر جديد واحد يقطع السطر',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2749,6 +2761,9 @@ export const ar: Dictionary = {
     'تبحث صفحات الويب هنا عن العناوين كما يفعل النظام؛ ويُضبط DNS في إعدادات النظام نفسه.',
   'Set by the settings file': 'محدد في ملف الإعدادات',
   'The settings file has a problem': 'في ملف الإعدادات مشكلة',
+  'Some changes may not be noticed': 'قد لا تُلاحَظ بعض التغييرات',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'بلغ النظام حدّه من المجلدات المراقَبة، لذا قد لا يلاحظ Orden كل تغيير تجريه برامج أخرى في مساحاتك. رفع fs.inotify.max_user_watches يصلح ذلك.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'أتنقل المحادثة {name} إلى {space}؟',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

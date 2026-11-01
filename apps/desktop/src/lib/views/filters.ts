@@ -1,4 +1,4 @@
-/** Todoist's filters, the nib way: a filter is a `.base` file in the space's `Filters/`
+/** Todoist's filters, the Orden way: a filter is a `.base` file in the space's `Filters/`
  *  folder, its view's filter the Todoist query read into Bases' own (`fromTodoist`), and
  *  the words it was written in kept beside it (`nib.todoist`), so it is edited as it was
  *  typed and Obsidian reads the base without knowing Todoist at all. Each list of a query
@@ -6,7 +6,7 @@
  *
  *  Pure, but for `saveFilter`, which writes the file. */
 
-import { answer, type Base, fromTodoist, type Row, type View, writeBase } from '@nib/bases'
+import { answer, type Base, fromTodoist, type Row, type View, writeBase } from '@orden/bases'
 import { canWriteAt } from '../sharing.svelte'
 import { joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'

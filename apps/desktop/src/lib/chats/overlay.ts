@@ -8,8 +8,8 @@
  *  `sending` until it is placed, or the account's refusal. Pure, so the drawing of an
  *  outbox is tested without a store. */
 
-import type { Logged, Message, Who } from '@nib/chats'
-import type { Refusal } from '@nib/chats/wire'
+import type { Logged, Message, Who } from '@orden/chats'
+import type { Refusal } from '@orden/chats/wire'
 import type { Shown } from './api'
 import type { OutboxRow } from './cache'
 import { fold, type Kept } from './fold'

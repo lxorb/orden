@@ -1576,6 +1576,18 @@ export const my: Dictionary = {
   'answered by {model}, {date}': '{model} ဖြေသည်၊ {date}',
   'AI block': 'AI ဘလောက်',
   'Do with AI': 'AI ဖြင့် လုပ်ရန်',
+  'Use the browser': 'ဘရောက်ဇာ သုံးရန်',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI ဖြင့် လုပ်သော အလုပ်ကို ဝဘ်စာမျက်နှာများ ဖွင့်ပြီး ၎င်းတို့ပေါ်တွင် လုပ်ဆောင်ခွင့်ပေးသည်။',
+  'Look through notes': 'မှတ်စုများ ကြည့်ရန်',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI ဖြင့် လုပ်သော အလုပ်ကို ၎င်း၏ မှတ်စုအပြင် သင်၏ အခြားမှတ်စုများကို ရှာဖွေဖတ်ရှုခွင့်ပေးသည်။',
+  'Change other notes': 'အခြားမှတ်စုများ ပြောင်းရန်',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI ဖြင့် လုပ်သော အလုပ်ကို ထိုအလုပ်မှလွဲ၍ အခြားမှတ်စုများကို ရေး၊ ရွှေ့၊ ဖျက်ခွင့်ပေးသည်။',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI ဖြင့် လုပ်သော အလုပ်ကို လုပ်ခိုင်းသည့်အရာ။ ပြီးလျှင် အလုပ်ကို အမှန်ခြစ်ဆဲဖြစ်ပြီး မဟုတ်လျှင် မှတ်ချက်တွင် မေးသည်။',
+  'Started in the AI panel': 'AI အကန့်တွင် စတင်ပြီး',
   'Highlight colour': 'မီးမောင်းအရောင်',
   'A single newline breaks the line': 'လိုင်းအသစ်တစ်ခုတည်းဖြင့် လိုင်းပြတ်သည်',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2620,6 +2632,9 @@ export const my: Dictionary = {
     'ဤနေရာတွင် ဝဘ်စာမျက်နှာများသည် စနစ်ကဲ့သို့ပင် လိပ်စာများကို ရှာသည်။ ၎င်း၏ DNS ကို စနစ်၏ ဆက်တင်များတွင် သတ်မှတ်ရသည်။',
   'Set by the settings file': 'ဆက်တင်ဖိုင်က သတ်မှတ်ထားသည်',
   'The settings file has a problem': 'ဆက်တင်ဖိုင်တွင် ပြဿနာရှိသည်',
+  'Some changes may not be noticed': 'ပြောင်းလဲမှုအချို့ကို မသိနိုင်ပါ',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'စနစ်၏ စောင့်ကြည့်ဖိုင်တွဲ ကန့်သတ်ချက် ပြည့်သွားသဖြင့် အခြားပရိုဂရမ်များ သင့်နေရာများတွင် ပြုလုပ်သော ပြောင်းလဲမှုတိုင်းကို Orden မသိနိုင်ပါ။ fs.inotify.max_user_watches ကို တိုးပါက ပြေလည်သည်။',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ချတ် {name} ကို {space} သို့ ရွှေ့မလား',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

@@ -16,7 +16,7 @@
  *  answering that needs the whole space, and none of this needs to know about
  *  one. */
 
-import { findLinks, type FoundLink } from '@nib/markdown/links'
+import { findLinks, type FoundLink } from '@orden/markdown/links'
 import { shownName } from './note-name'
 import { folderOf, relativePath } from './space-paths'
 

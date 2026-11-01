@@ -2,7 +2,7 @@
  *  know and the app does not already tell it, and nothing else.
  *
  *  Read by the AI sidebar as the space's instructions (ai/sidebar/setup.ts), the same
- *  file Claude Code, Codex and the rest read in a folder. Remembering is nib's own line
+ *  file Claude Code, Codex and the rest read in a folder. Remembering is Orden's own line
  *  (ai/commands/instructions.ts) and writes under the `## Memory` heading, so the
  *  heading is here already, as `/memory` makes it. Not translated: the model reads it,
  *  and the writer's own language is the first thing it says to use.

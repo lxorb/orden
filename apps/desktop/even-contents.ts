@@ -204,13 +204,8 @@ export function partOf(file: string, catalogue: boolean): Part {
 
 /** Bytes each part may weigh, as staged. Measured on 2026-10-07 at 5,297,926 for the
  *  code, 762,886 for the catalogues, 266,816 for the styles, 256,168 for the fonts and
- *  33,555 for the pages and the icon. The budgets add up to 7,298,000, so 1.04 MiB of
+ *  33,555 for the pages and the icon. The budgets add up to 7,270,000, so 1.07 MiB of
  *  the 8 MiB ceiling is out of every part's reach without a change to this table.
- *
- *  The catalogues' raised on 2026-10-24, from 850,000 to 950,000, for #768: every
- *  setting the plugin's own Settings shows says what it does behind a `?`, and those
- *  sentences are rows the plugin asks for, in each of the 24 catalogues it ships.
- *  Measured 922,538, from 779,615 at 7a57b7518.
  *
  *  The code raised on 2026-10-24, to 5,700,000, for the second bug burn-down landed
  *  together (#681 to #948). Measured 5,654,763.
@@ -223,12 +218,25 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  fixes, so each of them need not raise it. Measured 5,700,028 with main as of this
  *  raise.
  *
- *  The code raised on 2026-10-27, to 5,758,000, for main's burn-down fixes merged into
- *  unstable, each side raised above without the other's. Measured 5,728,470 for the
- *  code and 940,002 for the catalogues together; the headroom is the 30,000 main kept
- *  for the fourth burn-down's pending fixes. */
+ *  Raised on 2026-10-27, to 5,732,000, for #781: what a canvas holds that Orden does not
+ *  read is fingerprinted and counted in generations, so a merge keeps the version another
+ *  app changed (canvas-extras.ts, in the plugin through the canvas it opens). Measured
+ *  5,730,560, from 5,728,470 at d6bbe05c4.
+ *
+ *  The catalogues' raised on 2026-10-24, from 850,000 to 950,000, for #768: every
+ *  setting the plugin's own Settings shows says what it does behind a `?`, and those
+ *  sentences are rows the plugin asks for, in each of the 24 catalogues it ships.
+ *  Measured 922,538, from 779,615 at 7a57b7518. *
+ *  The code raised on 2026-10-28, to 5,733,000, for #523: the file list, which the
+ *  plugin carries, is a tree to a screen reader and hands the keyboard on from a row
+ *  deleted under it (Tree.svelte). Measured 5,732,608, from 5,731,862 at 0168bd709.
+ *
+ *  The code raised on 2026-11-01, to 5,739,000, for the fourth bug burn-down's fixes
+ *  merged into unstable at 9163eeb16: its raises were measured without them. Measured
+ *  5,738,198.
+ */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_758_000,
+  code: 5_739_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

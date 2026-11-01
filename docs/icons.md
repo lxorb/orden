@@ -13,7 +13,7 @@ that thing has.
 | --- | --- | --- |
 | a note | `icon:` in its own front matter | The one place a markdown file has for metadata. It travels with the file into another vault, and Obsidian's Iconize plugin reads the same key. |
 | a canvas | `nib.icon` in the `.canvas` JSON | A canvas has no front matter. `nib` is the one top-level key the JSON Canvas spec leaves for what is ours, and the ink already lives there; under it the file is the spec exactly. |
-| a chat | `icon` and `iconColor` in its `.chat` pointer, after the id | A chat's log is the account's, but the pointer is the one file it has in the space and already carries its name and place (`docs/chats.md` 4.2). So the icon goes wherever the chat goes, by either sync, to everybody who can reach the space, exactly as a canvas's does. A nib from before these keys drops them and reads the same chat. |
+| a chat | `icon` and `iconColor` in its `.chat` pointer, after the id | A chat's log is the account's, but the pointer is the one file it has in the space and already carries its name and place (`docs/chats.md` 4.2). So the icon goes wherever the chat goes, by either sync, to everybody who can reach the space, exactly as a canvas's does. A Orden from before these keys drops them and reads the same chat. |
 | a folder with no note of its own | one map per space, `icons: { <path>: <name> }` | A folder is not a file. Kept beside the space rather than inside the folder: nothing is added to anybody's folders, the map is the size of what was chosen, and it goes where the space's other settings go. |
 | a space | this device's own store, keyed by folder, and the account's `icon` column | It was a device's choice before it was the account's, and it still is on a machine that is not signed in. Keyed by folder here rather than by id, so it survives the ids being handed out again. |
 
@@ -21,7 +21,7 @@ Three ways of giving a folder an icon were weighed. A dotfile inside the folder
 would sync for free and survive a move without being told, but it puts a file in
 every folder somebody marked and every other tool that walks the vault sees it. A
 `folder.md` index note is Obsidian's folder-note convention, and a folder that has
-one of those is a note in nib and keeps its icon in that note's front matter like
+one of those is a note in Orden and keeps its icon in that note's front matter like
 any other. The map is what is left for the folders that have no such note - the
 ones a vault arrived with - and it costs one obligation: a rename, a move or a
 delete has to rewrite the key, which is `moved` and `gone` in
@@ -96,7 +96,7 @@ say it that way. A set this build has never heard of reads as a set rather than 
 name, so the row falls back to its kind's mark instead of drawing the wrong picture.
 
 Read more widely than written. Obsidian's Iconize puts a two-letter pack prefix in
-front of every name it writes - `LiFileText`, `FaRocket` - and nib looks any of them
+front of every name it writes - `LiFileText`, `FaRocket` - and Orden looks any of them
 up in Lucide without the prefix, which is the right answer far more often than
 nothing at all. Letters and digits alone decide, so `FileText`, `file-text` and
 `file_text` are one icon.

@@ -34,8 +34,8 @@ import {
   serverFrameOf,
   socketPath,
   text,
-} from '@nib/online/wire'
-import { BEAT } from '@nib/sync-core/wire'
+} from '@orden/online/wire'
+import { BEAT } from '@orden/sync-core/wire'
 import { BEAT_EVERY, linkDelay } from '../backoff'
 
 /** What a socket looks like from here; the browser's, or the tests'. */

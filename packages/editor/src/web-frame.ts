@@ -3,7 +3,7 @@
  *
  *  One place, because every surface that renders a note shows the same card: the
  *  editor's live preview, the reading view, a canvas card and a slide. The markup
- *  comes from @nib/markdown, which knows the provider, the sandbox it needs and the
+ *  comes from @orden/markdown, which knows the provider, the sandbox it needs and the
  *  permissions it is granted; this only builds the element from what the card
  *  already says. Nothing here decides policy - a surface that could loosen a
  *  sandbox would be a surface where the policy is not the policy.

@@ -12,7 +12,7 @@
  *  caller hands it: the door's from the token a socket carries, a route's from the
  *  session the guard already read, the object's own from a person's id. */
 
-import type { Role } from '@nib/chats'
+import type { Role } from '@orden/chats'
 import type { Env, Whoever } from '../types'
 
 /** One chat as one person reaches it. */

@@ -10,7 +10,7 @@
  *  once, while each tab keeps its own caret and its own place in the note. Nothing
  *  has to be kept in step, because there is nothing to keep in step. */
 
-import { type FoldLines, SharedDoc } from '@nib/editor'
+import { type FoldLines, SharedDoc } from '@orden/editor'
 import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 import { t } from '../i18n.svelte'

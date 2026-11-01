@@ -48,7 +48,7 @@ describe('the manifest a build is packed from', () => {
     // blocks anything not on it before the request leaves the WebView.
     //
     // One origin, and `api.openai.com` is deliberately not it. The account's key is
-    // written and never read back, so the plugin has no key to send and Nib makes
+    // written and never read back, so the plugin has no key to send and Orden makes
     // that request; see services/sync/src/ask. A permission's description has to
     // stay true, and "sign in and keep your notes in step" is now the whole of what
     // the network is for.

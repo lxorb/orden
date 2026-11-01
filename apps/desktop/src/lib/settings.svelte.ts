@@ -1,4 +1,4 @@
-import { setSnippets } from '@nib/editor'
+import { setSnippets } from '@orden/editor'
 import { account } from './account.svelte'
 import { modes } from './modes.svelte'
 import { connectors } from './connectors.svelte'

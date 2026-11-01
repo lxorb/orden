@@ -8,8 +8,8 @@
    *  refused says so, with Try again and Delete.
    *
    *  The row draws and the chat acts: every press is a call on the chat's page. */
-  import type { Message, Who } from '@nib/chats'
-  import { chatLinkOf } from '@nib/chats/links'
+  import type { Message, Who } from '@orden/chats'
+  import { chatLinkOf } from '@orden/chats/links'
   import type { Shown } from '../api'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'

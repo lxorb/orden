@@ -17,7 +17,7 @@ Run it with the repository's own Chromium:
 
     python scripts/web-tab-e2e.py
 
-It builds nothing. `pnpm --filter @nib/desktop build` first, then this."""
+It builds nothing. `pnpm --filter @orden/desktop build` first, then this."""
 
 import http.server
 import json
@@ -259,7 +259,7 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
 
     # 2. A website written when a website was a note. Opening it writes the shortcut
     #    beside it and takes the note away, and what opens is the shortcut: a space
-    #    that came from an older nib converts itself a row at a time. See
+    #    that came from an older Orden converts itself a row at a time. See
     #    docs/web-tabs.md.
     open_row(page, "A page written as a note")
     page.wait_for_timeout(1500)
@@ -416,7 +416,7 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
 
 def main() -> int:
     if not DIST.is_dir():
-        raise SystemExit(f"no build at {DIST}; run pnpm --filter @nib/desktop build")
+        raise SystemExit(f"no build at {DIST}; run pnpm --filter @orden/desktop build")
 
     shutil.rmtree(OUT, ignore_errors=True)
     OUT.mkdir(parents=True, exist_ok=True)

@@ -4,7 +4,7 @@
 //!
 //! The identifier comes from the build (build.rs), never from a constant written here: a
 //! probe is the same source built as `ch.emilvinu.nib.probe.<name>`, and its `nib mcp`
-//! has to reach that probe and nothing of the reader's own nib.
+//! has to reach that probe and nothing of the reader's own Orden.
 
 use std::ffi::OsString;
 use std::path::PathBuf;

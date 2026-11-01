@@ -1,4 +1,4 @@
-//! The unpartitioned twins an earlier nib made of partitioned cookies, found so that
+//! The unpartitioned twins an earlier Orden made of partitioned cookies, found so that
 //! `keep` can take them away.
 //!
 //! From f47877a4 (2026-09-27) until 2026-09-30, `keep` gave every session cookie its

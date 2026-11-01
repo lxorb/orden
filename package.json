@@ -1,5 +1,5 @@
 {
-  "name": "nib",
+  "name": "orden",
   "private": true,
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -8,9 +8,9 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "pnpm --filter @nib/desktop app",
-    "web": "pnpm --filter @nib/desktop dev",
-    "build": "pnpm --filter @nib/desktop app:build",
+    "dev": "pnpm --filter @orden/desktop app",
+    "web": "pnpm --filter @orden/desktop dev",
+    "build": "pnpm --filter @orden/desktop app:build",
     "check": "pnpm -r --no-bail check",
     "test": "pnpm -r --no-bail --no-sort --workspace-concurrency=2 test --fsModuleCache",
     "lint": "eslint .",
@@ -42,8 +42,8 @@
       "workerd"
     ],
     "overrides": {
-      "@codemirror/lang-markdown>@codemirror/lang-html": "workspace:@nib/lang-html@*",
-      "@codemirror/lang-markdown>@codemirror/autocomplete": "workspace:@nib/autocomplete@*"
+      "@codemirror/lang-markdown>@codemirror/lang-html": "workspace:@orden/lang-html@*",
+      "@codemirror/lang-markdown>@codemirror/autocomplete": "workspace:@orden/autocomplete@*"
     },
     "overrides-comment": "The markdown language asks for the HTML grammar in a static import, and that grammar brings the CSS and JavaScript ones with it and the parser runtime under all three: a hundred and sixty-seven kilobytes in front of the first paint for the notes that have a tag in them. What it gets instead fetches the real grammar when a note turns out to have one - see packages/lang-html, which is the whole of the reasoning. Scoped to that one package, so a ```html fence and every other reader of the grammar still reach the real thing. The second is the same shape: that package also imports the completion library at the top of its module, for the tag names a `<` offers through a source nib never asks, which held thirty-five kilobytes of popup in front of the first paint. See packages/autocomplete; the popup the app does use imports the real thing by name and is fetched as the first editor is built.",
     "comment": "workerd ships no win32-arm64 binary; pull the x64 one so wrangler runs under emulation.",

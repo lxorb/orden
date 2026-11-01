@@ -35,7 +35,7 @@
 
 import { Compartment, type StateEffect } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import { enrolled, openViews } from './open-views'
 import { flushTableEdits } from './table/widget'
 

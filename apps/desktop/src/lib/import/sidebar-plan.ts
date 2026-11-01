@@ -1,4 +1,4 @@
-/** A browser's sidebar as nib's: what each of its spaces becomes before anything is
+/** A browser's sidebar as Orden's: what each of its spaces becomes before anything is
  *  written. What becomes what is Zen's picture, which every browser's sidebar is read
  *  into (sidebar.ts); see zen-plan.ts for why each thing becomes what it does. A tab
  *  a browser says when it kept, a bookmark, says that day as the day it was kept.
@@ -13,7 +13,7 @@ import { isWebAddress } from '../web-tab/address'
 import { writeShortcut } from '../web-tab/shortcut'
 import { readIcon } from '../icons'
 
-/** One of the browser's spaces as a nib space. */
+/** One of the browser's spaces as an Orden space. */
 export interface SpacePlan {
   name: string
   icon: string | null
@@ -38,7 +38,7 @@ interface SidebarImport {
  *  picture past this is a page's screenshot somebody's session kept by accident. */
 const LONGEST_MARK = 64 * 1024
 
-/** What nib makes of a sidebar. `now` is when the web notes say they were kept, where
+/** What Orden makes of a sidebar. `now` is when the web notes say they were kept, where
  *  the browser did not say; `containers` is the line that says containers stayed
  *  behind, in the browser's name, or null for a browser that has none. */
 export function sidebarImport(session: Sidebar, now: Date, containers: Lost | null): SidebarImport {
@@ -152,7 +152,7 @@ function write(rows: readonly Row[], folder: string, plan: SpacePlan, names: Nam
     const name = safeName(row.folder.name)
     if (!row.rows.length) {
       // Its name is taken as a folder's too: a note beside a folder of the same name
-      // is the note nib nests into that folder (folder-notes.ts), not a second one.
+      // is the note Orden nests into that folder (folder-notes.ts), not a second one.
       const path = names.free(`${names.free(inside(name))}.md`)
       plan.files.push({ kind: 'note', path, text: '' })
       order.push(nameIn(path))

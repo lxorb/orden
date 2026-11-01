@@ -1,7 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
 /** A web note in the phone app is the reader's browser's: its address handed to the
- *  system, never a page inside nib - not from its row, and not from a tab an older
+ *  system, never a page inside Orden - not from its row, and not from a tab an older
  *  sitting left of it, which was what Emil still found on the phone (#206). See
  *  `openWeb` in workspace.svelte.ts, and tauri.test.ts for where the address goes. */
 

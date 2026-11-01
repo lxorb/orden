@@ -6,7 +6,7 @@
  *  member of a shared space, a peer typing in a room, a guest a link let in, a
  *  paste off the web - is a document from outside, and a document from outside is
  *  shown as the characters it is made of. The renderer already knows how; see
- *  `escapeHtml` in @nib/markdown, which is what a published page is rendered
+ *  `escapeHtml` in @orden/markdown, which is what a published page is rendered
  *  with, and for the same reason.
  *
  *  Two things decide it, because two things are what the app can actually know:

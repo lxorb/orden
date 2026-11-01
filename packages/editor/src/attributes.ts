@@ -4,7 +4,7 @@
  *  wrote and the attribute is a `"…"`: neither character may survive there, and
  *  nothing else in it can end the attribute or open a tag.
  *
- *  Not @nib/markdown's `escape`, which leaves an `&` that already opens an entity
+ *  Not @orden/markdown's `escape`, which leaves an `&` that already opens an entity
  *  alone. That is right for prose - a note that wrote `&amp;` meant the ampersand
  *  - and wrong for a URL, where the entity is what the browser would decode back
  *  into a scheme. Two places here write such an attribute and each had its own

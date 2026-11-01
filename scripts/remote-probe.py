@@ -3,10 +3,10 @@
 Windows only, and never a real machine: there is no `sshd` here to reach, and a reader's
 own hosts are theirs. `NIB_SSH` points the crate at `scripts/fake-ssh.py` (through a
 one-line `.cmd`) and `NIB_SSH_CONFIG` at a config written here, so what is checked is
-everything on nib's side of `ssh`:
+everything on Orden's side of `ssh`:
 
 * the crate reads the config's hosts - a pattern and a `Match` left out, an `Include`
-  followed, a heading's group - and refuses a host made in nib whose address could be
+  followed, a heading's group - and refuses a host made in Orden whose address could be
   read as an option;
 * a remote terminal put back as a restart puts one back **waits** for Reconnect, and the
   bar's button starts `ssh` with `-F <config> -- <host>`;

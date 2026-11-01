@@ -90,9 +90,9 @@ pub struct Seen {
 
 /// Why a token was not taken.
 enum Refusal {
-    /// nib does not know it.
+    /// Orden does not know it.
     Unknown,
-    /// nib did not answer.
+    /// Orden did not answer.
     Unreachable(String),
 }
 
@@ -585,7 +585,7 @@ fn grant_of(endpoint: &Endpoint, token: &str) -> Result<Grant, Refusal> {
     }
 }
 
-/// Why nib did not answer, in a sentence: the reader closed it, most likely.
+/// Why Orden did not answer, in a sentence: the reader closed it, most likely.
 fn unreachable(error: &std::io::Error) -> String {
     format!("Orden is not running or did not answer ({error}); ask the reader to open Orden, then call again")
 }

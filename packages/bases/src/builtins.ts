@@ -1,4 +1,4 @@
-/** The views nib ships, as the bases they are: Inbox, Today, Upcoming, Completed, a
+/** The views Orden ships, as the bases they are: Inbox, Today, Upcoming, Completed, a
  *  project, a label, and what is assigned to me. Each is an ordinary Base, so the
  *  engine answers it like any other and "Copy to a base" writes it as a `.base`
  *  file the reader then changes. Group keys are values, never words: Today groups
@@ -7,7 +7,7 @@
  *
  *  A task whose start date has not come is in none of them but Upcoming, which is where
  *  the days ahead are, and a project's own list, which is its note; and only a deadline
- *  makes a task overdue (#371, `@nib/markdown/task-dates`). A task with no start date
+ *  makes a task overdue (#371, `@orden/markdown/task-dates`). A task with no start date
  *  is in Today only when the reader says so, as one whose start date has come (#408). */
 
 import type { Base, Filter, View } from './types'
@@ -156,7 +156,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
 }
 
 /** A Today a tab changed, made to say `undated` the way Settings does now: a view whose
- *  filter is still the one nib ships the other way takes this way's, so what a reader
+ *  filter is still the one Orden ships the other way takes this way's, so what a reader
  *  laid out stays theirs and the switch still reaches it. A filter they wrote is kept. */
 export function todayAs(base: Base, undated: boolean): Base {
   const now = builtinView('today', { undated }).views[0]?.filters

@@ -2,7 +2,7 @@
 //!
 //! Emil, 2026-09-27: *"there should be a setting for a space where you can set on which
 //! granularity to save the website data. either global (default) which just uses the
-//! global cookies and data store of nib or per space which saves it per space or per
+//! global cookies and data store of Orden or per space which saves it per space or per
 //! site which makes it separate for each site in this space."*
 //!
 //! The window decides which store a tab is in and says so by name - nothing for the

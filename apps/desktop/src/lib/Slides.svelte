@@ -14,7 +14,7 @@
    */
 
   import { onDestroy, tick } from 'svelte'
-  import { loadEmbed } from '@nib/editor'
+  import { loadEmbed } from '@orden/editor'
   import { claimsGesture } from './swipe'
   import { menu } from './menu.svelte'
   import { overlays } from './overlays'

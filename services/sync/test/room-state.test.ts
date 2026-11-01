@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
 import { MAX_NOTE_BYTES } from '../src/notes'
 import { MOST_DOCUMENT_BYTES, RoomState, TOO_LARGE_IN_A_ROOM } from '../src/rooms/state'
-import { TEXT } from '@nib/rooms'
+import { TEXT } from '@orden/rooms'
 
 /** A room's own storage, and what it survives.
  *

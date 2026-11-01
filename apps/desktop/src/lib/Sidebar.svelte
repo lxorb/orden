@@ -660,8 +660,10 @@
         use:segmented
       >
         {#each strip.drawn as item (item.id)}
+          <!-- `data-tab` is where a task sent to the AI panel flies to; see ai/sent-off.ts. -->
           <button
             class:on={showing === item.id}
+            data-tab={item.id}
             role="tab"
             title={shortcuts.tooltip(item.label, commandOf(item.id))}
             aria-label={item.label}

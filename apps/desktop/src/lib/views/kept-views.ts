@@ -2,7 +2,7 @@
  *  a list's groups are folded, and how each project is laid out - list or board, its
  *  grouping, its sorting - so a project opened again comes back as it was left.
  *
- *  Kept by the view's name (`viewKey`): a project by its space and its note, a view nib
+ *  Kept by the view's name (`viewKey`): a project by its space and its note, a view Orden
  *  ships by its name, a base by its file. */
 
 import { isRecord, keep, stored, stringList } from '../stored'

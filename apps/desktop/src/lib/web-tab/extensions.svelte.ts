@@ -6,8 +6,14 @@
  *  web tab and never in the first paint: nothing here matters before a page is open. */
 
 import { stored, keep } from '../stored'
-import { invoke, isDesktop } from '../tauri'
+import { invoke, isDesktop, platform } from '../tauri'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
+
+/** Whether this build's engine runs extensions in web tabs: `WebView2` on Windows and
+ *  nib's own Chromium on Linux, the crate's `SUPPORTED`; a Mac's engine has no extension
+ *  API. On Linux they could be installed from a store's own page and then neither seen
+ *  nor removed, since the bar's button and the Settings list were Windows' alone (#789). */
+export const runsExtensions = isDesktop && (platform() === 'windows' || platform() === 'linux')
 
 /** One extension, as the crate describes it. */
 export interface Extension {

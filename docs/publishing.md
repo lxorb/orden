@@ -69,7 +69,7 @@ out of the same renderer and were already the same markup.
   so they outrank it.
 - **Coloured fences, server side.** `services/sync/src/blog/code.ts` carries
   thirteen Lezer grammars - the very parsers the editor loads through
-  `@codemirror/lang-*` - and colours a fence with `@nib/markdown/highlight`, the
+  `@codemirror/lang-*` - and colours a fence with `@orden/markdown/highlight`, the
   module the export uses too. Same `hl-` classes, same tree, character for
   character. The colours are in document.css now, written with `:where(#write)`
   so a reader's chosen palette still wins in the app.
@@ -166,7 +166,7 @@ the page list whatever the rules or the front matter say.
 
 **The note decides for itself.** `publish: true` or `publish: false` in its front
 matter, which is Obsidian Publish's own key, so a vault that already has them
-keeps them and a vault that leaves nib keeps working. A note that says either has
+keeps them and a vault that leaves Orden keeps working. A note that says either has
 settled its own case, and no rule about its folder changes that: what the author
 wrote in the file wins over a row in a pane, always. A value we do not
 understand - `publish: maybe` - is read as silence rather than as a page taken
@@ -205,7 +205,7 @@ See `blog/front.ts` and `blog/fill.ts`.
 ### What a publish will change
 
 Obsidian Publish shows an upload dialog: these files will be added, these
-changed, these removed. nib has nothing to upload. A page **is** the note, served
+changed, these removed. Orden has nothing to upload. A page **is** the note, served
 live, so the words on a page change when the note changes and no publish is
 involved.
 
@@ -316,7 +316,7 @@ ticket the old one handed out. A month, `HttpOnly`, `Secure`, `SameSite=Lax`.
 
 The form is the site's own design and says nothing but the site's name: no hint,
 because a hint is half the password, and no explanation of what is behind it,
-because whoever sent the address said that. It is the one page in nib that may
+because whoever sent the address said that. It is the one page in Orden that may
 post anything anywhere, and the policy says so in as many words:
 `form-action 'self'` on that page and `'none'` on every other. It carries
 `noindex`, and nothing behind it is ever cached by anything but the reader's own
@@ -537,7 +537,7 @@ A fence in the note:
 A field is its label, and after the colon what kind it is: `text` by default,
 `email`, `lines` for a paragraph, `number`, or `choice` with the choices after it.
 A `*` in front means it must be answered. Obsidian has no form block, so there is
-no key to borrow and this is nib's own; it is written to read as a note rather
+no key to borrow and this is Orden's own; it is written to read as a note rather
 than as a config file, and a fence that says something else is shown as the fence
 it is rather than guessed at.
 
@@ -653,7 +653,7 @@ page's own policy needed `'self'` added to `img-src`, which is also what lets a
 site read over plain http - a drive against a local Worker - show its own pictures.
 
 **What is left.** An edited diagram leaves its old picture in the account's
-storage, the way a replaced theme and a deleted picture already do; nothing in nib
+storage, the way a replaced theme and a deleted picture already do; nothing in Orden
 sweeps unreferenced blobs yet. And a diagram added to a note that is already
 published appears on the page after the next Publish rather than on the next save,
 because the drawing is a publish-time pass over the space.
@@ -715,7 +715,7 @@ because the drawing is a publish-time pass over the space.
   asked its browser for and fails if one of them is somebody else's; on 12.09.2026
   that list was the page, its two stylesheets, the three KaTeX faces its equations
   are set in, and the one picture the fixture names and the space does not hold.
-- `pnpm --filter @nib/sync test` covers the rest: the stylesheet is the one the
+- `pnpm --filter @orden/sync test` covers the rest: the stylesheet is the one the
   generator writes, it is served and cached, every class the page uses has a rule
   in it, the fences are coloured, the headings have ids, nothing runs, and the
   maths sheet and its faces are served from the blog with nothing left on the page

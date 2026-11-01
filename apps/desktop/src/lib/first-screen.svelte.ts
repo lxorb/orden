@@ -20,7 +20,7 @@
  *  what a launch drew before. It takes no input it would lose: a press is where the
  *  caret goes and a key typed is written there, once the editor is up. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { samePath } from './space-paths'
 import { isNumber, isRecord, isString, stored } from './stored'
 import { mark } from './trace'

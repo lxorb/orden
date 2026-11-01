@@ -5,7 +5,7 @@
  *  savedGroups }` out of `recovery.jsonlz4` - every window that is not private is
  *  read, the tabs in their order, each tab's page the one its history is on:
  *
- *  - **A pinned tab** is one of the Essentials, which is what nib's are for: what
+ *  - **A pinned tab** is one of the Essentials, which is what Orden's are for: what
  *    stays put above everything else.
  *  - **A tab group** is a folder of its name (`groups: [{ id, name, color }]` on the
  *    window, `groupId` on its tabs), where its first tab is. Its colour has nothing to

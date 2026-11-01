@@ -8,7 +8,7 @@
  *  nowhere stays in the window's field. Everything arriving is checked here, once: a message is a value crossing a
  *  boundary. */
 
-import type { Remind } from '@nib/markdown/task-line'
+import type { Remind } from '@orden/markdown/task-line'
 import type { Entry } from './entry'
 
 export const CHANNEL = 'nib-quick-add'

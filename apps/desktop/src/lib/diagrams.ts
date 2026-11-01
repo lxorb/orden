@@ -1,5 +1,5 @@
-import { sequenceToMermaid } from '@nib/editor'
-import { flowSource, keepSafeLinks } from '@nib/editor/flow'
+import { sequenceToMermaid } from '@orden/editor'
+import { flowSource, keepSafeLinks } from '@orden/editor/flow'
 import type { Scheme } from './theme.svelte'
 
 /** Drawn with the theme's face, which the document names in its stylesheet. */

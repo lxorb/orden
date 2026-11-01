@@ -5,7 +5,7 @@
  *  being moved or renamed, and it is what the graph, the backlinks and the
  *  unlinked mentions all read. Some spaces want the other spelling anyway - a
  *  folder that is also a static site, a vault shared with somebody whose editor
- *  has never heard of `[[`, a habit - and Obsidian offers the same choice, so nib
+ *  has never heard of `[[`, a habit - and Obsidian offers the same choice, so Orden
  *  does too.
  *
  *  Four answers, because Obsidian's own two settings are one question: a wikilink,
@@ -17,13 +17,13 @@
  *  Pure, and the only place a link's text is decided: `linkTo` in composer.ts is
  *  the one caller, and every writer in the app goes through that. */
 
-import { slugify } from '@nib/markdown/links'
+import { slugify } from '@orden/markdown/links'
 import { encodeTarget } from './link-rewrite'
 import { folderOf, nameOf, relativePath } from './space-paths'
 
 export type LinkFormat = 'wikilink' | 'shortest' | 'relative' | 'absolute'
 
-/** In the order the setting offers them: the one nib writes today, then the three
+/** In the order the setting offers them: the one Orden writes today, then the three
  *  shapes of the other spelling, widest first. */
 export const LINK_FORMATS: readonly LinkFormat[] = ['wikilink', 'shortest', 'relative', 'absolute']
 

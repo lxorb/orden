@@ -538,3 +538,122 @@ describe('merging two canvas files somebody else wrote in too', () => {
     )
   })
 })
+
+/** #781. What Orden does not read says nothing of when it changed, and Orden never
+ *  changes it, so the file counts: a write records each such thing's fingerprint and
+ *  generation, and the next read counts what another app changed or threw away since a
+ *  generation on. Two copies put together keep the higher generation, either way round,
+ *  through any number of writes. */
+describe('merging two copies after another app changed one of them', () => {
+  const drawing = { id: 'x', type: 'excalidraw', x: 100, y: 0, width: 200, height: 100 }
+  const card = { id: 'c', type: 'text', text: 'hello', x: 300, y: 0, width: 200, height: 60 }
+
+  /** The file as Orden last wrote it, on every device. */
+  const written = writeCanvas(
+    readCanvas(
+      JSON.stringify({
+        nodes: [drawing, { ...card, styleAttributes: { shape: 'pill' } }],
+        edges: [{ id: 'e', fromNode: 'x', toNode: 'c' }],
+        nib: { version: 1, at: { c: 100 } },
+      }),
+    ),
+  )
+  interface File {
+    nodes: { id: string; x: number; styleAttributes?: { shape: string } }[]
+    edges: { id: string }[]
+    nib: Record<string, unknown>
+  }
+  const parse = (text: string) => JSON.parse(text) as File
+  /** What another app does to a file: it edits the JSON, keeping what it does not know. */
+  const outside = (text: string, edit: (file: File) => void) => {
+    const file = parse(text)
+    edit(file)
+    return JSON.stringify(file, null, '\t')
+  }
+  const moveTo = (x: number) => (file: File) => {
+    const node = file.nodes.find((one) => one.id === 'x')
+    if (node) node.x = x
+  }
+  const throwAway = (file: File) => {
+    file.nodes = file.nodes.filter((one) => one.id !== 'x')
+    file.edges = []
+  }
+
+  test('records what it wrote, and counts nothing changed in its own file', () => {
+    expect(parse(written).nib.outside).toBeDefined()
+    const extras = readCanvas(written).extras
+    // The drawing, the edge to it, and the card's own field.
+    expect([...(extras?.generations ?? [])].sort()).toEqual([
+      ['edge:e', 0],
+      ['field:c', 0],
+      ['node:x', 0],
+    ])
+    expect(extras?.buried.size).toBe(0)
+  })
+
+  test('keeps the version another app changed, whichever side asks', () => {
+    // 50 sorts after 100, so a tie would keep the old place.
+    const moved = outside(written, (file) => {
+      moveTo(50)(file)
+      const other = file.nodes.find((one) => one.id === 'c')
+      if (other) other.styleAttributes = { shape: 'square' }
+    })
+    const one = mergeCanvasFiles(written, moved, 300)
+    expect(mergeCanvasFiles(moved, written, 300)).toBe(one)
+    const file = parse(one)
+    expect(file.nodes.find((node) => node.id === 'x')?.x).toBe(50)
+    expect(file.nodes.find((node) => node.id === 'c')?.styleAttributes).toEqual({ shape: 'square' })
+  })
+
+  test('leaves what another app threw away gone, and its edge with it', () => {
+    const thrown = outside(written, throwAway)
+    for (const merged of [
+      mergeCanvasFiles(written, thrown, 300),
+      mergeCanvasFiles(thrown, written, 300),
+    ]) {
+      const file = parse(merged)
+      expect(file.nodes.map((node) => node.id)).toEqual(['c'])
+      expect(file.edges).toEqual([])
+    }
+  })
+
+  test('keeps one thrown away on one side and changed on the other: it was still wanted', () => {
+    const thrown = outside(written, throwAway)
+    const moved = outside(written, moveTo(50))
+    for (const merged of [
+      mergeCanvasFiles(thrown, moved, 300),
+      mergeCanvasFiles(moved, thrown, 300),
+    ]) {
+      expect(parse(merged).nodes.find((node) => node.id === 'x')?.x).toBe(50)
+    }
+  })
+
+  test('keeps the change through a write, against a copy that never saw it', () => {
+    const once = mergeCanvasFiles(written, outside(written, moveTo(50)), 300)
+    expect(readCanvas(once).extras?.generations.get('node:x')).toBe(1)
+    for (const again of [
+      mergeCanvasFiles(once, written, 400),
+      mergeCanvasFiles(written, once, 400),
+    ]) {
+      expect(parse(again).nodes.find((node) => node.id === 'x')?.x).toBe(50)
+    }
+    // And a burial outlives its write the same way.
+    const gone = mergeCanvasFiles(written, outside(written, throwAway), 300)
+    for (const again of [
+      mergeCanvasFiles(gone, written, 400),
+      mergeCanvasFiles(written, gone, 400),
+    ]) {
+      expect(parse(again).nodes.map((node) => node.id)).toEqual(['c'])
+    }
+  })
+
+  test('keeps everything from two files Orden never wrote, as before', () => {
+    const plain = JSON.stringify({ nodes: [drawing], edges: [] })
+    const other = JSON.stringify({ nodes: [{ ...drawing, id: 'y' }], edges: [] })
+    expect(
+      parse(mergeCanvasFiles(plain, other, 300))
+        .nodes.map((node) => node.id)
+        .sort(),
+    ).toEqual(['x', 'y'])
+  })
+})

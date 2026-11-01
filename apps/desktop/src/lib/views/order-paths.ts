@@ -4,7 +4,7 @@
  *  the way links to it are (`retarget` in link-index.svelte.ts). Without it a renamed
  *  card would lose its place in its column. Fetched with the first move. */
 
-import { type Base, readBase, writeBase } from '@nib/bases'
+import { type Base, readBase, writeBase } from '@orden/bases'
 import { folderNotePath } from '../folder-notes'
 import { folderOf, relativeTo } from '../space-paths'
 import { type Entry, workspace } from '../workspace.svelte'
@@ -51,7 +51,7 @@ function movedPath(path: string, from: string, to: string): string {
 }
 
 /** The notes a database's board could stand in, as a fence: the note of each folder
- *  the moved note is in, `A/A.md` as nib writes it and `A.md` beside `A/` as an
+ *  the moved note is in, `A/A.md` as Orden writes it and `A.md` beside `A/` as an
  *  import from Notion does. Only these are read, so a rename reads a handful of notes
  *  and not the space. */
 function foldersNotes(root: string, path: string): string[] {

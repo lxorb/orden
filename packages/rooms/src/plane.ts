@@ -43,8 +43,8 @@ import {
   packed,
   strokeOf,
   type Thing,
-} from '@nib/markdown/canvas'
-import { extrasRead, extrasText, holdsExtras } from '@nib/markdown/canvas-extras'
+} from '@orden/markdown/canvas'
+import { extrasRead, extrasText, holdsExtras } from '@orden/markdown/canvas-extras'
 import * as Y from 'yjs'
 import { fold } from './fold'
 
@@ -55,7 +55,7 @@ export const BURIED = 'gone'
  *  app's nodes, the edges ending at them, fields and keys the spec does not name (#780).
  *  One value under `HELD`, the extras as `extrasText` writes them, so a room's settle
  *  writes them back into the file as the canvas store does; see canvas-extras.ts in
- *  @nib/markdown. Never part of an epoch's seed, whose bytes every device and every
+ *  @orden/markdown. Never part of an epoch's seed, whose bytes every device and every
  *  build must agree on: put in by an update of its own (`seedExtras`). */
 export const EXTRAS = 'extras'
 const HELD = 'held'

@@ -2,7 +2,7 @@ import { execSync } from 'node:child_process'
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { everySurface } from '@nib/themes/write'
+import { everySurface } from '@orden/themes/write'
 import manifest from './even.app.json'
 import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
@@ -65,7 +65,7 @@ function when(): string {
 /** Every rule about `#write` reaching every page a note is on, in the app's own
  *  stylesheets and in each component's: the app has several of those pages at once and
  *  only one of them can be the id. The sheets say `#write`, as Typora and every theme
- *  do, and an exported or a published note keeps its one; see @nib/themes/write. */
+ *  do, and an exported or a published note keeps its one; see @orden/themes/write. */
 const everyPage = {
   postcssPlugin: 'nib-every-page',
   Rule(rule: { selector: string }) {

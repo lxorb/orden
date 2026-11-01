@@ -1,6 +1,6 @@
 <script lang="ts">
   /** The History page: every page this tab's history holds, in the pane where a site
-   *  would be. Chrome's `chrome://history` - Ctrl+H, a row in the dots - in nib's shapes.
+   *  would be. Chrome's `chrome://history` - Ctrl+H, a row in the dots - in Orden's shapes.
    *
    *  One search field and one list, newest first under the day each page was last open,
    *  a time against each row. A press opens the page in this tab, Ctrl or the middle

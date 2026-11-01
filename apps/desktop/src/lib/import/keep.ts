@@ -10,15 +10,15 @@
  *  was left in.
  *
  *  Labels become tags. Colours do not come: a colour is how a note was found on
- *  the Keep wall, and the wall is what nib's search, tags and picture of the space
+ *  the Keep wall, and the wall is what Orden's search, tags and picture of the space
  *  are for. Pinning does not come either, for the same reason.
  *
  *  What was in the bin stays in the bin. Takeout puts deleted notes in the export
  *  and Keep would have thrown them away within the week; importing them would be
  *  the one act of this whole feature that nobody asked for. The count is said. */
 
-import { escapeText, plainWords } from '@nib/markdown/escapes'
-import { plainTaskWords } from '@nib/markdown/task-line'
+import { escapeText, plainWords } from '@orden/markdown/escapes'
+import { plainTaskWords } from '@orden/markdown/task-line'
 import { key } from '../i18n.svelte'
 
 import { dayOf, noteText, type Meta } from './meta'
@@ -29,7 +29,7 @@ import type { Source } from './sources'
 const ASSETS = 'assets'
 
 /** Where an archived note goes: a folder of its own, because an archive is a
- *  place rather than a property, and nothing in nib reads a property saying so. */
+ *  place rather than a property, and nothing in Orden reads a property saying so. */
 const ARCHIVE = 'Archive'
 
 interface KeepNote {

@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import Editor from '../../src/lib/Editor.svelte'
 import { type Tab, workspace } from '../../src/lib/workspace.svelte'
 import { reactive } from './runes.svelte'

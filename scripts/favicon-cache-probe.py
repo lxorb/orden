@@ -43,7 +43,7 @@ from probe_app import close_app
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-#: The mark, as the capture finds it: magenta, which no part of nib is drawn in.
+#: The mark, as the capture finds it: magenta, which no part of Orden is drawn in.
 MAGENTA = (255, 0, 255)
 
 

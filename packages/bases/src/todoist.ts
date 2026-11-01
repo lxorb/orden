@@ -81,7 +81,7 @@ function term(raw: string, options: TodoistOptions, at: number): string {
     case 'überfällig':
     case 'ueberfaellig':
       // Only a deadline makes a task late; a start date past is a task that can be done
-      // (#371, `@nib/markdown/task-dates`).
+      // (#371, `@orden/markdown/task-dates`).
       return 'task.deadline < today()'
     case 'no date':
     case 'kein datum':

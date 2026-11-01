@@ -1,4 +1,4 @@
-/** The app's sync v2 engine against this Worker, both whole, in `@nib/sync-core`'s
+/** The app's sync v2 engine against this Worker, both whole, in `@orden/sync-core`'s
  *  simulator (docs/sync-v2.md section 12).
  *
  *  The devices are the engine that runs in the window (apps/desktop/src/lib/sync2,
@@ -20,7 +20,7 @@ import {
   type Report,
   simulate,
   type Step,
-} from '@nib/sync-core/sim'
+} from '@orden/sync-core/sim'
 import { WorkerAccount } from './sync2-account'
 
 type Devices = NonNullable<Options['device']>

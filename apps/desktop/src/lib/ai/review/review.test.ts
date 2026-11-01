@@ -1,5 +1,5 @@
-import { EditorState, type TransactionSpec } from '@nib/editor'
-import { reviewMarks, reviewMarksOf } from '@nib/editor/review'
+import { EditorState, type TransactionSpec } from '@orden/editor'
+import { reviewMarks, reviewMarksOf } from '@orden/editor/review'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Thread, Turn } from '../chat/types'

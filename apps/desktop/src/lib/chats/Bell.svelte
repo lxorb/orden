@@ -4,7 +4,7 @@
    *  hour, the evening, a day or a week. The chat's own setting, kept by the account so
    *  every device agrees; the head hands it in and takes the change (the chats' store,
    *  `notifyFor`). A chat of more than ten people starts at mentions, the rest at all. */
-  import type { Notify } from '@nib/chats'
+  import type { Notify } from '@orden/chats'
   import { DIVIDER, type MenuEntry, menu } from '../menu.svelte'
   import { plural, t } from '../i18n.svelte'
   import { askToShow } from '../notify'

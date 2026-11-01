@@ -7,8 +7,8 @@
 
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { type PullResponse, type PushResponse, seedUpdate } from '@nib/sync-core'
-import { TEXT } from '@nib/rooms'
+import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-core'
+import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { sweepChats } from '../src/chats/sweep'
 import { sweepLeftovers } from '../src/leftovers'

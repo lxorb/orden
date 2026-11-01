@@ -1,4 +1,4 @@
-import type { FoundLink } from '@nib/markdown/links'
+import type { FoundLink } from '@orden/markdown/links'
 import { describe, expect, test } from 'vitest'
 import { CORPUS } from './corpus'
 import { toMarkdown } from './markdown'

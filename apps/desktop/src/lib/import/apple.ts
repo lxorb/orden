@@ -109,7 +109,7 @@ export async function planFor(read: AppleNotes): Promise<ImportPlan> {
 
 /** What Notes keeps and this cannot bring, one line each.
  *
- *  A locked note is the honest one: it is encrypted with a passphrase nib does
+ *  A locked note is the honest one: it is encrypted with a passphrase Orden does
  *  not have, exactly like Evernote's `<en-crypt>`. The bin is the Keep rule: what
  *  somebody threw away stays thrown away, and the count is said out loud. */
 function lost(read: AppleNotes): ImportPlan['lost'] {

@@ -141,9 +141,9 @@ and the container application, which the first `wrangler deploy` of the machines
 1. **Egress.** Sandbox SDK 1.0 has no host allow-list of its own: with the internet off,
    HTTP and HTTPS leave a container only through an outbound handler the Worker registers,
    and for HTTPS that handler holds the cleartext while it forwards it. That breaks 4.8's
-   rule that no handler of nib's sees the AI providers' traffic. The design's answer ("never
+   rule that no handler of Orden's sees the AI providers' traffic. The design's answer ("never
    the other way round") is the default here: `MACHINE_EGRESS = "open"`, the internet on and
-   no handler at all, so nothing of nib's sees a byte, at the price of other ports being open
+   no handler at all, so nothing of Orden's sees a byte, at the price of other ports being open
    (mail, SSH, raw TCP). `"web"` is one variable away: internet off, HTTP and HTTPS through
    `Egress` (src/machines/entry.ts), which reads the hostname only and refuses private and
    metadata addresses. With the allow-list being Emil alone, `open` costs nothing in abuse;
@@ -153,7 +153,7 @@ and the container application, which the first `wrangler deploy` of the machines
 
 ## Steps
 
-1. **Lanes on main**, gate green: `@nib/online`, the machine's image and `nibd` (lane `online-nibd`),
+1. **Lanes on main**, gate green: `@orden/online`, the machine's image and `nibd` (lane `online-nibd`),
    this Worker lane, the client.
 2. **The image's two requirements from this lane**: `nibd` listens on port **7680** and takes
    the link at `GET /link` with `authorization: Bearer <NIBD_SECRET>` (the secret is in the
@@ -165,7 +165,7 @@ and the container application, which the first `wrangler deploy` of the machines
 3. **The bucket** (EU):
    `wrangler r2 bucket create nib-homes --jurisdiction eu`
 4. **The migration** on the real database:
-   `pnpm --filter @nib/sync migrate:remote` (applies `0045_machines.sql`; Emil's account
+   `pnpm --filter @orden/sync migrate:remote` (applies `0045_machines.sql`; Emil's account
    `78180341-d10b-4bea-92dc-f327035ebfac` is on the allow-list and is the admin from it).
 5. **Move the machines into the deployed config** (done 2026-10-05): the `MACHINES`
    binding, the `v3` migration tag, the `containers` block, the `HOMES` bucket and

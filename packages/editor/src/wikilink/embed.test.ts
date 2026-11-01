@@ -1,5 +1,5 @@
 import { EditorState } from '@codemirror/state'
-import { parseWikilink } from '@nib/markdown/links'
+import { parseWikilink } from '@orden/markdown/links'
 import { describe, expect, test } from 'vitest'
 import type { LinkSpan } from './at'
 import { EmbedFileWidget, embedWidget } from './embed'

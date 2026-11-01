@@ -20,7 +20,7 @@ itself frame by frame:
   open.
 * **Chrome** - Chrome 153 headless on the same page at the same size and scale, handed
   the notch the machine's own *lines to scroll* makes (lines x 100/3 pixels, Chromium's
-  `kScrollbarPixelsPerLine`), against nib's page handed the same through the engine's
+  `kScrollbarPixelsPerLine`), against Orden's page handed the same through the engine's
   devtools. Distance, frames with movement and the curve: Chrome's animation is the
   engine's own in both.
 

@@ -8,8 +8,8 @@ import {
   type InkStroke,
   readCanvas,
   writeCanvas,
-} from '@nib/markdown/canvas'
-import { merged, stamped } from '@nib/markdown/canvas-merge'
+} from '@orden/markdown/canvas'
+import { merged, stamped } from '@orden/markdown/canvas-merge'
 import {
   buriedOf,
   EXTRAS,

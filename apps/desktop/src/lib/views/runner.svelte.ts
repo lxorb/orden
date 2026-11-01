@@ -1,4 +1,4 @@
-/** A space's bases at work while nib runs (docs/tasks.md 5.13): their automations and
+/** A space's bases at work while Orden runs (docs/tasks.md 5.13): their automations and
  *  their ids on every change to a note, and the repeating templates on their days.
  *
  *  Fetched with the rows (rows/rows.svelte.ts), at the launch order's last turn and never

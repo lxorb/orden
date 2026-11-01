@@ -392,7 +392,7 @@ describe('the archive', () => {
 
 /** A copy another sync tool made beside a note: the same menu, and one more entry that
  *  puts the two side by side, while the note it was made of is there to compare with.
- *  See @nib/sync-core/foreign. */
+ *  See @orden/sync-core/foreign. */
 describe('another sync tool’s copy', () => {
   const clash = note('/s/loose (# Name clash 2026-10-05 a1b2c3C #).md')
   const orphan = note('/s/gone (# Name clash 2026-10-05 a1b2c3C #).md')

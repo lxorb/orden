@@ -34,7 +34,7 @@ export type Notify = 'all' | 'mentions' | 'nothing'
  *  And what the chat wears in every list that shows it, as a canvas keeps it under
  *  `nib`: the icon in the app's written form (`rocket`, an emoji, `set:name`) and the
  *  accent a stroked one is drawn in. Both the file's, so they go wherever the pointer
- *  goes, by either sync, and a nib that knows neither key still reads the chat. */
+ *  goes, by either sync, and an Orden that knows neither key still reads the chat. */
 export interface Pointer {
   v: 1
   chat: string

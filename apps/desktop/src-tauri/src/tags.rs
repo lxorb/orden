@@ -191,7 +191,7 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
 const MARKS: &[char] = &['*', '_', '~', '='];
 
 /// Whether a hash after `before` opens a tag. The twin of `opensTagAt` in
-/// @nib/markdown's tags.ts, which the renderer and the editor read tags by too.
+/// @orden/markdown's tags.ts, which the renderer and the editor read tags by too.
 ///
 /// It opens a word: after nothing, a blank or a `(`, though not the `](` of a
 /// link, where `#heading` is where the link goes. A run of marks in between is
@@ -572,7 +572,7 @@ mod tests {
         assert_eq!(tags_in("| x | y |\n| - | - |\n|#f|#g|\n"), vec!["#f", "#g"]);
     }
 
-    /// The rows of `PARITY` in @nib/markdown's tags.test.ts, which the page is
+    /// The rows of `PARITY` in @orden/markdown's tags.test.ts, which the page is
     /// held to, and of "alike on the page and in the index" in search/tags.test.ts.
     #[test]
     fn reads_the_parity_rows() {

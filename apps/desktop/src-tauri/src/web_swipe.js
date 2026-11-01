@@ -17,7 +17,7 @@
   // Taken now, so a page that replaces its own `window.open` replaces nothing of this.
   const open = window.open.bind(window)
 
-  // Through the binding where nib's world has one (nib's own Chromium), and otherwise
+  // Through the binding where nib's world has one (Orden's own Chromium), and otherwise
   // as a window asked for under a name that says it, which the crate reads and never
   // opens (`WebView2`); see web_swipe.rs.
   function say(said) {

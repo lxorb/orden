@@ -13,7 +13,7 @@
  *  three different conclusions about one file. Nothing else may decide it - not what
  *  a tab was opened as, and not what a session wrote down about it months ago. */
 
-import { isCanvasTarget, isPagesTarget, isWebTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 
 /** The two shapes a room's document comes in, named as the service names them. */
 export type RoomKind = 'words' | 'plane'

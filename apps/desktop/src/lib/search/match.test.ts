@@ -248,7 +248,7 @@ describe('front matter', () => {
   })
 
   /** The block has to close, which is Obsidian's rule and the one the readers in
-   *  @nib/markdown follow: a note that opens with a fence and never closes it
+   *  @orden/markdown follow: a note that opens with a fence and never closes it
    *  opens with a rule instead, so there is no key in it to find. The same note
    *  read by the renderer and by the properties table is in render.test.ts, and
    *  the twin of this is in matcher.rs. */

@@ -186,7 +186,7 @@ def drive(browser: Browser) -> None:
         wrong("the note did not come back where it was left")
 
     # And never drawn raw where anybody could see it: the part on screen is parsed
-    # before it is drawn (see parse-ahead.ts in @nib/editor).
+    # before it is drawn (see parse-ahead.ts in @orden/editor).
     say(f"frames with a heading's marks on screen: {found['raw']}, of them with nothing over them: {found['rawSeen']}")
     if found["rawSeen"]:
         wrong(f"the note showed its marks for {found['rawSeen']} frames")

@@ -222,6 +222,25 @@ describe('a call made and answered', () => {
   })
 })
 
+/** A task done with AI with a switch off in Settings (#325): the tools it stands for are
+ *  not offered, and a model that calls one anyway is told so without it running. */
+describe('a tool the thread is not given', () => {
+  test('is not listed, and a call to it never reaches the crate', async () => {
+    answers = [stream('anthropic-1'), stream('anthropic-2')]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    thread.without = ['read_note']
+    await send(thread, 'What is in Birds.md?')
+
+    const listed = (sent[0]?.body.tools ?? []) as { name: string }[]
+    expect(listed.map((one) => one.name)).not.toContain('read_note')
+    expect(calls).toEqual([])
+    expect(thread.turns[1]?.parts[2]).toMatchObject({
+      state: 'error',
+      result: { text: 'read_note is not available in this chat.', error: true },
+    })
+  })
+})
+
 describe('a call that asks the reader first', () => {
   /** A crate that asks once for every call, and a reader who answers as each test says. */
   function asking(answer: (id: string) => boolean | null) {

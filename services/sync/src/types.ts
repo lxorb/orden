@@ -95,6 +95,10 @@ export interface Env {
   /** lxorbs-minion's token for opening those issues, set by hand
    *  (`wrangler secret put GITHUB_FEEDBACK_TOKEN`). Unset, reports wait for it. */
   GITHUB_FEEDBACK_TOKEN?: string
+  /** The project board each report's issue goes on as Todo, as `user/number`: the
+   *  owner's account and the board's number. A var; unset, issues stay off any board.
+   *  The token needs the `project` scope for it. */
+  FEEDBACK_PROJECT?: string
 
   /** Workers AI, which is what listens for an account with no OpenAI key of its own;
    *  see ask/heard.ts. Absent in tests, which hand in a fake, and in a Worker that has

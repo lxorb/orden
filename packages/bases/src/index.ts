@@ -1,4 +1,4 @@
-/** `@nib/bases`: the one place a question about rows is answered. A note is a row
+/** `@orden/bases`: the one place a question about rows is answered. A note is a row
  *  whose columns are its front matter, a task line is a row whose columns are its
  *  fields, and a view of either is Obsidian's `.base` format answered by
  *  Obsidian's expression language. Pure: no DOM, no I/O, nothing per keystroke.

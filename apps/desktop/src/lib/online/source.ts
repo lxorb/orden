@@ -13,7 +13,7 @@
  *  with nobody until the account moves to v2, where the file's id adopts the session its
  *  words name, and the shell in it goes on (services/sync/src/machines/routes.ts). */
 
-import { termOf } from '@nib/online/term'
+import { termOf } from '@orden/online/term'
 import {
   IMAGE_PART,
   type ImageKind,
@@ -21,7 +21,7 @@ import {
   MOST_INPUT,
   INPUT_RATE,
   type ServerFrame,
-} from '@nib/online/wire'
+} from '@orden/online/wire'
 import { account } from '../account.svelte'
 import { ApiError, BASE } from '../api'
 import { toBase64 } from '../bytes'

@@ -1,5 +1,5 @@
-import type { EditorView } from '@nib/editor'
-import { CODE_PALETTES } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
+import { CODE_PALETTES } from '@orden/editor'
 import { t } from '../i18n.svelte'
 import { DEFAULTS, modes } from '../modes.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from '../note-id'

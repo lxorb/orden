@@ -10,11 +10,11 @@
    *  with a format is that format (format.ts: a percentage, money, a bar, an address
    *  a press opens), and a button column is its button, which a press runs on the row
    *  (press.ts). */
-  import type { Row, Value } from '@nib/bases'
-  import { cellValue } from '@nib/bases'
+  import type { Row, Value } from '@orden/bases'
+  import { cellValue } from '@orden/bases'
   import { tick } from 'svelte'
-  import type { Property } from '@nib/markdown/properties'
-  import type { ListItem } from '@nib/markdown/property-edits'
+  import type { Property } from '@orden/markdown/properties'
+  import type { ListItem } from '@orden/markdown/property-edits'
   import { t } from '../i18n.svelte'
   import PropertyValue from '../properties/PropertyValue.svelte'
   import { valueText } from './chips'

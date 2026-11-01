@@ -1646,6 +1646,18 @@ export const fr: Dictionary = {
   'answered by {model}, {date}': 'répondu par {model}, {date}',
   'AI block': 'Bloc IA',
   'Do with AI': 'Faire avec l’IA',
+  'Use the browser': 'Utiliser le navigateur',
+  'Lets a task done with AI open web pages and act on them.':
+    'Permet à une tâche faite avec l’IA d’ouvrir des pages web et d’y agir.',
+  'Look through notes': 'Parcourir les notes',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Permet à une tâche faite avec l’IA de chercher et de lire vos autres notes, en plus de la sienne.',
+  'Change other notes': 'Modifier d’autres notes',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Permet à une tâche faite avec l’IA d’écrire, de déplacer et de supprimer des notes autres que la tâche.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Ce qu’on demande à une tâche faite avec l’IA. Elle coche toujours la tâche une fois faite, ou pose sa question dans un commentaire.',
+  'Started in the AI panel': 'Lancé dans le panneau IA',
   'Highlight colour': 'Couleur du surlignage',
   'A single newline breaks the line': 'Un simple retour à la ligne coupe la ligne',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2717,6 +2729,9 @@ export const fr: Dictionary = {
     'Ici, les pages web trouvent les adresses comme le fait le système ; son DNS se règle dans les réglages du système.',
   'Set by the settings file': 'Défini par le fichier de réglages',
   'The settings file has a problem': 'Le fichier de réglages a un problème',
+  'Some changes may not be noticed': 'Certaines modifications pourraient passer inaperçues',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Le système a atteint sa limite de dossiers surveillés : Orden pourrait ne pas remarquer toutes les modifications que d’autres programmes font dans vos espaces. Augmenter fs.inotify.max_user_watches règle le problème.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Déplacer la discussion {name} vers {space} ?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

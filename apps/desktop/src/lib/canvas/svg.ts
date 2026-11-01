@@ -11,7 +11,7 @@
  *  the workspace, the file system and the printer, and how a stroke is drawn is
  *  none of those. This is pure, and a test of it costs nothing. */
 
-import { escapeAll } from '@nib/markdown/html'
+import { escapeAll } from '@orden/markdown/html'
 import type { InkStroke } from './format'
 import { INK_STYLES, inkOpacity, inkPath, outlineOf } from './ink'
 import { inkColour, type Palette } from './paint'

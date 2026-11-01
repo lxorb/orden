@@ -1,6 +1,6 @@
 """Quick add's key from any app, on a probe. Windows only.
 
-docs/tasks.md 5.6: once nib is running, a key the system holds for it opens a small window
+docs/tasks.md 5.6: once Orden is running, a key the system holds for it opens a small window
 of its own over whatever is in front. A probe never holds the reader's key: under
 `NIB_OFF_SCREEN` the crate registers the key named in `NIB_QUICK_ADD_KEY` and nothing else
 (`allowed` in src-tauri/src/quick_add.rs). So this starts a probe with a key nobody has on

@@ -77,7 +77,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          pnpm --filter @nib/desktop exec tauri build --bundles ${{ matrix.bundles }} \
+          pnpm --filter @orden/desktop exec tauri build --bundles ${{ matrix.bundles }} \
             --config "{\"version\":\"$NEW\",\"bundle\":{\"createUpdaterArtifacts\":false}}"
 
       # An artifact keeps no file modes, and a Mac app's program has to stay one.

@@ -7,7 +7,7 @@
  *  place: it is the whole text every time it runs, which is why the workspace
  *  only lets it run once the typing has paused. */
 
-import { lines, slugify } from '@nib/markdown/links'
+import { lines, slugify } from '@orden/markdown/links'
 
 export interface Heading {
   level: number

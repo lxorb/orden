@@ -19,7 +19,7 @@
 //! apps/desktop/src/lib/back-swipe/swipes.ts holds a touchpad's swipe to it: a gesture is
 //! the time two fingers are down, and only their lift decides it.
 //!
-//! **Only while nib is in front.** The reports are the pad's whoever is in front, so a
+//! **Only while Orden is in front.** The reports are the pad's whoever is in front, so a
 //! finger landing while another program is is never said; a lift always is, once a landing
 //! was. Nothing but the count leaves this file: not where the fingers are, not which.
 //!
@@ -83,7 +83,7 @@ impl Frames {
 }
 
 /// What to tell the window, if anything, when a frame says `fingers` and the window was
-/// last told `told`: a change, and while nib is not in front (`ours` false) nothing but
+/// last told `told`: a change, and while Orden is not in front (`ours` false) nothing but
 /// a lift.
 #[must_use]
 pub fn telling(told: u32, fingers: u32, ours: bool) -> Option<u32> {
@@ -198,7 +198,7 @@ mod raw {
             ) else {
                 return;
             };
-            // Whoever is in front, so a lift is heard after nib has gone behind; what is
+            // Whoever is in front, so a lift is heard after Orden has gone behind; what is
             // said while it is behind is decided in `telling`.
             let pad = RAWINPUTDEVICE {
                 usUsagePage: DIGITIZER,
@@ -403,7 +403,7 @@ mod raw {
         (count, tips)
     }
 
-    /// Whether the window in front is one of nib's own.
+    /// Whether the window in front is one of Orden's own.
     fn in_front() -> bool {
         // Safe: a window handle out, and the process that owns it.
         unsafe {

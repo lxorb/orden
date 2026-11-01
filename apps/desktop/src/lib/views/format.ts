@@ -7,7 +7,7 @@
  *  A percentage is a share, 0.25 for 25 %, as Notion's is; a bar takes a share too, or
  *  a number of a hundred where it is more than one. Numbers in the app's language. */
 
-import type { Value } from '@nib/bases'
+import type { Value } from '@orden/bases'
 import { i18n } from '../i18n.svelte'
 
 /** The formats a column can be given, in the order its menu offers them. */

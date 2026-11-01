@@ -81,7 +81,7 @@ export function terminalName(parts: {
  *
  *  `blind` is a shell whose programs the system cannot list - a WSL distribution's are
  *  in the Linux kernel - and there a title counts from Enter to the next prompt mark,
- *  which the shells nib starts all make (see shells.rs). */
+ *  which the shells Orden starts all make (see shells.rs). */
 export class Front {
   /** The program in front, by name, or null for the shell. */
   program: string | null = null

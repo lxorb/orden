@@ -523,7 +523,7 @@ them:
 reader wrote are the lines they meant. `aggressive` is what the plugin did before
 there was a choice - markdown says a soft wrap inside a paragraph is a space, and
 that is still true of it - and it is one setting away. The default is declared once,
-as `DEFAULT_COMPACTION` in `@nib/glasses`, and the mapping, the schema's initial and
+as `DEFAULT_COMPACTION` in `@orden/glasses`, and the mapping, the schema's initial and
 the store's default all read it; a device that has already saved a value keeps it.
 
 **A line number is the line of the file at every level.** That is the whole point of
@@ -583,7 +583,7 @@ which every app is checked for on its root page.
   front of each (`□`, `■` once ticked), eight lines like every list. A tap ticks the
   task under the cursor in its note; the row stays, its box filled, until the list is
   left, so a mis-tap is a second tap away. A double tap closes it. It is answered
-  without the rows engine (`todayTasks` in `@nib/bases/tasks`, held to the engine's
+  without the rows engine (`todayTasks` in `@orden/bases/tasks`, held to the engine's
   own Today by a test), which is what keeps the package under 8 MiB; see
   `even/today.ts` and docs/tasks.md 5.18.
 - **Switch space** is the spaces; a tap confirms **and goes straight into that
@@ -689,7 +689,7 @@ both undocumented and inert - and a flick only turned a page the reader could no
 So the app scrolled it instead, a line at a time, which is the app turning pages of
 one row: the same mechanism with a worse page, no page number worth showing, and a
 second answer to a question that has one. Emil, on 0.8.1: *"please remove the
-scrolling 'nib turns the pages / glasses scroll' setting from the glasses section of
+scrolling 'Orden turns the pages / glasses scroll' setting from the glasses section of
 the settings. Effectively it should be always nib who turns the pages."* So the row,
 the field, the stored key, the mode and the code path behind it are all out, and the
 page number means something on every page again.
@@ -1247,7 +1247,7 @@ keys nothing has written this launch.
 
 ### What goes into the package, and why it is a build of its own
 
-`pnpm --filter @nib/desktop build:even` runs `vite.even.config.ts`, whose only
+`pnpm --filter @orden/desktop build:even` runs `vite.even.config.ts`, whose only
 page is `even.html`, then stages `apps/desktop/dist-even` through
 `scripts/even-stage.mjs`. In that folder **`index.html` and `even.html` are the
 same page, and that page is the plugin**; the editor's own `index.html` is not in
@@ -1454,7 +1454,7 @@ To point it at a laptop instead of at production, serve the app on the LAN and
 pass that address:
 
 ```sh
-pnpm --filter @nib/desktop exec vite --host 0.0.0.0 --port 5173
+pnpm --filter @orden/desktop exec vite --host 0.0.0.0 --port 5173
 npx @evenrealities/evenhub-cli qr --http --port 5173
 ```
 
@@ -1505,7 +1505,7 @@ firmware.
 By hand, if CI is not an option:
 
 ```sh
-pnpm --filter @nib/desktop build:even
+pnpm --filter @orden/desktop build:even
 pnpm even:pack
 ```
 
@@ -1635,7 +1635,7 @@ character is within a pixel of where the glasses will put it, the wrapping, the
 bands, the gutter and the rules are exact, and only the letterforms are borrowed.
 
 ```sh
-pnpm --filter @nib/desktop build:even
+pnpm --filter @orden/desktop build:even
 python scripts/even-e2e.py
 ```
 
@@ -1783,7 +1783,7 @@ In rough order of how much rests on it:
 The whole drive, in a browser, against a bridge that answers like the device:
 
 ```sh
-pnpm --filter @nib/desktop build:even
+pnpm --filter @orden/desktop build:even
 python scripts/even-e2e.py
 ```
 
@@ -1793,7 +1793,7 @@ there.
 Against the official simulator, with the real SDK doing the talking:
 
 ```sh
-pnpm --filter @nib/desktop exec vite --port 5173
+pnpm --filter @orden/desktop exec vite --port 5173
 npx @evenrealities/evenhub-simulator --automation-port 1438 http://localhost:5173/even.html
 ```
 

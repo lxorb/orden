@@ -90,11 +90,10 @@ function diskOf(telling: Telling): Disk {
       // does not hold goes to this device's: a folder, which may hold files that never
       // travel; a page note, whose paper only this trash keeps beside it; and any other
       // file, whose bytes the account keeps only as a version.
-      // That trash leaves what the account holds as an entry of its own, a PDF's
-      // highlights, for that entry's own move or delete: a PDF turned into its page note
-      // elsewhere comes as this delete, run first, and a move of its highlights, which
-      // found none.
       if (syncDeletes(path, kind)) await invoke('delete_note', { path })
+      // Leaving what the account holds as an entry of its own, a PDF's highlights, for
+      // that entry's own move or delete: a PDF turned into its page note elsewhere comes
+      // as this delete, run first, and a move of its highlights, which found none.
       else
         await invoke('trash_item', {
           path,

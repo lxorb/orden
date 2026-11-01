@@ -32,6 +32,7 @@
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
   import CanvasPicked from './CanvasPicked.svelte'
+  import CanvasFar from './CanvasFar.svelte'
   import {
     ctrlWheelZoom,
     graphPoint,
@@ -84,7 +85,7 @@
   import { hand } from './canvas/hand.svelte'
   import { aimed, fading, latticeLayers, latticeLevel, settled, stepped } from './canvas/lattice'
   import { drawnWidth, pens } from './canvas/pens.svelte'
-  import { hitAt, HANDLE, PORT } from './canvas/hit'
+  import { hitAt, HANDLE, PORT, roomFor } from './canvas/hit'
   import { assisted, leadPoint, penFelt, tidyShape, transformed } from './canvas/ink'
   import { inkColour } from './canvas/paint'
   import { readPalette } from './canvas/palette'
@@ -140,6 +141,15 @@
    *  keeps a plane of five hundred cards at sixty frames a second. */
   const QUANTUM = 400
 
+  /** Below this zoom a card's words are a few pixels high and the plane is drawn from
+   *  far away: boxes on one canvas (CanvasFar.svelte, #535). */
+  const FAR_SCALE = 0.35
+  /** And past this many cards in view, whatever the zoom: about what a page of them
+   *  lays out within a frame or two. */
+  const MOST_CARDS = 300
+  /** How many cards round the page are made in one frame; see `drawnCards`. */
+  const MADE_A_FRAME = 60
+
   /** How long a pointer has to be still before it means something else: the menu
    *  under a finger, a tidied shape under a pen. */
   const HELD = 480
@@ -169,7 +179,7 @@
    *  a 2d context and cannot read a custom property. */
   let palette = $state.raw<Record<string, string>>({})
   /** Whether the plane has been put in view yet; see `measure`. */
-  let placed = false
+  let placed = $state(false)
   /** Where the pointer last was on the plane, so a paste and a new card land
    *  where the reader is looking. */
   let at: Point = { x: 0, y: 0 }
@@ -488,7 +498,78 @@
    *  which is the order they stack in. */
   const cards = $derived(shown.nodes.filter((node) => overlaps(boxOf(node), inView)))
 
-  const picked = $derived(new Set(store.picked))
+  /** Whether the plane is far enough away that its cards are drawn as boxes on one
+   *  canvas rather than as cards (CanvasFar.svelte, #535): zoomed out past reading, or
+   *  more cards in view than a page of elements carries without stalling. The card
+   *  being written in stays a card either way. */
+  const far = $derived(
+    camera.scale < FAR_SCALE ||
+      cards.length > MOST_CARDS ||
+      // And a large plane not placed yet, which its first measure is about to frame
+      // whole: its first frame is not made of cards at a view nobody will see.
+      (!placed && !store.framed && shown.nodes.length > MOST_CARDS),
+  )
+
+  /** The cards wanted as cards: near, those in view; far, only the one being written in. */
+  const wanted = $derived(far ? cards.filter((node) => node.id === store.editing) : cards)
+
+  /** The part of the plane actually on screen, give or take how far the view moves before
+   *  `inView` is worked out again: what `inView` is without its slack. */
+  const onPage = $derived.by(() => {
+    const scale = 2 ** (roughZoom / 4)
+    const across = spanX / scale + 2 * QUANTUM
+    const down = spanY / scale + 2 * QUANTUM
+    return {
+      x: roughX * QUANTUM - across / 2,
+      y: roughY * QUANTUM - down / 2,
+      width: across,
+      height: down,
+    }
+  })
+
+  /** The cards in the slack round the page already made, for those made a few at a time;
+   *  see `drawnCards`. */
+  let madeAround = $state.raw<ReadonlySet<string>>(new Set())
+
+  /** The cards drawn as cards. Those on the page at once; those only in the slack round
+   *  it - there for a pan to find already made - at once where they are few, and else
+   *  `MADE_A_FRAME` a frame after it (#535). An undo that brought eight thousand back,
+   *  or a zoom into reading distance, made a page and a screenful of slack round it in
+   *  one go: two hundred cards to make where thirty are seen. */
+  const drawnCards = $derived.by(() => {
+    const waiting = wanted.filter(
+      (node) => !madeAround.has(node.id) && !overlaps(boxOf(node), onPage),
+    )
+    if (waiting.length <= MADE_A_FRAME) return wanted
+    const late = new Set(waiting.map((node) => node.id))
+    return wanted.filter((node) => !late.has(node.id))
+  })
+
+  // The slack's cards made, `MADE_A_FRAME` at a time, until none waits.
+  $effect(() => {
+    const all = wanted
+    const made = madeAround
+    const waiting = all.filter((node) => !made.has(node.id) && !overlaps(boxOf(node), onPage))
+    if (waiting.length <= MADE_A_FRAME) return
+    const frame = requestAnimationFrame(() => {
+      const still = new Set(all.map((node) => node.id))
+      madeAround = new Set([
+        ...[...made].filter((id) => still.has(id)),
+        ...waiting.slice(0, MADE_A_FRAME).map((node) => node.id),
+      ])
+    })
+    return () => cancelAnimationFrame(frame)
+  })
+
+  /** The connectors drawn as connectors: none from far away, and near, only those with
+   *  an end on a card in view - every other one is off the page. */
+  const drawnEdges = $derived.by(() => {
+    if (far) return []
+    const near = new Set(cards.map((node) => node.id))
+    return shown.edges.filter((edge) => near.has(edge.fromNode) || near.has(edge.toNode))
+  })
+
+  const picked = $derived(store.pickedSet)
 
   /** Whether a resize holds the shape of the box without being asked: a picture under
    *  a thumb, where there is no Shift to hold and a stretched photograph is not the
@@ -527,9 +608,15 @@
   /** The card the four dots sit on: whatever is under the pointer, and nothing
    *  while a gesture is under way, a card is being written in, or the tool in
    *  hand is not the arrow. */
-  const ported = $derived(
-    gesture || store.editing !== null || tools.which !== 'select' ? null : machine.hovered,
-  )
+  const ported = $derived.by(() => {
+    if (gesture || store.editing !== null || tools.which !== 'select') return null
+    const under = machine.hovered
+    const node = under === null ? undefined : shown.nodes.find((one) => one.id === under)
+    // And only on a card big enough on screen to be pressed apart from them; see
+    // `roomFor` in canvas/hit.ts.
+    if (!node || !roomFor(boxOf(node), camera.scale, PORT)) return null
+    return node.id
+  })
 
   const portedBox = $derived(shown.nodes.find((node) => node.id === ported) ?? null)
 
@@ -600,11 +687,14 @@
     if (gesture) return []
 
     const out: { key: string; at: Point }[] = []
+    // By id, once: after Ctrl+A every edge is picked, and looking each end up along the
+    // cards was two walks of the plane per edge (#535).
+    const byId = new Map(shown.nodes.map((node) => [node.id, node]))
     for (const edge of shown.edges) {
       if (!store.isPicked(edge.id)) continue
 
-      const from = shown.nodes.find((one) => one.id === edge.fromNode)
-      const to = shown.nodes.find((one) => one.id === edge.toNode)
+      const from = byId.get(edge.fromNode)
+      const to = byId.get(edge.toNode)
       if (!from || !to) continue
 
       const ends = edgeEnds(edge, boxOf(from), boxOf(to))
@@ -1032,7 +1122,10 @@
         run.cut(store, effect.at, effect.reach, `rub:${gestures}`)
         break
       case 'catch':
-        run.lasso(store, effect.lasso, pens.partly)
+        run.lasso(store, effect.lasso, pens.partly, effect.cards ?? false)
+        break
+      case 'unmenu':
+        menu.hide()
         break
       case 'pan':
         store.camera = panned(camera, effect.dx, effect.dy)
@@ -1925,15 +2018,32 @@
       ></div>
     {/each}
 
+    {#if far}
+      <CanvasFar
+        nodes={shown.nodes}
+        edges={shown.edges}
+        {picked}
+        dimmed={narrowed}
+        skip={store.editing}
+        view={inView}
+        {camera}
+        {originX}
+        {originY}
+        width={spanX}
+        height={spanY}
+        {palette}
+      />
+    {/if}
+
     <div class="plane" style:transform="translate({originX}px, {originY}px) scale({camera.scale})">
       <CanvasEdges
-        edges={shown.edges}
+        edges={drawnEdges}
         nodes={shown.nodes}
-        picked={store.picked}
+        picked={store.pickedSet}
         provisional={drawing}
       />
 
-      {#each cards as node (node.id)}
+      {#each drawnCards as node (node.id)}
         <CanvasNode
           {node}
           canvasPath={tab.path}
@@ -1981,7 +2091,9 @@
           style:border-width="{unit}px"
         ></div>
 
-        {#each HANDLES as handle (handle.id)}
+        <!-- Only on a box big enough on screen to be grabbed apart from them; see
+             `roomFor` in canvas/hit.ts. -->
+        {#each roomFor(box, camera.scale, HANDLE) ? HANDLES : [] as handle (handle.id)}
           <div
             class="handle"
             style:left="{box.x + ((handle.x + 1) / 2) * box.width}px"

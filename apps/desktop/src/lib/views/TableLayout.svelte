@@ -12,7 +12,7 @@
    *  wrapping within (`nib.lines`), so every row is still one height and nothing is
    *  measured; the first columns frozen while the rest scroll across (`nib.freeze`);
    *  each row in its conditional colour; and the header's menu (column-menu.ts). */
-  import { type Group, groupName, type Row, rowId } from '@nib/bases'
+  import { type Group, groupName, type Row, rowId } from '@orden/bases'
   import { untrack } from 'svelte'
   import { menu } from '../menu.svelte'
   import { windowFor } from '../row-window'

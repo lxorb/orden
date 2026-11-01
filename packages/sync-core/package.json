@@ -1,5 +1,5 @@
 {
-  "name": "@nib/sync-core",
+  "name": "@orden/sync-core",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -23,8 +23,8 @@
     "sim:long": "vitest run --config vitest.long.config.ts"
   },
   "dependencies": {
-    "@nib/markdown": "workspace:*",
-    "@nib/rooms": "workspace:*",
+    "@orden/markdown": "workspace:*",
+    "@orden/rooms": "workspace:*",
     "diff-match-patch-es": "^2.0.1",
     "yjs": "^13.6.32"
   },

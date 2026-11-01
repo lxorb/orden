@@ -202,7 +202,7 @@ export function readPens(raw: string | null): Kept {
   try {
     parsed = JSON.parse(raw)
   } catch {
-    // Something else wrote this key, or an older Nib wrote a shape this one does
+    // Something else wrote this key, or an older Orden wrote a shape this one does
     // not know. Start again rather than guess.
     return blank()
   }

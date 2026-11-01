@@ -1,6 +1,6 @@
 cask "orden" do
-  version "0.18.0"
-  sha256 "4bc2eded5f934185be3e4a367e87694256dcc88eaac07c45566bcc1a342c7916"
+  version "0.19.0"
+  sha256 "4576a00a3014bc50160596362657755dad6e34bd1db7de469e13aaf6e19fac89"
 
   url "https://github.com/lxorb/orden/releases/download/v#{version}/Orden-#{version}-macos-universal.dmg",
       verified: "github.com/lxorb/orden/"

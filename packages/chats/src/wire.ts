@@ -1,7 +1,7 @@
 /** Everything chats say over HTTP, over a chat's socket and through the hub, as types
  *  and as checks (docs/chats.md 4.4).
  *
- *  One module for every end, for the reason `@nib/sync-core/wire` gives: the app, the
+ *  One module for every end, for the reason `@orden/sync-core/wire` gives: the app, the
  *  Worker's `ChatLog` and the hub read what another end wrote, and a shape spelled twice
  *  is two shapes a year later. Every frame is JSON text: a chat carries no bytes of its
  *  own (files go up as blobs and are named by their hash), so nothing here needs the

@@ -7,7 +7,7 @@
  *  Put on the page the first time it is asked for (people/card.svelte.ts's way), so
  *  nothing of it is fetched before somebody opens a task. */
 
-import { type Row, taskHash } from '@nib/bases'
+import { type Row, taskHash } from '@orden/bases'
 import { mount } from 'svelte'
 import { samePath } from '../../space-paths'
 import type { Kit } from '../kit'

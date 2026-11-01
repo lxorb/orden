@@ -5,7 +5,7 @@
  *  Asked of the programs themselves and of the crate, never read off their files, and
  *  only when the AI pane is looked at or a sign-in is waited for - never at launch. The
  *  answers are kept for the run and not written down: a sign-in done in a terminal an
- *  hour ago is the program's news, and asking again is how nib hears it.
+ *  hour ago is the program's news, and asking again is how Orden hears it.
  *
  *  A sign-in happens somewhere else - a terminal tab running the program's own login, or
  *  the browser for ChatGPT - so after one starts, the answer is asked for again every few

@@ -1,5 +1,5 @@
 {
-  "name": "@nib/bases",
+  "name": "@orden/bases",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -21,7 +21,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nib/markdown": "workspace:*",
+    "@orden/markdown": "workspace:*",
     "yaml": "^2.9.0"
   },
   "devDependencies": {

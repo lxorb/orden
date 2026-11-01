@@ -37,7 +37,7 @@ async function run() {
 }
 
 /** The tab in front of a set out of sight is written as its place along the strip. A
- *  tab before it that cannot come back - its file deleted while nib was closed - used
+ *  tab before it that cannot come back - its file deleted while Orden was closed - used
  *  to move every place after it one along, and the set came back on another note. */
 test('a set comes back on the tab it was left on when one before it has gone', async () => {
   const IDEAS = '/spaces/Work/Ideas.md'

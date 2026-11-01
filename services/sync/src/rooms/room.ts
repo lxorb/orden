@@ -6,7 +6,7 @@
  *  them on a train - end up with the same content and nobody is asked to choose.
  *
  *  Three things happen here and nothing else does. Sockets are joined and their
- *  messages handed to the protocol (see @nib/rooms, which is the wire). Updates
+ *  messages handed to the protocol (see @orden/rooms, which is the wire). Updates
  *  are written down and folded into a snapshot when the pile grows, so waking a
  *  room is one read. And the content is settled into the note store a moment after
  *  the typing stops, as an ordinary save with the version moved on, so everything
@@ -37,8 +37,8 @@ import {
   receive,
   syncStep1,
   syncUpdate,
-} from '@nib/rooms'
-import { fold } from '@nib/rooms/fold'
+} from '@orden/rooms'
+import { fold } from '@orden/rooms/fold'
 import {
   ackFrame,
   epochFrame,
@@ -47,7 +47,7 @@ import {
   NEW_EPOCH,
   type PushAnswer,
   unframe,
-} from '@nib/sync-core'
+} from '@orden/sync-core'
 import * as Y from 'yjs'
 import { byteLength, sha256 } from '../crypto'
 import { note as noted } from '../failed'
@@ -246,7 +246,7 @@ function attach(socket: WebSocket, change: Partial<Attached>) {
 const PUSHED = 'push'
 
 /** How many pushes a room remembers the answer to, so one whose answer was lost is
- *  answered the same way when it comes again; see `PushDoc` in @nib/sync-core. A device
+ *  answered the same way when it comes again; see `PushDoc` in @orden/sync-core. A device
  *  resends only its latest, so a few dozen covers every device a note has. */
 const REMEMBERED_PUSHES = 64
 
@@ -1345,7 +1345,7 @@ export class NoteRoom implements DurableObject {
 
     // Written in before the note was last written by somebody else: kept beside it,
     // since there is no ancestor to fold it in against. Unless one of the two holds
-    // every word of the other, which is what nib's own echo looks like - the same
+    // every word of the other, which is what Orden's own echo looks like - the same
     // words reaching the note by another road a keystroke apart - and then the fuller
     // one is the note, and a copy would be a copy of nobody's words but its own. The
     // same test as `keptBeside`, for the same reason.

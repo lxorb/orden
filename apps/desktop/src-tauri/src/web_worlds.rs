@@ -115,7 +115,7 @@ fn evaluating(expression: &str, context: i64) -> String {
 
 /// What the protocol is asked to follow a page's frames with: every frame that runs in a
 /// process of its own - a site framed in another site's page - each held at its start
-/// until nib's scripts are in it, and the page's workers, let go the moment they are
+/// until Orden's scripts are in it, and the page's workers, let go the moment they are
 /// attached (see `attached`).
 ///
 /// A frame from another site is a document the page's own registration never reaches:
@@ -123,7 +123,7 @@ fn evaluating(expression: &str, context: i64) -> String {
 /// its own. Measured on the probe: a same-site frame had nib's world, and one from
 /// another site did not until this. Its links and its keys are the page's all the same.
 ///
-/// **The page's session holds its workers too.** On nib's own Chromium, a page's
+/// **The page's session holds its workers too.** On Orden's own Chromium, a page's
 /// session asked to hold what it attaches at its start and to attach frames alone held
 /// every dedicated worker the page started all the same, without attaching it, as a
 /// frame's does on `WebView2` (see `IN_A_FRAME`): the worker never ran a line. Anubis
@@ -173,7 +173,7 @@ enum Attached {
 }
 
 /// What the protocol has just attached to, out of the event that says so: a frame from
-/// another site, anything else that is waiting for nib - a frame's worker, see
+/// another site, anything else that is waiting for Orden - a frame's worker, see
 /// `IN_A_FRAME` - or `None` for a target that is running already.
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn attached(event: &str) -> Option<Attached> {
@@ -195,7 +195,7 @@ fn let_go() -> (&'static str, String) {
 }
 
 /// What a frame is sent once it is attached, in order, which is the order its session
-/// runs them in: its page domain on, nib's scripts registered in nib's world, its own
+/// runs them in: its page domain on, Orden's scripts registered in nib's world, its own
 /// frames followed the same way, and then let go. The last is sent whatever became of
 /// the others, because a frame held at its start and never let go is a frame that never
 /// loads.
@@ -219,7 +219,7 @@ pub struct Cleared {
     swept: bool,
     /// How many there were, where the engine can say.
     counted: Option<usize>,
-    /// Whether nib's own scripts are in nib's world.
+    /// Whether Orden's own scripts are in nib's world.
     ours: bool,
     /// Whether frames from other sites have them too.
     frames: bool,
@@ -272,7 +272,7 @@ mod engine {
 
     /// Clears a page of the app before it is sent to the site: the runtime's scripts
     /// taken back, the engine's message channel and host objects off, and `scripts` -
-    /// nib's own, or nothing - registered in nib's world.
+    /// Orden's own, or nothing - registered in nib's world.
     ///
     /// On the window's own thread, on a webview that is still on `about:blank`, and in the
     /// event loop's own turn rather than inside one of the engine's handlers: the two
@@ -384,7 +384,7 @@ mod engine {
         (!id.is_empty()).then_some(id)
     }
 
-    /// Registers nib's own scripts in nib's world, for every document the page creates
+    /// Registers Orden's own scripts in nib's world, for every document the page creates
     /// from here on. Waits for the engine, so the site's first document has them.
     ///
     /// The protocol's page domain is turned on first, because a script registered on a
@@ -400,7 +400,7 @@ mod engine {
             )
     }
 
-    /// Follows the page's frames from other sites and gives each nib's scripts before its
+    /// Follows the page's frames from other sites and gives each Orden's scripts before its
     /// first document; see `attaching`.
     ///
     /// The engine says a frame has been attached as one of the protocol's events, on this
@@ -572,10 +572,10 @@ mod engine {
 #[cfg(feature = "cef")]
 pub use engine::{asking, sent, value};
 
-/// nib's own Chromium: the same protocol `WebView2` is cleared with, spoken through the
+/// Orden's own Chromium: the same protocol `WebView2` is cleared with, spoken through the
 /// runtime's own door to the page's agent (see engine/devtools.rs). What the runtime puts
 /// in every page is two things there: a script it registers over the protocol, taken
-/// back here the way `WebView2`'s are, and `window.ipc`, which nib's own renderer never
+/// back here the way `WebView2`'s are, and `window.ipc`, which Orden's own renderer never
 /// gives a page that is not the app's (see cef/src/helper.rs).
 #[cfg(feature = "cef")]
 mod engine {
@@ -628,7 +628,7 @@ mod engine {
         devtools::call(view, None, method, &params, PATIENCE).ok()
     }
 
-    /// Clears a page built on `about:blank` - the runtime's scripts taken back, nib's own
+    /// Clears a page built on `about:blank` - the runtime's scripts taken back, Orden's own
     /// registered in nib's world, frames from other sites followed - and sends it to the
     /// site. On a thread of its own: every step waits for the page's agent, whose answers
     /// arrive on the window's thread.
@@ -687,7 +687,7 @@ mod engine {
         }
     }
 
-    /// Follows the page's frames from other sites and gives each nib's scripts before its
+    /// Follows the page's frames from other sites and gives each Orden's scripts before its
     /// first document, as on `WebView2`: the frame's own session is told, in order and
     /// without waiting, from inside the event that says it was attached.
     fn following(view: &Webview, scripts: &str) -> bool {
@@ -750,7 +750,7 @@ mod engine {
     use super::{Cleared, CHANNEL, WORLD};
 
     /// Clears a page built on `about:blank` of everything the runtime put in it, puts
-    /// nib's own scripts in a content world of nib's own, and sends it to the site. On the
+    /// Orden's own scripts in a content world of Orden's own, and sends it to the site. On the
     /// main thread, where the webview lives.
     ///
     /// The user content controller is the one the view was built with - the
@@ -832,7 +832,7 @@ mod engine {
     use super::{Cleared, CHANNEL, WORLD};
 
     /// Clears a page built on `about:blank` of everything the runtime put in it, puts
-    /// nib's own scripts in a script world of nib's own, and sends it to the site. On the
+    /// Orden's own scripts in a script world of Orden's own, and sends it to the site. On the
     /// main thread, where the webview lives; the scripts apply from the next document on,
     /// which is the site's.
     pub fn sent(webview: &PlatformWebview, url: &str, scripts: &str) -> Cleared {

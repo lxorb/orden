@@ -743,7 +743,7 @@ describe('the links in a vault', () => {
 
   test('to a root note by its relative or rooted path still go there past a namesake beside them', async () => {
     // Obsidian's "Relative path to file" and "Absolute path in vault" formats write
-    // these; nib reads a bare `[[Plan]]` from `Projects/` as the one beside it.
+    // these; Orden reads a bare `[[Plan]]` from `Projects/` as the one beside it.
     const vault = [file('Plan.md', '# Root plan\n'), file('Projects/Plan.md', '# Project plan\n')]
     await expect(
       noteFrom('Projects/A.md', ...vault, file('Projects/A.md', 'See [[../Plan]].\n')),
@@ -768,7 +768,7 @@ describe('the links in a vault', () => {
   })
 
   test('on the line after a table are not escaped as if in a cell', async () => {
-    // A list item, a heading, or the end of a callout ends a table, and nib reads
+    // A list item, a heading, or the end of a callout ends a table, and Orden reads
     // `[[Plan\\|x]]` outside one as a link to a note called `Plan\\`.
     const plan = file('Plan.md', '# Plan\n')
     const listed = '| Day | Hours |\n| --- | --- |\n| Mon | 3 |\n- see [[Plan|the plan]]\n'

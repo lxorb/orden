@@ -12,7 +12,7 @@
 import { SerializeAddon } from '@xterm/addon-serialize'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import headless from '@xterm/headless'
-import { SCROLLBACK } from '@nib/online/wire'
+import { SCROLLBACK } from '@orden/online/wire'
 
 const { Terminal } = headless
 

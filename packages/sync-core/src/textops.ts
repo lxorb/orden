@@ -1,6 +1,6 @@
 /** A whole text written into a shared one as the few operations it differs by.
  *
- *  Three writers hand nib a whole text rather than keystrokes: another program that
+ *  Three writers hand Orden a whole text rather than keystrokes: another program that
  *  saved the file (section 5.5), a modal answer that keeps this device's words over
  *  the merge (5.4), and the account's `ingest` for a v1 push, the connector and a
  *  rollback (5.10). Replacing the shared text wholesale would be correct and

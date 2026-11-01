@@ -2,7 +2,7 @@
  *  property's choices (options.ts), a column's format (format.ts), and an automation's
  *  write folded into the undo of the edit that fired it (workspace/undo-join.ts). */
 
-import { readBase, type Row } from '@nib/bases'
+import { readBase, type Row } from '@orden/bases'
 import { describe, expect, test } from 'vitest'
 import type { FileAction } from '../workspace/undo.svelte'
 import { joinedAction } from '../workspace/undo-join'

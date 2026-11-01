@@ -4,7 +4,7 @@
  *  barely moves once the rows are measured. Pure; the numbers are the tab's own
  *  stylesheet's, in pixels. */
 
-import type { Message } from '@nib/chats'
+import type { Message } from '@orden/chats'
 import { fitted, gallery, sortFiles } from './media'
 import type { Item } from './rows'
 

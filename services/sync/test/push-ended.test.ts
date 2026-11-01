@@ -2,7 +2,7 @@
  *  devices list, its session ended, signed out, or run out. See src/push/live.ts. */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { momentOf } from '@nib/markdown/task-reminders'
+import { momentOf } from '@orden/markdown/task-reminders'
 import { sha256 } from '../src/crypto'
 import { forgetAccess } from '../src/push/fcm'
 import { sendDue } from '../src/push/reminders'

@@ -9,8 +9,8 @@
  *  account adopts one its owner made on v1 rather than making another beside it, and the
  *  words are brought up to the session it answers. */
 
-import type { Term } from '@nib/online'
-import { termOf, termText } from '@nib/online/term'
+import type { Term } from '@orden/online'
+import { termOf, termText } from '@orden/online/term'
 
 /** What it reads and writes: the file's words, and the account's new session. */
 export interface OwnFile {

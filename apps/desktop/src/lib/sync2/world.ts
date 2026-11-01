@@ -6,7 +6,7 @@
  *  routes); the simulator hands in a map of files and its network. So the engine that
  *  runs in the window is the engine the simulator's seeds judge, line for line. */
 
-import type { Framed } from '@nib/sync-core/wire'
+import type { Framed } from '@orden/sync-core/wire'
 import type { Classify } from './classify'
 import type { Blobs } from './files'
 
@@ -50,7 +50,7 @@ export interface World {
   now(): number
   /** A number in [0, 1): client ids and op ids. */
   random(): number
-  /** A digest of a file's words: what tells nib's own last write from another
+  /** A digest of a file's words: what tells Orden's own last write from another
    *  program's. */
   digest(text: string): Promise<string>
   /** Joins a space's root and a local path. */

@@ -1571,6 +1571,18 @@ export const vi: Dictionary = {
   'answered by {model}, {date}': '{model} trả lời, {date}',
   'AI block': 'Khối AI',
   'Do with AI': 'Làm bằng AI',
+  'Use the browser': 'Dùng trình duyệt',
+  'Lets a task done with AI open web pages and act on them.':
+    'Cho phép việc làm bằng AI mở trang web và thao tác trên đó.',
+  'Look through notes': 'Xem qua ghi chú',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Cho phép việc làm bằng AI tìm và đọc các ghi chú khác của bạn, ngoài ghi chú của nó.',
+  'Change other notes': 'Thay đổi ghi chú khác',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Cho phép việc làm bằng AI viết, di chuyển và xoá các ghi chú khác ngoài việc đó.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Điều được yêu cầu ở việc làm bằng AI. Nó vẫn đánh dấu việc khi xong, hoặc hỏi trong một bình luận.',
+  'Started in the AI panel': 'Đã bắt đầu trong bảng AI',
   'Highlight colour': 'Màu đánh dấu',
   'A single newline breaks the line': 'Một lần xuống dòng là ngắt dòng',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2606,6 +2618,9 @@ export const vi: Dictionary = {
     'Ở đây các trang web tra cứu địa chỉ theo cách của hệ thống; DNS được đặt trong phần cài đặt của chính hệ thống.',
   'Set by the settings file': 'Do tệp cài đặt quy định',
   'The settings file has a problem': 'Tệp cài đặt có vấn đề',
+  'Some changes may not be noticed': 'Một số thay đổi có thể không được nhận ra',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Hệ thống đã chạm giới hạn số thư mục được theo dõi, nên Orden có thể không thấy mọi thay đổi mà chương trình khác tạo trong không gian của bạn. Tăng fs.inotify.max_user_watches sẽ khắc phục.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Chuyển cuộc trò chuyện {name} tới {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

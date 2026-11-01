@@ -1,4 +1,4 @@
-//! Agents: programs that drive nib on the reader's behalf, through the local endpoint.
+//! Agents: programs that drive Orden on the reader's behalf, through the local endpoint.
 //! The design is docs/agent-native.md; this is its crate half.
 //!
 //! One responsibility a file:
@@ -6,7 +6,7 @@
 //! | file | what it owns |
 //! | --- | --- |
 //! | `verbs` | every verb's name, arguments and answer, and the events: the contract |
-//! | `grants` | who may drive nib and how far, and their tokens |
+//! | `grants` | who may drive Orden and how far, and their tokens |
 //! | `policy` | what an agent may do, and what it asks first, read from the page |
 //! | `approvals` | the questions, and the reader's answers |
 //! | `limits`, `stop` | how fast, and the stop |
@@ -22,7 +22,7 @@
 //! is made on the first request that names an agent verb or carries an agent's token,
 //! and an installation nobody pairs an agent with never makes it (11).
 //!
-//! **Two engines drive a page, and the verbs are the same on both.** `WebView2` and nib's
+//! **Two engines drive a page, and the verbs are the same on both.** `WebView2` and Orden's
 //! own Chromium both speak the `DevTools` Protocol, and `engines` hands every verb the
 //! page on whichever it is; the system's engines on a Mac and on Linux answer
 //! `unsupported_on_this_engine` from the same verbs (section 12, and `engines` for why).
@@ -139,7 +139,7 @@ use verbs::{Answer, Approval, ApprovalAnswer, ApprovalState, Category, Code, Pai
 /// Everything the crate keeps about agents, made on the first agent request.
 #[derive(Default)]
 pub struct Agents {
-    /// Who may drive nib.
+    /// Who may drive Orden.
     pub grants: Grants,
 }
 
@@ -309,7 +309,7 @@ fn browse(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
 /// The system's engine on a Mac and on Linux: measured, not built (section 12). Its
 /// pages can be kept out of sight and alive, but every way a page reaches the reader -
 /// a file panel, a camera prompt, a window - is the engine's own delegate there, which
-/// nib does not hold for an agent's page yet; so no verb pretends.
+/// Orden does not hold for an agent's page yet; so no verb pretends.
 #[cfg(not(any(windows, feature = "cef")))]
 fn browse(_app: &AppHandle, _caller: &Caller, verb: Verb, _since: u64) -> Answer {
     Answer::error(

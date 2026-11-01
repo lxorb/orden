@@ -48,6 +48,7 @@
   class="nib-glyph toggle"
   class:is-on={open}
   class:right={side === 'right'}
+  data-side-toggle={side}
   title={shortcuts.tooltip(label, side === 'left' ? 'app.sidebar' : 'app.right-sidebar')}
   aria-label={label}
   aria-pressed={open}

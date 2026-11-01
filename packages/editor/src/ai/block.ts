@@ -8,7 +8,7 @@
  *  What the answer needs beyond that is a way to be replaced when the question is
  *  asked again, and a way to say which model said it. Both are file content, so
  *  both had to be spellings markdown already has: two HTML comments around the
- *  answer, which every renderer hides and which @nib/markdown strips before it
+ *  answer, which every renderer hides and which @orden/markdown strips before it
  *  renders anything (see comments.ts there), and one italic line at the top of it.
  *
  *  So the whole of the format is:
@@ -92,7 +92,7 @@ function offsetOf(lines: readonly string[], line: number): number {
 
 /** The quiet line over an answer. `label` is the wording the app translated, with
  *  `{model}` and `{date}` already filled in; this only puts it in italics, which
- *  is what makes it quiet in every renderer rather than only in nib's. */
+ *  is what makes it quiet in every renderer rather than only in Orden's. */
 function attribution(label: string): string {
   return `*${label}*`
 }

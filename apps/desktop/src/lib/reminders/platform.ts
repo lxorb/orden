@@ -34,7 +34,7 @@ function words() {
   }
 }
 
-/** Hands the whole plan to whatever rings with nib closed. Answers whether anything
+/** Hands the whole plan to whatever rings with Orden closed. Answers whether anything
  *  does. */
 export async function hand(plan: readonly Reminder[]): Promise<boolean> {
   const reminders = plan.map((one) => ({ ...one, tomorrow: untilTomorrow(one.at) }))

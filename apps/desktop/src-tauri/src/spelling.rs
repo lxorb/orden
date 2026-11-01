@@ -1,8 +1,8 @@
-//! The dictionaries nib's own Chromium checks a word against, several at once (#771).
+//! The dictionaries Orden's own Chromium checks a word against, several at once (#771).
 //!
 //! Chromium reads no page's `lang` to choose a dictionary: it checks every word against
 //! each one in its profile's `spellcheck.dictionaries`, and fetches one it has not got
-//! the first time the list names it. nib never wrote that list, so a note was checked in
+//! the first time the list names it. Orden never wrote that list, so a note was checked in
 //! the one dictionary the profile started with, which is the locale's - English, on the
 //! NixOS laptop of the reader who asked for several. The window says which are on, and
 //! this writes them into every profile a page of the app's is drawn from: its own

@@ -3,9 +3,9 @@
  *  Templates plugin does, so a space opened in both apps has one folder of them.
  *
  *  A template is found the way a link is, by its path or its name, and its words are
- *  filled (`fillTemplate` in @nib/bases) for the note made from it. */
+ *  filled (`fillTemplate` in @orden/bases) for the note made from it. */
 
-import { fillTemplate, withoutTemplateKeys } from '@nib/bases'
+import { fillTemplate, withoutTemplateKeys } from '@orden/bases'
 import { t } from '../i18n.svelte'
 import { menu } from '../menu.svelte'
 import { rows } from '../rows/rows.svelte'

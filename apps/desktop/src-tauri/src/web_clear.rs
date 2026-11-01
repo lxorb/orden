@@ -319,7 +319,7 @@ mod engine {
     }
 }
 
-/// nib's own Chromium, through the `DevTools` Protocol.
+/// Orden's own Chromium, through the `DevTools` Protocol.
 #[cfg(feature = "cef")]
 mod engine {
     use serde_json::{json, Value};

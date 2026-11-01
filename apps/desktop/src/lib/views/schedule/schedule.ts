@@ -7,9 +7,9 @@
  *
  *  Pure. The layer that draws it is Scheduler.svelte. */
 
-import { addDays, parseRule, type Row, ruleText, type TaskChange, weekday } from '@nib/bases'
-import { parseQuickAdd } from '@nib/bases/language'
-import { dayOf, type DueReads, startField, startOf } from '@nib/markdown/task-dates'
+import { addDays, parseRule, type Row, ruleText, type TaskChange, weekday } from '@orden/bases'
+import { parseQuickAdd } from '@orden/bases/language'
+import { dayOf, type DueReads, startField, startOf } from '@orden/markdown/task-dates'
 
 /** What a pick says about a task's day: null takes the field away, absent leaves it.
  *  `due` is the day picked, which is the day the task starts (#371). */
@@ -137,7 +137,7 @@ interface Dated {
 }
 
 /** The task's start date as a pick changes it (#371): written to the field that already
- *  holds its day - `🛫`, a `⏳` it is kept by, an old `📅` in a space of nib's own - so
+ *  holds its day - `🛫`, a `⏳` it is kept by, an old `📅` in a space of Orden's own - so
  *  nothing else on the line moves, else as a new `🛫`. No date takes the day, its time
  *  and its repeat away and leaves the duration and the deadline, as Todoist does. */
 export function changeFor(task: Dated | null, picked: Scheduled): TaskChange {

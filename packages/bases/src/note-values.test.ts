@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { compile } from './expr/compile'
 import { contextAt, noteRow } from './fixtures/rows'
-import { readProperties } from '@nib/markdown/properties'
-import { withItem, writeList } from '@nib/markdown/property-edits'
+import { readProperties } from '@orden/markdown/properties'
+import { withItem, writeList } from '@orden/markdown/property-edits'
 import { parse } from 'yaml'
 import { listAsWritten, noteValues, scalarValue, taskHash } from './note-values'
 

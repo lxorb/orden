@@ -12,7 +12,7 @@ Run it with the repository's own Chromium:
 
     python scripts/export-e2e.py
 
-It builds nothing. `pnpm --filter @nib/desktop build` first, then this."""
+It builds nothing. `pnpm --filter @orden/desktop build` first, then this."""
 
 import base64
 import functools
@@ -620,7 +620,7 @@ CHECKS = {
 
 def main() -> int:
     if not DIST.is_dir():
-        raise SystemExit(f"no build at {DIST}; run pnpm --filter @nib/desktop build")
+        raise SystemExit(f"no build at {DIST}; run pnpm --filter @orden/desktop build")
 
     # Emptied rather than removed: a document still open in a word processor
     # holds its folder, and a run that cannot start is worse than a stale file.

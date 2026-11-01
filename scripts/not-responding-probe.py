@@ -1,4 +1,4 @@
-"""A second launch while the first nib is frozen, and what the stall recorder says about
+"""A second launch while the first Orden is frozen, and what the stall recorder says about
 it. Windows only.
 
 Emil's log of 2026-10-03 has five launches in twenty-five seconds: a nib had frozen,
@@ -188,7 +188,7 @@ def main() -> int:
         frozen.thaw()
         handed = until(lambda: other.poll() is not None, 10)
         check(bool(handed), "once the first answers, the second hands over and goes")
-        check(app.poll() is None, "and the first is still the nib running")
+        check(app.poll() is None, "and the first is still the Orden running")
         gone(app)
         written = log_of(told.identifier)[before:]
         say(f"log: {[line for line in written.splitlines() if 'stall' in line]}")

@@ -4,8 +4,8 @@
    *  with "Also send to" the chat as Slack has it. It slides in as every right panel
    *  does, Escape and ✕ close it, and on a phone it is the page. Replies are few beside
    *  a chat, so they are drawn whole and kept current from the store's changes. */
-  import type { Message } from '@nib/chats'
-  import { may } from '@nib/chats'
+  import type { Message } from '@orden/chats'
+  import { may } from '@orden/chats'
   import { onMount } from 'svelte'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'

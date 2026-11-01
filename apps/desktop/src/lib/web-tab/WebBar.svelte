@@ -3,7 +3,7 @@
    *  been downloaded, and the dots. Saving the page as a note is a row behind the dots
    *  (menu.ts): Emil, #405, asked for the scissors off the bar.
    *
-   *  A browser's row, in nib's shapes. The same `.nib-glyph` squares the find bar and
+   *  A browser's row, in Orden's shapes. The same `.nib-glyph` squares the find bar and
    *  the sidebar's foot are made of, the same `.nib-field` every box you type in is,
    *  and the same row scale, so a thumb gets 56px where a pointer gets 28 without a
    *  second design for a small screen. Under the strip and above the page, which is
@@ -138,7 +138,7 @@
    *  *"Can I see proper link, instead the 'Nicified' version without clicking on it?"*,
    *  and Emil: *"we want that in general for nib by default"*. So the field always says
    *  where the tab is, as Chrome's does under Always show full URLs, and what a press
-   *  adds is only the selection to type over. nib's own pages read as their address,
+   *  adds is only the selection to type over. Orden's own pages read as their address,
    *  as they did, as `chrome://history` does; see own-pages.ts. */
   const resting = $derived(page.url ?? '')
 

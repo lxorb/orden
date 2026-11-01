@@ -1,4 +1,4 @@
-/** A note that holds notes, which is the only way nib organises anything.
+/** A note that holds notes, which is the only way Orden organises anything.
  *
  *  Dropping one note onto another nests it, the way a page nests under a page in
  *  Notion. On disk that is the folder-note convention: `A.md` becomes the folder
@@ -10,16 +10,16 @@
  *  the same idea, and both of the folder-note plugins an Obsidian vault is likely
  *  to have offer both: LostPaladin's `folder-notes` and xpgo's `folder-note-core`
  *  each default to looking for `A/A.md` and each has to be told to look outside
- *  the folder instead. So a space nib nested a note in reads as nested in Obsidian
+ *  the folder instead. So a space Orden nested a note in reads as nested in Obsidian
  *  with nothing switched on, which is the point.
  *
  *  Read more widely than written, as everything about somebody else's vault is:
  *  `A/index.md` is the other convention in the wild - the same plugins offer it,
  *  and every site generator there is calls a folder's own page that - so a folder
- *  holding one is drawn as that page too. nib writes the namesake and never the
+ *  holding one is drawn as that page too. Orden writes the namesake and never the
  *  index, so nothing is converted by being looked at.
  *
- *  A folder with no note of either kind is a folder nib did not make: it comes
+ *  A folder with no note of either kind is a folder Orden did not make: it comes
  *  from a vault, a clone or Finder. Its row is still the row of a note - the
  *  folder's name, quiet, and the note it would be is written the moment somebody
  *  writes in it. Nothing here writes anything; see docs/tree.md.
@@ -51,7 +51,7 @@ export function folderFor(note: string): string {
  *
  *  Asked of a folder that has none, which is where it earns its keep: a row out
  *  of somebody's vault opens the note it would be, and that note is written when
- *  there are words in it and not before. Always `.md`, because that is what nib
+ *  there are words in it and not before. Always `.md`, because that is what Orden
  *  writes; a vault of `.markdown` files keeps its own extension on the notes it
  *  already has. */
 export function folderNotePath(folder: string): string {
@@ -72,7 +72,7 @@ export function isFolderNote(note: string): boolean {
  *  none of its own.
  *
  *  The namesake first, the index after it, so a folder holding both is the note
- *  nib would have written. The name has to match exactly. A vault where `Notes/`
+ *  Orden would have written. The name has to match exactly. A vault where `Notes/`
  *  happens to hold `notes.md` is a folder holding a note, and reading it as one
  *  thing because two filesystems disagree about capitals would fold a row
  *  somebody meant to keep. */
@@ -122,9 +122,9 @@ export function noteToNest(tree: Entry | null, folder: string): string | null {
  *  who drags the last row back out has undone it. An empty `A/` left standing
  *  beside `A.md` would be tidying up after a gesture nobody knew they had made.
  *
- *  Only the namesake, which is the only layout nib itself makes. A folder whose
+ *  Only the namesake, which is the only layout Orden itself makes. A folder whose
  *  note is an `index.md` came from somewhere else, and taking that layout apart
- *  because a reader moved one note out of it would be nib rearranging a vault it
+ *  because a reader moved one note out of it would be Orden rearranging a vault it
  *  was only asked to show. */
 export function unnesting(entry: Entry): { note: string; into: string; folder: string } | null {
   const own = folderNote(entry)

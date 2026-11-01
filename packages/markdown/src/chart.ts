@@ -13,7 +13,7 @@
  *  instrument. The grounds were fine and the behaviour was not: a `type: radar`
  *  came out as a bar chart, silently, which is a picture of the right numbers
  *  saying the wrong thing about them. A reader cannot see that happen. So they are
- *  drawn, and a `type` nib has never heard of draws nothing at all - the fence
+ *  drawn, and a `type` Orden has never heard of draws nothing at all - the fence
  *  stays the characters it is made of, the way a diagram that will not draw does,
  *  which is a refusal somebody can see and correct.
  *

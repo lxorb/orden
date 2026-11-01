@@ -44,7 +44,7 @@ describe('which container to record into', () => {
 })
 
 describe('what a recording is called', () => {
-  /** `![[take.webm]]` is a film to nib and to Obsidian both, and a film embed draws a
+  /** `![[take.webm]]` is a film to Orden and to Obsidian both, and a film embed draws a
    *  black rectangle over sound with no picture. `.weba` is the spelling that says
    *  sound; see packages/markdown/src/links.ts. */
   test('says sound rather than film, whatever the codec was', () => {

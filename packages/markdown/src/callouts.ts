@@ -23,7 +23,7 @@
  *  **Thirteen looks, and every other word an alias of one of them.** Thirteen is
  *  Obsidian's list, and the aliases are Obsidian's too - which is the whole of the
  *  reason both are exactly these. `important` and `caution` were the two that were
- *  not: nib had them as GitHub alert kinds before it had any of the others, so they
+ *  not: Orden had them as GitHub alert kinds before it had any of the others, so they
  *  kept looks and colours of their own, and an `[!important]` written here came out
  *  violet where Obsidian draws it green. A file that reads differently in the editor
  *  it was written for and in the one it travels to is a file this app got wrong, so
@@ -114,7 +114,7 @@ export interface Callout {
    *  what an unknown type carries so it can be styled without being registered
    *  anywhere. */
   type: string
-  /** The look nib knows for that type, or null for one it has never heard of.
+  /** The look Orden knows for that type, or null for one it has never heard of.
    *  An alias has already resolved: `tldr` answers `abstract`. */
   look: string | null
   /** What the title reads as when the writer wrote none: the type, as a word. */
@@ -174,7 +174,7 @@ export function calloutOf(text: string): Callout | null {
 
 /** The icon a look wears, as the elements it is drawn from, for anything
  *  building DOM rather than writing markup - the editor's callout widget.
- *  Nothing at all for a type nib has never heard of. */
+ *  Nothing at all for a type Orden has never heard of. */
 export function calloutIconParts(look: string | null): IconParts | null {
   const node = look === null ? undefined : LOOKS.get(look)
   return node ?? null

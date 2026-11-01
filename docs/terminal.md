@@ -24,7 +24,7 @@ exception is an online terminal, whose shell is a machine of the reader's in the
 - **A terminal's own tab**: _Open another_, beside it in the same folder; the chevron
   lists the other shells.
 - **Split right, Split down** on a terminal's tab: another shell in the new pane, in the
-  same folder, since the panes are nib's own.
+  same folder, since the panes are Orden's own.
 
 ## Which shell
 
@@ -45,7 +45,7 @@ is a program on one computer, and what was on its screen is nobody else's.
 ## Where it starts
 
 In the folder of the space being worked in - VS Code's workspace root. Except beside a
-file in no space - the app's own `custom.css` or `snippets.json`, the one kind nib opens
+file in no space - the app's own `custom.css` or `snippets.json`, the one kind Orden opens
 from outside its spaces - whose own folder is the one that has anything to do with it. At home where there is neither, and at home
 when the folder asked for has gone, as Warp and Windows Terminal do rather than refusing
 to start. See `startingFolder` in `apps/desktop/src/lib/terminal/spec.ts`.
@@ -64,7 +64,7 @@ it comes back in its place in the strip, under its name, with its
 shell, in **the folder it was last in**, with **its last thousand lines** above a fresh
 prompt and one dim line between the two saying when they are from: VS Code's revive,
 Windows Terminal's restored buffer, Warp's restoration. The folder is the one people miss
-when it is lost (Warp and JetBrains both have the complaint), so the shells nib starts are
+when it is lost (Warp and JetBrains both have the complaint), so the shells Orden starts are
 taught to say it, each in the sequence a terminal already understands, and only where the
 reader has not set one up themselves: Command Prompt through `PROMPT` (Windows Terminal's
 own recipe, OSC 9;9), PowerShell through a prompt function wrapped around the profile's
@@ -171,13 +171,13 @@ Remote-SSH explorer, Termius, Tabby, iTerm2 and Warp. What they taught is in the
 **The system's `ssh`, in the pty a shell would have.** Keys, the agent (Windows' own OpenSSH,
 `System32\OpenSSH\ssh.exe`, first - the one its agent service speaks to - then the PATH), a
 `ProxyJump`, a second factor's prompt and `known_hosts` all work the way they do in any other
-terminal, because nothing stands between the reader and `ssh`. nib keeps no password, speaks no
+terminal, because nothing stands between the reader and `ssh`. Orden keeps no password, speaks no
 SSH of its own (Termius and Tabby both do, and both differ from the system's on exactly those
 four), and puts nothing on the other machine (Warp's wrapper is what its users switch off).
 
 **Where hosts come from.** The reader's `~/.ssh/config`, read and never written - VS Code's Add
 host prepends a block to the reader's own file, and the first matching block wins - and hosts
-made in nib, kept in the app's local data folder (`remote/hosts.json`), never synced: which
+made in Orden, kept in the app's local data folder (`remote/hosts.json`), never synced: which
 machines a person reaches is this computer's business. The config is read again each time a
 list opens, so an edit shows at once (VS Code's explorer needs a reload). What counts as a host
 (`src-tauri/src/terminal/ssh_config.rs`):
@@ -195,7 +195,7 @@ list opens, so an edit shows at once (VS Code's explorer needs a reload). What c
 own after a blank line, a few words that are not a setting commented out (`## Work ##`, `# Home`)
 - groups the hosts under it until the next; hosts in an included file with no heading of their
 own are grouped by the file's name, `config.d/work` being `work`. Settings can put any host in a
-group of nib's own, which goes before the config's.
+group of Orden's own, which goes before the config's.
 
 **The picker** (`lib/remote/HostPicker.svelte`) is the space switcher's shape: in the middle of
 the window, no field, every host numbered, a digit connecting at once where only one host can
@@ -203,7 +203,7 @@ be meant, letters finding a host by its name, its other names or its address and
 Enter, Backspace taking one back. The pinned hosts first, then the five connected to most lately
 (newest first), then the rest under their groups' names, a line between; when each was last
 connected to at the row's end, quietly. An address typed that no host has - `emil@10.0.0.5`,
-`box:2222` - is a row of its own, and choosing it keeps it as a host made in nib, the way a
+`box:2222` - is a row of its own, and choosing it keeps it as a host made in Orden, the way a
 browser keeps what was typed in its history. A digit is always a host's number, so an address
 that starts with one is typed into Shift Shift or Settings instead. With no hosts at all the
 one row is Add host, which is Settings, Remote. A right click on a host pins it.
@@ -215,7 +215,7 @@ connect to it, which keeps it (`lib/palette/mode.ts`, `lib/palette/kinds.ts`).
 **The tab** is a terminal tab like any other, whose words name the host as its shell:
 `{"shell":"ssh:pi"}`. A host is an id to the window as a shell is: the crate finds `pi` in the
 config or `n-...` among the hosts it keeps, and the program, the arguments and the destination
-are its own - a host made in nib is held to what a destination can be before it is kept and
+are its own - a host made in Orden is held to what a destination can be before it is kept and
 again before it is used, and handed to `ssh` after `--`, so nothing the window keeps can be read
 as an option (`src-tauri/src/terminal/remote.rs`). So the strip, the session, Reopen closed
 tab, Duplicate, a split, Open another and Move to space all carry it with nothing of their own.
@@ -238,8 +238,8 @@ split - connects as it opens (`madeNow` in `lib/remote/open.ts`).
 
 **Settings, Remote** lists every host in the picker's order: dragged to reorder, or the two
 arrows on each row. A row opens the host: its colour (the canvas's six), its group, its pin; for
-a host made in nib its name and address too, and Remove; for one of the config, Open config,
-which opens the file in the system's text editor (nib never writes it).
+a host made in Orden its name and address too, and Remove; for one of the config, Open config,
+which opens the file in the system's text editor (Orden never writes it).
 
 **Not now**, written down as the next steps:
 
@@ -316,7 +316,7 @@ notifications are every terminal's (below); what the machine adds:
 
 - **A browser that is yours.** The machine has no screen, so `xdg-open`,
   `sensible-browser` and `$BROWSER` there are `nib-open`, which hands the address to the
-  machine's owner's nib - on the device that typed in that session last - where it opens
+  machine's owner's Orden - on the device that typed in that session last - where it opens
   as a link from this terminal would: a web tab beside it, in front while the terminal is
   what they look at and behind otherwise; the system browser on a phone; and in the browser
   build, where a page may not open a window nobody pressed for, the site's name on the
@@ -386,7 +386,7 @@ crashes, is killed or is interrupted does not, and the prompt after it had every
 the mouse typed at it (Emil, 2026-10-01: `C"1C%0C` and on at a PowerShell prompt, after
 Claude Code and a restart).
 
-So the shells nib starts mark each prompt with OSC 133;A - FinalTerm's prompt mark, the one
+So the shells Orden starts mark each prompt with OSC 133;A - FinalTerm's prompt mark, the one
 Windows Terminal, iTerm2, kitty and WezTerm read; VS Code's 633;A is read too - in front of
 the prompt: Command Prompt through `PROMPT` (in front of the reader's own as well, since the
 mark draws nothing), PowerShell in the prompt function, bash in `PROMPT_COMMAND`, WSL through
@@ -463,7 +463,7 @@ word, as it does in every terminal there is. Cmd+W closes the tab on a Mac.
   takes a password refuses at once (`src-tauri/src/terminal/picture.rs`); the online
   machine takes it up the terminal's own socket (docs/online-terminal.md 4.13). See
   `lib/terminal/images.ts`.
-- **Find**: Ctrl+F, in nib's find bar, painting what it finds the way a note's find does.
+- **Find**: Ctrl+F, in Orden's find bar, painting what it finds the way a note's find does.
 - **Scrollback**: five thousand lines. VS Code keeps a thousand and Windows Terminal about
   nine; five is a long build log at a few megabytes a terminal.
 
@@ -526,8 +526,8 @@ session per tab, and four threads each (`terminal/session.rs`):
 The window acknowledges what it has drawn (`pty_seen`), sends its size (`pty_resize`),
 and sends keystrokes one call at a time with whatever arrived meanwhile going with the
 next, so a paste is one call and nothing overtakes anything. A process's _ignore Ctrl+C_
-flag is inherited on Windows, and a launcher that starts nib in a group of its own would
-have handed it to every shell; nib clears its own before the first shell, which a window
+flag is inherited on Windows, and a launcher that starts Orden in a group of its own would
+have handed it to every shell; Orden clears its own before the first shell, which a window
 with no console loses nothing by.
 
 In the window: `lib/terminal/sessions.svelte.ts` keeps each tab's screen - xterm.js in an
@@ -550,7 +550,7 @@ test/weight.test.ts).
 - **Paths as links**, and the screen reader mode.
 - **A shell that survives a restart.** iTerm2 runs every session inside a server of its
   own and VS Code every terminal inside a pty host, so a crash or an upgrade reconnects to
-  the running shell. Every restart nib has - a crash, an update (the installer takes the
+  the running shell. Every restart Orden has - a crash, an update (the installer takes the
   process down) - ends the one process that holds the
   pseudo consoles, and a console ends with its owner; keeping shells alive would be a
   second long-lived program with the rules under _Who may_ proved again across a pipe to
@@ -585,7 +585,7 @@ test/weight.test.ts).
 | `apps/desktop/src/lib/online/` | an online terminal: making one, its socket, its machine, Resume, Settings |
 | `apps/desktop/src/lib/terminal/naming.ts` | what a tab is called and what it wears, out of what runs in it |
 | `apps/desktop/src/lib/terminal/rename.ts` | a name of the reader's own, given and given back |
-| `apps/desktop/src-tauri/src/terminal/remote.rs` | another machine: which host an id names, `ssh` started for it, and the hosts nib keeps |
+| `apps/desktop/src-tauri/src/terminal/remote.rs` | another machine: which host an id names, `ssh` started for it, and the hosts Orden keeps |
 | `apps/desktop/src-tauri/src/terminal/ssh_config.rs` | the reader's ssh config, read: hosts, includes, groups |
 | `apps/desktop/src/lib/remote/hosts.ts` | the hosts as one list: the picker's order, an address typed, what Settings changes |
 | `apps/desktop/src/lib/remote/HostPicker.svelte` | Remote's picker in the middle of the window |

@@ -1581,6 +1581,18 @@ export const id: Dictionary = {
   'answered by {model}, {date}': 'dijawab {model}, {date}',
   'AI block': 'Blok AI',
   'Do with AI': 'Kerjakan dengan AI',
+  'Use the browser': 'Gunakan browser',
+  'Lets a task done with AI open web pages and act on them.':
+    'Mengizinkan tugas yang dikerjakan AI membuka halaman web dan bertindak di sana.',
+  'Look through notes': 'Telusuri catatan',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Mengizinkan tugas yang dikerjakan AI mencari dan membaca catatan Anda yang lain, selain catatannya sendiri.',
+  'Change other notes': 'Ubah catatan lain',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Mengizinkan tugas yang dikerjakan AI menulis, memindahkan, dan menghapus catatan selain tugas itu.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Apa yang diminta dari tugas yang dikerjakan AI. Tugas tetap dicentang saat selesai, atau AI bertanya dalam komentar.',
+  'Started in the AI panel': 'Dimulai di panel AI',
   'Highlight colour': 'Warna sorotan',
   'A single newline breaks the line': 'Satu baris baru memutus baris',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2630,6 +2642,9 @@ export const id: Dictionary = {
     'Di sini halaman web mencari alamat seperti sistem; DNS-nya diatur di pengaturan sistem itu sendiri.',
   'Set by the settings file': 'Diatur oleh file pengaturan',
   'The settings file has a problem': 'File pengaturan bermasalah',
+  'Some changes may not be noticed': 'Beberapa perubahan mungkin tak terlihat',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Sistem sudah mencapai batas folder yang dipantau, jadi Orden mungkin tak melihat setiap perubahan yang dibuat program lain di ruang Anda. Menaikkan fs.inotify.max_user_watches memperbaikinya.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Pindahkan obrolan {name} ke {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

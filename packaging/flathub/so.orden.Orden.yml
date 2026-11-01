@@ -69,7 +69,7 @@ modules:
       - ln -s pnpm.cjs pnpm/bin/pnpm
       # Only the desktop app and the packages it is built from: the Worker under
       # services/ is not part of a Flatpak.
-      - pnpm install --offline --frozen-lockfile --filter "@nib/desktop..."
+      - pnpm install --offline --frozen-lockfile --filter "@orden/desktop..."
       # A Flatpak is updated by Flathub and must not install anything itself, so
       # the updater is left with nowhere to look. The plugin stays configured -
       # its public key is not optional - and an empty endpoint list is what the
@@ -84,7 +84,7 @@ modules:
         json.dump(conf, open(path, 'w'), indent=2)"
       # The web assets first: the binary embeds apps/desktop/dist at compile
       # time, which is what tauri.conf.json points frontendDist at.
-      - pnpm --filter @nib/desktop build
+      - pnpm --filter @orden/desktop build
       - cargo build --offline --release --manifest-path apps/desktop/src-tauri/Cargo.toml
       - install -Dm755 apps/desktop/src-tauri/target/release/nib /app/bin/nib
       - install -Dm644 so.orden.Orden.desktop /app/share/applications/so.orden.Orden.desktop

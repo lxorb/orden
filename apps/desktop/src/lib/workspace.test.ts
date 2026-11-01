@@ -3243,7 +3243,7 @@ describe('reopening the tab that was closed last', () => {
  *  A browser opens it because a first visit has nothing else to read. Signing in
  *  changes that, and nothing was watching: the workspace restores seconds before
  *  the account does, so somebody who signed in was left looking at "Welcome to
- *  Nib" with their own notes in the sidebar beside it. */
+ *  Orden" with their own notes in the sidebar beside it. */
 describe('the welcome note, once there are real notes', () => {
   const WELCOME = '/Notes/Read me.md'
 
@@ -3866,7 +3866,7 @@ describe('a click in the file list landing inside a gesture that re-reads the no
 
 /** The number goes before the extension, and the extension is the last dot of the
  *  file's own name. Not this store's rule any more but `freePath`'s, the one every
- *  other part of the app steps a taken name aside with; see @nib/markdown/paths. */
+ *  other part of the app steps a taken name aside with; see @orden/markdown/paths. */
 describe('a new file stepping aside from a name the folder already has', () => {
   const row = (path: string, children?: Entry[]): Entry => ({
     name: path.split('/').pop()!,
@@ -4456,7 +4456,7 @@ describe('a preview landing on a note that is already open', () => {
 })
 
 /** The rows of a tab's own menu that act on more than the tab: Chrome's, VS Code's
- *  and Obsidian's, which nib's menu had only two of. See tab-strip/menu.ts. */
+ *  and Obsidian's, which Orden's menu had only two of. See tab-strip/menu.ts. */
 describe('what a tab s own menu does to the strip', () => {
   const entry = (path: string, children: Entry[] = [], isDir = false): Entry => ({
     name: path.split('/').pop() ?? path,

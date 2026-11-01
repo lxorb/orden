@@ -15,9 +15,9 @@
  *  to speak of, and what happens to it is the site's default; see
  *  spaces/site.ts. */
 
-import { documentTitle, withoutComments } from '@nib/markdown'
-import { frontMatterList, frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
-import { findLinks } from '@nib/markdown/links'
+import { documentTitle, withoutComments } from '@orden/markdown'
+import { frontMatterList, frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
+import { findLinks } from '@orden/markdown/links'
 import { objectIn } from '../body'
 
 /** Long enough for a sentence somebody wrote as a description, short enough that

@@ -127,7 +127,7 @@ reader instead.
 
 ## The recipient: no pseudo-space
 
-A note somebody shared with you is not a space, and nib does not invent one for
+A note somebody shared with you is not a space, and Orden does not invent one for
 it. No folder, no row in the tree, no file on the disk. A folder holding one
 borrowed note would be a copy of it, and a copy is exactly what sharing exists
 in order not to make.

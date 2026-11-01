@@ -1,7 +1,7 @@
 <script lang="ts">
   /** What this site is: the popover behind the mark at the left of the address field.
    *
-   *  Chrome's site information bubble, kept to what nib can honestly say: whether the
+   *  Chrome's site information bubble, kept to what Orden can honestly say: whether the
    *  connection is the secure kind, the certificate it was made with where the engine
    *  says (#776), what the site has been allowed or refused, and one row that forgets
    *  all of it. A site that has never asked for anything shows the first
@@ -23,19 +23,19 @@
   import type { Ask } from './permissions.svelte'
   import { ASKS, grants } from './permissions.svelte'
 
-  /** `aside` is the private tab this is about, whose answers are its own; see sites.ts. */
   const {
     url,
     site,
     tab,
-    aside,
     onclose,
+    privately = false,
   }: {
     url: string | null
     site: string
     tab: string
-    aside?: string | undefined
     onclose: () => void
+    /** A private tab's site, whose answers are the private session's; see permissions.svelte.ts. */
+    privately?: boolean
   } = $props()
 
   /** Whom a certificate names; see web_certificate.rs. */
@@ -91,7 +91,7 @@
   const named = (party: Party) =>
     [party.name, ...party.organization].filter((one) => one !== '').join(' · ')
   const day = (at: number) => i18n.when(at, { dateStyle: 'long' })
-  const said = $derived(grants.of(site, aside))
+  const said = $derived(grants.of(site, privately))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
 
   // Closed by Escape, a press past it and the window losing the focus - which is also
@@ -153,7 +153,7 @@
           <button
             class="nib-button is-quiet"
             onclick={() =>
-              grants.remember(site, ask, said[ask] === 'allow' ? 'block' : 'allow', aside)}
+              grants.remember(site, ask, said[ask] === 'allow' ? 'block' : 'allow', privately)}
           >
             {said[ask] === 'allow' ? t('Allowed') : t('Blocked')}
           </button>
@@ -164,7 +164,7 @@
     <button
       class="nib-button is-quiet reset"
       onclick={() => {
-        grants.forget(site, aside)
+        grants.forget(site, privately)
         onclose()
       }}
     >

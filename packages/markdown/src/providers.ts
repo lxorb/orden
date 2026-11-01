@@ -23,7 +23,7 @@
  *  wrote by hand gets in web-embed.ts, which is the honest bargain for a frame
  *  nobody has driven. A row somebody does drive moves up here.
  *
- *  nib used to refuse the whole idea, on the grounds that a list of every site
+ *  Orden used to refuse the whole idea, on the grounds that a list of every site
  *  with an embed API is a list nobody maintains. That much was right, and the
  *  broad list is not that list: scripts/embed-table.ts writes it, reading the
  *  public oEmbed registry and holding every row to it - a provider that has left

@@ -6,7 +6,7 @@
    *  The card being carried stays mounted wherever the scroll goes, drawn at its own
    *  place out of the flow: the carry lives on it, and a card taken out of the page
    *  mid-carry would put the card back. */
-  import { type Row, rowId } from '@nib/bases'
+  import { type Row, rowId } from '@orden/bases'
   import { untrack, type Snippet } from 'svelte'
   import { windowFor } from '../row-window'
   import { ListView } from '../row-window.svelte'

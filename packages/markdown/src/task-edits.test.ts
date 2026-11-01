@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { changedTask, lastDateTaken, taskLine, type TaskChange, writeTask } from './task-edits'
 import { readTask } from './task-line'
 
-/** Lines already in nib's order, which a read and a whole write give back byte for
+/** Lines already in Orden's order, which a read and a whole write give back byte for
  *  byte: the Tasks plugin's documented emoji lines and the design's examples. */
 const CANONICAL = [
   '- [ ] #task Has a created date ➕ 2023-04-13',
@@ -95,7 +95,7 @@ const CHANGES: [string, TaskChange, string][] = [
   ['- [ ] a 📅 2026-10-06 ^blk', { priority: 3 }, '- [ ] a 🔼 📅 2026-10-06 ^blk'],
   ['- [ ] a ^blk', { due: '2026-10-06' }, '- [ ] a 📅 2026-10-06 ^blk'],
   ['- [ ] a', { id: 'x1', dependsOn: ['y2'] }, '- [ ] a 🆔 x1 ⛔ y2'],
-  // Fields out of nib's order stay where they are; a new one goes before the first
+  // Fields out of Orden's order stay where they are; a new one goes before the first
   // that ranks after it.
   ['- [ ] a 📅 2026-10-06 ⏫', { start: '2026-10-01' }, '- [ ] a 🛫 2026-10-01 📅 2026-10-06 ⏫'],
   // A line in Dataview's format stays in it.
@@ -222,7 +222,7 @@ describe('a change', () => {
     })
   })
 
-  test('keeps every Tasks field readable: nib fields never land after its fields', () => {
+  test("keeps every Tasks field readable: Orden's fields never land after its fields", () => {
     const line = changedTask('- [ ] a ⏫ 📅 2026-10-06', { remind: [{ before: 15 }], tags: ['x'] })
     expect(line).toBe('- [ ] a [remind:: 15m] #x ⏫ 📅 2026-10-06')
     expect(readTask(line)).toMatchObject({ priority: 2, due: '2026-10-06', tags: ['x'] })

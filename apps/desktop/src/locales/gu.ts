@@ -1587,6 +1587,18 @@ export const gu: Dictionary = {
   'answered by {model}, {date}': '{model}નો જવાબ, {date}',
   'AI block': 'AI બ્લૉક',
   'Do with AI': 'AI વડે કરો',
+  'Use the browser': 'બ્રાઉઝર વાપરો',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI વડે થતા કાર્યને વેબ પેજ ખોલવા અને તેના પર કામ કરવા દે છે.',
+  'Look through notes': 'નોંધો જુઓ',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI વડે થતા કાર્યને પોતાની નોંધ ઉપરાંત તમારી બીજી નોંધો શોધવા અને વાંચવા દે છે.',
+  'Change other notes': 'બીજી નોંધો બદલો',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI વડે થતા કાર્યને કાર્ય સિવાયની નોંધો લખવા, ખસેડવા અને કાઢી નાખવા દે છે.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI વડે થતા કાર્યને શું કરવાનું કહેવાય છે. પૂરું થાય ત્યારે તે છતાં કાર્ય પર ટિક કરે છે, અથવા ટિપ્પણીમાં પૂછે છે.',
+  'Started in the AI panel': 'AI પેનલમાં શરૂ થયું',
   'Highlight colour': 'ઉજાગર રંગ',
   'A single newline breaks the line': 'એક નવી લીટી જ લીટી તોડે છે',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2622,6 +2634,9 @@ export const gu: Dictionary = {
     'અહીં વેબ પેજ સિસ્ટમની જેમ જ સરનામાં શોધે છે; તેનું DNS સિસ્ટમના પોતાના સેટિંગ્સમાં નક્કી થાય છે.',
   'Set by the settings file': 'સેટિંગ્સ ફાઇલ દ્વારા નક્કી',
   'The settings file has a problem': 'સેટિંગ્સ ફાઇલમાં સમસ્યા છે',
+  'Some changes may not be noticed': 'કેટલાક ફેરફારો કદાચ ધ્યાનમાં ન આવે',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'સિસ્ટમની જોવાતા ફોલ્ડરોની મર્યાદા પૂરી થઈ ગઈ છે, તેથી બીજા પ્રોગ્રામ તમારી સ્પેસમાં કરે તે દરેક ફેરફાર Orden કદાચ ન જુએ. fs.inotify.max_user_watches વધારવાથી સુધરે છે.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ચેટ {name} ને {space} માં ખસેડવી?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

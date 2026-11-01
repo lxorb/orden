@@ -22,7 +22,7 @@ engine's own `DevTools` protocol (see `devtools.py`):
   its own.
 * **a window asked for from nib's world reaches the app** - `nib-behind`, as the middle
   button asks, opens a tab behind the page.
-* **a page's dialogs are the page's** - `confirm()` holds the page's script until nib's
+* **a page's dialogs are the page's** - `confirm()` holds the page's script until Orden's
   card is answered and gives back `true` or `false`, never a promise; `prompt()` gives
   back the words typed or `null`; `alert()` shows. The dialog plugin used to answer a
   site's `confirm()` with a truthy promise at once, so *"Delete this?"* went ahead as if
@@ -178,7 +178,7 @@ ASKED = f"""(() => {{
 
 LISTENING = "JSON.stringify(Object.keys(getEventListeners(window)).sort())"
 
-# nib's listeners on a page's window: a link pressed for a tab of its own, the keys a page
+# Orden's listeners on a page's window: a link pressed for a tab of its own, the keys a page
 # lets go by, and a modifier tapped twice (see web_opens.rs).
 NIBS = {"auxclick", "click", "keydown", "keyup"}
 
@@ -317,7 +317,7 @@ def listeners(at: int, port: int) -> dict[str, dict[str, object]]:
 
 
 def dialogs(app, at: int, port: int) -> tuple[dict[str, object], list[str]]:
-    """Opens each of the page's dialogs, answers nib's card for it, and reads back what
+    """Opens each of the page's dialogs, answers Orden's card for it, and reads back what
     the page's script was given."""
 
     said: dict[str, object] = {}
@@ -470,7 +470,7 @@ def main() -> int:
             if not NIBS <= set(nib):
                 wrong.append(f"nib's world in {path} has no listeners: {one}")
             if NIBS & set(page):
-                wrong.append(f"the page's own world in {path} has nib's listeners: {page}")
+                wrong.append(f"the page's own world in {path} has Orden's listeners: {page}")
         added = (
             [one for one in after if one not in before]
             if isinstance(after, list) and isinstance(before, list)

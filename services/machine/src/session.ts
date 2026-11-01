@@ -16,7 +16,7 @@
  *  the saved screen if there is one. Whatever is asked of the session meanwhile waits. */
 
 import { existsSync } from 'node:fs'
-import type { NibdFrame, Restored, SessionNow } from '@nib/online/wire'
+import type { NibdFrame, Restored, SessionNow } from '@orden/online/wire'
 import { Coalescer } from './coalesce'
 import { Held, socketOf } from './held'
 import type { Hello } from './hold-wire'

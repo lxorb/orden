@@ -1,4 +1,4 @@
-import type { FileRef } from '@nib/chats'
+import type { FileRef } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
 import { barsOf, clock, fitted, gallery, seekAt, sortFiles } from './media'
 

@@ -13,7 +13,7 @@ import { Parser, type Input, type PartialParse, type TreeFragment } from '@lezer
  *  package, which brings `html` and `htmlCompletionSource` in for `markdown()` to build
  *  its nested parser out of.
  *
- *  Raw HTML blocks and inline tags are part of nib's markdown, so `markdown()` wants a
+ *  Raw HTML blocks and inline tags are part of Orden's markdown, so `markdown()` wants a
  *  grammar for them, and the one it reaches for brings the CSS and JavaScript grammars
  *  with it for `<style>` and `<script>`, and the LR parser runtime under all three -
  *  which nothing else in front of the first paint needs, markdown's own parser being
@@ -52,7 +52,7 @@ let held: Promise<typeof import('@codemirror/lang-html')> | null = null
 
 /** The real grammar, fetched once.
  *
- *  Exported for the tests - nib's own and the editor's, which hold a cold parse and a
+ *  Exported for the tests - Orden's own and the editor's, which hold a cold parse and a
  *  warm one to each other - and called by the parser below, which is what asks for it
  *  when a note turns out to have a tag in it. */
 export function htmlGrammar(): Promise<typeof import('@codemirror/lang-html')> {
@@ -135,7 +135,7 @@ const data = defineLanguageFacet({
  *
  *  The support is the close-tag handler and nothing else. What the real support also
  *  holds is three completion sources - HTML's own, and JavaScript's and CSS's for what
- *  is nested inside it - and none of the three has ever run in nib or can: the popup is
+ *  is nested inside it - and none of the three has ever run in Orden or can: the popup is
  *  built with `override`, which is the whole list of sources rather than an addition to
  *  it, so a source offered through language data is never asked. See `completing` in
  *  packages/editor/src/completing.ts. The same goes for the tag completion `markdown()`
@@ -171,12 +171,12 @@ const closeTags: Extension = EditorView.inputHandler.of((view, from, to, text, i
 /** The completions offered inside a tag: none, ever.
  *
  *  `markdown()` asks for these once, through a source of its own, to offer tag names
- *  when a `<` is typed in a note. Nothing in nib ever reaches it - see the note on
+ *  when a `<` is typed in a note. Nothing in Orden ever reaches it - see the note on
  *  `html` above - and there are two reasons it answers nothing rather than delegating
  *  to the real grammar when the grammar is here.
  *
  *  The first is what a context is now. `markdown()` builds one to ask this with, and
- *  the class it builds is nib's own: that package's static import of the completion
+ *  the class it builds is Orden's own: that package's static import of the completion
  *  library held thirty-five kilobytes of popup in front of the first paint, so it gets
  *  packages/autocomplete instead, which carries the three things a context is made of
  *  and nothing else. Handing that to the real grammar's source would be a lie, and the

@@ -22,7 +22,7 @@
  *  (services/machine/src/images.ts). While it does, the line across the top of the panes
  *  sweeps, and says so where it could not. Fetched with the first picture. */
 
-import { type ImageKind, MOST_IMAGE } from '@nib/online/wire'
+import { type ImageKind, MOST_IMAGE } from '@orden/online/wire'
 import { busy } from '../busy.svelte'
 import { fileBytes } from '../bytes'
 import { t } from '../i18n.svelte'

@@ -3,7 +3,7 @@
  *  choices), a calendar and a timeline of notes need a date property. Everything else
  *  the view had is kept, so switching back is the view it was. Pure. */
 
-import type { Base, Row } from '@nib/bases'
+import type { Base, Row } from '@orden/bases'
 import { editorOf, knownProperties, optionsOf } from './columns'
 import { setGroup, setLayout, setNibOption } from './edit'
 import type { Layout } from './words'

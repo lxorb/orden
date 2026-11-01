@@ -1,4 +1,4 @@
-/** The projects the Tasks panel lists, Todoist's "My Projects" the nib way: the notes in
+/** The projects the Tasks panel lists, Todoist's "My Projects" the Orden way: the notes in
  *  the space's projects folder, as the file list draws them (docs/tree.md). A note is a
  *  project, a folder is a project whose note is its namesake (`Uni/Uni.md`, written or
  *  not yet), and what a folder holds besides its own note are its sub-projects. The order

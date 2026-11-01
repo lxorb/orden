@@ -1,4 +1,4 @@
-import { MUTED_FOR_GOOD } from '@nib/chats/notify'
+import { MUTED_FOR_GOOD } from '@orden/chats/notify'
 import { describe, expect, it } from 'vitest'
 import { mutedUntil, ringOf } from './bell'
 

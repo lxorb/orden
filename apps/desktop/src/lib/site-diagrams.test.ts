@@ -105,7 +105,7 @@ vi.mock('./diagrams', () => ({
 }))
 
 const { asFile, diagramFences, drawnBoth, pushDiagrams } = await import('./site-diagrams')
-const { diagramKey } = await import('@nib/markdown/diagrams')
+const { diagramKey } = await import('@orden/markdown/diagrams')
 
 const SPACE = '7d1f4e8c-0000-4000-8000-000000000001'
 const FENCE = '```mermaid\ngraph TD\n  A --> B\n```\n'

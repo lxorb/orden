@@ -9,7 +9,7 @@
  *  and warmed at the launch's last turn. `api` keeps its name and its types either
  *  way, so no caller knows which half it reached. */
 
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import { deviceName } from './device'
 import { isRecord, isString, parsed } from './stored'
 

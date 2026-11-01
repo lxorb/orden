@@ -9,8 +9,8 @@
  *  either way (sync/pass.ts); the app's own untouched welcome note and AGENTS.md are
  *  nobody's writing. None of those is a reason to ask. */
 
-import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@nib/markdown/links'
-import { inForeignCopy } from '@nib/sync-core/foreign'
+import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
+import { inForeignCopy } from '@orden/sync-core/foreign'
 import { isUntouchedAgents } from '../agents-seed'
 import { api } from '../api'
 import { sha256 } from '../bytes'

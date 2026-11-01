@@ -4,13 +4,13 @@
  *  A program on the machine asking for a browser - `gh auth login --web`, Claude Code's
  *  sign-in, Python's `webbrowser` - is asking for one on the person's own computer: the
  *  machine has no screen. So `nib-open` hands the address up the link, and the owner's
- *  nib opens it. Only the web: an address in any other scheme would hand a file, a mail
+ *  Orden opens it. Only the web: an address in any other scheme would hand a file, a mail
  *  program or an app on the person's computer to a program on a machine.
  *
  *  And the one thing VS Code's port forwarding is there for in a sign-in: the page the
  *  provider sends the browser back to is `http://localhost:<port>/callback` - the
  *  program's own listener, on the machine and not on the computer the browser runs on.
- *  So an address that names such a page is opened in a tab nib watches, and when the tab
+ *  So an address that names such a page is opened in a tab Orden watches, and when the tab
  *  lands there, that one request is made on the machine instead (`callback`). Only to a
  *  loopback origin the opened address itself named, so a page cannot steer the machine
  *  anywhere it was not already sent. Pure. */

@@ -3,7 +3,7 @@
  *  Obsidian users keep their lists in these: `not done`, `due before tomorrow`,
  *  `path includes Work`, `group by heading`, `sort by priority`, `limit 10`. Each
  *  line becomes a filter, a grouping, a sort or a limit of one list view of task
- *  rows, so the block is drawn as a live list in nib instead of as code. A line
+ *  rows, so the block is drawn as a live list in Orden instead of as code. A line
  *  this cannot read is answered back rather than guessed at, and the block keeps
  *  its source either way. */
 
@@ -12,7 +12,7 @@ import type { Base, Filter, Sort, View } from './types'
 
 export interface TasksQuery {
   base: Base
-  /** The lines nib does not read, as written. */
+  /** The lines Orden does not read, as written. */
   unsupported: string[]
 }
 
@@ -282,7 +282,7 @@ const PROPERTIES: Record<string, string> = {
   urgency: 'task.priority',
 }
 
-/** Lines that only change how the plugin draws a list, which nib draws its own way. */
+/** Lines that only change how the plugin draws a list, which Orden draws its own way. */
 const DRAWING = /^(hide|show|short mode|full mode|short|full|explain|ignore global query|layout)\b/i
 
 /** A ` ```tasks ` fence's lines as a list view of task rows. */

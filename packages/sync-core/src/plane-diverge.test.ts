@@ -1,4 +1,4 @@
-import { type Canvas, type CanvasNode, emptyCanvas } from '@nib/markdown/canvas'
+import { type Canvas, type CanvasNode, emptyCanvas } from '@orden/markdown/canvas'
 import { describe, expect, test } from 'vitest'
 import { divergePlane } from './plane-diverge'
 

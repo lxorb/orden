@@ -8,7 +8,7 @@
    *  A view of notes adds a note where its filter points instead (add.ts), and a column
    *  that stands for a box's mark, which quick add cannot carry, takes the words in a
    *  plain field of its own and writes them with that mark. */
-  import type { Group } from '@nib/bases'
+  import type { Group } from '@orden/bases'
   import { untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import type { Prefill as QuickPrefill } from '../quick-add/entry'

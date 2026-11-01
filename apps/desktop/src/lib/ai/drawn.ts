@@ -10,7 +10,7 @@
  *  way: code in an answer is there to be taken somewhere else, and selecting it by hand
  *  out of a scrolling box is the one fiddly part of that. */
 
-import { renderMarkdown, type RenderOptions } from '@nib/markdown'
+import { renderMarkdown, type RenderOptions } from '@orden/markdown'
 
 type LinkResolver = NonNullable<RenderOptions['resolveLink']>
 

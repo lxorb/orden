@@ -14,7 +14,7 @@
    *  and gone with it, the way the hover card's is (preview-card.ts). Written a pause
    *  after the typing stops, and at once as the card goes or the window does - no dot,
    *  nothing to save. Its edge widens it; Escape puts it away. See pad.ts. */
-  import { createEditor, EditorView, setNoteIndex } from '@nib/editor'
+  import { createEditor, EditorView, setNoteIndex } from '@orden/editor'
   import { onMount } from 'svelte'
   import { SAVE_DELAY } from '../backoff'
   import { pickedLink } from '../composer'

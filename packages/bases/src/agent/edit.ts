@@ -6,8 +6,8 @@
  *  the line it was on, so a note typed in since the agent read it is still edited in
  *  the right place, or refused where the task is gone. */
 
-import { appliedEdits, type TextEdit } from '@nib/markdown/edits'
-import { lastDateTaken, type TaskChange, writeTask } from '@nib/markdown/task-edits'
+import { appliedEdits, type TextEdit } from '@orden/markdown/edits'
+import { lastDateTaken, type TaskChange, writeTask } from '@orden/markdown/task-edits'
 import { taskRowsOfText } from '../task-rows'
 import { tick } from '../occurrence'
 import type { Row } from '../types'

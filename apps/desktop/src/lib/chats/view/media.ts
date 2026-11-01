@@ -6,8 +6,8 @@
  *  and height, and a voice message's bars - so a row is the right height from its first
  *  frame and never jumps when the picture arrives. */
 
-import type { FileRef } from '@nib/chats'
-import { WAVE_BARS } from '@nib/chats/limits'
+import type { FileRef } from '@orden/chats'
+import { WAVE_BARS } from '@orden/chats/limits'
 
 /** The most pictures a gallery shows; the rest are a count on the last. */
 const GALLERY_MOST = 6

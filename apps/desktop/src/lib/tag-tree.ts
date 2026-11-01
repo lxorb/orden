@@ -11,7 +11,7 @@
  *  `#` popup wants the same numbers. What a row looks like is TagTree.svelte's, and
  *  what a rename writes is tag-edits.ts. */
 
-import type { SpaceTag } from '@nib/editor'
+import type { SpaceTag } from '@orden/editor'
 
 export interface TagNode {
   /** The last segment, which is what a row shows. */

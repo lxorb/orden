@@ -3,7 +3,7 @@
  *  list is there before any chat is opened, and a press opens the chat at the message.
  *  Kept on this device; see `stored.ts`. */
 
-import type { Message } from '@nib/chats'
+import type { Message } from '@orden/chats'
 import { isNumber, isRecord, isString, keep, stored } from '../../stored'
 
 const KEY = 'nib:chats-saved'

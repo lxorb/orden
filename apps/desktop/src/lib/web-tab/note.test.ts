@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { frontMatterValue } from '@nib/markdown/front-matter'
+import { frontMatterValue } from '@orden/markdown/front-matter'
 import { clipNote, clipSource, keptBody, webTitleOf, webUrlOf } from './note'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')

@@ -17,7 +17,7 @@
  *  about two copies. See conflicts.ts for the three answers and why asking is
  *  quiet rather than a dialog. */
 
-import { isWebTarget } from '@nib/markdown/links'
+import { isWebTarget } from '@orden/markdown/links'
 import { log } from '../log'
 import { insideSpace, withinSpace } from '../space-paths'
 import { forget, isRecord, keep, stored } from '../stored'
@@ -198,7 +198,7 @@ class Record {
       log('warn', 'sync: a note waiting to be settled has gone, so its other copy is kept beside')
       if (answer !== 'mine') {
         const [{ conflictPath }, { writeDown }] = await Promise.all([
-          import('@nib/markdown/paths'),
+          import('@orden/markdown/paths'),
           import('./write-down'),
         ])
         await writeDown(conflictPath(path), clash.theirs)
@@ -239,7 +239,7 @@ class Record {
       }
     } else if (answer === 'both') {
       const [{ conflictPath }, { writeDown }] = await Promise.all([
-        import('@nib/markdown/paths'),
+        import('@orden/markdown/paths'),
         import('./write-down'),
       ])
       await writeDown(conflictPath(path), clash.theirs)

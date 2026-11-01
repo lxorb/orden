@@ -1574,6 +1574,18 @@ export const am: Dictionary = {
   'answered by {model}, {date}': '{model} መለሰ፣ {date}',
   'AI block': 'የAI ብሎክ',
   'Do with AI': 'በAI አድርግ',
+  'Use the browser': 'አሳሹን ተጠቀም',
+  'Lets a task done with AI open web pages and act on them.':
+    'በAI የሚሠራ ተግባር ድረ-ገጾችን እንዲከፍትና በእነሱ ላይ እንዲሠራ ይፈቅዳል።',
+  'Look through notes': 'ማስታወሻዎችን ፈልግ',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'በAI የሚሠራ ተግባር ከራሱ ማስታወሻ በተጨማሪ ሌሎች ማስታወሻዎችዎን እንዲፈልግና እንዲያነብ ይፈቅዳል።',
+  'Change other notes': 'ሌሎች ማስታወሻዎችን ቀይር',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'በAI የሚሠራ ተግባር ከተግባሩ ውጭ ያሉ ማስታወሻዎችን እንዲጽፍ፣ እንዲያንቀሳቅስና እንዲሰርዝ ይፈቅዳል።',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'በAI የሚሠራ ተግባር እንዲያደርግ የሚጠየቀው። ሲጨርስ አሁንም ተግባሩን ምልክት ያደርጋል፣ አለበለዚያ በአስተያየት ይጠይቃል።',
+  'Started in the AI panel': 'በAI ፓነል ውስጥ ተጀምሯል',
   'Highlight colour': 'የማጉላት ቀለም',
   'A single newline breaks the line': 'አንድ አዲስ መስመር መስመሩን ይሰብራል',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2590,6 +2602,9 @@ export const am: Dictionary = {
     'እዚህ ድረ-ገጾች አድራሻዎችን የሚፈልጉት ሥርዓቱ በሚፈልግበት መንገድ ነው፤ የDNS ቅንብሩ በሥርዓቱ ቅንብሮች ውስጥ ነው።',
   'Set by the settings file': 'በቅንብሮች ፋይል የተቀመጠ',
   'The settings file has a problem': 'የቅንብሮች ፋይሉ ችግር አለበት',
+  'Some changes may not be noticed': 'አንዳንድ ለውጦች ላይታዩ ይችላሉ',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'የሥርዓቱ የሚከታተሉ አቃፊዎች ገደብ ደርሷል፤ ስለዚህ Orden ሌሎች ፕሮግራሞች በቦታዎችዎ የሚያደርጉትን ሁሉ ለውጥ ላያስተውል ይችላል። fs.inotify.max_user_watchesን ማሳደግ ያስተካክለዋል።',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ውይይቱ {name} ወደ {space} ይዛወር?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

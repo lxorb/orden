@@ -374,7 +374,7 @@ describe('the bridge the page talks over', () => {
 
   /** `addJavascriptInterface` injects the bridge object into every frame of the
    *  webview, iframes included, and hands the activity nothing about which of them
-   *  called. Nib's pages hold frames of somebody else's - a page a note embeds, a
+   *  called. Orden's pages hold frames of somebody else's - a page a note embeds, a
    *  block of a note's own HTML - sandboxed exactly so the app is out of their
    *  reach, and the bridge was the way round that sandbox: a framed page could ask
    *  for every AI key on the phone, or turn the microphone on. So the calls that

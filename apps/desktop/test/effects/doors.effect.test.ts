@@ -10,7 +10,7 @@ import { reactive, root, watch } from './runes.svelte'
  *  a tab that stayed open, and the palette, the right-click menu, the prompt sheet,
  *  sign-in and the format bar were dead for the rest of the session without a word. A
  *  door tries twice now and forgets a fetch that failed both times; see door.ts in
- *  @nib/markdown for the helper and reloading.svelte.ts for what the page does about a
+ *  @orden/markdown for the helper and reloading.svelte.ts for what the page does about a
  *  module the browser will not fetch again.
  *
  *  In the jsdom project because a latched door is asked from an `$effect` in App.svelte,

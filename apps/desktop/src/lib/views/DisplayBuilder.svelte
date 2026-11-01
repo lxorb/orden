@@ -2,7 +2,7 @@
   /** Todoist's Display menu, in the view's head where a view is of tasks: the layout
    *  (list, board, calendar), whether done tasks stay, how it is grouped and sorted, and
    *  what it is narrowed to - a priority, a label, a day (display.ts). Every choice is a
-   *  change of the view, kept where the view keeps its changes; Reset puts a view nib
+   *  change of the view, kept where the view keeps its changes; Reset puts a view Orden
    *  ships back the way it came. */
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
@@ -33,7 +33,7 @@
 
   const live = $derived(kit.live)
   const view = $derived(live.view)
-  /** The view as it came, for a view nib ships: what Default means. */
+  /** The view as it came, for a view Orden ships: what Default means. */
   const original = $derived.by(() => {
     if (kit.spec.builtin === undefined) return null
     return builtinBase(asShipped(kit.spec)).views[0] ?? null

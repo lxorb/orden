@@ -12,7 +12,7 @@
  *  rotated, and it is rotated too whenever pending edits are thrown away, so one id
  *  never names two different operations. */
 
-import { TEXT } from '@nib/rooms'
+import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { type Divergence, diverge, type Times } from '../../src/diverge'
 import { coalesce } from '../../src/outbox'
@@ -463,7 +463,7 @@ export class ReferenceDevice implements DeviceAdapter {
     }
   }
 
-  /** Another program changed a note's file: folded in three ways against what nib last
+  /** Another program changed a note's file: folded in three ways against what Orden last
    *  wrote (section 5.5). */
   private foreign(action: Extract<Action, { t: 'edit-file' }>) {
     const id = this.writable(action.note)

@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Todoist's Add filter, in nib's sheet: a name and a query in Todoist's own language,
+  /** Todoist's Add filter, in Orden's sheet: a name and a query in Todoist's own language,
    *  how many open tasks it finds as it is typed, and the field marked where the grammar
    *  cannot read it. Saving writes the filter's base (filters.ts) and opens it. */
   import Sheet from '../Sheet.svelte'

@@ -7,7 +7,7 @@
  *  hands a name and a caller that hands a path cannot come to different ends. */
 
 import { describe, expect, test, vi } from 'vitest'
-import { frontMatterValue } from '@nib/markdown/front-matter'
+import { frontMatterValue } from '@orden/markdown/front-matter'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()

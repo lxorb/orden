@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { everySurface } from '@nib/themes/write'
+import { everySurface } from '@orden/themes/write'
 
 /** One `#write` to a document, and every page a note is on reached anyway.
  *
@@ -11,7 +11,7 @@ import { everySurface } from '@nib/themes/write'
  *  and each of them used to carry `id="write"`, because that is the id every theme
  *  is written against. Every page wears the class now, the page in the focused pane
  *  wears the id as well, and the rules reach all of them as `:is(#write, .nib-write)`.
- *  See write.ts in @nib/themes. */
+ *  See write.ts in @orden/themes. */
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const EDITOR = fileURLToPath(new URL('../../../packages/editor/src/', import.meta.url))
@@ -49,7 +49,7 @@ describe('every page a note is on', () => {
 
   test('and the app’s build reads its stylesheets that way', () => {
     const config = readFileSync(CONFIG, 'utf8')
-    expect(config).toContain("from '@nib/themes/write'")
+    expect(config).toContain("from '@orden/themes/write'")
     expect(config).toContain('postcss: { plugins: [everyPage] }')
   })
 

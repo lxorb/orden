@@ -11,7 +11,7 @@ const disk = new Map<string, string>()
 /** Every import written, space by space. */
 const written: { root: string; files: Planned[] }[] = []
 
-/** The spaces nib has, and what was done to each. */
+/** The spaces Orden has, and what was done to each. */
 const spaces: { id: string; name: string; root: string }[] = []
 const done: string[] = []
 const marks: { kind: string; path: string; text: string }[] = []

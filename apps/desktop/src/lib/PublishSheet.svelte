@@ -277,7 +277,7 @@
         </div>
       {/if}
 
-      <!-- What this will do, before it is done. A nib site is live - the page is
+      <!-- What this will do, before it is done. An Orden site is live - the page is
            the note - so the only thing a publish changes is which pages exist,
            and that is what this says. -->
       {#if changes}

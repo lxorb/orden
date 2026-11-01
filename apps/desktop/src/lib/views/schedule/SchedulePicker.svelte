@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Todoist's scheduler, nib's shapes: a field that reads a typed date with quick add's
+  /** Todoist's scheduler, Orden's shapes: a field that reads a typed date with quick add's
    *  grammar and says what it understood; Today, Tomorrow, Later this week, This weekend,
    *  Next week and No date, each with its day; a month with today ringed, the day picked
    *  filled and a dot under every day that already holds tasks; and the time, the
@@ -8,8 +8,8 @@
    *  A day, a typed phrase and a repeat are picks that close it. The time and the
    *  duration are kept as they are changed, as every other setting in the app is, and
    *  it stays up for the next. Arrows walk the rows, Enter takes one, Escape closes. */
-  import { addDays, addMonths } from '@nib/bases'
-  import { dayWords, timeWords } from '@nib/editor/task-days'
+  import { addDays, addMonths } from '@orden/bases'
+  import { dayWords, timeWords } from '@orden/editor/task-days'
   import ArrowRight from 'lucide/dist/esm/icons/arrow-right.mjs'
   import Briefcase from 'lucide/dist/esm/icons/briefcase.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'

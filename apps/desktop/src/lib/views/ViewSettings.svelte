@@ -3,7 +3,7 @@
    *  layout, how it is grouped, which rows it is of, a board's card size and columns,
    *  which properties it shows (on a board, on its cards, in that order), and the rest
    *  of what can be done to a view, which `more` names. */
-  import type { CardSize, RowKinds } from '@nib/bases'
+  import type { CardSize, RowKinds } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import type { MenuEntry } from '../menu.svelte'
   import { segmented } from '../slide'

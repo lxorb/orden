@@ -34,7 +34,7 @@ async function markdown(args: Said): Promise<string> {
   const url = said(args, 'url') ?? ''
   const [read, { htmlToMarkdown }] = await Promise.all([
     articleOf({ url, title: '', html }),
-    import('@nib/markdown/from-html'),
+    import('@orden/markdown/from-html'),
   ])
   return read.html.trim() ? htmlToMarkdown(read.html).trim() : ''
 }

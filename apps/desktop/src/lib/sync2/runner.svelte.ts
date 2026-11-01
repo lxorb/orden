@@ -710,7 +710,7 @@ class Runner {
   }
 
   /** What the account holds for a note on this disk: its id, its version, and the digest
-   *  of what nib last wrote. */
+   *  of what Orden last wrote. */
   tracked(path: string): { id: string; version: number; hash: string } | null {
     const engine = this.engine
     const entry = engine?.entryAt(path)
@@ -726,7 +726,7 @@ class Runner {
    *  left to it; see `holds` in sync.svelte.ts.
    *
    *  An entry with a number has been handed over once, and that is all it says. A note
-   *  with words not acknowledged, or whose file another program wrote since nib did, is
+   *  with words not acknowledged, or whose file another program wrote since Orden did, is
    *  ahead of the account. A file another program changed (`touched`), one whose bytes
    *  the account names differently from the ones last on this disk, and one held in a
    *  conflict - whose bytes here were never sent (`holdFile` in files.ts) - are too. Each

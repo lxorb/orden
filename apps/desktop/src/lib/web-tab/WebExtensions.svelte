@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Every extension, in the bubble under the puzzle: Chrome's extensions menu, in nib's
+  /** Every extension, in the bubble under the puzzle: Chrome's extensions menu, in Orden's
    *  shapes.
    *
    *  A row is an extension's picture and name; pressing it opens its popup, or its options

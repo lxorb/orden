@@ -7,7 +7,7 @@
  *  put up. The rows are read and written through the app's own task actions
  *  (task-actions.ts), handed in, so the whole of this is a test. */
 
-import { shownWords } from '@nib/markdown/escapes'
+import { shownWords } from '@orden/markdown/escapes'
 import type { Row } from './shell'
 
 /** One task as the list holds it. */

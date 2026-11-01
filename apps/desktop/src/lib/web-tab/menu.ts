@@ -1,21 +1,21 @@
-/** The rows behind the dots on a web tab's bar: Chrome's menu, with what nib has.
+/** The rows behind the dots on a web tab's bar: Chrome's menu, with what Orden has.
  *
  *  Emil, 2026-09-13: *"Our browser related menu structure should be very similar to
  *  that of chrome. And in general we don't want to reinvent how a browser works."* So
  *  these are Chrome's rows, in Chrome's order, in Chrome's words, bent onto the thing
- *  nib already has wherever the two differ:
+ *  Orden already has wherever the two differ:
  *
  *  | Chrome | here |
  *  | --- | --- |
  *  | New tab | a web tab with nowhere to go yet, which is what the address field is for |
  *  | New Incognito window | a private tab: Chrome's window of its own is a tab here |
- *  | History | nib's History page, in a tab of its own, as Chrome's is |
+ *  | History | Orden's History page, in a tab of its own, as Chrome's is |
  *  | Bookmarks | the space's own web notes, which is what a bookmark is here |
  *  | Delete browsing data | Chrome's dialog, over the engine's own call |
  *  | Zoom | the engine's own zoom, on Chrome's own ladder of steps |
- *  | Find | nib's find bar, over the engine's own find |
+ *  | Find | Orden's find bar, over the engine's own find |
  *  | Save page | Save as a note: the clipper, the page written into the space as a note |
- *  | Share | nib's share sheet |
+ *  | Share | Orden's share sheet |
  *  | Settings | the app's settings |
  *
  *  **What is not here is what the page's own menu already has.** Back, forward, reload,
@@ -108,7 +108,7 @@ export interface WebActions {
  *  because the middle of the three zoom rows says so. */
 export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntry[] {
   const url = page.url
-  // nib's own pages are no site: nothing to zoom, print, save or share.
+  // Orden's own pages are no site: nothing to zoom, print, save or share.
   const has = url !== null && isWebAddress(url)
 
   return [

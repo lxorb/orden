@@ -1,5 +1,5 @@
 """Does a web note keep you logged in when you close it and open it again - and when
-you quit nib and start it again?
+you quit Orden and start it again?
 
 Emil, 2026-09-13: *"When I close and then reopen a web note, all state is lost. For
 example, when I log in, then I would be logged out. That should not be the case."*
@@ -7,7 +7,7 @@ And 2026-09-27: *"on moodle-app2.let.ethz.ch every time i reopen nib I have to
 reloggin."*
 
 A web note is a browser tab, and a browser that continues where it left off keeps you
-logged in across both. This drive proves that nib does. It signs in to a page served
+logged in across both. This drive proves that Orden does. It signs in to a page served
 on the loopback (a session cookie, a persistent cookie, a localStorage token, and a
 widget framed from another site that signs in with a partitioned cookie - the shapes a
 login takes), closes the note so the webview is torn down, opens it again, and asks the
@@ -16,7 +16,7 @@ closed - starts it over and asks once more.
 
     session cookie   - no expiry of its own. Survives close + reopen because the one
                        shared WebView2 environment is held open; survives a restart
-                       because nib gives it an expiry in the engine's own cookie store
+                       because Orden gives it an expiry in the engine's own cookie store
                        (src-tauri/src/web_cookies.rs)
     persistent cookie- written to the `web` folder on disk; survives everything
     localStorage     - written to disk; survives everything
@@ -24,7 +24,7 @@ closed - starts it over and asks once more.
     cookie             (CHIPS), inside the app page's partition. Kept across a restart
                        like the other session cookie, and still in that partition: the
                        widget's own site, opened on its own, never sees it. The COM
-                       cookie manager nib first kept logins through wrote a copy of it
+                       cookie manager Orden first kept logins through wrote a copy of it
                        without the partition, which the widget's site could read under
                        every site; the drive plants such a copy and proves the next
                        page load takes it away (src-tauri/src/web_cookies/twins.rs)
@@ -33,7 +33,7 @@ The widget is `localhost` framed in `127.0.0.1`: the same server, two sites.
 
 And the rest of what a site keeps, which a browser that continues where it left off keeps
 too (Emil, 2026-09-14): an `IndexedDB` record and a service worker the sign-in leaves, a
-permission the reader granted in nib's bubble, and the size the reader zoomed the site to.
+permission the reader granted in Orden's bubble, and the size the reader zoomed the site to.
 All four are read back after the restart: the first three by the page itself, the zoom
 as the page's own `devicePixelRatio` and as the tab's.
 
@@ -227,7 +227,7 @@ LOGIN = """<!doctype html>
 # A service worker, which only has to exist to be kept.
 WORKER = "self.addEventListener('fetch', function () {})\n"
 
-# A page that asks for notifications, which nib's bubble answers.
+# A page that asks for notifications, which Orden's bubble answers.
 ASK = """<!doctype html>
 <title>Asking</title>
 <body><p>Asking</p></body>
@@ -615,7 +615,7 @@ def main() -> int:
         ok = ok and logged_in(said["signed in"])
         base = float(said["signed in"].get("dpr", "1") or "1")
 
-        # The site asks for notifications, and the reader allows it in nib's bubble.
+        # The site asks for notifications, and the reader allows it in Orden's bubble.
         navigate(tab, f"http://127.0.0.1:{port}/ask")
         bubble = ".ask .nib-button:not(.is-quiet)"
         until = time.perf_counter() + 15
@@ -626,7 +626,7 @@ def main() -> int:
         time.sleep(1)
 
         # And zooms the site a step, with the key the bar reads while the app has the
-        # keyboard; nib keeps the size by site (web-tab/sites.ts).
+        # keyboard; Orden keeps the size by site (web-tab/sites.ts).
         navigate(tab, f"http://127.0.0.1:{port}/app")
         time.sleep(3)
         app.ask(
@@ -708,7 +708,7 @@ def main() -> int:
         # And the app quit the way a person quits it - the window closed - and started
         # over. All three come back, the session cookie too: a browser that continues
         # where it left off keeps a session-only login across a restart, and so does
-        # nib. See `RESTORE` in src-tauri/src/engine.rs.
+        # Orden. See `RESTORE` in src-tauri/src/engine.rs.
         quit(running)
         time.sleep(2)
         running, app = launch(args.exe, args.identifier, unlike=app.port)
@@ -722,7 +722,7 @@ def main() -> int:
         said["still logged in on relaunch"] = logged_in(relaunched)
         ok = ok and logged_in(relaunched)
         # IndexedDB, the service worker, the permission and the size, after the restart.
-        # The size is the site's in nib and given to the page once it has loaded, as every
+        # The size is the site's in Orden and given to the page once it has loaded, as every
         # page of a zoomed site is (WebTab.svelte), so the page is read once more after it.
         navigate(tab, f"http://127.0.0.1:{port}/app")
         time.sleep(3)

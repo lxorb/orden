@@ -4,6 +4,7 @@ import { INK_TOOLS } from './format'
 import { bounds, type Point } from './geometry'
 import type { PenTraits } from './contacts'
 import {
+  cardsInLasso,
   assisted,
   erased,
   forceOf,
@@ -1022,5 +1023,32 @@ describe('a stroke reported coarsely', () => {
   test('is what the outline is worked out from, so a coarse stroke paints as a curve', () => {
     const coarse = stroke([point(0, 0), point(60, 0), point(120, 40), point(120, 100)])
     expect(outlineOf(coarse).length).toBeGreaterThan(8)
+  })
+})
+
+/** #349: a loop drawn by a held finger picks cards as well as ink. */
+describe('the cards a loop goes round', () => {
+  const loop = [
+    { x: 0, y: 0 },
+    { x: 300, y: 0 },
+    { x: 300, y: 200 },
+    { x: 0, y: 200 },
+  ]
+  const card = (id: string, x: number, y: number) => ({ id, x, y, width: 100, height: 50 })
+
+  test('are the ones whole inside it', () => {
+    expect(
+      cardsInLasso([card('in', 10, 10), card('half', 220, 10), card('out', 400, 10)], loop),
+    ).toEqual(['in'])
+  })
+
+  test('and with partly, those whose middle is inside it', () => {
+    expect(
+      cardsInLasso([card('in', 10, 10), card('half', 220, 10), card('out', 400, 10)], loop, true),
+    ).toEqual(['in', 'half'])
+  })
+
+  test('and none for a loop of fewer than three points', () => {
+    expect(cardsInLasso([card('in', 10, 10)], loop.slice(0, 2))).toEqual([])
   })
 })

@@ -1,5 +1,5 @@
 {
-  "name": "@nib/online",
+  "name": "@orden/online",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -16,7 +16,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nib/sync-core": "workspace:*"
+    "@orden/sync-core": "workspace:*"
   },
   "devDependencies": {
     "fast-check": "^4.10.2",

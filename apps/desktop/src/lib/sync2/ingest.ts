@@ -1,11 +1,11 @@
 /** Files changed by something other than nib: another editor, a `git checkout`, a sync
  *  tool of somebody else's (docs/sync-v2.md section 5.5).
  *
- *  Every write nib makes is recorded (project.ts), so a file whose words are not nib's
+ *  Every write Orden makes is recorded (project.ts), so a file whose words are not Orden's
  *  last write was changed by something else. Its new text is folded in three ways:
- *  against the words nib last wrote, with the document as it reads now (which may have
+ *  against the words Orden last wrote, with the document as it reads now (which may have
  *  moved on since, from the account) as the other side. The usual case is that the
- *  document has not moved - nib was closed, or nobody else wrote - and then the change
+ *  document has not moved - Orden was closed, or nobody else wrote - and then the change
  *  is simply this device's own edit, as the few operations the texts differ by. When
  *  both moved, `diverge` decides exactly as it does for two devices: settled quietly,
  *  or the note held for the modal.
@@ -24,7 +24,7 @@ import { keepLosers } from './rejoin'
 import type { SpaceState } from './places'
 import { get, type Change, type EntryRow } from './store'
 
-/** The words nib last wrote to an entry's file. */
+/** The words Orden last wrote to an entry's file. */
 export async function writtenOf(core: Core, id: string): Promise<string | null> {
   const [row] = await core.store.read([get('written', id)])
   return row?.text ?? null
@@ -49,7 +49,7 @@ async function unsynced(core: Core, entry: EntryRow, full: string, read: string)
 }
 
 /** Folds another program's change to an entry's file into its document. Answers the
- *  changes to write; nothing when the file says what nib wrote. */
+ *  changes to write; nothing when the file says what Orden wrote. */
 export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Promise<Change[]> {
   if (!entry.local_path || core.isHeld(entry.id)) return []
   const full = core.world.join(space.row.root, entry.local_path)

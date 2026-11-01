@@ -12,7 +12,7 @@
  *  in any other reader of the sidecar. An open viewer reads the sheet again at once;
  *  see pdf/sheets.svelte.ts. */
 
-import { isPdfTarget } from '@nib/markdown/links'
+import { isPdfTarget } from '@orden/markdown/links'
 import type { AgentAnswer } from '../../automation/caller'
 import { COLOURS, type Highlight, type Quad } from '../../pdf/highlights'
 import { marksWritten } from '../../pdf/sheets.svelte'

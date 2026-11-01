@@ -177,7 +177,10 @@ function drawing(token: Tokens.Generic, display: boolean): string {
 }
 
 /** `$inline$`, and a `$$` block written either way. Where the block begins and
- *  ends is blocks.ts, which slides.ts reads without any of this. */
+ *  ends is blocks.ts, which slides.ts reads without any of this.
+ *
+ *  A closing `$` straight before a digit closes nothing, which is Pandoc's rule: `$5-$10`
+ *  is two prices, and was drawn as the formula `5-` with the `10` after it (#498). */
 export const maths: MarkedExtension = remembering({
   extensions: [
     {
@@ -189,7 +192,7 @@ export const maths: MarkedExtension = remembering({
       level: 'inline',
       start: (src: string) => src.indexOf('$'),
       tokenizer(src: string) {
-        const match = /^\$(?!\s)((?:\\.|[^$\\])+?)(?<!\s)\$/.exec(src)
+        const match = /^\$(?!\s)((?:\\.|[^$\\])+?)(?<!\s)\$(?!\d)/.exec(src)
         if (!match) return undefined
         return { type: 'inlineMath', raw: match[0], text: match[1] }
       },
@@ -235,7 +238,7 @@ function afterMarker(tokens: Token[], cut: number): Token[] {
  *  Which types there are, what each is called and which icon it wears is
  *  callouts.ts - the one place that knows. Here is only what the markup looks
  *  like: the type as written on `data-callout`, so a theme can reach any of
- *  them including one nib has never heard of, and the look nib does know as a
+ *  them including one Orden has never heard of, and the look Orden does know as a
  *  class, so a stylesheet needs the fifteen names rather than the thirty.
  *
  *  A fold sign in the note makes it a `<details>`, open unless the sign was the

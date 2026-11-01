@@ -209,6 +209,67 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #788: a download stopped in a web tab stops, and the next of its name is its own.
+      - name: A download stopped on its way, and the same name again, under sway
+        if: always()
+        env:
+          OUT: wayland-out/download
+          DOWNLOAD: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #789: the extensions web tabs run are seen and managed on Linux too.
+      - name: A web tab's extensions in the bar and in Settings, under sway
+        if: always()
+        env:
+          OUT: wayland-out/extensions
+          EXTENSIONS: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #787: a private tab's answer to a site is kept for its private session only.
+      - name: A private tab's permission answer kept from normal tabs, under sway
+        if: always()
+        env:
+          OUT: wayland-out/grants
+          GRANTS: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #477: a name Windows keeps for a device is given to no note or folder, on Linux too.
+      - name: A device's name refused for a note and a folder, under sway
+        if: always()
+        env:
+          OUT: wayland-out/reserved
+          RESERVED: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #676: a page note made from a PDF wears the PDF's mark.
+      - name: A page note made from a PDF wears the PDF's mark, under sway
+        if: always()
+        env:
+          OUT: wayland-out/pdf-mark
+          PDFMARK: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #481: changes other programs make are noticed though a folder cannot be watched,
+      # and the reader is told when the limit of watched folders is reached.
+      - name: A space watched past a folder nobody may read and past the limit, under sway
+        if: always()
+        env:
+          OUT: wayland-out/watch
+          WATCH: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #427: a web tab's page drawn in the app's scheme, light or dark, as the app's
       # scheme is switched, not in the system's.
       - name: A web tab's page in the app's scheme, under sway
@@ -216,6 +277,17 @@ jobs:
         env:
           OUT: wayland-out/scheme
           SCHEME: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #961: a setting and a draft from a tenth of a second before the app was killed are there
+      # when it is started again.
+      - name: What the app took in survives a kill, under sway
+        if: always()
+        env:
+          OUT: wayland-out/kill
+          KILL: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"

@@ -186,7 +186,7 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./rows/rows.svelte'))
 
   // And the reminders, which plan over those rows and hand the plan to whatever rings
-  // with nib closed; never the glasses' plugin. See reminders/start.svelte.ts.
+  // with Orden closed; never the glasses' plugin. See reminders/start.svelte.ts.
   if (!__EVEN_PLUGIN__) {
     void startup.turn('right').then(() => import('./reminders/start.svelte'))
   }
@@ -297,7 +297,7 @@ let going = false
 async function onClose(event: Closing, window: Closable) {
   settle()
 
-  // An agent's pages live in this window, or the reminders keep nib in the tray: it
+  // An agent's pages live in this window, or the reminders keep Orden in the tray: it
   // hides instead, and the tray has Quit (docs/agent-native.md, open question 6, and
   // docs/tasks.md decision 6).
   const hide = agentMarks.holding ? agentMarks.hide : trayKeeper()

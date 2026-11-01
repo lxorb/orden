@@ -1643,6 +1643,18 @@ export const it: Dictionary = {
   'answered by {model}, {date}': 'risposto da {model}, {date}',
   'AI block': 'Blocco IA',
   'Do with AI': 'Fai con l’IA',
+  'Use the browser': 'Usa il browser',
+  'Lets a task done with AI open web pages and act on them.':
+    'Permette a un’attività fatta con l’IA di aprire pagine web e agire su di esse.',
+  'Look through notes': 'Cerca nelle note',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Permette a un’attività fatta con l’IA di cercare e leggere le tue altre note, oltre alla sua.',
+  'Change other notes': 'Modifica altre note',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Permette a un’attività fatta con l’IA di scrivere, spostare ed eliminare note diverse dall’attività.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Cosa viene chiesto a un’attività fatta con l’IA. Spunta comunque l’attività quando è fatta, o chiede in un commento.',
+  'Started in the AI panel': 'Avviato nel pannello IA',
   'Highlight colour': 'Colore dell’evidenziazione',
   'A single newline breaks the line': 'Un solo ritorno a capo interrompe la riga',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2712,6 +2724,9 @@ export const it: Dictionary = {
     'Qui le pagine web cercano gli indirizzi come fa il sistema; il suo DNS si imposta nelle impostazioni del sistema.',
   'Set by the settings file': 'Impostato dal file delle impostazioni',
   'The settings file has a problem': 'Il file delle impostazioni ha un problema',
+  'Some changes may not be noticed': 'Alcune modifiche potrebbero sfuggire',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Il sistema ha raggiunto il limite di cartelle osservate, quindi Orden potrebbe non accorgersi di ogni modifica che altri programmi fanno nei tuoi spazi. Aumentare fs.inotify.max_user_watches risolve.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Spostare la chat {name} in {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

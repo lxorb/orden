@@ -26,7 +26,7 @@
 
 - [ ] Migration: `alter table notes add column deleted_at integer; alter table spaces add column deleted_at integer;`
 - [ ] Tests (harness from `test/harness.ts`): after `DELETE /v1/notes/:id` the R2 object still exists and the row has `deleted = 1`, `deleted_at` set, `size`/`hash` unchanged; after `DELETE /v1/spaces/:id` its notes and objects still exist and the space has `deleted_at`.
-- [ ] Implement; run `pnpm --filter @nib/sync test`; commit `feat: deleted notes and spaces are kept`.
+- [ ] Implement; run `pnpm --filter @orden/sync test`; commit `feat: deleted notes and spaces are kept`.
 
 ### Task 2: Listing and restoring
 
@@ -70,4 +70,4 @@
 **Files:** Modify `src/lib/workspace.svelte.ts` (`selection: string[]`, `anchor`, `select(path, { toggle, range, order })`, `selectAll(order)`, `clearSelection()`, `isSelected(path)`, `dragPayload(path): string[]`), `src/lib/Tree.svelte` (click modifiers, `.selected`, drag payload `text/nib-paths`, keyboard on the tree container: Ctrl+A, Escape, Delete/Backspace), `src/lib/Sidebar.svelte` and `src/lib/Rail.svelte` (drop handlers accept `text/nib-paths`), menu bulk entries; Test `src/lib/workspace.test.ts` (selection describe block).
 
 - [ ] Tests: toggle adds and removes; range follows the given order from the anchor; select all; plain select replaces; space change clears; `dragPayload` returns the selection when the row is in it, the row alone otherwise.
-- [ ] Implement; `pnpm --filter @nib/desktop test` and `check`; browser check on an isolated origin; commit `feat: select several notes with ctrl and shift`.
+- [ ] Implement; `pnpm --filter @orden/desktop test` and `check`; browser check on an isolated origin; commit `feat: select several notes with ctrl and shift`.

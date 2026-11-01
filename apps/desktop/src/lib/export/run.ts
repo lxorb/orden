@@ -8,9 +8,9 @@
  *  and it is loaded when an export is actually run rather than at startup - the
  *  Word writer and the zip are a good deal larger than the list of names. */
 
-import { loadFor } from '@nib/markdown/engines'
-import { numbered } from '@nib/markdown/paths'
-import type { FoundLink } from '@nib/markdown/links'
+import { loadFor } from '@orden/markdown/engines'
+import { numbered } from '@orden/markdown/paths'
+import type { FoundLink } from '@orden/markdown/links'
 import {
   buildBody,
   buildStyles,
@@ -302,7 +302,7 @@ export async function runExport(
   // has left the app must have its formulas set in it rather than their source.
   // Once, here, because every format below renders or lexes the note somewhere
   // inside it and none of those places has an await to spare. See
-  // @nib/markdown/engines.
+  // @orden/markdown/engines.
   await loadFor(note.source)
 
   if (id === 'pdf') return exportPdf(note, options)

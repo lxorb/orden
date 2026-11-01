@@ -1,4 +1,4 @@
-//! The `DevTools` Protocol on one page of nib's own Chromium: calls, and what the page
+//! The `DevTools` Protocol on one page of Orden's own Chromium: calls, and what the page
 //! says back.
 //!
 //! The same protocol `WebView2` speaks through its COM interfaces (see

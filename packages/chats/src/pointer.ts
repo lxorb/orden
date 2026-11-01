@@ -4,10 +4,10 @@
  *  hand, so it is read strictly, as a `.term` is: anything but a known version and an
  *  id of the account's shape is not a chat, and the tab says the file is damaged rather
  *  than opening a chat nobody made. Extra fields are dropped, so a later version may add
- *  one an older nib ignores; a version it does not know is refused.
+ *  one an older Orden ignores; a version it does not know is refused.
  *
  *  The one exception to "written once" is what the chat wears: choosing an icon writes
- *  the pointer again with `icon` and `iconColor` after the id (docs/icons.md). A nib
+ *  the pointer again with `icon` and `iconColor` after the id (docs/icons.md). An Orden
  *  from before them drops both and reads the same chat. */
 
 import type { Pointer } from './types'

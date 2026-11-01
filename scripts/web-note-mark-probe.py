@@ -8,7 +8,7 @@ the last one after it closes (see `faviconFor` in apps/desktop/src/lib/chosen-ic
 This serves a page of its own, opens its web note in a tab, and swaps the page's mark
 twice the way a chat site does - a badge on, the badge off - through the page's own
 debugging port, which presses nothing. After each, the tab's picture and the row's are
-read off nib's own page and compared; then the tab is closed and the row read again.
+read off Orden's own page and compared; then the tab is closed and the row read again.
 
     python scripts/web-note-mark-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
 
@@ -121,7 +121,7 @@ SHOWN = """JSON.stringify((() => {
 
 
 def pictures_of(app, tab: str) -> tuple[str | None, str | None]:
-    """The row's picture and the tab's, off nib's own page."""
+    """The row's picture and the tab's, off Orden's own page."""
 
     said = app.ask(SHOWN % (json.dumps(f"{NOTE}.url"), json.dumps(tab)))
     return (said.get("row"), said.get("tab")) if isinstance(said, dict) else (None, None)

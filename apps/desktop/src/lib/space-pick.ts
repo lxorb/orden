@@ -14,7 +14,7 @@
  *
  *  Pure; space-typing.svelte.ts holds the typing and the wait. */
 
-import { foldName } from '@nib/markdown/links'
+import { foldName } from '@orden/markdown/links'
 import { fuzzyFolded } from './palette/match'
 
 /** How long a number that a second digit could still make longer waits for it. */

@@ -58,7 +58,7 @@ function originOf(url: string): string | null {
 /** Every site the history in `books` says was visited since `since`, as its origin;
  *  nought is all time.
  *
- *  For nib's own Chromium on Linux, which has no call that clears a time range: there the
+ *  For Orden's own Chromium on Linux, which has no call that clears a time range: there the
  *  crate clears what each of these sites stored, cookies and all, and a site the window
  *  does not name keeps its data (#418). The other engines clear by the range and pass
  *  over the list. See src-tauri/src/web_clear.rs. */

@@ -29,8 +29,8 @@ every push to `main`; see "CI" below.
 | `packages/bases` | Rows, views and the Bases expression language: a note or a task line as a row, Obsidian's `.base` file read and written, filters, formulas, groups and summaries, recurrence, and Todoist's filter language. Pure, no DOM; see `docs/tasks.md`. The task line itself is `packages/markdown`'s (`task-line.ts`, `task-edits.ts`). |
 | `packages/themes` | Design tokens and the stylesheets, shared by the editor, the app and published pages. |
 | `packages/glasses` | A note as pages of pixels for the Even Realities G2. Pure but for the rasteriser; see `docs/even.md`. |
-| `packages/chats` | The chats' shared half, `@nib/chats` (`docs/chats.md`): the types the app, the Worker's `ChatLog` and the connector meet at (`types.ts`), the one reducer every end applies a chat's events with (`reduce.ts`), who may do what (`roles.ts`), the search language (`search.ts`), mentions, ids, a `.chat` pointer's text, message links, the limits, and every frame and HTTP shape with its check (`wire.ts`). Pure, no DOM, no dependencies. |
-| `packages/online` | The online terminal's shared half, `@nib/online` (`docs/online-terminal.md`): the types the app, the Worker's `Machine` and the machine's `nibd` meet at (`types.ts`), every frame of both sockets with its check (`wire.ts`), a `.term` file's text (`term.ts`), and the rules all three decide by: `awake` (whether a machine stays awake), `sizeOf` (whose size the pty takes), `mayType` (who types), and a month's usage and its price (`usage.ts`). Pure, no DOM; a shape any two of them share is spelled here and nowhere else. |
+| `packages/chats` | The chats' shared half, `@orden/chats` (`docs/chats.md`): the types the app, the Worker's `ChatLog` and the connector meet at (`types.ts`), the one reducer every end applies a chat's events with (`reduce.ts`), who may do what (`roles.ts`), the search language (`search.ts`), mentions, ids, a `.chat` pointer's text, message links, the limits, and every frame and HTTP shape with its check (`wire.ts`). Pure, no DOM, no dependencies. |
+| `packages/online` | The online terminal's shared half, `@orden/online` (`docs/online-terminal.md`): the types the app, the Worker's `Machine` and the machine's `nibd` meet at (`types.ts`), every frame of both sockets with its check (`wire.ts`), a `.term` file's text (`term.ts`), and the rules all three decide by: `awake` (whether a machine stays awake), `sizeOf` (whose size the pty takes), `mayType` (who types), and a month's usage and its price (`usage.ts`). Pure, no DOM; a shape any two of them share is spelled here and nowhere else. |
 | `apps/desktop` | The Svelte 5 app (stores in `src/lib/*.svelte.ts`, components in `src/lib/*.svelte`), the browser shim in `src/lib/web`, and the Tauri crate in `src-tauri`. |
 | `apps/cli` | `orden` (and `nib`, its old name), which drives the running app over its local endpoint. One Node script, no dependencies, and no knowledge of what any verb does; see `docs/automation.md`. |
 | `services/sync` | The Cloudflare Worker: sync, publishing, MCP, accounts, and the theme store's catalogue. Tests run routes against real SQL. A published page is the note; see `docs/publishing.md`. |
@@ -187,9 +187,9 @@ quietly: a change that touches one says so where it is made.
   stream) or an 8.3 alias (`TRASH~1`) is let in nowhere, since its letters do not
   say what it names (#485, #486).
 
-**nib opens nothing from outside its spaces.** No bundle declares a file type,
+**Orden opens nothing from outside its spaces.** No bundle declares a file type,
 no command line, second launch or Finder hand-off is read as a note (only a web
-page, once nib is the browser; see `launch.rs`), there is no Open file, and a
+page, once Orden is the browser; see `launch.rs`), there is no Open file, and a
 file dropped where nothing takes it is not opened in place of the app
 (`apps/desktop/src/lib/drops.ts`). A file from elsewhere comes in as a copy:
 Import, a drop onto the file list or into a note, a share on the phone.
@@ -245,7 +245,7 @@ points. What stands in front of all four, and so what a new caller has to keep:
   `web/paths.ts` clamps at the virtual root.
 - **The phone**, whose spaces folder is inside the app's own external files
   directory and whose manifest asks for no storage permission. A share hands
-  over bytes and a name, never a path, and nib is no file manager's "Open
+  over bytes and a name, never a path, and Orden is no file manager's "Open
   with": the manifest's one VIEW filter is the `nib://` link. The widget's
   `open` intent extra is an absolute path, judged against the spaces by
   `openable` in `apps/desktop/src/lib/mobile/handed.ts` and by `openable` in
@@ -415,7 +415,7 @@ What that one import gives it, so that no drive writes any of it again:
 - **A native probe**, `harness.Native(DRIVE, exe)`: through `scripts/probe_app.py`'s
   `run_probe`, off every screen, with `NIB_SPACES_DIR` in a temp folder. Never the
   reader's own nib: the installed exe, a build under the release identifier
-  `ch.emilvinu.nib` (whose launch the running nib would take) or one whose identifier
+  `ch.emilvinu.nib` (whose launch the running Orden would take) or one whose identifier
   nobody said is refused before it starts, and run-all.py skips a native drive
   pointed at one (`NIB_PROBE_EXE`, `NIB_PROBE_IDENTIFIER`). Nothing is ended by its
   name, only by the number of a process the harness started.
@@ -532,7 +532,7 @@ cannot be, by construction:
   that could have taken the foreground, and not one of the four probes could.
 - **Held back from its first line**, under `NIB_OFF_SCREEN`
   (`apps/desktop/src-tauri/src/foreground.rs`): the process locks the foreground where
-  it could have taken it, every activation on the app's thread is refused - nib's own
+  it could have taken it, every activation on the app's thread is refused - Orden's own
   Chromium's included, whose windows are that thread's - and every top-level window is
   `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW` with no taskbar button from the moment it
   is made, whatever tao or winit write over it later.
@@ -580,7 +580,7 @@ window had a taskbar button and could be activated (`WS_EX_APPWINDOW`); now it a
 other top-level window of the process, tao's and the single-instance plugin's included,
 are `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW`.
 
-Measured 2026-10-03, on nib's own Chromium while there was one, started with
+Measured 2026-10-03, on Orden's own Chromium while there was one, started with
 `--load-extension` of a folder with no manifest, every window of the family looked at every
 twenty milliseconds: before the hook, the load error's box was on the primary screen 254 ms
 and one second into two launches; with the hook, five launches of five raised it, and in
@@ -646,15 +646,15 @@ WARN  stall: the page was blocked 1840 ms; ran TimerHandler:setTimeout - link-in
 WARN  stall: nib was not responding for 41.0 s when it was ended (web_open: building the page), since 2026-10-04T08:15:02.481Z
 ```
 
-So when nib freezes, the thing to do is wait ten seconds and say so: the log has the
+So when Orden freezes, the thing to do is wait ten seconds and say so: the log has the
 rest. See `apps/desktop/src-tauri/src/stall.rs` and `apps/desktop/src/lib/stalls.ts`.
 
-A second launch while the first nib is frozen no longer waits on it for ever. The single
+A second launch while the first Orden is frozen no longer waits on it for ever. The single
 instance plugin hands a launch over with a `SendMessage` that waits as long as the
 frozen window does, so every click after a freeze used to be another invisible process
 stuck behind it. The hand-over is now made first with a timeout of two seconds; past
-that the launch asks, once, whether to end the nib that is not responding - found
-through the plugin's own window, so it can only ever be nib under the same identifier -
+that the launch asks, once, whether to end the Orden that is not responding - found
+through the plugin's own window, so it can only ever be Orden under the same identifier -
 and comes up in its place, or leaves it and goes. The question closes itself and the
 launch is handed over if the frozen one answers meanwhile. See
 `apps/desktop/src-tauri/src/handover.rs` and `scripts/not-responding-probe.py`.
@@ -954,7 +954,7 @@ short of a row, carries one nothing asks for, has the wrong count forms for its
 language, loses a placeholder, or holds an em dash. Run it alone with
 
 ```sh
-pnpm --filter @nib/desktop exec vitest run src/lib/i18n.test.ts
+pnpm --filter @orden/desktop exec vitest run src/lib/i18n.test.ts
 ```
 
 Rules the tests enforce:
@@ -1020,9 +1020,9 @@ Two things to keep in mind while writing a string:
    which way each mark points, and that the note did not follow the interface, so
    add the id to `RIGHT_TO_LEFT` there as well as in `direction.ts`.
 
-Keep one word per term. nib's own vocabulary, and what to follow:
+Keep one word per term. Orden's own vocabulary, and what to follow:
 
-| nib's word | What it is | Precedent |
+| Orden's word | What it is | Precedent |
 | --- | --- | --- |
 | space | a folder of notes that syncs and is shared as a unit | Obsidian's *vault*, Notion's *workspace*. de `Bereich`, fr `Espace`, ja `スペース` |
 | note | one markdown document | Obsidian's *note*, Notion's *page*. de `Notiz`, fr `Note`, ja `ノート` |

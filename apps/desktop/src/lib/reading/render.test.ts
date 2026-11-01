@@ -227,7 +227,7 @@ describe('the HTML in a note', () => {
   })
 
   /** An embed is another note pulled into this one, and it is rendered with the
-   *  outer note's options; see `inside` in @nib/markdown. */
+   *  outer note's options; see `inside` in @orden/markdown. */
   test('is escaped inside an embedded note as well', async () => {
     bodies['Plan.md'] = '# Plan\n\n<script>alert(1)</script>\n'
     const html = await readingHtml(note('![[Plan]]\n'), 'light', false)

@@ -6,7 +6,7 @@
  *  workspace's (`openView`); which view a tab is, and so whether one is open already,
  *  is the spec's (spec.ts). */
 
-import { writeBase } from '@nib/bases'
+import { writeBase } from '@orden/bases'
 import type { OpenHow } from '../new-tab'
 import { nameOf, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -38,7 +38,7 @@ function openSpec(spec: ViewSpec, name: string, path: string | null = null, how:
   return workspace.openView(writeSpec(spec), name, path, how)
 }
 
-/** A view nib ships: Inbox, Today, Upcoming, Completed. */
+/** A view Orden ships: Inbox, Today, Upcoming, Completed. */
 export function openBuiltin(builtin: Builtin, how: OpenHow = {}) {
   return openSpec({ builtin }, builtinName(builtin), null, how)
 }

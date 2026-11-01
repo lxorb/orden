@@ -14,7 +14,7 @@ import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 // URL rather than importing the module keeps the worker out of the page.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import legacyWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import { fileBytes, sha256 } from '../bytes'
 import { PDF_TO_CSS } from './pages'
 
@@ -42,7 +42,7 @@ export function current(scope: object = globalThis): boolean {
 }
 
 /** The library, loaded once per window, or again after a load that failed; see
- *  door.ts in @nib/markdown. */
+ *  door.ts in @orden/markdown. */
 export const pdfjs: () => Promise<Library> = door(() =>
   (current()
     ? import('pdfjs-dist').then((library) => ({ library, worker: workerUrl }))

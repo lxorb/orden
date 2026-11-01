@@ -6,10 +6,10 @@
 //! the web bar, the popup in a bubble, the options page as a tab and a list in Settings.
 //!
 //! **Who installs depends on the engine, and nothing else does.** `WebView2` installs
-//! nothing from a store - its API takes an unpacked folder - so on it nib installs: the
+//! nothing from a store - its API takes an unpacked folder - so on it Orden installs: the
 //! file fetched from the store's update service (fetch.rs), checked the way Chromium
 //! checks it (crx.rs), unpacked into `<config>/extensions` (library.rs), handed to every
-//! store's profile (webview2.rs), and updated the same way. nib's own Chromium installs
+//! store's profile (webview2.rs), and updated the same way. Orden's own Chromium installs
 //! from the store for itself and refuses a host the one door to install a folder, so there
 //! the store's own button installs and the list is the engine's (chromium.rs). Everything
 //! the reader sees is the same on both: the button and its icons in the web bar
@@ -17,7 +17,7 @@
 //! page as a tab, the rows in Settings.
 //!
 //! **Where they run.** Every store a reader's tab can be in: the shared one, a space's, a
-//! site's. Never nib's own interface, which is a separate data folder on `WebView2` and a
+//! site's. Never Orden's own interface, which is a separate data folder on `WebView2` and a
 //! separate profile on Chromium (engine.rs). And never an agent's own store, which is
 //! built with extensions off at the engine; see `in_store`.
 
@@ -28,7 +28,7 @@ use std::sync::{LazyLock, Mutex, PoisonError, RwLock};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter as _, Url};
 
-// What nib installs itself, which on nib's own Chromium the store does; see chromium.rs.
+// What Orden installs itself, which on Orden's own Chromium the store does; see chromium.rs.
 #[cfg(not(feature = "cef"))]
 mod crx;
 #[cfg(not(feature = "cef"))]
@@ -89,7 +89,7 @@ fn went_right(id: &str) {
         .retain(|(one, _)| one != id);
 }
 
-/// Whether this build's engine runs extensions at all: `WebView2` and nib's Chromium.
+/// Whether this build's engine runs extensions at all: `WebView2` and Orden's Chromium.
 /// A Mac's and Linux's own engines have no extension API.
 pub const SUPPORTED: bool = cfg!(any(feature = "cef", windows));
 
@@ -123,7 +123,7 @@ pub fn ours(url: &Url) -> bool {
         })
 }
 
-/// The list as written down: on `WebView2`, what nib installed; on nib's own Chromium,
+/// The list as written down: on `WebView2`, what Orden installed; on Orden's own Chromium,
 /// the pins the reader set, the list itself being the engine's (`listed`).
 pub fn kept(app: &AppHandle) -> Vec<Kept> {
     root(app)
@@ -241,7 +241,7 @@ pub async fn extensions_list(app: AppHandle) -> Result<Vec<Shown>, String> {
     .map_err(|error| error.to_string())
 }
 
-/// What an install came to: the extension, installed - or, on nib's own Chromium, the
+/// What an install came to: the extension, installed - or, on Orden's own Chromium, the
 /// store's own page, where the store's own button installs it.
 #[derive(Serialize)]
 #[serde(untagged)]
@@ -336,7 +336,7 @@ pub async fn extensions_set(
 ) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
-        // nib's own Chromium keeps whether one is on itself, and loses nothing it stored.
+        // Orden's own Chromium keeps whether one is on itself, and loses nothing it stored.
         #[cfg(feature = "cef")]
         if let Some(on) = enabled {
             chromium::enable(&app, &id, on)?;
@@ -391,7 +391,7 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
 }
 
 /// Looks for a newer version of every extension, and installs what it finds. Answers how
-/// many moved. The window asks every few hours, never at the launch. nib's own Chromium
+/// many moved. The window asks every few hours, never at the launch. Orden's own Chromium
 /// updates what its store installed itself.
 #[tauri::command]
 pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
@@ -445,7 +445,7 @@ fn page_of(app: &AppHandle, id: &str, options: bool) -> Result<String, String> {
 }
 
 /// The store's own page a tab is on, if it is an extension's: `(store, id)`, so the bar
-/// can offer Add there. Never on nib's own Chromium, where the store's own button
+/// can offer Add there. Never on Orden's own Chromium, where the store's own button
 /// installs.
 #[tauri::command]
 pub fn extensions_named(link: String) -> Option<(Store, String)> {

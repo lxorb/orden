@@ -6,7 +6,7 @@
  *  somewhere: three hundred notes is more than anyone comes back to and small
  *  enough to write down on every pause in the typing. */
 
-import type { FoldLines } from '@nib/editor'
+import type { FoldLines } from '@orden/editor'
 import { movedTo, samePath } from '../space-paths'
 import type { FileOp } from './file-ops'
 import type { Position } from './session'

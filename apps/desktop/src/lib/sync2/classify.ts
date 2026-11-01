@@ -6,7 +6,7 @@
  *  been typed in meanwhile, so `rejoin` reads the texts again once the answer is back
  *  and classifies again here if they moved; see rejoin.ts. */
 
-import type { Times } from '@nib/sync-core/diverge'
+import type { Times } from '@orden/sync-core/diverge'
 import { judge, type Judged, type Shape } from './kinds'
 
 export interface Judging {

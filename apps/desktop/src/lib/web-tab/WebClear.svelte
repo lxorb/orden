@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Delete browsing data: Chrome's dialog, in nib's sheet.
+  /** Delete browsing data: Chrome's dialog, in Orden's sheet.
    *
    *  Chrome's choices in Chrome's words - a time range, Browsing history, Cookies and
    *  other site data, Cached images and files - and Chrome's default: the last hour, all

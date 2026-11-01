@@ -4,7 +4,7 @@
  *  carry no YAML parser, and a task found again in a note's words read the task rows
  *  alone (`taskRowsOfText`). See docs/tasks.md 5.3. */
 
-import { readTask } from '@nib/markdown/task-line'
+import { readTask } from '@orden/markdown/task-line'
 import { type ScannedTask, scanRows, type Stamp } from './scan'
 import { taskHash } from './task-hash'
 import type { FileInfo, Row, TaskRow, Value } from './types'

@@ -12,7 +12,7 @@
  *  src-tauri/src/chatgpt.rs), and **Claude Code** and **Codex**, the programs their
  *  makers ship, run on this machine and signed in to by the reader in them (see
  *  src-tauri/src/ai_cli.rs and local/). docs/ai.md says why it is these three roads and
- *  not a login of nib's own.
+ *  not a login of Orden's own.
  *
  *  Pure. Nothing here fetches, stores or reads a key: this is the arithmetic of
  *  which address, which headers and which shape, so all of it can be tested without
@@ -98,7 +98,7 @@ const MOST_TOKENS = 4096
 /** The other ways of writing "this machine", and the one the app can reach.
  *
  *  `127.0.0.1` and `localhost` are the same machine to every network stack alive.
- *  They are not the same host to a content security policy, and nib's policy names
+ *  They are not the same host to a content security policy, and Orden's policy names
  *  `http://localhost:*` and no other plain-http origin, which is deliberate: plain
  *  http to this machine is what a local model is, and plain http to anywhere else
  *  is what the policy exists to forbid. See src/csp.ts.
@@ -213,11 +213,11 @@ export function headersFor(provider: Provider, apiKey: string): Record<string, s
       'content-type': 'application/json',
       'anthropic-version': ANTHROPIC_VERSION,
       'x-api-key': apiKey,
-      // Anthropic's API sends no CORS headers unless asked. nib is a webview and a
+      // Anthropic's API sends no CORS headers unless asked. Orden is a webview and a
       // browser tab, so every request it makes is a cross-origin one; without this
       // the browser refuses the reply before any of our code sees it. The name is
       // theirs, and what it warns about is a key in a page somebody else served -
-      // which is not this: the key is the reader's own and the page is nib's.
+      // which is not this: the key is the reader's own and the page is Orden's.
       'anthropic-dangerous-direct-browser-access': 'true',
     }
   }
@@ -263,6 +263,56 @@ export function modelsIn(body: unknown): string[] {
     .filter((id): id is string => typeof id === 'string' && id.length > 0)
 
   return [...new Set(names)].sort((a, b) => a.localeCompare(b))
+}
+
+/** Families on OpenAI's list that are not for talking to: no chat, so no tools either. */
+export const NOT_CHAT =
+  /embedding|whisper|tts|dall-e|moderation|transcribe|audio|realtime|image|search|babbage|davinci/i
+
+/** The models a provider's list offers to talk to: OpenAI's and a plan's without the
+ *  families that only embed, speak, hear or draw, which the chat's catalogue leaves out
+ *  too (chat/catalogue.ts). Another server's names say nothing Orden could read them by. */
+export function talkable(kind: ProviderKind, ids: readonly string[]): string[] {
+  if (kind !== 'openai' && kind !== 'chatgpt') return [...ids]
+  return ids.filter((id) => !NOT_CHAT.test(id))
+}
+
+/** How a known family's model ranks as the one to start on, lower first, or null for a
+ *  name nib knows nothing of. OpenAI's: the newest GPT, its full model before its mini,
+ *  and nothing else - a pro, codex, chat-latest or dated name is not the one to start
+ *  every chat on. Anthropic's: Sonnet, then Opus, then Haiku, each newest first. */
+function rankOf(kind: ProviderKind, id: string): number[] | null {
+  if (kind === 'openai' || kind === 'chatgpt') {
+    const gpt = /^gpt-(\d+)(?:\.(\d+))?(-mini)?$/.exec(id)
+    if (!gpt) return null
+    return [-Number(gpt[1]), -Number(gpt[2] ?? 0), gpt[3] ? 1 : 0]
+  }
+  if (kind === 'anthropic') {
+    const claude = /^claude-(sonnet|opus|haiku)-(\d+)(?:-(\d{1,2}))?(-\d{8})?$/.exec(id)
+    if (!claude) return null
+    const family = ['sonnet', 'opus', 'haiku'].indexOf(claude[1] ?? '')
+    return [family, -Number(claude[2]), -Number(claude[3] ?? 0), claude[4] ? 1 : 0]
+  }
+  return null
+}
+
+/** The model a provider starts on once its list is read: the best of a family Orden knows
+ *  that can use tools, where the list has one, else the first it offers to talk to. Not
+ *  the first by name - OpenAI's list sorted begins with babbage-002, which cannot call a
+ *  single tool (#325). */
+export function firstModel(kind: ProviderKind, ids: readonly string[]): string | null {
+  const offered = talkable(kind, ids)
+  const known = offered
+    .map((id) => ({ id, rank: rankOf(kind, id) }))
+    .filter((one): one is { id: string; rank: number[] } => one.rank !== null)
+    .sort((a, b) => {
+      for (let at = 0; at < Math.max(a.rank.length, b.rank.length); at++) {
+        const by = (a.rank[at] ?? 0) - (b.rank[at] ?? 0)
+        if (by !== 0) return by
+      }
+      return 0
+    })
+  return known[0]?.id ?? offered[0] ?? null
 }
 
 /** One thing said. `assistant` is an earlier answer, which is what a conversation

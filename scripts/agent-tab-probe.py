@@ -1,4 +1,4 @@
-"""Agents in nib, measured: every browser verb of docs/agent-native.md 5.2 on WebView2, on a
+"""Agents in Orden, measured: every browser verb of docs/agent-native.md 5.2 on WebView2, on a
 page set of our own, with nothing of it ever on a screen or in front.
 
 Windows only, on a probe build (version 99.0.0, updater blocked), launched by `run_probe`.
@@ -461,7 +461,7 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         running = run_probe(args.exe, quiet=True)
         port_now, secret, pid = endpoint(args.identifier, unlike=first_port)
         if pid and pid != running.pid:
-            raise SystemExit(f"another nib (pid {pid}) is listening under {args.identifier}")
+            raise SystemExit(f"another Orden (pid {pid}) is listening under {args.identifier}")
         until = time.perf_counter() + 90
         while time.perf_counter() < until and not main_window(running.pid):
             time.sleep(0.2)

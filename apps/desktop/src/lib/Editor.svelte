@@ -24,7 +24,7 @@
     type StateOptions,
     shortcutEffect,
     trustedMarkupEffect,
-  } from '@nib/editor'
+  } from '@orden/editor'
   import { pickedLink } from './composer'
   import { EditorStates } from './editor-states'
   import { firstScreen } from './first-screen.svelte'
@@ -270,7 +270,7 @@
   // The page in the focused pane is `#write`, and no other: a window with its panes
   // split, a column of stacked notes or a card open over a link has several pages,
   // and an id is one element. Every page wears the class the themes reach them all
-  // by; see write.ts in @nib/themes. Set on the element for the reason the name is.
+  // by; see write.ts in @orden/themes. Set on the element for the reason the name is.
   $effect(() => {
     if (focused) view?.contentDOM.setAttribute('id', 'write')
     else view?.contentDOM.removeAttribute('id')

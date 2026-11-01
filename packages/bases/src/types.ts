@@ -6,10 +6,10 @@
  *  the answer, so a change here is a change to all three: keep it small and say
  *  why. Nothing in this file runs. */
 
-import type { TaskFields } from '@nib/markdown/task-line'
+import type { TaskFields } from '@orden/markdown/task-line'
 
-export type { FieldName, Priority, Remind, TaskFields } from '@nib/markdown/task-line'
-export type { TaskChange } from '@nib/markdown/task-edits'
+export type { FieldName, Priority, Remind, TaskFields } from '@orden/markdown/task-line'
+export type { TaskChange } from '@orden/markdown/task-edits'
 
 /** A date, or a date and a time. Floating: the wall clock wherever the reader is,
  *  unless a zone is written. `time` is `HH:mm` or `HH:mm:ss`. */
@@ -100,7 +100,7 @@ export interface TaskRow extends TaskFields {
   comments?: number
   /** What a `📅` on it means: a deadline in an Obsidian vault, else - absent - a start
    *  date. Said by whatever made the rows, which knows the space; see
-   *  `@nib/markdown/task-dates`. */
+   *  `@orden/markdown/task-dates`. */
   dueReads?: 'deadline'
 }
 
@@ -146,7 +146,7 @@ export interface SelectOption {
   tone?: string
 }
 
-/** What nib adds about a property, under `nib.properties`. */
+/** What Orden adds about a property, under `nib.properties`. */
 export interface NibProperty {
   options?: SelectOption[]
   /** `number`, `percent`, `currency:EUR`, `progress`, `url`, `email`, `phone`... */
@@ -204,7 +204,7 @@ export interface NibView {
   /** A form's fields that must be filled before it is sent. */
   required?: string[]
   /** How tall a board's cards are: the title's lines and the property lines under it.
-   *  nib's own, beside Obsidian's numeric `cardSize`, which Cards reads in pixels. */
+   *  Orden's own, beside Obsidian's numeric `cardSize`, which Cards reads in pixels. */
   cardSize?: CardSize
   /** A board's columns in this view's own order, by group key as text; a group it does
    *  not name follows in the options' order. */
@@ -220,7 +220,7 @@ export interface NibView {
 }
 
 export interface View {
-  /** `table`, `cards`, `list`, `kanban`, `map`, and nib's `calendar`, `timeline`,
+  /** `table`, `cards`, `list`, `kanban`, `map`, and Orden's `calendar`, `timeline`,
    *  `chart`, `form`. */
   type: string
   name: string

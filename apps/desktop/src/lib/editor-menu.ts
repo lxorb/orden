@@ -18,7 +18,7 @@ import {
   toggleQuote,
   toggleWrap,
   type Transaction,
-} from '@nib/editor'
+} from '@orden/editor'
 import {
   blocksFor,
   blockTargets,
@@ -36,7 +36,7 @@ import {
   removeLink,
   showPicture,
   turnBlocksInto,
-} from '@nib/editor/menu'
+} from '@orden/editor/menu'
 import { account } from './account.svelte'
 import { canTranscribe } from './ai/hears'
 import { copySelection, copyText, cutSelection } from './clipboard'
@@ -117,7 +117,7 @@ export function blockLinkName(path: string | null | undefined): string | null {
 /** The rows about the block a press landed in: what it is, and what can be done
  *  to it.
  *
- *  To it, or to every block a selection covers: a selection in nib is a selection
+ *  To it, or to every block a selection covers: a selection in Orden is a selection
  *  of text and never a mode, so the blocks it lies across are simply the blocks it
  *  lies across. The first row is not a row to press - it says which block the rest
  *  of them are about, and how much of the note that is, which is the only place
@@ -129,7 +129,7 @@ export function blockLinkName(path: string | null | undefined): string | null {
  *  Every row acts on all of them. A reader holding four blocks wants what they would
  *  want holding one - turn these into a list, take them a step in, move them, link to
  *  them - and the editor answers each of those for a run of blocks as readily as for
- *  one; see block/commands.ts in @nib/editor. What the rows say changes with the
+ *  one; see block/commands.ts in @orden/editor. What the rows say changes with the
  *  count and what they do does not. */
 function blockEntries(
   view: EditorView | undefined,
@@ -174,7 +174,7 @@ function blockEntries(
     { label: t('Duplicate'), run: () => duplicateBlocks(view, at) },
     {
       // A link to a block needs the block to have a name, and giving it one is a
-      // change to the note; see blockTarget in @nib/editor/menu. A note nobody has
+      // change to the note; see blockTarget in @orden/editor/menu. A note nobody has
       // saved yet has no path and so nothing to point at: the row is there and
       // says it cannot happen, which is shorter than explaining why.
       //
@@ -216,11 +216,11 @@ function blockEntries(
  *  Nothing at all anywhere else, because two greyed rows in every menu would be two
  *  rows about something that is not there.
  *
- *  A callout folds in nib whatever it says - the chevron in the margin folds any
+ *  A callout folds in Orden whatever it says - the chevron in the margin folds any
  *  block - so what these write is what the file carries, which is the half Obsidian
- *  reads and the half nib reads on the way in: `+` says the callout may be folded,
+ *  reads and the half Orden reads on the way in: `+` says the callout may be folded,
  *  `-` says it opens shut. Written here rather than typed by hand, which is the whole
- *  reason for the rows; see callouts.ts in @nib/markdown and fold.ts in @nib/editor. */
+ *  reason for the rows; see callouts.ts in @orden/markdown and fold.ts in @orden/editor. */
 function calloutEntries(view: EditorView): MenuEntry[] {
   const sign = calloutSign(view.state)
   if (sign === null) return []
@@ -294,7 +294,7 @@ function firstWords(text: string): string {
 /** Keeping this block in the bookmarks above the file list.
  *
  *  The same naming a link to it uses - a heading by its words, anything else by a
- *  name written into the note; see blockTarget in @nib/editor/menu - so the row and
+ *  name written into the note; see blockTarget in @orden/editor/menu - so the row and
  *  the link point at the same thing and neither has a way of its own. */
 function blockBookmark(view: EditorView, at: number, path: string | null | undefined): MenuEntry[] {
   const root = workspace.activeSpace?.root
@@ -543,7 +543,7 @@ function recordingEntries(view: EditorView | undefined, at: number | null): Menu
 /** The rows a right click on a link offers: where it goes, and changing it.
  *
  *  The way out to the real browser first. Pressing a link opens the page here now,
- *  which is what nib holding pages means - so the deliberate "not here, over there" has
+ *  which is what Orden holding pages means - so the deliberate "not here, over there" has
  *  to be somewhere a hand can find it, and this is where every browser keeps it. It is
  *  the only one: Shift+click is a tab in front, as in the rest of the app; see
  *  new-tab.ts. Only over a web address: a `mailto:` leaves for the system on a plain
@@ -554,7 +554,7 @@ function recordingEntries(view: EditorView | undefined, at: number | null): Menu
  *  pointing it somewhere else, and taking it away with its words kept. The address is
  *  read off the decoration under the pointer rather than out of the document, because
  *  that decoration is what the press landed on; the document says where the link is
- *  written, which is what the two edits change. See link-edit.ts in @nib/editor. */
+ *  written, which is what the two edits change. See link-edit.ts in @orden/editor. */
 function linkEntries(
   view: EditorView | undefined,
   event: MouseEvent,
@@ -625,7 +625,7 @@ function linkOf(jump: NoteJump): string {
  *  Obsidian all put there: the picture itself on the clipboard, the picture on its own,
  *  and the picture gone. Open is the full-window view a double click opens, and Delete
  *  is the bin on the picture's toolbar: it takes the picture out of the note and leaves
- *  the file, which another note may be showing. See image/pressed.ts in @nib/editor. */
+ *  the file, which another note may be showing. See image/pressed.ts in @orden/editor. */
 function pictureEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
   const picture = view ? pressedPicture(view, event.target) : null
   if (!view || !picture) return []

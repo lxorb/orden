@@ -21,9 +21,9 @@
  *  was there, three ways against that text (section 5.9). */
 
 import { fileMade } from './files'
-import { inForeignCopy } from '@nib/sync-core/foreign'
-import { kindOfName } from '@nib/sync-core/tree'
-import type { EntryKind, Op } from '@nib/sync-core/wire'
+import { inForeignCopy } from '@orden/sync-core/foreign'
+import { kindOfName } from '@orden/sync-core/tree'
+import type { EntryKind, Op } from '@orden/sync-core/wire'
 import type { Core } from './core'
 import { MINE } from './docs'
 import { shapeOf, turn } from './kinds'
@@ -115,7 +115,7 @@ export async function made(
   what: Made,
 ): Promise<{ id: string; changes: Change[] }> {
   // Another sync tool's copy stays on this disk alone, the way a file too large to
-  // travel does: an id, and nothing made (@nib/sync-core/foreign). Whichever way it
+  // travel does: an id, and nothing made (@orden/sync-core/foreign). Whichever way it
   // came - the watcher, the first pass, a file made in the list - this is where.
   if (inForeignCopy(what.path)) return { id: freshId(core), changes: [] }
   const changes: Change[] = []

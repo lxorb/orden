@@ -8,7 +8,7 @@
  *  by the palette the first time three letters are typed, and never in the glasses'
  *  plugin. */
 
-import { hasModifiers, type Member } from '@nib/chats'
+import { hasModifiers, type Member } from '@orden/chats'
 import { t } from '../../i18n.svelte'
 import type { Row } from '../../palette/rows'
 import { firstLine } from './body'

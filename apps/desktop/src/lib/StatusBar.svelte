@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tooLongToParse, type VimMode } from '@nib/editor'
+  import { tooLongToParse, type VimMode } from '@orden/editor'
   import { countNote, countText } from './counts'
   import { chrome } from './glass/chrome.svelte'
   import { amount, t } from './i18n.svelte'

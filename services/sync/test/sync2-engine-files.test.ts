@@ -275,6 +275,44 @@ describe('a file that is not a note, under v2', () => {
   })
 })
 
+/** #517: the nightly sweep of misnamed copies takes the rows of an upload answered over
+ *  such a copy with it, and the bytes were the account's no more. The device that still
+ *  has the file sends them again on its own, rather than at its next edit of the file. */
+describe('a file whose bytes the account lost', () => {
+  afterEach(() => vi.useRealTimers())
+
+  test('is sent again by the device that has it, and reaches the others', async () => {
+    const laptop = await device('laptop', { 'Trip/photo.png': picture(5) })
+    await passed(laptop)
+    const digest = await crypto.subtle.digest('SHA-256', picture(5))
+    const hash = [...new Uint8Array(digest)]
+      .map((one) => one.toString(16).padStart(2, '0'))
+      .join('')
+    expect(env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash)).toEqual({
+      many: 1,
+    })
+
+    // What the sweep leaves: no row and no object.
+    env.db.prepare('delete from blobs where hash = ?').run(hash)
+    await env.NOTES.delete(`blobs/${hash}`)
+
+    const phone = await device('phone')
+    await passed(phone)
+    expect(bytesAt(phone, 'Trip/photo.png')).toBeUndefined()
+
+    // Hours on: the laptop's check finds the bytes gone and sends them.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(Date.now() + 7 * 60 * 60 * 1000)
+    await passed(laptop)
+    expect(env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash)).toEqual({
+      many: 1,
+    })
+
+    await passed(phone)
+    expect(bytesAt(phone, 'Trip/photo.png')).toEqual(picture(5))
+  })
+})
+
 describe('an account too full for a file', () => {
   /** A laptop whose account answers every upload of bytes `status` (507, no room) while
    *  `full` says so. */

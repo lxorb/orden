@@ -133,7 +133,7 @@ export function runFence() {
 /** The door the runner comes through, by where it sits rather than by what asks for
  *  it: three files import it under two different relative names. The door and not the
  *  runner, so the plugin's editor draws no Run button and never has a runner to fetch;
- *  see run/door.ts in @nib/editor. */
+ *  see run/door.ts in @orden/editor. */
 const RUNNER = 'packages/editor/src/run/door'
 
 /** The frame script, by the name it is asked for: the characters every sandboxed

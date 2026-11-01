@@ -402,8 +402,14 @@ class Chat implements Panel {
 
   /** A new thread started out of sight, in the list and running there: a task done with
    *  AI (#325). On the provider, model and effort a new thread asks, in `mode`. */
-  startAside(space: string, title: string, mode: Mode, text: string): Promise<Ended> {
-    const thread = { ...this.fresh(), space, title, mode }
+  startAside(
+    space: string,
+    title: string,
+    mode: Mode,
+    text: string,
+    without: string[] = [],
+  ): Promise<Ended> {
+    const thread = { ...this.fresh(), space, title, mode, ...(without.length ? { without } : {}) }
     this.adopt(thread)
     return this.turn(thread, text)
   }

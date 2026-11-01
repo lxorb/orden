@@ -8,7 +8,7 @@
  *  says - all, mentions or nothing, and a mute - is the chat's, `PUT /v2/chats/:id/me`;
  *  see notify.ts. */
 
-import { type Hours, isHours, isKeywords } from '@nib/chats/notify'
+import { type Hours, isHours, isKeywords } from '@orden/chats/notify'
 import { account } from '../account.svelte'
 import { api, type AccountSettings } from '../api'
 import { isBoolean, isRecord, keep, stored } from '../stored'

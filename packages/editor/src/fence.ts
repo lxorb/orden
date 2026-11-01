@@ -1,7 +1,7 @@
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
-import { captionIn, languageIn } from '@nib/markdown/code'
+import { captionIn, languageIn } from '@orden/markdown/code'
 import { enclosingNamed } from './nodes'
 
 /** Reading a fenced code block back out of the document.
@@ -22,7 +22,7 @@ function fenceInfo(state: EditorState, node: SyntaxNode): string {
  *  names none.
  *
  *  Its first word, and not the whole of it: everything after the language is the
- *  block's caption. See code.ts in @nib/markdown, which is where both halves are
+ *  block's caption. See code.ts in @orden/markdown, which is where both halves are
  *  read out of the string, since a page and a note have to agree about what a
  *  fence says. */
 export function fenceLanguage(state: EditorState, node: SyntaxNode): string {

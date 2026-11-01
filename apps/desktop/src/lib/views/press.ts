@@ -4,7 +4,7 @@
  *  a base can be written by anybody a space is shared with and a press should never
  *  do what a link to the same command could not. */
 
-import { type Base, pressed, readButtons, type Row } from '@nib/bases'
+import { type Base, pressed, readButtons, type Row } from '@orden/bases'
 import { openExternal } from '../tauri'
 import { pressRow } from './act'
 import { nowHere } from './days'

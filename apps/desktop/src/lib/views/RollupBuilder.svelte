@@ -2,9 +2,9 @@
   /** A rollup, made from three choices rather than a formula (docs/tasks.md 5.12): the
    *  relation (a property of links, or a column of notes linking here), what of the
    *  related notes to read, and how to sum them up. Written as a formula Obsidian reads
-   *  too (`rollupFormula` in @nib/bases) and shown as a column; pressed on a rollup's
+   *  too (`rollupFormula` in @orden/bases) and shown as a column; pressed on a rollup's
    *  column again, the choices it was made from come back. */
-  import { readReverse, readRollup, type Rollup, ROLLUPS, rollupFormula } from '@nib/bases'
+  import { readReverse, readRollup, type Rollup, ROLLUPS, rollupFormula } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { relationsOf } from './columns'

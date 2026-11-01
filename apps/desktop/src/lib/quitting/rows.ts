@@ -34,7 +34,7 @@ export interface Row {
    *  Settings says to ask whenever a terminal is open. */
   busy: boolean
   /** What its mark is drawn from (TerminalMark.svelte): a terminal's own, and Claude
-   *  Code or Codex for a thread they answer. A thread of a provider nib asks itself has
+   *  Code or Codex for a thread they answer. A thread of a provider Orden asks itself has
    *  none, and wears the AI's spark. */
   doc?: string
   running?: Tab['running']

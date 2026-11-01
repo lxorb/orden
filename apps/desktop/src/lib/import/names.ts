@@ -5,10 +5,10 @@
  *  This is the one place that argues with that, so no reader has to.
  *
  *  What a file may hold and how a taken name steps aside are
- *  @nib/markdown/paths, shared with the sync service so that an
+ *  @orden/markdown/paths, shared with the sync service so that an
  *  imported note is named the way every other note is. */
 
-import { freePath, withoutForbidden } from '@nib/markdown/paths'
+import { freePath, withoutForbidden } from '@orden/markdown/paths'
 import { isReserved } from '../naming'
 
 /** Long enough for any title somebody wrote on purpose, short enough that the
@@ -171,7 +171,7 @@ export class Names {
   private readonly kept = new Set<string>()
 
   /** A free path, remembered as taken. Folders count as taken too: a note and a
-   *  folder of the same name is how nib nests, so those are meant to collide and
+   *  folder of the same name is how Orden nests, so those are meant to collide and
    *  the caller says which by asking once for each. `own` says the path is the
    *  file's own name, which a name `keep` held back is free for. */
   free(path: string, own = false): string {

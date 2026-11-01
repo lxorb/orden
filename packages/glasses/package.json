@@ -1,5 +1,5 @@
 {
-  "name": "@nib/glasses",
+  "name": "@orden/glasses",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@evenrealities/pretext": "^0.1.4",
-    "@nib/markdown": "workspace:*",
+    "@orden/markdown": "workspace:*",
     "marked": "^18.0.11",
     "node-emoji": "^2.2.0"
   },

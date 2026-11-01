@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { deckBody, FIT_STEPS } from '@nib/markdown/deck'
+import { deckBody, FIT_STEPS } from '@orden/markdown/deck'
 import { buildDeckHtml, DECK_PAPER, exportDeck } from './file'
 import type { StageSlide } from './render'
 

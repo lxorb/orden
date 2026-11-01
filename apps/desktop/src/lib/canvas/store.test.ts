@@ -603,6 +603,33 @@ describe('a plane with something on it this app does not read', () => {
     expect(written.metadata).toEqual({ version: '1.0-1.0' })
   })
 
+  /** #781: another app moved its own node twice while the reader had the plane open
+   *  and had drawn on it, so the file's words are merged with the reader's each time.
+   *  Both moves count the same generation from what the app last wrote, so only the
+   *  file can say which is newer: nothing in the app changes such a node. */
+  test('takes what another app changed in the file, even with the reader’s edits open', () => {
+    const { store, note } = opened(vault())
+    store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card('b', 600)] })
+    store.part()
+
+    const written = note.text
+    const movedTo = (x: number) => {
+      const file = JSON.parse(written) as { nodes: { id: string; x: number }[] }
+      const drawing = file.nodes.find((one) => one.id === 'x')
+      if (drawing) drawing.x = x
+      return `${JSON.stringify(file, null, '\t')}\n`
+    }
+    store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card('c', 900)] })
+    // 25 sorts before 50, so a tie between the two moves would keep the first.
+    note.replace(movedTo(25))
+    store.follow()
+    note.replace(movedTo(50))
+    store.follow()
+
+    expect(store.canvas.extras?.nodes.get('x')?.x).toBe(50)
+    expect(ids(store.canvas).sort()).toEqual(['a', 'b', 'c'])
+  })
+
   test('and lets a card taken away take its own fields and its edges with it', () => {
     const { store, note } = opened(vault())
     store.edit({ ...store.canvas, nodes: [] })
@@ -612,5 +639,52 @@ describe('a plane with something on it this app does not read', () => {
     expect(written.nodes.map((one) => one.id)).toEqual(['x'])
     expect(written.edges).toEqual([])
     expect(written.metadata).toEqual({ version: '1.0-1.0' })
+  })
+})
+
+/** #535: what is picked is asked once per card and per edge of a plane that may hold
+ *  thousands while thousands are picked, so it is asked of a set kept beside the list,
+ *  which has to say what the list says after every way of picking. */
+describe('what is picked, asked by id', () => {
+  test('answers what the list says, through every way of picking', () => {
+    const { store } = opened(
+      writeCanvas({
+        ...readCanvas(blankCanvas()),
+        nodes: [card('a'), card('b', 300), card('c', 600)],
+      }),
+    )
+    const answers = () => ['a', 'b', 'c'].filter((id) => store.isPicked(id))
+
+    store.pickAll(['a', 'c'])
+    expect(answers()).toEqual(['a', 'c'])
+    store.pick('b', true)
+    expect(answers()).toEqual(['a', 'b', 'c'])
+    store.pick('a', true)
+    expect(answers()).toEqual(['b', 'c'])
+    store.pick('c')
+    expect(answers()).toEqual(['c'])
+    store.picked = []
+    expect(answers()).toEqual([])
+    expect([...store.pickedSet]).toEqual([])
+  })
+})
+
+/** #535: a card drawn only while it is written in - from far away, CanvasFar.svelte -
+ *  goes with its editor, before it can hand its words over. Leaving it asks for them
+ *  first, whoever leaves it. */
+describe('leaving the card being written in', () => {
+  test('asks it for its words first', async () => {
+    const { cardWriting } = await import('./writing')
+    const { store } = opened(writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('a')] }))
+    const handed: string[] = []
+    cardWriting(() => handed.push('handed'))
+    try {
+      store.editing = 'a'
+      expect(handed).toEqual([])
+      store.editing = null
+      expect(handed).toEqual(['handed'])
+    } finally {
+      cardWriting(null)
+    }
   })
 })

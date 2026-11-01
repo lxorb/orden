@@ -11,7 +11,7 @@
 import { execFile } from 'node:child_process'
 import { readFileSync, statfsSync } from 'node:fs'
 import { availableParallelism } from 'node:os'
-import type { Disk } from '@nib/online/types'
+import type { Disk } from '@orden/online/types'
 
 /** Microseconds of CPU used so far, by the machine's cgroup or the kernel's count. */
 export function cpuMicros(

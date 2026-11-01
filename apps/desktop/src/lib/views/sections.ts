@@ -1,4 +1,4 @@
-/** A project's sections, the nib way: a section is a heading of the project's note, and
+/** A project's sections, the Orden way: a section is a heading of the project's note, and
  *  what it holds is every line under it up to the next heading as high or higher. So a
  *  section added, renamed, duplicated, moved up or down, taken to another project or
  *  deleted is a heading and its lines, written as the note's words; the writer turns the
@@ -9,7 +9,7 @@
  *
  *  Pure: a note's words in, its words after out, or null where the section is not there. */
 
-import { lines as rowsOf } from '@nib/markdown/links'
+import { lines as rowsOf } from '@orden/markdown/links'
 
 interface Section {
   /** The heading's line. */
@@ -24,7 +24,7 @@ const HEADING = /^(#{1,6})[ \t]+(.*?)[ \t]*#*[ \t]*$/
 const FENCE = /^[ \t]*(`{3,}|~{3,})/
 
 /** Every heading of a note with what it holds, in order. Code and the front matter
- *  hold none: which lines are code is `lines` in @nib/markdown/links, the reading the
+ *  hold none: which lines are code is `lines` in @orden/markdown/links, the reading the
  *  page agrees with, so a block closes on its own mark only. */
 function sectionsOf(lines: readonly string[]): Section[] {
   const out: Section[] = []

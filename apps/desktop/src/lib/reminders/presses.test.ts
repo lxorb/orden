@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 import { rowsIn } from './fixtures'
 import { type Host, pressOf, respond } from './presses'
 

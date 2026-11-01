@@ -20,8 +20,8 @@ import {
   toggleWrap,
   undoEdit,
   unfoldEverything,
-} from '@nib/editor'
-import { HIGHLIGHT_COLOURS } from '@nib/markdown/highlights'
+} from '@orden/editor'
+import { HIGHLIGHT_COLOURS } from '@orden/markdown/highlights'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { copySelection, cutSelection } from './clipboard'
@@ -95,7 +95,7 @@ function run(view: EditorView | undefined, command: StateCommand) {
 
   // The view rather than a pair made out of it, so a command that can do more
   // with one does: folding moves the lines it hides before it hides them, which
-  // needs something that can measure them. See fold-motion.ts in @nib/editor.
+  // needs something that can measure them. See fold-motion.ts in @orden/editor.
   command(view)
   view.focus()
 }
@@ -356,7 +356,7 @@ export function appMenu(context: Context): MenuGroup[] {
           // highlights the selection and sticks: the row above, the bar's own
           // button and the shortcut all write that colour from then on. Five
           // colours, which is what Obsidian encodes in the markdown, plus the
-          // plain highlight; see highlights.ts in @nib/markdown.
+          // plain highlight; see highlights.ts in @orden/markdown.
           label: t('Highlight colour'),
           disabled: !writable,
           rows: HIGHLIGHT_COLOURS.map((colour) => ({

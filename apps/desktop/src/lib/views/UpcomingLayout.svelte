@@ -10,7 +10,7 @@
    *  As a board it is Todoist's too: a column for every day of the two weeks from the
    *  strip's first day, an empty one too, what is overdue first, a card carried to
    *  another column given that day; the arrows move the columns a week. */
-  import { addDays, groupName } from '@nib/bases'
+  import { addDays, groupName } from '@orden/bases'
   import { untrack } from 'svelte'
   import { i18n, t } from '../i18n.svelte'
   import { dateAt } from './days'

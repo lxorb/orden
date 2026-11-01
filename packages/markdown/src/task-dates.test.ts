@@ -19,8 +19,8 @@ const line = (text: string) => {
   return task
 }
 
-describe("in a space of nib's own", () => {
-  test('a 📅 is the start date nib wrote before it said start dates', () => {
+describe("in a space of Orden's own", () => {
+  test('a 📅 is the start date Orden wrote before it said start dates', () => {
     const task = line('Call the bank 📅 2026-10-06')
 
     expect(startOf(task)).toBe('2026-10-06')

@@ -30,7 +30,7 @@
  *  pdf-lib is loaded when an export runs and not before, like the rest of the
  *  export's libraries. */
 
-import { onPage, pagesOf } from '@nib/markdown/pages'
+import { onPage, pagesOf } from '@orden/markdown/pages'
 import {
   type Canvas,
   type CanvasNode,
@@ -53,7 +53,7 @@ import { isDesktop } from '../tauri'
 import { paperPlaces } from './held'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
 import { cssColour, svgToPng } from './raster'
-import { escapeAll } from '@nib/markdown/html'
+import { escapeAll } from '@orden/markdown/html'
 
 /** What an export of a page note is about. */
 export interface PagesOut {

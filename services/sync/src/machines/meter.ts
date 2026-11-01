@@ -3,10 +3,10 @@
  *
  *  `Machine` adds to the month's row every minute it is awake and once more as it
  *  sleeps, so the allowance and the budget breaker read numbers at most a minute old.
- *  The arithmetic is `@nib/online`'s (`accrue`, `usedOf`, `spend`); this is the SQL. */
+ *  The arithmetic is `@orden/online`'s (`accrue`, `usedOf`, `spend`); this is the SQL. */
 
-import { accrue, monthOf, NONE, SMALL, type Usage, usedOf as asAllowance } from '@nib/online'
-import type { Allowance } from '@nib/online'
+import { accrue, monthOf, NONE, SMALL, type Usage, usedOf as asAllowance } from '@orden/online'
+import type { Allowance } from '@orden/online'
 import type { Env } from '../types'
 
 const USAGE = `awake_s as awakeS, cpu_s as cpuS, mem_gib_s as memGibS, disk_gb_s as diskGbS,

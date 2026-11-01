@@ -12,8 +12,8 @@
  *  The listening costs a mapping of one step per change, and exists only for notes
  *  an agent has written in. */
 
-import { ChangeSet, type Heard, type Mark, Text } from '@nib/editor'
-import { fold } from '@nib/rooms/fold'
+import { ChangeSet, type Heard, type Mark, Text } from '@orden/editor'
+import { fold } from '@orden/rooms/fold'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Replacement } from './edits'
 import { Steps } from './steps'

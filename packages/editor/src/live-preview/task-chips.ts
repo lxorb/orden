@@ -3,27 +3,27 @@
  *    ◯ Call the bank about the card   Mon 16:00 · 🔔 · ⏫
  *
  *  A task's fields are marks the way `**` is: written so another app can read them,
- *  and not what the reader wants to look at. So every field the Tasks plugin or nib
+ *  and not what the reader wants to look at. So every field the Tasks plugin or Orden
  *  writes is hidden like a mark, and comes back with the caret on its line, dimmed the
  *  way marks are; a chip after the words says what they said. Tags stay where they
- *  were written: they are words, and already wear their own pill. An inline field nib
+ *  were written: they are words, and already wear their own pill. An inline field Orden
  *  has no name for stays too, because nothing would say what it held.
  *
  *  A chip pressed opens its field's choices as the app draws them (`taskHelp.pick`),
  *  and the pick is one edit of exactly the characters that change (`writeTask`). */
 
 import type { EditorView } from '@codemirror/view'
-import { writeTask } from '@nib/markdown/task-edits'
+import { writeTask } from '@orden/markdown/task-edits'
 import {
   type FieldToken,
   type ParsedTask,
   parseTask,
   type Priority,
   type TaskFields,
-} from '@nib/markdown/task-line'
+} from '@orden/markdown/task-line'
 import { label } from '../labels'
 import { dayWords, timeWords, todayHere } from '../task-days'
-import { deadlineOf, type DueReads, startOf } from '@nib/markdown/task-dates'
+import { deadlineOf, type DueReads, startOf } from '@orden/markdown/task-dates'
 import { noteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
 

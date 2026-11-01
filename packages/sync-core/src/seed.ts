@@ -17,9 +17,9 @@
  *
  *  Nothing here knows about a disk or a socket; a caller persists or sends the bytes. */
 
-import type { Canvas } from '@nib/markdown/canvas'
-import { seedExtras, seedPlane as planted } from '@nib/rooms/plane'
-import { TEXT } from '@nib/rooms'
+import type { Canvas } from '@orden/markdown/canvas'
+import { seedExtras, seedPlane as planted } from '@orden/rooms/plane'
+import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 
 /** FNV-1a's 32-bit offset basis and prime. Fixed by definition rather than by any
@@ -58,7 +58,7 @@ function unixLines(text: string): string {
 }
 
 /** A throwaway document under the seed's client id. Garbage collection stays on, as
- *  it is everywhere else nib makes a document, so the bytes are the ones any other
+ *  it is everywhere else Orden makes a document, so the bytes are the ones any other
  *  device makes. */
 function seedDoc(noteId: string, epoch: number): Y.Doc {
   const doc = new Y.Doc()

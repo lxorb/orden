@@ -52,7 +52,7 @@ export interface EntryRow {
   deleted: boolean
 }
 
-/** What nib last wrote to a note: the ancestor of every three-way merge with another
+/** What Orden last wrote to a note: the ancestor of every three-way merge with another
  *  program's edit (section 5.5). */
 export interface WrittenRow {
   id: string

@@ -6,7 +6,7 @@
  *  what that edit left, so nothing typed in between is ever folded in. Out of the first
  *  paint: only the bases' runner asks (views/running.ts). */
 
-import { oneEdit } from '@nib/markdown/edits'
+import { oneEdit } from '@orden/markdown/edits'
 import { reverse } from '../search/replace'
 import { samePath } from '../space-paths'
 import type { FileAction, FileActions } from './undo.svelte'

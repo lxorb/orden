@@ -30,10 +30,10 @@ import {
   type SpaceBlock,
   type SpaceTag,
   type TaskHelp,
-} from '@nib/editor'
-import type { EmbeddedNote } from '@nib/markdown'
-import { door } from '@nib/markdown/door'
-import { oneEdit } from '@nib/markdown/edits'
+} from '@orden/editor'
+import type { EmbeddedNote } from '@orden/markdown'
+import { door } from '@orden/markdown/door'
+import { oneEdit } from '@orden/markdown/edits'
 import {
   blockIdOf,
   blockIds,
@@ -47,7 +47,7 @@ import {
   isWebTarget,
   type LinkKind,
   withoutBlockIds,
-} from '@nib/markdown/links'
+} from '@orden/markdown/links'
 import { breathe } from './breathe'
 import { buildGraph, type NoteGraph } from './graph'
 import { type Placed, retargetLinks } from './link-rewrite'
@@ -652,7 +652,7 @@ class Links {
    *  A website is a shortcut file now - `Svelte docs.url` - and its name says so,
    *  which is why no list asks this any more. What is left in here is the old format:
    *  a `.md` note with `url:` in its front matter, from a space written by an older
-   *  nib. So this map is what says a note wants converting, and the only thing it
+   *  Orden. So this map is what says a note wants converting, and the only thing it
    *  says; see web-tab/shortcut.ts and `workspace.asShortcut`.
    *
    *  The same shape as the icons above and for the same reason: a space of a
@@ -698,7 +698,7 @@ class Links {
    *  by a lookup rather than a walk, and derived so the row's own menu says Change
    *  rather than Set the moment a cover is written - without the tree being told.
    *  Only which picture, not where its band sits: what asks this is a menu deciding
-   *  between three words. See cover.ts in @nib/markdown. */
+   *  between three words. See cover.ts in @orden/markdown. */
   private readonly covers = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const map = new Map<string, string>()

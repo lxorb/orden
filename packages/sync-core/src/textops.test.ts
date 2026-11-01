@@ -1,4 +1,4 @@
-import { TEXT } from '@nib/rooms'
+import { TEXT } from '@orden/rooms'
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'

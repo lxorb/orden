@@ -1,10 +1,10 @@
 <script lang="ts">
-  /** A task's comments in its view, Todoist's way the nib way: the list items under the
+  /** A task's comments in its view, Todoist's way the Orden way: the list items under the
    *  task that are no tasks (task-body.ts), each with when it was written, and a field
    *  under them that writes one more, stamped. Enter sends, Shift and Enter is a new line,
    *  and a comment's cross takes it away again; each is one edit of the note, one undo.
    *  Read again whenever the task's row changes, which is when its note was written. */
-  import type { Row } from '@nib/bases'
+  import type { Row } from '@orden/bases'
   import { i18n, t } from '../../i18n.svelte'
   import Cross from '../../Cross.svelte'
   import { workspace } from '../../workspace.svelte'

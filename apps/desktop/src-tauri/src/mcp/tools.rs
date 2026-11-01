@@ -112,7 +112,7 @@ pub fn listed(grant: &Grant, window: Option<&BTreeSet<String>>) -> Vec<&'static 
         .collect()
 }
 
-/// The one tool of a client nib has not paired yet: `agent_status`, answered by this
+/// The one tool of a client Orden has not paired yet: `agent_status`, answered by this
 /// process with where the pairing stands.
 pub fn unpaired() -> Vec<&'static Tool> {
     find("agent_status").into_iter().collect()

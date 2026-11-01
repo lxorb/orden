@@ -11,7 +11,7 @@
  *  See docs/sharing.md and src/spaces/share.ts. */
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { subprotocol } from '@nib/rooms'
+import { subprotocol } from '@orden/rooms'
 import { spacesFor } from '../src/mcp/tools'
 import { MOST_ITEMS } from '../src/spaces/space'
 import { purgeExpired } from '../src/trash'

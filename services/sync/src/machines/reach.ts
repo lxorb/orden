@@ -15,7 +15,7 @@
  *  to name, is in no space, and reaches its owner and nobody else. */
 
 import type { Env } from '../types'
-import type { SpaceRole, Typing } from '@nib/online'
+import type { SpaceRole, Typing } from '@orden/online'
 
 /** What one person reaches on one terminal. */
 export interface Reached {

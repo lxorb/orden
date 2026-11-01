@@ -11,7 +11,7 @@
 //!   sound is paused first - and one in a call, capturing the camera, the microphone or
 //!   the screen, or holding a Web Lock, as Edge's sleeping tabs do: those run on. Shown
 //!   again, the engine wakes it itself; `Resume` says so at once.
-//! - nib's own Chromium: the page lifecycle's `frozen`, over the `DevTools` protocol, and
+//! - Orden's own Chromium: the page lifecycle's `frozen`, over the `DevTools` protocol, and
 //!   `active` to let it run.
 //! - `WKWebView` and `WebKitGTK` have neither: the sound is paused, and the engine's own
 //!   throttling of a page out of sight is the rest.

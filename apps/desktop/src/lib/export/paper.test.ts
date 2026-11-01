@@ -11,7 +11,7 @@ import { toRtf } from './rtf'
  *  Word and RTF ignored it altogether: the Word document went out with no page
  *  properties at all, which is Word's own default of US Letter, and the RTF had
  *  `\paperw12240\paperh15840\margl1440` written into its header by hand. So a reader
- *  on nib's A4 default got Letter, and A5, landscape and a 33 mm margin were dropped
+ *  on Orden's A4 default got Letter, and A5, landscape and a 33 mm margin were dropped
  *  without anything saying so - while the same note printed or exported as HTML
  *  honoured every one of them.
  *
@@ -55,7 +55,7 @@ function rtfOf(source: string, page: PageSetup) {
 }
 
 /** A4 upright is 210 by 297 mm, and a twip is a fourteen-hundred-and-fortieth of an
- *  inch: 11,906 by 16,838, the numbers Word itself writes for A4. The margin nib defaults to is 20 mm, which is 1134. */
+ *  inch: 11,906 by 16,838, the numbers Word itself writes for A4. The margin Orden defaults to is 20 mm, which is 1134. */
 describe('the paper a Word document goes out on', () => {
   test('is the A4 the app defaults to, not the Letter Word assumes', async () => {
     const page = await docxPage(NOTE, setup())

@@ -14,13 +14,13 @@
  *
  *  Everything else in the engine speaks files - text in, text out - and asks here. */
 
-import { holdsCanvas, readCanvas, writeCanvas } from '@nib/markdown/canvas'
-import { TEXT } from '@nib/rooms'
-import { pushPlane, readPlane } from '@nib/rooms/plane'
-import { diverge, type Times, type Verdict } from '@nib/sync-core/diverge'
-import { divergePlane } from '@nib/sync-core/plane-diverge'
-import { seedPlane, seedUpdate } from '@nib/sync-core/seed'
-import { textops } from '@nib/sync-core/textops'
+import { holdsCanvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
+import { TEXT } from '@orden/rooms'
+import { pushPlane, readPlane } from '@orden/rooms/plane'
+import { diverge, type Times, type Verdict } from '@orden/sync-core/diverge'
+import { divergePlane } from '@orden/sync-core/plane-diverge'
+import { seedPlane, seedUpdate } from '@orden/sync-core/seed'
+import { textops } from '@orden/sync-core/textops'
 import * as Y from 'yjs'
 import { settleShortcuts } from '../web-tab/settle'
 

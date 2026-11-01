@@ -59,7 +59,7 @@ function attribute(label: string): string {
     .replace(/[\r\n\t]/g, ' ')
 }
 
-/** Words from outside inside nib's mark, which the model reads as data. */
+/** Words from outside inside Orden's mark, which the model reads as data. */
 export function untrusted(source: string, words: string): string {
   return `<${MARK} source="${attribute(source)}">\n${inert(words)}\n</${MARK}>`
 }

@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 
 from harness import Drive
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -59,7 +60,15 @@ def drive(browser) -> None:
     check("one Claude account is in use", sheet.get_by_text("In use", exact=True).count() == 1)
     check("the other can be switched to", sheet.get_by_role("button", name="Use", exact=True).count() == 1)
     check("OpenAI's one account is its own row", sheet.locator(".name.strong", has_text="OpenAI").count() == 0)
-    check("Access is on the same page", sheet.get_by_text("Access", exact=True).count() >= 1)
+    # Access is fetched as the page opens (`{#await import(...)}` in SettingsPanel.svelte),
+    # so it is waited for: counted at once it was missing whenever the fetch took longer
+    # than the page took to settle, which WebKit's did now and then (#446).
+    try:
+        sheet.get_by_text("Access", exact=True).first.wait_for(timeout=10_000)
+        access = True
+    except PlaywrightTimeout:
+        access = False
+    check("Access is on the same page", access)
 
     sheet.get_by_role("button", name="Use", exact=True).click()
     quiet(page)

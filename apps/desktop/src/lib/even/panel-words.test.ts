@@ -1,7 +1,7 @@
 import { readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { SCRIPTS, undrawable } from '@nib/glasses'
+import { SCRIPTS, undrawable } from '@orden/glasses'
 import { i18n, t } from '../i18n.svelte'
 import { forgetPanelLanguage, panelDrawable, panelWord } from './panel-words'
 

@@ -1616,6 +1616,18 @@ export const ha: Dictionary = {
   'answered by {model}, {date}': '{model} ya amsa, {date}',
   'AI block': 'Sashen AI',
   'Do with AI': 'Yi da AI',
+  'Use the browser': 'Yi amfani da burauza',
+  'Lets a task done with AI open web pages and act on them.':
+    'Yana bar aikin da AI ke yi ya buɗe shafukan yanar gizo ya yi aiki a kansu.',
+  'Look through notes': 'Duba bayanan kula',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Yana bar aikin da AI ke yi ya nema ya karanta sauran bayanan kularka, ban da nasa.',
+  'Change other notes': 'Canza wasu bayanan kula',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Yana bar aikin da AI ke yi ya rubuta, ya matsar, ya share bayanan kula ban da aikin.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Abin da ake roƙon aikin da AI ke yi. Har yanzu yana yiwa aikin alama idan ya gama, ko ya tambaya a cikin sharhi.',
+  'Started in the AI panel': 'An fara a cikin allon AI',
   'Highlight colour': 'Launin haske',
   'A single newline breaks the line': 'Sabon layi ɗaya na karya layin',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2674,6 +2686,9 @@ export const ha: Dictionary = {
     'A nan, shafukan yanar gizo suna neman adireshi kamar yadda tsarin yake yi; ana saita DNS ɗinsa a cikin saitunan tsarin.',
   'Set by the settings file': 'Fayil ɗin saituna ne ya saita',
   'The settings file has a problem': 'Fayil ɗin saituna yana da matsala',
+  'Some changes may not be noticed': 'Wataƙila ba za a lura da wasu canje-canje ba',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Tsarin ya kai iyakar fayilolin da yake kallo, don haka Orden ba zai iya lura da kowane canji da wasu shirye-shirye ke yi a wurarenka ba. Ƙara fs.inotify.max_user_watches yana gyara hakan.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'A matsar da hira {name} zuwa {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

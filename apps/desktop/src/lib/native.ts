@@ -5,7 +5,7 @@
  *  webview - so five of its own modules import it outright, and a dynamic
  *  `import('@tauri-apps/api/core')` is therefore not a boundary at all: the bundler
  *  cannot move a module its own dependencies hold in place, and said so on every
- *  build. A door of nib's own is one it can move, because nothing but this file
+ *  build. A door of Orden's own is one it can move, because nothing but this file
  *  names the package.
  *
  *  Which matters most where the crate is never asked anything: a page in a browser

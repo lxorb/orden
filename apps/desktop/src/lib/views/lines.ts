@@ -10,7 +10,7 @@
  *  The line is found again by its anchor, as the write path finds it (`taskLine` in
  *  rows/write.ts): the note may have been edited since the view was drawn. */
 
-import { placeIn } from '@nib/bases/agent'
+import { placeIn } from '@orden/bases/agent'
 import { taskLine } from '../rows/write'
 
 interface Anchor {

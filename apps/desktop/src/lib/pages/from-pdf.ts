@@ -22,8 +22,8 @@
  *
  *  Pure but for what `Turning` does, so every case is a line of from-pdf.test.ts. */
 
-import { readCanvas, writeCanvas } from '@nib/markdown/canvas'
-import { pagesFromPdf, pagesOf } from '@nib/markdown/pages'
+import { readCanvas, writeCanvas } from '@orden/markdown/canvas'
+import { pagesFromPdf, pagesOf } from '@orden/markdown/pages'
 import { folderOf, nameOf, placesOf, samePath } from '../space-paths'
 import { joinPath } from '../tauri'
 import { holderOf, paperOf } from './held'

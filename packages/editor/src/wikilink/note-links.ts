@@ -1,4 +1,4 @@
-import { isAudioTarget, isImageTarget, isVideoTarget } from '@nib/markdown/links'
+import { isAudioTarget, isImageTarget, isVideoTarget } from '@orden/markdown/links'
 import { about } from './complete'
 import type { LinkWrite, NoteIndex } from './notes'
 

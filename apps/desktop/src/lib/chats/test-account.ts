@@ -11,8 +11,8 @@ import {
   type Message,
   mayEvent,
   type Who,
-} from '@nib/chats'
-import type { ChatRow, EventsPage, Result, StatePage } from '@nib/chats/wire'
+} from '@orden/chats'
+import type { ChatRow, EventsPage, Result, StatePage } from '@orden/chats/wire'
 import type { Remote } from './engine'
 import { keepsRow } from './fold'
 

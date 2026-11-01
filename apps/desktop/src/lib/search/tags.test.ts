@@ -88,7 +88,7 @@ describe('the tags in a note', () => {
     ])
   })
 
-  /** The rows of `PARITY` in @nib/markdown's tags.test.ts, which the page is held
+  /** The rows of `PARITY` in @orden/markdown's tags.test.ts, which the page is held
    *  to, and of `reads_the_parity_rows` in tags.rs. */
   test('alike on the page and in the index, row by row', () => {
     const rows: [string, string[]][] = [

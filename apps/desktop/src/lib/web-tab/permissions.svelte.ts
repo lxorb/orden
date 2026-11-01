@@ -22,7 +22,16 @@
  *  By origin, because that is what a permission is about - a grant to `docs.example` is
  *  not a grant to every page that links to it - and this device's, because it is about
  *  this machine's camera. So it lives in local storage beside the other things a device
- *  decides for itself, and never on the account. */
+ *  decides for itself, and never on the account.
+ *
+ *  **A private tab's answers are kept nowhere** (#787). They were written to the same
+ *  store, so a camera allowed in a private tab was allowed in every normal tab after it,
+ *  without a word, and the site's info named a site visited privately. So a private
+ *  tab's answers live in memory, for the private session - every private tab of the run,
+ *  which is what `WebView2`'s InPrivate profile shares (see private.ts) - and are gone
+ *  when the last private tab closes. A private tab is not given what a normal one
+ *  allowed, only what it blocked, which is Chrome's rule for Incognito: a choice to be
+ *  more careful carries over, and an allow does not follow anybody into private. */
 
 import { invoke, isDesktop } from '../tauri'
 import { withOrWithout } from '../records'
@@ -36,7 +45,7 @@ const STORAGE_KEY = 'nib:web-grants'
  *  The list is the engine's, not a choice: these are the permission kinds `WebView2`
  *  raises a request for, which is also the list Chrome's own site settings show. What
  *  is **not** here is the hardware buses - Bluetooth, USB, serial, HID - and the
- *  credential store: the engine raises no request for those, and nothing of nib's
+ *  credential store: the engine raises no request for those, and nothing of Orden's
  *  hides them from a page either, since a page is handed nothing of the app's (see
  *  src-tauri/src/web_worlds.rs). A device chooser or a passkey is the engine's and the
  *  system's to ask about, at the moment the page asks. */
@@ -85,14 +94,9 @@ export interface Asking {
   /** The origin, as the bubble shows it. */
   site: string
   ask: Ask
-  /** Whether the page that asked is a private tab's, whose answers are kept for that tab
-   *  in memory and never written down; see private.ts. */
-  inPrivate?: boolean
-}
-
-/** The private tab an answer to `said` is kept to, or none for every other tab. */
-function asideOf(said: Asking): string | undefined {
-  return said.inPrivate ? said.tab : undefined
+  /** Asked by a private tab: answered for the private session only. The crate does not
+   *  say so; the page that asked does, as the request arrives. */
+  privately: boolean
 }
 
 type Table = Record<string, Partial<Record<Ask, Answer>>>
@@ -123,7 +127,7 @@ export function readAsked(value: unknown): Asking | null {
   if (typeof tab !== 'string' || typeof id !== 'number') return null
   if (typeof origin !== 'string' || typeof kind !== 'string' || !isAsk(kind)) return null
 
-  return { id, tab, site: plainOrigin(origin) || origin, ask: kind }
+  return { id, tab, site: plainOrigin(origin) || origin, ask: kind, privately: false }
 }
 
 class Grants {
@@ -136,9 +140,8 @@ class Grants {
    *  from it is drawn again. */
   private changed = $state(0)
 
-  /** What each private tab was told, by tab: in memory only, and gone with the tab. A
-   *  private tab is asked afresh, the way an Incognito window starts with nothing. */
-  private asides = $state<Record<string, Table>>({})
+  /** What each site was told in a private tab: memory, never the store. */
+  private privately = $state<Table>({})
 
   /** The requests waiting for an answer, oldest first: one bubble at a time, like a
    *  browser, and the next one appears as the last is answered. */
@@ -151,8 +154,8 @@ class Grants {
     })
   }
 
-  private table(aside?: string): Table {
-    if (aside !== undefined) return this.asides[aside] ?? {}
+  /** What the store holds, read so that what reads it is drawn again when it moves. */
+  private by(): Table {
     this.heardChange()
     return this.kept.get()
   }
@@ -162,40 +165,43 @@ class Grants {
     return this.changed
   }
 
-  /** Everything this site has been told, which is nothing until it asked. */
-  of(site: string, aside?: string): Partial<Record<Ask, Answer>> {
-    return this.table(aside)[site] ?? {}
+  /** Everything this site has been told, which is nothing until it asked. In a private
+   *  tab: what it was told there, over what a normal tab blocked. */
+  of(site: string, privately = false): Partial<Record<Ask, Answer>> {
+    const by = this.by()
+    if (!privately) return by[site] ?? {}
+
+    const blocked = Object.entries(by[site] ?? {}).filter(([, said]) => said === 'block')
+    return { ...Object.fromEntries(blocked), ...this.privately[site] }
   }
 
   /** What this site was told about one thing, or null for one nobody has decided. */
-  said(site: string, ask: Ask, aside?: string): Answer | null {
-    return this.of(site, aside)[ask] ?? null
+  said(site: string, ask: Ask, privately = false): Answer | null {
+    return this.of(site, privately)[ask] ?? null
   }
 
   /** Remembers an answer. A site with nothing left is taken out, so the store holds the
    *  sites somebody has decided about and no others. */
-  remember(site: string, ask: Ask, answer: Answer | null, aside?: string) {
+  remember(site: string, ask: Ask, answer: Answer | null, privately = false) {
     if (!site) return
 
+    const before = (privately ? this.privately : this.by())[site] ?? {}
     const kept = Object.fromEntries(
-      Object.entries(this.of(site, aside)).filter(([one]) => one !== ask),
+      Object.entries(before).filter(([one]) => one !== ask),
     ) as Partial<Record<Ask, Answer>>
     if (answer !== null) kept[ask] = answer
 
-    this.write(
-      withOrWithout(this.table(aside), site, Object.keys(kept).length ? kept : null),
-      aside,
-    )
-  }
-
-  /** The table written: a private tab's in memory, else to this device's storage. A
-   *  device that cannot keep it asks again next time, which is the answer that matters;
-   *  it just forgets what was said. */
-  private write(all: Table, aside?: string) {
-    if (aside !== undefined) {
-      this.asides = { ...this.asides, [aside]: all }
+    if (privately) {
+      this.privately = withOrWithout(this.privately, site, Object.keys(kept).length ? kept : null)
       return
     }
+
+    this.write(withOrWithout(this.by(), site, Object.keys(kept).length ? kept : null))
+  }
+
+  /** The table written to this device's storage. A device that cannot keep it asks
+   *  again next time, which is the answer that matters; it just forgets what was said. */
+  private write(all: Table) {
     this.kept.set(all, JSON.stringify(all))
     this.changed++
   }
@@ -207,7 +213,7 @@ class Grants {
    *  A second request for the same thing while the bubble is up is the same question:
    *  one bubble, and both requests answered by the one press. */
   heard(said: Asking) {
-    const already = this.said(said.site, said.ask, asideOf(said))
+    const already = this.said(said.site, said.ask, said.privately)
     if (already !== null) {
       void this.tell(said.id, already === 'allow')
       return
@@ -220,11 +226,10 @@ class Grants {
    *  remembered for this site, and every other request the same press answers goes with
    *  it - a page that asked for the camera twice asked one question. */
   answer(said: Asking, allow: boolean) {
-    const aside = asideOf(said)
-    this.remember(said.site, said.ask, allow ? 'allow' : 'block', aside)
+    this.remember(said.site, said.ask, allow ? 'allow' : 'block', said.privately)
 
     const same = this.asking.filter(
-      (one) => one.site === said.site && one.ask === said.ask && asideOf(one) === aside,
+      (one) => one.site === said.site && one.ask === said.ask && one.privately === said.privately,
     )
     this.asking = this.asking.filter((one) => !same.includes(one))
     for (const one of same) void this.tell(one.id, allow)
@@ -241,10 +246,10 @@ class Grants {
 
   /** The tab has gone, so its questions have. A request nobody let go of is a promise
    *  the page is still waiting on, which is what a browser leaves behind for a bubble
-   *  somebody dismissed - but a closed tab has no page to wait. A private tab's answers
-   *  go with it. */
-  dropped(tab: string) {
-    if (this.asides[tab]) this.asides = withOrWithout(this.asides, tab, null)
+   *  somebody dismissed - but a closed tab has no page to wait. With no private tab left
+   *  open, the private session has ended, and what was said in it goes with it. */
+  dropped(tab: string, privateLeft = true) {
+    if (!privateLeft) this.privately = {}
 
     const gone = this.asking.filter((one) => one.tab === tab)
     if (!gone.length) return
@@ -261,11 +266,15 @@ class Grants {
   /** Everything this site was told, forgotten - Chrome's Reset permissions. The page
    *  goes on running: what it already holds it keeps until it asks again, which is
    *  what happens in a browser too. */
-  forget(site: string, aside?: string) {
-    const all = this.table(aside)
+  forget(site: string, privately = false) {
+    if (privately) {
+      this.privately = withOrWithout<Partial<Record<Ask, Answer>>>(this.privately, site, null)
+      return
+    }
+    const all = this.by()
     if (!all[site]) return
 
-    this.write(withOrWithout<Partial<Record<Ask, Answer>>>(all, site, null), aside)
+    this.write(withOrWithout<Partial<Record<Ask, Answer>>>(all, site, null))
   }
 }
 

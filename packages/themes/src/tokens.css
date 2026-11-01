@@ -124,7 +124,7 @@
   /* How tall a note's cover is. One number, so the editor, the reading view, an
      exported document and a published page all give a note the same top; a theme
      may say otherwise like any other token. Shorter on a hand's width of screen,
-     where the words are what somebody came for. See cover.ts in @nib/markdown. */
+     where the words are what somebody came for. See cover.ts in @orden/markdown. */
   --cover-height: 200px;
 
   /* Icons, one size per context, so how big a glyph is says what kind of thing
@@ -147,7 +147,7 @@
   --row-indent: 14px;
   /* The corner a selected block is drawn with. Its own token because it is read
      back as a number and traced into the outline rather than declared on a box;
-     see selection/shape.ts in @nib/editor. A plain length, no calc. */
+     see selection/shape.ts in @orden/editor. A plain length, no calc. */
   --selection-radius: 6px;
 
   /* The ring a keyboard leaves behind it, and the one thing that says where the
@@ -174,7 +174,7 @@
   /* The gutter of line numbers beside a code block: the digits, the hairline
      that separates them from the code, and the space either side of that
      hairline. How wide the column is comes from the block's own line count and
-     is written onto its lines - see live-preview/decorate.ts in @nib/editor -
+     is written onto its lines - see live-preview/decorate.ts in @orden/editor -
      so what is left here is what a theme might want to restate. */
   --code-number-color: var(--muted);
   --code-number-rule: var(--line-strong);
@@ -500,7 +500,7 @@
      Named `--syntax-*` and not `--code-*` on purpose: every `--code-` name in
      this file is the furniture around a block rather than the code in it, and
      `--code-number` beside `--code-number-color` would have been two unrelated
-     colours one hyphen apart. See FOLLOW in code-theme.ts in @nib/editor, which
+     colours one hyphen apart. See FOLLOW in code-theme.ts in @orden/editor, which
      reads them, and note that it is read only while Highlighting follows the
      theme: choosing GitHub or Dracula pins that palette's own colours. */
   --syntax-number: #e0a233;
@@ -523,7 +523,7 @@
   /* A coloured highlight, as a wash of the tone it named. A colour emoji at the
      start of the highlight is how Obsidian 1.14 says which colour, and these are
      the five it can say; the emoji themselves are in highlights.ts in
-     @nib/markdown, which is where they belong - a stylesheet is baked into every
+     @orden/markdown, which is where they belong - a stylesheet is baked into every
      exported document, and none of those bytes should be an emoji in a comment.
 
      The same strength as `--accent-soft`, which is what a highlight with no
@@ -534,7 +534,7 @@
      tone and a custom property is substituted where it is used - so a light
      theme's own `--canvas-1` is what a light page mixes. There is no `--mark-3`:
      Obsidian writes no yellow emoji, because a plain highlight is already its
-     yellow, and a colour nib could write but Obsidian could not read is not a
+     yellow, and a colour Orden could write but Obsidian could not read is not a
      colour. */
   --mark-1: color-mix(in srgb, var(--canvas-1) 22%, transparent);
   --mark-2: color-mix(in srgb, var(--canvas-2) 22%, transparent);
@@ -669,7 +669,7 @@
   --surface-picked: var(--surface-3);
 
   /* Callout looks, so a theme can restate them like any other colour. Fifteen,
-     which is the thirteen Obsidian has plus the two nib had first; the other
+     which is the thirteen Obsidian has plus the two Orden had first; the other
      words for them - `tldr`, `hint`, `error` - resolve to one of these before
      any markup is written. See packages/markdown/src/callouts.ts.
 

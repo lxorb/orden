@@ -4,7 +4,7 @@
 //! Emil, 2026-10-03: *"Swiping (left/right) to go to the previous / redo page."* Chrome and
 //! Edge take a sideways scroll the page left over as Back or Forward, with an arrow that
 //! follows the fingers. Both of Windows' engines are Chromium and have that swipe too, and
-//! nib starts both without it (`ENGINE_SWIPE` in engine.rs): it walks the engine's own
+//! Orden starts both without it (`ENGINE_SWIPE` in engine.rs): it walks the engine's own
 //! history, and a tab nib revived after a relaunch has none - its trail is this crate's
 //! (`Trail` in `web_tabs.rs`) - so the engine's swipe did nothing on most tabs after a
 //! restart, went the wrong way after any step the crate made itself, and on the pages where
@@ -19,7 +19,7 @@
 //! would have taken it, and says it a frame at a time. Every listener there is passive and
 //! only reads, so the page scrolls exactly as it did.
 //!
-//! **How it is said** is each engine's one road back from nib's world. On nib's own
+//! **How it is said** is each engine's one road back from nib's world. On Orden's own
 //! Chromium a function only that world has (`BINDING`, the `DevTools` protocol's
 //! `Runtime.addBinding` by the world's name), as `web_opens.rs` asks there. On `WebView2`
 //! a window asked for under a name that carries it (`NAMED`), which `web_opens.rs` hears
@@ -45,7 +45,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-/// nib's script for every page and frame, as the file holds it; see `web_swipe.js`.
+/// Orden's script for every page and frame, as the file holds it; see `web_swipe.js`.
 const SCRIPT: &str = include_str!("web_swipe.js");
 
 /// The script as a page is handed it: a function called on the spot and nothing round
@@ -56,7 +56,7 @@ pub fn script() -> &'static str {
     SCRIPT.trim().trim_start_matches(';')
 }
 
-/// The function nib's world in a page says a swipe through on nib's own Chromium.
+/// The function nib's world in a page says a swipe through on Orden's own Chromium.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const BINDING: &str = "nibSwiped";
 

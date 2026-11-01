@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** A task, whole (Todoist's task view in nib's shapes): where it lives, its box and its
+  /** A task, whole (Todoist's task view in Orden's shapes): where it lives, its box and its
    *  words, its description in the editor every note is written in, its sub-tasks, and a
    *  column of what it is - its note, its day, its deadline, its priority, its labels and
    *  its reminders - each a press away from being changed. The arrows walk the list it
@@ -9,12 +9,12 @@
    *  views' one write path, so every edit is one edit of the note and one undo, and the
    *  note open in a pane beside it changes as it is written. A layer over the window; a
    *  page of its own on a phone. */
-  import type { Priority, Row } from '@nib/bases'
-  import { parseQuickAdd } from '@nib/bases/language'
-  import { linesOf } from '@nib/bases/tasks'
-  import { dayWords } from '@nib/editor/task-days'
-  import { editedWords, shownWords } from '@nib/markdown/escapes'
-  import { deadlineOf, startOf } from '@nib/markdown/task-dates'
+  import type { Priority, Row } from '@orden/bases'
+  import { parseQuickAdd } from '@orden/bases/language'
+  import { linesOf } from '@orden/bases/tasks'
+  import { dayWords } from '@orden/editor/task-days'
+  import { editedWords, shownWords } from '@orden/markdown/escapes'
+  import { deadlineOf, startOf } from '@orden/markdown/task-dates'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
   import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs'

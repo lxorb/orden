@@ -3,25 +3,25 @@
 //!
 //! The window names a tool, a model, an effort, a mode and a thread, and sends words.
 //! Everything else on the command line, and every field of every message that sets a
-//! program up, is written here, so no page (nib's own, or one that got hold of its
+//! program up, is written here, so no page (Orden's own, or one that got hold of its
 //! bridge) can hand Claude Code or Codex a flag that lets it run a command, write a file
 //! or reach a server the reader set up for their own work.
 //!
 //! - **A question** (`ask`, Claude Code only) is answered in words: no tools at all
 //!   (`--tools ""`), none of the reader's MCP servers (`--strict-mcp-config` with none
-//!   given), nothing written to its session history, nib's own one-line system prompt in
+//!   given), nothing written to its session history, Orden's own one-line system prompt in
 //!   place of the coding agent's, and where the installed version knows `--safe-mode`,
 //!   the reader's hooks, plugins and `CLAUDE.md` left out while their sign-in and model
 //!   work as always.
 //! - **A session** (the AI sidebar's thread, docs/ai-sidebar.md 5.2) is the same promise
-//!   with one tool in it: nib's own, `nib mcp`, under the sidebar's grant, listing only
+//!   with one tool in it: Orden's own, `nib mcp`, under the sidebar's grant, listing only
 //!   what the thread's mode lists. Claude Code runs long-lived with turns on stdin as
 //!   stream-json, `--restricted` where it has it (the reader's settings files, hooks and
 //!   plugins left out) and the reader's `CLAUDE.md` files switched off by their own
 //!   variable. Not `--safe-mode`: measured on 2.1.280, it drops the `--mcp-config` server
 //!   too. Codex runs as `app-server` for every question, sidebar or not: read-only,
 //!   asking nobody, shell and web search off, none of the reader's MCP servers, no
-//!   `AGENTS.md`, and nib's server added per thread on stdin (`codex_thread`).
+//!   `AGENTS.md`, and Orden's server added per thread on stdin (`codex_thread`).
 //!
 //! Which optional flags Claude Code has is read off its own `--help`, once per program
 //! per run of the app (`Caps`), so an older version is still asked rather than refused
@@ -101,7 +101,7 @@ Reply in the language of the request, briefly, saying what you did."
     }
 }
 
-/// nib's scale of effort, less `auto`, which is sent as nothing (docs/ai-sidebar.md 4.9).
+/// Orden's scale of effort, less `auto`, which is sent as nothing (docs/ai-sidebar.md 4.9).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Effort {
@@ -150,13 +150,15 @@ struct Row {
 
 /// The tools a mode lists and the ones it leaves out, by their names in `nib mcp`, from
 /// the one table the server lists them from (src/mcp/tools.json). What the grant does
-/// not reach the server leaves out on its own.
-pub fn tools_of(mode: Mode) -> (Vec<String>, Vec<String>) {
+/// not reach the server leaves out on its own. `without` is what the thread is not given
+/// whatever its mode lists (a task done with AI, #325); a name the table does not have
+/// is no tool, and changes nothing.
+pub fn tools_of(mode: Mode, without: &[String]) -> (Vec<String>, Vec<String>) {
     let table: Vec<Row> =
         serde_json::from_str(include_str!("../mcp/tools.json")).unwrap_or_default();
     let (listed, left): (Vec<Row>, Vec<Row>) = table.into_iter().partition(|row| {
         let reads = row.annotations["readOnlyHint"].as_bool() == Some(true);
-        crate::ai_agent::in_mode(mode, &row.name, reads)
+        crate::ai_agent::in_mode(mode, &row.name, reads) && !without.contains(&row.name)
     });
     let names = |rows: Vec<Row>| rows.into_iter().map(|row| row.name).collect();
     (names(listed), names(left))
@@ -172,17 +174,17 @@ pub const SERVER: &str = "orden";
 /// and Codex is told to pass this one on (`env_vars`). Never on a command line.
 pub const TOKEN_VAR: &str = "NIB_MCP_TOKEN";
 
-/// The variable `nib mcp` reads which nib thread a session is for, so a helper it starts
+/// The variable `nib mcp` reads which Orden thread a session is for, so a helper it starts
 /// is that thread's (src/mcp/link.rs). Not a secret: an id of the window's own.
 pub const THREAD_VAR: &str = "NIB_MCP_THREAD";
 
-/// A Codex thread's `nib mcp` told which nib thread it is for: the server's own
+/// A Codex thread's `nib mcp` told which Orden thread it is for: the server's own
 /// environment in the thread's config, sent on stdin like the rest of it.
 pub fn with_thread(params: &mut Value, thread: &str) {
     params["config"][format!("mcp_servers.{SERVER}.env")] = json!({ THREAD_VAR: thread });
 }
 
-/// How long either program waits for one nib tool: ten minutes, since in Approve a call
+/// How long either program waits for one Orden tool: ten minutes, since in Approve a call
 /// waits for the reader to approve it (src/mcp/link.rs).
 const TOOL_SECONDS: u64 = 600;
 
@@ -213,6 +215,8 @@ pub struct Shape<'a> {
     pub model: Option<&'a str>,
     /// `None` is the model's own default.
     pub effort: Option<Effort>,
+    /// The tools the thread is not given, whatever its mode lists; see `tools_of`.
+    pub without: &'a [String],
 }
 
 /// Whether a model name is one to pass on: a short run of the characters model names and
@@ -324,7 +328,7 @@ pub fn claude_session(shape: Shape, caps: &Caps, config: &Path) -> Result<Vec<St
 
     let mut args = claude_base(true, true);
     if let Some(mode) = shape.mode {
-        let (listed, left) = tools_of(mode);
+        let (listed, left) = tools_of(mode, shape.without);
         let named = |names: &[String]| {
             names
                 .iter()
@@ -348,7 +352,7 @@ pub fn claude_session(shape: Shape, caps: &Caps, config: &Path) -> Result<Vec<St
         }
     }
     // Anything not allowed above is refused without asking: nobody is there to ask, and
-    // nib's own questions are asked at nib's verbs.
+    // Orden's own questions are asked at Orden's verbs.
     if caps.has("--permission-mode") {
         args.extend(["--permission-mode".to_owned(), "dontAsk".to_owned()]);
     }
@@ -402,12 +406,18 @@ pub fn codex_server() -> Vec<String> {
 }
 
 /// The parameters of `thread/start`: read-only, asking nobody, kept nowhere, its
-/// instructions nib's, and for a mode `nib mcp` with the mode's tools. Sent on stdin, so
+/// instructions Orden's, and for a mode `nib mcp` with the mode's tools. Sent on stdin, so
 /// nothing in it is on a command line.
-pub fn codex_thread(mode: Option<Mode>, model: Option<&str>, nib: &Path, folder: &Path) -> Value {
+pub fn codex_thread(
+    mode: Option<Mode>,
+    model: Option<&str>,
+    without: &[String],
+    nib: &Path,
+    folder: &Path,
+) -> Value {
     let mut config = serde_json::Map::new();
     if let Some(mode) = mode {
-        let (listed, left) = tools_of(mode);
+        let (listed, left) = tools_of(mode, without);
         let key = |name: &str| format!("mcp_servers.{SERVER}.{name}");
         config.insert(key("command"), json!(nib));
         config.insert(key("args"), json!(["mcp"]));
@@ -499,6 +509,7 @@ mod tests {
                 mode,
                 model: Some("opus[1m]"),
                 effort: Some(Effort::Xhigh),
+                without: &[],
             };
             all.extend(claude_session(shape, &caps, &config()).expect("session"));
         }
@@ -551,8 +562,8 @@ mod tests {
         assert_eq!(value_of(&plan, "--permission-mode"), Some("dontAsk"));
         assert_eq!(value_of(&plan, "--input-format"), Some("stream-json"));
 
-        // The three permission modes list every nib verb, allowed in advance, so Claude Code itself
-        // never prompts: what asks first, in Approve and Auto, is nib, at its own verbs, for the
+        // The three permission modes list every Orden verb, allowed in advance, so Claude Code itself
+        // never prompts: what asks first, in Approve and Auto, is Orden, at its own verbs, for the
         // token lent to that mode. Its own tools stay out, so no bypass is needed.
         for mode in [Mode::Approve, Mode::Auto, Mode::Full] {
             let all = claude_session(shape(mode), &caps, &config()).expect("all");
@@ -570,6 +581,42 @@ mod tests {
         assert!(!words.contains(&"--allowedTools".to_owned()));
     }
 
+    /// A task done with AI with some switches off (#325): those tools are left out of what
+    /// either program is shown, in every mode, as a mode leaves its own out.
+    #[test]
+    fn a_thread_s_tools_left_out_are_never_shown() {
+        let caps = Caps::from_help(CLAUDE_HELP);
+        let without = ["browser_navigate".to_owned(), "write_note".to_owned()];
+        let auto = Shape {
+            mode: Some(Mode::Auto),
+            without: &without,
+            ..Shape::default()
+        };
+        let args = claude_session(auto, &caps, &config()).expect("auto");
+        let allowed = value_of(&args, "--allowedTools").expect("allowed");
+        assert!(allowed.contains("mcp__orden__update_task"));
+        assert!(!allowed.contains("browser_navigate") && !allowed.contains("write_note"));
+        let denied = value_of(&args, "--disallowedTools").expect("denied");
+        assert!(denied.contains("mcp__orden__browser_navigate"));
+        assert!(denied.contains("mcp__orden__write_note"));
+
+        let nib = PathBuf::from("nib");
+        let folder = PathBuf::from("ai");
+        let thread = codex_thread(Some(Mode::Auto), None, &without, &nib, &folder);
+        let enabled = thread["config"]["mcp_servers.orden.enabled_tools"]
+            .as_array()
+            .expect("enabled")
+            .iter()
+            .filter_map(Value::as_str)
+            .collect::<Vec<_>>();
+        assert!(enabled.contains(&"update_task"));
+        assert!(!enabled.contains(&"browser_navigate") && !enabled.contains(&"write_note"));
+
+        // A name that is no tool changes nothing.
+        let unknown = ["no_such_tool".to_owned()];
+        assert_eq!(tools_of(Mode::Full, &unknown), tools_of(Mode::Full, &[]));
+    }
+
     #[test]
     fn a_session_takes_its_model_and_effort_as_values() {
         let caps = Caps::from_help(CLAUDE_HELP);
@@ -577,6 +624,7 @@ mod tests {
             mode: Some(Mode::Plan),
             model: Some("sonnet[1m]"),
             effort: Some(Effort::Max),
+            without: &[],
         };
         let args = claude_session(shape, &caps, &config()).expect("args");
         assert_eq!(value_of(&args, "--model"), Some("sonnet[1m]"));
@@ -623,7 +671,7 @@ mod tests {
     fn a_codex_thread_adds_nib_alone_with_its_mode_s_tools() {
         let nib = PathBuf::from("nib.exe");
         let folder = PathBuf::from("ai");
-        let plan = codex_thread(Some(Mode::Plan), Some("gpt-5.1-codex"), &nib, &folder);
+        let plan = codex_thread(Some(Mode::Plan), Some("gpt-5.1-codex"), &[], &nib, &folder);
         assert_eq!(plan["sandbox"], "read-only");
         assert_eq!(plan["approvalPolicy"], "never");
         assert_eq!(plan["ephemeral"], true);
@@ -642,24 +690,24 @@ mod tests {
             .keys()
             .all(|key| key.starts_with("mcp_servers.orden.")));
 
-        let agent = codex_thread(Some(Mode::Full), None, &nib, &folder);
+        let agent = codex_thread(Some(Mode::Full), None, &[], &nib, &folder);
         assert!(agent["config"]["mcp_servers.orden.enabled_tools"].is_null());
-        let approve = codex_thread(Some(Mode::Approve), None, &nib, &folder);
+        let approve = codex_thread(Some(Mode::Approve), None, &[], &nib, &folder);
         assert!(approve["config"]["mcp_servers.orden.enabled_tools"].is_null());
-        // Codex asks nobody in any mode: nib asks, at its verbs, in Approve.
+        // Codex asks nobody in any mode: Orden asks, at its verbs, in Approve.
         assert_eq!(approve["approvalPolicy"], "never");
         assert_eq!(agent["approvalPolicy"], "never");
-        // Auto too: the three permission modes are nib's, never Codex's own sandbox.
-        let auto = codex_thread(Some(Mode::Auto), None, &nib, &folder);
+        // Auto too: the three permission modes are Orden's, never Codex's own sandbox.
+        let auto = codex_thread(Some(Mode::Auto), None, &[], &nib, &folder);
         assert_eq!(auto["approvalPolicy"], "never");
         assert_eq!(auto["sandbox"], "read-only");
         assert!(auto["config"]["mcp_servers.orden.enabled_tools"].is_null());
         assert!(agent.get("model").is_none());
-        let words = codex_thread(None, None, &nib, &folder);
+        let words = codex_thread(None, None, &[], &nib, &folder);
         assert_eq!(words["config"], json!({}));
 
-        // The nib thread a session is for reaches its `nib mcp` alone, for its helpers.
-        let mut helped = codex_thread(Some(Mode::Full), None, &nib, &folder);
+        // The Orden thread a session is for reaches its `nib mcp` alone, for its helpers.
+        let mut helped = codex_thread(Some(Mode::Full), None, &[], &nib, &folder);
         with_thread(&mut helped, "nib-thread-1");
         assert_eq!(
             helped["config"]["mcp_servers.orden.env"],

@@ -103,7 +103,7 @@ function byNoteName(a: string, b: string): number {
   return sortCompare(name(a), name(b)) || sortCompare(a, b)
 }
 
-/** The options a property's groups come in, nib's select options. */
+/** The options a property's groups come in, Orden's select options. */
 function optionOrder(base: Base, property: string | undefined): string[] {
   if (!property) return []
   const key = property.replace(/^note\./, '')

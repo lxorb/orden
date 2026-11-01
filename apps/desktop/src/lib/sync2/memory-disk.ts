@@ -2,7 +2,7 @@
  *  devices and the tests that run the engine against the Worker. Paths compare without
  *  case, as on Windows and a Mac. */
 
-import { nameKey } from '@nib/sync-core/tree'
+import { nameKey } from '@orden/sync-core/tree'
 import { folderOf } from './places'
 import type { Disk } from './world'
 

@@ -3,7 +3,7 @@
  *  crossing, devices that crash with an outbox full, and every device ending with the
  *  one state the reducer makes of the account's log. */
 
-import { type Event, type Message, ulid, type Who } from '@nib/chats'
+import { type Event, type Message, ulid, type Who } from '@orden/chats'
 import { afterEach, describe, expect, test } from 'vitest'
 import { MemoryCache } from './cache'
 import { ChatEngine } from './engine'

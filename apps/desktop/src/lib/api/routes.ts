@@ -295,7 +295,7 @@ export interface SiteSettings {
 }
 
 /** What a publish would change: how many pages the site would have, which
- *  appear, which disappear. A nib site is live - the page is the note - so this
+ *  appear, which disappear. An Orden site is live - the page is the note - so this
  *  is the only thing a publish can change and the only honest thing to show
  *  before one. */
 export interface SiteChanges {
@@ -396,7 +396,7 @@ export interface AccountSettings {
      there is no setting; a value an older build saved is ignored. The service still
      accepts the field so an older build's patch is not refused. */
   /** How much of a note's own white space reaches the panel: `none`, `collapse`
-   *  or `aggressive`; see `Compaction` in @nib/glasses. */
+   *  or `aggressive`; see `Compaction` in @orden/glasses. */
   glassesCompaction?: string
   /** Which of a note's markers are drawn on the panel, by construct. */
   glassesMarks?: Record<string, boolean>
@@ -429,7 +429,7 @@ export interface AccountSettings {
   /** What pings for every chat at once (docs/chats.md 4.11): words that call for the
    *  reader as their name does, the hours pings are let through (null for every hour),
    *  and whether a notification shows the words and makes a sound. See
-   *  chats/hush.svelte.ts and `Hours` in @nib/chats/notify. */
+   *  chats/hush.svelte.ts and `Hours` in @orden/chats/notify. */
   chatKeywords?: string[]
   chatHours?: { days: number[]; from: number; to: number } | null
   chatPreviews?: boolean
@@ -474,7 +474,7 @@ export interface AccountSettings {
   conflicts?: string
   /** Which colour the highlight button writes, as the palette tone it names, or
    *  null for a highlight with no colour of its own; see highlights.ts in
-   *  @nib/markdown. How somebody marks up, not which machine they are at. */
+   *  @orden/markdown. How somebody marks up, not which machine they are at. */
   highlightTone?: number | null
   /** Whether a single newline breaks the line. On the account because it is about
    *  how the notes read, and read by the blog as well, so a published page reads
@@ -485,7 +485,7 @@ export interface AccountSettings {
   linkFormat?: string
   /** What a note's front matter is drawn as: its rows, its source, or nothing. On
    *  the account because it is about how metadata is read rather than about which
-   *  machine is reading it; see properties.ts in @nib/markdown. */
+   *  machine is reading it; see properties.ts in @orden/markdown. */
   properties?: string
   /** Whether the formatting marks stay out of sight while writing. How somebody
    *  likes to write, so the same on every device; see `quietMarks` in modes.svelte.ts. */

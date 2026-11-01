@@ -10,7 +10,7 @@
 //! the window checks it on the way back in (`src/lib/ai/chat/threads.ts`). What is
 //! checked here is everything that names a file: a space and a thread are each an id the
 //! window made (a UUID), and anything else is refused rather than made safe, so no id can
-//! name a file outside the folder. Only nib's own window may ask.
+//! name a file outside the folder. Only Orden's own window may ask.
 
 use std::collections::BTreeMap;
 use std::fs;

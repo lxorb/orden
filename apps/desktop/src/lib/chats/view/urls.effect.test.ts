@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import type { Who } from '@nib/chats'
+import type { Who } from '@orden/chats'
 import type { Chats } from '../api'
 import { computed, root, watch } from '../../../../test/effects/runes.svelte'
 

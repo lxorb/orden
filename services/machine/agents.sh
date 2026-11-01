@@ -7,7 +7,7 @@
 #   in the release's manifest before it installs it, and keeps it current itself;
 # - Codex by npm, which checks every package against the registry's SHA-512 integrity,
 #   updated here at each boot since an npm install has no updater of its own.
-# Neither is ever signed in to by nib, and nothing here reads what they keep.
+# Neither is ever signed in to by Orden, and nothing here reads what they keep.
 set -uo pipefail
 
 export NPM_CONFIG_PREFIX="$HOME/.local"

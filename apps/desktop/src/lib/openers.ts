@@ -21,7 +21,7 @@ import {
   isPagesTarget,
   isPdfTarget,
   isWebTarget,
-} from '@nib/markdown/links'
+} from '@orden/markdown/links'
 import { isMarkdownPath } from './space-paths'
 
 /** What opens a path, or null where this build cannot show it. */

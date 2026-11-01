@@ -6,7 +6,7 @@ import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
 import { markedPlane, type PlaneMarks, planeMarks } from '../scan-canvas'
 import { scanNote, scanShortcut, type SpaceLinks } from '../scan-note'
-import { scanRows } from '@nib/bases/scan'
+import { scanRows } from '@orden/bases/scan'
 import { isNumber, isRecord, isString, parsed } from '../stored'
 import { tagsIn } from '../search/tags'
 import {
@@ -22,7 +22,7 @@ import {
   spaceOf,
   within,
 } from './paths'
-import { isBaseTarget, isChatTarget, isWebTarget } from '@nib/markdown/links'
+import { isBaseTarget, isChatTarget, isWebTarget } from '@orden/markdown/links'
 import { assetType } from './asset-route'
 import { isReserved } from '../naming'
 import { assets, type FileRow, files, KEEP, meta, snapshots, stats } from './store'
@@ -37,6 +37,8 @@ interface Entry {
   modified: number
   created: number
   children: Entry[]
+  /** A page note holding a paper; see `paper` in the desktop's tree.rs. */
+  paper?: boolean
 }
 
 interface TreeOptions {
@@ -204,6 +206,7 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
       modified: row.modified,
       created: row.created,
       children: [],
+      ...(present.has(paperOf(row.path)) && isPages(row.path) ? { paper: true } : {}),
     })
   }
 

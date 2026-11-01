@@ -3,7 +3,7 @@
  *  anything is said where they are. See src/signins.ts. */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { subprotocol } from '@nib/rooms'
+import { subprotocol } from '@orden/rooms'
 import { sha256 } from '../src/crypto'
 import type { Person } from '../src/chats/log'
 import { call, signIn, type TestEnv, testEnv } from './harness'

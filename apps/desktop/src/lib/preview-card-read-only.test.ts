@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { EditorView } from '@nib/editor'
+import { EditorView } from '@orden/editor'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** The card over a `[[link]]` is read-only wherever what is typed in it could not

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
-import { renderMarkdown } from '@nib/markdown'
-import { readTask } from '@nib/markdown/task-line'
+import { renderMarkdown } from '@orden/markdown'
+import { readTask } from '@orden/markdown/task-line'
 
 import { readKeep } from './keep'
 import type { ImportPlan } from './plan'

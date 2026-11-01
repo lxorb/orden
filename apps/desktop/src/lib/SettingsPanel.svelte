@@ -3,7 +3,7 @@
   import { overlays } from './overlays'
   import { fade, fly, scale, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import type { EditorView } from '@nib/editor'
+  import type { EditorView } from '@orden/editor'
   import Swatches from './Swatches.svelte'
   import { account } from './account.svelte'
   import { exportCommands } from './commands'
@@ -43,7 +43,8 @@
   import { ICONS, sectionGroups } from './settings/sections'
   import { type Place, search } from './settings-search'
   import { sync } from './sync.svelte'
-  import { isDesktop, openExternal, platform } from './tauri'
+  import { isDesktop, openExternal } from './tauri'
+  import { runsExtensions } from './web-tab/extensions.svelte'
   import { theme } from './theme.svelte'
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './themes/store.svelte'
@@ -890,9 +891,9 @@
       </label>
     {/if}
   </div>
-  <!-- The extensions web tabs run, where the engine runs any: Windows, on both of its
-       engines. See settings/ExtensionRows.svelte. -->
-  {#if platform() === 'windows'}
+  <!-- The extensions web tabs run, where the engine runs any: Windows and Linux. See
+       settings/ExtensionRows.svelte and `runsExtensions`. -->
+  {#if runsExtensions}
     <h3>{t('Extensions')}</h3>
     <div class="card">
       <ExtensionRows />

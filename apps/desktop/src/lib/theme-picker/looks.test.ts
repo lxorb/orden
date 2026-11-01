@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import tokens from '@nib/themes/tokens.css?raw'
-import { contrastCss } from '@nib/themes/contrast'
+import tokens from '@orden/themes/tokens.css?raw'
+import { contrastCss } from '@orden/themes/contrast'
 import { accentTokens } from '../accents'
 import { lookOf } from './looks'
 

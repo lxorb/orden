@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Where a message is written (docs/chats.md 4.15): a small nib editor, the notes'
+  /** Where a message is written (docs/chats.md 4.15): a small Orden editor, the notes'
    *  own live preview, one line that grows to a third of the chat and then scrolls,
    *  with the chat's name faint in it while it is empty.
    *
@@ -14,9 +14,9 @@
    *
    *  Nothing here costs anything per keystroke that grows with the chat: the editor is
    *  the composer's words and nothing else. */
-  import type { FileRef, Member, Poll } from '@nib/chats'
-  import { ASK_EVERYONE_PAST } from '@nib/chats/limits'
-  import { createEditor, EditorView, modeEffects, setNoteIndex } from '@nib/editor'
+  import type { FileRef, Member, Poll } from '@orden/chats'
+  import { ASK_EVERYONE_PAST } from '@orden/chats/limits'
+  import { createEditor, EditorView, modeEffects, setNoteIndex } from '@orden/editor'
   import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { chooseFiles } from '../../choose-files'
@@ -224,7 +224,7 @@
   /** Rows of the file list dropped on the chat, as links at the caret (#416), the
    *  words a drop on a note writes. */
   export function addNotes(paths: readonly string[]): void {
-    void import('@nib/editor/note-links').then(({ noteLinks }) =>
+    void import('@orden/editor/note-links').then(({ noteLinks }) =>
       insert(`${noteLinks(links.index(path), paths, pickedLink)} `),
     )
   }

@@ -1,18 +1,18 @@
 //! Another machine's shell in a tab: the system's own `ssh`, in the pty a local shell
 //! would have, so keys, the agent, `ProxyJump`, a second factor and `known_hosts` all
-//! work the way they do in any other terminal, and nib keeps no password and speaks no
+//! work the way they do in any other terminal, and Orden keeps no password and speaks no
 //! SSH of its own. See docs/terminal.md, _Another machine_.
 //!
 //! **A host is an id to the window**, as a shell is (see shells.rs): `ssh:pi` names a
-//! host of the reader's `~/.ssh/config` (`ssh_config.rs`) and `ssh:n-...` one made in nib,
+//! host of the reader's `~/.ssh/config` (`ssh_config.rs`) and `ssh:n-...` one made in Orden,
 //! and the program, its arguments and the destination are this module's. A host made in
-//! nib is a name, a user, an address and a port, each held to what a destination can be
+//! Orden is a name, a user, an address and a port, each held to what a destination can be
 //! before it is kept and again before it is used, and handed to `ssh` after `--`, so
 //! nothing the window keeps can be read as an option.
 //!
 //! **The config is never written.** Its hosts are mirrors, re-read each time the list
-//! is asked for, so an edit shows at once; what nib knows besides - a colour, a group, a
-//! pin, when one was last connected to, and the hosts made in nib - is one file in the
+//! is asked for, so an edit shows at once; what Orden knows besides - a colour, a group, a
+//! pin, when one was last connected to, and the hosts made in Orden - is one file in the
 //! app's local data folder, `remote/hosts.json`, which never syncs: which machines a
 //! person reaches is this computer's business.
 
@@ -30,7 +30,7 @@ use super::ssh_config::{self, ConfigHost};
 /// What a host's id starts with in a terminal's words, in place of a shell's id.
 pub const PREFIX: &str = "ssh:";
 
-/// What the id of a host made in nib starts with, so it can never be read as a name in
+/// What the id of a host made in Orden starts with, so it can never be read as a name in
 /// the config.
 const OWN: &str = "n-";
 
@@ -39,7 +39,7 @@ const OWN: &str = "n-";
 const MOST_HOSTS: usize = 500;
 const MOST_WORDS: usize = 200;
 
-/// A host made in nib.
+/// A host made in Orden.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Own {
     pub id: String,
@@ -51,7 +51,7 @@ pub struct Own {
     pub port: Option<u16>,
 }
 
-/// What nib knows about one host, from the config or its own.
+/// What Orden knows about one host, from the config or its own.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct About {
     /// One of the canvas's six colours, `1` to `6`.
@@ -124,7 +124,7 @@ pub fn is_user(user: &str) -> bool {
         })
 }
 
-/// Whether an id is one nib makes for its own hosts.
+/// Whether an id is one Orden makes for its own hosts.
 fn is_own_id(id: &str) -> bool {
     id.starts_with(OWN)
         && id.len() <= 64
@@ -208,7 +208,7 @@ pub enum Target<'a> {
     Own(&'a Own),
 }
 
-/// The host an id names, among the config's and nib's own.
+/// The host an id names, among the config's and Orden's own.
 fn target<'a>(id: &'a str, config: &[ConfigHost], kept: &'a Kept) -> Option<Target<'a>> {
     if is_own_id(id) {
         if let Some(own) = kept.own.iter().find(|one| one.id == id) {
@@ -221,7 +221,7 @@ fn target<'a>(id: &'a str, config: &[ConfigHost], kept: &'a Kept) -> Option<Targ
         .then_some(Target::Config(id))
 }
 
-/// Where everything here is: the reader's home, the config, and the file nib keeps.
+/// Where everything here is: the reader's home, the config, and the file Orden keeps.
 struct Places {
     home: PathBuf,
     config: PathBuf,
@@ -328,7 +328,7 @@ pub fn connect(webview: &Webview, id: &str) -> Result<Launch, String> {
 }
 
 /// The system's `ssh` and the arguments that reach the host `id` names, for a connection
-/// of nib's own beside the tab's: a picture carried over (`picture.rs`). Nothing is noted
+/// of Orden's own beside the tab's: a picture carried over (`picture.rs`). Nothing is noted
 /// down; refused for an id that names no host, and where there is no `ssh`.
 pub(super) fn reach(webview: &Webview, id: &str) -> Result<(PathBuf, Vec<String>), String> {
     let places = places(webview)?;
@@ -340,7 +340,7 @@ pub(super) fn reach(webview: &Webview, id: &str) -> Result<(PathBuf, Vec<String>
     Ok((program, args))
 }
 
-/// Every host there is: the config's, as it is now, and what nib keeps.
+/// Every host there is: the config's, as it is now, and what Orden keeps.
 #[tauri::command(async)]
 pub fn remote_hosts(webview: Webview) -> Result<Hosts, String> {
     super::owner(&webview)?;
@@ -372,7 +372,7 @@ pub fn remote_keep(webview: Webview, kept: Kept) -> Result<Kept, String> {
     Ok(kept)
 }
 
-/// The config, in the system's own text editor: nib reads it and never writes it.
+/// The config, in the system's own text editor: Orden reads it and never writes it.
 #[tauri::command(async)]
 pub fn remote_config_open(webview: Webview) -> Result<(), String> {
     super::owner(&webview)?;

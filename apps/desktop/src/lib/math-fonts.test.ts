@@ -1,8 +1,8 @@
-import { renderMarkdown } from '@nib/markdown'
+import { renderMarkdown } from '@orden/markdown'
 // Both heavy libraries handed over outright. In the app a formula is set by a render
 // that has awaited them - `prepareFences` and `runExport` do - and these render
-// synchronously; see @nib/markdown/engines.
-import '@nib/markdown/eager'
+// synchronously; see @orden/markdown/engines.
+import '@orden/markdown/eager'
 import { describe, expect, test } from 'vitest'
 import { mathCss } from './math-fonts'
 

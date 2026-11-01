@@ -3,11 +3,11 @@
  *  A reader on a NixOS laptop: *"spellchecking for multiple languages"*. The spelling
  *  pane had one dropdown, and what it set was the writing surface's `lang` - which no
  *  Chromium reads to choose a dictionary. Chromium checks a word against every
- *  dictionary in its `spellcheck.dictionaries` preference, and nib never wrote that, so
- *  on nib's own Chromium every note was checked in English whatever the pane said
+ *  dictionary in its `spellcheck.dictionaries` preference, and Orden never wrote that, so
+ *  on Orden's own Chromium every note was checked in English whatever the pane said
  *  (measured: the profile held `["en-US"]` and one `en-US-10-2.bdic`).
  *
- *  So on nib's own Chromium, which is every Linux desktop, the pane is a switch per
+ *  So on Orden's own Chromium, which is every Linux desktop, the pane is a switch per
  *  dictionary and the crate writes the ones that are on into that preference; Chromium
  *  fetches a dictionary it has not got the first time it is asked for. The other
  *  engines check in the languages their platform is set to, several at once already -
@@ -47,7 +47,7 @@ export const DICTIONARIES: readonly Dictionary[] = [
 
 const KNOWN = new Set(DICTIONARIES.map((one) => one.id))
 
-/** Whether this engine checks against a list nib can write: nib's own Chromium, which
+/** Whether this engine checks against a list Orden can write: Orden's own Chromium, which
  *  every Linux desktop runs. */
 export const choosable = isDesktop && platform() === 'linux'
 

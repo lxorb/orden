@@ -24,7 +24,7 @@ export function headingLevel(name: string): number | null {
   return HEADING_LEVEL[name] ?? null
 }
 
-/** What words a heading line shows is @nib/markdown's, not the editor's: it is
+/** What words a heading line shows is @orden/markdown's, not the editor's: it is
  *  what decides what `[[Note#Heading]]` can name, so the editor writing such a
  *  link and the renderer resolving one have to read the line the same way. */
-export { headingText } from '@nib/markdown/links'
+export { headingText } from '@orden/markdown/links'

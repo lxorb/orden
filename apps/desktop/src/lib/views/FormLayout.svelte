@@ -8,7 +8,7 @@
    *
    *  Its own controls rather than a cell's: a form fills a note that does not exist
    *  yet, so there is nothing for the one write path to write into until it is sent. */
-  import type { Value } from '@nib/bases'
+  import type { Value } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import Select from '../Select.svelte'

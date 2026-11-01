@@ -1,9 +1,9 @@
 import { describe, expect, test, vi } from 'vitest'
-import { SharedDoc } from '@nib/editor'
-import { TEXT } from '@nib/rooms'
-import { hash32 } from '@nib/sync-core/seed'
-import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@nib/sync-core/sim'
-import { type DocRefusal, frame, type PushRequest, unframe } from '@nib/sync-core/wire'
+import { SharedDoc } from '@orden/editor'
+import { TEXT } from '@orden/rooms'
+import { hash32 } from '@orden/sync-core/seed'
+import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@orden/sync-core/sim'
+import { type DocRefusal, frame, type PushRequest, unframe } from '@orden/sync-core/wire'
 import { attach } from './binding'
 import { inline } from './classify'
 import { HERE } from './docs'
@@ -12,7 +12,7 @@ import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import { put, scan, StoreError, type Change } from './store'
 import { numbersRow, wantedRow } from './records'
-import { seedUpdate } from '@nib/sync-core/seed'
+import { seedUpdate } from '@orden/sync-core/seed'
 import type { Disk, World } from './world'
 import type { SpaceNews } from '../space-watch'
 import * as Y from 'yjs'
@@ -23,6 +23,8 @@ vi.mock('../space-watch', () => ({
   unwatchSpaces: () => Promise.resolve(),
   scanSpace: () => Promise.resolve([]),
 }))
+const told = vi.hoisted(() => vi.fn())
+vi.mock('../notify', () => ({ notify: told }))
 const { watchFolders } = await import('./watching')
 
 /** The engine's own promises, held to one device with an account in memory (the
@@ -810,6 +812,34 @@ describe('the folder watcher', () => {
     expect(await here.disk.exists(`${ROOT}/Work/Plan.md`)).toBe(true)
   })
 
+  /** #481: past the system's limit of watched folders, the watch says so with its scan,
+   *  and the reader is told once a run, however often it is said. */
+  test('tells the reader once when the limit of watched folders is reached', async () => {
+    const here = await device()
+    const heard: ((news: SpaceNews) => void)[] = []
+    watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
+      heard.push(hear)
+      return Promise.resolve()
+    })
+    told.mockReset()
+    const watched = watchFolders({
+      engine: here.engine,
+      own: () => false,
+      ready: () => true,
+      changed: () => undefined,
+    })
+    for (const hear of heard) hear({ root: ROOT, changes: [], scan: true, gone: false })
+    for (let once = 0; once < 2; once += 1) {
+      for (const hear of heard) {
+        hear({ root: ROOT, changes: [], scan: true, gone: false, unwatched: 'limit' })
+      }
+    }
+    await vi.waitFor(() => expect(told).toHaveBeenCalledTimes(1))
+    expect(told.mock.calls[0]?.[0]).toBe('Some changes may not be noticed')
+    expect(String(told.mock.calls[0]?.[1])).toContain('fs.inotify.max_user_watches')
+    watched.stop()
+  })
+
   test('watches a space paired after it started, once', async () => {
     // A device's first v2 launch starts the engine with no space in its store; the
     // spaces are paired by the first pass, after the watch began. Watched by the roots it
@@ -858,7 +888,7 @@ describe('a pairing not committed yet', () => {
 /** A copy another sync tool made beside a note: never made on the account, never
  *  written onto a disk that does not have it, never sent when it changes, and never
  *  taken off a disk when the account lets go of one - which happens only when somebody
- *  asks, from the Sync pane. See @nib/sync-core/foreign. */
+ *  asks, from the Sync pane. See @orden/sync-core/foreign. */
 describe('another sync tool’s copy', () => {
   const CLASH = 'Plan (# Name clash 2026-10-05 a1b2c3C #).md'
   const WITH_CLASH: readonly Seeded[] = [...SEEDED, { id: 'n9', name: CLASH, text: 'theirs\n' }]

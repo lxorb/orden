@@ -1,4 +1,4 @@
-import { DEFAULT_COMPACTION } from '@nib/glasses'
+import { DEFAULT_COMPACTION } from '@orden/glasses'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** The one schema both surfaces are drawn from.
@@ -96,7 +96,7 @@ describe('every glasses setting', () => {
   })
 
   /** Emil, after reading on a pair: the lines he wrote are the lines he meant. The
-   *  default is declared once, in @nib/glasses, and both the schema's initial and the
+   *  default is declared once, in @orden/glasses, and both the schema's initial and the
    *  store's default read it - so a reader who has never chosen gets `collapse` and a
    *  device that saved a value keeps it. */
   test('starts a note at one break between blocks, not at as little as possible', () => {

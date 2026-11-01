@@ -1,12 +1,14 @@
-import { taskHash } from '@nib/bases'
-import { taskRowsOfText } from '@nib/bases/tasks'
-import { renderMarkdown } from '@nib/markdown'
+import { taskHash } from '@orden/bases'
+import { taskRowsOfText } from '@orden/bases/tasks'
+import { renderMarkdown } from '@orden/markdown'
 import { describe, expect, test } from 'vitest'
 import {
   commentsOf,
   descriptionOf,
   editedTask,
+  askedFor,
   withComment,
+  withoutNeedsInput,
   withDescription,
   withoutComment,
   withSubtask,
@@ -410,5 +412,52 @@ describe('the task edit field writes its words and its description together', ()
     if (!row?.task) throw new Error('no task')
     const change = changeOf(row.task, { text: 'Email Ann', fields: { tags: [], remind: [] } })
     expect(editedTask('- [ ] Call Sam\n', row, change, 'New words.')).toBeNull()
+  })
+})
+
+/** #325: an agent that could not finish a task asks in a comment under it and flags it
+ *  `needs-input`; the reader's comment is the answer, and the flag comes off with it. */
+describe('a task flagged as needing input', () => {
+  test('loses the flag, and keeps every other tag', () => {
+    const note = '- [ ] Book the room #work #needs-input\n- [ ] Next\n'
+    expect(withoutNeedsInput(note, at(0, 'Book the room'))).toBe(
+      '- [ ] Book the room #work\n- [ ] Next\n',
+    )
+  })
+
+  test('and a task without the flag is left as it is', () => {
+    const note = '- [ ] Book the room #work\n'
+    expect(withoutNeedsInput(note, at(0, 'Book the room'))).toBe(note)
+  })
+})
+
+/** #325: a chat that ended with its task neither ticked nor asked about leaves it asking
+ *  in the chat's last words, as the button promised; one already settled is left alone. */
+describe('a task left asking', () => {
+  test('gets the words as a comment, and the flag beside its other tags', () => {
+    const note = '- [ ] Write to the landlord #home\n- [ ] Next\n'
+    expect(
+      askedFor(
+        note,
+        at(0, 'Write to the landlord'),
+        'Which landlord, and about what?',
+        '2026-10-28T09:00',
+      ),
+    ).toBe(
+      '- [ ] Write to the landlord #home #needs-input\n' +
+        '  - Which landlord, and about what? [at:: 2026-10-28T09:00]\n- [ ] Next\n',
+    )
+  })
+
+  test('is flagged without a comment where the chat said nothing', () => {
+    expect(askedFor('- [ ] Call\n', at(0, 'Call'), '  ', '2026-10-28T09:00')).toBe(
+      '- [ ] Call #needs-input\n',
+    )
+  })
+
+  test('is left alone where it is done, cancelled or asking already', () => {
+    for (const line of ['- [x] Call', '- [-] Call', '- [ ] Call #needs-input']) {
+      expect(askedFor(`${line}\n`, at(0, 'Call'), 'Words', '2026-10-28T09:00')).toBeNull()
+    }
   })
 })

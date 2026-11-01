@@ -7,7 +7,7 @@ import { keyState } from './ask/key'
 import type { Env, Variables } from './types'
 import { KEEP_DAYS } from './versions'
 import { REMIND_BEFORE } from './push/reminders'
-import { isHours, isKeywords, LONGEST_KEYWORD, MOST_KEYWORDS } from '@nib/chats/notify'
+import { isHours, isKeywords, LONGEST_KEYWORD, MOST_KEYWORDS } from '@orden/chats/notify'
 
 /** The settings that follow the account from machine to machine, and what
  *  each may be. Anything else in a request is refused, so the column never
@@ -170,7 +170,7 @@ const CONFLICT_RULES = ['both', 'newest', 'ask']
 const LINK_FORMATS = ['wikilink', 'shortest', 'relative', 'absolute']
 
 /** What a note's front matter is drawn as, which the app asks with three words;
- *  see properties.ts in @nib/markdown. */
+ *  see properties.ts in @orden/markdown. */
 const PROPERTIES_MODES = ['properties', 'source', 'hidden']
 
 /** One of a list of numbers, said the way the app would say it. */
@@ -245,7 +245,7 @@ const KNOWN: Record<string, Check> = {
   // Which colour the highlight button writes. A palette tone by number, or null
   // for a highlight with no colour of its own; the app decides what a tone it has
   // never heard of means, which is the plain one. See highlights.ts in
-  // @nib/markdown.
+  // @orden/markdown.
   highlightTone: (value) =>
     value === null || (typeof value === 'number' && Number.isInteger(value) && value >= 0)
       ? null
@@ -258,7 +258,7 @@ const KNOWN: Record<string, Check> = {
   // What pings for every chat at once (docs/chats.md 4.11): the words that call for the
   // reader as their name does, the hours pings are let through, and whether a
   // notification shows the words and makes a sound. On the account, so every device
-  // holds back the same pings; the checks are @nib/chats/notify's, which the decision
+  // holds back the same pings; the checks are @orden/chats/notify's, which the decision
   // reads them by.
   chatKeywords: (value) =>
     isKeywords(value)

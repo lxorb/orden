@@ -1,12 +1,12 @@
 <script lang="ts">
-  /** A task's description, edited the way a note is: nib's own editor, live preview and
+  /** A task's description, edited the way a note is: Orden's own editor, live preview and
    *  all, over the prose written under the task (task-body.ts). What is typed is written
    *  back into the note a moment after the typing stops, as one edit, indented to be the
    *  task's own; the note's other words are never touched.
    *
    *  Read once as it opens and never again while it is up: the words in it are the
    *  reader's own, and a write coming back from the note would only move the caret. */
-  import { createEditor, type EditorView, modeEffects } from '@nib/editor'
+  import { createEditor, type EditorView, modeEffects } from '@orden/editor'
   import { onMount } from 'svelte'
   import { pickedLink } from '../../composer'
   import { t } from '../../i18n.svelte'

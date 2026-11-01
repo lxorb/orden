@@ -1,6 +1,6 @@
 /** What the phone's format bar holds.
  *
- *  The bar over the keyboard is the only toolbar nib has, and what belongs on it
+ *  The bar over the keyboard is the only toolbar Orden has, and what belongs on it
  *  is not something one list of nine can be right about for everybody: somebody
  *  writing prose wants Bold and Quote, somebody keeping a journal wants a task
  *  and a heading, and both are right. So the buttons are a list of command ids
@@ -88,7 +88,7 @@ const MARKS: Record<string, string> = {
 }
 
 /** The commands no letter says. `#` said Link on this bar once and `#` is how a
- *  tag starts in nib's markdown, with `H` already standing for Heading: one
+ *  tag starts in Orden's markdown, with `H` already standing for Heading: one
  *  character cannot mean both, so a link is the chain Lucide draws it with, which
  *  is the set the whole interface is drawn in.
  *

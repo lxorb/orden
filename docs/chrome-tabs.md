@@ -1,12 +1,12 @@
 # Chrome's tab strip
 
 What the desktop Chrome strip does, read off the Chromium source (`main`, September
-2026), and what nib takes from it. Numbers are Chrome's DIPs; the last column is
-nib's. Source paths are under `chrome/browser/ui/`.
+2026), and what Orden takes from it. Numbers are Chrome's DIPs; the last column is
+Orden's. Source paths are under `chrome/browser/ui/`.
 
 ## Shape
 
-| Rule | Chrome | Source | nib |
+| Rule | Chrome | Source | Orden |
 | --- | --- | --- | --- |
 | Strip height | 41 = tab 34 + toolbar overlap 1 + top padding 6 | `layout_constants.cc` | the bar's 38 |
 | Gap above a tab | 6 (`kTabStripPadding`) | `layout_constants.cc` | 5 |
@@ -24,9 +24,9 @@ nib's. Source paths are under `chrome/browser/ui/`.
 
 ## Widths
 
-A Chrome width includes the 18 of overlap; nib's is the pitch, Chrome's minus 18.
+A Chrome width includes the 18 of overlap; Orden's is the pitch, Chrome's minus 18.
 
-| | Chrome | nib pitch |
+| | Chrome | Orden pitch |
 | --- | --- | --- |
 | Standard (preferred) | 232 + 2 x 12 = 256 | 238 |
 | Minimum, active | favicon/close 16 + insets 2 x (12 + 8) = 56 | 38 |
@@ -231,14 +231,14 @@ See `scratchpad/is.svelte.ts` for which file it is and whether the card is up,
 
 ## Motion
 
-| Rule | Chrome | Source | nib |
+| Rule | Chrome | Source | Orden |
 | --- | --- | --- | --- |
 | Every bounds change | 200 ms, `EASE_OUT` = `1 - (1 - t)^2` | `bounds_animator.h`, `tween.cc`, `tab_container_impl.cc` `AnimateViewTo` | `--dur-base` (210), `--ease-out` |
 | New tab | starts overlap-wide (zero visible) at the previous tab's end, grows to full width while the ones after it slide along | `StartInsertTabAnimation` | grows from 0 |
 | Closed tab | shrinks to overlap-wide (zero visible), then goes; drawn as no longer active from the first frame, the next tab active at once | `StartRemoveTabAnimation` | shrinks to 0, inactive and out of the pointer's way |
 | Reduced motion | `RichAnimationDuration` drops to 0 | `animation.cc` | the `--dur-*` tokens are 0 |
 
-nib moves a tab with `transform` and changes its width on an absolutely placed box,
+Orden moves a tab with `transform` and changes its width on an absolutely placed box,
 so a width change lays out that one tab and nothing beside it.
 
 ## Dragging
@@ -275,12 +275,12 @@ so a width change lays out that one tab and nothing beside it.
 | Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at the ends |
 | Ctrl+W, Ctrl+Shift+T | close, reopen |
 
-## What nib does differently, and why
+## What Orden does differently, and why
 
-- **No tear-off into a window.** nib is one window. Dragging out of the strip is
+- **No tear-off into a window.** Orden is one window. Dragging out of the strip is
   its pane drop instead: against a side makes a pane, onto another pane's strip
   joins it and that strip makes room, as Chrome's attach does.
-- **The floating tab has a shadow.** Chrome moves a whole window; nib carries the
+- **The floating tab has a shadow.** Chrome moves a whole window; Orden carries the
   tab itself over the panes, so it is lifted to read as out of the strip.
 - **The strip scrolls when even the minimum widths do not fit**, rather than
   cutting tabs off: a tab that cannot be seen cannot be pressed. The mouse wheel
@@ -289,7 +289,7 @@ so a width change lays out that one tab and nothing beside it.
 - **A link dropped on the strip opens where it was let go**, as Chrome's does, and
   the strip makes room for it the way it does for a tab; it never replaces the tab
   under it. See `tab-strip/dropped.ts`.
-- **The tab menu is Chrome's, VS Code's and Obsidian's rows** that nib has
+- **The tab menu is Chrome's, VS Code's and Obsidian's rows** that Orden has
   something behind: Reload and Copy link on a web tab, Rename, Duplicate, Pin,
   Close, Close others, Close tabs to the right (to the left in a language that
   reads the other way), Close all, Reopen, Split, Move to other pane. A pinned tab
@@ -299,33 +299,33 @@ so a width change lays out that one tab and nothing beside it.
   are aimed at it, still close it outright. See `workspace/closing-pinned.ts`.
 - **The empty strip's menu is New tab, Reopen closed tab and Close all tabs**, each
   about that strip's pane. Chrome's other rows there - bookmark all tabs, name the
-  window, the task manager - have nothing behind them in nib. A held finger asks for
+  window, the task manager - have nothing behind them in Orden. A held finger asks for
   it too. See `tab-strip/strip-menu.ts`.
 - **Ctrl+D puts the tab down** rather than bookmarking the page: no tab in the strip is
   the active one, so none has the fill or the feet and every hairline shows, the pane
   shows the cards a pane with nothing open shows, and every tab stays open. Chrome always
-  has a tab in front; nib already had the empty pane. The focused pane only; a press on
+  has a tab in front; Orden already had the empty pane. The focused pane only; a press on
   a tab, the digits or Ctrl+Tab bring one back. A page is offered the key first, as
   Chrome offers it its bookmark key. See docs/keyboard.md.
-- **Double click on a tab keeps a preview** (VS Code's rule; nib opens previews).
+- **Double click on a tab keeps a preview** (VS Code's rule; Orden opens previews).
 - **Ctrl+1..9 are Alt+1..9 and Ctrl+Alt+1..9**, because Ctrl and a digit is a heading
   level. Alt+9 is the ninth tab and Alt+0 the last (Emil's rule); Ctrl+Alt+9 stays
   Chrome's last. A place past the end does nothing, as in Chrome.
-- **Colours are nib's tokens**; the strip's ground is `--surface-2` so the active
+- **Colours are Orden's tokens**; the strip's ground is `--surface-2` so the active
   tab has something to be cut out of.
 - **The active tab is always stroked** (lxorb, issue #242), where Chrome strokes it only
-  in a theme whose tab and frame are too alike. Every nib palette is under Chrome's 1.3:1
+  in a theme whose tab and frame are too alike. Every Orden palette is under Chrome's 1.3:1
   there, and under glass or a picture the open tab's fill can be the frame's own colour.
   The stroke is the bar's own hairline, a lift of the ink (`--tab-edge`, `--line` in the
   contrast theme), which leaves the open tab out of it: the line either side is drawn by
   the tab itself (see `.edge` in Tabs.svelte), so under a see-through fill there is no
   line showing through it. Edge's lift and Arc's pill were the other answers looked at;
   both leave the tab off the page below, which is what makes it the open one.
-- **The cross turns the danger colour on hover**, over Chrome's grey circle: nib's
+- **The cross turns the danger colour on hover**, over Chrome's grey circle: Orden's
   own close.
 - **A web tab's active fill is the bar's `--surface`, a note's is the page's
   `--bg`**: the active tab is filled with whatever is under the strip, which in
-  nib is not always a toolbar. Under the glass theme the strip stands on the
+  Orden is not always a toolbar. Under the glass theme the strip stands on the
   window's material and every pane paints its own paper, so the merge is exact
   there too; and a web tab's fill is its page's own colour, the bar's, so the tab,
   the bar and the page are one surface (docs/design.md, Glass).

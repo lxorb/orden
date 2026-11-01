@@ -14,7 +14,7 @@
  *  Yjs's `UndoManager` with the agent as its tracked origin is the same thing, and it
  *  is what these become under sync v2; see docs/agent-native.md 8.10. Pure. */
 
-import { ChangeSet, type Heard, type Text } from '@nib/editor'
+import { ChangeSet, type Heard, type Text } from '@orden/editor'
 
 type ChangeDesc = ChangeSet['desc']
 

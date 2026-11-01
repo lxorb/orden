@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { MOST_IMAGE } from '@nib/online/wire'
+import { MOST_IMAGE } from '@orden/online/wire'
 import { busy } from '../busy.svelte'
 import { carried, type Picture, pictureAt, pictureOf } from './images'
 import type { Source } from './source'

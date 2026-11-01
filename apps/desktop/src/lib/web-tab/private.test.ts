@@ -1,6 +1,6 @@
 /** A private tab writes nothing down about where it went: not what a site was allowed,
- *  not how large it was drawn, not that it was muted. What it was told lasts as long as
- *  the tab, in memory. See private.ts. */
+ *  not how large it was drawn, not that it was muted. Its size and mute last as long as
+ *  the tab, what a site was told as long as the private session, in memory. See private.ts. */
 
 import { beforeEach, expect, test, vi } from 'vitest'
 
@@ -79,38 +79,44 @@ test('a site muted in a private tab is muted there and written nowhere', () => {
   expect(sites.isMuted('secret.example')).toBe(false)
 })
 
-test('a private page answered is remembered for its tab and written nowhere', () => {
+test('a private page answered is remembered for the private session and written nowhere', () => {
   grants.heard({
     id: 1,
     tab: 'priv',
     site: 'secret.example',
     ask: 'notifications',
-    inPrivate: true,
+    privately: true,
   })
   grants.answer(grants.asking[0]!, false)
 
   expect(localStorage.getItem('nib:web-grants')).toBeNull()
   expect(grants.said('secret.example', 'notifications')).toBeNull()
-  expect(grants.said('secret.example', 'notifications', 'priv')).toBe('block')
+  expect(grants.said('secret.example', 'notifications', true)).toBe('block')
 
-  // Asked again in the same tab: answered from what was said.
+  // Asked again in a private tab: answered from what was said.
   grants.heard({
     id: 2,
     tab: 'priv',
     site: 'secret.example',
     ask: 'notifications',
-    inPrivate: true,
+    privately: true,
   })
   expect(grants.asking).toEqual([])
 
   // A tab that is not private is asked.
-  grants.heard({ id: 3, tab: 'open', site: 'secret.example', ask: 'notifications' })
+  grants.heard({
+    id: 3,
+    tab: 'open',
+    site: 'secret.example',
+    ask: 'notifications',
+    privately: false,
+  })
   expect(grants.asking.map((one) => one.id)).toEqual([3])
   grants.dismiss(grants.asking[0]!)
 
-  // The tab closed: what it was told is gone with it.
-  grants.dropped('priv')
-  expect(grants.said('secret.example', 'notifications', 'priv')).toBeNull()
+  // The last private tab closed: what the session was told is gone with it.
+  grants.dropped('priv', false)
+  expect(grants.said('secret.example', 'notifications', true)).toBeNull()
 })
 
 test('a site muted from a tab that is not private leaves a private tab’s own choice', async () => {

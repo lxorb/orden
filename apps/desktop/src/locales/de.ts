@@ -1618,6 +1618,18 @@ export const de: Dictionary = {
   'answered by {model}, {date}': 'beantwortet von {model}, {date}',
   'AI block': 'KI-Block',
   'Do with AI': 'Mit KI erledigen',
+  'Use the browser': 'Den Browser verwenden',
+  'Lets a task done with AI open web pages and act on them.':
+    'Erlaubt einer mit KI erledigten Aufgabe, Webseiten zu öffnen und darauf zu handeln.',
+  'Look through notes': 'Notizen durchsuchen',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Erlaubt einer mit KI erledigten Aufgabe, deine anderen Notizen zu durchsuchen und zu lesen, neben ihrer eigenen.',
+  'Change other notes': 'Andere Notizen ändern',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Erlaubt einer mit KI erledigten Aufgabe, andere Notizen als die Aufgabe zu schreiben, zu verschieben und zu löschen.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Was eine mit KI erledigte Aufgabe tun soll. Sie hakt die Aufgabe weiterhin ab, wenn sie erledigt ist, oder fragt in einem Kommentar.',
+  'Started in the AI panel': 'Im KI-Bereich gestartet',
   'Highlight colour': 'Hervorhebungsfarbe',
   'A single newline breaks the line': 'Ein einzelner Zeilenumbruch bricht die Zeile',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2692,6 +2704,9 @@ export const de: Dictionary = {
     'Webseiten schlagen Adressen hier so nach wie das System; sein DNS wird in den Einstellungen des Systems festgelegt.',
   'Set by the settings file': 'Von der Einstellungsdatei festgelegt',
   'The settings file has a problem': 'Die Einstellungsdatei hat ein Problem',
+  'Some changes may not be noticed': 'Manche Änderungen werden vielleicht nicht bemerkt',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Das System hat seine Grenze für überwachte Ordner erreicht, daher bemerkt Orden womöglich nicht jede Änderung, die andere Programme in deinen Bereichen vornehmen. fs.inotify.max_user_watches zu erhöhen behebt das.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Chat {name} nach {space} verschieben?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

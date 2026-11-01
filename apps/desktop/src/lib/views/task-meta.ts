@@ -8,9 +8,9 @@
  *  Pure, and in its own file because the row, the board's card and the list's
  *  arithmetic all ask it the same question and have to get one answer. */
 
-import { dayNumber, type Row, type TaskRow } from '@nib/bases'
-import { dayWords, timeWords } from '@nib/editor/task-days'
-import { deadlineOf, startOf } from '@nib/markdown/task-dates'
+import { dayNumber, type Row, type TaskRow } from '@orden/bases'
+import { dayWords, timeWords } from '@orden/editor/task-days'
+import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 
 /** How near a day is, which is the colour its words are drawn in: Todoist's red for
  *  a day gone by, green for today, orange for tomorrow, purple for the rest of the

@@ -7,7 +7,7 @@
  *  document's words moving shows as its `docSeq` moving, which happens when its room
  *  settles - the moment its snapshot is there to pull. */
 
-import { FEED_PAGE, type FeedItem } from '@nib/sync-core'
+import { FEED_PAGE, type FeedItem } from '@orden/sync-core'
 import type { Env } from '../types'
 import { kindOfName } from './tree'
 import { prepareSpace } from './prepare'

@@ -1,4 +1,4 @@
-import { apply, chatState, type Event, type Logged, type Message, type Who } from '@nib/chats'
+import { apply, chatState, type Event, type Logged, type Message, type Who } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
 import { foldAll, keepsRow, type Kept, type Lookup, marksOf } from './fold'
 import { random } from './test-account'

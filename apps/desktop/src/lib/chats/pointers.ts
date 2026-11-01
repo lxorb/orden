@@ -8,7 +8,7 @@
  *  which the chats' start does once after the launch and again when a chat turns up whose
  *  pointer is not known yet. */
 
-import { CHAT_EXTENSION, chatOf, chatText } from '@nib/chats'
+import { CHAT_EXTENSION, chatOf, chatText } from '@orden/chats'
 import { nameOf, within } from '../space-paths'
 import { sync } from '../sync.svelte'
 import { invoke, joinPath } from '../tauri'

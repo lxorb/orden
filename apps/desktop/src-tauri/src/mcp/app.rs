@@ -5,11 +5,11 @@
 //! and the installation's secret into `automation.json` as it starts and leaves the file
 //! behind when it ends, so a port in it may be a port nobody listens on any more, or one
 //! something else has taken since. Before the secret or a token is sent to a port, the
-//! port is asked once with neither, and only nib's own refusal - a 401 with a sentence in
-//! JSON - counts as nib. See endpoint.rs for the other side.
+//! port is asked once with neither, and only Orden's own refusal - a 401 with a sentence in
+//! JSON - counts as Orden. See endpoint.rs for the other side.
 //!
-//! **Started minimised, and without the keyboard.** A client that runs `nib mcp` while nib
-//! is closed gets nib, the way the design says (docs/agent-native.md 10), and the reader
+//! **Started minimised, and without the keyboard.** A client that runs `nib mcp` while Orden
+//! is closed gets Orden, the way the design says (docs/agent-native.md 10), and the reader
 //! gets nothing in their face: on Windows through `start /min`, which is the first window
 //! a process shows taking `SW_SHOWMINNOACTIVE` from its start-up info; on a Mac through
 //! `open -g -j`, in the background and hidden. The app is handed nothing of this process's
@@ -107,7 +107,7 @@ fn parse(bytes: &[u8]) -> Option<Said> {
     Some(Said { status, body })
 }
 
-/// Whether nib answers on the file's port: asked with no credential at all, which nib
+/// Whether Orden answers on the file's port: asked with no credential at all, which Orden
 /// refuses in its own words. Anything else listening there is not told a secret.
 pub fn answers(endpoint: &Endpoint) -> bool {
     let asked = serde_json::json!({ "verb": "agent_status" });
@@ -169,8 +169,8 @@ fn launch() -> Result<(), String> {
 /// This process's stdin, stdout and stderr kept to itself. They are the client's pipes,
 /// handed over inheritable, and `start` passes every inheritable handle on to the program
 /// it starts - measured: a pipe cmd was given stayed open until the started program
-/// ended. The app would then hold the client's stdout for as long as nib runs, and a
-/// client waiting for this server's output to end would wait for nib to quit. The app
+/// ended. The app would then hold the client's stdout for as long as Orden runs, and a
+/// client waiting for this server's output to end would wait for Orden to quit. The app
 /// asks the same before it starts Claude Code or Codex; see `ai_cli/family.rs`.
 #[allow(
     unsafe_code,
@@ -278,7 +278,7 @@ mod tests {
         );
     }
 
-    /// Something else on the port is not nib, and is never sent a credential: the
+    /// Something else on the port is not Orden, and is never sent a credential: the
     /// question that decides it carries none.
     #[test]
     fn a_stranger_on_the_port_is_not_nib() {

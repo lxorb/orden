@@ -4,9 +4,9 @@
    *  faces open the members, active first; the pin opens the pinned messages, each a jump;
    *  the bell is the chat's level and mute (../Bell.svelte, 4.11); the glass searches the
    *  chat, in the palette with the chat filled in. */
-  import type { Message, Notify } from '@nib/chats'
-  import { may } from '@nib/chats'
-  import { LONGEST_TOPIC } from '@nib/chats/limits'
+  import type { Message, Notify } from '@orden/chats'
+  import { may } from '@orden/chats'
+  import { LONGEST_TOPIC } from '@orden/chats/limits'
   import { amount, t } from '../../i18n.svelte'
   import Avatar from '../../people/Avatar.svelte'
   import Bell from '../Bell.svelte'

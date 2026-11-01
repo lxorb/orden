@@ -12,7 +12,7 @@
  *  it. What it is sent with is quick.ts; the sheet is QuickQuestion.svelte, fetched by
  *  the first press through the door in surfaces.svelte.ts. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { message, t } from '../i18n.svelte'
 import { quickSheet } from '../surfaces.svelte'
 import { views } from '../views.svelte'
@@ -110,7 +110,7 @@ class Quick {
     const read = await pages.read(tabId, true)
     if (!read?.html.trim() || round !== this.round) return
 
-    const { htmlToMarkdown } = await import('@nib/markdown/from-html')
+    const { htmlToMarkdown } = await import('@orden/markdown/from-html')
     const text = fitted(htmlToMarkdown(read.html).trim(), PAGE_TOKENS)
     if (round === this.round && text) {
       this.context = { kind: 'page', name: read.title || shown, text }

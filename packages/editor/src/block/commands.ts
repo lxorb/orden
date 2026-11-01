@@ -7,7 +7,7 @@
  *
  *  Every one of them works on the whole selection when there is one, so a selection
  *  lying across four paragraphs duplicates, deletes, indents, moves, turns or links
- *  to all four. A selection in nib is a selection of text and never a mode; the
+ *  to all four. A selection in Orden is a selection of text and never a mode; the
  *  blocks it touches are simply the blocks it touches, and this is where that is
  *  read off.
  *
@@ -20,7 +20,7 @@ import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
 import { indentLess, indentMore } from '@codemirror/commands'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
-import { blockIdOf, freeBlockId, blockIds } from '@nib/markdown/links'
+import { blockIdOf, freeBlockId, blockIds } from '@orden/markdown/links'
 import { headingLevel, headingText } from '../headings'
 import { enclosing } from '../nodes'
 import { copyBlock, cutBlock, moveBlock } from './move'
@@ -114,7 +114,7 @@ export const moveBlockDown = atCaret((view, pos) => moveBlocks(view, pos, 1))
  *  A block that has no name is given one, which is a change to the note: the name
  *  is a marker Obsidian reads the same way, it is written at the end of the block
  *  where Obsidian writes it, and nothing shows it - see withoutBlockIds in
- *  @nib/markdown. Null when there is no block to point at. */
+ *  @orden/markdown. Null when there is no block to point at. */
 export function blockTarget(view: EditorView, pos: number): string | null {
   const span = blockAt(view.state, pos)
   if (!span) return null

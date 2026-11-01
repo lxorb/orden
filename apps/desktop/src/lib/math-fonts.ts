@@ -1,4 +1,4 @@
-import { katexCss } from '@nib/themes/raw'
+import { katexCss } from '@orden/themes/raw'
 
 /** Every KaTeX face as a `data:` URI, baked in at build time. The package is
  *  a dependency of the app, so the path is stable. */

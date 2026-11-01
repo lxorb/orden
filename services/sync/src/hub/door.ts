@@ -2,7 +2,7 @@
  *
  *  A socket carries no `Authorization` header, so it names its session token in
  *  the subprotocol the way a room's socket does (`nib.token.<token>`, see
- *  @nib/rooms), beside the device it is (`nib.device.<id>`), and it is let in ahead
+ *  @orden/rooms), beside the device it is (`nib.device.<id>`), and it is let in ahead
  *  of the session guard. A session of an account leads to that account's hub, and a
  *  guest's to a hub of the guest's own, which hears the pokes of the spaces its
  *  links reach and nothing else. A program's `nib_` token opens nothing here.
@@ -14,7 +14,7 @@
  *  out, or ended from another - binds to its next one at its next hello. */
 
 import { Hono } from 'hono'
-import { tokenOf } from '@nib/rooms'
+import { tokenOf } from '@orden/rooms'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
 import { SIGN_IN } from '../refused'

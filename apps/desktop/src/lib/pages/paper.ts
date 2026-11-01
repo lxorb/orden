@@ -25,7 +25,7 @@
 import type { OpenPdf } from '../pdf/document'
 import { openBytes, openDocument } from '../pdf/document'
 import { PDF_TO_CSS } from '../pdf/pages'
-import { isPagesTarget } from '@nib/markdown/links'
+import { isPagesTarget } from '@orden/markdown/links'
 import { paperPlaces } from './held'
 
 /** How much bigger than the page itself a background is drawn. */

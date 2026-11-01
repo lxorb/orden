@@ -1598,6 +1598,18 @@ export const pa: Dictionary = {
   'answered by {model}, {date}': '{model} ਦਾ ਜਵਾਬ, {date}',
   'AI block': 'AI ਬਲਾਕ',
   'Do with AI': 'AI ਨਾਲ ਕਰੋ',
+  'Use the browser': 'ਬ੍ਰਾਊਜ਼ਰ ਵਰਤੋ',
+  'Lets a task done with AI open web pages and act on them.':
+    "AI ਨਾਲ ਕੀਤੇ ਜਾਂਦੇ ਕੰਮ ਨੂੰ ਵੈੱਬ ਪੰਨੇ ਖੋਲ੍ਹਣ ਅਤੇ ਉਨ੍ਹਾਂ 'ਤੇ ਕਾਰਵਾਈ ਕਰਨ ਦਿੰਦਾ ਹੈ।",
+  'Look through notes': 'ਨੋਟ ਵੇਖੋ',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI ਨਾਲ ਕੀਤੇ ਜਾਂਦੇ ਕੰਮ ਨੂੰ ਆਪਣੇ ਨੋਟ ਤੋਂ ਇਲਾਵਾ ਤੁਹਾਡੇ ਹੋਰ ਨੋਟ ਖੋਜਣ ਅਤੇ ਪੜ੍ਹਨ ਦਿੰਦਾ ਹੈ।',
+  'Change other notes': 'ਹੋਰ ਨੋਟ ਬਦਲੋ',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI ਨਾਲ ਕੀਤੇ ਜਾਂਦੇ ਕੰਮ ਨੂੰ ਕੰਮ ਤੋਂ ਇਲਾਵਾ ਹੋਰ ਨੋਟ ਲਿਖਣ, ਹਿਲਾਉਣ ਅਤੇ ਮਿਟਾਉਣ ਦਿੰਦਾ ਹੈ।',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    "AI ਨਾਲ ਕੀਤੇ ਜਾਂਦੇ ਕੰਮ ਨੂੰ ਕੀ ਕਰਨ ਲਈ ਕਿਹਾ ਜਾਂਦਾ ਹੈ। ਪੂਰਾ ਹੋਣ 'ਤੇ ਇਹ ਫਿਰ ਵੀ ਕੰਮ 'ਤੇ ਨਿਸ਼ਾਨ ਲਾਉਂਦਾ ਹੈ, ਜਾਂ ਕਿਸੇ ਟਿੱਪਣੀ ਵਿੱਚ ਪੁੱਛਦਾ ਹੈ।",
+  'Started in the AI panel': 'AI ਪੈਨਲ ਵਿੱਚ ਸ਼ੁਰੂ ਹੋਇਆ',
   'Highlight colour': 'ਉਭਾਰ ਦਾ ਰੰਗ',
   'A single newline breaks the line': 'ਇੱਕੋ ਨਵੀਂ ਲਾਈਨ ਲਾਈਨ ਤੋੜ ਦਿੰਦੀ ਹੈ',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2643,6 +2655,9 @@ export const pa: Dictionary = {
     'ਇੱਥੇ ਵੈੱਬ ਪੰਨੇ ਸਿਸਟਮ ਵਾਂਗ ਹੀ ਪਤੇ ਲੱਭਦੇ ਹਨ; ਇਸ ਦਾ DNS ਸਿਸਟਮ ਦੀਆਂ ਆਪਣੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਤੈਅ ਹੁੰਦਾ ਹੈ।',
   'Set by the settings file': 'ਸੈਟਿੰਗਾਂ ਫ਼ਾਈਲ ਵੱਲੋਂ ਤੈਅ',
   'The settings file has a problem': 'ਸੈਟਿੰਗਾਂ ਫ਼ਾਈਲ ਵਿੱਚ ਸਮੱਸਿਆ ਹੈ',
+  'Some changes may not be noticed': 'ਕੁਝ ਬਦਲਾਅ ਸ਼ਾਇਦ ਨਜ਼ਰ ਨਾ ਆਉਣ',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'ਸਿਸਟਮ ਦੀ ਦੇਖੇ ਜਾਂਦੇ ਫੋਲਡਰਾਂ ਦੀ ਹੱਦ ਪੂਰੀ ਹੋ ਗਈ ਹੈ, ਇਸ ਲਈ ਹੋਰ ਪ੍ਰੋਗਰਾਮ ਤੁਹਾਡੀਆਂ ਸਪੇਸਾਂ ਵਿੱਚ ਜੋ ਬਦਲਾਅ ਕਰਦੇ ਹਨ, Orden ਸ਼ਾਇਦ ਸਾਰੇ ਨਾ ਵੇਖੇ। fs.inotify.max_user_watches ਵਧਾਉਣ ਨਾਲ ਠੀਕ ਹੁੰਦਾ ਹੈ।',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ਚੈਟ {name} ਨੂੰ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

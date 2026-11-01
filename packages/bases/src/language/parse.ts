@@ -12,9 +12,9 @@
  *  stays words: people put the date at the end, and the words before it are free to
  *  mention a Friday. */
 
-import { TAG_NAME } from '@nib/markdown/tags'
-import { tagsIn } from '@nib/markdown/task-line'
-import type { Priority, Remind } from '@nib/markdown/task-line'
+import { TAG_NAME } from '@orden/markdown/tags'
+import { tagsIn } from '@orden/markdown/task-line'
+import type { Priority, Remind } from '@orden/markdown/task-line'
 import { addDays } from '../dates'
 import { nextDate, ruleText } from '../recurrence'
 import { DE } from './de'
@@ -38,7 +38,7 @@ export interface Chip {
 /** The fields quick add writes. */
 export interface QuickFields {
   /** The day the words or the picker say: a task's date, which is written as its start
-   *  date, `🛫` (#371, `@nib/markdown/task-dates`). Its deadline is `deadline`. */
+   *  date, `🛫` (#371, `@orden/markdown/task-dates`). Its deadline is `deadline`. */
   due?: string
   time?: string
   recurrence?: string

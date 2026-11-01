@@ -113,7 +113,7 @@ export const CRATE_ASKS = {
   /** Takes `StoreAsk`, answers `StoreSaid`: which store the reader's tabs of a space
    *  use for an address, as `web-data.ts` decides. */
   storeFor: 'agent.store_for',
-  /** Takes `{ html, url }`, answers the markdown `@nib/markdown/from-html` makes. */
+  /** Takes `{ html, url }`, answers the markdown `@orden/markdown/from-html` makes. */
   markdown: 'agent.markdown',
 } as const
 
@@ -138,7 +138,7 @@ export type Scope =
   | 'agents'
   | 'terminal'
 
-/** What a question is about (9.3), and the questions nib asks for itself. */
+/** What a question is about (9.3), and the questions Orden asks for itself. */
 export type Category =
   | 'paying'
   | 'sending'
@@ -283,7 +283,7 @@ export interface Opened {
 
 /** The commands the window calls the crate with: the settings pane (`agents_read`,
  *  `agents_write`, `agents_mint`, the log's days and its Clear), the activity panel,
- *  and `capture_to_note`'s reading of a page (`agents_capture`). Each answers only nib's
+ *  and `capture_to_note`'s reading of a page (`agents_capture`). Each answers only Orden's
  *  own window. */
 export const AGENT_COMMANDS = [
   'agents_read',

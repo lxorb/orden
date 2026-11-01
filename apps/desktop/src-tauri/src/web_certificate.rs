@@ -7,7 +7,7 @@
 //! site's certificate for. So the popover asks this for the certificate of the page as
 //! it is now, and says the connection is secure only where the engine says so too.
 //!
-//! On nib's own Chromium the page's visible navigation entry carries the connection's
+//! On Orden's own Chromium the page's visible navigation entry carries the connection's
 //! state and the certificate it was made with (`CefNavigationEntry::GetSSLStatus`).
 //! Elsewhere nothing is answered and the popover keeps to what the address says.
 

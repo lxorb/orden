@@ -19,8 +19,8 @@
     type NoteJump,
     setReadOnlyMode,
     type Text,
-  } from '@nib/editor'
-  import type { EmbeddedNote } from '@nib/markdown'
+  } from '@orden/editor'
+  import type { EmbeddedNote } from '@orden/markdown'
   import type { CanvasNode } from './canvas/format'
   import { cardHtml, fileSource, fileUrl, isPicture, keptByAccount } from './canvas/render'
   import { account } from './account.svelte'
@@ -251,7 +251,7 @@
    *
    *  The same listener the reading view and the editor's live preview use, so what a
    *  card does is decided in one place and a canvas is not a surface with a bargain
-   *  of its own; see web-frame.ts in @nib/editor.
+   *  of its own; see web-frame.ts in @orden/editor.
    *
    *  The press has to be taken from the surface to arrive at all. The plane asks to
    *  be sent the rest of every contact that lands on it - a stroke has to keep
@@ -418,6 +418,11 @@
     background: var(--surface);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+    /* Its size is its own, written on it, and nothing inside reaches out: so what is
+       inside is laid out, styled and painted on its own, and a page of cards made at
+       once - an undo bringing them back, a zoom into reading distance - is that many
+       small layouts rather than one of the whole plane (#535). */
+    contain: strict;
     /* The pointer belongs to the surface, which decides what a press means. */
     touch-action: none;
     transition:

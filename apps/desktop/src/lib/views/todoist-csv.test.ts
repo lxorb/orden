@@ -1,4 +1,4 @@
-import { taskRowsOfText } from '@nib/bases/tasks'
+import { taskRowsOfText } from '@orden/bases/tasks'
 import { describe, expect, test } from 'vitest'
 import { csvProject, planOf } from '../import/todoist'
 import { todoistCsv } from './todoist-csv'

@@ -193,8 +193,9 @@ describe('the mark a file or folder chose for itself', () => {
 
   test('and the kind s own mark is what a row falls back to', () => {
     // Which covers all four of: a row that chose nothing, a caller that knows no
-    // path, a name no set holds, and the moment before a set has arrived.
-    expect(source).toContain('fallback={MARKS[mark]}')
+    // path, a name no set holds, and the moment before a set has arrived. `shown` is
+    // the kind's mark, or a PDF's for a page note made from one (#676).
+    expect(source).toContain('fallback={MARKS[shown]}')
   })
 
   /** Which KIND a row is comes off its name: a website is `Svelte docs.url`, a

@@ -171,6 +171,22 @@ describe('a file read back', () => {
     expect(read).toMatchObject({ mode: 'approve', always: ['edit_note'] })
   })
 
+  test('keeps the tools a task done with AI was not given, after a restart too', () => {
+    const read = threadIn({
+      id: 't',
+      space: 's',
+      provider: 'openai',
+      model: 'gpt-5.5',
+      mode: 'auto',
+      without: ['browser_open', 7, 'write_note'],
+      turns: [],
+    })
+    expect(read?.without).toEqual(['browser_open', 'write_note'])
+    expect(
+      threadIn({ id: 't', space: 's', provider: 'openai', model: 'm', turns: [] }),
+    ).not.toHaveProperty('without')
+  })
+
   test('keeps what it can read and leaves out what it cannot', () => {
     const read = threadIn({
       id: 't',

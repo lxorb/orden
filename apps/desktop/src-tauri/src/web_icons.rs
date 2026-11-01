@@ -297,7 +297,7 @@ impl Telling {
 /// pixels - measured, on a screen at twice that - so a mark drawn from it is blurred on
 /// exactly the screens a mark is looked at on. The engine's choice of which picture to
 /// fetch is the right one, a size that fills the box on this screen, and `FaviconUri`
-/// says what it chose. So that address is read again inside the page - in nib's own
+/// says what it chose. So that address is read again inside the page - in Orden's own
 /// world there, which the page cannot see - where the site's cookies and its own origin
 /// are, and the bytes come back as they were served; see
 /// `FETCH`. Where the page will not hand them over - a mark on another origin that does

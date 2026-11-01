@@ -10,7 +10,7 @@
  *  and the thread that started it keeps their ids for the review (lane 3), so one review
  *  covers every change they made. */
 
-import { TAG_NAME } from '@nib/markdown/tags'
+import { TAG_NAME } from '@orden/markdown/tags'
 import { t } from '../../i18n.svelte'
 import type { Query } from '../../search/query'
 import { within } from '../../space-paths'

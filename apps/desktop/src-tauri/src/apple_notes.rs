@@ -6,7 +6,7 @@
 //! attachments in folders beside it. That is what Obsidian's importer reads, and
 //! this reads the same rows the same way.
 //!
-//! Which is why this is a Mac-only command. nib runs on Windows, Linux, Android
+//! Which is why this is a Mac-only command. Orden runs on Windows, Linux, Android
 //! and in a browser as well, and on those there is no database to read: the sheet
 //! says so, and what it offers instead is the folder an exporter wrote.
 //!
@@ -940,7 +940,7 @@ mod mac {
     }
 
     /// How a file is written into a note: shown where it is a picture, linked
-    /// where it is a paper or a recording, which is what nib writes itself.
+    /// where it is a paper or a recording, which is what Orden writes itself.
     fn shown(path: &str) -> String {
         let name = path.rsplit('/').next().unwrap_or(path);
         let extension = name.rsplit('.').next().unwrap_or("").to_lowercase();

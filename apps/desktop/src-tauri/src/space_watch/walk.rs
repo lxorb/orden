@@ -12,7 +12,7 @@
 //!   names, and a link is a thing about this disk that means nothing on another one.
 //!   Syncthing makes the same choice.
 //! - Hidden names are left out, as the tree leaves them out: `.git`, `.obsidian`, and
-//!   nib's own half-written temp files, which are hidden so that no list ever shows one.
+//!   Orden's own half-written temp files, which are hidden so that no list ever shows one.
 //!   So is what an operating system leaves in every folder it opens (`Thumbs.db`,
 //!   `desktop.ini`, an open Office file's `~$` owner file): a folder full of those
 //!   arriving on a Mac is noise, and none of them is anybody's writing.

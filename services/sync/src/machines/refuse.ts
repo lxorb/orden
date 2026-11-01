@@ -6,7 +6,7 @@
  *  and closes, which the app reads as final and stops trying (2026-10-07: a tab like that
  *  retried silently forever). */
 
-import { type Refusal, text } from '@nib/online/wire'
+import { type Refusal, text } from '@orden/online/wire'
 
 /** What a refused socket closes with: a policy's end, not a drop. */
 export const REFUSED_CLOSE = 4404

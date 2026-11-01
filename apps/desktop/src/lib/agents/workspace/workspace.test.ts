@@ -409,7 +409,7 @@ vi.mock('../../terminal/shells.svelte', () => ({
 
 // The rows of every space, read off the files as the rows store would read them.
 vi.mock('../../rows/rows.svelte', async () => {
-  const { rowsOfText } = await import('@nib/bases/rows')
+  const { rowsOfText } = await import('@orden/bases/rows')
   const spaces = [work, home, secret]
   return {
     rows: {
@@ -1377,7 +1377,7 @@ describe('to-dos and bases', () => {
   })
 
   test('a field changed, and a task moved to another note with what is under it', async () => {
-    const { taskHash } = await import('@nib/bases')
+    const { taskHash } = await import('@orden/bases')
     const at = `Thesis.md#1:${taskHash('Write the intro')}`
     await call('update_task', { space: 'Work', at, priority: 1, due: '' })
     expect(written()[0]?.split('\n')[1]).toBe('- [ ] Write the intro 🔺')
@@ -1388,6 +1388,23 @@ describe('to-dos and bases', () => {
       '# Plan\n\n## Later\n- [ ] Write the intro 📅 2026-01-02\n',
       '# Thesis\n- [ ] Read 🔁 every day 📅 2026-01-01\n',
     ])
+  })
+
+  /** #325: an agent doing a task with AI asks about it on the task itself, as the
+   *  reader comments on one, and flags it; the comment is in the same edit. */
+  test('a comment written under the task, with its tag, in one edit', async () => {
+    const { taskHash } = await import('@orden/bases')
+    const at = `Thesis.md#1:${taskHash('Write the intro')}`
+    await call('update_task', {
+      space: 'Work',
+      at,
+      tags: ['needs-input'],
+      comment: 'Which chapter is the intro for?',
+    })
+    expect(written()).toHaveLength(1)
+    const lines = written()[0]?.split('\n') ?? []
+    expect(lines[1]).toMatch(/^- \[ \] Write the intro .*#needs-input/)
+    expect(lines[2]).toMatch(/^ {2}- .*Which chapter is the intro for\?/)
   })
 
   test('a space the grant does not reach, an anchor that is not there', async () => {

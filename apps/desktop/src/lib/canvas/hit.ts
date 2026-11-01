@@ -33,6 +33,17 @@ import { FORGIVING, type Hit, NOTHING } from './pointer'
 export const HANDLE = 9
 export const PORT = 9
 
+/** How many handles across a box, or connector dots across a card, it has to be on
+ *  screen before they are offered on it. Far out a card is a few pixels and those, a
+ *  fixed size on screen, covered the whole of it: a press meant for the card took a
+ *  handle or started a connector (#535). */
+const ROOM = 3
+
+/** Whether a box is big enough on screen at `scale` to carry chrome `size` across. */
+export function roomFor(box: Box, scale: number, size: number): boolean {
+  return Math.min(box.width, box.height) * scale >= ROOM * size
+}
+
 export interface Where {
   canvas: Canvas
   picked: readonly string[]
@@ -95,7 +106,7 @@ export function hitAt(where: Where, point: Point): Hit {
 
 function handleAt(where: Where, point: Point, slack: number): HandleId | null {
   const box = where.box
-  if (!box) return null
+  if (!box || !roomFor(box, where.scale, HANDLE)) return null
 
   const reach = HANDLE / 2 / where.scale + slack
 

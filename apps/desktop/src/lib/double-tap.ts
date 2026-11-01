@@ -1,4 +1,4 @@
-/** A modifier pressed twice on its own: JetBrains' double Shift, which is how nib's
+/** A modifier pressed twice on its own: JetBrains' double Shift, which is how Orden's
  *  palette opens.
  *
  *  Emil, 2026-09-30: *"instead of Ctrl + P I want the shortcut to be just 'shift

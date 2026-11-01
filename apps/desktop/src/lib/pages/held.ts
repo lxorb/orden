@@ -11,7 +11,7 @@
  *
  *  Pure, so the browser build, the paper reader and the export ask the same thing. */
 
-import { isPagesTarget } from '@nib/markdown/links'
+import { isPagesTarget } from '@orden/markdown/links'
 import { placesOf, samePath } from '../space-paths'
 
 /** The paper the page note at `pages` holds, whether or not there is one. */

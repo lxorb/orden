@@ -137,7 +137,7 @@ stopped by UIKit before its first frame, and tao takes the scene road only when
 multiple scenes are on. `test/apple.test.ts` holds both.
 
 Run `tauri android init` again through the package manager, as
-`pnpm --filter @nib/desktop exec tauri android init`, never as `node` and a path
+`pnpm --filter @orden/desktop exec tauri android init`, never as `node` and a path
 to the CLI. The gradle task that builds the crate is generated with whatever
 command started the CLI written into it, so the second way bakes one machine's
 node into the project and the build then works nowhere else. Compare
@@ -213,7 +213,7 @@ anything answers `IMAGE_CAPTURE` before it offers the camera, and
 `RecognitionService`. Without the two `<intent>` rows in `<queries>` the answer is
 no on every phone from 11 on, and both features do nothing without saying why.
 
-## What another app may share with nib
+## What another app may share with Orden
 
 Anything, and it becomes a note.
 
@@ -223,10 +223,10 @@ makes the second share of the day arrive in the app that is already open -
 `singleTask`, and `onNewIntent`. Two filters: `SEND` and `SEND_MULTIPLE`.
 
 Not `VIEW` for a file. A share is a copy into a space, the way Import is: bytes and a
-name arrive and a note is written. A `VIEW` filter for a `.md` is nib offering itself
-in a file manager's "Open with", and nib opens nothing from outside its spaces - so
+name arrive and a note is written. A `VIEW` filter for a `.md` is Orden offering itself
+in a file manager's "Open with", and Orden opens nothing from outside its spaces - so
 there is none, and the one `VIEW` left is the `nib://` link. A markdown file shared
-to nib still becomes a note under its own name.
+to Orden still becomes a note under its own name.
 
 `*/*` on the share filters is deliberate. A note is where anything goes that
 somebody wants to keep a word about, Android only ever offers the row to somebody
@@ -270,7 +270,7 @@ gives it one.
 
 ## Alarms
 
-A task's reminder rings on the phone with nib closed (docs/tasks.md 5.10). The page
+A task's reminder rings on the phone with Orden closed (docs/tasks.md 5.10). The page
 plans the next 64 reminders across every space (`src/lib/reminders`) and hands the whole
 plan to the activity whenever it changes (`reminders` on the bridge, behind the frame's
 word); `Reminders.kt` sets an `AlarmManager` alarm for each, keeps the plan in the app's
@@ -289,11 +289,11 @@ the rule against a second sync implementation.
   the task's words, its note, **Done** and **Snooze**. Snooze is answered in Kotlin, by
   an alarm fifteen minutes on. Done and a press on the notification need the page,
   which owns the one write path: each is queued in the preferences and handed over the
-  next time the page asks (`remindersTaken`) - at once when nib is open
-  (`window.__nibReminders`), and a press opens nib to do it. A Done pressed with nib
-  closed is ticked the next time nib opens; the notification goes at once.
+  next time the page asks (`remindersTaken`) - at once when Orden is open
+  (`window.__nibReminders`), and a press opens Orden to do it. A Done pressed with Orden
+  closed is ticked the next time Orden opens; the notification goes at once.
 - **One ring per reminder.** A reminder's id is the one every device and the Worker make
-  for it (`reminderId` in `@nib/markdown/task-reminders`), and the phone remembers the
+  for it (`reminderId` in `@orden/markdown/task-reminders`), and the phone remembers the
   ids it rang for a week (`AlarmList.known`), so a push from the Worker for one the phone
   already rings stays quiet once the push client is in (below).
 - **Tests**: `AlarmListTest.kt` on the JVM - what a plan sets and cancels, the 64, the
@@ -302,7 +302,7 @@ the rule against a second sync implementation.
 
 ## Push
 
-The Worker pushes a reminder to a device that has not opened nib since the task was
+The Worker pushes a reminder to a device that has not opened Orden since the task was
 written elsewhere, which is the gap local alarms leave (docs/tasks.md decision 5). One
 module for reminders and chats (`services/sync/src/push`): device targets in
 `push_targets` (`POST /v2/push/targets`, `DELETE /v2/push/targets/:id`, `GET
@@ -328,7 +328,7 @@ which is in the repository:
    Apple Push Notifications service): `wrangler secret put APNS_KEY` with the `.p8`, and
    the vars `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_TOPIC` (the bundle id) and, for a
    development build, `APNS_SANDBOX=true`.
-4. `pnpm --filter @nib/sync migrate:remote` for `0044_push.sql`, and a deploy, which also
+4. `pnpm --filter @orden/sync migrate:remote` for `0044_push.sql`, and a deploy, which also
    adds the minute's cron.
 
 What is not built, by Emil's decision (docs/chats.md 7.4: none of the keys exist): the
@@ -339,7 +339,7 @@ Worker keeps and sends nothing.
 
 **Chats ping the desktop only, for now.** A chat's notification is the desktop's own
 (docs/chats.md 4.11): the hub pokes every signed-in device, the window decides by
-`decide` in `@nib/chats/notify` and shows it through the crate (`notices.rs`), with
+`decide` in `@orden/chats/notify` and shows it through the crate (`notices.rs`), with
 Reply in the notification on Windows and a Mac. A phone hears nothing of a chat while
 the app is closed, and nothing while it is open either: its notifications are the
 activity's, and the page does not ring them. The seam is kept for the day the keys
@@ -611,7 +611,7 @@ with `--inset-bottom`. The same component and the same three controls a desktop
 has, because a drawer is the sidebar.
 
 There is no bottom bar. Discord earns one because it has three unrelated
-app-level places; nib has one - your notes - and the other two candidates are
+app-level places; Orden has one - your notes - and the other two candidates are
 already where they belong: search is the pill at the top of the list, and who
 you are is the first thing in that foot. The reasoning is in `docs/design.md`.
 
@@ -810,7 +810,7 @@ Three more are left out on purpose.
 
 - **Sharing a note out to another app.** Tauri has no share sheet plugin, so this
   would be a plugin of our own on both platforms. Publishing a note through the
-  sync service already gets it out of the app. Sharing *into* nib is built; see
+  sync service already gets it out of the app. Sharing *into* Orden is built; see
   above.
 - **A share target in the browser build.** The PWA could be one too, through
   `share_target` in the manifest, and the whole of what it would do afterwards is
@@ -869,13 +869,13 @@ and the iOS half needs a macOS runner.
 
 ```sh
 # Android, with ANDROID_HOME and NDK_HOME set and a device or emulator attached
-pnpm --filter @nib/desktop exec tauri android dev
+pnpm --filter @orden/desktop exec tauri android dev
 
 # iOS, on a Mac with xcodegen and CocoaPods from Homebrew. The icons go in after
 # init, which fills the asset catalog with Tauri's own mark
-pnpm --filter @nib/desktop exec tauri ios init
+pnpm --filter @orden/desktop exec tauri ios init
 cp apps/desktop/src-tauri/icons/ios/*.png apps/desktop/src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
-pnpm --filter @nib/desktop exec tauri ios build --target aarch64-sim --debug
+pnpm --filter @orden/desktop exec tauri ios build --target aarch64-sim --debug
 ```
 
 `tauri ios dev` wants a signing identity even for the simulator, so without an Apple

@@ -19,7 +19,7 @@
  *  front of it, is the open space's, which is the only space a caller holding one can
  *  mean. Every mark in the app asks here, so each of them follows. */
 
-import { isChatTarget } from '@nib/markdown/links'
+import { isChatTarget, isPagesTarget } from '@orden/markdown/links'
 import { isFolderNote } from './folder-notes'
 import { links } from './link-index.svelte'
 import { elsewhere } from './marks-elsewhere.svelte'
@@ -59,6 +59,16 @@ export function chosenIcon(path: string): string | null {
   if (away === null) return links.iconOf(path) ?? workspace.folderIcons.iconOf(mapKey(path))
 
   return elsewhere.of(path)?.icon ?? workspace.folderIcons.iconOf(mapKey(path), away)
+}
+
+/** Whether the page note at `path` was made from a PDF, and so wears its mark (#676):
+ *  the open space's listing says (`paper` in tree.rs), and for a note it does not list,
+ *  another space's, marks-elsewhere.svelte.ts asks the disk once. */
+export function holdsPaper(path: string): boolean {
+  if (__EVEN_PLUGIN__ || !isPagesTarget(path)) return false
+  const listed = workspace.entryAt(path)
+  if (listed) return listed.paper === true
+  return elsewhere.of(path)?.paper === true
 }
 
 /** A website's own mark, as an address, or null for anything that is not one or has

@@ -17,7 +17,7 @@
  *  the message goes rather than when it was asked for, so what travels is where
  *  the hand is now. */
 
-import { awarenessUpdate, forget, isCatchUp, receive, syncStep1, syncUpdate } from '@nib/rooms'
+import { awarenessUpdate, forget, isCatchUp, receive, syncStep1, syncUpdate } from '@orden/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { RoomSocket } from './socket'

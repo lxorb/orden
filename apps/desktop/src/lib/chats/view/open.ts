@@ -6,7 +6,7 @@
  *  the pointer is written in the space); here it is placed, named and opened. Ctrl+T's
  *  card on M, the plus in the Chats panel and the file list's New all come here. */
 
-import { chatLinkOf } from '@nib/chats/links'
+import { chatLinkOf } from '@orden/chats/links'
 import { account } from '../../account.svelte'
 import { busy } from '../../busy.svelte'
 import type { OpenHow } from '../../new-tab'

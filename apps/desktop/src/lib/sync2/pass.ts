@@ -17,8 +17,8 @@
  *  the next one starts where the store says this one got to. A document a live room's
  *  socket carries is the socket's: a pass neither pulls nor pushes it. */
 
-import { sendMade, settleFiles } from './files'
-import { coalesce } from '@nib/sync-core/outbox'
+import { recoverLost, sendMade, settleFiles } from './files'
+import { coalesce } from '@orden/sync-core/outbox'
 import {
   type DocRefusal,
   feedPageOf,
@@ -32,7 +32,7 @@ import {
   type Op,
   type PullDoc,
   type PushDoc,
-} from '@nib/sync-core/wire'
+} from '@orden/sync-core/wire'
 import * as Y from 'yjs'
 import { Core, type Holding } from './core'
 import type { Doc } from './docs'
@@ -78,6 +78,7 @@ export async function pass(core: Core, space: SpaceState): Promise<Passed> {
   await settleDisk(core, space)
   if (!alive()) return passed
   if (!(await settleFiles(core, space, alive, passed))) return passed
+  if (!(await recoverLost(core, space, alive, passed))) return passed
   for (let round = 0; round < ROUNDS; round += 1) {
     const pulled = await pullDocs(core, space, alive)
     if (pulled === null) return passed
@@ -443,7 +444,7 @@ async function pullDocs(
 }
 
 /** A file written with a document's words - after any change another program made to it
- *  since nib last wrote it has been folded in, so nothing is written over. */
+ *  since Orden last wrote it has been folded in, so nothing is written over. */
 async function foldedThenProjected(
   core: Core,
   space: SpaceState,

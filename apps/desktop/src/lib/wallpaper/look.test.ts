@@ -1,4 +1,4 @@
-import { wallpaperCss } from '@nib/themes/wallpaper'
+import { wallpaperCss } from '@orden/themes/wallpaper'
 import { describe, expect, test } from 'vitest'
 import { accentColour } from '../accents'
 import { alphaFor, BODY, layered, linkOf } from '../content-ground'

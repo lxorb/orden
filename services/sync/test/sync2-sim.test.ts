@@ -1,4 +1,4 @@
-/** The Worker as `@nib/sync-core`'s simulator's account (docs/sync-v2.md section 12).
+/** The Worker as `@orden/sync-core`'s simulator's account (docs/sync-v2.md section 12).
  *
  *  The simulator drives devices and an account over an unkind network and then judges
  *  what everybody holds. Here the account is this Worker - its routes, its rooms and
@@ -9,7 +9,7 @@
  *  an edit in both orders (road 5), and an offline rename against an edit (road 6). */
 
 import { afterEach, describe, expect, test } from 'vitest'
-import { CALM, type Report, simulate, type Step, markersIn } from '@nib/sync-core/sim'
+import { CALM, type Report, simulate, type Step, markersIn } from '@orden/sync-core/sim'
 import { WorkerAccount } from './sync2-account'
 
 let made: WorkerAccount[] = []

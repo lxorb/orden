@@ -10,7 +10,7 @@
  *  five hundred on every pan is a frozen surface, and a canvas that is only being
  *  looked at renders nothing at all. */
 
-import { type EmbeddedNote, hardBreaks, renderMarkdown } from '@nib/markdown'
+import { type EmbeddedNote, hardBreaks, renderMarkdown } from '@orden/markdown'
 import { BASE } from '../api'
 import { accountAddress } from '../assets'
 import { isPicturePath } from '../space-paths'

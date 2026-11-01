@@ -47,7 +47,7 @@ which folds every row of the space; while any row is unfolded it is also a glyph
 beside the order of the files, and it is gone again once nothing is.
 
 Clicking opens and the twist discloses, for every row without exception. That is
-Notion's rule, and it is the one nib already had for a note that holds notes: the
+Notion's rule, and it is the one Orden already had for a note that holds notes: the
 name is the note, the caret beside it is what it holds. A row that opened on a
 click in one place and folded on a click in another would be two kinds of row
 wearing one design.
@@ -85,14 +85,14 @@ looking at that one picture - the whole space, one project, what nothing links t
 
 A build older than this one draws no row for a kind it has never heard of, and
 writes the list back without it: a graph view made here disappears from a device
-running an older nib rather than arriving broken. See
+running an older Orden rather than arriving broken. See
 `workspace/bookmarks.svelte.ts` and `workspace/graph-settings.svelte.ts`.
 
 ### The files among them are tiles
 
 Emil, 2026-10-13: the bookmarks should look like Zen's Essentials, and be called that. Zen and Arc, whose
 Favorites it copies, keep a grid of soft cards at the top of the sidebar, each wearing
-nothing but the site's mark, the one that is open lifted out of the rest. So does nib,
+nothing but the site's mark, the one that is open lifted out of the rest. So does Orden,
 for what has a face of its own: every file kept at the top of the list - a note, a
 website, a canvas, a PDF - is a tile, and everything that is only words stays a row
 under the grid: a heading, a block, a search, a graph view, a folder, a group and what
@@ -156,8 +156,8 @@ See `essentials.ts`, `BookmarkTile.svelte` and `tab-strip/bookmark-drop.ts`.
 ## A folder somebody else made
 
 A vault out of Obsidian is full of folders with no note of their own -
-`Projects/` holding two notes and nothing else. nib never makes one of those: a
-folder appears only because a note was nested, or because something outside nib
+`Projects/` holding two notes and nothing else. Orden never makes one of those: a
+folder appears only because a note was nested, or because something outside Orden
 put it there. But they exist, they have to keep working, and the vault has to stay
 a vault.
 
@@ -189,7 +189,7 @@ Two things follow, and both are deliberate:
 
 `folderNote` in `folder-notes.ts`, in this order:
 
-1. **the namesake**, `A/A.md`. This is what nib writes, and what both of the
+1. **the namesake**, `A/A.md`. This is what Orden writes, and what both of the
    folder-note plugins an Obsidian vault is likely to have look for by default -
    LostPaladin's `folder-notes` and xpgo's `folder-note-core`. The name has to
    match exactly: `Notes/notes.md` is a folder holding a note, because folding two
@@ -206,11 +206,11 @@ else's vault. Two consequences:
   named after its place rather than after itself, so the note keeps the name its
   convention gave it. A namesake is renamed with its folder, note first, because
   the links point at the note.
-- **Un-nesting** only ever takes apart what nib itself made. Drag the last note
+- **Un-nesting** only ever takes apart what Orden itself made. Drag the last note
   out of `A/` and the namesake `A/A.md` comes back up as `A.md` and the folder
   goes, because the way in was one drag and dragging the last row out has undone
   it. A folder whose note is an `index.md` is left exactly as it is: that layout
-  is somebody else's, and nib was asked to show the vault, not to rearrange it.
+  is somebody else's, and Orden was asked to show the vault, not to rearrange it.
 
 ## Icons
 

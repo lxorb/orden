@@ -10,7 +10,7 @@ const keyed = (result: Answer) =>
   result.groups.map((group) => [group.key, group.rows.map((row) => row.task?.text)])
 
 // Today is 2026-10-04 (contextAt). A start date is `🛫`, a deadline `[deadline:: ]`; a
-// `📅` is a start date in a space of nib's own and a deadline in an Obsidian vault (#371).
+// `📅` is a start date in a space of Orden's own and a deadline in an Obsidian vault (#371).
 const rows: Row[] = [
   taskRow('Inbox.md', '- [ ] Call the bank [time:: 16:00] ⏫ 🛫 2026-10-04', 0),
   taskRow('Inbox.md', '- [ ] Renew passport [deadline:: 2026-09-26] 🛫 2026-09-20', 1),
@@ -38,7 +38,7 @@ const rows: Row[] = [
 describe('the built-in views', () => {
   test('Today: overdue first, then today, by priority and time; not started and done ones out', () => {
     expect(keyed(answer(builtinView('today'), 0, rows, context))).toEqual([
-      // Overdue is a deadline past: nib's own, or a vault's `📅`.
+      // Overdue is a deadline past: Orden's own, or a vault's `📅`.
       [true, ['Renew passport', 'Vault due']],
       // A start date come stays in Today, and is never overdue: an old `📅` included.
       [false, ['Gym', 'Call the bank', 'Old date', 'Draft talk']],

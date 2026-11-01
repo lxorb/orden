@@ -11,7 +11,7 @@
 //!   global store does not have is copied as it is - `HttpOnly`, `Secure`, `SameSite`, the
 //!   partition and the expiry with it. One both have goes to the copy set last, and no
 //!   engine says when a cookie was set, so the later expiry stands for it: a site that sets
-//!   a cookie again sets the same lifetime from a later moment, and nib's own four hundred
+//!   a cookie again sets the same lifetime from a later moment, and Orden's own four hundred
 //!   days for a session cookie run from the last time it kept one (`web_cookies.rs`). A
 //!   cookie without an expiry on either side is the one from the store used last.
 //! - **An origin's storage, whole or not at all.** Its localStorage and every `IndexedDB`

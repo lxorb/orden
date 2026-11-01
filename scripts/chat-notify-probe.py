@@ -1,5 +1,5 @@
 """A chat's notification as Windows holds it: the crate's toast is raised under the app's
-own id, with the words, the chat's tag, nib's group and the field to answer in; a second
+own id, with the words, the chat's tag, Orden's group and the field to answer in; a second
 one for the same chat replaces the first; the page takes it back; and nothing of it is
 left once the app has gone (docs/chats.md 4.11, src-tauri/src/notices.rs).
 

@@ -4,16 +4,16 @@
  *  change to the task, which the editor writes as one edit of the characters that
  *  change. */
 
-import { todayOf } from '@nib/bases'
+import { todayOf } from '@orden/bases'
 import {
   deadlineField,
   deadlineOf,
   type DueReads,
   startField,
   startOf,
-} from '@nib/markdown/task-dates'
-import type { TaskChange } from '@nib/markdown/task-edits'
-import type { TaskFields } from '@nib/markdown/task-line'
+} from '@orden/markdown/task-dates'
+import type { TaskChange } from '@orden/markdown/task-edits'
+import type { TaskFields } from '@orden/markdown/task-line'
 import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from '../menu.svelte'
 import { dayRows, durationRows, priorityRows, remindRows } from './pickers'

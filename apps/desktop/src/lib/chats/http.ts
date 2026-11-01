@@ -1,13 +1,13 @@
 /** What the app asks the account about chats over HTTP (docs/chats.md 4.4; the routes are
  *  services/sync/src/chats/routes.ts). Every answer is read with its check from
- *  `@nib/chats/wire` before anything trusts it.
+ *  `@orden/chats/wire` before anything trusts it.
  *
  *  A call answers null when the account could not be reached or asked for a moment
  *  (`429`, `5xx`, no network): the caller tries again later. A refusal it can act on is
  *  an `ApiError` with the account's own word in it. */
 
-import type { Event, Notify, Pointer } from '@nib/chats'
-import { chatOf } from '@nib/chats'
+import type { Event, Notify, Pointer } from '@orden/chats'
+import { chatOf } from '@orden/chats'
 import {
   chatListOf,
   type ChatList,
@@ -20,7 +20,7 @@ import {
   resultsOf,
   statePageOf,
   type StatePage,
-} from '@nib/chats/wire'
+} from '@orden/chats/wire'
 import { account } from '../account.svelte'
 import { ApiError, BASE, request } from '../api'
 import { isRecord } from '../stored'

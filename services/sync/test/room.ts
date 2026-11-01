@@ -8,7 +8,7 @@
  *  folding into a snapshot, the settle writing the note.
  *
  *  What this stands in for is the runtime, not the protocol: the messages that
- *  cross are the real ones, encoded and decoded by the same @nib/rooms both ends
+ *  cross are the real ones, encoded and decoded by the same @orden/rooms both ends
  *  of the real thing use. The room really is running against workerd in the
  *  end-to-end test, where two browsers type into one note; see
  *  test/e2e/collaborate.py. */

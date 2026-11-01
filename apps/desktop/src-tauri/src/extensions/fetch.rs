@@ -9,8 +9,8 @@
 
 use super::link::Store;
 
-/// The Chromium version nib says it is, which a store reads to decide whether an
-/// extension that asks for a newer browser may have it. A current one: nib's engines are.
+/// The Chromium version Orden says it is, which a store reads to decide whether an
+/// extension that asks for a newer browser may have it. A current one: Orden's engines are.
 const PRODUCT_VERSION: &str = "140.0.0.0";
 
 /// The largest file taken, which is past every extension in either store.

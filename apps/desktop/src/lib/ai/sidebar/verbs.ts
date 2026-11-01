@@ -7,7 +7,7 @@
 import { key } from '../../i18n.svelte'
 import { nameOf } from '../../space-paths'
 
-/** The verb each of nib's tools is said with, past tense: the row is drawn as the
+/** The verb each of Orden's tools is said with, past tense: the row is drawn as the
  *  call goes and stays once it is done, and a pulse says which are still going. */
 const VERBS: Record<string, string> = {
   read_note: key('Read'),

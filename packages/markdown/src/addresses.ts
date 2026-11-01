@@ -8,7 +8,7 @@
  *  that is read one way here and another way there is how a filter gets walked
  *  past. */
 
-/** Schemes a browser runs instead of fetching. `@nib/markdown` drops them again
+/** Schemes a browser runs instead of fetching. `@orden/markdown` drops them again
  *  when it renders, which is the line that matters for a published page; a note
  *  should not be carrying one in the first place. */
 const RUNS = new Set(['javascript:', 'vbscript:'])

@@ -30,7 +30,7 @@
  *  file, with the account too (#423). */
 
 import { untrack } from 'svelte'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import { insideItsSpace, movedTo, nameOf, relativeTo, samePath, within } from '../space-paths'
 import { isRecord, isString, keep, recordOf, stored } from '../stored'
 import { FIRST_MODE, isSortMode, renamedIn, type SortMode, withoutName } from '../tree-order'

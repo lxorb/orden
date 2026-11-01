@@ -1,7 +1,7 @@
 import { tags } from '@lezer/highlight'
 import type { BlockContext, Line, MarkdownConfig } from '@lezer/markdown'
-import { parseWikilink, shownSpan } from '@nib/markdown/links'
-import { tagAt } from '@nib/markdown/tags'
+import { parseWikilink, shownSpan } from '@orden/markdown/links'
+import { tagAt } from '@orden/markdown/tags'
 import { markTags } from './tags'
 import {
   BACKSLASH,
@@ -12,6 +12,7 @@ import {
   DOLLAR,
   EQUALS,
   HASH,
+  isDigit,
   isSpace,
   NEWLINE,
   PERCENT,
@@ -36,7 +37,7 @@ const COMMENT_DELIMITER = { resolve: 'PercentComment', mark: 'PercentCommentMark
 /** `%%a note to yourself%%`, Obsidian's comment.
  *
  *  The editor's half of it. What takes it out of everything anybody else reads
- *  is `withoutComments` in @nib/markdown, which reads both spellings; this is
+ *  is `withoutComments` in @orden/markdown, which reads both spellings; this is
  *  only so the writer sees it go the way an HTML comment does, and gets it back
  *  the moment the caret is inside it.
  *
@@ -136,7 +137,7 @@ const Wikilink: MarkdownConfig = {
   ],
 }
 
-/** `#work/nib`, by the grammar in @nib/markdown's tags.ts that the renderer reads
+/** `#work/nib`, by the grammar in @orden/markdown's tags.ts that the renderer reads
  *  too. A parser node rather than a pattern over the lines: code, maths, comments,
  *  addresses and HTML claim their characters first, a heading's `# ` is the
  *  block's, and the tree is parsed incrementally, so a keystroke never costs a pass
@@ -159,7 +160,8 @@ const Hashtag: MarkdownConfig = {
   ],
 }
 
-/** `$x$`. Requires non-space just inside the delimiters, so prices survive. */
+/** `$x$`. Requires non-space just inside the delimiters, so prices survive, and no
+ *  digit after the closing one, Pandoc's rule: `$5-$10` is two prices (#498). */
 const InlineMath: MarkdownConfig = {
   defineNodes: [
     { name: 'InlineMath', style: markTags.math },
@@ -181,6 +183,7 @@ const InlineMath: MarkdownConfig = {
             continue
           }
           if (code === DOLLAR && !isSpace(cx.char(i - 1))) {
+            if (isDigit(cx.char(i + 1))) return -1
             return cx.addElement(
               cx.elt('InlineMath', pos, i + 1, [
                 cx.elt('MathMark', pos, pos + 1),
@@ -236,7 +239,7 @@ const BlockMath: MarkdownConfig = {
        *  It is not a convention anybody chose. CommonMark lets fenced code and an
        *  ATX heading interrupt a paragraph, @lezer/markdown gives each of them one
        *  of these, and the renderer this parser has to agree with already had the
-       *  same rule - `blockMath` in @nib/markdown's blocks.ts carries a `start`
+       *  same rule - `blockMath` in @orden/markdown's blocks.ts carries a `start`
        *  hook, which is marked's way of saying it. So a note said one thing while
        *  it was being written and another once it was read back, exported or
        *  published, which is worse than either answer on its own. */

@@ -27,7 +27,7 @@
  *  See sync/conflicts.ts for the three rules and docs/sync.md for what a reader is
  *  told. */
 
-import { conflictPath } from '@nib/markdown/paths'
+import { conflictPath } from '@orden/markdown/paths'
 import { record } from '../sync/record.svelte'
 import { type ConflictRule } from '../sync/conflicts'
 import { writeDown } from '../sync/write-down'

@@ -1,5 +1,5 @@
 //! The hosts the reader's own `~/.ssh/config` names, read the way `ssh` reads it and
-//! never written: nib lists them, and `ssh` itself resolves everything else.
+//! never written: Orden lists them, and `ssh` itself resolves everything else.
 //!
 //! What a host is here: a `Host` line's names that are names and not patterns. `Host pi
 //! raspberry` is one host, `pi`, found by `raspberry` too - the names on one line are one

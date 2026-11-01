@@ -11,8 +11,8 @@
  *  through the engine where the answer is "done", so a recurring task dropped on Done
  *  makes its next occurrence as a tick in the editor would. */
 
-import { deadlineField, deadlineOf, startField, startOf } from '@nib/markdown/task-dates'
-import { groupName, type Priority, type Row, type TaskChange, type Value } from '@nib/bases'
+import { deadlineField, deadlineOf, startField, startOf } from '@orden/markdown/task-dates'
+import { groupName, type Priority, type Row, type TaskChange, type Value } from '@orden/bases'
 import type { RowChange } from '../rows/write'
 import { bare, isNoteProperty } from './columns'
 import { dayIn } from './values'
@@ -115,7 +115,7 @@ export function dropInto(
   if (property.startsWith('task.')) return taskDrop(property.slice(5), key, row, today)
 
   // The built-in views' own groupings: Today's overdue half and its today half, and
-  // Upcoming's days. Their names are the builtins' (see builtins.ts in @nib/bases).
+  // Upcoming's days. Their names are the builtins' (see builtins.ts in @orden/bases).
   // Out of the overdue half, a task is due today: its deadline is what made it late.
   if (property === 'formula.overdue') {
     return key === false && row.task ? taskDrop('deadline', today, row, today) : null

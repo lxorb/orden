@@ -2,13 +2,13 @@
  *  (docs/sync-v2.md section 5.5).
  *
  *  The crate watches each space's folder and lists it once as the watch starts
- *  (src-tauri/src/space_watch.rs, space-watch.ts here). A file whose words are not nib's
+ *  (src-tauri/src/space_watch.rs, space-watch.ts here). A file whose words are not Orden's
  *  last write was changed by something else and is folded in three ways (ingest.ts); a
  *  file nobody made here is a create, one gone is a delete, one that moved - the same
  *  file at a new path - is a move. Read a hundred at a time, a tick apart, so a `git
  *  checkout` of another branch never holds the window up.
  *
- *  Not what nib did itself: the workspace says those once (workspace/file-ops.ts), and
+ *  Not what Orden did itself: the workspace says those once (workspace/file-ops.ts), and
  *  the engine's own moves and deletes are marked as they are made (`own`). A folder that
  *  is not there any more is never read as a reason to delete anything: a space renamed in
  *  Explorer is gone from here too, and it is the workspace that says what became of it. */
@@ -20,7 +20,8 @@ import {
   unwatchSpaces,
   watchSpaces,
 } from '../space-watch'
-import { inForeignCopy } from '@nib/sync-core/foreign'
+import { inForeignCopy } from '@orden/sync-core/foreign'
+import { t } from '../i18n.svelte'
 import { syncMark } from '../surfaces.svelte'
 import type { Engine } from './engine'
 import { holdsDocument } from './kinds'
@@ -39,7 +40,7 @@ function hidden(path: string): boolean {
 }
 
 /** Whether a path is another sync tool's copy, which the engine never keeps
- *  (@nib/sync-core/foreign). Hearing one is what fetches the mark the file list gives
+ *  (@orden/sync-core/foreign). Hearing one is what fetches the mark the file list gives
  *  it, once. */
 function foreign(path: string): boolean {
   if (!inForeignCopy(path)) return false
@@ -52,6 +53,26 @@ function foreign(path: string): boolean {
 function kept(engine: Engine, path: string, dir: boolean): boolean {
   if (hidden(path) || foreign(path)) return false
   return dir || holdsDocument(kindOfName(path)) || !!engine.core.world.blobs
+}
+
+/** Whether this run has said the system's limit of watched folders is reached. */
+let toldOfLimit = false
+
+/** Says once a run, as a notification, that changes other programs make may go unheard:
+ *  past the system's limit of watched folders, nothing past it is watched (#481). The
+ *  spaces are still read again at every scan, which the window asks for. */
+function limitReached(): void {
+  if (toldOfLimit) return
+  toldOfLimit = true
+  void import('../notify').then(({ notify }) =>
+    notify(
+      t('Some changes may not be noticed'),
+      t(
+        'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.',
+      ),
+      'watch-limit',
+    ),
+  )
 }
 
 export interface Watching {
@@ -95,6 +116,7 @@ export function watchFolders(how: Watching): Watched {
   }
 
   const heard = (news: SpaceNews) => {
+    if (news.unwatched === 'limit') limitReached()
     if (news.gone) return
     if (news.scan) queue.push(() => scanned(how, news.root))
     for (const change of news.changes) queue.push(() => changed(how, change))
@@ -172,7 +194,7 @@ async function made(engine: Engine, path: string, dir: boolean) {
   if (text !== null) await engine.created(path, dir, text)
 }
 
-/** A space's folder read whole against its tree: what changed while nib was not
+/** A space's folder read whole against its tree: what changed while Orden was not
  *  watching - closed, or the watcher having lost events. */
 async function scanned(how: Watching, root: string): Promise<void> {
   const engine = how.engine
@@ -195,7 +217,7 @@ async function scanned(how: Watching, root: string): Promise<void> {
     }
   }
 
-  // Deleted while nib was closed: the entries whose files the folder no longer has.
+  // Deleted while Orden was closed: the entries whose files the folder no longer has.
   // Asked of the disk once more first: a pass may have moved a file since the listing.
   for (const entry of [...space.entries.values()]) {
     if (!entry.local_path || entry.deleted || seen.has(space.key(entry.local_path))) continue

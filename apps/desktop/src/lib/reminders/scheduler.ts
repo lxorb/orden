@@ -8,12 +8,12 @@
  *  every space has been read, because a plan made from half the spaces would take the
  *  other half's reminders off the system.
  *
- *  The platform says whether it rings with nib closed. Where it does not (Linux, the
+ *  The platform says whether it rings with Orden closed. Where it does not (Linux, the
  *  browser, a phone without the activity) the page rings them itself while it runs.
  *  Plain rather than reactive, with its links to the app as a `Host`, so it is tested
  *  without one; see start.svelte.ts for the app's. */
 
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 import { plan, type Reminder, samePlan } from './plan'
 
 /** How long the rows have to be still before planning again: a save is several
@@ -33,7 +33,7 @@ export interface Host {
   /** The automatic reminder's minutes before a task's time, or null when it is off. */
   auto(): number | null
   now(): number
-  /** Hands the whole plan to whatever rings with nib closed. Answers whether anything
+  /** Hands the whole plan to whatever rings with Orden closed. Answers whether anything
    *  does: false is the page's to ring. Throws where it could not be handed, which is
    *  the page's to ring too, and to hand again on the next pass. */
   hand(plan: readonly Reminder[]): Promise<boolean>

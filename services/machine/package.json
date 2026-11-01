@@ -1,5 +1,5 @@
 {
-  "name": "@nib/machine",
+  "name": "@orden/machine",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -10,7 +10,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nib/online": "workspace:*",
+    "@orden/online": "workspace:*",
     "@xterm/addon-serialize": "0.14.0",
     "@xterm/addon-unicode11": "0.9.0",
     "@xterm/headless": "6.0.0",

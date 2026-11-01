@@ -44,7 +44,7 @@ import { key } from './i18n.svelte'
  *  Categories are not read. Lucide keeps them per icon in its repository rather than
  *  in anything it publishes, and where a category says "math" its tags already do; a
  *  second index of the same words would be weight for nothing. What tags genuinely do
- *  not cover - nobody tagged the briefcase "work" - is what nib's own synonym list in
+ *  not cover - nobody tagged the briefcase "work" - is what Orden's own synonym list in
  *  icons.ts is for.
  *
  *  Kept once, because two sets read it: the stroked one it describes, and the coloured

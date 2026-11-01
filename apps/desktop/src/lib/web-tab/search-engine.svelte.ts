@@ -2,7 +2,7 @@
  *
  *  Google until somebody chooses otherwise (Emil's call; see typed.ts), one of Chrome's
  *  list for the reader's region, or a custom address with `%s` where the words go. This
- *  device's, like Memory saver beside it: Chrome keeps it with the profile, and nib's
+ *  device's, like Memory saver beside it: Chrome keeps it with the profile, and Orden's
  *  profile is the machine's. What the list is, what a choice makes of the words and
  *  where the engine's own page is, is engines.ts.
  *

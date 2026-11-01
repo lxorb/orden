@@ -15,7 +15,7 @@ import {
   isButton,
   readRollup,
   reverseFormula,
-} from '@nib/bases'
+} from '@orden/bases'
 import { i18n, t } from '../i18n.svelte'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { writeEach } from './act'

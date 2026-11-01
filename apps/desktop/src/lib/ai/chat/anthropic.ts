@@ -304,7 +304,7 @@ class AnthropicReader implements Reader {
     if (part?.kind === 'tool') {
       part.args = block.input
       // A search the provider ran itself has answered by the time its result block
-      // arrives; nib has nothing to run.
+      // arrives; Orden has nothing to run.
       if (block.type === 'server_tool_use') part.state = 'ok'
     }
     return { changed: [open.part] }

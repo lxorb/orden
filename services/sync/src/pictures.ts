@@ -8,10 +8,10 @@
  *  from the same place as its words and its reminders (notes.ts), and the nightly sweep
  *  reads the notes written before there was anywhere to put them (blog/fill.ts). */
 
-import { lexMarkdown, withoutComments } from '@nib/markdown'
-import { coverOf } from '@nib/markdown/cover'
-import { frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
-import { withoutBlockIds } from '@nib/markdown/links'
+import { lexMarkdown, withoutComments } from '@orden/markdown'
+import { coverOf } from '@orden/markdown/cover'
+import { frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
+import { withoutBlockIds } from '@orden/markdown/links'
 import type { Env } from './types'
 
 /** The keys of a note's front matter beside its cover that hold a picture the app

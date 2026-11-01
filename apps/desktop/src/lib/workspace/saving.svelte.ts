@@ -14,8 +14,8 @@
  *  the pause, which file operation each is in the middle of, and the timers behind
  *  both. The workspace holds one of these and hands its calls straight through. */
 
-import { flushTableEdits } from '@nib/editor'
-import { freePath } from '@nib/markdown/paths'
+import { flushTableEdits } from '@orden/editor'
+import { freePath } from '@orden/markdown/paths'
 import { SAVE_AT_MOST, SAVE_DELAY, saveRetryDelay } from '../backoff'
 import { flushCardEdits } from '../canvas/writing'
 import { t } from '../i18n.svelte'

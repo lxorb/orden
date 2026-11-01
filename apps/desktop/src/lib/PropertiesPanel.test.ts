@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
 
 /** What the Properties panel draws for the note in front: a row per key with the
- *  control its value asks for, the YAML where the block is one nib cannot read, and no
+ *  control its value asks for, the YAML where the block is one Orden cannot read, and no
  *  controls at all where the note may not be written. Rendered on the server, the way
  *  Sidebar.test does beside it: the markup is what a reader gets. What a control
  *  writes is property-edits.ts's, tested there, and the drive presses them. */

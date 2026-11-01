@@ -8,7 +8,7 @@
  *  of same-height rows is what the window arithmetic needs (row-window.ts), so a
  *  Completed view of ten thousand done lines mounts the thirty on screen. Pure. */
 
-import { addDays, type Group, groupName, type Row, rowId } from '@nib/bases'
+import { addDays, type Group, groupName, type Row, rowId } from '@orden/bases'
 import { dayIn } from './values'
 import { isTitle } from './sections'
 

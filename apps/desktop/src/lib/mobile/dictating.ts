@@ -7,10 +7,10 @@
  *
  *  On Android the phone's own `SpeechRecognizer`, through the bridge, because the web's
  *  speech API is Chrome's and not the webview's; everywhere else the web's own, which
- *  is the same feature where it exists. Neither is nib's: no sound is recorded, nothing
+ *  is the same feature where it exists. Neither is Orden's: no sound is recorded, nothing
  *  is uploaded, and what comes back is words. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
 import { writeAtCaret } from '../insert-picture'

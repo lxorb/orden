@@ -106,7 +106,7 @@ function destination(typed: string): string {
  *  reader who selected words and pasted an address over them did not mean to lose
  *  the words.
  *
- *  The markdown package has one of these as well, `pasteURLAsLink`, and nib turns it
+ *  The markdown package has one of these as well, `pasteURLAsLink`, and Orden turns it
  *  off (see modes.ts): it carries the line break a copy often ends with into the link,
  *  refuses words with any markup in them, links the main selection only, leaves the
  *  words selected rather than the caret after the link, and a paste from the menu

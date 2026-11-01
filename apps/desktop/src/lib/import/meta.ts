@@ -1,4 +1,4 @@
-/** What a note knows about itself, written the way nib writes it.
+/** What a note knows about itself, written the way Orden writes it.
  *
  *  Dates are the reason this exists. Every one of these exports knows when each
  *  note was written, and the moment it is imported every file on disk says it
@@ -6,20 +6,20 @@
  *  file's own timestamps are the import's from then on. So what the export knew
  *  goes into the note, where it survives sync, a copy and another import.
  *
- *  `date` is the key nib already reads - an export uses it for the document's
+ *  `date` is the key Orden already reads - an export uses it for the document's
  *  date - and it holds the day the note was made. `updated` is only written when
  *  the export knew a different last-edited day, and it is the export's own fact
  *  rather than a feature: nothing in the app reads it, and a note that never
  *  changed after it was written does not carry it. */
 
-import { plainWords } from '@nib/markdown/escapes'
+import { plainWords } from '@orden/markdown/escapes'
 import {
   frontMatterBlock,
   frontMatterKeys,
   type FrontMatterRow,
   writeFrontMatter,
-} from '@nib/markdown/front-matter'
-import { TAG_NAME } from '@nib/markdown/tags'
+} from '@orden/markdown/front-matter'
+import { TAG_NAME } from '@orden/markdown/tags'
 
 export interface Meta {
   /** The day it was made, `YYYY-MM-DD`. */
@@ -38,7 +38,7 @@ export type Property = FrontMatterRow[1]
 
 /** A front matter block, or nothing at all when there is nothing to say. Which
  *  rows there are is decided here - only what the export knew - and how each value
- *  is spelled is @nib/markdown/front-matter's, shared with a web tab's clip so that a
+ *  is spelled is @orden/markdown/front-matter's, shared with a web tab's clip so that a
  *  clipped page and an imported note say the same thing the same way. */
 export function frontMatterFor(meta: Meta): string {
   const rows: FrontMatterRow[] = []
@@ -101,7 +101,7 @@ export function noteText(title: string | null, body: string, meta: Meta = {}, ow
   return `${props}${head}${words}${words ? '\n' : ''}`
 }
 
-/** A key's line, as @nib/markdown/front-matter reads one: an unindented line up to
+/** A key's line, as @orden/markdown/front-matter reads one: an unindented line up to
  *  its first colon with a blank or nothing after it. */
 const KEY_LINE = /^[^\s#-].*?[ \t]*:(?:\s|$)/
 
@@ -125,7 +125,7 @@ function ownBlock(body: string): ReturnType<typeof frontMatterBlock> {
 
 /** A note's own block with the rows of `meta` it does not say added in front of
  *  its closing fence, and up to that fence: a key in another case is the same key,
- *  since that is how the app reads one (see @nib/markdown/front-matter). */
+ *  since that is how the app reads one (see @orden/markdown/front-matter). */
 function withMeta(note: string, close: number, meta: Meta): string {
   const says = new Set(frontMatterKeys(note).map((key) => key.toLowerCase()))
   const nl = note.includes('\r\n') ? '\r\n' : '\n'
@@ -187,7 +187,7 @@ export function freeKey(wanted: string, taken: Set<string>): string {
  *  digits. */
 const TAG = new RegExp(`^${TAG_NAME}$`, 'u')
 
-/** What another app called a label, as a tag nib can hold: no spaces, no hash in
+/** What another app called a label, as a tag Orden can hold: no spaces, no hash in
  *  front, and the slashes kept, because a nested tag is a nested tag in both. A
  *  character the app's tags cannot hold is a hyphen; one they can, an accent
  *  written as a mark or a `🔥`, stays. */

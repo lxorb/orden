@@ -1,10 +1,10 @@
 """A reminder handed to Windows' own schedule: the toast is registered, under the app's id,
-to ring with nib not running (docs/tasks.md 5.10 and 7.3).
+to ring with Orden not running (docs/tasks.md 5.10 and 7.3).
 
 Windows only. What it proves, end to end through the packaged app: a space with a task
 that asks to be reminded is read, the reminders store plans it and hands the plan to the
 crate, and the crate puts a toast on `ToastNotifier`'s schedule under the probe's own app
-id, tagged with the reminder's id and in nib's group - which is read back here the way
+id, tagged with the reminder's id and in Orden's group - which is read back here the way
 any program on the machine can read it, through Windows PowerShell's WinRT.
 
 **It never rings on anybody's screen.** The reminder is twenty minutes out, the app is a

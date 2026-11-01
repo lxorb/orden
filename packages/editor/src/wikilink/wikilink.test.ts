@@ -490,7 +490,7 @@ describe('where a link goes', () => {
     expect(resolves(SPACE, wiki('PAPER.PDF'), 'wikilink')).toBe(true)
   })
 
-  test('a file Nib cannot open stays unresolved', () => {
+  test('a file Orden cannot open stays unresolved', () => {
     expect(resolves(SPACE, wiki('shot.png'), 'wikilink')).toBe(false)
   })
 

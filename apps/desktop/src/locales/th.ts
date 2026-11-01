@@ -1560,6 +1560,18 @@ export const th: Dictionary = {
   'answered by {model}, {date}': '{model} ตอบ {date}',
   'AI block': 'บล็อก AI',
   'Do with AI': 'ทำด้วย AI',
+  'Use the browser': 'ใช้เบราว์เซอร์',
+  'Lets a task done with AI open web pages and act on them.':
+    'ให้งานที่ทำด้วย AI เปิดหน้าเว็บและดำเนินการบนหน้านั้นได้',
+  'Look through notes': 'ค้นดูโน้ต',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'ให้งานที่ทำด้วย AI ค้นหาและอ่านโน้ตอื่นของคุณได้ นอกจากโน้ตของตัวเอง',
+  'Change other notes': 'เปลี่ยนโน้ตอื่น',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'ให้งานที่ทำด้วย AI เขียน ย้าย และลบโน้ตอื่นที่ไม่ใช่งานนั้นได้',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'สิ่งที่ขอให้งานที่ทำด้วย AI ทำ งานจะยังถูกติ๊กเมื่อเสร็จ หรือถามในความคิดเห็น',
+  'Started in the AI panel': 'เริ่มในแผง AI แล้ว',
   'Highlight colour': 'สีไฮไลต์',
   'A single newline breaks the line': 'ขึ้นบรรทัดใหม่ครั้งเดียวก็ตัดบรรทัด',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2580,6 +2592,9 @@ export const th: Dictionary = {
     'ที่นี่หน้าเว็บค้นหาที่อยู่แบบเดียวกับระบบ DNS ของมันตั้งค่าในการตั้งค่าของระบบเอง',
   'Set by the settings file': 'กำหนดโดยไฟล์การตั้งค่า',
   'The settings file has a problem': 'ไฟล์การตั้งค่ามีปัญหา',
+  'Some changes may not be noticed': 'การเปลี่ยนแปลงบางอย่างอาจไม่ถูกสังเกต',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'ระบบถึงขีดจำกัดของโฟลเดอร์ที่เฝ้าดูแล้ว Orden จึงอาจไม่เห็นการเปลี่ยนแปลงทุกอย่างที่โปรแกรมอื่นทำในพื้นที่ของคุณ เพิ่มค่า fs.inotify.max_user_watches เพื่อแก้ไข',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ย้ายแชต {name} ไปยัง {space} ไหม',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

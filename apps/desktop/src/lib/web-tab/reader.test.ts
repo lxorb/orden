@@ -9,8 +9,8 @@
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { extract, readSnapshot } from '@nib/markdown/article'
-import { frontMatterValue } from '@nib/markdown/front-matter'
+import { extract, readSnapshot } from '@orden/markdown/article'
+import { frontMatterValue } from '@orden/markdown/front-matter'
 import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 import { articleOf, clipNote } from './note'

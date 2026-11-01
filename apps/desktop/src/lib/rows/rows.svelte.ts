@@ -11,7 +11,7 @@
  *    rows.write(row, change)    a property or a task field, one edit, one undo
  *    rows.inbox(root?)          the space's inbox note, made the first time it is asked */
 
-import type { Row } from '@nib/bases'
+import type { Row } from '@orden/bases'
 import { untrack } from 'svelte'
 import { breathe } from '../breathe'
 import { links } from '../link-index.svelte'
@@ -57,7 +57,7 @@ $effect.root(() => {
   })
 })
 
-// A space's bases at work while nib runs (automations, ids, repeating templates) start
+// A space's bases at work while Orden runs (automations, ids, repeating templates) start
 // with the rows they read, and never in the glasses' plugin, which has no rows; see
 // views/runner.svelte.ts.
 if (!__EVEN_PLUGIN__) void import('../views/runner.svelte')

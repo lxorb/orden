@@ -110,7 +110,7 @@ const { links } = await import('../link-index.svelte')
 const { startup } = await import('../startup.svelte')
 const { readingHtml } = await import('./render')
 const { modes } = await import('../modes.svelte')
-const { EditorState, noteIndexExtension, renderNote } = await import('@nib/editor')
+const { EditorState, noteIndexExtension, renderNote } = await import('@orden/editor')
 
 /** The exporter, loaded once rather than by whichever test rendered first; see
  *  render.test.ts, and docs/conventions.md. */

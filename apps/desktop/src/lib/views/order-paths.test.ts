@@ -1,4 +1,4 @@
-import { readBase } from '@nib/bases'
+import { readBase } from '@orden/bases'
 import { describe, expect, test, vi } from 'vitest'
 import type { Entry } from '../workspace.svelte'
 import { movedWords, orderMoved } from './order-paths'

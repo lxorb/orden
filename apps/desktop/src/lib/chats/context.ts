@@ -2,15 +2,15 @@
  *  `@nib` in a chat attach a part of one, the way a note is attached.
  *
  *  The part is the unread one where there is one, else the newest messages, as the
- *  agent's `read_chat` words them (`@nib/chats/agent`): every message the reader did not
+ *  agent's `read_chat` words them (`@orden/chats/agent`): every message the reader did not
  *  write inside an untrusted mark naming the chat and the person, because a chat is
  *  other people's words and a model must never take them for the reader's. It is
  *  headed by a link to where it starts, which an answer can carry, and kept to what a
  *  model is handed of a note: the oldest messages go first when it is longer. */
 
-import { type Message, type Who } from '@nib/chats'
-import { messagesText } from '@nib/chats/agent'
-import { chatLink } from '@nib/chats/links'
+import { type Message, type Who } from '@orden/chats'
+import { messagesText } from '@orden/chats/agent'
+import { chatLink } from '@orden/chats/links'
 import { chats } from './store.svelte'
 
 /** The most messages a part holds, and the most characters: about what a note is

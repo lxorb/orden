@@ -42,6 +42,6 @@ mv trimmed "$image"
 
 if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && [ -f "$image.sig" ]; then
   rm "$image.sig"
-  pnpm --dir "$OLDPWD" --filter @nib/desktop exec tauri signer sign "$image" > /dev/null
+  pnpm --dir "$OLDPWD" --filter @orden/desktop exec tauri signer sign "$image" > /dev/null
   echo "signed again: $(basename "$image").sig"
 fi

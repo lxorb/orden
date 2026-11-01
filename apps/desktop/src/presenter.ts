@@ -5,7 +5,7 @@
  *  is a page that listens on a channel and draws three things; see
  *  lib/slides/Presenter.svelte. */
 
-import '@nib/themes'
+import '@orden/themes'
 import { mount } from 'svelte'
 import Presenter from './lib/slides/Presenter.svelte'
 

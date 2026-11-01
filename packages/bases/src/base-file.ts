@@ -4,13 +4,13 @@
  *  Obsidian's format, whole: `filters`, `formulas`, `properties`, `summaries` and
  *  `views`, each view with its `type`, `name`, `filters`, `order`, `sort`,
  *  `groupBy`, `limit` and `summaries`, and whatever else a layout keeps (`image`,
- *  `cardSize`, `columnSize`, a map's `coordinates`). nib's additions are under one
+ *  `cardSize`, `columnSize`, a map's `coordinates`). Orden's additions are under one
  *  key, `nib:`, at the top and inside a view, which Obsidian leaves alone.
  *
  *  Writing is a merge into the file as it was, not a new file: the YAML is read as
  *  a document, every value the Base changed is set in place, and every key nobody
  *  changed keeps its order, its quotes and its comments. A Base that says what the
- *  file already says gives the file back byte for byte, so opening a base in nib
+ *  file already says gives the file back byte for byte, so opening a base in Orden
  *  and closing it again never shows up as a change in Obsidian or in sync. */
 
 import { isMap, isScalar, isSeq, type Document, parseDocument } from 'yaml'
@@ -155,7 +155,7 @@ function readView(raw: unknown, at: number): View {
     nib: readNibView(plain.nib),
     options: rest(plain, VIEW_KEYS),
   }
-  // Filters of a shape nib cannot read and a limit that is not a count (`"10"`) are
+  // Filters of a shape Orden cannot read and a limit that is not a count (`"10"`) are
   // kept among the options as written, as the base's own filters are kept, so the
   // next write gives them back instead of leaving the view showing more rows.
   const filters = readFilter(plain.filters)
@@ -278,7 +278,7 @@ function nibViewPlain(nib: NibView): Plain {
 
 function viewPlain(view: View): Plain {
   // The filters and limit kept as written stand in their own place, and only while
-  // the view has none of its own: one set since replaces what nib could not read.
+  // the view has none of its own: one set since replaces what Orden could not read.
   return present([
     ['type', view.type],
     ['name', view.name],

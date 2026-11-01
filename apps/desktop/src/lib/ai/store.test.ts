@@ -29,6 +29,13 @@ vi.mock('./accounts-file', () => ({
   },
 }))
 
+/** What a provider's list of models answers, asked when an account is kept on one that
+ *  cannot talk. */
+const listModels = vi.fn((_provider: unknown) =>
+  Promise.resolve(['babbage-002', 'gpt-4.1', 'gpt-5.4-mini', 'gpt-5.5', 'tts-1']),
+)
+vi.mock('./complete', () => ({ listModels: (provider: unknown) => listModels(provider) }))
+
 /** One browsing profile's own storage. */
 function storage(entries: Record<string, string> = {}): Storage {
   const held = new Map(Object.entries(entries))
@@ -156,5 +163,44 @@ describe('two windows at once', () => {
     const kept = JSON.parse(file.text ?? '{}') as { accounts: { id: string; name: string }[] }
     expect(kept.accounts.map((one) => one.id)).toEqual(['claude-code', 'anthropic', 'openai'])
     expect(kept.accounts[1]?.name).toBe('Work')
+  })
+})
+
+/** #325: Settings once started an OpenAI key on babbage-002, the first name its list
+ *  sorted to, which cannot call a tool and which Settings lists no more. */
+describe('an account kept on a model nobody can talk to', () => {
+  const KEPT = (model: string) =>
+    JSON.stringify({
+      providers: [{ id: 'openai', kind: 'openai', name: '', model }],
+      defaultId: 'openai',
+      uses: {},
+    })
+
+  test('is moved to the one a key given now starts on, and written so', async () => {
+    listModels.mockClear()
+    const ai = await windowOn(storage({ 'nib:ai': KEPT('babbage-002') }))
+    await vi.waitFor(() => {
+      expect(ai.accounts[0]?.model).toBe('gpt-5.5')
+    })
+    await settled()
+    expect(JSON.parse(file.text ?? '{}').accounts[0].model).toBe('gpt-5.5')
+    expect(listModels).toHaveBeenCalledTimes(1)
+  })
+
+  test('one that can talk is left as it was, and nothing is asked', async () => {
+    listModels.mockClear()
+    const ai = await windowOn(storage({ 'nib:ai': KEPT('gpt-4.1') }))
+    await settled()
+    expect(ai.accounts[0]?.model).toBe('gpt-4.1')
+    expect(listModels).not.toHaveBeenCalled()
+  })
+
+  test('a list that cannot be read leaves it, to be tried again', async () => {
+    listModels.mockClear()
+    listModels.mockImplementationOnce(() => Promise.reject(new Error('offline')))
+    const ai = await windowOn(storage({ 'nib:ai': KEPT('davinci-002') }))
+    await settled()
+    expect(listModels).toHaveBeenCalled()
+    expect(ai.accounts.find((one) => one.id === 'openai')?.model).toBe('davinci-002')
   })
 })

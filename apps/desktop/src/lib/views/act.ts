@@ -9,12 +9,12 @@
  *  same edit, as the editor's box does. A move of whole lines is this lane's own, in
  *  lines.ts. */
 
-import { finish, skip, tick } from '@nib/bases'
-import type { Row, TaskChange } from '@nib/bases'
-import { appliedEdits, oneEdit } from '@nib/markdown/edits'
-import { blockIds, freeBlockId } from '@nib/markdown/links'
-import { taskLine as lineWords } from '@nib/markdown/task-edits'
-import type { TaskFields } from '@nib/markdown/task-line'
+import { finish, skip, tick } from '@orden/bases'
+import type { Row, TaskChange } from '@orden/bases'
+import { appliedEdits, oneEdit } from '@orden/markdown/edits'
+import { blockIds, freeBlockId } from '@orden/markdown/links'
+import { taskLine as lineWords } from '@orden/markdown/task-edits'
+import type { TaskFields } from '@orden/markdown/task-line'
 import { rows } from '../rows/rows.svelte'
 import { canWriteAt } from '../sharing.svelte'
 import { changed, type RowChange } from '../rows/write'
@@ -39,7 +39,15 @@ import {
   withLines,
   withoutBlock,
 } from './lines'
-import { editedTask, withComment, withDescription, withoutComment, withSubtask } from './task-body'
+import {
+  askedFor,
+  editedTask,
+  withComment,
+  withDescription,
+  withoutComment,
+  withoutNeedsInput,
+  withSubtask,
+} from './task-body'
 
 /** Where a row's note is on this disk, or null for a space no longer here. */
 function pathOf(row: Row): string | null {
@@ -477,13 +485,29 @@ export async function addSubtask(row: Row, line: string): Promise<boolean> {
   return rewrite(path, (before) => withSubtask(before, anchor, line))
 }
 
-/** A comment written under a task, stamped with this moment: the task view's composer. */
+/** A comment written under a task, stamped with this moment: the task view's composer.
+ *  It answers what a task flagged as needing input asked, so the flag comes off in the
+ *  same edit (#325). */
 export async function addComment(row: Row, words: string): Promise<boolean> {
   const anchor = row.anchor
   const path = pathOf(row)
   if (!anchor || path === null) return false
   const stamp = nowOf(new Date()).slice(0, 16)
-  return rewrite(path, (before) => withComment(before, anchor, words, stamp))
+  return rewrite(path, (before) => {
+    const commented = withComment(before, anchor, words, stamp)
+    return commented === null ? null : withoutNeedsInput(commented, anchor)
+  })
+}
+
+/** A task done with AI left asking (#325): the chat's last words under it as a comment,
+ *  and the task flagged `needs-input`, where the chat ended with the task neither ticked
+ *  nor asked about. A model told to do one of the two, and saying it had, did neither. */
+export async function leaveAsked(row: Row, words: string): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return false
+  const stamp = nowOf(new Date()).slice(0, 16)
+  return rewrite(path, (before) => askedFor(before, anchor, words, stamp))
 }
 
 /** A task's comment deleted, the one on that line of its note. */

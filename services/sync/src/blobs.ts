@@ -1,4 +1,4 @@
-import { DIAGRAM_SCHEMES, diagramKey } from '@nib/markdown/diagrams'
+import { DIAGRAM_SCHEMES, diagramKey } from '@orden/markdown/diagrams'
 import { Hono } from 'hono'
 import { NOT_A_HASH, OUT_OF_SPACE } from './refused'
 import { publishesFile, spaceForHost } from './blog'

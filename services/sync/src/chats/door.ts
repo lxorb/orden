@@ -7,8 +7,8 @@
  *  nothing of is a chat that does not exist. */
 
 import { Hono } from 'hono'
-import { subprotocol, tokenOf } from '@nib/rooms'
-import { DEVICE_PROTOCOL } from '@nib/sync-core'
+import { subprotocol, tokenOf } from '@orden/rooms'
+import { DEVICE_PROTOCOL } from '@orden/sync-core'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
 import { SIGN_IN } from '../refused'

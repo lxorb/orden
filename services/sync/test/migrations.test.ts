@@ -385,9 +385,9 @@ describe('0064, the versions kept as they are', () => {
   })
 })
 
-describe('0065, who could once write in a space', () => {
+describe('0066, who could once write in a space', () => {
   test('is everybody in one today, and the account behind a note written from another', () => {
-    const database = upTo('0064_held_versions.sql')
+    const database = upTo('0065_feedback_board.sql')
     seed(database)
     database.exec(`insert into users (id, email, created_at) values ('f', 'f@b.c', 1)`)
     database.exec(
@@ -425,7 +425,7 @@ describe('0065, who could once write in a space', () => {
               ('f', 'gone', 'Old.md', 1, 7, 0, 1, 'h', 'session:0000111122223333', null)`,
     )
 
-    database.exec(sql('0065_once_shared.sql'))
+    database.exec(sql('0066_once_shared.sql'))
 
     const rows = database.prepare(`select space_id, item from once_shared order by space_id`).all()
     expect(rows).toEqual([

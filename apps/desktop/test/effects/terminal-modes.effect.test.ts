@@ -1,7 +1,7 @@
 /** A program that leaves the mouse reported does not leave it reported at the prompt after
  *  it: Emil, 2026-10-01, *"moving the mouse over a nib terminal writes garbage at the
  *  PowerShell prompt"* - `C"1C%0C` and on, X10 reports of any-event tracking, after Claude
- *  Code had been running in the tab and nib had been restarted.
+ *  Code had been running in the tab and Orden had been restarted.
  *
  *  xterm.js itself, not a stand-in: what matters is the mode it is in once the shell's
  *  bytes have been drawn, since a move is reported exactly while `mouseTrackingMode` is not

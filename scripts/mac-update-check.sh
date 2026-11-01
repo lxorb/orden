@@ -1,5 +1,5 @@
 #!/bin/bash
-# A Mac's update, end to end, on a runner that is nobody's machine: a released nib
+# A Mac's update, end to end, on a runner that is nobody's machine: a released Orden
 # put somewhere a person puts it, launched, left to find the next release the way it
 # does by itself, told "Restart now" the way the notice is pressed, and then asked what
 # it is. Usage: mac-update-check.sh <dmg> <where> <version it should come back as>

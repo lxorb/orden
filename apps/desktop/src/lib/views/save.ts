@@ -1,4 +1,4 @@
-/** "Copy to a base": a view nib ships, or a fence in a note, written out as a `.base`
+/** "Copy to a base": a view Orden ships, or a fence in a note, written out as a `.base`
  *  file the reader then owns and changes (docs/tasks.md 5.4). At the root of the open
  *  space under the view's name, a number after it where the name is taken, and opened
  *  in place of nothing: the tab it was copied from stays what it was. */

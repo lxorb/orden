@@ -15,10 +15,10 @@
  *  of storage - so a room that held the account's id would soon hold a random one, and
  *  every ingest after that would be a new entry in every state vector for good. */
 
-import { readCanvas } from '@nib/markdown/canvas'
-import { TEXT } from '@nib/rooms'
-import { pushPlane } from '@nib/rooms/plane'
-import { hash32, seedPlane, seedUpdate, textops } from '@nib/sync-core'
+import { readCanvas } from '@orden/markdown/canvas'
+import { TEXT } from '@orden/rooms'
+import { pushPlane } from '@orden/rooms/plane'
+import { hash32, seedPlane, seedUpdate, textops } from '@orden/sync-core'
 import * as Y from 'yjs'
 import { readsAs, type RoomKind } from './kind'
 

@@ -8,7 +8,7 @@
    *
    *  The column of a base's ids has no choices: it has its prefix, and a new one is
    *  written into every id at once. */
-  import { inBase, type SelectOption } from '@nib/bases'
+  import { inBase, type SelectOption } from '@orden/bases'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'

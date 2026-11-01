@@ -14,8 +14,8 @@
  *  query.rs is the twin of this on the Rust side, and match.test.ts holds the
  *  two to the same answers. */
 
-import { frontMatterBlock } from '@nib/markdown/front-matter'
-import { taskAt } from '@nib/markdown/tasks'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { taskAt } from '@orden/markdown/tasks'
 import { lineAt, lineStarts } from './lines'
 import { isEmpty, type Query, type Unit } from './query'
 import { tagsIn } from './tags'

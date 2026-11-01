@@ -1,4 +1,4 @@
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { resetFields } from './reset-fields'
 import { generalPane } from './settings/general-pane'
 import { editorPane } from './settings/editor-pane'

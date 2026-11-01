@@ -53,7 +53,7 @@ const PUNCTUATION = /^[!-/:-@[-`{-~]$/
  *  escaping its punctuation. A conversion writes a page's `[`, `]` and backtick
  *  escaped wherever they are, because the same words can be a link's text, and
  *  the reading view takes the escapes back off when it links the address (see
- *  `bareAddress` in @nib/markdown). Followed as written, `?b=\[1\]` would be a
+ *  `bareAddress` in @orden/markdown). Followed as written, `?b=\[1\]` would be a
  *  page nobody linked to. Between the `<` `>` of an autolink nothing is an escape,
  *  so that address is followed as it is. */
 export function bareTarget(written: string, after: string): string {

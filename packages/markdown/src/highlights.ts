@@ -3,9 +3,9 @@
  *  Obsidian 1.14.0 (2026-09-02) added coloured highlights and encodes the colour
  *  in the markdown itself: "Add a color emoji (🔴, 🟠, 🟢, 🔵, 🟣) to the start of
  *  a highlight to change its color, or pick a color from the new formatting
- *  submenu." So that is exactly what nib writes - a note coloured here opens
+ *  submenu." So that is exactly what Orden writes - a note coloured here opens
  *  coloured there, and one coloured there opens coloured here. Nothing else would
- *  do: a `<mark class="…">` or an attribute of our own would be a syntax nib
+ *  do: a `<mark class="…">` or an attribute of our own would be a syntax Orden
  *  invented, and Obsidian would read it as words.
  *
  *  Five colours, because five is what the emoji say. A highlight with no emoji is
@@ -34,14 +34,14 @@ export interface HighlightColour {
   name: string
 }
 
-/** A highlight with no colour of its own: what nib has always written, what every
+/** A highlight with no colour of its own: what Orden has always written, what every
  *  note written before the colours carries, and what anything unreadable comes
  *  back as. */
 const PLAIN: HighlightColour = { emoji: null, tone: null, className: '', name: 'No colour' }
 
 /** The six, in the order they are offered: the plain one first, because it is the
  *  one that was always there, then the five the emoji name. The tones skip
- *  `--canvas-3`, the yellow: Obsidian writes no emoji for it, and a colour nib
+ *  `--canvas-3`, the yellow: Obsidian writes no emoji for it, and a colour Orden
  *  could write but Obsidian could not read is not a colour. */
 export const HIGHLIGHT_COLOURS: readonly HighlightColour[] = [
   PLAIN,

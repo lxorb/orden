@@ -1,9 +1,9 @@
-//! A second launch, when the nib already running does not answer.
+//! A second launch, when the Orden already running does not answer.
 //!
 //! A second launch belongs to the window already open: the single instance plugin finds
 //! the first instance's hidden window and hands it the launch's arguments with
 //! `SendMessage`, which waits until the first instance's window thread takes the message,
-//! for ever if that thread is stuck. So a nib that froze took every launch after it down
+//! for ever if that thread is stuck. So an Orden that froze took every launch after it down
 //! with it: each one sat invisible, waiting, and the reader clicked again. Emil's log of
 //! 2026-10-03 has five launches in twenty-five seconds.
 //!
@@ -12,7 +12,7 @@
 //! hand-over exactly and this launch ends. Not answered, this launch asks the one
 //! question Firefox asks in the same place (the running one is not responding; end it?)
 //! and, told yes, ends that process, found through the plugin's own window so it can
-//! only ever be nib under this identifier, waits for it to go, and carries on as the
+//! only ever be Orden under this identifier, waits for it to go, and carries on as the
 //! first launch. Told no, it leaves the frozen one alone and goes. If the frozen one
 //! comes back while the question is up, the question goes and the launch is handed over
 //! as it would have been.
@@ -29,7 +29,7 @@
 #[cfg(windows)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Found {
-    /// No nib is running under this identifier: this is the first launch.
+    /// No Orden is running under this identifier: this is the first launch.
     Nothing,
     /// It took the launch's arguments.
     Handed,
@@ -37,7 +37,7 @@ enum Found {
     Silent,
 }
 
-/// What to do about a nib that does not answer.
+/// What to do about an Orden that does not answer.
 #[cfg(windows)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Asked {
@@ -52,7 +52,7 @@ enum Asked {
 /// The process this launch ended, so the log can say so once the log is there.
 static ENDED: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
 
-/// Hands this launch to the nib already running, and answers whether this process
+/// Hands this launch to the Orden already running, and answers whether this process
 /// should now go. Called before anything of the app is built.
 #[cfg(windows)]
 pub fn handed_over(identifier: &str) -> bool {
@@ -76,7 +76,7 @@ pub fn handed_over(identifier: &str) -> bool {
 }
 
 /// On Linux the plugin hands a launch over on the session bus, which waits on no window
-/// thread, so a frozen nib never holds a launch up there. Every launch makes that call
+/// thread, so a frozen Orden never holds a launch up there. Every launch makes that call
 /// itself, before anything of the app is built, for two reasons. The plugin's own call
 /// comes as the app is set up, and on CEF that is after the engine has started: CEF
 /// keeps one browser process to a profile, so a second one meets the first's and ends
@@ -95,7 +95,7 @@ pub fn handed_over(identifier: &str) -> bool {
 }
 
 /// The plugin's own call, under the plugin's own names (tauri-plugin-single-instance's
-/// `platform_impl/linux.rs`): answers whether a running nib took the launch.
+/// `platform_impl/linux.rs`): answers whether a running Orden took the launch.
 #[cfg(target_os = "linux")]
 fn on_the_bus(identifier: &str, launch: &[String]) -> zbus::Result<bool> {
     let name = format!("{identifier}.SingleInstance");
@@ -134,7 +134,7 @@ pub fn handed_over(_identifier: &str) -> bool {
     false
 }
 
-/// Says in the log what the launch did about a frozen nib, now that there is a log.
+/// Says in the log what the launch did about a frozen Orden, now that there is a log.
 pub fn said(app: &tauri::AppHandle) {
     if let Some(pid) = ENDED.get() {
         crate::logs::say(
@@ -147,7 +147,7 @@ pub fn said(app: &tauri::AppHandle) {
     }
 }
 
-/// How long the running nib has to take the launch before it is asked about.
+/// How long the running Orden has to take the launch before it is asked about.
 #[cfg(windows)]
 const ANSWER: std::time::Duration = std::time::Duration::from_secs(2);
 
@@ -211,7 +211,7 @@ fn arguments() -> Vec<u8> {
     format!("{}|{args}\0", folder.to_str().unwrap_or_default()).into_bytes()
 }
 
-/// Sends the launch to the running nib, waiting `within` at most.
+/// Sends the launch to the running Orden, waiting `within` at most.
 #[cfg(windows)]
 #[allow(
     unsafe_code,
@@ -253,7 +253,7 @@ fn handed(names: &Names, launch: &[u8], within: std::time::Duration) -> Found {
     }
 }
 
-/// Asks whether to end the nib that does not answer, and goes on trying it while the
+/// Asks whether to end the Orden that does not answer, and goes on trying it while the
 /// question is up: an answer from it closes the question and the launch is handed over.
 #[cfg(windows)]
 #[allow(unsafe_code, reason = "the question is a Win32 message box")]
@@ -339,7 +339,7 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
     }
 }
 
-/// Ends the frozen nib and waits for it to have gone, with everything it held: the
+/// Ends the frozen Orden and waits for it to have gone, with everything it held: the
 /// single instance lock, the engine lock and the webview's profile. Answers whether it
 /// went.
 #[cfg(windows)]
@@ -370,7 +370,7 @@ mod tests {
     use super::{arguments, handed, Found, Names};
     use std::time::Duration;
 
-    /// No nib under an identifier nobody uses: this launch is the first.
+    /// No Orden under an identifier nobody uses: this launch is the first.
     #[test]
     fn nothing_running_is_nothing_to_hand_to() {
         let names = Names::of("ch.emilvinu.nib.test.nobody-runs-this");

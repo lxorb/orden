@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { decodePDFRawStream, degrees, type PDFArray, PDFDocument, type PDFRawStream } from 'pdf-lib'
-import { emptyPages, pagesFromPdf } from '@nib/markdown/pages'
+import { emptyPages, pagesFromPdf } from '@orden/markdown/pages'
 import type { Canvas, PageNode } from '../canvas/format'
 
 /** A page note's PDF (#539): the ink was drawn in CSS pixels onto sheets in points,

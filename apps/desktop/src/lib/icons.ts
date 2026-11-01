@@ -70,7 +70,7 @@ export function shapeFor(
  *  Read more widely than written, so a vault keeps what somebody chose elsewhere.
  *  Obsidian's Iconize writes a two-letter pack prefix per icon - `LiFileText` for
  *  Lucide, `FaRocket` for Font Awesome - and an emoji as the character; all of
- *  those arrive as the nearest icon in a set nib ships, or as the emoji itself.
+ *  those arrive as the nearest icon in a set Orden ships, or as the emoji itself.
  *
  *  Anything else - a name no set holds, a word somebody typed - falls back to the
  *  mark its kind wears. Which is what the row showed before, so nothing is ever a

@@ -4,7 +4,7 @@
  *  weight nothing else of a pass needs - and the glasses' plugin, whose package must
  *  stay small, never fetches it at all and keeps both copies as it always has. */
 
-import { diverge } from '@nib/sync-core/diverge'
+import { diverge } from '@orden/sync-core/diverge'
 
 /** The two copies as one note, when they meet nowhere: every edit either side made
  *  since `base` kept, an edit both made once. Null where they overlap, or where the

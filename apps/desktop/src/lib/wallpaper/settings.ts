@@ -5,7 +5,7 @@
  *
  *  Windows Terminal's background image is the role model for what is offered (fit,
  *  alignment, opacity) and Arc's theme for how little is said about it (a colour, its
- *  strength, a grain). What nib adds is that none of them can make the frame unreadable:
+ *  strength, a grain). What Orden adds is that none of them can make the frame unreadable:
  *  every floor is worked out from the picture under the dials; see look.ts. */
 
 import { t } from '../i18n.svelte'

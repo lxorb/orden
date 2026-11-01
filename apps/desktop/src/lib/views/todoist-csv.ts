@@ -1,14 +1,14 @@
 /** A project written out as Todoist writes one (docs/tasks.md 5.17): the CSV Todoist
  *  imports into a project and exports from one, so a project made here can be taken to
- *  Todoist, shared as a template, and brought back by nib's own importer unchanged.
+ *  Todoist, shared as a template, and brought back by Orden's own importer unchanged.
  *
  *  A section a `section` row, a task a `task` row indented as deep as it sits, its labels
  *  `@label` in its words, its priority as people count it, its day (or its repeat in
  *  words), its duration and its deadline, and each comment a `note` row under it. Pure,
  *  but for `saveProjectCsv`, which reads the note and hands the file over. */
 
-import { csvText, type Row } from '@nib/bases'
-import { deadlineOf, startOf } from '@nib/markdown/task-dates'
+import { csvText, type Row } from '@orden/bases'
+import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { deliver } from '../export/save'
 import { t } from '../i18n.svelte'
 import { rows as store } from '../rows/rows.svelte'
@@ -75,7 +75,7 @@ export function todoistCsv(tasks: readonly Row[], text: string): string {
         TYPE: 'task',
         CONTENT: [task.text, ...labels.map((tag) => `@${tag}`)].join(' '),
         // The whole description, not the scan's first line of it: csvText quotes a
-        // cell with lines in it, which Todoist and nib's importer read back whole.
+        // cell with lines in it, which Todoist and Orden's importer read back whole.
         DESCRIPTION: descriptionOf(text, anchor)?.text ?? task.description ?? '',
         PRIORITY: String(Math.min(Math.max(task.priority, 1), 4)),
         INDENT: String(level),

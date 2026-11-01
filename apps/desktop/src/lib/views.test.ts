@@ -1,4 +1,4 @@
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { countText } from './counts'
 import { views } from './views.svelte'

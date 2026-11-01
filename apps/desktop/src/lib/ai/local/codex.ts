@@ -6,7 +6,7 @@
  *  `codex app-server generate-ts` gives (0.160.0): `turn/started`, then for each thing
  *  the turn makes `item/started` and `item/completed` - an `agentMessage` is the answer,
  *  streamed as `item/agentMessage/delta`; a `reasoning` streams its summary as
- *  `item/reasoning/summaryTextDelta`; an `mcpToolCall` is one of nib's tools - then
+ *  `item/reasoning/summaryTextDelta`; an `mcpToolCall` is one of Orden's tools - then
  *  `thread/tokenUsage/updated` with the counts and the model's window, `thread/goal/updated`
  *  and `thread/goal/cleared` with where the thread's own goal stands,
  *  `account/rateLimits/updated` with where the plan stands, and `turn/completed` with
@@ -98,7 +98,7 @@ export function codexReader(): (line: string) => Heard {
   }
 }
 
-/** Where Codex's own goal stands, in nib's words: `complete` is met, a limit or a block
+/** Where Codex's own goal stands, in Orden's words: `complete` is met, a limit or a block
  *  holds it the way a pause does, and `budgetLimited` is its own end. */
 function goalIn(status: unknown): GoalState | null {
   switch (status) {
@@ -125,8 +125,8 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
-/** One of nib's tools, called: started, or answered. A tool of another server is not
- *  nib's and has no row; with `nib` the only server there is none. */
+/** One of Orden's tools, called: started, or answered. A tool of another server is not
+ *  Orden's and has no row; with `nib` the only server there is none. */
 function toolIn(item: Record<string, unknown>, done: boolean): Heard {
   if (item.server !== 'nib' || typeof item.id !== 'string' || typeof item.tool !== 'string')
     return {}

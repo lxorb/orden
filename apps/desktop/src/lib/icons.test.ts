@@ -268,7 +268,7 @@ describe('what each kind of icon is written as', () => {
     })
   })
 
-  /** A set this build has never heard of is a value a newer nib wrote. It reads as
+  /** A set this build has never heard of is a value a newer Orden wrote. It reads as
    *  what it says rather than as a Lucide name, so the row falls back to its kind's
    *  mark instead of drawing the wrong picture. */
   test('a set nothing here knows is still read as a set', () => {

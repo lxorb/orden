@@ -18,7 +18,7 @@
  *  there waits for them to pause, and is then resolved again against what they wrote
  *  (8.3). Edits elsewhere in the note land at once. */
 
-import { oneEdit } from '@nib/markdown/edits'
+import { oneEdit } from '@orden/markdown/edits'
 import { applied, changeOf, type Edit } from '../../search/replace'
 import type { Keeping } from '../../workspace/note-text'
 import { waited } from '../../timing'

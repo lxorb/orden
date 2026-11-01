@@ -2,7 +2,7 @@
   /** The extensions' part of the web bar: each pinned extension's own picture, which
    *  opens its popup, and the puzzle, which lists them all.
    *
-   *  Chrome's toolbar, in nib's glyph squares. On a store's page for an extension that is
+   *  Chrome's toolbar, in Orden's glyph squares. On a store's page for an extension that is
    *  not installed, the puzzle turns into the accent with a plus beside it, which installs
    *  it: the one press Chrome's own "Add to Chrome" is, put where the bar's presses are.
    *  Nothing is drawn where no engine runs extensions. */

@@ -8,7 +8,7 @@
  *  - **Which chats exist.** Those whose pointer is in a space the grant reaches; a chat
  *    whose space it does not reach is absent from every list and every lookup, as such
  *    a space is (9.6).
- *  - **Whose words.** The answers are `@nib/chats/agent`'s text, the connector's too:
+ *  - **Whose words.** The answers are `@orden/chats/agent`'s text, the connector's too:
  *    every message the reader did not write comes inside an untrusted mark naming the
  *    chat and the person, so another person's words are never an agent's instructions.
  *  - **What asks.** A post or a reaction in a chat anybody else reads is Publishing
@@ -16,8 +16,8 @@
  *    "Always in this chat" as the third answer. The chat with yourself asks nothing. A
  *    draft never asks: it waits in the composer for the reader to press Send. */
 
-import { may, type Message, type Who } from '@nib/chats'
-import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@nib/chats/agent'
+import { may, type Message, type Who } from '@orden/chats'
+import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
 import type { ChatEntry, Chats } from '../../chats/api'
 import { workspace } from '../../workspace.svelte'

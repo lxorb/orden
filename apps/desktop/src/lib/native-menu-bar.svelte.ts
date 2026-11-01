@@ -22,7 +22,7 @@
  *  action comes back to the page that made it, and sets it as the app's menu as it
  *  comes to the front. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import type {
   CheckMenuItem,
   Menu,

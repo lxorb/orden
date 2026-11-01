@@ -2,7 +2,7 @@
  *
  *  One answer for every place that rings: the app's scheduler, which hands the next
  *  reminders to the system, and the Worker, which pushes to a phone that has not opened
- *  nib since (docs/tasks.md 5.10). Both read the same task line, so both have to agree on
+ *  Orden since (docs/tasks.md 5.10). Both read the same task line, so both have to agree on
  *  the minute, and this is where that minute is worked out.
  *
  *  A task's time is floating, the wall clock wherever the reader is, unless a zone is

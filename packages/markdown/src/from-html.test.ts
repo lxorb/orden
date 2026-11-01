@@ -643,7 +643,7 @@ describe('a page as markdown', () => {
     })
 
     /** The same bug from the other end: a formula copied out of a note and pasted
-     *  back into one. Nib draws the glyphs and keeps the source on the element it
+     *  back into one. Orden draws the glyphs and keeps the source on the element it
      *  draws them into, so the note gets its own equation back rather than the
      *  symbols it was drawn as. */
     test('and a formula this app drew pastes back into a note as itself', async () => {

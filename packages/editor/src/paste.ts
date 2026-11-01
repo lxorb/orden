@@ -26,7 +26,7 @@ import { documentOf } from './shared'
  *  Nothing held on the side: a module is fetched once and kept by the loader, so every
  *  paste after the first is answered out of the cache in the turn that asked. */
 function converter(): Promise<(html: string) => string> {
-  return import('@nib/markdown/from-html').then((one) => one.htmlToMarkdown)
+  return import('@orden/markdown/from-html').then((one) => one.htmlToMarkdown)
 }
 
 /** Spreadsheet cells arrive as tab-separated lines; Typora turns them into a

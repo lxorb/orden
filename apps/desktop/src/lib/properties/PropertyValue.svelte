@@ -8,8 +8,8 @@
    *  It writes nothing itself: it says what the value became, and whoever holds the
    *  note writes it (the panel into the open document, a view through the rows' one
    *  write path). */
-  import type { Property } from '@nib/markdown/properties'
-  import { type ListItem, withItem, withoutItem } from '@nib/markdown/property-edits'
+  import type { Property } from '@orden/markdown/properties'
+  import { type ListItem, withItem, withoutItem } from '@orden/markdown/property-edits'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
 

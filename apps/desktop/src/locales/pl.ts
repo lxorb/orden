@@ -1669,6 +1669,18 @@ export const pl: Dictionary = {
   'answered by {model}, {date}': 'odpowiedział {model}, {date}',
   'AI block': 'Blok AI',
   'Do with AI': 'Zrób z AI',
+  'Use the browser': 'Używaj przeglądarki',
+  'Lets a task done with AI open web pages and act on them.':
+    'Pozwala zadaniu wykonywanemu przez AI otwierać strony internetowe i na nich działać.',
+  'Look through notes': 'Przeglądaj notatki',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Pozwala zadaniu wykonywanemu przez AI wyszukiwać i czytać twoje inne notatki, obok własnej.',
+  'Change other notes': 'Zmieniaj inne notatki',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Pozwala zadaniu wykonywanemu przez AI zapisywać, przenosić i usuwać notatki inne niż zadanie.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'O co prosi się zadanie wykonywane przez AI. Nadal odhacza zadanie po wykonaniu albo pyta w komentarzu.',
+  'Started in the AI panel': 'Rozpoczęto w panelu AI',
   'Highlight colour': 'Kolor wyróżnienia',
   'A single newline breaks the line': 'Pojedynczy nowy wiersz przerywa wiersz',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2729,6 +2741,9 @@ export const pl: Dictionary = {
     'Tutaj strony wyszukują adresy tak jak system; jego DNS ustawia się w ustawieniach systemu.',
   'Set by the settings file': 'Ustawione przez plik ustawień',
   'The settings file has a problem': 'Plik ustawień ma problem',
+  'Some changes may not be noticed': 'Niektóre zmiany mogą umknąć',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'System osiągnął limit obserwowanych folderów, więc Orden może nie zauważyć każdej zmiany, którą inne programy robią w twoich przestrzeniach. Zwiększenie fs.inotify.max_user_watches to naprawia.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Przenieść czat {name} do {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

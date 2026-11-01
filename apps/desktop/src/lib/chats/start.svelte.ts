@@ -17,7 +17,7 @@
  *  Importing this is starting it. */
 
 import { untrack } from 'svelte'
-import { CHAT_EXTENSION } from '@nib/chats'
+import { CHAT_EXTENSION } from '@orden/chats'
 import { account } from '../account.svelte'
 import { hub } from '../sync2/hub.svelte'
 import { isMobile } from '../tauri'

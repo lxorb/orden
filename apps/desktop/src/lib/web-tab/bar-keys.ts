@@ -4,7 +4,7 @@
  *  the few keys a browser and nib both spend - F5 is Present over a note, Ctrl and a
  *  digit is a heading level in one, Ctrl and a sign the size of a note's words - mean
  *  the browser's while a page is what the pane shows. A pane showing a page has no note
- *  to present, no heading to make and no words of nib's to size, so nothing is taken
+ *  to present, no heading to make and no words of Orden's to size, so nothing is taken
  *  from anybody. The keys are the registry's, so a reader's own bindings are the ones
  *  read; see `web.*` and `app.zoom-*` in shortcuts/registry.ts.
  *
@@ -38,7 +38,7 @@ export function barKey(event: KeyboardEvent, keys: Bindings): BarKey | null {
   const either = (id: string) => keys.pressed(id, event) || keys.pressed(`${id}.alt`, event)
 
   // F6 from inside the page is Chrome's way out of it to the address field. In the app
-  // it walks the regions, which is nib's and stays so.
+  // it walks the regions, which is Orden's and stays so.
   const f6 = event.key === 'F6' && !event.ctrlKey && !event.shiftKey && !event.altKey
   if (either('web.address') || (f6 && fromPage(event))) return { to: 'address' }
 

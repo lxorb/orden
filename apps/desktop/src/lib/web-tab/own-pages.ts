@@ -1,10 +1,10 @@
-/** nib's own pages in a web tab: where Chrome has `chrome://history`.
+/** Orden's own pages in a web tab: where Chrome has `chrome://history`.
  *
  *  Emil, 2026-09-13: what Chrome keeps inside the browser stays inside it, and Chrome
  *  keeps its history as a page in a tab, with its own address, that the address field
  *  leaves by being typed into. So does this: a web tab whose address is one of these
- *  draws nib's page in the pane where a site would be, builds no webview for it, and
- *  becomes an ordinary tab the moment it is sent anywhere else. The address is nib's
+ *  draws Orden's page in the pane where a site would be, builds no webview for it, and
+ *  becomes an ordinary tab the moment it is sent anywhere else. The address is Orden's
  *  own scheme, which no tab may open as a site (see `isWebAddress` in address.ts), so
  *  nothing outside this file can mistake one for the other.
  *
@@ -13,7 +13,7 @@
 /** The History page's address. */
 export const HISTORY = 'nib://history'
 
-/** Whether an address is one of nib's own pages. */
+/** Whether an address is one of Orden's own pages. */
 export function isOwnPage(url: string | null | undefined): boolean {
   return url === HISTORY
 }

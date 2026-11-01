@@ -1,5 +1,5 @@
-import { contrastCss } from '@nib/themes/contrast'
-import { everySurface } from '@nib/themes/write'
+import { contrastCss } from '@orden/themes/contrast'
+import { everySurface } from '@orden/themes/write'
 import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
 import { log } from './log'
@@ -105,7 +105,7 @@ const DEFAULT_THEME: ThemeInfo = {
 
 /** And the second: contrast, shipped rather than fetched, because the launch that
  *  needs it most is a first one. Its own accent, so the reader's is not painted over
- *  it; see `paintsOver` in themes/settings.ts and contrast.css in @nib/themes. */
+ *  it; see `paintsOver` in themes/settings.ts and contrast.css in @orden/themes. */
 const CONTRAST: ThemeInfo = {
   id: CONTRAST_THEME,
   name: 'Contrast',
@@ -158,7 +158,7 @@ const GLASS: ThemeInfo = {
   name: 'Glass',
   variants: ['dark', 'light'],
   translucent: true,
-  load: () => import('@nib/themes/glass').then((module) => module.glassCss),
+  load: () => import('@orden/themes/glass').then((module) => module.glassCss),
   own: () => import('./glass/settings').then((module) => module.glassSettings),
 }
 

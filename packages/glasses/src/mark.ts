@@ -22,13 +22,13 @@
  *  `firmware.ts`, which is also why a fence is written with `‘‘‘` rather than
  *  ``` - the font has no backtick, and three of them drew nothing at all. */
 
-import { lexMarkdown, stripFrontMatter, withoutComments } from '@nib/markdown'
+import { lexMarkdown, stripFrontMatter, withoutComments } from '@orden/markdown'
 import * as emoji from 'node-emoji'
-import { useEmoji } from '@nib/markdown/engines'
-import { calloutOf, opensCallout } from '@nib/markdown/callouts'
-import { readChart } from '@nib/markdown/chart'
-import { captionIn, languageIn } from '@nib/markdown/code'
-import { embedKind, type Wikilink } from '@nib/markdown/links'
+import { useEmoji } from '@orden/markdown/engines'
+import { calloutOf, opensCallout } from '@orden/markdown/callouts'
+import { readChart } from '@orden/markdown/chart'
+import { captionIn, languageIn } from '@orden/markdown/code'
+import { embedKind, type Wikilink } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
 import {
   type Compaction,
@@ -45,7 +45,7 @@ import { fit, fold, ruleOf, SPACE, width } from './firmware'
 // is a quarter of a megabyte; this module has it regardless, since `insteadOf` in
 // firmware.ts reads it for every emoji the firmware cannot draw - and the walk below
 // is over `lexMarkdown`'s tokens, where a shortcode with no table behind it would
-// reach the panel as the characters it was typed with. See @nib/markdown/engines.
+// reach the panel as the characters it was typed with. See @orden/markdown/engines.
 useEmoji(emoji)
 
 /** One line of the note, as the container will be given it.
@@ -769,7 +769,7 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   // from that file, and `title="..."` is the same thing said the way other editors
   // write it. Read through the one module that knows that - the whole string used to
   // be taken as the language, so a captioned fence opened with `‘‘‘ts src/main.ts`
-  // and the caption was never a caption at all. See @nib/markdown/code.
+  // and the caption was never a caption at all. See @orden/markdown/code.
   const info = ('lang' in token && typeof token.lang === 'string' ? token.lang : '').trim()
   const language = languageIn(info)
   const caption = captionIn(info)

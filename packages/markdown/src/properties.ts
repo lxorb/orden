@@ -1,10 +1,10 @@
 /** A note's front matter, read as the handful of things it usually says.
  *
  *  The block is YAML, and nothing here is a YAML parser. What it reads is what a
- *  note written by hand, by nib or by Obsidian actually holds: a top-level key on
+ *  note written by hand, by Orden or by Obsidian actually holds: a top-level key on
  *  a line, and after the colon a word, a number, a date, a yes or no, a list
  *  written either of the two ways, or the pairs of a small map - which is the
- *  shape nib's own `export:` page setup uses.
+ *  shape Orden's own `export:` page setup uses.
  *
  *  The rule for everything else is the important one: **if any line of the block
  *  is a shape this does not know, the whole block is left as source.** Not a
@@ -202,7 +202,7 @@ export function readProperties(source: string): Property[] | null {
 
     // Nothing after the colon: what is indented under it. Either `- item` lines,
     // which are a list, or `key: value` lines, which are a map - `export:` with
-    // a paper size under it is nib's own, and a note that uses it should still
+    // a paper size under it is Orden's own, and a note that uses it should still
     // get rows. Anything else indented is a shape nobody here can name, and the
     // block goes back to being source.
     const items: string[] = []

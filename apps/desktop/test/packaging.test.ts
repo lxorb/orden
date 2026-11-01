@@ -171,7 +171,7 @@ describe('what a workflow is allowed to fetch', () => {
 /** nib opens no note from outside its spaces, so no bundle and no package manager
  *  offers it a note: no double click, no "Open with", no share of a file to open
  *  where it lies. Held here rather than trusted to memory, because a file type is
- *  one line of config away on every platform and each one quietly makes nib a file
+ *  one line of config away on every platform and each one quietly makes Orden a file
  *  opener again. The web's two schemes are the browser's, and stay. And a PDF, which
  *  every bundle offers nib for in "Open with" and none makes nib the default of; it
  *  is brought into a space before it is read (src-tauri/src/handed_pdfs.rs). */
@@ -208,7 +208,7 @@ describe('what nib claims to open', () => {
   })
 
   /** The installer writes the browser and no file type, and an install over an
-   *  older Nib - the updater's included, which never runs the old uninstaller -
+   *  older Orden - the updater's included, which never runs the old uninstaller -
    *  takes the older one's file types away. */
   test('an install claims no file type and forgets the ones it used to', () => {
     const script = tauri('installer.nsh')
@@ -316,7 +316,7 @@ describe('the old names', () => {
     const lines = scoop.installer.script
     const at = lines.findIndex((one) => one.startsWith('# Up to 0.15.0'))
     expect(at).toBeGreaterThan(-1)
-    // The five lines publish.yml cuts: the comment, where nib kept it, and the move.
+    // The five lines publish.yml cuts: the comment, where Orden kept it, and the move.
     expect(lines.slice(at, at + 5)).toEqual([
       expect.stringMatching(/^# Up to 0\.15\.0/),
       "$was = Join-Path (Split-Path $persist_dir) 'nib'",

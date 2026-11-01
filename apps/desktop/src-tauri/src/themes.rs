@@ -384,7 +384,9 @@ mod tests {
         assert_eq!(file.path, path.to_string_lossy());
 
         std::fs::create_dir(dir.path().join("folder.json")).expect("a folder");
-        let error = declared(&dir.path().join("folder.json")).err().expect("an error");
+        let error = declared(&dir.path().join("folder.json"))
+            .err()
+            .expect("an error");
         assert!(error.contains("folder.json"), "{error}");
     }
 

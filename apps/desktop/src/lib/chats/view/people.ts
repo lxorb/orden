@@ -6,7 +6,7 @@
  *  profile, so they are what the chat's members list calls them, with their initial for
  *  a face. */
 
-import type { Member, Who } from '@nib/chats'
+import type { Member, Who } from '@orden/chats'
 import type { Face } from '../../people/face'
 import { people } from '../../people/people.svelte'
 

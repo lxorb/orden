@@ -23,8 +23,8 @@
  *  Pure and in B's coordinates throughout; the only text it writes is `resolution`,
  *  what the note should read, which the engine turns into operations with textops. */
 
-import { readProperties } from '@nib/markdown/properties'
-import { closesFence, fenceMark } from '@nib/markdown/fences'
+import { readProperties } from '@orden/markdown/properties'
+import { closesFence, fenceMark } from '@orden/markdown/fences'
 import { type Block, blocksOf, contentOf } from './blocks'
 import { edits, wordEdits } from './diff'
 import {

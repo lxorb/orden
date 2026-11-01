@@ -10,7 +10,7 @@
  *  Which means a note that is not open in any pane cannot be written into, and that is
  *  only ever answered honestly, as false. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { canWriteAt } from '../sharing.svelte'
 import { isMarkdownPath } from '../space-paths'
 import { views } from '../views.svelte'

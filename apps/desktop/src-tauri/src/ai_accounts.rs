@@ -124,7 +124,7 @@ pub fn write(root: &Path, text: &str, over: &str) -> Result<String, String> {
 }
 
 /// Whether `id` is kept as an account that is a second sign-in to `kind`'s program, and
-/// so has a home of nib's: the window says so (`own`), and only for a program's kind.
+/// so has a home of Orden's: the window says so (`own`), and only for a program's kind.
 /// Read here rather than taken from the window, so a page can name an account and never
 /// a folder.
 #[cfg(desktop)]

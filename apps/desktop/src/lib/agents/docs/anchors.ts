@@ -10,16 +10,16 @@
  *  A quote is the W3C Web Annotation text-quote selector: the words, and the words
  *  either side of them where the words alone are not enough. Headings and blocks mean
  *  what a link means by them (`[[Note#Heading]]`, `[[Note#^block]]`), read by the same
- *  grammar in @nib/markdown, so the anchor an agent is handed and the link a reader
+ *  grammar in @orden/markdown, so the anchor an agent is handed and the link a reader
  *  writes never disagree about which part of a note they name.
  *
  *  Where the annotation model says an ambiguous quote matches every place it is found,
  *  this refuses: an edit has one place, and an agent told "twice" reads again and says
  *  which. Pure, so everything it decides is tested without an editor. */
 
-import { frontMatterBlock } from '@nib/markdown/front-matter'
-import { blockIdOf, headingText, lines, slugify } from '@nib/markdown/links'
-import { taskAt } from '@nib/markdown/tasks'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { blockIdOf, headingText, lines, slugify } from '@orden/markdown/links'
+import { taskAt } from '@orden/markdown/tasks'
 import { DocError } from './problem'
 
 export type Anchor =
@@ -193,7 +193,7 @@ function quoted(anchor: Extract<Anchor, { quote: string }>, text: string): Place
   return { from: at, to: at + quote.length, shape: 'words' }
 }
 
-/** A heading line: the rule `headingsOf` and `sectionOf` in @nib/markdown read
+/** A heading line: the rule `headingsOf` and `sectionOf` in @orden/markdown read
  *  headings by, so a heading here is a heading to a link. */
 const HEADING = /^\s{0,3}(#{1,6})\s+(.*)$/
 

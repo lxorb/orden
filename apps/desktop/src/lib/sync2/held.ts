@@ -25,9 +25,9 @@
  *  question was drawn: the note is pulled again first, so words another device added in
  *  the meantime are kept by the second two answers and are a version under the first. */
 
-import { readCanvas } from '@nib/markdown/canvas'
-import { diverge, excerpt, type Excerpt } from '@nib/sync-core/diverge'
-import { pullResponseOf } from '@nib/sync-core/wire'
+import { readCanvas } from '@orden/markdown/canvas'
+import { diverge, excerpt, type Excerpt } from '@orden/sync-core/diverge'
+import { pullResponseOf } from '@orden/sync-core/wire'
 import type { HeldAnswer, Held, HeldNotes, Side } from './asking.svelte'
 import type { Core, Holding } from './core'
 import { made } from './create'

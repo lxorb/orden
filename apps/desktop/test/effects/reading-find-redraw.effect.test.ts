@@ -47,19 +47,6 @@ vi.mock('../../src/lib/shortcuts.svelte', () => ({
   },
 }))
 
-// jsdom has no Web Animations. Svelte's transitions wait for `onfinish`, so the bar
-// would never leave.
-Element.prototype.animate = function () {
-  return {
-    finished: Promise.resolve(),
-    cancel: () => undefined,
-    play: () => undefined,
-    pause: () => undefined,
-    set onfinish(done: () => void) {
-      setTimeout(done, 0)
-    },
-  } as never
-}
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
 const Reading = (await import('../../src/lib/Reading.svelte')).default

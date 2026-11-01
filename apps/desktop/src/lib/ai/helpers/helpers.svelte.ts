@@ -3,7 +3,7 @@
  *
  *  Emil, 2026-10-12: "claude can create subagents of openai models. e.g. claude opus 5.5
  *  creating an astra subagent in the same way as it would create a subagent of claude."
- *  So nib's tool `run_agent` is shaped like Claude Code's own `Agent` tool and Codex's
+ *  So Orden's tool `run_agent` is shaped like Claude Code's own `Agent` tool and Codex's
  *  `spawn_agent` - a few words of description, the whole task, a model - and whatever
  *  asks it, the helper is a thread of its own on the provider that model is on, with
  *  that provider's account in use: in the thread list, on its parent's `/jobs`, and its

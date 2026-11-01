@@ -1,4 +1,4 @@
-import { providers } from '@nib/markdown/providers'
+import { providers } from '@orden/markdown/providers'
 import { describe, expect, test } from 'vitest'
 import {
   FRAME_REFERRER,

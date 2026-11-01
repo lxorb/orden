@@ -258,7 +258,7 @@ def drive(browser: Browser) -> None:
     # Three, the same three the reading view draws below: the page the note framed by
     # hand, the block of its own HTML, and the video a provider's address becomes.
     # Every card wears `embed-web` and one class of its own beside it; see
-    # web-embed.ts and html-block.ts in @nib/markdown.
+    # web-embed.ts and html-block.ts in @orden/markdown.
     if counts["cards"] != 3:
         wrong(f"the editor drew {counts['cards']} cards, not 3 (a page, a block and a video)")
     if counts["pages"] != 1:

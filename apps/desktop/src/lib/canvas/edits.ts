@@ -67,6 +67,11 @@ function reach(canvas: Canvas, picked: readonly string[]): Set<string> {
   return going
 }
 
+/** Ids as a set, to be asked of rather than walked; never changed once made. */
+export function idSet(ids: readonly string[]): ReadonlySet<string> {
+  return new Set(ids)
+}
+
 /** The box round everything picked, or null. What the handles are drawn on and
  *  what a resize scales. */
 export function pickedBox(canvas: Canvas, picked: readonly string[]): Box | null {

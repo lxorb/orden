@@ -109,7 +109,7 @@ const writes = () => asked.filter((command) => WRITES.test(command))
 const SHORTCUT =
   '[InternetShortcut]\r\nURL=https://svelte.dev/docs\r\n' +
   'Title=Svelte docs\r\nNib-Added=2026-09-12T08:30:00.000Z\r\n'
-/** A website as an older nib wrote one: a note with the address in its front matter. */
+/** A website as an older Orden wrote one: a note with the address in its front matter. */
 const OLD = '---\nurl: https://kit.svelte.dev/\n---\n\n# Kit\n\n<https://kit.svelte.dev/>\n'
 
 beforeEach(async () => {

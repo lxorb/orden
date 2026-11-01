@@ -22,7 +22,7 @@ const LINK = 3
 const SHADE = 4
 const WASH = 5
 
-/** The five coloured highlights, in the order highlights.ts in @nib/markdown
+/** The five coloured highlights, in the order highlights.ts in @orden/markdown
  *  names them, as the indices they take in the table above.
  *
  *  A tone rather than a name: `==🔴 careful==` is drawn in `--canvas-1` on every
@@ -35,7 +35,7 @@ const TONE_COLOURS: Record<number, number> = { 1: 6, 2: 7, 4: 8, 5: 9, 6: 10 }
 /** The wash each of the five is drawn in: the light theme's own `--canvas-1` and
  *  its neighbours at the same strength `--mark-1` mixes them, over the white of
  *  the page. Written out because an RTF colour table is numbers, and a word
- *  processor has no `color-mix` to do it with. See tokens.css in @nib/themes. */
+ *  processor has no `color-mix` to do it with. See tokens.css in @orden/themes. */
 const TONE_WASHES = [
   '\\red250\\green210\\blue215',
   '\\red251\\green225\\blue199',

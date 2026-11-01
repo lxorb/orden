@@ -7,8 +7,8 @@
  *  folder `file.inFolder()` names, the tags `file.hasTag()` names and the values a
  *  `prop == "value"` names, so the row it makes is a row of the view it was made from. */
 
-import { isPropertyName } from '@nib/markdown/front-matter'
-import { type ListItem, writeList, writeProperty } from '@nib/markdown/property-edits'
+import { isPropertyName } from '@orden/markdown/front-matter'
+import { type ListItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { readFilter } from '../filter'
 import type { Base, Filter, Sort, View } from '../types'
 import { AgentError } from './tasks'
@@ -161,7 +161,7 @@ function viewWith(view: View, said: Args): View {
   if (said.type !== undefined) next.type = words(said.type, 'type')
   if (said.name !== undefined) next.name = words(said.name, 'name')
   if (said.filters !== undefined) {
-    // Filters nib could not read are kept as written only until the view is given
+    // Filters Orden could not read are kept as written only until the view is given
     // its own, and none is its own too; see `viewPlain` in base-file.ts.
     delete next.options.filters
     if (said.filters === null) delete next.filters

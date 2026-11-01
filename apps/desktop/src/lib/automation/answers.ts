@@ -9,7 +9,7 @@
  *  to `nib --json` and what a shortcut reads. See verbs.ts for the table these
  *  are reached through. */
 
-import { readProperties } from '@nib/markdown/properties'
+import { readProperties } from '@orden/markdown/properties'
 import { appCommands } from '../commands'
 import { countText } from '../counts'
 import { links } from '../link-index.svelte'

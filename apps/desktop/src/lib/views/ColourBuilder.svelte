@@ -5,7 +5,7 @@
    *  filter does; the rules are kept as one expression under the view's `nib.colour`
    *  (`colourExpression`). An expression written by hand that is not rules is kept and
    *  shown as its words, never lost by opening this. */
-  import { type ColourRule, colourExpression, colourRules } from '@nib/bases'
+  import { type ColourRule, colourExpression, colourRules } from '@orden/bases'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'

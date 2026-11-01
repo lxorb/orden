@@ -8,16 +8,41 @@
  *  The strip, the file list, the palette, the menus and the window title all ask
  *  here, so a document is called one thing wherever it is listed. */
 
+/** Names Windows keeps for devices, whatever the extension is: `NUL.md` names
+ *  the device as surely as `NUL`, and Windows reads the superscripts `¹²³` as
+ *  digits, so `COM¹` is a port as surely as `COM1`. The crate's own list (`RESERVED` in
+ *  src-tauri/src/paths.rs), said again here because a field answers between two
+ *  keystrokes and cannot wait for a round trip to the one place that has it; and here
+ *  rather than in naming.ts because a name made from a title is held to it too. */
+const RESERVED = [
+  'CON',
+  'PRN',
+  'AUX',
+  'NUL',
+  'CONIN$',
+  'CONOUT$',
+  ...Array.from('0123456789¹²³', (digit) => [`COM${digit}`, `LPT${digit}`]).flat(),
+]
+
+/** Whether the name is one of the device names, going by the part in front of
+ *  the first dot, which is where Windows looks, and without the spaces that part
+ *  ends with, which Windows drops: `CON .md` is `CON.md`. Every module that asks
+ *  asks this, so there is one list in the app to keep beside the crate's. */
+export function isReserved(name: string): boolean {
+  const stem = (name.split('.')[0] ?? name).replace(/ +$/, '')
+  return RESERVED.includes(stem.toUpperCase())
+}
+
 /** The endings a document is known by rather than named after: markdown's four, a
  *  canvas, a page note, the two a website is written as, and a chat's pointer.
  *
- *  These are the kinds nib writes and titles from the inside, so the ending is the
+ *  These are the kinds Orden writes and titles from the inside, so the ending is the
  *  file's own business: the reader named the document, the app chose what to keep it
  *  in, and which kind a row holds is drawn beside the name rather than spelled out
  *  after it; see file-mark.ts. Emil, 2026-09-13: *"I don't want filename endings,
  *  e.g. .url"*.
  *
- *  A PDF, a picture and anything else nib did not write keep theirs, the way
+ *  A PDF, a picture and anything else Orden did not write keep theirs, the way
  *  Obsidian does: their name *is* the file's name, there is no title behind it, and a
  *  row reading `report.pdf` is a paper somebody was sent where `report` is a note
  *  somebody wrote. Emil, 2026-09-14: *"report.pdf stays report.pdf"*.
@@ -160,6 +185,11 @@ export function nameFromTitle(title: string): string | null {
     .replace(/[<>:"/\\|?* -]/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[.\s]+|[.\s]+$/g, '')
+    .slice(0, MOST)
 
-  return text ? text.slice(0, MOST) : null
+  // And a device's name stepped aside from, as sync and the import step aside: a note
+  // headed `NUL` would otherwise be saved as the device on the reader's Windows machine
+  // (#477).
+  if (!text) return null
+  return isReserved(text) ? `_${text}` : text
 }

@@ -16,7 +16,7 @@
  *  moment it is opened: which rows are selected, what is archived and what a row
  *  can be moved into are all true only then. */
 
-import { foreignCopy } from '@nib/sync-core/foreign'
+import { foreignCopy } from '@orden/sync-core/foreign'
 import { folderNote, nestedIn } from './folder-notes'
 import { hiddenKinds, type KindName } from './settings.svelte'
 import { kindLabel } from './kind-words'
@@ -210,7 +210,7 @@ function openElsewhere(entry: Entry, own: Entry | null): MenuEntry[] {
 /** Another sync tool's copy beside the note it was made of: the note in front and the
  *  copy to the side, which is how two versions of one note are read against each other
  *  here, and Delete below is the rest of what there is to do with it. Offered only
- *  while the note is still there. See @nib/sync-core/foreign. */
+ *  while the note is still there. See @orden/sync-core/foreign. */
 function compareEntry(entry: Entry): MenuEntry[] {
   const copy = entry.is_dir ? null : foreignCopy(entry.name)
   const original = copy && entryAt(workspace.tree, joinPath(folderOf(entry.path), copy.original))

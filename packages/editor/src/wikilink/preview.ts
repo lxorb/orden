@@ -1,6 +1,6 @@
 import type { EditorState } from '@codemirror/state'
-import { loadFor } from '@nib/markdown/engines'
-import { mapSources } from '@nib/markdown/sources'
+import { loadFor } from '@orden/markdown/engines'
+import { mapSources } from '@orden/markdown/sources'
 import { attributeValue } from '../attributes'
 import { imageResolver } from '../images'
 import { noteIndex } from './notes'
@@ -47,10 +47,10 @@ export async function renderNote(
 
   // The formula engine and the emoji table, where this note wants either: loaded on
   // demand rather than at startup, and a preview is already a round trip. See
-  // @nib/markdown/engines.
+  // @orden/markdown/engines.
   // The renderer with them: nothing a window shows as it opens renders a note, so it
   // is fetched by the first preview rather than carried into the launch.
-  const [{ renderMarkdown }] = await Promise.all([import('@nib/markdown'), loadFor(source)])
+  const [{ renderMarkdown }] = await Promise.all([import('@orden/markdown'), loadFor(source)])
 
   // No app: raw HTML in a note is shown as the characters it is made of, since
   // nothing here can ask whose note it is, and the pictures go through the one

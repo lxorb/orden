@@ -24,7 +24,7 @@
  *  note taking on another, a website being given its first file - move rather than
  *  add: there is no second copy of the fact to update and none to go stale. */
 
-import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import { movedTo, nameOf, samePath, within } from '../space-paths'
 import type { DocumentStart, NoteDoc, Tab } from './documents.svelte'
 import type { FileOp } from './file-ops'

@@ -4,7 +4,7 @@
  *  than something to look for, and an empty one asks nothing, so both leave the
  *  field as it was. */
 
-import type { EditorState } from '@nib/editor'
+import type { EditorState } from '@orden/editor'
 
 /** Longer than any phrase somebody would search for, short enough that a
  *  selected paragraph on one long line is still not taken for one. */

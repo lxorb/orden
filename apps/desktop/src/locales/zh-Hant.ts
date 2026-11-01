@@ -1551,6 +1551,18 @@ export const zhHant: Dictionary = {
   'answered by {model}, {date}': '由{model}回答，{date}',
   'AI block': 'AI區塊',
   'Do with AI': '用AI完成',
+  'Use the browser': '使用瀏覽器',
+  'Lets a task done with AI open web pages and act on them.':
+    '允許用AI完成的任務開啟網頁並在其中操作。',
+  'Look through notes': '瀏覽筆記',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    '允許用AI完成的任務在自身筆記之外搜尋和閱讀你的其他筆記。',
+  'Change other notes': '變更其他筆記',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    '允許用AI完成的任務寫入、移動和刪除任務以外的筆記。',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    '要求用AI完成的任務做什麼。完成後它仍會勾選任務，否則在留言中提問。',
+  'Started in the AI panel': '已在AI面板中開始',
   'Highlight colour': '醒目提示顏色',
   'A single newline breaks the line': '單一換行即斷行',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2558,6 +2570,9 @@ export const zhHant: Dictionary = {
     '這裡的網頁依系統的方式查詢位址；DNS 需在系統本身的設定中變更。',
   'Set by the settings file': '由設定檔指定',
   'The settings file has a problem': '設定檔有問題',
+  'Some changes may not be noticed': '部分變更可能不會被察覺',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    '系統監看資料夾的數量已達上限，因此 Orden 可能無法察覺其他程式對你空間所做的每項變更。調高 fs.inotify.max_user_watches 即可解決。',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': '將對話 {name} 移到 {space}？',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

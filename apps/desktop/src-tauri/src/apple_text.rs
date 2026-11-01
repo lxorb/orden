@@ -15,7 +15,7 @@
 //! arithmetic. So this is built and tested on every platform the app is built for,
 //! and only the store reader beside it is a Mac's own; see `lib.rs`.
 //!
-//! What a run becomes is nib's own markdown rather than Obsidian's: `==marked==`
+//! What a run becomes is Orden's own markdown rather than Obsidian's: `==marked==`
 //! for a highlight with no coloured circle in front of it, `^up^` and `~down~`
 //! for a raised and a lowered run, `- [x]` for a ticked box.
 
@@ -54,7 +54,7 @@ const BOLD_ITALIC: i32 = 3;
 const SUPER: i32 = 1;
 const SUB: i32 = -1;
 
-/// How many spaces one level of a list is indented by, which is what nib's own
+/// How many spaces one level of a list is indented by, which is what Orden's own
 /// markdown writes: the width of `- `, so a nested line lines up under the words
 /// above it.
 const STEP: &str = "  ";
@@ -90,7 +90,7 @@ struct Run {
     /// Raised, lowered, or neither.
     baseline: i32,
     /// One of the five colours a highlight can be. Which one is not carried
-    /// over: nib has one highlight, and a note full of coloured circles is not
+    /// over: Orden has one highlight, and a note full of coloured circles is not
     /// a note anybody wrote.
     emphasis: i32,
     link: Option<String>,
@@ -489,7 +489,7 @@ fn wrapped(run: &Run, said: &str) -> String {
     }
 
     if run.underlined {
-        // nib has no mark of its own for an underline, and this is the one every
+        // Orden has no mark of its own for an underline, and this is the one every
         // markdown reader draws as one.
         marked = format!("<u>{marked}</u>");
     }
@@ -513,7 +513,7 @@ fn wrapped(run: &Run, said: &str) -> String {
     format!("{before}{marked}{after}")
 }
 
-/// A note's own words, escaped where nib's markdown would read them as markup: they
+/// A note's own words, escaped where Orden's markdown would read them as markup: they
 /// are plain words in Notes, and `a==b or c==d` is not a highlight, `_x_` not italics,
 /// `<b>` not a tag and `$x$` not math. The rules are packages/markdown's `escapeText`
 /// (escapes.ts), which every other conversion goes through, without its keeping of

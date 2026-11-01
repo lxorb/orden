@@ -15,8 +15,8 @@
  *
  *  Its own module, fetched by the rewrite that needs it. */
 
-import type { Canvas } from '@nib/markdown/canvas'
-import { type FoundLink, isPagesTarget } from '@nib/markdown/links'
+import type { Canvas } from '@orden/markdown/canvas'
+import { type FoundLink, isPagesTarget } from '@orden/markdown/links'
 import { paperOf } from './pages/held'
 import { folderOf } from './space-paths'
 import type { NoteDoc } from './workspace/documents.svelte'

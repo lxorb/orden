@@ -10,7 +10,7 @@
  *  every other command lives too, and the writing itself is run.ts, the slides
  *  code and the canvas's own picture code. */
 
-import { isDeck } from '@nib/markdown/slide-breaks'
+import { isDeck } from '@orden/markdown/slide-breaks'
 import { key, t } from '../i18n.svelte'
 import { type TabKind, TAB_KINDS } from '../workspace/tab-kinds'
 import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS } from './formats'

@@ -39,7 +39,15 @@ import {
   type Side,
 } from './format'
 import { bounds, type Box, boxOf, facingSide, GRID, type Point, rectBetween } from './geometry'
-import { erased, INK_STYLES, nearStroke, strokeBox, strokesInLasso, tidied } from './ink'
+import {
+  cardsInLasso,
+  erased,
+  INK_STYLES,
+  nearStroke,
+  strokeBox,
+  strokesInLasso,
+  tidied,
+} from './ink'
 import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
@@ -192,8 +200,16 @@ export const run = {
   /** What a loop or a box caught. Only strokes it went right round, so half a word
    *  is never dragged away from the other half, unless the lasso's own panel says
    *  a stroke it touched at all counts. */
-  lasso(store: CanvasStore, points: readonly Point[], partly = false) {
-    store.pickAll(strokesInLasso(store.canvas.ink, points, partly))
+  /** What a loop caught: the ink in it, and with `cards`, the cards in it too - a loop
+   *  drawn by a held finger, which is how a finger picks (#349). A card is caught whole
+   *  inside the loop, or with `partly`, by its middle. */
+  lasso(store: CanvasStore, points: readonly Point[], partly = false, cards = false) {
+    const ink = strokesInLasso(store.canvas.ink, points, partly)
+    if (!cards) {
+      store.pickAll(ink)
+      return
+    }
+    store.pickAll([...cardsInLasso(store.canvas.nodes, points, partly), ...ink])
   },
 
   remove(store: CanvasStore) {

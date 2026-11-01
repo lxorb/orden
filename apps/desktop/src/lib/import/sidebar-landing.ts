@@ -1,4 +1,4 @@
-/** A browser's spaces written into nib's: each into the space of its name, made where
+/** A browser's spaces written into Orden's: each into the space of its name, made where
  *  there is none, and an import that has been done before bringing only what is new.
  *  Every browser's, Zen's first; zen-landing.ts says why a space of the same name is
  *  the same space and what a second import brings. See sidebar-plan.ts for what

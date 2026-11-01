@@ -376,6 +376,15 @@ describe('Typora extensions', () => {
     expect(html).not.toContain('$')
   })
 
+  // #498: Pandoc's rule, a closing dollar straight before a digit closes nothing.
+  test('a range of prices is not a formula', () => {
+    const html = renderMarkdown('From $5-$10 a head.\n')
+
+    expect(html).not.toContain('math-inline')
+    expect(html).toContain('$5-$10')
+    expect(renderMarkdown('Say $x$ 1 time.\n')).toContain('math-inline')
+  })
+
   test('block math on one line among prose', () => {
     const html = renderMarkdown('Before.\n\n$$E = mc^2$$\n\nAfter.\n')
 
@@ -829,6 +838,19 @@ describe('definition lists', () => {
 
 describe('abbreviations', () => {
   const SOURCE = '*[HTML]: HyperText Markup Language\n\nI write HTML every day.\n'
+
+  // #498: `\b` knows ASCII letters only, so a term ending in `+` and one in another
+  // script were never marked.
+  test('marks a term of any script or ending in a symbol, and none inside a longer word', () => {
+    const html = renderMarkdown(
+      '*[C++]: a language\n*[日本]: Japan\n*[UN]: United Nations\n\nC++ and 日本 and UN, not UNIX.\n',
+    )
+    expect(html).toContain('<abbr title="a language">C++</abbr>')
+    expect(html).toContain('<abbr title="Japan">日本</abbr>')
+    expect(html).toContain('<abbr title="United Nations">UN</abbr>,')
+    expect(html).toContain('not UNIX')
+    expect(html.match(/<abbr/g)).toHaveLength(3)
+  })
 
   test('expands a defined word', () => {
     expect(renderMarkdown(SOURCE)).toContain('<abbr title="HyperText Markup Language">HTML</abbr>')

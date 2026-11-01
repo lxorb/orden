@@ -5,7 +5,7 @@
    *  rows (docs/tasks.md 5.8). A row the builder cannot show - a formula, a group
    *  inside a group - stays as written, with its words. Saved as Bases' YAML, so
    *  Obsidian reads the filter too. */
-  import { fromTodoist } from '@nib/bases'
+  import { fromTodoist } from '@orden/bases'
   import { i18n, t } from '../i18n.svelte'
   import Cross from '../Cross.svelte'
   import Select from '../Select.svelte'

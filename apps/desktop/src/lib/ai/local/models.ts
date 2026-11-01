@@ -1,5 +1,5 @@
 /** The models Claude Code and Codex offer, as each program lists them, in the shape the
- *  model popover reads (`ModelInfo`, docs/ai-sidebar.md 4.9). Never a table of nib's:
+ *  model popover reads (`ModelInfo`, docs/ai-sidebar.md 4.9). Never a table of Orden's:
  *  Claude Code's `list_models` and Codex's `model/list` are asked through the crate
  *  (`ai_cli_models`), and what neither says is null until a turn says it.
  *
@@ -12,11 +12,11 @@
 import type { Effort, ModelInfo } from '../chat/types'
 import type { LocalKind } from '../providers'
 
-/** nib's scale, in its order; `auto` is the model's own default and always offered. */
+/** Orden's scale, in its order; `auto` is the model's own default and always offered. */
 const SCALE: readonly Effort[] = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']
 
-/** A level as a program spells it, on nib's scale; one nib has no place for is left
- *  out (Codex's `ultra` hands work to subagents, which nib's agent does not have). */
+/** A level as a program spells it, on Orden's scale; one Orden has no place for is left
+ *  out (Codex's `ultra` hands work to subagents, which Orden's agent does not have). */
 function levelOf(word: unknown): Effort | null {
   if (word === 'none') return 'off'
   return SCALE.find((one) => one === word) ?? null

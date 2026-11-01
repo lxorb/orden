@@ -13,9 +13,9 @@
  *  Its own module because none of it is about what is open: `noteText` prefers an
  *  open document over the disk and that is the whole of its dealings with them. */
 
-import { oneEdit } from '@nib/markdown/edits'
-import { taskAt } from '@nib/markdown/tasks'
-import type { SpaceTag } from '@nib/editor'
+import { oneEdit } from '@orden/markdown/edits'
+import { taskAt } from '@orden/markdown/tasks'
+import type { SpaceTag } from '@orden/editor'
 import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
 import { lineStarts } from '../search/lines'
@@ -127,7 +127,7 @@ export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): 
   // Ticked the way every box is: the done date, the open sub-tasks, and a recurring
   // task's next occurrence above it, as one thing to undo. The engine is fetched with
   // the first tick rather than carried by the first paint.
-  const { tick, todayOf } = await import('@nib/bases/occurrence')
+  const { tick, todayOf } = await import('@orden/bases/occurrence')
   const edits = tick(before, line, todayOf())
   if (!edits.length) return false
 
@@ -137,7 +137,7 @@ export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): 
 
 /** Writes the whole of one note, from words somebody typed somewhere other than a
  *  pane: the editor mounted in a hover card, which is a note being written in without
- *  being opened. See wikilink/hover.ts in @nib/editor and preview-card.ts.
+ *  being opened. See wikilink/hover.ts in @orden/editor and preview-card.ts.
  *
  *  The whole note in, one span of characters out: `oneEdit` is the smallest change the
  *  two versions differ by, so a pane that happens to be showing the same note takes

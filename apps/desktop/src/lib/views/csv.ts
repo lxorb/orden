@@ -1,9 +1,9 @@
 /** A view as CSV (docs/tasks.md 4): its rows in the order and the groups it shows them,
  *  its columns as their names, every cell the value a spreadsheet reads
- *  (`csvValue` in @nib/bases). Copied, or saved as a file the way an export is. A
+ *  (`csvValue` in @orden/bases). Copied, or saved as a file the way an export is. A
  *  button column has nothing to say in a spreadsheet and is left out. */
 
-import { cellValue, csvText, csvValue, isButton } from '@nib/bases'
+import { cellValue, csvText, csvValue, isButton } from '@orden/bases'
 import { copyText } from '../clipboard'
 import { deliver } from '../export/save'
 import { t } from '../i18n.svelte'

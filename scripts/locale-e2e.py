@@ -21,7 +21,7 @@ whichever way it was written and never whichever way the app does.
 
 Run it with the repository's own Chromium, against a build:
 
-    pnpm --filter @nib/desktop build
+    pnpm --filter @orden/desktop build
     python scripts/locale-e2e.py
 
 `--languages de,ja` and `--widths desktop` narrow it while something is being
@@ -580,7 +580,7 @@ def main() -> int:
         languages.insert(0, "en")
 
     if not DIST.is_dir():
-        raise SystemExit(f"no build at {DIST}; run pnpm --filter @nib/desktop build")
+        raise SystemExit(f"no build at {DIST}; run pnpm --filter @orden/desktop build")
 
     shutil.rmtree(OUT, ignore_errors=True)
     OUT.mkdir(parents=True, exist_ok=True)

@@ -1,4 +1,4 @@
-/** What an app's habits say about nib's own settings, for an import that makes a
+/** What an app's habits say about Orden's own settings, for an import that makes a
  *  new space.
  *
  *  Chrome's first run, which brings the search engine and the bookmarks bar over
@@ -14,7 +14,7 @@
  *
  *  Pure: a list of answers. The store that applies them is carry-over.ts. */
 
-import type { PropertiesMode } from '@nib/markdown/properties'
+import type { PropertiesMode } from '@orden/markdown/properties'
 import type { AttachmentFolder } from '../attachments'
 import type { LinkFormat } from '../link-format'
 import type { FormatId } from './plan'

@@ -2,12 +2,12 @@
  *  and the door against real SQL, and `Machine` driven through a fake host with the
  *  alarm moved by the clock. */
 
-import { mayType } from '@nib/online'
-import { subprotocol } from '@nib/rooms'
+import { mayType } from '@orden/online'
+import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { askMachine } from '../src/machines/ask'
-import { PING_EVERY, QUIET_FOR } from '@nib/online/wire'
+import { PING_EVERY, QUIET_FOR } from '@orden/online/wire'
 import { Machine, resumeOf } from '../src/machines/machine'
 import { reachAgain } from '../src/machines/reach'
 import { eraseAccount } from '../src/erase'
@@ -2261,7 +2261,7 @@ describe('the hub’s machine frame', () => {
     expect(laptop.take()).toEqual([{ t: 'machine', state: 'starting' }])
     expect(guest.take()).toEqual([])
 
-    const { hubFrameOf } = await import('@nib/sync-core/wire')
+    const { hubFrameOf } = await import('@orden/sync-core/wire')
     expect(hubFrameOf({ t: 'machine', state: 'awake' })).toEqual({ t: 'machine', state: 'awake' })
     expect(hubFrameOf({ t: 'machine', state: 'melting' })).toBeNull()
 

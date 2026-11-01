@@ -86,7 +86,7 @@ describe('a task line read the way the Tasks plugin reads it', () => {
     expect(readTask('a [x] in a sentence')).toBeNull()
   })
 
-  test('takes nib fields before the tags and the emoji', () => {
+  test("takes Orden's fields before the tags and the emoji", () => {
     const task = readTask(
       '- [ ] Call the bank about the card [time:: 16:00] [remind:: 15m] #admin ⏫ 📅 2026-10-06',
     )
@@ -161,7 +161,7 @@ describe('a task line read the way the Tasks plugin reads it', () => {
     })
   })
 
-  test('reads bracket fields wherever they stand, and keeps the ones nib has no name for', () => {
+  test('reads bracket fields wherever they stand, and keeps the ones Orden has no name for', () => {
     const task = readTask(
       '- [ ] Review [assignee:: Lucile] the PR [effort:: big] (due:: 2026-10-06)',
     )
@@ -205,7 +205,7 @@ describe('a task line read the way the Tasks plugin reads it', () => {
     })
   })
 
-  test('reads boxes nib does not name as open, with their mark', () => {
+  test('reads boxes Orden does not name as open, with their mark', () => {
     expect(readTask('- [>] forwarded')).toMatchObject({
       status: '>',
       done: false,
@@ -214,7 +214,7 @@ describe('a task line read the way the Tasks plugin reads it', () => {
   })
 })
 
-describe('the values of nib fields', () => {
+describe("the values of Orden's fields", () => {
   test.each([
     ['45m', 45],
     ['2h', 120],

@@ -28,7 +28,7 @@ import { describe, expect, test } from 'vitest'
  *  the raw blocks and inline tags in a note, which brings the CSS and JavaScript
  *  grammars and the LR parser runtime with it - a hundred and sixty-seven kilobytes,
  *  fourteen milliseconds of the launch measured in Chrome, for the notes that have a
- *  tag in them. What that package asks for now is a door of nib's own, said once in the
+ *  tag in them. What that package asks for now is a door of Orden's own, said once in the
  *  root manifest; see packages/lang-html. Which is why the last two tests here are
  *  about a manifest and a dynamic import rather than about this graph: the edge that
  *  holds those five packages out is inside a dependency, where no walk of our own
@@ -47,7 +47,7 @@ import { describe, expect, test } from 'vitest'
  *  Batch 120 took 1.29 megabytes to 1.23, over five edges of five different kinds, and
  *  the largest of them was a dependency's again: `@codemirror/lang-markdown` imports the
  *  completion library at the top of its module, for the tag names a `<` offers through a
- *  source nib never asks, and that held the whole popup - thirty-five kilobytes - in
+ *  source Orden never asks, and that held the whole popup - thirty-five kilobytes - in
  *  front of the first paint. The others were the crate's own IPC, held there by one line
  *  of JavaScript asking for the platform's name; everything the app knows about talking
  *  to a model, for a glyph nobody had pressed; the phone's share intent and its speech
@@ -61,7 +61,7 @@ import { describe, expect, test } from 'vitest'
  *  adopt Find, its two steps and goto-line off the library's own keymap, and reading
  *  that array is importing the engine - fifteen kilobytes of query, cursor and
  *  replacement for a bar nobody has opened. The four keys are declared by hand now and
- *  run nib's own commands through a door, the library's keymap is not spread underneath
+ *  run Orden's own commands through a door, the library's keymap is not spread underneath
  *  them any more (every one of its seven keys was already adopted, claimed or dead, and
  *  `unclaimedKeymap` says which is which), and the engine arrives in a compartment at
  *  the launch's last turn - because one thing it carries happens unasked, the faint
@@ -88,14 +88,21 @@ const ENTRY = fileURLToPath(new URL('../src/main.ts', import.meta.url))
 /** The workspace packages, by the name an import asks for them under. Resolved
  *  through each one's own `exports` map, so a subpath reaches the module that subpath
  *  exists for - which is the whole point of having them. */
-const WORKSPACE = ['@nib/editor', '@nib/glasses', '@nib/markdown', '@nib/rooms', '@nib/themes']
+const WORKSPACE = [
+  '@orden/editor',
+  '@orden/glasses',
+  '@orden/markdown',
+  '@orden/rooms',
+  '@orden/themes',
+]
 
 /** Where a workspace import lands, or null when the specifier is not one of ours. */
 function workspaceFile(specifier: string): string | null {
   const name = WORKSPACE.find((one) => specifier === one || specifier.startsWith(`${one}/`))
   if (!name) return null
 
-  const folder = join(ROOT, 'packages', name.slice('@nib/'.length))
+  // The folder is the name after its scope, whichever scope the package is in now (#367).
+  const folder = join(ROOT, 'packages', name.slice(name.indexOf('/') + 1))
   const manifest = JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8')) as {
     exports?: Record<string, string>
   }
@@ -160,7 +167,7 @@ function asked(file: string): string[] {
  *  asked for that way.
  *
  *  This is where a hundred and twenty-six kilobytes were hiding. `raw.ts` in
- *  @nib/themes holds seven stylesheets as text for what an export and a deck bake into
+ *  @orden/themes holds seven stylesheets as text for what an export and a deck bake into
  *  the file they write, the shell wanted one of them - the contrast palette, three
  *  kilobytes - and a module is the unit a chunk is made of, so the shell got all seven.
  *  The module's own source is a dozen lines of comment, so the budget above saw nothing
@@ -321,7 +328,7 @@ function holds(tail: string): boolean {
  *  bundler chunked it. Anything not in that list is behind a dynamic import.
  *
  *  Raised 2026-09-18 for open-link.ts, which is where a pressed link goes now that
- *  nib has pages of its own to put one in. 5,800 bytes of it, and it cannot be lazy:
+ *  Orden has pages of its own to put one in. 5,800 bytes of it, and it cannot be lazy:
  *  the pane hands the editor its link opener as the editor is built, and a module
  *  fetched on the first press would be a press that did nothing for a frame. Nor is
  *  it a subsystem arriving early - it is one pure decision and four lines of act, and
@@ -390,9 +397,9 @@ function holds(tail: string): boolean {
  *  default (12,506, which is the commit that went over), a web note's doubled ending
  *  (2,039) and the renames the bookmarks follow (6,461). None of that was a door left
  *  open; it is the workspace, the link index and the editor doing more. What had no
- *  business here went behind a door: the conversion of a website an older nib wrote
+ *  business here went behind a door: the conversion of a website an older Orden wrote
  *  as a note, with the reader of that format and the word counter under it
- *  (web-tab/convert.ts, note.ts, words.ts in @nib/markdown - 15,080 bytes and three
+ *  (web-tab/convert.ts, note.ts, words.ts in @orden/markdown - 15,080 bytes and three
  *  files), fetched by the first such note opened. Measured 3,325,127.
  *
  *  The palette learned recent notes, folders, making a note, headings and lines (the
@@ -474,7 +481,7 @@ function holds(tail: string): boolean {
  *
  *  The editor's right-click menu went behind a door as it learned a link's and a
  *  picture's rows (the power-user list's eighth batch), and so did what it asks of
- *  the editor (`@nib/editor/menu`): fetched at the launch's last turn, like a tab's
+ *  the editor (`@orden/editor/menu`): fetched at the launch's last turn, like a tab's
  *  menu. With its rows and a dropped PDF's keeping, measured 3,279,919 and 378 modules,
  *  against 3,298,741 and 380 on the main it landed on.
  *
@@ -535,7 +542,7 @@ function holds(tail: string): boolean {
  *  window shows as it opens: the right-click menu, the bar over a selection, the
  *  sign-in and join sheets (all mounted at the launch's last turn, see `warmDoors`), a
  *  phone's drawer drag (drawer-follow.ts), a block's menu commands
- *  (`@nib/editor/menu`), the Run button's sandbox (run/door.ts), the `[[` popup's rows
+ *  (`@orden/editor/menu`), the Run button's sandbox (run/door.ts), the `[[` popup's rows
  *  (behind the completion library's door already, once the facet every editor carries
  *  was apart from them), the matcher behind a query fence's two helpers
  *  (search/lines.ts, search/task.ts), and a deck's renderer behind the one question
@@ -561,7 +568,7 @@ function holds(tail: string): boolean {
  *
  *  Not raised 2026-09-30 for a chunk that did not arrive, from a main at 3,214,640 and
  *  376 to 3,210,758 and 378. What had to come in is the door every lazy part is fetched
- *  through (door.ts in @nib/markdown) and the page's ear for a failed fetch
+ *  through (door.ts in @orden/markdown) and the page's ear for a failed fetch
  *  (reloading.svelte.ts), both here before a deploy can take a chunk away; what the page
  *  then does about it (reload-when.ts) is fetched at the launch's last turn. What paid
  *  for them is page-setup.ts, 8,977 bytes the settings held in front of the first paint
@@ -623,7 +630,7 @@ function holds(tail: string): boolean {
  *
  *  Lowered the same day, to 3,195,000, from that main, which every queued pull request
  *  was failing by a hundred bytes to seven kilobytes before the raise. Not a raise for
- *  any of them: room, made by taking the renderer out of the first paint. `@nib/markdown`'s
+ *  any of them: room, made by taking the renderer out of the first paint. `@orden/markdown`'s
  *  own entry and what only it reads - marked's extensions, the block grammars, the
  *  comments, the wikilinks and the starts they read with, sixty-six kilobytes of source
  *  over six modules, and the whole of marked in the built figure - was there for five
@@ -781,7 +788,7 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-19, to 3,250,000, for the bug fixes after #419: the version row in
  *  Settings (#490), and markdown's lookups by Map and CommonMark's fence rule (#492,
- *  #493), had taken the room down to 17 bytes, and fixes in @nib/markdown land beside
+ *  #493), had taken the room down to 17 bytes, and fixes in @orden/markdown land beside
  *  the app's in parallel. Measured 3,244,983.
  *
  *  Raised 2026-10-19, to 3,251,000, for #548: Send feedback's bug at the foot of the
@@ -797,7 +804,7 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-19, to 3,255,000, for #544: words from the room are held while an
  *  input method composes in a view and taken in when it ends, with what is typed
  *  meanwhile carried past them (`held`, `settle` and the compositionend handler in
- *  @nib/editor's shared.ts). Measured 3,254,393.
+ *  @orden/editor's shared.ts). Measured 3,254,393.
  *
  *  Raised 2026-10-19, to 3,256,000, for #533: a version put back from the history is
  *  said to be one (`restoreVersion` on the workspace and in saving.svelte.ts,
@@ -846,7 +853,7 @@ function holds(tail: string): boolean {
  *  anything is mounted (`data-engine-bars` in main.ts). Measured 3,283,984.
  *
  *  Raised 2026-10-24, to 3,285,000, for #771: the dictionaries spelling is checked in are
- *  a list now, several at once (`spellLanguages` in modes.svelte.ts), told to nib's own
+ *  a list now, several at once (`spellLanguages` in modes.svelte.ts), told to Orden's own
  *  Chromium from a module fetched at the launch rather than carried in front of it
  *  (spell-languages.ts). Measured 3,284,888, from 3,283,984 at 65b6bd1a9.
  *
@@ -889,7 +896,7 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-26, to 3,362,800, for B482: code is never a tag, in a quote, a
  *  callout, a list item or indented, as the renderer judges it, and a comment marker
- *  there hides nothing (`CodeBlocks`, added to fences.ts in @nib/markdown so no
+ *  there hides nothing (`CodeBlocks`, added to fences.ts in @orden/markdown so no
  *  module is added, and read by search/tags.ts and comments.ts). Measured 3,362,016.
  *
  *  Raised 2026-10-26, to 3,364,000, for the round 4 fixes landed together: main with
@@ -920,7 +927,7 @@ function holds(tail: string): boolean {
  *  note is asked of the note, a share of it on its own and what the last listing kept
  *  included (`reachedByOthers` and the kept `{ role, shared, items }` in
  *  sharing.svelte.ts), and an embed or a canvas file card is trusted by its own note
- *  (`embedNote` in link-index.svelte.ts, `EmbeddedNote` in @nib/markdown). Measured
+ *  (`embedNote` in link-index.svelte.ts, `EmbeddedNote` in @orden/markdown). Measured
  *  3,388,683 with main as of this raise.
  *
  *  Raised 2026-10-27, to 3,390,900, for B565: the note an agent names is read by one
@@ -934,20 +941,28 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-27, to 3,405,000, once for the fourth bug burn-down's pending fixes,
  *  so each of them need not raise it. Measured 3,390,605 with main as of this raise.
  *
- *  Raised 2026-10-27, to 3,422,600, once more for the fourth bug burn-down's remaining
- *  fixes, which outgrew the raise above. Measured 3,407,533 with main as of this raise.
+ *  Raised 2026-10-27, to 3,418,000, for main and unstable merged into one: each had
+ *  raised this for its own fixes alone, and these are what they come to in one build.
+ *  Measured 3,416,826 and 381 modules.
  *
- *  Raised 2026-10-27, to 3,431,000, for main's burn-down fixes merged into unstable: the
- *  two lists above, each raised without the other's fixes, measured 3,416,876 and 381
- *  modules together. The headroom is the 14,000 main kept for the fourth burn-down's
- *  pending fixes.
+ *  Raised 2026-10-28, to 3,419,600, for #676: a page note made from a PDF wears the
+ *  PDF's mark, asked of the listing (`holdsPaper` in chosen-icon.ts, `shown` in
+ *  FileMark.svelte). Measured 3,418,727 with unstable as of this raise.
  *
- *  Kept at 3,431,000 on 2026-10-27 with #1017 merged in: its 3,422,600 was measured on
- *  main, and the tree here with #986 measured 3,418,810 and 381 modules. */
-const BUDGET = 3_431_000
-/** Raised 2026-10-26, to 383, for settings/held.ts (#673): measured 382, from 381 at
- *  6ac1ef69b. Main's fixes merged into unstable measured 381 on 2026-10-27. */
-const MOST_FILES = 383
+ *  Raised 2026-10-28, to 3,420,400, for #325: a comment written in the task view takes
+ *  `#needs-input` off its task (`withoutNeedsInput` in task-body.ts, read by act.ts).
+ *  Measured 3,419,653 with #676's second part beside it.
+ *
+ *  Raised 2026-10-28, to 3,423,400, for #523: the file list is a tree to a screen reader,
+ *  each row a treeitem with its level and its place among its own (`among` in
+ *  Tree.svelte), and a row deleted under the keyboard hands it on. Measured 3,423,327,
+ *  from 3,421,029 at 0168bd709.
+ *
+ *  Raised 2026-11-01, to 3,431,700, for the fourth bug burn-down's fixes merged into
+ *  unstable at 9163eeb16: unstable's raises were measured without them. Measured
+ *  3,430,841. */
+const BUDGET = 3_431_700
+const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
@@ -990,7 +1005,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['lucide', 'the icon library'],
     // The formula engine, its chemistry pack and the emoji table, because the renderer
     // imported all three outright. Loaded when a note turns out to have a formula or a
-    // `:shortcode:` in it; see @nib/markdown/engines.
+    // `:shortcode:` in it; see @orden/markdown/engines.
     ['katex', 'the formula engine'],
     ['katex/contrib/mhchem', 'the chemistry pack'],
     ['node-emoji', 'the emoji table'],
@@ -999,7 +1014,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['@replit/codemirror-vim', 'the vim keymap'],
     // The firmware font metrics, because the app's mode settings read the glasses'
     // compaction names off the package that also holds its text engine. Those names
-    // are @nib/glasses/choices now.
+    // are @orden/glasses/choices now.
     ['@evenrealities/pretext', 'the firmware font metrics'],
     // These four were already behind a boundary and must stay there: the diagram
     // drawers, the PDF viewer, and the writers an export loads.
@@ -1080,7 +1095,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/wallpaper/floors.ts', "the wallpaper's scrim"],
     ['/lib/wallpaper/kept.ts', "the wallpaper's copy"],
     ['/themes/src/wallpaper.ts', "the wallpaper's sheet"],
-    // Nib as the browser: the row that makes it one, behind the settings sheet, and
+    // Orden as the browser: the row that makes it one, behind the settings sheet, and
     // the listener for links from other programs, with the roads in after the space.
     ['/lib/settings/DefaultBrowser.svelte', 'the default browser row'],
     ['/lib/web-tab/handed.ts', 'the pages other programs hand over'],
@@ -1216,7 +1231,7 @@ describe('what the app evaluates before it draws anything', () => {
     // scans a plane's cards for links and the sync mirror merges two versions of one,
     // so both reach it before anything is drawn. See workspace.createPages.
     ['/markdown/src/pages.ts', 'the pages engine'],
-    // The websites an older nib wrote as notes, turned into shortcuts: only a space
+    // The websites an older Orden wrote as notes, turned into shortcuts: only a space
     // from before shortcuts has any, and the first one opened fetches it. See
     // workspace.openWeb.
     ['/lib/web-tab/convert.ts', 'the old websites, converted'],
@@ -1306,7 +1321,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/search/warm.svelte.ts', "the search's hold on the space"],
     // And the renderer itself, which no window needs to draw its first frame: what the
     // launch read off it is in breaks.ts and engines.ts, and the copy, the hover and
-    // the reading view fetch it (copy.ts and wikilink/preview.ts in @nib/editor).
+    // the reading view fetch it (copy.ts and wikilink/preview.ts in @orden/editor).
     ['/markdown/src/index.ts', 'the renderer'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
@@ -1403,7 +1418,7 @@ describe('what the app evaluates before it draws anything', () => {
       pnpm?: { overrides?: Record<string, string> }
     }
 
-    expect(manifest.pnpm?.overrides?.[OVERRIDE]).toBe('workspace:@nib/lang-html@*')
+    expect(manifest.pnpm?.overrides?.[OVERRIDE]).toBe('workspace:@orden/lang-html@*')
     expect(existsSync(DOOR)).toBe(true)
   })
 
@@ -1411,7 +1426,7 @@ describe('what the app evaluates before it draws anything', () => {
    *
    *  `@codemirror/lang-markdown` also imports the completion library outright - one
    *  class, to build a context with, in order to offer the names of HTML tags when a `<`
-   *  is typed. That source is registered in the language's own data and nib never asks
+   *  is typed. That source is registered in the language's own data and Orden never asks
    *  it: the popup is built with `override`, which is the whole list of sources rather
    *  than an addition to one. So thirty-five kilobytes of popup were evaluated before
    *  the window had drawn anything, for a source nothing reaches.
@@ -1428,7 +1443,7 @@ describe('what the app evaluates before it draws anything', () => {
       pnpm?: { overrides?: Record<string, string> }
     }
 
-    expect(manifest.pnpm?.overrides?.[POPUP]).toBe('workspace:@nib/autocomplete@*')
+    expect(manifest.pnpm?.overrides?.[POPUP]).toBe('workspace:@orden/autocomplete@*')
     expect(existsSync(POPUP_DOOR)).toBe(true)
     expect(asked(POPUP_DOOR)).not.toContain('@codemirror/autocomplete')
   })
@@ -1448,7 +1463,7 @@ describe('what the app evaluates before it draws anything', () => {
    *  `@tauri-apps/plugin-os` - one line of JavaScript over a global, asked for the
    *  platform's name - imports it too.
    *
-   *  So there is a door of nib's own again: src/lib/native.ts names the package and
+   *  So there is a door of Orden's own again: src/lib/native.ts names the package and
    *  nothing else does, the platform's name is read off the page where the plugin's
    *  Rust half writes it, and a browser build fetches neither. */
   const CRATE = join(ROOT, 'apps/desktop/src/lib/native.ts')
@@ -1509,7 +1524,7 @@ describe('what reading a note fetches', () => {
 
   /** What a graph costs that the app has not already read.
    *
-   *  The marginal weight, not the whole graph: both of these reach `@nib/editor` for
+   *  The marginal weight, not the whole graph: both of these reach `@orden/editor` for
    *  the two lists of languages the renderer draws rather than colours, and the editor
    *  is on screen before either surface is asked for, so the bundler has it in a chunk
    *  the page already has. What a reader waits for is the part that is new. */
@@ -1540,7 +1555,7 @@ describe('what reading a note fetches', () => {
       // an export carries its own CSS because it lands in a file somebody else opens,
       // and a surface on screen is already wearing the app's.
       //
-      // By the file rather than by the specifier: `@nib/themes/raw` is one of ours and
+      // By the file rather than by the specifier: `@orden/themes/raw` is one of ours and
       // resolves through the package's own exports map, so it is a module in the graph
       // and never a name in `packages`. Asked the other way this read as green whatever
       // the surface imported.

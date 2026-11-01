@@ -34,7 +34,7 @@ behind, in front, and behind.
 
 `run_probe` in scripts/probe_app.py starts it off the screen and without the keyboard,
 and ends the run if any of it is ever in view. No key is pressed in a page here: a key
-nib answers from inside a page hands the keyboard back to the window, which is what
+Orden answers from inside a page hands the keyboard back to the window, which is what
 puts a probe in front of somebody; see the page-first step of web-page-probe.py.
 """
 
@@ -186,7 +186,7 @@ def endpoint(identifier: str, unlike: int = 0) -> tuple[int, str, int]:
         except (OSError, ValueError):
             pass
         time.sleep(0.2)
-    raise SystemExit(f"the app never wrote {path}; close any nib running under this identifier")
+    raise SystemExit(f"the app never wrote {path}; close any Orden running under this identifier")
 
 
 def allow_eval(identifier: str) -> None:
@@ -335,7 +335,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     running = run_probe(exe, env=env, quiet=True)
     port, secret, pid = endpoint(identifier, unlike)
     if pid and pid != running.pid:
-        raise SystemExit(f"another nib (pid {pid}) is listening under {identifier}: close it first")
+        raise SystemExit(f"another Orden (pid {pid}) is listening under {identifier}: close it first")
     until = time.perf_counter() + 90
     while time.perf_counter() < until and not main_window(running.pid):
         time.sleep(0.2)

@@ -9,7 +9,7 @@
  *  WebSocket, and a token in the address is a token in a log; a subprotocol is a
  *  header the browser sets itself, and the server names it back. */
 
-import { subprotocol } from '@nib/rooms'
+import { subprotocol } from '@orden/rooms'
 import { roomDelay } from '../backoff'
 import { BASE } from '../api'
 

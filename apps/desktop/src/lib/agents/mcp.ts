@@ -3,7 +3,7 @@
  *  it with the program's path, which the crate answers through the `mcp_program`
  *  command: the installed exe, or an AppImage's own path.
  *
- *  Claude Code's line adds nib at user scope, so it is there in every folder the client
+ *  Claude Code's line adds Orden at user scope, so it is there in every folder the client
  *  starts in rather than only the one it was added from; `json` is the entry a client
  *  configured by file takes (Claude Desktop's `claude_desktop_config.json`, Cursor's
  *  `mcp.json`). See docs/agent-native.md 10. */

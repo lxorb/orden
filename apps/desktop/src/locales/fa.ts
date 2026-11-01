@@ -1596,6 +1596,18 @@ export const fa: Dictionary = {
   'answered by {model}, {date}': 'پاسخ از {model}، {date}',
   'AI block': 'بلوک هوش مصنوعی',
   'Do with AI': 'انجام با هوش مصنوعی',
+  'Use the browser': 'استفاده از مرورگر',
+  'Lets a task done with AI open web pages and act on them.':
+    'به کاری که با هوش مصنوعی انجام می‌شود اجازه می‌دهد صفحه‌های وب را باز کند و در آن‌ها کار کند.',
+  'Look through notes': 'مرور یادداشت‌ها',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'به کاری که با هوش مصنوعی انجام می‌شود اجازه می‌دهد علاوه بر یادداشت خودش، یادداشت‌های دیگر شما را جست‌وجو کند و بخواند.',
+  'Change other notes': 'تغییر یادداشت‌های دیگر',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'به کاری که با هوش مصنوعی انجام می‌شود اجازه می‌دهد یادداشت‌هایی جز خود کار را بنویسد، جابه‌جا کند و حذف کند.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'آنچه از کاری که با هوش مصنوعی انجام می‌شود خواسته می‌شود. همچنان پس از انجام، کار را تیک می‌زند یا در یک نظر می‌پرسد.',
+  'Started in the AI panel': 'در پنل هوش مصنوعی شروع شد',
   'Highlight colour': 'رنگ پُررنگ',
   'A single newline breaks the line': 'یک خط تازه خط را می‌شکند',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2641,6 +2653,9 @@ export const fa: Dictionary = {
     'صفحه‌های وب اینجا نشانی‌ها را همان‌طور پیدا می‌کنند که سیستم؛ DNS آن در تنظیمات خود سیستم تعیین می‌شود.',
   'Set by the settings file': 'تعیین‌شده در فایل تنظیمات',
   'The settings file has a problem': 'فایل تنظیمات مشکلی دارد',
+  'Some changes may not be noticed': 'شاید برخی تغییرها دیده نشوند',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'سیستم به سقف پوشه‌های زیر نظر رسیده است، پس شاید Orden همهٔ تغییرهایی را که برنامه‌های دیگر در فضاهای شما می‌دهند نبیند. افزایش fs.inotify.max_user_watches مشکل را حل می‌کند.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'گفتگوی {name} به {space} منتقل شود؟',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

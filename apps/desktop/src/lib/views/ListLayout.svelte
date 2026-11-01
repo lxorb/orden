@@ -14,7 +14,7 @@
    *  are folded is kept on this device (kept-views.ts). A row carried onto
    *  another group is written into it; onto another task of its own note, it moves its
    *  lines there. */
-  import { groupName, type Row, rowId, type Value } from '@nib/bases'
+  import { groupName, type Row, rowId, type Value } from '@orden/bases'
   import { untrack } from 'svelte'
   import { Heights } from '../chats/view/window'
   import { without } from '../records'

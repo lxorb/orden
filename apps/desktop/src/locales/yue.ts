@@ -1549,6 +1549,17 @@ export const yue: Dictionary = {
   'answered by {model}, {date}': '由{model}回答，{date}',
   'AI block': 'AI區塊',
   'Do with AI': '用AI做',
+  'Use the browser': '用瀏覽器',
+  'Lets a task done with AI open web pages and act on them.': '畀用AI做嘅任務開網頁同喺上面操作。',
+  'Look through notes': '睇吓筆記',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    '畀用AI做嘅任務喺自己筆記以外搜尋同閱讀你其他筆記。',
+  'Change other notes': '改其他筆記',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    '畀用AI做嘅任務寫、搬同刪除任務以外嘅筆記。',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    '叫用AI做嘅任務做乜。做完佢都會剔咗個任務，唔係就喺留言度問。',
+  'Started in the AI panel': '已經喺AI面板開始咗',
   'Highlight colour': '突出顯示顏色',
   'A single newline breaks the line': '單一換行即斷行',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2552,6 +2563,9 @@ export const yue: Dictionary = {
     '喺度網頁跟系統嘅方法搵地址；DNS 要喺系統自己嘅設定度改。',
   'Set by the settings file': '由設定檔指定',
   'The settings file has a problem': '設定檔有問題',
+  'Some changes may not be noticed': '有啲改動可能留意唔到',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    '系統監察資料夾嘅上限已經到咗，所以 Orden 可能留意唔到其他程式喺你啲空間入面做嘅每個改動。提高 fs.inotify.max_user_watches 就得。',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': '將傾偈 {name} 移去 {space}？',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

@@ -468,6 +468,8 @@ describe('the switch', () => {
       'lib/access/AccountSteps.svelte',
       // What an agent may do, a switch a scope, in Settings > AI > Access.
       'lib/agents/settings/AgentDetail.svelte',
+      // What a task done with AI may reach, in Settings > AI > Do with AI (#325).
+      'lib/ai/DoWithAiCard.svelte',
       // Fast, in the AI panel's model popover.
       'lib/ai/sidebar/ModelPicker.svelte',
       // One answer or several, in a new poll.
@@ -806,6 +808,7 @@ describe('the sentence behind a setting', () => {
       'lib/SettingsPanel.svelte',
       'lib/SyncPane.svelte',
       'lib/access/Access.svelte',
+      'lib/ai/DoWithAiCard.svelte',
       'lib/people/ProfileRows.svelte',
     ])
   })

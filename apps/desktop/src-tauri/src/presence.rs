@@ -1,11 +1,11 @@
 //! Whether somebody is at this computer, and what the computer is called: the two things
 //! a device says about itself to its account's hub (docs/chats.md 4.10).
 //!
-//! **Somebody is at it** while a key was pressed or the pointer moved in nib in the last
+//! **Somebody is at it** while a key was pressed or the pointer moved in Orden in the last
 //! five minutes. The app's own page hears its own input, and nothing else: a key typed
 //! into a web page, or the pointer moving over one, goes to the page's own webview, which
 //! is another process's window, and the app's page never hears of it. So the system is
-//! asked instead - when it last had any input at all, and whether one of nib's windows is
+//! asked instead - when it last had any input at all, and whether one of Orden's windows is
 //! the one in front - which together say that the input was nib's. Where the system cannot
 //! be asked the window's own page is what the app goes on.
 //!
@@ -27,7 +27,7 @@ pub struct Input {
     pub front: bool,
 }
 
-/// When the system last had input and whether nib is in front, or nothing where the
+/// When the system last had input and whether Orden is in front, or nothing where the
 /// system has no way to say.
 #[tauri::command(async)]
 pub fn input_idle() -> Option<Input> {

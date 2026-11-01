@@ -9,8 +9,8 @@
  *  - so a chat of 100,000 messages costs what its window costs. Every list is replaced,
  *  never changed in place. */
 
-import { type Who } from '@nib/chats'
-import { RECEIPTS_UP_TO, TYPING_EVERY, TYPING_SHOWN } from '@nib/chats/limits'
+import { type Who } from '@orden/chats'
+import { RECEIPTS_UP_TO, TYPING_EVERY, TYPING_SHOWN } from '@orden/chats/limits'
 import type {
   ChatEntry,
   ChatMember,

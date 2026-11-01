@@ -4,7 +4,7 @@
 //! A drive's build runs with `NIB_OFF_SCREEN` (see placement.rs) on the machine of
 //! somebody who is working at it. On 2026-09-30 off-screen probes became the window in
 //! front ten times: Chromium ones five times in one lane, one at -32000,-32000 977
-//! milliseconds into a warm launch, one for four seconds after the reader's own nib
+//! milliseconds into a warm launch, one for four seconds after the reader's own Orden
 //! restarted. Each was off every screen and under every other window, the watch ended
 //! each of them, and each time the reader's typing went into it for a second or four
 //! first.

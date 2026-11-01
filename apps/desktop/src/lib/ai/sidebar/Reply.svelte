@@ -13,7 +13,7 @@
    *
    *  The words are the model's, which are nobody's markup: drawn through ai/drawn.ts
    *  with raw HTML escaped and nothing to load. */
-  import type { EditorView } from '@nib/editor'
+  import type { EditorView } from '@orden/editor'
   import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Answer from '../Answer.svelte'

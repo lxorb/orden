@@ -113,7 +113,7 @@ describe('the addresses a note can show rather than link to', () => {
 })
 
 describe('the broad list, for the places nobody wrote a row for by hand', () => {
-  /** One address apiece on the seven Notion shows where nib used to show a link.
+  /** One address apiece on the seven Notion shows where Orden used to show a link.
    *  Four of them - Drive, Twitch, the gist and the form - are in no oEmbed
    *  registry at all, which is the reason the list cannot simply be the registry
    *  and has to be a table of embed addresses instead. */

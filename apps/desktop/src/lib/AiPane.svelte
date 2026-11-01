@@ -33,11 +33,10 @@
   import { listModels } from './ai/complete'
   import { forgetKey, hasKey, keysAreGuarded, writeKey } from './ai/keys'
   import { plans } from './ai/local/status.svelte'
-  import { type Mode, MODES, modeWord } from './ai/modes'
-  import { rememberTaskMode, taskMode } from './ai/sidebar/prefs'
   import { browserVault, keepBrowserInVault, vault } from './ai/vault/start.svelte'
   import PlanRows from './ai/PlanRows.svelte'
   import {
+    firstModel,
     isLocal,
     KIND_NAMES,
     offeredKinds,
@@ -62,7 +61,6 @@
   let models = $state<Record<string, string[]>>({})
   /** Which provider is being asked for its models, so its row can say so. */
   let asking = $state('')
-  let tasked = $state(taskMode())
   /** What went wrong, by provider, in that provider's own words. */
   let trouble = $state<Record<string, string>>({})
   /** What a base URL looks like, as the address Ollama answers on. An address and
@@ -154,9 +152,11 @@
     try {
       const found = await listModels(provider)
       models = { ...models, [provider.id]: found }
-      // The first one where nothing has been chosen, so a provider that has just
-      // been given a key is usable without a second decision.
-      if (!provider.model && found[0]) ai.update(provider.id, { model: found[0] })
+      // One where nothing has been chosen, so a provider that has just been given a key
+      // is usable without a second decision: one that can use tools, never merely the
+      // first by name (#325).
+      const first = firstModel(provider.kind, found)
+      if (!provider.model && first) ai.update(provider.id, { model: first })
     } catch (error) {
       trouble = { ...trouble, [provider.id]: message(error, t('Could not read the models.')) }
     } finally {
@@ -509,37 +509,16 @@
   </div>
 {/if}
 
-<!-- The permission mode a task done with AI works in (#325); the glasses have no AI panel. -->
+<!-- What a task done with AI may do and is asked (#325): in a file of its own, so the
+     glasses, which have no AI panel, carry none of it. -->
 {#if !__EVEN_PLUGIN__}
-  <div class="card">
-    <div class="nib-setting setting">
-      <span class="name"
-        ><span class="nib-named"
-          >{t('Do with AI')}<Hint
-            text={t(
-              'Whether a task done with AI asks before each change or makes them on its own.',
-            )}
-          /></span
-        ></span
-      >
-      <div class="pick">
-        <Select
-          value={tasked}
-          options={MODES.filter((one) => one !== 'plan').map((one) => ({
-            value: one,
-            label: t(modeWord(one)),
-          }))}
-          onchange={(value: string) => rememberTaskMode((tasked = value as Mode))}
-          label={t('Do with AI')}
-          plain={viewport.touch}
-        />
-      </div>
-    </div>
-  </div>
+  {#await import('./ai/DoWithAiCard.svelte') then card}
+    <card.default />
+  {/await}
 {/if}
 
 <!-- The two things worth a sentence: where a key goes, and that an answer can be
-     wrong. The second is Anthropic's condition for Claude Code inside nib, and true of
+     wrong. The second is Anthropic's condition for Claude Code inside Orden, and true of
      every provider; see docs/ai.md, Your own plan. -->
 <p class="hint caption">
   {#if vault.standing === 'open'}

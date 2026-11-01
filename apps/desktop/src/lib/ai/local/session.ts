@@ -33,6 +33,8 @@ export interface Opening {
   forkOf?: string
   /** The thread it is for, which the helpers it starts belong to. */
   thread?: string
+  /** The tools its `nib mcp` does not list nor answer, whatever the mode reaches (#325). */
+  without?: string[]
 }
 
 /** A picture with a message. */
@@ -130,6 +132,7 @@ export async function openSession(
       // The account is the one the grant is the provider's for: its home, where it has one.
       account: opening.agent.id,
       ...(opening.thread ? { thread: opening.thread } : {}),
+      ...(opening.without?.length ? { without: opening.without } : {}),
     },
     output: channel,
   })

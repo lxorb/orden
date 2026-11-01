@@ -1624,6 +1624,18 @@ export const ptBR: Dictionary = {
   'answered by {model}, {date}': 'respondido por {model}, {date}',
   'AI block': 'Bloco de IA',
   'Do with AI': 'Fazer com IA',
+  'Use the browser': 'Usar o navegador',
+  'Lets a task done with AI open web pages and act on them.':
+    'Permite que uma tarefa feita com IA abra páginas da web e aja nelas.',
+  'Look through notes': 'Pesquisar nas notas',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Permite que uma tarefa feita com IA pesquise e leia suas outras notas, além da própria.',
+  'Change other notes': 'Alterar outras notas',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Permite que uma tarefa feita com IA escreva, mova e exclua notas além da tarefa.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'O que se pede a uma tarefa feita com IA. Ela ainda marca a tarefa quando concluída, ou pergunta em um comentário.',
+  'Started in the AI panel': 'Iniciado no painel de IA',
   'Highlight colour': 'Cor do destaque',
   'A single newline breaks the line': 'Uma única quebra de linha quebra a linha',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2687,6 +2699,9 @@ export const ptBR: Dictionary = {
     'Aqui as páginas da web procuram endereços como o sistema faz; o DNS dele é definido nos ajustes do próprio sistema.',
   'Set by the settings file': 'Definido pelo arquivo de configurações',
   'The settings file has a problem': 'O arquivo de configurações tem um problema',
+  'Some changes may not be noticed': 'Algumas mudanças podem passar despercebidas',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'O sistema chegou ao limite de pastas observadas, então o Orden pode não perceber todas as mudanças que outros programas fazem nos seus espaços. Aumentar fs.inotify.max_user_watches resolve.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Mover a conversa {name} para {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

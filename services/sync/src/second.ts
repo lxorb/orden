@@ -1,13 +1,13 @@
 /** The second factor: a code from an authenticator app.
  *
- *  Signing in to nib is an emailed code, so whoever holds the mailbox holds the
+ *  Signing in to Orden is an emailed code, so whoever holds the mailbox holds the
  *  account. That is fine for almost everybody and not fine for two cases worth
  *  taking seriously: a mailbox that has been taken over, and one left signed in
  *  on a machine somebody else uses. A second factor is exactly the answer to
  *  those, and to nothing else.
  *
  *  Why TOTP rather than passkeys, which are stronger and nicer: a passkey is
- *  bound to one origin, and nib runs at `tauri://localhost` on the desktop, at
+ *  bound to one origin, and Orden runs at `tauri://localhost` on the desktop, at
  *  `http://127.0.0.1:<a fresh port every launch>` inside the glasses plugin, and
  *  at its own domain on the web. There is no single relying party those three can
  *  agree on, so a passkey would work on the web and refuse to exist on the other

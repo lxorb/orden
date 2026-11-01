@@ -6,7 +6,7 @@
  *
  *  In the jsdom project because focus needs a document and the table is mounted. */
 
-import { answer, readBase, type Row } from '@nib/bases'
+import { answer, readBase, type Row } from '@orden/bases'
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 

@@ -211,7 +211,7 @@ describe('a folder an Apple Notes exporter wrote', () => {
   /** Notes writes its own scheme for a link between two notes, and an exporter hands
    *  that scheme over as it stands. It is a fact about where the note used to live, so
    *  it stays a link rather than arriving as the words with the address thrown away;
-   *  see `appTargets` in @nib/markdown. */
+   *  see `appTargets` in @orden/markdown. */
   test("a link in Apple's own scheme stays a link", async () => {
     const plan = await readAs('apple-notes', [
       file(

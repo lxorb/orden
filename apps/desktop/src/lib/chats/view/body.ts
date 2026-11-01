@@ -8,7 +8,7 @@
  *  wording: a message is drawn many times as it scrolls past and changes rarely, so the
  *  HTML is kept by its words. */
 
-import { renderMarkdown } from '@nib/markdown'
+import { renderMarkdown } from '@orden/markdown'
 import { links } from '../../link-index.svelte'
 
 /** The most wordings kept: several pages of a busy chat. */

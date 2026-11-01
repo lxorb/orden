@@ -12,12 +12,12 @@
 # snap: `browser-support` with `allow-sandbox`, as the Chromium snap has it.
 #
 # Build with `snapcraft` from this directory. Publishing needs a Snapcraft
-# account and `snapcraft upload --release=stable orden_0.18.0_amd64.snap`; see
+# account and `snapcraft upload --release=stable orden_0.19.0_amd64.snap`; see
 # packaging/linux.md.
 name: orden
 title: Orden
 base: core24
-version: '0.18.0'
+version: '0.19.0'
 summary: Markdown editor with live preview
 description: |
   Orden, formerly nibeditor, is a small markdown editor that formats what you
@@ -81,8 +81,8 @@ parts:
     plugin: dump
     source-type: deb
     source:
-      - on amd64: https://github.com/lxorb/orden/releases/download/v0.18.0/Orden-0.18.0-linux-x64.deb
-      - on arm64: https://github.com/lxorb/orden/releases/download/v0.18.0/Orden-0.18.0-linux-arm64.deb
+      - on amd64: https://github.com/lxorb/orden/releases/download/v0.19.0/Orden-0.19.0-linux-x64.deb
+      - on arm64: https://github.com/lxorb/orden/releases/download/v0.19.0/Orden-0.19.0-linux-arm64.deb
     # The bytes those two names stood for on the day the release was made. Every
     # other packaging path here pins a digest - scoop, chocolatey, homebrew, the
     # AUR, nix, and flathub by commit - and this one did not: a tampered release
@@ -94,9 +94,9 @@ parts:
     # snapcraft 8.11.1). Both digests are written down below, and the snap workflow
     # copies the one for its runner into the line; as committed it holds amd64's,
     # for a build on an amd64 machine. See packaging/linux.md.
-    #   on amd64: sha256/b28d67f383adc5e699c4d4774d205c4fb4333b6b8778f18c3fc35f14e0dda30a
-    #   on arm64: sha256/7cd52d7fc6531e7c363f8fba82fb6688c8ba03fb3dddc5efd0d6db4a3473ac2e
-    source-checksum: sha256/b28d67f383adc5e699c4d4774d205c4fb4333b6b8778f18c3fc35f14e0dda30a
+    #   on amd64: sha256/85d650bce50369991389368f6cecb080e8bb08db050d765cb075a751af67055b
+    #   on arm64: sha256/58e43657f7b36a01864b595d740f143aca75f4f19d518846944c28820d675839
+    source-checksum: sha256/85d650bce50369991389368f6cecb080e8bb08db050d765cb075a751af67055b
     override-build: |
       craftctl default
 

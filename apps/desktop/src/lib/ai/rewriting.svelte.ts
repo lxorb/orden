@@ -17,7 +17,7 @@
  *  click on the scrim, a note swapped in another pane - and what is replaced has to
  *  be the text the diff was about. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { i18n, message, t } from '../i18n.svelte'
 import { complete, wasStopped } from './complete'
 import { defaultLanguage, nameOfLanguage, rewriteMessages, type Verb } from './rewrite'

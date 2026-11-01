@@ -16,7 +16,7 @@
  *  place a keyboard is chosen, and it hands the one it chose to the store next door.
  *  What the launch reads is the name alone; see preset-ids.ts. */
 
-import type { KeyOverrides } from '@nib/editor'
+import type { KeyOverrides } from '@orden/editor'
 import { t } from '../i18n.svelte'
 import type { PresetId } from './preset-ids'
 
@@ -65,7 +65,7 @@ const OBSIDIAN: KeyOverrides = {
   'edit.delete-line': 'Mod-d',
   'app.deselect-tab': null,
   // Ctrl+] indents and Ctrl+[ outdents, the way round Obsidian and VS Code have it.
-  // Orden's own order is Typora's; see `edit.indent` in @nib/editor's keymap.
+  // Orden's own order is Typora's; see `edit.indent` in @orden/editor's keymap.
   'edit.indent': 'Mod-]',
   'edit.outdent': 'Mod-[',
 }
@@ -167,7 +167,7 @@ const VSCODE: KeyOverrides = {
   'pane.split-right': 'Mod-\\',
   'format.clear': null,
   // Ctrl+] indents and Ctrl+[ outdents. Orden's own order is Typora's, the other way
-  // round; see `edit.indent` in @nib/editor's keymap.
+  // round; see `edit.indent` in @orden/editor's keymap.
   'edit.indent': 'Mod-]',
   'edit.outdent': 'Mod-[',
 }

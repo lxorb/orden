@@ -7,7 +7,7 @@
  *  carries a time, because every time the hub decides by is its own. See
  *  docs/sync-v2.md section 7. */
 
-import type { ChatPoke } from '@nib/chats/wire'
+import type { ChatPoke } from '@orden/chats/wire'
 
 /** A device's id, made by the device and kept in its sync store. */
 export const DEVICE = /^[A-Za-z0-9_-]{8,64}$/

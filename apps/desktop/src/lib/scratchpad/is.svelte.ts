@@ -1,4 +1,4 @@
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 /** The scratchpad by name in no space, and its card: up or not, and how wide. Eager, so
  *  a card left up has its column before the note is drawn. See pad.ts. */
 

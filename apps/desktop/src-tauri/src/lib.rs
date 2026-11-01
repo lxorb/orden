@@ -36,7 +36,7 @@ mod agents;
 // What a launch reads first, read while the webview starts; see ahead.rs.
 #[cfg(desktop)]
 mod ahead;
-// The AI sidebar's agent: nib's own tools under a built-in grant; see ai_agent.rs.
+// The AI sidebar's agent: Orden's own tools under a built-in grant; see ai_agent.rs.
 #[cfg(desktop)]
 mod ai_agent;
 // Claude Code and Codex, run headless on this machine with the reader's own plan; see
@@ -263,6 +263,9 @@ mod window_drag;
 // Whether Chromium draws on the graphics card or on the CPU, in the log; see gpu.rs.
 #[cfg(desktop)]
 mod gpu;
+// What the app's page keeps in its storage, kept on the disk at once (#961); see kept.rs.
+#[cfg(desktop)]
+mod kept;
 // Which DNS the web tabs' pages look names up with (#766, #767); see secure_dns.rs.
 #[cfg(desktop)]
 mod secure_dns;
@@ -276,7 +279,7 @@ mod page_hide;
 // A web tab's page drawn in the app's scheme rather than the system's; see page_scheme.rs.
 #[cfg(desktop)]
 mod page_scheme;
-// The dictionaries nib's own Chromium checks spelling against; see spelling.rs.
+// The dictionaries Orden's own Chromium checks spelling against; see spelling.rs.
 #[cfg(desktop)]
 mod spelling;
 // The font families installed here, for Settings' font pickers; see fonts.rs.
@@ -467,6 +470,8 @@ macro_rules! desktop_commands {
             gpu::gpu_seen,
             gpu::gpu_chosen,
             gpu::gpu_choose,
+            kept::kept_write,
+            kept::kept_forget,
             secure_dns::dns_chosen,
             secure_dns::dns_choose,
             gpu::gpu_line,
@@ -690,7 +695,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     )]
     let mut context = tauri::generate_context!();
 
-    // A second launch is handed to the nib already running, or - where that one has
+    // A second launch is handed to the Orden already running, or - where that one has
     // stopped answering - asks whether to end it, rather than waiting on it for ever; see
     // handover.rs.
     #[cfg(desktop)]
@@ -780,7 +785,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // instead. Two reasons, one per engine, and the config still says what the window
     // looks like either way; see engine.rs.
     //
-    // On nib's own Chromium, because the interface needs a profile of its own and a
+    // On Orden's own Chromium, because the interface needs a profile of its own and a
     // profile is asked for when a webview is built. On the system's, because a window
     // the runtime builds is built around its webview - so there is nothing on screen
     // until the webview runtime has started, which on Windows is between a third and
@@ -1018,7 +1023,7 @@ fn ready(
                 Some(colour) => building.background_color(colour),
                 None => building,
             };
-            let window = building.visible(at_once).build()?;
+            let window = placement::settled(building.visible(at_once))?;
             top_edge::mind(&window.as_ref().window());
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
@@ -1072,9 +1077,9 @@ fn ready(
     Ok(())
 }
 
-/// What other programs list nib in, put back after every launch: Windows' browsers, put
+/// What other programs list Orden in, put back after every launch: Windows' browsers, put
 /// back if a portable copy moved or an install never wrote it (`default_browser.rs`), and
-/// the agent programs on this computer, so they reach nib with nothing to set up
+/// the agent programs on this computer, so they reach Orden with nothing to set up
 /// (`ai_cli/enroll.rs`). Each on a thread of its own, after the window.
 #[cfg(desktop)]
 fn kept_listed(handle: &tauri::AppHandle<Engine>) {
@@ -1120,7 +1125,17 @@ mod tests {
     /// reader follows a call into a closure without knowing it runs on another
     /// thread. The other two reach Windows through the
     /// registry, and a key is opened and closed inside one call.
-    const EXCEPTED: [&str; 3] = ["write_log", "new_menu_registered", "set_new_menu"];
+    ///
+    /// And the page's storage kept on the disk (kept.rs): each write is handed to a
+    /// thread of its own over a channel, and on the window's thread so the writes keep
+    /// the order the page made them in.
+    const EXCEPTED: [&str; 5] = [
+        "write_log",
+        "new_menu_registered",
+        "set_new_menu",
+        "kept_write",
+        "kept_forget",
+    ];
 
     /// What a body that waits says itself, whichever module it is in: the
     /// filesystem, a subprocess, the machine's own keychain, and the system's shell,

@@ -26,7 +26,7 @@
  *  The whole import is one thing to undo. However many thousand files it wrote,
  *  what somebody did was import once. */
 
-import { freePath } from '@nib/markdown/paths'
+import { freePath } from '@orden/markdown/paths'
 
 import { insideOnly } from '../automation/inside'
 import { key } from '../i18n.svelte'

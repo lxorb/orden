@@ -1,4 +1,4 @@
-//! The six tools nib's account connector has too - `list_spaces`, `list_notes`,
+//! The six tools Orden's account connector has too - `list_spaces`, `list_notes`,
 //! `read_note`, `search_notes`, `list_backlinks` and `write_note` - answered in the
 //! connector's own words (services/sync/src/mcp/tools.ts), so a prompt or a skill written
 //! against one reads the other's answers the same way (docs/agent-native.md 10).

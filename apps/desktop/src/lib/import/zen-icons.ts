@@ -1,13 +1,13 @@
-/** A Zen space's or folder's icon, and its theme's colour, as nib writes them.
+/** A Zen space's or folder's icon, and its theme's colour, as Orden writes them.
  *
  *  Zen offers an emoji or one of its own drawings, which a session writes as
  *  `chrome://browser/skin/zen-icons/selectable/rocket.svg`: Ionicons' names, which
  *  are the everyday names Lucide draws the same things under, give or take a word.
  *  So an emoji stays the emoji, a drawing becomes Lucide's of the same thing, and a
  *  drawing Lucide has nothing for leaves the space wearing its initial, which is
- *  what a nib space with no icon wears anyway.
+ *  what an Orden space with no icon wears anyway.
  *
- *  The colour is the theme's main dot, as the nearest accent nib offers: an icon's
+ *  The colour is the theme's main dot, as the nearest accent Orden offers: an icon's
  *  tint is one of those and never a colour of its own (see `isIconTint`). */
 
 import { ACCENTS } from '../accents'
@@ -111,7 +111,7 @@ const SAME = new Set([
   'wallet',
 ])
 
-/** The icon nib writes for what Zen wrote, or null where nib has nothing to draw. */
+/** The icon Orden writes for what Zen wrote, or null where Orden has nothing to draw. */
 export function zenIcon(value: string | null): string | null {
   if (!value) return null
 

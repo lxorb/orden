@@ -11,7 +11,7 @@ export async function todayHere(): Promise<{ at: string; space: string; text: st
   const space = workspace.activeSpace
   if (!space) return []
   const { clockOf, scannedTaskRows, scanRows, taskOut, todayTasks } =
-    await import('@nib/bases/tasks')
+    await import('@orden/bases/tasks')
   const rows = []
   for (const note of links.held()) {
     if (!/\.(md|markdown)$/i.test(note.path)) continue

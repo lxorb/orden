@@ -284,6 +284,18 @@ export function mayPushDocuments(env: Env, whoId: string): Promise<boolean> {
   return within(env, 'doc-push', whoId, DOCUMENT_PUSHES_A_MINUTE, A_MINUTE)
 }
 
+/** How many sides a modal answer let go of one account (or one guest) may keep in an
+ *  hour, on top of the pushes above. A kept side is a whole note, up to eight megabytes,
+ *  and somebody meets one when two of their devices disagreed and they chose: a device
+ *  back from a month away brings a few dozen at most. Two hundred in an hour is a
+ *  script, and was gigabytes of versions before the night's sweep could see them
+ *  (#471). Keyed by the account or the guest; see erase.ts. */
+const KEEPS_AN_HOUR = 200
+
+export function mayKeepVersions(env: Env, whoId: string): Promise<boolean> {
+  return within(env, 'doc-keep', whoId, KEEPS_AN_HOUR, AN_HOUR)
+}
+
 /** How many messages one address may be sent in an hour, and in a day, whoever
  *  caused them and whichever kind they were.
  *

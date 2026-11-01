@@ -3,8 +3,8 @@
  *  has nothing left to wait for by the time the words are written. A message carries at
  *  most `MOST_FILES`. */
 
-import type { FileRef } from '@nib/chats'
-import { MOST_FILES } from '@nib/chats/limits'
+import type { FileRef } from '@orden/chats'
+import { MOST_FILES } from '@orden/chats/limits'
 import { prepared } from './prepare'
 import { store } from './source.svelte'
 

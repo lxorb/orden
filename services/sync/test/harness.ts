@@ -337,7 +337,7 @@ interface SpaceView {
   /** Which of its files are shared on their own, by note id; see 0026. */
   sharedItems: string[]
   /** Whether anybody besides the owner could once write in it, and which of its files
-   *  were once shared on their own; see 0065. */
+   *  were once shared on their own; see 0066. */
   onceShared?: boolean
   onceSharedItems?: string[]
   bookmarks: BookmarkView[]

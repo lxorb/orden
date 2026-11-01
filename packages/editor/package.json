@@ -1,5 +1,5 @@
 {
-  "name": "@nib/editor",
+  "name": "@orden/editor",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -30,8 +30,8 @@
     "@lezer/highlight": "^1.2.3",
     "@lezer/javascript": "^1.5.4",
     "@lezer/markdown": "^1.7.2",
-    "@nib/markdown": "workspace:*",
-    "@nib/rooms": "workspace:*",
+    "@orden/markdown": "workspace:*",
+    "@orden/rooms": "workspace:*",
     "@replit/codemirror-lang-nix": "^6.0.1",
     "@replit/codemirror-lang-solidity": "^6.0.2",
     "@replit/codemirror-lang-svelte": "^6.0.0",
@@ -43,7 +43,7 @@
     "mermaid": "^11.17.2"
   },
   "devDependencies": {
-    "@nib/lang-html": "workspace:*",
+    "@orden/lang-html": "workspace:*",
     "@types/node": "^24.13.3",
     "jsdom": "^28.1.0",
     "typescript": "^5.9.3",

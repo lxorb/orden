@@ -7,8 +7,10 @@
  *  put on again: the list item's content column, the width of its marker. Pure; the
  *  task's line is found again by its anchor, as every other edit of a view finds it. */
 
-import type { Row, TaskChange } from '@nib/bases'
-import { CODE, type CodeLine, CodeBlocks, OPENS, WORDS } from '@nib/markdown/fences'
+import type { Row, TaskChange } from '@orden/bases'
+import { CODE, type CodeLine, CodeBlocks, OPENS, WORDS } from '@orden/markdown/fences'
+import { changedTask } from '@orden/markdown/task-edits'
+import { readTask } from '@orden/markdown/task-line'
 import { changed } from '../rows/write'
 import { lineOfAnchor } from './lines'
 
@@ -224,7 +226,7 @@ export function withSubtask(text: string, anchor: Anchor, line: string): string 
 }
 
 /** One of a task's comments: a list item straight under it that is no task, Todoist's
- *  comment the nib way, with the moment it was written where the composer stamped one
+ *  comment the Orden way, with the moment it was written where the composer stamped one
  *  (`[at:: …]`). */
 export interface Comment {
   /** Its line in the note, counting from zero. */
@@ -278,6 +280,44 @@ export function commentsOf(text: string, anchor: Anchor): Comment[] {
     } else open = null
   }
   return out
+}
+
+/** The tag an agent doing a task with AI flags it with when it needs the reader: it has
+ *  asked something in a comment under it (#325). */
+export const NEEDS_INPUT = 'needs-input'
+
+/** `text` with the task at `anchor` no longer flagged as needing input: what a comment
+ *  the reader writes under it does, since it is the answer (#325). */
+export function withoutNeedsInput(text: string, anchor: Anchor): string {
+  const at = lineOfAnchor(text, anchor)
+  if (at === null) return text
+  const lines = text.split('\n')
+  const line = lines[at] ?? ''
+  const fields = readTask(line.replace(/\r$/, ''))
+  if (!fields?.tags.includes(NEEDS_INPUT)) return text
+  lines[at] = changedTask(line, { tags: fields.tags.filter((one) => one !== NEEDS_INPUT) })
+  return lines.join('\n')
+}
+
+/** The note with the task left asking (#325): `words` written under it as a comment, and
+ *  the task flagged `needs-input`. What Orden does itself when a chat doing the task with
+ *  AI ended with it neither ticked nor asked about, as the button promised it would be.
+ *  Null where there is nothing to do: the task gone, done, cancelled or flagged already. */
+export function askedFor(
+  text: string,
+  anchor: Anchor,
+  words: string,
+  stamp: string,
+): string | null {
+  const at = lineOfAnchor(text, anchor)
+  if (at === null) return null
+  const fields = readTask((text.split('\n')[at] ?? '').replace(/\r$/, ''))
+  if (!fields || fields.done || fields.cancelled || fields.tags.includes(NEEDS_INPUT)) return null
+  // The comment goes under the task, so the task's own line is where it was.
+  const commented = withComment(text, anchor, words, stamp) ?? text
+  const lines = commented.split('\n')
+  lines[at] = changedTask(lines[at] ?? '', { tags: [...fields.tags, NEEDS_INPUT] })
+  return lines.join('\n')
 }
 
 /** The note with a comment added under the task, after the last one it has (or at the

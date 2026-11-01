@@ -19,8 +19,8 @@
  */
 
 import { describe, expect, test, vi } from 'vitest'
-import { receive, syncUpdate } from '@nib/rooms'
-import { readPlane, seedPlane } from '@nib/rooms/plane'
+import { receive, syncUpdate } from '@orden/rooms'
+import { readPlane, seedPlane } from '@orden/rooms/plane'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { type Canvas, type CanvasNode, emptyCanvas } from '../canvas/format'

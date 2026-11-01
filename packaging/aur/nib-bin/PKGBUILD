@@ -10,7 +10,7 @@ pkgname=orden-bin
 # The program, its icon and its desktop entry keep the name every install of it
 # has had: the binary is `nib`, whatever the product is called.
 _pkgname=nib
-pkgver=0.18.0
+pkgver=0.19.0
 pkgrel=1
 pkgdesc="Lightweight markdown editor with realtime inline preview"
 arch=('x86_64' 'aarch64')
@@ -37,8 +37,8 @@ source_x86_64=("nib.deb::${_url}/Orden-${pkgver}-linux-x64.deb")
 source_aarch64=("nib.deb::${_url}/Orden-${pkgver}-linux-arm64.deb")
 noextract=('nib.deb')
 sha256sums=('dbc30233704066e7d5479267db5d81532ca61a5b68f30eb0b7eccc9372532aff')
-sha256sums_x86_64=('b28d67f383adc5e699c4d4774d205c4fb4333b6b8778f18c3fc35f14e0dda30a')
-sha256sums_aarch64=('7cd52d7fc6531e7c363f8fba82fb6688c8ba03fb3dddc5efd0d6db4a3473ac2e')
+sha256sums_x86_64=('85d650bce50369991389368f6cecb080e8bb08db050d765cb075a751af67055b')
+sha256sums_aarch64=('58e43657f7b36a01864b595d740f143aca75f4f19d518846944c28820d675839')
 
 package() {
   bsdtar -O -xf "${srcdir}/nib.deb" 'data.tar.*' |

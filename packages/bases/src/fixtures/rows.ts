@@ -1,7 +1,7 @@
 /** Rows for tests, built the way the rows store builds them: a note's front matter
  *  through `noteValues`, a task line through `readTask`. */
 
-import { readTask } from '@nib/markdown/task-line'
+import { readTask } from '@orden/markdown/task-line'
 import { noteValues, taskHash } from '../note-values'
 import type { Context, FileInfo, Row, TaskRow, Value } from '../types'
 

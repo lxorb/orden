@@ -39,7 +39,7 @@ import {
   takeParsed,
 } from './format'
 import { changesBetween, type Written, written } from './written'
-import { pickedBox } from './edits'
+import { idSet, pickedBox } from './edits'
 import { type KeptView, viewKept, viewOf } from './place'
 import { bounds } from './geometry'
 import { strokeBox } from './ink'
@@ -80,10 +80,25 @@ export class CanvasStore implements PlaneSurface {
    *  Delete and the colour dots mean whatever is picked. Replaced whole, like
    *  the canvas, and raw for the same reason. */
   picked = $state.raw<string[]>([])
+  /** The same, as a set: what `isPicked` asks, once per card or edge of a plane that
+   *  may hold thousands while thousands are picked (#535). */
+  readonly pickedSet = $derived(idSet(this.picked))
 
   /** The text node being written in, while one is. One at a time: an editor is
    *  mounted only for this node, which is what keeps five hundred cards cheap. */
-  editing = $state<string | null>(null)
+  #editing = $state<string | null>(null)
+  get editing(): string | null {
+    return this.#editing
+  }
+
+  /** Leaving a card hands its words to the plane first, whoever leaves it. The card
+   *  hands them over itself as its editor goes, but a card that goes with it - drawn
+   *  only while it is written in, as from far away (CanvasFar.svelte, #535) - went
+   *  before it could, and took the words with it. See canvas/writing.ts. */
+  set editing(id: string | null) {
+    if (this.#editing !== null && id !== this.#editing) flushCardEdits()
+    this.#editing = id
+  }
 
   /** The room this plane is in, while it is in one. Raw: it is set once, when the
    *  room has said what it holds, and read for what it can do rather than for
@@ -472,7 +487,17 @@ export class CanvasStore implements PlaneSurface {
     // The icon is the file's own metadata rather than anything on the plane, so
     // the words that just arrived are the newest word on it: a merge that kept
     // ours would make taking an icon away impossible while the canvas is open.
-    const together = { ...merged(ours, arrived), icon: arrived.icon ?? null }
+    //
+    // And what the file holds that Orden does not read, for the same reason: nothing in
+    // the app changes it, so the file is the only one that can have a newer word on it,
+    // and what is open holds only what the file said before - two changes made outside
+    // before the app writes again count the same generation (#781).
+    const together: Canvas = {
+      ...merged(ours, arrived),
+      icon: arrived.icon ?? null,
+      ...(arrived.extras ? { extras: arrived.extras } : {}),
+    }
+    if (!arrived.extras) delete together.extras
     this.canvas = together
     this.keepPicked()
     // Whatever the merge kept goes to the other devices as the edit it is.
@@ -574,7 +599,7 @@ export class CanvasStore implements PlaneSurface {
   }
 
   isPicked(id: string): boolean {
-    return this.picked.includes(id)
+    return this.pickedSet.has(id)
   }
 
   /** A plain click picks one thing; Shift or Ctrl adds to what is picked and

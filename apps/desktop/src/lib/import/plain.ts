@@ -10,8 +10,8 @@
  *  That is Bear's and Craft's usual answer, and a folder called `Trip.textbundle`
  *  sitting in a space would be a folder nothing opens. */
 
-import { plainWords } from '@nib/markdown/escapes'
-import { htmlToMarkdown } from '@nib/markdown/from-html'
+import { plainWords } from '@orden/markdown/escapes'
+import { htmlToMarkdown } from '@orden/markdown/from-html'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk, isNoteFile } from './folder'

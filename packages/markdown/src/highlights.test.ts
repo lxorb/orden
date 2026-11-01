@@ -6,7 +6,7 @@ import { renderMarkdown, setHardBreaks } from './index'
 /** The markup is Obsidian's, and this is the whole of the claim: a colour emoji
  *  at the start of the highlight, which 1.14.0 added on 2026-09-02. */
 describe('the colour a highlight names', () => {
-  test('is the five emoji Obsidian writes, and nothing nib invented', () => {
+  test('is the five emoji Obsidian writes, and nothing Orden invented', () => {
     expect(HIGHLIGHT_COLOURS.map((one) => one.emoji)).toEqual([null, '🔴', '🟠', '🟢', '🔵', '🟣'])
   })
 
@@ -39,7 +39,7 @@ describe('the colour a highlight names', () => {
   })
 
   /** There is no yellow, and that is deliberate: Obsidian writes no yellow emoji
-   *  because a plain highlight is already its yellow. A tone nib could write and
+   *  because a plain highlight is already its yellow. A tone Orden could write and
    *  Obsidian could not read would not be Obsidian-compatible. */
   test('skips the yellow tone, which has no emoji to write it with', () => {
     expect(HIGHLIGHT_COLOURS.map((one) => one.tone)).toEqual([null, 1, 2, 4, 5, 6])

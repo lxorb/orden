@@ -49,7 +49,7 @@ const SECTION = 'internetshortcut'
 /** The key that makes the file a shortcut at all. */
 const URL_KEY = 'url'
 
-/** nib's own, in the same block. */
+/** Orden's own, in the same block. */
 const TITLE_KEY = 'title'
 const ADDED_KEY = 'nib-added'
 const HOME_KEY = 'nib-home'

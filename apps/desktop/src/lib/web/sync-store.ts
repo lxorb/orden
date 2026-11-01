@@ -4,7 +4,7 @@
  *  and only in the browser build.
  *
  *  Two things differ from the crate's store, and neither shows through the interface.
- *  What nib last wrote is kept as text rather than compressed: the browser's own store
+ *  What Orden last wrote is kept as text rather than compressed: the browser's own store
  *  already compresses what it keeps, and compressing here would be an await inside a
  *  transaction, which IndexedDB answers by committing it. And there is no damaged file
  *  to set aside: a browser that cannot open its store says so, and signing out and in
@@ -305,7 +305,7 @@ export interface Leadership {
  *  A Web Lock is held until the tab closes, crashes or lets go, and the browser hands it
  *  to the next tab waiting at once, so the engine moves to another tab the moment the
  *  leader's goes and never runs in two. A browser without Web Locks (they need a secure
- *  context, and every browser nib supports has had them since 2022) leads at once: a
+ *  context, and every browser Orden supports has had them since 2022) leads at once: a
  *  second tab there is a second engine, the rows are the same rows, and every write is a
  *  transaction, so it costs work rather than words. */
 export function leadSync(signal?: AbortSignal): Promise<Leadership | null> {

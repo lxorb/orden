@@ -40,7 +40,7 @@ Read with `docs/ai.md` (the providers, the plan rules, the seam) and `docs/agent
 4. **A context ring beside it**, from the provider's own token counts after every answer
    and an estimate (marked ≈) for the draft. Hover for numbers, click for the breakdown;
    compaction is automatic near the top and `/compact` by hand.
-5. **The agent is nib's own agent with nib's own tools.** Whether nib runs the loop (keys and
+5. **The agent is Orden's own agent with Orden's own tools.** Whether Orden runs the loop (keys and
    the ChatGPT plan) or Claude Code and Codex do, the tools are the `nib mcp` verbs, under a
    grant in Settings > Agents, through the same policy as any agent: the always-ask list,
    untrusted marks, the stop key. Never a folder, never a shell of the reader's.
@@ -52,9 +52,9 @@ Read with `docs/ai.md` (the providers, the plan rules, the seam) and `docs/agent
    the notes, the conversation, or both, to before any message; editing an old message does
    the same and sends it again.
 8. **Fifty-eight commands, with the vendors' names.** Every Claude Code and Codex command
-   has a row in section 3: the nib command it is, or why it has none. `/goal`, `/compact`,
+   has a row in section 3: the Orden command it is, or why it has none. `/goal`, `/compact`,
    `/btw`, `/rewind`, `/plan`, `/review` and the rest work the same whoever answers; where a
-   CLI has the command itself, nib hands it through, and where not, nib does it.
+   CLI has the command itself, Orden hands it through, and where not, Orden does it.
 9. **Threads are kept, searchable, branchable**: one list across spaces, on this device, never synced,
    exported to a note on demand.
 10. **Keyboard first, quiet, fast.** Everything above has a key; the panel is lazy and out of
@@ -77,7 +77,7 @@ A reader asking a model about their notes wants four things, and today's panel g
    "turn my outline into the deck": an agent that edits, in the open, where every edit can
    be seen, kept or taken back.
 
-The coding agents solved 2 to 4 for code; nib's job is to bring that over for notes, tabs
+The coding agents solved 2 to 4 for code; Orden's job is to bring that over for notes, tabs
 and pages without bringing over what makes them tiring: a terminal's worth of text, a modal
 for every edit, a model list nobody maintains.
 
@@ -236,14 +236,14 @@ their readers complain about is the index (`docs/ai.md`, "No index").
 | keyboard flow | everything | everything | most | most | most | some | some | some |
 | voice | ✓ | - | - | ✓ | - | ✓ | ✓ | - |
 
-### 2.3 What nib takes, and what it leaves
+### 2.3 What Orden takes, and what it leaves
 
 - **Model and effort on one popover with the level on the chip** (Claude Code, Codex). One
   click to see both, one key to change either.
 - **The context ring and its tray** (Cursor), from real counts (Claude Code, Codex,
   Zed), plus the line nobody else draws: what the next send is about to add.
 - **Apply, then Keep or Undo per change** (Cursor, Copilot, Zed) rather than a modal per
-  edit (Claude Code's Manual mode), because nib's agent edits are already live, isolated and
+  edit (Claude Code's Manual mode), because Orden's agent edits are already live, isolated and
   undoable one agent at a time (`docs/agent-native.md` 8.5). Asking first stays available as
   a permission, for the reader who wants it.
 - **Checkpoints at every message, with Redo** (Claude Code, Copilot), and Copilot's honest
@@ -259,7 +259,7 @@ their readers complain about is the index (`docs/ai.md`, "No index").
 - **Follow the agent** (Zed) through the notes it edits, off by default.
 - Left behind: a model "Auto" that hides which model answered (Cursor); commands about a
   terminal's own rendering; an index built before the first question (Obsidian); a cloud
-  runner (nib never runs a model on its server; `docs/ai.md`).
+  runner (Orden never runs a model on its server; `docs/ai.md`).
 
 ---
 
@@ -276,37 +276,37 @@ Arguments follow the name. Commands that change the session (`/model`, `/effort`
 running turn, as Claude Code queues them.
 
 How to read the provider columns: **CC** is Claude Code, **Cx** Codex, **API** the four
-keyed or plan providers nib runs itself (Claude and OpenAI keys, the ChatGPT plan,
-OpenAI-compatible). "nib" means nib does it the same way for every provider; anything else
+keyed or plan providers Orden runs itself (Claude and OpenAI keys, the ChatGPT plan,
+OpenAI-compatible). "Orden" means Orden does it the same way for every provider; anything else
 names the provider's own road.
 
 ### 3.1 Conversation
 
-| nib | synonyms | from | what it does in nib | CC | Cx | API |
+| Orden | synonyms | from | what it does in Orden | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
 | `/new [name]` | `/clear`, `/reset` | CC `/clear` (`/reset`, `/new`), Cx `/new`, `/clear`, Copilot | a new thread; the old one stays in history, named if a name was given | the session process ends, a new one starts | `thread/start` | new transcript |
-| `/resume [name]` | `/continue`, `/history` | CC, Cx | the thread list, filtered by what follows | a new process seeded from nib's transcript (nib runs CC with no session of its own on disk) | `thread/resume` while the app-server runs, else seeded | the transcript |
-| `/rename [name]` | `/title` | CC, Cx | names the thread (Codex's `/title` names its terminal; here it is the thread's name); no name asks `/recap` for one | nib | nib | nib |
+| `/resume [name]` | `/continue`, `/history` | CC, Cx | the thread list, filtered by what follows | a new process seeded from Orden's transcript (Orden runs CC with no session of its own on disk) | `thread/resume` while the app-server runs, else seeded | the transcript |
+| `/rename [name]` | `/title` | CC, Cx | names the thread (Codex's `/title` names its terminal; here it is the thread's name); no name asks `/recap` for one | Orden | Orden | Orden |
 | `/recap` | - | CC | one line about the thread, which is also the automatic title | one-shot ask | one-shot ask | `complete()` |
 | `/branch [name]` | - | CC | a copy of the thread up to here, and you are in it | new process, seeded | `thread/fork` | copy |
 | `/fork [prompt]` | - | CC, Cx, Copilot | a copy that runs in the background while you stay; with a prompt it starts on it | new process, seeded | `thread/fork` | copy |
-| `/rewind` | `/undo`, `/checkpoint` | CC | pick a message: restore notes and conversation, conversation only, notes only, summarize from here, summarize up to here (4.5) | nib's checkpoints (CC's own see no nib edit: they go through MCP) | nib | nib |
-| `/compact [focus]` | - | CC, Cx, Copilot, Zed | the older turns become a summary; the focus steers it | `/compact` into the live session | `thread/compact/start` | Claude key: server compaction where the model lists `compact`; OpenAI key: `/responses/compact`; ChatGPT plan and compatible: nib's own summary turn |
-| `/autocompact [auto\|<tokens>\|off]` | - | CC | when compaction happens on its own; shown on the ring as a tick | `--autocompact` at the next process start | `model_auto_compact_token_limit` | nib's threshold |
+| `/rewind` | `/undo`, `/checkpoint` | CC | pick a message: restore notes and conversation, conversation only, notes only, summarize from here, summarize up to here (4.5) | Orden's checkpoints (CC's own see no Orden edit: they go through MCP) | Orden | Orden |
+| `/compact [focus]` | - | CC, Cx, Copilot, Zed | the older turns become a summary; the focus steers it | `/compact` into the live session | `thread/compact/start` | Claude key: server compaction where the model lists `compact`; OpenAI key: `/responses/compact`; ChatGPT plan and compatible: Orden's own summary turn |
+| `/autocompact [auto\|<tokens>\|off]` | - | CC | when compaction happens on its own; shown on the ring as a tick | `--autocompact` at the next process start | `model_auto_compact_token_limit` | Orden's threshold |
 | `/context [all]` | - | CC | the ring's tray as a message: system, instructions, tools, attached, conversation, free | `modelUsage` of the last result | `thread/tokenUsage/updated` | the response's `usage` |
 | `/btw [question]` | `/side` | CC `/btw`, Cx `/side` (`/btw`), Cursor | the Quick question sheet, with this thread as its context; nothing is added here (`docs/ai.md`, "A quick question") | one-shot ask | one-shot ask | `complete()` |
-| `/copy [n]` | - | CC, Cx | the nth latest answer, citations as wikilinks | nib | nib | nib |
-| `/export [note]` | `/save` | CC | the thread as a note in the space (or the clipboard with no name) | nib | nib | nib |
-| `/archive` | - | Cx | out of the list, kept | nib | nib | nib |
-| `/delete` | - | Cx | gone for good; asks | nib | nib | nib |
+| `/copy [n]` | - | CC, Cx | the nth latest answer, citations as wikilinks | Orden | Orden | Orden |
+| `/export [note]` | `/save` | CC | the thread as a note in the space (or the clipboard with no name) | Orden | Orden | Orden |
+| `/archive` | - | Cx | out of the list, kept | Orden | Orden | Orden |
+| `/delete` | - | Cx | gone for good; asks | Orden | Orden | Orden |
 | `/stop` | - | CC, Cx | the turn and the thread's background work stop (**Esc** stops the turn) | interrupt | `turn/interrupt` | abort |
-| `/jobs` | `/ps`, `/bashes` | CC `/tasks` (`/bashes`), Cx `/ps` | the thread's background work: a goal, loops, subtasks, agent tabs, terminal commands. Claude Code's `/tasks` is named `/jobs` here because a task in nib is a box in a note (`docs/tasks.md` 5.15, decision 8.3); `/ps` and `/bashes` still land | nib | nib | nib |
-| `/focus` | - | CC | tool rows and thinking fold away; prompts and answers stay | nib | nib | nib |
-| `/help` | - | everyone | the commands and keys | nib | nib | nib |
+| `/jobs` | `/ps`, `/bashes` | CC `/tasks` (`/bashes`), Cx `/ps` | the thread's background work: a goal, loops, subtasks, agent tabs, terminal commands. Claude Code's `/tasks` is named `/jobs` here because a task in Orden is a box in a note (`docs/tasks.md` 5.15, decision 8.3); `/ps` and `/bashes` still land | Orden | Orden | Orden |
+| `/focus` | - | CC | tool rows and thinking fold away; prompts and answers stay | Orden | Orden | Orden |
+| `/help` | - | everyone | the commands and keys | Orden | Orden | Orden |
 
 ### 3.2 Model
 
-| nib | synonyms | from | what it does in nib | CC | Cx | API |
+| Orden | synonyms | from | what it does in Orden | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
 | `/model [name]` | `/models` | CC, Cx, Copilot `/models` | the model popover; a name sets it for this thread, **Alt+P** opens it | `/model <name>` into the session (works headless) | `model` on the next `turn/start` | `model` on the next request |
 | `/effort [level\|auto]` | `/reasoning`, `/think` | CC `/effort`; Cx sets it in `/model`; thinking toggles | Auto, Off, Minimal, Low, Medium, High, Extra, Max - only the levels the model has (5.1); **Alt+T** steps through them | `/effort <level>` into the session | `effort` on the next `turn/start` | Claude: `output_config.effort` (a per-message effort where the model has it, so the cache survives); OpenAI and ChatGPT: `reasoning.effort`; compatible: `reasoning_effort` where the model takes it |
@@ -315,96 +315,96 @@ names the provider's own road.
 
 ### 3.3 Modes and long work
 
-| nib | synonyms | from | what it does in nib | CC | Cx | API |
+| Orden | synonyms | from | what it does in Orden | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/approve [task]` | `/ask` | CC default mode, Cx Auto, Copilot approvals | Approve mode, the first one: every tool the grant reaches, and each change waits in its row for **Approve**, **Deny** or **Always** (this tool, this thread); reads never ask; answers cite their passages (the Ask panel's reading) | full grant, nib asks at its verbs | full grant, nib asks at its verbs | full grant, nib asks at its verbs |
+| `/approve [task]` | `/ask` | CC default mode, Cx Auto, Copilot approvals | Approve mode, the first one: every tool the grant reaches, and each change waits in its row for **Approve**, **Deny** or **Always** (this tool, this thread); reads never ask; answers cite their passages (the Ask panel's reading) | full grant, Orden asks at its verbs | full grant, Orden asks at its verbs | full grant, Orden asks at its verbs |
 | `/plan [task]` | - | CC, Cx, Cursor, Copilot | Plan mode: read-only tools; the plan is written as a draft note with a task per step, which you edit; **Build** runs it in Auto mode | read-only tools listed | Cx plan mode, read-only tools | read-only tools |
-| `/auto [task]` | `/agent` | CC auto mode, Cx Auto, Cursor Agent auto-run | Auto mode: every tool the grant reaches; a change is made at once, on the changes card to keep or undo, and what Settings › AI › Access says asks (sending, deleting, publishing, the terminal, ...) still waits for **Approve** | full grant, nib asks where Access says | full grant, nib asks where Access says | full grant, nib asks where Access says |
+| `/auto [task]` | `/agent` | CC auto mode, Cx Auto, Cursor Agent auto-run | Auto mode: every tool the grant reaches; a change is made at once, on the changes card to keep or undo, and what Settings › AI › Access says asks (sending, deleting, publishing, the terminal, ...) still waits for **Approve** | full grant, Orden asks where Access says | full grant, Orden asks where Access says | full grant, Orden asks where Access says |
 | `/full [task]` | `/yolo`, `/bypass` | CC bypassPermissions, Cx Full Access | Full permissions: every tool the grant reaches, nothing asked at all (#372); every change on the changes card to keep or undo | full grant, never asks | full grant, never asks | full grant, never asks |
 | `/agents [name]` | `/subagents` | CC `/agents`, Cx `/agent` (`/subagents`) | the thread's agent profile: a note with `agent:` front matter gives instructions, a model, an effort and tools; none is the default | profile's instructions as the fixed style slot + model + effort | the same, by `thread/start` | system message + model + effort |
-| `/permissions` | `/approvals`, `/allowed-tools` | CC (`/allowed-tools`), Cx `/permissions` | the sidebar agent's grant (4.4): scopes and sites; how much it asks is the mode | nib's grant | nib's grant | nib's grant |
-| `/goal [condition\|pause\|resume\|clear]` | `clear`: `stop`, `off`, `reset`, `none`, `cancel` | CC, Cx, Cursor | keeps working until the condition holds, an evaluator says it cannot, or the budget is spent (4.8) | CC's own `/goal` in the session | `thread/goal/set\|get\|clear` | nib's evaluator loop |
-| `/loop [interval] [prompt]` | `/proactive` | CC | runs a prompt on an interval while nib is open; the interval left out, the model paces it | nib | nib | nib |
-| `/subtask <task>` | - | CC | a helper thread in the background whose answer comes back here | nib | nib | nib |
-| `/bg [prompt]` | `/background` | CC | sends, leaves the thread running in the background, and opens a new one | nib | nib | nib |
-| `/batch <instruction>` | - | CC | one instruction fanned out over many notes (a folder, a tag, a search), each a subtask; one review of every change | nib | nib | nib |
-| `/deep-research <question>` | `/research` | CC `/deep-research`, Notion research | agent tabs search and read in the background; a cited report lands as a note (needs the browser scope) | nib's browser verbs | nib's browser verbs | nib's browser verbs |
+| `/permissions` | `/approvals`, `/allowed-tools` | CC (`/allowed-tools`), Cx `/permissions` | the sidebar agent's grant (4.4): scopes and sites; how much it asks is the mode | Orden's grant | Orden's grant | Orden's grant |
+| `/goal [condition\|pause\|resume\|clear]` | `clear`: `stop`, `off`, `reset`, `none`, `cancel` | CC, Cx, Cursor | keeps working until the condition holds, an evaluator says it cannot, or the budget is spent (4.8) | CC's own `/goal` in the session | `thread/goal/set\|get\|clear` | Orden's evaluator loop |
+| `/loop [interval] [prompt]` | `/proactive` | CC | runs a prompt on an interval while Orden is open; the interval left out, the model paces it | Orden | Orden | Orden |
+| `/subtask <task>` | - | CC | a helper thread in the background whose answer comes back here | Orden | Orden | Orden |
+| `/bg [prompt]` | `/background` | CC | sends, leaves the thread running in the background, and opens a new one | Orden | Orden | Orden |
+| `/batch <instruction>` | - | CC | one instruction fanned out over many notes (a folder, a tag, a search), each a subtask; one review of every change | Orden | Orden | Orden |
+| `/deep-research <question>` | `/research` | CC `/deep-research`, Notion research | agent tabs search and read in the background; a cited report lands as a note (needs the browser scope) | Orden's browser verbs | Orden's browser verbs | Orden's browser verbs |
 
 ### 3.4 Context and instructions
 
-| nib | synonyms | from | what it does in nib | CC | Cx | API |
+| Orden | synonyms | from | what it does in Orden | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/mention <thing>` | `/add`, `/attach` | Cx `/mention` | attaches what `@` would (4.2) | nib | nib | nib |
-| `/add-space <space>` | `/add-dir` | CC `/add-dir` | widens this thread to another space, if the grant reaches it | nib | nib | nib |
-| `/memory` | `/memories`, `/instructions`, `/rules` | CC `/memory`, Cx `/memories`, Copilot `/instructions` | opens the space's `AGENTS.md` and the personal instructions; "remember" on or off (4.6) | nib | nib | nib |
-| `/init` | - | CC, Cx, Copilot | writes the space's `AGENTS.md` from its folders, tags, templates and habits, as a new note you review | nib | nib | nib |
-| `/skills [name]` | `/commands`, `/prompts` | CC `/skills`, Cx `/skills`, Copilot `/prompts` | the custom commands: notes with `command:` front matter (4.7) | nib | nib | nib |
-| `/mcp` | `/tools` | CC `/mcp`, Cx `/mcp`, Copilot `/tools` | the tools this thread can use, by scope, each switchable off for the thread | nib's verbs | nib's verbs | nib's verbs |
+| `/mention <thing>` | `/add`, `/attach` | Cx `/mention` | attaches what `@` would (4.2) | Orden | Orden | Orden |
+| `/add-space <space>` | `/add-dir` | CC `/add-dir` | widens this thread to another space, if the grant reaches it | Orden | Orden | Orden |
+| `/memory` | `/memories`, `/instructions`, `/rules` | CC `/memory`, Cx `/memories`, Copilot `/instructions` | opens the space's `AGENTS.md` and the personal instructions; "remember" on or off (4.6) | Orden | Orden | Orden |
+| `/init` | - | CC, Cx, Copilot | writes the space's `AGENTS.md` from its folders, tags, templates and habits, as a new note you review | Orden | Orden | Orden |
+| `/skills [name]` | `/commands`, `/prompts` | CC `/skills`, Cx `/skills`, Copilot `/prompts` | the custom commands: notes with `command:` front matter (4.7) | Orden | Orden | Orden |
+| `/mcp` | `/tools` | CC `/mcp`, Cx `/mcp`, Copilot `/tools` | the tools this thread can use, by scope, each switchable off for the thread | Orden's verbs | Orden's verbs | Orden's verbs |
 
 ### 3.5 On words
 
-nib's own verbs, from the rewrite menu (`docs/ai.md`, "Rewriting a selection") and
+Orden's own verbs, from the rewrite menu (`docs/ai.md`, "Rewriting a selection") and
 Copilot's `/explain` and `/fix`. On the selection, else the note in front; the answer is a
 reviewable diff, not a reply.
 
-| nib | synonyms | from | what it does in nib | CC | Cx | API |
+| Orden | synonyms | from | what it does in Orden | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/shorter` | - | nib | the same in fewer words | nib | nib | nib |
-| `/longer` | - | nib | more about the same | nib | nib | nib |
-| `/fix` | `/grammar` | nib, Copilot `/fix` | spelling, grammar, punctuation, nothing else | nib | nib | nib |
-| `/translate [language]` | - | nib | into the interface's language or the one named | nib | nib | nib |
-| `/explain` | - | Copilot | what the selection means, as a reply | nib | nib | nib |
-| `/summarize [note]` | - | nib | a summary under the note's first heading, as a change to keep | nib | nib | nib |
-| `/review [note\|changes]` | `/code-review` | CC `/review` (`/code-review`), Cx `/review` | comments on a note (clarity, claims, structure) as changes to keep or undo; `changes` reviews what this thread did | nib | `review/start` with a custom target | nib |
-| `/diff` | `/changes` | CC, Cx | every note this thread changed, with Keep and Undo (4.5) | nib | nib | nib |
+| `/shorter` | - | Orden | the same in fewer words | Orden | Orden | Orden |
+| `/longer` | - | Orden | more about the same | Orden | Orden | Orden |
+| `/fix` | `/grammar` | Orden, Copilot `/fix` | spelling, grammar, punctuation, nothing else | Orden | Orden | Orden |
+| `/translate [language]` | - | Orden | into the interface's language or the one named | Orden | Orden | Orden |
+| `/explain` | - | Copilot | what the selection means, as a reply | Orden | Orden | Orden |
+| `/summarize [note]` | - | Orden | a summary under the note's first heading, as a change to keep | Orden | Orden | Orden |
+| `/review [note\|changes]` | `/code-review` | CC `/review` (`/code-review`), Cx `/review` | comments on a note (clarity, claims, structure) as changes to keep or undo; `changes` reviews what this thread did | Orden | `review/start` with a custom target | Orden |
+| `/diff` | `/changes` | CC, Cx | every note this thread changed, with Keep and Undo (4.5) | Orden | Orden | Orden |
 
 ### 3.6 Account and app
 
-| nib | synonyms | from | what it does in nib | CC | Cx | API |
+| Orden | synonyms | from | what it does in Orden | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/tasks [filter\|words]` | - | Todoist's Filter Assist | the reader's to-dos as rows with live boxes: Today with nothing after it, a list for Todoist's filter language, and for words the model writes the filter, shown above the rows (`docs/tasks.md` 5.15) | nib | nib | nib |
-| `/today [wishes]` | `/plan-day` | Todoist's Assist, To Do's My Day | plan my day: in Auto mode the model reads overdue, today, the next seven days and the inbox, and writes times and dates with `update_task`, each an edit the review keeps or undoes | nib | nib | nib |
-| `/catchup [chat]` | - | Slack's recaps | what the reader missed: the unread part of every chat (or the one named) attached, each other person's words inside an untrusted mark, and the model writes what each holds for them, headed by a link to where it starts (`docs/chats.md` 4.14) | nib | nib | nib |
-| `/reply [wishes]` | - | Slack's AI replies | a draft for the chat in front: its unread part (or its newest messages) attached, and the model's answer put in that chat's composer for the reader to send; `@nib` in a chat asks the same from the composer | nib | nib | nib |
+| `/tasks [filter\|words]` | - | Todoist's Filter Assist | the reader's to-dos as rows with live boxes: Today with nothing after it, a list for Todoist's filter language, and for words the model writes the filter, shown above the rows (`docs/tasks.md` 5.15) | Orden | Orden | Orden |
+| `/today [wishes]` | `/plan-day` | Todoist's Assist, To Do's My Day | plan my day: in Auto mode the model reads overdue, today, the next seven days and the inbox, and writes times and dates with `update_task`, each an edit the review keeps or undoes | Orden | Orden | Orden |
+| `/catchup [chat]` | - | Slack's recaps | what the reader missed: the unread part of every chat (or the one named) attached, each other person's words inside an untrusted mark, and the model writes what each holds for them, headed by a link to where it starts (`docs/chats.md` 4.14) | Orden | Orden | Orden |
+| `/reply [wishes]` | - | Slack's AI replies | a draft for the chat in front: its unread part (or its newest messages) attached, and the model's answer put in that chat's composer for the reader to send; `@nib` in a chat asks the same from the composer | Orden | Orden | Orden |
 | `/status` | - | CC, Cx | provider, model, effort, account and plan, grant, program version | `claude auth status --json` | `codex login status` | Settings > AI's row |
 | `/usage` | `/cost`, `/stats`, `/rate-limit-options` | CC `/usage` (`/cost`, `/stats`), Cx `/usage` | tokens in this thread and today; a plan's state and reset time; money only where the provider says it | `total_cost_usd`, `rate_limit_event` | rate limits from the app-server | `usage`; OpenRouter's `cost` |
 | `/login` | - | CC | the provider's own sign-in road (`docs/ai.md`, "Your own plan") | `claude auth login` in a terminal tab | `codex login` in a terminal tab | ChatGPT: Continue with ChatGPT; keys: Settings > AI |
 | `/logout` | - | CC, Cx | sign out of it | `claude auth logout` in a terminal tab | `codex logout` in a terminal tab | ChatGPT: Sign out |
-| `/doctor` | `/checkup`, `/debug-config` | CC `/doctor` (`/checkup`), Cx `/debug-config` | where the program is, its version and flags, sign-in, whether the model list answers | nib | nib | nib |
+| `/doctor` | `/checkup`, `/debug-config` | CC `/doctor` (`/checkup`), Cx `/debug-config` | where the program is, its version and flags, sign-in, whether the model list answers | Orden | Orden | Orden |
 | `/config` | `/settings` | CC | Settings > AI | nib | nib | nib |
 | `/keybindings` | `/keymap` | CC, Cx | Settings > Keyboard, filtered to the panel | nib | nib | nib |
-| `/theme` | - | CC, Cx | nib's theme picker | nib | nib | nib |
-| `/vim` | - | Cx (CC took its out) | vim keys in the field, using nib's vim mode | nib | nib | nib |
-| `/voice [on\|off]` | - | CC | dictation into the field through the transcription road (`docs/ai.md`, "Sound, as words") | nib | nib | nib |
+| `/theme` | - | CC, Cx | Orden's theme picker | Orden | Orden | Orden |
+| `/vim` | - | Cx (CC took its out) | vim keys in the field, using Orden's vim mode | Orden | Orden | Orden |
+| `/voice [on\|off]` | - | CC | dictation into the field through the transcription road (`docs/ai.md`, "Sound, as words") | Orden | Orden | Orden |
 
 That is **63 commands** and **46 synonyms**. A custom command (4.7) is one more row, and a
 custom command with a vendor's name wins over nothing but itself: built-ins keep their
 names.
 
-### 3.7 Not in nib
+### 3.7 Not in Orden
 
 Every other command Claude Code and Codex have, and why it has no row.
 
 | command | from | why not |
 | --- | --- | --- |
-| `/advisor` | CC | a second model consulted mid-task is Anthropic's server tool; `/goal`'s evaluator and `/subtask` are nib's second opinion |
-| `/artifacts`, `/artifact-capabilities`, `/artifact-diagramming`, `/design`, `/design-login`, `/design-sync`, `/slides`, `/dataviz` | CC | claude.ai's published pages; nib's output is notes, canvases and decks of its own |
-| `/auto-mode-setup`, `/fewer-permission-prompts`, `/sandbox`, `/setup-default-sandbox`, `/sandbox-add-read-dir` | CC, Cx | tune a shell's permissions; the sidebar has no shell of the reader's, and its asks are nib's policy |
+| `/advisor` | CC | a second model consulted mid-task is Anthropic's server tool; `/goal`'s evaluator and `/subtask` are Orden's second opinion |
+| `/artifacts`, `/artifact-capabilities`, `/artifact-diagramming`, `/design`, `/design-login`, `/design-sync`, `/slides`, `/dataviz` | CC | claude.ai's published pages; Orden's output is notes, canvases and decks of its own |
+| `/auto-mode-setup`, `/fewer-permission-prompts`, `/sandbox`, `/setup-default-sandbox`, `/sandbox-add-read-dir` | CC, Cx | tune a shell's permissions; the sidebar has no shell of the reader's, and its asks are Orden's policy |
 | `/autofix-pr`, `/install-github-app`, `/install-slack-app`, `/web-setup`, `/security-review`, `/simplify`, `/ultrareview`, `/run`, `/verify`, `/run-skill-generator`, `/claude-api` | CC | about a code repository; a space is not one |
-| `/bug`, `/share`, `/feedback` | CC, Cx | report to the vendor through the vendor's app; nib sends nothing anywhere |
-| `/chrome`, `/claude-in-chrome`, `/ide` | CC, Cx | nib is the browser and the editor; `@tab` and the browser scope are this |
+| `/bug`, `/share`, `/feedback` | CC, Cx | report to the vendor through the vendor's app; Orden sends nothing anywhere |
+| `/chrome`, `/claude-in-chrome`, `/ide` | CC, Cx | Orden is the browser and the editor; `@tab` and the browser scope are this |
 | `/color`, `/statusline`, `/tui`, `/raw`, `/scroll-speed`, `/terminal-setup` | CC, Cx | a terminal's own rendering |
 | `/desktop`, `/app`, `/mobile`, `/ios`, `/android`, `/remote-control`, `/rc`, `/teleport`, `/tp`, `/remote-env`, `/cd` | CC, Cx | move a session between the vendor's surfaces; a thread lives in its space |
 | `/exit`, `/quit` | CC, Cx | Escape puts the panel away |
 | `/heapdump`, `/debug`, `/insights`, `/skill-doctor`, `/team-onboarding`, `/powerup`, `/release-notes` | CC | about the CLI itself |
 | `/hooks`, `/plugin`, `/plugins`, `/reload-plugins`, `/plugin-authoring`, `/update-config`, `/experimental`, `/apps` | CC, Cx | extend the vendor's program; the sidebar's extensions are notes (4.7) |
 | `/reload-skills` | CC | commands are found as notes change; there is nothing to reload |
-| `/import` | CC, Cx | imports another vendor's config files; nib never reads `~/.claude` or `~/.codex` (`docs/ai.md`) |
-| `/list-agents`, `/peers` | CC | other CLI sessions; the Activity panel is nib's list of agents |
-| `/schedule`, `/routines`, `/workflows`, `/workflow-authoring` | CC | cloud runners; `/loop` is the part that runs while nib is open |
+| `/import` | CC, Cx | imports another vendor's config files; Orden never reads `~/.claude` or `~/.codex` (`docs/ai.md`) |
+| `/list-agents`, `/peers` | CC | other CLI sessions; the Activity panel is Orden's list of agents |
+| `/schedule`, `/routines`, `/workflows`, `/workflow-authoring` | CC | cloud runners; `/loop` is the part that runs while Orden is open |
 | `/passes`, `/stickers`, `/radio`, `/upgrade`, `/usage-credits`, `/privacy-settings`, `/pets`, `/pet` | CC, Cx | the vendor's shop and account pages; **Manage usage** on the provider's row goes there |
-| `/setup-bedrock`, `/setup-vertex` | CC | cloud providers of Claude Code's; a compatible provider is nib's road to a gateway |
-| `/pr-comments`, `/ultraplan` | CC | removed by Anthropic (Claude Code also removed `/vim`; nib keeps Codex's) |
+| `/setup-bedrock`, `/setup-vertex` | CC | cloud providers of Claude Code's; a compatible provider is Orden's road to a gateway |
+| `/pr-comments`, `/ultraplan` | CC | removed by Anthropic (Claude Code also removed `/vim`; Orden keeps Codex's) |
 
 ---
 
@@ -437,11 +437,11 @@ reads as Approve.
   none of it is in the first paint, held by `apps/desktop/test/weight.test.ts`.
 
 **Laid out as the Codex extension's sidebar is in VS Code** (Emil, 2026-10-05: "I wanted the
-VS Code Codex sidebar"), in nib's own tokens, type and motion, from the extension as it shipped
+VS Code Codex sidebar"), in Orden's own tokens, type and motion, from the extension as it shipped
 in October 2026 (openai.chatgpt 26.5930, its docs and its issues: [codex-ide], [codex-cmds],
 [codex-settings], [codex-changelog]); what was taken:
 
-| Codex | nib |
+| Codex | Orden |
 | --- | --- |
 | History, Settings and New chat in the view's title | the side's own row: New chat (hidden while the thread is empty) and Chats; Settings › AI stays where every setting is |
 | Back and the chat's title in a chat | the same at a side: Back to the home, the title's menu (rename, follow, branch, save, open in new tab, archive, delete) |
@@ -610,10 +610,10 @@ draws for `@note` and it holds here.
 - **The end of a long turn** is a system notification when the window is not in front, like
   Zed's.
 
-### 4.4 Tools: nib's verbs, under a grant
+### 4.4 Tools: Orden's verbs, under a grant
 
 The sidebar's agent is an agent like any other (`docs/agent-native.md` 9.1): a **built-in
-grant per provider**, named after it ("nib · Claude Code"), listed in Settings › AI › Access with
+grant per provider**, named after it ("Orden · Claude Code"), listed in Settings › AI › Access with
 the same scopes, sites, asks and limits, and the same stop. Its default is Emil's default for
 agents (all but `browser.script`, `browser.storage`, `settings`, `terminal`), with
 `browser.reader` on, because the reader is right there, and `terminal` on with no program on
@@ -647,13 +647,13 @@ takeover (`docs/agent-native.md` 9.4). The mode is not drawn in red - neither it
 the mode's menu nor the button while it is on: it is chosen on purpose, and the button's
 tooltip says it asks for nothing. Claude Code's `bypassPermissions` and Codex's Full Access
 are where the same idea comes from; the CLIs themselves already never prompt here (below),
-so Full permissions is nib's own verbs asking nothing.
+so Full permissions is Orden's own verbs asking nothing.
 
-**The same three for every engine.** nib's own loop (a key, the ChatGPT plan, a compatible
+**The same three for every engine.** Orden's own loop (a key, the ChatGPT plan, a compatible
 server) sends the mode with every call; Claude Code and Codex are handed a token lent for
 the mode (below), and a mode changed mid-thread starts the session again on the new one's
-token, the conversation resumed. Their own permission settings stay where nib puts them in
-every mode - Claude Code `dontAsk` with nib's verbs alone allowed, Codex `approvalPolicy:
+token, the conversation resumed. Their own permission settings stay where Orden puts them in
+every mode - Claude Code `dontAsk` with Orden's verbs alone allowed, Codex `approvalPolicy:
 never` in a read-only sandbox - because they have no tools of their own to supervise:
 mapping Full permissions onto `bypassPermissions` or Codex's `danger-full-access` would
 only lift a sandbox nothing uses. A helper (`run_agent`, `/batch`, `/deep-research`) works
@@ -665,34 +665,34 @@ it is on.
 
 Two roads to the same tools:
 
-- **Keys and the ChatGPT plan: nib runs the loop.** The tool definitions are the MCP list
+- **Keys and the ChatGPT plan: Orden runs the loop.** The tool definitions are the MCP list
   the grant reaches, sent as the provider's function tools (Anthropic `tools`, OpenAI
   function tools; for the ChatGPT plan in a namespace, as its preview requires [siwc-limits]).
   Each call goes to the crate with the built-in agent's identity and is answered exactly as
   an external agent's is: the policy, the asks, the log, `<untrusted>` marks. No second
   policy path in the window. A compatible server that refuses tools leaves the thread
   answering in words, and says so in a line.
-- **Claude Code and Codex: they run the loop, and nib is their only tool.** Claude Code gets
+- **Claude Code and Codex: they run the loop, and Orden is their only tool.** Claude Code gets
   `--mcp-config` naming `nib mcp` alone (with the built-in agent's token), still
   `--tools ""` and `--strict-mcp-config`, so none of its own file, shell or web tools and
   none of the reader's MCP servers; Codex gets `mcp_servers` with `nib` alone, its shell
   tool off, read-only sandbox. This is the road `docs/ai.md` already promises: "One that
   ever does gets nib's own MCP server (`nib mcp`) with the grant Settings > Agents gives
   it, never a folder." The crate still writes every argument (`apps/desktop/src-tauri/src/ai_cli/args.rs`).
-  Neither program prompts in any mode: in the three permission modes every nib verb is allowed in
+  Neither program prompts in any mode: in the three permission modes every Orden verb is allowed in
   advance (`--permission-mode dontAsk`, Codex's `approvalPolicy: never`), which within a
-  toolset of nib's verbs alone is what `bypassPermissions` and Full Access would be,
+  toolset of Orden's verbs alone is what `bypassPermissions` and Full Access would be,
   without lifting a sandbox nothing uses or tripping a managed setting that forbids them.
   What asks is nib: the token `nib mcp` is handed is lent for the thread's mode
   (`ai_agent::lend`), so the endpoint supervises the session as that mode says, and in
   Approve `nib mcp` holds the program's call open while the reader answers in the row (up
-  to seven minutes; each program gives a nib tool ten).
+  to seven minutes; each program gives a Orden tool ten).
 
-`@web` is the one tool that is the provider's rather than nib's, turned on per message.
+`@web` is the one tool that is the provider's rather than Orden's, turned on per message.
 
 ### 4.5 Changes: review, keep, undo, rewind
 
-nib's agent edits are already live transactions with the agent's caret, each its own undo
+Orden's agent edits are already live transactions with the agent's caret, each its own undo
 step, undoable per agent mapped through the reader's later typing
 (`apps/desktop/src/lib/agents/docs/track.ts`, `docs/agent-native.md` 8.2 to 8.5). The
 sidebar adds a review layer on top, and nothing underneath changes.
@@ -732,7 +732,7 @@ sidebar adds a review layer on top, and nothing underneath changes.
 - **The space's instructions** are its `AGENTS.md` at the space root, the file Codex,
   Cursor and Copilot read and Claude Code reads beside `CLAUDE.md`; a `CLAUDE.md` there is
   read too. They are notes, in the tree, synced and versioned like any other. A space
-  made in nib starts with one of two lines (write in the notes' own language and style,
+  made in Orden starts with one of two lines (write in the notes' own language and style,
   ask before deleting, moving or renaming) and an empty `## Memory`; an import brings
   only what its folder had (`agents-seed.ts`). `/init` writes a fuller one; `/memory`
   opens it.
@@ -755,7 +755,7 @@ and `mode:` override the thread's for that one send. A note whose front matter s
 
 Found through the front matter the link index already reads, so a command written on
 another device is there when it syncs, opens in Obsidian as text, and has versions. No
-special folder and nothing outside the space: nib never reads `~/.claude` or `~/.codex`.
+special folder and nothing outside the space: Orden never reads `~/.claude` or `~/.codex`.
 
 ### 4.8 /goal, for every provider
 
@@ -773,7 +773,7 @@ One goal per thread, with Claude Code's words and Codex's budget:
   and says why; a retryable one retries three times.
 - The chip over the field: ◎, the time it has run, its turns and tokens; click for the
   last reason; `/goal clear` or the chip's ✕ ends it.
-- Claude Code and Codex run their own (`/goal` in the session, `thread/goal/set`) and nib
+- Claude Code and Codex run their own (`/goal` in the session, `thread/goal/set`) and Orden
   reads their state into the same chip, so the reader cannot tell the roads apart.
 
 ### 4.9 Model and effort, per provider
@@ -790,7 +790,7 @@ table in the source (`docs/ai.md`, "The model list is fetched, never written dow
 | Claude Code | its aliases (`default`, `best`, `fable`, `opus`, `sonnet`, `haiku`, `opusplan`, `[1m]` forms) plus any name typed ([model config][cc-model]) | `--effort` at start, `/effort` in the session; a level it refuses is remembered for that model | `thinking_delta` | `modelUsage[model].contextWindow` on every result |
 | Codex | `model/list` on the app-server: `supportedReasoningEfforts`, `defaultReasoningEffort`, `inputModalities` ([app-server][cx-app-server]) | `effort` on `turn/start` | reasoning items | `thread/tokenUsage/updated`, `modelContextWindow` |
 
-**nib's one scale**: Auto (the model's default, sent as nothing), Off, Minimal, Low,
+**Orden's one scale**: Auto (the model's default, sent as nothing), Off, Minimal, Low,
 Medium, High, Extra (`xhigh`), Max. The row shows only what the model has, so Off is only
 there for an OpenAI model that takes `none` and Max only where the model has `max`.
 **Alt+T** steps up and wraps. The level a reader picks is remembered per model, as Claude
@@ -853,7 +853,7 @@ for clashes before taking it.
 | --- | --- | --- |
 | **Ctrl+Shift+A** | anywhere | the panel, and its field; again for the thread list |
 | **Enter** / **Shift+Enter** | field | send (queue while running) / new line |
-| **Ctrl+Enter** | field, running | send now: steer the running turn (Codex `turn/steer`, CC mid-turn input, nib's loop after the current tool) |
+| **Ctrl+Enter** | field, running | send now: steer the running turn (Codex `turn/steer`, CC mid-turn input, Orden's loop after the current tool) |
 | **Esc** | field, running | stop; what arrived stays |
 | **Esc Esc** | empty field | rewind |
 | **Up** | empty field | edit the last message |
@@ -872,7 +872,7 @@ for clashes before taking it.
   `--ease-out`, 100 to 190 ms). Words arrive without animation; a new row slides in 8 px;
   the ring's fill eases; a kept change's tint fades over 190 ms; an undone one is struck
   and collapses.
-- The only sentence nib writes is the field's placeholder. Modes, models, effort, the ring
+- The only sentence Orden writes is the field's placeholder. Modes, models, effort, the ring
   and every row are a word or a glyph; errors are the provider's words. Every new string is
   in all forty catalogues in `apps/desktop/src/locales`.
 
@@ -916,16 +916,16 @@ names a tool, a model, an effort, a mode and a thread, never a flag. What change
   requests (`set_model`, `interrupt`, `get_context_usage`, `list_models`), `/effort`,
   `/compact` and `/goal` are written as messages ([headless][cc-headless]); `/fast` is
   not, since Claude Code says "Fast mode is not available in the Agent SDK". A thread
-  reopened after the program ended is seeded from nib's transcript. Unmodified, signed in
+  reopened after the program ended is seeded from Orden's transcript. Unmodified, signed in
   by the reader, no token read: everything `docs/ai.md` requires stays true.
 - **Codex** moves from `exec` to `app-server` over stdio: `initialize`, then
   `thread/start` with the read-only sandbox, `mcp_servers` holding `nib` alone, the shell
   tool off and the reader's config ignored; `turn/start` per message with `model` and
   `effort`; `turn/steer`, `turn/interrupt`, `thread/compact/start`, `thread/goal/*`,
   `thread/fork`, `model/list`, `serviceTier: "priority"` for Fast. Approval requests the
-  app-server raises are refused (nib's own asks happen at nib's verbs). The app-server
+  app-server raises are refused (Orden's own asks happen at Orden's verbs). The app-server
   has no `--ignore-user-config`, so the reader's config is overridden key by key (`-c`).
-- Both stay on the job object or process group, the empty folder of nib's own, and the
+- Both stay on the job object or process group, the empty folder of Orden's own, and the
   stop, as today; a session idle for ten minutes is ended and reseeded on the next message.
 
 ### 5.3 What stays exactly as it is
@@ -941,7 +941,7 @@ pointed at the new panel in Approve mode, which kept Ask's reading.
 ## 6. The implementation plan
 
 Five lanes in two waves, on disjoint files. Each lane reads this document, `docs/ai.md` and
-`docs/agent-native.md` first, follows the rules for every nib agent, and adds tests for its
+`docs/agent-native.md` first, follows the rules for every Orden agent, and adds tests for its
 logic. New files are named relative to `apps/desktop/src` (or `src-tauri/src`).
 
 ### 6.1 The interfaces the lanes meet at
@@ -1030,7 +1030,7 @@ Agreed by lane 2 against lane 1's `lib/ai/chat/types.ts`. Lane 2's one change in
   sent mid-turn after the turn, so its answer is a model turn of its own.
 - **The program's own goal**, for lane 5's `/goal` runner: `Engine.goal?(thread, to, on,
   signal)` (`lib/ai/chat/types.ts`), which only these two engines have; where it is
-  missing the runner keeps nib's evaluator loop. `to` is `GoalTo`: `set` with the
+  missing the runner keeps Orden's evaluator loop. `to` is `GoalTo`: `set` with the
   condition and Codex's token budget, `resume` with the condition and the next turn's
   words, `pause`, `clear`. A set or a resume runs like a send - the reader's message is
   the condition, each turn the program takes is a model turn of its own, `done` once -
@@ -1097,7 +1097,7 @@ other's files.
   `lib/ai/review/commands.ts`, found by name like the panel finds lane 5, and are dimmed
   ("Not here yet") until that file exists. A thread's review covers the threads in its
   `helpers` too, so a `/batch` is one review.
-- **Lane 2.** `/goal` runs nib's evaluator on every provider today, Claude Code and Codex
+- **Lane 2.** `/goal` runs Orden's evaluator on every provider today, Claude Code and Codex
   included (6.4). When the local engine carries a `goal` of its own, the runner hands Claude
   Code's `/goal` and Codex's `thread/goal/*` the condition and reads their state into the same
   `Goal`. `/login` and `/logout` type the program's own `auth login` / `auth logout` (Codex

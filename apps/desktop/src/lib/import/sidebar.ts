@@ -1,7 +1,7 @@
 /** A browser's sidebar as every reader of one hands it over: its spaces, its folders
  *  and its tabs, in the order the browser draws them. Zen's session, Firefox's and
  *  Chromium's are read into this one shape (zen.ts, firefox.ts, chromium.ts), and
- *  sidebar-plan.ts makes nib's spaces of it, so a browser is a reader and nothing
+ *  sidebar-plan.ts makes Orden's spaces of it, so a browser is a reader and nothing
  *  else. A browser without spaces is one space; one without folders has its tab
  *  groups and its bookmark folders as folders instead.
  *

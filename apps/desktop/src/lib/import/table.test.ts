@@ -1,5 +1,5 @@
-import { readBase } from '@nib/bases'
-import { renderMarkdown } from '@nib/markdown'
+import { readBase } from '@orden/bases'
+import { renderMarkdown } from '@orden/markdown'
 import { describe, expect, test } from 'vitest'
 
 import type { ImportPlan } from './plan'

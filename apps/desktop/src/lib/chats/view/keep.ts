@@ -9,11 +9,11 @@
  *    tab.
  *
  *  The link is the message's own, `nib://chat/<chat>/<message>`, which opens the chat at
- *  it from anywhere in nib. */
+ *  it from anywhere in Orden. */
 
-import type { Message } from '@nib/chats'
-import { isWho } from '@nib/chats/wire'
-import { chatLink } from '@nib/chats/links'
+import type { Message } from '@orden/chats'
+import { isWho } from '@orden/chats/wire'
+import { chatLink } from '@orden/chats/links'
 import { storeBeside } from '../../assets'
 import { t } from '../../i18n.svelte'
 import { canWriteAt } from '../../sharing.svelte'

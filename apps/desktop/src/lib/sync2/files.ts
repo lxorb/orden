@@ -52,7 +52,18 @@ export interface Blobs {
   /** A file's bytes, from its space. `gone` for one the account no longer has. */
   down(space: string, id: string): Promise<Uint8Array | 'gone' | null>
   replace(space: string, id: string, hash: string, base: string): Promise<Replaced | null>
+  /** Which of these hashes the account keeps, or null where it did not say - no answer,
+   *  or an account from before it could be asked (#517). */
+  have?(hashes: string[]): Promise<Set<string> | null>
 }
+
+/** How often the files a space holds in step are checked against what the account
+ *  keeps: once a launch, and then every few hours. Bytes the account lost do not come
+ *  back by waiting, and every check is a request per ninety files. */
+const LOST_EVERY = 6 * 60 * 60_000
+
+/** How many hashes one question names; the account's ceiling. */
+const ASKED_AT_ONCE = 90
 
 /** A file's bytes and their hash, read now; null for one that is not there, and for one
  *  too large to travel. */
@@ -239,6 +250,57 @@ export async function settleFiles(
       entry.file_key = await blobs.hash(bytes)
       await written(core, entry, entry.file_key, bytes)
       space.changed()
+    }
+  }
+  return true
+}
+
+/** The files this disk holds in step whose bytes the account no longer keeps, sent up
+ *  again from here (#517).
+ *
+ *  A file in step is never asked about - the account named those bytes, and this disk
+ *  has them - so bytes the account lost stayed lost: the nightly sweep of misnamed
+ *  copies takes the rows of uploads that were answered over such a copy with it, and
+ *  from then on every other device of the space read the file as gone, until somebody
+ *  edited it here again. Asked now and then (`LOST_EVERY`), in batches, and only of the
+ *  files whose bytes on this disk are still the ones the account named; an account
+ *  that cannot be asked is not asked again until the next time. Answers whether
+ *  everything got an answer. */
+export async function recoverLost(
+  core: Core,
+  space: SpaceState,
+  alive: () => boolean,
+  room: Room,
+): Promise<boolean> {
+  const blobs = core.world.blobs
+  if (!blobs?.have || core.world.now() - space.lostCheckedAt < LOST_EVERY) return true
+  space.lostCheckedAt = core.world.now()
+
+  const inStep = [...space.entries.values()].filter(
+    (entry) =>
+      entry.kind === 'file' &&
+      !entry.deleted &&
+      entry.seq !== null &&
+      entry.local_path &&
+      entry.file_key !== null &&
+      entry.file_key === entry.written_hash &&
+      space.isLive(entry.id) &&
+      !space.foreign(entry.id) &&
+      !core.isHeld(entry.id),
+  )
+  for (let from = 0; from < inStep.length; from += ASKED_AT_ONCE) {
+    const batch = inStep.slice(from, from + ASKED_AT_ONCE)
+    const kept = await blobs.have([...new Set(batch.map((entry) => entry.file_key ?? ''))])
+    if (!alive()) return false
+    if (kept === null) return true
+    for (const entry of batch) {
+      if (entry.file_key === null || kept.has(entry.file_key)) continue
+      const here = await readBytes(core, space, entry)
+      // Changed here since, or gone: the next settle sends or fetches it as ever.
+      if (here?.hash !== entry.file_key) continue
+      const stored = await blobs.up(here.hash, here.bytes)
+      if (!alive() || stored === null) return false
+      await taken(core, space, entry, here.hash, stored, room)
     }
   }
   return true

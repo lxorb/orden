@@ -1601,6 +1601,18 @@ export const gsw: Dictionary = {
   'answered by {model}, {date}': 'gantwortet vo {model}, {date}',
   'AI block': 'KI-Block',
   'Do with AI': 'Mit KI erledige',
+  'Use the browser': 'De Browser bruuche',
+  'Lets a task done with AI open web pages and act on them.':
+    'Lat e Ufgab, wo mit KI erledigt wird, Websiite uufmache und druf handle.',
+  'Look through notes': 'Notize dürsueche',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Lat e Ufgab, wo mit KI erledigt wird, dini andere Notize dürsueche und lese, näbe ihrere eigene.',
+  'Change other notes': 'Anderi Notize ändere',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Lat e Ufgab, wo mit KI erledigt wird, anderi Notize als d Ufgab schriibe, verschiebe und lösche.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Was e Ufgab, wo mit KI erledigt wird, söll mache. Si hakt d Ufgab wiiterhin ab, wenn si erledigt isch, oder fragt imene Kommentar.',
+  'Started in the AI panel': 'Im KI-Beriich gstartet',
   'Highlight colour': 'Hervorhäbigsfarb',
   'A single newline breaks the line': 'En einzelne Zileumbruch bricht d Zile',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2656,6 +2668,9 @@ export const gsw: Dictionary = {
     'Websiite luege d Adrässe do so naa wie s System; sis DNS wird i de Iistellige vom System festgleit.',
   'Set by the settings file': 'Vo de Iistelligsdatei feschtgleit',
   'The settings file has a problem': 'D Iistelligsdatei hät es Problem',
+  'Some changes may not be noticed': 'Gwüssi Änderige merkt mer villicht nöd',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'S System hät sini Gränze für überwachti Ordner erreicht, drum merkt Orden villicht nöd jedi Änderig, wo anderi Programm i dine Bereich mached. fs.inotify.max_user_watches uufehaa behebt das.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Chat {name} uf {space} verschiebe?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

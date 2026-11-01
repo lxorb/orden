@@ -19,7 +19,7 @@ import { typedAddress } from './typed'
  *  connection, the certificate was wrong, or anything else. */
 export type Failure = 'unreachable' | 'certificate' | 'other'
 
-/** An https address nib chose for a host typed with no scheme, and where to go when
+/** An https address Orden chose for a host typed with no scheme, and where to go when
  *  nothing answers there. */
 export interface Upgrade {
   tried: string

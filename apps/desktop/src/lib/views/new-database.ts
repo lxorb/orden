@@ -7,7 +7,7 @@
  *  medium cards, and the column of no status first, where a page nobody gave one
  *  lands. */
 
-import { type Base, writeBase } from '@nib/bases'
+import { type Base, writeBase } from '@orden/bases'
 import { folderNotePath } from '../folder-notes'
 import { t } from '../i18n.svelte'
 import { samePath } from '../space-paths'

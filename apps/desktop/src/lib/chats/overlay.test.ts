@@ -1,4 +1,4 @@
-import type { Event, Message } from '@nib/chats'
+import type { Event, Message } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
 import type { OutboxRow } from './cache'
 import { isMain } from './cache'

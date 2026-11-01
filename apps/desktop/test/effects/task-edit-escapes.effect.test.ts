@@ -11,12 +11,12 @@
  *  label, and a Save that changed nothing turned it into one (B417). In the jsdom
  *  project because it mounts the field and presses real keys. */
 
-import { taskRowsOfText } from '@nib/bases/tasks'
+import { taskRowsOfText } from '@orden/bases/tasks'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
 import type { Entry } from '../../src/lib/quick-add/entry'
 import QuickAdd from '../../src/lib/quick-add/QuickAdd.svelte'
-import { changedTask } from '@nib/markdown/task-edits'
+import { changedTask } from '@orden/markdown/task-edits'
 import { changeOf, prefillFor } from '../../src/lib/views/task-edit'
 
 let shown: ReturnType<typeof mount> | undefined

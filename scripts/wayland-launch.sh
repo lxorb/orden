@@ -14,9 +14,11 @@
 #     there is none (SECOND names the command that starts a second copy) - quick add's
 #     window comes up either way, floating, as a compositor floats a fixed-size window;
 #   - with DRIVE=1, Orden opened on a page of one colour in a web tab, and
-#     scripts/wayland-drive.py reading where that page is drawn on every screen, with
-#     the tab's menu over it and after a resize, clicking with the compositor's own
-#     pointer (scripts/wayland-pointer.py); and with COLD=n as well, Orden quit and
+#     no process of the app running with GPU compositing turned off (#390,
+#     scripts/compositing-check.py), and scripts/wayland-drive.py reading where that
+#     page is drawn on every screen, with the tab's menu over it and after a resize,
+#     clicking with the compositor's own pointer (scripts/wayland-pointer.py); and
+#     with COLD=n as well, Orden quit and
 #     started again n times, each on another screen and with no address, and the drive
 #     run on the web tab it came back to;
 #   - with IDLE=1, what the app costs the CPU while nothing happens, before anything
@@ -28,6 +30,9 @@
 #     scripts/textsize-drive.py);
 #   - with FLASH=1, the strip's note tab and web tab chosen in turn in the dark scheme,
 #     filmed, and no frame of the pane white (#762, scripts/flash-drive.py);
+#   - with KILL=1, the app's scheme switched and words typed into a new note, the app
+#     killed outright a tenth of a second later, and both there when it is started
+#     again (#961, scripts/kill-drive.py);
 #   - with WORKER=1, a web tab's page whose worker has to answer it, as it opens and
 #     after Orden is quit and started again with no address (#777,
 #     scripts/worker-drive.py);
@@ -38,6 +43,29 @@
 #     (scripts/doh-server.py, its authority trusted in the user's NSS store), the web
 #     tab sent to it, and Settings > General > DNS set to that server: reached at once
 #     and after Orden is started again (#766, #767, scripts/dns-drive.py);
+#   - with DOWNLOAD=1, a download in a web tab stopped on its way and the same name
+#     downloaded again: the first has to stop and leave nothing, the second has to be a
+#     file of its own (#788, scripts/download-drive.py);
+#   - with EXTENSIONS=1, a small extension of the run's own loaded (`--load-extension`):
+#     seen in the web bar and in Settings, removed through the engine and gone from both,
+#     and still gone once Orden is started again without it (#789,
+#     scripts/extensions-drive.py);
+#   - with GRANTS=1, a site in a private tab asking for the camera and allowed, the
+#     private tab closed, and the same site asking from a normal tab: the private answer
+#     has to be written nowhere and the normal tab has to be asked (#787,
+#     scripts/grants-drive.py);
+#   - with PDFMARK=1, two PDFs and a blank page note put in the space and one PDF
+#     opened, which makes it a page note: its row and its tab have to wear the PDF's
+#     mark and the blank one's another, and so does its tab opened from another
+#     space (#676, scripts/pdf-mark-drive.py);
+#   - with RESERVED=1, a name Windows keeps for a device given to a note or a folder
+#     through the app's own commands, and a note made from words headed with one: each
+#     refused or stepped aside from, and a note that already has one still written and
+#     moved (#477, scripts/reserved-drive.py);
+#   - with WATCH=1, a space holding a folder nobody may read and four hundred more: a
+#     note written into it by another program has to be heard, at its top and deep in
+#     it, and again under a lowered limit of watched folders, which the watch has to say
+#     (#481, scripts/watch-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
@@ -168,7 +196,13 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ]; then
+# With DRIVE=1, Chromium's DevTools port, which says how Chromium runs (#390,
+# scripts/compositing-check.py).
+if [ "${DRIVE:-0}" = 1 ]; then
+  NIB_CEF_DEBUG_PORT=${NIB_CEF_DEBUG_PORT:-9339}
+  export NIB_CEF_DEBUG_PORT
+fi
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ] || [ "${GRANTS:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
@@ -264,8 +298,58 @@ if [ "${DNS:-0}" = 1 ]; then
   endpoint
   set -- "$@" "http://$dns_name:8765/"
 fi
+# With DOWNLOAD=1, a page with a file to download, slowly or at once, and a downloads
+# folder of the run's own (#788).
+if [ "${DOWNLOAD:-0}" = 1 ]; then
+  mkdir -p "$out/downloads"
+  # Absolute, as the app takes only an absolute folder from it; see `folder_named`.
+  NIB_DOWNLOADS_DIR="$(cd "$out/downloads" && pwd)"
+  export NIB_DOWNLOADS_DIR
+  python3 "$here/download-server.py" 8765 "$out/served.txt" > "$out/site.log" 2>&1 &
+  site_pid=$!
+  endpoint
+  set -- "$@" http://127.0.0.1:8765/
+fi
+# With WATCH=1, a spaces folder of the run's own (#481).
+if [ "${WATCH:-0}" = 1 ]; then
+  mkdir -p "$out/spaces"
+  # Absolute, as the app takes only an absolute folder from it; see `folder_named`.
+  NIB_SPACES_DIR="$(cd "$out/spaces" && pwd)"
+  export NIB_SPACES_DIR
+  endpoint
+fi
+# With EXTENSIONS=1, an extension of the run's own, with a button, loaded into the
+# browsing profile as Chromium loads one from the command line (#789).
+ext_name="Orden run extension"
+if [ "${EXTENSIONS:-0}" = 1 ]; then
+  mkdir -p "$out/extension"
+  python3 - "$out/extension" "$ext_name" <<'MAKE'
+import json, struct, sys, zlib
+from pathlib import Path
+folder, name = Path(sys.argv[1]), sys.argv[2]
+def chunk(kind, data):
+    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+rows = b"".join(b"\x00" + b"\x2b\x8a\x6e\xff" * 16 for _ in range(16))
+icon = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 16, 16, 8, 6, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
+(folder / "icon.png").write_bytes(icon)
+(folder / "manifest.json").write_text(json.dumps({
+    "manifest_version": 3, "name": name, "version": "1.0",
+    "icons": {"16": "icon.png"},
+    "action": {"default_title": name, "default_icon": "icon.png"},
+}))
+MAKE
+  NIB_CEF_ARGS="load-extension=$(cd "$out/extension" && pwd)"
+  export NIB_CEF_ARGS
+fi
 # With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
+# With KILL=1, the endpoint and no page (#961).
+[ "${KILL:-0}" = 1 ] && endpoint
+# With RESERVED=1, the endpoint and no page (#477).
+[ "${RESERVED:-0}" = 1 ] && endpoint
+# With PDFMARK=1, the endpoint and no page (#676).
+[ "${PDFMARK:-0}" = 1 ] && endpoint
 # With CERT=1, the endpoint and a site over https, a real one: its certificate is the
 # point (#776).
 if [ "${CERT:-0}" = 1 ]; then
@@ -344,6 +428,9 @@ if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
 fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
+  # Every page, the window's own and the web tab's, put together on the card as far as
+  # the app decides it (#390, scripts/compositing-check.py), and then where it is drawn.
+  python3 "$here/compositing-check.py" "$NIB_CEF_DEBUG_PORT" || status=1
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
 fi
 
@@ -393,6 +480,81 @@ if [ "$status" = 0 ] && [ "${DNS:-0}" = 1 ]; then
   fi
 fi
 
+if [ "$status" = 0 ] && [ "${DOWNLOAD:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/download-drive.py" "$out" "$NIB_DOWNLOADS_DIR" "$out/served.txt" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${GRANTS:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/grants-drive.py" "$out" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
+  sleep 3
+  if python3 "$here/extensions-drive.py" "$out" installed "$ext_name"; then
+    # Started again without it on the command line: what was removed stays removed.
+    unset NIB_CEF_ARGS
+    kill -TERM "$app_pid" 2>/dev/null || true
+    for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
+    kill -KILL "$app_pid" 2>/dev/null || true
+    wait "$app_pid" 2>/dev/null || true
+    endpoint
+    "${command[@]}" > "$out/orden-again.log" 2>&1 &
+    app_pid=$!
+    if wait_for_views 1; then
+      sleep 3
+      python3 "$here/extensions-drive.py" "$out" again "$ext_name" || status=1
+    else
+      echo "::error::no window mapped when started again"
+      status=1
+    fi
+  else
+    status=1
+  fi
+fi
+
+# The space made, then given a folder nobody may read and four hundred more, and the app
+# started again on it; then again under a limit of watched folders it is past (#481).
+again() {
+  kill -TERM "$app_pid" 2>/dev/null || true
+  for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
+  kill -KILL "$app_pid" 2>/dev/null || true
+  wait "$app_pid" 2>/dev/null || true
+  endpoint
+  "${command[@]}" >> "$out/orden-again.log" 2>&1 &
+  app_pid=$!
+  wait_for_views 1 || { echo "::error::no window mapped when started again"; return 1; }
+  sleep 3
+}
+if [ "$status" = 0 ] && [ "${WATCH:-0}" = 1 ]; then
+  sleep 5
+  space=$(find "$NIB_SPACES_DIR" -mindepth 1 -maxdepth 1 -type d ! -name '.*' | head -1)
+  if [ -z "$space" ]; then
+    echo "::error::the app made no space in $NIB_SPACES_DIR"
+    status=1
+  else
+    echo "the space: $space"
+    mkdir -p "$space/deep/inner" "$space/locked"
+    for n in $(seq 400); do mkdir -p "$space/many/$n"; done
+    chmod 000 "$space/locked"
+    again && python3 "$here/watch-drive.py" "$out" folders "$space" || status=1
+    if [ "$status" = 0 ]; then
+      kill -TERM "$app_pid" 2>/dev/null || true
+      for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
+      kill -KILL "$app_pid" 2>/dev/null || true
+      was=$(cat /proc/sys/fs/inotify/max_user_watches)
+      used=$(cat /proc/[0-9]*/fdinfo/* 2>/dev/null | grep -c '^inotify' || true)
+      echo "inotify: $used watches in use of $was; the limit lowered to $((used + 120))"
+      sudo sysctl -q fs.inotify.max_user_watches=$((used + 120))
+      again && python3 "$here/watch-drive.py" "$out" limit "$space" || status=1
+      grep -h "could not watch all of" "$out"/orden*.log | head -3 || true
+      sudo sysctl -q fs.inotify.max_user_watches="$was"
+    fi
+    chmod 755 "$space/locked"
+  fi
+fi
+
 if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then
   sleep 3
   python3 "$here/scheme-drive.py" sway "$out" "$app_pid" || status=1
@@ -410,6 +572,52 @@ fi
 
 if [ "$status" = 0 ] && [ "${CHECK:-0}" = 1 ]; then
   APP_COMMAND="${command[0]}" python3 "$here/wayland-418.py" "$out" "$app_pid" || status=1
+fi
+
+# What the app took in a tenth of a second before it was killed, there when it is started
+# again (#961). A tenth, sooner than the engine puts the page's storage on the disk of its
+# own accord, which a second was not; a kill, not a quit, so nothing is written on the way
+# out.
+if [ "$status" = 0 ] && [ "${RESERVED:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/reserved-drive.py" "$out" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${PDFMARK:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/pdf-mark-drive.py" "$out" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${KILL:-0}" = 1 ]; then
+  sleep 3
+  if python3 "$here/kill-drive.py" "$out" write; then
+    sleep 0.1
+    # Every process of it at once, as `pkill` or the session ending does: the engine's
+    # storage runs in a process of its own, which puts what it holds on the disk the
+    # moment the app's own process is gone if it outlives it. The app and every process
+    # under it, found first and then killed together.
+    tree="$app_pid" under="$app_pid"
+    while [ -n "$under" ]; do
+      under=$(ps -e -o pid=,ppid= | awk -v set=" $under " 'index(set, " " $2 " ") { printf "%s ", $1 }')
+      tree="$tree $under"
+    done
+    # shellcheck disable=SC2086 # one pid per word
+    kill -KILL $tree 2>/dev/null || true
+    wait "$app_pid" 2>/dev/null || true
+    sleep 1
+    endpoint
+    "${command[@]}" > "$out/orden-again.log" 2>&1 &
+    app_pid=$!
+    if wait_for_views 1; then
+      sleep 3
+      python3 "$here/kill-drive.py" "$out" read || status=1
+    else
+      echo "::error::no window mapped when started again"
+      status=1
+    fi
+  else
+    status=1
+  fi
 fi
 
 # A page's worker answering it, and again on the web tab the app comes back to once it is

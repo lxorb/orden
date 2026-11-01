@@ -12,7 +12,7 @@ import {
   type Side,
 } from '../../canvas/format'
 import { connected, movedBy, removed, withLabel, withNode, withText } from '../../canvas/edits'
-import { settled } from '@nib/markdown/pages'
+import { settled } from '@orden/markdown/pages'
 import { hasPages, pageIn, pageOperation, placeOnPage } from './pages-ops'
 import { Refused } from './problem'
 

@@ -129,7 +129,7 @@ async function oldNoteGone(ws: Converts, path: string) {
  *  stands. Answers how many there were, so the palette can say what it did.
  *
  *  One pass rather than a wait for each file to be opened: a space that came from an
- *  older nib has all of its websites in the old format, and a reader who wants them
+ *  older Orden has all of its websites in the old format, and a reader who wants them
  *  all as shortcuts should not have to open each one. */
 export async function convertWebsites(ws: Converts): Promise<number> {
   if (!ws.activeSpace) return 0

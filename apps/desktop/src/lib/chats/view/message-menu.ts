@@ -3,7 +3,7 @@
  *  table every end decides by (`may`), so a row is never there for something the
  *  account would refuse. */
 
-import { may, type Message, type Role } from '@nib/chats'
+import { may, type Message, type Role } from '@orden/chats'
 import { copyText } from '../../clipboard'
 import { t } from '../../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../../menu.svelte'

@@ -1,6 +1,6 @@
 # Tasks and databases
 
-A design and a plan. It decides how nib replaces a to-do app and a database app: every
+A design and a plan. It decides how Orden replaces a to-do app and a database app: every
 feature Todoist sells, for free, on the notes the reader already has, and every database
 feature of Obsidian Bases and Notion that earns its place, on the same notes. One engine
 answers both, because a task is a row too. Section 7 is the plan the lanes build from.
@@ -26,7 +26,7 @@ Nothing here loosens any of them.
 
 1. **A task is a line in a note.** `- [ ] Call the bank 🛫 2026-10-06`, in the Obsidian
    Tasks plugin's own emoji format, so a space opened in Obsidian with Tasks installed reads
-   every date, priority and recurrence nib wrote. What Tasks has no field for (a time of day,
+   every date, priority and recurrence Orden wrote. What Tasks has no field for (a time of day,
    a duration, a deadline, a reminder, an assignee) is a Dataview inline field, `[time::
 16:00]`, which Dataview reads and Tasks keeps as words. No store of nib's own, ever.
 2. **A project is a note, a section is a heading, a label is a tag, a sub-task is an
@@ -37,13 +37,13 @@ Nothing here loosens any of them.
    carries every task line and every note's front matter back with the links; the window
    keeps them as rows and re-reads only the note that changed. 10,000 tasks answer a view in
    a frame.
-4. **One engine for tasks and databases**, a new pure package, `@nib/bases`: rows, Obsidian's
+4. **One engine for tasks and databases**, a new pure package, `@orden/bases`: rows, Obsidian's
    Bases expression language, filters, formulas, sort, group, summaries. A note is a row whose
    columns are its front matter; a task is a row whose columns are its fields. Todoist's
    filter language (`today & #work | overdue`) compiles to the same tree.
-5. **Views are `.base` files**, Obsidian's format, with nib's additions under one key, `nib:`,
+5. **Views are `.base` files**, Obsidian's format, with Orden's additions under one key, `nib:`,
    that Obsidian leaves alone. Table, list, cards, board, calendar, timeline and chart; the
-   built-in Inbox, Today and Upcoming are bases nib ships and a reader can copy and change.
+   built-in Inbox, Today and Upcoming are bases Orden ships and a reader can copy and change.
 6. **A Tasks panel on the left** beside the files and the search: Inbox, Today, Upcoming,
    then the reader's saved views, projects and labels, each with its count. A row opens its
    view in a tab, the way the graph opens. The panel is navigation, the tab is the work.
@@ -54,10 +54,10 @@ sunday` becomes chips as it is typed, in English and German, and a chip pressed 
 8. **Every view edits.** A box ticks, a cell edits the front matter through the one write
    path every other surface uses, a card dragged to another column changes the property the
    board is grouped by, a task dragged to another day changes its date. One edit, one undo.
-9. **Reminders fire with nib closed.** Desktop notifications are handed to the system
+9. **Reminders fire with Orden closed.** Desktop notifications are handed to the system
    scheduler (Windows scheduled toasts, macOS notification triggers), the phone schedules
-   local alarms, nib stays in the tray while a reminder exists, and the Worker pushes to
-   a phone that has not opened nib since (8.5).
+   local alarms, Orden stays in the tray while a reminder exists, and the Worker pushes to
+   a phone that has not opened Orden since (8.5).
 10. **The agent works the list.** `nib mcp` and the account connector gain `list_tasks`,
     `add_task`, `update_task`, `query_base`, `add_row` and `edit_base`; the AI sidebar gets
     `/tasks` and `/today` (plan my day), and its background-work command becomes `/jobs`.
@@ -86,7 +86,7 @@ What matters to them, in order:
    one list that never misses a task because it was written in the wrong place.
 3. **Nothing is ever lost or locked in.** The task is a line they can see, edit, grep, sync
    and open in another app.
-4. **It reminds them**, on the device in their hand, even when nib is not open.
+4. **It reminds them**, on the device in their hand, even when Orden is not open.
 5. **It scales without slowing the editor down.** Ten thousand tasks and five thousand notes
    cost nothing while typing.
 6. **The views do the editing.** A board, a calendar and a table are where things are moved,
@@ -181,7 +181,7 @@ added, property edited or a schedule; forms that write rows.
   can drift; it is slow with thousands of rows; the free plan limits charts, automations and
   history; offline is recent and partial.
 
-### 2.4 What nib takes, and what it leaves
+### 2.4 What Orden takes, and what it leaves
 
 - **Takes**: Todoist's quick add with clickable chips, `every!`, Today with overdue, Upcoming,
   the filter language and layouts on any view; Things' When apart from Deadline and its
@@ -192,14 +192,14 @@ added, property edited or a schedule; forms that write rows.
   buttons and automations, built on the notes.
 - **Leaves**: Karma and streak games; a team admin console; a hundred integrations, where one
   MCP server, a CLI and `nib://` links are the integration; dashboards as a separate thing
-  (a note embedding several views is a dashboard); anything that needs a store nib owns.
+  (a note embedding several views is a dashboard); anything that needs a store Orden owns.
 
 ## 3. Todoist parity: every feature, mapped
 
 **must** ships in the first round of lanes, **should** in the same lanes after the musts,
 **later** waits for a reason given, **drop** is a decision.
 
-| #   | Todoist feature                                                  | nib                                                                                                                                                         | mark                                   | why                                                              |
+| #   | Todoist feature                                                  | Orden                                                                                                                                                         | mark                                   | why                                                              |
 | --- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------- |
 | 1   | Quick Add in the app                                             | the quick add field from the palette and its key (5.6)                                                                                                      | must                                   | the core habit                                                   |
 | 2   | Global Quick Add shortcut                                        | a system-wide key opens a small quick add window over any app (5.6)                                                                                         | must                                   | capture from anywhere is the point                               |
@@ -220,7 +220,7 @@ added, property edited or a schedule; forms that write rows.
 | 17  | Share sheet on the phone                                         | "Add as task" beside the existing share into a note                                                                                                         | should                                 |                                                                  |
 | 18  | Widgets                                                          | the Android widget gains a Today list with boxes                                                                                                            | should                                 | the widget exists                                                |
 | 19  | Quick settings tile                                              | "Add task" tile next to New note                                                                                                                            | should                                 | three lines of Kotlin                                            |
-| 20  | Wear OS                                                          | none                                                                                                                                                        | drop                                   | no watch build; the glasses are nib's wearable                   |
+| 20  | Wear OS                                                          | none                                                                                                                                                        | drop                                   | no watch build; the glasses are Orden's wearable                   |
 | 21  | Siri, Google Assistant                                           | an App Shortcut on Android for "add task"                                                                                                                   | later                                  | needs an intent filter per assistant                             |
 | 22  | Inbox                                                            | `Inbox.md` at each space's root, made on the first quick add                                                                                                | must                                   |                                                                  |
 | 23  | Projects                                                         | a note with tasks is a project; the panel lists them (5.5)                                                                                                  | must                                   |                                                                  |
@@ -266,7 +266,7 @@ added, property edited or a schedule; forms that write rows.
 | 63  | Automatic reminder at the due time                               | on for every task with a time; a setting for how long before                                                                                                | must                                   |                                                                  |
 | 64  | Custom reminders, several per task                               | `[remind:: 15m, 2026-10-06 09:00]`                                                                                                                          | must                                   |                                                                  |
 | 65  | Recurring reminders                                              | a reminder on a recurring task moves with it; a reminder that recurs on its own                                                                             | later                                  | rare beyond the first case, which is must with 42                |
-| 66  | Location reminders                                               | none                                                                                                                                                        | later                                  | needs background location on phones nib does not ask for         |
+| 66  | Location reminders                                               | none                                                                                                                                                        | later                                  | needs background location on phones Orden does not ask for         |
 | 67  | Desktop notifications                                            | the system's, with Done and Snooze (5.10)                                                                                                                   | must                                   |                                                                  |
 | 68  | Mobile notifications                                             | local alarms the phone holds (must); push from the Worker (should, 8.5)                                                                                     | must, should                           |                                                                  |
 | 69  | Email reminders                                                  | the Worker mails the reader's own verified address                                                                                                          | later                                  | after push, if asked                                             |
@@ -275,7 +275,7 @@ added, property edited or a schedule; forms that write rows.
 | 72  | Assignees                                                        | `+Name`, a view per person, "assigned to me"                                                                                                                | should                                 |                                                                  |
 | 73  | Comments with mentions and notifications                         | none beyond the note's own words                                                                                                                            | later                                  | needs per-person notifications                                   |
 | 74  | Activity history                                                 | the note's versions with who wrote each, and the done lines                                                                                                 | should                                 | versions exist                                                   |
-| 75  | Team workspace, roles, guests                                    | the sharing roles that exist                                                                                                                                | drop                                   | nib shares spaces and notes; an admin console is another product |
+| 75  | Team workspace, roles, guests                                    | the sharing roles that exist                                                                                                                                | drop                                   | Orden shares spaces and notes; an admin console is another product |
 | 76  | Productivity: completed per day and week, goals                  | a Logbook header with counts per day                                                                                                                        | later                                  | after the views                                                  |
 | 77  | Karma                                                            | none                                                                                                                                                        | drop                                   | points for ticking boxes is the opposite of calm                 |
 | 78  | Vacation mode, days off                                          | none                                                                                                                                                        | drop                                   | belongs to Karma                                                 |
@@ -284,7 +284,7 @@ added, property edited or a schedule; forms that write rows.
 | 81  | API                                                              | the CLI's `tasks` verbs and `nib://add-task` (5.15)                                                                                                         | must                                   |                                                                  |
 | 82  | MCP server                                                       | `nib mcp` and the account connector (5.15)                                                                                                                  | must                                   | Emil's ask                                                       |
 | 83  | Offline                                                          | files                                                                                                                                                       | must                                   | free                                                             |
-| 84  | Sync                                                             | nib sync, tasks being notes                                                                                                                                 | must                                   | free                                                             |
+| 84  | Sync                                                             | Orden sync, tasks being notes                                                                                                                                 | must                                   | free                                                             |
 | 85  | Mobile apps                                                      | the phone build with the panel and quick add                                                                                                                | must                                   |                                                                  |
 | 86  | Themes                                                           | the theme store                                                                                                                                             | must                                   | exists                                                           |
 | 87  | Keyboard shortcuts                                               | the keys of 5.16, rebindable                                                                                                                                | must                                   |                                                                  |
@@ -310,12 +310,12 @@ deadlines, a full activity log, unlimited dictation and the AI features.
 One table, Obsidian's and Notion's features side by side. "Bases" and "Notion" say whether
 each has it (✓), partly (~) or not (-).
 
-| feature                                                                                                                  | Bases                        | Notion                         | nib                  | how                                                                                                     |
+| feature                                                                                                                  | Bases                        | Notion                         | Orden                  | how                                                                                                     |
 | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | ------------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------- |
 | **Rows and files**                                                                                                       |                              |                                |                      |                                                                                                         |
 | a row is a note                                                                                                          | ✓                            | ✓ (a page)                     | must                 | the rows index (5.3)                                                                                    |
 | a row is a task line                                                                                                     | -                            | ~ (a page)                     | must                 | `nib: { rows: tasks }` on a view (5.11)                                                                 |
-| a base as a file                                                                                                         | ✓ `.base`                    | -                              | must                 | Obsidian's YAML, read and written without losing a key nib does not know                                |
+| a base as a file                                                                                                         | ✓ `.base`                    | -                              | must                 | Obsidian's YAML, read and written without losing a key Orden does not know                                |
 | a base inside a note                                                                                                     | ✓ ` ```base `                | ✓ inline database              | must                 | the fence, drawn in the editor and the reading view                                                     |
 | embed a base or one view                                                                                                 | ✓ `![[x.base#View]]`         | ✓ linked view                  | must                 | the embed widget                                                                                        |
 | new row from a view                                                                                                      | ✓                            | ✓                              | must                 | a note made in the folder the filter names, with the filter's properties written in (the bug Bases has) |
@@ -354,12 +354,12 @@ each has it (✓), partly (~) or not (-).
 | board / kanban, drag changes the property                                                                                | ✓ (1.14)                     | ✓                              | must                 |                                                                                                         |
 | manual card order within a column                                                                                        | -                            | ✓                              | should               | `nib.order: [paths]` per column, kept in the base                                                       |
 | board columns for empty groups, hidden groups, column order                                                              | ~                            | ✓                              | must                 | the group's options decide the columns, not the rows present                                            |
-| calendar (month, week, day)                                                                                              | -                            | ✓                              | must                 | `type: calendar` (nib)                                                                                  |
-| timeline / Gantt                                                                                                         | -                            | ✓                              | must                 | `type: timeline` (nib)                                                                                  |
+| calendar (month, week, day)                                                                                              | -                            | ✓                              | must                 | `type: calendar` (Orden)                                                                                  |
+| timeline / Gantt                                                                                                         | -                            | ✓                              | must                 | `type: timeline` (Orden)                                                                                  |
 | dependency arrows on the timeline                                                                                        | -                            | ✓                              | should               | Tasks' `🆔` and `⛔` for tasks, a `blocked-by` relation for notes                                       |
-| chart (bar, line, donut, number)                                                                                         | -                            | ✓                              | should               | `type: chart` (nib), drawn as SVG                                                                       |
+| chart (bar, line, donut, number)                                                                                         | -                            | ✓                              | should               | `type: chart` (Orden), drawn as SVG                                                                       |
 | feed                                                                                                                     | -                            | ✓                              | later                | a list of whole notes, one under the other; the reading view can almost do it                           |
-| form                                                                                                                     | -                            | ✓                              | should               | `type: form` (nib): fields for the view's properties; Submit makes the note                             |
+| form                                                                                                                     | -                            | ✓                              | should               | `type: form` (Orden): fields for the view's properties; Submit makes the note                             |
 | public form                                                                                                              | -                            | ✓                              | later                | through publishing, answers come in through the Worker                                                  |
 | map                                                                                                                      | ✓ (plugin)                   | ✓                              | later                | tiles are a third party: loads on a press, and needs a place property                                   |
 | dashboard                                                                                                                | -                            | ✓                              | drop                 | a note that embeds several views is a dashboard already                                                 |
@@ -384,11 +384,11 @@ each has it (✓), partly (~) or not (-).
 | **Templates, buttons, automations**                                                                                      |                              |                                |                      |                                                                                                         |
 | templates for new rows                                                                                                   | - (core Templates)           | ✓                              | must                 | a note in the templates folder; Obsidian's `{{date}}`, `{{time}}`, `{{title}}`                          |
 | a default template per base and per view                                                                                 | -                            | ✓                              | must                 | `nib.template: "[[Templates/Bug]]"`                                                                     |
-| repeating templates                                                                                                      | -                            | ✓                              | should               | a template with `🔁` makes a note on its schedule when nib runs (5.13)                                  |
+| repeating templates                                                                                                      | -                            | ✓                              | should               | a template with `🔁` makes a note on its schedule when Orden runs (5.13)                                  |
 | buttons in a page                                                                                                        | -                            | ✓                              | should               | the button column, and a ` ```button ` fence later                                                      |
-| automation: property set when another changes                                                                            | -                            | ✓                              | should               | rules in `nib.automations`, run where nib runs                                                          |
+| automation: property set when another changes                                                                            | -                            | ✓                              | should               | rules in `nib.automations`, run where Orden runs                                                          |
 | automation: notification                                                                                                 | -                            | ✓                              | should               | a reminder to the reader                                                                                |
-| automation: webhook, Slack, mail                                                                                         | -                            | ✓                              | later                | needs the Worker to run it while nib is closed                                                          |
+| automation: webhook, Slack, mail                                                                                         | -                            | ✓                              | later                | needs the Worker to run it while Orden is closed                                                          |
 | automation on a schedule                                                                                                 | -                            | ✓                              | later                | with repeating templates on the Worker                                                                  |
 | **Structure**                                                                                                            |                              |                                |                      |                                                                                                         |
 | sub-items                                                                                                                | -                            | ✓                              | must                 | nested tasks; for notes a `parent` relation, shown as a tree                                            |
@@ -431,7 +431,7 @@ lanes 1, 4 and 7:
 
 ### 5.1 Where tasks live
 
-**In notes, as lines.** A task is a list item with a box, as nib already reads it
+**In notes, as lines.** A task is a list item with a box, as Orden already reads it
 (`packages/markdown/src/tasks.ts`), with its fields written after its words in the
 [Tasks emoji format][tasks-emoji]:
 
@@ -447,18 +447,18 @@ lanes 1, 4 and 7:
 - [-] Renew the gym ❌ 2026-09-30
 ```
 
-Why this and not a store of nib's own:
+Why this and not a store of Orden's own:
 
 - **Portability is the promise.** Obsidian with the Tasks plugin reads every date, priority
   and recurrence; Dataview reads the bracket fields; every editor shows the words. A space
-  that leaves nib loses nothing.
-- **The emoji are hidden.** nib's live preview already hides the marks markdown is made of;
+  that leaves Orden loses nothing.
+- **The emoji are hidden.** Orden's live preview already hides the marks markdown is made of;
   a task's fields are marks too. The editor draws the line as its words and a row of quiet
   chips (5.7), and the source is one caret away, as every other mark is.
 - **Context is free.** A task written in a meeting note sits under the meeting's heading, next
   to the paragraph that explains it. Todoist has to copy that into a comment.
 
-**The fields.** nib reads all of the Tasks format and Dataview's bracket form, and writes
+**The fields.** Orden reads all of the Tasks format and Dataview's bracket form, and writes
 one canonical form so a round trip through Obsidian changes no byte.
 
 | field          | written                                              | read too                                       | notes                                                                             |
@@ -474,11 +474,11 @@ one canonical form so a round trip through Obsidian changes no byte.
 | recurrence     | `🔁 every week on Monday`, `... when done`           | `[repeat:: ]`                                  | always written in English, the words Tasks parses; shown in the reader's language |
 | id, depends on | `🆔 a1b2c3`, `⛔ a1b2c3`                             | `[id:: ]`, `[dependsOn:: ]`                    | written when a dependency is drawn                                                |
 | tags           | `#admin`                                             |                                                | Todoist's labels                                                                  |
-| time           | `[time:: 16:00]`                                     | `[time:: 16:00 Europe/Zurich]`                 | nib's; the start or scheduled date's time                                         |
-| duration       | `[duration:: 45m]`                                   | `1h30m`, `90m`                                 | nib's                                                                             |
-| deadline       | `[deadline:: 2026-10-20]`                            |                                                | nib's; Todoist's deadline                                                         |
-| reminders      | `[remind:: 15m, 2026-10-06 09:00]`                   |                                                | nib's; relative to the start time, or absolute                                    |
-| assignee       | `[assignee:: Lucile]`                                | `+Lucile` in quick add                         | nib's                                                                             |
+| time           | `[time:: 16:00]`                                     | `[time:: 16:00 Europe/Zurich]`                 | Orden's; the start or scheduled date's time                                         |
+| duration       | `[duration:: 45m]`                                   | `1h30m`, `90m`                                 | Orden's                                                                             |
+| deadline       | `[deadline:: 2026-10-20]`                            |                                                | Orden's; Todoist's deadline                                                         |
+| reminders      | `[remind:: 15m, 2026-10-06 09:00]`                   |                                                | Orden's; relative to the start time, or absolute                                    |
+| assignee       | `[assignee:: Lucile]`                                | `+Lucile` in quick add                         | Orden's                                                                             |
 
 #### 5.1.1 A start date and a deadline
 
@@ -498,24 +498,24 @@ connectors' `list_tasks`. It is on the account (`undatedInToday`), off to begin 
 it is `undated` on Bases' Today (`builtinView`); a Today a tab laid out differently keeps
 its layout and still follows it (`todayAs`), unless the reader wrote its filter.
 
-Written, a start date is `🛫` and a deadline `[deadline:: ]`; what nib writes for a date
+Written, a start date is `🛫` and a deadline `[deadline:: ]`; what Orden writes for a date
 picked, typed or said is `🛫`. A `📅` is read by where it stands, and never rewritten:
 
 - in an **Obsidian vault**, a space with `.obsidian` at its root, it is the Tasks plugin's
   due date, which is a deadline;
-- in a **space of nib's own**, where a deadline has always been `[deadline:: ]`, it is the
-  date nib wrote before it said start dates, and is read as one - unless the line has a
+- in a **space of Orden's own**, where a deadline has always been `[deadline:: ]`, it is the
+  date Orden wrote before it said start dates, and is read as one - unless the line has a
   `🛫` of its own, which makes it a line written the plugin's way and its `📅` the
   deadline.
 
 A date set again is written to the field that already holds it, so an old `📅` moves in
 place. `⏳` stays the plugin's scheduled date: it places a task on a day the way a start
-date does, and never makes it late. The rules are `@nib/markdown/task-dates`; the rows say
+date does, and never makes it late. The rules are `@orden/markdown/task-dates`; the rows say
 which way a space reads its `📅` (`dueReads`), and so does the editor's note index.
 
-**Order on the line**: words, then nib's bracket fields, then tags, then the emoji fields in
+**Order on the line**: words, then Orden's bracket fields, then tags, then the emoji fields in
 Tasks' own order. Tasks reads its fields from the end of the line backwards and stops at the
-first thing it does not know, so nib's fields go before its own and every Tasks field stays
+first thing it does not know, so Orden's fields go before its own and every Tasks field stays
 readable. A test holds the writer to the Tasks plugin's own examples.
 
 **Projects, sections, sub-tasks, comments.**
@@ -594,7 +594,7 @@ Ticking a recurring task does what the Tasks plugin does, so both apps agree on 
 One edit to the document per tick, so one Ctrl+Z restores both lines. The rule's grammar is
 the Tasks plugin's (`every 2 weeks on Monday, Friday`, `every month on the last Friday`,
 `every year on 3 March`, `every weekday`, `until`, `when done`), parsed into an RRULE-shaped
-value inside `@nib/bases` and written back as the same English words.
+value inside `@orden/bases` and written back as the same English words.
 
 ### 5.3 The index
 
@@ -605,7 +605,7 @@ saved. The rows ride on that pass:
 
 - the crate adds, per note, its **raw front matter block** and its **task lines** (the line
   number, the indentation, the box's character, the text, and the heading path above it).
-  Raw, because one parser is enough: the window parses fields with `@nib/markdown` and
+  Raw, because one parser is enough: the window parses fields with `@orden/markdown` and
   properties with `packages/markdown/src/properties.ts`, so the crate and the window cannot
   disagree about a field. `apps/desktop/src/lib/scan-note.ts` does the same for the browser
   build;
@@ -635,8 +635,8 @@ added to the scan, under 4 MB of rows, under 2 ms to update one note's rows afte
 null), `tasks` (`{ line, indent, mark, text, section }`, `text` being everything after
 the box, outside code and front matter, at most 5,000 a note and 2,000 characters a line)
 and `stamp` (`{ size, mtime, ctime }` in milliseconds, off the handle the note was read
-through); `@nib/bases/scan` (`packages/bases/src/scan.ts`) is the browser's twin, and its tests are the crate's cases. The
-rows store is `lib/rows/`: `@nib/bases/rows` makes a note's rows (`readTask`, `noteValues`,
+through); `@orden/bases/scan` (`packages/bases/src/scan.ts`) is the browser's twin, and its tests are the crate's cases. The
+rows store is `lib/rows/`: `@orden/bases/rows` makes a note's rows (`readTask`, `noteValues`,
 `taskHash`; `parent` is the nearest less indented task above under the same heading),
 `store.ts` keeps them per space and file, `write.ts` is the one write path and `inbox.ts`
 the inbox. `rows.svelte.ts` is the app's instance, fetched at the launch order's last turn:
@@ -646,12 +646,12 @@ scanned after it one at a time, every save in any space reaches the rows through
 per file, `{ root, space, path, removed, added }`, and `path` is null when a whole space
 was read, renamed or forgotten. `rows.write(row, { note?, task? })` edits front matter keys
 and task fields through `replaceInNotes`, finding a task's line again by its anchor's hash
-where lines above it moved. An edit made outside nib reaches the rows exactly where it
+where lines above it moved. An edit made outside Orden reaches the rows exactly where it
 reaches the link index, and no other way: the rows add no watcher of their own.
 
 ### 5.4 One engine: rows, queries, views
 
-`@nib/bases` (new package, pure, no DOM) is the one place a question about rows is answered.
+`@orden/bases` (new package, pure, no DOM) is the one place a question about rows is answered.
 
 - **A row** is a note or a task. Its columns: `file.*` (Bases' own list), `note.*` (the front
   matter; for a task, its note's), `task.*` for a task (`text`, `status`, `done`, `due`,
@@ -777,7 +777,7 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
   after `>` its notes, after `>Note/` that note's headings (Todoist's `#`, `@` and `/`);
   ↑ ↓ walk them, Enter or Tab takes one, Escape puts them away (`tokenAt` in
   `quick-add/field.ts`).
-- **The grammar**, English and German, one table per language in `@nib/bases`:
+- **The grammar**, English and German, one table per language in `@orden/bases`:
 
   | what     | English                                                                                                                                                                                        | German                                                                                                                                                                                      |
   | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -792,7 +792,7 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
   | deadline | `{fri}`                                                                                                                                                                                        | `{Fr}`                                                                                                                                                                                      |
   | duration | `for 45m`, `for 1h30`                                                                                                                                                                          | `für 45 Min`, `1,5 Std`                                                                                                                                                                     |
 
-  The grammar is nib's own table rather than a library: [chrono][chrono], the usual one,
+  The grammar is Orden's own table rather than a library: [chrono][chrono], the usual one,
   has German only in part and no recurrences at all, and a table is what a third language
   is added to.
 
@@ -812,7 +812,7 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
   `apps/desktop/src-tauri/src/agents/shell.rs`). Registered after the launch order, never in
   the first paint. Default **Ctrl+Alt+Space** (Ctrl+Option+Space on a Mac, where
   Cmd+Ctrl+Space is the emoji picker), rebindable in Settings > Keyboard, and switched off
-  there with one switch. It needs nib running, so the
+  there with one switch. It needs Orden running, so the
   tray question is 8.6.
 - **Inside the app** the key is the same, and **Q** in a view or the panel, Todoist's key,
   where no field has the keyboard.
@@ -821,7 +821,7 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
   into several tasks shown as rows to keep or drop (Ramble's correction by speech comes free:
   the words are editable before Enter).
 
-**As built** (lane 3). The grammar is `@nib/bases/language`, its own entry so nothing that
+**As built** (lane 3). The grammar is `@orden/bases/language`, its own entry so nothing that
 never adds a task loads it: `grammar.ts` is a table's shape, `en.ts` and `de.ts` are the two
 tables, `when.ts` reads a day and a time, `repeat.ts` a rule (English handed to the Tasks
 plugin's own reader after Todoist's ways of saying one are said its way, German built into the
@@ -889,15 +889,15 @@ The editor draws a task line as words and chips, hiding its fields the way it hi
   dim over `--dur-*`.
 - The search's `task:` operators and the ` ```query ` fence keep working and keep their live
   boxes; a ` ```tasks ` fence (the Tasks plugin's) is drawn by the engine as a list view
-  instead of as code, so Obsidian's query blocks come alive in nib.
+  instead of as code, so Obsidian's query blocks come alive in Orden.
 
 **As built** (lane 3). `packages/editor/src/live-preview/task-chips.ts`, hooked in from
-`decorate.ts` where a box is drawn, hides every field the Tasks plugin or nib writes as a mark
+`decorate.ts` where a box is drawn, hides every field the Tasks plugin or Orden writes as a mark
 (dimmed with the caret on the line) and draws the chips after the words; tags stay words, and
-so does an inline field nib has no name for. The module and the grammar behind it are fetched
+so does an inline field Orden has no name for. The module and the grammar behind it are fetched
 the first time a line on screen has a field, and the note is drawn again when they land, as an
 emoji is. Days are `task-days.ts`, shared with quick add. What only the app can do comes in on
-the note index as `tasks` (`TaskHelp`): `tick`, the engine's (`tick` in `@nib/bases`, now
+the note index as `tasks` (`TaskHelp`): `tick`, the engine's (`tick` in `@orden/bases`, now
 exported), used by the box, by Ctrl+Enter (`task-tick.ts`, one transaction, so one undo takes
 back the done line and the next occurrence), by `rows.write({ task: { done } })` and by every
 box in search and fence rows (`toggleTaskAt`); `pick`, a chip's choices in the app's menu out
@@ -910,11 +910,11 @@ open space's rows) in the query fence's own rows and boxes, in the editor and th
 
 ### 5.8 Filters: Todoist's language on the engine
 
-A view's filter field takes Todoist's language as typed, and `@nib/bases` compiles it to the
+A view's filter field takes Todoist's language as typed, and `@orden/bases` compiles it to the
 expression tree; the toolbar's Filter button shows the same tree as rows to click. Saved, it
 is written as Bases YAML, so Obsidian reads the filter as well.
 
-| Todoist                                                                               | nib reads it as                                                          |
+| Todoist                                                                               | Orden reads it as                                                          |
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | `today`, `tomorrow`, `overdue`, `od`, `no date`, `7 days`, `next 7 days`, `next week` | due (or scheduled) on, before or within                                  |
 | `date: oct 6`, `date before: fri`, `date after: today`                                | the same, on the due date                                                |
@@ -1105,22 +1105,22 @@ rather than adding a second one.
 
 **Where it fires**:
 
-| where         | nib running                                                                                       | nib closed                                                                                                                                                                                                                                                                    |
+| where         | Orden running                                                                                       | Orden closed                                                                                                                                                                                                                                                                    |
 | ------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Windows       | a toast from the notification plugin                                                              | **scheduled toasts**: the scheduler hands each to the system (`ToastNotifier.AddToSchedule` under nib's app id, through the `windows` crate already in the build), which shows it at the time with nib not running; the actions start nib                                     |
-| macOS         | a notification                                                                                    | a `UNCalendarNotificationTrigger` request, which the system fires with nib quit                                                                                                                                                                                               |
-| Linux         | a notification                                                                                    | nothing unless nib is in the tray (8.6); said once in Settings                                                                                                                                                                                                                |
+| Windows       | a toast from the notification plugin                                                              | **scheduled toasts**: the scheduler hands each to the system (`ToastNotifier.AddToSchedule` under Orden's app id, through the `windows` crate already in the build), which shows it at the time with Orden not running; the actions start Orden                                     |
+| macOS         | a notification                                                                                    | a `UNCalendarNotificationTrigger` request, which the system fires with Orden quit                                                                                                                                                                                               |
+| Linux         | a notification                                                                                    | nothing unless Orden is in the tray (8.6); said once in Settings                                                                                                                                                                                                                |
 | Android       | a notification                                                                                    | **local alarms**: the page hands the list to Kotlin, which sets `AlarmManager` alarms, keeps the list in the app's own storage and sets them again after a reboot. No sync and no credential in Kotlin, so `docs/mobile.md`'s rule against a second sync implementation holds |
 | browser build | a Web Notification while the tab is open                                                          | push from the Worker (8.5)                                                                                                                                                                                                                                                    |
 | Even glasses  | the phone's notification, which the Even app shows on the glasses like any other it is allowed to | the same, from the phone's alarm                                                                                                                                                                                                                                              |
 
 **Actions** on every notification that has them: **Done** (ticks it through the same write a
-box does, starting nib in the background where it has to), **Snooze** (15 minutes, or until
+box does, starting Orden in the background where it has to), **Snooze** (15 minutes, or until
 tomorrow 9:00), and a press that opens the note at the line. A reminder that fired is not
 fired again on another start; a task ticked on another device stops its reminders here as
 soon as the change arrives.
 
-**The gap**, said plainly: a phone that has not opened nib since a task was added on the
+**The gap**, said plainly: a phone that has not opened Orden since a task was added on the
 laptop has not scheduled its alarm. Todoist pushes from its server. Closing that gap is
 push from the Worker, which can read notes (notes are not end-to-end encrypted, see
 `docs/sync-v2.md`): it would keep a table of upcoming reminders from the task lines it
@@ -1130,7 +1130,7 @@ reading reminder times), and Emil decided to build it (8.5).
 
 **As built** (lane 5, 2026-10-04):
 
-- **When**: `remindTimes` and `momentOf` in `@nib/markdown/task-reminders`, shared by the
+- **When**: `remindTimes` and `momentOf` in `@orden/markdown/task-reminders`, shared by the
   app and the Worker so both agree on the minute. A relative `[remind:: 15m]` counts back
   on the wall clock from the task's time on the day it starts (else is scheduled); a
   deadline rings nothing (5.1.1); a bare time is
@@ -1149,7 +1149,7 @@ reading reminder times), and Emil decided to build it (8.5).
   (`toast.rs`) is `scenario="reminder"` with the system's own snooze (15 min, 1 h,
   tomorrow 9:00) and Done as a `nib://reminder` link. Proved by
   `scripts/reminders-probe.py` on a probe of its own; where Windows refuses the id, the
-  page rings the plan itself while nib runs (7.3's fallback).
+  page rings the plan itself while Orden runs (7.3's fallback).
 - **macOS**: `reminders/macos.rs`, `UNCalendarNotificationTrigger` requests in one
   category with Done and two snoozes (15 min, 1 h), the delegate set at launch so a
   press that started the app is heard; a build that is not a bundle answers no and the
@@ -1174,10 +1174,10 @@ reading reminder times), and Emil decided to build it (8.5).
   the keys Emil has to make. Dry-run under `wrangler dev --test-scheduled`: a due row in
   a local D1 was claimed by the minute's cron.
 
-### 5.11 `.base` files, and nib's key
+### 5.11 `.base` files, and Orden's key
 
-A base nib writes is a base Obsidian reads. nib's additions go under one key, `nib:`, at the
-top level and inside a view, and every key nib does not know is kept on a round trip in the
+A base Orden writes is a base Obsidian reads. Orden's additions go under one key, `nib:`, at the
+top level and inside a view, and every key Orden does not know is kept on a round trip in the
 order it was written. Obsidian ignores what it does not understand; lane 1 proves that with
 fixtures opened in Obsidian 1.14 (if the top-level key were refused, the additions move into
 the views, where plugin view types already keep their own options).
@@ -1240,9 +1240,9 @@ nib:
 - **`nib.rows`**: `notes` (Bases' own, the default), `tasks`, or `both`. A view of tasks in
   Obsidian shows the notes those tasks are in, which is the graceful version of the same
   question.
-- **nib-only view types** (`calendar`, `timeline`, `chart`, `form`) are drawn by nib; Obsidian
+- **nib-only view types** (`calendar`, `timeline`, `chart`, `form`) are drawn by Orden; Obsidian
   shows its own message for an unknown layout, for that view only. Where a community plugin
-  already named the type, nib uses the same name and options.
+  already named the type, Orden uses the same name and options.
 - **`this`** is the note that embeds the base, the base itself when opened, and the note in
   front for a base in a side panel: Bases' rules.
 
@@ -1257,7 +1257,7 @@ fence as code, for the reason a ` ```query ` fence stays code (`apps/desktop/src
   a table cell, a card and a form, so a date is picked the same way everywhere.
 - **The type of a property** is what Obsidian's `types.json` says where the space has one,
   else what its values look like, else what the base's `nib.properties` says (select options,
-  number format, person, URL). nib writes `types.json` for a property the reader gives a type,
+  number format, person, URL). Orden writes `types.json` for a property the reader gives a type,
   so Obsidian agrees.
 - **Writes** go through one path: `lib/rows/write.ts`, which edits a note's front matter with
   `frontMatterEdit` (`packages/markdown/src/property-edits.ts`) and a task's fields with the
@@ -1281,7 +1281,7 @@ fence as code, for the reason a ` ```query ` fence stays code (`apps/desktop/src
   one into 46 the first time a reader looks (a merge of ids, not of notes).
 - **Created by, edited by** wait for sync v2 to keep an author per version of each file.
 
-**As built** (lane 7, 2026-10-05). The engine's halves are `@nib/bases`'s `rollup.ts`,
+**As built** (lane 7, 2026-10-05). The engine's halves are `@orden/bases`'s `rollup.ts`,
 `ids.ts`, `colour.ts` and `csv.ts`; the app's are `lib/views/`'s builders, each a layer
 the view's head holds under its name (`live.builder`), opened from a column's menu
 (`column-menu.ts`, the table's header and a form's field alike) or the name's menu.
@@ -1334,20 +1334,20 @@ the view's head holds under its name (`live.builder`), opened from a column's me
   with tasks whose dates are written relative (`📅 {{date+7d}}`), which is how Todoist's
   project templates are used.
 - **Repeating templates**: a template with `🔁 every Monday` in its front matter's `repeat`
-  makes its note on schedule while nib runs (the next time nib runs, if it was closed: one
+  makes its note on schedule while Orden runs (the next time Orden runs, if it was closed: one
   note, not one per missed week, with the missed dates said in the note's list).
 - **Buttons**: a property type whose cell is a button with a label and an action: run a palette
   command, set properties on this row, add a task to this note, open a URL. Notion's button,
   without a scripting language.
 - **Automations**, in the base's `nib.automations`: when a row is added, or a property
   changes to a value, set properties, move the note to a folder, add a date, or remind. They
-  run where nib runs, are listed in the base's menu with a switch each, and every run is one
-  undoable edit. Webhooks, mail and schedules while nib is closed need the Worker (later).
+  run where Orden runs, are listed in the base's menu with a switch each, and every run is one
+  undoable edit. Webhooks, mail and schedules while Orden is closed need the Worker (later).
 - **Forms**: 5.9.
 
 **As built** (lane 7, 2026-10-05).
 
-- **Templates**: `@nib/bases`'s `templates.ts` fills `{{title}}`, `{{date}}`, `{{time}}`,
+- **Templates**: `@orden/bases`'s `templates.ts` fills `{{title}}`, `{{date}}`, `{{time}}`,
   `{{date:FORMAT}}` (Moment's tokens, `formatDate`) and `{{date+7d}}` (`d`, `w`, `M`,
   `y`), and takes the template's own keys (`repeat`, `made`, `folder`) off the note. The
   folder is `.obsidian/templates.json`'s, else `Templates` (`views/templates.ts`). The
@@ -1419,7 +1419,7 @@ the view's head holds under its name (`live.builder`), opened from a column's me
 **The verbs**, in `nib mcp` (`apps/desktop/src-tauri/src/mcp/tools.json`, answered by the
 window as the note verbs are, `apps/desktop/src/lib/agents/workspace/notes.ts`) and, where
 marked, the account connector (`services/sync/src/mcp/tools.ts`, reading the account's notes
-with nib closed):
+with Orden closed):
 
 | tool          | arguments                                                                                                                                                                                | what it does                                            | connector |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------- |
@@ -1446,7 +1446,7 @@ cover them: an agent that may not write a space may not add a task to it.
   `/goal` it can keep going ("clear the inbox: give every task a note and a date").
 
 **The name clash.** Lane 5 of the AI sidebar registered `/tasks` (synonyms `/ps`, `/bashes`)
-for a thread's background work, after Claude Code's `/tasks`. In nib "task" already means a
+for a thread's background work, after Claude Code's `/tasks`. In Orden "task" already means a
 box in a note: the search's `task:` operators, the `set_task` verb, `read_note`'s `tasks`,
 this document. One word per term (`docs/conventions.md`), so **`/tasks` becomes the to-do
 command and background work becomes `/jobs`**, keeping `/ps` and `/bashes` as synonyms so a
@@ -1460,20 +1460,20 @@ its table test reads. Decision 8.3.
 only add a line to an inbox.
 
 **As built** (lane 6). The verbs are `lib/agents/workspace/tasks.ts` in the window and
-`services/sync/src/mcp/tasks.ts` on the Worker, both over `@nib/bases/agent`: a task
+`services/sync/src/mcp/tasks.ts` on the Worker, both over `@orden/bases/agent`: a task
 goes out as the fields it has with `at` (`path#line:hash`), found again in the note as
 it is by the hash nearest its line, and a change is the note written back whole as the
 agent's own edit (`writeNote`, the connector's `write_note`). `edit_rows` and
 `edit_base` are the local server's alone. The seven rows cost the tools table 3,767
 characters, about 950 tokens, and its ceiling went from 28,000 to 31,000. The rows of a
-note are `@nib/bases/rows` (`rowsOfText` on the Worker), so both servers read a task
+note are `@orden/bases/rows` (`rowsOfText` on the Worker), so both servers read a task
 one way. `/tasks` draws its rows as a notice with live boxes (`ai/sidebar/TaskRows.svelte`)
 and `/today` is a turn in Agent mode; the reader's own surfaces add, tick and list
 through `lib/task-actions.ts`, which writes the way quick add does (`quick-add/write.ts`).
 `add_task` reads its words with quick add's grammar (`quickWords`: the reader's language
 and English in the app, English and German on the Worker), the Tasks plugin's own marks
 written in them winning, and `>Note /Heading` choosing where it goes; every way a task
-comes in places its line with one function (`placeIn`, `@nib/bases/tasks`). The CLI's verbs are the same verbs asked as the reader, and `nib://add-task`
+comes in places its line with one function (`placeIn`, `@orden/bases/tasks`). The CLI's verbs are the same verbs asked as the reader, and `nib://add-task`
 takes the words and a space and nothing else.
 
 ### 5.16 Keys
@@ -1481,8 +1481,8 @@ takes the words and a space and nothing else.
 | key                          | where                                          | what                                                      |
 | ---------------------------- | ---------------------------------------------- | --------------------------------------------------------- |
 | Ctrl+Alt+Space               | anywhere, the system                           | quick add window (rebindable, can be off)                 |
-| Ctrl+Alt+Space, Q            | in nib; Q only where no field has the keyboard | quick add                                                 |
-| Ctrl+Shift+Y                 | in nib                                         | the Tasks panel (the next free letter; registry decides)  |
+| Ctrl+Alt+Space, Q            | in Orden; Q only where no field has the keyboard | quick add                                                 |
+| Ctrl+Shift+Y                 | in Orden                                         | the Tasks panel (the next free letter; registry decides)  |
 | Ctrl+Enter                   | a task line                                    | tick (exists)                                             |
 | ↑ ↓, j k                     | a row in a view                                | the row below, above                                      |
 | Enter, Space                 | a row                                          | the task's own view; the note at the line beside the view |
@@ -1557,7 +1557,7 @@ says how many of each before anything is written, as the other importers do.
   scrolling at 60 fps; a tick reflected in every open view within one frame.
 - **Words**: the panel and the views say names and counts, nothing else. Empty Today is an
   empty list with the add row; there is no "You're all done!" sentence (Todoist's
-  illustration is exactly the copy nib does not write).
+  illustration is exactly the copy Orden does not write).
 - **Motion**: a ticked task's box fills and the row fades and slides out of an open-only view
   over `--dur-*` with `--ease-out`; cards lift on drag with the canvas's shadow; the layout
   switch slides like every segmented control; reduced motion makes all of it a cut.
@@ -1575,14 +1575,14 @@ The browser extension's **As a task**, and the Worker's `POST /v1/spaces/:id/tas
 was the only caller of, went with the extension (#366). On the glasses the modal's fifth row is
 Today and "task ..." / "Aufgabe ..." adds to the inbox (docs/even.md).
 
-## 6. What nib does not do
+## 6. What Orden does not do
 
 - **A Todoist account bridge** (two-way sync with Todoist): the import is the bridge; two
   sources of truth for one list is how tasks get lost.
 - **Karma, streaks, vacation mode.**
 - **Dashboards as a type.** A note with several embedded views is a dashboard, and a
   better one: it has words between the charts.
-- **A formula language of nib's own.** Bases' is the language; a formula Obsidian cannot read
+- **A formula language of Orden's own.** Bases' is the language; a formula Obsidian cannot read
   is a base that stops working there.
 - **Verification, wiki owners**, and the other Notion features that belong to a company wiki
   rather than a database.
@@ -1590,20 +1590,20 @@ Today and "task ..." / "Aufgabe ..." adds to the inbox (docs/even.md).
 ## 7. The implementation plan
 
 Seven lanes in three waves, at most six at once. Each lane reads this document,
-`docs/conventions.md` and the rules for every nib agent first, writes tests for its logic,
+`docs/conventions.md` and the rules for every Orden agent first, writes tests for its logic,
 and adds every new string to every catalogue in `apps/desktop/src/locales`. New files in the
 app are named relative to `apps/desktop/src` (or `src-tauri/src`); the new package is
-packages/bases, published in the workspace as `@nib/bases`.
+packages/bases, published in the workspace as `@orden/bases`.
 
 ### 7.1 The interfaces the lanes meet at
 
 Written first, by lane 1: the shapes are in `packages/bases/src/types.ts` (exported from
-`@nib/bases`), the task line's in `packages/markdown/src/task-line.ts` (re-exported by
-`@nib/bases`, because the search and the editor read task lines without the engine). This
+`@orden/bases`), the task line's in `packages/markdown/src/task-line.ts` (re-exported by
+`@orden/bases`, because the search and the editor read task lines without the engine). This
 section is the summary; the comments in those files are the contract.
 
 ```ts
-// @nib/markdown/task-line: one line, read the way the Tasks plugin reads it
+// @orden/markdown/task-line: one line, read the way the Tasks plugin reads it
 type Priority = 1 | 2 | 3 | 4 | 5 | 6   // p1 🔺, p2 ⏫, p3 🔼, 4 none (p4), 5 🔽, 6 ⏬
 type Remind = { before: number } | { time: string } | { at: string; time: string }
 interface TaskFields {
@@ -1619,13 +1619,13 @@ interface TaskFields {
 function readTask(line: string): TaskFields | null
 function parseTask(line: string): ParsedTask | null   // the fields and where each is written
 
-// @nib/markdown/task-edits: the smallest edits, offsets into the line
+// @orden/markdown/task-edits: the smallest edits, offsets into the line
 type TaskChange = { [K in keyof TaskFields]?: TaskFields[K] | null }  // null removes
 function writeTask(line: string, change: TaskChange): TextEdit[]
 function changedTask(line: string, change: TaskChange): string
 function taskLine(fields: TaskFields, prefix?: string): string        // a new line, nib's order
 
-// @nib/bases: types.ts
+// @orden/bases: types.ts
 type Value = null | boolean | number | string
   | { kind: 'date'; iso: string; time?: string; zone?: string }
   | { kind: 'duration'; ms: number; months: number }
@@ -1653,7 +1653,7 @@ interface Context { today: string; now: string; this?: Row; me?: string; search?
 interface Group { key: Value; rows: Row[]; summaries: Record<string, Value>; sub?: Group[] }
 interface Answer { groups: Group[]; total: number; summaries: Record<string, Value> }
 
-// @nib/bases: functions
+// @orden/bases: functions
 function noteValues(frontMatter: string): Record<string, Value>    // the note, or its block
 function taskHash(text: string): string
 function readBase(yaml: string): Base
@@ -1700,13 +1700,13 @@ reads a file. The reminders store (lane 5) reads `rows.watch` and nothing else.
 
 | lane                         | owns                                                                                                                                                                                                                                                                                                                                                       | builds                                                                                                                                                                                                                                                                                                                                                                                                                                     | tests                                                                                                                                                                                                                                                                                                                                                 | wave |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| **1 `rows-engine`**          | `@nib/bases` (new, in packages/bases); `packages/markdown/src/tasks.ts` and its test; the `tasks` fence's reading                                                                                                                                                                                                                                          | the types above; the task line reader and writer (5.1), canonical order, every Tasks and Dataview field; recurrence (5.2) with next occurrence; Bases YAML read and write with every unknown key kept; the expression language (parser, compiler, every function and method of the functions page); filters, sort, group, sub-group, limit, summaries (the defaults and custom); Todoist's filter language (5.8); the built-in views (5.4) | the Tasks plugin's documented examples round-trip byte for byte; Bases' documented example reads and writes unchanged; every function against Obsidian's documented results; 10,000 rows answered under 20 ms in a perf test; Todoist's documented filters compile to the expected trees; recurrence over month ends, leap days, `when done`, `until` | 1    |
+| **1 `rows-engine`**          | `@orden/bases` (new, in packages/bases); `packages/markdown/src/tasks.ts` and its test; the `tasks` fence's reading                                                                                                                                                                                                                                          | the types above; the task line reader and writer (5.1), canonical order, every Tasks and Dataview field; recurrence (5.2) with next occurrence; Bases YAML read and write with every unknown key kept; the expression language (parser, compiler, every function and method of the functions page); filters, sort, group, sub-group, limit, summaries (the defaults and custom); Todoist's filter language (5.8); the built-in views (5.4) | the Tasks plugin's documented examples round-trip byte for byte; Bases' documented example reads and writes unchanged; every function against Obsidian's documented results; 10,000 rows answered under 20 ms in a perf test; Todoist's documented filters compile to the expected trees; recurrence over month ends, leap days, `when done`, `until` | 1    |
 | **2 `rows-index`**           | `lib/rows/` (new); `apps/desktop/src-tauri/src/links.rs` (the scan's two new fields); `apps/desktop/src/lib/scan-note.ts`; the space's `inbox` setting                                                                                                                                                                                                     | task lines and raw front matter on the scan (crate and browser); rows built and kept current through `file-ops.ts` and saves; every space scanned after the launch order; the one write path (`lib/rows/write.ts`) for properties and task fields; the inbox note; the cache only if 5.3's measure says so                                                                                                                                 | cargo tests for the scan's fields; store tests for created, moved, removed, saved and a note open with unsaved words; a perf test with 5,000 notes and 10,000 tasks (scan cost, memory, update time); `weight.test.ts` unchanged; a draft-PR CI for the crate                                                                                         | 1    |
-| **3 `quick-add-and-editor`** | `@nib/bases`'s `language/` folder (new); `lib/quick-add/` (new); `packages/editor/src/live-preview/` task chips (a new file, a hook in `decorate.ts`); the quick add window in `src-tauri/src` (new file)                                                                                                                                                  | the en and de grammar tables and the parser (5.6), chips in the field, the pickers; the quick add sheet, palette row, panel row and global window with its key; the editor's chips, pickers, completion of a typed date and the tick with recurrence (5.7); the ` ```tasks ` fence drawn by the engine                                                                                                                                     | parser tests per table row in both languages and the ambiguous cases; editor state tests for chips hidden and shown with the caret, a pick as one edit, a recurring tick as one undo; a drive: quick add from the palette into the Inbox, a chip pressed back to words; the global key tested on a probe through `run_probe` only                     | 2    |
+| **3 `quick-add-and-editor`** | `@orden/bases`'s `language/` folder (new); `lib/quick-add/` (new); `packages/editor/src/live-preview/` task chips (a new file, a hook in `decorate.ts`); the quick add window in `src-tauri/src` (new file)                                                                                                                                                  | the en and de grammar tables and the parser (5.6), chips in the field, the pickers; the quick add sheet, palette row, panel row and global window with its key; the editor's chips, pickers, completion of a typed date and the tick with recurrence (5.7); the ` ```tasks ` fence drawn by the engine                                                                                                                                     | parser tests per table row in both languages and the ambiguous cases; editor state tests for chips hidden and shown with the caret, a pick as one edit, a recurring tick as one undo; a drive: quick add from the palette into the Inbox, a chip pressed back to words; the global key tested on a probe through `run_probe` only                     | 2    |
 | **4 `views`**                | `lib/views/` (new); the `'tasks'` panel in `apps/desktop/src/lib/workspace.svelte.ts` and `apps/desktop/src/lib/workspace/panels.ts`; the view tab's kind in `apps/desktop/src/lib/openers.ts`; the base fence and embed; `apps/desktop/src/lib/PropertiesPanel.svelte` (its controls lifted into shared ones)                                             | the Tasks panel (5.5); the view tab and its head; list, table, cards, board, calendar, Upcoming, timeline and chart layouts (5.9); inline editing through `rows.write`; drag on every layout; the filter, sort and group builders; saving a view as a `.base`; ` ```base ` and `![[x.base#View]]`; the phone layouts                                                                                                                       | component tests per layout; a drive `test/e2e/tasks.py`: seed tasks and notes, Today and Upcoming right, a board drag writing the property, a calendar drag writing the date, a table cell edit undone with Ctrl+Z, an embedded base in a note; the same at phone width; 2,000-card board scroll measured                                             | 2    |
 | **5 `reminders`**            | `lib/reminders/` (new); `src-tauri/src` reminders module (new); the Android alarm and boot receiver (new Kotlin beside `Widgets.kt`); the tray residency setting                                                                                                                                                                                           | the scheduler (5.10); Windows scheduled toasts and macOS triggers; the notification actions starting nib in the background; Linux and the tray; Android alarms, actions and reboot; the settings rows; the Worker push (8.5)                                                                                                                                                                                                               | scheduler tests (a moved task moves its reminder, a ticked one cancels, a recurring one schedules the next, 64 kept); cargo tests for the scheduling calls behind a trait; a probe with an identifier of its own, never Emil's nib, that a scheduled toast is registered; Android unit tests for the alarm list                                       | 2    |
 | **6 `tasks-everywhere`**     | `apps/desktop/src-tauri/src/mcp/tools.json` and the window's handlers (`lib/agents/workspace/tasks.ts`, new); `services/sync/src/mcp/tools.ts`; `apps/desktop/src/lib/ai/commands/table.ts` and `docs/ai-sidebar.md` 3.1; the CLI's verbs; `lib/import/todoist.ts` (new); the Even Today screen in `apps/desktop/src/lib/even/`; the widget's Today layout | the verbs of 5.15 on both servers; `/tasks`, `/today` and the `/jobs` rename; the CLI verbs and `nib://add-task`; the Todoist importer from the API and CSV (5.17); the glasses' Today and spoken add (5.18); the share sheet's                                                                                                                                                                              | verb tests through the MCP harness, a grant without the space refused; the AI command table test green with the new rows; importer tests on a recorded API answer and Todoist's documented CSV, with priorities turned round and recurrences re-parsed; Even screen tests within the panel's eight lines                                              | 2    |
-| **7 `database-extras`**      | `lib/views/` additions agreed with lane 4 (the form layout, the button cell, the rollup picker); `@nib/bases`'s `automations` (new)                                                                                                                                                                                                                        | relations' reverse columns and the rollup picker (5.12); unique ids; select options with tones; conditional colour; forms; buttons; templates and repeating templates; automations; locking; CSV export and CSV import as a base                                                                                                                                                                                                           | engine tests for rollups, id collisions, automations firing once per change and undoing as one; a drive: a form makes a note, a button sets a property, a rollup counts                                                                                                                                                                               | 3    |
+| **7 `database-extras`**      | `lib/views/` additions agreed with lane 4 (the form layout, the button cell, the rollup picker); `@orden/bases`'s `automations` (new)                                                                                                                                                                                                                        | relations' reverse columns and the rollup picker (5.12); unique ids; select options with tones; conditional colour; forms; buttons; templates and repeating templates; automations; locking; CSV export and CSV import as a base                                                                                                                                                                                                           | engine tests for rollups, id collisions, automations firing once per change and undoing as one; a drive: a form makes a note, a button sets a property, a rollup counts                                                                                                                                                                               | 3    |
 
 **Wave 1** is lanes 1 and 2 together: one is a pure package, the other the crate and the
 store, meeting at 7.1's types. **Wave 2** is lanes 3, 4, 5 and 6 together once lane 1's
@@ -1723,14 +1723,14 @@ lane 6 `docs/agent-native.md` 5.3, `docs/automation.md`, `docs/import.md` and `d
 - **Obsidian and the `nib:` key.** Proved by lane 1 on day one, with the fallback of 5.11.
 - **Obsidian 1.14's own keys.** The kanban's `type` and the cards' option names are read off
   files Obsidian itself writes, kept as fixtures, never guessed from the help pages.
-- **The Tasks plugin's parser and nib's bracket fields.** Proved by round-tripping the
+- **The Tasks plugin's parser and Orden's bracket fields.** Proved by round-tripping the
   plugin's own test lines; the order rule of 5.1 exists for it.
 - **Windows scheduled toasts without a packaged identity.** The notification plugin already
-  shows toasts under nib's app id in the installed build; lane 5 proves scheduling under the
+  shows toasts under Orden's app id in the installed build; lane 5 proves scheduling under the
   same id in a probe with its own identifier before building on it, and falls back to the
   tray where it cannot.
 - **Android exact alarms.** From Android 14 `SCHEDULE_EXACT_ALARM` is no longer granted to
-  a new install by default, and `USE_EXACT_ALARM` is for clocks and calendars. nib sends the
+  a new install by default, and `USE_EXACT_ALARM` is for clocks and calendars. Orden sends the
   reader to the system's switch once, the first time a reminder is set, and falls back to
   inexact alarms (within minutes) when it stays off.
 
@@ -1752,8 +1752,8 @@ them.
    one. Decided.
 5. **Push through the Worker.** Decided: built in lane 5. The Worker keeps a table of
    upcoming reminders from the task lines it receives and sends Web Push and FCM at the
-   time, so a phone that has not opened nib since a task was added elsewhere still rings.
-6. **nib in the tray** by default when the global quick add key is set or a reminder
+   time, so a phone that has not opened Orden since a task was added elsewhere still rings.
+6. **Orden in the tray** by default when the global quick add key is set or a reminder
    exists (Todoist's way), and off otherwise. Decided.
 7. **An inbox per space** (`Inbox.md` in each), shown together in the Inbox view. Decided.
 8. **Bases and templates are back; daily notes stay out** (Today is the daily list).

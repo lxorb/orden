@@ -10,7 +10,7 @@
  *  with one dead link still exports, and the export says so by not carrying the
  *  picture, which is exactly what the note itself shows. */
 
-import { mapSources, sourcesOf } from '@nib/markdown/sources'
+import { mapSources, sourcesOf } from '@orden/markdown/sources'
 import { fileBytes, parseDataUri, toBase64 } from '../bytes'
 import { isReserved } from '../naming'
 import { claimName } from './naming'

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { NibWidget } from '../src/live-preview/widget'
 
-/** Nib's widgets hold timers, listeners on the editor's own content element,
+/** Orden's widgets hold timers, listeners on the editor's own content element,
  *  and live view objects. `NibWidget` is where giving those back lives, so a
  *  widget that extends `WidgetType` directly has to remember the teardown for
  *  itself and, going by the ones that used to, will not. That is checked here

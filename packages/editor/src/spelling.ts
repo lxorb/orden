@@ -1,6 +1,6 @@
 /** The words the reader has said are words.
  *
- *  nib does not spell-check: the webview does, and it draws the wavy line itself,
+ *  Orden does not spell-check: the webview does, and it draws the wavy line itself,
  *  outside the document. No browser gives a page a way to ask which words it
  *  thinks are wrong, to read its suggestions, or to add one to its dictionary -
  *  deliberately, and on every platform. So "add to dictionary" cannot mean what

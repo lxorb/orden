@@ -42,6 +42,54 @@ class Github {
   failing: ('refuse' | 'lose')[] = []
   /** Run while an issue is being opened, before it is: what else happens meanwhile. */
   meanwhile: (() => void) | null = null
+  /** The board: its items, each an issue's node id and its Status option. */
+  board = new Map<string, string | null>()
+  /** Whether the token may reach the board, as one without the `project` scope may not. */
+  boardRefused = false
+
+  private graphql(body: string): Response {
+    const { query, variables } = JSON.parse(body) as {
+      query: string
+      variables: Record<string, string>
+    }
+    if (this.boardRefused) {
+      return Response.json({
+        errors: [
+          { message: 'Your token has not been granted the required scopes to execute this query.' },
+        ],
+      })
+    }
+    if (query.includes('projectV2(number')) {
+      return Response.json({
+        data: {
+          user: {
+            projectV2: {
+              id: 'PVT_board',
+              field: {
+                id: 'PVTSSF_status',
+                options: [
+                  { id: 'opt_backlog', name: 'Backlog' },
+                  { id: 'opt_todo', name: 'Todo' },
+                ],
+              },
+            },
+          },
+        },
+      })
+    }
+    if (query.includes('addProjectV2ItemById')) {
+      const node = variables.content ?? ''
+      if (!this.board.has(node)) this.board.set(node, null)
+      return Response.json({ data: { addProjectV2ItemById: { item: { id: `item_${node}` } } } })
+    }
+    if (query.includes('updateProjectV2ItemFieldValue')) {
+      this.board.set((variables.item ?? '').replace(/^item_/, ''), variables.option ?? null)
+      return Response.json({
+        data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: variables.item } } },
+      })
+    }
+    return new Response('{}', { status: 400 })
+  }
 
   readonly fetch = async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url)
@@ -51,7 +99,15 @@ class Github {
     if (headers.get('authorization') !== 'Bearer minion-token') {
       return new Response('{}', { status: 401 })
     }
+    if (url.pathname === '/graphql' && method === 'POST') {
+      return this.graphql(typeof init?.body === 'string' ? init.body : '{}')
+    }
     const edited = new RegExp(`^/repos/${REPO}/issues/(\\d+)$`).exec(url.pathname)
+    if (edited && method === 'GET') {
+      const issue = this.issues.find((one) => one.number === Number(edited[1]))
+      if (!issue) return new Response('{}', { status: 404 })
+      return Response.json({ number: issue.number, node_id: `I_${String(issue.number)}` })
+    }
     if (edited && method === 'PATCH') {
       const issue = this.issues.find((one) => one.number === Number(edited[1]))
       if (!issue) return new Response('{}', { status: 404 })
@@ -67,6 +123,7 @@ class Github {
         listed.map((one) => ({
           number: one.number,
           html_url: `https://github.com/${REPO}/issues/${String(one.number)}`,
+          node_id: `I_${String(one.number)}`,
           body: one.body,
         })),
       )
@@ -86,6 +143,7 @@ class Github {
       {
         number: issue.number,
         html_url: `https://github.com/${REPO}/issues/${String(issue.number)}`,
+        node_id: `I_${String(issue.number)}`,
       },
       { status: 201 },
     )
@@ -172,6 +230,83 @@ describe('a report', () => {
     } finally {
       waiting.close()
     }
+  })
+})
+
+describe('a report on the board', () => {
+  const PROJECT = 'lxorb/2'
+
+  interface BoardRow {
+    issue_node: string | null
+    board_at: number | null
+    board_tries: number
+    board_next_at: number
+  }
+  const boardRows = (on: TestEnv) =>
+    on.db
+      .prepare('select issue_node, board_at, board_tries, board_next_at from feedback')
+      .all() as BoardRow[]
+
+  test('goes on it as Todo as soon as its issue is open', async () => {
+    const onBoard = testEnv({
+      FEEDBACK_REPO: REPO,
+      GITHUB_FEEDBACK_TOKEN: 'minion-token',
+      FEEDBACK_PROJECT: PROJECT,
+    })
+    try {
+      await call(onBoard, '/v1/feedback', { body: REPORT })
+      expect(hub.board.get('I_1')).toBe('opt_todo')
+      expect(boardRows(onBoard)).toMatchObject([{ issue_node: 'I_1', board_tries: 0 }])
+      expect(boardRows(onBoard)[0]?.board_at).not.toBeNull()
+    } finally {
+      onBoard.close()
+    }
+  })
+
+  test('stays off it where no board is named', async () => {
+    await call(env, '/v1/feedback', { body: REPORT })
+    expect(hub.issues).toHaveLength(1)
+    expect(hub.board.size).toBe(0)
+    expect(hub.asked.some((one) => one.endsWith('/graphql'))).toBe(false)
+  })
+
+  test('the board did not take keeps its issue, and goes on once the board takes it', async () => {
+    const onBoard = testEnv({
+      FEEDBACK_REPO: REPO,
+      GITHUB_FEEDBACK_TOKEN: 'minion-token',
+      FEEDBACK_PROJECT: PROJECT,
+    })
+    try {
+      hub.boardRefused = true
+      await call(onBoard, '/v1/feedback', { body: REPORT })
+      const row = onBoard.db.prepare('select issue_number from feedback').get() as {
+        issue_number: number
+      }
+      expect(row.issue_number).toBe(1)
+      const [off] = boardRows(onBoard)
+      expect(off).toMatchObject({ board_at: null, board_tries: 1 })
+
+      hub.boardRefused = false
+      // Not before its time.
+      await openWaitingIssues(onBoard, (off?.board_next_at ?? 0) - 1)
+      expect(hub.board.size).toBe(0)
+
+      await openWaitingIssues(onBoard, off?.board_next_at ?? 0)
+      expect(hub.board.get('I_1')).toBe('opt_todo')
+      expect(hub.issues).toHaveLength(1)
+      expect(boardRows(onBoard)[0]?.board_at).not.toBeNull()
+    } finally {
+      onBoard.close()
+    }
+  })
+
+  test('opened before the board was named goes on it from the cron, its node asked for', async () => {
+    await call(env, '/v1/feedback', { body: REPORT })
+    env.db.prepare('update feedback set issue_node = null').run()
+
+    await openWaitingIssues({ ...env, FEEDBACK_PROJECT: PROJECT })
+    expect(hub.board.get('I_1')).toBe('opt_todo')
+    expect(hub.asked).toContain(`GET /repos/${REPO}/issues/1`)
   })
 })
 

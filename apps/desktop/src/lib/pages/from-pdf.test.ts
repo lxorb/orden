@@ -1,5 +1,5 @@
-import { readCanvas } from '@nib/markdown/canvas'
-import { pagesOf } from '@nib/markdown/pages'
+import { readCanvas } from '@orden/markdown/canvas'
+import { pagesOf } from '@orden/markdown/pages'
 import { describe, expect, test } from 'vitest'
 import { adoptBeside, asPageNote, type Turning } from './from-pdf'
 

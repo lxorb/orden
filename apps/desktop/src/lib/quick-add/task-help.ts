@@ -4,10 +4,10 @@
  *  in the first paint; see `tasks` in link-index.svelte.ts, which stands in for it until
  *  then. */
 
-import type { TaskHelp } from '@nib/editor'
-import { dayWords, todayHere } from '@nib/editor/task-days'
-import { tick, todayOf } from '@nib/bases'
-import { parseQuickAdd } from '@nib/bases/language'
+import type { TaskHelp } from '@orden/editor'
+import { dayWords, todayHere } from '@orden/editor/task-days'
+import { tick, todayOf } from '@orden/bases'
+import { parseQuickAdd } from '@orden/bases/language'
 import { i18n } from '../i18n.svelte'
 import { quickAdd } from './asked.svelte'
 import { pickField } from './task-pick'

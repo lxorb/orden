@@ -271,7 +271,7 @@ const WORTH_PACKING: usize = 128;
 /// says which, so a later change of mind about how to keep one is a new byte rather
 /// than a migration.
 ///
-/// What nib last wrote to every note is the one thing the store holds that grows with
+/// What Orden last wrote to every note is the one thing the store holds that grows with
 /// the notes themselves, and prose deflates to about a third.
 pub fn pack(text: &str) -> Vec<u8> {
     if text.len() >= WORTH_PACKING {

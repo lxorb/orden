@@ -50,8 +50,8 @@ import {
   undoEdit,
   unfoldEverything,
   upperCase,
-} from '@nib/editor'
-import { deckOf, slideAt } from '@nib/markdown/slides'
+} from '@orden/editor'
+import { deckOf, slideAt } from '@orden/markdown/slides'
 import { present } from './slides/present.svelte'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
@@ -83,7 +83,7 @@ import { canPublish, canShare, canShareItem, canWriteAt, shareThisFile } from '.
 import { archiveEntry, DIVIDER } from './menu.svelte'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
-import { PROPERTIES_MODES } from '@nib/markdown/properties'
+import { PROPERTIES_MODES } from '@orden/markdown/properties'
 import { PROPERTIES_WORDS } from './properties-words'
 import { type KindName, settings } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
@@ -729,7 +729,7 @@ function foldingCommands(view?: EditorView): Command[] {
       if (!view) return
       // The view itself, not a state and a dispatch made out of it: a fold moves
       // the lines it hides out of sight before it lands, and only something
-      // holding the view can move anything. See fold-motion.ts in @nib/editor.
+      // holding the view can move anything. See fold-motion.ts in @orden/editor.
       command(view)
       view.focus()
     },
@@ -1346,7 +1346,7 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: !isDesktop,
       run: () => void closeWindow(),
     },
-    // A desktop's alone, where a web tab is a page of nib's; see web-tab/private.ts.
+    // A desktop's alone, where a web tab is a page of Orden's; see web-tab/private.ts.
     {
       id: 'new-private',
       label: t('New private tab'),
@@ -1485,7 +1485,7 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.typewriter'),
       run: () => modes.toggleTypewriter(view),
     },
-    // The tab alone in nib's window, which stays a window; see lib/tab-fill. Not on a
+    // The tab alone in Orden's window, which stays a window; see lib/tab-fill. Not on a
     // phone or a tablet, which show one document and nothing beside it already.
     ...(viewport.touch
       ? []

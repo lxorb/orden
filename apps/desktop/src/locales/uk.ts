@@ -1667,6 +1667,18 @@ export const uk: Dictionary = {
   'answered by {model}, {date}': 'відповіла {model}, {date}',
   'AI block': 'Блок ШІ',
   'Do with AI': 'Зробити з ШІ',
+  'Use the browser': 'Використовувати браузер',
+  'Lets a task done with AI open web pages and act on them.':
+    'Дозволяє завданню, яке виконує ШІ, відкривати вебсторінки й діяти на них.',
+  'Look through notes': 'Переглядати нотатки',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'Дозволяє завданню, яке виконує ШІ, шукати й читати інші ваші нотатки, окрім власної.',
+  'Change other notes': 'Змінювати інші нотатки',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'Дозволяє завданню, яке виконує ШІ, писати, переміщувати й видаляти нотатки, крім самого завдання.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'Що доручають завданню, яке виконує ШІ. Воно все одно позначає завдання виконаним або питає в коментарі.',
+  'Started in the AI panel': 'Запущено на панелі ШІ',
   'Highlight colour': 'Колір виділення',
   'A single newline breaks the line': 'Один перенос рядка розриває рядок',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2722,6 +2734,9 @@ export const uk: Dictionary = {
     'Тут вебсторінки шукають адреси так само, як система; її DNS задається в налаштуваннях самої системи.',
   'Set by the settings file': 'Задано файлом налаштувань',
   'The settings file has a problem': 'У файлі налаштувань є помилка',
+  'Some changes may not be noticed': 'Деякі зміни можуть залишитися непоміченими',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Система досягла межі відстежуваних тек, тож Orden може не помітити всіх змін, які інші програми вносять у ваші простори. Збільште fs.inotify.max_user_watches, щоб це виправити.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Перемістити чат {name} до {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

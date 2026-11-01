@@ -1,4 +1,4 @@
-import type { Message, Who } from '@nib/chats'
+import type { Message, Who } from '@orden/chats'
 import { describe, expect, it } from 'vitest'
 import type { Notice } from '../notify'
 import { type Chosen, ChatNotices, lineOf, type NoticeWorld, type Told } from './notify'

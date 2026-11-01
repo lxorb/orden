@@ -42,7 +42,7 @@ vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
 }))
 
-const { freePath } = await import('@nib/markdown/paths')
+const { freePath } = await import('@orden/markdown/paths')
 const { extractSelection, mergeInto, splitAtCaret } = await import('./composing')
 const { FileActions } = await import('./undo.svelte')
 type Composes = import('./composing').Composes

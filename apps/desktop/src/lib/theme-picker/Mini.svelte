@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** One theme on its card: nib in small, in the theme's own colours.
+  /** One theme on its card: Orden in small, in the theme's own colours.
    *
    *  The title bar with a tab in it, the list with the open note lit in the
    *  accent, and a note with a heading, two lines and a link - the parts somebody

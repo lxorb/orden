@@ -8,12 +8,12 @@
  *  Lane 3 draws the same fields in the editor; the words here are the views' own and
  *  read the same fields, so the two cannot say a task is due on different days. */
 
-import type { Row, TaskRow, Value } from '@nib/bases'
+import type { Row, TaskRow, Value } from '@orden/bases'
 import { amount } from '../i18n.svelte'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
 import { plain } from './inline'
-import { dayWords } from '@nib/editor/task-days'
-import { deadlineOf, startOf } from '@nib/markdown/task-dates'
+import { dayWords } from '@orden/editor/task-days'
+import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 
 export interface Chip {
   kind: 'date' | 'time' | 'repeat' | 'duration' | 'deadline' | 'remind' | 'assignee'

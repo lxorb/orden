@@ -6,8 +6,8 @@
  *  does. It is only ever asked for while the numbers are on screen, but even
  *  then it should not be felt. */
 
-import { frontMatterBlock } from '@nib/markdown/front-matter'
-import type { PropertiesMode } from '@nib/markdown/properties'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
+import type { PropertiesMode } from '@orden/markdown/properties'
 
 export interface Counts {
   words: number

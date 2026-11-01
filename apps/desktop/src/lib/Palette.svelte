@@ -12,7 +12,7 @@
   import { tick, untrack } from 'svelte'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import type { EditorView } from '@nib/editor'
+  import type { EditorView } from '@orden/editor'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
   import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs'
   import Server from 'lucide/dist/esm/icons/server.mjs'

@@ -16,10 +16,10 @@
  *  read holds it. The reading is two halves, so a test hands over a recorded answer:
  *  the API's pages or the CSV become `Account`, and `planOf` writes the notes. */
 
-import { parseRule, ruleText } from '@nib/bases'
-import { taskLine } from '@nib/markdown/task-edits'
-import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@nib/markdown/task-line'
-import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
+import { parseRule, ruleText } from '@orden/bases'
+import { taskLine } from '@orden/markdown/task-edits'
+import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@orden/markdown/task-line'
+import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
 import { key } from '../i18n.svelte'
 import { readCsv } from './csv'
 import { dayOf } from './meta'
@@ -528,7 +528,7 @@ function dueOf(due: unknown): Pick<Task, 'due' | 'time' | 'zone' | 'repeats'> {
   const zone = text(due.timezone)
   if (date.endsWith('Z') && zone) {
     // A fixed time is said in UTC with the zone it was set in: written as that zone's
-    // wall clock and the zone after it, as nib writes a time that does not float.
+    // wall clock and the zone after it, as Orden writes a time that does not float.
     const local = wallClock(new Date(date), zone)
     if (local) return { due: local.day, time: local.time, zone, ...repeats }
   }

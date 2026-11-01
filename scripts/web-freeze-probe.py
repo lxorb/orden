@@ -47,7 +47,7 @@ The exe comes from wherever the crate is built; the machine this was written on 
 not compile it at all, so it came out of a throwaway CI job on a `windows-11-arm`
 runner:
 
-    pnpm --filter @nib/desktop exec tauri build --no-bundle \
+    pnpm --filter @orden/desktop exec tauri build --no-bundle \
       --config '{"identifier":"ch.emilvinu.nib.probe","version":"99.0.0",
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
 

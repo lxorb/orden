@@ -1,4 +1,4 @@
-//! Quick add from any app (docs/tasks.md 5.6): a key the system holds for nib, and the
+//! Quick add from any app (docs/tasks.md 5.6): a key the system holds for Orden, and the
 //! small window it opens over whatever is in front, with the quick add field and
 //! nothing else.
 //!
@@ -16,7 +16,7 @@
 //!
 //! **A probe never holds the reader's key.** A run whose windows are sent off the screen
 //! is a drive's, and a key registered there is a key taken from whoever is at the
-//! machine, their own nib's included. There the key is the one the drive names in
+//! machine, their own Orden's included. There the key is the one the drive names in
 //! `NIB_QUICK_ADD_KEY`, or none at all, and the window it opens is sent off the screen
 //! like every other and never brought forward (`placement::built`, `placement::raised`).
 

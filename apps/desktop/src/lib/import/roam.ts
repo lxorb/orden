@@ -20,7 +20,7 @@
  *
  *  `{{[[embed]]: ((uid))}}` is another block shown in place, which is its words,
  *  and the blocks under it when it stands alone. `{{[[embed]]: [[Page]]}}` is a
- *  page shown in place, which is nib's `![[Page]]`.
+ *  page shown in place, which is Orden's `![[Page]]`.
  *
  *  `[these words]([[Page]])` is a link to a page that shows other words, which is
  *  `[[Page|these words]]`.
@@ -36,8 +36,8 @@
  *
  *  Code, fenced or inline, is kept exactly as it was written. */
 
-import { foldName } from '@nib/markdown/links'
-import { asWords } from '@nib/markdown/words'
+import { foldName } from '@orden/markdown/links'
+import { asWords } from '@orden/markdown/words'
 
 import { key } from '../i18n.svelte'
 

@@ -34,7 +34,7 @@ describe('a tasks fence', () => {
     ['scheduled this week', []],
     ['happens next week', ['Paint']],
     ['happens last week', []],
-    // In a space of nib's own a `📅` is a start date (#371): Write report starts today.
+    // In a space of Orden's own a `📅` is a start date (#371): Write report starts today.
     ['starts before today', ['Old thing', 'Paint', 'Water', 'Halfway']],
     ['is recurring', ['Paint']],
     ['priority is highest', ['Write report']],
@@ -66,7 +66,7 @@ describe('a tasks fence', () => {
     expect(result.groups.map((group) => group.key)).toEqual(['Home', 'Plan'])
   })
 
-  test("lines about drawing are nib's to decide, and lines it cannot read are said", () => {
+  test("lines about drawing are Orden's to decide, and lines it cannot read are said", () => {
     const query = readTasksQuery(
       'not done\nshort mode\nhide edit button\nexplain\n# a comment\nfrobnicate wildly\ngroup by urgency score',
     )

@@ -3,10 +3,10 @@
  *  how remembering works while memory is on.
  *
  *  The panel's engine setup appends `instructionsFor(thread)` to the space's own
- *  instructions (6.5), so every road gets the same lines: nib's own loop as part of the
+ *  instructions (6.5), so every road gets the same lines: Orden's own loop as part of the
  *  system prompt, Claude Code and Codex as the fixed style slot the crate appends.
  *  Nothing here is text from a page: a style or a profile is a note in the thread's
- *  space the reader picked by name, and the rest is nib's own. One from a space
+ *  space the reader picked by name, and the rest is Orden's own. One from a space
  *  somebody else can reach goes inside the untrusted mark, as its words are theirs. Not translated: nobody reads it but the model. */
 
 import { isBoolean, keep, stored } from '../../stored'

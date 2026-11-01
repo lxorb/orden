@@ -2,7 +2,7 @@
   /** A message's reactions (docs/chats.md 3, #30, #31): each emoji with how many, the
    *  reader's own in the accent, a press to put one on or take it back, and who on the
    *  bubble. A new one pops in. The last chip opens the picker. */
-  import type { Message } from '@nib/chats'
+  import type { Message } from '@orden/chats'
   import { scale } from 'svelte/transition'
   import { backOut } from 'svelte/easing'
   import { amount, t } from '../../i18n.svelte'

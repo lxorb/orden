@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** A task in a list, Todoist's row in nib's shapes: the box, the words with their
+  /** A task in a list, Todoist's row in Orden's shapes: the box, the words with their
    *  inline marks, the first line of the description under them, and a meta line - the
    *  day in the colour of how near it is, ↻, the deadline, the duration, the bell, how
    *  many sub-tasks are done, how many comments, the labels - with where it lives at its
@@ -11,8 +11,8 @@
    *
    *  As tall as its lines, exactly (`lines`, worked out by the list from task-meta.ts),
    *  so the list places every row by arithmetic and measures none. */
-  import type { Row } from '@nib/bases'
-  import { linkModifier } from '@nib/editor'
+  import type { Row } from '@orden/bases'
+  import { linkModifier } from '@orden/editor'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
   import Check from 'lucide/dist/esm/icons/check.mjs'
@@ -243,7 +243,11 @@
               onclick={(event) => {
                 event.stopPropagation()
                 onselect?.()
-                void import('../ai/do-task').then((one) => one.doWithAi(row, task.text))
+                const button = event.currentTarget
+                void import('../ai/do-task').then(async (one) => {
+                  // Where the chat went, once it is there: it starts out of sight.
+                  if (await one.doWithAi(row, task.text)) one.sentOff(button)
+                })
               }}><Glyph icon={Sparkles} /></button
             >
           {/if}

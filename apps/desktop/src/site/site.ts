@@ -13,7 +13,7 @@
  *  It is bundled into the Worker by scripts/site-js.ts and served from the site's
  *  own domain at a path that is its own hash - never from a CDN, for the reason
  *  the KaTeX faces are not either. The graph is the app's own layout and painter,
- *  imported rather than reimplemented: one graph in nib, drawn by one piece of
+ *  imported rather than reimplemented: one graph in Orden, drawn by one piece of
  *  code, on a canvas in the app and on a canvas on the page. */
 
 import { framing, nodeAt } from '../lib/camera'
@@ -235,7 +235,7 @@ function hoverCards() {
  *  graph the server wrote into the document, sizing the canvas, framing what
  *  came, and following a link when somebody presses a node. The physics, the
  *  radii, the framing and every pixel are the app's, imported - one graph in
- *  nib, drawn by one piece of code.
+ *  Orden, drawn by one piece of code.
  *
  *  No dragging, no zoom, no controls. A reader of a blog is being shown how the
  *  pages hang together and then following one; the dials are for somebody

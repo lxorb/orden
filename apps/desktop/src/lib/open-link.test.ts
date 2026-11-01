@@ -85,7 +85,7 @@ describe('what never becomes a tab', () => {
 
 /** Which builds have somewhere to put a page, read off the device when nobody says:
  *  the desktop alone. A tablet hands a page to the system's browser as a phone does
- *  (#206), where it used to draw it in a frame inside nib. */
+ *  (#206), where it used to draw it in a frame inside Orden. */
 describe('where a page may go', () => {
   const was = viewport.device
   afterEach(() => {

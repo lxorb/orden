@@ -18,7 +18,7 @@
  *  decides what that costs. That is what makes the rules above testable rather
  *  than hopeful; there is a fake bridge for the rest. */
 
-import { type Page, pageAt, pagesOf, type Paging } from '@nib/glasses'
+import { type Page, pageAt, pagesOf, type Paging } from '@orden/glasses'
 
 /** A note the plugin has open. Keyed by the document rather than by the tab,
  *  because two panes showing one note are one note; see documents.svelte.ts. */

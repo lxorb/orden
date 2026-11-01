@@ -7,7 +7,7 @@
  *  are the agent's edits, which land on the changes card to keep or undo; `/explain` is the
  *  one that is a reply. The prompts are the model's to read and are not translated. */
 
-import { frontMatterBlock } from '@nib/markdown/front-matter'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
 import { languageNames, type Verb } from '../rewrite'

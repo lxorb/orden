@@ -17,7 +17,7 @@ import type { SyntaxNode } from '@lezer/common'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { isExternal } from './external'
 import { fenceLanguage } from './languages'
-import type { PropertiesMode } from '@nib/markdown/properties'
+import type { PropertiesMode } from '@orden/markdown/properties'
 import { livePreview } from './live-preview'
 import { noReveal, quietMarks } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
@@ -45,7 +45,7 @@ const punctuation = new Compartment()
 const language = new Compartment()
 const equations = new Compartment()
 /** Which of the three answers the note's front matter gets; see properties.ts in
- *  @nib/markdown and live-preview/properties.ts here. */
+ *  @orden/markdown and live-preview/properties.ts here. */
 const metadata = new Compartment()
 const spelling = new Compartment()
 const spellWords = new Compartment()
@@ -82,7 +82,7 @@ function editorClass(name: string): Extension {
  *
  *  The other nested parser is HTML, for a raw block or an inline tag, and it arrives
  *  the same way without being asked for here: what `@codemirror/lang-markdown` gets
- *  when it asks for `@codemirror/lang-html` is nib's own door, said once in the root
+ *  when it asks for `@codemirror/lang-html` is Orden's own door, said once in the root
  *  manifest. The grammar behind it - and the CSS and JavaScript grammars nested inside
  *  it, for `<style>` and `<script>` - comes with the first note that has a tag in it
  *  instead of before the window has drawn anything. See packages/lang-html. */
@@ -92,7 +92,7 @@ const markdownFor = once((strict: boolean): Extension =>
     codeLanguages: fenceLanguage,
     extensions: strict ? [] : nibMarkdownExtensions,
     addKeymap: false,
-    // An address pasted over words is nib's own; see `linkedPaste` in paste.ts.
+    // An address pasted over words is Orden's own; see `linkedPaste` in paste.ts.
     pasteURLAsLink: false,
   }),
 )
@@ -388,7 +388,7 @@ const ligaturesFor = once((scope: LigatureScope): Extension =>
 /** Curly quotes, dashes, ellipsis. Off until asked for: a note is a file other
  *  tools read, and a character nobody typed is a surprise in it - the dashes
  *  most of all, which is how a deck lost every one of its slide breaks. Typora
- *  has it on; nib would rather hand back what was written. */
+ *  has it on; Orden would rather hand back what was written. */
 const punctuationFor = once((on: boolean): Extension => (on ? smartPunctuation() : []))
 
 /** CSS counters number the headings; the document text stays untouched. */
@@ -403,7 +403,7 @@ const codeLineNumbersFor = once((on: boolean): Extension =>
  *  around it. One switch, because both are the same promise: what you type
  *  lands around what you meant rather than over it.
  *
- *  Only nib's own half is here. The library's `closeBrackets` lives in the compartment
+ *  Only Orden's own half is here. The library's `closeBrackets` lives in the compartment
  *  the completion menus come through, because it is the same package as they are and it
  *  is fetched with them; every caller below says the switch to both. See
  *  completion.ts. */

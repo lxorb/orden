@@ -28,16 +28,16 @@ import {
   type LigatureScope,
   type VimMode,
   type EditorView,
-} from '@nib/editor'
-import { setHardBreaks } from '@nib/markdown/breaks'
-import { highlightTone, type HighlightColour } from '@nib/markdown/highlights'
-import { type PropertiesMode, propertiesMode } from '@nib/markdown/properties'
+} from '@orden/editor'
+import { setHardBreaks } from '@orden/markdown/breaks'
+import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
+import { type PropertiesMode, propertiesMode } from '@orden/markdown/properties'
 import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { viewport } from './viewport.svelte'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
-import { isPaper, type Paper } from '@nib/markdown/papers'
+import { isPaper, type Paper } from '@orden/markdown/papers'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from './link-format'
 import { type ConflictRule, conflictRule, DEFAULT_RULE } from './sync/conflicts'
 import {
@@ -46,7 +46,7 @@ import {
   isCompaction,
   MARKS,
   type Marks,
-} from '@nib/glasses/choices'
+} from '@orden/glasses/choices'
 import { glassesKey } from './even/key.svelte'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
@@ -383,7 +383,7 @@ class Modes {
   spellcheck = $state(DEFAULTS.spellcheck)
   /** The dictionaries a note is checked against, several at once (#771), as they were
    *  chosen; none chosen is the reader's own language. Read and written through
-   *  spell-languages.ts, which only the spelling pane and nib's own Chromium need. */
+   *  spell-languages.ts, which only the spelling pane and Orden's own Chromium need. */
   spellLanguages = $state<string[]>([])
   /** The words the reader has said are words: names, terms, a project. The
    *  checker is turned off over each of them wherever it appears, which is what
@@ -447,11 +447,11 @@ class Modes {
    *  it is turned on from the hold modal on the glasses, or here. */
   glassesVoice = $state(DEFAULTS.glassesVoice)
   /** How much of a note's own white space reaches the panel; see `Compaction` in
-   *  @nib/glasses. One break between blocks, which is Emil's answer having read on a
+   *  @orden/glasses. One break between blocks, which is Emil's answer having read on a
    *  pair; the default is said once, in that package. */
   glassesCompaction = $state<Compaction>(DEFAULTS.glassesCompaction)
   /** Which of a note's markers are drawn. Rule one as it stands, until a reader
-   *  overrules it per construct; see `Marks` in @nib/glasses. */
+   *  overrules it per construct; see `Marks` in @orden/glasses. */
   glassesMarks = $state<Marks>({ ...MARKS })
   /** The phrases each spoken command answers to, where the reader has changed
    *  them. Only the differences travel, the way the shortcuts do: a full dump
@@ -500,7 +500,7 @@ class Modes {
    *
    *  Only what a page note *starts* as. A page added to a note takes the size of the one
    *  it follows, and a page already written on is changed from its own menu; see
-   *  `added` and `reshaped` in @nib/markdown/pages. */
+   *  `added` and `reshaped` in @orden/markdown/pages. */
   pagesPaper = $state<Paper>(DEFAULTS.pagesPaper)
 
   /** What a device does when the same note was written in two places. On the
@@ -523,7 +523,7 @@ class Modes {
    *  (#408). Off, which is Todoist's Today: a start date or a deadline that has come.
    *  On the account, because it is how somebody plans their day rather than which
    *  machine they plan it on; the connector's Today reads it too. See `undated` in
-   *  @nib/bases' builtins.ts. */
+   *  @orden/bases' builtins.ts. */
   undatedInToday = $state(DEFAULTS.undatedInToday)
 
   /** Whether two fingers turn a canvas (#351). */
@@ -533,13 +533,13 @@ class Modes {
   canvasTurnSnaps = $state(DEFAULTS.canvasTurnSnaps)
 
   /** Which colour the highlight button writes, as the palette tone it names, or
-   *  null for a highlight with no colour of its own - which is what nib has always
+   *  null for a highlight with no colour of its own - which is what Orden has always
    *  written and so is where this starts.
    *
    *  The last colour chosen sticks, because marking up a paper is one colour a
    *  dozen times rather than a fresh decision each time. On the account: it is
    *  about how somebody marks up, not about the machine they are at. See
-   *  highlights.ts in @nib/markdown for which tone each emoji is. */
+   *  highlights.ts in @orden/markdown for which tone each emoji is. */
   highlightTone = $state<number | null>(DEFAULTS.highlightTone)
 
   /** Whether a single newline breaks the line instead of being the space
@@ -550,7 +550,7 @@ class Modes {
    *  reads the way it is typed. Either way it is the one renderer that answers, so
    *  the reading view, an export, a card on a canvas and a published page all say
    *  the same thing; a deck keeps its single breaks whatever this says, because a
-   *  slide is a poster. See `RenderOptions.breaks` in @nib/markdown. */
+   *  slide is a poster. See `RenderOptions.breaks` in @orden/markdown. */
   hardBreaks = $state(DEFAULTS.hardBreaks)
 
   /** How a link to another note is written: `[[wikilinks]]`, or markdown links
@@ -565,10 +565,10 @@ class Modes {
    *  Nothing, which is where every note starts: the metadata at the top of a file
    *  is what the app reads - the icon a note wears, its cover - and not something
    *  to read on the way into the note. Somebody who wants to edit it in rows says
-   *  so here, and somebody whose metadata holds a shape nib cannot read asks for
+   *  so here, and somebody whose metadata holds a shape Orden cannot read asks for
    *  the source. The one answer is read by the editor and by the reading view, so a
    *  note cannot say one thing written and another read; see properties.ts in
-   *  @nib/markdown and hidden-front-matter.ts in the editor. */
+   *  @orden/markdown and hidden-front-matter.ts in the editor. */
   properties = $state<PropertiesMode>(DEFAULTS.properties)
 
   constructor() {
@@ -673,7 +673,7 @@ class Modes {
     }
     // The renderer and the one link writer are told once, here and in the setters
     // below, rather than asked by every caller; see `setHardBreaks` in
-    // @nib/markdown and `setLinkWriting` in link-format.ts.
+    // @orden/markdown and `setLinkWriting` in link-format.ts.
     setHardBreaks(this.hardBreaks)
     setLinkWriting(this.linkFormat)
     setHighlightColour(this.highlight)
@@ -681,7 +681,7 @@ class Modes {
     if (this.alwaysOnTop) this.applyAlwaysOnTop()
 
     // The window's own, so it is put on before the first paint rather than after it: a
-    // window that came up with nib's frame and grew the system's a moment later is a
+    // window that came up with Orden's frame and grew the system's a moment later is a
     // window that jumped.
     this.applyFrame()
     this.applyHand()

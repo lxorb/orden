@@ -10,7 +10,7 @@
  *  So the side that has a DOM does the drawing, which is this side - exactly as
  *  the favicon the site wears and the theme it is dressed in are drawn by the app
  *  and sent up as blobs. Each diagram goes up as an SVG named by the fence's own
- *  contents (see @nib/markdown/diagrams), and the page writes an `<img>` where the
+ *  contents (see @orden/markdown/diagrams), and the page writes an `<img>` where the
  *  fence stood. A fence nothing has drawn yet stays the code block it was, so a
  *  space published from a device that has never seen the note still reads.
  *
@@ -29,8 +29,13 @@
  *  replaced theme and a deleted picture do. Nothing here sweeps blobs, and this is
  *  not the batch that starts. */
 
-import { codeBlocks } from '@nib/markdown'
-import { DIAGRAM_SCHEMES, type DiagramScheme, diagramKey, isDiagram } from '@nib/markdown/diagrams'
+import { codeBlocks } from '@orden/markdown'
+import {
+  DIAGRAM_SCHEMES,
+  type DiagramScheme,
+  diagramKey,
+  isDiagram,
+} from '@orden/markdown/diagrams'
 import { api } from './api'
 import { drawDiagram } from './diagrams'
 import { keep, stored } from './stored'

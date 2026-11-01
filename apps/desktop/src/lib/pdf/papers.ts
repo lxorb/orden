@@ -3,7 +3,7 @@
  *  A paper is not a note: its words are inside a PDF, and getting at them is
  *  pdf.js, a worker and a page at a time. So the space search cannot walk them the
  *  way it walks notes - neither the crate nor the browser's own walk has anything
- *  to read - and what nib does instead is take a page's words down the first time
+ *  to read - and what Orden does instead is take a page's words down the first time
  *  anything reads them and keep them:
  *
  *  In memory for the sitting, which is what the viewer fills as a reader scrolls,
@@ -22,7 +22,7 @@
  *  paper as in a note. Only the rows are built here: a page has no lines, so the
  *  words around the match are what a row shows. */
 
-import { isPagesTarget } from '@nib/markdown/links'
+import { isPagesTarget } from '@orden/markdown/links'
 import { holderOf, paperOf } from '../pages/held'
 import { type Hit, Matcher } from '../search/match'
 import type { Query } from '../search/query'

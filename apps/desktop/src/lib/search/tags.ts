@@ -18,9 +18,9 @@
  *  slashes, so the characters that may appear in one are what decides how deep a
  *  tree can go. */
 
-import { CodeBlocks, WORDS } from '@nib/markdown/fences'
-import { type FrontMatterBlock, frontMatterBlock } from '@nib/markdown/front-matter'
-import { codeSpans, inCode, TAG_NAME, tagAt } from '@nib/markdown/tags'
+import { CodeBlocks, WORDS } from '@orden/markdown/fences'
+import { type FrontMatterBlock, frontMatterBlock } from '@orden/markdown/front-matter'
+import { codeSpans, inCode, TAG_NAME, tagAt } from '@orden/markdown/tags'
 
 /** Where one use of a tag sits: the offsets of its name, the hash not included,
  *  so a rename splices a new path in and leaves whatever hung off the old one. */
@@ -31,7 +31,7 @@ export interface TagUse {
   to: number
 }
 
-/** What a tag's name may hold: the grammar `@nib/markdown` reads tags with. */
+/** What a tag's name may hold: the grammar `@orden/markdown` reads tags with. */
 const NAME = new RegExp(`^${TAG_NAME}$`, 'u')
 
 /** A hash; whether it opens a tag, and how long its name is, is `tagAt`'s to say. */
@@ -167,7 +167,7 @@ function spaces(body: string, at: number, stop: number): number {
 
 /** The tags under a `tags:` key, whether they are on its line or in items
  *  beneath it. Where the block sits is the one reader every other part of the app
- *  reads it with; see `frontMatterBlock` in @nib/markdown. */
+ *  reads it with; see `frontMatterBlock` in @orden/markdown. */
 function readFront(body: string, front: FrontMatterBlock, out: TagUse[]) {
   let at = front.body.from
 
@@ -265,7 +265,7 @@ const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/
  *  list item's or a heading's. A blank line, a line of code and a line that opens
  *  a block end one, and code is in none. What is code is judged as the renderer
  *  judges it, fences in quotes and list items and indented code included; see
- *  `CodeBlocks` in @nib/markdown's fences.ts. */
+ *  `CodeBlocks` in @orden/markdown's fences.ts. */
 function blocksOf(body: string, at: number): [number, number][] {
   const out: [number, number][] = []
   const code = new CodeBlocks()

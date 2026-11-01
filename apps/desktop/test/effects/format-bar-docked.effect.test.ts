@@ -1,6 +1,6 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import FormatBar from '../../src/lib/FormatBar.svelte'
 import { viewport } from '../../src/lib/viewport.svelte'
 

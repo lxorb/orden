@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import { nameToWrite } from './naming'
-import { draftName, endingOf, nameFromContent, rowName, shownName, titleFrom } from './note-name'
+import {
+  draftName,
+  endingOf,
+  nameFromContent,
+  nameFromTitle,
+  rowName,
+  shownName,
+  titleFrom,
+} from './note-name'
 
 const lines = (doc: string) => doc.split('\n')
 
@@ -154,7 +162,7 @@ describe('the name a document is listed under', () => {
     expect(shownName('Team.chat')).toBe('Team')
   })
 
-  /** A paper, a picture and anything else nib did not write are files from
+  /** A paper, a picture and anything else Orden did not write are files from
    *  somewhere else with no title behind them, so the name is the file's own -
    *  which is what Obsidian shows and what Emil asked for on 2026-09-14. The mark
    *  beside the row says which kind it is either way. */
@@ -238,7 +246,7 @@ describe('the ending a name wears', () => {
 })
 
 /** The one rule, read from both ends. Whatever a list leaves off a name, a rename
- *  puts back, so every name nib lists survives being shown and typed back
+ *  puts back, so every name Orden lists survives being shown and typed back
  *  unchanged - which is what keeps an ending from doubling up or going missing. The
  *  pair is `shownName` and `endingOf` here, and `nameToWrite` in naming.ts. */
 describe('what a list leaves off and a rename puts back', () => {
@@ -266,5 +274,23 @@ describe('what a list leaves off and a rename puts back', () => {
 
   test.each(LISTED)('is the same name again: %s', (name) => {
     expect(nameToWrite(shownName(name), endingOf(name) ?? '')).toBe(name)
+  })
+})
+
+/** #477: a note headed with a name Windows keeps for a device, saved under it, was the
+ *  device on the reader's Windows machine. It steps aside, as sync and an import do. */
+describe('a title that is a device name', () => {
+  test("is not a note's file name", () => {
+    expect(nameFromContent('# NUL\n')).toBe('_NUL')
+    expect(nameFromContent('con\n')).toBe('_con')
+    expect(nameFromTitle('COM¹')).toBe('_COM¹')
+    expect(nameFromTitle('CONIN$')).toBe('_CONIN$')
+    expect(nameFromTitle('Lpt1 ')).toBe('_Lpt1')
+  })
+
+  test('and a name that only starts like one is left as it is', () => {
+    expect(nameFromContent('# Console log\n')).toBe('Console log')
+    expect(nameFromTitle('COM10')).toBe('COM10')
+    expect(nameFromTitle('Nullable')).toBe('Nullable')
   })
 })

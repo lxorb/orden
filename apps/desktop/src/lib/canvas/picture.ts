@@ -14,7 +14,7 @@
  *  the same picture with the cards set as plain wrapped lines instead, which is
  *  the one thing that both reads the same and rasterises at all. */
 
-import { escapeAll } from '@nib/markdown/html'
+import { escapeAll } from '@orden/markdown/html'
 import { inlineImages, printInFrame } from '../export'
 import { writtenPdf } from '../export/print'
 import { chooseTarget, download } from '../export/save'

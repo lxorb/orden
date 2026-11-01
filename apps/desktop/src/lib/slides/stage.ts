@@ -4,12 +4,12 @@
  *  right can be tested without a screen: a slide is the same shape whatever it
  *  is shown on, and pressing a key always lands somewhere that exists. */
 
-import { FIT_STEPS } from '@nib/markdown/deck'
+import { FIT_STEPS } from '@orden/markdown/deck'
 
 /** The sizes a slide's text is allowed to take. One ladder for the app, an
  *  exported file and a published page, so a slide is the same size on all three;
  *  it lives beside the page builder that has to write it out as a literal. */
-export { FIT_STEPS } from '@nib/markdown/deck'
+export { FIT_STEPS } from '@orden/markdown/deck'
 
 /** The stage, in CSS pixels. Sixteen by nine, fixed, so a slide written on a
  *  laptop is the slide a projector shows: everything is laid out at this size

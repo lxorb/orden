@@ -54,7 +54,7 @@ describe('building the keymap', () => {
   })
 
   /** The library scoped its Find keys to `editor search-panel` so they kept
-   *  working while the keyboard was inside its own panel. The panel is nib's bar
+   *  working while the keyboard was inside its own panel. The panel is Orden's bar
    *  now - a row of the pane, not a CodeMirror panel - and the bar answers Enter
    *  and Shift+Enter itself, so a scope naming a panel that does not exist is a
    *  scope that means nothing. See find.ts. */
@@ -141,7 +141,7 @@ describe('a state built with them', () => {
    *
    *  A key bound in two places fires two commands, and the second is one nobody can
    *  find in the settings or take off - the failure every `claim` in keymap.ts exists
-   *  to prevent, and the one Ctrl+F used to be: nib's own binding on top of the
+   *  to prevent, and the one Ctrl+F used to be: Orden's own binding on top of the
    *  library's own entry underneath.
    *
    *  These six by name rather than every chord, because layering is deliberate
@@ -152,7 +152,7 @@ describe('a state built with them', () => {
    *  It is these six because the search keymap is no longer read at all - the engine
    *  behind it is fetched at the launch's last turn rather than carried into the first
    *  paint, so the four keys it carried are declared by hand in keymap.ts and the two
-   *  it duplicated are nib's own. Declaring a key by hand is how one comes to be bound
+   *  it duplicated are Orden's own. Declaring a key by hand is how one comes to be bound
    *  twice, so each is counted. */
   test('and installs each of the search keys once', () => {
     const installed = EditorState.create({

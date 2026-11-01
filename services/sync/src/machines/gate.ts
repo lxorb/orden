@@ -13,11 +13,11 @@
 
 import type { Env } from '../types'
 import { budgetLeft } from './budget'
-import { ALLOWANCE } from '@nib/online'
+import { ALLOWANCE } from '@orden/online'
 import { hetznerMissing } from './hetzner-host'
 import { DevHost } from './host'
 import { usedOf } from './meter'
-import type { Refusal } from '@nib/online/wire'
+import type { Refusal } from '@orden/online/wire'
 import { type Service, serviceOf } from './service'
 
 /** `known` is the service's row where the caller has just read it (the door). */

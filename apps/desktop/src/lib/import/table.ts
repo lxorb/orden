@@ -13,10 +13,10 @@
  *  table again, so what came in as a database is one (docs/tasks.md 4, "import CSV
  *  as a base"). */
 
-import { plainWords } from '@nib/markdown/escapes'
+import { plainWords } from '@orden/markdown/escapes'
 import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
-import { type Base, writeBase } from '@nib/bases'
+import { type Base, writeBase } from '@orden/bases'
 import { dayOf, freeKey, noteText, type Meta, propertyName, titleHeading } from './meta'
 import { Names, safeName, withoutNotionId } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'

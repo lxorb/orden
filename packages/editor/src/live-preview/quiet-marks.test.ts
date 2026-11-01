@@ -1,7 +1,7 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import '@nib/markdown/eager'
+import '@orden/markdown/eager'
 import { buildDecorations } from './decorate'
 import { quietMarks } from './reveal'
 import { nibMarkdownExtensions } from '../markdown/extensions'

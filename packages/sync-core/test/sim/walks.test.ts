@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { simulate } from './run'
 
-/** How many seeds a CI run walks. The nightly run is `pnpm --filter @nib/sync-core
+/** How many seeds a CI run walks. The nightly run is `pnpm --filter @orden/sync-core
  *  sim:long`. */
 const SEEDS = 1000
 

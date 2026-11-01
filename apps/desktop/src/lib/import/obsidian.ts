@@ -2,7 +2,7 @@
  *  and `.obsidian/`, which says how the reader liked to write.
  *
  *  The notes need nothing of their own. Wikilinks, embeds, callouts, block ids,
- *  `%%comments%%`, `==highlights==`, `.canvas` and `.base` files are all nib's own
+ *  `%%comments%%`, `==highlights==`, `.canvas` and `.base` files are all Orden's own
  *  spelling already, which is why the vault is read by plain.ts and only named here.
  *
  *  What is Obsidian's alone is its settings folder. Most of it comes along, so the
@@ -11,7 +11,7 @@
  *  vault: which panes were open, the plugins' code, and Obsidian's own trash. And
  *  `app.json` is read on the way past, for the habits it records; see carry.ts. */
 
-import type { PropertiesMode } from '@nib/markdown/properties'
+import type { PropertiesMode } from '@orden/markdown/properties'
 import type { AttachmentFolder } from '../attachments'
 import { key } from '../i18n.svelte'
 import type { LinkFormat } from '../link-format'
@@ -126,7 +126,7 @@ export async function obsidianCarries(sources: readonly Source[]): Promise<Carri
   return fromAppJson(said)
 }
 
-/** `app.json`, as nib's answers. A key the file does not have is Obsidian's
+/** `app.json`, as Orden's answers. A key the file does not have is Obsidian's
  *  default, because that is what the reader was looking at: Obsidian writes a key
  *  only once it is changed. */
 export function fromAppJson(said: unknown): Carried {
@@ -140,7 +140,7 @@ export function fromAppJson(said: unknown): Carried {
     attachments: attachmentsOf(app.attachmentFolderPath),
     properties: propertiesOf(app.propertiesInDocument),
     vim: app.vimMode === true,
-    // Live Preview shows the marks around the cursor, which is nib's own default.
+    // Live Preview shows the marks around the cursor, which is Orden's own default.
     quietMarks: false,
     keys: 'obsidian',
   }
@@ -152,10 +152,10 @@ function linkFormatOf(markdown: unknown, format: unknown): LinkFormat {
   return format === 'relative' || format === 'absolute' ? format : 'shortest'
 }
 
-/** Where Obsidian puts a pasted picture, as the nearest of nib's three. `/` is
- *  the top of the vault and a bare name a folder there, both of which nib answers
+/** Where Obsidian puts a pasted picture, as the nearest of Orden's three. `/` is
+ *  the top of the vault and a bare name a folder there, both of which Orden answers
  *  with the space's own `assets/`; `./` is beside the note and `./name` a folder
- *  beside it, which is the note's own folder in nib. */
+ *  beside it, which is the note's own folder in Orden. */
 function attachmentsOf(path: unknown): AttachmentFolder {
   if (typeof path !== 'string') return 'space'
   return path.startsWith('./') ? 'note' : 'space'

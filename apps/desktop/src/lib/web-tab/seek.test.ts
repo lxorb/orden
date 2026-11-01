@@ -1,5 +1,5 @@
 /** Find and the address field in a web tab: Ctrl+F, Ctrl+L and Alt+D are the page's
- *  first, as in Chrome. The script in every page asks for nib's answer only when nothing
+ *  first, as in Chrome. The script in every page asks for Orden's answer only when nothing
  *  in the page took the key, and the crate's word for it is read into one of four asks
  *  for the tab it came from. Ctrl+0 asks the same way, and the crate answers it itself.
  *  See seek.ts, passed.svelte.ts, web_opens.rs and web_page.rs. */
@@ -161,7 +161,7 @@ describe('the script in every page', () => {
     expect(one.press({ keyCode: 70, ctrlKey: true })).toEqual({ opened: [], prevented: true })
     expect(one.press({ keyCode: 70, ctrlKey: true }).opened).toEqual([])
     expect(one.own()).toBe(2)
-    // Its other keys are still nib's.
+    // Its other keys are still Orden's.
     expect(one.press({ keyCode: 71, ctrlKey: true }).opened).toEqual(['nib-find-next'])
   })
 

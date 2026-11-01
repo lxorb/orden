@@ -3,7 +3,7 @@
    *  its pin.
    *
    *  A host of the ssh config shows its name and address as the config has them and
-   *  nothing to type into: the config is the reader's own file, which nib never writes
+   *  nothing to type into: the config is the reader's own file, which Orden never writes
    *  (VS Code's Add host writing a block in front of the reader's own is the complaint
    *  this avoids), so Open config is how those change. A host made here is nib's, and
    *  its name and address are fields. Every change is written as it is made; see

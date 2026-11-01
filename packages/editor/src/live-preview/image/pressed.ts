@@ -1,6 +1,6 @@
 import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { embedKind, embedSize } from '@nib/markdown/links'
+import { embedKind, embedSize } from '@orden/markdown/links'
 import { imageResolver } from '../../images'
 import { linkAt } from '../../wikilink/at'
 import { openLightbox } from './lightbox'

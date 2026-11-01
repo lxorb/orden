@@ -155,7 +155,7 @@ describe('every writer in the app', () => {
  *  setting: every row wrote `[[Deep note]]` whatever it said.
  *
  *  Which facts each kind of row hands over is pinned in the editor's own test - see
- *  complete.test.ts in @nib/editor, where the rows are picked for real - and these
+ *  complete.test.ts in @orden/editor, where the rows are picked for real - and these
  *  are those facts, spelled in all four. A nested space, because a flat one cannot
  *  tell the three markdown spellings apart: all three say `Deep note.md` there. */
 describe('the `[[` popup, in a nested space', () => {

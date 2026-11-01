@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { forgetParsed, parseAhead, takeParsed, writeCanvas } from './format'
-import { emptyCanvas, type InkStroke } from '@nib/markdown/canvas'
+import { emptyCanvas, type InkStroke } from '@orden/markdown/canvas'
 
 /** A plane read before the surface that shows it is built, counted.
  *
@@ -46,7 +46,7 @@ function plane(count: number): string {
 /** How many times `JSON.parse` is called while `run` goes.
  *
  *  On the built-in, because what is being counted is reading a plane and the reader
- *  is `@nib/markdown/canvas`, which is not this module's to instrument. Put back
+ *  is `@orden/markdown/canvas`, which is not this module's to instrument. Put back
  *  afterwards whatever happens. */
 function parses(run: () => void): number {
   const real = JSON.parse

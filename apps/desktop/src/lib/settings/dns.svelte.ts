@@ -18,7 +18,7 @@ export const PROVIDER_NAMES = {
 } as const
 
 class Dns {
-  /** Whether this engine can be told at all; nib's own Chromium only. Not known until
+  /** Whether this engine can be told at all; Orden's own Chromium only. Not known until
    *  the crate has answered, and the group is left out until then. */
   offered = $state(false)
   /** Whether the crate has answered, so a desktop whose engine cannot be told says so

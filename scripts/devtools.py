@@ -193,7 +193,7 @@ class Session:
 
     def world(self, name: str, frame: str | None = None) -> int | None:
         """The context of the world `name` in a frame, the page's own frame by default:
-        the same one nib's scripts run in when `name` is nib's."""
+        the same one Orden's scripts run in when `name` is Orden's."""
 
         if frame is None:
             frame = self.call("Page.getFrameTree").get("frameTree", {}).get("frame", {}).get("id")

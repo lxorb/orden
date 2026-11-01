@@ -7,7 +7,7 @@
  *  Ctrl+S wrote a blank card over the file, and a window shut mid-word wrote the
  *  plane without the word in it and took it with it.
  *
- *  So this is the twin of `flushTableEdits` in @nib/editor, and for the same reason:
+ *  So this is the twin of `flushTableEdits` in @orden/editor, and for the same reason:
  *  whatever is about to read the document says so first. One card, because there is
  *  one caret; nothing at all when nobody is writing, so it is safe to say anywhere.
  *

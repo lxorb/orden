@@ -26,9 +26,13 @@
    *  and link-index for where the values come from and icons.ts for what an icon may
    *  say.
    *
+   *  A page note made from a PDF wears the PDF's mark, because that is what the reader
+   *  brought in and still thinks of it as (#676); a page note started blank wears the
+   *  page note's. See `holdsPaper`.
+   *
    *  What a row holds is said at the far end of it and by the indentation of what
    *  follows, never by the mark: the mark says what the row is. */
-  import { chosenIcon, chosenTint, faviconFor } from './chosen-icon'
+  import { chosenIcon, chosenTint, faviconFor, holdsPaper } from './chosen-icon'
   import { type FileMark, MARKS } from './file-mark'
   import Icon from './Icon.svelte'
   import { readIcon } from './icons'
@@ -56,6 +60,11 @@
   const chosen = $derived(path === undefined ? null : readIcon(chosenIcon(path)))
   const tint = $derived(path === undefined ? null : chosenTint(path))
 
+  /** The kind's mark, but a PDF's for a page note made from one. */
+  const shown = $derived<FileMark>(
+    mark === 'pages' && path !== undefined && holdsPaper(path) ? 'pdf' : mark,
+  )
+
   /** The site's own mark for a website, the globe standing in until a page has shown
    *  one. Read through the same façade the chosen icon is, so this names no store of its
    *  own; see chosen-icon.ts and TabMark.svelte. */
@@ -78,7 +87,7 @@
   </span>
 {:else}
   <span class="mark" class:quiet={chosen === null || chosen.kind === 'lucide'}>
-    <Icon icon={chosen} {tint} fallback={MARKS[mark]} />
+    <Icon icon={chosen} {tint} fallback={MARKS[shown]} />
   </span>
 {/if}
 

@@ -1,9 +1,9 @@
 /** A text field's own menu: Cut, Copy, Paste and Select all.
  *
- *  Every system gives a field these four under the right button, and nib had taken
+ *  Every system gives a field these four under the right button, and Orden had taken
  *  them away: the window stops the browser's own menu everywhere (App.svelte), so the
  *  address bar, the search box, the find bar and a name being renamed answered a
- *  right click with nothing at all. This gives them back in nib's own menu, the same
+ *  right click with nothing at all. This gives them back in Orden's own menu, the same
  *  one every row and the editor use.
  *
  *  One rule rather than a menu per field, because a field is a field wherever it is:

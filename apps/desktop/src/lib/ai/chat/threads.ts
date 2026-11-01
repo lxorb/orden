@@ -7,7 +7,7 @@
  *  holds the Ask panel's forty turns and is too small for a history.
  *
  *  Reading is careful and writing is not: a thread comes back from a file some version
- *  of nib wrote, possibly one cut short, so it is checked on the way in and what is not a
+ *  of Orden wrote, possibly one cut short, so it is checked on the way in and what is not a
  *  thread is left out rather than trusted. See `threadIn`. */
 
 import { without } from '../../records'
@@ -218,10 +218,11 @@ export function threadIn(value: unknown): Thread | null {
       ? (value.compaction as unknown as Compaction)
       : undefined
   const always = Array.isArray(value.always) ? value.always.filter(isString) : []
+  const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
   // Every field the engine reads is checked below; the rest (a goal, what was spent) is
   // kept as written.
   return {
-    ...(without(value, 'always') as unknown as Thread),
+    ...(without(without(value, 'always'), 'without') as unknown as Thread),
     id,
     space,
     title: isString(title) ? title : '',
@@ -230,6 +231,7 @@ export function threadIn(value: unknown): Thread | null {
     effort: isEffort(effort) ? effort : 'auto',
     mode: modeIn(mode) ?? FIRST_MODE,
     ...(always.length ? { always } : {}),
+    ...(kept.length ? { without: kept } : {}),
     turns,
     usage: usageIn(value.usage),
     created: isNumber(value.created) ? value.created : 0,

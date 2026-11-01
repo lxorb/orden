@@ -18,7 +18,7 @@ export interface Limit {
   untilWords: string | null
 }
 
-/** A call of one of nib's tools, as the program says it started or was answered. */
+/** A call of one of Orden's tools, as the program says it started or was answered. */
 export interface ToolHeard {
   id: string
   /** The tool's name in `nib mcp`, without the program's prefix (`read_note`). */

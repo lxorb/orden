@@ -1,9 +1,9 @@
 /** Rows out of words, for the reminders' tests: a note read the way the rows read one. */
 
-import type { Row } from '@nib/bases'
-import { rowsOf } from '@nib/bases/rows'
+import type { Row } from '@orden/bases'
+import { rowsOf } from '@orden/bases/rows'
 import { scanNote } from '../scan-note'
-import { scanRows } from '@nib/bases/scan'
+import { scanRows } from '@orden/bases/scan'
 
 export function rowsIn(space: string, path: string, content: string): Row[] {
   const note = scanNote(path, content)

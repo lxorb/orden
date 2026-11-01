@@ -16,7 +16,7 @@
  *  registry; see vim.ts and open-views.ts. */
 
 import { Compartment, type StateEffect } from '@codemirror/state'
-import { door } from '@nib/markdown/door'
+import { door } from '@orden/markdown/door'
 import { enrolled, openViews } from './open-views'
 
 const completions = new Compartment()

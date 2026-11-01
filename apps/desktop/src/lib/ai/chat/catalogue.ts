@@ -13,7 +13,7 @@
  *  Claude Code and Codex are their own engines' (lane 2). Asked when the reader opens the
  *  model popover, which is the press the request is for. */
 
-import { isLocal, modelsUrl, type Provider } from '../providers'
+import { isLocal, modelsUrl, NOT_CHAT, type Provider } from '../providers'
 import { sseJson } from '../stream'
 import { ordered, SCALE } from './effort'
 import { learnt } from './learned'
@@ -79,10 +79,6 @@ export function anthropicModels(body: unknown): ModelInfo[] {
     ]
   })
 }
-
-/** Families on OpenAI's list that are not for talking to. */
-const NOT_CHAT =
-  /embedding|whisper|tts|dall-e|moderation|transcribe|audio|realtime|image|search|babbage|davinci/i
 
 /** OpenAI's list: names, and every level until one is refused. */
 export function openaiModels(body: unknown): ModelInfo[] {

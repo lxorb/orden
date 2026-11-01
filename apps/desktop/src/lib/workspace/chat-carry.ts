@@ -12,7 +12,7 @@
  *  moves: refused, nothing moves. This is the rule; the asking is chat-leaving.ts, fetched
  *  with the first such move, and the plugin, which has no chats, has a twin of that. */
 
-import { isChatTarget } from '@nib/markdown/links'
+import { isChatTarget } from '@orden/markdown/links'
 import { account } from '../account.svelte'
 import { roleOf } from '../sharing.svelte'
 import { samePath, within } from '../space-paths'

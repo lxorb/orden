@@ -5,11 +5,11 @@
  *  values rather than words (Today groups by whether a task is overdue), and this is
  *  where a value becomes what the reader reads, in their language. */
 
-import { addDays, groupName, type Value } from '@nib/bases'
+import { addDays, groupName, type Value } from '@orden/bases'
 import { i18n, key, t } from '../i18n.svelte'
 import { dateAt } from './days'
 import { bare } from './columns'
-import { dayWords } from '@nib/editor/task-days'
+import { dayWords } from '@orden/editor/task-days'
 import type { ChartKind, Measure } from './chart'
 import type { Builtin } from './spec'
 import { dayIn } from './values'
@@ -50,7 +50,7 @@ const LAYOUT_NAMES: Record<Layout, string> = {
 }
 
 /** The layout a view's type draws as: Bases' own names, and `board` read as the
- *  kanban Obsidian 1.14 writes. A type nib has no layout for is drawn as a table, the
+ *  kanban Obsidian 1.14 writes. A type Orden has no layout for is drawn as a table, the
  *  way Obsidian falls back for one it does not know. */
 export function layoutOf(type: string): Layout {
   if (type === 'board') return 'kanban'
@@ -95,7 +95,7 @@ const FIELD_NAMES: Record<string, string> = {
   'task.completed': key('Done'),
 }
 
-/** What a column is called: the base's display name, nib's word for a field it
+/** What a column is called: the base's display name, Orden's word for a field it
  *  knows, else the property's own name. */
 export function propertyName(property: string, displayName?: string): string {
   if (displayName) return displayName

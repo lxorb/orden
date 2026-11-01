@@ -1,6 +1,6 @@
 /** The hosts, held: asked of the crate each time a list of them opens - the picker,
  *  Settings, the palette - because the config may have been edited since, and kept
- *  back through it when Settings changes what nib knows about one.
+ *  back through it when Settings changes what Orden knows about one.
  *
  *  A change shows at once and is written after, as every setting is; a write the crate
  *  refuses puts back what it holds. Nothing here is asked at launch. See hosts.ts for
@@ -96,7 +96,7 @@ class Remote {
     this.hosts = hostsOf(this.config, kept)
   }
 
-  /** What nib knows, changed: shown now, written after. */
+  /** What Orden knows, changed: shown now, written after. */
   async keep(change: (kept: Kept) => Kept): Promise<void> {
     const next = change(this.kept)
     this.take(next)

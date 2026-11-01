@@ -13,7 +13,7 @@
  *  on a canvas - and each sits behind a small function of its own. The
  *  arithmetic and the markup are pure, and are what the tests read. */
 
-import { escapeAll } from '@nib/markdown/html'
+import { escapeAll } from '@orden/markdown/html'
 import { toXhtml } from './epub'
 
 export interface ImageOptions {

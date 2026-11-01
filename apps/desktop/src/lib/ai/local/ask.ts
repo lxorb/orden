@@ -6,7 +6,7 @@
  *  that is closed once it has answered (session.ts). Either way the lines are read with
  *  the program's own reader; the answer is handed on as it grows, the model answering is
  *  named, where the plan stands is kept for the pane, and an ending that is not an
- *  answer becomes nib's sentence. A stop ends the program's turn, and is thrown as the
+ *  answer becomes Orden's sentence. A stop ends the program's turn, and is thrown as the
  *  same `AbortError` a stopped request is, so no caller tells the two roads apart.
  *  Fetched by the first question that needs it. */
 

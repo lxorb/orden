@@ -12,7 +12,7 @@
 //!   the pane. `WebView2` says when a page holds a full screen element, and the window
 //!   answers by going full screen with the page over all of it. Escape and F11 give the
 //!   screen back, as in Chrome; they are the engine's to hear, so they are heard here,
-//!   and F11 is nib's own full screen only while no video holds the screen (`web_keys.rs`).
+//!   and F11 is Orden's own full screen only while no video holds the screen (`web_keys.rs`).
 //! - **Zoom.** Ctrl and the wheel, Ctrl and a sign, or a pinch zoom the page inside the
 //!   engine (switched on for a web tab's page in `web_tabs.rs`), and the menu's
 //!   percentage never knew. The engine says when it changes, so the window can show it
@@ -22,7 +22,7 @@
 //!   and forgot what the reader chose. So a zoom made in the page is set again as the
 //!   app's own the moment it is heard, which is what the engine keeps across pages until
 //!   the window sets the next site's. Its Ctrl+0 goes back to that same zoom the app set,
-//!   which is no zoom at all; so Ctrl+0 is the page's first and then nib's, the way the
+//!   which is no zoom at all; so Ctrl+0 is the page's first and then Orden's, the way the
 //!   find keys are (see `web_opens.rs`), and `actual_size` answers it.
 //!
 //! And **how a page arrived**: where a navigation of its own frame ended and, when it did
@@ -418,7 +418,7 @@ pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
     quieted(view, muted)
 }
 
-/// nib's own Chromium mutes the page the way Chrome's tab strip does: the browser's own
+/// Orden's own Chromium mutes the page the way Chrome's tab strip does: the browser's own
 /// sound off, whatever the page plays next, and nothing said to the page.
 #[cfg(feature = "cef")]
 pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {

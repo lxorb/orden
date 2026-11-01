@@ -14,10 +14,12 @@ import { render } from 'svelte/server'
 
 const chosen: Record<string, string | null> = {}
 const tints: Record<string, string | null> = {}
+const papers = new Set<string>()
 
 vi.mock('./chosen-icon', () => ({
   chosenIcon: (path: string) => chosen[path] ?? null,
   chosenTint: (path: string) => tints[path] ?? null,
+  holdsPaper: (path: string) => papers.has(path),
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
@@ -71,7 +73,7 @@ describe('a row that chose an icon of its own', () => {
     expect(body).not.toContain(strokes(MARKS.canvas)[0])
   })
 
-  /** Nib writes Lucide's plain name; a vault out of Obsidian's Iconize writes a
+  /** Orden writes Lucide's plain name; a vault out of Obsidian's Iconize writes a
    *  prefix per pack. Both reach the same drawing, for a canvas and a folder's map
    *  entry as much as for a note. */
   test('however the name was spelled in the file or the map', () => {
@@ -146,5 +148,32 @@ describe('a row that chose nothing', () => {
     const body = drawn('file', 'Work')
 
     for (const stroke of strokes(MARKS.file)) expect(body).toContain(stroke)
+  })
+})
+
+/** #676: a page note made from a PDF wears the PDF's mark, which is what the reader
+ *  brought in; one started blank wears the page note's. */
+describe('a page note', () => {
+  test('made from a PDF wears the PDF mark', () => {
+    papers.add('Lecture.pages')
+    const body = drawn('pages', 'Lecture.pages')
+
+    for (const stroke of strokes(MARKS.pdf)) expect(body).toContain(stroke)
+    expect(body).not.toContain(strokes(MARKS.pages)[0])
+  })
+
+  test('started blank wears its own', () => {
+    const body = drawn('pages', 'Sketches.pages')
+
+    for (const stroke of strokes(MARKS.pages)) expect(body).toContain(stroke)
+    expect(body).not.toContain(strokes(MARKS.pdf)[0])
+  })
+
+  test('an icon it chose still comes first', () => {
+    papers.add('Chosen.pages')
+    chosen['Chosen.pages'] = 'rocket'
+    const body = drawn('pages', 'Chosen.pages')
+
+    for (const stroke of rocket) expect(body).toContain(stroke)
   })
 })

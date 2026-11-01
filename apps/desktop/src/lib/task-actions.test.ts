@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { rowsOfText } from '@nib/bases/rows'
-import { todayOf } from '@nib/bases'
+import { rowsOfText } from '@orden/bases/rows'
+import { todayOf } from '@orden/bases'
 
 /** The reader's own hands on their to-dos: a line added to the inbox, a box ticked the
  *  way the Tasks plugin ticks one, and Today. Against a space of fake files, written

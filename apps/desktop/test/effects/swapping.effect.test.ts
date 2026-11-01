@@ -9,7 +9,7 @@ import {
   StateEffect,
   type StateView,
   type TransactionSpec,
-} from '@nib/editor'
+} from '@orden/editor'
 import { EditorStates, type NoteTab } from '../../src/lib/editor-states'
 import { computed, reactive, root, watch } from './runes.svelte'
 

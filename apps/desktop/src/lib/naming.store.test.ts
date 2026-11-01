@@ -365,7 +365,7 @@ describe('making a note inside a note', () => {
     expect(workspace.naming).toBeNull()
   })
 
-  /** A row that is already a folder - one nib nested, or one out of somebody's
+  /** A row that is already a folder - one Orden nested, or one out of somebody's
    *  vault - only gets the new note. Nothing is written to make it a folder note,
    *  because nobody asked for that. */
   test('while a folder only gets the note, and no note of its own', async () => {
@@ -385,7 +385,7 @@ describe('making a note inside a note', () => {
   })
 })
 
-/** A folder that came from outside nib has no note of its own until somebody
+/** A folder that came from outside Orden has no note of its own until somebody
  *  writes one. Opening its row opens the note it would be, and looking is not
  *  writing: the file appears when there are words in it, which is the ordinary
  *  save. */

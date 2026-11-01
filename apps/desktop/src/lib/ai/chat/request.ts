@@ -83,7 +83,7 @@ async function refusalOf(response: Response, provider: Provider): Promise<Refuse
 }
 
 /** A refusal from its body: the plan's sentence where a plan said it, else the
- *  provider's, else a status in nib's words. */
+ *  provider's, else a status in Orden's words. */
 export async function refusalIn(
   body: unknown,
   status: number,

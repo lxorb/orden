@@ -38,13 +38,13 @@ import {
   Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
-import type { PropertiesMode } from '@nib/markdown/properties'
+import type { PropertiesMode } from '@orden/markdown/properties'
 import { isExternal } from '../external'
 
 /** What the note's front matter is drawn as: the rows it says, the YAML it is
  *  written in, or nothing at all. The reader's own answer, asked once in Settings
  *  and read by the reading view through the same three words; see properties.ts in
- *  @nib/markdown. Nothing is where a note with no answer starts. */
+ *  @orden/markdown. Nothing is where a note with no answer starts. */
 export const propertiesMode = Facet.define<PropertiesMode, PropertiesMode>({
   combine: (values) => values[0] ?? 'hidden',
 })

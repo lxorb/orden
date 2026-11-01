@@ -285,7 +285,7 @@ export async function sharedAmong(env: Env, spaceIds: readonly string[]): Promis
 /** Writes down that somebody besides the owner may now write in a space, or in one
  *  note of it where `item` names it. Kept after they leave, because their words stay:
  *  what marks a space's words as somebody else's asks this as well as who is in it
- *  now (`onceSharedAmong`, mcp/tools.ts `spacesFor`). See migrations/0065. */
+ *  now (`onceSharedAmong`, mcp/tools.ts `spacesFor`). See migrations/0066. */
 export async function onceShared(env: Env, spaceId: string, item = ''): Promise<void> {
   await env.DB.prepare('insert or ignore into once_shared (space_id, item, at) values (?, ?, ?)')
     .bind(spaceId, item, now())

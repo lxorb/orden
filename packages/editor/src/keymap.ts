@@ -268,7 +268,7 @@ export const nibBindings: BindingSpec[] = [
   //
   // No scope. The library scoped its own Find keys to `editor search-panel` so
   // they would keep working while the keyboard was inside its panel; the panel
-  // is nib's bar now, the bar answers Enter and Shift+Enter itself, and a scope
+  // is Orden's bar now, the bar answers Enter and Shift+Enter itself, and a scope
   // naming a panel that no longer exists is a scope that means nothing.
   { id: 'edit.find-previous', key: 'Mod-Shift-g', run: findPrevious, preventDefault: true },
   {
@@ -361,12 +361,12 @@ export const nibBindings: BindingSpec[] = [
  *
  *  Undo, Find, Select all and the rest are shortcuts a reader presses and
  *  would look for in the list, so they are named here and become as
- *  changeable as anything nib defines. The binding object is the one the
+ *  changeable as anything Orden defines. The binding object is the one the
  *  library ships - `shift`, `scope` and all - with only its key up for
  *  discussion, and `unclaimedKeymap` below is what is left after these are
  *  taken out of it, so a rebound Undo does not leave the old key working.
  *
- *  What is deliberately not taken over: everything CodeMirror binds that nib
+ *  What is deliberately not taken over: everything CodeMirror binds that Orden
  *  already binds over the top of it (Mod-d, Mod-u), which would
  *  put a second entry on a key that is already spoken for, and the raw
  *  editing keys - the arrows, Home, Backspace, Enter - which are how a text
@@ -437,7 +437,7 @@ const linuxRedo = claim(
  *  invisible binding the specs exist to prevent. */
 claim(defaultKeymap, (binding) => binding.key === 'Mod-/', 'the library comment toggle')
 
-/** Two more of the library's keys that nib binds over the top of, taken off.
+/** Two more of the library's keys that Orden binds over the top of, taken off.
  *
  *  Its Delete line sat on Ctrl+Shift+K under Code block, and its "select the node
  *  around" on Ctrl+I under Italic: neither could ever be reached, and neither was in
@@ -449,7 +449,7 @@ claim(defaultKeymap, (binding) => binding.key === 'Mod-i', 'the library parent s
 /** The library's own multiple-cursor keys, taken off theirs.
  *
  *  All four were firing already, unnamed and unlisted: Ctrl+D ran the library's
- *  "select the next one" underneath nib's own Ctrl+D, Ctrl+Shift+L selected
+ *  "select the next one" underneath Orden's own Ctrl+D, Ctrl+Shift+L selected
  *  every match under the sidebar's key, and Ctrl+Alt+Up added a cursor while
  *  Ctrl+Alt+Down was quietly shadowed by the pane split. A key that does
  *  something nobody can find in the list is exactly what the specs exist to
@@ -457,7 +457,7 @@ claim(defaultKeymap, (binding) => binding.key === 'Mod-i', 'the library parent s
  *
  *  Two of the four were the search keymap's, and that keymap is not read here any
  *  more - see `unclaimedKeymap` below for why, and for what happened to each of its
- *  seven keys. The two are claimed by name instead of by entry: they are the keys nib
+ *  seven keys. The two are claimed by name instead of by entry: they are the keys Orden
  *  binds `edit.select-word` and `edit.select-all-occurrences` to, and what they must
  *  not be is bound twice. */
 claim(defaultKeymap, (binding) => binding.key === 'Mod-Alt-ArrowUp', 'the library cursor above')
@@ -468,7 +468,7 @@ claim(defaultKeymap, (binding) => binding.key === 'Mod-Alt-ArrowDown', 'the libr
  *  It is the key every browser goes back and forward with, which is what the app
  *  does with it: a tab that has moved on from one note to another goes back along
  *  its own trail. The library moved the caret out of one syntax node and into the
- *  next with it, which nothing in nib's own list ever mentioned and nobody
+ *  next with it, which nothing in Orden's own list ever mentioned and nobody
  *  pressed on purpose. Only the entry that binds it on Windows and Linux: the Mac
  *  reads Alt and an arrow as a word at a time, through another entry, and keeps
  *  it - see the mac chord on `app.back` in the app's registry. */
@@ -500,7 +500,7 @@ export const standardBindings: BindingSpec[] = [
     alias: true,
   },
   adopt('edit.select-all', defaultKeymap, 'Mod-a'),
-  // The library's four search keys, on nib's own commands, declared rather than
+  // The library's four search keys, on Orden's own commands, declared rather than
   // adopted - which is the one place in this file where a library key is spelled out
   // by hand, and the reason is what the key does rather than what it is called.
   //
@@ -512,7 +512,7 @@ export const standardBindings: BindingSpec[] = [
   // `preventDefault`, and each one still comes off the keymap underneath when a reader
   // rebinds it, because `unclaimedKeymap` no longer carries any of them at all.
   //
-  // The commands are nib's either way. Find opens nib's bar rather than the library's
+  // The commands are Orden's either way. Find opens Orden's bar rather than the library's
   // panel, and the steps fall back to opening the bar rather than the panel whenever
   // the query is empty - which is also the honest answer while the engine is still on
   // its way, since nothing can have been looked for yet. See find.ts.
@@ -522,7 +522,7 @@ export const standardBindings: BindingSpec[] = [
   // Find previous has entries of its own in nibBindings above.
   { id: 'edit.find-next', key: 'Mod-g', run: findNext, preventDefault: true },
   { id: 'edit.find-next.alt', key: 'F3', run: findNext, preventDefault: true, alias: true },
-  // The library's own dialog, which is the one surface of its own nib still uses. Run
+  // The library's own dialog, which is the one surface of its own Orden still uses. Run
   // through the door, so the key is spent on the press and the dialog opens as the
   // engine lands; see `gotoLine` in find.ts.
   { id: 'edit.goto-line', key: 'Mod-Alt-g', run: gotoLine },
@@ -541,13 +541,13 @@ export const standardBindings: BindingSpec[] = [
  *  turn rather than carried into the first paint. It holds seven keys, and not one of
  *  them would have reached this list:
  *
- *  - `Mod-f` opens the library's panel, which nib replaced with its own bar. Named
- *    above as `edit.find`, on nib's own command.
+ *  - `Mod-f` opens the library's panel, which Orden replaced with its own bar. Named
+ *    above as `edit.find`, on Orden's own command.
  *  - `Mod-g` and `F3` step through the matches, and are named above as
- *    `edit.find-next` and its alias, on nib's own steps - which fall back to opening
+ *    `edit.find-next` and its alias, on Orden's own steps - which fall back to opening
  *    the bar rather than the library's panel.
  *  - `Mod-Alt-g` is the goto-line dialog, named above as `edit.goto-line`.
- *  - `Mod-d` and `Mod-Shift-l` were both firing underneath nib's own Ctrl+D and the
+ *  - `Mod-d` and `Mod-Shift-l` were both firing underneath Orden's own Ctrl+D and the
  *    sidebar's Ctrl+Shift+L; they are `edit.select-word` and
  *    `edit.select-all-occurrences` above, on the library's commands run through the
  *    door.

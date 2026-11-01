@@ -1,7 +1,7 @@
 /** The tasks' and bases' verbs: `list_tasks`, `add_task`, `update_task`, `query_base`,
  *  `add_row`, `edit_rows` and `edit_base` (docs/tasks.md 5.15).
  *
- *  What a call means is `@nib/bases/agent`, the half the account connector shares; this
+ *  What a call means is `@orden/bases/agent`, the half the account connector shares; this
  *  is the rest, on the road every note verb takes. A list reads the rows of the spaces
  *  the grant reaches, every one of them unless a space is named, because Today has to
  *  see a task wherever it was written. A change is read off the note as it is on screen
@@ -11,7 +11,7 @@
  *  together. A space the grant does not reach does not exist, and one shared to read is
  *  refused before anything is asked. */
 
-import type { Base, Context, Row } from '@nib/bases'
+import type { Base, Context, Row } from '@orden/bases'
 import {
   AgentError,
   clockOf,
@@ -33,10 +33,10 @@ import {
   taskIn,
   withProperties,
   writeBase,
-} from '@nib/bases/agent'
-import { appliedEdits } from '@nib/markdown/edits'
-import { taskLine } from '@nib/markdown/task-edits'
-import { taskHash } from '@nib/bases'
+} from '@orden/bases/agent'
+import { appliedEdits } from '@orden/markdown/edits'
+import { taskLine } from '@orden/markdown/task-edits'
+import { taskHash } from '@orden/bases'
 import type { AgentAnswer } from '../../automation/caller'
 import { modes } from '../../modes.svelte'
 import { onDisk as there } from '../../on-disk'
@@ -47,6 +47,8 @@ import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'
 import { DocError, notes } from '../docs'
 import { asked } from './asks'
+import { nowOf } from '../../views/days'
+import { withComment } from '../../views/task-body'
 import { type Call, done, flag, maybe, need, writerOf } from './call'
 import { at, made, noteOf } from './notes'
 import { Refused } from './problem'
@@ -239,6 +241,9 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   const { today } = clockOf(new Date())
+  // A comment under it (#325): what an agent asks about a task it could not finish, or
+  // what it did; the task view's own kind of comment, stamped now. In the same edit.
+  const comment = typeof call.args.comment === 'string' ? call.args.comment.trim() : ''
   try {
     let said = await rewritten(call, note, (text) => {
       const edited = editedTask(
@@ -250,8 +255,11 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
         ticking,
         today,
       )
+      const commented = comment
+        ? withComment(edited.text, readAt(edited.at), comment, nowOf(new Date()).slice(0, 16))
+        : null
       return {
-        text: edited.text,
+        text: commented ?? edited.text,
         said: { at: edited.at, ...(edited.next ? { next: edited.next } : {}) },
       }
     })

@@ -11,8 +11,8 @@
  *  of these reads a recorded action and writes the disk, which is why it can be
  *  tested by handing it a stand-in store rather than a workspace. */
 
-import { oneEdit } from '@nib/markdown/edits'
-import { freePath } from '@nib/markdown/paths'
+import { oneEdit } from '@orden/markdown/edits'
+import { freePath } from '@orden/markdown/paths'
 import { sha256 } from '../bytes'
 import { applied, type Edit } from '../search/replace'
 import type { Retargeting } from '../link-index.svelte'

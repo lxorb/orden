@@ -18,7 +18,7 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 import type { Duplex } from 'node:stream'
 import { WebSocketServer, type WebSocket } from 'ws'
-import { linkFrame, machineFrameOf, SILENT_FOR } from '@nib/online/wire'
+import { linkFrame, machineFrameOf, SILENT_FOR } from '@orden/online/wire'
 import type { Nibd } from './nibd'
 
 /** Past this much unsent on the link the ptys stop being read; under the lower mark

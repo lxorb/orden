@@ -2,15 +2,15 @@
  *  `query_base` and `add_row`, under the names and arguments `nib mcp` gives them, so
  *  a prompt written against one works against the other (docs/tasks.md 5.15).
  *
- *  What a call means is `@nib/bases/agent`, the same module the app's own verbs use,
- *  over rows read off the account's notes with nib closed: each note's words through
+ *  What a call means is `@orden/bases/agent`, the same module the app's own verbs use,
+ *  over rows read off the account's notes with Orden closed: each note's words through
  *  `rowsOfText`, the one reader of a task line there is. A change is the note written
  *  whole through `putNote`, the connector's `write_note`, so it is a version like any
  *  other and a room merges it with whoever is typing. The answers are the same JSON
  *  the app answers with, because a model reads both. Writing needs a token that may
  *  write and a space that was not shared to read. */
 
-import type { Context, Row } from '@nib/bases'
+import type { Context, Row } from '@orden/bases'
 import {
   AgentError,
   clockOf,
@@ -29,11 +29,11 @@ import {
   taskChange,
   taskIn,
   withProperties,
-} from '@nib/bases/agent'
-import { rowsOfText } from '@nib/bases/rows'
-import { taskHash } from '@nib/bases'
-import { appliedEdits } from '@nib/markdown/edits'
-import { taskLine } from '@nib/markdown/task-edits'
+} from '@orden/bases/agent'
+import { rowsOfText } from '@orden/bases/rows'
+import { taskHash } from '@orden/bases'
+import { appliedEdits } from '@orden/markdown/edits'
+import { taskLine } from '@orden/markdown/task-edits'
 import { objectIn } from '../body'
 import { cleanPath } from '../notes'
 import { blobKey } from '../sync2/files'

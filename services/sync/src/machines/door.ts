@@ -12,7 +12,7 @@
  *  is refused on a socket instead, which the app can read (refuse.ts). */
 
 import { Hono } from 'hono'
-import { tokenOf } from '@nib/rooms'
+import { tokenOf } from '@orden/rooms'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
 import { SIGN_IN } from '../refused'

@@ -9,19 +9,19 @@
    *  the rows are here, beside the note, one press away and out of the words.
    *
    *  Each value is drawn by properties/PropertyValue.svelte, the control a table's cell
-   *  draws too. Every control writes through property-edits.ts in @nib/markdown, whose answer is
+   *  draws too. Every control writes through property-edits.ts in @orden/markdown, whose answer is
    *  one edit of the characters that change and nothing else in the file. It goes into
    *  the note's own document, so it is the note's undo step and every pane showing the
-   *  note has it at once; see `edit` in @nib/editor's shared.ts.
+   *  note has it at once; see `edit` in @orden/editor's shared.ts.
    *
    *  Follows the panel's note - the note in front, or the one the panel is held on -
    *  and reads `tab.doc`, which catches up when the typing pauses, as the outline does:
    *  nothing here runs per keystroke. Fetched the first time the panel is shown; see
    *  surfaces.svelte.ts. */
-  import { documentOf, insertFrontMatter } from '@nib/editor'
-  import type { TextEdit } from '@nib/markdown/edits'
-  import { frontMatterBlock } from '@nib/markdown/front-matter'
-  import { type Property, readProperties } from '@nib/markdown/properties'
+  import { documentOf, insertFrontMatter } from '@orden/editor'
+  import type { TextEdit } from '@orden/markdown/edits'
+  import { frontMatterBlock } from '@orden/markdown/front-matter'
+  import { type Property, readProperties } from '@orden/markdown/properties'
   import {
     addProperty,
     propertyNamed,
@@ -30,7 +30,7 @@
     renameProperty,
     writeList,
     writeProperty,
-  } from '@nib/markdown/property-edits'
+  } from '@orden/markdown/property-edits'
   import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
@@ -57,7 +57,7 @@
   const tab = $derived(workspace.panelTab?.kind === 'note' ? workspace.panelTab : null)
   const doc = $derived(tab?.doc ?? null)
   const block = $derived(doc === null ? null : frontMatterBlock(doc))
-  /** The rows, or null for a note with no block or one nib cannot read without
+  /** The rows, or null for a note with no block or one Orden cannot read without
    *  guessing; `block` tells those two apart. */
   const rows = $derived(doc === null ? null : readProperties(doc))
   /** Front matter is Markdown's, and an unknown file opens as a note tab too; a draft
@@ -181,7 +181,7 @@
   <p class="nib-section">{t('Properties')}<span>{rows?.length ?? 0}</span></p>
 
   {#if block && rows === null}
-    <!-- A block nib cannot read without guessing: a comment, a nested shape. Shown as
+    <!-- A block Orden cannot read without guessing: a comment, a nested shape. Shown as
          it is written, and edited where it is written. -->
     <button class="yaml" onclick={editSource}
       >{doc?.slice(block.body.from, block.body.to).trimEnd()}</button

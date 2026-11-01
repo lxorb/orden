@@ -6,7 +6,7 @@
  *  happen is worse than a short one. The arithmetic is in composer.ts and the
  *  files are workspace's; this is only the asking. */
 
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import type { Command } from './commands'
 import { t } from './i18n.svelte'
 import type { MenuEntry } from './menu.svelte'

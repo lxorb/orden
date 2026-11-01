@@ -1,4 +1,4 @@
-/** What a provider taught nib about one of its models by refusing something, and the
+/** What a provider taught Orden about one of its models by refusing something, and the
  *  level a reader last picked for it: kept on this device so neither is asked again.
  *
  *  A provider's list says what it says (catalogue.ts); what it leaves out is learnt the

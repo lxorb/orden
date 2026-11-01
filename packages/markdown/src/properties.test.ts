@@ -194,7 +194,7 @@ describe('a block this cannot draw', () => {
     expect(readProperties('---\ntitle: A plan\nweird:\n  ~ what\n---\n')).toBe(null)
   })
 
-  test('but nib’s own page setup is a shape it knows, so those notes keep rows', () => {
+  test('but Orden’s own page setup is a shape it knows, so those notes keep rows', () => {
     // `export:` with a paper size under it is what page-setup.ts reads. Without
     // this every note that prints on anything but the default went back to YAML.
     expect(said('---\ntitle: A plan\nexport:\n  paper: A4\n  margin: 15mm\n---\n')).toEqual([

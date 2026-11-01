@@ -1600,6 +1600,18 @@ export const te: Dictionary = {
   'answered by {model}, {date}': '{model} బదులిచ్చింది, {date}',
   'AI block': 'AI బ్లాక్',
   'Do with AI': 'AI తో చేయండి',
+  'Use the browser': 'బ్రౌజర్ వాడండి',
+  'Lets a task done with AI open web pages and act on them.':
+    'AI తో చేసే పనికి వెబ్ పేజీలు తెరిచి వాటిపై పనిచేయడానికి అనుమతిస్తుంది.',
+  'Look through notes': 'నోట్స్ చూడండి',
+  'Lets a task done with AI search and read your other notes, beside its own.':
+    'AI తో చేసే పనికి దాని నోట్‌తో పాటు మీ ఇతర నోట్స్ వెతకడానికి, చదవడానికి అనుమతిస్తుంది.',
+  'Change other notes': 'ఇతర నోట్స్ మార్చండి',
+  'Lets a task done with AI write, move and delete notes other than the task.':
+    'AI తో చేసే పనికి ఆ పని కాకుండా ఇతర నోట్స్ రాయడానికి, తరలించడానికి, తొలగించడానికి అనుమతిస్తుంది.',
+  'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.':
+    'AI తో చేసే పనిని ఏమి చేయమని అడుగుతారో అది. పూర్తయితే అది పనిని టిక్ చేస్తుంది, లేదంటే వ్యాఖ్యలో అడుగుతుంది.',
+  'Started in the AI panel': 'AI ప్యానెల్‌లో ప్రారంభమైంది',
   'Highlight colour': 'హైలైట్ రంగు',
   'A single newline breaks the line': 'ఒక కొత్త పంక్తి పంక్తిని విరుస్తుంది',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -2649,6 +2661,9 @@ export const te: Dictionary = {
     'ఇక్కడ వెబ్ పేజీలు సిస్టమ్ లాగే చిరునామాలను వెతుకుతాయి; దాని DNS సిస్టమ్ సొంత సెట్టింగ్‌లలో సెట్ చేయబడుతుంది.',
   'Set by the settings file': 'సెట్టింగ్‌ల ఫైల్ నిర్ణయించింది',
   'The settings file has a problem': 'సెట్టింగ్‌ల ఫైల్‌లో సమస్య ఉంది',
+  'Some changes may not be noticed': 'కొన్ని మార్పులు గమనించబడకపోవచ్చు',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'సిస్టమ్ పర్యవేక్షించే ఫోల్డర్ల పరిమితి చేరింది, కాబట్టి ఇతర ప్రోగ్రామ్‌లు మీ స్పేస్‌లలో చేసే ప్రతి మార్పును Orden గమనించకపోవచ్చు. fs.inotify.max_user_watches పెంచితే సరిపోతుంది.',
   // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'చాట్ {name} ను {space} కి తరలించాలా?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':

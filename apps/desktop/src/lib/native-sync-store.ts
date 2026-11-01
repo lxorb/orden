@@ -3,14 +3,14 @@
  *  sync2/store.ts, and only inside the app.
  *
  *  Bytes cross the bridge as bytes, in the envelope sync v2 already speaks to the
- *  account (`frame` in @nib/sync-core): a write goes up as the raw request body and a
+ *  account (`frame` in @orden/sync-core): a write goes up as the raw request body and a
  *  read comes back as the raw response, so a document's update is never spelled as a
  *  list of numbers, which is what JSON would make of it - four characters a byte, parsed
  *  back one number at a time. The crate reads and writes the same envelope in
  *  sync_store/wire.rs. One answer carries at most the envelope's ceiling of parts, ten
  *  thousand; a read of more says so, and is asked in batches. */
 
-import { frame, unframe } from '@nib/sync-core/wire'
+import { frame, unframe } from '@orden/sync-core/wire'
 import { invoke } from './native'
 import {
   answerOf,

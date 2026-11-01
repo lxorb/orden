@@ -3,8 +3,8 @@
  *  chip taken out of the line. Pure, so the sheet and the global window share it and a
  *  test can read it. */
 
-import type { Chip, ChipKind } from '@nib/bases/language'
-import { oneEdit } from '@nib/markdown/edits'
+import type { Chip, ChipKind } from '@orden/bases/language'
+import { oneEdit } from '@orden/markdown/edits'
 
 /** A run of the line: words, or the characters of one chip. */
 export interface Piece {

@@ -1,4 +1,4 @@
-import type { EditorView } from '@nib/editor'
+import type { EditorView } from '@orden/editor'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** When the palette offers to merge the note in front of the reader into another.

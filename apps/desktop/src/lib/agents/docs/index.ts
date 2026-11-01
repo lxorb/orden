@@ -12,7 +12,7 @@
  *  The one module here that reaches the workspace, and it is only ever imported on
  *  the first agent call: nothing of lib/agents is in the first paint. */
 
-import { documentOf } from '@nib/editor'
+import { documentOf } from '@orden/editor'
 import { links } from '../../link-index.svelte'
 import { isScratchpad } from '../../scratchpad/is.svelte'
 import { scratchpad } from '../../scratchpad/pad'

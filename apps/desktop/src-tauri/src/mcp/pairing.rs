@@ -1,10 +1,10 @@
-//! Which client this is, and the token nib gave it (docs/agent-native.md 9.1).
+//! Which client this is, and the token Orden gave it (docs/agent-native.md 9.1).
 //!
 //! A client is asked about once. The first `nib mcp` a client runs asks the reader through
 //! `agent_pair` (the bubble in nib: the client's name, Don't allow, Allow), and the token
 //! an Allow answers is kept here, under the client's own name, in the app's settings
 //! folder: `<config>/agents/clients/<client>`, the owner's alone. Every later run of that
-//! client reads it and asks nobody. nib itself keeps only the token's hash (grants.rs), so
+//! client reads it and asks nobody. Orden itself keeps only the token's hash (grants.rs), so
 //! this file is the one copy; removing the agent in Settings > Agents is what makes it
 //! worth nothing.
 
@@ -83,7 +83,7 @@ fn file_name(name: &str) -> String {
     key.trim_end_matches('-').to_owned()
 }
 
-/// What is kept for a client: the agent nib made for it, and its token.
+/// What is kept for a client: the agent Orden made for it, and its token.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Kept {
     /// The agent's id.
@@ -113,7 +113,7 @@ pub fn keep(dir: &Path, client: &Client, kept: &Kept) -> Result<(), String> {
     write_privately(&path, text.as_bytes())
 }
 
-/// The client's token, gone: nib no longer knows it.
+/// The client's token, gone: Orden no longer knows it.
 pub fn forget(dir: &Path, client: &Client) {
     let _ = std::fs::remove_file(file(dir, client));
 }

@@ -8,7 +8,7 @@
  *  Every write is the views' one write path (act.ts): one edit of each note it touches,
  *  one undo. */
 
-import type { Priority, Row } from '@nib/bases'
+import type { Priority, Row } from '@orden/bases'
 import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
@@ -30,7 +30,7 @@ import {
 import type { Kit } from './kit'
 import { offersPlaces, placeEntries } from './project-actions'
 import type { RowKey } from './row-keys'
-import { deadlineField, deadlineOf, startOf } from '@nib/markdown/task-dates'
+import { deadlineField, deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { changeFor, loadByDay } from './schedule/schedule'
 import { type Box, showScheduler } from './schedule/scheduling.svelte'
 import { labelsOf } from './task-meta'

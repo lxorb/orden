@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'vitest'
-import { createEditor, type EditorView, loadLineCommands, SharedDoc } from '@nib/editor'
+import { createEditor, type EditorView, loadLineCommands, SharedDoc } from '@orden/editor'
 
 /** A paste answered a moment late, and a pane that moved on in that moment.
  *

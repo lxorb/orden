@@ -7,7 +7,7 @@
  *  (a formula somebody wrote, a group inside a group) is kept as it was written and
  *  shown as its words, so opening the builder never loses a filter. Pure. */
 
-import type { Filter } from '@nib/bases'
+import type { Filter } from '@orden/bases'
 
 export type Operator =
   '==' | '!=' | '<' | '>' | '<=' | '>=' | 'contains' | 'empty' | 'filled' | 'tag'
@@ -36,7 +36,7 @@ export interface FilterRows {
 
 /** What a property holds, as far as asking it whether it is empty goes: `truth` a
  *  checkbox, `number` a number, `link` one link, `other` a text, a date or a list.
- *  Undefined where it is not known (a formula, a task's field nib does not list). */
+ *  Undefined where it is not known (a formula, a task's field Orden does not list). */
 export type Holds = 'truth' | 'number' | 'link' | 'other'
 export type HoldsOf = (property: string) => Holds | undefined
 

@@ -32,7 +32,7 @@
  *  answering, is waited for on the alarm (`waitForNibd`), and one that does not come
  *  back is power-cycled through the host's API. */
 
-import { BEAT, BEAT_ANSWER } from '@nib/sync-core/wire'
+import { BEAT, BEAT_ANSWER } from '@orden/sync-core/wire'
 import { randomToken } from '../crypto'
 import { note } from '../failed'
 import { askHub } from '../hub/reach'
@@ -60,7 +60,7 @@ import {
   type Typed,
   type Typing,
   type Watcher,
-} from '@nib/online'
+} from '@orden/online'
 import {
   type ClientFrame,
   clientFrameOf,
@@ -80,7 +80,7 @@ import {
   type ServerFrame,
   type SessionNow,
   text,
-} from '@nib/online/wire'
+} from '@orden/online/wire'
 import { reachAgain } from './reach'
 import { stillSignedIn } from '../signins'
 import { serviceOf } from './service'
@@ -662,7 +662,7 @@ export class Machine implements DurableObject {
     if (chosen) this.say(chosen.socket, { t: 'browse', url })
   }
 
-  /** A tab the owner's nib opened landed on the program's own sign-in callback: that
+  /** A tab the owner's Orden opened landed on the program's own sign-in callback: that
    *  request, made on the machine, where the program listens. The owner's alone. */
   private callback(socket: WebSocket, viewer: Viewer, url: string): void {
     if (!viewer.owns) {

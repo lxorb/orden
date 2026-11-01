@@ -2,8 +2,8 @@
  *  lines as they read, without the front matter, the marks of markdown or a heading
  *  that only says the note's name again. Pure, so a test reads it. */
 
-import { CodeBlocks, WORDS } from '@nib/markdown/fences'
-import { stripFrontMatter } from '@nib/markdown/front-matter'
+import { CodeBlocks, WORDS } from '@orden/markdown/fences'
+import { stripFrontMatter } from '@orden/markdown/front-matter'
 
 /** The lines a card shows. */
 const LINES = 2

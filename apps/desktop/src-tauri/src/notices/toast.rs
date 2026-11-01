@@ -6,7 +6,7 @@
 //! none. Every press is a foreground activation, heard in this process by the toast's
 //! own `Activated` (windows.rs): never a `nib://` link, which would start whichever nib
 //! registered the scheme, and never one that lands in an app that is not running,
-//! because a notice is taken off the screen when nib quits (notices.rs).
+//! because a notice is taken off the screen when Orden quits (notices.rs).
 //!
 //! Pure, so the XML is tested on every runner; only Windows builds a toast from it.
 

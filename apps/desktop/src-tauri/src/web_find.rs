@@ -1,12 +1,12 @@
 //! Finding words in a web tab's page: Ctrl+F.
 //!
-//! The bar is nib's own - the one every other surface finds with, under the web bar -
+//! The bar is Orden's own - the one every other surface finds with, under the web bar -
 //! and the finding is the engine's. `WebView2` has a find of its own (`ICoreWebView2Find`)
 //! that marks every match in the page, walks them and says how many there are and which
 //! one is lit, which is Chrome's own find with the dialog left out. The window types, the
 //! engine finds, and the count comes back as `nib://web-found`.
 //!
-//! An engine without it - an older runtime, the other two desktops, nib's own Chromium -
+//! An engine without it - an older runtime, the other two desktops, Orden's own Chromium -
 //! is asked by a line of script in the page instead: the browser's own `window.find`
 //! walks and selects the matches, and the page's text is counted for the tally. It marks
 //! one match rather than all of them, which is the honest difference.
@@ -112,7 +112,7 @@ pub fn web_find(app: AppHandle, tab: String, term: String, look: Look) -> Result
         Ok(())
     }
 
-    // nib's own Chromium has no find to lend either, and runs the page's in nib's own
+    // Orden's own Chromium has no find to lend either, and runs the page's in Orden's own
     // world, where the page cannot see what it leaves behind; see web_worlds.rs.
     #[cfg(feature = "cef")]
     {
@@ -304,7 +304,7 @@ mod native {
     }
 
     /// A new word: the engine's options, with its own dialog kept out of sight because
-    /// the bar is nib's. The tally is said once the session has started as well as as it
+    /// the bar is Orden's. The tally is said once the session has started as well as as it
     /// changes, because a new word with as many matches as the last changes nothing the
     /// engine would report.
     #[allow(

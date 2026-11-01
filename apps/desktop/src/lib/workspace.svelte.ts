@@ -1,4 +1,4 @@
-import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@nib/editor'
+import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account } from './account.svelte'
 import { hiddenKinds, settings } from './settings.svelte'
 import { arriving } from './arriving.svelte'
@@ -9,8 +9,8 @@ import {
   isPdfTarget,
   isTabFile,
   isWebTarget,
-} from '@nib/markdown/links'
-import { freePath } from '@nib/markdown/paths'
+} from '@orden/markdown/links'
+import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index.svelte'
 import { onDisk } from './on-disk'
@@ -128,6 +128,8 @@ export interface Entry {
   evicted?: boolean
   /** A folder the listing did not read into; see `walk` in tree.rs. */
   unlisted?: boolean
+  /** A page note holding a paper, made from a PDF; see `paper` in tree.rs. */
+  paper?: boolean
 }
 
 /** What the listing itself is asked for. One field, because the order the rows are
@@ -676,13 +678,22 @@ class Workspace {
    *  not the editor: that one only catches up when the typing pauses, which is
    *  as often as an outline needs to move. Lazy as every derived is, so a
    *  closed outline panel costs nothing at all. */
-  readonly headings = $derived.by(() => scanHeadings(this.panelTab?.doc ?? ''))
+  readonly headings = $derived.by(() => scanHeadings(this.markdownOfPanel))
 
   /** The note's footnotes, under its headings in the outline panel: both are the
    *  shape of the note being read rather than anything about the space around it,
    *  and both jump within it. Lazy for the same reason the headings are, and it
    *  gives up on the first pass over a note with no `[^` in it at all. */
-  readonly footnotes = $derived.by(() => scanFootnotes(this.panelTab?.doc ?? ''))
+  readonly footnotes = $derived.by(() => scanFootnotes(this.markdownOfPanel))
+
+  /** The text of the panel's note where it is markdown, which is all the outline reads.
+   *  A canvas or a page note is JSON, whose every edit had its whole file walked for
+   *  headings it cannot have: a tenth of a second per nudge, on a plane of eight
+   *  thousand cards (#535). */
+  private get markdownOfPanel(): string {
+    const tab = this.panelTab
+    return tab?.kind === 'note' ? tab.doc : ''
+  }
 
   /** Every file in the space, flattened: the notes, and the PDFs and canvases
    *  beside them, which are the three things a tab can hold. What quick open
@@ -960,7 +971,7 @@ class Workspace {
             : { ...draft, dirty: false, doc }
         }
 
-        // Never a tab: an older nib's goes, its unwritten words written first.
+        // Never a tab: an older Orden's goes, its unwritten words written first.
         if (isScratchpad(draft.path)) {
           if (draft.dirty && draft.path)
             await writeFile(draft.path, draft.doc).catch(() => undefined)
@@ -1041,7 +1052,7 @@ class Workspace {
       (await ahead.noteAhead(path)) ??
       (await invoke<string>('read_note', { path }).catch(() => null))
     if (text === null) return null
-    // A canvas or a page note whose text stopped being one while nib was closed is
+    // A canvas or a page note whose text stopped being one while Orden was closed is
     // not put back as a blank plane, which its first stroke would write over the
     // file: it is refused as its open refuses it (`openCanvas`, `openDeck`).
     if (draft.kind === 'canvas' || draft.kind === 'pages') {
@@ -1421,7 +1432,7 @@ class Workspace {
   }
 
   async newPages() {
-    const { blankPages } = await import('@nib/markdown/pages')
+    const { blankPages } = await import('@orden/markdown/pages')
     // The paper the reader chose, which the workspace has no opinion about.
     const { modes } = await import('./modes.svelte')
     this.openUnsaved('pages', blankPages(modes.pagesPaper))
@@ -2033,7 +2044,7 @@ class Workspace {
 
     const path = this.spelled(asked)
     // Already open, before anything is written: the conversion below makes a file. Off
-    // the desktop app such a tab is an older sitting's frame inside nib (#206): it goes.
+    // the desktop app such a tab is an older sitting's frame inside Orden (#206): it goes.
     const held = this.opened.at(path)
     if (held) {
       if (await this.handedOut(path)) {
@@ -2423,7 +2434,7 @@ class Workspace {
     // pages engine is a surface's worth of code, and a window that opens on a note has
     // no stack of paper to read; see surfaces.svelte.ts, where the surface itself comes
     // through.
-    const { blankPages } = await import('@nib/markdown/pages')
+    const { blankPages } = await import('@orden/markdown/pages')
     // And the paper the reader chose, which the workspace has no opinion about: A4
     // outside North America and Letter inside it are both right, so the store is asked
     // rather than a size assumed. Fetched here rather than imported at the top because
@@ -3997,7 +4008,7 @@ class Workspace {
    *
    *  The row's own gesture for what a drag does: `A.md` becomes `A/A.md` and the
    *  new note arrives beside it, waiting for a name. A row that is already a
-   *  folder - one nib nested, or one out of somebody's vault - only gets the new
+   *  folder - one Orden nested, or one out of somebody's vault - only gets the new
    *  note, and a row that can hold nothing gets nothing: a PDF or a picture is not
    *  a place.
    *

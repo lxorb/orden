@@ -35,7 +35,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const has = (flag) => args.includes(flag)
 const after = (flag) => (has(flag) ? args[args.indexOf(flag) + 1] : undefined)
 
-/** The question on stdin, as its last line of words: nib wraps a question in tags, and
+/** The question on stdin, as its last line of words: Orden wraps a question in tags, and
  *  the answer echoes what was asked rather than the tag that closed it. */
 async function question() {
   let text = ''
@@ -51,7 +51,7 @@ function refuse(why) {
 
 /** `mcp get`, `mcp add` and `mcp remove`, as both programs spell them, kept in a file of
  *  the program's home (`CLAUDE_CONFIG_DIR` or `CODEX_HOME`, else `HOME`): what a test of
- *  nib connecting itself to the agents on a machine reads back. Never a real config. */
+ *  Orden connecting itself to the agents on a machine reads back. Never a real config. */
 function mcp(home) {
   const file = join(home, 'fake-mcp.json')
   let servers = {}
@@ -509,7 +509,7 @@ function appServer() {
     if (params.ephemeral !== true) return fail(id, 'kept on disk')
     const config = params.config ?? {}
     if (Object.keys(config).some((key) => !key.startsWith('mcp_servers.orden.')))
-      return fail(id, 'configured beyond nib')
+      return fail(id, 'configured beyond Orden')
     if (config['mcp_servers.orden.command']) {
       if (config['mcp_servers.orden.args']?.join(' ') !== 'mcp') return fail(id, 'not nib mcp')
       if (

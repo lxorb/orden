@@ -1,4 +1,4 @@
-import { foldName } from '@nib/markdown/links'
+import { foldName } from '@orden/markdown/links'
 
 /** Subsequence match with a score. Higher is better; null means no match.
  *  Consecutive hits and matches at word starts are rewarded, so "rdm" ranks

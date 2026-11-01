@@ -39,7 +39,7 @@ SHOTS = DRIVE.shots
 
 
 # The five colours Obsidian encodes, and the plain one. The tone each is drawn in
-# is highlights.ts in @nib/markdown; the drive asks the page rather than repeating
+# is highlights.ts in @orden/markdown; the drive asks the page rather than repeating
 # it, so a change there fails here instead of being copied.
 EMOJI = ["\U0001F534", "\U0001F7E0", "\U0001F7E2", "\U0001F535", "\U0001F7E3"]
 

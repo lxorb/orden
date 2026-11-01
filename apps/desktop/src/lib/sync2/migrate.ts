@@ -43,7 +43,7 @@ import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
 import { project, wrote } from './project'
 import type { Change, EntryRow } from './store'
-import { pullResponseOf, PULL_BATCH, type FeedItem, type Op } from '@nib/sync-core/wire'
+import { pullResponseOf, PULL_BATCH, type FeedItem, type Op } from '@orden/sync-core/wire'
 import * as Y from 'yjs'
 
 /** What v1 knew of a space: its feed cursor and the notes it tracked, by path. */
@@ -130,7 +130,7 @@ export async function firstPass(
     }
     return null
   }
-  // A document's file, matched to its entry. What nib last wrote is the file as v1 left
+  // A document's file, matched to its entry. What Orden last wrote is the file as v1 left
   // it: the words the next pull is measured against, so a file v1 merely fell behind on
   // is written over and not read as edits.
   const match = async (entry: EntryRow, file: string, tracked: Tracked | undefined) => {

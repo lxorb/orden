@@ -1,4 +1,4 @@
-import { CODE_PALETTES } from '@nib/editor'
+import { CODE_PALETTES } from '@orden/editor'
 import { describe, expect, test } from 'vitest'
 import { highlightCode, loadParsers, paletteCss } from './highlight'
 
