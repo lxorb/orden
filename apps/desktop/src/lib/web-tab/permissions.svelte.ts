@@ -35,7 +35,7 @@
 
 import { invoke, isDesktop } from '../tauri'
 import { withOrWithout } from '../records'
-import { isRecord, keep, stored } from '../stored'
+import { isRecord, Shared } from '../stored'
 import { plainOrigin } from './address'
 
 const STORAGE_KEY = 'nib:web-grants'
@@ -99,6 +99,25 @@ export interface Asking {
   privately: boolean
 }
 
+type Table = Record<string, Partial<Record<Ask, Answer>>>
+
+/** What storage holds, read rather than trusted. */
+function readTable(read: unknown): Table {
+  if (!isRecord(read)) return {}
+
+  const out: Table = {}
+  for (const [site, value] of Object.entries(read)) {
+    if (!isRecord(value)) continue
+
+    const said: Partial<Record<Ask, Answer>> = {}
+    for (const [kind, answer] of Object.entries(value)) {
+      if (isAsk(kind) && isAnswer(answer)) said[kind] = answer
+    }
+    if (Object.keys(said).length) out[site] = said
+  }
+  return out
+}
+
 /** What the crate says when a site asks for something. Read rather than trusted: an
  *  event is a boundary like any other. */
 export function readAsked(value: unknown): Asking | null {
@@ -112,39 +131,47 @@ export function readAsked(value: unknown): Asking | null {
 }
 
 class Grants {
-  /** What each site was told, by origin and then by what it asked for. */
-  private by = $state<Record<string, Partial<Record<Ask, Answer>>>>({})
+  /** What each site was told, by origin and then by what it asked for: read again
+   *  whenever another window wrote it, so Reset permissions there is not undone by an
+   *  answer here. See `Shared` in stored.ts. */
+  private readonly kept = new Shared(STORAGE_KEY, readTable)
+
+  /** Counted up as what is kept changes, here or in another window, so what is drawn
+   *  from it is drawn again. */
+  private changed = $state(0)
 
   /** What each site was told in a private tab: memory, never the store. */
-  private privately = $state<Record<string, Partial<Record<Ask, Answer>>>>({})
+  private privately = $state<Table>({})
 
   /** The requests waiting for an answer, oldest first: one bubble at a time, like a
    *  browser, and the next one appears as the last is answered. */
   asking = $state<Asking[]>([])
 
   constructor() {
-    const read = stored(STORAGE_KEY)
-    if (!isRecord(read)) return
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
+    window.addEventListener('storage', (event) => {
+      if (event.key === STORAGE_KEY || event.key === null) this.changed++
+    })
+  }
 
-    const out: Record<string, Partial<Record<Ask, Answer>>> = {}
-    for (const [site, value] of Object.entries(read)) {
-      if (!isRecord(value)) continue
+  /** What the store holds, read so that what reads it is drawn again when it moves. */
+  private by(): Table {
+    this.heardChange()
+    return this.kept.get()
+  }
 
-      const said: Partial<Record<Ask, Answer>> = {}
-      for (const [kind, answer] of Object.entries(value)) {
-        if (isAsk(kind) && isAnswer(answer)) said[kind] = answer
-      }
-      if (Object.keys(said).length) out[site] = said
-    }
-    this.by = out
+  /** Reads the count, so what reads the table is drawn again when it moves. */
+  private heardChange(): number {
+    return this.changed
   }
 
   /** Everything this site has been told, which is nothing until it asked. In a private
    *  tab: what it was told there, over what a normal tab blocked. */
   of(site: string, privately = false): Partial<Record<Ask, Answer>> {
-    if (!privately) return this.by[site] ?? {}
+    const by = this.by()
+    if (!privately) return by[site] ?? {}
 
-    const blocked = Object.entries(this.by[site] ?? {}).filter(([, said]) => said === 'block')
+    const blocked = Object.entries(by[site] ?? {}).filter(([, said]) => said === 'block')
     return { ...Object.fromEntries(blocked), ...this.privately[site] }
   }
 
@@ -158,7 +185,7 @@ class Grants {
   remember(site: string, ask: Ask, answer: Answer | null, privately = false) {
     if (!site) return
 
-    const before = (privately ? this.privately : this.by)[site] ?? {}
+    const before = (privately ? this.privately : this.by())[site] ?? {}
     const kept = Object.fromEntries(
       Object.entries(before).filter(([one]) => one !== ask),
     ) as Partial<Record<Ask, Answer>>
@@ -169,12 +196,14 @@ class Grants {
       return
     }
 
-    const all = withOrWithout(this.by, site, Object.keys(kept).length ? kept : null)
-    this.by = all
+    this.write(withOrWithout(this.by(), site, Object.keys(kept).length ? kept : null))
+  }
 
-    // A device that cannot keep this asks again next time, which is the answer that
-    // matters; it just forgets what was said.
-    keep(STORAGE_KEY, JSON.stringify(all))
+  /** The table written to this device's storage. A device that cannot keep it asks
+   *  again next time, which is the answer that matters; it just forgets what was said. */
+  private write(all: Table) {
+    this.kept.set(all, JSON.stringify(all))
+    this.changed++
   }
 
   /** A site has asked for something. Either the reader has already said what this site
@@ -239,14 +268,13 @@ class Grants {
    *  what happens in a browser too. */
   forget(site: string, privately = false) {
     if (privately) {
-      this.privately = withOrWithout(this.privately, site, null)
+      this.privately = withOrWithout<Partial<Record<Ask, Answer>>>(this.privately, site, null)
       return
     }
-    if (!this.by[site]) return
+    const all = this.by()
+    if (!all[site]) return
 
-    const all = withOrWithout(this.by, site, null)
-    this.by = all
-    keep(STORAGE_KEY, JSON.stringify(all))
+    this.write(withOrWithout<Partial<Record<Ask, Answer>>>(all, site, null))
   }
 }
 

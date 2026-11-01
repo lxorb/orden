@@ -73,4 +73,6 @@ const TOKENS: readonly [string, string, string][] = [
   ['line', '--line-strong', '#d6d9de'],
   ['surface', '--surface', '#ffffff'],
   ['bg', '--bg', '#fbfbfd'],
+  // The faint rule of a page's ruling, for a page note's export.
+  ['dot', '--canvas-dot', '#d5dce5'],
 ]

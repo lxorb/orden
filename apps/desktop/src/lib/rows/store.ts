@@ -37,6 +37,9 @@ export interface RowsChange {
   path: string | null
   removed: readonly Row[]
   added: readonly Row[]
+  /** For a note renamed or moved, told at its new path: where it was and its rows
+   *  there, so the move is not taken for a note just made (B551). */
+  from?: { space: string; path: string; rows: readonly Row[] }
 }
 
 export type RowsListener = (change: RowsChange) => void
@@ -204,7 +207,12 @@ export class RowsStore {
   }
 
   /** One file's rows replaced, made now and again over a read in the air. */
-  private edit(held: Held, key: string, next: (before: Row[] | undefined) => Row[] | null) {
+  private edit(
+    held: Held,
+    key: string,
+    next: (before: Row[] | undefined) => Row[] | null,
+    from?: RowsChange['from'],
+  ) {
     const change = (files: Map<string, Row[]>) => {
       const rows = next(files.get(key))
       if (!rows?.length) files.delete(key)
@@ -217,7 +225,14 @@ export class RowsStore {
     held.flat = null
     const after = held.files.get(key) ?? []
     const path = after[0]?.path ?? before[0]?.path ?? key
-    this.tell({ root: held.root, space: held.name, path, removed: before, added: after })
+    const told: RowsChange = {
+      root: held.root,
+      space: held.name,
+      path,
+      removed: before,
+      added: after,
+    }
+    this.tell(from ? { ...told, from } : told)
   }
 
   private add(space: SpaceName) {
@@ -310,8 +325,11 @@ export class RowsStore {
       // Rows already where it went are a save since the rename, newer than what moved:
       // a link rewrite is told before the move (B498). A case-only rename's own key
       // was emptied just above.
-      this.edit(now, pathKey(moved, now.root), (saved) =>
-        saved?.length ? bornWhen(saved, rows) : movedRows(rows, moved, now.name),
+      this.edit(
+        now,
+        pathKey(moved, now.root),
+        (saved) => (saved?.length ? bornWhen(saved, rows) : movedRows(rows, moved, now.name)),
+        { space: was.name, path, rows },
       )
     }
     return true
@@ -413,6 +431,13 @@ export class RowsStore {
     }
     return (await this.host.scan(held.root))?.notes ?? []
   }
+}
+
+/** The rows a note's words make at `relative` in a space, as a save would make them;
+ *  the read of a task's dates aside, which only the store knows. */
+export function noteRowsOf(space: string, relative: string, content: string): Row[] {
+  const stamp = { size: content.length, mtime: 0, ctime: 0 }
+  return rowsOf(space, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }))
 }
 
 /** A scanned note as the rows read it. */

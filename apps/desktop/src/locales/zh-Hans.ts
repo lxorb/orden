@@ -2571,4 +2571,12 @@ export const zhHans: Dictionary = {
   'Some changes may not be noticed': '部分更改可能不会被察觉',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     '系统监视文件夹的数量已达上限，因此 Orden 可能无法察觉其他程序对你空间所做的每处更改。调高 fs.inotify.max_user_watches 即可解决。',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '将对话 {name} 移动到 {space}？',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    '之后 {space} 中的所有人都能阅读全部历史，{from} 中的人将失去它。',
+  'Move the chats {names} to {space}?': '将对话 {names} 移动到 {space}？',
+  'Move the chat': '移动对话',
+  'Only the file': '仅文件',
+  'Trust this space again': '再次信任此空间',
 }

@@ -64,7 +64,7 @@
   import { watchScale, watchShifts } from './shifts'
   import { grants, siteOf } from './permissions.svelte'
   import { dialogs } from './dialogs.svelte'
-  import { isMuted, keepZoom, zoomOf } from './sites'
+  import { asideFor, isMuted, keepZoom, zoomOf } from './sites'
   import { movedOn } from './used'
   import { visited } from './visited'
   import { webData } from './web-data.svelte'
@@ -543,9 +543,10 @@
     if (!page.live || page.loading || !here) return
 
     untrack(() => {
-      page.zoom = zoomOf(here)
+      const aside = asideFor(tab.id, page)
+      page.zoom = zoomOf(here, aside)
       void pages.zoom(tab.id, page.zoom)
-      mute(tab.id, page, isMuted(here))
+      mute(tab.id, page, isMuted(here, aside))
     })
   })
 
@@ -598,7 +599,7 @@
   })
 
   function clip() {
-    void clipPage(tab.id, { url: page.url, title: page.title })
+    void clipPage(tab.id, space, { url: page.url, title: page.title })
   }
 
   // A new page is a new mark to look for.
@@ -737,7 +738,7 @@
    *  page, so this one is kept for the site here. */
   function zoomTo(factor: number) {
     page.zoom = factor
-    keepZoom(site, factor)
+    keepZoom(site, factor, asideFor(tab.id, page))
     void pages.zoom(tab.id, factor)
   }
 

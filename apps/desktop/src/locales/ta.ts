@@ -2696,4 +2696,12 @@ export const ta: Dictionary = {
   'Some changes may not be noticed': 'சில மாற்றங்கள் கவனிக்கப்படாமல் போகலாம்',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'கணினி கண்காணிக்கும் கோப்புறைகளின் வரம்பை எட்டிவிட்டது, எனவே பிற நிரல்கள் உங்கள் இடங்களில் செய்யும் ஒவ்வொரு மாற்றத்தையும் Orden கவனிக்காமல் போகலாம். fs.inotify.max_user_watches ஐ உயர்த்தினால் சரியாகும்.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'அரட்டை {name} ஐ {space} க்கு நகர்த்தவா?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'அப்போது {space} இல் உள்ள அனைவரும் முழு வரலாற்றையும் படிக்கலாம், {from} இல் உள்ளவர்கள் அதை இழப்பார்கள்.',
+  'Move the chats {names} to {space}?': 'அரட்டைகள் {names} ஐ {space} க்கு நகர்த்தவா?',
+  'Move the chat': 'அரட்டையை நகர்த்து',
+  'Only the file': 'கோப்பு மட்டும்',
+  'Trust this space again': 'இந்த இடத்தை மீண்டும் நம்பு',
 }

@@ -2651,4 +2651,12 @@ export const ps: Dictionary = {
   'Some changes may not be noticed': 'ښايي ځينې بدلونونه ونه لیدل شي',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'سیسټم د څارل شويو فولډرونو حد ته رسېدلی، نو ښايي Orden هغه ټول بدلونونه ونه ویني چې نور پروګرامونه ستاسو په ځایونو کې کوي. د fs.inotify.max_user_watches لوړول یې سموي.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'خبرې اترې {name} {space} ته وخوځول شي؟',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'بیا به په {space} کې هرڅوک ټول تاریخ ولولي، او په {from} کې خلک به یې له لاسه ورکړي.',
+  'Move the chats {names} to {space}?': 'خبرې اترې {names} {space} ته وخوځول شي؟',
+  'Move the chat': 'خبرې اترې وخوځوه',
+  'Only the file': 'یوازې فایل',
+  'Trust this space again': 'په دې ځای بیا باور وکړئ',
 }

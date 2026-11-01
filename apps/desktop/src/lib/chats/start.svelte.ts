@@ -42,7 +42,9 @@ function followed(op: FileOp): void {
     if (isPointer(op.from) || isPointer(op.to)) void chats.pointerMoved(op.from, op.to)
     return
   }
-  // A folder or a whole space moved: whatever pointers were in it are found again.
+  // A folder or a whole space moved: whatever pointers were in it are found again, the
+  // chats' own among them where it went.
+  chats.folderMoved(op.from, op.to)
   void chats.lookAgain()
 }
 

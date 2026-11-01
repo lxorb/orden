@@ -217,6 +217,7 @@ export function exportCommands(): Command[] {
       name: name(),
       path: note()?.path ?? null,
       root: workspace.rootHolding(note()?.path ?? null),
+      trusted: target().trusted,
     })
 
     if (id === 'pdf') await out.exportPagesPdf(about)

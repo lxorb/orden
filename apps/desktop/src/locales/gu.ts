@@ -2637,4 +2637,12 @@ export const gu: Dictionary = {
   'Some changes may not be noticed': 'કેટલાક ફેરફારો કદાચ ધ્યાનમાં ન આવે',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'સિસ્ટમની જોવાતા ફોલ્ડરોની મર્યાદા પૂરી થઈ ગઈ છે, તેથી બીજા પ્રોગ્રામ તમારી સ્પેસમાં કરે તે દરેક ફેરફાર Orden કદાચ ન જુએ. fs.inotify.max_user_watches વધારવાથી સુધરે છે.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ચેટ {name} ને {space} માં ખસેડવી?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'પછી {space} માં બધા આખો ઇતિહાસ વાંચી શકશે, અને {from} ના લોકો તે ગુમાવશે.',
+  'Move the chats {names} to {space}?': 'ચેટ {names} ને {space} માં ખસેડવી?',
+  'Move the chat': 'ચેટ ખસેડો',
+  'Only the file': 'ફક્ત ફાઇલ',
+  'Trust this space again': 'આ સ્પેસ પર ફરી વિશ્વાસ કરો',
 }

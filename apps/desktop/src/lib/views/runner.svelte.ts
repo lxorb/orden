@@ -15,7 +15,7 @@ import { untrack } from 'svelte'
 import { links } from '../link-index.svelte'
 import { rows } from '../rows/rows.svelte'
 import { workspace } from '../workspace.svelte'
-import { basesAre, heard, readHeld, repeatTemplates, running } from './running'
+import { basesAre, heardChange, readHeld, repeatTemplates } from './running'
 
 $effect.root(() => {
   // The open space's base files, read again whenever the list of them changes.
@@ -29,11 +29,7 @@ links.hearSaves((path) => {
   if (/\.base$/i.test(path)) void readHeld(path)
 })
 
-rows.watch((change) => {
-  if (change.path === null || !running()) return
-  if (!change.added.some((row) => row.kind === 'note')) return
-  heard(change.space, change.path, change.removed)
-})
+rows.watch(heardChange)
 
 // Once the rows are all read, and then every half hour, which also catches the day
 // turning over.

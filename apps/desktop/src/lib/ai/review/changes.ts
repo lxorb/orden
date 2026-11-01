@@ -87,8 +87,9 @@ export function answered(turns: readonly Turn[], at: number): string | null {
   return found
 }
 
-/** A thread as the review reads it: with the helper threads a command started from it
- *  (`/batch`, `/subtask`; lib/ai/commands/helpers.ts), whose changes are its own. */
+/** A thread as the review reads it: with the helper threads started under it, by a
+ *  command (`/batch`, `/subtask`; lib/ai/commands/helpers.ts) or by `run_agent`
+ *  (lib/ai/helpers), whose changes are its own. */
 export type Reviewed = Pick<Thread, 'id' | 'provider' | 'turns'> & { helpers?: readonly string[] }
 
 /** The thread's changes, oldest first: every edit the thread, or a helper of it, was

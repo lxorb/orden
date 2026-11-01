@@ -153,18 +153,21 @@ pub(crate) fn last_used(folder: &Path) -> Option<SystemTime> {
     newest(folder, 5, &mut 0)
 }
 
-/// Folds the store `from` into the global one: its cookies, and the storage of each of
-/// `origins` the global store has none of. `from_used_last` is whether `from` was used
-/// more recently than the global store.
+/// Folds the store `from` into `into`: its cookies, and the storage of each of `origins`.
+/// Into the global store (`into` none) only an origin's storage it has none of; into a
+/// named store, which is one made for this copy (`web_copy`), every origin's, since what
+/// is there was put by nothing but the copy. `from_used_last` is whether `from` was used
+/// more recently than `into`.
 pub(crate) async fn merge(
     caller: &Webview,
     from: &str,
+    into: Option<&str>,
     origins: &[String],
     from_used_last: bool,
 ) -> Result<Merged, String> {
     let window = caller.window();
     let mut old = Hidden::open(&window, Some(from)).await?;
-    let mut global = Hidden::open(&window, None).await?;
+    let mut global = Hidden::open(&window, into).await?;
 
     let theirs = cookies::every(old.view()).await?;
     let ours = cookies::every(global.view()).await?;
@@ -179,7 +182,7 @@ pub(crate) async fn merge(
 
     for origin in origins {
         // An origin that cannot be opened or read is left as it is, and the rest go on.
-        match copied(&mut old, &mut global, origin).await {
+        match copied(&mut old, &mut global, origin, into.is_some()).await {
             Ok(true) => merged.origins += 1,
             Ok(false) | Err(_) => merged.left += 1,
         }
@@ -187,9 +190,21 @@ pub(crate) async fn merge(
     Ok(merged)
 }
 
-/// One origin's storage out of `old` and into `global`, when `global` has none. Says
-/// whether it was copied.
-async fn copied(old: &mut Hidden, global: &mut Hidden, origin: &str) -> Result<bool, String> {
+/// Whether an origin's storage is copied, given whether the store it goes into already
+/// holds some for it: never over what the shared store has of its own, and always into a
+/// store made for the copy (`fresh`).
+pub(crate) fn takes_storage(into_has: bool, fresh: bool) -> bool {
+    fresh || !into_has
+}
+
+/// One origin's storage out of `old` and into `global`; see `takes_storage`. Says whether
+/// it was copied.
+async fn copied(
+    old: &mut Hidden,
+    global: &mut Hidden,
+    origin: &str,
+    fresh: bool,
+) -> Result<bool, String> {
     let listing = quoted(r#"{"session":false}"#)?;
     let list = format!("nibDump('list', {listing})");
 
@@ -201,7 +216,9 @@ async fn copied(old: &mut Hidden, global: &mut Hidden, origin: &str) -> Result<b
             there.origin
         ));
     }
-    if there.local.as_ref().is_some_and(|items| !items.is_empty()) || !there.databases.is_empty() {
+    let has =
+        there.local.as_ref().is_some_and(|items| !items.is_empty()) || !there.databases.is_empty();
+    if !takes_storage(has, fresh) {
         return Ok(false);
     }
 
@@ -254,7 +271,21 @@ fn parsed<'a, T: Deserialize<'a>>(text: &'a str) -> Result<T, String> {
 #[cfg(test)]
 mod tests {
     use super::super::cookies::{Cookie, Partition};
-    use super::chosen;
+    use super::{chosen, takes_storage};
+
+    #[test]
+    fn the_shared_store_keeps_an_origin_s_storage_and_a_fresh_store_takes_the_copy() {
+        assert!(takes_storage(false, false), "nothing there: copied");
+        assert!(
+            !takes_storage(true, false),
+            "the shared store's own storage stands"
+        );
+        assert!(
+            takes_storage(true, true),
+            "a store made for the copy holds nothing of its own"
+        );
+        assert!(takes_storage(false, true));
+    }
 
     fn cookie(name: &str, value: &str, expires: Option<f64>) -> Cookie {
         Cookie {

@@ -2566,4 +2566,12 @@ export const yue: Dictionary = {
   'Some changes may not be noticed': '有啲改動可能留意唔到',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     '系統監察資料夾嘅上限已經到咗，所以 Orden 可能留意唔到其他程式喺你啲空間入面做嘅每個改動。提高 fs.inotify.max_user_watches 就得。',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '將傾偈 {name} 移去 {space}？',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    '咁 {space} 入面每個人都睇到成個紀錄，{from} 啲人就冇得再睇。',
+  'Move the chats {names} to {space}?': '將傾偈 {names} 移去 {space}？',
+  'Move the chat': '移傾偈',
+  'Only the file': '淨係個檔案',
+  'Trust this space again': '再次信任呢個空間',
 }

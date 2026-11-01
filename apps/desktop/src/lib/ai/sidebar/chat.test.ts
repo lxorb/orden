@@ -837,6 +837,123 @@ describe('a chat while it answers', () => {
     return chat
   }
 
+  /** `/batch`, `/subtask`, `/fork`, a goal, a loop: everything a chat started ends with
+   *  it, and what its helpers started too, and the chat is not written again. */
+  test('a deleted chat stops all the work it started', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const { tasks } = await import('../commands/tasks.svelte')
+    const { helpers } = await import('../helpers/helpers.svelte')
+    const { newThread } = await import('../chat/threads')
+    const note = newThread('work', 'p', 'm')
+    const open = chat.thread
+    if (!open) throw new Error('open')
+    helpers.startedUnder(open, note)
+    const batch = vi.fn()
+    const under = vi.fn()
+    const other = vi.fn()
+    tasks.add({ thread: id, kind: 'batch', label: 'Inbox/', stop: batch })
+    tasks.add({ thread: note.id, kind: 'subtask', label: 'deeper', helper: 'h2', stop: under })
+    tasks.add({ thread: 'elsewhere', kind: 'loop', label: 'keep on', stop: other })
+
+    await chat.remove(id)
+
+    await vi.waitFor(() => expect(batch).toHaveBeenCalled())
+    expect(under).toHaveBeenCalled()
+    expect(other).not.toHaveBeenCalled()
+    expect(tasks.of(id)).toEqual([])
+    expect(deleted).toEqual([`work/${id}`])
+    tasks.stop('elsewhere')
+  })
+
+  /** A `run_agent` helper on the road run.ts starts it on: the panel's own thread and
+   *  turn. Stop ends it, the chat is written down with it for its review, and a delete
+   *  ends one started after. */
+  test('Stop and delete end a run_agent helper on the panel’s road', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await settled()
+    const { helpers } = await import('../helpers/helpers.svelte')
+    const parent = chat.threadOf(id)
+    if (!parent) throw new Error('held')
+    const signals: AbortSignal[] = []
+    engine.send.mockImplementation(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void, signal?: AbortSignal) =>
+        new Promise<void>((resolve) => {
+          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          if (signal) signals.push(signal)
+          signal?.addEventListener('abort', () => {
+            on({ type: 'done', stop: 'stopped' })
+            resolve()
+          })
+        }),
+    )
+    const provider = { id: 'p', kind: 'compatible', model: 'm', name: 'Fake' } as const
+    const roads = {
+      offered: () => Promise.resolve([{ provider, models: [] }]),
+      run: (thread: Thread, text: string, signal: AbortSignal) => {
+        chat.adopt(thread)
+        return chat.turn(thread, text, { signal })
+      },
+    }
+    const ask = {
+      parent,
+      space: 'work',
+      prompt: 'Fix every note in Inbox',
+      description: 'inbox',
+      model: '',
+      mode: parent.mode,
+    }
+    try {
+      const first = await helpers.start(ask, roads)
+      if ('refused' in first) throw new Error(first.refused)
+      await vi.waitFor(() => expect(signals).toHaveLength(1))
+
+      chat.stop()
+      await vi.waitFor(() => expect(signals[0]?.aborted).toBe(true))
+      expect((parent as Thread & { helpers?: string[] }).helpers).toEqual([first.id])
+
+      const second = await helpers.start(ask, roads)
+      if ('refused' in second) throw new Error(second.refused)
+      await vi.waitFor(() => expect(signals).toHaveLength(2))
+      await chat.remove(id)
+      await vi.waitFor(() => expect(signals[1]?.aborted).toBe(true))
+    } finally {
+      engine.send.mockReset()
+    }
+  })
+
+  test('a delete refused leaves the work the chat started running', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await settled()
+    const { tasks } = await import('../commands/tasks.svelte')
+    const loop = vi.fn()
+    tasks.add({ thread: id, kind: 'loop', label: 'keep on', stop: loop })
+    refusing.delete = true
+
+    await chat.remove(id)
+    await settled()
+
+    expect(chat.heads.map((one) => one.id)).toContain(id)
+    expect(loop).not.toHaveBeenCalled()
+    tasks.stop(id)
+  })
+
+  test('Stop stops the work the open chat started', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const { tasks } = await import('../commands/tasks.svelte')
+    const fork = vi.fn()
+    tasks.add({ thread: id, kind: 'fork', label: 'a copy', helper: 'h3', stop: fork })
+
+    chat.stop()
+
+    await vi.waitFor(() => expect(fork).toHaveBeenCalled())
+    expect(tasks.of(id)).toEqual([])
+  })
+
   test('stays deleted once deleted while it answers', async () => {
     const chat = await asked()
     const id = String(chat.thread?.id)

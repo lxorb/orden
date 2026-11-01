@@ -2621,4 +2621,12 @@ export const vi: Dictionary = {
   'Some changes may not be noticed': 'Một số thay đổi có thể không được nhận ra',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Hệ thống đã chạm giới hạn số thư mục được theo dõi, nên Orden có thể không thấy mọi thay đổi mà chương trình khác tạo trong không gian của bạn. Tăng fs.inotify.max_user_watches sẽ khắc phục.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Chuyển cuộc trò chuyện {name} tới {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Khi đó mọi người trong {space} có thể đọc toàn bộ lịch sử, và những người trong {from} mất quyền xem.',
+  'Move the chats {names} to {space}?': 'Chuyển các cuộc trò chuyện {names} tới {space}?',
+  'Move the chat': 'Chuyển cuộc trò chuyện',
+  'Only the file': 'Chỉ tệp',
+  'Trust this space again': 'Tin cậy lại không gian này',
 }

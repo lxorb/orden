@@ -2645,4 +2645,12 @@ export const ms: Dictionary = {
   'Some changes may not be noticed': 'Sesetengah perubahan mungkin tidak disedari',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Sistem telah mencapai had folder yang dipantau, jadi Orden mungkin tidak menyedari setiap perubahan yang dibuat program lain dalam ruang anda. Menaikkan fs.inotify.max_user_watches membetulkannya.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Alihkan sembang {name} ke {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Semua orang dalam {space} kemudian boleh membaca seluruh sejarah, dan orang dalam {from} kehilangannya.',
+  'Move the chats {names} to {space}?': 'Alihkan sembang {names} ke {space}?',
+  'Move the chat': 'Alihkan sembang',
+  'Only the file': 'Fail sahaja',
+  'Trust this space again': 'Percayai ruang ini semula',
 }

@@ -2624,4 +2624,12 @@ export const ja: Dictionary = {
   'Some changes may not be noticed': '一部の変更に気づけないかもしれません',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'システムの監視フォルダー数が上限に達したため、ほかのプログラムがスペースに加えた変更を Orden がすべて検知できない可能性があります。fs.inotify.max_user_watches を増やすと解決します。',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'チャット {name} を {space} へ移動しますか？',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    '{space} の全員が履歴をすべて読めるようになり、{from} の人は読めなくなります。',
+  'Move the chats {names} to {space}?': 'チャット {names} を {space} へ移動しますか？',
+  'Move the chat': 'チャットを移動',
+  'Only the file': 'ファイルのみ',
+  'Trust this space again': 'このスペースを再び信頼する',
 }

@@ -116,6 +116,39 @@ interface Kept {
   shared: boolean
   /** Absent in what a build between the two formats wrote. */
   items?: string[]
+  /** Whether anybody besides the owner could ever write in it, as this device has
+   *  seen it, and which of its files were ever shared on their own. Sticky: one
+   *  listing that says so is enough, until the owner trusts the space again (see
+   *  `trustAgain`). Absent in what an older build wrote. */
+  once?: boolean
+  onceItems?: string[]
+}
+
+/** What was kept of the space at this folder, where it is the object form. */
+function keptAt(root: string): Kept | null {
+  const one = kept(root)
+  return one && typeof one === 'object' ? (one as Kept) : null
+}
+
+/** How many once-shared files are kept per space: the listing's own ceiling, with
+ *  room for those handed back since. */
+const MOST_ONCE_ITEMS = 400
+
+/** What is kept of who could ever write in a space: what this listing says, on top
+ *  of what was kept before. What an older build kept as shared counts, since it is
+ *  all this device knows of who was in the space before it kept this. */
+function onceFrom(one: RemoteSpace, before: Kept | null): Pick<Kept, 'once' | 'onceItems'> {
+  const was = before ? (before.once ?? before.shared) : false
+  const items = new Set([
+    ...(before ? (before.onceItems ?? before.items ?? []) : []),
+    ...(one.sharedItems ?? []),
+    ...(one.onceSharedItems ?? []),
+  ])
+
+  return {
+    once: was || one.shared || !!one.onceShared,
+    onceItems: [...items].slice(0, MOST_ONCE_ITEMS),
+  }
 }
 
 let rolesText: string | null = null
@@ -137,8 +170,14 @@ export function rememberRoles(): void {
     if (!id) continue
     paired = true
     const one = account.spaces.find((listed) => listed.id === id)
-    if (one)
-      roles[space.root] = { role: one.role, shared: one.shared, items: one.sharedItems ?? [] }
+    if (one) {
+      roles[space.root] = {
+        role: one.role,
+        shared: one.shared,
+        items: one.sharedItems ?? [],
+        ...onceFrom(one, keptAt(space.root)),
+      }
+    }
   }
 
   if (paired) keep(ROLES_KEY, JSON.stringify(roles))
@@ -242,10 +281,11 @@ export function canWriteIn(
 }
 
 /** Whether somebody else may have written the note at this path: its space is shared
- *  or somebody else's, or the note was shared on its own. Decides raw HTML (below) and
- *  a collaborator's commands and AGENTS.md (ai/commands/found.ts). Until the listing
- *  is in, a paired space it has not named counts as shared: a kept `owner` role says
- *  nothing about who else is in it. */
+ *  or somebody else's, or the note was shared on its own - now, or at any time before
+ *  (`onceReached`). Decides raw HTML (below) and a collaborator's commands and
+ *  AGENTS.md (ai/commands/found.ts). Until the listing is in, a paired space it has
+ *  not named counts as shared: a kept `owner` role says nothing about who else is in
+ *  it. */
 export function reachedByOthers(path: string | null): boolean {
   return reachedAs(path) !== null
 }
@@ -274,8 +314,11 @@ export function reachedByOthersIn(root: string): boolean {
 function reached(root: string, path: string | null): Reach {
   const unknown = !account.listed || sync.remoteIdFor(root) === null
   const guess = unknown && !remoteOf(root) ? keptShared(root, path) : null
-  if (guess === 'space' || isShared(root) || roleOf(root) !== 'owner') return 'space'
-  if (guess === 'note') return 'note'
+  const once = onceReached(root, path)
+  if (guess === 'space' || once === 'space' || isShared(root) || roleOf(root) !== 'owner') {
+    return 'space'
+  }
+  if (guess === 'note' || once === 'note') return 'note'
 
   const item = path === null ? !!remoteOf(root)?.sharedItems?.length : isSharedItem(path)
   return item ? 'note' : null
@@ -295,6 +338,59 @@ function keptShared(root: string, path: string | null): Reach {
   if (path === null) return 'note'
   const id = sync.tracked(path)?.id
   return !id || items.includes(id) ? 'note' : null
+}
+
+/** Whether somebody besides the owner could ever write in the space, or in this note
+ *  of it on its own (any note of it where `path` is null), as the account or this
+ *  device has seen it. Somebody who left, or was taken out, is no longer in the space,
+ *  but what they wrote still is; so the words stay theirs until the owner says
+ *  otherwise (`trustAgain`). */
+function onceReached(root: string, path: string | null): Reach {
+  const listed = remoteOf(root)
+  const held = keptAt(root)
+  if (listed?.onceShared === true || held?.once === true) return 'space'
+
+  const items = [...(listed?.onceSharedItems ?? []), ...(held?.onceItems ?? [])]
+  if (!items.length) return null
+  if (path === null) return 'note'
+
+  const id = sync.tracked(path)?.id
+  return id && items.includes(id) ? 'note' : null
+}
+
+/** Whether the owner can say the space is theirs again: it is theirs, somebody could
+ *  once write in it, and nobody is in it or in a file of it now. */
+export function canTrustAgain(space: Space): boolean {
+  if (!ownsRemotely(space)) return false
+
+  const listed = remoteOf(space.root)
+  if (!listed || listed.shared || listed.sharedItems?.length) return false
+
+  const held = keptAt(space.root)
+  if (listed.onceShared === true || held?.once === true) return true
+  return (listed.onceSharedItems ?? []).length > 0 || (held?.onceItems ?? []).length > 0
+}
+
+/** The owner saying a space somebody once wrote in is theirs again, on the account
+ *  and on this device. Its words reach a model as the owner's from here on. */
+export async function trustAgain(space: Space): Promise<void> {
+  const token = account.accountToken
+  const id = sync.remoteIdFor(space.root)
+  if (!token || !id || !canTrustAgain(space)) return
+
+  await api.trustSpace(token, id)
+
+  const listed = account.spaces.find((one) => one.id === id)
+  if (listed) Object.assign(listed, { onceShared: false, onceSharedItems: [] })
+
+  const roles = keptRoles()
+  const at = Object.keys(roles).find((root) => samePath(root, space.root))
+  const one = at === undefined ? null : keptAt(at)
+  if (at !== undefined && one) {
+    keep(ROLES_KEY, JSON.stringify({ ...roles, [at]: { ...one, once: false, onceItems: [] } }))
+  }
+
+  await account.loadSpaces().catch(() => undefined)
 }
 
 /** Where a document's words came from, as much as this side of the wire knows:

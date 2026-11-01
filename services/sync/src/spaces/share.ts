@@ -31,7 +31,7 @@ import { machineOf } from '../limits'
 import { avatarIn } from '../people/avatar'
 import { roomsRevoked } from '../rooms'
 import type { Env, Note, Space, User, Variables } from '../types'
-import { atLeast, isGiven, MOST_ITEMS, spaceOf, type Given } from './space'
+import { atLeast, isGiven, MOST_ITEMS, onceShared, spaceOf, trustAgain, type Given } from './space'
 
 /** An invitation, a change of role or a guest's role with no role named. Three
  *  routes and one sentence: what is missing is the same field each time. */
@@ -453,6 +453,7 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   )
     .bind(space.id, email, scope.id, role, await sha256(token), now() + INVITE_TTL, now())
     .run()
+  await onceShared(context.env, space.id, scope.id)
 
   // Asking to be let in and then being let in is one thing, not two.
   await context.env.DB.prepare(
@@ -542,6 +543,15 @@ share.delete('/:id/share/members/:email', atLeast('owner'), about(), async (cont
   await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'none', scope.id)
 
   return context.json(await sharing(context.env, space, context.get('user'), scope))
+})
+
+/** The owner saying the space's words are theirs again. Somebody who could once write
+ *  in it keeps it marked as somebody else's after they leave, because what they wrote
+ *  is still there (see `onceShared`); this is the one way back, and it never unmarks
+ *  a space or a note somebody is still in. */
+share.post('/:id/share/trust', atLeast('owner'), async (context) => {
+  await trustAgain(context.env, spaceOf(context).id)
+  return context.json({ ok: true })
 })
 
 /** Somebody letting themselves out of a space. The one thing under this path
@@ -690,6 +700,7 @@ share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (conte
   )
     .bind(space.id, email, scope.id, waiting.role, now())
     .run()
+  await onceShared(context.env, space.id, scope.id)
 
   await context.env.DB.prepare(
     'delete from space_requests where space_id = ? and email = ? and item = ?',
@@ -754,6 +765,7 @@ share.post('/:id/share/guests/:guest', atLeast('owner'), about(), async (context
   )
     .bind(now(), space.id, guest, scope.id)
     .run()
+  await onceShared(context.env, space.id, scope.id)
 
   return context.json(await sharing(context.env, space, context.get('user'), scope))
 })

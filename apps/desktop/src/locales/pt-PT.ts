@@ -2716,4 +2716,12 @@ export const ptPT: Dictionary = {
   'Some changes may not be noticed': 'Algumas alterações podem passar despercebidas',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'O sistema atingiu o limite de pastas observadas, por isso o Orden pode não reparar em todas as alterações que outros programas fazem nos seus espaços. Aumentar fs.inotify.max_user_watches resolve.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Mover a conversa {name} para {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Todos em {space} poderão ler todo o histórico, e as pessoas em {from} perdem-no.',
+  'Move the chats {names} to {space}?': 'Mover as conversas {names} para {space}?',
+  'Move the chat': 'Mover a conversa',
+  'Only the file': 'Só o ficheiro',
+  'Trust this space again': 'Confiar novamente neste espaço',
 }

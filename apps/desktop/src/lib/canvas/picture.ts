@@ -49,7 +49,7 @@ function colourOf(node: { color?: string }, palette: Palette, fallback: string):
 
 /** How the words inside a card are set, since an SVG carries no stylesheet of
  *  its own and a `foreignObject` inherits nothing from the page it came from. */
-function styles(palette: Palette): string {
+export function styles(palette: Palette): string {
   return `
     .card { box-sizing: border-box; width: 100%; height: 100%; padding: 8px 12px;
       overflow: hidden; color: ${palette.text ?? '#111'};
@@ -192,7 +192,7 @@ function hostOf(url: string): string {
 
 /** One node as SVG. A group is a dashed frame with its name above it, a shape is
  *  itself, a picture is the picture, and everything else is a card. */
-function drawnNode(
+export function drawnNode(
   node: CanvasNode,
   palette: Palette,
   canvasPath: string | null,
@@ -418,14 +418,13 @@ export interface Drawing {
 
 /** The SVG, with every picture in it inlined so the file stands alone. */
 async function readySvg(drawing: Drawing, plain = false): Promise<string> {
-  const svg = canvasSvg(
-    drawing.canvas,
-    drawing.palette,
-    drawing.path,
-    drawing.root,
-    plain,
-    drawing.trusted,
+  return inlinedSvg(
+    canvasSvg(drawing.canvas, drawing.palette, drawing.path, drawing.root, plain, drawing.trusted),
   )
+}
+
+/** An SVG with every picture in it inlined. Also a page note's; see pages/out.ts. */
+export function inlinedSvg(svg: string): Promise<string> {
   // `inlineImages` matches `<img src>`, which is what a card's markdown holds;
   // an `<image href>` is swapped the same way by asking for the same resolver.
   //

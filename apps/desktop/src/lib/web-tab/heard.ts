@@ -21,7 +21,7 @@ import { mute } from './mute'
 import type { Page } from './pages.svelte'
 import { siteOf } from './permissions.svelte'
 import { answer, readAsk } from './passed.svelte'
-import { isMuted, keepZoom } from './sites'
+import { asideFor, isMuted, keepZoom } from './sites'
 import { settled, type Failure } from './upgrade'
 
 /** What the crate said about one tab's page. */
@@ -81,7 +81,7 @@ export function heard(page: Page, said: Said, go?: Go): void {
       // A page in a tab keeps whatever it was told last, and a tab carries on to other
       // sites: so the site it is on now decides, the moment there is sound to decide
       // about.
-      const quiet = isMuted(siteOf(page.url))
+      const quiet = isMuted(siteOf(page.url), asideFor(said.tab, page))
       if (said.playing && said.muted !== quiet) mute(said.tab, page, quiet)
       return
     }
@@ -90,7 +90,8 @@ export function heard(page: Page, said: Said, go?: Go): void {
       return
     case 'zoom':
       page.zoom = said.factor
-      keepZoom(siteOf(page.url), said.factor)
+      // A private page's size is kept for its tab only, and written nowhere.
+      keepZoom(siteOf(page.url), said.factor, asideFor(said.tab, page))
       return
     case 'arrived': {
       // The https the bar chose for a host typed without a scheme, and nothing answered

@@ -18,7 +18,7 @@ import { newId, now } from '../crypto'
 import { within } from '../limits'
 import { NO_SUCH_SPACE } from '../refused'
 import { roomForAnItem, TOO_MANY_ITEMS } from '../spaces/share'
-import { allows, reachedSpace, refusal } from '../spaces/space'
+import { allows, onceShared, reachedSpace, refusal } from '../spaces/space'
 import { blobKey, BYTES, NO_SUCH_FILE } from '../sync2/files'
 import { deviceOf } from '../sync2/device'
 import type { Env, Variables, Whoever } from '../types'
@@ -501,6 +501,7 @@ chats.post('/:chat/note', async (context) => {
       .bind(dropped.space, one.email, dropped.note, at, at)
       .run()
   }
+  if (results.length) await onceShared(env, dropped.space, dropped.note)
   return context.json({ shared: results.length })
 })
 

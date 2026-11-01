@@ -12,7 +12,7 @@
  *  is. The rows and what is done to them are visits.ts; what is offered from them is
  *  omnibox.ts. */
 
-import { forget as forgetStored, keep, stored } from '../stored'
+import { forget as forgetStored, Shared } from '../stored'
 import { forget } from './favicons'
 import { completion, suggested, type Completion } from './omnibox'
 import {
@@ -32,8 +32,11 @@ import type { Visit } from './visits'
 type Book = string
 
 class Visited {
-  /** The rows of each history read so far, each read the first time anything asks. */
-  private readonly books = new Map<Book, readonly Visit[]>()
+  /** Each history read so far, read the first time anything asks and again whenever
+   *  another window has written it since: one window writing back the rows it read
+   *  at first lost the other's visits, and brought back a history deleted there. See
+   *  `Shared` in stored.ts. */
+  private readonly books = new Map<Book, Shared<readonly Visit[]>>()
 
   /** Where each tab was last counted as being, so the engine saying the same page
    *  again - its title arrived, its mark arrived - is not another visit. */
@@ -48,24 +51,28 @@ class Visited {
     return () => this.watchers.delete(heard)
   }
 
-  /** The rows, read the first time anything asks. */
-  private rows(book: Book): readonly Visit[] {
-    let list = this.books.get(book)
-    if (!list) {
-      list = visitsFrom(stored(book))
-      this.books.set(book, list)
+  private bookOf(book: Book): Shared<readonly Visit[]> {
+    let kept = this.books.get(book)
+    if (!kept) {
+      kept = new Shared(book, visitsFrom)
+      this.books.set(book, kept)
     }
-    return list
+    return kept
+  }
+
+  /** The rows as they are now, read the first time anything asks. */
+  private rows(book: Book): readonly Visit[] {
+    return this.bookOf(book).get()
   }
 
   /** Written as it changes, which is at most twice a page: the engine reports a page
    *  three times as it lands - the page, its title, its mark - and only the first two
    *  change a row. See `named` in visits.ts. */
   private write(book: Book, next: readonly Visit[]) {
-    if (next === this.books.get(book)) return
+    const kept = this.bookOf(book)
+    if (next === kept.get()) return
 
-    this.books.set(book, next)
-    keep(book, JSON.stringify(next))
+    kept.set(next, JSON.stringify(next))
     for (const heard of this.watchers) heard(book)
   }
 

@@ -10,7 +10,7 @@
 //! | --- | --- |
 //! | `WebView2` | sent to `<origin>/__nib_restore`, which `WebResourceRequested` answers with an empty page before any network is asked |
 //! | `WKWebView` | `loadHTMLString("", baseURL: <origin>/__nib_restore)`, which runs as that origin |
-//! | CEF (Linux) | sent to `<origin>/__nib_restore` as it is, so the site answers; its answer is a document of the origin all the same |
+//! | CEF (Linux) | sent to `<origin>/__nib_restore`, which the `DevTools` Protocol's `Fetch` domain answers with an empty page before any network is asked |
 //!
 //! The view is a child of the window that asked, a pixel wide, hidden from the moment
 //! it exists and never given the keyboard, built through the same seam every web tab is
@@ -18,6 +18,7 @@
 //! browser process. It is closed when it is dropped.
 
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Duration;
 
 use tauri::async_runtime::{channel, Receiver};
 use tauri::webview::PageLoadEvent;
@@ -30,6 +31,11 @@ use super::answer::PATIENCE;
 /// The address every hidden page is sent to under an origin. Nothing on the network is
 /// ever asked for it.
 pub(crate) const PATH: &str = "/__nib_restore";
+
+/// How long a hidden page may take to become an origin. The page is answered on this
+/// computer and is empty, so this is long only for an engine starting a store's browser
+/// process; a minute was a Save waiting a minute with nothing said.
+const VISIT: Duration = Duration::from_secs(15);
 
 /// How many hidden views this run has made, for their labels.
 static MADE: AtomicU64 = AtomicU64::new(0);
@@ -101,7 +107,7 @@ impl Hidden {
         let address = format!("{origin}{PATH}");
         engine::show(&self.view, &address)?;
         loop {
-            match tokio::time::timeout(PATIENCE, self.loads.recv()).await {
+            match tokio::time::timeout(VISIT, self.loads.recv()).await {
                 Ok(Some(loaded)) if loaded.starts_with(&address) => return Ok(()),
                 Ok(Some(_)) => {}
                 _ => return Err(format!("{origin} could not be opened to restore into")),
@@ -218,19 +224,52 @@ mod engine {
     }
 }
 
-/// CEF: the address itself, as the site answers it. Not intercepted as on `WebView2`, so
-/// the site is asked; whatever it sends - its own page, a page saying there is no such
-/// address - is a document of the origin, which is all the restore needs of it.
+/// CEF: the restore address answered in the page's own engine, as on `WebView2`, through
+/// the `DevTools` Protocol's `Fetch` domain: every request for it is held before the
+/// network is asked and fulfilled with an empty page. It used to go to the site, which
+/// ran the site's own code in both stores, wrote the site's storage into the store a copy
+/// was going into before the copy could, and for a site that redirects an address it
+/// does not know never finished loading at it at all.
 #[cfg(feature = "cef")]
 mod engine {
+    use serde_json::{json, Value};
     use tauri::{Url, Webview};
 
-    #[allow(
-        clippy::unused_async,
-        reason = "one signature for every engine; WebView2's has something to wait for"
-    )]
-    pub(super) async fn prepared(_view: &Webview) -> Result<(), String> {
-        Ok(())
+    use super::super::cdp;
+    use super::PATH;
+
+    pub(super) async fn prepared(view: &Webview) -> Result<(), String> {
+        let answering = view.clone();
+        crate::engine::devtools::hear(view, move |method, session, params: &Value| {
+            if method != "Fetch.requestPaused" || session.is_some() {
+                return;
+            }
+            let Some(id) = params["requestId"].as_str() else {
+                return;
+            };
+            crate::engine::devtools::tell(
+                &answering,
+                None,
+                vec![(
+                    "Fetch.fulfillRequest",
+                    json!({
+                        "requestId": id,
+                        "responseCode": 200,
+                        "responseHeaders": [
+                            { "name": "Content-Type", "value": "text/html; charset=utf-8" }
+                        ],
+                        "body": "",
+                    }),
+                )],
+            );
+        })?;
+        cdp::call(
+            view,
+            "Fetch.enable",
+            &json!({ "patterns": [{ "urlPattern": format!("*{PATH}"), "requestStage": "Request" }] }),
+        )
+        .await
+        .map(|_| ())
     }
 
     pub(super) fn show(view: &Webview, address: &str) -> Result<(), String> {

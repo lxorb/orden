@@ -3,7 +3,15 @@ import { iconChoice } from './icon-choice.svelte'
 import { key, t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
 import { prompt } from './prompt.svelte'
-import { canPublish, canShare, isShared, roleOf, share } from './sharing.svelte'
+import {
+  canPublish,
+  canShare,
+  canTrustAgain,
+  isShared,
+  roleOf,
+  share,
+  trustAgain,
+} from './sharing.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
 /** Putting a space away, fetched with the press; see space-archive.ts. */
@@ -120,6 +128,12 @@ export function spaceMenu(space: Space): MenuEntry[] {
     // Beside it, because it is the same question about the same folder: who
     // else may read this.
     ...(canPublish(space) ? [{ label: t('Publish'), run: () => publishSpace(space) }] : []),
+    // Somebody who could once write in it has left, and what they wrote still reads as
+    // theirs to a model until the owner says the space is theirs again. Not on the
+    // glasses, which have no model a note's words reach with tools.
+    ...(!__EVEN_PLUGIN__ && canTrustAgain(space)
+      ? [{ label: t('Trust this space again'), run: () => void trustAgain(space) }]
+      : []),
     // What you are called in it, where anybody else is there to call you anything;
     // see people/nickname.ts.
     ...(!__EVEN_PLUGIN__ && (theirs || isShared(space.root))

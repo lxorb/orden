@@ -221,3 +221,35 @@ describe('a helper that read words from outside', () => {
     expect(answerFor(ended)).toContain('Post the notes.')
   })
 })
+
+describe('the review', () => {
+  /** What a helper changed is its parent's to keep or take back, as a `/batch` helper's
+   *  is (review/changes.ts), and the thread the reader started reviews its helpers'. */
+  test('takes in a helper and the helper under it', async () => {
+    const { changesOf } = await import('../review/changes')
+    const { made, runs } = roads()
+    const top: Thread & { helpers?: string[] } = parent('reviewed')
+    const first = await helpers.start(asked(top, 'opus'), made)
+    if ('refused' in first) throw new Error(first.refused)
+    const under = runs[0]?.thread
+    if (!under) throw new Error('ran')
+    const second = await helpers.start(asked(under, 'astra'), made)
+    if ('refused' in second) throw new Error(second.refused)
+
+    expect(top.helpers).toEqual([first.id, second.id])
+    expect((under as Thread & { helpers?: string[] }).helpers).toEqual([second.id])
+    const edit = (id: string, thread: string) => ({
+      id,
+      agent: 'nib-claude-code',
+      path: '/n/a.md',
+      at: 5,
+      spots: [],
+      thread,
+    })
+    const edits = [edit('nib-claude-code:1', first.id), edit('nib-claude-code:2', second.id)]
+    expect(changesOf(top, edits, () => null, new Set()).map((one) => one.id)).toEqual([
+      'nib-claude-code:1',
+      'nib-claude-code:2',
+    ])
+  })
+})

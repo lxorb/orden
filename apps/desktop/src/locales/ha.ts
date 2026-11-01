@@ -2689,4 +2689,12 @@ export const ha: Dictionary = {
   'Some changes may not be noticed': 'Wataƙila ba za a lura da wasu canje-canje ba',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Tsarin ya kai iyakar fayilolin da yake kallo, don haka Orden ba zai iya lura da kowane canji da wasu shirye-shirye ke yi a wurarenka ba. Ƙara fs.inotify.max_user_watches yana gyara hakan.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'A matsar da hira {name} zuwa {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Duk wanda ke cikin {space} zai iya karanta dukan tarihin, kuma mutanen {from} za su rasa shi.',
+  'Move the chats {names} to {space}?': 'A matsar da hirarraki {names} zuwa {space}?',
+  'Move the chat': 'Matsar da hirar',
+  'Only the file': 'Fayil kaɗai',
+  'Trust this space again': 'Sake amincewa da wannan wuri',
 }

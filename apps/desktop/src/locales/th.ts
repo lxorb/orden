@@ -2595,4 +2595,12 @@ export const th: Dictionary = {
   'Some changes may not be noticed': 'การเปลี่ยนแปลงบางอย่างอาจไม่ถูกสังเกต',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'ระบบถึงขีดจำกัดของโฟลเดอร์ที่เฝ้าดูแล้ว Orden จึงอาจไม่เห็นการเปลี่ยนแปลงทุกอย่างที่โปรแกรมอื่นทำในพื้นที่ของคุณ เพิ่มค่า fs.inotify.max_user_watches เพื่อแก้ไข',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ย้ายแชต {name} ไปยัง {space} ไหม',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'ทุกคนใน {space} จะอ่านประวัติทั้งหมดได้ และคนใน {from} จะไม่เห็นอีก',
+  'Move the chats {names} to {space}?': 'ย้ายแชต {names} ไปยัง {space} ไหม',
+  'Move the chat': 'ย้ายแชต',
+  'Only the file': 'เฉพาะไฟล์',
+  'Trust this space again': 'เชื่อถือพื้นที่นี้อีกครั้ง',
 }

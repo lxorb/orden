@@ -16,21 +16,15 @@ import type { Query } from '../../search/query'
 import { within } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import { branchThread, newThread } from '../chat/threads'
+import { helpers } from '../helpers/helpers.svelte'
 import type { Mode, Thread } from '../chat/types'
 import type { Host } from './host'
-import type { Held } from './instructions'
 import { answerOf } from './loop'
 import { tasks, type TaskKind } from './tasks.svelte'
 import type { Ended } from './types'
 
 /** Subtasks of one batch that run at once. */
 const AT_ONCE = 3
-
-/** The fields the helpers keep on the thread that started them. */
-interface Helped {
-  /** Every helper thread this one started: what lane 3's review of it covers too. */
-  helpers?: string[]
-}
 
 /** A copy of the thread to here, or a new thread on the same provider and model where
  *  there is nothing to copy or the helper should start clean. */
@@ -50,8 +44,6 @@ function helperOf(parent: Thread, title: string, copy: boolean, mode?: Mode): Th
           title,
         }
   if (mode) made.mode = mode
-  const held = parent as Held & Helped
-  held.helpers = [...(held.helpers ?? []), made.id]
   return made
 }
 
@@ -72,6 +64,7 @@ async function run(
     helper: helper.id,
     stop: () => stopper.abort(),
   })
+  helpers.startedUnder(parent, helper)
   host.adopt(helper)
   try {
     return await host.turn(helper, text, { signal: stopper.signal })
@@ -79,6 +72,7 @@ async function run(
     return null
   } finally {
     tasks.done(task.id)
+    helpers.endedUnder(helper.id)
   }
 }
 
@@ -215,12 +209,14 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
         false,
         parent.mode,
       )
+      helpers.startedUnder(parent, helper)
       host.adopt(helper)
       const ended = await host
         .turn(helper, `${instruction}\n\nWork on this one note only: [[${linkOf(path, root)}]]`, {
           signal: stopper.signal,
         })
         .catch(() => null)
+      helpers.endedUnder(helper.id)
       if (ended && ended.stop !== 'error' && ended.stop !== 'stopped') done++
     }
   }

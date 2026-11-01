@@ -2664,4 +2664,12 @@ export const te: Dictionary = {
   'Some changes may not be noticed': 'కొన్ని మార్పులు గమనించబడకపోవచ్చు',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'సిస్టమ్ పర్యవేక్షించే ఫోల్డర్ల పరిమితి చేరింది, కాబట్టి ఇతర ప్రోగ్రామ్‌లు మీ స్పేస్‌లలో చేసే ప్రతి మార్పును Orden గమనించకపోవచ్చు. fs.inotify.max_user_watches పెంచితే సరిపోతుంది.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'చాట్ {name} ను {space} కి తరలించాలా?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'అప్పుడు {space} లోని అందరూ పూర్తి చరిత్రను చదవగలరు, {from} లోని వారు దాన్ని కోల్పోతారు.',
+  'Move the chats {names} to {space}?': 'చాట్‌లు {names} ను {space} కి తరలించాలా?',
+  'Move the chat': 'చాట్‌ను తరలించు',
+  'Only the file': 'ఫైల్ మాత్రమే',
+  'Trust this space again': 'ఈ స్పేస్‌ను మళ్లీ నమ్మండి',
 }

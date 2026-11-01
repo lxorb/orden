@@ -2633,4 +2633,12 @@ export const jv: Dictionary = {
   'Some changes may not be noticed': 'Sawetara owah-owahan bisa uga ora katon',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Sistem wis tekan wates folder sing dipantau, dadi Orden bisa uga ora weruh saben owah-owahan sing digawe program liya ing ruang sampeyan. Ngundhakake fs.inotify.max_user_watches ndandani iki.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Pindhah obrolan {name} menyang {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Kabeh wong ing {space} banjur bisa maca kabeh riwayat, lan wong ing {from} kelangan.',
+  'Move the chats {names} to {space}?': 'Pindhah obrolan {names} menyang {space}?',
+  'Move the chat': 'Pindhah obrolan',
+  'Only the file': 'Mung berkase',
+  'Trust this space again': 'Pitados papan iki maneh',
 }

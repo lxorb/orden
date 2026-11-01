@@ -2612,4 +2612,12 @@ export const ko: Dictionary = {
   'Some changes may not be noticed': '일부 변경 사항을 놓칠 수 있습니다',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     '시스템의 감시 폴더 수가 한도에 도달해, 다른 프로그램이 스페이스에서 만든 변경 사항을 Orden이 모두 알아차리지 못할 수 있습니다. fs.inotify.max_user_watches 값을 늘리면 해결됩니다.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '채팅 {name}을(를) {space}(으)로 옮길까요?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    '그러면 {space}의 모든 사람이 전체 기록을 읽을 수 있고, {from}의 사람들은 볼 수 없게 돼요.',
+  'Move the chats {names} to {space}?': '채팅 {names}을(를) {space}(으)로 옮길까요?',
+  'Move the chat': '채팅 옮기기',
+  'Only the file': '파일만',
+  'Trust this space again': '이 공간을 다시 신뢰',
 }

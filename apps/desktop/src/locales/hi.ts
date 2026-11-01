@@ -2648,4 +2648,12 @@ export const hi: Dictionary = {
   'Some changes may not be noticed': 'कुछ बदलाव शायद पकड़े न जाएँ',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'सिस्टम में देखे जा रहे फ़ोल्डरों की सीमा पूरी हो गई है, इसलिए दूसरे प्रोग्राम आपके स्पेस में जो बदलाव करते हैं, Orden शायद उन सब पर ध्यान न दे। fs.inotify.max_user_watches बढ़ाने से यह ठीक होता है।',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'चैट {name} को {space} में ले जाएँ?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'तब {space} में हर कोई पूरा इतिहास पढ़ सकेगा, और {from} के लोग इसे खो देंगे।',
+  'Move the chats {names} to {space}?': 'चैट {names} को {space} में ले जाएँ?',
+  'Move the chat': 'चैट ले जाएँ',
+  'Only the file': 'सिर्फ़ फ़ाइल',
+  'Trust this space again': 'इस स्पेस पर फिर से भरोसा करें',
 }

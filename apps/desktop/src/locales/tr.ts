@@ -2665,4 +2665,12 @@ export const tr: Dictionary = {
   'Some changes may not be noticed': 'Bazı değişiklikler fark edilmeyebilir',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Sistem izlenen klasör sınırına ulaştı, bu yüzden Orden diğer programların alanlarınızda yaptığı her değişikliği fark etmeyebilir. fs.inotify.max_user_watches değerini artırmak bunu düzeltir.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': '{name} sohbeti {space} alanına taşınsın mı?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Bundan sonra {space} içindeki herkes tüm geçmişi okuyabilir ve {from} içindekiler onu kaybeder.',
+  'Move the chats {names} to {space}?': '{names} sohbetleri {space} alanına taşınsın mı?',
+  'Move the chat': 'Sohbeti taşı',
+  'Only the file': 'Yalnızca dosya',
+  'Trust this space again': 'Bu alana yeniden güven',
 }

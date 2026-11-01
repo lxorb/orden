@@ -430,21 +430,27 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
       : null
 
   // A move like the one it undoes, so it waits for the writes of what is open in it
-  // the same way; see `move` in workspace.svelte.ts.
-  await ws.holdingUnder(action.to, async () => {
-    await invoke('rename_note', { from: action.to, to: action.from }).catch(
-      async (error: unknown) => {
-        await back?.()
-        throw error
-      },
-    )
+  // the same way, and is under way until it is told; see `move` in workspace.svelte.ts.
+  const { moving: underWay } = await import('../views/moving')
+  await underWay(action.from, () =>
+    ws.holdingUnder(action.to, async () => {
+      await invoke('rename_note', { from: action.to, to: action.from }).catch(
+        async (error: unknown) => {
+          await back?.()
+          throw error
+        },
+      )
 
-    // The rename rewrote every link that pointed at the note; putting the name
-    // back has to put those back too, which is the same rewrite the other way
-    // round - and, again, before anything is told the note moved.
-    if (action.rewrote) await ws.retarget(action.to, action.from, { moved: true })
-    await ws.fileMoved(action.to, action.from, kind)
-  })
+      // The rename rewrote every link that pointed at the note; putting the name
+      // back has to put those back too, which is the same rewrite the other way
+      // round - and, again, before anything is told the note moved.
+      // A rewrite that fails leaves the name put back all the same, and told so; see
+      // `retargetMoved` in workspace.svelte.ts.
+      if (action.rewrote)
+        await ws.retarget(action.to, action.from, { moved: true }).catch(() => undefined)
+      await ws.fileMoved(action.to, action.from, kind)
+    }),
+  )
   // A nesting made the folder; refused where something else is in it now.
   if (action.nests) {
     await invoke('remove_empty_folder', { path: folderOf(action.to) }).catch(() => undefined)

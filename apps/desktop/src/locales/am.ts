@@ -2605,4 +2605,12 @@ export const am: Dictionary = {
   'Some changes may not be noticed': 'አንዳንድ ለውጦች ላይታዩ ይችላሉ',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'የሥርዓቱ የሚከታተሉ አቃፊዎች ገደብ ደርሷል፤ ስለዚህ Orden ሌሎች ፕሮግራሞች በቦታዎችዎ የሚያደርጉትን ሁሉ ለውጥ ላያስተውል ይችላል። fs.inotify.max_user_watchesን ማሳደግ ያስተካክለዋል።',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ውይይቱ {name} ወደ {space} ይዛወር?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'ከዚያ በ{space} ያሉ ሁሉ ሙሉ ታሪኩን ማንበብ ይችላሉ፣ በ{from} ያሉትም ያጡታል።',
+  'Move the chats {names} to {space}?': 'ውይይቶቹ {names} ወደ {space} ይዛወሩ?',
+  'Move the chat': 'ውይይቱን አንቀሳቅስ',
+  'Only the file': 'ፋይሉን ብቻ',
+  'Trust this space again': 'ይህን ቦታ እንደገና እመን',
 }

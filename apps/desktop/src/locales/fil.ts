@@ -2704,4 +2704,12 @@ export const fil: Dictionary = {
   'Some changes may not be noticed': 'Maaaring hindi mapansin ang ilang pagbabago',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Naabot na ng system ang hangganan nito sa mga binabantayang folder, kaya maaaring hindi mapansin ng Orden ang bawat pagbabagong ginagawa ng ibang programa sa iyong mga space. Naaayos ito sa pagtaas ng fs.inotify.max_user_watches.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Ilipat ang chat na {name} sa {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Mababasa na ng lahat sa {space} ang buong kasaysayan, at mawawala ito sa mga tao sa {from}.',
+  'Move the chats {names} to {space}?': 'Ilipat ang mga chat na {names} sa {space}?',
+  'Move the chat': 'Ilipat ang chat',
+  'Only the file': 'Ang file lang',
+  'Trust this space again': 'Pagkatiwalaan muli ang space na ito',
 }

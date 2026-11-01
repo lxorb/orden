@@ -2687,4 +2687,12 @@ export const ml: Dictionary = {
   'Some changes may not be noticed': 'ചില മാറ്റങ്ങൾ ശ്രദ്ധിക്കപ്പെടാതെ പോകാം',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'സിസ്റ്റം നിരീക്ഷിക്കുന്ന ഫോൾഡറുകളുടെ പരിധി എത്തി, അതിനാൽ മറ്റ് പ്രോഗ്രാമുകൾ നിങ്ങളുടെ സ്പേസുകളിൽ വരുത്തുന്ന എല്ലാ മാറ്റങ്ങളും Orden ശ്രദ്ധിച്ചേക്കില്ല. fs.inotify.max_user_watches കൂട്ടിയാൽ ശരിയാകും.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ചാറ്റ് {name} {space}-ലേക്ക് നീക്കണോ?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'അപ്പോൾ {space}-ലെ എല്ലാവർക്കും മുഴുവൻ ചരിത്രവും വായിക്കാം, {from}-ലെ ആളുകൾക്ക് അത് നഷ്ടമാകും.',
+  'Move the chats {names} to {space}?': 'ചാറ്റുകൾ {names} {space}-ലേക്ക് നീക്കണോ?',
+  'Move the chat': 'ചാറ്റ് നീക്കുക',
+  'Only the file': 'ഫയൽ മാത്രം',
+  'Trust this space again': 'ഈ സ്പേസിനെ വീണ്ടും വിശ്വസിക്കുക',
 }

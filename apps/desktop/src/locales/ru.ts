@@ -2744,4 +2744,12 @@ export const ru: Dictionary = {
   'Some changes may not be noticed': 'Некоторые изменения могут остаться незамеченными',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Система достигла предела отслеживаемых папок, поэтому Orden может не заметить всех изменений, которые другие программы вносят в ваши пространства. Увеличьте fs.inotify.max_user_watches, чтобы это исправить.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Переместить чат {name} в {space}?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Тогда все в {space} смогут прочитать всю историю, а люди в {from} её потеряют.',
+  'Move the chats {names} to {space}?': 'Переместить чаты {names} в {space}?',
+  'Move the chat': 'Переместить чат',
+  'Only the file': 'Только файл',
+  'Trust this space again': 'Снова доверять этому пространству',
 }

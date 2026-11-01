@@ -956,8 +956,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-28, to 3,423,400, for #523: the file list is a tree to a screen reader,
  *  each row a treeitem with its level and its place among its own (`among` in
  *  Tree.svelte), and a row deleted under the keyboard hands it on. Measured 3,423,327,
- *  from 3,421,029 at 0168bd709. */
-const BUDGET = 3_423_400
+ *  from 3,421,029 at 0168bd709.
+ *
+ *  Raised 2026-11-01, to 3,431,700, for the fourth bug burn-down's fixes merged into
+ *  unstable at 9163eeb16: unstable's raises were measured without them. Measured
+ *  3,430,841. */
+const BUDGET = 3_431_700
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

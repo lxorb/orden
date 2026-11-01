@@ -230,9 +230,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-10-28, to 5,733,000, for #523: the file list, which the
  *  plugin carries, is a tree to a screen reader and hands the keyboard on from a row
  *  deleted under it (Tree.svelte). Measured 5,732,608, from 5,731,862 at 0168bd709.
+ *
+ *  The code raised on 2026-11-01, to 5,739,000, for the fourth bug burn-down's fixes
+ *  merged into unstable at 9163eeb16: its raises were measured without them. Measured
+ *  5,738,198.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_733_000,
+  code: 5_739_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

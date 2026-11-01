@@ -21,7 +21,7 @@ function resting(pages: Held): Resting[] {
   return pages.each().map(([id, page]) => {
     const site = siteOf(page.url)
     const allowed = (ask: 'camera' | 'microphone' | 'notifications') =>
-      grants.said(site, ask) === 'allow'
+      grants.said(site, ask, page.inPrivate) === 'allow'
     return {
       id,
       live: page.live,

@@ -2732,4 +2732,12 @@ export const fr: Dictionary = {
   'Some changes may not be noticed': 'Certaines modifications pourraient passer inaperçues',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Le système a atteint sa limite de dossiers surveillés : Orden pourrait ne pas remarquer toutes les modifications que d’autres programmes font dans vos espaces. Augmenter fs.inotify.max_user_watches règle le problème.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'Déplacer la discussion {name} vers {space} ?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'Tout le monde dans {space} pourra alors lire tout l’historique, et les personnes de {from} le perdront.',
+  'Move the chats {names} to {space}?': 'Déplacer les discussions {names} vers {space} ?',
+  'Move the chat': 'Déplacer la discussion',
+  'Only the file': 'Le fichier seul',
+  'Trust this space again': 'Faire de nouveau confiance à cet espace',
 }

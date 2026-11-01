@@ -2680,4 +2680,12 @@ export const kn: Dictionary = {
   'Some changes may not be noticed': 'ಕೆಲವು ಬದಲಾವಣೆಗಳು ಗಮನಕ್ಕೆ ಬಾರದಿರಬಹುದು',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'ಸಿಸ್ಟಮ್ ವೀಕ್ಷಿಸುವ ಫೋಲ್ಡರ್‌ಗಳ ಮಿತಿ ತಲುಪಿದೆ, ಹಾಗಾಗಿ ಇತರ ಪ್ರೋಗ್ರಾಂಗಳು ನಿಮ್ಮ ಸ್ಪೇಸ್‌ಗಳಲ್ಲಿ ಮಾಡುವ ಎಲ್ಲ ಬದಲಾವಣೆಗಳನ್ನು Orden ಗಮನಿಸದಿರಬಹುದು. fs.inotify.max_user_watches ಹೆಚ್ಚಿಸಿದರೆ ಸರಿಯಾಗುತ್ತದೆ.',
+  // A chat carried into another space, its own pointer not known (B542)
+  'Move the chat {name} to {space}?': 'ಚಾಟ್ {name} ಅನ್ನು {space} ಗೆ ಸರಿಸಬೇಕೆ?',
+  'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
+    'ಆಗ {space} ನಲ್ಲಿರುವ ಎಲ್ಲರೂ ಸಂಪೂರ್ಣ ಇತಿಹಾಸವನ್ನು ಓದಬಹುದು, ಮತ್ತು {from} ನಲ್ಲಿರುವವರು ಅದನ್ನು ಕಳೆದುಕೊಳ್ಳುತ್ತಾರೆ.',
+  'Move the chats {names} to {space}?': 'ಚಾಟ್‌ಗಳು {names} ಅನ್ನು {space} ಗೆ ಸರಿಸಬೇಕೆ?',
+  'Move the chat': 'ಚಾಟ್ ಸರಿಸಿ',
+  'Only the file': 'ಫೈಲ್ ಮಾತ್ರ',
+  'Trust this space again': 'ಈ ಸ್ಪೇಸ್ ಅನ್ನು ಮತ್ತೆ ನಂಬಿ',
 }

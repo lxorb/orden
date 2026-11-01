@@ -1304,6 +1304,7 @@ class Pages {
     clearTimeout(page.resting)
     void history().then((visited) => visited.left(tabId))
     this.asked.delete(tabId)
+    if (page.inPrivate) void import('./sites').then(({ forgetAside }) => forgetAside(tabId))
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)

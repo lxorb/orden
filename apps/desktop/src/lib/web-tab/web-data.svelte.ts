@@ -32,6 +32,29 @@ export function freshOwn(): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
+/** The stores a copy is being read out of, by their note's id, and how many copies:
+ *  a tab saved out of a Separate note (`ownFor` in workspace/placing.ts). A store being
+ *  read is in use, so setting its note back to Global leaves it; see own-data.ts. */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; read on a press
+const copying = new Map<string, number>()
+
+/** Whether the store of `own` is being copied out of now. */
+export function isCopying(own: string): boolean {
+  return (copying.get(own) ?? 0) > 0
+}
+
+/** Runs `copy` while the store of `own` is held as being copied out of. */
+export async function copyingOut<T>(own: string, copy: () => Promise<T>): Promise<T> {
+  copying.set(own, (copying.get(own) ?? 0) + 1)
+  try {
+    return await copy()
+  } finally {
+    const left = (copying.get(own) ?? 1) - 1
+    if (left > 0) copying.set(own, left)
+    else copying.delete(own)
+  }
+}
+
 class WebData {
   private merging: Promise<void> | null = null
 
