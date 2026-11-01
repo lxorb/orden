@@ -269,8 +269,16 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 /// answered twice. So each press puts the answer back at the end of the window's list on
 /// its way down, in the capturing turn, which is before the page's bubbling handlers run
 /// and after they were added. The list is the document's and not a world's, so this
-/// holds from nib's own world as it did from the page's. A page that stops the press on
-/// its way up is left to the engine, whose own find then opens, as a browser's would.
+/// holds from nib's own world as it did from the page's.
+///
+/// A key is the page's only by `preventDefault`, as it is to Chrome. A page that stops one
+/// on its way up has kept it from the rest of the page and said nothing about the browser,
+/// and a site's field that stops every key was where Ctrl+Space and Shift twice did nothing
+/// until a click outside the page (#1022). So a key that never came back up is answered
+/// once the page is done with it, when it can still say whether the page took it. Not
+/// the find's keys and Ctrl+0, which are left to the engine, whose own answer then comes
+/// as a browser's would; and not Escape, where stopping it is how a page's dialog keeps
+/// its close from the page under it.
 ///
 /// A modifier tapped twice on its own asks by name as well, counted by the rules
 /// `lib/double-tap.ts` keeps and waiting as long (`within`, which that file's test holds
@@ -289,14 +297,20 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)
 
-  function last(type, answer) {
+  var came = new WeakSet()
+
+  function last(type, answer, stopped) {
     function after(event) {
       removeEventListener(type, after)
+      came.add(event)
       answer(event)
     }
-    addEventListener(type, function () {
+    addEventListener(type, function (event) {
       removeEventListener(type, after)
       addEventListener(type, after)
+      if (stopped) setTimeout(function () {
+        if (!came.has(event)) answer(event, true)
+      })
     }, true)
   }
 
@@ -317,13 +331,14 @@ pub const SCRIPT: &str = r"(function () {
     if (event.button === 0 && held && !event.altKey && !event.metaKey) asked(event)
   })
 
-  last('keydown', function (event) {
+  last('keydown', function (event, stopped) {
     if (!event.isTrusted || event.defaultPrevented || event.metaKey) return
     var ctrl = event.ctrlKey
     var alt = event.altKey
     var back = event.shiftKey
     var code = event.keyCode
     var name = null
+    if (stopped && code === 27) return
     if (!ctrl && !alt && !back && code === 27) return open('about:blank', 'nib-escape')
     if (ctrl && alt) return
     else if (alt) name = code === 68 && !back ? 'nib-address' : null
@@ -336,10 +351,10 @@ pub const SCRIPT: &str = r"(function () {
     else if (ctrl && code === 46 && back) name = 'nib-ctrl-shift-delete'
     else if (ctrl && code === 71) name = back ? 'nib-find-previous' : 'nib-find-next'
     else if (!ctrl && code === 114) name = back ? 'nib-find-previous' : 'nib-find-next'
-    if (!name) return
+    if (!name || (stopped && /^nib-(find|actual)/.test(name))) return
     event.preventDefault()
     open('about:blank', name)
-  })
+  }, true)
 
   var within = 350
   var twice = { Shift: 'nib-twice-shift', Control: 'nib-twice-ctrl', Alt: 'nib-twice-alt' }
@@ -392,7 +407,7 @@ pub const SCRIPT: &str = r"(function () {
     var key = asking
     asking = null
     if (key && !event.defaultPrevented) open('about:blank', twice[key])
-  })
+  }, true)
   var here = typeof location === 'object' ? location : null
   if (here && /^(chromewebstore\.google\.com|microsoftedge\.microsoft\.com)$/.test(here.hostname) &&
     /\/detail\//.test(here.pathname)) {
@@ -745,22 +760,27 @@ mod heard {
 /// `SCRIPT` asks through there, in place of a window name. The engine's `DevTools`
 /// protocol puts it in nib's world alone (`Runtime.addBinding` by the world's name), so
 /// the page's own world never has it, and says each call to this app as
-/// `Runtime.bindingCalled`, which nothing in a page can raise.
+/// `Runtime.bindingCalled`, which nothing in a page can raise. The engine puts it in a
+/// new document's world only while the protocol's runtime domain is on, which it never is
+/// on a reader's page, so it is put there as each document arrives; see `following` in
+/// `web_worlds.rs`.
 #[cfg(feature = "cef")]
 pub const BINDING: &str = "nibAsked";
 
 /// `SCRIPT` as Orden's own Chromium runs it: the engine hands the host no window name, so
 /// the script asks through `BINDING` instead, with the address and the name it would
 /// have opened a window under - and through a window after all where the binding is not
-/// there, which opens the link as a tab in front rather than not at all.
+/// there, which opens the link as a tab in front rather than not at all. Looked for at each
+/// ask, since it arrives in a document just after this script has started there.
 #[cfg(feature = "cef")]
 pub fn script() -> String {
     without_store_button(SCRIPT).replacen(
         "var open = window.open.bind(window)",
         concat!(
-            "var open = typeof nibAsked === 'function'",
-            " ? function (url, name) { nibAsked(JSON.stringify([url, name])) }",
-            " : window.open.bind(window)",
+            "var opening = window.open.bind(window)\n  ",
+            "var open = function (url, name) {\n    ",
+            "if (typeof nibAsked === 'function') nibAsked(JSON.stringify([url, name]))\n    ",
+            "else opening(url, name)\n  }",
         ),
         1,
     )
@@ -851,6 +871,8 @@ mod tests {
         assert!(script.contains("typeof nibAsked === 'function'"));
         assert!(script.contains(super::BINDING));
         assert!(!script.contains("var open = window.open.bind(window)"));
+        // At each ask: the binding arrives in a document after this script has started.
+        assert!(!script.contains("var open = typeof nibAsked"));
     }
 
     #[test]

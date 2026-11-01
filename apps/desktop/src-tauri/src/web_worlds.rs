@@ -599,6 +599,12 @@ mod engine {
         json!({ "name": crate::web_opens::BINDING, "executionContextName": super::WORLD })
     }
 
+    /// What a page's event has the binding put in nib's world again for: a document that
+    /// has just arrived in a frame. Pure, so the rule has a test.
+    pub(super) fn bound_again(method: &str) -> Option<(&'static str, Value)> {
+        (method == "Page.frameNavigated").then(|| ("Runtime.addBinding", binding()))
+    }
+
     /// Hears what nib's world in the page asks through its bindings, for as long as the
     /// page is open, and hands each call to `web_opens` or `web_swipe`.
     pub fn asking(view: &Webview, app: &tauri::AppHandle, tab: &str, window: &str) {
@@ -690,10 +696,21 @@ mod engine {
     /// Follows the page's frames from other sites and gives each Orden's scripts before its
     /// first document, as on `WebView2`: the frame's own session is told, in order and
     /// without waiting, from inside the event that says it was attached.
+    ///
+    /// And `web_opens::BINDING` put in nib's world in each document as it arrives: the
+    /// engine gives a binding named by its world only to the worlds there already, unless
+    /// the protocol's runtime domain is on, and that stays off a reader's page (see
+    /// scripts/web-bot-probe.py). Asked once, before the first document, it reached none of
+    /// them, so every ask through it went nowhere and Ctrl+Space and Shift twice did
+    /// nothing from inside a page (#1022).
     fn following(view: &Webview, scripts: &str) -> bool {
         let telling = view.clone();
         let scripts = scripts.to_string();
-        let heard = devtools::hear(view, move |method, _session, params| {
+        let heard = devtools::hear(view, move |method, session, params| {
+            if let Some(again) = bound_again(method) {
+                devtools::tell(&telling, session, vec![again]);
+                return;
+            }
             if method != "Target.attachedToTarget" {
                 return;
             }
@@ -925,6 +942,19 @@ mod tests {
         let asked: serde_json::Value = serde_json::from_str(&world_in("4F2A")).expect("json");
         assert_eq!(asked["frameId"], "4F2A");
         assert_eq!(asked["worldName"], WORLD);
+    }
+
+    /// Without the runtime domain on, a binding reaches only the worlds already there, so
+    /// it is put in each document as that arrives, and it never takes the domain on.
+    #[cfg(feature = "cef")]
+    #[test]
+    fn a_document_arriving_has_nib_s_binding_put_in_its_world() {
+        let (method, params) =
+            super::engine::bound_again("Page.frameNavigated").expect("the binding again");
+        assert_eq!(method, "Runtime.addBinding");
+        assert_eq!(params["name"], crate::web_opens::BINDING);
+        assert_eq!(params["executionContextName"], WORLD);
+        assert!(super::engine::bound_again("Runtime.bindingCalled").is_none());
     }
 
     #[test]

@@ -93,7 +93,13 @@ function page(own: number | null = null) {
     const index = at(type, handler, capture)
     if (index >= 0) heard.splice(index, 1)
   }
-  runInNewContext(pageScript(), { window, addEventListener, removeEventListener, Element: Object })
+  runInNewContext(pageScript(), {
+    window,
+    addEventListener,
+    removeEventListener,
+    setTimeout,
+    Element: Object,
+  })
 
   // The page puts its own `window.open` in after the script has run, as some do.
   window.open = () => {
