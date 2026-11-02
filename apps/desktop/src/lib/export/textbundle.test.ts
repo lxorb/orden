@@ -1,6 +1,7 @@
 import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
 import { CORPUS } from './corpus'
+import { documentOf, picturesIn } from './document'
 import type { Picture } from './pictures'
 import { bundleFiles, packEntries } from './textbundle'
 import { zipOf } from './zip'
@@ -212,5 +213,20 @@ describe('a picture however it was written', () => {
     expect(asked(source, 'pic.png', 'p.png')).toBe(
       '![x][ref]\n\n[ref]: assets/p.png\n[other]: else.png\n[^1]: pic.png\n\n```\n[ref]: pic.png\n```\n',
     )
+  })
+
+  test.each([
+    ['![[photo.png]]\n'],
+    ['![a](photo(1).png)\n'],
+    ['![a](<my photo.png>)\n'],
+    ["![a](pic.png 'T')\n"],
+    ['![x][ref]\n\n[ref]: pic.png\n'],
+    ['![ref]\n\n[ref]: <my pic.png> "T"\n'],
+  ])('%j: what the document finds is what the text gives up', (source) => {
+    const [src] = picturesIn(documentOf(source, 'Note.md'))
+    expect(src).toBeDefined()
+    const text = asked(source, src ?? '', 'landed.png')
+    expect(text).toContain('assets/landed.png')
+    expect(text).not.toContain(src)
   })
 })
