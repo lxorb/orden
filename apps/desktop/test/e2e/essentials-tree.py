@@ -65,6 +65,9 @@ KEEP = "(name) => { const ws = window.nibApp.workspace; const root = ws.activeSp
 
 
 def press_row(page: Page, label: str) -> bool:
+    # The first menu is fetched if the launch has not got round to it, and opens as it
+    # lands: a row looked for before that was no row at all (#442).
+    page.locator("[role=menu] [role=menuitem]").first.wait_for(timeout=15_000)
     row = page.locator("[role=menu] [role=menuitem]", has_text=label).first
     if row.count() < 1:
         page.keyboard.press("Escape")

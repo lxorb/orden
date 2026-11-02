@@ -25,6 +25,7 @@ from collections.abc import Callable
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
+from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
@@ -71,9 +72,17 @@ def check(
         closers.append(("its own button", opening if toggles is True else toggles))
     for how, close in closers:
         opening()
+        # The first menu is fetched if the launch has not got round to it, and opens as
+        # it lands: late is no fault, and it was read as one at 250 ms on a busy runner
+        # (#442). Up, it has to stay up.
+        try:
+            DRIVE.wait_for(page, f"!!document.querySelector({popup!r})", f"{name} to open", 15)
+        except SystemExit:
+            wrong(f"{name}: the press never opened it")
+            return
         page.wait_for_timeout(250)
         if not shown(page, popup):
-            wrong(f"{name}: the press that opened it closed it again (or it never opened)")
+            wrong(f"{name}: the press that opened it closed it again")
             return
         if how == "a press past it":
             shot(page, f"{name.replace(' ', '-')}-open")
@@ -218,6 +227,9 @@ def drive(browser: Browser) -> None:
 
     def pick_and_open() -> None:
         # Escape and a press on the plane let go of the card as well: picked again first.
+        # Once its bar has played its way out, which is still on the page until then and
+        # would read as still picked, and then is gone from under the press.
+        quiet(page)
         if not shown(page, ".over"):
             page.locator(".canvas [data-id]").first.click()
             page.wait_for_timeout(300)
