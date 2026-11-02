@@ -1,4 +1,4 @@
-import { syntaxTree } from '@codemirror/language'
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { enclosingNamed } from './nodes'
@@ -17,6 +17,9 @@ export interface LinkParts {
   to: number
   /** The address or the note, as written: what editing the link selects. */
   target: { from: number; to: number }
+  /** A label no definition answers, brackets and all, or the empty spot where one is
+   *  left out: what editing swaps for `(label)`, so that the address typed is a link. */
+  unwritten?: { from: number; to: number }
   /** The words a reader sees, or null where taking the link away would leave the same
    *  link behind: an address written out is a link by being one. */
   words: string | null
@@ -55,10 +58,53 @@ function wikilinkParts(state: EditorState, node: SyntaxNode): LinkParts | null {
   }
 }
 
+/** Labels match the way a reader matches them: case and runs of blanks do not count. */
+const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase()
+
+/** The address the first definition of a label holds, wherever in the note it is. */
+function definedAddress(state: EditorState, label: string): SyntaxNode | null {
+  const key = labelKey(label)
+  // Asked of the whole note: a definition usually sits at the end of it, past what has
+  // been parsed for the screen, and missing it would read as a label nothing defines.
+  const tree = ensureSyntaxTree(state, state.doc.length, 200) ?? syntaxTree(state)
+  let found: SyntaxNode | null = null
+  tree.iterate({
+    enter(ref) {
+      if (found) return false
+      if (ref.name !== 'LinkReference') return ref.name !== 'Paragraph'
+      const written = ref.node.getChild('LinkLabel')
+      if (written && labelKey(state.doc.sliceString(written.from + 1, written.to - 1)) === key)
+        found = ref.node.getChild('URL')
+      return false
+    },
+  })
+  return found
+}
+
+/** Where `[words][label]`, `[words][]` and `[words]` point: the address their definition
+ *  holds, since typing over the label would only break the link. With no definition
+ *  there is no address yet, so the label has to make way for one. */
+function labelTarget(
+  state: EditorState,
+  node: SyntaxNode,
+  words: { from: number; to: number },
+): Pick<LinkParts, 'target' | 'unwritten'> {
+  const written = node.getChild('LinkLabel')
+  const inner = written && { from: written.from + 1, to: written.to - 1 }
+  const label = inner && inner.to > inner.from ? inner : words
+
+  const address = definedAddress(state, state.doc.sliceString(label.from, label.to))
+  if (address) return { target: { from: address.from, to: address.to } }
+  return {
+    target: inner ?? { from: node.to, to: node.to },
+    unwritten: written ? { from: written.from, to: written.to } : { from: node.to, to: node.to },
+  }
+}
+
 function markdownParts(state: EditorState, node: SyntaxNode): LinkParts {
   const marks = node.getChildren('LinkMark')
   // An address written out is its own pointer.
-  const pointer = node.name === 'URL' ? node : (node.getChild('URL') ?? node.getChild('LinkLabel'))
+  const pointer = node.name === 'URL' ? node : node.getChild('URL')
   // `[words]()` points nowhere yet, and editing it is typing between the brackets.
   const empty = marks[3] ? { from: marks[2]?.to ?? node.to, to: marks[3].from } : null
   const target = pointer
@@ -69,12 +115,15 @@ function markdownParts(state: EditorState, node: SyntaxNode): LinkParts {
 
   const open = marks[0]
   const close = marks[1]
-  return {
+  const parts = {
     from: node.from,
     to: node.to,
     target,
     words: open && close ? state.doc.sliceString(open.to, close.from) : null,
   }
+  return pointer || empty || !open || !close
+    ? parts
+    : { ...parts, ...labelTarget(state, node, { from: open.to, to: close.from }) }
 }
 
 /** The link at a position, of whichever spelling, or null where there is none. */
@@ -91,6 +140,20 @@ export function editLink(pos: number): StateCommand {
   return ({ state, dispatch }) => {
     const parts = state.readOnly ? null : linkPartsAt(state, pos)
     if (!parts) return false
+
+    if (parts.unwritten) {
+      const label = state.doc.sliceString(parts.target.from, parts.target.to)
+      const at = parts.unwritten.from + 1
+      dispatch(
+        state.update({
+          changes: { ...parts.unwritten, insert: `(${label})` },
+          selection: EditorSelection.range(at, at + label.length),
+          scrollIntoView: true,
+          userEvent: 'input',
+        }),
+      )
+      return true
+    }
 
     dispatch(
       state.update({
