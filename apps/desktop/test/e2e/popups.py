@@ -25,7 +25,6 @@ from collections.abc import Callable
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
-from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
@@ -227,9 +226,6 @@ def drive(browser: Browser) -> None:
 
     def pick_and_open() -> None:
         # Escape and a press on the plane let go of the card as well: picked again first.
-        # Once its bar has played its way out, which is still on the page until then and
-        # would read as still picked, and then is gone from under the press.
-        quiet(page)
         if not shown(page, ".over"):
             page.locator(".canvas [data-id]").first.click()
             page.wait_for_timeout(300)
