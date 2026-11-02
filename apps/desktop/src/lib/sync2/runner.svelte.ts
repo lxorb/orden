@@ -492,7 +492,12 @@ class Runner {
       // The paper each page note holds goes where the note goes (#551), kept by the
       // note's id rather than as a file of the tree; see pages/carried.ts. Not waited
       // for: a paper is megabytes, and nothing in the pass is behind it.
-      void import('../pages/carrying').then(({ carryNow }) => carryNow(() => pageNotes(engine)))
+      void import('../pages/carrying').then(({ carryNow }) =>
+        carryNow(
+          () => pageNotes(engine),
+          (note, failed) => void engine.said(note.space, failed),
+        ),
+      )
       this.lastSyncedAt = Date.now()
       this.status = offline ? 'offline' : 'idle'
     } catch (error) {
@@ -1011,7 +1016,12 @@ function pageNotes(engine: Engine): Carried[] {
       if (entry.kind !== 'pages' || entry.deleted || entry.seq === null || !entry.local_path)
         continue
       if (!space.isLive(entry.id)) continue
-      out.push({ path: joinPath(space.row.root, entry.local_path), id: entry.id, writes })
+      out.push({
+        path: joinPath(space.row.root, entry.local_path),
+        id: entry.id,
+        writes,
+        space: space.id,
+      })
     }
   }
   return out

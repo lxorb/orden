@@ -581,6 +581,21 @@ describe('a push the account refuses', () => {
   })
 })
 
+test('a line said from beside the passes reaches the log and whoever has it open', async () => {
+  const one = await device()
+  const heard: (string | null)[] = []
+  one.engine.on('pass', (row) => heard.push(row.failed))
+
+  await one.engine.said(SPACE, 'the account would not take Lecture.pages.pdf')
+
+  const [rows] = await one.engine.core.store.read([scan('log')])
+  expect(rows.at(-1)).toMatchObject({
+    space: SPACE,
+    failed: 'the account would not take Lecture.pages.pdf',
+  })
+  expect(heard).toEqual(['the account would not take Lecture.pages.pdf'])
+})
+
 describe('an outbox folded while offline', () => {
   test('a note moved into a folder made and deleted here is deleted on the account too', async () => {
     // The folder and its delete cancel before the account hears of either, and what was

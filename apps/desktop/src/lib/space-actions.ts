@@ -207,7 +207,7 @@ export async function publishSpace(space: Space) {
 /** Deleting a space, or letting go of one somebody shared, which is the same
  *  gesture and a different sentence: a space that is not yours is not yours to
  *  delete, and leaving it takes its notes off this machine and nowhere else. */
-async function deleteSpace(space: Space) {
+export async function deleteSpace(space: Space) {
   // One answer for the dialog and for `forget`. Not known yet, the account is asked
   // once; still unknown, it is a leave, and nothing is deleted from the account.
   let role = roleOf(space.root)
@@ -229,6 +229,8 @@ async function deleteSpace(space: Space) {
   })
 
   if (!sure) return
+  const { mayEndSpace } = await import('./workspace/space-changes')
+  if (!(await mayEndSpace(workspace, space.id))) return
 
   const root = space.root
   await workspace.deleteSpace(space.id)
