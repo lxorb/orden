@@ -1195,10 +1195,7 @@ pub fn write_in_place(target: &Path, bytes: &[u8]) -> Result<(), String> {
     };
 
     let copy = staged(target, bytes, false)?;
-    let into = file
-        .write_all(bytes)
-        .and_then(|()| file.set_len(bytes.len() as u64))
-        .and_then(|()| file.sync_all());
+    let into = poured(&mut file, bytes);
     drop(file);
 
     match into {
@@ -1209,6 +1206,42 @@ pub fn write_in_place(target: &Path, bytes: &[u8]) -> Result<(), String> {
         // The copy is the only whole version left if this fails too, so it stays.
         Err(_) => fs::rename(&copy, target).map_err(|error| cannot("save", target, &error)),
     }
+}
+
+/// A file `poured` writes into: what it takes of `fs::File`, apart so a refusal can be
+/// tested.
+trait Pourable: Write {
+    fn size(&self) -> std::io::Result<u64>;
+    fn shrink(&mut self, to: u64) -> std::io::Result<()>;
+    fn sync(&mut self) -> std::io::Result<()>;
+}
+
+impl Pourable for fs::File {
+    fn size(&self) -> std::io::Result<u64> {
+        self.metadata().map(|meta| meta.len())
+    }
+    fn shrink(&mut self, to: u64) -> std::io::Result<()> {
+        self.set_len(to)
+    }
+    fn sync(&mut self) -> std::io::Result<()> {
+        self.sync_all()
+    }
+}
+
+/// `bytes` into an open file, in place of what it held.
+///
+/// Shrunk before anything is written. Windows refuses to shrink a file another process
+/// has mapped (`ERROR_USER_MAPPED_FILE`) and writes to it all the same, so shrinking
+/// after the write left the new text with the old one's tail, and the note stayed that
+/// way if putting the copy over it was refused too. Refused first, the note is still
+/// the old text, whole.
+fn poured(file: &mut impl Pourable, bytes: &[u8]) -> std::io::Result<()> {
+    let length = bytes.len() as u64;
+    if file.size()? > length {
+        file.shrink(length)?;
+    }
+    file.write_all(bytes)?;
+    file.sync()
 }
 
 fn written(target: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
@@ -1821,6 +1854,50 @@ mod tests {
 
     /// A save writes into the note that is there, so the note stays the same file,
     /// and leaves nothing beside it; one that shrinks the note leaves no tail.
+    /// A file that may not be shrunk, as Windows refuses one another process has mapped,
+    /// and is written to all the same.
+    struct Mapped(Vec<u8>);
+
+    impl std::io::Write for Mapped {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            let end = bytes.len().min(self.0.len());
+            self.0[..end].copy_from_slice(&bytes[..end]);
+            self.0.extend_from_slice(&bytes[end..]);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    impl super::Pourable for Mapped {
+        fn size(&self) -> std::io::Result<u64> {
+            Ok(self.0.len() as u64)
+        }
+        fn shrink(&mut self, _to: u64) -> std::io::Result<()> {
+            Err(std::io::Error::other("the file is mapped"))
+        }
+        fn sync(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// A refused shrink leaves the old text whole, never the new text on its tail.
+    #[test]
+    fn a_file_that_may_not_shrink_keeps_its_old_text() {
+        let mut file = Mapped(b"a first, longer version".to_vec());
+        assert!(super::poured(&mut file, b"second").is_err());
+        assert_eq!(file.0, b"a first, longer version");
+    }
+
+    /// Growing asks nothing of the shrink a mapped file refuses.
+    #[test]
+    fn a_file_that_may_not_shrink_still_takes_a_longer_text() {
+        let mut file = Mapped(b"short".to_vec());
+        super::poured(&mut file, b"a longer one").expect("the write");
+        assert_eq!(file.0, b"a longer one");
+    }
+
     #[test]
     fn an_in_place_write_keeps_the_file() {
         use std::io::{Read as _, Seek as _};
