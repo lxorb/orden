@@ -27,6 +27,7 @@ disk.current = new Disk()
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { pane } = await import('../../src/lib/workspace/pane-tree')
 const Tree = (await import('../../src/lib/Tree.svelte')).default
+const { keyboardStays } = await import('../../src/lib/caret')
 
 const ALPHA = '/space/Alpha.md'
 const BETA = '/space/Beta.md'
@@ -81,6 +82,52 @@ test('a row deleted under the keyboard hands it on to the row that comes up into
   await deleteRow(BETA)
 
   await vi.waitFor(() => expect(focused()).toBe(GAMMA))
+})
+
+test('the row a menu asked for with Shift+F10 deleted is the same, though the menu took the keyboard', async () => {
+  rowOf(BETA)!.focus()
+  rowOf(BETA)!.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true, cancelable: true }),
+  )
+  // Where the menu has it, and then nowhere once the menu has gone.
+  const inMenu = document.body.appendChild(document.createElement('button'))
+  inMenu.focus()
+  inMenu.remove()
+
+  await deleteRow(BETA)
+
+  await vi.waitFor(() => expect(focused()).toBe(GAMMA))
+})
+
+test('and the note that comes to the front does not take the keyboard from the row', async () => {
+  rowOf(BETA)!.focus()
+  rowOf(BETA)!.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true, cancelable: true }),
+  )
+  const caret = document.body.appendChild(document.createElement('div'))
+  caret.tabIndex = 0
+  caret.focus()
+
+  await deleteRow(BETA)
+
+  await vi.waitFor(() => expect(focused()).toBe(GAMMA))
+  expect(keyboardStays()).toBe(true)
+})
+
+test('a menu long closed, and something done since, leaves the keyboard where it went', async () => {
+  rowOf(BETA)!.focus()
+  rowOf(BETA)!.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true, cancelable: true }),
+  )
+  const elsewhere = document.body.appendChild(document.createElement('input'))
+  elsewhere.focus()
+  elsewhere.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }))
+
+  await deleteRow(BETA)
+  flushSync()
+
+  expect(document.activeElement).toBe(elsewhere)
+  elsewhere.remove()
 })
 
 test('and the last row hands it back to the row that is last now', async () => {

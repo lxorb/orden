@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount, tick, untrack } from 'svelte'
+  import { staysOn } from './caret'
   import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
@@ -355,8 +356,10 @@
   async function closeByKey(id: string) {
     await workspace.closeAsking(id)
     await tick()
-    if (!workspace.tabs.some((one) => one.id === id))
-      strip?.querySelector<HTMLElement>(`.pick[data-tab="${activeId}"]`)?.focus()
+    if (workspace.tabs.some((one) => one.id === id)) return
+    const next = strip?.querySelector<HTMLElement>(`.pick[data-tab="${activeId}"]`)
+    next?.focus()
+    if (next) staysOn(next)
   }
 
   /** What pressed the cross: a click a key sent has no pointer behind it. */
