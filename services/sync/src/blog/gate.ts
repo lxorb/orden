@@ -39,7 +39,7 @@ const TICKET = '__Host-nib_site'
 
 /** What the cookie was called until 2026-10, when readers already held a month's tickets
  *  under it. Still read, and never set, so they are not asked again before those run
- *  out; nothing depends on this name past the end of 2026 and it can go. Any script
+ *  out; it can go once the rename has been deployed for a month. Any script
  *  under the root can set one, so where this name is concerned the first value says
  *  nothing and each is asked: see `ticketsIn`. */
 const OLD_TICKET = 'nib_site'
