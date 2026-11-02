@@ -121,6 +121,11 @@ export function focusEditor(): boolean {
   return focusRegion('editor')
 }
 
+/** The list, whichever panel is open: at its first stop, or itself. */
+export function focusList(): boolean {
+  return focusRegion('list')
+}
+
 /** The keyboard put into a side of the window, at the first thing in it past its edge, and
  *  what took it; null where the side cannot hold it. */
 export function intoSide(side: 'left' | 'right'): HTMLElement | null {

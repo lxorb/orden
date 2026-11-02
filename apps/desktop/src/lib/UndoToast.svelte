@@ -97,8 +97,9 @@
         const back = from
         // After the card has left the page, or a press there has nothing to land on.
         queueMicrotask(() => {
+          // In the page and out of reach is the same: a side shut since says nothing else.
           if (back.isConnected) back.focus({ preventScroll: true })
-          else focusEditor()
+          if (document.activeElement !== back) focusEditor()
         })
       },
     }

@@ -43,6 +43,7 @@
   } from './folder-notes'
   import { t } from './i18n.svelte'
   import { staysOn } from './caret'
+  import { focusList } from './focus'
   import { menu } from './menu.svelte'
   import { overlays } from './overlays'
   import { longPress } from './longpress'
@@ -201,6 +202,8 @@
         workspace.rootHolding(next.entry.path) === workspace.rootHolding(was)
       ) {
         stand(next.entry.path, true)
+      } else if (!next && nowhere) {
+        void tick().then(standOnList)
       }
     })
   })
@@ -351,6 +354,16 @@
 
   /** Puts the keyboard on a row and makes it the one selected, which is what
    *  arriving at a row in a file list means. */
+  /** No row left to hand the keyboard to: what the panel has in their place, its way to a
+   *  new note, or the list itself where it has nothing. */
+  function standOnList() {
+    if (!focusList() && list) {
+      list.tabIndex = -1
+      list.focus()
+    }
+    if (document.activeElement) staysOn(document.activeElement)
+  }
+
   function stand(path: string, stays = false) {
     workspace.select(path)
 
@@ -401,9 +414,9 @@
       shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)
     if (deleting && workspace.selection.length) {
       event.preventDefault()
-      keyedOn = true
       // Nothing in a space shared to be read, as no other key that writes; see `fileKey`.
       if (!workspace.selection.every((path) => canWriteAt(path))) return
+      keyedOn = true
       // What holds something archived stays, and says why.
       const kept = workspace.selection.filter((path) => workspace.keepsArchived(path))
       void workspace.removeMany(workspace.selection)
