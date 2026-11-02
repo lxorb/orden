@@ -9,8 +9,9 @@
  *  running for as long as their tab is open, a file renamed or deleted under a tab nobody
  *  can see. A tab is on screen when its pane is in the frame on screen; the frames of
  *  the other sets are kept here with the rest of what belongs to them - which pane has
- *  the focus and which fills the window, both sides' panels, the preview, the tab the
- *  panels are held on, and whether the keyboard was in a page.
+ *  the focus and which fills the window, both sides' panels (but for an open chat, which
+ *  stays), the preview, the tab the panels are held on, and whether the keyboard was in
+ *  a page.
  *
  *  Every space keeps its own tabs (#674), so this is fetched by the first switch of
  *  space or move of a tab to another, and by a launch whose session holds sets, at its
@@ -195,8 +196,12 @@ class Sets {
     ws.panes.restore(frame, set ? focusIn(frame, set.focused) : frame.id)
     ws.panes.fills = set?.fills && paneIn(frame, set.fills) ? set.fills : null
     if (set) {
+      // The open chat stays open, whatever this set kept at its side (#332).
+      const chatting = ws.openOn(ws.sideOf('ask')) === 'ask'
       ws.panel = set.panel
       ws.rightPanel = set.rightPanel
+      if (chatting && ws.sideOf('ask') === 'left') ws.panel = 'ask'
+      if (chatting && ws.sideOf('ask') === 'right') ws.rightPanel = 'ask'
     }
     ws.previewTabId = set?.preview ?? null
     ws.heldTabId = set?.held ?? null

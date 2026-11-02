@@ -79,6 +79,36 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+describe('the chat at a side', () => {
+  afterEach(() => {
+    workspace.rightPanel = null
+  })
+
+  // #332: the open chat stays open when the space changes, whatever the space kept there.
+  test('stays open through a space that had that side shut', async () => {
+    await workspace.showSpace('home')
+    await workspace.showSpace('work')
+    workspace.showPanel('ask')
+
+    await workspace.showSpace('home')
+    expect(workspace.openOn('right')).toBe('ask')
+    await workspace.showSpace('work')
+    expect(workspace.openOn('right')).toBe('ask')
+  })
+
+  test('leaves any other panel to the space that kept it', async () => {
+    await workspace.showSpace('home')
+    workspace.closePanel('right')
+    await workspace.showSpace('work')
+    workspace.showPanel('outline')
+
+    await workspace.showSpace('home')
+    expect(workspace.openOn('right')).toBe(null)
+    await workspace.showSpace('work')
+    expect(workspace.openOn('right')).toBe('outline')
+  })
+})
+
 describe('every space', () => {
   test('keeps its own tabs, and shows them again when it is shown', async () => {
     await workspace.openEntry(PLAN)
