@@ -222,6 +222,14 @@ def drive(browser: Browser) -> None:
         page.keyboard.type("card")
         page.keyboard.press("Escape")
         page.wait_for_timeout(400)
+    # The plane is moved by its camera, and a press is read by it too: nothing may scroll
+    # the box it stands in, or what is drawn and what a press finds part ways.
+    scrolled = page.evaluate(
+        "() => { const it = document.querySelector('.canvas'); it.scrollTo(40, 40);"
+        " const at = [it.scrollLeft, it.scrollTop]; it.scrollTo(0, 0); return at }"
+    )
+    if scrolled != [0, 0]:
+        wrong(f"the box the plane stands in scrolled to {scrolled}")
     picked = page.locator('.over button[aria-label="Colour"]').first
 
     def pick_and_open() -> None:
