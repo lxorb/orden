@@ -21,7 +21,7 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::{Condvar, Mutex, PoisonError};
 
 use serde::Serialize;
 
@@ -117,25 +117,64 @@ static WSL_SILENT: AtomicBool = AtomicBool::new(false);
 const LOOKS: u8 = 3;
 
 /// What a look found, kept once it can be believed: a look that could not be sure is
-/// looked at again by the next to ask, `LOOKS` times in all.
-struct Kept<T: 'static>(Mutex<(Option<&'static T>, u8)>);
+/// looked at again by the next to ask, `LOOKS` times in all. One look at a time, made
+/// outside the lock: whoever asks during one shares its answer, and waits for that one
+/// look and no other.
+struct Kept<T: 'static> {
+    state: Mutex<Looks<T>>,
+    looked: Condvar,
+}
 
-impl<T> Kept<T> {
+struct Looks<T: 'static> {
+    found: Option<&'static T>,
+    left: u8,
+    looking: bool,
+}
+
+impl<T: 'static> Kept<T> {
     const fn new() -> Self {
-        Self(Mutex::new((None, LOOKS)))
+        Self {
+            state: Mutex::new(Looks {
+                found: None,
+                left: LOOKS,
+                looking: false,
+            }),
+            looked: Condvar::new(),
+        }
     }
 
     /// `look` answers with what it found, and whether that can be believed.
     fn get(&self, look: impl FnOnce() -> (T, bool)) -> &'static T {
-        let mut kept = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        if let (Some(found), 0) = *kept {
+        let mut state = self.lock();
+        if state.looking {
+            state = self
+                .looked
+                .wait_while(state, |state| state.looking)
+                .unwrap_or_else(PoisonError::into_inner);
+            if let Some(found) = state.found {
+                return found;
+            }
+        }
+        if let (Some(found), 0) = (state.found, state.left) {
             return found;
         }
+        state.looking = true;
+        drop(state);
+
         let (found, sure) = look();
         // Once per look, and there are at most `LOOKS` of them in a run.
         let found: &'static T = Box::leak(Box::new(found));
-        *kept = (Some(found), if sure { 0 } else { kept.1 - 1 });
+
+        let mut state = self.lock();
+        state.found = Some(found);
+        state.left = if sure { 0 } else { state.left - 1 };
+        state.looking = false;
+        self.looked.notify_all();
         found
+    }
+
+    fn lock(&self) -> std::sync::MutexGuard<'_, Looks<T>> {
+        self.state.lock().unwrap_or_else(PoisonError::into_inner)
     }
 }
 
@@ -789,6 +828,39 @@ mod tests {
         let kept = Kept::new();
         assert_eq!(*kept.get(|| ("cmd", true)), "cmd");
         assert_eq!(*kept.get(|| panic!("kept")), "cmd");
+    }
+
+    /// Nobody queues behind the lock while a look is out.
+    #[test]
+    fn a_look_is_made_outside_the_lock() {
+        let kept = Kept::new();
+        kept.get(|| {
+            assert!(kept.state.try_lock().is_ok());
+            ("cmd", true)
+        });
+    }
+
+    /// Whoever asks while a look is out does not make another.
+    #[test]
+    fn who_asks_during_a_look_shares_its_answer() {
+        let kept: &'static Kept<&str> = Box::leak(Box::new(Kept::new()));
+        let (started, looking) = std::sync::mpsc::channel();
+        let (finish, finished) = std::sync::mpsc::channel::<()>();
+        let first = std::thread::spawn(move || {
+            kept.get(|| {
+                started.send(()).expect("the test");
+                finished.recv().expect("the test");
+                ("cmd", true)
+            })
+        });
+        looking.recv().expect("the look");
+
+        let second = std::thread::spawn(|| *kept.get(|| panic!("a second look")));
+        std::thread::yield_now();
+        finish.send(()).expect("the look");
+
+        assert_eq!(*first.join().expect("the first"), "cmd");
+        assert_eq!(second.join().expect("the second"), "cmd");
     }
 
     /// A WSL that never answers holds nobody up for ever.
