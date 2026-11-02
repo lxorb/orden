@@ -92,6 +92,59 @@ describe('what somebody typed', () => {
   })
 })
 
+/** A word and a colon is not a scheme because it looks like one: Chrome takes a scheme it
+ *  knows, or anything written with `//`, as an address, and the rest as words. The bar did
+ *  nothing at all for these. */
+describe('a word with a colon after it', () => {
+  test.each([
+    ['site:github.com orden'],
+    ['site:github.com'],
+    ['site:github.com/lxorb'],
+    ['TypeError: x is not a function'],
+    ['define:serendipity'],
+    ['filetype:pdf rust'],
+    ['note: buy milk'],
+    ['a:b'],
+    ['note:'],
+    ['http: is a protocol'],
+    ['mailto: somebody'],
+  ])('%s is words', (typed) => {
+    expect(webAddress(typed)).toBe(
+      `https://www.google.com/search?q=${encodeURIComponent(typed.trim())}`,
+    )
+    expect(typedAddress(typed)).toBeNull()
+  })
+
+  test.each([
+    ['javascript:alert(1)'],
+    ['data:text/html,hi'],
+    ['mailto:me@example.com'],
+    ['tel:123'],
+    ['about:blank'],
+    ['ftp:example'],
+    ['nib://history'],
+    ['foo://bar'],
+    ['chrome://settings'],
+  ])('%s is an address no tab opens, and stays out of the search', (typed) => {
+    expect(webAddress(typed)).toBeNull()
+  })
+
+  test('a file stays out of the search however it is written', () => {
+    expect(webAddress('file:notes.txt')).toBeNull()
+    expect(webAddress('file: notes.txt')).toBeNull()
+    expect(webAddress('FILE:///etc/passwd')).toBeNull()
+    expect(webAddress('C:\\My Documents\\a.txt')).toBeNull()
+  })
+
+  test('an address still goes where it says', () => {
+    expect(webAddress('view-source:https://example.com')).toBe('view-source:https://example.com')
+    expect(webAddress('HTTP://example.com')).toBe('HTTP://example.com')
+    expect(webAddress('nas:5000')).toBe('http://nas:5000')
+    expect(webAddress('example.com:8080/a')).toBe('http://example.com:8080/a')
+    expect(webAddress('[::1]:3000/a')).toBe('http://[::1]:3000/a')
+  })
+})
+
 /** A path on this machine, typed into the bar, is not a host called `c` or `nas`: it would
  *  go out over http, and as words it would go to the search engine. `file:` is not a thing
  *  a tab opens, so it is what `file:///C:/...` typed out is: nothing (#790). */

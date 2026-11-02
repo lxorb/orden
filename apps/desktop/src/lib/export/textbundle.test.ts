@@ -141,3 +141,75 @@ describe('the zip the packages are built with', () => {
     expect(await zip.file('a.txt')?.async('string')).toBe('grüezi 日本語')
   })
 })
+
+/** `picturesIn` finds every one of these, so the bytes are copied into the bundle, and
+ *  the text has to come along or the bundle shows nothing once it is moved. */
+describe('a picture however it was written', () => {
+  const asked = (source: string, src: string, name: string) =>
+    String(
+      bundleFiles(source, [{ src, name, mime: 'image/png', bytes: new Uint8Array([1]) }]).find(
+        (file) => file.path === 'text.md',
+      )?.body,
+    )
+
+  test('an embed stays a picture, in the bundle', () => {
+    expect(asked('![[photo.png]]\n', 'photo.png', 'photo.png')).toBe('![](assets/photo.png)\n')
+    expect(asked('a ![[photo.png]] b\n', 'photo.png', 'p.png')).toBe('a ![](assets/p.png) b\n')
+  })
+
+  test('an embed keeps its words, and a size is not words', () => {
+    expect(asked('![[photo.png|A cat]]\n', 'photo.png', 'photo.png')).toBe(
+      '![A cat](assets/photo.png)\n',
+    )
+    expect(asked('![[photo.png|300]]\n', 'photo.png', 'photo.png')).toBe('![](assets/photo.png)\n')
+  })
+
+  test('an embed stays a picture when links are resolved too', () => {
+    const resolved = bundleFiles(
+      '![[photo.png]] and [[Note]]\n',
+      [{ src: 'photo.png', name: 'photo.png', mime: 'image/png', bytes: new Uint8Array([1]) }],
+      { link: () => '../elsewhere/x.png' },
+    )
+    expect(resolved.find((file) => file.path === 'text.md')?.body).toBe(
+      '![](assets/photo.png) and [Note](../elsewhere/x.png)\n',
+    )
+  })
+
+  test('an embed whose picture did not come along is still a link', () => {
+    const resolved = bundleFiles('![[gone.png]]\n', [], { link: () => '../gone.png' })
+    expect(resolved.find((file) => file.path === 'text.md')?.body).toBe('[gone.png](../gone.png)\n')
+  })
+
+  test('parentheses in the source', () => {
+    expect(asked('![a](photo(1).png)\n', 'photo(1).png', 'photo1.png')).toBe(
+      '![a](assets/photo1.png)\n',
+    )
+    expect(asked('![a](photo(1).png "T")\n', 'photo(1).png', 'photo1.png')).toBe(
+      '![a](assets/photo1.png "T")\n',
+    )
+  })
+
+  test('parentheses in the name it lands under', () => {
+    expect(asked('![a](x.png)\n', 'x.png', 'photo(1).png')).toBe('![a](assets/photo(1).png)\n')
+    expect(asked('![a](x.png)\n', 'x.png', 'photo(1.png')).toBe('![a](<assets/photo(1.png>)\n')
+  })
+
+  test('a reference definition', () => {
+    expect(asked('![x][ref]\n\n[ref]: pic.png\n', 'pic.png', 'p.png')).toBe(
+      '![x][ref]\n\n[ref]: assets/p.png\n',
+    )
+    expect(asked('![ref]\n\n[ref]: <my pic.png> "T"\n', 'my pic.png', 'p.png')).toBe(
+      '![ref]\n\n[ref]: <assets/p.png> "T"\n',
+    )
+    expect(asked('![x][ref]\n\n> [REF]: pic.png\n', 'pic.png', 'p.png')).toBe(
+      '![x][ref]\n\n> [REF]: assets/p.png\n',
+    )
+  })
+
+  test('a definition of something else, a footnote and code are left alone', () => {
+    const source = '![x][ref]\n\n[ref]: pic.png\n[other]: else.png\n[^1]: pic.png\n\n```\n[ref]: pic.png\n```\n'
+    expect(asked(source, 'pic.png', 'p.png')).toBe(
+      '![x][ref]\n\n[ref]: assets/p.png\n[other]: else.png\n[^1]: pic.png\n\n```\n[ref]: pic.png\n```\n',
+    )
+  })
+})

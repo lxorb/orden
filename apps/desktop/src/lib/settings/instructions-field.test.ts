@@ -230,4 +230,53 @@ describe('the field for a space’s AGENTS.md', () => {
     await field.flush()
     expect(writes.at(-1)?.after).toBe('two')
   })
+
+  /** A file written on Windows: the crate keeps its line endings on every write (`notes.rs`),
+   *  and a text box only ever holds `\n`. */
+  test('a CRLF file is the same file: a version once, and no stray CR', async () => {
+    const { held, writes, hands } = disk('one\r\ntwo\r\n')
+    hands.write.mockImplementation((_path, before, after, first) => {
+      writes.push({ before, after, first })
+      held.text = after.replace(/\n/g, '\r\n')
+      return Promise.resolve()
+    })
+    const field = new InstructionsField(PATH, hands)
+    await field.load()
+    expect(field.text).toBe('one\ntwo\n')
+
+    field.type('one\ntwo\nthree\n')
+    await field.flush()
+    field.type('one\ntwo\nthree\nfour\n')
+    await field.flush()
+    field.type('one\ntwo\nthree\nfour\nfive\n')
+    await field.flush()
+
+    expect(writes.map((one) => one.first)).toEqual([true, false, false])
+    expect(field.text).toBe('one\ntwo\nthree\nfour\nfive\n')
+    expect(held.text).toBe('one\r\ntwo\r\nthree\r\nfour\r\nfive\r\n')
+  })
+
+  test('opening a CRLF file and typing nothing new writes nothing', async () => {
+    const { writes, hands } = disk('one\r\ntwo\r\n')
+    const field = new InstructionsField(PATH, hands)
+    await field.load()
+
+    field.type('one\ntwo\n')
+    await field.flush()
+
+    expect(field.dirty).toBe(false)
+    expect(writes).toEqual([])
+  })
+
+  test('something else writing the file, in CRLF, still merges with the typing', async () => {
+    const { held, hands } = disk('one\r\ntwo\r\n')
+    const field = new InstructionsField(PATH, hands)
+    await field.load()
+
+    field.type('one\ntwo\nmine\n')
+    held.text = 'theirs\r\none\r\ntwo\r\n'
+    await field.flush()
+
+    expect(field.text).toBe('theirs\none\ntwo\nmine\n')
+  })
 })

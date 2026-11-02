@@ -17,6 +17,13 @@ describe('what an exported file is called', () => {
     expect(fileNameFor('Version 1.2 notes.md', 'rtf')).toBe('Version 1.2 notes.rtf')
   })
 
+  test('a dot in a name with no ending is not an ending either', () => {
+    expect(fileNameFor('v1.2 plan', 'docx')).toBe('v1.2 plan.docx')
+    expect(fileNameFor('v1.2', 'docx')).toBe('v1.2.docx')
+    expect(fileNameFor('notes.mp3', 'docx')).toBe('notes.docx')
+    expect(fileNameFor('a.7z', 'docx')).toBe('a.docx')
+  })
+
   test('only the last extension goes', () => {
     expect(fileNameFor('archive.tar.md', 'txt')).toBe('archive.tar.txt')
   })

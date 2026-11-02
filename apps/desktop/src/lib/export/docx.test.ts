@@ -502,3 +502,48 @@ describe('a coloured highlight', () => {
     for (const emoji of ['🔴', '🟠', '🟢', '🔵', '🟣']) expect(xml).not.toContain(emoji)
   })
 })
+
+/** Text pasted from Word, PowerPoint or a PDF carries what XML 1.0 has no way to say,
+ *  and a strict reader refuses the whole file over one. */
+describe('characters XML cannot carry', () => {
+  const FORBIDDEN = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/
+
+  const parts = async (source: string, paper = PAPER) => {
+    const bytes = await toDocx(documentOf(source, 'Note.md'), [], paper)
+    const zip = await JSZip.loadAsync(bytes)
+    const xml = Object.values(zip.files).filter((one) => /\.(xml|rels)$/.test(one.name))
+    return Promise.all(xml.map(async (one) => [one.name, await one.async('string')] as const))
+  }
+
+  const HOSTILE =
+    '---\ntitle: "T\u0001itle"\nauthor: "A\u0002uthor"\n---\n\n# He\u000bad\n\nword\u0001 and\u000cmore\ufffe[^n] [li\u0001nk](https://a.b/c) `co\u0001de`\n\n| a\u0001 |\n| - |\n| b\ufffe |\n\n- it\u0001em\n\n> qu\u0001ote\n\n```\nfen\u0001ce\n```\n\n[^n]: fo\u0001ot\n'
+
+  test('leave no part of the file', async () => {
+    for (const [name, xml] of await parts(HOSTILE)) {
+      expect(FORBIDDEN.test(xml), name).toBe(false)
+    }
+  })
+
+  test('nor the running text, which carries the title', async () => {
+    const paper = { ...PAPER, header: 'he\u0001ad', footer: 'fo\ufffeot' }
+    for (const [name, xml] of await parts('words\n', paper)) {
+      expect(FORBIDDEN.test(xml), name).toBe(false)
+    }
+  })
+
+  test('and the words either side of a soft break stay words', async () => {
+    const all = await parts('one\u000btwo\u000cthree\u0001four\n')
+    const body = all.find(([name]) => name === 'word/document.xml')?.[1] ?? ''
+    expect(body).toContain('one two threefour')
+  })
+
+  test('a picture is still found by what the note wrote', async () => {
+    const doc = documentOf('![cat](a.png)\n', 'Note.md')
+    const zip = await JSZip.loadAsync(
+      await toDocx(doc, [{ src: 'a.png', name: 'a\u0001.png', mime: 'image/png', bytes: LOCAL }], PAPER),
+    )
+    const xml = await zip.file('word/document.xml')?.async('string')
+    expect(xml).toContain('<pic:pic')
+    expect(FORBIDDEN.test(xml ?? '')).toBe(false)
+  })
+})

@@ -363,3 +363,10 @@ describe('naming the document', () => {
     expect(documentOf('just words\n', 'File.md').title).toBe('File')
   })
 })
+
+describe('a title from the file’s name', () => {
+  test('keeps a dot that is no ending', () => {
+    expect(titleOf('words\n', 'v1.2 plan')).toBe('v1.2 plan')
+    expect(titleOf('words\n', 'v1.2 plan.md')).toBe('v1.2 plan')
+  })
+})
