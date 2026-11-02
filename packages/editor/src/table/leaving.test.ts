@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { forceParsing } from '@codemirror/language'
 import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, expect, test, vi } from 'vitest'
 import { createEditor } from '../editor'
@@ -35,6 +36,8 @@ function typedCell(): EditorView {
     selection: { anchor: TABLE.length },
   })
   open.push(view)
+  // A cold worker on a busy machine can miss the first parse, and no table is drawn before it.
+  forceParsing(view, TABLE.length, 10_000)
   const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
     (one) => one.textContent === '1',
   )

@@ -130,12 +130,16 @@ describe('editing a link by a label, in a long note', () => {
 
   const body = 'some words and a [link](https://x.dev) with *marks*\n\n'.repeat(2000)
   const long = `[words][ref]\n\n${body}[ref]: https://r.dev\n`
-  /** Not run through `parsed`: as the note stands before the parser has reached its end. */
+  /** As the note stands before the parser has reached its end: the link is read, the
+   *  definition is not. */
   const unparsed = () =>
-    EditorState.create({
-      doc: long,
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
-    })
+    parsed(
+      EditorState.create({
+        doc: long,
+        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      }),
+      100,
+    )
 
   test('finds a definition the parser had not reached, whatever the clock says', () => {
     let current = unparsed()
@@ -202,13 +206,15 @@ describe('a label left behind by an edit nobody finished', () => {
 
 describe('undoing an edit of a label', () => {
   function editing(doc: string) {
-    let current = EditorState.create({
-      doc,
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-        history(),
-      ],
-    })
+    let current = parsed(
+      EditorState.create({
+        doc,
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          history(),
+        ],
+      }),
+    )
     const dispatch = (transaction: { state: EditorState }) => (current = transaction.state)
     const type = (insert: string, at = current.selection.main) =>
       (current = current.update({
