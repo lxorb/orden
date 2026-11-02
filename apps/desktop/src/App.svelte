@@ -1224,7 +1224,7 @@
 </main>
 
 {#snippet notices()}
-  <div class="notices" data-notices class:over={viewport.drawer}>
+  <div class="notices" data-notices data-region="notices" class:over={viewport.drawer}>
     <StorageWarning />
     {#if undoToastNotice.asked}
       {#await undoToastNotice.asked then UndoToast}

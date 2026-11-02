@@ -3,7 +3,9 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
+  import { focusEditor } from './focus'
   import { dur } from './motion'
+  import { told } from './said.svelte'
   import { back } from './sync2/resurrected.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
@@ -12,7 +14,7 @@
   import { workspace } from './workspace.svelte'
 
   /** The one word for each thing the toast can take back. */
-  const said = $derived({
+  const word = $derived({
     delete: t('Deleted'),
     move: t('Moved'),
     archive: t('Archived'),
@@ -38,6 +40,75 @@
     if (undoToast.kind) untrack(() => failed.dismiss())
   })
 
+  /** Which card is up, of the ones that take turns in one place. */
+  const turn = $derived(
+    failed.retry ? 'failed' : undoToast.kind ? 'undo' : unread.shown ? 'unread' : null,
+  )
+
+  /** Whether each card is up, by the name `kept` is given. */
+  const up = {
+    failed: () => turn === 'failed',
+    undo: () => turn === 'undo',
+    back: () => !!back.said,
+    unsynced: () => !!unsynced.said,
+  }
+
+  /** The card the keyboard is in, if it is in one. */
+  let holding: { card: HTMLElement; name: keyof typeof up } | null = null
+
+  // A card that goes while the keyboard is in it - Undo pressed, Ctrl+Z, a newer card
+  // in its place - hands the keyboard to the note. Before the page changes rather than
+  // after: a card on its way out is made inert at once, and the keyboard in it would
+  // be dropped on the page.
+  $effect.pre(() => {
+    for (const going of Object.values(up)) going()
+    untrack(() => {
+      if (holding && !up[holding.name]() && holding.card.contains(document.activeElement)) {
+        holding = null
+        focusEditor()
+      }
+    })
+  })
+
+  /** Kept up while the pointer is on it or the keyboard is in it, and let go once
+   *  neither is: a hand on its way to Undo is not beaten to it by the clock, and nor
+   *  is a key that walked to it with F6 (#523). */
+  function kept(name: keyof typeof up, toast?: { hold(): void; linger(): void }) {
+    return (card: HTMLElement) => {
+      let pointer = false
+      let keys = false
+      const go = () => {
+        if (!pointer && !keys) toast?.linger()
+      }
+      const on = {
+        pointerenter: () => {
+          pointer = true
+          toast?.hold()
+        },
+        pointerleave: () => {
+          pointer = false
+          go()
+        },
+        focusin: () => {
+          keys = true
+          holding = { card, name }
+          toast?.hold()
+        },
+        focusout: (event: Event) => {
+          const to = (event as FocusEvent).relatedTarget
+          if (to instanceof Node && card.contains(to)) return
+          keys = false
+          if (holding?.card === card) holding = null
+          if (up[name]()) go()
+        },
+      }
+      for (const [type, run] of Object.entries(on)) card.addEventListener(type, run)
+      return () => {
+        for (const [type, run] of Object.entries(on)) card.removeEventListener(type, run)
+      }
+    }
+  }
+
   // Gone with the component, and the timers with it.
   $effect(() => () => {
     undoToast.dismiss()
@@ -53,26 +124,34 @@
      the two came last dismissed the other, so this only decides a tie. -->
 {#if failed.retry}
   <!-- A card carried to a column whose note would not be written: it went back. -->
-  <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
+  <div
+    class="toast"
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    {@attach told(t('Not moved'))}
+    {@attach kept('failed')}
+  >
     <p>{t('Not moved')}</p>
     <button class="undo" onclick={() => failed.again()}>{t('Retry')}</button>
   </div>
 {:else if undoToast.kind}
   <div
     class="toast"
-    role="status"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    onpointerenter={() => undoToast.hold()}
-    onpointerleave={() => undoToast.linger()}
+    {@attach told(word[undoToast.kind])}
+    {@attach kept('undo', undoToast)}
   >
-    <p>{said[undoToast.kind]}</p>
+    <p>{word[undoToast.kind]}</p>
     <button class="undo" onclick={() => void undoToast.undo(workspace)}>{t('Undo')}</button>
   </div>
   <!-- A row clicked that opened nothing, because the file is there and would not
        read; see unread.svelte.ts. Nothing to press: there is no way back from a
        file another program holds, only the news that it does. -->
 {:else if unread.shown}
-  <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
+  <div
+    class="toast"
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    {@attach told(t('That file could not be read'))}
+  >
     <p>{t('That file could not be read')}</p>
   </div>
 {/if}{#if back.said}
@@ -80,31 +159,29 @@
        it; see sync2/resurrected.svelte.ts. Its own toast rather than a turn of the one
        above, so an Undo that is up is not taken away by it. Written against the block
        before it, because a line between two blocks is a space on the page. -->
+  {@const words = t('{name} is back: {device} was writing in it', {
+    name: back.said.name,
+    device: back.said.device,
+  })}
   <div
     class="toast"
-    role="status"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    onpointerenter={() => back.hold()}
-    onpointerleave={() => back.linger()}
+    {@attach told(words)}
+    {@attach kept('back', back)}
   >
-    <p>
-      {t('{name} is back: {device} was writing in it', {
-        name: back.said.name,
-        device: back.said.device,
-      })}
-    </p>
+    <p>{words}</p>
   </div>
 {/if}{#if unsynced.said}
   <!-- A file whose edits here do not sync: its name and its kind disagree since a
        rename. See sync2/unsynced.svelte.ts. -->
+  {@const words = t('Changes to {name} are not syncing', { name: unsynced.said })}
   <div
     class="toast"
-    role="status"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    onpointerenter={() => unsynced.hold()}
-    onpointerleave={() => unsynced.linger()}
+    {@attach told(words)}
+    {@attach kept('unsynced', unsynced)}
   >
-    <p>{t('Changes to {name} are not syncing', { name: unsynced.said })}</p>
+    <p>{words}</p>
   </div>
 {/if}
 

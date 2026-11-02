@@ -100,7 +100,7 @@ Four sentences.
 
 ### The regions
 
-Eight, in the order the window draws them, which is the order Tab already walks:
+Nine, in the order the window draws them, which is the order Tab already walks:
 
 | | |
 | --- | --- |
@@ -110,12 +110,14 @@ Eight, in the order the window draws them, which is the order Tab already walks:
 | `foot` | the row under it: the account, the theme, the settings |
 | `tabs` | the strip of notes |
 | `editor` | the note |
+| `notices` | the cards over the note's foot - an Undo, a warning - while one is up |
 | `status` | the bar under it, over a note |
 | `right` | the other side of the window, while it is showing |
 
 They are marked in the page with one `data-region` attribute each, so the order
 F6 walks is the order the window is built in and cannot drift from it. What is
-not on screen is not in the ring: the sidebar may be shut, a phone has no strip,
+not on screen is not in the ring: the sidebar may be shut, the notices row is
+empty most of the time, a phone has no strip,
 the graph and a canvas have no status bar - the bar counts the words of a note,
 and neither of those has a note for it to count, while a page note keeps its bar
 for the one thing it does have to say, which page of how many is in front; see
