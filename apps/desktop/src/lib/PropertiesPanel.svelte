@@ -120,6 +120,42 @@
     apply(renameProperty(source(), key, field.value))
   }
 
+  /** The keyboard on a row's key once the row has settled: the first of these names the
+   *  note holds, since a name it would not take leaves the old one. */
+  async function standOnKey(...names: string[]) {
+    await tick()
+    for (const name of names) {
+      const key = list?.querySelector<HTMLElement>(`[data-key="${CSS.escape(name)}"] button.key`)
+      if (key) return key.focus()
+    }
+  }
+
+  /** Enter in a name being typed: written, and the keyboard goes back to the key the
+   *  field stood in for rather than with the field. Escape the same, writing nothing. */
+  function renameKey(event: KeyboardEvent & { currentTarget: HTMLInputElement }, key: string) {
+    const typed = event.currentTarget.value.trim()
+    const enter = event.key === 'Enter' && !event.isComposing
+    commitOnEnter(event)
+    if (enter) void standOnKey(typed, key)
+    cancelOnEscape(event, () => {
+      renaming = null
+      void standOnKey(key)
+    })
+  }
+
+  /** A row taken out. From the keyboard, which goes to the row now in its place, the last
+   *  row where it was the last, or the way to add one where it was the only one: the row
+   *  it was on has gone, and the menu it pressed Remove in with it (#523). */
+  async function removeRow(key: string, keyed: boolean) {
+    const at = rows?.findIndex((one) => one.key === key) ?? -1
+    if (!apply(removeProperty(source(), key)) || !keyed) return
+
+    await tick()
+    const next = rows?.[Math.min(at, rows.length - 1)]
+    if (next) void standOnKey(next.key)
+    else list?.querySelector<HTMLElement>('.adder')?.focus()
+  }
+
   /** A new key, written with nothing after it, and the keyboard put in its value. A name
    *  the note already has writes nothing, since writing it would empty that key, and the
    *  keyboard goes to that key's value instead, which is what typing it was after. */
@@ -145,17 +181,21 @@
     cancel()
   }
 
-  function rowMenu(property: Property): MenuEntry[] {
+  /** Whether a key rather than a pointer was last on a row's key, as a menu asked for
+   *  there says where the keyboard goes when it has done. */
+  let keyed = false
+
+  function rowMenu(property: Property, keyed: boolean): MenuEntry[] {
     if (!writable) return []
 
     return [
       { label: t('Rename'), run: () => void startRenaming(property.key) },
-      { label: t('Remove'), run: () => apply(removeProperty(source(), property.key)) },
+      { label: t('Remove'), run: () => void removeRow(property.key, keyed) },
     ]
   }
 
   function showMenu(event: MouseEvent, property: Property) {
-    const items = rowMenu(property)
+    const items = rowMenu(property, keyed)
     if (!items.length) return
     event.preventDefault()
     menu.show(event, items, { title: property.key })
@@ -193,6 +233,7 @@
         <div
           class="prop"
           data-key={property.key}
+          onpointerdowncapture={() => (keyed = false)}
           oncontextmenu={(event) => showMenu(event, property)}
           use:longPress={(event) => showMenu(event, property)}
         >
@@ -203,19 +244,24 @@
               value={property.key}
               aria-label={t('Rename')}
               autofocus
-              onkeydown={(event) => {
-                commitOnEnter(event)
-                cancelOnEscape(event, () => (renaming = null))
-              }}
+              onkeydown={(event) => renameKey(event, property.key)}
               onblur={(event) => finishRenaming(property.key, event.currentTarget)}
             />
-          {:else}
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <span
+          {:else if writable}
+            <!-- A button, so a key can stand on it: Shift+F10 there is the row's menu, which
+                 in the value's field is the field's own, and Enter renames, which a
+                 pointer does with a double click (#523). -->
+            <button
               class="key"
               title={property.key}
-              ondblclick={() => void startRenaming(property.key)}>{property.key}</span
+              onkeydown={() => (keyed = true)}
+              onclick={(event) => {
+                if (event.detail === 0) void startRenaming(property.key)
+              }}
+              ondblclick={() => void startRenaming(property.key)}>{property.key}</button
             >
+          {:else}
+            <span class="key" title={property.key}>{property.key}</span>
           {/if}
 
           <PropertyValue
@@ -292,6 +338,17 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--muted);
+  }
+
+  /* Drawn as the words it is: only a key can tell it from the span of a note that cannot
+     be written. */
+  button.key {
+    min-width: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    text-align: start;
+    cursor: default;
   }
 
   /* A field with no box until a pointer or the keyboard arrives, so the rows go on
