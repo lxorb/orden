@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { favicon, isWebAddress, plainOrigin } from './address'
+import { favicon, isWebAddress, plainOrigin, shownUrl } from './address'
 import { webAddress } from './typed'
 
 describe('what a web tab may open', () => {
@@ -68,4 +68,62 @@ test("a site's own picture is looked for at its root, and an address with no roo
   // What a tab can hold before its page is an address, which once threw in the pane.
   expect(favicon('pass.proton.me/onboarding')).toBeNull()
   expect(favicon('about:blank')).toBeNull()
+})
+
+/** The host as Chrome spells it: a name in one writing system reads as itself, and one that
+ *  could pass for another name stays punycode (#790). */
+describe('a name that is not ASCII', () => {
+  test.each([
+    ['https://xn--mnchen-3ya.de/a', 'münchen.de'],
+    ['https://www.xn--mnchen-3ya.de/', 'münchen.de'],
+    ['https://xn--mnchen-3ya.de:8443/', 'münchen.de:8443'],
+    ['http://xn--mnchen-3ya.de/', 'http://münchen.de'],
+    ['https://xn--wgv71a119e.jp/', '日本語.jp'],
+    ['https://xn--e1afmkfd.xn--p1ai/', 'пример.рф'],
+    ['https://xn--fsqu00a.xn--0zwm56d/', '例子.测试'],
+  ])('%s reads as %s', (url, shown) => {
+    expect(plainOrigin(url)).toBe(shown)
+  })
+
+  test.each([
+    // Latin with Cyrillic, the classic: a Cyrillic a in front of pple.
+    ['https://xn--pple-43d.com/', 'xn--pple-43d.com'],
+    // Cyrillic alone, every letter of it one that looks Latin, under a Latin ending.
+    ['https://xn--80ak6aa92e.com/', 'xn--80ak6aa92e.com'],
+    // Greek with Latin.
+    ['https://xn--pple-zld.com/', 'xn--pple-zld.com'],
+    // A symbol: not a name in any writing system.
+    ['https://xn--n3h.com/', 'xn--n3h.com'],
+  ])('%s stays as it is', (url, shown) => {
+    expect(plainOrigin(url)).toBe(shown)
+  })
+
+  test('judges each label by itself', () => {
+    expect(plainOrigin('https://xn--pple-43d.xn--mnchen-3ya.de/')).toBe('xn--pple-43d.münchen.de')
+  })
+
+  test('Latin beside the writing systems that are written with it', () => {
+    // abcテスト, and 中文abc.
+    expect(plainOrigin('https://xn--abc-7k4bocn.jp/')).toBe('abcテスト.jp')
+    expect(plainOrigin('https://xn--abc-u68do18h.cn/')).toBe('中文abc.cn')
+  })
+
+  test('Cyrillic that looks Latin reads as itself under a Cyrillic ending', () => {
+    expect(plainOrigin('https://xn--80ak6aa92e.xn--p1ai/')).toBe('аррӏе.рф')
+    expect(plainOrigin('https://xn--80ak6aa92e.ru/')).toBe('аррӏе.ru')
+  })
+
+  test('the whole address, for the field', () => {
+    expect(shownUrl('https://xn--mnchen-3ya.de/a?b=c#d')).toBe('https://münchen.de/a?b=c#d')
+    expect(shownUrl('https://example.com/a')).toBe('https://example.com/a')
+    expect(shownUrl('https://xn--pple-43d.com/')).toBe('https://xn--pple-43d.com/')
+    expect(shownUrl('view-source:https://xn--mnchen-3ya.de/')).toBe(
+      'view-source:https://münchen.de/',
+    )
+    expect(shownUrl('not an address')).toBe('not an address')
+    // Who the page is, for an address that spends its front on something else.
+    expect(shownUrl('https://google.com@xn--mnchen-3ya.de/')).toBe(
+      'https://google.com@xn--mnchen-3ya.de/',
+    )
+  })
 })

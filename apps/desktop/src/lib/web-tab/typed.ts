@@ -111,6 +111,12 @@ export interface HalfTyped {
  *  the network what is on this machine. It means `file:`, which a tab does not open. */
 const WINDOWS_PATH = /^(?:[a-z]:[\\/]|\\\\)/i
 
+/** An address with a name that is not ASCII in it, spelled as the page will say it is on,
+ *  so that what is typed and where it landed are one row of history. */
+function asTheEngineSays(address: string): string {
+  return /[^ -~]/.test(address) ? new URL(address).href : address
+}
+
 /** The address something typed is, or null for words and for nothing: what the palette
  *  offers to go to, where a few words are a search for a note rather than for the web. */
 export function typedAddress(typed: string): string | null {
@@ -120,10 +126,10 @@ export function typedAddress(typed: string): string | null {
   const host = said.startsWith('//') ? said.slice(2) : said
   if (said.startsWith('//') || isHost(said)) {
     const guessed = `${schemeFor(host)}://${host}`
-    return isWebAddress(guessed) ? guessed : null
+    return isWebAddress(guessed) ? asTheEngineSays(guessed) : null
   }
 
-  if (SCHEME.test(said)) return isWebAddress(said) ? said : null
+  if (SCHEME.test(said)) return isWebAddress(said) ? asTheEngineSays(said) : null
 
   return null
 }

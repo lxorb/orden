@@ -116,3 +116,12 @@ describe('a Windows path', () => {
     expect(webAddress('nas:5000')).toBe('http://nas:5000')
   })
 })
+
+/** What is typed is kept in history under the address the page then says it is on. */
+describe('a name that is not ASCII', () => {
+  test('is sent to the address the engine will say', () => {
+    expect(webAddress('münchen.de')).toBe('https://xn--mnchen-3ya.de/')
+    expect(webAddress('https://münchen.de/a')).toBe('https://xn--mnchen-3ya.de/a')
+    expect(typedAddress('münchen.de')).toBe('https://xn--mnchen-3ya.de/')
+  })
+})

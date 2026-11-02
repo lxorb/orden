@@ -42,7 +42,7 @@
   import PrivateMark from './PrivateMark.svelte'
   import ExtensionButtons from './ExtensionButtons.svelte'
   import { barKey, stops, type ZoomStep } from './bar-keys'
-  import { isWebAddress } from './address'
+  import { isWebAddress, shownUrl } from './address'
   import { downloads, progressOf } from './downloads.svelte'
   import { addressing } from './passed.svelte'
   import { invoke, isDesktop } from '../tauri'
@@ -140,7 +140,7 @@
    *  where the tab is, as Chrome's does under Always show full URLs, and what a press
    *  adds is only the selection to type over. Orden's own pages read as their address,
    *  as they did, as `chrome://history` does; see own-pages.ts. */
-  const resting = $derived(page.url ?? '')
+  const resting = $derived(shownUrl(page.url ?? ''))
 
   /** Whether this tab had nowhere to go when the bar was built, which is the one thing
    *  `onMount` needs to know and the one moment it cannot ask.
@@ -330,7 +330,7 @@
     bind:this={field}
     {resting}
     {book}
-    address={page.url ?? ''}
+    address={resting}
     held={page}
     onenter={onaddress}
     {ontyping}

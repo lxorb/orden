@@ -18,6 +18,7 @@
  *  Pure, and per keystroke: every row is read once, the parts of an address are worked
  *  out once per row and kept, and the rows are at most `MOST_VISITS`. See visits.ts. */
 
+import { shownHost } from './address'
 import type { Visit } from './visits'
 
 /** How much more an address somebody typed counts than one a link led to. Chrome
@@ -47,6 +48,9 @@ interface Parts {
   host: string
   /** And without the `www.` every browser leaves off: `google.com`. */
   bare: string
+  /** The same two as a name reads, for a name that is not ASCII; see `shownHost` in address.ts. */
+  hostShown: string
+  bareShown: string
   /** Everything after the host: `/search?q=nib`. */
   path: string
   /** What the list searches in: the bare address and the title, lower case. */
@@ -60,11 +64,14 @@ const taken = new WeakMap<Visit, Parts>()
 function split(address: string): Omit<Parts, 'words'> {
   const url = new URL(address)
   const host = url.host.toLowerCase()
+  const hostShown = shownHost(host)
 
   return {
     protocol: url.protocol,
     host,
     bare: host.replace(/^www\./, ''),
+    hostShown,
+    bareShown: hostShown.replace(/^www\./, ''),
     path: `${url.pathname}${url.search}`,
   }
 }
@@ -74,7 +81,11 @@ function partsOf(visit: Visit): Parts {
   if (known) return known
 
   const said = split(visit.url)
-  const parts = { ...said, words: `${said.bare}${said.path} ${visit.title}`.toLowerCase() }
+  const shown = said.bareShown === said.bare ? '' : ` ${said.bareShown}`
+  const parts = {
+    ...said,
+    words: `${said.bare}${said.path}${shown} ${visit.title}`.toLowerCase(),
+  }
 
   taken.set(visit, parts)
   return parts
@@ -85,8 +96,8 @@ function partsOf(visit: Visit): Parts {
  *  front page ends in. `http:` stays in front, because that is the one thing about an
  *  address worth warning somebody about. See `plainOrigin` in address.ts. */
 export function shownAddress(url: string): string {
-  const { protocol, bare, path } = split(url)
-  const shown = `${bare}${path === '/' ? '' : path}`
+  const { protocol, bareShown, path } = split(url)
+  const shown = `${bareShown}${path === '/' ? '' : path}`
 
   return protocol === 'http:' ? `http://${shown}` : shown
 }
@@ -121,7 +132,7 @@ export function completion(list: readonly Visit[], typed: string, now: number): 
   const rest = scheme ? said.slice(scheme[0].length) : said
   if (!rest) return null
 
-  const asked = rest.toLowerCase()
+  const asked = rest.toLowerCase().normalize('NFC')
   const protocol = scheme ? `${(scheme[1] ?? '').toLowerCase()}:` : null
   const pastHost = /[/?#]/.test(rest)
 
@@ -133,9 +144,9 @@ export function completion(list: readonly Visit[], typed: string, now: number): 
     if (protocol !== null && parts.protocol !== protocol) continue
 
     if (pastHost) {
-      const form = [`${parts.bare}${parts.path}`, `${parts.host}${parts.path}`].find((one) =>
-        one.toLowerCase().startsWith(asked),
-      )
+      const form = [parts.bareShown, parts.hostShown, parts.bare, parts.host]
+        .map((one) => `${one}${parts.path}`)
+        .find((one) => one.toLowerCase().startsWith(asked))
       if (form === undefined) continue
 
       const score = frecency(visit, now)
@@ -143,7 +154,9 @@ export function completion(list: readonly Visit[], typed: string, now: number): 
       continue
     }
 
-    const form = [parts.bare, parts.host].find((one) => one.startsWith(asked))
+    const form = [parts.bareShown, parts.hostShown, parts.bare, parts.host].find((one) =>
+      one.startsWith(asked),
+    )
     if (form === undefined) continue
 
     const site = `${parts.protocol}//${parts.host}`
@@ -169,7 +182,8 @@ const HOST_START = 4
  *  word, anywhere, or not at all. A term of one or two letters is found only at the
  *  front of something, because `e` is somewhere in every address there is. */
 function found(parts: Parts, term: string): number {
-  if (parts.bare.startsWith(term) || parts.host.startsWith(term)) return HOST_START
+  const hosts = [parts.bareShown, parts.hostShown, parts.bare, parts.host]
+  if (hosts.some((one) => one.startsWith(term))) return HOST_START
 
   let at = parts.words.indexOf(term)
   let anywhere = false
@@ -196,7 +210,13 @@ export function suggested(
   now: number,
   count = OFFERED,
 ): Visit[] {
-  const terms = typed.trim().replace(SCHEME, '').toLowerCase().split(/\s+/).filter(Boolean)
+  const terms = typed
+    .trim()
+    .replace(SCHEME, '')
+    .toLowerCase()
+    .normalize('NFC')
+    .split(/\s+/)
+    .filter(Boolean)
   if (!terms.length) return []
 
   const scored: { visit: Visit; site: boolean; score: number }[] = []

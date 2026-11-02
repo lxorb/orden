@@ -168,3 +168,29 @@ describe('an address as the list shows it', () => {
     expect(shownAddress('http://localhost:1420/')).toBe('http://localhost:1420')
   })
 })
+
+/** History keeps the address the engine says, which is punycode; the field speaks as the
+ *  reader does (#790). */
+describe('a name that is not ASCII', () => {
+  const munich = visit('https://xn--mnchen-3ya.de/stadt', { title: 'Stadtportal' })
+
+  test('is finished from what is typed, and goes to its real address', () => {
+    expect(completion([munich], 'münch', NOW)).toEqual({
+      text: 'münchen.de',
+      url: 'https://xn--mnchen-3ya.de/',
+    })
+    expect(completion([munich], 'mu\u0308nch', NOW)?.url).toBe('https://xn--mnchen-3ya.de/')
+    expect(completion([munich], 'münchen.de/st', NOW)?.url).toBe(munich.url)
+  })
+
+  test('is found in the list by either spelling', () => {
+    expect(suggested([munich], 'münchen', NOW)).toEqual([munich])
+    expect(suggested([munich], 'xn--mn', NOW)).toEqual([munich])
+    expect(completion([munich], 'xn--mn', NOW)?.text).toBe('xn--mnchen-3ya.de')
+  })
+
+  test('reads as itself in the list', () => {
+    expect(shownAddress(munich.url)).toBe('münchen.de/stadt')
+    expect(shownAddress('https://xn--pple-43d.com/')).toBe('xn--pple-43d.com')
+  })
+})
