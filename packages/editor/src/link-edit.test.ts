@@ -137,7 +137,7 @@ describe('editing a link by a label, in a long note', () => {
       extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
     })
 
-  test('finds a definition the parser had not reached, however late the hour', () => {
+  test('finds a definition the parser had not reached, whatever the clock says', () => {
     let current = unparsed()
     expect(syntaxTree(current).length).toBeLessThan(long.length)
     // Every read of the clock is past any budget, so nothing here depends on a machine.
@@ -155,9 +155,10 @@ describe('editing a link by a label, in a long note', () => {
 
   test('building the menu parses nothing', () => {
     const current = unparsed()
-    const before = syntaxTree(current).length
+    // A parse is the one thing here that reads the clock, to know when to stop.
+    const clock = vi.spyOn(Date, 'now')
     expect(linkPartsAt(current, 1)?.words).toBe('words')
-    expect(syntaxTree(current).length).toBe(before)
+    expect(clock).not.toHaveBeenCalled()
   })
 })
 

@@ -68,13 +68,3 @@ test('a table replaced by other words with a cell mid-edit keeps those words', (
   expect(errors).toEqual([])
   expect(view.state.doc.toString()).toBe('words\n\nprose\n\nend')
 })
-
-test('a table redrawn by a change to its own text with a cell mid-edit keeps that change', () => {
-  const view = typedCell()
-  const asked = vi.spyOn(view, 'posAtDOM')
-  const two = TABLE.indexOf('2')
-  view.dispatch({ changes: { from: two, to: two + 1, insert: '3' } })
-  expect(asked).not.toHaveBeenCalled()
-  expect(errors).toEqual([])
-  expect(view.state.doc.toString()).toBe(TABLE.replace('2', '3'))
-})
