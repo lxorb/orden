@@ -78,6 +78,30 @@ describe("the browser's disk, as the v2 engine sees it", () => {
 })
 
 describe('a move the engine makes', () => {
+  /** A write that has not answered would land at the old path after the move. Rejected
+   *  while the file is where it was, the entry stays and the next pass asks again; see
+   *  `moves` in places.ts. */
+  test('is refused, the file left alone, under a write that has stalled', async () => {
+    notes.set('/s/Stuck.md', '# Stuck\n')
+    const told: string[] = []
+    const telling = {
+      touching: () => undefined,
+      holdingWrites: (_from: string, _run: unknown, stalled: () => Promise<void>) => stalled(),
+      moved: () => {
+        told.push('told')
+        return Promise.resolve()
+      },
+    } as unknown as Parameters<typeof appWorld>[1]
+
+    await expect(
+      appWorld(() => null, telling).disk.move('/s/Stuck.md', '/s/Moved too.md', 'file'),
+    ).rejects.toThrow('/s/Stuck.md')
+
+    expect(notes.has('/s/Stuck.md')).toBe(true)
+    expect(notes.has('/s/Moved too.md')).toBe(false)
+    expect(told).toEqual([])
+  })
+
   test('waits for the writes of what it moves, its telling included', async () => {
     notes.set('/s/Held.md', '# Held\n')
     const order: string[] = []

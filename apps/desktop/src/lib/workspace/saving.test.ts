@@ -61,6 +61,9 @@ type Entry = import('../workspace.svelte').Entry
 
 const SPACE = '/space'
 
+/** For a move of sync's in a test where no write stalls. */
+const notStalled = () => Promise.reject(new Error('stalled'))
+
 /** One row of a listing, as the disk hands it over. */
 function row(path: string): Entry {
   return {
@@ -559,11 +562,15 @@ describe('a note renamed while its write was in the air', () => {
     const renamed = new Promise<void>((go) => {
       moved = () => go()
     })
-    const moving = saving.holdingWrites(`${SPACE}/a.md`, async () => {
-      order.push(`rename after ${String(written().length)} write`)
-      await renamed
-      note.path = `${SPACE}/b.md`
-    })
+    const moving = saving.holdingWrites(
+      `${SPACE}/a.md`,
+      async () => {
+        order.push(`rename after ${String(written().length)} write`)
+        await renamed
+        note.path = `${SPACE}/b.md`
+      },
+      notStalled,
+    )
 
     expect(order).toEqual([])
     letGo()
@@ -594,10 +601,14 @@ describe('a note renamed while its write was in the air', () => {
     const renaming = saving.holding([note], () => pass)
 
     let ran = false
-    await saving.holdingWrites(`${SPACE}/a.md`, () => {
-      ran = true
-      return Promise.resolve()
-    })
+    await saving.holdingWrites(
+      `${SPACE}/a.md`,
+      () => {
+        ran = true
+        return Promise.resolve()
+      },
+      notStalled,
+    )
     expect(ran).toBe(true)
 
     passOver()
@@ -608,7 +619,7 @@ describe('a note renamed while its write was in the air', () => {
    *  more, so the move held nothing and the words landed at the old path, a second file
    *  beside the one that moved. */
   test('by sync takes along a note whose tab closed on the way to its write', async () => {
-    const { saving, note, closed } = open(`${SPACE}/a.md`)
+    const { saving, note, closed, deleted } = open(`${SPACE}/a.md`)
 
     let letGo = () => {
       // Replaced the moment the promise below hands over its resolver.
@@ -621,16 +632,20 @@ describe('a note renamed while its write was in the air', () => {
     closed()
     await vi.waitFor(() => expect(versions()).toHaveLength(1))
 
-    await saving.holdingWrites(`${SPACE}/a.md`, () => {
-      saving.follow({
-        op: 'moved',
-        from: `${SPACE}/a.md`,
-        to: `${SPACE}/b.md`,
-        kind: 'file',
-        root: SPACE,
-      })
-      return Promise.resolve()
-    })
+    await saving.holdingWrites(
+      `${SPACE}/a.md`,
+      () => {
+        saving.follow({
+          op: 'moved',
+          from: `${SPACE}/a.md`,
+          to: `${SPACE}/b.md`,
+          kind: 'file',
+          root: SPACE,
+        })
+        return Promise.resolve()
+      },
+      notStalled,
+    )
 
     letGo()
     holdingVersion = null
@@ -642,6 +657,12 @@ describe('a note renamed while its write was in the air', () => {
     note.replace('# a again')
     await saving.write(note)
     expect(written().map((one) => one.path)).toEqual([`${SPACE}/b.md`, `${SPACE}/b.md`])
+
+    // And the note really deleted after that stays deleted.
+    deleted()
+    note.replace('# a once more')
+    await saving.write(note)
+    expect(written()).toHaveLength(2)
   })
 
   test('here waits for the write of a note whose tab has closed', async () => {
@@ -691,20 +712,36 @@ describe('a note renamed while its write was in the air', () => {
     expect(written()).toHaveLength(1)
 
     let ran = false
-    const moving = saving.holdingWrites(`${SPACE}/a.md`, () => {
+    const run = () => {
       ran = true
       return Promise.resolve()
-    })
+    }
+    let stalled = 0
+    const later = () => {
+      stalled += 1
+      return Promise.resolve()
+    }
 
+    // Put off rather than made: the write would land at the old path after the move,
+    // a second file. Where the note still is, it lands where it belongs.
+    const moving = saving.holdingWrites(`${SPACE}/a.md`, run, later)
     await vi.advanceTimersByTimeAsync(IN_THE_AIR_AT_MOST - 1)
-    expect(ran).toBe(false)
+    expect(stalled).toBe(0)
     await vi.advanceTimersByTimeAsync(1)
-    expect(ran).toBe(true)
     await moving
+    expect(stalled).toBe(1)
+    expect(ran).toBe(false)
+
+    // Not waited for all over again by every pass that asks.
+    await saving.holdingWrites(`${SPACE}/a.md`, run, later)
+    expect(stalled).toBe(2)
 
     letGo()
     holding = null
     await writing
+    await saving.holdingWrites(`${SPACE}/a.md`, run, later)
+    expect(ran).toBe(true)
+    expect(stalled).toBe(2)
     vi.useRealTimers()
   })
 

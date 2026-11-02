@@ -144,6 +144,30 @@ describe('a closed note whose write is refused', () => {
   })
 })
 
+describe('a closed note opened and written in while its write is refused', () => {
+  test('takes back the agent’s words, not the ones beside them', async () => {
+    const { desk, open, disk } = deskWith({ 'a.md': 'one two' })
+    const agent = anAgent()
+    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'two' }, replace: 'TWO' }])
+
+    const replace = desk.replaceInNotes.bind(desk)
+    let pane: ReturnType<typeof open> | null = null
+    desk.replaceInNotes = () => {
+      desk.replaceInNotes = replace
+      pane = open('a.md')
+      const note = desk.documentAt('/space/a.md')
+      if (note) tracksOf(agent.id).get('/space/a.md')?.follow(note)
+      pane.type(0, 'zero ')
+      return Promise.resolve(0)
+    }
+    expect(await undoAgent(desk, agent, { path: 'a.md' })).toEqual({ undone: 0 })
+
+    expect(await undoAgent(desk, agent, { path: 'a.md' })).toEqual({ undone: 1 })
+    expect(disk.size).toBe(1)
+    expect((pane as unknown as { text: string }).text).toBe('zero one two')
+  })
+})
+
 describe('where an agent’s edits are', () => {
   test('is carried through the reader’s typing, and forgotten once taken back', async () => {
     const { desk, panes } = deskWith({ 'a.md': 'one two' }, ['a.md'])

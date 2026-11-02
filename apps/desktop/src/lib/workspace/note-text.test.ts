@@ -703,14 +703,19 @@ describe('a closed note written to after the change was worked out', () => {
       expect(disk.get(NOTE)).toBe('# Title\none\r\nthe plan #two words#\r\nthree\n')
     })
 
-    /** A first line ending `\r\n` has the disk turn every other line to it, and nothing
-     *  said here can stop that; see `as_written`. So the note is left as it is. */
-    test('refuses a mixed file the disk would rewrite', async () => {
-      const mixed = 'one\r\nthe plan #two words#\nthree\r\n'
-      const { ws } = space({ [NOTE]: mixed })
+    /** A first line ending `\r\n` has the disk turn every other line to it, as a save
+     *  from a tab does; see `as_written`. Sent as it stands, and not refused: nobody can
+     *  see why a note would take no edit. */
+    test('writes a mixed file the disk then rewrites, as a save would', async () => {
+      const { ws } = space({ [NOTE]: 'one\r\nthe plan #two words#\nthree\r\n' })
 
-      expect(await replaceInNotes(ws, [lf])).toBe(0)
-      expect(disk.get(NOTE)).toBe(mixed)
+      expect(await replaceInNotes(ws, [lf])).toBe(1)
+      expect(disk.get(NOTE)).toBe('one\r\nthe plan #two-words\nthree\r\n')
+
+      // What the disk made of it, and a word since, put back the same way.
+      disk.set(NOTE, 'Re: one\r\nthe plan #two-words\r\nthree\r\n')
+      await undoLastFileAction(ws as unknown as PutsBack)
+      expect(disk.get(NOTE)).toBe('Re: one\r\nthe plan #two words#\r\nthree\r\n')
     })
   })
 
