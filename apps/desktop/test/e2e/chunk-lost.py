@@ -58,12 +58,19 @@ PALETTE_OPEN = "() => !!document.querySelector('.palette[role=dialog]')"
 MARK = "() => { window.__beforeReload = true }"
 SAME_PAGE = "() => window.__beforeReload === true"
 
+#: Whether this page came from the index a deploy changed; see `newer_build`.
+RELOADED = "() => document.querySelector('script[type=module][src]')?.getAttribute('src').includes('deploy=2')"
+
 
 def lose_the_palette(page: Page) -> dict[str, int]:
     """Refuses the palette's chunk for as long as the drive says, and counts asks."""
-    asked = {"palette": 0}
+    asked = {"palette": 0, "deployed": 0}
 
     def refuse(route: Route) -> None:
+        # The deploy is the one that has the chunk: a page reloaded for it is not refused.
+        if asked["deployed"]:
+            route.continue_()
+            return
         asked["palette"] += 1
         route.abort("connectionreset")
 
@@ -128,17 +135,19 @@ def newer_build(browser: Browser) -> None:
         response = route.fetch()
         body = response.text()
         if served["root"] > 1:
+            asked["deployed"] = 1
             body = ENTRY.sub(r'\1?deploy=2"', body, count=1)
         route.fulfill(response=response, body=body)
 
     page.route(re.compile(r"^[^?#]+://[^/]+/(\?.*)?$"), deployed)
     DRIVE.open(page)
-    page.evaluate(MARK)
     say(f"    the palette's chunk was asked for {asked['palette']} time(s) and refused")
 
-    # The site is asked as the chunk fails; the hands are off, so the page goes.
+    # The site is asked as the chunk fails; the hands are off, so the page goes. By the
+    # entry it names, which is what a deploy changes: a mark made on the page here missed
+    # it where the page had gone already, 3 s of no hands after the chunk failed.
     page.unroute(PALETTE)
-    if not DRIVE.waited(page, f"() => !({SAME_PAGE})()", "the page to reload by itself", patience=30):
+    if not DRIVE.waited(page, RELOADED, "the page to reload by itself", patience=30):
         shot(page, "newer-build-stuck")
         return
     DRIVE.ready(page)
