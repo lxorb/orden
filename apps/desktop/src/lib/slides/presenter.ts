@@ -118,8 +118,8 @@ export function presenterChannel(heard: (message: Message) => void): Channel {
   }
 }
 
-/** How big the presenter's window opens. Wide enough for the slide, the one
- *  after it and the notes beside them. */
+/** How big the presenter's window opens in a browser: wide enough for the slide, the
+ *  one after it and the notes beside them. The app's is src-tauri/src/presenter.rs. */
 const WIDTH = 1100
 const HEIGHT = 680
 
@@ -164,21 +164,15 @@ export async function openPresenter(): Promise<boolean> {
     // The screen the deck is not on, so the notes are not projected.
     const other = screens.find((screen) => screen.name !== here?.name) ?? here
 
-    const window = new WebviewWindow(LABEL, {
-      url: 'presenter.html',
-      title: 'Orden',
-      width: WIDTH,
-      height: HEIGHT,
-      ...(other ? { x: other.position.x + 40, y: other.position.y + 40 } : {}),
+    // Built by the crate: where it is built decides what it can hear, and what can see it.
+    await invoke('presenter_open', {
+      x: other ? other.position.x + 40 : null,
+      y: other ? other.position.y + 40 : null,
     })
-
-    return await new Promise<boolean>((settle) => {
-      void window.once('tauri://created', () => settle(true))
-      void window.once('tauri://error', () => settle(false))
-    })
+    return true
   } catch {
-    // The packaged app may not be allowed to open a window; presenting goes on
-    // without one, and the notes are a sheet.
+    // A window that could not be opened: presenting goes on without one, and the notes
+    // are a sheet.
     return false
   }
 }

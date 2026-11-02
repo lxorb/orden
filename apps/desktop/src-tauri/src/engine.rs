@@ -502,8 +502,15 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     }
 }
 
-/// A window of the app's own that no page of it runs in, such as the hidden one a PDF is
-/// printed from: only the interface's profile and Alloy style of what `own_window` gives.
+/// A window of the app's own that is not a document window: the hidden one a PDF is printed
+/// from, the quick add field and the presenter's. Only the interface's profile and Alloy
+/// style of what `own_window` gives, whose scripts speak for a page that holds a document.
+///
+/// Every page of the app is in this profile, whatever else it is. It holds the app's commands
+/// and the key to them at `http://tauri.localhost`, which `<all_urls>` matches, so in the
+/// profile a web extension runs in that extension's script could read and write notes. A test
+/// below reads this off the source, and no page may build a window at all: a window the
+/// plugin builds is built past this (test/permissions.test.ts).
 #[cfg(feature = "cef")]
 pub(crate) fn own_profile<M: tauri::Manager<crate::Engine>>(
     building: tauri::WebviewWindowBuilder<'_, crate::Engine, M>,
@@ -552,7 +559,10 @@ mod tests {
         let mut sources = vec![root.clone()];
         let mut past = Vec::new();
         while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at).expect("the crate's source").flatten() {
+            for entry in std::fs::read_dir(&at)
+                .expect("the crate's source")
+                .flatten()
+            {
                 let path = entry.path();
                 if path.is_dir() {
                     sources.push(path);
@@ -560,14 +570,19 @@ mod tests {
                 }
                 let text = std::fs::read_to_string(&path).unwrap_or_default();
                 let text = text.split("#[cfg(test)]").next().unwrap_or_default();
-                let of_the_app = text.contains("WebviewUrl::App(") || text.contains("WebviewUrl::default()");
-                let in_it = text.contains("engine::own_window(") || text.contains("engine::own_profile(");
+                let of_the_app =
+                    text.contains("WebviewUrl::App(") || text.contains("WebviewUrl::default()");
+                let in_it =
+                    text.contains("engine::own_window(") || text.contains("engine::own_profile(");
                 if of_the_app && !in_it {
                     past.push(path.display().to_string());
                 }
             }
         }
-        assert!(past.is_empty(), "an app page outside the interface's profile: {past:?}");
+        assert!(
+            past.is_empty(),
+            "an app page outside the interface's profile: {past:?}"
+        );
     }
 
     #[test]

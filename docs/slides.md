@@ -121,7 +121,9 @@ anywhere else, including in a browser, where it is a window of its own.
 
 It is a page of its own (`presenter.html`) rather than the app again, so it holds
 no workspace, no sync and no editor. The two windows talk over a broadcast
-channel; see `apps/desktop/src/lib/slides/presenter.ts`.
+channel; see `apps/desktop/src/lib/slides/presenter.ts`. The crate builds the window
+(`apps/desktop/src-tauri/src/presenter.rs`), because a broadcast channel reaches only
+its own Chromium profile and only the crate can ask for one.
 
 ## Writing a deck
 

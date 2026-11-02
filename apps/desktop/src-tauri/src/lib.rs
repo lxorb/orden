@@ -157,6 +157,9 @@ mod pdf;
 mod placement;
 #[cfg(desktop)]
 mod presence;
+// The presenter's window; see presenter.rs.
+#[cfg(desktop)]
+mod presenter;
 mod query;
 // Quick add from any app: its key and its window; see quick_add.rs.
 #[cfg(desktop)]
@@ -436,6 +439,7 @@ macro_rules! desktop_commands {
             hotkeys::global_keys_change,
             quick_add::quick_add_hide,
             quick_add::quick_add_tall,
+            presenter::presenter_open,
             agents::shell::tray_keep,
             reminders::reminders_set,
             reminders::reminders_taken,
@@ -669,7 +673,8 @@ pub fn cef_helper() -> bool {
     if !std::env::args_os().any(|arg| arg.as_encoded_bytes().starts_with(b"--type=")) {
         return false;
     }
-    tauri_runtime_cef::run_cef_helper_process();
+    // Not the runtime's own helper, whose renderers write `window.ipc` into every page.
+    engine::renderer::run();
     true
 }
 

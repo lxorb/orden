@@ -137,6 +137,12 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
         .min_inner_size(WIDTH, HEIGHT)
         .max_inner_size(WIDTH, HEIGHT);
 
+    // In the interface's profile on CEF: a broadcast channel reaches only its own profile,
+    // so anywhere else nobody hears the task; and this page holds the app's commands, which
+    // the profile the web's extensions run in must not see. See `engine::own_profile`.
+    #[cfg(feature = "cef")]
+    let builder = crate::engine::own_profile(builder);
+
     // Off the screen with every other window where a drive sent them there.
     crate::placement::built(builder)
 }
