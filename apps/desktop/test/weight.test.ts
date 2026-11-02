@@ -960,8 +960,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-01, to 3,431,700, for the fourth bug burn-down's fixes merged into
  *  unstable at 9163eeb16: unstable's raises were measured without them. Measured
- *  3,430,841. */
-const BUDGET = 3_431_700
+ *  3,430,841.
+ *
+ *  Raised 2026-11-02, to 3,433,600, for #483: on Windows every window writes what it owes
+ *  before the installer ends the app, and closing one window leaves the install to the
+ *  last (`installStaged`, `handOn`, `settledForInstaller` in updater.ts). Measured
+ *  3,433,239, from about 3,431,283 at 971ae9834. */
+const BUDGET = 3_433_600
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

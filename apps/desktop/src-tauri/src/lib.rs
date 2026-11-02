@@ -504,6 +504,7 @@ macro_rules! desktop_commands {
             lifecycle::quit_confirmed,
             lifecycle::quit_others,
             lifecycle::quit_show,
+            lifecycle::update_install_failed,
             lifecycle::update_may_install,
             lifecycle::update_settled,
             document_window::show_document,

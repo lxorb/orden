@@ -13,6 +13,7 @@ const world = vi.hoisted(() => ({
   asked: [] as string[],
   installs: 0,
   mayInstall: true,
+  installFails: false,
   askedToInstall: [] as unknown[],
 }))
 
@@ -54,7 +55,7 @@ vi.mock('@tauri-apps/plugin-updater', () => ({
     }
     install() {
       world.installs++
-      return Promise.resolve()
+      return world.installFails ? Promise.reject(new Error('refused')) : Promise.resolve()
     }
   },
 }))
@@ -69,6 +70,7 @@ beforeEach(async () => {
   world.asked = []
   world.installs = 0
   world.mayInstall = true
+  world.installFails = false
   world.askedToInstall = []
   vi.resetModules()
   updater = await import('./updater')
@@ -124,6 +126,27 @@ describe('the installer on the way out', () => {
     expect(await updater.installStaged(true)).toBe(false)
     expect(world.installs).toBe(0)
     expect(world.askedToInstall).toEqual([{ closing: true }])
+  })
+
+  test('a window told no tells the others to look', async () => {
+    await updater.stageUpdate('stable')
+    world.mayInstall = false
+    let stop: () => void = () => undefined
+    const heard = new Promise<void>((resolve) => {
+      stop = updater.hearHandedOn(resolve)
+    })
+
+    await updater.installStaged(true)
+    await heard
+    stop()
+  })
+
+  test('an installer that did not start lets another window try', async () => {
+    await updater.stageUpdate('stable')
+    world.installFails = true
+
+    expect(await updater.installStaged()).toBe(false)
+    expect(world.asked).toContain('update_install_failed')
   })
 
   test('a window told yes runs it, once', async () => {
