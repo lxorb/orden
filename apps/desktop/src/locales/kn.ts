@@ -2692,4 +2692,6 @@ export const kn: Dictionary = {
   'Move the chat': 'ಚಾಟ್ ಸರಿಸಿ',
   'Only the file': 'ಫೈಲ್ ಮಾತ್ರ',
   'Trust this space again': 'ಈ ಸ್ಪೇಸ್ ಅನ್ನು ಮತ್ತೆ ನಂಬಿ',
+  'Agent instructions': 'ಏಜೆಂಟ್ ಸೂಚನೆಗಳು',
+  "AGENTS is this space's agent instructions": 'AGENTS ಈ ಸ್ಪೇಸ್‌ನ ಏಜೆಂಟ್ ಸೂಚನೆಗಳು',
 }

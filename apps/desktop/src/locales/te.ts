@@ -2676,4 +2676,6 @@ export const te: Dictionary = {
   'Move the chat': 'చాట్‌ను తరలించు',
   'Only the file': 'ఫైల్ మాత్రమే',
   'Trust this space again': 'ఈ స్పేస్‌ను మళ్లీ నమ్మండి',
+  'Agent instructions': 'ఏజెంట్ సూచనలు',
+  "AGENTS is this space's agent instructions": 'AGENTS ఈ స్పేస్ యొక్క ఏజెంట్ సూచనలు',
 }

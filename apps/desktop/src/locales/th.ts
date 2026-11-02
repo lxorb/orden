@@ -2606,4 +2606,6 @@ export const th: Dictionary = {
   'Move the chat': 'ย้ายแชต',
   'Only the file': 'เฉพาะไฟล์',
   'Trust this space again': 'เชื่อถือพื้นที่นี้อีกครั้ง',
+  'Agent instructions': 'คำสั่งสำหรับเอเจนต์',
+  "AGENTS is this space's agent instructions": 'AGENTS คือคำสั่งสำหรับเอเจนต์ของพื้นที่นี้',
 }

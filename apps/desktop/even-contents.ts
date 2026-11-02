@@ -245,6 +245,10 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-02, to 5,740,000, for #680: the interface's zoom in
  *  modes.svelte.ts. Measured 5,739,049.
  *
+ *  The code raised on 2026-11-02, to 5,748,000, for the space's AGENTS.md shown as a
+ *  field: the name refused on the glasses' own file list too, and the file left off it.
+ *  Measured 5,747,277.
+ *
  *  The code raised on 2026-11-02, to 5,759,000, for the open bug round's branches merged
  *  together on claude/bugs-2026-11: each raise above was measured without the others.
  *  Measured 5,758,444.

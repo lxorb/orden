@@ -2583,4 +2583,6 @@ export const zhHantHK: Dictionary = {
   'Move the chat': '移動對話',
   'Only the file': '只移檔案',
   'Trust this space again': '再次信任此空間',
+  'Agent instructions': '代理指示',
+  "AGENTS is this space's agent instructions": 'AGENTS 是此空間的代理指示',
 }

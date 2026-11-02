@@ -2699,4 +2699,6 @@ export const ml: Dictionary = {
   'Move the chat': 'ചാറ്റ് നീക്കുക',
   'Only the file': 'ഫയൽ മാത്രം',
   'Trust this space again': 'ഈ സ്പേസിനെ വീണ്ടും വിശ്വസിക്കുക',
+  'Agent instructions': 'ഏജന്റ് നിർദ്ദേശങ്ങൾ',
+  "AGENTS is this space's agent instructions": 'AGENTS ഈ സ്പേസിന്റെ ഏജന്റ് നിർദ്ദേശങ്ങളാണ്',
 }

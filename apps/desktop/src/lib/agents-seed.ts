@@ -10,11 +10,12 @@
  *  Made with the space from the switcher and a fresh start, not with an import,
  *  which brings what the folder had. */
 
+import { AGENTS_NAME } from './note-name'
 import { joinPath } from './tauri'
 import { writeFile } from './workspace/write-file'
 import { workspace } from './workspace.svelte'
 
-export const AGENTS_NAME = 'AGENTS.md'
+export { AGENTS_NAME }
 
 export const AGENTS_SEED = `# AGENTS
 

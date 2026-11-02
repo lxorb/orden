@@ -2719,4 +2719,7 @@ export const de: Dictionary = {
   'Move the chat': 'Chat verschieben',
   'Only the file': 'Nur die Datei',
   'Trust this space again': 'Diesem Bereich wieder vertrauen',
+  'Agent instructions': 'Anweisungen für Agenten',
+  "AGENTS is this space's agent instructions":
+    'AGENTS sind die Agenten-Anweisungen dieses Bereichs',
 }

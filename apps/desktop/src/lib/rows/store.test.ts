@@ -401,3 +401,22 @@ describe('the rows of every space', () => {
     expect(tasks(store.of())).toEqual(['Work:Plan.md:Saved since'])
   })
 })
+
+describe('a space’s AGENTS.md, which its settings edit', () => {
+  test('makes no row, and one in a folder makes its rows', async () => {
+    const { store, answer, settled } = rig({
+      [`${WORK}/AGENTS.md`]: '- [ ] Top\n',
+      [`${WORK}/sub/AGENTS.md`]: '- [ ] Nested\n',
+    })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+
+    const said = [...new Set(store.of('Work').map((row) => row.file.path))]
+    expect(said).toEqual(['sub/AGENTS.md'])
+
+    store.saved(`${WORK}/AGENTS.md`, '- [ ] Again\n')
+    expect([...new Set(store.of('Work').map((row) => row.file.path))]).toEqual(['sub/AGENTS.md'])
+  })
+})

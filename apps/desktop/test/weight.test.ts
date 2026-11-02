@@ -988,6 +988,10 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-02, to 3,433,500, for #680: the interface's zoom in Settings, and the row
  *  taking a drag on `dragenter` (#427). Measured 3,432,626.
  *
+ *  Raised 2026-11-02, to 3,440,900, for the space's AGENTS.md shown as a field: the rule
+ *  for the name (`isAgentsName`), the hint on a row's name field (NameField.svelte), and
+ *  the file left out of what the store lists. Measured 3,440,160.
+ *
  *  Raised 2026-11-02, to 3,459,100, for the open bug round's branches merged together on
  *  claude/bugs-2026-11: each raise above was measured without the others. Measured
  *  3,458,532. */

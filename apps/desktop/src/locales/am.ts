@@ -2616,4 +2616,6 @@ export const am: Dictionary = {
   'Move the chat': 'ውይይቱን አንቀሳቅስ',
   'Only the file': 'ፋይሉን ብቻ',
   'Trust this space again': 'ይህን ቦታ እንደገና እመን',
+  'Agent instructions': 'የኤጀንት መመሪያዎች',
+  "AGENTS is this space's agent instructions": 'AGENTS የዚህ ቦታ የኤጀንት መመሪያዎች ነው',
 }

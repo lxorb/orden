@@ -2658,4 +2658,6 @@ export const bn: Dictionary = {
   'Move the chat': 'চ্যাট সরান',
   'Only the file': 'শুধু ফাইল',
   'Trust this space again': 'এই স্পেসে আবার ভরসা করুন',
+  'Agent instructions': 'এজেন্টের নির্দেশনা',
+  "AGENTS is this space's agent instructions": 'AGENTS হলো এই স্পেসের এজেন্ট নির্দেশনা',
 }

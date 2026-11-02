@@ -2677,4 +2677,6 @@ export const tr: Dictionary = {
   'Move the chat': 'Sohbeti taşı',
   'Only the file': 'Yalnızca dosya',
   'Trust this space again': 'Bu alana yeniden güven',
+  'Agent instructions': 'Ajan talimatları',
+  "AGENTS is this space's agent instructions": 'AGENTS bu alanın ajan talimatlarıdır',
 }

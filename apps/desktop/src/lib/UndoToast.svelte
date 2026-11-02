@@ -6,6 +6,7 @@
   import { focusEditor } from './focus'
   import { dur } from './motion'
   import { said as spoken } from './said.svelte'
+  import { reservedName } from './reserved-name.svelte'
   import { back } from './sync2/resurrected.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
@@ -49,6 +50,9 @@
   })
   $effect(() => {
     if (failed.retry) spoken.say(`${t('Not moved')}. ${t('Retry')}`)
+  })
+  $effect(() => {
+    if (reservedName.root) spoken.say(t("AGENTS is this space's agent instructions"))
   })
   $effect(() => {
     if (unread.shown) spoken.say(t('That file could not be read'))
@@ -108,6 +112,7 @@
   // Gone with the component, and the timers with it.
   $effect(() => () => {
     undoToast.dismiss()
+    reservedName.dismiss()
     unread.dismiss()
     failed.dismiss()
     back.dismiss()
@@ -118,7 +123,20 @@
 <!-- One word for what happened and one for the way back: the row it was about has
      already gone or moved, which says the rest. A failed carry comes first: whichever of
      the two came last dismissed the other, so this only decides a tie. -->
-{#if failed.retry}
+{#if reservedName.root}
+  <!-- A note called AGENTS refused where there is no field to say so in: the palette's
+       way round it aside, a link, a drop, the name a save was given. Gmail's snackbar,
+       one line and the way there. See reserved-name.svelte.ts. -->
+  <div
+    class="toast"
+    data-region="notices"
+    use:handsBack
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+  >
+    <p>{t("AGENTS is this space's agent instructions")}</p>
+    <button class="undo" onclick={() => reservedName.open()}>{t('Open')}</button>
+  </div>
+{:else if failed.retry}
   <!-- A card carried to a column whose note would not be written: it went back. -->
   <div
     class="toast"

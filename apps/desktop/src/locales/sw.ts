@@ -2701,4 +2701,6 @@ export const sw: Dictionary = {
   'Move the chat': 'Hamisha gumzo',
   'Only the file': 'Faili pekee',
   'Trust this space again': 'Amini nafasi hii tena',
+  'Agent instructions': 'Maagizo ya mawakala',
+  "AGENTS is this space's agent instructions": 'AGENTS ni maagizo ya mawakala ya nafasi hii',
 }

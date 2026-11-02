@@ -12,6 +12,7 @@ import {
   share,
   trustAgain,
 } from './sharing.svelte'
+import { settings } from './settings.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
 /** Putting a space away, fetched with the press; see space-archive.ts. */
@@ -124,6 +125,10 @@ export function spaceMenu(space: Space): MenuEntry[] {
   return trim([
     ...(theirs ? [] : [{ label: t('Rename'), run: () => void renameSpace(space) }]),
     { label: t('Choose an icon'), run: () => iconChoice.space(space.id) },
+    // What is the space's own, like its agent instructions; see settings/SpacePane.svelte.
+    ...(__EVEN_PLUGIN__
+      ? []
+      : [{ label: t('Settings'), run: () => settings.show('space', space.root) }]),
     ...(canShare(space) ? [{ label: t('Share'), run: () => void shareSpace(space) }] : []),
     // Beside it, because it is the same question about the same folder: who
     // else may read this.

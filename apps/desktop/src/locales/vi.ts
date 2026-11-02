@@ -2633,4 +2633,6 @@ export const vi: Dictionary = {
   'Move the chat': 'Chuyển cuộc trò chuyện',
   'Only the file': 'Chỉ tệp',
   'Trust this space again': 'Tin cậy lại không gian này',
+  'Agent instructions': 'Hướng dẫn cho tác tử',
+  "AGENTS is this space's agent instructions": 'AGENTS là hướng dẫn cho tác tử của không gian này',
 }

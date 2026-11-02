@@ -2648,4 +2648,6 @@ export const gu: Dictionary = {
   'Move the chat': 'ચેટ ખસેડો',
   'Only the file': 'ફક્ત ફાઇલ',
   'Trust this space again': 'આ સ્પેસ પર ફરી વિશ્વાસ કરો',
+  'Agent instructions': 'એજન્ટ સૂચનાઓ',
+  "AGENTS is this space's agent instructions": 'AGENTS આ સ્પેસની એજન્ટ સૂચનાઓ છે',
 }

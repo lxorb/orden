@@ -1290,6 +1290,7 @@
         extension={named.making === 'database' ? '' : extensionOf(entry.name, entry.is_dir)}
         current={named.making ? undefined : entry.name}
         taken={workspace.namesBeside(entry.path)}
+        space={workspace.activeSpace?.root}
         appending={named.appending}
         bind:wrong
         oncommit={(typed: string) => commit(entry, own, typed)}

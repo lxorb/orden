@@ -134,7 +134,9 @@
   // The theme store is a sheet over this one, so closing this one closes it too:
   // it would otherwise be waiting there the next time the settings opened.
   $effect(() => {
-    if (!settings.open) store.close()
+    if (settings.open) return
+    store.close()
+    settings.landsOnField = false
   })
 
   // And a half-done deletion goes with the pane it was started in: coming back to
@@ -1174,6 +1176,11 @@
   {:else if !__EVEN_PLUGIN__ && settings.section === 'remote'}
     <!-- Fetched as it is opened, as Agents is; see remote/RemotePane.svelte. -->
     {#await import('./remote/RemotePane.svelte') then pane}
+      <pane.default />
+    {/await}
+  {:else if !__EVEN_PLUGIN__ && settings.section === 'space'}
+    <!-- Fetched as it is opened, as Agents is; see settings/SpacePane.svelte. -->
+    {#await import('./settings/SpacePane.svelte') then pane}
       <pane.default />
     {/await}
   {:else if settings.section === 'trash'}

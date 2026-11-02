@@ -14,7 +14,7 @@
 
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import type { AgentAnswer } from '../../automation/caller'
-import { movedIn, movedPath } from '../../automation/acts'
+import { movedIn, movedPath, ONTO_INSTRUCTIONS, ontoInstructions } from '../../automation/acts'
 import { isMarkdownPath, notePath, relativeTo } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { entryAt } from '../../tree-edits'
@@ -140,6 +140,10 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   }
   if (await entryIn(place, to)) {
     throw new Refused('exists', `${to} is already there, and nothing is written over`)
+  }
+
+  if (ontoInstructions(place.space.root, from, to)) {
+    throw new Refused('bad_arguments', `${to} is this space's instructions: ${ONTO_INSTRUCTIONS}`)
   }
 
   const source = onDisk(place, from)

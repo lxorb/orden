@@ -2708,4 +2708,7 @@ export const ta: Dictionary = {
   'Move the chat': 'அரட்டையை நகர்த்து',
   'Only the file': 'கோப்பு மட்டும்',
   'Trust this space again': 'இந்த இடத்தை மீண்டும் நம்பு',
+  'Agent instructions': 'ஏஜென்ட் அறிவுறுத்தல்கள்',
+  "AGENTS is this space's agent instructions":
+    'AGENTS என்பது இந்த இடத்தின் ஏஜென்ட் அறிவுறுத்தல்கள்',
 }

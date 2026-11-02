@@ -2645,4 +2645,6 @@ export const jv: Dictionary = {
   'Move the chat': 'Pindhah obrolan',
   'Only the file': 'Mung berkase',
   'Trust this space again': 'Pitados papan iki maneh',
+  'Agent instructions': 'Instruksi agen',
+  "AGENTS is this space's agent instructions": 'AGENTS yaiku instruksi agen kanggo papan iki',
 }
