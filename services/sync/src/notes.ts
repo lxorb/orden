@@ -579,6 +579,11 @@ async function reachedNote(
   // neither is words to read, write or delete here.
   if (!note || HIDDEN_FROM_V1.has(note.kind ?? 'note')) return null
 
+  // Nor is a note purged from Recently deleted, whose row stays only to retire its id:
+  // writing to it would bring back what the purge took away (`reachedNotes` in
+  // sync2/docs.ts).
+  if (note.deleted && note.deleted_at === null) return null
+
   const space = await reachedSpace(env, who, note.space_id)
   if (space) return { note, space, only: false }
   if (note.deleted) return null
