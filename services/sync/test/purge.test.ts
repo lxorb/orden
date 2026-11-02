@@ -225,6 +225,41 @@ describe('a note purged from Recently deleted', () => {
   })
 })
 
+/** An id a purge retired is nothing a v1 write comes back through: on sync v2 a room could
+ *  not settle what the tree hides, for ever, and on v1 the tombstone came back alive. */
+describe('a write to a note purged since it was read', () => {
+  test.each([
+    ['on sync v1', false],
+    ['on sync v2', true],
+  ])('is answered as a note that is not there, %s', async (_, v2) => {
+    const id = (
+      await call(env, `/v1/spaces/${space}/notes`, {
+        token,
+        body: { path: 'Gone.md', content: 'secret words' },
+      })
+    ).json.note.id
+    if (v2) await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+    const { version } = env.db.prepare('select version from notes where id = ?').get(id) as {
+      version: number
+    }
+
+    const put = await call(env, `/v1/notes/${id}`, {
+      token,
+      method: 'PUT',
+      body: { content: 'edited offline', baseVersion: version },
+    })
+
+    expect(put.status).toBe(404)
+    expect(env.db.prepare('select deleted, deleted_at from notes where id = ?').get(id)).toEqual({
+      deleted: 1,
+      deleted_at: null,
+    })
+    expect((await call(env, `/v1/notes/${id}`, { token })).status).toBe(404)
+  })
+})
+
 /** A purge and a restore of one note are two requests, and each reads the row before it
  *  writes it. Whichever way round they land the note is either whole or gone: never a
  *  live note with nothing in it (#473). */
