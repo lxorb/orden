@@ -474,6 +474,7 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
         // took is back before anything reads it; see kept.rs.
         .initialization_script(crate::kept::kept_script())
         .initialization_script(crate::window_drag::SCRIPT)
+        .initialization_script(crate::page_drag::SCRIPT)
         .initialization_script(crate::gpu::SCRIPT)
         .initialization_script(crate::page_scale::SCRIPT)
         .initialization_script(crate::keyboard::PRESS_SCRIPT)
