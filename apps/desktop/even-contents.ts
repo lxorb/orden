@@ -245,12 +245,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-02, to 5,740,000, for #680: the interface's zoom in
  *  modes.svelte.ts. Measured 5,739,049.
  *
- *  The code raised on 2026-11-02, to 5,758,000, for the open bug round's branches merged
+ *  The code raised on 2026-11-02, to 5,759,000, for the open bug round's branches merged
  *  together on claude/bugs-2026-11: each raise above was measured without the others.
- *  Measured 5,757,454.
+ *  Measured 5,758,444.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_758_000,
+  code: 5_759_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

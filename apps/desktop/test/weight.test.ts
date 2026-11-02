@@ -988,10 +988,10 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-02, to 3,433,500, for #680: the interface's zoom in Settings, and the row
  *  taking a drag on `dragenter` (#427). Measured 3,432,626.
  *
- *  Raised 2026-11-02, to 3,457,700, for the open bug round's branches merged together on
+ *  Raised 2026-11-02, to 3,459,100, for the open bug round's branches merged together on
  *  claude/bugs-2026-11: each raise above was measured without the others. Measured
- *  3,457,189. */
-const BUDGET = 3_457_700
+ *  3,458,532. */
+const BUDGET = 3_459_100
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
