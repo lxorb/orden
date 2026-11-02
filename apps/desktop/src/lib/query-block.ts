@@ -19,7 +19,7 @@
  *  the surface that asked draws the answer. */
 
 import { escapeAll } from '@orden/markdown/html'
-import { AGENTS_NAME, shownName } from './note-name'
+import { shownName } from './note-name'
 import type { Hit } from './search/match'
 import { taskOf } from './search/task'
 import { parseQuery } from './search/query'
@@ -116,7 +116,7 @@ export async function queryRowsHtml(
   const hits: Hit[] = []
   await searchSpace(root, query, [], MOST, (batch) => hits.push(...batch.hits), [
     ...workspace.leftOutOf(root),
-    AGENTS_NAME,
+    workspace.instructionsName(root),
   ]).catch(() => undefined)
 
   if (!hits.length)

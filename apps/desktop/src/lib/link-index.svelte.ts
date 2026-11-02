@@ -356,6 +356,11 @@ class Links {
    *  kept until another space opens, and a note saved there is read again into it. */
   private others = new Map<string, OtherSpace | 'reading'>()
 
+  /** Whether a path of this space is the file at its top that its settings edit. */
+  private isInstructions(relative: string): boolean {
+    return samePath(relative, AGENTS_NAME, this.root ?? undefined)
+  }
+
   private get archived(): ReadonlySet<string> {
     return this.root === null ? NOTHING : this.archivedIn(this.root)
   }
@@ -374,7 +379,7 @@ class Links {
       aliases: note.aliases,
       // The space's AGENTS.md is its setting: a link still resolves and opens it, and
       // `[[` offers it no more than it offers an archived note.
-      ...(coveredBy(archived, note.path) === null && note.path !== AGENTS_NAME
+      ...(coveredBy(archived, note.path) === null && !this.isInstructions(note.path)
         ? {}
         : { archived: true }),
     }))
@@ -410,7 +415,7 @@ class Links {
 
     for (const note of this.notes) {
       // An archived note's tags are not the space's, as the search behind a row says.
-      if (coveredBy(archived, note.path) !== null || note.path === AGENTS_NAME) continue
+      if (coveredBy(archived, note.path) !== null || this.isInstructions(note.path)) continue
 
       // One note is one count per name, whatever it wrote twice and whatever two
       // of its tags share a level. A list rather than a set: a note carries a
@@ -1916,7 +1921,7 @@ class Links {
   /** What the space's own searches skip; see `leftOutOf` in workspace.svelte.ts. */
   private async leftOut(root: string): Promise<string[]> {
     const { workspace } = await import('./workspace.svelte')
-    return [...workspace.leftOutOf(root), AGENTS_NAME]
+    return [...workspace.leftOutOf(root), workspace.instructionsName(root)]
   }
 
   /** Gives a block of another note a name, so a link can point at the block.

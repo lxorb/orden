@@ -8,14 +8,12 @@
  *  toast Undo lives in, the way a failed board write does; see views/failed.svelte.ts. */
 
 import { settings } from './settings.svelte'
-import { landing } from './settings/landing.svelte'
 import { undoToastNotice } from './surfaces.svelte'
 import { UNDO_LINGER, undoToast } from './undo-toast.svelte'
 
 /** The Space pane of the space at `root`, with the caret in its field. */
 export function openInstructions(root: string) {
-  landing.instructions = true
-  settings.show('space', root)
+  settings.show('space', root, true)
 }
 
 class ReservedName {

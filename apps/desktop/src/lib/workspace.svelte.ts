@@ -117,9 +117,11 @@ import { apartOf, readWebFile } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
 
-/** Whether a path is the AGENTS.md at the top of the space at `root`. */
+/** Whether a path is the AGENTS.md at the top of the space at `root`: one file, however
+ *  it is spelled, on a disk that sets case aside, and on one that does not, the spelling
+ *  agents read, with an `agents.md` beside it a note of its own. */
 function isInstructions(root: string, path: string): boolean {
-  return nameOf(path) === AGENTS_NAME && samePath(folderOf(path), root)
+  return samePath(path, joinPath(root, AGENTS_NAME), root)
 }
 
 export interface Entry {
@@ -457,7 +459,15 @@ class Workspace {
 
   get leftOut(): string[] {
     const root = this.activeSpace?.root
-    return root === undefined ? [] : [...this.leftOutOf(root), AGENTS_NAME]
+    return root === undefined ? [] : [...this.leftOutOf(root), this.instructionsName(root)]
+  }
+
+  /** The file at the top of a space as what leaves it out of a search has to say it, which
+   *  is by the exact name: as the listing spells it, where that is the space listed. */
+  instructionsName(root: string): string {
+    const tree = samePath(this.tree?.path, root) ? this.tree : null
+    const listed = tree?.children.find((one) => !one.is_dir && isInstructions(root, one.path))
+    return listed?.name ?? AGENTS_NAME
   }
 
   /** Whether a path is a space's AGENTS.md: the file at its top that its settings edit,
@@ -3601,12 +3611,12 @@ class Workspace {
     return root ? linkedFiles(this.tree, root, carriedRows(transfer)) : []
   }
 
-  async moveMany(paths: string[], intoFolder: string, agent = false) {
+  async moveMany(paths: string[], intoFolder: string, undoing = false) {
     // A note called AGENTS in a folder stays one, and moves between folders; at the top
-    // of a space it would stop being a note and become the setting. An agent's move is
-    // no gesture to refuse: it comes with `agent`, from `movedIn` in automation/acts.ts.
+    // of a space it would stop being a note and become the setting. Only an Undo puts one
+    // back; see `movedIn` in automation/acts.ts, which refuses an agent's the same way.
     if (
-      !agent &&
+      !undoing &&
       paths.some((path) => isAgentsName(nameOf(path))) &&
       this.spaces.some((one) => samePath(one.root, intoFolder))
     ) {

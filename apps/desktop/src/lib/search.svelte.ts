@@ -8,7 +8,6 @@
 import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@orden/editor'
 import { revealPanel } from './focus'
-import { AGENTS_NAME } from './note-name'
 import { isScratchpad } from './scratchpad/is.svelte'
 import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
@@ -269,7 +268,7 @@ class Search {
     // And the space's AGENTS.md, which is its settings' rather than a note to find.
     const excluded = [
       ...(this.archived ? workspace.excluded.of(root) : workspace.leftOutOf(root)),
-      AGENTS_NAME,
+      workspace.instructionsName(root),
     ]
     const { unsavedHits } = await import('./search/unsaved')
     const unsaved = unsavedHits(this.query, workspace.activeSpaceId, MOST)

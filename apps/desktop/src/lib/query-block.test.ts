@@ -27,6 +27,7 @@ vi.mock('./workspace.svelte', () => ({
   workspace: {
     activeSpace: { root: '/space' },
     leftOutOf: () => ['Archive'],
+    instructionsName: () => 'AGENTS.md',
     open: () => Promise.resolve(),
     goto: null,
     toggleTaskAt: () => Promise.resolve(true),

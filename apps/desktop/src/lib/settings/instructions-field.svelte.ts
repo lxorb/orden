@@ -14,7 +14,14 @@
 /** How long the typing rests before the file is written: the hover card's. */
 export const SETTLES_AFTER = 900
 
+/** How long one write may hold up the ones after it. A disk that does not answer leaves
+ *  the words owed, and the next pause or leaving the field tries again. */
+export const GIVES_UP_AFTER = 10_000
+
 export interface FieldHands {
+  /** Whether the space the file is at the top of is still there. `write_note` makes the
+   *  folders it is asked for, so a file made after a space went would bring it back. */
+  space(path: string): Promise<boolean>
   /** What the file says, with whatever is unsaved in a pane; null where it would not
    *  read or is not there. */
   read(path: string): Promise<string | null>
@@ -41,6 +48,8 @@ export class InstructionsField {
   unreadable = $state(false)
   /** Words typed that the file does not hold yet. */
   dirty = $state(false)
+  /** The space went from under the field: its words stay on screen and go nowhere. */
+  orphaned = $state(false)
 
   /** What the file said when the typing started, which a merge is measured from. */
   private base = ''
@@ -57,7 +66,7 @@ export class InstructionsField {
   ) {}
 
   get locked(): boolean {
-    return this.unreadable || this.reading()
+    return this.unreadable || this.orphaned || this.reading()
   }
 
   async load() {
@@ -98,8 +107,17 @@ export class InstructionsField {
   /** Whatever is unwritten, now. What leaving the field and closing the pane ask. */
   flush(): Promise<void> {
     clearTimeout(this.timer)
-    this.writing = this.writing.then(() => this.write())
+    this.writing = this.writing.then(() => this.bounded())
     return this.writing
+  }
+
+  private async bounded() {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const gives = new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, GIVES_UP_AFTER)
+    })
+    await Promise.race([this.write(), gives])
+    clearTimeout(timer)
   }
 
   private async write() {
@@ -111,6 +129,10 @@ export class InstructionsField {
       if (before === null) {
         if (await this.hands.there(this.path)) {
           this.unreadable = true
+          return
+        }
+        if (!(await this.hands.space(this.path))) {
+          this.orphaned = true
           return
         }
         if (after) await this.hands.make(this.path, after)

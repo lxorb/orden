@@ -134,7 +134,9 @@
   // The theme store is a sheet over this one, so closing this one closes it too:
   // it would otherwise be waiting there the next time the settings opened.
   $effect(() => {
-    if (!settings.open) store.close()
+    if (settings.open) return
+    store.close()
+    settings.landsOnField = false
   })
 
   // And a half-done deletion goes with the pane it was started in: coming back to

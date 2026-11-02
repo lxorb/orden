@@ -162,12 +162,16 @@ class Settings {
   /** Which space the Space pane is about where it was asked for one, by its root; the
    *  one in front otherwise. */
   space = $state<string | null>(null)
+  /** The hint on a refused name: the Space pane puts the caret in its field. Any other
+   *  way into the settings, or out of them, takes it back. */
+  landsOnField = $state(false)
 
   /** Opens on General, or on the list of panes where the screen is a phone's.
    *  Asked for by name, a pane opens straight away on both. Agents and LLM access are
    *  Settings > AI's Access now, and a link to either still lands there. */
-  show(section?: Section, space: string | null = null) {
+  show(section?: Section, space: string | null = null, landsOnField = false) {
     this.space = space
+    this.landsOnField = landsOnField
     const moved = section === 'agents' || section === 'llm'
     this.at = moved ? 'access' : null
     this.section = moved ? 'ai' : (section ?? 'general')

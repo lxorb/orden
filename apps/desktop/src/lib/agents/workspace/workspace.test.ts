@@ -597,7 +597,8 @@ describe('another space, without switching', () => {
       { space: 'Home', path: 'Soup.md', to: 'AGENTS.md' },
     ]) {
       expect(await call('move_file', args)).toMatchObject({
-        error: { code: 'bad_arguments', message: expect.stringContaining('write_note') as string },
+        code: 'bad_arguments',
+        message: expect.stringContaining('write_note') as string,
       })
     }
     expect(workspace.rename).not.toHaveBeenCalled()

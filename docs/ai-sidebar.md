@@ -747,9 +747,12 @@ sidebar adds a review layer on top, and nothing underneath changes.
   or not, any folder): a row's name field, the palette, a link to nothing, a save and a
   drop on the top of the space refuse it, with a hint that goes to the field
   (`reserved-name.svelte.ts`), and words headed `AGENTS` step aside to `AGENTS 2`. An
-  agent, sync or an import is not refused, and a file they bring stays as it is: at the
-  top it is what the field shows, and in a folder it is a note like any other, which
-  keeps its name.
+  agent, sync or an import writing the file by its content is not refused, and a file
+  they bring stays as it is: at the top it is what the field shows, and in a folder it is
+  a note like any other, which keeps its name. An agent's or an automation's move or
+  rename of another note onto it is refused with an error saying so; only an Undo of a
+  move off it puts it back. On a disk that sets case aside a root `agents.md` is this
+  same file. `/memory` makes it, with the `## Memory` heading, if it is not there.
 - **Personal instructions** are a field in Settings > AI, for every space.
 - **Remembering is an edit.** "Remember that I file papers under Reading" (or the model's
   own `remember` when memory is on) appends a line under `## Memory` in `AGENTS.md` as a

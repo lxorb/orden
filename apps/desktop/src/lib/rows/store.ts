@@ -192,7 +192,7 @@ export class RowsStore {
   /** A note's rows, read the way its space reads a task's dates. */
   private rowsIn(held: Held, read: NoteRead): Row[] {
     // The file at the top of a space that its settings edit, and no row of any view.
-    if (read.path === AGENTS_NAME) return []
+    if (samePath(read.path, AGENTS_NAME, held.root)) return []
     const rows = rowsOf(held.name, read)
     if (held.vault) for (const row of rows) if (row.task) row.task.dueReads = 'deadline'
     return rows

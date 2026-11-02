@@ -48,7 +48,7 @@
   import { places } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
   import { destinationOf, type Host, hostFor, said } from './remote/hosts'
-  import { relativeTo } from './space-paths'
+  import { relativeTo, samePath } from './space-paths'
   import TabMark from './TabMark.svelte'
   import { theme } from './theme.svelte'
   import { canWriteAt } from './sharing.svelte'
@@ -154,7 +154,7 @@
       focused: workspace.active?.kind ?? null,
       recent: workspace.recent,
       bookmarks: workspace.bookmarks.list.filter(
-        (one) => !(one.kind === 'note' && one.path === AGENTS_NAME),
+        (one) => !(one.kind === 'note' && samePath(one.path, AGENTS_NAME, root ?? undefined)),
       ),
       commands,
       pages: browses ? visited.all(webData.history()) : [],

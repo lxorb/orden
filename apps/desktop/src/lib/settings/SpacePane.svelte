@@ -1,3 +1,15 @@
+<script lang="ts" module>
+  import { owes, writing } from '../parting'
+  import type { InstructionsField } from './instructions-field.svelte'
+
+  /** The field on the page. A window closing runs no teardown, so what it still owes is
+   *  written from here and waited for, as a scratchpad's is; see parting.ts. */
+  let current: InstructionsField | null = null
+  owes(() => {
+    if (current) writing(current.flush())
+  })
+</script>
+
 <script lang="ts">
   /** Settings > Space: what belongs to a space rather than to whoever is reading it.
    *
@@ -6,19 +18,19 @@
    *  of as a note. ChatGPT's and Claude's projects keep their instructions the same way,
    *  a box in the project's settings. See instructions-field.svelte.ts for what it writes
    *  and reserved-name.svelte.ts for the way here from a refused name. */
+  import { untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { links } from '../link-index.svelte'
   import { AGENTS_NAME } from '../note-name'
   import { onDisk } from '../on-disk'
   import { canWriteAt } from '../sharing.svelte'
   import { settings } from '../settings.svelte'
-  import { samePath } from '../space-paths'
+  import { folderOf, samePath } from '../space-paths'
   import { joinPath } from '../tauri'
   import { workspace } from '../workspace.svelte'
   import { noteText, writeNoteText } from '../workspace/note-text'
   import { writeFile } from '../workspace/write-file'
-  import { type FieldHands, InstructionsField } from './instructions-field.svelte'
-  import { landing } from './landing.svelte'
+  import { type FieldHands, InstructionsField as Field } from './instructions-field.svelte'
 
   const root = $derived(settings.space ?? workspace.activeSpace?.root ?? null)
   const name = $derived(workspace.spaces.find((one) => one.root === root)?.name ?? '')
@@ -28,7 +40,14 @@
     sync.nudge()
   }
 
+  /** Whether a space is one the window has, and its folder is there. */
+  const listed = (at: string) => workspace.spaces.some((one) => samePath(one.root, at))
+
   const hands: FieldHands = {
+    space: async (path) => {
+      const at = folderOf(path)
+      return listed(at) && (await onDisk(at))
+    },
     read: (path) => noteText(workspace, path),
     there: onDisk,
     write: async (path, before, after, first) => {
@@ -37,43 +56,45 @@
     },
     make: async (path, text) => {
       await writeFile(path, text)
-      if (samePath(root, workspace.activeSpace?.root)) await workspace.loadTree()
+      if (samePath(folderOf(path), workspace.activeSpace?.root)) await workspace.loadTree()
       await workspace.fileCame(path, 'file')
       await nudged()
     },
   }
 
-  let field = $state.raw<InstructionsField | null>(null)
+  let field = $state.raw<Field | null>(null)
   let box = $state<HTMLTextAreaElement>()
 
   $effect(() => {
     if (root === null) return
-    const path = joinPath(root, AGENTS_NAME)
-    const one = new InstructionsField(path, hands, () => !canWriteAt(path))
+    const at = root
+    const path = joinPath(at, AGENTS_NAME)
+    const one = new Field(path, hands, () => !listed(at) || !canWriteAt(path))
     field = one
-    void one.load()
+    current = one
+    // A root's field, and nothing else's: the read goes past what is open, and following
+    // that would read the file again and put it over the words for every tab changed.
+    untrack(() => void one.load())
 
     // Written elsewhere, by sync, an agent or a pane; a CLI's write is seen on coming back.
     const stop = links.hearSaves((saved, words) => {
       if (samePath(saved, path)) one.heard(words)
     })
     const back = () => void one.look()
-    const away = () => void one.flush()
     window.addEventListener('focus', back)
-    window.addEventListener('pagehide', away)
 
     return () => {
       stop()
       window.removeEventListener('focus', back)
-      window.removeEventListener('pagehide', away)
-      void one.flush()
+      if (current === one) current = null
+      writing(one.flush())
     }
   })
 
   // The hint on a refused name lands here, with the caret in the words.
   $effect(() => {
-    if (!landing.instructions || !box) return
-    landing.instructions = false
+    if (!settings.landsOnField || !box) return
+    settings.landsOnField = false
     box.focus()
   })
 </script>
