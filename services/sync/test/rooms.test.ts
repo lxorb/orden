@@ -1809,23 +1809,40 @@ describe('somebody who stops being in the space while the file is open', () => {
       vi.useRealTimers()
     })
 
-    /** A join whose statement matching `sql`, past the first `skip` of them, never answers. */
+    /** A join whose statement matching `sql`, past the first `skip` of them, never answers,
+     *  and something said while it waits, which is what must not wait for ever. */
     async function hungAt(sql: RegExp, method: 'first' | 'run', skip = 0) {
       vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
       const login = await sha256(writer)
-      const prepare = env.DB.prepare.bind(env.DB)
-      let met = 0
-      env.DB.prepare = ((text: string) => {
-        const statement = prepare(text)
-        if (sql.test(text) && met++ >= skip) {
-          ;(statement as unknown as Record<string, unknown>)[method] = () =>
-            new Promise(() => undefined)
-        }
-        return statement
-      }) as typeof env.DB.prepare
-
       const socket = new FakeSocket()
       const { room: made } = live.of(noteId)
+      const doc = new Y.Doc()
+      const mark = Y.encodeStateVector(doc)
+      doc.getText(TEXT).insert(0, 'early ')
+      const update = syncUpdate(Y.encodeStateAsUpdate(doc, mark)).slice().buffer
+
+      let heard = false
+      let asked = false
+      const wasAsked = () => asked
+      const prepare = env.DB.prepare.bind(env.DB)
+      let met = 0
+      env.DB.prepare = (text: string) => {
+        const statement = prepare(text)
+        if (sql.test(text) && met++ >= skip) {
+          ;(statement as unknown as Record<string, unknown>)[method] = () => {
+            asked = true
+            // On a later turn, as an event of its own is.
+            setImmediate(() => {
+              void made.webSocketMessage(socket as unknown as WebSocket, update).then(() => {
+                heard = true
+              })
+            })
+            return new Promise(() => undefined)
+          }
+        }
+        return statement
+      }
+
       let entered = false
       void made
         .enter(
@@ -1836,22 +1853,13 @@ describe('somebody who stops being in the space while the file is open', () => {
         .then(() => {
           entered = true
         })
-      await vi.advanceTimersByTimeAsync(0)
-
-      // Something said while it waits, which is what must not wait for ever.
-      const doc = new Y.Doc()
-      const mark = Y.encodeStateVector(doc)
-      doc.getText(TEXT).insert(0, 'early ')
-      let heard = false
-      void made
-        .webSocketMessage(
-          socket as unknown as WebSocket,
-          syncUpdate(Y.encodeStateAsUpdate(doc, mark)).slice().buffer,
-        )
-        .then(() => {
-          heard = true
-        })
-      await vi.advanceTimersByTimeAsync(0)
+      // Opening the room takes turns of the event loop rather than time.
+      for (let turn = 0; turn < 1000 && !wasAsked(); turn++) {
+        await new Promise((next) => setImmediate(next))
+      }
+      await new Promise((next) => setImmediate(next))
+      await new Promise((next) => setImmediate(next))
+      expect(wasAsked()).toBe(true)
       expect(socket.closed).toBe(false)
       expect(heard).toBe(false)
 

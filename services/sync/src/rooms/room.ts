@@ -80,6 +80,10 @@ import { accessOf } from './access'
  *  has stopped typing sees one settle rather than two. */
 const SETTLE_DELAY = 1_200
 
+/** How long a socket let into a room waits for the database to settle its join. Longer
+ *  than a slow answer, and shorter than somebody typing into nothing for long. */
+const SETTLES_WITHIN = 15_000
+
 /** How many awareness entries one socket is remembered as having announced. A
  *  device is one caret and announces one; a handful covers a client that reloaded
  *  its document without closing the socket. The point of the number is that there
@@ -401,8 +405,11 @@ export class NoteRoom implements DurableObject {
    *  where nothing said - a room the runtime woke to fire an alarm has forgotten, and
    *  no name is better than another device's. */
   private settling = ''
-  /** Sockets let in whose join is not yet settled, and whether each stays. Held in
-   *  memory: a join is a request in flight, and the object does not sleep through one. */
+  /** Sockets let in whose join is not yet settled, and whether each stays. Held in memory,
+   *  on what the runtime documents rather than anything a test here can show: an object
+   *  does not hibernate while a request is being processed or a timer is set, pending I/O
+   *  holds off eviction for up to fifteen minutes, and an object that shuts down anyway
+   *  terminates its sockets with it, so none is left to speak without this. */
   private readonly letting = new Map<WebSocket, Promise<boolean>>()
   /** And which device that was, by id rather than by name, for the tree; see
    *  `Attached`. */
@@ -528,7 +535,7 @@ export class NoteRoom implements DurableObject {
     // What the socket says from here until this is settled waits for it: the object
     // takes messages while it waits on the database, and a socket let in on what the
     // door read must not be heard on it once that may no longer be so.
-    const settling = this.settleIn(server, held, joining)
+    const settling = this.settleInTime(server, held, joining)
     this.letting.set(
       server,
       settling.catch(() => false),
@@ -553,6 +560,29 @@ export class NoteRoom implements DurableObject {
     server.send(syncStep1(this.state.doc))
     const present = awarenessState(this.awareness)
     if (present) server.send(present)
+  }
+
+  /** The rest of a join, within a bound: the database neither answering nor failing would
+   *  otherwise leave the socket in the room with whatever it says waiting for ever. Closed
+   *  as any join this side could not finish is, so the device comes back and says it
+   *  again. Its row, if it has one, is one nothing needs waiting on: the next join's sweep
+   *  takes it (opened.ts). */
+  private async settleInTime(server: WebSocket, held: Held, joining: Joining): Promise<boolean> {
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const late = new Promise<'late'>((answer) => {
+      timer = setTimeout(() => {
+        answer('late')
+      }, SETTLES_WITHIN)
+    })
+    try {
+      const settled = await Promise.race([this.settleIn(server, held, joining), late])
+      if (settled !== 'late') return settled
+      noted(`room ${held.noteId} join`, new Error('the database did not answer a join'), null)
+      server.close(1011, 'try again')
+      return false
+    } finally {
+      clearTimeout(timer)
+    }
   }
 
   /** The rest of a join once the socket is in the room, answering whether it stays. */
