@@ -8,7 +8,7 @@ import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import type { Space } from '../workspace.svelte'
-import { type HoldsSpaces, selectSpace } from './spaces'
+import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 
 /** Creates a space folder under the one the app owns. The name is the only
  *  thing asked for; where it lives is not a decision worth making. */
@@ -129,6 +129,12 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   // Its tabs close and what was kept under its root goes with it; see
   // workspace/file-ops.ts.
   await ws.fileGone(space.root, 'space')
+  // The sets, fetched while this is still the space on screen: fetched by the switch
+  // below they would take what is left of its tabs for the next space's. See
+  // `selectSpace`.
+  if (ws.activeSpaceId === id && (tabSets.fetched || ws.tabs.length)) {
+    await import('./sets.svelte')
+  }
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
   if (ws.activeSpaceId !== id) {
     ws.persist()

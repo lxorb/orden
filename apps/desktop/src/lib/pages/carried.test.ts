@@ -183,10 +183,9 @@ describe('a paper the account will not take', () => {
   function refusing(answer: () => Promise<void>) {
     const made = world({ '/s/Lecture.pages': WITH_PAPER, '/s/Lecture.pages.pdf': PDF })
     const count = { reads: 0, ups: 0 }
-    const read = made.how.read
-    made.how.read = (path) => {
+    made.how.read = () => {
       count.reads += 1
-      return read(path)
+      return Promise.resolve(PDF)
     }
     made.how.up = () => {
       count.ups += 1
@@ -281,18 +280,27 @@ describe('a paper the account will not take', () => {
   })
 
   test('holds nobody else up', async () => {
-    const { how, sent } = refusing(() => Promise.reject(new ApiError(413, 'too big')))
-    const up = how.up
-    how.up = (id, hash, bytes) =>
-      id === 'n1' ? up(id, hash, bytes) : (sent.push({ id, hash }), Promise.resolve())
-    const read = how.read
-    how.read = (path) => (path === '/s/B.pages.pdf' ? Promise.resolve(PDF) : read(path))
-    const exists = how.exists
-    how.exists = (path) => (path === '/s/B.pages.pdf' ? Promise.resolve(true) : exists(path))
+    const { how, sent } = world({
+      '/s/A.pages': WITH_PAPER,
+      '/s/A.pages.pdf': PDF,
+      '/s/B.pages': WITH_PAPER,
+      '/s/B.pages.pdf': PDF,
+    })
+    how.up = (id, hash) => {
+      if (id === 'a') return Promise.reject(new ApiError(413, 'too big'))
+      sent.push({ id, hash })
+      return Promise.resolve()
+    }
 
-    await carryPapers([NOTE, { ...NOTE, id: 'n2', path: '/s/B.pages' }], how)
+    await carryPapers(
+      [
+        { ...NOTE, path: '/s/A.pages', id: 'a' },
+        { ...NOTE, path: '/s/B.pages', id: 'b' },
+      ],
+      how,
+    )
 
-    expect(sent.map((one) => one.id)).toEqual(['n2'])
+    expect(sent.map((one) => one.id)).toEqual(['b'])
   })
 })
 

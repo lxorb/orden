@@ -117,6 +117,8 @@ class Sets {
    *  could take put into the set on screen, so none of its tabs is lost. */
   async wake(): Promise<void> {
     for (const key of Object.keys(this.drafted)) await this.built(key)
+    // A set still building was out of `gone`'s reach when it last looked.
+    this.gone(workspace.spaces.map((one) => one.id))
     if (this.on !== GLOBAL && this.aside[GLOBAL]) {
       this.carry(this.tabsOf(GLOBAL), workspace.panes.focusedId)
       this.aside = without(this.aside, GLOBAL)
@@ -160,6 +162,9 @@ class Sets {
     this.putAside(left)
     this.bringIn(to, coming)
     ws.activeSpaceId = id
+    // The set that left, if it was of a space deleted while on screen: `gone` could not
+    // close what was showing, and nothing would ever show it again.
+    this.gone(ws.spaces.map((one) => one.id))
 
     void this.settle(left, to, coming)
   }

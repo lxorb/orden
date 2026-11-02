@@ -137,3 +137,37 @@ test('a space that is still there keeps its set through a launch', async () => {
 
   expect(names(after.tabs)).toEqual(['web'])
 })
+
+describe('the set older builds shared, in a window with no space to give it to', () => {
+  /** A session holding that set: its tabs one web tab, drafted under `global`. */
+  async function sharedSet(on: string) {
+    const before = await window([WORK], 'work')
+    const sets = await fetched()
+    before.openWebsite()
+    await sets.toSpace('food', false)
+    const { aside } = JSON.parse(JSON.stringify(before.setsWritten())) as {
+      aside: Record<string, unknown>
+    }
+    return { on, aside: { global: aside.work } }
+  }
+
+  test('comes on screen at that launch, none of it lost', async () => {
+    const written = await sharedSet('work')
+
+    const after = await window([], null, written)
+    await (await fetched()).wake()
+
+    expect(names(after.tabs)).toEqual(['web'])
+    expect(after.tabs.every((tab) => after.panes.at(tab.paneId))).toBe(true)
+  })
+
+  test('kept for the next launch, where the window itself shows the shared set', async () => {
+    // No build writes this: a set on screen is never also aside. Not lost if one did.
+    const written = await sharedSet('global')
+
+    const after = await window([], null, written)
+    await (await fetched()).wake()
+
+    expect(Object.keys((after.setsWritten() as { aside: object }).aside)).toEqual(['global'])
+  })
+})
