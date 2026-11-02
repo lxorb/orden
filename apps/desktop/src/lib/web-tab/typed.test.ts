@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { dotCom, webAddress } from './typed'
+import { dotCom, typedAddress, webAddress } from './typed'
 
 /** Ctrl+Enter in the address field, which every browser has had for thirty years. */
 describe('the dot-com press', () => {
@@ -89,5 +89,30 @@ describe('what somebody typed', () => {
     // An address is an address whichever engine searches words.
     expect(webAddress('svelte.dev', 'https://duckduckgo.com/?q=%s')).toBe('https://svelte.dev')
     expect(webAddress('javascript:alert(1)', 'https://duckduckgo.com/?q=%s')).toBeNull()
+  })
+})
+
+/** A path on this machine, typed into the bar, is not a host called `c` or `nas`: it would
+ *  go out over http, and as words it would go to the search engine. `file:` is not a thing
+ *  a tab opens, so it is what `file:///C:/...` typed out is: nothing (#790). */
+describe('a Windows path', () => {
+  test.each([
+    ['C:\\Users\\emil\\Documents\\thesis.pdf'],
+    ['c:\\thesis.pdf'],
+    ['C:/Users/emil/thesis.pdf'],
+    ['C:\\Users\\emil\\My Documents\\thesis.pdf'],
+    ['C:\\Users'],
+    ['\\\\nas\\share\\a.txt'],
+    ['\\\\nas\\share'],
+    ['\\\\nas\\my share\\a.txt'],
+    ['\\\\192.168.0.2\\share\\a.txt'],
+  ])('%s goes nowhere', (path) => {
+    expect(webAddress(path)).toBe(null)
+    expect(typedAddress(path)).toBe(null)
+  })
+
+  test('a host with a backslash after it is still that host', () => {
+    expect(webAddress('example.com\\docs')).toBe('https://example.com\\docs')
+    expect(webAddress('nas:5000')).toBe('http://nas:5000')
   })
 })

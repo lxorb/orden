@@ -106,11 +106,16 @@ export interface HalfTyped {
   over: string
 }
 
+/** A Windows path: a drive letter, or a share. To `URL` it is a host called `c` or `nas`
+ *  over http, and with a space in it words for the search engine, either of which tells
+ *  the network what is on this machine. It means `file:`, which a tab does not open. */
+const WINDOWS_PATH = /^(?:[a-z]:[\\/]|\\\\)/i
+
 /** The address something typed is, or null for words and for nothing: what the palette
  *  offers to go to, where a few words are a search for a note rather than for the web. */
 export function typedAddress(typed: string): string | null {
   const said = typed.trim()
-  if (!said) return null
+  if (!said || WINDOWS_PATH.test(said)) return null
 
   const host = said.startsWith('//') ? said.slice(2) : said
   if (said.startsWith('//') || isHost(said)) {
@@ -134,7 +139,7 @@ export function typedAddress(typed: string): string | null {
  *  tries https"* - and a dev server, which serves plain http, answered nothing.
  *
  *  Then a scheme, taken as written, so `http://` pages still open and a
- *  `javascript:` one never does. Anything left is words, and words are a search on
+ *  `javascript:` one never does. A Windows path is nothing too. Anything left is words, and words are a search on
  *  `engine`, the reader's choice of search engine. */
 export function webAddress(typed: string, engine = SEARCH): string | null {
   const said = typed.trim()
@@ -144,6 +149,7 @@ export function webAddress(typed: string, engine = SEARCH): string | null {
   if (address !== null) return address
   // An address this app refuses is nothing rather than something to search for.
   if (said.startsWith('//') || isHost(said) || SCHEME.test(said)) return null
+  if (WINDOWS_PATH.test(said)) return null
 
   return searchOn(engine, said)
 }
