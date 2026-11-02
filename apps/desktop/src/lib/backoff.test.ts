@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  linkDelay,
-  NUDGE_DELAY,
-  nudgeDelay,
-  paperRetryDelay,
-  pollDelay,
-  roomDelay,
-  saveRetryDelay,
-} from './backoff'
+import { linkDelay, NUDGE_DELAY, nudgeDelay, pollDelay, roomDelay, saveRetryDelay } from './backoff'
 
 const SECOND = 1000
 
@@ -142,10 +134,4 @@ describe('how soon a note that would not go down is tried again', () => {
   test('and never longer than a minute, however long it keeps failing', () => {
     expect(saveRetryDelay(99)).toBe(60 * SECOND)
   })
-})
-
-test('a paper that did not go up waits half a minute, doubling to ten', () => {
-  expect(paperRetryDelay(1)).toBe(30_000)
-  expect(paperRetryDelay(2)).toBe(60_000)
-  expect(paperRetryDelay(20)).toBe(600_000)
 })

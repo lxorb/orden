@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ApiError } from '../api'
-import { paperRetryDelay } from '../backoff'
-import { type Carrying, carryPapers, forgetLacking, namesAPaper, paperFor } from './carried'
+import {
+  type Carrying,
+  carryPapers,
+  forgetLacking,
+  namesAPaper,
+  paperFor,
+  paperRetryDelay,
+} from './carried'
 
 /** A page note's paper carried with the note (#551): up once from the device that has
  *  it, down onto a device that has the note and not the paper, and never asked about
@@ -331,6 +337,12 @@ describe('the paper of a page that opens before it came', () => {
     const { how } = world({})
     expect(await paperFor('n1', null, how)).toBeNull()
   })
+})
+
+test('a paper that did not go up waits half a minute, doubling to ten', () => {
+  expect(paperRetryDelay(1)).toBe(30_000)
+  expect(paperRetryDelay(2)).toBe(60_000)
+  expect(paperRetryDelay(20)).toBe(600_000)
 })
 
 test('a page note names a paper only where a page is drawn on one', () => {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** A space deleted takes its set of tabs with it, whichever tabs and whichever way it
  *  went (#786). The space on screen was the gap: its set was still the one showing while
@@ -37,6 +37,7 @@ const FOOD = { id: 'food', name: 'Food', root: '/spaces/Food' }
 
 /** A window as a launch leaves it, with these spaces and this one on screen. */
 async function window(spaces: (typeof WORK)[], active: string | null, setsRead?: unknown) {
+  await vi.dynamicImportSettled()
   vi.resetModules()
   const { workspace } = await import('../workspace.svelte')
   workspace.spaces = spaces.map((one) => ({ ...one }))
@@ -58,6 +59,8 @@ beforeEach(() => {
   one.files.set(`${WORK.root}/Plan.md`, '# Plan\n')
   one.files.set(`${FOOD.root}/Food.md`, '# Food\n')
 })
+
+afterEach(() => vi.dynamicImportSettled())
 
 describe('the space on screen deleted', () => {
   test('closes its tabs that are no file, and the next space’s stay', async () => {

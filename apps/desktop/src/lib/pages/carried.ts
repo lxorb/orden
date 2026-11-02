@@ -28,7 +28,6 @@
 import { readCanvas } from '@orden/markdown/canvas'
 import { pagesOf } from '@orden/markdown/pages'
 import { ApiError } from '../api'
-import { paperRetryDelay } from '../backoff'
 import { nameOf } from '../space-paths'
 import { paperOf } from './held'
 
@@ -90,6 +89,12 @@ const failing = new Map<string, { tries: number; until: number; said: boolean }>
  *  role (403), a note not there (404) and a rate (429) can change with the file as it is,
  *  so they are not among them. */
 const REFUSALS: ReadonlySet<number> = new Set([400, 413, 415])
+
+/** How long a carrying that failed in a way that may pass waits: each try can be the
+ *  whole PDF read, hashed and sent, so half a minute, doubling to ten. */
+export function paperRetryDelay(tries: number): number {
+  return Math.min(30_000 * 2 ** Math.max(0, tries - 1), 600_000)
+}
 
 /** Every page note's paper carried: up where the account does not have it from this
  *  device yet, down where this device has none. One note that fails is passed over and
