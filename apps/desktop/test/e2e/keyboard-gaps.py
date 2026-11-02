@@ -119,11 +119,19 @@ def into_region(page: Page, region: str) -> None:
 def to_row(page: Page, starts: str) -> None:
     """The arrows along the file list until the row is reached."""
     into_region(page, "list")
+    # From the top: the list is entered at the note that is open, wherever that is.
+    page.keyboard.press("Home")
+    page.evaluate("() => new Promise(requestAnimationFrame)")
+    seen = []
     for _ in range(14):
-        if where(page).split("|")[-1].startswith(starts):
+        at = where(page).split("|")[-1]
+        seen.append(at)
+        if at.startswith(starts):
             return
         page.keyboard.press("ArrowDown")
-    wrong(f"no row called {starts}: stands on {where(page)}")
+        # A frame for the row to take the keyboard: the walk goes by way of the list.
+        page.evaluate("() => new Promise(requestAnimationFrame)")
+    wrong(f"no row called {starts}: the arrows went {seen}")
 
 
 def choose(page: Page, label: str) -> None:
@@ -188,6 +196,29 @@ def row_deleted(page: Page) -> None:
         wrong(f"the keyboard went with the deleted row: {at}")
 
 
+def open_row_deleted(page: Page) -> None:
+    """A row whose note is the one showing: the next note comes to the front, and the
+    keyboard stays in the list rather than going with it."""
+    page.evaluate(
+        "async () => { const ws = window.nibApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Damson')).path, { activate: true }) }"
+    )
+    quiet(page)
+    to_row(page, "Damson")
+    press(page, "Shift+F10")
+    choose(page, "Delete")
+    if page.evaluate("() => !!document.querySelector('[role=dialog], [role=alertdialog]')"):
+        press(page, "Enter")
+    wait_for(page, "!window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the open note to go")
+    quiet(page)
+    at = where(page)
+    say(f"[delete] after the open note's row went the keyboard is on {at}")
+    if not at.startswith("list|button.nib-row"):
+        wrong(f"the keyboard did not stay in the list: {at}")
+    press(page, "Control+z")
+    wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
+    quiet(page)
+
+
 def toast_keys(page: Page) -> None:
     # The delete above put it up, and the region had said so.
     said = page.evaluate(SAID)
@@ -222,17 +253,20 @@ def toast_keys(page: Page) -> None:
     if page.evaluate("() => !!document.querySelector('[role=dialog], [role=alertdialog]')"):
         press(page, "Enter")
     wait_for(page, "document.querySelector('.toast .undo')", "the toast again")
+    # At once: the toast has its six seconds, and once the keyboard is on it, it stays.
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
-    quiet(page)
-    at = press(page, "F6")
+    page.keyboard.press("F6")
+    at = where(page)
     say(f"[toast] F6 from the note: {at}")
     if not at.endswith("|Undo"):
         wrong(f"F6 from the note did not reach Undo: {at}")
-    at = press(page, "Shift+F6")
+    page.keyboard.press("Shift+F6")
+    at = where(page)
     say(f"[toast] Shift+F6 from Undo: {at}")
     if not at.startswith("editor|"):
         wrong(f"Shift+F6 from Undo did not go back to the note: {at}")
-    press(page, "F6", "Enter")
+    page.keyboard.press("F6")
+    press(page, "Enter")
     wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
     quiet(page)
     at = where(page)
@@ -259,6 +293,21 @@ def properties(page: Page, held: str) -> None:
     wait_for(page, "document.querySelector('.prop[data-key=\"place\"]')", "the properties panel")
     quiet(page)
     page.evaluate("() => document.querySelector('.prop[data-key=\"place\"] .value input').focus()")
+
+    # The button a key can stand on is drawn exactly as the words of a note that cannot be
+    # written, which is what it was before.
+    box = """() => { const b = document.querySelector('.prop[data-key="weather"] .key').getBoundingClientRect(); const s = getComputedStyle(document.querySelector('.prop[data-key="weather"] .key')); return [b.x, b.y, b.width, b.height, s.fontSize, s.fontFamily, s.color, s.lineHeight] }"""
+    written = page.evaluate(box)
+    page.evaluate("() => { window.nibApp.modes.readOnly = true }")
+    quiet(page)
+    if page.evaluate("""() => document.querySelector('.prop[data-key="weather"] .key').tagName""") == "SPAN":
+        read = page.evaluate(box)
+        say(f"[props] the key as a button {written}, as words {read}")
+        if written != read:
+            wrong(f"the key's button is drawn differently: {written} against {read}")
+    page.evaluate("() => { window.nibApp.modes.readOnly = false }")
+    quiet(page)
+    page.evaluate("""() => document.querySelector('.prop[data-key="place"] .value input').focus()""")
 
     # Back along the row from its field to its key.
     at = press(page, "Shift+Tab")
@@ -312,7 +361,7 @@ def properties(page: Page, held: str) -> None:
     press(page, "Shift+F10")
     rows = page.evaluate("() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim())")
     say(f"[props] Shift+F10 in the field: {rows}")
-    if "Paste" not in rows:
+    if not any(row.startswith("Paste") for row in rows):
         wrong(f"the field lost its own menu: {rows}")
     press(page, "Escape")
     DRIVE.shot(page, "properties")
@@ -391,14 +440,19 @@ def toggle_order(page: Page) -> None:
         back = page.evaluate("(toggle) => document.activeElement === document.querySelector(toggle)", toggle)
         if not back:
             wrong(f"Shift+Tab did not go back to the {side} toggle: {at}")
-        # Only the press that opened it: Tab again goes on along the bar, not round.
-        press(page, "Tab", "Shift+Tab")
-        back = page.evaluate("(toggle) => document.activeElement === document.querySelector(toggle)", toggle)
-        at = press(page, "Tab")
-        inside = page.evaluate("(selector) => !!document.activeElement?.closest(selector)", selector)
-        say(f"[toggle] {side}: Tab from a toggle pressed a while ago: {at}")
-        if inside and side == "left":
-            wrong("Tab from the toggle goes into the sidebar every time, which is a ring with no way out")
+        # Only the press that opened it: round the window with Tab and back to the toggle,
+        # the next Tab goes on along the bar, or the side and the bar are a ring.
+        if side == "left":
+            press(page, "Tab")
+            for _ in range(40):
+                if page.evaluate("(toggle) => document.activeElement === document.querySelector(toggle)", toggle):
+                    break
+                page.keyboard.press("Tab")
+            at = press(page, "Tab")
+            inside = page.evaluate("(selector) => !!document.activeElement?.closest(selector)", selector)
+            say(f"[toggle] {side}: Tab from the toggle, reached by going round: {at}")
+            if inside:
+                wrong("Tab from the toggle goes into the sidebar every time, a ring with no way out")
 
 
 def drive(browser: Browser) -> None:
@@ -419,6 +473,7 @@ def drive(browser: Browser) -> None:
         ("axe", lambda: axe_says(page, "the window")),
         ("delete", lambda: row_deleted(page)),
         ("toast", lambda: toast_keys(page)),
+        ("open row", lambda: open_row_deleted(page)),
         ("tab", lambda: tab_closed(page)),
         ("properties", lambda: properties(page, held)),
         ("sides", lambda: named_sides(page)),
