@@ -232,19 +232,19 @@ def toast_keys(page: Page) -> None:
 
     # Tab from the row it happened in reaches Undo before it reaches the note.
     came_from = where(page)
-    for count in range(1, 31):
-        at = press(page, "Tab")
-        if at.endswith("|Undo") or "editor|" in at:
-            break
-    say(f"[toast] {count} Tabs from the row: {at}")
     if sys.platform == "darwin":
         # A Mac's Tab passes over buttons until its reader turns on Keyboard navigation,
-        # which a runner has off, so what comes after Tab starts on Undo by hand.
-        page.evaluate(
-            "() => [...document.querySelectorAll('.toast button')].find((one) => one.textContent.trim() === 'Undo').focus()"
-        )
-    elif not at.endswith("|Undo"):
-        wrong(f"Tab reached the note before Undo: {at}")
+        # which a runner has off, so what comes after Tab starts on Undo by hand, before
+        # the toast has run out.
+        page.evaluate("() => document.querySelector('.toast .undo').focus()")
+    else:
+        for count in range(1, 31):
+            at = press(page, "Tab")
+            if at.endswith("|Undo") or "editor|" in at:
+                break
+        say(f"[toast] {count} Tabs from the row: {at}")
+        if not at.endswith("|Undo"):
+            wrong(f"Tab reached the note before Undo: {at}")
 
     # Pressing it brings the note back and the keyboard to where it came from.
     at = press(page, "Enter")
