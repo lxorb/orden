@@ -3,7 +3,8 @@
  *  Found in the #419 bug hunt (#523): Rename and Remove for a text-valued property were
  *  the pointer's alone. Shift+F10 in the value's field is the field's own menu, and the
  *  key was a span nothing could stand on, renamed by a double click. The key is a button
- *  now: a press or F2 renames it, its menu key is the row's menu, and the keyboard comes
+ *  now: Enter, Space or F2 renames it - the pointer's single click still does nothing and
+ *  its double click still renames - its menu key is the row's menu, and the keyboard comes
  *  back to it once the name is typed.
  *
  *  In the jsdom project because the panel is mounted and pressed. */
@@ -76,8 +77,27 @@ test('F2 renames it, and Enter hands the keyboard back to the key under its new 
   await vi.waitFor(() => expect(document.activeElement).toBe(key('state')))
 })
 
+const renamingNow = () => host.querySelector('input.rename') !== null
+
+test('a single click leaves the key as it is, and a double click renames it', () => {
+  key('status')?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }))
+  flushSync()
+  expect(renamingNow()).toBe(false)
+
+  key('status')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, detail: 2 }))
+  flushSync()
+  expect(renamingNow()).toBe(true)
+})
+
+test('Enter on it renames it', () => {
+  // What Enter or Space on a button fires: a click with no clicks counted.
+  key('status')?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }))
+  flushSync()
+  expect(renamingNow()).toBe(true)
+})
+
 test('Escape leaves the name as it was, and the keyboard on it', async () => {
-  key('status')?.click()
+  key('status')?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }))
   flushSync()
   await vi.waitFor(() => expect(document.activeElement?.classList.contains('rename')).toBe(true))
 

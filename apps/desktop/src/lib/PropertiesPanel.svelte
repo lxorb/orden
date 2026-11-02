@@ -227,14 +227,20 @@
             />
           {:else if writable}
             <!-- A button, so the keyboard can stand on the key as well as the pointer:
-                 a press renames it, as F2 renames a row of the file list, and Shift+F10
+                 Enter, Space or F2 renames it, as F2 renames a row of the file list, a
+                 double click still does and a single click still does nothing, and Shift+F10
                  or the menu key on it is the row's menu, Rename and Remove. A text value's
                  field answers those keys with its own menu, so without this the key was
                  the one way to either and only a pointer had it (#523). -->
             <button
               class="key"
               title={property.key}
-              onclick={() => void startRenaming(property.key)}
+              onclick={(event) => {
+                // A key's press only: one has no clicks to count. The pointer renames
+                // with a double click, as it always has.
+                if (event.detail === 0) void startRenaming(property.key)
+              }}
+              ondblclick={() => void startRenaming(property.key)}
               onkeydown={(event) => {
                 if (event.key === 'F2' && !event.isComposing) {
                   event.preventDefault()
