@@ -484,13 +484,13 @@ function votesOf(value: unknown): Record<Who, number[]> | null {
 
 function reactionsOf(value: unknown): Record<string, Who[]> | null {
   if (!isRecord(value)) return null
-  const reactions: Record<string, Who[]> = {}
+  const reactions: [string, Who[]][] = []
   for (const [emoji, people] of Object.entries(value)) {
     const checked = listOf(people, MOST_MEMBERS, whoOf)
     if (!isEmoji(emoji) || !checked) return null
-    reactions[emoji] = checked
+    reactions.push([emoji, checked])
   }
-  return reactions
+  return Object.fromEntries(reactions)
 }
 
 /** A message as it stands, as a device reads one from a state page. */

@@ -149,11 +149,12 @@ describe('what Format document must not touch', () => {
     '[[_a_|shown]]\n',
     '[x](_f_.md)\n',
     '[x](__f__.md)\n',
-    '[x](a.md "_t_")\n',
+    '[x](a.md "a _t_ b")\n',
+    '[x][a _ref_ b]\n',
     '![x](_p_.png)\n',
     '[x][_ref_]\n',
     '[ref]: _u_\n',
-    '[ref]: u "_t_"\n',
+    '[ref]: u "a _t_ b"\n',
     '<http://x/_a_>\n',
   ])('the target of %j', (source) => {
     expect(reformat(source)).toBe(source)

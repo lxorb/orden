@@ -84,14 +84,15 @@ export function place(row: Row, day: string): Placed {
 }
 
 /** The days a repeating task comes back on within the days shown, after the one it
- *  is on now. Each is the same row placed again, as a ghost. */
-export function occurrences(placed: Placed, last: string, most = 62): Placed[] {
+ *  is on now. Each is the same row placed again, as a ghost. `most` counts from `first`,
+ *  the first day shown, so a task from months ago still has its faded days. */
+export function occurrences(placed: Placed, last: string, most = 62, first = placed.day): Placed[] {
   const task = placed.row.task
   if (!task?.recurrence || task.done || task.cancelled) return []
   const rule = parseRule(task.recurrence)
   if (!rule || rule.whenDone) return []
   const out: Placed[] = []
-  let after = placed.day
+  let after = first > placed.day ? addDays(first, -1) : placed.day
   while (out.length < most) {
     const next = nextDate(rule, placed.day, after)
     if (next === null || next > last) break
@@ -120,8 +121,8 @@ export function placedByDay(
     }
     const placed = place(row, day)
     if (day >= first) byDay.get(day)?.push(placed)
-    for (const ghost of occurrences(placed, last)) {
-      if (ghost.day >= first) byDay.get(ghost.day)?.push(ghost)
+    for (const ghost of occurrences(placed, last, undefined, first)) {
+      byDay.get(ghost.day)?.push(ghost)
     }
   }
   return { byDay, undated }
