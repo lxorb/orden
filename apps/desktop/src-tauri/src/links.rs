@@ -1055,7 +1055,11 @@ fn markdown_link(letters: &[char], at: usize) -> Option<(usize, String, String)>
 
     // Whatever is left is a title, and then it has to close the link.
     scan = skip_blanks(scan);
-    if let Some(quote) = letters.get(scan).copied().filter(|one| matches!(one, '"' | '\'')) {
+    if let Some(quote) = letters
+        .get(scan)
+        .copied()
+        .filter(|one| matches!(one, '"' | '\''))
+    {
         scan += 1;
         while scan < stop && letters[scan] != quote {
             scan += 1;

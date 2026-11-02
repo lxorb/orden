@@ -42,12 +42,13 @@ function measure(source: string, flags: string): Cost {
   let at = 0
 
   function alternatives(): Cost {
-    const branches = [sequence()]
+    const opening = sequence()
+    const branches = [opening]
     while (source[at] === '|') {
       at++
       branches.push(sequence())
     }
-    if (branches.length === 1) return branches[0]!
+    if (branches.length === 1) return opening
 
     const firsts = branches.map((one) => one.first)
     // Told apart by the first character, only one branch is ever tried on a given

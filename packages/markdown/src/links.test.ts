@@ -626,7 +626,15 @@ describe('a markdown target the way a link names a file', () => {
   })
 
   test('what encodeTarget writes reads back as the same name', () => {
-    for (const name of ['C#.md', 'Why?.md', 'a (1).md', '100%.md', 'a%20b.md', 'a[b].md', 'é ü.md']) {
+    for (const name of [
+      'C#.md',
+      'Why?.md',
+      'a (1).md',
+      '100%.md',
+      'a%20b.md',
+      'a[b].md',
+      'é ü.md',
+    ]) {
       expect(decodeTarget(encodeTarget(name))).toBe(name)
       expect(only(`[S](${encodeTarget(name)})`)).toEqual([name])
     }
@@ -641,7 +649,11 @@ describe('a markdown target the way a link names a file', () => {
 
 describe('parentheses and brackets in a markdown link', () => {
   const read = (text: string) =>
-    findLinks(text).map((link) => [link.target, link.alias, text.slice(link.targetFrom, link.targetTo)])
+    findLinks(text).map((link) => [
+      link.target,
+      link.alias,
+      text.slice(link.targetFrom, link.targetTo),
+    ])
 
   test('a target holds balanced parentheses, which is how Obsidian writes `a (1).md`', () => {
     expect(read('[x](a%20(1).md)')).toEqual([['a (1).md', 'x', 'a%20(1).md']])

@@ -688,9 +688,7 @@ export function encodeTarget(path: string): string {
  *  is undone, which `decodeURI` does not do for the characters a URL reserves. A `%`
  *  that does not begin an escape is taken as written. */
 export function decodeFragment(fragment: string): string {
-  return fragment.replace(ESCAPES, (run) =>
-    UTF8.decode(bytesOf(run)),
-  )
+  return fragment.replace(ESCAPES, (run) => UTF8.decode(bytesOf(run)))
 }
 
 /** The name a block link points at, when a line ends by naming one.

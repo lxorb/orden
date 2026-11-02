@@ -70,10 +70,7 @@ describe('parsing', () => {
 
 describe('a cell that ends in a backslash', () => {
   test('an escaped backslash does not escape the pipe after it, as the renderer reads it', () => {
-    expect(parseTable('| C:\\\\| D |\n|---|---|\n| 1 | 2 |')?.header).toEqual([
-      'C:\\\\',
-      'D',
-    ])
+    expect(parseTable('| C:\\\\| D |\n|---|---|\n| 1 | 2 |')?.header).toEqual(['C:\\\\', 'D'])
   })
 
   test('an odd run still does', () => {
@@ -81,10 +78,7 @@ describe('a cell that ends in a backslash', () => {
       'a\\\\\\| b',
       'c',
     ])
-    expect(parseTable('| a\\| b | c |\n|---|---|\n| 1 | 2 |')?.header).toEqual([
-      'a\\| b',
-      'c',
-    ])
+    expect(parseTable('| a\\| b | c |\n|---|---|\n| 1 | 2 |')?.header).toEqual(['a\\| b', 'c'])
   })
 })
 

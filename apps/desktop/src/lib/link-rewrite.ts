@@ -92,7 +92,14 @@ function asMarkdown(link: FoundLink, source: string, placed: string | Placed): s
   const path = typeof placed === 'string' ? placed : placed.path
   const fragment = link.block === null ? link.heading : `^${link.block}`
   return formatLink(
-    { name: shownName(nameOf(path)), path, from: source, fragment, shown: link.alias, embed: link.embed },
+    {
+      name: shownName(nameOf(path)),
+      path,
+      from: source,
+      fragment,
+      shown: link.alias,
+      embed: link.embed,
+    },
     'relative',
   )
 }
