@@ -1437,6 +1437,7 @@ export const jv: Dictionary = {
   'The note': 'Cathetan',
   '{space} panel': 'Panel {space}',
   'Panel width': 'Amba panel',
+  'Pane size': 'Ukuran panel',
   Values: 'Nilai',
   Pages: 'Kaca',
   'Page {number} of {count}': 'Kaca {number}/{count}',

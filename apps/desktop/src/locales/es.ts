@@ -1496,6 +1496,7 @@ export const es: Dictionary = {
   'The note': 'La nota',
   '{space} panel': 'Panel de {space}',
   'Panel width': 'Ancho del panel',
+  'Pane size': 'Tamaño del panel',
   Values: 'Valores',
   Pages: 'Páginas',
   'Page {number} of {count}': 'Página {number} de {count}',

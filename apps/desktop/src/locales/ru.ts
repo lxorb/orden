@@ -1534,6 +1534,7 @@ export const ru: Dictionary = {
   'The note': 'Заметка',
   '{space} panel': 'Панель пространства {space}',
   'Panel width': 'Ширина панели',
+  'Pane size': 'Размер области',
   Values: 'Значения',
   Pages: 'Страницы',
   'Page {number} of {count}': 'Страница {number} из {count}',

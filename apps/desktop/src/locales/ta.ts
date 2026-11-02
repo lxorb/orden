@@ -1477,6 +1477,7 @@ export const ta: Dictionary = {
   'The note': 'குறிப்பு',
   '{space} panel': '{space} பலகம்',
   'Panel width': 'பலக அகலம்',
+  'Pane size': 'பலக அளவு',
   Values: 'மதிப்புகள்',
   Pages: 'பக்கங்கள்',
   'Page {number} of {count}': '{count} இல் {number} பக்கம்',

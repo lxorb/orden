@@ -1463,6 +1463,7 @@ export const gsw: Dictionary = {
   'The note': 'D Notiz',
   '{space} panel': 'Bereich {space}',
   'Panel width': 'Breiti vom Bereich',
+  'Pane size': 'Grössi vom Teilfänschter',
   Values: 'Wärt',
   Pages: 'Site',
   'Page {number} of {count}': 'Site {number} vo {count}',

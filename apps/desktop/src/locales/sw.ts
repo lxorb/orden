@@ -1474,6 +1474,7 @@ export const sw: Dictionary = {
   'The note': 'Dokezo',
   '{space} panel': 'Paneli ya {space}',
   'Panel width': 'Upana wa paneli',
+  'Pane size': 'Ukubwa wa paneli',
   Values: 'Thamani',
   Pages: 'Kurasa',
   'Page {number} of {count}': 'Ukurasa {number} wa {count}',

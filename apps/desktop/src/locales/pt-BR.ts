@@ -1486,6 +1486,7 @@ export const ptBR: Dictionary = {
   'The note': 'A nota',
   '{space} panel': 'Painel de {space}',
   'Panel width': 'Largura do painel',
+  'Pane size': 'Tamanho do painel',
   Values: 'Valores',
   Pages: 'Páginas',
   'Page {number} of {count}': 'Página {number} de {count}',

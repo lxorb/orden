@@ -1479,6 +1479,7 @@ export const de: Dictionary = {
   'The note': 'Die Notiz',
   '{space} panel': 'Bereich {space}',
   'Panel width': 'Breite des Bereichs',
+  'Pane size': 'Größe des Teilfensters',
   Values: 'Werte',
   Pages: 'Seiten',
   'Page {number} of {count}': 'Seite {number} von {count}',

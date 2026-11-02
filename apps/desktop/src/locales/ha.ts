@@ -1477,6 +1477,7 @@ export const ha: Dictionary = {
   'The note': 'Bayanin kula',
   '{space} panel': 'Fanon {space}',
   'Panel width': 'Faɗin fanon',
+  'Pane size': 'Girman fanon',
   Values: 'Darajoji',
   Pages: 'Shafuka',
   'Page {number} of {count}': 'Shafi {number} daga {count}',

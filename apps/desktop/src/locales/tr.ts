@@ -1459,6 +1459,7 @@ export const tr: Dictionary = {
   'The note': 'Not',
   '{space} panel': '{space} paneli',
   'Panel width': 'Panel genişliği',
+  'Pane size': 'Bölme boyutu',
   Values: 'Değerler',
   Pages: 'Sayfalar',
   'Page {number} of {count}': 'Sayfa {number}/{count}',

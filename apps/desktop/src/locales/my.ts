@@ -1436,6 +1436,7 @@ export const my: Dictionary = {
   'The note': 'မှတ်စု',
   '{space} panel': '{space} အကန့်',
   'Panel width': 'အကန့်အကျယ်',
+  'Pane size': 'အကန့်အရွယ်အစား',
   Values: 'တန်ဖိုးများ',
   Pages: 'စာမျက်နှာများ',
   'Page {number} of {count}': 'စာမျက်နှာ {number}/{count}',

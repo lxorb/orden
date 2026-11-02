@@ -1462,6 +1462,7 @@ export const te: Dictionary = {
   'The note': 'నోట్',
   '{space} panel': '{space} ప్యానెల్',
   'Panel width': 'ప్యానెల్ వెడల్పు',
+  'Pane size': 'పేన్ పరిమాణం',
   Values: 'విలువలు',
   Pages: 'పేజీలు',
   'Page {number} of {count}': '{count}లో {number} పేజీ',

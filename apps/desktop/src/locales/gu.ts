@@ -1450,6 +1450,7 @@ export const gu: Dictionary = {
   'The note': 'નોંધ',
   '{space} panel': '{space} પૅનલ',
   'Panel width': 'પૅનલની પહોળાઈ',
+  'Pane size': 'ખાનાનું કદ',
   Values: 'મૂલ્યો',
   Pages: 'પાનાં',
   'Page {number} of {count}': 'પાનું {number}/{count}',

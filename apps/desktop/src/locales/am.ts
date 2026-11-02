@@ -1438,6 +1438,7 @@ export const am: Dictionary = {
   'The note': 'ማስታወሻው',
   '{space} panel': 'የ{space} ሰሌዳ',
   'Panel width': 'የሰሌዳ ስፋት',
+  'Pane size': 'የሰሌዳ መጠን',
   Values: 'ዋጋዎች',
   Pages: 'ገጾች',
   'Page {number} of {count}': 'ገጽ {number}/{count}',

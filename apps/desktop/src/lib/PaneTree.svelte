@@ -132,6 +132,9 @@
           class="divider"
           role="separator"
           aria-orientation={split.along === 'row' ? 'vertical' : 'horizontal'}
+          aria-label={t('Pane size')}
+          aria-valuemin={0}
+          aria-valuemax={100}
           aria-valuenow={Math.round(split.fraction * 100)}
           tabindex="0"
           title={t('Drag to resize')}

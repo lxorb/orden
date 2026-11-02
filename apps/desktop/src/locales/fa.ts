@@ -1458,6 +1458,7 @@ export const fa: Dictionary = {
   'The note': 'یادداشت',
   '{space} panel': 'تخته {space}',
   'Panel width': 'پهنای تخته',
+  'Pane size': 'اندازه تخته',
   Values: 'مقدارها',
   Pages: 'صفحه‌ها',
   'Page {number} of {count}': 'صفحه {number} از {count}',

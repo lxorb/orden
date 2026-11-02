@@ -1502,6 +1502,7 @@ export const it: Dictionary = {
   'The note': 'La nota',
   '{space} panel': 'Pannello di {space}',
   'Panel width': 'Larghezza del pannello',
+  'Pane size': 'Dimensione del riquadro',
   Values: 'Valori',
   Pages: 'Pagine',
   'Page {number} of {count}': 'Pagina {number} di {count}',

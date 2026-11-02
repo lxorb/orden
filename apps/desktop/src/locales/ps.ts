@@ -1458,6 +1458,7 @@ export const ps: Dictionary = {
   'The note': 'يادښت',
   '{space} panel': 'د {space} تخته',
   'Panel width': 'د تختې پلنوالی',
+  'Pane size': 'د تختې اندازه',
   Values: 'ارزښتونه',
   Pages: 'مخونه',
   'Page {number} of {count}': 'مخ {number} له {count}',

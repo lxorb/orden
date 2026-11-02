@@ -1455,6 +1455,7 @@ export const mr: Dictionary = {
   'The note': 'नोंद',
   '{space} panel': '{space} चा पॅनेल',
   'Panel width': 'पॅनेलची रुंदी',
+  'Pane size': 'फलकाचा आकार',
   Values: 'मूल्ये',
   Pages: 'पाने',
   'Page {number} of {count}': 'पान {number}/{count}',

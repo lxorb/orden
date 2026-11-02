@@ -1438,6 +1438,7 @@ export const ja: Dictionary = {
   'The note': 'ノート',
   '{space} panel': '{space} パネル',
   'Panel width': 'パネルの幅',
+  'Pane size': 'ペインのサイズ',
   Values: '値',
   Pages: 'ページ',
   'Page {number} of {count}': '{count} ページ中 {number} ページ',

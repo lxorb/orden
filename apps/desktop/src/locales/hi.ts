@@ -1453,6 +1453,7 @@ export const hi: Dictionary = {
   'The note': 'नोट',
   '{space} panel': '{space} का पैनल',
   'Panel width': 'पैनल की चौड़ाई',
+  'Pane size': 'फलक का आकार',
   Values: 'मान',
   Pages: 'पृष्ठ',
   'Page {number} of {count}': 'पृष्ठ {number}/{count}',
