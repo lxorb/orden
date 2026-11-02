@@ -962,11 +962,11 @@ function holds(tail: string): boolean {
  *  unstable at 9163eeb16: unstable's raises were measured without them. Measured
  *  3,430,841.
  *
- *  Raised 2026-11-02, to 3,434,500, for #613 and #614: a move sync makes waits for the
+ *  Raised 2026-11-02, to 3,438,700, for #613 and #614: a move sync makes waits for the
  *  write in the air without waiting on what waits for the pass (`holdingWrites` in
- *  saving.svelte.ts), and an agent hears a write the disk road left alone. Measured
- *  3,434,036. */
-const BUDGET = 3_434_500
+ *  saving.svelte.ts), and an agent hears a write the disk road left alone, its steps
+ *  kept and a file's other line endings with them. Measured 3,438,266. */
+const BUDGET = 3_438_700
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

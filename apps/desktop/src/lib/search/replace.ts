@@ -94,9 +94,44 @@ export function changeOf(path: string, before: string, edits: Edit[]): Change {
 
 /** A file's words as `like` would say them: with one line ending where `like` was worked
  *  out on one, as an agent's edits are, or a file with Windows ones differs on every
- *  line. The disk gives a file its own endings back; see `as_written` in notes.rs. */
+ *  line. */
 export function endingsLike(words: string, like: string): string {
   return like.includes('\r') || !words.includes('\r') ? words : words.replace(/\r\n?/g, '\n')
+}
+
+/** Whether the first line ending of a file is `\r\n`, which has the disk write every
+ *  line that way; see `as_written` in notes.rs. */
+function crlfFirst(file: string): boolean {
+  const first = file.indexOf('\n')
+  return first > 0 && file[first - 1] === '\r'
+}
+
+/** Whether the disk would leave the lines of a file as they are when it is written
+ *  again: not one that starts with `\r\n` and has a bare `\n` further down. */
+export function diskKeepsEndings(file: string): boolean {
+  return !crlfFirst(file) || !/(^|[^\r])\n/.test(file)
+}
+
+/** Edits worked out on a file's words with one line ending, applied to the file itself:
+ *  a line they do not touch stays as it was, and one they add ends as the disk would
+ *  end it. */
+export function appliedToFile(file: string, edits: readonly Edit[]): string {
+  const crlf = crlfFirst(file)
+  let raw = 0
+  let flat = 0
+  const seek = (to: number) => {
+    for (; flat < to; flat++) raw += file[raw] === '\r' && file[raw + 1] === '\n' ? 2 : 1
+    return raw
+  }
+
+  let out = ''
+  let last = 0
+  for (const edit of edits) {
+    out += file.slice(last, seek(edit.from))
+    out += crlf ? edit.insert.replace(/\r?\n/g, '\r\n') : edit.insert
+    last = seek(edit.to)
+  }
+  return out + file.slice(last)
 }
 
 /** The edits that put a replacement back, in the coordinates of the note the

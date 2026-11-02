@@ -313,10 +313,12 @@ async function changeClosed(
     if (note.pad) return null
     // Nothing was written, so no version was kept: the next edit is still the first.
     if (snapshot) kept.delete(keyOf(agent.id, note.path))
+    // A note that has gone says so here.
+    await wordsOf(desk, note)
     throw new DocError(
       'rev_changed',
       note.relative,
-      `${note.relative} changed while it was being written, and nothing was written`,
+      `nothing was written to ${note.relative}: it changed as the edit landed, its line endings are mixed, or it cannot be written here`,
     )
   }
 
@@ -327,8 +329,7 @@ async function changeClosed(
 /** A closed note's words written with `edits`: the one road a note nobody has open is
  *  written by, or the scratchpad's own, which carries its card's caret. False when the
  *  scratchpad's words were no longer `before`, or when the road left the note's file
- *  alone because it changed in the air or went: whoever asked must not be told it is
- *  done. */
+ *  alone: whoever asked must not be told it is done. */
 async function writeClosed(
   desk: Desk,
   note: Located,
@@ -338,6 +339,22 @@ async function writeClosed(
 ): Promise<boolean> {
   if (note.pad) return desk.padWrite(before, edits)
   return (await desk.replaceInNotes([changeOf(note.path, before, [...edits])], keeping)) > 0
+}
+
+/** What a track took back or put back, written; the track told where it was not, so
+ *  what it counted as done can be asked for again. */
+async function wroteBack(
+  desk: Desk,
+  note: Located,
+  words: string,
+  back: { edits: readonly Edit[]; refused: () => void },
+): Promise<boolean> {
+  const wrote = await writeClosed(desk, note, words, back.edits).catch((error: unknown) => {
+    back.refused()
+    throw error
+  })
+  if (!wrote) back.refused()
+  return wrote
 }
 
 /** Whether this is the agent's first edit of the note this session, remembered. */
@@ -413,7 +430,7 @@ export async function undoAt(desk: Desk, agent: Agent, note: Located): Promise<{
     const back = track.undoClosed(words)
     if (!back) return { undone: 0 }
 
-    if (!(await writeClosed(desk, note, words, back.edits))) return { undone: 0 }
+    if (!(await wroteBack(desk, note, words, back))) return { undone: 0 }
     return { undone: back.count }
   })
 }
@@ -441,7 +458,7 @@ export async function undoSomeAt(
     const back = track.undoSomeClosed(words, ids, token)
     if (!back) return []
 
-    if (!(await writeClosed(desk, note, words, back.edits))) return []
+    if (!(await wroteBack(desk, note, words, back))) return []
     return back.ids
   })
 }
@@ -466,7 +483,7 @@ export async function putBackAt(
     const back = track.putBackClosed(words, token)
     if (!back) return []
 
-    if (!(await writeClosed(desk, note, words, back.edits))) return []
+    if (!(await wroteBack(desk, note, words, back))) return []
     return back.ids
   })
 }

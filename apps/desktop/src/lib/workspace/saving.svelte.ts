@@ -23,12 +23,13 @@ import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { owesLast, settleUp } from '../parting'
-import { nameOf, samePath, within } from '../space-paths'
+import { movedTo, nameOf, samePath, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
 import { entryAt } from '../tree-edits'
 import type { Entry } from '../workspace.svelte'
 import { holdsWords, type NoteDoc, type Tab } from './documents.svelte'
+import type { FileOp } from './file-ops'
 import { isDraft } from './drafts'
 
 /** Pauses in a row that ended in a refused write before the light says so. One is
@@ -64,6 +65,10 @@ export interface Writes {
   fileCame(path: string, kind: 'file' | 'folder', key?: string): Promise<void>
 }
 
+/** How long a move of sync's waits for a write in the air, in milliseconds. A write on a
+ *  share that has stalled may never answer, and a pass has the engine to itself. */
+export const IN_THE_AIR_AT_MOST = 10_000
+
 export class Saving {
   /** The write that waits for a pause in the changes; see timing.ts. */
   private readonly soon = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY, SAVE_AT_MOST)
@@ -85,6 +90,15 @@ export class Saving {
    *  birth. One at a time per document, so a rename never lands inside a write and
    *  moves the file out from under it; see `holding`. */
   private readonly busy = new WeakMap<NoteDoc, Promise<void>>()
+
+  /** How many operations hold each document: one whose tab has closed is on no other
+   *  list, and its write goes on all the same. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  private readonly held = new Map<NoteDoc, number>()
+
+  /** Moved with no tab to show it: the listing may not have heard, and that is not its
+   *  file being gone; see `gone`. */
+  private readonly followed = new WeakSet<NoteDoc>()
 
   /** The `write_note` of each document last sent, which `holdingWrites` waits for. */
   private readonly inTheAir = new WeakMap<NoteDoc, Promise<unknown>>()
@@ -300,11 +314,21 @@ export class Saving {
     const before = Promise.all(notes.map((one) => this.busy.get(one) ?? Promise.resolve()))
     const mine = before.then(run)
     for (const one of notes) {
+      this.held.set(one, (this.held.get(one) ?? 0) + 1)
       this.busy.set(
         one,
         mine.catch(() => undefined),
       )
     }
+    void mine
+      .catch(() => undefined)
+      .then(() => {
+        for (const one of notes) {
+          const left = (this.held.get(one) ?? 1) - 1
+          if (left) this.held.set(one, left)
+          else this.held.delete(one)
+        }
+      })
 
     this.track(mine)
     return mine
@@ -319,25 +343,46 @@ export class Saving {
    *  the files had gone - the note was then in two places, the old one with the
    *  newest words - and the document was told the old path back with it. */
   holdingUnder(from: string, run: () => Promise<void>): Promise<void> {
-    const notes = [...this.ws.documents, ...this.waiting].filter(
+    return this.holding(this.under(from), run)
+  }
+
+  /** Every document at or under `from`: open, waiting to be written, or on its way
+   *  there with its tab closed. */
+  private under(from: string): NoteDoc[] {
+    return [...this.ws.documents, ...this.waiting, ...this.held.keys()].filter(
       (one, at, all) =>
         all.indexOf(one) === at && one.path !== null && within(from, one.path) !== null,
     )
-    return this.holding(notes, run)
+  }
+
+  /** A file operation. An open document follows a move through its tabs (`follow` in
+   *  workspace/open.ts); one whose tab has closed with a write still owed follows here,
+   *  or the words would land at the old path and make a second file. */
+  follow(op: FileOp) {
+    if (op.op !== 'moved') return
+    for (const note of [...this.held.keys(), ...this.waiting]) {
+      if (note.path === null || this.ws.documents.includes(note)) continue
+      const to = movedTo(note.path, op.from, op.to)
+      if (to === null) continue
+      note.path = to
+      note.name = nameOf(to)
+      this.followed.add(note)
+    }
   }
 
   /** A move sync makes of everything at or under `from`: after the write in the air of
-   *  every document open there, and with the next one waiting until it is told.
+   *  each document there, for `IN_THE_AIR_AT_MOST` at most, and with the next write
+   *  waiting until it is told. A write that outlasts that may land at the old path once
+   *  it answers: said in the log, since a move put off is better than an engine stuck.
    *
    *  Not `holdingUnder`, which waits for all a document is held for. A pass has the
    *  engine to itself (`use` in sync2/core.ts), and what holds a document can be waiting
    *  for the engine: a move made here tells the account inside its hold, and a new
-   *  note's first write says so. Waiting for those inside the pass would never end. A
-   *  write in the air is one round trip to the disk, and waits for nobody. */
+   *  note's first write says so. Waiting for those inside the pass would never end. So
+   *  a rename in the air is not waited for, and the two race as they always have: the
+   *  one that finds the file gone is refused, and sync tries again next pass. */
   async holdingWrites<T>(from: string, run: () => Promise<T>): Promise<T> {
-    const notes = this.ws.documents.filter(
-      (one) => one.path !== null && within(from, one.path) !== null,
-    )
+    const notes = this.under(from)
     let letGo = () => {
       // Replaced the moment the promise below hands over its resolver.
     }
@@ -347,12 +392,26 @@ export class Saving {
     for (const one of notes) this.syncMoving.set(one, moving)
 
     try {
-      await Promise.all(notes.map((one) => this.inTheAir.get(one) ?? Promise.resolve()))
+      await this.landed(notes, from)
       return await run()
     } finally {
       for (const one of notes) if (this.syncMoving.get(one) === moving) this.syncMoving.delete(one)
       letGo()
     }
+  }
+
+  /** The writes in the air of these documents landed, or too long gone by. */
+  private async landed(notes: readonly NoteDoc[], from: string): Promise<void> {
+    const air = notes.flatMap((one) => this.inTheAir.get(one) ?? [])
+    if (!air.length) return
+
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const late = new Promise<boolean>((go) => {
+      timer = setTimeout(() => go(true), IN_THE_AIR_AT_MOST)
+    })
+    const stalled = await Promise.race([Promise.all(air).then(() => false), late])
+    clearTimeout(timer)
+    if (stalled) log('warn', `save: a write under ${from} has not answered, and sync moves it`)
   }
 
   /** Writes one document down: a note, a canvas or a page note. Everything that
@@ -454,7 +513,7 @@ export class Saving {
   private gone(note: NoteDoc): boolean {
     const path = note.path
     const tree = this.ws.tree
-    if (path === null || !tree || this.making.has(note)) return false
+    if (path === null || !tree || this.making.has(note) || this.followed.has(note)) return false
     if (this.ws.tabs.some((tab) => tab.note === note)) return false
     if (!within(tree.path, path)) return false
 

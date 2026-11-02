@@ -235,11 +235,11 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  merged into unstable at 9163eeb16: its raises were measured without them. Measured
  *  5,738,198.
  *
- *  The code raised on 2026-11-02, to 5,739,700, for #613: a move sync makes waits for
- *  the write in the air (`holdingWrites` in saving.svelte.ts). Measured 5,739,122.
+ *  The code raised on 2026-11-02, to 5,740,500, for #613: a move sync makes waits for
+ *  the write in the air (`holdingWrites` in saving.svelte.ts). Measured 5,740,275.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_739_700,
+  code: 5_740_500,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

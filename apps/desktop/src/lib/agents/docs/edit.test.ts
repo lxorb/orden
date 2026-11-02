@@ -284,7 +284,7 @@ describe('an edit to a closed note', () => {
 
     refusing.next = true
     expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 0 })
-    expect(fileOf('log.md')).toBe('one two')
+    expect(fileOf('log.md')).toBe('one\n\n two')
 
     // Still there to take back: nothing went.
     expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 1 })

@@ -636,6 +636,12 @@ describe('a note renamed while its write was in the air', () => {
     holdingVersion = null
     await saving.settled()
     expect(written().map((one) => one.path)).toEqual([`${SPACE}/b.md`])
+
+    // A write after it finds no row at the new name in a listing not read again yet,
+    // which is not the file being gone.
+    note.replace('# a again')
+    await saving.write(note)
+    expect(written().map((one) => one.path)).toEqual([`${SPACE}/b.md`, `${SPACE}/b.md`])
   })
 
   test('here waits for the write of a note whose tab has closed', async () => {

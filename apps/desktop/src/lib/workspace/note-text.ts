@@ -20,7 +20,15 @@ import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
 import { lineStarts } from '../search/lines'
 import { isMarkdownPath, samePath } from '../space-paths'
-import { applied, changeOf, type Edit, endingsLike, reverse } from '../search/replace'
+import {
+  applied,
+  appliedToFile,
+  changeOf,
+  diskKeepsEndings,
+  type Edit,
+  endingsLike,
+  reverse,
+} from '../search/replace'
 import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
@@ -289,13 +297,17 @@ async function writeClosed(
   if (read === null) return null
 
   const now = endingsLike(read, change.before)
+  // Worked out on one line ending, written into a file of others: lines it did not touch
+  // stay as they were, which the disk will not do for a file it would rewrite.
+  const foreign = now !== read
+  if (foreign && !diskKeepsEndings(read)) return null
   const same = now === change.before
   const edits = same ? change.edits : carriedPast(change.before, now, change.edits)
   if (!edits) return null
   const after = same ? change.after : applied(now, edits)
 
   await keep(change.path, read, keeping)
-  await writeFile(change.path, after)
+  await writeFile(change.path, foreign ? appliedToFile(read, edits) : after)
 
   const late = ws.documentAt(change.path)
   const caught = late?.live.carried(edits, now)

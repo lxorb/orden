@@ -482,6 +482,7 @@ class Workspace {
     // operation does names one of them. The open documents first, so that anything
     // asking about a note between two followers already meets its new path.
     this.fileOps.follow((op) => this.opened.follow(op, (id) => this.close(id)))
+    this.fileOps.follow((op) => this.saving.follow(op))
     this.fileOps.follow((op) => this.positions.follow(op))
     this.fileOps.follow((op) => this.device.follow(op))
     this.fileOps.follow((op) => this.closed.follow(op))
