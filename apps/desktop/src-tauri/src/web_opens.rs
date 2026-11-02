@@ -778,16 +778,18 @@ pub const BINDING: &str = "nibAsked";
 /// that stops every key had Ctrl+F do nothing at all (#397). Here they are Orden's as well.
 #[cfg(feature = "cef")]
 pub fn script() -> String {
-    without_store_button(SCRIPT).replacen(
-        "var open = window.open.bind(window)",
-        concat!(
-            "var opening = window.open.bind(window)\n  ",
-            "var open = function (url, name) {\n    ",
-            "if (typeof nibAsked === 'function') nibAsked(JSON.stringify([url, name]))\n    ",
-            "else opening(url, name)\n  }",
-        ),
-        1,
-    )
+    without_store_button(SCRIPT)
+        .replacen(
+            "var open = window.open.bind(window)",
+            concat!(
+                "var opening = window.open.bind(window)\n  ",
+                "var open = function (url, name) {\n    ",
+                "if (typeof nibAsked === 'function') nibAsked(JSON.stringify([url, name]))\n    ",
+                "else opening(url, name)\n  }",
+            ),
+            1,
+        )
+        .replacen(STOPPED_ENGINE_KEYS, "/^$/", 1)
 }
 
 /// The names of the keys `SCRIPT` leaves to the engine once a page has only stopped them,
