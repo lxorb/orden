@@ -3622,16 +3622,24 @@ class Workspace {
     return root ? linkedFiles(this.tree, root, carriedRows(transfer)) : []
   }
 
+  /** Whether a move into `intoFolder` would make one of `paths` the instructions of the
+   *  space it is the top of, which is said to the reader and not done. */
+  refusedAsInstructions(paths: string[], intoFolder: string): boolean {
+    if (
+      !paths.some((path) => isAgentsName(nameOf(path))) ||
+      !this.spaces.some((one) => samePath(one.root, intoFolder))
+    ) {
+      return false
+    }
+    void import('./reserved-name.svelte').then((one) => one.reservedName.tell(intoFolder))
+    return true
+  }
+
   async moveMany(paths: string[], intoFolder: string, undoing = false) {
     // A note called AGENTS in a folder stays one, and moves between folders; at the top
     // of a space it would stop being a note and become the setting. Only an Undo puts one
     // back; see `movedIn` in automation/acts.ts, which refuses an agent's the same way.
-    if (
-      !undoing &&
-      paths.some((path) => isAgentsName(nameOf(path))) &&
-      this.spaces.some((one) => samePath(one.root, intoFolder))
-    ) {
-      void import('./reserved-name.svelte').then((one) => one.reservedName.tell(intoFolder))
+    if (!undoing && this.refusedAsInstructions(paths, intoFolder)) {
       this.clearSelection()
       return
     }

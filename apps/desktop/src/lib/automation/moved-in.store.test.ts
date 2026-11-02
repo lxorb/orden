@@ -70,6 +70,16 @@ describe('a nested AGENTS.md moved to the top under another name', () => {
 })
 
 describe('a move under a new name', () => {
+  test('refused where it lands is taken, and nothing is renamed on the way', async () => {
+    hard.files.set(`${ROOT}/b/x.md`, 'the x in b')
+    hard.files.set(`${ROOT}/b/y.md`, 'the y in b')
+    await workspace.loadTree()
+
+    await expect(movedIn(ROOT, 'a/x.md', 'b/y.md')).rejects.toThrow('already there')
+    expect(hard.files.get(`${ROOT}/a/x.md`)).toBe('the x in a')
+    expect(hard.files.get(`${ROOT}/b/y.md`)).toBe('the y in b')
+  })
+
   test('goes through a stop that is free', async () => {
     await movedIn(ROOT, 'a/x.md', 'b/y.md')
 
@@ -90,7 +100,8 @@ describe('a move under a new name', () => {
 })
 
 describe('a tile of a nested AGENTS.md let go of over the top of the space', () => {
-  const tile = () => workspace.bookmarks.put(ROOT, [{ kind: 'note', path: 'a/AGENTS.md', text: '' }])
+  const tile = () =>
+    workspace.bookmarks.put(ROOT, [{ kind: 'note', path: 'a/AGENTS.md', text: '' }])
 
   test('keeps its tile, and does not take the place of the instructions', async () => {
     tile()
