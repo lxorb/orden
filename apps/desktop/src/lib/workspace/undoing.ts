@@ -83,8 +83,11 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
   try {
     switch (action.kind) {
       case 'delete':
+        // Where it landed goes on the step, which beside a note made at its name since
+        // is not where it was: a redo deletes this note, not that one.
+        action.path = await putBack(action)
         // And the index reads it again, so the links to it resolve at once.
-        await ws.fileCame(await putBack(action), action.folder ? 'folder' : 'file')
+        await ws.fileCame(action.path, action.folder ? 'folder' : 'file')
         break
       case 'create': {
         // Into Recently deleted, and what that kept goes on the step for a redo.
