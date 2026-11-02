@@ -77,8 +77,9 @@
     }
     if (under) {
       drag.transfer.dropEffect = startingEffect(allowed)
-      const refused = say('dragover', under)
-      if (!refused) drag.effect = effectOf(drag.transfer.dropEffect, allowed)
+      // `dispatchEvent` answers false for an event somebody prevented, which is taking it.
+      const taken = !say('dragover', under)
+      if (taken) drag.effect = effectOf(drag.transfer.dropEffect, allowed)
       else drag.effect = takesWords(under) ? startingEffect(allowed) : 'none'
     } else {
       drag.effect = 'none'
@@ -175,6 +176,24 @@
       transfer.setDragImage = (element) => {
         asked = element
       }
+      // A DataTransfer made by hand is a clipboard's to the engine, which then keeps neither
+      // of a drag's two words; they are kept here, as a drag's would be.
+      let allowed = 'uninitialized'
+      let wanted = 'none'
+      Object.defineProperties(transfer, {
+        effectAllowed: {
+          get: () => allowed,
+          set: (value) => {
+            allowed = value
+          },
+        },
+        dropEffect: {
+          get: () => wanted,
+          set: (value) => {
+            wanted = value
+          },
+        },
+      })
       drag = {
         source,
         transfer,
