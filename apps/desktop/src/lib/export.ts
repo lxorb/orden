@@ -66,17 +66,25 @@ export interface HtmlOptions {
  *  sheet, its fonts and pictures are `data:` addresses by the time it is written,
  *  and a bare page keeps the paths the note wrote - so those may load from
  *  anywhere, and nothing else may load at all. */
-export const CONTENT_POLICY = [
-  "default-src 'none'",
-  "script-src 'none'",
-  "object-src 'none'",
-  "base-uri 'none'",
-  "form-action 'none'",
-  "style-src * 'unsafe-inline'",
-  'img-src * data: blob:',
-  'media-src * data: blob:',
-  'font-src * data:',
-].join('; ')
+const contentPolicy = (pictures: string) =>
+  [
+    "default-src 'none'",
+    "script-src 'none'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "style-src * 'unsafe-inline'",
+    `img-src * data: blob:${pictures}`,
+    `media-src * data: blob:${pictures}`,
+    'font-src * data:',
+  ].join('; ')
+
+const CONTENT_POLICY = contentPolicy('')
+
+/** The same for a page that only ever goes to the printer and never leaves the machine:
+ *  a plane's sheet. A picture too big to inline, or outside what `read_asset` reads, is
+ *  left at the app's own address, which `*` does not cover and which is only a picture. */
+export const SHEET_POLICY = contentPolicy(' asset: http://asset.localhost')
 
 function declarations(tokens: Record<string, string>): string {
   return Object.entries(tokens)

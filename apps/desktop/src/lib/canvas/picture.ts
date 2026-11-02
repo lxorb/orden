@@ -15,7 +15,7 @@
  *  the one thing that both reads the same and rasterises at all. */
 
 import { escapeAll } from '@orden/markdown/html'
-import { assetsOf, CONTENT_POLICY, inlineImages, localSources, printInFrame } from '../export'
+import { assetsOf, inlineImages, localSources, printInFrame, SHEET_POLICY } from '../export'
 import { writtenPdf } from '../export/print'
 import { chooseTarget, download } from '../export/save'
 import { type Canvas, type CanvasNode } from './format'
@@ -507,7 +507,7 @@ async function sheetOf(drawing: Drawing) {
   // With the policy a note's page has. In a frame the sheet is under the app's own; for
   // a PDF, and for the dialog on a Mac, it is a file in a window of its own, under
   // nothing else, and a plane of one's own has markup on it. See trust.ts.
-  const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${CONTENT_POLICY}"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${SHEET_POLICY}"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
 
   return { html, page: { width: width / 96, height: height / 96, margin: 0, landscape: false } }
 }
