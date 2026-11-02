@@ -960,8 +960,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-01, to 3,431,700, for the fourth bug burn-down's fixes merged into
  *  unstable at 9163eeb16: unstable's raises were measured without them. Measured
- *  3,430,841. */
-const BUDGET = 3_431_700
+ *  3,430,841.
+ *
+ *  Raised 2026-11-02, to 3,440,700, for #790 and #791: a name that is not ASCII reads as
+ *  itself, by Chrome's rule, wherever a tab's name is drawn, and that is in front of the
+ *  first paint (`shownHost` in web-tab/address.ts, and no module of its own); and a page
+ *  whose process died is offered again. Measured 3,439,802. */
+const BUDGET = 3_440_700
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

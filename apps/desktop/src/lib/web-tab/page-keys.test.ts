@@ -126,15 +126,14 @@ describe('the same keys on the engine with no answer of its own', () => {
     inside.eval(script.replaceAll('!event.isTrusted', 'false').replace(onChromium, '/^$/'))
     const field = inside.document.getElementById('field') as HTMLInputElement
     field.addEventListener('keydown', (event) => event.stopPropagation())
-    field.dispatchEvent(
-      new inside.KeyboardEvent('keydown', {
-        bubbles: true,
-        cancelable: true,
-        key: 'x',
-        keyCode: code,
-        ctrlKey: true,
-      } as KeyboardEventInit),
-    )
+    const init: KeyboardEventInit & { keyCode: number } = {
+      bubbles: true,
+      cancelable: true,
+      key: 'x',
+      keyCode: code,
+      ctrlKey: true,
+    }
+    field.dispatchEvent(new inside.KeyboardEvent('keydown', init))
     await new Promise((done) => inside.setTimeout(done, 5))
     expect(asked).toEqual([name])
   })

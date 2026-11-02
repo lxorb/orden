@@ -3130,7 +3130,7 @@ mod shot {
 mod tests {
     use super::{
         address, allowed, capture_kinds, handed_over, is_ours, opening, origin_of, origin_written,
-        reader, Place, Profile, Trail, WebTabs, BLANK,
+        reader, tab_of, Place, Profile, Trail, WebTabs, BLANK,
     };
     use tauri::Url;
 

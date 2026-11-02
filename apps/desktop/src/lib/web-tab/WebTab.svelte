@@ -66,7 +66,7 @@
   import { watchScale, watchShifts } from './shifts'
   import { grants, siteOf } from './permissions.svelte'
   import { dialogs } from './dialogs.svelte'
-  import { asideFor, isMuted, keepZoom, zoomOf } from './sites'
+  import { asideFor, isMuted, zoomOf } from './sites'
   import { movedOn } from './used'
   import { visited } from './visited'
   import { webData } from './web-data.svelte'
