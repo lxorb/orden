@@ -66,7 +66,6 @@
       if (press.key !== 'Tab' || !press.shiftKey) return
       press.preventDefault()
       toggle.focus()
-      opened = true
     }
     landed.addEventListener('keydown', back)
     landed.addEventListener('focusout', () => landed.removeEventListener('keydown', back), {
