@@ -21,7 +21,8 @@ import { type TabKind, TAB_KINDS } from './workspace/tab-kinds'
  *  `space` is the sidebar's header, which is the space's name and its switcher;
  *  `panels` is the row of panel tabs; `list` is whichever panel is open, under
  *  them; `foot` is the row under it, which is the account, the theme and the
- *  settings; `tabs` is the strip of notes; `editor` is the note;
+ *  settings; `tabs` is the strip of notes; `editor` is the note; `notices` is a
+ *  card over the foot of the note with something to press on it, while one is up;
  *  `status` is the bar under it; `right` is the other side of the window, once
  *  something has been moved over to it.
  *
@@ -37,6 +38,7 @@ export const REGIONS = [
   'foot',
   'tabs',
   'editor',
+  'notices',
   'status',
   'right',
 ] as const

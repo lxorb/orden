@@ -100,7 +100,7 @@ Four sentences.
 
 ### The regions
 
-Eight, in the order the window draws them, which is the order Tab already walks:
+Nine, in the order the window draws them, which is the order Tab already walks:
 
 | | |
 | --- | --- |
@@ -110,6 +110,7 @@ Eight, in the order the window draws them, which is the order Tab already walks:
 | `foot` | the row under it: the account, the theme, the settings |
 | `tabs` | the strip of notes |
 | `editor` | the note |
+| `notices` | a card over the foot of the note with something to press on it, Undo or Retry, while one is up |
 | `status` | the bar under it, over a note |
 | `right` | the other side of the window, while it is showing |
 

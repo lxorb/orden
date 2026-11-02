@@ -21,6 +21,7 @@ describe('the order', () => {
       'foot',
       'tabs',
       'editor',
+      'notices',
       'status',
       'right',
     ])

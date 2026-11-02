@@ -3,7 +3,9 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
+  import { focusEditor } from './focus'
   import { dur } from './motion'
+  import { said as spoken } from './said.svelte'
   import { back } from './sync2/resurrected.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
@@ -38,6 +40,70 @@
     if (undoToast.kind) untrack(() => failed.dismiss())
   })
 
+  // Said through the region that was on the page first, and not by a region arriving
+  // with its words, which most readers never announce; see said.svelte.ts (#523). Each
+  // action that joins the Undo is said again, though the words are the same.
+  $effect(() => {
+    if (undoToast.batch.length && undoToast.kind)
+      spoken.say(`${said[undoToast.kind]}. ${t('Undo')}`)
+  })
+  $effect(() => {
+    if (failed.retry) spoken.say(`${t('Not moved')}. ${t('Retry')}`)
+  })
+  $effect(() => {
+    if (unread.shown) spoken.say(t('That file could not be read'))
+  })
+  $effect(() => {
+    if (back.said)
+      spoken.say(
+        t('{name} is back: {device} was writing in it', {
+          name: back.said.name,
+          device: back.said.device,
+        }),
+      )
+  })
+  $effect(() => {
+    if (unsynced.said) spoken.say(t('Changes to {name} are not syncing', { name: unsynced.said }))
+  })
+
+  /** Whether a hand or the keyboard is on the Undo: either holds it against the clock,
+   *  and it lingers only once both have gone. */
+  let handOn = false
+  let keysOn = false
+
+  function rest() {
+    if (!handOn && !keysOn) undoToast.linger()
+  }
+
+  /** The keyboard, handed back to where it came from as a card goes from under it: by
+   *  its own Undo, or by Ctrl+Z pressed on it. */
+  function handsBack(card: HTMLElement) {
+    let from: HTMLElement | null = null
+
+    const entered = (event: FocusEvent) => {
+      const came = event.relatedTarget
+      if (came instanceof HTMLElement && !card.contains(came)) from = came
+    }
+    const left = (event: FocusEvent) => {
+      if (event.relatedTarget instanceof Node && !card.contains(event.relatedTarget)) from = null
+    }
+    card.addEventListener('focusin', entered)
+    card.addEventListener('focusout', left)
+
+    return {
+      destroy() {
+        const at = document.activeElement
+        if (!from || (at !== document.body && at !== null && !card.contains(at))) return
+        const back = from
+        // After the card has left the page, or a press there has nothing to land on.
+        queueMicrotask(() => {
+          if (back.isConnected) back.focus({ preventScroll: true })
+          else focusEditor()
+        })
+      },
+    }
+  }
+
   // Gone with the component, and the timers with it.
   $effect(() => () => {
     undoToast.dismiss()
@@ -53,17 +119,38 @@
      the two came last dismissed the other, so this only decides a tie. -->
 {#if failed.retry}
   <!-- A card carried to a column whose note would not be written: it went back. -->
-  <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
+  <div
+    class="toast"
+    data-region="notices"
+    use:handsBack
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+  >
     <p>{t('Not moved')}</p>
     <button class="undo" onclick={() => failed.again()}>{t('Retry')}</button>
   </div>
 {:else if undoToast.kind}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="toast"
-    role="status"
+    data-region="notices"
+    use:handsBack
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    onpointerenter={() => undoToast.hold()}
-    onpointerleave={() => undoToast.linger()}
+    onpointerenter={() => {
+      handOn = true
+      undoToast.hold()
+    }}
+    onpointerleave={() => {
+      handOn = false
+      rest()
+    }}
+    onfocusin={() => {
+      keysOn = true
+      undoToast.hold()
+    }}
+    onfocusout={() => {
+      keysOn = false
+      rest()
+    }}
   >
     <p>{said[undoToast.kind]}</p>
     <button class="undo" onclick={() => void undoToast.undo(workspace)}>{t('Undo')}</button>
@@ -72,7 +159,7 @@
        read; see unread.svelte.ts. Nothing to press: there is no way back from a
        file another program holds, only the news that it does. -->
 {:else if unread.shown}
-  <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
+  <div class="toast" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
     <p>{t('That file could not be read')}</p>
   </div>
 {/if}{#if back.said}
@@ -80,9 +167,9 @@
        it; see sync2/resurrected.svelte.ts. Its own toast rather than a turn of the one
        above, so an Undo that is up is not taken away by it. Written against the block
        before it, because a line between two blocks is a space on the page. -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="toast"
-    role="status"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
     onpointerenter={() => back.hold()}
     onpointerleave={() => back.linger()}
@@ -97,9 +184,9 @@
 {/if}{#if unsynced.said}
   <!-- A file whose edits here do not sync: its name and its kind disagree since a
        rename. See sync2/unsynced.svelte.ts. -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="toast"
-    role="status"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
     onpointerenter={() => unsynced.hold()}
     onpointerleave={() => unsynced.linger()}

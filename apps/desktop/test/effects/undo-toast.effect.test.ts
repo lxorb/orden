@@ -8,9 +8,10 @@
  *  In the jsdom project because it mounts a component. */
 
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { said } from '../../src/lib/said.svelte'
 import UndoToast from '../../src/lib/UndoToast.svelte'
-import { undoToast } from '../../src/lib/undo-toast.svelte'
+import { UNDO_LINGER, undoToast } from '../../src/lib/undo-toast.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
 
 /** jsdom has no animations, and the toast flies in. */
@@ -76,4 +77,56 @@ test('the Undo row in a menu takes it away too', () => {
   flushSync()
   // Gone, on its way out: jsdom never finishes the fly, so the store is what is asked.
   expect(undoToast.kind).toBeNull()
+})
+
+/** #523: the toast arrived holding its words inside `role=status`, which most readers
+ *  never announce; its clock did not stop for the keyboard; and the keyboard fell to
+ *  `body` as it went. */
+describe('from the keyboard', () => {
+  const card = () => host.querySelector<HTMLElement>('.toast')
+  const undo = () => host.querySelector<HTMLElement>('.undo')
+
+  test('it is said through the region that was there first, not by arriving', () => {
+    workspace.undone.record({ kind: 'delete', path: 'A.md', content: 'a' })
+    flushSync()
+
+    expect(card()?.getAttribute('role')).toBeNull()
+    expect(said.words).toBe('Deleted. Undo')
+  })
+
+  test('the clock waits while the keyboard is on it, and starts as it leaves', () => {
+    vi.useFakeTimers()
+    workspace.undone.record({ kind: 'delete', path: 'A.md', content: 'a' })
+    flushSync()
+
+    undo()?.focus()
+    flushSync()
+    vi.advanceTimersByTime(UNDO_LINGER * 2)
+    expect(undoToast.kind).toBe('delete')
+
+    undo()?.blur()
+    vi.advanceTimersByTime(UNDO_LINGER)
+    expect(undoToast.kind).toBeNull()
+    vi.useRealTimers()
+  })
+
+  test('a pointer leaving does not start the clock under the keyboard', () => {
+    vi.useFakeTimers()
+    workspace.undone.record({ kind: 'delete', path: 'A.md', content: 'a' })
+    flushSync()
+
+    undo()?.focus()
+    card()?.dispatchEvent(new PointerEvent('pointerenter'))
+    card()?.dispatchEvent(new PointerEvent('pointerleave'))
+    vi.advanceTimersByTime(UNDO_LINGER * 2)
+    expect(undoToast.kind).toBe('delete')
+    vi.useRealTimers()
+  })
+
+  test('it can be found by F6', () => {
+    workspace.undone.record({ kind: 'delete', path: 'A.md', content: 'a' })
+    flushSync()
+
+    expect(card()?.dataset.region).toBe('notices')
+  })
 })
