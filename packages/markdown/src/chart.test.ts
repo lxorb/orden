@@ -326,3 +326,83 @@ describe('a kind an object would answer from its prototype', () => {
     }
   })
 })
+
+// The numbers a fence can hold are every finite double, so the arithmetic of the scale
+// is what has to hold: a NaN in an attribute is a chart that draws nothing, or half.
+describe('numbers at the ends of what a number can be', () => {
+  const DATA = [
+    '0, 0',
+    '1e308',
+    '1.7e308, 1.7e308',
+    '1e308, -1e308',
+    '-1.7e308, 1',
+    '1e308, 1, -5',
+    '1.7976931348623157e308',
+    '-1.7976931348623157e308',
+    '1.7976931348623157e308, -1.7976931348623157e308',
+    '-1.7e308',
+    '1e300, 1e-300',
+    '5e-324',
+    '-5e-324',
+    '5e-324, 1e-323',
+    '1e-320',
+  ]
+  const KINDS = ['bar', 'line', 'scatter', 'pie', 'donut', 'radar', 'polar']
+
+  test.each(KINDS.flatMap((kind) => DATA.map((data) => [kind, data] as const)))(
+    '%s of [%s] holds nothing but numbers',
+    (kind, data) => {
+      const figure = chartFigure(`type: ${kind}\nseries:\n  - data: [${data}]\n`)
+      expect(figure).toMatch(/<svg/)
+      expect(figure).not.toMatch(/NaN|Infinity|∞/)
+    },
+  )
+
+  test('a value is said as what it is, not as infinity', () => {
+    const svg = chartSvg(readChart('series:\n  - data: [1e307]\n')!)
+    expect(svg).toMatch(/<title>10(,000)+<\/title>/)
+    expect(svg).not.toMatch(/<title>∞/)
+  })
+
+  test('the scale stops where numbers stop, and its lines stay on the step', () => {
+    const svg = chartSvg(readChart('series:\n  - data: [1.7e308, -1.7e308]\n')!)
+    const ticks = [...svg.matchAll(/class="chart-tick"[^>]*>([^<]+)</g)].map((one) => one[1])
+    expect(ticks).toContain('0')
+    expect(ticks.some((one) => one?.startsWith('100,000,000'))).toBe(true)
+    expect(ticks.some((one) => one?.startsWith('-100,000,000'))).toBe(true)
+    for (const y of svg.matchAll(/class="chart-grid"[^>]* y1="([^"]+)"/g)) {
+      expect(Number(y[1])).toBeGreaterThanOrEqual(24)
+      expect(Number(y[1])).toBeLessThanOrEqual(300)
+    }
+  })
+
+  test('a radar at the edge keeps its rings inside the rim', () => {
+    const svg = chartSvg(readChart('type: radar\nseries:\n  - data: [1.7e308, 1, 1]\n')!)
+    expect(svg).not.toMatch(/NaN|Infinity/)
+    const rim = 146
+    for (const ring of svg.matchAll(/<polygon class="chart-grid" points="([^"]+)"/g)) {
+      for (const point of (ring[1] ?? '').split(' ')) {
+        const [x = 0, y = 0] = point.split(',').map(Number)
+        expect(Math.hypot(x - 320, y - 162)).toBeLessThanOrEqual(rim + 1)
+      }
+    }
+  })
+
+  test('a number that rounds to nothing is no negative zero', () => {
+    for (const data of ['-0, 5', '-0.004, 5']) {
+      const svg = chartSvg(readChart(`series:\n  - data: [${data}]\n`)!)
+      expect(svg).toContain('<title>0</title>')
+      expect(svg).not.toContain('-0<')
+    }
+  })
+
+  test('a pie too big to add up is still a pie', () => {
+    const svg = chartSvg(readChart('type: pie\nseries:\n  - data: [1.7e308, 1.7e308]\n')!)
+    expect(svg.match(/class="chart-slice"/g)).toHaveLength(2)
+  })
+
+  test('zeroes draw against the same scale they always asked for', () => {
+    const svg = chartSvg(readChart('series:\n  - data: [0, 0]\n')!)
+    expect(svg.match(/class="chart-grid"/g)).toHaveLength(5)
+  })
+})
