@@ -1,6 +1,14 @@
 import { describe, expect, test, vi } from 'vitest'
 import { SharedDoc } from '@orden/editor'
-import { awarenessUpdate, forget, readSync, receive, syncStep1, TEXT, unattended } from '@orden/rooms'
+import {
+  awarenessUpdate,
+  forget,
+  readSync,
+  receive,
+  syncStep1,
+  TEXT,
+  unattended,
+} from '@orden/rooms'
 import { ackFrame, epochFrame, NEW_EPOCH } from '@orden/sync-core/wire'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'

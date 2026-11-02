@@ -21,6 +21,7 @@
 import { history, invertedEffects, isolateHistory, redo, undo } from '@codemirror/commands'
 import {
   ChangeSet,
+  type ChangeSpec,
   type EditorSelection,
   EditorState,
   type Extension,
@@ -140,9 +141,52 @@ const marksKept = invertedEffects.of((transaction) =>
   ),
 )
 
+/** Whether the code unit at `at` is half of a character with its other half gone: the
+ *  first half with no second after it, or the second with no first before it. */
+function halfAt(doc: Text, at: number): boolean {
+  const [before, here, after] = [at - 1, at, at + 1].map((one) =>
+    one < 0 || one >= doc.length ? 0 : doc.sliceString(one, one + 1).charCodeAt(0),
+  ) as [number, number, number]
+  if (here >= 0xd800 && here <= 0xdbff) return !(after >= 0xdc00 && after <= 0xdfff)
+  if (here >= 0xdc00 && here <= 0xdfff) return !(before >= 0xd800 && before <= 0xdbff)
+  return false
+}
+
+/** No change leaves half a character behind (#545).
+ *
+ *  A position between the two halves of an emoji is one nothing should offer, and
+ *  anything that reckons in columns or offsets still can. The half left over cannot
+ *  reach a disk or another device as anything but U+FFFD, since what travels is UTF-8,
+ *  and a room's Yjs text refuses to be cut there at all. So what is typed between the
+ *  halves goes after the character, and what took one half takes both. A change that
+ *  leaves a whole character, a different one, is not this and is left alone.
+ *
+ *  As a change after the change rather than instead of it, which keeps whatever else
+ *  the transaction says and maps the caret through. */
+const wholeCharacters = EditorState.transactionFilter.of((made) => {
+  if (!made.docChanged) return made
+
+  const doc = made.newDoc
+  const mended: ChangeSpec[] = []
+  made.changes.iterChanges((fromA, toA, fromB, toB) => {
+    const first = fromB > 0 && halfAt(doc, fromB - 1)
+    const second = toB < doc.length && halfAt(doc, toB)
+
+    if (first && second && fromA === toA) {
+      mended.push({ from: fromB, insert: doc.sliceString(toB, toB + 1) })
+      mended.push({ from: toB, to: toB + 1 })
+      return
+    }
+    if (first) mended.push({ from: fromB - 1, to: fromB })
+    if (second) mended.push({ from: toB, to: toB + 1 })
+  })
+
+  return mended.length ? [made, { changes: mended, sequential: true }] : made
+})
+
 /** A document's own state: words and a history, nothing that draws. */
 function documentState(doc: string | Text): EditorState {
-  return EditorState.create({ doc, extensions: [history(), marksKept] })
+  return EditorState.create({ doc, extensions: [history(), marksKept, wholeCharacters] })
 }
 
 /** A change, as whoever listens to a document hears it: what changed, from which
@@ -316,6 +360,12 @@ export class SharedDoc {
     return this.state.doc
   }
 
+  /** The words a room has, for whatever `onLocal` tells it: these, and whatever it
+   *  said that is held back while somebody composes. See `held`. */
+  get roomWords(): Text {
+    return this.held ? this.held.apply(this.state.doc) : this.state.doc
+  }
+
   /** How many views are on it. Two is the same note in two panes. */
   get panes(): number {
     return this.views.size
@@ -401,7 +451,9 @@ export class SharedDoc {
    *  the document too, so undoing this edit later comes back to where it was
    *  made rather than to wherever another pane happens to be. */
   local(changes: ChangeSet, selection: EditorSelection, from: DocView) {
-    const made = this.state.update({ changes, selection })
+    // As the view made it, which its own filters have already been through: the two
+    // must not come to differ.
+    const made = this.state.update({ changes, selection, filter: false })
     this.state = made.state
 
     this.did()
@@ -508,6 +560,8 @@ export class SharedDoc {
     const made = this.state.update({
       changes,
       annotations: Transaction.addToHistory.of(false),
+      // What the room's words are is not this document's to mend.
+      filter: false,
     })
 
     this.state = made.state
@@ -741,6 +795,7 @@ export class SharedDoc {
 export function sharing(): Extension {
   return [
     sharedField,
+    wholeCharacters,
     EditorState.transactionExtender.of((transaction) =>
       sharedOf(transaction.startState) ? { annotations: Transaction.addToHistory.of(false) } : null,
     ),

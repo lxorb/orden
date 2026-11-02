@@ -695,6 +695,19 @@ describe('half of one character', () => {
     expect(note.text.toString()).toBe('a\u{1f601}b')
   })
 
+  test('reads the room’s words, held ones and all, while somebody composes', () => {
+    const note = new SharedDoc('ab')
+    const pane = new Composing(note)
+    pane.composing = true
+    note.arrived([{ from: 0, to: 0, insert: 'room ' }])
+
+    expect(note.text.toString()).toBe('ab')
+    expect(note.roomWords.toString()).toBe('room ab')
+    pane.composing = false
+    note.settle()
+    expect(note.roomWords.toString()).toBe('room ab')
+  })
+
   test('does not stand in the way of what arrives from a room', () => {
     const note = new SharedDoc('ab')
 
