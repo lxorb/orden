@@ -303,12 +303,21 @@ fn same_path(one: &Path, other: &Path) -> bool {
         .eq_ignore_ascii_case(&other.as_os_str().to_string_lossy())
 }
 
+/// Whether a character is one of Unicode's invisible format characters (Cf), which say how
+/// text is drawn and are no part of a name: `invoice\u{202E}fdp.exe` is an `.exe` that reads
+/// as `invoiceexe.pdf`, and Open runs it. The two joiners stay, which Persian and emoji
+/// spell with, as they do in Chrome's own rule for a file name.
+fn is_format(one: char) -> bool {
+    false && matches!(one, '\u{00AD}')
+}
+
 /// A name a file can be saved under on every desktop, out of whatever the server or
 /// the link said.
 ///
 /// The engine has already cleaned it for its own platform; this is the rule that does
 /// not depend on that. Nothing that is a path (`/`, `\`, `..` at the front), nothing a
-/// file system refuses (`<>:"|?*` and control characters), no dot or space at the end,
+/// file system refuses (`<>:"|?*` and control characters), nothing invisible that changes
+/// how it reads (`is_format`), no dot or space at the end,
 /// which Windows drops without saying, no dot at the front, which hides a file on the
 /// other two, and no device name. A name with nothing left is `download`, which is
 /// Chrome's word for it.
@@ -318,6 +327,7 @@ pub(crate) fn clean_name(suggested: &OsStr) -> String {
         .chars()
         .map(|one| {
             if one.is_control()
+                || is_format(one)
                 || matches!(one, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*')
             {
                 '_'
@@ -1260,6 +1270,17 @@ mod tests {
         assert_eq!(name("tab\there.txt"), "tab_here.txt");
         assert_eq!(name("report.pdf. . "), "report.pdf");
         assert_eq!(name(".hidden"), "hidden");
+    }
+
+    #[test]
+    fn what_changes_how_a_name_reads_is_replaced() {
+        assert_eq!(name("invoice\u{202E}fdp.exe"), "invoice_fdp.exe");
+        assert_eq!(name("a\u{2066}b\u{2069}.pdf"), "a_b_.pdf");
+        assert_eq!(name("a\u{200B}b\u{FEFF}.pdf"), "a_b_.pdf");
+        assert_eq!(name("a\u{061C}b\u{E0041}.pdf"), "a_b_.pdf");
+        // The joiners are how a name is spelled in Persian and in emoji.
+        assert_eq!(name("می\u{200C}خواهم.pdf"), "می\u{200C}خواهم.pdf");
+        assert_eq!(name("👩\u{200D}💻.pdf"), "👩\u{200D}💻.pdf");
     }
 
     #[test]

@@ -401,6 +401,22 @@ describe('the strip', () => {
     expect(keyRuns(itemIn(view, 'Reload').anywhere, 'away')).toBe(true)
   })
 
+  /** #397: Cmd+[ and Cmd+] are a browser's back and forward, and a row is how a key gets
+   *  out of a page on a Mac. Cmd+[ is a note's indent, so the rows exist only while a web
+   *  tab is in front; see `reloadRows`. */
+  test('takes back and forward on the brackets, from anywhere, as rows', () => {
+    const stepping = sources({
+      viewRows: [row('Back', 'web.back'), row('Forward', 'web.forward')],
+      keyFor: (command) =>
+        ({ 'web.back': 'Mod-[', 'web.forward': 'Mod-]' })[command] ?? KEYS[command] ?? null,
+      isWindowCommand: (command) => command.startsWith('app.') || command.startsWith('web.'),
+    })
+    const view = menu(describeMenuBar(stepping).entries, 'view')
+    expect(itemIn(view, 'Back')).toMatchObject({ accelerator: 'Cmd+[', anywhere: true })
+    expect(itemIn(view, 'Forward')).toMatchObject({ accelerator: 'Cmd+]', anywhere: true })
+    expect(keyRuns(itemIn(view, 'Back').anywhere, 'page')).toBe(true)
+  })
+
   test('runs each row’s own function, by the row’s id', () => {
     const ran: string[] = []
     const groups: MenuGroup[] = [

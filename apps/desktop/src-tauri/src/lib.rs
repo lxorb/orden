@@ -796,6 +796,18 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
 
+    // A web tab's page whose process died, on the two engines that say so to the app rather
+    // than to the page; see web_page.rs. A process that ended normally is the page closing.
+    #[cfg(feature = "cef")]
+    let builder = builder.on_web_content_process_terminate(|view, ended| {
+        use tauri::webview::WebContentProcessTerminationReason as Reason;
+        if !matches!(ended.reason, Reason::Normal) {
+            web_page::ended(view);
+        }
+    });
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    let builder = builder.on_web_content_process_terminate(web_page::ended);
+
     #[cfg(desktop)]
     let builder = builder.setup(move |app| ready(app, ui.as_ref()));
     #[cfg(not(desktop))]

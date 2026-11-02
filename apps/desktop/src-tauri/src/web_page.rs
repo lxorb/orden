@@ -29,9 +29,13 @@
 //! not arrive, why - the word the bar's https-first waits for (web-tab/upgrade.ts). Emil,
 //! 2026-10-13 (#235): a host typed with no scheme was tried over https alone.
 //!
+//! And **a page whose process died** (#791), which every engine says its own way:
+//! `WebView2` as `ProcessFailed` on the page, here; `WKWebView` and Orden's own Chromium to
+//! the one hook the app's builder has for it (`run_on` in lib.rs), which lands in `ended`.
+//!
 //! All of it is said to the window as one event, `nib://web-page`, carrying the tab.
-//! `WebView2`'s alone: elsewhere nothing is said, a video fills its pane as it did, and
-//! a mute is the page's own media elements told to be quiet.
+//! But for that last, `WebView2`'s alone: elsewhere nothing is said, a video fills its pane
+//! as it did, and a mute is the page's own media elements told to be quiet.
 
 use serde::Serialize;
 use tauri::AppHandle;
@@ -57,6 +61,9 @@ pub enum Said {
         url: String,
         failure: Option<Failure>,
     },
+    /// The page's process has died: a white box from here on, until somebody builds it
+    /// again. The pane offers that; see `ended` in pages.svelte.ts.
+    Crashed,
 }
 
 /// Why a page did not arrive, in the three kinds that decide anything: nothing answered
@@ -86,6 +93,23 @@ struct Heard {
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub fn leaves(vk: u32, down: bool) -> bool {
     down && matches!(vk, 0x1B | 0x7A)
+}
+
+/// A webview's process has died: said to its window, if it is a tab's page. The app's own
+/// page goes through the same hook, and has nothing to say it to.
+#[cfg_attr(not(any(feature = "cef", target_os = "macos")), allow(dead_code))]
+pub fn ended(view: &tauri::Webview) {
+    use tauri::{Emitter, Manager};
+
+    let Some(tab) = crate::web_tabs::tab_of(view.label()) else {
+        return;
+    };
+    let window = view.window().label().to_string();
+    let heard = Heard {
+        tab,
+        said: Said::Crashed,
+    };
+    let _ = view.app_handle().emit_to(window.as_str(), SAID, heard);
 }
 
 /// What a page is told when its sound is turned off or on, on an engine that cannot
@@ -139,6 +163,7 @@ mod heard {
         ICoreWebView2, ICoreWebView2Controller, ICoreWebView2NavigationCompletedEventArgs,
         ICoreWebView2NavigationCompletedEventArgs2, ICoreWebView2_8, COREWEBVIEW2_KEY_EVENT_KIND,
         COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN, COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN,
+        COREWEBVIEW2_PROCESS_FAILED_KIND, COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_EXITED,
         COREWEBVIEW2_WEB_ERROR_STATUS, COREWEBVIEW2_WEB_ERROR_STATUS_CANNOT_CONNECT,
         COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_COMMON_NAME_IS_INCORRECT,
         COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_EXPIRED,
@@ -154,7 +179,8 @@ mod heard {
     use webview2_com::{
         AcceleratorKeyPressedEventHandler, ContainsFullScreenElementChangedEventHandler,
         ExecuteScriptCompletedHandler, IsDocumentPlayingAudioChangedEventHandler,
-        IsMutedChangedEventHandler, NavigationCompletedEventHandler, ZoomFactorChangedEventHandler,
+        IsMutedChangedEventHandler, NavigationCompletedEventHandler, ProcessFailedEventHandler,
+        ZoomFactorChangedEventHandler,
     };
     use windows_core::{Interface, BOOL, PWSTR};
 
@@ -267,6 +293,23 @@ mod heard {
                 let _ = eight.add_IsDocumentPlayingAudioChanged(&playing, &raw mut token);
                 let _ = eight.add_IsMutedChanged(&muted, &raw mut token);
             }
+
+            // Its process, gone. The main frame's only, which is the page: a frame of another
+            // site crashing leaves the page around it, and the window has nothing to offer
+            // for it. Nor for the engine's own process, whose every page goes at once and
+            // which a Reload here could not bring back.
+            let told = tell.clone();
+            let failed = ProcessFailedEventHandler::create(Box::new(move |_, args| {
+                let Some(args) = args else { return Ok(()) };
+                let mut kind = COREWEBVIEW2_PROCESS_FAILED_KIND::default();
+                args.ProcessFailedKind(&raw mut kind)?;
+                if kind == COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_EXITED {
+                    told(Said::Crashed);
+                }
+                Ok(())
+            }));
+            let mut token = 0i64;
+            let _ = core.add_ProcessFailed(&failed, &raw mut token);
 
             let told = tell.clone();
             let filled =
@@ -473,6 +516,16 @@ mod tests {
         })
         .expect("json");
         assert_eq!(zoom["factor"], 1.25);
+
+        let crashed = serde_json::to_value(Heard {
+            tab: "d".into(),
+            said: Said::Crashed,
+        })
+        .expect("json");
+        assert_eq!(
+            crashed,
+            serde_json::json!({ "tab": "d", "said": "crashed" })
+        );
     }
 
     #[test]
