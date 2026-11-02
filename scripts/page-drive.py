@@ -87,6 +87,23 @@ def xdo(*words):
     subprocess.run(["xdotool", *map(str, words)], capture_output=True, check=False)
 
 
+def origin():
+    """Where the window's page starts on the screen, under whatever frame a desktop gave it."""
+    found = subprocess.run(["xdotool", "search", "--name", "Orden"], capture_output=True, text=True, check=False)
+    said = subprocess.run(
+        ["xwininfo", "-id", found.stdout.split()[0]], capture_output=True, text=True, check=False
+    ).stdout
+    x = said.split("Absolute upper-left X:")[1].split()[0]
+    y = said.split("Absolute upper-left Y:")[1].split()[0]
+    return int(x), int(y)
+
+
+def move(x, y):
+    """The pointer to a place in the window's screen pixels."""
+    left, top = origin()
+    xdo("mousemove", int(x + left), int(y + top))
+
+
 def picture(name):
     """The whole screen, as the X server has it."""
     path = OUT / f"{name}.png"
@@ -112,10 +129,10 @@ def dragged(start, end, y):
     x = (start["x"] + 40) * ratio
     y0 = (start["y"] + start["height"] / 2) * ratio
     y1 = (end["y"] + end["height"] * y) * ratio
-    xdo("mousemove", x, y0)
+    move(x, y0)
     xdo("mousedown", 1)
     for step in range(1, 13):
-        xdo("mousemove", x, y0 + (y1 - y0) * step / 12)
+        move(x, y0 + (y1 - y0) * step / 12)
         time.sleep(0.05)
     # At rest a moment, as a hand comes to rest before it lets go.
     time.sleep(0.5)
@@ -175,22 +192,42 @@ def lifted(start, end):
     x = (start["x"] + 40)
     y0 = start["y"] + start["height"] / 2
     y1 = end["y"] + end["height"] / 2
-    xdo("mousemove", x, y0)
+    move(x, y0)
     xdo("mousedown", 1)
     for step in range(1, 13):
-        xdo("mousemove", x, y0 + (y1 - y0) * step / 12)
+        move(x, y0 + (y1 - y0) * step / 12)
         time.sleep(0.05)
     time.sleep(0.5)
 
 
 def stale():
-    """The window loses the focus with the button down, as alt-tab does: nothing goes on."""
+    """The window loses the focus with the button down, as alt-tab does: nothing goes on. Only
+    a window manager moves the focus as a desktop does, so without one it is not asked."""
+    wm = subprocess.run(["xprop", "-root", "_NET_SUPPORTING_WM_CHECK"], capture_output=True, text=True, check=False)
+    if "window id" not in wm.stdout:
+        print("stale: no window manager to take the focus away, not asked")
+        return
+    other = subprocess.Popen(["xmessage", "-geometry", "200x100+1300+800", "another app"])
+    found = ""
+    for _ in range(50):
+        found = subprocess.run(["xdotool", "search", "--class", "xmessage"], capture_output=True, text=True, check=False).stdout
+        if found.split():
+            break
+        time.sleep(0.1)
+    own = subprocess.run(["xdotool", "search", "--name", "Orden"], capture_output=True, text=True, check=False).stdout.split()
+    xdo("windowactivate", "--sync", own[0])
     run(HEAR)
     rows = run(ROWS) or []
+    # A press of its own first, for the page to have the keyboard, as a hand's would.
+    move(600, 400)
+    xdo("click", 1)
+    time.sleep(0.3)
     before = run("nib.workspace.notes.map((one) => one.path).sort()")
     lifted(rows[-1], rows[1])
-    root = subprocess.run(["xwininfo", "-root"], capture_output=True, text=True, check=False).stdout
-    xdo("windowfocus", root.split("Window id: ")[1].split()[0])
+    heard = run("window.__heard.splice(0)") or []
+    if "dragover" not in heard:
+        fail(f"no drag to lose the pointer of: {heard[-5:]}")
+    xdo("windowactivate", "--sync", found.split()[0])
     time.sleep(0.5)
     heard = run("window.__heard.splice(0)") or []
     if "dragend" not in heard:
@@ -202,8 +239,10 @@ def stale():
         fail(f"a drag over with the focus gone still said {late[:5]}")
     xdo("mouseup", 1)
     time.sleep(0.3)
+    other.kill()
+    xdo("windowactivate", "--sync", own[0])
     # The next plain click, anywhere, that used to end it on the row it was over.
-    xdo("mousemove", 600, 400)
+    move(600, 400)
     xdo("click", 1)
     time.sleep(0.5)
     after = run("nib.workspace.notes.map((one) => one.path).sort()")
@@ -211,14 +250,12 @@ def stale():
         fail(f"a drag that lost its pointer moved a note: {set(after or []) ^ set(before or [])}")
     if "drop" in (run("window.__heard.splice(0)") or []):
         fail("a drag that lost its pointer dropped")
-    # The window has the keyboard back, for what follows.
-    run("window.focus(); return true")
-    print("stale: nothing moved")
+    print("stale: ended with the focus, nothing moved")
 
 
 def chord():
     """The right button pressed and let go during a left drag leaves it going."""
-    run("window.__heard.splice(0); return true")
+    run(HEAR)
     rows = run(ROWS) or []
     lifted(rows[-1], rows[1])
     xdo("mousedown", 3)
@@ -228,7 +265,6 @@ def chord():
     heard = run("window.__heard.splice(0)") or []
     if "dragend" in heard or "dragover" not in heard:
         fail(f"another button's release ended the drag: {heard[-5:]}")
-    run("document.dispatchEvent(new Event('noop')); return true")
     xdo("key", "Escape")
     time.sleep(0.3)
     xdo("mouseup", 1)
@@ -268,14 +304,15 @@ def words():
     word = run(f"{WORD}('beta')")
     goal = run(f"{WORD}('epsilon')")
     x, y = word["x"] + word["width"] / 2, word["y"] + word["height"] / 2
-    xdo("mousemove", x, y)
+    move(x, y)
     xdo("click", "--repeat", 2, "--delay", 60, 1)
-    time.sleep(0.4)
+    # Past the time a third press would be a triple click.
+    time.sleep(0.8)
     print("selected", run("getSelection().toString()"))
     xdo("mousedown", 1)
     x1, y1 = goal["x"] + goal["width"] + 2, goal["y"] + goal["height"] / 2
     for step in range(1, 13):
-        xdo("mousemove", x + (x1 - x) * step / 12, y + (y1 - y) * step / 12)
+        move(x + (x1 - x) * step / 12, y + (y1 - y) * step / 12)
         time.sleep(0.05)
     time.sleep(0.5)
     picture("word-over")
@@ -306,7 +343,8 @@ HOLE = """(() => {
 def corners(shot, hole, label):
     """The site's colour in the hole's four inside corners, and not beyond two of its edges."""
     ratio = hole["ratio"]
-    left, top = hole["x"] * ratio, hole["y"] * ratio
+    at_x, at_y = origin()
+    left, top = hole["x"] * ratio + at_x, hole["y"] * ratio + at_y
     right, bottom = left + hole["width"] * ratio, top + hole["height"] * ratio
     # Five pixels in, past a pane's rounded corner; two out, past a rounded fractional edge.
     for x, y, name in (
@@ -342,7 +380,9 @@ def zoom():
             hole = run(HOLE)
             if hole:
                 shot = picture(f"zoom-{int(factor * 100)}")
-                if shot.getpixel((int((hole["x"] + 8) * hole["ratio"]), int((hole["y"] + 8) * hole["ratio"]))) == SITE:
+                at_x, at_y = origin()
+                inside = (int((hole["x"] + 8) * hole["ratio"]) + at_x, int((hole["y"] + 8) * hole["ratio"]) + at_y)
+                if shot.getpixel(inside) == SITE:
                     break
         print(f"at {int(factor * 100)}%", hole)
         if not hole:
