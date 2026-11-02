@@ -236,7 +236,8 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  5,738,198.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_739_000,
+  // Raised 1,000 for #680, the interface's zoom in modes.svelte.ts. Measured 5,739,049.
+  code: 5_740_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
