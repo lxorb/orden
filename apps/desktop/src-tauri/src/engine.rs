@@ -534,10 +534,41 @@ pub(crate) fn internal(url: &str) -> bool {
 
 #[cfg(feature = "cef")]
 pub(crate) mod devtools;
+#[cfg(feature = "cef")]
+pub(crate) mod renderer;
 
 #[cfg(test)]
 mod tests {
     use super::{internal, APP_PROFILE, ROOT};
+
+    /// A window whose page is one of the app's own holds the app's commands and the key to
+    /// them, so on CEF it is in the interface's profile, where no extension installed for
+    /// the web runs. Read off the source, because a window built past it looks the same to
+    /// the compiler and comes up working. And no page builds one: see
+    /// test/permissions.test.ts.
+    #[test]
+    fn every_window_of_an_app_page_is_in_the_interface_s_profile() {
+        let root = crate::app_dir().join("src");
+        let mut sources = vec![root.clone()];
+        let mut past = Vec::new();
+        while let Some(at) = sources.pop() {
+            for entry in std::fs::read_dir(&at).expect("the crate's source").flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    sources.push(path);
+                    continue;
+                }
+                let text = std::fs::read_to_string(&path).unwrap_or_default();
+                let text = text.split("#[cfg(test)]").next().unwrap_or_default();
+                let of_the_app = text.contains("WebviewUrl::App(") || text.contains("WebviewUrl::default()");
+                let in_it = text.contains("engine::own_window(") || text.contains("engine::own_profile(");
+                if of_the_app && !in_it {
+                    past.push(path.display().to_string());
+                }
+            }
+        }
+        assert!(past.is_empty(), "an app page outside the interface's profile: {past:?}");
+    }
 
     #[test]
     fn the_engine_s_own_first_page_is_nobody_s_address() {

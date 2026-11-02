@@ -877,6 +877,39 @@ mod tests {
         }
     }
 
+    /// Only a real head is the page's head: the word in a comment, or a `<header>`
+    /// standing where no head was written, must not put the policy behind what comes first.
+    #[test]
+    fn the_policy_goes_to_the_real_head() {
+        let meta = "<meta http-equiv=\"Content-Security-Policy\"";
+
+        let page = "<!-- a <head> in words --><!doctype html><head><script>1</script>";
+        assert!(super::fenced(page).contains(&format!("<head>{meta}")), "{page}");
+        assert!(!super::fenced(page).contains(&format!("words --><!doctype html>{meta}")));
+
+        // No head at all: before the header and whatever follows it.
+        let page = "<!doctype html><header><script>1</script></header><head>";
+        assert!(super::fenced(page).starts_with(&format!("<!doctype html>{meta}")), "{page}");
+
+        // A head named only further down, past something that runs, is no head to wait for.
+        let page = "<script>1</script><head>";
+        assert!(super::fenced(page).starts_with(meta), "{page}");
+        let page = "<title><head></title><script>1</script>";
+        assert!(super::fenced(page).starts_with(meta), "{page}");
+
+        // A `>` in an attribute does not end the tag.
+        let page = "<html data-a=\"x>y\"><head data-b='p>q'><p>";
+        assert!(super::fenced(page).contains(&format!("data-b='p>q'>{meta}")), "{page}");
+
+        // A comment the parser closes at once hides nothing behind it.
+        let page = "<!--><script>1</script><!-- --><head>";
+        assert!(super::fenced(page).starts_with(&format!("<!-->{meta}")) || super::fenced(page).starts_with(meta), "{page}");
+
+        // Whitespace and a byte order mark before the head, and the tag's own boundary.
+        let page = "\u{feff}\n <!DOCTYPE html>\n<HTML>\n<HEAD\nlang=en>\n<title>t</title>";
+        assert!(super::fenced(page).contains(&format!("lang=en>{meta}")), "{page}");
+    }
+
     /// The policy comes before anything it applies to, after the doctype that decides how
     /// the page lays out, and nothing of the page is lost.
     #[test]

@@ -1,5 +1,14 @@
 import { createHash } from 'node:crypto'
-import { readdirSync, readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
@@ -90,6 +99,126 @@ describe('the workflow that publishes it', () => {
  *  it. The builds still run on a branch; the job that writes does not. */
 describe('the release', () => {
   const workflow = repo('.github', 'workflows', 'release.yml')
+  const publishJob = () =>
+    /\n {2}publish:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n|$)/.exec(workflow)?.[1] ?? ''
+  /** One step's `run:` block, as the shell is handed it. */
+  const stepRun = (name: string) => {
+    const step = new RegExp(`- name: ${name}\\n([\\s\\S]*?)(?=\\n {6}- |$)`).exec(publishJob())?.[1]
+    const block = /run: \|\n([\s\S]*)/.exec(step ?? '')?.[1] ?? ''
+    return block.replace(/^ {10}/gm, '')
+  }
+
+  /** The upload step run for real against a `gh` that fails where it is told to, and that
+   *  says the release holds what it was given. Under `bash -e`, as a runner runs it. */
+  function upload(gh: { refuse?: string; drop?: string }) {
+    const at = mkdtempSync(join(tmpdir(), 'nib-release-'))
+    mkdirSync(join(at, 'bin'))
+    mkdirSync(join(at, 'artifacts'))
+    const bundles = ['Nib-1.0.0-linux-x64.AppImage', 'Nib-1.0.0-windows-x64-setup.exe']
+    for (const name of bundles) writeFileSync(join(at, 'artifacts', name), 'bytes')
+    writeFileSync(
+      join(at, 'latest.json'),
+      JSON.stringify({
+        platforms: Object.fromEntries(
+          bundles.map((name) => [
+            name,
+            { url: `https://github.com/o/r/releases/download/t/${name}` },
+          ]),
+        ),
+      }),
+    )
+    const log = join(at, 'gh.log')
+    const held = join(at, 'held')
+    writeFileSync(held, '')
+    writeFileSync(
+      join(at, 'bin', 'gh'),
+      `#!/bin/bash
+echo "$*" >> "${log}"
+case "$1 $2" in
+  "release upload")
+    if [ -n "$REFUSE" ] && [[ "$*" == *"$REFUSE"* ]]; then exit 1; fi
+    name=$(basename "$4")
+    if [ -z "$DROP" ] || [ "$name" != "$DROP" ]; then echo "$name" >> "${held}"; fi
+    ;;
+  "release view") cat "${held}" ;;
+esac
+`,
+    )
+    chmodSync(join(at, 'bin', 'gh'), 0o755)
+    const ran = spawnSync('bash', ['-e', '-c', stepRun('Upload the files')], {
+      cwd: at,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: `${join(at, 'bin')}:${process.env.PATH ?? ''}`,
+        TAG: 'v1.0.0',
+        FILES: 'updates',
+        REFUSE: gh.refuse ?? '',
+        DROP: gh.drop ?? '',
+      },
+    })
+    return { status: ran.status, calls: readFileSync(log, 'utf8'), said: ran.stdout + ran.stderr }
+  }
+
+  // Bash on a runner of every kind this job is, Linux; a Windows desk has none to trust.
+  describe.skipIf(process.platform === 'win32')('uploads', () => {
+    test('a refused installer stops the step, before the manifest that names it', () => {
+      const { status, calls } = upload({ refuse: 'updates artifacts/Nib-1.0.0-linux-x64.AppImage' })
+      expect(status).not.toBe(0)
+      expect(calls).not.toContain('latest.json')
+    })
+
+    test('a manifest naming a file the release does not hold is not uploaded', () => {
+      const { status, calls, said } = upload({ drop: 'Nib-1.0.0-windows-x64-setup.exe' })
+      expect(status).not.toBe(0)
+      expect(calls).not.toContain('latest.json')
+      expect(said).toContain('Nib-1.0.0-windows-x64-setup.exe')
+    })
+
+    test('with everything up, the manifest goes last', () => {
+      const { status, calls } = upload({})
+      expect(status).toBe(0)
+      expect(calls.trim().split('\n').at(-1)).toContain('latest.json')
+    })
+  })
+
+  /** `releases/latest/download/latest.json` is what every install asks: a tag's release
+   *  is a draft until its manifest is up, so the address never answers 404 from a release
+   *  that is only half there. Both workflows that may make it make it a draft, and the
+   *  desktop's publish, the one holding the manifest, is the only one that publishes it. */
+  describe('a tag', () => {
+    test('is a draft until its manifest is up, and handed on only after', () => {
+      const job = publishJob()
+      expect(stepRun('Make the draft')).toContain('--draft')
+      const steps = [
+        'Make the draft',
+        'Upload the files',
+        'Publish the release',
+        'Hand the release',
+      ]
+      const places = steps.map((name) => job.indexOf(`- name: ${name}`))
+      expect(places.every((at) => at >= 0)).toBe(true)
+      expect(places).toEqual([...places].sort((a, b) => a - b))
+      expect(stepRun('Publish the release')).toContain('--draft=false')
+    })
+
+    test('a run again never makes a second draft, nor publishes one already out', () => {
+      expect(stepRun('Make the draft')).toContain('gh release view "$TAG"')
+      expect(stepRun('Publish the release')).toContain('isDraft')
+    })
+
+    test('the phones add to the draft and never publish it', () => {
+      const mobile = repo('.github', 'workflows', 'publish-mobile.yml')
+      const step = /- name: Publish the release\n([\s\S]*?)(?=\n {6}- )/.exec(mobile)?.[1] ?? ''
+      const made = /- name: (?:Make the draft|Publish the release)\n([\s\S]*?)(?=\n {6}- )/.exec(
+        mobile,
+      )?.[1]
+      expect(step).toBe('')
+      expect(made).toContain('--draft')
+      expect(made).toContain('gh release view "$TAG"')
+      expect(mobile).not.toContain('--draft=false')
+    })
+  })
 
   test('publishes only from unstable or a tag', () => {
     const job = /\n {2}publish:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n|$)/.exec(workflow)?.[1] ?? ''
