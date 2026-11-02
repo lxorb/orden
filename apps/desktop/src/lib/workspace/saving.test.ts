@@ -13,6 +13,9 @@ const sent: { command: string; path: string; content: string }[] = []
 /** A write held open, so a test can do something while it is in the air. */
 let holding: Promise<void> | null = null
 
+/** A version being kept held open, which comes before the write it is for. */
+let holdingVersion: Promise<void> | null = null
+
 /** Paths the disk refuses a write to, and how many more times it will. */
 const refusing = new Map<string, number>()
 
@@ -24,6 +27,7 @@ vi.mock('../tauri', () => ({
       content: typeof args?.content === 'string' ? args.content : '',
     })
     if (command === 'write_note' && holding) await holding
+    if (command === 'snapshot_note' && holdingVersion) await holdingVersion
 
     const path = typeof args?.path === 'string' ? args.path : ''
     const left = refusing.get(path) ?? 0
@@ -48,7 +52,7 @@ vi.mock('../sync.svelte', () => ({
   sync: Object.assign(light, { nudge: () => undefined, wrote: () => undefined }),
 }))
 
-const { Saving } = await import('./saving.svelte')
+const { IN_THE_AIR_AT_MOST, Saving } = await import('./saving.svelte')
 const { settleUp } = await import('../parting')
 const { NoteDoc, Tab, UNTITLED } = await import('./documents.svelte')
 type Writes = import('./saving.svelte').Writes
@@ -598,6 +602,104 @@ describe('a note renamed while its write was in the air', () => {
 
     passOver()
     await renaming
+  })
+
+  /** The tab closed and the write went on without it. Nothing lists the document any
+   *  more, so the move held nothing and the words landed at the old path, a second file
+   *  beside the one that moved. */
+  test('by sync takes along a note whose tab closed on the way to its write', async () => {
+    const { saving, note, closed } = open(`${SPACE}/a.md`)
+
+    let letGo = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    holdingVersion = new Promise<void>((go) => {
+      letGo = () => go()
+    })
+
+    note.replace('# a typed')
+    closed()
+    await vi.waitFor(() => expect(versions()).toHaveLength(1))
+
+    await saving.holdingWrites(`${SPACE}/a.md`, () => {
+      saving.follow({
+        op: 'moved',
+        from: `${SPACE}/a.md`,
+        to: `${SPACE}/b.md`,
+        kind: 'file',
+        root: SPACE,
+      })
+      return Promise.resolve()
+    })
+
+    letGo()
+    holdingVersion = null
+    await saving.settled()
+    expect(written().map((one) => one.path)).toEqual([`${SPACE}/b.md`])
+  })
+
+  test('here waits for the write of a note whose tab has closed', async () => {
+    const { saving, note, closed } = open(`${SPACE}/a.md`)
+    const order: string[] = []
+
+    let letGo = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    holding = new Promise<void>((go) => {
+      letGo = () => go()
+    })
+
+    note.replace('# a typed')
+    closed()
+    await vi.waitFor(() => expect(written()).toHaveLength(1))
+
+    const renaming = saving.holdingUnder(`${SPACE}/a.md`, () => {
+      order.push('renamed')
+      return Promise.resolve()
+    })
+    for (let turn = 0; turn < 20; turn++) await Promise.resolve()
+    expect(order).toEqual([])
+
+    letGo()
+    holding = null
+    await renaming
+    expect(order).toEqual(['renamed'])
+  })
+
+  /** A pass has the engine to itself: a write the disk never answers, on a share that
+   *  stalled, must not keep it there, with every operation queued behind it. */
+  test('by sync waits for a write in the air only so long', async () => {
+    vi.useFakeTimers()
+    const { saving, note } = open(`${SPACE}/a.md`)
+
+    let letGo = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    holding = new Promise<void>((go) => {
+      letGo = () => go()
+    })
+
+    note.replace('# a typed')
+    const writing = saving.write(note)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(written()).toHaveLength(1)
+
+    let ran = false
+    const moving = saving.holdingWrites(`${SPACE}/a.md`, () => {
+      ran = true
+      return Promise.resolve()
+    })
+
+    await vi.advanceTimersByTimeAsync(IN_THE_AIR_AT_MOST - 1)
+    expect(ran).toBe(false)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(ran).toBe(true)
+    await moving
+
+    letGo()
+    holding = null
+    await writing
+    vi.useRealTimers()
   })
 
   /** Something that did not wait - a space renamed, a file moved by sync - moves the

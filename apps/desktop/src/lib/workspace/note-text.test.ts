@@ -640,10 +640,8 @@ describe('a closed note written to after the change was worked out', () => {
   })
 
   /** An agent's edits are worked out on one line ending (`wordsOf` in agents/docs), and
-   *  a file with Windows ones read as changed on every line, which overlapped them. The
-   *  disk puts the file's own endings back; see `as_written` in notes.rs. */
-  test('and takes a file that differs only by its line endings for the same words', async () => {
-    const { ws } = space({ [NOTE]: 'one\r\nthe plan #two words#\r\nthree\r\n' })
+   *  a file with Windows ones read as changed on every line, which overlapped them. */
+  describe('in a file with other line endings than the change was worked out on', () => {
     const lf = {
       path: NOTE,
       before: 'one\nthe plan #two words#\nthree\n',
@@ -652,27 +650,68 @@ describe('a closed note written to after the change was worked out', () => {
       back: [{ from: 13, to: 23, insert: '#two words#' }],
     }
 
-    expect(await replaceInNotes(ws, [lf])).toBe(1)
-    expect(disk.get(NOTE)).toBe(lf.after)
+    test('takes them for the same words, and puts them back', async () => {
+      const { ws } = space({ [NOTE]: 'one\r\nthe plan #two words#\r\nthree\r\n' })
 
-    // What the disk would have made of it, which an undo reads back.
-    disk.set(NOTE, 'one\r\nthe plan #two-words\r\nthree\r\n')
-    await undoLastFileAction(ws as unknown as PutsBack)
-    expect(disk.get(NOTE)).toBe('one\r\nthe plan #two words#\r\nthree\r\n')
-  })
+      expect(await replaceInNotes(ws, [lf])).toBe(1)
+      expect(disk.get(NOTE)).toBe('one\r\nthe plan #two-words\r\nthree\r\n')
 
-  test('and carries the change past what was written meanwhile, whatever the endings', async () => {
-    const { ws } = space({ [NOTE]: 'Re: one\r\nthe plan #two words#\r\nthree\r\n' })
-    const lf = {
-      path: NOTE,
-      before: 'one\nthe plan #two words#\nthree\n',
-      after: 'one\nthe plan #two-words\nthree\n',
-      edits: [{ from: 13, to: 24, insert: '#two-words' }],
-      back: [{ from: 13, to: 23, insert: '#two words#' }],
-    }
+      await undoLastFileAction(ws as unknown as PutsBack)
+      expect(disk.get(NOTE)).toBe('one\r\nthe plan #two words#\r\nthree\r\n')
+    })
 
-    expect(await replaceInNotes(ws, [lf])).toBe(1)
-    expect(disk.get(NOTE)).toBe('Re: one\nthe plan #two-words\nthree\n')
+    test('carries the change past what was written meanwhile', async () => {
+      const { ws } = space({ [NOTE]: 'Re: one\r\nthe plan #two words#\r\nthree\r\n' })
+
+      expect(await replaceInNotes(ws, [lf])).toBe(1)
+      expect(disk.get(NOTE)).toBe('Re: one\r\nthe plan #two-words\r\nthree\r\n')
+    })
+
+    test('writes a line it adds the way the file writes them', async () => {
+      const { ws } = space({ [NOTE]: 'one\r\ntwo\r\n' })
+      const adding = {
+        path: NOTE,
+        before: 'one\ntwo\n',
+        after: 'one\nnew\nmore\ntwo\n',
+        edits: [{ from: 4, to: 4, insert: 'new\nmore\n' }],
+        back: [{ from: 4, to: 13, insert: '' }],
+      }
+
+      expect(await replaceInNotes(ws, [adding])).toBe(1)
+      expect(disk.get(NOTE)).toBe('one\r\nnew\r\nmore\r\ntwo\r\n')
+    })
+
+    /** The disk gives a file whose first line ends `\n` what it is handed; see
+     *  `as_written` in notes.rs. So the lines the edit did not touch stay as they were. */
+    test('leaves a mixed file its other lines, and takes them back the same way', async () => {
+      const mixed = '# T\none\r\nthe plan #two words#\r\nthree\n'
+      const { ws } = space({ [NOTE]: mixed })
+      const change = {
+        path: NOTE,
+        before: '# T\none\nthe plan #two words#\nthree\n',
+        after: '# T\none\nthe plan #two-words\nthree\n',
+        edits: [{ from: 17, to: 28, insert: '#two-words' }],
+        back: [{ from: 17, to: 27, insert: '#two words#' }],
+      }
+
+      expect(await replaceInNotes(ws, [change])).toBe(1)
+      expect(disk.get(NOTE)).toBe('# T\none\r\nthe plan #two-words\r\nthree\n')
+
+      // And past a word written since, on a line of its own.
+      disk.set(NOTE, '# Title\none\r\nthe plan #two-words\r\nthree\n')
+      await undoLastFileAction(ws as unknown as PutsBack)
+      expect(disk.get(NOTE)).toBe('# Title\none\r\nthe plan #two words#\r\nthree\n')
+    })
+
+    /** A first line ending `\r\n` has the disk turn every other line to it, and nothing
+     *  said here can stop that; see `as_written`. So the note is left as it is. */
+    test('refuses a mixed file the disk would rewrite', async () => {
+      const mixed = 'one\r\nthe plan #two words#\nthree\r\n'
+      const { ws } = space({ [NOTE]: mixed })
+
+      expect(await replaceInNotes(ws, [lf])).toBe(0)
+      expect(disk.get(NOTE)).toBe(mixed)
+    })
   })
 
   test('and writes nothing at all for a note that has gone', async () => {
