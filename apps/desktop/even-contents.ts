@@ -269,12 +269,16 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  press from a click, so the pointer keeps renaming it with a double click
  *  (PropertiesPanel.svelte). Measured 5,740,025.
  *
- *  The code raised on 2026-11-03, to 5,768,100, for unstable's #523 fixes merged into
- *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
- *  and the fixes for one behaviour made one. Measured 5,767,961.
+ *  The code raised on 2026-11-02, to 5,741,000, for #1036: a web page taking the keyboard
+ *  is the app's own page letting go of whatever it had focused, told by the crate as well
+ *  as by the window's blur (keyboard-home.ts). Measured 5,740,924.
+ *
+ *  The code raised on 2026-11-03, to 5,769,000, for unstable's #523 and #1036 fixes merged
+ *  into claude/bugs-2026-11: the two branches' raises above were measured without each
+ *  other, and the fixes for one behaviour made one. Measured 5,768,860.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_768_100,
+  code: 5_769_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

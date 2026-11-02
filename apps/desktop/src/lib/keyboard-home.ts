@@ -19,11 +19,31 @@
  *  or a link pressed with the pointer. Chrome keeps its toolbar out of the keyboard's way
  *  like this, so a menu opened over a page gives the page its typing back as it closes.
  *
+ *  **A site taking the keyboard is the one handoff out of this page** (#1036). A web
+ *  tab's page is a native view beside this one, and a press into it never reaches this
+ *  page's HTML; all this page may hear is its window's `blur`, and on CEF on Linux it
+ *  sometimes hears nothing at all. Whatever had the keyboard here - the address field
+ *  with its address selected, the find bar, a menu, a note - was left looking and acting
+ *  as if it still had it, and the engine focused it again, selection and all, the next
+ *  time this page got the keyboard back. So the crate says it as well, from each
+ *  engine, the moment a page of this window takes the keyboard (`IN_PAGE`, see
+ *  src-tauri/src/keyboard.rs), and either word lands in `went`: once the crate has
+ *  confirmed a page holds it, this page lets go. The window's `blur` is played for
+ *  whatever listens to it if the engine never sent it, the focused element is blurred,
+ *  a selection inside it is taken down, and the element is no longer where the keyboard
+ *  goes home to: it is the site's now, and comes back here only with a person's press,
+ *  a key or a layer of the app's own. Any control is handled by the plain DOM events it
+ *  already listens to; none of them needs to know a page exists.
+ *
  *  Fetched at the launch's last turn, where it listens for itself; see `warmDoors`. */
 
 import { overlays } from './overlays'
 import { invoke, isDesktop } from './tauri'
 import { IN_A_PAGE } from './trap'
+
+/** What the crate says to this window's own page as one of its sites takes the keyboard;
+ *  `IN_PAGE` in src-tauri/src/keyboard.rs. */
+export const IN_PAGE = 'nib://keyboard-in-page'
 
 /** What a press lands on on its way to something else. */
 const PRESSED_THROUGH = [
@@ -80,6 +100,13 @@ class KeyboardHome {
    *  the element it kept: that is not a person choosing it. */
   private regaining = false
   private settling = 0
+  /** Whether the window's `blur` going round is the one `release` plays. */
+  private playing = false
+  /** Counts the keyboard being used here - a press, a key, an element taking it - so a
+   *  slow answer about a site having it is not acted on after it came back here, and the
+   *  window's `blur` is played once each time it goes. */
+  private moves = 0
+  private played = -1
 
   constructor() {
     const capture = { capture: true }
@@ -91,10 +118,16 @@ class KeyboardHome {
     overlays.watch(() => {
       if (overlays.depth === 0) this.settle()
     })
-    if (isDesktop) void invoke('keyboard_watch').catch(() => undefined)
+    if (isDesktop) {
+      void invoke('keyboard_watch').catch(() => undefined)
+      void import('@tauri-apps/api/event')
+        .then(({ listen }) => listen(IN_PAGE, () => void this.went()))
+        .catch(() => undefined)
+    }
   }
 
   private pressed() {
+    this.moves += 1
     this.pressing = true
     setTimeout(() => (this.pressing = false))
   }
@@ -103,6 +136,7 @@ class KeyboardHome {
     const at = event.target
     if (!(at instanceof HTMLElement)) return
 
+    this.moves += 1
     this.last = at
     this.lastInLayer = overlays.depth > 0
     if (this.lastInLayer || this.regaining || !document.hasFocus()) return
@@ -113,7 +147,9 @@ class KeyboardHome {
   }
 
   private typed(event: KeyboardEvent) {
-    if (!event.isTrusted || overlays.depth > 0) return
+    if (!event.isTrusted) return
+    this.moves += 1
+    if (overlays.depth > 0) return
     // A modifier alone is not typing: Alt is the first half of Alt+Tab.
     if (['Alt', 'Control', 'Shift', 'Meta', 'AltGraph'].includes(event.key)) return
     this.say()
@@ -129,7 +165,7 @@ class KeyboardHome {
 
   private window(event: Event, coming: boolean) {
     // The window's own, and not an element's, which the capturing turn hears too.
-    if (event.target instanceof Node) return
+    if (event.target instanceof Node || this.playing) return
 
     if (!coming) {
       this.told = false
@@ -145,10 +181,41 @@ class KeyboardHome {
     })
   }
 
+  /** The keyboard may have gone to a site in this window: the window's `blur`, or the
+   *  crate saying so. Let go of here once the crate confirms it, and not when somebody
+   *  has pressed or typed here since; gone to another program, nothing is let go of,
+   *  and the engine gives the element back as the window comes back. */
   private async went() {
-    if (await invoke<boolean>('keyboard_went').catch(() => false)) {
-      document.documentElement.setAttribute(IN_A_PAGE, '')
+    const moves = this.moves
+    if (!(await invoke<boolean>('keyboard_went').catch(() => false))) return
+    if (moves === this.moves) this.release()
+  }
+
+  /** A site has the keyboard: nothing here looks or acts as if it still had it. */
+  private release() {
+    document.documentElement.setAttribute(IN_A_PAGE, '')
+    this.told = false
+    this.here = null
+    // Every popup, the tab walk, the pointer hidden while typing: whatever listens for
+    // the window going hears it where the engine never said it, which is an engine that
+    // still thinks this page has the keyboard.
+    if (document.hasFocus() && this.played !== this.moves) {
+      this.played = this.moves
+      this.playing = true
+      try {
+        dispatchEvent(new FocusEvent('blur'))
+      } finally {
+        this.playing = false
+      }
     }
+    const at = document.activeElement
+    if (adrift(at) || !(at instanceof HTMLElement)) return
+    const selection = getSelection()
+    const anchor = selection?.anchorNode
+    if (selection && !selection.isCollapsed && anchor && at.contains(anchor)) {
+      selection.removeAllRanges()
+    }
+    at.blur()
   }
 
   /** The last layer closed: once it has gone, the keyboard goes back if nothing took it. */
