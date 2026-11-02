@@ -68,6 +68,26 @@ describe('parsing', () => {
   })
 })
 
+describe('a cell that ends in a backslash', () => {
+  test('an escaped backslash does not escape the pipe after it, as the renderer reads it', () => {
+    expect(parseTable('| C:\\\\| D |\n|---|---|\n| 1 | 2 |')?.header).toEqual([
+      'C:\\\\',
+      'D',
+    ])
+  })
+
+  test('an odd run still does', () => {
+    expect(parseTable('| a\\\\\\| b | c |\n|---|---|\n| 1 | 2 |')?.header).toEqual([
+      'a\\\\\\| b',
+      'c',
+    ])
+    expect(parseTable('| a\\| b | c |\n|---|---|\n| 1 | 2 |')?.header).toEqual([
+      'a\\| b',
+      'c',
+    ])
+  })
+})
+
 describe('serializing', () => {
   test('round-trips without changing meaning', () => {
     const model = parseTable(SOURCE)!

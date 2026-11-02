@@ -161,3 +161,24 @@ describe('folding in order is the reducer', () => {
     }
   })
 })
+
+describe('an emoji named after what every object holds', () => {
+  test('folds as the reducer does', async () => {
+    const log: Logged[] = [
+      { kind: 'post', id: 'p', message: 'm', body: 'hi', seq: 1, at: 1, author: 'user:a' as Who },
+      {
+        kind: 'react',
+        id: 'r',
+        target: 'm',
+        emoji: 'constructor',
+        on: true,
+        seq: 2,
+        at: 2,
+        author: 'user:a' as Who,
+      },
+    ]
+    const store = new Store()
+    await store.fold(log)
+    expect(Object.keys(store.messages().get('m')?.reactions ?? {})).toEqual(['constructor'])
+  })
+})

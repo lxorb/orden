@@ -177,3 +177,13 @@ describe('a value being written', () => {
     ])
   })
 })
+
+describe('a trailing comma in a flow sequence', () => {
+  test('opens no member, as in YAML', () => {
+    expect(flowItems('[a, b,]')).toEqual(['a', 'b'])
+    expect(flowItems('[a, b, ]')).toEqual(['a', 'b'])
+    expect(flowItems('[a]')).toEqual(['a'])
+    expect(flowItems('[a,,b]')).toEqual(['a', '', 'b'])
+    expect(flowItems('["a,",]')).toEqual(['a,'])
+  })
+})

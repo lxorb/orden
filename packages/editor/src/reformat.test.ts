@@ -3,7 +3,7 @@ import { reformat } from './reformat'
 
 describe('tidying a document', () => {
   test('settles on one bullet character', () => {
-    expect(reformat('* one\n+ two\n- three\n')).toBe('- one\n- two\n- three\n')
+    expect(reformat('* one\n* two\n')).toBe('- one\n- two\n')
   })
 
   test('keeps nesting intact', () => {
@@ -139,5 +139,61 @@ describe('code and blocks the parser keeps, wherever they sit', () => {
 
   test('a table in prose is still re-aligned, inline code in its cells and all', () => {
     expect(reformat('|a|`b`|\n|-|-|\n')).toBe('| a   | `b` |\n| --- | --- |\n')
+  })
+})
+
+describe('what Format document must not touch', () => {
+  test.each([
+    '[[a _b_ c]]\n',
+    '![[a _b_ c]]\n',
+    '[[_a_|shown]]\n',
+    '[x](_f_.md)\n',
+    '[x](__f__.md)\n',
+    '[x](a.md "_t_")\n',
+    '![x](_p_.png)\n',
+    '[x][_ref_]\n',
+    '[ref]: _u_\n',
+    '[ref]: u "_t_"\n',
+    '<http://x/_a_>\n',
+  ])('the target of %j', (source) => {
+    expect(reformat(source)).toBe(source)
+  })
+
+  test('words around a link and a link label are still tidied', () => {
+    expect(reformat('_a_ [[b]] _c_\n')).toBe('*a* [[b]] *c*\n')
+    expect(reformat('[ _x_ ](a.md)\n')).toBe('[ *x* ](a.md)\n')
+  })
+
+  test.each([
+    '---\nPriorität: _hoch_\nlist:\n  * a\n---\n',
+    '---\ndue date: a_b_ _c_\nx: * y\n---\n',
+    '---\nSize (cm): _3_\n---\n',
+    '---\n日期: _x_\n---\n',
+    '---\n# a comment\nk: _v_\n---\n',
+    '---\n"k": _v_\n---\n',
+    '\uFEFF---\nk: _v_\n---\n',
+  ])('front matter %j, whatever its first key is', (source) => {
+    expect(reformat(source)).toBe(source)
+  })
+
+  test('a line of hyphens with nothing to close it is a rule and what follows is words', () => {
+    expect(reformat('---\n\n_a_\n')).toBe('---\n\n*a*\n')
+  })
+})
+
+describe('bullets that mean something', () => {
+  test('a plus stays a plus: a deck reads it as a click', () => {
+    expect(reformat('+ x\n+ y\n')).toBe('+ x\n+ y\n')
+  })
+
+  test('two lists side by side stay two lists', () => {
+    expect(reformat('- a\n* b\n')).toBe('- a\n* b\n')
+    expect(reformat('* a\n- b\n')).toBe('* a\n- b\n')
+    expect(reformat('* a\n\n- b\n')).toBe('* a\n\n- b\n')
+    expect(reformat('- a\n  * b\n  + c\n')).toBe('- a\n  * b\n  + c\n')
+  })
+
+  test('a star list on its own still becomes dashes', () => {
+    expect(reformat('* a\n* b\n\nwords\n\n* c\n')).toBe('- a\n- b\n\nwords\n\n- c\n')
   })
 })

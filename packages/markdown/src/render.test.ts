@@ -1102,3 +1102,15 @@ describe('the whole sweep', () => {
     }
   })
 })
+
+describe('nesting deeper than the parser can follow', () => {
+  test.each(['> ', '- '])('%j many thousands of times is drawn as words', (mark) => {
+    const html = renderMarkdown(`${mark.repeat(20000)}the words <b>`)
+    expect(html).toContain('the words &lt;b&gt;')
+    expect(html).not.toContain('<b>')
+  })
+
+  test('nesting anybody writes is still read', () => {
+    expect(renderMarkdown('> > a')).toContain('<blockquote>')
+  })
+})
