@@ -11,7 +11,7 @@
  *  time: every row the same height, a heading the same as a row, and which of them are
  *  on screen is arithmetic. See WebHistory.svelte. */
 
-import { shownHost } from './idn'
+import { readable } from './address'
 import type { Visit } from './visits'
 
 /** One line of the list: a day's heading, or a page. */
@@ -28,7 +28,7 @@ export function dayOf(time: number): number {
 /** The host a page is on, without `www.`, the way the list shows it beside the title. */
 export function hostOf(url: string): string {
   try {
-    return shownHost(new URL(url).host).replace(/^www\./i, '')
+    return readable(new URL(url).host).replace(/^www\./i, '')
   } catch {
     return url
   }

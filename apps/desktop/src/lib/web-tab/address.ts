@@ -46,10 +46,11 @@ export function hostsReadBy(read: (host: string) => string): void {
   reading = read
 }
 
-function readable(host: string): string {
+export function readable(host: string): string {
   if (!host.includes('xn--')) return host
   if (reading) return reading(host)
-  void import('./idn')
+  // The glasses' plugin has no web tab to read a name in, and leaves the rule out.
+  if (!__EVEN_PLUGIN__) void import('./idn')
   return host
 }
 

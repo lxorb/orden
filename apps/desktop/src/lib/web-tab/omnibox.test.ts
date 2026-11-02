@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import './idn'
 import { completion, frecency, shownAddress, suggested } from './omnibox'
 import type { Visit } from './visits'
 

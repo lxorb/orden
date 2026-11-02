@@ -333,7 +333,8 @@
     {book}
     address={resting}
     held={page}
-    onenter={(said, aside, typed) => onaddress(meantBy(said, page.url), aside, typed)}
+    onenter={(said: string, aside: boolean, typed: string) =>
+      onaddress(meantBy(said, page.url), aside, typed)}
     {ontyping}
   />
 

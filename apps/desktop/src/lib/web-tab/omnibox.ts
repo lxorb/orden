@@ -18,7 +18,7 @@
  *  Pure, and per keystroke: every row is read once, the parts of an address are worked
  *  out once per row and kept, and the rows are at most `MOST_VISITS`. See visits.ts. */
 
-import { shownHost } from './idn'
+import { readable } from './address'
 import type { Visit } from './visits'
 
 /** How much more an address somebody typed counts than one a link led to. Chrome
@@ -64,7 +64,7 @@ const taken = new WeakMap<Visit, Parts>()
 function split(address: string): Omit<Parts, 'words'> {
   const url = new URL(address)
   const host = url.host.toLowerCase()
-  const hostShown = shownHost(host)
+  const hostShown = readable(host)
 
   return {
     protocol: url.protocol,
