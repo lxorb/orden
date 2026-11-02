@@ -19,7 +19,7 @@
  *  whole, which is still a loop over closures. */
 
 import { compile, formulaReader } from './expr/compile'
-import { type Scope, settled, sortCompare, text, type Val } from './expr/runtime'
+import { fieldOf, type Scope, settled, sortCompare, text, type Val } from './expr/runtime'
 import { compileFilters } from './filter'
 import { summarize } from './summaries'
 import type { Answer, Base, Context, Group, Row, Sort, Value, View } from './types'
@@ -51,9 +51,9 @@ function getter(property: string): Getter {
       run: (scope) => {
         try {
           return compiled.run(scope)
-        } catch (error) {
-          if (error instanceof BasesError) return null
-          throw error
+        } catch {
+          // Whatever one row made of it, `toFixed(200)` included, is that row's.
+          return null
         }
       },
     }
@@ -70,15 +70,18 @@ function getter(property: string): Getter {
         run: (scope) => {
           try {
             return scope.row ? scope.formula(formula, scope.row) : null
-          } catch (error) {
-            if (error instanceof BasesError) return null
-            throw error
+          } catch {
+            return null
           }
         },
       }
     }
     const name = property.replace(/^note\./, '')
-    return { local: true, clock: false, run: (scope) => scope.row?.note[name] ?? null }
+    return {
+      local: true,
+      clock: false,
+      run: (scope) => (scope.row ? fieldOf(scope.row.note, name) : null),
+    }
   }
 }
 

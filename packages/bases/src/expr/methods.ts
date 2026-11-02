@@ -9,6 +9,7 @@
 import { formatDate, msOf, readDate, relative } from '../dates'
 import { BasesError } from '../errors'
 import type { DateValue, Row, Value } from '../types'
+import { mayRead } from './pattern'
 import {
   equal,
   FileRef,
@@ -99,7 +100,7 @@ function fileMethod(
     case 'hasLink':
       return { value: linksTo(row, args[0]?.() ?? null, scope) }
     case 'hasProperty':
-      return { value: text(args[0]?.() ?? null) in row.note }
+      return { value: Object.hasOwn(row.note, text(args[0]?.() ?? null)) }
     case 'hasTag':
       return { value: hasTag(row.file.tags, evaluated(args)) }
     case 'inFolder': {
@@ -156,12 +157,15 @@ function stringMethod(value: string, name: string, args: readonly Arg[]): { valu
     case 'replace': {
       const [pattern = null, replacement = null] = evaluated(args)
       const by = text(replacement)
-      if (pattern instanceof RegExp)
+      if (pattern instanceof RegExp) {
+        if (!mayRead(pattern, value)) return { value }
         return { value: value.replace(new RegExp(pattern.source, pattern.flags), by) }
+      }
       return { value: value.replaceAll(text(pattern), () => by) }
     }
     case 'split': {
       const [separator = null, limit] = evaluated(args)
+      if (separator instanceof RegExp && !mayRead(separator, value)) return { value: [value] }
       const parts = value.split(separator instanceof RegExp ? separator : text(separator))
       return { value: limit == null ? parts : parts.slice(0, number(limit, 'split')) }
     }
@@ -349,7 +353,8 @@ export function callMethod(receiver: Val, name: string, args: readonly Arg[], sc
   } else if (receiver instanceof RegExp) {
     if (name === 'matches') {
       const pattern = new RegExp(receiver.source, receiver.flags.replace('g', ''))
-      found = { value: pattern.test(text(args[0]?.() ?? null)) }
+      const value = text(args[0]?.() ?? null)
+      found = { value: mayRead(receiver, value) && pattern.test(value) }
     }
   } else if (typeof receiver === 'string') {
     found = stringMethod(receiver, name, args)

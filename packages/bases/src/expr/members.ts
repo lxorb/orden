@@ -151,7 +151,7 @@ export function taskField(row: Row, name: string, scope: Scope): Val {
     case 'note':
       return new NoteRef(row)
     default:
-      return task.fields[name] ?? null
+      return fieldOf(task.fields, name)
   }
 }
 
@@ -213,9 +213,9 @@ export function member(object: Val, name: string, scope: Scope): Val {
   if (object instanceof ThisRef) {
     if (name === 'file') return new FileRef(object.row)
     if (name === 'note') return new NoteRef(object.row)
-    return object.row.note[name] ?? null
+    return fieldOf(object.row.note, name)
   }
-  if (object instanceof NoteRef) return object.row.note[name] ?? null
+  if (object instanceof NoteRef) return fieldOf(object.row.note, name)
   if (object instanceof TaskRef) return taskField(object.row, name, scope)
   if (typeof object === 'string' || Array.isArray(object))
     return name === 'length' ? object.length : null

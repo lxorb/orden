@@ -442,9 +442,9 @@ views:
 
   test('answers nothing on that row and the view still answers', () => {
     const shown = answer(failing, 0, some, context)
-    expect(shown.rows.map((row) => row.file.name)).toEqual(['Good.md', 'Bad.md'])
-    expect(cellValue(failing, 'formula.fixed', some[0] as Row, context)).toBeNull()
-    expect(cellValue(failing, 'formula.fixed', some[1] as Row, context)).toBe('1.00')
+    expect(names(shown.groups[0]?.rows ?? []).sort()).toEqual(['Bad', 'Good'])
+    expect(cellValue(failing, 'formula.fixed', some[0]!, context)).toBeNull()
+    expect(cellValue(failing, 'formula.fixed', some[1]!, context)).toBe('1.00')
   })
 
   test('and a filter that throws on a row only leaves that row out', () => {
@@ -453,6 +453,6 @@ views:
   - type: table
     name: All
 `)
-    expect(answer(filtered, 0, some, context).rows.map((row) => row.file.name)).toEqual(['Good.md'])
+    expect(names(answer(filtered, 0, some, context).groups[0]?.rows ?? [])).toEqual(['Good'])
   })
 })
