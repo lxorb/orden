@@ -384,6 +384,12 @@ describe('an edit that lands between the halves of one character', () => {
     })
   })
 
+  test('does not carry half of one that was written', () => {
+    const held = afterwards('ab', (device) => device.type(0, '\uD83D'))
+
+    expect(held).toEqual({ note: 'ab', room: 'ab', there: 'ab' })
+  })
+
   test('carries a character changed by its second half alone', () => {
     // Which is a whole character on either side, so nothing about the note is wrong,
     // and the shared text still cannot be cut where the change says.

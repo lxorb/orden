@@ -708,6 +708,41 @@ describe('half of one character', () => {
     expect(note.roomWords.toString()).toBe('room ab')
   })
 
+  test('never goes in as what was written, at either end or in the middle', () => {
+    const note = new SharedDoc('ab')
+
+    note.edit([{ from: 0, to: 0, insert: '\uD83D' }])
+    expect(note.text.toString()).toBe('ab')
+
+    note.edit([{ from: 2, to: 2, insert: '\uDE00' }])
+    expect(note.text.toString()).toBe('ab')
+
+    note.edit([{ from: 1, to: 1, insert: 'x\uDE00y\uD83Dz' }])
+    expect(note.text.toString()).toBe('axyzb')
+
+    note.edit([{ from: 0, to: 0, insert: grin }])
+    expect(note.text.toString()).toBe(`${grin}axyzb`)
+  })
+
+  test('is left where it was by a change that did not part it from anything', () => {
+    const trailing = new SharedDoc('a\uDE00b')
+    trailing.edit([{ from: 1, to: 1, insert: 'x' }])
+    expect(trailing.text.toString()).toBe('ax\uDE00b')
+
+    const leading = new SharedDoc('a\uD83Db')
+    leading.edit([{ from: 2, to: 2, insert: 'x' }])
+    expect(leading.text.toString()).toBe('a\uD83Dxb')
+  })
+
+  test('comes into a pane joining the document just as the document holds it', () => {
+    const note = new SharedDoc('a\uD83Db')
+    const late = new Pane(new SharedDoc('other'))
+
+    note.join(late)
+
+    expect(late.text).toBe('a\uD83Db')
+  })
+
   test('does not stand in the way of what arrives from a room', () => {
     const note = new SharedDoc('ab')
 
