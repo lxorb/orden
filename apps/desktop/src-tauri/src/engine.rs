@@ -158,7 +158,11 @@ pub(crate) const ENGINE_SWIPE: (&str, &str, &str) = (
 ///
 /// And **session cookies are kept**, as Windows and a Mac keep them (`web_cookies.rs`):
 /// a sign-in that lives in one - Moodle's, Shibboleth's - lasts across a restart, as it
-/// does in a browser told to continue where it left off.
+/// does in a browser told to continue where it left off. Which is the preference it
+/// takes: `persist_session_cookies` alone wrote them and the next start threw them away
+/// after every clean quit (`scripts/session-drive.py`). Chromium brings them back only
+/// after a crash or under `session.restore_on_startup` = 1, its "Continue where you left
+/// off"; CEF restores no tabs on it, those stay Orden's own.
 #[cfg(feature = "cef")]
 pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     use tauri_runtime_cef::{Cef, DevToolsPolicy, RemoteDebugging, SandboxPolicy};
@@ -180,6 +184,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     let mut engine = Cef::default()
         .sandbox(sandbox)
         .persist_session_cookies(true)
+        .profile_preference_value("session.restore_on_startup", 1)
         .deep_link_schemes(["nib"])
         .disable_features([swipe_feature])
         .command_line_args([(swipe_switch, Some(swipe_off))])

@@ -1819,10 +1819,11 @@ store on disk - a lasting cookie survives, a session-only one does not, a restar
 included - until the same seam exists for `WebKitGTK`: wry hands out no cookie store
 there, so there is nothing yet to give an expiry through.
 
-**On Linux today that is Orden's own Chromium, and session cookies are kept.** CEF has the
-setting the system's engines lack, `persist_session_cookies`, and `cef_runtime` turns it on
-for the whole process (`scripts/session-drive.py`). No expiry is written: a session cookie
-stays one, as with Chrome's "Continue where you left off".
+**On Linux today that is Orden's own Chromium, and session cookies are kept.** `cef_runtime`
+turns on `persist_session_cookies` and sets `session.restore_on_startup` to 1, the preference
+behind Chrome's "Continue where you left off", in every profile. The setting alone did not
+do it: the cookie was on disk and the next start after a clean quit dropped it. No expiry is
+written, so a session cookie stays one (`scripts/session-drive.py`, `SESSION=1`).
 
 **No Orden IPC reaches the site**, three times over:
 
