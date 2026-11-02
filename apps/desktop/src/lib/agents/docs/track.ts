@@ -196,6 +196,9 @@ export class Track {
     const takenBack = [...this.takenBack]
     return () => {
       steps()
+      // A note opened while the write was in the air is heard from again by `catchUp`,
+      // which goes through what it says now from these words.
+      this.letGo()
       this.seen = seen
       this.where.clear()
       for (const [id, spans] of where) this.where.set(id, spans)

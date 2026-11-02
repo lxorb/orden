@@ -318,7 +318,7 @@ async function changeClosed(
     throw new DocError(
       'rev_changed',
       note.relative,
-      `nothing was written to ${note.relative}: it changed as the edit landed, its line endings are mixed, or it cannot be written here`,
+      `nothing was written to ${note.relative}: it changed as the edit landed, or it cannot be written here`,
     )
   }
 

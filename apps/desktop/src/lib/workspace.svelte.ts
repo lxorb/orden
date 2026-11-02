@@ -4235,8 +4235,8 @@ class Workspace {
 
   /** A move sync makes of everything open at or under `path`; see `holdingWrites` in
    *  workspace/saving.svelte.ts. */
-  holdingWrites<T>(path: string, run: () => Promise<T>): Promise<T> {
-    return this.saving.holdingWrites(path, run)
+  holdingWrites<T>(path: string, run: () => Promise<T>, stalled: () => Promise<T>): Promise<T> {
+    return this.saving.holdingWrites(path, run, stalled)
   }
 
   /** One file under another name in the same folder, and everything that owes: the

@@ -24,7 +24,6 @@ import {
   applied,
   appliedToFile,
   changeOf,
-  diskKeepsEndings,
   type Edit,
   endingsLike,
   reverse,
@@ -297,10 +296,8 @@ async function writeClosed(
   if (read === null) return null
 
   const now = endingsLike(read, change.before)
-  // Worked out on one line ending, written into a file of others: lines it did not touch
-  // stay as they were, which the disk will not do for a file it would rewrite.
+  // Worked out on one line ending, written into a file of others; see `appliedToFile`.
   const foreign = now !== read
-  if (foreign && !diskKeepsEndings(read)) return null
   const same = now === change.before
   const edits = same ? change.edits : carriedPast(change.before, now, change.edits)
   if (!edits) return null

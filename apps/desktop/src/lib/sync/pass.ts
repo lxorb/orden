@@ -193,9 +193,10 @@ export interface Waiting {
   /** One note moved here because another device renamed or moved it, by the paths
    *  it had and has. */
   moved?: (from: string, to: string) => void | Promise<void>
-  /** A rename a pass makes, after the writes in the air of what is open in it; see
-   *  `holdingWrites` in workspace/saving.svelte.ts. */
-  holdingWrites?: <T>(from: string, run: () => Promise<T>) => Promise<T>
+  /** A rename a pass makes, after the writes in the air of what is open in it, and
+   *  `stalled` in its place under one that has not answered; see `holdingWrites` in
+   *  workspace/saving.svelte.ts. */
+  holdingWrites?: <T>(from: string, run: () => Promise<T>, stalled: () => Promise<T>) => Promise<T>
   /** Notes to fetch first, by their path in the space: the one somebody is looking
    *  at, and the one they were looking at last. A page is a few hundred notes and
    *  a slow connection is a body a second, so which end of it the open note is at
@@ -624,7 +625,10 @@ async function movedThere(
       if (done) await waiting?.moved?.(full(from), full(to))
       return done
     }
-    return waiting?.holdingWrites ? waiting.holdingWrites(full(from), renamed) : renamed()
+    // Made under a write that has stalled too. A move not made here costs this note its
+    // entry (see below), the file at the old name going up as a note of its own: no
+    // better than the write landing there later, and this way the move happens.
+    return waiting?.holdingWrites ? waiting.holdingWrites(full(from), renamed, renamed) : renamed()
   }
 
   const left = new Set(pending)

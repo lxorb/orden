@@ -106,15 +106,10 @@ function crlfFirst(file: string): boolean {
   return first > 0 && file[first - 1] === '\r'
 }
 
-/** Whether the disk would leave the lines of a file as they are when it is written
- *  again: not one that starts with `\r\n` and has a bare `\n` further down. */
-export function diskKeepsEndings(file: string): boolean {
-  return !crlfFirst(file) || !/(^|[^\r])\n/.test(file)
-}
-
 /** Edits worked out on a file's words with one line ending, applied to the file itself:
- *  a line they do not touch stays as it was, and one they add ends as the disk would
- *  end it. */
+ *  a line they do not touch stays as it was where the disk keeps it, and one they add
+ *  ends as the disk would end it. A file that starts with `\r\n` and has a bare `\n`
+ *  further down comes out all `\r\n` from the disk, as it does from a save in a tab. */
 export function appliedToFile(file: string, edits: readonly Edit[]): string {
   const crlf = crlfFirst(file)
   let raw = 0
