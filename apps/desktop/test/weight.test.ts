@@ -973,8 +973,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-02, to 3,437,900, for #523: a sidebar toggle hands Tab into what it
  *  opened, a row or a tab closed from the keyboard keeps it past the caret rule (caret.ts),
- *  and the notices are a region F6 walks. Measured 3,437,265, from 3,430,841. */
-const BUDGET = 3_437_900
+ *  and the notices are a region F6 walks. Measured 3,437,265, from 3,430,841.
+ *
+ *  Raised 2026-11-02, to 3,436,000, for #790, #791 and #397: a page whose process died is
+ *  offered again, the zoom and step rows over a page, and a host's two spellings kept apart.
+ *  The rule for reading a name that is not ASCII is not in it: web-tab/idn.ts arrives with
+ *  the web bar. Measured 3,435,406. */
+const BUDGET = 3_436_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

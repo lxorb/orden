@@ -303,12 +303,64 @@ fn same_path(one: &Path, other: &Path) -> bool {
         .eq_ignore_ascii_case(&other.as_os_str().to_string_lossy())
 }
 
+/// Whether a character is one of Unicode's invisible format characters (Cf), which say how
+/// text is drawn and are no part of a name: `invoice\u{202E}fdp.exe` is an `.exe` that reads
+/// as `invoiceexe.pdf`, and Open runs it. The two joiners stay, which Persian and emoji
+/// spell with, as they do in Chrome's own rule for a file name.
+fn is_format(one: char) -> bool {
+    matches!(one,
+        '\u{00AD}'
+        | '\u{0600}'..='\u{0605}'
+        | '\u{061C}'
+        | '\u{06DD}'
+        | '\u{070F}'
+        | '\u{0890}'..='\u{0891}'
+        | '\u{08E2}'
+        | '\u{180E}'
+        | '\u{200B}'
+        | '\u{200E}'..='\u{200F}'
+        | '\u{202A}'..='\u{202E}'
+        | '\u{2060}'..='\u{2064}'
+        | '\u{2066}'..='\u{206F}'
+        | '\u{FEFF}'
+        | '\u{FFF9}'..='\u{FFFB}'
+        | '\u{110BD}'
+        | '\u{110CD}'
+        | '\u{13430}'..='\u{1343F}'
+        | '\u{1BCA0}'..='\u{1BCA3}'
+        | '\u{1D173}'..='\u{1D17A}'
+        | '\u{E0001}'
+        | '\u{E0020}'..='\u{E007F}'
+    )
+}
+
+/// Whether a character draws as nothing, whatever Unicode files it under: 150 of them
+/// between `invoice.pdf` and `.exe` is a name the file manager cuts off at `invoice.pdf`,
+/// and Open runs the exe. The spaces among them go too, though a CJK name may have used one:
+/// an underscore is a small price, and a plain space is kept, one at a time.
+fn is_blank(one: char) -> bool {
+    matches!(one,
+        '\u{00A0}'
+        | '\u{115F}'..='\u{1160}'
+        | '\u{1680}'
+        | '\u{17B4}'..='\u{17B5}'
+        | '\u{2000}'..='\u{200A}'
+        | '\u{202F}'
+        | '\u{205F}'
+        | '\u{2800}'
+        | '\u{3000}'
+        | '\u{3164}'
+        | '\u{FFA0}'
+    )
+}
+
 /// A name a file can be saved under on every desktop, out of whatever the server or
 /// the link said.
 ///
 /// The engine has already cleaned it for its own platform; this is the rule that does
 /// not depend on that. Nothing that is a path (`/`, `\`, `..` at the front), nothing a
-/// file system refuses (`<>:"|?*` and control characters), no dot or space at the end,
+/// file system refuses (`<>:"|?*` and control characters), nothing invisible that changes
+/// how it reads (`is_format`, `is_blank`, a run of spaces), no dot or space at the end,
 /// which Windows drops without saying, no dot at the front, which hides a file on the
 /// other two, and no device name. A name with nothing left is `download`, which is
 /// Chrome's word for it.
@@ -318,12 +370,23 @@ pub(crate) fn clean_name(suggested: &OsStr) -> String {
         .chars()
         .map(|one| {
             if one.is_control()
+                || is_format(one)
+                || is_blank(one)
                 || matches!(one, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*')
             {
                 '_'
             } else {
                 one
             }
+        })
+        .collect();
+    let mut was_space = false;
+    let replaced: String = replaced
+        .chars()
+        .filter(|one| {
+            let again = was_space && *one == ' ';
+            was_space = *one == ' ';
+            !again
         })
         .collect();
 
@@ -1260,6 +1323,35 @@ mod tests {
         assert_eq!(name("tab\there.txt"), "tab_here.txt");
         assert_eq!(name("report.pdf. . "), "report.pdf");
         assert_eq!(name(".hidden"), "hidden");
+    }
+
+    #[test]
+    fn what_changes_how_a_name_reads_is_replaced() {
+        assert_eq!(name("invoice\u{202E}fdp.exe"), "invoice_fdp.exe");
+        assert_eq!(name("a\u{2066}b\u{2069}.pdf"), "a_b_.pdf");
+        assert_eq!(name("a\u{200B}b\u{FEFF}.pdf"), "a_b_.pdf");
+        assert_eq!(name("a\u{061C}b\u{E0041}.pdf"), "a_b_.pdf");
+        // The joiners are how a name is spelled in Persian and in emoji.
+        assert_eq!(name("می\u{200C}خواهم.pdf"), "می\u{200C}خواهم.pdf");
+        assert_eq!(name("👩\u{200D}💻.pdf"), "👩\u{200D}💻.pdf");
+    }
+
+    /// #790 review: what looks like nothing pushes the real extension out of the file
+    /// manager's view, whichever category Unicode files it under.
+    #[test]
+    fn a_run_of_nothing_cannot_hide_the_extension() {
+        for blank in [
+            '\u{3164}', '\u{115F}', '\u{1160}', '\u{FFA0}', '\u{2800}', '\u{2003}', '\u{3000}',
+            '\u{00A0}',
+        ] {
+            let said = format!("invoice.pdf{}.exe", blank.to_string().repeat(150));
+            assert!(!name(&said).contains(blank), "{blank:?}");
+        }
+        assert_eq!(
+            name(&format!("invoice.pdf{}.exe", " ".repeat(150))),
+            "invoice.pdf .exe"
+        );
+        assert_eq!(name("Lecture  3.pdf"), "Lecture 3.pdf");
     }
 
     #[test]

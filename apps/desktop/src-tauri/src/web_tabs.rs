@@ -77,6 +77,18 @@ fn adopted_label(label: &str) -> bool {
     })
 }
 
+/// The tab a webview is the page of, or nothing for one of the app's own.
+#[cfg_attr(not(any(feature = "cef", target_os = "macos")), allow(dead_code))]
+pub(crate) fn tab_of(label: &str) -> Option<String> {
+    let adopted = ADOPTED.lock().ok().and_then(|held| {
+        held.as_ref()?
+            .iter()
+            .find(|(_, page)| page.as_str() == label)
+            .map(|(tab, _)| tab.clone())
+    });
+    adopted.or_else(|| label.strip_prefix(LABEL).map(str::to_string))
+}
+
 /// Makes an existing page the page of a reader's tab, and gives it what a reader's tab
 /// has: the browser's keys, the page-first keys, full screen, finding, downloads and the
 /// permission bubble. The window places it as it places any tab's page, with `web_place`,
@@ -425,12 +437,31 @@ pub struct WebTabs {
     opening: Mutex<HashSet<String>>,
 }
 
+/// A tab taken for one build; see `claimed`.
+struct Claim<'a> {
+    tabs: &'a WebTabs,
+    tab: &'a str,
+}
+
+impl Drop for Claim<'_> {
+    fn drop(&mut self) {
+        self.tabs.built(self.tab);
+    }
+}
+
 impl WebTabs {
     /// Takes a tab for one build, or says that somebody already has it.
     fn claim(&self, tab: &str) -> bool {
         self.opening
             .lock()
             .is_ok_and(|mut busy| busy.insert(tab.to_string()))
+    }
+
+    /// Takes a tab for one build, given back when what it returns goes, whichever way the
+    /// build ended: a store that could not be had stopped one on its way and left the tab
+    /// taken, and every later open was told it was already opening a page.
+    fn claimed<'a>(&'a self, tab: &'a str) -> Option<Claim<'a>> {
+        self.claim(tab).then_some(Claim { tabs: self, tab })
     }
 
     /// Gives it back, whether the page arrived or not.
@@ -713,6 +744,11 @@ fn handed_over(url: &Url) -> Option<String> {
 /// kind that breaks on a global it did not expect - and labelled so it is granted
 /// nothing. What it asks for in turn opens as a tab beside the page that opened it. It
 /// closes when its page does; see `WindowCloseRequested` in wry.
+///
+/// A private tab's is private. `window_features` hands over the opener's environment and
+/// says nothing of its mode, and wry builds a controller as `incognito` says with no regard
+/// for the opener: left at false, a private tab's sign-in was offered the profile that
+/// lasts (#791). Private on the same environment is the opener's own private session.
 #[cfg(all(windows, not(feature = "cef")))]
 fn popup(
     app: &AppHandle,
@@ -720,6 +756,7 @@ fn popup(
     features: tauri::webview::NewWindowFeatures,
     tab: &str,
     holder: &str,
+    private: bool,
 ) -> Option<tauri::WebviewWindow> {
     use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -733,6 +770,7 @@ fn popup(
 
     let building = tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(blank))
         .window_features(features)
+        .incognito(private)
         .title(url.host_str().unwrap_or_default())
         // The page takes its own drops, as a tab's does, and a file dropped on a site
         // is no pick in the system's dialog; see `window_builder` in launch.rs.
@@ -1215,9 +1253,9 @@ pub async fn web_open(
         return Err("that tab already has a page".into());
     }
 
-    if !tabs.claim(&tab) {
+    let Some(claim) = tabs.claimed(&tab) else {
         return Err("that tab is already opening a page".into());
-    }
+    };
 
     // Where this tab had been, back under the webview being built for it: a tab being
     // revived keeps its arrows, and stepping one of them walks this rather than an
@@ -1307,7 +1345,7 @@ pub async fn web_open(
         #[cfg(all(windows, not(feature = "cef")))]
         if said.is_none() && features.size().is_some() {
             // One that could not be built is a tab, like any other window asked for.
-            if let Some(window) = popup(&opening, &url, features, &asking, &holder) {
+            if let Some(window) = popup(&opening, &url, features, &asking, &holder, private) {
                 return NewWindowResponse::Create { window };
             }
         }
@@ -1357,7 +1395,7 @@ pub async fn web_open(
             .unwrap_or_else(|| Err("that page was never built".to_string())),
     };
 
-    tabs.built(&tab);
+    drop(claim);
     made?;
     crate::keyboard::built(&label_of(&tab));
 
@@ -3098,7 +3136,7 @@ mod shot {
 mod tests {
     use super::{
         address, allowed, capture_kinds, handed_over, is_ours, opening, origin_of, origin_written,
-        reader, Place, Profile, Trail, WebTabs, BLANK,
+        reader, tab_of, Place, Profile, Trail, WebTabs, BLANK,
     };
     use tauri::Url;
 
@@ -3463,6 +3501,39 @@ mod tests {
 
         tabs.built("a");
         assert!(tabs.claim("a"));
+    }
+
+    /// #791: `crate::engine::web_store(...)?` left the tab taken for good.
+    #[test]
+    fn a_build_given_up_on_the_way_gives_the_tab_back() {
+        fn build(tabs: &WebTabs) -> Result<(), String> {
+            let _claim = tabs.claimed("a").ok_or("busy")?;
+            assert!(!tabs.claim("a"));
+            Err("the store could not be had".to_string())
+        }
+
+        let tabs = WebTabs::default();
+        assert!(build(&tabs).is_err());
+        assert!(tabs.claim("a"));
+    }
+
+    /// #791: `popup`'s window is `cfg(windows)` and takes the engine to run, so this holds
+    /// the one word that keeps a private sign-in out of the profile that lasts.
+    #[test]
+    fn a_private_tab_s_popup_is_private() {
+        let source = include_str!("web_tabs.rs");
+        let popup = source
+            .split("fn popup(")
+            .nth(1)
+            .and_then(|from| from.split("\n}\n").next())
+            .expect("the popup's function");
+        assert!(popup.contains(".incognito(private)"));
+    }
+
+    #[test]
+    fn a_tab_is_told_from_its_page_s_label() {
+        assert_eq!(tab_of("web-a1").as_deref(), Some("a1"));
+        assert_eq!(tab_of("main"), None);
     }
 
     #[test]

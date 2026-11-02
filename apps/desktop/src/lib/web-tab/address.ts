@@ -36,14 +36,26 @@ export function isWebAddress(url: string): boolean {
   )
 }
 
-/** The origin, plainly, for the bar to show while nobody is typing in it.
- *
- *  The host and nothing else, because the host is the part that says who is
- *  answering and the rest is where a reader stops reading. `www.` goes, the way
- *  every browser drops it. An `http:` page keeps its scheme in front, because that
- *  is the one thing about an address worth warning somebody about. */
-export function plainOrigin(url: string): string {
-  if (SOURCE.test(url)) return `view-source:${plainOrigin(url.replace(SOURCE, ''))}`
+/** How a host reads, once idn.ts has been loaded: most sessions never meet a name that is
+ *  not ASCII, and what decides about one is a table too large to read before the first
+ *  paint. Until then such a name reads as punycode, which is the safe way to be wrong. */
+let reading: ((host: string) => string) | null = null
+
+/** Called by idn.ts as it arrives. */
+export function hostsReadBy(read: (host: string) => string): void {
+  reading = read
+}
+
+export function readable(host: string): string {
+  if (!host.includes('xn--')) return host
+  if (reading) return reading(host)
+  // The glasses' plugin has no web tab to read a name in, and leaves the rule out.
+  if (!__EVEN_PLUGIN__) void import('./idn')
+  return host
+}
+
+function origin(url: string, read: (host: string) => string): string {
+  if (SOURCE.test(url)) return `view-source:${origin(url.replace(SOURCE, ''), read)}`
 
   let parsed: URL
   try {
@@ -56,8 +68,26 @@ export function plainOrigin(url: string): string {
   // own-pages.ts.
   if (parsed.protocol === 'nib:') return url
 
-  const host = parsed.host.replace(/^www\./i, '')
+  const host = read(parsed.host).replace(/^www\./i, '')
   return parsed.protocol === 'http:' ? `http://${host}` : host
+}
+
+/** The origin, plainly, for the bar to show while nobody is typing in it.
+ *
+ *  The host and nothing else, because the host is the part that says who is
+ *  answering and the rest is where a reader stops reading. `www.` goes, the way
+ *  every browser drops it. An `http:` page keeps its scheme in front, because that
+ *  is the one thing about an address worth warning somebody about. For showing, and
+ *  never for keeping anything under: see `originKey`. */
+export function plainOrigin(url: string): string {
+  return origin(url, readable)
+}
+
+/** The same origin as what a site's grants, size and sound are kept under, always as `URL`
+ *  spells it: what is safe to show may change, and a site must not lose what it was
+ *  allowed when it does. Shown through `shownSite` in idn.ts. */
+export function originKey(url: string): string {
+  return origin(url, (host) => host)
 }
 
 /** The picture a site keeps at its root, which every browser looks for when a page names
