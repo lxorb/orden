@@ -26,10 +26,11 @@ use objc2_foundation::{
     NSString,
 };
 use objc2_user_notifications::{
-    UNAuthorizationOptions, UNCalendarNotificationTrigger, UNMutableNotificationContent,
-    UNNotification, UNNotificationAction, UNNotificationActionOptions, UNNotificationCategory,
-    UNNotificationCategoryOptions, UNNotificationPresentationOptions, UNNotificationRequest,
-    UNNotificationResponse, UNNotificationSound, UNNotificationTrigger,
+    UNAuthorizationOptions, UNAuthorizationStatus, UNCalendarNotificationTrigger,
+    UNMutableNotificationContent, UNNotification, UNNotificationAction,
+    UNNotificationActionOptions, UNNotificationCategory, UNNotificationCategoryOptions,
+    UNNotificationPresentationOptions, UNNotificationRequest, UNNotificationResponse,
+    UNNotificationSettings, UNNotificationSound, UNNotificationTrigger,
     UNTimeIntervalNotificationTrigger, UNUserNotificationCenter, UNUserNotificationCenterDelegate,
 };
 use tauri::AppHandle;
@@ -236,8 +237,28 @@ impl Requests {
         WORDS.lock().unwrap_or_else(PoisonError::into_inner).0 = Some(words.clone());
         categorise(&centre);
 
+        // The system takes a request it will never show without a word, so a plan handed
+        // to it would be answered as held. Refused here, the page rings them itself while
+        // it runs. Not yet decided is the question above, still up: a yes then is worth
+        // waiting for, and the next plan hears a no.
+        if authorization(&centre) == Some(UNAuthorizationStatus::Denied) {
+            return Err("notifications are turned off for Orden".into());
+        }
+
         Ok(Self { centre })
     }
+}
+
+/// What the system says about this app's notifications, if it says in time.
+fn authorization(centre: &UNUserNotificationCenter) -> Option<UNAuthorizationStatus> {
+    let (said, heard) = mpsc::channel();
+    let answer = RcBlock::new(move |settings: std::ptr::NonNull<UNNotificationSettings>| {
+        // SAFETY of the read: the system hands live settings for the call's length.
+        let status = unsafe { settings.as_ref() }.authorizationStatus();
+        let _ = said.send(status);
+    });
+    centre.getNotificationSettingsWithCompletionHandler(&answer);
+    heard.recv_timeout(PATIENCE).ok()
 }
 
 impl System for Requests {
