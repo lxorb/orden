@@ -430,7 +430,6 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
 ) -> Result<tauri::WebviewWindowBuilder<'a, crate::Engine, M>, Box<dyn std::error::Error>> {
     let building =
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
-    crate::page_scale::read_chosen(manager.app_handle());
     // This run's hardware acceleration decided here, as the first window is made and
     // before the engine starts; every window and page after it asks `gpu::this_run`.
     #[cfg(all(windows, not(feature = "cef")))]
@@ -450,6 +449,7 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     #[cfg(feature = "cef")]
     let building = {
         let _ = OWN_PROFILE.set(app_profile(manager.app_handle())?);
+        crate::page_scale::read_chosen(manager.app_handle());
         // What the last run's page kept, for this first window to put back; see kept.rs.
         crate::kept::read_kept(manager.app_handle());
         own_window(building)

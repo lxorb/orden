@@ -289,8 +289,6 @@
   // Here rather than on the surface, because the surface is rebuilt with every
   // note; see text-size.ts.
   $effect(() => watchTextSize())
-  // A Mac's lights keep their width at the interface's zoom; see modes.svelte.ts.
-  if (platform() === 'macos') void modes.askInterfaceZoom()
 
   // What pulling a list or a note down past its top runs. The surfaces it is
   // attached to have no idea what the app is showing, so the runner is left

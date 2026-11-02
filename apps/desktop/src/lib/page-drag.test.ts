@@ -59,7 +59,7 @@ function page(html = '') {
   }) as typeof inside.setInterval
   inside.clearInterval = (() => {
     atRest = null
-  }) as typeof inside.clearInterval
+  })
 
   inside.eval(script.replaceAll('!event.isTrusted', '!event.native'))
 
@@ -69,7 +69,7 @@ function page(html = '') {
       heard.push(`${type} ${(event.target as Element).id}`)
     })
   }
-  const byId = (id: string) => document.getElementById(id) as HTMLElement
+  const byId = (id: string) => document.getElementById(id)!
   // A row that takes what is dragged over it, as the file list's do.
   for (const type of ['dragenter', 'dragover']) {
     byId('folder').addEventListener(type, (event) => {
@@ -107,8 +107,9 @@ function page(html = '') {
       byId(id).addEventListener(
         'dragstart',
         (one) => {
-          ;(one as unknown as { dataTransfer: { effectAllowed: string } }).dataTransfer.effectAllowed =
-            effect
+          ;(
+            one as unknown as { dataTransfer: { effectAllowed: string } }
+          ).dataTransfer.effectAllowed = effect
         },
         { once: true },
       )
@@ -160,6 +161,7 @@ describe('a drag that has lost its pointer never lands', () => {
     const it = page()
     it.start('row', 'copyMove')
     it.over('folder')
+    it.inside.document.hasFocus = () => false
     it.inside.dispatchEvent(new it.inside.Event('blur'))
     expect(it.live()).toBe(false)
     expect(it.heard.at(-1)).toBe('dragend row')
@@ -274,7 +276,7 @@ describe('around the drag', () => {
     const it = page()
     const said: number[] = []
     it.byId('row').addEventListener('pointercancel', (event) => {
-      said.push((event as PointerEvent).pointerId)
+      said.push((event).pointerId)
     })
     it.pointer('pointerdown', { pointerId: 7 })
     it.start('row', 'copyMove')

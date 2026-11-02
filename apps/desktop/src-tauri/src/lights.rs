@@ -63,9 +63,7 @@ fn spot(
     } else {
         along
     };
-    // In points, which the bar is as many more of as the interface is zoomed; see
-    // page_scale.rs.
-    let top = ((BAR * crate::page_scale::chosen() - height) / 2.0).round() - holder_top;
+    let top = ((BAR - height) / 2.0).round() - holder_top;
     (x, top)
 }
 

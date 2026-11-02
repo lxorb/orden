@@ -19,11 +19,13 @@
 //!
 //! **The whole interface's zoom** (#680): Settings > Appearance > Window > Zoom, as VS
 //! Code's "Window: Zoom Level" and Slack's View > Zoom. It is the engine's page zoom of
-//! the app's own page, kept on this device (`FILE`), because the engine lays out by it the
+//! the app's own page, kept on this device (`engine::FILE`), because the engine lays out by it the
 //! way it does by a screen's scale: the sidebar, the menus and every measurement go with
 //! it, and `100vh` and a pointer's place stay true, which CSS's `zoom` on the root would
 //! not leave them. A web tab's page keeps the size its site is kept at (`web`): only the
-//! hole it is placed in changes, and `of` is what says so.
+//! hole it is placed in changes, and `of` is what says so. Linux's CEF only, the one engine
+//! a run has proved that on: WebView2's zoom and `WKWebView`'s `pageZoom` have never been run
+//! with a web tab placed under them, and placing is the risk.
 
 /// Chromium's scale, which CEF on X11 sizes windows by correctly only at 1; see the top
 /// of this file.
@@ -87,79 +89,65 @@ fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     None
 }
 
-/// Where the interface's zoom is kept, in the app's config folder: a number in plain text.
-const FILE: &str = "interface-zoom";
+/// The interface's zoom as Settings offers it, Chrome's rungs: `INTERFACE_ZOOMS` in
+/// modes.svelte.ts.
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+const RUNGS: [f64; 8] = [0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0];
 
-/// The zoom in force; 1 until `read_chosen`, and where nothing was ever chosen.
-static CHOSEN: std::sync::Mutex<f64> = std::sync::Mutex::new(1.0);
-
-/// A zoom as the app takes it, from a command or the file: a number, from half to double.
+/// A zoom as the app takes it, from a command or the file: the rung nearest it, so a hand-
+/// written file can never leave Settings showing none of them.
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 fn zoom_of(factor: f64) -> Option<f64> {
-    (factor.is_finite() && factor > 0.0).then(|| factor.clamp(0.5, 2.0))
+    (factor.is_finite() && factor > 0.0).then(|| {
+        RUNGS
+            .into_iter()
+            .min_by(|a, b| (a - factor).abs().total_cmp(&(b - factor).abs()))
+            .unwrap_or(1.0)
+    })
 }
 
-/// The interface's zoom in force: 1 is a hundred per cent.
-pub fn chosen() -> f64 {
-    *CHOSEN.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
-}
-
-/// Reads the kept zoom, as the first window is made and before its page has run.
-pub fn read_chosen(app: &tauri::AppHandle<crate::Engine>) {
-    let kept = crate::paths::config_dir(app)
-        .ok()
-        .and_then(|config| std::fs::read_to_string(config.join(FILE)).ok())
-        .and_then(|text| text.trim().parse().ok())
-        .and_then(zoom_of);
-    if let Some(zoom) = kept {
-        *CHOSEN.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = zoom;
-    }
-}
-
-/// A window's page given the zoom as it is built. On CEF on Linux the page says its ratio
-/// as it starts, and `engine::heard` answers that.
-pub fn wear(webview: &tauri::Webview<crate::Engine>) {
-    #[cfg(not(feature = "cef"))]
-    if (chosen() - 1.0).abs() > 0.001 {
-        let _ = webview.set_zoom(chosen());
-    }
-    #[cfg(feature = "cef")]
-    let _ = webview;
-}
-
-/// The interface's zoom as Settings shows it.
+/// The interface's zoom as Settings shows it. Only Linux's CEF has it; see the top of this
+/// file.
 #[tauri::command(async)]
 pub fn interface_zoom_chosen() -> f64 {
-    chosen()
+    #[cfg(feature = "cef")]
+    {
+        engine::chosen()
+    }
+    #[cfg(not(feature = "cef"))]
+    {
+        1.0
+    }
 }
 
 /// The interface's zoom changed: kept for the next run, and in force in every window now.
 #[tauri::command(async)]
+#[cfg_attr(
+    not(feature = "cef"),
+    allow(
+        clippy::needless_pass_by_value,
+        reason = "a command's arguments are its own"
+    )
+)]
 pub fn interface_zoom_choose(
     app: tauri::AppHandle<crate::Engine>,
     factor: f64,
 ) -> Result<(), String> {
-    use tauri::Manager as _;
-
-    let zoom = zoom_of(factor).ok_or("that is not a zoom")?;
-    let config = crate::paths::config_dir(&app)?;
-    crate::paths::made(&config)?;
-    crate::paths::write_atomically(&config.join(FILE), zoom.to_string().as_bytes())?;
-    *CHOSEN.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = zoom;
-
-    for window in crate::launch::document_windows(&app) {
-        #[cfg(feature = "cef")]
-        engine::zooming(window.label());
-        if let Some(view) = app.get_webview(window.label()) {
-            #[cfg(feature = "cef")]
-            let _ = view.set_zoom(zoom * engine::desktop());
-            #[cfg(not(feature = "cef"))]
-            let _ = view.set_zoom(zoom);
-        }
-        // A Mac's lights stand in the bar, which is as tall as the zoom makes it.
-        #[cfg(target_os = "macos")]
-        crate::lights::refresh(&window);
+    #[cfg(feature = "cef")]
+    {
+        engine::choose(&app, factor)
     }
-    Ok(())
+    #[cfg(not(feature = "cef"))]
+    {
+        let _ = (app, factor);
+        Err("the interface has no zoom here".to_owned())
+    }
+}
+
+/// Reads the kept zoom, as the first window is made and before its page has run.
+#[cfg(feature = "cef")]
+pub fn read_chosen(app: &tauri::AppHandle<crate::Engine>) {
+    engine::read_chosen(app);
 }
 
 #[cfg(feature = "cef")]
@@ -168,6 +156,47 @@ mod engine {
     use std::sync::{LazyLock, Mutex, OnceLock, PoisonError};
 
     use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
+
+    /// Where the interface's zoom is kept, in the app's config folder: a number in plain text.
+    const FILE: &str = "interface-zoom";
+
+    /// The zoom in force; 1 until `read_chosen`, and where nothing was ever chosen.
+    static CHOSEN: Mutex<f64> = Mutex::new(1.0);
+
+    /// The interface's zoom in force: 1 is a hundred per cent.
+    pub fn chosen() -> f64 {
+        *CHOSEN.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    pub fn read_chosen(app: &tauri::AppHandle<crate::Engine>) {
+        let kept = crate::paths::config_dir(app)
+            .ok()
+            .and_then(|config| std::fs::read_to_string(config.join(FILE)).ok())
+            .and_then(|text| text.trim().parse().ok())
+            .and_then(super::zoom_of);
+        if let Some(zoom) = kept {
+            *CHOSEN.lock().unwrap_or_else(PoisonError::into_inner) = zoom;
+        }
+    }
+
+    /// Kept first: where the file cannot be written nothing changes, and the page is told.
+    pub fn choose(app: &tauri::AppHandle<crate::Engine>, factor: f64) -> Result<(), String> {
+        use tauri::Manager as _;
+
+        let zoom = super::zoom_of(factor).ok_or("that is not a zoom")?;
+        let config = crate::paths::config_dir(app)?;
+        crate::paths::made(&config)?;
+        crate::paths::write_atomically(&config.join(FILE), zoom.to_string().as_bytes())?;
+        *CHOSEN.lock().unwrap_or_else(PoisonError::into_inner) = zoom;
+
+        for window in crate::launch::document_windows(app) {
+            zooming(window.label());
+            if let Some(view) = app.get_webview(window.label()) {
+                let _ = view.set_zoom(zoom * desktop());
+            }
+        }
+        Ok(())
+    }
 
     /// The desktop's scale, read from XSETTINGS as the app starts (`start`); 1 before
     /// that, and where there is no X server or no settings daemon, which is the scale
@@ -221,7 +250,7 @@ mod engine {
         SAID.lock()
             .unwrap_or_else(PoisonError::into_inner)
             .insert(window, ratio);
-        let scale = desktop() * super::chosen();
+        let scale = desktop() * chosen();
         if (ratio - scale).abs() > 0.01 {
             let _ = webview.set_zoom(scale);
         }
@@ -233,7 +262,7 @@ mod engine {
     pub fn zooming(window: &str) {
         SAID.lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .insert(window.to_owned(), desktop() * super::chosen());
+            .insert(window.to_owned(), desktop() * chosen());
     }
 
     pub fn of(window: &tauri::Window<crate::Engine>) -> f64 {
@@ -241,7 +270,7 @@ mod engine {
             .unwrap_or_else(PoisonError::into_inner)
             .get(window.label())
             .copied()
-            .unwrap_or_else(|| desktop() * super::chosen())
+            .unwrap_or_else(|| desktop() * chosen())
     }
 }
 
@@ -282,7 +311,7 @@ pub fn page_scale_seen(webview: tauri::Webview<crate::Engine>, ratio: f64) {
 
 /// The ratio between what a window's own page measures and the screen's pixels it is
 /// drawn in: where its web pages go is what it measured times this. Its page's own word
-/// on CEF on Linux, else the window's scale times the interface's zoom.
+/// on CEF on Linux, else the window's scale.
 #[cfg_attr(
     feature = "cef",
     allow(
@@ -297,7 +326,7 @@ pub fn of(window: &tauri::Window<crate::Engine>) -> tauri::Result<f64> {
     }
     #[cfg(not(feature = "cef"))]
     {
-        Ok(window.scale_factor()? * chosen())
+        window.scale_factor()
     }
 }
 
@@ -316,15 +345,27 @@ pub fn web(factor: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{scale_of_dpi, xsettings_int, zoom_of, SCRIPT};
+    use super::{scale_of_dpi, xsettings_int, zoom_of, RUNGS, SCRIPT};
 
     #[test]
-    fn a_zoom_is_a_number_from_half_to_double() {
+    fn a_zoom_is_the_nearest_rung() {
         assert_eq!(zoom_of(1.25), Some(1.25));
+        assert_eq!(zoom_of(1.3), Some(1.25));
+        assert_eq!(zoom_of(1.4), Some(1.5));
         assert_eq!(zoom_of(9.0), Some(2.0));
-        assert_eq!(zoom_of(0.1), Some(0.5));
+        assert_eq!(zoom_of(0.1), Some(0.8));
         assert_eq!(zoom_of(0.0), None);
         assert_eq!(zoom_of(f64::NAN), None);
+    }
+
+    #[test]
+    fn the_rungs_are_the_ones_settings_offers() {
+        let modes = include_str!("../../src/lib/modes.svelte.ts");
+        let listed = RUNGS.map(|one| one.to_string()).join(", ");
+        assert!(
+            modes.contains(&format!("INTERFACE_ZOOMS = [{listed}]")),
+            "{listed}"
+        );
     }
 
     /// XSETTINGS as a daemon writes it: little-endian, a string, an integer and a colour.

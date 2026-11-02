@@ -7,8 +7,15 @@
   // How often a pointer at rest says `dragover`: the HTML standard's, and Chromium's.
   const AT_REST = 350
   const PRESS_EVENTS = ['pointermove', 'pointerup', 'pointercancel', 'mousemove', 'mouseup']
+  // What a drag's own loop keeps from the page: another button's press and its menu.
+  const KEPT_FROM_THE_PAGE = ['mousedown', 'contextmenu']
+  // How far a release may be from the last move, a rounding at a page zoom, and still be
+  // this drag's: the engine sends every move ahead of the release it comes before.
+  const SAME_PLACE = 2
 
   let drag = null
+  // Whose press a drag would take over, which is the one the engine says it cancels.
+  let pressed = 0
 
   /** What a dragover that was taken comes to: what it asked for, if the source allows it. */
   function effectOf(wanted, allowed) {
@@ -48,11 +55,13 @@
     )
   }
 
-  /** A field or a note takes words of its own accord, where a list has to say it does. */
+  /** A note's editor takes words of its own accord and puts them in on the `drop` this says,
+   *  where a list has to say it takes them. A plain field has only the engine's own drop to
+   *  put them in, which this is not, so it is refused rather than seeming to land. */
   function takesWords(element) {
     return (
       drag.transfer.types.includes('text/plain') &&
-      !!element.closest('textarea, input, [contenteditable="true"], [contenteditable=""]')
+      !!element.closest('[contenteditable="true"], [contenteditable=""]')
     )
   }
 
@@ -97,13 +106,37 @@
     if (!drag) return
     swallow(event)
     drag.keys = event
-    const moved = event.clientX !== drag.x || event.clientY !== drag.y
-    drag.x = event.clientX
-    drag.y = event.clientY
-    if (event.type === 'pointerup') end(true)
-    else if (event.type === 'pointercancel' || (event.type === 'pointermove' && !event.buttons)) {
+    const away = Math.max(Math.abs(event.clientX - drag.x), Math.abs(event.clientY - drag.y))
+    if (event.type === 'pointerup') {
+      // Another button let go with the left still down is the drag's to go on through. A
+      // release that is not the left's, or is not where the drag last was, is of a pointer
+      // this drag has lost: it must not land on what it was last over.
+      if (event.button !== 0 && event.buttons & 1) return
+      end(event.button === 0 && !(event.buttons & 1) && away <= SAME_PLACE)
+    } else if (
+      event.type === 'pointercancel' ||
+      (event.type === 'pointermove' && !(event.buttons & 1))
+    ) {
       end(false)
-    } else if (event.type === 'pointermove' && moved) step()
+    } else if (event.type === 'pointermove' && away > 0) {
+      drag.x = event.clientX
+      drag.y = event.clientY
+      step()
+    }
+  }
+
+  /** A press is a new gesture, so the drag before it lost its release somewhere; the press
+   *  is the page's own. */
+  function onNewPress(event) {
+    pressed = event.pointerId
+    if (drag) end(false)
+  }
+
+  /** The window gone from under the pointer, by alt-tab or a grab of the system's: the
+   *  release may never come, and nobody is dragging. On the window itself: a focus moving
+   *  inside the page does not reach this. */
+  function onGone() {
+    if (drag && (document.visibilityState === 'hidden' || !document.hasFocus())) end(false)
   }
 
   function onKey(event) {
@@ -119,6 +152,7 @@
     const { target, source, effect, style, image, timer } = drag
     clearInterval(timer)
     for (const type of PRESS_EVENTS) window.removeEventListener(type, onPointer, true)
+    for (const type of KEPT_FROM_THE_PAGE) window.removeEventListener(type, swallow, true)
     window.removeEventListener('keydown', onKey, true)
     window.removeEventListener('keyup', onKey, true)
     style.remove()
@@ -142,10 +176,15 @@
     window.addEventListener('pointerdown', noClick, true)
   }
 
-  /** What is carried under the pointer: what the source asked for, else a copy of it. */
+  /** What is carried under the pointer: what the source asked for, else a copy of it, with
+   *  no second element of an id, and no second page or player running. */
   function imageOf(element) {
     const box = element.getBoundingClientRect()
     const image = element.cloneNode(true)
+    image.removeAttribute('id')
+    for (const inner of image.querySelectorAll('[id]')) inner.removeAttribute('id')
+    for (const inner of image.querySelectorAll('iframe, video, audio, object, embed'))
+      inner.remove()
     Object.assign(image.style, {
       position: 'fixed',
       left: '0',
@@ -160,10 +199,15 @@
     return image
   }
 
+  window.addEventListener('pointerdown', onNewPress, true)
+  window.addEventListener('blur', onGone)
+  document.addEventListener('visibilitychange', onGone)
   window.addEventListener(
     'dragstart',
     (event) => {
-      if (!event.isTrusted || drag) return
+      if (!event.isTrusted) return
+      // One left over from a release that never came gives way, or the engine's comes back.
+      if (drag) end(false)
       swallow(event)
       const source = event.target.nodeType === 1 ? event.target : event.target.parentElement
       if (!source) return
@@ -212,8 +256,9 @@
       }
       // What the engine says of the pointer as its drag takes it; a press held on a row
       // for its menu lets go of that here.
-      source.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true, pointerId: 1 }))
+      source.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true, pointerId: pressed }))
       for (const type of PRESS_EVENTS) window.addEventListener(type, onPointer, true)
+      for (const type of KEPT_FROM_THE_PAGE) window.addEventListener(type, swallow, true)
       window.addEventListener('keydown', onKey, true)
       window.addEventListener('keyup', onKey, true)
       drag.style = document.head.appendChild(document.createElement('style'))

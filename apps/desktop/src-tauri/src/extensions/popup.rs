@@ -36,8 +36,8 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tauri::{
-    AppHandle, Emitter as _, LogicalSize, Manager as _, PhysicalPosition, PhysicalSize, Url, Webview,
-    WebviewBuilder, WebviewUrl,
+    AppHandle, Emitter as _, LogicalSize, Manager as _, PhysicalPosition, PhysicalSize, Url,
+    Webview, WebviewBuilder, WebviewUrl,
 };
 
 /// The start of every popup's label: under the `web-` prefix every page of the web wears,
