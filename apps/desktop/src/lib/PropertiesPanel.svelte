@@ -261,6 +261,15 @@
               title={property.key}
               onkeydown={(event) => {
                 keyed = true
+                // Asked for here and not left to the browser: WebKit makes no menu of these.
+                if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  const box = event.currentTarget.getBoundingClientRect()
+                  const at = { clientX: box.left + 12, clientY: box.bottom }
+                  showMenu(new MouseEvent('contextmenu', at), property)
+                  return
+                }
                 if (event.key !== 'Enter' && event.key !== ' ') return
                 event.preventDefault()
                 void startRenaming(property.key)
