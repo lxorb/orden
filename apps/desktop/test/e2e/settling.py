@@ -25,13 +25,30 @@ the path: `from settling import quiet, steady, NO_CARET`.
 
 from __future__ import annotations
 
+import weakref
 from collections.abc import Callable
 
-#: Every stylesheet the page has asked for has arrived. What WebKit answers before that
+#: Every stylesheet the page has been given is in force. What WebKit answers before that
 #: is not the page: it applies none of a page's sheets, nor a `<style>` added since, while
 #: one is still on its way, and a chunk's is for a second or so after a launch. No token
-#: resolves and a mark in a button is as big as it likes (#443).
-LANDED = "[...document.querySelectorAll('link[rel=stylesheet]')].every((one) => one.sheet)"
+#: resolves and a mark in a button is as big as it likes (#443). Links by having arrived,
+#: and a `<style>` by being among the sheets the document says it has.
+LANDED = (
+    "[...document.querySelectorAll('link[rel=stylesheet]')].every((one) => one.sheet)"
+    " && [...document.querySelectorAll('style')]"
+    ".every((one) => [...document.styleSheets].includes(one.sheet))"
+)
+
+#: The sheets that are not in force, by name, for saying which.
+UNLANDED = """
+() => [
+  ...[...document.querySelectorAll('link[rel=stylesheet]')].filter((one) => !one.sheet)
+    .map((one) => one.getAttribute('href')),
+  ...[...document.querySelectorAll('style')]
+    .filter((one) => ![...document.styleSheets].includes(one.sheet))
+    .map((one) => `<style id="${one.id}">`),
+]
+"""
 
 #: What the page must have finished before a shot is taken.
 #:
@@ -46,12 +63,16 @@ LANDED = "[...document.querySelectorAll('link[rel=stylesheet]')].every((one) => 
 #: its states are still, which is why two matching frames do not catch it: one run
 #: had it dim before the first frame and the next had it dim after the second. It is
 #: a class, so it can be waited for.
-STILL = f"""
-() => {LANDED}
-  && document.fonts.status === 'loaded'
+MOVED_ON = """
+document.fonts.status === 'loaded'
   && document.getAnimations().every((one) => one.playState !== 'running')
   && !document.querySelector('.nib-scrollbar.is-lit, .nib-scrollbar.is-settling')
 """
+STILL = f"() => {LANDED} && {MOVED_ON}"
+
+#: Pages with a sheet that never landed, which has been said once and is not waited on
+#: at every quiet after it.
+NO_SHEET: "weakref.WeakSet[object]" = weakref.WeakSet()
 
 #: The caret, hidden. Both spellings: the browser's own in a field, and the
 #: editor's, which is an element with a blink of its own.
@@ -96,11 +117,16 @@ def quiet(page: object, settle: int = 90) -> None:
     two readings.
     """
     try:
-        page.wait_for_function(STILL, timeout=6000)  # type: ignore[attr-defined]
+        still = f"() => {MOVED_ON}" if page in NO_SHEET else STILL
+        page.wait_for_function(still, timeout=6000)  # type: ignore[attr-defined]
     except Exception:
         # A page with an animation that never ends - a spinner - is photographed as
         # it is rather than waited on for ever; the shot says so by being unsteady.
-        pass
+        # A sheet that never landed is said: what is photographed then is not the page.
+        missing = page.evaluate(UNLANDED)  # type: ignore[attr-defined]
+        if missing and page not in NO_SHEET:
+            NO_SHEET.add(page)
+            print(f"  a sheet never landed, what follows is drawn without it: {missing}", flush=True)
 
     was = page.evaluate(FOCUS)  # type: ignore[attr-defined]
     for _ in range(8):

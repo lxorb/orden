@@ -30,8 +30,10 @@ from __future__ import annotations
 import json
 
 from playwright.sync_api import Browser, Page
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
 from harness import Drive
+from settling import LANDED, UNLANDED
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
@@ -69,14 +71,13 @@ async ([note]) => {
 # through a probe element so a token written as a hex, an rgb() or a color-mix()
 # all come back as the colour the eye gets.
 #
-# Nothing until every sheet has landed, in one go with the reading so that none can be
-# asked for between the two: WebKit keeps a page's sheets back while one is on its way, a
-# theme's `<style>` included, and a chunk's is for a second or so after a launch. Read in
-# that time the tokens are nothing, so each is the same colour as the page and every
-# ratio is 1:1; or, with the built-in's sheets in, they are the built-in's (#443).
+# Nothing until every sheet is in force, in one go with the reading so that none can be
+# asked for between the two: see `LANDED`. Read before that the tokens are nothing, so each
+# is the same colour as the page and every ratio is 1:1; or, with the built-in's sheets
+# in, they are the built-in's (#443).
 RATIOS = """
 (names) => {
-  if (![...document.querySelectorAll('link[rel=stylesheet]')].every((one) => one.sheet)) return null
+  if (!(LANDED)) return null
 
   const probe = document.createElement('span')
   probe.style.position = 'fixed'
@@ -110,7 +111,7 @@ RATIOS = """
   probe.remove()
   return out
 }
-"""
+""".replace("LANDED", LANDED)
 
 # What a fence is coloured in. The four `--syntax-*` tokens reach these and
 # nothing else does, so this is the assertion the tokens exist for.
@@ -157,14 +158,16 @@ TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR")
 
 # The chunks the app fetches once it is up are cancelled by a reload, and WebKit reports
 # each one, and each import waiting on it, from the page being left. It is the drive's
-# reload rather than the app; see `reload` in bookmark-tiles.py, which met it first.
+# reload rather than the app; see `reload` in bookmark-tiles.py, which met it first. Only
+# until the new page is the page: a chunk it fails to fetch itself is a failure, and so is
+# what the app does about one, which is to offer Reload.
 CANCELLED = ("Importing a module script failed", "due to access control checks")
-RELOADING: set[Page] = set()
+LEAVING: set[Page] = set()
 
 
 def listen(page: Page, label: str) -> None:
     def cancelled(said: str) -> bool:
-        return page in RELOADING and any(one in said for one in CANCELLED)
+        return page in LEAVING and any(one in said for one in CANCELLED)
 
     page.on(
         "pageerror",
@@ -177,6 +180,16 @@ def listen(page: Page, label: str) -> None:
         and not any(one in message.text for one in TOLERATED)
         and not cancelled(message.text)
         else None,
+    )
+    page.on(
+        "requestfailed",
+        lambda request: wrong(f"[{label}] a piece of the app did not arrive: {request.url}")
+        if page not in LEAVING and "/assets/" in request.url
+        else None,
+    )
+    page.on(
+        "framenavigated",
+        lambda frame: LEAVING.discard(page) if frame == page.main_frame else None,
     )
 
 
@@ -216,7 +229,11 @@ def fresh(browser: Browser, label: str, forced: bool = False) -> Page:
 
 
 def ratios(page: Page) -> dict:
-    return page.wait_for_function(RATIOS, arg=WANTED, timeout=30_000, polling=50).json_value()
+    try:
+        return page.wait_for_function(RATIOS, arg=WANTED, timeout=30_000, polling=50).json_value()
+    except PlaywrightTimeout:
+        wrong(f"a sheet never landed, so the colours cannot be read: {page.evaluate(UNLANDED)}")
+        return {}
 
 
 def wear_the_theme(page: Page) -> None:
@@ -345,14 +362,18 @@ def drive_offered(browser: Browser) -> None:
 
     # The same machine, launched again. Still asking for more contrast, and this
     # time it is not asked back.
-    RELOADING.add(page)
-    page.reload(wait_until="domcontentloaded")
-    RELOADING.discard(page)
-    wait_for(page, "window.nibApp", "[offered] the app again")
-    page.wait_for_timeout(800)
+    # Through the launch's last turn, which fetches the palette among the rest, and until
+    # the fetching is over, for `listen` to have heard how each chunk went.
+    LEAVING.add(page)
+    with page.expect_request("**/assets/Palette-*.js", timeout=30_000):
+        page.reload(wait_until="domcontentloaded")
+        wait_for(page, "window.nibApp", "[offered] the app again")
+    page.wait_for_load_state("networkidle")
 
     if page.evaluate("() => window.nibApp.theme.offerContrast"):
         wrong("the answer was given a second time")
+    if page.evaluate("() => !!document.querySelector('.notices .reload')"):
+        wrong("a piece of the app did not arrive on the second launch")
     if page.evaluate("() => window.nibApp.theme.id") != "contrast":
         wrong("the theme chosen by the first launch did not survive the second")
     shot(page, "31-not-asked-again")

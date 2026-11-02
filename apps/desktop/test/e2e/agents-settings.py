@@ -55,8 +55,8 @@ def check(what: str, held: bool) -> None:
 
 
 #: Where to press a row: its middle, once that has stood still for a few looks and is the
-#: row a press there finds. Given up on after five seconds, so that a press that cannot
-#: land is a press that fails rather than a drive that hangs.
+#: row a press there finds. Null after five seconds without that: a row covered, or still
+#: moving, is a failure rather than something to press anyway.
 STANDING = """
 (one) => new Promise((done) => {
   const started = Date.now()
@@ -68,7 +68,8 @@ STANDING = """
     same = String(at) === was ? same + 1 : 0
     was = String(at)
     const found = one.contains(document.elementFromPoint(at[0], at[1]))
-    if ((same >= 6 && found) || Date.now() - started > 5000) done(at)
+    if (same >= 6 && found) done(at)
+    else if (Date.now() - started > 5000) done(null)
     else setTimeout(look, 30)
   }
   look()
@@ -85,7 +86,19 @@ def press(page, row) -> None:
     went down on one row and up on another, which is no click at all (#446)."""
     row.evaluate("(one) => one.scrollIntoView({ block: 'center', behavior: 'instant' })")
     quiet(page)
-    page.mouse.click(*row.evaluate(STANDING))
+    at = row.evaluate(STANDING)
+    if at is None:
+        raise SystemExit(f"nothing to press: {row} never stood still with nothing over it")
+    page.mouse.click(*at)
+
+
+def choose(page, name: str) -> None:
+    """Opens the agent of that name from the list, and it is that agent that opens."""
+    press(page, page.locator(".agents .agent", has_text=name))
+    page.wait_for_function(
+        "(name) => document.querySelector('.agents .who input.title')?.value === name",
+        arg=name,
+    )
 
 
 def switch(page, name: str) -> None:
@@ -197,16 +210,14 @@ def look(browser, scheme: str, language: str) -> None:
     photograph("list")
 
     # Codex was granted no browser: no trifecta.
-    press(page, page.locator(".agents .agent", has_text="Codex"))
-    page.wait_for_selector(".agents .who")
+    choose(page, "Codex")
     quiet(page)
     check(f"[{name}] no trifecta line on an agent with no browser", page.locator(".trifecta").count() == 0)
     page.locator(".agents .back").click()
     page.wait_for_selector(".agents .agent")
     quiet(page)
 
-    press(page, page.locator(".agents .agent", has_text="Claude Code"))
-    page.wait_for_selector(".agents .who")
+    choose(page, "Claude Code")
     quiet(page)
     check(f"[{name}] the trifecta line is on the agent that reads and browses", page.locator(".trifecta").count() == 1)
     body_to(page, "top")
