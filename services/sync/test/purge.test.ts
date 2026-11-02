@@ -545,6 +545,7 @@ describe('a purge the database fails part way', () => {
   ])('at %s leaves it to purge again', async (_, sql) => {
     const id = await held()
     const before = env.db.prepare('select hash, size from notes where id = ?').get(id)
+    const whole = remaining(id)
     const body = (await env.NOTES.get(`spaces/${space}/${id}`))?.size
     const recovered = failing(sql)
 
@@ -558,22 +559,7 @@ describe('a purge the database fails part way', () => {
     ).toEqual([id])
     expect((await env.NOTES.get(`spaces/${space}/${id}`))?.size).toBe(body)
     expect(await env.NOTES.get(`versions/${versionOf(id)}`)).not.toBe(null)
-    expect(remaining(id)).toEqual({
-      ...nothing,
-      search: 1,
-      reminders: 1,
-      pictures: 1,
-      versions: 1,
-      answers: 1,
-      paths: 1,
-      members: 1,
-      links: 1,
-      requests: 1,
-      invited: 1,
-      guests: 1,
-      chats: 1,
-      terms: 1,
-    })
+    expect(remaining(id)).toEqual(whole)
 
     recovered()
     const second = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
@@ -613,7 +599,7 @@ describe('a purge the database fails part way', () => {
 
   test('nor does telling a machine what ended take the purge back', async () => {
     const id = await held()
-    env.justBefore(/insert into machine_audit|into machine_log|audit/, () => {
+    env.justBefore(/insert into machine_events/, () => {
       throw new Error('D1 is not answering')
     })
 
@@ -662,6 +648,7 @@ describe('a purge the database fails part way', () => {
   /** Nothing is taken before the row is, so a restore that wins keeps all of it. */
   test('a restore landing just ahead of it keeps the history too', async () => {
     const id = await held()
+    const whole = remaining(id)
     env.justBefore(/select kind, hash, paper, front_rev, size/, () => {
       env.db.prepare('update notes set deleted = 0, deleted_at = null where id = ?').run(id)
     })
@@ -669,8 +656,7 @@ describe('a purge the database fails part way', () => {
     const purge = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
 
     expect(purge.status).toBe(404)
-    expect(remaining(id).versions).toBe(1)
-    expect(remaining(id).search).toBe(1)
+    expect(remaining(id)).toEqual(whole)
     expect(await env.NOTES.get(`versions/${versionOf(id)}`)).not.toBe(null)
     expect(env.keys()).toContain(`spaces/${space}/${id}`)
   })

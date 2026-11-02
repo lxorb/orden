@@ -45,6 +45,16 @@ export async function endTerms(
   await tellEnded(env, ended, who)
 }
 
+/** The row of one file's live session ended, as a statement of a batch: what it answers
+ *  with is what `tellEnded` is then told. */
+export function endingTerm(env: Env, term: string, at: number): D1PreparedStatement {
+  return env.DB.prepare(
+    `update term_sessions set ended_at = ?
+      where ended_at is null and term <> session and term = ?
+     returning machine, session, user_id`,
+  ).bind(at, term)
+}
+
 /** Tells each machine about sessions whose rows have already ended, and each owner's
  *  devices, so Settings' list drops them. Never a throw past a machine that could not
  *  be asked: the row is what counts, and the machine reads the rows again. */
