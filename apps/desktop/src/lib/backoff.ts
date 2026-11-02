@@ -85,6 +85,13 @@ export function saveRetryDelay(tries: number): number {
   return Math.min(2_000 * 2 ** Math.max(0, tries - 1), 60_000)
 }
 
+/** A page note's paper that did not get where it was going, tried again (pages/carried.ts):
+ *  each try can be the whole PDF read, hashed and sent, so later than a note, doubling to
+ *  ten minutes. */
+export function paperRetryDelay(tries: number): number {
+  return Math.min(30_000 * 2 ** Math.max(0, tries - 1), 600_000)
+}
+
 /** The heartbeat on the account's hub socket. The hub counts a device alive while its
  *  last beat is under thirty seconds old, so three can go missing before it is not. */
 export const BEAT_EVERY = 10_000

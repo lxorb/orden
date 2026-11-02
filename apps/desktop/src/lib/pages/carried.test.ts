@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { ApiError } from '../api'
+import { paperRetryDelay } from '../backoff'
 import { type Carrying, carryPapers, forgetLacking, namesAPaper, paperFor } from './carried'
 
 /** A page note's paper carried with the note (#551): up once from the device that has
@@ -38,8 +40,11 @@ function world(
   const sent: { id: string; hash: string }[] = []
   const asked: string[] = []
   const kept = vi.fn()
+  const stamps = new Map<string, string>()
+  const said: string[] = []
   const how: Carrying = {
     exists: (path) => Promise.resolve(disk.has(path)),
+    stamp: (path) => Promise.resolve(stamps.get(path) ?? null),
     read: (path) => {
       const held = disk.get(path)
       return Promise.resolve(held instanceof Uint8Array ? held : null)
@@ -63,8 +68,9 @@ function world(
     },
     carried: new Map(),
     kept,
+    said: (note, failed) => said.push(`${note.space}: ${failed}`),
   }
-  return { disk, sent, asked, how, kept }
+  return { disk, sent, asked, how, kept, stamps, said }
 }
 
 beforeEach(() => forgetLacking())
@@ -75,7 +81,7 @@ describe('carrying a page note’s paper', () => {
       '/s/Lecture.pages': WITH_PAPER,
       '/s/Lecture.pages.pdf': PDF,
     })
-    const notes = [{ path: '/s/Lecture.pages', id: 'n1', writes: true }]
+    const notes = [{ path: '/s/Lecture.pages', id: 'n1', writes: true, space: 'Work' }]
 
     await carryPapers(notes, how)
     await carryPapers(notes, how)
@@ -87,13 +93,13 @@ describe('carrying a page note’s paper', () => {
 
   test('does not send it from a space shared to read', async () => {
     const { sent, how } = world({ '/s/Lecture.pages': WITH_PAPER, '/s/Lecture.pages.pdf': PDF })
-    await carryPapers([{ path: '/s/Lecture.pages', id: 'n1', writes: false }], how)
+    await carryPapers([{ path: '/s/Lecture.pages', id: 'n1', writes: false, space: 'Work' }], how)
     expect(sent).toEqual([])
   })
 
   test('brings it down beside a note that has none here', async () => {
     const { disk, asked, how } = world({ '/s/Lecture.pages': WITH_PAPER }, { n1: PDF })
-    await carryPapers([{ path: '/s/Lecture.pages', id: 'n1', writes: false }], how)
+    await carryPapers([{ path: '/s/Lecture.pages', id: 'n1', writes: false, space: 'Work' }], how)
 
     expect(asked).toEqual(['n1'])
     expect(disk.get('/s/Lecture.pages.pdf')).toBe(PDF)
@@ -101,7 +107,7 @@ describe('carrying a page note’s paper', () => {
 
   test('never asks about a page note of blank sheets', async () => {
     const { asked, how } = world({ '/s/Sketch.pages': BLANK })
-    await carryPapers([{ path: '/s/Sketch.pages', id: 'n2', writes: true }], how)
+    await carryPapers([{ path: '/s/Sketch.pages', id: 'n2', writes: true, space: 'Work' }], how)
     expect(asked).toEqual([])
   })
 
@@ -111,7 +117,7 @@ describe('carrying a page note’s paper', () => {
     vi.useFakeTimers()
     try {
       const { asked, how } = world({ '/s/Lecture.pages': WITH_PAPER })
-      const notes = [{ path: '/s/Lecture.pages', id: 'n1', writes: true }]
+      const notes = [{ path: '/s/Lecture.pages', id: 'n1', writes: true, space: 'Work' }]
 
       await carryPapers(notes, how)
       await carryPapers(notes, how)
@@ -139,7 +145,7 @@ describe('carrying a page note’s paper', () => {
       return Promise.resolve(PDF)
     }
 
-    await carryPapers([{ path: '/s/Lecture.pages', id: 'n1', writes: true }], how)
+    await carryPapers([{ path: '/s/Lecture.pages', id: 'n1', writes: true, space: 'Work' }], how)
 
     expect(disk.has('/s/Lecture.pages.pdf')).toBe(false)
     expect(how.carried.has('n1')).toBe(false)
@@ -160,12 +166,133 @@ describe('carrying a page note’s paper', () => {
 
     await carryPapers(
       [
-        { path: '/s/A.pages', id: 'a', writes: true },
-        { path: '/s/B.pages', id: 'b', writes: true },
+        { path: '/s/A.pages', id: 'a', writes: true, space: 'Work' },
+        { path: '/s/B.pages', id: 'b', writes: true, space: 'Work' },
       ],
       how,
     )
     expect(sent.map((one) => one.id)).toEqual(['b'])
+  })
+})
+
+describe('a paper the account will not take', () => {
+  const NOTE = { path: '/s/Lecture.pages', id: 'n1', writes: true, space: 'Work' }
+
+  /** A paper on the disk whose every read and send is counted, and sends that answer
+   *  as `answer` says. */
+  function refusing(answer: () => Promise<void>) {
+    const made = world({ '/s/Lecture.pages': WITH_PAPER, '/s/Lecture.pages.pdf': PDF })
+    const count = { reads: 0, ups: 0 }
+    const read = made.how.read
+    made.how.read = (path) => {
+      count.reads += 1
+      return read(path)
+    }
+    made.how.up = () => {
+      count.ups += 1
+      return answer()
+    }
+    made.stamps.set('/s/Lecture.pages.pdf', 'first')
+    return { ...made, count }
+  }
+
+  const passes = async (times: number, how: Carrying) => {
+    for (let at = 0; at < times; at += 1) await carryPapers([NOTE], how)
+  }
+
+  beforeEach(() => void vi.useFakeTimers({ toFake: ['Date'] }))
+  afterEach(() => void vi.useRealTimers())
+
+  test.each([413, 415, 400])(
+    'is not read or sent again after a %i, and is said once',
+    async (status) => {
+      const { how, count, said } = refusing(() => Promise.reject(new ApiError(status, 'no')))
+
+      await passes(5, how)
+      vi.setSystemTime(Date.now() + 24 * 60 * 60_000)
+      await passes(5, how)
+
+      expect(count).toEqual({ reads: 1, ups: 1 })
+      expect(said).toEqual(['Work: the account would not take Lecture.pages.pdf'])
+      expect(how.carried.has('n1')).toBe(false)
+    },
+  )
+
+  test('goes again once the file changes, and is said again if refused again', async () => {
+    let answer: () => Promise<void> = () => Promise.reject(new ApiError(413, 'too big'))
+    const { how, count, stamps, said, sent } = refusing(() => answer())
+
+    await passes(3, how)
+    stamps.set('/s/Lecture.pages.pdf', 'second')
+    await passes(3, how)
+    expect(count.ups).toBe(2)
+    expect(said).toHaveLength(2)
+
+    answer = () => Promise.resolve()
+    stamps.set('/s/Lecture.pages.pdf', 'third')
+    await passes(3, how)
+    expect(count.ups).toBe(3)
+    expect(how.carried.has('n1')).toBe(true)
+    expect(sent).toEqual([])
+  })
+
+  test.each([
+    ['out of reach', () => new TypeError('fetch failed')],
+    ['a 500', () => new ApiError(500, 'oops')],
+    ['a 429', () => new ApiError(429, 'slow down')],
+    ['a 403', () => new ApiError(403, 'read only for now')],
+  ])('waits longer each time after %s, then goes', async (_, error) => {
+    let answer: () => Promise<void> = () => Promise.reject(error())
+    const { how, count, said } = refusing(() => answer())
+
+    await passes(3, how)
+    expect(count.ups).toBe(1)
+
+    vi.setSystemTime(Date.now() + paperRetryDelay(1))
+    await passes(3, how)
+    expect(count.ups).toBe(2)
+
+    vi.setSystemTime(Date.now() + paperRetryDelay(1))
+    await passes(3, how)
+    expect(count.ups).toBe(2)
+
+    vi.setSystemTime(Date.now() + paperRetryDelay(2))
+    answer = () => Promise.resolve()
+    await passes(3, how)
+    expect(count.ups).toBe(3)
+    expect(how.carried.has('n1')).toBe(true)
+    expect(said).toEqual([])
+  })
+
+  test('a full account is said once and tried again, since room can be made', async () => {
+    let answer: () => Promise<void> = () => Promise.reject(new ApiError(507, 'out of space'))
+    const { how, count, said } = refusing(() => answer())
+
+    await passes(3, how)
+    vi.setSystemTime(Date.now() + paperRetryDelay(1))
+    await passes(3, how)
+    expect(count.ups).toBe(2)
+    expect(said).toEqual(['Work: no room on the account for Lecture.pages.pdf'])
+
+    vi.setSystemTime(Date.now() + paperRetryDelay(2))
+    answer = () => Promise.resolve()
+    await passes(1, how)
+    expect(how.carried.has('n1')).toBe(true)
+  })
+
+  test('holds nobody else up', async () => {
+    const { how, sent } = refusing(() => Promise.reject(new ApiError(413, 'too big')))
+    const up = how.up
+    how.up = (id, hash, bytes) =>
+      id === 'n1' ? up(id, hash, bytes) : (sent.push({ id, hash }), Promise.resolve())
+    const read = how.read
+    how.read = (path) => (path === '/s/B.pages.pdf' ? Promise.resolve(PDF) : read(path))
+    const exists = how.exists
+    how.exists = (path) => (path === '/s/B.pages.pdf' ? Promise.resolve(true) : exists(path))
+
+    await carryPapers([NOTE, { ...NOTE, id: 'n2', path: '/s/B.pages' }], how)
+
+    expect(sent.map((one) => one.id)).toEqual(['n2'])
   })
 })
 
