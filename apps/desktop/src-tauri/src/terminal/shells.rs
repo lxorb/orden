@@ -776,7 +776,10 @@ mod tests {
     fn a_look_that_was_not_sure_is_looked_at_again() {
         let kept = Kept::new();
         assert_eq!(*kept.get(|| (vec!["cmd"], false)), vec!["cmd"]);
-        assert_eq!(*kept.get(|| (vec!["cmd", "wsl:Ubuntu"], true)), vec!["cmd", "wsl:Ubuntu"]);
+        assert_eq!(
+            *kept.get(|| (vec!["cmd", "wsl:Ubuntu"], true)),
+            vec!["cmd", "wsl:Ubuntu"]
+        );
         assert_eq!(*kept.get(|| panic!("kept")), vec!["cmd", "wsl:Ubuntu"]);
     }
 

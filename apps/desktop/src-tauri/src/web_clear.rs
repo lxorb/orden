@@ -409,7 +409,10 @@ mod tests {
     #[test]
     fn site_data_is_everything_but_the_caches() {
         assert_eq!(
-            without(vec!["cookies", "disk", "files", "memory"], &["disk", "memory"]),
+            without(
+                vec!["cookies", "disk", "files", "memory"],
+                &["disk", "memory"]
+            ),
             vec!["cookies", "files"]
         );
     }
