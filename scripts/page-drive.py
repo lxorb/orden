@@ -132,23 +132,24 @@ def tree():
     if not rows:
         return
     print("before", [one["name"] for one in rows])
-    moving, under = rows[-1], rows[0]
+    # Not the first row, which the first run's tip stands over.
+    moving, under = rows[-1], rows[1]
     dragged(moving, under, 0.1)
     # Settled, for its order to be read off where the rows stand.
     until(f"(() => !nib.workspace.arranged.dragging && !document.getAnimations().length)()", "the rows settled")
     now = run(ROWS) or []
     names = [one["name"] for one in now]
     print("reordered", names)
-    if names[0:1] != [moving["name"]]:
+    if names[1:2] != [moving["name"]]:
         fail(f"{moving['name']} let go above {under['name']} did not stand there: {names}")
 
-    dragged(now[0], now[1], 0.5)
+    dragged(now[1], now[2], 0.5)
     paths = until(
         f"""(() => {{
           const paths = nib.workspace.notes.map((one) => one.path)
-          return paths.some((one) => one.endsWith('/{now[1]["name"]}/{now[0]["name"]}.md')) ? paths : null
+          return paths.some((one) => one.endsWith('/{now[2]["name"]}/{now[1]["name"]}.md')) ? paths : null
         }})()""",
-        f"{now[0]['name']} in {now[1]['name']}",
+        f"{now[1]['name']} in {now[2]['name']}",
     )
     print("nested", paths)
     picture("nested")

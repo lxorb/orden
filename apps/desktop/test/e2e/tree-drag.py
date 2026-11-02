@@ -7,15 +7,13 @@ stands there. nesting.py shoots the row this makes, and tree-order.py the order 
 
     python apps/desktop/test/e2e/tree-drag.py
 
-Twice: with the engine's drag, and with the page's own that Linux runs on instead
-(src-tauri/src/page_drag.js).
+Linux runs its own drag instead (src-tauri/src/page_drag.js), with a real pointer in
+scripts/page-drive.py.
 
 Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/tree-drag/`.
 """
 
 from __future__ import annotations
-
-from pathlib import Path
 
 from playwright.sync_api import Browser, Page
 
@@ -60,15 +58,7 @@ def drag(page: Page, name: str, onto: str, where: float) -> None:
 
 
 def drive(browser: Browser) -> None:
-    both(browser, None)
-    both(browser, Path(__file__).parents[2] / "src-tauri" / "src" / "page_drag.js")
-
-
-def both(browser: Browser, script: Path | None) -> None:
-    say(f"the {'page' if script else 'engine'}'s drag")
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
-    if script:
-        page.add_init_script(path=str(script))
     DRIVE.open(page)
     page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     page.evaluate(SEED, ["Lark", "Plover", "Wren"])
