@@ -54,19 +54,38 @@ def check(what: str, held: bool) -> None:
         wrong(what)
 
 
+#: Where to press a row: its middle, once that has stood still for a few looks and is the
+#: row a press there finds. Given up on after five seconds, so that a press that cannot
+#: land is a press that fails rather than a drive that hangs.
+STANDING = """
+(one) => new Promise((done) => {
+  const started = Date.now()
+  let was = ''
+  let same = 0
+  const look = () => {
+    const box = one.getBoundingClientRect()
+    const at = [box.x + box.width / 2, box.y + box.height / 2]
+    same = String(at) === was ? same + 1 : 0
+    was = String(at)
+    const found = one.contains(document.elementFromPoint(at[0], at[1]))
+    if ((same >= 6 && found) || Date.now() - started > 5000) done(at)
+    else setTimeout(look, 30)
+  }
+  look()
+})
+"""
+
+
 def press(page, row) -> None:
-    """A press on what is in the middle of the column, once it is there, where the page says
-    it is. A click scrolls what it presses into view by itself in Chromium; in WebKit it
-    did not reach into the sheet's column, or read the place off the column as it moved: the
-    press landed below the window, on nothing, or went down on one row and up on another,
-    which is no click at all (#446)."""
+    """A press on what is in the middle of the column, once it stands there. A click
+    scrolls what it presses into view by itself in Chromium; in WebKit it did not reach
+    into the sheet's column, or read the place off the column as it moved, and the column
+    does move: it is taken back to what the list's height allows a frame or two after
+    the list replaces an agent's page. The press landed below the window, on nothing, or
+    went down on one row and up on another, which is no click at all (#446)."""
     row.evaluate("(one) => one.scrollIntoView({ block: 'center', behavior: 'instant' })")
     quiet(page)
-    at = row.evaluate(
-        "(one) => { const box = one.getBoundingClientRect();"
-        " return [box.x + box.width / 2, box.y + box.height / 2] }"
-    )
-    page.mouse.click(*at)
+    page.mouse.click(*row.evaluate(STANDING))
 
 
 def switch(page, name: str) -> None:
