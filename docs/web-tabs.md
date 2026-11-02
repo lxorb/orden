@@ -1819,6 +1819,17 @@ store on disk - a lasting cookie survives, a session-only one does not, a restar
 included - until the same seam exists for `WebKitGTK`: wry hands out no cookie store
 there, so there is nothing yet to give an expiry through.
 
+**On Linux today that is Orden's own Chromium, and it takes Windows' road.** A session cookie
+is given the same four hundred days through `Network.setCookie`, after each page load and as
+the window closes, and a private tab's never (`web_cookies.rs`, `scripts/session-drive.py`).
+CEF's own `persist_session_cookies` lost the cookie after a clean quit, and the preference that
+keeps it, `session.restore_on_startup` = 1, is one the runtime pins because it reopens the last
+run's tabs in hidden windows nobody owns.
+
+**The trade-off the issue asked for, on every platform:** a session cookie now reaches the disk,
+protected only as far as the engine's own store is (`SecretStorage` on Linux), and clearing the
+last hour reaches only the origins visited in it (`web_clear.rs`), so an older cookie stays.
+
 **No Orden IPC reaches the site**, three times over:
 
 1. The capabilities name the app's own **webviews** rather than the windows they

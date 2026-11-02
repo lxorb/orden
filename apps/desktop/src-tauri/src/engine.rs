@@ -147,7 +147,8 @@ pub(crate) const ENGINE_SWIPE: (&str, &str, &str) = (
 /// one, and the engine's own swipe off so only Orden's runs ([`ENGINE_SWIPE`]).
 ///
 /// What a run can ask for through its environment, for the drives and for somebody
-/// chasing a crash, none of it read by a launch that sets nothing:
+/// chasing a crash, none of it read by a launch that sets nothing, and none of it read at
+/// all by a build that ships (see `from_run`):
 ///
 /// - `NIB_CEF_ARGS`: switches for Chromium, `key=value` or a bare key, split on commas,
 ///   such as `enable-logging=stderr,v=1`.
@@ -158,16 +159,12 @@ pub(crate) const ENGINE_SWIPE: (&str, &str, &str) = (
 pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     use tauri_runtime_cef::{Cef, DevToolsPolicy, RemoteDebugging, SandboxPolicy};
 
-    let sandbox = match std::env::var("NIB_CEF_SANDBOX")
-        .unwrap_or_default()
-        .as_str()
-    {
+    let sandbox = match from_run("NIB_CEF_SANDBOX").unwrap_or_default().as_str() {
         "required" => SandboxPolicy::Required,
         "disabled" | "off" => SandboxPolicy::Disabled,
         _ => SandboxPolicy::Auto,
     };
-    let debugging = std::env::var("NIB_CEF_DEBUG_PORT")
-        .ok()
+    let debugging = from_run("NIB_CEF_DEBUG_PORT")
         .and_then(|port| port.parse::<u16>().ok())
         .filter(|port| *port >= 1024)
         .map_or(RemoteDebugging::Disabled, |port| RemoteDebugging::Port {
@@ -187,7 +184,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
             crate::page_scale::SWITCH.0,
             Some(crate::page_scale::SWITCH.1),
         )])
-        .command_line_args(switches(&std::env::var("NIB_CEF_ARGS").unwrap_or_default()))
+        .command_line_args(switches(&from_run("NIB_CEF_ARGS").unwrap_or_default()))
         // A web tab's developer tools in the build that ships, as in a browser; Orden's own
         // window turns its own off outside a development build (`ui_window`).
         .devtools(DevToolsPolicy::Allowed)
@@ -220,6 +217,25 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         engine = engine.root_cache_path(root);
     }
     engine
+}
+
+/// One of `cef_runtime`'s variables, as this run set it.
+///
+/// Nothing in a build without debug assertions, which is every package a reader installs.
+/// The runtime keeps TLS keys out of a log, the protocol's port shut and the sandbox on in
+/// such a build, and these would open all three again to whatever can set a process's
+/// environment: `ssl-key-log-file` through the switches, and on the port every page and
+/// the app's own commands, for any user of the machine. The drives keep them because
+/// they run `tauri build --debug` (wayland.yml); a test holds both workflows to that.
+#[cfg(feature = "cef")]
+fn from_run(name: &str) -> Option<String> {
+    read_by(cfg!(debug_assertions), name)
+}
+
+/// See `from_run`; `drive` is whether this is a build the drives run.
+#[cfg(any(feature = "cef", test))]
+fn read_by(drive: bool, name: &str) -> Option<String> {
+    drive.then(|| std::env::var(name).ok()).flatten()
 }
 
 /// Chromium's feature for the overlay scrollbars Linux gets; see `cef_runtime`.
@@ -484,6 +500,20 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     }
 }
 
+/// A window of the app's own that no page of it runs in, such as the hidden one a PDF is
+/// printed from: only the interface's profile and Alloy style of what `own_window` gives.
+#[cfg(feature = "cef")]
+pub(crate) fn own_profile<M: tauri::Manager<crate::Engine>>(
+    building: tauri::WebviewWindowBuilder<'_, crate::Engine, M>,
+) -> tauri::WebviewWindowBuilder<'_, crate::Engine, M> {
+    use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
+    let building = building.browser_runtime_style(RuntimeStyle::Alloy);
+    match OWN_PROFILE.get() {
+        Some(profile) => building.data_directory(profile.clone()),
+        None => building,
+    }
+}
+
 /// The interface's profile folder, once the first window has made it.
 #[cfg(feature = "cef")]
 static OWN_PROFILE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
@@ -556,6 +586,33 @@ mod tests {
             vec![("--noerrdialogs".to_owned(), None)]
         );
         assert!(super::switches("").is_empty());
+    }
+
+    /// A build that ships reads none of the variables that would reopen what the runtime
+    /// shuts; a drive's build reads them. `PATH` stands for them, being there already.
+    #[test]
+    fn a_build_that_ships_reads_nothing_from_its_environment() {
+        assert_eq!(super::read_by(false, "PATH"), None);
+        assert!(super::read_by(true, "PATH").is_some());
+    }
+
+    /// Those variables are only read by a build with debug assertions, so every drive
+    /// that uses them has to run one and no reader may be given one.
+    #[test]
+    fn the_drives_build_for_debug_and_the_release_does_not() {
+        let workflow = |name: &str| {
+            std::fs::read_to_string(
+                crate::app_dir().join(format!("../../../.github/workflows/{name}.yml")),
+            )
+            .expect("a workflow")
+        };
+        assert!(workflow("wayland").contains("scripts/linux-cef.sh tauri build --debug"));
+        let release = workflow("release");
+        let linux = release
+            .lines()
+            .find(|line| line.contains("scripts/linux-cef.sh tauri build"))
+            .expect("the release's Linux build");
+        assert!(!linux.contains("--debug"), "{linux}");
     }
 
     /// The engine's own swipe is named the way Chromium reads it, and handed over the way

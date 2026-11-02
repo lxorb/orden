@@ -72,8 +72,22 @@ describe('where the other copy goes', () => {
     expect(conflictPath('Board.canvas')).toContain('.canvas')
   })
 
-  test('and a file with no extension is still a name', () => {
-    expect(conflictPath('Notes')).toBe('Notes')
+  test('and a file with no extension still gets a name of its own', () => {
+    const on = new Date('2026-09-13T10:00:00Z')
+
+    expect(conflictPath('Notes', on)).toBe('Notes (from another device 2026-09-13)')
+    expect(conflictPath('notes/README', on)).toBe('notes/README (from another device 2026-09-13)')
+    // The dot of a folder is not the file's.
+    expect(conflictPath('v1.2/README', on)).toBe('v1.2/README (from another device 2026-09-13)')
+    expect(conflictPath('C:\\v1.2\\README', on)).toBe(
+      'C:\\v1.2\\README (from another device 2026-09-13)',
+    )
+  })
+
+  test('is never the file it is a copy of', () => {
+    for (const path of ['README', 'a/README', 'trailing.', '.hidden', 'a.b/c', 'a/.md', 'a.md']) {
+      expect(conflictPath(path)).not.toBe(path)
+    }
   })
 
   test('steps aside by number when that name is taken too', () => {
