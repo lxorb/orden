@@ -153,7 +153,9 @@ describe('the sheet a plane of one’s own is printed on', () => {
   test('forbids every script before anything on it is read', async () => {
     const page = await printed('Card')
     const head = page.slice(0, page.indexOf('<body>'))
-    expect(head).toMatch(/<meta http-equiv="Content-Security-Policy" content="[^"]*script-src 'none'/)
+    expect(head).toMatch(
+      /<meta http-equiv="Content-Security-Policy" content="[^"]*script-src 'none'/,
+    )
     expect(page.indexOf('Content-Security-Policy')).toBeLessThan(page.indexOf('<title>'))
   })
 

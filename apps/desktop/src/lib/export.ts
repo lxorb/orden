@@ -66,7 +66,7 @@ export interface HtmlOptions {
  *  sheet, its fonts and pictures are `data:` addresses by the time it is written,
  *  and a bare page keeps the paths the note wrote - so those may load from
  *  anywhere, and nothing else may load at all. */
-const CONTENT_POLICY = [
+export const CONTENT_POLICY = [
   "default-src 'none'",
   "script-src 'none'",
   "object-src 'none'",

@@ -15,7 +15,7 @@
  *  the one thing that both reads the same and rasterises at all. */
 
 import { escapeAll } from '@orden/markdown/html'
-import { assetsOf, inlineImages, localSources, printInFrame } from '../export'
+import { assetsOf, CONTENT_POLICY, inlineImages, localSources, printInFrame } from '../export'
 import { writtenPdf } from '../export/print'
 import { chooseTarget, download } from '../export/save'
 import { type Canvas, type CanvasNode } from './format'
@@ -423,8 +423,9 @@ async function readySvg(drawing: Drawing, plain = false): Promise<string> {
   )
 }
 
-/** A picture drawn on the plane, as `drawnNode` writes one. A card's words cannot look
- *  like it: what a card says is text in the XML, with its `<` escaped. */
+/** A picture drawn on the plane, as `drawnNode` writes one. Also one an own card's HTML
+ *  wrote out as an `<image>` in an `<svg>` of its own, which is a picture to inline just
+ *  the same; a card's words cannot match, their `<` being escaped in the XML. */
 const DRAWN = /(<image\b[^>]*?\bhref=")([^"]*)(")/g
 
 /** An SVG with every picture in it inlined. Also a page note's; see pages/out.ts.
@@ -502,7 +503,11 @@ async function sheetOf(drawing: Drawing) {
 
   // The paper is the drawing: a plane has no columns to break into pages, so it
   // goes on one sheet of its own size rather than being cut across A4.
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
+  //
+  // With the policy a note's page has. In a frame the sheet is under the app's own; for
+  // a PDF, and for the dialog on a Mac, it is a file in a window of its own, under
+  // nothing else, and a plane of one's own has markup on it. See trust.ts.
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${CONTENT_POLICY}"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
 
   return { html, page: { width: width / 96, height: height / 96, margin: 0, landscape: false } }
 }
