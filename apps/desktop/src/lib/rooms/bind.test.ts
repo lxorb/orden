@@ -350,6 +350,51 @@ describe('a note bound to a room', () => {
   })
 })
 
+describe('an edit that lands between the halves of one character', () => {
+  const grin = '\u{1f600}'
+  const beam = '\u{1f601}'
+
+  /** Two devices in one room, one of them about to make the edit, and both asked
+   *  what they ended up holding. A halved character cannot cross the wire: what
+   *  travels is UTF-8, so the second device is what would show it. */
+  function afterwards(words: string, edit: (device: Device) => void) {
+    const one = Device.opening(words)
+    const two = Device.joining(one, words)
+    edit(one)
+    exchange(one, two)
+    return { note: one.words, room: one.shared, there: two.words }
+  }
+
+  test('keeps the character whole and what was typed beside it', () => {
+    const held = afterwards(`a${grin}b`, (device) => device.type(2, 'x'))
+
+    expect(held).toEqual({ note: `a${grin}xb`, room: `a${grin}xb`, there: `a${grin}xb` })
+  })
+
+  test('takes the whole character when one half of it is deleted', () => {
+    expect(afterwards(`a${grin}b`, (device) => device.cut(1, 2))).toEqual({
+      note: 'ab',
+      room: 'ab',
+      there: 'ab',
+    })
+    expect(afterwards(`a${grin}b`, (device) => device.cut(2, 3))).toEqual({
+      note: 'ab',
+      room: 'ab',
+      there: 'ab',
+    })
+  })
+
+  test('carries a character changed by its second half alone', () => {
+    // Which is a whole character on either side, so nothing about the note is wrong,
+    // and the shared text still cannot be cut where the change says.
+    const held = afterwards(`a${grin}b`, (device) => {
+      device.note.edit([{ from: 2, to: 3, insert: beam.slice(1) }])
+    })
+
+    expect(held).toEqual({ note: `a${beam}b`, room: `a${beam}b`, there: `a${beam}b` })
+  })
+})
+
 describe('a keystroke in a note that is in a room', () => {
   /** What a hundred keystrokes in the middle of a note of this size ask of the
    *  room. Everything a keystroke does here has to be the size of the keystroke:

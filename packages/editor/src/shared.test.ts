@@ -660,3 +660,46 @@ describe('words from the room while somebody composes (#544)', () => {
     expect(pane.text).toBe(room.words)
   })
 })
+
+describe('half of one character', () => {
+  const grin = '\u{1f600}'
+
+  test('never gets into a pane or the document, and the caret lands after what was typed', () => {
+    const note = new SharedDoc(`a${grin}b`)
+    const pane = new Pane(note)
+    const other = new Pane(note)
+
+    pane.edit({ from: 2, insert: 'x' }, 3)
+
+    expect(pane.text).toBe(`a${grin}xb`)
+    expect(pane.caret).toBe(4)
+    expect(other.text).toBe(`a${grin}xb`)
+    expect(note.text.toString()).toBe(`a${grin}xb`)
+  })
+
+  test('goes with the half that was deleted, and undo puts the character back', () => {
+    const note = new SharedDoc(`a${grin}b`)
+
+    note.edit([{ from: 2, to: 3, insert: '' }])
+    expect(note.text.toString()).toBe('ab')
+
+    note.undo(new Pane(note))
+    expect(note.text.toString()).toBe(`a${grin}b`)
+  })
+
+  test('is left alone where the change leaves a whole character', () => {
+    const note = new SharedDoc(`a${grin}b`)
+
+    note.edit([{ from: 2, to: 3, insert: '\u{1f601}'.slice(1) }])
+
+    expect(note.text.toString()).toBe('a\u{1f601}b')
+  })
+
+  test('does not stand in the way of what arrives from a room', () => {
+    const note = new SharedDoc('ab')
+
+    note.arrived([{ from: 1, to: 1, insert: grin }])
+
+    expect(note.text.toString()).toBe(`a${grin}b`)
+  })
+})
