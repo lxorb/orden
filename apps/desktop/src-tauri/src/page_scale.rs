@@ -24,7 +24,7 @@
 //! it, and `100vh` and a pointer's place stay true, which CSS's `zoom` on the root would
 //! not leave them. A web tab's page keeps the size its site is kept at (`web`): only the
 //! hole it is placed in changes, and `of` is what says so. Linux's CEF only, the one engine
-//! a run has proved that on: WebView2's zoom and `WKWebView`'s `pageZoom` have never been run
+//! a run has proved that on: `WebView2`'s zoom and `WKWebView`'s `pageZoom` have never been run
 //! with a web tab placed under them, and placing is the risk.
 
 /// Chromium's scale, which CEF on X11 sizes windows by correctly only at 1; see the top
