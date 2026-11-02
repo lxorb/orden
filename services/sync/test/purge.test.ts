@@ -224,6 +224,138 @@ describe('a note purged from Recently deleted', () => {
   })
 })
 
+/** A purge and a restore of one note are two requests, and each reads the row before it
+ *  writes it. Whichever way round they land the note is either whole or gone: never a
+ *  live note with nothing in it (#473). */
+describe('a note restored and purged at once', () => {
+  interface Row {
+    deleted: number
+    deleted_at: number | null
+    hash: string
+    size: number
+  }
+
+  const row = (id: string) =>
+    env.db.prepare('select deleted, deleted_at, hash, size from notes where id = ?').get(id) as Row
+
+  /** `work` run at the moment the next batch is about to be written, after whatever
+   *  that request read to decide on it. */
+  function beforeNextBatch(work: () => Promise<unknown>) {
+    const real = env.DB.batch.bind(env.DB)
+    let waiting = true
+    env.DB.batch = (async (statements: D1PreparedStatement[]) => {
+      if (waiting) {
+        waiting = false
+        await work()
+      }
+      return await real(statements)
+    }) as typeof env.DB.batch
+  }
+
+  async function deleted(path: string): Promise<string> {
+    const id = await heldInARoom(path, 'one\nKEEP ME\n', 'x')
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    return id
+  }
+
+  async function deletedOnV1(path: string): Promise<string> {
+    const id = (
+      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content: 'KEEP ME' } })
+    ).json.note.id
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    return id
+  }
+
+  test('the restore first, as the purge is starting: it stays, whole', async () => {
+    const id = await deleted('Both.md')
+    const before = row(id)
+    // Past the purge's own look at the row and before anything it does about it.
+    env.justBefore(/select kind, hash, paper, front_rev, size/, () => {
+      env.db.prepare('update notes set deleted = 0, deleted_at = null where id = ?').run(id)
+    })
+
+    const purge = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    expect(purge.status).toBe(404)
+    expect(row(id)).toMatchObject({ deleted: 0, hash: before.hash, size: before.size })
+    expect(env.keys()).toContain(`spaces/${space}/${id}`)
+    expect((await call(env, `/v1/notes/${id}`, { token })).json.content).toContain('KEEP ME')
+  })
+
+  test('the purge first, under a tree batch: the note stays gone', async () => {
+    const id = await deleted('Both.md')
+    beforeNextBatch(() => call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token }))
+
+    const answer = await call<{ results: Record<string, unknown>[] }>(
+      env,
+      `/v2/spaces/${space}/ops`,
+      { token, body: { ops: [{ op: 'back', t: 'restore', id, seen: 1_000_000 }] } },
+    )
+
+    expect(answer.status).toBe(200)
+    expect(answer.json.results[0]).toMatchObject({ refused: 'gone' })
+    expect(row(id)).toMatchObject({ deleted: 1, deleted_at: null, hash: '', size: 0 })
+  })
+
+  test('the purge first, under Recently deleted’s restore: the same', async () => {
+    const id = await deleted('Both.md')
+    beforeNextBatch(() => call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token }))
+
+    const back = await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })
+
+    expect(back.status).toBe(404)
+    expect(row(id)).toMatchObject({ deleted: 1, deleted_at: null, hash: '', size: 0 })
+  })
+
+  test('and on a v1 tree, whose restore is a row written by path', async () => {
+    const id = await deletedOnV1('Old.md')
+    beforeNextBatch(() => call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token }))
+
+    const back = await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })
+
+    expect(back.status).toBe(404)
+    expect(row(id)).toMatchObject({ deleted: 1, deleted_at: null, hash: '', size: 0 })
+  })
+
+  test('a batch sent after the purge is refused too', async () => {
+    const id = await deleted('Both.md')
+    await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    const answer = await call<{ results: Record<string, unknown>[] }>(
+      env,
+      `/v2/spaces/${space}/ops`,
+      { token, body: { ops: [{ op: 'back', t: 'restore', id, seen: 1_000_000 }] } },
+    )
+
+    expect(answer.json.results[0]).toMatchObject({ refused: 'gone' })
+    expect(row(id)).toMatchObject({ deleted: 1, hash: '' })
+  })
+
+  /** The row says it is gone before the bucket is asked, so the bucket saying no leaves
+   *  nothing in Recently deleted to tap again: the sweep is what comes back for it. */
+  test('bytes the bucket would not give up go at the next sweep', async () => {
+    const id = await deleted('Stuck.md')
+    const bucket = env.NOTES as unknown as { delete(keys: string | string[]): Promise<void> }
+    const real = bucket.delete.bind(bucket)
+    let failing = true
+    bucket.delete = (keys) => {
+      if (!failing) return real(keys)
+      failing = false
+      return Promise.reject(new Error('the bucket is not answering'))
+    }
+
+    const purge = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    expect(purge.status).toBe(200)
+    expect(row(id)).toMatchObject({ deleted: 1, deleted_at: null, hash: '' })
+    expect(env.keys()).toContain(`spaces/${space}/${id}`)
+
+    await sweepLeftovers(env)
+    expect(env.keys()).not.toContain(`spaces/${space}/${id}`)
+    expect(env.keys()).not.toContain(`crdt/${id}`)
+  })
+})
+
 describe('a v1 note deleted again', () => {
   /** A note on the v1 tree, which has no `name_key`: its delete is the route's own. */
   async function v1Note(): Promise<string> {

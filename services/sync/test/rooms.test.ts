@@ -1698,6 +1698,48 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect(read.json.content).toBe(OPENING)
   })
 
+  /** The door asks the database and the room then waits on its storage and on D1: an
+   *  owner's route landing in that wait found no row to tell, or a room with no socket
+   *  yet, and the socket was then let in on what the door had read (#473). */
+  test('has the socket closed when they are taken out during its handshake', async () => {
+    env.justBefore(/insert into room_sockets/, () => {
+      env.db
+        .prepare('delete from space_members where space_id = ? and email = ?')
+        .run(spaceId, WRITER)
+    })
+
+    const socket = await signedIn(writer, writerId)
+
+    expect(socket.closed).toBe(true)
+    expect(socket.closedWith?.code).toBe(1008)
+    expect(socket.take()).toEqual([])
+    expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
+  })
+
+  test('has the socket made a reader when the role drops during its handshake', async () => {
+    env.justBefore(/insert into room_sockets/, () => {
+      env.db
+        .prepare("update space_members set role = 'read' where space_id = ? and email = ?")
+        .run(spaceId, WRITER)
+    })
+
+    const socket = await signedIn(writer, writerId)
+
+    expect(socket.closed).toBe(false)
+    expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
+  })
+
+  test('is let in as the door said where the database cannot be asked again', async () => {
+    env.justBefore(/case when sp.user_id = me.user_id/, () => {
+      throw new Error('D1 is not answering')
+    })
+
+    const socket = await signedIn(writer, writerId)
+
+    expect(socket.closed).toBe(false)
+    expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(true)
+  })
+
   test('has the socket closed when the owner takes them out', async () => {
     const socket = await open(writerId)
 

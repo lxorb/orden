@@ -183,9 +183,27 @@ function bucket() {
           upload.parts.set(partNumber, bytesOf(value))
           return Promise.resolve({ partNumber, etag: `etag-${String(partNumber)}` })
         },
-        complete(parts: { partNumber: number }[]) {
+        /** What the real thing says to a list it cannot put together, in its words
+         *  (workerd's, as `wrangler dev` runs them). Its other refusal, parts too small
+         *  or uneven, is left to a test to ask for: parts that can be read at a glance
+         *  are what most tests here want. */
+        complete(parts: { partNumber: number; etag: string }[]) {
           const upload = uploads.get(uploadId)
           if (!upload) return Promise.reject(new Error('no such upload'))
+          for (const { partNumber: number, etag } of parts) {
+            if (!Number.isInteger(number) || number < 1 || number > 10_000) {
+              return Promise.reject(
+                new TypeError(`Part number must be between 1 and 10000 (inclusive).`),
+              )
+            }
+            if (!upload.parts.has(number) || etag !== `etag-${String(number)}`) {
+              return Promise.reject(
+                new Error(
+                  'completeMultipartUpload: One or more of the specified parts could not be found. (10025)',
+                ),
+              )
+            }
+          }
           const pieces = [...parts]
             .sort((a, b) => a.partNumber - b.partNumber)
             .map((part) => upload.parts.get(part.partNumber) ?? new Uint8Array())

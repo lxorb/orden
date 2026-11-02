@@ -78,6 +78,93 @@ describe('bytes up', () => {
     expect(env.keys().some((key) => key.startsWith('blobs/'))).toBe(false)
   })
 
+  /** A list R2 cannot put together is the device's mistake, and said so; the bucket
+   *  itself being unwell is not, and is left to say what it says (#473). */
+  describe('in parts that do not make a file', () => {
+    async function started(data: Uint8Array) {
+      const hash = await hashOf(data)
+      const answer = await call<{ upload: string }>(env, '/v2/blobs/parts', {
+        token,
+        body: { hash, size: data.length, type: 'video/mp4' },
+      })
+      return { hash, upload: answer.json.upload }
+    }
+
+    const finish = (upload: string, parts: unknown) =>
+      call(env, `/v2/blobs/parts/${upload}`, { token, body: { parts } })
+
+    const send = (upload: string, part: number, raw: Uint8Array) =>
+      call<{ part: number; etag: string }>(env, `/v2/blobs/parts/${upload}/${String(part)}`, {
+        method: 'PUT',
+        token,
+        raw,
+      })
+
+    /** The bucket answering a completion with this. */
+    function completing(fails: Error) {
+      const notes = env.NOTES as unknown as {
+        resumeMultipartUpload(key: string, id: string): { complete(parts: unknown): unknown }
+      }
+      const real = notes.resumeMultipartUpload.bind(notes)
+      notes.resumeMultipartUpload = (key, id) => ({
+        ...real(key, id),
+        complete: () => Promise.reject(fails),
+      })
+    }
+
+    test('an empty list', async () => {
+      const { upload } = await started(bytes(100, 1))
+      expect((await finish(upload, [])).status).toBe(400)
+    })
+
+    test('a part nobody sent, or an etag that is not its own', async () => {
+      const data = bytes(100, 2)
+      const { hash, upload } = await started(data)
+      const part = (await send(upload, 1, data)).json
+
+      expect((await finish(upload, [{ part: 7, etag: 'etag-7' }])).status).toBe(400)
+      expect((await finish(upload, [{ part: 1, etag: 'not its own' }])).status).toBe(400)
+
+      // A list that was wrong is not an upload thrown away: the right one still lands.
+      expect((await finish(upload, [part])).status).toBe(201)
+      expect(env.db.prepare('select size from blobs where hash = ?').get(hash)).toEqual({
+        size: 100,
+      })
+    })
+
+    test('a number no part can have', async () => {
+      const { upload } = await started(bytes(100, 3))
+      for (const part of [0, -1, 1.5, 10_001]) {
+        expect((await finish(upload, [{ part, etag: 'x' }])).status, String(part)).toBe(400)
+      }
+    })
+
+    test('parts too small, or of uneven sizes, as the bucket says', async () => {
+      const { upload } = await started(bytes(100, 4))
+      for (const said of [
+        'completeMultipartUpload: Your proposed upload is smaller than the minimum allowed object size. (10011)',
+        'completeMultipartUpload: There was a problem with the multipart upload. (10048)',
+      ]) {
+        completing(new Error(said))
+        expect((await finish(upload, [{ part: 1, etag: 'x' }])).status, said).toBe(400)
+      }
+    })
+
+    test('an empty part, which comes out the wrong size', async () => {
+      const { upload } = await started(bytes(100, 5))
+      const part = (await send(upload, 1, new Uint8Array())).json
+      expect((await finish(upload, [part])).status).toBe(400)
+    })
+
+    test('but a bucket that is unwell is not the device’s to hear about as a mistake', async () => {
+      const { upload } = await started(bytes(100, 6))
+      completing(
+        new Error('completeMultipartUpload: We encountered an internal error. Please try again. (10001)'),
+      )
+      expect((await finish(upload, [{ part: 1, etag: 'x' }])).status).toBe(500)
+    })
+  })
+
   test('in parts, put together, measured and hashed before they are kept', async () => {
     const data = bytes(20_000, 7)
     const hash = await hashOf(data)
