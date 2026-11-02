@@ -130,6 +130,16 @@ test('a menu long closed, and something done since, leaves the keyboard where it
   elsewhere.remove()
 })
 
+test('the only row left, gone, hands it to the list itself rather than to the page', async () => {
+  await deleteRow(ALPHA)
+  await deleteRow(GAMMA)
+  rowOf(BETA)!.focus()
+
+  await deleteRow(BETA)
+
+  await vi.waitFor(() => expect(document.activeElement?.getAttribute('role')).toBe('tree'))
+})
+
 test('and the last row hands it back to the row that is last now', async () => {
   rowOf(GAMMA)!.focus()
 

@@ -9,6 +9,7 @@
 
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import * as focusing from '../../src/lib/focus'
 import { said } from '../../src/lib/said.svelte'
 import UndoToast from '../../src/lib/UndoToast.svelte'
 import { UNDO_LINGER, undoToast } from '../../src/lib/undo-toast.svelte'
@@ -121,6 +122,24 @@ describe('from the keyboard', () => {
     vi.advanceTimersByTime(UNDO_LINGER * 2)
     expect(undoToast.kind).toBe('delete')
     vi.useRealTimers()
+  })
+
+  test('what the keyboard came from, hidden since, gives way to the note', async () => {
+    const from = document.body.appendChild(document.createElement('button'))
+    from.focus()
+    workspace.undone.record({ kind: 'delete', path: 'A.md', content: 'a' })
+    flushSync()
+    undo()?.focus()
+    // Connected and able to take nothing: a side shut while the keyboard was on the card.
+    from.focus = () => undefined
+    const note = vi.spyOn(focusing, 'focusEditor').mockReturnValue(true)
+
+    void unmount(shown)
+    await Promise.resolve()
+    expect(note).toHaveBeenCalled()
+
+    shown = mount(UndoToast, { target: host })
+    from.remove()
   })
 
   test('it can be found by F6', () => {

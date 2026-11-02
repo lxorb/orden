@@ -19,9 +19,9 @@ describe('the order', () => {
       'panels',
       'list',
       'foot',
+      'notices',
       'tabs',
       'editor',
-      'notices',
       'status',
       'right',
     ])

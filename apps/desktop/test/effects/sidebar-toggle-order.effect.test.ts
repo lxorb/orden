@@ -64,6 +64,9 @@ test('Tab after opening with a key goes into the side, and Shift+Tab back', () =
 
   expect(tab(inside, true)).toBe(true)
   expect(document.activeElement).toBe(toggle)
+
+  // Once: from here Tab goes on along the bar, or nothing gets past the toggle.
+  expect(tab(toggle)).toBe(false)
 })
 
 test('Tab from a toggle the keyboard has come back round to goes on along the bar', () => {

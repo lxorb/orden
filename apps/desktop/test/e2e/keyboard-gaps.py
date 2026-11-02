@@ -254,26 +254,100 @@ def toast_keys(page: Page) -> None:
     if page.evaluate("() => !!document.querySelector('[role=dialog], [role=alertdialog]')"):
         press(page, "Enter")
     wait_for(page, "document.querySelector('.toast .undo')", "the toast again")
-    # At once: the toast has its six seconds, and once the keyboard is on it, it stays.
+    # At once: the toast has its six seconds, and once the keyboard is on it, it stays. F6
+    # walks what Tab walks: the card is ahead of the strip, so two back from the note.
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
-    page.keyboard.press("F6")
-    at = where(page)
-    say(f"[toast] F6 from the note: {at}")
-    if not at.endswith("|Undo"):
-        wrong(f"F6 from the note did not reach Undo: {at}")
+    page.keyboard.press("Shift+F6")
     page.keyboard.press("Shift+F6")
     at = where(page)
-    say(f"[toast] Shift+F6 from Undo: {at}")
-    if not at.startswith("editor|"):
-        wrong(f"Shift+F6 from Undo did not go back to the note: {at}")
-    page.keyboard.press("F6")
+    say(f"[toast] Shift+F6 twice from the note: {at}")
+    if not at.endswith("|Undo"):
+        wrong(f"Shift+F6 twice from the note did not reach Undo: {at}")
+    for key, region in (("F6", "tabs|"), ("Shift+F6", "notices|"), ("Tab", "tabs|"), ("Shift+Tab", "notices|")):
+        page.keyboard.press(key)
+        at = where(page)
+        say(f"[toast] {key} beside Undo: {at}")
+        if not at.startswith(region):
+            wrong(f"{key} beside Undo went to {at}, not {region}: F6, Tab and the list disagree")
     press(page, "Enter")
     wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
     quiet(page)
     at = where(page)
-    say(f"[toast] Undo from F6: the keyboard is on {at}")
+    say(f"[toast] Undo: the keyboard is on {at}")
+    if not at.startswith("tabs|"):
+        wrong(f"Undo did not hand the keyboard back to the tab it came from: {at}")
+
+
+def hand_back_hidden(page: Page) -> None:
+    """What the keyboard came from, shut away while it was on Undo: it goes to the note."""
+    to_row(page, "Damson")
+    press(page, "Shift+F10")
+    choose(page, "Delete")
+    if page.evaluate("() => !!document.querySelector('[role=dialog], [role=alertdialog]')"):
+        press(page, "Enter")
+    wait_for(page, "document.querySelector('.toast .undo')", "the toast")
+    page.keyboard.press("F6")
+    page.keyboard.press("F6")
+    at = where(page)
+    if not at.endswith("|Undo"):
+        wrong(f"F6 twice from the list did not reach Undo: {at}")
+    page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.openOn('left')) ws.toggleSidebar('left') }")
+    page.keyboard.press("Enter")
+    wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
+    quiet(page)
+    at = where(page)
+    say(f"[toast] Undo with the sidebar shut since: {at}")
+    if at == "body":
+        wrong("the keyboard fell to the page: what it came from is hidden")
+    page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }")
+    quiet(page)
+
+
+def enter_after_going(page: Page) -> None:
+    """The caret stays out for the delete's or the close's own switch, and no longer: Enter
+    on what took the keyboard opens it, as Enter on a row or a tab does (review of #523)."""
+    page.evaluate(
+        "async () => { const ws = window.nibApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Damson')).path, { activate: true }) }"
+    )
+    quiet(page)
+    to_row(page, "Damson")
+    press(page, "Shift+F10")
+    choose(page, "Delete")
+    if page.evaluate("() => !!document.querySelector('[role=dialog], [role=alertdialog]')"):
+        press(page, "Enter")
+    wait_for(page, "!window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note to go")
+    quiet(page)
+    at = press(page, "Enter")
+    say(f"[caret] Enter on the row that took the keyboard: {at}")
     if not at.startswith("editor|"):
-        wrong(f"Undo did not hand the keyboard back to the note: {at}")
+        wrong(f"Enter on the row left the keyboard off the note: {at}")
+    page.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
+    wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
+    quiet(page)
+
+    for name in ("Alder", "Birch", "Cedar", "Read me"):
+        page.evaluate(
+            "async (name) => { const ws = window.nibApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith(name)).path, { activate: true }); ws.keep(ws.activeTabId) }",
+            name,
+        )
+    quiet(page)
+    page.evaluate("() => document.querySelector('.tabs .active > .pick').focus()")
+    press(page, "Delete")
+    quiet(page)
+    if not where(page).startswith("tabs|"):
+        wrong(f"the close did not leave the keyboard on the strip: {where(page)}")
+    at = press(page, "Enter")
+    say(f"[caret] Enter on the tab in front after a close: {at}")
+    if not at.startswith("editor|"):
+        wrong(f"Enter on the tab in front left the keyboard off the note: {at}")
+    page.evaluate("() => document.querySelector('.tabs .active > .pick').focus()")
+    press(page, "Delete")
+    quiet(page)
+    press(page, "ArrowLeft")
+    at = press(page, "Enter")
+    say(f"[caret] an arrow and Enter after a close: {at}")
+    if not at.startswith("editor|"):
+        wrong(f"Enter on the next tab left the keyboard off the note: {at}")
 
 
 def tab_closed(page: Page) -> None:
@@ -405,6 +479,11 @@ def divider(page: Page) -> None:
     press(page, "End")
     most = page.evaluate("() => Number(document.querySelector('.divider').getAttribute('aria-valuenow'))")
     say(f"[divider] Home {least}, End {most}")
+    ends = page.evaluate(
+        "() => ['aria-valuemin', 'aria-valuemax'].map((name) => Number(document.querySelector('.divider').getAttribute(name)))"
+    )
+    if ends != [least, most]:
+        wrong(f"the divider says its range is {ends}, and goes {least} to {most}")
     if not least < was < most:
         wrong(f"Home and End did not take it to its ends: {least}, {most}")
     press(page, "Enter")
@@ -441,19 +520,13 @@ def toggle_order(page: Page) -> None:
         back = page.evaluate("(toggle) => document.activeElement === document.querySelector(toggle)", toggle)
         if not back:
             wrong(f"Shift+Tab did not go back to the {side} toggle: {at}")
-        # Only the press that opened it: round the window with Tab and back to the toggle,
-        # the next Tab goes on along the bar, or the side and the bar are a ring.
-        if side == "left":
-            press(page, "Tab")
-            for _ in range(40):
-                if page.evaluate("(toggle) => document.activeElement === document.querySelector(toggle)", toggle):
-                    break
-                page.keyboard.press("Tab")
-            at = press(page, "Tab")
-            inside = page.evaluate("(selector) => !!document.activeElement?.closest(selector)", selector)
-            say(f"[toggle] {side}: Tab from the toggle, reached by going round: {at}")
-            if inside:
-                wrong("Tab from the toggle goes into the sidebar every time, a ring with no way out")
+        # Only the press that opened it: from the toggle again Tab goes on along the bar, or
+        # the side and the toggle are a ring with no way past it.
+        at = press(page, "Tab")
+        inside = page.evaluate("(selector) => !!document.activeElement?.closest(selector)", selector)
+        say(f"[toggle] {side}: Tab again from the toggle: {at}")
+        if inside:
+            wrong(f"Tab from the {side} toggle went into the sidebar a second time: {at}")
 
 
 def version_row(page: Page) -> None:
@@ -503,6 +576,8 @@ def drive(browser: Browser) -> None:
         ("delete", lambda: row_deleted(page)),
         ("toast", lambda: toast_keys(page)),
         ("open row", lambda: open_row_deleted(page)),
+        ("hand back", lambda: hand_back_hidden(page)),
+        ("enter", lambda: enter_after_going(page)),
         ("tab", lambda: tab_closed(page)),
         ("properties", lambda: properties(page, held)),
         ("sides", lambda: named_sides(page)),
