@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest'
-import { serveApp } from '../src/channel'
+import { serveApp, switchChannel } from '../src/channel'
 import { call, testEnv, type TestEnv } from './harness'
 
 /** The web serves two builds from one Worker: the release at the root and the edge of
@@ -147,7 +147,7 @@ describe('?channel=', () => {
     const answer = await call(env, '/s/x?a=1&channel=unstable')
     expect(answer.status).toBe(302)
     expect(answer.headers.get('location')).toBe('/s/x?a=1')
-    const cookie = answer.headers.get('set-cookie') ?? ''
+    const cookie = answer.headers.getSetCookie()[0] ?? ''
     expect(cookie).toMatch(
       /^__Host-orden-channel=unstable; Path=\/; Max-Age=\d+; SameSite=Lax; Secure$/,
     )
@@ -166,6 +166,20 @@ describe('?channel=', () => {
     expect(cookies).toHaveLength(2)
     expect(cookies[0]).toMatch(/^__Host-orden-channel=stable; Path=\/; Max-Age=\d+;.* Secure$/)
     expect(cookies[1]).toMatch(/^orden-channel=; Path=\/; Max-Age=0;/)
+  })
+
+  /** A browser refuses the prefix without https: a machine running this for itself, and
+   *  the end-to-end drive (test/e2e/web-channel.py), keep the plain name. */
+  test('over plain http, keeps the name a browser takes there', () => {
+    env = testEnv({ ASSETS: assets(BOTH) })
+    const edge = switchChannel(new Request('http://localhost:8787/?channel=unstable'))
+    expect(edge?.headers.getSetCookie()).toEqual([
+      expect.stringMatching(/^orden-channel=unstable; Path=\/; Max-Age=\d+; SameSite=Lax$/),
+    ])
+    const release = switchChannel(new Request('http://localhost:8787/?channel=stable'))
+    expect(release?.headers.getSetCookie()).toEqual([
+      'orden-channel=; Path=/; Max-Age=0; SameSite=Lax',
+    ])
   })
 
   test('anything else is just a parameter', async () => {
