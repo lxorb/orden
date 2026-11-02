@@ -504,6 +504,8 @@ macro_rules! desktop_commands {
             lifecycle::quit_confirmed,
             lifecycle::quit_others,
             lifecycle::quit_show,
+            lifecycle::update_may_install,
+            lifecycle::update_settled,
             document_window::show_document,
             menu_bar::hand_to_keyboard,
             placement::take_keyboard,

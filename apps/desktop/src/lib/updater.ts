@@ -172,9 +172,15 @@ export async function restartToUpdate(install = true) {
 }
 
 /** Runs the staged installer. Called as the app closes, so nothing is
- *  interrupted; the update is in place for the next launch. Answers whether it was. */
-export async function installStaged(): Promise<boolean> {
+ *  interrupted; the update is in place for the next launch. Answers whether it was.
+ *
+ *  On Windows the installer ends the process with every window in it, so the crate says
+ *  whether this one may start it: `closing` is one window going rather than the whole
+ *  app, which leaves the update to the last window, as nothing else has been asked about
+ *  stopping. See `update_may_install` in src-tauri/src/lifecycle.rs. */
+export async function installStaged(closing = false): Promise<boolean> {
   if (!staged) return false
+  if (!(await invoke<boolean>('update_may_install', { closing }).catch(() => true))) return false
 
   try {
     await staged.install()
@@ -186,4 +192,12 @@ export async function installStaged(): Promise<boolean> {
   } finally {
     staged = null
   }
+}
+
+/** Another window is about to start the installer, which ends this one with it: what is
+ *  owed is waited for as a window going waits, and the crate is told. It stops waiting by
+ *  itself as well; see `before_installer` in src-tauri/src/lifecycle.rs. */
+export async function settledForInstaller(owed: () => Promise<unknown>): Promise<void> {
+  await Promise.race([owed().catch(() => undefined), waited(GIVE_UP)])
+  await invoke('update_settled').catch(() => undefined)
 }
