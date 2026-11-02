@@ -750,22 +750,27 @@
     </div>
   {:else if field.kind === 'value'}
     <!-- Said rather than set: the version this is (#490). The whole row copies it, and
-         says so for a moment in the value's place. -->
+         says so for a moment in the value's place. To a key and a reader the control is
+         the value and not the row, whose name holds a hint that is a button of its own
+         (#523). A span with a role, since words inside a button cannot be selected. -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
       class="nib-setting setting pressable"
       class:declared={!!field.declared}
-      role="button"
-      tabindex="0"
       title={t('Copy')}
       onclick={() => field.press()}
-      onkeydown={(event) => {
-        if (event.key !== ' ' && event.key !== 'Enter') return
-        event.preventDefault()
-        field.press()
-      }}
     >
       {@render named(field, where)}
-      <span class="value said">{field.get()}</span>
+      <span
+        class="value said"
+        role="button"
+        tabindex="0"
+        onkeydown={(event) => {
+          if (event.key !== ' ' && event.key !== 'Enter') return
+          event.preventDefault()
+          field.press()
+        }}>{field.get()}</span
+      >
     </div>
   {:else if field.kind === 'text'}
     <!-- A line somebody types. The placeholder is what the app answers to with
@@ -1857,7 +1862,7 @@
   }
 
   button.setting:focus-visible,
-  .setting.pressable:focus-visible {
+  .setting .value.said:focus-visible {
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
