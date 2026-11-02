@@ -232,38 +232,64 @@ mod engine {
     use objc2::MainThreadMarker;
     use objc2_foundation::{NSDate, NSSet, NSString};
     use objc2_web_kit::{
-        WKWebView, WKWebsiteDataStore, WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache,
+        WKWebView, WKWebsiteDataStore, WKWebsiteDataTypeCookies, WKWebsiteDataTypeDiskCache,
+        WKWebsiteDataTypeFetchCache, WKWebsiteDataTypeIndexedDBDatabases,
+        WKWebsiteDataTypeLocalStorage, WKWebsiteDataTypeMemoryCache,
+        WKWebsiteDataTypeOfflineWebApplicationCache, WKWebsiteDataTypeServiceWorkerRegistrations,
+        WKWebsiteDataTypeSessionStorage, WKWebsiteDataTypeWebSQLDatabases,
     };
 
     use super::{seconds, Clearing, PATIENCE};
 
-    /// The types the two rows mean to `WKWebsiteDataStore`: all of them for both.
+    /// WebKit's name for the file systems (OPFS), on a macOS that has them.
     ///
-    /// Site data is every type the running system has but the two caches, rather than a
-    /// list: the file systems (OPFS) only exist on macOS 14, and naming their constant
-    /// would stop the app from starting on 13.3, where the symbol is not there to link.
+    /// Looked up rather than named: the crate declares it as a plain static, which links
+    /// it strongly, and a symbol macOS 13.3 does not have would stop the app from starting
+    /// there. Rust has no weak link to give it, and `available!` only guards the read.
+    #[allow(
+        unsafe_code,
+        reason = "a constant only some versions of WebKit export is found through dlsym"
+    )]
+    pub(super) fn file_system_type() -> Option<&'static NSString> {
+        // SAFETY: dlsym only reads the dynamic linker's tables.
+        let found =
+            unsafe { libc::dlsym(libc::RTLD_DEFAULT, c"WKWebsiteDataTypeFileSystem".as_ptr()) };
+        // SAFETY: what WebKit exports under this name is an `NSString * const`, which lives
+        // for the program.
+        (!found.is_null()).then(|| unsafe { *found.cast::<&'static NSString>() })
+    }
+
+    /// The types the two rows mean to `WKWebsiteDataStore`: all of them for both.
     #[allow(
         unsafe_code,
         reason = "the data types are WebKit's own constants, read as the statics they are"
     )]
     fn types(clearing: Clearing, mtm: MainThreadMarker) -> Retained<NSSet<NSString>> {
-        // SAFETY: WebKit's own constants, which live for the program, and a class method of
-        // WebKit's, on the main thread.
-        let (caches, all): (Vec<&NSString>, _) = unsafe {
-            (
-                vec![WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache],
-                WKWebsiteDataStore::allWebsiteDataTypes(mtm),
-            )
-        };
         if clearing.site && clearing.cache {
-            return all;
+            // SAFETY: a class method of WebKit's, on the main thread.
+            return unsafe { WKWebsiteDataStore::allWebsiteDataTypes(mtm) };
         }
+        // SAFETY: WebKit's own constants, which live for the program.
+        let mut named: Vec<&NSString> = unsafe {
+            if clearing.site {
+                vec![
+                    WKWebsiteDataTypeCookies,
+                    WKWebsiteDataTypeLocalStorage,
+                    WKWebsiteDataTypeSessionStorage,
+                    WKWebsiteDataTypeIndexedDBDatabases,
+                    WKWebsiteDataTypeWebSQLDatabases,
+                    WKWebsiteDataTypeServiceWorkerRegistrations,
+                    WKWebsiteDataTypeFetchCache,
+                    WKWebsiteDataTypeOfflineWebApplicationCache,
+                ]
+            } else {
+                vec![WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache]
+            }
+        };
         if clearing.site {
-            let all = all.to_vec();
-            let all: Vec<&NSString> = all.iter().map(|one| &**one).collect();
-            return NSSet::from_slice(&super::without(all, &caches));
+            named.extend(file_system_type());
         }
-        NSSet::from_slice(&caches)
+        NSSet::from_slice(&named)
     }
 
     #[allow(
@@ -393,28 +419,17 @@ async fn within(
     }
 }
 
-/// `all` but those in `gone`.
-#[cfg(any(target_os = "macos", test))]
-fn without<T: PartialEq>(mut all: Vec<T>, gone: &[T]) -> Vec<T> {
-    all.retain(|one| !gone.contains(one));
-    all
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{without, Clearing};
+    use super::Clearing;
 
-    /// Site data on a Mac is what the system has but its caches, so what is new in a later
-    /// macOS goes with it, as the file systems did in 14.
+    /// Found at run time, so it is what WebKit has and not a word of ours; `macos-latest`
+    /// is past the 14 it arrived in.
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
     #[test]
-    fn site_data_is_everything_but_the_caches() {
-        assert_eq!(
-            without(
-                vec!["cookies", "disk", "files", "memory"],
-                &["disk", "memory"]
-            ),
-            vec!["cookies", "files"]
-        );
+    fn a_mac_finds_the_file_systems_type() {
+        let found = super::engine::file_system_type().expect("macOS 14 or later");
+        assert_eq!(found.to_string(), "WKWebsiteDataTypeFileSystem");
     }
 
     /// The window's words for it, read as the crate reads them.
