@@ -445,7 +445,7 @@ export async function inlinedSvg(svg: string): Promise<string> {
     return await inlineImages(
       svg.replace(
         DRAWN,
-        (whole: string, before: string, src: string, after: string) =>
+        (_whole: string, before: string, src: string, after: string) =>
           `${before}${found.get(src) ?? src}${after}`,
       ),
       back,
