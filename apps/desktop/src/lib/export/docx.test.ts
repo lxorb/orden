@@ -506,7 +506,7 @@ describe('a coloured highlight', () => {
 /** Text pasted from Word, PowerPoint or a PDF carries what XML 1.0 has no way to say,
  *  and a strict reader refuses the whole file over one. */
 describe('characters XML cannot carry', () => {
-  const FORBIDDEN = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/
+  const FORBIDDEN = /[^\t\n\r\u{20}-\u{D7FF}\u{E000}-\u{FFFD}\u{10000}-\u{10FFFF}]/u
 
   const parts = async (source: string, paper = PAPER) => {
     const bytes = await toDocx(documentOf(source, 'Note.md'), [], paper)
@@ -540,7 +540,11 @@ describe('characters XML cannot carry', () => {
   test('a picture is still found by what the note wrote', async () => {
     const doc = documentOf('![cat](a.png)\n', 'Note.md')
     const zip = await JSZip.loadAsync(
-      await toDocx(doc, [{ src: 'a.png', name: 'a\u0001.png', mime: 'image/png', bytes: LOCAL }], PAPER),
+      await toDocx(
+        doc,
+        [{ src: 'a.png', name: 'a\u0001.png', mime: 'image/png', bytes: LOCAL }],
+        PAPER,
+      ),
     )
     const xml = await zip.file('word/document.xml')?.async('string')
     expect(xml).toContain('<pic:pic')

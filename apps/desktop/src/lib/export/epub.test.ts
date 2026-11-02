@@ -649,13 +649,15 @@ describe('splitting', () => {
 /** Text pasted from Word, PowerPoint or a PDF carries what XML 1.0 has no way to say,
  *  and a reader refuses the whole book over one. */
 describe('characters XML cannot carry', () => {
-  const FORBIDDEN = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/
+  const FORBIDDEN = /[^\t\n\r\u{20}-\u{D7FF}\u{E000}-\u{FFFD}\u{10000}-\u{10FFFF}]/u
 
   test('leave no part of the book', async () => {
     const one = await bookOf({
       title: 'T\u0001itle',
       author: 'A\ufffeuthor',
-      body: renderMarkdown('# He\u000bad\n\nword\u0001 <!-- no\u0001te --> <span da\u0001ta="v\u0001">x</span>\n'),
+      body: renderMarkdown(
+        '# He\u000bad\n\nword\u0001 <!-- no\u0001te --> <span da\u0001ta="v\u0001">x</span>\n',
+      ),
     })
     const parts = one.names.filter((name) => /\.(xhtml|opf|ncx|xml)$/.test(name))
     expect(parts.length).toBeGreaterThan(3)

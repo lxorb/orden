@@ -17,6 +17,7 @@
 import { mapSources } from '@orden/markdown/sources'
 import { claimName } from './naming'
 import { type Picture, suffixFor } from './pictures'
+import { legalCode, legalXml } from './xml-legal'
 import { type Entry, zipOf } from './zip'
 
 export interface EpubOptions {
@@ -123,11 +124,18 @@ function referenceOf(name: string): string {
   return `&amp;${name};`
 }
 
+/** Whether `&#65;` or `&#x41;` names a character XML can carry. */
+function legalReference(reference: string): boolean {
+  const hex = /x/i.test(reference.charAt(2))
+  return legalCode(Number.parseInt(reference.slice(hex ? 3 : 2), hex ? 16 : 10))
+}
+
 /** One run of text, or one attribute value, as XML can carry it. `quotes` is on
  *  for an attribute, where a double quote would end the value. */
 function escaped(text: string, quotes: boolean): string {
-  return text.replace(CHARACTER, (whole: string, name: string | undefined) => {
+  return legalXml(text).replace(CHARACTER, (whole: string, name: string | undefined) => {
     if (name !== undefined) return referenceOf(name)
+    if (whole.startsWith('&#')) return legalReference(whole) ? whole : ''
     if (whole === '&') return '&amp;'
     if (whole === '<') return '&lt;'
     if (whole === '>') return '&gt;'
@@ -304,7 +312,8 @@ export function toXhtml(html: string): string {
 
   const renamed = (name: string) => (foreign > 0 && name.toLowerCase() === 'p' ? 'span' : name)
 
-  for (const piece of piecesOf(html)) {
+  // The whole of it rather than each piece: a comment and a name are written as they were.
+  for (const piece of piecesOf(legalXml(html))) {
     switch (piece.kind) {
       case 'text':
         out += escaped(piece.text, false)
