@@ -1658,6 +1658,7 @@ export const gsw: Dictionary = {
   Reload: 'Neu lade',
   'Hard reload': 'Vollständig neu lade',
   'Open in the browser': 'Im Browser ufmache',
+  "This media can't play here": 'Das Medium lauft do nöd',
   'Show it here': 'Da azeige',
   Website: 'Webssite',
   'Open a website': 'Webssite ufmache',

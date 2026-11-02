@@ -1703,6 +1703,7 @@ export const fr: Dictionary = {
   Reload: 'Recharger',
   'Hard reload': 'Actualisation forcée',
   'Open in the browser': 'Ouvrir dans le navigateur',
+  "This media can't play here": 'Ce média ne peut pas être lu ici',
   'Show it here': 'Afficher ici',
   Website: 'Site web',
   'Open a website': 'Ouvrir un site web',

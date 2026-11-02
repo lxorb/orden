@@ -1638,6 +1638,7 @@ export const id: Dictionary = {
   Reload: 'Muat ulang',
   'Hard reload': 'Muat ulang penuh',
   'Open in the browser': 'Buka di peramban',
+  "This media can't play here": 'Media ini tidak dapat diputar di sini',
   'Show it here': 'Tampilkan di sini',
   Website: 'Situs web',
   'Open a website': 'Buka situs web',

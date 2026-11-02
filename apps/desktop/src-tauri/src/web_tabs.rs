@@ -815,6 +815,7 @@ fn opening(place: Option<Place>, url: &str) -> String {
     let mut scripts = vec![
         crate::web_opens::script(),
         crate::web_swipe::script().to_string(),
+        crate::web_media::script().to_string(),
     ];
     #[cfg(all(not(windows), not(feature = "cef")))]
     let mut scripts: Vec<String> = Vec::new();
@@ -3403,9 +3404,11 @@ mod tests {
             format!(
                 "{};
 {};
+{};
 ",
                 crate::web_opens::script(),
-                crate::web_swipe::script()
+                crate::web_swipe::script(),
+                crate::web_media::script()
             )
         );
     }

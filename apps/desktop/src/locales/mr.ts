@@ -1650,6 +1650,7 @@ export const mr: Dictionary = {
   Reload: 'पुन्हा लोड करा',
   'Hard reload': 'पूर्णपणे पुन्हा लोड करा',
   'Open in the browser': 'ब्राउझरमध्ये उघडा',
+  "This media can't play here": 'हे मीडिया येथे चालू शकत नाही',
   'Show it here': 'येथे दाखवा',
   Website: 'संस्थळ',
   'Open a website': 'संस्थळ उघडा',

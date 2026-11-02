@@ -1617,6 +1617,7 @@ export const th: Dictionary = {
   Reload: 'โหลดใหม่',
   'Hard reload': 'โหลดใหม่ทั้งหมด',
   'Open in the browser': 'เปิดในเบราว์เซอร์',
+  "This media can't play here": 'เล่นสื่อนี้ที่นี่ไม่ได้',
   'Show it here': 'แสดงที่นี่',
   Website: 'เว็บไซต์',
   'Open a website': 'เปิดเว็บไซต์',

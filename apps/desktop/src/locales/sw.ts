@@ -1670,6 +1670,7 @@ export const sw: Dictionary = {
   Reload: 'Pakia tena',
   'Hard reload': 'Pakia upya kabisa',
   'Open in the browser': 'Fungua kwenye kivinjari',
+  "This media can't play here": 'Midia hii haiwezi kuchezwa hapa',
   'Show it here': 'Ionyeshe hapa',
   Website: 'Tovuti',
   'Open a website': 'Fungua tovuti',

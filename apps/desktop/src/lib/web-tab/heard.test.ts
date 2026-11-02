@@ -30,7 +30,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { found, heard, readFound, readSaid } = await import('./heard')
+const { found, heard, readFound, readSaid, readUnplayable } = await import('./heard')
 const { Page } = await import('./pages.svelte')
 const sites = await import('./sites')
 
@@ -182,4 +182,10 @@ test('a wrong certificate, or a page that arrived, settles an upgrade where it i
     expect(went).toEqual([])
     expect(page.upgrade).toBeNull()
   }
+})
+
+test('a tab that would not play something is read, and nothing else is', () => {
+  expect(readUnplayable({ tab: 'a' })).toBe('a')
+  expect(readUnplayable({ tab: 1 })).toBe(null)
+  expect(readUnplayable(null)).toBe(null)
 })

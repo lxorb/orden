@@ -234,6 +234,8 @@ mod web_icons;
 #[cfg(desktop)]
 mod web_keys;
 #[cfg(desktop)]
+mod web_media;
+#[cfg(desktop)]
 mod web_opens;
 #[cfg(desktop)]
 mod web_page;

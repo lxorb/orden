@@ -789,12 +789,17 @@ pub fn script() -> String {
 /// What one call through `BINDING` asked, read as the window name `SCRIPT` names it
 /// with: a tab of its own for a link, the find or the address field, a chord, or a tap.
 /// Only ever raised for a press a person made (`isTrusted`), which is what a window
-/// name's user flag says on `WebView2`.
+/// name's user flag says on `WebView2`. And a video that will not play, which no press
+/// raises and which only puts a bar on the tab that said it; see web_media.rs.
 #[cfg(feature = "cef")]
 pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
     let Ok((url, name)) = serde_json::from_str::<(String, String)>(payload) else {
         return;
     };
+    if name == crate::web_media::UNPLAYABLE {
+        crate::web_media::heard(app, window, tab);
+        return;
+    }
     if let Some(key) = sought(&name) {
         if key.wanted_by(window) {
             passed(app, window, tab, key);

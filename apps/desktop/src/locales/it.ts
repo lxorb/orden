@@ -1700,6 +1700,7 @@ export const it: Dictionary = {
   Reload: 'Ricarica',
   'Hard reload': 'Ricaricamento forzato',
   'Open in the browser': 'Apri nel browser',
+  "This media can't play here": 'Questo contenuto non può essere riprodotto qui',
   'Show it here': 'Mostralo qui',
   Website: 'Sito web',
   'Open a website': 'Apri un sito web',

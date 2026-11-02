@@ -1724,6 +1724,7 @@ export const uk: Dictionary = {
   Reload: 'Оновити',
   'Hard reload': 'Жорстке перезавантаження',
   'Open in the browser': 'Відкрити в браузері',
+  "This media can't play here": 'Цей файл тут не відтворюється',
   'Show it here': 'Показати тут',
   Website: 'Сайт',
   'Open a website': 'Відкрити сайт',

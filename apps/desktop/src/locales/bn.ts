@@ -1649,6 +1649,7 @@ export const bn: Dictionary = {
   Reload: 'আবার লোড করুন',
   'Hard reload': 'পুরোপুরি আবার লোড করুন',
   'Open in the browser': 'ব্রাউজারে খুলুন',
+  "This media can't play here": 'এই মিডিয়া এখানে চালানো যাচ্ছে না',
   'Show it here': 'এখানে দেখান',
   Website: 'ওয়েবসাইট',
   'Open a website': 'ওয়েবসাইট খুলুন',

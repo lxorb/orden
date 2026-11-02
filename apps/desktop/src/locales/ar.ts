@@ -1756,6 +1756,7 @@ export const ar: Dictionary = {
   Reload: 'إعادة التحميل',
   'Hard reload': 'إعادة تحميل كاملة',
   'Open in the browser': 'فتح في المتصفح',
+  "This media can't play here": 'لا يمكن تشغيل هذه الوسائط هنا',
   'Show it here': 'إظهاره هنا',
   Website: 'موقع ويب',
   'Open a website': 'فتح موقع ويب',

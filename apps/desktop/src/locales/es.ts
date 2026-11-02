@@ -1692,6 +1692,7 @@ export const es: Dictionary = {
   Reload: 'Recargar',
   'Hard reload': 'Recarga forzada',
   'Open in the browser': 'Abrir en el navegador',
+  "This media can't play here": 'Este contenido no se puede reproducir aquí',
   'Show it here': 'Mostrarlo aquí',
   Website: 'Sitio web',
   'Open a website': 'Abrir un sitio web',

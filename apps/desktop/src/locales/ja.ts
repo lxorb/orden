@@ -1634,6 +1634,7 @@ export const ja: Dictionary = {
   Reload: '再読み込み',
   'Hard reload': 'ハード再読み込み',
   'Open in the browser': 'ブラウザーで開く',
+  "This media can't play here": 'このメディアはここでは再生できません',
   'Show it here': 'ここに表示',
   Website: 'ウェブサイト',
   'Open a website': 'ウェブサイトを開く',

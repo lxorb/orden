@@ -1626,6 +1626,7 @@ export const ko: Dictionary = {
   Reload: '다시 불러오기',
   'Hard reload': '강력 새로고침',
   'Open in the browser': '브라우저에서 열기',
+  "This media can't play here": '이 미디어는 여기에서 재생할 수 없습니다',
   'Show it here': '여기에 표시',
   Website: '웹사이트',
   'Open a website': '웹사이트 열기',

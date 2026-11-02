@@ -1648,6 +1648,7 @@ export const hi: Dictionary = {
   Reload: 'फिर लोड करें',
   'Hard reload': 'पूरी तरह फिर लोड करें',
   'Open in the browser': 'ब्राउज़र में खोलें',
+  "This media can't play here": 'यह मीडिया यहाँ नहीं चल सकता',
   'Show it here': 'यहाँ दिखाएँ',
   Website: 'वेबसाइट',
   'Open a website': 'वेबसाइट खोलें',

@@ -67,6 +67,11 @@ export function readFound(value: unknown): Found | null {
   return { tab, count: Math.max(0, count), at: count > 0 && at >= 0 ? at : -1 }
 }
 
+/** The tab a video or a sound would not play in, for want of a decoder; see web_media.rs. */
+export function readUnplayable(value: unknown): string | null {
+  return isRecord(value) && typeof value.tab === 'string' ? value.tab : null
+}
+
 /** Where a page that did not arrive is sent instead: the tab and the address. */
 export type Go = (tab: string, url: string) => void
 
@@ -129,6 +134,11 @@ export async function listening(
     const said = readFound(event.payload)
     const one = said && page(said.tab)
     if (one) found(one, said)
+  })
+  await listen('nib://web-unplayable', (event) => {
+    const tab = readUnplayable(event.payload)
+    const one = tab === null ? undefined : page(tab)
+    if (one) one.unplayable = true
   })
   // The page's own keys for find and the address field that nothing in it took; see
   // passed.svelte.ts.

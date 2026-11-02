@@ -434,6 +434,10 @@ export class Page {
   /** Said under the bar for a moment; see `rehouse`. */
   notice = $state<string | null>(null)
 
+  /** Something on the page would not play, for want of a decoder, and the reader has not
+   *  shut the bar that offers the browser; see web_media.rs. Until the page moves. */
+  unplayable = $state(false)
+
   /** When this tab was last looked at: when it went out of sight, for one that has. */
   looked = Date.now()
 
@@ -1488,6 +1492,7 @@ class Pages {
 
         const was = page.loading
         const moved = said.url !== '' && said.url !== page.at
+        if (moved || (said.loading && !was)) page.unplayable = false
         page.loading = said.loading
         // A load beginning is a page arriving, and the mark it settles on is the one the
         // file keeps.

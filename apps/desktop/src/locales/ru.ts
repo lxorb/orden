@@ -1729,6 +1729,7 @@ export const ru: Dictionary = {
   Reload: 'Обновить',
   'Hard reload': 'Жёсткая перезагрузка',
   'Open in the browser': 'Открыть в браузере',
+  "This media can't play here": 'Этот файл здесь не воспроизводится',
   'Show it here': 'Показать здесь',
   Website: 'Сайт',
   'Open a website': 'Открыть сайт',

@@ -1655,6 +1655,7 @@ export const pa: Dictionary = {
   Reload: 'ਮੁੜ ਲੋਡ ਕਰੋ',
   'Hard reload': 'ਪੂਰੀ ਤਰ੍ਹਾਂ ਮੁੜ ਲੋਡ ਕਰੋ',
   'Open in the browser': 'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਖੋਲ੍ਹੋ',
+  "This media can't play here": 'ਇਹ ਮੀਡੀਆ ਇੱਥੇ ਨਹੀਂ ਚੱਲ ਸਕਦਾ',
   'Show it here': 'ਇੱਥੇ ਦਿਖਾਓ',
   Website: 'ਵੈੱਬਸਾਈਟ',
   'Open a website': 'ਵੈੱਬਸਾਈਟ ਖੋਲ੍ਹੋ',
