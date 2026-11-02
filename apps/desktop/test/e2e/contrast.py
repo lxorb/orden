@@ -68,8 +68,16 @@ async ([note]) => {
 # Every colour that has to be read, against the page it is read on. Measured
 # through a probe element so a token written as a hex, an rgb() or a color-mix()
 # all come back as the colour the eye gets.
+#
+# Nothing until every sheet has landed, in one go with the reading so that none can be
+# asked for between the two: WebKit keeps a page's sheets back while one is on its way, a
+# theme's `<style>` included, and a chunk's is for a second or so after a launch. Read in
+# that time the tokens are nothing, so each is the same colour as the page and every
+# ratio is 1:1; or, with the built-in's sheets in, they are the built-in's (#443).
 RATIOS = """
 (names) => {
+  if (![...document.querySelectorAll('link[rel=stylesheet]')].every((one) => one.sheet)) return null
+
   const probe = document.createElement('span')
   probe.style.position = 'fixed'
   probe.style.opacity = '0'
@@ -147,13 +155,27 @@ FLOORS = {
 # the app going wrong.
 TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR")
 
+# The chunks the app fetches once it is up are cancelled by a reload, and WebKit reports
+# each one, and each import waiting on it, from the page being left. It is the drive's
+# reload rather than the app; see `reload` in bookmark-tiles.py, which met it first.
+CANCELLED = ("Importing a module script failed", "due to access control checks")
+RELOADING: set[Page] = set()
+
 
 def listen(page: Page, label: str) -> None:
-    page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
+    def cancelled(said: str) -> bool:
+        return page in RELOADING and any(one in said for one in CANCELLED)
+
+    page.on(
+        "pageerror",
+        lambda error: None if cancelled(str(error)) else wrong(f"[{label}] page error: {error}"),
+    )
     page.on(
         "console",
         lambda message: wrong(f"[{label}] console error: {message.text}")
-        if message.type == "error" and not any(one in message.text for one in TOLERATED)
+        if message.type == "error"
+        and not any(one in message.text for one in TOLERATED)
+        and not cancelled(message.text)
         else None,
     )
 
@@ -194,7 +216,7 @@ def fresh(browser: Browser, label: str, forced: bool = False) -> Page:
 
 
 def ratios(page: Page) -> dict:
-    return page.evaluate(RATIOS, WANTED)
+    return page.wait_for_function(RATIOS, arg=WANTED, timeout=30_000, polling=50).json_value()
 
 
 def wear_the_theme(page: Page) -> None:
@@ -323,7 +345,9 @@ def drive_offered(browser: Browser) -> None:
 
     # The same machine, launched again. Still asking for more contrast, and this
     # time it is not asked back.
+    RELOADING.add(page)
     page.reload(wait_until="domcontentloaded")
+    RELOADING.discard(page)
     wait_for(page, "window.nibApp", "[offered] the app again")
     page.wait_for_timeout(800)
 

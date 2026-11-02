@@ -27,6 +27,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+#: Every stylesheet the page has asked for has arrived. What WebKit answers before that
+#: is not the page: it applies none of a page's sheets, nor a `<style>` added since, while
+#: one is still on its way, and a chunk's is for a second or so after a launch. No token
+#: resolves and a mark in a button is as big as it likes (#443).
+LANDED = "[...document.querySelectorAll('link[rel=stylesheet]')].every((one) => one.sheet)"
+
 #: What the page must have finished before a shot is taken.
 #:
 #: The faces first: a shot taken while a face is still arriving is a shot of the
@@ -40,8 +46,9 @@ from collections.abc import Callable
 #: its states are still, which is why two matching frames do not catch it: one run
 #: had it dim before the first frame and the next had it dim after the second. It is
 #: a class, so it can be waited for.
-STILL = """
-() => document.fonts.status === 'loaded'
+STILL = f"""
+() => {LANDED}
+  && document.fonts.status === 'loaded'
   && document.getAnimations().every((one) => one.playState !== 'running')
   && !document.querySelector('.nib-scrollbar.is-lit, .nib-scrollbar.is-settling')
 """

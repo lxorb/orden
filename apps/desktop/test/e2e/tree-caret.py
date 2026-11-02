@@ -25,6 +25,7 @@ import json
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
+from settling import LANDED
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
@@ -194,6 +195,9 @@ def tags(browser: Browser) -> None:
         DRIVE.open(page)
         page.evaluate(TAGS)
         wait_for(page, f"() => !!document.querySelector(\"{TAG}\")", "the tag that holds tags")
+        # Measured under its own sheet: WebKit keeps a page's sheets back while one is on
+        # its way, and until then the mark in the twist stood 200 px tall, twice running.
+        wait_for(page, LANDED, "the sheets")
         seen = None
         for _ in range(40):
             now = page.evaluate(f"() => JSON.stringify(document.querySelector(\"{TAG}\").getBoundingClientRect())")
