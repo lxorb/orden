@@ -37,7 +37,7 @@ pub struct Changes {
 pub fn make_so(
     system: &impl System,
     wanted: &[(Planned, String)],
-    _moved: &[String],
+    moved: &[String],
     words: &Words,
     now: i64,
 ) -> Result<Changes, String> {
@@ -45,7 +45,9 @@ pub fn make_so(
     let mut changes = Changes::default();
 
     for id in &held {
-        if !wanted.iter().any(|(one, _)| &one.id == id && one.at > now) {
+        // One at another moment goes too and comes back below at its own: left alone it
+        // would ring at the old one, stop being held, and be added for the new one as well.
+        if moved.contains(id) || !wanted.iter().any(|(one, _)| &one.id == id && one.at > now) {
             system.remove(id)?;
             changes.removed.push(id.clone());
         }
@@ -53,7 +55,7 @@ pub fn make_so(
     for (one, nonce) in wanted {
         // A moment already gone is refused by every system, and would ring at once by
         // the others: it is not handed over at all.
-        if one.at <= now || held.contains(&one.id) {
+        if one.at <= now || (held.contains(&one.id) && !moved.contains(&one.id)) {
             continue;
         }
         system.add(one, nonce, words)?;
