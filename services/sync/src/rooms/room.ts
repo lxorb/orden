@@ -864,8 +864,10 @@ export class NoteRoom implements DurableObject {
    *  out the way a revocation closes one person, the settle that may be on the clock
    *  is taken off it, and the storage goes. What is held in memory is let go of too:
    *  without `held` a settle has nothing to write into, so nothing this object still
-   *  remembers can put a row or a byte back. An object that never existed answers the
-   *  same, with nothing to take away. */
+   *  remembers can put a row or a byte back, and without `opened` and the document a
+   *  socket joining this object next opens the room afresh rather than one still holding
+   *  the words. An object that never existed answers the same, with nothing to take
+   *  away. */
   private async erase(): Promise<Response> {
     for (const socket of this.ctx.getWebSockets()) {
       forget(this.awareness, announcedBy(socket), socket)
@@ -873,11 +875,22 @@ export class NoteRoom implements DurableObject {
     }
 
     this.held = null
+    this.opened = null
     this.settleAt = null
+    this.startEmpty()
     await this.ctx.storage.deleteAlarm()
     await this.ctx.storage.deleteAll()
 
     return new Response(null, { status: 204 })
+  }
+
+  /** A new document in place of the one held, since a Yjs document cannot be emptied. */
+  private startEmpty() {
+    this.state.doc.destroy()
+    this.awareness.destroy()
+    this.state = new RoomState(this.ctx.storage)
+    this.awareness = new Awareness(this.state.doc)
+    this.listen()
   }
 
   async webSocketMessage(socket: WebSocket, message: ArrayBuffer | string) {
@@ -1439,11 +1452,7 @@ export class NoteRoom implements DurableObject {
 
     await this.closeForEpoch(epoch, base)
     await this.state.clear()
-    this.state.doc.destroy()
-    this.awareness.destroy()
-    this.state = new RoomState(this.ctx.storage)
-    this.awareness = new Awareness(this.state.doc)
-    this.listen()
+    this.startEmpty()
 
     Y.applyUpdateV2(this.state.doc, seedOf(held.kind, held.noteId, epoch, seed), PUSHED)
     const seeded = fileOf(held.kind, this.state.doc)

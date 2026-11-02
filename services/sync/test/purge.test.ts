@@ -264,7 +264,7 @@ describe('a write to a note purged since it was read', () => {
 /** An erased room is one that holds nothing, including the object still in memory that the
  *  next join finds. */
 describe('a room erased while its object lives', () => {
-  test('hands the next socket none of its words, and what that socket types settles', async () => {
+  test('hands the next socket none of its words, and opens again', async () => {
     const id = await heldInARoom('Gone.md', 'TOP SECRET\n', 'more ')
     const { room } = rooms.of(id)
     const join = { noteId: id, spaceId: space, kind: 'words' as const }
