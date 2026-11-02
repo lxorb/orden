@@ -54,23 +54,28 @@ def check(what: str, held: bool) -> None:
         wrong(what)
 
 
-def in_view(page, row) -> None:
-    """What is about to be pressed, brought to the middle of the column first. A click
-    scrolls what it presses into view by itself in Chromium; in WebKit it did not reach
-    into the sheet's column, so the press landed below the window, on nothing, or as the
-    column moved under it: down on one row and up on another, which is no click at all."""
+def press(page, row) -> None:
+    """A press on what is in the middle of the column, once it is there, where the page says
+    it is. A click scrolls what it presses into view by itself in Chromium; in WebKit it
+    did not reach into the sheet's column, or read the place off the column as it moved: the
+    press landed below the window, on nothing, or went down on one row and up on another,
+    which is no click at all (#446)."""
     row.evaluate("(one) => one.scrollIntoView({ block: 'center', behavior: 'instant' })")
     quiet(page)
+    at = row.evaluate(
+        "(one) => { const box = one.getBoundingClientRect();"
+        " return [box.x + box.width / 2, box.y + box.height / 2] }"
+    )
+    page.mouse.click(*at)
 
 
 def switch(page, name: str) -> None:
-    """Presses the switch of that name, brought into view first. Then until the switch says it moved, which is the
+    """Presses the switch of that name. Then until the switch says it moved, which is the
     grant written back through the crate's stand-in and drawn again: on a busy runner
     in WebKit that was now and then more than the 200 ms the drive used to give it."""
     row = page.locator(".agents [role=switch]", has_text=name)
-    in_view(page, row)
     was = row.get_attribute("aria-checked")
-    row.click()
+    press(page, row)
     moved = row.evaluate(
         "(one, was) => new Promise((done) => { const at = Date.now(); const look = () =>"
         " one.getAttribute('aria-checked') !== was ? done(true) : Date.now() - at > 5000 ?"
@@ -173,8 +178,7 @@ def look(browser, scheme: str, language: str) -> None:
     photograph("list")
 
     # Codex was granted no browser: no trifecta.
-    in_view(page, page.locator(".agents .agent", has_text="Codex"))
-    page.locator(".agents .agent", has_text="Codex").click()
+    press(page, page.locator(".agents .agent", has_text="Codex"))
     page.wait_for_selector(".agents .who")
     quiet(page)
     check(f"[{name}] no trifecta line on an agent with no browser", page.locator(".trifecta").count() == 0)
@@ -182,8 +186,7 @@ def look(browser, scheme: str, language: str) -> None:
     page.wait_for_selector(".agents .agent")
     quiet(page)
 
-    in_view(page, page.locator(".agents .agent", has_text="Claude Code"))
-    page.locator(".agents .agent", has_text="Claude Code").click()
+    press(page, page.locator(".agents .agent", has_text="Claude Code"))
     page.wait_for_selector(".agents .who")
     quiet(page)
     check(f"[{name}] the trifecta line is on the agent that reads and browses", page.locator(".trifecta").count() == 1)
