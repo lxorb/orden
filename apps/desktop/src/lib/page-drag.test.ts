@@ -15,8 +15,7 @@ function page(html = '') {
     `<div id="row" draggable="true"><span id="inner"></span>row</div><div id="folder">folder</div><div id="other" draggable="true">other</div><input id="field"><div id="note" contenteditable="true"></div>${html}`,
     { runScripts: 'outside-only' },
   )
-  const inside = dom.window as unknown as Window &
-    typeof globalThis & { DragEvent: unknown; PointerEvent: unknown; DataTransfer: unknown }
+  const inside = dom.window as unknown as Window & typeof globalThis
   const { document } = inside
 
   class Transfer {
@@ -46,9 +45,7 @@ function page(html = '') {
       this.pointerId = init.pointerId ?? 0
     }
   }
-  inside.DragEvent = Drag
-  inside.PointerEvent = Pointer
-  inside.DataTransfer = Transfer
+  Object.assign(inside, { DragEvent: Drag, PointerEvent: Pointer, DataTransfer: Transfer })
 
   let under: Element | null = null
   document.elementFromPoint = () => under
@@ -57,9 +54,9 @@ function page(html = '') {
     atRest = run
     return 1
   }) as typeof inside.setInterval
-  inside.clearInterval = (() => {
+  inside.clearInterval = () => {
     atRest = null
-  })
+  }
 
   inside.eval(script.replaceAll('!event.isTrusted', '!event.native'))
 
@@ -276,7 +273,7 @@ describe('around the drag', () => {
     const it = page()
     const said: number[] = []
     it.byId('row').addEventListener('pointercancel', (event) => {
-      said.push((event).pointerId)
+      said.push(event.pointerId)
     })
     it.pointer('pointerdown', { pointerId: 7 })
     it.start('row', 'copyMove')
