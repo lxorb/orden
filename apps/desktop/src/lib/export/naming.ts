@@ -12,9 +12,10 @@
 
 import { freePath } from '@orden/markdown/paths'
 
-/** The note's name without whatever extension it had. */
+/** The note's name without whatever extension it had. An extension is one word with a
+ *  letter in it, so the dots of `v1.2 plan` and `v1.2` stay. */
 export function stemOf(name: string): string {
-  return name.replace(/\.[^./\\]+$/, '')
+  return name.replace(/\.(?=[^./\\\s]*\p{L})[^./\\\s]+$/u, '')
 }
 
 /** The file an export of `name` produces. */
