@@ -121,6 +121,13 @@ export function focusEditor(): boolean {
   return focusRegion('editor')
 }
 
+/** The keyboard put into a side of the window, at the first thing in it past its edge, and
+ *  what took it; null where the side cannot hold it. */
+export function intoSide(side: 'left' | 'right'): HTMLElement | null {
+  if (!focusRegion(side === 'right' ? 'right' : 'space')) return null
+  return document.activeElement instanceof HTMLElement ? document.activeElement : null
+}
+
 /** One region along, wrapping, from wherever the keyboard is. What F6 does.
  *
  *  A region that is on screen but has nothing to stand on is stepped over rather
