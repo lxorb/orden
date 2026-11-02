@@ -295,6 +295,7 @@ TEARDOWN = 90
 NEEDS = {
     "native": "a native probe build (Windows, NIB_PROBE_EXE and NIB_PROBE_IDENTIFIER)",
     "chromium": "Chromium's own DevTools, flags or routing, which WebKit does not have",
+    "tab-stops": "Tab stopping at buttons, which a Mac leaves to Keyboard navigation, off on a runner",
 }
 
 #: The identifier every release is built under, which is the nib the reader is using
@@ -1803,6 +1804,8 @@ def missing(needs: Sequence[str]) -> str:
                 return f"refused: {why}"
         if one == "chromium" and WEBKIT:
             return f"needs {NEEDS['chromium']}"
+        if one == "tab-stops" and WEBKIT and sys.platform == "darwin":
+            return f"needs {NEEDS['tab-stops']}"
         if one not in NEEDS:
             return f"needs {one}, which the harness does not know"
     return ""

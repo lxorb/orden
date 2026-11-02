@@ -27,13 +27,14 @@ Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/keyboard-
 from __future__ import annotations
 
 import json
-import sys
 
 from playwright.sync_api import Browser, Page
 
 import harness
 from harness import Drive
 from settling import quiet
+
+NEEDS = ("tab-stops",)
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
@@ -232,19 +233,13 @@ def toast_keys(page: Page) -> None:
 
     # Tab from the row it happened in reaches Undo before it reaches the note.
     came_from = where(page)
-    if sys.platform == "darwin":
-        # A Mac's Tab passes over buttons until its reader turns on Keyboard navigation,
-        # which a runner has off, so what comes after Tab starts on Undo by hand, before
-        # the toast has run out.
-        page.evaluate("() => document.querySelector('.toast .undo').focus()")
-    else:
-        for count in range(1, 31):
-            at = press(page, "Tab")
-            if at.endswith("|Undo") or "editor|" in at:
-                break
-        say(f"[toast] {count} Tabs from the row: {at}")
-        if not at.endswith("|Undo"):
-            wrong(f"Tab reached the note before Undo: {at}")
+    for count in range(1, 31):
+        at = press(page, "Tab")
+        if at.endswith("|Undo") or "editor|" in at:
+            break
+    say(f"[toast] {count} Tabs from the row: {at}")
+    if not at.endswith("|Undo"):
+        wrong(f"Tab reached the note before Undo: {at}")
 
     # Pressing it brings the note back and the keyboard to where it came from.
     at = press(page, "Enter")
