@@ -239,9 +239,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  one live region and the notices row is a region F6 walks to (UndoToast.svelte,
  *  said.svelte.ts, focus.ts). Measured 5,739,412, from 5,739,030 at ff4c0315c, which was
  *  over already.
+ *
+ *  The code raised on 2026-11-02, to 5,739,900, for #523: a property's key is a button the
+ *  keyboard renames and opens the row's menu from (PropertiesPanel.svelte). Measured
+ *  5,739,841.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_739_500,
+  code: 5_739_900,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
