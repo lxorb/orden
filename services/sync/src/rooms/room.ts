@@ -401,6 +401,9 @@ export class NoteRoom implements DurableObject {
    *  where nothing said - a room the runtime woke to fire an alarm has forgotten, and
    *  no name is better than another device's. */
   private settling = ''
+  /** Sockets let in whose join is not yet settled, and whether each stays. Held in
+   *  memory: a join is a request in flight, and the object does not sleep through one. */
+  private readonly letting = new Map<WebSocket, Promise<boolean>>()
   /** And which device that was, by id rather than by name, for the tree; see
    *  `Attached`. */
   private settlingDevice: string | undefined = undefined
@@ -522,22 +525,19 @@ export class NoteRoom implements DurableObject {
       ...(joining.login ? { login: joining.login } : {}),
     } satisfies Attached)
 
-    // And written again now the socket is in the room. The wait on the first write
-    // lets other events in, and the close of another device of this person landing
-    // there saw none of theirs left and took the row away, leaving this socket in the
-    // room with no row to reach it by. A socket that cannot be written down is not
-    // left in the room either.
+    // What the socket says from here until this is settled waits for it: the object
+    // takes messages while it waits on the database, and a socket let in on what the
+    // door read must not be heard on it once that may no longer be so.
+    const settling = this.settleIn(server, held, joining)
+    this.letting.set(
+      server,
+      settling.catch(() => false),
+    )
     try {
-      await this.remember(held, joining.who)
-    } catch (error) {
-      server.close(1011, 'try again')
-      throw error
+      if (!(await settling)) return
+    } finally {
+      this.letting.delete(server)
     }
-
-    // And asked again, now a route that ends this access can reach the socket: the door
-    // read the database before all of the above, and a revocation landing since found
-    // no row to tell, or no socket here to close. One landing after this finds both.
-    if (!(await this.stillLetIn(server, joining))) return
 
     // Rows nothing will take away are cleared after the join rather than before it:
     // the join waits on none of the rooms that asks, and fails for none of them.
@@ -555,9 +555,30 @@ export class NoteRoom implements DurableObject {
     if (present) server.send(present)
   }
 
+  /** The rest of a join once the socket is in the room, answering whether it stays. */
+  private async settleIn(server: WebSocket, held: Held, joining: Joining): Promise<boolean> {
+    // And written again now the socket is in the room. The wait on the first write
+    // lets other events in, and the close of another device of this person landing
+    // there saw none of theirs left and took the row away, leaving this socket in the
+    // room with no row to reach it by. A socket that cannot be written down is not
+    // left in the room either.
+    try {
+      await this.remember(held, joining.who)
+    } catch (error) {
+      server.close(1011, 'try again')
+      throw error
+    }
+
+    // And asked again, now a route that ends this access can reach the socket: the door
+    // read the database before all of the above, and a revocation landing since found
+    // no row to tell, or no socket here to close. One landing after this finds both.
+    return await this.stillLetIn(server, joining)
+  }
+
   /** Whether a socket just let in may stay, and as what, by what its sign-in may do to
    *  the file now. A database that cannot say leaves it as the door said: the question
-   *  is asked again within the minute (`askSignIns`), and is not worth refusing a join. */
+   *  is asked again the next time something is said here more than a minute after it
+   *  last was (`askSignIns`), and is not worth refusing a join. */
   private async stillLetIn(server: WebSocket, joining: Joining): Promise<boolean> {
     const login = joining.login
     const noteId = this.held?.noteId
@@ -832,6 +853,11 @@ export class NoteRoom implements DurableObject {
   async webSocketMessage(socket: WebSocket, message: ArrayBuffer | string) {
     // Everything a room says is bytes. A string is not this protocol.
     if (typeof message === 'string') return
+
+    // A socket still being settled in is heard once that is done, as what it turned out
+    // to be; see `enter`.
+    const letting = this.letting.get(socket)
+    if (letting && !(await letting)) return
 
     const said = new Uint8Array(message)
 
