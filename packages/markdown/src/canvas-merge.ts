@@ -96,18 +96,34 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
     if (at[id] === undefined) gone[id] = now
   }
 
-  // When things moved, for what is still here, apart from `at`: see `Canvas.moved`.
-  const moved = noTimes()
-  for (const [id, since] of Object.entries(before.moved ?? {})) {
-    if (at[id] !== undefined) moved[id] = since
-  }
-  for (const id of shifted) moved[id] = now
-
   const out: Canvas = { ...after, at, gone }
-  if (Object.keys(moved).length) out.moved = moved
+  const moved = movesAfter(before.moved, shifted, removed, now)
+  if (moved) out.moved = moved
   else delete out.moved
 
   return out
+}
+
+/** When things moved, for what is still here, apart from `at`: see `Canvas.moved`. The
+ *  very same record where nothing moved and nothing it names went, so a pen on a plane
+ *  of many moved cards neither walks it nor has it written to the room again. */
+function movesAfter(
+  was: Record<string, number> | undefined,
+  shifted: readonly string[],
+  removed: readonly string[],
+  now: number,
+): Record<string, number> | undefined {
+  const dropped = was ? removed.filter((id) => timeIn(was, id) !== undefined) : []
+  if (!shifted.length && !dropped.length) return was
+
+  const moved = noTimes()
+  const gone = new Set(dropped)
+  for (const [id, since] of Object.entries(was ?? {})) {
+    if (!gone.has(id)) moved[id] = since
+  }
+  for (const id of shifted) moved[id] = now
+
+  return Object.keys(moved).length ? moved : undefined
 }
 
 /** What changed between two versions of one list, by identity.
@@ -274,8 +290,10 @@ function mergeList<T extends Thing>(
     (id) => timeOf(ourCanvas, id),
     (id) => timeOf(theirCanvas, id),
   )
-  const ourGaps = gapsIn(ourList, shared, (id) => ourMove(id) >= theirMove(id))
-  const theirGaps = gapsIn(theirList, shared, (id) => theirMove(id) >= ourMove(id))
+  // What the other side does not hold stands on this one, whatever that side says of its
+  // moves: only a tombstone takes a thing off the plane.
+  const ourGaps = gapsIn(ourList, shared, (id) => !yours.has(id) || ourMove(id) >= theirMove(id))
+  const theirGaps = gapsIn(theirList, shared, (id) => !mine.has(id) || theirMove(id) >= ourMove(id))
   const touchedAt = (id: string) =>
     Math.max(ourMove(id), theirMove(id)) || Math.max(timeOf(ourCanvas, id), timeOf(theirCanvas, id))
 

@@ -347,7 +347,15 @@ function things(canvas: Canvas): Map<string, Thing> {
 
 /** A whole canvas into an empty document: the room's first content, from the file
  *  as it was stored. Stacked in the order the file listed them, so a plane seeded
- *  here looks exactly like the file it came from. */
+ *  here looks exactly like the file it came from.
+ *
+ *  Without the file's `moved`, because a seed's bytes are the same on every device and in
+ *  every build. So the room opens in the file's order and with no time for any move in it.
+ *  A device holding that file puts the times back as it joins. A device with an older copy
+ *  that joins first has nothing to lose to: where it disagrees the merge goes by `at`,
+ *  then the smaller index, then id, and that can undo a move the file held. A copy with a
+ *  move of its own, however old, beats the room the same way. Both stay agreed on every
+ *  device; plane.test.ts holds all of it. */
 export function seedPlane(doc: Y.Doc, canvas: Canvas) {
   const plane = planeOf(doc)
   const buried = buriedOf(doc)
