@@ -35,10 +35,14 @@ function carriedFor(whose: string): Map<string, string> {
   return record.carried
 }
 
-function how(token: string, whose: string): Carrying {
+function how(token: string, whose: string, said: Carrying['said'] = () => undefined): Carrying {
   const carried = carriedFor(whose)
   return {
     exists: onDisk,
+    async stamp(path) {
+      const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
+      return stamp === null || stamp === undefined ? null : JSON.stringify(stamp)
+    },
     async read(path) {
       return await fileBytes(path).catch(() => null)
     },
@@ -54,6 +58,7 @@ function how(token: string, whose: string): Carrying {
     down: (id) => api.notePaper(token, id),
     carried,
     kept: () => void keep(KEY + whose, JSON.stringify(Object.fromEntries(carried))),
+    said,
   }
 }
 
@@ -70,31 +75,36 @@ async function onDisk(path: string): Promise<boolean> {
 }
 
 /** The page notes v1's mirrors hold, for their papers: of the spaces the workspace
- *  lists, as a pass syncs them. `reads` says which are shared to read. */
+ *  lists, as a pass syncs them, each named as v1's log names a space. `reads` says which
+ *  are shared to read. */
 export function mirroredPages(
   mirrors: readonly Mirror[],
   reads: (spaceId: string) => boolean,
 ): Carried[] {
   const out: Carried[] = []
   for (const mirror of mirrors) {
-    if (!workspace.spaces.some((space) => space.root === mirror.root)) continue
+    const space = workspace.spaces.find((one) => one.root === mirror.root)
+    if (!space) continue
     const writes = !reads(mirror.spaceId)
     for (const [path, held] of Object.entries(mirror.notes)) {
-      if (isPagesTarget(path)) out.push({ path: joinPath(mirror.root, path), id: held.id, writes })
+      if (isPagesTarget(path)) {
+        out.push({ path: joinPath(mirror.root, path), id: held.id, writes, space: space.name })
+      }
     }
   }
   return out
 }
 
 /** Every page note the account holds here, carried, at most once in a while. Answers
- *  at once where a carrying is under way or one was moments ago. */
-export function carryNow(notes: () => Carried[]): Promise<void> {
+ *  at once where a carrying is under way or one was moments ago. `said` takes a line for
+ *  the log of the sync asking. */
+export function carryNow(notes: () => Carried[], said: Carrying['said']): Promise<void> {
   const token = account.token
   const whose = account.user?.id
   if (!token || !whose || carrying || Date.now() - lastAt < EVERY) return Promise.resolve()
 
   lastAt = Date.now()
-  carrying = carryPapers(notes(), how(token, whose)).finally(() => (carrying = null))
+  carrying = carryPapers(notes(), how(token, whose, said)).finally(() => (carrying = null))
   return carrying
 }
 
