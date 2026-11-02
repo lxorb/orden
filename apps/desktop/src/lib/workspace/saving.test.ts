@@ -528,6 +528,78 @@ describe('a note renamed while its write was in the air', () => {
     expect(note.path).toBe(`${SPACE}/b.md`)
   })
 
+  /** A move sync makes on this disk, which waits for the write in the air and has the
+   *  next one wait for it: landing inside a rename, a write put the old name back beside
+   *  the file, and sync would then read that as a note made here. */
+  test('by sync waits for the write in the air, and the next write follows it', async () => {
+    const { saving, note } = open(`${SPACE}/a.md`)
+    const order: string[] = []
+
+    let letGo = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    holding = new Promise<void>((go) => {
+      letGo = () => go()
+    })
+
+    note.replace('# a typed')
+    const writing = saving.write(note)
+    await vi.waitFor(() => expect(written()).toHaveLength(1))
+
+    note.replace('# a typed more')
+    const next = saving.write(note)
+
+    let moved = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    const renamed = new Promise<void>((go) => {
+      moved = () => go()
+    })
+    const moving = saving.holdingWrites(`${SPACE}/a.md`, async () => {
+      order.push(`rename after ${String(written().length)} write`)
+      await renamed
+      note.path = `${SPACE}/b.md`
+    })
+
+    expect(order).toEqual([])
+    letGo()
+    holding = null
+    await writing
+    await vi.waitFor(() => expect(order).toEqual(['rename after 1 write']))
+    // The write after it is not let down while the rename is in the air.
+    expect(written()).toHaveLength(1)
+
+    moved()
+    await Promise.all([moving, next])
+    expect(written().map((one) => one.path)).toEqual([`${SPACE}/a.md`, `${SPACE}/b.md`])
+  })
+
+  /** A pass has the engine to itself, and a move made here waits for the engine inside
+   *  its hold: telling the account (`follow` in sync2/runner.svelte.ts). Waiting for
+   *  that hold from inside the pass never ended. */
+  test('by sync does not wait for what is held waiting on the engine', async () => {
+    const { saving, note } = open(`${SPACE}/a.md`)
+
+    let passOver = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    const pass = new Promise<void>((go) => {
+      passOver = () => go()
+    })
+    // A rename made here, telling the account, which waits for the pass to end.
+    const renaming = saving.holding([note], () => pass)
+
+    let ran = false
+    await saving.holdingWrites(`${SPACE}/a.md`, () => {
+      ran = true
+      return Promise.resolve()
+    })
+    expect(ran).toBe(true)
+
+    passOver()
+    await renaming
+  })
+
   /** Something that did not wait - a space renamed, a file moved by sync - moves the
    *  note while its write is in the air. The write landing used to tell the document
    *  the old path back, so the tab followed the file the move had just left. */

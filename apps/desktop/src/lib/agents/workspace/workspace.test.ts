@@ -160,6 +160,7 @@ const workspace = {
   // The one sentence every file operation is said as, heard for real by whatever
   // follows it; see workspace/file-ops.ts.
   fileOps: new FileOps(),
+  holdingUnder: vi.fn((_path: string, run: () => Promise<void>) => run()),
   fileMoved: vi.fn((from: string, to: string, kind: Kind) =>
     workspace.fileOps.tell({ op: 'moved', from, to, kind, root: '/s/Home' }),
   ),
@@ -568,6 +569,8 @@ describe('another space, without switching', () => {
     await call('move_file', { space: 'Home', path: 'Soup.md', to: 'Food/Soup' })
 
     expect(files.has('/s/Home/Food/Soup.md')).toBe(true)
+    // After whatever write of the note is in the air, as a move made here.
+    expect(workspace.holdingUnder).toHaveBeenCalledWith('/s/Home/Soup.md', expect.anything())
     expect(indexed).toContainEqual({
       root: '/s/Home',
       asked: 'retarget',
