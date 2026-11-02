@@ -1617,3 +1617,18 @@ describe('a folder renamed, in a note inside it that is rewritten', () => {
     expect(notes['Diary/A.md']).toBe('[[Diary/B]] [b2](./B.md)\n')
   })
 })
+
+describe('a space’s AGENTS.md, which is a setting', () => {
+  test('is not offered by `[[`, nor counted for its tags, and a link to it still resolves', async () => {
+    await space({
+      'AGENTS.md': '#hidden\n',
+      'Plan.md': '#seen\n',
+      'sub/AGENTS.md': '#nested\n',
+    })
+    const notes = links.index(at('Plan.md')).notes
+    expect(notes.find((one) => one.path === 'AGENTS.md')?.archived).toBe(true)
+    expect(notes.find((one) => one.path === 'sub/AGENTS.md')?.archived).toBeUndefined()
+    expect(links.spaceTags.map((one) => one.tag).sort()).toEqual(['nested', 'seen'])
+    expect(links.targetOf(at('Plan.md'), { kind: 'wikilink', target: 'AGENTS' })).toBe('AGENTS.md')
+  })
+})

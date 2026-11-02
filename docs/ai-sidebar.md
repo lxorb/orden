@@ -253,7 +253,8 @@ their readers complain about is the index (`docs/ai.md`, "No index").
 - **The vendors' command names** (Claude Code first, Codex where it differs), and generic
   behaviour behind them, so `/goal` is Claude's `/goal` and Codex's `/goal` at once.
 - **Instructions as a file the reader owns** (`AGENTS.md`, `CLAUDE.md`), never a hidden
-  memory store: a remembered fact is an edit to that note you can read.
+  memory store: a remembered fact is an edit to that file you can read, in the space's
+  settings.
 - **Custom commands and agents as notes** (Obsidian Copilot, Raycast), found by their front
   matter, so they sync, version and open in Obsidian as text.
 - **Follow the agent** (Zed) through the notes it edits, off by default.
@@ -336,8 +337,8 @@ names the provider's own road.
 | --- | --- | --- | --- | --- | --- | --- |
 | `/mention <thing>` | `/add`, `/attach` | Cx `/mention` | attaches what `@` would (4.2) | Orden | Orden | Orden |
 | `/add-space <space>` | `/add-dir` | CC `/add-dir` | widens this thread to another space, if the grant reaches it | Orden | Orden | Orden |
-| `/memory` | `/memories`, `/instructions`, `/rules` | CC `/memory`, Cx `/memories`, Copilot `/instructions` | opens the space's `AGENTS.md` and the personal instructions; "remember" on or off (4.6) | Orden | Orden | Orden |
-| `/init` | - | CC, Cx, Copilot | writes the space's `AGENTS.md` from its folders, tags, templates and habits, as a new note you review | Orden | Orden | Orden |
+| `/memory` | `/memories`, `/instructions`, `/rules` | CC `/memory`, Cx `/memories`, Copilot `/instructions` | opens the space's `AGENTS.md`, its field in Settings > Space, and the personal instructions; "remember" on or off (4.6) | Orden | Orden | Orden |
+| `/init` | - | CC, Cx, Copilot | writes the space's `AGENTS.md` from its folders, tags, templates and habits, for you to review in Settings > Space | Orden | Orden | Orden |
 | `/skills [name]` | `/commands`, `/prompts` | CC `/skills`, Cx `/skills`, Copilot `/prompts` | the custom commands: notes with `command:` front matter (4.7) | Orden | Orden | Orden |
 | `/mcp` | `/tools` | CC `/mcp`, Cx `/mcp`, Copilot `/tools` | the tools this thread can use, by scope, each switchable off for the thread | Orden's verbs | Orden's verbs | Orden's verbs |
 
@@ -731,11 +732,24 @@ sidebar adds a review layer on top, and nothing underneath changes.
 
 - **The space's instructions** are its `AGENTS.md` at the space root, the file Codex,
   Cursor and Copilot read and Claude Code reads beside `CLAUDE.md`; a `CLAUDE.md` there is
-  read too. They are notes, in the tree, synced and versioned like any other. A space
-  made in Orden starts with one of two lines (write in the notes' own language and style,
-  ask before deleting, moving or renaming) and an empty `## Memory`; an import brings
-  only what its folder had (`agents-seed.ts`). `/init` writes a fuller one; `/memory`
-  opens it.
+  read too. It is a real file there, synced and versioned like any other, and read by
+  agents, CLIs and older clients as ever; the app shows it as a field in **Settings >
+  Space** (`settings/SpacePane.svelte`, reached from a space's menu too) instead of as a
+  note, the way ChatGPT's and Claude's projects keep their instructions. It is left out
+  of the tree, the palette, search, `[[`, the graph, views, recents and restored tabs,
+  and opening it from anywhere (a link, `/memory`, the tray) opens the field; a tab with
+  words unsaved from before stays until it is closed. Agents still list, read, search and
+  write it. Clearing the field leaves the file there, empty. A space made in Orden starts
+  with one of two lines (write in the notes' own language and style, ask before deleting,
+  moving or renaming) and an empty `## Memory`; an import brings only what its folder had
+  (`agents-seed.ts`). `/init` writes a fuller one; `/memory` opens it.
+- **The name is the setting's.** No note in a space is called `AGENTS` (any case, `.md`
+  or not, any folder): a row's name field, the palette, a link to nothing, a save and a
+  drop on the top of the space refuse it, with a hint that goes to the field
+  (`reserved-name.svelte.ts`), and words headed `AGENTS` step aside to `AGENTS 2`. An
+  agent, sync or an import is not refused, and a file they bring stays as it is: at the
+  top it is what the field shows, and in a folder it is a note like any other, which
+  keeps its name.
 - **Personal instructions** are a field in Settings > AI, for every space.
 - **Remembering is an edit.** "Remember that I file papers under Reading" (or the model's
   own `remember` when memory is on) appends a line under `## Memory` in `AGENTS.md` as a

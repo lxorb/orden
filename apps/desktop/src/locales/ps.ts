@@ -2660,4 +2660,6 @@ export const ps: Dictionary = {
   'Move the chat': 'خبرې اترې وخوځوه',
   'Only the file': 'یوازې فایل',
   'Trust this space again': 'په دې ځای بیا باور وکړئ',
+  'Agent instructions': 'د اجنټ لارښوونې',
+  "AGENTS is this space's agent instructions": 'AGENTS د دې ځای د اجنټ لارښوونې دي',
 }

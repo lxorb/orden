@@ -2741,4 +2741,7 @@ export const fr: Dictionary = {
   'Move the chat': 'Déplacer la discussion',
   'Only the file': 'Le fichier seul',
   'Trust this space again': 'Faire de nouveau confiance à cet espace',
+  'Agent instructions': 'Instructions pour les agents',
+  "AGENTS is this space's agent instructions":
+    'AGENTS correspond aux instructions pour les agents de cet espace',
 }

@@ -4,6 +4,7 @@
 
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
+import { AGENTS_NAME } from '../note-name'
 import { insideSpace } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 
@@ -14,6 +15,7 @@ export async function todayHere(): Promise<{ at: string; space: string; text: st
     await import('@orden/bases/tasks')
   const rows = []
   for (const note of links.held()) {
+    if (note.path === AGENTS_NAME) continue
     if (!/\.(md|markdown)$/i.test(note.path)) continue
     const tasks =
       note.tasks ??

@@ -29,6 +29,7 @@
   import { t } from './i18n.svelte'
   import { dur } from './motion'
   import { type NameFault, nameFault, nameToCommit } from './naming'
+  import { agentsHint } from './reserved-words'
   import { caretAtEnd, selectAll, selectStem } from './select-all'
 
   interface Props {
@@ -42,6 +43,8 @@
     current?: string | undefined
     /** The names already beside it, its own left out; see naming.ts. */
     taken?: readonly string[]
+    /** The space a refused name is told about, for the way to its settings. */
+    space?: string | undefined
     /** The caret goes to the end rather than the name arriving selected: a name
      *  that is settled and waiting for a title after it. */
     appending?: boolean
@@ -60,6 +63,7 @@
     extension = '',
     current,
     taken = [],
+    space,
     appending = false,
     oncommit,
     oncancel,
@@ -74,7 +78,7 @@
   // svelte-ignore state_referenced_locally
   let typed = $state(value)
 
-  const fault = $derived(nameFault({ typed, extension, taken }))
+  const fault = $derived(nameFault({ typed, extension, taken, current }))
 
   /** Whether the name will not do. Not the same as an empty field: a name nobody
    *  has finished typing is not a mistake. Bound out so the row can wear the
@@ -107,6 +111,8 @@
         return t('Windows keeps this name for itself')
       case 'taken':
         return t('That name is taken')
+      case 'agents':
+        return agentsHint()
       case 'empty':
       case null:
         return null
@@ -126,6 +132,20 @@
     const name = nameToCommit({ typed, extension, taken, was: value, current })
     if (name === null) oncancel()
     else oncommit(name)
+    // The field is gone and took its bubble with it, so the way to the setting goes on.
+    if (fault === 'agents' && space) void refused().then((one) => one.reservedName.tell(space))
+  }
+
+  const refused = () => import('./reserved-name.svelte')
+
+  /** The field the keyboard comes back to from the hint, and the hint itself. */
+  let field = $state<HTMLInputElement>()
+  let hint = $state<HTMLButtonElement>()
+
+  /** The hint pressed: the name goes as it does on Escape, and the setting opens. */
+  function follow() {
+    escape()
+    if (space) void refused().then((one) => one.openInstructions(space))
   }
 
   function escape() {
@@ -160,8 +180,11 @@
     enterkeyhint="done"
     aria-label={t('Name')}
     aria-invalid={amiss}
+    bind:this={field}
     use:caret
-    onblur={leave}
+    onblur={(event) => {
+      if (!hint || event.relatedTarget !== hint) leave()
+    }}
     onkeydown={(event) => {
       if (event.key === 'Enter') {
         event.preventDefault()
@@ -174,11 +197,45 @@
         escape()
       } else if (event.key === 'Tab') {
         event.preventDefault()
+        // The one bubble with something to press, and Tab is how the keyboard presses it.
+        hint?.focus()
       }
     }}
   />
 
-  {#if reason}
+  {#if fault === 'agents' && space}
+    <!-- The same bubble, as the way to the setting. Its press takes no focus from the
+         name, because a blur there would end the field before the press lands. -->
+    <span
+      class="reason-at"
+      aria-live="polite"
+      transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}
+    >
+      <button
+        bind:this={hint}
+        type="button"
+        class="nib-bubble is-pressable reason pressed"
+        onpointerdown={(event) => event.preventDefault()}
+        onclick={(event) => {
+          event.stopPropagation()
+          follow()
+        }}
+        onblur={(event) => {
+          if (event.relatedTarget !== field) leave()
+        }}
+        onkeydown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            event.stopPropagation()
+            escape()
+          } else if (event.key === 'Tab') {
+            event.preventDefault()
+            field?.focus()
+          }
+        }}>{reason}</button
+      >
+    </span>
+  {:else if reason}
     <span
       class="nib-bubble reason"
       aria-live="polite"
@@ -234,5 +291,11 @@
     top: calc(100% + 4px);
     inset-inline-start: 0;
     z-index: var(--z-popover);
+  }
+
+  /* The one that goes somewhere, and reads as a link does. */
+  .pressed {
+    cursor: pointer;
+    text-decoration: underline;
   }
 </style>

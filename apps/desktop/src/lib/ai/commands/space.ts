@@ -22,8 +22,8 @@ function rootOf(thread: Thread | null): string | null {
   return space?.root ?? workspace.activeSpace?.root ?? null
 }
 
-/** `/memory [on|off]`: remembering switched, or the space's `AGENTS.md` opened, made
- *  first where there is none. */
+/** `/memory [on|off]`: remembering switched, or the space's `AGENTS.md` opened, which is
+ *  its field in the space's settings, empty where there is no file yet. */
 export async function memory(host: Host, thread: Thread | null, args: string): Promise<void> {
   const word = args.trim().toLowerCase()
   if (word === 'on' || word === 'off') {
@@ -33,13 +33,7 @@ export async function memory(host: Host, thread: Thread | null, args: string): P
   }
   const root = rootOf(thread)
   if (!root) return
-  const path = `${root}/${AGENTS}`
-  // A space shared to be read makes no note, and opening the name it would have
-  // had would show an empty page that is in no space at all.
-  if ((await workspace.noteText(path).catch(() => null)) === null) {
-    if ((await workspace.noteFrom('# AGENTS\n\n## Memory\n', root)) === null) return
-  }
-  await workspace.open(path)
+  await workspace.open(`${root}/${AGENTS}`)
 }
 
 /** What `/init` asks. Not translated: the model's to read. */

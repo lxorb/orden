@@ -350,7 +350,7 @@ export async function movedIn(root: string, from: string, to: string): Promise<s
     return to
   }
 
-  await workspace.moveMany([source], folder ? insideSpace(root, folder) : root)
+  await workspace.moveMany([source], folder ? insideSpace(root, folder) : root, true)
   if (name !== nameOf(from)) {
     await workspace.rename(
       insideSpace(root, folder ? `${folder}/${nameOf(from)}` : nameOf(from)),

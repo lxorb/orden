@@ -2667,4 +2667,6 @@ export const pa: Dictionary = {
   'Move the chat': 'ਚੈਟ ਭੇਜੋ',
   'Only the file': 'ਸਿਰਫ਼ ਫ਼ਾਈਲ',
   'Trust this space again': 'ਇਸ ਸਪੇਸ ਉੱਤੇ ਮੁੜ ਭਰੋਸਾ ਕਰੋ',
+  'Agent instructions': 'ਏਜੰਟ ਹਦਾਇਤਾਂ',
+  "AGENTS is this space's agent instructions": 'AGENTS ਇਸ ਸਪੇਸ ਦੀਆਂ ਏਜੰਟ ਹਦਾਇਤਾਂ ਹਨ',
 }

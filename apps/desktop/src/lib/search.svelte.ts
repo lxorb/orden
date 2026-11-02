@@ -8,6 +8,7 @@
 import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@orden/editor'
 import { revealPanel } from './focus'
+import { AGENTS_NAME } from './note-name'
 import { isScratchpad } from './scratchpad/is.svelte'
 import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
@@ -265,7 +266,11 @@ class Search {
     // Rows arrive in handfuls and go on the end, so the list fills from the
     // top while the rest of the space is still being read. The guesses come in
     // the last handful, already ranked; see space.ts.
-    const excluded = this.archived ? workspace.excluded.of(root) : workspace.leftOutOf(root)
+    // And the space's AGENTS.md, which is its settings' rather than a note to find.
+    const excluded = [
+      ...(this.archived ? workspace.excluded.of(root) : workspace.leftOutOf(root)),
+      AGENTS_NAME,
+    ]
     const { unsavedHits } = await import('./search/unsaved')
     const unsaved = unsavedHits(this.query, workspace.activeSpaceId, MOST)
     // The scratchpad answers in every space, and never while a replacement is being

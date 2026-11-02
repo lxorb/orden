@@ -2621,4 +2621,6 @@ export const ko: Dictionary = {
   'Move the chat': '채팅 옮기기',
   'Only the file': '파일만',
   'Trust this space again': '이 공간을 다시 신뢰',
+  'Agent instructions': '에이전트 지침',
+  "AGENTS is this space's agent instructions": 'AGENTS는 이 스페이스의 에이전트 지침입니다',
 }

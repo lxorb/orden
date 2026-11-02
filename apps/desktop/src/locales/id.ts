@@ -2654,4 +2654,6 @@ export const id: Dictionary = {
   'Move the chat': 'Pindahkan obrolan',
   'Only the file': 'Hanya berkasnya',
   'Trust this space again': 'Percayai ruang ini lagi',
+  'Agent instructions': 'Instruksi agen',
+  "AGENTS is this space's agent instructions": 'AGENTS adalah instruksi agen untuk ruang ini',
 }

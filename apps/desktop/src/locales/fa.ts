@@ -2665,4 +2665,6 @@ export const fa: Dictionary = {
   'Move the chat': 'انتقال گفتگو',
   'Only the file': 'فقط فایل',
   'Trust this space again': 'دوباره به این فضا اعتماد کن',
+  'Agent instructions': 'دستورالعمل‌های عامل',
+  "AGENTS is this space's agent instructions": 'AGENTS دستورالعمل‌های عامل این فضا است',
 }

@@ -4,6 +4,8 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { dur } from './motion'
+  import { reservedName } from './reserved-name.svelte'
+  import { agentsHint } from './reserved-words'
   import { back } from './sync2/resurrected.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
@@ -41,6 +43,7 @@
   // Gone with the component, and the timers with it.
   $effect(() => () => {
     undoToast.dismiss()
+    reservedName.dismiss()
     unread.dismiss()
     failed.dismiss()
     back.dismiss()
@@ -51,7 +54,15 @@
 <!-- One word for what happened and one for the way back: the row it was about has
      already gone or moved, which says the rest. A failed carry comes first: whichever of
      the two came last dismissed the other, so this only decides a tie. -->
-{#if failed.retry}
+{#if reservedName.root}
+  <!-- A note called AGENTS refused where there is no field to say so in: the palette's
+       way round it aside, a link, a drop, the name a save was given. Gmail's snackbar,
+       one line and the way there. See reserved-name.svelte.ts. -->
+  <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
+    <p>{agentsHint()}</p>
+    <button class="undo" onclick={() => reservedName.open()}>{t('Open')}</button>
+  </div>
+{:else if failed.retry}
   <!-- A card carried to a column whose note would not be written: it went back. -->
   <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
     <p>{t('Not moved')}</p>

@@ -2753,4 +2753,7 @@ export const ru: Dictionary = {
   'Move the chat': 'Переместить чат',
   'Only the file': 'Только файл',
   'Trust this space again': 'Снова доверять этому пространству',
+  'Agent instructions': 'Инструкции для агентов',
+  "AGENTS is this space's agent instructions":
+    'AGENTS: инструкции для агентов этого пространства',
 }

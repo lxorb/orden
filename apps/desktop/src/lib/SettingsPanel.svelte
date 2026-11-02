@@ -1171,6 +1171,11 @@
     {#await import('./remote/RemotePane.svelte') then pane}
       <pane.default />
     {/await}
+  {:else if !__EVEN_PLUGIN__ && settings.section === 'space'}
+    <!-- Fetched as it is opened, as Agents is; see settings/SpacePane.svelte. -->
+    {#await import('./settings/SpacePane.svelte') then pane}
+      <pane.default />
+    {/await}
   {:else if settings.section === 'trash'}
     <RecentlyDeleted />
   {:else if !__EVEN_PLUGIN__ && settings.section === 'import'}

@@ -2644,4 +2644,7 @@ export const my: Dictionary = {
   'Move the chat': 'ချတ်ကို ရွှေ့ရန်',
   'Only the file': 'ဖိုင်သာ',
   'Trust this space again': 'ဤနေရာကို ထပ်မံယုံကြည်ရန်',
+  'Agent instructions': 'အေးဂျင့် ညွှန်ကြားချက်များ',
+  "AGENTS is this space's agent instructions":
+    'AGENTS သည် ဤနေရာ၏ အေးဂျင့် ညွှန်ကြားချက်များ ဖြစ်သည်',
 }

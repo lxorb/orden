@@ -2580,4 +2580,6 @@ export const zhHans: Dictionary = {
   'Move the chat': '移动对话',
   'Only the file': '仅文件',
   'Trust this space again': '再次信任此空间',
+  'Agent instructions': '智能体指令',
+  "AGENTS is this space's agent instructions": 'AGENTS 是此空间的智能体指令',
 }

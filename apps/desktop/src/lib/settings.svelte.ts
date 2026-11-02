@@ -18,6 +18,7 @@ type ExportAppearance = 'light' | 'dark' | 'app'
 
 export type Section =
   | 'general'
+  | 'space'
   | 'editor'
   | 'kinds'
   | 'shortcuts'
@@ -158,10 +159,15 @@ class Settings {
    *  own. Read and cleared by the part it names. */
   at = $state<'access' | null>(null)
 
+  /** Which space the Space pane is about where it was asked for one, by its root; the
+   *  one in front otherwise. */
+  space = $state<string | null>(null)
+
   /** Opens on General, or on the list of panes where the screen is a phone's.
    *  Asked for by name, a pane opens straight away on both. Agents and LLM access are
    *  Settings > AI's Access now, and a link to either still lands there. */
-  show(section?: Section) {
+  show(section?: Section, space: string | null = null) {
+    this.space = space
     const moved = section === 'agents' || section === 'llm'
     this.at = moved ? 'access' : null
     this.section = moved ? 'ai' : (section ?? 'general')

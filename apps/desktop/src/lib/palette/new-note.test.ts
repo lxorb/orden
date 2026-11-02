@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { namesAgents, noteToMake } from './new-note'
+import { withOffers } from './offers'
 
 describe('a name typed into the palette, as a note', () => {
   test('is a note at the top of the space', () => {
@@ -36,5 +37,16 @@ describe('the name AGENTS typed into the palette', () => {
     expect(namesAgents('Groceries')).toBe(false)
     expect(namesAgents('AGENTS/Plan')).toBe(false)
     expect(namesAgents('')).toBe(false)
+  })
+})
+
+describe('what the palette offers for the name', () => {
+  test('the way to the setting, keyboard-chosen like any row', () => {
+    expect(withOffers([], 'AGENTS', null, null)).toEqual([{ kind: 'agents' }])
+    expect(withOffers([], 'Uni/agents.md', null, null)).toEqual([{ kind: 'agents' }])
+  })
+
+  test('nothing of the kind for another name', () => {
+    expect(withOffers([], 'Plan', null, null)).toEqual([])
   })
 })

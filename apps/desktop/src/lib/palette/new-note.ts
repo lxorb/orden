@@ -8,6 +8,7 @@
  *  all rather than a note under some other name than the one typed. */
 
 import { nameFault, nameToWrite } from '../naming'
+import { isAgentsName } from '../note-name'
 
 export interface NoteToMake {
   /** Where, relative to the space, with `/` between folders; empty for the top. */
@@ -30,4 +31,15 @@ export function noteToMake(term: string): NoteToMake | null {
   if (!folders || nameFault({ typed: last, extension: '.md', taken: [] })) return null
 
   return { folder: parts.join('/'), name: nameToWrite(last, '.md') }
+}
+
+/** Whether what was typed names the one note no space makes; the palette says where
+ *  that name is instead of offering nothing. See `isAgentsName`. */
+export function namesAgents(term: string): boolean {
+  const last = term
+    .split(/[\\/]/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .at(-1)
+  return last !== undefined && isAgentsName(nameToWrite(last, '.md'))
 }

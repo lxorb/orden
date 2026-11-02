@@ -20,6 +20,8 @@
   import { pages } from '../web-tab/pages.svelte'
   import { type Tab, workspace } from '../workspace.svelte'
   import { offeredName } from '../workspace/drafts'
+  import { isAgentsName } from '../note-name'
+  import { joinPath } from '../tauri'
   import { fileFor, placesFor, startingPlace } from './places'
 
   const {
@@ -109,6 +111,13 @@
     event.preventDefault()
     const folder = place?.id
     const file = fileFor(name, tab.note, title)
+    // Where nobody may name a note; see `isAgentsName`. The bubble stays with the words.
+    if (folder && isAgentsName(file)) {
+      const root = workspace.rootHolding(joinPath(folder, file))
+      if (root !== null)
+        void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
+      return
+    }
     // Gone at once, with the row arriving in the list as it goes: what is left is a
     // write, and a write that fails says so where every write says it.
     onclose()
