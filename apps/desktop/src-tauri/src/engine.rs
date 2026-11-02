@@ -505,6 +505,20 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     }
 }
 
+/// A window of the app's own that no page of it runs in, such as the hidden one a PDF is
+/// printed from: only the interface's profile and Alloy style of what `own_window` gives.
+#[cfg(feature = "cef")]
+pub(crate) fn own_profile<M: tauri::Manager<crate::Engine>>(
+    building: tauri::WebviewWindowBuilder<'_, crate::Engine, M>,
+) -> tauri::WebviewWindowBuilder<'_, crate::Engine, M> {
+    use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
+    let building = building.browser_runtime_style(RuntimeStyle::Alloy);
+    match OWN_PROFILE.get() {
+        Some(profile) => building.data_directory(profile.clone()),
+        None => building,
+    }
+}
+
 /// The interface's profile folder, once the first window has made it.
 #[cfg(feature = "cef")]
 static OWN_PROFILE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();

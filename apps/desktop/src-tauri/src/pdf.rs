@@ -6,25 +6,27 @@
 //! file. `WKWebView` hands out an `NSPrintOperation` for its page, and an operation
 //! told to save rather than print, with its panels switched off, is the same thing:
 //! the paper, the margins and the page breaks are the ones a print would have, which
-//! is what a PDF of a note is for. `WebKitGTK` offers only its print panel, so on
-//! Linux this says it cannot help and the window falls back to that panel.
+//! is what a PDF of a note is for. `WebKitGTK` offers only its print panel, so a build
+//! on it says it cannot help and the window falls back to that panel.
 //!
 //! On a Mac the print dialog itself comes through here as well, because the window's
 //! own road to it - `print()` in a frame - is one `WKWebView` ignores; see
 //! `print_page`.
 //!
-//! And on Orden's own Chromium - the `cef` feature, off in everything that ships -
-//! neither system engine is there any more, so the one call this module makes into
-//! it is not there to make: the printer here says no and the window falls back to
-//! the panel, exactly as it does on Linux. Chromium's own `PrintToPDF` is the answer
-//! and it is batch 6's; see docs/browser.md.
+//! And on Orden's own Chromium - the `cef` feature, which is every Linux package -
+//! the page is asked through the `DevTools` protocol, `Page.printToPDF`, which needs no
+//! print handler of the runtime and hands the file back whole; a call that goes out
+//! from a thread of its own rather than from inside the webview (`printer` below).
 
 use serde::Deserialize;
+use serde_json::{json, Value};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tauri::webview::{PageLoadEvent, PlatformWebview};
+use tauri::webview::PageLoadEvent;
+#[cfg(not(feature = "cef"))]
+use tauri::webview::PlatformWebview;
 use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder};
 
 use crate::clock;
@@ -63,12 +65,41 @@ pub struct PdfPage {
     pub landscape: bool,
 }
 
+/// What a printer is handed to print from: the engine's own view of the page on a system
+/// engine, which is only reached on the window's thread, and the window on Orden's own
+/// Chromium, whose protocol is only called from any other; see `in_hidden_window`.
+#[cfg(not(feature = "cef"))]
+type Printable = PlatformWebview;
+#[cfg(feature = "cef")]
+type Printable = tauri::WebviewWindow<crate::Engine>;
+
 /// Whether `print_pdf` can write a file here. `WebView2` can print to a file
 /// without a dialog, and so can `WKWebView` from macOS 11, where it first hands out
-/// a print operation; `WebKitGTK` only offers its print panel.
+/// a print operation, and Orden's own Chromium; `WebKitGTK` only offers its print panel.
 #[tauri::command]
 pub fn pdf_supported() -> bool {
     printer::available()
+}
+
+/// What `Page.printToPDF` is asked: the reader's paper as their own PDF export lays a
+/// note on it (`pdf.rs`, `PdfPage`, upright and turned by `landscape`), the page's
+/// backgrounds, and none of the browser's own lines - the address and the date that a
+/// print dialog writes into the margins are not the page.
+pub(crate) fn printing(paper: &PdfPage) -> Value {
+    let margin = paper.margin.max(0.0);
+    json!({
+        "landscape": paper.landscape,
+        "paperWidth": paper.width,
+        "paperHeight": paper.height,
+        "marginTop": margin,
+        "marginBottom": margin,
+        "marginLeft": margin,
+        "marginRight": margin,
+        "printBackground": true,
+        "displayHeaderFooter": false,
+        "preferCSSPageSize": false,
+        "transferMode": "ReturnAsBase64",
+    })
 }
 
 /// One inch in the unit `AppKit` measures paper in, the `PostScript` point.
@@ -199,9 +230,7 @@ async fn in_hidden_window<F>(
     print: F,
 ) -> Result<(), String>
 where
-    F: FnOnce(&PlatformWebview, mpsc::Sender<Result<(), String>>) -> Result<(), String>
-        + Send
-        + 'static,
+    F: FnOnce(&Printable, mpsc::Sender<Result<(), String>>) -> Result<(), String> + Send + 'static,
 {
     let job = format!(
         "{}-{}-{}",
@@ -233,6 +262,11 @@ where
     #[cfg(all(windows, not(feature = "cef")))]
     let building = building.additional_browser_args(&crate::engine::browser_args(app));
 
+    // In the interface's own profile, as Alloy style, so an extension installed for the
+    // web never sees the note on its way to the paper; see `engine::own_profile`.
+    #[cfg(feature = "cef")]
+    let building = crate::engine::own_profile(building);
+
     let window = building
         .title("Orden")
         .visible(false)
@@ -253,14 +287,23 @@ where
                 std::thread::sleep(SETTLE);
 
                 let failed = done.clone();
-                let asked = window.with_webview(move |webview| {
-                    if let Err(error) = print(&webview, done) {
-                        let _ = failed.send(Err(error));
-                    }
-                });
 
-                if let Err(error) = asked {
-                    give_up(&window, &error.to_string());
+                #[cfg(feature = "cef")]
+                if let Err(error) = print(&window, done) {
+                    let _ = failed.send(Err(error));
+                }
+
+                #[cfg(not(feature = "cef"))]
+                {
+                    let asked = window.with_webview(move |webview| {
+                        if let Err(error) = print(&webview, done) {
+                            let _ = failed.send(Err(error));
+                        }
+                    });
+
+                    if let Err(error) = asked {
+                        give_up(&window, &error.to_string());
+                    }
                 }
             });
         })
@@ -286,6 +329,7 @@ where
 
 /// A failure before the printer was even reached cannot use the channel the
 /// closure took with it; closing the window makes the wait give up instead.
+#[cfg(not(feature = "cef"))]
 fn give_up(window: &tauri::WebviewWindow, error: &str) {
     eprintln!("print_pdf: {error}");
     let _ = window.destroy();
@@ -713,7 +757,50 @@ pub(crate) fn print_sheet(webview: &PlatformWebview) -> Result<(), String> {
     printer::sheet(webview)
 }
 
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
+/// Orden's own Chromium: `Page.printToPDF`, which answers with the file. On this thread,
+/// which is `in_hidden_window`'s own, because a protocol call waits for the window's.
+#[cfg(feature = "cef")]
+mod printer {
+    use super::{printing, PdfPage, Printable, PATIENCE};
+    use base64::Engine as _;
+    use std::path::Path;
+    use std::sync::mpsc::Sender;
+
+    pub fn available() -> bool {
+        true
+    }
+
+    pub fn print(
+        window: &Printable,
+        output: &str,
+        page: &PdfPage,
+        done: Sender<Result<(), String>>,
+    ) -> Result<(), String> {
+        let printed = crate::engine::devtools::call(
+            window.as_ref(),
+            None,
+            "Page.printToPDF",
+            &printing(page),
+            PATIENCE,
+        )?;
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(
+                printed
+                    .get("data")
+                    .and_then(|data| data.as_str())
+                    .unwrap_or_default(),
+            )
+            .map_err(|error| format!("the engine printed something unreadable: {error}"))?;
+        if bytes.is_empty() {
+            return Err("the engine printed nothing".into());
+        }
+        crate::paths::write_atomically(Path::new(output), &bytes)?;
+        let _ = done.send(Ok(()));
+        Ok(())
+    }
+}
+
+#[cfg(all(not(any(windows, target_os = "macos")), not(feature = "cef")))]
 mod printer {
     use super::PdfPage;
     use std::sync::mpsc::Sender;

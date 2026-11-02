@@ -33,7 +33,7 @@ use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::snapshot::{self, Part};
 use super::verbs::{Answer, Code, Cookie, FieldValue, Match, Moment, Picture, Until};
-use crate::pdf::PdfPage;
+use crate::pdf::{printing, PdfPage};
 
 /// What an agent's refs are resolved and scripts run under, in the page.
 const WORLD: &str = "nib-agent";
@@ -1884,27 +1884,6 @@ impl Page<'_> {
         let (parts, secret) = self.parts()?;
         Ok(snapshot::find(&parts, &secret, wanted))
     }
-}
-
-/// What `Page.printToPDF` is asked: the reader's paper as their own PDF export lays a
-/// note on it (`pdf.rs`, `PdfPage`, upright and turned by `landscape`), the page's
-/// backgrounds, and none of the browser's own lines - the address and the date that a
-/// print dialog writes into the margins are not the page.
-fn printing(paper: &PdfPage) -> Value {
-    let margin = paper.margin.max(0.0);
-    json!({
-        "landscape": paper.landscape,
-        "paperWidth": paper.width,
-        "paperHeight": paper.height,
-        "marginTop": margin,
-        "marginBottom": margin,
-        "marginLeft": margin,
-        "marginRight": margin,
-        "printBackground": true,
-        "displayHeaderFooter": false,
-        "preferCSSPageSize": false,
-        "transferMode": "ReturnAsBase64",
-    })
 }
 
 /// Whether the engine's refusal of a print is that it has no printing at all, rather
