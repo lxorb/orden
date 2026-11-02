@@ -28,7 +28,8 @@ mod tests {
 
     #[test]
     fn the_script_takes_the_engine_s_drag_and_says_each_event_itself() {
-        assert!(SCRIPT.contains("addEventListener('dragstart'"));
+        assert!(SCRIPT.contains("'dragstart'"));
+        assert!(SCRIPT.contains("isTrusted"));
         for event in ["dragenter", "dragover", "dragleave", "drop", "dragend"] {
             assert!(SCRIPT.contains(&format!("'{event}'")), "{event}");
         }
