@@ -30,3 +30,36 @@ export function keepsSystemMenu(target: EventTarget | null, system: string): boo
   if (field.tagName === 'TEXTAREA') return true
   return field.tagName === 'INPUT' && typeof field.type === 'string' && WORDS.has(field.type)
 }
+
+/** Shift+F10 or the key with a menu printed on it, on a Mac, where the engine makes no
+ *  `contextmenu` of them as Windows' and Linux's do: the app makes one, for what has the
+ *  keyboard. VS Code keeps Shift+F10 on a Mac the same way. Nothing where something took
+ *  the key first, as a row in a list does. Answers whether it was the key. Being no real
+ *  press it cannot open the system's menu, so a field gets Orden's; see App.svelte. */
+export function macMenuKey(event: KeyboardEvent): boolean {
+  if (event.key !== 'ContextMenu' && !(event.key === 'F10' && event.shiftKey)) return false
+  const on = document.activeElement
+  if (event.defaultPrevented || !on || on === document.body) return true
+
+  event.preventDefault()
+  on.dispatchEvent(pressAt(caretBox(on) ?? on.getBoundingClientRect()))
+  return true
+}
+
+/** Where the menu of a key arrives: under the caret, or under what has the keyboard where
+ *  there is no caret to read, as a row's menu does. */
+function pressAt(box: DOMRect): MouseEvent {
+  return new MouseEvent('contextmenu', {
+    bubbles: true,
+    cancelable: true,
+    clientX: Math.round(box.left + Math.min(box.width / 2, 120)),
+    clientY: Math.round(box.bottom),
+  })
+}
+
+function caretBox(on: Element): DOMRect | null {
+  const selection = on.ownerDocument.getSelection()
+  if (!selection?.rangeCount || !on.contains(selection.focusNode)) return null
+  const box = selection.getRangeAt(0).getBoundingClientRect()
+  return box.height ? box : null
+}

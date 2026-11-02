@@ -944,7 +944,9 @@ and the field keeps the keyboard while it is up, the way it does under the
 system's own menu: a name commits and an address goes back to the page's when
 its field loses it. So the menu is walked from the field. The arrows, Home and
 End light a row, Enter chooses it, Escape closes the menu and nothing else, and
-any other key closes it and goes on into the field. See `lib/field-menu.ts`.
+any other key closes it and goes on into the field. See `lib/field-menu.ts`. On a Mac a
+right click there is the system's own menu instead (`lib/system-menu.ts`), which no key
+can open, so the keys give Orden's; the note's menu comes up on them the same way.
 
 A layer opened while a site in a web tab had the keyboard - a menu, the palette, a site's own question or permission bubble - hands it back to the site,
 not to whatever the app's page last had focused: the app's page only held it to open the

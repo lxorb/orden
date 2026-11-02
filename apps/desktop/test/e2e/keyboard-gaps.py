@@ -447,9 +447,16 @@ def properties(page: Page, held: str) -> None:
     press(page, "Shift+F10")
     rows = page.evaluate("() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim())")
     say(f"[props] Shift+F10 in the field: {rows}")
-    # WebKit makes no contextmenu of the key, in a field as anywhere the app asks for none.
-    if not harness.WEBKIT and not any(row.startswith("Paste") for row in rows):
+    if not any(row.startswith("Paste") for row in rows):
         wrong(f"the field lost its own menu: {rows}")
+    press(page, "Escape")
+    # And the note its own, where the caret is.
+    page.evaluate("() => document.querySelector('.cm-content').focus()")
+    press(page, "Shift+F10")
+    rows = page.evaluate("() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim())")
+    say(f"[props] Shift+F10 in the note: {rows[:4]}")
+    if not rows:
+        wrong("the note gave no menu on the key")
     press(page, "Escape")
     DRIVE.shot(page, "properties")
 
