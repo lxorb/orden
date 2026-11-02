@@ -54,16 +54,21 @@ def check(what: str, held: bool) -> None:
         wrong(what)
 
 
+def in_view(page, row) -> None:
+    """What is about to be pressed, brought to the middle of the column first. A click
+    scrolls what it presses into view by itself in Chromium; in WebKit it did not reach
+    into the sheet's column, so the press landed below the window, on nothing, or as the
+    column moved under it: down on one row and up on another, which is no click at all."""
+    row.evaluate("(one) => one.scrollIntoView({ block: 'center', behavior: 'instant' })")
+    quiet(page)
+
+
 def switch(page, name: str) -> None:
-    """Presses the switch of that name, brought to the middle of the column first. A
-    click scrolls what it presses into view by itself in Chromium; in WebKit it did not
-    reach into the sheet's column, so the press landed below the window, on nothing,
-    and the switch never moved. Then until the switch says it moved, which is the
+    """Presses the switch of that name, brought into view first. Then until the switch says it moved, which is the
     grant written back through the crate's stand-in and drawn again: on a busy runner
     in WebKit that was now and then more than the 200 ms the drive used to give it."""
     row = page.locator(".agents [role=switch]", has_text=name)
-    row.evaluate("(one) => one.scrollIntoView({ block: 'center', behavior: 'instant' })")
-    quiet(page)
+    in_view(page, row)
     was = row.get_attribute("aria-checked")
     row.click()
     moved = row.evaluate(
@@ -168,6 +173,7 @@ def look(browser, scheme: str, language: str) -> None:
     photograph("list")
 
     # Codex was granted no browser: no trifecta.
+    in_view(page, page.locator(".agents .agent", has_text="Codex"))
     page.locator(".agents .agent", has_text="Codex").click()
     page.wait_for_selector(".agents .who")
     quiet(page)
@@ -176,6 +182,7 @@ def look(browser, scheme: str, language: str) -> None:
     page.wait_for_selector(".agents .agent")
     quiet(page)
 
+    in_view(page, page.locator(".agents .agent", has_text="Claude Code"))
     page.locator(".agents .agent", has_text="Claude Code").click()
     page.wait_for_selector(".agents .who")
     quiet(page)
