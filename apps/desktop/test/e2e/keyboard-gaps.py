@@ -12,7 +12,8 @@ reads is where a key leaves the keyboard and what a screen reader is told about 
   - the tab in front says it is;
   - the two sidebars have a name each, and axe has nothing to say about these parts;
   - the divider between two panes is a named separator the arrows move;
-  - Tab after opening a sidebar from its toggle goes into that sidebar, and Shift+Tab back.
+  - Tab after opening a sidebar from its toggle goes into that sidebar, and Shift+Tab back;
+  - the version in Settings is a control of its own, beside the hint rather than round it.
 
 A table cell's Escape is cell-escape.effect.test.ts, where the table is mounted.
 
@@ -455,6 +456,34 @@ def toggle_order(page: Page) -> None:
                 wrong("Tab from the toggle goes into the sidebar every time, a ring with no way out")
 
 
+def version_row(page: Page) -> None:
+    """The version in Settings copies on a press, and a hint beside its name is a button of
+    its own: the row cannot be one too (axe, `nested-interactive`)."""
+    page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+    page.evaluate("() => window.nibApp.settings.show()")
+    wait_for(page, "document.querySelector('.setting.pressable')", "the version's row")
+    quiet(page)
+    axe_says(page, "settings")
+    value = ".setting.pressable .value.said"
+    page.evaluate("(value) => document.querySelector(value).focus()", value)
+    seen = page.evaluate(
+        """(value) => {
+          const one = document.querySelector(value)
+          return { held: document.activeElement === one, role: one.getAttribute('role'), row: one.closest('.setting').getAttribute('role') }
+        }""",
+        value,
+    )
+    say(f"[version] {seen}")
+    if not seen["held"] or seen["role"] != "button" or seen["row"] is not None:
+        wrong(f"the version is not the control, its row is: {seen}")
+        press(page, "Escape")
+        return
+    at = press(page, "Enter")
+    wait_for(page, f"document.querySelector({json.dumps(value)}).textContent === 'Copied'", "the row to say it copied")
+    say(f"[version] Enter on it: Copied, the keyboard on {at}")
+    press(page, "Escape")
+
+
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
@@ -480,6 +509,7 @@ def drive(browser: Browser) -> None:
         ("axe", lambda: axe_says(page, "both sidebars")),
         ("divider", lambda: divider(page)),
         ("toggle", lambda: toggle_order(page)),
+        ("version", lambda: version_row(page)),
     ):
         try:
             part()
