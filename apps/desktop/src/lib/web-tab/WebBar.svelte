@@ -42,7 +42,8 @@
   import PrivateMark from './PrivateMark.svelte'
   import ExtensionButtons from './ExtensionButtons.svelte'
   import { barKey, stops, type ZoomStep } from './bar-keys'
-  import { isWebAddress, shownUrl } from './address'
+  import { isWebAddress } from './address'
+  import { meantBy, shownUrl } from './idn'
   import { downloads, progressOf } from './downloads.svelte'
   import { addressing } from './passed.svelte'
   import { invoke, isDesktop } from '../tauri'
@@ -332,7 +333,7 @@
     {book}
     address={resting}
     held={page}
-    onenter={onaddress}
+    onenter={(said, aside, typed) => onaddress(meantBy(said, page.url), aside, typed)}
     {ontyping}
   />
 

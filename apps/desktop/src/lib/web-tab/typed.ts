@@ -111,6 +111,13 @@ export interface HalfTyped {
  *  the network what is on this machine. It means `file:`, which a tab does not open. */
 const WINDOWS_PATH = /^(?:[a-z]:[\\/]|\\\\)/i
 
+/** Whether something typed is a file on this machine, which a tab does not open, so the bar
+ *  can say so rather than do nothing where a browser would have opened it. */
+export function isLocalFile(typed: string): boolean {
+  const said = typed.trim()
+  return WINDOWS_PATH.test(said) || /^file:/i.test(said)
+}
+
 /** An address with a name that is not ASCII in it, spelled as the page will say it is on,
  *  so that what is typed and where it landed are one row of history. */
 function asTheEngineSays(address: string): string {

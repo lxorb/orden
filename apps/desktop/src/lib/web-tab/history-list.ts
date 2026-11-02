@@ -11,7 +11,7 @@
  *  time: every row the same height, a heading the same as a row, and which of them are
  *  on screen is arithmetic. See WebHistory.svelte. */
 
-import { shownHost } from './address'
+import { shownHost } from './idn'
 import type { Visit } from './visits'
 
 /** One line of the list: a day's heading, or a page. */

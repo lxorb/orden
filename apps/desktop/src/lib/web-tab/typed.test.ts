@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { dotCom, typedAddress, webAddress } from './typed'
+import { dotCom, isLocalFile, typedAddress, webAddress } from './typed'
 
 /** Ctrl+Enter in the address field, which every browser has had for thirty years. */
 describe('the dot-com press', () => {
@@ -109,6 +109,14 @@ describe('a Windows path', () => {
   ])('%s goes nowhere', (path) => {
     expect(webAddress(path)).toBe(null)
     expect(typedAddress(path)).toBe(null)
+  })
+
+  test('is told from what merely goes nowhere, so the bar can say why', () => {
+    expect(isLocalFile('C:\\thesis.pdf')).toBe(true)
+    expect(isLocalFile('\\\\nas\\share')).toBe(true)
+    expect(isLocalFile('file:///etc/passwd')).toBe(true)
+    expect(isLocalFile('javascript:alert(1)')).toBe(false)
+    expect(isLocalFile('example.com')).toBe(false)
   })
 
   test('a host with a backslash after it is still that host', () => {

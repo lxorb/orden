@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { favicon, isWebAddress, plainOrigin, shownUrl } from './address'
+import { favicon, isWebAddress, originKey, plainOrigin } from './address'
+import { meantBy, shownSite, shownUrl } from './idn'
 import { webAddress } from './typed'
 
 describe('what a web tab may open', () => {
@@ -68,6 +69,75 @@ test("a site's own picture is looked for at its root, and an address with no roo
   // What a tab can hold before its page is an address, which once threw in the pane.
   expect(favicon('pass.proton.me/onboarding')).toBeNull()
   expect(favicon('about:blank')).toBeNull()
+})
+
+/** #790 review: the bar is what says who is answering, so when in doubt it says punycode. */
+describe('a name that could pass for another', () => {
+  const ascii = (name: string) => new URL(`https://${name}/`).hostname
+
+  test.each([
+    // Latin letters that exist to look like others, and no one's diacritic.
+    ['gıthub.com'],
+    ['\u0237query.com'],
+    ['\u0138ey.com'],
+    ['faß.de'],
+    ['ɡoogle.com'],
+    // Greek's final sigma, which reads as an o or a c.
+    ['ςιτι.com'],
+    // A known name with one diacritic, which only a list can tell.
+    ['gòogle.com'],
+    ['pаypal.com'],
+    ['pàypal.com'],
+    ['microsöft.com'],
+    ['gi\u0307thub.com'],
+    ['goo\u0323gle.com'],
+    ['gøogle.com'],
+  ])('%s stays punycode', (name) => {
+    const host = ascii(name)
+    expect(host).toContain('xn--')
+    expect(plainOrigin(`https://${host}/`)).toBe(host)
+  })
+
+  test.each([['münchen.de'], ['zürich.ch'], ['españa.es'], ['việtnam.vn'], ['şişli.tr']])(
+    '%s reads as itself',
+    (name) => {
+      expect(plainOrigin(`https://${ascii(name)}/`)).toBe(name)
+    },
+  )
+})
+
+/** What a grant, a muted site and a size are kept under is not how the name is drawn: a rule
+ *  about what is safe to show must never move what a site was allowed. */
+describe('the key of a site', () => {
+  test('is the spelling that does not change', () => {
+    expect(originKey('https://www.xn--mnchen-3ya.de/a')).toBe('xn--mnchen-3ya.de')
+    expect(originKey('http://xn--mnchen-3ya.de/')).toBe('http://xn--mnchen-3ya.de')
+    expect(originKey('https://example.com:8443/')).toBe('example.com:8443')
+    expect(originKey('view-source:https://xn--mnchen-3ya.de/')).toBe(
+      'view-source:xn--mnchen-3ya.de',
+    )
+  })
+
+  test('is read as the name it is only where it is shown', () => {
+    expect(shownSite('xn--mnchen-3ya.de')).toBe('münchen.de')
+    expect(shownSite('http://xn--mnchen-3ya.de')).toBe('http://münchen.de')
+    expect(shownSite('')).toBe('')
+  })
+})
+
+/** The field's face is a display string; going somewhere from it is not. */
+describe('Enter on a bar nobody typed in', () => {
+  test('goes to the page itself', () => {
+    const url = 'https://xn--mnchen-3ya.de/a'
+    expect(meantBy('https://münchen.de/a', url)).toBe(url)
+  })
+
+  test('takes anything else as what was typed', () => {
+    expect(meantBy('https://münchen.de/b', 'https://xn--mnchen-3ya.de/a')).toBe(
+      'https://münchen.de/b',
+    )
+    expect(meantBy('words', null)).toBe('words')
+  })
 })
 
 /** The host as Chrome spells it: a name in one writing system reads as itself, and one that

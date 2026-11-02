@@ -1183,6 +1183,47 @@ describe('a page whose process died', () => {
     expect(pages.of('typed').crashed).toBe(false)
   })
 
+  test('during its build is not lost', async () => {
+    const shown = pages.show('early', SITE, PANE)
+    const arrive = await asked()
+    await crash('early')
+    arrive()
+    await shown
+    await settle()
+
+    const page = pages.of('early')
+    expect(page.crashed).toBe(true)
+    expect(page.live).toBe(false)
+    expect(calls).toContainEqual({ command: 'web_close', args: { tab: 'early', keep: true } })
+  })
+
+  test('Reload closes what may be left of it first', async () => {
+    await livePage('left')
+    await crash('left')
+    calls.length = 0
+
+    await pages.step('left', 'reload')
+    expect(calls).toContainEqual({ command: 'web_close', args: { tab: 'left', keep: true } })
+    expect(pages.of('left').crashed).toBe(false)
+  })
+
+  test('a build that is refused after Reload offers Reload again', async () => {
+    await livePage('refused')
+    await crash('refused')
+    await pages.step('refused', 'reload')
+
+    building = null
+    refuse = true
+    const shown = pages.show('refused', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    refuse = false
+
+    expect(pages.of('refused').crashed).toBe(true)
+    expect(pages.of('refused').openable).toBe(true)
+  })
+
   test('a page on its way out says so to nobody', async () => {
     await livePage('parked')
     await pages.park('parked')

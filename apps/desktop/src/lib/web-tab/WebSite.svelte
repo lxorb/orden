@@ -107,7 +107,7 @@
   bind:this={bubble}
   class="site nib-bubble is-pressable"
   role="dialog"
-  aria-label={site}
+  aria-label={shownSite(site)}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
 >
   <p class="how" class:risky={!secure}>

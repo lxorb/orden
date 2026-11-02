@@ -797,7 +797,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let ui = engine::take_ui_window(&mut context);
 
     // A web tab's page whose process died, on the two engines that say so to the app rather
-    // than to the page; see web_page.rs. A process that ended normally is the page closing.
+    // than to the page; see web_page.rs. CEF has no word for a normal end (its termination
+    // status starts at abnormal), and its killed is somebody else's doing, an out of memory
+    // killer or a task manager: closing a page says nothing here. A page the window has
+    // taken away is not live by then either; see `ended` in pages.svelte.ts.
     #[cfg(feature = "cef")]
     let builder = builder.on_web_content_process_terminate(|view, ended| {
         use tauri::webview::WebContentProcessTerminationReason as Reason;

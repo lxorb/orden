@@ -3099,8 +3099,6 @@ class Workspace {
     return note
   }
 
-  /** One step back, and one step on - or, for an arrow pressed with the middle button
-   *  or a modifier, that step opened in a tab of its own; see `stepAside`. */
   /** A zoom row or key with a page in front is the page's size, as in Chrome: true where it
    *  was, and false where it is the words' size as it is anywhere else. */
   zoomPage(step: 'in' | 'out' | 'reset'): boolean {
@@ -3111,6 +3109,8 @@ class Workspace {
     return true
   }
 
+  /** One step back, and one step on - or, for an arrow pressed with the middle button
+   *  or a modifier, that step opened in a tab of its own; see `stepAside`. */
   goBack(id: string | null = this.activeTabId, ask: TabAsk = 'plain') {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return

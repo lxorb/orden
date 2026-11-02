@@ -189,6 +189,12 @@ describe('a name that is not ASCII', () => {
     expect(completion([munich], 'xn--mn', NOW)?.text).toBe('xn--mnchen-3ya.de')
   })
 
+  test('is found however its title was composed', () => {
+    const noted = visit('https://example.com/', { title: 'Mu\u0308nchen' })
+    expect(suggested([noted], 'münchen', NOW)).toEqual([noted])
+    expect(suggested([noted], 'mu\u0308nchen', NOW)).toEqual([noted])
+  })
+
   test('reads as itself in the list', () => {
     expect(shownAddress(munich.url)).toBe('münchen.de/stadt')
     expect(shownAddress('https://xn--pple-43d.com/')).toBe('xn--pple-43d.com')

@@ -18,7 +18,7 @@
  *  Pure, and per keystroke: every row is read once, the parts of an address are worked
  *  out once per row and kept, and the rows are at most `MOST_VISITS`. See visits.ts. */
 
-import { shownHost } from './address'
+import { shownHost } from './idn'
 import type { Visit } from './visits'
 
 /** How much more an address somebody typed counts than one a link led to. Chrome
@@ -48,7 +48,7 @@ interface Parts {
   host: string
   /** And without the `www.` every browser leaves off: `google.com`. */
   bare: string
-  /** The same two as a name reads, for a name that is not ASCII; see `shownHost` in address.ts. */
+  /** The same two as a name reads, for a name that is not ASCII; see idn.ts. */
   hostShown: string
   bareShown: string
   /** Everything after the host: `/search?q=nib`. */
@@ -84,7 +84,7 @@ function partsOf(visit: Visit): Parts {
   const shown = said.bareShown === said.bare ? '' : ` ${said.bareShown}`
   const parts = {
     ...said,
-    words: `${said.bare}${said.path}${shown} ${visit.title}`.toLowerCase(),
+    words: `${said.bare}${said.path}${shown} ${visit.title}`.toLowerCase().normalize('NFC'),
   }
 
   taken.set(visit, parts)

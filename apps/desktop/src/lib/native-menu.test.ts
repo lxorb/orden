@@ -417,6 +417,19 @@ describe('the strip', () => {
     expect(keyRuns(itemIn(view, 'Back').anywhere, 'page')).toBe(true)
   })
 
+  /** Focus moved to a note in another pane: the rows go, and with them the key the note
+   *  indents with. A strip whose rows differ is built again rather than told. */
+  test('builds the strip again when back and forward come or go', () => {
+    const keyFor = (command: string) =>
+      ({ 'web.back': 'Mod-[', 'web.forward': 'Mod-]' })[command] ?? KEYS[command] ?? null
+    const onPage = describeMenuBar(
+      sources({ viewRows: [row('Back', 'web.back'), row('Forward', 'web.forward')], keyFor }),
+    ).entries
+    const onNote = describeMenuBar(sources({ viewRows: [], keyFor })).entries
+    expect(changesBetween(onPage, onNote)).toBe(null)
+    expect(JSON.stringify(onNote)).not.toContain('Cmd+[')
+  })
+
   test('runs each row’s own function, by the row’s id', () => {
     const ran: string[] = []
     const groups: MenuGroup[] = [

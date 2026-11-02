@@ -38,7 +38,7 @@
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
   import { favicon, plainOrigin } from './address'
-  import { webAddress } from './typed'
+  import { isLocalFile, webAddress } from './typed'
   import { upgradeOf } from './upgrade'
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
@@ -800,7 +800,12 @@
       onhistory={showTrail}
       onaddress={(said: string, aside: boolean, typed: string) => {
         const url = webAddress(said, searchEngine.url)
-        if (!url) return
+        if (!url) {
+          // Not sent anywhere, by DNS or to the search engine; and said, since Chrome would
+          // have opened it (#790).
+          if (isLocalFile(said)) page.notice = t('That file could not be read')
+          return
+        }
 
         // Typed, or chosen from what the field offered, which Chrome counts the same:
         // either way it is an address somebody went to on purpose. See visits.ts.
