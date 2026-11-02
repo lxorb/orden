@@ -19,8 +19,10 @@ import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
 import { extensionOf, nameToWrite } from '../naming'
 import { search } from '../search.svelte'
-import { AGENTS_NAME } from '../note-name'
+import { AGENTS_NAME, isAgentsName } from '../note-name'
+import { onDisk } from '../on-disk'
 import { folderOf, insideSpace, isMarkdownPath, nameOf, relativeTo, samePath } from '../space-paths'
+import { joinPath } from '../tauri'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import { type Road, said, type Said, words, yes } from './args'
@@ -371,13 +373,27 @@ export async function movedIn(
     return to
   }
 
-  await workspace.moveMany([source], folder ? insideSpace(root, folder) : root, undoing)
-  if (name !== nameOf(from)) {
-    await workspace.rename(
-      insideSpace(root, folder ? `${folder}/${nameOf(from)}` : nameOf(from)),
-      name,
-    )
+  const into = folder ? insideSpace(root, folder) : root
+  if (name === nameOf(from)) {
+    await workspace.moveMany([source], into, undoing)
+    return to
   }
+
+  // A move and a rename are two steps, and the first of them stops somewhere. Under its
+  // old name where it lands, unless that is the space's instructions, which moveMany
+  // refuses without a word and the rename would then take for this file, or the place
+  // of another file; then under its new name where it is. Should either end be taken,
+  // that is said before anything has moved.
+  const stop = joinPath(into, nameOf(from))
+  if ((!folder && isAgentsName(nameOf(from))) || (await onDisk(stop))) {
+    if (await onDisk(joinPath(into, name))) throw new Error(`${to} is already there`)
+    await workspace.rename(source, name)
+    await workspace.moveMany([joinPath(folderOf(source), name)], into, undoing)
+    return to
+  }
+
+  await workspace.moveMany([source], into, undoing)
+  await workspace.rename(stop, name)
 
   return to
 }
