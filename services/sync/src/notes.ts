@@ -116,6 +116,14 @@ export function noteKey(spaceId: string, noteId: string): string {
  *  first. */
 export const TAKEN_SEQ = '(select next - 1 from space_cursor where space_id = ?1)'
 
+/** The statement that moves a space's cursor on, for the batch that writes under it. */
+export function takeSeq(env: Env, spaceId: string): D1PreparedStatement {
+  return env.DB.prepare(
+    `insert into space_cursor (space_id, next) values (?1, 2)
+     on conflict(space_id) do update set next = next + 1`,
+  ).bind(spaceId)
+}
+
 /** A row written at the space's next cursor value. Strictly increasing, so a client
  *  can ask for "everything after N" and never miss a write that shared a millisecond.
  *
@@ -132,10 +140,7 @@ export async function atNextSeq(
   write: D1PreparedStatement,
 ): Promise<{ seq: number; changes: number }> {
   const [, written, taken] = await env.DB.batch([
-    env.DB.prepare(
-      `insert into space_cursor (space_id, next) values (?1, 2)
-       on conflict(space_id) do update set next = next + 1`,
-    ).bind(spaceId),
+    takeSeq(env, spaceId),
     write,
     env.DB.prepare('select next - 1 as seq from space_cursor where space_id = ?1').bind(spaceId),
   ])
@@ -1062,15 +1067,18 @@ export async function restoreNote(env: Env, note: Note, device: string | undefin
 
   const at = now()
   // The number taken and the row written as one; see `atNextSeq`.
-  const { seq } = await atNextSeq(
+  const { seq, changes } = await atNextSeq(
     env,
     note.space_id,
     env.DB.prepare(
       `update notes set deleted = 0, deleted_at = null, path = ?2, seq = ${TAKEN_SEQ},
                         version = version + 1, updated_at = ?3
-        where id = ?4`,
+        where id = ?4 and deleted = 1 and deleted_at is not null`,
     ).bind(note.space_id, path, at, note.id),
   )
+  // Purged since it was read, or back already: only ever out of Recently deleted, since
+  // a tombstone written back would be a live note with nothing in it.
+  if (!changes) return (await noteById(env, note.id)) ?? note
 
   return {
     ...note,

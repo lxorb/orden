@@ -383,6 +383,40 @@ v2Blobs.post('/parts', async (context) => {
   return context.json({ upload: upload.uploadId, part: PART }, 201)
 })
 
+/** A number a part may have. */
+function isPartNumber(part: unknown): part is number {
+  return typeof part === 'number' && Number.isSafeInteger(part) && part >= 1 && part <= 10_000
+}
+
+/** Which refusal of R2's this is. Read off the code, or the message for where a thrown
+ *  error carries none, as `wrangler dev` does. */
+function r2Code(error: unknown): number | null {
+  const { code, message } = (error ?? {}) as { code?: unknown; message?: unknown }
+  if (typeof code === 'number') return code
+  const said = typeof message === 'string' ? /\((\d+)\)$/.exec(message) : null
+  return said?.[1] ? Number(said[1]) : null
+}
+
+/** Whether R2 refused a completion because of the list it was given: a part it does not
+ *  have or an etag that is not that part's (10025), parts below its smallest (10011), or
+ *  of sizes it cannot join (10048). Anything else is the bucket's own trouble. */
+function isTheListsFault(error: unknown): boolean {
+  const code = r2Code(error)
+  return code === 10011 || code === 10025 || code === 10048
+}
+
+/** Whether the upload itself has gone from the bucket: aborted, expired, or finished by
+ *  another request a moment ago (10024). */
+function isUploadGone(error: unknown): boolean {
+  return r2Code(error) === 10024
+}
+
+/** The row saying an upload was here, for one the bucket no longer has: answered from
+ *  then on as an upload these routes do not know. */
+async function forgetUpload(env: Env, id: string): Promise<void> {
+  await env.DB.prepare('delete from cached where scope = ? and key = ?').bind(UPLOADS, id).run()
+}
+
 /** One part of a large file. */
 v2Blobs.put('/parts/:upload/:part', async (context) => {
   const user = context.get('user')
@@ -390,9 +424,7 @@ v2Blobs.put('/parts/:upload/:part', async (context) => {
   if (!upload) return context.json({ error: NO_SUCH_FILE }, 404)
 
   const part = Number(context.req.param('part'))
-  if (!Number.isSafeInteger(part) || part < 1 || part > 10_000) {
-    return context.json({ error: TOO_BIG }, 413)
-  }
+  if (!isPartNumber(part)) return context.json({ error: TOO_BIG }, 413)
   const body = await context.req.arrayBuffer()
   if (body.byteLength > PART) return context.json({ error: TOO_BIG }, 413)
 
@@ -400,8 +432,16 @@ v2Blobs.put('/parts/:upload/:part', async (context) => {
     upload.staging,
     context.req.param('upload'),
   )
-  const uploaded = await uploading.uploadPart(part, body)
-  return context.json({ part: uploaded.partNumber, etag: uploaded.etag })
+  try {
+    const uploaded = await uploading.uploadPart(part, body)
+    return context.json({ part: uploaded.partNumber, etag: uploaded.etag })
+  } catch (error) {
+    if (isUploadGone(error)) {
+      await forgetUpload(context.env, context.req.param('upload'))
+      return context.json({ error: NO_SUCH_FILE }, 404)
+    }
+    throw error
+  }
 })
 
 /** A large file, finished: the parts put together, measured and hashed, and kept only
@@ -422,12 +462,23 @@ v2Blobs.post('/parts/:upload', async (context) => {
       string,
       unknown
     >
-    if (typeof part !== 'number' || typeof etag !== 'string')
+    if (!isPartNumber(part) || typeof etag !== 'string')
       return context.json({ error: WRONG_BYTES }, 400)
     parts.push({ partNumber: part, etag })
   }
 
-  await context.env.NOTES.resumeMultipartUpload(upload.staging, id).complete(parts)
+  // A list the bucket cannot put together leaves the upload as it was, to be finished
+  // with a right one (workerd's emulation does; R2 itself has not been asked).
+  try {
+    await context.env.NOTES.resumeMultipartUpload(upload.staging, id).complete(parts)
+  } catch (error) {
+    if (isUploadGone(error)) {
+      await forgetUpload(context.env, id)
+      return context.json({ error: NO_SUCH_FILE }, 404)
+    }
+    if (isTheListsFault(error)) return context.json({ error: WRONG_BYTES }, 400)
+    throw error
+  }
   await context.env.DB.prepare('delete from cached where scope = ? and key = ?')
     .bind(UPLOADS, id)
     .run()

@@ -23,7 +23,7 @@ import { blogFence } from './blog/code'
 import { feed, type FeedPage, newestFirst, robots, rss, sitemap } from './blog/feed'
 import { answersFrom, formHtml, formOf } from './blog/form'
 import { type NoteFront, readFront } from './blog/front'
-import { gateBody, matches, newTicket, ticketCookie, ticketHolds, ticketIn } from './blog/gate'
+import { gateBody, letIn, matches, newTicket, ticketCookie } from './blog/gate'
 import { escape, type Head, headOf } from './blog/head'
 import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from './blog/math'
 import { answers, asked as readQuery, hasWords, matching } from './blog/find'
@@ -1075,10 +1075,7 @@ async function takeAnswer(
   // password, so sending an answer costs none of their tries and tells a stranger
   // nothing about the notes. Without one the reader lands on the form again, at
   // the root, which is where the gate is on every path of the site.
-  if (
-    site.password &&
-    !(await ticketHolds(site.password, ticketIn(request.headers.get('cookie')), Date.now()))
-  ) {
+  if (site.password && !(await letIn(site.password, request.headers.get('cookie'), Date.now()))) {
     return back('/')
   }
 
@@ -1232,7 +1229,7 @@ async function served(
       })
     }
 
-    if (!(await ticketHolds(held, ticketIn(request.headers.get('cookie')), Date.now()))) {
+    if (!(await letIn(held, request.headers.get('cookie'), Date.now()))) {
       const wrong = request.method === 'POST'
       return page(
         { title: heading, site: heading, url: `${url.origin}/`, noindex: true },
