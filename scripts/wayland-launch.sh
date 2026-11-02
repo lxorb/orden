@@ -39,6 +39,9 @@
 #   - with SESSION=1, a page in a web tab that makes a cookie with no expiry, and that
 #     cookie still there after Orden is quit and started again with no address (#483,
 #     scripts/session-drive.py);
+#   - with EXPORTPDF=1, a page printed to a file in a window nobody sees, with its pages
+#     and words in the file, and a page reaching for a file on the disk printed without it
+#     (#483, scripts/pdf-drive.py);
 #   - with CERT=1, a site served over https (CERT_HOST, example.com unless said) and
 #     the certificate its page came with shown from the site's popover (#776,
 #     scripts/cert-drive.py);
@@ -201,7 +204,7 @@ endpoint() {
 command=("$@")
 # With DRIVE=1, Chromium's DevTools port, which says how Chromium runs (#390,
 # scripts/compositing-check.py).
-if [ "${DRIVE:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ]; then
   NIB_CEF_DEBUG_PORT=${NIB_CEF_DEBUG_PORT:-9339}
   export NIB_CEF_DEBUG_PORT
 fi
@@ -230,14 +233,17 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ 
 </script>
 PAGE
   fi
-  # With SESSION=1, a page that makes a cookie with no expiry, and says if it found one.
+  # With SESSION=1, a page that makes a cookie with no expiry, and says if it found one;
+  # in a private tab, `?private`, a cookie of another name.
   if [ "${SESSION:-0}" = 1 ]; then
     cat > "$out/site/index.html" <<'PAGE'
 <!doctype html><title>a session waiting</title>
 <script>
-  const found = document.cookie.includes('signed=in')
-  document.cookie = 'signed=in; path=/'
-  document.title = found ? 'a session cookie kept' : 'a session cookie made'
+  const hidden = location.search.includes('private')
+  const name = hidden ? 'hidden' : 'signed'
+  const found = document.cookie.includes(name + '=in')
+  document.cookie = name + '=in; path=/'
+  document.title = 'a ' + (hidden ? 'private' : 'session') + ' cookie ' + (found ? 'kept' : 'made')
 </script>
 PAGE
   fi
@@ -364,6 +370,13 @@ fi
 [ "${RESERVED:-0}" = 1 ] && endpoint
 # With PDFMARK=1, the endpoint and no page (#676).
 [ "${PDFMARK:-0}" = 1 ] && endpoint
+# With EXPORTPDF=1 the endpoint too, and a spaces folder the file may be written in.
+if [ "${EXPORTPDF:-0}" = 1 ]; then
+  mkdir -p "$out/spaces"
+  NIB_SPACES_DIR="$(cd "$out/spaces" && pwd)"
+  export NIB_SPACES_DIR
+  endpoint
+fi
 # With CERT=1, the endpoint and a site over https, a real one: its certificate is the
 # point (#776).
 if [ "${CERT:-0}" = 1 ]; then
@@ -661,14 +674,17 @@ if [ "$status" = 0 ] && [ "${WORKER:-0}" = 1 ]; then
   fi
 fi
 
-# A session cookie, and the same cookie on the web tab the app comes back to once it is
-# quit and started again with no address (#483).
-if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
+if [ "$status" = 0 ] && [ "${EXPORTPDF:-0}" = 1 ]; then
   sleep 3
-  python3 "$here/session-drive.py" "$out" 'a session cookie made' || status=1
-  if [ "$status" = 0 ]; then
-    # Kept tabs reach the disk a few seconds after they change; see WORKER=1.
-    sleep 10
+  python3 "$here/pdf-drive.py" "$out" || status=1
+fi
+
+# A session cookie and the same cookie on the web tab the app comes back to once its window
+# is closed and it is started again with no address, a private tab's nowhere on the disk,
+# and nothing more than the first run had: not then, not after a kill, and the process gone
+# when its window closes (#483, scripts/session-drive.py).
+if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
+  closed() {
     # Its window closed, as a reader quits. A signal would not do: Chromium brings a
     # session cookie back after an exit it takes for a crash whatever it is told.
     swaymsg '[title=".*"] kill' > /dev/null || true
@@ -679,16 +695,41 @@ if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
     fi
     kill -KILL "$app_pid" 2>/dev/null || true
     wait "$app_pid" 2>/dev/null || true
+  }
+  again() {
     endpoint
     "${command[@]}" > "$out/orden-again.log" 2>&1 &
     app_pid=$!
-    if wait_for_views 1; then
-      sleep 3
-      python3 "$here/session-drive.py" "$out" 'a session cookie kept' || status=1
-    else
-      echo "::error::no window mapped when started again"
-      status=1
-    fi
+    wait_for_views 1 || { echo "::error::no window mapped when started again"; status=1; }
+    sleep 3
+  }
+  sleep 3
+  python3 "$here/session-drive.py" "$out" first || status=1
+  if [ "$status" = 0 ]; then
+    read -r pages windows < "$out/session-counts"
+    # Kept tabs reach the disk a few seconds after they change; see WORKER=1.
+    sleep 10
+    closed
+  fi
+  if [ "$status" = 0 ]; then
+    again
+    python3 "$here/session-drive.py" "$out" again "$pages" "$windows" || status=1
+  fi
+  if [ "$status" = 0 ]; then
+    # Every process of it at once, as a crash does; a cookie reaches the disk within
+    # half a minute, and this is about what a kill brings back with it.
+    sleep 35
+    tree="$app_pid" under="$app_pid"
+    while [ -n "$under" ]; do
+      under=$(ps -e -o pid=,ppid= | awk -v set=" $under " 'index(set, " " $2 " ") { printf "%s ", $1 }')
+      tree="$tree $under"
+    done
+    # shellcheck disable=SC2086 # one pid per word
+    kill -KILL $tree 2>/dev/null || true
+    wait "$app_pid" 2>/dev/null || true
+    again
+    python3 "$here/session-drive.py" "$out" killed "$pages" "$windows" || status=1
+    [ "$status" = 0 ] && closed
   fi
 fi
 
