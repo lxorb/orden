@@ -271,14 +271,14 @@ describe('a room erased while its object lives', () => {
     const first = new FakeSocket()
     await room.enter(first as unknown as WebSocket, join)
     const memory = () => (room as unknown as { state: { doc: Y.Doc } }).state.doc
-    expect(memory().getText(TEXT).toString()).toContain('TOP SECRET')
+    expect(memory().getText(TEXT).toJSON()).toContain('TOP SECRET')
 
     const erased = await room.fetch(
       new Request('https://room/', { headers: { 'x-nib-erase': 'yes' } }),
     )
     expect(erased.status).toBe(204)
     expect(first.closed).toBe(true)
-    expect(memory().getText(TEXT).toString()).toBe('')
+    expect(memory().getText(TEXT).toJSON()).toBe('')
 
     // Nothing of the old document, and a room that opens again: `held` is what a settle
     // writes from.
@@ -287,7 +287,7 @@ describe('a room erased while its object lives', () => {
     const next = new FakeSocket()
     await room.enter(next as unknown as WebSocket, join)
     expect(next.closed).toBe(false)
-    expect(memory().getText(TEXT).toString()).toBe('')
+    expect(memory().getText(TEXT).toJSON()).toBe('')
     expect((room as unknown as { held: unknown }).held).not.toBeNull()
   })
 })

@@ -429,9 +429,11 @@ describe('sending', () => {
       env.FCM_SERVICE_ACCOUNT = await serviceAccount()
       await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
       await save('Plan.md', TASK)
-      const row = env.db
-        .prepare('select note_id, user_id, space_id from push_reminders')
-        .get() as Record<string, string>
+      const row = env.db.prepare('select note_id, user_id, space_id from push_reminders').get() as {
+        note_id: string
+        user_id: string
+        space_id: string
+      }
       const insert = env.db.prepare(
         `insert into push_reminders
            (note_id, id, user_id, space_id, at, title, body, path, hash, line, sent_at)
