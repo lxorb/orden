@@ -125,7 +125,9 @@
   async function standOnKey(...names: string[]) {
     await tick()
     for (const name of names) {
-      const key = list?.querySelector<HTMLElement>(`[data-key="${CSS.escape(name)}"] button.key`)
+      const key = list?.querySelector<HTMLElement>(
+        `[data-key="${CSS.escape(name)}"] .key[role="button"]`,
+      )
       if (key) return key.focus()
     }
   }
@@ -248,17 +250,25 @@
               onblur={(event) => finishRenaming(property.key, event.currentTarget)}
             />
           {:else if writable}
-            <!-- A button, so a key can stand on it: Shift+F10 there is the row's menu, which
-                 in the value's field is the field's own, and Enter renames, which a
-                 pointer does with a double click (#523). -->
-            <button
+            <!-- A control a key can stand on: Shift+F10 there is the row's menu, which in the
+                 value's field is the field's own, and Enter renames, which a pointer does
+                 with a double click (#523). A span with a role, or its words stop being
+                 selectable. -->
+            <span
               class="key"
+              role="button"
+              tabindex="0"
               title={property.key}
-              onkeydown={() => (keyed = true)}
+              onkeydown={(event) => {
+                keyed = true
+                if (event.key !== 'Enter' && event.key !== ' ') return
+                event.preventDefault()
+                void startRenaming(property.key)
+              }}
               onclick={(event) => {
                 if (event.detail === 0) void startRenaming(property.key)
               }}
-              ondblclick={() => void startRenaming(property.key)}>{property.key}</button
+              ondblclick={() => void startRenaming(property.key)}>{property.key}</span
             >
           {:else}
             <span class="key" title={property.key}>{property.key}</span>
@@ -338,17 +348,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--muted);
-  }
-
-  /* Drawn as the words it is: only a key can tell it from the span of a note that cannot
-     be written. */
-  button.key {
-    min-width: 0;
-    border: 0;
-    background: none;
-    font: inherit;
-    text-align: start;
-    cursor: default;
   }
 
   /* A field with no box until a pointer or the keyboard arrives, so the rows go on
