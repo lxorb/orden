@@ -12,10 +12,10 @@
  *  Two maps, at the root of the document.
  *
  *  `canvas` holds everything on the plane, keyed by id. Each value is a map of
- *  that object's own fields, the very fields a file would carry for it, plus three
+ *  that object's own fields, the very fields a file would carry for it, plus those
  *  the room needs: `kind`, which of the file's three lists it belongs to; `at`,
- *  when it was last touched; and `z`, where it sits in the stack, since a map has
- *  no order and a file's order does matter.
+ *  when it was last touched; `z`, where it sits in the stack, since a map has
+ *  no order and a file's order does matter; and `moved`, when `z` last changed.
  *
  *  `gone` holds what has been thrown away, by id, with the time it went. The same
  *  tombstones a file carries under `nib.gone`, and for the same reason: a device
@@ -66,13 +66,16 @@ const HELD = 'held'
  *  guess. */
 type ThingKind = 'node' | 'edge' | 'ink'
 
-/** The three keys a room adds to an object. Never written into a file: a record
+/** The keys a room adds to an object. Never written into a file: a record
  *  is read back through the format's own readers, which keep the fields they know
  *  and drop everything else. */
 const KIND = 'kind'
 const AT = 'at'
 const Z = 'z'
-const ADDED: readonly string[] = [KIND, AT, Z]
+/** When it last moved in the stack, where it has: `Canvas.moved`. Left out of a seed, whose
+ *  bytes every build must agree on, and written by the push that moves it. */
+const MOVED = 'moved'
+const ADDED: readonly string[] = [KIND, AT, Z, MOVED]
 
 export function planeOf(doc: Y.Doc): Y.Map<Y.Map<unknown>> {
   return doc.getMap(PLANE)
@@ -281,50 +284,59 @@ function restack(plane: Y.Map<Y.Map<unknown>>, before: readonly Thing[], after: 
   for (const place of places) {
     if (!stays.has(place)) {
       waiting.push(place)
-      continue
+    } else if (between(waiting, low, place.z)) {
+      waiting = []
+      low = place.z
+    } else {
+      waiting.push(place)
     }
-
-    if (!between(waiting, low, place.z)) {
-      numbered(plane, after)
-      return
-    }
-    waiting = []
-    low = place.z
   }
 
-  if (!between(waiting, low, ceiling?.z)) numbered(plane, after)
+  // Past the end of what changed only where there is no room yet: what sits above is
+  // walked up, one at a time, until there is.
+  for (const thing of after.slice(after.length - tail)) {
+    const [place] = placed(thing)
+    if (!place) continue
+    if (between(waiting, low, place.z)) return
+    waiting.push(place)
+  }
+
+  between(waiting, low, undefined)
 }
 
 /** Records written to sit in order between two places, either of which may be open.
- *  Answers false, having written nothing, where there is no number between them left:
- *  halved that far by a card moved back and forth over one neighbour, so the whole list
- *  is laid out again, once in a very long while, rather than two things in one place. */
+ *  Answers false, having written nothing, where there is no number between them: two
+ *  things on one place, or a place halved that far by a card moved back and forth over
+ *  one neighbour. The caller takes the upper neighbour along and tries further up, so
+ *  that writes as few records as it can and overwrites as little of what another device
+ *  moved meanwhile; nothing else in the list is touched. Open above, there is always
+ *  room. */
 function between(waiting: readonly Placing[], low?: number, high?: number): boolean {
   const count = waiting.length
+  if (!count) return true
+
   const at = (one: number) => {
-    if (low !== undefined && high !== undefined)
+    if (low !== undefined && high !== undefined) {
       return low + ((high - low) * (one + 1)) / (count + 1)
+    }
     if (low !== undefined) return low + one + 1
     return (high ?? count) - (count - one)
   }
 
-  for (let one = 0; one < count; one++) {
-    const z = at(one)
-    if ((low !== undefined && z <= low) || (high !== undefined && z >= high)) return false
-    // Never equal to the one before: a run squeezed that tight has no room either.
-    if (one > 0 && z <= at(one - 1)) return false
+  if (low !== undefined && high !== undefined) {
+    let last = low
+    for (let one = 0; one < count; one++) {
+      const z = at(one)
+      if (z <= last || z >= high) return false
+      last = z
+    }
   }
 
-  waiting.forEach((place, one) => place.record.set(Z, at(one)))
-  return true
-}
-
-/** A whole list laid out on whole numbers, in its order. */
-function numbered(plane: Y.Map<Y.Map<unknown>>, list: readonly Thing[]) {
-  list.forEach((thing, index) => {
-    const record = plane.get(thing.id)
-    if (record && record.get(Z) !== index) record.set(Z, index)
+  waiting.forEach((place, one) => {
+    place.z = at(one)
+    place.record.set(Z, place.z)
   })
+  return true
 }
 
 function things(canvas: Canvas): Map<string, Thing> {
@@ -375,9 +387,7 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
   }
 
   for (const [id, thing] of is) {
-    // The time as well, because a thing that only moved in the stack is the very same
-    // object with a new one.
-    if (was.get(id) === thing && before.at[id] === after.at[id] && plane.has(id)) continue
+    if (was.get(id) === thing && plane.has(id)) continue
     put(plane, thing, after.at[id] ?? 0, placeFor(id))
   }
 
@@ -390,6 +400,14 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
   restack(plane, before.nodes, after.nodes)
   restack(plane, before.edges, after.edges)
   restack(plane, before.ink, after.ink)
+
+  // And when, for the next merge with a file; see `Canvas.moved`.
+  if (after.moved !== before.moved) {
+    for (const [id, when] of Object.entries(after.moved ?? {})) {
+      const record = plane.get(id)
+      if (record && record.get(MOVED) !== when) record.set(MOVED, when)
+    }
+  }
 
   // Every tombstone the edit ended up with, whether it came from a delete here or
   // from a merge that dropped something.
@@ -477,11 +495,14 @@ export function readPlane(doc: Y.Doc, previous?: Canvas, changed?: ReadonlySet<s
   const nodes: Placed<CanvasNode>[] = []
   const later: { record: Y.Map<unknown>; z: number; id: string }[] = []
   const at: Record<string, number> = {}
+  const moved: Record<string, number> = {}
 
   for (const [id, record] of plane) {
     const z = placeOf(record)
     const when = record.get(AT)
     at[id] = typeof when === 'number' ? when : 0
+    const shifted = record.get(MOVED)
+    if (typeof shifted === 'number') moved[id] = shifted
 
     if (record.get(KIND) !== 'node') {
       later.push({ record, z, id })
@@ -530,6 +551,7 @@ export function readPlane(doc: Y.Doc, previous?: Canvas, changed?: ReadonlySet<s
     ink: ink.map((one) => one.thing),
     at,
     gone,
+    ...(Object.keys(moved).length ? { moved } : {}),
     ...(holdsExtras(extras) ? { extras } : {}),
   }
 }

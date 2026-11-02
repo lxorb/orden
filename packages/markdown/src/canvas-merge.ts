@@ -44,7 +44,8 @@ function byId<T extends Thing>(things: readonly T[]): Map<string, T> {
 export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
   const changed: string[] = []
   const removed: string[] = []
-  const touched = { changed, removed }
+  const shifted: string[] = []
+  const touched = { changed, removed, shifted }
 
   // A list at a time, and only the lists that are not the very same list. Drawing
   // one stroke on a plane of ten thousand touches the ink and leaves the nodes and
@@ -95,7 +96,18 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
     if (at[id] === undefined) gone[id] = now
   }
 
-  return { ...after, at, gone }
+  // When things moved, for what is still here, apart from `at`: see `Canvas.moved`.
+  const moved = noTimes()
+  for (const [id, since] of Object.entries(before.moved ?? {})) {
+    if (at[id] !== undefined) moved[id] = since
+  }
+  for (const id of shifted) moved[id] = now
+
+  const out: Canvas = { ...after, at, gone }
+  if (Object.keys(moved).length) out.moved = moved
+  else delete out.moved
+
+  return out
 }
 
 /** What changed between two versions of one list, by identity.
@@ -107,11 +119,11 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
  *  replaced - and only what is left between them is put into maps.
  *
  *  `changed` collects what is on the plane now and was not there in this form
- *  before; `removed` collects what has gone. */
+ *  before; `removed` collects what has gone; `shifted` what sits in another place. */
 function diff<T extends Thing>(
   before: readonly T[],
   after: readonly T[],
-  touched: { changed: string[]; removed: string[] },
+  touched: { changed: string[]; removed: string[]; shifted: string[] },
 ): void {
   if (before === after) return
 
@@ -153,18 +165,17 @@ function diff<T extends Thing>(
     if (!is.has(id)) touched.removed.push(id)
   }
 
-  // And what only moved. The list is the stack, so a thing in another place is a thing
-  // that changed, even where it is the very same object. Only those that have to have
-  // moved for the rest to read the same: what was edited is stamped already, and a time
-  // on something nobody touched would beat somebody's edit of it in a merge.
+  // And what moved. The list is the stack, so that is an edit of its own, whatever else
+  // happened to the thing. Only those that have to have moved for the rest to read the
+  // same: a time on something nobody moved would beat somebody's move of it in a merge.
   const places = new Map(wasMiddle.map((thing, index) => [thing.id, index]))
-  const same = isMiddle.filter((thing) => was.get(thing.id) === thing)
+  const both = isMiddle.filter((thing) => places.has(thing.id))
   const stayed = standing(
-    same,
+    both,
     (one, other) => (places.get(one.id) ?? 0) < (places.get(other.id) ?? 0),
   )
-  for (const [index, thing] of same.entries()) {
-    if (!stayed.has(index)) touched.changed.push(thing.id)
+  for (const [index, thing] of both.entries()) {
+    if (!stayed.has(index)) touched.shifted.push(thing.id)
   }
 }
 
@@ -227,15 +238,19 @@ function later<T extends Thing>(ours: T, ourTime: number, theirs: T, theirTime: 
 /** One list merged: the union by id, each entry the later of the two versions,
  *  and anything a tombstone outlives left out.
  *
- *  The order is the same on both sides because it is worked out from both: a
- *  thing sits where the side that touched it later put it - bringing a card to
- *  the front touches it. What both sides last touched at one moment is what they share
- *  and what the rest is placed against: everything else sits between the same two of
- *  those as it does on its own side, so a list that grew on one side does not push a
- *  move on the other out of place. Two things that come to sit in one gap go in the
- *  order they were touched, which puts a card brought to the front over what was added
- *  before that and under what was added after, and by their ids at one moment. That is
- *  what makes the z order of a merged canvas the same on every device. */
+ *  The order is the same on both sides because it is worked out from both, and apart
+ *  from what each thing says: a thing sits where the side that moved it later put it,
+ *  and its words are whichever side edited it later, which may be the other. What neither
+ *  side moved later is what they share and what the rest is placed against: everything
+ *  else sits between the same two of those as it does on its own side, so a list that grew
+ *  on one side does not push a move on the other out of place. Two things that come to
+ *  sit in one gap go in the order they got there, which puts a card brought to the front
+ *  over what was added before that and under what was added after, and by their ids at
+ *  one moment. That is what makes the z order of a merged canvas the same on every
+ *  device.
+ *
+ *  Two moves of one thing are one place, the later: the other is dropped, on both devices
+ *  alike. */
 function mergeList<T extends Thing>(
   ours: readonly T[],
   theirs: readonly T[],
@@ -245,20 +260,24 @@ function mergeList<T extends Thing>(
 ): T[] {
   const mine = byId(ours)
   const yours = byId(theirs)
-  const shared = (id: string) =>
-    mine.has(id) && yours.has(id) && timeOf(ourCanvas, id) === timeOf(theirCanvas, id)
+  const ourMove = (id: string) => timeIn(ourCanvas.moved ?? {}, id) ?? 0
+  const theirMove = (id: string) => timeIn(theirCanvas.moved ?? {}, id) ?? 0
+  const shared = (id: string) => mine.has(id) && yours.has(id) && ourMove(id) === theirMove(id)
 
   // Each id once, from the maps: a file written by hand may name one twice.
   const ourList = [...mine.values()]
   const theirList = [...yours.values()]
-  const anchors = settled(ourList, theirList, shared)
-  const ourGaps = gapsIn(ourList, shared, (id) => timeOf(ourCanvas, id) >= timeOf(theirCanvas, id))
-  const theirGaps = gapsIn(
+  const anchors = settled(
+    ourList,
     theirList,
     shared,
-    (id) => timeOf(theirCanvas, id) >= timeOf(ourCanvas, id),
+    (id) => timeOf(ourCanvas, id),
+    (id) => timeOf(theirCanvas, id),
   )
-  const touchedAt = (id: string) => Math.max(timeOf(ourCanvas, id), timeOf(theirCanvas, id))
+  const ourGaps = gapsIn(ourList, shared, (id) => ourMove(id) >= theirMove(id))
+  const theirGaps = gapsIn(theirList, shared, (id) => theirMove(id) >= ourMove(id))
+  const touchedAt = (id: string) =>
+    Math.max(ourMove(id), theirMove(id)) || Math.max(timeOf(ourCanvas, id), timeOf(theirCanvas, id))
 
   const out: T[] = []
   const keep = (id: string) => {
@@ -306,20 +325,28 @@ function mergeList<T extends Thing>(
 }
 
 /** What both sides share, in one order. The order they both have, which is nearly
- *  always; two that disagree have nothing to say which is right - neither touched any of
- *  it later - so each thing goes where it sits on the side that has it earlier, and by
- *  id where that is one place. */
+ *  always. Two that disagree have no time of a move to go on, as in a file an older
+ *  build wrote, which stamped a move as an edit: so each thing goes where the side that
+ *  touched it later put it, and where neither did so later, where it sits on the side
+ *  that has it earlier; by id where that is one place. */
 function settled(
   ours: readonly Thing[],
   theirs: readonly Thing[],
   shared: (id: string) => boolean,
+  ourTime: (id: string) => number,
+  theirTime: (id: string) => number,
 ): string[] {
   const one = ours.filter((thing) => shared(thing.id)).map((thing) => thing.id)
   const other = theirs.filter((thing) => shared(thing.id)).map((thing) => thing.id)
   if (one.every((id, index) => id === other[index])) return one
 
   const places = new Map(one.map((id, index) => [id, index]))
-  other.forEach((id, index) => places.set(id, Math.min(places.get(id) ?? index, index)))
+  other.forEach((id, index) => {
+    const seen = places.get(id) ?? index
+    const mine = ourTime(id)
+    const yours = theirTime(id)
+    places.set(id, yours > mine ? index : mine > yours ? seen : Math.min(seen, index))
+  })
 
   return one.sort((a, b) => {
     const gap = (places.get(a) ?? 0) - (places.get(b) ?? 0)
@@ -379,6 +406,15 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
     at[id] = Math.max(timeIn(ours.at, id) ?? 0, timeIn(theirs.at, id) ?? 0)
   }
 
+  const moved = noTimes()
+  for (const id of new Set([
+    ...Object.keys(ours.moved ?? {}),
+    ...Object.keys(theirs.moved ?? {}),
+  ])) {
+    if (!held.has(id)) continue
+    moved[id] = Math.max(timeIn(ours.moved ?? {}, id) ?? 0, timeIn(theirs.moved ?? {}, id) ?? 0)
+  }
+
   return {
     nodes,
     edges,
@@ -387,6 +423,7 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
     gone,
     icon: kept,
     iconColor: keptTint(ours, theirs, kept),
+    ...(Object.keys(moved).length ? { moved } : {}),
     // What either side held that is not read, kept: another app's nodes, the edges
     // ending at them, the fields and keys the spec does not name (#501, #780).
     ...(holdsExtras(ours.extras) || holdsExtras(theirs.extras)

@@ -743,17 +743,16 @@ describe('the order of the stack', () => {
   })
 
   describe('never at the price of what a card says', () => {
-    const start = () => ({ ...plane({ nodes: [card('x', 'a'), card('y', 'y')] }), at: { x: 5, y: 5 } })
+    const start = { ...plane({ nodes: [card('x', 'a'), card('y', 'y')] }), at: { x: 5, y: 5 } }
     const typed = (canvas: Canvas, text: string) => ({
       ...canvas,
       nodes: canvas.nodes.map((node) => (node.id === 'x' ? card('x', text) : node)),
     })
-    const words = (canvas: Canvas) =>
-      canvas.nodes.find((node) => node.id === 'x' && node.type === 'text')
+    const words = (canvas: Canvas) => canvas.nodes.find((node) => node.id === 'x')
 
     test('words typed on one side outlive a later move on a stale copy of the other', () => {
-      const a = stamped(start(), typed(start(), 'ab'), 10)
-      const b = stamped(start(), moved(start(), 'y', 'x'), 20)
+      const a = stamped(start, typed(start, 'ab'), 10)
+      const b = stamped(start, moved(start, 'y', 'x'), 20)
       for (const both of [merged(a, b, 30), merged(b, a, 30)]) {
         expect(words(both)).toMatchObject({ text: 'ab' })
         expect(order(both)).toEqual(['y', 'x'])
@@ -762,8 +761,8 @@ describe('the order of the stack', () => {
     })
 
     test('and a move outlives words typed after it, on a copy that never moved', () => {
-      const a = stamped(start(), typed(start(), 'ab'), 40)
-      const b = stamped(start(), moved(start(), 'y', 'x'), 20)
+      const a = stamped(start, typed(start, 'ab'), 40)
+      const b = stamped(start, moved(start, 'y', 'x'), 20)
       for (const both of [merged(a, b, 50), merged(b, a, 50)]) {
         expect(words(both)).toMatchObject({ text: 'ab' })
         expect(order(both)).toEqual(['y', 'x'])
@@ -771,8 +770,8 @@ describe('the order of the stack', () => {
     })
 
     test('through the files as well', () => {
-      const a = writeCanvas(stamped(start(), typed(start(), 'ab'), 10))
-      const b = writeCanvas(stamped(start(), moved(start(), 'y', 'x'), 20))
+      const a = writeCanvas(stamped(start, typed(start, 'ab'), 10))
+      const b = writeCanvas(stamped(start, moved(start, 'y', 'x'), 20))
       const both = readCanvas(mergeCanvasFiles(a, b, 30))
       expect(words(both)).toMatchObject({ text: 'ab' })
       expect(order(both)).toEqual(['y', 'x'])
@@ -780,10 +779,10 @@ describe('the order of the stack', () => {
     })
 
     test('a delete is not outlived by a move made after it', () => {
-      const a = stamped(start(), { ...start(), nodes: [card('y', 'y')] }, 10)
-      const b = stamped(start(), moved(start(), 'y', 'x'), 20)
+      const a = stamped(start, { ...start, nodes: start.nodes.slice(1) }, 10)
+      const b = stamped(start, moved(start, 'y', 'x'), 20)
       expect(order(merged(a, b, 30))).toEqual(['y'])
-      expect(merged(a, b, 30).moved ?? {}).toEqual({})
+      expect(merged(a, b, 30).moved).toBeUndefined()
     })
   })
 
@@ -803,9 +802,9 @@ describe('the order of the stack', () => {
 
     test('leaves everything an older reader looks at as it was', () => {
       const before = base('a', 'b')
-      const nib = JSON.parse(writeCanvas(stamped(before, moved(before, 'b', 'a'), 200))).nib
-      expect(nib.at).toEqual({ a: 100, b: 100 })
-      expect(nib.order).toEqual(['b', 'a'])
+      const file = JSON.parse(writeCanvas(stamped(before, moved(before, 'b', 'a'), 200)))
+      expect(file.nib.at).toEqual({ a: 100, b: 100 })
+      expect(file.nodes.map((node: CanvasNode) => node.id)).toEqual(['b', 'a'])
     })
 
     test('is forgotten with the thing it was about', () => {
