@@ -438,3 +438,97 @@ describe('a plane holding what this app does not read', () => {
     expect(readPlane(doc, first, new Set(['a'])).extras).toBe(first.extras)
   })
 })
+
+/** The stack is a number on each thing, and moving something in it writes that number
+ *  (#783). What `ordered` in the app hands over: new objects for what moved. */
+describe('the order of the stack in a room', () => {
+  const twoDevices = (...ids: string[]) => {
+    const one = new Device()
+    const two = new Device()
+    one.edit({ ...emptyCanvas(), nodes: ids.map((id) => card(id)) })
+    carry(one, two)
+    return { one, two }
+  }
+  const moved = (canvas: Canvas, ...ids: string[]) => ({
+    ...canvas,
+    nodes: ids.map((id) => ({ ...(canvas.nodes.find((node) => node.id === id) as CanvasNode) })),
+  })
+  const order = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
+
+  test.each([
+    ['to the front', ['b', 'c', 'a']],
+    ['to the back', ['c', 'a', 'b']],
+    ['one step forward', ['b', 'a', 'c']],
+    ['one step back', ['a', 'c', 'b']],
+  ])('a card moved %s reaches the other device', (_how, wanted) => {
+    const { one, two } = twoDevices('a', 'b', 'c')
+    one.edit(moved(one.canvas, ...wanted), 2000)
+    carry(one, two)
+    expect(order(two.canvas)).toEqual(wanted)
+  })
+
+  test('and stays where it was put on this device when something else arrives', () => {
+    const { one, two } = twoDevices('a', 'b', 'c')
+    one.edit(moved(one.canvas, 'b', 'c', 'a'), 2000)
+    two.edit({ ...two.canvas, nodes: [...two.canvas.nodes, card('d')] }, 2000)
+    both(one, two)
+    expect(order(one.canvas)).toEqual(order(two.canvas))
+    expect(order(one.canvas).indexOf('b')).toBeLessThan(order(one.canvas).indexOf('a'))
+    expect(order(one.canvas).indexOf('c')).toBeLessThan(order(one.canvas).indexOf('a'))
+  })
+
+  test('a move writes the one thing that moved, with its time', () => {
+    const { one, two } = twoDevices('a', 'b', 'c', 'd')
+    let writes = 0
+    two.doc.on('afterTransaction', (transaction: Y.Transaction) => {
+      writes += touched(transaction).size
+    })
+    const same = { ...one.canvas, nodes: [...one.canvas.nodes.slice(1), one.canvas.nodes[0]!] }
+    one.edit(same, 2000)
+    carry(one, two)
+    expect(writes).toBe(1)
+    expect(two.canvas.at.a).toBe(2000)
+    expect(order(two.canvas)).toEqual(['b', 'c', 'd', 'a'])
+  })
+
+  test('a card moved back and forth between the same two stays in order however often', () => {
+    const { one, two } = twoDevices('low', 'a', 'b', 'high')
+    for (let turn = 0; turn < 200; turn++) {
+      const wanted = turn % 2 ? ['low', 'a', 'b', 'high'] : ['low', 'b', 'a', 'high']
+      one.edit(moved(one.canvas, ...wanted), 2000 + turn)
+      carry(one, two)
+      expect(order(two.canvas)).toEqual(wanted)
+    }
+  })
+
+  test('a file that lists things in another order turns the room to that order', () => {
+    const doc = new Y.Doc()
+    const before = { ...emptyCanvas(), nodes: [card('a'), card('b'), card('c')] }
+    seedPlane(doc, before)
+    const file = { ...emptyCanvas(), nodes: [card('c'), card('a'), card('b')] }
+    pushPlane(doc, before, file)
+    expect(order(readPlane(doc))).toEqual(['c', 'a', 'b'])
+  })
+
+  test('a thing put in the middle sits in the middle', () => {
+    const { one, two } = twoDevices('a', 'b')
+    one.edit({ ...one.canvas, nodes: [one.canvas.nodes[0]!, card('m'), one.canvas.nodes[1]!] }, 2000)
+    carry(one, two)
+    expect(order(two.canvas)).toEqual(['a', 'm', 'b'])
+  })
+
+  test('nothing is written for an edit that moved nothing', () => {
+    const { one } = twoDevices('a', 'b', 'c')
+    const before = Y.encodeStateVector(one.doc)
+    one.doc.transact(() => pushPlane(one.doc, one.canvas, { ...one.canvas }), 'here')
+    expect(Y.encodeStateVector(one.doc)).toEqual(before)
+  })
+
+  test('joining writes the merged order into the room', () => {
+    const { one, two } = twoDevices('a', 'b', 'c')
+    const away = stamped(two.canvas, moved(two.canvas, 'c', 'a', 'b'), 5000)
+    const held = readPlane(one.doc)
+    one.doc.transact(() => pushPlane(one.doc, held, merged(away, held, 6000)), 'join')
+    expect(order(readPlane(one.doc))).toEqual(['c', 'a', 'b'])
+  })
+})

@@ -657,3 +657,89 @@ describe('merging two copies after another app changed one of them', () => {
     ).toEqual(['x', 'y'])
   })
 })
+
+/** The stack: the order is the z order, and moving something in it is an edit that has
+ *  to reach the other copy like any other (#504, #783). */
+describe('the order of the stack', () => {
+  const base = (...ids: string[]) => {
+    const things = ids.map((id) => card(id))
+    return { ...plane({ nodes: things }), at: Object.fromEntries(ids.map((id) => [id, 100])) }
+  }
+  const moved = (canvas: Canvas, ...ids: string[]) => ({
+    ...canvas,
+    nodes: ids.map((id) => canvas.nodes.find((node) => node.id === id) as CanvasNode),
+  })
+  const order = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
+
+  test('stamped records a move even where every object is the very same one', () => {
+    const before = base('a', 'b', 'c')
+    const after = stamped(before, moved(before, 'b', 'c', 'a'), 200)
+    expect(after.at).toEqual({ a: 200, b: 100, c: 100 })
+  })
+
+  test('stamped stamps nothing more than what moved, wherever in the list it was', () => {
+    const before = base('a', 'b', 'c', 'd', 'e')
+    const after = stamped(before, moved(before, 'a', 'd', 'b', 'c', 'e'), 200)
+    expect(after.at).toEqual({ a: 100, b: 100, c: 100, d: 200, e: 100 })
+  })
+
+  test('a swap of the first two survives the merge', () => {
+    const theirs = base('a', 'b', 'c')
+    const ours = stamped(theirs, moved(theirs, 'b', 'a', 'c'), 200)
+    expect(order(merged(ours, theirs, 300))).toEqual(['b', 'a', 'c'])
+    expect(order(merged(theirs, ours, 300))).toEqual(['b', 'a', 'c'])
+  })
+
+  test('sending to the back survives the merge', () => {
+    const theirs = base('a', 'b', 'c')
+    const ours = stamped(theirs, moved(theirs, 'c', 'a', 'b'), 200)
+    expect(order(merged(ours, theirs, 300))).toEqual(['c', 'a', 'b'])
+    expect(order(merged(theirs, ours, 300))).toEqual(['c', 'a', 'b'])
+  })
+
+  test('one step back survives the merge', () => {
+    const theirs = base('a', 'b', 'c')
+    const ours = stamped(theirs, moved(theirs, 'a', 'c', 'b'), 200)
+    expect(order(merged(ours, theirs, 300))).toEqual(['a', 'c', 'b'])
+    expect(order(merged(theirs, ours, 300))).toEqual(['a', 'c', 'b'])
+  })
+
+  test('brought to the front, it sits over what the other side added before that', () => {
+    const start = base('a', 'b')
+    const ours = stamped(start, moved(start, 'b', 'a'), 300)
+    const theirs = stamped(start, { ...start, nodes: [...start.nodes, card('x'), card('y')] }, 200)
+    expect(order(merged(ours, theirs, 400))).toEqual(['b', 'x', 'y', 'a'])
+    expect(order(merged(theirs, ours, 400))).toEqual(['b', 'x', 'y', 'a'])
+  })
+
+  test('and under what the other side added after it', () => {
+    const start = base('a', 'b')
+    const ours = stamped(start, moved(start, 'b', 'a'), 200)
+    const theirs = stamped(start, { ...start, nodes: [...start.nodes, card('x')] }, 300)
+    expect(order(merged(ours, theirs, 400))).toEqual(['b', 'a', 'x'])
+    expect(order(merged(theirs, ours, 400))).toEqual(['b', 'a', 'x'])
+  })
+
+  test('what each side added stays where that side put it among the rest', () => {
+    const start = base('a', 'b')
+    const ours = stamped(start, { ...start, nodes: [card('m'), ...start.nodes] }, 200)
+    const theirs = stamped(start, { ...start, nodes: [...start.nodes, card('n')] }, 200)
+    expect(order(merged(ours, theirs, 300))).toEqual(['m', 'a', 'b', 'n'])
+    expect(order(merged(theirs, ours, 300))).toEqual(['m', 'a', 'b', 'n'])
+  })
+
+  test('two copies that disagree with no times to go on come out the same either way', () => {
+    const one = plane({ nodes: [card('a'), card('b'), card('c')] })
+    const other = plane({ nodes: [card('c'), card('b'), card('a')] })
+    expect(order(merged(one, other, 100))).toEqual(order(merged(other, one, 100)))
+  })
+
+  test('a merge is the same the second time', () => {
+    const start = base('a', 'b', 'c')
+    const ours = stamped(start, moved(start, 'c', 'a', 'b'), 200)
+    const theirs = stamped(start, { ...start, nodes: [...start.nodes, card('x')] }, 300)
+    const once = merged(ours, theirs, 400)
+    expect(order(merged(once, theirs, 400))).toEqual(order(once))
+    expect(order(merged(once, ours, 400))).toEqual(order(once))
+  })
+})
