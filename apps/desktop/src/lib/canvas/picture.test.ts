@@ -159,6 +159,21 @@ describe('the sheet a plane of one’s own is printed on', () => {
     expect(page.indexOf('Content-Security-Policy')).toBeLessThan(page.indexOf('<title>'))
   })
 
+  test('lets a picture too big to inline still load from the app’s own address', async () => {
+    const page = await printed('Card')
+    expect(page).toMatch(/img-src [^;"]*asset: http:\/\/asset\.localhost/)
+  })
+
+  test('holds a page in a frame as the card it is on screen, and no frame', async () => {
+    const page = await printed('<iframe src="https://x.test/page"></iframe>')
+    const dom = new DOMParser().parseFromString(page, 'text/html')
+    expect(dom.querySelector('iframe')).toBeNull()
+    expect(dom.querySelector('[data-frame]')?.getAttribute('data-frame')).toBe(
+      'https://x.test/page',
+    )
+    expect(page).not.toContain('frame-src')
+  })
+
   test('keeps markup of one’s own, handlers under that policy', async () => {
     const page = await printed('<u>mine</u> <img src="x.png" onerror="alert(1)">')
     expect(page).toContain('<u')

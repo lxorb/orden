@@ -786,6 +786,63 @@ describe('the order of the stack', () => {
     })
   })
 
+  test('a thing the other side does not hold stands, whatever that side says of its moves', () => {
+    const ours = { ...plane({ nodes: [card('x')] }), at: { x: 5 } }
+    const theirs = plane({ moved: { x: 9 } })
+    expect(order(merged(ours, theirs, 100))).toEqual(['x'])
+    expect(order(merged(theirs, ours, 100))).toEqual(['x'])
+  })
+
+  /** A drag is stamped as an edit, as it has been since the merge was written, and a
+   *  merge takes one whole object. So a stale copy dragged later still beats real words.
+   *  Splitting it needs a time per kind of field and a merge that puts one object together
+   *  out of two: a design change for the owner. Expected to fail until then. */
+  test.fails('words typed on one side outlive a later drag of a stale copy', () => {
+    const start = { ...plane({ nodes: [card('x', 'draft')] }), at: { x: 1 } }
+    const a = stamped(start, { ...start, nodes: [card('x', 'draft', 50)] }, 3)
+    const b = stamped(start, { ...start, nodes: [card('x', 'final')] }, 2)
+    expect(merged(a, b, 4).nodes[0]).toMatchObject({ text: 'final', x: 50 })
+  })
+
+  describe('kept from edit to edit', () => {
+    const before = base('a', 'b', 'c')
+    const shifted = stamped(before, moved(before, 'b', 'c', 'a'), 200)
+
+    test('is the very same record where nothing moved or went', () => {
+      const drawn = stamped(shifted, { ...shifted, nodes: [...shifted.nodes, card('d')] }, 300)
+      expect(drawn.moved).toBe(shifted.moved)
+      const typed = stamped(
+        shifted,
+        {
+          ...shifted,
+          nodes: shifted.nodes.map((node) => (node.id === 'b' ? card('b', 'B') : node)),
+        },
+        300,
+      )
+      expect(typed.moved).toBe(shifted.moved)
+    })
+
+    test('and where what went had never moved', () => {
+      const less = stamped(
+        shifted,
+        { ...shifted, nodes: shifted.nodes.filter((node) => node.id !== 'b') },
+        300,
+      )
+      expect(less.moved).toBe(shifted.moved)
+    })
+
+    test('and a new one where something moved or what went had', () => {
+      const again = stamped(shifted, moved(shifted, 'a', 'b', 'c'), 300)
+      expect(again.moved).not.toBe(shifted.moved)
+      const less = stamped(
+        shifted,
+        { ...shifted, nodes: shifted.nodes.filter((node) => node.id !== 'a') },
+        300,
+      )
+      expect(less.moved).toBeUndefined()
+    })
+  })
+
   describe('in the file', () => {
     test('a plane nothing was moved on writes nothing new', () => {
       const file = writeCanvas(stamped(plane(), plane({ nodes: [card('a')] }), 100))

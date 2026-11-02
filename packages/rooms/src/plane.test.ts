@@ -614,6 +614,53 @@ describe('the order of the stack in a room', () => {
     expect(planeOf(doc).get('a')?.has('moved')).toBe(false)
   })
 
+  /** What a seed leaving the times out comes to; see `seedPlane`. */
+  describe('a room seeded from a file with moves in it', () => {
+    const file = {
+      ...emptyCanvas(),
+      nodes: [card('b'), card('a')],
+      at: { a: 1, b: 1 },
+      moved: { a: 5 },
+    }
+    const seeded = () => {
+      const doc = new Y.Doc()
+      seedPlane(doc, file)
+      return doc
+    }
+
+    test('opens in the file’s order', () => {
+      expect(order(readPlane(seeded()))).toEqual(['b', 'a'])
+    })
+
+    test('and a device holding that file puts the time back when it joins', () => {
+      const doc = seeded()
+      const held = readPlane(doc)
+      doc.transact(() => pushPlane(doc, held, merged(file, held, 10)))
+      expect(order(readPlane(doc))).toEqual(['b', 'a'])
+      expect(readPlane(doc).moved).toEqual({ a: 5 })
+    })
+
+    test('but one with an older copy, joining first, has no time to lose to: by id', () => {
+      const doc = seeded()
+      const held = readPlane(doc)
+      const stale = { ...emptyCanvas(), nodes: [card('a'), card('b')], at: { a: 1, b: 1 } }
+      doc.transact(() => pushPlane(doc, held, merged(stale, held, 10)))
+      expect(order(readPlane(doc))).toEqual(['a', 'b'])
+    })
+
+    test('and a move from before the seed, on a copy, beats a room that lost its time', () => {
+      const doc = seeded()
+      const held = readPlane(doc)
+      const away = {
+        ...emptyCanvas(),
+        nodes: [card('a'), card('b')],
+        at: { a: 1, b: 1 },
+        moved: { b: 3 },
+      }
+      expect(order(merged(away, held, 10))).toEqual(['a', 'b'])
+    })
+  })
+
   test('a file that lists things in another order turns the room to that order', () => {
     const doc = new Y.Doc()
     const before = { ...emptyCanvas(), nodes: [card('a'), card('b'), card('c')] }
@@ -631,6 +678,17 @@ describe('the order of the stack in a room', () => {
     )
     carry(one, two)
     expect(order(two.canvas)).toEqual(['a', 'm', 'b'])
+  })
+
+  test('an edit that moved nothing writes no time of a move', () => {
+    const { one } = twoDevices('a', 'b', 'c')
+    one.edit(moved(one.canvas, 'b', 'c', 'a'), 2000)
+    const record = planeOf(one.doc).get('a')
+    const writes: unknown[] = []
+    record?.observe((event) => writes.push(...event.keys.keys()))
+    one.edit({ ...one.canvas, nodes: [...one.canvas.nodes, card('d')] }, 3000)
+    expect(writes).toEqual([])
+    expect(readPlane(one.doc).moved).toEqual({ a: 2000 })
   })
 
   test('nothing is written for an edit that moved nothing', () => {
