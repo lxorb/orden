@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount, tick, untrack } from 'svelte'
   import { staysOn } from './caret'
+  import { views } from './views.svelte'
   import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
@@ -840,7 +841,13 @@
       current: '.active > .pick',
       wrap: true,
       quiet: '.shut',
-      open: (row) => row.click(),
+      open: (row) => {
+        const inFront = row.dataset.tab === activeId
+        row.click()
+        // Nothing arrives for the caret rule to act on, and Enter means the note (#523).
+        const showing = workspace.showing(paneId)
+        if (inFront && showing?.kind === 'note' && !showing.reading) views.of(paneId)?.focus()
+      },
       peek: (row) => row.click(),
       remove: (row) => void closeByKey(row.dataset.tab ?? ''),
       menu: (row, at) => row.dispatchEvent(at),
