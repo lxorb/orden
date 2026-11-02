@@ -87,7 +87,12 @@ def drive(browser: Browser) -> None:
         new_row(page, "agents")
         hint = page.locator(".naming button")
         hint.wait_for()
+        hint.evaluate("(one) => Promise.all(document.getAnimations().map((a) => a.finished))")
         page.screenshot(path=str(SHOTS / "agents-md-hint.png"))
+        field_at = page.locator(".naming input").bounding_box()
+        hint_at = hint.bounding_box()
+        if not field_at or not hint_at or abs(hint_at["x"] - field_at["x"]) > 2:
+            raise SystemExit(f"the hint is not under the name: {hint_at} and {field_at}")
         if "AGENTS" not in hint.inner_text():
             raise SystemExit(f"the hint says {hint.inner_text()!r}")
         if page.locator(".naming [aria-live=polite] button").count() != 1:
@@ -144,6 +149,7 @@ def drive(browser: Browser) -> None:
         page.keyboard.press("Enter")
         toast = page.locator(".toast button")
         toast.wait_for()
+        toast.evaluate("(one) => Promise.all(document.getAnimations().map((a) => a.finished))")
         page.screenshot(path=str(SHOTS / "agents-md-toast.png"))
         toast.click()
         wait_for(

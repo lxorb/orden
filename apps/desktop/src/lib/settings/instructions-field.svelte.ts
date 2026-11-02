@@ -75,7 +75,7 @@ export class InstructionsField {
   async look() {
     if (this.dirty) return
     const words = await this.hands.read(this.path)
-    if (words !== null && !this.dirty) this.heard(words)
+    if (words !== null) this.heard(words)
   }
 
   type(words: string) {

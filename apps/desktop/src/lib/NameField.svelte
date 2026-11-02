@@ -129,11 +129,13 @@
     if (settled) return
     settled = true
 
+    // Read first: what the host hands this field goes with the row a commit ends.
+    const told = fault === 'agents' ? space : undefined
     const name = nameToCommit({ typed, extension, taken, was: value, current })
     if (name === null) oncancel()
     else oncommit(name)
     // The field is gone and took its bubble with it, so the way to the setting goes on.
-    if (fault === 'agents' && space) void refused().then((one) => one.reservedName.tell(space))
+    if (told) void refused().then((one) => one.reservedName.tell(told))
   }
 
   const refused = () => import('./reserved-name.svelte')
@@ -144,8 +146,9 @@
 
   /** The hint pressed: the name goes as it does on Escape, and the setting opens. */
   function follow() {
+    const told = space
     escape()
-    if (space) void refused().then((one) => one.openInstructions(space))
+    if (told) void refused().then((one) => one.openInstructions(told))
   }
 
   function escape() {
@@ -207,14 +210,14 @@
     <!-- The same bubble, as the way to the setting. Its press takes no focus from the
          name, because a blur there would end the field before the press lands. -->
     <span
-      class="reason-at"
+      class="reason"
       aria-live="polite"
       transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}
     >
       <button
         bind:this={hint}
         type="button"
-        class="nib-bubble is-pressable reason pressed"
+        class="nib-bubble is-pressable pressed"
         onpointerdown={(event) => event.preventDefault()}
         onclick={(event) => {
           event.stopPropagation()
@@ -224,9 +227,13 @@
           if (event.relatedTarget !== field) leave()
         }}
         onkeydown={(event) => {
-          if (event.key === 'Escape') {
+          // Kept off the list around it, whose own keys these are otherwise.
+          event.stopPropagation()
+          if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
-            event.stopPropagation()
+            follow()
+          } else if (event.key === 'Escape') {
+            event.preventDefault()
             escape()
           } else if (event.key === 'Tab') {
             event.preventDefault()

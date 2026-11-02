@@ -44,7 +44,7 @@ async function leftOpen(typed: string | null) {
   await workspace.openEntry(PLAN)
   await workspace.openEntry(STAND_IN)
   const tab = workspace.tabs.find((one) => one.path === STAND_IN)
-  if (!tab?.note) throw new Error('the tab did not open')
+  if (!tab) throw new Error('the tab did not open')
   if (typed !== null) {
     tab.note.replace(typed, true)
     tab.note.dirty = true
@@ -77,8 +77,8 @@ test('a tab with words unsaved is put back with them, and they are written', asy
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.path)).toContain(AGENTS))
 
   const tab = workspace.tabs.find((one) => one.path === AGENTS)
-  expect(tab?.note?.text).toBe('# Rules\n\n- unsaved\n')
-  expect(tab?.note?.dirty).toBe(true)
+  expect(tab?.note.text).toBe('# Rules\n\n- unsaved\n')
+  expect(tab?.note.dirty).toBe(true)
 
   workspace.flush()
   await workspace.writesSettled()
