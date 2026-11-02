@@ -70,15 +70,125 @@ export const WIKILINK_INNER = '[^[\\]\\n]+'
  *  be rewritten when a note is renamed. */
 const WIKILINK = new RegExp(`(?<!\\\\)(!?)\\[\\[(${WIKILINK_INNER})\\]\\]`, 'g')
 
-/** `[label](target)`, with an optional `"title"` and an optional `<>` around a
- *  target that has spaces in it. Only the shape is matched here; whether the
- *  target names a note rather than the web is decided by `isNoteTarget`.
+/** How far a `[label](target)` may run before it is not one. A label is a phrase and
+ *  a target is a path, so this is room and then some, and it is what keeps the walk
+ *  over a line linear: a `[` that opens nothing moves the walk on by one character,
+ *  so a scan to the end of the line is one per `[` on it. The same number as
+ *  `LONGEST_LINK` in apps/desktop/src-tauri/src/links.rs. */
+const LONGEST_LINK = 1000
+
+/** How deep a target's parentheses may go, which is cmark's own limit. */
+const DEEPEST_PARENS = 32
+
+const BLANK = /\s/
+
+/** One `[label](target)` on a line, and where its parts are. */
+interface MarkdownLink {
+  label: string
+  /** The target as written, its `<>` left off. */
+  written: string
+  writtenFrom: number
+  /** Just past the closing parenthesis. */
+  to: number
+}
+
+/** The `]` that closes the label opened at `open`, or -1. A label holds balanced
+ *  brackets and escaped ones, as in CommonMark. A bracket pair that opens a link of
+ *  its own means this `[` opens none, since links do not nest; `[[` is a wikilink's. */
+function labelEnd(line: string, open: number, stop: number): number {
+  let depth = 1
+
+  for (let at = open + 1; at < stop; at++) {
+    const one = line[at]
+    if (one === '\\') {
+      at++
+    } else if (one === '[') {
+      if (line[at - 1] === '[' || line[at + 1] === '[') return -1
+      depth++
+    } else if (one === ']') {
+      depth--
+      if (depth === 0) return at
+      if (line[at + 1] === '(') return -1
+    }
+  }
+
+  return -1
+}
+
+/** Just past a bare target starting at `from`, which ends at a blank or at a `)` it did
+ *  not open. -1 when its parentheses do not balance. */
+function bareTargetEnd(line: string, from: number, stop: number): number {
+  let depth = 0
+  let at = from
+
+  while (at < stop) {
+    const one = line[at] ?? ''
+    if (BLANK.test(one)) break
+    if (one === '\\') {
+      at += 2
+      continue
+    }
+    if (one === '(' && ++depth > DEEPEST_PARENS) return -1
+    if (one === ')') {
+      if (depth === 0) break
+      depth--
+    }
+    at++
+  }
+
+  return at < stop && depth === 0 ? at : -1
+}
+
+/** The `[label](target)` opened by the `[` at `open`, with an optional `"title"` and an
+ *  optional `<>` around a target that has spaces in it. Only the shape is read here;
+ *  whether the target names a note rather than the web is decided by `isNoteTarget`.
  *
- *  The blanks before a title belong to the title: with a `\s*` either side of an
- *  optional one, a link nothing closed shared its blanks out every way there is,
- *  and a hundred thousand of them took thirteen seconds (#494). */
-const MARKDOWN_LINK =
-  /(?<!\\)(!?)\[((?:[^[\]\\]|\\.)*)\]\(\s*(?:<([^<>\n]*)>|([^\s()]+))(?:\s*(?:"[^"\n]*"|'[^'\n]*'))?\s*\)/g
+ *  The twin of `markdown_link` in apps/desktop/src-tauri/src/links.rs. By hand rather
+ *  than a pattern, because a target's parentheses and a label's brackets balance. */
+function markdownLinkAt(line: string, open: number): MarkdownLink | null {
+  const stop = Math.min(line.length, open + LONGEST_LINK)
+  const skipBlanks = (from: number) => {
+    let at = from
+    while (at < stop && BLANK.test(line[at] ?? '')) at++
+    return at
+  }
+
+  const close = labelEnd(line, open, stop)
+  if (close === -1 || line[close + 1] !== '(') return null
+
+  let at = skipBlanks(close + 2)
+  let writtenFrom = at
+  let writtenTo: number
+
+  if (line[at] === '<') {
+    writtenFrom = at + 1
+    writtenTo = writtenFrom
+    while (writtenTo < stop && line[writtenTo] !== '>' && line[writtenTo] !== '<') writtenTo++
+    if (writtenTo >= stop || line[writtenTo] !== '>') return null
+    at = writtenTo + 1
+  } else {
+    writtenTo = bareTargetEnd(line, at, stop)
+    if (writtenTo <= at) return null
+    at = writtenTo
+  }
+
+  at = skipBlanks(at)
+  const quote = line[at]
+  if (quote === '"' || quote === "'") {
+    at = line.indexOf(quote, at + 1) + 1
+    if (at === 0 || at >= stop) return null
+    at = skipBlanks(at)
+  }
+
+  if (at >= stop || line[at] !== ')') return null
+
+  return {
+    label: line.slice(open + 1, close),
+    written: line.slice(writtenFrom, writtenTo),
+    writtenFrom,
+    to: at + 1,
+  }
+}
 
 /** How many links one note is read for. Far past any note anybody writes - a map of
  *  content points at a few hundred things - and a bound on what one file can cost
@@ -297,6 +407,17 @@ export function parseWikilink(inner: string, embed = false): Wikilink | null {
   return { target, heading, block, alias: alias === '' ? null : alias, embed }
 }
 
+/** The characters a wikilink cannot hold in a name: `#` and `^` open a fragment, `|` an
+ *  alias, and a bracket ends the link. Obsidian refuses all five in a link for the same
+ *  reason, though a file may be named with them, so a link to such a file is a markdown
+ *  link, which both apps read; see link-format.ts in the app. */
+const NOT_IN_WIKILINK = /[#^[\]|]/
+
+/** Whether `[[name]]` would read as something other than a link to `name`. */
+export function wikilinkCannotName(name: string): boolean {
+  return NOT_IN_WIKILINK.test(name)
+}
+
 /** The link back as source, which is what a rename writes. */
 export function formatWikilink(link: Wikilink): string {
   const alias = link.alias === null ? '' : `|${link.alias}`
@@ -476,9 +597,17 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
     })
   }
 
-  for (const match of line.matchAll(MARKDOWN_LINK)) {
-    const [whole, bang = '', label = '', angled, bare] = match
-    const written = angled ?? bare ?? ''
+  for (let open = line.indexOf('['); open !== -1; open = line.indexOf('[', open + 1)) {
+    if (line[open - 1] === '\\') continue
+
+    const link = markdownLinkAt(line, open)
+    if (!link) continue
+
+    const { written, writtenFrom, label } = link
+    // A backslash in front of the bang escapes the bang and leaves the link.
+    const embed = line[open - 1] === '!' && line[open - 2] !== '\\'
+    const start = embed ? open - 1 : open
+    open = link.to - 1
     if (!isNoteTarget(written)) continue
 
     const hash = written.indexOf('#')
@@ -486,8 +615,8 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
     const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
     if (!target && !fragment) continue
 
-    const from = offset + match.index
-    const targetFrom = from + whole.indexOf(written, label.length + bang.length + 2)
+    const from = offset + start
+    const targetFrom = offset + writtenFrom
     // `#^a1b2c3` names a block in a markdown link exactly as in a wikilink, which
     // is how Obsidian writes one and how Orden writes one when the Links setting
     // asks for markdown links; see link-format.ts in the app.
@@ -498,10 +627,10 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
       heading: block === null ? fragment || null : null,
       block,
       alias: label,
-      embed: bang === '!',
+      embed,
       kind: 'markdown',
       from,
-      to: from + whole.length,
+      to: offset + link.to,
       targetFrom,
       targetTo: targetFrom + target.length,
       line: at,
@@ -512,17 +641,6 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
   found.push(...here)
 }
 
-/** A markdown target as the name it stands for: `My%20Note.md` is a link to
- *  `My Note.md`, and a rename has to recognise it as one. A target that is not
- *  valid encoding is taken as written. */
-function decodeTarget(target: string): string {
-  try {
-    return decodeURI(target)
-  } catch {
-    return target
-  }
-}
-
 /** One or more percent escapes in a row: how a heading's words are written in a link
  *  when they hold a space or a character a URL cannot. */
 const ESCAPES = /(?:%[0-9A-Fa-f]{2})+/g
@@ -531,13 +649,47 @@ const ESCAPES = /(?:%[0-9A-Fa-f]{2})+/g
  *  encoding comes out as replacement characters rather than as an error. */
 const UTF8 = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true })
 
+/** A backslash and the punctuation it escapes, or a run of percent escapes. */
+const WRITTEN = /\\([!-/:-@[-`{-~])|(?:%[0-9A-Fa-f]{2})+/g
+
+/** The same UTF-8, for a name: a run that is not valid encoding is no name at all. */
+const STRICT_UTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
+
+function bytesOf(run: string): Uint8Array {
+  return Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))
+}
+
+/** A markdown target as the name it stands for: `My%20Note.md` is a link to
+ *  `My Note.md` and `C%23.md` a link to `C#.md`, and a rename has to recognise each as
+ *  one. Every escape is undone, which `decodeURI` does not do for the characters a URL
+ *  reserves, so the link the app writes to `C#.md` reads back as that note. A `%` that
+ *  begins no escape is a `%`; a target that is not valid encoding is taken as written.
+ *  The twin of `decode` in apps/desktop/src-tauri/src/links.rs.
+ *
+ *  Split a target from its `#fragment` before reading it: what comes out may hold a
+ *  `#` of its own. */
+export function decodeTarget(target: string): string {
+  try {
+    return target.replace(WRITTEN, (run, mark?: string) => mark ?? STRICT_UTF8.decode(bytesOf(run)))
+  } catch {
+    return target
+  }
+}
+
+/** A path as a markdown target: the characters a browser or an editor would
+ *  otherwise read as something else. `#` opens a fragment and a space ends the
+ *  target, and a `)` (`1) Intro.pdf`) ends the link, so those are written out. */
+export function encodeTarget(path: string): string {
+  return encodeURI(path).replace(/[#?()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
+}
+
 /** The `#fragment` of a link as the words it names. What a note writes in a link is
  *  a URL, so `Some%20Heading` is `Some Heading` and `Why%3F` is `Why?`: every escape
  *  is undone, which `decodeURI` does not do for the characters a URL reserves. A `%`
  *  that does not begin an escape is taken as written. */
 export function decodeFragment(fragment: string): string {
   return fragment.replace(ESCAPES, (run) =>
-    UTF8.decode(Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))),
+    UTF8.decode(bytesOf(run)),
   )
 }
 

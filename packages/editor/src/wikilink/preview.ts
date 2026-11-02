@@ -1,5 +1,6 @@
 import type { EditorState } from '@codemirror/state'
 import { loadFor } from '@orden/markdown/engines'
+import { decodeTarget } from '@orden/markdown/links'
 import { mapSources } from '@orden/markdown/sources'
 import { attributeValue } from '../attributes'
 import { imageResolver } from '../images'
@@ -24,11 +25,7 @@ const REMOTE = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i
 /** The path as the note wrote it. The renderer percent-encodes what it puts in
  *  an attribute; the host resolves the path, not the encoding of it. */
 function written(src: string): string {
-  try {
-    return decodeURI(src.replace(/&amp;/g, '&'))
-  } catch {
-    return src
-  }
+  return decodeTarget(src.replace(/&amp;/g, '&'))
 }
 
 /** Some markdown as HTML. `path` is the note it came out of, relative to the

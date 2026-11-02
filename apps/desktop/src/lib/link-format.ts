@@ -17,8 +17,7 @@
  *  Pure, and the only place a link's text is decided: `linkTo` in composer.ts is
  *  the one caller, and every writer in the app goes through that. */
 
-import { slugify } from '@orden/markdown/links'
-import { encodeTarget } from './link-rewrite'
+import { encodeTarget, slugify, wikilinkCannotName } from '@orden/markdown/links'
 import { folderOf, nameOf, relativePath } from './space-paths'
 
 export type LinkFormat = 'wikilink' | 'shortest' | 'relative' | 'absolute'
@@ -79,15 +78,25 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
   const fragment = target.fragment ?? ''
   const shown = target.shown && (target.shown !== target.name || fragment) ? target.shown : ''
 
-  if (format === 'wikilink') {
+  if (format === 'wikilink' && !beyondWikilink(target.name, fragment, shown)) {
     const inner = fragment ? `${target.name}#${fragment}` : target.name
     return `${bang}[[${inner}${shown ? `|${shown}` : ''}]]`
   }
 
-  const label = shown || target.name || bareFragment(fragment)
+  // A brackets' worth of words would close the label, so they are written escaped.
+  const label = (shown || target.name || bareFragment(fragment)).replace(/[[\]]/g, '\\$&')
   const anchor = fragment ? `#${markdownFragment(fragment)}` : ''
+  const path = pathFor(target, format === 'wikilink' ? 'shortest' : format)
 
-  return `${bang}[${label}](${encodeTarget(pathFor(target, format))}${anchor})`
+  return `${bang}[${label}](${encodeTarget(path)}${anchor})`
+}
+
+/** Whether a wikilink would say something else than this: a note named `C# basics` is
+ *  legal, and `[[C# basics]]` is a link to the heading ` basics` of a note `C`. Those
+ *  fall to the other spelling, which can say anything; Obsidian offers nothing better.
+ *  After the name's `#` a heading may hold one more, and an alias may hold a bar. */
+function beyondWikilink(name: string, fragment: string, shown: string): boolean {
+  return wikilinkCannotName(name) || /[[\]|]/.test(fragment) || /[[\]]/.test(shown)
 }
 
 /** The target of a markdown link, in the shape the format asks for.

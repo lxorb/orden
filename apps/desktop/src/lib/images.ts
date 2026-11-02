@@ -1,4 +1,5 @@
 import { frontMatter } from '@orden/markdown/front-matter'
+import { decodeTarget } from '@orden/markdown/links'
 import { folderOf } from './space-paths'
 import { assetUrl, joinPath } from './tauri'
 
@@ -11,12 +12,7 @@ function isRemote(src: string): boolean {
  *  folder with a space in its name arrives as `%20` - from Orden itself, from
  *  Typora, from Obsidian. The file on disk is named with the space. */
 function written(src: string): string {
-  try {
-    return decodeURI(src)
-  } catch {
-    // Not valid encoding at all, so it is already the name it stands for.
-    return src
-  }
+  return decodeTarget(src)
 }
 
 /** The same path with `.` and `..` folded away, so what is handed on points
