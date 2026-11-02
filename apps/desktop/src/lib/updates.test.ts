@@ -42,6 +42,7 @@ const world = vi.hoisted(() => ({
 
 vi.mock('./updater', () => ({
   asChannel: (value: unknown) => (value === 'unstable' ? 'unstable' : 'stable'),
+  hearHandedOn: () => () => undefined,
   stageUpdate: (channel: string) => {
     world.looks++
     world.channels.push(channel)

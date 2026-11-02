@@ -241,7 +241,7 @@ mod engine {
 
     use super::{seconds, Clearing, PATIENCE};
 
-    /// WebKit's name for the file systems (OPFS), on a macOS that has them.
+    /// `WebKit`'s name for the file systems (OPFS), on a macOS that has them.
     ///
     /// Looked up rather than named: the crate declares it as a plain static, which links
     /// it strongly, and a symbol macOS 13.3 does not have would stop the app from starting
@@ -423,7 +423,7 @@ async fn within(
 mod tests {
     use super::Clearing;
 
-    /// Found at run time, so it is what WebKit has and not a word of ours; `macos-latest`
+    /// Found at run time, so it is what `WebKit` has and not a word of ours; `macos-latest`
     /// is past the 14 it arrived in.
     #[cfg(all(target_os = "macos", not(feature = "cef")))]
     #[test]

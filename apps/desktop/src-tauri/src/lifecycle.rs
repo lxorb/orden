@@ -290,7 +290,7 @@ pub fn update_settled(webview: tauri::Webview) {
 /// go on working: `terminal::end_all` and the plugin's `cleanup_before_exit`, which hides
 /// the windows and takes the tray away, would have ended that. The process going takes
 /// what they would: a shell with its pseudoconsole, an AI program with its job object
-/// (ai_cli/family.rs). A tray icon and a notice may stay on the screen until the system
+/// (`ai_cli/family.rs`). A tray icon and a notice may stay on the screen until the system
 /// next looks, and the installer starts the new version straight after.
 pub fn before_installer(app: &AppHandle, from: &str) {
     crate::placement::note_every_window(app);

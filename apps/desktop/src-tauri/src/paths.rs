@@ -1921,7 +1921,7 @@ mod tests {
     fn off_windows_the_write_comes_before_the_shrink() {
         let mut file = Mapped(b"a first, longer version".to_vec());
         assert!(super::poured(&mut file, b"second", false).is_err());
-        assert_eq!(file.0, b"secondrst, longer version");
+        assert_eq!(file.0, b"secondt, longer version");
     }
 
     /// Either order ends in the same file when nothing refuses.
