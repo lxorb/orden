@@ -27,6 +27,7 @@ Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/keyboard-
 from __future__ import annotations
 
 import json
+import sys
 
 from playwright.sync_api import Browser, Page
 
@@ -236,7 +237,13 @@ def toast_keys(page: Page) -> None:
         if at.endswith("|Undo") or "editor|" in at:
             break
     say(f"[toast] {count} Tabs from the row: {at}")
-    if not at.endswith("|Undo"):
+    if sys.platform == "darwin":
+        # A Mac's Tab passes over buttons until its reader turns on Keyboard navigation,
+        # which a runner has off, so what comes after Tab starts on Undo by hand.
+        page.evaluate(
+            "() => [...document.querySelectorAll('.toast button')].find((one) => one.textContent.trim() === 'Undo').focus()"
+        )
+    elif not at.endswith("|Undo"):
         wrong(f"Tab reached the note before Undo: {at}")
 
     # Pressing it brings the note back and the keyboard to where it came from.
@@ -445,7 +452,8 @@ def properties(page: Page, held: str) -> None:
     press(page, "Shift+F10")
     rows = page.evaluate("() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim())")
     say(f"[props] Shift+F10 in the field: {rows}")
-    if not any(row.startswith("Paste") for row in rows):
+    # WebKit makes no contextmenu of the key, in a field as anywhere the app asks for none.
+    if not harness.WEBKIT and not any(row.startswith("Paste") for row in rows):
         wrong(f"the field lost its own menu: {rows}")
     press(page, "Escape")
     DRIVE.shot(page, "properties")
@@ -541,7 +549,9 @@ def toggle_order(page: Page) -> None:
 def version_row(page: Page) -> None:
     """The version in Settings copies on a press, and a hint beside its name is a button of
     its own: the row cannot be one too (axe, `nested-interactive`)."""
-    page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+    # WebKit knows neither; the harness answers its clipboard (`WEBKIT_CLIPBOARD`).
+    if not harness.WEBKIT:
+        page.context.grant_permissions(["clipboard-read", "clipboard-write"])
     page.evaluate("() => window.nibApp.settings.show()")
     wait_for(page, "document.querySelector('.setting.pressable')", "the version's row")
     quiet(page)
