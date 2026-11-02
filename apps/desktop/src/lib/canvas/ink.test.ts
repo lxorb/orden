@@ -1078,6 +1078,23 @@ describe('a tapered pen written zoomed in', () => {
     expect(shown(tool, 4)).toBeCloseTo(shown(tool, 1), 0)
   })
 
+  /** The library does not clamp a taper to the stroke, so a short dab with a wide nib is
+   *  measured: at a taper in proportion it keeps most of its body, and does not vanish. */
+  test.each([
+    [14, 30],
+    [14, 60],
+    [30, 40],
+    [30, 120],
+  ])('a brush of %s over %s keeps a body in the middle', (size, length) => {
+    const shape = (nib: number, long: number) => {
+      const step = long / 40
+      const points = Array.from({ length: 41 }, (_, at) => point(at * step, 0))
+      const ring = outlineOf({ id: 's', tool: 'brush', color: '#000', size: nib, points })
+      return across(ring, long / 2) / nib
+    }
+    expect(shape(size, length)).toBeGreaterThan(0.3)
+  })
+
   test('and a stroke at the width a tool starts at keeps the taper it always had', () => {
     const points = Array.from({ length: 67 }, (_, at) => point(at * 3, 0))
     const size = INK_STYLES.brush.size

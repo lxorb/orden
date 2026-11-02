@@ -72,6 +72,30 @@ describe('a plane arriving from a room', () => {
   })
 })
 
+describe('a plane written down after a room spoke', () => {
+  test('does not take its own write for news, so nothing writes again', () => {
+    vi.useFakeTimers()
+    try {
+      const { store, note } = opened(
+        JSON.stringify({ nodes: [], edges: [], nib: { icon: 'star', iconColor: 'red' } }),
+      )
+      store.arrived({ ...blank(), nodes: [card('a')] })
+      vi.runOnlyPendingTimers()
+      const revision = note.revision
+      const text = note.text
+      expect(JSON.parse(text).nib.iconColor).toBe('red')
+
+      expect(store.follow()).toBe(false)
+      vi.runOnlyPendingTimers()
+      expect(vi.getTimerCount()).toBe(0)
+      expect(note.revision).toBe(revision)
+      expect(note.text).toBe(text)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
 describe('a plane in a space somebody shared to read', () => {
   test('takes no edit at all', () => {
     const { store, note } = opened()

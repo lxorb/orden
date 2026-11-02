@@ -295,6 +295,21 @@ describe('the stack on a shared plane', () => {
     expect(stack(two.canvas)).toEqual(['c', 'a', 'b'])
   })
 
+  test('a card moved while another device typed in it keeps those words', () => {
+    const one = Device.opening(board())
+    const away = withNodes(
+      one.canvas,
+      one.canvas.nodes.map((node) => (node.id === 'a' ? { ...card('a'), x: 99 } : node)),
+    )
+    const typed = stamped(one.canvas, away, Date.now() - 1000)
+
+    one.edit(ordered(one.canvas, ['a'], 'front'))
+    const two = Device.joining(one, typed)
+    carry(two, one)
+    expect(stack(two.canvas)).toEqual(['b', 'c', 'a'])
+    expect(two.canvas.nodes.at(-1)?.x).toBe(99)
+  })
+
   test('undo takes the move back', () => {
     const one = Device.opening(board())
     one.edit(ordered(one.canvas, ['a'], 'forward'))

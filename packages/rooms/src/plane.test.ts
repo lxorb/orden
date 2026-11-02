@@ -487,7 +487,8 @@ describe('the order of the stack in a room', () => {
     one.edit(same, 2000)
     carry(one, two)
     expect(writes).toBe(1)
-    expect(two.canvas.at.a).toBe(2000)
+    expect(two.canvas.moved?.a).toBe(2000)
+    expect(two.canvas.at.a).toBe(1000)
     expect(order(two.canvas)).toEqual(['b', 'c', 'd', 'a'])
   })
 
@@ -499,6 +500,114 @@ describe('the order of the stack in a room', () => {
       carry(one, two)
       expect(order(two.canvas)).toEqual(wanted)
     }
+  })
+
+  /** Every record's place as it stands, to see which were written. */
+  const places = (doc: Y.Doc) =>
+    Object.fromEntries([...planeOf(doc)].map(([id, record]) => [id, record.get('z')]))
+
+  test('two things in one place are told apart by id, and nothing is laid out for that', () => {
+    const one = new Device()
+    const two = new Device()
+    const base = [card('a'), card('b'), card('c'), card('d')]
+    one.edit({ ...emptyCanvas(), nodes: base })
+    carry(one, two)
+    // Each adds at the same moment, so the two new ones share a place.
+    one.edit({ ...one.canvas, nodes: [...one.canvas.nodes, card('x')] }, 2000)
+    two.edit({ ...two.canvas, nodes: [...two.canvas.nodes, card('y')] }, 2000)
+    both(one, two)
+    expect(places(one.doc).x).toBe(places(one.doc).y)
+
+    // A card put between the tied pair moves the upper of them, and leaves the rest alone.
+    const was = places(one.doc)
+    one.edit(moved(one.canvas, 'b', 'c', 'd', 'x', 'a', 'y'), 3000)
+    const is = places(one.doc)
+    expect(order(readPlane(one.doc))).toEqual(['b', 'c', 'd', 'x', 'a', 'y'])
+    expect(is.b).toBe(was.b)
+    expect(is.c).toBe(was.c)
+    expect(is.d).toBe(was.d)
+  })
+
+  test('a tie with what sits above the move is got past as well', () => {
+    const one = new Device()
+    const two = new Device()
+    one.edit({ ...emptyCanvas(), nodes: [card('a'), card('b')] })
+    carry(one, two)
+    one.edit({ ...one.canvas, nodes: [...one.canvas.nodes, card('x')] }, 2000)
+    two.edit({ ...two.canvas, nodes: [...two.canvas.nodes, card('y')] }, 2000)
+    both(one, two)
+
+    const held = one.canvas.nodes
+    const by = (id: string) => held.find((node) => node.id === id) as CanvasNode
+    one.edit({ ...one.canvas, nodes: [by('b'), by('x'), by('a'), by('y')] }, 3000)
+    expect(order(readPlane(one.doc))).toEqual(['b', 'x', 'a', 'y'])
+  })
+
+  test('no room left between two neighbours moves as few as it can, and not the list', () => {
+    const { one, two } = twoDevices('a', 'b', 'c', 'high', 'top')
+    for (let turn = 0; turn < 200; turn++) {
+      const wanted = turn % 2 ? ['a', 'b', 'c', 'high', 'top'] : ['a', 'c', 'b', 'high', 'top']
+      one.edit(moved(one.canvas, ...wanted), 2000 + turn)
+    }
+    carry(one, two)
+    const is = places(one.doc)
+    // What sits under the pair never moved, however long that went on.
+    expect(is.a).toBe(0)
+    expect(is.top).toBe(4)
+    expect(order(two.canvas)).toEqual(['a', 'b', 'c', 'high', 'top'])
+  })
+
+  test('undo of a move onto a place somebody took since agrees on both devices', () => {
+    const one = new Device()
+    const two = new Device()
+    one.edit({ ...emptyCanvas(), nodes: [card('a'), card('b'), card('c')] })
+    carry(one, two)
+    const scope = planeOf(one.doc)
+    const history = new Y.UndoManager(scope, { trackedOrigins: new Set(['here']), captureTimeout: 0 })
+
+    // `a` leaves place 0, and `c`, sent to the back elsewhere, lands one under `b`: place 0.
+    one.edit(moved(one.canvas, 'b', 'c', 'a'), 2000)
+    carry(one, two)
+    two.edit(moved(two.canvas, 'c', 'b', 'a'), 3000)
+    carry(two, one)
+    expect(places(one.doc).c).toBe(0)
+
+    history.undo()
+    carry(one, two)
+    expect(places(one.doc).a).toBe(0)
+    // One place, so by id: the same order on both, which is what a tie has to be.
+    expect(order(readPlane(one.doc))).toEqual(['a', 'c', 'b'])
+    expect(order(readPlane(two.doc))).toEqual(['a', 'c', 'b'])
+    // And the next move there sees it through.
+    one.reread()
+    one.edit(moved(one.canvas, 'c', 'a', 'b'), 4000)
+    expect(order(readPlane(one.doc))).toEqual(['c', 'a', 'b'])
+  })
+
+  test('the time of a move crosses the room, and a joining file is measured against it', () => {
+    const { one, two } = twoDevices('a', 'b', 'c')
+    one.edit({ ...one.canvas, nodes: [...one.canvas.nodes.slice(1), one.canvas.nodes[0] as CanvasNode] }, 5000)
+    carry(one, two)
+    expect(readPlane(two.doc).moved).toEqual({ a: 5000 })
+
+    // A copy that moved `c` to the back before that, and a card's words typed since.
+    const stale = stamped(emptyCanvas(), { ...emptyCanvas(), nodes: [card('c'), card('a'), card('b')] }, 900)
+    const old = { ...stale, moved: { c: 1500 } }
+    const room = readPlane(two.doc)
+    const together = merged(old, room, 6000)
+    expect(order(together)).toEqual(['c', 'b', 'a'])
+  })
+
+  test('a seed holds no time of a move, so every device still seeds the same bytes', () => {
+    const doc = new Y.Doc()
+    const file = {
+      ...emptyCanvas(),
+      nodes: [card('a'), card('b')],
+      at: { a: 1, b: 1 },
+      moved: { a: 5 },
+    }
+    seedPlane(doc, file)
+    expect(planeOf(doc).get('a')?.has('moved')).toBe(false)
   })
 
   test('a file that lists things in another order turns the room to that order', () => {
