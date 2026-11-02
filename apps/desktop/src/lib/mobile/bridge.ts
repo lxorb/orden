@@ -75,7 +75,9 @@ export function method<K extends keyof NibSystem>(name: K): NibSystem[K] | undef
   // Checked before it is named: a value crossing into the page is unknown until
   // it has been read.
   const held = (found as Partial<NibSystem>)[name]
-  return typeof held === 'function' ? held : undefined
+  // Bound, since the caller calls it on its own, and the Java bridge throws on a call
+  // whose `this` is not the object it injected.
+  return typeof held === 'function' ? (held.bind(found) as NibSystem[K]) : undefined
 }
 
 /** Whether the page is running inside the activity at all, which is the one
