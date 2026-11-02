@@ -92,6 +92,13 @@ export function changeOf(path: string, before: string, edits: Edit[]): Change {
   return { path, before, after: applied(before, edits), edits, back: reverse(before, edits) }
 }
 
+/** A file's words as `like` would say them: with one line ending where `like` was worked
+ *  out on one, as an agent's edits are, or a file with Windows ones differs on every
+ *  line. The disk gives a file its own endings back; see `as_written` in notes.rs. */
+export function endingsLike(words: string, like: string): string {
+  return like.includes('\r') || !words.includes('\r') ? words : words.replace(/\r\n?/g, '\n')
+}
+
 /** The edits that put a replacement back, in the coordinates of the note the
  *  replacement left behind. Undoing is then the same kind of change the
  *  replacement was, which is what keeps the carets in an open pane where their

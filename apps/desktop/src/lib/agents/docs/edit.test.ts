@@ -250,6 +250,32 @@ describe('an edit to a closed note', () => {
     ])
   })
 
+  /** The file changed in the same moment, and the write left it alone: the agent is told
+   *  so rather than told it is done, and its first version is still to be kept. */
+  test('says so when the write was refused, and nothing is recorded', async () => {
+    const { desk, written, fileOf, refusing } = deskWith({ 'log.md': '- [ ] one\n' })
+    const agent = anAgent()
+    const edit = [{ at: { task: 'one' }, replace: '- [x] one' }]
+
+    refusing.next = true
+    expect(await refusal(editNote(desk, agent, { path: 'log.md' }, edit))).toBe('rev_changed')
+    expect(fileOf('log.md')).toBe('- [ ] one\n')
+    expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 0 })
+
+    await editNote(desk, agent, { path: 'log.md' }, edit)
+    expect(written.map((one) => one.keeping?.snapshot)).toEqual([true])
+  })
+
+  test('says nothing was taken back when that write is refused', async () => {
+    const { desk, fileOf, refusing } = deskWith({ 'log.md': 'one' })
+    const agent = anAgent()
+    await editNote(desk, agent, { path: 'log.md' }, [{ at: { end: true }, insert_after: ' two' }])
+
+    refusing.next = true
+    expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 0 })
+    expect(fileOf('log.md')).not.toBe('one')
+  })
+
   test('is resolved against the words with one line ending, whatever the file has', async () => {
     const { desk, fileOf } = deskWith({ 'crlf.md': '# Title\r\n\r\nline one\r\nline two\r\n' })
 

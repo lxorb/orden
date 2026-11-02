@@ -19,7 +19,9 @@ export type Problem =
   | 'bad_include'
   /** Two edits of one call that would change the same characters. */
   | 'overlapping'
-  /** `if_rev` said which words the edit was for, and they have changed since. */
+  /** `if_rev` said which words the edit was for, and they have changed since; or a
+   *  closed note's file changed as the edit was being written, and the write left it
+   *  alone. Read it again. */
   | 'rev_changed'
   /** The reader was writing where the edit goes, and once they paused its anchor
    *  was gone. See docs/agent-native.md 8.3. */

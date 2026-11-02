@@ -639,6 +639,42 @@ describe('a closed note written to after the change was worked out', () => {
     expect(ws.undone.stack).toEqual([])
   })
 
+  /** An agent's edits are worked out on one line ending (`wordsOf` in agents/docs), and
+   *  a file with Windows ones read as changed on every line, which overlapped them. The
+   *  disk puts the file's own endings back; see `as_written` in notes.rs. */
+  test('and takes a file that differs only by its line endings for the same words', async () => {
+    const { ws } = space({ [NOTE]: 'one\r\nthe plan #two words#\r\nthree\r\n' })
+    const lf = {
+      path: NOTE,
+      before: 'one\nthe plan #two words#\nthree\n',
+      after: 'one\nthe plan #two-words\nthree\n',
+      edits: [{ from: 13, to: 24, insert: '#two-words' }],
+      back: [{ from: 13, to: 23, insert: '#two words#' }],
+    }
+
+    expect(await replaceInNotes(ws, [lf])).toBe(1)
+    expect(disk.get(NOTE)).toBe(lf.after)
+
+    // What the disk would have made of it, which an undo reads back.
+    disk.set(NOTE, 'one\r\nthe plan #two-words\r\nthree\r\n')
+    await undoLastFileAction(ws as unknown as PutsBack)
+    expect(disk.get(NOTE)).toBe('one\r\nthe plan #two words#\r\nthree\r\n')
+  })
+
+  test('and carries the change past what was written meanwhile, whatever the endings', async () => {
+    const { ws } = space({ [NOTE]: 'Re: one\r\nthe plan #two words#\r\nthree\r\n' })
+    const lf = {
+      path: NOTE,
+      before: 'one\nthe plan #two words#\nthree\n',
+      after: 'one\nthe plan #two-words\nthree\n',
+      edits: [{ from: 13, to: 24, insert: '#two-words' }],
+      back: [{ from: 13, to: 23, insert: '#two words#' }],
+    }
+
+    expect(await replaceInNotes(ws, [lf])).toBe(1)
+    expect(disk.get(NOTE)).toBe('Re: one\nthe plan #two-words\nthree\n')
+  })
+
   test('and writes nothing at all for a note that has gone', async () => {
     const { ws } = space({ [NOTE]: change.before })
     disk.delete(NOTE)

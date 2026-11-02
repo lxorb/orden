@@ -14,7 +14,7 @@
 import { oneEdit } from '@orden/markdown/edits'
 import { freePath } from '@orden/markdown/paths'
 import { sha256 } from '../bytes'
-import { applied, type Edit } from '../search/replace'
+import { applied, type Edit, endingsLike } from '../search/replace'
 import type { Retargeting } from '../link-index.svelte'
 import type { Holding } from '../sync/holding'
 import { onDisk } from '../on-disk'
@@ -399,7 +399,7 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
       continue
     }
 
-    const now = read.get(note.path) ?? note.after
+    const now = endingsLike(read.get(note.path) ?? note.after, note.after)
     await writeFile(note.path, now === note.after ? note.content : carriedPast(note, now))
   }
 }
