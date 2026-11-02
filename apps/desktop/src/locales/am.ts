@@ -2472,6 +2472,7 @@ export const am: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'የOrden የራሱ የርዕስ አሞሌ፣ ወይም የሥርዓትዎ የመስኮት ክፈፍ።',
   'How large the text of notes is.': 'የማስታወሻዎች ጽሑፍ ምን ያህል ትልቅ እንደሆነ።',
+  'How large all of Orden is drawn on this device.': 'ኦርደን በዚህ መሣሪያ ላይ በሙሉ ምን ያህል ትልቅ እንደሚታይ።',
   'The space between the lines of a note.': 'በማስታወሻ መስመሮች መካከል ያለው ክፍተት።',
   'How wide a line of a note grows before it wraps.':
     'የማስታወሻ መስመር ወደሚቀጥለው መስመር ከመጠቅለሉ በፊት ምን ያህል እንደሚሰፋ።',

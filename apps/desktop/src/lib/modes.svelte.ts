@@ -51,7 +51,7 @@ import { glassesKey } from './even/key.svelte'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, keep, stored, stringList } from './stored'
-import { currentWindow, invoke, isDesktop } from './tauri'
+import { currentWindow, invoke, isDesktop, platform } from './tauri'
 import { theme } from './theme.svelte'
 import { opening } from './workspace/documents.svelte'
 
@@ -61,6 +61,16 @@ const STORAGE_KEY = 'nib:modes'
  *  stays something a regular expression engine will take; see spelling.ts. */
 const MOST_SPELL_WORDS = 500
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
+
+/** Settings > Appearance > Window > Zoom (#680), Chrome's own rungs: how large the whole
+ *  of the app is drawn, as VS Code's "Window: Zoom Level" and Slack's View > Zoom. The
+ *  crate keeps it on this device and applies it, being the engine's page zoom; see
+ *  src-tauri/src/page_scale.rs. A browser has its own, so only a desktop has this. */
+export const INTERFACE_ZOOMS = [0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2]
+
+/** How wide a Mac's traffic lights are, in points at any zoom: `--traffic-lights` in
+ *  tokens.css. */
+const LIGHTS = 78
 
 /** How long the account keeps what a note said before, in days. A month, which
  *  is what it always kept, or a year. The same two the service takes; see
@@ -375,6 +385,7 @@ class Modes {
   strict = $state(DEFAULTS.strict)
   equationNumbers = $state(DEFAULTS.equationNumbers)
   zoom = $state(DEFAULTS.zoom)
+  interfaceZoom = $state(1)
   width = $state(DEFAULTS.width)
   lineHeight = $state(DEFAULTS.lineHeight)
   /** The webview's own spell checker, over the writing surface. On, because a
@@ -706,6 +717,23 @@ class Modes {
   /** Tells the window. A refusal is the window manager's answer and there is
    *  nothing to say about it: the row goes back to what the window is doing at
    *  the next start, since nothing was written. */
+  /** The zoom the crate keeps, asked for as Settings is drawn and, on a Mac, as the app
+   *  starts, for its lights. */
+  async askInterfaceZoom() {
+    this.wearInterfaceZoom(await invoke<number>('interface_zoom_chosen'))
+  }
+
+  async setInterfaceZoom(factor: number) {
+    this.wearInterfaceZoom(factor)
+    await invoke('interface_zoom_choose', { factor })
+  }
+
+  private wearInterfaceZoom(factor: number) {
+    this.interfaceZoom = factor
+    if (platform() !== 'macos') return
+    document.documentElement.style.setProperty('--traffic-lights', `${String(LIGHTS / factor)}px`)
+  }
+
   setFrame(value: string) {
     const wanted = frameChoice(value)
     if (!wanted || wanted === this.frame) return

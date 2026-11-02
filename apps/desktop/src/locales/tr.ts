@@ -2522,6 +2522,8 @@ export const tr: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden’in kendi başlık çubuğu ya da sisteminizin pencere çerçevesi.',
   'How large the text of notes is.': 'Notların yazısının ne kadar büyük olduğu.',
+  'How large all of Orden is drawn on this device.':
+    'Orden’ın tamamının bu cihazda ne kadar büyük görüneceği.',
   'The space between the lines of a note.': 'Bir notun satırları arasındaki boşluk.',
   'How wide a line of a note grows before it wraps.':
     'Bir not satırının alt satıra geçmeden önce ne kadar genişleyebileceği.',

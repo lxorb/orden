@@ -481,6 +481,8 @@ macro_rules! desktop_commands {
             secure_dns::dns_choose,
             gpu::gpu_line,
             page_scale::page_scale_seen,
+            page_scale::interface_zoom_chosen,
+            page_scale::interface_zoom_choose,
             page_scheme::page_scheme_seen,
             spelling::spell_languages,
             fonts::font_families,

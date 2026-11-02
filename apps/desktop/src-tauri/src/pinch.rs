@@ -21,6 +21,7 @@ pub fn first_window(app: &tauri::AppHandle) {
 
     if let Some(window) = app.get_webview_window("main") {
         let_through(window.as_ref());
+        crate::page_scale::wear(window.as_ref());
     }
 }
 

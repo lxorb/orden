@@ -2626,6 +2626,7 @@ export const ar: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'شريط عنوان Orden الخاص، أو إطار النافذة في نظامك.',
   'How large the text of notes is.': 'حجم نص الملاحظات.',
+  'How large all of Orden is drawn on this device.': 'حجم عرض Orden بالكامل على هذا الجهاز.',
   'The space between the lines of a note.': 'المسافة بين أسطر الملاحظة.',
   'How wide a line of a note grows before it wraps.': 'أقصى عرض لسطر الملاحظة قبل أن يلتف.',
   'Typing an opening bracket or quote adds the closing one too.':

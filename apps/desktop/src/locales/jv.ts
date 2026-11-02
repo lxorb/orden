@@ -2489,6 +2489,8 @@ export const jv: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Bar judhul Orden dhewe, utawa kerangka jendhela sistem sampeyan.',
   'How large the text of notes is.': 'Sepira gedhene teks cathetan.',
+  'How large all of Orden is drawn on this device.':
+    'Sepira gedhéné kabèh Orden ditampilaké ing piranti iki.',
   'The space between the lines of a note.': 'Jarak antarane baris ing cathetan.',
   'How wide a line of a note grows before it wraps.':
     'Sepira ambane baris cathetan sadurunge mlebu baris anyar.',

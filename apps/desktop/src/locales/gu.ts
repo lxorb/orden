@@ -2496,6 +2496,7 @@ export const gu: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ની પોતાની શીર્ષક પટ્ટી, કે તમારી સિસ્ટમનું વિન્ડો ચોકઠું.',
   'How large the text of notes is.': 'નોંધોનું લખાણ કેટલું મોટું છે.',
+  'How large all of Orden is drawn on this device.': 'આ ઉપકરણ પર આખું Orden કેટલું મોટું દેખાય.',
   'The space between the lines of a note.': 'નોંધની લીટીઓ વચ્ચેની જગ્યા.',
   'How wide a line of a note grows before it wraps.':
     'નોંધની લીટી વીંટાતાં પહેલાં કેટલી પહોળી થાય છે.',

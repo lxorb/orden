@@ -2525,6 +2525,8 @@ export const gsw: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Di eiget Titelliischte vo Orden oder de Fänschterrahme vo dim System.',
   'How large the text of notes is.': 'Wie gross de Text vo Notize isch.',
+  'How large all of Orden is drawn on this device.':
+    'Wie gross s ganze Orden uf däm Grät aazeigt wird.',
   'The space between the lines of a note.': 'De Abstand zwüsche de Ziile vonere Notiz.',
   'How wide a line of a note grows before it wraps.':
     'Wie breit e Ziile vonere Notiz wird, bevor si umbricht.',

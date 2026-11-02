@@ -2593,6 +2593,8 @@ export const uk: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Власний рядок заголовка Orden або рамка вікна вашої системи.',
   'How large the text of notes is.': 'Розмір тексту нотаток.',
+  'How large all of Orden is drawn on this device.':
+    'Наскільки великим показується весь Orden на цьому пристрої.',
   'The space between the lines of a note.': 'Відстань між рядками нотатки.',
   'How wide a line of a note grows before it wraps.':
     'До якої ширини росте рядок нотатки, перш ніж перенестися.',

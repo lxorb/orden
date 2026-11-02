@@ -16,6 +16,14 @@
 //! reader chose (`web`). A page is placed by what the app's page says its own pixel
 //! ratio is (`of`), its zoom included, which is the ratio between what it measures and
 //! the screen's pixels it is drawn in; GTK's scale is not that ratio here.
+//!
+//! **The whole interface's zoom** (#680): Settings > Appearance > Window > Zoom, as VS
+//! Code's "Window: Zoom Level" and Slack's View > Zoom. It is the engine's page zoom of
+//! the app's own page, kept on this device (`FILE`), because the engine lays out by it the
+//! way it does by a screen's scale: the sidebar, the menus and every measurement go with
+//! it, and `100vh` and a pointer's place stay true, which CSS's `zoom` on the root would
+//! not leave them. A web tab's page keeps the size its site is kept at (`web`): only the
+//! hole it is placed in changes, and `of` is what says so.
 
 /// Chromium's scale, which CEF on X11 sizes windows by correctly only at 1; see the top
 /// of this file.
@@ -79,6 +87,81 @@ fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     None
 }
 
+/// Where the interface's zoom is kept, in the app's config folder: a number in plain text.
+const FILE: &str = "interface-zoom";
+
+/// The zoom in force; 1 until `read_chosen`, and where nothing was ever chosen.
+static CHOSEN: std::sync::Mutex<f64> = std::sync::Mutex::new(1.0);
+
+/// A zoom as the app takes it, from a command or the file: a number, from half to double.
+fn zoom_of(factor: f64) -> Option<f64> {
+    (factor.is_finite() && factor > 0.0).then(|| factor.clamp(0.5, 2.0))
+}
+
+/// The interface's zoom in force: 1 is a hundred per cent.
+pub fn chosen() -> f64 {
+    *CHOSEN.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+/// Reads the kept zoom, as the first window is made and before its page has run.
+pub fn read_chosen(app: &tauri::AppHandle<crate::Engine>) {
+    let kept = crate::paths::config_dir(app)
+        .ok()
+        .and_then(|config| std::fs::read_to_string(config.join(FILE)).ok())
+        .and_then(|text| text.trim().parse().ok())
+        .and_then(zoom_of);
+    if let Some(zoom) = kept {
+        *CHOSEN.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = zoom;
+    }
+}
+
+/// A window's page given the zoom as it is built. On CEF on Linux the page says its ratio
+/// as it starts, and `engine::heard` answers that.
+pub fn wear(webview: &tauri::Webview<crate::Engine>) {
+    #[cfg(not(feature = "cef"))]
+    if (chosen() - 1.0).abs() > 0.001 {
+        let _ = webview.set_zoom(chosen());
+    }
+    #[cfg(feature = "cef")]
+    let _ = webview;
+}
+
+/// The interface's zoom as Settings shows it.
+#[tauri::command(async)]
+pub fn interface_zoom_chosen() -> f64 {
+    chosen()
+}
+
+/// The interface's zoom changed: kept for the next run, and in force in every window now.
+#[tauri::command(async)]
+pub fn interface_zoom_choose(
+    app: tauri::AppHandle<crate::Engine>,
+    factor: f64,
+) -> Result<(), String> {
+    use tauri::Manager as _;
+
+    let zoom = zoom_of(factor).ok_or("that is not a zoom")?;
+    let config = crate::paths::config_dir(&app)?;
+    crate::paths::made(&config)?;
+    crate::paths::write_atomically(&config.join(FILE), zoom.to_string().as_bytes())?;
+    *CHOSEN.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = zoom;
+
+    for window in crate::launch::document_windows(&app) {
+        #[cfg(feature = "cef")]
+        engine::zooming(window.label());
+        if let Some(view) = app.get_webview(window.label()) {
+            #[cfg(feature = "cef")]
+            let _ = view.set_zoom(zoom * engine::desktop());
+            #[cfg(not(feature = "cef"))]
+            let _ = view.set_zoom(zoom);
+        }
+        // A Mac's lights stand in the bar, which is as tall as the zoom makes it.
+        #[cfg(target_os = "macos")]
+        crate::lights::refresh(&window);
+    }
+    Ok(())
+}
+
 #[cfg(feature = "cef")]
 mod engine {
     use std::collections::HashMap;
@@ -138,10 +221,19 @@ mod engine {
         SAID.lock()
             .unwrap_or_else(PoisonError::into_inner)
             .insert(window, ratio);
-        let scale = desktop();
+        let scale = desktop() * super::chosen();
         if (ratio - scale).abs() > 0.01 {
             let _ = webview.set_zoom(scale);
         }
+    }
+
+    /// The window's ratio is what the zoom is about to make it, from before its page lays
+    /// out by it: the page places its web tabs as soon as it has, and may do that before
+    /// its own word on the ratio arrives.
+    pub fn zooming(window: &str) {
+        SAID.lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .insert(window.to_owned(), desktop() * super::chosen());
     }
 
     pub fn of(window: &tauri::Window<crate::Engine>) -> f64 {
@@ -149,7 +241,7 @@ mod engine {
             .unwrap_or_else(PoisonError::into_inner)
             .get(window.label())
             .copied()
-            .unwrap_or_else(desktop)
+            .unwrap_or_else(|| desktop() * super::chosen())
     }
 }
 
@@ -190,7 +282,7 @@ pub fn page_scale_seen(webview: tauri::Webview<crate::Engine>, ratio: f64) {
 
 /// The ratio between what a window's own page measures and the screen's pixels it is
 /// drawn in: where its web pages go is what it measured times this. Its page's own word
-/// on CEF on Linux, else the window's scale.
+/// on CEF on Linux, else the window's scale times the interface's zoom.
 #[cfg_attr(
     feature = "cef",
     allow(
@@ -205,7 +297,7 @@ pub fn of(window: &tauri::Window<crate::Engine>) -> tauri::Result<f64> {
     }
     #[cfg(not(feature = "cef"))]
     {
-        window.scale_factor()
+        Ok(window.scale_factor()? * chosen())
     }
 }
 
@@ -224,7 +316,16 @@ pub fn web(factor: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{scale_of_dpi, xsettings_int, SCRIPT};
+    use super::{scale_of_dpi, xsettings_int, zoom_of, SCRIPT};
+
+    #[test]
+    fn a_zoom_is_a_number_from_half_to_double() {
+        assert_eq!(zoom_of(1.25), Some(1.25));
+        assert_eq!(zoom_of(9.0), Some(2.0));
+        assert_eq!(zoom_of(0.1), Some(0.5));
+        assert_eq!(zoom_of(0.0), None);
+        assert_eq!(zoom_of(f64::NAN), None);
+    }
 
     /// XSETTINGS as a daemon writes it: little-endian, a string, an integer and a colour.
     fn settings(dpi: i32) -> Vec<u8> {

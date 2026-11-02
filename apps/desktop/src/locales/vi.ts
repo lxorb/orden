@@ -2481,6 +2481,8 @@ export const vi: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Thanh tiêu đề riêng của Orden hoặc khung cửa sổ của hệ thống.',
   'How large the text of notes is.': 'Cỡ chữ của ghi chú.',
+  'How large all of Orden is drawn on this device.':
+    'Kích thước hiển thị toàn bộ Orden trên thiết bị này.',
   'The space between the lines of a note.': 'Khoảng cách giữa các dòng của ghi chú.',
   'How wide a line of a note grows before it wraps.':
     'Một dòng ghi chú rộng đến đâu trước khi xuống dòng.',

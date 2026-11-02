@@ -430,6 +430,7 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
 ) -> Result<tauri::WebviewWindowBuilder<'a, crate::Engine, M>, Box<dyn std::error::Error>> {
     let building =
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
+    crate::page_scale::read_chosen(manager.app_handle());
     // This run's hardware acceleration decided here, as the first window is made and
     // before the engine starts; every window and page after it asks `gpu::this_run`.
     #[cfg(all(windows, not(feature = "cef")))]

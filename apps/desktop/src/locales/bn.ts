@@ -2506,6 +2506,7 @@ export const bn: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden-এর নিজের টাইটেল বার, অথবা আপনার সিস্টেমের উইন্ডো ফ্রেম।',
   'How large the text of notes is.': 'নোটের লেখা কত বড়।',
+  'How large all of Orden is drawn on this device.': 'এই ডিভাইসে পুরো Orden কত বড় দেখানো হবে।',
   'The space between the lines of a note.': 'নোটের লাইনগুলোর মাঝের ফাঁক।',
   'How wide a line of a note grows before it wraps.':
     'পরের লাইনে যাওয়ার আগে নোটের একটি লাইন কতটা চওড়া হয়।',

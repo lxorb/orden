@@ -2557,6 +2557,8 @@ export const fil: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Ang sariling title bar ng Orden, o ang kuwadro ng bintana ng iyong sistema.',
   'How large the text of notes is.': 'Gaano kalaki ang teksto ng mga tala.',
+  'How large all of Orden is drawn on this device.':
+    'Kung gaano kalaki ipinapakita ang buong Orden sa device na ito.',
   'The space between the lines of a note.': 'Ang espasyo sa pagitan ng mga linya ng tala.',
   'How wide a line of a note grows before it wraps.':
     'Gaano kalapad ang linya ng tala bago ito bumaba sa susunod na linya.',

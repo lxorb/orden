@@ -2470,6 +2470,8 @@ export const ko: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden 자체의 제목 표시줄이나 시스템의 창 프레임 중에서 고릅니다.',
   'How large the text of notes is.': '노트 글자의 크기입니다.',
+  'How large all of Orden is drawn on this device.':
+    '이 기기에서 Orden 전체가 표시되는 크기입니다.',
   'The space between the lines of a note.': '노트의 줄과 줄 사이 간격입니다.',
   'How wide a line of a note grows before it wraps.':
     '노트의 한 줄이 줄바꿈되기 전까지의 너비입니다.',
