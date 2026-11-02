@@ -94,7 +94,7 @@ export function remindersIn(
     const task = readTask(text)
     if (!task) continue
     const hash = taskHash(task.text)
-    for (const wall of remindTimes(task, auto)) {
+    for (const wall of remindTimes(task, auto, 'start', zone)) {
       const at = momentOf(wall, zone)
       if (!(at > from)) continue
       kept.push({

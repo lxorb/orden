@@ -241,8 +241,10 @@ export interface ChartOptions {
  *  that would cost. */
 function sayer(options?: ChartOptions): (value: number) => string {
   const format = new Intl.NumberFormat(options?.locale ?? tongue)
-  // A number too big to multiply has no hundredths to round to anyway.
-  return (value) => format.format(Math.abs(value) > 1e15 ? value : Math.round(value * 100) / 100)
+  // A number too big to multiply has no hundredths to round to anyway. The added zero
+  // is for a value that rounds to minus zero, which would be written `-0`.
+  return (value) =>
+    format.format(Math.abs(value) > 1e15 ? value : Math.round(value * 100) / 100 + 0)
 }
 
 /** One chart's formatter, handed down to whatever draws the numbers in it. */
@@ -250,10 +252,12 @@ type Said = (value: number) => string
 
 /** Past these a chart's arithmetic stops being arithmetic: a range or a sum runs out to
  *  infinity, and a step rounds down to nothing. */
-const LARGEST = 1e300
+const LARGEST = 1e280
 const SMALLEST = 1e-300
 /** What a chart too big to add up is drawn at a fraction of. */
 const SHRUNK = 1e20
+/** How far a scale can reach and still be said out loud once it is multiplied back. */
+const EDGE = Number.MAX_VALUE / SHRUNK
 
 /** The scale a chart is drawn against: how far it reaches each way, and how far
  *  apart the lines across it are.
@@ -282,7 +286,22 @@ function span(chart: Chart): { low: number; high: number; step: number } {
   const power = 10 ** Math.floor(Math.log10(rough))
   const step = [1, 2, 2.5, 5, 10].map((one) => one * power).find((one) => one >= rough / 1.5) ?? 1
 
-  return { low: Math.floor(bottom / step) * step, high: Math.ceil(top / step) * step, step }
+  return {
+    low: Math.max(Math.floor(bottom / step) * step, -EDGE),
+    high: Math.min(Math.ceil(top / step) * step, EDGE),
+    step,
+  }
+}
+
+/** The values a scale draws its lines at. An end held back at the edge is off the step,
+ *  so there the lines stay on the step and inside the end; everywhere else the ends are
+ *  on it, and the half step is what floating point may have left over. */
+function marks(low: number, high: number, step: number): number[] {
+  const first = low <= -EDGE ? Math.ceil(low / step) * step : low
+  const last = high >= EDGE ? high : high + step / 2
+  const out: number[] = []
+  for (let value = first; value <= last; value += step) out.push(value)
+  return out
 }
 
 function text(words: string, x: number, y: number, className: string, anchor = 'middle'): string {
@@ -295,7 +314,7 @@ function frame(chart: Chart, low: number, high: number, step: number, said: Said
 
   // One line per step of the scale rather than a fixed number of them, so every
   // label is a number the step reaches exactly.
-  for (let value = low; value <= high + step / 2; value += step) {
+  for (const value of marks(low, high, step)) {
     const y = PLOT.y + PLOT.h * ((high - value) / (high - low))
     out.push(
       `<line class="chart-grid" x1="${PLOT.x}" y1="${round(y)}" x2="${PLOT.x + PLOT.w}" y2="${round(y)}"/>`,
@@ -443,7 +462,7 @@ function radar(chart: Chart, low: number, high: number, step: number, said: Said
   const reach = (value: number) => (radius * (value - low)) / (high - low || 1)
   const out: string[] = []
 
-  for (let value = low + step; value <= high + step / 2; value += step) {
+  for (const value of marks(low, high, step).slice(1)) {
     const ring = Array.from({ length: count }, (_one, one) =>
       at(middle, reach(value), spoke(count, one)),
     )
@@ -576,7 +595,12 @@ export function chartSvg(chart: Chart, options?: ChartOptions): string {
   // digits that survive the trip.
   const huge = chart.series.some((one) => one.data.some((value) => Math.abs(value) > LARGEST))
   const say = sayer(options)
-  const said = huge ? (value: number) => say(Number((value * SHRUNK).toPrecision(15))) : say
+  const back = (value: number) => {
+    const whole = Number((value * SHRUNK).toPrecision(15))
+    // Rounding the largest number there is can carry it past the largest number there is.
+    return Number.isFinite(whole) ? whole : Math.sign(value) * Number.MAX_VALUE
+  }
+  const said = huge ? (value: number) => say(back(value)) : say
   const drawn = huge
     ? {
         ...chart,

@@ -29,6 +29,9 @@ export interface WallTime {
    *  moment is counted from it, since a clock change between the two puts the wall time
    *  somewhere other than that many minutes earlier, or nowhere. */
   before?: { date: string; time: string; minutes: number }
+  /** A counted reminder that shares its minute with a written one but not its moment,
+   *  which a clock change repeating that minute does; see `remindTimes` and `reminderId`. */
+  twin?: true
 }
 
 const MINUTE = 60_000
@@ -47,6 +50,7 @@ export function remindTimes(
   task: TaskFields,
   auto: number | null,
   due: DueReads = 'start',
+  reader?: string,
 ): WallTime[] {
   if (task.done || task.cancelled) return []
 
@@ -66,14 +70,28 @@ export function remindTimes(
   }
   if (auto !== null && day && task.time) found.push(before(at(day, task.time), auto))
 
-  const seen = new Set<string>()
-  return found
-    .filter((one) => {
-      const key = `${one.date} ${one.time}`
-      if (seen.has(key)) return false
-      seen.add(key)
+  // Once per moment. Two on one minute are nearly always one moment, and only then is
+  // it worth working out; `reader` is the zone a floating time is read in, as `momentOf`.
+  const seen = new Map<string, WallTime[]>()
+  const once = found.filter((one) => {
+    const key = `${one.date} ${one.time}`
+    const same = seen.get(key)
+    if (!same) {
+      seen.set(key, [one])
       return true
-    })
+    }
+    const moment = momentOf(one, reader)
+    if (same.some((other) => Object.is(momentOf(other, reader), moment))) return false
+    same.push(one)
+    return true
+  })
+
+  return once
+    .map((one) =>
+      one.before && (seen.get(`${one.date} ${one.time}`)?.length ?? 0) > 1
+        ? { ...one, twin: true as const }
+        : one,
+    )
     .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
 }
 
@@ -177,7 +195,10 @@ function formatter(zone: string): Intl.DateTimeFormat {
  *  enough for a Windows toast's tag, and spread enough that 64 of them never meet. */
 export function reminderId(space: string, path: string, hash: string, wall: WallTime): string {
   let value = 0xcbf29ce484222325n
-  const key = [space, path, hash, `${wall.date} ${wall.time}`].join('\n')
+  // A twin has to be told from the written reminder on its minute, since an alarm, a
+  // timer and a row are all held by the id. Every other id is what it always was.
+  const minute = `${wall.date} ${wall.time}${wall.twin ? ' counted' : ''}`
+  const key = [space, path, hash, minute].join('\n')
   for (const byte of new TextEncoder().encode(key)) {
     value ^= BigInt(byte)
     value = (value * 0x100000001b3n) & 0xffffffffffffffffn

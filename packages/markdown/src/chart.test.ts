@@ -368,8 +368,8 @@ describe('numbers at the ends of what a number can be', () => {
     const svg = chartSvg(readChart('series:\n  - data: [1.7e308, -1.7e308]\n')!)
     const ticks = [...svg.matchAll(/class="chart-tick"[^>]*>([^<]+)</g)].map((one) => one[1])
     expect(ticks).toContain('0')
-    expect(ticks.some((one) => one?.startsWith('150,000,000'))).toBe(true)
-    expect(ticks.some((one) => one?.startsWith('-150,000,000'))).toBe(true)
+    expect(ticks.some((one) => one?.startsWith('100,000,000'))).toBe(true)
+    expect(ticks.some((one) => one?.startsWith('-100,000,000'))).toBe(true)
     for (const y of svg.matchAll(/class="chart-grid"[^>]* y1="([^"]+)"/g)) {
       expect(Number(y[1])).toBeGreaterThanOrEqual(24)
       expect(Number(y[1])).toBeLessThanOrEqual(300)
