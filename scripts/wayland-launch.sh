@@ -36,6 +36,9 @@
 #   - with WORKER=1, a web tab's page whose worker has to answer it, as it opens and
 #     after Orden is quit and started again with no address (#777,
 #     scripts/worker-drive.py);
+#   - with SESSION=1, a page in a web tab that makes a cookie with no expiry, and that
+#     cookie still there after Orden is quit and started again with no address (#483,
+#     scripts/session-drive.py);
 #   - with CERT=1, a site served over https (CERT_HOST, example.com unless said) and
 #     the certificate its page came with shown from the site's popover (#776,
 #     scripts/cert-drive.py);
@@ -202,7 +205,7 @@ if [ "${DRIVE:-0}" = 1 ]; then
   NIB_CEF_DEBUG_PORT=${NIB_CEF_DEBUG_PORT:-9339}
   export NIB_CEF_DEBUG_PORT
 fi
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ] || [ "${GRANTS:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ] || [ "${GRANTS:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
@@ -224,6 +227,17 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ 
   const worker = new Worker(URL.createObjectURL(code))
   worker.onmessage = (event) => { document.title = 'a worker answered at ' + event.data }
   worker.postMessage(loaded)
+</script>
+PAGE
+  fi
+  # With SESSION=1, a page that makes a cookie with no expiry, and says if it found one.
+  if [ "${SESSION:-0}" = 1 ]; then
+    cat > "$out/site/index.html" <<'PAGE'
+<!doctype html><title>a session waiting</title>
+<script>
+  const found = document.cookie.includes('signed=in')
+  document.cookie = 'signed=in; path=/'
+  document.title = found ? 'a session cookie kept' : 'a session cookie made'
 </script>
 PAGE
   fi
@@ -640,6 +654,37 @@ if [ "$status" = 0 ] && [ "${WORKER:-0}" = 1 ]; then
     if wait_for_views 1; then
       sleep 3
       python3 "$here/worker-drive.py" "$out" "started again" "$since" || status=1
+    else
+      echo "::error::no window mapped when started again"
+      status=1
+    fi
+  fi
+fi
+
+# A session cookie, and the same cookie on the web tab the app comes back to once it is
+# quit and started again with no address (#483).
+if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/session-drive.py" "$out" 'a session cookie made' || status=1
+  if [ "$status" = 0 ]; then
+    # Kept tabs reach the disk a few seconds after they change; see WORKER=1.
+    sleep 10
+    # Its window closed, as a reader quits. A signal would not do: Chromium brings a
+    # session cookie back after an exit it takes for a crash whatever it is told.
+    swaymsg '[title=".*"] kill' > /dev/null || true
+    for _ in $(seq 100); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
+    if kill -0 "$app_pid" 2>/dev/null; then
+      echo "::error::the app did not quit with its window closed"
+      status=1
+    fi
+    kill -KILL "$app_pid" 2>/dev/null || true
+    wait "$app_pid" 2>/dev/null || true
+    endpoint
+    "${command[@]}" > "$out/orden-again.log" 2>&1 &
+    app_pid=$!
+    if wait_for_views 1; then
+      sleep 3
+      python3 "$here/session-drive.py" "$out" 'a session cookie kept' || status=1
     else
       echo "::error::no window mapped when started again"
       status=1

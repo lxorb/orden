@@ -35,6 +35,9 @@
 //! out; there a lasting cookie survives a restart and a session one does not, which
 //! docs/web-tabs.md says out loud.
 //!
+//! Orden's own Chromium, on Linux, does not need this: it is told to keep session cookies
+//! as it starts (`cef_runtime` in engine.rs).
+//!
 //! On Windows the store is reached through the `DevTools` Protocol - every cookie out of
 //! `Network.getAllCookies`, each session one back through `Network.setCookie` - and not
 //! through `ICoreWebView2CookieManager`, the COM manager Orden used first. That one knows

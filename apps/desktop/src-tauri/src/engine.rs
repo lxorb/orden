@@ -155,6 +155,10 @@ pub(crate) const ENGINE_SWIPE: (&str, &str, &str) = (
 /// - `NIB_CEF_DEBUG_PORT`: the `DevTools` protocol on that local port, for a drive.
 /// - `NIB_CEF_SANDBOX`: `disabled` for a container that cannot give Chromium a sandbox,
 ///   `required` to refuse to start without one. Kept wherever it can be otherwise.
+///
+/// And **session cookies are kept**, as Windows and a Mac keep them (`web_cookies.rs`):
+/// a sign-in that lives in one - Moodle's, Shibboleth's - lasts across a restart, as it
+/// does in a browser told to continue where it left off.
 #[cfg(feature = "cef")]
 pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     use tauri_runtime_cef::{Cef, DevToolsPolicy, RemoteDebugging, SandboxPolicy};
@@ -175,6 +179,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     let (swipe_feature, swipe_switch, swipe_off) = ENGINE_SWIPE;
     let mut engine = Cef::default()
         .sandbox(sandbox)
+        .persist_session_cookies(true)
         .deep_link_schemes(["nib"])
         .disable_features([swipe_feature])
         .command_line_args([(swipe_switch, Some(swipe_off))])

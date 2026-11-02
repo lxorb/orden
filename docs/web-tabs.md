@@ -1819,6 +1819,11 @@ store on disk - a lasting cookie survives, a session-only one does not, a restar
 included - until the same seam exists for `WebKitGTK`: wry hands out no cookie store
 there, so there is nothing yet to give an expiry through.
 
+**On Linux today that is Orden's own Chromium, and session cookies are kept.** CEF has the
+setting the system's engines lack, `persist_session_cookies`, and `cef_runtime` turns it on
+for the whole process (`scripts/session-drive.py`). No expiry is written: a session cookie
+stays one, as with Chrome's "Continue where you left off".
+
 **No Orden IPC reaches the site**, three times over:
 
 1. The capabilities name the app's own **webviews** rather than the windows they
