@@ -983,8 +983,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-02, to 3,433,600, for #483: on Windows every window writes what it owes
  *  before the installer ends the app, and closing one window leaves the install to the
  *  last (`installStaged`, `handOn`, `settledForInstaller` in updater.ts). Measured
- *  3,433,239, from about 3,431,283 at 971ae9834. */
-const BUDGET = 3_433_600
+ *  3,433,239, from about 3,431,283 at 971ae9834.
+ *
+ *  Raised 2026-11-02, to 3,457,700, for the open bug round's branches merged together on
+ *  claude/bugs-2026-11: each raise above was measured without the others. Measured
+ *  3,457,189. */
+const BUDGET = 3_457_700
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
