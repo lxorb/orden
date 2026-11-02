@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { reachAs } from '../src/chats/reach'
 import { sha256 } from '../src/crypto'
 import { sweepChats } from '../src/chats/sweep'
+import { sweepUnused } from '../src/unused'
 import { sweepLeftovers } from '../src/leftovers'
 import { chatLogs, type ChatSocket, fire, hangUp, open, say } from './chat-fakes'
 import { call, type ShareView, signIn, type TestEnv, testEnv } from './harness'
@@ -1132,6 +1133,118 @@ describe('chats', () => {
       const after = await call(env, `/v2/chats/${chat}/files/${hash}`, { token: people.owner })
       expect(after.status).toBe(404)
       expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([])
+    })
+
+    describe('that nothing names any more', () => {
+      const BYTES = new Uint8Array([3, 1, 4, 1])
+      const unused = () =>
+        env.db.prepare('select user_id, hash from unused_blobs order by user_id').all()
+      const holders = (hash: string) =>
+        env.db.prepare('select user_id from blobs where hash = ? order by user_id').all(hash)
+      const served = async (hash: string) => (await call(env, `/i/${hash}.png`)).status
+
+      async function posted(chat: string, hash: string, token = people.writer) {
+        const post = postOf('see', { files: [file(hash)] })
+        await send(token, chat, post)
+        return post
+      }
+
+      test('stops counting and being served, once a delete took the last message', async () => {
+        const chat = await chatOfOwner()
+        const hash = await upload(people.writer, BYTES)
+        const post = await posted(chat, hash)
+        expect(unused()).toEqual([])
+
+        await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
+        expect(unused()).toEqual([{ user_id: ids.writer, hash }])
+
+        expect(await sweepUnused(env)).toBe(1)
+        expect(holders(hash)).toEqual([])
+        expect(await served(hash)).toBe(404)
+      })
+
+      test('and once the chat is erased', async () => {
+        const chat = await chatOfOwner()
+        const hash = await upload(people.writer, BYTES)
+        await posted(chat, hash)
+        env.db.prepare('update chats set ended_at = 1 where id = ?').run(chat)
+
+        expect(await sweepChats(env, T0)).toBe(1)
+        expect(unused()).toEqual([{ user_id: ids.writer, hash }])
+
+        await sweepUnused(env)
+        expect(holders(hash)).toEqual([])
+        expect(await served(hash)).toBe(404)
+      })
+
+      test('and once its whole space is purged, whoever of its members posted it', async () => {
+        const chat = await chatOfOwner()
+        const hash = await upload(people.writer, BYTES)
+        await posted(chat, hash)
+
+        await call(env, `/v1/spaces/${spaceId}`, { method: 'DELETE', token: people.owner })
+        await call(env, `/v1/trash/spaces/${spaceId}`, { method: 'DELETE', token: people.owner })
+
+        expect(holders(hash)).toEqual([])
+        expect(await served(hash)).toBe(404)
+      })
+
+      test('and leaves alone an account outside the chat that holds the same bytes', async () => {
+        const chat = await chatOfOwner()
+        const hash = await upload(people.writer, BYTES)
+        await upload(people.stranger, BYTES)
+        const post = await posted(chat, hash)
+
+        await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
+        expect(unused()).toEqual([{ user_id: ids.writer, hash }])
+
+        await sweepUnused(env)
+        expect(holders(hash)).toEqual([{ user_id: ids.stranger }])
+        expect(await served(hash)).toBe(200)
+      })
+
+      test('and a member whose own note shows the same bytes keeps them', async () => {
+        const chat = await chatOfOwner()
+        const hash = await upload(people.owner, BYTES)
+        await call(env, `/v1/spaces/${spaceId}/notes`, {
+          token: people.owner,
+          body: { path: 'Mine.md', content: `![](/i/${hash}.png)\n` },
+        })
+        const post = await posted(chat, hash, people.owner)
+
+        await send(people.owner, chat, { kind: 'delete', id: id(), target: post.message })
+        await sweepUnused(env)
+        expect(holders(hash)).toEqual([{ user_id: ids.owner }])
+        expect(await served(hash)).toBe(200)
+      })
+
+      test('and another chat naming them keeps them served', async () => {
+        const chat = await chatOfOwner()
+        const other = (await makeChat()).json.chat
+        const hash = await upload(people.writer, BYTES)
+        const post = await posted(chat, hash)
+        await posted(other, hash)
+
+        await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
+        await sweepUnused(env)
+        expect((await call(env, `/v2/chats/${other}/files/${hash}`, { token: people.reader })).status).toBe(200)
+        expect(holders(hash)).toEqual([{ user_id: ids.owner }])
+      })
+
+      test('and a post held for later that names them keeps them', async () => {
+        const chat = await chatOfOwner()
+        const hash = await upload(people.writer, BYTES)
+        const post = await posted(chat, hash)
+        await send(people.writer, chat, {
+          kind: 'schedule',
+          id: id(),
+          sendAt: T0 + 3_600_000,
+          post: postOf('later', { files: [file(hash)] }),
+        })
+
+        await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
+        expect(unused()).toEqual([])
+      })
     })
 
     test('a guest holds no blobs, so attaches none', async () => {
