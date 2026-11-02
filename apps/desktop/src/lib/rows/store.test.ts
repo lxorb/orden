@@ -222,7 +222,7 @@ describe('the rows of every space', () => {
 
     expect(store.of().map((row) => row.path)).toEqual(['Road.md', 'Road.md'])
     const link = { kind: 'link', target: 'Road' }
-    expect(store.of().map((row) => row.note['see'])).toEqual([link, link])
+    expect(store.of().map((row) => row.note.see)).toEqual([link, link])
     expect(tasks(store.of())).toEqual(['Work:Road.md:Read [[Road]]'])
   })
 

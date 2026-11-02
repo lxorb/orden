@@ -347,7 +347,7 @@ export class Saving {
     for (const one of notes) this.syncMoving.set(one, moving)
 
     try {
-      await Promise.all(notes.map((one) => this.inTheAir.get(one)))
+      await Promise.all(notes.map((one) => this.inTheAir.get(one) ?? Promise.resolve()))
       return await run()
     } finally {
       for (const one of notes) if (this.syncMoving.get(one) === moving) this.syncMoving.delete(one)
