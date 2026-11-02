@@ -45,6 +45,7 @@ import {
   type Thing,
 } from '@orden/markdown/canvas'
 import { extrasRead, extrasText, holdsExtras } from '@orden/markdown/canvas-extras'
+import { standing } from '@orden/markdown/canvas-merge'
 import * as Y from 'yjs'
 import { fold } from './fold'
 
@@ -218,6 +219,107 @@ function placeIn(plane: Y.Map<Y.Map<unknown>>, id: string): number | null {
   return typeof z === 'number' ? z : null
 }
 
+/** One record's place in the stack, as `stacked` compares them. */
+interface Place {
+  id: string
+  z: number
+}
+
+function under(one: Place, other: Place): boolean {
+  if (one.z !== other.z) return one.z < other.z
+  return one.id < other.id
+}
+
+/** One of a file's three lists, its order written into the room where the two differ.
+ *
+ *  A list only says which order and a record only says where it sits, so what moved is
+ *  worked out against where they sit. Only what has to move is written, so a card
+ *  brought to the front is one number and whatever somebody else moved meanwhile stays
+ *  theirs. It goes between its new neighbours, a fraction where it has to be: the rest
+ *  of the stack stays where it is, and `nextPlace` goes on from the highest whatever
+ *  that is.
+ *
+ *  What both ends of the two lists hold as the very same objects is walked off first,
+ *  as in `diff` in canvas-merge.ts, so a stroke added to ten thousand looks at one. */
+function restack(plane: Y.Map<Y.Map<unknown>>, before: readonly Thing[], after: readonly Thing[]) {
+  if (before === after) return
+
+  let head = 0
+  const shortest = Math.min(before.length, after.length)
+  while (head < shortest && before[head] === after[head]) head++
+
+  let tail = 0
+  while (
+    tail < shortest - head &&
+    before[before.length - 1 - tail] === after[after.length - 1 - tail]
+  ) {
+    tail++
+  }
+
+  const middle = after.slice(head, after.length - tail)
+  if (!middle.length) return
+
+  const placed = (thing: Thing | undefined): Place | null => {
+    const record = thing && plane.get(thing.id)
+    return thing && record ? { id: thing.id, z: placeOf(record) } : null
+  }
+
+  const floor = placed(after[head - 1])
+  const ceiling = placed(after[after.length - tail])
+  const places = middle.map((thing) => placed(thing) as Place)
+  const inside = places
+    .map((place, index) => ({ place, index }))
+    .filter(({ place }) => (!floor || under(floor, place)) && (!ceiling || under(place, ceiling)))
+
+  const stays = new Set<number>()
+  const kept = standing(inside, (one, other) => under(one.place, other.place))
+  for (const at of kept) stays.add((inside[at] as { index: number }).index)
+  if (stays.size === middle.length) return
+
+  for (let from = 0; from < middle.length;) {
+    if (stays.has(from)) {
+      from++
+      continue
+    }
+
+    let to = from
+    while (to < middle.length && !stays.has(to)) to++
+
+    const low = from > 0 ? (places[from - 1] as Place).z : floor?.z
+    const high = to < middle.length ? (places[to] as Place).z : ceiling?.z
+    const count = to - from
+
+    for (let one = 0; one < count; one++) {
+      const z =
+        low !== undefined && high !== undefined
+          ? low + ((high - low) * (one + 1)) / (count + 1)
+          : low !== undefined
+            ? low + one + 1
+            : (high ?? count) - (count - one)
+
+      // Halved until a number has no room left between its neighbours: the whole list
+      // laid out again, once in a very long while, rather than two things in one place.
+      if ((low !== undefined && z <= low) || (high !== undefined && z >= high)) {
+        numbered(plane, after)
+        return
+      }
+
+      plane.get((middle[from + one] as Thing).id)?.set(Z, z)
+      ;(places[from + one] as Place).z = z
+    }
+
+    from = to
+  }
+}
+
+/** A whole list laid out on whole numbers, in its order. */
+function numbered(plane: Y.Map<Y.Map<unknown>>, list: readonly Thing[]) {
+  list.forEach((thing, index) => {
+    const record = plane.get(thing.id)
+    if (record && record.get(Z) !== index) record.set(Z, index)
+  })
+}
+
 function things(canvas: Canvas): Map<string, Thing> {
   const out = new Map<string, Thing>()
   for (const thing of [...canvas.nodes, ...canvas.edges, ...canvas.ink]) out.set(thing.id, thing)
@@ -266,13 +368,21 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
   }
 
   for (const [id, thing] of is) {
-    if (was.get(id) === thing && plane.has(id)) continue
+    // The time as well, because a thing that only moved in the stack is the very same
+    // object with a new one.
+    if (was.get(id) === thing && before.at[id] === after.at[id] && plane.has(id)) continue
     put(plane, thing, after.at[id] ?? 0, placeFor(id))
   }
 
   for (const id of was.keys()) {
     if (!is.has(id)) plane.delete(id)
   }
+
+  // Where things sit, now that everything the edit kept is on the plane. Only within a
+  // list: a file keeps three of them, and the three are drawn apart.
+  restack(plane, before.nodes, after.nodes)
+  restack(plane, before.edges, after.edges)
+  restack(plane, before.ink, after.ink)
 
   // Every tombstone the edit ended up with, whether it came from a delete here or
   // from a merge that dropped something.

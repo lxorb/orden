@@ -734,6 +734,12 @@ describe('the order of the stack', () => {
     expect(order(merged(one, other, 100))).toEqual(order(merged(other, one, 100)))
   })
 
+  test('an id a hand wrote twice comes out once, and takes nothing with it', () => {
+    const one = plane({ nodes: [card('a'), card('a'), card('b')] })
+    const other = plane({ nodes: [card('a'), card('b'), card('c')] })
+    expect(order(merged(one, other, 100))).toEqual(['a', 'b', 'c'])
+  })
+
   test('a merge is the same the second time', () => {
     const start = base('a', 'b', 'c')
     const ours = stamped(start, moved(start, 'c', 'a', 'b'), 200)

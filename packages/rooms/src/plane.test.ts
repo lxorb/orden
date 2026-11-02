@@ -512,7 +512,10 @@ describe('the order of the stack in a room', () => {
 
   test('a thing put in the middle sits in the middle', () => {
     const { one, two } = twoDevices('a', 'b')
-    one.edit({ ...one.canvas, nodes: [one.canvas.nodes[0]!, card('m'), one.canvas.nodes[1]!] }, 2000)
+    one.edit(
+      { ...one.canvas, nodes: [one.canvas.nodes[0]!, card('m'), one.canvas.nodes[1]!] },
+      2000,
+    )
     carry(one, two)
     expect(order(two.canvas)).toEqual(['a', 'm', 'b'])
   })
