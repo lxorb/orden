@@ -761,7 +761,7 @@ pub(crate) fn print_sheet(webview: &PlatformWebview) -> Result<(), String> {
 /// which is `in_hidden_window`'s own, because a protocol call waits for the window's.
 #[cfg(feature = "cef")]
 mod printer {
-    use super::{printing, PdfPage, Printable, PATIENCE};
+    use super::{printing, PdfPage, Printable, Value, PATIENCE};
     use base64::Engine as _;
     use std::path::Path;
     use std::sync::mpsc::Sender;
@@ -787,7 +787,7 @@ mod printer {
             .decode(
                 printed
                     .get("data")
-                    .and_then(|data| data.as_str())
+                    .and_then(Value::as_str)
                     .unwrap_or_default(),
             )
             .map_err(|error| format!("the engine printed something unreadable: {error}"))?;
@@ -833,6 +833,14 @@ mod tests {
             margin,
             landscape,
         }
+    }
+
+    /// Orden's own Chromium writes a PDF itself, so its export asks for a file rather
+    /// than going through the print dialog.
+    #[cfg(feature = "cef")]
+    #[test]
+    fn chromium_writes_the_file_itself() {
+        assert!(super::pdf_supported());
     }
 
     /// A4 upright, in points, with an inch of margin: the numbers `AppKit` expects.
