@@ -255,15 +255,24 @@ def toast_keys(page: Page) -> None:
         press(page, "Enter")
     wait_for(page, "document.querySelector('.toast .undo')", "the toast again")
     # At once: the toast has its six seconds, and once the keyboard is on it, it stays. F6
-    # walks what Tab walks: the card is ahead of the strip, so two back from the note.
+    # walks what Tab walks: the strip, the card, the note.
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Shift+F6")
-    page.keyboard.press("Shift+F6")
     at = where(page)
-    say(f"[toast] Shift+F6 twice from the note: {at}")
+    say(f"[toast] Shift+F6 from the note: {at}")
     if not at.endswith("|Undo"):
-        wrong(f"Shift+F6 twice from the note did not reach Undo: {at}")
-    for key, region in (("F6", "tabs|"), ("Shift+F6", "notices|"), ("Tab", "tabs|"), ("Shift+Tab", "notices|")):
+        wrong(f"Shift+F6 from the note did not reach Undo: {at}")
+    for key, region in (
+        ("F6", "editor|"),
+        ("Shift+F6", "notices|"),
+        ("Tab", "editor|"),
+        ("Shift+F6", "notices|"),
+        # The bar's last button, after the strip and just ahead of the card.
+        ("Shift+Tab", "-|"),
+        ("Tab", "notices|"),
+        ("F6", "editor|"),
+        ("Shift+F6", "notices|"),
+    ):
         page.keyboard.press(key)
         at = where(page)
         say(f"[toast] {key} beside Undo: {at}")
@@ -274,8 +283,8 @@ def toast_keys(page: Page) -> None:
     quiet(page)
     at = where(page)
     say(f"[toast] Undo: the keyboard is on {at}")
-    if not at.startswith("tabs|"):
-        wrong(f"Undo did not hand the keyboard back to the tab it came from: {at}")
+    if not at.startswith("editor|"):
+        wrong(f"Undo did not hand the keyboard back to the note it came from: {at}")
 
 
 def hand_back_hidden(page: Page) -> None:
@@ -286,11 +295,11 @@ def hand_back_hidden(page: Page) -> None:
     if page.evaluate("() => !!document.querySelector('[role=dialog], [role=alertdialog]')"):
         press(page, "Enter")
     wait_for(page, "document.querySelector('.toast .undo')", "the toast")
-    page.keyboard.press("F6")
-    page.keyboard.press("F6")
+    for _ in range(3):
+        page.keyboard.press("F6")
     at = where(page)
     if not at.endswith("|Undo"):
-        wrong(f"F6 twice from the list did not reach Undo: {at}")
+        wrong(f"F6 three times from the list (foot, strip, card) did not reach Undo: {at}")
     page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.openOn('left')) ws.toggleSidebar('left') }")
     page.keyboard.press("Enter")
     wait_for(page, "window.nibApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
@@ -369,17 +378,17 @@ def properties(page: Page, held: str) -> None:
     quiet(page)
     page.evaluate("() => document.querySelector('.prop[data-key=\"place\"] .value input').focus()")
 
-    # The button a key can stand on is drawn exactly as the words of a note that cannot be
-    # written, which is what it was before.
-    box = """() => { const b = document.querySelector('.prop[data-key="weather"] .key').getBoundingClientRect(); const s = getComputedStyle(document.querySelector('.prop[data-key="weather"] .key')); return [b.x, b.y, b.width, b.height, s.fontSize, s.fontFamily, s.color, s.lineHeight] }"""
+    # The control a key can stand on is drawn exactly as the words of a note that cannot be
+    # written, and its words can still be selected.
+    box = """() => { const b = document.querySelector('.prop[data-key="weather"] .key').getBoundingClientRect(); const s = getComputedStyle(document.querySelector('.prop[data-key="weather"] .key')); return [b.x, b.y, b.width, b.height, s.fontSize, s.fontFamily, s.color, s.lineHeight, s.userSelect] }"""
     written = page.evaluate(box)
     page.evaluate("() => { window.nibApp.modes.readOnly = true }")
     quiet(page)
     if page.evaluate("""() => document.querySelector('.prop[data-key="weather"] .key').tagName""") == "SPAN":
         read = page.evaluate(box)
-        say(f"[props] the key as a button {written}, as words {read}")
+        say(f"[props] the key as a control {written}, as words {read}")
         if written != read:
-            wrong(f"the key's button is drawn differently: {written} against {read}")
+            wrong(f"the key as a control is drawn differently: {written} against {read}")
     page.evaluate("() => { window.nibApp.modes.readOnly = false }")
     quiet(page)
     page.evaluate("""() => document.querySelector('.prop[data-key="place"] .value input').focus()""")
@@ -387,7 +396,7 @@ def properties(page: Page, held: str) -> None:
     # Back along the row from its field to its key.
     at = press(page, "Shift+Tab")
     say(f"[props] Shift+Tab from the value: {at}")
-    if "|button.key|" not in at:
+    if "|span.key|" not in at:
         wrong(f"a property's key takes no keyboard: {at}")
         return
 
@@ -407,7 +416,7 @@ def properties(page: Page, held: str) -> None:
     quiet(page)
     at = where(page)
     say(f"[props] Enter on the new name: {at}")
-    if "button.key|region" not in at:
+    if "span.key|region" not in at:
         wrong(f"the keyboard did not stay on the renamed key: {at}")
 
     # Enter on a key renames, as a double click does, and Escape leaves it as it was.
@@ -416,7 +425,7 @@ def properties(page: Page, held: str) -> None:
         wrong(f"Enter on a key did not open its name: {at}")
     at = press(page, "Escape")
     say(f"[props] Escape out of the name: {at}")
-    if "button.key|region" not in at:
+    if "span.key|region" not in at:
         wrong(f"Escape out of a name lost the keyboard: {at}")
 
     # Remove, and the keyboard goes to the key that took its place.
@@ -426,7 +435,7 @@ def properties(page: Page, held: str) -> None:
     quiet(page)
     at = where(page)
     say(f"[props] after Remove: {at}")
-    if "button.key|weather" not in at:
+    if "span.key|weather" not in at:
         wrong(f"the keyboard went with the removed row: {at}")
     words = page.evaluate("() => window.nibApp.workspace.active?.note?.latest ?? ''")
     if "region:" in words or "place:" in words:
