@@ -355,10 +355,10 @@ describe('numbers at the ends of what a number can be', () => {
   )
 
   test('a value is said as what it is, not as infinity', () => {
-    expect(chartSvg(readChart('series:\n  - data: [1e307]\n')!)).toMatch(
-      /<title>10,*0{3}[0,]*<\/title>/,
-    )
-    expect(chartSvg(readChart('series:\n  - data: [1e307]\n')!)).not.toMatch(/<title>∞/)
+    // Three hundred and eight digits, of which a double knows the first sixteen.
+    const svg = chartSvg(readChart('series:\n  - data: [1e307]\n')!)
+    expect(svg).toMatch(/<title>10,000,000,000,000,0\d\d,[\d,]+<\/title>/)
+    expect(svg).not.toMatch(/<title>∞/)
   })
 
   test('a pie too big to add up is still a pie', () => {

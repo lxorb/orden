@@ -241,11 +241,19 @@ export interface ChartOptions {
  *  that would cost. */
 function sayer(options?: ChartOptions): (value: number) => string {
   const format = new Intl.NumberFormat(options?.locale ?? tongue)
-  return (value) => format.format(Math.round(value * 100) / 100)
+  // A number too big to multiply has no hundredths to round to anyway.
+  return (value) => format.format(Math.abs(value) > 1e15 ? value : Math.round(value * 100) / 100)
 }
 
 /** One chart's formatter, handed down to whatever draws the numbers in it. */
 type Said = (value: number) => string
+
+/** Past these a chart's arithmetic stops being arithmetic: a range or a sum runs out to
+ *  infinity, and a step rounds down to nothing. */
+const LARGEST = 1e300
+const SMALLEST = 1e-300
+/** What a chart too big to add up is drawn at a fraction of. */
+const SHRUNK = 1e20
 
 /** The scale a chart is drawn against: how far it reaches each way, and how far
  *  apart the lines across it are.
@@ -262,8 +270,10 @@ function span(chart: Chart): { low: number; high: number; step: number } {
   const every = chart.series.flatMap((one) => one.data)
   const top = Math.max(0, ...every)
   const bottom = Math.min(0, ...every)
-  // A chart of nothing but zeroes still needs a scale to draw against.
-  const reach = top === bottom ? 1 : top - bottom
+  // A chart of nothing but zeroes still needs a scale to draw against, and so does one
+  // whose numbers are too small for a step between them to be a number at all.
+  if (top - bottom < SMALLEST) return { low: 0, high: 1, step: 0.25 }
+  const reach = top - bottom
 
   // A step a little under the rough one is allowed, which buys a line or two more
   // in exchange for a round number: seven over four is 1.75, and 2 reads better
@@ -561,9 +571,23 @@ function legend(chart: Chart): string {
 
 /** The chart as one SVG, sized by its viewBox so the column decides how wide. */
 export function chartSvg(chart: Chart, options?: ChartOptions): string {
-  const { low, high, step } = span(chart)
-  const said = sayer(options)
-  const body = roundly(chart, low, high, step, said) ?? squarely(chart, low, high, step, said)
+  // Every drawing is ratios of the numbers, so a chart too big to add up is the same
+  // picture of smaller ones; only what it says out loud is multiplied back.
+  const huge = chart.series.some((one) => one.data.some((value) => Math.abs(value) > LARGEST))
+  const say = sayer(options)
+  const said = huge ? (value: number) => say(value * SHRUNK) : say
+  const drawn = huge
+    ? {
+        ...chart,
+        series: chart.series.map((one) => ({
+          ...one,
+          data: one.data.map((value) => value / SHRUNK),
+        })),
+      }
+    : chart
+
+  const { low, high, step } = span(drawn)
+  const body = roundly(drawn, low, high, step, said) ?? squarely(drawn, low, high, step, said)
 
   return `<svg class="chart-svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" preserveAspectRatio="xMidYMid meet">${body}</svg>`
 }
