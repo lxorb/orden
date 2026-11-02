@@ -198,7 +198,15 @@
     color: var(--muted);
   }
 
+  /* The row is the box here, so the row answers the keyboard the way a box does, and
+     the words inside it do not: base.css's answer on them drew a square inside the
+     rounded row (#667). Two classes, which is what outweighs that rule. */
   .composer-row:focus-within {
     background: var(--surface-hover);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .composer-row .composer:focus {
+    box-shadow: none;
   }
 </style>
