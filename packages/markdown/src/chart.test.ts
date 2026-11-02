@@ -326,3 +326,48 @@ describe('a kind an object would answer from its prototype', () => {
     }
   })
 })
+
+// The numbers a fence can hold are every finite double, so the arithmetic of the scale
+// is what has to hold: a NaN in an attribute is a chart that draws nothing, or half.
+describe('numbers at the ends of what a number can be', () => {
+  const DATA = [
+    '0, 0',
+    '1e308',
+    '1.7e308, 1.7e308',
+    '1e308, -1e308',
+    '-1.7e308, 1',
+    '1e308, 1, -5',
+    '1e300, 1e-300',
+    '5e-324',
+    '-5e-324',
+    '5e-324, 1e-323',
+    '1e-320',
+  ]
+  const KINDS = ['bar', 'line', 'scatter', 'pie', 'donut', 'radar', 'polar']
+
+  test.each(KINDS.flatMap((kind) => DATA.map((data) => [kind, data] as const)))(
+    '%s of [%s] holds nothing but numbers',
+    (kind, data) => {
+      const figure = chartFigure(`type: ${kind}\nseries:\n  - data: [${data}]\n`)
+      expect(figure).toMatch(/<svg/)
+      expect(figure).not.toMatch(/NaN|Infinity/)
+    },
+  )
+
+  test('a value is said as what it is, not as infinity', () => {
+    expect(chartSvg(readChart('series:\n  - data: [1e307]\n')!)).toMatch(
+      /<title>10,*0{3}[0,]*<\/title>/,
+    )
+    expect(chartSvg(readChart('series:\n  - data: [1e307]\n')!)).not.toMatch(/<title>∞/)
+  })
+
+  test('a pie too big to add up is still a pie', () => {
+    const svg = chartSvg(readChart('type: pie\nseries:\n  - data: [1.7e308, 1.7e308]\n')!)
+    expect(svg.match(/class="chart-slice"/g)).toHaveLength(2)
+  })
+
+  test('zeroes draw against the same scale they always asked for', () => {
+    const svg = chartSvg(readChart('series:\n  - data: [0, 0]\n')!)
+    expect(svg.match(/class="chart-grid"/g)).toHaveLength(5)
+  })
+})
