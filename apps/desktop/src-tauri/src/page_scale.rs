@@ -112,7 +112,7 @@ fn zoom_of(factor: f64) -> Option<f64> {
 pub fn interface_zoom_chosen() -> f64 {
     #[cfg(feature = "cef")]
     {
-        engine::chosen()
+        engine::in_force()
     }
     #[cfg(not(feature = "cef"))]
     {
@@ -164,7 +164,7 @@ mod engine {
     static CHOSEN: Mutex<f64> = Mutex::new(1.0);
 
     /// The interface's zoom in force: 1 is a hundred per cent.
-    pub fn chosen() -> f64 {
+    pub fn in_force() -> f64 {
         *CHOSEN.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
@@ -250,7 +250,7 @@ mod engine {
         SAID.lock()
             .unwrap_or_else(PoisonError::into_inner)
             .insert(window, ratio);
-        let scale = desktop() * chosen();
+        let scale = desktop() * in_force();
         if (ratio - scale).abs() > 0.01 {
             let _ = webview.set_zoom(scale);
         }
@@ -262,7 +262,7 @@ mod engine {
     pub fn zooming(window: &str) {
         SAID.lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .insert(window.to_owned(), desktop() * chosen());
+            .insert(window.to_owned(), desktop() * in_force());
     }
 
     pub fn of(window: &tauri::Window<crate::Engine>) -> f64 {
@@ -270,7 +270,7 @@ mod engine {
             .unwrap_or_else(PoisonError::into_inner)
             .get(window.label())
             .copied()
-            .unwrap_or_else(|| desktop() * chosen())
+            .unwrap_or_else(|| desktop() * in_force())
     }
 }
 
