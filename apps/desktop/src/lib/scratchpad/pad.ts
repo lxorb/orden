@@ -20,29 +20,125 @@
  *  the column it slides in PadColumn.svelte, the card ScratchpadCard.svelte. */
 
 import type { EditorView } from '@orden/editor'
+import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { applied, type Edit } from '../search/replace'
+import { forget, isRecord, isString, keep, stored, storedText } from '../stored'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { shown } from './is.svelte'
 import { difference, joined } from './words'
 
+/** The words the card is writing, until the file has them. A write begun as the page goes
+ *  may never land - a browser does not wait for it, and WebKit lost it now and then - and
+ *  this is in no session to be written by the next launch, as a note's words are (#446).
+ *
+ *  Held with what the file may say for them to be written over it: what it said when they
+ *  were begun, or any write then on its way. Anything else is somebody's words since, an
+ *  append's or another program's, and the two go side by side rather than one over the
+ *  other; see `settled`. */
+const WRITING = 'nib:scratchpad-writing'
+
+interface Owed {
+  words: string
+  over: string[]
+}
+
+function owedNow(): Owed | null {
+  const held = stored(WRITING)
+  return isRecord(held) && isString(held.words) && Array.isArray(held.over)
+    ? { words: held.words, over: held.over.filter(isString) }
+    : null
+}
+
+/** Enough to tell two texts apart, without holding a second copy of the words. */
+function stamp(text: string): string {
+  let hash = 2166136261
+  for (let at = 0; at < text.length; at++) {
+    hash = Math.imul(hash ^ text.charCodeAt(at), 16777619)
+  }
+  return `${text.length}:${(hash >>> 0).toString(36)}`
+}
+
+/** What the words owed and what the file says come to. */
+function settled(owed: Owed, file: string): string {
+  if (file === owed.words) return file
+  return owed.over.includes(stamp(file)) ? owed.words : joined(file, owed.words)
+}
+
 class Scratchpad {
   private asked: Promise<string> | null = null
+  /** What the file said when this window last read or wrote it; null before that. */
+  private known: string | null = null
+  /** The words of the writes on their way. */
+  private readonly onTheirWay = new Set<string>()
   /** The card's editor while it is up, which holds the words before the file does. */
   live: EditorView | null = null
   /** The line a search hit asked the card to land on; the card takes it. */
   line: number | null = null
 
-  /** Where it is, made the first time. One question per run; a failed one is asked
-   *  again next time. */
+  /** Where it is, made the first time, with what the last run did not get written down
+   *  written first. One question per run; a failed one is asked again next time. */
   where(): Promise<string> {
-    this.asked ??= invoke<string>('scratchpad_path').catch((error: unknown) => {
-      this.asked = null
-      throw error
-    })
+    this.asked ??= invoke<string>('scratchpad_path')
+      .then(async (path) => {
+        await this.pay(path)
+        return path
+      })
+      .catch((error: unknown) => {
+        this.asked = null
+        throw error
+      })
     return this.asked
+  }
+
+  /** What is owed, written. A disk that will not take it or a file that will not read
+   *  costs nothing: it stays owed, and the card opens on it; see `editable`. */
+  private async pay(path: string): Promise<void> {
+    const owed = owedNow()
+    if (!owed) return
+
+    try {
+      const file = await workspace.noteText(path)
+      if (file === null && (await onDisk(path))) return
+      const words = settled(owed, file ?? '')
+      if (words !== file) await writeFile(path, words)
+      this.known = words
+      forget(WRITING)
+    } catch (error) {
+      log('warn', `scratchpad: what the last run owed is not written yet: ${String(error)}`)
+    }
+  }
+
+  /** The card's words to the file, held until they are there. Storage too full to hold
+   *  them leaves nothing older in their place, which the next launch would write. */
+  async writeDown(path: string, words: string): Promise<void> {
+    const mine = JSON.stringify({ words, over: this.mayBe() } satisfies Owed)
+    if (!keep(WRITING, mine)) {
+      forget(WRITING)
+      keep(WRITING, mine)
+    }
+
+    await this.landed(path, words)
+    if (storedText(WRITING) === mine) forget(WRITING)
+  }
+
+  /** What the file may say now, as far as this window can tell. */
+  private mayBe(): string[] {
+    const known = this.known === null ? [] : [this.known]
+    return [...known, ...this.onTheirWay].map(stamp)
+  }
+
+  /** Every write of the file goes through here, so `known` stays what it says. */
+  private async landed(path: string, words: string): Promise<void> {
+    this.onTheirWay.add(words)
+    try {
+      await writeFile(path, words)
+      this.known = words
+    } finally {
+      this.onTheirWay.delete(words)
+    }
   }
 
   /** The card up, with the keyboard in it unless asked not to, at a line when one is
@@ -76,7 +172,7 @@ class Scratchpad {
     if (now.replace(/\r\n?/g, '\n') !== before) return false
 
     live?.dispatch({ changes: [...edits] })
-    await writeFile(path, applied(before, edits))
+    await this.written(path, applied(before, edits))
     return true
   }
 
@@ -84,7 +180,10 @@ class Scratchpad {
    *  yet. Throws where the file is there and will not read, since a card opened empty
    *  on it saved over everything it held at the first keystroke. */
   async editable(): Promise<string> {
-    return this.toChange(await this.where())
+    const text = await this.toChange(await this.where())
+    this.known = text
+    const owed = owedNow()
+    return owed ? settled(owed, text) : text
   }
 
   /** What a write changes: the card's words while it is up, else the file's, and
@@ -106,7 +205,16 @@ class Scratchpad {
     if (after === before) return
 
     this.live?.dispatch({ changes: difference(before, after) })
-    await writeFile(path, after)
+    await this.written(path, after)
+  }
+
+  /** An edit, written. The card's words have what is owed in them, so with the card up it
+   *  is done with; with the card away it is not, and goes beside these next launch. */
+  private async written(path: string, words: string): Promise<void> {
+    const held = storedText(WRITING)
+    const within = this.live !== null
+    await this.landed(path, words)
+    if (within && storedText(WRITING) === held) forget(WRITING)
   }
 }
 

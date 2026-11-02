@@ -208,12 +208,13 @@ def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
     if pressed["tall"] < start["tall"] - 2:
         wrong(f"the words below jumped up: {start['tall']}px became {pressed['tall']}px at once")
 
-    page.wait_for_timeout(70)
+    # Until it has shrunk, rather than 70 ms on: a busy runner had not drawn the first frame
+    # of the movement by then.
+    shrunk = f"() => ({MOTION})({json.dumps(selector)}).tall < {start['tall']}"
+    DRIVE.waited(page, shrunk, "the block to shrink while it was shutting", 5)
     midway = page.evaluate(MOTION, selector)
     say(f"[{label}] midway: {json.dumps(midway)}")
     shot(page, f"{at}-folding-midway")
-    if midway["tall"] >= start["tall"]:
-        wrong("the block did not shrink while it was shutting")
 
     page.wait_for_timeout(600)
     landed = page.evaluate(MOTION, selector)
