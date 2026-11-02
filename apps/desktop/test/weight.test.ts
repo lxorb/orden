@@ -963,7 +963,7 @@ function holds(tail: string): boolean {
  *  3,430,841.
  *
  *  Raised 2026-11-02, to 3,433,500, for #680: the interface's zoom in Settings, and the row
- *  taking a drag on `dragenter` (#427). Measured 3,432,908. */
+ *  taking a drag on `dragenter` (#427). Measured 3,432,626. */
 const BUDGET = 3_433_500
 const MOST_FILES = 382
 
