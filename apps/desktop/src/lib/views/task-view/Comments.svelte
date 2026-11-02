@@ -93,8 +93,10 @@
   {/each}
   {#if writable}
     <!-- A quiet row like Add sub-task above it, its mark the one a task's row comments
-         with, and the words on the row's line rather than at the top of a box (#667). -->
-    <label class="nib-row composer-row">
+         with, and the words on the row's line rather than at the top of a box (#667). It
+         wears the field as well, for what a field says as the keyboard lands in it: round
+         the row, the box here, rather than a square round the words inside it. -->
+    <label class="nib-row nib-field composer-row">
       <span class="nib-row-mark"><Glyph icon={Message} /></span>
       <textarea
         bind:this={field}
@@ -165,23 +167,32 @@
     opacity: 1;
   }
 
+  /* The field's border is there all the time, so it comes off the row's own room to
+     leave the words where Add sub-task's are. */
   .composer-row {
     align-items: flex-start;
+    padding-inline: calc(var(--row-pad) - 1px);
+    /* A quiet row until the keyboard lands; the field's answer to that is base.css's. */
+    border-color: transparent;
     color: var(--muted);
     cursor: text;
   }
 
+  .composer-row:not(:hover, :focus-within) {
+    background: none;
+  }
+
   .composer-row .nib-row-mark {
-    height: var(--row-height);
+    height: calc(var(--row-height) - 2px);
   }
 
   /* One line of words is the row's line, centred in its height the way a row's label
      is; more lines grow it downwards from there. */
-  .composer {
+  .composer-row .composer {
     flex: 1;
     min-width: 0;
     margin: 0;
-    padding: calc((var(--row-height) - var(--text-row) * var(--leading-row)) / 2) 0;
+    padding: calc((var(--row-height) - 2px - var(--text-row) * var(--leading-row)) / 2) 0;
     border: none;
     background: none;
     color: var(--text-strong);
@@ -189,7 +200,7 @@
     line-height: var(--leading-row);
     resize: none;
     field-sizing: content;
-    min-height: var(--row-height);
+    min-height: calc(var(--row-height) - 2px);
     max-height: 30vh;
     outline: none;
   }
@@ -198,15 +209,7 @@
     color: var(--muted);
   }
 
-  /* The row is the box here, so the row answers the keyboard the way a box does, and
-     the words inside it do not: base.css's answer on them drew a square inside the
-     rounded row (#667). Two classes, which is what outweighs that rule. */
   .composer-row:focus-within {
     background: var(--surface-hover);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-  }
-
-  .composer-row .composer:focus {
-    box-shadow: none;
   }
 </style>

@@ -131,6 +131,12 @@ def the_comment_field(page: Page) -> None:
         wrong(f"the comment field is still a box: border {fields['border']}")
 
 
+BORDER = """() => {
+  const row = document.querySelector('.sheet .composer').closest('.nib-row')
+  row.getAnimations().forEach((one) => one.finish())
+  return getComputedStyle(row).borderTopColor
+}"""
+
 # What the comment field's focus draws: on the words, on the row, and what clips it.
 RING = """() => {
   const composer = document.querySelector('.sheet .composer')
@@ -163,6 +169,10 @@ def the_comment_ring(page: Page) -> None:
     """The ring of the comment field goes round the row it is drawn as, not round the
     words inside that row, which drew a square halo inside the rounded row (#667)."""
     composer = page.locator(".sheet .composer")
+    composer.hover()
+    rest = page.evaluate(BORDER)
+    if rest != "rgba(0, 0, 0, 0)":
+        wrong(f"the comment row is a box under the pointer: {rest}")
     composer.focus()
     # Past the box-shadow's own transition.
     page.evaluate("""() => document.querySelector('.sheet .composer').closest('.nib-row').getAnimations().forEach((one) => one.finish())""")
