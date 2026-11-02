@@ -2521,6 +2521,8 @@ export const te: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden సొంత టైటిల్ బార్, లేదా మీ సిస్టమ్ విండో ఫ్రేమ్.',
   'How large the text of notes is.': 'నోట్‌ల టెక్స్ట్ ఎంత పెద్దదో అది.',
+  'How large all of Orden is drawn on this device.':
+    'ఈ పరికరంలో Orden మొత్తం ఎంత పెద్దగా కనిపిస్తుంది.',
   'The space between the lines of a note.': 'నోట్ లైన్‌ల మధ్య ఖాళీ.',
   'How wide a line of a note grows before it wraps.':
     'నోట్ లైన్ చుట్టుకునే ముందు ఎంత వెడల్పు పెరుగుతుందో అది.',

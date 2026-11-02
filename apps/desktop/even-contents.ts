@@ -242,6 +242,9 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  carries of a page whose process died, the zoom rows and a host's two spellings. The rule
  *  for reading a name (web-tab/idn.ts) is left out. Measured 5,741,223.
  *
+ *  The code raised on 2026-11-02, to 5,740,000, for #680: the interface's zoom in
+ *  modes.svelte.ts. Measured 5,739,049.
+ *
  *  The code raised on 2026-11-02, to 5,758,000, for the open bug round's branches merged
  *  together on claude/bugs-2026-11: each raise above was measured without the others.
  *  Measured 5,757,454.

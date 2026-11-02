@@ -2486,6 +2486,7 @@ export const ja: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden 独自のタイトルバーか、システムのウィンドウ枠かを選びます。',
   'How large the text of notes is.': 'ノートの文字の大きさです。',
+  'How large all of Orden is drawn on this device.': 'このデバイスで Orden 全体を表示する大きさ。',
   'The space between the lines of a note.': 'ノートの行と行の間隔です。',
   'How wide a line of a note grows before it wraps.': 'ノートの一行が折り返すまでの幅です。',
   'Typing an opening bracket or quote adds the closing one too.':

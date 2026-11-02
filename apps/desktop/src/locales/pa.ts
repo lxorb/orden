@@ -2513,6 +2513,8 @@ export const pa: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ਦੀ ਆਪਣੀ ਸਿਰਲੇਖ ਪੱਟੀ, ਜਾਂ ਤੁਹਾਡੇ ਸਿਸਟਮ ਦਾ ਵਿੰਡੋ ਚੌਖਟਾ।',
   'How large the text of notes is.': 'ਨੋਟਾਂ ਦਾ ਲਿਖਤ ਕਿੰਨਾ ਵੱਡਾ ਹੈ।',
+  'How large all of Orden is drawn on this device.':
+    'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਪੂਰਾ Orden ਕਿੰਨਾ ਵੱਡਾ ਦਿਖਦਾ ਹੈ।',
   'The space between the lines of a note.': 'ਨੋਟ ਦੀਆਂ ਲਾਈਨਾਂ ਵਿਚਕਾਰ ਦੀ ਥਾਂ।',
   'How wide a line of a note grows before it wraps.':
     'ਨੋਟ ਦੀ ਲਾਈਨ ਮੁੜਨ ਤੋਂ ਪਹਿਲਾਂ ਕਿੰਨੀ ਚੌੜੀ ਹੁੰਦੀ ਹੈ।',

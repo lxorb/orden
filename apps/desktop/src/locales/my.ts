@@ -2491,6 +2491,8 @@ export const my: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ၏ ကိုယ်ပိုင် ခေါင်းစဉ်ဘား သို့မဟုတ် သင့်စနစ်၏ ဝင်းဒိုးဘောင်။',
   'How large the text of notes is.': 'မှတ်စုများ၏ စာလုံးအရွယ် မည်မျှကြီးမည်နည်း။',
+  'How large all of Orden is drawn on this device.':
+    'ဤစက်ပေါ်တွင် Orden တစ်ခုလုံး ပြသသည့် အရွယ်အစား။',
   'The space between the lines of a note.': 'မှတ်စုတစ်ခု၏ လိုင်းများကြား အကွာအဝေး။',
   'How wide a line of a note grows before it wraps.':
     'မှတ်စု၏ လိုင်းတစ်ကြောင်း ခေါက်မသွားမီ မည်မျှ ကျယ်မည်နည်း။',

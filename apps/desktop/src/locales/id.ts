@@ -2501,6 +2501,8 @@ export const id: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Bilah judul milik Orden, atau bingkai jendela sistem Anda.',
   'How large the text of notes is.': 'Seberapa besar teks catatan.',
+  'How large all of Orden is drawn on this device.':
+    'Seberapa besar seluruh Orden ditampilkan di perangkat ini.',
   'The space between the lines of a note.': 'Jarak antarbaris dalam catatan.',
   'How wide a line of a note grows before it wraps.':
     'Seberapa lebar baris catatan sebelum terlipat ke baris berikutnya.',

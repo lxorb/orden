@@ -271,6 +271,9 @@ mod kept;
 // Which DNS the web tabs' pages look names up with (#766, #767); see secure_dns.rs.
 #[cfg(desktop)]
 mod secure_dns;
+// A drag out of the app's own page, which the page runs itself on Linux; see page_drag.rs.
+#[cfg(desktop)]
+mod page_drag;
 // How large the app's pages are drawn, and where a web tab's page goes; see
 // page_scale.rs.
 #[cfg(desktop)]
@@ -478,6 +481,8 @@ macro_rules! desktop_commands {
             secure_dns::dns_choose,
             gpu::gpu_line,
             page_scale::page_scale_seen,
+            page_scale::interface_zoom_chosen,
+            page_scale::interface_zoom_choose,
             page_scheme::page_scheme_seen,
             spelling::spell_languages,
             fonts::font_families,

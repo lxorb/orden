@@ -2509,6 +2509,7 @@ export const ps: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'د Orden خپله سرلیک پټه، یا ستاسو د غونډال د کړکۍ چوکاټ.',
   'How large the text of notes is.': 'د یادښتونو متن څومره لوی وي.',
+  'How large all of Orden is drawn on this device.': 'په دې وسیله کې د ټول Orden د ښودلو اندازه.',
   'The space between the lines of a note.': 'د یادښت د کرښو ترمنځ واټن.',
   'How wide a line of a note grows before it wraps.':
     'د یادښت یوه کرښه له ماتېدو مخکې څومره پلنه کېږي.',

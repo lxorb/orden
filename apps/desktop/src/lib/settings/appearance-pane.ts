@@ -1,6 +1,6 @@
 import { key, t } from '../i18n.svelte'
-import { DEFAULTS, type FontPlace, modes } from '../modes.svelte'
-import { isDesktop } from '../tauri'
+import { DEFAULTS, type FontPlace, INTERFACE_ZOOMS, modes } from '../modes.svelte'
+import { isDesktop, platform } from '../tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../schemes'
 import { appSettings, builtIns, type SchemeChoice, theme } from '../theme.svelte'
 import { type ChosenSettings, SHARED, type ThemeSetting, type ThemeValue } from '../themes/settings'
@@ -206,6 +206,8 @@ function ownFields(): Field[] {
 
 /** Settings › Appearance; see `preferences` in ../preferences.ts. */
 export function appearancePane(): Pane {
+  const zooms = isDesktop && platform() === 'linux'
+  if (zooms) void modes.askInterfaceZoom().catch(() => undefined)
   return {
     id: 'appearance',
     label: t('Appearance'),
@@ -373,6 +375,24 @@ export function appearancePane(): Pane {
                   get: () => modes.frame,
                   set: (value) => modes.setFrame(value),
                 },
+                ...(zooms
+                  ? ([
+                      {
+                        // A list and not a slider: this moves the control under the pointer.
+                        kind: 'select',
+                        label: t('Zoom'),
+                        hint: t('How large all of Orden is drawn on this device.'),
+                        words: ['scale', 'interface', 'ui', 'sidebar', 'bigger', 'smaller'],
+                        options: INTERFACE_ZOOMS.map((one) => ({
+                          value: String(one),
+                          label: `${String(Math.round(one * 100))}%`,
+                        })),
+                        initial: '1',
+                        get: () => String(modes.interfaceZoom),
+                        set: (value) => void modes.setInterfaceZoom(Number(value)),
+                      },
+                    ] satisfies Field[])
+                  : []),
               ],
             },
           ] satisfies Group[])

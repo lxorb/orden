@@ -2505,6 +2505,7 @@ export const hi: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden का अपना टाइटल बार या आपके सिस्टम का विंडो फ़्रेम।',
   'How large the text of notes is.': 'नोट का टेक्स्ट कितना बड़ा है।',
+  'How large all of Orden is drawn on this device.': 'इस डिवाइस पर पूरा Orden कितना बड़ा दिखे।',
   'The space between the lines of a note.': 'नोट की पंक्तियों के बीच की जगह।',
   'How wide a line of a note grows before it wraps.':
     'नोट की पंक्ति मुड़ने से पहले कितनी चौड़ी होती है।',

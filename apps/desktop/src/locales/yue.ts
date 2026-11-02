@@ -2435,6 +2435,7 @@ export const yue: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     '用 Orden 自己嘅標題列，定係你系統嘅視窗框。',
   'How large the text of notes is.': '筆記文字有幾大。',
+  'How large all of Orden is drawn on this device.': '成個 Orden 喺呢部裝置上面顯示幾大。',
   'The space between the lines of a note.': '筆記行同行之間嘅空間。',
   'How wide a line of a note grows before it wraps.': '筆記一行可以去到幾闊先換行。',
   'Typing an opening bracket or quote adds the closing one too.':

@@ -985,6 +985,9 @@ function holds(tail: string): boolean {
  *  last (`installStaged`, `handOn`, `settledForInstaller` in updater.ts). Measured
  *  3,433,239, from about 3,431,283 at 971ae9834.
  *
+ *  Raised 2026-11-02, to 3,433,500, for #680: the interface's zoom in Settings, and the row
+ *  taking a drag on `dragenter` (#427). Measured 3,432,626.
+ *
  *  Raised 2026-11-02, to 3,457,700, for the open bug round's branches merged together on
  *  claude/bugs-2026-11: each raise above was measured without the others. Measured
  *  3,457,189. */

@@ -2457,6 +2457,7 @@ export const th: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'แถบชื่อของ Orden เอง หรือกรอบหน้าต่างของระบบคุณ',
   'How large the text of notes is.': 'ขนาดตัวอักษรของโน้ต',
+  'How large all of Orden is drawn on this device.': 'ขนาดการแสดงผลของ Orden ทั้งหมดบนอุปกรณ์นี้',
   'The space between the lines of a note.': 'ระยะห่างระหว่างบรรทัดของโน้ต',
   'How wide a line of a note grows before it wraps.': 'ความกว้างของบรรทัดโน้ตก่อนจะขึ้นบรรทัดใหม่',
   'Typing an opening bracket or quote adds the closing one too.':

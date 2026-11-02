@@ -2549,6 +2549,8 @@ export const ta: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden-இன் சொந்தத் தலைப்புப் பட்டை, அல்லது உங்கள் கணினியின் சாளரச் சட்டகம்.',
   'How large the text of notes is.': 'குறிப்புகளின் உரை எவ்வளவு பெரியது என்பது.',
+  'How large all of Orden is drawn on this device.':
+    'இந்தச் சாதனத்தில் முழு Orden எவ்வளவு பெரிதாகக் காட்டப்படுகிறது.',
   'The space between the lines of a note.': 'ஒரு குறிப்பின் வரிகளுக்கு இடையேயான இடைவெளி.',
   'How wide a line of a note grows before it wraps.':
     'ஒரு குறிப்பின் வரி மடங்குவதற்கு முன் எவ்வளவு அகலமாக வளரும் என்பது.',

@@ -385,7 +385,7 @@ jobs:
       contents: read
     steps:
       - name: KWin, Xvfb and xdotool, as Fedora 44 has them
-        run: dnf install -y kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git ffmpeg-free python3-pillow
+        run: dnf install -y kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool xwd xmessage ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git ffmpeg-free python3-pillow
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -411,6 +411,17 @@ jobs:
           OUT: kwin-out/popups
           KWIN: '1'
           POPUP: '1'
+          NIB_CEF_SANDBOX: disabled
+        run: |
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
+      - name: A note dragged in the file list, and the interface zoomed, under KWin
+        if: always()
+        env:
+          OUT: kwin-out/page
+          KWIN: '1'
+          TREE: '1'
+          ZOOM: '1'
           NIB_CEF_SANDBOX: disabled
         run: |
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"

@@ -2504,6 +2504,7 @@ export const ur: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden کی اپنی ٹائٹل بار، یا آپ کے سسٹم کا ونڈو فریم۔',
   'How large the text of notes is.': 'نوٹس کا متن کتنا بڑا ہو۔',
+  'How large all of Orden is drawn on this device.': 'اس ڈیوائس پر پورا Orden کتنا بڑا دکھائی دے۔',
   'The space between the lines of a note.': 'نوٹ کی لائنوں کے درمیان فاصلہ۔',
   'How wide a line of a note grows before it wraps.': 'نوٹ کی ایک لائن مڑنے سے پہلے کتنی چوڑی ہو۔',
   'Typing an opening bracket or quote adds the closing one too.':

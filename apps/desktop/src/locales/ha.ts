@@ -2544,6 +2544,8 @@ export const ha: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Sandar take ta Orden kanta, ko firam ɗin taga na tsarinka.',
   'How large the text of notes is.': 'Girman rubutun bayanan kula.',
+  'How large all of Orden is drawn on this device.':
+    'Yadda Orden gaba ɗaya yake da girma a wannan na’ura.',
   'The space between the lines of a note.': 'Tazarar da ke tsakanin layukan bayanin kula.',
   'How wide a line of a note grows before it wraps.':
     'Faɗin da layin bayanin kula ke kaiwa kafin ya naɗe.',

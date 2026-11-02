@@ -2555,6 +2555,7 @@ export const ptBR: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'A barra de título do próprio Orden ou a moldura de janela do seu sistema.',
   'How large the text of notes is.': 'O tamanho do texto das notas.',
+  'How large all of Orden is drawn on this device.': 'O tamanho de todo o Orden neste dispositivo.',
   'The space between the lines of a note.': 'O espaço entre as linhas de uma nota.',
   'How wide a line of a note grows before it wraps.':
     'Até que largura uma linha de nota cresce antes de quebrar.',

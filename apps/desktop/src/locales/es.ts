@@ -2573,6 +2573,8 @@ export const es: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'La barra de título propia de Orden o el marco de ventana de tu sistema.',
   'How large the text of notes is.': 'El tamaño del texto de las notas.',
+  'How large all of Orden is drawn on this device.':
+    'El tamaño con el que se muestra todo Orden en este dispositivo.',
   'The space between the lines of a note.': 'El espacio entre las líneas de una nota.',
   'How wide a line of a note grows before it wraps.':
     'Cuánto se ensancha una línea de una nota antes de saltar a la siguiente.',

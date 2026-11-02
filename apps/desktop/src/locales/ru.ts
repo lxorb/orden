@@ -2600,6 +2600,8 @@ export const ru: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Собственная строка заголовка Orden или рамка окна вашей системы.',
   'How large the text of notes is.': 'Размер текста заметок.',
+  'How large all of Orden is drawn on this device.':
+    'Насколько крупно отображается весь Orden на этом устройстве.',
   'The space between the lines of a note.': 'Расстояние между строками заметки.',
   'How wide a line of a note grows before it wraps.':
     'До какой ширины растёт строка заметки, прежде чем перенестись.',

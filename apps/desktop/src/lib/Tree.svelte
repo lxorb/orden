@@ -787,6 +787,9 @@
     return dropTarget.lit(entry.is_dir ? entry.path : folderFor(entry.path))
   }
 
+  /** On `dragenter` as well as `dragover`. A row entered and not taken refuses the drag
+   *  until its next `dragover`, and a gap opening under the pointer enters the carried row
+   *  with the pointer at rest: let go then, and the drop was lost (#427). */
   function overRow(event: DragEvent, entry: Entry) {
     const how = landing(event, shortcuts.platform)
     if (!how) return
@@ -1335,6 +1338,7 @@
       ontouchcancel={endPress}
       ondragstart={(event) => startDrag(event, entry.path)}
       ondragend={endDrag}
+      ondragenter={(event) => overRow(event, entry)}
       ondragover={(event) => overRow(event, entry)}
       ondragleave={(event) => stillInside(event) || dropTarget.clear()}
       ondrop={(event) => drop(event, entry)}

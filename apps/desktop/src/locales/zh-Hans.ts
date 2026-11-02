@@ -2439,6 +2439,7 @@ export const zhHans: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     '使用 Orden 自己的标题栏，或系统的窗口边框。',
   'How large the text of notes is.': '笔记文字的大小。',
+  'How large all of Orden is drawn on this device.': '整个 Orden 在此设备上的显示大小。',
   'The space between the lines of a note.': '笔记行与行之间的距离。',
   'How wide a line of a note grows before it wraps.': '笔记一行在换行前可达的宽度。',
   'Typing an opening bracket or quote adds the closing one too.':

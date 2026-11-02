@@ -2536,6 +2536,8 @@ export const kn: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ನ ಸ್ವಂತ ಶೀರ್ಷಿಕೆ ಪಟ್ಟಿ, ಅಥವಾ ನಿಮ್ಮ ಸಿಸ್ಟಂನ ವಿಂಡೋ ಚೌಕಟ್ಟು.',
   'How large the text of notes is.': 'ಟಿಪ್ಪಣಿಗಳ ಪಠ್ಯ ಎಷ್ಟು ದೊಡ್ಡದು ಎಂಬುದು.',
+  'How large all of Orden is drawn on this device.':
+    'ಈ ಸಾಧನದಲ್ಲಿ ಇಡೀ Orden ಎಷ್ಟು ದೊಡ್ಡದಾಗಿ ಕಾಣಿಸುತ್ತದೆ.',
   'The space between the lines of a note.': 'ಟಿಪ್ಪಣಿಯ ಸಾಲುಗಳ ನಡುವಿನ ಅಂತರ.',
   'How wide a line of a note grows before it wraps.':
     'ಟಿಪ್ಪಣಿಯ ಸಾಲು ಮುಂದಿನ ಸಾಲಿಗೆ ಹೋಗುವ ಮುನ್ನ ಎಷ್ಟು ಅಗಲ ಬೆಳೆಯುತ್ತದೆ ಎಂಬುದು.',

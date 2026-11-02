@@ -2511,6 +2511,7 @@ export const mr: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ची स्वतःची शीर्षक पट्टी किंवा तुमच्या सिस्टमची खिडकी फ्रेम.',
   'How large the text of notes is.': 'नोंदींचा मजकूर किती मोठा आहे.',
+  'How large all of Orden is drawn on this device.': 'या डिव्हाइसवर संपूर्ण Orden किती मोठे दिसते.',
   'The space between the lines of a note.': 'नोंदीच्या ओळींमधील अंतर.',
   'How wide a line of a note grows before it wraps.': 'नोंदीची ओळ गुंडाळण्यापूर्वी किती रुंद होते.',
   'Typing an opening bracket or quote adds the closing one too.':

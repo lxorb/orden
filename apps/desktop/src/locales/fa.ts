@@ -2513,6 +2513,7 @@ export const fa: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'نوار عنوان خود Orden، یا قاب پنجرهٔ سامانهٔ شما.',
   'How large the text of notes is.': 'اندازهٔ متن یادداشت‌ها.',
+  'How large all of Orden is drawn on this device.': 'اندازهٔ نمایش کل Orden در این دستگاه.',
   'The space between the lines of a note.': 'فاصلهٔ میان خط‌های یک یادداشت.',
   'How wide a line of a note grows before it wraps.':
     'یک خط یادداشت پیش از شکستن تا چه پهنایی پیش می‌رود.',
