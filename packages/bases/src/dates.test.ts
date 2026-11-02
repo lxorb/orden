@@ -74,3 +74,13 @@ describe('dates on the floating clock', () => {
     expect(relative(1_000_000_000_000 + offset, 1_000_000_000_000)).toBe(expected)
   })
 })
+
+describe('a time with a fraction of a second', () => {
+  const at = (time: string) => msOf({ kind: 'date', iso: '2026-01-01', time })
+
+  test('counts the fraction once', () => {
+    expect(at('10:00:05.750') - at('10:00:05')).toBe(750)
+    expect(at('10:00:05.900')).toBeLessThan(at('10:00:06.100'))
+    expect(formatDate(dateAt(at('10:00:05.750')), 'HH:mm:ss.SSS')).toBe('10:00:05.750')
+  })
+})

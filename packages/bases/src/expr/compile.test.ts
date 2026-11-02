@@ -3,6 +3,7 @@ import { BasesError } from '../errors'
 import { contextAt, noteRow } from '../fixtures/rows'
 import type { Row, Value } from '../types'
 import { compile } from './compile'
+import { longestInput } from './pattern'
 
 const context = contextAt()
 const book = noteRow(
@@ -288,5 +289,88 @@ describe('mistakes', () => {
   test('a method a value does not have is an error when run', () => {
     expect(() => run('(5).lower()')).toThrow('number has no lower()')
     expect(() => run('number("abc")')).toThrow(BasesError)
+  })
+})
+
+describe('what Object.prototype holds is no property', () => {
+  test.each([
+    'note.constructor',
+    'note.toString',
+    'note.__proto__',
+    'note["constructor"]',
+    'constructor',
+    'this.constructor',
+    'formula.constructor',
+    'note.meta.constructor',
+  ])('%s is null', (source) => {
+    expect(run(source)).toBeNull()
+  })
+
+  test('file.hasProperty asks the note and nothing behind it', () => {
+    expect(run('file.hasProperty("toString")')).toBe(false)
+    expect(run('file.hasProperty("__proto__")')).toBe(false)
+    expect(run('file.hasProperty("status")')).toBe(true)
+  })
+})
+
+describe('a pattern that could freeze whoever opens the base', () => {
+  const long = 'a'.repeat(28)
+
+  test.each([
+    '/(a+)+$/',
+    '/(a*)*$/',
+    '/(a|a)+$/',
+    '/(a|ab)*c/',
+    '/(\\w|\\d)+$/',
+    '/(a?)+$/',
+    '/(?:a+)+$/',
+    '/(a{1,5})+$/',
+    '/((a+))+$/',
+    '/(a+b?)*$/',
+    '/(a*)\\1$/',
+    '/(?<x>a*)\\k<x>$/',
+    '/(a+){20}$/',
+    `/${'a?'.repeat(30)}${'a'.repeat(30)}/`,
+    `/${'(a|a)'.repeat(30)}/`,
+    `/${'.*'.repeat(30)}x/`,
+  ])('%s is refused when it is compiled', (pattern) => {
+    expect(() => compile(`${pattern}.matches("${long}!")`)).toThrow(BasesError)
+  })
+
+  test.each([
+    ['/^abc$/.matches("abc")', true],
+    ['/^(foo|bar)+$/.matches("foobar")', true],
+    ['/^\\d{4}-\\d{2}-\\d{2}$/.matches("2026-11-03")', true],
+    ['/^(\\d{2})+$/.matches("1234")', true],
+    ['/(\\.\\d+)?$/.matches("1.5")', true],
+    ['/^(\\d{1,3}\\.){3}\\d{1,3}$/.matches("10.0.0.1")', true],
+    ['/\\d+-\\d+-\\d+/.matches("1-2-3")', true],
+    ['/(\\w+)@(\\w+)\\.com/.matches("a@b.com")', true],
+    ['/[(a+)+]/.matches("+")', true],
+    ['/\\(a+\\)+/.matches("(a))")', true],
+    ['/^(a|b)*$/i.matches("ABab")', true],
+    ['"a1b".replace(/\\d+/, "x")', 'axb'],
+    ['"a,b".split(/,/)', ['a', 'b']],
+  ] as [string, Value][])('%s still answers', (source, wanted) => {
+    expect(run(source)).toEqual(wanted)
+  })
+
+  test('a value too long for what a pattern may cost is no match, and nothing is scanned', () => {
+    const wide = 'x'.repeat(600)
+    // Two open-ended repeats and a scan from every start: the cube of the length.
+    expect(run(`/.*.*y/.matches("${wide}")`)).toBe(false)
+    expect(run(`/.*.*x/.matches("${wide}")`)).toBe(false)
+    expect(run(`/.*.*x/.matches("xxx")`)).toBe(true)
+    expect(run(`"${wide}".replace(/.*.*x/, "")`)).toBe(wide)
+    expect(run(`"${wide}".split(/.*.*y/)`)).toEqual([wide])
+    // One that costs nothing reads any length.
+    expect(run(`/x$/.matches("${wide}")`)).toBe(true)
+  })
+
+  test('a pattern is measured, not run, so the longest refused one costs no time at all', () => {
+    expect(longestInput(/(foo|bar)baz/)).toBeGreaterThan(1_000_000)
+    expect(longestInput(/\d+-\d+/)).toBeLessThan(1000)
+    expect(longestInput(/\d+-\d+/)).toBeGreaterThan(100)
+    expect(longestInput(/(a+)+/)).toBe(0)
   })
 })
