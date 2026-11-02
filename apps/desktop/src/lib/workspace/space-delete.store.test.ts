@@ -28,6 +28,15 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
+/** What the question before a running terminal closes answers, and what it was asked. */
+const ending = vi.hoisted(() => ({ answer: true, asked: [] as string[][] }))
+vi.mock('../terminal/closing', () => ({
+  mayEnd: (tabs: readonly { kind: string }[]) => {
+    ending.asked.push(tabs.map((one) => one.kind))
+    return Promise.resolve(ending.answer)
+  },
+}))
+
 const { Disk, memoryStorage } = await import('../../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
@@ -101,31 +110,119 @@ describe('the space on screen deleted', () => {
   })
 })
 
-test('a space that left on its own is closed at the switch away from it', async () => {
-  const workspace = await window([WORK, FOOD], 'work')
-  await fetched()
-  workspace.openWebsite()
+describe('a space missing from the listing, which may be a drive not mounted', () => {
+  test('keeps what was on screen at the switch away from it', async () => {
+    const workspace = await window([WORK, FOOD], 'work')
+    await fetched()
+    workspace.openWebsite()
 
-  workspace.spaces = workspace.spaces.filter((one) => one.id !== 'work')
-  await workspace.selectSpace('food')
+    workspace.spaces = workspace.spaces.filter((one) => one.id !== 'work')
+    await workspace.selectSpace('food')
 
-  expect(workspace.tabs).toEqual([])
+    expect(names(workspace.tabs)).toEqual(['web'])
+    expect(Object.keys((workspace.setsWritten() as { aside: object }).aside)).toEqual(['work'])
+  })
+
+  test('keeps its set through a launch, words and running shells with it', async () => {
+    const before = await window([WORK, FOOD], 'work')
+    await fetched()
+    before.openWebsite()
+    await before.selectSpace('food')
+    const written: unknown = JSON.parse(JSON.stringify(before.setsWritten()))
+
+    const after = await window([FOOD], 'food', written)
+    await (await fetched()).wake()
+
+    expect(names(after.tabs)).toEqual(['web'])
+    expect(Object.keys((after.setsWritten() as { aside: object }).aside)).toEqual(['work'])
+  })
 })
 
-test('a session that kept the set of a space already gone lets it go at the launch', async () => {
-  // Written by the builds this was wrong in: the tabs are put aside under `work`.
+test('a space out of sight deleted closes its set, built or not', async () => {
   const before = await window([WORK, FOOD], 'work')
   await fetched()
   before.openWebsite()
   await before.selectSpace('food')
   const written: unknown = JSON.parse(JSON.stringify(before.setsWritten()))
-  expect(Object.keys((written as { aside: object }).aside)).toEqual(['work'])
+  await before.deleteSpace('work')
+  expect(before.tabs).toEqual([])
 
-  const after = await window([FOOD], 'food', written)
+  const after = await window([WORK, FOOD], 'food', written)
+  await after.deleteSpace('work')
   await (await fetched()).wake()
 
   expect(after.tabs).toEqual([])
-  expect(Object.keys((after.setsWritten() as { aside: object }).aside)).toEqual([])
+  expect(Object.keys((after.setsWritten() as { aside: object } | undefined)?.aside ?? {})).toEqual(
+    [],
+  )
+})
+
+test('the last space deleted leaves its tabs the window’s, for the next space made', async () => {
+  const workspace = await window([WORK], 'work')
+  await fetched()
+  workspace.openWebsite()
+
+  await workspace.deleteSpace('work')
+  expect(workspace.activeSpaceId).toBeNull()
+  expect(workspace.tabs.every((tab) => workspace.panes.at(tab.paneId))).toBe(true)
+  expect(names(workspace.tabs)).toEqual(['web'])
+
+  disk.current?.folders.add(FOOD.root)
+  workspace.spaces = [{ ...FOOD }]
+  await workspace.selectSpace('food')
+
+  expect(workspace.tabs.every((tab) => workspace.panes.at(tab.paneId))).toBe(true)
+  expect(names(workspace.tabs)).toEqual(['web'])
+})
+
+test('the shared set of older builds is not given to the space being deleted', async () => {
+  const before = await window([WORK], 'work')
+  const sets = await fetched()
+  before.openWebsite()
+  await sets.toSpace('food', false)
+  const { aside } = JSON.parse(JSON.stringify(before.setsWritten())) as {
+    aside: Record<string, unknown>
+  }
+
+  const after = await window([WORK, FOOD], 'food', { on: 'food', aside: { global: aside.work } })
+  await after.deleteSpace('work')
+  await (await fetched()).wake()
+
+  expect(names(after.tabs)).toEqual(['web'])
+  expect(after.tabs.every((tab) => after.panes.at(tab.paneId))).toBe(true)
+})
+
+describe('a running shell in the space being deleted, which the sheet says nothing about', () => {
+  async function asked(answer: boolean) {
+    const workspace = await window([WORK, FOOD], 'work')
+    await fetched()
+    workspace.openWebsite()
+    const tab = workspace.tabs[0]
+    if (tab) Object.defineProperty(tab, 'kind', { value: 'terminal' })
+    ending.answer = answer
+    ending.asked = []
+    const { prompt } = await import('../prompt.svelte')
+    vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
+    const { deleteSpace } = await import('../space-actions')
+    await deleteSpace(workspace.spaces[0] ?? WORK)
+    return workspace
+  }
+
+  test('asks as closing its tab does, and no leaves the space and the shell', async () => {
+    const workspace = await asked(false)
+
+    expect(ending.asked).toEqual([['terminal']])
+    expect(workspace.spaces.map((one) => one.id)).toEqual(['work', 'food'])
+    expect(names(workspace.tabs)).toEqual(['terminal'])
+  })
+
+  test('and yes goes on with the delete', async () => {
+    const workspace = await asked(true)
+
+    expect(ending.asked).toEqual([['terminal']])
+    expect(workspace.spaces.map((one) => one.id)).toEqual(['food'])
+    expect(workspace.tabs).toEqual([])
+  })
 })
 
 test('a space that is still there keeps its set through a launch', async () => {

@@ -51,8 +51,10 @@ function how(token: string, whose: string, said: Carrying['said'] = () => undefi
     },
     text: (path) => invoke<string>('read_note', { path }).catch(() => null),
     hash: (bytes) => sha256(bytes),
-    async up(id, hash, bytes) {
+    async up(hash, bytes) {
       await api.putBlob(token, hash, 'application/pdf', bytes.slice().buffer)
+    },
+    async hold(id, hash) {
       await api.holdPaper(token, id, hash)
     },
     down: (id) => api.notePaper(token, id),

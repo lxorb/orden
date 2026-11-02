@@ -53,8 +53,10 @@ export interface Carrying {
   /** A note's words, to see whether its pages name a paper at all. */
   text(path: string): Promise<string | null>
   hash(bytes: Uint8Array): Promise<string>
-  /** The bytes up under their hash, and the note named as holding them. */
-  up(id: string, hash: string, bytes: Uint8Array): Promise<void>
+  /** The bytes up under their hash. */
+  up(hash: string, bytes: Uint8Array): Promise<void>
+  /** The note named as holding bytes already up. */
+  hold(id: string, hash: string): Promise<void>
   /** The paper the account has for a note, or null where it has none. */
   down(id: string): Promise<Uint8Array | null>
   /** The hash each note's paper was last carried as, by the note's id. */
@@ -132,7 +134,8 @@ async function carryOne(note: Carried, how: Carrying): Promise<void> {
       if (!bytes?.byteLength) return
       const hash = await how.hash(bytes)
       try {
-        await how.up(note.id, hash, bytes)
+        await how.up(hash, bytes)
+        await how.hold(note.id, hash)
       } catch (error) {
         if (!(error instanceof ApiError && REFUSALS.has(error.status))) throw error
         refused.set(note.id, stamp)

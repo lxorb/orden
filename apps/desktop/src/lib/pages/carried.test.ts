@@ -64,7 +64,8 @@ function world(
       return Promise.resolve(typeof held === 'string' ? held : null)
     },
     hash: (bytes) => Promise.resolve(`hash-${String(bytes.byteLength)}`),
-    up: (id, hash) => {
+    up: () => Promise.resolve(),
+    hold: (id, hash) => {
       sent.push({ id, hash })
       return Promise.resolve()
     },
@@ -168,7 +169,7 @@ describe('carrying a page note’s paper', () => {
       sent.push({ id, hash })
       return Promise.resolve()
     }
-    how.up = (id, hash) => (id === 'a' ? Promise.reject(new Error('offline')) : up(id, hash))
+    how.hold = (id, hash) => (id === 'a' ? Promise.reject(new Error('offline')) : up(id, hash))
 
     await carryPapers(
       [
@@ -225,7 +226,7 @@ describe('a paper the account will not take', () => {
 
   test('goes again once the file changes, and is said again if refused again', async () => {
     let answer: () => Promise<void> = () => Promise.reject(new ApiError(413, 'too big'))
-    const { how, count, stamps, said, sent } = refusing(() => answer())
+    const { how, count, stamps, said } = refusing(() => answer())
 
     await passes(3, how)
     stamps.set('/s/Lecture.pages.pdf', 'second')
@@ -238,7 +239,6 @@ describe('a paper the account will not take', () => {
     await passes(3, how)
     expect(count.ups).toBe(3)
     expect(how.carried.has('n1')).toBe(true)
-    expect(sent).toEqual([])
   })
 
   test.each([
@@ -286,17 +286,15 @@ describe('a paper the account will not take', () => {
   })
 
   test('holds nobody else up', async () => {
+    const LARGE = new Uint8Array(99)
     const { how, sent } = world({
       '/s/A.pages': WITH_PAPER,
-      '/s/A.pages.pdf': PDF,
+      '/s/A.pages.pdf': LARGE,
       '/s/B.pages': WITH_PAPER,
       '/s/B.pages.pdf': PDF,
     })
-    how.up = (id, hash) => {
-      if (id === 'a') return Promise.reject(new ApiError(413, 'too big'))
-      sent.push({ id, hash })
-      return Promise.resolve()
-    }
+    how.up = (hash) =>
+      hash === 'hash-99' ? Promise.reject(new ApiError(413, 'too big')) : Promise.resolve()
 
     await carryPapers(
       [
@@ -307,6 +305,56 @@ describe('a paper the account will not take', () => {
     )
 
     expect(sent.map((one) => one.id)).toEqual(['b'])
+  })
+
+  test('with nothing to say whether the file changed is tried again later, said once', async () => {
+    // No stamp where `file_stamp` failed or a browser has none: not remembered, since
+    // nothing would ever say the file changed.
+    const { how, count, stamps, said } = refusing(() => Promise.reject(new ApiError(413, 'no')))
+    stamps.clear()
+
+    await passes(3, how)
+    expect(count.ups).toBe(1)
+
+    vi.setSystemTime(Date.now() + paperRetryDelay(1))
+    await passes(3, how)
+    expect(count.ups).toBe(2)
+    expect(said).toEqual(['Work: the account would not take Lecture.pages.pdf'])
+  })
+
+  test('is only what the blob store says: a 400 naming the note clears by itself', async () => {
+    // `only a page note holds a paper`: the account has the note under an older name, a
+    // push behind the carrying.
+    const { how, count, said } = refusing(() => Promise.resolve())
+    let hold: () => Promise<void> = () => Promise.reject(new ApiError(400, 'not pages yet'))
+    how.hold = () => hold()
+
+    await passes(3, how)
+    expect(count.ups).toBe(1)
+    expect(said).toEqual([])
+
+    vi.setSystemTime(Date.now() + paperRetryDelay(1))
+    hold = () => Promise.resolve()
+    await passes(1, how)
+    expect(count.ups).toBe(2)
+    expect(how.carried.has('n1')).toBe(true)
+  })
+
+  test('a 401 is the account’s, so the pass stops, and a sign-in starts over', async () => {
+    let answer: () => Promise<void> = () => Promise.reject(new ApiError(401, 'signed out'))
+    const { how, count } = refusing(() => answer())
+    const notes = [NOTE, { ...NOTE, id: 'n2', path: '/s/B.pages' }]
+    how.exists = () => Promise.resolve(true)
+
+    await carryPapers(notes, how)
+    expect(count).toEqual({ reads: 1, ups: 1 })
+    await carryPapers(notes, how)
+    expect(count).toEqual({ reads: 1, ups: 1 })
+
+    forgetLacking()
+    answer = () => Promise.resolve()
+    await carryPapers(notes, how)
+    expect(count).toEqual({ reads: 3, ups: 3 })
   })
 })
 
