@@ -1748,18 +1748,18 @@ describe('somebody who stops being in the space while the file is open', () => {
 
       let said: Promise<void> = Promise.resolve()
       const prepare = env.DB.prepare.bind(env.DB)
-      env.DB.prepare = ((sql: string) => {
+      env.DB.prepare = (sql: string) => {
         const statement = prepare(sql)
         if (!sql.includes('case when sp.user_id = me.user_id')) return statement
-        const first = statement.first.bind(statement) as () => Promise<unknown>
-        statement.first = (async () => {
+        const first = statement.first.bind(statement)
+        statement.first = async () => {
           change()
           said = say(made, state, socket, update)
           await new Promise((settled) => setImmediate(settled))
           return await first()
-        }) as typeof statement.first
+        }
         return statement
-      }) as typeof env.DB.prepare
+      }
 
       await made.enter(
         socket as unknown as WebSocket,

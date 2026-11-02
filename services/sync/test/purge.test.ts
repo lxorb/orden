@@ -504,7 +504,7 @@ describe('a purge the database fails part way', () => {
   function failing(sql: RegExp, only?: string): () => void {
     const prepare = env.DB.prepare.bind(env.DB)
     let down = true
-    env.DB.prepare = ((text: string) => {
+    env.DB.prepare = (text: string) => {
       const statement = prepare(text)
       if (!sql.test(text)) return statement
       const bind = statement.bind.bind(statement)
@@ -514,12 +514,10 @@ describe('a purge the database fails part way', () => {
         named ||= args.some((one) => typeof one === 'string' && one.includes(only ?? ''))
         return bind(...args)
       }
-      statement.run = ((...args: []) =>
-        down && named
-          ? Promise.reject(new Error('D1 is not answering'))
-          : run(...args)) as typeof statement.run
+      statement.run = (...args: []) =>
+        down && named ? Promise.reject(new Error('D1 is not answering')) : run(...args)
       return statement
-    }) as typeof env.DB.prepare
+    }
     return () => {
       down = false
     }
