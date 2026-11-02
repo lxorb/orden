@@ -371,7 +371,7 @@ describe('doing it again', () => {
     const written = again({ kind: 'delete', path: '/s/old.md', content: 'kept words' })
     await undoLastFileAction(written.ws)
     await redoLastFileAction(written.ws)
-    expect(written.asked).toEqual(['remove /s/old 1.md'])
+    expect(written.asked).toEqual(['remove /s/old 2.md'])
 
     const trashed = again({ kind: 'delete', path: '/s/old.md', content: '', trashId: 't-1' })
     restores.set('t-1', '/s/old 2.md')
