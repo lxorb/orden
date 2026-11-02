@@ -971,3 +971,34 @@ describe('a note renamed while a canvas showing it is open in the back of its pa
     ])
   })
 })
+
+describe('an undo asked for while a move is on its way', () => {
+  test('takes back the move, not the step before it', async () => {
+    const one = disk.current
+    if (!one) throw new Error('no disk')
+    // A step before the move, which is what the undo took back with the move in the air.
+    workspace.undone.record({ kind: 'create', path: `${ROOT}/Idea.md` })
+
+    const asked = Promise.withResolvers<void>()
+    const landing = Promise.withResolvers<void>()
+    const real = one.invoke.bind(one)
+    const held = vi.spyOn(one, 'invoke').mockImplementation(async (command, args) => {
+      if (command === 'rename_note') {
+        asked.resolve()
+        await landing.promise
+      }
+      return real(command, args)
+    })
+
+    const moving = workspace.moveMany([`${ROOT}/Plan.md`], `${ROOT}/Work`)
+    await asked.promise
+    const undoing = workspace.undoFileAction()
+    landing.resolve()
+    await Promise.all([moving, undoing])
+    held.mockRestore()
+
+    expect(one.files.has(`${ROOT}/Plan.md`)).toBe(true)
+    expect(one.files.has(`${ROOT}/Work/Plan.md`)).toBe(false)
+    expect(one.files.has(`${ROOT}/Idea.md`)).toBe(true)
+  })
+})

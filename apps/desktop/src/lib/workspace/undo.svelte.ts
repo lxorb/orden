@@ -149,13 +149,24 @@ export class FileActions {
   async batch<T>(work: () => Promise<T>): Promise<T> {
     if (this.#held) return work()
     const held: FileAction[] = (this.#held = [])
+    const done = Promise.withResolvers<void>()
+    this.#landing = done.promise
     try {
       return await work()
     } finally {
       this.#held = null
       const [only, ...more] = held
       if (only) this.record(more.length ? { kind: 'many', steps: held } : only)
+      done.resolve()
     }
+  }
+
+  /** The gesture under way, which records its step only as it ends: an undo asked for
+   *  until then waits for it, or it takes back the step before. */
+  #landing: Promise<void> = Promise.resolve()
+
+  landed(): Promise<void> {
+    return this.#landing
   }
 
   /** Drops the newest one, once it has actually been put back, and keeps it to do

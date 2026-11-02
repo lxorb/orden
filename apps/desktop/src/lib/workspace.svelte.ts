@@ -4527,6 +4527,7 @@ class Workspace {
    *  and not on a file operation to take back. See test/weight.test.ts. */
   async undoFileAction() {
     await this.inTurn(async () => {
+      await this.undone.landed()
       const { undoLastFileAction } = await import('./workspace/undoing')
       await undoLastFileAction(this)
     })
@@ -4535,6 +4536,7 @@ class Workspace {
   /** Does the last undone file operation again; see workspace/redoing.ts. */
   async redoFileAction() {
     await this.inTurn(async () => {
+      await this.undone.landed()
       const { redoLastFileAction } = await import('./workspace/redoing')
       await redoLastFileAction(this)
     })
