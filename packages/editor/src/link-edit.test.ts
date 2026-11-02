@@ -38,7 +38,16 @@ describe('the link a press landed on', () => {
     ['see www.x.dev now', 'x.dev', 'www.x.dev', null],
     ['see [[Plan#Today|the plan]] now', 'plan', 'Plan#Today', 'the plan'],
     ['see [[Plan]] now', 'Plan', 'Plan', 'Plan'],
-    ['see [words][ref] now\n\n[ref]: https://r.dev', 'words', '[ref]', 'words'],
+    ['see [words][ref] now\n\n[ref]: https://r.dev', 'words', 'https://r.dev', 'words'],
+    ['see [words][] now\n\n[words]: https://r.dev', 'words', 'https://r.dev', 'words'],
+    ['see [words] now\n\n[words]: https://r.dev', 'words', 'https://r.dev', 'words'],
+    [
+      'see [Some  words] now\n\n[some WORDS]: https://r.dev',
+      'Some',
+      'https://r.dev',
+      'Some  words',
+    ],
+    ['see [words][ref] now', 'words', 'ref', 'words'],
     ['see [words]() now', 'words', '', 'words'],
   ])('%s', (doc, at, target, words) => {
     const parts = linkPartsAt(state(doc), inside(doc, at))
@@ -68,6 +77,54 @@ describe('editing it', () => {
   test('selects the note of a link with words of its own, not the words', () => {
     const doc = 'see [[Plan|the plan]] now'
     expect(after(doc, editLink(inside(doc, 'the plan'))).selected).toBe('Plan')
+  })
+})
+
+describe('editing a link by its label', () => {
+  /** What typing an address over the selection leaves, which has to be a link to it. */
+  function typed(doc: string) {
+    let current = state(doc)
+    editLink(inside(doc, 'words'))({
+      state: current,
+      dispatch: (transaction) => (current = transaction.state),
+    })
+    return current
+      .update(
+        current.changeByRange((range) => ({
+          range,
+          changes: { from: range.from, to: range.to, insert: 'https://new.dev' },
+        })),
+      )
+      .state.doc.toString()
+  }
+
+  test.each([
+    ['[words][ref]\n\n[ref]: https://r.dev', '[words][ref]\n\n[ref]: https://new.dev'],
+    ['[words][REF]\n\n[ref]: https://r.dev', '[words][REF]\n\n[ref]: https://new.dev'],
+    ['[words][]\n\n[words]: https://r.dev', '[words][]\n\n[words]: https://new.dev'],
+    ['[words]\n\n[words]: https://r.dev', '[words]\n\n[words]: https://new.dev'],
+    ['> [words][ref]\n>\n> [ref]: https://r.dev', '> [words][ref]\n>\n> [ref]: https://new.dev'],
+  ])('%s changes the address its definition holds', (doc, left) => {
+    expect(typed(doc)).toBe(left)
+  })
+
+  test.each([
+    ['[words][ref] now', '[words](https://new.dev) now'],
+    ['[words][] now', '[words](https://new.dev) now'],
+    ['[words] now', '[words](https://new.dev) now'],
+  ])('%s with no definition becomes a link to what is typed', (doc, left) => {
+    expect(typed(doc)).toBe(left)
+  })
+
+  test('selects a label nothing defines, written where an address goes', () => {
+    const done = after('[words][ref] now', editLink(1))
+    expect(done).toEqual({ ran: true, doc: '[words](ref) now', selected: 'ref' })
+  })
+
+  test('takes the first of two definitions, as a reader does', () => {
+    expect(typed('[words][a]\n\n[a]: https://one.dev\n[a]: https://two.dev')).toBe(
+      '[words][a]\n\n[a]: https://new.dev\n[a]: https://two.dev',
+    )
   })
 })
 
