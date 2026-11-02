@@ -383,6 +383,21 @@ v2Blobs.post('/parts', async (context) => {
   return context.json({ upload: upload.uploadId, part: PART }, 201)
 })
 
+/** A number a part may have. */
+function isPartNumber(part: unknown): part is number {
+  return typeof part === 'number' && Number.isSafeInteger(part) && part >= 1 && part <= 10_000
+}
+
+/** Whether R2 refused a completion because of the list it was given: a part it does not
+ *  have or an etag that is not that part's (10025), parts below its smallest (10011), or
+ *  of sizes it cannot join (10048). Read off the code, or the message for where a thrown
+ *  error carries none, as `wrangler dev` does. Anything else is the bucket's own trouble. */
+function isTheListsFault(error: unknown): boolean {
+  const { code, message } = (error ?? {}) as { code?: unknown; message?: unknown }
+  if (code === 10011 || code === 10025 || code === 10048) return true
+  return typeof message === 'string' && /\((10011|10025|10048)\)$/.test(message)
+}
+
 /** One part of a large file. */
 v2Blobs.put('/parts/:upload/:part', async (context) => {
   const user = context.get('user')
@@ -390,9 +405,7 @@ v2Blobs.put('/parts/:upload/:part', async (context) => {
   if (!upload) return context.json({ error: NO_SUCH_FILE }, 404)
 
   const part = Number(context.req.param('part'))
-  if (!Number.isSafeInteger(part) || part < 1 || part > 10_000) {
-    return context.json({ error: TOO_BIG }, 413)
-  }
+  if (!isPartNumber(part)) return context.json({ error: TOO_BIG }, 413)
   const body = await context.req.arrayBuffer()
   if (body.byteLength > PART) return context.json({ error: TOO_BIG }, 413)
 
@@ -422,12 +435,19 @@ v2Blobs.post('/parts/:upload', async (context) => {
       string,
       unknown
     >
-    if (typeof part !== 'number' || typeof etag !== 'string')
+    if (!isPartNumber(part) || typeof etag !== 'string')
       return context.json({ error: WRONG_BYTES }, 400)
     parts.push({ partNumber: part, etag })
   }
 
-  await context.env.NOTES.resumeMultipartUpload(upload.staging, id).complete(parts)
+  // A list the bucket cannot put together leaves the upload as it was, to be finished
+  // with a right one.
+  try {
+    await context.env.NOTES.resumeMultipartUpload(upload.staging, id).complete(parts)
+  } catch (error) {
+    if (isTheListsFault(error)) return context.json({ error: WRONG_BYTES }, 400)
+    throw error
+  }
   await context.env.DB.prepare('delete from cached where scope = ? and key = ?')
     .bind(UPLOADS, id)
     .run()
