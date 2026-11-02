@@ -86,6 +86,13 @@ export class Saving {
    *  moves the file out from under it; see `holding`. */
   private readonly busy = new WeakMap<NoteDoc, Promise<void>>()
 
+  /** The `write_note` of each document last sent, which `holdingWrites` waits for. */
+  private readonly inTheAir = new WeakMap<NoteDoc, Promise<unknown>>()
+
+  /** The move of sync's each document is in the middle of, which a write about to go
+   *  down waits for; see `holdingWrites`. */
+  private readonly syncMoving = new WeakMap<NoteDoc, Promise<void>>()
+
   /** Every one of those still running, for whoever has to wait for all of them: the
    *  window going, and Ctrl+S. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
@@ -319,6 +326,35 @@ export class Saving {
     return this.holding(notes, run)
   }
 
+  /** A move sync makes of everything at or under `from`: after the write in the air of
+   *  every document open there, and with the next one waiting until it is told.
+   *
+   *  Not `holdingUnder`, which waits for all a document is held for. A pass has the
+   *  engine to itself (`use` in sync2/core.ts), and what holds a document can be waiting
+   *  for the engine: a move made here tells the account inside its hold, and a new
+   *  note's first write says so. Waiting for those inside the pass would never end. A
+   *  write in the air is one round trip to the disk, and waits for nobody. */
+  async holdingWrites<T>(from: string, run: () => Promise<T>): Promise<T> {
+    const notes = this.ws.documents.filter(
+      (one) => one.path !== null && within(from, one.path) !== null,
+    )
+    let letGo = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    const moving = new Promise<void>((go) => {
+      letGo = () => go()
+    })
+    for (const one of notes) this.syncMoving.set(one, moving)
+
+    try {
+      await Promise.all(notes.map((one) => this.inTheAir.get(one)))
+      return await run()
+    } finally {
+      for (const one of notes) if (this.syncMoving.get(one) === moving) this.syncMoving.delete(one)
+      letGo()
+    }
+  }
+
   /** Writes one document down: a note, a canvas or a page note. Everything that
    *  writes comes through here, so a note open in two panes is written once
    *  however the writing was asked for. */
@@ -477,6 +513,9 @@ export class Saving {
       await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
     }
 
+    // Sync is moving the file: the words go down where it lands, below.
+    for (let move = this.syncMoving.get(note); move; move = this.syncMoving.get(note)) await move
+
     // The document moved on to another note while this write was being got ready.
     // Refused rather than written: these words are that other note's, and this path
     // is not theirs to go to.
@@ -488,7 +527,12 @@ export class Saving {
     // Moved while the write was being got ready: the words follow the file.
     if (note.path !== null) path = note.path
 
-    await invoke('write_note', { path, content })
+    const landing = invoke('write_note', { path, content })
+    this.inTheAir.set(
+      note,
+      landing.catch(() => undefined),
+    )
+    await landing
     note.written(path, nameOf(path), revision)
     // Moved under the write by something that did not wait for it: the words are
     // owed again at the path the note is at now; see `written`.

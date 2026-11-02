@@ -167,15 +167,19 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
   const index = await indexOf(place)
 
   // Under way until it is told; see `move` in workspace.svelte.ts.
-  await moving(to, async () => {
-    await invoke('rename_note', { from, to })
-    // A rewrite that fails leaves the note moved all the same, and told so; see
-    // `retargetMoved` in workspace.svelte.ts.
-    await index
-      .retarget(from, to, place.space.root, undefined, { moved: true })
-      .catch(() => undefined)
-    await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
-  })
+  await moving(to, () =>
+    // After whatever write of a note open in it is in the air; see `holdingUnder` in
+    // workspace/saving.svelte.ts.
+    workspace.holdingUnder(from, async () => {
+      await invoke('rename_note', { from, to })
+      // A rewrite that fails leaves the note moved all the same, and told so; see
+      // `retargetMoved` in workspace.svelte.ts.
+      await index
+        .retarget(from, to, place.space.root, undefined, { moved: true })
+        .catch(() => undefined)
+      await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
+    }),
+  )
 }
 
 export async function trashFile(call: Call): Promise<AgentAnswer> {

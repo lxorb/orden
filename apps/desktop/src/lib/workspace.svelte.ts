@@ -4232,6 +4232,12 @@ class Workspace {
     return this.saving.holdingUnder(path, run)
   }
 
+  /** A move sync makes of everything open at or under `path`; see `holdingWrites` in
+   *  workspace/saving.svelte.ts. */
+  holdingWrites<T>(path: string, run: () => Promise<T>): Promise<T> {
+    return this.saving.holdingWrites(path, run)
+  }
+
   /** One file under another name in the same folder, and everything that owes: the
    *  row, the links to it, and what everything kept by path hears; see `fileMoved`.
    *  `undoable` is whether somebody did it - a row renamed - or the note's own words

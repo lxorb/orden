@@ -594,6 +594,7 @@ class Runner {
     touching: (path) => {
       this.touched.set(path.replaceAll('\\', '/'), Date.now() + TOUCHED)
     },
+    holdingWrites: (from, run) => workspace.holdingWrites(from, run),
     moved: async (from, to, kind) => {
       this.own.add(`moved:${from}`)
       try {

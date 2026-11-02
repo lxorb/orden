@@ -25,6 +25,9 @@ export interface Telling {
   /** A path the engine is about to move or take away: what the folder's watcher will
    *  report next is the engine's own doing. */
   touching(path: string): void
+  /** A move the engine makes, after the writes in the air of what is open in it; see
+   *  `holdingWrites` in workspace/saving.svelte.ts. */
+  holdingWrites(from: string, run: () => Promise<void>): Promise<void>
   /** A file or folder the engine moved, for everything kept by path. */
   moved(from: string, to: string, kind: FileKind): Promise<void>
   /** One it took away. */
@@ -71,8 +74,10 @@ function diskOf(telling: Telling): Disk {
       // are entries of their own, moved by moves of their own in whichever order those
       // come. Taking them along, a PDF moved after its highlights found none and cleared
       // the ones that had just arrived, and the next scan deleted them everywhere.
-      await invoke('rename_note', { from, to, alone: true, ...(hold ? { hold } : {}) })
-      await telling.moved(from, to, kind)
+      await telling.holdingWrites(from, async () => {
+        await invoke('rename_note', { from, to, alone: true, ...(hold ? { hold } : {}) })
+        await telling.moved(from, to, kind)
+      })
     },
     async remove(path, kind) {
       telling.touching(path)
