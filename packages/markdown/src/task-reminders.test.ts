@@ -191,6 +191,38 @@ describe('a clock change', () => {
     expect(momentOf(wall, 'Europe/Zurich')).toBe(Date.UTC(2026, 9, 25, 0, 30))
   })
 
+  // On the wall clock 01:30 comes twice that night: the reminder counted back from
+  // 02:00 is the second, the one written as 01:30 the first. Two moments, so two rings,
+  // and two ids, since every place that holds a reminder holds it by its id.
+  test('a counted reminder and a written one on a minute it repeats both ring', () => {
+    process.env.TZ = 'America/New_York'
+    const line = '- [ ] a [time:: 02:00] [remind:: 30m, 1:30] 🛫 2026-11-01'
+    for (const zone of ['America/New_York', undefined]) {
+      const walls = remindTimes(task(line), null, 'start', zone)
+      expect(walls.map((one) => momentOf(one, zone)).sort()).toEqual([
+        Date.UTC(2026, 10, 1, 5, 30),
+        Date.UTC(2026, 10, 1, 6, 30),
+      ])
+      const ids = walls.map((one) => reminderId('s', 'n.md', 'h', one))
+      expect(new Set(ids).size).toBe(2)
+      // The written one keeps the id it always had.
+      expect(ids).toContain(reminderId('s', 'n.md', 'h', { date: '2026-11-01', time: '01:30' }))
+    }
+  })
+
+  test('the same two on any other day are the one ring they always were', () => {
+    process.env.TZ = 'America/New_York'
+    const line = '- [ ] a [time:: 09:30] [remind:: 30m, 9:00] 🛫 2026-07-01'
+    const walls = remindTimes(task(line), null, 'start', 'America/New_York')
+    expect(walls).toHaveLength(1)
+  })
+
+  test('a written one repeated beside a counted one is still one of each', () => {
+    process.env.TZ = 'America/New_York'
+    const line = '- [ ] a [time:: 02:00] [remind:: 30m, 1:30, 1:30] 🛫 2026-11-01'
+    expect(remindTimes(task(line), null, 'start', 'America/New_York')).toHaveLength(2)
+  })
+
   test('a reminder counted back over it still rings before the task', () => {
     const one = task('- [ ] a [time:: 03:15 Europe/Zurich] [remind:: 30m] 🛫 2026-03-29')
     const [wall] = remindTimes(one, null)

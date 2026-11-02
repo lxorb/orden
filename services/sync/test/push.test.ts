@@ -189,6 +189,18 @@ describe('reminders kept from the notes', () => {
     expect(found.map((one) => [one.line, one.at])).toEqual([[6, AT]])
     expect(found[0]?.id).toMatch(/^[0-9a-f]{16}$/)
   })
+
+  // The table holds a note's reminders by their id, so two moments under one id would
+  // refuse the whole save.
+  test('a counted and a written reminder a clock change sets apart are two rows', () => {
+    const content = '- [ ] a [time:: 02:00] [remind:: 30m, 1:30] 🛫 2026-11-01\n'
+    const found = remindersIn(content, 'Work', 'Plan.md', 'America/New_York', null, 0)
+    expect(found.map((one) => one.at)).toEqual([
+      Date.UTC(2026, 10, 1, 5, 30),
+      Date.UTC(2026, 10, 1, 6, 30),
+    ])
+    expect(new Set(found.map((one) => one.id)).size).toBe(2)
+  })
 })
 
 describe('sending', () => {
