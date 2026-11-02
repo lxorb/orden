@@ -534,6 +534,11 @@ export class NoteRoom implements DurableObject {
       throw error
     }
 
+    // And asked again, now a route that ends this access can reach the socket: the door
+    // read the database before all of the above, and a revocation landing since found
+    // no row to tell, or no socket here to close. One landing after this finds both.
+    if (!(await this.stillLetIn(server, joining))) return
+
     // Rows nothing will take away are cleared after the join rather than before it:
     // the join waits on none of the rooms that asks, and fails for none of them.
     if (joining.who) {
@@ -548,6 +553,25 @@ export class NoteRoom implements DurableObject {
     server.send(syncStep1(this.state.doc))
     const present = awarenessState(this.awareness)
     if (present) server.send(present)
+  }
+
+  /** Whether a socket just let in may stay, and as what, by what its sign-in may do to
+   *  the file now. A database that cannot say leaves it as the door said: the question
+   *  is asked again within the minute (`askSignIns`), and is not worth refusing a join. */
+  private async stillLetIn(server: WebSocket, joining: Joining): Promise<boolean> {
+    const login = joining.login
+    const noteId = this.held?.noteId
+    if (!login || !noteId) return true
+
+    const may = await accessOf(this.env, noteId, [login])
+      .then((found) => found.get(login))
+      .catch(() => undefined)
+    if (may === 'read') attach(server, { mayWrite: false })
+    if (may !== 'none') return true
+
+    server.close(1008, 'no longer in this space')
+    await this.forgetSocket(server)
+    return false
   }
 
   /** The room opened for somebody arriving, a socket or a request, with the shape the
