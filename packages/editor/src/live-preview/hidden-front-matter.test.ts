@@ -11,6 +11,7 @@ import {
 import type { PropertiesMode } from '@orden/markdown/properties'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { insertFrontMatter } from '../commands'
+import { editorState } from '../editor'
 import { external } from '../external'
 import { findExtensions, findTally, loadFind, NO_FIND } from '../find'
 import { nibMarkdownExtensions } from '../markdown/extensions'
@@ -325,5 +326,41 @@ describe('find', () => {
     expect(onThePage(state, 5)).toBe(false)
     expect(onThePage(state, PAGE)).toBe(true)
     expect(onThePage(stateOf(NOTE, 0, 'properties'), 5)).toBe(true)
+  })
+})
+
+/** Filters run last-registered first, and `sharing` comes before the modes, so this
+ *  guard hears an edit before `wholeCharacters` in shared.ts mends it: asked of a real
+ *  editor's state, since the order is what is in question. */
+describe('hidden front matter beside a character in two halves', () => {
+  const grin = '\u{1f600}'
+  const beside = `${META}${grin} Groceries\n`
+
+  function opened(): EditorState {
+    const state = parsed(editorState({ doc: beside }))
+    expect(hiddenFrontMatter(state)).not.toBeNull()
+    return state
+  }
+
+  test('a delete from the fence into the character keeps the fence and takes it whole', () => {
+    const state = opened()
+
+    const after = state.update({
+      changes: { from: FENCE_END, to: PAGE + 1 },
+      userEvent: 'delete',
+    }).state
+
+    expect(after.doc.toString()).toBe(`${META} Groceries\n`)
+  })
+
+  test('a word typed over the fence and half the character lands on the page, whole', () => {
+    const state = opened()
+
+    const after = state.update({
+      changes: { from: FENCE_END, to: PAGE + 1, insert: 'x' },
+      userEvent: 'input.type',
+    }).state
+
+    expect(after.doc.toString()).toBe(`${META}x Groceries\n`)
   })
 })
