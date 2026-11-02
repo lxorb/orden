@@ -249,12 +249,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  field: the name refused on the glasses' own file list too, and the file left off it.
  *  Measured 5,747,277.
  *
- *  The code raised on 2026-11-02, to 5,759,000, for the open bug round's branches merged
+ *  The code raised on 2026-11-02, to 5,767,900, for the open bug round's branches merged
  *  together on claude/bugs-2026-11: each raise above was measured without the others.
- *  Measured 5,758,444.
+ *  Measured 5,767,345.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_759_000,
+  code: 5_767_900,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

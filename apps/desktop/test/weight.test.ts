@@ -992,10 +992,10 @@ function holds(tail: string): boolean {
  *  for the name (`isAgentsName`), the hint on a row's name field (NameField.svelte), and
  *  the file left out of what the store lists. Measured 3,440,160.
  *
- *  Raised 2026-11-02, to 3,459,100, for the open bug round's branches merged together on
+ *  Raised 2026-11-02, to 3,468,000, for the open bug round's branches merged together on
  *  claude/bugs-2026-11: each raise above was measured without the others. Measured
- *  3,458,532. */
-const BUDGET = 3_459_100
+ *  3,467,409. */
+const BUDGET = 3_468_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
