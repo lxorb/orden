@@ -4,6 +4,9 @@
   tree  A note dragged in the file list with xdotool's pointer, as a hand does it: into the
         order in Manual, then into another note (#427). On CEF the engine's own drag ended
         as it started, so neither did anything; see src-tauri/src/page_drag.rs.
+        A drag whose window loses the focus with the button held ends and moves nothing; a
+        right button pressed and let go during one leaves it going; a word dragged inside
+        the editor moves.
   zoom  Settings > Appearance > Window > Zoom (#680) at each rung: the page's own ratio, the
         sidebar as many screen pixels wider, and the web tab's page, a native window placed
         from the layout, in its hole to the pixel: its colour on the hole's four inside
@@ -153,6 +156,138 @@ def tree():
     )
     print("nested", paths)
     picture("nested")
+    stale()
+    chord()
+    words()
+
+
+# Every drag event the page hears, for what was said after a given moment.
+HEAR = """(() => {
+  window.__heard = []
+  for (const type of ['dragover', 'drop', 'dragend'])
+    window.addEventListener(type, () => window.__heard.push(type), true)
+  return true
+})()"""
+
+
+def lifted(start, end):
+    """Pressed on a row and held in the middle of another, the button still down."""
+    x = (start["x"] + 40)
+    y0 = start["y"] + start["height"] / 2
+    y1 = end["y"] + end["height"] / 2
+    xdo("mousemove", x, y0)
+    xdo("mousedown", 1)
+    for step in range(1, 13):
+        xdo("mousemove", x, y0 + (y1 - y0) * step / 12)
+        time.sleep(0.05)
+    time.sleep(0.5)
+
+
+def stale():
+    """The window loses the focus with the button down, as alt-tab does: nothing goes on."""
+    run(HEAR)
+    rows = run(ROWS) or []
+    before = run("nib.workspace.notes.map((one) => one.path).sort()")
+    lifted(rows[-1], rows[1])
+    root = subprocess.run(["xwininfo", "-root"], capture_output=True, text=True, check=False).stdout
+    xdo("windowfocus", root.split("Window id: ")[1].split()[0])
+    time.sleep(0.5)
+    heard = run("window.__heard.splice(0)") or []
+    if "dragend" not in heard:
+        fail(f"the window lost the focus and the drag went on: {heard[-5:]}")
+    # Three times over the rate a resting pointer says `dragover` at.
+    time.sleep(1.1)
+    late = run("window.__heard.splice(0)") or []
+    if late:
+        fail(f"a drag over with the focus gone still said {late[:5]}")
+    xdo("mouseup", 1)
+    time.sleep(0.3)
+    # The next plain click, anywhere, that used to end it on the row it was over.
+    xdo("mousemove", 600, 400)
+    xdo("click", 1)
+    time.sleep(0.5)
+    after = run("nib.workspace.notes.map((one) => one.path).sort()")
+    if after != before:
+        fail(f"a drag that lost its pointer moved a note: {set(after or []) ^ set(before or [])}")
+    if "drop" in (run("window.__heard.splice(0)") or []):
+        fail("a drag that lost its pointer dropped")
+    # The window has the keyboard back, for what follows.
+    run("window.focus(); return true")
+    print("stale: nothing moved")
+
+
+def chord():
+    """The right button pressed and let go during a left drag leaves it going."""
+    run("window.__heard.splice(0); return true")
+    rows = run(ROWS) or []
+    lifted(rows[-1], rows[1])
+    xdo("mousedown", 3)
+    time.sleep(0.1)
+    xdo("mouseup", 3)
+    time.sleep(0.5)
+    heard = run("window.__heard.splice(0)") or []
+    if "dragend" in heard or "dragover" not in heard:
+        fail(f"another button's release ended the drag: {heard[-5:]}")
+    run("document.dispatchEvent(new Event('noop')); return true")
+    xdo("key", "Escape")
+    time.sleep(0.3)
+    xdo("mouseup", 1)
+    time.sleep(0.3)
+    if "dragend" not in (run("window.__heard.splice(0)") or []):
+        fail("Escape did not end the drag")
+    print("chord: went on, Escape ended it")
+
+
+# Where a word is on the screen, by a range over its text in the editor.
+WORD = """((word) => {
+  const walker = document.createTreeWalker(document.querySelector('.cm-content'), NodeFilter.SHOW_TEXT)
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const at = node.textContent.indexOf(word)
+    if (at < 0) continue
+    const range = document.createRange()
+    range.setStart(node, at)
+    range.setEnd(node, at + word.length)
+    const box = range.getBoundingClientRect()
+    return { x: box.x, y: box.y, width: box.width, height: box.height }
+  }
+  return null
+})"""
+
+
+def words():
+    """A word selected in the editor and dragged to another line moves there."""
+    run("""(async () => {
+      const ws = nib.workspace
+      const made = await ws.noteFrom('# Words\\n\\nalpha beta gamma\\n\\ndelta epsilon\\n', ws.activeSpace.root)
+      const note = ws.notes.find((one) => one.name.startsWith('Words'))
+      await ws.openEntry(note.path, { activate: true })
+      return !!made
+    })()""")
+    until(f"!!{WORD}('beta')", "the note in the editor")
+    time.sleep(1)
+    word = run(f"{WORD}('beta')")
+    goal = run(f"{WORD}('epsilon')")
+    x, y = word["x"] + word["width"] / 2, word["y"] + word["height"] / 2
+    xdo("mousemove", x, y)
+    xdo("click", "--repeat", 2, "--delay", 60, 1)
+    time.sleep(0.4)
+    print("selected", run("getSelection().toString()"))
+    xdo("mousedown", 1)
+    x1, y1 = goal["x"] + goal["width"] + 2, goal["y"] + goal["height"] / 2
+    for step in range(1, 13):
+        xdo("mousemove", x + (x1 - x) * step / 12, y + (y1 - y) * step / 12)
+        time.sleep(0.05)
+    time.sleep(0.5)
+    picture("word-over")
+    xdo("mouseup", 1)
+    time.sleep(0.8)
+    picture("word-dropped")
+    text = run("[...document.querySelectorAll('.cm-line')].map((one) => one.textContent)") or []
+    print("the note", text)
+    first = next((one for one in text if "alpha" in one), "")
+    second = next((one for one in text if "delta" in one), "")
+    if "beta" in first or "beta" not in second:
+        fail(f"the word did not move: {text}")
 
 
 # Where the web tab's hole is, in the page's own units, and what the zoom has made of the page.
