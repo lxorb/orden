@@ -243,13 +243,13 @@ describe('a note restored and purged at once', () => {
   function beforeNextBatch(work: () => Promise<unknown>) {
     const real = env.DB.batch.bind(env.DB)
     let waiting = true
-    env.DB.batch = (async (statements: D1PreparedStatement[]) => {
+    env.DB.batch = async (statements: D1PreparedStatement[]) => {
       if (waiting) {
         waiting = false
         await work()
       }
       return await real(statements)
-    }) as typeof env.DB.batch
+    }
   }
 
   async function deleted(path: string): Promise<string> {
@@ -278,6 +278,11 @@ describe('a note restored and purged at once', () => {
 
     expect(purge.status).toBe(404)
     expect(row(id)).toMatchObject({ deleted: 0, hash: before.hash, size: before.size })
+    expect(env.keys()).toContain(`spaces/${space}/${id}`)
+    expect((await call(env, `/v1/notes/${id}`, { token })).json.content).toContain('KEEP ME')
+
+    // And what the purge wrote down before it asked is not taken from a note that stayed.
+    await sweepLeftovers(env)
     expect(env.keys()).toContain(`spaces/${space}/${id}`)
     expect((await call(env, `/v1/notes/${id}`, { token })).json.content).toContain('KEEP ME')
   })
@@ -339,7 +344,7 @@ describe('a note restored and purged at once', () => {
     const real = bucket.delete.bind(bucket)
     let failing = true
     bucket.delete = (keys) => {
-      if (!failing) return real(keys)
+      if (!failing || !keys.includes(`spaces/${space}/${id}`)) return real(keys)
       failing = false
       return Promise.reject(new Error('the bucket is not answering'))
     }

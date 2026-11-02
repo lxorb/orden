@@ -1062,15 +1062,18 @@ export async function restoreNote(env: Env, note: Note, device: string | undefin
 
   const at = now()
   // The number taken and the row written as one; see `atNextSeq`.
-  const { seq } = await atNextSeq(
+  const { seq, changes } = await atNextSeq(
     env,
     note.space_id,
     env.DB.prepare(
       `update notes set deleted = 0, deleted_at = null, path = ?2, seq = ${TAKEN_SEQ},
                         version = version + 1, updated_at = ?3
-        where id = ?4`,
+        where id = ?4 and deleted = 1 and deleted_at is not null`,
     ).bind(note.space_id, path, at, note.id),
   )
+  // Purged since it was read, or back already: only ever out of Recently deleted, since
+  // a tombstone written back would be a live note with nothing in it.
+  if (!changes) return (await noteById(env, note.id)) ?? note
 
   return {
     ...note,

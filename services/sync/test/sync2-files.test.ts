@@ -159,7 +159,9 @@ describe('bytes up', () => {
     test('but a bucket that is unwell is not the device’s to hear about as a mistake', async () => {
       const { upload } = await started(bytes(100, 6))
       completing(
-        new Error('completeMultipartUpload: We encountered an internal error. Please try again. (10001)'),
+        new Error(
+          'completeMultipartUpload: We encountered an internal error. Please try again. (10001)',
+        ),
       )
       expect((await finish(upload, [{ part: 1, etag: 'x' }])).status).toBe(500)
     })

@@ -732,9 +732,7 @@ describe('a site behind a password', () => {
     expect(behind.text).toContain('Words.')
 
     const forged = `nib_site=${String(Date.now() + 1000)}.${'0'.repeat(64)}`
-    expect((await page('/plan', { headers: { cookie: forged } })).text).toContain(
-      'type="password"',
-    )
+    expect((await page('/plan', { headers: { cookie: forged } })).text).toContain('type="password"')
   })
 
   /** Every answer on a site behind a password, not only the gate: the feed and the

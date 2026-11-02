@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { chunks, places } from './bound'
 import { now } from './crypto'
-import { noteKey, presentNote, restoreNote } from './notes'
+import { note as noted } from './failed'
+import { atNextSeq, noteKey, presentNote, restoreNote } from './notes'
 import { snapshotKey } from './rooms/epoch'
 import { deviceOf } from './sync2/device'
 import { presentSpace } from './spaces/space'
@@ -128,28 +129,64 @@ async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Se
 }
 
 /** Takes a note's content away for good. The row stays as the tombstone the
- *  change feed relies on, and stops being listed. */
-async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>, who: string | null) {
+ *  change feed relies on, and stops being listed.
+ *
+ *  The row is what is asked first, because a restore of the same note may be on its way
+ *  and the bytes cannot be had back: a purge finishing over one left a live note with
+ *  nothing in it. It answers false, having taken no words, where the note has already
+ *  left Recently deleted. And the write moves the space's cursor, so that a tree batch
+ *  that read the note as still there starts again and finds it gone, rather than
+ *  writing it back (`changeTree`). */
+async function purgeNote(
+  env: Env,
+  note: Pick<Note, 'id' | 'space_id'>,
+  who: string | null,
+): Promise<boolean> {
   // What the note used of the owner's blobs, read before the purge takes it away; see
   // unused.ts. A note written before its pictures were has its body read for them.
   const used = await usedBy(env, note)
 
-  await env.NOTES.delete([noteKey(note.space_id, note.id), snapshotKey(note.id)])
   // And what the account remembered it saying before. A version of a note whose
   // words have gone for good is a version of nothing; the bodies go with the
-  // rows, each only once the last row naming it has gone. See versions.ts.
+  // rows, each only once the last row naming it has gone. See versions.ts. Ahead of the
+  // row, because a failure here is what leaves the note to be purged again; a restore
+  // in that moment has lost its history, and none of its words.
   await forgetVersions(env, note.id)
+
+  // The bytes written down, for the sweep to come back for if the bucket says no below:
+  // past the row, nothing is left in Recently deleted to tap again. A name is not taken
+  // while its note is anything but a tombstone, so one written for a purge that does not
+  // go on is only crossed off (leftovers.ts).
+  const objects = [noteKey(note.space_id, note.id), snapshotKey(note.id)]
+  const since = now()
+  await env.DB.batch(
+    objects.map((what) =>
+      env.DB.prepare('insert or ignore into leftovers (what, since) values (?, ?)').bind(
+        what,
+        since,
+      ),
+    ),
+  )
+
+  // And its paper, which the tombstone would otherwise still serve to whoever reaches
+  // the note, and which the bytes would still be kept for as a use of the space.
+  const { changes } = await atNextSeq(
+    env,
+    note.space_id,
+    env.DB.prepare(
+      `update notes set size = 0, hash = '', paper = null, deleted_at = null
+        where space_id = ?1 and id = ?2 and deleted = 1 and deleted_at is not null`,
+    ).bind(note.space_id, note.id),
+  )
+  if (!changes) return false
+
+  await env.NOTES.delete(objects).catch((error: unknown) => {
+    noted(`purge ${note.id}`, error, null)
+  })
   await forgetWords(env, note.id).catch(() => undefined)
   // And its reminders, which hold the words of its tasks; see push/reminders.ts.
   await forgetReminders(env, note.id).catch(() => undefined)
   await forgetPictures(env, note.id).catch(() => undefined)
-  // And its paper, which the tombstone would otherwise still serve to whoever reaches
-  // the note, and which the bytes would still be kept for as a use of the space.
-  await env.DB.prepare(
-    "update notes set size = 0, hash = '', paper = null, deleted_at = null where id = ?",
-  )
-    .bind(note.id)
-    .run()
 
   // And what is named by the note's id outside the row: its room, which holds the
   // whole document for as long as the file does, emptied from `leftovers` like an
@@ -204,6 +241,7 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>, who: str
     ),
   ])
   for (const guest of guests) await forgetEmptyGuest(env, guest)
+  return true
 }
 
 /** The guests one share of a space reaches, read before its rows go: a guest that
@@ -460,6 +498,8 @@ trash.post('/notes/:id/restore', async (context) => {
   if (note.space_deleted) return context.json({ error: 'restore its space first' }, 409)
 
   const back = await restoreNote(env, note, await deviceOf(context))
+  // Purged in the moment since it was read: there is nothing to give back.
+  if (back.deleted) return context.json({ error: 'nothing to restore' }, 404)
   return context.json({ note: presentNote(back) })
 })
 
@@ -468,7 +508,10 @@ trash.delete('/notes/:id', async (context) => {
   const note = await deletedNote(context.env, user.id, context.req.param('id'))
   if (!note) return context.json({ error: 'nothing to delete' }, 404)
 
-  await purgeNote(context.env, note, user.id)
+  // Restored in the moment since it was read: that is the answer that stands.
+  if (!(await purgeNote(context.env, note, user.id))) {
+    return context.json({ error: 'nothing to delete' }, 404)
+  }
   await sweepUnused(context.env, RIGHT_AFTER, user.id)
   return context.json({ ok: true })
 })
