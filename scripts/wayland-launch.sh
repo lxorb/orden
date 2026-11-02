@@ -729,7 +729,12 @@ if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
     wait "$app_pid" 2>/dev/null || true
     again
     python3 "$here/session-drive.py" "$out" killed "$pages" "$windows" || status=1
-    [ "$status" = 0 ] && closed
+    # And it goes when its window closes, restored or not; started once more for the
+    # check at the end of this script that the app is up.
+    if [ "$status" = 0 ]; then
+      closed
+      again
+    fi
   fi
 fi
 
