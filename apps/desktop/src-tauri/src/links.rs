@@ -1446,6 +1446,59 @@ mod tests {
         assert!(targets("[y](//x.dev/a)").is_empty());
     }
 
+    /// The twins of 'a markdown target the way a link names a file' in links.test.ts:
+    /// the hash in an escape is part of the name, and only one written out opens a
+    /// fragment.
+    #[test]
+    fn an_escaped_hash_is_part_of_the_name() {
+        let links = links_in("[S](C%23.md#a%20b)");
+        assert_eq!(links[0].target, "C#.md");
+        assert_eq!(links[0].heading.as_deref(), Some("a b"));
+
+        assert_eq!(targets("[S](Why%3F.md)"), vec!["Why?.md"]);
+        assert_eq!(targets("[S](a%2520b.md)"), vec!["a%20b.md"]);
+        assert_eq!(decode("a%20b%"), "a b%");
+        assert_eq!(decode("%FF.md"), "%FF.md");
+        assert_eq!(links_in("[S](a.md#^b1)")[0].block.as_deref(), Some("b1"));
+    }
+
+    /// The twins of 'parentheses and brackets in a markdown link' in links.test.ts.
+    #[test]
+    fn a_markdown_link_holds_balanced_parentheses_and_brackets() {
+        assert_eq!(targets("[x](a%20(1).md)"), vec!["a (1).md"]);
+        assert_eq!(targets("[x](a(1).md)"), vec!["a(1).md"]);
+        assert_eq!(targets("[x](a((1)).md)"), vec!["a((1)).md"]);
+        assert_eq!(
+            targets("[x](a(1).md \"t\") [y](b.md)"),
+            vec!["a(1).md", "b.md"]
+        );
+        assert_eq!(targets("[x](a\\(1.md)"), vec!["a(1.md"]);
+
+        assert!(targets("[x](a(1.md)").is_empty());
+        assert_eq!(targets("[x](a)1).md)"), vec!["a"]);
+
+        assert_eq!(links_in("[a[b]c](d.md)")[0].alias.as_deref(), Some("a[b]c"));
+        assert_eq!(links_in("[a\\]b](d.md)")[0].alias.as_deref(), Some("a\\]b"));
+        assert_eq!(links_in("[a[b](d.md)")[0].alias.as_deref(), Some("b"));
+
+        assert_eq!(targets("[a[b](c.md)d](e.md)"), vec!["c.md"]);
+        let image = links_in("[![i](p.png)](e.md)");
+        assert_eq!(image.len(), 1);
+        assert_eq!(image[0].target, "p.png");
+        assert!(image[0].embed);
+
+        let wiki = links_in("[[a]](b.md)");
+        assert_eq!(wiki.len(), 1);
+        assert_eq!(wiki[0].kind, "wikilink");
+        assert_eq!(targets("[x [[a]] y](b.md)"), vec!["a"]);
+
+        assert!(targets("[x](a b.md)").is_empty());
+        assert!(targets("[x](<a<b>)").is_empty());
+        assert!(!links_in("\\![x](a.md)")[0].embed);
+
+        assert!(links_in(&format!("[a]({}", "(".repeat(100_000))).is_empty());
+    }
+
     #[test]
     fn a_markdown_target_loses_its_encoding_and_keeps_its_heading() {
         let links = links_in("[x](My%20Note.md#a-heading)");

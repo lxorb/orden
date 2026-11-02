@@ -2,7 +2,9 @@ import { describe, expect, test } from 'vitest'
 import {
   blockIdOf,
   blockIds,
+  decodeTarget,
   embedKind,
+  encodeTarget,
   embedSize,
   findLinks,
   foldName,
@@ -18,6 +20,7 @@ import {
   MOST_LINKS,
   linkTarget,
   pageFragment,
+  wikilinkCannotName,
   parseWikilink,
   headingsOf,
   sectionOf,
@@ -602,5 +605,108 @@ describe('a markdown link that never closes', () => {
   test('still reads a title after blanks, and blanks with no title', () => {
     const found = findLinks('[a](One.md   "title"  ) [b](<Two.md>   )')
     expect(found.map((link) => link.target)).toEqual(['One.md', 'Two.md'])
+  })
+})
+
+describe('a markdown target the way a link names a file', () => {
+  const only = (text: string) => findLinks(text).map((link) => link.target)
+
+  test('every escape is undone, reserved characters too, as links.rs reads it', () => {
+    expect(only('[S](C%23.md)')).toEqual(['C#.md'])
+    expect(only('[S](Why%3F.md)')).toEqual(['Why?.md'])
+    expect(only('[S](a%2520b.md)')).toEqual(['a%20b.md'])
+    expect(decodeTarget('100%')).toBe('100%')
+    expect(decodeTarget('a%20b%')).toBe('a b%')
+    expect(decodeTarget('%FF.md')).toBe('%FF.md')
+  })
+
+  test('the hash in an escape is no fragment, and one written out still is', () => {
+    const [link] = findLinks('[S](C%23.md#a%20b)')
+    expect(link).toMatchObject({ target: 'C#.md', heading: 'a b' })
+  })
+
+  test('what encodeTarget writes reads back as the same name', () => {
+    for (const name of ['C#.md', 'Why?.md', 'a (1).md', '100%.md', 'a%20b.md', 'a[b].md', 'é ü.md']) {
+      expect(decodeTarget(encodeTarget(name))).toBe(name)
+      expect(only(`[S](${encodeTarget(name)})`)).toEqual([name])
+    }
+  })
+
+  test('a rename finds the target as it is written, not as it is read', () => {
+    const text = '[S](C%23.md#h)'
+    const [link] = findLinks(text)
+    expect(text.slice(link?.targetFrom, link?.targetTo)).toBe('C%23.md')
+  })
+})
+
+describe('parentheses and brackets in a markdown link', () => {
+  const read = (text: string) =>
+    findLinks(text).map((link) => [link.target, link.alias, text.slice(link.targetFrom, link.targetTo)])
+
+  test('a target holds balanced parentheses, which is how Obsidian writes `a (1).md`', () => {
+    expect(read('[x](a%20(1).md)')).toEqual([['a (1).md', 'x', 'a%20(1).md']])
+    expect(read('[x](a(1).md)')).toEqual([['a(1).md', 'x', 'a(1).md']])
+    expect(read('[x](a((1)).md)')).toEqual([['a((1)).md', 'x', 'a((1)).md']])
+    expect(read('[x](a(1).md "t") [y](b.md)').map(([target]) => target)).toEqual([
+      'a(1).md',
+      'b.md',
+    ])
+  })
+
+  test('escaped parentheses are the name and count for nothing', () => {
+    expect(read('[x](a\\(1.md)')).toEqual([['a(1.md', 'x', 'a\\(1.md']])
+  })
+
+  test('parentheses that do not balance are no link, or end it where they close', () => {
+    expect(findLinks('[x](a(1.md)')).toEqual([])
+    expect(read('[x](a)1).md)').map(([target]) => target)).toEqual(['a'])
+  })
+
+  test('a label holds balanced brackets and escaped ones', () => {
+    expect(read('[a[b]c](d.md)')).toEqual([['d.md', 'a[b]c', 'd.md']])
+    expect(read('[a\\]b](d.md)')).toEqual([['d.md', 'a\\]b', 'd.md']])
+    expect(findLinks('[a[b](d.md)').map((link) => link.alias)).toEqual(['b'])
+  })
+
+  test('an inner link is the link and the outer one is not', () => {
+    expect(read('[a[b](c.md)d](e.md)').map(([target]) => target)).toEqual(['c.md'])
+    expect(findLinks('[![i](p.png)](e.md)').map((link) => [link.target, link.embed])).toEqual([
+      ['p.png', true],
+    ])
+  })
+
+  test('a wikilink is never read as a label', () => {
+    expect(findLinks('[[a]](b.md)').map((link) => [link.kind, link.target])).toEqual([
+      ['wikilink', 'a'],
+    ])
+    expect(findLinks('[x [[a]] y](b.md)').map((link) => link.target)).toEqual(['a'])
+  })
+
+  test('words between the target and the bracket are no link, as in CommonMark', () => {
+    expect(findLinks('[x](a b.md)')).toEqual([])
+    expect(findLinks('[x](<a<b>)')).toEqual([])
+  })
+
+  test('a backslash before the bang leaves the link and escapes only the bang', () => {
+    expect(findLinks('\\![x](a.md)').map((link) => link.embed)).toEqual([false])
+  })
+
+  test('what a link may cost is bounded, as in links.rs', () => {
+    const long = 'x'.repeat(1000)
+    expect(findLinks(`[a](${long}.md)`)).toEqual([])
+    expect(findLinks(`[${long}](a.md)`)).toEqual([])
+    expect(findLinks('[a]('.repeat(5000))).toEqual([])
+    expect(findLinks(`[a](${'('.repeat(100000)}`)).toEqual([])
+  })
+})
+
+describe('what a wikilink cannot name', () => {
+  test('the characters its own grammar or Obsidian takes for something else', () => {
+    for (const name of ['C# basics', 'a^b', 'a[b]', 'a]b', 'a|b']) {
+      expect(wikilinkCannotName(name)).toBe(true)
+    }
+    for (const name of ['Plan', 'a (1)', 'folder/Plan', 'é ü', 'a&b']) {
+      expect(wikilinkCannotName(name)).toBe(false)
+    }
   })
 })

@@ -141,3 +141,43 @@ describe('code the page draws is never rewritten', () => {
     )
   })
 })
+
+describe('renaming a note to a name a wikilink cannot say', () => {
+  const to = { from: 'Plan.md', to: 'f/C# basics.md' }
+
+  test('turns the links to it into markdown links, keeping what they said', () => {
+    expect(rewriteLinks('a [[Plan]] b', 'Note.md', to, pointsAt('plan'))).toBe(
+      'a [C# basics](f/C%23%20basics.md) b',
+    )
+    expect(rewriteLinks('[[Plan|the plan]]', 'g/Note.md', to, pointsAt('plan'))).toBe(
+      '[the plan](../f/C%23%20basics.md)',
+    )
+    expect(rewriteLinks('[[Plan#Some Part]]', 'Note.md', to, pointsAt('plan'))).toBe(
+      '[C# basics](f/C%23%20basics.md#some-part)',
+    )
+    expect(rewriteLinks('[[Plan#^a1]]', 'Note.md', to, pointsAt('plan'))).toBe(
+      '[C# basics](f/C%23%20basics.md#^a1)',
+    )
+    expect(rewriteLinks('![[Plan]]', 'Note.md', to, pointsAt('plan'))).toBe(
+      '![C# basics](f/C%23%20basics.md)',
+    )
+  })
+
+  test('leaves every other link and word alone', () => {
+    expect(
+      rewriteLinks('[[Other]] [[Plan]] [x](Other.md) `[[Plan]]`', 'Note.md', to, pointsAt('plan')),
+    ).toBe('[[Other]] [C# basics](f/C%23%20basics.md) [x](Other.md) `[[Plan]]`')
+  })
+
+  test('a link the app wrote to such a name is found and renamed again', () => {
+    const first = rewriteLinks('[[Plan]]', 'Note.md', to, pointsAt('plan')) ?? ''
+    expect(
+      rewriteLinks(
+        first,
+        'Note.md',
+        { from: to.to, to: 'Road.md' },
+        (link) => link.target === 'f/C# basics.md',
+      ),
+    ).toBe('[C# basics](Road.md)')
+  })
+})
