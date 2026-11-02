@@ -443,6 +443,12 @@ struct Claim<'a> {
     tab: &'a str,
 }
 
+impl Drop for Claim<'_> {
+    fn drop(&mut self) {
+        self.tabs.built(self.tab);
+    }
+}
+
 impl WebTabs {
     /// Takes a tab for one build, or says that somebody already has it.
     fn claim(&self, tab: &str) -> bool {

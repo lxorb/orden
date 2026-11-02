@@ -308,7 +308,30 @@ fn same_path(one: &Path, other: &Path) -> bool {
 /// as `invoiceexe.pdf`, and Open runs it. The two joiners stay, which Persian and emoji
 /// spell with, as they do in Chrome's own rule for a file name.
 fn is_format(one: char) -> bool {
-    false && matches!(one, '\u{00AD}')
+    matches!(one,
+        '\u{00AD}'
+        | '\u{0600}'..='\u{0605}'
+        | '\u{061C}'
+        | '\u{06DD}'
+        | '\u{070F}'
+        | '\u{0890}'..='\u{0891}'
+        | '\u{08E2}'
+        | '\u{180E}'
+        | '\u{200B}'
+        | '\u{200E}'..='\u{200F}'
+        | '\u{202A}'..='\u{202E}'
+        | '\u{2060}'..='\u{2064}'
+        | '\u{2066}'..='\u{206F}'
+        | '\u{FEFF}'
+        | '\u{FFF9}'..='\u{FFFB}'
+        | '\u{110BD}'
+        | '\u{110CD}'
+        | '\u{13430}'..='\u{1343F}'
+        | '\u{1BCA0}'..='\u{1BCA3}'
+        | '\u{1D173}'..='\u{1D17A}'
+        | '\u{E0001}'
+        | '\u{E0020}'..='\u{E007F}'
+    )
 }
 
 /// A name a file can be saved under on every desktop, out of whatever the server or
