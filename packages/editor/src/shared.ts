@@ -34,7 +34,7 @@ import {
 } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
 import { fold } from '@orden/rooms/fold'
-import { external } from './external'
+import { external, isExternal } from './external'
 
 /** As much of a view as a document needs: the state it is holding, and a way to
  *  hand it a change. A CodeMirror `EditorView` is one; so is a state with a
@@ -141,44 +141,60 @@ const marksKept = invertedEffects.of((transaction) =>
   ),
 )
 
-/** Whether the code unit at `at` is half of a character with its other half gone: the
- *  first half with no second after it, or the second with no first before it. */
-function halfAt(doc: Text, at: number): boolean {
-  const [before, here, after] = [at - 1, at, at + 1].map((one) =>
-    one < 0 || one >= doc.length ? 0 : doc.sliceString(one, one + 1).charCodeAt(0),
-  ) as [number, number, number]
-  if (here >= 0xd800 && here <= 0xdbff) return !(after >= 0xdc00 && after <= 0xdfff)
-  if (here >= 0xdc00 && here <= 0xdfff) return !(before >= 0xd800 && before <= 0xdbff)
-  return false
+const leads = (unit: number) => unit >= 0xd800 && unit <= 0xdbff
+const trails = (unit: number) => unit >= 0xdc00 && unit <= 0xdfff
+
+/** Whether `at` falls between the two halves of one character. */
+function parted(doc: Text, at: number): boolean {
+  if (at <= 0 || at >= doc.length) return false
+  const halves = doc.sliceString(at - 1, at + 1)
+  return leads(halves.charCodeAt(0)) && trails(halves.charCodeAt(1))
 }
 
-/** No change leaves half a character behind (#545).
+/** No change makes half a character (#545): by parting a pair, or by writing a half.
  *
  *  A position between the two halves of an emoji is one nothing should offer, and
  *  anything that reckons in columns or offsets still can. The half left over cannot
  *  reach a disk or another device as anything but U+FFFD, since what travels is UTF-8,
  *  and a room's Yjs text refuses to be cut there at all. So what is typed between the
- *  halves goes after the character, and what took one half takes both. A change that
- *  leaves a whole character, a different one, is not this and is left alone.
+ *  halves goes after the character, what took one half takes both, and a half among
+ *  what was written does not go in. A change that leaves a whole character, a different
+ *  one, is not this and is left alone; nor is a half already in the words beside it,
+ *  which this change did not make.
  *
  *  As a change after the change rather than instead of it, which keeps whatever else
- *  the transaction says and maps the caret through. */
+ *  the transaction says and maps the caret through. Runs after a mode's own filters,
+ *  which come later in the editor's extensions (see `filterTransaction` in the library):
+ *  the hidden front matter's guard has already moved an edit off the fence by here. And
+ *  never on words from outside, which a view has to hold just as the document does. */
 const wholeCharacters = EditorState.transactionFilter.of((made) => {
-  if (!made.docChanged) return made
+  if (!made.docChanged || isExternal(made)) return made
 
+  const before = made.startState.doc
   const doc = made.newDoc
   const mended: ChangeSpec[] = []
   made.changes.iterChanges((fromA, toA, fromB, toB) => {
-    const first = fromB > 0 && halfAt(doc, fromB - 1)
-    const second = toB < doc.length && halfAt(doc, toB)
+    const first = parted(before, fromA) && !parted(doc, fromB)
+    const second = parted(before, toA) && !parted(doc, toB)
 
     if (first && second && fromA === toA) {
       mended.push({ from: fromB, insert: doc.sliceString(toB, toB + 1) })
       mended.push({ from: toB, to: toB + 1 })
-      return
+    } else {
+      if (first) mended.push({ from: fromB - 1, to: fromB })
+      if (second) mended.push({ from: toB, to: toB + 1 })
     }
-    if (first) mended.push({ from: fromB - 1, to: fromB })
-    if (second) mended.push({ from: toB, to: toB + 1 })
+
+    // What was written, with a unit either side to say whether its ends are whole.
+    const start = Math.max(fromB - 1, 0)
+    const words = doc.sliceString(start, Math.min(toB + 1, doc.length))
+    for (let at = fromB; at < toB; at++) {
+      const unit = words.charCodeAt(at - start)
+      const half = leads(unit)
+        ? !trails(words.charCodeAt(at - start + 1))
+        : trails(unit) && !leads(words.charCodeAt(at - start - 1))
+      if (half) mended.push({ from: at, to: at + 1 })
+    }
   })
 
   return mended.length ? [made, { changes: mended, sequential: true }] : made
@@ -338,6 +354,8 @@ export class SharedDoc {
       const made = this.state.update({
         changes: change,
         annotations: Transaction.addToHistory.of(false),
+        // The next note's words as they are, which is what the state below is built on.
+        filter: false,
       })
 
       this.carry(made.changes, null)
