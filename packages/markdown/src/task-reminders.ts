@@ -25,9 +25,14 @@ export interface WallTime {
   date: string
   time: string
   zone?: string
+  /** For a reminder counted back from the task's time, that time and how far back. The
+   *  moment is counted from it, since a clock change between the two puts the wall time
+   *  somewhere other than that many minutes earlier, or nowhere. */
+  before?: { date: string; time: string; minutes: number }
 }
 
 const MINUTE = 60_000
+const DAY = 86_400_000
 
 /** The day a task rings on: the day it starts, else the one it is scheduled for. A
  *  deadline rings nothing (#371); `due` says what a `📅` means in the task's space. */
@@ -73,7 +78,8 @@ export function remindTimes(
 }
 
 /** A wall time some minutes earlier, counted on the wall clock: 15 minutes before
- *  00:10 is 23:55 the day before. */
+ *  00:10 is 23:55 the day before. That is the minute it is known by; see `before` on
+ *  WallTime for the moment it rings at. */
 function before(wall: WallTime, minutes: number): WallTime {
   if (minutes <= 0) return wall
   const [hours = 0, mins = 0] = wall.time.split(':').map(Number)
@@ -82,13 +88,20 @@ function before(wall: WallTime, minutes: number): WallTime {
   const pad = (value: number, width = 2) => String(value).padStart(width, '0')
   const date = `${pad(moment.getUTCFullYear(), 4)}-${pad(moment.getUTCMonth() + 1)}-${pad(moment.getUTCDate())}`
   const time = `${pad(moment.getUTCHours())}:${pad(moment.getUTCMinutes())}`
-  return wall.zone ? { date, time, zone: wall.zone } : { date, time }
+  const from = { date: wall.date, time: wall.time, minutes }
+  return wall.zone ? { date, time, zone: wall.zone, before: from } : { date, time, before: from }
 }
 
 /** The moment a wall time stands for, in milliseconds since the epoch: read in its own
  *  zone where it has one, else in `zone`, else on this machine's clock. NaN for a date,
  *  a time or a zone that is not one. */
 export function momentOf(wall: WallTime, zone?: string): number {
+  if (wall.before) {
+    const { date, time, minutes } = wall.before
+    const from = wall.zone ? { date, time, zone: wall.zone } : { date, time }
+    return momentOf(from, zone) - minutes * MINUTE
+  }
+
   const [hours, minutes] = wall.time.split(':').map(Number)
   const [year, month, day] = wall.date.split('-').map(Number)
   if ([hours, minutes, year, month, day].some((one) => one === undefined || Number.isNaN(one))) {
@@ -100,11 +113,20 @@ export function momentOf(wall: WallTime, zone?: string): number {
     return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1, hours ?? 0, minutes ?? 0).getTime()
   }
 
-  // The zone's offset at the moment guessed, then again at the moment that gives, which
-  // is the one a clock change between the two decides.
-  const first = utc - offsetOf(named, utc)
-  if (Number.isNaN(first)) return NaN
-  return utc - offsetOf(named, first)
+  // The zone's offset a day either side, which is before and after any clock change
+  // near this wall time.
+  const early = offsetOf(named, utc - DAY)
+  const late = offsetOf(named, utc + DAY)
+  if (Number.isNaN(early) || Number.isNaN(late)) return NaN
+  const first = utc - early
+  if (early === late) return first
+
+  // A wall time the change repeats is read the first time round, and one it skips at the
+  // offset before it, which is what `new Date()` does on a machine in the zone. The app
+  // reads a floating time that way, so the Worker has to as well.
+  return offsetOf(named, first) !== early && offsetOf(named, utc - late) === late
+    ? utc - late
+    : first
 }
 
 /** How far a zone's wall clock is ahead of UTC at a moment, in milliseconds. */

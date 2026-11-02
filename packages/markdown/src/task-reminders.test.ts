@@ -12,7 +12,13 @@ describe('remindTimes', () => {
   test('a task with a time rings at it, less the automatic offset', () => {
     const one = task('- [ ] Call the bank [time:: 16:00] 📅 2026-10-06')
     expect(remindTimes(one, 0)).toEqual([{ date: '2026-10-06', time: '16:00' }])
-    expect(remindTimes(one, 15)).toEqual([{ date: '2026-10-06', time: '15:45' }])
+    expect(remindTimes(one, 15)).toEqual([
+      {
+        date: '2026-10-06',
+        time: '15:45',
+        before: { date: '2026-10-06', time: '16:00', minutes: 15 },
+      },
+    ])
     expect(remindTimes(one, null)).toEqual([])
   })
 
@@ -23,13 +29,23 @@ describe('remindTimes', () => {
     expect(remindTimes(one, 15)).toEqual([
       { date: '2026-10-05', time: '09:00' },
       { date: '2026-10-06', time: '08:30' },
-      { date: '2026-10-06', time: '15:45' },
+      {
+        date: '2026-10-06',
+        time: '15:45',
+        before: { date: '2026-10-06', time: '16:00', minutes: 15 },
+      },
     ])
   })
 
   test('counting back crosses midnight on the wall clock', () => {
     const one = task('- [ ] Night train [time:: 00:10] [remind:: 1h] 📅 2026-10-06')
-    expect(remindTimes(one, null)).toEqual([{ date: '2026-10-05', time: '23:10' }])
+    expect(remindTimes(one, null)).toEqual([
+      {
+        date: '2026-10-05',
+        time: '23:10',
+        before: { date: '2026-10-06', time: '00:10', minutes: 60 },
+      },
+    ])
   })
 
   test('the scheduled day stands in for a due one', () => {
@@ -55,7 +71,12 @@ describe('remindTimes', () => {
   test('a zone on the line stays with every reminder of it', () => {
     const one = task('- [ ] Standup [time:: 09:00 America/New_York] [remind:: 10m] 📅 2026-10-06')
     expect(remindTimes(one, null)).toEqual([
-      { date: '2026-10-06', time: '08:50', zone: 'America/New_York' },
+      {
+        date: '2026-10-06',
+        time: '08:50',
+        zone: 'America/New_York',
+        before: { date: '2026-10-06', time: '09:00', minutes: 10 },
+      },
     ])
   })
 })
@@ -150,7 +171,9 @@ describe('a clock change', () => {
           const walls = remindTimes(task(`- [ ] a ${line} [remind:: 30m] 🛫 ${date}`), null)
           const at = momentOf({ date, time }, zone)
           for (const wall of walls) {
-            expect(`${date} ${time} ${momentOf(wall, zone)}`).toBe(`${date} ${time} ${at - 1_800_000}`)
+            expect(`${date} ${time} ${momentOf(wall, zone)}`).toBe(
+              `${date} ${time} ${at - 1_800_000}`,
+            )
             expect(`${date} ${time} ${momentOf(wall)}`).toBe(`${date} ${time} ${at - 1_800_000}`)
           }
         }

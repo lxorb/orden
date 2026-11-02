@@ -572,10 +572,11 @@ function legend(chart: Chart): string {
 /** The chart as one SVG, sized by its viewBox so the column decides how wide. */
 export function chartSvg(chart: Chart, options?: ChartOptions): string {
   // Every drawing is ratios of the numbers, so a chart too big to add up is the same
-  // picture of smaller ones; only what it says out loud is multiplied back.
+  // picture of smaller ones; only what it says out loud is multiplied back, to the
+  // digits that survive the trip.
   const huge = chart.series.some((one) => one.data.some((value) => Math.abs(value) > LARGEST))
   const say = sayer(options)
-  const said = huge ? (value: number) => say(value * SHRUNK) : say
+  const said = huge ? (value: number) => say(Number((value * SHRUNK).toPrecision(15))) : say
   const drawn = huge
     ? {
         ...chart,

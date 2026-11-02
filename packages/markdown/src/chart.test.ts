@@ -355,9 +355,8 @@ describe('numbers at the ends of what a number can be', () => {
   )
 
   test('a value is said as what it is, not as infinity', () => {
-    // Three hundred and eight digits, of which a double knows the first sixteen.
     const svg = chartSvg(readChart('series:\n  - data: [1e307]\n')!)
-    expect(svg).toMatch(/<title>10,000,000,000,000,0\d\d,[\d,]+<\/title>/)
+    expect(svg).toMatch(/<title>10(,000)+<\/title>/)
     expect(svg).not.toMatch(/<title>∞/)
   })
 
