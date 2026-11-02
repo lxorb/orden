@@ -74,7 +74,10 @@ fn mark_private(label: &str, private: bool) {
 /// Whether a web tab's page is a private one.
 #[cfg_attr(
     not(any(windows, target_os = "macos", feature = "cef")),
-    allow(dead_code, reason = "only the engines whose cookies are given an expiry ask")
+    allow(
+        dead_code,
+        reason = "only the engines whose cookies are given an expiry ask"
+    )
 )]
 pub(crate) fn is_private(label: &str) -> bool {
     PRIVATE
