@@ -9,7 +9,14 @@
  *  Pure. What a wikilink resolves to and where the pictures went are the
  *  caller's answers; this only writes them down. */
 
-import { findLinks, type FoundLink, lines, shownText } from '@orden/markdown/links'
+import {
+  embedKind,
+  embedSize,
+  findLinks,
+  type FoundLink,
+  lines,
+  shownText,
+} from '@orden/markdown/links'
 import { encodeTarget } from '../link-rewrite'
 
 /** A stretch of the source, and what goes in its place. */
@@ -29,8 +36,21 @@ export interface MarkdownOptions {
   picture?: (src: string) => string | null
 }
 
+/** A source written bare: anything without a space, with its parentheses balanced, to the
+ *  two levels deep anyone writes, as CommonMark reads one. */
+const BARE = String.raw`(?:[^\s()\\]|\\.|\((?:[^\s()\\]|\\.|\([^\s()]*\))*\))*`
+
+/** What may follow a source: a title in any of markdown's three spellings. */
+const TITLE = String.raw`(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?`
+
 /** `![alt](src "title")`, with the parts kept apart so only the source moves. */
-const PICTURE = /!\[([^\]]*)\]\(\s*(<[^>]*>|[^\s)]*)((?:\s+"[^"]*")?)\s*\)/g
+const PICTURE = new RegExp(String.raw`!\[([^\]]*)\]\(\s*(<[^>]*>|${BARE})(${TITLE})\s*\)`, 'g')
+
+/** `[name]: src "title"`, which is where `![alt][name]` and `![name]` keep their source: on
+ *  its own line, in a quote or not, and not a footnote's. */
+const DEFINITION = new RegExp(
+  String.raw`^([ >]*\[(?!\^)[^\]]+\]:[ \t]*)(<[^>]*>|[^\s<]\S*)(${TITLE})[ \t]*$`,
+)
 
 /** The link as markdown: the words it showed, pointing where it now points. */
 function asLink(link: FoundLink, target: string): string {
@@ -46,7 +66,17 @@ function asLink(link: FoundLink, target: string): string {
  *  was written that way, and when it holds a space, since a bare space would end
  *  the source and turn the rest of the path into a title. */
 function asSource(path: string, written: string): string {
-  return written.startsWith('<') || path.includes(' ') ? `<${path}>` : path
+  return written.startsWith('<') || path.includes(' ') || !balanced(path) ? `<${path}>` : path
+}
+
+/** Whether a path's parentheses pair up, which is what lets one stand bare. */
+function balanced(path: string): boolean {
+  let open = 0
+  for (const one of path) {
+    if (one === '(') open++
+    if (one === ')' && --open < 0) return false
+  }
+  return open === 0
 }
 
 /** Where every picture's source sits in the text, outside code: code as the links
@@ -67,9 +97,33 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
       const from = at + match.index + match[0].indexOf(written, match[1]?.length ?? 0)
       edits.push({ from, to: from + written.length, text: asSource(wanted, written) })
     }
+
+    const definition = DEFINITION.exec(line)
+    if (definition) {
+      const written = definition[2] ?? ''
+      const bare = written.startsWith('<') ? written.slice(1, -1) : written
+      const wanted = rename(bare)
+      if (wanted === null || wanted === bare) continue
+
+      const from = at + (definition[1]?.length ?? 0)
+      edits.push({ from, to: from + written.length, text: asSource(wanted, written) })
+    }
   }
 
   return edits
+}
+
+/** `![[pic.png]]` as a plain markdown reader can draw it, where the picture has a place to
+ *  be drawn from: a picture still, with the words the document reads under it. Null for
+ *  anything else, which is an embed of a note and only ever a link. */
+function pictureEmbed(link: FoundLink, rename: (src: string) => string | null): string | null {
+  if (!link.embed || embedKind(link.target) !== 'image') return null
+
+  const wanted = rename(link.target)
+  if (wanted === null) return null
+
+  const words = embedSize(link.alias) === null ? (link.alias ?? '') : ''
+  return `![${words}](${asSource(wanted, '')})`
 }
 
 /** The note, rewritten. Edits are applied back to front so that each one's
@@ -77,9 +131,16 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
 export function toMarkdown(source: string, options: MarkdownOptions = {}): string {
   const edits: Edit[] = []
 
-  if (options.link) {
+  if (options.link || options.picture) {
     for (const found of findLinks(source)) {
       if (found.kind !== 'wikilink') continue
+
+      const picture = options.picture ? pictureEmbed(found, options.picture) : null
+      if (picture !== null) {
+        edits.push({ from: found.from, to: found.to, text: picture })
+        continue
+      }
+      if (!options.link) continue
 
       const target = options.link(found)
       edits.push({

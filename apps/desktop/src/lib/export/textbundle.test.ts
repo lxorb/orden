@@ -207,7 +207,8 @@ describe('a picture however it was written', () => {
   })
 
   test('a definition of something else, a footnote and code are left alone', () => {
-    const source = '![x][ref]\n\n[ref]: pic.png\n[other]: else.png\n[^1]: pic.png\n\n```\n[ref]: pic.png\n```\n'
+    const source =
+      '![x][ref]\n\n[ref]: pic.png\n[other]: else.png\n[^1]: pic.png\n\n```\n[ref]: pic.png\n```\n'
     expect(asked(source, 'pic.png', 'p.png')).toBe(
       '![x][ref]\n\n[ref]: assets/p.png\n[other]: else.png\n[^1]: pic.png\n\n```\n[ref]: pic.png\n```\n',
     )
