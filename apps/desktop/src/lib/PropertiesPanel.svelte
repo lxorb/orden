@@ -117,7 +117,19 @@
   function finishRenaming(key: string, field: HTMLInputElement) {
     if (renaming !== key) return
     renaming = null
-    apply(renameProperty(source(), key, field.value))
+    const renamed = apply(renameProperty(source(), key, field.value))
+    if (keyed) void standOnKey(renamed ? field.value.trim() : key)
+  }
+
+  /** Whether the rename was ended by a key - Enter or Escape - rather than by the
+   *  keyboard or the pointer going somewhere else: the field goes with it, and the
+   *  keyboard goes back to the key it renamed rather than to the page. */
+  let keyed = false
+
+  async function standOnKey(key: string) {
+    keyed = false
+    await tick()
+    list?.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"] button.key`)?.focus()
   }
 
   /** A new key, written with nothing after it, and the keyboard put in its value. A name
@@ -204,18 +216,34 @@
               aria-label={t('Rename')}
               autofocus
               onkeydown={(event) => {
+                if (event.key === 'Enter' && !event.isComposing) keyed = true
                 commitOnEnter(event)
-                cancelOnEscape(event, () => (renaming = null))
+                cancelOnEscape(event, () => {
+                  renaming = null
+                  void standOnKey(property.key)
+                })
               }}
               onblur={(event) => finishRenaming(property.key, event.currentTarget)}
             />
-          {:else}
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <span
+          {:else if writable}
+            <!-- A button, so the keyboard can stand on the key as well as the pointer:
+                 a press renames it, as F2 renames a row of the file list, and Shift+F10
+                 or the menu key on it is the row's menu, Rename and Remove. A text value's
+                 field answers those keys with its own menu, so without this the key was
+                 the one way to either and only a pointer had it (#523). -->
+            <button
               class="key"
               title={property.key}
-              ondblclick={() => void startRenaming(property.key)}>{property.key}</span
+              onclick={() => void startRenaming(property.key)}
+              onkeydown={(event) => {
+                if (event.key === 'F2' && !event.isComposing) {
+                  event.preventDefault()
+                  void startRenaming(property.key)
+                }
+              }}>{property.key}</button
             >
+          {:else}
+            <span class="key" title={property.key}>{property.key}</span>
           {/if}
 
           <PropertyValue
@@ -292,6 +320,16 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--muted);
+  }
+
+  button.key {
+    min-width: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    font: inherit;
+    text-align: start;
+    cursor: default;
   }
 
   /* A field with no box until a pointer or the keyboard arrives, so the rows go on
