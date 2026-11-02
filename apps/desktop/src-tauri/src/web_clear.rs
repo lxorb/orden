@@ -232,43 +232,38 @@ mod engine {
     use objc2::MainThreadMarker;
     use objc2_foundation::{NSDate, NSSet, NSString};
     use objc2_web_kit::{
-        WKWebView, WKWebsiteDataStore, WKWebsiteDataTypeCookies, WKWebsiteDataTypeDiskCache,
-        WKWebsiteDataTypeFetchCache, WKWebsiteDataTypeIndexedDBDatabases,
-        WKWebsiteDataTypeLocalStorage, WKWebsiteDataTypeMemoryCache,
-        WKWebsiteDataTypeOfflineWebApplicationCache, WKWebsiteDataTypeServiceWorkerRegistrations,
-        WKWebsiteDataTypeSessionStorage, WKWebsiteDataTypeWebSQLDatabases,
+        WKWebView, WKWebsiteDataStore, WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache,
     };
 
     use super::{seconds, Clearing, PATIENCE};
 
     /// The types the two rows mean to `WKWebsiteDataStore`: all of them for both.
+    ///
+    /// Site data is every type the running system has but the two caches, rather than a
+    /// list: the file systems (OPFS) only exist on macOS 14, and naming their constant
+    /// would stop the app from starting on 13.3, where the symbol is not there to link.
     #[allow(
         unsafe_code,
         reason = "the data types are WebKit's own constants, read as the statics they are"
     )]
     fn types(clearing: Clearing, mtm: MainThreadMarker) -> Retained<NSSet<NSString>> {
-        if clearing.site && clearing.cache {
-            // SAFETY: a class method of WebKit's, on the main thread.
-            return unsafe { WKWebsiteDataStore::allWebsiteDataTypes(mtm) };
-        }
-        // SAFETY: WebKit's own constants, which live for the program.
-        let named: Vec<&NSString> = unsafe {
-            if clearing.site {
-                vec![
-                    WKWebsiteDataTypeCookies,
-                    WKWebsiteDataTypeLocalStorage,
-                    WKWebsiteDataTypeSessionStorage,
-                    WKWebsiteDataTypeIndexedDBDatabases,
-                    WKWebsiteDataTypeWebSQLDatabases,
-                    WKWebsiteDataTypeServiceWorkerRegistrations,
-                    WKWebsiteDataTypeFetchCache,
-                    WKWebsiteDataTypeOfflineWebApplicationCache,
-                ]
-            } else {
-                vec![WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache]
-            }
+        // SAFETY: WebKit's own constants, which live for the program, and a class method of
+        // WebKit's, on the main thread.
+        let (caches, all): (Vec<&NSString>, _) = unsafe {
+            (
+                vec![WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache],
+                WKWebsiteDataStore::allWebsiteDataTypes(mtm),
+            )
         };
-        NSSet::from_slice(&named)
+        if clearing.site && clearing.cache {
+            return all;
+        }
+        if clearing.site {
+            let all = all.to_vec();
+            let all: Vec<&NSString> = all.iter().map(|one| &**one).collect();
+            return NSSet::from_slice(&super::without(all, &caches));
+        }
+        NSSet::from_slice(&caches)
     }
 
     #[allow(
@@ -398,9 +393,26 @@ async fn within(
     }
 }
 
+/// `all` but those in `gone`.
+#[cfg(any(target_os = "macos", test))]
+fn without<T: PartialEq>(mut all: Vec<T>, gone: &[T]) -> Vec<T> {
+    all.retain(|one| !gone.contains(one));
+    all
+}
+
 #[cfg(test)]
 mod tests {
-    use super::Clearing;
+    use super::{without, Clearing};
+
+    /// Site data on a Mac is what the system has but its caches, so what is new in a later
+    /// macOS goes with it, as the file systems did in 14.
+    #[test]
+    fn site_data_is_everything_but_the_caches() {
+        assert_eq!(
+            without(vec!["cookies", "disk", "files", "memory"], &["disk", "memory"]),
+            vec!["cookies", "files"]
+        );
+    }
 
     /// The window's words for it, read as the crate reads them.
     #[test]
