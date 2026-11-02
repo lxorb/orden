@@ -42,7 +42,10 @@
     renameSteps,
   } from './folder-notes'
   import { t } from './i18n.svelte'
+  import { staysOn } from './caret'
+  import { focusList } from './focus'
   import { menu } from './menu.svelte'
+  import { overlays } from './overlays'
   import { longPress } from './longpress'
   import { landsIn } from './move-targets'
   import NameField from './NameField.svelte'
@@ -168,6 +171,9 @@
   /** Where in the list the row the keyboard is on was, so a row deleted under the
    *  keyboard hands it on to the row that comes up into its place. */
   let standingAt = -1
+  /** Whether what is deleting the row came from the keyboard on it: its Delete key, or a
+   *  menu Shift+F10 asked for, which took the keyboard off the row on the way. */
+  let keyedOn = false
 
   // The row the keyboard was on, gone from the list - deleted from its menu, or by a
   // shortcut while it had the keyboard. The engine leaves the keyboard on the page's
@@ -183,7 +189,11 @@
       standing = null
       const index = Math.min(standingAt, flat.length - 1)
       const next = flat[index]
-      const nowhere = document.activeElement === null || document.activeElement === document.body
+      // A row whose note was showing brings another note to the front, and the caret rule
+      // may have given it the keyboard already: that is not a person moving it.
+      const nowhere =
+        keyedOn || document.activeElement === null || document.activeElement === document.body
+      keyedOn = false
       // A row of the same space: one switched to has a list of its own, and the
       // keyboard is not handed across.
       if (
@@ -191,7 +201,9 @@
         nowhere &&
         workspace.rootHolding(next.entry.path) === workspace.rootHolding(was)
       ) {
-        stand(next.entry.path)
+        stand(next.entry.path, true)
+      } else if (!next && nowhere) {
+        void tick().then(standOnList)
       }
     })
   })
@@ -342,13 +354,26 @@
 
   /** Puts the keyboard on a row and makes it the one selected, which is what
    *  arriving at a row in a file list means. */
-  function stand(path: string) {
+  /** No row left to hand the keyboard to: what the panel has in their place, its way to a
+   *  new note, or the list itself where it has nothing. */
+  function standOnList() {
+    if (!focusList() && list) {
+      list.tabIndex = -1
+      list.focus()
+    }
+    if (document.activeElement) staysOn(document.activeElement)
+  }
+
+  function stand(path: string, stays = false) {
     workspace.select(path)
 
     const index = at.get(path)
     if (index === undefined) return
 
-    void reach(index).then((row) => row?.focus())
+    void reach(index).then((row) => {
+      row?.focus()
+      if (row && stays) staysOn(row)
+    })
   }
 
   /** Which of the walk's keys this press is, by the id the registry holds it
@@ -391,6 +416,7 @@
       event.preventDefault()
       // Nothing in a space shared to be read, as no other key that writes; see `fileKey`.
       if (!workspace.selection.every((path) => canWriteAt(path))) return
+      keyedOn = true
       // What holds something archived stays, and says why.
       const kept = workspace.selection.filter((path) => workspace.keepsArchived(path))
       void workspace.removeMany(workspace.selection)
@@ -1127,15 +1153,29 @@
   function onFocus(event: FocusEvent) {
     const from = event.target instanceof Element ? event.target.closest('.row') : null
     standing = from instanceof HTMLElement ? (from.dataset.path ?? null) : null
+    keyedOn = false
     standingAt = standing === null ? -1 : (at.get(standing) ?? -1)
+  }
+
+  /** The next thing a person does, once nothing is over the list, ends what `keyedOn`
+   *  was for: a row deleted after that is not the one the keyboard was on. */
+  function movedOn() {
+    if (!keyedOn || overlays.depth > 0) return
+    keyedOn = false
+    if (!list?.contains(document.activeElement)) standing = null
   }
 
   function onBlur(event: FocusEvent) {
     const to = event.relatedTarget
     if (to instanceof Node && list?.contains(to)) return
+    // Into the row's own menu, which is how Delete is reached: the row is still the one
+    // the keyboard comes back to (#523).
+    if (keyedOn) return
     standing = null
   }
 </script>
+
+<svelte:window onkeydowncapture={movedOn} onpointerdowncapture={movedOn} />
 
 <!-- Keys are read on the list, where every row's keydown ends up: the selection
      keys here, and the walk every list in the app shares through the action; see
@@ -1157,7 +1197,10 @@
     sideways,
     open: openRow,
     peek: peekRow,
-    menu: (row, to) => row.dispatchEvent(to),
+    menu: (row, to) => {
+      keyedOn = true
+      row.dispatchEvent(to)
+    },
     leave: leaveList,
     long: {
       count: () => flat.length,

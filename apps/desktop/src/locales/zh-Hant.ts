@@ -1415,6 +1415,7 @@ export const zhHant: Dictionary = {
   'The note': '筆記',
   '{space} panel': '{space}面板',
   'Panel width': '面板寬度',
+  'Pane size': '窗格大小',
   Values: '值',
   Pages: '頁',
   'Page {number} of {count}': '第{number}頁，共{count}頁',

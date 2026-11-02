@@ -12,7 +12,7 @@
   import { t } from './i18n.svelte'
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
-  import { type Frame, paneIn, type Split } from './workspace/pane-tree'
+  import { clamped, type Frame, paneIn, type Split } from './workspace/pane-tree'
   import { workspace } from './workspace.svelte'
 
   const { frame }: { frame: Frame } = $props()
@@ -30,6 +30,16 @@
   })
 
   let host = $state<HTMLElement>()
+  let wide = $state(0)
+  let tall = $state(0)
+
+  /** How far the divider can go, as `resize` holds it: a share of the room, or all of it
+   *  before the room has been measured. */
+  function ends(split: Split): [number, number] {
+    const room = split.along === 'row' ? wide : tall
+    if (!room) return [0, 100]
+    return [Math.round(clamped(0, room) * 100), Math.round(clamped(1, room) * 100)]
+  }
 
   /** How to end the drag that is on, if one is. A pane can be closed from a key
    *  or a menu while a finger is on the divider, and then the handle goes without
@@ -119,6 +129,8 @@
     class:down={split.along === 'column'}
     class:sliding={workspace.panes.sliding === split.id}
     bind:this={host}
+    bind:clientWidth={wide}
+    bind:clientHeight={tall}
     style:grid-template-columns={split.along === 'row' && kept < 0 ? share(split) : undefined}
     style:grid-template-rows={split.along === 'column' && kept < 0 ? share(split) : undefined}
   >
@@ -132,6 +144,9 @@
           class="divider"
           role="separator"
           aria-orientation={split.along === 'row' ? 'vertical' : 'horizontal'}
+          aria-label={t('Pane size')}
+          aria-valuemin={ends(split)[0]}
+          aria-valuemax={ends(split)[1]}
           aria-valuenow={Math.round(split.fraction * 100)}
           tabindex="0"
           title={t('Drag to resize')}

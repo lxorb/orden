@@ -1467,6 +1467,7 @@ export const kn: Dictionary = {
   'The note': 'ಟಿಪ್ಪಣಿ',
   '{space} panel': '{space} ಪ್ಯಾನೆಲ್',
   'Panel width': 'ಪ್ಯಾನೆಲ್ ಅಗಲ',
+  'Pane size': 'ಪೇನ್ ಗಾತ್ರ',
   Values: 'ಮೌಲ್ಯಗಳು',
   Pages: 'ಪುಟಗಳು',
   'Page {number} of {count}': '{count}ರಲ್ಲಿ {number} ಪುಟ',

@@ -1473,6 +1473,7 @@ export const ml: Dictionary = {
   'The note': 'കുറിപ്പ്',
   '{space} panel': '{space} പാനൽ',
   'Panel width': 'പാനൽ വീതി',
+  'Pane size': 'പെയിൻ വലിപ്പം',
   Values: 'മൂല്യങ്ങൾ',
   Pages: 'പേജുകൾ',
   'Page {number} of {count}': '{count}ൽ {number} പേജ്',

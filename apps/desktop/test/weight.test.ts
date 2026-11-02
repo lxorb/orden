@@ -969,8 +969,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-02, to 3,438,700, for #613 and #614: a move sync makes waits for the
  *  write in the air without waiting on what waits for the pass (`holdingWrites` in
  *  saving.svelte.ts), and an agent hears a write the disk road left alone, its steps
- *  kept and a file's other line endings with them. Measured 3,438,266. */
-const BUDGET = 3_438_700
+ *  kept and a file's other line endings with them. Measured 3,438,266.
+ *
+ *  Raised 2026-11-02, to 3,437,900, for #523: a sidebar toggle hands Tab into what it
+ *  opened, a row or a tab closed from the keyboard keeps it past the caret rule (caret.ts),
+ *  and the notices are a region F6 walks. Measured 3,437,265, from 3,430,841. */
+const BUDGET = 3_437_900
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

@@ -20,6 +20,7 @@
    *  read as a window with a thick left edge - a different icon, which is what it
    *  was reported as. A button that redraws itself is a button you have to read
    *  twice, and the state is already said three ways. */
+  import { intoSide } from './focus'
   import { t } from './i18n.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { type PanelSide, workspace } from './workspace.svelte'
@@ -39,6 +40,38 @@
         ? t('Hide right sidebar')
         : t('Show right sidebar'),
   )
+
+  /** Whether the press this button still has the keyboard from opened the side. The side
+   *  stands apart from its toggle in the page - the left one ahead of the bar, the right
+   *  one past a note Tab cannot leave - and moving either would mean rebuilding the
+   *  window's columns, so the next Tab goes there by hand, as it would go from any button
+   *  to what it just disclosed (#523). Once: a toggle Tab sent into its side every time
+   *  would be a ring with no way out, since the left side leads back to the bar. */
+  let opened = false
+
+  function pressed(event: MouseEvent) {
+    workspace.toggleSidebar(side)
+    opened = event.detail === 0 && !!workspace.openOn(side)
+  }
+
+  /** Tab into the side just opened, and Shift+Tab from there back to here. */
+  function onward(event: KeyboardEvent & { currentTarget: HTMLElement }) {
+    if (event.key !== 'Tab' || event.shiftKey || !opened) return
+    const toggle = event.currentTarget
+    const landed = intoSide(side)
+    if (!landed) return
+    event.preventDefault()
+
+    const back = (press: KeyboardEvent) => {
+      if (press.key !== 'Tab' || !press.shiftKey) return
+      press.preventDefault()
+      toggle.focus()
+    }
+    landed.addEventListener('keydown', back)
+    landed.addEventListener('focusout', () => landed.removeEventListener('keydown', back), {
+      once: true,
+    })
+  }
 </script>
 
 <!-- The glyph is mirrored for the right side and nothing else about it changes:
@@ -52,7 +85,9 @@
   title={shortcuts.tooltip(label, side === 'left' ? 'app.sidebar' : 'app.right-sidebar')}
   aria-label={label}
   aria-pressed={open}
-  onclick={() => workspace.toggleSidebar(side)}
+  onclick={pressed}
+  onkeydown={onward}
+  onblur={() => (opened = false)}
 >
   <svg viewBox="0 0 14 14">
     <rect x="1" y="2.5" width="12" height="9" rx="1.5" />

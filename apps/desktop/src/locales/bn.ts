@@ -1455,6 +1455,7 @@ export const bn: Dictionary = {
   'The note': 'নোট',
   '{space} panel': '{space} প্যানেল',
   'Panel width': 'প্যানেলের প্রস্থ',
+  'Pane size': 'প্যানের আকার',
   Values: 'মান',
   Pages: 'পাতা',
   'Page {number} of {count}': 'পাতা {number}/{count}',

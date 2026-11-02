@@ -1563,6 +1563,7 @@ export const ar: Dictionary = {
   'The note': 'الملاحظة',
   '{space} panel': 'لوحة {space}',
   'Panel width': 'عرض اللوحة',
+  'Pane size': 'حجم الجزء',
   Values: 'القيم',
   Pages: 'الصفحات',
   'Page {number} of {count}': 'الصفحة {number} من {count}',

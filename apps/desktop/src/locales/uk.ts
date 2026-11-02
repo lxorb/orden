@@ -1530,6 +1530,7 @@ export const uk: Dictionary = {
   'The note': 'Нотатка',
   '{space} panel': 'Панель простору {space}',
   'Panel width': 'Ширина панелі',
+  'Pane size': 'Розмір області',
   Values: 'Значення',
   Pages: 'Сторінки',
   'Page {number} of {count}': 'Сторінка {number} з {count}',

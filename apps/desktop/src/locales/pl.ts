@@ -1531,6 +1531,7 @@ export const pl: Dictionary = {
   'The note': 'Notatka',
   '{space} panel': 'Panel przestrzeni {space}',
   'Panel width': 'Szerokość panelu',
+  'Pane size': 'Rozmiar panelu',
   Values: 'Wartości',
   Pages: 'Strony',
   'Page {number} of {count}': 'Strona {number} z {count}',

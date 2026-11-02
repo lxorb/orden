@@ -1460,6 +1460,7 @@ export const pa: Dictionary = {
   'The note': 'ਨੋਟ',
   '{space} panel': '{space} ਪੈਨਲ',
   'Panel width': 'ਪੈਨਲ ਚੌੜਾਈ',
+  'Pane size': 'ਖ਼ਾਨੇ ਦਾ ਆਕਾਰ',
   Values: 'ਮੁੱਲ',
   Pages: 'ਸਫ਼ੇ',
   'Page {number} of {count}': 'ਸਫ਼ਾ {number}/{count}',

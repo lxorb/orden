@@ -1431,6 +1431,7 @@ export const ko: Dictionary = {
   'The note': '노트',
   '{space} panel': '{space} 패널',
   'Panel width': '패널 너비',
+  'Pane size': '창 크기',
   Values: '값',
   Pages: '페이지',
   'Page {number} of {count}': '{count}쪽 중 {number}쪽',

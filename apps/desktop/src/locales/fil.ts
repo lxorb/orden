@@ -1481,6 +1481,7 @@ export const fil: Dictionary = {
   'The note': 'Ang tala',
   '{space} panel': 'Panel ng {space}',
   'Panel width': 'Lapad ng panel',
+  'Pane size': 'Laki ng pane',
   Values: 'Mga halaga',
   Pages: 'Mga pahina',
   'Page {number} of {count}': 'Pahina {number} ng {count}',

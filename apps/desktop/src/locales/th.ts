@@ -1424,6 +1424,7 @@ export const th: Dictionary = {
   'The note': 'โน้ต',
   '{space} panel': 'แผงของ {space}',
   'Panel width': 'ความกว้างแผง',
+  'Pane size': 'ขนาดบาน',
   Values: 'ค่า',
   Pages: 'หน้า',
   'Page {number} of {count}': 'หน้า {number} จาก {count}',

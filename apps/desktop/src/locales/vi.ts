@@ -1433,6 +1433,7 @@ export const vi: Dictionary = {
   'The note': 'Ghi chú',
   '{space} panel': 'Bảng của {space}',
   'Panel width': 'Chiều rộng bảng',
+  'Pane size': 'Kích thước ngăn',
   Values: 'Giá trị',
   Pages: 'Trang',
   'Page {number} of {count}': 'Trang {number}/{count}',

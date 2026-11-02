@@ -1442,6 +1442,7 @@ export const ms: Dictionary = {
   'The note': 'Nota',
   '{space} panel': 'Panel {space}',
   'Panel width': 'Lebar panel',
+  'Pane size': 'Saiz anak tetingkap',
   Values: 'Nilai',
   Pages: 'Halaman',
   'Page {number} of {count}': 'Halaman {number}/{count}',

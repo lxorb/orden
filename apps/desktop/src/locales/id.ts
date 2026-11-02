@@ -1443,6 +1443,7 @@ export const id: Dictionary = {
   'The note': 'Catatan',
   '{space} panel': 'Panel {space}',
   'Panel width': 'Lebar panel',
+  'Pane size': 'Ukuran panel',
   Values: 'Nilai',
   Pages: 'Halaman',
   'Page {number} of {count}': 'Halaman {number}/{count}',

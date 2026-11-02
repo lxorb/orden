@@ -1456,6 +1456,7 @@ export const ur: Dictionary = {
   'The note': 'نوٹ',
   '{space} panel': '{space} کا پینل',
   'Panel width': 'پینل کی چوڑائی',
+  'Pane size': 'پین کا سائز',
   Values: 'قدریں',
   Pages: 'صفحات',
   'Page {number} of {count}': 'صفحہ {number} از {count}',
