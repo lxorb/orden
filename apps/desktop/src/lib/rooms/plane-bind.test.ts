@@ -10,6 +10,7 @@ import {
   type InkStroke,
   writeCanvas,
 } from '../canvas/format'
+import { ordered } from '../canvas/arrange'
 import type { Hand, PlaneSurface, Reachable, SharedPlane } from '../canvas/shared'
 import { PlaneBinding } from './plane-bind'
 
@@ -267,6 +268,50 @@ describe('a plane bound to a room', () => {
 
     expect(two.canvas.nodes.map((node) => node.id)).toEqual(['b'])
     expect(writeCanvas(two.canvas)).toBe(writeCanvas(two.inRoom))
+  })
+})
+
+describe('the stack on a shared plane', () => {
+  const stack = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
+  const board = () => withNodes(emptyCanvas(), [card('a'), card('b'), card('c')])
+
+  test('a card brought to the front is at the front on the other device', () => {
+    const one = Device.opening(board())
+    const two = Device.joining(one)
+
+    one.edit(ordered(one.canvas, ['a'], 'front'))
+    carry(one, two)
+    expect(stack(two.canvas)).toEqual(['b', 'c', 'a'])
+  })
+
+  test('and stays there here when something else arrives', () => {
+    const one = Device.opening(board())
+    const two = Device.joining(one)
+
+    one.edit(ordered(one.canvas, ['c'], 'back'))
+    two.edit({ ...two.canvas, nodes: two.canvas.nodes.map((n) => ({ ...n, x: n.x + 1 })) })
+    both(one, two)
+    expect(stack(one.canvas)).toEqual(['c', 'a', 'b'])
+    expect(stack(two.canvas)).toEqual(['c', 'a', 'b'])
+  })
+
+  test('undo takes the move back', () => {
+    const one = Device.opening(board())
+    one.edit(ordered(one.canvas, ['a'], 'forward'))
+    expect(stack(one.canvas)).toEqual(['b', 'a', 'c'])
+
+    one.undo()
+    expect(stack(one.canvas)).toEqual(['a', 'b', 'c'])
+  })
+
+  test('a move made while away is kept by the merge of joining', () => {
+    const one = Device.opening(board())
+    const away = stamped(one.canvas, ordered(one.canvas, ['c'], 'back'), Date.now() + 1000)
+
+    const two = Device.joining(one, away)
+    carry(two, one)
+    expect(stack(two.canvas)).toEqual(['c', 'a', 'b'])
+    expect(stack(one.canvas)).toEqual(['c', 'a', 'b'])
   })
 })
 

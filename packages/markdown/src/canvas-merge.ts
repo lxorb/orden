@@ -172,7 +172,7 @@ function diff<T extends Thing>(
  *  `before` says: the longest run already in that order, which leaves the fewest to
  *  move. The earlier of two equally long ones, so of two things that swapped, the one
  *  that came forward over the other is the one that moved. */
-export function standing<T>(
+export function standing<T extends object>(
   items: readonly T[],
   before: (one: T, other: T) => boolean,
 ): Set<number> {
@@ -182,24 +182,27 @@ export function standing<T>(
   const next: number[] = []
 
   for (let index = items.length - 1; index >= 0; index--) {
-    const item = items[index] as T
+    const item = items[index]
+    if (!item) continue
+
     let low = 0
     let high = starts.length
     while (low < high) {
       const middle = (low + high) >> 1
-      if (before(item, items[starts[middle] as number] as T)) low = middle + 1
+      const start = items[starts[middle] ?? 0]
+      if (start && before(item, start)) low = middle + 1
       else high = middle
     }
 
-    next[index] = low > 0 ? (starts[low - 1] as number) : -1
+    next[index] = starts[low - 1] ?? -1
     starts[low] = index
   }
 
   const out = new Set<number>()
-  let at = starts.length ? (starts[starts.length - 1] as number) : -1
+  let at = starts[starts.length - 1] ?? -1
   while (at >= 0) {
     out.add(at)
-    at = next[at] as number
+    at = next[at] ?? -1
   }
 
   return out
@@ -292,7 +295,7 @@ function mergeList<T extends Thing>(
               : touchedAt(one) < touchedAt(other)
       if (first) i++
       else j++
-      keep((first ? one : other) as string)
+      keep((first ? one : other) ?? '')
     }
 
     const anchor = anchors[gap]
@@ -306,9 +309,9 @@ function mergeList<T extends Thing>(
  *  always; two that disagree have nothing to say which is right - neither touched any of
  *  it later - so each thing goes where it sits on the side that has it earlier, and by
  *  id where that is one place. */
-function settled<T extends Thing>(
-  ours: readonly T[],
-  theirs: readonly T[],
+function settled(
+  ours: readonly Thing[],
+  theirs: readonly Thing[],
   shared: (id: string) => boolean,
 ): string[] {
   const one = ours.filter((thing) => shared(thing.id)).map((thing) => thing.id)
@@ -326,8 +329,8 @@ function settled<T extends Thing>(
 
 /** One side's own things that stand, in the gaps its shared ones leave: the first gap
  *  is what sits under the first shared thing, the last what sits over the last. */
-function gapsIn<T extends Thing>(
-  list: readonly T[],
+function gapsIn(
+  list: readonly Thing[],
   shared: (id: string) => boolean,
   stands: (id: string) => boolean,
 ): string[][] {

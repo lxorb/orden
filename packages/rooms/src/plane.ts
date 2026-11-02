@@ -220,12 +220,13 @@ function placeIn(plane: Y.Map<Y.Map<unknown>>, id: string): number | null {
 }
 
 /** One record's place in the stack, as `stacked` compares them. */
-interface Place {
+interface Placing {
   id: string
   z: number
+  record: Y.Map<unknown>
 }
 
-function under(one: Place, other: Place): boolean {
+function under(one: Placing, other: Placing): boolean {
   if (one.z !== other.z) return one.z < other.z
   return one.id < other.id
 }
@@ -259,57 +260,63 @@ function restack(plane: Y.Map<Y.Map<unknown>>, before: readonly Thing[], after: 
   const middle = after.slice(head, after.length - tail)
   if (!middle.length) return
 
-  const placed = (thing: Thing | undefined): Place | null => {
+  const placed = (thing: Thing | undefined): Placing[] => {
     const record = thing && plane.get(thing.id)
-    return thing && record ? { id: thing.id, z: placeOf(record) } : null
+    return thing && record ? [{ id: thing.id, z: placeOf(record), record }] : []
   }
 
-  const floor = placed(after[head - 1])
-  const ceiling = placed(after[after.length - tail])
-  const places = middle.map((thing) => placed(thing) as Place)
-  const inside = places
-    .map((place, index) => ({ place, index }))
-    .filter(({ place }) => (!floor || under(floor, place)) && (!ceiling || under(place, ceiling)))
+  const [floor] = placed(after[head - 1])
+  const [ceiling] = placed(after[after.length - tail])
+  const places = middle.flatMap(placed)
+  const inside = places.filter(
+    (place) => (!floor || under(floor, place)) && (!ceiling || under(place, ceiling)),
+  )
 
-  const stays = new Set<number>()
-  const kept = standing(inside, (one, other) => under(one.place, other.place))
-  for (const at of kept) stays.add((inside[at] as { index: number }).index)
-  if (stays.size === middle.length) return
+  const kept = standing(inside, under)
+  if (kept.size === places.length) return
+  const stays = new Set(inside.filter((_, index) => kept.has(index)))
 
-  for (let from = 0; from < middle.length;) {
-    if (stays.has(from)) {
-      from++
+  let low = floor?.z
+  let waiting: Placing[] = []
+  for (const place of places) {
+    if (!stays.has(place)) {
+      waiting.push(place)
       continue
     }
 
-    let to = from
-    while (to < middle.length && !stays.has(to)) to++
-
-    const low = from > 0 ? (places[from - 1] as Place).z : floor?.z
-    const high = to < middle.length ? (places[to] as Place).z : ceiling?.z
-    const count = to - from
-
-    for (let one = 0; one < count; one++) {
-      const z =
-        low !== undefined && high !== undefined
-          ? low + ((high - low) * (one + 1)) / (count + 1)
-          : low !== undefined
-            ? low + one + 1
-            : (high ?? count) - (count - one)
-
-      // Halved until a number has no room left between its neighbours: the whole list
-      // laid out again, once in a very long while, rather than two things in one place.
-      if ((low !== undefined && z <= low) || (high !== undefined && z >= high)) {
-        numbered(plane, after)
-        return
-      }
-
-      plane.get((middle[from + one] as Thing).id)?.set(Z, z)
-      ;(places[from + one] as Place).z = z
+    if (!between(waiting, low, place.z)) {
+      numbered(plane, after)
+      return
     }
-
-    from = to
+    waiting = []
+    low = place.z
   }
+
+  if (!between(waiting, low, ceiling?.z)) numbered(plane, after)
+}
+
+/** Records written to sit in order between two places, either of which may be open.
+ *  Answers false, having written nothing, where there is no number between them left:
+ *  halved that far by a card moved back and forth over one neighbour, so the whole list
+ *  is laid out again, once in a very long while, rather than two things in one place. */
+function between(waiting: readonly Placing[], low?: number, high?: number): boolean {
+  const count = waiting.length
+  const at = (one: number) => {
+    if (low !== undefined && high !== undefined)
+      return low + ((high - low) * (one + 1)) / (count + 1)
+    if (low !== undefined) return low + one + 1
+    return (high ?? count) - (count - one)
+  }
+
+  for (let one = 0; one < count; one++) {
+    const z = at(one)
+    if ((low !== undefined && z <= low) || (high !== undefined && z >= high)) return false
+    // Never equal to the one before: a run squeezed that tight has no room either.
+    if (one > 0 && z <= at(one - 1)) return false
+  }
+
+  waiting.forEach((place, one) => place.record.set(Z, at(one)))
+  return true
 }
 
 /** A whole list laid out on whole numbers, in its order. */

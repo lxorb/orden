@@ -667,7 +667,7 @@ describe('the order of the stack', () => {
   }
   const moved = (canvas: Canvas, ...ids: string[]) => ({
     ...canvas,
-    nodes: ids.map((id) => canvas.nodes.find((node) => node.id === id) as CanvasNode),
+    nodes: ids.map((id) => canvas.nodes.find((node) => node.id === id)!),
   })
   const order = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
 
