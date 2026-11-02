@@ -444,7 +444,8 @@ describe('sending', () => {
       const ids: string[] = []
       const send = ((url: string, init?: RequestInit) => {
         if (url.includes('oauth2')) return Promise.resolve(TOKEN())
-        ids.push((JSON.parse(init?.body as string) as { message: { data: { id: string } } }).message.data.id)
+        const body = JSON.parse(init?.body as string) as { message: { data: { id: string } } }
+        ids.push(body.message.data.id)
         return Promise.resolve(DOWN())
       }) as typeof fetch
       await sendDue(env, AT, send)

@@ -9,7 +9,8 @@
  *  account with a device to push to, so a save costs nothing for everybody else.
  *
  *  **Sent at the minute** by the cron each minute (`sendDue`): each reminder due is
- *  claimed once, pushed to every target of its account, and let go a day later. A
+ *  claimed once, pushed to every target of its account, and let go a day later. One that
+ *  every target failed is tried again the next minute, for a while (`TRIED_FOR`). A
  *  reminder in a note deleted since, or of a space deleted since, is not sent.
  *
  *  The id is the one every device makes for the same reminder, so a phone that set the
@@ -35,7 +36,8 @@ const AT_ONCE = 200
 /** How long a reminder is kept after its minute, sent or not. */
 const KEPT_FOR = 86_400_000
 
-/** How long after its minute a reminder no service took is tried again, once a minute. */
+/** How long after its minute a reminder no service took is tried again, once a minute:
+ *  long enough for a service to come back, and short of a ring nobody can use. */
 export const TRIED_FOR = 3_600_000
 
 /** A note as this reads it. */
@@ -225,6 +227,8 @@ export async function sendDue(
     .bind(now - KEPT_FOR)
     .run()
 
+  // Newest first: reminders being tried again stay on this list, and a service that is
+  // down for some must not hold up one whose minute has just come for the others.
   const { results: due } = await env.DB.prepare(
     `select r.note_id, r.id, r.user_id, r.at, r.title, r.body, r.path, r.hash, r.line,
             s.name as space
@@ -232,7 +236,7 @@ export async function sendDue(
        join notes n on n.id = r.note_id and n.deleted = 0
        join spaces s on s.id = r.space_id and s.deleted = 0
       where r.sent_at is null and r.at <= ?
-      order by r.at limit ?`,
+      order by r.at desc limit ?`,
   )
     .bind(now, AT_ONCE)
     .all<Due>()
@@ -279,7 +283,20 @@ export async function sendDue(
     const delivered = await Promise.all(
       theirs.map((target) => push(env, target, message, now, send)),
     )
-    if (delivered.includes('sent')) sent++
+    if (delivered.includes('sent')) {
+      sent++
+    } else if (delivered.includes('failed') && now - one.at < TRIED_FOR) {
+      // Let go of for the next minute, and only where nothing took it, so no phone that
+      // rang rings again: a device that failed beside one that rang stays without. Only
+      // this run's own claim, and a service that took it but could not say so is asked
+      // again under the same id, which the phone knows (`topic`, `apns-collapse-id`,
+      // Reminders.kt).
+      await env.DB.prepare(
+        'update push_reminders set sent_at = null where note_id = ? and id = ? and sent_at = ?',
+      )
+        .bind(one.note_id, one.id, now)
+        .run()
+    }
   }
   return sent
 }
