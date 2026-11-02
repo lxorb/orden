@@ -14,6 +14,7 @@ import { sweepChats } from '../src/chats/sweep'
 import { sweepLeftovers } from '../src/leftovers'
 import { purgeExpired } from '../src/trash'
 import { call, mail, type ShareView, signIn, type TestEnv, testEnv } from './harness'
+import { FakeSocket } from './room'
 import { framed, type Live, live } from './sync2'
 
 let env: TestEnv
@@ -257,6 +258,37 @@ describe('a write to a note purged since it was read', () => {
       deleted_at: null,
     })
     expect((await call(env, `/v1/notes/${id}`, { token })).status).toBe(404)
+  })
+})
+
+/** An erased room is one that holds nothing, including the object still in memory that the
+ *  next join finds. */
+describe('a room erased while its object lives', () => {
+  test('hands the next socket none of its words, and what that socket types settles', async () => {
+    const id = await heldInARoom('Gone.md', 'TOP SECRET\n', 'more ')
+    const { room } = rooms.of(id)
+    const join = { noteId: id, spaceId: space, kind: 'words' as const }
+    const first = new FakeSocket()
+    await room.enter(first as unknown as WebSocket, join)
+    const memory = () => (room as unknown as { state: { doc: Y.Doc } }).state.doc
+    expect(memory().getText(TEXT).toString()).toContain('TOP SECRET')
+
+    const erased = await room.fetch(
+      new Request('https://room/', { headers: { 'x-nib-erase': 'yes' } }),
+    )
+    expect(erased.status).toBe(204)
+    expect(first.closed).toBe(true)
+    expect(memory().getText(TEXT).toString()).toBe('')
+
+    // Nothing of the old document, and a room that opens again: `held` is what a settle
+    // writes from.
+    await env.NOTES.delete(`spaces/${space}/${id}`)
+    env.db.prepare("update notes set epoch = 0, epoch_base = '' where id = ?").run(id)
+    const next = new FakeSocket()
+    await room.enter(next as unknown as WebSocket, join)
+    expect(next.closed).toBe(false)
+    expect(memory().getText(TEXT).toString()).toBe('')
+    expect((room as unknown as { held: unknown }).held).not.toBeNull()
   })
 })
 
