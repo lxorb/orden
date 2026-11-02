@@ -20,6 +20,7 @@
   import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { agentMarks } from '../agent-marks.svelte'
+  import Cross from '../Cross.svelte'
   import { fullscreen } from '../fullscreen.svelte'
   import { chrome, landed } from '../glass/chrome.svelte'
   import { t } from '../i18n.svelte'
@@ -871,6 +872,25 @@
       </p>
     {/if}
 
+    <!-- Firefox's bar for a video it cannot decode, as Chrome draws a bar: in the column, so
+         the page gives up the room and nothing has to be cut out of it. See web_media.rs. -->
+    {#if page.unplayable}
+      <div class="unplayable" role="status" transition:fade={{ duration: dur(140) }}>
+        <p>{t("This media can't play here")}</p>
+        <button class="nib-button is-quiet" onclick={() => void openExternal(page.at ?? address)}>
+          {t('Open in the browser')}
+        </button>
+        <button
+          class="nib-glyph"
+          aria-label={t('Close')}
+          title={t('Close')}
+          onclick={() => (page.unplayable = false)}
+        >
+          <Cross small />
+        </button>
+      </div>
+    {/if}
+
     <!-- What the page said, what a site asked for, and what a site is: one at a time,
          because a question waiting to be answered is the only thing worth reading, and
          the page's own dialog first, because its script is stopped until it is answered.
@@ -1072,6 +1092,23 @@
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
+  }
+
+  .unplayable {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+  }
+
+  .unplayable p {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    color: var(--muted);
   }
 
   /* The still picture of the page, from the top left corner at its own size: it was

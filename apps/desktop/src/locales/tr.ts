@@ -1655,6 +1655,7 @@ export const tr: Dictionary = {
   Reload: 'Yeniden yükle',
   'Hard reload': 'Sert yeniden yükleme',
   'Open in the browser': 'Tarayıcıda aç',
+  "This media can't play here": 'Bu medya burada oynatılamıyor',
   'Show it here': 'Burada göster',
   Website: 'Web sitesi',
   'Open a website': 'Web sitesi aç',

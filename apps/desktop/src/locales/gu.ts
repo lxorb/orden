@@ -1644,6 +1644,7 @@ export const gu: Dictionary = {
   Reload: 'ફરી લાવો',
   'Hard reload': 'પૂરેપૂરું ફરી લાવો',
   'Open in the browser': 'બ્રાઉઝરમાં ખોલો',
+  "This media can't play here": 'આ મીડિયા અહીં ચાલી શકતું નથી',
   'Show it here': 'અહીં બતાવો',
   Website: 'વેબસાઇટ',
   'Open a website': 'વેબસાઇટ ખોલો',

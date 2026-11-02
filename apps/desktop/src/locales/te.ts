@@ -1657,6 +1657,7 @@ export const te: Dictionary = {
   Reload: 'మళ్ళీ లోడ్ చేయి',
   'Hard reload': 'పూర్తిగా మళ్ళీ లోడ్ చేయి',
   'Open in the browser': 'బ్రౌజర్‌లో తెరువు',
+  "This media can't play here": 'ఈ మీడియాను ఇక్కడ ప్లే చేయలేము',
   'Show it here': 'ఇక్కడ చూపు',
   Website: 'వెబ్‌సైట్',
   'Open a website': 'వెబ్‌సైట్ తెరువు',

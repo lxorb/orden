@@ -1694,6 +1694,7 @@ export const ptPT: Dictionary = {
   Reload: 'Recarregar',
   'Hard reload': 'Recarregamento forçado',
   'Open in the browser': 'Abrir no navegador',
+  "This media can't play here": 'Não é possível reproduzir este conteúdo aqui',
   'Show it here': 'Mostrar aqui',
   Website: 'Sítio web',
   'Open a website': 'Abrir um sítio web',

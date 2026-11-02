@@ -1663,6 +1663,7 @@ export const kn: Dictionary = {
   Reload: 'ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
   'Hard reload': 'ಪೂರ್ಣವಾಗಿ ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
   'Open in the browser': 'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆರೆ',
+  "This media can't play here": 'ಈ ಮಾಧ್ಯಮವನ್ನು ಇಲ್ಲಿ ಪ್ಲೇ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ',
   'Show it here': 'ಇಲ್ಲಿ ತೋರಿಸು',
   Website: 'ಜಾಲತಾಣ',
   'Open a website': 'ಜಾಲತಾಣ ತೆರೆ',

@@ -1638,6 +1638,7 @@ export const ms: Dictionary = {
   Reload: 'Muat semula',
   'Hard reload': 'Muat semula sepenuhnya',
   'Open in the browser': 'Buka dalam pelayar',
+  "This media can't play here": 'Media ini tidak boleh dimainkan di sini',
   'Show it here': 'Tunjukkan di sini',
   Website: 'Laman web',
   'Open a website': 'Buka laman web',

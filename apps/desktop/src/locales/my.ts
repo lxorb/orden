@@ -1633,6 +1633,7 @@ export const my: Dictionary = {
   Reload: 'ပြန်ဖွင့်ပါ',
   'Hard reload': 'အပြည့်အဝ ပြန်ဖွင့်ပါ',
   'Open in the browser': 'ဘရောက်ဇာတွင်ဖွင့်ပါ',
+  "This media can't play here": 'ဤမီဒီယာကို ဤနေရာတွင် ဖွင့်၍မရပါ',
   'Show it here': 'ဤတွင်ပြပါ',
   Website: 'ဝဘ်ဆိုက်',
   'Open a website': 'ဝဘ်ဆိုက်ဖွင့်ပါ',

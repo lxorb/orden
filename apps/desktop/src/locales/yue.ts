@@ -1605,6 +1605,7 @@ export const yue: Dictionary = {
   Reload: '重新載入',
   'Hard reload': '強制重新載入',
   'Open in the browser': '喺瀏覽器開啟',
+  "This media can't play here": '呢個媒體喺度播唔到',
   'Show it here': '喺呢度顯示',
   Website: '網站',
   'Open a website': '開啟網站',
