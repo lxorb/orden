@@ -146,7 +146,7 @@ describe('the installer on the way out', () => {
  *  land, then the crate hears, and a disk that does not answer does not hold it up. */
 describe('settling for another window s installer', () => {
   test('says so once what is owed has landed', async () => {
-    let landed = () => {}
+    let landed: () => void = () => undefined
     const owed = new Promise<void>((resolve) => (landed = resolve))
 
     const settling = updater.settledForInstaller(() => owed)
