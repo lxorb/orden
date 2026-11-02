@@ -156,6 +156,25 @@ describe('bytes up', () => {
       expect((await finish(upload, [part])).status).toBe(400)
     })
 
+    /** Aborted, expired, or finished by another request at the same moment: the answer
+     *  a route gives for an upload it does not know, and nothing left to ask about. */
+    test('an upload the bucket no longer has', async () => {
+      const data = bytes(100, 7)
+      const { upload } = await started(data)
+      const part = (await send(upload, 1, data)).json
+      const bucket = env.NOTES as unknown as {
+        resumeMultipartUpload(key: string, id: string): { abort(): Promise<void> }
+      }
+      const staged = env.db.prepare('select value from cached where key = ?').get(upload) as {
+        value: string
+      }
+      await bucket.resumeMultipartUpload(staged.value.split(':')[4] ?? '', upload).abort()
+
+      expect((await send(upload, 2, data)).status).toBe(404)
+      expect((await finish(upload, [part])).status).toBe(404)
+      expect(env.db.prepare('select value from cached where key = ?').get(upload)).toBeUndefined()
+    })
+
     test('but a bucket that is unwell is not the device’s to hear about as a mistake', async () => {
       const { upload } = await started(bytes(100, 6))
       completing(

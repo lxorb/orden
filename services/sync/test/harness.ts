@@ -179,7 +179,11 @@ function bucket() {
         uploadId,
         uploadPart(partNumber: number, value: ArrayBuffer | Uint8Array) {
           const upload = uploads.get(uploadId)
-          if (!upload) return Promise.reject(new Error('no such upload'))
+          if (!upload) {
+            return Promise.reject(
+              new Error('uploadPart: The specified multipart upload does not exist. (10024)'),
+            )
+          }
           upload.parts.set(partNumber, bytesOf(value))
           return Promise.resolve({ partNumber, etag: `etag-${String(partNumber)}` })
         },
@@ -189,7 +193,13 @@ function bucket() {
          *  are what most tests here want. */
         complete(parts: { partNumber: number; etag: string }[]) {
           const upload = uploads.get(uploadId)
-          if (!upload) return Promise.reject(new Error('no such upload'))
+          if (!upload) {
+            return Promise.reject(
+              new Error(
+                'completeMultipartUpload: The specified multipart upload does not exist. (10024)',
+              ),
+            )
+          }
           for (const { partNumber: number, etag } of parts) {
             if (!Number.isInteger(number) || number < 1 || number > 10_000) {
               return Promise.reject(

@@ -1729,6 +1729,77 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
   })
 
+  /** The object takes a socket's messages while it waits on D1, so a keystroke can
+   *  arrive between the socket being let in and the door's word being checked. */
+  describe('a keystroke sent while the handshake is still asking', () => {
+    /** The moment access is asked again: `change` lands, the socket says something, and
+     *  everything that can run runs before the database answers. Somebody typed a moment
+     *  ago, so the once-a-minute question (`askSignIns`) is not what catches it. */
+    async function typedDuring(change: () => void): Promise<FakeSocket> {
+      const ownerId = (await call(env, '/v1/me', { token: owner })).json.user.id
+      await typeInto(await signedIn(owner, ownerId))
+
+      const socket = new FakeSocket()
+      const { room: made, state } = live.of(noteId)
+      const doc = new Y.Doc()
+      const mark = Y.encodeStateVector(doc)
+      doc.getText(TEXT).insert(0, 'early ')
+      const update = syncUpdate(Y.encodeStateAsUpdate(doc, mark))
+
+      let said: Promise<void> = Promise.resolve()
+      const prepare = env.DB.prepare.bind(env.DB)
+      env.DB.prepare = ((sql: string) => {
+        const statement = prepare(sql)
+        if (!sql.includes('case when sp.user_id = me.user_id')) return statement
+        const first = statement.first.bind(statement) as () => Promise<unknown>
+        statement.first = (async () => {
+          change()
+          said = say(made, state, socket, update)
+          await new Promise((settled) => setImmediate(settled))
+          return await first()
+        }) as typeof statement.first
+        return statement
+      }) as typeof env.DB.prepare
+
+      await made.enter(
+        socket as unknown as WebSocket,
+        { noteId, spaceId, kind: 'words' },
+        { writes: true, who: writerId, login: await sha256(writer) },
+      )
+      env.DB.prepare = prepare
+      await said
+      await made.alarm()
+      return socket
+    }
+
+    const content = async (): Promise<string> =>
+      (await call(env, `/v1/notes/${noteId}`, { token: owner })).json.content
+
+    test('is dropped from somebody just made a reader', async () => {
+      await typedDuring(() => {
+        env.db
+          .prepare("update space_members set role = 'read' where space_id = ? and email = ?")
+          .run(spaceId, WRITER)
+      })
+      expect(await content()).not.toContain('early ')
+    })
+
+    test('is dropped from somebody just taken out', async () => {
+      const socket = await typedDuring(() => {
+        env.db
+          .prepare('delete from space_members where space_id = ? and email = ?')
+          .run(spaceId, WRITER)
+      })
+      expect(socket.closedWith?.code).toBe(1008)
+      expect(await content()).not.toContain('early ')
+    })
+
+    test('is kept from somebody who may still write', async () => {
+      await typedDuring(() => undefined)
+      expect(await content()).toContain('early ')
+    })
+  })
+
   test('is let in as the door said where the database cannot be asked again', async () => {
     env.justBefore(/case when sp.user_id = me.user_id/, () => {
       throw new Error('D1 is not answering')

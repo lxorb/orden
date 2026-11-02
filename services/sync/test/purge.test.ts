@@ -12,6 +12,7 @@ import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { sweepChats } from '../src/chats/sweep'
 import { sweepLeftovers } from '../src/leftovers'
+import { purgeExpired } from '../src/trash'
 import { call, mail, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 import { framed, type Live, live } from './sync2'
 
@@ -358,6 +359,320 @@ describe('a note restored and purged at once', () => {
     await sweepLeftovers(env)
     expect(env.keys()).not.toContain(`spaces/${space}/${id}`)
     expect(env.keys()).not.toContain(`crdt/${id}`)
+  })
+})
+
+/** A purge is one transaction, so it finishes or leaves the note in Recently deleted to
+ *  be purged again; anything left half done is words somebody asked to have gone, or
+ *  storage nothing would ever take back. */
+describe('a purge the database fails part way', () => {
+  const HASH = 'c'.repeat(64)
+
+  /** A note deleted with a row in everything a purge has to take away. */
+  async function held(path = 'Held.md'): Promise<string> {
+    const id = await heldInARoom(path, 'one\nKEEP ME\n', 'x')
+    const at = 1
+    const run = (sql: string, ...args: (string | number)[]) => {
+      env.db.prepare(sql).run(...args)
+    }
+    run(
+      `insert into note_search (note_id, space_id, path, title, body) values (?, ?, ?, 'T', 'WORDS')`,
+      id,
+      space,
+      path,
+    )
+    run(
+      `insert into push_reminders (note_id, id, user_id, space_id, at, title, body, path, hash, line)
+       values (?, 'r', 'u', ?, ?, 'TASK', 'TASK', ?, 'h', 1)`,
+      id,
+      space,
+      at,
+      path,
+    )
+    run('insert into note_pictures (note_id, hash) values (?, ?)', id, HASH)
+    run(
+      `insert into note_versions (note_id, at, hash, size, by, held) values (?, ?, ?, 1, '', 0)`,
+      id,
+      at,
+      versionOf(id),
+    )
+    await env.NOTES.put(`versions/${versionOf(id)}`, 'OLD WORDS')
+    run(
+      `insert into form_answers (id, space_id, note_id, at, answers, bytes) values (?, ?, ?, ?, '{}', 2)`,
+      `form-${id}`,
+      space,
+      id,
+      at,
+    )
+    run(
+      'insert into blog_paths (space_id, slug, note_id, at) values (?, ?, ?, ?)',
+      space,
+      `old-${id}`,
+      id,
+      at,
+    )
+    run(
+      `insert into space_members (space_id, email, item, role, created_at) values (?, 'm@example.com', ?, 'read', ?)`,
+      space,
+      id,
+      at,
+    )
+    run(
+      `insert into space_links (space_id, item, token, role, mode, created_at) values (?, ?, ?, 'read', 'open', ?)`,
+      space,
+      id,
+      `token-${id}`,
+      at,
+    )
+    run(
+      `insert into space_requests (space_id, email, item, role, created_at) values (?, 'q@example.com', ?, 'read', ?)`,
+      space,
+      id,
+      at,
+    )
+    run(`insert into guests (id, name, created_at) values (?, 'Owl', ?)`, `guest-${id}`, at)
+    run(
+      `insert into guest_members (space_id, guest_id, item, role, joined_at, created_at) values (?, ?, ?, 'read', ?, ?)`,
+      space,
+      `guest-${id}`,
+      id,
+      at,
+      at,
+    )
+    run(
+      `insert into chats (id, space_id, file_id, created_at, last_seq, topic, posting, slowmode)
+       values (?, ?, ?, ?, 0, '', 'writers', 0)`,
+      `chat-${id}`,
+      space,
+      id,
+      at,
+    )
+    run(
+      `insert into term_sessions (term, machine, session, user_id, created_at) values (?, 'machine', ?, 'u', ?)`,
+      id,
+      `session-${id}`,
+      at,
+    )
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    return id
+  }
+
+  /** A hash of its own per note, so two notes do not hold one body between them. */
+  const versionOf = (id: string) => createHash('sha256').update(id).digest('hex')
+
+  const count = (sql: string, ...args: string[]) =>
+    (env.db.prepare(sql).get(...args) as { held: number }).held
+
+  /** How much of a note's is still there, table by table. */
+  const remaining = (id: string) => ({
+    search: count('select count(*) as held from note_search where note_id = ?', id),
+    reminders: count('select count(*) as held from push_reminders where note_id = ?', id),
+    pictures: count('select count(*) as held from note_pictures where note_id = ?', id),
+    versions: count('select count(*) as held from note_versions where note_id = ?', id),
+    answers: count('select count(*) as held from form_answers where note_id = ?', id),
+    paths: count('select count(*) as held from blog_paths where note_id = ?', id),
+    members: count('select count(*) as held from space_members where item = ?', id),
+    links: count('select count(*) as held from space_links where item = ?', id),
+    requests: count('select count(*) as held from space_requests where item = ?', id),
+    invited: count('select count(*) as held from guest_members where item = ?', id),
+    guests: count('select count(*) as held from guests where id = ?', `guest-${id}`),
+    chats: count('select count(*) as held from chats where file_id = ? and ended_at is null', id),
+    terms: count(
+      'select count(*) as held from term_sessions where term = ? and ended_at is null',
+      id,
+    ),
+  })
+
+  const nothing = {
+    search: 0,
+    reminders: 0,
+    pictures: 0,
+    versions: 0,
+    answers: 0,
+    paths: 0,
+    members: 0,
+    links: 0,
+    requests: 0,
+    invited: 0,
+    guests: 0,
+    chats: 0,
+    terms: 0,
+  }
+
+  /** Every statement matching `sql` that names `only`, if that is given, failing as it
+   *  runs, until the answer is called. */
+  function failing(sql: RegExp, only?: string): () => void {
+    const prepare = env.DB.prepare.bind(env.DB)
+    let down = true
+    env.DB.prepare = ((text: string) => {
+      const statement = prepare(text)
+      if (!sql.test(text)) return statement
+      const bind = statement.bind.bind(statement)
+      const run = statement.run.bind(statement)
+      let named = only === undefined
+      statement.bind = (...args: unknown[]) => {
+        named ||= args.some((one) => typeof one === 'string' && one.includes(only ?? ''))
+        return bind(...args)
+      }
+      statement.run = ((...args: []) =>
+        down && named
+          ? Promise.reject(new Error('D1 is not answering'))
+          : run(...args)) as typeof statement.run
+      return statement
+    }) as typeof env.DB.prepare
+    return () => {
+      down = false
+    }
+  }
+
+  test.each([
+    ['its words in search', /delete from note_search/],
+    ['its reminders', /delete from push_reminders/],
+    ['its pictures', /delete from note_pictures/],
+    ['its versions', /delete from note_versions/],
+    ['the blobs it stops using', /insert or ignore into unused_blobs/],
+    ['what is left in the bucket and the room', /insert or ignore into leftovers/],
+    ['its chat', /update chats set ended_at/],
+    ['its form answers', /delete from form_answers/],
+    ['its addresses', /delete from blog_paths/],
+    ['its terminal session', /update term_sessions set ended_at/],
+    ['who it was shared with', /delete from space_members/],
+    ['its links', /delete from space_links/],
+    ['who asked for it', /delete from space_requests/],
+    ['its guests’ places', /delete from guest_members/],
+    ['a guest with nothing left', /delete from guests/],
+    ['the row', /update notes set size = 0/],
+  ])('at %s leaves it to purge again', async (_, sql) => {
+    const id = await held()
+    const before = env.db.prepare('select hash, size from notes where id = ?').get(id)
+    const body = (await env.NOTES.get(`spaces/${space}/${id}`))?.size
+    const recovered = failing(sql)
+
+    const first = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    expect(first.status).toBe(500)
+    // Still in Recently deleted, whole, and nothing of it taken.
+    expect(env.db.prepare('select hash, size from notes where id = ?').get(id)).toEqual(before)
+    expect(
+      (await call(env, '/v1/trash', { token })).json.notes.map((one: { id: string }) => one.id),
+    ).toEqual([id])
+    expect((await env.NOTES.get(`spaces/${space}/${id}`))?.size).toBe(body)
+    expect(await env.NOTES.get(`versions/${versionOf(id)}`)).not.toBe(null)
+    expect(remaining(id)).toEqual({
+      ...nothing,
+      search: 1,
+      reminders: 1,
+      pictures: 1,
+      versions: 1,
+      answers: 1,
+      paths: 1,
+      members: 1,
+      links: 1,
+      requests: 1,
+      invited: 1,
+      guests: 1,
+      chats: 1,
+      terms: 1,
+    })
+
+    recovered()
+    const second = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    expect(second.status).toBe(200)
+    expect(remaining(id)).toEqual(nothing)
+    expect(
+      env.db.prepare('select deleted, deleted_at, hash, size from notes where id = ?').get(id),
+    ).toEqual({ deleted: 1, deleted_at: null, hash: '', size: 0 })
+    expect(env.keys()).not.toContain(`spaces/${space}/${id}`)
+    expect(env.keys()).not.toContain(`versions/${versionOf(id)}`)
+    expect(count('select count(*) as held from leftovers where what = ?', `rooms/${id}`)).toBe(1)
+    expect(
+      count('select count(*) as held from unused_blobs where hash = ?', HASH) +
+        count('select count(*) as held from blobs where hash = ?', HASH),
+    ).toBeLessThanOrEqual(1)
+  })
+
+  test('whatever is past the transaction comes back at the sweep', async () => {
+    const id = await held()
+    const bucket = env.NOTES as unknown as { delete(keys: string | string[]): Promise<void> }
+    const real = bucket.delete.bind(bucket)
+    bucket.delete = () => Promise.reject(new Error('the bucket is not answering'))
+
+    const purge = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    expect(purge.status).toBe(200)
+    expect(remaining(id)).toEqual(nothing)
+    expect(env.keys()).toContain(`versions/${versionOf(id)}`)
+
+    bucket.delete = real
+    await sweepLeftovers(env)
+    expect(env.keys()).not.toContain(`spaces/${space}/${id}`)
+    expect(env.keys()).not.toContain(`crdt/${id}`)
+    expect(env.keys()).not.toContain(`versions/${versionOf(id)}`)
+  })
+
+  test('nor does telling a machine what ended take the purge back', async () => {
+    const id = await held()
+    env.justBefore(/insert into machine_audit|into machine_log|audit/, () => {
+      throw new Error('D1 is not answering')
+    })
+
+    const purge = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    expect(purge.status).toBe(200)
+    expect(remaining(id)).toEqual(nothing)
+  })
+
+  test('emptying the trash goes on past one that failed, and says so', async () => {
+    const stuck = await held('Stuck.md')
+    const fine = await held('Fine.md')
+    const recovered = failing(/delete from note_search/, stuck)
+
+    const first = await call(env, '/v1/trash', { method: 'DELETE', token })
+
+    expect(first.status).toBe(500)
+    expect(remaining(fine)).toEqual(nothing)
+    expect(env.db.prepare('select deleted_at from notes where id = ?').get(stuck)).not.toEqual({
+      deleted_at: null,
+    })
+
+    recovered()
+    expect((await call(env, '/v1/trash', { method: 'DELETE', token })).status).toBe(200)
+    expect(remaining(stuck)).toEqual(nothing)
+  })
+
+  test('the nightly job goes on past one that failed, and the next night finishes it', async () => {
+    const stuck = await held('Stuck.md')
+    const fine = await held('Fine.md')
+    env.db.prepare('update notes set deleted_at = 1 where id in (?, ?)').run(stuck, fine)
+    const recovered = failing(/delete from note_search/, stuck)
+
+    await purgeExpired(env, Date.now())
+
+    expect(remaining(fine)).toEqual(nothing)
+    expect(env.db.prepare('select deleted_at from notes where id = ?').get(stuck)).toEqual({
+      deleted_at: 1,
+    })
+
+    recovered()
+    await purgeExpired(env, Date.now())
+    expect(remaining(stuck)).toEqual(nothing)
+  })
+
+  /** Nothing is taken before the row is, so a restore that wins keeps all of it. */
+  test('a restore landing just ahead of it keeps the history too', async () => {
+    const id = await held()
+    env.justBefore(/select kind, hash, paper, front_rev, size/, () => {
+      env.db.prepare('update notes set deleted = 0, deleted_at = null where id = ?').run(id)
+    })
+
+    const purge = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    expect(purge.status).toBe(404)
+    expect(remaining(id).versions).toBe(1)
+    expect(remaining(id).search).toBe(1)
+    expect(await env.NOTES.get(`versions/${versionOf(id)}`)).not.toBe(null)
+    expect(env.keys()).toContain(`spaces/${space}/${id}`)
   })
 })
 
