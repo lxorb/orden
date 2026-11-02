@@ -45,6 +45,33 @@ export function noteUnused(
   )
 }
 
+/** The statement that writes down the files a chat stops naming (`where`, on `f`, `?1` the
+ *  moment and the rest its own), for whoever in the chat's space holds them.
+ *
+ *  `chat_files` does not say who posted a file, so its holders are found through `blobs`,
+ *  and only among the space's owner and members, who are who could have. An account
+ *  outside the space that holds the same bytes has nothing to do with this chat, and may
+ *  keep them for something not written yet. A member's own use is what `letGo` asks. */
+export function noteChatFiles(
+  env: Env,
+  where: string,
+  at: number,
+  ...bound: string[]
+): D1PreparedStatement {
+  return env.DB.prepare(
+    `insert or ignore into unused_blobs (user_id, hash, since)
+       select b.user_id, b.hash, ?1
+         from chat_files f
+         join chats c on c.id = f.chat_id
+         join spaces sp on sp.id = c.space_id
+         join blobs b on b.hash = f.hash
+        where ${where}
+          and (b.user_id = sp.user_id
+               or exists (select 1 from space_members m join users u on u.email = m.email
+                           where m.space_id = sp.id and u.id = b.user_id))`,
+  ).bind(at, ...bound)
+}
+
 /** Asks about the oldest on the list, as many as `most`, and answers how many were
  *  decided. The bodies it reads are read once between all of them, within one budget
  *  (`Reading` in used.ts), so a sweep costs the bucket the same however much is on the

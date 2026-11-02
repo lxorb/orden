@@ -5,10 +5,12 @@
  *  deleted, or its whole space purged. In Recently deleted it is still the chat, and put
  *  back it is the chat as it was. Once ended, the log is kept 30 days more, then its
  *  rows go and its object is emptied with the other leftovers (leftovers.ts), which is
- *  safe to repeat. */
+ *  safe to repeat. The files it named are written down for whoever holds them (unused.ts)
+ *  before the rows that say so go. */
 
 import { AT_A_TIME, places } from '../bound'
 import type { Env } from '../types'
+import { noteChatFiles } from '../unused'
 
 /** How long an ended chat's log is kept. */
 const KEPT_FOR = 30 * 24 * 60 * 60 * 1000
@@ -39,6 +41,7 @@ export async function sweepChats(env: Env, at: number): Promise<number> {
       `insert or ignore into leftovers (what, since)
          select 'chats/' || id, ? from chats where id in (${list})`,
     ).bind(at, ...ids),
+    noteChatFiles(env, 'f.chat_id in (select value from json_each(?2))', at, JSON.stringify(ids)),
     env.DB.prepare(`delete from chat_reads where chat_id in (${list})`).bind(...ids),
     env.DB.prepare(`delete from chat_files where chat_id in (${list})`).bind(...ids),
     env.DB.prepare(`delete from chat_sockets where chat_id in (${list})`).bind(...ids),

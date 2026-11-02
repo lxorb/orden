@@ -30,6 +30,7 @@ import { note } from '../failed'
 import { askHub } from '../hub/reach'
 import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
 import type { Env } from '../types'
+import { noteChatFiles } from '../unused'
 import {
   admit,
   type Asker,
@@ -104,6 +105,16 @@ const NAMES_FILE = `select 1 from messages m
   where m.deleted = 0
     and (json_extract(m.json, '$.preview.picture') = ?1
          or exists (select 1 from json_each(m.json, '$.files') f
+                     where json_extract(f.value, '$.hash') = ?1
+                        or json_extract(f.value, '$.preview') = ?1))
+  limit 1`
+
+/** Whether a post held for later names a file (`?1` its hash), as `NAMES_FILE` asks of a
+ *  message: its author holds the bytes for when it goes. */
+const HELD_FOR_FILE = `select 1 from scheduled s
+  where s.refused is null
+    and (json_extract(s.post, '$.preview.picture') = ?1
+         or exists (select 1 from json_each(s.post, '$.files') f
                      where json_extract(f.value, '$.hash') = ?1
                         or json_extract(f.value, '$.preview') = ?1))
   limit 1`
@@ -922,7 +933,8 @@ export class ChatLog implements DurableObject {
   }
 
   /** The files a deleted or edited message named, let go of where no message still names
-   *  them. */
+   *  them, and written down for whoever holds them (unused.ts) unless a post held for
+   *  later needs them. */
   private async freeFiles(effects: Effects): Promise<void> {
     const chat = this.chatId()
     if (!chat || !effects.freed.length) return
@@ -931,11 +943,19 @@ export class ChatLog implements DurableObject {
     )
     const loose = hashes.filter((hash) => !this.sql.exec(NAMES_FILE, hash).toArray().length)
     if (!loose.length) return
-    await this.env.DB.prepare(
-      `delete from chat_files where chat_id = ? and hash in (${places(loose.length)})`,
-    )
-      .bind(chat, ...loose)
-      .run()
+    const unheld = loose.filter((hash) => !this.sql.exec(HELD_FOR_FILE, hash).toArray().length)
+    await this.env.DB.batch([
+      noteChatFiles(
+        this.env,
+        'f.chat_id = ?2 and f.hash in (select value from json_each(?3))',
+        Date.now(),
+        chat,
+        JSON.stringify(unheld),
+      ),
+      this.env.DB.prepare(
+        `delete from chat_files where chat_id = ? and hash in (${places(loose.length)})`,
+      ).bind(chat, ...loose),
+    ])
   }
 
   /** Everybody the chat reaches, believed for a minute. */
