@@ -1800,6 +1800,93 @@ describe('somebody who stops being in the space while the file is open', () => {
     })
   })
 
+  /** A database that neither answers nor fails leaves a socket in the room with what it
+   *  says waiting on nothing: closed with a reason, so the device comes back. */
+  describe('a handshake the database never answers', () => {
+    const LONGER_THAN_ANY_WAIT = 60 * 60 * 1000
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    /** A join whose statement matching `sql`, past the first `skip` of them, never answers. */
+    async function hungAt(sql: RegExp, method: 'first' | 'run', skip = 0) {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+      const login = await sha256(writer)
+      const prepare = env.DB.prepare.bind(env.DB)
+      let met = 0
+      env.DB.prepare = ((text: string) => {
+        const statement = prepare(text)
+        if (sql.test(text) && met++ >= skip) {
+          ;(statement as unknown as Record<string, unknown>)[method] = () =>
+            new Promise(() => undefined)
+        }
+        return statement
+      }) as typeof env.DB.prepare
+
+      const socket = new FakeSocket()
+      const { room: made } = live.of(noteId)
+      let entered = false
+      void made
+        .enter(
+          socket as unknown as WebSocket,
+          { noteId, spaceId, kind: 'words' },
+          { writes: true, who: writerId, login },
+        )
+        .then(() => {
+          entered = true
+        })
+      await vi.advanceTimersByTimeAsync(0)
+
+      // Something said while it waits, which is what must not wait for ever.
+      const doc = new Y.Doc()
+      const mark = Y.encodeStateVector(doc)
+      doc.getText(TEXT).insert(0, 'early ')
+      let heard = false
+      void made
+        .webSocketMessage(
+          socket as unknown as WebSocket,
+          syncUpdate(Y.encodeStateAsUpdate(doc, mark)).slice().buffer,
+        )
+        .then(() => {
+          heard = true
+        })
+      await vi.advanceTimersByTimeAsync(0)
+      expect(socket.closed).toBe(false)
+      expect(heard).toBe(false)
+
+      await vi.advanceTimersByTimeAsync(LONGER_THAN_ANY_WAIT)
+      return { socket, entered: () => entered, heard: () => heard, prepare }
+    }
+
+    test('at the access asked again', async () => {
+      const { socket, entered, heard, prepare } = await hungAt(
+        /case when sp.user_id = me.user_id/,
+        'first',
+      )
+      expect(socket.closedWith?.code).toBe(1011)
+      expect(entered()).toBe(true)
+      expect(heard()).toBe(true)
+      env.DB.prepare = prepare
+      const read = await call(env, `/v1/notes/${noteId}`, { token: owner })
+      expect(read.json.content).toBe(OPENING)
+    })
+
+    test('at the row written again', async () => {
+      const { socket, entered, heard } = await hungAt(/insert into room_sockets/, 'run', 1)
+      expect(socket.closedWith?.code).toBe(1011)
+      expect(entered()).toBe(true)
+      expect(heard()).toBe(true)
+    })
+
+    test('and a join that is answered leaves nothing on the clock', async () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+      const socket = await signedIn(writer, writerId)
+      expect(socket.closed).toBe(false)
+      expect(vi.getTimerCount()).toBe(0)
+    })
+  })
+
   test('is let in as the door said where the database cannot be asked again', async () => {
     env.justBefore(/case when sp.user_id = me.user_id/, () => {
       throw new Error('D1 is not answering')

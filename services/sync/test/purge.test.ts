@@ -430,6 +430,7 @@ describe('a purge the database fails part way', () => {
       id,
       at,
     )
+    run('insert into once_shared (space_id, item, at) values (?, ?, ?)', space, id, at)
     run(`insert into guests (id, name, created_at) values (?, 'Owl', ?)`, `guest-${id}`, at)
     run(
       `insert into guest_members (space_id, guest_id, item, role, joined_at, created_at) values (?, ?, ?, 'read', ?, ?)`,
@@ -477,6 +478,7 @@ describe('a purge the database fails part way', () => {
     invited: count('select count(*) as held from guest_members where item = ?', id),
     guests: count('select count(*) as held from guests where id = ?', `guest-${id}`),
     chats: count('select count(*) as held from chats where file_id = ? and ended_at is null', id),
+    once: count('select count(*) as held from once_shared where item = ?', id),
     terms: count(
       'select count(*) as held from term_sessions where term = ? and ended_at is null',
       id,
@@ -496,6 +498,7 @@ describe('a purge the database fails part way', () => {
     invited: 0,
     guests: 0,
     chats: 0,
+    once: 0,
     terms: 0,
   }
 
@@ -524,7 +527,7 @@ describe('a purge the database fails part way', () => {
   }
 
   test.each([
-    ['its words in search', /delete from note_search/],
+    ['who once held it', /delete from once_shared/],
     ['its reminders', /delete from push_reminders/],
     ['its pictures', /delete from note_pictures/],
     ['its versions', /delete from note_versions/],
@@ -576,6 +579,95 @@ describe('a purge the database fails part way', () => {
     ).toBeLessThanOrEqual(1)
   })
 
+  /** The index keeps a note's id in a column nothing can look up, so this statement reads
+   *  all of it. In the transaction, an index grown too big for one statement would have
+   *  kept every note from ever being purged. */
+  describe('its words, which are not worth holding the rest up for', () => {
+    const wordsLeft = (id: string) =>
+      count('select count(*) as held from leftovers where what = ?', `words/${id}`)
+
+    test('go with it when they can, and leave nothing to come back for', async () => {
+      const id = await held()
+      expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(
+        200,
+      )
+      expect(remaining(id)).toEqual(nothing)
+      expect(wordsLeft(id)).toBe(0)
+    })
+
+    test('and when they cannot, the purge stands and the sweep comes back', async () => {
+      const id = await held()
+      const recovered = failing(/delete from note_search/)
+
+      expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(
+        200,
+      )
+      expect(env.db.prepare('select deleted_at, hash from notes where id = ?').get(id)).toEqual({
+        deleted_at: null,
+        hash: '',
+      })
+      expect(remaining(id).search).toBeGreaterThan(0)
+      expect(wordsLeft(id)).toBe(1)
+
+      // And a sweep they fail in again keeps them, and holds up nothing else.
+      await sweepLeftovers(env)
+      expect(wordsLeft(id)).toBe(1)
+      expect(env.keys()).not.toContain(`spaces/${space}/${id}`)
+      expect(count('select count(*) as held from leftovers where what = ?', `rooms/${id}`)).toBe(0)
+
+      recovered()
+      await sweepLeftovers(env)
+      expect(remaining(id).search).toBe(0)
+      expect(wordsLeft(id)).toBe(0)
+    })
+  })
+
+  /** A batch that answered and did not say it landed has not said anything was let go. */
+  test('takes no bytes on a batch that says it did not land', async () => {
+    const id = await held()
+    const real = env.DB.batch.bind(env.DB)
+    env.DB.batch = (async (statements: D1PreparedStatement[]) => {
+      const answers = await real(statements)
+      if (statements.length < 10) return answers
+      return answers.map((one, at) => (at === 3 ? { ...one, success: false } : one))
+    }) as typeof env.DB.batch
+
+    const purge = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    expect(purge.status).toBe(500)
+    expect(env.keys()).toContain(`spaces/${space}/${id}`)
+    expect(env.keys()).toContain(`versions/${versionOf(id)}`)
+  })
+
+  /** D1 takes two million bytes in one bound value, and a hash is 67 of them in a list: a
+   *  note may name more pictures than one list holds, four megabytes of it being allowed. */
+  test('fits what a note with every picture it can hold stopped using', async () => {
+    const id = await held()
+    const insert = env.db.prepare('insert into note_pictures (note_id, hash) values (?, ?)')
+    env.db.exec('begin')
+    for (let at = 0; at < 40_000; at++) insert.run(id, String(at).padStart(64, '0'))
+    env.db.exec('commit')
+
+    let widest = 0
+    const prepare = env.DB.prepare.bind(env.DB)
+    env.DB.prepare = ((text: string) => {
+      const statement = prepare(text)
+      const bind = statement.bind.bind(statement)
+      statement.bind = (...args: unknown[]) => {
+        for (const one of args) if (typeof one === 'string') widest = Math.max(widest, one.length)
+        return bind(...args)
+      }
+      return statement
+    }) as typeof env.DB.prepare
+
+    expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
+
+    expect(widest).toBeLessThanOrEqual(2_000_000)
+    expect(
+      count('select count(*) as held from unused_blobs where hash like ?', '0%'),
+    ).toBeGreaterThan(39_000)
+  })
+
   test('whatever is past the transaction comes back at the sweep', async () => {
     const id = await held()
     const bucket = env.NOTES as unknown as { delete(keys: string | string[]): Promise<void> }
@@ -610,7 +702,7 @@ describe('a purge the database fails part way', () => {
   test('emptying the trash goes on past one that failed, and says so', async () => {
     const stuck = await held('Stuck.md')
     const fine = await held('Fine.md')
-    const recovered = failing(/delete from note_search/, stuck)
+    const recovered = failing(/delete from form_answers/, stuck)
 
     const first = await call(env, '/v1/trash', { method: 'DELETE', token })
 
@@ -629,7 +721,7 @@ describe('a purge the database fails part way', () => {
     const stuck = await held('Stuck.md')
     const fine = await held('Fine.md')
     env.db.prepare('update notes set deleted_at = 1 where id in (?, ?)').run(stuck, fine)
-    const recovered = failing(/delete from note_search/, stuck)
+    const recovered = failing(/delete from form_answers/, stuck)
 
     await purgeExpired(env, Date.now())
 
