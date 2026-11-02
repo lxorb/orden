@@ -246,9 +246,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  The code raised on 2026-11-02, to 5,740,000, for #523: a sidebar opened from its toggle
  *  by a key takes the keyboard into it (`enterSide` in focus.ts). Measured 5,739,967.
+ *
+ *  The code raised on 2026-11-02, to 5,740,100, for #523: a property's key tells a key's
+ *  press from a click, so the pointer keeps renaming it with a double click
+ *  (PropertiesPanel.svelte). Measured 5,740,025.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_740_000,
+  code: 5_740_100,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
