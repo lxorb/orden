@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { chunks, places } from './bound'
 import { now } from './crypto'
 import { note as noted } from './failed'
+import { wordsLeftover } from './leftovers'
 import { noteKey, presentNote, restoreNote, takeSeq } from './notes'
 import { snapshotKey } from './rooms/epoch'
 import { deviceOf } from './sync2/device'
@@ -183,7 +184,12 @@ async function purgeNote(
          select distinct 'versions/' || hash, ?2 from note_versions where note_id = ?1`,
     ).bind(note.id, at),
     versions,
-    forgetWords(env, note.id),
+    // Written down rather than done: the index keeps the id in a column it cannot look
+    // up, so taking them out reads all of it, and a statement that may not fit in the
+    // time a transaction has must not be able to keep the note from going. Tried below,
+    // then by the sweep. No search shows them meanwhile: an answer is a published page
+    // or nothing (`matching` in blog/find.ts).
+    leftover(wordsLeftover(note.id)),
     // And its reminders, which hold the words of its tasks; see push/reminders.ts.
     forgetReminders(env, note.id),
     forgetPictures(env, note.id),
@@ -194,7 +200,7 @@ async function purgeNote(
     ).bind(note.id),
     // And the blobs it used, so the owner stops paying for whichever nothing else of
     // theirs still shows (unused.ts).
-    noteUnused(env, note.space_id, used, at),
+    ...noteUnused(env, note.space_id, used, at),
     // And what is named by the note's id outside the row: its room, which holds the
     // whole document for as long as the file does, emptied from `leftovers` like an
     // account's (leftovers.ts); and a chat its `.chat` file opened, which ends now and
@@ -234,6 +240,10 @@ async function purgeNote(
       note.space_id,
       note.id,
     ),
+    env.DB.prepare('delete from once_shared where space_id = ? and item = ?').bind(
+      note.space_id,
+      note.id,
+    ),
     // A guest that was in nothing else is nobody now; see `forgetEmptyGuest`.
     env.DB.prepare(
       `delete from guests where id in (select value from json_each(?))
@@ -252,6 +262,12 @@ async function purgeNote(
     if (still) throw error
     return false
   }
+  // A batch that answered without saying it landed has not let go of anything. Whichever
+  // it did, what would be taken below is on the list for the sweep, which asks the rows.
+  // The types say this cannot be false; it is the bytes that are at stake if they are wrong.
+  if (!(answers as { success: boolean }[]).every((one) => one.success)) {
+    throw new Error(`purge ${note.id} did not land`)
+  }
 
   // Past the transaction, so none of this can take the purge back, and none of it is
   // lost by failing: the sweep comes back for the bytes, and a machine reads its rows
@@ -267,6 +283,10 @@ async function purgeNote(
     answerOf<{ hash: string }>(versions).map((one) => one.hash),
   ).catch(later)
   await tellEnded(env, answerOf<Ended>(terms), who).catch(later)
+  await env.DB.batch([
+    forgetWords(env, note.id),
+    env.DB.prepare('delete from leftovers where what = ?').bind(wordsLeftover(note.id)),
+  ]).catch(later)
   return true
 }
 
@@ -381,7 +401,7 @@ async function purgeSpace(
     const listed = readSpaceFiles(marker?.files ?? '[]').map((one) => one.hash)
     const theme = readSite(marker?.site ?? null).theme?.hash
     await env.DB.batch([
-      noteUnused(env, space.id, theme ? [...listed, theme] : listed, at),
+      ...noteUnused(env, space.id, theme ? [...listed, theme] : listed, at),
       env.DB.prepare('delete from folders where space_id = ?').bind(space.id),
       env.DB.prepare('delete from tree_ops where space_id = ?').bind(space.id),
       env.DB.prepare('delete from space_entries where space_id = ?').bind(space.id),

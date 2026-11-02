@@ -650,7 +650,7 @@ describe('a purge the database fails part way', () => {
 
     let widest = 0
     const prepare = env.DB.prepare.bind(env.DB)
-    env.DB.prepare = ((text: string) => {
+    env.DB.prepare = (text: string) => {
       const statement = prepare(text)
       const bind = statement.bind.bind(statement)
       statement.bind = (...args: unknown[]) => {
@@ -658,7 +658,7 @@ describe('a purge the database fails part way', () => {
         return bind(...args)
       }
       return statement
-    }) as typeof env.DB.prepare
+    }
 
     expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
 

@@ -13,6 +13,7 @@
  *  their own that is not written yet. */
 
 import { letGo } from './blobs'
+import { chunks } from './bound'
 import { now } from './crypto'
 import { reading } from './used'
 import type { Env } from './types'
@@ -23,18 +24,25 @@ import type { Env } from './types'
 export const RIGHT_AFTER = 25
 export const NIGHTLY = 200
 
-/** The statement that writes down these hashes, for the owner of this space. */
+/** How many hashes one statement's list names. D1 takes two million bytes in a bound
+ *  value and a hash is 67 of them in a list, and a note of four megabytes can name more
+ *  than that holds; a list too long would be a purge that fails every time. */
+const HASHES_AT_ONCE = 10_000
+
+/** The statements that write down these hashes, for the owner of this space. */
 export function noteUnused(
   env: Env,
   spaceId: string,
   hashes: Iterable<string>,
   at: number,
-): D1PreparedStatement {
-  return env.DB.prepare(
-    `insert or ignore into unused_blobs (user_id, hash, since)
-       select sp.user_id, value, ?3 from spaces sp, json_each(?2)
-        where sp.id = ?1 and value != ''`,
-  ).bind(spaceId, JSON.stringify([...new Set(hashes)]), at)
+): D1PreparedStatement[] {
+  return chunks([...new Set(hashes)], HASHES_AT_ONCE).map((piece) =>
+    env.DB.prepare(
+      `insert or ignore into unused_blobs (user_id, hash, since)
+         select sp.user_id, value, ?3 from spaces sp, json_each(?2)
+          where sp.id = ?1 and value != ''`,
+    ).bind(spaceId, JSON.stringify(piece), at),
+  )
 }
 
 /** Asks about the oldest on the list, as many as `most`, and answers how many were
