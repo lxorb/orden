@@ -33,7 +33,7 @@ function searchOn(engine: string, words: string): string {
  *  every address on the web - a string with a space in it is words, and a single word
  *  with no dot and no port is words too. */
 const HOST =
-  /^(?:localhost|\[[0-9a-f:.]+\]|\d{1,3}(?:\.\d{1,3}){3}|[^\s/?#@]+\.[^\s/?#@.]{2,}|[a-z\d-]+(?=:\d))(?::\d{1,5})?(?:[/?#]|$)/i
+  /^(?:localhost|\[[0-9a-f:.]+\]|\d{1,3}(?:\.\d{1,3}){3}|[^\s/?#@:]+\.[^\s/?#@.:]{2,}|[a-z\d-]+(?=:\d))(?::\d{1,5})?(?:[/?#]|$)/i
 
 /** Schemes a word with digits after it is, rather than a host and a port: `tel:123`. */
 const NOT_HOSTS = new Set(['tel', 'sms', 'mailto', 'news', 'urn', 'magnet', 'about', 'data'])
@@ -92,8 +92,45 @@ function isHost(typed: string): boolean {
   return !word || !NOT_HOSTS.has(word.toLowerCase())
 }
 
-/** A scheme written at the front, whatever it is. */
+/** A word and a colon at the front, which may be a scheme. */
 const SCHEME = /^([a-z][a-z\d+.-]*):/i
+
+/** The schemes a word and a colon is taken for without `//`: the web's, and what a browser
+ *  hands to the system or opens itself. */
+const KNOWN_SCHEMES = new Set([
+  ...NOT_HOSTS,
+  'http',
+  'https',
+  'file',
+  'ftp',
+  'ws',
+  'wss',
+  'javascript',
+  'vbscript',
+  'blob',
+  'filesystem',
+  'view-source',
+  'nib',
+])
+
+/** A name and a password in front of a host, which is an address and never words: a search
+ *  would tell the engine the password. */
+const CREDENTIALS = /^[^\s/?#@]+:[^\s/?#@]*@[^\s/?#@]+/
+
+/** Whether something typed opens with a scheme and is not a few words with a colon in them,
+ *  by Chrome's rule: one it knows with nothing but the address after it, or any word with
+ *  `//` after it. So `site:github.com orden` and `note: buy milk` are a search. */
+function hasScheme(said: string): boolean {
+  const word = SCHEME.exec(said)?.[1]
+  if (word === undefined) return false
+
+  const rest = said.slice(word.length + 1)
+  return (
+    rest.startsWith('//') ||
+    CREDENTIALS.test(said) ||
+    (KNOWN_SCHEMES.has(word.toLowerCase()) && !/^\s/.test(rest))
+  )
+}
 
 /** An address half typed into a tab's field and left there: what the field held, what of
  *  it the reader typed, where the caret was, and the address it was typed over, so it
@@ -109,7 +146,7 @@ export interface HalfTyped {
 /** A Windows path: a drive letter, or a share. To `URL` it is a host called `c` or `nas`
  *  over http, and with a space in it words for the search engine, either of which tells
  *  the network what is on this machine. It means `file:`, which a tab does not open. */
-const WINDOWS_PATH = /^(?:[a-z]:[\\/]|\\\\)/i
+const WINDOWS_PATH = /^(?:[a-z]:(?:[\\/]|$)|\\\\)/i
 
 /** Whether something typed is a file on this machine, which a tab does not open, so the bar
  *  can say so rather than do nothing where a browser would have opened it. */
@@ -136,7 +173,7 @@ export function typedAddress(typed: string): string | null {
     return isWebAddress(guessed) ? asTheEngineSays(guessed) : null
   }
 
-  if (SCHEME.test(said)) return isWebAddress(said) ? asTheEngineSays(said) : null
+  if (hasScheme(said)) return isWebAddress(said) ? asTheEngineSays(said) : null
 
   return null
 }
@@ -152,7 +189,7 @@ export function typedAddress(typed: string): string | null {
  *  tries https"* - and a dev server, which serves plain http, answered nothing.
  *
  *  Then a scheme, taken as written, so `http://` pages still open and a
- *  `javascript:` one never does. A Windows path is nothing too. Anything left is words, and words are a search on
+ *  `javascript:` one never does. A Windows path or a `file:` is nothing too. Anything left is words, and words are a search on
  *  `engine`, the reader's choice of search engine. */
 export function webAddress(typed: string, engine = SEARCH): string | null {
   const said = typed.trim()
@@ -161,8 +198,8 @@ export function webAddress(typed: string, engine = SEARCH): string | null {
   const address = typedAddress(said)
   if (address !== null) return address
   // An address this app refuses is nothing rather than something to search for.
-  if (said.startsWith('//') || isHost(said) || SCHEME.test(said)) return null
-  if (WINDOWS_PATH.test(said)) return null
+  if (said.startsWith('//') || isHost(said) || hasScheme(said)) return null
+  if (isLocalFile(said)) return null
 
   return searchOn(engine, said)
 }

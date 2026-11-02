@@ -129,10 +129,15 @@ describe('a word with a colon after it', () => {
     expect(webAddress(typed)).toBeNull()
   })
 
+  test('a password in front of a host stays out of the search', () => {
+    expect(webAddress('admin:secret@router.lan')).toBeNull()
+  })
+
   test('a file stays out of the search however it is written', () => {
     expect(webAddress('file:notes.txt')).toBeNull()
     expect(webAddress('file: notes.txt')).toBeNull()
     expect(webAddress('FILE:///etc/passwd')).toBeNull()
+    expect(webAddress('C:')).toBeNull()
     expect(webAddress('C:\\My Documents\\a.txt')).toBeNull()
   })
 
