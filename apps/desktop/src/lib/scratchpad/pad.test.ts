@@ -35,8 +35,13 @@ vi.mock('../on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(fake.disk.has(path)),
 }))
 
+vi.mock('../log', () => ({ log: () => undefined }))
+
 vi.mock('../stored', () => ({
   storedText: (key: string) => fake.kept.get(key) ?? null,
+  stored: (key: string): unknown => JSON.parse(fake.kept.get(key) ?? 'null'),
+  isRecord: (value: unknown) => typeof value === 'object' && value !== null,
+  isString: (value: unknown) => typeof value === 'string',
   keep: (key: string, value: string) => {
     if (fake.full) return false
     fake.kept.set(key, value)

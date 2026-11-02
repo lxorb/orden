@@ -178,6 +178,13 @@
     item.run()
   }
 
+  /** A press with no other button down is a new one: the press that opened a menu that
+   *  landed late has been let go of unheard, and the next release is not its release
+   *  (#442). The opening press itself comes before the menu is asked for. */
+  function onPress(event: PointerEvent) {
+    if ((event.buttons & (event.buttons - 1)) === 0) menu.heldAt = null
+  }
+
   /** The press that opened the menu, let go of: on a row it chooses it, as a Mac's and
    *  Linux's own menus do (#368); see menu-release.ts. Read at the point it came up at,
    *  since a canvas keeps the pointer it was pressed with. */
@@ -268,11 +275,9 @@
   }
 </script>
 
-<!-- A press is a new one: the press that opened a menu that landed late has been let go of
-     unheard, and the next release is not its release (#442). -->
 <svelte:window
   onresize={() => menu.hide()}
-  onpointerdowncapture={() => (menu.heldAt = null)}
+  onpointerdowncapture={onPress}
   onpointerupcapture={onRelease}
 />
 
