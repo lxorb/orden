@@ -131,6 +131,59 @@ def the_comment_field(page: Page) -> None:
         wrong(f"the comment field is still a box: border {fields['border']}")
 
 
+# What the comment field's focus draws: on the words, on the row, and what clips it.
+RING = """() => {
+  const composer = document.querySelector('.sheet .composer')
+  const row = composer.closest('.nib-row')
+  const of = (one) => {
+    const style = getComputedStyle(one)
+    return { shadow: style.boxShadow, outline: style.outlineStyle, radius: style.borderTopLeftRadius }
+  }
+  const box = row.getBoundingClientRect()
+  const spread = Number(/(\\d+(?:\\.\\d+)?)px$/.exec(of(row).shadow)?.[1] ?? 0)
+  const clips = []
+  for (let up = row.parentElement; up; up = up.parentElement) {
+    const style = getComputedStyle(up)
+    if (style.overflowX === 'visible' && style.overflowY === 'visible') continue
+    const edge = up.getBoundingClientRect()
+    if (box.left - spread < edge.left || box.right + spread > edge.right)
+      clips.push(up.className)
+  }
+  const words = composer.getBoundingClientRect()
+  return {
+    focused: document.activeElement === composer,
+    words: of(composer), row: of(row), spread, clips,
+    inside: words.left >= box.left && words.right <= box.right
+      && words.top >= box.top && words.bottom <= box.bottom,
+  }
+}"""
+
+
+def the_comment_ring(page: Page) -> None:
+    """The ring of the comment field goes round the row it is drawn as, not round the
+    words inside that row, which drew a square halo inside the rounded row (#667)."""
+    composer = page.locator(".sheet .composer")
+    composer.focus()
+    # Past the box-shadow's own transition.
+    page.evaluate("""() => document.querySelector('.sheet .composer').closest('.nib-row').getAnimations().forEach((one) => one.finish())""")
+    ring = page.evaluate(RING)
+    say(f"[comment ring] {ring}")
+    shot(page, "01b-comment-ring")
+    if not ring["focused"]:
+        wrong("the comment field did not take the focus")
+    if ring["words"]["shadow"] != "none" or ring["words"]["outline"] != "none":
+        wrong(f"the words inside the comment row draw a ring of their own: {ring['words']}")
+    if not ring["spread"]:
+        wrong(f"the comment row says nothing of the focus: {ring['row']}")
+    if ring["row"]["radius"] in ("0px", ""):
+        wrong(f"the comment row's ring is square: {ring['row']}")
+    if not ring["inside"]:
+        wrong("the comment's words stand outside the ring")
+    if ring["clips"]:
+        wrong(f"the comment row's ring is cut off by {ring['clips']}")
+    composer.blur()
+
+
 def the_view(page: Page) -> None:
     page.locator(f"{row('Call the bank')} .words").click()
     wait_for(page, "document.querySelector('.sheet .title')", "the task view")
@@ -141,6 +194,7 @@ def the_view(page: Page) -> None:
             wrong(f"the task view does not say {wanted}")
     shot(page, "01-view")
     the_comment_field(page)
+    the_comment_ring(page)
 
     # Its words, changed.
     page.locator(".sheet .title").fill("Call the bank again")
