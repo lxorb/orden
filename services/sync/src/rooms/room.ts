@@ -81,7 +81,7 @@ import { accessOf } from './access'
 const SETTLE_DELAY = 1_200
 
 /** How long a socket let into a room waits for the database to settle its join. Longer
- *  than a slow answer, and shorter than somebody typing into nothing for long. */
+ *  than a slow answer, and shorter than a device is left waiting on its handshake. */
 const SETTLES_WITHIN = 15_000
 
 /** How many awareness entries one socket is remembered as having announced. A
@@ -405,12 +405,6 @@ export class NoteRoom implements DurableObject {
    *  where nothing said - a room the runtime woke to fire an alarm has forgotten, and
    *  no name is better than another device's. */
   private settling = ''
-  /** Sockets let in whose join is not yet settled, and whether each stays. Held in memory,
-   *  on what the runtime documents rather than anything a test here can show: an object
-   *  does not hibernate while a request is being processed or a timer is set, pending I/O
-   *  holds off eviction for up to fifteen minutes, and an object that shuts down anyway
-   *  terminates its sockets with it, so none is left to speak without this. */
-  private readonly letting = new Map<WebSocket, Promise<boolean>>()
   /** And which device that was, by id rather than by name, for the tree; see
    *  `Attached`. */
   private settlingDevice: string | undefined = undefined
@@ -532,19 +526,9 @@ export class NoteRoom implements DurableObject {
       ...(joining.login ? { login: joining.login } : {}),
     } satisfies Attached)
 
-    // What the socket says from here until this is settled waits for it: the object
-    // takes messages while it waits on the database, and a socket let in on what the
-    // door read must not be heard on it once that may no longer be so.
-    const settling = this.settleInTime(server, held, joining)
-    this.letting.set(
-      server,
-      settling.catch(() => false),
-    )
-    try {
-      if (!(await settling)) return
-    } finally {
-      this.letting.delete(server)
-    }
+    // Nothing the device says can reach this wait: `fetch` hands it the socket's other end
+    // in its 101, after this. What the wait can do is never end; see `settleInTime`.
+    if (!(await this.settleInTime(server, held, joining))) return
 
     // Rows nothing will take away are cleared after the join rather than before it:
     // the join waits on none of the rooms that asks, and fails for none of them.
@@ -563,9 +547,9 @@ export class NoteRoom implements DurableObject {
   }
 
   /** The rest of a join, within a bound: the database neither answering nor failing would
-   *  otherwise leave the socket in the room with whatever it says waiting for ever. Closed
-   *  as any join this side could not finish is, so the device comes back and says it
-   *  again. Its row, if it has one, is one nothing needs waiting on: the next join's sweep
+   *  otherwise leave the handshake unanswered for ever, with a socket in the room that no
+   *  device is on. Closed as any join this side could not finish is, so the device comes
+   *  back. Its row, if it has one, is one nothing needs waiting on: the next join's sweep
    *  takes it (opened.ts). */
   private async settleInTime(server: WebSocket, held: Held, joining: Joining): Promise<boolean> {
     let timer: ReturnType<typeof setTimeout> | null = null
@@ -896,11 +880,6 @@ export class NoteRoom implements DurableObject {
   async webSocketMessage(socket: WebSocket, message: ArrayBuffer | string) {
     // Everything a room says is bytes. A string is not this protocol.
     if (typeof message === 'string') return
-
-    // A socket still being settled in is heard once that is done, as what it turned out
-    // to be; see `enter`.
-    const letting = this.letting.get(socket)
-    if (letting && !(await letting)) return
 
     const said = new Uint8Array(message)
 

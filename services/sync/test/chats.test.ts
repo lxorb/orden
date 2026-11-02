@@ -1227,7 +1227,9 @@ describe('chats', () => {
 
         await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
         await sweepUnused(env)
-        expect((await call(env, `/v2/chats/${other}/files/${hash}`, { token: people.reader })).status).toBe(200)
+        expect(
+          (await call(env, `/v2/chats/${other}/files/${hash}`, { token: people.reader })).status,
+        ).toBe(200)
         expect(holders(hash)).toEqual([{ user_id: ids.owner }])
       })
 
