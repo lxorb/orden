@@ -268,7 +268,13 @@
   }
 </script>
 
-<svelte:window onresize={() => menu.hide()} onpointerupcapture={onRelease} />
+<!-- A press is a new one: the press that opened a menu that landed late has been let go of
+     unheard, and the next release is not its release (#442). -->
+<svelte:window
+  onresize={() => menu.hide()}
+  onpointerdowncapture={() => (menu.heldAt = null)}
+  onpointerupcapture={onRelease}
+/>
 
 {#if menu.open}
   {#if viewport.touch}
