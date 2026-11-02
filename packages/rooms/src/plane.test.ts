@@ -538,7 +538,7 @@ describe('the order of the stack in a room', () => {
     both(one, two)
 
     const held = one.canvas.nodes
-    const by = (id: string) => held.find((node) => node.id === id) as CanvasNode
+    const by = (id: string) => held.find((node) => node.id === id)!
     one.edit({ ...one.canvas, nodes: [by('b'), by('x'), by('a'), by('y')] }, 3000)
     expect(order(readPlane(one.doc))).toEqual(['b', 'x', 'a', 'y'])
   })
@@ -586,10 +586,7 @@ describe('the order of the stack in a room', () => {
 
   test('the time of a move crosses the room, and a joining file is measured against it', () => {
     const { one, two } = twoDevices('a', 'b', 'c')
-    one.edit(
-      { ...one.canvas, nodes: [...one.canvas.nodes.slice(1), one.canvas.nodes[0] as CanvasNode] },
-      5000,
-    )
+    one.edit({ ...one.canvas, nodes: [...one.canvas.nodes.slice(1), one.canvas.nodes[0]!] }, 5000)
     carry(one, two)
     expect(readPlane(two.doc).moved).toEqual({ a: 5000 })
 

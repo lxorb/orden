@@ -802,9 +802,12 @@ describe('the order of the stack', () => {
 
     test('leaves everything an older reader looks at as it was', () => {
       const before = base('a', 'b')
-      const file = JSON.parse(writeCanvas(stamped(before, moved(before, 'b', 'a'), 200)))
+      const file = JSON.parse(writeCanvas(stamped(before, moved(before, 'b', 'a'), 200))) as {
+        nib: { at: unknown }
+        nodes: CanvasNode[]
+      }
       expect(file.nib.at).toEqual({ a: 100, b: 100 })
-      expect(file.nodes.map((node: CanvasNode) => node.id)).toEqual(['b', 'a'])
+      expect(file.nodes.map((node) => node.id)).toEqual(['b', 'a'])
     })
 
     test('is forgotten with the thing it was about', () => {
