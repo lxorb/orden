@@ -960,8 +960,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-01, to 3,431,700, for the fourth bug burn-down's fixes merged into
  *  unstable at 9163eeb16: unstable's raises were measured without them. Measured
- *  3,430,841. */
-const BUDGET = 3_431_700
+ *  3,430,841.
+ *
+ *  Raised 2026-11-02, to 3,439,800, for the space's AGENTS.md shown as a field: the rule
+ *  for the name (`isAgentsName`), the hint on a row's name field (NameField.svelte), and
+ *  the file left out of what the store lists. Measured 3,439,085. */
+const BUDGET = 3_439_800
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

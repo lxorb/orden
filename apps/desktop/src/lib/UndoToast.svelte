@@ -5,7 +5,6 @@
   import { t } from './i18n.svelte'
   import { dur } from './motion'
   import { reservedName } from './reserved-name.svelte'
-  import { agentsHint } from './reserved-words'
   import { back } from './sync2/resurrected.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
@@ -59,7 +58,7 @@
        way round it aside, a link, a drop, the name a save was given. Gmail's snackbar,
        one line and the way there. See reserved-name.svelte.ts. -->
   <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
-    <p>{agentsHint()}</p>
+    <p>{t("AGENTS is this space's agent instructions")}</p>
     <button class="undo" onclick={() => reservedName.open()}>{t('Open')}</button>
   </div>
 {:else if failed.retry}

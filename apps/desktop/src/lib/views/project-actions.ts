@@ -40,7 +40,8 @@ function projectName(words: string): string | null {
 function refused(path: string, name: string): boolean {
   if (!isAgentsName(`${name}.md`)) return false
   const root = workspace.rootHolding(path)
-  if (root !== null) void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
+  if (root !== null)
+    void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
   return true
 }
 

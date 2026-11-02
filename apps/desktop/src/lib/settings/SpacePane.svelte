@@ -81,8 +81,9 @@
 {#if field}
   <div class="card">
     <label class="nib-setting setting tall">
-      <span class="name">{t('Agent instructions')}</span>
-      {#if name}<span class="space">{name}</span>{/if}
+      <span class="name"
+        >{t('Agent instructions')}{#if name}<small>{name}</small>{/if}</span
+      >
       <textarea
         bind:this={box}
         rows="12"
@@ -115,7 +116,8 @@
     flex: 1;
   }
 
-  .space {
+  small {
+    margin-inline-start: var(--space-2);
     color: var(--muted);
     font-size: var(--text-sm);
   }

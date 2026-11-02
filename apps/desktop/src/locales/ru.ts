@@ -2754,6 +2754,5 @@ export const ru: Dictionary = {
   'Only the file': 'Только файл',
   'Trust this space again': 'Снова доверять этому пространству',
   'Agent instructions': 'Инструкции для агентов',
-  "AGENTS is this space's agent instructions":
-    'AGENTS: инструкции для агентов этого пространства',
+  "AGENTS is this space's agent instructions": 'AGENTS: инструкции для агентов этого пространства',
 }

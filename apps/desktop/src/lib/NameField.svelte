@@ -29,7 +29,6 @@
   import { t } from './i18n.svelte'
   import { dur } from './motion'
   import { type NameFault, nameFault, nameToCommit } from './naming'
-  import { agentsHint } from './reserved-words'
   import { caretAtEnd, selectAll, selectStem } from './select-all'
 
   interface Props {
@@ -112,7 +111,7 @@
       case 'taken':
         return t('That name is taken')
       case 'agents':
-        return agentsHint()
+        return t("AGENTS is this space's agent instructions")
       case 'empty':
       case null:
         return null
@@ -125,8 +124,9 @@
    *  fire the blur that would commit or restore a second time. */
   let settled = false
 
-  function leave() {
-    if (settled) return
+  function leave(event?: FocusEvent) {
+    // Between the name and its hint the field is still up; see below.
+    if (settled || (event?.relatedTarget && event.relatedTarget === hint)) return
     settled = true
 
     // Read first: what the host hands this field goes with the row a commit ends.
@@ -185,9 +185,7 @@
     aria-invalid={amiss}
     bind:this={field}
     use:caret
-    onblur={(event) => {
-      if (!hint || event.relatedTarget !== hint) leave()
-    }}
+    onblur={leave}
     onkeydown={(event) => {
       if (event.key === 'Enter') {
         event.preventDefault()
@@ -210,14 +208,14 @@
     <!-- The same bubble, as the way to the setting. Its press takes no focus from the
          name, because a blur there would end the field before the press lands. -->
     <span
-      class="reason"
+      class="nib-bubble is-pressable reason held"
       aria-live="polite"
       transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}
     >
       <button
         bind:this={hint}
         type="button"
-        class="nib-bubble is-pressable pressed"
+        class="go"
         onpointerdown={(event) => event.preventDefault()}
         onclick={(event) => {
           event.stopPropagation()
@@ -300,9 +298,21 @@
     z-index: var(--z-popover);
   }
 
-  /* The one that goes somewhere, and reads as a link does. */
-  .pressed {
-    cursor: pointer;
+  /* The one that goes somewhere, and reads as a link does. Held to the row's width, as a
+     longer sentence than the rest would otherwise leave the side of the window. */
+  .held {
+    inset-inline-end: 0;
+    width: auto;
+  }
+
+  .go {
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
     text-decoration: underline;
+    cursor: pointer;
   }
 </style>

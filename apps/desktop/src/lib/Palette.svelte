@@ -25,7 +25,6 @@
   import Icon from './Icon.svelte'
   import { middleOpens } from './new-tab'
   import { AGENTS_NAME, shownName } from './note-name'
-  import { agentsHint } from './reserved-words'
   import { scanHeadings } from './outline'
   import { overlays } from './overlays'
   import { OUTLINE_MARK, GRAPH_MARK, SEARCH_MARK } from './panel-marks'
@@ -318,7 +317,7 @@
       case 'make':
         return shownName(row.make.name)
       case 'agents':
-        return agentsHint()
+        return t("AGENTS is this space's agent instructions")
       case 'address':
         return row.address
       case 'place':

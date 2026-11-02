@@ -234,9 +234,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-01, to 5,739,000, for the fourth bug burn-down's fixes
  *  merged into unstable at 9163eeb16: its raises were measured without them. Measured
  *  5,738,198.
+ *
+ *  The code raised on 2026-11-02, to 5,748,000, for the space's AGENTS.md shown as a
+ *  field: the name refused on the glasses' own file list too, and the file left off it.
+ *  Measured 5,747,277.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_739_000,
+  code: 5_748_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

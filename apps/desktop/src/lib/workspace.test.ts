@@ -5366,7 +5366,11 @@ describe('a space and its AGENTS.md', () => {
   test('a link to a note of the name makes none, and a hint says where it is', async () => {
     const { reservedName } = await import('./reserved-name.svelte')
     Reflect.deleteProperty(notes, AGENTS)
-    await workspace.followLink({ target: 'AGENTS', path: null, heading: null, block: null, page: null }, 'plain', '/space/a.md')
+    await workspace.followLink(
+      { target: 'AGENTS', path: null, heading: null, block: null, page: null },
+      'plain',
+      '/space/a.md',
+    )
     await vi.waitFor(() => expect(reservedName.root).toBe('/space'))
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
     reservedName.dismiss()
