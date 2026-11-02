@@ -109,7 +109,7 @@ export async function newTicket(held: SitePassword, at: number): Promise<string>
 }
 
 /** Whether a ticket is this site's, and still good. */
-export async function ticketHolds(
+async function ticketHolds(
   held: SitePassword,
   ticket: string | null,
   at: number,
@@ -133,7 +133,7 @@ export function ticketCookie(ticket: string): string {
 /** The tickets a request carries, the one under today's name first. More than one is
  *  somebody's cookie for the root beside the reader's own; a ticket is signed with the
  *  site's key, so asking about each lets in nobody the site has not. */
-export function ticketsIn(header: string | null): string[] {
+function ticketsIn(header: string | null): string[] {
   const current: string[] = []
   const old: string[] = []
 
