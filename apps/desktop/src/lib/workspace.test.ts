@@ -179,6 +179,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { panesOf } = await import('./workspace/session')
 const { noteId } = await import('./note-id')
+const { answeredCase } = await import('./space-paths')
 const { viewport } = await import('./viewport.svelte')
 const { pages } = await import('./web-tab/pages.svelte')
 const { links } = await import('./link-index.svelte')
@@ -5393,8 +5394,61 @@ describe('a space and its AGENTS.md', () => {
     expect(sent.filter((one) => one.command === 'rename_note')).toHaveLength(1)
   })
 
-  test('an agent moves one onto the top of the space all the same', async () => {
+  test('an agent’s move being undone puts one back on the top of the space', async () => {
     await workspace.moveMany([NESTED], '/space', true)
     expect(sent.filter((one) => one.command === 'rename_note')).toHaveLength(1)
+  })
+
+  describe('on a disk that sets case aside', () => {
+    const LOWER = '/space/agents.md'
+
+    beforeEach(() => {
+      answeredCase('/space', true)
+      notes[LOWER] = '# Lower'
+      workspace.tree = entry('/space', [entry(LOWER), entry('/space/a.md')])
+    })
+
+    afterEach(() => {
+      answeredCase('/space', null)
+      Reflect.deleteProperty(notes, LOWER)
+    })
+
+    test('a root agents.md is the one file, so it has no row and is the field', async () => {
+      const { settings } = await import('./settings.svelte')
+      expect(workspace.instructionsAt(LOWER)).toBe(true)
+      expect(walked(workspace.shownTree)).not.toContain(LOWER)
+      expect(workspace.files.map((one) => one.path)).not.toContain(LOWER)
+
+      await workspace.open(LOWER)
+      expect(workspace.tabs.map((one) => one.path)).not.toContain(LOWER)
+      expect(settings.section).toBe('space')
+    })
+
+    test('what a search leaves out is spelled as the listing spells it', () => {
+      expect(workspace.leftOut).toContain('agents.md')
+    })
+  })
+
+  describe('on a disk that tells case apart', () => {
+    const LOWER = '/space/agents.md'
+
+    beforeEach(() => {
+      answeredCase('/space', false)
+      notes[LOWER] = '# Lower'
+      workspace.tree = entry('/space', [entry(AGENTS), entry(LOWER)])
+    })
+
+    afterEach(() => {
+      answeredCase('/space', null)
+      Reflect.deleteProperty(notes, LOWER)
+    })
+
+    test('a root agents.md is a note of its own beside the setting', async () => {
+      expect(workspace.instructionsAt(LOWER)).toBe(false)
+      expect(walked(workspace.shownTree)).toContain(LOWER)
+      expect(walked(workspace.shownTree)).not.toContain(AGENTS)
+      await workspace.open(LOWER)
+      expect(workspace.active?.path).toBe(LOWER)
+    })
   })
 })

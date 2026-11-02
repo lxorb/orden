@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { InstructionsField, SETTLES_AFTER } from './instructions-field.svelte'
+import { GIVES_UP_AFTER, InstructionsField, SETTLES_AFTER } from './instructions-field.svelte'
 
 /** The field a space's AGENTS.md is edited in: what it writes, when, and what it never
  *  writes. Stands in for the disk; the write path itself is workspace/note-text.ts. */
@@ -11,6 +11,7 @@ function disk(start: string | null) {
   const writes: { before: string; after: string; first: boolean }[] = []
   const made: string[] = []
   const hands = {
+    space: vi.fn(() => Promise.resolve(true)),
     read: vi.fn(() => Promise.resolve(held.text)),
     there: vi.fn(() => Promise.resolve(held.unreadable)),
     write: vi.fn((_path: string, before: string, after: string, first: boolean) => {
@@ -199,5 +200,34 @@ describe('the field for a space’s AGENTS.md', () => {
 
     await field.flush()
     expect(held.text).toBe('mine')
+  })
+
+  test('a space that has gone is not made again, and the field locks with its words in it', async () => {
+    const { hands, made } = disk(null)
+    const field = new InstructionsField(PATH, hands)
+    await field.load()
+
+    hands.space.mockResolvedValue(false)
+    field.type('# After it went')
+    await vi.advanceTimersByTimeAsync(SETTLES_AFTER)
+
+    expect(made).toEqual([])
+    expect(field.locked).toBe(true)
+    expect(field.text).toBe('# After it went')
+  })
+
+  test('a write that never comes back does not hold up the ones after it', async () => {
+    const { hands, writes } = disk('# Rules')
+    hands.write.mockImplementationOnce(() => new Promise<void>(() => undefined))
+    const field = new InstructionsField(PATH, hands)
+    await field.load()
+
+    field.type('one')
+    void field.flush()
+    await vi.advanceTimersByTimeAsync(GIVES_UP_AFTER)
+
+    field.type('two')
+    await field.flush()
+    expect(writes.at(-1)?.after).toBe('two')
   })
 })

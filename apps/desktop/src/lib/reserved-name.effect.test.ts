@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
  *  opens. In the jsdom project because the field is drawn and pressed. */
 
 const { settings } = await import('./settings.svelte')
-const { landing } = await import('./settings/landing.svelte')
 const { reservedName } = await import('./reserved-name.svelte')
 const NameField = (await import('./NameField.svelte')).default
 
@@ -38,7 +37,7 @@ beforeEach(() => {
   oncommit.mockClear()
   oncancel.mockClear()
   settings.open = false
-  landing.instructions = false
+  settings.landsOnField = false
   reservedName.dismiss()
   target = document.createElement('div')
   document.body.append(target)
@@ -79,7 +78,7 @@ describe('a row named AGENTS', () => {
     expect(settings.open).toBe(true)
     expect(settings.section).toBe('space')
     expect(settings.space).toBe('/space')
-    expect(landing.instructions).toBe(true)
+    expect(settings.landsOnField).toBe(true)
     expect(oncommit).not.toHaveBeenCalled()
     expect(oncancel).toHaveBeenCalledTimes(1)
   })
@@ -165,12 +164,20 @@ describe('the toast’s way to the setting', () => {
     expect(reservedName.root).toBeNull()
     expect(settings.section).toBe('space')
     expect(settings.space).toBe('/other')
-    expect(landing.instructions).toBe(true)
+    expect(settings.landsOnField).toBe(true)
   })
 
   test('any other way into Settings is about the space in front', () => {
     settings.show('space', '/other')
     settings.show('general')
     expect(settings.space).toBeNull()
+  })
+
+  test('the caret asked for is not left waiting for a pane that was never drawn', () => {
+    reservedName.tell('/other')
+    reservedName.open()
+    expect(settings.landsOnField).toBe(true)
+    settings.show('general')
+    expect(settings.landsOnField).toBe(false)
   })
 })

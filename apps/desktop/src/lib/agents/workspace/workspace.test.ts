@@ -590,6 +590,20 @@ describe('another space, without switching', () => {
     expect(workspace.moveMany).not.toHaveBeenCalled()
   })
 
+  test('no note becomes the space’s instructions by being moved or renamed', async () => {
+    for (const args of [
+      { path: 'Plan.md', to: 'AGENTS' },
+      { path: 'Plan.md', to: 'AGENTS.md' },
+      { space: 'Home', path: 'Soup.md', to: 'AGENTS.md' },
+    ]) {
+      expect(await call('move_file', args)).toMatchObject({
+        error: { code: 'bad_arguments', message: expect.stringContaining('write_note') as string },
+      })
+    }
+    expect(workspace.rename).not.toHaveBeenCalled()
+    expect(workspace.moveMany).not.toHaveBeenCalled()
+  })
+
   test('the space that is open takes the tree own rename', async () => {
     // Said with the space it ran in, which a later Undo moves it back in.
     expect(await call('move_file', { path: 'Plan.md', to: 'Old plan' })).toMatchObject({

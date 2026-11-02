@@ -10,6 +10,9 @@ const disk = vi.hoisted(() => ({
   writable: true,
   writes: [] as { path: string; after: string }[],
   made: [] as string[],
+  reads: 0,
+  tabs: null as (() => unknown) | null,
+  reactive: false,
   heard: null as ((path: string, words: string) => void) | null,
 }))
 
@@ -18,7 +21,9 @@ vi.mock('../tauri', async (original) => ({
   invoke: () => Promise.resolve(null),
 }))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: vi.fn() } }))
-vi.mock('../on-disk', () => ({ onDisk: (path: string) => Promise.resolve(disk.files.has(path)) }))
+vi.mock('../on-disk', () => ({
+  onDisk: (path: string) => Promise.resolve(disk.files.has(path) || !path.endsWith('.md')),
+}))
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => disk.writable }))
 vi.mock('../link-index.svelte', () => ({
   links: {
@@ -40,7 +45,13 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 vi.mock('../workspace/note-text', () => ({
-  noteText: (_: unknown, path: string) => Promise.resolve(disk.files.get(path) ?? null),
+  // A note's text is read off what is open, which is reactive in the real store: the
+  // pane must not follow it. `settings.section` stands in for the tabs changing.
+  noteText: (_: unknown, path: string) => {
+    disk.reads++
+    if (disk.reactive) void disk.tabs?.()
+    return Promise.resolve(disk.files.get(path) ?? null)
+  },
   writeNoteText: (_: unknown, path: string, _before: string, after: string) => {
     disk.writes.push({ path, after })
     disk.files.set(path, after)
@@ -56,7 +67,8 @@ vi.mock('../workspace/write-file', () => ({
 }))
 
 const { settings } = await import('../settings.svelte')
-const { landing } = await import('./landing.svelte')
+const { settleUp, stillWriting } = await import('../parting')
+disk.tabs = () => settings.section
 const SpacePane = (await import('./SpacePane.svelte')).default
 
 const settled = () => new Promise((resolve) => setTimeout(resolve))
@@ -87,7 +99,9 @@ beforeEach(() => {
   disk.made = []
   disk.writable = true
   settings.space = null
-  landing.instructions = false
+  settings.landsOnField = false
+  disk.reads = 0
+  disk.reactive = false
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -128,10 +142,10 @@ describe('Settings > Space', () => {
     expect(document.activeElement).not.toBe(box)
     close?.()
 
-    landing.instructions = true
+    settings.landsOnField = true
     box = await shown()
     expect(document.activeElement).toBe(box)
-    expect(landing.instructions).toBe(false)
+    expect(settings.landsOnField).toBe(false)
   })
 
   test('words typed and the settings closed at once are written', async () => {
@@ -173,5 +187,58 @@ describe('Settings > Space', () => {
     disk.heard?.('/space/sub/AGENTS.md', '# Elsewhere')
     flushSync()
     expect(box.value).toBe('# Arrived')
+  })
+
+  test('the tabs changing behind it neither reads the file again nor takes the words typed', async () => {
+    disk.reactive = true
+    disk.files.set('/space/AGENTS.md', '# Rules')
+    const box = await shown()
+    typed(box, '# Rules, typing')
+    const reads = disk.reads
+
+    settings.section = settings.section === 'space' ? 'general' : 'space'
+    flushSync()
+    await settled()
+    flushSync()
+
+    expect(disk.reads).toBe(reads)
+    expect(box.value).toBe('# Rules, typing')
+    expect(target.querySelector('textarea')).toBe(box)
+  })
+
+  test('a window going takes the words typed with it, and waits for them', async () => {
+    disk.files.set('/space/AGENTS.md', '# Rules')
+    const box = await shown()
+    typed(box, '# Rules, last keys')
+
+    settleUp()
+    expect(stillWriting()).toBe(true)
+    await settled()
+    await settled()
+    expect(disk.files.get('/space/AGENTS.md')).toBe('# Rules, last keys')
+  })
+
+  test('a space no longer on the list locks the field and is not made again', async () => {
+    settings.space = '/gone'
+    const box = await shown()
+    expect(box.readOnly).toBe(true)
+    typed(box, '# Back from the dead')
+    box.dispatchEvent(new Event('blur'))
+    await settled()
+    expect(disk.made).toEqual([])
+  })
+
+  test('the file made tells the listing of the space it is in, not the one now asked for', async () => {
+    const { workspace } = await import('../workspace.svelte')
+    const reads = vi.mocked(workspace.loadTree)
+    reads.mockClear()
+    const box = await shown()
+    typed(box, '# New')
+    settings.space = '/other'
+    flushSync()
+    await settled()
+    await settled()
+    expect(disk.made).toEqual(['/space/AGENTS.md'])
+    expect(reads).toHaveBeenCalled()
   })
 })
