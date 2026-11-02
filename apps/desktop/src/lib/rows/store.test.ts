@@ -200,6 +200,32 @@ describe('the rows of every space', () => {
     expect(store.of().map((row) => row.file.ctime)).toEqual([1, 1])
   })
 
+  test('a note that links to itself shows the new link once it is renamed', async () => {
+    const { store, disk, settled } = rig(
+      { [`${WORK}/Plan.md`]: '---\nsee: "[[Plan]]"\n---\n- [ ] Read [[Plan]]\n' },
+      WORK,
+    )
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+
+    const after = '---\nsee: "[[Road]]"\n---\n- [ ] Read [[Road]]\n'
+    disk.delete(`${WORK}/Plan.md`)
+    disk.set(`${WORK}/Road.md`, after)
+    store.saved(`${WORK}/Road.md`, after)
+    void store.follow({
+      op: 'moved',
+      from: `${WORK}/Plan.md`,
+      to: `${WORK}/Road.md`,
+      kind: 'file',
+      root: WORK,
+    })
+
+    expect(store.of().map((row) => row.path)).toEqual(['Road.md', 'Road.md'])
+    const link = { kind: 'link', target: 'Road' }
+    expect(store.of().map((row) => row.note.see)).toEqual([link, link])
+    expect(tasks(store.of())).toEqual(['Work:Road.md:Read [[Road]]'])
+  })
+
   test('a renamed or moved note says where it was, so it is not taken for a note just made', async () => {
     const { store, heard, settled } = rig(
       { [`${WORK}/Projects/Launch.md`]: '---\nstatus: Doing\n---\n' },

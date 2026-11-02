@@ -482,6 +482,7 @@ class Workspace {
     // operation does names one of them. The open documents first, so that anything
     // asking about a note between two followers already meets its new path.
     this.fileOps.follow((op) => this.opened.follow(op, (id) => this.close(id)))
+    this.fileOps.follow((op) => this.saving.follow(op))
     this.fileOps.follow((op) => this.positions.follow(op))
     this.fileOps.follow((op) => this.device.follow(op))
     this.fileOps.follow((op) => this.closed.follow(op))
@@ -4230,6 +4231,12 @@ class Workspace {
    *  workspace/saving.svelte.ts. */
   holdingUnder(path: string, run: () => Promise<void>): Promise<void> {
     return this.saving.holdingUnder(path, run)
+  }
+
+  /** A move sync makes of everything open at or under `path`; see `holdingWrites` in
+   *  workspace/saving.svelte.ts. */
+  holdingWrites<T>(path: string, run: () => Promise<T>, stalled: () => Promise<T>): Promise<T> {
+    return this.saving.holdingWrites(path, run, stalled)
   }
 
   /** One file under another name in the same folder, and everything that owes: the

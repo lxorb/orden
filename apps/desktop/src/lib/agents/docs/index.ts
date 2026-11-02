@@ -61,9 +61,7 @@ const desk: Desk = {
   },
   documentAt: (path) => workspace.documentAt(path),
   noteText: (path) => workspace.noteText(path),
-  replaceInNotes: async (changes, keeping) => {
-    await workspace.replaceInNotes(changes, keeping)
-  },
+  replaceInNotes: (changes, keeping) => workspace.replaceInNotes(changes, keeping),
   frontView(note) {
     const tab = workspace.active
     if (tab?.note !== note) return null

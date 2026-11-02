@@ -34,8 +34,9 @@ export interface Desk {
   /** A note's words as they stand: the open document's, else the disk's. */
   noteText(path: string): Promise<string | null>
   /** The one road a note nobody has open is written by: a snapshot, the write, the
-   *  index told, sync nudged; see workspace/note-text.ts. */
-  replaceInNotes(changes: readonly Change[], keeping?: Keeping): Promise<void>
+   *  index told, sync nudged; see workspace/note-text.ts. Answers how many were written:
+   *  a file that changed under the change, or went, is left as it is. */
+  replaceInNotes(changes: readonly Change[], keeping?: Keeping): Promise<number>
   /** The view the reader is looking at, when it shows this document. */
   frontView(note: NoteDoc): EditorView | null
   /** The links out of a note and into it, off the link index, which knows the space

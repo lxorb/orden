@@ -193,6 +193,10 @@ export interface Waiting {
   /** One note moved here because another device renamed or moved it, by the paths
    *  it had and has. */
   moved?: (from: string, to: string) => void | Promise<void>
+  /** A rename a pass makes, after the writes in the air of what is open in it, and
+   *  `stalled` in its place under one that has not answered; see `holdingWrites` in
+   *  workspace/saving.svelte.ts. */
+  holdingWrites?: <T>(from: string, run: () => Promise<T>, stalled: () => Promise<T>) => Promise<T>
   /** Notes to fetch first, by their path in the space: the one somebody is looking
    *  at, and the one they were looking at last. A page is a few hundred notes and
    *  a slow connection is a body a second, so which end of it the open note is at
@@ -600,25 +604,31 @@ async function movedThere(
     if (from === null) return false
     mirror.moving = { id: one.id, from, to }
     waiting?.save?.()
-    const done = await invoke('rename_note', { from: full(from), to: full(to) }).then(
-      () => true,
-      (error: unknown) => {
-        log('warn', `sync: ${full(from)} not moved to ${full(to)} - ${String(error)}`)
-        return false
-      },
-    )
-    if (done) {
-      rekey(mirror, from, to)
-      one.at = to
+    const renamed = async () => {
+      const done = await invoke('rename_note', { from: full(from), to: full(to) }).then(
+        () => true,
+        (error: unknown) => {
+          log('warn', `sync: ${full(from)} not moved to ${full(to)} - ${String(error)}`)
+          return false
+        },
+      )
+      if (done) {
+        rekey(mirror, from, to)
+        one.at = to
+      }
+      delete mirror.moving
+      waiting?.save?.()
+      // Told as made, from where the file really was: a step aside too. What follows a
+      // file by its path hears each step in turn, so told only from the old name to the
+      // new, in a swap the second note's open document went to its new name and then on
+      // with the first note's file, and saved its words over that one.
+      if (done) await waiting?.moved?.(full(from), full(to))
+      return done
     }
-    delete mirror.moving
-    waiting?.save?.()
-    // Told as made, from where the file really was: a step aside too. What follows a
-    // file by its path hears each step in turn, so told only from the old name to the
-    // new, in a swap the second note's open document went to its new name and then on
-    // with the first note's file, and saved its words over that one.
-    if (done) await waiting?.moved?.(full(from), full(to))
-    return done
+    // Made under a write that has stalled too. A move not made here costs this note its
+    // entry (see below), the file at the old name going up as a note of its own: no
+    // better than the write landing there later, and this way the move happens.
+    return waiting?.holdingWrites ? waiting.holdingWrites(full(from), renamed, renamed) : renamed()
   }
 
   const left = new Set(pending)

@@ -92,6 +92,43 @@ export function changeOf(path: string, before: string, edits: Edit[]): Change {
   return { path, before, after: applied(before, edits), edits, back: reverse(before, edits) }
 }
 
+/** A file's words as `like` would say them: with one line ending where `like` was worked
+ *  out on one, as an agent's edits are, or a file with Windows ones differs on every
+ *  line. */
+export function endingsLike(words: string, like: string): string {
+  return like.includes('\r') || !words.includes('\r') ? words : words.replace(/\r\n?/g, '\n')
+}
+
+/** Whether the first line ending of a file is `\r\n`, which has the disk write every
+ *  line that way; see `as_written` in notes.rs. */
+function crlfFirst(file: string): boolean {
+  const first = file.indexOf('\n')
+  return first > 0 && file[first - 1] === '\r'
+}
+
+/** Edits worked out on a file's words with one line ending, applied to the file itself:
+ *  a line they do not touch stays as it was where the disk keeps it, and one they add
+ *  ends as the disk would end it. A file that starts with `\r\n` and has a bare `\n`
+ *  further down comes out all `\r\n` from the disk, as it does from a save in a tab. */
+export function appliedToFile(file: string, edits: readonly Edit[]): string {
+  const crlf = crlfFirst(file)
+  let raw = 0
+  let flat = 0
+  const seek = (to: number) => {
+    for (; flat < to; flat++) raw += file[raw] === '\r' && file[raw + 1] === '\n' ? 2 : 1
+    return raw
+  }
+
+  let out = ''
+  let last = 0
+  for (const edit of edits) {
+    out += file.slice(last, seek(edit.from))
+    out += crlf ? edit.insert.replace(/\r?\n/g, '\r\n') : edit.insert
+    last = seek(edit.to)
+  }
+  return out + file.slice(last)
+}
+
 /** The edits that put a replacement back, in the coordinates of the note the
  *  replacement left behind. Undoing is then the same kind of change the
  *  replacement was, which is what keeps the carets in an open pane where their

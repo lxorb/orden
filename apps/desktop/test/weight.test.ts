@@ -964,8 +964,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-02, to 3,434,900, for #545: no change makes half a character
  *  (`wholeCharacters` in shared.ts), and a room's text is only cut between characters
- *  (`apply` in rooms/bind.ts). Measured 3,434,821. */
-const BUDGET = 3_434_900
+ *  (`apply` in rooms/bind.ts). Measured 3,434,821.
+ *
+ *  Raised 2026-11-02, to 3,438,700, for #613 and #614: a move sync makes waits for the
+ *  write in the air without waiting on what waits for the pass (`holdingWrites` in
+ *  saving.svelte.ts), and an agent hears a write the disk road left alone, its steps
+ *  kept and a file's other line endings with them. Measured 3,438,266. */
+const BUDGET = 3_438_700
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

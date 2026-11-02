@@ -19,6 +19,9 @@ const refused = new Set<string>()
  *  path with nothing here reads empty and has no stamp, so nothing is at it. */
 const disk = new Map<string, string>()
 
+/** Where the trash put a note back, by its id, where that is not the name it had. */
+const restores = new Map<string, string>()
+
 /** The folders a listing can be had of, by root, as the crate lists them. */
 const trees = new Map<string, unknown>()
 
@@ -39,6 +42,7 @@ vi.mock('../tauri', () => ({
     const named = path || id
     if (refused.has(named) || refused.has(`${command} ${named}`))
       return Promise.reject(new Error(`${named} will not budge`))
+    if (command === 'restore_trash') return Promise.resolve(restores.get(id) ?? '')
     if (command === 'read_note') return Promise.resolve(disk.get(path) ?? '')
     if (command === 'file_stamp') return Promise.resolve(disk.has(path) ? { modified: 0 } : '')
     return Promise.resolve('')
@@ -117,6 +121,7 @@ beforeEach(() => {
   told.length = 0
   refused.clear()
   disk.clear()
+  restores.clear()
 })
 
 describe('an entry that goes back', () => {
@@ -357,6 +362,22 @@ describe('doing it again', () => {
     expect(asked).toEqual(['move /s/a.md -> /s/Work'])
     expect(ws.undone.last?.kind).toBe('move')
     expect(ws.undone.ahead).toEqual([])
+  })
+
+  /** A note made at the deleted one's name since: the note put back stepped aside, and
+   *  that is the one to delete again, not the newer note at the old name. */
+  test('deletes the note where it stepped aside to, not the one at its old name', async () => {
+    disk.set('/s/old.md', 'newer words')
+    const written = again({ kind: 'delete', path: '/s/old.md', content: 'kept words' })
+    await undoLastFileAction(written.ws)
+    await redoLastFileAction(written.ws)
+    expect(written.asked).toEqual(['remove /s/old 2.md'])
+
+    const trashed = again({ kind: 'delete', path: '/s/old.md', content: '', trashId: 't-1' })
+    restores.set('t-1', '/s/old 2.md')
+    await undoLastFileAction(trashed.ws)
+    await redoLastFileAction(trashed.ws)
+    expect(trashed.asked).toEqual(['remove /s/old 2.md'])
   })
 
   test('renames to the name it had been given, and deletes what it had deleted', async () => {

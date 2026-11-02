@@ -87,6 +87,8 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
   let front: Pane | null = null
   /** The scratchpad's words, which a reader may write in between a read and a write. */
   const pad = { text: '', wrote: 0 }
+  /** The next write of a closed note refused, as a file changed in the air is. */
+  const refusing = { next: false }
 
   const opened = (path: string, caret = 0): Pane => {
     const at = `${SPACE.root}/${path}`
@@ -113,9 +115,13 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
       return Promise.resolve(disk.get(path) ?? null)
     },
     replaceInNotes: (changes, keeping) => {
+      if (refusing.next) {
+        refusing.next = false
+        return Promise.resolve(0)
+      }
       written.push({ changes, keeping })
       for (const change of changes) disk.set(change.path, change.after)
-      return Promise.resolve()
+      return Promise.resolve(changes.length)
     },
     frontView: (note) => (front?.note === note ? (front as unknown as EditorView) : null),
     linksOf: () => [],
@@ -142,6 +148,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
     written,
     kept,
     pad,
+    refusing,
     /** Opens a note that was closed, as a pane on a new document. */
     open: opened,
     /** A tab holding a note with no file, as a pane on it. */
