@@ -217,7 +217,7 @@ mod web_certificate;
 // on a Mac.
 #[cfg(desktop)]
 mod web_clear;
-#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+#[cfg(any(windows, target_os = "macos", feature = "cef"))]
 mod web_cookies;
 #[cfg(desktop)]
 mod web_cut;

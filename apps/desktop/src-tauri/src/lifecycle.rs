@@ -258,9 +258,9 @@ pub fn quit_now(app: &AppHandle) {
         // there is still only the one question, and a Cancel after it leaves nothing
         // but a login that lasts, which every page load does anyway. See
         // web_cookies.rs.
-        #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+        #[cfg(any(windows, target_os = "macos", feature = "cef"))]
         crate::web_cookies::kept(&window, ask);
-        #[cfg(not(all(any(windows, target_os = "macos"), not(feature = "cef"))))]
+        #[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
         ask();
     }
 }

@@ -34,7 +34,7 @@
 //! See `web_worlds.rs`.
 
 use std::collections::{HashMap, HashSet};
-use std::sync::Mutex;
+use std::sync::{Mutex, PoisonError};
 
 use serde::{Deserialize, Serialize};
 use tauri::webview::{NewWindowResponse, PageLoadEvent};
@@ -50,9 +50,37 @@ pub(crate) const LABEL: &str = "web-";
 
 /// Whether a webview is one of the web's own - a tab's page, or the page that holds
 /// the session open - rather than the app's.
-#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+#[cfg(any(windows, target_os = "macos", feature = "cef"))]
 pub(crate) fn is_page(label: &str) -> bool {
     label.starts_with(LABEL) || adopted_label(label)
+}
+
+/// The labels of the pages that are private right now, for what goes through every web
+/// tab of a window without having built them; see `web_cookies.rs`.
+static PRIVATE: Mutex<std::collections::BTreeSet<String>> =
+    Mutex::new(std::collections::BTreeSet::new());
+
+/// Says whether the page about to be built under `label` is private. A label is reused
+/// when a tab's page is built again, so this is said every time.
+fn mark_private(label: &str, private: bool) {
+    let mut marked = PRIVATE.lock().unwrap_or_else(PoisonError::into_inner);
+    if private {
+        marked.insert(label.to_string());
+    } else {
+        marked.remove(label);
+    }
+}
+
+/// Whether a web tab's page is a private one.
+#[cfg_attr(
+    not(any(windows, target_os = "macos", feature = "cef")),
+    allow(dead_code, reason = "only the engines whose cookies are given an expiry ask")
+)]
+pub(crate) fn is_private(label: &str) -> bool {
+    PRIVATE
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .contains(label)
 }
 
 /// Pages a tab took over rather than built, by the tab's id: an agent's page the reader
@@ -401,9 +429,9 @@ impl Trail {
 /// The app's builder with what web tabs keep in it: the trail of every tab, every page
 /// following its window as the window is resized (`web_follow.rs`), and - on
 /// the system's engine on Windows and on a Mac - a window that waits, as it closes, for
-/// its tabs' logins to be made to last; see `web_cookies.rs`.
+/// its tabs' logins to be made to last; see `web_cookies.rs`. Orden's own Chromium too.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
-    #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+    #[cfg(any(windows, target_os = "macos", feature = "cef"))]
     let builder = builder.on_window_event(crate::web_cookies::leaving);
     builder
         .on_window_event(crate::web_follow::heard)
@@ -1265,6 +1293,7 @@ pub async fn web_open(
     // under Orden's own engine. One call, so this file no longer knows which platform
     // or which engine it is. See src/engine.rs.
     // A private page is in memory and gone with the last of them; see `Profile`.
+    mark_private(&label_of(&tab), private);
     let builder = crate::engine::web_store(builder, &app, store.as_deref())?.incognito(private);
 
     let opening = app.clone();
@@ -1382,7 +1411,7 @@ fn reporting(
     private: bool,
 ) -> WebviewBuilder<crate::Engine> {
     // Only the engines whose cookies are given an expiry have anything to leave alone.
-    #[cfg(not(all(any(windows, target_os = "macos"), not(feature = "cef"))))]
+    #[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
     let _ = private;
     let moved = tab.to_string();
     let sending = app.clone();
@@ -1414,6 +1443,10 @@ fn reporting(
         #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
         if !private {
             let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
+        }
+        #[cfg(feature = "cef")]
+        if !private {
+            crate::web_cookies::keep(&view, || ());
         }
 
         // An engine that cannot say when the page's mark changes is asked for it once
@@ -3104,6 +3137,18 @@ mod tests {
 
     fn at(url: &str) -> Url {
         Url::parse(url).expect("an address")
+    }
+
+    /// A page is private for as long as it is built so: a label comes back when a tab's
+    /// page is built again, and the new page is what counts.
+    #[test]
+    fn a_page_is_private_as_it_was_last_built() {
+        let label = "web-private-test";
+        assert!(!super::is_private(label));
+        super::mark_private(label, true);
+        assert!(super::is_private(label));
+        super::mark_private(label, false);
+        assert!(!super::is_private(label));
     }
 
     /// A private page is in the store every space shares, whatever store was asked for,

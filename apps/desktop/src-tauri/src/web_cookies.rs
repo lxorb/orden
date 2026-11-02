@@ -35,8 +35,11 @@
 //! out; there a lasting cookie survives a restart and a session one does not, which
 //! docs/web-tabs.md says out loud.
 //!
-//! Orden's own Chromium, on Linux, does not need this: it is told to keep session cookies
-//! as it starts (`cef_runtime` in engine.rs).
+//! Orden's own Chromium, on Linux, takes the same road as Windows, through the same
+//! protocol. CEF has a setting of its own and it does not do: `persist_session_cookies`
+//! alone lost the cookie after a clean quit, and the preference that brings it back,
+//! `session.restore_on_startup`, is one `tauri-runtime-cef` pins because it reopens the
+//! last run's tabs in hidden windows nobody owns (`scripts/session-drive.py` measures it).
 //!
 //! On Windows the store is reached through the `DevTools` Protocol - every cookie out of
 //! `Network.getAllCookies`, each session one back through `Network.setCookie` - and not
@@ -48,7 +51,7 @@
 //! stays in its partition. `twins.rs` finds the copies the COM manager left, and each
 //! keep takes away any there are.
 
-#[cfg(windows)]
+#[cfg(any(windows, feature = "cef"))]
 use crate::web_state::cookies::Cookie;
 
 #[cfg(windows)]
@@ -107,6 +110,27 @@ pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'st
     });
 }
 
+/// The same promise on Orden's own Chromium, over the protocol the Windows one speaks: on
+/// a thread of its own, because a call waits for the window's thread (engine/devtools.rs).
+#[cfg(feature = "cef")]
+pub fn keep(view: &tauri::Webview, done: impl FnOnce() + Send + 'static) {
+    use serde_json::json;
+
+    use crate::engine::devtools::call;
+    use crate::web_state::cookies::{engine::cookies_in, now};
+
+    let view = view.clone();
+    std::thread::spawn(move || {
+        // Nothing to tell anybody where the store could not be read, as on Windows.
+        if let Ok(said) = call(&view, None, "Network.getAllCookies", &json!({}), PATIENCE) {
+            for (method, params) in asks(&cookies_in(&said), now()) {
+                let _ = call(&view, None, method, &params, PATIENCE);
+            }
+        }
+        done();
+    });
+}
+
 /// What keeping a store's logins asks the engine for, given every cookie in it: each
 /// twin an earlier Orden made taken away, then each session cookie written back as it is -
 /// its partition first of all - with an expiry four hundred days out.
@@ -114,16 +138,26 @@ pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'st
 /// One `setCookie` a cookie rather than one `setCookies` for them all, because the
 /// engine refuses a whole list over one cookie in it that it will not take, and one it
 /// will not take is no reason for every other login to end with the session.
-#[cfg(windows)]
+#[cfg(any(windows, feature = "cef"))]
 fn asks(all: &[Cookie], now: f64) -> Vec<(&'static str, serde_json::Value)> {
-    use crate::web_state::cookies::engine::{deleting, to_devtools};
+    use crate::web_state::cookies::engine::to_devtools;
 
-    let taken = twins::of(all).map(|twin| ("Network.deleteCookies", deleting(twin)));
     let kept = all
         .iter()
         .filter(|one| one.expires.is_none())
         .map(|one| ("Network.setCookie", to_devtools(one, now)));
-    taken.chain(kept).collect()
+
+    // No Orden on Chromium ever made a twin; see `twins.rs`.
+    #[cfg(windows)]
+    {
+        use crate::web_state::cookies::engine::deleting;
+        twins::of(all)
+            .map(|twin| ("Network.deleteCookies", deleting(twin)))
+            .chain(kept)
+            .collect()
+    }
+    #[cfg(not(windows))]
+    kept.collect()
 }
 
 /// Makes every session cookie in the data store this webview is on last, and says so
@@ -296,12 +330,14 @@ pub fn leaving(window: &tauri::Window, event: &tauri::WindowEvent) {
     });
 }
 
-/// The window's web tabs, which are the pages whose logins are worth keeping.
+/// The window's web tabs, which are the pages whose logins are worth keeping: never a
+/// private one's, since what it signed in to ends with it.
 fn pages(window: &tauri::Window) -> Vec<tauri::Webview> {
     window
         .webviews()
         .into_iter()
         .filter(|one| crate::web_tabs::is_page(one.label()))
+        .filter(|one| !crate::web_tabs::is_private(one.label()))
         .collect()
 }
 
@@ -337,15 +373,19 @@ pub fn kept(window: &tauri::Window, then: impl FnOnce() + Send + 'static) {
     let left = Arc::new(AtomicUsize::new(pages.len()));
     for page in pages {
         let (waiting, going) = (left.clone(), then.clone());
-        let asked = page.with_webview(move |platform| {
-            keep(&platform, move || {
-                if waiting.fetch_sub(1, Ordering::SeqCst) == 1 {
-                    go(&going);
-                }
-            });
-        });
-        if asked.is_err() && left.fetch_sub(1, Ordering::SeqCst) == 1 {
-            go(&then);
+        let answered = move || {
+            if waiting.fetch_sub(1, Ordering::SeqCst) == 1 {
+                go(&going);
+            }
+        };
+        #[cfg(feature = "cef")]
+        keep(&page, answered);
+        #[cfg(not(feature = "cef"))]
+        {
+            let asked = page.with_webview(move |platform| keep(&platform, answered));
+            if asked.is_err() && left.fetch_sub(1, Ordering::SeqCst) == 1 {
+                go(&then);
+            }
         }
     }
 
@@ -367,6 +407,48 @@ mod tests {
     fn a_session_cookie_is_kept_for_four_hundred_days_from_now() {
         assert!((KEPT_FOR - 34_560_000.0).abs() < f64::EPSILON);
         assert!(now() > 1_700_000_000.0, "the clock reads a real day");
+    }
+
+    /// On Chromium as on Windows: each session cookie written back to last, its partition
+    /// with it, and a lasting one left alone.
+    #[cfg(feature = "cef")]
+    #[test]
+    fn chromium_s_session_cookies_are_written_back_to_last() {
+        use crate::web_state::cookies::engine::cookies_in;
+        use serde_json::json;
+
+        let one = |name: &str, session: bool, partition: Option<&str>| {
+            let mut cookie = json!({
+                "name": name, "value": "v", "domain": "a.example", "path": "/",
+                "secure": true, "httpOnly": false, "session": session,
+                "expires": if session { -1.0 } else { 1_900_000_000.0 },
+            });
+            if let Some(site) = partition {
+                cookie["partitionKey"] =
+                    json!({ "topLevelSite": site, "hasCrossSiteAncestor": true });
+            }
+            cookie
+        };
+        let all = cookies_in(&json!({ "cookies": [
+            one("sid", true, None),
+            one("part", true, Some("https://news.example")),
+            one("pid", false, None),
+        ] }));
+        let asks = super::asks(&all, 1000.0);
+
+        assert_eq!(asks.len(), 2, "{asks:?}");
+        assert!(asks
+            .iter()
+            .all(|(method, _)| *method == "Network.setCookie"));
+        assert_eq!(asks[0].1["name"], "sid");
+        assert!(
+            (asks[0].1["expires"].as_f64().expect("an expiry") - (1000.0 + KEPT_FOR)).abs() < 1.0
+        );
+        assert_eq!(asks[1].1["name"], "part");
+        assert_eq!(
+            asks[1].1["partitionKey"]["topLevelSite"],
+            "https://news.example"
+        );
     }
 
     /// A widget's partitioned session cookie is written back in its partition, and no
