@@ -994,8 +994,19 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-02, to 3,468,000, for the open bug round's branches merged together on
  *  claude/bugs-2026-11: each raise above was measured without the others. Measured
- *  3,467,409. */
-const BUDGET = 3_468_000
+ *  3,467,409.
+ *
+ *  Raised 2026-11-02, to 3,433,300, for #523: the notices row is a region F6 walks to,
+ *  and a notice's words go through the one live region (`told` in said.svelte.ts)
+ *  rather than a `role="status"` card that arrives holding them. Measured 3,433,255.
+ *
+ *  Raised 2026-11-02, to 3,434,100, for #523: a sidebar opened from its toggle by a key
+ *  takes the keyboard into it (`enterSide` in focus.ts). Measured 3,434,078.
+ *
+ *  Raised 2026-11-03, to 3,469,300, for unstable's #523 fixes merged into
+ *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
+ *  and the fixes for one behaviour made one. Measured 3,469,195. */
+const BUDGET = 3_469_300
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

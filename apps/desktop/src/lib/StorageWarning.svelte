@@ -5,18 +5,25 @@
   import { settings } from './settings.svelte'
   import { readableSize, usage } from './usage.svelte'
   import { dur } from './motion'
+  import { told } from './said.svelte'
+
+  const words = $derived(
+    t('{used} of {limit} used.', {
+      used: readableSize(usage.used),
+      limit: readableSize(usage.limit),
+    }),
+  )
 </script>
 
 <!-- At the start of the notices row, with the update notice at its end; see
      `.notices` in App.svelte. -->
 {#if usage.warning}
-  <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
-    <p>
-      {t('{used} of {limit} used.', {
-        used: readableSize(usage.used),
-        limit: readableSize(usage.limit),
-      })}
-    </p>
+  <div
+    class="toast"
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    {@attach told(words)}
+  >
+    <p>{words}</p>
 
     <div class="actions">
       <button class="quiet" onclick={() => (usage.dismissed = true)}>{t('Dismiss')}</button>
