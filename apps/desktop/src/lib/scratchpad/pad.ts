@@ -22,11 +22,17 @@
 import type { EditorView } from '@orden/editor'
 import { onDisk } from '../on-disk'
 import { applied, type Edit } from '../search/replace'
+import { forget, keep, storedText } from '../stored'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { shown } from './is.svelte'
 import { difference, joined } from './words'
+
+/** The words the card is writing, until the file has them. A write begun as the page goes
+ *  may never land - a browser does not wait for it, and WebKit lost it now and then - and
+ *  this is in no session to be written by the next launch, as a note's words are (#446). */
+const WRITING = 'nib:scratchpad-writing'
 
 class Scratchpad {
   private asked: Promise<string> | null = null
@@ -35,14 +41,27 @@ class Scratchpad {
   /** The line a search hit asked the card to land on; the card takes it. */
   line: number | null = null
 
-  /** Where it is, made the first time. One question per run; a failed one is asked
-   *  again next time. */
+  /** Where it is, made the first time, with what the last run did not get written down
+   *  written first. One question per run; a failed one is asked again next time. */
   where(): Promise<string> {
-    this.asked ??= invoke<string>('scratchpad_path').catch((error: unknown) => {
-      this.asked = null
-      throw error
-    })
+    this.asked ??= invoke<string>('scratchpad_path')
+      .then(async (path) => {
+        const owed = storedText(WRITING)
+        if (owed !== null) await writeFile(path, owed).then(() => forget(WRITING))
+        return path
+      })
+      .catch((error: unknown) => {
+        this.asked = null
+        throw error
+      })
     return this.asked
+  }
+
+  /** The card's words to the file, held until they are there. */
+  async writeDown(path: string, words: string): Promise<void> {
+    keep(WRITING, words)
+    await writeFile(path, words)
+    if (storedText(WRITING) === words) forget(WRITING)
   }
 
   /** The card up, with the keyboard in it unless asked not to, at a line when one is
