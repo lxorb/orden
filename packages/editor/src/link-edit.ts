@@ -1,6 +1,7 @@
+import { isolateHistory } from '@codemirror/commands'
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
-import type { SyntaxNode } from '@lezer/common'
+import type { SyntaxNode, Tree } from '@lezer/common'
 import { enclosingNamed } from './nodes'
 
 /** A link changed from its own menu: pointed somewhere else, or taken away with its
@@ -17,9 +18,10 @@ export interface LinkParts {
   to: number
   /** The address or the note, as written: what editing the link selects. */
   target: { from: number; to: number }
-  /** A label no definition answers, brackets and all, or the empty spot where one is
-   *  left out: what editing swaps for `(label)`, so that the address typed is a link. */
-  unwritten?: { from: number; to: number }
+  /** Set on a link that points by a label: `[words][label]`, `[words][]`, `[words]`. What
+   *  the label says, and where a `(address)` would go in its place. What it means is
+   *  asked only when the link is edited, since that takes the whole note parsed. */
+  label?: { text: string; written: { from: number; to: number } }
   /** The words a reader sees, or null where taking the link away would leave the same
    *  link behind: an address written out is a link by being one. */
   words: string | null
@@ -58,46 +60,71 @@ function wikilinkParts(state: EditorState, node: SyntaxNode): LinkParts | null {
   }
 }
 
-/** Labels match the way a reader matches them: case and runs of blanks do not count. */
-const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase()
+/** Labels match the way CommonMark says: a case fold, which is what the round trip through
+ *  upper case is for (`ß` and `SS`), and blanks in a run count as one. Wider than what
+ *  `marked` matches, so a label any reader takes as defined is never taken as undefined. */
+const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase().toUpperCase()
+
+/** How long a parse of the whole note may take when Edit link was chosen: as long as it
+ *  takes. Saying a label has no definition is what rewrites the link, so it cannot be said
+ *  from part of a note, and the background parse has usually finished by now anyway. */
+const WHOLE_NOTE = 1e9
 
 /** The address the first definition of a label holds, wherever in the note it is. */
-function definedAddress(state: EditorState, label: string): SyntaxNode | null {
+function definedAddress(state: EditorState, tree: Tree, label: string): SyntaxNode | null {
   const key = labelKey(label)
-  // Asked of the whole note: a definition usually sits at the end of it, past what has
-  // been parsed for the screen, and missing it would read as a label nothing defines.
-  const tree = ensureSyntaxTree(state, state.doc.length, 200) ?? syntaxTree(state)
-  let found: SyntaxNode | null = null
+  let first: SyntaxNode | null = null
   tree.iterate({
     enter(ref) {
-      if (found) return false
+      if (first) return false
       if (ref.name !== 'LinkReference') return ref.name !== 'Paragraph'
       const written = ref.node.getChild('LinkLabel')
       if (written && labelKey(state.doc.sliceString(written.from + 1, written.to - 1)) === key)
-        found = ref.node.getChild('URL')
+        first = ref.node
       return false
     },
   })
-  return found
+  return (first as SyntaxNode | null)?.getChild('URL') ?? null
 }
 
-/** Where `[words][label]`, `[words][]` and `[words]` point: the address their definition
- *  holds, since typing over the label would only break the link. With no definition
- *  there is no address yet, so the label has to make way for one. */
-function labelTarget(
+/** A label's text as an address a link can hold: bare where it can be, in `<>` where it
+ *  cannot, and never with what `<>` cannot hold. */
+function addressOf(label: string): string {
+  const text = label.trim().replace(/\s+/g, ' ')
+  if (/^[^\s<>()\\]*$/.test(text)) return text
+  return `<${text.replace(/</g, '%3C').replace(/>/g, '%3E')}>`
+}
+
+/** Swaps a label nothing defines for an address, selected so the next thing typed replaces
+ *  it, and still a link if nothing is. Its own undo step whatever comes before or after:
+ *  the address typed next is a second one, which takes the link back to this. */
+function writeAddress(state: EditorState, label: string, written: { from: number; to: number }) {
+  const address = addressOf(label)
+  const at = written.from + 1
+  return state.update({
+    changes: { ...written, insert: `(${address})` },
+    selection: EditorSelection.range(at, at + address.length),
+    scrollIntoView: true,
+    userEvent: 'input.link',
+    annotations: isolateHistory.of('full'),
+  })
+}
+
+/** Where `[words][label]`, `[words][]` and `[words]` say what they point by. */
+function labelParts(
   state: EditorState,
   node: SyntaxNode,
   words: { from: number; to: number },
-): Pick<LinkParts, 'target' | 'unwritten'> {
+): Pick<LinkParts, 'target' | 'label'> {
   const written = node.getChild('LinkLabel')
   const inner = written && { from: written.from + 1, to: written.to - 1 }
-  const label = inner && inner.to > inner.from ? inner : words
-
-  const address = definedAddress(state, state.doc.sliceString(label.from, label.to))
-  if (address) return { target: { from: address.from, to: address.to } }
+  const said = inner && inner.to > inner.from ? inner : words
   return {
     target: inner ?? { from: node.to, to: node.to },
-    unwritten: written ? { from: written.from, to: written.to } : { from: node.to, to: node.to },
+    label: {
+      text: state.doc.sliceString(said.from, said.to),
+      written: written ? { from: written.from, to: written.to } : { from: node.to, to: node.to },
+    },
   }
 }
 
@@ -123,7 +150,7 @@ function markdownParts(state: EditorState, node: SyntaxNode): LinkParts {
   }
   return pointer || empty || !open || !close
     ? parts
-    : { ...parts, ...labelTarget(state, node, { from: open.to, to: close.from }) }
+    : { ...parts, ...labelParts(state, node, { from: open.to, to: close.from }) }
 }
 
 /** The link at a position, of whichever spelling, or null where there is none. */
@@ -135,29 +162,31 @@ export function linkPartsAt(state: EditorState, pos: number): LinkParts | null {
 }
 
 /** Selects where the link at `pos` points, which in the live preview is also what
- *  shows its markup: the next thing typed is the new address. */
+ *  shows its markup: the next thing typed is the new address. For a link by a label that
+ *  is the address its definition holds, since typing over the label would only break the
+ *  link; a label nothing defines has none yet, and makes way for one. */
 export function editLink(pos: number): StateCommand {
   return ({ state, dispatch }) => {
     const parts = state.readOnly ? null : linkPartsAt(state, pos)
     if (!parts) return false
 
-    if (parts.unwritten) {
-      const label = state.doc.sliceString(parts.target.from, parts.target.to)
-      const at = parts.unwritten.from + 1
-      dispatch(
-        state.update({
-          changes: { ...parts.unwritten, insert: `(${label})` },
-          selection: EditorSelection.range(at, at + label.length),
-          scrollIntoView: true,
-          userEvent: 'input',
-        }),
-      )
-      return true
+    let target = parts.target
+    if (parts.label) {
+      const tree = ensureSyntaxTree(state, state.doc.length, WHOLE_NOTE)
+      if (!tree) return false
+      const address = definedAddress(state, tree, parts.label.text)
+      if (!address) {
+        dispatch(
+          writeAddress(state, state.doc.sliceString(target.from, target.to), parts.label.written),
+        )
+        return true
+      }
+      target = address
     }
 
     dispatch(
       state.update({
-        selection: EditorSelection.range(parts.target.from, parts.target.to),
+        selection: EditorSelection.range(target.from, target.to),
         scrollIntoView: true,
         userEvent: 'select',
       }),

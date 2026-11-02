@@ -187,7 +187,7 @@ describe('a label left behind by an edit nobody finished', () => {
 
   test.each([
     ['[words][ref]', '[words](ref)', 'ref'],
-    ['[words][Some  words]', '[words](<Some  words>)', '<Some  words>'],
+    ['[words][Some  words]', '[words](<Some words>)', '<Some words>'],
     ['[words][a(b]', '[words](<a(b>)', '<a(b>'],
     ['[words][a<b]', '[words](<a%3Cb>)', '<a%3Cb>'],
     ['[words][a\\]b]', '[words](<a\\]b>)', '<a\\]b>'],
