@@ -253,9 +253,7 @@ impl Requests {
 fn authorization(centre: &UNUserNotificationCenter) -> Option<UNAuthorizationStatus> {
     let (said, heard) = mpsc::channel();
     let answer = RcBlock::new(move |settings: std::ptr::NonNull<UNNotificationSettings>| {
-        // SAFETY of the read: the system hands live settings for the call's length.
-        let status = unsafe { settings.as_ref() }.authorizationStatus();
-        let _ = said.send(status);
+        let _ = said.send(status_of(settings));
     });
     centre.getNotificationSettingsWithCompletionHandler(&answer);
     heard.recv_timeout(PATIENCE).ok()
@@ -320,6 +318,17 @@ impl System for Requests {
             .removePendingNotificationRequestsWithIdentifiers(&ids);
         Ok(())
     }
+}
+
+/// The status in the settings the centre handed over.
+#[allow(
+    unsafe_code,
+    reason = "the centre hands its answer over as a bare pointer for the length of the call"
+)]
+fn status_of(settings: std::ptr::NonNull<UNNotificationSettings>) -> UNAuthorizationStatus {
+    // SAFETY: the pointer is the settings the notification centre passes its completion
+    // handler, alive for the whole of the call this runs inside.
+    unsafe { settings.as_ref() }.authorizationStatus()
 }
 
 /// The identifiers of the requests the centre handed over.
