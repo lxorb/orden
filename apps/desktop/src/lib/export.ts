@@ -199,6 +199,14 @@ export async function inlineImages(
   const sources = localSources(html)
   if (!sources.length) return html
 
+  return swapSources(html, await assetsOf(sources, resolve))
+}
+
+/** The bytes behind each address as a `data:` URI, for those that could be read. */
+export async function assetsOf(
+  sources: readonly string[],
+  resolve: (src: string) => string,
+): Promise<Map<string, string>> {
   const inlined = new Map<string, string>()
 
   await Promise.all(
@@ -208,7 +216,7 @@ export async function inlineImages(
     }),
   )
 
-  return swapSources(html, inlined)
+  return inlined
 }
 
 /** The whole document, ready to write: fences drawn, pictures inside it.
