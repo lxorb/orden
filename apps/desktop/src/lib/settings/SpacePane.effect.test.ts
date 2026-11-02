@@ -230,6 +230,7 @@ describe('Settings > Space', () => {
 
   test('the file made tells the listing of the space it is in, not the one now asked for', async () => {
     const { workspace } = await import('../workspace.svelte')
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- a mock, only ever read
     const reads = vi.mocked(workspace.loadTree)
     reads.mockClear()
     const box = await shown()
