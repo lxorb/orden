@@ -20,8 +20,16 @@ vi.mock('../export/save', () => ({
   download: (_name: string, payload: { text: string }) => world.saved.push(payload.text),
 }))
 
+vi.mock('../tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../tauri')>()),
+  invoke: (command: string, args?: { path?: string }) =>
+    command === 'read_asset'
+      ? Promise.resolve(`data:image/png;base64,${args?.path ?? ''}`)
+      : Promise.resolve(null),
+}))
+
 const { readCanvas } = await import('./format')
-const { canvasSvg, exportCanvasSvg } = await import('./picture')
+const { canvasSvg, exportCanvasSvg, inlinedSvg } = await import('./picture')
 
 const HOSTILE = '<img src=x onerror="alert(1)">'
 
@@ -76,5 +84,39 @@ describe('a picture of somebody else’s plane', () => {
 
     expect(world.saved).toHaveLength(1)
     expect(world.saved[0]).not.toMatch(/<im(g|age) [^>]*onerror/)
+  })
+})
+
+describe('a picture with its pictures inlined', () => {
+  const inFoo = (body: string) => `<foreignObject><div>${body}</div></foreignObject>`
+
+  test('keeps a card’s picture an `img`, inlined, which is the tag XHTML shows', async () => {
+    const svg = await inlinedSvg(`<svg>${inFoo('<img src="p.png" alt="p" />')}</svg>`)
+    expect(svg).toContain('<img src="data:image/png;base64,p.png" alt="p" />')
+    expect(svg).not.toContain('<image')
+  })
+
+  test('leaves the words `src="q"` in a card’s code as they are', async () => {
+    const words = '<code>src="q" and href="r"</code>'
+    expect(await inlinedSvg(`<svg>${inFoo(words)}</svg>`)).toContain(words)
+  })
+
+  test('inlines a picture on the plane where it sits, as an `image` with an `href`', async () => {
+    const svg = await inlinedSvg(`<svg><image x="1" href="a.png"/></svg>`)
+    expect(svg).toBe(`<svg><image x="1" href="data:image/png;base64,a.png"/></svg>`)
+  })
+
+  test('both in one drawing, and a link in a card keeps its `href`', async () => {
+    const svg = await inlinedSvg(
+      `<svg><image href="a.png"/>${inFoo('<a href="b.md">b</a><img src="c.png"/>')}</svg>`,
+    )
+    expect(svg).toContain('<image href="data:image/png;base64,a.png"/>')
+    expect(svg).toContain('<a href="b.md">b</a>')
+    expect(svg).toContain('<img src="data:image/png;base64,c.png"/>')
+  })
+
+  test('leaves alone a picture that is already an address on the network', async () => {
+    const svg = `<svg><image href="https://x.test/a.png"/></svg>`
+    expect(await inlinedSvg(svg)).toBe(svg)
   })
 })

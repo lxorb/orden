@@ -61,6 +61,17 @@ function room(): Shared & { pushed: Canvas[]; undone: number } {
 
 const ids = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
 
+describe('a plane arriving from a room', () => {
+  test('says nothing about the icon, so the file keeps it and its colour', () => {
+    const { store } = opened(
+      JSON.stringify({ nodes: [], edges: [], nib: { icon: 'star', iconColor: 'red' } }),
+    )
+    store.arrived({ ...blank(), nodes: [card('a')] })
+    expect(store.canvas.icon).toBe('star')
+    expect(store.canvas.iconColor).toBe('red')
+  })
+})
+
 describe('a plane in a space somebody shared to read', () => {
   test('takes no edit at all', () => {
     const { store, note } = opened()
