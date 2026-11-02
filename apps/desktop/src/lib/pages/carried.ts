@@ -79,14 +79,35 @@ const ASK_AGAIN = 60_000
  *  pages drawn on blank sheets. Each note is looked at once a session, not once a pass. */
 const settled = new Set<string>()
 
-/** Papers the account refused for what they are, by note id: the stamp the file had. */
-const refused = new Map<string, string | null>()
+/** Papers the account refused for what they are, by note id: the stamp the file had. A
+ *  file nothing can stamp is not here, and waits as any failure does: with nothing to say
+ *  it changed, it would wait for good. */
+const refused = new Map<string, string>()
 
 /** Page notes whose carrying failed in a way that may pass, by note id: how many times
  *  in a row, when the next try is, and whether the log has said so. */
 const failing = new Map<string, { tries: number; until: number; said: boolean }>()
 
-/** What the account says of the bytes themselves, which saying again changes nothing
+function failingOf(id: string) {
+  const one = failing.get(id) ?? { tries: 0, until: 0, said: false }
+  failing.set(id, one)
+  return one
+}
+
+/** Said once a run of failures. */
+function sayOnce(note: Carried, failed: string, how: Carrying) {
+  const one = failingOf(note.id)
+  if (one.said) return
+  one.said = true
+  how.said(note, failed)
+}
+
+/** Until when nothing is tried at all: a session the account no longer takes is the same
+ *  answer for every note, each otherwise a whole PDF read and hashed to hear it. Ended by
+ *  the next sign-in (`forgetLacking`). */
+let notSignedInUntil = 0
+
+/** What the blob store says of the bytes themselves, which saying again changes nothing
  *  about: too big, not a kind it keeps, not what it was told. A full account (507), a
  *  role (403), a note not there (404) and a rate (429) can change with the file as it is,
  *  so they are not among them. */
@@ -103,19 +124,22 @@ export function paperRetryDelay(tries: number): number {
  *  tried again later; the rest still go. */
 export async function carryPapers(notes: readonly Carried[], how: Carrying): Promise<void> {
   for (const note of notes) {
+    if (Date.now() < notSignedInUntil) return
     if (Date.now() < (failing.get(note.id)?.until ?? 0)) continue
     try {
       await carryOne(note, how)
       failing.delete(note.id)
     } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        notSignedInUntil = Date.now() + paperRetryDelay(1)
+        return
+      }
       // Out of reach, or refused for now: tried again later.
-      const one = failing.get(note.id) ?? { tries: 0, until: 0, said: false }
+      const one = failingOf(note.id)
       one.tries += 1
       one.until = Date.now() + paperRetryDelay(one.tries)
-      failing.set(note.id, one)
-      if (error instanceof ApiError && error.status === 507 && !one.said) {
-        one.said = true
-        how.said(note, `no room on the account for ${nameOf(paperOf(note.path))}`)
+      if (error instanceof ApiError && error.status === 507) {
+        sayOnce(note, `no room on the account for ${nameOf(paperOf(note.path))}`, how)
       }
     }
   }
@@ -129,19 +153,26 @@ async function carryOne(note: Carried, how: Carrying): Promise<void> {
   if (await how.exists(paper)) {
     if (!how.carried.has(note.id) && note.writes) {
       const stamp = await how.stamp(paper)
-      if (refused.has(note.id) && refused.get(note.id) === stamp) return
+      if (refused.get(note.id) === stamp) return
       const bytes = await how.read(paper)
       if (!bytes?.byteLength) return
       const hash = await how.hash(bytes)
       try {
         await how.up(hash, bytes)
-        await how.hold(note.id, hash)
       } catch (error) {
         if (!(error instanceof ApiError && REFUSALS.has(error.status))) throw error
+        const failed = `the account would not take ${nameOf(paper)}`
+        if (stamp === null) {
+          sayOnce(note, failed, how)
+          throw error
+        }
         refused.set(note.id, stamp)
-        how.said(note, `the account would not take ${nameOf(paper)}`)
+        how.said(note, failed)
         return
       }
+      // Apart from the bytes: what this answers is about the note, which a push behind the
+      // carrying can change (`only a page note holds a paper`).
+      await how.hold(note.id, hash)
       refused.delete(note.id)
       how.carried.set(note.id, hash)
       how.kept()
@@ -213,10 +244,12 @@ export async function paperFor(
 }
 
 /** Forgets what the account was found not to have: a paper may have been carried up
- *  from another device since. For the tests, and for a fresh sign-in. */
+ *  from another device since. And what the session before refused or failed at. For the
+ *  tests, and for a fresh sign-in (`carryNow`). */
 export function forgetLacking(): void {
   lacking.clear()
   settled.clear()
   refused.clear()
   failing.clear()
+  notSignedInUntil = 0
 }

@@ -5,10 +5,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
  *  minutes later. */
 
 const world = vi.hoisted(() => ({
-  account: { token: 'first', user: { id: 'u1' } } as {
-    token: string | null
-    user: { id: string } | null
-  },
+  account: { token: 'first', user: { id: 'u1' } },
   puts: 0,
   answer: (): Promise<unknown> => Promise.resolve({}),
 }))

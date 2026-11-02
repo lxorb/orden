@@ -12,7 +12,7 @@ import { invoke, isNative, joinPath } from '../tauri'
 import { isPagesTarget } from '@orden/markdown/links'
 import type { Mirror } from '../sync/mirror'
 import { workspace } from '../workspace.svelte'
-import { type Carried, type Carrying, carryPapers, paperFor } from './carried'
+import { type Carried, type Carrying, carryPapers, forgetLacking, paperFor } from './carried'
 
 /** The least time between two carryings. Each page note is looked at once a session
  *  (carried.ts), so a carrying after the first costs a walk of the list; this only
@@ -23,6 +23,8 @@ const KEY = 'nib:papers-carried:'
 
 let carrying: Promise<void> | null = null
 let lastAt = 0
+/** The session the last carrying ran under; a new one starts over. */
+let lastToken: string | null = null
 
 /** What has been carried, by the account signed in now. */
 let record: { whose: string; carried: Map<string, string> } | null = null
@@ -106,6 +108,8 @@ export function carryNow(notes: () => Carried[], said: Carrying['said']): Promis
   if (!token || !whose || carrying || Date.now() - lastAt < EVERY) return Promise.resolve()
 
   lastAt = Date.now()
+  if (token !== lastToken) forgetLacking()
+  lastToken = token
   carrying = carryPapers(notes(), how(token, whose, said)).finally(() => (carrying = null))
   return carrying
 }

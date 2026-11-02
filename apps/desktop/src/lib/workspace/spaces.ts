@@ -27,6 +27,7 @@ export interface HoldsSpaces {
   panel: Panel | null
   readonly notes: Entry[]
   readonly tabs: Tab[]
+  setsRead: unknown
   fileMoved(from: string, to: string, kind: 'space'): Promise<void>
   fileGone(path: string, kind: 'space'): Promise<void>
   /** One file operation on everything open under a folder; see `holdingUnder` in
