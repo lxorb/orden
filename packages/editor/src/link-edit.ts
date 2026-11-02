@@ -1,4 +1,4 @@
-import { syntaxTree } from '@codemirror/language'
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { enclosingNamed } from './nodes'
@@ -7,9 +7,9 @@ import { enclosingNamed } from './nodes'
  *  words kept. What Chrome's editors, Obsidian, Notion and Typora all offer on a right
  *  click, and all of it a change to the text, so the undo takes it back as one step.
  *
- *  Every spelling of a link a note holds: `[words](address)`, `<address>`, an address
- *  written out, and `[[Note|words]]`. A picture is not one of them - its menu is its
- *  own - and neither is `![[embed]]`, which is a thing shown rather than a link. */
+ *  Every spelling of a link a note holds: `[words](address)`, `[words][ref]` and its
+ *  short forms, `<address>`, an address written out, and `[[Note|words]]`. A picture
+ *  is not one of them - its menu is its own - and neither is `![[embed]]`, which is a thing shown rather than a link. */
 
 /** Where a link is, where it points, and what is left of it without the link. */
 export interface LinkParts {
@@ -17,6 +17,9 @@ export interface LinkParts {
   to: number
   /** The address or the note, as written: what editing the link selects. */
   target: { from: number; to: number }
+  /** Written over `target` before editing, for a reference no definition answers:
+   *  the link then points nowhere yet, and the address is typed between its brackets. */
+  fill?: '()'
   /** The words a reader sees, or null where taking the link away would leave the same
    *  link behind: an address written out is a link by being one. */
   words: string | null
@@ -55,26 +58,60 @@ function wikilinkParts(state: EditorState, node: SyntaxNode): LinkParts | null {
   }
 }
 
+/** A reference's label the way CommonMark matches it to a definition. */
+const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase()
+
+/** The address the first definition of `label` gives, without its `<` `>`. Read off
+ *  the whole note, since definitions are mostly written at its end. */
+function definedAddress(state: EditorState, label: string): { from: number; to: number } | null {
+  const key = labelKey(label)
+  let found: { from: number; to: number } | null = null
+  const tree = ensureSyntaxTree(state, state.doc.length, 100) ?? syntaxTree(state)
+  tree.iterate({
+    enter: (node) => {
+      if (found) return false
+      if (node.name !== 'LinkReference') return true
+      const name = node.node.getChild('LinkLabel')
+      const url = node.node.getChild('URL')
+      if (name && url && labelKey(state.doc.sliceString(name.from + 1, name.to - 1)) === key) {
+        const angled = state.doc.sliceString(url.from, url.from + 1) === '<'
+        found = angled ? { from: url.from + 1, to: url.to - 1 } : { from: url.from, to: url.to }
+      }
+      return false
+    },
+  })
+  return found
+}
+
 function markdownParts(state: EditorState, node: SyntaxNode): LinkParts {
   const marks = node.getChildren('LinkMark')
-  // An address written out is its own pointer.
-  const pointer = node.name === 'URL' ? node : (node.getChild('URL') ?? node.getChild('LinkLabel'))
-  // `[words]()` points nowhere yet, and editing it is typing between the brackets.
-  const empty = marks[3] ? { from: marks[2]?.to ?? node.to, to: marks[3].from } : null
-  const target = pointer
-    ? { from: pointer.from, to: pointer.to }
-    : (empty ?? { from: node.to, to: node.to })
-
-  if (node.name !== 'Link') return { from: node.from, to: node.to, target, words: null }
-
-  const open = marks[0]
-  const close = marks[1]
-  return {
+  const words =
+    node.name === 'Link' && marks[0] && marks[1]
+      ? state.doc.sliceString(marks[0].to, marks[1].from)
+      : null
+  const parts = (target: LinkParts['target'], fill?: '()'): LinkParts => ({
     from: node.from,
     to: node.to,
     target,
-    words: open && close ? state.doc.sliceString(open.to, close.from) : null,
-  }
+    words,
+    ...(fill ? { fill } : {}),
+  })
+
+  // An address written out is its own pointer.
+  const url = node.name === 'URL' ? node : node.getChild('URL')
+  if (url) return parts({ from: url.from, to: url.to })
+  // `[words]()` points nowhere yet, and editing it is typing between the brackets.
+  if (marks[3]) return parts({ from: marks[2]?.to ?? node.to, to: marks[3].from })
+  if (node.name !== 'Link') return parts({ from: node.to, to: node.to })
+
+  // `[words][ref]`, `[words][]` and `[words]` point where the definition of their
+  // label, or of their words, says: that address is what editing them changes, for
+  // every link that shares it. Without one they point nowhere yet, and become the
+  // `[words]()` above, the label they named making way for the brackets.
+  const label = node.getChild('LinkLabel')
+  const named = label ? state.doc.sliceString(label.from + 1, label.to - 1) : ''
+  const address = definedAddress(state, named.trim() ? named : (words ?? ''))
+  return address ? parts(address) : parts({ from: label?.from ?? node.to, to: node.to }, '()')
 }
 
 /** The link at a position, of whichever spelling, or null where there is none. */
@@ -92,12 +129,22 @@ export function editLink(pos: number): StateCommand {
     const parts = state.readOnly ? null : linkPartsAt(state, pos)
     if (!parts) return false
 
+    const { target, fill } = parts
     dispatch(
-      state.update({
-        selection: EditorSelection.range(parts.target.from, parts.target.to),
-        scrollIntoView: true,
-        userEvent: 'select',
-      }),
+      state.update(
+        fill
+          ? {
+              changes: { from: target.from, to: target.to, insert: fill },
+              selection: EditorSelection.cursor(target.from + 1),
+              scrollIntoView: true,
+              userEvent: 'input',
+            }
+          : {
+              selection: EditorSelection.range(target.from, target.to),
+              scrollIntoView: true,
+              userEvent: 'select',
+            },
+      ),
     )
     return true
   }

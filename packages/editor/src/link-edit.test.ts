@@ -38,7 +38,7 @@ describe('the link a press landed on', () => {
     ['see www.x.dev now', 'x.dev', 'www.x.dev', null],
     ['see [[Plan#Today|the plan]] now', 'plan', 'Plan#Today', 'the plan'],
     ['see [[Plan]] now', 'Plan', 'Plan', 'Plan'],
-    ['see [words][ref] now\n\n[ref]: https://r.dev', 'words', '[ref]', 'words'],
+    ['see [words][ref] now\n\n[ref]: https://r.dev', 'words', 'https://r.dev', 'words'],
     ['see [words]() now', 'words', '', 'words'],
   ])('%s', (doc, at, target, words) => {
     const parts = linkPartsAt(state(doc), inside(doc, at))
@@ -69,6 +69,32 @@ describe('editing it', () => {
     const doc = 'see [[Plan|the plan]] now'
     expect(after(doc, editLink(inside(doc, 'the plan'))).selected).toBe('Plan')
   })
+})
+
+describe('editing a reference to a definition', () => {
+  test.each([
+    ['see [words][ref] now\n\n[ref]: https://r.dev "t"', 'https://r.dev'],
+    ['see [words][] now\n\n[Words]: <https://w.dev>', 'https://w.dev'],
+    ['see [Some  words] now\n\n> [some words]: https://s.dev', 'https://s.dev'],
+    ['see [words][ref] now\n\n[ref]: https://one.dev\n[ref]: https://two.dev', 'https://one.dev'],
+  ])('selects the address it is defined with: %s', (doc, address) => {
+    expect(after(doc, editLink(inside(doc, 'words')))).toEqual({
+      ran: true,
+      doc,
+      selected: address,
+    })
+  })
+
+  test.each(['see [words][ref] now', 'see [words][] now', 'see [words] now'])(
+    'with no definition, points nowhere yet and is typed between the brackets: %s',
+    (doc) => {
+      let current = state(doc)
+      editLink(inside(doc, 'words'))({ state: current, dispatch: (tr) => (current = tr.state) })
+      expect(current.doc.toString()).toBe('see [words]() now')
+      expect(current.selection.main.empty).toBe(true)
+      expect(current.selection.main.head).toBe('see [words]('.length)
+    },
+  )
 })
 
 describe('taking it away', () => {
