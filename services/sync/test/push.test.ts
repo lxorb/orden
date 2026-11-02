@@ -5,7 +5,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
 import { base64url, fromBase64url } from '../src/push/keys'
-import { remindersIn, sendDue } from '../src/push/reminders'
+import { remindersIn, sendDue, TRIED_FOR } from '../src/push/reminders'
 import { forgetAccess } from '../src/push/fcm'
 import { encrypted } from '../src/push/webpush'
 import { call, signIn, testEnv, type TestEnv } from './harness'
@@ -363,6 +363,93 @@ describe('sending', () => {
     expect(await sendDue(env, AT, none.send)).toBe(0)
     expect(none.asked).toEqual([])
     expect(env.db.prepare('select kind from push_targets').all()).toEqual([{ kind: 'apns' }])
+  })
+
+  describe('a push no service took', () => {
+    const OK = () => Response.json({ name: 'projects/nib-test/messages/1' })
+    const DOWN = () => new Response('down', { status: 503 })
+    const TOKEN = () => Response.json({ access_token: 'access', expires_in: 3600 })
+
+    test('is tried again the next minute, and rings once', async () => {
+      env.FCM_SERVICE_ACCOUNT = await serviceAccount()
+      await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+      await save('Plan.md', TASK)
+
+      const down = recorded(TOKEN, DOWN)
+      expect(await sendDue(env, AT, down.send)).toBe(0)
+      expect(kept()).toMatchObject([{ sent_at: null }])
+
+      const back = recorded(OK)
+      expect(await sendDue(env, AT + 60_000, back.send)).toBe(1)
+      expect(back.asked).toHaveLength(1)
+      expect(kept()).toMatchObject([{ sent_at: AT + 60_000 }])
+
+      const after = recorded()
+      expect(await sendDue(env, AT + 120_000, after.send)).toBe(0)
+      expect(after.asked).toEqual([])
+    })
+
+    test('is not tried again where another device of the account took it', async () => {
+      env.FCM_SERVICE_ACCOUNT = await serviceAccount()
+      await register({ kind: 'fcm', token: 'one-phone', zone: ZONE })
+      await register({ kind: 'fcm', token: 'other-phone', zone: ZONE })
+      await save('Plan.md', TASK)
+
+      const half = recorded(TOKEN, OK, DOWN)
+      expect(await sendDue(env, AT, half.send)).toBe(1)
+
+      const after = recorded()
+      expect(await sendDue(env, AT + 60_000, after.send)).toBe(0)
+      expect(after.asked).toEqual([])
+    })
+
+    test('stops being tried once the reminder is too late to be worth ringing', async () => {
+      env.FCM_SERVICE_ACCOUNT = await serviceAccount()
+      await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+      await save('Plan.md', TASK)
+
+      const last = AT + TRIED_FOR
+      expect(await sendDue(env, last - 1, recorded(TOKEN, DOWN).send)).toBe(0)
+      expect(kept()).toMatchObject([{ sent_at: null }])
+      expect(await sendDue(env, last, recorded(DOWN).send)).toBe(0)
+
+      const after = recorded()
+      expect(await sendDue(env, last + 60_000, after.send)).toBe(0)
+      expect(after.asked).toEqual([])
+    })
+
+    test('is not tried again where a service has no keys', async () => {
+      await register({ kind: 'apns', token: 'iphone-token', zone: ZONE })
+      await save('Plan.md', TASK)
+      expect(await sendDue(env, AT, recorded().send)).toBe(0)
+      expect(kept()[0]?.sent_at).toBe(AT)
+    })
+
+    test('holds up no reminder whose minute has just come', async () => {
+      env.FCM_SERVICE_ACCOUNT = await serviceAccount()
+      await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+      await save('Plan.md', TASK)
+      const row = env.db
+        .prepare('select note_id, user_id, space_id from push_reminders')
+        .get() as Record<string, string>
+      const insert = env.db.prepare(
+        `insert into push_reminders
+           (note_id, id, user_id, space_id, at, title, body, path, hash, line, sent_at)
+         values (?, ?, ?, ?, ?, 'Older', 'Plan', 'Plan.md', 'h', 0, null)`,
+      )
+      for (let one = 0; one < 200; one++) {
+        insert.run(row.note_id, `older-${one}`, row.user_id, row.space_id, AT - 60_000 - one)
+      }
+
+      const ids: string[] = []
+      const send = ((url: string, init?: RequestInit) => {
+        if (url.includes('oauth2')) return Promise.resolve(TOKEN())
+        ids.push((JSON.parse(init?.body as string) as { message: { data: { id: string } } }).message.data.id)
+        return Promise.resolve(DOWN())
+      }) as typeof fetch
+      await sendDue(env, AT, send)
+      expect(ids).toContain(kept().find((one) => one.title === 'Call the bank')?.id)
+    })
   })
 
   test('a note deleted since is not pushed', async () => {

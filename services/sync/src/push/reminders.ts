@@ -35,6 +35,9 @@ const AT_ONCE = 200
 /** How long a reminder is kept after its minute, sent or not. */
 const KEPT_FOR = 86_400_000
 
+/** How long after its minute a reminder no service took is tried again, once a minute. */
+export const TRIED_FOR = 3_600_000
+
 /** A note as this reads it. */
 interface Saved {
   id: string
