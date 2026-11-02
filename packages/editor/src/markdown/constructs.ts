@@ -1,3 +1,4 @@
+import type { Input } from '@lezer/common'
 import { tags } from '@lezer/highlight'
 import type { BlockContext, Line, MarkdownConfig } from '@lezer/markdown'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
@@ -366,7 +367,10 @@ const FrontMatter: MarkdownConfig = {
         // committing, since a block parser cannot rewind once it has consumed lines.
         // Their test rather than a look at the first key: `Priorität: hoch` is a key,
         // and read as a rule and a heading it was drawn as one and rewritten by Format.
-        if (!frontMatterBlock(cx.input.read(0, cx.input.length))) return false
+        // The context holds its input but does not type it, and offers no other way to
+        // look further than the next line; the tests of this construct would catch it going.
+        const { input } = cx as unknown as { input: Input }
+        if (!frontMatterBlock(input.read(0, input.length))) return false
 
         const marks = [cx.elt('FrontMatterMark', 0, 3)]
         let to = 3

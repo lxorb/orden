@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { nibMarkdownParser } from './markdown/extensions'
 import { reformat } from './reformat'
 
 describe('tidying a document', () => {
@@ -196,5 +197,32 @@ describe('bullets that mean something', () => {
 
   test('a star list on its own still becomes dashes', () => {
     expect(reformat('* a\n* b\n\nwords\n\n* c\n')).toBe('- a\n- b\n\nwords\n\n- c\n')
+  })
+})
+
+describe('what the parser calls front matter', () => {
+  const kids = (source: string) => {
+    const names: string[] = []
+    for (
+      let node = nibMarkdownParser.parse(source).topNode.firstChild;
+      node;
+      node = node.nextSibling
+    )
+      names.push(node.name)
+    return names
+  }
+
+  test.each([
+    '---\nPriorität: hoch\n---\nb\n',
+    '---\ndue date: x\n---\nb\n',
+    '---\nk: v\n---\nb\n',
+  ])('%j is the same block the readers of a note take', (source) => {
+    expect(kids(source)[0]).toBe('FrontMatter')
+    expect(kids(source)).not.toContain('SetextHeading2')
+  })
+
+  test('a leading rule nothing closes is a rule', () => {
+    expect(kids('---\n\nwords\n')[0]).toBe('HorizontalRule')
+    expect(kids('---\nk: v\n')[0]).not.toBe('FrontMatter')
   })
 })
