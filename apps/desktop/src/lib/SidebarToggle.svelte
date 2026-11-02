@@ -20,6 +20,7 @@
    *  read as a window with a thick left edge - a different icon, which is what it
    *  was reported as. A button that redraws itself is a button you have to read
    *  twice, and the state is already said three ways. */
+  import { enterSide } from './focus'
   import { t } from './i18n.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { type PanelSide, workspace } from './workspace.svelte'
@@ -52,7 +53,12 @@
   title={shortcuts.tooltip(label, side === 'left' ? 'app.sidebar' : 'app.right-sidebar')}
   aria-label={label}
   aria-pressed={open}
-  onclick={() => workspace.toggleSidebar(side)}
+  onclick={(event) => {
+    const opening = !open
+    workspace.toggleSidebar(side)
+    // A press from a key - Enter, Space, a screen reader's - has no clicks to count.
+    if (opening && event.detail === 0) enterSide(side)
+  }}
 >
   <svg viewBox="0 0 14 14">
     <rect x="1" y="2.5" width="12" height="9" rx="1.5" />

@@ -11,7 +11,7 @@
  *  folder. See roving.ts. */
 
 import { isRegion, type Region, REGIONS, stepRegion } from './regions'
-import type { Panel } from './workspace.svelte'
+import type { Panel, PanelSide } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 
 /** Everything a key can land on. `[tabindex="0"]` first, because that is what a
@@ -161,6 +161,18 @@ export function revealPanel(panel: Panel): void {
 
   workspace.showPanel(panel)
   settle(region, panel)
+}
+
+/** Puts the keyboard in a side just opened from its toggle by a key.
+ *
+ *  The sidebar comes before the bar in the page - it runs the window's full height and
+ *  the bar sits beside it - so Tab from the toggle that opened it went on into the tabs
+ *  and the note, and the panel just opened was behind it (#523). A key that opens a
+ *  side takes the keyboard into it, as Ctrl+Shift+E does; a pointer leaves it where it
+ *  was. */
+export function enterSide(side: PanelSide): void {
+  const panel = workspace.openOn(side)
+  if (panel) settle(side === 'right' ? 'right' : 'list', panel)
 }
 
 /** Puts the keyboard in a region, and keeps at it for a few frames while what is
