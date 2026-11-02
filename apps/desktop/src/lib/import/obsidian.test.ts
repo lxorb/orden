@@ -465,7 +465,7 @@ describe('the links in a vault', () => {
         file('C.md', '# C\n'),
         file('C# basics.md', '# C# basics\n'),
       ),
-    ).resolves.toBe('See [[C# basics|basics]].\n')
+    ).resolves.toBe('See [basics](C%23%20basics.md).\n')
     // A wikilink is read as written, never as percent encoding.
     await expect(
       noteFrom(
