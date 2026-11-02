@@ -960,8 +960,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-01, to 3,431,700, for the fourth bug burn-down's fixes merged into
  *  unstable at 9163eeb16: unstable's raises were measured without them. Measured
- *  3,430,841. */
-const BUDGET = 3_431_700
+ *  3,430,841.
+ *
+ *  Raised 2026-11-02, to 3,433,300, for #523: the notices row is a region F6 walks to,
+ *  and a notice's words go through the one live region (`told` in said.svelte.ts)
+ *  rather than a `role="status"` card that arrives holding them. Measured 3,433,255. */
+const BUDGET = 3_433_300
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
