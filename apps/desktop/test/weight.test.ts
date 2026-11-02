@@ -978,8 +978,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-02, to 3,436,000, for #790, #791 and #397: a page whose process died is
  *  offered again, the zoom and step rows over a page, and a host's two spellings kept apart.
  *  The rule for reading a name that is not ASCII is not in it: web-tab/idn.ts arrives with
- *  the web bar. Measured 3,435,406. */
-const BUDGET = 3_436_000
+ *  the web bar. Measured 3,435,406.
+ *
+ *  Raised 2026-11-02, to 3,433,600, for #483: on Windows every window writes what it owes
+ *  before the installer ends the app, and closing one window leaves the install to the
+ *  last (`installStaged`, `handOn`, `settledForInstaller` in updater.ts). Measured
+ *  3,433,239, from about 3,431,283 at 971ae9834. */
+const BUDGET = 3_433_600
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

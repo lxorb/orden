@@ -1179,13 +1179,24 @@ pub fn write_privately(target: &Path, bytes: &[u8]) -> Result<(), String> {
 /// file beside the note and flushed, so a full disk fails there, before a byte of the
 /// note is touched. Only then is the note overwritten and flushed, and the copy
 /// dropped. A write into the note that fails part way puts the copy over it the old
-/// way, so the note is the old text or the new, never half of either; a crash in that
-/// moment leaves the copy beside it, and the version before is in the note's history.
+/// way, so the note is the new text whole; if that is refused as well the note keeps what
+/// the write left, and the copy stays beside it. A crash in that moment leaves the note
+/// part written, whichever way round (see `poured`), with the copy beside it, and the
+/// version before is in the note's history.
 ///
 /// A file that is not there yet has no identity to keep, and is made the atomic way.
 /// So is a link: paths are judged by what they say (see `inside`), so writing through
 /// one could land outside the spaces, and replacing it is what a save always did.
 pub fn write_in_place(target: &Path, bytes: &[u8]) -> Result<(), String> {
+    into_place(target, bytes, |file| poured(file, bytes, cfg!(windows)))
+}
+
+/// `write_in_place`, with what writes into the open file handed in.
+fn into_place(
+    target: &Path,
+    bytes: &[u8],
+    pour: impl FnOnce(&mut fs::File) -> std::io::Result<()>,
+) -> Result<(), String> {
     let linked = fs::symlink_metadata(target).is_ok_and(|meta| meta.file_type().is_symlink());
     let opened = (!linked)
         .then(|| fs::OpenOptions::new().write(true).open(target).ok())
@@ -1195,10 +1206,7 @@ pub fn write_in_place(target: &Path, bytes: &[u8]) -> Result<(), String> {
     };
 
     let copy = staged(target, bytes, false)?;
-    let into = file
-        .write_all(bytes)
-        .and_then(|()| file.set_len(bytes.len() as u64))
-        .and_then(|()| file.sync_all());
+    let into = pour(&mut file);
     drop(file);
 
     match into {
@@ -1209,6 +1217,47 @@ pub fn write_in_place(target: &Path, bytes: &[u8]) -> Result<(), String> {
         // The copy is the only whole version left if this fails too, so it stays.
         Err(_) => fs::rename(&copy, target).map_err(|error| cannot("save", target, &error)),
     }
+}
+
+/// A file `poured` writes into: what it takes of `fs::File`, apart so a refusal can be
+/// tested.
+trait Pourable: Write {
+    fn size(&self) -> std::io::Result<u64>;
+    fn shrink(&mut self, to: u64) -> std::io::Result<()>;
+    fn sync(&mut self) -> std::io::Result<()>;
+}
+
+impl Pourable for fs::File {
+    fn size(&self) -> std::io::Result<u64> {
+        self.metadata().map(|meta| meta.len())
+    }
+    fn shrink(&mut self, to: u64) -> std::io::Result<()> {
+        self.set_len(to)
+    }
+    fn sync(&mut self) -> std::io::Result<()> {
+        self.sync_all()
+    }
+}
+
+/// `bytes` into an open file, in place of what it held.
+///
+/// Windows refuses to shrink a file another process has mapped
+/// (`ERROR_USER_MAPPED_FILE`) and writes to it all the same, so there the shrink comes
+/// first (`shrink_first`): refused, the note is still the old text, whole, where shrinking
+/// after the write left the new text with the old one's tail, for good if putting the copy
+/// over it was refused too. Nothing else refuses, and there the write comes first, for a
+/// crash: between the two steps that leaves the new text with a tail, where the other
+/// order leaves the start of the old text and the new only in a hidden copy.
+fn poured(file: &mut impl Pourable, bytes: &[u8], shrink_first: bool) -> std::io::Result<()> {
+    let length = bytes.len() as u64;
+    if shrink_first && file.size()? > length {
+        file.shrink(length)?;
+    }
+    file.write_all(bytes)?;
+    if !shrink_first && file.size()? > length {
+        file.shrink(length)?;
+    }
+    file.sync()
 }
 
 fn written(target: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
@@ -1821,6 +1870,136 @@ mod tests {
 
     /// A save writes into the note that is there, so the note stays the same file,
     /// and leaves nothing beside it; one that shrinks the note leaves no tail.
+    /// A file that may not be shrunk, as Windows refuses one another process has mapped,
+    /// and is written to all the same.
+    struct Mapped(Vec<u8>);
+
+    impl std::io::Write for Mapped {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            let end = bytes.len().min(self.0.len());
+            self.0[..end].copy_from_slice(&bytes[..end]);
+            self.0.extend_from_slice(&bytes[end..]);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    impl super::Pourable for Mapped {
+        fn size(&self) -> std::io::Result<u64> {
+            Ok(self.0.len() as u64)
+        }
+        fn shrink(&mut self, _to: u64) -> std::io::Result<()> {
+            Err(std::io::Error::other("the file is mapped"))
+        }
+        fn sync(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// On Windows a refused shrink leaves the old text whole, never the new text on its
+    /// tail.
+    #[test]
+    fn a_file_that_may_not_shrink_keeps_its_old_text() {
+        let mut file = Mapped(b"a first, longer version".to_vec());
+        assert!(super::poured(&mut file, b"second", true).is_err());
+        assert_eq!(file.0, b"a first, longer version");
+    }
+
+    /// Growing asks nothing of the shrink a mapped file refuses.
+    #[test]
+    fn a_file_that_may_not_shrink_still_takes_a_longer_text() {
+        let mut file = Mapped(b"short".to_vec());
+        super::poured(&mut file, b"a longer one", true).expect("the write");
+        assert_eq!(file.0, b"a longer one");
+    }
+
+    /// Everywhere else the new text is down before anything is cut, which is what a crash
+    /// between the two finds.
+    #[test]
+    fn off_windows_the_write_comes_before_the_shrink() {
+        let mut file = Mapped(b"a first, longer version".to_vec());
+        assert!(super::poured(&mut file, b"second", false).is_err());
+        assert_eq!(file.0, b"secondt, longer version");
+    }
+
+    /// Either order ends in the same file when nothing refuses.
+    #[test]
+    fn either_order_leaves_exactly_the_new_text() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = dir.path().join("Note.md");
+        for shrink_first in [true, false] {
+            std::fs::write(&target, "a first, longer version").expect("the old text");
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .open(&target)
+                .expect("the note");
+            super::poured(&mut file, b"second", shrink_first).expect("the write");
+            drop(file);
+            assert_eq!(
+                std::fs::read_to_string(&target).expect("the note"),
+                "second"
+            );
+        }
+    }
+
+    /// A write that fails part way: the copy goes over the note, and nothing is left beside
+    /// it.
+    #[test]
+    fn a_write_that_fails_puts_the_copy_over_the_note() {
+        use std::io::Write as _;
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = dir.path().join("Note.md");
+        std::fs::write(&target, "a first, longer version").expect("the old text");
+
+        super::into_place(&target, b"second", |file| {
+            file.write_all(b"sec")?;
+            Err(std::io::Error::other("the file is mapped"))
+        })
+        .expect("the copy put over the note");
+
+        assert_eq!(
+            std::fs::read_to_string(&target).expect("the note"),
+            "second"
+        );
+        assert_eq!(
+            std::fs::read_dir(dir.path()).expect("the folder").count(),
+            1
+        );
+    }
+
+    /// And when that is refused too: the save says so, and the copy stays, the one whole
+    /// version left.
+    #[cfg(unix)]
+    #[test]
+    fn a_copy_that_cannot_be_put_over_the_note_stays_beside_it() {
+        use std::os::unix::fs::PermissionsExt as _;
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = dir.path().join("Note.md");
+        std::fs::write(&target, "old").expect("the old text");
+        let folder = |mode| {
+            std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(mode))
+                .expect("the folder's mode");
+        };
+
+        let saved = super::into_place(&target, b"second", |_| {
+            folder(0o555);
+            Err(std::io::Error::other("the file is mapped"))
+        });
+        folder(0o755);
+
+        assert!(saved.is_err());
+        assert_eq!(std::fs::read_to_string(&target).expect("the note"), "old");
+        let copies: Vec<_> = std::fs::read_dir(dir.path())
+            .expect("the folder")
+            .map(|one| one.expect("an entry").path())
+            .filter(|one| *one != target)
+            .collect();
+        assert_eq!(copies.len(), 1);
+        assert_eq!(std::fs::read(&copies[0]).expect("the copy"), b"second");
+    }
+
     #[test]
     fn an_in_place_write_keeps_the_file() {
         use std::io::{Read as _, Seek as _};

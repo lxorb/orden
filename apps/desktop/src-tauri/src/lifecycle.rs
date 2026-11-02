@@ -9,7 +9,10 @@
 //! Windows and Linux end the app with its last window, as they always did, and
 //! nothing here changes that.
 
-use std::sync::atomic::{AtomicU8, Ordering};
+use std::collections::HashSet;
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+use std::sync::{Condvar, Mutex, PoisonError};
+use std::time::Duration;
 use tauri::{AppHandle, Emitter, ExitRequestApi, Manager, RunEvent, WindowEvent};
 
 use crate::launch;
@@ -22,6 +25,16 @@ const QUIT: &str = "nib://quit";
 /// stop - a terminal's program, an AI turn - and answer `quit_confirmed` or
 /// `keep_running`. See `lib/quitting` in the app.
 const QUIT_ASK: &str = "nib://quit-ask";
+
+/// What every other window is told just before a window's installer ends the process:
+/// write what is owed and answer `update_settled`. See `before_installer`.
+const UPDATE_SETTLE: &str = "nib://update-settle";
+
+/// How long the installer is held for the other windows' answers. A window waits
+/// `GIVE_UP` for its own writes (lib/parting.ts, three seconds) and then answers, so this
+/// is that and a moment for the answer. What did not land by then is in the window's
+/// session, which the next launch writes.
+const SETTLE_WAIT: Duration = Duration::from_secs(4);
 
 /// Where the app is on its way out, as one of the four values below.
 #[derive(Default)]
@@ -47,9 +60,84 @@ impl Quitting {
     }
 }
 
+/// The installer on Windows, which ends the process as soon as it has started: who may
+/// start it, and which windows it is still waiting to hear from.
+#[derive(Default)]
+pub struct Installer {
+    /// A window has been told it may. There is only ever the one: a second would start a
+    /// second installer over the first.
+    taken: AtomicBool,
+    /// The windows that have asked on their way out, and are going whatever the answer.
+    closing: Mutex<HashSet<String>>,
+    unanswered: Mutex<HashSet<String>>,
+    answered: Condvar,
+}
+
+impl Installer {
+    /// Whether this is the first to ask.
+    fn take(&self) -> bool {
+        !self.taken.swap(true, Ordering::SeqCst)
+    }
+
+    /// The installer did not start, and the process is still here: another may try.
+    fn release(&self) {
+        self.taken.store(false, Ordering::SeqCst);
+    }
+
+    /// This window is on its way out, and says how many of `others` are not. Two windows
+    /// closing together each see the other, and the second to ask is the last.
+    fn closing(&self, label: &str, others: impl IntoIterator<Item = String>) -> usize {
+        let mut closing = self.closing.lock().unwrap_or_else(PoisonError::into_inner);
+        closing.insert(label.to_owned());
+        others
+            .into_iter()
+            .filter(|other| !closing.contains(other))
+            .count()
+    }
+
+    /// These windows are about to be asked, and no others are waited on.
+    fn expect(&self, labels: impl IntoIterator<Item = String>) {
+        *self.lock() = labels.into_iter().collect();
+    }
+
+    /// This window has answered.
+    fn heard(&self, label: &str) {
+        if self.lock().remove(label) {
+            self.answered.notify_all();
+        }
+    }
+
+    /// This window has gone, which is as good as an answer. Its label is free again.
+    fn gone(&self, label: &str) {
+        self.closing
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .remove(label);
+        self.heard(label);
+    }
+
+    /// Waits for every answer, `within` at most, and answers with the windows still not
+    /// heard from.
+    fn wait(&self, within: Duration) -> Vec<String> {
+        let (left, _) = self
+            .answered
+            .wait_timeout_while(self.lock(), within, |unanswered| !unanswered.is_empty())
+            .unwrap_or_else(PoisonError::into_inner);
+        left.iter().cloned().collect()
+    }
+
+    fn lock(&self) -> std::sync::MutexGuard<'_, HashSet<String>> {
+        self.unanswered
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+    }
+}
+
 /// The state this module keeps, added to the builder.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
-    builder.manage(Quitting::default())
+    builder
+        .manage(Quitting::default())
+        .manage(Installer::default())
 }
 
 /// The app's own answer to everything the event loop reports; handed to
@@ -123,6 +211,8 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             if let Some(pending) = app.try_state::<launch::Pending>() {
                 pending.forget(&label);
             }
+            // Nothing is left of it for an installer to wait on.
+            app.state::<Installer>().gone(&label);
             // Its terminals go with it; see terminal.rs.
             crate::terminal::window_gone(app, &label);
             crate::ai_cli::window_gone(app, &label);
@@ -136,6 +226,87 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
         }
 
         _ => {}
+    }
+}
+
+/// Whether a window may start the installer, which on Windows ends the process with every
+/// window in it (`Update::install_inner` in tauri-plugin-updater: `ShellExecuteW`, then
+/// `std::process::exit(0)`).
+///
+/// A restart (`closing` false) has asked about every window, and a quit is ending them all
+/// anyway. A window closing by itself has only asked about what runs in it, so it leaves
+/// the update to the last one; the install is only later, and a last window with no
+/// update ready of its own only leaves it for the next run.
+fn installer_may_start(closing: bool, now: u8, others: usize) -> bool {
+    !closing || now == ASKING || others == 0
+}
+
+/// A window asks whether it may start the installer. Elsewhere the installer ends nothing,
+/// and the answer is always yes.
+#[tauri::command]
+pub fn update_may_install(webview: tauri::Webview, closing: bool) -> bool {
+    if !cfg!(windows) {
+        return true;
+    }
+    let app = webview.app_handle();
+    let installer = app.state::<Installer>();
+    let others = listening_windows(app, Some(webview.label()))
+        .iter()
+        .map(|window| window.label().to_owned())
+        .collect::<Vec<_>>();
+    let others = if closing {
+        installer.closing(webview.label(), others)
+    } else {
+        others.len()
+    };
+    installer_may_start(closing, state(app).now(), others) && installer.take()
+}
+
+/// The installer did not start: see `Installer::release`.
+#[tauri::command]
+pub fn update_install_failed(app: AppHandle) {
+    app.state::<Installer>().release();
+}
+
+/// A window has written what it owed before the installer; see `before_installer`.
+#[tauri::command]
+pub fn update_settled(webview: tauri::Webview) {
+    webview
+        .app_handle()
+        .state::<Installer>()
+        .heard(webview.label());
+}
+
+/// What the app does on Windows between the installer being ready and it being started,
+/// handed to the updater by `check_update`, in place of the plugin's own hook.
+///
+/// `from` is the window starting the installer, which has waited for its own writes. Every
+/// other window is told to write what it owes, and is waited for up to `SETTLE_WAIT`. This
+/// runs on a thread of the runtime's, as the plugin's `install` command does, so the event
+/// loop goes on delivering the windows' events and commands meanwhile.
+///
+/// Nothing is taken down here. The plugin runs this before `ShellExecuteW`, and has no
+/// hook after it, so an installer that does not start comes back to an app that has to
+/// go on working: `terminal::end_all` and the plugin's `cleanup_before_exit`, which hides
+/// the windows and takes the tray away, would have ended that. The process going takes
+/// what they would: a shell with its pseudoconsole, an AI program with its job object
+/// (`ai_cli/family.rs`). A tray icon and a notice may stay on the screen until the system
+/// next looks, and the installer starts the new version straight after.
+pub fn before_installer(app: &AppHandle, from: &str) {
+    crate::placement::note_every_window(app);
+
+    let installer = app.state::<Installer>();
+    let others: Vec<String> = listening_windows(app, Some(from))
+        .iter()
+        .map(|window| window.label().to_owned())
+        .collect();
+    installer.expect(others.iter().cloned());
+    for label in &others {
+        let _ = app.emit_to(label.as_str(), UPDATE_SETTLE, ());
+    }
+    let left = installer.wait(SETTLE_WAIT);
+    if !left.is_empty() {
+        crate::trace::mark("update: installer starting with a window not settled");
     }
 }
 
@@ -466,7 +637,107 @@ fn on_exit(code: Option<i32>, now: u8, mac: bool) -> Exit {
 
 #[cfg(test)]
 mod tests {
-    use super::{on_exit, Exit, ASKING, CONFIRMING, LEAVING, RUNNING};
+    use super::{
+        installer_may_start, on_exit, Exit, Installer, ASKING, CONFIRMING, LEAVING, RUNNING,
+    };
+    use std::sync::Arc;
+    use std::time::Duration;
+
+    /// A window closing by itself does not end the others for an installer.
+    #[test]
+    fn only_the_last_window_closing_starts_the_installer() {
+        assert!(!installer_may_start(true, RUNNING, 1));
+        assert!(installer_may_start(true, RUNNING, 0));
+        assert!(!installer_may_start(true, CONFIRMING, 2));
+    }
+
+    /// A quit and a restart end every window whichever goes first.
+    #[test]
+    fn a_quit_or_a_restart_starts_the_installer_with_windows_open() {
+        assert!(installer_may_start(true, ASKING, 2));
+        assert!(installer_may_start(false, RUNNING, 2));
+    }
+
+    /// A second installer started over the first is what `take` is there to stop.
+    #[test]
+    fn the_installer_is_started_once() {
+        let installer = Installer::default();
+        assert!(installer.take());
+        assert!(!installer.take());
+    }
+
+    /// One that did not start leaves the app able to try again.
+    #[test]
+    fn an_installer_that_did_not_start_may_be_tried_again() {
+        let installer = Installer::default();
+        assert!(installer.take());
+        installer.release();
+        assert!(installer.take());
+    }
+
+    /// The first of two closing together still has the other to leave it to; the second
+    /// is the last.
+    #[test]
+    fn of_two_windows_closing_together_the_second_is_the_last() {
+        let installer = Installer::default();
+        assert_eq!(installer.closing("a", ["b".to_owned()]), 1);
+        assert_eq!(installer.closing("b", ["a".to_owned()]), 0);
+    }
+
+    /// A new window under a label that has gone is a window staying.
+    #[test]
+    fn a_window_gone_is_no_longer_closing() {
+        let installer = Installer::default();
+        installer.closing("a", []);
+        installer.gone("a");
+        assert_eq!(installer.closing("b", ["a".to_owned()]), 1);
+    }
+
+    /// A window gone needs no answer.
+    #[test]
+    fn a_window_gone_ends_the_wait_for_it() {
+        let installer = Installer::default();
+        installer.expect(["a".to_owned()]);
+        installer.gone("a");
+        assert!(installer.wait(Duration::from_secs(3600)).is_empty());
+    }
+
+    #[test]
+    fn nothing_to_wait_for_is_not_waited_for() {
+        let installer = Installer::default();
+        assert!(installer.wait(Duration::from_secs(3600)).is_empty());
+    }
+
+    #[test]
+    fn every_window_answering_ends_the_wait() {
+        let installer = Arc::new(Installer::default());
+        installer.expect(["a".to_owned(), "b".to_owned()]);
+        installer.heard("a");
+
+        let answering = installer.clone();
+        let answer = std::thread::spawn(move || answering.heard("b"));
+        assert!(installer.wait(Duration::from_secs(3600)).is_empty());
+        answer.join().expect("the answer");
+    }
+
+    /// A window that never answers holds the installer no longer than the bound, and is
+    /// named.
+    #[test]
+    fn a_window_that_does_not_answer_is_given_up_on() {
+        let installer = Installer::default();
+        installer.expect(["a".to_owned(), "b".to_owned()]);
+        installer.heard("b");
+        assert_eq!(installer.wait(Duration::ZERO), vec!["a".to_owned()]);
+    }
+
+    /// A word from a window nobody is waiting on changes nothing.
+    #[test]
+    fn a_window_not_waited_for_is_ignored() {
+        let installer = Installer::default();
+        installer.expect(["a".to_owned()]);
+        installer.heard("z");
+        assert_eq!(installer.wait(Duration::ZERO), vec!["a".to_owned()]);
+    }
 
     #[test]
     fn a_mac_app_outlives_its_last_window() {

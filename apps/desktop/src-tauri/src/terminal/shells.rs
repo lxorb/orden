@@ -20,7 +20,8 @@
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use std::sync::OnceLock;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Condvar, Mutex, PoisonError};
 
 use serde::Serialize;
 
@@ -107,16 +108,89 @@ pub trait Machine {
     fn etc_shells(&self) -> String;
 }
 
-/// The shells, found the first time anything asks and the same list after that.
+/// `wsl -l -q` ran out of its three seconds on the last look, which says nothing about
+/// what is installed: a WSL service still starting after a boot takes that long.
+static WSL_SILENT: AtomicBool = AtomicBool::new(false);
+
+/// How many looks at a machine that may have more to say. Each one that WSL does not
+/// answer holds whoever asked for its three seconds.
+const LOOKS: u8 = 3;
+
+/// What a look found, kept once it can be believed: a look that could not be sure is
+/// looked at again by the next to ask, `LOOKS` times in all. One look at a time, made
+/// outside the lock: whoever asks during one shares its answer, and waits for that one
+/// look and no other.
+struct Kept<T: 'static> {
+    state: Mutex<Looks<T>>,
+    looked: Condvar,
+}
+
+struct Looks<T: 'static> {
+    found: Option<&'static T>,
+    left: u8,
+    looking: bool,
+}
+
+impl<T: 'static> Kept<T> {
+    const fn new() -> Self {
+        Self {
+            state: Mutex::new(Looks {
+                found: None,
+                left: LOOKS,
+                looking: false,
+            }),
+            looked: Condvar::new(),
+        }
+    }
+
+    /// `look` answers with what it found, and whether that can be believed.
+    fn get(&self, look: impl FnOnce() -> (T, bool)) -> &'static T {
+        let mut state = self.lock();
+        if state.looking {
+            state = self
+                .looked
+                .wait_while(state, |state| state.looking)
+                .unwrap_or_else(PoisonError::into_inner);
+            if let Some(found) = state.found {
+                return found;
+            }
+        }
+        if let (Some(found), 0) = (state.found, state.left) {
+            return found;
+        }
+        state.looking = true;
+        drop(state);
+
+        let (found, sure) = look();
+        // Once per look, and there are at most `LOOKS` of them in a run.
+        let found: &'static T = Box::leak(Box::new(found));
+
+        let mut state = self.lock();
+        state.found = Some(found);
+        state.left = if sure { 0 } else { state.left - 1 };
+        state.looking = false;
+        self.looked.notify_all();
+        found
+    }
+
+    fn lock(&self) -> std::sync::MutexGuard<'_, Looks<T>> {
+        self.state.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+}
+
+/// The shells, found the first time anything asks and the same list after that; unless
+/// WSL did not answer in time, when restored `wsl:` terminals would otherwise say there
+/// is no such shell for the whole run.
 pub fn detected() -> &'static [Shell] {
-    static FOUND: OnceLock<Vec<Shell>> = OnceLock::new();
-    FOUND.get_or_init(|| {
+    static FOUND: Kept<Vec<Shell>> = Kept::new();
+    FOUND.get(|| {
         let machine = ThisMachine;
-        if cfg!(windows) {
+        let found = if cfg!(windows) {
             windows(&machine)
         } else {
             unix(&machine)
-        }
+        };
+        (found, !WSL_SILENT.swap(false, Ordering::SeqCst))
     })
 }
 
@@ -634,7 +708,10 @@ fn wsl_list() -> Vec<String> {
 
     let printed = heard
         .recv_timeout(Duration::from_secs(3))
-        .unwrap_or_default();
+        .unwrap_or_else(|_| {
+            WSL_SILENT.store(true, Ordering::SeqCst);
+            Vec::new()
+        });
     let _ = child.kill();
     let _ = child.wait();
     distributions(&printed)
@@ -731,6 +808,69 @@ mod tests {
             edition: "Community".to_owned(),
         }];
         fake
+    }
+
+    /// A look WSL did not answer is looked at again, and what it finds then is kept.
+    #[test]
+    fn a_look_that_was_not_sure_is_looked_at_again() {
+        let kept = Kept::new();
+        assert_eq!(*kept.get(|| (vec!["cmd"], false)), vec!["cmd"]);
+        assert_eq!(
+            *kept.get(|| (vec!["cmd", "wsl:Ubuntu"], true)),
+            vec!["cmd", "wsl:Ubuntu"]
+        );
+        assert_eq!(*kept.get(|| panic!("kept")), vec!["cmd", "wsl:Ubuntu"]);
+    }
+
+    /// A sure answer the first time is the only look there is.
+    #[test]
+    fn a_sure_look_is_the_only_one() {
+        let kept = Kept::new();
+        assert_eq!(*kept.get(|| ("cmd", true)), "cmd");
+        assert_eq!(*kept.get(|| panic!("kept")), "cmd");
+    }
+
+    /// Nobody queues behind the lock while a look is out.
+    #[test]
+    fn a_look_is_made_outside_the_lock() {
+        let kept = Kept::new();
+        kept.get(|| {
+            assert!(kept.state.try_lock().is_ok());
+            ("cmd", true)
+        });
+    }
+
+    /// Whoever asks while a look is out does not make another.
+    #[test]
+    fn who_asks_during_a_look_shares_its_answer() {
+        let kept: &'static Kept<&str> = Box::leak(Box::new(Kept::new()));
+        let (started, looking) = std::sync::mpsc::channel();
+        let (finish, finished) = std::sync::mpsc::channel::<()>();
+        let first = std::thread::spawn(move || {
+            kept.get(|| {
+                started.send(()).expect("the test");
+                finished.recv().expect("the test");
+                ("cmd", true)
+            })
+        });
+        looking.recv().expect("the look");
+
+        let second = std::thread::spawn(|| *kept.get(|| panic!("a second look")));
+        std::thread::yield_now();
+        finish.send(()).expect("the look");
+
+        assert_eq!(*first.join().expect("the first"), "cmd");
+        assert_eq!(second.join().expect("the second"), "cmd");
+    }
+
+    /// A WSL that never answers holds nobody up for ever.
+    #[test]
+    fn a_wsl_that_never_answers_stops_being_asked() {
+        let kept = Kept::new();
+        for _ in 0..LOOKS {
+            kept.get(|| ("cmd", false));
+        }
+        assert_eq!(*kept.get(|| panic!("given up")), "cmd");
     }
 
     #[test]
