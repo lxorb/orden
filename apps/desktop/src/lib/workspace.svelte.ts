@@ -1720,13 +1720,30 @@ class Workspace {
    *  back brings it straight back, and a note in a space was written down before
    *  it was closed - the account has it whatever this window shows.
    *
+   *  A draft with words is written down first, where Save would offer: there is no
+   *  strip to keep it in and no question that could be asked of a tap on something
+   *  else, so it is a note, as what is typed into Apple Notes or Google Keep is.
+   *
    *  A desktop keeps every tab and every pane it has always had. */
   private onlyOne(kept: Tab) {
     if (!viewport.touch) return
 
     for (const other of this.tabs) {
-      if (other.id !== kept.id && this.panes.at(other.paneId)) this.close(other.id)
+      if (other.id === kept.id || !this.panes.at(other.paneId)) continue
+      if (this.keeping.has(other.id)) continue
+      const words = isDraft(other.note) && hasWords(other.note)
+      if (words && !this.tabs.some((one) => one !== other && one.note === other.note)) {
+        void this.writtenAndClosed(other)
+      } else this.close(other.id)
     }
+  }
+
+  /** A draft given its place and then put away; put away all the same where it could
+   *  not be given one, which leaves its words in Recently deleted. */
+  private async writtenAndClosed(tab: Tab) {
+    this.flush()
+    await this.save(tab)
+    if (this.active?.id !== tab.id) this.close(tab.id)
   }
 
   /** One pane, one document: what a phone and a tablet come down to, wherever an

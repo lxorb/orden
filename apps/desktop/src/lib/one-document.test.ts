@@ -163,6 +163,45 @@ describe('a phone and a tablet', () => {
     expect(open()).toEqual(['Two'])
   })
 
+  test('a draft with words is written down as it goes, not left in the bin', async () => {
+    viewport.device = 'phone'
+
+    workspace.openBlank()
+    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Shopping list\nmilk and eggs' }])
+    await workspace.open('/space/One.md')
+    await vi.waitFor(() => expect(open()).toEqual(['One']))
+
+    expect(notes.get('/space/Shopping list.md')).toBe('Shopping list\nmilk and eggs')
+    expect(workspace.closed.stack.at(-1)?.draft).toMatchObject({
+      path: '/space/Shopping list.md',
+    })
+
+    await workspace.reopenClosed()
+    expect(workspace.active?.doc).toBe('Shopping list\nmilk and eggs')
+  })
+
+  test('so does one the plus put away', async () => {
+    viewport.device = 'phone'
+
+    workspace.openBlank()
+    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Shopping list' }])
+    workspace.openBlank()
+
+    await vi.waitFor(() => expect(notes.get('/space/Shopping list.md')).toBe('Shopping list'))
+    await vi.waitFor(() => expect(workspace.tabs).toHaveLength(1))
+  })
+
+  test('an empty one just goes', async () => {
+    viewport.device = 'phone'
+    const before = notes.size
+
+    workspace.openBlank()
+    await workspace.open('/space/One.md')
+
+    expect(open()).toEqual(['One'])
+    expect(notes.size).toBe(before)
+  })
+
   test('never split a pane, however it is asked', async () => {
     viewport.device = 'tablet'
     await workspace.open('/space/One.md')
