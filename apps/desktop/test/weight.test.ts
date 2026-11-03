@@ -1047,7 +1047,11 @@ function holds(tail: string): boolean {
  *  until it lands, charts, paste, block commands, links, a thread written down while it
  *  runs), what a base may cost, a tile's move, the sync's scans, and an undo that waits for
  *  every gesture landing, measured together. What could wait went behind a door on the
- *  branches. Measured 3,515,848, 385 modules. */
+ *  branches. Measured 3,515,848, 385 modules.
+ *
+ *  Raised 2026-11-03, to 3,518,000, for the second hunt's desktop fixes: an Android view's
+ *  EditContext filled again after a swap, and `busy.start` saying what failed; both have to
+ *  be in the first paint. Measured 3,517,161, 385 modules. */
 const BUDGET = 3_518_000
 const MOST_FILES = 386
 
