@@ -30,7 +30,7 @@ vi.mock('./chosen-icon', () => ({
   chosenIcon: (path: string) => chosen[path] ?? null,
   chosenTint: () => null,
   faviconFor: (path: string) => marks[path] ?? null,
-  holdsPaper: () => false,
+  sourceMark: (mark: string) => mark,
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')

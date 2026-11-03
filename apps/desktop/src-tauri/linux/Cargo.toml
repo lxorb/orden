@@ -64,12 +64,6 @@ tauri-plugin-single-instance = { version = "=3.0.0-alpha.3", features = ["deep-l
 tauri-plugin-updater = "=3.0.0-alpha.3"
 tauri-plugin-global-shortcut = "=3.0.0-alpha.3"
 tauri-plugin-notification = "=3.0.0-alpha.3"
-keyring = { version = "3", default-features = false, features = [
-  "apple-native",
-  "windows-native",
-  "sync-secret-service",
-  "crypto-rust",
-] }
 sha2 = "0.10"
 window-vibrancy = "0.6"
 portable-pty = "0.9"
@@ -78,6 +72,13 @@ reqwest = { version = "0.13", default-features = false, features = ["rustls-no-p
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
 tokio = { version = "1", default-features = false, features = ["time", "sync"] }
+
+[target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
+keyring = { version = "3", default-features = false, features = [
+  "windows-native",
+  "sync-secret-service",
+  "crypto-rust",
+] }
 
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 tauri = { version = "=3.0.0-alpha.5", features = ["tray-icon"] }

@@ -26,6 +26,7 @@
 import { mount } from 'svelte'
 import { i18n } from '../i18n.svelte'
 import { shortcuts } from '../shortcuts.svelte'
+import { tabOverview } from '../surfaces.svelte'
 import { isDesktop } from '../tauri'
 import { viewport } from '../viewport.svelte'
 import { workspace } from '../workspace.svelte'
@@ -75,16 +76,19 @@ class Numbers {
   }
 
   private down(event: KeyboardEvent) {
-    const place = this.hold.down({
-      key: event.key,
-      code: event.code,
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      shiftKey: event.shiftKey,
-      metaKey: event.metaKey,
-      repeat: event.repeat,
-      altGraph: event.getModifierState('AltGraph'),
-    })
+    const place = this.hold.down(
+      {
+        key: event.key,
+        code: event.code,
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        shiftKey: event.shiftKey,
+        metaKey: event.metaKey,
+        repeat: event.repeat,
+        altGraph: event.getModifierState('AltGraph'),
+      },
+      event.timeStamp,
+    )
 
     if (place) this.place()
     else if (!this.hold.holding) this.clear()
@@ -93,7 +97,7 @@ class Numbers {
   /** Only Alt's own release, or a key let go of once Alt is: a digit let go of with Alt
    *  still down is a hand on its way to the next one. */
   private up(event: KeyboardEvent) {
-    if (event.key === 'Alt' || !event.altKey) this.released()
+    if (event.key === 'Alt' || !event.altKey) this.released(event.timeStamp)
   }
 
   private used() {
@@ -101,8 +105,8 @@ class Numbers {
     this.clear()
   }
 
-  private released() {
-    this.hold.released()
+  private released(now?: number) {
+    this.hold.released(now)
     this.clear()
   }
 
@@ -125,6 +129,8 @@ class Numbers {
     // there switches by: two sets of figures on the glass at once would be one too many
     // to read. See SpacePlace.svelte.
     if (document.querySelector('[data-spaces-open]')) return
+    // Nor over the tab overview, whose windows the tabs are while it is up (#331).
+    if (tabOverview.open) return
 
     const paneId = workspace.panes.focusedId
     const strip = document.querySelector(`[data-strip="${CSS.escape(paneId)}"]`)

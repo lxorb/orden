@@ -2586,4 +2586,6 @@ export const yue: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS 係呢個空間嘅代理指示',
   '{title}, unread': '{title}，未讀',
   '{title}, running': '{title}，運行緊',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden 唔再將 AI 鎖匙放喺 Mac 嘅鑰匙圈，佢成日問密碼。請再輸入一次你嘅鎖匙，再登入多次 ChatGPT。',
 }

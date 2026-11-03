@@ -234,6 +234,13 @@ pub fn restored(app: &AppHandle, config: &WindowConfig) -> WindowConfig {
         return config;
     };
 
+    put_into(config, placed)
+}
+
+/// A config with a kept place put into it: the bounds, and whether it is maximised over
+/// them. The one way a kept place becomes a window's config, so what the file says is
+/// what the window is built as, on every platform.
+fn put_into(mut config: WindowConfig, placed: Placement) -> WindowConfig {
     if positions() {
         config.x = Some(placed.x);
         config.y = Some(placed.y);
@@ -349,21 +356,79 @@ pub fn settled<R: Runtime, M: Manager<R>>(
 }
 
 /// See `settled`.
+///
+/// A window that opens maximised is judged by its screen, not its corner: its corner is
+/// the screen's, never the place put back, and moving it - which on Windows tao does by
+/// taking the maximise off first - opened every maximised window as a normal one (#1086).
+/// So it is only moved where it was maximised over the wrong screen, and through
+/// `moved_as_it_is`, which keeps it maximised.
 fn settle<R: Runtime>(window: &WebviewWindow<R>) {
     #[cfg(windows)]
     {
-        let Some(&(x, y)) = PUT.get() else {
+        let Some(&put) = PUT.get() else {
             return;
         };
         let Ok(at) = window.outer_position() else {
             return;
         };
-        if (f64::from(at.x) - x).abs() > 1.0 || (f64::from(at.y) - y).abs() > 1.0 {
-            let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
+        let maximized = window.is_maximized().unwrap_or(false);
+        let screen = window.current_monitor().ok().flatten().map(|screen| {
+            let (at, size) = (screen.position(), screen.size());
+            (
+                f64::from(at.x),
+                f64::from(at.y),
+                f64::from(size.width),
+                f64::from(size.height),
+            )
+        });
+        if moves(put, (f64::from(at.x), f64::from(at.y)), maximized, screen) {
+            let _ = moved_as_it_is(window, tauri::PhysicalPosition::new(put.0, put.1));
         }
     }
     #[cfg(not(windows))]
     let _ = window;
+}
+
+/// Whether a window built at `at`, in physical pixels, is moved to `put`: a normal window
+/// where it is more than a pixel off, a maximised one only where `screen`, the screen it
+/// is maximised over, is not the one `put` is on. A screen that cannot be said leaves a
+/// maximised window as it is, since moving it is what could cost it its state.
+#[cfg_attr(
+    not(any(windows, test)),
+    allow(dead_code, reason = "only Windows puts a window back to the pixel")
+)]
+fn moves(
+    put: (f64, f64),
+    at: (f64, f64),
+    maximized: bool,
+    screen: Option<(f64, f64, f64, f64)>,
+) -> bool {
+    if !maximized {
+        return (at.0 - put.0).abs() > 1.0 || (at.1 - put.1).abs() > 1.0;
+    }
+    screen.is_some_and(|(x, y, width, height)| {
+        put.0 < x || put.0 >= x + width || put.1 < y || put.1 >= y + height
+    })
+}
+
+/// Moves a window and keeps what it was: maximised stays maximised. The one way anything
+/// in the crate moves a window that may be maximised, because tao on Windows takes a
+/// window's maximise off before it moves or sizes it, and a window put back where it was
+/// then came back as a normal one (#1086). Full screen is never moved: it covers its
+/// screen, and nothing puts it back.
+pub fn moved_as_it_is<R: Runtime>(
+    window: &WebviewWindow<R>,
+    to: impl Into<tauri::Position>,
+) -> tauri::Result<()> {
+    if window.is_fullscreen().unwrap_or(false) {
+        return Ok(());
+    }
+    let maximized = window.is_maximized().unwrap_or(false);
+    window.set_position(to)?;
+    if maximized {
+        window.maximize()?;
+    }
+    Ok(())
 }
 
 /// Where the compositor places the window and never says on which screen - Wayland's
@@ -467,7 +532,7 @@ pub fn built_away<R: Runtime, M: Manager<R>>(
     #[cfg(not(windows))]
     let window = building.build()?;
     crate::top_edge::mind(&window.as_ref().window());
-    window.set_position(LogicalPosition::new(x, y))?;
+    moved_as_it_is(&window, LogicalPosition::new(x, y))?;
     window.show()?;
     Ok(window)
 }
@@ -826,8 +891,8 @@ fn keep(window: &Window) {
 #[cfg(test)]
 mod tests {
     use super::{
-        named, names_its_place, onto, sane, sized_for_any, under_the_menu_bar, Area, Followed,
-        Placement, DESK_IN_PIXELS, OFF,
+        moves, named, names_its_place, onto, put_into, sane, sized_for_any, under_the_menu_bar,
+        Area, Followed, Placement, DESK_IN_PIXELS, OFF,
     };
     use tauri::utils::config::WindowConfig;
 
@@ -1307,5 +1372,106 @@ mod tests {
         assert!(!serde_json::to_string(&read)
             .expect("written")
             .contains("scale"));
+    }
+
+    /// #1086: what a window was as it closed is what it is built as at the next launch, on
+    /// every platform - maximised over the bounds it goes back to, or those bounds alone -
+    /// through the file and the screens it is judged against.
+    #[test]
+    fn a_window_reopens_as_it_was_left() {
+        let normal = at_scale(1.0, 140.0, 120.0, 887.0, 612.0);
+        let screen = at_scale(1.0, -8.0, -8.0, 1936.0, 1056.0);
+        for maximized in [true, false] {
+            let mut followed = Followed::starting(None);
+            followed.saw(Some(normal), false);
+            if maximized {
+                followed.saw(Some(screen), false);
+                followed.saw(None, true);
+            }
+            let text =
+                serde_json::to_string(&followed.placement().expect("a place")).expect("written");
+            let read: Placement = serde_json::from_str(&text).expect("read back");
+            assert!(sane(&read));
+            let config = put_into(WindowConfig::default(), onto(read, &[PRIMARY, PANEL]));
+            assert_eq!(config.maximized, maximized, "maximised: {maximized}");
+            assert_eq!((config.x, config.y), (Some(normal.x), Some(normal.y)));
+            assert_eq!((config.width, config.height), (normal.width, normal.height));
+            assert!(!config.center);
+        }
+    }
+
+    /// #1086: a window built maximised has the screen's corner, never the place put back,
+    /// and putting it back to the pixel took its maximise away on Windows. It is moved
+    /// only where it was maximised over another screen; a normal window wherever it is
+    /// more than a pixel off.
+    #[test]
+    fn a_maximised_window_is_moved_only_off_the_wrong_screen() {
+        let put = (1960.0, 200.0);
+        let primary = Some((0.0, 0.0, 1920.0, 1080.0));
+        let panel = Some((1920.0, 0.0, 2880.0, 1800.0));
+        assert!(!moves(put, (1912.0, -8.0), true, panel), "on its screen");
+        assert!(moves(put, (-8.0, -8.0), true, primary), "on the wrong one");
+        assert!(
+            !moves(put, (-8.0, -8.0), true, None),
+            "a screen nobody can say"
+        );
+        assert!(!moves(put, (1960.5, 200.0), false, panel));
+        assert!(moves(put, (980.0, 100.0), false, primary));
+    }
+
+    /// Nothing moves or sizes one of the app's windows but `moved_as_it_is`, which keeps
+    /// it maximised: tao on Windows takes the maximise off a window it moves or sizes, and a
+    /// call that forgets is a window that comes back normal (#1086). Read off the source
+    /// for the same reason as the tests above.
+    #[test]
+    fn nothing_moves_a_window_but_moved_as_it_is() {
+        // The quick-add window is never maximised (`maximizable(false)`), and a popup's
+        // views are webviews inside a window, not windows.
+        let excused = ["quick_add.rs", "extensions/popup.rs"];
+        let calls = [".set_position(", ".set_size(", ".set_outer_position("];
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let mut sources = vec![root.clone()];
+        let mut found = Vec::new();
+        while let Some(at) = sources.pop() {
+            for entry in std::fs::read_dir(&at)
+                .expect("the crate's source")
+                .flatten()
+            {
+                let path = entry.path();
+                if path.is_dir() {
+                    sources.push(path);
+                    continue;
+                }
+                let name = path
+                    .strip_prefix(&root)
+                    .expect("under the source")
+                    .to_string_lossy()
+                    .replace('\\', "/");
+                if excused.contains(&&*name) {
+                    continue;
+                }
+                let text = std::fs::read_to_string(&path).unwrap_or_default();
+                let code = text.split("mod tests {").next().unwrap_or("");
+                for (at, line) in code.lines().enumerate() {
+                    let line = line.trim_start();
+                    if !line.starts_with("//") && calls.iter().any(|call| line.contains(call)) {
+                        found.push(format!("{name}:{}", at + 1));
+                    }
+                }
+            }
+        }
+        let inside_moved = found
+            .iter()
+            .filter(|at| at.starts_with("placement.rs:"))
+            .count();
+        found.retain(|at| !at.starts_with("placement.rs:"));
+        assert_eq!(
+            inside_moved, 1,
+            "placement.rs moves a window past `moved_as_it_is`"
+        );
+        assert!(
+            found.is_empty(),
+            "a window moved past `moved_as_it_is`: {found:?}"
+        );
     }
 }

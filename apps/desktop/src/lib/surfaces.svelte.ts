@@ -274,6 +274,13 @@ export const joinPending = latched(() => import('./JoinPending.svelte'))
  *  says it; see RenameNotice.svelte. */
 export const renameNotice = latched(() => import('./RenameNotice.svelte'))
 
+/** The line that says a Mac's AI keys are typed again (#1090), fetched only by a Mac
+ *  that had some; see ai/keys-moved.svelte.ts. */
+export const keysMovedNotice = latched(() => {
+  if (__EVEN_PLUGIN__) throw new Error('no AI keys in the Even Realities plugin')
+  return import('./ai/KeysMoved.svelte')
+})
+
 /** What the app menu's rows are built out of: every command in the app, named, asked
  *  whether it may run, with the export list and the shortcut hints beside them. Not a
  *  component but the same bargain - nothing of it is worth a byte before somebody
@@ -320,12 +327,14 @@ export const syncMark = latched(() =>
  *  SpacePicker.svelte and space-picker.svelte.ts. */
 export const spacePickerDialog = latched(() => import('./SpacePicker.svelte'))
 
-/** Every tab of the space as cards (issue #331), fetched with the first press. */
-export const tabOverviewSheet = latched(() => import('./TabOverview.svelte'))
-export const tabOverview = $state({ open: false })
+/** Every tab as a window on a canvas, Alt Alt (issue #331): the layer, fetched with the
+ *  first ask, and whether it is wanted. `out` is the tabs whose window is away from the
+ *  strip, which the strip leaves a gap for; see overview/Overview.svelte. */
+export const tabOverviewLayer = latched(() => import('./overview/Overview.svelte'))
+export const tabOverview = $state<{ open: boolean; out: string[] }>({ open: false, out: [] })
 
 export function toggleTabOverview(): void {
-  void tabOverviewSheet.ask()
+  void tabOverviewLayer.ask()
   tabOverview.open = !tabOverview.open
 }
 

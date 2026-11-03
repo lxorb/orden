@@ -2710,4 +2710,6 @@ export const ha: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS shine umarnin wakilai na wannan wuri',
   '{title}, unread': '{title}, ba a karanta ba',
   '{title}, running': '{title}, yana gudana',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden ba ya ajiye maɓallan AI a cikin keychain na Mac kuma, wanda ke ta neman kalmar sirrinsa. Shigar da maɓallanka kuma ka sake shiga ChatGPT.',
 }

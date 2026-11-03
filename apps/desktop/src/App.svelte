@@ -53,7 +53,7 @@
     feedbackSheet,
     importSheet,
     spacePickerDialog,
-    tabOverviewSheet,
+    tabOverviewLayer,
     hostPickerDialog,
     paletteDoor,
     paletteWords,
@@ -72,6 +72,7 @@
     firstSpaceDoor,
     menuBarDoor,
     undoToastNotice,
+    keysMovedNotice,
   } from './lib/surfaces.svelte'
   import { canWriteAt, canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
@@ -103,6 +104,15 @@
 
   // The app's new name, on the one launch that says it.
   if (renamed.showing) void renameNotice.ask()
+  // A Mac's AI keys, typed once more now that the keychain is not asked (#1090): checked
+  // after the first paint, and the card fetched only where there is something to say.
+  if (isDesktop && !__EVEN_PLUGIN__) {
+    setTimeout(() => {
+      void import('./lib/ai/keys-moved.svelte')
+        .then(({ keysMoved }) => keysMoved.check())
+        .then((say) => (say ? keysMovedNotice.ask() : undefined))
+    }, 3000)
+  }
 
   /** The editor of the pane that has the focus, which is what every key, every
    *  menu and the palette act on. Each pane leaves its own here; see
@@ -1265,6 +1275,11 @@
         <JoinPending />
       {/await}
     {/if}
+    {#if keysMovedNotice.asked}
+      {#await keysMovedNotice.asked then KeysMoved}
+        <KeysMoved />
+      {/await}
+    {/if}
     {#if renamed.showing && renameNotice.asked}
       {#await renameNotice.asked then RenameNotice}
         <RenameNotice />
@@ -1399,9 +1414,9 @@
     <SpacePicker />
   {/await}
 {/if}
-{#if tabOverviewSheet.asked}
-  {#await tabOverviewSheet.asked then TabOverview}
-    <TabOverview />
+{#if tabOverviewLayer.asked}
+  {#await tabOverviewLayer.asked then Overview}
+    <Overview />
   {/await}
 {/if}
 {#if hostPickerDialog.asked}

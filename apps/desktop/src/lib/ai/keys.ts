@@ -10,9 +10,10 @@
  *
  *  Three platforms, three stores, one pair of calls:
  *
- *  - The desktop app: the machine's own keychain, through the Rust commands. The
- *    Credential Manager on Windows, the Keychain on macOS, the Secret Service on
- *    Linux. See src-tauri/src/secrets.rs.
+ *  - The desktop app: through the Rust commands, the Credential Manager on Windows and
+ *    the Secret Service on Linux, and on macOS a file of Orden's own, the owner's alone,
+ *    never the keychain, which kept asking for its password (#1090). See
+ *    src-tauri/src/secrets.rs.
  *  - The phone app: `EncryptedSharedPreferences`, which is a file encrypted with a
  *    key held in the phone's hardware Keystore, reached through the activity. See
  *    the Secrets bridge in MainActivity.kt.

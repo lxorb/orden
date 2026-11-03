@@ -2676,4 +2676,6 @@ export const fa: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS دستورالعمل‌های عامل این فضا است',
   '{title}, unread': '{title}، خوانده\u200cنشده',
   '{title}, running': '{title}، در حال اجرا',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden دیگر کلیدهای هوش مصنوعی را در کلیدزنجیر Mac نگه نمی‌دارد، که مدام رمزش را می‌خواست. کلیدهایتان را دوباره وارد کنید و یک بار دیگر به ChatGPT وارد شوید.',
 }

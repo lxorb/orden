@@ -145,6 +145,13 @@ describe('five presses, which Windows reads as Sticky Keys', () => {
 })
 
 describe('the other modifiers', () => {
+  test('answer every second tap, with no burst to wait out', () => {
+    const twice = ['+Alt', '-Alt', '+Alt', '-Alt']
+    expect(play(...twice, 40, ...twice)).toEqual(['Alt', 'Alt'])
+    // Three taps are one double tap and the start of the next.
+    expect(play(...twice, '+Alt', '-Alt')).toEqual(['Alt'])
+  })
+
   test('are taps of their own, and one does not finish another', () => {
     expect(play('+Control', '-Control', '+Control', '-Control')).toEqual(['Control'])
     expect(play('+Alt', '-Alt', '+Alt', '-Alt')).toEqual(['Alt'])

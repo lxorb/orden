@@ -1046,13 +1046,26 @@ function holds(tail: string): boolean {
  *  wears its spark until the reader looks at it (TabMark.svelte, agent-marks.svelte.ts).
  *  Measured 3,481,273.
  *
- *  Raised 2026-11-03, to 3,516,800, for the bug hunt's round one merged into
+ *  Raised 2026-11-03, to 3,482,700, for #331: the top bar's button for the tab overview,
+ *  and the strip leaving a gap where a tab's window is out (Titlebar.svelte, Tabs.svelte).
+ *  Measured 3,482,585, 385 modules.
+ *
+ *  Raised 2026-11-04, to 3,485,100, for #676: a PDF's mark is Lucide's page with "PDF"
+ *  written under it (`typeMark` in file-mark.ts), and what a file was made from is
+ *  decided for every list in one place (`sourceMark` in chosen-icon.ts). Measured
+ *  3,484,939.
+ *
+ *  Raised 2026-11-04, to 3,486,000, for #1090: a Mac told once that its AI keys are typed
+ *  again now the keychain is not asked, checked after the first paint (App.svelte,
+ *  surfaces.svelte.ts). Measured 3,485,824.
+ *
+ *  Raised 2026-11-03, to 3,521,400, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes (a phone's draft kept
  *  until it lands, charts, paste, block commands, links, a thread written down while it
  *  runs), what a base may cost, a tile's move, the sync's scans, and an undo that waits for
  *  every gesture landing, measured together. What could wait went behind a door on the
- *  branches. Measured 3,516,657, 385 modules. */
-const BUDGET = 3_516_800
+ *  branches. Measured 3,521,208, 385 modules. */
+const BUDGET = 3_521_400
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

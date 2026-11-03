@@ -2727,4 +2727,6 @@ export const fil: Dictionary = {
     'Ang AGENTS ay ang mga tagubilin sa agent ng space na ito',
   '{title}, unread': '{title}, hindi pa nababasa',
   '{title}, running': '{title}, tumatakbo',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Hindi na itinatago ng Orden ang mga AI key sa keychain ng Mac, na paulit-ulit na humihingi ng password nito. Ilagay muli ang iyong mga key at mag-sign in muli sa ChatGPT.',
 }

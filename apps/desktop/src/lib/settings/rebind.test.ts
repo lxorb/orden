@@ -158,9 +158,9 @@ describe('closing the pane', () => {
 describe('a modifier tapped twice', () => {
   test('is the key of a row the window runs', () => {
     rebind.listen('app.graph')
-    rebind.tapped('Alt')
+    rebind.tapped('Meta')
 
-    expect(shortcuts.keyFor('app.graph')).toBe('Alt Alt')
+    expect(shortcuts.keyFor('app.graph')).toBe('Meta Meta')
     expect(rebind.listening).toBeNull()
   })
 

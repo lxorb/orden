@@ -2667,4 +2667,6 @@ export const id: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS adalah instruksi agen untuk ruang ini',
   '{title}, unread': '{title}, belum dibaca',
   '{title}, running': '{title}, sedang berjalan',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden tidak lagi menyimpan kunci AI di rantai kunci Mac, yang terus meminta kata sandinya. Masukkan kunci Anda dan masuk ke ChatGPT sekali lagi.',
 }

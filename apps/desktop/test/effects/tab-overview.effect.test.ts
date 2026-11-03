@@ -1,25 +1,25 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** Every tab of the space as a card (issue #331), opened from the palette's row or
- *  Ctrl+Alt+Up: one card per tab of every pane, a web tab's with its page, the arrows walk
- *  the grid, Enter on one goes to it, Escape and the key again put it away. In the jsdom
- *  project because the cards are mounted. */
+/** Every tab as a window on a canvas (issue #331), opened by Alt Alt, the top bar's button
+ *  or the palette's row: one window per tab of every pane, the arrows walk them, Enter
+ *  or a press opens one, Escape and the key again send them home. In the jsdom project
+ *  because the windows are mounted; asked for less movement, so every window is where it
+ *  goes at once and nothing waits on a frame. How it moves is overview/spring.ts's test. */
 
-/** Svelte plays a transition through the Web Animations API, which jsdom has not got. */
-Element.prototype.animate = () =>
-  ({
-    cancel: () => undefined,
-    finished: Promise.resolve(),
-    effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
-  }) as unknown as Animation
+window.matchMedia = ((query: string) => ({
+  matches: query.includes('reduce'),
+  media: query,
+  addEventListener: () => undefined,
+  removeEventListener: () => undefined,
+})) as unknown as typeof window.matchMedia
 Element.prototype.scrollIntoView = () => undefined
 
-const { default: TabOverview } = await import('../../src/lib/TabOverview.svelte')
+const { default: Overview } = await import('../../src/lib/overview/Overview.svelte')
 const { tabOverview } = await import('../../src/lib/surfaces.svelte')
 const { appCommands } = await import('../../src/lib/commands')
 const { overlays } = await import('../../src/lib/overlays')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
+const { runTap } = await import('../../src/lib/tapped')
 const { pages } = await import('../../src/lib/web-tab/pages.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 
@@ -29,9 +29,9 @@ beforeEach(() => {
   workspace.panes.collapse()
   workspace.tabs = []
   for (const name of ['One', 'Two', 'Three']) workspace.openBlank(name, `# ${name}`)
-  // A second pane, whose tab is a card too.
+  // A second pane, whose tab is a window too.
   workspace.split('row')
-  const made = mount(TabOverview, { target: document.body })
+  const made = mount(Overview, { target: document.body })
   close = () => void unmount(made, { outro: false })
 })
 
@@ -42,11 +42,11 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-const cards = () => [...document.querySelectorAll<HTMLButtonElement>('.nib-tile')]
+const windows = () => [...document.querySelectorAll<HTMLButtonElement>('.window')]
+const layer = () => document.querySelector('.canvas')
 
-/** A key, pressed where the keyboard is. */
-function press(key: string, held: KeyboardEventInit = {}): KeyboardEvent {
-  const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...held })
+function press(key: string): KeyboardEvent {
+  const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
   document.activeElement?.dispatchEvent(event)
   flushSync()
   return event
@@ -60,71 +60,75 @@ async function opened() {
   await tick()
 }
 
-test('the palette’s row shows one card per tab, Enter on one goes to it and puts them away', async () => {
+test('the palette’s row shows one window per tab, the strip leaves them out, the keyboard on the one in front', async () => {
   await opened()
-  expect(cards().map((one) => one.textContent.trim())).toEqual(['One', 'Two', 'Three', 'Three'])
-  // The keyboard starts on the tab being read.
-  expect(document.activeElement).toBe(document.querySelector('.nib-tile.is-on'))
+  expect(windows().map((one) => one.getAttribute('aria-label'))).toEqual([
+    'One',
+    'Two',
+    'Three',
+    'Three',
+  ])
+  expect(tabOverview.out).toHaveLength(4)
+  expect(document.activeElement).toBe(document.querySelector('.window[aria-current="page"]'))
+})
 
-  cards()[0]?.focus()
-  press('Enter')
+test('a press on a window opens its tab, and every window goes home', async () => {
+  await opened()
+  windows()[0]?.click()
+  flushSync()
+  await tick()
   expect(workspace.activeTabId).toBe(workspace.tabs[0]?.id)
   expect(tabOverview.open).toBe(false)
+  expect(layer()).toBe(null)
+  expect(tabOverview.out).toEqual([])
   expect(overlays.depth).toBe(0)
 })
 
-test('Down and Up walk a row of the grid at a time, and Right a tile', async () => {
-  // Two tiles to a row: jsdom lays nothing out, so each tile says which row it is on.
-  vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: Element) {
-    return Math.floor(cards().indexOf(this as HTMLButtonElement) / 2)
-  })
+test('the arrows walk to another window, which opens as a press on it does', async () => {
   await opened()
-  cards()[0]?.focus()
-
-  press('ArrowDown')
-  expect(document.activeElement).toBe(cards()[2])
+  windows()[0]?.focus()
   press('ArrowRight')
-  expect(document.activeElement).toBe(cards()[3])
-  press('ArrowUp')
-  expect(document.activeElement).toBe(cards()[1])
+  const walked = document.activeElement as HTMLButtonElement | null
+  expect(walked).not.toBe(windows()[0])
+  expect(windows()).toContain(walked)
+  // Enter on a button is its click, in a browser; jsdom has no default actions.
+  const id = workspace.tabs.find((one) => one.shown === walked?.getAttribute('aria-label'))?.id
+  walked?.click()
+  flushSync()
+  expect(workspace.active?.shown).toBe(walked?.getAttribute('aria-label'))
+  expect(id).toBeTruthy()
 })
 
-test('a web tab’s card shows its page as it was left, and a note’s shows none', async () => {
-  const page = workspace.openPage('https://example.com/') ?? ''
-  // jsdom cannot draw the still, so the photograph itself stands in; see thumb.ts.
-  pages.of(page).shot = 'data:image/png;base64,AA=='
-  await opened()
-
-  await vi.waitFor(() => expect(cards().at(-1)?.querySelector('img')).not.toBe(null))
-  expect(cards().at(-1)?.querySelector('img')?.getAttribute('src')).toBe(pages.of(page).shot)
-  expect(cards()[0]?.querySelector('img')).toBe(null)
-})
-
-test('Escape puts it away and goes nowhere', async () => {
+test('Escape sends them home and goes nowhere', async () => {
   await opened()
   const before = workspace.activeTabId
-
   expect(overlays.escape()).toBe(true)
   flushSync()
+  await tick()
   expect(tabOverview.open).toBe(false)
+  expect(layer()).toBe(null)
   expect(workspace.activeTabId).toBe(before)
 })
 
-test('Ctrl+Alt+Up opens it, and pressed on a card puts it away again', async () => {
+test('Alt tapped twice opens it, and again puts it away', async () => {
   const context = { palette: () => undefined, fullscreen: () => undefined }
-  const up = { code: 'ArrowUp', ctrlKey: true, altKey: true }
-
-  expect(shortcuts.handle(new KeyboardEvent('keydown', { key: 'ArrowUp', ...up }), context)).toBe(
-    true,
-  )
+  expect(runTap('Alt', context)).toBe(true)
   flushSync()
   await tick()
-  expect(cards()).toHaveLength(4)
+  expect(windows()).toHaveLength(4)
 
-  // On a card the chord is not the list's: it goes on to the window.
-  const again = press('ArrowUp', up)
-  expect(again.defaultPrevented).toBe(false)
-  expect(shortcuts.handle(again, context)).toBe(true)
+  expect(runTap('Alt', context)).toBe(true)
   flushSync()
-  expect(tabOverview.open).toBe(false)
+  await tick()
+  expect(layer()).toBe(null)
+})
+
+test('a web tab’s window shows its page as it was left, a tab nowhere in the file list is dashed', async () => {
+  const page = workspace.openPage('https://example.com/') ?? ''
+  pages.of(page).shot = 'data:image/png;base64,AA=='
+  await opened()
+  const web = windows().find((one) => one.querySelector('img'))
+  expect(web?.querySelector('img')?.getAttribute('src')).toBe(pages.of(page).shot)
+  // Every tab here is a draft or a page nobody kept.
+  expect(windows().every((one) => one.classList.contains('unsaved'))).toBe(true)
 })

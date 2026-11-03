@@ -2730,4 +2730,6 @@ export const de: Dictionary = {
     'AGENTS sind die Agenten-Anweisungen dieses Bereichs',
   '{title}, unread': '{title}, ungelesen',
   '{title}, running': '{title}, läuft',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden speichert KI-Schlüssel nicht mehr im Schlüsselbund des Mac, der immer wieder nach seinem Passwort fragte. Gib deine Schlüssel noch einmal ein und melde dich erneut bei ChatGPT an.',
 }
