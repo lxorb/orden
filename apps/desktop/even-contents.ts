@@ -377,10 +377,17 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  the window's corners as a setting beside the theme (corners.ts) and the Tab preview
  *  delay (tab-strip/preview-delay.svelte.ts), with their six sentences in every
  *  language. Measured 5,845,725 and 962,864.
+ *
+ *  The code raised on 2026-11-04, to 5,846,200, and the catalogues to 964,400, for
+ *  #1089: every AI chat in one state moved by one machine (ai/session-state.ts), the
+ *  rows that show it with their model's logo, Pin and Archive (ai/sidebar/ChatRow.svelte),
+ *  the slide to the next chat (ai/sidebar/slide.ts) and the question before a costly
+ *  switch of model (ai/switch-cost.ts), in nine strings in every language. Measured
+ *  5,846,057 and 964,246.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_845_900,
-  catalogues: 963_000,
+  code: 5_846_200,
+  catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,
