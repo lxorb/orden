@@ -14,7 +14,7 @@
 
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import type { AgentAnswer } from '../../automation/caller'
-import { movedIn, movedPath } from '../../automation/acts'
+import { movedIn, movedPath, ONTO_INSTRUCTIONS, ontoInstructions } from '../../automation/acts'
 import { isMarkdownPath, notePath, relativeTo } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { entryAt } from '../../tree-edits'
@@ -142,6 +142,10 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
     throw new Refused('exists', `${to} is already there, and nothing is written over`)
   }
 
+  if (ontoInstructions(place.space.root, from, to)) {
+    throw new Refused('bad_arguments', `${to} is this space's instructions: ${ONTO_INSTRUCTIONS}`)
+  }
+
   const source = onDisk(place, from)
   writableAt(place, source)
 
@@ -167,15 +171,19 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
   const index = await indexOf(place)
 
   // Under way until it is told; see `move` in workspace.svelte.ts.
-  await moving(to, async () => {
-    await invoke('rename_note', { from, to })
-    // A rewrite that fails leaves the note moved all the same, and told so; see
-    // `retargetMoved` in workspace.svelte.ts.
-    await index
-      .retarget(from, to, place.space.root, undefined, { moved: true })
-      .catch(() => undefined)
-    await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
-  })
+  await moving(to, () =>
+    // After whatever write of a note open in it is in the air; see `holdingUnder` in
+    // workspace/saving.svelte.ts.
+    workspace.holdingUnder(from, async () => {
+      await invoke('rename_note', { from, to })
+      // A rewrite that fails leaves the note moved all the same, and told so; see
+      // `retargetMoved` in workspace.svelte.ts.
+      await index
+        .retarget(from, to, place.space.root, undefined, { moved: true })
+        .catch(() => undefined)
+      await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
+    }),
+  )
 }
 
 export async function trashFile(call: Call): Promise<AgentAnswer> {

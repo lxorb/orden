@@ -21,6 +21,7 @@
 import { history, invertedEffects, isolateHistory, redo, undo } from '@codemirror/commands'
 import {
   ChangeSet,
+  type ChangeSpec,
   type EditorSelection,
   EditorState,
   type Extension,
@@ -33,7 +34,7 @@ import {
 } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
 import { fold } from '@orden/rooms/fold'
-import { external } from './external'
+import { external, isExternal } from './external'
 
 /** As much of a view as a document needs: the state it is holding, and a way to
  *  hand it a change. A CodeMirror `EditorView` is one; so is a state with a
@@ -140,9 +141,68 @@ const marksKept = invertedEffects.of((transaction) =>
   ),
 )
 
+const leads = (unit: number) => unit >= 0xd800 && unit <= 0xdbff
+const trails = (unit: number) => unit >= 0xdc00 && unit <= 0xdfff
+
+/** Whether `at` falls between the two halves of one character. */
+function parted(doc: Text, at: number): boolean {
+  if (at <= 0 || at >= doc.length) return false
+  const halves = doc.sliceString(at - 1, at + 1)
+  return leads(halves.charCodeAt(0)) && trails(halves.charCodeAt(1))
+}
+
+/** No change makes half a character (#545): by parting a pair, or by writing a half.
+ *
+ *  A position between the two halves of an emoji is one nothing should offer, and
+ *  anything that reckons in columns or offsets still can. The half left over cannot
+ *  reach a disk or another device as anything but U+FFFD, since what travels is UTF-8,
+ *  and a room's Yjs text refuses to be cut there at all. So what is typed between the
+ *  halves goes after the character, what took one half takes both, and a half among
+ *  what was written does not go in. A change that leaves a whole character, a different
+ *  one, is not this and is left alone; nor is a half already in the words beside it,
+ *  which this change did not make.
+ *
+ *  As a change after the change rather than instead of it, which keeps whatever else
+ *  the transaction says and maps the caret through. Runs after a mode's own filters,
+ *  which come later in the editor's extensions (see `filterTransaction` in the library):
+ *  the hidden front matter's guard has already moved an edit off the fence by here. And
+ *  never on words from outside, which a view has to hold just as the document does. */
+const wholeCharacters = EditorState.transactionFilter.of((made) => {
+  if (!made.docChanged || isExternal(made)) return made
+
+  const before = made.startState.doc
+  const doc = made.newDoc
+  const mended: ChangeSpec[] = []
+  made.changes.iterChanges((fromA, toA, fromB, toB) => {
+    const first = parted(before, fromA) && !parted(doc, fromB)
+    const second = parted(before, toA) && !parted(doc, toB)
+
+    if (first && second && fromA === toA) {
+      mended.push({ from: fromB, insert: doc.sliceString(toB, toB + 1) })
+      mended.push({ from: toB, to: toB + 1 })
+    } else {
+      if (first) mended.push({ from: fromB - 1, to: fromB })
+      if (second) mended.push({ from: toB, to: toB + 1 })
+    }
+
+    // What was written, with a unit either side to say whether its ends are whole.
+    const start = Math.max(fromB - 1, 0)
+    const words = doc.sliceString(start, Math.min(toB + 1, doc.length))
+    for (let at = fromB; at < toB; at++) {
+      const unit = words.charCodeAt(at - start)
+      const half = leads(unit)
+        ? !trails(words.charCodeAt(at - start + 1))
+        : trails(unit) && !leads(words.charCodeAt(at - start - 1))
+      if (half) mended.push({ from: at, to: at + 1 })
+    }
+  })
+
+  return mended.length ? [made, { changes: mended, sequential: true }] : made
+})
+
 /** A document's own state: words and a history, nothing that draws. */
 function documentState(doc: string | Text): EditorState {
-  return EditorState.create({ doc, extensions: [history(), marksKept] })
+  return EditorState.create({ doc, extensions: [history(), marksKept, wholeCharacters] })
 }
 
 /** A change, as whoever listens to a document hears it: what changed, from which
@@ -294,6 +354,8 @@ export class SharedDoc {
       const made = this.state.update({
         changes: change,
         annotations: Transaction.addToHistory.of(false),
+        // The next note's words as they are, which is what the state below is built on.
+        filter: false,
       })
 
       this.carry(made.changes, null)
@@ -314,6 +376,12 @@ export class SharedDoc {
    *  Turning it into a string is the caller's decision, and costs a pass. */
   get text(): Text {
     return this.state.doc
+  }
+
+  /** The words a room has, for whatever `onLocal` tells it: these, and whatever it
+   *  said that is held back while somebody composes. See `held`. */
+  get roomWords(): Text {
+    return this.held ? this.held.apply(this.state.doc) : this.state.doc
   }
 
   /** How many views are on it. Two is the same note in two panes. */
@@ -401,7 +469,9 @@ export class SharedDoc {
    *  the document too, so undoing this edit later comes back to where it was
    *  made rather than to wherever another pane happens to be. */
   local(changes: ChangeSet, selection: EditorSelection, from: DocView) {
-    const made = this.state.update({ changes, selection })
+    // As the view made it, which its own filters have already been through: the two
+    // must not come to differ.
+    const made = this.state.update({ changes, selection, filter: false })
     this.state = made.state
 
     this.did()
@@ -508,6 +578,8 @@ export class SharedDoc {
     const made = this.state.update({
       changes,
       annotations: Transaction.addToHistory.of(false),
+      // What the room's words are is not this document's to mend.
+      filter: false,
     })
 
     this.state = made.state
@@ -741,6 +813,7 @@ export class SharedDoc {
 export function sharing(): Extension {
   return [
     sharedField,
+    wholeCharacters,
     EditorState.transactionExtender.of((transaction) =>
       sharedOf(transaction.startState) ? { annotations: Transaction.addToHistory.of(false) } : null,
     ),

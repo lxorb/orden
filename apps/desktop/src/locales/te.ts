@@ -1463,6 +1463,7 @@ export const te: Dictionary = {
   'The note': 'నోట్',
   '{space} panel': '{space} ప్యానెల్',
   'Panel width': 'ప్యానెల్ వెడల్పు',
+  'Pane size': 'పేన్ పరిమాణం',
   Values: 'విలువలు',
   Pages: 'పేజీలు',
   'Page {number} of {count}': '{count}లో {number} పేజీ',
@@ -2521,6 +2522,8 @@ export const te: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden సొంత టైటిల్ బార్, లేదా మీ సిస్టమ్ విండో ఫ్రేమ్.',
   'How large the text of notes is.': 'నోట్‌ల టెక్స్ట్ ఎంత పెద్దదో అది.',
+  'How large all of Orden is drawn on this device.':
+    'ఈ పరికరంలో Orden మొత్తం ఎంత పెద్దగా కనిపిస్తుంది.',
   'The space between the lines of a note.': 'నోట్ లైన్‌ల మధ్య ఖాళీ.',
   'How wide a line of a note grows before it wraps.':
     'నోట్ లైన్ చుట్టుకునే ముందు ఎంత వెడల్పు పెరుగుతుందో అది.',
@@ -2674,6 +2677,8 @@ export const te: Dictionary = {
   'Move the chat': 'చాట్‌ను తరలించు',
   'Only the file': 'ఫైల్ మాత్రమే',
   'Trust this space again': 'ఈ స్పేస్‌ను మళ్లీ నమ్మండి',
+  'Agent instructions': 'ఏజెంట్ సూచనలు',
+  "AGENTS is this space's agent instructions": 'AGENTS ఈ స్పేస్ యొక్క ఏజెంట్ సూచనలు',
   '{title}, unread': '{title}, చదవనిది',
   '{title}, running': '{title}, నడుస్తోంది',
 }

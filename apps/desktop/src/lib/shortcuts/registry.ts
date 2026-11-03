@@ -1208,7 +1208,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-=',
-    run: () => modes.stepZoom(1),
+    run: () => workspace.zoomPage('in') || modes.stepZoom(1),
   },
   {
     id: 'app.zoom-out',
@@ -1216,7 +1216,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod--',
-    run: () => modes.stepZoom(-1),
+    run: () => workspace.zoomPage('out') || modes.stepZoom(-1),
   },
   {
     // A digit, which is the one kind of key a layout puts behind Shift: on AZERTY the
@@ -1229,7 +1229,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-0',
-    run: () => modes.resetZoom(),
+    run: () => workspace.zoomPage('reset') || modes.resetZoom(),
   },
 ]
 
@@ -1593,6 +1593,11 @@ const WEB_ENTRIES: Shortcut[] = (
     ['web.fresh', () => t('Hard reload'), 'Mod-Shift-r', undefined],
     ['web.fresh.alt', () => t('Hard reload'), 'Mod-F5', null],
     ['web.stop', () => t('Stop'), 'Escape', undefined],
+    // Chrome's on a Mac, where Cmd and a bracket is a note's indent and `app.back` lives one
+    // modifier over. A row while a page is in front; see `reloadRows` in
+    // native-menu-bar.svelte.ts. Everywhere else `app.back` is already Chrome's.
+    ['web.back', () => t('Back'), null, 'Mod-['],
+    ['web.forward', () => t('Forward'), null, 'Mod-]'],
   ] as const
 ).map(([id, label, key, mac]) => ({
   id,

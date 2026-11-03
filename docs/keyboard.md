@@ -109,8 +109,8 @@ Nine, in the order the window draws them, which is the order Tab already walks:
 | `list` | whichever panel is open, under them |
 | `foot` | the row under it: the account, the theme, the settings |
 | `tabs` | the strip of notes |
+| `notices` | the cards over the note's foot - an Undo, a warning - while one is up. Ahead of the note in the page, since Tab cannot leave a note: Shift+F6 from the note reaches them, and Tab from the strip |
 | `editor` | the note |
-| `notices` | the cards over the note's foot - an Undo, a warning - while one is up |
 | `status` | the bar under it, over a note |
 | `right` | the other side of the window, while it is showing |
 

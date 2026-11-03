@@ -8,7 +8,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { readFrame } from '../src/hub/frames'
-import { call, signIn, type TestEnv, testEnv } from './harness'
+import { call, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 import { computer, connect, hub, type Hubs, hubs } from './hub-fakes'
 
 const T0 = Date.UTC(2026, 8, 30, 12)
@@ -150,6 +150,45 @@ describe('ending a device', () => {
 
     await call(env, '/v1/auth/signout', { method: 'POST', token })
     expect(socket.closedWith?.code).toBe(1008)
+  })
+
+  /** A guest's sign-in has no id and no device row, so its socket is found by the hash
+   *  its token is kept under, which the door says it came with; see hub/door.ts. */
+  test('is what a guest signing out does, to that one sign-in', async () => {
+    const owner = await signIn(env, 'host@example.com')
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Shared' } })).json
+      .space.id
+    const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
+      method: 'PUT',
+      token: owner,
+      body: { role: 'read', mode: 'open' },
+    })
+    const link = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
+    const joined = await call(env, `/v1/join/${link}`, {
+      method: 'POST',
+      body: { device: 'Windows' },
+    })
+    const guest: string = joined.json.guest.id
+    const token: string = joined.json.token
+
+    const hub = running.of(guest).hub
+    const socket = connect(hub, {
+      device: 'device-guest',
+      who: guest,
+      guest: true,
+      session: await sha256(token),
+    })
+    const elsewhere = connect(hub, {
+      device: 'device-other',
+      who: guest,
+      guest: true,
+      session: await sha256('another sign-in'),
+    })
+
+    await call(env, '/v1/auth/signout', { method: 'POST', token })
+
+    expect(socket.closedWith?.code).toBe(1008)
+    expect(elsewhere.closedWith).toBe(null)
   })
 
   test('is unknown for a device the account does not have', async () => {

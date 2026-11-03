@@ -42,6 +42,8 @@
     current?: string | undefined
     /** The names already beside it, its own left out; see naming.ts. */
     taken?: readonly string[]
+    /** The space a refused name is told about, for the way to its settings. */
+    space?: string | undefined
     /** The caret goes to the end rather than the name arriving selected: a name
      *  that is settled and waiting for a title after it. */
     appending?: boolean
@@ -60,6 +62,7 @@
     extension = '',
     current,
     taken = [],
+    space,
     appending = false,
     oncommit,
     oncancel,
@@ -74,7 +77,7 @@
   // svelte-ignore state_referenced_locally
   let typed = $state(value)
 
-  const fault = $derived(nameFault({ typed, extension, taken }))
+  const fault = $derived(nameFault({ typed, extension, taken, current }))
 
   /** Whether the name will not do. Not the same as an empty field: a name nobody
    *  has finished typing is not a mistake. Bound out so the row can wear the
@@ -107,6 +110,8 @@
         return t('Windows keeps this name for itself')
       case 'taken':
         return t('That name is taken')
+      case 'agents':
+        return t("AGENTS is this space's agent instructions")
       case 'empty':
       case null:
         return null
@@ -119,13 +124,31 @@
    *  fire the blur that would commit or restore a second time. */
   let settled = false
 
-  function leave() {
-    if (settled) return
+  function leave(event?: FocusEvent) {
+    // Between the name and its hint the field is still up; see below.
+    if (settled || (event?.relatedTarget && event.relatedTarget === hint)) return
     settled = true
 
+    // Read first: what the host hands this field goes with the row a commit ends.
+    const told = fault === 'agents' ? space : undefined
     const name = nameToCommit({ typed, extension, taken, was: value, current })
     if (name === null) oncancel()
     else oncommit(name)
+    // The field is gone and took its bubble with it, so the way to the setting goes on.
+    if (told) void refused().then((one) => one.reservedName.tell(told))
+  }
+
+  const refused = () => import('./reserved-name.svelte')
+
+  /** The field the keyboard comes back to from the hint, and the hint itself. */
+  let field = $state<HTMLInputElement>()
+  let hint = $state<HTMLButtonElement>()
+
+  /** The hint pressed: the name goes as it does on Escape, and the setting opens. */
+  function follow() {
+    const told = space
+    escape()
+    if (told) void refused().then((one) => one.openInstructions(told))
   }
 
   function escape() {
@@ -160,6 +183,7 @@
     enterkeyhint="done"
     aria-label={t('Name')}
     aria-invalid={amiss}
+    bind:this={field}
     use:caret
     onblur={leave}
     onkeydown={(event) => {
@@ -174,11 +198,49 @@
         escape()
       } else if (event.key === 'Tab') {
         event.preventDefault()
+        // The one bubble with something to press, and Tab is how the keyboard presses it.
+        hint?.focus()
       }
     }}
   />
 
-  {#if reason}
+  {#if fault === 'agents' && space}
+    <!-- The same bubble, as the way to the setting. Its press takes no focus from the
+         name, because a blur there would end the field before the press lands. -->
+    <span
+      class="nib-bubble is-pressable reason held"
+      aria-live="polite"
+      transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}
+    >
+      <button
+        bind:this={hint}
+        type="button"
+        class="go"
+        onpointerdown={(event) => event.preventDefault()}
+        onclick={(event) => {
+          event.stopPropagation()
+          follow()
+        }}
+        onblur={(event) => {
+          if (event.relatedTarget !== field) leave()
+        }}
+        onkeydown={(event) => {
+          // Kept off the list around it, whose own keys these are otherwise.
+          event.stopPropagation()
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            follow()
+          } else if (event.key === 'Escape') {
+            event.preventDefault()
+            escape()
+          } else if (event.key === 'Tab') {
+            event.preventDefault()
+            field?.focus()
+          }
+        }}>{reason}</button
+      >
+    </span>
+  {:else if reason}
     <span
       class="nib-bubble reason"
       aria-live="polite"
@@ -234,5 +296,23 @@
     top: calc(100% + 4px);
     inset-inline-start: 0;
     z-index: var(--z-popover);
+  }
+
+  /* The one that goes somewhere, and reads as a link does. Held to the row's width, as a
+     longer sentence than the rest would otherwise leave the side of the window. */
+  .held {
+    inset-inline-end: 0;
+    width: auto;
+  }
+
+  .go {
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    text-decoration: underline;
+    cursor: pointer;
   }
 </style>

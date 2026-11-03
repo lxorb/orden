@@ -26,6 +26,7 @@ function hands(): { asked: string[]; hands: Hands } {
       openGraph: say('graph'),
       showSetting: say('setting'),
       make: say('make'),
+      agents: say('agents'),
       goto: say('goto'),
       openHost: say('host'),
       connect: say('connect'),
@@ -255,5 +256,13 @@ describe('a message in a chat', () => {
       'message ["/s/Team/thesis.chat","01K6Z8",{}]',
       'message ["/s/Team/thesis.chat","01K6Z8",{"activate":false,"beside":true}]',
     ])
+  })
+})
+
+describe('the row for a name a note cannot have', () => {
+  test('goes to the setting and shuts the palette', () => {
+    const { asked, hands: given } = hands()
+    expect(choose({ kind: 'agents' }, undefined, given)).toBe('close')
+    expect(asked).toEqual(['agents []'])
   })
 })

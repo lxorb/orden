@@ -25,6 +25,9 @@ export const ICONS: Record<string, string> = {
   // already a sun, and adjusting things is what this pane is for.
   general:
     'M2 4h2.4M7.6 4H14M2 8h4.4M9.6 8H14M2 12h6.4M11.6 12H14M4.4 4a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M6.4 8a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M8.4 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0',
+  // The space's own mark: a tile with a line of words in it.
+  space:
+    'M3 2.5h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5zM5 6h6M5 9h4',
   editor: 'M2 12.6l1.6-.4 8-8a1.4 1.4 0 0 0-2-2l-8 8zM2 14.2h12',
   // Four tiles, one of them a plus: the kinds a new tab offers, and the one being made.
   kinds: 'M2.5 2.5h4.5v4.5H2.5zM9 2.5h4.5v4.5H9zM2.5 9h4.5v4.5H2.5zM11.25 9v4.5M9 11.25h4.5',
@@ -76,6 +79,9 @@ export function sectionGroups(): Item[][] {
   return [
     [
       { id: 'general', label: t('General') },
+      // What belongs to the space in front rather than to this reader; one field so far,
+      // its agent instructions. Not on the glasses. See SpacePane.svelte.
+      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'space' as Section, label: t('Space') }]),
       { id: 'editor', label: t('Editor') },
       // Which kinds of tab anything offers to make; see kind-choice.ts.
       { id: 'kinds', label: t('Note types') },

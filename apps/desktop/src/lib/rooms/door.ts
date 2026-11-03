@@ -237,10 +237,11 @@ export class RoomDoor {
     this.socket.send(this.question())
 
     // A room that was asleep has forgotten who is here, and this device has not:
-    // saying it again is what puts the others' view of us back.
-    if (this.awareness.getLocalState()) {
-      this.socket.send(awarenessUpdate(this.awareness, [this.doc.clientID]))
-    }
+    // saying it again is what puts the others' view of us back. At a clock of its own,
+    // which goes out through the listener above: whoever stayed in the room heard this
+    // device leave at the clock it last said, and the protocol refuses that clock again.
+    const here = this.awareness.getLocalState()
+    if (here) this.awareness.setLocalState(here)
   }
 
   /** The connection went, and the code says whether it is coming back.

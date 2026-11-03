@@ -12,6 +12,7 @@ import {
   share,
   trustAgain,
 } from './sharing.svelte'
+import { settings } from './settings.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
 /** Putting a space away, fetched with the press; see space-archive.ts. */
@@ -124,6 +125,10 @@ export function spaceMenu(space: Space): MenuEntry[] {
   return trim([
     ...(theirs ? [] : [{ label: t('Rename'), run: () => void renameSpace(space) }]),
     { label: t('Choose an icon'), run: () => iconChoice.space(space.id) },
+    // What is the space's own, like its agent instructions; see settings/SpacePane.svelte.
+    ...(__EVEN_PLUGIN__
+      ? []
+      : [{ label: t('Settings'), run: () => settings.show('space', space.root) }]),
     ...(canShare(space) ? [{ label: t('Share'), run: () => void shareSpace(space) }] : []),
     // Beside it, because it is the same question about the same folder: who
     // else may read this.
@@ -207,7 +212,7 @@ export async function publishSpace(space: Space) {
 /** Deleting a space, or letting go of one somebody shared, which is the same
  *  gesture and a different sentence: a space that is not yours is not yours to
  *  delete, and leaving it takes its notes off this machine and nowhere else. */
-async function deleteSpace(space: Space) {
+export async function deleteSpace(space: Space) {
   // One answer for the dialog and for `forget`. Not known yet, the account is asked
   // once; still unknown, it is a leave, and nothing is deleted from the account.
   let role = roleOf(space.root)
@@ -229,6 +234,8 @@ async function deleteSpace(space: Space) {
   })
 
   if (!sure) return
+  const { mayEndSpace } = await import('./workspace/space-changes')
+  if (!(await mayEndSpace(workspace, space.id))) return
 
   const root = space.root
   await workspace.deleteSpace(space.id)

@@ -962,12 +962,50 @@ function holds(tail: string): boolean {
  *  unstable at 9163eeb16: unstable's raises were measured without them. Measured
  *  3,430,841.
  *
+ *  Raised 2026-11-02, to 3,434,900, for #545: no change makes half a character
+ *  (`wholeCharacters` in shared.ts), and a room's text is only cut between characters
+ *  (`apply` in rooms/bind.ts). Measured 3,434,821.
+ *
+ *  Raised 2026-11-02, to 3,438,700, for #613 and #614: a move sync makes waits for the
+ *  write in the air without waiting on what waits for the pass (`holdingWrites` in
+ *  saving.svelte.ts), and an agent hears a write the disk road left alone, its steps
+ *  kept and a file's other line endings with them. Measured 3,438,266.
+ *
+ *  Raised 2026-11-02, to 3,437,900, for #523: a sidebar toggle hands Tab into what it
+ *  opened, a row or a tab closed from the keyboard keeps it past the caret rule (caret.ts),
+ *  and the notices are a region F6 walks. Measured 3,437,265, from 3,430,841.
+ *
+ *  Raised 2026-11-02, to 3,436,000, for #790, #791 and #397: a page whose process died is
+ *  offered again, the zoom and step rows over a page, and a host's two spellings kept apart.
+ *  The rule for reading a name that is not ASCII is not in it: web-tab/idn.ts arrives with
+ *  the web bar. Measured 3,435,406.
+ *
+ *  Raised 2026-11-02, to 3,433,600, for #483: on Windows every window writes what it owes
+ *  before the installer ends the app, and closing one window leaves the install to the
+ *  last (`installStaged`, `handOn`, `settledForInstaller` in updater.ts). Measured
+ *  3,433,239, from about 3,431,283 at 971ae9834.
+ *
+ *  Raised 2026-11-02, to 3,433,500, for #680: the interface's zoom in Settings, and the row
+ *  taking a drag on `dragenter` (#427). Measured 3,432,626.
+ *
+ *  Raised 2026-11-02, to 3,440,900, for the space's AGENTS.md shown as a field: the rule
+ *  for the name (`isAgentsName`), the hint on a row's name field (NameField.svelte), and
+ *  the file left out of what the store lists. Measured 3,440,160.
+ *
+ *  Raised 2026-11-02, to 3,468,000, for the open bug round's branches merged together on
+ *  claude/bugs-2026-11: each raise above was measured without the others. Measured
+ *  3,467,409.
+ *
  *  Raised 2026-11-02, to 3,433,300, for #523: the notices row is a region F6 walks to,
  *  and a notice's words go through the one live region (`told` in said.svelte.ts)
  *  rather than a `role="status"` card that arrives holding them. Measured 3,433,255.
  *
  *  Raised 2026-11-02, to 3,434,100, for #523: a sidebar opened from its toggle by a key
  *  takes the keyboard into it (`enterSide` in focus.ts). Measured 3,434,078.
+ *
+ *  Raised 2026-11-03, to 3,469,300, for unstable's #523 fixes merged into
+ *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
+ *  and the fixes for one behaviour made one. Measured 3,469,195.
  *
  *  Raised 2026-11-03, to 3,434,300, for #1044: a search reads the space's own inbox, which
  *  the crate's walk leaves out as hidden (the call in search/space.ts; what it reads is
@@ -998,8 +1036,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,445,500, and to 386 modules, for #1079: the panes choose the
  *  tab a pane comes back to by the one rule in workspace/recency.ts, now read with the
  *  panes rather than with Ctrl+Tab's first press, and a pane's order of use is written
- *  down with the session. Measured 3,445,347, 385 modules. */
-const BUDGET = 3_445_500
+ *  down with the session. Measured 3,445,347, 385 modules.
+ *
+ *  Raised 2026-11-03, to 3,480,600, for unstable's #1044 to #1079 merged into
+ *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
+ *  and the sum of their growth is what came. Measured 3,480,464, 385 modules. */
+const BUDGET = 3_480_600
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

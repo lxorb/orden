@@ -1564,6 +1564,7 @@ export const ar: Dictionary = {
   'The note': 'الملاحظة',
   '{space} panel': 'لوحة {space}',
   'Panel width': 'عرض اللوحة',
+  'Pane size': 'حجم الجزء',
   Values: 'القيم',
   Pages: 'الصفحات',
   'Page {number} of {count}': 'الصفحة {number} من {count}',
@@ -2627,6 +2628,7 @@ export const ar: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'شريط عنوان Orden الخاص، أو إطار النافذة في نظامك.',
   'How large the text of notes is.': 'حجم نص الملاحظات.',
+  'How large all of Orden is drawn on this device.': 'حجم عرض Orden بالكامل على هذا الجهاز.',
   'The space between the lines of a note.': 'المسافة بين أسطر الملاحظة.',
   'How wide a line of a note grows before it wraps.': 'أقصى عرض لسطر الملاحظة قبل أن يلتف.',
   'Typing an opening bracket or quote adds the closing one too.':
@@ -2774,6 +2776,8 @@ export const ar: Dictionary = {
   'Move the chat': 'انقل المحادثة',
   'Only the file': 'الملف فقط',
   'Trust this space again': 'الوثوق بهذه المساحة مجددًا',
+  'Agent instructions': 'تعليمات الوكلاء',
+  "AGENTS is this space's agent instructions": 'AGENTS هو تعليمات الوكلاء لهذه المساحة',
   '{title}, unread': '{title}، غير مقروءة',
   '{title}, running': '{title}، قيد التشغيل',
 }

@@ -64,6 +64,7 @@
 
     const walk = (entries: Entry[]) => {
       for (const entry of entries) {
+        if (workspace.instructionsAt(entry.path)) continue
         found.set(entry.path, entry)
         if (entry.children.length) walk(entry.children)
       }

@@ -94,7 +94,7 @@ export function remindersIn(
     const task = readTask(text)
     if (!task) continue
     const hash = taskHash(task.text)
-    for (const wall of remindTimes(task, auto)) {
+    for (const wall of remindTimes(task, auto, 'start', zone)) {
       const at = momentOf(wall, zone)
       if (!(at > from)) continue
       kept.push({
@@ -207,8 +207,8 @@ interface Due {
 
 /** And takes them away again, for a note whose words have gone for good: a reminder
  *  holds the words of its task, and nothing would send it now, so nothing keeps it. */
-export async function forgetReminders(env: Env, noteId: string): Promise<void> {
-  await env.DB.prepare('delete from push_reminders where note_id = ?').bind(noteId).run()
+export function forgetReminders(env: Env, noteId: string): D1PreparedStatement {
+  return env.DB.prepare('delete from push_reminders where note_id = ?').bind(noteId)
 }
 
 /** Every reminder due by now, pushed once to every device of its account. Answers how

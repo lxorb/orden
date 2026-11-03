@@ -651,6 +651,31 @@ describe('the quota', () => {
     expect(theirs.json.used).toBe(before)
   })
 
+  /** Each fits on its own and they do not fit together. Both have read the account as
+   *  having room by the time either writes: the row's own insert is what decides. */
+  test('lets one of two uploads through when only one fits, however they land', async () => {
+    const owner = (env.db.prepare('select id from users limit 1').get() as { id: string }).id
+    const size = 4096
+    env.db
+      .prepare('insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)')
+      .run(OTHER, owner, QUOTA - start - size - 1, 'image/png', 1)
+    const first = file(size, 1)
+    const second = file(size, 2)
+
+    // The other upload lands just as this one, past its own check, is about to write.
+    env.justBefore(/insert into blobs/, () => {
+      env.db
+        .prepare('insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)')
+        .run(second.hash, owner, size, 'image/png', 1)
+    })
+    const response = await upload(first)
+
+    expect(response.status).toBe(507)
+    expect(env.db.prepare('select hash from blobs where hash = ?').all(first.hash)).toEqual([])
+    expect(env.keys()).not.toContain(`blobs/${first.hash}`)
+    expect((await call(env, '/v1/usage', { token })).json.used).toBeLessThanOrEqual(QUOTA)
+  })
+
   test('turns away an image that would not fit', async () => {
     // Fill the account to the brim first, then offer one more byte.
     const owner = env.db.prepare('select id from users limit 1').get() as { id: string }

@@ -4,6 +4,7 @@ import { EditorSelection, EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import '@orden/markdown/eager'
+import { parsed } from '../../../test/parsed'
 import { nibMarkdownExtensions } from '../../markdown/extensions'
 import { livePreview } from '..'
 
@@ -31,14 +32,16 @@ afterEach(() => {
 
 function typedAlt(text: string): EditorView {
   const view = new EditorView({
-    state: EditorState.create({
-      doc: DOC,
-      selection: EditorSelection.cursor(DOC.length),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-        livePreview(),
-      ],
-    }),
+    state: parsed(
+      EditorState.create({
+        doc: DOC,
+        selection: EditorSelection.cursor(DOC.length),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          livePreview(),
+        ],
+      }),
+    ),
     parent: document.body,
   })
   const alt = view.contentDOM.querySelector('input')

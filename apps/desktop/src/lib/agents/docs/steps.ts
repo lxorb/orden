@@ -109,6 +109,17 @@ export class Steps {
     this.steps.push({ ids, changes: changes.invert(before), mapped: null })
   }
 
+  /** The steps as they stand, answering the way back to them. */
+  saved(): () => void {
+    const steps = [...this.steps]
+    const undone = [...this.undone]
+    return () => {
+      this.steps = steps
+      this.undone.clear()
+      for (const id of undone) this.undone.add(id)
+    }
+  }
+
   /** A change made after the steps that is not one of them. */
   carry(change: ChangeDesc) {
     if (change.empty || !this.steps.length) return

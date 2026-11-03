@@ -18,6 +18,7 @@
 
 import { askInChunks, chunks, places } from './bound'
 import { eraseChats } from './chats/ask'
+import { note } from './failed'
 import { ISSUES, withdrawIssues } from './feedback-issues'
 import { eraseHubs } from './hub/reach'
 import { eraseMachines } from './machines/ask'
@@ -45,6 +46,17 @@ const CHAT = 'chats/'
 /** A machine home's backup, in the homes bucket rather than the notes one. */
 const HOME = 'homes/'
 
+/** A purged note's words in the search index, by the note's id; see `purgeNote`. */
+const WORDS = 'words/'
+
+/** How many notes' words one sweep takes out: one statement, which reads the whole index
+ *  however many it names. */
+const WORDS_AT_ONCE = 100
+
+export function wordsLeftover(noteId: string): string {
+  return WORDS + noteId
+}
+
 /** Whether a name is an object's storage rather than the bucket's. */
 const isObject = (name: string) =>
   name.startsWith(ROOM) ||
@@ -53,13 +65,45 @@ const isObject = (name: string) =>
   name.startsWith(CHAT) ||
   name.startsWith(ISSUES)
 
+/** Purged notes' words taken out of the search index, and crossed off once they have
+ *  gone. Apart from the rest because this is the one step that can be too much for the
+ *  database: one that fails stays on the list for the next sweep, and nothing else on it
+ *  waits. Answers how many it crossed off. */
+async function sweepWords(env: Env): Promise<number> {
+  const { results } = await env.DB.prepare(
+    'select what from leftovers where what like ? order by since, what limit ?',
+  )
+    .bind(`${WORDS}%`, WORDS_AT_ONCE)
+    .all<{ what: string }>()
+  if (!results.length) return 0
+
+  const names = results.map((one) => one.what)
+  const ids = names.map((one) => one.slice(WORDS.length))
+  try {
+    await env.DB.batch([
+      env.DB.prepare(
+        'delete from note_search where note_id in (select value from json_each(?))',
+      ).bind(JSON.stringify(ids)),
+      env.DB.prepare('delete from leftovers where what in (select value from json_each(?))').bind(
+        JSON.stringify(names),
+      ),
+    ])
+  } catch (error) {
+    note('leftovers words', error, null)
+    return 0
+  }
+  return names.length
+}
+
 /** Empties the oldest of what the list names, as much as one sweep takes on, and
  *  answers how many it crossed off. */
 export async function sweepLeftovers(env: Env): Promise<number> {
+  const words = await sweepWords(env)
+
   const taken = async (sql: string, most: number) =>
     (
       await env.DB.prepare(sql)
-        .bind(`${ROOM}%`, `${HUB}%`, `${MACHINE}%`, `${CHAT}%`, `${ISSUES}%`, most)
+        .bind(`${ROOM}%`, `${HUB}%`, `${MACHINE}%`, `${CHAT}%`, `${ISSUES}%`, most, `${WORDS}%`)
         .all<{ what: string }>()
     ).results
 
@@ -67,19 +111,20 @@ export async function sweepLeftovers(env: Env): Promise<number> {
     ...(await taken(
       `select what from leftovers where what not like ?1 and what not like ?2
           and what not like ?3 and what not like ?4 and what not like ?5
+          and what not like ?7
         order by since, what limit ?6`,
       OBJECTS_AT_ONCE,
     )),
     ...(await taken(
-      `select what from leftovers where what like ?1 or what like ?2 or what like ?3
-          or what like ?4 or what like ?5
+      `select what from leftovers where (what like ?1 or what like ?2 or what like ?3
+          or what like ?4 or what like ?5) and what not like ?7
         order by since, what limit ?6`,
       ROOMS_AT_ONCE,
     )),
   ]
 
   const names = results.map((one) => one.what)
-  if (!names.length) return 0
+  if (!names.length) return words
 
   // A version or a picture another note or another account still names is not
   // this account's to take away, and neither is anything a row has come back for.

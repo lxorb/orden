@@ -117,6 +117,57 @@ describe('one change taken back among others', () => {
   })
 })
 
+describe('a closed note whose write is refused', () => {
+  test('keeps what would have gone, to be asked for again', async () => {
+    const { desk, fileOf, refusing } = deskWith({ 'a.md': 'one two' })
+    const agent = anAgent()
+    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'two' }, replace: 'TWO' }])
+    const ids = idsOf(agent, 'a.md')
+    const note = located(desk, { path: 'a.md' })
+
+    refusing.next = true
+    expect(await undoSomeAt(desk, agent, note, new Set(ids), 'rewind-1')).toEqual([])
+    expect(idsOf(agent, 'a.md')).toEqual(ids)
+    expect(tracksOf(agent.id).get('/space/a.md')?.holds('rewind-1')).toBe(false)
+    expect(fileOf('a.md')).toBe('one TWO')
+
+    expect(await undoSomeAt(desk, agent, note, new Set(ids), 'rewind-1')).toEqual(ids)
+    expect(fileOf('a.md')).toBe('one two')
+
+    refusing.next = true
+    expect(await putBackAt(desk, agent, note, 'rewind-1')).toEqual([])
+    expect(idsOf(agent, 'a.md')).toEqual([])
+    expect(fileOf('a.md')).toBe('one two')
+
+    expect(await putBackAt(desk, agent, note, 'rewind-1')).toEqual(ids)
+    expect(fileOf('a.md')).toBe('one TWO')
+  })
+})
+
+describe('a closed note opened and written in while its write is refused', () => {
+  test('takes back the agent’s words, not the ones beside them', async () => {
+    const { desk, open, disk } = deskWith({ 'a.md': 'one two' })
+    const agent = anAgent()
+    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'two' }, replace: 'TWO' }])
+
+    const replace = desk.replaceInNotes.bind(desk)
+    let pane: ReturnType<typeof open> | null = null
+    desk.replaceInNotes = () => {
+      desk.replaceInNotes = replace
+      pane = open('a.md')
+      const note = desk.documentAt('/space/a.md')
+      if (note) tracksOf(agent.id).get('/space/a.md')?.follow(note)
+      pane.type(0, 'zero ')
+      return Promise.resolve(0)
+    }
+    expect(await undoAgent(desk, agent, { path: 'a.md' })).toEqual({ undone: 0 })
+
+    expect(await undoAgent(desk, agent, { path: 'a.md' })).toEqual({ undone: 1 })
+    expect(disk.size).toBe(1)
+    expect((pane as unknown as { text: string }).text).toBe('zero one two')
+  })
+})
+
 describe('where an agent’s edits are', () => {
   test('is carried through the reader’s typing, and forgotten once taken back', async () => {
     const { desk, panes } = deskWith({ 'a.md': 'one two' }, ['a.md'])

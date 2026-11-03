@@ -391,7 +391,7 @@ async function keepAtMost(env: Env, noteId: string): Promise<void> {
  *  The one place a version's bytes are taken away, because the rule is one rule:
  *  a body goes when the last row naming it has, so a version two notes share
  *  outlives either of them losing it. Answers how many went. */
-async function forgetBodies(env: Env, hashes: Iterable<string>): Promise<number> {
+export async function forgetBodies(env: Env, hashes: Iterable<string>): Promise<number> {
   let gone = 0
 
   for (const hash of new Set(hashes)) {
@@ -719,15 +719,8 @@ export async function countVersionsAt(
   return found?.held ?? 0
 }
 
-export async function forgetVersions(env: Env, noteId: string): Promise<number> {
-  const { results } = await env.DB.prepare(
-    'delete from note_versions where note_id = ? returning hash',
-  )
-    .bind(noteId)
-    .all<{ hash: string }>()
-
-  return await forgetBodies(
-    env,
-    results.map((one) => one.hash),
-  )
+/** A note's versions going, as a statement of a batch: what its rows answer with is what
+ *  `forgetBodies` is then asked about. */
+export function forgetVersions(env: Env, noteId: string): D1PreparedStatement {
+  return env.DB.prepare('delete from note_versions where note_id = ? returning hash').bind(noteId)
 }

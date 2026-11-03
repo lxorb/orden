@@ -24,7 +24,7 @@
   import { t } from './i18n.svelte'
   import Icon from './Icon.svelte'
   import { middleOpens } from './new-tab'
-  import { shownName } from './note-name'
+  import { AGENTS_NAME, shownName } from './note-name'
   import { scanHeadings } from './outline'
   import { overlays } from './overlays'
   import { OUTLINE_MARK, GRAPH_MARK, SEARCH_MARK } from './panel-marks'
@@ -48,7 +48,7 @@
   import { places } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
   import { destinationOf, type Host, hostFor, said } from './remote/hosts'
-  import { relativeTo } from './space-paths'
+  import { relativeTo, samePath } from './space-paths'
   import TabMark from './TabMark.svelte'
   import { theme } from './theme.svelte'
   import { canWriteAt } from './sharing.svelte'
@@ -153,7 +153,9 @@
       active: workspace.activeTabId,
       focused: workspace.active?.kind ?? null,
       recent: workspace.recent,
-      bookmarks: workspace.bookmarks.list,
+      bookmarks: workspace.bookmarks.list.filter(
+        (one) => !(one.kind === 'note' && samePath(one.path, AGENTS_NAME, root ?? undefined)),
+      ),
       commands,
       pages: browses ? visited.all(webData.history()) : [],
       settings: settingRows,
@@ -314,6 +316,8 @@
         return row.setting.label
       case 'make':
         return shownName(row.make.name)
+      case 'agents':
+        return t("AGENTS is this space's agent instructions")
       case 'address':
         return row.address
       case 'place':
@@ -346,6 +350,8 @@
         return row.setting.where
       case 'make':
         return row.make.folder || null
+      case 'agents':
+        return null
       case 'host':
         return row.host.detail
       case 'message':
@@ -477,6 +483,9 @@
     },
     // Written and opened in the folder it names under the space, made along with
     // the note where it is not there yet.
+    agents: () => {
+      if (root) void import('./reserved-name.svelte').then((one) => one.openInstructions(root))
+    },
     make: (note) => {
       if (root)
         void workspace.createNote(note.folder ? joinPath(root, note.folder) : root, note.name)

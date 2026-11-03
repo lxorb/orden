@@ -38,7 +38,7 @@
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
   import { favicon, plainOrigin } from './address'
-  import { webAddress } from './typed'
+  import { isLocalFile, webAddress } from './typed'
   import { upgradeOf } from './upgrade'
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
@@ -59,13 +59,14 @@
   import { keepNow, keepPage } from './keep'
   import { trailSteps, webRows, zoomed, type WebActions } from './menu'
   import { mute, muteSite } from './mute'
+  import { zoomTo as zoomPageTo } from './zoom'
   import { shownAddress } from './omnibox'
   import { type Frame, pages, type Rect, siteMark, type Step } from './pages.svelte'
   import { seek, shut, sought } from './seek'
   import { watchScale, watchShifts } from './shifts'
   import { grants, siteOf } from './permissions.svelte'
   import { dialogs } from './dialogs.svelte'
-  import { asideFor, isMuted, keepZoom, zoomOf } from './sites'
+  import { asideFor, isMuted, zoomOf } from './sites'
   import { movedOn } from './used'
   import { visited } from './visited'
   import { webData } from './web-data.svelte'
@@ -734,13 +735,9 @@
     menu.show(event, rows, { title: forward ? t('Forward') : t('Back') })
   }
 
-  /** Draws the page at `factor`, from the dots or a key while the app has the keyboard.
-   *  The engine says nothing about a zoom it was told to make, only one made in the
-   *  page, so this one is kept for the site here. */
+  /** Draws the page at `factor`, from the dots or a key while the app has the keyboard. */
   function zoomTo(factor: number) {
-    page.zoom = factor
-    keepZoom(site, factor, asideFor(tab.id, page))
-    void pages.zoom(tab.id, factor)
+    zoomPageTo(tab.id, page, factor)
   }
 
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
@@ -803,7 +800,12 @@
       onhistory={showTrail}
       onaddress={(said: string, aside: boolean, typed: string) => {
         const url = webAddress(said, searchEngine.url)
-        if (!url) return
+        if (!url) {
+          // Not sent anywhere, by DNS or to the search engine; and said, since Chrome would
+          // have opened it (#790).
+          if (isLocalFile(said)) page.notice = t('That file could not be read')
+          return
+        }
 
         // Typed, or chosen from what the field offered, which Chrome counts the same:
         // either way it is an address somebody went to on purpose. See visits.ts.
@@ -974,6 +976,21 @@
         onclear={() => clearingAsked.ask(tab.id)}
       />
     {/await}
+  {:else if isDesktop && page.crashed}
+    <!-- The page's process is gone, and its webview with it: a white box, which a reader
+         took for the site. Chrome's Aw, Snap: where it was, and Reload, here as on the bar. -->
+    <div class="card">
+      <p class="name">{page.title || plainOrigin(address)}</p>
+      <p class="site">{address}</p>
+      <div class="rows">
+        <button class="nib-button" onclick={() => void pages.step(tab.id, 'reload')}>
+          {t('Reload')}
+        </button>
+        <button class="nib-button is-quiet" onclick={() => void openExternal(address)}>
+          {t('Open in the browser')}
+        </button>
+      </div>
+    </div>
   {:else if isDesktop && page.openable}
     <!-- The hole. Nothing is drawn in it but the last picture of the page: the page
          itself is a webview over this box, and anything here would be under it. The

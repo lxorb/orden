@@ -14,7 +14,8 @@ import { type FileChange, spaceNamed } from './files'
 /** A file moved the way an agent's move moves it. */
 async function moved(root: string, from: string, to: string): Promise<void> {
   const { movedIn } = await import('../../automation/acts')
-  await movedIn(root, from, to)
+  // Taken back: an agent's move off the space's instructions puts them back.
+  await movedIn(root, from, to, true)
 }
 
 /** The folder of the space a change was made in: the one the call said, else the

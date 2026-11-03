@@ -187,13 +187,36 @@ export class Track {
     return some.ids
   }
 
-  /** The same against a closed note's words, as the edits that do it. */
+  /** What a closed note's words being written will change here, and the way back if
+   *  they are not: the steps were counted gone, and could not be asked for again. */
+  private saved(): () => void {
+    const steps = this.steps.saved()
+    const seen = this.seen
+    const where = [...this.where]
+    const takenBack = [...this.takenBack]
+    return () => {
+      steps()
+      // A note opened while the write was in the air is heard from again by `catchUp`,
+      // which goes through what it says now from these words.
+      this.letGo()
+      this.seen = seen
+      this.where.clear()
+      for (const [id, spans] of where) this.where.set(id, spans)
+      this.takenBack.clear()
+      for (const [name, back] of takenBack) this.takenBack.set(name, back)
+      this.tell()
+    }
+  }
+
+  /** The same against a closed note's words, as the edits that do it. `refused` for a
+   *  write that did not happen. */
   undoSomeClosed(
     words: string,
     ids: ReadonlySet<string>,
     token?: string,
-  ): { edits: Replacement[]; after: string; ids: string[] } | null {
+  ): { edits: Replacement[]; after: string; ids: string[]; refused: () => void } | null {
     this.catchUp(null, words)
+    const refused = this.saved()
     const before = ropeOf(words)
     const some = this.steps.take(ids, before)
     if (!some?.ids.length) return null
@@ -201,7 +224,7 @@ export class Track {
     const after = some.changes.apply(before).toString()
     this.seen = after
     this.tookBack(some.ids, some.changes, before, token)
-    return { edits: replacementsOf(some.changes), after, ids: some.ids }
+    return { edits: replacementsOf(some.changes), after, ids: some.ids, refused }
   }
 
   /** What `token` took back, put back into the open note as one edit of this agent's,
@@ -225,8 +248,9 @@ export class Track {
   putBackClosed(
     words: string,
     token: string,
-  ): { edits: Replacement[]; after: string; ids: string[] } | null {
+  ): { edits: Replacement[]; after: string; ids: string[]; refused: () => void } | null {
     this.catchUp(null, words)
+    const refused = this.saved()
     const back = this.takenBack.get(token)
     if (!back) return null
     this.takenBack.delete(token)
@@ -235,7 +259,7 @@ export class Track {
     const after = back.changes.apply(before).toString()
     this.seen = after
     this.recorded(back.ids, back.changes, before)
-    return { edits: replacementsOf(back.changes), after, ids: back.ids }
+    return { edits: replacementsOf(back.changes), after, ids: back.ids, refused }
   }
 
   /** Whether `token` has anything to put back. */
@@ -313,8 +337,11 @@ export class Track {
 
   /** Every step taken back against a closed note's words, as the edits that do it.
    *  The caller writes them; the track takes the result as what it last knew. */
-  undoClosed(words: string): { edits: Replacement[]; after: string; count: number } | null {
+  undoClosed(
+    words: string,
+  ): { edits: Replacement[]; after: string; count: number; refused: () => void } | null {
     this.catchUp(null, words)
+    const refused = this.saved()
     const all = this.steps.takeAll()
     if (!all) return null
 
@@ -322,7 +349,7 @@ export class Track {
     const after = all.changes.apply(before).toString()
     this.seen = after
     this.tookBack(all.ids, all.changes, before)
-    return { edits: replacementsOf(all.changes), after, count: all.ids.length }
+    return { edits: replacementsOf(all.changes), after, count: all.ids.length, refused }
   }
 
   private hold(note: NoteDoc) {

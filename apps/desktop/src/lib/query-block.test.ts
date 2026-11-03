@@ -27,6 +27,7 @@ vi.mock('./workspace.svelte', () => ({
   workspace: {
     activeSpace: { root: '/space' },
     leftOutOf: () => ['Archive'],
+    instructionsName: () => 'AGENTS.md',
     open: () => Promise.resolve(),
     goto: null,
     toggleTaskAt: () => Promise.resolve(true),
@@ -83,7 +84,7 @@ describe('what a fence answers with', () => {
   test('and leaves out what the space leaves out', async () => {
     await answered('plan')
 
-    expect(asked[0]?.excluded).toEqual(['Archive'])
+    expect(asked[0]?.excluded).toEqual(['Archive', 'AGENTS.md'])
   })
 
   test('and groups a note s lines under its name once', async () => {

@@ -188,8 +188,8 @@ export async function htmlIsLive(env: Env, spaceId: string): Promise<boolean> {
 }
 
 /** And takes them away again, for a note whose words have gone for good. */
-export async function forgetPictures(env: Env, noteId: string): Promise<void> {
-  await env.DB.prepare('delete from note_pictures where note_id = ?').bind(noteId).run()
+export function forgetPictures(env: Env, noteId: string): D1PreparedStatement {
+  return env.DB.prepare('delete from note_pictures where note_id = ?').bind(noteId)
 }
 
 /** The attributes of an HTML tag that a browser draws a picture from: an image's or a

@@ -16,6 +16,7 @@ import { claimGuest, claimGuestsAt, guestForToken } from './guests'
 import { machineOf, mailCeilings, mailNotSent, mayTryCode } from './limits'
 import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
 import { devicesEnded } from './hub/devices'
+import { askHub } from './hub/reach'
 import { machinesSignedOut } from './machines/revoke'
 import { forgetEndedTargets } from './push/live'
 import { roomsSignedOut } from './rooms'
@@ -593,6 +594,10 @@ auth.post('/signout', async (context) => {
     if (guest) {
       await roomsSignedOut(context.env, guest.guest_id)
       await machinesSignedOut(context.env, guest.guest_id, [await sha256(token)])
+      // And its hub socket, which no row names: a guest says hello to no `devices`.
+      await askHub(context.env, guest.guest_id, 'revoke', {
+        'x-nib-sessions': await sha256(token),
+      })
     }
   }
   return context.json({ ok: true })

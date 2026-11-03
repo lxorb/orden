@@ -161,6 +161,7 @@ const workspace = {
   // The one sentence every file operation is said as, heard for real by whatever
   // follows it; see workspace/file-ops.ts.
   fileOps: new FileOps(),
+  holdingUnder: vi.fn((_path: string, run: () => Promise<void>) => run()),
   fileMoved: vi.fn((from: string, to: string, kind: Kind) =>
     workspace.fileOps.tell({ op: 'moved', from, to, kind, root: '/s/Home' }),
   ),
@@ -577,6 +578,8 @@ describe('another space, without switching', () => {
     await call('move_file', { space: 'Home', path: 'Soup.md', to: 'Food/Soup' })
 
     expect(files.has('/s/Home/Food/Soup.md')).toBe(true)
+    // After whatever write of the note is in the air, as a move made here.
+    expect(workspace.holdingUnder).toHaveBeenCalledWith('/s/Home/Soup.md', expect.anything())
     expect(indexed).toContainEqual({
       root: '/s/Home',
       asked: 'retarget',
@@ -595,6 +598,21 @@ describe('another space, without switching', () => {
       args: ['/s/Home/Soup.md', '/s/Home/Food/Soup.md'],
     })
     // The tree's own rename is the open space's, and its undo the reader's.
+    expect(workspace.rename).not.toHaveBeenCalled()
+    expect(workspace.moveMany).not.toHaveBeenCalled()
+  })
+
+  test('no note becomes the space’s instructions by being moved or renamed', async () => {
+    for (const args of [
+      { path: 'Plan.md', to: 'AGENTS' },
+      { path: 'Plan.md', to: 'AGENTS.md' },
+      { space: 'Home', path: 'Soup.md', to: 'AGENTS.md' },
+    ]) {
+      expect(await call('move_file', args)).toMatchObject({
+        code: 'bad_arguments',
+        message: expect.stringContaining('write_note') as string,
+      })
+    }
     expect(workspace.rename).not.toHaveBeenCalled()
     expect(workspace.moveMany).not.toHaveBeenCalled()
   })

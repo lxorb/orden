@@ -17,6 +17,7 @@
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import { i18n, t } from '../i18n.svelte'
+  import { shownSite } from './idn'
   import { invoke } from '../tauri'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
@@ -111,7 +112,7 @@
   bind:this={bubble}
   class="site nib-bubble is-pressable"
   role="dialog"
-  aria-label={site}
+  aria-label={shownSite(site)}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
 >
   <p class="how" class:risky={!secure}>

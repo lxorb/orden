@@ -1425,6 +1425,7 @@ export const th: Dictionary = {
   'The note': 'โน้ต',
   '{space} panel': 'แผงของ {space}',
   'Panel width': 'ความกว้างแผง',
+  'Pane size': 'ขนาดบาน',
   Values: 'ค่า',
   Pages: 'หน้า',
   'Page {number} of {count}': 'หน้า {number} จาก {count}',
@@ -2457,6 +2458,7 @@ export const th: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'แถบชื่อของ Orden เอง หรือกรอบหน้าต่างของระบบคุณ',
   'How large the text of notes is.': 'ขนาดตัวอักษรของโน้ต',
+  'How large all of Orden is drawn on this device.': 'ขนาดการแสดงผลของ Orden ทั้งหมดบนอุปกรณ์นี้',
   'The space between the lines of a note.': 'ระยะห่างระหว่างบรรทัดของโน้ต',
   'How wide a line of a note grows before it wraps.': 'ความกว้างของบรรทัดโน้ตก่อนจะขึ้นบรรทัดใหม่',
   'Typing an opening bracket or quote adds the closing one too.':
@@ -2605,6 +2607,8 @@ export const th: Dictionary = {
   'Move the chat': 'ย้ายแชต',
   'Only the file': 'เฉพาะไฟล์',
   'Trust this space again': 'เชื่อถือพื้นที่นี้อีกครั้ง',
+  'Agent instructions': 'คำสั่งสำหรับเอเจนต์',
+  "AGENTS is this space's agent instructions": 'AGENTS คือคำสั่งสำหรับเอเจนต์ของพื้นที่นี้',
   '{title}, unread': '{title}, ยังไม่ได้อ่าน',
   '{title}, running': '{title}, กำลังทำงาน',
 }

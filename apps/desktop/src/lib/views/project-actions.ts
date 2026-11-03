@@ -14,6 +14,7 @@ import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu.svelte'
 import { inboxOf } from '../rows/inbox'
 import { inboxNote } from '../rows/inbox-note'
+import { isAgentsName } from '../note-name'
 import { canWriteAt } from '../sharing.svelte'
 import { folderOf, insideSpace, nameOf, samePath, within } from '../space-paths'
 import { joinPath } from '../tauri'
@@ -34,13 +35,23 @@ function projectName(words: string): string | null {
   return name && !/^\.+$/.test(name) ? name : null
 }
 
+/** Whether a project's name is the one no note takes, which it is told to the space
+ *  holding `path`; see `isAgentsName`. */
+function refused(path: string, name: string): boolean {
+  if (!isAgentsName(`${name}.md`)) return false
+  const root = workspace.rootHolding(path)
+  if (root !== null)
+    void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
+  return true
+}
+
 /** A new, empty project in a folder, under the first free name its words make; answers
  *  its note on this disk, or null where the words make no name or the folder is in a
  *  space shared to be read, which takes no new note. Asked here, as every way a project
  *  is made comes through it. */
 async function made(folder: string, words: string, template?: string): Promise<string | null> {
   const name = projectName(words)
-  if (name === null || !canWriteAt(folder)) return null
+  if (name === null || !canWriteAt(folder) || refused(folder, name)) return null
   const path = joinPath(folder, await workspace.freeNameOnDisk(folder, `${name}.md`))
   const text = template === undefined ? '' : await templateWords(template, name)
   await writeFile(path, text)
@@ -76,7 +87,7 @@ export async function renameProject(
   words: string,
 ): Promise<void> {
   const name = projectName(words)
-  if (name === null) return
+  if (name === null || refused(project.note, name)) return
   const was = nameOf(project.note).replace(/.md$/i, '')
   let note: string
   if (project.folder !== null) {
