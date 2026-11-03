@@ -125,3 +125,16 @@ test('asked for its sessions, answers every one it has: none yet', async () => {
   await nibd.receive({ t: 'list' })
   expect(said).toEqual([{ t: 'sessions', sessions: [] }])
 })
+
+test('an ended session is started again by an open, but not by a watcher’s', async () => {
+  const { nibd, attach } = machine()
+  attach()
+  let restarted = 0
+  const ended = { alive: false, restart: () => (restarted += 1), detach: () => undefined }
+  ;(nibd as unknown as { sessions: Map<string, unknown> }).sessions.set('s_1', ended)
+  const open = { t: 'open', session: 's_1', cols: 80, rows: 24 } as const
+  await nibd.receive({ ...open, watching: true })
+  expect(restarted).toBe(0)
+  await nibd.receive(open)
+  expect(restarted).toBe(1)
+})

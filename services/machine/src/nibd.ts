@@ -161,7 +161,9 @@ export class Nibd {
       case 'open':
         if (!session) {
           this.sessions.set(frame.session, this.session(frame.session, frame.cols, frame.rows))
-        } else if (!session.alive) {
+        } else if (!session.alive && !frame.watching) {
+          // Whoever may only watch does not start its shell again, which is `start`'s to
+          // ask for. `Machine` keeps no word of an ended shell across its own restart.
           session.restart()
         }
         return

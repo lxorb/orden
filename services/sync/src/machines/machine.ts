@@ -171,6 +171,8 @@ const RECENT = 'recent'
 const METERED = 'metered'
 const GRACE = 'grace'
 const RESTORED = 'restored'
+/** How many of a terminal's sockets only its owner may take. */
+const KEPT_FOR_OWNER = 5
 /** Sessions ended while there was no link to say it on, said on the next one. */
 const ENDING = 'ending'
 
@@ -403,7 +405,10 @@ export class Machine implements DurableObject {
     server.serializeAttachment(viewer)
     this.next.set(server, -1)
 
-    if (this.ctx.getWebSockets(viewer.session).length > MOST_SOCKETS) {
+    // The last few only for its owner: watchers, who may be anybody with a link, cannot
+    // fill the bound and shut them out of their own terminal.
+    const room = viewer.owns ? MOST_SOCKETS : MOST_SOCKETS - KEPT_FOR_OWNER
+    if (this.ctx.getWebSockets(viewer.session).length > room) {
       this.say(server, { t: 'refused', error: 'rate' })
       server.close(4429, 'too many sockets on this terminal')
       return
@@ -692,12 +697,19 @@ export class Machine implements DurableObject {
    *  Nor for a watcher on a session whose shell ended: `open` on an ended session starts
    *  its shell again (nibd.ts), which is `start`'s to ask for and refused to whoever may
    *  not type, so a reader or a link's guest opening the terminal, or coming back to it,
-   *  would otherwise start the owner's program for them. They watch it ended. */
+   *  would otherwise start the owner's program for them. They watch it ended. `news` is
+   *  gone once this object restarts, so `nibd` is told it is a watcher too, and such an
+   *  open does not count: somebody who may type still opens after it. */
   private ensureOpen(viewer: Viewer): void {
     if (!this.link || this.restoring || this.opened.has(viewer.session)) return
-    if (!maySocketType(viewer) && this.news.get(viewer.session)?.ended) return
+    const size = this.sizeFor(viewer)
+    if (!maySocketType(viewer)) {
+      if (this.news.get(viewer.session)?.ended) return
+      this.tell(viewer.session, { t: 'open', session: viewer.session, ...size, watching: true })
+      return
+    }
     this.opened.add(viewer.session)
-    this.tell(viewer.session, { t: 'open', session: viewer.session, ...this.sizeFor(viewer) })
+    this.tell(viewer.session, { t: 'open', session: viewer.session, ...size })
   }
 
   /** Every session `nibd` has, tabs open on it or not, for Settings' list; null where
