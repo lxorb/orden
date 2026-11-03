@@ -1,9 +1,12 @@
 <script lang="ts">
-  /** A task in a list, Todoist's row in Orden's shapes: the box, the words with their
-   *  inline marks, the first line of the description under them, and a meta line - the
-   *  day in the colour of how near it is, ↻, the deadline, the duration, the bell, how
-   *  many sub-tasks are done, how many comments, the labels - with where it lives at its
-   *  end. Under the pointer it offers to schedule it and its menu (task-actions.ts).
+  /** A task in a list, Todoist's in Orden's shapes: the box, the words with their
+   *  inline marks, the first line of the description under them, and a meta line
+   *  (TaskMeta.svelte) - the day in the colour of how near it is, ↻, the deadline, the
+   *  duration, the bell, how many sub-tasks are done, how many comments, the labels -
+   *  with where it lives at its end. Under the pointer or the focus it offers to
+   *  schedule it and its menu (task-actions.ts). `card` draws it as Todoist's card, a
+   *  rounded one on a raised ground with room between it and the next (#1043); without,
+   *  it is a row over a hairline, as the sub-tasks of a task's view are.
    *
    *  Ctrl or Cmd and a press selects it, Shift and a press every row from the last one
    *  selected, and while anything is selected a press selects; the middle button opens
@@ -13,21 +16,15 @@
    *  so the list places every row by arithmetic and measures none. */
   import type { Row } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
-  import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
   import Check from 'lucide/dist/esm/icons/check.mjs'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
-  import ListTree from 'lucide/dist/esm/icons/list-tree.mjs'
   import Grip from 'lucide/dist/esm/icons/grip-vertical.mjs'
   import Message from 'lucide/dist/esm/icons/message-square.mjs'
   import Pencil from 'lucide/dist/esm/icons/pencil.mjs'
-  import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
   import Sparkles from 'lucide/dist/esm/icons/sparkles.mjs'
-  import Target from 'lucide/dist/esm/icons/target.mjs'
-  import Timer from 'lucide/dist/esm/icons/timer.mjs'
-  import { amount, t } from '../i18n.svelte'
+  import { t } from '../i18n.svelte'
   import Glyph from '../quick-add/Glyph.svelte'
-  import { durationLabel } from '../quick-add/labels'
   import { shortcuts } from '../shortcuts.svelte'
   import Twist from '../Twist.svelte'
   import { viewport } from '../viewport.svelte'
@@ -41,12 +38,14 @@
   import { scheduleRows, taskMenu } from './task-actions'
   import TaskBox from './TaskBox.svelte'
   import TaskEditor from './TaskEditor.svelte'
+  import TaskMeta from './TaskMeta.svelte'
   import Words from './Words.svelte'
 
   const {
     row,
     kit,
     lines,
+    card = false,
     dated = true,
     where = true,
     depth = 0,
@@ -66,6 +65,8 @@
     kit: Kit
     /** How many lines it is drawn on: 1 to 3. */
     lines: number
+    /** Drawn as a card (see the top): what the views' lists are. */
+    card?: boolean
     dated?: boolean
     where?: boolean
     depth?: number
@@ -89,25 +90,12 @@
   const task = $derived(row.task)
   const label = $derived(task ? plain(task.text) : row.file.basename)
   const meta = $derived(task ? metaOf(task, kit.live.today, dated, subtasks) : [])
-  /** The heading it is under, but not a note's title over the whole of it. */
-  const section = $derived.by(() => {
-    const under = task?.section.at(-1)
-    return under === row.file.basename ? undefined : under
-  })
   const blocker = $derived(task?.dependsOn.length ? blockerOf(task, kit.live.rows) : null)
   const tone = $derived(kit.live.colourOf(row))
   /** Which space, where it is not the open one (decision 8.4). */
   const elsewhere = $derived(
     kit.spec.builtin !== undefined && row.space !== workspace.activeSpace?.name ? row.space : null,
   )
-
-  const TONES = {
-    late: 'var(--danger)',
-    today: 'var(--success)',
-    tomorrow: 'var(--canvas-2)',
-    week: 'var(--canvas-6)',
-    later: undefined,
-  } as const
 
   /** The note at the line, beside the view (with Ctrl or Cmd, in a tab). */
   function open(event: MouseEvent) {
@@ -144,7 +132,7 @@
 </script>
 
 {#if task}
-  <div class="swipe">
+  <div class="swipe" class:card>
     <span class="under" aria-hidden="true"
       ><span class="mark done"><Glyph icon={Check} /></span><span class="mark later"
         ><Glyph icon={Calendar} /></span
@@ -270,36 +258,7 @@
 
       {#if lines > (task.description ? 2 : 1)}
         <div class="line meta">
-          {#each meta as one, index (index)}
-            {#if one.kind === 'date'}
-              <span class="bit" style:color={TONES[one.tone]}
-                ><Glyph icon={one.repeat ? Repeat : Calendar} />{one.text}</span
-              >
-            {:else if one.kind === 'deadline'}
-              <span class="bit" class:late={one.late}><Glyph icon={Target} />{one.text}</span>
-            {:else if one.kind === 'duration'}
-              <span class="bit"><Glyph icon={Timer} />{durationLabel(one.minutes)}</span>
-            {:else if one.kind === 'remind'}
-              <span class="bit" aria-label={t('Reminder')}><Glyph icon={Bell} /></span>
-            {:else if one.kind === 'subtasks'}
-              <span class="bit"
-                ><Glyph icon={ListTree} />{amount(one.done)}/{amount(one.total)}</span
-              >
-            {:else if one.kind === 'comments'}
-              <span class="bit"><Glyph icon={Message} />{amount(one.count)}</span>
-            {:else if one.kind === 'tag'}
-              <span class="bit tag">#{one.tag}</span>
-            {:else}
-              <span class="bit">+{one.name}</span>
-            {/if}
-          {/each}
-          {#if where}
-            <button type="button" class="where" onclick={open} tabindex="-1" title={t('Open')}>
-              {#if elsewhere}<span class="space">{elsewhere}</span>{/if}
-              {row.file.basename}{#if section}<span class="sep" aria-hidden="true">›</span
-                >{section}{/if}
-            </button>
-          {/if}
+          <TaskMeta {row} {meta} {where} {elsewhere} onwhere={open} />
         </div>
       {/if}
       {#if editing}
@@ -367,9 +326,10 @@
     display: flex;
     flex-direction: column;
     height: calc(
-      var(--task-head, var(--row-height)) + (var(--lines) - 1) * var(--task-line, 18px) +
-        min(var(--lines) - 1, 1) * var(--task-foot, 6px)
+      2 * var(--card-pad, 0px) + var(--task-head, var(--row-height)) + (var(--lines) - 1) *
+        var(--task-line, 18px) + min(var(--lines) - 1, 1) * var(--task-foot, 6px)
     );
+    padding-block: var(--card-pad, 0px);
     padding-inline: calc(var(--row-pad) + var(--depth) * var(--row-indent)) var(--row-pad);
     border-radius: var(--radius-row);
     color: var(--text);
@@ -401,6 +361,55 @@
 
   .task.is-on {
     background: var(--surface-selected);
+  }
+
+  /* The card: its padding and the room under it are the list's (ListLayout.svelte), so
+     the list's arithmetic and the drawing are one number each; its edge a ring rather
+     than a border, which would take from the room inside. */
+  .card {
+    --card-pad: var(--task-pad, 6px);
+    padding-block-end: var(--task-gap, 6px);
+  }
+
+  .card .under {
+    inset-block-end: var(--task-gap, 6px);
+    border-radius: var(--radius-md);
+  }
+
+  .card .task {
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px var(--line);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out),
+      opacity var(--dur-base) var(--ease-out),
+      translate var(--dur-base) var(--ease-out);
+  }
+
+  .card .task::after {
+    content: none;
+  }
+
+  @media (hover: hover) {
+    .card .task:hover {
+      background: var(--surface-hover);
+      box-shadow:
+        inset 0 0 0 1px var(--line-strong),
+        var(--shadow-sm);
+    }
+  }
+
+  .card .task.is-on {
+    background: var(--surface-selected);
+  }
+
+  .card .task.is-picked {
+    background: var(--accent-soft);
+  }
+
+  .card .grip {
+    top: calc(var(--card-pad) + (var(--task-head, var(--row-height)) - var(--icon-md)) / 2);
   }
 
   .task.is-picked {
@@ -558,47 +567,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .bit {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-  }
-
-  .bit.late {
-    color: var(--danger);
-  }
-
-  .where {
-    flex: 0 1 auto;
-    min-width: 0;
-    margin-inline-start: auto;
-    overflow: hidden;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    cursor: default;
-  }
-
-  @media (hover: hover) {
-    .where:hover {
-      color: var(--text-strong);
-    }
-  }
-
-  .sep {
-    margin: 0 0.3em;
-  }
-
-  .space {
-    margin-inline-end: 0.4em;
-    color: var(--muted-strong);
-  }
-
   .finished,
   .blocked {
     opacity: 0.55;
@@ -609,11 +577,28 @@
     text-decoration-color: var(--line-strong);
   }
 
+  /* Ticked and not written back yet: the box fills at once (TaskBox.svelte), and the
+     words strike through and the task quiets with it, before the list lets it go. */
+  .words {
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .task:not(.finished):has(:global(.box.done)) {
+    opacity: 0.6;
+  }
+
+  .task:not(.finished):has(:global(.box.done)) .words {
+    color: var(--muted-strong);
+    text-decoration: line-through;
+    text-decoration-color: var(--line-strong);
+  }
+
   .task:global(.is-carried) {
     opacity: 0.35;
   }
 
-  .toned {
+  .toned,
+  .card .task.toned {
     background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }
 </style>

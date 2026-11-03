@@ -1,7 +1,7 @@
 /** Todoist's keys on a row of a view (row-keys.ts, docs/tasks.md 5.16), read by the list
  *  where the focus is and put in the shortcuts registry when the first view is drawn, or
- *  the settings are opened, rather than with the first paint. An id ending `.alt` is a
- *  second key for the one before. */
+ *  the settings are opened, rather than with the first paint. An id ending `.alt` (or
+ *  `.alt2`) is another key for the one before. */
 
 import { t } from '../i18n.svelte'
 import { BY_ID, CATEGORIES, SHORTCUTS, type Shortcut } from '../shortcuts/registry'
@@ -11,9 +11,10 @@ const TASK_ENTRIES: Shortcut[] = (
     ['tasks.next', () => t('Next task'), 'j'],
     ['tasks.previous', () => t('Previous task'), 'k'],
     ['tasks.open', () => t('Open'), 'Enter'],
-    ['tasks.note', () => t('Open in note'), 'Space'],
+    ['tasks.note', () => t('Open in note'), 'o'],
     ['tasks.complete', () => t('Complete'), 'e'],
     ['tasks.complete.alt', () => t('Complete'), 'Mod-Enter'],
+    ['tasks.complete.alt2', () => t('Complete'), 'Space'],
     ['tasks.schedule', () => t('Schedule'), 't'],
     ['tasks.undate', () => t('Remove date'), 'Shift-t'],
     ['tasks.priority', () => t('Priority'), 'y'],
@@ -50,7 +51,7 @@ const TASK_ENTRIES: Shortcut[] = (
   scope: 'panel' as const,
   key,
   contextual: true,
-  ...(id.endsWith('.alt') ? { alias: true } : {}),
+  ...(/\.alt\d*$/.test(id) ? { alias: true } : {}),
 }))
 
 // Into the registry, and its group into the list, once: the first paint carries neither.

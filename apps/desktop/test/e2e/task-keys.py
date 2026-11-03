@@ -3,7 +3,7 @@
 What this drives, against the real rows store and the real files:
 
   * j and k walk the rows; e completes the one the keyboard is on, the toast says
-    Completed, and its Undo opens it again.
+    Completed, and its Undo opens it again; Space completes it too.
   * Shift+T takes a task's date away.
   * Ctrl and a press selects rows, Shift and a press every row between; the bulk bar
     says how many, and a priority key gives every one of them that priority in one undo.
@@ -110,6 +110,13 @@ def keys(page: Page, days: dict[str, str]) -> None:
     shot(page, "01-completed")
     page.locator(".toast .undo").click()
     wait_for(page, f"() => ({TASK})('Pay the dentist')?.task.done === false", "the toast's Undo")
+
+    # Space ticks the card the keyboard is on, as its box would (#1043).
+    page.locator(row("Pay the dentist")).focus()
+    page.keyboard.press(" ")
+    wait_for(page, f"() => ({TASK})('Pay the dentist')?.task.done === true", "Space completing it")
+    page.locator(".toast .undo").click()
+    wait_for(page, f"() => ({TASK})('Pay the dentist')?.task.done === false", "Space's Undo")
 
     page.locator(row("Buy stamps")).focus()
     page.keyboard.press("Shift+T")

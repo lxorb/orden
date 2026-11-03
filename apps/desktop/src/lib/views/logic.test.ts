@@ -729,7 +729,9 @@ describe('the keys of a row', () => {
     expect(on('ArrowDown')).toEqual({ kind: 'step', by: 1 })
     expect(on('k')).toEqual({ kind: 'step', by: -1 })
     expect(on('Enter')).toEqual({ kind: 'open' })
-    expect(on(' ')).toEqual({ kind: 'note' })
+    expect(on('o')).toEqual({ kind: 'note' })
+    // Space ticks the card the focus is on, as its box would (#1043).
+    expect(on(' ')).toEqual({ kind: 'tick' })
     expect(on('e')).toEqual({ kind: 'tick' })
     expect(on('Enter', { ctrlKey: true })).toEqual({ kind: 'tick' })
     expect(on('Enter', { metaKey: true }, true)).toEqual({ kind: 'tick' })
