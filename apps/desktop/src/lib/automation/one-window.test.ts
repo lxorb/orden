@@ -53,8 +53,7 @@ vi.mock('@tauri-apps/api/window', () => ({
 vi.mock('../tauri', () => ({
   isNative: true,
   isDesktop: true,
-  invoke: (command: string) =>
-    Promise.resolve(command === 'automation_claim' ? world.claims : []),
+  invoke: (command: string) => Promise.resolve(command === 'automation_claim' ? world.claims : []),
   openExternal: () => Promise.resolve(),
 }))
 vi.mock('../web-tab/handed', () => ({ hearPages: () => Promise.resolve(() => undefined) }))

@@ -322,9 +322,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
  *  thread written down while it runs, the sync's scans, and an undo that waits for every
  *  gesture landing, measured together. Measured 5,807,931.
+ *
+ *  The code raised on 2026-11-03, to 5,809,000, for what a window hears on itself alone, a
+ *  request taken by one window once, and a placeholder iCloud left read as no delete. Measured
+ *  5,808,553.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_808_200,
+  code: 5_809_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
