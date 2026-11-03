@@ -320,12 +320,14 @@ export const syncMark = latched(() =>
  *  SpacePicker.svelte and space-picker.svelte.ts. */
 export const spacePickerDialog = latched(() => import('./SpacePicker.svelte'))
 
-/** Every tab of the space as cards (issue #331), fetched with the first press. */
-export const tabOverviewSheet = latched(() => import('./TabOverview.svelte'))
-export const tabOverview = $state({ open: false })
+/** Every tab as a window on a canvas, Alt Alt (issue #331): the layer, fetched with the
+ *  first ask, and whether it is wanted. `out` is the tabs whose window is away from the
+ *  strip, which the strip leaves a gap for; see overview/Overview.svelte. */
+export const tabOverviewLayer = latched(() => import('./overview/Overview.svelte'))
+export const tabOverview = $state<{ open: boolean; out: string[] }>({ open: false, out: [] })
 
 export function toggleTabOverview(): void {
-  void tabOverviewSheet.ask()
+  void tabOverviewLayer.ask()
   tabOverview.open = !tabOverview.open
 }
 
