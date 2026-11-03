@@ -1497,6 +1497,7 @@ export const es: Dictionary = {
   'The note': 'La nota',
   '{space} panel': 'Panel de {space}',
   'Panel width': 'Ancho del panel',
+  'Pane size': 'Tamaño del panel',
   Values: 'Valores',
   Pages: 'Páginas',
   'Page {number} of {count}': 'Página {number} de {count}',
@@ -2573,6 +2574,8 @@ export const es: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'La barra de título propia de Orden o el marco de ventana de tu sistema.',
   'How large the text of notes is.': 'El tamaño del texto de las notas.',
+  'How large all of Orden is drawn on this device.':
+    'El tamaño con el que se muestra todo Orden en este dispositivo.',
   'The space between the lines of a note.': 'El espacio entre las líneas de una nota.',
   'How wide a line of a note grows before it wraps.':
     'Cuánto se ensancha una línea de una nota antes de saltar a la siguiente.',
@@ -2729,6 +2732,9 @@ export const es: Dictionary = {
   'Move the chat': 'Mover el chat',
   'Only the file': 'Solo el archivo',
   'Trust this space again': 'Volver a confiar en este espacio',
+  'Agent instructions': 'Instrucciones para agentes',
+  "AGENTS is this space's agent instructions":
+    'AGENTS son las instrucciones para agentes de este espacio',
   '{title}, unread': '{title}, sin leer',
   '{title}, running': '{title}, en curso',
 }

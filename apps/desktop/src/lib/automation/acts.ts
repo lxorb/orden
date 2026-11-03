@@ -19,7 +19,8 @@ import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
 import { extensionOf, nameToWrite } from '../naming'
 import { search } from '../search.svelte'
-import { folderOf, insideSpace, isMarkdownPath, nameOf, relativeTo } from '../space-paths'
+import { AGENTS_NAME } from '../note-name'
+import { folderOf, insideSpace, isMarkdownPath, nameOf, relativeTo, samePath } from '../space-paths'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import { type Road, said, type Said, words, yes } from './args'
@@ -337,11 +338,31 @@ export async function moveFile(args: Said): Promise<unknown> {
   return { from, to: await movedIn(space.root, from, movedPath(from, to)) }
 }
 
+export const ONTO_INSTRUCTIONS = 'write_note writes them, and no note is moved onto them'
+
+/** Whether a move would make something else the file at the top of the space at `root`. */
+export function ontoInstructions(root: string, from: string, to: string): boolean {
+  return samePath(to, AGENTS_NAME, root) && !samePath(from, to, root)
+}
+
 /** Moves or renames a file or a folder of the space at `root` to `to`, both relative
  *  to it, through the tree's own rename and move, so every link to it is rewritten and
  *  the move is one thing to undo. Answers `to`. An agent's move in the space that is
  *  open comes through here too; see lib/agents/workspace/tree.ts. */
-export async function movedIn(root: string, from: string, to: string): Promise<string> {
+export async function movedIn(
+  root: string,
+  from: string,
+  to: string,
+  undoing = false,
+): Promise<string> {
+  // A note made the space's instructions without a word, hidden from the file list with
+  // whatever it held. Those are written, by content; only an Undo puts them back.
+  if (!undoing && ontoInstructions(root, from, to)) {
+    throw new Error(
+      `${AGENTS_NAME} at the top of a space is its instructions: ${ONTO_INSTRUCTIONS}`,
+    )
+  }
+
   const folder = folderOf(to)
   const name = nameOf(to)
   const source = insideSpace(root, from)
@@ -350,7 +371,7 @@ export async function movedIn(root: string, from: string, to: string): Promise<s
     return to
   }
 
-  await workspace.moveMany([source], folder ? insideSpace(root, folder) : root)
+  await workspace.moveMany([source], folder ? insideSpace(root, folder) : root, undoing)
   if (name !== nameOf(from)) {
     await workspace.rename(
       insideSpace(root, folder ? `${folder}/${nameOf(from)}` : nameOf(from)),

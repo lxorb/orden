@@ -11,7 +11,7 @@
  *  folder. See roving.ts. */
 
 import { isRegion, type Region, REGIONS, stepRegion } from './regions'
-import type { Panel, PanelSide } from './workspace.svelte'
+import type { Panel } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 
 /** Everything a key can land on. `[tabindex="0"]` first, because that is what a
@@ -123,6 +123,18 @@ export function focusEditor(): boolean {
   return focusRegion('editor')
 }
 
+/** The list, whichever panel is open: at its first stop, or itself. */
+export function focusList(): boolean {
+  return focusRegion('list')
+}
+
+/** The keyboard put into a side of the window, at the first thing in it past its edge, and
+ *  what took it; null where the side cannot hold it. */
+export function intoSide(side: 'left' | 'right'): HTMLElement | null {
+  if (!focusRegion(side === 'right' ? 'right' : 'space')) return null
+  return document.activeElement instanceof HTMLElement ? document.activeElement : null
+}
+
 /** One region along, wrapping, from wherever the keyboard is. What F6 does.
  *
  *  A region that is on screen but has nothing to stand on is stepped over rather
@@ -161,18 +173,6 @@ export function revealPanel(panel: Panel): void {
 
   workspace.showPanel(panel)
   settle(region, panel)
-}
-
-/** Puts the keyboard in a side just opened from its toggle by a key.
- *
- *  The sidebar comes before the bar in the page - it runs the window's full height and
- *  the bar sits beside it - so Tab from the toggle that opened it went on into the tabs
- *  and the note, and the panel just opened was behind it (#523). A key that opens a
- *  side takes the keyboard into it, as Ctrl+Shift+E does; a pointer leaves it where it
- *  was. */
-export function enterSide(side: PanelSide): void {
-  const panel = workspace.openOn(side)
-  if (panel) settle(side === 'right' ? 'right' : 'list', panel)
 }
 
 /** Puts the keyboard in a region, and keeps at it for a few frames while what is

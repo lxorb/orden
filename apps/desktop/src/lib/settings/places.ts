@@ -39,6 +39,9 @@ export function places(): Place[] {
     },
     { section: 'sync', label: t('What synced'), text: [] },
     { section: 'sync', label: t('Go back'), text: [t('This space, as it was')] },
+    ...(__EVEN_PLUGIN__
+      ? []
+      : [{ section: 'space' as const, label: t('Agent instructions'), text: ['AGENTS.md'] }]),
     { section: 'appearance', label: t('Themes'), text: [t('Browse'), t('Install')] },
     { section: 'editor', label: t('Reset to defaults'), text: [] },
     // Modal editing sits with the keyboard rather than with the editor, so

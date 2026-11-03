@@ -1437,6 +1437,7 @@ export const my: Dictionary = {
   'The note': 'မှတ်စု',
   '{space} panel': '{space} အကန့်',
   'Panel width': 'အကန့်အကျယ်',
+  'Pane size': 'အကန့်အရွယ်အစား',
   Values: 'တန်ဖိုးများ',
   Pages: 'စာမျက်နှာများ',
   'Page {number} of {count}': 'စာမျက်နှာ {number}/{count}',
@@ -2491,6 +2492,8 @@ export const my: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ၏ ကိုယ်ပိုင် ခေါင်းစဉ်ဘား သို့မဟုတ် သင့်စနစ်၏ ဝင်းဒိုးဘောင်။',
   'How large the text of notes is.': 'မှတ်စုများ၏ စာလုံးအရွယ် မည်မျှကြီးမည်နည်း။',
+  'How large all of Orden is drawn on this device.':
+    'ဤစက်ပေါ်တွင် Orden တစ်ခုလုံး ပြသသည့် အရွယ်အစား။',
   'The space between the lines of a note.': 'မှတ်စုတစ်ခု၏ လိုင်းများကြား အကွာအဝေး။',
   'How wide a line of a note grows before it wraps.':
     'မှတ်စု၏ လိုင်းတစ်ကြောင်း ခေါက်မသွားမီ မည်မျှ ကျယ်မည်နည်း။',
@@ -2645,6 +2648,9 @@ export const my: Dictionary = {
   'Move the chat': 'ချတ်ကို ရွှေ့ရန်',
   'Only the file': 'ဖိုင်သာ',
   'Trust this space again': 'ဤနေရာကို ထပ်မံယုံကြည်ရန်',
+  'Agent instructions': 'အေးဂျင့် ညွှန်ကြားချက်များ',
+  "AGENTS is this space's agent instructions":
+    'AGENTS သည် ဤနေရာ၏ အေးဂျင့် ညွှန်ကြားချက်များ ဖြစ်သည်',
   '{title}, unread': '{title}၊ မဖတ်ရသေး',
   '{title}, running': '{title}၊ လုပ်ဆောင်နေဆဲ',
 }

@@ -12,10 +12,10 @@
  *  Two maps, at the root of the document.
  *
  *  `canvas` holds everything on the plane, keyed by id. Each value is a map of
- *  that object's own fields, the very fields a file would carry for it, plus three
+ *  that object's own fields, the very fields a file would carry for it, plus those
  *  the room needs: `kind`, which of the file's three lists it belongs to; `at`,
- *  when it was last touched; and `z`, where it sits in the stack, since a map has
- *  no order and a file's order does matter.
+ *  when it was last touched; `z`, where it sits in the stack, since a map has
+ *  no order and a file's order does matter; and `moved`, when `z` last changed.
  *
  *  `gone` holds what has been thrown away, by id, with the time it went. The same
  *  tombstones a file carries under `nib.gone`, and for the same reason: a device
@@ -45,6 +45,7 @@ import {
   type Thing,
 } from '@orden/markdown/canvas'
 import { extrasRead, extrasText, holdsExtras } from '@orden/markdown/canvas-extras'
+import { standing } from '@orden/markdown/canvas-merge'
 import * as Y from 'yjs'
 import { fold } from './fold'
 
@@ -65,13 +66,16 @@ const HELD = 'held'
  *  guess. */
 type ThingKind = 'node' | 'edge' | 'ink'
 
-/** The three keys a room adds to an object. Never written into a file: a record
+/** The keys a room adds to an object. Never written into a file: a record
  *  is read back through the format's own readers, which keep the fields they know
  *  and drop everything else. */
 const KIND = 'kind'
 const AT = 'at'
 const Z = 'z'
-const ADDED: readonly string[] = [KIND, AT, Z]
+/** When it last moved in the stack, where it has: `Canvas.moved`. Left out of a seed, whose
+ *  bytes every build must agree on, and written by the push that moves it. */
+const MOVED = 'moved'
+const ADDED: readonly string[] = [KIND, AT, Z, MOVED]
 
 export function planeOf(doc: Y.Doc): Y.Map<Y.Map<unknown>> {
   return doc.getMap(PLANE)
@@ -218,6 +222,123 @@ function placeIn(plane: Y.Map<Y.Map<unknown>>, id: string): number | null {
   return typeof z === 'number' ? z : null
 }
 
+/** One record's place in the stack, as `stacked` compares them. */
+interface Placing {
+  id: string
+  z: number
+  record: Y.Map<unknown>
+}
+
+function under(one: Placing, other: Placing): boolean {
+  if (one.z !== other.z) return one.z < other.z
+  return one.id < other.id
+}
+
+/** One of a file's three lists, its order written into the room where the two differ.
+ *
+ *  A list only says which order and a record only says where it sits, so what moved is
+ *  worked out against where they sit. Only what has to move is written, so a card
+ *  brought to the front is one number and whatever somebody else moved meanwhile stays
+ *  theirs. It goes between its new neighbours, a fraction where it has to be: the rest
+ *  of the stack stays where it is, and `nextPlace` goes on from the highest whatever
+ *  that is.
+ *
+ *  What both ends of the two lists hold as the very same objects is walked off first,
+ *  as in `diff` in canvas-merge.ts, so a stroke added to ten thousand looks at one. */
+function restack(plane: Y.Map<Y.Map<unknown>>, before: readonly Thing[], after: readonly Thing[]) {
+  if (before === after) return
+
+  let head = 0
+  const shortest = Math.min(before.length, after.length)
+  while (head < shortest && before[head] === after[head]) head++
+
+  let tail = 0
+  while (
+    tail < shortest - head &&
+    before[before.length - 1 - tail] === after[after.length - 1 - tail]
+  ) {
+    tail++
+  }
+
+  const middle = after.slice(head, after.length - tail)
+  if (!middle.length) return
+
+  const placed = (thing: Thing | undefined): Placing[] => {
+    const record = thing && plane.get(thing.id)
+    return thing && record ? [{ id: thing.id, z: placeOf(record), record }] : []
+  }
+
+  const [floor] = placed(after[head - 1])
+  const [ceiling] = placed(after[after.length - tail])
+  const places = middle.flatMap(placed)
+  const inside = places.filter(
+    (place) => (!floor || under(floor, place)) && (!ceiling || under(place, ceiling)),
+  )
+
+  const kept = standing(inside, under)
+  if (kept.size === places.length) return
+  const stays = new Set(inside.filter((_, index) => kept.has(index)))
+
+  let low = floor?.z
+  let waiting: Placing[] = []
+  for (const place of places) {
+    if (!stays.has(place)) {
+      waiting.push(place)
+    } else if (between(waiting, low, place.z)) {
+      waiting = []
+      low = place.z
+    } else {
+      waiting.push(place)
+    }
+  }
+
+  // Past the end of what changed only where there is no room yet: what sits above is
+  // walked up, one at a time, until there is.
+  for (const thing of after.slice(after.length - tail)) {
+    const [place] = placed(thing)
+    if (!place) continue
+    if (between(waiting, low, place.z)) return
+    waiting.push(place)
+  }
+
+  between(waiting, low, undefined)
+}
+
+/** Records written to sit in order between two places, either of which may be open.
+ *  Answers false, having written nothing, where there is no number between them: two
+ *  things on one place, or a place halved that far by a card moved back and forth over
+ *  one neighbour. The caller takes the upper neighbour along and tries further up, so
+ *  that writes as few records as it can and overwrites as little of what another device
+ *  moved meanwhile; nothing else in the list is touched. Open above, there is always
+ *  room. */
+function between(waiting: readonly Placing[], low?: number, high?: number): boolean {
+  const count = waiting.length
+  if (!count) return true
+
+  const at = (one: number) => {
+    if (low !== undefined && high !== undefined) {
+      return low + ((high - low) * (one + 1)) / (count + 1)
+    }
+    if (low !== undefined) return low + one + 1
+    return (high ?? count) - (count - one)
+  }
+
+  if (low !== undefined && high !== undefined) {
+    let last = low
+    for (let one = 0; one < count; one++) {
+      const z = at(one)
+      if (z <= last || z >= high) return false
+      last = z
+    }
+  }
+
+  waiting.forEach((place, one) => {
+    place.z = at(one)
+    place.record.set(Z, place.z)
+  })
+  return true
+}
+
 function things(canvas: Canvas): Map<string, Thing> {
   const out = new Map<string, Thing>()
   for (const thing of [...canvas.nodes, ...canvas.edges, ...canvas.ink]) out.set(thing.id, thing)
@@ -226,7 +347,15 @@ function things(canvas: Canvas): Map<string, Thing> {
 
 /** A whole canvas into an empty document: the room's first content, from the file
  *  as it was stored. Stacked in the order the file listed them, so a plane seeded
- *  here looks exactly like the file it came from. */
+ *  here looks exactly like the file it came from.
+ *
+ *  Without the file's `moved`, because a seed's bytes are the same on every device and in
+ *  every build. So the room opens in the file's order and with no time for any move in it.
+ *  A device holding that file puts the times back as it joins. A device with an older copy
+ *  that joins first has nothing to lose to: where it disagrees the merge goes by `at`,
+ *  then the smaller index, then id, and that can undo a move the file held. A copy with a
+ *  move of its own, however old, beats the room the same way. Both stay agreed on every
+ *  device; plane.test.ts holds all of it. */
 export function seedPlane(doc: Y.Doc, canvas: Canvas) {
   const plane = planeOf(doc)
   const buried = buriedOf(doc)
@@ -272,6 +401,20 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
 
   for (const id of was.keys()) {
     if (!is.has(id)) plane.delete(id)
+  }
+
+  // Where things sit, now that everything the edit kept is on the plane. Only within a
+  // list: a file keeps three of them, and the three are drawn apart.
+  restack(plane, before.nodes, after.nodes)
+  restack(plane, before.edges, after.edges)
+  restack(plane, before.ink, after.ink)
+
+  // And when, for the next merge with a file; see `Canvas.moved`.
+  if (after.moved !== before.moved) {
+    for (const [id, when] of Object.entries(after.moved ?? {})) {
+      const record = plane.get(id)
+      if (record && record.get(MOVED) !== when) record.set(MOVED, when)
+    }
   }
 
   // Every tombstone the edit ended up with, whether it came from a delete here or
@@ -360,11 +503,14 @@ export function readPlane(doc: Y.Doc, previous?: Canvas, changed?: ReadonlySet<s
   const nodes: Placed<CanvasNode>[] = []
   const later: { record: Y.Map<unknown>; z: number; id: string }[] = []
   const at: Record<string, number> = {}
+  const moved: Record<string, number> = {}
 
   for (const [id, record] of plane) {
     const z = placeOf(record)
     const when = record.get(AT)
     at[id] = typeof when === 'number' ? when : 0
+    const shifted = record.get(MOVED)
+    if (typeof shifted === 'number') moved[id] = shifted
 
     if (record.get(KIND) !== 'node') {
       later.push({ record, z, id })
@@ -413,6 +559,7 @@ export function readPlane(doc: Y.Doc, previous?: Canvas, changed?: ReadonlySet<s
     ink: ink.map((one) => one.thing),
     at,
     gone,
+    ...(Object.keys(moved).length ? { moved } : {}),
     ...(holdsExtras(extras) ? { extras } : {}),
   }
 }

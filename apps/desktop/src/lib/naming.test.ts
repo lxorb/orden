@@ -267,3 +267,38 @@ describe('the names the crate keeps for devices', () => {
     expect(refused).toEqual([])
   })
 })
+
+describe('the name AGENTS, which a space keeps for its agent instructions', () => {
+  const naming = { extension: '.md', taken: beside() }
+
+  test('is refused for a note, however it is spelled, with or without the ending', () => {
+    for (const typed of ['AGENTS', 'agents', 'Agents', 'AGENTS.md', 'agents.MD', '  AGENTS  ']) {
+      expect(nameFault({ ...naming, typed }), typed).toBe('agents')
+    }
+  })
+
+  test('goes before a name being taken, since the file at the root is taken by the setting', () => {
+    expect(nameFault({ ...naming, typed: 'AGENTS', taken: beside('AGENTS.md') })).toBe('agents')
+  })
+
+  test('is free for what is no note: a folder, a space, a canvas', () => {
+    expect(nameFault({ extension: '', taken: beside(), typed: 'AGENTS' })).toBeNull()
+    expect(nameFault({ extension: '.canvas', taken: beside(), typed: 'AGENTS' })).toBeNull()
+  })
+
+  test('and for a name that only starts with it', () => {
+    expect(nameFault({ ...naming, typed: 'AGENTS 2' })).toBeNull()
+    expect(nameFault({ ...naming, typed: 'My AGENTS' })).toBeNull()
+  })
+
+  test('a nested note already called that opens on no fault, and changes case or leaves it', () => {
+    const own = { ...naming, current: 'AGENTS.md' }
+    expect(nameFault({ ...own, typed: 'AGENTS' })).toBeNull()
+    expect(nameFault({ ...own, typed: 'agents' })).toBeNull()
+    expect(nameFault({ ...own, typed: 'Rules' })).toBeNull()
+  })
+
+  test('writes nothing', () => {
+    expect(nameToCommit({ ...naming, typed: 'AGENTS', was: 'Plan', current: 'Plan.md' })).toBeNull()
+  })
+})

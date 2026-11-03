@@ -332,6 +332,12 @@ export class Page {
    *  the card a browser build shows, because that is the one surface with somewhere
    *  to send the reader. Given a new address it is worth trying again. */
   openable = $state(true)
+  /** Whether the page's process died under it. The pane offers it again rather than build
+   *  it on its own: a page that crashes as it loads would crash for ever. See `ended`. */
+  crashed = $state(false)
+  /** Whether the build on its way is a crashed page being offered again, whose refusal is
+   *  that same offer once more rather than the card for a platform with no webview. */
+  rebuilding = false
   /** What a browser build has in the pane. The card until the reader presses it,
    *  and the frame from then on: one press per tab, because saying yes to a site is
    *  about the tab rather than about each page in it. Never read on a desktop. */
@@ -583,6 +589,8 @@ class Pages {
 
     await this.listen()
 
+    if (page.crashed) return
+
     if (page.live) {
       await this.thaw(tabId)
       await this.place(tabId, pane, visible, !visible, over)
@@ -691,6 +699,7 @@ class Pages {
       page.live = true
       page.openable = true
       page.frozen = false
+      page.rebuilding = false
       page.store = store
       // A webview the crate has just built is on screen at the rectangle it was built
       // at: nothing has to place it to make that true, and the first thing drawn over
@@ -714,13 +723,21 @@ class Pages {
       // The label is cleared first: the crate refuses a second page under a label that
       // has one, and a page nothing places any more is drawn over the whole app.
       await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
-      if (page.url === tried) page.openable = false
+      if (page.rebuilding) {
+        page.rebuilding = false
+        page.crashed = true
+      } else if (page.url === tried) page.openable = false
     } finally {
       page.opening = false
     }
 
     const wanted = page.wanted
     page.wanted = null
+    // Its process died while it was on its way, which `ended` could only note.
+    if (page.live && page.crashed) {
+      await this.ended(tabId)
+      return
+    }
     if (!page.live) {
       // Sent somewhere while the last address was being refused: built there now, rather
       // than left on a card nothing would ask again. A new tab typed into the moment it
@@ -1009,6 +1026,28 @@ class Pages {
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
+  /** The page's process has died. What is left is an engine's empty white box, so it goes
+   *  the way a parked page goes, with the trail kept, and the pane offers the page again.
+   *  Not asked where it was: nothing is there to answer, and the last place written stays.
+   *  A page already on its way out says this too, and is nobody's news. One on its way in
+   *  is noted, and goes the same way as it arrives; see `build`. */
+  async ended(tabId: string): Promise<void> {
+    const page = this.held.get(tabId)
+    if (page?.opening) page.crashed = true
+    if (!page?.live) return
+
+    page.crashed = true
+    page.live = false
+    page.frozen = false
+    page.loading = false
+    page.playing = false
+    page.back = false
+    page.forward = false
+    page.shot = null
+    clearTimeout(page.resting)
+    await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
+  }
+
   /** Reads where the page has got to and writes it down for this device, and whether
    *  something is typed into it. Quiet about failure: a page that has gone is a page
    *  whose place was already written when it went. */
@@ -1145,6 +1184,7 @@ class Pages {
     page.upgrade = upgrade
     page.url = url
     page.openable = true
+    page.crashed = false
     // The title, the mark and the picture all belonged to the page that was there.
     // Until the new one says what it is called the bar shows the site, which is true
     // of both.
@@ -1176,6 +1216,15 @@ class Pages {
    *  row of the history under the arrows. */
   async step(tabId: string, step: Step, by = 1): Promise<void> {
     const page = this.held.get(tabId)
+    // Reload over a page that crashed is the page again: the pane builds it once the hole
+    // is back, on a label that has to be free, and the first close may not have got there.
+    // See `ended`.
+    if (page?.crashed && (step === 'reload' || step === 'fresh')) {
+      await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
+      page.rebuilding = true
+      page.crashed = false
+      return
+    }
     if (!isDesktop || !page?.live) return
     // Back, forward or reload is a visit of its own; see `go`.
     page.upgrade = null
@@ -1482,6 +1531,7 @@ class Pages {
         listen,
         (tab) => this.held.get(tab),
         (tab, url) => void this.go(tab, url),
+        (tab) => void this.ended(tab),
       )
       await listen('nib://web-tab', (event) => {
         const said = readMoved(event.payload)

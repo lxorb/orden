@@ -2,8 +2,8 @@
  *
  *  Found in the #419 bug hunt (#523): the sidebar comes before the bar in the page, so
  *  Tab from the toggle that had just opened it went on into the tabs and the note, and
- *  the panel was behind it. A key that opens it now takes the keyboard into it; a click
- *  leaves the keyboard where it was.
+ *  the panel was behind it. After a key opens it the next Tab goes in; a click leaves
+ *  the keyboard where it was. See sidebar-toggle-order.effect.test.ts for the rest of it.
  *
  *  In the jsdom project because the toggle is mounted and pressed. jsdom lays nothing
  *  out, so every box says it has one, and the panel is a stand-in for the real one. */
@@ -22,7 +22,7 @@ beforeEach(() => {
   workspace.panel = null
   host = document.createElement('div')
   host.innerHTML =
-    '<div data-region="list"><div data-panel="tree"><button tabindex="0" class="row">A.md</button></div></div>'
+    '<div data-region="space"><button class="row">Space</button></div><div data-region="list"><div data-panel="tree"><button tabindex="0" class="row">A.md</button></div></div>'
   document.body.append(host)
   shown = mount(SidebarToggle, { target: host })
   flushSync()
@@ -42,13 +42,19 @@ afterEach(async () => {
 
 const toggle = () => host.querySelector<HTMLButtonElement>('[data-side-toggle="left"]')
 
-test('opened by a key, the sidebar has the keyboard', async () => {
+test('opened by a key, the toggle keeps the keyboard until Tab takes it in', async () => {
   toggle()?.focus()
   // What Enter or Space on a button fires: a click with no clicks counted.
   toggle()?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }))
   flushSync()
 
   expect(workspace.panel).toBe('tree')
+  await frames()
+  expect(document.activeElement).toBe(toggle())
+
+  toggle()?.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }),
+  )
   await vi.waitFor(() => expect(document.activeElement?.classList.contains('row')).toBe(true))
 })
 

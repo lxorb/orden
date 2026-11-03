@@ -75,6 +75,7 @@ fn escaped(text: &str) -> String {
             '\'' => out.push_str("&apos;"),
             // A control character is not XML at all, and the system refuses the toast.
             one if one.is_control() && one != '\t' => out.push(' '),
+            '\u{FFFE}' | '\u{FFFF}' => out.push(' '),
             one => out.push(one),
         }
     }
@@ -104,6 +105,12 @@ mod tests {
             "<selection id=\"15\" content=\"15 min\"/><selection id=\"60\" content=\"1 h\"/><selection id=\"900\" content=\"Tomorrow\"/>"
         ));
         assert!(made.contains("arguments=\"nib://reminder?act=done&amp;id=00ff00ff00ff00ff&amp;n=0123\" content=\"Done\""));
+    }
+
+    /// U+FFFE and U+FFFF are not XML characters either; see notices/toast.rs.
+    #[test]
+    fn the_two_noncharacters_are_not_handed_to_the_toast() {
+        assert_eq!(escaped("a\u{FFFE}b\u{FFFF}c"), "a b c");
     }
 
     #[test]

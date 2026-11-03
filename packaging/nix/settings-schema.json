@@ -1499,6 +1499,10 @@
     "type": "string",
     "description": "The key that runs Address, as the keys file writes it; empty for none."
   },
+  "shortcuts.web-back": {
+    "type": "string",
+    "description": "The key that runs Back, as the keys file writes it; empty for none."
+  },
   "shortcuts.web-clear-data": {
     "type": "string",
     "description": "The key that runs Delete browsing data, as the keys file writes it; empty for none."
@@ -1506,6 +1510,10 @@
   "shortcuts.web-devtools": {
     "type": "string",
     "description": "The key that runs Developer tools, as the keys file writes it; empty for none."
+  },
+  "shortcuts.web-forward": {
+    "type": "string",
+    "description": "The key that runs Forward, as the keys file writes it; empty for none."
   },
   "shortcuts.web-fresh": {
     "type": "string",

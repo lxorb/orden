@@ -7,7 +7,10 @@
  *  reader cannot open. */
 
 import { t } from '../../i18n.svelte'
+import { onDisk } from '../../on-disk'
+import { canWriteAt } from '../../sharing.svelte'
 import { workspace } from '../../workspace.svelte'
+import { writeFile } from '../../workspace/write-file'
 import type { Thread } from '../chat/types'
 import { found, foundNamed, fromOthers, rootOfSpace } from './found'
 import { type Host, sendHere } from './host'
@@ -22,8 +25,9 @@ function rootOf(thread: Thread | null): string | null {
   return space?.root ?? workspace.activeSpace?.root ?? null
 }
 
-/** `/memory [on|off]`: remembering switched, or the space's `AGENTS.md` opened, made
- *  first where there is none. */
+/** `/memory [on|off]`: remembering switched, or the space's `AGENTS.md` opened, which is
+ *  its field in the space's settings. Made first where there is none, with the heading
+ *  remembering writes under; asked for by name, unlike opening the settings. */
 export async function memory(host: Host, thread: Thread | null, args: string): Promise<void> {
   const word = args.trim().toLowerCase()
   if (word === 'on' || word === 'off') {
@@ -34,10 +38,12 @@ export async function memory(host: Host, thread: Thread | null, args: string): P
   const root = rootOf(thread)
   if (!root) return
   const path = `${root}/${AGENTS}`
-  // A space shared to be read makes no note, and opening the name it would have
-  // had would show an empty page that is in no space at all.
-  if ((await workspace.noteText(path).catch(() => null)) === null) {
-    if ((await workspace.noteFrom('# AGENTS\n\n## Memory\n', root)) === null) return
+  if (canWriteAt(path) && !(await onDisk(path))) {
+    await writeFile(path, '# AGENTS\n\n## Memory\n')
+    if (root === workspace.activeSpace?.root) await workspace.loadTree()
+    await workspace.fileCame(path, 'file')
+    const { sync } = await import('../../sync.svelte')
+    sync.nudge()
   }
   await workspace.open(path)
 }

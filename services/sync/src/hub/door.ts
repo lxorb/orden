@@ -56,8 +56,9 @@ hubDoor.get('/', async (context) => {
   const token = tokenOf(offered)
   const device = deviceProtocol(offered)
 
+  const tokenHash = await sha256(token ?? '')
   const row = await context.env.DB.prepare(WHO)
-    .bind(await sha256(token ?? ''), now(), device ?? '')
+    .bind(tokenHash, now(), device ?? '')
     .first<{
       user_id: string | null
       session_id: string | null
@@ -84,7 +85,8 @@ hubDoor.get('/', async (context) => {
     upgrade: 'websocket',
     'x-nib-device': device,
     'x-nib-who': who,
-    'x-nib-session': row.session_id ?? '',
+    // A guest's sign-in has no id, and is found by the hash it is kept under.
+    'x-nib-session': row.session_id ?? tokenHash,
     'x-nib-guest': row.user_id ? 'no' : 'yes',
   })
 

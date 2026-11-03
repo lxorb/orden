@@ -159,3 +159,33 @@ describe('the z order', () => {
     expect(ordered(canvas, [], 'front')).toBe(canvas)
   })
 })
+
+/** A move says nothing about what a card says, so it hands back the very same cards:
+ *  a merge would otherwise take this copy's words for newer than another's (#783). */
+describe('the order of the stack', () => {
+  const board = () =>
+    ({
+      nodes: ['a', 'b', 'c'].map((id) => ({
+        id,
+        type: 'text',
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 50,
+        text: id,
+      })),
+      edges: [],
+      ink: [],
+      at: {},
+      gone: {},
+    }) as Canvas
+
+  test.each(['front', 'forward', 'backward', 'back'] as const)('%s moves no new object', (how) => {
+    const canvas = board()
+    const picked = how === 'front' || how === 'forward' ? 'a' : 'c'
+    const after = ordered(canvas, [picked], how)
+    expect(after.nodes.map((node) => node.id)).not.toEqual(['a', 'b', 'c'])
+    expect(new Set(after.nodes)).toEqual(new Set(canvas.nodes))
+    for (const node of after.nodes) expect(canvas.nodes).toContain(node)
+  })
+})

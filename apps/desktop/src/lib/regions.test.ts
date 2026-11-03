@@ -20,8 +20,8 @@ describe('the order', () => {
       'list',
       'foot',
       'tabs',
-      'editor',
       'notices',
+      'editor',
       'status',
       'right',
     ])

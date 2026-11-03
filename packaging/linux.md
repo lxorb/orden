@@ -121,6 +121,23 @@ cannot be setuid, and NixOS allows the namespaces. An AppImage cannot carry a se
 helper: where user namespaces are restricted as well (Ubuntu 24.04's AppArmor), the
 runtime starts Chromium without a sandbox and says so in the log.
 
+**What a package reads from its environment.** No `NIB_CEF_ARGS`, `NIB_CEF_DEBUG_PORT` or
+`NIB_CEF_SANDBOX`: only a build with debug assertions does, which is what the drives run
+(`from_run` in engine.rs).
+
+**Coming from WebKitGTK.** A machine that ran 0.16 or older and updates to a CEF build keeps
+its spaces and notes, which are files, and starts with the page's `localStorage` empty
+(theme, appearance, last note, tabs, any Untitled draft) and the web tabs signed out: those
+now live in `<config>/chromium`. Nothing is moved, deliberately, and the old folders
+(`<config>/web`, `<config>/web-stores`, WebKit's `localstorage` under the data folder) are
+never deleted, so going back to 0.16 finds them and a draft can still be got out by hand. WebKit
+writes `localStorage` and cookies in formats of its own that Chromium cannot read; a move would
+read them and write Chromium's, once, on a real install of the old version, and CI has no
+Linux upgrade job to prove that on. CEF shipped in 0.17 on 2026-10-19, so a late import could
+also put old settings over ones a reader has changed since. If it is ever wanted, the safe
+road for settings is seeding `kept/` (kept.rs) behind a marker, with a job in `upgrade.yml`
+that starts from the 0.16 `.deb`. Signing in again is the accepted cost for web tabs.
+
 ## apt - `apt.orden.so`
 
 An apt repository of our own, served at `https://apt.orden.so` from the Cloudflare R2

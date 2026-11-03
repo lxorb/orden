@@ -69,9 +69,16 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
+const moves = vi.hoisted(() => ({
+  rename: vi.fn(() => Promise.resolve()),
+  moveMany: vi.fn(() => Promise.resolve()),
+}))
+
 vi.mock('../workspace.svelte', () => ({
   workspace: {
     spaces: [space],
+    rename: moves.rename,
+    moveMany: moves.moveMany,
     activeSpace: space,
     activeSpaceId: space.id,
     active: null,
@@ -132,8 +139,17 @@ vi.mock('../sharing.svelte', () => ({
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-const { appendNote, deleteFile, moveFile, newNote, openNote, runCommand, setProperty, writeFile } =
-  await import('./acts')
+const {
+  appendNote,
+  deleteFile,
+  moveFile,
+  movedIn,
+  newNote,
+  openNote,
+  runCommand,
+  setProperty,
+  writeFile,
+} = await import('./acts')
 
 describe('a note named rather than pathed', () => {
   test('is opened at the path the index holds it under', async () => {
@@ -456,5 +472,30 @@ describe('a space shared to be read', () => {
     expect(written).toEqual([])
     expect(made).toEqual([])
     readOnly.clear()
+  })
+})
+
+describe('the space’s instructions, which a move does not make', () => {
+  test('refused with what to do instead, whatever note it was', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '# Plan')
+    moves.rename.mockClear()
+    moves.moveMany.mockClear()
+    await expect(moveFile({ path: 'Plan.md', to: 'AGENTS.md' })).rejects.toThrow('write_note')
+    await expect(movedIn('/Work', 'Notes/AGENTS.md', 'AGENTS.md')).rejects.toThrow('instructions')
+    expect(moves.rename).not.toHaveBeenCalled()
+    expect(moves.moveMany).not.toHaveBeenCalled()
+  })
+
+  test('an Undo of a move off them puts them back', async () => {
+    await movedIn('/Work', 'Old.md', 'AGENTS.md', true)
+    expect(moves.rename).toHaveBeenCalledWith('/Work/Old.md', 'AGENTS.md')
+  })
+
+  test('and they may move off, or into a folder under the name', async () => {
+    await expect(movedIn('/Work', 'AGENTS.md', 'Old.md')).resolves.toBe('Old.md')
+    await expect(movedIn('/Work', 'Notes/AGENTS.md', 'Other/AGENTS.md')).resolves.toBe(
+      'Other/AGENTS.md',
+    )
   })
 })

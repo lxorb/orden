@@ -121,6 +121,15 @@ export class Engine implements AskedEngine {
   // -------------------------------------------------------------------------
   // Passes
 
+  /** A line in the log about one space from beside its passes, where a page's paper not
+   *  taken is said (pages/carried.ts), and told to whoever has the log open. */
+  async said(spaceId: string, failed: string): Promise<void> {
+    const at = this.core.world.now()
+    const row: LogRow = { at, space: spaceId, pulled: null, pushed: null, failed }
+    await this.core.commit([put('log', row)]).catch(() => undefined)
+    this.emit('pass', row)
+  }
+
   /** One pass over one space. Written in the log when it moved anything or failed. */
   async pass(spaceId: string): Promise<Passed | null> {
     const space = this.core.spaces.get(spaceId)

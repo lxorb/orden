@@ -179,6 +179,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { panesOf } = await import('./workspace/session')
 const { noteId } = await import('./note-id')
+const { answeredCase } = await import('./space-paths')
 const { viewport } = await import('./viewport.svelte')
 const { pages } = await import('./web-tab/pages.svelte')
 const { links } = await import('./link-index.svelte')
@@ -5258,6 +5259,197 @@ describe('the words of the paper a page note holds', () => {
     await settled()
 
     expect(await hits('/renamed')).toEqual(['/renamed/Lecture.pages.pdf'])
+  })
+})
+
+/** The file at the top of a space that agents read: a real file on the disk, shown as a
+ *  field in the space's settings rather than as a note; see settings/SpacePane.svelte. */
+describe('a space and its AGENTS.md', () => {
+  const entry = (path: string, children: Entry[] | null = null): Entry => ({
+    name: path.split('/').at(-1) ?? '',
+    path,
+    is_dir: children !== null,
+    children: children ?? [],
+    modified: 1,
+    created: 1,
+  })
+  const AGENTS = '/space/AGENTS.md'
+  const NESTED = '/space/sub/AGENTS.md'
+  const walked = (one: Entry | null): string[] =>
+    (one?.children ?? []).flatMap((child) => [child.path, ...walked(child)])
+
+  beforeEach(async () => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    workspace.closed.stack = []
+    notes[AGENTS] = '# Rules'
+    notes[NESTED] = '# Nested'
+    workspace.tree = entry('/space', [
+      entry(AGENTS),
+      entry('/space/a.md'),
+      entry('/space/sub', [entry(NESTED)]),
+    ])
+    const { settings } = await import('./settings.svelte')
+    settings.open = false
+    sent.length = 0
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(notes, AGENTS)
+    Reflect.deleteProperty(notes, NESTED)
+    workspace.tree = null
+  })
+
+  test('is on the disk still, and in the listing that says so', () => {
+    expect(walked(workspace.tree)).toContain(AGENTS)
+    expect(workspace.entryAt(AGENTS)?.path).toBe(AGENTS)
+  })
+
+  test('has no row, is no note, and is not what a list of files offers', () => {
+    expect(walked(workspace.shownTree)).not.toContain(AGENTS)
+    expect(workspace.files.map((one) => one.path)).not.toContain(AGENTS)
+    expect(workspace.notes.map((one) => one.path)).not.toContain(AGENTS)
+  })
+
+  test('one in a folder is any other note', () => {
+    expect(walked(workspace.shownTree)).toContain(NESTED)
+    expect(workspace.notes.map((one) => one.path)).toContain(NESTED)
+  })
+
+  test('is left out of the picture of the space, and not of what an agent searches', () => {
+    expect(workspace.leftOut).toContain('AGENTS.md')
+    expect(workspace.leftOutOf('/space')).not.toContain('AGENTS.md')
+  })
+
+  test('is not among the recent notes', async () => {
+    workspace.remember(AGENTS)
+    workspace.remember('/space/a.md')
+    await Promise.resolve()
+    expect(workspace.recent).not.toContain(AGENTS)
+    expect(workspace.recent).toContain('/space/a.md')
+  })
+
+  test('opened from anywhere, it is the field and no tab', async () => {
+    const { settings } = await import('./settings.svelte')
+    await workspace.open(AGENTS)
+    expect(workspace.tabs.map((one) => one.path)).not.toContain(AGENTS)
+    expect(settings.open).toBe(true)
+    expect(settings.section).toBe('space')
+    expect(settings.space).toBe('/space')
+  })
+
+  test('opened behind the reader, it moves nothing', async () => {
+    const { settings } = await import('./settings.svelte')
+    await workspace.open(AGENTS, { activate: false })
+    expect(workspace.tabs.map((one) => one.path)).not.toContain(AGENTS)
+    expect(settings.open).toBe(false)
+  })
+
+  test('one in a folder opens as a note', async () => {
+    await workspace.open(NESTED)
+    expect(workspace.active?.path).toBe(NESTED)
+  })
+
+  test('a new file never takes the name, anywhere in the space', () => {
+    expect(workspace.freeName('/elsewhere', 'AGENTS.md')).toBe('AGENTS 2.md')
+    expect(workspace.freeName('/space/sub', 'agents.md')).toBe('agents 2.md')
+    expect(workspace.freeName('/elsewhere', 'AGENTS.canvas')).toBe('AGENTS.canvas')
+  })
+
+  test('words headed AGENTS step aside rather than becoming the setting', async () => {
+    Reflect.deleteProperty(notes, AGENTS)
+    const made = await workspace.noteFrom('# AGENTS\n', '/space')
+    expect(made).toBe('/space/AGENTS 2.md')
+    Reflect.deleteProperty(notes, '/space/AGENTS 2.md')
+  })
+
+  test('a link to a note of the name makes none, and a hint says where it is', async () => {
+    const { reservedName } = await import('./reserved-name.svelte')
+    Reflect.deleteProperty(notes, AGENTS)
+    await workspace.followLink(
+      { target: 'AGENTS', path: null, heading: null, block: null, page: null },
+      'plain',
+      '/space/a.md',
+    )
+    await vi.waitFor(() => expect(reservedName.root).toBe('/space'))
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    reservedName.dismiss()
+  })
+
+  test('a note of the name dropped on the top of the space stays where it was', async () => {
+    const { reservedName } = await import('./reserved-name.svelte')
+    await workspace.moveMany([NESTED], '/space')
+    await vi.waitFor(() => expect(reservedName.root).toBe('/space'))
+    expect(sent.filter((one) => one.command === 'rename_note')).toEqual([])
+    reservedName.dismiss()
+  })
+
+  test('between two folders it is the note it was', async () => {
+    workspace.tree = entry('/space', [
+      entry('/space/sub', [entry(NESTED)]),
+      entry('/space/other', []),
+    ])
+    await workspace.moveMany([NESTED], '/space/other')
+    expect(sent.filter((one) => one.command === 'rename_note')).toHaveLength(1)
+  })
+
+  test('an agent’s move being undone puts one back on the top of the space', async () => {
+    await workspace.moveMany([NESTED], '/space', true)
+    expect(sent.filter((one) => one.command === 'rename_note')).toHaveLength(1)
+  })
+
+  describe('on a disk that sets case aside', () => {
+    const LOWER = '/space/agents.md'
+
+    beforeEach(() => {
+      answeredCase('/space', true)
+      notes[LOWER] = '# Lower'
+      workspace.tree = entry('/space', [entry(LOWER), entry('/space/a.md')])
+    })
+
+    afterEach(() => {
+      answeredCase('/space', null)
+      Reflect.deleteProperty(notes, LOWER)
+    })
+
+    test('a root agents.md is the one file, so it has no row and is the field', async () => {
+      const { settings } = await import('./settings.svelte')
+      expect(workspace.instructionsAt(LOWER)).toBe(true)
+      expect(walked(workspace.shownTree)).not.toContain(LOWER)
+      expect(workspace.files.map((one) => one.path)).not.toContain(LOWER)
+
+      await workspace.open(LOWER)
+      expect(workspace.tabs.map((one) => one.path)).not.toContain(LOWER)
+      expect(settings.section).toBe('space')
+    })
+
+    test('what a search leaves out is spelled as the listing spells it', () => {
+      expect(workspace.leftOut).toContain('agents.md')
+    })
+  })
+
+  describe('on a disk that tells case apart', () => {
+    const LOWER = '/space/agents.md'
+
+    beforeEach(() => {
+      answeredCase('/space', false)
+      notes[LOWER] = '# Lower'
+      workspace.tree = entry('/space', [entry(AGENTS), entry(LOWER)])
+    })
+
+    afterEach(() => {
+      answeredCase('/space', null)
+      Reflect.deleteProperty(notes, LOWER)
+    })
+
+    test('a root agents.md is a note of its own beside the setting', async () => {
+      expect(workspace.instructionsAt(LOWER)).toBe(false)
+      expect(walked(workspace.shownTree)).toContain(LOWER)
+      expect(walked(workspace.shownTree)).not.toContain(AGENTS)
+      await workspace.open(LOWER)
+      expect(workspace.active?.path).toBe(LOWER)
+    })
   })
 })
 

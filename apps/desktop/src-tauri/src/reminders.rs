@@ -178,6 +178,19 @@ fn kept<'a>(state: &'a mut State, app: &AppHandle) -> &'a mut HashMap<String, Ke
     })
 }
 
+/// The ids of a plan held at another moment than the plan says, read before `merge` writes
+/// the new moments down. An id is the wall minute, so it stays when the moment moves: the
+/// machine changed zone, or a new version reads a clock change differently.
+fn moved(kept: &HashMap<String, Kept>, plan: &[Planned]) -> Vec<String> {
+    plan.iter()
+        .filter(|one| {
+            kept.get(&one.id)
+                .is_some_and(|held| held.planned.at != one.at)
+        })
+        .map(|one| one.id.clone())
+        .collect()
+}
+
 /// The plan merged into what is kept: each reminder keeps the nonce it was first given,
 /// one that rang is kept a week for its Done, and one taken out of the plan before it
 /// rang is forgotten. Answers the plan with its nonces.
@@ -271,17 +284,24 @@ pub fn reminders_set(
     }
 
     let now = now_ms();
-    let wanted = in_state(|state| {
+    let (wanted, moved) = in_state(|state| {
         let kept = kept(state, &app);
+        let moved = moved(kept, &reminders);
         let wanted = merge(kept, reminders, now, fresh_nonce);
         save(&app, kept);
-        wanted
+        (wanted, moved)
     });
-    Ok(handed(&app, &wanted, &words, now))
+    Ok(handed(&app, &wanted, &moved, &words, now))
 }
 
 /// The plan made so on this platform's schedule, if it has one.
-fn handed(app: &AppHandle, wanted: &[(Planned, String)], words: &Words, now: i64) -> bool {
+fn handed(
+    app: &AppHandle,
+    wanted: &[(Planned, String)],
+    moved: &[String],
+    words: &Words,
+    now: i64,
+) -> bool {
     #[cfg(any(windows, target_os = "macos"))]
     {
         #[cfg(windows)]
@@ -289,13 +309,13 @@ fn handed(app: &AppHandle, wanted: &[(Planned, String)], words: &Words, now: i64
         #[cfg(target_os = "macos")]
         let system = macos::Requests::start(app, words);
         system
-            .and_then(|system| schedule::make_so(&system, wanted, words, now))
+            .and_then(|system| schedule::make_so(&system, wanted, moved, words, now))
             .map_err(|error| eprintln!("nib: reminders: {error}"))
             .is_ok()
     }
     #[cfg(not(any(windows, target_os = "macos")))]
     {
-        let _ = (app, wanted, words, now);
+        let _ = (app, wanted, moved, words, now);
         false
     }
 }
@@ -453,6 +473,19 @@ mod tests {
             nonce,
         );
         assert!(!kept.contains_key("a"));
+    }
+
+    #[test]
+    fn a_reminder_is_moved_only_when_its_moment_is_another() {
+        let mut kept = HashMap::new();
+        merge(
+            &mut kept,
+            vec![planned("a", 2000), planned("b", 3000)],
+            1000,
+            || "n".to_owned(),
+        );
+        let plan = [planned("a", 2000), planned("b", 6600), planned("c", 4000)];
+        assert_eq!(moved(&kept, &plan), ["b"]);
     }
 
     #[test]

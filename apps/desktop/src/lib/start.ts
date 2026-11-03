@@ -30,7 +30,7 @@ import { theme } from './theme.svelte'
 import { pull } from './pull.svelte'
 import { toolbar } from './toolbar.svelte'
 import { trash } from './trash.svelte'
-import { installStaged, ready } from './updater'
+import { installStaged, ready, settledForInstaller } from './updater'
 import { updates } from './updates.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
@@ -271,6 +271,11 @@ async function guardClose() {
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     const own = getCurrentWindow()
     await own.listen('nib://quit', () => void onQuit(window))
+    // Another window's installer is about to end the app; see lifecycle.rs.
+    await own.listen('nib://update-settle', () => {
+      settle()
+      void settledForInstaller(owed)
+    })
     // Asked first whether what runs may stop, by the crate and by the other windows.
     await own.listen(
       'nib://quit-ask',
@@ -350,12 +355,17 @@ function settle() {
   workspace.graphSettings.flush()
 }
 
+/** The writes on their way to the disk, landed. */
+function owed() {
+  return Promise.all([workspace.writesSettled(), written()])
+}
+
 /** The writes that are owed, waited for; and a waiting update put in place. */
 async function go(): Promise<void> {
   going = true
   try {
-    await Promise.race([Promise.all([workspace.writesSettled(), written()]), waited(GIVE_UP)])
-    await installStaged()
+    await Promise.race([owed(), waited(GIVE_UP)])
+    await installStaged(true)
   } finally {
     going = false
   }

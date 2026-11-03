@@ -200,6 +200,32 @@ describe('the rows of every space', () => {
     expect(store.of().map((row) => row.file.ctime)).toEqual([1, 1])
   })
 
+  test('a note that links to itself shows the new link once it is renamed', async () => {
+    const { store, disk, settled } = rig(
+      { [`${WORK}/Plan.md`]: '---\nsee: "[[Plan]]"\n---\n- [ ] Read [[Plan]]\n' },
+      WORK,
+    )
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+
+    const after = '---\nsee: "[[Road]]"\n---\n- [ ] Read [[Road]]\n'
+    disk.delete(`${WORK}/Plan.md`)
+    disk.set(`${WORK}/Road.md`, after)
+    store.saved(`${WORK}/Road.md`, after)
+    void store.follow({
+      op: 'moved',
+      from: `${WORK}/Plan.md`,
+      to: `${WORK}/Road.md`,
+      kind: 'file',
+      root: WORK,
+    })
+
+    expect(store.of().map((row) => row.path)).toEqual(['Road.md', 'Road.md'])
+    const link = { kind: 'link', target: 'Road' }
+    expect(store.of().map((row) => row.note.see)).toEqual([link, link])
+    expect(tasks(store.of())).toEqual(['Work:Road.md:Read [[Road]]'])
+  })
+
   test('a renamed or moved note says where it was, so it is not taken for a note just made', async () => {
     const { store, heard, settled } = rig(
       { [`${WORK}/Projects/Launch.md`]: '---\nstatus: Doing\n---\n' },
@@ -373,6 +399,25 @@ describe('the rows of every space', () => {
     store.spacesAre([{ root: WORK, name: 'Work' }])
     await settled()
     expect(tasks(store.of())).toEqual(['Work:Plan.md:Saved since'])
+  })
+})
+
+describe('a space’s AGENTS.md, which its settings edit', () => {
+  test('makes no row, and one in a folder makes its rows', async () => {
+    const { store, answer, settled } = rig({
+      [`${WORK}/AGENTS.md`]: '- [ ] Top\n',
+      [`${WORK}/sub/AGENTS.md`]: '- [ ] Nested\n',
+    })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+
+    const said = [...new Set(store.of('Work').map((row) => row.file.path))]
+    expect(said).toEqual(['sub/AGENTS.md'])
+
+    store.saved(`${WORK}/AGENTS.md`, '- [ ] Again\n')
+    expect([...new Set(store.of('Work').map((row) => row.file.path))]).toEqual(['sub/AGENTS.md'])
   })
 })
 

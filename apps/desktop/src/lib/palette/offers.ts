@@ -9,7 +9,7 @@
  *  note. Shift+Enter makes the note whatever else answers; see Palette.svelte. */
 
 import { visitKey } from '../web-tab/visits'
-import { type NoteToMake, noteToMake } from './new-note'
+import { namesAgents, type NoteToMake, noteToMake } from './new-note'
 import type { Row } from './rows'
 
 /** The note `term` would make, where it reads as a name and names nothing the space
@@ -46,5 +46,6 @@ export function withOffers(
   const written = /^(https?:\/\/|www\.)/i.test(term.trim())
   const out = written ? [...offers, ...found] : [...found, ...offers]
 
+  if (namesAgents(term)) return [...out, { kind: 'agents' }]
   return make ? [...out, { kind: 'make', make }] : out
 }

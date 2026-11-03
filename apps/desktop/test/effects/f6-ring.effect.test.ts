@@ -74,20 +74,20 @@ test('an open right side is where F6 goes after the status bar', () => {
   expect(here()).toBe('right')
 })
 
-/** The cards over the foot of the note - an Undo above all - are where F6 goes after
- *  the note while one is up: Tab in the note indents, so nothing else reaches them
- *  (#523). The row is always on the page, and empty it is no stop at all. */
-test('the notices row is a stop after the note while a card is up, and none while it is empty', () => {
-  region('editor')
+/** The cards over the foot of the note - an Undo above all - are where F6 goes between
+ *  the strip and the note while one is up: Tab in the note indents, so nothing else
+ *  reaches them (#523). The row is always on the page, and empty it is no stop at all. */
+test('the notices row is a stop ahead of the note while a card is up, and none while it is empty', () => {
+  region('tabs')
   const notices = region('notices')
-  region('status')
+  region('editor')
 
   page.querySelector<HTMLElement>('[data-region=editor] button')?.focus()
-  expect(stepRegionFocus(1)).toBe(true)
+  expect(stepRegionFocus(-1)).toBe(true)
   expect(here()).toBe('notices')
 
   notices.replaceChildren()
   page.querySelector<HTMLElement>('[data-region=editor] button')?.focus()
-  expect(stepRegionFocus(1)).toBe(true)
-  expect(here()).toBe('status')
+  expect(stepRegionFocus(-1)).toBe(true)
+  expect(here()).toBe('tabs')
 })

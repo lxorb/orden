@@ -114,14 +114,10 @@ export async function queryRowsHtml(
 
   const query = parseQuery(said)
   const hits: Hit[] = []
-  await searchSpace(
-    root,
-    query,
-    [],
-    MOST,
-    (batch) => hits.push(...batch.hits),
-    workspace.leftOutOf(root),
-  ).catch(() => undefined)
+  await searchSpace(root, query, [], MOST, (batch) => hits.push(...batch.hits), [
+    ...workspace.leftOutOf(root),
+    workspace.instructionsName(root),
+  ]).catch(() => undefined)
 
   if (!hits.length)
     return `<div class="nib-query"><p class="nib-query-none">${escapeAll(nothing)}</p></div>`

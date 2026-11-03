@@ -6,25 +6,28 @@
 //! file. `WKWebView` hands out an `NSPrintOperation` for its page, and an operation
 //! told to save rather than print, with its panels switched off, is the same thing:
 //! the paper, the margins and the page breaks are the ones a print would have, which
-//! is what a PDF of a note is for. `WebKitGTK` offers only its print panel, so on
-//! Linux this says it cannot help and the window falls back to that panel.
+//! is what a PDF of a note is for. `WebKitGTK` offers only its print panel, so a build
+//! on it says it cannot help and the window falls back to that panel.
 //!
 //! On a Mac the print dialog itself comes through here as well, because the window's
 //! own road to it - `print()` in a frame - is one `WKWebView` ignores; see
 //! `print_page`.
 //!
-//! And on Orden's own Chromium - the `cef` feature, off in everything that ships -
-//! neither system engine is there any more, so the one call this module makes into
-//! it is not there to make: the printer here says no and the window falls back to
-//! the panel, exactly as it does on Linux. Chromium's own `PrintToPDF` is the answer
-//! and it is batch 6's; see docs/browser.md.
+//! And on Orden's own Chromium - the `cef` feature, which is every Linux package -
+//! the page is asked through the `DevTools` protocol, `Page.printToPDF`, which needs no
+//! print handler of the runtime and hands the file back whole; a call that goes out
+//! from a thread of its own rather than from inside the webview (`printer` below).
 
 use serde::Deserialize;
+#[cfg(any(windows, feature = "cef"))]
+use serde_json::{json, Value};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tauri::webview::{PageLoadEvent, PlatformWebview};
+use tauri::webview::PageLoadEvent;
+#[cfg(not(feature = "cef"))]
+use tauri::webview::PlatformWebview;
 use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder};
 
 use crate::clock;
@@ -63,12 +66,42 @@ pub struct PdfPage {
     pub landscape: bool,
 }
 
+/// What a printer is handed to print from: the engine's own view of the page on a system
+/// engine, which is only reached on the window's thread, and the window on Orden's own
+/// Chromium, whose protocol is only called from any other; see `in_hidden_window`.
+#[cfg(not(feature = "cef"))]
+type Printable = PlatformWebview;
+#[cfg(feature = "cef")]
+type Printable = tauri::WebviewWindow<crate::Engine>;
+
 /// Whether `print_pdf` can write a file here. `WebView2` can print to a file
 /// without a dialog, and so can `WKWebView` from macOS 11, where it first hands out
-/// a print operation; `WebKitGTK` only offers its print panel.
+/// a print operation, and Orden's own Chromium; `WebKitGTK` only offers its print panel.
 #[tauri::command]
 pub fn pdf_supported() -> bool {
     printer::available()
+}
+
+/// What `Page.printToPDF` is asked: the reader's paper as their own PDF export lays a
+/// note on it (`pdf.rs`, `PdfPage`, upright and turned by `landscape`), the page's
+/// backgrounds, and none of the browser's own lines - the address and the date that a
+/// print dialog writes into the margins are not the page.
+#[cfg(any(windows, feature = "cef"))]
+pub(crate) fn printing(paper: &PdfPage) -> Value {
+    let margin = paper.margin.max(0.0);
+    json!({
+        "landscape": paper.landscape,
+        "paperWidth": paper.width,
+        "paperHeight": paper.height,
+        "marginTop": margin,
+        "marginBottom": margin,
+        "marginLeft": margin,
+        "marginRight": margin,
+        "printBackground": true,
+        "displayHeaderFooter": false,
+        "preferCSSPageSize": false,
+        "transferMode": "ReturnAsBase64",
+    })
 }
 
 /// One inch in the unit `AppKit` measures paper in, the `PostScript` point.
@@ -199,9 +232,7 @@ async fn in_hidden_window<F>(
     print: F,
 ) -> Result<(), String>
 where
-    F: FnOnce(&PlatformWebview, mpsc::Sender<Result<(), String>>) -> Result<(), String>
-        + Send
-        + 'static,
+    F: FnOnce(&Printable, mpsc::Sender<Result<(), String>>) -> Result<(), String> + Send + 'static,
 {
     let job = format!(
         "{}-{}-{}",
@@ -210,7 +241,7 @@ where
         PRINTS.fetch_add(1, Ordering::Relaxed)
     );
     let path = std::env::temp_dir().join(format!("nib-print-{job}.html"));
-    std::fs::write(&path, html).map_err(|error| cannot("write", &path, &error))?;
+    written_alone(&path, &fenced(&html)).map_err(|error| cannot("write", &path, &error))?;
 
     // Every road out from here takes the temp file with it. The file is the whole
     // note, pictures and all, and the temp folder is not where a note belongs a
@@ -233,6 +264,11 @@ where
     #[cfg(all(windows, not(feature = "cef")))]
     let building = building.additional_browser_args(&crate::engine::browser_args(app));
 
+    // In the interface's own profile, as Alloy style, so an extension installed for the
+    // web never sees the note on its way to the paper; see `engine::own_profile`.
+    #[cfg(feature = "cef")]
+    let building = crate::engine::own_profile(building);
+
     let window = building
         .title("Orden")
         .visible(false)
@@ -253,14 +289,23 @@ where
                 std::thread::sleep(SETTLE);
 
                 let failed = done.clone();
-                let asked = window.with_webview(move |webview| {
-                    if let Err(error) = print(&webview, done) {
-                        let _ = failed.send(Err(error));
-                    }
-                });
 
-                if let Err(error) = asked {
-                    give_up(&window, &error.to_string());
+                #[cfg(feature = "cef")]
+                if let Err(error) = print(&window, done) {
+                    let _ = failed.send(Err(error));
+                }
+
+                #[cfg(not(feature = "cef"))]
+                {
+                    let asked = window.with_webview(move |webview| {
+                        if let Err(error) = print(&webview, done) {
+                            let _ = failed.send(Err(error));
+                        }
+                    });
+
+                    if let Err(error) = asked {
+                        give_up(&window, &error.to_string());
+                    }
                 }
             });
         })
@@ -284,8 +329,49 @@ where
         .unwrap_or_else(|_| Err(TOO_LONG.into()))
 }
 
+/// What the page in the hidden window may load. It is a `file://` page, and a page there
+/// could reach any file of the reader's: an export's own markup holds no way to (see
+/// `ACTS` in packages/markdown/src/html-block.ts, and export.test.ts), and this is the
+/// answer should one ever get through. Nothing runs and nothing is read off the disk;
+/// styles and pictures are inside the page, and a picture off the web a note still names
+/// is what the same page shows anywhere else.
+const PAGE_POLICY: &str = "default-src 'none'; style-src 'unsafe-inline'; \
+     img-src data: http: https:; font-src data:; media-src data:";
+
+/// The page with [`PAGE_POLICY`] at the top of its head, before anything it could apply to.
+/// Past the head or the doctype, since anything before a doctype changes how the whole
+/// page lays out.
+fn fenced(html: &str) -> String {
+    let lower = html.to_ascii_lowercase();
+    let tag_end = |tag: &str| {
+        lower
+            .find(tag)
+            .and_then(|at| lower[at..].find('>').map(|end| at + end + 1))
+    };
+    let at = tag_end("<head")
+        .or_else(|| tag_end("<!doctype"))
+        .unwrap_or(0);
+    format!(
+        "{}<meta http-equiv=\"Content-Security-Policy\" content=\"{PAGE_POLICY}\">{}",
+        &html[..at],
+        &html[at..]
+    )
+}
+
+/// The whole note for a moment in a folder other people on the machine share: readable by
+/// nobody else, and in a file that this run made, never one somebody laid there ahead of it.
+fn written_alone(path: &std::path::Path, html: &str) -> std::io::Result<()> {
+    use std::io::Write as _;
+    let mut opening = std::fs::OpenOptions::new();
+    opening.write(true).create_new(true);
+    #[cfg(unix)]
+    std::os::unix::fs::OpenOptionsExt::mode(&mut opening, 0o600);
+    opening.open(path)?.write_all(html.as_bytes())
+}
+
 /// A failure before the printer was even reached cannot use the channel the
 /// closure took with it; closing the window makes the wait give up instead.
+#[cfg(not(feature = "cef"))]
 fn give_up(window: &tauri::WebviewWindow, error: &str) {
     eprintln!("print_pdf: {error}");
     let _ = window.destroy();
@@ -713,7 +799,50 @@ pub(crate) fn print_sheet(webview: &PlatformWebview) -> Result<(), String> {
     printer::sheet(webview)
 }
 
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
+/// Orden's own Chromium: `Page.printToPDF`, which answers with the file. On this thread,
+/// which is `in_hidden_window`'s own, because a protocol call waits for the window's.
+#[cfg(feature = "cef")]
+mod printer {
+    use super::{printing, PdfPage, Printable, Value, PATIENCE};
+    use base64::Engine as _;
+    use std::path::Path;
+    use std::sync::mpsc::Sender;
+
+    pub fn available() -> bool {
+        true
+    }
+
+    pub fn print(
+        window: &Printable,
+        output: &str,
+        page: &PdfPage,
+        done: Sender<Result<(), String>>,
+    ) -> Result<(), String> {
+        let printed = crate::engine::devtools::call(
+            window.as_ref(),
+            None,
+            "Page.printToPDF",
+            &printing(page),
+            PATIENCE,
+        )?;
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(
+                printed
+                    .get("data")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default(),
+            )
+            .map_err(|error| format!("the engine printed something unreadable: {error}"))?;
+        if bytes.is_empty() {
+            return Err("the engine printed nothing".into());
+        }
+        crate::paths::write_atomically(Path::new(output), &bytes)?;
+        let _ = done.send(Ok(()));
+        Ok(())
+    }
+}
+
+#[cfg(all(not(any(windows, target_os = "macos")), not(feature = "cef")))]
 mod printer {
     use super::PdfPage;
     use std::sync::mpsc::Sender;
@@ -746,6 +875,51 @@ mod tests {
             margin,
             landscape,
         }
+    }
+
+    /// The policy comes before anything it applies to, after the doctype that decides how
+    /// the page lays out, and nothing of the page is lost.
+    #[test]
+    fn the_policy_is_first_in_the_page() {
+        let meta = "<meta http-equiv=\"Content-Security-Policy\"";
+        let page = "<!DOCTYPE html><HTML><HEAD lang=en><title>t</title></HEAD><p>x";
+        let fenced = super::fenced(page);
+        assert!(fenced.starts_with(&format!("<!DOCTYPE html><HTML><HEAD lang=en>{meta}")));
+        assert!(fenced.ends_with("<title>t</title></HEAD><p>x"));
+
+        assert!(super::fenced("<!doctype html><p>x").starts_with(&format!("<!doctype html>{meta}")));
+        assert!(super::fenced("<p>x").starts_with(meta));
+        assert!(super::PAGE_POLICY.starts_with("default-src 'none'"));
+        assert!(!super::PAGE_POLICY.contains("file:"));
+    }
+
+    /// Only this run's user can read the page in the temp folder, and a file already at
+    /// its name, or a link somebody laid there, is refused rather than written through.
+    #[test]
+    fn the_page_in_the_temp_folder_is_the_run_s_own() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let path = dir.path().join("page.html");
+        super::written_alone(&path, "words").expect("a new file");
+        assert_eq!(std::fs::read_to_string(&path).expect("the file"), "words");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt as _;
+            let mode = std::fs::metadata(&path)
+                .expect("its mode")
+                .permissions()
+                .mode();
+            assert_eq!(mode & 0o777, 0o600);
+        }
+        assert!(super::written_alone(&path, "again").is_err());
+        assert_eq!(std::fs::read_to_string(&path).expect("the file"), "words");
+    }
+
+    /// Orden's own Chromium writes a PDF itself, so its export asks for a file rather
+    /// than going through the print dialog.
+    #[cfg(feature = "cef")]
+    #[test]
+    fn chromium_writes_the_file_itself() {
+        assert!(super::pdf_supported());
     }
 
     /// A4 upright, in points, with an inch of margin: the numbers `AppKit` expects.

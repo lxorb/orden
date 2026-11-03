@@ -36,7 +36,7 @@
 import { invoke, isDesktop } from '../tauri'
 import { withOrWithout } from '../records'
 import { isRecord, Shared } from '../stored'
-import { plainOrigin } from './address'
+import { originKey } from './address'
 
 const STORAGE_KEY = 'nib:web-grants'
 
@@ -76,10 +76,11 @@ function isAnswer(value: unknown): value is Answer {
   return value === 'allow' || value === 'block'
 }
 
-/** The origin a grant is about: the host as the bar shows it, so what somebody allowed
- *  reads as the site they were looking at. */
+/** The origin a grant is about, as `originKey` keeps it: a key, and read as a name only where
+ *  it is shown (`shownSite` in idn.ts), so what somebody allowed reads as the site they were
+ *  looking at and stays allowed whatever is thought safe to show. */
 export function siteOf(url: string | null): string {
-  return url === null ? '' : plainOrigin(url)
+  return url === null ? '' : originKey(url)
 }
 
 /** A request a site has made and nobody has answered yet.
@@ -127,7 +128,7 @@ export function readAsked(value: unknown): Asking | null {
   if (typeof tab !== 'string' || typeof id !== 'number') return null
   if (typeof origin !== 'string' || typeof kind !== 'string' || !isAsk(kind)) return null
 
-  return { id, tab, site: plainOrigin(origin) || origin, ask: kind, privately: false }
+  return { id, tab, site: originKey(origin) || origin, ask: kind, privately: false }
 }
 
 class Grants {
