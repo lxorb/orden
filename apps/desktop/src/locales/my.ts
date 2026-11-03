@@ -2657,6 +2657,6 @@ export const my: Dictionary = {
     'AGENTS သည် ဤနေရာ၏ အေးဂျင့် ညွှန်ကြားချက်များ ဖြစ်သည်',
   '{title}, unread': '{title}၊ မဖတ်ရသေး',
   '{title}, running': '{title}၊ လုပ်ဆောင်နေဆဲ',
-  'This PDF is locked, so its pages went out as pictures':
-    'ဤ PDF ကို လော့ခ်ချထားသဖြင့် စာမျက်နှာများကို ပုံများအဖြစ် ထုတ်ခဲ့သည်',
+  'This PDF is locked by its owner': 'ဤ PDF ကို ပိုင်ရှင်က လော့ခ်ချထားသည်',
+  'Part of this could not be undone': 'ဤအရာ၏ တစ်စိတ်တစ်ပိုင်းကို ပြန်ဖျက်၍ မရပါ',
 }

@@ -5,7 +5,7 @@ import { busy } from '../busy.svelte'
 import type { Canvas, PageNode } from '../canvas/format'
 
 /** What of a paper goes out with the sheets that were made from it: its page under the
- *  ink in a PNG and an SVG, and a paper pdf-lib will not copy from still goes out. */
+ *  ink in a PNG and an SVG, and a paper locked by its owner stays in the note. */
 
 /** A white pixel, which is as much of a page as these tests need. */
 const PIXEL =
@@ -15,6 +15,8 @@ const held = vi.hoisted(() => ({
   bytes: null as Uint8Array | null,
   drawn: [] as string[],
   asked: [] as number[],
+  at: [] as unknown[],
+  locked: false,
   zipped: [] as { path: string; body: unknown }[],
 }))
 
@@ -25,8 +27,10 @@ vi.mock('./raster', () => ({
     return Promise.resolve(new Uint8Array([1]))
   },
   cssColour: (colour: string) => colour,
-  paperPicture: (_at: unknown, number: number) => {
+  paperIsLocked: () => Promise.resolve(held.locked),
+  paperPicture: (at: unknown, number: number) => {
     held.asked.push(number)
+    held.at.push(at)
     return Promise.resolve(number <= 2 ? PIXEL : null)
   },
 }))
@@ -38,7 +42,7 @@ vi.mock('../export/zip', () => ({
 }))
 vi.mock('../export/save', () => ({ download: () => undefined }))
 
-const { exportPagesPng, exportPagesSvg, pagesPdf } = await import('./out')
+const { exportPagesPng, exportPagesSvg, pagesPdf, printPages } = await import('./out')
 
 const SIZES = [
   { width: 816, height: 1056 },
@@ -93,6 +97,8 @@ afterEach(() => {
   held.bytes = null
   held.drawn = []
   held.asked = []
+  held.at = []
+  held.locked = false
   held.zipped = []
   busy.clear()
 })
@@ -122,19 +128,47 @@ describe('a sheet made from a paper, as a picture', () => {
   })
 })
 
-describe('a paper pdf-lib will not copy from', () => {
-  test('goes out with its pages as pictures under the ink, and says so', async () => {
+describe('a paper locked by its owner', () => {
+  const WORD = 'This PDF is locked by its owner'
+
+  test('does not go out as a PDF, and says why', async () => {
     held.bytes = await ownerLocked()
 
-    const bytes = await pagesPdf(out(paperNote()))
+    expect(await pagesPdf(out(paperNote()))).toBeNull()
+    expect(busy.trouble).toBe(WORD)
+  })
 
-    const doc = await PDFDocument.load(bytes!)
-    expect(doc.isEncrypted).toBe(false)
-    expect(doc.getPageCount()).toBe(2)
-    const first = await contentOf(bytes!, 0)
-    expect(first.match(/ Do$/gm)).toHaveLength(1)
-    expect(first.indexOf(' Do')).toBeLessThan(first.indexOf('1 0 0 rg'))
-    expect(busy.trouble).toBeTruthy()
+  test('and is not printed', async () => {
+    held.bytes = await ownerLocked()
+    const printing = vi.fn()
+    vi.doMock('../export', () => ({ printInFrame: printing }))
+
+    await printPages(out(paperNote()))
+
+    expect(printing).not.toHaveBeenCalled()
+    expect(busy.trouble).toBe(WORD)
+  })
+
+  test('leaves its page out of a PNG and an SVG, which keep the ink, and says why', async () => {
+    held.locked = true
+
+    await exportPagesSvg(out(paperNote()))
+    expect(String(held.zipped[0]?.body)).not.toContain('<image')
+    expect(String(held.zipped[0]?.body)).toContain('<path')
+    expect(busy.trouble).toBe(WORD)
+
+    busy.clear()
+    await exportPagesPng(out(paperNote()))
+    expect(held.drawn[0]).not.toContain('<image')
+    expect(busy.trouble).toBe(WORD)
+    expect(held.asked).toEqual([])
+  })
+})
+
+describe('a note shared on its own', () => {
+  test('asks for its paper by the note’s id on the account', async () => {
+    await exportPagesSvg({ ...out(paperNote()), shared: 'note-1' })
+    expect(held.at[0]).toMatchObject({ shared: 'note-1' })
   })
 })
 

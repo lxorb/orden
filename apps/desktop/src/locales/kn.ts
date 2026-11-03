@@ -2701,6 +2701,6 @@ export const kn: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS ಈ ಸ್ಪೇಸ್‌ನ ಏಜೆಂಟ್ ಸೂಚನೆಗಳು',
   '{title}, unread': '{title}, ಓದಿಲ್ಲ',
   '{title}, running': '{title}, ಚಾಲನೆಯಲ್ಲಿದೆ',
-  'This PDF is locked, so its pages went out as pictures':
-    'ಈ PDF ಲಾಕ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ ಅದರ ಪುಟಗಳು ಚಿತ್ರಗಳಾಗಿ ಹೊರಬಂದಿವೆ',
+  'This PDF is locked by its owner': 'ಈ PDF ಅನ್ನು ಅದರ ಮಾಲೀಕರು ಲಾಕ್ ಮಾಡಿದ್ದಾರೆ',
+  'Part of this could not be undone': 'ಇದರ ಒಂದು ಭಾಗವನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗಲಿಲ್ಲ',
 }

@@ -2667,6 +2667,6 @@ export const ms: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS ialah arahan ejen untuk ruang ini',
   '{title}, unread': '{title}, belum dibaca',
   '{title}, running': '{title}, sedang berjalan',
-  'This PDF is locked, so its pages went out as pictures':
-    'PDF ini dikunci, jadi halamannya keluar sebagai gambar',
+  'This PDF is locked by its owner': 'PDF ini dikunci oleh pemiliknya',
+  'Part of this could not be undone': 'Sebahagian daripada ini tidak dapat dibuat asal',
 }

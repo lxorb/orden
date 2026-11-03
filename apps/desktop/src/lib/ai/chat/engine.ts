@@ -436,6 +436,7 @@ export function createApiEngine(setup: Setup): Engine {
         args: call.args,
         state: output.approval ? 'asking' : output.error ? 'error' : 'ok',
         result: output,
+        at: Date.now(),
       }
       turn.parts[index] = done
       on({ type: 'part', turn: turn.id, index, part: done })

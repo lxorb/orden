@@ -2593,5 +2593,6 @@ export const zhHant: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS 是此空間的代理指示',
   '{title}, unread': '{title}，未讀',
   '{title}, running': '{title}，執行中',
-  'This PDF is locked, so its pages went out as pictures': '此 PDF 已鎖定，因此頁面以圖片形式匯出',
+  'This PDF is locked by its owner': '此 PDF 已被擁有者鎖定',
+  'Part of this could not be undone': '部分內容無法復原',
 }

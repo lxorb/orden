@@ -2586,5 +2586,6 @@ export const yue: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS 係呢個空間嘅代理指示',
   '{title}, unread': '{title}，未讀',
   '{title}, running': '{title}，運行緊',
-  'This PDF is locked, so its pages went out as pictures': '呢個 PDF 鎖咗，所以啲頁以圖片形式匯出',
+  'This PDF is locked by its owner': '呢個 PDF 俾擁有者鎖咗',
+  'Part of this could not be undone': '有部分冇辦法復原',
 }

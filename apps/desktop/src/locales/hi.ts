@@ -2669,6 +2669,6 @@ export const hi: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS इस स्पेस के एजेंट निर्देश हैं',
   '{title}, unread': '{title}, अनपढ़ा',
   '{title}, running': '{title}, चल रहा है',
-  'This PDF is locked, so its pages went out as pictures':
-    'यह PDF लॉक है, इसलिए इसके पेज चित्रों के रूप में निकले',
+  'This PDF is locked by its owner': 'यह PDF इसके स्वामी ने लॉक की है',
+  'Part of this could not be undone': 'इसका एक हिस्सा पहले जैसा नहीं किया जा सका',
 }

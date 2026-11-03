@@ -1,9 +1,9 @@
-"""A note made from a PDF, out as a picture, and a PDF locked by its owner, out at all.
+"""A note made from a PDF, out as a picture, and a PDF locked by its owner, kept in.
 
 A PNG or an SVG of a sheet carries the paper's page under the ink, counted in pixels of
-the file that came out. A paper with an owner's password opens and draws, and pdf-lib
-refuses to copy from it: it still goes out as a PDF, with its pages as pictures, and says
-so. Both papers are written here by Ghostscript, the second `-sOwnerPassword=own`."""
+the file that came out. A paper with an owner's password opens and draws, and what is in
+it does not go out: no PDF and no print, a PNG with the ink alone, and each says why. Both
+papers are written here by Ghostscript, the second `-sOwnerPassword=own`."""
 
 from __future__ import annotations
 
@@ -215,11 +215,22 @@ def drive(browser: Browser) -> None:
                 wrong(f"{row}: {name} is a white sheet, the paper's page is not on it")
 
     opened_with_ink(page, "Locked.pdf", LOCKED)
-    made = exported(page, "Export as PDF")
-    if not made.startswith(b"%PDF") or b"/Encrypt" in made or b"/Image" not in made:
-        wrong(f"Export as PDF of the locked paper: {len(made)} bytes, not pictures on sheets")
-    wait_for(page, "document.querySelector('.track.failed .said')?.innerText.includes('locked')", "the word")
+    word = "document.querySelector('.track.failed .said')?.innerText === 'This PDF is locked by its owner'"
+    page.keyboard.press("Control+Shift+P")
+    page.wait_for_selector(".palette input")
+    page.keyboard.type("Export as PDF", delay=1)
+    page.wait_for_function(
+        "() => [...document.querySelectorAll('[role=option]')].some((one) => one.innerText.startsWith('Export as PDF'))"
+    )
+    page.keyboard.press("Enter")
+    wait_for(page, word, "the word on Export as PDF")
     shot(page, "01-locked-said")
+
+    pictures = zipfile.ZipFile(io.BytesIO(exported(page, "Export as PNG")))
+    wait_for(page, word, "the word on Export as PNG")
+    for name in sorted(one for one in pictures.namelist() if one.endswith(".png")):
+        if looked_at(page, name, "image/png", pictures.read(name)) > 5000:
+            wrong(f"the locked paper's page came out in {name}")
 
 
 if __name__ == "__main__":

@@ -199,6 +199,7 @@ function partIn(value: unknown): Part | null {
     verb: value.verb,
     args: value.args ?? {},
     state,
+    ...(typeof value.at === 'number' ? { at: value.at } : {}),
     ...(result ? { result } : {}),
     ...(change
       ? {

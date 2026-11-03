@@ -2730,6 +2730,6 @@ export const de: Dictionary = {
     'AGENTS sind die Agenten-Anweisungen dieses Bereichs',
   '{title}, unread': '{title}, ungelesen',
   '{title}, running': '{title}, läuft',
-  'This PDF is locked, so its pages went out as pictures':
-    'Dieses PDF ist gesperrt, seine Seiten wurden daher als Bilder ausgegeben',
+  'This PDF is locked by its owner': 'Dieses PDF ist von seinem Eigentümer gesperrt',
+  'Part of this could not be undone': 'Ein Teil davon konnte nicht rückgängig gemacht werden',
 }

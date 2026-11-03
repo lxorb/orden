@@ -54,8 +54,13 @@ import { t } from '../i18n.svelte'
 import { isDesktop } from '../tauri'
 import { paperPlaces } from './held'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
-import { cssColour, paperPicture, svgToPng } from './raster'
+import { cssColour, paperIsLocked, paperPicture, svgToPng } from './raster'
 import { escapeAll } from '@orden/markdown/html'
+
+/** Says why a paper with an owner's password is left out: opened and shown, not copied out. */
+function saidLocked(): void {
+  busy.failed(t('This PDF is locked by its owner'))
+}
 
 /** What an export of a page note is about. */
 export interface PagesOut {
@@ -64,6 +69,9 @@ export interface PagesOut {
   /** The note's own path, so the PDF its pages name can be found beside it. */
   path: string | null
   root: string | null
+  /** The note's id on the account, for a note shared on its own: no path here, and its
+   *  paper the account's to hand over, as on screen; see `PaperAt`. */
+  shared?: string | null
   name: string
   /** Whether the cards' HTML is markup rather than the characters it is made of,
    *  asked the way the page on screen asks it; see trust.ts. */
@@ -102,6 +110,7 @@ export function pagesOutOf(open: {
   name: string
   path: string | null
   root: string | null
+  shared?: string | null
   trusted?: boolean
 }): PagesOut {
   return {
@@ -113,6 +122,7 @@ export function pagesOutOf(open: {
     palette: paletteOf('light'),
     path: open.path,
     root: open.root,
+    shared: open.shared ?? null,
     name: open.name,
     trusted: open.trusted ?? false,
   }
@@ -251,12 +261,17 @@ export function pageSvg(
   ].join('')
 }
 
-/** The page of a paper a sheet shows, as a picture, or null for a sheet with none. What a
- *  PNG, an SVG and a paper pdf-lib cannot copy from all carry; the sheet comes out without
- *  it where the paper has gone, as it shows on screen. */
-function paperBehind(out: PagesOut, page: PageNode): Promise<string | null> {
-  if (!page.file || page.page === undefined) return Promise.resolve(null)
-  return paperPicture({ file: page.file, note: out.path, root: out.root }, page.page)
+/** The page of a paper a sheet shows, as a picture, or null for a sheet with none. The
+ *  sheet comes out without it where the paper has gone, as it shows on screen, and where
+ *  the paper's owner locked it, which is ink on white as it ever was and says why. */
+async function paperBehind(out: PagesOut, page: PageNode): Promise<string | null> {
+  if (!page.file || page.page === undefined) return null
+  const at = { file: page.file, note: out.path, root: out.root, shared: out.shared ?? null }
+  if (await paperIsLocked(at)) {
+    saidLocked()
+    return null
+  }
+  return paperPicture(at, page.page)
 }
 
 /** A stroke shifted, which is what putting a page's ink in the page's own
@@ -352,7 +367,7 @@ export async function exportPagesPdf(out: PagesOut): Promise<string | undefined>
 }
 
 /** The note's PDF, as bytes: what the export above writes and what printing puts on
- *  paper, so the two cannot differ. Null for a note with no pages. */
+ *  paper, so the two cannot differ. Null for a note with no pages, or on a locked paper. */
 export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
   const pages = pagesOf(given.canvas)
   if (!pages.length) return null
@@ -369,14 +384,15 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
   const source = papers.size === 1 ? [...papers][0] : null
   const bytes = source ? await paperBytes(paperPlaces(source, out.path, out.root)) : null
 
-  // A paper locked by its owner opens and draws, and pdf-lib cannot read what is in it:
-  // each sheet is then one of its own with the paper's page as a picture on it, so the
-  // note still goes out with its ink, and the words of the paper do not stay words.
+  // A paper locked by its owner opens and draws, and what is in it does not go out of the
+  // app; pdf-lib could not copy from it either. No file, and the reason.
   const opened = bytes ? await PDFDocument.load(bytes, { ignoreEncryption: true }) : null
-  const locked = !!opened?.isEncrypted
-  if (locked) busy.failed(t('This PDF is locked, so its pages went out as pictures'))
-  const doc = opened && !locked ? opened : await PDFDocument.create()
-  const kept = opened && !locked ? await doc.copyPages(doc, doc.getPageIndices()) : []
+  if (opened?.isEncrypted) {
+    saidLocked()
+    return null
+  }
+  const doc = opened ?? (await PDFDocument.create())
+  const kept = opened ? await doc.copyPages(doc, doc.getPageIndices()) : []
   // Which pages of the paper a sheet already is. A page can be only one sheet: inserted
   // twice, one page is both, with the ink of both on it.
   const used = new Set<number>()
@@ -405,15 +421,6 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
     const sheet = copy
       ? doc.insertPage(carried + at, copy)
       : doc.insertPage(carried + at, [page.width / PDF_TO_CSS, page.height / PDF_TO_CSS])
-    const pictured = locked ? await paperBehind(out, page) : null
-    if (pictured) {
-      sheet.drawImage(await doc.embedPng(pictured), {
-        x: 0,
-        y: 0,
-        width: sheet.getWidth(),
-        height: sheet.getHeight(),
-      })
-    }
 
     // The page is the sheet as pdf.js shows it, which is how its size was read: the
     // crop box turned by /Rotate. So the ink is scaled from pixels to that box's points,
@@ -426,7 +433,7 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
 
     // The ruling and the words, under the ink as on screen. The ruling only on a sheet
     // of its own: a page of a paper covers its ruling on screen too.
-    const ruled = from === null && !pictured && page.pattern !== 'blank'
+    const ruled = from === null && page.pattern !== 'blank'
     const cards = cardsOn(out.canvas, page)
     // One at a time, so a sheet of a hundred shapes holds one canvas of pixels at once
     // rather than a hundred.

@@ -2680,6 +2680,6 @@ export const pa: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS ਇਸ ਸਪੇਸ ਦੀਆਂ ਏਜੰਟ ਹਦਾਇਤਾਂ ਹਨ',
   '{title}, unread': '{title}, ਅਣਪੜ੍ਹਿਆ',
   '{title}, running': '{title}, ਚੱਲ ਰਿਹਾ ਹੈ',
-  'This PDF is locked, so its pages went out as pictures':
-    'ਇਹ PDF ਲੌਕ ਹੈ, ਇਸ ਲਈ ਇਸਦੇ ਪੰਨੇ ਤਸਵੀਰਾਂ ਵਜੋਂ ਨਿਕਲੇ',
+  'This PDF is locked by its owner': 'ਇਹ PDF ਇਸਦੇ ਮਾਲਕ ਨੇ ਲੌਕ ਕੀਤੀ ਹੈ',
+  'Part of this could not be undone': 'ਇਸਦਾ ਕੁਝ ਹਿੱਸਾ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ',
 }

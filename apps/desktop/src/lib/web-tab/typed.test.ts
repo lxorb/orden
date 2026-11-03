@@ -254,10 +254,23 @@ describe('a name that is not ASCII', () => {
 })
 
 describe('a time of day', () => {
-  test.each(['10:30', '9:05', '10:30:15'])('%s is words, not a host and a port', (typed) => {
+  test.each(['10:30', '9:05', '0:00', '23:59'])('%s is words, not a host and a port', (typed) => {
     expect(typedAddress(typed)).toBeNull()
     expect(mayBeSecret(typed)).toBe(false)
     expect(webAddress(typed)).toBe(`https://www.google.com/search?q=${encodeURIComponent(typed)}`)
+  })
+
+  test.each([
+    '8080:80',
+    '0:8080',
+    '123:456',
+    '2130706433:80',
+    '10:30/path',
+    '99:99',
+    '24:00',
+    '9:5',
+  ])('%s is a number with a port, and opens', (typed) => {
+    expect(webAddress(typed)).toBe(`http://${typed}`)
   })
 
   test('a word with a port is still a host', () => {

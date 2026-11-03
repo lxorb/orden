@@ -2766,6 +2766,6 @@ export const ru: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS: инструкции для агентов этого пространства',
   '{title}, unread': '{title}, не прочитано',
   '{title}, running': '{title}, выполняется',
-  'This PDF is locked, so its pages went out as pictures':
-    'Этот PDF заблокирован, поэтому его страницы вышли как изображения',
+  'This PDF is locked by its owner': 'Этот PDF заблокирован владельцем',
+  'Part of this could not be undone': 'Часть этого не удалось отменить',
 }

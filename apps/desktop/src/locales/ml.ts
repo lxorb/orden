@@ -2709,6 +2709,6 @@ export const ml: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS ഈ സ്പേസിന്റെ ഏജന്റ് നിർദ്ദേശങ്ങളാണ്',
   '{title}, unread': '{title}, വായിക്കാത്തത്',
   '{title}, running': '{title}, പ്രവർത്തിക്കുന്നു',
-  'This PDF is locked, so its pages went out as pictures':
-    'ഈ PDF ലോക്ക് ചെയ്തതാണ്, അതിനാൽ പേജുകൾ ചിത്രങ്ങളായി പുറത്തുവന്നു',
+  'This PDF is locked by its owner': 'ഈ PDF അതിന്റെ ഉടമ ലോക്ക് ചെയ്തതാണ്',
+  'Part of this could not be undone': 'ഇതിന്റെ ഒരു ഭാഗം പഴയപടിയാക്കാനായില്ല',
 }

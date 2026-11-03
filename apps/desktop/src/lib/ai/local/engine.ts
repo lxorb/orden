@@ -415,6 +415,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
               ...part,
               state: tool.done.error ? 'error' : 'ok',
               result: { text: tool.done.text, images: [], error: tool.done.error },
+              at: Date.now(),
             })
           } else if (at < 0) {
             say({
@@ -424,7 +425,10 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
               args: tool.args ?? {},
               state: tool.done ? (tool.done.error ? 'error' : 'ok') : 'running',
               ...(tool.done
-                ? { result: { text: tool.done.text, images: [], error: tool.done.error } }
+                ? {
+                    result: { text: tool.done.text, images: [], error: tool.done.error },
+                    at: Date.now(),
+                  }
                 : {}),
             })
           }

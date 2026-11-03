@@ -2755,6 +2755,6 @@ export const fr: Dictionary = {
     'AGENTS correspond aux instructions pour les agents de cet espace',
   '{title}, unread': '{title}, non lu',
   '{title}, running': '{title}, en cours',
-  'This PDF is locked, so its pages went out as pictures':
-    'Ce PDF est verrouillé, ses pages sont donc sorties sous forme d’images',
+  'This PDF is locked by its owner': 'Ce PDF est verrouillé par son propriétaire',
+  'Part of this could not be undone': 'Une partie n’a pas pu être annulée',
 }

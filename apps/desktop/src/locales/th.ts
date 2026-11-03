@@ -2615,6 +2615,6 @@ export const th: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS คือคำสั่งสำหรับเอเจนต์ของพื้นที่นี้',
   '{title}, unread': '{title}, ยังไม่ได้อ่าน',
   '{title}, running': '{title}, กำลังทำงาน',
-  'This PDF is locked, so its pages went out as pictures':
-    'PDF นี้ถูกล็อก หน้าจึงถูกส่งออกเป็นรูปภาพ',
+  'This PDF is locked by its owner': 'PDF นี้ถูกล็อกโดยเจ้าของ',
+  'Part of this could not be undone': 'ไม่สามารถเลิกทำบางส่วนได้',
 }

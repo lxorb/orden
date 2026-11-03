@@ -2643,6 +2643,6 @@ export const vi: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS là hướng dẫn cho tác tử của không gian này',
   '{title}, unread': '{title}, chưa đọc',
   '{title}, running': '{title}, đang chạy',
-  'This PDF is locked, so its pages went out as pictures':
-    'PDF này bị khóa nên các trang được xuất dưới dạng ảnh',
+  'This PDF is locked by its owner': 'PDF này bị chủ sở hữu khóa',
+  'Part of this could not be undone': 'Không thể hoàn tác một phần của việc này',
 }

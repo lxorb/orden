@@ -2727,6 +2727,6 @@ export const fil: Dictionary = {
     'Ang AGENTS ay ang mga tagubilin sa agent ng space na ito',
   '{title}, unread': '{title}, hindi pa nababasa',
   '{title}, running': '{title}, tumatakbo',
-  'This PDF is locked, so its pages went out as pictures':
-    'Naka-lock ang PDF na ito, kaya lumabas ang mga pahina nito bilang mga larawan',
+  'This PDF is locked by its owner': 'Naka-lock ng may-ari ang PDF na ito',
+  'Part of this could not be undone': 'Hindi na-undo ang bahagi nito',
 }

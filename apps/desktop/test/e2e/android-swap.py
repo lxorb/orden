@@ -75,7 +75,49 @@ def pane(browser: Browser, label: str, steps: list[tuple[str, ...]]) -> None:
     phone.close()
 
 
+def composing(browser: Browser) -> None:
+    """A word being composed as the note changes ends in its own note: the keyboard's next
+    letters are not the note swapped in's, and the caret is still there to type with."""
+    phone = browser.new_context(
+        viewport={"width": 390, "height": 844}, user_agent=AGENT, has_touch=True, is_mobile=True
+    )
+    page = phone.new_page()
+    DRIVE.open(page)
+    DRIVE.seed(page, "# Aaa\n\nfirst\n", "# Bbb\n\nshort\n")
+    opening = """async (name) => {
+      const ws = window.nibApp.workspace
+      await ws.openEntry(ws.notes.find((one) => one.name.startsWith(name)).path, { activate: true })
+    }"""
+    page.evaluate(opening, "Aaa")
+    page.wait_for_timeout(250)
+    typing = phone.new_cdp_session(page)
+    page.locator(".cm-content").first.tap()
+    typing.send("Input.imeSetComposition", {"text": "wor", "selectionStart": 3, "selectionEnd": 3})
+    page.wait_for_timeout(100)
+    page.evaluate(opening, "Bbb")
+    page.wait_for_timeout(250)
+    typing.send("Input.imeSetComposition", {"text": "word", "selectionStart": 4, "selectionEnd": 4})
+    page.wait_for_timeout(100)
+    typing.send("Input.insertText", {"text": "word"})
+    page.wait_for_timeout(250)
+    words, context = page.evaluate(WORDS), page.evaluate(CONTEXT)
+    say(f"composing across a swap: Bbb holds {json.dumps(words)}, context {json.dumps(context['text'])}")
+    if context["text"] != words:
+        wrong(f"after a composition across a swap the keyboard reads {context['text']!r}")
+    # At the caret of the note swapped in, not where the old composition stood in the other.
+    if words != "word# Bbb\n\nshort\n":
+        wrong(f"the composition reached into the note swapped in: {words!r}")
+    page.evaluate(opening, "Aaa")
+    page.wait_for_timeout(250)
+    first = page.evaluate(WORDS)
+    say(f"Aaa holds {json.dumps(first)}")
+    if "wor" not in first or "word" in first:
+        wrong(f"the composition did not stay in its own note: {first!r}")
+    phone.close()
+
+
 def drive(browser: Browser) -> None:
+    composing(browser)
     pane(browser, "note, then +", [("open", "Longer"), ("keys", "XAX"), ("blank",), ("keys", "one")])
     pane(browser, "draft, then +", [("blank",), ("keys", "one"), ("blank",), ("keys", "two")])
     pane(

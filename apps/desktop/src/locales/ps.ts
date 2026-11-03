@@ -2672,6 +2672,6 @@ export const ps: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS د دې ځای د اجنټ لارښوونې دي',
   '{title}, unread': '{title}، نالوستی',
   '{title}, running': '{title}، روان دی',
-  'This PDF is locked, so its pages went out as pictures':
-    'دا PDF قلف دی، نو پاڼې یې د انځورونو په توګه ووتلې',
+  'This PDF is locked by its owner': 'دا PDF د خپل مالک لخوا قلف شوی دی',
+  'Part of this could not be undone': 'د دې یوه برخه بېرته نه شوه راګرځول',
 }

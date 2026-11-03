@@ -44,8 +44,11 @@ export async function svgToPng(
  *  show no paper either. */
 export async function paperPicture(at: PaperAt, number: number): Promise<string | null> {
   const { paperOf } = await import('./paper')
-  const paper = await paperOf(at, number)
-  if (!paper) return null
+  // A bitmap let go of by now - the tab closed, or paper.ts's cap reached - has no size,
+  // and the one asked for next is drawn again.
+  let paper = await paperOf(at, number)
+  if (paper && !paper.image.width) paper = await paperOf(at, number)
+  if (!paper?.image.width) return null
 
   const sheet = document.createElement('canvas')
   sheet.width = paper.image.width
@@ -56,6 +59,12 @@ export async function paperPicture(at: PaperAt, number: number): Promise<string 
 
   ctx.drawImage(paper.image, 0, 0)
   return sheet.toDataURL('image/png')
+}
+
+/** See `paperIsLocked` in paper.ts; here so a test has one module to stand in for. */
+export async function paperIsLocked(at: PaperAt): Promise<boolean> {
+  const { paperIsLocked: asked } = await import('./paper')
+  return asked(at)
 }
 
 let measuring: CanvasRenderingContext2D | null | undefined

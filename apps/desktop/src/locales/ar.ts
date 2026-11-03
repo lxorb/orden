@@ -2784,6 +2784,6 @@ export const ar: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS هو تعليمات الوكلاء لهذه المساحة',
   '{title}, unread': '{title}، غير مقروءة',
   '{title}, running': '{title}، قيد التشغيل',
-  'This PDF is locked, so its pages went out as pictures':
-    'ملف PDF هذا مقفل، لذا صُدّرت صفحاته كصور',
+  'This PDF is locked by its owner': 'ملف PDF هذا مقفل من قبل مالكه',
+  'Part of this could not be undone': 'تعذّر التراجع عن جزء من هذا',
 }

@@ -30,7 +30,7 @@ import { type Agent, showAgent } from './presence'
 import { movedTo } from '../../space-paths'
 import { DocError } from './problem'
 import { revOf } from './rev'
-import { touch, touchedMoved } from './touched'
+import { touch, touchedMoved, type Touched } from './touched'
 import { Track } from './track'
 
 /** How far back the reader's own writing keeps an edit away: two seconds. */
@@ -96,23 +96,51 @@ function trackOf(agent: Agent, path: string): Track {
 /** Where each track's note is now, which a move changes. */
 const placed = new WeakMap<Track, string>()
 
+/** Tracks whose name a moved note took: the note they are of was moved off or deleted,
+ *  and may come back. By the key they had, oldest first; each has it again when the note
+ *  on it moves away. */
+const waiting = new Map<string, { track: Track; row: Touched | null }[]>()
+
 /** A note moved or renamed, or a folder or a space with it: its tracks go with it, so
- *  what an agent did stays the agent's to take back, under the name the note has now. A
- *  track already at the new name is of a note that name no longer means. */
+ *  what an agent did stays the agent's to take back, under the name the note has now. */
 export function tracksMoved(from: string, to: string, root?: string): void {
+  for (const [key, held] of [...waiting]) {
+    const [agent, path] = partsOf(key)
+    const now = movedTo(path, from, to, root)
+    // One waiting for this very name stays: it is the note on it that moved.
+    if (now === null || now === path || now === to) continue
+    waiting.delete(key)
+    waiting.set(keyOf(agent, now), held)
+  }
   for (const [key, track] of [...tracks]) {
-    const split = key.indexOf('\n')
-    const [agent, path] = [key.slice(0, split), key.slice(split + 1)]
+    const [agent, path] = partsOf(key)
     const now = movedTo(path, from, to, root)
     if (now === null || now === path) continue
 
     tracks.delete(key)
+    const there = tracks.get(keyOf(agent, now))
+    const row = touchedMoved(path, now, agent)
+    if (there) {
+      const held = waiting.get(keyOf(agent, now)) ?? []
+      held.push({ track: there, row })
+      waiting.set(keyOf(agent, now), held)
+    }
     tracks.set(keyOf(agent, now), track)
     placed.set(track, now)
     if (kept.delete(key)) kept.add(keyOf(agent, now))
-    touchedMoved(path, now)
+
+    const back = waiting.get(key)?.pop()
+    if (back) {
+      tracks.set(key, back.track)
+      if (back.row) touch(path, back.row, back.row.edits)
+    }
     for (const listener of listeners) listener(agent, now, path)
   }
+}
+
+function partsOf(key: string): [string, string] {
+  const split = key.indexOf('\n')
+  return [key.slice(0, split), key.slice(split + 1)]
 }
 
 /** Whoever wants to know when an agent's edits of a note change: one made, some taken

@@ -2742,6 +2742,6 @@ export const es: Dictionary = {
     'AGENTS son las instrucciones para agentes de este espacio',
   '{title}, unread': '{title}, sin leer',
   '{title}, running': '{title}, en curso',
-  'This PDF is locked, so its pages went out as pictures':
-    'Este PDF está bloqueado, así que sus páginas salieron como imágenes',
+  'This PDF is locked by its owner': 'Este PDF está bloqueado por su propietario',
+  'Part of this could not be undone': 'Parte de esto no se pudo deshacer',
 }

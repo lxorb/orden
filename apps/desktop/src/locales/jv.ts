@@ -2655,6 +2655,6 @@ export const jv: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS yaiku instruksi agen kanggo papan iki',
   '{title}, unread': '{title}, durung diwaca',
   '{title}, running': '{title}, lagi mlaku',
-  'This PDF is locked, so its pages went out as pictures':
-    'PDF iki dikunci, mula kacané metu minangka gambar',
+  'This PDF is locked by its owner': 'PDF iki dikunci déning sing nduwèni',
+  'Part of this could not be undone': 'Sapérangan iki ora bisa dibatalaké',
 }

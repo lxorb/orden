@@ -1053,10 +1053,10 @@ function holds(tail: string): boolean {
  *  every gesture landing, measured together. What could wait went behind a door on the
  *  branches. Measured 3,516,657, 385 modules.
  *
- *  Raised 2026-11-03, to 3,518,000, for the second hunt's desktop fixes: an Android view's
- *  EditContext filled again after a swap, and `busy.start` saying what failed; both have to
- *  be in the first paint. */
-const BUDGET = 3_518_000
+ *  Raised 2026-11-03, to 3,519,000, for the second hunt's desktop fixes: an Android view's
+ *  EditContext filled again after a swap and a word composing ended, and `busy.start` saying what failed; both have to
+ *  be in the first paint. Measured 3,518,655, 385 modules. */
+const BUDGET = 3_519_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
