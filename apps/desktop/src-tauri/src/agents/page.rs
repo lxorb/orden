@@ -21,6 +21,7 @@
 //! has each filled one painted over (9.4).
 
 use std::collections::{HashMap, HashSet};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
@@ -263,6 +264,10 @@ pub struct Page<'a> {
     pub own: bool,
     /// The stop the call started under.
     pub since: u64,
+    /// Whether this call may touch a credential: type into a sign-in form, photograph a
+    /// focused password field, print a page with a filled one. Set by the one decision
+    /// (`judged` in browser.rs, from the grant's mode, #1072), never by the page.
+    pub credentials: AtomicBool,
 }
 
 /// An element, resolved from a ref.
@@ -836,7 +841,7 @@ impl Page<'_> {
     /// Words into a field, as text rather than keys; replacing what is there when asked.
     pub fn type_text(&self, element: &Element, text: &str, replace: bool) -> Result<(), Answer> {
         let facts = self.facts(element)?;
-        refuse_secret(&facts)?;
+        self.refuse_secret(&facts)?;
         if facts.sensitive() {
             super::log::sensitive();
         }
@@ -954,7 +959,7 @@ impl Page<'_> {
     /// One field of a form set to a value, by what kind of field it is.
     pub fn fill(&self, element: &Element, value: &FieldValue) -> Result<(), Answer> {
         let facts = self.facts(element)?;
-        refuse_secret(&facts)?;
+        self.refuse_secret(&facts)?;
         if facts.sensitive() {
             super::log::sensitive();
         }
@@ -992,6 +997,23 @@ impl Page<'_> {
     /// Whether a key may go to the field that has the page's keyboard: never one that
     /// would open a picker, and never a character into a password field - which in a
     /// reader's tab may be the field the reader is typing their own password into.
+    /// Whether this call was cleared to touch a credential (`credentials`).
+    pub fn may_touch_credentials(&self) -> bool {
+        self.credentials.load(Ordering::Relaxed)
+    }
+
+    /// A password field, or any field of a sign-in form, refused unless this call was
+    /// cleared for it: the floor under `judged`, which asks or clears first (#1072).
+    fn refuse_secret(&self, facts: &Facts) -> Result<(), Answer> {
+        if (facts.password() || facts.sign_in()) && !self.may_touch_credentials() {
+            return Err(Answer::error(
+                Code::PasswordField,
+                "that is a sign-in, and this agent's mode asks before signing in",
+            ));
+        }
+        Ok(())
+    }
+
     fn may_press(&self, key: &Key) -> Result<(), Answer> {
         if let Some(facts) = self.active_facts()? {
             if facts.picker() && key.opens_a_picker() {
@@ -1000,10 +1022,10 @@ impl Page<'_> {
                     "that key would open a list of the engine's own: use browser_select or browser_fill_form",
                 ));
             }
-            if facts.password() && key.changes_words() {
+            if facts.password() && key.changes_words() && !self.may_touch_credentials() {
                 return Err(Answer::error(
                     Code::PasswordField,
-                    "the field with the keyboard is a password field: signing in is the reader's, ask with browser_takeover",
+                    "the field with the keyboard is a password field, and this agent's mode asks before signing in",
                 ));
             }
         }
@@ -1224,7 +1246,9 @@ impl Page<'_> {
         full: bool,
         scale: Option<f64>,
     ) -> Result<Picture, Answer> {
-        if self.active_facts()?.is_some_and(|facts| facts.password()) {
+        if !self.may_touch_credentials()
+            && self.active_facts()?.is_some_and(|facts| facts.password())
+        {
             return Err(Answer::error(
                 Code::PasswordField,
                 "a password field has the keyboard: nothing is photographed while one does",
@@ -1628,7 +1652,9 @@ impl Page<'_> {
     /// shapes that nothing here can paint over after the engine has laid them out. So
     /// the agent is told to take the picture instead, rather than handed a weaker print.
     pub fn pdf(&self, paper: &PdfPage) -> Result<String, Answer> {
-        if self.secrets(self.every_part()).iter().any(|one| one.filled) {
+        if !self.may_touch_credentials()
+            && self.secrets(self.every_part()).iter().any(|one| one.filled)
+        {
             return Err(Answer::error(
                 Code::PasswordField,
                 "a filled secret field is on the page, and it would print as bullets that say how long it is: capture a screenshot, which paints it over",
@@ -1962,17 +1988,6 @@ fn thrown(answered: &Value) -> Result<(), Answer> {
         Code::Failed,
         cdp::cut(said.to_string(), 2_000),
     ))
-}
-
-/// A password field, or any field of a sign-in form, refused: signing in is a takeover.
-fn refuse_secret(facts: &Facts) -> Result<(), Answer> {
-    if facts.password() || facts.sign_in() {
-        return Err(Answer::error(
-            Code::PasswordField,
-            "that is a sign-in: the reader types it, ask with browser_takeover",
-        ));
-    }
-    Ok(())
 }
 
 fn text(value: &Value, key: &str) -> String {

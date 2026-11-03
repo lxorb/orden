@@ -30,7 +30,8 @@ export const ms: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Kebenaran penuh',
   'Auto mode': 'Mod automatik',
-  'Full permissions: nothing is asked first': 'Kebenaran penuh: tiada apa yang ditanya dahulu',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Kebenaran penuh: tiada apa yang ditanya atau dikembalikan kepada anda, walaupun log masuk, membayar, menghantar atau memadam',
   // Import: Zen's tabs
   'Import from Zen': 'Import daripada Zen',
   'Containers stay in Zen': 'Bekas kekal dalam Zen',

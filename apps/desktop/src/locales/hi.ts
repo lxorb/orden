@@ -30,7 +30,8 @@ export const hi: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'पूरी अनुमतियाँ',
   'Auto mode': 'स्वचालित मोड',
-  'Full permissions: nothing is asked first': 'पूरी अनुमतियाँ: पहले कुछ नहीं पूछा जाता',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'पूरी अनुमतियाँ: कुछ भी पूछा या आपको वापस नहीं सौंपा जाता, साइन इन, भुगतान, भेजना या हटाना भी नहीं',
   // Import: Zen's tabs
   'Import from Zen': 'Zen से इंपोर्ट करें',
   'Containers stay in Zen': 'कंटेनर Zen में ही रहते हैं',

@@ -30,7 +30,8 @@ export const ja: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'フルアクセス',
   'Auto mode': '自動モード',
-  'Full permissions: nothing is asked first': 'フルアクセス: 事前に何も確認しません',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'フルアクセス: 何も確認せず、あなたに戻すこともしません。サインイン、支払い、送信、削除も同様です',
   // Import: Zen's tabs
   'Import from Zen': 'Zen から読み込む',
   'Containers stay in Zen': 'コンテナは Zen に残ります',

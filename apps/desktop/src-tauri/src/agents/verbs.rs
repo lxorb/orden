@@ -1150,7 +1150,7 @@ pub enum Category {
     Publishing,
     /// Delete, remove, erase: for good.
     Deleting,
-    /// A password field or a sign-in form, which is a takeover.
+    /// A password field or a sign-in form: typing into it, or signing in (#1072).
     SigningIn,
     /// `write_setting`.
     Settings,

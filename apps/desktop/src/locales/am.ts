@@ -30,7 +30,8 @@ export const am: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'ሙሉ ፈቃዶች',
   'Auto mode': 'ራስ-ሰር ሁነታ',
-  'Full permissions: nothing is asked first': 'ሙሉ ፈቃዶች፦ ምንም አስቀድሞ አይጠየቅም',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'ሙሉ ፈቃዶች፦ ምንም አይጠየቅም ወይም ወደ እርስዎ አይመለስም፣ መግባት፣ መክፈል፣ መላክ ወይም መሰረዝ እንኳ',
   // Import: Zen's tabs
   'Import from Zen': 'ከZen አምጣ',
   'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',

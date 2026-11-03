@@ -31,7 +31,8 @@ export const ha: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Cikakken izini',
   'Auto mode': 'Yanayin kai-tsaye',
-  'Full permissions: nothing is asked first': 'Cikakken izini: ba a tambayar komai da farko',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Cikakken izini: ba a tambayar komai ko mayar maka da shi, ko shiga, biya, aikawa ko gogewa ma',
   // Import: Zen's tabs
   'Import from Zen': 'Shigo daga Zen',
   'Containers stay in Zen': 'Kwantenoni suna zama a Zen',

@@ -258,11 +258,19 @@ fn gate<'a>(
         },
     );
     super::cdp::awake(view, &label, own);
+    // A credential is the mode's to clear (#1072): at once where the agent's mode does
+    // not ask about signing in, and the reader's own command line always; otherwise once
+    // `judged` has asked.
+    let cleared = match caller {
+        Caller::Agent(grant) => !grant.asks(Category::SigningIn),
+        Caller::Reader => true,
+    };
     let page = Page {
         view,
         label,
         own,
         since,
+        credentials: std::sync::atomic::AtomicBool::new(cleared),
     };
     if let Caller::Agent(grant) = caller {
         if let Err(why) = policy::site_allowed(grant, &page.url(), place.store()) {
@@ -371,9 +379,11 @@ fn acted(page: &Page<'_>) -> Answer {
     })
 }
 
-/// Whether a press or a write asks first. `Ok` to go ahead; the answer to give when not.
-/// Signing in is refused outright, for the command line too, the way typing into a
-/// password field is: it is the reader's, through a takeover (9.4).
+/// Whether a press or a write asks first: the one decision every act in a tab goes
+/// through, by the grant's mode (`Grant::asks`, #1072). `Ok` to go ahead; the answer to
+/// give when not. Signing in and words into a sign-in form ask as `Category::SigningIn`,
+/// so under Full permissions they simply happen, and once cleared the page lets the call
+/// touch the credential.
 fn judged(
     app: &AppHandle,
     caller: &Caller,
@@ -383,21 +393,22 @@ fn judged(
     act: Act,
     key: &str,
 ) -> Result<(), Answer> {
-    if policy::signs_in(facts, act) {
-        return Err(Answer::error(
-            Code::PasswordField,
-            "that signs in: the reader does, ask with browser_takeover",
-        ));
-    }
+    let cleared = || -> Result<(), Answer> {
+        if policy::credential_act(facts, act) {
+            page.credentials
+                .store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+        Ok(())
+    };
     let Caller::Agent(grant) = caller else {
-        return Ok(());
+        return cleared();
     };
     let hosts = page_hosts(page);
     let Some(question) = policy::judge(grant, facts, act, &page.url(), &hosts) else {
-        return Ok(());
+        return cleared();
     };
     if approvals::allowed(&grant.id, key) {
-        return Ok(());
+        return cleared();
     }
     Err(ask(
         app,
@@ -653,6 +664,19 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::Press(pressing) => {
                 let key = keys::chord(&pressing.keys)
                     .map_err(|why| Answer::error(Code::BadArguments, why))?;
+                // A key that types into a sign-in form is words into it, judged so.
+                if key.changes_words() {
+                    if let Some(facts) = page.active_facts()? {
+                        if facts.password() || facts.sign_in() {
+                            let asked = approvals::key(
+                                "browser_press_words",
+                                Some(&tab),
+                                Some(&pressing.keys),
+                            );
+                            judged(app, caller, page, place, &facts, Act::Write, &asked)?;
+                        }
+                    }
+                }
                 // Enter and Control+Enter are a message box's send as well as a form's
                 // submit; Shift+Enter only submits a form of single-line fields.
                 if key.sends() || key.submits() {
@@ -689,12 +713,15 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 for field in &form.fields {
                     let target = element(page, &field.element)?;
                     let facts = page.facts(&target)?;
-                    if facts.password() || facts.sign_in() {
-                        return Err(Answer::error(Code::PasswordField, "that form is a sign-in: the reader fills it, ask with browser_takeover"));
-                    }
                     targets.push((target, facts));
                 }
-                if let Some((_, facts)) = targets.first() {
+                // A sign-in form is judged by its credential field, which asks as the mode
+                // says (#1072); any other form by its first field.
+                let judged_by = targets
+                    .iter()
+                    .find(|(_, facts)| facts.password() || facts.sign_in())
+                    .or_else(|| targets.first());
+                if let Some((_, facts)) = judged_by {
                     let key = approvals::key("browser_fill_form", Some(&tab), None);
                     judged(app, caller, page, place, facts, Act::Write, &key)?;
                 }

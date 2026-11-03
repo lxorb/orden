@@ -30,7 +30,8 @@ export const vi: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Toàn quyền',
   'Auto mode': 'Chế độ tự động',
-  'Full permissions: nothing is asked first': 'Toàn quyền: không hỏi trước điều gì',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Toàn quyền: không hỏi và không giao lại cho bạn điều gì, kể cả đăng nhập, thanh toán, gửi hay xóa',
   // Import: Zen's tabs
   'Import from Zen': 'Nhập từ Zen',
   'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',

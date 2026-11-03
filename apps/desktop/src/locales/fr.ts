@@ -31,7 +31,8 @@ export const fr: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Autorisations complètes',
   'Auto mode': 'Mode automatique',
-  'Full permissions: nothing is asked first': 'Autorisations complètes : rien n’est demandé avant',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Autorisations complètes : rien n’est demandé ni rendu, pas même la connexion, le paiement, l’envoi ou la suppression',
   // Import: Zen's tabs
   'Import from Zen': 'Importer depuis Zen',
   'Containers stay in Zen': 'Les conteneurs restent dans Zen',

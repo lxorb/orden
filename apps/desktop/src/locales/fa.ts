@@ -30,7 +30,8 @@ export const fa: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'دسترسی کامل',
   'Auto mode': 'حالت خودکار',
-  'Full permissions: nothing is asked first': 'دسترسی کامل: پیش از هیچ کاری پرسیده نمی‌شود',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'دسترسی کامل: هیچ چیز پرسیده یا به شما برگردانده نمی‌شود، حتی ورود، پرداخت، ارسال یا حذف',
   // Import: Zen's tabs
   'Import from Zen': 'درون‌آوری از Zen',
   'Containers stay in Zen': 'کانتینرها در Zen می‌مانند',

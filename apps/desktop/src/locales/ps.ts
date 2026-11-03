@@ -30,7 +30,8 @@ export const ps: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'بشپړې اجازې',
   'Auto mode': 'خپلکاره حالت',
-  'Full permissions: nothing is asked first': 'بشپړې اجازې: مخکې هیڅ نه پوښتل کېږي',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'بشپړې اجازې: هیڅ نه پوښتل کېږي او نه تاسو ته بېرته سپارل کېږي، حتی ننوتل، تادیه، لېږل یا ړنګول',
   // Import: Zen's tabs
   'Import from Zen': 'له Zen څخه واردول',
   'Containers stay in Zen': 'کانټینرونه په Zen کې پاتې کېږي',

@@ -30,7 +30,8 @@ export const pa: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'ਪੂਰੀਆਂ ਇਜਾਜ਼ਤਾਂ',
   'Auto mode': 'ਆਟੋ ਮੋਡ',
-  'Full permissions: nothing is asked first': 'ਪੂਰੀਆਂ ਇਜਾਜ਼ਤਾਂ: ਪਹਿਲਾਂ ਕੁਝ ਨਹੀਂ ਪੁੱਛਿਆ ਜਾਂਦਾ',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'ਪੂਰੀਆਂ ਇਜਾਜ਼ਤਾਂ: ਕੁਝ ਵੀ ਪੁੱਛਿਆ ਜਾਂ ਤੁਹਾਨੂੰ ਵਾਪਸ ਨਹੀਂ ਸੌਂਪਿਆ ਜਾਂਦਾ, ਸਾਈਨ ਇਨ, ਭੁਗਤਾਨ, ਭੇਜਣਾ ਜਾਂ ਮਿਟਾਉਣਾ ਵੀ ਨਹੀਂ',
   // Import: Zen's tabs
   'Import from Zen': 'Zen ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
   'Containers stay in Zen': 'ਕੰਟੇਨਰ Zen ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',

@@ -31,7 +31,8 @@ export const te: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'పూర్తి అనుమతులు',
   'Auto mode': 'ఆటో మోడ్',
-  'Full permissions: nothing is asked first': 'పూర్తి అనుమతులు: ముందుగా ఏమీ అడగదు',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'పూర్తి అనుమతులు: ఏదీ అడగదు లేదా మీకు తిరిగి అప్పగించదు, సైన్ ఇన్, చెల్లింపు, పంపడం లేదా తొలగించడం కూడా',
   // Import: Zen's tabs
   'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
   'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',

@@ -30,7 +30,8 @@ export const ko: Dictionary = {
   // AI: the three permission modes
   'Full permissions': '전체 권한',
   'Auto mode': '자동 모드',
-  'Full permissions: nothing is asked first': '전체 권한: 미리 묻지 않습니다',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    '전체 권한: 로그인, 결제, 보내기, 삭제까지 아무것도 묻거나 넘기지 않습니다',
   // Import: Zen's tabs
   'Import from Zen': 'Zen에서 가져오기',
   'Containers stay in Zen': '컨테이너는 Zen에 남습니다',

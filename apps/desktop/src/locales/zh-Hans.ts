@@ -30,7 +30,8 @@ export const zhHans: Dictionary = {
   // AI: the three permission modes
   'Full permissions': '完全权限',
   'Auto mode': '自动模式',
-  'Full permissions: nothing is asked first': '完全权限：事先不会询问任何事',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    '完全权限：不会询问或交还给你任何事，登录、付款、发送和删除也不例外',
   // Import: Zen's tabs
   'Import from Zen': '从 Zen 导入',
   'Containers stay in Zen': '容器保留在 Zen 中',

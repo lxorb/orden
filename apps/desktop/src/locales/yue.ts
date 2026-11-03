@@ -30,7 +30,8 @@ export const yue: Dictionary = {
   // AI: the three permission modes
   'Full permissions': '完整權限',
   'Auto mode': '自動模式',
-  'Full permissions: nothing is asked first': '完整權限：乜都唔會事先問',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    '完整權限：乜都唔會問或者交返俾你，連登入、付款、傳送同刪除都係',
   // Import: Zen's tabs
   'Import from Zen': '由 Zen 匯入',
   'Containers stay in Zen': '容器留喺 Zen',

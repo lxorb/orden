@@ -886,6 +886,18 @@ describe('the AI sidebar’s two modes that act', () => {
     }
   })
 
+  test('Full permissions (autonomous) refuses nothing kept to the reader’s hands (#1072)', async () => {
+    const acting = agent({ mode: 'autonomous' })
+    expect(await call('workspace_tabs', { op: 'close', tab: 't2' }, acting)).toMatchObject({
+      result: { closed: 't2' },
+    })
+    for (const id of ['close-window', 'new-window']) {
+      expect(await call('run_command', { id }, acting), id).not.toMatchObject({ code: 'by_hand' })
+    }
+    // Any other mode keeps them to the reader, as does the reader's own command line.
+    expect(await call('run_command', { id: 'close-window' })).toMatchObject({ code: 'by_hand' })
+  })
+
   test('Approve (confirm) asks before every change and never before a read', async () => {
     const approving = agent({ mode: 'confirm' })
     for (const [verb, args] of changes('light')) {

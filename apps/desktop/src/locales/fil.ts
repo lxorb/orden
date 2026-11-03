@@ -30,7 +30,8 @@ export const fil: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Buong pahintulot',
   'Auto mode': 'Auto mode',
-  'Full permissions: nothing is asked first': 'Buong pahintulot: walang itatanong muna',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Buong pahintulot: walang itinatanong o ibinabalik sa iyo, kahit ang pag-sign in, pagbabayad, pagpapadala o pagbura',
   // Import: Zen's tabs
   'Import from Zen': 'Mag-import mula sa Zen',
   'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
