@@ -1057,8 +1057,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,486,000, for #1090: a Mac told once that its AI keys are typed
  *  again now the keychain is not asked, checked after the first paint (App.svelte,
- *  surfaces.svelte.ts). Measured 3,485,824. */
-const BUDGET = 3_486_000
+ *  surfaces.svelte.ts). Measured 3,485,824.
+ *
+ *  Raised 2026-11-04, to 3,490,500, for #1082: a website whose favicon has not come
+ *  wears its brand's logo, read off its address by `siteBrand` and decided with the
+ *  rest of a file's marks by `sourceMark` (icons.ts, chosen-icon.ts, FileMark.svelte).
+ *  The logos themselves are a chunk of their own. Measured 3,490,342. */
+const BUDGET = 3_490_500
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

@@ -339,9 +339,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  each space's place on it kept (overview/places.svelte.ts), moved and zoomed by the
  *  wheel, a touchpad and two fingers (overview/camera.ts), and a window dropped against a
  *  side making a pane there. Measured 5,799,795.
+ *
+ *  The code raised on 2026-11-04, to 5,801,700, for #1082: the brands' tab and a
+ *  website's brand read off its address (icon-sets.ts, `siteBrand` in icons.ts); the
+ *  logos and their names stay out (vite.even.config.ts, brand-names.even.ts). Measured
+ *  5,801,561.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_800_000,
+  code: 5_801_700,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
