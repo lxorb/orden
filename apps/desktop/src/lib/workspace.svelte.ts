@@ -3447,6 +3447,11 @@ class Workspace {
     this.saving.flush()
   }
 
+  /** The same, and whatever else holds words of its own; see saving.svelte.ts. */
+  wordsNow() {
+    this.saving.wordsNow()
+  }
+
   /** Text put into a note from somewhere other than the editor: a version
    *  restored from the history, a note pulled in by a sync. */
   replace(text: string, target?: Tab) {

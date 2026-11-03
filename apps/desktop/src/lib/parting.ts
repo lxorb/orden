@@ -37,6 +37,22 @@ export function owesLast(write: () => void): void {
   lastly.add(write)
 }
 
+/** What turns a surface into the words of its document, a plane's strokes above all:
+ *  owed like the rest when the window goes, and asked for alone by whatever reads a
+ *  document and is going to stay; see `wordsNow` in workspace/saving.svelte.ts. */
+const surfaces = new Set<() => void>()
+
+/** The same as `owes`, for a write that only turns something into words. */
+export function owesWords(write: () => void): void {
+  surfaces.add(write)
+  owing.add(write)
+}
+
+/** Every surface's words in its document, with nothing else that is owing started. */
+export function surfacesToWords(): void {
+  for (const write of surfaces) write()
+}
+
 /** Everything owing, written now. Called where the window is going; see `onClose`
  *  in start.ts. */
 export function settleUp(): void {

@@ -63,6 +63,21 @@ export function readPalette(element: Element): Palette {
   return palette
 }
 
+/** The theme's colours as one of its sides has them, whichever side is on, read off
+ *  an element that asks for it, as every theme answers `data-theme` on any element. */
+export function paletteOf(scheme: 'light' | 'dark'): Palette {
+  const probe = document.createElement('div')
+  probe.dataset.theme = scheme
+  probe.hidden = true
+  document.body.append(probe)
+
+  try {
+    return readPalette(probe)
+  } finally {
+    probe.remove()
+  }
+}
+
 const TOKENS: readonly [string, string, string][] = [
   ['accent', '--accent', '#4c6ef5'],
   // What a pen writes in when nobody chose a colour: the same ink the words on

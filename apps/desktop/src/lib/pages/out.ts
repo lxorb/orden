@@ -41,7 +41,7 @@ import {
 } from '../canvas/format'
 import { INK_STYLES, inkOpacity, outlineOf } from '../canvas/ink'
 import { inkColour, type Palette } from '../canvas/paint'
-import { DEFAULT_INK, readPalette } from '../canvas/palette'
+import { DEFAULT_INK, paletteOf } from '../canvas/palette'
 import { drawnNode, inlinedSvg, styles } from '../canvas/picture'
 import { inkSvg } from '../canvas/svg'
 import { type Box } from '../canvas/geometry'
@@ -108,26 +108,11 @@ export function pagesOutOf(open: {
     // stylesheet, so nothing in it can look `var(--canvas-1)` up any more. Its light
     // side whatever side is on, because the sheet is white (B571): a dark theme's pen
     // with no colour of its own writes near white, invisible on paper.
-    palette: lightPalette(),
+    palette: paletteOf('light'),
     path: open.path,
     root: open.root,
     name: open.name,
     trusted: open.trusted ?? false,
-  }
-}
-
-/** The theme's colours as its light side has them, read off an element that asks for
- *  that side, as every theme answers `data-theme` on any element. */
-function lightPalette(): Palette {
-  const probe = document.createElement('div')
-  probe.dataset.theme = 'light'
-  probe.hidden = true
-  document.body.append(probe)
-
-  try {
-    return readPalette(probe)
-  } finally {
-    probe.remove()
   }
 }
 
@@ -163,7 +148,7 @@ function cardsOn(canvas: Canvas, page: PageNode): CanvasNode[] {
 }
 
 /** The palette a sheet that has left the app is drawn in: the light theme's (see
- *  `lightPalette`), on white, with the light theme's own values under it for whatever
+ *  `pagesOutOf`), on white, with the light theme's own values under it for whatever
  *  the palette does not say. */
 function paperPalette(palette: Palette): Palette {
   return {

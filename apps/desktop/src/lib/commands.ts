@@ -141,7 +141,7 @@ export function exportCommands(): Command[] {
   // something asks for them as text, and an export is asking. Only ever from a
   // row's `run`, never while the rows are built; see `kind` below.
   const source = () => {
-    workspace.flush()
+    workspace.wordsNow()
     return note()?.doc ?? ''
   }
   const name = () => note()?.name ?? 'Untitled.md'

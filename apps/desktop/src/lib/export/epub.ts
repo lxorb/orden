@@ -286,6 +286,19 @@ function closing(open: string[], name: string | null): string {
   return out
 }
 
+/** The namespaces an HTML parser gives these two by itself and an XML one does not:
+ *  there a bare `<svg>` is an XHTML element nobody has heard of, so a chart comes out
+ *  as its labels run together, with no height and no lines. */
+const FOREIGN_ROOTS: Record<string, string> = {
+  svg: 'http://www.w3.org/2000/svg',
+  math: 'http://www.w3.org/1998/Math/MathML',
+}
+
+function namespaceOf(name: string, attributes: string): string {
+  const space = FOREIGN_ROOTS[name.toLowerCase()]
+  return space && !/\sxmlns=/.test(attributes) ? ` xmlns="${space}"` : ''
+}
+
 /** The renderer's HTML as XML a parser will take. Nothing is lower-cased and
  *  nothing is reordered: the note's markup comes through as it was written,
  *  with only what XML insists on changed.
@@ -322,12 +335,13 @@ export function toXhtml(html: string): string {
       case 'open': {
         const attributes = attributesOf(piece.attributes)
         const name = renamed(piece.name)
+        const space = namespaceOf(name, attributes)
 
         if (piece.empty || VOID_ELEMENTS.has(name.toLowerCase())) {
-          out += `<${name}${attributes} />`
+          out += `<${name}${space}${attributes} />`
         } else {
           if (name.toLowerCase() === 'foreignobject') foreign++
-          out += `<${name}${attributes}>`
+          out += `<${name}${space}${attributes}>`
           open.push(name)
         }
         break

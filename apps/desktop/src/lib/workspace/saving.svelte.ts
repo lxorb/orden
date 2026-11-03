@@ -22,7 +22,7 @@ import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
-import { owesLast, settleUp } from '../parting'
+import { owesLast, settleUp, surfacesToWords } from '../parting'
 import { nameOf, samePath, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
@@ -160,6 +160,17 @@ export class Saving {
    *  that have been typed in, and nothing at all when none have. */
   flush() {
     for (const note of this.ws.documents) note.flush()
+  }
+
+  /** Everything that holds words of its own on the way to a document, handed over: a
+   *  table cell, the card being written in, a plane that commits after a pause. For
+   *  whatever is about to read a document and show it to somebody: an export read
+   *  before the plane's pause was over came out without the last strokes. */
+  wordsNow() {
+    flushTableEdits()
+    flushCardEdits()
+    surfacesToWords()
+    this.flush()
   }
 
   /** Text put into a note from somewhere other than the editor: a version

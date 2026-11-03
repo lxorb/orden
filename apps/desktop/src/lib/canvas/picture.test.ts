@@ -20,6 +20,9 @@ vi.mock('../export/save', () => ({
   download: (_name: string, payload: { text: string }) => world.saved.push(payload.text),
 }))
 
+vi.mock('../settings.svelte', () => ({ settings: { exportAppearance: 'light' } }))
+
+const { settings } = await import('../settings.svelte')
 const { readCanvas } = await import('./format')
 const { canvasSvg, exportCanvasSvg } = await import('./picture')
 
@@ -76,5 +79,59 @@ describe('a picture of somebody else’s plane', () => {
 
     expect(world.saved).toHaveLength(1)
     expect(world.saved[0]).not.toMatch(/<im(g|age) [^>]*onerror/)
+  })
+})
+
+describe('the colours of a picture leaving the app', () => {
+  const dark = { bg: '#0e1013', text: '#eeeeee', ink: '#ffffff' }
+  const sheet = document.createElement('style')
+  sheet.textContent = "[data-theme='light'] { --bg: #fafbfc; }"
+  document.head.append(sheet)
+
+  const drawing = () => ({
+    canvas: readCanvas(JSON.stringify({ nodes: [], edges: [] })),
+    palette: dark,
+    path: null,
+    root: null,
+    name: 'Plane.canvas',
+    trusted: false,
+  })
+  const saved = async () => {
+    await exportCanvasSvg(drawing())
+    return world.saved.at(-1) ?? ''
+  }
+
+  test('are the ones Appearance chooses, whichever side the window is on', async () => {
+    settings.exportAppearance = 'light'
+    const svg = await saved()
+
+    expect(svg).toContain('fill="#fafbfc"')
+    expect(svg).not.toContain('#0e1013')
+  })
+
+  test('are the window’s where Appearance says as the app is', async () => {
+    settings.exportAppearance = 'app'
+
+    expect(await saved()).toContain('fill="#0e1013"')
+  })
+})
+
+describe('a card set as plain lines', () => {
+  test('is the weight the card is on the plane, not the weight of a label', () => {
+    const svg = canvasSvg(
+      readCanvas(
+        JSON.stringify({
+          nodes: [{ id: 'a', type: 'text', text: 'hello', x: 0, y: 0, width: 200, height: 80 }],
+          edges: [],
+        }),
+      ),
+      {},
+      null,
+      null,
+      true,
+    )
+
+    expect(svg).toMatch(/<text[^>]*class="words"[^>]*>/)
+    expect(svg).toContain('.words { font: 13px')
   })
 })
