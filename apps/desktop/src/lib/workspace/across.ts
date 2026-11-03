@@ -137,7 +137,7 @@ export class Across {
       if (disk !== null && disk !== note.onDisk) {
         if (note.onDisk !== null && asText(note)) {
           words = await together(note.onDisk, content, disk)
-          this.brought(note, content, words)
+          await this.brought(note, content, words)
           this.metOnDisk(note, disk)
         } else {
           // Nothing to merge against, or nothing that merges: what is there is kept.
@@ -164,12 +164,15 @@ export class Across {
     return this.hearing
   }
 
-  /** Words a merge left, put into the note. */
-  private brought(note: NoteDoc, from: string, to: string) {
+  /** Words a merge left, put into the note. A key pressed since the merge read it is in the
+   *  note already and stays: what arrives is merged with it first. */
+  private async brought(note: NoteDoc, from: string, to: string) {
     if (from === to) return
     const joined = this.desk.joined(note)
-    if (joined) joined.put(to)
-    else note.took(fold(from, to), to)
+    const now = joined ? joined.text() : note.latest
+    const words = now === from ? to : await together(from, now, to)
+    if (joined) joined.put(words)
+    else note.took(fold(now, words), words)
   }
 
   private async heardWords(path: string, base: string, text: string) {
@@ -198,8 +201,8 @@ export class Across {
       if (words === text && !joined) note.dirty = false
       return
     }
-    this.brought(note, mine, words)
-    if (words === text) {
+    await this.brought(note, mine, words)
+    if ((joined ? joined.text() : note.latest) === text) {
       note.dirty = false
       return
     }

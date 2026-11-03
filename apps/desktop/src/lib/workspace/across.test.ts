@@ -85,7 +85,7 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
     const words = await across.writing(note, path, content, async (down) => {
       disk.set(path, down)
     })
-    if (words !== null) note.dirty = false
+    if (words !== null) note.dirty = note.latest !== words
     return words
   }
   const type = (note: NoteDoc, words: string) => {
@@ -162,6 +162,24 @@ describe('one note in two windows', () => {
     await wires.deliver()
     expect(disk.get(PATH)).toBe(`TOP ${BASE}FROM-A `)
     expect(inA.latest).toBe(disk.get(PATH))
+  })
+
+  test('a key pressed while a merge is on its way stays', async () => {
+    const { disk, a, b } = twoWindows()
+    const inA = a.open(BASE)
+    const inB = b.open(BASE)
+    a.type(inA, 'FROM-A ')
+    await a.save(inA)
+    b.type(inB, 'FROM-B ')
+    const saving = b.save(inB)
+    // Pressed after the save read the note, before the merge came back.
+    inB.live.edit([{ from: 0, to: 0, insert: 'KEY ' }])
+    await saving
+
+    expect(disk.get(PATH)).toContain('FROM-A')
+    expect(inB.latest).toContain('KEY')
+    expect(inB.latest).toContain('FROM-A')
+    expect(inB.latest).toContain('FROM-B')
   })
 
   test('both at one place in one moment come to the same words in both', async () => {

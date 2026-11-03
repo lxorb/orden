@@ -605,7 +605,7 @@ export class Saving {
     // once. A keystroke landing inside the round trip belongs to the next write,
     // and the note has to be told which one it just had.
     let content = note.text
-    let revision = note.revision
+    const revision = note.revision
 
     // The words the file held when this sitting began, kept as a version before the
     // first write replaces them. Every write is not a version: a note written as
@@ -650,9 +650,11 @@ export class Saving {
     })
     const landed = await landing
     if (landed === null) return
+    // More went down than this note said when it was asked: it may have been typed in
+    // since, so it is written once more, and that write finds nothing left to meet.
     if (landed !== content) {
       content = landed
-      revision = note.revision
+      this.owed(note)
     }
     note.written(path, nameOf(path), revision)
     // Moved under the write by something that did not wait for it: the words are
