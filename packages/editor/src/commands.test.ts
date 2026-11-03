@@ -28,13 +28,11 @@ import {
   toggleTask,
   toggleTaskList,
   toggleWrap,
-  indentItems,
-  outdentItems,
-  moveLineOver,
   insertHorizontalRule,
   tickTaskAtCaret,
 } from './commands'
 import { selectWord } from './keymap'
+import { indentItems, moveLineOver, outdentItems } from './list-keys'
 import { parsed } from '../test/parsed'
 
 /** One command over one document, and everything a test might ask about the

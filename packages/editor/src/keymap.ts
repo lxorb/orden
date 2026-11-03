@@ -14,7 +14,6 @@ import {
 import type { KeyBinding } from '@codemirror/view'
 import {
   clearFormatting,
-  indentItems,
   insertCallout,
   insertCodeFence,
   insertComment,
@@ -25,8 +24,6 @@ import {
   insertLink,
   insertMathBlock,
   insertToc,
-  moveLineOver,
-  outdentItems,
   setHeading,
   shiftHeading,
   toggleBulletList,
@@ -62,6 +59,9 @@ import {
   sortLines,
   titleCase,
   upperCase,
+  indentItems,
+  moveLineOver,
+  outdentItems,
 } from './line-door'
 import { pastePlain } from './paste'
 import { runFenceAtCursor } from './run/door'

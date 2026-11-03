@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { namedBlock } from './block-names'
 import {
   blockIdOf,
   blockIds,
@@ -18,7 +19,6 @@ import {
   isWebTarget,
   MOST_LINKS,
   linkTarget,
-  namedBlock,
   pageFragment,
   parseWikilink,
   headingsOf,

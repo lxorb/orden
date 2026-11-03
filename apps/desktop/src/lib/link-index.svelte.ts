@@ -46,7 +46,6 @@ import {
   isTabFile,
   isWebTarget,
   type LinkKind,
-  namedBlock,
   withoutBlockIds,
 } from '@orden/markdown/links'
 import { breathe } from './breathe'
@@ -1947,6 +1946,7 @@ class Links {
     const before = await this.wordsOf(absolute, absolute, open)
     if (before === null) return null
 
+    const { namedBlock } = await import('@orden/markdown/block-names')
     const named = namedBlock(before, line, () =>
       freeBlockId(new Set(blockIds(before).map((one) => one.id))),
     )

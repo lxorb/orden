@@ -998,8 +998,16 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,445,500, and to 386 modules, for #1079: the panes choose the
  *  tab a pane comes back to by the one rule in workspace/recency.ts, now read with the
  *  panes rather than with Ctrl+Tab's first press, and a pane's order of use is written
- *  down with the session. Measured 3,445,347, 385 modules. */
-const BUDGET = 3_445_500
+ *  down with the session. Measured 3,445,347, 385 modules.
+ *
+ *  Raised 2026-11-03, to 3,460,600, for the writing fixes of the views hunt: a paste puts a
+ *  block on lines of its own and keeps a list on an empty item (paste.ts, 4.8 KB), marks go
+ *  on each part of a selection across blocks and a heading trades a list marker
+ *  (commands.ts, 4.4 KB), a block name on a line of its own is read back (links.ts, 1 KB), a
+ *  chart reads block lists (chart.ts, 1.7 KB), words beside a picture win (images.ts, 1 KB),
+ *  a phone writes a draft down (workspace.svelte.ts, 1.1 KB). What could wait for a press
+ *  or a pick was put behind a door: list-keys.ts, block-names.ts. Measured 3,460,433. */
+const BUDGET = 3_460_600
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
