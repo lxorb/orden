@@ -702,7 +702,30 @@ class Modes {
     }
 
     // Written back without whatever this version has not got; see `stale` above.
+    // From here on `persist` writes what changes, so the fields left as they are stay
+    // whatever another window has made them; see `persist`.
+    this.written = isRecord(saved) ? saved : fieldsOf(this.state())
     if (stale) this.persist()
+    this.hearOthers()
+    for (const view of this.views) this.apply(view)
+  }
+
+  /** The fields as this window last read or wrote them, which is how `persist` tells
+   *  what this window changed from what another did. */
+  private written: Record<string, unknown> | null = null
+
+  /** Another window's setting, from the moment it is made (the `storage` event reaches
+   *  every other page of the origin). Without this it took effect only where it was
+   *  made, and this window's next write put its own stale value back. */
+  private hearing = false
+  private hearOthers() {
+    if (this.hearing || typeof window === 'undefined') return
+    this.hearing = true
+    window.addEventListener('storage', (event) => {
+      if (event.key !== STORAGE_KEY) return
+      this.restore()
+      this.applyAlwaysOnTop()
+    })
   }
 
   toggleAlwaysOnTop() {
@@ -1654,6 +1677,25 @@ class Modes {
   }
 
   private persist() {
+    const fields = fieldsOf(this.state())
+    const seen = this.written
+    this.written = fields
+    const now = stored(STORAGE_KEY)
+    if (!seen || !isRecord(now)) {
+      keep(STORAGE_KEY, JSON.stringify(fields))
+      return
+    }
+    // Only what this window changed, onto what is there now: two windows writing in one
+    // moment, before either has heard the other, keep both of what they set.
+    const merged = { ...now }
+    for (const name of Object.keys(seen)) if (!(name in fields)) delete merged[name]
+    for (const [name, value] of Object.entries(fields)) {
+      if (JSON.stringify(value) !== JSON.stringify(seen[name])) merged[name] = value
+    }
+    keep(STORAGE_KEY, JSON.stringify(merged))
+  }
+
+  private state(): Saved {
     const state: Saved = {
       source: this.opensInSource,
       readOnly: this.readOnly,
@@ -1705,8 +1747,13 @@ class Modes {
       frontMatter: this.properties,
       linkFormat: this.linkFormat,
     }
-    keep(STORAGE_KEY, JSON.stringify(state))
+    return state
   }
+}
+
+/** The fields as they go into storage: what `undefined` leaves out is not one. */
+function fieldsOf(state: Saved): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(state)) as Record<string, unknown>
 }
 
 export const modes = new Modes()
