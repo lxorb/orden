@@ -18,7 +18,10 @@
   ["---\ntags:\n  - a\n  - b\nother: 1\n---\n", true],
   ["---\ntags:\n- a\n- b\nother: 1\n---\n", true],
   ["---\ntags:\n# why\n- a\n\n- b\n---\n", true],
-  ["---\ntext: |\n  words\n\n  more: words\n\n  - and a list\n  # not a comment\n  ---\nafter: 1\n---\nrest", true],
+  [
+    "---\ntext: |\n  words\n\n  more: words\n\n  - and a list\n  # not a comment\n  ---\nafter: 1\n---\nrest",
+    true
+  ],
   ["---\ntext: >-\n  words\n\n  more\nafter: 1\n---\n", true],
   ["---\ntext: |2\n    words [ open \"\n---\n", true],
   ["---\na:\n  b: |\n    don't [ stop\n  c: 1\n---\n", true],

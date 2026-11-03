@@ -89,9 +89,9 @@ function spelled(r: (n: number) => number, map: Record<string, unknown>): string
     indentSeq: r(2) === 0,
     collectionStyle: (['any', 'block', 'flow'] as const)[r(3)] ?? 'any',
     lineWidth: [0, 20, 80][r(3)] ?? 0,
-    defaultStringType: (
-      ['PLAIN', 'QUOTE_DOUBLE', 'QUOTE_SINGLE', 'BLOCK_LITERAL', 'BLOCK_FOLDED'] as const
-    )[r(5)] ?? 'PLAIN',
+    defaultStringType:
+      (['PLAIN', 'QUOTE_DOUBLE', 'QUOTE_SINGLE', 'BLOCK_LITERAL', 'BLOCK_FOLDED'] as const)[r(5)] ??
+      'PLAIN',
     aliasDuplicateObjects: false,
   })
 }
