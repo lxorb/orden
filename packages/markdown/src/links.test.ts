@@ -10,6 +10,8 @@ import {
   foldName,
   formatWikilink,
   isAudioTarget,
+  labelEnds,
+  sizedAlt,
   isNoteTarget,
   isCanvasTarget,
   isImageTarget,
@@ -720,5 +722,65 @@ describe('what a wikilink cannot name', () => {
     for (const name of ['Plan', 'a (1)', 'folder/Plan', 'é ü', 'a&b']) {
       expect(wikilinkCannotName(name)).toBe(false)
     }
+  })
+})
+
+describe('a size after a bar in a picture words', () => {
+  test.each([
+    ['|100x200', '', { width: 100, height: 200 }],
+    ['\\|300', '', { width: 300, height: null }],
+    ['a cat|300', 'a cat', { width: 300, height: null }],
+    ['a|b', 'a|b', null],
+    ['300', '300', null],
+    ['', '', null],
+  ])('%j', (alt, words, size) => {
+    expect(sizedAlt(alt)).toEqual({ alt: words, size })
+  })
+})
+
+describe('the walk agrees with links.rs', () => {
+  const read = (text: string) => findLinks(text).map((link) => [link.kind, link.target])
+
+  test('what a markdown target holds is not a wikilink of its own', () => {
+    expect(read('[x]([[a]])')).toEqual([['markdown', '[[a]]']])
+    expect(read('[x](http://a/[[b]])')).toEqual([])
+  })
+
+  test('what a wikilink closes is not the label of a link', () => {
+    expect(read('[[\\]](x)')).toEqual([['wikilink', '\\']])
+  })
+
+  test('order stays the order written', () => {
+    expect(read('[a](b.md) [[c]] ![d](e.png) ![[f]]').map(([, one]) => one)).toEqual([
+      'b.md',
+      'c',
+      'e.png',
+      'f',
+    ])
+  })
+
+  test('a blank is what JavaScript and the crate both call one', () => {
+    expect(read('[x](a﻿b.md)')).toEqual([])
+    expect(read('[x](a\u0085b.md)')).toEqual([['markdown', 'a\u0085b.md']])
+  })
+})
+
+describe('a line of brackets that open nothing', () => {
+  /** The brackets are matched in one pass; a scan from each would be a thousand
+   *  characters per bracket. */
+  test('are matched once, not scanned from each', () => {
+    const line = 'a['.repeat(50000)
+    expect(labelEnds(line).size).toBe(0)
+    expect(findLinks(line)).toEqual([])
+  })
+
+  test('and the same links are found as a scan from each bracket finds', () => {
+    expect(labelEnds('[a[b]c]').get(0)).toBe(6)
+    expect(labelEnds('[a[b]c]').get(2)).toBe(4)
+    expect(labelEnds('[a[b](c)d]').has(0)).toBe(false)
+    expect(labelEnds('[a[b](c)d]').get(2)).toBe(4)
+    expect(labelEnds('[[a]').has(0)).toBe(false)
+    expect(labelEnds('[[a]').get(1)).toBe(3)
+    expect(labelEnds('[a\\]b]').get(0)).toBe(5)
   })
 })

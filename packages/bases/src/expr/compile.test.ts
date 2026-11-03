@@ -1,9 +1,11 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
+import { cellValue } from '../answer'
+import { readBase, writeBase } from '../base-file'
 import { BasesError } from '../errors'
 import { contextAt, noteRow } from '../fixtures/rows'
-import type { Row, Value } from '../types'
+import type { Base, Row, Value } from '../types'
 import { compile } from './compile'
-import { longestInput } from './pattern'
+import { patternAllowed, refusedPattern } from './pattern'
 
 const context = contextAt()
 const book = noteRow(
@@ -313,64 +315,145 @@ describe('what Object.prototype holds is no property', () => {
   })
 })
 
-describe('a pattern that could freeze whoever opens the base', () => {
-  const long = 'a'.repeat(28)
-
+describe('a pattern in a base of ones own', () => {
   test.each([
-    '/(a+)+$/',
-    '/(a*)*$/',
-    '/(a|a)+$/',
-    '/(a|ab)*c/',
-    '/(\\w|\\d)+$/',
-    '/(a?)+$/',
-    '/(?:a+)+$/',
-    '/(a{1,5})+$/',
-    '/((a+))+$/',
-    '/(a+b?)*$/',
-    '/(a*)\\1$/',
-    '/(?<x>a*)\\k<x>$/',
-    '/(a+){20}$/',
-    `/${'a?'.repeat(30)}${'a'.repeat(30)}/`,
-    `/${'(a|a)'.repeat(30)}/`,
-    `/${'.*'.repeat(30)}x/`,
-  ])('%s is refused when it is compiled', (pattern) => {
-    expect(() => compile(`${pattern}.matches("${long}!")`)).toThrow(BasesError)
-  })
-
-  test.each([
-    ['/^abc$/.matches("abc")', true],
-    ['/^(foo|bar)+$/.matches("foobar")', true],
-    ['/^\\d{4}-\\d{2}-\\d{2}$/.matches("2026-11-03")', true],
-    ['/^(\\d{2})+$/.matches("1234")', true],
-    ['/(\\.\\d+)?$/.matches("1.5")', true],
-    ['/^(\\d{1,3}\\.){3}\\d{1,3}$/.matches("10.0.0.1")', true],
-    ['/\\d+-\\d+-\\d+/.matches("1-2-3")', true],
-    ['/(\\w+)@(\\w+)\\.com/.matches("a@b.com")', true],
-    ['/[(a+)+]/.matches("+")', true],
-    ['/\\(a+\\)+/.matches("(a))")', true],
-    ['/^(a|b)*$/i.matches("ABab")', true],
+    ['/^[a-z]+(-[a-z]+)*$/.matches("a-b-c")', true],
+    ['/^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$/.matches("a@b.co")', true],
+    ['/^(\\w+\\/)+/.matches("a/b/")', true],
+    ['/^#(\\w+\\/)*\\w+$/.matches("#a/b")', true],
+    ['/^(foo|far)+$/.matches("foofar")', true],
+    ['/(\\w)\\1/.matches("aa")', true],
+    [
+      '/^\\s*(\\w+)\\s*:\\s*(.*)$/.matches("a long key : with a long value after it, past twenty")',
+      true,
+    ],
+    ['/.*foo.*bar.*baz.*/.matches("foo bar baz")', true],
     ['"a1b".replace(/\\d+/, "x")', 'axb'],
     ['"a,b".split(/,/)', ['a', 'b']],
-  ] as [string, Value][])('%s still answers', (source, wanted) => {
+  ] as [string, Value][])('%s answers as it always did', (source, wanted) => {
     expect(run(source)).toEqual(wanted)
   })
 
-  test('a value too long for what a pattern may cost is no match, and nothing is scanned', () => {
-    const wide = 'x'.repeat(600)
-    // Two open-ended repeats and a scan from every start: the cube of the length.
-    expect(run(`/.*.*y/.matches("${wide}")`)).toBe(false)
-    expect(run(`/.*.*x/.matches("${wide}")`)).toBe(false)
-    expect(run(`/.*.*x/.matches("xxx")`)).toBe(true)
-    expect(run(`"${wide}".replace(/.*.*x/, "")`)).toBe(wide)
-    expect(run(`"${wide}".split(/.*.*y/)`)).toEqual([wide])
-    // One that costs nothing reads any length.
-    expect(run(`/x$/.matches("${wide}")`)).toBe(true)
+  test('a long value is read like a short one', () => {
+    const wide = 'x'.repeat(5000)
+    expect(run(`/\\d+(\\.\\d+)?|x/.matches("${wide}")`)).toBe(true)
+  })
+})
+
+describe('a pattern in a base somebody else could have written', () => {
+  const safe = (source: string) => patternAllowed(new RegExp(source))
+
+  test.each([
+    /(a+)+$/,
+    /(a*)*$/,
+    /(a|a)+$/,
+    /(a|ab)*c/,
+    /(\w|\d)+$/,
+    /(a?)+$/,
+    /(?:a+)+$/,
+    /(a{1,5})+$/,
+    /((a+))+$/,
+    /(a+b?)*$/,
+    /(a*)\1$/,
+    /(?<x>a*)\k<x>$/,
+    /(a+){20}$/,
+    /^(\u{61}+)+$/u,
+    /^(σ|ς)+$/i,
+    /^(µ|μ)+$/i,
+    /^(ſ|s)+$/iu,
+    /^(K|K)+$/iu,
+    /^(\x61|a)+$/,
+    /^(a|a)+$/,
+    /^(\u{61}|a)+$/u,
+    /^(?:\p{L}+)+$/u,
+    new RegExp(`${'a?'.repeat(30)}${'a'.repeat(30)}`),
+    new RegExp('(a|a)'.repeat(30)),
+    new RegExp(`${'.*'.repeat(30)}x`),
+  ])('%s is refused, measured and not run', (pattern) => {
+    expect(patternAllowed(pattern)).toBe(false)
   })
 
-  test('a pattern is measured, not run, so the longest refused one costs no time at all', () => {
-    expect(longestInput(/(foo|bar)baz/)).toBeGreaterThan(1_000_000)
-    expect(longestInput(/\d+-\d+/)).toBeLessThan(1000)
-    expect(longestInput(/\d+-\d+/)).toBeGreaterThan(100)
-    expect(longestInput(/(a+)+/)).toBe(0)
+  test.each([
+    '^abc$',
+    '^(foo|bar)+$',
+    '^\\d{4}-\\d{2}-\\d{2}$',
+    '^(\\d{2})+$',
+    '(\\.\\d+)?$',
+    '[(a+)+]',
+    '\\(a+\\)+',
+    '^(a|b)*$',
+    '\\d+-\\d+',
+  ])('/%s/ may run', (source) => {
+    expect(safe(source)).toBe(true)
+  })
+
+  test('a counted repeat that is not one is read as what it is', () => {
+    // No `u`: `\u{61}` is the letter u sixty-one times, and `+` over a group of one way.
+    expect(patternAllowed(/^(\u{61})+$/)).toBe(true)
+    expect(patternAllowed(/^\p{L}+$/u)).toBe(true)
+  })
+
+  const guardedBase = (formula: string) =>
+    ({
+      ...readBase(
+        `formulas:\n  f: ${JSON.stringify(formula)}\nviews:\n  - type: table\n    name: T\n`,
+      ),
+      guarded: true,
+    }) as Base
+
+  test('names the pattern that is refused, wherever in the base it is written', () => {
+    expect(refusedPattern(guardedBase('/(a+)+$/.matches("x")'))).toBe('/(a+)+$/')
+    expect(
+      refusedPattern(
+        readBase(
+          'views:\n  - type: table\n    name: T\n    filters:\n      and:\n        - /(a|a)*/.matches(note.x)\n',
+        ),
+      ),
+    ).toBe('/(a|a)*/')
+    expect(refusedPattern(guardedBase('/^(foo|bar)+$/.matches("x")'))).toBeNull()
+    expect(refusedPattern(readBase('views:\n  - type: table\n    name: T\n'))).toBeNull()
+  })
+
+  test('a guarded base refuses a value too long to read rather than start on it', () => {
+    const base = guardedBase('/x$/.matches(note.long)')
+    const row = noteRow('A.md', { long: 'x'.repeat(2000), short: 'x' })
+    expect(cellValue(base, 'formula.f', row, context)).toBeNull()
+    expect(
+      cellValue(
+        { ...base, formulas: { f: '/x$/.matches(note.short)' } },
+        'formula.f',
+        row,
+        context,
+      ),
+    ).toBe(true)
+    expect(cellValue({ ...base, guarded: false }, 'formula.f', row, context)).toBe(true)
+  })
+
+  test('a guarded base spends a share of the clock on patterns and no more', () => {
+    let now = 0
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => now)
+    const base = guardedBase('"x".replace(/x/, note.y)')
+    const row = noteRow('A.md', { y: 'z' })
+    try {
+      expect(cellValue(base, 'formula.f', row, context)).toBe('z')
+      now += 1000 // A read that took a whole second, seen after it: the next is refused.
+      const slow = vi.spyOn(RegExp.prototype, Symbol.replace as never)
+      slow.mockImplementationOnce((() => {
+        now += 400
+        return 'late'
+      }) as never)
+      expect(cellValue(base, 'formula.f', row, context)).toBe('late')
+      expect(cellValue(base, 'formula.f', row, context)).toBeNull()
+      slow.mockRestore()
+      now += 1000
+      expect(cellValue(base, 'formula.f', row, context)).toBe('z')
+    } finally {
+      clock.mockRestore()
+    }
+  })
+
+  test('the flag is no part of the file', () => {
+    const base = readBase('views:\n  - type: table\n    name: T\n')
+    expect(writeBase({ ...base, guarded: true })).toBe(writeBase(base))
   })
 })

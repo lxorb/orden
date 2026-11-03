@@ -1575,6 +1575,35 @@ mod tests {
         assert_eq!(links_in("[S](a.md#^b1)")[0].block.as_deref(), Some("b1"));
     }
 
+    /// The twins of 'the walk agrees with links.rs' in links.test.ts.
+    #[test]
+    fn the_walk_agrees_with_links_ts() {
+        assert_eq!(targets("[x]([[a]])"), vec!["[[a]]"]);
+        assert!(targets("[x](http://a/[[b]])").is_empty());
+        assert_eq!(targets("[[\\]](x)"), vec!["\\"]);
+        // A table writes the bar with a backslash, which names nothing.
+        assert_eq!(targets("| [[a\\|b]] |"), vec!["a"]);
+        assert_eq!(links_in("[[a\\|b]]")[0].alias.as_deref(), Some("b"));
+        assert!(targets("[x](a\u{FEFF}b.md)").is_empty());
+        assert_eq!(targets("[x](a\u{85}b.md)"), vec!["a\u{85}b.md"]);
+    }
+
+    /// The twin of 'a line of brackets that open nothing' in links.test.ts.
+    #[test]
+    fn a_line_of_brackets_is_read_once() {
+        let ends = super::label_ends(&"a[".repeat(50_000).chars().collect::<Vec<char>>());
+        assert!(ends.iter().all(Option::is_none));
+
+        let of = |line: &str| super::label_ends(&line.chars().collect::<Vec<char>>());
+        assert_eq!(of("[a[b]c]")[0], Some(6));
+        assert_eq!(of("[a[b]c]")[2], Some(4));
+        assert_eq!(of("[a[b](c)d]")[0], None);
+        assert_eq!(of("[a[b](c)d]")[2], Some(4));
+        assert_eq!(of("[[a]")[0], None);
+        assert_eq!(of("[[a]")[1], Some(3));
+        assert_eq!(of("[a\\]b]")[0], Some(5));
+    }
+
     /// The twins of 'parentheses and brackets in a markdown link' in links.test.ts.
     #[test]
     fn a_markdown_link_holds_balanced_parentheses_and_brackets() {

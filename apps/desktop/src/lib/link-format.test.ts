@@ -286,3 +286,11 @@ describe('a link to a note a wikilink cannot name', () => {
     expect(formatLink({ ...PLAN, shown: 'a]b' }, 'shortest')).toBe('[a\\]b](Plan.md)')
   })
 })
+
+describe('the label of a markdown link', () => {
+  test('a name ending in a backslash does not escape the bracket that closes it', () => {
+    const written = formatLink({ name: 'e\\', path: 'e\\.md' }, 'shortest')
+    expect(written.startsWith('[e\\\\](')).toBe(true)
+    expect(findLinks(written)).toHaveLength(1)
+  })
+})

@@ -181,3 +181,28 @@ describe('renaming a note to a name a wikilink cannot say', () => {
     ).toBe('[C# basics](Road.md)')
   })
 })
+
+describe('a link that changes spelling keeps what it could say', () => {
+  const to = (name: string) => ({ from: 'Old.md', to: name })
+
+  test('a bar in the name does not cut a table row', () => {
+    expect(rewriteLinks('| [[Old]] | b |', 'N.md', to('a|b.md'), pointsAt('old'))).toBe(
+      '| [a\\|b](a%7Cb.md) | b |',
+    )
+  })
+
+  test('a table wikilink keeps its words without its backslash', () => {
+    expect(rewriteLinks('| [[Old\\|see]] |', 'N.md', to('C#.md'), pointsAt('old'))).toBe(
+      '| [see](C%23.md) |',
+    )
+  })
+
+  test('a picture keeps its size, in the spelling Obsidian reads', () => {
+    const png = { from: 'Old.png', to: 'C#.png' }
+    const points = (link: FoundLink) => link.target === 'Old.png'
+    expect(rewriteLinks('![[Old.png|100x200]]', 'N.md', png, points)).toBe(
+      '![\\|100x200](C%23.png)',
+    )
+    expect(rewriteLinks('![[Old.png|300]]', 'N.md', png, points)).toBe('![\\|300](C%23.png)')
+  })
+})

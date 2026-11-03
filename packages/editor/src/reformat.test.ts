@@ -226,3 +226,46 @@ describe('what the parser calls front matter', () => {
     expect(kids('---\nk: v\n')[0]).not.toBe('FrontMatter')
   })
 })
+
+describe('words that open a note under a rule', () => {
+  const kids = (source: string) => {
+    const names: string[] = []
+    for (
+      let node = nibMarkdownParser.parse(source).topNode.firstChild;
+      node;
+      node = node.nextSibling
+    )
+      names.push(node.name)
+    return names
+  }
+
+  test.each([
+    '---\n\nMy essay intro.\n\n---\n\nSecond part.\n',
+    '---\n# Slide one\n\n- a\n\n---\n\n# Slide two\n',
+    '---\nMy essay intro.\n\n---\n\nSecond part.\n',
+    '---\n# Heading\n---\nwords\n',
+    '---\n- item: one\n---\n',
+    '---\nHere is what I think about it: quite a lot.\n---\n',
+  ])('%j stay on the page', (source) => {
+    expect(kids(source)[0]).not.toBe('FrontMatter')
+  })
+
+  test.each([
+    '---\n---\nb\n',
+    '---\nPriorität: hoch\n---\n',
+    '---\ndue date: x\n---\n',
+    '---\nSize (cm): 3\n---\n',
+    '---\n日期: x\n---\n',
+    '---\n# a comment\nk: v\n---\n',
+    '---\n"k": v\n---\n',
+    '---\nk:\n---\n',
+    '---\na.b$c-d: v\n---\n',
+  ])('%j is front matter', (source) => {
+    expect(kids(source)[0]).toBe('FrontMatter')
+  })
+
+  test('Format reads the same: prose under a rule is tidied, a key is not', () => {
+    expect(reformat('---\n\n_a_\n\n---\n\nb\n')).toBe('---\n\n*a*\n\n---\n\nb\n')
+    expect(reformat('---\nPriorität: _a_\n---\n')).toBe('---\nPriorität: _a_\n---\n')
+  })
+})
