@@ -53,11 +53,29 @@ export function surfacesToWords(): void {
   for (const write of surfaces) write()
 }
 
-/** Everything owing, written now. Called where the window is going; see `onClose`
- *  in start.ts. */
-export function settleUp(): void {
+/** What only a session really ending may do: say so to the sync store, which reads it at
+ *  the next launch and keeps every client id. Said by a save, the word stays true through
+ *  all the typing after it, and a crash then reuses a client id the room has already seen
+ *  further along; see `clean` in sync2/core.ts. */
+const ending = new Set<() => void>()
+
+/** The same as `owesLast`, for what only the session's end may run. */
+export function owesAtTheEnd(write: () => void): void {
+  ending.add(write)
+}
+
+/** Everything owing, written now, with the session going on: Ctrl+S, a window hidden or
+ *  left in the tray, a close that may yet be called off. */
+export function writeOwed(): void {
   for (const write of owing) write()
   for (const write of lastly) write()
+}
+
+/** The same, and the session over. Called where the window is going; see `onClose` in
+ *  start.ts. */
+export function settleUp(): void {
+  writeOwed()
+  for (const write of ending) write()
 }
 
 /** How long a window going waits for its writes. A disk that does not answer must not

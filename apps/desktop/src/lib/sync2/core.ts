@@ -181,6 +181,10 @@ export class Core {
   commit(changes: readonly Change[]): Promise<void> {
     if (!changes.length && !this.refused.length) return this.writing.then(() => undefined)
     const next = this.writing.then(async () => {
+      if (this.clean) {
+        await this.store.cleanExit(false)
+        this.clean = false
+      }
       const batch = [...this.refused, ...changes]
       this.refused = []
       try {
@@ -189,6 +193,22 @@ export class Core {
         this.refused = batch
         throw error
       }
+    })
+    this.writing = next.catch(() => undefined)
+    return next
+  }
+
+  /** Whether this session has said it ended and written nothing since. */
+  private clean = false
+
+  /** Says this session ended cleanly, after every write already asked for. A window can
+   *  say so and then go on, a close called off, a page come back, so the next write takes
+   *  it back first: a crash after that word would keep every client id, and whatever the
+   *  room has heard from them since is a history the store no longer has. */
+  endedCleanly(): Promise<void> {
+    const next = this.writing.then(async () => {
+      await this.store.cleanExit(true)
+      this.clean = true
     })
     this.writing = next.catch(() => undefined)
     return next

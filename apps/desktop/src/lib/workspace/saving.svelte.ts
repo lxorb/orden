@@ -22,7 +22,7 @@ import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
-import { owesLast, settleUp, surfacesToWords } from '../parting'
+import { owesLast, surfacesToWords, writeOwed } from '../parting'
 import { movedTo, nameOf, samePath, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
@@ -244,7 +244,7 @@ export class Saving {
     // make sure they landed. Then everything else that writes on a timer.
     flushTableEdits()
     flushCardEdits()
-    settleUp()
+    writeOwed()
 
     const tab = this.ws.active
     if (tab) this.ws.keep(tab.id)

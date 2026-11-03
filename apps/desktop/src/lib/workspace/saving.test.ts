@@ -53,7 +53,7 @@ vi.mock('../sync.svelte', () => ({
 }))
 
 const { IN_THE_AIR_AT_MOST, Saving } = await import('./saving.svelte')
-const { settleUp } = await import('../parting')
+const { owesAtTheEnd, settleUp } = await import('../parting')
 const { NoteDoc, Tab, UNTITLED } = await import('./documents.svelte')
 type Writes = import('./saving.svelte').Writes
 type Doc = import('./documents.svelte').NoteDoc
@@ -389,6 +389,19 @@ describe('the window going while the typing is still warm', () => {
 })
 
 describe('Ctrl+S', () => {
+  /** The session goes on after a save, so it must not say it ended. */
+  test('runs nothing that only the end of the session may', async () => {
+    const { saving } = open(`${SPACE}/ended.md`)
+    const ended = vi.fn()
+    owesAtTheEnd(ended)
+
+    await saving.writeNow()
+    expect(ended).not.toHaveBeenCalled()
+
+    settleUp()
+    expect(ended).toHaveBeenCalledOnce()
+  })
+
   test('writes what is waiting now, keeps the note in front as a version, and asks nothing', async () => {
     const PATH = `${SPACE}/pressed.md`
     const { note, saving } = open(PATH)
