@@ -152,6 +152,11 @@ export function watchFolders(how: Watching): Watched {
 
 async function changed(how: Watching, change: SpaceChange): Promise<void> {
   const engine = how.engine
+  // A space's first pass is what matches its files to their entries, and reads the whole
+  // folder when it does. Before that a note v1 tracks has no entry, and a create queued
+  // for it here is the same note twice (as `scanned` waits, for the same reason).
+  const placed = engine.placed(change.path)
+  if (placed && !how.ready(placed.space.id)) return
   if (change.kind === 'renamed') {
     if (how.own(change.from) || !kept(engine, change.path, change.dir)) return
     if (engine.entryAt(change.from)) {

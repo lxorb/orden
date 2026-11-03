@@ -48,9 +48,12 @@ function arrive(note: Held, from: string, to: string) {
   if (change) note.live.arrived([change])
 }
 
-/** Brings a note and its document to one text, as above. Answers null once they are
- *  one, or, where the two each moved and the rule asks, the words the note said as the
- *  question went up: the note is held, and the next meeting is against those (#543).
+/** How a meeting of a note and its document ended: one text, or the note held. */
+type Met = { shared: string; asked?: never } | { asked: string; shared?: never }
+
+/** Brings a note and its document to one text, as above. Answers the words they shared as
+ *  it ended, or, where the two each moved and the rule asks, the words the note said as
+ *  the question went up: the note is held, and the next meeting is against those (#543).
  *
  *  `given` is the words both sides last shared, where the caller knows them better than
  *  the file Orden last wrote: after a hold, what the note said when it was asked. */
@@ -60,19 +63,24 @@ async function agree(
   note: Held,
   doc: Doc,
   given?: string,
-): Promise<string | null> {
+): Promise<Met> {
+  if (note.latest === doc.text()) return { shared: doc.text() }
+
+  const written = given ?? (await writtenOf(engine.core, id))
+  // Read after that wait, not before: what a pull or a key brought meanwhile is one of
+  // the two sides, and a change made from a stale text would take it out.
   const mine = note.latest
   const theirs = doc.text()
-  if (mine === theirs) return null
+  if (mine === theirs) return { shared: theirs }
 
-  const base = given ?? (await writtenOf(engine.core, id)) ?? theirs
+  const base = written ?? theirs
   if (theirs === base) {
     doc.write((live) => turn('words', live, theirs, mine, MINE))
-    return null
+    return { shared: doc.text() }
   }
   if (mine === base) {
     arrive(note, mine, theirs)
-    return null
+    return { shared: theirs }
   }
 
   const merged = mergedOf(base, mine, theirs)
@@ -88,7 +96,7 @@ async function agree(
     // Held like another program's edit: the note keeps what it says here, and the
     // question comes up over it.
     await engine.holdFile(id, base, mine)
-    return mine
+    return { asked: mine }
   }
   const resolution = judged.resolution
   // Settled without asking, one side's words in the overlap stand and the other's are
@@ -97,8 +105,9 @@ async function agree(
   // Kept after the two are one, so nothing typed in the meantime falls between them.
   doc.write((live) => turn('words', live, theirs, resolution, MINE))
   arrive(note, mine, resolution)
+  const shared = doc.text()
   await engine.keepLost(id, judged.lost, mine, theirs)
-  return null
+  return { shared }
 }
 
 /** How many times a note and its document are brought together before they are joined,
@@ -138,30 +147,35 @@ export async function attach(
   const join = () => {
     unbind = bind(note.live, text, holds)
   }
+  // A key typed while they were being brought together is in the note and not in the
+  // document, and every operation after it lands one place off (#543). A pull landed
+  // meanwhile is the other way about. So they meet again, against what they last shared,
+  // which tells the two apart: neither is taken for the other's deletion. Nothing is
+  // awaited between the last look and the join.
+  const together = async (given?: string): Promise<Met> => {
+    let met = await agree(engine, id, note, doc, given)
+    for (let round = 0; round < AGREEING; round++) {
+      if (met.shared === undefined || gone() || note.latest === doc.text()) break
+      met = await agree(engine, id, note, doc, met.shared)
+    }
+    return met
+  }
   const wait = (asked: string) => {
     waiting = engine.whenLetGo(id, () => {
       waiting = null
       void (async () => {
         if (gone()) return
-        const still = await agree(engine, id, note, doc, asked)
+        const met = await together(asked)
         if (gone()) return
-        if (still === null) join()
-        else wait(still)
+        if (met.asked === undefined) join()
+        else wait(met.asked)
       })()
     })
   }
 
-  let asked = await agree(engine, id, note, doc)
-  // A key typed while that was asked is in the note and not in the document, and every
-  // operation after it lands one place off (#543). What the document says now is what
-  // the two last shared, so what the note has beyond it goes in; nothing is awaited
-  // between the last look and the join.
-  for (let round = 0; round < AGREEING && asked === null && !gone(); round++) {
-    if (note.latest === doc.text()) break
-    asked = await agree(engine, id, note, doc, doc.text())
-  }
-  if (asked === null) join()
-  else wait(asked)
+  const met = await together()
+  if (met.asked === undefined) join()
+  else wait(met.asked)
 
   // The account's words taken over this device's, or a new epoch: the same note, a new
   // document under it. A note still waiting on its question meets it when that is answered.

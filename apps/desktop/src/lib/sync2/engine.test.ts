@@ -435,9 +435,11 @@ describe('words that reach the document while a note and its document are brough
 
   test('a pull is kept, in the document and in the note', async () => {
     const { one, note, keepLost } = await meeting()
+    let arriving = true
     one.engine.keepLost = async (...args) => {
       const doc = one.engine.core.docs.get(PLAN)
-      doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'PULLED '))
+      if (arriving) doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'PULLED '))
+      arriving = false
       await keepLost(...args)
     }
 
@@ -452,10 +454,14 @@ describe('words that reach the document while a note and its document are brough
 
   test('a pull and a key both stay, or the two are held apart and nothing is lost', async () => {
     const { one, note, keepLost } = await meeting()
+    let arriving = true
     one.engine.keepLost = async (...args) => {
       const doc = one.engine.core.docs.get(PLAN)
-      doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'PULLED '))
-      note.arrived([{ from: note.text.length, to: note.text.length, insert: 'KEY' }])
+      if (arriving) {
+        doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'PULLED '))
+        note.arrived([{ from: note.text.length, to: note.text.length, insert: 'KEY' }])
+      }
+      arriving = false
       await keepLost(...args)
     }
 
