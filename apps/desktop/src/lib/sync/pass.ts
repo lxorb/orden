@@ -19,6 +19,7 @@
  *  is settled too, the newer copy standing: it is a tab written down, and a copy of
  *  a bookmark is clutter rather than safety. See web-tab/settle.ts. */
 
+import { carriedOwn, INBOX_PATH, withTasksOf } from '@orden/bases/inbox'
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import { conflictPath } from '@orden/markdown/paths'
 import { inForeignCopy } from '@orden/sync-core/foreign'
@@ -27,7 +28,7 @@ import { sha256 } from '../bytes'
 import { log } from '../log'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
-import { folderOf, nameOf, relativeTo } from '../space-paths'
+import { folderOf, insideSpace, nameOf, relativeTo, samePath } from '../space-paths'
 import { syncMark } from '../surfaces.svelte'
 import { invoke, joinPath } from '../tauri'
 import { settleShortcuts } from '../web-tab/settle'
@@ -132,6 +133,23 @@ async function settled(
 async function theirsIsNewer(path: string, updatedAt: number): Promise<boolean> {
   const stamp = await fileStamp(path)
   return stamp === null || updatedAt > stamp.modified
+}
+
+/** The space's inbox where it is Orden's own (#1044): a dotted name the list
+ *  leaves out, and carried all the same, as a note. Left out of what goes up, it was a
+ *  note that vanished here, and the loop at the bottom of `push` deleted it on the
+ *  account - the one every task with no note goes to, wherever it was added. Asked of
+ *  the disk by a read, which a browser answers as well as a desktop. */
+async function ownNotes(root: string, tree: Entry): Promise<Entry[]> {
+  const path = insideSpace(root, INBOX_PATH)
+  if (flatten(tree).some((one) => samePath(one.path, path))) return []
+  const there = await invoke<string>('read_note', { path }).then(
+    () => true,
+    () => false,
+  )
+  if (!there) return []
+  const modified = (await fileStamp(path))?.modified ?? 0
+  return [{ name: nameOf(path), path, is_dir: false, modified, created: modified, children: [] }]
 }
 
 function flatten(entry: Entry): Entry[] {
@@ -456,6 +474,16 @@ export async function pull(
           : null
         if (merged !== null) {
           await writeDown(target, merged, local)
+          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
+          waiting?.wrote?.(target)
+          continue
+        }
+
+        // The space's own inbox is a list of tasks in a file nobody opens: never a
+        // question about it, never a hidden second copy, never one side lost. Every
+        // task of both, each once, and the push below sends that on top (#1044).
+        if (carriedOwn(remote.path)) {
+          await writeDown(target, withTasksOf(local, content), local)
           mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
           waiting?.wrote?.(target)
           continue
@@ -1280,7 +1308,7 @@ export async function push(
   // Another sync tool's copies are left out from the start, whether the account has
   // ever had one or not: nothing about one is sent, and the loop at the bottom deletes
   // none (`inForeignCopy`). Meeting one fetches the mark the file list gives them.
-  const all = flatten(tree)
+  const all = [...flatten(tree), ...(await ownNotes(root, tree))]
   const everything = all.filter((one) => !inForeignCopy(relativeTo(root, one.path)))
   if (!__EVEN_PLUGIN__ && everything.length < all.length) void syncMark.ask()
   const folded = await foldWebCopies(everything)
@@ -1637,6 +1665,16 @@ async function keepBoth(
   if (merged !== null) {
     await writeDown(here, merged, ours)
     const { note } = await api.writeNote(token, tracked.id, path, merged, theirs.version)
+    mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
+    return
+  }
+
+  // The space's own inbox is a list of tasks in a file nobody sees: a second copy of it
+  // would be hidden with its tasks. Every task of both, each once, instead (#1044).
+  if (carriedOwn(path)) {
+    const both = withTasksOf(ours, sent)
+    await writeDown(here, both, ours)
+    const { note } = await api.writeNote(token, tracked.id, path, both, theirs.version)
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
     return
   }

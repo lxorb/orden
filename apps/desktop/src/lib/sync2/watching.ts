@@ -20,6 +20,7 @@ import {
   unwatchSpaces,
   watchSpaces,
 } from '../space-watch'
+import { carriedOwn } from '@orden/bases/inbox'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { t } from '../i18n.svelte'
 import { syncMark } from '../surfaces.svelte'
@@ -31,12 +32,15 @@ import { relative } from './engine'
 /** How many changes one tick reads. */
 const BATCH = 100
 
-/** Whether a path is the app's own (a dotted file or folder) rather than the person's. */
+/** Whether a path is the app's own (a dotted file or folder) rather than the person's.
+ *  Bar the space's own inbox (`carriedOwn`, #1044), which is hidden from every list and
+ *  carried all the same; the crate's walk and watch report it for the same reason. */
 function hidden(path: string): boolean {
-  return path
-    .replace(/\\/g, '/')
-    .split('/')
-    .some((part) => part.startsWith('.'))
+  const parts = path.replace(/\\/g, '/').split('/')
+  const name = parts.at(-1) ?? ''
+  return parts.some(
+    (part, at) => part.startsWith('.') && !(at === parts.length - 1 && carriedOwn(name)),
+  )
 }
 
 /** Whether a path is another sync tool's copy, which the engine never keeps

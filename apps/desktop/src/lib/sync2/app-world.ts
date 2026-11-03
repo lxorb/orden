@@ -7,6 +7,7 @@
  *  autosave - so it is said to the list and the link index as a file written over or a
  *  file come, never as an edit to an open document. */
 
+import { INBOX_PATH } from '@orden/bases/inbox'
 import { api, BASE } from '../api'
 import { fileBytes, sha256, toBase64 } from '../bytes'
 import { deviceName } from '../device'
@@ -148,6 +149,12 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[]> {
     }
   }
   if (tree) walk(tree)
+  // The list leaves a dotted file out as the app's own; sync carries the space's own
+  // inbox all the same (#1044), as the crate's scan does on a desktop.
+  const inbox = `${base}/${INBOX_PATH}`
+  if (!out.some((one) => one.path === INBOX_PATH) && (await stamped(inbox).catch(() => false))) {
+    out.push({ path: INBOX_PATH, dir: false })
+  }
   return out
 }
 
