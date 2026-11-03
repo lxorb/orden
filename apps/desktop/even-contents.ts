@@ -308,9 +308,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-03, to 5,775,600, for unstable's #1044 to #1079 merged into
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
  *  and the sum of their growth is what came. Measured 5,775,432.
+ *
+ *  The code raised on 2026-11-03, to 5,778,800, for the views' hunt: one pass over a line's
+ *  brackets so a markdown link's brackets balance, and what a base somebody else could have written
+ *  may cost. Measured 5,778,387.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_775_600,
+  code: 5_778_800,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
