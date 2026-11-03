@@ -87,3 +87,14 @@ describe('links in a cell', () => {
     expect(html('[tap](javascript:alert(1))')).toBe('<a>tap</a>')
   })
 })
+
+describe('a wikilink in a cell', () => {
+  test('draws its words and none of its brackets', () => {
+    expect(parseInline('[[Note]]')).toEqual([{ text: 'Note' }])
+    expect(parseInline('see [[Note\\|alias]] here')).toEqual([
+      { text: 'see ' },
+      { text: 'alias' },
+      { text: ' here' },
+    ])
+  })
+})

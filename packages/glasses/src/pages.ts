@@ -14,7 +14,9 @@
  *     always says where you are.
  *  2. **A line is never split across a page.** A row that only exists because
  *     the line before it ran out of room, the body of a fence, the rows of a
- *     table, the first line under a heading: each moves whole.
+ *     table, the first line under a heading: each moves whole. The one exception
+ *     is a line longer than the panel, a long paragraph on one source line: moved
+ *     whole its rows past the eighth could never be read, so it is cut between rows.
  *  3. **A page is cut by the firmware's own measure.** The lines are wrapped
  *     here rather than by the container, so a page holds exactly the rows the
  *     panel has and never one more, and paging is arithmetic rather than a
@@ -90,6 +92,8 @@ const LIGHT = '─'
 interface Wrapped {
   line: Line
   rows: readonly string[]
+  /** A later part of a line cut for being longer than a page. Says no number. */
+  continues?: boolean
 }
 
 /** A page being filled. */
@@ -98,10 +102,37 @@ interface Taking {
   rows: number
   section: string
   rule: string
+  /** The heading that opened this page, which makes it a page with nothing under
+   *  it yet. */
+  head: Line | null
+  /** A heading taken into the body rather than opening a page; see `pagesOf`. What the
+   *  pages after this one sit under. */
+  next: { section: string; rule: string } | null
 }
 
-function empty(section: string, rule: string): Taking {
-  return { taken: [], rows: 0, section, rule }
+function empty(section: string, rule: string, head: Line | null = null): Taking {
+  return { taken: [], rows: 0, section, rule, head, next: null }
+}
+
+/** A wrapped line as parts that fit on a page. Marks know where a line of the note
+ *  begins and not where each row of it does, so a part's place is that share of the
+ *  way to the next line: near enough to find the part, and always going forwards. */
+function partsOf(whole: Wrapped, most: number, next: number): Wrapped[] {
+  if (whole.rows.length <= most) return [whole]
+
+  const span = Math.max(0, next - whole.line.from)
+  const parts: Wrapped[] = []
+  for (let at = 0; at < whole.rows.length; at += most) {
+    const rows = whole.rows.slice(at, at + most)
+    if (at === 0) {
+      parts.push({ line: whole.line, rows })
+      continue
+    }
+
+    const from = whole.line.from + Math.floor((span * at) / whole.rows.length)
+    parts.push({ line: { ...whole.line, from, glued: false }, rows, continues: true })
+  }
+  return parts
 }
 
 /** What paging a note did, counted.
@@ -155,12 +186,12 @@ export function pagesOf(source: string, paging: Paging): Page[] {
   let taking = empty('', LIGHT)
 
   const cut = (to: number) => {
-    if (!taking.taken.length) return
+    if (!taking.taken.length && !taking.head) return
 
-    const first = taking.taken[0]?.line
+    const first = (taking.next ? taking.head : taking.taken[0]?.line) ?? taking.head
     const shown: string[] = []
     const counted: string[] = []
-    for (const { line, rows } of taking.taken) {
+    for (const { line, rows, continues } of taking.taken) {
       for (const [at, row] of rows.entries()) {
         shown.push(indent + row)
         // Only the first row of a line carries its number: the rest are the same
@@ -169,7 +200,7 @@ export function pagesOf(source: string, paging: Paging): Page[] {
           // Against the right of its own column, whatever its digits, with a space
           // kept clear on either side so a number can never touch a word.
           const room = paging.gutter - SPACE * 2
-          counted.push(at === 0 ? rightward(fit(String(line.at), room), room) : '')
+          counted.push(at === 0 && !continues ? rightward(fit(String(line.at), room), room) : '')
         }
       }
     }
@@ -187,7 +218,7 @@ export function pagesOf(source: string, paging: Paging): Page[] {
       section: taking.section,
       rule: taking.rule,
       firstLine: first?.at ?? 1,
-      lastLine: taking.taken.at(-1)?.line.at ?? 1,
+      lastLine: taking.taken.at(-1)?.line.at ?? first?.at ?? 1,
     })
   }
 
@@ -199,7 +230,7 @@ export function pagesOf(source: string, paging: Paging): Page[] {
    *  page and whose body is at the head of the next is exactly the break this
    *  rule exists to prevent, and the opening line is not itself glued to
    *  anything. */
-  const runFor = (coming: Line): Wrapped[] => {
+  const runFor = ({ line: coming, rows }: Wrapped): Wrapped[] => {
     if (!coming.glued) return []
 
     let back = 0
@@ -209,17 +240,31 @@ export function pagesOf(source: string, paging: Paging): Page[] {
     // the run would move the whole page and make no progress at all.
     if (back + 1 >= taking.taken.length) return []
 
+    // Nor when the run and what is coming would overflow the next page as well.
+    const run = taking.taken.slice(-(back + 1))
+    const held = run.reduce((sum, one) => sum + one.rows.length, 0)
+    if (held + rows.length > paging.rows) return []
+
     return taking.taken.splice(-(back + 1))
   }
 
-  for (const line of marked) {
+  for (const [at, line] of marked.entries()) {
     work.lines += 1
     // A heading at or above the reader's level opens a page of its own and goes
     // into the head band rather than into the body.
     if (paging.breakAt > 0 && line.level > 0 && line.level <= paging.breakAt) {
-      cut(line.from)
-      taking = empty(fold(line.text), line.level === 1 ? HEAVY : LIGHT)
-      continue
+      const section = fold(line.text)
+      const rule = line.level === 1 ? HEAVY : LIGHT
+      // A title directly over a section, the usual head of a note: the second heading
+      // goes on the first one's page, in the order they were written, rather than the
+      // note opening on a page of nothing.
+      if (taking.head && taking.taken.every((one) => one.line.level > 0 || one.line.under)) {
+        taking.next = { section, rule }
+      } else {
+        cut(line.from)
+        taking = empty(section, rule, section === '' ? null : line)
+        continue
+      }
     }
 
     // The underline `mark.ts` drew under that heading is the head band's own
@@ -227,21 +272,24 @@ export function pagesOf(source: string, paging: Paging): Page[] {
     // by its shape: a note may perfectly well have a rule of its own there.
     if (taking.taken.length === 0 && taking.section !== '' && line.under) continue
 
-    const rows = wrap(line.text, inner, hangOf(line.text))
-    if (taking.rows > 0 && taking.rows + rows.length > paging.rows) {
-      const moving = runFor(line)
-      for (const one of moving) taking.rows -= one.rows.length
+    const whole = { line, rows: wrap(line.text, inner, hangOf(line.text)) }
+    const next = marked[at + 1]?.from ?? source.length
+    for (const part of partsOf(whole, paging.rows, next)) {
+      if (taking.rows > 0 && taking.rows + part.rows.length > paging.rows) {
+        const moving = runFor(part)
+        for (const one of moving) taking.rows -= one.rows.length
 
-      cut(moving[0]?.line.from ?? line.from)
-      taking = empty(taking.section, taking.rule)
-      for (const one of moving) {
-        taking.taken.push(one)
-        taking.rows += one.rows.length
+        cut(moving[0]?.line.from ?? part.line.from)
+        taking = empty(taking.next?.section ?? taking.section, taking.next?.rule ?? taking.rule)
+        for (const one of moving) {
+          taking.taken.push(one)
+          taking.rows += one.rows.length
+        }
       }
-    }
 
-    taking.taken.push({ line, rows })
-    taking.rows += rows.length
+      taking.taken.push(part)
+      taking.rows += part.rows.length
+    }
   }
 
   cut(source.length)

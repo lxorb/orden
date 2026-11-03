@@ -343,3 +343,12 @@ describe('a markdown picture with a size after a bar', () => {
     expect(imageAt(state('![a|b](a.png)'), 0)).toMatchObject({ alt: 'a|b' })
   })
 })
+
+describe('brackets in alt text', () => {
+  test('are written so the picture stays a picture, and read back as typed', () => {
+    const insert = imageMarkup({ src: 'a.png', alt: 'a]b[c', title: '', zoom: 100 })
+    expect(insert).toBe('![a\\]b\\[c](a.png)')
+
+    expect(imageAt(state(insert), 0)?.alt).toBe('a]b[c')
+  })
+})

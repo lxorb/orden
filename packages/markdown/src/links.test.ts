@@ -1,8 +1,11 @@
 import { describe, expect, test } from 'vitest'
+import { namedBlock } from './block-names'
+import { renderMarkdown } from './index'
 import {
   blockIdOf,
   blockIds,
   decodeTarget,
+  blocksOf,
   embedKind,
   encodeTarget,
   embedSize,
@@ -782,5 +785,101 @@ describe('a line of brackets that open nothing', () => {
     expect(labelEnds('[[a]').has(0)).toBe(false)
     expect(labelEnds('[[a]').get(1)).toBe(3)
     expect(labelEnds('[a\\]b]').get(0)).toBe(5)
+  })
+})
+
+describe('a block name on a line of its own', () => {
+  const FENCED = 'a\n\n```\nx\n\ny\n```\n\n^abc123\n\nb\n'
+
+  test('a link to it gets the block above, whatever blank lines that holds', () => {
+    expect(sectionOf(FENCED, { heading: null, block: 'abc123' })).toBe('```\nx\n\ny\n```')
+    expect(sectionOf('| a |\n| - |\n\n^tab\n\nb', { heading: null, block: 'tab' })).toBe(
+      '| a |\n| - |',
+    )
+  })
+
+  test('a run with the name under it stays as it was', () => {
+    expect(sectionOf('a\nb\n^n\n\nc', { heading: null, block: 'n' })).toBe('a\nb')
+  })
+
+  test('belongs to that block in the list of blocks', () => {
+    expect(blocksOf(FENCED).map((one) => [one.line, one.id])).toEqual([
+      [0, null],
+      [2, 'abc123'],
+      [10, null],
+    ])
+  })
+
+  test('naming one writes it where it can be read', () => {
+    const id = () => 'new123'
+
+    expect(namedBlock('a\n\n```\nx\n\ny\n```\n\nb\n', 2, id)).toEqual({
+      id: 'new123',
+      source: 'a\n\n```\nx\n\ny\n```\n\n^new123\n\nb\n',
+    })
+    expect(namedBlock('| a |\r\n| - |\r\n', 0, id)?.source).toBe(
+      '| a |\r\n| - |\r\n\r\n^new123\r\n',
+    )
+    expect(namedBlock('---\n\nb', 0, id)?.source).toBe('---\n\n^new123\n\nb')
+    expect(namedBlock('words\nmore\n\nb\n', 0, id)?.source).toBe('words\nmore ^new123\n\nb\n')
+    expect(namedBlock('words\r\n\r\nb', 0, id)?.source).toBe('words ^new123\r\n\r\nb')
+  })
+
+  test('naming one that has a name changes nothing', () => {
+    const id = () => 'new123'
+
+    const fence = 'a\n\n```\nx\n```\n\n^old\n'
+    expect(namedBlock(fence, 2, id)).toEqual({ id: 'old', source: fence })
+    expect(namedBlock('words ^old\n', 0, id)).toEqual({ id: 'old', source: 'words ^old\n' })
+  })
+
+  test('front matter takes no name', () => {
+    expect(namedBlock('---\nt: x\n---\n\nb\n', 1, () => 'new123')).toBeNull()
+    expect(namedBlock('a', 5, () => 'new123')).toBeNull()
+  })
+})
+
+describe('naming a block by where it ends', () => {
+  const id = () => 'new123'
+
+  test.each([
+    ['a fence under words', 'para\n```\nx\n```\n\nafter', 'para\n```\nx\n```\n\n^new123\n\nafter'],
+    [
+      'a table under words',
+      'para\n\n| a |\n| - |\n| 1 |',
+      'para\n\n| a |\n| - |\n| 1 |\n\n^new123',
+    ],
+    ['a rule under words', 'para\n***\n\nb', 'para\n***\n\n^new123\n\nb'],
+    ['a setext heading', 'Title\n---\n\nb', 'Title\n---\n\n^new123\n\nb'],
+    ['a setext one', 'Title\n===\n\nb', 'Title\n===\n\n^new123\n\nb'],
+  ])('%s', (_what, source, wanted) => {
+    const line = source.startsWith('para\n\n') ? 2 : 0
+    expect(namedBlock(source, line, id)?.source).toBe(wanted)
+  })
+
+  test('a name under a paragraph is its name', () => {
+    expect(namedBlock('para\n\n^have\n\nb', 0, id)).toEqual({
+      id: 'have',
+      source: 'para\n\n^have\n\nb',
+    })
+  })
+
+  test('maths and a comment hold their blank lines', () => {
+    expect(namedBlock('$$\na\n\nb\n$$\n', 0, id)?.source).toBe('$$\na\n\nb\n$$\n\n^new123\n')
+    expect(namedBlock('<!--\na\n\nb\n-->\n', 0, id)?.source).toBe('<!--\na\n\nb\n-->\n\n^new123\n')
+  })
+})
+
+describe('a closing fence an older build named', () => {
+  const OLD = 'a\n\n```\nx\n``` ^old\n\n# After\n\nb\n'
+
+  test('closes the fence, and the name is found', () => {
+    expect(blockIds(OLD)).toEqual([{ id: 'old', line: 4 }])
+    expect(withoutBlockIds(OLD)).toBe('a\n\n```\nx\n```\n\n# After\n\nb\n')
+    expect(renderMarkdown(OLD)).toContain('<h1')
+  })
+
+  test('code that only looks like one stays code', () => {
+    expect(blockIds('```\n``` ^a b\n```\n')).toEqual([])
   })
 })

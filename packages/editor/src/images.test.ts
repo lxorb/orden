@@ -1,7 +1,7 @@
 import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
-import { imageHandling, type ImageSink, receiveImages } from './images'
+import { imageHandling, type ImageSink, receiveImages, wordsBesidePicture } from './images'
 
 /** A picture the sink is handed. Its contents are never read. */
 const PICTURE = [new File([new Uint8Array([1])], 'a.png', { type: 'image/png' })]
@@ -174,5 +174,30 @@ describe('a picture whose name a link would read as something else', () => {
     await settled()
 
     expect(editor.doc).toBe('![](assets/1%29%20scan%232.png)')
+  })
+})
+
+describe('a picture beside words on the clipboard', () => {
+  const STYLE = '<html><head><style>td{}</style></head><body><!--StartFragment-->'
+
+  test('Office writes its cells and words with a picture of them: the words win', () => {
+    expect(wordsBesidePicture(`${STYLE}<table><tr><td>Bob</td></tr></table>`, 'Bob')).toBe(true)
+    expect(wordsBesidePicture(`${STYLE}<p>word&nbsp;</p>`, 'word')).toBe(true)
+    expect(wordsBesidePicture('', 'Name\tAge\nBob\t3')).toBe(true)
+  })
+
+  test('a picture copied off a page or out of a viewer stays a picture', () => {
+    expect(wordsBesidePicture('', '')).toBe(false)
+    expect(wordsBesidePicture('<img src="https://x.co/a.png" alt="a">', '')).toBe(false)
+    expect(wordsBesidePicture('<img src="https://x.co/a.png" alt="a">', 'a')).toBe(false)
+    expect(wordsBesidePicture(`${STYLE}<p><img src="a.png"></p>`, 'a.png')).toBe(false)
+    // A file from a file manager: its name beside it.
+    expect(wordsBesidePicture('', 'photo.png')).toBe(false)
+  })
+})
+
+describe('a bracket in a picture attribute', () => {
+  test('is no words', () => {
+    expect(wordsBesidePicture('<img src="a.png" alt="Cat > dog">', 'Cat > dog')).toBe(false)
   })
 })

@@ -3,9 +3,6 @@ import {
   addCursorBelow,
   defaultKeymap,
   historyKeymap,
-  indentLess,
-  indentMore,
-  indentWithTab,
   selectLine,
 } from '@codemirror/commands'
 import {
@@ -16,7 +13,6 @@ import {
 } from '@codemirror/state'
 import type { KeyBinding } from '@codemirror/view'
 import {
-  clearFormatting,
   insertCallout,
   insertCodeFence,
   insertComment,
@@ -62,6 +58,10 @@ import {
   sortLines,
   titleCase,
   upperCase,
+  clearFormatting,
+  indentItems,
+  moveLineOver,
+  outdentItems,
 } from './line-door'
 import { pastePlain } from './paste'
 import { runFenceAtCursor } from './run/door'
@@ -223,8 +223,8 @@ export const nibBindings: BindingSpec[] = [
   { id: 'paragraph.toc', key: null, run: insertToc, preventDefault: true },
   { id: 'paragraph.front-matter', key: null, run: insertFrontMatter, preventDefault: true },
 
-  { id: 'edit.indent', key: 'Mod-[', run: indentMore, preventDefault: true },
-  { id: 'edit.outdent', key: 'Mod-]', run: indentLess, preventDefault: true },
+  { id: 'edit.indent', key: 'Mod-[', run: indentItems, preventDefault: true },
+  { id: 'edit.outdent', key: 'Mod-]', run: outdentItems, preventDefault: true },
 
   // The bracket pair again, one modifier further out, because folding is the
   // same shape of idea as indenting - open this up, close this down - and the
@@ -526,8 +526,8 @@ export const standardBindings: BindingSpec[] = [
   // through the door, so the key is spent on the press and the dialog opens as the
   // engine lands; see `gotoLine` in find.ts.
   { id: 'edit.goto-line', key: 'Mod-Alt-g', run: gotoLine },
-  adopt('edit.move-line-up', defaultKeymap, 'Alt-ArrowUp'),
-  adopt('edit.move-line-down', defaultKeymap, 'Alt-ArrowDown'),
+  adopt('edit.move-line-up', defaultKeymap, 'Alt-ArrowUp', { run: moveLineOver(-1) }),
+  adopt('edit.move-line-down', defaultKeymap, 'Alt-ArrowDown', { run: moveLineOver(1) }),
   adopt('edit.copy-line-up', defaultKeymap, 'Shift-Alt-ArrowUp'),
   adopt('edit.copy-line-down', defaultKeymap, 'Shift-Alt-ArrowDown'),
 ]
@@ -557,7 +557,7 @@ export const standardBindings: BindingSpec[] = [
 export const unclaimedKeymap: KeyBinding[] = [
   ...defaultKeymap,
   ...historyKeymap,
-  indentWithTab,
+  { key: 'Tab', run: indentItems, shift: outdentItems },
 ].filter((binding) => !adopted.has(binding))
 
 /** Every binding this file installs, as CodeMirror bindings at their

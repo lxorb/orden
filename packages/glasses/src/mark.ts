@@ -28,7 +28,7 @@ import { useEmoji } from '@orden/markdown/engines'
 import { calloutOf, opensCallout } from '@orden/markdown/callouts'
 import { readChart } from '@orden/markdown/chart'
 import { captionIn, languageIn } from '@orden/markdown/code'
-import { embedKind, type Wikilink } from '@orden/markdown/links'
+import { blockIdOf, embedKind, type Wikilink } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
 import {
   type Compaction,
@@ -628,6 +628,11 @@ class Sheet {
     return this.where.at(from)
   }
 
+  /** Where a line of the file begins, if the file has that line. */
+  startOf(line: number): number | undefined {
+    return this.where.startOf(line)
+  }
+
   /** A run of lines that belong together: the first may start a page, the rest
    *  follow it wherever it went. */
   addAll(texts: readonly string[], from: number, nest: Nest): void {
@@ -702,8 +707,12 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     case 'paragraph': {
       const from = where.take(raw)
       const picture = onlyPicture(kids)
-      if (picture) sheet.add(`${PICTURE} ${picture}`, from, nest)
-      else sheet.add(inlineWords(kids, sheet.marks, sheet.flow), from, nest)
+      if (picture) {
+        sheet.add(`${PICTURE} ${picture}`, from, nest)
+        break
+      }
+      const words = unnamed(inlineWords(kids, sheet.marks, sheet.flow))
+      if (words) sheet.add(words, from, nest)
       break
     }
 
@@ -724,7 +733,7 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
     case 'text':
       sheet.add(
-        kids.length ? inlineWords(kids, sheet.marks, sheet.flow) : textOf(token),
+        unnamed(kids.length ? inlineWords(kids, sheet.marks, sheet.flow) : textOf(token)),
         where.take(raw),
         nest,
       )
@@ -757,6 +766,26 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     default:
       sheet.add(textOf(token), where.take(raw), nest)
   }
+}
+
+/** Words without the block name at the end of a line: a marker for a link to point at,
+ *  which nothing that shows a note shows; see `withoutBlockIds`. */
+function unnamed(words: string): string {
+  if (!words.includes('^')) return words
+
+  return words
+    .split('\n')
+    .map((line) => {
+      const id = blockIdOf(line)
+      return id
+        ? line
+            .trimEnd()
+            .slice(0, -id.length - 1)
+            .trimEnd()
+        : line
+    })
+    .join('\n')
+    .trimEnd()
 }
 
 /** A fence, with the lines it was written between and its code as it stands.
@@ -815,7 +844,9 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     inside += line.length + 1
   }
   if (marked) {
-    sheet.add(FENCE, from + Math.max(0, raw.length - FENCE.length - 1), nest, { glued: true })
+    // Where its own line begins: `raw` may or may not end in a newline, and the
+    // closing fence may be longer than three.
+    sheet.add(FENCE, from + raw.trimEnd().lastIndexOf('\n') + 1, nest, { glued: true })
   }
 }
 
@@ -929,16 +960,19 @@ function table(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   const cells = (row: readonly Tokens.TableCell[]) =>
     row.map((cell) => inlineWords(cell.tokens, sheet.marks, sheet.flow))
 
-  sheet.addAll(
-    tableLines(
-      cells(one.header),
-      one.rows.map((row) => cells(row)),
-      one.align.map((given) => (given !== null && ALIGNS.has(given) ? given : 'left')),
-      sheet.width - width(QUOTE.repeat(nest.quote) + STEP.repeat(nest.depth)),
-    ),
-    where.take(rawOf(token)),
-    nest,
+  const lines = tableLines(
+    cells(one.header),
+    one.rows.map((row) => cells(row)),
+    one.align.map((given) => (given !== null && ALIGNS.has(given) ? given : 'left')),
+    sheet.width - width(QUOTE.repeat(nest.quote) + STEP.repeat(nest.depth)),
   )
+  // Each row is a line of the file, and carries that line's place and number: a page
+  // cut inside a long table has to know which rows it holds.
+  const from = where.take(rawOf(token))
+  const first = sheet.lineAt(from)
+  for (const [at, line] of lines.entries()) {
+    sheet.add(line, at === 0 ? from : (sheet.startOf(first + at) ?? from), nest, { glued: at > 0 })
+  }
 }
 
 interface Definition {

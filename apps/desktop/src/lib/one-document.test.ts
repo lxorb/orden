@@ -163,6 +163,108 @@ describe('a phone and a tablet', () => {
     expect(open()).toEqual(['Two'])
   })
 
+  test('a draft with words is written down as it goes, not left in the bin', async () => {
+    viewport.device = 'phone'
+
+    workspace.openBlank()
+    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Shopping list\nmilk and eggs' }])
+    await workspace.open('/space/One.md')
+    expect(open()).toEqual(['One'])
+
+    await vi.waitFor(() => {
+      expect(notes.get('/space/Shopping list.md')).toBe('Shopping list\nmilk and eggs')
+      expect(workspace.closed.stack.at(-1)?.draft).toMatchObject({
+        path: '/space/Shopping list.md',
+      })
+    })
+
+    await workspace.reopenClosed()
+    expect(workspace.active?.doc).toBe('Shopping list\nmilk and eggs')
+  })
+
+  test('so does one the plus put away', async () => {
+    viewport.device = 'phone'
+
+    workspace.openBlank()
+    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Shopping list' }])
+    workspace.openBlank()
+
+    expect(workspace.tabs).toHaveLength(1)
+    await vi.waitFor(() => expect(notes.get('/space/Shopping list.md')).toBe('Shopping list'))
+  })
+
+  test('an empty one just goes', async () => {
+    viewport.device = 'phone'
+    const before = notes.size
+
+    workspace.openBlank()
+    await workspace.open('/space/One.md')
+
+    expect(open()).toEqual(['One'])
+    expect(notes.size).toBe(before)
+  })
+
+  test('two drafts with one name, put away at once, are two notes', async () => {
+    viewport.device = 'phone'
+    workspace.tree = null
+
+    workspace.openBlank()
+    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Same\nfirst' }])
+    workspace.openBlank()
+    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Same\nsecond' }])
+    workspace.openBlank()
+
+    await vi.waitFor(() => expect(notes.get('/space/Same 2.md')).toBeDefined())
+    expect([notes.get('/space/Same.md'), notes.get('/space/Same 2.md')].sort()).toEqual([
+      'Same\nfirst',
+      'Same\nsecond',
+    ])
+  })
+
+  test('so does an untitled pair', async () => {
+    viewport.device = 'phone'
+    workspace.tree = null
+
+    workspace.openBlank()
+    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: '\n\nfirst' }])
+    workspace.openBlank()
+    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: '\n\nsecond' }])
+    workspace.openBlank()
+
+    await vi.waitFor(() => {
+      const held = [...notes.values()].filter((one) => one === '\n\nfirst' || one === '\n\nsecond')
+      expect(held).toHaveLength(2)
+    })
+  })
+
+  test.each(['- ', '# ', '​', '1. ', '- [ ] '])(
+    'a draft of nothing but %j writes no file',
+    async (words) => {
+      viewport.device = 'phone'
+      const before = notes.size
+
+      workspace.openBlank()
+      workspace.active?.note.live.edit([{ from: 0, to: 0, insert: words }])
+      await workspace.open('/space/One.md')
+      await new Promise((done) => setTimeout(done))
+
+      expect(notes.size).toBe(before)
+    },
+  )
+
+  test('the session keeps a draft until its file has landed', async () => {
+    viewport.device = 'phone'
+
+    workspace.openBlank()
+    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Kept\nwords' }])
+    await workspace.open('/space/One.md')
+
+    const held = () => JSON.stringify(workspace.layout())
+    expect(held()).toContain('Kept\\nwords')
+    await vi.waitFor(() => expect(notes.get('/space/Kept.md')).toBe('Kept\nwords'))
+    await vi.waitFor(() => expect(held()).not.toContain('Kept\\nwords'))
+  })
+
   test('never split a pane, however it is asked', async () => {
     viewport.device = 'tablet'
     await workspace.open('/space/One.md')

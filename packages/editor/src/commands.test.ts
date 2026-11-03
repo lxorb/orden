@@ -8,7 +8,6 @@ import {
 import { describe, expect, test } from 'vitest'
 import {
   calloutSign,
-  clearFormatting,
   closeFence,
   insertCallout,
   insertCodeFence,
@@ -28,9 +27,13 @@ import {
   toggleTask,
   toggleTaskList,
   toggleWrap,
+  insertHorizontalRule,
   tickTaskAtCaret,
 } from './commands'
 import { selectWord } from './keymap'
+import { indentItems, moveLineOver, outdentItems } from './list-keys'
+import { clearFormatting, marksAcross } from './marks'
+import { nibMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
 /** One command over one document, and everything a test might ask about the
@@ -577,5 +580,212 @@ describe('a callout is asked to fold', () => {
 
   test('leaves a callout with no title of its own a callout with no title', () => {
     expect(at(setCalloutSign('-'), '> [!tip]\n> Below it.\n', 4)).toBe('> [!tip]-\n> Below it.\n')
+  })
+})
+
+describe('italic over a word that is bold', () => {
+  const italic = toggleWrap('*')
+  const bold = toggleWrap('**')
+
+  test('adds to the marks rather than taking a star of them', () => {
+    expect(run(italic, '**[word]**')).toBe('***word***')
+    expect(run(italic, '[**word**]')).toBe('***word***')
+  })
+
+  test('comes back off', () => {
+    expect(run(italic, '***[word]***')).toBe('**word**')
+    expect(run(italic, '[***word***]')).toBe('**word**')
+    expect(run(italic, '*[word]*')).toBe('word')
+    expect(run(bold, '***[word]***')).toBe('*word*')
+    expect(run(bold, '*[word]*')).toBe('***word***')
+  })
+})
+
+describe('marks across blocks', () => {
+  const bold = marksAcross('**')
+
+  test('go on each paragraph, since a run ends with its block', () => {
+    expect(run(bold, '[one\ntwo\n\nthree]')).toBe('**one**\n**two**\n\n**three**')
+  })
+
+  test('go inside each item', () => {
+    expect(run(bold, '[- a\n- b]\n')).toBe('- **a**\n- **b**\n')
+  })
+
+  test('come off again, and a selection starts where it starts', () => {
+    expect(run(bold, '[**a**\n\n**b**]')).toBe('a\n\nb')
+    expect(run(bold, 'x [a\n\nb] y')).toBe('x **a**\n\n**b** y')
+  })
+})
+
+describe('a heading over a list item', () => {
+  test('trades the marker rather than standing in front of it', () => {
+    expect(run(setHeading(2), '- ite|m')).toBe('## item')
+    expect(run(setHeading(2), '1. ite|m')).toBe('## item')
+    expect(at(setHeading(2), '- [ ] item', 8)).toBe('## item')
+  })
+})
+
+describe('clear formatting over code', () => {
+  test('leaves a fence as it is', () => {
+    const doc = '```\n**b** `c`\n```'
+    expect(apply(clearFormatting, `a **b**\n\n${doc}`, 0, doc.length + 9).doc).toBe(`a b\n\n${doc}`)
+  })
+
+  test("takes a code span's marks and none of what it holds", () => {
+    expect(run(clearFormatting, '[`**b**` **c**]')).toBe('**b** c')
+  })
+})
+
+describe('Tab on a list item', () => {
+  test('under a number goes as far as the words above it', () => {
+    expect(at(indentItems, '1. x\n2. y\n3. z', 6)).toBe('1. x\n   1. y\n3. z')
+    expect(at(indentItems, '10. x\n11. y', 7)).toBe('10. x\n    1. y')
+    expect(at(indentItems, '1. x\n- y', 6)).toBe('1. x\n   - y')
+  })
+
+  test('under a bullet is what it always was', () => {
+    expect(at(indentItems, '- x\n- y', 5)).toBe('- x\n  - y')
+  })
+
+  test('continues a list nested already', () => {
+    expect(at(indentItems, '1. x\n   1. y\n2. z', 15)).toBe('1. x\n   1. y\n   2. z')
+  })
+
+  test('back out goes where it came from, and counts on', () => {
+    expect(at(outdentItems, '1. x\n   1. y', 8)).toBe('1. x\n2. y')
+    expect(at(outdentItems, '- x\n    - y', 9)).toBe('- x\n- y')
+  })
+
+  test('leaves words and code to the plain indent', () => {
+    expect(at(indentItems, 'words', 1)).toBe('  words')
+    expect(at(outdentItems, '  words', 3)).toBe('words')
+    expect(at(indentItems, '```\n1. x\n2. y\n```', 11)).toBe('```\n1. x\n  2. y\n```')
+  })
+})
+
+describe('moving a line past a table', () => {
+  const TABLE = '| x |\n| - |\n| 1 |'
+
+  test('going down steps over it whole', () => {
+    expect(at(moveLineOver(1), `a\n\n${TABLE}\n\nb`, 0)).toBe(`${TABLE}\n\na\n\nb`)
+    expect(at(moveLineOver(1), `a\n${TABLE}`, 0)).toBe(`${TABLE}\n\na`)
+  })
+
+  test('going up steps over it whole', () => {
+    expect(at(moveLineOver(-1), `b\n\n${TABLE}\n\na`, 20 + 3)).toBe(`b\n\na\n\n${TABLE}`)
+  })
+
+  test('takes the caret with it', () => {
+    const moved = apply(moveLineOver(1), `ab\n\n${TABLE}`, 1)
+    expect(moved.selection).toEqual([TABLE.length + 3, TABLE.length + 3])
+  })
+
+  test('leaves any other line to the library', () => {
+    expect(at(moveLineOver(1), 'a\nb', 0)).toBe('b\na')
+    expect(at(moveLineOver(-1), 'a\nb', 2)).toBe('b\na')
+  })
+})
+
+describe('a block inserted in the middle of a line', () => {
+  test('a table keeps the words on either side and is a table', () => {
+    expect(run(insertTable(1, 1), 'abc |def')).toBe('abc \n\n| Column 1 |\n| --- |\n|     |\n\ndef')
+  })
+
+  test('keeps what was selected', () => {
+    expect(run(insertTable(1, 1), '[words]')).toBe('words\n\n| Column 1 |\n| --- |\n|     |')
+  })
+
+  test('a rule writes its own line break', () => {
+    expect(run(insertHorizontalRule, 'a|b')).toBe('a\n---\nb')
+  })
+})
+
+describe('marks over a selection that holds what is not words', () => {
+  const across = (doc: string, mark = '**') => {
+    const state = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.range(0, doc.length),
+        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      }),
+    )
+    let next = state
+    marksAcross(mark)({ state, dispatch: (one: Transaction) => (next = one.state) })
+    return next.doc.toString()
+  }
+
+  test.each([
+    ['front matter', '---\ntitle: x\n---\n\npara', '---\ntitle: x\n---\n\n**para**'],
+    ['a table', 'a\n\n| x |\n| --- |\n| 1 |\n\nb', '**a**\n\n| x |\n| --- |\n| 1 |\n\n**b**'],
+    ['maths', 'a\n\n$$\nx\n$$\n\nb', '**a**\n\n$$\nx\n$$\n\n**b**'],
+    ['html', 'a\n\n<div>\nb\n</div>\n\nc', '**a**\n\n<div>\nb\n</div>\n\n**c**'],
+    ['a rule', 'a\n\n---\n\nb', '**a**\n\n---\n\n**b**'],
+    ['a link definition', 'a\n\n[x]: http://u\n\nb', '**a**\n\n[x]: http://u\n\n**b**'],
+    ['a fence', 'a\n\n```\ncode\n```\n\nb', '**a**\n\n```\ncode\n```\n\n**b**'],
+    ['a block name', 'a ^abc123\n\nb\n\n^own', '**a** ^abc123\n\n**b**\n\n^own'],
+  ])('leaves %s as it is', (_what, doc, wanted) => {
+    expect(across(doc)).toBe(wanted)
+  })
+
+  test('front matter with nothing after it, and soft lines stay one run', () => {
+    expect(across('---\ntitle: x\n---')).toBe('---\ntitle: x\n---')
+    expect(across('one\ntwo')).toBe('**one\ntwo**')
+    expect(across('**one\ntwo**')).toBe('one\ntwo')
+  })
+
+  test('italic over bold paragraphs adds to them, and comes off', () => {
+    expect(across('**a**\n\n**b**', '*')).toBe('***a***\n\n***b***')
+    expect(across('***a***\n\n***b***', '*')).toBe('**a**\n\n**b**')
+    expect(across('*a*\n\n*b*', '*')).toBe('a\n\nb')
+  })
+
+  test('toggling one line leaves its name out of the marks', () => {
+    expect(run(toggleWrap('**'), '[a ^abc123]')).toBe('**a** ^abc123')
+  })
+})
+
+describe('a table with something after it', () => {
+  test('keeps a blank line, or the next line is a row', () => {
+    expect(run(insertTable(1, 1), 'abc|\nnext')).toBe(
+      'abc\n\n| Column 1 |\n| --- |\n|     |\n\nnext',
+    )
+    expect(run(insertTable(1, 1), '|\nnext')).toBe('| Column 1 |\n| --- |\n|     |\n\nnext')
+    expect(run(insertTable(1, 1), 'above\n|')).toBe('above\n\n| Column 1 |\n| --- |\n|     |')
+  })
+})
+
+describe('Tab with what hangs under an item', () => {
+  test('children go with their parent', () => {
+    expect(at(indentItems, '1. a\n2. b\n   - c', 6)).toBe('1. a\n   1. b\n      - c')
+    expect(at(indentItems, '- a\n- b\n  - c\n\n    more\n- d', 5)).toBe(
+      '- a\n  - b\n    - c\n\n      more\n- d',
+    )
+    expect(at(outdentItems, '- a\n  - b\n    - c\n- d', 6)).toBe('- a\n- b\n  - c\n- d')
+  })
+
+  test('a selection counts on', () => {
+    expect(apply(indentItems, '1. a\n2. b\n3. c', 6, 14).doc).toBe('1. a\n   1. b\n   2. c')
+  })
+
+  test('a first item keeps its number', () => {
+    expect(at(indentItems, '5. a', 1)).toBe('  5. a')
+  })
+
+  test('in a quote stays in the quote', () => {
+    expect(at(indentItems, '> 1. a\n> 2. b', 10)).toBe('> 1. a\n>    1. b')
+    expect(at(outdentItems, '> 1. a\n>    1. b', 14)).toBe('> 1. a\n> 2. b')
+  })
+})
+
+describe('moving a line past a table, with a line beside it', () => {
+  const TABLE = '| x |\n| - |\n| 1 |'
+
+  test('going up, the line under it is not left to be a row', () => {
+    expect(at(moveLineOver(-1), `${TABLE}\n\na\nb`, TABLE.length + 2)).toBe(`a\n\n${TABLE}\n\nb`)
+  })
+
+  test('going down, the line over it is not left on its head', () => {
+    expect(at(moveLineOver(1), `a\nb\n\n${TABLE}`, 2)).toBe(`a\n\n${TABLE}\n\nb`)
   })
 })

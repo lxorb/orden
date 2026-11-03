@@ -88,7 +88,7 @@ import * as ahead from './workspace/ahead'
 import { firstScreen } from './first-screen.svelte'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
-import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
+import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace/drafts'
 import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
 import { type Binning, FileActions, type Kept } from './workspace/undo.svelte'
@@ -1276,7 +1276,10 @@ class Workspace {
       frame: frameDraft(frame, (pane) => {
         // A private tab is never written down: a restart does not bring it back, as a
         // browser's private window does not come back. See web-tab/private.ts.
-        const tabs = this.tabsIn(pane.id).filter((tab) => !tab.inPrivate)
+        const tabs = [
+          ...this.tabsIn(pane.id).filter((tab) => !tab.inPrivate),
+          ...[...this.puttingAway].filter((tab) => tab.paneId === pane.id),
+        ]
         // A pane put down with Ctrl+D writes the tab it showed last: showing nothing
         // is a moment's view, like a menu being open, and a launch brings the work back.
         const ids = tabs.map((tab) => tab.id)
@@ -1755,13 +1758,41 @@ class Workspace {
    *  back brings it straight back, and a note in a space was written down before
    *  it was closed - the account has it whatever this window shows.
    *
+   *  A draft with words is written down first, where Save would offer: there is no
+   *  strip to keep it in and no question that could be asked of a tap on something
+   *  else, so it is a note, as what is typed into Apple Notes or Google Keep is.
+   *
    *  A desktop keeps every tab and every pane it has always had. */
   private onlyOne(kept: Tab) {
     if (!viewport.touch) return
 
     for (const other of this.tabs) {
-      if (other.id !== kept.id && this.panes.at(other.paneId)) this.close(other.id)
+      if (other.id === kept.id || !this.panes.at(other.paneId)) continue
+      const held = this.tabs.some((one) => one !== other && one.note === other.note)
+      if (!held && isDraft(other.note) && worthAFile(other.note)) this.putAwayWritten(other)
+      else this.close(other.id)
     }
+  }
+
+  /** Drafts on their way to a file, which the session keeps until they have landed: a
+   *  window killed in between brings the draft back rather than losing it. */
+  private readonly puttingAway = new Set<Tab>()
+
+  /** A draft off the screen now, and its file behind that; see `putAway` in placing.ts. */
+  private putAwayWritten(tab: Tab) {
+    const paneId = tab.paneId
+    const at = Math.max(this.tabsIn(paneId).indexOf(tab), 0)
+    this.puttingAway.add(tab)
+    this.close(tab.id, false)
+
+    void import('./workspace/placing').then((one) => one.putAway(this, tab, paneId, at))
+  }
+
+  /** A draft's file landed, or could not. */
+  putAwayDone(tab: Tab, paneId: string, at: number) {
+    this.puttingAway.delete(tab)
+    this.closed.record({ draft: this.draftOf(tab), paneId, at })
+    this.persist()
   }
 
   /** One pane, one document: what a phone and a tablet come down to, wherever an

@@ -22,7 +22,6 @@ export {
 export { type AiAsk, type AiRunner, setAiRunner } from './ai/run'
 export {
   calloutSign,
-  clearFormatting,
   insertAiBlock,
   insertCallout,
   insertChart,
@@ -91,6 +90,7 @@ export {
   sortLines,
   titleCase,
   upperCase,
+  clearFormatting,
 } from './line-door'
 export { pasteHere, pastePlain } from './paste'
 export { reformat, reformatDocument } from './reformat'

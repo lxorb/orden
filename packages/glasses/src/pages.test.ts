@@ -315,6 +315,94 @@ describe('what moves whole', () => {
 })
 
 /** Where a page is in the note, which is what binds the glasses to the phone. */
+describe('a line longer than a page', () => {
+  const LONG = 'long '.repeat(400).trim()
+
+  test('is cut between its rows, so all of it can be read', () => {
+    const all = pages(LONG)
+
+    expect(all.length).toBeGreaterThan(1)
+    for (const page of all) {
+      expect(page.words.split('\n').length).toBeLessThanOrEqual(BODY_ROWS)
+    }
+    expect(
+      all
+        .map((page) => page.words)
+        .join(' ')
+        .split(/\s+/u).length,
+    ).toBe(400)
+  })
+
+  test('says its number on its first row only', () => {
+    const all = pages(LONG, { gutter: NUMS })
+
+    expect(all[0]?.numbers.split('\n')[0]).toContain('1')
+    expect(all[1]?.numbers.trim()).toBe('')
+    expect(all[1]?.numbers.split('\n').length).toBe(all[1]?.words.split('\n').length)
+  })
+
+  test('goes forwards, so an offset in it finds the page it is on', () => {
+    const all = pages(`before\n\n${LONG}\n\nafter`)
+
+    for (const [at, page] of all.entries()) {
+      if (at > 0) expect(page.from).toBeGreaterThan(all[at - 1]?.from ?? -1)
+      expect(page.to).toBeGreaterThan(page.from)
+      expect(pageAt(all, page.from)).toBe(at)
+    }
+    expect(all.at(-1)?.words).toContain('after')
+  })
+})
+
+describe('a heading with nothing under it', () => {
+  test('takes the next heading into its page rather than opening on a blank one', () => {
+    const all = pages('# Title\n\n## Section\n\nbody')
+
+    expect(all.map((page) => page.section)).toEqual(['TITLE'])
+    expect(all[0]?.words).toContain('SECTION')
+    expect(all[0]?.words).toContain('body')
+    expect(all[0]).toMatchObject({ from: 0, firstLine: 1 })
+  })
+
+  test('every one of a run of them is read, in order', () => {
+    const [page] = pages('## A\n\n## B\n\n## C\n\ntext')
+
+    expect(page?.section).toBe('A')
+    expect(page?.words.indexOf('B')).toBeLessThan(page?.words.indexOf('C') ?? 0)
+    expect(page?.words).toContain('text')
+  })
+
+  test('a long section under it wears its own heading on the next page', () => {
+    const all = pages(`# Title\n\n## Section\n\n${PROSE}`)
+
+    expect(all[0]?.section).toBe('TITLE')
+    expect(all[1]?.section).toBe('SECTION')
+  })
+
+  test('at the end of a note, or as the whole of it, still makes a page', () => {
+    expect(pages('text\n\n## Empty at end').at(-1)?.section).toBe('EMPTY AT END')
+    const only = pages('# Just a title')
+    expect(only.map((page) => page.section)).toEqual(['JUST A TITLE'])
+    expect(only[0]).toMatchObject({ words: '', from: 0, firstLine: 1, lastLine: 1 })
+  })
+})
+
+describe('a table longer than a page', () => {
+  const rows = Array.from({ length: 30 }, (_one, at) => `| r${at} | ${at} |`)
+  const note = ['| a | b |', '| - | - |', ...rows, ''].join('\n')
+
+  test('holds each row at its own line, so an offset finds the row', () => {
+    const all = pages(note, { breakAt: 0, gutter: NUMS })
+
+    expect(all.length).toBeGreaterThan(1)
+    expect(pageAt(all, 0)).toBe(0)
+    expect(all[0]).toMatchObject({ from: 0, firstLine: 1, lastLine: BODY_ROWS })
+    expect(all[0]?.numbers.split('\n').map((one) => one.trim())[1]).toBe('2')
+    const last = note.indexOf('| r29 |')
+    expect(pageAt(all, last)).toBe(all.length - 1)
+    expect(all[1]?.from).toBe(note.indexOf(`| r${BODY_ROWS - 2} |`))
+  })
+})
+
 describe('where a page is', () => {
   test('numbers the pages in order and only goes forwards', () => {
     const all = pages(PROSE)

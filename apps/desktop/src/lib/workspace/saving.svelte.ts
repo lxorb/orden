@@ -440,6 +440,16 @@ export class Saving {
     void done.then(() => this.running.delete(done))
   }
 
+  /** The paths drafts have taken and not landed at yet. Neither the listing nor the open
+   *  documents answer for them: a draft put away has no tab, and a space nobody has
+   *  listed has no tree for `born` to put a row in. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  private readonly claimed = new Set<string>()
+
+  private isClaimed(path: string): boolean {
+    return [...this.claimed].some((one) => samePath(one, path))
+  }
+
   /** A draft given a place: a file in `folder` called `file`, or the next number after
    *  it, written at once; the path it landed at, or null for one with a file already.
    *  Claimed as it is chosen, so two drafts saved together never land on one file; see
@@ -464,7 +474,11 @@ export class Saving {
     // again rather than lost; see `saveWaiting`.
     this.waiting.add(note)
     this.soon.cancel()
-    await this.saveWaiting()
+    try {
+      await this.saveWaiting()
+    } finally {
+      this.claimed.delete(path)
+    }
     return path
   }
 
@@ -488,7 +502,9 @@ export class Saving {
       const name = freePath(
         file,
         (candidate) =>
-          found.includes(candidate) || this.ws.freeName(folder, candidate) !== candidate,
+          found.includes(candidate) ||
+          this.isClaimed(joinPath(folder, candidate)) ||
+          this.ws.freeName(folder, candidate) !== candidate,
       )
       const path = joinPath(folder, name)
       // The other half of a page note's pair as well: a page note landing beside a PDF
@@ -499,8 +515,9 @@ export class Saving {
         (await onDisk(path)) || (other !== null && (await onDisk(joinPath(folder, other))))
       if (note.path !== null) return null
       if (taken) found.push(name)
-      else if (this.ws.freeName(folder, name) === name) {
+      else if (!this.isClaimed(path) && this.ws.freeName(folder, name) === name) {
         note.path = path
+        this.claimed.add(path)
         return path
       }
     }

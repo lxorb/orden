@@ -17,13 +17,15 @@
  *  of selection. */
 
 import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
-import { indentLess, indentMore } from '@codemirror/commands'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
-import { blockIdOf, freeBlockId, blockIds } from '@orden/markdown/links'
+import { fenceName } from '@orden/markdown/fences'
+import { blockIdOf, freeBlockId, blockIds, lines, ownLine } from '@orden/markdown/links'
+import { indentItems, outdentItems } from '../list-keys'
 import { headingLevel, headingText } from '../headings'
 import { enclosing } from '../nodes'
 import { copyBlock, cutBlock, moveBlock } from './move'
+import { verbatimLines } from './verbatim'
 import { type BlockShape, shaped, wordsOf } from './shape'
 import { blockAt, type BlockKind, blocksIn, type BlockSpan, writtenLine } from './span'
 
@@ -127,18 +129,63 @@ export function blockTarget(view: EditorView, pos: number): string | null {
     return words ? `#${words}` : null
   }
 
-  // The end of the block is where a name goes, which is where Obsidian looks for
-  // one. A fence's name goes after its closing marks, not inside the code.
-  const last = doc.lineAt(span.to)
-  const already = blockIdOf(last.text)
+  // Front matter is the note's and not a block of it: a name on its closing line
+  // would leave it unclosed.
+  if (span.kind === 'properties') return null
+
+  // The page's reading of what is code, which is not always this grammar's: a fence
+  // nothing closes, or one an older build closed with a name, is words to the grammar.
+  // The name it was closed with is this block's. A name written on one nothing closes
+  // is code on the page, under it as much as in it.
+  const rows = [...lines(doc.toString())]
+  if (rows[first.number - 1]?.code) {
+    for (let at = first.number - 1; rows[at]?.code; at++) {
+      const old = fenceName(rows[at]?.text ?? '')
+      if (old) return `#^${old}`
+    }
+    if (!verbatimLines(view.state, span.from, span.to).has(first.number)) return null
+  }
+
+  const last = doc.lineAt(ownEnd(view.state, span))
+  const verbatim = verbatimLines(view.state, span.from, span.to).has(last.number)
+  // Where the name would already be: under the block, or at the end of its last line.
+  const under = writtenLine(view.state, last.number + 1, 1)
+  const already =
+    under && ownLine(under.text)
+      ? blockIdOf(under.text)
+      : span.kind !== 'code' && blockIdOf(last.text)
   if (already) return `#^${already}`
 
   const taken = new Set(blockIds(doc.toString()).map((one) => one.id))
   const id = freeBlockId(taken)
-  const end = last.from + last.text.trimEnd().length
 
+  if (verbatim) {
+    // On a line of its own under the block, as Obsidian writes it. A name on a closing
+    // fence closes nothing, and on a table's last row is one more cell.
+    const below = last.number < doc.lines ? doc.line(last.number + 1).text.trim() : ''
+    const insert = `\n\n^${id}${below ? '\n' : ''}`
+    view.dispatch({ changes: { from: last.to, to: last.to, insert } })
+    return `#^${id}`
+  }
+
+  const end = last.from + last.text.trimEnd().length
   view.dispatch({ changes: { from: end, to: end, insert: ` ^${id}` } })
   return `#^${id}`
+}
+
+/** Where a block's own words end. An item with children ends before them: a name at
+ *  the very end of it is the name of the last child. */
+function ownEnd(state: EditorState, span: BlockSpan): number {
+  if (span.kind !== 'list') return span.to
+
+  const first = state.doc.lineAt(span.from)
+  const inner = blocksIn(state, Math.min(first.to + 1, span.to), span.to).find(
+    (one) => one.from > first.to,
+  )
+  if (!inner) return span.to
+
+  const before = writtenLine(state, state.doc.lineAt(inner.from).number - 1, -1)
+  return before ? before.to : span.to
 }
 
 /** Which kinds of block hold prose, and so have a line of words that could be a
@@ -151,7 +198,49 @@ export function blockTarget(view: EditorView, pos: number): string | null {
  *  side of it. */
 const PROSE = new Set<BlockKind>(['heading', 'paragraph', 'list', 'quote'])
 
+/** The line of a heading's underline, when it is written with one. */
+function underlineOf(state: EditorState, from: number): number | null {
+  for (const node of enclosing(syntaxTree(state).resolveInner(from, 1))) {
+    if (node.name.startsWith('SetextHeading')) return state.doc.lineAt(node.to).number
+  }
+  return null
+}
+
+/** One depth of a list being numbered. */
+interface Counting {
+  written: number
+  at: number
+  column: number
+  nth: number
+}
+
+/** A line as a numbered item, counting within its own depth and sitting under the words
+ *  of the item it hangs from: two spaces under `1. ` nest nothing. */
+function numberedLine(text: string, counting: Counting[]): string {
+  const { indent, words } = wordsOf(text)
+  const written = indent.length
+
+  for (let top = counting.at(-1); top && counting.length > 1 && top.written > written;) {
+    counting.pop()
+    top = counting.at(-1)
+  }
+  let level = counting.at(-1)
+  if (!level || level.written < written) {
+    level = { written, at: level ? level.column : written, column: 0, nth: 1 }
+    counting.push(level)
+  }
+
+  const mark = `${level.nth}. `
+  level.nth++
+  level.column = level.at + mark.length
+  return ' '.repeat(level.at) + mark + words
+}
+
 /** Every block a press acted on, as the shape that was asked for.
+ *
+ *  A heading's block is its whole section, and only its own line turns: the section
+ *  holds what the reader did not press. A list or a quote may hold code or a table,
+ *  which keep every character.
  *
  *  A heading is one line in markdown, so a block turning into one puts its first
  *  line under the hashes and leaves the rest of it as the words beneath - which is
@@ -168,25 +257,42 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
   const doc = view.state.doc
   const changes: ChangeSpec[] = []
   const heading = shape.startsWith('heading')
+  const counting: Counting[] = []
+  const seen = new Set<number>()
   let nth = 1
 
   for (const span of spans) {
     const first = doc.lineAt(span.from).number
-    const last = doc.lineAt(Math.min(span.to, doc.length)).number
+    const underline = span.kind === 'heading' ? underlineOf(view.state, span.from) : null
+    const last =
+      span.kind !== 'heading'
+        ? doc.lineAt(Math.min(span.to, doc.length)).number
+        : underline
+          ? underline - 1
+          : first
+    const verbatim = verbatimLines(view.state, span.from, doc.line(last).to)
 
     for (let number = first; number <= last; number++) {
+      // An item's block holds the items nested in it, and each is a block of its own.
+      if (verbatim.has(number) || seen.has(number)) continue
+      seen.add(number)
       const line = doc.line(number)
       // A blank line is what makes two paragraphs two paragraphs, and a marker in
       // front of nothing is an item nobody asked for.
       if (!wordsOf(line.text).words.trim()) continue
 
       const into: BlockShape = heading && number > first ? 'paragraph' : shape
-      const text = shaped(line.text, into, nth)
+      const text =
+        into === 'numbered' ? numberedLine(line.text, counting) : shaped(line.text, into, nth)
       if (into === 'numbered') nth++
       if (text === line.text) continue
 
       changes.push({ from: line.from, to: line.to, insert: text })
     }
+
+    // The underline said what kind of heading this was, and now it would say something
+    // else: a rule, or the same heading again under the new one.
+    if (underline) changes.push({ from: doc.line(last).to, to: doc.line(underline).to })
   }
 
   if (!changes.length) return false
@@ -225,11 +331,11 @@ function overBlocks(view: EditorView, pos: number, command: StateCommand): boole
 
 /** One step further in, and one step back out. */
 export function indentBlocks(view: EditorView, pos: number): boolean {
-  return overBlocks(view, pos, indentMore)
+  return overBlocks(view, pos, indentItems)
 }
 
 export function outdentBlocks(view: EditorView, pos: number): boolean {
-  return overBlocks(view, pos, indentLess)
+  return overBlocks(view, pos, outdentItems)
 }
 
 /** The nearest line with something on it above or below a position, or null at the

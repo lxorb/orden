@@ -1038,3 +1038,167 @@ describe('a rendered task list pasted back', () => {
     expect(lines[2]).toContain('\\[a:: b\\](see)')
   })
 })
+
+describe('a paste from Google Docs', () => {
+  const docs = (inner: string) =>
+    `<meta charset="utf-8"><b style="font-weight:normal" id="docs-internal-guid-1">${inner}</b>`
+
+  test('writes no marks for the wrapper around the whole of it', () => {
+    const said = htmlToMarkdown(docs('<p dir="ltr"><span>one</span></p><p><span>two</span></p>'))
+    expect(said).toBe('one\n\ntwo')
+    expect(htmlToMarkdown(docs('<span>just words</span>'))).toBe('just words')
+  })
+
+  test('reads bold and italic off the spans', () => {
+    const said = htmlToMarkdown(
+      docs(
+        '<p><span style="font-weight:700">B</span> <span style="font-style:italic">I</span> <span style="font-weight:400">n</span> <span style="font-weight:700;font-style:italic">both </span>x</p>',
+      ),
+    )
+    expect(said).toBe('**B** *I* n ***both*** x')
+  })
+
+  test('a heading is not bold on top of being a heading, and code keeps its characters', () => {
+    expect(htmlToMarkdown('<h2><span style="font-weight:700">t</span></h2>')).toBe('## t')
+    expect(htmlToMarkdown('<code><span style="font-weight:700">t</span></code>')).toBe('`t`')
+  })
+
+  test('strong or em around blocks write no marks', () => {
+    expect(htmlToMarkdown('<strong><p>a</p><p>b</p></strong>')).toBe('a\n\nb')
+    expect(htmlToMarkdown('<em><div>a</div></em>')).toBe('a')
+  })
+})
+
+describe('a link around blocks', () => {
+  test('goes inside the heading', () => {
+    expect(htmlToMarkdown('<a href="https://u.co"><h2>t</h2></a>')).toBe('## [t](https://u.co)')
+  })
+
+  test('links each block rather than writing brackets around blank lines', () => {
+    const said = htmlToMarkdown('<a href="https://u.co"><div>x</div><div>y</div></a>')
+    expect(said).toBe('[x](https://u.co)\n\n[y](https://u.co)')
+    expect(renderMarkdown(said)).not.toContain('](')
+  })
+
+  test('leaves what a link cannot hold unlinked', () => {
+    const said = htmlToMarkdown('<a href="https://u.co"><pre>code</pre><p>y</p></a>')
+    expect(said).toBe('```\ncode\n```\n\n[y](https://u.co)')
+  })
+
+  test('a link in a line stays one', () => {
+    expect(htmlToMarkdown('<p>a <a href="https://u.co">b <b>c</b></a> d</p>')).toBe(
+      'a [b **c**](https://u.co) d',
+    )
+  })
+})
+
+describe('preformatted text with line breaks in tags', () => {
+  test('a br is a new line, as JetBrains IDEs copy code', () => {
+    expect(htmlToMarkdown('<pre><span>a</span><br><span>  b</span><br></pre>')).toBe(
+      '```\na\n  b\n```',
+    )
+  })
+
+  test('holds beside real newlines and comments', () => {
+    expect(htmlToMarkdown('<pre>a\nb<!-- c --><br>d</pre>')).toBe('```\na\nb\nd\n```')
+  })
+})
+
+describe('a heading cell across two columns', () => {
+  test('pads the row, so the rows under it keep their cells', () => {
+    const said = htmlToMarkdown(
+      '<table><thead><tr><th colspan="2">a</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>',
+    )
+    expect(said).toBe('| a |  |\n| --- | --- |\n| 1 | 2 |')
+    expect(renderMarkdown(said)).toContain('2')
+  })
+
+  test('in a row of a table that has no heading row', () => {
+    const said = htmlToMarkdown(
+      '<table><tr><td colspan="2">a</td></tr><tr><td>1</td><td>2</td></tr></table>',
+    )
+    expect(said).toBe('|  |  |\n| --- | --- |\n| a |  |\n| 1 | 2 |')
+  })
+
+  test('a colspan nothing could mean is one', () => {
+    const said = htmlToMarkdown('<table><tr><th colspan="0">a</th></tr></table>')
+    expect(said).toBe('| a |\n| --- |')
+  })
+})
+
+describe('a loose task list', () => {
+  test('keeps the box of an item whose words sit in a paragraph', () => {
+    expect(
+      htmlToMarkdown(
+        '<ul><li><p><input type="checkbox"> x</p></li><li><p><input type="checkbox" checked> y</p></li></ul>',
+      ),
+    ).toMatch(/^- \[ \] x\n+- \[x\] y$/u)
+  })
+})
+
+describe('marks and what stands beside them', () => {
+  test('a heading holds its line break as a space', () => {
+    expect(htmlToMarkdown('<h1>a<br>b</h1>')).toBe('# a b')
+  })
+
+  test('marks that could not close write no stars', () => {
+    expect(renderMarkdown(htmlToMarkdown('<p><b>"x"</b>y</p>'))).not.toContain('*')
+    expect(renderMarkdown(htmlToMarkdown('<p>y<i>"x"</i></p>'))).not.toContain('*')
+    expect(htmlToMarkdown('<p><b>"x"</b> y</p>')).toBe('**"x"** y')
+    expect(htmlToMarkdown('<p><b>x</b>y</p>')).toBe('**x**y')
+  })
+
+  test('a linked picture with a bracket in its words stays a linked picture', () => {
+    const html = renderMarkdown(
+      htmlToMarkdown('<a href="https://u.co"><img src="https://u.co/a.png" alt="p]q"></a>'),
+    )
+    expect(html).toContain('<img')
+    expect(html).not.toContain('](')
+  })
+})
+
+describe('marks beside marks', () => {
+  test('bold beside bold is one run', () => {
+    expect(htmlToMarkdown('<p><b>foo</b><b>bar</b></p>')).toBe('**foobar**')
+    expect(
+      htmlToMarkdown(
+        '<p><span style="font-weight:700">foo</span><span style="font-weight:700">bar</span> x</p>',
+      ),
+    ).toBe('**foobar** x')
+    expect(htmlToMarkdown('<p><b>foo</b> <b>bar</b></p>')).toBe('**foo** **bar**')
+    expect(htmlToMarkdown('<p><i>a</i><i>b</i><b>c</b></p>')).toContain('*ab*')
+  })
+
+  test('a line break stays outside them', () => {
+    expect(htmlToMarkdown('<p><b>a<br></b>b</p>')).toBe('**a**  \nb')
+    expect(renderMarkdown(htmlToMarkdown('<p><b>a<br></b>b</p>'))).not.toContain('*')
+  })
+})
+
+describe('a table with two heading rows', () => {
+  test('has one line of dashes', () => {
+    const said = htmlToMarkdown(
+      '<table><thead><tr><th>a</th></tr><tr><th>b</th></tr></thead><tbody><tr><td>c</td></tr></tbody></table>',
+    )
+    expect(said).toBe('| a |\n| --- |\n| b |\n| c |')
+  })
+})
+
+describe('a link around a task list', () => {
+  test('goes inside the item, past its box', () => {
+    const said = htmlToMarkdown(
+      '<a href="https://u.co"><ul><li><input type="checkbox"> x</li></ul></a>',
+    )
+    expect(said).toBe('- [ ] [x](https://u.co)')
+  })
+})
+
+describe('alt ending in a backslash, in a link', () => {
+  test('stays a picture', () => {
+    const html = renderMarkdown(
+      htmlToMarkdown('<a href="https://u.co"><img src="https://u.co/a.png" alt="p\\"></a>'),
+    )
+    expect(html).toContain('<img')
+    expect(html).not.toContain('](')
+  })
+})

@@ -15,7 +15,7 @@
  *  Imported on its own - `@orden/markdown/links` - by the editor, which wants the
  *  grammar and not the renderer that stands on it. */
 
-import { closingTicks, CodeBlocks, WORDS } from './fences'
+import { closingTicks, CodeBlocks, fenceName, WORDS } from './fences'
 import { frontMatterBlock } from './front-matter'
 
 /** What one link between notes says. */
@@ -548,7 +548,7 @@ export function findLinks(text: string): FoundLink[] {
 }
 
 /** One line of some markdown, and whether it is code. */
-interface Row {
+export interface Row {
   text: string
   /** Where the line starts in the whole text. */
   from: number
@@ -597,6 +597,10 @@ export function* lines(text: string): Generator<Row> {
     at = end + 1
     line++
   }
+}
+
+export function rowsOf(text: string): Row[] {
+  return [...lines(text)]
 }
 
 /** The links on one line of prose, added in the order they were written. One walk over
@@ -847,6 +851,10 @@ function blockSection(source: string, wanted: string): string | null {
   if (!found) return null
 
   const lines = source.split('\n')
+  if (ownLine(lines[found.line] ?? '') && !(lines[found.line - 1] ?? '').trim()) {
+    return blockAbove(source, lines, found.line)
+  }
+
   let start = found.line
   let end = found.line
   while (start > 0 && (lines[start - 1] ?? '').trim()) start--
@@ -856,6 +864,27 @@ function blockSection(source: string, wanted: string): string | null {
   block[found.line - start] = (lines[found.line] ?? '').replace(BLOCK_ID, '')
 
   return block.join('\n').trimEnd()
+}
+
+/** Whether a line holds a block's name and nothing else. */
+export function ownLine(line: string): boolean {
+  return line.trim().startsWith('^') && blockIdOf(line.trim()) === line.trim().slice(1)
+}
+
+/** The block a name on a line of its own stands under, past the blank lines between
+ *  them and whatever blank lines a fence holds. */
+function blockAbove(source: string, lines: readonly string[], under: number): string {
+  const rows = rowsOf(source)
+  let end = under - 1
+  while (end > 0 && !(lines[end] ?? '').trim()) end--
+
+  let start = end
+  while (start > 0 && ((lines[start - 1] ?? '').trim() || rows[start - 1]?.code)) start--
+
+  return lines
+    .slice(start, end + 1)
+    .join('\n')
+    .trimEnd()
 }
 
 /** A name no block in the note has yet. Six characters of base 36, which is two
@@ -879,8 +908,7 @@ export function blockIds(text: string): { id: string; line: number }[] {
   const found: { id: string; line: number }[] = []
 
   for (const row of lines(text)) {
-    if (row.code) continue
-    const id = blockIdOf(row.text)
+    const id = row.code ? fenceName(row.text) : blockIdOf(row.text)
     if (id) found.push({ id, line: row.line })
   }
 
@@ -914,6 +942,13 @@ export function blocksOf(text: string): NoteBlock[] {
       continue
     }
 
+    // A name on a line of its own is the block above's.
+    const above = current ? null : found.at(-1)
+    if (above && !row.code && ownLine(row.text)) {
+      above.id = blockIdOf(row.text)
+      continue
+    }
+
     if (!current) {
       current = { line: row.line, text: firstWords(row.text), id: null }
       found.push(current)
@@ -938,9 +973,7 @@ export function withoutBlockIds(text: string): string {
   let at = 0
 
   for (const row of lines(text)) {
-    if (row.code) continue
-
-    const id = blockIdOf(row.text)
+    const id = row.code ? fenceName(row.text) : blockIdOf(row.text)
     if (!id) continue
 
     const end = row.from + row.text.trimEnd().length

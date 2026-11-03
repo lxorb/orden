@@ -33,7 +33,7 @@
  *  document and looked at on its own. */
 
 import { escape } from './html'
-import { flowItems, unquoted } from './yaml'
+import { flowItems, listItem, uncommented, unquoted } from './yaml'
 
 export type ChartKind = 'bar' | 'line' | 'scatter' | 'pie' | 'donut' | 'radar' | 'polar'
 
@@ -92,18 +92,42 @@ function colour(at: number): string {
 /** A number as YAML would read one, or null for anything that is not one. Its
  *  only caller draws a zero for the null; see `numbers` below. */
 function numberOf(written: string): number | null {
-  const value = Number(unquoted(written))
-  return Number.isFinite(value) ? value : null
+  const read = unquoted(written)
+  const value = Number(read)
+  return read !== '' && Number.isFinite(value) ? value : null
+}
+
+/** A value without the comment after it. A flow list up to its closing bracket: YAML
+ *  has no comment inside one here, since `[#1, #2]` was always two labels. */
+function valueOf(written: string): string {
+  const value = written.trim()
+  if (!value.startsWith('[')) return uncommented(written)
+
+  let depth = 0
+  let quote = ''
+  for (let at = 0; at < value.length; at++) {
+    const char = value.charAt(at)
+    if (quote) {
+      if (char === quote) quote = ''
+    } else if ((char === '"' || char === "'") && /[[,]\s*$/u.test(value.slice(0, at))) {
+      quote = char
+    } else if (char === '[') depth++
+    else if (char === ']' && --depth === 0) return value.slice(0, at + 1)
+  }
+  return value
 }
 
 /** One line split at its first colon, when it is a mapping at all. */
-function pair(line: string): { indent: number; key: string; value: string } | null {
+function pair(
+  line: string,
+): { indent: number; key: string; value: string; written: string } | null {
   const indent = line.length - line.trimStart().length
   const rest = line.trim().replace(/^-\s*/, '')
   const at = rest.indexOf(':')
   if (at <= 0) return null
 
-  return { indent, key: rest.slice(0, at).trim().toLowerCase(), value: rest.slice(at + 1) }
+  const written = rest.slice(at + 1)
+  return { indent, key: rest.slice(0, at).trim().toLowerCase(), value: valueOf(written), written }
 }
 
 /** The chart a fence's body describes, or null when it describes none.
@@ -119,12 +143,33 @@ export function readChart(source: string): Chart | null {
   let labels: string[] = []
   const series: Series[] = []
   let inSeries = false
+  // A key with nothing after it, whose list is on the lines below: where the key's
+  // words begin, since YAML lets its dashes sit there or further in, and what the
+  // items are poured into.
+  let list: { column: number; into: (item: string) => void } | null = null
 
   for (const line of lines) {
     if (line.trim() === '' || line.trimStart().startsWith('#')) continue
 
+    const item = listItem(line)
+    const margin = line.length - line.trimStart().length
+    if (list && item !== null && margin >= list.column) {
+      list.into(uncommented(item))
+      continue
+    }
+    list = null
+
     const found = pair(line)
     const listed = line.trimStart().startsWith('-')
+
+    // `series:` over a bare list of numbers, the block spelling of `series: [1, 2]`.
+    if (found === null && listed && inSeries && item !== null) {
+      const one = numberOf(uncommented(item))
+      if (one === null) continue
+      if (series.at(-1)?.title !== '') series.push({ title: '', data: [] })
+      series.at(-1)?.data.push(one)
+      continue
+    }
 
     // A line with no colon on it says nothing this reads. `series:` on its own
     // is not one of those - it is a key with an empty value, and it is the
@@ -147,8 +192,14 @@ export function readChart(source: string): Chart | null {
       // the reader can see what they asked for and change it. Silently drawing a bar
       // chart instead was the right numbers saying the wrong thing.
       if (found.key === 'type') kind = KINDS.get(unquoted(found.value).toLowerCase()) ?? null
-      else if (found.key === 'title') title = unquoted(found.value) || null
-      else if (found.key === 'labels') labels = flowItems(found.value) ?? [unquoted(found.value)]
+      // `#1 Sales` is a title for all a reader can tell; nothing else is lost by it.
+      else if (found.key === 'title') title = unquoted(found.value || found.written) || null
+      else if (found.key === 'labels') {
+        if (found.value.trim() === '') {
+          labels = []
+          list = { column: 0, into: (one) => labels.push(unquoted(one)) }
+        } else labels = flowItems(found.value) ?? [unquoted(found.value)]
+      }
       continue
     }
 
@@ -160,10 +211,23 @@ export function readChart(source: string): Chart | null {
     if (!current) continue
 
     if (found.key === 'title' || found.key === 'label') current.title = unquoted(found.value)
-    else if (found.key === 'data') current.data = numbers(found.value)
+    else if (found.key === 'data') {
+      current.data = numbers(found.value)
+      if (found.value.trim() === '') {
+        const dash = listed
+          ? line.trimStart().length - line.trimStart().slice(1).trimStart().length
+          : 0
+        list = {
+          column: found.indent + dash,
+          into: (one) => current.data.push(numberOf(one) ?? 0),
+        }
+      }
+    }
   }
 
-  const drawn = series.filter((one) => one.data.length > 0)
+  const drawn = series
+    .filter((one) => one.data.length > 0)
+    .map((one) => ({ ...one, data: one.data.slice(0, MOST_POINTS) }))
   if (drawn.length === 0 || kind === null) return null
 
   return { kind, title, labels, series: drawn.slice(0, MOST_SERIES) }
@@ -177,6 +241,10 @@ function numbers(value: string): number[] {
     const one = numberOf(value)
     return one === null ? [] : [one]
   }
+
+  // Points or anything else with structure in it. Not numbers this can draw, and a
+  // row of zeroes would say there were.
+  if (listed.some((written) => /^[[{]/u.test(written))) return []
 
   return listed.slice(0, MOST_POINTS).map((written) => numberOf(written) ?? 0)
 }

@@ -7,7 +7,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
  *  written, `../Private` moved a note into another space, or made the day's note
  *  there over whatever was there. */
 
-const { written, template, moved, plan, before } = vi.hoisted(() => ({
+const { written, template, moved, plan, before, writing } = vi.hoisted(() => ({
+  writing: { pairs: [] as unknown[], changed: true },
   before: [] as unknown[][],
   written: new Map<string, string>(),
   template: { folder: '' },
@@ -26,11 +27,17 @@ vi.mock('./automate', () => ({
   planned: (_bases: unknown, removed: unknown[]) => {
     before.push(removed)
     return {
-      writes: [],
-      moves: [{ row: { space: 'Shared', path: 'Inbox/a.md' }, folder: plan.folder }],
+      writes: writing.pairs,
+      moves: plan.folder
+        ? [{ row: { space: 'Shared', path: 'Inbox/a.md' }, folder: plan.folder }]
+        : [],
       notices: [],
     }
   },
+}))
+vi.mock('./act', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./act')>()),
+  writeEach: async () => writing.changed,
 }))
 vi.mock('../workspace.svelte', () => ({
   workspace: {
@@ -102,6 +109,38 @@ describe("a base's automation that moves a note", () => {
     await changed()
 
     expect(moved).toEqual([])
+  })
+})
+
+describe("a base's automation that writes a note", () => {
+  async function changed(path: string) {
+    await readHeld('/s/Shared/Tasks.base')
+    writing.pairs = [{ row: { space: 'Shared', path }, change: {} }]
+    heard('Shared', path, [])
+    await new Promise((done) => setTimeout(done, 150))
+    writing.pairs = []
+  }
+
+  test('takes the next change for its own, when its write changed the note', async () => {
+    plan.folder = ''
+    writing.changed = true
+    await changed('Inbox/one.md')
+    expect(before).toHaveLength(1)
+
+    await changed('Inbox/one.md')
+    expect(before).toHaveLength(1)
+
+    await changed('Inbox/one.md')
+    expect(before).toHaveLength(2)
+  })
+
+  test('and not when its write changed nothing, since none is coming', async () => {
+    plan.folder = ''
+    writing.changed = false
+    await changed('Inbox/two.md')
+    await changed('Inbox/two.md')
+
+    expect(before).toHaveLength(2)
   })
 })
 

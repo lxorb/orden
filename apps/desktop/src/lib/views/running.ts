@@ -126,7 +126,11 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   const plan = planned(bases, removed, rowsOf(space, path), all, context, clock())
 
   for (const write of plan.writes) ours.add(keyOf(write.row.space, write.row.path))
-  if (plan.writes.length) await writeEach(plan.writes, true)
+  // A write that changes nothing raises no change, so the mark would wait for the
+  // next one somebody makes and swallow it.
+  if (plan.writes.length && !(await writeEach(plan.writes, true))) {
+    for (const write of plan.writes) ours.delete(keyOf(write.row.space, write.row.path))
+  }
 
   for (const move of plan.moves) {
     // The folder is the base's words, which anybody who can write the space can write;

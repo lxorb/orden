@@ -5,6 +5,7 @@ import { EditorView } from '@codemirror/view'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { nibMarkdownExtensions } from './markdown/extensions'
+import { loadLineCommands } from './line-door'
 import { richPaste } from './paste'
 
 // The converter a page's HTML goes through, fetched before any paste waits on it. jsdom
@@ -38,7 +39,8 @@ async function pasted(marked: string, text: string, html = ''): Promise<string> 
     value: { files: [], getData: (type: string) => flavours[type] ?? '' },
   })
   view.contentDOM.dispatchEvent(event)
-  // A page's HTML is written once the converter answers.
+  // A page's HTML is written once the converter answers, and a sheet's as its rule lands.
+  await loadLineCommands()
   await new Promise((done) => setTimeout(done))
 
   const note = view.state.doc.toString()
