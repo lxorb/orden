@@ -119,8 +119,11 @@
     event.preventDefault()
   }
 
+  /** The two sides' shares of what is left once the divider has its pixel: shares of
+   *  the whole and the pixel besides made the split a pixel wider than its room, under
+   *  the right side by that much (#1076). */
   const share = (split: Split) =>
-    `${(split.fraction * 100).toFixed(3)}% 1px ${((1 - split.fraction) * 100).toFixed(3)}%`
+    `minmax(0, ${split.fraction.toFixed(5)}fr) 1px minmax(0, ${(1 - split.fraction).toFixed(5)}fr)`
 </script>
 
 {#if split}

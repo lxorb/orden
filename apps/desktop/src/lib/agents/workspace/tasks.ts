@@ -11,7 +11,8 @@
  *  together. A space the grant does not reach does not exist, and one shared to read is
  *  refused before anything is asked. */
 
-import type { Base, Context, Row } from '@orden/bases'
+import { type Base, type Context, INBOX_PATH, type Row } from '@orden/bases'
+import { meansInbox } from '@orden/bases/inbox'
 import {
   AgentError,
   clockOf,
@@ -194,8 +195,9 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   })()
   const { fields } = read
   // The space's inbox where no note is named, made by the write below if it is not there.
-  const inbox = rows.inboxes().find((one) => one.space === place.space.name)?.path ?? 'Inbox.md'
-  const path = maybe(call, 'note') ?? read.note ?? inbox
+  const inbox = rows.inboxes().find((one) => one.space === place.space.name)?.path ?? INBOX_PATH
+  const named = maybe(call, 'note') ?? read.note ?? null
+  const path = named === null ? inbox : await namedOrInbox(place, named)
   const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, path)
   const under = maybe(call, 'under') ?? read.heading
   const line = taskLine(fields)
@@ -272,6 +274,18 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   }
 }
 
+/** The note a task names, or the space's inbox where it says "Inbox" and the space has
+ *  no note called that (#1044): so a task sent to the Inbox by name makes no `Inbox.md`. */
+async function namedOrInbox(place: Place, named: string): Promise<string> {
+  if (!meansInbox(named)) return named
+  const { rows } = await import('../../rows/rows.svelte')
+  const theirs = rows
+    .of(place.space.name)
+    .some((row) => row.kind === 'note' && meansInbox(row.path))
+  if (theirs) return named
+  return rows.inboxes().find((one) => one.space === place.space.name)?.path ?? INBOX_PATH
+}
+
 /** `move_to`: the task and everything under it into another note, or under another
  *  heading of its own. Two notes are two edits, the new one written first, so a task
  *  is never in neither. */
@@ -289,7 +303,9 @@ async function moved(
   const { note: wanted, under } = target as { note?: unknown; under?: unknown }
   const heading = typeof under === 'string' && under.trim() ? under.trim() : undefined
   const into =
-    typeof wanted === 'string' && wanted.trim() ? writableNote(call, wanted.trim()) : from
+    typeof wanted === 'string' && wanted.trim()
+      ? writableNote(call, await namedOrInbox(place, wanted.trim()))
+      : from
 
   if (into.relative === from.relative) {
     const line = await rewritten(call, from, (text) => {

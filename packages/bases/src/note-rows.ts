@@ -10,6 +10,7 @@
 
 import { findLinks } from '@orden/markdown/links'
 import { tagsIn } from '@orden/markdown/task-line'
+import { INBOX_NAME, INBOX_PATH } from './inbox'
 import { noteValues } from './note-values'
 import { type ScannedTask, scanRows, type Stamp } from './scan'
 import { fileInfo, taskRowsOf } from './task-rows'
@@ -27,12 +28,20 @@ export interface NoteRead {
   links: readonly { target: string; embed: boolean }[]
 }
 
-/** The note's row first, then its tasks in the order they are written. */
+/** The note's row first, then its tasks in the order they are written. The space's own
+ *  inbox (`INBOX_PATH`) is where tasks are kept rather than a note of the reader's: its
+ *  tasks are rows, named Inbox wherever a view names a task's note, and it is no row of
+ *  its own for a base of notes to list. */
 export function rowsOf(space: string, read: NoteRead): Row[] {
-  const file = fileInfo(read)
+  const inbox = read.path === INBOX_PATH
+  const file = inbox
+    ? { ...fileInfo(read), name: `${INBOX_NAME}.md`, basename: INBOX_NAME }
+    : fileInfo(read)
   const note: Record<string, Value> = read.front === null ? {} : noteValues(read.front)
+  const tasks = taskRowsOf(space, read.path, read.tasks, file, note)
+  if (inbox) return tasks
   const own: Row = { kind: 'note', space, path: read.path, file, note }
-  return [own, ...taskRowsOf(space, read.path, read.tasks, file, note)]
+  return [own, ...tasks]
 }
 
 /** A note's rows from its words alone, where no scan has read it: the account

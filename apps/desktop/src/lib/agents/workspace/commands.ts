@@ -18,7 +18,7 @@ import type { AgentAnswer } from '../../automation/caller'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { Category } from '../verbs'
-import { asked } from './asks'
+import { asked, readersOwn } from './asks'
 import { type Call, done, need, needScope } from './call'
 import { Refused } from './problem'
 import { placeFor } from './spaces'
@@ -71,7 +71,7 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   if (!found) throw new Refused('no_such_command', `there is no command called ${id}`)
   if (found.disabled === true) throw new Refused('failed', `${id} cannot run just now`)
   if (found.ownWindow === true || found.byHand === true || WINDOW.has(id)) {
-    throw new Refused('by_hand', `${id} is the reader's to press`)
+    readersOwn(call, `${id} is the reader's to press`)
   }
   if (moves(id)) needScope(call, 'workspace.focus', id)
 

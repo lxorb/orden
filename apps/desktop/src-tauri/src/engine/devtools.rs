@@ -39,32 +39,66 @@ struct Page {
     waiting: Mutex<HashMap<i64, SyncSender<Result<Value, String>>>>,
     /// Who hears the page's events.
     hearing: Mutex<Vec<Hearing>>,
+    /// Whether the observer is registered, held while it is being registered: every
+    /// caller waits for the first one's registration, since an answer the agent sends
+    /// before there is an observer is heard by nobody.
+    observed: Mutex<bool>,
 }
+
+/// The pages spoken to, by the webview's label.
+type Pages = Mutex<HashMap<String, Arc<Page>>>;
 
 /// Every page that has been spoken to, by the webview's label. A label is reused only
 /// after its page has gone, and the observer of a page that has gone hears nothing.
-static PAGES: LazyLock<Mutex<HashMap<String, Arc<Page>>>> = LazyLock::new(Mutex::default);
+static PAGES: LazyLock<Pages> = LazyLock::new(Mutex::default);
 
 /// The conversation with this webview's page, the observer registered the first time.
 fn page(view: &Webview) -> Result<Arc<Page>, String> {
-    let label = view.label().to_string();
-    let mut pages = PAGES.lock().unwrap_or_else(PoisonError::into_inner);
-    if let Some(found) = pages.get(&label) {
-        return Ok(Arc::clone(found));
-    }
-
-    let made = Arc::new(Page::default());
-    let heard = Arc::clone(&made);
-    view.on_dev_tools_protocol(move |said| {
-        if let DevToolsProtocol::Message(raw) = said {
-            if let Ok(message) = serde_json::from_slice::<Value>(&raw) {
-                read(&heard, &message);
+    page_in(&PAGES, view.label(), |made| {
+        let heard = Arc::clone(made);
+        view.on_dev_tools_protocol(move |said| {
+            if let DevToolsProtocol::Message(raw) = said {
+                if let Ok(message) = serde_json::from_slice::<Value>(&raw) {
+                    read(&heard, &message);
+                }
             }
-        }
+        })
+        .map_err(|error| format!("the page's agent could not be reached: {error}"))
     })
-    .map_err(|error| format!("the page's agent could not be reached: {error}"))?;
-    pages.insert(label, Arc::clone(&made));
-    Ok(made)
+}
+
+/// The page under `label` in `pages`, made the first time and its observer registered
+/// through `register` until one registration has worked.
+///
+/// **The list is never held while the observer is registered.** Registering waits for
+/// the window's thread, which takes the runtime's message - and the window's thread takes
+/// the list as well, to let go of a page that is closing (`let_go_of`, from `web_close`).
+/// A page being built on one thread, held here, and another closed on the window's own
+/// was each waiting for the other: Ctrl+W pressed through tabs whose pages were still
+/// coming up froze the whole app for good (#1031). Only the page's own `observed` is held
+/// across the wait, which nothing on the window's thread ever takes.
+fn page_in(
+    pages: &Pages,
+    label: &str,
+    register: impl FnOnce(&Arc<Page>) -> Result<(), String>,
+) -> Result<Arc<Page>, String> {
+    let found = Arc::clone(
+        pages
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .entry(label.to_string())
+            .or_default(),
+    );
+    let mut observed = found
+        .observed
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner);
+    if !*observed {
+        register(&found)?;
+        *observed = true;
+    }
+    drop(observed);
+    Ok(found)
 }
 
 /// One message from the agent: an answer for whoever waits on its id, or an event for
@@ -183,9 +217,15 @@ pub fn hear(
     Ok(())
 }
 
-/// Lets go of a page that has closed, so its label can be a new page's.
+/// Lets go of a page that has closed, so its label can be a new page's. On the window's
+/// own thread, and so never waiting on a page being registered; see `page_in`.
 pub fn let_go_of(label: &str) {
-    PAGES
+    forget(&PAGES, label);
+}
+
+/// `label`'s page taken off `pages`.
+fn forget(pages: &Pages, label: &str) {
+    pages
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
         .remove(label);
@@ -195,7 +235,78 @@ pub fn let_go_of(label: &str) {
 mod tests {
     use serde_json::json;
 
-    use super::{answer, asking, read, Page};
+    use std::sync::mpsc::channel;
+    use std::sync::Arc;
+    use std::time::Duration;
+
+    use super::{answer, asking, forget, page_in, read, Page, Pages};
+
+    /// #1031: a page being registered on one thread - which waits for the window's thread -
+    /// while the window's thread lets go of another page that is closing. The letting go
+    /// has to come back without the registration having ended, or each waits for the other.
+    #[test]
+    fn a_page_closing_never_waits_for_another_being_registered() {
+        let pages: Arc<Pages> = Arc::default();
+        let (registering, registered) = channel();
+        let (window, waiting_for_window) = channel::<()>();
+
+        let building = Arc::clone(&pages);
+        let builder = std::thread::spawn(move || {
+            page_in(&building, "web-a", |_| {
+                registering.send(()).unwrap();
+                // The runtime's message, which only the window's thread answers.
+                waiting_for_window.recv().map_err(|error| error.to_string())
+            })
+            .map(|_| ())
+        });
+        registered.recv().unwrap();
+
+        // The window's thread, closing another tab's page meanwhile.
+        let (closed, closing) = channel();
+        let window_thread = Arc::clone(&pages);
+        std::thread::spawn(move || {
+            forget(&window_thread, "web-b");
+            closed.send(()).unwrap();
+        });
+        let answered = closing.recv_timeout(Duration::from_secs(5));
+
+        // The window's thread answers the registration either way, so a failing run ends.
+        window.send(()).unwrap();
+        builder.join().unwrap().unwrap();
+        assert!(
+            answered.is_ok(),
+            "closing a page waited for another being registered"
+        );
+    }
+
+    /// Everybody asking for a page while its observer is registered waits for that, and
+    /// it is registered once; one that failed is tried again by the next.
+    #[test]
+    fn a_page_is_observed_once_and_after_a_failure_again() {
+        let pages = Pages::default();
+        let mut tries = 0;
+        let failed = page_in(&pages, "web-a", |_| {
+            tries += 1;
+            Err("not yet".to_string())
+        });
+        assert!(failed.is_err());
+        let first = page_in(&pages, "web-a", |_| {
+            tries += 1;
+            Ok(())
+        })
+        .unwrap();
+        let again = page_in(&pages, "web-a", |_| {
+            tries += 1;
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(tries, 2);
+        assert!(Arc::ptr_eq(&first, &again));
+
+        forget(&pages, "web-a");
+        let fresh = page_in(&pages, "web-a", |_| Ok(())).unwrap();
+        assert!(!Arc::ptr_eq(&first, &fresh));
+    }
 
     #[test]
     fn an_answer_is_its_result_or_the_agent_s_words() {

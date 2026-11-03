@@ -13,7 +13,7 @@
 //! | a download | into `Downloads/nib agents/<agent>`, 500 MB at most |
 //! | a file chooser | intercepted, answered by `browser_upload` |
 //! | `print()`, `showPicker()` | nothing |
-//! | basic authentication, a client certificate | refused |
+//! | basic authentication, a client certificate | held like a dialog until `browser_dialog` answers it, which signs in as the mode says (#1072), or 30 s |
 //!
 //! On `WebView2` all of it is the engine's own events on the page's own engine, set on
 //! the window's thread on a page that is still `about:blank`, so none of it can be too
@@ -33,7 +33,9 @@ use serde_json::json;
 use tauri::AppHandle;
 #[cfg(all(windows, not(feature = "cef")))]
 use webview2_com::Microsoft::Web::WebView2::Win32::{
-    ICoreWebView2, ICoreWebView2Deferral, ICoreWebView2DownloadOperation,
+    ICoreWebView2, ICoreWebView2BasicAuthenticationRequestedEventArgs,
+    ICoreWebView2ClientCertificate, ICoreWebView2ClientCertificateRequestedEventArgs,
+    ICoreWebView2Deferral, ICoreWebView2DownloadOperation,
     ICoreWebView2NewWindowRequestedEventArgs, ICoreWebView2ScriptDialogOpeningEventArgs,
     ICoreWebView2Settings3, ICoreWebView2Settings4, ICoreWebView2Settings5, ICoreWebView2Settings6,
     ICoreWebView2_10, ICoreWebView2_4, ICoreWebView2_5, ICoreWebView2_8,
@@ -90,9 +92,77 @@ static DOWNLOADS: Mutex<Vec<(String, Download)>> = Mutex::new(Vec::new());
 /// A dialog's engine objects, which live on the window's thread.
 #[cfg(all(windows, not(feature = "cef")))]
 struct Waiting {
-    args: ICoreWebView2ScriptDialogOpeningEventArgs,
+    asked: Holding,
     deferral: ICoreWebView2Deferral,
     number: u64,
+}
+
+/// What the engine waits on for a held dialog, by its kind.
+#[cfg(all(windows, not(feature = "cef")))]
+enum Holding {
+    /// `alert`, `confirm`, `prompt`, `beforeunload`.
+    Script(ICoreWebView2ScriptDialogOpeningEventArgs),
+    /// The site's sign-in box.
+    SignIn(ICoreWebView2BasicAuthenticationRequestedEventArgs),
+    /// The site's request for a client certificate, with those it may be answered with
+    /// and the words each is known by.
+    Certificate(
+        ICoreWebView2ClientCertificateRequestedEventArgs,
+        Vec<(ICoreWebView2ClientCertificate, String)>,
+    ),
+}
+
+/// The agent's answer to a held dialog (`browser_dialog`).
+#[derive(Clone, Debug, Default)]
+pub struct Said {
+    /// OK, or Cancel.
+    pub accept: bool,
+    /// A prompt's words; for a certificate, words of the subject of the one to present.
+    pub text: Option<String>,
+    /// A sign-in box's user name.
+    pub username: Option<String>,
+    /// A sign-in box's password.
+    pub password: Option<String>,
+}
+
+impl Said {
+    /// OK or Cancel and nothing else: what a dialog nobody answered is given.
+    pub(super) fn only(accept: bool) -> Self {
+        Said {
+            accept,
+            ..Said::default()
+        }
+    }
+
+    /// Of `offered`, by the words each is known by, the one this answer presents: the
+    /// first whose words hold `text`, ignoring case, or the first of all when it names
+    /// none. `None` for an answer of no, or nothing offered.
+    pub(super) fn chosen<'a>(&self, offered: impl IntoIterator<Item = &'a str>) -> Option<usize> {
+        if !self.accept {
+            return None;
+        }
+        let wanted = self
+            .text
+            .as_deref()
+            .map(str::trim)
+            .filter(|one| !one.is_empty())
+            .map(str::to_lowercase);
+        let mut first = None;
+        for (at, words) in offered.into_iter().enumerate() {
+            first.get_or_insert(at);
+            if wanted
+                .as_deref()
+                .is_some_and(|wanted| words.to_lowercase().contains(wanted))
+            {
+                return Some(at);
+            }
+        }
+        if wanted.is_some() {
+            None
+        } else {
+            first
+        }
+    }
 }
 
 /// A window the page asked for, waiting for its agent tab to be built.
@@ -164,7 +234,7 @@ pub fn quieten(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
     windows(app, core, owner);
     permissions(core, owner);
     downloads(app, core, owner);
-    sign_ins(core, owner);
+    sign_ins(app, core, owner);
 
     // The file chooser intercepted and the two stubs in place, before the first
     // document: the page domain on first, since a script registered with it off is kept
@@ -218,17 +288,6 @@ fn dialogs(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
         };
         // Safe: as above.
         let deferral = unsafe { args.GetDeferral()? };
-        let number = NUMBER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        WAITING.with_borrow_mut(|held| {
-            held.insert(
-                label.clone(),
-                Waiting {
-                    args: args.clone(),
-                    deferral,
-                    number,
-                },
-            );
-        });
         let dialog = Dialog {
             kind,
             message: cdp::cut(message, 4_000),
@@ -236,34 +295,54 @@ fn dialogs(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
             url,
             open_ms: 0,
         };
-        DIALOGS
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .get_or_insert_with(HashMap::new)
-            .insert(
-                label.clone(),
-                Held {
-                    dialog,
-                    since: Instant::now(),
-                },
-            );
-
-        // Answered the safe way if nobody answers: an alert read, anything else no.
-        let late = app.clone();
-        let named = label.clone();
-        std::thread::spawn(move || {
-            std::thread::sleep(DIALOG_PATIENCE);
-            let answering = late.clone();
-            let _ = late.run_on_main_thread(move || {
-                let _ = answering;
-                settle(&named, Some(number), kind == DialogKind::Alert, None);
-            });
-        });
+        waiting(
+            &app,
+            &label,
+            dialog,
+            Holding::Script(args.clone()),
+            deferral,
+        );
         Ok(())
     }));
     let mut token = 0i64;
     // Safe: as above.
     let _ = unsafe { core.add_ScriptDialogOpening(&handler, &raw mut token) };
+}
+
+/// A dialog held for the agent, on the window's thread: its engine objects kept here, what
+/// the agent is told kept for `dialog_of`, and answered the safe way if nobody answers in
+/// time - an alert read, anything else no.
+#[cfg(all(windows, not(feature = "cef")))]
+fn waiting(
+    app: &AppHandle,
+    label: &str,
+    dialog: Dialog,
+    asked: Holding,
+    deferral: ICoreWebView2Deferral,
+) {
+    let number = NUMBER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let kind = dialog.kind;
+    WAITING.with_borrow_mut(|held| {
+        held.insert(
+            label.to_string(),
+            Waiting {
+                asked,
+                deferral,
+                number,
+            },
+        );
+    });
+    hold(label, dialog);
+    let late = app.clone();
+    let named = label.to_string();
+    std::thread::spawn(move || {
+        std::thread::sleep(DIALOG_PATIENCE);
+        let answering = late.clone();
+        let _ = late.run_on_main_thread(move || {
+            let _ = answering;
+            settle(&named, Some(number), Said::only(kind == DialogKind::Alert));
+        });
+    });
 }
 
 /// A string the engine hands out through an out pointer, taken and freed.
@@ -293,33 +372,25 @@ pub fn dialog_of(label: &str) -> Option<Dialog> {
         })
 }
 
-/// Answers the dialog a page is holding: OK or Cancel, and a prompt's words. From any
-/// thread; the answer is given on the window's.
-pub fn answer_dialog(
-    app: &AppHandle,
-    label: &str,
-    accept: bool,
-    text: Option<String>,
-) -> Result<(), String> {
+/// Answers the dialog a page is holding: OK or Cancel, a prompt's words, a sign-in box's
+/// user name and password, the certificate to present. From any thread; the answer is
+/// given on the window's.
+pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), String> {
     if dialog_of(label).is_none() {
         return Err("the page is holding no dialog".into());
     }
     #[cfg(feature = "cef")]
-    return super::engines::cef::answer_dialog(app, label, accept, text);
+    return super::engines::cef::answer_dialog(app, label, said);
     #[cfg(all(windows, not(feature = "cef")))]
     {
         let named = label.to_string();
-        app.run_on_main_thread(move || settle(&named, None, accept, text))
+        app.run_on_main_thread(move || settle(&named, None, said))
             .map_err(|error| error.to_string())
     }
 }
 
 /// A dialog a page is holding, kept for the agent: what `dialog_of` answers until the
 /// dialog is answered.
-#[cfg_attr(
-    all(windows, not(feature = "cef")),
-    allow(dead_code, reason = "WebView2 keeps its dialogs where it hears them")
-)]
 pub(super) fn hold(label: &str, dialog: Dialog) {
     DIALOGS
         .lock()
@@ -352,7 +423,7 @@ pub(super) fn release(label: &str) {
     unsafe_code,
     reason = "a dialog's answer is given through WebView2's COM interfaces"
 )]
-fn settle(label: &str, number: Option<u64>, accept: bool, text: Option<String>) {
+fn settle(label: &str, number: Option<u64>, said: Said) {
     let Some(waiting) = WAITING.with_borrow_mut(|held| {
         let fits = held
             .get(label)
@@ -374,11 +445,36 @@ fn settle(label: &str, number: Option<u64>, accept: bool, text: Option<String>) 
     }
     // Safe: the engine's own objects, on the thread they were made on.
     unsafe {
-        if let Some(text) = text {
-            let _ = waiting.args.SetResultText(&HSTRING::from(text));
-        }
-        if accept {
-            let _ = waiting.args.Accept();
+        match &waiting.asked {
+            Holding::Script(args) => {
+                if let Some(text) = &said.text {
+                    let _ = args.SetResultText(&HSTRING::from(text.as_str()));
+                }
+                if said.accept {
+                    let _ = args.Accept();
+                }
+            }
+            Holding::SignIn(args) => {
+                let answered = said.accept.then(|| args.Response().ok()).flatten();
+                match answered {
+                    Some(response) => {
+                        let name = said.username.as_deref().unwrap_or_default();
+                        let password = said.password.as_deref().unwrap_or_default();
+                        let _ = response.SetUserName(&HSTRING::from(name));
+                        let _ = response.SetPassword(&HSTRING::from(password));
+                    }
+                    None => {
+                        let _ = args.SetCancel(true);
+                    }
+                }
+            }
+            Holding::Certificate(args, offered) => {
+                if let Some(at) = said.chosen(offered.iter().map(|(_, words)| words.as_str())) {
+                    let _ = args.SetSelectedCertificate(&offered[at].0);
+                }
+                // No, or none chosen: on without a certificate, as a browser's Cancel goes.
+                let _ = args.SetHandled(true);
+            }
         }
         let _ = waiting.deferral.Complete();
     }
@@ -681,27 +777,47 @@ pub fn downloads_of(agent: &str, tab: Option<&str>) -> Vec<Download> {
         .collect()
 }
 
-/// Basic authentication and client certificates, refused: a password is the reader's
-/// to type, in a takeover (9.4).
+/// The site's sign-in box and its request for a client certificate, held for the agent
+/// like any dialog: `browser_dialog` answers them, and answering yes signs in, which asks
+/// as the mode says - nothing at all under Full permissions (#1072, `policy::answering`).
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "sign-in requests are WebView2's own events, reached through its COM interfaces"
 )]
-fn sign_ins(core: &ICoreWebView2, owner: &Owner) {
+fn sign_ins(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
     if let Ok(ten) = core.cast::<ICoreWebView2_10>() {
-        let label = owner.label.clone();
+        let (app, label) = (app.clone(), owner.label.clone());
         let handler = BasicAuthenticationRequestedEventHandler::create(Box::new(move |_, args| {
-            if let Some(args) = args {
-                // Safe: the event's own arguments, on the window's thread.
-                unsafe { args.SetCancel(true)? };
-                say(
-                    &label,
-                    "warning",
-                    "Orden refused the site's sign-in box: ask the reader with browser_takeover"
-                        .into(),
-                );
+            let Some(args) = args else {
+                return Ok(());
+            };
+            // A page shown to the reader since (6.7) has the engine's own box back.
+            if super::tabs::owner(&label).is_none() {
+                return Ok(());
             }
+            // Safe: the event's own arguments, on the window's thread.
+            let (url, challenge, deferral) = unsafe {
+                (
+                    text(|out| args.Uri(out)),
+                    text(|out| args.Challenge(out)),
+                    args.GetDeferral()?,
+                )
+            };
+            let dialog = Dialog {
+                kind: DialogKind::SignIn,
+                message: cdp::cut(signing_in(&challenge), 4_000),
+                default_text: None,
+                url,
+                open_ms: 0,
+            };
+            waiting(
+                &app,
+                &label,
+                dialog,
+                Holding::SignIn(args.clone()),
+                deferral,
+            );
             Ok(())
         }));
         let mut token = 0i64;
@@ -709,22 +825,75 @@ fn sign_ins(core: &ICoreWebView2, owner: &Owner) {
         let _ = unsafe { ten.add_BasicAuthenticationRequested(&handler, &raw mut token) };
     }
     if let Ok(five) = core.cast::<ICoreWebView2_5>() {
-        let label = owner.label.clone();
+        let (app, label) = (app.clone(), owner.label.clone());
         let handler = ClientCertificateRequestedEventHandler::create(Box::new(move |_, args| {
-            if let Some(args) = args {
-                // Safe: as above.
-                unsafe { args.SetCancel(true)? };
-                say(
-                    &label,
-                    "warning",
-                    "Orden refused the site's request for a client certificate".into(),
-                );
+            let Some(args) = args else {
+                return Ok(());
+            };
+            if super::tabs::owner(&label).is_none() {
+                return Ok(());
             }
+            // Safe: as above.
+            let (host, offered, deferral) = unsafe {
+                let mut offered = Vec::new();
+                if let Ok(all) = args.MutuallyTrustedCertificates() {
+                    let mut count = 0u32;
+                    let _ = all.Count(&raw mut count);
+                    for at in 0..count {
+                        if let Ok(one) = all.GetValueAtIndex(at) {
+                            let words = text(|out| one.Subject(out));
+                            offered.push((one, words));
+                        }
+                    }
+                }
+                (text(|out| args.Host(out)), offered, args.GetDeferral()?)
+            };
+            let message = certificates(offered.iter().map(|(_, words)| words.as_str()));
+            let dialog = Dialog {
+                kind: DialogKind::Certificate,
+                message: cdp::cut(message, 4_000),
+                default_text: None,
+                url: format!("https://{host}/"),
+                open_ms: 0,
+            };
+            waiting(
+                &app,
+                &label,
+                dialog,
+                Holding::Certificate(args.clone(), offered),
+                deferral,
+            );
             Ok(())
         }));
         let mut token = 0i64;
         // Safe: as above.
         let _ = unsafe { five.add_ClientCertificateRequested(&handler, &raw mut token) };
+    }
+}
+
+/// What a site's sign-in box says to the agent, from what the site sent: its realm when
+/// it named one.
+pub(super) fn signing_in(realm: &str) -> String {
+    let realm = realm.trim();
+    if realm.is_empty() {
+        "The site asks to sign in: answer with username and password".to_string()
+    } else {
+        format!("The site asks to sign in to {realm}: answer with username and password")
+    }
+}
+
+/// What a site's request for a client certificate says to the agent: those it may be
+/// answered with, by their subjects.
+pub(super) fn certificates<'a>(offered: impl IntoIterator<Item = &'a str>) -> String {
+    let all: Vec<&str> = offered.into_iter().collect();
+    if all.is_empty() {
+        "The site asks for a client certificate, and none is installed that it takes: accept to go on without one"
+            .to_string()
+    } else {
+        format!(
+            "The site asks for a client certificate: accept to present the first, or name one in text. Offered: {}",
+            all.join("; ")
+        )
     }
 }
 
@@ -753,7 +922,55 @@ pub fn forget(app: &AppHandle, label: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::STUBS;
+    use super::{certificates, signing_in, Said, STUBS};
+    use crate::agents::verbs::{AnswerDialog, DialogKind};
+
+    #[test]
+    fn a_certificate_is_the_one_named_or_the_first() {
+        let offered = ["CN=Ada Lovelace, O=Example", "CN=Build bot, O=Example"];
+        let yes = Said::only(true);
+        assert_eq!(yes.chosen(offered), Some(0));
+        let named = Said {
+            text: Some("build BOT".into()),
+            ..Said::only(true)
+        };
+        assert_eq!(named.chosen(offered), Some(1));
+        let missing = Said {
+            text: Some("nobody".into()),
+            ..Said::only(true)
+        };
+        assert_eq!(missing.chosen(offered), None);
+        assert_eq!(Said::only(false).chosen(offered), None);
+        assert_eq!(yes.chosen(std::iter::empty()), None);
+    }
+
+    #[test]
+    fn the_agent_is_told_how_to_answer_a_sign_in_and_a_certificate() {
+        assert!(signing_in("Staff").contains("sign in to Staff"));
+        assert!(signing_in(" ").contains("username and password"));
+        assert!(certificates(["CN=A", "CN=B"]).ends_with("CN=A; CN=B"));
+        assert!(certificates(std::iter::empty()).contains("go on without one"));
+    }
+
+    #[test]
+    fn browser_dialog_takes_a_user_name_and_a_password() {
+        let answer: AnswerDialog = serde_json::from_value(serde_json::json!({
+            "tab": "a1", "accept": true, "username": "ada", "password": "secret"
+        }))
+        .expect("an answer");
+        assert_eq!(answer.username.as_deref(), Some("ada"));
+        assert_eq!(answer.password.as_deref(), Some("secret"));
+        assert_eq!(
+            serde_json::to_value(DialogKind::SignIn).expect("json"),
+            "sign_in"
+        );
+        assert_eq!(
+            serde_json::to_value(DialogKind::Certificate).expect("json"),
+            "certificate"
+        );
+        assert!(DialogKind::SignIn.signs_in() && DialogKind::Certificate.signs_in());
+        assert!(!DialogKind::Prompt.signs_in());
+    }
 
     #[test]
     fn the_stubs_touch_nothing_but_print_and_the_pickers() {

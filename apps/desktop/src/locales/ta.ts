@@ -31,7 +31,8 @@ export const ta: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'முழு அனுமதிகள்',
   'Auto mode': 'தானியங்கு பயன்முறை',
-  'Full permissions: nothing is asked first': 'முழு அனுமதிகள்: முன்னதாக எதுவும் கேட்கப்படாது',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'முழு அனுமதிகள்: எதுவும் கேட்கப்படாது அல்லது உங்களிடம் திருப்பித் தரப்படாது, உள்நுழைவு, பணம் செலுத்துதல், அனுப்புதல், நீக்குதல் கூட',
   // Import: Zen's tabs
   'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
   'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
@@ -2711,4 +2712,6 @@ export const ta: Dictionary = {
   'Agent instructions': 'ஏஜென்ட் அறிவுறுத்தல்கள்',
   "AGENTS is this space's agent instructions":
     'AGENTS என்பது இந்த இடத்தின் ஏஜென்ட் அறிவுறுத்தல்கள்',
+  '{title}, unread': '{title}, படிக்காதது',
+  '{title}, running': '{title}, இயங்குகிறது',
 }

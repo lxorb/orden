@@ -1,7 +1,7 @@
 /** A tool row's verb and object. */
 
 import { describe, expect, test } from 'vitest'
-import { bareName, objectOf, verbOf } from './verbs'
+import { bareName, helperOf, objectOf, verbOf } from './verbs'
 
 describe('a tool row', () => {
   test('says nib’s tools with a verb, whichever road called them', () => {
@@ -20,5 +20,23 @@ describe('a tool row', () => {
     expect(objectOf({ url: 'https://example.org/a/b' })).toBe('example.org')
     expect(objectOf({ query: 'kestrel' })).toBe('“kestrel”')
     expect(objectOf(null)).toBe('')
+  })
+})
+
+describe('a helper’s row (#1062)', () => {
+  test('names the helper’s thread it opens, from the API loop or a session’s answer', () => {
+    const ok = (text: string, agent?: string) => ({
+      text,
+      images: [],
+      error: false,
+      ...(agent ? { agent } : {}),
+    })
+    expect(helperOf({ verb: 'run_agent', result: ok('Two herons.', 'h-1') })).toBe('h-1')
+    expect(
+      helperOf({ verb: 'mcp__nib__run_agent', result: ok('{"agent": "h-2", "state": "done"}') }),
+    ).toBe('h-2')
+    expect(helperOf({ verb: 'agent_result', result: ok('{"agent":"h-3"}') })).toBe('h-3')
+    expect(helperOf({ verb: 'read_note', result: ok('{"agent":"h-4"}') })).toBeNull()
+    expect(helperOf({ verb: 'run_agent' })).toBeNull()
   })
 })

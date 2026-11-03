@@ -137,8 +137,11 @@
   function renameKey(event: KeyboardEvent & { currentTarget: HTMLInputElement }, key: string) {
     const typed = event.currentTarget.value.trim()
     const enter = event.key === 'Enter' && !event.isComposing
+    // A name another row has is refused, and that row is not the one being renamed.
+    const other = propertyNamed(source(), typed)
+    const taken = !!other && other.key !== key
     commitOnEnter(event)
-    if (enter) void standOnKey(typed, key)
+    if (enter) void standOnKey(...(taken ? [key] : [typed, key]))
     cancelOnEscape(event, () => {
       renaming = null
       void standOnKey(key)
@@ -251,8 +254,8 @@
             />
           {:else if writable}
             <!-- A control a key can stand on: Shift+F10 there is the row's menu, which in the
-                 value's field is the field's own, and Enter renames, which a pointer does
-                 with a double click (#523). A span with a role, or its words stop being
+                 value's field is the field's own, and Enter, Space or F2 renames, as F2 renames a
+                 row of the file list and a pointer does with a double click (#523). A span with a role, or its words stop being
                  selectable. -->
             <span
               class="key"
@@ -270,7 +273,7 @@
                   showMenu(new MouseEvent('contextmenu', at), property)
                   return
                 }
-                if (event.key !== 'Enter' && event.key !== ' ') return
+                if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'F2') return
                 event.preventDefault()
                 void startRenaming(property.key)
               }}

@@ -31,7 +31,8 @@ export const ptBR: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Permissões totais',
   'Auto mode': 'Modo automático',
-  'Full permissions: nothing is asked first': 'Permissões totais: nada é perguntado antes',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Permissões totais: nada é perguntado nem devolvido a você, nem mesmo entrar, pagar, enviar ou excluir',
   // Import: Zen's tabs
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contêineres ficam no Zen',
@@ -2715,4 +2716,6 @@ export const ptBR: Dictionary = {
   'Trust this space again': 'Confiar neste espaço de novo',
   'Agent instructions': 'Instruções para agentes',
   "AGENTS is this space's agent instructions": 'AGENTS são as instruções para agentes deste espaço',
+  '{title}, unread': '{title}, não lido',
+  '{title}, running': '{title}, em andamento',
 }

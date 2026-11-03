@@ -30,7 +30,8 @@ export const zhHant: Dictionary = {
   // AI: the three permission modes
   'Full permissions': '完整權限',
   'Auto mode': '自動模式',
-  'Full permissions: nothing is asked first': '完整權限：事先不會詢問任何事',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    '完整權限：不會詢問或交還給你任何事，登入、付款、傳送和刪除也不例外',
   // Import: Zen's tabs
   'Import from Zen': '從 Zen 匯入',
   'Containers stay in Zen': '容器會留在 Zen 中',
@@ -2586,4 +2587,6 @@ export const zhHant: Dictionary = {
   'Trust this space again': '再次信任此空間',
   'Agent instructions': '代理指示',
   "AGENTS is this space's agent instructions": 'AGENTS 是此空間的代理指示',
+  '{title}, unread': '{title}，未讀',
+  '{title}, running': '{title}，執行中',
 }

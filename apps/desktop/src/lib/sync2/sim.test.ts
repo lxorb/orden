@@ -148,6 +148,43 @@ describe('scripted roads, the engine as every device', () => {
     )
   })
 
+  test("the space's own inbox made on two devices is one inbox with every task of both, once", async () => {
+    // #1044: a task added on each device while apart makes the hidden inbox on each, and
+    // both had moved the same old inbox in. One inbox, every task once, nothing asked.
+    const made = (device: number, marker: string): Step => ({
+      t: 'act',
+      device,
+      action: {
+        t: 'create',
+        folder: null,
+        name: '.Inbox.md',
+        words: `- [ ] Call the bank\n- [ ] Buy milk\n- [ ] ${marker}\n`,
+      },
+    })
+    const report = await run([
+      { t: 'offline', device: 0 },
+      made(0, 'mk701z'),
+      made(1, 'mk702z'),
+      { t: 'pass', device: 1 },
+      settle,
+      { t: 'online', device: 0 },
+      { t: 'pass', device: 0 },
+      settle,
+      { t: 'pass', device: 0 },
+      { t: 'pass', device: 1 },
+      settle,
+    ])
+
+    expect(report.failures).toEqual([])
+    expect(report.held).toBe(0)
+    const inboxes = report.account.entries.filter((one) => one.name.includes('Inbox'))
+    expect(inboxes.map((one) => one.name)).toEqual(['.Inbox.md'])
+    const text = textOf(report, '.Inbox.md')
+    expect(markersIn(text)).toEqual(expect.arrayContaining(['mk701z', 'mk702z']))
+    expect(text.match(/Call the bank/g)).toHaveLength(1)
+    expect(text.match(/Buy milk/g)).toHaveLength(1)
+  })
+
   test('a sentence rewritten on both sides is held and asked, and Keep both keeps both', async () => {
     const rewrite = (device: number, words: string): Step[] => [
       { t: 'act', device, action: { t: 'cut', note: PLAN, at: 0, length: 36 } },

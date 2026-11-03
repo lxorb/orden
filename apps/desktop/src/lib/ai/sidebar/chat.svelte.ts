@@ -27,7 +27,10 @@ import { unlisted } from '../chat/catalogue'
 import { nextEffort, within } from '../chat/effort'
 import {
   branchThread,
+  chatsOf,
   deleteThread,
+  findParents,
+  unreadOf,
   isDeleted,
   staysDeleted,
   keepThread,
@@ -51,6 +54,7 @@ import { added, noUsage } from '../chat/usage'
 import { nextMode } from '../modes'
 import type { Provider } from '../providers'
 import { ai } from '../store.svelte'
+import { chatsUnread, panelKeepsUnread } from '../unread.svelte'
 import { threadMarkdown } from './export'
 import { readOutside } from '../chat/transcript'
 import { draftOf, type Front, type Picked } from './gather'
@@ -92,6 +96,8 @@ export interface Queued {
 export interface Head {
   id: string
   title: string
+  /** The thread it is a helper of, which its conversation goes back to. */
+  parent: string | null
   provider: string
   model: string
   effort: Effort
@@ -121,6 +127,7 @@ function headOf(thread: Thread): Head {
   return {
     id: thread.id,
     title: thread.title,
+    parent: thread.parent ?? null,
     provider: thread.provider,
     model: thread.model,
     effort: thread.effort,
@@ -133,9 +140,19 @@ function headOf(thread: Thread): Head {
   }
 }
 
+/** Where a space's helpers were told their parents, once (`findParentsOnce`). */
+const PARENTS_KEY = 'nib:ai-helpers-parented'
+
 class Chat implements Panel {
-  /** Every space's threads, newest first, each with the space it is kept in. */
-  heads = $state.raw<Listed[]>([])
+  /** Every space's threads, newest first, each with the space it is kept in: helpers
+   *  too, which the lists leave out. */
+  every = $state.raw<Listed[]>([])
+  /** The chats, as every list of them shows them (#1062): `every` without the helpers,
+   *  which are their parents' steps. */
+  heads = $derived(chatsOf(this.every))
+  /** The chats with an answer the reader has not seen yet, helpers' counted in their
+   *  chat's (#1064). */
+  unread = $derived(unreadOf(this.every))
   /** The open thread, as the controls show it. */
   head = $state.raw<Head | null>(null)
   /** Its turns, as the conversation draws them. */
@@ -275,9 +292,10 @@ class Chat implements Panel {
   private async arrive(opening: boolean): Promise<void> {
     const spaces = this.spaces
     for (const space of spaces) await this.adoptOldAsk(space)
-    const heads = await listEveryThread(spaces).catch(() => this.heads)
+    const heads = await listEveryThread(spaces).catch(() => this.every)
     if (this.spaces !== spaces) return
-    this.heads = heads
+    this.every = heads
+    void this.findParentsOnce(spaces)
     if (!opening) return
     const { last, before } = lastOpen()
     const id =
@@ -301,13 +319,30 @@ class Chat implements Panel {
 
   private async refreshHeads(): Promise<void> {
     const spaces = this.spaces
-    const heads = await listEveryThread(spaces).catch(() => this.heads)
-    if (this.spaces === spaces) this.heads = heads
+    const heads = await listEveryThread(spaces).catch(() => this.every)
+    if (this.spaces === spaces) this.every = heads
+  }
+
+  /** Each space's helpers kept before a helper said whose it was (#1062) told so once,
+   *  in the background, and the lists drawn again without them. */
+  private async findParentsOnce(spaces: readonly string[]): Promise<void> {
+    let wrote = 0
+    for (const space of spaces) {
+      const key = `${PARENTS_KEY}:${space}`
+      if (!space || stored(key) === true) continue
+      try {
+        wrote += await findParents(space)
+        keep(key, 'true')
+      } catch {
+        // Tried again next launch.
+      }
+    }
+    if (wrote) await this.refreshHeads()
   }
 
   /** The space a thread is kept in: its line's, else the space in front. */
   private spaceOf(id: string): string {
-    return this.live.get(id)?.space ?? this.heads.find((one) => one.id === id)?.space ?? this.space
+    return this.live.get(id)?.space ?? this.every.find((one) => one.id === id)?.space ?? this.space
   }
 
   /** A new thread on the provider Used for > Ask names, in the last mode picked. Not
@@ -425,6 +460,30 @@ class Chat implements Panel {
     if (thread.turns.length) void keepThread(thread).catch(() => undefined)
   }
 
+  /** The agent said something new in `thread` (an answer, a question for the reader):
+   *  unread until the reader sees it (#1064). Written down with what it said. */
+  answered(thread: Thread): void {
+    const answered = Date.now()
+    thread.answered = answered
+    const listed = this.every.some((one) => one.id === thread.id)
+    this.every = this.every.map((one) => (one.id === thread.id ? { ...one, answered } : one))
+    if (!thread.turns.length) return
+    // A thread not in the list yet (its first answer still on its way) is put there.
+    const kept = keepThread(thread).catch(() => undefined)
+    if (!listed) void kept.then(() => this.refreshHeads())
+  }
+
+  /** The reader has the thread in view with its latest answer (Conversation.svelte):
+   *  read, here and wherever it is kept. Its helpers' answers are read with it. */
+  async saw(id: string): Promise<void> {
+    const thread = this.threadOf(id) ?? (await this.held(id))
+    if (!thread) return
+    const seen = Date.now()
+    thread.seen = seen
+    this.every = this.every.map((one) => (one.id === id ? { ...one, seen } : one))
+    if (thread.turns.length) await keepThread(thread).catch(() => undefined)
+  }
+
   /** The thread list in the conversation's place; asked again with nothing to search
    *  for while it is there, the conversation back (the side's Chats button). */
   showThreads(query = ''): void {
@@ -473,6 +532,8 @@ class Chat implements Panel {
       }
     } else if (event.type === 'part') {
       this.changed.add(event.turn)
+      // A question for the reader is an answer they have not seen, until they do.
+      if (event.part.kind === 'tool' && event.part.state === 'asking') this.answered(thread)
     } else if (event.type === 'done') {
       this.everything = true
     }
@@ -712,7 +773,7 @@ class Chat implements Panel {
     } finally {
       once?.signal?.removeEventListener('abort', stop)
       if (once) Object.assign(thread, before)
-      await this.finish(thread)
+      await this.finish(thread, !stopper.signal.aborted)
     }
     send.settle?.(ended)
     // A stop pauses the queue: what was waiting stays, to be sent or taken back.
@@ -742,8 +803,10 @@ class Chat implements Panel {
     return stopper
   }
 
-  /** A thread is done answering, however it ended: drawn whole and written down. */
-  private async finish(thread: Thread): Promise<void> {
+  /** A thread is done answering, however it ended: drawn whole and written down; an
+   *  answer the reader did not stop is one for them to see (`replied`). */
+  private async finish(thread: Thread, replied = false): Promise<void> {
+    if (replied && thread.turns.at(-1)?.role === 'model') thread.answered = Date.now()
     this.stoppers.delete(thread.id)
     this.running = this.running.filter((one) => one !== thread.id)
     this.pending = without(this.pending, thread.id)
@@ -771,8 +834,8 @@ class Chat implements Panel {
 
   /** An answer other than a send's (Ask again, a compaction) done: what was queued
    *  meanwhile goes next, as after a send, unless it was stopped. */
-  private async ended(thread: Thread, stopper: AbortController): Promise<void> {
-    await this.finish(thread)
+  private async ended(thread: Thread, stopper: AbortController, replied = false): Promise<void> {
+    await this.finish(thread, replied && !stopper.signal.aborted)
     if (!stopper.signal.aborted) this.next(thread)
   }
 
@@ -977,7 +1040,7 @@ class Chat implements Panel {
         if (thread.turns.length === at) thread.turns.push(...taken)
         if (thread === this.open) this.trouble = message(error, t('The model did not answer.'))
       })
-      .finally(() => void this.ended(thread, stopper))
+      .finally(() => void this.ended(thread, stopper, true))
   }
 
   /** The open thread's last message again a little after its plan resets (the button
@@ -1264,10 +1327,18 @@ class Chat implements Panel {
 
 export const chat = new Chat()
 
+// The ✦ tab's dot, kept with the list (#1064).
+panelKeepsUnread()
+$effect.root(() => {
+  $effect(() => {
+    chatsUnread.any = chat.unread.size > 0
+  })
+})
+
 // A call of a thread's that names no space works in the thread's space, not the one in
 // front (docs/ai-sidebar.md 4.11): its helpers' too, which are threads of their own.
 answerThreadSpaces(
-  (id) => chat.threadOf(id)?.space ?? chat.heads.find((one) => one.id === id)?.space ?? null,
+  (id) => chat.threadOf(id)?.space ?? chat.every.find((one) => one.id === id)?.space ?? null,
 )
 
 /** The space a thread works in: its own, and the one in front where it names none this

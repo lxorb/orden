@@ -42,6 +42,7 @@ import { fileOfUpdates, judge, shapeOf, turn, unixLines } from './kinds'
 import { type Outboxed, settle, type SpaceState } from './places'
 import { project } from './project'
 import { againstBytes, type Merging, type Outgoing, outgoingBytes } from './records'
+import { carriedOwn, withTasksOf } from '@orden/bases/inbox'
 import { keepLosers, rejoin } from './rejoin'
 import { put, remove, type Change, type EntryRow } from './store'
 import { Refused } from './transport'
@@ -494,39 +495,50 @@ async function mergeDays(core: Core, space: SpaceState) {
     if (!theirs || !target || core.hasPending(into) || core.isHeld(into)) continue
     const base = create.mergeable?.text ?? ''
     const remote = theirs.text()
-    const times = { local: ours?.pendingAt ?? 0, remote: theirs.pendingAt }
-    const judged = judge(theirs.shape, base, words, remote, times)
-    const held = judged.resolution === null
-    core.classified.push({
-      id: into,
-      base,
-      local: words,
-      remote,
-      times,
-      held,
-      ...(judged.merged === undefined ? {} : { merged: judged.merged }),
-    })
-
-    if (judged.resolution === null) {
-      const against = { t: 'merge', base, local: words, from: mine } as const
-      const holding: Holding = {
-        row: {
-          id: into,
-          remote: againstBytes(against),
-          remote_sv: new Uint8Array(),
-          device: core.by.get(into) ?? null,
-          at: core.world.now(),
-        },
-        against,
-      }
-      changes.push(...core.holdChanges(holding))
-    } else {
-      const resolution = judged.resolution
-      changes.push(...keepLosers(core, space, into, judged.lost, words, remote))
+    if (target.parent === null && carriedOwn(target.name)) {
+      // The space's own inbox, made apart on two devices: every task of both, each
+      // once, never a question about a file nobody opens (#1044). Two devices moving
+      // one old inbox in make the same list, which is then that list once.
+      const resolution = withTasksOf(remote, words)
       theirs.write((live) => turn(theirs.shape, live, remote, resolution, MINE))
       theirs.flush()
       changes.push(...core.docChanges(theirs))
       changes.push(...(await project(core, space, target, theirs)))
+    } else {
+      const times = { local: ours?.pendingAt ?? 0, remote: theirs.pendingAt }
+      const judged = judge(theirs.shape, base, words, remote, times)
+      const held = judged.resolution === null
+      core.classified.push({
+        id: into,
+        base,
+        local: words,
+        remote,
+        times,
+        held,
+        ...(judged.merged === undefined ? {} : { merged: judged.merged }),
+      })
+
+      if (judged.resolution === null) {
+        const against = { t: 'merge', base, local: words, from: mine } as const
+        const holding: Holding = {
+          row: {
+            id: into,
+            remote: againstBytes(against),
+            remote_sv: new Uint8Array(),
+            device: core.by.get(into) ?? null,
+            at: core.world.now(),
+          },
+          against,
+        }
+        changes.push(...core.holdChanges(holding))
+      } else {
+        const resolution = judged.resolution
+        changes.push(...keepLosers(core, space, into, judged.lost, words, remote))
+        theirs.write((live) => turn(theirs.shape, live, remote, resolution, MINE))
+        theirs.flush()
+        changes.push(...core.docChanges(theirs))
+        changes.push(...(await project(core, space, target, theirs)))
+      }
     }
 
     // This device's own day note goes: its words are in the one that was there.

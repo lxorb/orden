@@ -97,6 +97,14 @@ describe('a helper', () => {
     })
   })
 
+  test('is its parent’s, not a chat of its own; an outside agent’s has no parent (#1062)', async () => {
+    const { made, runs } = roads()
+    await helpers.start(asked(parent('p10'), 'sonnet'), made)
+    await helpers.start(asked(null, 'sonnet'), made)
+    expect(runs[0]?.thread.parent).toBe('p10')
+    expect(runs[1]?.thread).not.toHaveProperty('parent')
+  })
+
   test('works in its parent’s mode, and a profile’s instructions come first', async () => {
     const { made, runs } = roads()
     const plan = { ...parent('p2'), mode: 'plan' as const }

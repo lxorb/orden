@@ -1788,13 +1788,11 @@
     gap: 1px;
   }
 
-  /* The name and the `?` beside it on one line, so the glyph reads as belonging
-     to the word rather than to the row. */
+  /* The name and the `?` after it as one run of text, so the glyph reads as
+     belonging to the word rather than to the row: it sits on the letters and wraps
+     with the last word, which Hint.svelte does once for every label (#1052). */
   .setting .name .what {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    min-width: 0;
+    display: block;
   }
 
   .setting .name small {
