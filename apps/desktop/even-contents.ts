@@ -334,9 +334,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,795,500, for #1090: the window's door to the
  *  notice a Mac's AI keys are typed again by, which the plugin never opens
  *  (surfaces.svelte.ts). Measured 5,795,317.
+ *
+ *  The code raised on 2026-11-03, to 5,800,000, for #331: the overview's one canvas,
+ *  each space's place on it kept (overview/places.svelte.ts), moved and zoomed by the
+ *  wheel, a touchpad and two fingers (overview/camera.ts), and a window dropped against a
+ *  side making a pane there. Measured 5,799,795.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_795_500,
+  code: 5_800_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
