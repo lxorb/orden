@@ -244,6 +244,9 @@ export interface Thread {
    *  (`Once`, `run` in chat.svelte.ts). Those are what a write says: a send's own Auto read
    *  back as the thread's would let later changes through without Approve. */
   own?: Pick<Thread, 'mode' | 'model' | 'effort'>
+  /** Read from a file another window is still answering in: not this window's to write
+   *  over, until something is sent here (`answeringIn` in threads.ts). */
+  elsewhere?: boolean
   /** The provider's id in Settings > AI. */
   provider: string
   model: string

@@ -291,6 +291,66 @@ describe('a file written while its answer was on its way', () => {
   })
 })
 
+/** Two windows hold one file. Window A's answer on its way is not an answer the window
+ *  went on, and a Stopped row in B would offer Ask again over it. */
+describe('a file another window is still answering in', () => {
+  const answered = (at: number, by = 'another window') =>
+    threadIn({
+      ...newThread('work', 'p', 'm'),
+      answering: 'm1',
+      answeringAt: at,
+      answeringIn: by,
+      turns: [
+        { id: 'y1', role: 'you', at: 1, parts: [] },
+        { id: 'm1', role: 'model', at: 2, parts: [{ kind: 'text', text: 'Herons' }] },
+      ],
+    })
+
+  test('says no Stopped while it was written lately, and is not written from here', async () => {
+    const read = answered(Date.now())
+    if (!read) throw new Error('no thread')
+
+    expect(read.turns[1]?.parts).toEqual([{ kind: 'text', text: 'Herons' }])
+    expect(read.elsewhere).toBe(true)
+
+    const before = writes.length
+    await keepThread(read)
+    expect(writes).toHaveLength(before)
+  })
+
+  test('is one the window went on once it has long gone quiet', () => {
+    const read = answered(Date.now() - 10 * 60_000)
+
+    expect(read?.turns[1]?.parts.at(-1)).toEqual({ kind: 'notice', code: 'stopped', text: '' })
+    expect(read?.elsewhere).toBeUndefined()
+  })
+
+  test('written by this window before a reload is over at once', async () => {
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [{ id: 'm1', role: 'model', at: 2, parts: [] }]
+    thread.answering = 'm1'
+    await keepThread(thread)
+
+    const read = await readThread('work', thread.id)
+    expect(read?.turns[0]?.parts).toEqual([{ kind: 'notice', code: 'stopped', text: '' }])
+    expect(read?.elsewhere).toBeUndefined()
+  })
+
+  test('says when and where it was written, and only while it is answering', async () => {
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [{ id: 'm1', role: 'model', at: 2, parts: [] }]
+    thread.answering = 'm1'
+    await keepThread(thread)
+    const body = JSON.parse(writes.at(-1) ?? '{}') as Record<string, unknown>
+    expect(typeof body.answeringAt).toBe('number')
+    expect(typeof body.answeringIn).toBe('string')
+
+    delete thread.answering
+    await keepThread(thread)
+    expect(JSON.parse(writes.at(-1) ?? '{}')).not.toHaveProperty('answeringAt')
+  })
+})
+
 describe('a branch', () => {
   test('is a copy up to a turn under a new id, with the compaction only if it is in it', () => {
     const thread = had()

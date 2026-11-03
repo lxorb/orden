@@ -1554,6 +1554,42 @@ describe('an answer on its way', () => {
     expect(thread).toMatchObject({ mode: 'auto', model: 'other', effort: 'high' })
   })
 
+  test('is written again while nothing arrives, so another window knows it is alive', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] })
+    try {
+      const { one, written } = await answering()
+      await vi.waitFor(async () => expect((await written())?.answering).toBe('answer'))
+      const first = (await written()) as Thread & { answeringAt: number }
+      await vi.advanceTimersByTimeAsync(60_000)
+
+      await vi.waitFor(async () => {
+        const now = (await written()) as Thread & { answeringAt: number }
+        expect(now.answeringAt).toBeGreaterThan(first.answeringAt)
+      })
+      one.end()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('in another window is not asked again from this one', async () => {
+    const chat = await launched()
+    chat.here('work')
+    const { newThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [
+      { id: 'y', role: 'you', at: 1, parts: [], draft: { text: 'Hi', attachments: [] } },
+      { id: 'm', role: 'model', at: 2, parts: [] },
+    ]
+    thread.elsewhere = true
+    engine.send.mockClear()
+
+    chat.retry(undefined, thread)
+
+    expect(engine.send).not.toHaveBeenCalled()
+    expect(thread.turns).toHaveLength(2)
+  })
+
   test('is written without the mark once it has ended', async () => {
     const { model, one, written } = await answering()
     one.on({ type: 'done', stop: 'end' })

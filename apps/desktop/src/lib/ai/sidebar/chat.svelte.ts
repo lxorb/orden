@@ -86,6 +86,11 @@ const AFTER_RESET = 30_000
 const KEEP_QUIET = 1_000
 const KEEP_AT_MOST = 3_000
 
+/** How often an answer with nothing new is written anyway: a long call is silent, and
+ *  another window tells an answer alive from a window gone by the time in the file
+ *  (`GONE_AFTER` in chat/threads.ts). */
+const ANSWER_BEAT = 30_000
+
 /** A message waiting behind a running turn. */
 export interface Queued {
   id: string
@@ -552,6 +557,12 @@ class Chat implements Panel {
 
   // ── An answer on its way, written down ─────────────────
 
+  /** Whether another window is still answering in the chat in front, which Ask again
+   *  would answer a second time. */
+  get answeredElsewhere(): boolean {
+    return !!this.open?.elsewhere
+  }
+
   /** The threads whose answers have grown since they were last written. */
   private readonly unkept = new Set<Thread>()
 
@@ -563,11 +574,29 @@ class Chat implements Panel {
    *  a chat that has only just started is one the next launch can find. */
   private answeringIn(thread: Thread, turn: Turn): void {
     thread.answering = turn.id
+    delete thread.elsewhere
+    this.beat ??= setInterval(() => this.answersAlive(), ANSWER_BEAT)
     this.unkept.delete(thread)
     const listed = this.every.some((one) => one.id === thread.id)
     const kept = keepThread(thread).catch(() => undefined)
     if (thread === this.open) rememberOpen(thread.id)
     if (!listed) void kept.then(() => this.refreshHeads())
+  }
+
+  /** What says the answers here are alive, while there are any. */
+  private beat: ReturnType<typeof setInterval> | null = null
+
+  private answersAlive(): void {
+    const answering = this.running.flatMap((id) => {
+      const thread = this.live.get(id)
+      return thread?.answering ? [thread] : []
+    })
+    if (answering.length) {
+      for (const thread of answering) void keepThread(thread).catch(() => undefined)
+      return
+    }
+    if (this.beat !== null) clearInterval(this.beat)
+    this.beat = null
   }
 
   /** A part of an answer arrived or changed. A call that has finished is written now:
@@ -1073,7 +1102,7 @@ class Chat implements Panel {
   /** The last message again, in place of its answer (Ask again); with a model named,
    *  that model answers this time and from here on (retry with another model). */
   retry(model?: { provider: string; id: string }, thread = this.open): void {
-    if (!thread || this.running.includes(thread.id)) return
+    if (!thread || this.running.includes(thread.id) || thread.elsewhere) return
     if (model) this.setModel(model.provider, model.id)
     let at = thread.turns.length - 1
     while (at >= 0 && (thread.turns[at]?.role !== 'you' || thread.turns[at]?.steered)) at--

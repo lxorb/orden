@@ -118,6 +118,7 @@ export function branchThread(thread: Thread, upTo: string, title?: string): Thre
   Object.assign(copy, copy.own)
   delete copy.own
   delete copy.answering
+  delete copy.elsewhere
   const now = Date.now()
   return {
     ...copy,
@@ -226,6 +227,40 @@ function turnIn(value: unknown): Turn | null {
   return turn
 }
 
+/** How long a file an answer is being written to may go unwritten before the window
+ *  answering in it is taken to be gone. Well over the panel's beat, `ANSWER_BEAT` in
+ *  chat.svelte.ts, since a browser slows the timers of a window nobody is looking at. */
+const GONE_AFTER = 3 * 60_000
+
+/** This window's name for itself. A reload keeps it, so a file this window wrote and is
+ *  not answering in any more is over at once; another window has its own. */
+function thisWindow(): string {
+  try {
+    const held = sessionStorage.getItem(WINDOW_KEY)
+    if (held) return held
+    const made = crypto.randomUUID()
+    sessionStorage.setItem(WINDOW_KEY, made)
+    return made
+  } catch {
+    return THIS_PAGE
+  }
+}
+
+const WINDOW_KEY = 'nib:ai-window'
+const THIS_PAGE = crypto.randomUUID()
+
+/** Whether another window is still answering in this file, as far as anybody can tell
+ *  from here. */
+function answeredElsewhere(value: Record<string, unknown>): boolean {
+  const { answeringAt, answeringIn } = value
+  return (
+    isString(answeringIn) &&
+    answeringIn !== thisWindow() &&
+    isNumber(answeringAt) &&
+    Date.now() - answeringAt < GONE_AFTER
+  )
+}
+
 /** An answer the window went on, as the reader will find it: all that arrived, and
  *  the row a stop leaves, whose Ask again is the way on. */
 function cutOff(turns: Turn[], answering: string): void {
@@ -251,7 +286,8 @@ export function threadIn(value: unknown): Thread | null {
   const turns = Array.isArray(value.turns)
     ? value.turns.map(turnIn).filter((one): one is Turn => one !== null)
     : []
-  if (isString(value.answering)) cutOff(turns, value.answering)
+  const elsewhere = isString(value.answering) && answeredElsewhere(value)
+  if (isString(value.answering) && !elsewhere) cutOff(turns, value.answering)
   // A compaction's block is the provider's and goes back as it came, so only where it
   // starts is checked.
   const compaction =
@@ -262,10 +298,17 @@ export function threadIn(value: unknown): Thread | null {
   const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
   // Every field the engine reads is checked below; the rest (a goal, what was spent) is
   // kept as written.
-  const rest = ['always', 'without', 'parent', 'answered', 'seen', 'answering'].reduce(
-    without,
-    value,
-  )
+  const rest = [
+    'always',
+    'without',
+    'parent',
+    'answered',
+    'seen',
+    'answering',
+    'answeringAt',
+    'answeringIn',
+    'elsewhere',
+  ].reduce(without, value)
   return {
     ...(rest as unknown as Thread),
     id,
@@ -284,6 +327,7 @@ export function threadIn(value: unknown): Thread | null {
     created: isNumber(value.created) ? value.created : 0,
     updated: isNumber(value.updated) ? value.updated : 0,
     ...(compaction ? { compaction } : {}),
+    ...(elsewhere ? { elsewhere } : {}),
   }
 }
 
@@ -432,7 +476,9 @@ export async function readThread(space: string, id: string): Promise<Thread | nu
 
 /** A thread as a file says it: its own mode and model, whatever one send is running on. */
 function asWritten({ own, ...thread }: Thread): Thread {
-  return { ...thread, ...own }
+  // When and where, for the window that reads it meanwhile; see `answeredElsewhere`.
+  const alive = thread.answering ? { answeringAt: Date.now(), answeringIn: thisWindow() } : {}
+  return { ...thread, ...own, ...alive }
 }
 
 /** Writes a thread down, and its line in the space's list. */
@@ -525,7 +571,7 @@ function again(entry: { next: boolean }): boolean {
 }
 
 export function keepThread(thread: Thread): Promise<void> {
-  if (removed.has(thread.id)) return Promise.resolve()
+  if (removed.has(thread.id) || thread.elsewhere) return Promise.resolve()
   const held = writing.get(thread.id)
   if (held) {
     held.next = true
