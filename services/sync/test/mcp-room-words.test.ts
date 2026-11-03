@@ -229,6 +229,174 @@ describe('update_task on a note with a room', () => {
   })
 })
 
+describe('a move whose note will not let go', () => {
+  /** The note it leaves, written in every time it is read once the task has landed. */
+  function writtenIn(from: string, into: string, change: (at: number) => Promise<void>) {
+    const get = env.NOTES.get.bind(env.NOTES)
+    let busy = false
+    let at = 0
+    env.NOTES.get = (async (key: string) => {
+      const object = await get(key)
+      if (busy || key !== `spaces/${space}/${from}`) return object
+      busy = true
+      const there = await get(`spaces/${space}/${into}`)
+      if ((await there?.text())?.includes('Ship')) await change(at++)
+      busy = false
+      return object
+    }) as never
+  }
+
+  test('says it is in both, and which to take it out of', async () => {
+    const start = '- [ ] Ship\n'
+    const from = await made('Plan.md', start)
+    const into = await made('Later.md', 'later\n')
+    await prepare()
+    await rooms.settle()
+    const { tasks } = JSON.parse(await tool('list_tasks', {}))
+    writtenIn(from, into, async () => {
+      await typed(from, 'x\n', start)
+      await rooms.settle()
+    })
+
+    const answer = await tool('update_task', { at: tasks[0].at, move_to: { note: 'Later' } })
+
+    expect(answer).toMatch(/Later\.md/)
+    expect(answer).toMatch(/still in Plan\.md/)
+    expect(answer).toMatch(/not move it again/)
+  })
+
+  test('says so where the task was edited there meanwhile, and stays', async () => {
+    const start = '- [ ] Ship\n'
+    const from = await made('Plan.md', start)
+    const into = await made('Later.md', 'later\n')
+    const { tasks } = JSON.parse(await tool('list_tasks', {}))
+    writtenIn(from, into, async (at) => {
+      if (at > 0) return
+      const version = (
+        env.db.prepare('select version from notes where id = ?').get(from) as { version: number }
+      ).version
+      await call(env, `/v1/notes/${from}`, {
+        token,
+        method: 'PUT',
+        body: { content: '- [ ] Ship it today\n', baseVersion: version },
+      })
+    })
+
+    const answer = JSON.parse(
+      await tool('update_task', { at: tasks[0].at, move_to: { note: 'Later' } }),
+    )
+
+    expect(answer.at).toMatch(/^Later\.md#/)
+    expect(answer.left).toMatch(/Plan\.md/)
+    expect(await body(from)).toBe('- [ ] Ship it today\n')
+    expect(await body(into)).toContain('Ship')
+  })
+})
+
+describe('a note that starts with a byte order mark', () => {
+  test.each([false, true])('takes a task, on a room: %s', async (room) => {
+    const id = await made('Bom.md', '\uFEFF- [ ] First\n')
+    if (room) {
+      await prepare()
+      await rooms.settle()
+    }
+
+    const answer = await tool('add_task', { note: 'Bom', text: 'from mcp' })
+
+    expect(answer).not.toMatch(/changed while/)
+    const row = env.db.prepare('select hash from notes where id = ?').get(id)
+    expect(row).toBeTruthy()
+    expect(await body(id)).toContain('- [ ] First')
+    expect(await body(id)).toContain('- [ ] from mcp')
+  })
+})
+
+describe('two add_tasks to a note not there yet', () => {
+  test('both land, in one note', async () => {
+    const answers = await Promise.all([
+      tool('add_task', { note: 'Fresh', text: 'one' }),
+      tool('add_task', { note: 'Fresh', text: 'two' }),
+    ])
+
+    expect(answers.every((answer) => answer.startsWith('{'))).toBe(true)
+    const rows = env.db.prepare("select id from notes where path like 'Fresh%'").all() as {
+      id: string
+    }[]
+    expect(rows).toHaveLength(1)
+    const words = await body(rows[0]?.id ?? '')
+    expect(words).toContain('- [ ] one')
+    expect(words).toContain('- [ ] two')
+  })
+
+  test('both land on a space whose tree is rows', async () => {
+    await prepare()
+    const answers = await Promise.all([
+      tool('add_task', { note: 'Fresh', text: 'one' }),
+      tool('add_task', { note: 'Fresh', text: 'two' }),
+    ])
+    await rooms.settle()
+
+    expect(answers.every((answer) => answer.startsWith('{'))).toBe(true)
+    const rows = env.db.prepare("select id from notes where path like 'Fresh%'").all() as {
+      id: string
+    }[]
+    expect(rows).toHaveLength(1)
+    const words = await body(rows[0]?.id ?? '')
+    expect(words).toContain('- [ ] one')
+    expect(words).toContain('- [ ] two')
+  })
+})
+
+describe('a room whose settle is refused', () => {
+  async function refusing() {
+    const id = await made('Plan.md', 'one\n')
+    await prepare()
+    await rooms.settle()
+    await typed(id, 'typed\n', 'one\n')
+    const { room } = rooms.of(id)
+    ;(room as never as { settle: () => Promise<boolean> }).settle = () => Promise.resolve(false)
+    const { version } = env.db.prepare('select version from notes where id = ?').get(id) as {
+      version: number
+    }
+    return { id, version, room }
+  }
+
+  test('answers a v1 save 503, not a conflict, and keeps the words', async () => {
+    const { id, version, room } = await refusing()
+
+    const saved = await call(env, `/v1/notes/${id}`, {
+      token,
+      method: 'PUT',
+      body: { content: 'one\nsaved\n', baseVersion: version },
+    })
+
+    expect(saved.status).toBe(503)
+    const doc = (room as never as { state: { doc: Y.Doc } }).state.doc
+    expect(doc.getText(TEXT).toJSON()).toBe('one\ntyped\n')
+  })
+
+  test('answers a task tool that it could not write, not that the note moved', async () => {
+    await refusing()
+
+    expect(await tool('add_task', { note: 'Plan', text: 'x' })).toMatch(/could not be written/)
+  })
+
+  test('a real conflict is still one', async () => {
+    const id = await made('Other.md', 'one\n')
+    await prepare()
+    await rooms.settle()
+    await typed(id, 'typed\n', 'one\n')
+
+    const saved = await call(env, `/v1/notes/${id}`, {
+      token,
+      method: 'PUT',
+      body: { content: 'one\nsaved\n', baseVersion: 1 },
+    })
+
+    expect(saved.status).toBe(409)
+  })
+})
+
 describe('add_task on a v1 note', () => {
   test('keeps a save made between its read and its write', async () => {
     const id = await made('Plan.md', 'one\n')

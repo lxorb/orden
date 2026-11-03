@@ -408,6 +408,69 @@ describe('a key typed while a note and its document are brought together', () =>
   })
 })
 
+describe('words that reach the document while a note and its document are brought together', () => {
+  async function meeting() {
+    const one = await device()
+    one.online = false
+    const seeded = SEEDED[0]?.text ?? ''
+    const theirs = seeded.replace('Monday', 'Friday')
+    const doc = await one.engine.hold(PLAN)
+    const live = doc?.live
+    live?.transact(() => {
+      const text = live.getText(TEXT)
+      text.delete(0, text.length)
+      text.insert(0, theirs)
+    }, HERE)
+    await one.engine.letGo(PLAN)
+    const note = new SharedDoc(seeded.replace('Monday', 'Tuesday'))
+    const keepLost = one.engine.keepLost.bind(one.engine)
+    return { one, note, keepLost }
+  }
+  const held = (note: SharedDoc) => ({
+    live: note,
+    get latest() {
+      return note.text.toString()
+    },
+  })
+
+  test('a pull is kept, in the document and in the note', async () => {
+    const { one, note, keepLost } = await meeting()
+    one.engine.keepLost = async (...args) => {
+      const doc = one.engine.core.docs.get(PLAN)
+      doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'PULLED '))
+      await keepLost(...args)
+    }
+
+    const part = await attach(one.engine, PLAN, held(note), () => true)
+
+    const doc = await one.engine.hold(PLAN)
+    expect(doc?.text()).toContain('PULLED ')
+    expect(note.text.toString()).toBe(doc?.text())
+    await one.engine.letGo(PLAN)
+    part?.()
+  })
+
+  test('a pull and a key both stay, or the two are held apart and nothing is lost', async () => {
+    const { one, note, keepLost } = await meeting()
+    one.engine.keepLost = async (...args) => {
+      const doc = one.engine.core.docs.get(PLAN)
+      doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'PULLED '))
+      note.arrived([{ from: note.text.length, to: note.text.length, insert: 'KEY' }])
+      await keepLost(...args)
+    }
+
+    const part = await attach(one.engine, PLAN, held(note), () => true)
+
+    const doc = await one.engine.hold(PLAN)
+    const both = `${doc?.text() ?? ''}\n${note.text.toString()}`
+    expect(both).toContain('PULLED ')
+    expect(both).toContain('KEY')
+    if (!one.engine.core.isHeld(PLAN)) expect(note.text.toString()).toBe(doc?.text())
+    await one.engine.letGo(PLAN)
+    part?.()
+  })
+})
+
 describe('an open note held apart from its document (#543)', () => {
   /** The document and the note each written over, differently, while the note was
    *  closed: the rule asks, the note is held, and it is not joined to the document until
@@ -948,6 +1011,40 @@ describe('the folder watcher', () => {
 
     expect(here.engine.entryAt(`${ROOT}/Quiet`)).toBeFalsy()
   })
+
+  test.each(['modified', 'created'])(
+    'leaves a space alone until its first pass is done: a %s event makes nothing',
+    async (kind) => {
+      // A note v1 tracks has no entry yet. The first pass matches it to its entry, and a
+      // create queued here as well was `Plan.md` and `Plan 2.md`.
+      const here = await device()
+      const heard: ((news: SpaceNews) => void)[] = []
+      watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
+        heard.push(hear)
+        return Promise.resolve()
+      })
+      const watched = watchFolders({
+        engine: here.engine,
+        own: () => false,
+        ready: () => false,
+        changed: () => undefined,
+      })
+      await here.disk.write(`${ROOT}/Late.md`, 'late\n')
+      const change = {
+        kind,
+        path: `${ROOT}/Late.md`,
+        dir: false,
+        size: 1,
+        mtime: 1,
+        id: null,
+      } as SpaceNews['changes'][number]
+      for (const hear of heard) hear({ root: ROOT, changes: [change], scan: false, gone: false })
+      await settled()
+      watched.stop()
+
+      expect(here.engine.entryAt(`${ROOT}/Late.md`)).toBeFalsy()
+    },
+  )
 
   test('hears the space’s own hidden inbox, and no other hidden file (#1044)', async () => {
     const here = await device()

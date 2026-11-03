@@ -153,12 +153,9 @@ function bucket() {
 
       return Promise.resolve({
         size: bytesOf(held.value).length,
-        text: () =>
-          Promise.resolve(
-            typeof held.value === 'string'
-              ? held.value
-              : new TextDecoder().decode(bytesOf(held.value)),
-          ),
+        // As workerd's `text()` reads: UTF-8 with a byte order mark taken off, so the
+        // words read are not always the words a hash of the bytes covers.
+        text: () => Promise.resolve(new TextDecoder().decode(bytesOf(held.value))),
         arrayBuffer: () => Promise.resolve(bytesOf(held.value).slice().buffer),
         body: held.value,
         httpMetadata: { contentType: held.contentType },

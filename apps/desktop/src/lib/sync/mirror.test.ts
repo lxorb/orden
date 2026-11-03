@@ -745,6 +745,29 @@ describe('a note renamed on this machine', () => {
     expect(clashes.map((one) => one.path)).toEqual([`${ROOT}/Three.md`])
   })
 
+  test.each([503, 409])(
+    'and a note whose write keeps answering %i holds up no other note',
+    async (status) => {
+      const first = await paired('A.md', HERE)
+      const second = fake.addRemote('B.md', HERE)
+      fake.disk.set(`${ROOT}/B.md`, HERE)
+      await pull(first.mirror, 'token', NOBODY)
+      fake.disk.set(`${ROOT}/A.md`, `${HERE}a\n`)
+      fake.disk.set(`${ROOT}/B.md`, `${HERE}b\n`)
+      const writing = fake.api.writeNote
+      fake.api.writeNote = (token, id, ...rest) => {
+        if (id !== first.id) return writing(token, id, ...rest)
+        const note = { id, version: 1, hash: 'theirs' }
+        return Promise.reject(new ApiError(status, 'no', { note, content: `${HERE}x\n` }))
+      }
+
+      await push(first.mirror, 'token', NOBODY)
+      fake.api.writeNote = writing
+
+      expect(fake.remote.get(second)?.content).toBe(`${HERE}b\n`)
+    },
+  )
+
   test('and one the account refused to rename is told again, never deleted', async () => {
     const { mirror, id } = await paired('One.md', HERE)
     renameOnDisk('One.md', 'Two.md')

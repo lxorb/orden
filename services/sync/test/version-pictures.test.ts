@@ -111,6 +111,25 @@ describe('a picture let go of by an account with more versions than a sweep read
   })
 })
 
+describe('a version nobody has read yet', () => {
+  test('that arrives after the rest were read keeps the picture for now', async () => {
+    await older(2, () => 'x\n')
+    const asking = /v\.pictures/
+    env.justBefore(asking, () => {
+      env.justBefore(asking, () => {
+        env.db
+          .prepare('insert into note_versions (note_id, at, hash, size) values (?, 9999, ?, 1)')
+          .run(noteId, 'unread')
+      })
+    })
+
+    expect(await sweepUnused(env)).toBe(0)
+
+    expect(holds()).toBe(1)
+    expect(listed()).toBe(1)
+  })
+})
+
 describe('a version kept now', () => {
   test('says what it shows, and no sweep reads its body', async () => {
     await keepVersionNow(env, noteId, SHOWS, 'one')
