@@ -4,7 +4,6 @@
  *  wrong kind of value) is left out rather than stopping the view. */
 
 import { compile } from './expr/compile'
-import { BasesError } from './errors'
 import { type Scope, truthy } from './expr/runtime'
 import type { Context, Filter, Row } from './types'
 import { scopeFor } from './expr/compile'
@@ -28,9 +27,9 @@ function compileOne(filter: Filter): CompiledFilter {
       test: (scope) => {
         try {
           return truthy(expression.run(scope))
-        } catch (error) {
-          if (error instanceof BasesError) return false
-          throw error
+        } catch {
+          // Whatever one row made of it, `toFixed(200)` included, is that row's.
+          return false
         }
       },
     }

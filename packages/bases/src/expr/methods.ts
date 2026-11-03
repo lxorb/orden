@@ -9,6 +9,7 @@
 import { formatDate, msOf, readDate, relative } from '../dates'
 import { BasesError } from '../errors'
 import type { DateValue, Row, Value } from '../types'
+import { readPattern } from './pattern'
 import {
   equal,
   FileRef,
@@ -99,7 +100,7 @@ function fileMethod(
     case 'hasLink':
       return { value: linksTo(row, args[0]?.() ?? null, scope) }
     case 'hasProperty':
-      return { value: text(args[0]?.() ?? null) in row.note }
+      return { value: Object.hasOwn(row.note, text(args[0]?.() ?? null)) }
     case 'hasTag':
       return { value: hasTag(row.file.tags, evaluated(args)) }
     case 'inFolder': {
@@ -156,13 +157,18 @@ function stringMethod(value: string, name: string, args: readonly Arg[]): { valu
     case 'replace': {
       const [pattern = null, replacement = null] = evaluated(args)
       const by = text(replacement)
-      if (pattern instanceof RegExp)
-        return { value: value.replace(new RegExp(pattern.source, pattern.flags), by) }
+      if (pattern instanceof RegExp) {
+        const copy = new RegExp(pattern.source, pattern.flags)
+        return { value: readPattern(pattern, value, () => value.replace(copy, by)) }
+      }
       return { value: value.replaceAll(text(pattern), () => by) }
     }
     case 'split': {
       const [separator = null, limit] = evaluated(args)
-      const parts = value.split(separator instanceof RegExp ? separator : text(separator))
+      const parts =
+        separator instanceof RegExp
+          ? readPattern(separator, value, () => value.split(separator))
+          : value.split(text(separator))
       return { value: limit == null ? parts : parts.slice(0, number(limit, 'split')) }
     }
     default:
@@ -349,7 +355,8 @@ export function callMethod(receiver: Val, name: string, args: readonly Arg[], sc
   } else if (receiver instanceof RegExp) {
     if (name === 'matches') {
       const pattern = new RegExp(receiver.source, receiver.flags.replace('g', ''))
-      found = { value: pattern.test(text(args[0]?.() ?? null)) }
+      const value = text(args[0]?.() ?? null)
+      found = { value: readPattern(receiver, value, () => pattern.test(value)) }
     }
   } else if (typeof receiver === 'string') {
     found = stringMethod(receiver, name, args)

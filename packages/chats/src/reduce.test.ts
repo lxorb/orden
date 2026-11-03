@@ -455,3 +455,17 @@ describe('order', () => {
     )
   })
 })
+
+describe('an emoji named after what every object holds', () => {
+  it.each(['constructor', '__proto__', 'toString'])('%s is one more reaction', (emoji) => {
+    const state = stateOf(
+      log(
+        [EMIL, post('m1', 'hi')],
+        [LUCILE, { kind: 'react', id: 'r1', target: 'm1', emoji, on: true }],
+      ),
+    )
+    const { reactions } = message(state, 'm1')
+    expect(Object.keys(reactions)).toEqual([emoji])
+    expect(Object.getOwnPropertyDescriptor(reactions, emoji)?.value).toEqual([LUCILE])
+  })
+})

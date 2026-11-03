@@ -14,7 +14,7 @@ import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
-import { isNoteTarget, slugify, withoutBlockIds } from './links'
+import { isNoteTarget, sizedAlt, slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref } from './tags'
 import { iframeCard, isIframeTag, splitIframe, webCard } from './web-embed'
@@ -321,11 +321,15 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
 
         // Through the text renderer, so markdown in the alt text comes out as
         // the words it stands for rather than as tags inside an attribute.
-        const alt = this.parser.parseInline(token.tokens, this.parser.textRenderer)
+        const { alt, size } = sizedAlt(
+          this.parser.parseInline(token.tokens, this.parser.textRenderer),
+        )
         const src = safeSrc(token.href) ? attributeUrl(token.href) : ''
         if (!src) return escape(alt)
 
         const attributes = [` src="${src}"`, ` alt="${escape(alt)}"`]
+        if (size) attributes.push(` width="${String(size.width)}"`)
+        if (size?.height) attributes.push(` height="${String(size.height)}"`)
         if (token.title) attributes.push(` title="${escape(token.title)}"`)
         return `<img${attributes.join('')}>`
       },
@@ -506,6 +510,18 @@ function inside(options: RenderOptions): RenderOptions {
   return rest
 }
 
+/** The page, or the words as they are for a note nested past what the parser's stack
+ *  can follow: `> ` four thousand times is eight kilobytes, and a note arrives from a
+ *  share. The stack is the only limit on that depth, so it is the overflow that says so. */
+function parsedOrPlain(marked: Marked, body: string, breaks: boolean): string {
+  try {
+    return marked.parse(body, { async: false, breaks })
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error
+    return `<p>${escape(body)}</p>\n`
+  }
+}
+
 export function renderMarkdown(source: string, options: RenderOptions = {}): string {
   // The caller's array where it asked for one, so a surface that draws the
   // contents beside the page reads the headings this parse found rather than
@@ -526,7 +542,7 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   // two shared ones above serve a deck as well as a document: marked merges a
   // call's options over the instance's and leaves the instance alone. A caller
   // that says nothing gets the reader's own answer; see `setHardBreaks`.
-  let html = marked.parse(body, { async: false, breaks: options.breaks ?? hardBreaks() })
+  let html = parsedOrPlain(marked, body, options.breaks ?? hardBreaks())
 
   html = markAbbreviations(html, collectAbbreviations(body))
 

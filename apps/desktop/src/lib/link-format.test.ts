@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { findLinks } from '@orden/markdown/links'
 import { formatLink, isLinkFormat, LINK_FORMATS, linkWriting, setLinkWriting } from './link-format'
 import { linkTo, pickedLink } from './composer'
 import { citation } from './pdf/highlights'
@@ -233,5 +234,63 @@ describe('the `[[` popup, in a nested space', () => {
       '[a1b2c3](#^a1b2c3)',
       '[a1b2c3](#^a1b2c3)',
     ])
+  })
+})
+
+/** A name the wikilink grammar reads as something else: legal on the disk, and in
+ *  Obsidian refused in a link for the same reason. */
+describe('a link to a note a wikilink cannot name', () => {
+  const name = 'C# basics'
+  const about = { name, path: 'f/C# basics.md', from: 'g/n.md' }
+
+  test('is written as a markdown link, whatever the setting, and reads back', () => {
+    const written = formatLink(about, 'wikilink')
+    expect(written).toBe('[C# basics](C%23%20basics.md)')
+    expect(findLinks(written)).toMatchObject([{ target: 'C# basics.md', heading: null }])
+  })
+
+  test('with a folder in the name keeps the path that says which', () => {
+    const written = formatLink({ ...about, name: 'f/C# basics' }, 'wikilink')
+    expect(written).toBe('[f/C# basics](f/C%23%20basics.md)')
+  })
+
+  test('keeps its heading, its words and its embed', () => {
+    expect(formatLink({ ...about, fragment: 'Some Heading', shown: 'see' }, 'wikilink')).toBe(
+      '[see](C%23%20basics.md#some-heading)',
+    )
+    expect(formatLink({ ...about, embed: true }, 'wikilink')).toBe('![C# basics](C%23%20basics.md)')
+  })
+
+  test('brackets in a name stay a link, in the label and in the target', () => {
+    for (const odd of ['a[b]', 'a]b', 'a[b']) {
+      const written = formatLink({ name: odd, path: `${odd}.md` }, 'wikilink')
+      expect(findLinks(written)).toMatchObject([{ kind: 'markdown', target: `${odd}.md` }])
+    }
+  })
+
+  test('words or a heading that would close a wikilink early do the same', () => {
+    expect(formatLink({ ...PLAN, fragment: 'Foo [bar]' }, 'wikilink')).toBe(
+      '[Plan](Plan.md#foo-bar)',
+    )
+    expect(findLinks(formatLink({ ...PLAN, shown: 'a]b' }, 'wikilink'))).toMatchObject([
+      { kind: 'markdown', target: 'Plan.md' },
+    ])
+  })
+
+  test('a name a wikilink can say is still a wikilink', () => {
+    expect(formatLink({ name: 'a (1)' }, 'wikilink')).toBe('[[a (1)]]')
+    expect(formatLink({ ...PLAN, fragment: 'C# intro' }, 'wikilink')).toBe('[[Plan#C# intro]]')
+  })
+
+  test('words with a bracket in a markdown link are escaped so the label closes where it should', () => {
+    expect(formatLink({ ...PLAN, shown: 'a]b' }, 'shortest')).toBe('[a\\]b](Plan.md)')
+  })
+})
+
+describe('the label of a markdown link', () => {
+  test('a name ending in a backslash does not escape the bracket that closes it', () => {
+    const written = formatLink({ name: 'e\\', path: 'e\\.md' }, 'shortest')
+    expect(written.startsWith('[e\\\\](')).toBe(true)
+    expect(findLinks(written)).toHaveLength(1)
   })
 })

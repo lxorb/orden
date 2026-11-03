@@ -1,6 +1,6 @@
 import { EditorSelection, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { embedKind, formatWikilink } from '@orden/markdown/links'
+import { embedKind, encodeTarget, formatWikilink } from '@orden/markdown/links'
 
 /** Stores a file a note was handed and returns the path to write into the document,
  *  relative to the note. Supplied by the host so the editor package stays free of
@@ -31,7 +31,7 @@ function isKept(file: File): boolean {
  *  dropped file, by its name alone, which the space resolves wherever the file sits -
  *  the same embed a recording is written as. */
 function markdownFor(file: File, path: string): string {
-  if (isImage(file)) return `![](${encodeURI(path)})`
+  if (isImage(file)) return `![](${encodeTarget(path)})`
 
   const name = path.slice(path.lastIndexOf('/') + 1)
   return formatWikilink({ target: name, heading: null, block: null, alias: null, embed: true })

@@ -16,6 +16,7 @@
  *  phone browser does the same, so one input is both rows. */
 
 import type { EditorView } from '@orden/editor'
+import { encodeTarget } from '@orden/markdown/links'
 import { storeImage } from './assets'
 import { busy } from './busy.svelte'
 import { chooseFiles, PICTURES } from './choose-files'
@@ -57,7 +58,7 @@ export async function putPicture(view: EditorView, file: File): Promise<void> {
   try {
     const src = await busy.run(t('Storing the image'), () => storeImage(file, note.path))
     void usage.refresh()
-    if (src) writeAtCaret(view, `![${alt(file.name)}](${encodeURI(src)})`)
+    if (src) writeAtCaret(view, `![${alt(file.name)}](${encodeTarget(src)})`)
   } catch (error) {
     void usage.refresh()
     settings.error = message(error, key('That image does not fit in your storage.'))

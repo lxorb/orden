@@ -31,7 +31,7 @@
   import { theme } from './theme.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
-  import { decodeFragment, isTabFile, pageFragment } from '@orden/markdown/links'
+  import { decodeFragment, decodeTarget, isTabFile, pageFragment } from '@orden/markdown/links'
   import { links } from './link-index.svelte'
   import { pressRow } from './query-block'
 
@@ -440,11 +440,7 @@
 
   /** A target as the name it stands for: what a note writes in a link is a URL. */
   function written(target: string): string {
-    try {
-      return decodeURI(target)
-    } catch {
-      return target
-    }
+    return decodeTarget(target)
   }
 
   /** Scrolls to a heading on this page, the way the browser would if it were

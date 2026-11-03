@@ -595,6 +595,20 @@ describe('the calendar', () => {
     expect(ghosts.every((one) => one.ghost)).toBe(true)
   })
 
+  test('a daily task still has ghosts months after its day', () => {
+    const gym = taskRow('Health.md', '- [ ] Gym 🔁 every day 📅 2026-01-01')
+    const days = ['2026-10-04', '2026-10-05', '2026-10-06']
+    const placed = placedByDay([gym], days, (row) => row.task?.due ?? null)
+    expect(days.map((day) => placed.byDay.get(day)?.length)).toEqual([1, 1, 1])
+    expect(placed.byDay.get('2026-10-04')?.[0]?.ghost).toBe(true)
+  })
+
+  test('an occurrence counts from the first day shown, and its rule from its own day', () => {
+    const every = taskRow('Health.md', '- [ ] Gym 🔁 every 3 days 📅 2026-01-01')
+    const ghosts = occurrences(place(every, '2026-01-01'), '2026-01-12', 62, '2026-01-06')
+    expect(ghosts.map((one) => one.day)).toEqual(['2026-01-07', '2026-01-10'])
+  })
+
   test('keeps what has no day for the tray', () => {
     const rows = [taskRow('A.md', '- [ ] Dated 📅 2026-10-05'), taskRow('A.md', '- [ ] Not', 1)]
     const placed = placedByDay(rows, ['2026-10-04', '2026-10-05'], (row) => row.task?.due ?? null)

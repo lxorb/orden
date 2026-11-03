@@ -15,9 +15,11 @@ export const BLANK = /^[ \t]*$/
 /** Front matter is metadata rather than a slide, and its two rules are not
  *  breaks. Answers where the note's body starts. */
 export function bodyStart(source: string): number {
-  if (!source.startsWith('---')) return 0
+  // A byte order mark in front of the fence leaves it front matter, as `frontMatterBlock`
+  // reads it; that module is not imported, because this one is asked of every note.
+  if (!source.startsWith('---', source.startsWith('\uFEFF') ? 1 : 0)) return 0
 
-  const matter = /^---\r?\n(?:[\s\S]*?\r?\n)??---[ \t]*(?:\r?\n|$)/.exec(source)
+  const matter = /^\uFEFF?---\r?\n(?:[\s\S]*?\r?\n)??---[ \t]*(?:\r?\n|$)/.exec(source)
   return matter ? matter[0].length : 0
 }
 

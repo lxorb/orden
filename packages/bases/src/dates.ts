@@ -85,7 +85,7 @@ export function msOf(value: DateValue): number {
   const day = dayNumber(value.iso) * DAY
   if (!value.time) return day
   const [hours = 0, minutes = 0, seconds = 0] = value.time.split(':').map(Number)
-  return day + ((hours * 60 + minutes) * 60 + seconds) * 1000 + millisOf(value.time)
+  return day + ((hours * 60 + minutes) * 60 + Math.floor(seconds)) * 1000 + millisOf(value.time)
 }
 
 function millisOf(time: string): number {

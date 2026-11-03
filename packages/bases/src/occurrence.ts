@@ -161,7 +161,8 @@ export function tick(
   const next = nextOccurrence(task, today, options)
 
   if (next) {
-    const nextLine = changedTask(target.text, changeBetween(task, next))
+    // A block id names one line, so the line that comes back does not take it along.
+    const nextLine = changedTask(target.text, { ...changeBetween(task, next), block: null })
     const block = [nextLine, ...repeatedChildren(lines, children)]
     if (task.onCompletion === 'delete') {
       edits.push({ from: target.from, to: target.from + target.text.length, insert: nextLine })

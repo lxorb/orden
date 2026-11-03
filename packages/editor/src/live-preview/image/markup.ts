@@ -1,6 +1,7 @@
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
+import { sizedAlt } from '@orden/markdown/links'
 import { attributeValue } from '../../attributes'
 import { enclosing } from '../../nodes'
 
@@ -95,7 +96,7 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
 
   // The parser leaves alt text as bare text between `![` and `]`.
   const [open, close] = node.getChildren('LinkMark')
-  const alt = open && close ? state.doc.sliceString(open.to, close.from) : ''
+  const { alt, size } = sizedAlt(open && close ? state.doc.sliceString(open.to, close.from) : '')
   const title = node.getChild('LinkTitle')
 
   return {
@@ -103,6 +104,7 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
     alt,
     title: title ? state.doc.sliceString(title.from + 1, title.to - 1) : '',
     zoom: 100,
+    ...(size ? { width: size.width } : {}),
   }
 }
 

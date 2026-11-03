@@ -433,7 +433,8 @@ function arrivals(
   const edits: TextEdit[] = [...before].map(([at, list]) => ({
     from: at,
     to: at,
-    insert: `${byRank(list)} `,
+    // `x⏫` holds its field against the words, and a tag needs a blank in front to be one.
+    insert: `${/\s/.test(line.charAt(at - 1)) || at === 0 ? '' : ' '}${byRank(list)} `,
   }))
   if (after.length) {
     const end = staying.at(-1)?.to ?? parsed.wordsTo

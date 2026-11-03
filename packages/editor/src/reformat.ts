@@ -1,6 +1,7 @@
-import type { Tree } from '@lezer/common'
+import type { SyntaxNode, Tree } from '@lezer/common'
 import type { StateCommand } from '@codemirror/state'
 import { closesFence, fenceMark } from '@orden/markdown/fences'
+import { frontMatterBlock, opensFrontMatter } from '@orden/markdown/front-matter'
 import { nibMarkdownParser } from './markdown/extensions'
 import { parseTable, serializeTable } from './table/model'
 
@@ -26,10 +27,17 @@ const VERBATIM = new Set([
   'HTMLTag',
   'HorizontalRule',
   'HardBreak',
+  // Where a link points and what it is called: `[[a _b_ c]]` names a note with
+  // underscores in it, and an asterisk there is a link to another note.
+  'Wikilink',
+  'URL',
+  'LinkTitle',
+  'LinkLabel',
+  'LinkReference',
 ])
 
-/** Tidies a document without changing what it means: one bullet character, one
- *  emphasis style, pipe-aligned tables, and no runs of blank lines. */
+/** Tidies a document without changing what it means: dashes for stars, one emphasis
+ *  style, pipe-aligned tables, and no runs of blank lines. */
 export function reformat(source: string): string {
   const lines = source.split('\n')
   const out: string[] = []
@@ -44,7 +52,7 @@ export function reformat(source: string): string {
   // values are full of the characters `tidy` rewrites - an `_id_` in a title,
   // a `* ` starting a list item - and rewriting them changes what the note
   // says about itself.
-  const matter = readFrontMatter(lines)
+  const matter = readFrontMatter(source)
   if (matter) {
     out.push(...lines.slice(0, matter))
     index = matter
@@ -97,18 +105,11 @@ export function reformat(source: string): string {
 }
 
 /** How many lines the document's front matter takes, or null when it has none.
- *  Only at the very top, and only when what follows looks like YAML, which is
- *  the same test the parser makes (see `FrontMatter` in markdown/constructs.ts)
- *  so that the two agree on what a leading `---` is. */
-function readFrontMatter(lines: readonly string[]): number | null {
-  if (lines[0]?.trim() !== '---') return null
-  if (!/^\s*[\w.$-]+\s*:/.test(lines[1] ?? '')) return null
-
-  for (let index = 1; index < lines.length; index++) {
-    if (lines[index]?.trim() === '---') return index + 1
-  }
-  // Unclosed, and the parser would not call it front matter either.
-  return null
+ *  The same test the parser makes (see `FrontMatter` in markdown/constructs.ts) so
+ *  that the two agree on what a leading `---` is. */
+function readFrontMatter(source: string): number | null {
+  const block = opensFrontMatter(source) ? frontMatterBlock(source) : null
+  return block && source.slice(0, block.close).split('\n').length
 }
 
 /** The lines the parser starts a table on: not in code, a comment or HTML, and not
@@ -158,6 +159,7 @@ function verbatim(tree: Tree, lines: readonly string[]): [number, number][][] {
   const ranges: [number, number][] = []
   tree.iterate({
     enter(node) {
+      if (node.name === 'BulletList') markersOfNeighbours(node.node, ranges)
       if (!VERBATIM.has(node.name)) return true
       ranges.push([node.from, node.to])
       return false
@@ -178,6 +180,17 @@ function verbatim(tree: Tree, lines: readonly string[]): [number, number][][] {
   })
 }
 
+/** A list right beside another list is apart from it only by its marker: `- a` over
+ *  `* b` is two lists, and the same marker on both would make it one. */
+function markersOfNeighbours(list: SyntaxNode, ranges: [number, number][]) {
+  if (list.prevSibling?.name !== 'BulletList' && list.nextSibling?.name !== 'BulletList') return
+
+  for (let item = list.firstChild; item; item = item.nextSibling) {
+    const mark = item.getChild('ListMark')
+    if (mark) ranges.push([mark.from, mark.to])
+  }
+}
+
 /** `tidy`, leaving the `kept` stretches of the line as they are. Every rewrite it
  *  makes keeps the line's length but the trimming of its end, so a kept character can
  *  be hidden behind an `x` - whitespace staying whitespace, so what is around it reads
@@ -192,8 +205,9 @@ function tidyAround(line: string, kept: readonly [number, number][]): string {
 function tidy(line: string): string {
   return (
     line
-      // One bullet character throughout.
-      .replace(/^(\s*)[*+](\s+)/, '$1-$2')
+      // One bullet character throughout. Not over a `+`, which a deck reads as a list
+      // that comes in one click at a time; see `fragmentsOf` in @orden/markdown/slides.
+      .replace(/^(\s*)\*(\s+)/, '$1-$2')
       // Underscore emphasis becomes asterisk, which nests more predictably.
       .replace(/(^|[\s(])__(\S(?:[^_]*\S)?)__(?=[\s).,;:!?]|$)/g, '$1**$2**')
       .replace(/(^|[\s(])_(\S(?:[^_]*\S)?)_(?=[\s).,;:!?]|$)/g, '$1*$2*')

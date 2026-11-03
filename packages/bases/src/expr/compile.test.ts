@@ -1,8 +1,11 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
+import { cellValue } from '../answer'
+import { readBase, writeBase } from '../base-file'
 import { BasesError } from '../errors'
 import { contextAt, noteRow } from '../fixtures/rows'
-import type { Row, Value } from '../types'
+import type { Base, Row, Value } from '../types'
 import { compile } from './compile'
+import { patternAllowed, refusedPattern } from './pattern'
 
 const context = contextAt()
 const book = noteRow(
@@ -288,5 +291,164 @@ describe('mistakes', () => {
   test('a method a value does not have is an error when run', () => {
     expect(() => run('(5).lower()')).toThrow('number has no lower()')
     expect(() => run('number("abc")')).toThrow(BasesError)
+  })
+})
+
+describe('what Object.prototype holds is no property', () => {
+  test.each([
+    'note.constructor',
+    'note.toString',
+    'note.__proto__',
+    'note["constructor"]',
+    'constructor',
+    'this.constructor',
+    'formula.constructor',
+    'note.meta.constructor',
+  ])('%s is null', (source) => {
+    expect(run(source)).toBeNull()
+  })
+
+  test('file.hasProperty asks the note and nothing behind it', () => {
+    expect(run('file.hasProperty("toString")')).toBe(false)
+    expect(run('file.hasProperty("__proto__")')).toBe(false)
+    expect(run('file.hasProperty("status")')).toBe(true)
+  })
+})
+
+describe('a pattern in a base of ones own', () => {
+  test.each([
+    ['/^[a-z]+(-[a-z]+)*$/.matches("a-b-c")', true],
+    ['/^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$/.matches("a@b.co")', true],
+    ['/^(\\w+\\/)+/.matches("a/b/")', true],
+    ['/^#(\\w+\\/)*\\w+$/.matches("#a/b")', true],
+    ['/^(foo|far)+$/.matches("foofar")', true],
+    ['/(\\w)\\1/.matches("aa")', true],
+    ['/^\\s*(\\w+)\\s*:\\s*(.*)$/.matches("key : with a long value after it, past twenty")', true],
+    ['/.*foo.*bar.*baz.*/.matches("foo bar baz")', true],
+    ['"a1b".replace(/\\d+/, "x")', 'axb'],
+    ['"a,b".split(/,/)', ['a', 'b']],
+  ] as [string, Value][])('%s answers as it always did', (source, wanted) => {
+    expect(run(source)).toEqual(wanted)
+  })
+
+  test('a long value is read like a short one', () => {
+    const wide = 'x'.repeat(5000)
+    expect(run(`/\\d+(\\.\\d+)?|x/.matches("${wide}")`)).toBe(true)
+  })
+})
+
+describe('a pattern in a base somebody else could have written', () => {
+  const safe = (source: string) => patternAllowed(new RegExp(source))
+
+  test.each([
+    /(a+)+$/,
+    /(a*)*$/,
+    /(a|a)+$/,
+    /(a|ab)*c/,
+    /(\w|\d)+$/,
+    /(a?)+$/,
+    /(?:a+)+$/,
+    /(a{1,5})+$/,
+    /((a+))+$/,
+    /(a+b?)*$/,
+    /(a*)\1$/,
+    /(?<x>a*)\k<x>$/,
+    /(a+){20}$/,
+    /^(\u{61}+)+$/u,
+    /^(σ|ς)+$/i,
+    /^(µ|μ)+$/i,
+    /^(ſ|s)+$/iu,
+    /^(K|K)+$/iu,
+    /^(\x61|a)+$/,
+    /^(a|a)+$/,
+    /^(\u{61}|a)+$/u,
+    /^(?:\p{L}+)+$/u,
+    new RegExp(`${'a?'.repeat(30)}${'a'.repeat(30)}`),
+    new RegExp('(a|a)'.repeat(30)),
+    new RegExp(`${'.*'.repeat(30)}x`),
+  ])('%s is refused, measured and not run', (pattern) => {
+    expect(patternAllowed(pattern)).toBe(false)
+  })
+
+  test.each([
+    '^abc$',
+    '^(foo|bar)+$',
+    '^\\d{4}-\\d{2}-\\d{2}$',
+    '^(\\d{2})+$',
+    '(\\.\\d+)?$',
+    '[(a+)+]',
+    '\\(a+\\)+',
+    '^(a|b)*$',
+    '\\d+-\\d+',
+  ])('/%s/ may run', (source) => {
+    expect(safe(source)).toBe(true)
+  })
+
+  test('a counted repeat that is not one is read as what it is', () => {
+    // No `u`: `\u{61}` is the letter u sixty-one times, and `+` over a group of one way.
+    expect(patternAllowed(new RegExp('^(\\u{61})+$'))).toBe(true)
+    expect(patternAllowed(/^\p{L}+$/u)).toBe(true)
+  })
+
+  const guardedBase = (formula: string) =>
+    ({
+      ...readBase(
+        `formulas:\n  f: ${JSON.stringify(formula)}\nviews:\n  - type: table\n    name: T\n`,
+      ),
+      guarded: true,
+    }) as Base
+
+  test('names the pattern that is refused, wherever in the base it is written', () => {
+    expect(refusedPattern(guardedBase('/(a+)+$/.matches("x")'))).toBe('/(a+)+$/')
+    expect(
+      refusedPattern(
+        readBase(
+          'views:\n  - type: table\n    name: T\n    filters:\n      and:\n        - /(a|a)*/.matches(note.x)\n',
+        ),
+      ),
+    ).toBe('/(a|a)*/')
+    expect(refusedPattern(guardedBase('/^(foo|bar)+$/.matches("x")'))).toBeNull()
+    expect(refusedPattern(readBase('views:\n  - type: table\n    name: T\n'))).toBeNull()
+  })
+
+  test('a guarded base refuses a value too long to read rather than start on it', () => {
+    const base = guardedBase('/x$/.matches(note.long)')
+    const row = noteRow('A.md', { long: 'x'.repeat(2000), short: 'x' })
+    expect(cellValue(base, 'formula.f', row, context)).toBeNull()
+    expect(
+      cellValue(
+        { ...base, formulas: { f: '/x$/.matches(note.short)' } },
+        'formula.f',
+        row,
+        context,
+      ),
+    ).toBe(true)
+    expect(cellValue({ ...base, guarded: false }, 'formula.f', row, context)).toBe(true)
+  })
+
+  test('a guarded base spends a share of the clock on patterns and no more', () => {
+    let now = 0
+    let step = 0
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => (now += step))
+    const base = guardedBase('"x".replace(/x/, note.y)')
+    const row = noteRow('A.md', { y: 'z' })
+    try {
+      expect(cellValue(base, 'formula.f', row, context)).toBe('z')
+      now += 1000
+      // Each look at the clock sees 400 ms gone, so this read took them all.
+      step = 400
+      expect(cellValue(base, 'formula.f', row, context)).toBe('z')
+      step = 0
+      expect(cellValue(base, 'formula.f', row, context)).toBeNull()
+      now += 1000
+      expect(cellValue(base, 'formula.f', row, context)).toBe('z')
+    } finally {
+      clock.mockRestore()
+    }
+  })
+
+  test('the flag is no part of the file', () => {
+    const base = readBase('views:\n  - type: table\n    name: T\n')
+    expect(writeBase({ ...base, guarded: true })).toBe(writeBase(base))
   })
 })

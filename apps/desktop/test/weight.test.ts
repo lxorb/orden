@@ -1040,8 +1040,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-03, to 3,480,600, for unstable's #1044 to #1079 merged into
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
- *  and the sum of their growth is what came. Measured 3,480,464, 385 modules. */
-const BUDGET = 3_480_600
+ *  and the sum of their growth is what came. Measured 3,480,464, 385 modules.
+ *
+ *  Raised 2026-11-03, to 3,492,800, for the views' hunt: what a base somebody else could
+ *  have written may cost (expr/pattern.ts), and one pass over a line's brackets so a
+ *  markdown link's brackets balance (links.ts). Measured 3,492,482. */
+const BUDGET = 3_492_800
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

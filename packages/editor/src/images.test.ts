@@ -162,3 +162,17 @@ describe('a dropped file that is not a picture', () => {
     expect(editor.doc).toBe('![](../assets/a.png)\n![[b.pdf]]')
   })
 })
+
+describe('a picture whose name a link would read as something else', () => {
+  test('is written so the link stays one', async () => {
+    const { sink, settle } = heldSink()
+    const editor = surface('', 0)
+
+    const writing = receiveImages(editor.view, PICTURE, sink, 0)
+    settle('assets/1) scan#2.png')
+    await writing
+    await settled()
+
+    expect(editor.doc).toBe('![](assets/1%29%20scan%232.png)')
+  })
+})

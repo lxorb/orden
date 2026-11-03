@@ -308,3 +308,9 @@ describe('the grammar the fragments are counted with', () => {
     }
   })
 })
+
+describe('a note that opens with a byte order mark', () => {
+  test('keeps its front matter off the first slide', () => {
+    expect(shown('﻿---\nk: v\n---\n# One\n\n---\n\n# Two\n')).toEqual(['# One', '# Two'])
+  })
+})

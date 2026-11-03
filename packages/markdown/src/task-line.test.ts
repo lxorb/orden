@@ -368,3 +368,15 @@ describe('code in a task', () => {
 test('an address with two colons in it is left as it is by taskWords', () => {
   expect(taskWords('see https://example.com/a::b')).toBe('see https://example.com/a::b')
 })
+
+describe('a parenthesis in the words before a field', () => {
+  test('does not take the field into a key of its own', () => {
+    expect(readTask('- [ ] buy (before work [due:: 2026-05-06])')?.due).toBe('2026-05-06')
+    expect(readTask('- [ ] buy [before (due:: 2026-05-06)]')?.due).toBe('2026-05-06')
+  })
+
+  test('and a field of either kind still reads', () => {
+    expect(readTask('- [ ] buy (due:: 2026-05-06)')?.due).toBe('2026-05-06')
+    expect(readTask('- [ ] buy [due:: 2026-05-06]')?.due).toBe('2026-05-06')
+  })
+})

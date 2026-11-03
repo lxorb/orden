@@ -113,6 +113,40 @@ export function frontMatterBlock(source: string): FrontMatterBlock | null {
   return null
 }
 
+/** A line that reads as a key and its colon: a word as the fields of a plugin are
+ *  named, or a name in anybody's language of a few words, quoted or not. `Priorität:`,
+ *  `due date:`, `Size (cm):` and `日期:` are; `- a: b` and a sentence that has a colon
+ *  in it are not. */
+const PLAIN_KEY = /^\s*[\w.$-]+\s*:/
+const QUOTED_KEY = /^\s*(?:"[^"]*"|'[^']*')\s*:/
+const NAMED_KEY = /^\s*([^\s:#\-*+>|[\]{}!&%@`"',.?][^:.,!?;]*?)\s*:(?:\s|$)/u
+const MOST_KEY_WORDS = 4
+
+function isKeyLine(line: string): boolean {
+  if (PLAIN_KEY.test(line) || QUOTED_KEY.test(line)) return true
+  const key = NAMED_KEY.exec(line)?.[1]
+  return key !== undefined && key.split(/\s+/).length <= MOST_KEY_WORDS
+}
+
+/** Whether a note's opening `---` is front matter to the editor, rather than a rule
+ *  with words below it: a block, whose first line that is not a comment is a key, or
+ *  with nothing in it at all. An editor hides the block from the caret, from find and
+ *  from whoever is typing, so an essay under a rule is not one, nor a deck's first
+ *  slide, however many `---` come after them. A heading reads as a comment, which is
+ *  why a comment has to lead to a key.
+ *
+ *  Narrower than `frontMatterBlock`, which every reader of a note's metadata takes. */
+export function opensFrontMatter(source: string): boolean {
+  const block = frontMatterBlock(source)
+  if (!block) return false
+  if (block.body.from === block.body.to) return true
+
+  for (const line of source.slice(block.body.from, block.body.to).split('\n')) {
+    if (!/^\s*#/.test(line)) return isKeyLine(line)
+  }
+  return false
+}
+
 /** What a written row holds: one key, and either a value or a list of them. A
  *  number and a yes-or-no are written as YAML's own, for a column that held one;
  *  a string is always read back as the words it said. */

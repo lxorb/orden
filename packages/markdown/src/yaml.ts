@@ -122,7 +122,8 @@ function members(inside: string): string[] {
     }
   }
 
-  out.push(inside.slice(start))
+  // A comma may close a sequence as well as part it: `[a, b,]` is two, as in YAML.
+  if (out.length === 0 || inside.slice(start).trim() !== '') out.push(inside.slice(start))
   return out
 }
 

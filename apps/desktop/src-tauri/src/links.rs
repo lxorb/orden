@@ -877,6 +877,7 @@ fn without_code(line: &str) -> Cow<'_, str> {
 /// reached. See `MOST_LINKS`.
 fn links_on(line: &str, most: usize) -> Vec<Link> {
     let letters: Vec<char> = line.chars().collect();
+    let ends = label_ends(&letters);
     let mut found = Vec::new();
     let mut at = 0;
 
@@ -887,7 +888,8 @@ fn links_on(line: &str, most: usize) -> Vec<Link> {
             continue;
         }
 
-        let embed = at > 0 && letters[at - 1] == '!';
+        // A backslash in front of the bang escapes the bang and leaves the link.
+        let embed = at > 0 && letters[at - 1] == '!' && (at < 2 || letters[at - 2] != '\\');
 
         if letters.get(at + 1) == Some(&'[') {
             if let Some(end) = closing_brackets(&letters, at + 2) {
@@ -902,7 +904,7 @@ fn links_on(line: &str, most: usize) -> Vec<Link> {
             continue;
         }
 
-        if let Some((end, label, target)) = markdown_link(&letters, at) {
+        if let Some((end, label, target)) = markdown_link(&letters, at, &ends) {
             if let Some(link) = note_link(&label, &target, embed) {
                 found.push(link);
             }
@@ -935,9 +937,98 @@ fn closing_brackets(letters: &[char], from: usize) -> Option<usize> {
     None
 }
 
+/// How deep a target's parentheses may go, which is cmark's own limit.
+const DEEPEST_PARENS: usize = 32;
+
+/// Whether a character ends a bare target, as JavaScript's `\s` reads it, so both
+/// readings of a line agree: U+FEFF is a blank there and U+0085 is not.
+fn is_blank(one: char) -> bool {
+    one == '\u{FEFF}' || (one != '\u{85}' && one.is_whitespace())
+}
+
+/// The `]` that closes the label each `[` of a line opens, for those that open one. A
+/// label holds balanced brackets and escaped ones, as in `CommonMark`. A bracket pair
+/// that opens a link of its own means the brackets around it open none, since links do
+/// not nest; `[[` is a wikilink's.
+///
+/// One pass over the line rather than a scan from each `[`: `a[` over a megabyte, which
+/// is one line of a note somebody shared, was a thousand characters read per bracket.
+/// The twin of `labelEnds` in links.ts.
+fn label_ends(letters: &[char]) -> Vec<Option<usize>> {
+    let mut ends = vec![None; letters.len()];
+    let mut open: Vec<usize> = Vec::new();
+    let mut at = 0;
+
+    while at < letters.len() {
+        match letters[at] {
+            '\\' => at += 1,
+            '[' => {
+                let doubles = letters.get(at + 1) == Some(&'[');
+                if doubles || (at > 0 && letters[at - 1] == '[') {
+                    open.clear();
+                }
+                if !doubles {
+                    open.push(at);
+                }
+            }
+            ']' => {
+                if let Some(from) = open.pop() {
+                    ends[from] = Some(at);
+                    if letters.get(at + 1) == Some(&'(') {
+                        open.clear();
+                    }
+                }
+            }
+            _ => {}
+        }
+        at += 1;
+    }
+
+    ends
+}
+
+/// Just past a bare target starting at `from`, which ends at a blank or at a `)` it
+/// did not open. Nothing when its parentheses do not balance. The twin of
+/// `bareTargetEnd` in links.ts.
+fn bare_target_end(letters: &[char], from: usize, stop: usize) -> Option<usize> {
+    let mut depth = 0;
+    let mut at = from;
+
+    while at < stop {
+        match letters[at] {
+            one if is_blank(one) => break,
+            '\\' => {
+                at += 2;
+                continue;
+            }
+            '(' => {
+                depth += 1;
+                if depth > DEEPEST_PARENS {
+                    return None;
+                }
+            }
+            ')' => {
+                if depth == 0 {
+                    break;
+                }
+                depth -= 1;
+            }
+            _ => {}
+        }
+        at += 1;
+    }
+
+    (at < stop && depth == 0).then_some(at)
+}
+
 /// A `[label](target)` starting at `at`: where it ends, what it is labelled, and
-/// where it points. Titles and `<>` around the target are both understood.
-fn markdown_link(letters: &[char], at: usize) -> Option<(usize, String, String)> {
+/// where it points. Titles and `<>` around the target are both understood. The twin
+/// of `markdownLinkAt` in links.ts.
+fn markdown_link(
+    letters: &[char],
+    at: usize,
+    ends: &[Option<usize>],
+) -> Option<(usize, String, String)> {
     // Every scan below stops here rather than at the end of the line, and that is
     // what keeps the walk over a line linear. A `[` that turns out not to open a
     // link moves the walk on by one character and the next `[` is read from there,
@@ -948,55 +1039,60 @@ fn markdown_link(letters: &[char], at: usize) -> Option<(usize, String, String)>
     // than this is not one anybody wrote: the target is a path, and a path is
     // three hundred characters at the outside.
     let stop = letters.len().min(at + LONGEST_LINK);
-
-    let mut close = at + 1;
-    while close < stop && letters[close] != ']' {
-        if letters[close] == '[' {
-            return None;
+    let skip_blanks = |from: usize| {
+        let mut scan = from;
+        while scan < stop && is_blank(letters[scan]) {
+            scan += 1;
         }
-        close += 1;
-    }
-    if close >= stop || letters.get(close + 1) != Some(&'(') {
+        scan
+    };
+
+    let close = ends[at].filter(|close| *close < stop)?;
+    if letters.get(close + 1) != Some(&'(') {
         return None;
     }
 
-    let mut scan = close + 2;
-    while scan < stop && (letters[scan] == ' ' || letters[scan] == '\t') {
-        scan += 1;
-    }
-
-    let angled = letters.get(scan) == Some(&'<');
-    if angled {
-        scan += 1;
-    }
-
-    let mut target = String::new();
-    while scan < stop {
-        let one = letters[scan];
-        if angled && one == '>' {
-            scan += 1;
-            break;
+    let from = skip_blanks(close + 2);
+    let (written, mut scan) = if letters.get(from) == Some(&'<') {
+        let opened = from + 1;
+        let mut end = opened;
+        while end < stop && letters[end] != '>' && letters[end] != '<' {
+            end += 1;
         }
-        if !angled && (one == ')' || one == ' ' || one == '\t') {
-            break;
-        }
-        if one == '\n' {
+        if end >= stop || letters[end] != '>' {
             return None;
         }
-        target.push(one);
-        scan += 1;
-    }
+        (&letters[opened..end], end + 1)
+    } else {
+        let end = bare_target_end(letters, from, stop)?;
+        if end == from {
+            return None;
+        }
+        (&letters[from..end], end)
+    };
 
-    // Whatever is left has to close the link, with room for a title.
-    while scan < stop && letters[scan] != ')' {
+    // Whatever is left is a title, and then it has to close the link.
+    scan = skip_blanks(scan);
+    if let Some(quote) = letters
+        .get(scan)
+        .copied()
+        .filter(|one| matches!(one, '"' | '\''))
+    {
         scan += 1;
+        while scan < stop && letters[scan] != quote {
+            scan += 1;
+        }
+        if scan >= stop {
+            return None;
+        }
+        scan = skip_blanks(scan + 1);
     }
     if scan >= stop || letters[scan] != ')' {
         return None;
     }
 
     let label: String = letters[at + 1..close].iter().collect();
-    Some((scan + 1, label, target))
+    Some((scan + 1, label, written.iter().collect()))
 }
 
 /// The note, heading and block a target names: `folder/Note#Heading`, or
@@ -1007,6 +1103,12 @@ fn split_target(named: &str) -> (String, Option<String>, Option<String>) {
         None => (named.trim().to_string(), ""),
     };
 
+    let (heading, block) = anchors(fragment);
+    (target, heading, block)
+}
+
+/// What the part after a `#` names: a heading, or a block when it opens with `^`.
+fn anchors(fragment: &str) -> (Option<String>, Option<String>) {
     let block = fragment.strip_prefix('^').map(str::to_string);
     let heading = if block.is_none() && !fragment.is_empty() {
         Some(fragment.to_string())
@@ -1014,7 +1116,7 @@ fn split_target(named: &str) -> (String, Option<String>, Option<String>) {
         None
     };
 
-    (target, heading, block)
+    (heading, block)
 }
 
 /// What is between the brackets, as a link. Nothing when it names nothing to
@@ -1022,7 +1124,11 @@ fn split_target(named: &str) -> (String, Option<String>, Option<String>) {
 fn wikilink(inner: &str, embed: bool) -> Option<Link> {
     let (named, alias) = match inner.split_once('|') {
         // Everything after the first bar, so an alias may hold one itself.
-        Some((named, alias)) => (named, Some(alias.trim()).filter(|one| !one.is_empty())),
+        // `\\|` is how a table cell writes the bar, and its backslash names nothing.
+        Some((named, alias)) => (
+            named.strip_suffix('\\').unwrap_or(named),
+            Some(alias.trim()).filter(|one| !one.is_empty()),
+        ),
         None => (inner, None),
     };
 
@@ -1049,7 +1155,11 @@ fn note_link(label: &str, written: &str, embed: bool) -> Option<Link> {
         return None;
     }
 
-    let (target, heading, block) = split_target(&decode(written));
+    // Split before anything is decoded: `C%23.md` is a link to `C#.md`, and the hash
+    // that comes out of the escape opens nothing.
+    let (target, fragment) = written.split_once('#').unwrap_or((written, ""));
+    let (target, fragment) = (decode(target), decode_fragment(fragment));
+    let (heading, block) = anchors(&fragment);
     if target.is_empty() && heading.is_none() && block.is_none() {
         return None;
     }
@@ -1085,7 +1195,8 @@ fn is_note_target(target: &str) -> bool {
 }
 
 /// A markdown target as the name it stands for: `My%20Note.md` links to
-/// `My Note.md`, and the index has to recognise it as one.
+/// `My Note.md`, and the index has to recognise it as one. A backslash escapes the
+/// punctuation after it. The twin of `decodeTarget` in links.ts.
 fn decode(target: &str) -> String {
     let bytes = target.as_bytes();
     let mut out: Vec<u8> = Vec::with_capacity(bytes.len());
@@ -1097,12 +1208,36 @@ fn decode(target: &str) -> String {
             at += 3;
             continue;
         }
+        if bytes[at] == b'\\' && bytes.get(at + 1).is_some_and(u8::is_ascii_punctuation) {
+            at += 1;
+        }
         out.push(bytes[at]);
         at += 1;
     }
 
     // Not valid encoding means the characters are the name.
     String::from_utf8(out).unwrap_or_else(|_| target.to_string())
+}
+
+/// The part after a `#` as the words it names, every escape undone and what is not
+/// valid encoding left as replacement characters. The twin of `decodeFragment` in
+/// links.ts.
+fn decode_fragment(fragment: &str) -> String {
+    let bytes = fragment.as_bytes();
+    let mut out: Vec<u8> = Vec::with_capacity(bytes.len());
+    let mut at = 0;
+
+    while at < bytes.len() {
+        if let Some(byte) = escape_at(bytes, at) {
+            out.push(byte);
+            at += 3;
+        } else {
+            out.push(bytes[at]);
+            at += 1;
+        }
+    }
+
+    String::from_utf8_lossy(&out).into_owned()
 }
 
 /// The byte a `%xx` at this position stands for, or nothing when what is there is
@@ -1444,6 +1579,88 @@ mod tests {
         );
         assert!(targets("[x](https://x.dev) [y](mailto:a@b.dev)").is_empty());
         assert!(targets("[y](//x.dev/a)").is_empty());
+    }
+
+    /// The twins of 'a markdown target the way a link names a file' in links.test.ts:
+    /// the hash in an escape is part of the name, and only one written out opens a
+    /// fragment.
+    #[test]
+    fn an_escaped_hash_is_part_of_the_name() {
+        let links = links_in("[S](C%23.md#a%20b)");
+        assert_eq!(links[0].target, "C#.md");
+        assert_eq!(links[0].heading.as_deref(), Some("a b"));
+
+        assert_eq!(targets("[S](Why%3F.md)"), vec!["Why?.md"]);
+        assert_eq!(targets("[S](a%2520b.md)"), vec!["a%20b.md"]);
+        assert_eq!(decode("a%20b%"), "a b%");
+        assert_eq!(decode("%FF.md"), "%FF.md");
+        assert_eq!(links_in("[S](a.md#^b1)")[0].block.as_deref(), Some("b1"));
+    }
+
+    /// The twins of 'the walk agrees with links.rs' in links.test.ts.
+    #[test]
+    fn the_walk_agrees_with_links_ts() {
+        assert_eq!(targets("[x]([[a]])"), vec!["[[a]]"]);
+        assert!(targets("[x](http://a/[[b]])").is_empty());
+        assert_eq!(targets("[[\\]](x)"), vec!["\\"]);
+        // A table writes the bar with a backslash, which names nothing.
+        assert_eq!(targets("| [[a\\|b]] |"), vec!["a"]);
+        assert_eq!(links_in("[[a\\|b]]")[0].alias.as_deref(), Some("b"));
+        assert!(targets("[x](a\u{FEFF}b.md)").is_empty());
+        assert_eq!(targets("[x](a\u{85}b.md)"), vec!["a\u{85}b.md"]);
+    }
+
+    /// The twin of 'a line of brackets that open nothing' in links.test.ts.
+    #[test]
+    fn a_line_of_brackets_is_read_once() {
+        let ends = super::label_ends(&"a[".repeat(50_000).chars().collect::<Vec<char>>());
+        assert!(ends.iter().all(Option::is_none));
+
+        let of = |line: &str| super::label_ends(&line.chars().collect::<Vec<char>>());
+        assert_eq!(of("[a[b]c]")[0], Some(6));
+        assert_eq!(of("[a[b]c]")[2], Some(4));
+        assert_eq!(of("[a[b](c)d]")[0], None);
+        assert_eq!(of("[a[b](c)d]")[2], Some(4));
+        assert_eq!(of("[[a]")[0], None);
+        assert_eq!(of("[[a]")[1], Some(3));
+        assert_eq!(of("[a\\]b]")[0], Some(5));
+    }
+
+    /// The twins of 'parentheses and brackets in a markdown link' in links.test.ts.
+    #[test]
+    fn a_markdown_link_holds_balanced_parentheses_and_brackets() {
+        assert_eq!(targets("[x](a%20(1).md)"), vec!["a (1).md"]);
+        assert_eq!(targets("[x](a(1).md)"), vec!["a(1).md"]);
+        assert_eq!(targets("[x](a((1)).md)"), vec!["a((1)).md"]);
+        assert_eq!(
+            targets("[x](a(1).md \"t\") [y](b.md)"),
+            vec!["a(1).md", "b.md"]
+        );
+        assert_eq!(targets("[x](a\\(1.md)"), vec!["a(1.md"]);
+
+        assert!(targets("[x](a(1.md)").is_empty());
+        assert_eq!(targets("[x](a)1).md)"), vec!["a"]);
+
+        assert_eq!(links_in("[a[b]c](d.md)")[0].alias.as_deref(), Some("a[b]c"));
+        assert_eq!(links_in("[a\\]b](d.md)")[0].alias.as_deref(), Some("a\\]b"));
+        assert_eq!(links_in("[a[b](d.md)")[0].alias.as_deref(), Some("b"));
+
+        assert_eq!(targets("[a[b](c.md)d](e.md)"), vec!["c.md"]);
+        let image = links_in("[![i](p.png)](e.md)");
+        assert_eq!(image.len(), 1);
+        assert_eq!(image[0].target, "p.png");
+        assert!(image[0].embed);
+
+        let wiki = links_in("[[a]](b.md)");
+        assert_eq!(wiki.len(), 1);
+        assert_eq!(wiki[0].kind, "wikilink");
+        assert_eq!(targets("[x [[a]] y](b.md)"), vec!["a"]);
+
+        assert!(targets("[x](a b.md)").is_empty());
+        assert!(targets("[x](<a<b>)").is_empty());
+        assert!(!links_in("\\![x](a.md)")[0].embed);
+
+        assert!(links_in(&format!("[a]({}", "(".repeat(100_000))).is_empty());
     }
 
     #[test]

@@ -290,7 +290,7 @@ const AT_END = {
 
 /** A bracket or round field, `[key:: value]` or `(key:: value)`, as far as its two
  *  colons. The key is everything before the first colon. */
-const FIELD_KEY = { '[': /\[([^[\]:]+?)::/uy, '(': /\(([^():]+?)::/uy }
+const FIELD_KEY = { '[': /\[([^[\]():]+?)::/uy, '(': /\(([^[\]():]+?)::/uy }
 
 /** What a field is read as: the whole of it at `index`, then its key and value. */
 interface Found {

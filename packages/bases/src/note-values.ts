@@ -103,7 +103,13 @@ export function noteValues(text: string): Record<string, Value> {
     ? text
     : `---\n${text}${text.endsWith('\n') ? '' : '\n'}---\n`
   const rows = readProperties(source)
-  if (rows) return Object.fromEntries(rows.map((row) => [row.key, propertyValue(row)]))
+  if (rows) {
+    // A key written twice reads its first, which is the one an edit writes: the cell
+    // would not change otherwise (`keyLine` in @orden/markdown/front-matter).
+    const firsts = new Map<string, Value>()
+    for (const row of rows) if (!firsts.has(row.key)) firsts.set(row.key, propertyValue(row))
+    return Object.fromEntries(firsts)
+  }
 
   const block = frontMatterBlock(source)
   if (!block) return {}

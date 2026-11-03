@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest'
 import { compile } from './expr/compile'
 import { contextAt, noteRow } from './fixtures/rows'
 import { readProperties } from '@orden/markdown/properties'
-import { withItem, writeList } from '@orden/markdown/property-edits'
+import { appliedEdits } from '@orden/markdown/edits'
+import { withItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { parse } from 'yaml'
 import { listAsWritten, noteValues, scalarValue, taskHash } from './note-values'
 
@@ -138,5 +139,18 @@ describe('a list in a block the rows cannot draw', () => {
     expect(note.slice(found.from, found.to)).toBe('ids:\r\n  - 007\r\n  - "x"')
     expect(found.property.items).toEqual(['007', 'x'])
     expect(found.property.writtenItems).toEqual(['007', '"x"'])
+  })
+})
+
+describe('a key written twice', () => {
+  test('reads the first, which is the one an edit writes', () => {
+    const note = '---\nstatus: a\nstatus: b\n---\n'
+    expect(noteValues(note).status).toBe('a')
+    const edit = writeProperty(note, 'status', 'c', 'text')
+    expect(edit && noteValues(appliedEdits(note, [edit])).status).toBe('c')
+  })
+
+  test('and keys keep the order they are written in', () => {
+    expect(Object.keys(noteValues('---\nb: 1\na: 2\nb: 3\n---\n'))).toEqual(['b', 'a'])
   })
 })

@@ -1102,3 +1102,37 @@ describe('the whole sweep', () => {
     }
   })
 })
+
+describe('nesting deeper than the parser can follow', () => {
+  test.each([
+    ['> ', 20000],
+    ['- ', 5000],
+  ])(
+    '%j %i times is still drawn',
+    (mark, times) => {
+      const html = renderMarkdown(`${mark.repeat(times)}the words <b>`)
+      expect(html).toContain('the words')
+      expect(html).not.toContain('<b>')
+    },
+    30000,
+  )
+
+  test('nesting anybody writes is still read', () => {
+    expect(renderMarkdown('> > a')).toContain('<blockquote>')
+  })
+})
+
+describe('a markdown picture with a size after a bar', () => {
+  test('is drawn at that size, as Obsidian does', () => {
+    expect(renderMarkdown('![\\|100x200](a.png)')).toContain(
+      '<img src="a.png" alt="" width="100" height="200">',
+    )
+    expect(renderMarkdown('![a cat|300](a.png)')).toContain(
+      '<img src="a.png" alt="a cat" width="300">',
+    )
+  })
+
+  test('and words after a bar are words', () => {
+    expect(renderMarkdown('![a|b](a.png)')).toContain('alt="a|b"')
+  })
+})

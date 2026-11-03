@@ -21,6 +21,7 @@ import {
   arithmetic,
   compare,
   equal,
+  fieldOf,
   FileRef,
   isDuration,
   NoteRef,
@@ -88,10 +89,10 @@ function compileName(name: string): Fn {
         return (scope) => {
           const locals = scope.locals
           if (locals && name in locals) return locals[name] ?? null
-          return scope.row?.note[name] ?? null
+          return scope.row ? fieldOf(scope.row.note, name) : null
         }
       }
-      return (scope) => scope.row?.note[name] ?? null
+      return (scope) => (scope.row ? fieldOf(scope.row.note, name) : null)
   }
 }
 
@@ -104,7 +105,7 @@ function compileMember(node: Extract<Node, { type: 'member' }>, facts: Facts): F
         facts.formulas.add(name)
         return (scope) => (scope.row ? scope.formula(name, scope.row) : null)
       case 'note':
-        return (scope) => scope.row?.note[name] ?? null
+        return (scope) => (scope.row ? fieldOf(scope.row.note, name) : null)
       case 'file':
         return (scope) => (scope.row ? fileField(scope.row, name, scope) : null)
       case 'task':
@@ -266,7 +267,7 @@ export function formulaReader(
   return (name, row, scope) => {
     const kept = cache.get(row)?.get(name)
     if (kept !== undefined) return kept
-    const source = formulas[name]
+    const source = Object.hasOwn(formulas, name) ? formulas[name] : undefined
     if (source === undefined) return null
     if (running.has(name)) throw new BasesError(`formula.${name} refers to itself`)
 
