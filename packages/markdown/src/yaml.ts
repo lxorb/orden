@@ -170,9 +170,7 @@ function ambiguous(value: string): boolean {
     /:\s|:$|\s#/.test(value) ||
     /^(true|false|null|yes|no|on|off|~)$/i.test(value) ||
     /^[-+]?[\d._]+([eE][-+]?\d+)?$/.test(value) ||
-    /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value) ||
-    // A sentence, plain, could make the key in front of it read as one: `isKeyLine`.
-    /\s\S+\s.*[.!?…]$/u.test(value)
+    /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value)
   )
 }
 
@@ -187,12 +185,13 @@ function quoted(value: string): string {
  *  quotes looks like something a machine made. */
 export function scalar(value: string): string {
   const said = oneLine(value)
-  return ambiguous(said) ? quoted(said) : said
+  // A sentence, plain, could make the key in front of it read as one: `isKeyLine`.
+  return ambiguous(said) || /\s\S+\s.*[.!?…]$/u.test(said) ? quoted(said) : said
 }
 
 /** A member of a flow sequence, which is how a note writes `tags:`. A scalar's
  *  rules, plus the characters that would end the member or the list itself. */
 export function flowItem(value: string): string {
   const said = oneLine(value)
-  return /[,[\]{}]/.test(said) ? quoted(said) : scalar(said)
+  return /[,[\]{}]/.test(said) || ambiguous(said) ? quoted(said) : said
 }

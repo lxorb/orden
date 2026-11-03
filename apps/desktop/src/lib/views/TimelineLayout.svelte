@@ -51,6 +51,8 @@
     })
   })
   const span = $derived(spanOf(bars, live.today))
+  /** A base of only old dates is drawn around them, and today is nowhere on its track. */
+  const todayShown = $derived(live.today >= span.first && live.today <= span.last)
   const width = $derived(DAY_WIDTH[scale])
   const total = $derived((daysBetween(span.first, span.last) + 1) * width)
   const ROW = 32
@@ -193,7 +195,7 @@
           {#each ticks as tick (tick.day)}
             <span class="rule" style:inset-inline-start={`${x(tick.day)}px`}></span>
           {/each}
-          {#if live.today >= span.first && live.today <= span.last}
+          {#if todayShown}
             <span class="today" style:inset-inline-start={`${x(live.today) + width / 2}px`}></span>
           {/if}
           <svg class="arrows" width={total} height={bars.length * ROW} aria-hidden="true">
