@@ -103,12 +103,15 @@ interface Taking {
   section: string
   rule: string
   /** The heading that opened this page, which makes it a page with nothing under
-   *  it. A title directly over a section is the usual head of a note. */
+   *  it yet. */
   head: Line | null
+  /** A heading taken into the body rather than opening a page; see `pagesOf`. What the
+   *  pages after this one sit under. */
+  next: { section: string; rule: string } | null
 }
 
 function empty(section: string, rule: string, head: Line | null = null): Taking {
-  return { taken: [], rows: 0, section, rule, head }
+  return { taken: [], rows: 0, section, rule, head, next: null }
 }
 
 /** A wrapped line as parts that fit on a page. Marks know where a line of the note
@@ -185,7 +188,7 @@ export function pagesOf(source: string, paging: Paging): Page[] {
   const cut = (to: number) => {
     if (!taking.taken.length && !taking.head) return
 
-    const first = taking.taken[0]?.line ?? taking.head
+    const first = (taking.next ? taking.head : taking.taken[0]?.line) ?? taking.head
     const shown: string[] = []
     const counted: string[] = []
     for (const { line, rows, continues } of taking.taken) {
@@ -250,10 +253,19 @@ export function pagesOf(source: string, paging: Paging): Page[] {
     // A heading at or above the reader's level opens a page of its own and goes
     // into the head band rather than into the body.
     if (paging.breakAt > 0 && line.level > 0 && line.level <= paging.breakAt) {
-      cut(line.from)
       const section = fold(line.text)
-      taking = empty(section, line.level === 1 ? HEAVY : LIGHT, section === '' ? null : line)
-      continue
+      const rule = line.level === 1 ? HEAVY : LIGHT
+      // A title directly over a section, the usual head of a note: the second heading
+      // goes on the first one's page, in the order they were written, rather than the
+      // note opening on a page of nothing.
+      if (taking.head && taking.taken.every((one) => one.line.level > 0 || one.line.under)) {
+        taking.next = { section, rule }
+      }
+      else {
+        cut(line.from)
+        taking = empty(section, rule, section === '' ? null : line)
+        continue
+      }
     }
 
     // The underline `mark.ts` drew under that heading is the head band's own
@@ -269,7 +281,7 @@ export function pagesOf(source: string, paging: Paging): Page[] {
         for (const one of moving) taking.rows -= one.rows.length
 
         cut(moving[0]?.line.from ?? part.line.from)
-        taking = empty(taking.section, taking.rule)
+        taking = empty(taking.next?.section ?? taking.section, taking.next?.rule ?? taking.rule)
         for (const one of moving) {
           taking.taken.push(one)
           taking.rows += one.rows.length

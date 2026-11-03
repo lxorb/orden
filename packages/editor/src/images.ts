@@ -51,7 +51,7 @@ export function wordsBesidePicture(html: string, text: string): boolean {
   const words = html
     .replace(/<(style|script|head|title)\b[\s\S]*?<\/\1\s*>/giu, '')
     .replace(/<!--[\s\S]*?-->/gu, '')
-    .replace(/<[^>]*>/gu, '')
+    .replace(/<(?:"[^"]*"|'[^']*'|[^>"'])*>/gu, '')
     .replace(/&nbsp;|&#160;/giu, ' ')
   return words.trim() !== ''
 }

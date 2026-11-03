@@ -97,7 +97,7 @@ function copiedHere(html: string, text: string): string | null {
 }
 
 /** Words put in over the selection, with the caret after them. */
-function inserted(state: EditorState, text: string): TransactionSpec {
+export function inserted(state: EditorState, text: string): TransactionSpec {
   const range = state.selection.main
   return {
     changes: { from: range.from, to: range.to, insert: text },
@@ -111,91 +111,10 @@ function insert(view: EditorView, text: string) {
   view.dispatch(inserted(view.state, text))
 }
 
-/** What a line holds in front of a caret that the words on it stand behind: the indent
- *  and quote marks, which go on every line, then a list marker and its box. */
-const LEAD = /^([ \t]*(?:>[ \t]?)*[ \t]*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/
-
+/** A list's first line, and a line holding an item with nothing in it yet: what decides
+ *  that a plain paste is not CodeMirror's to put in. See `intoEmptyItem`. */
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
-
-/** A paste's first line, when markdown only reads it at the start of a line. */
-const OPENS_BLOCK =
-  /^(?:#{1,6}[ \t]|\||`{3,}|~{3,}|>[ \t]?|(?:[-*+]|\d+[.)])[ \t]|\$\$|(?:-{3,}|\*{3,}|_{3,})$)/
-
-/** A paste's last line, when words carried on behind it would become part of it. */
-const CLOSES_BLOCK = /^(?:#{1,6}[ \t]|\||`{3,}|~{3,}|\$\$)/
-
-/** A list on an empty item: the item is the first of the list, whichever marker that
- *  has, and the rest follow it at its depth. Null for any other paste. */
-function intoEmptyItem(state: EditorState, text: string): TransactionSpec | null {
-  const range = state.selection.main
-  const line = state.doc.lineAt(range.from)
-  if (!range.empty || !AN_ITEM.test(text)) return null
-
-  const found = LEAD.exec(line.text)
-  const marker = found?.[2]
-  const kept = found?.[1] ?? ''
-  if (!marker || line.text.trimEnd().length > kept.length + marker.trimEnd().length) return null
-  if (range.from < line.from + kept.length + marker.length) return null
-
-  const body = text.replace(/\n/g, `\n${kept}`)
-  const from = line.from + kept.length
-  return {
-    changes: { from, to: line.to, insert: body },
-    selection: EditorSelection.cursor(from + body.length),
-    scrollIntoView: true,
-    userEvent: 'input.paste',
-  }
-}
-
-/** Markdown put where it is read as what it is.
- *
- *  A heading or a table is only one at the start of a line, so a page or a sheet pasted
- *  with the caret after words starts on a line of its own, and what stood behind the
- *  caret stays behind it; on an empty item, or inside an item or a quote, it stays in
- *  there. Google Docs and Notion both make a block of a block pasted into a line. */
-export function placed(state: EditorState, text: string): TransactionSpec {
-  const special = intoEmptyItem(state, text)
-  if (special) return special
-
-  const range = state.selection.main
-  const line = state.doc.lineAt(range.from)
-  const end = state.doc.lineAt(range.to)
-  const before = line.text.slice(0, range.from - line.from)
-  const after = end.text.slice(range.to - end.from)
-
-  const found = LEAD.exec(before)
-  const kept = found?.[1] ?? ''
-  const marker = found?.[2] ?? ''
-  const lead = kept + ' '.repeat(marker.length)
-  const held = (lines: string) =>
-    lines.replace(/\n([^\n]*)/g, (_all, one: string) => `\n${one ? lead + one : lead.trimEnd()}`)
-  const gap = `\n${lead.trimEnd()}\n${lead}`
-
-  const inFront = before.length === kept.length + marker.length
-  const first = text.slice(0, text.indexOf('\n') + 1 || text.length).trimEnd()
-  const last = text.slice(text.lastIndexOf('\n') + 1)
-  const opens = !inFront && OPENS_BLOCK.test(first)
-  const closes = after.trim() !== '' && CLOSES_BLOCK.test(last)
-  if (!inFront && !opens && !closes && !lead) return inserted(state, text)
-  if (!inFront && !opens && !closes && !text.includes('\n')) return inserted(state, text)
-
-  const from = opens ? line.from + before.trimEnd().length : range.from
-  const to = closes ? range.to + (after.length - after.trimStart().length) : range.to
-  const head = (opens ? gap : '') + held(text)
-
-  return {
-    changes: { from, to, insert: head + (closes || (opens && after.trim()) ? gap : '') },
-    selection: EditorSelection.cursor(from + head.length),
-    scrollIntoView: true,
-    userEvent: 'input.paste',
-  }
-}
-
-/** Plain text as itself, but for a list on an empty item, which would otherwise be a
- *  list inside the item with only its first line in it. */
-export function plainly(state: EditorState, text: string): TransactionSpec {
-  return intoEmptyItem(state, text) ?? inserted(state, text)
-}
+const EMPTY_ITEM = /^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
 
 /** Where a paste goes that is written a moment after it was made, because what writes
  *  it - the link rule, the page converter - is fetched with the first one: the note it
@@ -293,13 +212,15 @@ export function richPaste(): Extension {
 
       // A list on an empty item, from this app or as plain text. Whatever else those
       // two come to, CodeMirror's plain paste below would nest its first line alone.
-      const item =
-        view.state.selection.ranges.length === 1 && (copiedHere(html, text) || !html.trim())
-          ? intoEmptyItem(view.state, text)
-          : null
-      if (item) {
+      if (
+        view.state.selection.ranges.length === 1 &&
+        (copiedHere(html, text) || !html.trim()) &&
+        AN_ITEM.test(text) &&
+        EMPTY_ITEM.test(view.state.doc.lineAt(view.state.selection.main.head).text)
+      ) {
         event.preventDefault()
-        view.dispatch(item)
+        const land = later(view)
+        void loadLineCommands().then(({ plainly }) => land((state) => plainly(state, text)))
         return true
       }
 
@@ -313,7 +234,8 @@ export function richPaste(): Extension {
       const table = delimitedToTable(text)
       if (table) {
         event.preventDefault()
-        view.dispatch(placed(view.state, table))
+        const land = later(view)
+        void loadLineCommands().then(({ placed }) => land((state) => placed(state, table)))
         return true
       }
 
@@ -326,8 +248,8 @@ export function richPaste(): Extension {
       // first page pasted in a run of the app and on no other.
       event.preventDefault()
       const land = later(view)
-      void converter()
-        .then((htmlToMarkdown) => {
+      void Promise.all([converter(), loadLineCommands()])
+        .then(([htmlToMarkdown, { placed }]) => {
           // A page that comes to nothing - all chrome and no prose - is pasted as the
           // plain text beside it, which is what handing the paste back would have
           // done with it.
@@ -360,7 +282,7 @@ export const pasteHere: Command = (view) => {
   void readClipboard()
     .then(async (clipboard) => {
       if (!clipboard) return
-      const { linkedPaste } = await loadLineCommands()
+      const { linkedPaste, placed, plainly } = await loadLineCommands()
       if (land((state) => linkedPaste(state, clipboard.text))) return
 
       const markdown = await pastedMarkdown(clipboard.html, clipboard.text)

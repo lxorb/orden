@@ -7,8 +7,9 @@ import {
 import { EditorView } from '@codemirror/view'
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { describe, expect, test } from 'vitest'
-import { clearFormatting, insertHorizontalRule, setHeading, toggleWrap } from './commands'
+import { insertHorizontalRule, setHeading, toggleWrap } from './commands'
 import { external } from './external'
+import { clearFormatting } from './marks'
 import { blockDecorations } from './live-preview'
 import { buildDecorations } from './live-preview/decorate'
 import {

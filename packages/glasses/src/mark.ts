@@ -28,7 +28,7 @@ import { useEmoji } from '@orden/markdown/engines'
 import { calloutOf, opensCallout } from '@orden/markdown/callouts'
 import { readChart } from '@orden/markdown/chart'
 import { captionIn, languageIn } from '@orden/markdown/code'
-import { embedKind, type Wikilink } from '@orden/markdown/links'
+import { blockIdOf, embedKind, type Wikilink } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
 import {
   type Compaction,
@@ -707,8 +707,12 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     case 'paragraph': {
       const from = where.take(raw)
       const picture = onlyPicture(kids)
-      if (picture) sheet.add(`${PICTURE} ${picture}`, from, nest)
-      else sheet.add(inlineWords(kids, sheet.marks, sheet.flow), from, nest)
+      if (picture) {
+        sheet.add(`${PICTURE} ${picture}`, from, nest)
+        break
+      }
+      const words = unnamed(inlineWords(kids, sheet.marks, sheet.flow))
+      if (words) sheet.add(words, from, nest)
       break
     }
 
@@ -729,7 +733,7 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
     case 'text':
       sheet.add(
-        kids.length ? inlineWords(kids, sheet.marks, sheet.flow) : textOf(token),
+        unnamed(kids.length ? inlineWords(kids, sheet.marks, sheet.flow) : textOf(token)),
         where.take(raw),
         nest,
       )
@@ -762,6 +766,26 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     default:
       sheet.add(textOf(token), where.take(raw), nest)
   }
+}
+
+/** Words without the block name at the end of a line: a marker for a link to point at,
+ *  which nothing that shows a note shows; see `withoutBlockIds`. */
+function unnamed(words: string): string {
+  if (!words.includes('^')) return words
+
+  return words
+    .split('\n')
+    .map((line) => {
+      const id = blockIdOf(line)
+      return id
+        ? line
+            .trimEnd()
+            .slice(0, -id.length - 1)
+            .trimEnd()
+        : line
+    })
+    .join('\n')
+    .trimEnd()
 }
 
 /** A fence, with the lines it was written between and its code as it stands.

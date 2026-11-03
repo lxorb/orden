@@ -70,3 +70,8 @@ export const outdentItems = writable(door((commands) => commands.outdentItems))
 const moveDown = door((commands) => commands.moveLineOver(1))
 const moveUp = door((commands) => commands.moveLineOver(-1))
 export const moveLineOver = (delta: -1 | 1) => writable(delta < 0 ? moveUp : moveDown)
+
+export const clearFormatting = door((commands) => commands.clearFormatting)
+
+/** Marks over several lines, by which ones the marks are. */
+export const marksAcross = (mark: string) => door((commands) => commands.marksAcross(mark))

@@ -13,7 +13,6 @@ import {
 } from '@codemirror/state'
 import type { KeyBinding } from '@codemirror/view'
 import {
-  clearFormatting,
   insertCallout,
   insertCodeFence,
   insertComment,
@@ -59,6 +58,7 @@ import {
   sortLines,
   titleCase,
   upperCase,
+  clearFormatting,
   indentItems,
   moveLineOver,
   outdentItems,

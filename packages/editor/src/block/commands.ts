@@ -19,11 +19,13 @@
 import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
-import { blockIdOf, freeBlockId, blockIds } from '@orden/markdown/links'
+import { fenceName } from '@orden/markdown/fences'
+import { blockIdOf, freeBlockId, blockIds, lines, ownLine } from '@orden/markdown/links'
 import { indentItems, outdentItems } from '../list-keys'
 import { headingLevel, headingText } from '../headings'
 import { enclosing } from '../nodes'
 import { copyBlock, cutBlock, moveBlock } from './move'
+import { verbatimLines } from './verbatim'
 import { type BlockShape, shaped, wordsOf } from './shape'
 import { blockAt, type BlockKind, blocksIn, type BlockSpan, writtenLine } from './span'
 
@@ -131,13 +133,27 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   // would leave it unclosed.
   if (span.kind === 'properties') return null
 
+  // The page's reading of what is code, which is not always this grammar's: a fence
+  // nothing closes, or one an older build closed with a name, is words to the grammar.
+  // The name it was closed with is this block's. A name written on one nothing closes
+  // is code on the page, under it as much as in it.
+  const rows = [...lines(doc.toString())]
+  if (rows[first.number - 1]?.code) {
+    for (let at = first.number - 1; rows[at]?.code; at++) {
+      const old = fenceName(rows[at]?.text ?? '')
+      if (old) return `#^${old}`
+    }
+    if (!verbatimLines(view.state, span.from, span.to).has(first.number)) return null
+  }
+
   const last = doc.lineAt(ownEnd(view.state, span))
   const verbatim = verbatimLines(view.state, span.from, span.to).has(last.number)
-  // Where the name would already be: under the block, or at the end of its words.
-  const under = verbatim ? writtenLine(view.state, last.number + 1, 1) : null
-  const already = under?.text.trim().startsWith('^')
-    ? blockIdOf(under.text)
-    : !verbatim && blockIdOf(last.text)
+  // Where the name would already be: under the block, or at the end of its last line.
+  const under = writtenLine(view.state, last.number + 1, 1)
+  const already =
+    under && ownLine(under.text)
+      ? blockIdOf(under.text)
+      : span.kind !== 'code' && blockIdOf(last.text)
   if (already) return `#^${already}`
 
   const taken = new Set(blockIds(doc.toString()).map((one) => one.id))
@@ -155,39 +171,6 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   const end = last.from + last.text.trimEnd().length
   view.dispatch({ changes: { from: end, to: end, insert: ` ^${id}` } })
   return `#^${id}`
-}
-
-/** Blocks whose lines are typed exactly as they stand: no shape is put on them, and
- *  a name on one is no name. */
-const VERBATIM = new Set([
-  'FencedCode',
-  'CodeBlock',
-  'Table',
-  'BlockMath',
-  'FrontMatter',
-  'HorizontalRule',
-  'HTMLBlock',
-  'CommentBlock',
-  'LinkReference',
-])
-
-/** Which lines between two positions belong to such a block, by number. */
-function verbatimLines(state: EditorState, from: number, to: number): Set<number> {
-  const found = new Set<number>()
-
-  syntaxTree(state).iterate({
-    from,
-    to,
-    enter: (node) => {
-      if (!VERBATIM.has(node.name)) return true
-
-      const last = state.doc.lineAt(Math.min(node.to, state.doc.length)).number
-      for (let at = state.doc.lineAt(node.from).number; at <= last; at++) found.add(at)
-      return false
-    },
-  })
-
-  return found
 }
 
 /** Where a block's own words end. An item with children ends before them: a name at
@@ -215,6 +198,44 @@ function ownEnd(state: EditorState, span: BlockSpan): number {
  *  side of it. */
 const PROSE = new Set<BlockKind>(['heading', 'paragraph', 'list', 'quote'])
 
+/** The line of a heading's underline, when it is written with one. */
+function underlineOf(state: EditorState, from: number): number | null {
+  for (const node of enclosing(syntaxTree(state).resolveInner(from, 1))) {
+    if (node.name.startsWith('SetextHeading')) return state.doc.lineAt(node.to).number
+  }
+  return null
+}
+
+/** One depth of a list being numbered. */
+interface Counting {
+  written: number
+  at: number
+  column: number
+  nth: number
+}
+
+/** A line as a numbered item, counting within its own depth and sitting under the words
+ *  of the item it hangs from: two spaces under `1. ` nest nothing. */
+function numberedLine(text: string, counting: Counting[]): string {
+  const { indent, words } = wordsOf(text)
+  const written = indent.length
+
+  for (let top = counting.at(-1); top && counting.length > 1 && top.written > written;) {
+    counting.pop()
+    top = counting.at(-1)
+  }
+  let level = counting.at(-1)
+  if (!level || level.written < written) {
+    level = { written, at: level ? level.column : written, column: 0, nth: 1 }
+    counting.push(level)
+  }
+
+  const mark = `${level.nth}. `
+  level.nth++
+  level.column = level.at + mark.length
+  return ' '.repeat(level.at) + mark + words
+}
+
 /** Every block a press acted on, as the shape that was asked for.
  *
  *  A heading's block is its whole section, and only its own line turns: the section
@@ -236,27 +257,42 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
   const doc = view.state.doc
   const changes: ChangeSpec[] = []
   const heading = shape.startsWith('heading')
+  const counting: Counting[] = []
+  const seen = new Set<number>()
   let nth = 1
 
   for (const span of spans) {
     const first = doc.lineAt(span.from).number
-    const last = span.kind === 'heading' ? first : doc.lineAt(Math.min(span.to, doc.length)).number
+    const underline = span.kind === 'heading' ? underlineOf(view.state, span.from) : null
+    const last =
+      span.kind !== 'heading'
+        ? doc.lineAt(Math.min(span.to, doc.length)).number
+        : underline
+          ? underline - 1
+          : first
     const verbatim = verbatimLines(view.state, span.from, doc.line(last).to)
 
     for (let number = first; number <= last; number++) {
-      if (verbatim.has(number)) continue
+      // An item's block holds the items nested in it, and each is a block of its own.
+      if (verbatim.has(number) || seen.has(number)) continue
+      seen.add(number)
       const line = doc.line(number)
       // A blank line is what makes two paragraphs two paragraphs, and a marker in
       // front of nothing is an item nobody asked for.
       if (!wordsOf(line.text).words.trim()) continue
 
       const into: BlockShape = heading && number > first ? 'paragraph' : shape
-      const text = shaped(line.text, into, nth)
+      const text =
+        into === 'numbered' ? numberedLine(line.text, counting) : shaped(line.text, into, nth)
       if (into === 'numbered') nth++
       if (text === line.text) continue
 
       changes.push({ from: line.from, to: line.to, insert: text })
     }
+
+    // The underline said what kind of heading this was, and now it would say something
+    // else: a rule, or the same heading again under the new one.
+    if (underline) changes.push({ from: doc.line(last).to, to: doc.line(underline).to })
   }
 
   if (!changes.length) return false
