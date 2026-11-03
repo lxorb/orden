@@ -1698,6 +1698,7 @@ export class NoteRoom implements DurableObject {
 
     if ((await sha256(fileOf(held.kind, this.state.doc))) !== held.hash) await this.settle()
 
+    const level = held.hash
     const row = await this.env.DB.prepare('select * from notes where id = ?')
       .bind(held.noteId)
       .first<Note>()
@@ -1708,6 +1709,18 @@ export class NoteRoom implements DurableObject {
     if (!readsAs(held.kind, asked.text)) return { refused: UNREADABLE }
 
     const current = fileOf(held.kind, this.state.doc)
+    // A writer naming a version wrote on that version's words, so the document has to
+    // be holding them. A settle that was refused, or a keystroke that arrived while the
+    // row was read or this was hashed, is words the text knows nothing of, and the
+    // difference between the two would take them out. Nothing is awaited below.
+    if (
+      asked.base !== undefined &&
+      ((await sha256(current)) !== level ||
+        held.hash !== level ||
+        fileOf(held.kind, this.state.doc) !== current)
+    ) {
+      return { conflict: true }
+    }
     const update = ingested(held.kind, this.state.doc, held.noteId, current, asked.text)
     if (!update) return { note: row }
 
