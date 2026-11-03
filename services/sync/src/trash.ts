@@ -4,6 +4,7 @@ import { now } from './crypto'
 import { note as noted } from './failed'
 import { wordsLeftover } from './leftovers'
 import { noteKey, presentNote, restoreNote, takeSeq } from './notes'
+import { eraseRooms } from './rooms'
 import { snapshotKey } from './rooms/epoch'
 import { deviceOf } from './sync2/device'
 import { presentSpace } from './spaces/space'
@@ -283,6 +284,9 @@ async function purgeNote(
     answerOf<{ hash: string }>(versions).map((one) => one.hash),
   ).catch(later)
   await tellEnded(env, answerOf<Ended>(terms), who).catch(later)
+  // Its room now rather than at the sweep: until then it holds the words, and whoever is
+  // still in it goes on hearing whoever else is. The list stays the guarantee.
+  await eraseRooms(env, [note.id]).catch(later)
   await env.DB.batch([
     forgetWords(env, note.id),
     env.DB.prepare('delete from leftovers where what = ?').bind(wordsLeftover(note.id)),

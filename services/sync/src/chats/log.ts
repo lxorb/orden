@@ -113,6 +113,16 @@ const NAMES_FILE = `select 1 from messages m
 /** How long the list of who the chat reaches is believed. */
 const REACHERS_FOR = 60_000
 
+/** Every blob a post held for later names; see `heldFilesOf`. */
+function filesOfHeld(post: Post): string[] {
+  return [
+    ...(post.files ?? []).flatMap((file) =>
+      file.preview ? [file.hash, file.preview] : [file.hash],
+    ),
+    ...(post.preview?.picture ? [post.preview.picture] : []),
+  ]
+}
+
 function attachedTo(socket: WebSocket): Attached | null {
   const held: unknown = socket.deserializeAttachment()
   if (typeof held !== 'object' || held === null) return null
@@ -401,7 +411,7 @@ export class ChatLog implements DurableObject {
     if (held) return held
 
     // Taking back a post that has not gone yet.
-    if (event.kind === 'delete' && this.unschedule(person.who, event.target)) {
+    if (event.kind === 'delete' && (await this.unschedule(person.who, event.target))) {
       return { t: 'placed', id: event.id, seq: 0, at }
     }
 
@@ -516,15 +526,20 @@ export class ChatLog implements DurableObject {
    *  author can still see and send again. */
   private heldFilesOf(who: string): string[] {
     const rows = this.sql.exec<{ post: string }>('select post from scheduled where author = ?', who)
-    return rows.toArray().flatMap((row) => {
-      const post = JSON.parse(row.post) as Post
-      return [
-        ...(post.files ?? []).flatMap((file) =>
-          file.preview ? [file.hash, file.preview] : [file.hash],
-        ),
-        ...(post.preview?.picture ? [post.preview.picture] : []),
-      ]
-    })
+    return rows.toArray().flatMap((row) => filesOfHeld(JSON.parse(row.post) as Post))
+  }
+
+  /** The blobs a post that was held and is not any more named, written down for its
+   *  author: a hash let go of while the post held it came off the list as used, and
+   *  nothing else asks about it again (unused.ts). The list only asks. A guest holds
+   *  none. */
+  private async heldNoMore(who: Who, hashes: readonly string[]): Promise<void> {
+    if (!hashes.length || who.startsWith('guest:')) return
+    await noteUnusedBy(this.env, hubIdOf(who), hashes, Date.now())
+      .run()
+      .catch((error: unknown) => {
+        note(`chat ${this.chatId()} held`, error, null)
+      })
   }
 
   private heldAnswer(id: string): Answer | null {
@@ -538,6 +553,14 @@ export class ChatLog implements DurableObject {
    *  a scheduled post is editable until it goes. */
   private async schedule(person: Person, event: Extract<Event, { kind: 'schedule' }>) {
     const sql = this.sql
+    const before = sql
+      .exec<{ post: string }>(
+        'select post from scheduled where message = ? and author = ?',
+        event.post.message,
+        person.who,
+      )
+      .toArray()
+      .flatMap((row) => filesOfHeld(JSON.parse(row.post) as Post))
     this.ctx.storage.transactionSync(() => {
       sql.exec(
         `delete from scheduled_tries where id in (
@@ -562,14 +585,19 @@ export class ChatLog implements DurableObject {
         JSON.stringify(event.post),
       )
     })
+    const still = new Set(filesOfHeld(event.post))
+    await this.heldNoMore(
+      person.who,
+      before.filter((hash) => !still.has(hash)),
+    )
     await this.plan()
   }
 
   /** A delete of a post still waiting for its time takes it back, for its author. */
-  private unschedule(who: Who, message: string): boolean {
+  private async unschedule(who: Who, message: string): Promise<boolean> {
     const row = this.sql
-      .exec<{ id: string }>(
-        'select id from scheduled where message = ? and author = ?',
+      .exec<{ id: string; post: string }>(
+        'select id, post from scheduled where message = ? and author = ?',
         message,
         who,
       )
@@ -577,6 +605,7 @@ export class ChatLog implements DurableObject {
     if (row) {
       this.sql.exec('delete from scheduled where id = ?', row.id)
       this.sql.exec('delete from scheduled_tries where id = ?', row.id)
+      await this.heldNoMore(who, filesOfHeld(JSON.parse(row.post) as Post))
     }
     return row !== undefined
   }

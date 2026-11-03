@@ -365,6 +365,49 @@ describe('an open note', () => {
   })
 })
 
+describe('a key typed while a note and its document are brought together', () => {
+  test('goes into the document, so what follows lands in the right place', async () => {
+    const one = await device()
+    one.online = false
+    const seeded = SEEDED[0]?.text ?? ''
+    const theirs = seeded.replace('Monday', 'Friday')
+    const doc = await one.engine.hold(PLAN)
+    const live = doc?.live
+    live?.transact(() => {
+      const text = live.getText(TEXT)
+      text.delete(0, text.length)
+      text.insert(0, theirs)
+    }, HERE)
+    await one.engine.letGo(PLAN)
+
+    const mine = seeded.replace('Monday', 'Tuesday')
+    const note = new SharedDoc(mine)
+    const keepLost = one.engine.keepLost.bind(one.engine)
+    one.engine.keepLost = async (...args) => {
+      note.arrived([{ from: 0, insert: 'X' }])
+      await keepLost(...args)
+    }
+    const part = await attach(
+      one.engine,
+      PLAN,
+      {
+        live: note,
+        get latest() {
+          return note.text.toString()
+        },
+      },
+      () => true,
+    )
+
+    const held = await one.engine.hold(PLAN)
+    expect(one.engine.core.isHeld(PLAN)).toBe(false)
+    expect(held?.text()).toBe(note.text.toString())
+    expect(note.text.toString().startsWith('X')).toBe(true)
+    await one.engine.letGo(PLAN)
+    part?.()
+  })
+})
+
 describe('an open note held apart from its document (#543)', () => {
   /** The document and the note each written over, differently, while the note was
    *  closed: the rule asks, the note is held, and it is not joined to the document until
@@ -869,6 +912,41 @@ describe('the folder watcher', () => {
     )
     expect(folders.map((folder) => folder.local_path)).toEqual(['Work'])
     expect(await here.disk.exists(`${ROOT}/Work/Plan.md`)).toBe(true)
+  })
+
+  test('makes a file it was told changed and has no entry for', async () => {
+    // A note that would not read at its `created`, as a Windows lock leaves one, is on
+    // no entry, and its next change is the next time anything says it is there.
+    const here = await device()
+    const heard: ((news: SpaceNews) => void)[] = []
+    watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
+      heard.push(hear)
+      return Promise.resolve()
+    })
+    const watched = watchFolders({
+      engine: here.engine,
+      own: () => false,
+      ready: () => true,
+      changed: () => undefined,
+    })
+    await here.disk.write(`${ROOT}/Late.md`, 'late\n')
+    await here.disk.mkdir(`${ROOT}/Quiet`)
+    const told = (path: string, dir: boolean) =>
+      ({ kind: 'modified', path, dir, size: 1, mtime: 1, id: null }) as const
+    for (const hear of heard) {
+      hear({
+        root: ROOT,
+        changes: [told(`${ROOT}/Late.md`, false), told(`${ROOT}/Quiet`, true)],
+        scan: false,
+        gone: false,
+      })
+    }
+    await vi.waitFor(() => {
+      expect(here.engine.entryAt(`${ROOT}/Late.md`)).not.toBeNull()
+    })
+    watched.stop()
+
+    expect(here.engine.entryAt(`${ROOT}/Quiet`)).toBeFalsy()
   })
 
   test('hears the space’s own hidden inbox, and no other hidden file (#1044)', async () => {

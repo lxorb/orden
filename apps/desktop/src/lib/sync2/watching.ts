@@ -170,7 +170,10 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
     if (!change.dir) await engine.foreign(change.path)
     return
   }
-  if (change.kind === 'created') await made(engine, change.path, change.dir)
+  // A file with no entry that changed is a file with no entry: its `created` may have
+  // met it locked (a picture half copied on Windows), and nothing else would ask again
+  // before the next launch. A folder's change says nothing about the folder.
+  if (change.kind === 'created' || !change.dir) await made(engine, change.path, change.dir)
 }
 
 /** Whether the tree already has a folder where `path` is: the engine makes one on this

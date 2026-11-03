@@ -1338,6 +1338,44 @@ describe('chats', () => {
         expect(await served(hash)).toBe(200)
       })
 
+      test('and let go of once that post is taken back', async () => {
+        const chat = await chatOfOwner()
+        const other = (await makeChat()).json.chat
+        const hash = await upload(people.writer, BYTES)
+        const post = await posted(chat, hash)
+        const held = later(hash)
+        await send(people.writer, other, held)
+
+        await deleted(people.writer, chat, post.message)
+        await sweepUnused(env)
+        expect(holders(hash)).toEqual([{ user_id: ids.writer }])
+        expect(unused()).toEqual([])
+
+        await deleted(people.writer, other, held.post.message)
+        await sweepUnused(env)
+        expect(holders(hash)).toEqual([])
+      })
+
+      test('and let go of once the post that held it is held without it', async () => {
+        const chat = await chatOfOwner()
+        const other = (await makeChat()).json.chat
+        const hash = await upload(people.writer, BYTES)
+        const post = await posted(chat, hash)
+        const held = later(hash)
+        await send(people.writer, other, held)
+        await deleted(people.writer, chat, post.message)
+        await sweepUnused(env)
+        expect(unused()).toEqual([])
+
+        await send(people.writer, other, {
+          ...held,
+          id: id(),
+          post: { ...held.post, files: [] },
+        })
+        await sweepUnused(env)
+        expect(holders(hash)).toEqual([])
+      })
+
       test('and so does one that was refused, which its author can still see', async () => {
         const chat = await chatOfOwner()
         const other = (await makeChat()).json.chat

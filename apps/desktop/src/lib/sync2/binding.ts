@@ -101,6 +101,10 @@ async function agree(
   return null
 }
 
+/** How many times a note and its document are brought together before they are joined,
+ *  for the keys typed while the last time was asked. */
+const AGREEING = 8
+
 /** Joins a note to its document. Answers how to part them again. `holds` is whether the
  *  note's view is still on this file (see rooms/bind.ts).
  *
@@ -147,7 +151,15 @@ export async function attach(
     })
   }
 
-  const asked = await agree(engine, id, note, doc)
+  let asked = await agree(engine, id, note, doc)
+  // A key typed while that was asked is in the note and not in the document, and every
+  // operation after it lands one place off (#543). What the document says now is what
+  // the two last shared, so what the note has beyond it goes in; nothing is awaited
+  // between the last look and the join.
+  for (let round = 0; round < AGREEING && asked === null && !gone(); round++) {
+    if (note.latest === doc.text()) break
+    asked = await agree(engine, id, note, doc, doc.text())
+  }
   if (asked === null) join()
   else wait(asked)
 
