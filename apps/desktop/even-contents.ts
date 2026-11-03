@@ -322,9 +322,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-03, to 5,792,500, for #331: every tab as a window on a
  *  canvas, Alt Alt (overview/), which takes the place of the palette's tab cards.
  *  Measured 5,792,326.
+ *
+ *  The code raised on 2026-11-03, to 5,794,900, for #331: a window of the overview
+ *  dragged to another place in its strip or into another pane (overview/drag.ts), and
+ *  Alt Alt turning it back at any moment. Measured 5,794,727.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_792_500,
+  code: 5_794_900,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
