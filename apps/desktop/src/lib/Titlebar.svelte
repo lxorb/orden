@@ -168,9 +168,13 @@
       <Tabs paneId={only.id} caption />
     {/if}
 
-    <!-- What the window is dragged by; a sliver beside a strip, whose own empty
-         stretch is the caption too (Tabs.svelte). Then the scratchpad's switch. -->
-    <div class="drag" class:sliver={!!only} data-tauri-drag-region></div>
+    <!-- What the window is dragged by, while the panes have the strips. A strip up here
+         is the caption itself, and keeps the sliver it can always be dragged by ahead of
+         its own buttons (Tabs.svelte), so they and the switches after them are one row
+         (#1060). Then the scratchpad's switch. -->
+    {#if !only}
+      <div class="drag" data-tauri-drag-region></div>
+    {/if}
     {@render edgeMark()}
     {@render padGlyph()}
   {/if}
@@ -273,11 +277,6 @@
   .drag {
     flex: 1;
     min-width: var(--space-5);
-  }
-
-  .drag.sliver {
-    flex: none;
-    width: var(--space-5);
   }
 
   /* Placed, so a lit button is drawn over the strip's line. */
