@@ -433,3 +433,25 @@ describe('numbers at the ends of what a number can be', () => {
     expect(svg.match(/class="chart-grid"/g)).toHaveLength(5)
   })
 })
+
+describe('what a comment is not', () => {
+  test('a hash inside a list', () => {
+    expect(readChart('labels: [#1, #2]\nseries: [1, 2]')?.labels).toEqual(['#1', '#2'])
+    expect(readChart('labels: [a #1, b #2] # note\nseries: [1, 2]')?.labels).toEqual([
+      'a #1',
+      'b #2',
+    ])
+    expect(readChart('series: [1, 2] # [3]')?.series[0]?.data).toEqual([1, 2])
+  })
+
+  test('a title that begins with one', () => {
+    expect(readChart('title: #1 Sales\nseries: [1]')?.title).toBe('#1 Sales')
+    expect(readChart('title: Issue #12\nseries: [1]')?.title).toBe('Issue')
+  })
+
+  test('a key whose list is below it still opens with a comment beside it', () => {
+    const chart = readChart('labels: # the months\n  - a\nseries: # all\n  - data: # one\n      - 1\n')
+    expect(chart?.labels).toEqual(['a'])
+    expect(chart?.series[0]?.data).toEqual([1])
+  })
+})

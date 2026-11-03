@@ -354,25 +354,35 @@ describe('a line longer than a page', () => {
 })
 
 describe('a heading with nothing under it', () => {
-  test('still makes a page, so the note reads in full', () => {
+  test('takes the next heading into its page rather than opening on a blank one', () => {
     const all = pages('# Title\n\n## Section\n\nbody')
 
-    expect(all.map((page) => page.section)).toEqual(['TITLE', 'SECTION'])
-    expect(all[0]?.words).toBe('')
-    expect(all[0]?.rule).not.toBe(all[1]?.rule)
+    expect(all.map((page) => page.section)).toEqual(['TITLE'])
+    expect(all[0]?.words).toContain('SECTION')
+    expect(all[0]?.words).toContain('body')
+    expect(all[0]).toMatchObject({ from: 0, firstLine: 1 })
   })
 
-  test('at the end of a note, or as the whole of it', () => {
+  test('every one of a run of them is read, in order', () => {
+    const [page] = pages('## A\n\n## B\n\n## C\n\ntext')
+
+    expect(page?.section).toBe('A')
+    expect(page?.words.indexOf('B')).toBeLessThan(page?.words.indexOf('C') ?? 0)
+    expect(page?.words).toContain('text')
+  })
+
+  test('a long section under it wears its own heading on the next page', () => {
+    const all = pages(`# Title\n\n## Section\n\n${PROSE}`)
+
+    expect(all[0]?.section).toBe('TITLE')
+    expect(all[1]?.section).toBe('SECTION')
+  })
+
+  test('at the end of a note, or as the whole of it, still makes a page', () => {
     expect(pages('text\n\n## Empty at end').at(-1)?.section).toBe('EMPTY AT END')
-    expect(pages('# Just a title').map((page) => page.section)).toEqual(['JUST A TITLE'])
-  })
-
-  test('says which line it is, and where', () => {
-    const [first, second] = pages('# Title\n\n## Section\n\nbody')
-
-    expect(first).toMatchObject({ from: 0, firstLine: 1, lastLine: 1 })
-    expect(pageAt(pages('# Title\n\n## Section\n\nbody'), 0)).toBe(0)
-    expect(second?.firstLine).toBe(5)
+    const only = pages('# Just a title')
+    expect(only.map((page) => page.section)).toEqual(['JUST A TITLE'])
+    expect(only[0]).toMatchObject({ words: '', from: 0, firstLine: 1, lastLine: 1 })
   })
 })
 

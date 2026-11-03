@@ -5,7 +5,8 @@ import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { copiedFlavours, readyToCopy } from './copy'
 import { nibMarkdownExtensions } from './markdown/extensions'
-import { delimitedToTable, pastedMarkdown, placed, plainly } from './paste'
+import { delimitedToTable, pastedMarkdown } from './paste'
+import { placed, plainly } from './paste-place'
 import { linkedPaste } from './paste-link'
 
 // The renderer a copy writes its HTML with is fetched by the first selection; a test
@@ -292,5 +293,24 @@ describe('commas that are not a table', () => {
   test('data written with a space after its commas is still data', () => {
     expect(delimitedToTable('Name, Age, City\nBob, 3, Paris')).toContain('| Bob | 3 | Paris |')
     expect(delimitedToTable('a,b,c\nd,e,f')).toContain('| d | e | f |')
+  })
+})
+
+describe('a table with a line under the caret', () => {
+  const at = (marked: string, text: string) => {
+    const caret = marked.indexOf('|')
+    const state = EditorState.create({ doc: marked.replace('|', ''), selection: { anchor: caret } })
+    return state.update(placed(state, text)).state.doc.toString()
+  }
+  const TABLE = '| a | b |\n| --- | --- |\n| c | d |'
+
+  test('keeps a blank line between them', () => {
+    expect(at('abc|\nnext', TABLE)).toBe(`abc\n\n${TABLE}\n\nnext`)
+    expect(at('|\nnext', TABLE)).toBe(`${TABLE}\n\nnext`)
+    expect(at('abc|\n\nnext', TABLE)).toBe(`abc\n\n${TABLE}\n\nnext`)
+  })
+
+  test('and over it, on an empty line under words', () => {
+    expect(at('above\n|', TABLE)).toBe(`above\n\n${TABLE}`)
   })
 })

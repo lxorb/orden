@@ -181,3 +181,9 @@ describe('a picture beside words on the clipboard', () => {
     expect(wordsBesidePicture('', 'photo.png')).toBe(false)
   })
 })
+
+describe('a bracket in a picture attribute', () => {
+  test('is no words', () => {
+    expect(wordsBesidePicture('<img src="a.png" alt="Cat > dog">', 'Cat > dog')).toBe(false)
+  })
+})

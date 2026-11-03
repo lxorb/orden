@@ -338,6 +338,55 @@ describe('a link to a block', () => {
   })
 })
 
+describe('naming a block in old notes and open ones', () => {
+  const named = (doc: string, at: string) => {
+    const pos = doc.indexOf(at)
+    const { view, said } = viewOf(doc, pos)
+    const [target] = blockTargets(view, pos)
+    return { target, said: said() }
+  }
+
+  test('an unclosed fence takes no name, since it would be code', () => {
+    const doc = 'a\n\n```\nx\n'
+    expect(named(doc, 'x')).toEqual({ target: undefined, said: doc })
+  })
+
+  test('a closing fence an older build named keeps that name', () => {
+    const doc = 'a\n\n```\nx\n``` ^old\n\nb\n'
+    expect(named(doc, 'x')).toEqual({ target: '#^old', said: doc })
+  })
+
+  test('a name under a paragraph is its name, not a reason for a second', () => {
+    const doc = 'para\n\n^have\n\nb\n'
+    expect(named(doc, 'para')).toEqual({ target: '#^have', said: doc })
+  })
+
+  test('maths with a blank line in it takes it under the whole of it', () => {
+    const { target, said } = named('$$\na\n\nb\n$$\n', 'a')
+    expect(said).toBe(`$$\na\n\nb\n$$\n\n${target?.slice(1) ?? ''}\n`)
+  })
+})
+
+describe('turning a setext heading', () => {
+  test.each([
+    ['heading2', '## Title\n\nb\n'],
+    ['bullet', '- Title\n\nb\n'],
+    ['paragraph', 'Title\n\nb\n'],
+  ] as const)('into %s takes its underline away', (shape, wanted) => {
+    const { view, said } = viewOf('Title\n---\n\nb\n', 0)
+    expect(turnBlocksInto(view, 0, shape)).toBe(true)
+    expect(said()).toBe(wanted)
+  })
+})
+
+describe('turning a nested list into numbers', () => {
+  test('each level counts for itself and stays nested', () => {
+    const { view, said } = viewOf('- a\n  - b\n    - c\n  - d\n- e\n', 0, 28)
+    expect(turnBlocksInto(view, 0, 'numbered')).toBe(true)
+    expect(said()).toBe('1. a\n   1. b\n      1. c\n   2. d\n2. e\n')
+  })
+})
+
 describe('the two that were already there', () => {
   test('still duplicate and still delete every block the selection covers', () => {
     const duplicated = overThree()

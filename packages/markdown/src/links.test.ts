@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { namedBlock } from './block-names'
+import { renderMarkdown } from './index'
 import {
   blockIdOf,
   blockIds,
@@ -655,5 +656,46 @@ describe('a block name on a line of its own', () => {
   test('front matter takes no name', () => {
     expect(namedBlock('---\nt: x\n---\n\nb\n', 1, () => 'new123')).toBeNull()
     expect(namedBlock('a', 5, () => 'new123')).toBeNull()
+  })
+})
+
+describe('naming a block by where it ends', () => {
+  const id = () => 'new123'
+
+  test.each([
+    ['a fence under words', 'para\n```\nx\n```\n\nafter', 'para\n```\nx\n```\n\n^new123\n\nafter'],
+    ['a table under words', 'para\n\n| a |\n| - |\n| 1 |', 'para\n\n| a |\n| - |\n| 1 |\n\n^new123'],
+    ['a rule under words', 'para\n***\n\nb', 'para\n***\n\n^new123\n\nb'],
+    ['a setext heading', 'Title\n---\n\nb', 'Title\n---\n\n^new123\n\nb'],
+    ['a setext one', 'Title\n===\n\nb', 'Title\n===\n\n^new123\n\nb'],
+  ])('%s', (_what, source, wanted) => {
+    const line = source.startsWith('para\n\n') ? 2 : 0
+    expect(namedBlock(source, line, id)?.source).toBe(wanted)
+  })
+
+  test('a name under a paragraph is its name', () => {
+    expect(namedBlock('para\n\n^have\n\nb', 0, id)).toEqual({
+      id: 'have',
+      source: 'para\n\n^have\n\nb',
+    })
+  })
+
+  test('maths and a comment hold their blank lines', () => {
+    expect(namedBlock('$$\na\n\nb\n$$\n', 0, id)?.source).toBe('$$\na\n\nb\n$$\n\n^new123\n')
+    expect(namedBlock('<!--\na\n\nb\n-->\n', 0, id)?.source).toBe('<!--\na\n\nb\n-->\n\n^new123\n')
+  })
+})
+
+describe('a closing fence an older build named', () => {
+  const OLD = 'a\n\n```\nx\n``` ^old\n\n# After\n\nb\n'
+
+  test('closes the fence, and the name is found', () => {
+    expect(blockIds(OLD)).toEqual([{ id: 'old', line: 4 }])
+    expect(withoutBlockIds(OLD)).toBe('a\n\n```\nx\n```\n\n# After\n\nb\n')
+    expect(renderMarkdown(OLD)).toContain('<h1')
+  })
+
+  test('code that only looks like one stays code', () => {
+    expect(blockIds('```\n``` ^a b\n```\n')).toEqual([])
   })
 })

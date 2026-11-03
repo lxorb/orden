@@ -1156,3 +1156,49 @@ describe('marks and what stands beside them', () => {
     expect(html).not.toContain('](')
   })
 })
+
+describe('marks beside marks', () => {
+  test('bold beside bold is one run', () => {
+    expect(htmlToMarkdown('<p><b>foo</b><b>bar</b></p>')).toBe('**foobar**')
+    expect(
+      htmlToMarkdown(
+        '<p><span style="font-weight:700">foo</span><span style="font-weight:700">bar</span> x</p>',
+      ),
+    ).toBe('**foobar** x')
+    expect(htmlToMarkdown('<p><b>foo</b> <b>bar</b></p>')).toBe('**foo** **bar**')
+    expect(htmlToMarkdown('<p><i>a</i><i>b</i><b>c</b></p>')).toContain('*ab*')
+  })
+
+  test('a line break stays outside them', () => {
+    expect(htmlToMarkdown('<p><b>a<br></b>b</p>')).toBe('**a**  \nb')
+    expect(renderMarkdown(htmlToMarkdown('<p><b>a<br></b>b</p>'))).not.toContain('*')
+  })
+})
+
+describe('a table with two heading rows', () => {
+  test('has one line of dashes', () => {
+    const said = htmlToMarkdown(
+      '<table><thead><tr><th>a</th></tr><tr><th>b</th></tr></thead><tbody><tr><td>c</td></tr></tbody></table>',
+    )
+    expect(said).toBe('| a |\n| --- |\n| b |\n| c |')
+  })
+})
+
+describe('a link around a task list', () => {
+  test('goes inside the item, past its box', () => {
+    const said = htmlToMarkdown(
+      '<a href="https://u.co"><ul><li><input type="checkbox"> x</li></ul></a>',
+    )
+    expect(said).toBe('- [ ] [x](https://u.co)')
+  })
+})
+
+describe('alt ending in a backslash, in a link', () => {
+  test('stays a picture', () => {
+    const html = renderMarkdown(
+      htmlToMarkdown('<a href="https://u.co"><img src="https://u.co/a.png" alt="p\\"></a>'),
+    )
+    expect(html).toContain('<img')
+    expect(html).not.toContain('](')
+  })
+})
