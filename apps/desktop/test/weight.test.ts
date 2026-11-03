@@ -979,8 +979,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-03, to 3,436,400, and to 384 modules, for #1064: the ✦ tab wears a dot
  *  while an AI chat has an answer not yet seen, which the side reads without loading the
- *  panel (ai/unread.svelte.ts, ai/UnreadDot.svelte). Measured 3,436,269, 383 modules. */
-const BUDGET = 3_436_400
+ *  panel (ai/unread.svelte.ts, ai/UnreadDot.svelte). Measured 3,436,269, 383 modules.
+ *
+ *  Raised 2026-11-03, to 3,437,400, for #1064: the dot is read from the chats' heads at
+ *  launch, before the AI panel is opened (`lookAtLaunch` in ai/unread.svelte.ts; the
+ *  threads' module is fetched with it). Measured 3,437,263. */
+const BUDGET = 3_437_400
 const MOST_FILES = 384
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
