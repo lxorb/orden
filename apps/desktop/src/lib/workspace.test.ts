@@ -3054,9 +3054,11 @@ describe('a note writes itself, wherever it is', () => {
   /** A disk that does not answer must not hold a delete up for ever. */
   test('a delete does not wait for ever on a write that never comes back', async () => {
     await typedIn('/space/a.md')
-    let free = () => {}
+    const gate = { free: () => undefined as unknown }
     holding.write = new Promise<void>((resolve) => {
-      free = resolve
+      gate.free = () => {
+        resolve()
+      }
     })
 
     const deleting = workspace.remove('/space/a.md', false)
@@ -3065,7 +3067,7 @@ describe('a note writes itself, wherever it is', () => {
 
     expect(sent.map((one) => one.command)).toContain('trash_item')
     holding.write = null
-    free()
+    gate.free()
   })
 
   test('a note in a space goes down well inside a second of the typing pausing', async () => {
