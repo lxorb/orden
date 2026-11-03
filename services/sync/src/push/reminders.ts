@@ -40,6 +40,12 @@ const KEPT_FOR = 86_400_000
  *  long enough for a service to come back, and short of a ring nobody can use. */
 export const TRIED_FOR = 3_600_000
 
+/** How long after a push no service took it is tried again, twice as long each time. */
+export const TRY_AGAIN_AFTER = 300_000
+
+/** How many times one reminder is pushed before it is given up on. */
+export const MOST_TRIES = 4
+
 /** A note as this reads it. */
 interface Saved {
   id: string
