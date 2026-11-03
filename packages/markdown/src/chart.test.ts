@@ -64,6 +64,33 @@ describe('reading a chart out of a fence', () => {
     expect(readChart('series:\n  - label: Sales\n    data: [1]\n')?.series[0]?.title).toBe('Sales')
   })
 
+  test('block lists read as the flow lists they are', () => {
+    const chart = readChart(
+      'labels:\n  - a\n  - b\nseries:\n  - title: A\n    data:\n      - 1\n      - 2\n  - title: B\n    data:\n    - 3\n    - 4\n',
+    )
+    expect(chart?.labels).toEqual(['a', 'b'])
+    expect(chart?.series).toEqual([
+      { title: 'A', data: [1, 2] },
+      { title: 'B', data: [3, 4] },
+    ])
+    expect(readChart('labels:\n- "a: b"\n- c\nseries: [1, 2]')?.labels).toEqual(['a: b', 'c'])
+    expect(readChart('series:\n  - 1\n  - 2\n')?.series).toEqual([{ title: '', data: [1, 2] }])
+  })
+
+  test('a comment after a value is not part of it', () => {
+    expect(readChart('series: [1, 2] # trailing')?.series[0]?.data).toEqual([1, 2])
+    const chart = readChart('labels: [a, b] # note\ntitle: T # why\nseries:\n  - data: [1] # one\n')
+    expect(chart?.labels).toEqual(['a', 'b'])
+    expect(chart?.title).toBe('T')
+    expect(chart?.series[0]?.data).toEqual([1])
+  })
+
+  test('refuses rather than draw zeroes for numbers it cannot read', () => {
+    expect(readChart('type: scatter\nseries:\n  - data: [[1,2],[3,4]]\n')).toBeNull()
+    expect(readChart('series:\n  - data: [{x: 1, y: 2}]\n')).toBeNull()
+    expect(readChart('series:\n  - title: A\n    data:\n')).toBeNull()
+  })
+
   test('a value that is not a number is a zero rather than a refusal', () => {
     expect(readChart('series:\n  - data: [1, x, 3]\n')?.series[0]?.data).toEqual([1, 0, 3])
   })
