@@ -26,7 +26,6 @@ import type { IconNode } from 'lucide'
 // the first paint. Every row of the file list wears one of these, so this module is
 // in the first chunk by definition. See canvas/lucide.d.ts, which is where the
 // types for these paths are declared, and icons.ts, which loads the index lazily.
-import BookText from 'lucide/dist/esm/icons/book-text.mjs'
 import File from 'lucide/dist/esm/icons/file.mjs'
 import FileText from 'lucide/dist/esm/icons/file-text.mjs'
 import Globe from 'lucide/dist/esm/icons/globe.mjs'
@@ -65,6 +64,45 @@ const Workflow: IconNode = [
   ['path', { d: 'M6.5 11v4.25a2.25 2.25 0 0 0 2.25 2.25H13' }],
   ['rect', { width: '9', height: '9', x: '13', y: '13', rx: '2.25' }],
 ]
+
+/** The top of Lucide's page - its outline and its folded corner, as `file` draws them -
+ *  cut off above the middle, which is where a file type's mark writes its name. */
+const PAGE_TOP: IconNode = [
+  [
+    'path',
+    {
+      d: 'M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v3',
+    },
+  ],
+  ['path', { d: 'M14 2v5a1 1 0 0 0 1 1h5' }],
+]
+
+/** A file type's own mark: the top of the page, and the type's name under it in
+ *  capitals (#676).
+ *
+ *  Lettered because a reader asked for the word: a PDF drawn as a book was a shape
+ *  somebody had to learn, and the three letters are what every other program has
+ *  taught them to look for. The letters are strokes at the set's weight, on the row
+ *  from 14 to 21 and from 3 to 21 across, three units apart, which is what keeps three
+ *  of them apart at the 16px a row draws: each letter four units wide, the gap between
+ *  two of them a pixel and a half of clear air once the stroke is drawn. Strokes rather
+ *  than type, so the mark takes the colour and the weight of the list it is in, light
+ *  or dark, like every other mark here.
+ *
+ *  A type added later writes its own letters on the same row and is one line here. */
+export function typeMark(letters: IconNode): IconNode {
+  return [...PAGE_TOP, ...letters]
+}
+
+const Pdf: IconNode = typeMark([
+  // P: a stem, and a bowl on its upper half.
+  ['path', { d: 'M3 21v-7h2a2 2 0 0 1 0 4H3' }],
+  // D: a stem, and a bowl the height of it.
+  ['path', { d: 'M10 14v7h1a3 3 0 0 0 3-3v-1a3 3 0 0 0-3-3z' }],
+  // F: a stem with its arm, and the bar.
+  ['path', { d: 'M21 14h-4v7' }],
+  ['path', { d: 'M17 17.5h3' }],
+])
 
 /** The marks there are, and there is no folder among them, because no row is a
  *  folder: a note that holds notes is drawn as the note, and a folder out of
@@ -140,9 +178,9 @@ export function markOf(kind: TabKind): FileMark | null {
  *  Three of them are the obvious thing: a page with writing on it, a plain page,
  *  a picture in its frame. The other two are choices. A canvas is two cards with
  *  a line from one to the other, which is what a canvas in this app actually is.
- *  A PDF is a book rather than a fourth page: what tells it from a note at 13px
- *  has to be its outline and not something written inside it, and a PDF is the
- *  half of the pair that is read rather than written.
+ *  A PDF is the one mark that says its name: the page with "PDF" written under it,
+ *  drawn here on Lucide's page rather than taken from the library, which has none;
+ *  see `typeMark`.
  *
  *  The pair that matters most is the first two, because one row turns into the
  *  other: a folder somebody has not written yet is the plain page, and the words
@@ -152,9 +190,9 @@ export const MARKS: Record<FileMark, IconNode> = {
   canvas: Workflow,
   // A pad with a pen on it, which is the one shape in the set that says "paper you
   // write on by hand" rather than "a file with words in it". The nib is what tells
-  // it from the book a PDF wears at 13px.
+  // it from a PDF's letters at 13px.
   pages: NotebookPen,
-  pdf: BookText,
+  pdf: Pdf,
   picture: Image,
   file: File,
   // A globe, because that is what every browser has meant by the web for thirty

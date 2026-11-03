@@ -2625,4 +2625,6 @@ export const am: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS የዚህ ቦታ የኤጀንት መመሪያዎች ነው',
   '{title}, unread': '{title}፣ ያልተነበበ',
   '{title}, running': '{title}፣ በመሥራት ላይ',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden የAI ቁልፎችን ከእንግዲህ በMac ቁልፍ ሰንሰለት ውስጥ አያስቀምጥም፤ የይለፍ ቃሉን ደጋግሞ ይጠይቅ ነበርና። ቁልፎችዎን ያስገቡ እና ወደ ChatGPT እንደገና ይግቡ።',
 }

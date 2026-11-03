@@ -2669,4 +2669,6 @@ export const hi: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS इस स्पेस के एजेंट निर्देश हैं',
   '{title}, unread': '{title}, अनपढ़ा',
   '{title}, running': '{title}, चल रहा है',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden अब AI कुंजियाँ Mac की कीचेन में नहीं रखता, जो बार-बार उसका पासवर्ड माँगती थी। अपनी कुंजियाँ फिर से डालें और ChatGPT में एक बार और साइन इन करें।',
 }

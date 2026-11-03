@@ -167,7 +167,7 @@
   },
   {
     "name": "browser_type",
-    "description": "Type words into a field by ref. `replace` empties it first, `submit` presses Enter after. A password field or a sign-in form asks the reader first where your mode asks about signing in.",
+    "description": "Type words into a field by ref. `replace` empties it first, `submit` presses Enter after. A sign-in field asks first where your mode asks about signing in.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -394,7 +394,7 @@
   },
   {
     "name": "browser_show",
-    "description": "Make one of your tabs a tab of the reader's, behind the one in front with your mark on it, for them to look at when they choose. Asks first where your mode asks.",
+    "description": "Make one of your tabs a tab of the reader's, behind the one in front, with your mark. Asks first where your mode asks.",
     "inputSchema": {
       "type": "object",
       "properties": { "tab": { "type": "string" } },
@@ -403,7 +403,7 @@
   },
   {
     "name": "browser_takeover",
-    "description": "Ask the reader to do one step in a tab that only a person can: a captcha, a code sent to their phone. Under Full permissions nothing is handed over: do the step yourself. `reason` is the one line they read. The tab stays yours: browser_wait for the page to change, or approval_status says done.",
+    "description": "Ask the reader to do a step only a person can (a captcha, a code sent to their phone); under Full permissions, do it yourself. `reason` is the one line they read. The tab stays yours: browser_wait for the page to change, or approval_status says done.",
     "inputSchema": {
       "type": "object",
       "properties": { "tab": { "type": "string" }, "reason": { "type": "string" } },
@@ -1036,7 +1036,7 @@
   },
   {
     "name": "workspace_tabs",
-    "description": "The reader's tabs. open: a `path`, a `url` or a `view` (graph, scratchpad, settings at `section`). new: a tab of `kind` with no file (a note with `content`, a web tab with `url`, a terminal with `shell` and `cwd`). rename: a tab's `name`, a file's renamed with its links. save: an unsaved tab written at `path`. close, split, focus. Tabs open behind the reader's, and nothing you do moves their screen, keyboard or scroll; `background` false, focus, split and closing the tab in front need workspace.focus and are only for when the reader asked, in their message, to be shown it.",
+    "description": "The reader's tabs. open: a `path`, a `url` or a `view` (graph, scratchpad, settings at `section`). new: a tab of `kind` with no file (a note with `content`, a web tab with `url`, a terminal with `shell` and `cwd`). rename: a tab's `name`, a file's renamed with its links. save: an unsaved tab written at `path`. close, split, focus. Tabs open behind the reader's and never move their screen, keyboard or scroll; `background` false, focus, split and closing the tab in front need workspace.focus, only when the reader asked to be shown it.",
     "inputSchema": {
       "type": "object",
       "properties": {

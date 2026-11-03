@@ -2693,4 +2693,6 @@ export const gsw: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS sind d Agänte-Aawiisige vo däm Beriich',
   '{title}, unread': '{title}, ungläse',
   '{title}, running': '{title}, lauft',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden speicheret KI-Schlüssel nümm im Schlüsselbund vom Mac, wo immer wieder nach em Passwort gfrogt het. Gib dini Schlüssel no einisch ii und meld di wieder bi ChatGPT aa.',
 }

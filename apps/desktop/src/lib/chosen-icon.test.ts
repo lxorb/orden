@@ -95,7 +95,7 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-const { chosenIcon, chosenTint, faviconFor, holdsPaper } = await import('./chosen-icon')
+const { chosenIcon, chosenTint, faviconFor, holdsPaper, sourceMark } = await import('./chosen-icon')
 const { elsewhere } = await import('./marks-elsewhere.svelte')
 const { NoteDoc, Tab } = await import('./workspace/documents.svelte')
 
@@ -248,6 +248,18 @@ describe('a page note made from a PDF', () => {
     await vi.waitFor(() => expect(reads).toContain('/Home/Sketch.pages'))
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(holdsPaper('/Home/Sketch.pages')).toBe(false)
+  })
+
+  /** The one answer every list draws by (#676): the PDF's mark for a page note made
+   *  from one, and the kind's own for everything else. */
+  test('wears the PDF s mark, and nothing else does', () => {
+    open('/Work')
+
+    expect(sourceMark('pages', '/Work/Made.pages')).toBe('pdf')
+    expect(sourceMark('pages', '/Work/Blank.pages')).toBe('pages')
+    expect(sourceMark('pages', undefined)).toBe('pages')
+    expect(sourceMark('note', '/Work/Made.pages')).toBe('note')
+    expect(sourceMark('pdf', '/Work/Paper.pdf')).toBe('pdf')
   })
 
   test('a file that is not a page note is never asked about', () => {

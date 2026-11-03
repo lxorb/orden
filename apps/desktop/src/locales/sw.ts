@@ -2711,4 +2711,6 @@ export const sw: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS ni maagizo ya mawakala ya nafasi hii',
   '{title}, unread': '{title}, haijasomwa',
   '{title}, running': '{title}, inaendelea',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden haihifadhi tena funguo za AI kwenye keychain ya Mac, iliyokuwa ikiuliza nenosiri lake mara kwa mara. Weka funguo zako na uingie ChatGPT tena.',
 }

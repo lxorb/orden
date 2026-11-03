@@ -202,18 +202,6 @@ tauri-plugin-global-shortcut = "~2.3"
 # desktop and knows the installed app's identity on Windows. Added on the first agent
 # request, never at launch; see src/agents/shell.rs.
 tauri-plugin-notification = "~2.4"
-# An AI provider's key goes in the machine's own keychain and nowhere else: the
-# Credential Manager, the Keychain, the Secret Service. Named features rather than
-# the defaults, so only the three stores the three desktops have are compiled in -
-# `linux-native` is the kernel's session keyring, which forgets a key at logout,
-# and `crypto-rust` keeps the Secret Service transport off OpenSSL. A phone has
-# EncryptedSharedPreferences instead and a browser has nothing; see secrets.rs.
-keyring = { version = "3", default-features = false, features = [
-  "apple-native",
-  "windows-native",
-  "sync-secret-service",
-  "crypto-rust",
-] }
 # What an agent's token is kept as: its SHA-256, so the file of grants is a list of
 # what each agent may do and not a way to be one. Already in the lock file as
 # something tauri builds with; see src/agents/grants.rs.
@@ -258,6 +246,21 @@ tokio = { version = "1", default-features = false, features = ["time", "sync"] }
 # the tray library is loaded from the system and is not on every desktop: there the
 # window closes the ordinary way. Already in the lock file, as what tauri builds with.
 # `protocol-asset` as on the desktops' entry above: what the Tauri CLI writes on a build.
+# An AI provider's key goes in the machine's own store: the Credential Manager on
+# Windows, the Secret Service on Linux. Named features rather than the defaults, so only
+# those two are compiled in - `linux-native` is the kernel's session keyring, which
+# forgets a key at logout, and `crypto-rust` keeps the Secret Service transport off
+# OpenSSL. Never on a Mac, whose keychain asks for the login password and asks again
+# (#1090): a Mac keeps them in a file of the app's own. A phone has the iPhone's
+# keychain (below) or EncryptedSharedPreferences, and a browser has nothing; see
+# secrets.rs. test/no-keychain-on-mac.test.ts holds this table to that.
+[target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
+keyring = { version = "3", default-features = false, features = [
+  "windows-native",
+  "sync-secret-service",
+  "crypto-rust",
+] }
+
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
 

@@ -327,17 +327,26 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  dragged to another place in its strip or into another pane (overview/drag.ts), and
  *  Alt Alt turning it back at any moment. Measured 5,794,727.
  *
- *  The code raised on 2026-11-03, to 5,824,800, for the bug hunt's round one merged into
+ *  The code raised on 2026-11-04, to 5,795,200, for #676: a PDF's mark is a page with
+ *  "PDF" written under it, and what a file was made from is decided in one place
+ *  (`typeMark` in file-mark.ts, `sourceMark` in chosen-icon.ts). Measured 5,795,057.
+ *
+ *  The code raised on 2026-11-04, to 5,795,500, for #1090: the window's door to the
+ *  notice a Mac's AI keys are typed again by, which the plugin never opens
+ *  (surfaces.svelte.ts). Measured 5,795,317.
+ *
+ *  The code raised on 2026-11-03, to 5,800,000, for #331: the overview's one canvas,
+ *  each space's place on it kept (overview/places.svelte.ts), moved and zoomed by the
+ *  wheel, a touchpad and two fingers (overview/camera.ts), and a window dropped against a
+ *  side making a pane there. Measured 5,799,795.
+ *
+ *  The code raised on 2026-11-03, to 5,829,900, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
  *  thread written down while it runs, the sync's scans, and an undo that waits for every
- *  gesture landing, measured together. Measured 5,824,556.
- *
- *  And to 5,837,200 for a session per window and writes that meet other windows
- *  (hunt2-windows): the plugin has one window, and these are on paths it shares. The merge
- *  and the engine's side stay out. Measured 5,836,999.
+ *  gesture landing, measured together. Measured 5,829,627.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_837_200,
+  code: 5_829_900,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
