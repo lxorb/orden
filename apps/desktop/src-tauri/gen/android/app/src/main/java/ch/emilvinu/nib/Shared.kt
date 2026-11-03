@@ -186,6 +186,13 @@ object Shared {
    * revoked grant, a deleted file and a film all look like from here.
    */
   private fun copy(context: Context, uri: Uri, at: Int, room: Long): Item? {
+    // Another app's share is held to what it could read itself: a content URI of its own.
+    // A file URI, or this app's own provider, would hand this app's private files to the
+    // sheet, which then offers to write them into a note.
+    if (!foreign(context, uri)) {
+      Log.w(TAG, "a shared address that is not another app's content was left out")
+      return null
+    }
     val resolver = context.contentResolver
     val name = nameOf(resolver, uri, at)
     val mime = resolver.getType(uri) ?: typeOf(uri)
@@ -262,6 +269,10 @@ object Shared {
   }
 
   @Suppress("DEPRECATION")
+  private fun foreign(context: Context, uri: Uri): Boolean =
+    uri.scheme == android.content.ContentResolver.SCHEME_CONTENT &&
+      uri.authority?.startsWith(context.packageName) != true
+
   private fun stream(intent: Intent): Uri? = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
 
   @Suppress("DEPRECATION")
