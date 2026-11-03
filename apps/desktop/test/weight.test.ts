@@ -1071,8 +1071,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,495,600, for #1081: the Collapse button asks the rows drawn
  *  whether one stands open rather than what is remembered open, and every listing
  *  drops the folders remembered open that no row is (tree-flat.ts, workspace.svelte.ts,
- *  workspace/device.svelte.ts). Measured 3,495,431. */
-const BUDGET = 3_495_600
+ *  workspace/device.svelte.ts). Measured 3,495,431.
+ *
+ *  Raised 2026-11-04, to 3,499,300, for #1065: a pull down past the top reloads where
+ *  the reader is and its mark turns until that is done, never over the keyboard or a
+ *  selection (pull.svelte.ts, PullMark.svelte, `app.refresh` in shortcuts/registry.ts).
+ *  Measured 3,499,105. */
+const BUDGET = 3_499_300
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
