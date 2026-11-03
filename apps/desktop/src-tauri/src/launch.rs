@@ -332,9 +332,22 @@ pub fn reopen(app: &AppHandle) {
 
 /// A second window onto the same spaces. Each gets its own label, so several can
 /// be open at once; closing one leaves the others alone.
+///
+/// Async, and the building posted to the window's own event loop: on `WebView2` a webview
+/// built inside the callback a sync command runs in is a deadlock of the whole app (see
+/// `web_open`), and `placement::built_away` on Windows watches the thread that builds.
 #[tauri::command]
-pub fn new_window(app: AppHandle) -> Result<(), String> {
-    open_window(&app, &free_label(&app))
+pub async fn new_window(app: AppHandle) -> Result<(), String> {
+    let (sending, mut waiting) = tauri::async_runtime::channel(1);
+    let building = app.clone();
+    app.run_on_main_thread(move || {
+        let _ = sending.try_send(open_window(&building, &free_label(&building)));
+    })
+    .map_err(|error| format!("could not open another window: {error}"))?;
+    waiting
+        .recv()
+        .await
+        .unwrap_or_else(|| Err("could not open another window".to_string()))
 }
 
 /// A window with this label, built the way the first one is described in

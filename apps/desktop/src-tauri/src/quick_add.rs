@@ -71,7 +71,10 @@ pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> O
     *HOST.lock().unwrap_or_else(PoisonError::into_inner) = Some(webview.label().to_owned());
     let held = crate::hotkeys::hold(&app, crate::hotkeys::Which::QuickAdd, wanted);
     if ASKED_AT_LAUNCH.swap(false, Ordering::Relaxed) {
-        bring_up(&app, None);
+        // Posted to the loop: on `WebView2` a webview built inside the callback a sync
+        // command runs in is a deadlock of the whole app (see `web_open`).
+        let building = app.clone();
+        let _ = app.run_on_main_thread(move || bring_up(&building, None));
     }
     held
 }

@@ -1159,6 +1159,7 @@ mod tests {
     /// And the page's storage kept on the disk (kept.rs): each write is handed to a
     /// thread of its own over a channel, and on the window's thread so the writes keep
     /// the order the page made them in.
+    ///
     const EXCEPTED: [&str; 5] = [
         "write_log",
         "new_menu_registered",
@@ -1170,10 +1171,8 @@ mod tests {
     /// What a body that waits says itself, whichever module it is in: the
     /// filesystem, a subprocess, the machine's own keychain, and the system's shell,
     /// which opens a file or shows it in its folder in its own time - the opener's own
-    /// commands are `async` for that reason. And building a webview, for which `WebView2`
-    /// runs a nested loop waiting on a callback it will not deliver into the handler a
-    /// sync command runs inside: a deadlock of the whole app (web_tabs.rs, `web_open`).
-    const WAITS: [&str; 11] = [
+    /// commands are `async` for that reason.
+    const WAITS: [&str; 9] = [
         "fs::",
         "File::",
         "OpenOptions",
@@ -1183,9 +1182,18 @@ mod tests {
         "delete_credential",
         "canonicalize",
         "tauri_plugin_opener::",
-        "WebviewWindowBuilder::new(",
-        "WebviewBuilder::new(",
     ];
+
+    /// What building a webview says. `WebView2` runs a nested loop for it, waiting on a
+    /// callback it will not deliver into the handler a sync command runs inside: a deadlock
+    /// of the whole app, not a stall (`web_open` in `web_tabs.rs`).
+    const BUILDS: [&str; 2] = ["WebviewWindowBuilder::new(", "WebviewBuilder::new("];
+
+    /// Quick add's window, built on a hot key's press and, from `quick_add_key`, from a
+    /// closure posted to the loop, neither of which is the command's callback. The reader
+    /// goes by name and cannot tell a closure from a call, and `pressed` is reached by
+    /// name from half the crate, so the walk stops here.
+    const BUILT_OFF_THE_CALLBACK: [&str; 1] = ["bring_up"];
 
     /// One function of the crate: the name it is called by, and the body it runs.
     struct Function {
@@ -1282,11 +1290,20 @@ mod tests {
     /// Every function that waits, by name: the ones that say so themselves, and then
     /// every one that calls one of those, to the end of the chain.
     fn waiting(functions: &[Function]) -> HashSet<String> {
+        reaching(functions, &WAITS, &[])
+    }
+
+    /// Every function that says one of these words, and then every one that calls one of
+    /// those, to the end of the chain; none of it through a function named in `stops`.
+    fn reaching(functions: &[Function], words: &[&str], stops: &[&str]) -> HashSet<String> {
         let mut waits: HashSet<String> = HashSet::new();
         let mut made_by: HashMap<String, HashSet<String>> = HashMap::new();
 
         for function in functions {
-            if WAITS.iter().any(|said| function.body.contains(said)) {
+            if stops.contains(&function.name.as_str()) {
+                continue;
+            }
+            if words.iter().any(|said| function.body.contains(said)) {
                 waits.insert(function.name.clone());
             }
             made_by
@@ -1345,6 +1362,52 @@ mod tests {
     /// down rather than in its own three lines.
     #[test]
     fn a_command_that_waits_says_async() {
+        let sources = own_sources();
+        let functions: Vec<Function> = sources.iter().flat_map(|one| functions(one)).collect();
+        let waits = waiting(&functions);
+
+        for name in sources.iter().flat_map(|one| on_the_calling_thread(one)) {
+            assert!(
+                !waits.contains(&name) || EXCEPTED.contains(&name.as_str()),
+                "{name} waits without saying async",
+            );
+        }
+    }
+
+    /// A command that builds a webview, a call or two down, says `async`.
+    #[test]
+    fn a_command_that_builds_a_webview_says_async() {
+        let sources = own_sources();
+        let functions: Vec<Function> = sources.iter().flat_map(|one| functions(one)).collect();
+        let builds = reaching(&functions, &BUILDS, &BUILT_OFF_THE_CALLBACK);
+        // The walk itself: both the windows of a press of the page's.
+        assert!(builds.contains("built_window") && builds.contains("open_window"));
+
+        for name in sources.iter().flat_map(|one| on_the_calling_thread(one)) {
+            assert!(
+                !builds.contains(&name),
+                "{name} builds a webview without saying async"
+            );
+        }
+    }
+
+    /// And the shape: a sync command is caught a call down, one that says `async` is not.
+    #[test]
+    fn building_a_webview_is_followed_to_the_command() {
+        let source = concat!(
+            "#[tauri::command]\npub fn opens() {\n    opened();\n}\n\n",
+            "fn opened() {\n    let _ = WebviewWindowBuilder::new(app, one, two);\n}\n\n",
+            "#[tauri::command]\npub fn child() {\n    let _ = WebviewBuilder::new(one, two);\n}\n\n",
+            "#[tauri::command]\npub async fn waited() {\n    opened();\n}\n",
+        );
+        let builds = reaching(&functions(source), &BUILDS, &[]);
+        let sync = on_the_calling_thread(source);
+        assert!(sync.iter().all(|one| builds.contains(one)));
+        assert_eq!(sync, vec!["opens".to_owned(), "child".to_owned()]);
+    }
+
+    /// The crate's own modules, as text.
+    fn own_sources() -> Vec<String> {
         let src = crate::app_dir().join("src");
         let mut sources = Vec::new();
 
@@ -1360,28 +1423,7 @@ mod tests {
             "only {} modules were read",
             sources.len()
         );
-
-        let functions: Vec<Function> = sources.iter().flat_map(|one| functions(one)).collect();
-        let waits = waiting(&functions);
-
-        for name in sources.iter().flat_map(|one| on_the_calling_thread(one)) {
-            assert!(
-                !waits.contains(&name) || EXCEPTED.contains(&name.as_str()),
-                "{name} waits without saying async",
-            );
-        }
-    }
-
-    /// A command that builds a window, a call or two down, is one that waits.
-    #[test]
-    fn building_a_webview_is_waiting() {
-        let source = concat!(
-            "#[tauri::command]\npub fn opens() {\n    opened();\n}\n\n",
-            "fn opened() {\n    let _ = WebviewWindowBuilder::new(app, one, two);\n}\n\n",
-            "#[tauri::command]\npub fn child() {\n    let _ = WebviewBuilder::new(one, two);\n}\n",
-        );
-        let waits = waiting(&functions(source));
-        assert!(waits.contains("opens") && waits.contains("child"));
+        sources
     }
 
     /// The three shapes the reader has to tell apart, and the chain it follows.
