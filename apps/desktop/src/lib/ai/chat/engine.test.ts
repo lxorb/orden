@@ -12,7 +12,7 @@ const { forgetLearnt, learnt } = await import('./learned')
 const { newThread } = await import('./threads')
 const { body } = await import('./recorded/read')
 const { watching } = await import('./sends')
-const { always, alwaysOffered, sayAlways } = await import('./approvals')
+const { always: alwaysCovers, alwaysOffered, sayAlways } = await import('./approvals')
 
 import type { Provider } from '../providers'
 import type { EngineEvent, Mode, Thread, ToolOutput } from './types'
@@ -365,8 +365,8 @@ describe('Always in a thread', () => {
   test('nor a question that says nothing of what it is about', () => {
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     sayAlways(thread, 'read_note')
-    expect(always(thread, 'read_note', undefined)).toBe(false)
-    expect(always(thread, 'read_note', 'writing')).toBe(true)
+    expect(alwaysCovers(thread, 'read_note', undefined)).toBe(false)
+    expect(alwaysCovers(thread, 'read_note', 'writing')).toBe(true)
     expect(alwaysOffered('terminal')).toBe(false)
     expect(alwaysOffered('writing')).toBe(true)
   })
