@@ -175,6 +175,14 @@ def main() -> int:
             if words not in account():
                 failed(f"{words} is gone: {account()!r}")
         say(f"at the end: {account()!r}")
+
+        # Signed out in a window with no engine: every window is, and the engine's goes.
+        c = window("C")
+        c.bring_to_front()
+        c.evaluate("() => window.nibApp.account.signOut()")
+        wait_for(b, "() => !window.nibApp.account.user", "[B] signed out with the other window")
+        wait_for(b, "() => !window.nibApp.sync.engine?.engine", "[B] the engine gone")
+        say("signed out in the window with no engine: every window is")
         context.close()
     for one in wrong:
         print(f"WRONG: {one}")

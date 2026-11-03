@@ -39,8 +39,16 @@ def drive(browser: Browser) -> None:
     b.evaluate("()=>window.nibApp.workspace.persist()")
     say("both drafts written down, B last")
 
+    # A reload is the same window: its session comes back to it, and nothing is taken twice.
+    b.reload()
+    DRIVE.ready(b)
+    wait_for(b, "()=>window.nibApp.workspace.tabs.some(t=>t.note.latest.includes('WINDOW B'))", "B back")
+    if b.evaluate("()=>window.nibApp.workspace.tabs.filter(t=>t.note.latest.includes('WINDOW B')).length") != 1:
+        wrong("a reload brought a draft back twice")
+
     a.close(run_before_unload=True)
     b.close(run_before_unload=True)
+    # What the next launch reads is left a moment for a reload to come back for.
     c = ctx.new_page()
     c.goto(DRIVE.origin)
     DRIVE.ready(c)
@@ -48,6 +56,7 @@ def drive(browser: Browser) -> None:
         c,
         "()=>window.nibApp.workspace.tabs.some(t=>t.note.latest.includes('WINDOW B'))",
         "the words of the window that went come along",
+        patience=30,
     )
     tabs = c.evaluate(TABS)
     say(f"next launch: {tabs}")
@@ -55,6 +64,13 @@ def drive(browser: Browser) -> None:
         wrong("the first window's draft is gone")
     if not c.evaluate("()=>localStorage.getItem('nib:workspace:1')===null"):
         wrong("the second window's entry stayed behind its words")
+    # And once only, over a reload of the window that took them.
+    c.reload()
+    DRIVE.ready(c)
+    c.wait_for_timeout(1200)
+    many = c.evaluate("()=>window.nibApp.workspace.tabs.filter(t=>t.note.latest.includes('WINDOW')).length")
+    if many != 2:
+        wrong(f"a reload left {many} tabs of the two drafts")
     c.close()
 
 
