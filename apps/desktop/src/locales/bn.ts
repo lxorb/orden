@@ -2042,6 +2042,8 @@ export const bn: Dictionary = {
     'এটি আপনার নোট পড়ে এবং আপনার লগইনে ব্রাউজ করে, তাই কোনো পেজ এটিকে দিয়ে নোট বাইরে পাঠানোর চেষ্টা করতে পারে।',
   Activity: 'কার্যকলাপ',
   'Add a site': 'সাইট যোগ করুন',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'এই তালিকার কোনো প্রোগ্রাম জিজ্ঞাসা ছাড়াই চলে, এবং সেই প্রোগ্রাম যা পারে সবই করতে পারে।',
   'Add a program': 'প্রোগ্রাম যোগ করুন',
   'Every space': 'প্রতিটি স্পেস',
   Sites: 'সাইট',

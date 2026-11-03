@@ -2106,6 +2106,8 @@ export const it: Dictionary = {
     'Legge le tue note e naviga con i tuoi accessi, quindi una pagina potrebbe provare a fargliele inviare altrove.',
   Activity: 'Attività',
   'Add a site': 'Aggiungi un sito',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Un programma in questo elenco viene eseguito senza chiedere e può fare tutto ciò che quel programma sa fare.',
   'Add a program': 'Aggiungi un programma',
   'Every space': 'Tutti gli spazi',
   Sites: 'Siti',

@@ -1990,6 +1990,8 @@ export const zhHant: Dictionary = {
     '它會讀取你的筆記，並以你的登入身分瀏覽，因此網頁可能試圖讓它把筆記傳送出去。',
   Activity: '活動',
   'Add a site': '新增網站',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    '此清單中的程式無需詢問即可執行，並能執行該程式能做的一切。',
   'Add a program': '新增程式',
   'Every space': '所有空間',
   Sites: '網站',

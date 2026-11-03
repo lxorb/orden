@@ -2045,6 +2045,8 @@ export const ps: Dictionary = {
     'ستاسو یادښتونه لولي او ستاسو په ننوتلو لټون کوي، نو یوه پاڼه کېدای شي هڅه وکړي چې یادښتونه بهر ولېږي.',
   Activity: 'فعالیت',
   'Add a site': 'سایټ زیات کړئ',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'په دې لیست کې پروګرام له پوښتنې پرته چلېږي، او هغه څه ټول کولی شي چې هغه پروګرام یې کولی شي.',
   'Add a program': 'پروګرام زیات کړئ',
   'Every space': 'هر ځای',
   Sites: 'سایټونه',

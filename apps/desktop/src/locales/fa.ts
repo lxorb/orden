@@ -2046,6 +2046,8 @@ export const fa: Dictionary = {
     'یادداشت‌های شما را می‌خواند و با ورودهای شما مرور می‌کند، پس صفحه‌ای ممکن است بکوشد آن را به فرستادن یادداشت‌ها به بیرون وادارد.',
   Activity: 'فعالیت',
   'Add a site': 'افزودن سایت',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'برنامه‌ای که در این فهرست باشد بدون پرسش اجرا می‌شود و هر کاری آن برنامه بتواند انجام می‌دهد.',
   'Add a program': 'افزودن برنامه',
   'Every space': 'همه فضاها',
   Sites: 'سایت‌ها',

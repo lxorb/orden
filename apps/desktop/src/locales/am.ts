@@ -2018,6 +2018,8 @@ export const am: Dictionary = {
     'ማስታወሻዎችዎን ያነባል እና በእርስዎ መግቢያ ያስሳል፤ ስለዚህ አንድ ገጽ ማስታወሻዎቹን ወደ ውጭ እንዲልክ ለማድረግ ሊሞክር ይችላል።',
   Activity: 'እንቅስቃሴ',
   'Add a site': 'ጣቢያ ያክሉ',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'በዚህ ዝርዝር ያለ ፕሮግራም ሳይጠይቅ ይሄዳል፣ ያ ፕሮግራም የሚችለውንም ሁሉ ማድረግ ይችላል።',
   'Add a program': 'ፕሮግራም ያክሉ',
   'Every space': 'ሁሉም ቦታዎች',
   Sites: 'ጣቢያዎች',

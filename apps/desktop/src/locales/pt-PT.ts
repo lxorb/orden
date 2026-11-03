@@ -2097,6 +2097,8 @@ export const ptPT: Dictionary = {
     'Lê as suas notas e navega com a sua sessão iniciada, por isso uma página pode tentar fazê-lo enviá-las para fora.',
   Activity: 'Atividade',
   'Add a site': 'Adicionar um site',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Um programa desta lista é executado sem perguntar e pode fazer tudo o que esse programa consegue fazer.',
   'Add a program': 'Adicionar um programa',
   'Every space': 'Todos os espaços',
   Sites: 'Sites',

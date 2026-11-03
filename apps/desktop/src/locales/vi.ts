@@ -2020,6 +2020,8 @@ export const vi: Dictionary = {
     'Nó đọc ghi chú của bạn và duyệt web khi đăng nhập như bạn, nên một trang có thể tìm cách khiến nó gửi ghi chú ra ngoài.',
   Activity: 'Hoạt động',
   'Add a site': 'Thêm trang web',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Chương trình trong danh sách này chạy mà không hỏi, và có thể làm mọi điều chương trình đó làm được.',
   'Add a program': 'Thêm chương trình',
   'Every space': 'Mọi không gian',
   Sites: 'Trang web',

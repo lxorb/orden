@@ -2074,6 +2074,8 @@ export const ta: Dictionary = {
     'இது உங்கள் குறிப்புகளைப் படித்து, உங்கள் உள்நுழைவுடன் உலாவுகிறது; எனவே ஒரு பக்கம் அவற்றை வெளியே அனுப்ப வைக்க முயலலாம்.',
   Activity: 'செயல்பாடு',
   'Add a site': 'தளத்தைச் சேர்',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'இந்தப் பட்டியலில் உள்ள நிரல் கேட்காமல் இயங்கும், அந்த நிரலால் செய்யக்கூடிய அனைத்தையும் செய்யும்.',
   'Add a program': 'நிரலைச் சேர்',
   'Every space': 'ஒவ்வொரு இடமும்',
   Sites: 'தளங்கள்',

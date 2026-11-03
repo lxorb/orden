@@ -2128,6 +2128,8 @@ export const pl: Dictionary = {
     'Czyta twoje notatki i przegląda strony zalogowany jako ty, więc strona może próbować skłonić go do wysłania ich dalej.',
   Activity: 'Aktywność',
   'Add a site': 'Dodaj witrynę',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Program z tej listy działa bez pytania i może zrobić wszystko, co potrafi ten program.',
   'Add a program': 'Dodaj program',
   'Every space': 'Każda przestrzeń',
   Sites: 'Witryny',

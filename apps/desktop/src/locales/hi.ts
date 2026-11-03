@@ -2039,6 +2039,8 @@ export const hi: Dictionary = {
     'यह आपके नोट पढ़ता है और आपके लॉग-इन से ब्राउज़ करता है, इसलिए कोई पेज इससे नोट बाहर भिजवाने की कोशिश कर सकता है।',
   Activity: 'गतिविधि',
   'Add a site': 'साइट जोड़ें',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'इस सूची का प्रोग्राम बिना पूछे चलता है, और वह प्रोग्राम जो कुछ कर सकता है वह सब कर सकता है।',
   'Add a program': 'प्रोग्राम जोड़ें',
   'Every space': 'हर स्पेस',
   Sites: 'साइटें',

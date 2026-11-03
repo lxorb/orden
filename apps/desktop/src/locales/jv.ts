@@ -2027,6 +2027,8 @@ export const jv: Dictionary = {
     'Dheweke maca cathetanmu lan njelajah nganggo login-mu, dadi sawijining kaca bisa nyoba nggawe dheweke ngirim cathetan kuwi metu.',
   Activity: 'Aktivitas',
   'Add a site': 'Tambah situs',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Program ing dhaptar iki mlaku tanpa takon, lan bisa nindakake kabeh sing bisa ditindakake program kuwi.',
   'Add a program': 'Tambah program',
   'Every space': 'Saben papan',
   Sites: 'Situs',

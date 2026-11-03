@@ -2034,6 +2034,8 @@ export const gu: Dictionary = {
     'તે તમારી નોંધો વાંચે છે અને તમારા લૉગ-ઇનથી બ્રાઉઝ કરે છે, તેથી કોઈ પેજ તેની પાસે નોંધો બહાર મોકલાવવાનો પ્રયાસ કરી શકે છે.',
   Activity: 'પ્રવૃત્તિ',
   'Add a site': 'સાઇટ ઉમેરો',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'આ યાદીનો પ્રોગ્રામ પૂછ્યા વિના ચાલે છે, અને તે પ્રોગ્રામ જે કરી શકે તે બધું કરી શકે છે.',
   'Add a program': 'પ્રોગ્રામ ઉમેરો',
   'Every space': 'દરેક જગ્યા',
   Sites: 'સાઇટ્સ',

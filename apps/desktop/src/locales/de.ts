@@ -2085,6 +2085,8 @@ export const de: Dictionary = {
     'Er liest deine Notizen und surft angemeldet als du, also könnte eine Seite versuchen, ihn dazu zu bringen, sie weiterzuschicken.',
   Activity: 'Aktivität',
   'Add a site': 'Website hinzufügen',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Ein Programm auf dieser Liste läuft ohne Nachfrage und kann alles, was dieses Programm kann.',
   'Add a program': 'Programm hinzufügen',
   'Every space': 'Alle Bereiche',
   Sites: 'Websites',

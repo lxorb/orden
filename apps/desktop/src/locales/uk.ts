@@ -2121,6 +2121,8 @@ export const uk: Dictionary = {
     'Він читає ваші нотатки й переглядає сайти під вашими входами, тож сторінка може спробувати змусити його надіслати їх назовні.',
   Activity: 'Активність',
   'Add a site': 'Додати сайт',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Програма з цього списку запускається без запитань і може робити все, що вміє ця програма.',
   'Add a program': 'Додати програму',
   'Every space': 'Усі простори',
   Sites: 'Сайти',

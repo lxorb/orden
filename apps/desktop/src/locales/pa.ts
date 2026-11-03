@@ -2047,6 +2047,8 @@ export const pa: Dictionary = {
     'ਇਹ ਤੁਹਾਡੇ ਨੋਟ ਪੜ੍ਹਦਾ ਹੈ ਅਤੇ ਤੁਹਾਡੇ ਲੌਗ-ਇਨ ਨਾਲ ਬ੍ਰਾਊਜ਼ ਕਰਦਾ ਹੈ, ਇਸ ਲਈ ਕੋਈ ਪੰਨਾ ਇਸ ਤੋਂ ਨੋਟ ਬਾਹਰ ਭਿਜਵਾਉਣ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰ ਸਕਦਾ ਹੈ।',
   Activity: 'ਗਤੀਵਿਧੀ',
   'Add a site': 'ਸਾਈਟ ਜੋੜੋ',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'ਇਸ ਸੂਚੀ ਦਾ ਪ੍ਰੋਗਰਾਮ ਬਿਨਾਂ ਪੁੱਛੇ ਚੱਲਦਾ ਹੈ, ਅਤੇ ਉਹ ਪ੍ਰੋਗਰਾਮ ਜੋ ਕਰ ਸਕਦਾ ਹੈ ਉਹ ਸਭ ਕਰ ਸਕਦਾ ਹੈ।',
   'Add a program': 'ਪ੍ਰੋਗਰਾਮ ਜੋੜੋ',
   'Every space': 'ਹਰ ਥਾਂ',
   Sites: 'ਸਾਈਟਾਂ',

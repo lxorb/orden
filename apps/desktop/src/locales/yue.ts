@@ -1987,6 +1987,8 @@ export const yue: Dictionary = {
     '佢會讀你嘅筆記，同埋用你嘅登入身份瀏覽，所以網頁可能會想令佢將筆記傳出去。',
   Activity: '活動',
   'Add a site': '加網站',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    '呢個清單上面嘅程式唔使問就會執行，嗰個程式做到嘅嘢佢都做得到。',
   'Add a program': '加程式',
   'Every space': '所有空間',
   Sites: '網站',

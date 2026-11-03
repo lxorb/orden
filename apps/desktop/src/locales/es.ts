@@ -2099,6 +2099,8 @@ export const es: Dictionary = {
     'Lee tus notas y navega con tu sesión iniciada, así que una página podría intentar que las envíe a otro sitio.',
   Activity: 'Actividad',
   'Add a site': 'Añadir un sitio',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Un programa de esta lista se ejecuta sin preguntar y puede hacer todo lo que ese programa pueda hacer.',
   'Add a program': 'Añadir un programa',
   'Every space': 'Todos los espacios',
   Sites: 'Sitios',

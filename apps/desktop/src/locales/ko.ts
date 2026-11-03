@@ -2013,6 +2013,8 @@ export const ko: Dictionary = {
     '노트를 읽고 내 로그인으로 탐색하므로, 페이지가 노트를 밖으로 보내도록 유도할 수 있습니다.',
   Activity: '활동',
   'Add a site': '사이트 추가',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    '이 목록의 프로그램은 묻지 않고 실행되며, 그 프로그램이 할 수 있는 모든 일을 할 수 있습니다.',
   'Add a program': '프로그램 추가',
   'Every space': '모든 공간',
   Sites: '사이트',

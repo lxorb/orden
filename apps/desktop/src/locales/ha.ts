@@ -2073,6 +2073,8 @@ export const ha: Dictionary = {
     'Yana karanta bayanan kula naka kuma yana bincike da shigarka, don haka shafi zai iya ƙoƙarin sa shi ya aika su waje.',
   Activity: 'Ayyuka',
   'Add a site': 'Ƙara shafi',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Shirin da ke cikin wannan jeri yana gudana ba tare da tambaya ba, kuma yana iya yin duk abin da shirin zai iya yi.',
   'Add a program': 'Ƙara shiri',
   'Every space': 'Kowane wuri',
   Sites: 'Shafuka',

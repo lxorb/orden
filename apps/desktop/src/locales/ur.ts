@@ -2040,6 +2040,8 @@ export const ur: Dictionary = {
     'یہ آپ کے نوٹس پڑھتا ہے اور آپ کے لاگ اِن کے ساتھ براؤز کرتا ہے، اس لیے کوئی صفحہ اسے نوٹس باہر بھیجنے پر آمادہ کرنے کی کوشش کر سکتا ہے۔',
   Activity: 'سرگرمی',
   'Add a site': 'سائٹ شامل کریں',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'اس فہرست کا پروگرام پوچھے بغیر چلتا ہے، اور وہ سب کچھ کر سکتا ہے جو وہ پروگرام کر سکتا ہے۔',
   'Add a program': 'پروگرام شامل کریں',
   'Every space': 'ہر اسپیس',
   Sites: 'سائٹس',

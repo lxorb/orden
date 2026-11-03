@@ -2053,6 +2053,8 @@ export const tr: Dictionary = {
     'Notlarını okuyor ve senin oturumunla geziniyor, bu yüzden bir sayfa onu notlarını dışarı göndermeye ikna etmeye çalışabilir.',
   Activity: 'Etkinlik',
   'Add a site': 'Site ekle',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Bu listedeki bir program sormadan çalışır ve o programın yapabildiği her şeyi yapabilir.',
   'Add a program': 'Program ekle',
   'Every space': 'Her alan',
   Sites: 'Siteler',

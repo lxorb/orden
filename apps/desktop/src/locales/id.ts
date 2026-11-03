@@ -2035,6 +2035,8 @@ export const id: Dictionary = {
     'Ia membaca catatanmu dan menjelajah dengan login-mu, jadi sebuah halaman bisa mencoba membuatnya mengirim catatan itu keluar.',
   Activity: 'Aktivitas',
   'Add a site': 'Tambah situs',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Program dalam daftar ini berjalan tanpa bertanya, dan dapat melakukan apa pun yang bisa dilakukan program itu.',
   'Add a program': 'Tambah program',
   'Every space': 'Setiap ruang',
   Sites: 'Situs',

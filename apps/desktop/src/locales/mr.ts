@@ -2045,6 +2045,8 @@ export const mr: Dictionary = {
     'तो तुमच्या नोंदी वाचतो आणि तुमच्या लॉग-इनने ब्राउझ करतो, त्यामुळे एखादे पान त्याच्याकडून नोंदी बाहेर पाठवण्याचा प्रयत्न करू शकते.',
   Activity: 'क्रियाकलाप',
   'Add a site': 'साइट जोडा',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'या यादीतील प्रोग्राम न विचारता चालतो, आणि तो प्रोग्राम जे करू शकतो ते सर्व करू शकतो.',
   'Add a program': 'प्रोग्राम जोडा',
   'Every space': 'प्रत्येक स्पेस',
   Sites: 'साइट्स',

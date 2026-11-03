@@ -2031,6 +2031,8 @@ export const ja: Dictionary = {
     'ノートを読み、あなたとしてログインしたまま閲覧するため、ページがノートを外部に送らせようとする可能性があります。',
   Activity: 'アクティビティ',
   'Add a site': 'サイトを追加',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'このリストのプログラムは確認なしで実行され、そのプログラムにできることはすべて行えます。',
   'Add a program': 'プログラムを追加',
   'Every space': 'すべてのスペース',
   Sites: 'サイト',
