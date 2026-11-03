@@ -340,13 +340,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  wheel, a touchpad and two fingers (overview/camera.ts), and a window dropped against a
  *  side making a pane there. Measured 5,799,795.
  *
- *  The code raised on 2026-11-03, to 5,824,800, for the bug hunt's round one merged into
+ *  The code raised on 2026-11-03, to 5,829,900, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
  *  thread written down while it runs, the sync's scans, and an undo that waits for every
- *  gesture landing, measured together. Measured 5,824,556.
+ *  gesture landing, measured together. Measured 5,829,627.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_824_800,
+  code: 5_829_900,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
