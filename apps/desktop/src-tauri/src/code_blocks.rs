@@ -50,11 +50,18 @@ enum Leaf {
 pub struct CodeBlocks {
     containers: Vec<Container>,
     leaf: Leaf,
+    named: Option<String>,
 }
 
 impl CodeBlocks {
+    /// The name on the fence the last line read closed: see `fence_name`.
+    pub fn closed_name(&self) -> Option<&str> {
+        self.named.as_deref()
+    }
+
     /// What `raw`, the next line, is.
     pub fn line(&mut self, raw: &str) -> CodeLine {
+        self.named = None;
         let line = expanded(raw.strip_suffix('\r').unwrap_or(raw));
         let line = line.as_ref();
         let mut at = 0;
@@ -102,6 +109,7 @@ impl CodeBlocks {
         if let Leaf::Fence(mark, length) = self.leaf {
             if closes_fence(rest, mark, length) {
                 self.leaf = Leaf::Nothing;
+                self.named = fence_name(rest, mark).map(str::to_string);
             }
             return CodeLine::Code;
         }
@@ -243,13 +251,38 @@ fn fence_mark(line: &str) -> Option<(u8, usize)> {
 }
 
 /// Whether a line closes the fence of `mark` and `length`: the same character,
-/// at least as many of them, and nothing after them.
+/// at least as many of them, and nothing after them but blanks, or the name an older
+/// build wrote.
 fn closes_fence(line: &str, mark: u8, length: usize) -> bool {
     let Some((found, run)) = fence_mark(line) else {
         return false;
     };
     let after = &line[spaces_at(line, 0) + run..];
-    found == mark && run >= length && after.trim_start_matches([' ', '\t']).is_empty()
+    found == mark
+        && run >= length
+        && (after.trim_start_matches([' ', '\t']).is_empty() || fence_name(line, mark).is_some())
+}
+
+/// The block name on a closing fence, as an older build wrote it: ` ``` ^abc123`. A fence
+/// line followed by one name closes a fence that is open, never opens or names one, and
+/// only where the name is what that build wrote, six lowercase letters and digits; the
+/// rule and why in `fenceName` in fences.ts, both held to fence-table.json.
+fn fence_name(line: &str, mark: u8) -> Option<&str> {
+    let run = line[spaces_at(line, 0)..]
+        .bytes()
+        .take_while(|&one| one == mark)
+        .count();
+    let after = &line[spaces_at(line, 0) + run..];
+    let spaced = after.trim_start_matches([' ', '\t']);
+    if spaced.len() == after.len() {
+        return None;
+    }
+    let name = spaced.strip_prefix('^')?.trim_end_matches([' ', '\t']);
+    (name.len() == 6
+        && name
+            .bytes()
+            .all(|one| one.is_ascii_lowercase() || one.is_ascii_digit()))
+    .then_some(name)
 }
 
 /// A thematic break, which looks like a list item and is none.
@@ -316,6 +349,29 @@ fn expanded(line: &str) -> Cow<'_, str> {
 #[cfg(test)]
 mod tests {
     use super::{CodeBlocks, CodeLine};
+
+    /// The notes `CodeBlocks` in links.test.ts, the editor's grammar and the glasses are
+    /// held to as well.
+    #[test]
+    fn every_parser_of_a_fence_reads_the_one_table() {
+        let table: Vec<(String, String, Vec<String>)> = serde_json::from_str(include_str!(
+            "../../../../packages/markdown/src/fence-table.json"
+        ))
+        .expect("the table parses");
+
+        for (note, shape, ids) in table {
+            assert_eq!(walk(&note), shape, "{note:?}");
+            let mut code = CodeBlocks::default();
+            let found: Vec<String> = note
+                .split('\n')
+                .filter_map(|line| {
+                    code.line(line);
+                    code.closed_name().map(str::to_string)
+                })
+                .collect();
+            assert_eq!(found, ids, "{note:?}");
+        }
+    }
 
     /// What the walk says of each line of `note`, as one letter a line: `w` for
     /// words, `c` for code and `o` for a fence that opens.

@@ -1,3 +1,5 @@
+import fenceTable from '../../../markdown/src/fence-table.json'
+import { nibMarkdownParser } from './extensions'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { syntaxTree } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
@@ -43,6 +45,22 @@ function namesOf(state: EditorState): string[] {
 function names(doc: string): string[] {
   return namesOf(stateFor(doc))
 }
+
+describe('a fence, as every parser of a note reads it', () => {
+  test.each(fenceTable as [string, string, string[]][])('%j', (note, shape) => {
+    const code = new Set<number>()
+    const text = note.replaceAll('\r\n', '\n')
+    const lineOf = (at: number) => text.slice(0, at).split('\n').length - 1
+    nibMarkdownParser.parse(text).iterate({
+      enter(node) {
+        if (node.name !== 'FencedCode') return
+        for (let at = lineOf(node.from); at <= lineOf(node.to); at++) code.add(at)
+      },
+    })
+    const said = text.split('\n').map((_, at) => (code.has(at) ? 'c' : 'w'))
+    expect(said.join('')).toBe(shape.replaceAll('o', 'c'))
+  })
+})
 
 describe('highlight', () => {
   test('parses ==marked==', () => {

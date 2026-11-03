@@ -352,8 +352,8 @@ describe('naming a block in old notes and open ones', () => {
   })
 
   test('a closing fence an older build named keeps that name', () => {
-    const doc = 'a\n\n```\nx\n``` ^old\n\nb\n'
-    expect(named(doc, 'x')).toEqual({ target: '#^old', said: doc })
+    const doc = 'a\n\n```\nx\n``` ^abc123\n\nb\n'
+    expect(named(doc, 'x')).toEqual({ target: '#^abc123', said: doc })
   })
 
   test('a name under a paragraph is its name, not a reason for a second', () => {

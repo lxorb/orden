@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { draws, fold, width } from './firmware'
 import { markLines, MARKS, workDone } from './mark'
 import { BODY_INNER } from './panel'
+import fenceTable from '../../markdown/src/fence-table.json'
 
 const lines = (source: string, inner = BODY_INNER) =>
   markLines(source, { inner }).map((one) => one.text)
@@ -655,6 +656,37 @@ describe('where a fence ends', () => {
   test('with a longer fence and nothing after it', () => {
     const lines = markLines('````\na\n````', { inner: 576 })
     expect(lines.map((line) => line.at)).toEqual([1, 2, 3])
+  })
+})
+
+describe('a fence, as every parser of a note reads it', () => {
+  test.each(fenceTable as [string, string, string[]][])('%j', (note, shape, ids) => {
+    const said = lines(note).join('\n')
+    for (const id of ids) expect(said).not.toContain(id)
+    // The words under it are words: nothing of the fence comes after them.
+    const last = shape.lastIndexOf('c')
+    if (shape.endsWith('w') && last !== -1) expect(said.trimEnd().endsWith('words')).toBe(true)
+  })
+
+  test('a block name on a list item is no word of it', () => {
+    expect(lines('- a ^xyz')).toEqual(lines('- a'))
+  })
+})
+
+describe('a quote of several lines', () => {
+  test('draws one bar on each', () => {
+    expect(lines('> a\n> b\n')).toEqual(['│ a', '│ b'])
+    expect(lines('> > a\n> > b\n')).toEqual(['│ │ a', '│ │ b'])
+  })
+})
+
+describe('a word the front matter says as well', () => {
+  test('is found where the page has it', () => {
+    const note = '---\ntitle: Same\n---\n\nSame\n\n> q\n> r\n'
+    const marked = markLines(note, { inner: BODY_INNER })
+    expect(marked[0]?.at).toBe(5)
+    expect(marked[0]?.from).toBe(note.indexOf('Same\n\n'))
+    expect(marked.map((line) => line.at)).toEqual([5, 7, 8])
   })
 })
 

@@ -613,12 +613,17 @@ fn note_tags(body: &str) -> Vec<String> {
 /// walk a note straight down and none of them looks back: a space of ten thousand
 /// notes is a million and a half lines, and this is asked of every one of them
 /// three times over.
-fn prose_lines(body: &str, words_from: usize, mut each: impl FnMut(usize, &str)) {
+///
+/// The name an older build wrote on a closing fence comes as the third argument, on the
+/// fence's line and alone: it is all a reader takes from that line.
+fn prose_lines(body: &str, words_from: usize, mut each: impl FnMut(usize, &str, Option<&str>)) {
     let mut code = CodeBlocks::default();
 
     for (index, line) in body.lines().enumerate() {
         if index < words_from || code.line(line) == CodeLine::Words {
-            each(index, line);
+            each(index, line, None);
+        } else if let Some(name) = code.closed_name() {
+            each(index, line, Some(name));
         }
     }
 }
@@ -651,7 +656,12 @@ fn prose(body: &str, words_from: usize) -> Prose {
     // The list items it is inside of, for what is written under each task.
     let mut open: Vec<Open> = Vec::new();
 
-    prose_lines(body, words_from, |index, line| {
+    prose_lines(body, words_from, |index, line, fence_name| {
+        if let Some(id) = fence_name {
+            blocks.push(id.to_string());
+            return;
+        }
+
         let heading = heading_of(line);
         if let Some((level, text)) = heading {
             if index >= words_from {

@@ -45,7 +45,7 @@ export function fenceMark(line: string): string | null {
 }
 
 /** Whether a line closes the fence `mark` opened: the same character, at least as
- *  many of them, and nothing after them.
+ *  many of them, and nothing after them but blanks, or the name an older build wrote.
  *
  *  The last of the three is the one that is easy to forget. CommonMark allows an
  *  info string only on the line that opens a block, so ```` ```ts ```` inside a
@@ -58,14 +58,24 @@ export function closesFence(line: string, mark: string): boolean {
 
   const run = found[1] ?? ''
   if (!run.startsWith(mark.charAt(0)) || run.length < mark.length) return false
-  return !found[2] || fenceName(line) !== null
+  return /^ {0,3}[`~]+[ \t]*\r?$/.test(line) || fenceName(line) !== null
 }
 
-/** The block name on a closing fence, as an older build wrote it: ` ``` ^abc123`. Read
- *  as closing, or everything under it in such a note would be code. */
+/** The block name on a closing fence, as an older build wrote it: ` ``` ^abc123`. Such a
+ *  note has to keep working, or everything under its fence would be code, and code that
+ *  shows such a line has to stay code, or the page would end it there and turn every
+ *  fence after it inside out. So the rule, for every reader of a note, the Rust twin and
+ *  the editor's grammar among them (fence-table.json):
+ *
+ *      A fence line followed by one name closes a fence that is open, never opens or
+ *      names one, and only where the name is what that build wrote: `freeBlockId`'s
+ *      six lowercase letters and digits. Anything else after the marks is code.
+ *
+ *  What is left: code showing a line just like that closes early. Six random characters
+ *  after a fence are not what code shows, and a note that does can put more ticks round it. */
 export function fenceName(line: string): string | null {
   if (!couldBeFence(line)) return null
-  return /^ {0,3}(?:`{3,}|~{3,})[ \t]+\^([A-Za-z0-9-]+)[ \t]*\r?$/.exec(line)?.[1] ?? null
+  return /^ {0,3}(?:`{3,}|~{3,})[ \t]+\^([a-z0-9]{6})[ \t]*\r?$/.exec(line)?.[1] ?? null
 }
 
 /** Where a span of `length` backticks closes after `from`, or -1: at a run of
@@ -137,6 +147,7 @@ export class CodeBlocks {
   private containers: Container[] = []
   private leaf: Leaf = null
   private item = false
+  private named: string | null = null
 
   /** A walk that has read what this one has, to go on from here apart from it. */
   copy(): CodeBlocks {
@@ -152,6 +163,12 @@ export class CodeBlocks {
     return this.item
   }
 
+  /** The name on the fence the last line read closed: see `fenceName`. Past whatever
+   *  quote or list item the fence is in, as a look at the line alone would not be. */
+  get closedName(): string | null {
+    return this.named
+  }
+
   /** The mark of the fence that is open, or null outside one. */
   get fence(): string | null {
     return this.leaf !== null && typeof this.leaf === 'object' ? this.leaf.mark : null
@@ -161,6 +178,7 @@ export class CodeBlocks {
     // A line break written as CRLF leaves its `\r` on a line split at `\n`.
     const line = expanded(raw.endsWith('\r') ? raw.slice(0, -1) : raw)
     this.item = false
+    this.named = null
     let at = 0
     let matched = 0
 
@@ -193,7 +211,10 @@ export class CodeBlocks {
     }
 
     if (this.leaf !== null && typeof this.leaf === 'object') {
-      if (closesFence(rest, this.leaf.mark)) this.leaf = null
+      if (closesFence(rest, this.leaf.mark)) {
+        this.leaf = null
+        this.named = fenceName(rest)
+      }
       return CODE
     }
 

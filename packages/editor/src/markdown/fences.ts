@@ -1,5 +1,6 @@
 import { TreeFragment, type Input, type PartialParse, type Tree } from '@lezer/common'
 import type { BlockContext, Element, Line, MarkdownConfig, MarkdownParser } from '@lezer/markdown'
+import { fenceName } from '@orden/markdown/fences'
 import { enclosing } from '../nodes'
 import { BACKTICK, isSpace, TILDE } from './syntax'
 
@@ -28,13 +29,16 @@ function fenceEnd(line: Line): number {
 }
 
 /** Where a line's closing fence ends, or -1: the opener's character, at least
- *  as many of them, at most three spaces in, and nothing else on the line. */
+ *  as many of them, at most three spaces in, and nothing else on the line but the
+ *  name an older build wrote there, which is part of the mark: see `fenceName`. */
 function closerEnd(line: Line, mark: number, length: number): number {
   let pos = line.pos
   if (line.indent - line.baseIndent < 4) {
     while (pos < line.text.length && line.text.charCodeAt(pos) === mark) pos++
   }
-  return pos - line.pos >= length && line.skipSpace(pos) === line.text.length ? pos : -1
+  if (pos - line.pos < length) return -1
+  if (line.skipSpace(pos) === line.text.length) return pos
+  return fenceName(line.text.slice(line.pos)) === null ? -1 : line.text.trimEnd().length
 }
 
 /** Whether the current line is still inside every block the fence opened in.
