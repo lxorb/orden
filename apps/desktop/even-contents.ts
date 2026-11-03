@@ -353,9 +353,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,813,900, for #1074: a web tab's bar saying a
  *  window the page opened on its own was blocked, with its Open (WebTab.svelte, and the
  *  words in every catalogue). Measured 5,813,707.
+ *
+ *  The code raised on 2026-11-04, to 5,814,600, for #1081: whether a row of the file
+ *  list stands open asked in one place, of the rows drawn (`standsOpen` and `anyOpen`
+ *  in tree-flat.ts), and the folders remembered open kept clean of the ones that went
+ *  (`keepOpen` in workspace/device.svelte.ts). Measured 5,814,220.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_813_900,
+  code: 5_814_600,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

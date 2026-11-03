@@ -1066,8 +1066,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,491,500, for #1074: a web tab's bar saying a window the page
  *  opened on its own was blocked, and the Open that opens it (WebTab.svelte,
- *  pages.svelte.ts). Measured 3,491,408. */
-const BUDGET = 3_491_500
+ *  pages.svelte.ts). Measured 3,491,408.
+ *
+ *  Raised 2026-11-04, to 3,495,600, for #1081: the Collapse button asks the rows drawn
+ *  whether one stands open rather than what is remembered open, and every listing
+ *  drops the folders remembered open that no row is (tree-flat.ts, workspace.svelte.ts,
+ *  workspace/device.svelte.ts). Measured 3,495,431. */
+const BUDGET = 3_495_600
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
