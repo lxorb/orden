@@ -168,10 +168,14 @@ struct Secret {
     filled: bool,
 }
 
-/// The element that has the keyboard, into frames of the same origin.
+/// The element that has the keyboard, into open shadow roots and frames of the same origin.
 const ACTIVE: &str = r"(() => {
   let at = document.activeElement
-  try { while (at && at.contentDocument && at.contentDocument.activeElement) at = at.contentDocument.activeElement } catch (_) {}
+  try { while (at) {
+    const inner = (at.shadowRoot && at.shadowRoot.activeElement) || (at.contentDocument && at.contentDocument.activeElement)
+    if (!inner) break
+    at = inner
+  } } catch (_) {}
   return at
 })()";
 
@@ -400,21 +404,65 @@ impl Page<'_> {
 
     /// What the element with the keyboard says about itself, if one has it.
     pub fn active_facts(&self) -> Result<Option<Facts>, Answer> {
-        let found = self.call(
+        let Some((facts, object)) = self.active_in(None)? else {
+            return Ok(None);
+        };
+        if !facts.frame_owner() {
+            return Ok(Some(facts));
+        }
+        // The keyboard is in a frame of another origin, whose document this one cannot
+        // read: what a key lands on is asked of the frame itself.
+        let owner = self.call("DOM.describeNode", &json!({ "objectId": object }))?;
+        let session = owner
+            .pointer("/node/frameId")
+            .and_then(Value::as_str)
+            .and_then(|frame| self.frame_session(frame));
+        let inner = match &session {
+            Some(session) => self.active_in(Some(session))?,
+            None => None,
+        };
+        match inner {
+            Some((facts, _)) if !facts.frame_owner() => Ok(Some(facts)),
+            _ => Err(Answer::error(
+                Code::Failed,
+                "the keyboard is in a frame Orden cannot read: press or type there by ref",
+            )),
+        }
+    }
+
+    /// What has the keyboard in one session, and a handle to it.
+    fn active_in(&self, session: Option<&str>) -> Result<Option<(Facts, String)>, Answer> {
+        let call = |method: &str, params: &Value| -> Result<Value, Answer> {
+            cdp::call_in(self.view, session, method, params, cdp::PATIENCE)
+                .map_err(|why| stale(&why))
+        };
+        let found = call(
             "Runtime.evaluate",
             &json!({ "expression": ACTIVE, "returnByValue": false }),
         )?;
         let Some(object) = found.pointer("/result/objectId").and_then(Value::as_str) else {
             return Ok(None);
         };
-        let said = self.call(
+        let said = call(
             "Runtime.callFunctionOn",
             &json!({ "objectId": object, "functionDeclaration": FACTS.as_str(), "returnByValue": true }),
         )?;
         Ok(said
             .pointer("/result/value")
             .cloned()
-            .and_then(|value| serde_json::from_value(value).ok()))
+            .and_then(|value| serde_json::from_value(value).ok())
+            .map(|facts| (facts, object.to_string())))
+    }
+
+    /// The session of a frame in a process of its own, by the frame's id.
+    fn frame_session(&self, frame: &str) -> Option<String> {
+        self.heard()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .frames()
+            .into_iter()
+            .find(|(_, one)| one.id == frame)
+            .map(|(_, one)| one.session)
     }
 
     /// Runs an expression in nib's own world in the page's frame, answering its value.
@@ -639,15 +687,76 @@ impl Page<'_> {
         hit.get("backendNodeId").and_then(Value::as_u64)
     }
 
-    /// What a press at a point in the page's viewport lands on, as an element.
+    /// What a press at a point in the page's viewport lands on, as an element: inside a
+    /// frame of another origin where the point is in one, since the frame's element says
+    /// nothing of the button a press lands on (a card form, a pay button). A point in a
+    /// frame that cannot be read is refused, for a press by ref, rather than judged blind.
     pub fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
-        self.node_at(point)
-            .map(|backend| Element {
-                session: None,
-                frame: None,
-                backend,
+        let backend = self
+            .node_at(point)
+            .ok_or_else(|| Answer::error(Code::Failed, "nothing of the page is at that point"))?;
+        let element = Element {
+            session: None,
+            frame: None,
+            backend,
+        };
+        let described = self.call("DOM.describeNode", &json!({ "backendNodeId": backend }))?;
+        let name = described
+            .pointer("/node/nodeName")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        if !matches!(name.to_ascii_uppercase().as_str(), "IFRAME" | "FRAME") {
+            return Ok(element);
+        }
+        // A frame the page can read is hit through: what came back is its edge.
+        let own = self.run_on(
+            &element,
+            "function () { try { return !!this.contentDocument } catch (_) { return false } }",
+            &[],
+        )?;
+        if own.as_bool() == Some(true) {
+            return Ok(element);
+        }
+        described
+            .pointer("/node/frameId")
+            .and_then(Value::as_str)
+            .and_then(|frame| self.element_in_frame(frame, point))
+            .ok_or_else(|| {
+                Answer::error(
+                    Code::Failed,
+                    "that point is in a frame Orden cannot read: take a snapshot and press by ref",
+                )
             })
-            .ok_or_else(|| Answer::error(Code::Failed, "nothing of the page is at that point"))
+    }
+
+    /// What is at a point of the page's viewport inside a frame in a process of its own;
+    /// `None` when that cannot be told, or the point is in a frame inside that one.
+    fn element_in_frame(&self, frame: &str, (x, y): (f64, f64)) -> Option<Element> {
+        let session = self.frame_session(frame)?;
+        let inner = Element {
+            session: Some(session.clone()),
+            frame: Some(frame.to_string()),
+            backend: 0,
+        };
+        let (left, top) = self.frame_offset(&inner).ok()?;
+        let call = |method: &str, params: &Value| {
+            cdp::call_in(self.view, Some(&session), method, params, cdp::PATIENCE).ok()
+        };
+        let metrics = call("Page.getLayoutMetrics", &json!({}))?;
+        let scrolled = |path: &str| metrics.pointer(path).and_then(Value::as_f64).unwrap_or(0.0);
+        let hit = call(
+            "DOM.getNodeForLocation",
+            &json!({
+                "x": whole(x - left + scrolled("/cssLayoutViewport/pageX")),
+                "y": whole(y - top + scrolled("/cssLayoutViewport/pageY")),
+                "includeUserAgentShadowDOM": false,
+                "ignorePointerEventsNone": true,
+            }),
+        )?;
+        let backend = hit.get("backendNodeId").and_then(Value::as_u64)?;
+        let element = Element { backend, ..inner };
+        let facts = self.facts(&element).ok()?;
+        (!facts.frame_owner()).then_some(element)
     }
 
     /// Where a frame in a process of its own sits in the page, for its elements' points.

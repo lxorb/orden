@@ -1168,9 +1168,19 @@ mod progress {
         let Some(at) = begun.iter().position(|one| one.guid == guid) else {
             return;
         };
-        // An end is the runtime's to say; only the engine's record of it goes.
-        if text(params, "state").as_deref() != Some("inProgress") {
+        let state = text(params, "state");
+        if state.as_deref() != Some("inProgress") {
+            // A completed one is the runtime's to say. One that broke is nobody else's:
+            // the runtime says nothing of an interruption (a 404, a connection reset), so
+            // it would stay going for good, its tab kept and its name taken.
+            let broke = (state.as_deref() != Some("completed"))
+                .then(|| matched(&mut begun, at).zip(Some(begun[at].url.clone())))
+                .flatten();
             begun.retain(|one| one.guid != guid);
+            drop(begun);
+            if let Some((id, url)) = broke {
+                broke_off(app, window, id, &url);
+            }
             return;
         }
         let Some(id) = matched(&mut begun, at) else {
@@ -1185,6 +1195,19 @@ mod progress {
         if let Some(one) =
             downloads.moved(&path, bytes(params, "receivedBytes").unwrap_or(0), total)
         {
+            let _ = app.emit_to(window, MOVED, one);
+        }
+    }
+
+    /// A download the engine gave up on, ended in the list as failed, as `heard` ends one
+    /// the runtime said failed.
+    fn broke_off(app: &AppHandle, window: &str, id: u64, url: &str) {
+        let downloads = held(app);
+        let Some(path) = downloads.going_to(id) else {
+            return;
+        };
+        if let Some(one) = downloads.finish(url, Some(&path), false) {
+            let _ = super::settle(app, &one.tab);
             let _ = app.emit_to(window, MOVED, one);
         }
     }

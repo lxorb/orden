@@ -9,8 +9,8 @@
 //! says so, and `approval_status` tells the agent.
 //!
 //! **An allowed question lets the same call through once.** The agent calls again, the
-//! call finds its question allowed by what it is about (the verb, the tab, the element),
-//! and goes ahead; the question is then spent. "Always on this site" writes the category
+//! call finds its question allowed by what it is about (the verb, the tab, the element,
+//! and on a page its host and the element's name, `on_page`), and goes ahead; the question is then spent. "Always on this site" writes the category
 //! into the grant for that site, so the next one is not asked at all. A question nobody
 //! answered for a day expires.
 
@@ -60,8 +60,10 @@ pub fn key(verb: &str, tab: Option<&str>, element: Option<&str>) -> String {
 
 /// What a call is about on the page it would land on: an allowance is for one press on
 /// one site, so the same key or ref after the tab has moved on is another question.
-pub fn on_page(key: &str, _url: &str, _element: &str) -> String {
-    key.to_string()
+pub fn on_page(key: &str, url: &str, element: &str) -> String {
+    let host = super::policy::host_of(url).unwrap_or_default();
+    let element = element.split_whitespace().collect::<Vec<_>>().join(" ");
+    format!("{key}:{host}:{element}")
 }
 
 /// Whether the reader allowed this call: spends the allowance if so.

@@ -44,10 +44,33 @@ use serde::Deserialize;
 use super::grants::{Grant, Mode, SiteRule};
 use super::verbs::{Category, DialogKind, Store};
 
-/// The host of an address, lower case.
+/// The host of an address, lower case, and without the root's dot that names the same
+/// host (`bank.example.`), which every rule below would otherwise read as another one.
 pub fn host_of(url: &str) -> Option<String> {
     let parsed: tauri::Url = url.parse().ok()?;
-    parsed.host_str().map(str::to_lowercase)
+    parsed
+        .host_str()
+        .map(|host| host.trim_end_matches('.').to_lowercase())
+}
+
+/// Whether a page an agent acts in may be at an address: the web. Beyond it, only what a
+/// page makes of its own and which reads nothing of the machine: `about:blank`, where a
+/// tab or a window starts (and the empty address the engine says for one), and a `blob:`
+/// the page wrote itself, how a site shows or hands over a file it built. Never `file:`,
+/// `chrome:`, `view-source:`, `javascript:`, an extension's page or a scheme somebody
+/// else registered, whichever road asks: an agent's own call, or the page it is on.
+pub fn on_the_web(url: &str) -> bool {
+    if url.is_empty() {
+        return true;
+    }
+    let Ok(parsed) = url.parse::<tauri::Url>() else {
+        return false;
+    };
+    match parsed.scheme() {
+        "http" | "https" | "blob" => true,
+        "about" => parsed.as_str() == "about:blank",
+        _ => false,
+    }
 }
 
 /// The site a host is on: its registrable domain, as far as it can be told without the
@@ -98,13 +121,25 @@ pub fn rule_for(grant: &Grant, host: &str) -> Option<SiteRule> {
 
 /// Whether a site the reader named covers a host.
 fn covers(site: &str, host: &str) -> bool {
-    let site = site.trim().trim_start_matches("*.").to_lowercase();
+    let site = site
+        .trim()
+        .trim_start_matches("*.")
+        .trim_end_matches('.')
+        .to_lowercase();
     host == site || host.ends_with(&format!(".{site}"))
 }
 
-/// Whether an agent may be at an address in a tab of this store: a denied site nowhere,
-/// a site kept to the agent's own store only there.
+/// Whether an agent may be at an address in a tab of this store: nowhere off the web, a
+/// denied site nowhere, a site kept to the agent's own store only there. The page the
+/// engine shows for a load that failed is no address anybody asked for, and the tab has
+/// to stay the agent's to send elsewhere.
 pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String> {
+    if url.starts_with("chrome-error:") {
+        return Ok(());
+    }
+    if !on_the_web(url) {
+        return Err(format!("an agent stays on the web, and {url} is not on it"));
+    }
     let Some(host) = host_of(url) else {
         return Ok(());
     };
@@ -211,6 +246,17 @@ impl Facts {
                 said: self.name.clone(),
                 ..Field::default()
             })
+    }
+
+    /// Whether a key that presses lands on it: no box words go into, and no page with
+    /// nothing in focus.
+    pub fn pressable(&self) -> bool {
+        !self.editable && !matches!(self.tag.as_str(), "" | "body" | "html")
+    }
+
+    /// Whether it is a frame's element, which says nothing of what is in the frame.
+    pub fn frame_owner(&self) -> bool {
+        matches!(self.tag.as_str(), "iframe" | "frame")
     }
 
     /// Whether it opens one of the engine's own pickers when pressed (6.5).
@@ -468,8 +514,15 @@ pub fn judge(
 }
 
 /// What a key does to the element that has the keyboard, as `judge` reads it; `None` when
-/// it presses nothing.
+/// it presses nothing. Space or Enter on what is no box is a press of it, the same as a
+/// click on it, whatever it is pressed by. In a box, Enter is the box's: its form's submit
+/// and a message's send.
 pub fn key_act(mut facts: Facts, key: &super::keys::Key) -> Option<(Facts, Act)> {
+    if key.presses() && facts.pressable() {
+        // Enter on an input that is no box submits its form, as a press of its submit does.
+        facts.submit |= facts.tag == "input" && facts.in_form && key.submits();
+        return Some((facts, Act::Press));
+    }
     if !(key.sends() || key.submits()) {
         return None;
     }

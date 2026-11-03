@@ -154,9 +154,13 @@ pub fn find(agent: &str, id: &str) -> Option<Tab> {
         .cloned()
 }
 
-/// Whether a page an agent's tab is on may open a window to `url`: the agent's own
-/// rules about the site.
+/// Whether a page an agent's tab is on may go to `url` or open a window to it: nowhere
+/// off the web, whoever's tab it is, and the agent's own rules about the site. Each
+/// engine's navigation and window events ask this.
 pub fn may_open(owner: &Owner, url: &str) -> Result<(), String> {
+    if !super::policy::on_the_web(url) {
+        return Err("an agent's page stays on the web".to_string());
+    }
     super::policy::site_allowed_for(&owner.agent, url, store_of(&owner.tab))
 }
 
@@ -245,15 +249,18 @@ pub fn set(id: &str, change: impl FnOnce(&mut Tab)) {
     }
 }
 
-/// An address an agent's page may go to: the web, and nothing of the machine's.
-fn web_address(url: &str) -> Result<Url, Answer> {
+/// An address an agent may send a page to: the web, and nothing of the machine's or of
+/// the app's own origins. The address as read here is the one to hand the engine.
+pub(super) fn web_address(url: &str) -> Result<Url, Answer> {
     let address: Url = url.trim().parse().map_err(|error| {
         Answer::error(
             Code::BadArguments,
             format!("that is not an address: {error}"),
         )
     })?;
-    if matches!(address.scheme(), "http" | "https") || address.as_str() == "about:blank" {
+    if crate::web_tabs::allowed(&address) && address.scheme() != "view-source"
+        || address.as_str() == "about:blank"
+    {
         Ok(address)
     } else {
         Err(Answer::error(

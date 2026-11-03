@@ -79,7 +79,7 @@ impl Key {
 
     /// Whether this press presses what has the keyboard, as a click would.
     pub fn presses(&self) -> bool {
-        false
+        matches!(self.name.as_str(), " " | "Enter")
     }
 
     /// Whether this press is what sends from a message box: Enter, or Control+Enter

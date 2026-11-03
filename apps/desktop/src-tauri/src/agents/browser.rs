@@ -11,7 +11,7 @@
 //! answering `needs_approval` at once.
 
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::PoisonError;
 use std::time::Duration;
 
@@ -20,7 +20,7 @@ use tauri::{AppHandle, Emitter as _};
 
 use super::approvals::{self, Asking};
 use super::engines::{self, ReaderStore, View};
-use super::grants::{Grant, Scope, SiteRule};
+use super::grants::{Grant, Scope, SiteRule, Spaces};
 use super::keys;
 use super::page::{Element, Page};
 use super::policy::{self, Act, Facts};
@@ -97,7 +97,7 @@ pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answe
 fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
     let reader = match caller {
         Caller::Reader => {
-            super::reader::tabs(app, &super::grants::Spaces::All(super::grants::Every::All))
+            super::reader::tabs(app, &Spaces::All(super::grants::Every::All))
         }
         Caller::Agent(grant) if grant.holds(Scope::BrowserReader) => {
             super::reader::tabs(app, &grant.spaces)
@@ -115,6 +115,9 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
             Code::NotGranted,
             "this agent was not granted tabs of its own",
         );
+    }
+    if let Err(refused) = tabs::web_address(&open.url) {
+        return refused;
     }
     let host = policy::host_of(&open.url).unwrap_or_default();
     let mut store = open.store;
@@ -220,7 +223,7 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), A
         return Err(not_found());
     }
     if let Caller::Agent(grant) = caller {
-        if !matches!(grant.spaces, super::grants::Spaces::All(_))
+        if !matches!(grant.spaces, Spaces::All(_))
             && !super::reader::tabs(app, &grant.spaces)
                 .iter()
                 .any(|one| one.id == tab)
@@ -407,7 +410,8 @@ fn judged(
     let Some(question) = policy::judge(grant, facts, act, &page.url(), &hosts) else {
         return cleared();
     };
-    if approvals::allowed(&grant.id, key) {
+    let key = approvals::on_page(key, &page.url(), &facts.name);
+    if approvals::allowed(&grant.id, &key) {
         return cleared();
     }
     Err(ask(
@@ -417,7 +421,7 @@ fn judged(
         question.summary,
         Some(&page.url()),
         place.id(),
-        key,
+        &key,
     ))
 }
 
@@ -506,12 +510,15 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
         Ok(match verb {
             Verb::Navigate(go) => {
                 if let Some(url) = &go.url {
+                    // The same address `browser_open` holds to, read once: a `file:` would
+                    // read this machine, a `javascript:` is a script without the scope.
+                    let address = tabs::web_address(url)?;
                     if let Caller::Agent(grant) = caller {
-                        policy::site_allowed(grant, url, place.store())
+                        policy::site_allowed(grant, address.as_str(), place.store())
                             .map_err(|why| Answer::error(Code::SiteDenied, why))?;
                     }
                     super::count_navigation(caller, page.since)?;
-                    page.navigate(url)?;
+                    page.navigate(address.as_str())?;
                 } else if go.back || go.forward || go.reload {
                     super::count_navigation(caller, page.since)?;
                     page.step(if go.back { -1 } else { i64::from(go.forward) })?;
@@ -664,29 +671,31 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::Press(pressing) => {
                 let key = keys::chord(&pressing.keys)
                     .map_err(|why| Answer::error(Code::BadArguments, why))?;
+                // Facts are asked once, and only of a key they can matter to.
+                let facts = if key.changes_words() || key.sends() || key.submits() {
+                    page.active_facts()?
+                } else {
+                    None
+                };
                 // A key that types into a sign-in form is words into it, judged so.
                 if key.changes_words() {
-                    if let Some(facts) = page.active_facts()? {
-                        if facts.password() || facts.sign_in() {
-                            let asked = approvals::key(
-                                "browser_press_words",
-                                Some(&tab),
-                                Some(&pressing.keys),
-                            );
-                            judged(app, caller, page, place, &facts, Act::Write, &asked)?;
-                        }
+                    if let Some(facts) = facts.as_ref().filter(|one| {
+                        one.editable && (one.password() || one.sign_in())
+                    }) {
+                        let asked = approvals::key(
+                            "browser_press_words",
+                            Some(&tab),
+                            Some(&pressing.keys),
+                        );
+                        judged(app, caller, page, place, facts, Act::Write, &asked)?;
                     }
                 }
+                // Space or Enter on a button or a link is a press of it, as a click is;
                 // Enter and Control+Enter are a message box's send as well as a form's
                 // submit; Shift+Enter only submits a form of single-line fields.
-                if key.sends() || key.submits() {
-                    if let Some(mut facts) = page.active_facts()? {
-                        facts.submit = facts.in_form && key.submits();
-                        let act = if key.sends() { Act::Enter } else { Act::Press };
-                        let asked =
-                            approvals::key("browser_press", Some(&tab), Some(&pressing.keys));
-                        judged(app, caller, page, place, &facts, act, &asked)?;
-                    }
+                if let Some((facts, act)) = facts.and_then(|one| policy::key_act(one, &key)) {
+                    let asked = approvals::key("browser_press", Some(&tab), Some(&pressing.keys));
+                    judged(app, caller, page, place, &facts, act, &asked)?;
                 }
                 press(page, place, &key)?;
                 acted(page)
@@ -744,12 +753,19 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             }
             Verb::Upload(upload) => {
                 let target = element(page, &upload.element)?;
-                let files = files_of(app, &upload.files)?;
+                let files = files_of(app, caller, &upload.files)?;
                 if let Caller::Agent(grant) = caller {
                     let outside: Vec<&(PathBuf, bool)> =
                         files.iter().filter(|(_, inside)| !inside).collect();
-                    let key =
-                        approvals::key("browser_upload", Some(&tab), Some(&upload.files.join("|")));
+                    let key = approvals::on_page(
+                        &approvals::key(
+                            "browser_upload",
+                            Some(&tab),
+                            Some(&upload.files.join("|")),
+                        ),
+                        &page.url(),
+                        "",
+                    );
                     if !outside.is_empty()
                         && grant.asks(Category::Files)
                         && !approvals::allowed(&grant.id, &key)
@@ -863,7 +879,11 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     if let Some(question) =
                         policy::answering(grant, held.kind, answer.accept, &held.url)
                     {
-                        let key = approvals::key("browser_dialog", Some(place.id()), None);
+                        let key = approvals::on_page(
+                            &approvals::key("browser_dialog", Some(place.id()), None),
+                            &held.url,
+                            "",
+                        );
                         if !approvals::allowed(&grant.id, &key) {
                             return Err(ask(
                                 app,
@@ -1018,8 +1038,14 @@ fn modifiers(held: &[super::verbs::Modifier]) -> u8 {
 }
 
 /// The files an agent hands a page: each an absolute path, or one relative to the spaces
-/// folder, and whether it is inside a space (9.4). A file that is not there is refused.
-fn files_of(app: &AppHandle, asked: &[String]) -> Result<Vec<(PathBuf, bool)>, Answer> {
+/// folder, and whether it is inside a space (9.4). A file that is not there is refused,
+/// and so, in the same words, is one in a space this agent does not reach, which does not
+/// exist to it (9.6) - by what its path says and by where a link in it really goes.
+fn files_of(
+    app: &AppHandle,
+    caller: &Caller,
+    asked: &[String],
+) -> Result<Vec<(PathBuf, bool)>, Answer> {
     if asked.is_empty() {
         return Err(Answer::error(Code::BadArguments, "say which files"));
     }
@@ -1035,25 +1061,44 @@ fn files_of(app: &AppHandle, asked: &[String]) -> Result<Vec<(PathBuf, bool)>, A
                     .map_or(given.clone(), |root| root.join(&given))
             };
             let path = crate::paths::folded(&path);
-            if !path.is_file() {
-                return Err(Answer::error(
+            let absent = || {
+                Answer::error(
                     Code::BadArguments,
                     format!("{} is not a file", path.display()),
-                ));
+                )
+            };
+            if !path.is_file() {
+                return Err(absent());
             }
             let inside = crate::paths::in_spaces(app, &path.to_string_lossy()).is_ok();
+            if let (Caller::Agent(grant), Some(root)) = (caller, &root) {
+                if inside && beyond_the_grant(root, &path, &grant.spaces) {
+                    return Err(absent());
+                }
+                let real = (std::fs::canonicalize(root), std::fs::canonicalize(&path));
+                if let (Ok(root), Ok(real)) = real {
+                    if real.starts_with(&root) && beyond_the_grant(&root, &real, &grant.spaces) {
+                        return Err(absent());
+                    }
+                }
+            }
             Ok((path, inside))
         })
         .collect()
 }
 
 /// Whether a path in the spaces folder is in a space the grant does not reach, or in none.
-fn beyond_the_grant(
-    _root: &std::path::Path,
-    _path: &std::path::Path,
-    _spaces: &super::grants::Spaces,
-) -> bool {
-    false
+fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
+    if matches!(spaces, Spaces::All(_)) {
+        return false;
+    }
+    let Ok(rest) = path.strip_prefix(root) else {
+        return true;
+    };
+    let mut parts = rest.components();
+    let space = parts.next().and_then(|one| one.as_os_str().to_str());
+    let holds_more = parts.next().is_some();
+    !(holds_more && space.is_some_and(|one| spaces.reach(one)))
 }
 
 #[cfg(test)]
