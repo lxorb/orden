@@ -97,6 +97,22 @@ function numberOf(written: string): number | null {
   return read !== '' && Number.isFinite(value) ? value : null
 }
 
+/** A key whose `[` is closed on a later line, as that one line: YAML reads a flow list
+ *  across lines as one list, and the walk below reads a line at a time. A `[` nothing
+ *  closes stays the line it was. */
+function flowsJoined(lines: readonly string[]): string[] {
+  const out: string[] = []
+  for (let at = 0; at < lines.length; at++) {
+    const line = lines[at] ?? ''
+    const close = /^\s*(?:-\s+)?[^\s:#]+\s*:\s*\[[^\]]*$/u.test(line)
+      ? lines.findIndex((one, below) => below > at && one.includes(']'))
+      : -1
+    out.push(close === -1 ? line : [line, ...lines.slice(at + 1, close + 1)].join(' '))
+    if (close !== -1) at = close
+  }
+  return out
+}
+
 /** A value without the comment after it. A flow list up to its closing bracket: YAML
  *  has no comment inside one here, since `[#1, #2]` was always two labels. */
 function valueOf(written: string): string {
@@ -137,7 +153,7 @@ function pair(
  *  vocabulary still draws the part of itself that is numbers. What it will not do
  *  is invent - a fence with no numbers in it is not a chart, and stays code. */
 export function readChart(source: string): Chart | null {
-  const lines = source.split('\n')
+  const lines = flowsJoined(source.split('\n'))
   let kind: ChartKind | null = 'bar'
   let title: string | null = null
   let labels: string[] = []

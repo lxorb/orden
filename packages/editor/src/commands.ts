@@ -18,7 +18,7 @@ import { marksAcross } from './line-door'
 import { noteIndex } from './wikilink/notes'
 import { headingLevel } from './headings'
 import { showFrontMatter } from './live-preview/hidden-front-matter'
-import { enclosing } from './nodes'
+import { enclosing, enclosingNamed } from './nodes'
 
 /** Wraps the selection, or unwraps it when the markers are already there -
  *  so the same shortcut turns emphasis on and off.
@@ -433,6 +433,9 @@ function roomBelow(state: EditorState, at: number, text: string, blank: boolean)
   return state.doc.line(line.number + 1).text.trim() ? '\n' : ''
 }
 
+/** Blocks whose lines mean nothing apart. */
+const HOLDS_ITS_LINES: ReadonlySet<string> = new Set(['Table', 'FencedCode', 'BlockMath'])
+
 /** Inserts a block on its own lines, leaving the caret where you type next.
  *
  *  Words after the caret stay on a line of their own: on the closing line of a fence
@@ -444,9 +447,17 @@ function roomBelow(state: EditorState, at: number, text: string, blank: boolean)
 function insertBlock(build: () => Block, room: Room = {}): StateCommand {
   return ({ state, dispatch }) => {
     const range = state.selection.main
-    const splits = splitsStructure(state, range.from, range.to)
+    // What holds its lines together goes on being one thing: a block never lands inside
+    // it, and a selection in it is not wrapped out of it.
+    const inTree = syntaxTree(state).resolveInner(range.to, -1)
+    const holder = enclosingNamed(inTree, HOLDS_ITS_LINES)
+    const quote = !holder && !room.wrap ? enclosingNamed(inTree, 'Blockquote') : null
+    const around = holder ?? quote
+    // A selection of the whole of it has nothing to take apart.
+    const whole = around && (around.from < range.from || around.to > range.to) ? around : null
+    const splits = !!whole || splitsStructure(state, range.from, range.to)
     const wrap = splits ? undefined : room.wrap
-    const below = splits ? state.doc.lineAt(range.to).to : range.to
+    const below = whole ? whole.to : splits ? state.doc.lineAt(range.to).to : range.to
 
     const from = wrap ? range.from : below
     // The line break ending a selection of whole lines is not a word to wrap.
@@ -786,9 +797,10 @@ export const insertComment = toggleWrap('<!-- ', ' -->')
  *  the writer's last line into a heading and break nothing. See
  *  packages/markdown/src/slides.ts. */
 export const insertSlideBreak: StateCommand = ({ state, dispatch }) => {
-  const range = state.selection.main
-  const line = state.doc.lineAt(range.from)
-  const emptyHere = line.text.slice(0, range.from - line.from).trim() === ''
+  // Past a selection, which stays: no other block written from a menu takes words away.
+  const at = state.selection.main.to
+  const line = state.doc.lineAt(at)
+  const emptyHere = line.text.slice(0, at - line.from).trim() === ''
   const above = line.number > 1 ? state.doc.line(line.number - 1) : null
   const emptyAbove = above === null || above.text.trim() === ''
 
@@ -799,8 +811,8 @@ export const insertSlideBreak: StateCommand = ({ state, dispatch }) => {
 
   dispatch(
     state.update({
-      changes: { from: range.from, to: range.to, insert },
-      selection: { anchor: range.from + insert.length },
+      changes: { from: at, insert },
+      selection: { anchor: at + insert.length },
       scrollIntoView: true,
       userEvent: 'input',
     }),

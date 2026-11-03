@@ -362,6 +362,10 @@ describe('a tag renamed everywhere', () => {
       [`${SPACE}/c.md`]: 'Also #work/q3\n',
     })
 
+    for (const name of ['2024', 'a.b', 'a,b', 'a!'])
+      expect(await retagNotes(ws, 'work', name)).toBe(0)
+    expect(disk.get(`${SPACE}/a.md`)).toBe('Plan #work\n')
+
     expect(await retagNotes(ws, 'work', 'job')).toBe(2)
 
     expect(disk.get(`${SPACE}/a.md`)).toBe('Plan #job\n')

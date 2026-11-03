@@ -1202,3 +1202,18 @@ describe('alt ending in a backslash, in a link', () => {
     expect(html).not.toContain('](')
   })
 })
+
+describe('a table with a cell over several rows', () => {
+  test('a cell that spans rows leaves its column empty below, so no cell shifts', () => {
+    const markdown = htmlToMarkdown(
+      '<table><tr><th>a</th><th>b</th><th>c</th></tr>' +
+        '<tr><td rowspan="2">1</td><td>2</td><td>3</td></tr>' +
+        '<tr><td>4</td><td>5</td></tr>' +
+        '<tr><td>6</td><td rowspan="2">7</td><td>8</td></tr>' +
+        '<tr><td>9</td><td>10</td></tr></table>',
+    )
+    expect(markdown).toBe(
+      '| a | b | c |\n| --- | --- | --- |\n| 1 | 2 | 3 |\n|  | 4 | 5 |\n| 6 | 7 | 8 |\n| 9 |  | 10 |',
+    )
+  })
+})

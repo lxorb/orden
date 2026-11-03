@@ -382,6 +382,8 @@ const SIZE = /^(\d+)(?:x(\d+))?$/
  *  which of the two `300x200` means. */
 export function embedSize(alias: string | null): { width: number; height: number | null } | null {
   const found = alias === null ? null : SIZE.exec(alias)
+  // A width of nothing is a picture nobody would see, which is no thing to ask for.
+  if (found && Number(found[1]) === 0) return null
   if (!found) return null
 
   const height = found[2]
@@ -395,7 +397,8 @@ export function sizedAlt(alt: string): {
   size: { width: number; height: number | null } | null
 } {
   const found = /^(.*?)\\?\|(\d+(?:x\d+)?)$/su.exec(alt)
-  return found ? { alt: found[1] ?? '', size: embedSize(found[2] ?? '') } : { alt, size: null }
+  const size = found ? embedSize(found[2] ?? '') : null
+  return found && size ? { alt: found[1] ?? '', size } : { alt, size: null }
 }
 
 /** The page a fragment names, or null when it names none.

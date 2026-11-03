@@ -141,6 +141,6 @@ function withExtension(name: string): string {
  *  fragment as. A `^blockid` and a `page=3` are already the names of things and
  *  stay exactly as written. */
 function markdownFragment(fragment: string): string {
-  if (fragment.startsWith('^') || fragment.includes('=')) return fragment
+  if (fragment.startsWith('^') || /^page=\d+$/i.test(fragment)) return fragment
   return slugify(fragment)
 }

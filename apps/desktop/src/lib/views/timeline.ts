@@ -84,16 +84,35 @@ export function barOf(
   }
 }
 
+/** How far from today a date can stretch the track, in days each way. One further off is
+ *  most often a year mistyped: `1026-11-03` drew a track of five million pixels and a
+ *  hundred thousand marks, with every other bar far away to the right. */
+const FURTHEST = 3650
+
 /** The days the timeline spans: from a little before the first bar to a little after
- *  the last, and never less than a month around today. */
+ *  the last, and never less than a month around today. A bar past `FURTHEST` does not
+ *  stretch it, and is drawn at its edge (`drawnOf`). */
 export function spanOf(bars: readonly Bar[], today: string): { first: string; last: string } {
+  const earliest = addDays(today, -FURTHEST)
+  const latest = addDays(today, FURTHEST)
   let first = addDays(today, -7)
   let last = addDays(today, 28)
   for (const bar of bars) {
-    if (bar.start < first) first = addDays(bar.start, -3)
-    if (bar.end > last) last = addDays(bar.end, 7)
+    if (bar.start < first && bar.start >= earliest) first = addDays(bar.start, -3)
+    if (bar.end > last && bar.end <= latest) last = addDays(bar.end, 7)
   }
   return { first, last }
+}
+
+/** The days a bar is drawn over on this span, and whether it runs past it: a drag still
+ *  moves the dates it says. */
+export function drawnOf(
+  bar: Bar,
+  span: { first: string; last: string },
+): { start: string; end: string; far: boolean } {
+  const start = bar.start < span.first ? span.first : bar.start > span.last ? span.last : bar.start
+  const end = bar.end > span.last ? span.last : bar.end < span.first ? span.first : bar.end
+  return { start, end, far: start !== bar.start || end !== bar.end }
 }
 
 /** How many days lie from one day to another. */

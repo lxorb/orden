@@ -59,6 +59,13 @@ describe('the three markdown spellings', () => {
     )
   })
 
+  test('a heading with an equals sign in it is a heading, and only a page number is kept', () => {
+    expect(formatLink({ name: 'Note', fragment: 'x = 1' }, 'shortest')).toBe('[Note](Note.md#x-1)')
+    expect(formatLink({ name: 'paper.pdf', fragment: 'page=3' }, 'shortest')).toBe(
+      '[paper.pdf](paper.pdf#page=3)',
+    )
+  })
+
   test('write a heading as the anchor an exported or published page gives it', () => {
     expect(formatLink({ ...PLAN, fragment: 'Next steps' }, 'absolute')).toBe(
       '[Plan](ideas/Plan.md#next-steps)',

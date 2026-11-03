@@ -618,6 +618,18 @@ describe('the calendar', () => {
 })
 
 describe('the timeline', () => {
+  test('a date years off, a year mistyped, does not stretch the track', () => {
+    const bars = (start: string) => [
+      { row: taskRow('T.md', '- [ ] a'), start, end: start, from: 'a', to: 'a' },
+    ]
+    const span = spanOf(bars('1026-11-03'), TODAY)
+    expect(span.first > '2015-01-01').toBe(true)
+    expect(span.last < '2036-01-01').toBe(true)
+    // A real plan some years off is what the track is for.
+    expect(spanOf(bars('2029-03-01'), TODAY).last > '2029-03-01').toBe(true)
+    expect(spanOf(bars('2024-03-01'), TODAY).first < '2024-03-01').toBe(true)
+  })
+
   test('a bar dragged keeps the times of day it says', () => {
     const row = noteRow('A.md', 'start: 2026-11-05T09:30\nend: 2026-11-09T17:45')
     const bar = barOf(row, { start: 'note.start', end: 'note.end' }, (one, key) => {

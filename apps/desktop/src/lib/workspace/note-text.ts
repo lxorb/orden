@@ -14,6 +14,7 @@
  *  open document over the disk and that is the whole of its dealings with them. */
 
 import { oneEdit } from '@orden/markdown/edits'
+import { isTagName } from '@orden/markdown/tags'
 import { taskAt } from '@orden/markdown/tasks'
 import type { SpaceTag } from '@orden/editor'
 import { links } from '../link-index.svelte'
@@ -81,6 +82,9 @@ export async function loadTags(ws: HoldsNotes): Promise<void> {
  *
  *  `to` is the path the node becomes, or null to take the tag away. */
 export async function retagNotes(ws: HoldsNotes, from: string, to: string | null): Promise<number> {
+  // Every note would be written with something that is no tag, and have lost this one.
+  if (to !== null && !isTagName(to)) return 0
+
   const { tagChanges } = await import('../tag-edits')
 
   const changes = await tagChanges(

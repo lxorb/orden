@@ -872,6 +872,15 @@ describe('naming a block by where it ends', () => {
   })
 })
 
+describe('a size of nothing', () => {
+  test('is no size: the picture is not drawn away', () => {
+    expect(sizedAlt('x|0')).toEqual({ alt: 'x|0', size: null })
+    expect(embedSize('0')).toBeNull()
+    expect(embedSize('0x20')).toBeNull()
+    expect(embedSize('300')).toEqual({ width: 300, height: null })
+  })
+})
+
 describe('a closing fence an older build named', () => {
   const OLD = 'a\n\n```\nx\n``` ^abc123\n\n# After\n\nb\n'
 

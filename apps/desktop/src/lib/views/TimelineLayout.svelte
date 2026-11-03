@@ -21,6 +21,7 @@
     DAY_WIDTH,
     daysBetween,
     dragged,
+    drawnOf,
     type Scale,
     SCALES,
     spanOf,
@@ -199,15 +200,17 @@
             {/each}
           </svg>
           {#each bars as bar, at (`${bar.row.space}:${rowId(bar.row)}`)}
-            {@const long = (daysBetween(bar.start, bar.end) + 1) * width}
+            {@const drawn = drawnOf(bar, span)}
+            {@const long = (daysBetween(drawn.start, drawn.end) + 1) * width}
             {@const words = bar.row.task ? plain(bar.row.task.text) : bar.row.file.basename}
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
               class="span"
               class:done={bar.row.task?.done}
+              class:far={drawn.far}
               style:--tone={bar.row.task ? priorityTone(bar.row.task.priority) : null}
               style:top={`${at * ROW + 5}px`}
-              style:inset-inline-start={`${x(bar.start)}px`}
+              style:inset-inline-start={`${x(drawn.start)}px`}
               style:width={`${long}px`}
               onpointerdown={(event) => drag(event, bar, 'move')}
               use:holdsThumb={() => carrying}
@@ -221,7 +224,7 @@
               <span
                 class="beside"
                 style:top={`${at * ROW + 5}px`}
-                style:inset-inline-start={`${x(bar.start) + long + 6}px`}>{words}</span
+                style:inset-inline-start={`${x(drawn.start) + long + 6}px`}>{words}</span
               >
             {/if}
           {/each}
@@ -361,6 +364,10 @@
     font-size: var(--text-xs);
     cursor: grab;
     transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  .span.far {
+    border-style: dashed;
   }
 
   .span.done {
