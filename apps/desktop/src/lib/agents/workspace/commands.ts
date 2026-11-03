@@ -13,7 +13,7 @@
  *    presentation - move what they are looking at, and need `workspace.focus` (7.2),
  *    with the window itself never an agent's to open, close or quit;
  *
- *  - and past those a row needs what the verb behind it needs (`scopeOf`): a row that
+ *  - and past those a row needs what the verb behind it needs (`scopesOf`): a row that
  *    closes a tab the reader can see what `workspace_tabs close` needs, one that rewrites
  *    a note `notes.write`. A row this list does not know is the reader's to press, so a
  *    row added to the palette is not an agent's until somebody says which it is. */
@@ -80,13 +80,6 @@ const SCREEN = new Set([
   'keys',
   'move-tab-pane',
   'new',
-  'new-canvas',
-  'new-database',
-  'new-from-template',
-  'new-pages',
-  'new-space',
-  'new-unique',
-  'new-web-note',
   'new-website',
   'next-slide',
   'pin',
@@ -101,7 +94,6 @@ const SCREEN = new Set([
   'save-layout',
   'settings',
   'shortcuts',
-  'space',
   'space-next',
   'space-previous',
   'spaces',
@@ -117,6 +109,19 @@ const SCREEN = new Set([
   'web-reload',
   'web-stop',
 ])
+
+/** The rows that make a file and open it in front. */
+const MAKES_NOTE = new Set([
+  'new-canvas',
+  'new-database',
+  'new-from-template',
+  'new-pages',
+  'new-unique',
+  'new-web-note',
+])
+
+/** The rows that make a space, and go there. */
+const MAKES_SPACE = new Set(['new-space', 'space'])
 
 /** The rows that write in the note in front. */
 const WRITES = new Set([
@@ -162,15 +167,20 @@ const PANELS = new Set([
   'sidebar',
 ])
 
-/** The scope a row needs, or null for a row that is the reader's to press: every row
- *  not named here. */
-function scopeOf(id: string): Scope | null {
-  if (ASKS[id] || asksOfSetting(id) || PANELS.has(id) || id.startsWith('view.')) return 'workspace'
-  if (SCREEN.has(id) || id.startsWith('space:') || id.startsWith('layout:')) {
-    return 'workspace.focus'
+/** The scopes a row needs, or null for a row that is the reader's to press: every row not
+ *  named here. That includes `export-*`, whose save dialog no verb has a scope for, and
+ *  `copy-uri`, which writes to the reader's clipboard. */
+function scopesOf(id: string): readonly Scope[] | null {
+  if (ASKS[id] || asksOfSetting(id) || PANELS.has(id) || id.startsWith('view.')) {
+    return ['workspace']
   }
-  if (TREE.has(id)) return 'tree'
-  if (WRITES.has(id) || /^(edit|format|paragraph)\./.test(id)) return 'notes.write'
+  if (MAKES_NOTE.has(id)) return ['notes.write', 'workspace.focus']
+  if (MAKES_SPACE.has(id)) return ['tree', 'workspace.focus']
+  if (SCREEN.has(id) || id.startsWith('space:') || id.startsWith('layout:')) {
+    return ['workspace.focus']
+  }
+  if (TREE.has(id)) return ['tree']
+  if (WRITES.has(id) || /^(edit|format|paragraph)\./.test(id)) return ['notes.write']
   return null
 }
 
@@ -193,9 +203,9 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   if (found.ownWindow === true || found.byHand === true || WINDOW.has(id)) {
     readersOwn(call, `${id} is the reader's to press`)
   }
-  const scope = scopeOf(id)
-  if (scope === null) readersOwn(call, `${id} is the reader's to press`)
-  else needScope(call, scope, id)
+  const scopes = scopesOf(id)
+  if (scopes === null) readersOwn(call, `${id} is the reader's to press`)
+  for (const scope of scopes ?? []) needScope(call, scope, id)
 
   const category = ASKS[id] ?? (asksOfSetting(id) ? 'settings' : null)
   const question = await asked(call, category, found.label)
