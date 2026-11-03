@@ -13,6 +13,7 @@
   import { dateAt } from './days'
   import { plain } from './inline'
   import type { Kit } from './kit'
+  import { HOLD, holdsThumb, THUMB_SLOP } from './drag.svelte'
   import {
     arrowsOf,
     type Bar,
@@ -92,9 +93,32 @@
     const element = (
       part === 'move' ? event.currentTarget : (event.currentTarget as HTMLElement).parentElement
     ) as HTMLElement
+    const startY = event.clientY
     let moved = false
+    // Under a thumb a bar is held first, as a board's card is: a swipe across it is the
+    // track's. See `holdsThumb`.
+    const thumb = event.pointerType === 'touch'
+    const hold = thumb
+      ? setTimeout(() => {
+          carrying = true
+        }, HOLD)
+      : undefined
     const days = (to: number) => Math.round((to - start) / width)
+    const done = () => {
+      clearTimeout(hold)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', done)
+      element.style.translate = ''
+      element.style.marginInlineStart = ''
+      element.style.marginInlineEnd = ''
+      carrying = false
+    }
     const move = (next: PointerEvent) => {
+      if (thumb && !carrying) {
+        if (Math.hypot(next.clientX - start, next.clientY - startY) > THUMB_SLOP) done()
+        return
+      }
       const by = days(next.clientX)
       if (Math.abs(next.clientX - start) > 3) moved = true
       if (part === 'move') element.style.translate = `${by * width}px 0`
@@ -103,13 +127,11 @@
       } else element.style.marginInlineEnd = `${-by * width}px`
     }
     const up = (next: PointerEvent) => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      element.style.translate = ''
-      element.style.marginInlineStart = ''
-      element.style.marginInlineEnd = ''
+      const held = carrying
+      done()
       if (!moved) {
-        if (part === 'move') kit.choose(bar.row, linkModifier(next))
+        // A bar held and let go where it was has been asked for nothing.
+        if (part === 'move' && !(thumb && held)) kit.choose(bar.row, linkModifier(next))
         return
       }
       const written = dragged(bar, part, days(next.clientX))
@@ -123,7 +145,11 @@
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', done)
   }
+
+  /** Whether a thumb has held a bar long enough to carry it. */
+  let carrying = false
 </script>
 
 <div class="timeline">
@@ -184,6 +210,7 @@
               style:inset-inline-start={`${x(bar.start)}px`}
               style:width={`${long}px`}
               onpointerdown={(event) => drag(event, bar, 'move')}
+              use:holdsThumb={() => carrying}
             >
               <span class="edge start" onpointerdown={(event) => drag(event, bar, 'start')}></span>
               <span class="words">{long >= NAMED ? words : ''}</span>
@@ -333,7 +360,6 @@
     color: var(--text-strong);
     font-size: var(--text-xs);
     cursor: grab;
-    touch-action: none;
     transition: background var(--dur-fast) var(--ease-out);
   }
 

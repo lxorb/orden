@@ -10,7 +10,7 @@
 
 import { addDays, dayNumber, type Row, type Value } from '@orden/bases'
 import { deadlineOf, startOf } from '@orden/markdown/task-dates'
-import { dayIn } from './values'
+import { dayIn, isDateValue } from './values'
 
 export type Scale = 'day' | 'week' | 'month' | 'quarter'
 export const SCALES: readonly Scale[] = ['day', 'week', 'month', 'quarter']
@@ -25,6 +25,16 @@ export interface Bar {
   /** The properties the two edges were read from, which a drag writes. */
   from: string
   to: string
+  /** The time of day each says after its day, as it is written, which a drag leaves. */
+  fromTime?: string
+  toTime?: string
+}
+
+/** What a value says after its day: `T09:30`, or nothing where it is a day alone. */
+function timeIn(value: Value): string {
+  if (typeof value === 'string') return value.slice(10)
+  if (!isDateValue(value) || !value.time) return ''
+  return `T${value.time.replace(/:00$/, '')}${value.zone ?? ''}`
 }
 
 /** The bar of one row, or null for a row with no date at all. `read` gives a note
@@ -56,12 +66,22 @@ export function barOf(
   }
 
   const fromProperty = dates.start ?? 'file.ctime'
-  const start = dayIn(read(row, fromProperty))
+  const startValue = read(row, fromProperty)
+  const start = dayIn(startValue)
   if (start === null) return null
   const toProperty = dates.end ?? fromProperty
-  const endRead = dayIn(read(row, toProperty))
+  const endValue = read(row, toProperty)
+  const endRead = dayIn(endValue)
   const end = endRead !== null && endRead >= start ? endRead : start
-  return { row, start, end, from: fromProperty, to: toProperty }
+  return {
+    row,
+    start,
+    end,
+    from: fromProperty,
+    to: toProperty,
+    fromTime: timeIn(startValue),
+    toTime: endRead === null ? '' : timeIn(endValue),
+  }
 }
 
 /** The days the timeline spans: from a little before the first bar to a little after
@@ -87,9 +107,10 @@ export function dragged(
   days: number,
 ): Record<string, string> {
   if (!days) return {}
+  const { fromTime = '', toTime = '' } = bar
   if (part === 'move') {
-    const out: Record<string, string> = { [bar.from]: addDays(bar.start, days) }
-    if (bar.to !== bar.from) out[bar.to] = addDays(bar.end, days)
+    const out: Record<string, string> = { [bar.from]: `${addDays(bar.start, days)}${fromTime}` }
+    if (bar.to !== bar.from) out[bar.to] = `${addDays(bar.end, days)}${toTime}`
     return out
   }
   if (part === 'start') {
@@ -97,10 +118,10 @@ export function dragged(
     // A task of one date pulled wider gets a start of its own rather than moving.
     const field =
       bar.from === bar.to && bar.row.task && bar.from === 'task.deadline' ? 'task.start' : bar.from
-    return { [field]: start > bar.end ? bar.end : start }
+    return { [field]: `${start > bar.end ? bar.end : start}${fromTime}` }
   }
   const end = addDays(bar.end, days)
-  return { [bar.to]: end < bar.start ? bar.start : end }
+  return { [bar.to]: `${end < bar.start ? bar.start : end}${toTime}` }
 }
 
 export interface Arrow {

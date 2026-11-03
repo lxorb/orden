@@ -618,6 +618,26 @@ describe('the calendar', () => {
 })
 
 describe('the timeline', () => {
+  test('a bar dragged keeps the times of day it says', () => {
+    const row = noteRow('A.md', 'start: 2026-11-05T09:30\nend: 2026-11-09T17:45')
+    const bar = barOf(row, { start: 'note.start', end: 'note.end' }, (one, key) => {
+      return one.note[key.replace('note.', '')] ?? null
+    })
+    if (!bar) throw new Error('no bar')
+    expect(dragged(bar, 'move', 3)).toEqual({
+      'note.start': '2026-11-08T09:30',
+      'note.end': '2026-11-12T17:45',
+    })
+    expect(dragged(bar, 'start', 1)).toEqual({ 'note.start': '2026-11-06T09:30' })
+    expect(dragged(bar, 'end', -1)).toEqual({ 'note.end': '2026-11-08T17:45' })
+
+    const words = barOf(row, { start: 'a', end: 'b' }, (_, key) =>
+      key === 'a' ? '2026-11-05 10:15' : '2026-11-06',
+    )
+    if (!words) throw new Error('no bar')
+    expect(dragged(words, 'move', 1)).toEqual({ a: '2026-11-06 10:15', b: '2026-11-07' })
+  })
+
   const read = () => null
   test('runs a task from its start to its deadline and writes what a drag moved', () => {
     // Beside a `🛫`, a `📅` is the deadline (#371).
