@@ -308,9 +308,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-03, to 5,775,600, for unstable's #1044 to #1079 merged into
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
  *  and the sum of their growth is what came. Measured 5,775,432.
+ *
+ *  The code raised on 2026-11-03, to 5,777,800, for #1071: the icon picker's emoji and
+ *  coloured drawings are one tab, the sets merged into one collection
+ *  (`mergeSets` in icon-sets.ts); the drawings' places among the emoji stay out
+ *  (flat-colour-places.even.ts). Measured 5,777,606.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_775_600,
+  code: 5_777_800,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
