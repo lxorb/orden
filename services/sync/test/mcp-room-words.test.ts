@@ -243,7 +243,7 @@ describe('a move whose note will not let go', () => {
       if ((await there?.text())?.includes('Ship')) await change(at++)
       busy = false
       return object
-    }) as never
+    })
   }
 
   test('says it is in both, and which to take it out of', async () => {

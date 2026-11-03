@@ -1420,6 +1420,9 @@ export async function push(
       mirror.offered = without(mirror.offered, path)
       sending.sent?.(path)
     } catch (error) {
+      // This note's room is not taking words just now. The next pass asks again, and
+      // the notes after this one have nothing to do with it.
+      if (error instanceof ApiError && error.status === 503) continue
       if (!(error instanceof ApiError) || error.status !== 409) throw error
 
       // The note's room settled while this write was in the air, which is this
@@ -1432,7 +1435,14 @@ export async function push(
       // from before the request, for the reason `Joined` gives.
       if (joined.has(tracked.id) && caughtUpWith(mirror, path, error.body)) continue
 
-      await keepBoth(mirror, path, tracked, error.body, token, tracked.hash)
+      try {
+        await keepBoth(mirror, path, tracked, error.body, token, tracked.hash)
+      } catch (again) {
+        // Moved again, or its room away: this note waits for the next pass, as above.
+        if (!(again instanceof ApiError) || (again.status !== 409 && again.status !== 503)) {
+          throw again
+        }
+      }
     }
   }
 

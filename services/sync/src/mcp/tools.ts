@@ -8,7 +8,7 @@
 
 import { untrusted } from '@orden/chats/agent'
 import { findLinks } from '@orden/markdown'
-import { byteLength, sha256 } from '../crypto'
+import { byteLength } from '../crypto'
 import { pokeNow } from '../hub/poke'
 import {
   addNote,
@@ -22,6 +22,7 @@ import {
 } from '../notes'
 import { noteKind, readsAs } from '../rooms/kind'
 import { fits } from '../storage'
+import { hashOfBytes } from '../sync2/files'
 import type { Env, Note } from '../types'
 import type { TokenRow } from './tokens'
 
@@ -417,8 +418,13 @@ export async function noteRead(
       .bind(spaceId, path)
       .first<Note>()
     if (!note) return null
-    const words = await noteBody(env, spaceId, note.id)
-    if ((await sha256(words)) === note.hash) return { note, words }
+    const object = await env.NOTES.get(noteKey(spaceId, note.id))
+    const bytes = object ? await object.arrayBuffer() : new ArrayBuffer(0)
+    // The bytes, because that is what the hash covers: read as text, a byte order mark
+    // comes off, and a note that starts with one would never agree with its row.
+    if ((await hashOfBytes(bytes)) === note.hash) {
+      return { note, words: new TextDecoder().decode(bytes) }
+    }
   }
   return MOVED
 }
@@ -488,6 +494,14 @@ export async function putNote(
     // that a note's name or another spelling holds lands elsewhere; see sync2/ops.ts.
     return { path: made.path }
   } catch (error) {
+    // Somebody made it in the moment since it was looked for: the path's unique index,
+    // or the tree's. Moved, like any other note that arrived under a write.
+    const arrived = await env.DB.prepare(
+      "select 1 as one from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
+    )
+      .bind(space.id, path)
+      .first()
+    if (arrived) return read === undefined ? changedWhileWriting(path) : MOVED
     // A space whose tree is rows holds one name per folder as Windows and a Mac
     // compare names, so another spelling of a note that is there is that note.
     if (!(error instanceof NoteTaken)) throw error

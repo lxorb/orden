@@ -136,9 +136,8 @@ export async function ownOtherwise(
 
   if (!picture) return null
 
-  const shown = await versionPictures(env, userId, done)
-  if (shown === null) return 'unknown'
-  if (shown.has(hash)) return 'used'
+  const shown = await versionShows(env, userId, hash, done)
+  if (shown !== null) return shown
 
   const unread = await env.DB.prepare(
     `select 1 as one from notes n join spaces sp on sp.id = n.space_id
@@ -191,9 +190,8 @@ export interface Reading {
   asks: number
   /** By account: the blobs its held posts name, or null for one that could not be asked. */
   held: Map<string, Set<string> | null>
-  /** By account: the pictures versions show in its spaces, or null while some of them are
-   *  still to be read. */
-  versions: Map<string, Set<string> | null>
+  /** By account: whether what is left of the versions in its spaces to read was read. */
+  versions: Map<string, boolean>
 }
 
 export function reading(): Reading {
@@ -244,19 +242,39 @@ async function heldFiles(env: Env, userId: string, done: Reading): Promise<Set<s
   return found
 }
 
-/** The pictures the versions of the notes in an account's spaces show, as each version's
- *  row says, or null while some have none written down yet.
+/** Whether a version of a note in an account's spaces shows a picture, as each version's
+ *  row says: `used`, `unknown` while a version has none written down yet, or null.
  *
  *  A version's row has them from when it was kept (versions.ts). One from before there
  *  was anywhere to put them (0068) is read here as far as what is left goes and written
  *  down, so what one sweep read the next does not read again, and an account with more
  *  of them than one request reads gets to the end of them over several. Until it does
  *  nothing it holds as a picture is let go of. */
-async function versionPictures(
+async function versionShows(
   env: Env,
   userId: string,
+  hash: string,
   done: Reading,
-): Promise<Set<string> | null> {
+): Promise<'used' | 'unknown' | null> {
+  if (!(await versionsRead(env, userId, done))) return 'unknown'
+
+  // Asked of the rows as they are now, one found being all it takes: a version kept with
+  // nothing written down since the read above counts as well.
+  const found = await env.DB.prepare(
+    `select v.pictures is null as unread from note_versions v join notes n on n.id = v.note_id
+       join spaces sp on sp.id = n.space_id
+      where (v.pictures is null or instr(v.pictures, ?2) > 0) and ${LIVE} and ${ITS_SPACES}
+      limit 1`,
+  )
+    .bind(userId, hash)
+    .first<{ unread: number }>()
+  if (!found) return null
+  return found.unread ? 'unknown' : 'used'
+}
+
+/** The versions in an account's spaces with no pictures written down, read as far as
+ *  what is left goes: whether that was all of them. */
+async function versionsRead(env: Env, userId: string, done: Reading): Promise<boolean> {
   const known = done.versions.get(userId)
   if (known !== undefined) return known
 
@@ -293,25 +311,8 @@ async function versionPictures(
     })
     if (writes.length) await env.DB.batch(writes)
   }
-  if (!whole) {
-    done.versions.set(userId, null)
-    return null
-  }
-
-  const { results } = await env.DB.prepare(
-    `select distinct v.pictures from note_versions v join notes n on n.id = v.note_id
-       join spaces sp on sp.id = n.space_id
-      where v.pictures != '[]' and ${LIVE} and ${ITS_SPACES}`,
-  )
-    .bind(userId)
-    .all<{ pictures: string }>()
-
-  const found = new Set<string>()
-  for (const row of results) {
-    for (const hash of JSON.parse(row.pictures) as string[]) found.add(hash)
-  }
-  done.versions.set(userId, found)
-  return found
+  done.versions.set(userId, whole)
+  return whole
 }
 
 /** And the pictures in notes written before their pictures were written down, which

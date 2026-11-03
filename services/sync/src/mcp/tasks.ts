@@ -469,22 +469,31 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
     )
     return { said, at: `${landed}#${placed.line}:${readAt(edited.at).hash}` }
   })
-  if (into !== path) {
-    // Read again, and only the task taken out of what it says now: what the other note
-    // was given is already written, and must not be given twice.
-    await edits(async () => {
-      let read
-      try {
-        read = await editing()
-      } catch (error) {
-        // Somebody took it out meanwhile, which is all this was going to do.
-        if (error instanceof AgentError) return
-        throw error
+  if (into === path) return { ...placedIn.said, at: placedIn.at }
+
+  // Read again, and only the task taken out of what it says now: what the other note
+  // was given is already written, and must not be given twice. From here a model told
+  // only that something failed moves it again, so it is told where the task is.
+  const left = await edits(async () => {
+    let read
+    try {
+      read = await editing()
+    } catch (error) {
+      // Not there as it was: taken out, which is all this was going to do, or edited.
+      if (error instanceof AgentError) {
+        return `The task is no longer in ${path} as it was. If it was edited there, it is in both: check ${path}.`
       }
-      await written(env, space, path, taken(read.edited).source, read.held.note)
-    })
-  }
-  return { ...placedIn.said, at: placedIn.at }
+      throw error
+    }
+    await written(env, space, path, taken(read.edited).source, read.held.note)
+    return null
+  }).catch((error: unknown) => {
+    if (!(error instanceof Said)) throw error
+    throw new Said(
+      `The task is in ${into} now and still in ${path}: ${error.message} Take it out of ${path}, and do not move it again.`,
+    )
+  })
+  return { ...placedIn.said, at: placedIn.at, ...(left ? { left } : {}) }
 }
 
 async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
