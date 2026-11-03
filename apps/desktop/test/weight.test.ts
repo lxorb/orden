@@ -1064,14 +1064,15 @@ function holds(tail: string): boolean {
  *  rest of a file's marks by `sourceMark` (icons.ts, chosen-icon.ts, FileMark.svelte).
  *  The logos themselves are a chunk of their own. Measured 3,490,342.
  *
- *  Raised 2026-11-03, to 3,525,900, for the bug hunt's round one merged into
- *  claude/hunt-round-1: the views' and the desktop's writing fixes (a phone's draft kept
- *  until it lands, charts, paste, block commands, links, a thread written down while it
- *  runs), what a base may cost, a tile's move, the sync's scans, and an undo that waits for
- *  every gesture landing, measured together. What could wait went behind a door on the
- *  branches. Measured 3,525,726, 385 modules. */
-const BUDGET = 3_525_900
-const MOST_FILES = 386
+ *  Raised 2026-11-03, to 3,551,100, and to 387 modules, for the bug hunt's rounds one and
+ *  two merged into claude/hunt-round-1, measured together: the views' and the desktop's
+ *  writing fixes (a phone's draft kept until it lands, charts, paste, block commands,
+ *  links, a thread written down while it runs), what a base may cost, a tile's move, the
+ *  sync's scans, an undo that waits for every gesture landing, one definition of front
+ *  matter (front-matter-lines.ts) and one device's windows being one. What could wait went
+ *  behind a door on the branches. Measured 3,550,937, 386 modules. */
+const BUDGET = 3_551_100
+const MOST_FILES = 387
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

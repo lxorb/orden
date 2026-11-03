@@ -345,13 +345,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  logos and their names stay out (vite.even.config.ts, brand-names.even.ts). Measured
  *  5,801,561.
  *
- *  The code raised on 2026-11-03, to 5,831,600, for the bug hunt's round one merged into
- *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
- *  thread written down while it runs, the sync's scans, and an undo that waits for every
- *  gesture landing, measured together. Measured 5,831,389.
+ *  The code raised on 2026-11-03, to 5,852,500, for the bug hunt's rounds one and two merged
+ *  into claude/hunt-round-1, measured together: the views' and the desktop's writing fixes,
+ *  what a base may cost, a thread written down while it runs, the sync's scans, an undo that
+ *  waits for every gesture landing, one definition of front matter and one device's windows
+ *  being one. Measured 5,852,262.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_831_600,
+  code: 5_852_500,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
