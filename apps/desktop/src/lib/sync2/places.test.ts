@@ -210,3 +210,46 @@ describe('a delete or a new folder the disk refuses', () => {
     expect([...disk.files.keys()].sort()).toEqual(['/r/a.md', '/r/d.md'])
   })
 })
+
+describe('a file waiting aside', () => {
+  // The name it waits under was spelled from its id, which a writer of a shared space
+  // chooses: `../../Private/AGENTS.md` took it into another space of this device.
+  test.each(['../../Private/AGENTS.md', '..\\..\\Private\\AGENTS.md', 'C:evil', 'plain'])(
+    'stays in its folder whatever its id is: %s',
+    async (id) => {
+      const disk = new MemoryDisk()
+      disk.folders.add('/spaces/Shared')
+      disk.files.set('/spaces/Shared/a.md', 'planted')
+      disk.files.set('/spaces/Shared/c.md', 'other')
+      const moves: string[] = []
+      const move = disk.move.bind(disk)
+      disk.move = (from, to) => {
+        moves.push(to)
+        return move(from, to)
+      }
+      const mkdir = disk.mkdir.bind(disk)
+      disk.mkdir = (path) => (path.includes('a:b') ? Promise.reject(new Error('no')) : mkdir(path))
+      const holder = row(id, 'note', 'F', 'b.md', 'a.md')
+      const mover = row('E', 'note', null, 'a.md', 'c.md')
+      const folder = row('F', 'folder', null, 'a:b', '')
+      const space = new SpaceState(
+        { space_id: 's', root: '/spaces/Shared', cursor: 9, role: 'write', store: null },
+        [mover, holder, folder],
+        [],
+        'd',
+        { platform: 'other', foldsCase: false } as never,
+      )
+
+      await settle(space, {
+        disk,
+        join: (a: string, b: string) => `${a}/${b}`,
+        keeps: () => false,
+        forget: () => undefined,
+      })
+
+      const waiting = moves.find((to) => to.includes('.nib-moving-'))
+      expect(waiting).toMatch(/^\/spaces\/Shared\/\.nib-moving-[a-z0-9]+$/)
+      expect(holder.local_path).toMatch(/^\.nib-moving-[a-z0-9]+$/)
+    },
+  )
+})

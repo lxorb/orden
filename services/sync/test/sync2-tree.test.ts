@@ -8,7 +8,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { FeedPage, OpResult, OpsResponse } from '@orden/sync-core'
 import { call, signIn, type TestEnv, testEnv } from './harness'
-import { invited, live } from './sync2'
+import { framed, invited, live } from './sync2'
 
 let env: TestEnv
 /** Two devices of one account: two sessions, which the tree tells apart. */
@@ -475,5 +475,29 @@ describe('the feed', () => {
     const second = await feed(first.cursor)
     expect(second.items).toHaveLength(100)
     expect(second.more).toBe(false)
+  })
+})
+
+describe('an id that spells a path', () => {
+  const send = (op: Record<string, unknown>) =>
+    call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [{ op: `o-${String(op.id)}`, seen: 0, ...op }] },
+    })
+
+  test('makes nothing, and what is made under an id devices spell still is', async () => {
+    const evil = { t: 'create', kind: 'note', parent: null, name: 'a.md' }
+    expect((await send({ ...evil, id: '../../Private/AGENTS.md' })).status).toBe(400)
+    expect((await send({ t: 'mkdir', id: 'a\\b', parent: null, name: 'A' })).status).toBe(400)
+    expect((await send({ ...evil, id: '0f3a9c11aa22bb33cc44dd55ee66ff00' })).status).toBe(200)
+  })
+
+  test('held from before, the feed does not hand it to a device', async () => {
+    const id = '0f3a9c11aa22bb33cc44dd55ee66ff00'
+    await send({ t: 'create', kind: 'note', parent: null, name: 'a.md', id })
+    await send({ t: 'create', kind: 'note', parent: null, name: 'b.md', id: 'bad' })
+    env.db.prepare("update notes set id = '../../x' where id = 'bad'").run()
+    const { value } = await framed<FeedPage>(env, `/v2/spaces/${space}/feed`, token)
+    expect(value.items.map((item) => item.id)).toEqual([id])
   })
 })

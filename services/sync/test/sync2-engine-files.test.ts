@@ -24,6 +24,8 @@ interface Device {
   disk: {
     bytes: Map<string, Uint8Array>
     files: Map<string, string>
+    kept: unknown[]
+    readBytes(path: string): Promise<Uint8Array | null>
     writeBytes(path: string, bytes: Uint8Array): Promise<void>
     write(path: string, text: string): Promise<void>
     remove(path: string): Promise<void>
@@ -38,6 +40,8 @@ interface Device {
     removed(path: string): Promise<void>
     moved(from: string, to: string): Promise<void>
     waiting(space: string): boolean
+    stamped(path: string, mtime: number, size: number): Promise<void>
+    on(type: 'unsynced', listener: (event: { name: string }) => void): () => void
     held: {
       notes: readonly { id: string }[]
       answer(id: string, answer: string): Promise<string | undefined>
@@ -278,6 +282,154 @@ describe('a file that is not a note, under v2', () => {
 /** #517: the nightly sweep of misnamed copies takes the rows of an upload answered over
  *  such a copy with it, and the bytes were the account's no more. The device that still
  *  has the file sends them again on its own, rather than at its next edit of the file. */
+describe('a file whose bytes on this disk cannot be judged', () => {
+  const entryOf = (one: Device, name: string) =>
+    [...(one.engine.core.spaces.get(space)?.entries.values() ?? [])].find(
+      (entry) => entry.name === name,
+    ) as unknown as { file_key: string; written_hash: string; mtime: number | null }
+
+  const replacedElsewhere = async (other: Device, name: string) => {
+    await other.disk.writeBytes(`${other.root}/${name}`, picture(5))
+    await other.engine.foreign(`${other.root}/${name}`)
+    await other.engine.pass(space)
+    await rooms.settle()
+  }
+
+  test('past what travels, it is not written over by another device’s replacement', async () => {
+    const laptop = await device('laptop', { 'v.bin': picture(3) })
+    const desktop = await device('desktop')
+    await passed(laptop, desktop)
+    const told: string[] = []
+    laptop.engine.on('unsynced', (event) => told.push(event.name))
+    const big = new Uint8Array(65 * 1024 * 1024).fill(9)
+    await laptop.disk.writeBytes(`${laptop.root}/v.bin`, big)
+    await laptop.engine.foreign(`${laptop.root}/v.bin`)
+    await replacedElsewhere(desktop, 'v.bin')
+
+    await laptop.engine.pass(space)
+    await laptop.engine.pass(space)
+
+    expect(bytesAt(laptop, 'v.bin') === big).toBe(true)
+    expect(told).toEqual(['v.bin'])
+    expect(bytesAt(desktop, 'v.bin')).toEqual(picture(5))
+
+    // Small enough again, it is a replacement on both sides, and is asked about.
+    await laptop.disk.writeBytes(`${laptop.root}/v.bin`, picture(9))
+    await laptop.engine.foreign(`${laptop.root}/v.bin`)
+    await laptop.engine.pass(space)
+    expect(bytesAt(laptop, 'v.bin')).toEqual(picture(9))
+    expect(laptop.engine.held.notes).toHaveLength(1)
+  })
+
+  test('that will not read, it is not written over, and read again until it does', async () => {
+    const laptop = await device('laptop', { 'v.bin': picture(3) })
+    const desktop = await device('desktop')
+    await passed(laptop, desktop)
+    const path = `${laptop.root}/v.bin`
+    const real = laptop.disk.readBytes.bind(laptop.disk)
+    let locked = true
+    laptop.disk.readBytes = (at) => (locked && at === path ? Promise.resolve(null) : real(at))
+    await laptop.disk.writeBytes(path, picture(7))
+    await laptop.engine.foreign(path)
+    await replacedElsewhere(desktop, 'v.bin')
+
+    await laptop.engine.pass(space)
+    await laptop.engine.pass(space)
+    expect(bytesAt(laptop, 'v.bin')).toEqual(picture(7))
+
+    // No news from the watcher here: it said so once, while the file was locked.
+    locked = false
+    await laptop.engine.pass(space)
+    expect(bytesAt(laptop, 'v.bin')).toEqual(picture(7))
+    expect(laptop.engine.held.notes).toHaveLength(1)
+  })
+
+  test('that will not read in step, it goes up once it does, with nothing else to say so', async () => {
+    const laptop = await device('laptop', { 'v.bin': picture(3) })
+    const desktop = await device('desktop')
+    await passed(laptop, desktop)
+    const path = `${laptop.root}/v.bin`
+    const real = laptop.disk.readBytes.bind(laptop.disk)
+    let locked = true
+    laptop.disk.readBytes = (at) => (locked && at === path ? Promise.resolve(null) : real(at))
+    await laptop.disk.writeBytes(path, picture(7))
+    await laptop.engine.foreign(path)
+    await laptop.engine.pass(space)
+    locked = false
+    await passed(laptop, desktop)
+    expect(bytesAt(desktop, 'v.bin')).toEqual(picture(7))
+  })
+
+  test('not there at all, it is fetched as ever', async () => {
+    const laptop = await device('laptop', { 'v.bin': picture(3) })
+    const desktop = await device('desktop')
+    await passed(laptop, desktop)
+    laptop.disk.bytes.delete(`${laptop.root}/v.bin`)
+    await replacedElsewhere(desktop, 'v.bin')
+    await laptop.engine.pass(space)
+    expect(bytesAt(laptop, 'v.bin')).toEqual(picture(5))
+  })
+
+  test('with its create waiting, the create waits too rather than being refused', async () => {
+    const laptop = await device('laptop')
+    const path = `${laptop.root}/new.bin`
+    await laptop.disk.writeBytes(path, picture(3))
+    await laptop.engine.created(path, false)
+    const real = laptop.disk.readBytes.bind(laptop.disk)
+    let locked = true
+    laptop.disk.readBytes = (at) => (locked && at === path ? Promise.resolve(null) : real(at))
+
+    await laptop.engine.pass(space)
+    expect(laptop.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
+    expect(laptop.engine.waiting(space)).toBe(false)
+    expect(entryOf(laptop, 'new.bin')).toBeTruthy()
+
+    locked = false
+    const desktop = await device('desktop')
+    await passed(laptop, desktop)
+    expect(bytesAt(desktop, 'new.bin')).toEqual(picture(3))
+  })
+
+  // Taken off the list before it went, and never put back: every later pass said it had
+  // finished, and the account kept the old bytes until the file was edited again.
+  test('a replacement seen while the account gives no answer goes up on a later pass', async () => {
+    let busy = false
+    const made = await (
+      await kit()
+    ).testDevice({
+      fetch: async (request) => {
+        if (busy && new URL(request.url).pathname.startsWith('/v2/blobs')) {
+          return new Response(null, { status: 503 })
+        }
+        return await app.fetch(request, env)
+      },
+      token,
+      name: 'laptop',
+      files: { 'p.png': picture(3) },
+    })
+    const core = made.engine.core
+    await core.commit(core.addSpace(space, made.root, 'owner'))
+    expect(await (await kit()).firstPass(core, core.spaces.get(space), null)).toBe(true)
+    await rooms.settle()
+    await made.engine.pass(space)
+    const before = entryOf(made, 'p.png').file_key
+
+    const path = `${made.root}/p.png`
+    await made.disk.writeBytes(path, picture(7))
+    await made.engine.foreign(path)
+    await made.engine.stamped(path, 123, 456)
+    busy = true
+    await made.engine.pass(space)
+    // Read again by the next launch too, whose scan has this stamp to go by.
+    expect(entryOf(made, 'p.png').mtime).toBeNull()
+    busy = false
+    await made.engine.pass(space)
+
+    expect(entryOf(made, 'p.png').file_key).not.toBe(before)
+    expect(entryOf(made, 'p.png').file_key).toBe(entryOf(made, 'p.png').written_hash)
+  })
+})
+
 describe('a file whose bytes the account lost', () => {
   afterEach(() => vi.useRealTimers())
 

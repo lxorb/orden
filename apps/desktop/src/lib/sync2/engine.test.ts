@@ -7,7 +7,7 @@ import { type DocRefusal, frame, type PushRequest, unframe } from '@orden/sync-c
 import { attach } from './binding'
 import { inline } from './classify'
 import { HERE } from './docs'
-import { Engine } from './engine'
+import { Engine, relative } from './engine'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import { put, scan, StoreError, type Change } from './store'
@@ -1073,5 +1073,83 @@ describe('another program’s unreadable canvas', () => {
     await one.engine.foreign(path)
 
     expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
+  })
+})
+
+describe('two spaces whose folders differ only in case', () => {
+  test('a path belongs to the folder spelled like it where the disk tells case apart', () => {
+    expect(relative('/s/Notes', '/s/notes/a.md', false)).toBeNull()
+    expect(relative('/s/notes', '/s/notes/a.md', false)).toBe('a.md')
+    expect(relative('/s/Notes', '/s/notes/a.md', true)).toBe('a.md')
+  })
+
+  // On Linux both can be there: a private note went up in the shared space, and a delete
+  // in the private one took the shared one's entry away on every device.
+  test.each([true, false])('and goes to its own, where foldsCase is %s', async (foldsCase) => {
+    const one = await device()
+    const core = one.engine.core
+    ;(core.world as { foldsCase: boolean }).foldsCase = foldsCase
+    await core.commit(core.addSpace('shared', '/s/Notes', 'write'))
+    await core.commit(core.addSpace('private', '/s/notes', 'owner'))
+    const [shared, kept] = [core.spaces.get('shared'), core.spaces.get('private')]
+
+    await one.disk.write('/s/notes/secret.md', 'private words')
+    await one.engine.created('/s/notes/secret.md', false, 'private words')
+    expect(one.engine.placed('/s/notes/secret.md')?.space.id).toBe('private')
+    expect([...(shared?.entries.values() ?? [])].map((entry) => entry.name)).toEqual([])
+    expect(shared?.outbox).toHaveLength(0)
+    expect(kept?.outbox).toHaveLength(1)
+
+    await one.disk.write('/s/Notes/same.md', 'shared words')
+    const id = await one.engine.created('/s/Notes/same.md', false, 'shared words')
+    await one.engine.removed('/s/notes/same.md')
+    expect(shared?.isLive(id ?? '')).toBe(true)
+  })
+})
+
+describe('a note the disk will not read', () => {
+  test('is not written over by the account, and is said to be not syncing', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const one = await device(account, 'd0')
+    const desk = await device(account, 'd1')
+    const note = SEEDED[0] as Seeded
+    const path = `${ROOT}/${note.name}`
+    const told: string[] = []
+    one.engine.on('unsynced', (event) => told.push(event.name))
+    const read = one.disk.read.bind(one.disk)
+    let refused = true
+    one.disk.read = (at) => (refused && at === path ? Promise.resolve(null) : read(at))
+    const theirs = `caf\u00e9, saved by another program\n${note.text}`
+    one.disk.files.set(path, theirs)
+
+    await desk.disk.write(path, `${note.text}and the desk wrote this\n`)
+    await desk.engine.foreign(path)
+    await desk.engine.pass(SPACE)
+    await one.engine.pass(SPACE)
+
+    expect(one.disk.files.get(path)).toBe(theirs)
+    expect(one.disk.kept).toEqual([])
+    expect(told).toEqual([note.name])
+
+    // Readable again, what the other program saved is folded in like any other edit.
+    refused = false
+    await one.engine.foreign(path)
+    const words = (await one.engine.core.doc(note.id))?.text() ?? ''
+    expect(words).toContain('saved by another program')
+    expect(words).toContain('and the desk wrote this')
+  })
+
+  test('nor is one that is simply not there taken for one that will not read', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const one = await device(account, 'd0')
+    const desk = await device(account, 'd1')
+    const note = SEEDED[0] as Seeded
+    const path = `${ROOT}/${note.name}`
+    one.disk.files.delete(path)
+    await desk.disk.write(path, `${note.text}and the desk wrote this\n`)
+    await desk.engine.foreign(path)
+    await desk.engine.pass(SPACE)
+    await one.engine.pass(SPACE)
+    expect(one.disk.files.get(path)).toContain('and the desk wrote this')
   })
 })
