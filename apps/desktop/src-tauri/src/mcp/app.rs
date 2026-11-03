@@ -121,7 +121,10 @@ pub fn running(dir: &Path) -> Option<Endpoint> {
     endpoint(dir).filter(answers)
 }
 
-/// Starts the app, minimised and without the keyboard, and waits for its endpoint.
+/// Starts the app with no window on screen (`launch::BACKGROUND_FLAG`, #1091) and without
+/// the keyboard, and waits for its endpoint. An agent connecting never opens, raises or
+/// focuses the reader's window: the app serves it from the tray, and the reader opens it
+/// as they always do.
 pub fn start(dir: &Path) -> Result<Endpoint, String> {
     let before = endpoint(dir);
     launch()?;
@@ -155,7 +158,11 @@ fn launch() -> Result<(), String> {
     let shell = std::env::var_os("ComSpec").unwrap_or_else(|| "cmd.exe".into());
     let mut command = Command::new(shell);
     command
-        .raw_arg(format!("/d /c start \"\" /min \"{}\"", program.display()))
+        .raw_arg(format!(
+            "/d /c start \"\" /min \"{}\" {}",
+            program.display(),
+            crate::launch::BACKGROUND_FLAG
+        ))
         .creation_flags(NO_WINDOW);
     if let Some(folder) = program.parent() {
         command.current_dir(folder);
@@ -205,17 +212,20 @@ fn launch() -> Result<(), String> {
         .ancestors()
         .find(|one| one.extension().is_some_and(|ext| ext == "app"));
     match bundle {
-        Some(bundle) => quiet(Command::new("open").args(["-g", "-j"]).arg(bundle))
-            .status()
-            .map(drop)
-            .map_err(|error| format!("Orden could not be started: {error}")),
+        Some(bundle) => quiet(
+            Command::new("open")
+                .args(["-g", "-j"])
+                .arg(bundle)
+                .args(["--args", crate::launch::BACKGROUND_FLAG]),
+        )
+        .status()
+        .map(drop)
+        .map_err(|error| format!("Orden could not be started: {error}")),
         None => detached(&program),
     }
 }
 
-/// The app, started, in a process group of its own. Linux has no minimised start a
-/// program can ask for without the window system's own calls, so the window opens as it
-/// always does.
+/// The app, started, in a process group of its own, asked for no window (#1091).
 #[cfg(all(unix, not(target_os = "macos")))]
 fn launch() -> Result<(), String> {
     detached(&super::program::program()?)
@@ -228,9 +238,13 @@ fn launch() -> Result<(), String> {
 fn detached(program: &Path) -> Result<(), String> {
     use std::os::unix::process::CommandExt as _;
 
-    let mut child = quiet(Command::new(program).process_group(0))
-        .spawn()
-        .map_err(|error| format!("Orden could not be started: {error}"))?;
+    let mut child = quiet(
+        Command::new(program)
+            .arg(crate::launch::BACKGROUND_FLAG)
+            .process_group(0),
+    )
+    .spawn()
+    .map_err(|error| format!("Orden could not be started: {error}"))?;
     std::thread::spawn(move || child.wait());
     Ok(())
 }
