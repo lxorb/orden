@@ -63,7 +63,8 @@ export interface ReviewPanel {
 interface Redo {
   thread: string
   token: string
-  notes: { agent: string; path: string }[]
+  /** The agents whose edits it took back, wherever their notes have got to since. */
+  agents: string[]
   made: { path: string; words: string }[]
   /** The moves and deletes it took back, oldest first. */
   files: FileChange[]
@@ -119,10 +120,11 @@ class Review {
   private saidTimer: ReturnType<typeof setTimeout> | undefined
 
   constructor() {
-    onTracks((agent, path) => {
+    onTracks((agent, path, was) => {
       this.version++
       this.draw()
-      this.follow(agent, path)
+      if (was === undefined) this.follow(agent, path)
+      else this.landedMoved(agent, was, path)
     })
     onSend((thread) => {
       if (this.redo?.thread === thread) this.forgetRedo()
@@ -210,13 +212,19 @@ class Review {
   }
 
   /** These taken back, each through everything since. Answers how many later edits
-   *  went with them because they rewrote their words, and says so for a moment. */
+   *  went with them because they rewrote their words, and says so for a moment. A note
+   *  that cannot be reached - it has gone - keeps nothing of the others from going. */
   async undo(changes: readonly Edit[], token?: string): Promise<number> {
     let more = 0
     for (const [key, group] of this.grouped(changes)) {
       const [agent = '', path = ''] = key.split('\n')
       const asked = new Set(group.map((one) => one.id))
-      const went = await undoSomeIn({ id: agent, name: agent }, path, asked, token)
+      const went = await undoSomeIn({ id: agent, name: agent }, path, asked, token).catch(
+        (error: unknown) => {
+          console.warn(`no edits taken back in ${path}: ${String(error)}`)
+          return []
+        },
+      )
       more += went.filter((id) => !asked.has(id)).length
     }
     if (more) this.say(plural(more, { one: 'and {count} after it', other: 'and {count} after it' }))
@@ -275,6 +283,14 @@ class Review {
   toggleFollow(thread: Pick<Thread, 'id'>): void {
     if (this.following.has(thread.id)) this.following.delete(thread.id)
     else this.following.add(thread.id)
+  }
+
+  /** What was heard in a note goes with it, or its next step taken back reads as a landing. */
+  private landedMoved(agent: string, was: string, path: string): void {
+    const seen = this.landed.get(`${agent}\n${was}`)
+    if (!seen) return
+    this.landed.delete(`${agent}\n${was}`)
+    this.landed.set(`${agent}\n${path}`, seen)
   }
 
   /** A note an agent just wrote in, brought to the front where the thread answering
@@ -359,16 +375,16 @@ class Review {
     if (!plan) return
     this.forgetRedo()
     const token = crypto.randomUUID()
-    const redo: Redo = { thread: thread.id, token, notes: [], made: [], files: [], turns: null }
+    const redo: Redo = { thread: thread.id, token, agents: [], made: [], files: [], turns: null }
 
     if (choice === 'both' || choice === 'notes') {
+      // The edits while their notes are at the names they were read under; then the
+      // moves, so a note the thread made and moved is back at the name it was made
+      // under for `unmake` to find.
       await this.undo(plan.changes, token)
-      redo.notes = this.grouped(plan.changes).map(([key]) => {
-        const [agent = '', path = ''] = key.split('\n')
-        return { agent, path }
-      })
-      redo.made = await this.unmake(thread, plan.made)
+      redo.agents = [...new Set(plan.changes.map((one) => one.agent))]
       redo.files = await this.undoFiles(thread, plan.files)
+      redo.made = await this.unmake(thread, plan.made)
     }
 
     const index = thread.turns.findIndex((one) => one.id === turn)
@@ -401,7 +417,7 @@ class Review {
     }
 
     this.sheet = null
-    if (redo.notes.length || redo.made.length || redo.files.length || redo.turns) this.redo = redo
+    if (redo.agents.length || redo.made.length || redo.files.length || redo.turns) this.redo = redo
   }
 
   /** The conversation cut: a compaction of turns now gone forgotten, a program that
@@ -447,8 +463,7 @@ class Review {
     const redo = this.redo
     if (redo?.thread !== thread.id) return
     this.redo = null
-    for (const { agent, path } of redo.notes)
-      await putBackIn({ id: agent, name: agent }, path, redo.token)
+    // The other way round from the rewind: the note made, then moved, then edited.
     for (const { path, words } of redo.made) {
       // Only where nothing is at the name. A file there that will not read - another
       // encoding, a lock - reads as null too, and writing into it wrote over it.
@@ -459,6 +474,14 @@ class Review {
     for (const one of redo.files) {
       await redoFile(one, thread)
       this.filesDone.delete(one.id)
+    }
+    for (const agent of redo.agents) {
+      for (const [path, track] of tracksOf(agent)) {
+        if (!track.holds(redo.token)) continue
+        await putBackIn({ id: agent, name: agent }, path, redo.token).catch((error: unknown) => {
+          console.warn(`no edits put back in ${path}: ${String(error)}`)
+        })
+      }
     }
     if (redo.turns) {
       thread.turns.push(...redo.turns)
@@ -473,7 +496,9 @@ class Review {
     const redo = this.redo
     if (!redo) return
     this.redo = null
-    for (const { agent, path } of redo.notes) tracksOf(agent).get(path)?.forgetTaken(redo.token)
+    for (const agent of redo.agents) {
+      for (const track of tracksOf(agent).values()) track.forgetTaken(redo.token)
+    }
   }
 
   // ── Editing a message ──────────────────────────────────
@@ -485,8 +510,8 @@ class Review {
     if (!plan) return
     this.forgetRedo()
     await this.undo(plan.changes)
-    await this.unmake(thread, plan.made)
     await this.undoFiles(thread, plan.files)
+    await this.unmake(thread, plan.made)
     if (!cutForEdit(thread, turn)) return
     const upTo = thread.compaction?.upTo
     if (upTo && !thread.turns.some((one) => one.id === upTo)) delete thread.compaction

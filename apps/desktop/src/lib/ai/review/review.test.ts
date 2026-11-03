@@ -20,9 +20,16 @@ const fake = vi.hoisted(() => ({
 }))
 
 vi.mock('../../automation/acts', () => ({
-  movedIn: (root: string, from: string, to: string) => {
+  movedIn: async (root: string, from: string, to: string) => {
     fake.moves.push([root, from, to])
-    return Promise.resolve()
+    // The disk's name changes where the desk has the note, and what follows a move hears.
+    const [was, now] = [`${root}/${from}`, `${root}/${to}`]
+    const words = fake.desk.disk.get(was)
+    if (words === undefined) return
+    fake.desk.disk.delete(was)
+    fake.desk.disk.set(now, words)
+    const { tracksMoved } = await import('../../agents/docs/edit')
+    tracksMoved(was, now)
   },
 }))
 
@@ -318,6 +325,97 @@ describe('a rewind', () => {
 /** A thread stays open across a switch of space, and a call that names none runs in
  *  the space in front: taking it back in the thread's own space deleted or moved the
  *  reader's note of that name there, on every device. */
+describe('a rewind over a note moved', () => {
+  const moving = (from: string, to: string): Turn['parts'] => [
+    {
+      kind: 'tool',
+      id: `m-${from}`,
+      verb: 'move_file',
+      args: { path: from, to },
+      state: 'ok',
+      result: { text: JSON.stringify({ from, to }), images: [], error: false },
+    },
+  ]
+  const moveOf = async (from: string, to: string) => {
+    const { movedIn } = await import('../../automation/acts')
+    await movedIn('/space', from, to)
+    fake.moves = []
+  }
+
+  test('edited and then moved takes back both, and Redo does them again', async () => {
+    fake.desk = deskWith({ 'Heron.md': 'A heron strikes' })
+    fake.documents = []
+    const thread = aThread()
+    const panel = { send: vi.fn(), text: '', touched: vi.fn(), release: vi.fn() }
+    await message(
+      thread,
+      'go',
+      [{ path: 'Heron.md', at: { quote: 'strikes' }, replace: 'STRIKES' }],
+      moving('Heron.md', 'Bird.md'),
+    )
+    await moveOf('Heron.md', 'Bird.md')
+
+    await review.rewind(thread, 'go', 'both', panel)
+    expect(fake.desk.fileOf('Heron.md')).toBe('A heron strikes')
+    expect(fake.desk.fileOf('Bird.md')).toBeUndefined()
+    expect(thread.turns).toEqual([])
+    expect(panel.text).toBe('go')
+    expect(review.sheet).toBeNull()
+
+    await review.putBack(thread, panel)
+    expect(fake.desk.fileOf('Bird.md')).toBe('A heron STRIKES')
+    expect(fake.desk.fileOf('Heron.md')).toBeUndefined()
+  })
+
+  test('made and then moved goes to Recently deleted, and Redo brings it back moved', async () => {
+    fake.desk = deskWith({ 'B.md': 'new words' })
+    fake.documents = []
+    fake.removed = []
+    const thread = aThread()
+    await message(
+      thread,
+      'make',
+      [],
+      [
+        {
+          kind: 'tool',
+          id: 'c1',
+          verb: 'create_note',
+          args: { path: 'A' },
+          state: 'ok',
+          result: { text: '{"path":"A.md","created":true}', images: [], error: false },
+        },
+        ...moving('A.md', 'B.md'),
+      ],
+    )
+
+    await review.rewind(thread, 'make', 'notes', null)
+    expect(fake.removed).toEqual(['/space/A.md'])
+    expect(fake.desk.fileOf('B.md')).toBeUndefined()
+
+    await review.putBack(thread, null)
+    expect(fake.desk.fileOf('B.md')).toBe('new words')
+    expect(fake.desk.fileOf('A.md')).toBeUndefined()
+  })
+
+  test('with a note that has gone still takes back the rest and cuts the conversation', async () => {
+    fake.desk = deskWith({ 'a.md': 'one', 'b.md': 'two' })
+    fake.documents = []
+    const thread = aThread()
+    const panel = { send: vi.fn(), text: '', touched: vi.fn(), release: vi.fn() }
+    await message(thread, 'go', [
+      { path: 'a.md', at: { quote: 'one' }, replace: 'ONE' },
+      { path: 'b.md', at: { quote: 'two' }, replace: 'TWO' },
+    ])
+    fake.desk.disk.delete('/space/a.md')
+
+    await review.rewind(thread, 'go', 'both', panel)
+    expect(fake.desk.fileOf('b.md')).toBe('two')
+    expect(thread.turns).toEqual([])
+    expect(panel.text).toBe('go')
+  })
+})
+
 describe('a call made in the space in front, not the thread’s', () => {
   const tool = (verb: string, args: unknown, answer: string): Turn['parts'] => [
     {

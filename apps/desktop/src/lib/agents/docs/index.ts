@@ -29,6 +29,7 @@ import {
   putBackAt,
   undoAgent,
   undoAt,
+  tracksMoved,
   undoSomeAt,
   writeNote,
 } from './edit'
@@ -42,6 +43,11 @@ export type { NoteRead } from './read'
 export { DocError, type Problem } from './problem'
 export { onTracks, trackedAgents, tracksOf } from './edit'
 export type { Span } from './track'
+
+// Fetched on the first agent call, and there is no track before that to follow a move.
+workspace.fileOps.follow((op) => {
+  if (op.op === 'moved') tracksMoved(op.from, op.to, op.root ?? undefined)
+})
 
 /** What an agent can do with notes. */
 export interface NoteDocs {

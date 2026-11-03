@@ -4,7 +4,7 @@
  *  front with an agent's edits in it offers taking them back, one row per agent.
  *  Its own small module, apart from everything that does the editing, so the palette
  *  can ask without bringing that in; see `agentUndoRows` in commands.ts. Kept by
- *  path, and for the session only: the undo it offers is of edits made since the app
+ *  path, which `touchedMoved` follows, and for the session only: the undo it offers is of edits made since the app
  *  opened. */
 
 import { SvelteMap } from 'svelte/reactivity'
@@ -33,4 +33,12 @@ export function touch(path: string, agent: { id: string; name: string }, edits: 
 
   if (now.length) byNote.set(path, now)
   else byNote.delete(path)
+}
+
+/** A note's agents, at the name it has now. */
+export function touchedMoved(from: string, to: string): void {
+  const held = byNote.get(from)
+  if (!held) return
+  byNote.delete(from)
+  byNote.set(to, held)
 }

@@ -27,9 +27,10 @@ import type { Selected } from './anchors'
 import { type Desk, type Located, located, type NoteAt, openNote, wordsOf } from './desk'
 import { type Planned, plan, readEdits, type Replacement } from './edits'
 import { type Agent, showAgent } from './presence'
+import { movedTo } from '../../space-paths'
 import { DocError } from './problem'
 import { revOf } from './rev'
-import { touch } from './touched'
+import { touch, touchedMoved } from './touched'
 import { Track } from './track'
 
 /** How far back the reader's own writing keeps an edit away: two seconds. */
@@ -82,20 +83,48 @@ function trackOf(agent: Agent, path: string): Track {
   const found = tracks.get(key)
   if (found) return found
 
-  const made = new Track(agent.id, (edits) => {
-    touch(path, agent, edits)
-    for (const listener of listeners) listener(agent.id, path)
+  const made: Track = new Track(agent.id, (edits) => {
+    const now = placed.get(made) ?? path
+    touch(now, agent, edits)
+    for (const listener of listeners) listener(agent.id, now)
   })
+  placed.set(made, path)
   tracks.set(key, made)
   return made
 }
 
+/** Where each track's note is now, which a move changes. */
+const placed = new WeakMap<Track, string>()
+
+/** A note moved or renamed, or a folder or a space with it: its tracks go with it, so
+ *  what an agent did stays the agent's to take back, under the name the note has now. A
+ *  track already at the new name is of a note that name no longer means. */
+export function tracksMoved(from: string, to: string, root?: string): void {
+  for (const [key, track] of [...tracks]) {
+    const split = key.indexOf('\n')
+    const [agent, path] = [key.slice(0, split), key.slice(split + 1)]
+    const now = movedTo(path, from, to, root)
+    if (now === null || now === path) continue
+
+    tracks.delete(key)
+    tracks.set(keyOf(agent, now), track)
+    placed.set(track, now)
+    if (kept.delete(key)) kept.add(keyOf(agent, now))
+    touchedMoved(path, now)
+    for (const listener of listeners) listener(agent, now, path)
+  }
+}
+
 /** Whoever wants to know when an agent's edits of a note change: one made, some taken
  *  back, the reader's Ctrl+Z of one. The review (lib/ai/review) is. */
-const listeners = new Set<(agent: string, path: string) => void>()
+const listeners = new Set<Listener>()
+
+/** Told of a note an agent's edits of have changed; `was` where nothing changed but
+ *  the note's name, and this is the name it had. */
+type Listener = (agent: string, path: string, was?: string) => void
 
 /** Listens; answers the way to stop. */
-export function onTracks(listener: (agent: string, path: string) => void): () => void {
+export function onTracks(listener: Listener): () => void {
   listeners.add(listener)
   return () => listeners.delete(listener)
 }
