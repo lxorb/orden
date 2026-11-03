@@ -208,7 +208,7 @@ async function scanned(how: Watching, root: string): Promise<void> {
   const seen = new Set<string>()
 
   for (const one of listed) {
-    const inside = relative(root, one.path)
+    const inside = relative(root, one.path, engine.core.world.foldsCase)
     if (inside === null || !kept(engine, inside, one.dir)) continue
     seen.add(space.key(inside))
     const entry = space.at(inside)
