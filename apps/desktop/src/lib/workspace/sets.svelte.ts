@@ -134,7 +134,11 @@ class Sets {
     this.going = this.going.catch(() => undefined).then(() => this.swap(id))
     await this.going
 
-    if (shown) ws.panel ??= 'tree'
+    if (shown) {
+      // The sidebar asked for, with the chat over it there: the file list for when it shuts.
+      if (ws.panel === 'ask') ws.underChat ??= 'tree'
+      ws.panel ??= 'tree'
+    }
     ws.clearSelection()
     await ws.loadTree()
     ws.persist()
@@ -174,8 +178,9 @@ class Sets {
         frame: ws.panes.frame,
         focused: ws.panes.focusedId,
         fills: ws.panes.fills,
-        panel: ws.panel,
-        rightPanel: ws.rightPanel,
+        // The chat is nobody's to keep: it goes along with the reader (#332).
+        panel: ws.panel === 'ask' ? ws.underChat : ws.panel,
+        rightPanel: ws.rightPanel === 'ask' ? ws.underChat : ws.rightPanel,
         preview: ws.previewTabId,
         held: ws.heldTabId,
         inPage: inPage(),
@@ -195,13 +200,19 @@ class Sets {
     ws.panes.swapping = true
     ws.panes.restore(frame, set ? focusIn(frame, set.focused) : frame.id)
     ws.panes.fills = set?.fills && paneIn(frame, set.fills) ? set.fills : null
+    // The open chat stays open, over what this set keeps at its side (#332), also where a
+    // card is over it.
+    const side = ws.sideOf('ask')
+    const chatting = (side === 'right' ? ws.rightPanel : ws.panel) === 'ask'
+    ws.underChat = null
     if (set) {
-      // The open chat stays open, whatever this set kept at its side (#332).
-      const chatting = ws.openOn(ws.sideOf('ask')) === 'ask'
-      ws.panel = set.panel
-      ws.rightPanel = set.rightPanel
-      if (chatting && ws.sideOf('ask') === 'left') ws.panel = 'ask'
-      if (chatting && ws.sideOf('ask') === 'right') ws.rightPanel = 'ask'
+      ws.panel = set.panel === 'ask' ? null : set.panel
+      ws.rightPanel = set.rightPanel === 'ask' ? null : set.rightPanel
+      if (chatting) {
+        ws.underChat = side === 'right' ? ws.rightPanel : ws.panel
+        if (side === 'right') ws.rightPanel = 'ask'
+        else ws.panel = 'ask'
+      }
     }
     ws.previewTabId = set?.preview ?? null
     ws.heldTabId = set?.held ?? null
