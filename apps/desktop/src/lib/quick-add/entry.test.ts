@@ -115,8 +115,8 @@ describe('where it goes, past code', () => {
   })
 
   test('a comment in the front matter is no heading either', () => {
-    expect(placed('---\n# c\n---\nText\n', TASK, 'c').after).toBe(
-      '---\n# c\n---\nText\n\n## c\n- [ ] New\n',
+    expect(placed('---\n# c\na: 1\n---\nText\n', TASK, 'c').after).toBe(
+      '---\n# c\na: 1\n---\nText\n\n## c\n- [ ] New\n',
     )
   })
 })
