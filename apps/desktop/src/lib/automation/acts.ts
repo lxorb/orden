@@ -344,7 +344,10 @@ export const ONTO_INSTRUCTIONS = 'write_note writes them, and no note is moved o
 
 /** Whether a move would make something else the file at the top of the space at `root`. */
 export function ontoInstructions(root: string, from: string, to: string): boolean {
-  return samePath(to, AGENTS_NAME, root) && !samePath(from, to, root)
+  if (samePath(from, to, root) || folderOf(to) || !isAgentsName(nameOf(to))) return false
+  // Respelled, they are still the file they were. Under any other ending or case a note is
+  // what `moveMany` refuses at the top of a space, and no link or field would take it.
+  return folderOf(from) !== '' || !isAgentsName(nameOf(from))
 }
 
 /** Moves or renames a file or a folder of the space at `root` to `to`, both relative
@@ -374,26 +377,46 @@ export async function movedIn(
   }
 
   const into = folder ? insideSpace(root, folder) : root
+  const carried = async (path: string) => {
+    if (!(await workspace.moveMany([path], into, undoing))) {
+      throw new Error(`the move of ${from} to ${to} was refused`)
+    }
+  }
   if (name === nameOf(from)) {
-    await workspace.moveMany([source], into, undoing)
+    await carried(source)
     return to
   }
 
-  // A move and a rename are two steps, and the first of them stops somewhere. Under its
-  // old name where it lands, unless that is the space's instructions, which moveMany
-  // refuses without a word and the rename would then take for this file, or the place
-  // of another file; then under its new name where it is. Should either end be taken,
-  // that is said before anything has moved.
-  const stop = joinPath(into, nameOf(from))
-  if ((!folder && isAgentsName(nameOf(from))) || (await onDisk(stop))) {
-    if (await onDisk(joinPath(into, name))) throw new Error(`${to} is already there`)
+  if (await onDisk(joinPath(into, name))) throw new Error(`${to} is already there`)
+
+  // A move and a rename are two steps, so the file stops somewhere between them, and that
+  // may not be another file's place or the top of the space under the name kept for its
+  // instructions, which the next step would then be taken for. Under its old name where
+  // it lands; else under its new name where it is; else a name free in both, which the
+  // rename at the end takes off again.
+  const here = folderOf(source)
+  const free = async (folderAt: string, called: string) =>
+    !(samePath(folderAt, root) && isAgentsName(called)) &&
+    !(await onDisk(joinPath(folderAt, called)))
+
+  if (await free(into, nameOf(from))) {
+    await carried(source)
+    await workspace.rename(joinPath(into, nameOf(from)), name)
+    return to
+  }
+  if (await free(here, name)) {
     await workspace.rename(source, name)
-    await workspace.moveMany([joinPath(folderOf(source), name)], into, undoing)
+    await carried(joinPath(here, name))
     return to
   }
 
-  await workspace.moveMany([source], into, undoing)
-  await workspace.rename(stop, name)
+  let number = 2
+  const numbered = () => name.replace(/(\.[^.]*)?$/, ` ${number}$1`)
+  while (!(await free(here, numbered())) || !(await free(into, numbered()))) number++
+  const aside = numbered()
+  await workspace.rename(source, aside)
+  await carried(joinPath(here, aside))
+  await workspace.rename(joinPath(into, aside), name)
 
   return to
 }
