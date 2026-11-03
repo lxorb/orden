@@ -54,7 +54,7 @@ import { added, noUsage } from '../chat/usage'
 import { nextMode } from '../modes'
 import type { Provider } from '../providers'
 import { ai } from '../store.svelte'
-import { chatsUnread } from '../unread.svelte'
+import { chatsUnread, panelKeepsUnread } from '../unread.svelte'
 import { threadMarkdown } from './export'
 import { readOutside } from '../chat/transcript'
 import { draftOf, type Front, type Picked } from './gather'
@@ -1328,6 +1328,7 @@ class Chat implements Panel {
 export const chat = new Chat()
 
 // The ✦ tab's dot, kept with the list (#1064).
+panelKeepsUnread()
 $effect.root(() => {
   $effect(() => {
     chatsUnread.any = chat.unread.size > 0
