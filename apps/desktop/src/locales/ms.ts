@@ -2294,6 +2294,12 @@ export const ms: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal dalam talian',
   'New online terminal': 'Terminal dalam talian baharu',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'peranti lain',
+  'Taken over by {device}': 'Diambil alih oleh {device}',
+  'Open on {device} since {time}': 'Dibuka pada {device} sejak {time}',
+  'Take over': 'Ambil alih',
+  'Take back': 'Ambil semula',
   'Start online machine': 'Mulakan mesin dalam talian',
   'Stop online machine': 'Hentikan mesin dalam talian',
   Resume: 'Sambung semula',

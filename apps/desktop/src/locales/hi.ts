@@ -2302,6 +2302,12 @@ export const hi: Dictionary = {
   // The online terminal
   'Online terminal': 'ऑनलाइन टर्मिनल',
   'New online terminal': 'नया ऑनलाइन टर्मिनल',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'कोई दूसरा डिवाइस',
+  'Taken over by {device}': '{device} ने ले लिया',
+  'Open on {device} since {time}': '{time} से {device} पर खुला',
+  'Take over': 'अपने हाथ लें',
+  'Take back': 'वापस लें',
   'Start online machine': 'ऑनलाइन मशीन शुरू करें',
   'Stop online machine': 'ऑनलाइन मशीन रोकें',
   Resume: 'फिर से शुरू करें',

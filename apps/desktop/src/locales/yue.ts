@@ -2243,6 +2243,12 @@ export const yue: Dictionary = {
   // The online terminal
   'Online terminal': '網上終端機',
   'New online terminal': '新網上終端機',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': '另一部裝置',
+  'Taken over by {device}': '已被 {device} 接手',
+  'Open on {device} since {time}': '自 {time} 起喺 {device} 開咗',
+  'Take over': '接手',
+  'Take back': '攞返',
   'Start online machine': '開啟網上機器',
   'Stop online machine': '停止網上機器',
   Resume: '繼續',

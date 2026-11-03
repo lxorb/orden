@@ -1,12 +1,9 @@
 /** Whether a file is an online terminal - a `.term`, whose words name a session on its
  *  owner's machine - and what its tab is called (docs/online-terminal.md 4.5, 4.10). */
 
-const TERM = /\.term$/i
+import { isTermTarget } from '@orden/markdown/links'
 
-/** Whether a path or a name is a `.term`. */
-export function isTermTarget(path: string | null): boolean {
-  return path !== null && TERM.test(path)
-}
+const TERM = /\.term$/i
 
 /** Whether a tab is an online terminal: a terminal whose file is a `.term`. */
 export function isOnlineTab(tab: { kind: string; path: string | null }): boolean {

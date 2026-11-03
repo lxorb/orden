@@ -2336,6 +2336,12 @@ export const ha: Dictionary = {
   // The online terminal
   'Online terminal': 'Tashar kan layi',
   'New online terminal': 'Sabuwar tashar kan layi',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'wata na’ura',
+  'Taken over by {device}': '{device} ya karɓe shi',
+  'Open on {device} since {time}': 'A buɗe a {device} tun {time}',
+  'Take over': 'Karɓe',
+  'Take back': 'Mayar',
   'Start online machine': 'Kunna na’urar kan layi',
   'Stop online machine': 'Dakatar da na’urar kan layi',
   Resume: 'Ci gaba',

@@ -2395,6 +2395,12 @@ export const pl: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Nowy terminal online',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'inne urządzenie',
+  'Taken over by {device}': 'Przejęte przez {device}',
+  'Open on {device} since {time}': 'Otwarte na {device} od {time}',
+  'Take over': 'Przejmij',
+  'Take back': 'Odbierz',
   'Start online machine': 'Uruchom maszynę online',
   'Stop online machine': 'Zatrzymaj maszynę online',
   Resume: 'Wznów',

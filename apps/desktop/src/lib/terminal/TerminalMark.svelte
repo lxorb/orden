@@ -16,7 +16,7 @@
 
   import Icon from '../Icon.svelte'
   import { marks } from '../online/marks.svelte'
-  import { isTermTarget } from '../online/path'
+  import { isTermTarget } from '@orden/markdown/links'
   import { remote } from '../remote/hosts.svelte'
   import type { Tab } from '../workspace/documents.svelte'
   import { TERMINAL_MARKS } from './marks'

@@ -2308,6 +2308,12 @@ export const mr: Dictionary = {
   // The online terminal
   'Online terminal': 'ऑनलाइन टर्मिनल',
   'New online terminal': 'नवीन ऑनलाइन टर्मिनल',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'दुसरे डिव्हाइस',
+  'Taken over by {device}': '{device} ने घेतले',
+  'Open on {device} since {time}': '{time} पासून {device} वर उघडे',
+  'Take over': 'ताब्यात घ्या',
+  'Take back': 'परत घ्या',
   'Start online machine': 'ऑनलाइन मशीन सुरू करा',
   'Stop online machine': 'ऑनलाइन मशीन थांबवा',
   Resume: 'पुन्हा सुरू करा',

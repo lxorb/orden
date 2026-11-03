@@ -2,7 +2,8 @@
   /** Over an online terminal until its session's screen is there: one line saying what
    *  it waits on, with the line the app draws for work worth waiting on under it - or,
    *  once the wait ended without the screen, why, and Try again, which Enter is too - or,
-   *  for a session that is no more, New online terminal in its place.
+   *  for a session that is no more, New online terminal in its place; for one another device
+   *  holds, who and since when, and Take over (Take back, where it was taken from here).
    *  Centred over the pane, over the cached screen dimmed where there is one, and never
    *  an empty pane in its place. See arrival.svelte.ts.
    *
@@ -17,11 +18,17 @@
 
   const failed = $derived('failed' in status)
   const gone = $derived('gone' in status)
+  // Another device holds the session (issue 1055): Take over, or Take back.
+  const held = $derived('held' in status ? status : null)
 </script>
 
-<div class="status" class:failed role="status">
+<div class="status" class:failed={failed || held !== null} role="status">
   <p>{statusLine(status)}</p>
-  {#if failed}
+  {#if held}
+    <button type="button" class="nib-button" onclick={onretry}
+      >{held.taken ? t('Take back') : t('Take over')}</button
+    >
+  {:else if failed}
     <button type="button" class="nib-button" onclick={onretry}
       >{gone ? t('New online terminal') : t('Try again')}</button
     >

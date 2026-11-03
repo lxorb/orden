@@ -2338,6 +2338,12 @@ export const ta: Dictionary = {
   // The online terminal
   'Online terminal': 'ஆன்லைன் முனையம்',
   'New online terminal': 'புதிய ஆன்லைன் முனையம்',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'வேறொரு சாதனம்',
+  'Taken over by {device}': '{device} எடுத்துக்கொண்டது',
+  'Open on {device} since {time}': '{time} முதல் {device} இல் திறந்துள்ளது',
+  'Take over': 'எடுத்துக்கொள்',
+  'Take back': 'திரும்பப் பெறு',
   'Start online machine': 'ஆன்லைன் இயந்திரத்தைத் தொடங்கு',
   'Stop online machine': 'ஆன்லைன் இயந்திரத்தை நிறுத்து',
   Resume: 'தொடர்',

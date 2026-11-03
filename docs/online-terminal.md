@@ -930,6 +930,33 @@ tmux started from a service dies with it unless it is moved to a scope of its ow
 - **The first restart after this is deployed** still ends the shells there are: a `nibd`
   without holders started them.
 
+### 4.17 One device at a time
+
+Issue 1055, lxorb: an online terminal is a file in the sidebar like any note, synced and
+reopened on every device, and **one device at a time** drives it.
+
+- **Listed.** A `.term` is a row of the file list (`is_term` in the crate's `tree.rs`, `listed`
+  in `web/commands.ts`) wearing the terminal's mark. It was neither: no row, and a phone's or
+  a browser's mirror, which walks that list, never sent it to the reader's other devices.
+  `web/commands.test.ts` lists a file of every `Opener` kind, so a new kind fails until listed.
+- **The lock** is `Machine`'s (`services/sync/src/machines/holding.ts`), one storage key a
+  session, every change made in one queue: two Take overs at once end with the second's device
+  holding it. It is among the sockets that may type and whose hello says `hold`; who may only
+  watch, and an Orden from before it, are never held off, so old and new apps and servers meet
+  harmlessly (an old server ignores `hold`, `take` and `leave`; an old app is never sent `held`).
+- **Held off**, a socket is sent nothing of the session and its keys go nowhere; it is told
+  `held {by, since, taken}` - the device's name (`devices.name`, which the door hands on) - and
+  its tab shows its last screen dimmed under _Open on <device> since <time>_ and **Take over**,
+  or _Taken over by <device>_ and **Take back**. Enter is the button.
+- **Take over** (`take`) hands it on at once: the old holder is told `held` with `taken`, the new
+  one `hold`, and says hello again with what it last drew, so `nibd` sends the rest or the whole
+  screen with its scrollback. Nothing restarts; the pty takes the holder's size.
+- **Let go**: closing the tab says `leave`, free at once. A socket that closed, or said nothing -
+  not even the runtime-answered beat - for `HOLD_QUIET` (45 s, then closed with 4408), keeps it
+  for `HOLD_GRACE` (30 s) to come back to; then the device waiting for it that was heard from
+  last has it. The minute alarm looks again where an evicted object lost the timer.
+- **Ending** the session drops its lock.
+
 ## 5. What Orden does not do
 
 - **Machines per space**, or machines several people pay for (4.1).

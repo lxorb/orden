@@ -2336,6 +2336,12 @@ export const sw: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminali ya mtandaoni',
   'New online terminal': 'Terminali mpya ya mtandaoni',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'kifaa kingine',
+  'Taken over by {device}': 'Kimechukuliwa na {device}',
+  'Open on {device} since {time}': 'Kimefunguliwa kwenye {device} tangu {time}',
+  'Take over': 'Chukua',
+  'Take back': 'Rudisha',
   'Start online machine': 'Washa mashine ya mtandaoni',
   'Stop online machine': 'Zima mashine ya mtandaoni',
   Resume: 'Endelea',

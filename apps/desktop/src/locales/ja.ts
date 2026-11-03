@@ -2288,6 +2288,12 @@ export const ja: Dictionary = {
   // The online terminal
   'Online terminal': 'オンラインターミナル',
   'New online terminal': '新しいオンラインターミナル',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': '別のデバイス',
+  'Taken over by {device}': '{device} に引き継がれました',
+  'Open on {device} since {time}': '{time} から {device} で開いています',
+  'Take over': '引き継ぐ',
+  'Take back': '取り戻す',
   'Start online machine': 'オンラインマシンを起動',
   'Stop online machine': 'オンラインマシンを停止',
   Resume: '再開',

@@ -149,10 +149,15 @@ export interface Person {
 }
 
 /** What the app says, as text. `hello` opens: the size of its screen, and the offset
- *  it last drew, if it drew any. `start` begins a new shell in a session whose shell
- *  ended; `resume` types the saved agent's own continue command. */
+ *  it last drew, if it drew any; `hold` where it takes part in the session's lock (one
+ *  device at a time, `held`), which an Orden from before it does not. `start` begins a
+ *  new shell in a session whose shell ended; `resume` types the saved agent's own
+ *  continue command. `take` is Take over: the session handed to this device at once;
+ *  `leave` lets go of it at once as the tab closes, where a drop keeps it for `HOLD_GRACE`. */
 export type ClientFrame =
-  | { t: 'hello'; since?: number; cols: number; rows: number }
+  | { t: 'hello'; since?: number; cols: number; rows: number; hold?: true }
+  | { t: 'take' }
+  | { t: 'leave' }
   | { t: 'in'; data: string }
   | { t: 'size'; cols: number; rows: number }
   | { t: 'start' }
@@ -186,7 +191,12 @@ export type ClientFrame =
  *  - `called`: a `callback` was made on the machine, and the HTTP status it was
  *    answered with, 0 where nothing answered;
  *  - `image`: a pasted picture is a file on the machine now, at `path`, or could not be
- *    written (null); to the sockets that may type, the one that sent it among them. */
+ *    written (null); to the sockets that may type, the one that sent it among them;
+ *  - `held`: another device holds the session (named `by`, held `since`), so this socket
+ *    is sent nothing of it and its keys go nowhere until it takes it over; `taken` where
+ *    it held the session itself until that device took it;
+ *  - `hold`: this socket, held off until now, holds the session: it says `hello` again
+ *    and is sent what it missed. */
 export type ServerFrame =
   | {
       t: 'screen'
@@ -209,6 +219,14 @@ export type ServerFrame =
   | { t: 'called'; url: string; status: number }
   | { t: 'image'; id: string; path: string | null }
   | { t: 'note'; note: Note }
+  | { t: 'held'; by: string; since: number; taken: boolean }
+  | { t: 'hold' }
+
+/** How long a session stays held by a device whose socket dropped, for it to come back
+ *  to before another device may have it; and how long a holder's socket may say nothing -
+ *  not even the beat it sends every ten seconds - before it counts as gone. */
+export const HOLD_GRACE = 30_000
+export const HOLD_QUIET = 45_000
 
 /** Something worth one line under the screen: `restore`, the home could not be put back
  *  from its backup, so this wake has the image's fresh one; `disk`, the machine's disk
@@ -465,9 +483,18 @@ export function clientFrameOf(raw: string): ClientFrame | null {
     case 'hello': {
       const { since, cols, rows } = value
       if (!isCells(cols) || !isCells(rows)) return null
-      if (since === undefined) return { t: 'hello', cols, rows }
-      return isCount(since) ? { t: 'hello', since, cols, rows } : null
+      if (since !== undefined && !isCount(since)) return null
+      return {
+        t: 'hello',
+        ...(since === undefined ? {} : { since }),
+        cols,
+        rows,
+        ...(value.hold === true ? { hold: true as const } : {}),
+      }
     }
+    case 'take':
+    case 'leave':
+      return { t: value.t }
     case 'in':
       return typeof value.data === 'string' && value.data.length <= MOST_INPUT
         ? { t: 'in', data: value.data }
@@ -549,6 +576,13 @@ export function serverFrameOf(raw: string): ServerFrame | null {
         : null
     case 'note':
       return oneOf(NOTES, value.note) ? { t: 'note', note: value.note } : null
+    case 'held': {
+      const { by, since, taken } = value
+      if (typeof by !== 'string' || by.length > LONGEST_TITLE || !isTime(since)) return null
+      return typeof taken === 'boolean' ? { t: 'held', by, since, taken } : null
+    }
+    case 'hold':
+      return { t: 'hold' }
     default:
       return null
   }

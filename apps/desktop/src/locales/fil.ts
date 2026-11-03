@@ -2348,6 +2348,12 @@ export const fil: Dictionary = {
   // The online terminal
   'Online terminal': 'Online na terminal',
   'New online terminal': 'Bagong online na terminal',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'ibang device',
+  'Taken over by {device}': 'Kinuha ng {device}',
+  'Open on {device} since {time}': 'Bukas sa {device} mula {time}',
+  'Take over': 'Kunin',
+  'Take back': 'Bawiin',
   'Start online machine': 'Simulan ang online na makina',
   'Stop online machine': 'Ihinto ang online na makina',
   Resume: 'Ituloy',

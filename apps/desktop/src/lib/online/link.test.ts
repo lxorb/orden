@@ -133,7 +133,7 @@ describe('the socket to an online session', () => {
     const socket = opened(found)
     expect(socket.url).toBe('wss://nib.test/v2/online/t1/socket')
     expect(socket.protocols).toEqual(['nib.token.tok', 'nib.device.dev1'])
-    expect(socket.sent).toEqual([text({ t: 'hello', cols: 100, rows: 30 })])
+    expect(socket.sent).toEqual([text({ t: 'hello', cols: 100, rows: 30, hold: true })])
     expect(heard).toEqual([{ t: 'open' }])
   })
 
@@ -171,10 +171,41 @@ describe('the socket to an online session', () => {
     await settle()
 
     const second = opened(found)
-    expect(second.sent).toEqual([text({ t: 'hello', cols: 80, rows: 24, since: 11 })])
+    expect(second.sent).toEqual([text({ t: 'hello', cols: 80, rows: 24, since: 11, hold: true })])
     // Sent again from before what was drawn: only the new part is drawn.
     second.events.heard(at(6, 'world!'))
     expect(drawn).toEqual(['hello ', 'world', '!'])
+  })
+
+  test('held off by another device: Take over, then hello again for what it missed', async () => {
+    const found = fakeWorld()
+    const heard: Heard[] = []
+    const link = new Link('t1', found.world, (one) => heard.push(one), 80, 24)
+    link.open()
+    await settle()
+    const socket = opened(found)
+    socket.events.heard(at(0, 'hello'))
+    socket.events.heard(text({ t: 'held', by: 'Phone', since: 5, taken: true }))
+    expect(heard.at(-1)).toEqual({ t: 'held', by: 'Phone', since: 5, taken: true })
+
+    socket.sent.length = 0
+    expect(link.take()).toBe(true)
+    socket.events.heard(text({ t: 'hold' }))
+    expect(socket.sent).toEqual([
+      text({ t: 'take' }),
+      text({ t: 'hello', cols: 80, rows: 24, since: 5, hold: true }),
+    ])
+  })
+
+  test('closing says it leaves, so the session is free at once', async () => {
+    const found = fakeWorld()
+    const link = new Link('t1', found.world, () => undefined, 80, 24)
+    link.open()
+    await settle()
+    const socket = opened(found)
+    link.close()
+    expect(socket.sent.at(-1)).toBe(text({ t: 'leave' }))
+    expect(socket.closed).toBe(true)
   })
 
   test('a screen starts the count again at its own offset', async () => {
@@ -192,7 +223,9 @@ describe('the socket to an online session', () => {
     socket.events.closed(1006)
     waiting(found)[0]?.run()
     await settle()
-    expect(opened(found).sent[0]).toBe(text({ t: 'hello', cols: 80, rows: 24, since: 503 }))
+    expect(opened(found).sent[0]).toBe(
+      text({ t: 'hello', cols: 80, rows: 24, since: 503, hold: true }),
+    )
   })
 
   test('waits for the reader after a refusal that asking again would get again', async () => {

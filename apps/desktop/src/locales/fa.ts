@@ -2309,6 +2309,12 @@ export const fa: Dictionary = {
   // The online terminal
   'Online terminal': 'ترمینال آنلاین',
   'New online terminal': 'ترمینال آنلاین جدید',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'دستگاهی دیگر',
+  'Taken over by {device}': '{device} آن را گرفت',
+  'Open on {device} since {time}': 'باز روی {device} از {time}',
+  'Take over': 'در دست گرفتن',
+  'Take back': 'پس گرفتن',
   'Start online machine': 'روشن کردن ماشین آنلاین',
   'Stop online machine': 'خاموش کردن ماشین آنلاین',
   Resume: 'ادامه',

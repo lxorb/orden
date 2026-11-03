@@ -2349,6 +2349,12 @@ export const ptBR: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Novo terminal online',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'outro dispositivo',
+  'Taken over by {device}': 'Assumido por {device}',
+  'Open on {device} since {time}': 'Aberto em {device} desde {time}',
+  'Take over': 'Assumir',
+  'Take back': 'Retomar',
   'Start online machine': 'Iniciar máquina online',
   'Stop online machine': 'Parar máquina online',
   Resume: 'Retomar',

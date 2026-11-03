@@ -17,6 +17,8 @@ describe('the mark a file wears', () => {
     expect(fileMark('Deep Learning.pdf')).toBe('pdf')
     expect(fileMark('Bugs.base')).toBe('base')
     expect(fileMark('shot.png')).toBe('picture')
+    // An online terminal's file, as its tab is (issue 1055).
+    expect(fileMark('Build.term')).toBe('terminal')
   })
 
   test('every extension a picture is written in', () => {
@@ -89,8 +91,7 @@ describe('the mark a file wears', () => {
  *  chosen but that the set is one set: every mark has a drawing, every drawing
  *  is Lucide's own, and no two marks are the same picture. */
 describe('the marks a row wears', () => {
-  // The terminal is a tab's mark and never a row's, and is here because the two share
-  // one drawing each; see file-mark.ts.
+  // The terminal is a tab's mark, and a row's for an online terminal's file.
   const MARK_NAMES: Mark[] = [
     'note',
     'canvas',

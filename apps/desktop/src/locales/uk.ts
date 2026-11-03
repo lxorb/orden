@@ -2388,6 +2388,12 @@ export const uk: Dictionary = {
   // The online terminal
   'Online terminal': 'Онлайн-термінал',
   'New online terminal': 'Новий онлайн-термінал',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'інший пристрій',
+  'Taken over by {device}': 'Перехоплено пристроєм {device}',
+  'Open on {device} since {time}': 'Відкрито на {device} з {time}',
+  'Take over': 'Перехопити',
+  'Take back': 'Повернути',
   'Start online machine': 'Запустити онлайн-машину',
   'Stop online machine': 'Зупинити онлайн-машину',
   Resume: 'Продовжити',

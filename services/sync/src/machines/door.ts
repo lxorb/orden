@@ -35,6 +35,19 @@ function deviceProtocol(header: string | undefined): string | null {
   return id && DEVICE.test(id) ? id : null
 }
 
+/** The name a person's device gave itself, as a header carries it; empty where it has
+ *  none here. Never one of somebody else's devices, whatever id a socket names. */
+async function deviceName(env: Env, device: string, who: string): Promise<string> {
+  const row = await env.DB.prepare(
+    'select name from devices where id = ?1 and user_id = ?2 and revoked_at is null',
+  )
+    .bind(device, who)
+    .first<{ name: string }>()
+    .catch(() => null)
+  // Escaped: a header carries no `’`, which a device's name often has.
+  return encodeURIComponent((row?.name ?? '').slice(0, 100))
+}
+
 export const onlineDoor = new Hono<{ Bindings: Env }>()
 
 onlineDoor.get('/:term/socket', async (context) => {
@@ -67,12 +80,18 @@ onlineDoor.get('/:term/socket', async (context) => {
   const reached = row ? reachedOf(row) : null
   if (!reached) return refusedSocket('gone', `${DEVICE_PROTOCOL}${device}`)
 
-  const wake = reached.owns ? ((await whyNotWake(env, reached.owner, at, service)) ?? 'yes') : 'no'
+  // Asked at once: whether the owner may wake the machine, and what the device is called,
+  // which another device holding the session off is told it by (machines/holding.ts).
+  const [wake, name] = await Promise.all([
+    reached.owns ? whyNotWake(env, reached.owner, at, service).then((why) => why ?? 'yes') : 'no',
+    deviceName(env, device, reached.who),
+  ])
   const answer = await askMachine(env, reached.machine, 'join', {
     upgrade: 'websocket',
     'x-nib-user': reached.owner,
     'x-nib-who': reached.who,
     'x-nib-device': device,
+    'x-nib-device-name': name,
     'x-nib-term': reached.term,
     'x-nib-session': reached.session,
     'x-nib-guest': reached.guest ? 'yes' : 'no',

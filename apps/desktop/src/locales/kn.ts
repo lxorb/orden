@@ -2327,6 +2327,12 @@ export const kn: Dictionary = {
   // The online terminal
   'Online terminal': 'ಆನ್‌ಲೈನ್ ಟರ್ಮಿನಲ್',
   'New online terminal': 'ಹೊಸ ಆನ್‌ಲೈನ್ ಟರ್ಮಿನಲ್',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'ಇನ್ನೊಂದು ಸಾಧನ',
+  'Taken over by {device}': '{device} ತೆಗೆದುಕೊಂಡಿದೆ',
+  'Open on {device} since {time}': '{time} ರಿಂದ {device} ನಲ್ಲಿ ತೆರೆದಿದೆ',
+  'Take over': 'ವಹಿಸಿಕೊಳ್ಳಿ',
+  'Take back': 'ಹಿಂಪಡೆಯಿರಿ',
   'Start online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ಪ್ರಾರಂಭಿಸಿ',
   'Stop online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ನಿಲ್ಲಿಸಿ',
   Resume: 'ಮುಂದುವರಿಸಿ',

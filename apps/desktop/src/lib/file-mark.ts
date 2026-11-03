@@ -14,6 +14,7 @@ import {
   isBaseTarget,
   isCanvasTarget,
   isChatTarget,
+  isTermTarget,
   isImageTarget,
   isPagesTarget,
   isPdfTarget,
@@ -150,6 +151,8 @@ export function fileMark(name: string): FileMark {
   if (isPdfTarget(name)) return 'pdf'
   if (isBaseTarget(name)) return 'base'
   if (isChatTarget(name)) return 'chat'
+  // An online terminal's file wears the terminal its tab is (issue 1055).
+  if (isTermTarget(name)) return 'terminal'
   if (isImageTarget(name)) return 'picture'
   if (isMarkdownPath(name)) return 'note'
   return 'file'

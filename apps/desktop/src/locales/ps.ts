@@ -2308,6 +2308,12 @@ export const ps: Dictionary = {
   // The online terminal
   'Online terminal': 'آنلاین ټرمینل',
   'New online terminal': 'نوی آنلاین ټرمینل',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'بله وسیله',
+  'Taken over by {device}': '{device} واخیست',
+  'Open on {device} since {time}': 'له {time} راهیسې په {device} پرانیستی',
+  'Take over': 'واخلئ',
+  'Take back': 'بیرته واخلئ',
   'Start online machine': 'آنلاین ماشین پیل کړئ',
   'Stop online machine': 'آنلاین ماشین ودروئ',
   Resume: 'بیا پیل',

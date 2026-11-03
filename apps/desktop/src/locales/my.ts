@@ -2284,6 +2284,12 @@ export const my: Dictionary = {
   // The online terminal
   'Online terminal': 'အွန်လိုင်း တာမင်နယ်',
   'New online terminal': 'အွန်လိုင်း တာမင်နယ် အသစ်',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'အခြားစက်',
+  'Taken over by {device}': '{device} က ယူသွားသည်',
+  'Open on {device} since {time}': '{time} မှစ၍ {device} တွင် ဖွင့်ထားသည်',
+  'Take over': 'လွှဲယူရန်',
+  'Take back': 'ပြန်ယူရန်',
   'Start online machine': 'အွန်လိုင်း စက်ကို စတင်ရန်',
   'Stop online machine': 'အွန်လိုင်း စက်ကို ရပ်ရန်',
   Resume: 'ဆက်လုပ်ရန်',

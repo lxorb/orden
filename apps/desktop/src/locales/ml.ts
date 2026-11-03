@@ -2332,6 +2332,12 @@ export const ml: Dictionary = {
   // The online terminal
   'Online terminal': 'ഓൺലൈൻ ടെർമിനൽ',
   'New online terminal': 'പുതിയ ഓൺലൈൻ ടെർമിനൽ',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'മറ്റൊരു ഉപകരണം',
+  'Taken over by {device}': '{device} ഏറ്റെടുത്തു',
+  'Open on {device} since {time}': '{time} മുതൽ {device}-ൽ തുറന്നിരിക്കുന്നു',
+  'Take over': 'ഏറ്റെടുക്കുക',
+  'Take back': 'തിരിച്ചെടുക്കുക',
   'Start online machine': 'ഓൺലൈൻ മെഷീൻ ആരംഭിക്കുക',
   'Stop online machine': 'ഓൺലൈൻ മെഷീൻ നിർത്തുക',
   Resume: 'തുടരുക',

@@ -635,10 +635,15 @@ class Session {
     this.focus()
   }
 
-  /** The online card's button, and Enter under it: Try again, or - where the session is
-   *  no more, which trying again cannot change - a new online terminal in this tab's
-   *  place, as a deleted codespace offers a new one where it was. */
+  /** The online card's button, and Enter under it: Take over where another device holds
+   *  the session; Try again; or - where the session is no more, which trying again cannot
+   *  change - a new online terminal in this tab's place, as a deleted codespace offers a
+   *  new one where it was. */
   retry() {
+    if (this.arrival.holder !== null) {
+      this.source?.take?.()
+      return
+    }
     if (!this.arrival.gone) {
       this.reconnect()
       return
@@ -873,7 +878,13 @@ class Session {
       if (what.connected && this.screened) this.landed()
       else this.live = false
     } else if ('typing' in what) this.mayType = what.typing
-    else if ('note' in what) {
+    else if ('held' in what) {
+      // Another device holds it: its last screen stays, dimmed, under who has it.
+      if (what.held) {
+        this.live = false
+        this.arrival.held(what.held)
+      } else this.arrival.unheld()
+    } else if ('note' in what) {
       if (this.live) this.say(what.note)
       else this.notes.push(what.note)
     } else if (this.online && (!this.live || what.gone === true)) {
@@ -1086,7 +1097,7 @@ class Session {
   /** A key in an online terminal: Reconnect, Try again or Resume where they are up, a new shell
    *  after one ended, and otherwise the session's - if this window may type in it. */
   private typedOnline(data: string, binary: boolean) {
-    if (this.offline || this.arrival.failure !== null) {
+    if (this.offline || this.arrival.failure !== null || this.arrival.holder !== null) {
       if (data === '\r') this.retry()
       return
     }

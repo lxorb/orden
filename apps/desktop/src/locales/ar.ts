@@ -2427,6 +2427,12 @@ export const ar: Dictionary = {
   // The online terminal
   'Online terminal': 'طرفية عبر الإنترنت',
   'New online terminal': 'طرفية جديدة عبر الإنترنت',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'جهاز آخر',
+  'Taken over by {device}': 'استولى عليه {device}',
+  'Open on {device} since {time}': 'مفتوح على {device} منذ {time}',
+  'Take over': 'استلام',
+  'Take back': 'استعادة',
   'Start online machine': 'تشغيل الجهاز عبر الإنترنت',
   'Stop online machine': 'إيقاف الجهاز عبر الإنترنت',
   Resume: 'استئناف',

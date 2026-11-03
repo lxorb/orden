@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest'
 import { terminalMark } from '../terminal/naming'
 import { cityOf, onlineOf } from './calls'
 import { ownSession } from './own'
-import { isMadeName, isOnlineTab, isTermTarget, termName } from './path'
+import { isTermTarget } from '@orden/markdown/links'
+import { isMadeName, isOnlineTab, termName } from './path'
 import { resumeCommand } from './resume'
 
 describe('an online terminal, told apart', () => {

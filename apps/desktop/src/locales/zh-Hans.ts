@@ -2246,6 +2246,12 @@ export const zhHans: Dictionary = {
   // The online terminal
   'Online terminal': '在线终端',
   'New online terminal': '新建在线终端',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': '另一台设备',
+  'Taken over by {device}': '已被 {device} 接管',
+  'Open on {device} since {time}': '自 {time} 起在 {device} 上打开',
+  'Take over': '接管',
+  'Take back': '收回',
   'Start online machine': '启动在线机器',
   'Stop online machine': '停止在线机器',
   Resume: '继续',

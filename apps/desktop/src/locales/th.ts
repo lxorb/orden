@@ -2260,6 +2260,12 @@ export const th: Dictionary = {
   // The online terminal
   'Online terminal': 'เทอร์มินัลออนไลน์',
   'New online terminal': 'เทอร์มินัลออนไลน์ใหม่',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'อุปกรณ์อื่น',
+  'Taken over by {device}': '{device} รับช่วงไปแล้ว',
+  'Open on {device} since {time}': 'เปิดอยู่บน {device} ตั้งแต่ {time}',
+  'Take over': 'รับช่วง',
+  'Take back': 'เอาคืน',
   'Start online machine': 'เปิดเครื่องออนไลน์',
   'Stop online machine': 'หยุดเครื่องออนไลน์',
   Resume: 'ทำต่อ',

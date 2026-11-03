@@ -2245,6 +2245,12 @@ export const zhHantHK: Dictionary = {
   // The online terminal
   'Online terminal': '網上終端機',
   'New online terminal': '新增網上終端機',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': '另一部裝置',
+  'Taken over by {device}': '已被 {device} 接管',
+  'Open on {device} since {time}': '自 {time} 起在 {device} 上開啟',
+  'Take over': '接管',
+  'Take back': '取回',
   'Start online machine': '啟動網上機器',
   'Stop online machine': '停止網上機器',
   Resume: '繼續',

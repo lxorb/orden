@@ -12,7 +12,7 @@
  *  Pure of the page: the clock is the world's, so the tests drive it with a fake. */
 
 import type { DownReason } from '@orden/online/wire'
-import { t } from '../i18n.svelte'
+import { i18n, t } from '../i18n.svelte'
 import type { Machine } from '../terminal/source'
 import { refusalWords } from './words'
 
@@ -27,8 +27,18 @@ export const BOOT_PATIENCE = 3 * 60_000
 type Waiting = 'connecting' | 'starting' | 'restoring'
 
 /** What is said over the screen. A failure that is `gone` is a session that is no more,
- *  which Try again cannot bring back: a new online terminal is offered instead. */
-export type Status = { waiting: Waiting } | { failed: string; gone?: true }
+ *  which Try again cannot bring back: a new online terminal is offered instead. `held` is
+ *  a session another device holds (issue 1055), with Take over under it - or Take back,
+ *  where it was `taken` from this one. */
+export type Status =
+  { waiting: Waiting } | { failed: string; gone?: true } | { held: string; taken: boolean }
+
+/** Who holds a session this terminal is held off, as the socket said it. */
+export interface Holder {
+  by: string
+  since: number
+  taken: boolean
+}
 
 interface Clock {
   /** Calls `run` after `ms`; answers what cancels it. */
@@ -45,6 +55,7 @@ const timers: Clock = {
 /** The one line a status is said in. */
 export function statusLine(status: Status): string {
   if ('failed' in status) return status.failed
+  if ('held' in status) return status.held
   switch (status.waiting) {
     case 'starting':
       return t('Starting machine…')
@@ -53,6 +64,19 @@ export function statusLine(status: Status): string {
     case 'connecting':
       return t('Connecting…')
   }
+}
+
+/** Who holds the session, in words: since a time today, or a day and time before. */
+export function heldLine(holder: Holder, now = Date.now()): string {
+  const device = holder.by || t('another device')
+  if (holder.taken) return t('Taken over by {device}', { device })
+  const day = (at: number) => i18n.when(at, { dateStyle: 'short' })
+  const today = day(holder.since) === day(now)
+  const time = i18n.when(
+    holder.since,
+    today ? { timeStyle: 'short' } : { dateStyle: 'medium', timeStyle: 'short' },
+  )
+  return t('Open on {device} since {time}', { device, time })
 }
 
 /** Why a machine that was starting went back to sleep, in words. */
@@ -67,6 +91,9 @@ export class Arrival {
   failure = $state<string | null>(null)
   /** Whether it ended because the session is no more. */
   gone = $state(false)
+  /** Who holds the session while another device does, which is no wait and no failure:
+   *  it lasts until this one takes it over or is handed it. */
+  holder = $state<Holder | null>(null)
   /** Whether the socket is open. */
   private linked = $state(false)
   /** The machine's state, as the socket last said it. */
@@ -85,6 +112,7 @@ export class Arrival {
   constructor(private readonly clock: Clock = timers) {}
 
   get status(): Status {
+    if (this.holder !== null) return { held: heldLine(this.holder), taken: this.holder.taken }
     if (this.failure !== null)
       return this.gone ? { failed: this.failure, gone: true } : { failed: this.failure }
     if (this.relinking) return { waiting: 'connecting' }
@@ -102,6 +130,23 @@ export class Arrival {
     this.booted = false
     this.relinking = false
     this.here = false
+    this.holder = null
+    this.wait()
+  }
+
+  /** Another device holds the session: nothing to wait for until this one takes it. */
+  held(holder: Holder): void {
+    this.stop()
+    this.here = false
+    this.failure = null
+    this.gone = false
+    this.holder = holder
+  }
+
+  /** This device holds it now, and waits for its screen. */
+  unheld(): void {
+    if (this.holder === null) return
+    this.holder = null
     this.wait()
   }
 
@@ -114,7 +159,11 @@ export class Arrival {
   /** The socket opened or dropped. A drop after the screen was here waits again. */
   linkedNow(open: boolean): void {
     this.linked = open
-    if (!open) this.here = false
+    // Whoever holds the session is said again by the socket that comes back.
+    if (!open) {
+      this.here = false
+      this.holder = null
+    }
     this.heard()
   }
 
@@ -150,7 +199,7 @@ export class Arrival {
 
   /** Something came from the socket, which gives it `PATIENCE` again. */
   heard(): void {
-    if (!this.here && this.failure === null) this.wait()
+    if (!this.here && this.failure === null && this.holder === null) this.wait()
   }
 
   /** The session's screen is drawn: nothing to wait on. */
@@ -160,6 +209,7 @@ export class Arrival {
     this.stop()
     this.failure = null
     this.gone = false
+    this.holder = null
   }
 
   /** The tab or its source is gone. */

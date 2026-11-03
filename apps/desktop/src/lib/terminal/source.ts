@@ -56,6 +56,9 @@ export type Said =
   | { refused: string; gone?: boolean }
   /** One line worth saying under the session's screen once it is drawn. */
   | { note: string }
+  /** For an online session: another device holds it, so nothing of it comes here and
+   *  nothing typed goes there until Take over; null once this one holds it. */
+  | { held: { by: string; since: number; taken: boolean } | null }
 
 export interface Source {
   /** True for a session on another machine, whose programs and folders nothing on this
@@ -72,6 +75,8 @@ export interface Source {
   /** A new shell where the last one ended, for a source that keeps its session: an
    *  online one. A pty's is a new source. */
   again?(): void
+  /** Take over: the session handed to this device from the one holding it. Online only. */
+  take?(): void
   /** A picture written to a file on the machine the shell runs on, answering its path
    *  there; rejects where it could not be. Only for a source on another machine: a shell
    *  on this one reads this computer's clipboard itself. See images.ts. */

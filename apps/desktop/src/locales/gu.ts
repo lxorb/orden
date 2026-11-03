@@ -2297,6 +2297,12 @@ export const gu: Dictionary = {
   // The online terminal
   'Online terminal': 'ઑનલાઇન ટર્મિનલ',
   'New online terminal': 'નવું ઑનલાઇન ટર્મિનલ',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'બીજું ઉપકરણ',
+  'Taken over by {device}': '{device} એ લઈ લીધું',
+  'Open on {device} since {time}': '{time} થી {device} પર ખુલ્લું',
+  'Take over': 'લઈ લો',
+  'Take back': 'પાછું લો',
   'Start online machine': 'ઑનલાઇન મશીન શરૂ કરો',
   'Stop online machine': 'ઑનલાઇન મશીન બંધ કરો',
   Resume: 'ફરી ચાલુ કરો',

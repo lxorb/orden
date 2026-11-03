@@ -2316,6 +2316,12 @@ export const tr: Dictionary = {
   // The online terminal
   'Online terminal': 'Çevrimiçi terminal',
   'New online terminal': 'Yeni çevrimiçi terminal',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'başka bir cihaz',
+  'Taken over by {device}': '{device} devraldı',
+  'Open on {device} since {time}': '{time} saatinden beri {device} üzerinde açık',
+  'Take over': 'Devral',
+  'Take back': 'Geri al',
   'Start online machine': 'Çevrimiçi makineyi başlat',
   'Stop online machine': 'Çevrimiçi makineyi durdur',
   Resume: 'Devam et',

@@ -266,6 +266,13 @@ export class OnlineSource implements Source {
           said({ note: t('Your machine’s disk is almost full') })
         }
         return
+      // Another device holds the session, or this one does now (issue 1055).
+      case 'held':
+        said({ held: { by: frame.by, since: frame.since, taken: frame.taken } })
+        return
+      case 'hold':
+        said({ held: null })
+        return
       // Who is here, and whose input came last: the people popover's and the cursor's,
       // which come later (4.6).
       case 'people':
@@ -338,6 +345,11 @@ export class OnlineSource implements Source {
   /** A new shell in the session, after the last one ended. */
   again(): void {
     this.link?.say({ t: 'start' })
+  }
+
+  /** Take over, from the device holding the session. */
+  take(): void {
+    this.link?.take()
   }
 
   /** The socket closed; the session goes on without this window. */

@@ -2303,6 +2303,12 @@ export const ur: Dictionary = {
   // The online terminal
   'Online terminal': 'آن لائن ٹرمینل',
   'New online terminal': 'نیا آن لائن ٹرمینل',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'کوئی اور آلہ',
+  'Taken over by {device}': '{device} نے لے لیا',
+  'Open on {device} since {time}': '{time} سے {device} پر کھلا',
+  'Take over': 'سنبھالیں',
+  'Take back': 'واپس لیں',
   'Start online machine': 'آن لائن مشین شروع کریں',
   'Stop online machine': 'آن لائن مشین روکیں',
   Resume: 'دوبارہ شروع کریں',

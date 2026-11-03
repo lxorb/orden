@@ -2318,6 +2318,12 @@ export const gsw: Dictionary = {
   // The online terminal
   'Online terminal': 'Online-Terminal',
   'New online terminal': 'Neus Online-Terminal',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'es anders Grät',
+  'Taken over by {device}': 'Übernoo vo {device}',
+  'Open on {device} since {time}': 'Offe uf {device} sit {time}',
+  'Take over': 'Übernää',
+  'Take back': 'Zrugghole',
   'Start online machine': 'Online-Maschine starte',
   'Stop online machine': 'Online-Maschine stoppe',
   Resume: 'Wiitermache',

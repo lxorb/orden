@@ -2280,6 +2280,12 @@ export const am: Dictionary = {
   // The online terminal
   'Online terminal': 'የመስመር ላይ ተርሚናል',
   'New online terminal': 'አዲስ የመስመር ላይ ተርሚናል',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'ሌላ መሣሪያ',
+  'Taken over by {device}': 'በ{device} ተወስዷል',
+  'Open on {device} since {time}': 'ከ{time} ጀምሮ በ{device} ላይ ክፍት',
+  'Take over': 'ተረከብ',
+  'Take back': 'መልሰህ ውሰድ',
   'Start online machine': 'የመስመር ላይ ማሽን አስጀምር',
   'Stop online machine': 'የመስመር ላይ ማሽን አቁም',
   Resume: 'ቀጥል',

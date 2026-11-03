@@ -2270,6 +2270,12 @@ export const ko: Dictionary = {
   // The online terminal
   'Online terminal': '온라인 터미널',
   'New online terminal': '새 온라인 터미널',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': '다른 기기',
+  'Taken over by {device}': '{device}에서 가져갔습니다',
+  'Open on {device} since {time}': '{time}부터 {device}에서 열려 있음',
+  'Take over': '가져오기',
+  'Take back': '되찾기',
   'Start online machine': '온라인 머신 시작',
   'Stop online machine': '온라인 머신 중지',
   Resume: '이어서 하기',

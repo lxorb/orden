@@ -2284,6 +2284,12 @@ export const jv: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Terminal online anyar',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'piranti liya',
+  'Taken over by {device}': 'Dijupuk {device}',
+  'Open on {device} since {time}': 'Kabukak ing {device} wiwit {time}',
+  'Take over': 'Jupuk alih',
+  'Take back': 'Jupuk maneh',
   'Start online machine': 'Wiwiti mesin online',
   'Stop online machine': 'Mandhegake mesin online',
   Resume: 'Terusake',

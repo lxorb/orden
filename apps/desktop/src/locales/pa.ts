@@ -2310,6 +2310,12 @@ export const pa: Dictionary = {
   // The online terminal
   'Online terminal': 'ਔਨਲਾਈਨ ਟਰਮੀਨਲ',
   'New online terminal': 'ਨਵਾਂ ਔਨਲਾਈਨ ਟਰਮੀਨਲ',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'ਕੋਈ ਹੋਰ ਡਿਵਾਈਸ',
+  'Taken over by {device}': '{device} ਨੇ ਲੈ ਲਿਆ',
+  'Open on {device} since {time}': '{time} ਤੋਂ {device} ’ਤੇ ਖੁੱਲ੍ਹਾ',
+  'Take over': 'ਸੰਭਾਲੋ',
+  'Take back': 'ਵਾਪਸ ਲਓ',
   'Start online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਸ਼ੁਰੂ ਕਰੋ',
   'Stop online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਰੋਕੋ',
   Resume: 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ',

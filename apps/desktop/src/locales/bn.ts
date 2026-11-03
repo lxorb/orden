@@ -2305,6 +2305,12 @@ export const bn: Dictionary = {
   // The online terminal
   'Online terminal': 'অনলাইন টার্মিনাল',
   'New online terminal': 'নতুন অনলাইন টার্মিনাল',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'অন্য একটি ডিভাইস',
+  'Taken over by {device}': '{device} নিয়ে নিয়েছে',
+  'Open on {device} since {time}': '{time} থেকে {device}-এ খোলা',
+  'Take over': 'নিয়ে নিন',
+  'Take back': 'ফিরিয়ে নিন',
   'Start online machine': 'অনলাইন মেশিন চালু করুন',
   'Stop online machine': 'অনলাইন মেশিন বন্ধ করুন',
   Resume: 'আবার শুরু করুন',

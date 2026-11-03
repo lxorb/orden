@@ -2278,6 +2278,12 @@ export const vi: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal trực tuyến',
   'New online terminal': 'Terminal trực tuyến mới',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'một thiết bị khác',
+  'Taken over by {device}': 'Đã bị {device} tiếp quản',
+  'Open on {device} since {time}': 'Đang mở trên {device} từ {time}',
+  'Take over': 'Tiếp quản',
+  'Take back': 'Lấy lại',
   'Start online machine': 'Khởi động máy trực tuyến',
   'Stop online machine': 'Dừng máy trực tuyến',
   Resume: 'Tiếp tục',

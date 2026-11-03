@@ -2316,6 +2316,12 @@ export const te: Dictionary = {
   // The online terminal
   'Online terminal': 'ఆన్‌లైన్ టెర్మినల్',
   'New online terminal': 'కొత్త ఆన్‌లైన్ టెర్మినల్',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'మరో పరికరం',
+  'Taken over by {device}': '{device} తీసుకుంది',
+  'Open on {device} since {time}': '{time} నుండి {device}లో తెరిచి ఉంది',
+  'Take over': 'తీసుకోండి',
+  'Take back': 'తిరిగి తీసుకోండి',
   'Start online machine': 'ఆన్‌లైన్ మెషీన్‌ను ప్రారంభించండి',
   'Stop online machine': 'ఆన్‌లైన్ మెషీన్‌ను ఆపండి',
   Resume: 'కొనసాగించండి',
