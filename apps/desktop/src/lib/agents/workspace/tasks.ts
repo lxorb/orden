@@ -218,7 +218,7 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const hash = taskHash(fields.text)
   if ((await workspace.noteText(onDisk(note.place, note.relative))) === null) {
     const placed = placeIn('', [line], under)
-    await made(note.place, note.relative, appliedEdits('', [placedEdit(placed)]), false)
+    await made(note.place, note.relative, appliedEdits('', [placedEdit(placed)]), null)
     return done({ at: `${note.relative}#${placed.line}:${hash}`, space: place.space.name })
   }
 
@@ -338,7 +338,7 @@ async function moved(
   let line: number
   if ((await workspace.noteText(onDisk(into.place, into.relative))) === null) {
     const placed = placeIn('', block.lines, heading)
-    await made(into.place, into.relative, appliedEdits('', [placedEdit(placed)]), false)
+    await made(into.place, into.relative, appliedEdits('', [placedEdit(placed)]), null)
     line = placed.line
   } else {
     line = await rewritten(call, into, (text) => {
@@ -434,7 +434,7 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
       ...where.properties,
       ...(properties as Record<string, unknown>),
     })
-    return done(await made(place, path, words, false))
+    return done(await made(place, path, words, null))
   } catch (error) {
     refused(error)
   }

@@ -101,7 +101,7 @@ export async function attachAgentLog(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   if ((await workspace.noteText(onDisk(place, relative))) === null) {
-    await made(place, relative, `${section}\n`, false)
+    await made(place, relative, `${section}\n`, null)
   } else {
     await notes.editNote(writerOf(call), { path: relative, space: place.space.id }, [
       { at: { end: true }, insert_after: section },

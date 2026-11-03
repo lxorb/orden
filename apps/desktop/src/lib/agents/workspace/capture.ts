@@ -248,7 +248,7 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
 
   const there = (await workspace.noteText(path)) !== null
   if (!there) {
-    await made(place, relative, words, false)
+    await made(place, relative, words, null)
     return done(
       { path: relative, space: place.space.id, source: page.url, created: true },
       page.url,
