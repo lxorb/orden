@@ -1067,10 +1067,11 @@ function known(): Promise<void> {
 
 export const sync = new Sync()
 
-workspace.fileOps.follow((op) => sync.follow(op))
+// What another window did, it tells the account of; see workspace/across.ts.
+workspace.fileOps.follow((op) => (op.heard ? undefined : sync.follow(op)))
 // The notes waiting on a question follow their files, and are found by id when one is
 // answered; see sync/record.svelte.ts.
-workspace.fileOps.follow((op) => record.follow(op))
+workspace.fileOps.follow((op) => (op.heard ? undefined : record.follow(op)))
 record.notes = {
   at: (id) => sync.pathOf(id),
   of: (path) => sync.tracked(path)?.id ?? null,

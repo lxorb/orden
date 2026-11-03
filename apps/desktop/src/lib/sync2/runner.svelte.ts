@@ -29,6 +29,8 @@ import { workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
 import { owesAtTheEnd, owesLast, writing } from '../parting'
 import { isDesktop, joinPath } from '../tauri'
+import { pathKey } from '../space-paths'
+import { oneWriteAt, type Said, windows } from '../windows'
 import { waited } from '../timing'
 import { appWorld, type Telling } from './app-world'
 import type { NoteDoc } from '../workspace/documents.svelte'
@@ -40,10 +42,13 @@ import { asking, type Held, type HeldAnswer, unsyncedToast } from './asking.svel
 import { attach, attachPlane, type PlaneJoin } from './binding'
 import { carry, uncarry } from './carry'
 import { kindOfName } from './create'
+import { MINE } from './docs'
 import { Engine } from './engine'
+import { type Leadership, leadSync } from './lead'
+import { Owed, type Owing, takeOwed } from './owed'
 import { type Holding, spend } from '../sync/holding'
 import type { Carried } from '../pages/carried'
-import { holdsDocument, joinsAs, unixLines } from './kinds'
+import { holdsDocument, joinsAs, turn, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put, remove } from './store'
@@ -52,6 +57,13 @@ import { pairsFromV1 } from './v1-pairs'
 import { usage } from '../usage.svelte'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
+
+/** How long a window with no engine waits on the one that has it: a pass is what can take
+ *  this long, and a window nobody answers in is a window that has gone. */
+const ASKS_AT_MOST = 30_000
+
+/** How long signing out in such a window waits for the engine's to let go of the store. */
+const SIGN_OUT_WAITS = 10_000
 
 /** How long after a change here the pass that sends it waits, so a burst of saves is one
  *  pass. */
@@ -148,12 +160,41 @@ class Runner {
   /** The space folders' watch, on the desktop; see watching.ts. */
   private watched: Watched | null = null
 
-  /** Starts the engine for the account signed in. */
+  /** Starts the engine for the account signed in, once this window is the one that runs
+   *  it: one engine per device, whichever window or tab that is (`leadSync`). Until then
+   *  this window speaks to the one that does; see "The other windows" below. */
   async start(): Promise<void> {
     const user = account.user
-    if (!user || this.engine) return
+    if (!user || this.engine || this.giving) return
     this.accountId = user.id
-    const store = await openSyncStore(user.id)
+    this.hearLeader()
+    const giving = new AbortController()
+    this.giving = giving
+    const lead = await leadSync(giving.signal, user.id)
+    if (!lead || this.giving !== giving || account.user?.id !== user.id) {
+      lead?.release()
+      return
+    }
+    this.giving = null
+    this.lead = lead
+    try {
+      await this.running(user)
+    } catch (error) {
+      // No engine, here: whoever waits next may fare better, and nothing is owed to nobody.
+      this.lead = null
+      lead.release()
+      this.owed.clear()
+      throw error
+    }
+  }
+
+  /** How the wait for the engine is given up. */
+  private giving: AbortController | null = null
+  /** This window's being the one that runs the engine. */
+  private lead: Leadership | null = null
+
+  private async running(user: { id: string }): Promise<void> {
+    const store = await openSyncStore(user.id, true)
     const engine = await Engine.start(
       appWorld(() => account.token, this.telling),
       store,
@@ -216,6 +257,7 @@ class Runner {
 
     this.status = 'idle'
     this.kick()
+    await this.tookOver(engine)
   }
 
   /** A held note answered: Keep mine, Keep theirs or Keep both. Answers the copy's path
@@ -243,7 +285,14 @@ class Runner {
   /** Signing out, while it runs. */
   private leaving: Promise<void> | null = null
 
-  private async halt(): Promise<void> {
+  private async halt(keepLead = false): Promise<void> {
+    this.giving?.abort()
+    this.giving = null
+    this.owed.clear()
+    this.seen = { spaces: [], notes: [] }
+    this.seenAt.clear()
+    this.noLeader()
+    for (const stop of this.hearings.splice(0)) stop()
     for (const stop of this.stops.splice(0)) stop()
     for (const key of this.carried) uncarry(key)
     this.carried.clear()
@@ -261,6 +310,12 @@ class Runner {
       engine.stop()
       await engine.core.store.close().catch(() => undefined)
     }
+    if (!keepLead) this.letGoLead()
+  }
+
+  private letGoLead() {
+    this.lead?.release()
+    this.lead = null
   }
 
   /** A save: everything typed written down, after autosave's own last writes. */
@@ -301,7 +356,7 @@ class Runner {
     const user = account.user
     const token = account.token
     if (!user || !token) return false
-    const store = await openSyncStore(user.id)
+    const store = await openSyncStore(user.id, true)
     const engine = await Engine.start(
       appWorld(() => account.token, this.telling),
       store,
@@ -332,11 +387,17 @@ class Runner {
   /** The way back, tried until it is walked, at v1's cadence while the account cannot be
    *  reached. Answers whether v1 may start, false once `alive` says this session ended. */
   async walkBack(alive: () => boolean): Promise<boolean> {
-    for (let tries = 0; alive(); tries += 1) {
-      if (await this.rollBack().catch(() => false)) return alive()
-      await waited(pollDelay(tries, document.hidden))
+    // One window walks it: an engine for this is an engine like any other.
+    const lead = await leadSync(undefined, account.user?.id)
+    try {
+      for (let tries = 0; alive(); tries += 1) {
+        if (await this.rollBack().catch(() => false)) return alive()
+        await waited(pollDelay(tries, document.hidden))
+      }
+      return false
+    } finally {
+      lead?.release()
     }
-    return false
   }
 
   /** The spaces v2 kept here: the ones whose first pass is done. */
@@ -390,9 +451,23 @@ class Runner {
         log('warn', `sync: signing out kept no mirrors - ${String(error)}`)
       }
     }
-    await this.halt()
+    const led = !!engine || !!this.lead
+    await this.halt(true)
     this.firsts.clear()
+    if (led) {
+      // Held until the store is gone, so no window that has not heard yet opens it meanwhile.
+      await forgetSyncStore(accountId).finally(() => this.letGoLead())
+      return
+    }
+    // Another window runs the engine, and it hears this too (workspace/across.ts): the store
+    // goes once that window has let go of it, not from under it.
+    const giving = new AbortController()
+    const late = setTimeout(() => giving.abort(), SIGN_OUT_WAITS)
+    const lead = await leadSync(giving.signal, accountId)
+    clearTimeout(late)
     await forgetSyncStore(accountId)
+      .catch(() => undefined)
+      .finally(() => lead?.release())
   }
 
   // -------------------------------------------------------------------------
@@ -406,6 +481,10 @@ class Runner {
   /** Every space passed now, waited for: what automation and a link joining ask for.
    *  Answers whether anything moved. */
   async passNow(): Promise<boolean> {
+    if (!this.engine) {
+      // Nobody to ask: starting, or an engine that would not start. Waiting would not help.
+      return this.leaderId ? (await this.ask('pass', {})) === true : false
+    }
     const before = this.lastSyncedAt
     this.kick()
     await this.passing_
@@ -415,7 +494,10 @@ class Runner {
   /** A pass soon over one space, or all of them. */
   kick(space?: string) {
     const engine = this.engine
-    if (!engine) return
+    if (!engine) {
+      if (this.accountId) this.say('sync-kick', { space })
+      return
+    }
     if (space) {
       if (engine.core.spaces.has(space)) this.due.add(space)
     } else {
@@ -430,7 +512,10 @@ class Runner {
 
   /** Something changed here: a pass in a moment, unless one is sooner. */
   nudge() {
-    if (!this.engine) return
+    if (!this.engine) {
+      if (this.accountId) this.say('sync-kick', {})
+      return
+    }
     this.quiet = 0
     clearTimeout(this.timer)
     this.timer = setTimeout(() => this.kick(), NUDGE)
@@ -513,6 +598,7 @@ class Runner {
       )
       this.lastSyncedAt = Date.now()
       this.status = offline ? 'offline' : 'idle'
+      if (moved) this.sayRows()
     } catch (error) {
       if (this.engine !== engine) return
       // The session ended on the account: signed out here too, as every other request
@@ -636,6 +722,18 @@ class Runner {
     written: () => {
       this.treeStale()
     },
+    // A file the engine wrote is one more write in that file's one line of writes, which
+    // the other windows hold the note of; see workspace/across.ts.
+    writing: async (path, text, write) => {
+      if (windows.alone) {
+        await write()
+        return
+      }
+      await oneWriteAt(path, async () => {
+        await write()
+        windows.say('words', { path, text })
+      })
+    },
   }
 
   private treeTimer: ReturnType<typeof setTimeout> | undefined
@@ -649,7 +747,14 @@ class Runner {
    *  they were done. */
   follow(op: FileOp): Promise<void> | undefined {
     const engine = this.engine
-    if (!engine) return undefined
+    if (!engine) {
+      if (this.owedTo) {
+        const at = op.op === 'moved' ? op.from : op.op === 'removed' ? op.path : null
+        const entry = at === null ? undefined : this.seenAt.get(pathKey(at))?.id
+        this.owed.add({ kind: 'op', op: withoutKey(op), ...(entry ? { entry } : {}) })
+      }
+      return undefined
+    }
     const key =
       op.op === 'moved' ? `moved:${op.from}` : op.op === 'removed' ? `removed:${op.path}` : ''
     if (key && this.own.has(key)) return undefined
@@ -688,13 +793,17 @@ class Runner {
   private readonly mergeables = new Set<string>()
 
   mergeable(path: string) {
+    if (!this.engine && this.accountId) this.say('sync-mergeable', { path })
     this.mergeables.add(path)
   }
 
   /** Autosave wrote a note: recorded, and what was typed is one more pending update. */
   async wrote(path: string, text: string): Promise<void> {
     const engine = this.engine
-    if (!engine) return
+    if (!engine) {
+      if (this.owedTo) this.owed.add({ kind: 'wrote', path, text })
+      return
+    }
     await engine.saved(path, text).catch((error: unknown) => {
       log('error', `sync: saved ${path} - ${String(error)}`)
     })
@@ -703,7 +812,8 @@ class Runner {
 
   /** The account's id for a space's folder. */
   remoteIdFor(root: string): string | null {
-    for (const space of this.engine?.core.spaces.values() ?? []) {
+    if (!this.engine) return this.seen.spaces.find((one) => one.root === root)?.id ?? null
+    for (const space of this.engine.core.spaces.values()) {
       if (space.row.root === root) return space.id
     }
     return null
@@ -712,7 +822,8 @@ class Runner {
   /** The role the sync store kept for the space a folder is, as the account last
    *  said it: what may be done there before the account is asked again. */
   roleKept(root: string): string | null {
-    for (const space of this.engine?.core.spaces.values() ?? []) {
+    if (!this.engine) return this.seen.spaces.find((one) => one.root === root)?.role ?? null
+    for (const space of this.engine.core.spaces.values()) {
       if (space.row.root === root) return space.row.role
     }
     return null
@@ -721,7 +832,8 @@ class Runner {
   /** The file on this disk an entry of the account is, by its id: null for one that is
    *  not on this disk, or in no space this device syncs. */
   fileOf(id: string): string | null {
-    for (const space of this.engine?.core.spaces.values() ?? []) {
+    if (!this.engine) return this.seen.notes.find((one) => one.id === id)?.path ?? null
+    for (const space of this.engine.core.spaces.values()) {
       const local = space.entries.get(id)?.local_path
       if (local && space.isLive(id)) return joinPath(space.row.root, local)
     }
@@ -731,9 +843,10 @@ class Runner {
   /** What the account holds for a note on this disk: its id, its version, and the digest
    *  of what Orden last wrote. */
   tracked(path: string): { id: string; version: number; hash: string } | null {
+    if (!this.engine) return this.seenAt.get(pathKey(path)) ?? null
     const engine = this.engine
-    const entry = engine?.entryAt(path)
-    if (!engine || entry?.seq == null) return null
+    const entry = engine.entryAt(path)
+    if (entry?.seq == null) return null
     return {
       id: entry.id,
       version: engine.core.numbers.get(entry.id)?.seq ?? 0,
@@ -752,6 +865,8 @@ class Runner {
    *  is read and hashed against what was last written, since the watcher's word on a
    *  change can come a moment after the change. */
   async holds(path: string, how: Holding = {}): Promise<boolean> {
+    // Not knowing is the safe answer: a delete then keeps its copy in this device's trash.
+    if (!this.engine && this.accountId) return (await this.ask('holds', { path })) === true
     const engine = this.engine
     const entry = engine?.entryAt(path)
     if (!engine || entry?.seq == null || entry.deleted || !entry.written_hash) {
@@ -778,6 +893,10 @@ class Runner {
 
   /** A space deleted here: its rows go with it. */
   async forget(root: string): Promise<void> {
+    if (!this.engine && this.accountId) {
+      await this.ask('forget', { root })
+      return
+    }
     const engine = this.engine
     const space = [...(engine?.core.spaces.values() ?? [])].find((one) => one.row.root === root)
     if (engine && space) await engine.core.commit(engine.core.forgetSpace(space.id))
@@ -807,6 +926,259 @@ class Runner {
     }
     const names = await this.names.catch(() => null)
     return names?.get(device) ?? ''
+  }
+
+  // -------------------------------------------------------------------------
+  // The other windows
+  //
+  // One window runs the engine. Each of the others keeps no engine and asks that one: what
+  // it did goes over in `owed`, and what the rest of the app asks of the engine in passing
+  // (which space a folder is, what the account holds of a note) is answered from what the
+  // engine's window last said. An open note in such a window is carried by its file,
+  // through the passes and workspace/across.ts, not by a room: the room is that window's.
+
+  /** The account's ids as the engine's window last said them. */
+  private seen: Rows = { spaces: [], notes: [] }
+  private seenAt = new Map<string, { id: string; version: number; hash: string }>()
+  private readonly owed = new Owed((item) => this.say('sync-owed', { item }))
+  /** The window that runs the engine, as far as anyone has said. */
+  private leaderId: string | null = null
+  /** A visible window's pass on the clock, kept by the window that runs them. */
+  private beat: ReturnType<typeof setInterval> | undefined
+
+  /** Whether anything this window does has anywhere to go: to an engine on its way, here or
+   *  in the window that holds the lock, or to one that is running. */
+  private get owedTo(): boolean {
+    return !!this.giving || !!this.lead || !!this.leaderId
+  }
+
+  /** Said for this account's windows and heard from them alone: two accounts are two
+   *  stores, and another's words must never reach this one's. */
+  private say(kind: string, what: Record<string, unknown> = {}) {
+    windows.say(kind, { ...what, account: this.accountId })
+  }
+
+  private hear(kind: string, listener: (said: Said) => void) {
+    return windows.hear(kind, (said) => {
+      if (this.accountId && said.account === this.accountId) listener(said)
+    })
+  }
+
+  private leaderIs(id: unknown) {
+    if (typeof id !== 'string' || this.engine) return
+    this.leaderId = id
+    // Whoever is looking at this window is why a pass should not wait for that one to be
+    // looked at: its clock runs slow while it is hidden, this one keeps it to a visible
+    // window's. A window holding a lock is not frozen, so nobody need take over from it.
+    this.beat ??= setInterval(() => this.lookedAt(), FALLBACK)
+  }
+
+  /** Nobody runs the engine, as far as this window can say, and so nobody will answer. */
+  private noLeader() {
+    this.leaderId = null
+    clearInterval(this.beat)
+    this.beat = undefined
+    for (const answer of [...this.asked.values()]) answer(null)
+  }
+
+  private lookedAt() {
+    if (!this.engine && this.leaderId && document.visibilityState !== 'hidden') {
+      this.say('sync-kick')
+    }
+  }
+  /** What this window hears while it is signed in, engine or not. */
+  private readonly hearings: (() => void)[] = []
+  /** Questions asked of the engine's window, by id. */
+  private readonly asked = new Map<string, (value: unknown) => void>()
+  /** Things owed by others, one at a time, as they were said. */
+  private taking: Promise<unknown> = Promise.resolve()
+
+  /** Asks the engine's window. Nobody there, or nobody who answers soon: null. */
+  private ask(what: string, args: Record<string, unknown>): Promise<unknown> {
+    if (!this.leaderId) return Promise.resolve(null)
+    return new Promise((resolve) => {
+      const id = crypto.randomUUID()
+      const timer = setTimeout(() => {
+        this.asked.delete(id)
+        resolve(null)
+      }, ASKS_AT_MOST)
+      this.asked.set(id, (value) => {
+        clearTimeout(timer)
+        this.asked.delete(id)
+        resolve(value)
+      })
+      this.say('sync-ask', { id, what, args })
+    })
+  }
+
+  /** What a window with no engine listens to. A window that takes the engine goes on
+   *  hearing these, and nobody says them to it any more. */
+  private hearLeader() {
+    if (this.hearings.length) return
+    if (typeof window !== 'undefined') {
+      const back = () => this.lookedAt()
+      window.addEventListener('focus', back)
+      document.addEventListener('visibilitychange', back)
+      this.hearings.push(() => {
+        window.removeEventListener('focus', back)
+        document.removeEventListener('visibilitychange', back)
+      })
+    }
+    this.hearings.push(
+      windows.hear('bye', (said) => {
+        if (said.from === this.leaderId) this.noLeader()
+      }),
+      this.hear('sync-leader', (said) => {
+        this.leaderIs(said.from)
+        this.owed.resend()
+        this.say('sync-hello')
+      }),
+      this.hear('sync-took', (said) => {
+        if (said.to === windows.me && typeof said.id === 'string') this.owed.done(said.id)
+      }),
+      this.hear('sync-said', (said) => {
+        if (said.to === windows.me && typeof said.id === 'string') {
+          this.asked.get(said.id)?.(said.value)
+        }
+      }),
+      this.hear('sync-light', (said) => {
+        if (this.engine) return
+        this.leaderIs(said.from)
+        this.status = said.status as Light
+        this.lastError = (said.lastError as string | null) ?? null
+        this.lastSyncedAt = (said.lastSyncedAt as number | null) ?? null
+      }),
+      this.hear('sync-rows', (said) => {
+        if (this.engine) return
+        this.leaderIs(said.from)
+        this.seen = said.rows as Rows
+        this.seenAt = new Map(
+          this.seen.notes.map(({ path, id, version, hash }) => [
+            pathKey(path),
+            { id, version, hash },
+          ]),
+        )
+      }),
+    )
+    this.say('sync-hello')
+  }
+
+  /** This window has the engine now: what it owed runs here, what the others owe comes
+   *  here, and they are told, so whatever the last engine's window never answered is said
+   *  again. */
+  private async tookOver(engine: Engine) {
+    this.noLeader()
+    this.stops.push(
+      this.hear('sync-owed', (said) => {
+        const item = said.item as Owing
+        this.inTurn(async () => {
+          await this.took(engine, item)
+          this.say('sync-took', { id: item.id, to: said.from })
+        })
+      }),
+      this.hear('sync-kick', (said) => {
+        this.kick(typeof said.space === 'string' ? said.space : undefined)
+      }),
+      this.hear('sync-mergeable', (said) => {
+        if (typeof said.path === 'string') this.mergeables.add(said.path)
+      }),
+      this.hear('sync-ask', (said) => {
+        this.inTurn(async () => {
+          this.say('sync-said', {
+            id: said.id,
+            to: said.from,
+            value: await this.answering(said).catch(() => null),
+          })
+        })
+      }),
+      this.hear('sync-hello', () => this.sayAll()),
+      $effect.root(() => {
+        $effect(() => {
+          const said = {
+            status: this.status,
+            lastError: this.lastError,
+            lastSyncedAt: this.lastSyncedAt,
+          }
+          untrack(() => this.say('sync-light', said))
+        })
+      }),
+    )
+    this.say('sync-leader')
+    this.sayAll()
+    for (const item of this.owed.drain()) {
+      await this.took(engine, item).catch((error: unknown) => {
+        log('error', `sync: ${String(error)}`)
+      })
+    }
+  }
+
+  private inTurn(run: () => Promise<void>) {
+    this.taking = this.taking.then(run).catch((error: unknown) => {
+      log('error', `sync: another window's - ${String(error)}`)
+    })
+  }
+
+  private took(engine: Engine, item: Owing): Promise<void> {
+    return takeOwed(engine, item, (op) => this.follow(op)).then(() => this.nudge())
+  }
+
+  private async answering(said: Said): Promise<unknown> {
+    const args = (said.args ?? {}) as { path?: string; root?: string }
+    if (said.what === 'pass') {
+      const moved = await this.passNow()
+      this.sayRows()
+      return moved
+    }
+    if (said.what === 'holds') return await this.holds(args.path ?? '')
+    if (said.what === 'forget') {
+      await this.forget(args.root ?? '')
+      this.sayRows()
+    }
+    return null
+  }
+
+  private sayAll() {
+    this.sayRows()
+    this.say('sync-light', {
+      status: this.status,
+      lastError: this.lastError,
+      lastSyncedAt: this.lastSyncedAt,
+    })
+  }
+
+  /** What the other windows answer with, once there are any. */
+  private sayRows() {
+    const engine = this.engine
+    if (!engine || windows.alone) return
+    const rows: Rows = { spaces: [], notes: [] }
+    for (const space of engine.core.spaces.values()) {
+      rows.spaces.push({ id: space.id, root: space.row.root, role: space.row.role })
+      for (const entry of space.entries.values()) {
+        if (entry.seq === null || !entry.local_path || !space.isLive(entry.id)) continue
+        rows.notes.push({
+          path: joinPath(space.row.root, entry.local_path),
+          id: entry.id,
+          version: engine.core.numbers.get(entry.id)?.seq ?? 0,
+          hash: entry.written_hash ?? '',
+        })
+      }
+    }
+    this.say('sync-rows', { rows })
+  }
+
+  /** The document a note on screen here is joined to, for what another window wrote into
+   *  it to go in through: the binding then brings it to the note as an arrival. */
+  joinedOf(note: NoteDoc): { text(): string; put(to: string): void } | null {
+    const engine = this.engine
+    const entry = note.path === null ? null : engine?.entryAt(note.path)
+    if (!engine || !entry || engine.core.isHeld(entry.id)) return null
+    if (![...this.bound.values()].some((one) => one.id === entry.id)) return null
+    const doc = engine.core.docs.get(entry.id)
+    if (!doc?.live || !engine.core.pinned.has(entry.id)) return null
+    return {
+      text: () => doc.text(),
+      put: (to) => doc.write((live) => turn('words', live, doc.text(), to, MINE)),
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -950,6 +1322,20 @@ class Runner {
       if (plane && entered?.hand) plane.hand = entered.hand.bind(entered)
     })
   }
+}
+
+/** What the engine's window says of what the engine holds, for the others to answer from. */
+interface Rows {
+  spaces: { id: string; root: string; role: string | null }[]
+  notes: { path: string; id: string; version: number; hash: string }[]
+}
+
+/** A file operation as it goes to another window: a document's key means nothing there. */
+function withoutKey(op: FileOp): FileOp {
+  if (op.op !== 'created') return op
+  const said = { ...op }
+  delete said.key
+  return said
 }
 
 /** What an open note is joined through: its views, or a canvas's surface. */

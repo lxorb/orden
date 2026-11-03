@@ -134,6 +134,12 @@ export class NoteDoc {
    *  no file or came back holding words the file never had; see `firstVersion`. */
   private before: string | null
 
+  /** The words this window last knew the file to hold, in the editor's line endings:
+   *  what a write and another window's write are each merged against, null for a document
+   *  with no file or one that came back holding words the file never had. See
+   *  workspace/across.ts. */
+  onDisk: string | null
+
   /** `edited` hears about every change to the words, wherever it came from: a
    *  keystroke in any pane, an undo, a picture dropped in. */
   constructor(start: DocumentStart, edited: (doc: NoteDoc) => void) {
@@ -145,6 +151,7 @@ export class NoteDoc {
     this.dirty = start.dirty
     this.words = start.text
     this.before = start.path !== null && !start.dirty ? start.text : null
+    this.onDisk = this.before
     this.live = new SharedDoc(start.text)
     this.retitle()
 
@@ -288,6 +295,7 @@ export class NoteDoc {
     this.words = text
     this.behind = false
     this.dirty = dirty
+    if (!dirty) this.onDisk = text
     // A note re-read from its file: that is what the file holds now, where the
     // version the first write keeps has not been taken yet.
     if (!dirty && this.before !== null) this.before = text
@@ -299,6 +307,7 @@ export class NoteDoc {
   wroteAs(text: string) {
     if (this.behind || this.words !== text) return
     this.dirty = false
+    this.onDisk = text
     if (this.before !== null) this.before = text
   }
 
@@ -314,7 +323,21 @@ export class NoteDoc {
     this.words = text
     this.behind = false
     this.dirty = false
+    this.onDisk = text
     if (this.before !== null) this.before = text
+  }
+
+  /** Words of another window's, brought into this note as they arrive from a room: every
+   *  caret stays, no step of undo is made, and nothing is written for it here. `to` is
+   *  what the words are afterwards. */
+  took(change: { from: number; to: number; insert: string } | null, to: string) {
+    if (!change) return
+    this.quiet = true
+    this.live.arrived([change])
+    this.quiet = false
+    // A composition holds what arrives until it ends, and the rope says when it has.
+    this.behind = this.live.text.toString() !== to
+    if (!this.behind) this.words = to
   }
 
   /** The one tab that previews a note, moving on to another one.
@@ -332,6 +355,7 @@ export class NoteDoc {
     this.path = note.path
     this.name = note.name
     this.before = note.text
+    this.onDisk = note.text
     this.arrivals++
 
     // Not `replace`: this document is not being edited, it is being pointed at

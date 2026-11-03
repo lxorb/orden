@@ -1572,6 +1572,40 @@ describe('an answer on its way', () => {
     }
   })
 
+  test('a send behind an answer in another window waits, and starts from what the file holds', async () => {
+    const chat = await launched()
+    chat.here('work')
+    const { keepThread, newThread, readThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [
+      { id: 'y', role: 'you', at: 1, parts: [], draft: { text: 'Hi', attachments: [] } },
+      { id: 'm', role: 'model', at: 2, parts: [{ kind: 'text', text: 'stale' }] },
+    ]
+    await keepThread(thread)
+    thread.elsewhere = true
+    chat.adopt(thread, true)
+    engine.send.mockClear()
+    const held = chat as unknown as { readAgain(id: string): Promise<void>; enqueue: unknown }
+    const reading = vi.spyOn(held, 'readAgain').mockResolvedValue(undefined)
+
+    chat.send('Next')
+    expect(engine.send).not.toHaveBeenCalled()
+    expect(thread.turns).toHaveLength(2)
+    reading.mockRestore()
+
+    // That window's answer ended: the file has it, and nobody says they are answering.
+    const finished = await readThread('work', thread.id)
+    if (!finished) throw new Error('no thread')
+    finished.turns[1] = { id: 'm', role: 'model', at: 2, parts: [{ kind: 'text', text: 'whole' }] }
+    await keepThread(finished)
+    await held.readAgain(thread.id)
+
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalled())
+    const live = (await readThread('work', thread.id))?.turns ?? []
+    expect(JSON.stringify(live)).toContain('whole')
+    expect(JSON.stringify(live)).not.toContain('stale')
+  })
+
   test('in another window is not asked again from this one', async () => {
     const chat = await launched()
     chat.here('work')

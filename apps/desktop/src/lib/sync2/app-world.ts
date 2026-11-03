@@ -37,6 +37,8 @@ export interface Telling {
   gone(path: string, kind: FileKind): Promise<void>
   /** One it wrote: `fresh` when nothing was there before. */
   written(path: string, fresh: boolean): void
+  /** The write itself, around whatever else has to know of it. */
+  writing?(path: string, text: string, write: () => Promise<unknown>): Promise<unknown>
 }
 
 function parentOf(path: string): string {
@@ -55,7 +57,8 @@ function diskOf(telling: Telling): Disk {
     async write(path, text) {
       const fresh = !(await stamped(path))
       await invoke('create_folder', { path: parentOf(path) }).catch(() => undefined)
-      await invoke('write_note', { path, content: text })
+      const write = () => invoke('write_note', { path, content: text })
+      await (telling.writing ? telling.writing(path, text, write) : write())
       links.noteSaved(path, text)
       telling.written(path, fresh)
     },

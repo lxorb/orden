@@ -1,7 +1,7 @@
 /** Threads kept: written and read back whole, checked on the way in, branched, and
  *  written one write at a time. The crate's half is ai_threads.rs's tests. */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** What the crate holds, by space and id, and every write it was asked for. */
 const disk = new Map<string, { head: unknown; body: string }>()
@@ -37,6 +37,33 @@ vi.mock('../../tauri', () => ({
     }
   },
 }))
+
+/** Two windows' ends of the channel: the code under test holds one, `other` the other. */
+vi.mock('../../windows', async (original) => {
+  const { Windows } = await original<typeof import('../../windows')>()
+  const ends: {
+    onmessage: ((event: MessageEvent<unknown>) => void) | null
+    postMessage(m: unknown): void
+  }[] = []
+  const end = () => {
+    const line = {
+      onmessage: null as ((event: MessageEvent<unknown>) => void) | null,
+      postMessage: (message: unknown) => {
+        for (const one of ends) {
+          if (one !== line) one.onmessage?.({ data: message } as MessageEvent<unknown>)
+        }
+      },
+    }
+    ends.push(line)
+    return line
+  }
+  const [mine, theirs] = [end(), end()]
+  return { Windows, windows: new Windows(() => mine), other: new Windows(() => theirs) }
+})
+
+const { other } = (await import('../../windows')) as unknown as {
+  other: import('../../windows').Windows
+}
 
 const {
   branchThread,
@@ -288,6 +315,63 @@ describe('a file written while its answer was on its way', () => {
     })
 
     expect(read?.turns[0]?.parts).toEqual([])
+  })
+})
+
+/** The file's clock against who says so now: a relaunch inside three minutes of a quit
+ *  (nobody says), and a chat open beside the window answering in it (that window does). */
+describe('whether anybody is answering is asked, not read off the clock', () => {
+  const inFile = (thread: Thread) => {
+    disk.set(`work/${thread.id}`, {
+      head: {},
+      body: JSON.stringify({ ...thread, answeringAt: Date.now(), answeringIn: 'gone' }),
+    })
+  }
+  const answeringOne = () => {
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [{ id: 'm1', role: 'model', at: 2, parts: [{ kind: 'text', text: 'Her' }] }]
+    thread.answering = 'm1'
+    return thread
+  }
+
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  test('a window that says nothing has gone, and the thread can be written again', async () => {
+    const thread = answeringOne()
+    inFile(thread)
+    const reading = readThread('work', thread.id)
+    await vi.advanceTimersByTimeAsync(2_000)
+    const read = await reading
+
+    expect(read?.elsewhere).toBeUndefined()
+    expect(read?.turns[0]?.parts.at(-1)).toEqual({ kind: 'notice', code: 'stopped', text: '' })
+    const before = writes.length
+    if (read) await keepThread(read)
+    expect(writes).toHaveLength(before + 1)
+  })
+
+  test('a window that says so is left to answer, and takes the name given here', async () => {
+    const thread = answeringOne()
+    inFile(thread)
+    const stop = other.hear('thread-answering?', (said) =>
+      other.say('thread-answering', { id: said.id }),
+    )
+    const named: unknown[] = []
+    const stopNamed = other.hear('thread-fields', (said) => named.push(said.fields))
+    const reading = readThread('work', thread.id)
+    await vi.advanceTimersByTimeAsync(2_000)
+    const read = await reading
+    expect(read?.elsewhere).toBe(true)
+
+    const before = writes.length
+    if (read) await keepThread({ ...read, title: 'Herons' })
+    expect(writes).toHaveLength(before)
+    expect(named).toHaveLength(1)
+    // The name given here, and nothing that window has moved on from since.
+    expect(named[0]).toEqual({ title: 'Herons' })
+    stop()
+    stopNamed()
   })
 })
 
