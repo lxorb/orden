@@ -2676,6 +2676,16 @@ export const ps: Dictionary = {
   'Agent instructions': 'د اجنټ لارښوونې',
   "AGENTS is this space's agent instructions": 'AGENTS د دې ځای د اجنټ لارښوونې دي',
   '{title}, unread': '{title}، نالوستی',
+  Working: 'کار کوي',
+  'Needs input': 'ځواب ته اړتیا لري',
+  Interrupted: 'ودرول شو',
+  '{title}, {state}': '{title}، {state}',
+  'Switch to {model}?': '{model} ته واوړي؟',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'بل پیغام ټوله خبرې اترې بیا لېږي: شاوخوا {count} نور ټوکنونه.',
+  'It is too long for this model, so it is compacted first.':
+    'دا د دې ماډل لپاره ډېره اوږده ده، نو لومړی لنډېږي.',
+  Switch: 'واوړه',
   '{title}, running': '{title}، روان دی',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden نور د AI کیلي د Mac په کیچین کې نه ساتي، چې تل یې پټنوم غوښته. خپلې کیلي بیا ولیکئ او یو ځل بیا ChatGPT ته ننوځئ.',

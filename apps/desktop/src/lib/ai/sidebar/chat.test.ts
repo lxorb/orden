@@ -116,7 +116,20 @@ vi.mock('./gather', async (importOriginal) => {
   }
 })
 
-vi.mock('../../prompt.svelte', () => ({ prompt: { confirm: () => Promise.resolve(true) } }))
+/** The answer a question with a box to tick gets: a switch of model (#1089). */
+const ticking = vi.hoisted(() => ({
+  answer: null as { id: string; ticked: boolean } | null,
+  asked: [] as string[],
+}))
+vi.mock('../../prompt.svelte', () => ({
+  prompt: {
+    confirm: () => Promise.resolve(true),
+    chooseTicking: (options: { title: string }) => {
+      ticking.asked.push(options.title)
+      return Promise.resolve(ticking.answer)
+    },
+  },
+}))
 
 /** The panel as a launch finds it: its store and what it remembers read afresh. */
 async function launched() {
@@ -1408,5 +1421,202 @@ describe('a chat’s unread mark (#1064)', () => {
     const { hostOf } = await import('../commands/host')
     hostOf(chat).line(parent, '↳ done')
     expect([...chat.unread]).toEqual([parent.id])
+  })
+})
+
+/** #1089: every chat is always in one state, which the runtime moves through one door. */
+describe('where a chat stands', () => {
+  beforeEach(() => {
+    kept.clear()
+    localStorage.clear()
+    engine.send.mockReset()
+    ticking.asked.length = 0
+  })
+
+  const around = { front: null, selection: '' }
+
+  async function opened() {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    return chat
+  }
+
+  const answers = (stop: 'end' | 'stopped' | 'error', ask = false) =>
+    engine.send.mockImplementation(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) => {
+        const turn = { id: crypto.randomUUID(), role: 'model' as const, at: 1, parts: [] }
+        thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+        thread.turns.push(turn)
+        if (ask)
+          on({
+            type: 'part',
+            turn: turn.id,
+            index: 0,
+            part: { kind: 'tool', id: 't', verb: 'edit', input: {}, state: 'asking' },
+          } as unknown as EngineEvent)
+        on({ type: 'done', stop })
+        return Promise.resolve()
+      },
+    )
+
+  test('done once an answer runs to its end, and written down so', async () => {
+    answers('end')
+    const chat = await opened()
+    chat.text = 'hello'
+    chat.submit(around)
+    const id = String(chat.thread?.id)
+    await vi.waitFor(() => expect(chat.states.get(id)).toBe('done'))
+    expect(chat.thread?.state).toBe('done')
+  })
+
+  test('an error where the answer failed, waiting while it waits on the plan', async () => {
+    const chat = await opened()
+    engine.send.mockImplementation(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) => {
+        thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+        thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+        on({ type: 'limit', limit: { state: 'reached', until, untilWords: null } })
+        on({ type: 'done', stop: 'error', error: 'At its limit' })
+        return Promise.resolve()
+      },
+    )
+    chat.text = 'go on'
+    chat.submit(around)
+    const id = String(chat.thread?.id)
+    await vi.waitFor(() => expect(chat.states.get(id)).toBe('error'))
+    chat.waitForReset(true)
+    expect(chat.states.get(id)).toBe('waiting')
+    chat.waitForReset(false)
+    expect(chat.states.get(id)).toBe('error')
+  })
+
+  test('interrupted where it was stopped short', async () => {
+    answers('stopped')
+    const chat = await opened()
+    chat.text = 'hello'
+    chat.submit(around)
+    const id = String(chat.thread?.id)
+    await vi.waitFor(() => expect(chat.states.get(id)).toBe('interrupted'))
+  })
+
+  test('needs input while the agent waits on the reader', async () => {
+    let release: () => void = () => undefined
+    engine.send.mockImplementation(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) => {
+        const turn = { id: crypto.randomUUID(), role: 'model' as const, at: 1, parts: [] }
+        thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+        thread.turns.push(turn)
+        on({
+          type: 'part',
+          turn: turn.id,
+          index: 0,
+          part: { kind: 'tool', id: 't', verb: 'edit', input: {}, state: 'asking' },
+        } as unknown as EngineEvent)
+        return new Promise<void>((resolve) => {
+          release = () => {
+            on({
+              type: 'part',
+              turn: turn.id,
+              index: 0,
+              part: { kind: 'tool', id: 't', verb: 'edit', input: {}, state: 'ok' },
+            } as unknown as EngineEvent)
+            on({ type: 'done', stop: 'end' })
+            resolve()
+          }
+        })
+      },
+    )
+    const chat = await opened()
+    chat.text = 'edit it'
+    chat.submit(around)
+    const id = String(chat.thread?.id)
+    await vi.waitFor(() => expect(chat.states.get(id)).toBe('needs-input'))
+    release()
+    await vi.waitFor(() => expect(chat.states.get(id)).toBe('done'))
+  })
+
+  test('archived once archived, and done again once brought back', async () => {
+    const plan = await had('work', 'Plan', 1_000)
+    const chat = await opened()
+    await vi.waitFor(() => expect(chat.heads).toHaveLength(1))
+    chat.archive(plan.id)
+    await vi.waitFor(() => expect(chat.states.get(plan.id)).toBe('archived'))
+    chat.unarchive(plan.id)
+    await vi.waitFor(() => expect(chat.states.get(plan.id)).toBe('done'))
+  })
+
+  /** Nothing that was at work when the app closed is at work after it opens. */
+  test('interrupted, after a launch, where it was at work when the app closed', async () => {
+    const { keepThread, newThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [{ id: 'u', role: 'you', at: 1, parts: [] }]
+    thread.state = 'running'
+    await keepThread(thread)
+    const chat = await opened()
+    await vi.waitFor(() => expect(chat.states.get(thread.id)).toBe('interrupted'))
+  })
+
+  test('pinned to the top, and kept so', async () => {
+    const plan = await had('work', 'Plan', 1_000)
+    const chat = await opened()
+    await vi.waitFor(() => expect(chat.heads).toHaveLength(1))
+    await chat.pin(plan.id)
+    expect(chat.heads[0]?.pinned).toBeGreaterThan(0)
+    const again = await opened()
+    await vi.waitFor(() => expect(again.heads[0]?.pinned).toBeGreaterThan(0))
+    await again.pin(plan.id, false)
+    expect(again.heads[0]?.pinned).toBeUndefined()
+  })
+})
+
+/** #1089: a switch that sends the conversation again is asked about first. */
+describe('switching a chat to another model', () => {
+  beforeEach(() => {
+    kept.clear()
+    localStorage.clear()
+    ticking.asked.length = 0
+    ticking.answer = { id: 'switch', ticked: false }
+  })
+
+  async function long() {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    const thread = chat.ensure()
+    thread.usage = { ...thread.usage, input: 50_000, output: 1_000 }
+    return { chat, thread }
+  }
+
+  test('asks first on a long chat, and switches on yes', async () => {
+    const { chat, thread } = await long()
+    await chat.chooseModel('p', 'other')
+    expect(ticking.asked).toHaveLength(1)
+    expect(thread.model).toBe('other')
+  })
+
+  test('switches nothing on no', async () => {
+    const { chat, thread } = await long()
+    ticking.answer = { id: 'cancel', ticked: false }
+    await chat.chooseModel('p', 'other')
+    expect(thread.model).toBe('m')
+  })
+
+  test('asks no more once told not to', async () => {
+    const { chat } = await long()
+    ticking.answer = { id: 'switch', ticked: true }
+    await chat.chooseModel('p', 'other')
+    await chat.chooseModel('p', 'third')
+    expect(ticking.asked).toHaveLength(1)
+  })
+
+  test('and never on a short one', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    chat.ensure()
+    await chat.chooseModel('p', 'other')
+    expect(ticking.asked).toEqual([])
+    expect(chat.thread?.model).toBe('other')
   })
 })

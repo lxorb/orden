@@ -2715,6 +2715,16 @@ export const ha: Dictionary = {
   'Agent instructions': 'Umarnin wakilai',
   "AGENTS is this space's agent instructions": 'AGENTS shine umarnin wakilai na wannan wuri',
   '{title}, unread': '{title}, ba a karanta ba',
+  Working: 'Yana aiki',
+  'Needs input': 'Yana bukatar amsa',
+  Interrupted: 'An katse',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'A canza zuwa {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Saƙo na gaba zai sake aika dukan tattaunawar: kusan ƙarin token {count}.',
+  'It is too long for this model, so it is compacted first.':
+    'Ta yi tsawo ga wannan samfurin, don haka za a taƙaita ta da farko.',
+  Switch: 'Canza',
   '{title}, running': '{title}, yana gudana',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ba ya ajiye maɓallan AI a cikin keychain na Mac kuma, wanda ke ta neman kalmar sirrinsa. Shigar da maɓallanka kuma ka sake shiga ChatGPT.',

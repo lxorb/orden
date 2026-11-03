@@ -17,10 +17,10 @@
  *  Fetched with the panel, never in the first paint; see surfaces.svelte.ts. */
 
 import { answerThreadSpaces } from '../../automation/caller'
-import { message, t } from '../../i18n.svelte'
+import { i18n, message, t } from '../../i18n.svelte'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
-import { forget, keep, stored } from '../../stored'
+import { forget, keep, stored, storedText } from '../../stored'
 import { onceAFrame } from '../../timing'
 import { workspace } from '../../workspace.svelte'
 import { unlisted } from '../chat/catalogue'
@@ -46,6 +46,7 @@ import type {
   Goal,
   Mode,
   ModelInfo,
+  Stop,
   Thread,
   Turn,
   Usage,
@@ -54,6 +55,14 @@ import { added, noUsage } from '../chat/usage'
 import { nextMode } from '../modes'
 import type { Provider } from '../providers'
 import { ai } from '../store.svelte'
+import { tasks } from '../commands/tasks.svelte'
+import {
+  FIRST_STATE,
+  next as nextState,
+  type SessionEvent,
+  type SessionState,
+  statesOf,
+} from '../session-state'
 import { chatsUnread, panelKeepsUnread } from '../unread.svelte'
 import { threadMarkdown } from './export'
 import { readOutside } from '../chat/transcript'
@@ -73,6 +82,8 @@ import {
 import type { Attached, Ended, Once, Panel } from '../commands/types'
 import { engineOf } from './setup'
 import { snapshot } from './snapshot'
+import { tokens } from './numbers'
+import { switchCost } from '../switch-cost'
 import { editMessage, lastMessage, openRewind } from '../review'
 
 /** How long after a plan resets a message waiting for it goes again: the window ends by
@@ -140,6 +151,9 @@ function headOf(thread: Thread): Head {
   }
 }
 
+/** "Don't ask again" under a switch of model that sends the conversation again (#1089). */
+const SWITCH_KEY = 'nib:ai-switch-asks'
+
 /** Where a space's helpers were told their parents, once (`findParentsOnce`). */
 const PARENTS_KEY = 'nib:ai-helpers-parented'
 
@@ -153,6 +167,8 @@ class Chat implements Panel {
   /** The chats with an answer the reader has not seen yet, helpers' counted in their
    *  chat's (#1064). */
   unread = $derived(unreadOf(this.every))
+  /** Where each chat stands (#1089), a helper's question counted as its chat's. */
+  states = $derived(statesOf(this.every))
   /** The open thread, as the controls show it. */
   head = $state.raw<Head | null>(null)
   /** Its turns, as the conversation draws them. */
@@ -294,7 +310,7 @@ class Chat implements Panel {
     for (const space of spaces) await this.adoptOldAsk(space)
     const heads = await listEveryThread(spaces).catch(() => this.every)
     if (this.spaces !== spaces) return
-    this.every = heads
+    this.every = heads.map((one) => this.settled(one))
     void this.findParentsOnce(spaces)
     if (!opening) return
     const { last, before } = lastOpen()
@@ -320,7 +336,63 @@ class Chat implements Panel {
   private async refreshHeads(): Promise<void> {
     const spaces = this.spaces
     const heads = await listEveryThread(spaces).catch(() => this.every)
-    if (this.spaces === spaces) this.every = heads
+    if (this.spaces === spaces) this.every = heads.map((one) => this.settled(one))
+  }
+
+  /** A head as this run knows it: a chat written down as at work that nothing in this
+   *  run is working on was at work when the app last closed, and is interrupted
+   *  (`relaunch`). Written down the next time the thread itself is. */
+  private settled<T extends Listed>(head: T): T {
+    const state = head.state ?? FIRST_STATE
+    if (this.running.includes(head.id) || tasks.of(head.id).length || this.resets[head.id]?.waiting)
+      return head
+    const now = nextState(state, { type: 'relaunch' })
+    return now === state ? head : { ...head, state: now }
+  }
+
+  /** The one door every change of a chat's state goes through (#1089): the machine in
+   *  session-state.ts says where it moves, and the list and the file are told. A send,
+   *  a question, an answer's end, work left running out of sight, an archive - each of
+   *  them is a call here and nowhere else. */
+  move(thread: Thread, event: SessionEvent): void {
+    const was: SessionState = thread.archived ? 'archived' : (thread.state ?? FIRST_STATE)
+    const now = nextState(was, event)
+    if (now === was) return
+    if (now === 'archived') thread.archived = true
+    else {
+      delete thread.archived
+      thread.state = now
+    }
+    const archived = !!thread.archived
+    this.every = this.every.map((one) =>
+      one.id === thread.id ? { ...one, state: thread.state ?? FIRST_STATE, archived } : one,
+    )
+    if (thread === this.open) this.head = headOf(thread)
+    if (thread.turns.length) void keepThread(thread).catch(() => undefined)
+  }
+
+  /** Work out of sight started or ended for a thread (`tasks`): waiting while there is
+   *  any and no turn is running, done once the last of it is over. */
+  worked(id: string): void {
+    const thread = this.threadOf(id)
+    if (!thread || this.running.includes(id)) return
+    this.move(thread, { type: tasks.of(id).length ? 'wait' : 'idle' })
+  }
+
+  /** The thread a chat's pin is on, pinned to the top of every list or taken off it. */
+  async pin(id: string, on = true): Promise<void> {
+    const thread = await this.held(id)
+    if (!thread) return
+    if (on) thread.pinned = Date.now()
+    else delete thread.pinned
+    const pinned = thread.pinned
+    this.every = this.every.map((one) => {
+      if (one.id !== id) return one
+      const rest = { ...one }
+      delete rest.pinned
+      return pinned ? { ...rest, pinned } : rest
+    })
+    await keepThread(thread).catch(() => undefined)
   }
 
   /** Each space's helpers kept before a helper said whose it was (#1062) told so once,
@@ -532,8 +604,12 @@ class Chat implements Panel {
       }
     } else if (event.type === 'part') {
       this.changed.add(event.turn)
-      // A question for the reader is an answer they have not seen, until they do.
-      if (event.part.kind === 'tool' && event.part.state === 'asking') this.answered(thread)
+      // A question for the reader is an answer they have not seen, until they do, and
+      // the chat waits on them; anything after it is the agent going on.
+      if (event.part.kind === 'tool' && event.part.state === 'asking') {
+        this.answered(thread)
+        this.move(thread, { type: 'ask' })
+      } else this.move(thread, { type: 'answered' })
     } else if (event.type === 'done') {
       this.everything = true
     }
@@ -750,7 +826,7 @@ class Chat implements Panel {
       ...(once?.model ? { model: once.model } : {}),
       ...(once?.effort ? { effort: once.effort } : {}),
     })
-    let ended: Ended
+    let ended: Ended = { stop: 'error', turn: null, usage: null }
     try {
       const draft: Draft = await draftOf(
         text,
@@ -773,7 +849,11 @@ class Chat implements Panel {
     } finally {
       once?.signal?.removeEventListener('abort', stop)
       if (once) Object.assign(thread, before)
-      await this.finish(thread, !stopper.signal.aborted)
+      await this.finish(
+        thread,
+        !stopper.signal.aborted,
+        stopper.signal.aborted ? 'stopped' : ended.stop,
+      )
     }
     send.settle?.(ended)
     // A stop pauses the queue: what was waiting stays, to be sent or taken back.
@@ -800,15 +880,17 @@ class Chat implements Panel {
       this.following.add(thread.id)
     this.running = [...this.running, thread.id]
     if (text !== undefined) this.pending = { ...this.pending, [thread.id]: text }
+    this.move(thread, { type: 'start' })
     return stopper
   }
 
   /** A thread is done answering, however it ended: drawn whole and written down; an
    *  answer the reader did not stop is one for them to see (`replied`). */
-  private async finish(thread: Thread, replied = false): Promise<void> {
+  private async finish(thread: Thread, replied = false, stop: Stop = 'end'): Promise<void> {
     if (replied && thread.turns.at(-1)?.role === 'model') thread.answered = Date.now()
     this.stoppers.delete(thread.id)
     this.running = this.running.filter((one) => one !== thread.id)
+    this.move(thread, { type: 'end', stop, busy: tasks.of(thread.id).length > 0 })
     this.pending = without(this.pending, thread.id)
     // Words steered in that the answer never took (sent before it was ready for them, or
     // after its last step) are the next message, first in the queue: never lost.
@@ -834,8 +916,17 @@ class Chat implements Panel {
 
   /** An answer other than a send's (Ask again, a compaction) done: what was queued
    *  meanwhile goes next, as after a send, unless it was stopped. */
-  private async ended(thread: Thread, stopper: AbortController, replied = false): Promise<void> {
-    await this.finish(thread, replied && !stopper.signal.aborted)
+  private async ended(
+    thread: Thread,
+    stopper: AbortController,
+    replied = false,
+    stop: Stop = 'end',
+  ): Promise<void> {
+    await this.finish(
+      thread,
+      replied && !stopper.signal.aborted,
+      stopper.signal.aborted ? 'stopped' : stop,
+    )
     if (!stopper.signal.aborted) this.next(thread)
   }
 
@@ -1034,13 +1125,16 @@ class Chat implements Panel {
     this.everything = true
     this.redraw()
     const stopper = this.begin(thread, asked.draft.text)
+    let stop: Stop = 'end'
     void this.sendDraft(thread, provider, asked.draft, stopper)
+      .then((ended) => (stop = ended.stop))
       .catch((error: unknown) => {
+        stop = 'error'
         // Refused before any turn: the message and its answer back as they were.
         if (thread.turns.length === at) thread.turns.push(...taken)
         if (thread === this.open) this.trouble = message(error, t('The model did not answer.'))
       })
-      .finally(() => void this.ended(thread, stopper, true))
+      .finally(() => void this.ended(thread, stopper, true, stop))
   }
 
   /** The open thread's last message again a little after its plan resets (the button
@@ -1052,6 +1146,8 @@ class Chat implements Panel {
     if (!thread || !reset) return
     clearTimeout(this.timers.get(thread.id))
     this.resets = { ...this.resets, [thread.id]: { until: reset.until, waiting: on } }
+    // Waiting on the plan is waiting; taken back, it is the failure it was.
+    this.move(thread, on ? { type: 'wait' } : { type: 'end', stop: 'error', busy: false })
     if (!on) return
     const after = reset.until + AFTER_RESET - Date.now()
     this.timers.set(
@@ -1097,6 +1193,45 @@ class Chat implements Panel {
     if (list.length) this.models = { ...this.models, [provider.id]: list }
     else this.asking.delete(provider.id)
     return list
+  }
+
+  /** Another model picked for this thread (the model picker): asked about first where the
+   *  switch sends the conversation again (#1089, switch-cost.ts) - how many tokens that
+   *  is about, and that it is compacted first where it does not fit the new model - unless
+   *  the reader said not to ask again. */
+  async chooseModel(provider: string, model: string): Promise<void> {
+    const thread = this.open
+    if (!thread) return
+    const info = this.models[provider]?.find((one) => one.id === model)
+    const cost = switchCost(
+      thread.usage,
+      thread,
+      { provider, model, window: info?.window ?? null },
+      thread.autocompact,
+    )
+    if (cost && storedText(SWITCH_KEY) !== 'never') {
+      const name = info?.name ?? model
+      const detail = [
+        t('The next message sends the whole conversation again: about {count} more tokens.', {
+          count: tokens(cost.tokens, i18n.language),
+        }),
+        ...(cost.compacts ? [t('It is too long for this model, so it is compacted first.')] : []),
+      ].join(' ')
+      const answer = await prompt.chooseTicking({
+        title: t('Switch to {model}?', { model: name }),
+        detail,
+        options: [
+          { id: 'switch', label: t('Switch'), primary: true },
+          { id: 'cancel', label: t('Cancel'), lands: true },
+        ],
+        tick: t("Don't ask again"),
+      })
+      if (answer?.id !== 'switch') return
+      if (answer.ticked) keep(SWITCH_KEY, 'never')
+    }
+    // Compacted by the model that has read it, before another one has to.
+    if (cost?.compacts && this.open === thread) await this.compacted()
+    if (this.open === thread) this.setModel(provider, model)
   }
 
   /** Another model for this thread, and the effort last used with it. */
@@ -1159,14 +1294,24 @@ class Chat implements Panel {
   // ── Context ────────────────────────────────────────────
 
   compact(focus?: string): void {
+    void this.compacted(focus)
+  }
+
+  /** The same, done once it is: what a switch of model waits on before it switches. */
+  private compacted(focus?: string): Promise<void> {
     const thread = this.open
     const provider = this.provider
-    if (!thread?.turns.length || !provider || this.running.includes(thread.id)) return
+    if (!thread?.turns.length || !provider || this.running.includes(thread.id))
+      return Promise.resolve()
     const stopper = this.begin(thread)
-    void engineOf(provider.kind)
+    let stop: Stop = 'end'
+    return engineOf(provider.kind)
       .then((engine) => engine.compact(thread, focus))
-      .catch((error: unknown) => (this.trouble = message(error, t('The model did not answer.'))))
-      .finally(() => void this.ended(thread, stopper))
+      .catch((error: unknown) => {
+        stop = 'error'
+        this.trouble = message(error, t('The model did not answer.'))
+      })
+      .then(() => this.ended(thread, stopper, false, stop))
   }
 
   openContext(): void {
@@ -1270,8 +1415,7 @@ class Chat implements Panel {
     if (!id) return
     const thread = await this.held(id)
     if (!thread) return
-    if (archived) thread.archived = true
-    else delete thread.archived
+    this.move(thread, { type: archived ? 'archive' : 'unarchive' })
     await keepThread(thread).catch(() => undefined)
     if (archived) this.forgetEdit(thread.id, true)
     if (archived && thread === this.open) this.newThread()
@@ -1326,6 +1470,9 @@ class Chat implements Panel {
 }
 
 export const chat = new Chat()
+
+// Work starting and ending out of sight moves its thread (#1089).
+tasks.watch((id) => chat.worked(id))
 
 // The ✦ tab's dot, kept with the list (#1064).
 panelKeepsUnread()

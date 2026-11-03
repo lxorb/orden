@@ -2597,6 +2597,15 @@ export const zhHantHK: Dictionary = {
   'Agent instructions': '代理指示',
   "AGENTS is this space's agent instructions": 'AGENTS 是此空間的代理指示',
   '{title}, unread': '{title}，未讀',
+  Working: '進行中',
+  'Needs input': '需要輸入',
+  Interrupted: '已中斷',
+  '{title}, {state}': '{title}，{state}',
+  'Switch to {model}?': '切換到 {model}？',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    '下一則訊息會重新傳送整段對話：大約多 {count} 個 token。',
+  'It is too long for this model, so it is compacted first.': '對這個模型來說太長，所以會先壓縮。',
+  Switch: '切換',
   '{title}, running': '{title}，執行中',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden 不再將 AI 金鑰存放在 Mac 的鑰匙圈中，它一再要求輸入密碼。請重新輸入金鑰，並再次登入 ChatGPT。',

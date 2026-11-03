@@ -2659,6 +2659,16 @@ export const jv: Dictionary = {
   'Agent instructions': 'Instruksi agen',
   "AGENTS is this space's agent instructions": 'AGENTS yaiku instruksi agen kanggo papan iki',
   '{title}, unread': '{title}, durung diwaca',
+  Working: 'Lagi nyambut gawe',
+  'Needs input': 'Butuh wangsulan',
+  Interrupted: 'Kandheg',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Ganti menyang {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Pesen sabanjure ngirim maneh kabeh obrolan: kira-kira {count} token luwih akeh.',
+  'It is too long for this model, so it is compacted first.':
+    'Kedawan kanggo model iki, mula dipadhetake dhisik.',
+  Switch: 'Ganti',
   '{title}, running': '{title}, lagi mlaku',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ora nyimpen kunci AI ing keychain Mac maneh, sing terus njaluk sandine. Lebokna kunci sampeyan lan mlebu ChatGPT sepisan maneh.',

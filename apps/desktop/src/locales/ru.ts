@@ -2770,6 +2770,16 @@ export const ru: Dictionary = {
   'Agent instructions': 'Инструкции для агентов',
   "AGENTS is this space's agent instructions": 'AGENTS: инструкции для агентов этого пространства',
   '{title}, unread': '{title}, не прочитано',
+  Working: 'Работает',
+  'Needs input': 'Нужен ответ',
+  Interrupted: 'Прервано',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Переключиться на {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Следующее сообщение отправит весь разговор заново: примерно на {count} токенов больше.',
+  'It is too long for this model, so it is compacted first.':
+    'Он слишком длинный для этой модели, поэтому сначала будет сжат.',
+  Switch: 'Переключить',
   '{title}, running': '{title}, выполняется',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden больше не хранит ключи ИИ в связке ключей Mac, которая снова и снова спрашивала пароль. Введите ключи заново и ещё раз войдите в ChatGPT.',

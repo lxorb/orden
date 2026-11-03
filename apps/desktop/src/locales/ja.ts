@@ -2649,6 +2649,16 @@ export const ja: Dictionary = {
   'Agent instructions': 'エージェントへの指示',
   "AGENTS is this space's agent instructions": 'AGENTS はこのスペースのエージェントへの指示です',
   '{title}, unread': '{title}、未読',
+  Working: '作業中',
+  'Needs input': '入力待ち',
+  Interrupted: '中断',
+  '{title}, {state}': '{title}、{state}',
+  'Switch to {model}?': '{model} に切り替えますか？',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    '次のメッセージで会話全体がもう一度送られます：約 {count} トークン多くかかります。',
+  'It is too long for this model, so it is compacted first.':
+    'このモデルには長すぎるため、先に圧縮されます。',
+  Switch: '切り替え',
   '{title}, running': '{title}、実行中',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden は AI キーを Mac のキーチェーンに保存しなくなりました。キーチェーンがパスワードを何度も求めていたためです。キーをもう一度入力し、ChatGPT にもう一度サインインしてください。',

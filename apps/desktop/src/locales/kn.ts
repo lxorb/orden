@@ -2706,6 +2706,16 @@ export const kn: Dictionary = {
   'Agent instructions': 'ಏಜೆಂಟ್ ಸೂಚನೆಗಳು',
   "AGENTS is this space's agent instructions": 'AGENTS ಈ ಸ್ಪೇಸ್‌ನ ಏಜೆಂಟ್ ಸೂಚನೆಗಳು',
   '{title}, unread': '{title}, ಓದಿಲ್ಲ',
+  Working: 'ಕೆಲಸ ನಡೆಯುತ್ತಿದೆ',
+  'Needs input': 'ಉತ್ತರ ಬೇಕು',
+  Interrupted: 'ಅಡಚಣೆ',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}ಗೆ ಬದಲಿಸಬೇಕೆ?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'ಮುಂದಿನ ಸಂದೇಶ ಇಡೀ ಸಂಭಾಷಣೆಯನ್ನು ಮತ್ತೆ ಕಳುಹಿಸುತ್ತದೆ: ಸುಮಾರು {count} ಹೆಚ್ಚು ಟೋಕನ್‌ಗಳು.',
+  'It is too long for this model, so it is compacted first.':
+    'ಈ ಮಾದರಿಗೆ ಇದು ತುಂಬಾ ಉದ್ದ, ಆದ್ದರಿಂದ ಮೊದಲು ಸಂಕ್ಷೇಪಿಸಲಾಗುತ್ತದೆ.',
+  Switch: 'ಬದಲಿಸಿ',
   '{title}, running': '{title}, ಚಾಲನೆಯಲ್ಲಿದೆ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ಇನ್ನು AI ಕೀಗಳನ್ನು Mac ನ ಕೀಚೈನ್‌ನಲ್ಲಿ ಇಡುವುದಿಲ್ಲ, ಅದು ಪದೇಪದೇ ಅದರ ಪಾಸ್‌ವರ್ಡ್ ಕೇಳುತ್ತಿತ್ತು. ನಿಮ್ಮ ಕೀಗಳನ್ನು ಮತ್ತೆ ನಮೂದಿಸಿ ಮತ್ತು ChatGPT ಗೆ ಮತ್ತೊಮ್ಮೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',

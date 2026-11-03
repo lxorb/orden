@@ -2672,6 +2672,16 @@ export const bn: Dictionary = {
   'Agent instructions': 'এজেন্টের নির্দেশনা',
   "AGENTS is this space's agent instructions": 'AGENTS হলো এই স্পেসের এজেন্ট নির্দেশনা',
   '{title}, unread': '{title}, অপঠিত',
+  Working: 'কাজ চলছে',
+  'Needs input': 'উত্তর দরকার',
+  Interrupted: 'বাধাপ্রাপ্ত',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}-এ বদলাবেন?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'পরের বার্তাটি পুরো কথোপকথন আবার পাঠাবে: প্রায় {count}টি টোকেন বেশি।',
+  'It is too long for this model, so it is compacted first.':
+    'এই মডেলের জন্য এটি খুব লম্বা, তাই আগে সংক্ষিপ্ত করা হয়।',
+  Switch: 'বদলান',
   '{title}, running': '{title}, চলছে',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden আর Mac-এর কিচেইনে AI কী রাখে না, কারণ সেটি বারবার পাসওয়ার্ড চাইত। আপনার কী আবার দিন এবং ChatGPT-তে আরেকবার সাইন ইন করুন।',

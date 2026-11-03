@@ -2741,6 +2741,16 @@ export const ptPT: Dictionary = {
   'Agent instructions': 'Instruções para agentes',
   "AGENTS is this space's agent instructions": 'AGENTS são as instruções para agentes deste espaço',
   '{title}, unread': '{title}, por ler',
+  Working: 'A trabalhar',
+  'Needs input': 'Precisa de resposta',
+  Interrupted: 'Interrompida',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Mudar para {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'A próxima mensagem envia novamente toda a conversa: cerca de {count} tokens a mais.',
+  'It is too long for this model, so it is compacted first.':
+    'É demasiado longa para este modelo, por isso é compactada primeiro.',
+  Switch: 'Mudar',
   '{title}, running': '{title}, em curso',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'O Orden já não guarda as chaves de IA no porta-chaves do Mac, que pedia a palavra-passe repetidamente. Introduza as suas chaves e inicie sessão no ChatGPT mais uma vez.',

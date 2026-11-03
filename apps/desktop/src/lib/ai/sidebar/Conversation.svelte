@@ -14,17 +14,17 @@
   import { cubicOut } from 'svelte/easing'
   import { fade, fly } from 'svelte/transition'
   import Thinking from '../Thinking.svelte'
-  import { agoShort } from '../../ago'
   import { copyText } from '../../clipboard'
-  import { i18n, t } from '../../i18n.svelte'
+  import { t } from '../../i18n.svelte'
   import { dur } from '../../motion'
   import { scrollbar } from '../../scrollbar'
   import { settings } from '../../settings.svelte'
-  import UnreadDot from '../UnreadDot.svelte'
+  import { beside, ordered, stateOf } from '../session-state'
   import { chat } from './chat.svelte'
+  import ChatRow from './ChatRow.svelte'
   import { sourcesFor } from './citations'
   import { hostHere } from './host'
-  import { rowName } from './marks'
+  import { slides } from './slide'
   import Branches from '../review/Branches.svelte'
   import ChangesCard from '../review/ChangesCard.svelte'
   import Reply from './Reply.svelte'
@@ -52,10 +52,24 @@
       (pending !== undefined || !turns.at(-1)?.parts.length || turns.at(-1)?.role === 'you'),
   )
   const hello = $derived(ready && !turns.length && pending === undefined && !running)
-  /** The latest threads, Codex's three on its home, and how many there are: a tab
-   *  has them all in its rail already. */
-  const listed = $derived(chat.heads.filter((one) => !one.archived).length)
-  const recent = $derived(chat.heads.filter((one) => !one.archived).slice(0, 3))
+  /** The chats in the order every list has (#1089), Codex's three of them on its home,
+   *  and the rest under them once Show all is pressed: in place, the same list grown,
+   *  rather than another view of it. A tab has them all in its rail already. */
+  const chats = $derived(ordered(chat.heads, chat.states, chat.unread))
+  let all = $state(false)
+  /** The row pointed at, lit as the list of all of them lights it (Threads.svelte). */
+  let pointed = $state(-1)
+  const recent = $derived(all ? chats : chats.slice(0, 3))
+
+  /** The chats beside the open one, which a sideways slide goes to (#1089): the list's
+   *  own order, round from the last to the first. Only from a chat that is in it. */
+  const sideways = $derived({
+    can: (step: 1 | -1) => !!id && chats.some((one) => one.id === id) && !!beside(chats, id, step),
+    go: (step: 1 | -1) => {
+      const one = beside(chats, id, step)
+      if (one) void chat.openThread(one.id, false)
+    },
+  })
   const here = hostHere()
   /** The thread a helper's is a step of, which its conversation goes back to: a helper
    *  is in no list of chats (#1062). Nothing where that thread is gone. */
@@ -133,7 +147,7 @@
 </script>
 
 <div class="room">
-  <div class="talk" bind:this={talk} use:scrollbar onscroll={onScroll}>
+  <div class="talk" bind:this={talk} use:scrollbar use:slides={sideways} onscroll={onScroll}>
     {#if !ready}
       <!-- The one thing to say before a provider is set up, and where to do it. -->
       <p class="empty-text">
@@ -153,32 +167,24 @@
            all of them, over a composer that is at the foot from the start. -->
       <div class="home" in:fade={{ duration: dur(150) }}>
         <h2 class="heading">{t('Chats')}</h2>
-        <ul class="recent">
-          {#each recent as one (one.id)}
-            {@const marks = {
-              unread: chat.unread.has(one.id),
-              running: chat.running.includes(one.id),
-            }}
-            <li>
-              <button
-                class="nib-row is-short"
-                class:is-unread={marks.unread}
-                aria-label={rowName(one.title, marks)}
-                onclick={() => void chat.openThread(one.id)}
-              >
-                {#if marks.unread}<UnreadDot />{/if}
-                <span class="nib-row-label">{one.title || t('Untitled')}</span>
-                {#if marks.running}<span class="dot"></span>{:else}<span class="nib-row-meta"
-                    >{agoShort(one.updated, i18n.language)}</span
-                  >{/if}
-              </button>
-            </li>
+        <ul class="recent" onpointerleave={() => (pointed = -1)}>
+          {#each recent as one, index (one.id)}
+            <ChatRow
+              lit={index === pointed}
+              onpoint={() => (pointed = index)}
+              head={one}
+              state={chat.states.get(one.id) ?? stateOf(one)}
+              unread={chat.unread.has(one.id)}
+              onopen={() => void chat.openThread(one.id)}
+              onpin={() => void chat.pin(one.id, !one.pinned)}
+              onarchive={() => chat.archive(one.id)}
+            />
           {/each}
-          {#if here === 'side' && listed > recent.length}
+          {#if here === 'side' && !all && chats.length > recent.length}
             <li>
-              <button class="nib-row is-short all" onclick={() => chat.showThreads()}>
+              <button class="nib-row is-short all" onclick={() => (all = true)}>
                 <span class="nib-row-label">{t('Show all')}</span>
-                <span class="nib-row-meta">{listed}</span>
+                <span class="nib-row-meta">{chats.length}</span>
               </button>
             </li>
           {/if}
@@ -304,21 +310,26 @@
 </div>
 
 <style>
+  /* Clipped sideways, so a chat slid out of the way leaves by the panel's edge. */
   .room {
     position: relative;
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow-x: clip;
   }
 
   /* The thread in a column: the panel's gutter at a side's width, and a reading measure
      down the middle of a tab (`--column`, set by the panel). */
+  /* A finger across it is a slide to the chat beside (#1089, slide.ts); up and down is
+     still the scroll. */
   .talk {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    touch-action: pan-y;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
@@ -355,24 +366,9 @@
     color: var(--muted);
   }
 
-  /* Unread (#1064), as the list draws it (Threads.svelte). */
-  .is-unread .nib-row-label {
-    color: var(--text-strong);
-    font-weight: var(--weight-strong);
-  }
-
-  /* A thread still at work: the list's ring (Threads.svelte). */
   .up {
     flex: none;
     color: var(--muted);
-  }
-
-  .dot {
-    flex: none;
-    width: 7px;
-    height: 7px;
-    border: 1.5px solid var(--accent);
-    border-radius: 50%;
   }
 
   /* The reader's message: a bubble at the end of the line, Codex's, with what went

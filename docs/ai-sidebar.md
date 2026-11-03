@@ -828,7 +828,11 @@ Code's `modelSettings` remembers it.
 Settings > AI > Used for's provider, the model last picked with it on this device (#428) and
 the last effort used with that model. Switching model
 mid-thread keeps the conversation and says, in a line between messages, which model answers
-from there (and that the cache starts again where it does).
+from there (and that the cache starts again where it does). Because the cache is per model,
+the next message sends the whole conversation again. On a chat long enough for that to
+matter, the picker asks first (#1089, `switch-cost.ts`): about how many tokens it is, and
+that the conversation is compacted first by the model that has it where it does not fit
+the new one. **Don't ask again** stops the question on this device.
 
 ### 4.10 The context ring
 
@@ -862,18 +866,45 @@ from there (and that the cache starts again where it does).
   this device, under the app's data folder by the crate, one folder a space
   (`localStorage` is too small for a history), never synced, never in a note unless
   exported; deleted with `/delete`, and all of a space's with the space.
-- **The list** (◷, or **Ctrl+Shift+A** twice): newest first, title and how long ago; typing
-  searches titles and words; **Enter** opens, **Delete** archives. The home of an empty
-  thread holds the latest three.
-- **Several at once**: a thread keeps running when another is opened; the list marks the
-  running ones, and the panel's tab wears a dot while one works out of sight.
+- **The list** (◷, or **Ctrl+Shift+A** twice): typing searches titles and words; **Enter**
+  opens, **Delete** archives. The home of an empty thread holds the first three, and
+  **Show all** under them grows the same list in place, with no other view and no search
+  (#1089).
+- **One order everywhere** (#1089, `ordered` in `session-state.ts`): pinned chats first,
+  then by state, attention first (needs input, failed, interrupted, done, waiting,
+  working), unread before read within a state, then the latest first. Archived chats are
+  in no list. They wait behind the **Archived** row at the foot of the ◷ list, which shows
+  them under the rest.
+- **A row** (`ChatRow.svelte`, the same in the home and the list): on the left, the logo
+  of whose model it talks to, out of the shared brand set (`provider-brand.ts`,
+  `brandIcon`); the title; its state's mark; how long ago. Pointed at, **Pin** and
+  **Archive** take the time's place, and the list's "..." after them.
+- **Every chat is always one state** (#1089): working, waiting, failed, needs input, done,
+  interrupted or archived. Each state has its own mark and colour, and the working one
+  turns, so colour is never the only sign. The runtime moves the state, never the reader:
+  a send starts it, a question or an approval stops it on the reader, and how the answer
+  ended settles it (done, interrupted when stopped short, failed). Work left running out
+  of sight, or a wait for the plan to reset, keeps it waiting. A launch interrupts
+  whatever was at work when the app closed. Every one of these goes through
+  `Chat.move`, the one door to the one machine (`next` in `session-state.ts`), and the
+  state is kept with the thread. Waiting is on something outside the reader (a goal, a
+  loop, a helper, a timer); needs input is on the reader. A helper has no state in the
+  list: its chat carries it, and a question the helper asks is the chat's.
+- **Sliding between chats** (#1089, `slide.ts`): in an open chat, a two-finger swipe, a
+  finger across the screen or a sideways scroll moves the conversation with the fingers.
+  Far enough, it lets go into the chat beside it in the list's order, round from the last
+  to the first. Short of that, it springs back. Something that scrolls sideways of its
+  own, such as a wide code block, keeps the gesture.
+- **Several at once**: a thread keeps running when another is opened, and the panel's tab
+  wears a dot while one works out of sight.
 - **Unread** (#1064): a chat the agent answered, or asked the reader something in, since
   the reader last saw it wears a dot in the accent before a stronger title, in the list and
-  the home alike, and the ✦ tab a dot; a running one keeps its ring instead. It is read
+  the home alike, and the ✦ tab a dot. Unread is not a state. It sits beside the state, so
+  a chat is done and unread or done and read. It is read
   once it is open in the window in use with its end in view, never on a hover. The thread
   keeps when it was answered and when it was seen (`answered`, `seen`), so the mark
   outlasts a restart; a helper's answer is its chat's (`unreadOf` in `chat/threads.ts`).
-  Screen readers hear "unread" and "running" in the row's name.
+  Screen readers hear "unread" and the state in the row's name.
 - **Edit, branch, fork**: 4.5 and the commands in 3.1.
 - **Retry with another model**: the retry glyph under an answer has a menu of the
   provider's models (ChatGPT's and Raycast's way of comparing).

@@ -2789,6 +2789,16 @@ export const ar: Dictionary = {
   'Agent instructions': 'تعليمات الوكلاء',
   "AGENTS is this space's agent instructions": 'AGENTS هو تعليمات الوكلاء لهذه المساحة',
   '{title}, unread': '{title}، غير مقروءة',
+  Working: 'قيد العمل',
+  'Needs input': 'يحتاج إلى رد',
+  Interrupted: 'مقاطعة',
+  '{title}, {state}': '{title}، {state}',
+  'Switch to {model}?': 'التبديل إلى {model}؟',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'الرسالة التالية ترسل المحادثة كلها مرة أخرى: نحو {count} رمز إضافي.',
+  'It is too long for this model, so it is compacted first.':
+    'إنها أطول من اللازم لهذا النموذج، لذا تُضغط أولًا.',
+  Switch: 'تبديل',
   '{title}, running': '{title}، قيد التشغيل',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'لم يعد Orden يحفظ مفاتيح الذكاء الاصطناعي في سلسلة مفاتيح Mac، التي ظلت تطلب كلمة مرورها. أدخل مفاتيحك وسجّل الدخول إلى ChatGPT مرة أخرى.',

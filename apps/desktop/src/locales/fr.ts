@@ -2759,6 +2759,16 @@ export const fr: Dictionary = {
   "AGENTS is this space's agent instructions":
     'AGENTS correspond aux instructions pour les agents de cet espace',
   '{title}, unread': '{title}, non lu',
+  Working: 'En cours',
+  'Needs input': 'Attend une réponse',
+  Interrupted: 'Interrompue',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Passer à {model} ?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Le prochain message renvoie toute la conversation : environ {count} jetons de plus.',
+  'It is too long for this model, so it is compacted first.':
+    'Elle est trop longue pour ce modèle, elle est donc d’abord compactée.',
+  Switch: 'Changer',
   '{title}, running': '{title}, en cours',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ne garde plus les clés d’IA dans le trousseau du Mac, qui redemandait sans cesse son mot de passe. Saisissez à nouveau vos clés et reconnectez-vous à ChatGPT.',

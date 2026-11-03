@@ -2647,6 +2647,16 @@ export const vi: Dictionary = {
   'Agent instructions': 'Hướng dẫn cho tác tử',
   "AGENTS is this space's agent instructions": 'AGENTS là hướng dẫn cho tác tử của không gian này',
   '{title}, unread': '{title}, chưa đọc',
+  Working: 'Đang làm',
+  'Needs input': 'Cần phản hồi',
+  Interrupted: 'Bị gián đoạn',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Chuyển sang {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Tin nhắn tiếp theo gửi lại toàn bộ cuộc trò chuyện: thêm khoảng {count} token.',
+  'It is too long for this model, so it is compacted first.':
+    'Nó quá dài cho mô hình này nên sẽ được nén trước.',
+  Switch: 'Chuyển',
   '{title}, running': '{title}, đang chạy',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden không còn giữ khóa AI trong Chuỗi khóa của Mac, vốn cứ hỏi mật khẩu mãi. Hãy nhập lại khóa và đăng nhập ChatGPT thêm một lần nữa.',

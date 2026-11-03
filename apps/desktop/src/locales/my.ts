@@ -2662,6 +2662,16 @@ export const my: Dictionary = {
   "AGENTS is this space's agent instructions":
     'AGENTS သည် ဤနေရာ၏ အေးဂျင့် ညွှန်ကြားချက်များ ဖြစ်သည်',
   '{title}, unread': '{title}၊ မဖတ်ရသေး',
+  Working: 'လုပ်ဆောင်နေသည်',
+  'Needs input': 'ထည့်သွင်းချက် လိုအပ်သည်',
+  Interrupted: 'ရပ်တန့်သွားသည်',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} သို့ ပြောင်းမလား။',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'နောက်စာက စကားဝိုင်းတစ်ခုလုံးကို ထပ်ပို့မည်- တိုကင် {count} ခန့် ပိုကုန်မည်။',
+  'It is too long for this model, so it is compacted first.':
+    'ဤမော်ဒယ်အတွက် ရှည်လွန်းသဖြင့် ဦးစွာ ချုံ့ပါမည်။',
+  Switch: 'ပြောင်းရန်',
   '{title}, running': '{title}၊ လုပ်ဆောင်နေဆဲ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden သည် AI သော့များကို Mac ၏ keychain တွင် မသိမ်းတော့ပါ၊ ၎င်းက စကားဝှက်ကို ထပ်ခါထပ်ခါ မေးနေခဲ့၍ဖြစ်သည်။ သင့်သော့များကို ထပ်ထည့်ပြီး ChatGPT သို့ နောက်တစ်ကြိမ် ဝင်ပါ။',

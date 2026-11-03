@@ -2596,6 +2596,16 @@ export const zhHans: Dictionary = {
   'Agent instructions': '智能体指令',
   "AGENTS is this space's agent instructions": 'AGENTS 是此空间的智能体指令',
   '{title}, unread': '{title}，未读',
+  Working: '进行中',
+  'Needs input': '需要输入',
+  Interrupted: '已中断',
+  '{title}, {state}': '{title}，{state}',
+  'Switch to {model}?': '切换到 {model}？',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    '下一条消息会重新发送整个对话：大约多 {count} 个 token。',
+  'It is too long for this model, so it is compacted first.':
+    '对这个模型来说太长了，所以会先压缩。',
+  Switch: '切换',
   '{title}, running': '{title}，运行中',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden 不再把 AI 密钥存放在 Mac 的钥匙串中，它总是一再要求输入密码。请重新输入密钥，并再次登录 ChatGPT。',

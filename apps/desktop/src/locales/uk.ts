@@ -2763,6 +2763,16 @@ export const uk: Dictionary = {
   'Agent instructions': 'Інструкції для агентів',
   "AGENTS is this space's agent instructions": 'AGENTS: інструкції для агентів цього простору',
   '{title}, unread': '{title}, не прочитано',
+  Working: 'Працює',
+  'Needs input': 'Потрібна відповідь',
+  Interrupted: 'Перервано',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Перейти на {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Наступне повідомлення надішле всю розмову знову: приблизно на {count} токенів більше.',
+  'It is too long for this model, so it is compacted first.':
+    'Вона задовга для цієї моделі, тому спершу буде стиснута.',
+  Switch: 'Перейти',
   '{title}, running': '{title}, виконується',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden більше не зберігає ключі ШІ у в’язці ключів Mac, яка знову й знову питала пароль. Введіть ключі ще раз і знову увійдіть у ChatGPT.',

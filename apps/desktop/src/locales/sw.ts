@@ -2715,6 +2715,16 @@ export const sw: Dictionary = {
   'Agent instructions': 'Maagizo ya mawakala',
   "AGENTS is this space's agent instructions": 'AGENTS ni maagizo ya mawakala ya nafasi hii',
   '{title}, unread': '{title}, haijasomwa',
+  Working: 'Inafanya kazi',
+  'Needs input': 'Inahitaji jibu',
+  Interrupted: 'Imekatizwa',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Badilisha kwenda {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Ujumbe unaofuata hutuma mazungumzo yote tena: takriban tokeni {count} zaidi.',
+  'It is too long for this model, so it is compacted first.':
+    'Ni marefu mno kwa modeli hii, kwa hiyo yanabanwa kwanza.',
+  Switch: 'Badilisha',
   '{title}, running': '{title}, inaendelea',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden haihifadhi tena funguo za AI kwenye keychain ya Mac, iliyokuwa ikiuliza nenosiri lake mara kwa mara. Weka funguo zako na uingie ChatGPT tena.',

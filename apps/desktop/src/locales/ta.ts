@@ -2723,6 +2723,16 @@ export const ta: Dictionary = {
   "AGENTS is this space's agent instructions":
     'AGENTS என்பது இந்த இடத்தின் ஏஜென்ட் அறிவுறுத்தல்கள்',
   '{title}, unread': '{title}, படிக்காதது',
+  Working: 'வேலை நடக்கிறது',
+  'Needs input': 'பதில் தேவை',
+  Interrupted: 'இடைநின்றது',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}-க்கு மாற்றவா?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'அடுத்த செய்தி முழு உரையாடலையும் மீண்டும் அனுப்பும்: சுமார் {count} கூடுதல் டோக்கன்கள்.',
+  'It is too long for this model, so it is compacted first.':
+    'இந்த மாதிரிக்கு இது மிக நீளம், எனவே முதலில் சுருக்கப்படும்.',
+  Switch: 'மாற்று',
   '{title}, running': '{title}, இயங்குகிறது',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden இனி AI விசைகளை Mac இன் கீசெயினில் வைப்பதில்லை, அது திரும்பத் திரும்ப அதன் கடவுச்சொல்லைக் கேட்டது. உங்கள் விசைகளை மீண்டும் உள்ளிட்டு ChatGPT இல் மீண்டும் ஒருமுறை உள்நுழையுங்கள்.',

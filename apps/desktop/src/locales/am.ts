@@ -2630,6 +2630,15 @@ export const am: Dictionary = {
   'Agent instructions': 'የኤጀንት መመሪያዎች',
   "AGENTS is this space's agent instructions": 'AGENTS የዚህ ቦታ የኤጀንት መመሪያዎች ነው',
   '{title}, unread': '{title}፣ ያልተነበበ',
+  Working: 'በመስራት ላይ',
+  'Needs input': 'ግብዓት ይፈልጋል',
+  Interrupted: 'ተቋርጧል',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'ወደ {model} ይቀየር?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'ቀጣዩ መልእክት ሙሉውን ውይይት እንደገና ይልካል፦ ወደ {count} ተጨማሪ ቶከኖች።',
+  'It is too long for this model, so it is compacted first.': 'ለዚህ ሞዴል በጣም ረጅም ስለሆነ መጀመሪያ ይታመቃል።',
+  Switch: 'ቀይር',
   '{title}, running': '{title}፣ በመሥራት ላይ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden የAI ቁልፎችን ከእንግዲህ በMac ቁልፍ ሰንሰለት ውስጥ አያስቀምጥም፤ የይለፍ ቃሉን ደጋግሞ ይጠይቅ ነበርና። ቁልፎችዎን ያስገቡ እና ወደ ChatGPT እንደገና ይግቡ።',

@@ -2697,6 +2697,16 @@ export const gsw: Dictionary = {
   'Agent instructions': 'Aawiisige für Agänte',
   "AGENTS is this space's agent instructions": 'AGENTS sind d Agänte-Aawiisige vo däm Beriich',
   '{title}, unread': '{title}, ungläse',
+  Working: 'Schaffet',
+  'Needs input': 'Bruucht Iigab',
+  Interrupted: 'Unterbroche',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Zu {model} wächsle?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Di nächscht Nachricht schickt s ganze Gspröch nomal: öppe {count} Tokens meh.',
+  'It is too long for this model, so it is compacted first.':
+    'Es isch z lang für das Modell und wird drum zerscht verdichtet.',
+  Switch: 'Wächsle',
   '{title}, running': '{title}, lauft',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden speicheret KI-Schlüssel nümm im Schlüsselbund vom Mac, wo immer wieder nach em Passwort gfrogt het. Gib dini Schlüssel no einisch ii und meld di wieder bi ChatGPT aa.',

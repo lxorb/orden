@@ -2671,6 +2671,16 @@ export const id: Dictionary = {
   'Agent instructions': 'Instruksi agen',
   "AGENTS is this space's agent instructions": 'AGENTS adalah instruksi agen untuk ruang ini',
   '{title}, unread': '{title}, belum dibaca',
+  Working: 'Bekerja',
+  'Needs input': 'Perlu masukan',
+  Interrupted: 'Terputus',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Beralih ke {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Pesan berikutnya mengirim ulang seluruh percakapan: sekitar {count} token lebih banyak.',
+  'It is too long for this model, so it is compacted first.':
+    'Terlalu panjang untuk model ini, jadi dipadatkan dulu.',
+  Switch: 'Beralih',
   '{title}, running': '{title}, sedang berjalan',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden tidak lagi menyimpan kunci AI di rantai kunci Mac, yang terus meminta kata sandinya. Masukkan kunci Anda dan masuk ke ChatGPT sekali lagi.',

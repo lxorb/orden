@@ -2620,6 +2620,16 @@ export const th: Dictionary = {
   'Agent instructions': 'คำสั่งสำหรับเอเจนต์',
   "AGENTS is this space's agent instructions": 'AGENTS คือคำสั่งสำหรับเอเจนต์ของพื้นที่นี้',
   '{title}, unread': '{title}, ยังไม่ได้อ่าน',
+  Working: 'กำลังทำงาน',
+  'Needs input': 'ต้องการคำตอบ',
+  Interrupted: 'ถูกขัดจังหวะ',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'เปลี่ยนเป็น {model} ไหม',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'ข้อความถัดไปจะส่งบทสนทนาทั้งหมดอีกครั้ง: เพิ่มประมาณ {count} โทเค็น',
+  'It is too long for this model, so it is compacted first.':
+    'ยาวเกินไปสำหรับโมเดลนี้ จึงจะถูกย่อก่อน',
+  Switch: 'เปลี่ยน',
   '{title}, running': '{title}, กำลังทำงาน',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ไม่เก็บคีย์ AI ไว้ในพวงกุญแจของ Mac อีกต่อไป ซึ่งคอยถามรหัสผ่านซ้ำแล้วซ้ำอีก ใส่คีย์ของคุณและลงชื่อเข้าใช้ ChatGPT อีกครั้ง',

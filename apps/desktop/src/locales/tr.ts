@@ -2691,6 +2691,16 @@ export const tr: Dictionary = {
   'Agent instructions': 'Ajan talimatları',
   "AGENTS is this space's agent instructions": 'AGENTS bu alanın ajan talimatlarıdır',
   '{title}, unread': '{title}, okunmamış',
+  Working: 'Çalışıyor',
+  'Needs input': 'Yanıt bekliyor',
+  Interrupted: 'Kesildi',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} modeline geçilsin mi?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Sonraki mesaj tüm konuşmayı yeniden gönderir: yaklaşık {count} token daha.',
+  'It is too long for this model, so it is compacted first.':
+    'Bu model için çok uzun, bu yüzden önce sıkıştırılır.',
+  Switch: 'Geç',
   '{title}, running': '{title}, çalışıyor',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden artık yapay zekâ anahtarlarını Mac’in anahtar zincirinde tutmuyor; anahtar zinciri parolasını tekrar tekrar soruyordu. Anahtarlarınızı yeniden girin ve ChatGPT’ye bir kez daha oturum açın.',

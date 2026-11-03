@@ -2638,6 +2638,16 @@ export const ko: Dictionary = {
   'Agent instructions': '에이전트 지침',
   "AGENTS is this space's agent instructions": 'AGENTS는 이 스페이스의 에이전트 지침입니다',
   '{title}, unread': '{title}, 읽지 않음',
+  Working: '작업 중',
+  'Needs input': '입력 필요',
+  Interrupted: '중단됨',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}(으)로 전환할까요?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    '다음 메시지에서 대화 전체를 다시 보냅니다: 약 {count}개 토큰이 더 듭니다.',
+  'It is too long for this model, so it is compacted first.':
+    '이 모델에는 너무 길어서 먼저 압축합니다.',
+  Switch: '전환',
   '{title}, running': '{title}, 실행 중',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden은 더 이상 AI 키를 Mac 키체인에 보관하지 않습니다. 키체인이 암호를 계속 물었기 때문입니다. 키를 다시 입력하고 ChatGPT에 한 번 더 로그인하세요.',

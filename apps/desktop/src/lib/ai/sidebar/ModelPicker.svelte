@@ -80,7 +80,7 @@
 
   function pick(id: string) {
     if (!provider) return
-    chat.setModel(provider.id, id)
+    void chat.chooseModel(provider.id, id)
   }
 
   /** The list's keys: arrows walk it, Enter takes the lit row and closes, Escape closes
@@ -137,7 +137,7 @@
             <button
               class="nib-chip"
               class:is-on={one.id === provider?.id}
-              onclick={() => chat.setModel(one.id, one.model)}>{one.name}</button
+              onclick={() => void chat.chooseModel(one.id, one.model)}>{one.name}</button
             >
           {/each}
         </div>

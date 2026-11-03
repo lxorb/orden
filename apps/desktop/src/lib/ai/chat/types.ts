@@ -8,6 +8,7 @@
 
 import type { Limit } from '../local/heard'
 import type { Mode } from '../modes'
+import type { SessionState } from '../session-state'
 import type { Provider, ProviderKind } from '../providers'
 
 /** What the agent may do in a thread, and how much it asks first (../modes.ts). */
@@ -256,6 +257,11 @@ export interface Thread {
   /** The provider's faster tier, where it has one. */
   fast?: boolean
   archived?: boolean
+  /** Where it stands (#1089), as the one machine in session-state.ts moved it last.
+   *  Absent on one written before there were states, which reads as done. */
+  state?: SessionState
+  /** When the reader pinned it to the top of the list; absent where they did not. */
+  pinned?: number
   compaction?: Compaction
   autocompact?: AutoCompact
   /** Everything this thread spent, for `/usage`. */
@@ -275,6 +281,8 @@ export interface ThreadHead {
   model: string
   updated: number
   archived?: boolean
+  state?: SessionState
+  pinned?: number
   /** The first words, for searching the list. */
   words: string
 }

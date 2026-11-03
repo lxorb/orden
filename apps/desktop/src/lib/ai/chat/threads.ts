@@ -14,6 +14,7 @@ import { without } from '../../records'
 import { isNumber, isRecord, isString } from '../../stored'
 import { isNative, invoke } from '../../tauri'
 import { FIRST_MODE, modeIn } from '../modes'
+import { isSessionState, type SessionState } from '../session-state'
 import { isEffort } from './effort'
 import type {
   Compaction,
@@ -78,6 +79,8 @@ export function headOf(thread: Thread): ThreadHead {
     model: thread.model,
     updated: thread.updated,
     ...(thread.archived ? { archived: true } : {}),
+    ...(thread.state ? { state: thread.state } : {}),
+    ...(thread.pinned ? { pinned: thread.pinned } : {}),
     words,
   }
 }
@@ -240,7 +243,10 @@ export function threadIn(value: unknown): Thread | null {
   const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
   // Every field the engine reads is checked below; the rest (a goal, what was spent) is
   // kept as written.
-  const rest = ['always', 'without', 'parent', 'answered', 'seen'].reduce(without, value)
+  const rest = ['always', 'without', 'parent', 'answered', 'seen', 'state', 'pinned'].reduce(
+    without,
+    value,
+  )
   return {
     ...(rest as unknown as Thread),
     id,
@@ -248,6 +254,7 @@ export function threadIn(value: unknown): Thread | null {
     title: isString(title) ? title : '',
     ...(isString(value.parent) && value.parent ? { parent: value.parent } : {}),
     ...timesIn(value),
+    ...placeIn(value),
     provider,
     model,
     effort: isEffort(effort) ? effort : 'auto',
@@ -270,6 +277,14 @@ function timesIn(value: Record<string, unknown>): { answered?: number; seen?: nu
   }
 }
 
+/** A thread's state and pin, where a file holds a state there is and a time (#1089). */
+function placeIn(value: Record<string, unknown>): { state?: SessionState; pinned?: number } {
+  return {
+    ...(isSessionState(value.state) ? { state: value.state } : {}),
+    ...(isNumber(value.pinned) ? { pinned: value.pinned } : {}),
+  }
+}
+
 function headIn(value: unknown): ThreadHead | null {
   if (!isRecord(value) || !isString(value.id)) return null
   return {
@@ -281,6 +296,7 @@ function headIn(value: unknown): ThreadHead | null {
     model: isString(value.model) ? value.model : '',
     updated: isNumber(value.updated) ? value.updated : 0,
     ...(value.archived === true ? { archived: true } : {}),
+    ...placeIn(value),
     words: isString(value.words) ? value.words : '',
   }
 }

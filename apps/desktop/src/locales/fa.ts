@@ -2681,6 +2681,16 @@ export const fa: Dictionary = {
   'Agent instructions': 'دستورالعمل‌های عامل',
   "AGENTS is this space's agent instructions": 'AGENTS دستورالعمل‌های عامل این فضا است',
   '{title}, unread': '{title}، خوانده\u200cنشده',
+  Working: 'در حال کار',
+  'Needs input': 'نیاز به پاسخ',
+  Interrupted: 'قطع شد',
+  '{title}, {state}': '{title}، {state}',
+  'Switch to {model}?': 'به {model} تغییر کند؟',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'پیام بعدی کل گفت‌وگو را دوباره می‌فرستد: حدود {count} توکن بیشتر.',
+  'It is too long for this model, so it is compacted first.':
+    'برای این مدل بیش از حد طولانی است، پس اول فشرده می‌شود.',
+  Switch: 'تغییر',
   '{title}, running': '{title}، در حال اجرا',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden دیگر کلیدهای هوش مصنوعی را در کلیدزنجیر Mac نگه نمی‌دارد، که مدام رمزش را می‌خواست. کلیدهایتان را دوباره وارد کنید و یک بار دیگر به ChatGPT وارد شوید.',

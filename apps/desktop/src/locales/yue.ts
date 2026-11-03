@@ -2591,6 +2591,15 @@ export const yue: Dictionary = {
   'Agent instructions': '代理指示',
   "AGENTS is this space's agent instructions": 'AGENTS 係呢個空間嘅代理指示',
   '{title}, unread': '{title}，未讀',
+  Working: '做緊',
+  'Needs input': '要你回覆',
+  Interrupted: '中斷咗',
+  '{title}, {state}': '{title}，{state}',
+  'Switch to {model}?': '轉去 {model}？',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    '下一個訊息會成段對話再送一次：大約多 {count} 個 token。',
+  'It is too long for this model, so it is compacted first.': '對呢個模型嚟講太長，所以會先壓縮。',
+  Switch: '轉',
   '{title}, running': '{title}，運行緊',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden 唔再將 AI 鎖匙放喺 Mac 嘅鑰匙圈，佢成日問密碼。請再輸入一次你嘅鎖匙，再登入多次 ChatGPT。',

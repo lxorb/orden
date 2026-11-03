@@ -2662,6 +2662,16 @@ export const gu: Dictionary = {
   'Agent instructions': 'એજન્ટ સૂચનાઓ',
   "AGENTS is this space's agent instructions": 'AGENTS આ સ્પેસની એજન્ટ સૂચનાઓ છે',
   '{title}, unread': '{title}, ન વાંચેલું',
+  Working: 'કામ ચાલુ',
+  'Needs input': 'જવાબ જોઈએ',
+  Interrupted: 'અટકાવ્યું',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} પર બદલવું?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'આગલો સંદેશ આખી વાતચીત ફરી મોકલશે: લગભગ {count} ટોકન વધુ.',
+  'It is too long for this model, so it is compacted first.':
+    'આ મોડેલ માટે તે બહુ લાંબી છે, તેથી પહેલાં સંક્ષિપ્ત થાય છે.',
+  Switch: 'બદલો',
   '{title}, running': '{title}, ચાલુ છે',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden હવે AI કી Mac ના કીચેનમાં રાખતું નથી, જે વારંવાર તેનો પાસવર્ડ માંગતું હતું. તમારી કી ફરી દાખલ કરો અને ChatGPT માં ફરી સાઇન ઇન કરો.',

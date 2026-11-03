@@ -2673,6 +2673,16 @@ export const hi: Dictionary = {
   'Agent instructions': 'एजेंट निर्देश',
   "AGENTS is this space's agent instructions": 'AGENTS इस स्पेस के एजेंट निर्देश हैं',
   '{title}, unread': '{title}, अनपढ़ा',
+  Working: 'काम जारी',
+  'Needs input': 'जवाब चाहिए',
+  Interrupted: 'बाधित',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} पर स्विच करें?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'अगला संदेश पूरी बातचीत फिर से भेजेगा: लगभग {count} टोकन ज़्यादा।',
+  'It is too long for this model, so it is compacted first.':
+    'यह इस मॉडल के लिए बहुत लंबी है, इसलिए पहले संक्षिप्त की जाती है।',
+  Switch: 'स्विच करें',
   '{title}, running': '{title}, चल रहा है',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden अब AI कुंजियाँ Mac की कीचेन में नहीं रखता, जो बार-बार उसका पासवर्ड माँगती थी। अपनी कुंजियाँ फिर से डालें और ChatGPT में एक बार और साइन इन करें।',

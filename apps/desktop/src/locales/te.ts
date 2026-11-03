@@ -2690,6 +2690,16 @@ export const te: Dictionary = {
   'Agent instructions': 'ఏజెంట్ సూచనలు',
   "AGENTS is this space's agent instructions": 'AGENTS ఈ స్పేస్ యొక్క ఏజెంట్ సూచనలు',
   '{title}, unread': '{title}, చదవనిది',
+  Working: 'పని జరుగుతోంది',
+  'Needs input': 'సమాధానం కావాలి',
+  Interrupted: 'అంతరాయం',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}కి మార్చాలా?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'తదుపరి సందేశం మొత్తం సంభాషణను మళ్లీ పంపుతుంది: సుమారు {count} టోకెన్లు ఎక్కువ.',
+  'It is too long for this model, so it is compacted first.':
+    'ఈ మోడల్‌కు ఇది చాలా పొడవు, కాబట్టి ముందు కుదించబడుతుంది.',
+  Switch: 'మార్చు',
   '{title}, running': '{title}, నడుస్తోంది',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ఇకపై AI కీలను Mac కీచెయిన్‌లో ఉంచదు, అది మళ్లీ మళ్లీ పాస్‌వర్డ్ అడిగేది. మీ కీలను మళ్లీ నమోదు చేసి ChatGPT లోకి మరోసారి సైన్ ఇన్ చేయండి.',

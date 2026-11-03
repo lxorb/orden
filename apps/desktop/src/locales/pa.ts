@@ -2684,6 +2684,16 @@ export const pa: Dictionary = {
   'Agent instructions': 'ਏਜੰਟ ਹਦਾਇਤਾਂ',
   "AGENTS is this space's agent instructions": 'AGENTS ਇਸ ਸਪੇਸ ਦੀਆਂ ਏਜੰਟ ਹਦਾਇਤਾਂ ਹਨ',
   '{title}, unread': '{title}, ਅਣਪੜ੍ਹਿਆ',
+  Working: 'ਕੰਮ ਜਾਰੀ',
+  'Needs input': 'ਜਵਾਬ ਚਾਹੀਦਾ',
+  Interrupted: 'ਰੁਕਿਆ',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} ਤੇ ਬਦਲੀਏ?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'ਅਗਲਾ ਸੁਨੇਹਾ ਸਾਰੀ ਗੱਲਬਾਤ ਦੁਬਾਰਾ ਭੇਜੇਗਾ: ਲਗਭਗ {count} ਟੋਕਨ ਹੋਰ।',
+  'It is too long for this model, so it is compacted first.':
+    'ਇਹ ਇਸ ਮਾਡਲ ਲਈ ਬਹੁਤ ਲੰਮੀ ਹੈ, ਇਸ ਲਈ ਪਹਿਲਾਂ ਛੋਟੀ ਕੀਤੀ ਜਾਂਦੀ ਹੈ।',
+  Switch: 'ਬਦਲੋ',
   '{title}, running': '{title}, ਚੱਲ ਰਿਹਾ ਹੈ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ਹੁਣ AI ਕੁੰਜੀਆਂ Mac ਦੀ ਕੀਚੇਨ ਵਿੱਚ ਨਹੀਂ ਰੱਖਦਾ, ਜੋ ਵਾਰ-ਵਾਰ ਉਸਦਾ ਪਾਸਵਰਡ ਮੰਗਦੀ ਸੀ। ਆਪਣੀਆਂ ਕੁੰਜੀਆਂ ਮੁੜ ਦਿਓ ਅਤੇ ChatGPT ਵਿੱਚ ਇੱਕ ਵਾਰ ਹੋਰ ਸਾਈਨ ਇਨ ਕਰੋ।',

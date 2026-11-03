@@ -24,15 +24,29 @@ interface Task {
 class Tasks {
   list = $state.raw<Task[]>([])
 
+  /** Who is told a thread's work started or ended: the chat store, which moves the
+   *  thread's state (#1089). One, set once. */
+  private told: ((thread: string) => void) | null = null
+
+  watch(tell: (thread: string) => void): () => void {
+    this.told = tell
+    return () => {
+      if (this.told === tell) this.told = null
+    }
+  }
+
   add(task: Omit<Task, 'id' | 'started'>): Task {
     const made: Task = { ...task, id: crypto.randomUUID(), started: Date.now() }
     this.list = [...this.list, made]
+    this.told?.(made.thread)
     return made
   }
 
   /** Off the list, without stopping it: it ended by itself. */
   done(id: string): void {
+    const ending = this.list.find((one) => one.id === id)
     this.list = this.list.filter((one) => one.id !== id)
+    if (ending) this.told?.(ending.thread)
   }
 
   of(thread: string): Task[] {
