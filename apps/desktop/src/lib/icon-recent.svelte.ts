@@ -11,7 +11,7 @@
  *  marking a month of folders reaches for the same eight icons, and reaching for them
  *  should not mean typing the same eight words again. */
 
-import { isString, keep, stored, stringList } from './stored'
+import { isString, keep, parsed, stored, storedText, stringList } from './stored'
 
 const RECENT_KEY = 'nib:icons-recent'
 const SET_KEY = 'nib:icon-set'
@@ -20,9 +20,15 @@ const SET_KEY = 'nib:icon-set'
  *  a second row of recent icons is a second grid, and the grid is below. */
 const MOST_RECENT = 12
 
+/** Read as it is written, which is the id as it stands rather than JSON: read as
+ *  JSON, every id came back as nothing and the picker forgot the tab it was left on.
+ *  A quoted id is read too, in case one was ever written that way. */
 function lastSet(): string {
-  const said = stored(SET_KEY)
-  return isString(said) ? said : ''
+  const said = storedText(SET_KEY)
+  if (said === null) return ''
+
+  const quoted = parsed(said)
+  return isString(quoted) ? quoted : said
 }
 
 class IconRecent {
