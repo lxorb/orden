@@ -384,9 +384,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  the slide to the next chat (ai/sidebar/slide.ts) and the question before a costly
  *  switch of model (ai/switch-cost.ts), in nine strings in every language. Measured
  *  5,846,057 and 964,246.
+ *
+ *  The code raised on 2026-11-04, to 5,848,600, for #1077: signing in gives the untouched
+ *  default space way to the account's own, decided in one place (seed-space.ts, and the
+ *  plan's `discard` in space-plan.ts). Measured 5,848,312.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_846_200,
+  code: 5_848_600,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
