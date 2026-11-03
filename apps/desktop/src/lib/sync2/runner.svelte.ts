@@ -46,7 +46,7 @@ import type { Carried } from '../pages/carried'
 import { holdsDocument, joinsAs, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
-import { forgetSyncStore, get, openSyncStore, put } from './store'
+import { forgetSyncStore, get, openSyncStore, put, remove } from './store'
 import { Refused } from './transport'
 import { pairsFromV1 } from './v1-pairs'
 import { usage } from '../usage.svelte'
@@ -478,15 +478,16 @@ class Runner {
             space.row.root,
             this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null,
           )
-          if (!(await firstPass(engine.core, space, v1))) {
+          const first = `${FIRST}${id}`
+          if (!(await firstPass(engine.core, space, v1, [put('meta', { key: first, value: 1 })]))) {
             offline = true
             await engine.core.commit([
               ...engine.core.forgetSpace(id),
               ...engine.core.addSpace(id, space.row.root, space.row.role),
+              remove('meta', first),
             ])
             continue
           }
-          await engine.core.commit([put('meta', { key: `${FIRST}${id}`, value: 1 })])
           this.firsts.add(id)
           this.watched?.follow()
         }

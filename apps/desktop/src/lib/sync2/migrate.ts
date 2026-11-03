@@ -67,11 +67,14 @@ interface Matched {
 }
 
 /** The first v2 pass of a space. Answers whether it got through; a pass that met no
- *  account is asked again next time, from the top. */
+ *  account, or read no listing of the folder, is asked again next time, from the top.
+ *  `done` is what says it got through, written with its last commit: whatever a crash
+ *  left short of that is a pass that never finished, and the next one starts over. */
 export async function firstPass(
   core: Core,
   space: SpaceState,
   v1: V1Space | null,
+  done: readonly Change[] = [],
 ): Promise<boolean> {
   const life = core.life
   const alive = () => core.life === life
@@ -80,12 +83,21 @@ export async function firstPass(
 
   if ((await world.account.ask('prepare', {}, space.id)) === null || !alive()) return false
 
+  // From the top, always. The feed is what files are matched against, and its cursor
+  // is written as it is read: one left by a pass that died meanwhile reads as an empty
+  // feed, which matches nothing, and then the file v1 wrote offline is taken for the
+  // words Orden last wrote there and the next pull writes over it.
+  space.row.cursor = 0
   const items = new Map<string, FeedItem>()
   if (!(await readFeed(core, space, alive, (item) => items.set(item.id, item)))) return false
 
   // The paper a page note holds is part of the note and no entry of its own (#551; see
   // `heldPaper` in engine.ts), so it is left out of what the folder is read as.
-  const everything = (await world.list?.(space.row.root)) ?? []
+  // A listing that failed is not an empty folder: read as one, every note v1 tracked
+  // would be a delete sent to the account.
+  const listed = world.list ? await world.list(space.row.root) : []
+  if (listed === null || !alive()) return false
+  const everything = listed
   const notes = new Set(everything.filter((one) => !one.dir).map((one) => space.key(one.path)))
   const listing = everything.filter((one) => {
     const holder = one.dir ? null : holderOf(one.path)
@@ -257,7 +269,7 @@ export async function firstPass(
     changes.push(...madeHere.changes)
   }
 
-  changes.push(core.wantChange(space.id))
+  changes.push(core.wantChange(space.id), ...done)
   await core.commit(changes)
   return alive()
 }
