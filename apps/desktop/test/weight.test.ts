@@ -1085,8 +1085,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,505,500, and to 387 modules, for #1088: the window's corners,
  *  a setting the theme paints before the first frame (corners.ts), and the tokens every
  *  surface on the frame reads (App.svelte, Pane.svelte, PaneTree.svelte, Sidebar.svelte).
- *  Measured 3,505,344, 386 modules. */
-const BUDGET = 3_505_500
+ *  Measured 3,505,344, 386 modules.
+ *
+ *  Raised 2026-11-04, to 3,506,100, for #1080: a press in a web tab's page making its tab
+ *  and pane the ones worked in, said by the crate (`chooseTab` in pages.svelte.ts).
+ *  Measured 3,505,980. */
+const BUDGET = 3_506_100
 const MOST_FILES = 387
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
