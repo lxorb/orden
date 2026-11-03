@@ -46,20 +46,32 @@ export function macMenuKey(event: KeyboardEvent): boolean {
   return true
 }
 
-/** Where the menu of a key arrives: under the caret, or under what has the keyboard where
- *  there is no caret to read, as a row's menu does. */
+/** Where the menu of a key arrives: on the caret's line, or on what has the keyboard where
+ *  there is no caret to read. On the line and not at its foot, since a note's menu is about
+ *  the block at the press, and the foot of a line can already be the next. */
 function pressAt(box: DOMRect): MouseEvent {
   return new MouseEvent('contextmenu', {
     bubbles: true,
     cancelable: true,
     clientX: Math.round(box.left + Math.min(box.width / 2, 120)),
-    clientY: Math.round(box.bottom),
+    clientY: Math.round(box.top + box.height / 2),
   })
 }
 
+/** Where the caret is, at the end of the selection that moves. An empty line's caret has no
+ *  box, so there the line itself: what has the keyboard can be a whole note, whose foot is
+ *  another block. */
 function caretBox(on: Element): DOMRect | null {
   const selection = on.ownerDocument.getSelection()
-  if (!selection?.rangeCount || !on.contains(selection.focusNode)) return null
-  const box = selection.getRangeAt(0).getBoundingClientRect()
-  return box.height ? box : null
+  const at = selection?.focusNode
+  if (!selection || !at || !on.contains(at)) return null
+
+  const caret = on.ownerDocument.createRange()
+  caret.setStart(at, selection.focusOffset)
+  caret.collapse(true)
+  const box = caret.getBoundingClientRect()
+  if (box.height) return box
+
+  const line = at.nodeType === Node.ELEMENT_NODE ? (at as Element) : at.parentElement
+  return line && line !== on ? line.getBoundingClientRect() : null
 }

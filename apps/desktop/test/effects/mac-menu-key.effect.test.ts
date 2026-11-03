@@ -27,6 +27,28 @@ afterEach(() => {
 })
 
 describe('a menu key on a Mac', () => {
+  // An empty line's caret has no box, and the foot of the note is another block.
+  test('on an empty line asks from that line, not from the foot of what has the keyboard', () => {
+    const note = document.createElement('div')
+    note.contentEditable = 'true'
+    note.tabIndex = 0
+    const line = document.createElement('div')
+    line.append(document.createElement('br'))
+    note.append(line)
+    document.body.append(note)
+    note.getBoundingClientRect = () => new DOMRect(0, 0, 600, 800)
+    line.getBoundingClientRect = () => new DOMRect(0, 100, 600, 20)
+    note.focus()
+    getSelection()?.collapse(line, 0)
+
+    const heard: MouseEvent[] = []
+    note.addEventListener('contextmenu', (event) => heard.push(event))
+    macMenuKey(key({ key: 'ContextMenu' }))
+
+    expect(heard[0]?.clientY).toBeGreaterThan(100)
+    expect(heard[0]?.clientY).toBeLessThan(120)
+  })
+
   test.each([{ key: 'F10', shiftKey: true }, { key: 'ContextMenu' }])(
     'asks what has the keyboard for its menu: %o',
     (init) => {

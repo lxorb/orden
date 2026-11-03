@@ -450,15 +450,78 @@ def properties(page: Page, held: str) -> None:
     if not any(row.startswith("Paste") for row in rows):
         wrong(f"the field lost its own menu: {rows}")
     press(page, "Escape")
-    # And the note its own, where the caret is.
-    page.evaluate("() => document.querySelector('.cm-content').focus()")
-    press(page, "Shift+F10")
-    rows = page.evaluate("() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim())")
-    say(f"[props] Shift+F10 in the note: {rows[:4]}")
-    if not rows:
-        wrong("the note gave no menu on the key")
     press(page, "Escape")
     DRIVE.shot(page, "properties")
+
+
+#: A note's menu says which block it is about, in the row that cannot be pressed.
+ABOUT = "() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim())"
+
+
+#: What the caret's line says.
+LINE = """() => {
+  const at = getSelection().focusNode
+  return (at.nodeType === 1 ? at : at.parentElement).closest('.cm-line')?.textContent ?? null
+}"""
+
+
+def note_menu(page: Page) -> None:
+    """Shift+F10 in the note is about the block the caret is in: the same as a right click
+    on that line, and a row of it acts on that block, not on the last one of the note."""
+    said = "# Menu key\n\nfirst para here\n\n\n\nlast words go here now"
+    page.evaluate(
+        """async (said) => {
+          const ws = window.nibApp.workspace
+          await ws.noteFrom(said, ws.activeSpace.root)
+          await ws.loadTree()
+          await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Menu key')).path, { activate: true })
+        }""",
+        said,
+    )
+    wait_for(page, "[...document.querySelectorAll('.cm-line')].some((one) => one.textContent.includes('last words'))", "the note")
+    quiet(page)
+
+    def caret_on(words: str | None) -> dict:
+        """The caret on the line saying `words`, or on the empty line before the last words,
+        by the keyboard from the top of the note; and where that line is."""
+        page.evaluate("() => document.querySelector('.cm-content').focus()")
+        page.keyboard.press("Meta+ArrowUp" if harness.WEBKIT else "Control+Home")
+        past = False
+        for _ in range(12):
+            at = page.evaluate(LINE)
+            if at == "" and words is None and past:
+                break
+            if at and words is not None and words in at:
+                break
+            past = past or "first para" in (at or "")
+            page.keyboard.press("ArrowDown")
+        quiet(page)
+        return page.evaluate(
+            """() => { const line = getSelection().focusNode; const one = (line.nodeType === 1 ? line : line.parentElement).closest('.cm-line'); const box = one.getBoundingClientRect(); return { x: box.x + 40, y: box.y + box.height / 2, text: one.textContent } }"""
+        )
+
+    empty = caret_on(None)
+    say(f"[note menu] the empty line: {empty}")
+    press(page, "Shift+F10")
+    by_key = page.evaluate(ABOUT)
+    press(page, "Escape")
+    page.mouse.click(empty["x"], empty["y"], button="right")
+    quiet(page)
+    by_press = page.evaluate(ABOUT)
+    press(page, "Escape")
+    say(f"[note menu] from the key {by_key[:6]}, from a press {by_press[:6]}")
+    if not by_key:
+        wrong("the note gave no menu on the key")
+    if by_key != by_press:
+        wrong(f"the key's menu on an empty line is about another block: {by_key} and not {by_press}")
+
+    caret_on("first para")
+    press(page, "Shift+F10")
+    choose(page, "Duplicate")
+    words = page.evaluate("() => window.nibApp.workspace.active?.note?.latest ?? ''")
+    say(f"[note menu] after Duplicate: {words!r}")
+    if words.count("first para here") != 2 or words.count("last words go here now") != 1:
+        wrong(f"Duplicate from the key did not act on the caret's block: {words!r}")
 
 
 def named_sides(page: Page) -> None:
@@ -601,6 +664,7 @@ def drive(browser: Browser) -> None:
         ("enter", lambda: enter_after_going(page)),
         ("tab", lambda: tab_closed(page)),
         ("properties", lambda: properties(page, held)),
+        ("note menu", lambda: note_menu(page)),
         ("sides", lambda: named_sides(page)),
         ("axe", lambda: axe_says(page, "both sidebars")),
         ("divider", lambda: divider(page)),
