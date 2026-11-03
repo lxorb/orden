@@ -1099,6 +1099,14 @@
   </div>
   <span class="reach" class:quiet aria-hidden="true"></span>
 
+  <!-- In the titlebar, the stretch the window is always dragged by, however many tabs
+       there are: after the tabs and ahead of the strip's own buttons, so that it is
+       part of the empty stretch beside them and never a hole in the row of buttons at
+       the bar's end (#1060). -->
+  {#if caption}
+    <div class="drag" data-tauri-drag-region></div>
+  {/if}
+
   <!-- Two links of a chain: this pane scrolls with the other one on the same
        note. Only there while there is another one. -->
   {#if twinned}
@@ -1712,6 +1720,11 @@
     stroke-linejoin: round;
   }
 
+  .drag {
+    flex: none;
+    width: var(--space-5);
+  }
+
   .link {
     flex: none;
     align-self: center;
@@ -1719,7 +1732,9 @@
     height: var(--row-height);
     display: grid;
     place-items: center;
-    margin: 0 var(--space-1);
+    /* Off the tabs, and against the button after it like every other button at the
+       strip's end (#1060). */
+    margin-inline-start: var(--space-1);
     border-radius: var(--radius-row);
     color: var(--muted);
   }

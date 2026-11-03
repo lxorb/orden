@@ -1620,7 +1620,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         // store; see web_keys.rs.
         crate::web_keys::listen(&platform, asking.clone(), window.clone());
         // Whether it has the keyboard, which is where it goes back to; see keyboard.rs.
-        crate::keyboard::page(&platform, &label, &window);
+        crate::keyboard::page(&asking, &platform, &label, &window);
         // How a window it asks for was pressed for; see web_opens.rs.
         crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
         // Its sound, its full screen and its zoom; see web_page.rs. And finding in it;

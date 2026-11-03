@@ -6,6 +6,7 @@
   import { restartToUpdate } from './updater'
   import { dur } from './motion'
   import { log } from './log'
+  import { told } from './said.svelte'
 
   const {
     version,
@@ -22,11 +23,28 @@
    *  notice's, long enough to read it twice. */
   const STAYS = 6000
 
-  /** The pointer on it, which keeps it up. */
-  let held = $state(false)
+  /** The pointer on it, or the keyboard in it, which keeps it up. */
+  let pointer = $state(false)
+  let keys = $state(false)
+
+  function heldBy(card: HTMLElement) {
+    const on = {
+      pointerenter: () => (pointer = true),
+      pointerleave: () => (pointer = false),
+      focusin: () => (keys = true),
+      focusout: (event: Event) => {
+        const to = (event as FocusEvent).relatedTarget
+        if (!(to instanceof Node && card.contains(to))) keys = false
+      },
+    }
+    for (const [type, run] of Object.entries(on)) card.addEventListener(type, run)
+    return () => {
+      for (const [type, run] of Object.entries(on)) card.removeEventListener(type, run)
+    }
+  }
 
   $effect(() => {
-    if (!managed || held) return
+    if (!managed || pointer || keys) return
     const timer = setTimeout(ondismiss, STAYS)
     return () => clearTimeout(timer)
   })
@@ -59,10 +77,13 @@
 <div
   class="notice"
   class:is-news={managed}
-  role="status"
   transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-  onpointerenter={() => (held = true)}
-  onpointerleave={() => (held = false)}
+  {@attach told(
+    managed
+      ? t('Orden {version} is available.', { version })
+      : t('Orden {version} is ready to install.', { version }),
+  )}
+  {@attach heldBy}
 >
   {#if managed}
     <p>{t('Orden {version} is available.', { version })}</p>

@@ -37,6 +37,8 @@ function reachable(node: Element): boolean {
  *  there goes nowhere, and F6 stood still on the status bar in front of it. */
 function standing(box: HTMLElement): boolean {
   if (box.getClientRects().length === 0 || box.closest('[inert]')) return false
+  // The notices row is always on the page and holds nothing while nothing is up.
+  if (box.childElementCount === 0) return false
   return getComputedStyle(box).visibility !== 'hidden'
 }
 

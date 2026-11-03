@@ -35,6 +35,36 @@ describe('a hint', () => {
   test('is never the browser tooltip, which arrives late and never under a finger', () => {
     expect(body).not.toMatch(/\btitle=/)
   })
+
+  test('is glued to the last word of its label, so a line never breaks before it (#1052)', () => {
+    expect(body).toContain('\u2060<button')
+  })
+})
+
+/** The glyph places itself on the label's letters (#1052), so whatever draws a label
+ *  with one draws it as a run of text: a flex row centres the glyph on the label's
+ *  line box instead, and on every line of a name that wraps at once. Measured in
+ *  test/e2e/help-mark.py. */
+describe('the labels it follows', () => {
+  const read = (path: string) =>
+    readFileSync(fileURLToPath(new URL(path, import.meta.url)), { encoding: 'utf8' })
+  const rule = (css: string, selector: string) => {
+    const at = css.lastIndexOf(`${selector} {`)
+    expect(at).toBeGreaterThan(-1)
+    return css.slice(at, css.indexOf('}', at))
+  }
+
+  test('are a run of text, not a flex row', () => {
+    const panel = read('./SettingsPanel.svelte')
+    const base = read('../../../../packages/themes/src/base.css')
+    for (const one of [
+      rule(panel, '.setting .name .what'),
+      rule(base, '.nib-setting .name .nib-named'),
+    ]) {
+      expect(one).toContain('display: block')
+      expect(one).not.toMatch(/display: (inline-)?flex|align-items|gap:/)
+    }
+  })
 })
 
 /** The settings panel draws the glyph after every declared row's name, in one slot, and

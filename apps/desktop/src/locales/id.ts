@@ -30,7 +30,8 @@ export const id: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Izin penuh',
   'Auto mode': 'Mode otomatis',
-  'Full permissions: nothing is asked first': 'Izin penuh: tidak ada yang ditanyakan dulu',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Izin penuh: tidak ada yang ditanyakan atau dikembalikan kepada Anda, bahkan masuk, membayar, mengirim, atau menghapus',
   // Import: Zen's tabs
   'Import from Zen': 'Impor dari Zen',
   'Containers stay in Zen': 'Kontainer tetap di Zen',
@@ -2659,4 +2660,6 @@ export const id: Dictionary = {
   'Trust this space again': 'Percayai ruang ini lagi',
   'Agent instructions': 'Instruksi agen',
   "AGENTS is this space's agent instructions": 'AGENTS adalah instruksi agen untuk ruang ini',
+  '{title}, unread': '{title}, belum dibaca',
+  '{title}, running': '{title}, sedang berjalan',
 }

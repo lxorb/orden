@@ -97,11 +97,14 @@ afterEach(() => {
 
 const NAMES = ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
 
-/** Ten notes in the one pane, the strip on the page, measured, and the first in front. */
+/** Ten notes in the one pane, the strip on the page, measured, and the first in front,
+ *  the second the one used before it: what a pane comes back to when the first goes
+ *  (#1079). */
 async function strip() {
   for (const name of NAMES) workspace.openBlank(name, `# ${name}`)
   const paneId = workspace.panes.focusedId
   const tabs = workspace.tabsIn(paneId)
+  workspace.activate(tabs[1]?.id ?? '')
   workspace.activate(tabs[0]?.id ?? '')
   shown = mount(Tabs, { target, props: { paneId } })
   await vi.waitFor(() => {
@@ -213,7 +216,7 @@ test('a tab closed with its cross goes as no longer in front, and the rest hold 
   expect(going?.classList.contains('leaving')).toBe(true)
   expect(going?.classList.contains('active')).toBe(false)
 
-  // One tab in front, never two: the next one, from the same frame.
+  // One tab in front, never two: the one used before it, from the same frame.
   expect(
     [...target.querySelectorAll('.tab.active')].map((node) => (node as HTMLElement).dataset.box),
   ).toEqual([two])
@@ -226,7 +229,7 @@ test('a tab closed with its cross goes as no longer in front, and the rest hold 
 
 /** #523: the keyboard went with the tab to the page's `body`, and the next arrow walked
  *  nothing. It goes on to the tab in front, the way a browser's strip does. */
-test('Delete on a tab leaves the keyboard on the tab in front after it', async () => {
+test('Delete on a tab leaves the keyboard on the tab in front after it, the one used before', async () => {
   const { ids } = await strip()
   const [one, two] = ids as [string, string]
 

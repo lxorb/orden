@@ -252,9 +252,65 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-02, to 5,767,900, for the open bug round's branches merged
  *  together on claude/bugs-2026-11: each raise above was measured without the others.
  *  Measured 5,767,345.
+ *
+ *  The code raised on 2026-11-02, to 5,739,500, for #523: a notice's words go through the
+ *  one live region and the notices row is a region F6 walks to (UndoToast.svelte,
+ *  said.svelte.ts, focus.ts). Measured 5,739,412, from 5,739,030 at ff4c0315c, which was
+ *  over already.
+ *
+ *  The code raised on 2026-11-02, to 5,739,900, for #523: a property's key is a button the
+ *  keyboard renames and opens the row's menu from (PropertiesPanel.svelte). Measured
+ *  5,739,841.
+ *
+ *  The code raised on 2026-11-02, to 5,740,000, for #523: a sidebar opened from its toggle
+ *  by a key takes the keyboard into it (`enterSide` in focus.ts). Measured 5,739,967.
+ *
+ *  The code raised on 2026-11-02, to 5,740,100, for #523: a property's key tells a key's
+ *  press from a click, so the pointer keeps renaming it with a double click
+ *  (PropertiesPanel.svelte). Measured 5,740,025.
+ *
+ *  The code raised on 2026-11-02, to 5,741,000, for #1036: a web page taking the keyboard
+ *  is the app's own page letting go of whatever it had focused, told by the crate as well
+ *  as by the window's blur (keyboard-home.ts). Measured 5,740,924.
+ *
+ *  The code raised on 2026-11-03, to 5,769,000, for unstable's #523 and #1036 fixes merged
+ *  into claude/bugs-2026-11: the two branches' raises above were measured without each
+ *  other, and the fixes for one behaviour made one. Measured 5,768,860.
+ *
+ *  The code raised on 2026-11-03, to 5,743,700, for #1044: the space's inbox is a hidden
+ *  note of Orden's own, which the rows read with the space, sync carries and merges as
+ *  every task of both (packages/bases/src/inbox.ts). Measured 5,743,620.
+ *
+ *  The code raised on 2026-11-03, to 5,743,800, for #1052: the `?` after a setting's name
+ *  sits on the name's letters as a word of it, glued to the last word, rather than in a
+ *  flex row beside it (Hint.svelte). Measured 5,743,715.
+ *
+ *  The code raised on 2026-11-03, to 5,743,900, for #1060: the sliver the window is
+ *  dragged by is drawn by the strip in the titlebar, ahead of its own buttons, rather
+ *  than by the bar after them (Tabs.svelte, Titlebar.svelte). Measured 5,743,874.
+ *
+ *  The code raised on 2026-11-03, to 5,744,300, for #1064: the ✦ tab wears a dot while an
+ *  AI chat has an answer not yet seen (Sidebar.svelte, ai/UnreadDot.svelte,
+ *  ai/unread.svelte.ts). Measured 5,744,218.
+ *
+ *  The code raised on 2026-11-03, to 5,746,600, for #1064: the dot is read from the
+ *  chats' heads at launch, before the AI panel is opened (`lookAtLaunch` in
+ *  ai/unread.svelte.ts). Measured 5,746,478.
+ *
+ *  The code raised on 2026-11-04, to 5,747,000, for #1076: what floats in a note's
+ *  corners is drawn by the focused pane inside its own box (pane-corners.svelte.ts).
+ *  Measured 5,746,806.
+ *
+ *  The code raised on 2026-11-04, to 5,747,600, for #1079: a pane that loses its tab
+ *  in front comes back to the one used there last (workspace/recency.ts), and keeps
+ *  that order through a restart. Measured 5,747,488.
+ *
+ *  The code raised on 2026-11-03, to 5,775,600, for unstable's #1044 to #1079 merged into
+ *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
+ *  and the sum of their growth is what came. Measured 5,775,432.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_767_900,
+  code: 5_775_600,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

@@ -98,14 +98,41 @@ describe('the to-dos, with Orden closed', () => {
     ])
   })
 
-  test("a task added to the space's inbox, made the first time", async () => {
+  test("a task added to the space's inbox, Orden's own, made the first time", async () => {
     const key = await connector()
     const added = await json(key, 'add_task', {
       space: 'Work',
       text: 'Call the bank 📅 2026-10-06',
     })
-    expect(added.at).toMatch(/^Inbox\.md#0:/)
-    expect(await read(key, 'Inbox.md')).toBe('- [ ] Call the bank 📅 2026-10-06\n')
+    // Orden's own inbox, in the space's hidden folder: no Inbox.md the reader never
+    // made is put at the root of the space (#1044).
+    expect(added.at).toMatch(/^\.Inbox\.md#0:/)
+    expect(await read(key, '.Inbox.md')).toBe('- [ ] Call the bank 📅 2026-10-06\n')
+    expect(await read(key, 'Inbox.md')).not.toContain('Call the bank')
+    const { tasks } = await json(key, 'list_tasks', { space: 'Work', view: 'inbox' })
+    expect(tasks.map((one) => one.text)).toEqual(['Call the bank'])
+
+    // Sent to the Inbox by name, where no note is called that, it goes there too.
+    await json(key, 'add_task', { space: 'Work', text: 'Post the letter', note: 'Inbox' })
+    expect(await read(key, '.Inbox.md')).toBe(
+      '- [ ] Call the bank 📅 2026-10-06\n- [ ] Post the letter\n',
+    )
+    expect(await read(key, 'Inbox.md')).not.toContain('Post the letter')
+
+    // Into a note and back again, and still no Inbox.md.
+    const { tasks: inbox } = await json(key, 'list_tasks', { space: 'Work', view: 'inbox' })
+    const letter = inbox.find((one) => one.text === 'Post the letter')
+    const moved = await json(key, 'update_task', {
+      space: 'Work',
+      at: letter?.at,
+      move_to: { note: 'Shop' },
+    })
+    expect(await read(key, 'Shop.md')).toContain('- [ ] Post the letter')
+    expect(await read(key, '.Inbox.md')).not.toContain('Post the letter')
+    await json(key, 'update_task', { space: 'Work', at: moved.at, move_to: { note: 'Inbox' } })
+    expect(await read(key, '.Inbox.md')).toContain('- [ ] Post the letter')
+    expect(await read(key, 'Shop.md')).not.toContain('Post the letter')
+    expect(await read(key, 'Inbox.md')).not.toContain('Post the letter')
 
     await json(key, 'add_task', {
       space: 'Work',

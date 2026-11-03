@@ -28,10 +28,12 @@ Nothing here loosens any of them.
    Tasks plugin's own emoji format, so a space opened in Obsidian with Tasks installed reads
    every date, priority and recurrence Orden wrote. What Tasks has no field for (a time of day,
    a duration, a deadline, a reminder, an assignee) is a Dataview inline field, `[time::
-16:00]`, which Dataview reads and Tasks keeps as words. No store of nib's own, ever.
+16:00]`, which Dataview reads and Tasks keeps as words. No store of nib's own, ever,
+   bar one hidden note per space: the Inbox (5.1).
 2. **A project is a note, a section is a heading, a label is a tag, a sub-task is an
    indented task.** Comments and descriptions are the indented lines under a task, and an
-   attachment is an embed there. Each space has an `Inbox.md`. Nothing has to be learned:
+   attachment is an embed there. Each space has an inbox of Orden's own, a hidden
+   `.Inbox.md` that no list shows (#1044). Nothing has to be learned:
    the markdown already said all of it.
 3. **One index, built in the pass that already reads the space.** The crate's link scan
    carries every task line and every note's front matter back with the links; the window
@@ -222,7 +224,7 @@ added, property edited or a schedule; forms that write rows.
 | 19  | Quick settings tile                                              | "Add task" tile next to New note                                                                                                                            | should                                 | three lines of Kotlin                                            |
 | 20  | Wear OS                                                          | none                                                                                                                                                        | drop                                   | no watch build; the glasses are Orden's wearable                   |
 | 21  | Siri, Google Assistant                                           | an App Shortcut on Android for "add task"                                                                                                                   | later                                  | needs an intent filter per assistant                             |
-| 22  | Inbox                                                            | `Inbox.md` at each space's root, made on the first quick add                                                                                                | must                                   |                                                                  |
+| 22  | Inbox                                                            | `.Inbox.md`, hidden, at each space's root, made on the first quick add (#1044)                                                                              | must                                   |                                                                  |
 | 23  | Projects                                                         | a note with tasks is a project; the panel lists them (5.5)                                                                                                  | must                                   |                                                                  |
 | 24  | Sub-projects and folders                                         | folders, and a note's tasks under its folder                                                                                                                | must                                   | the tree already is this                                         |
 | 25  | Sections                                                         | the headings of a project note                                                                                                                              | must                                   |                                                                  |
@@ -564,10 +566,35 @@ readable. A test holds the writer to the Tasks plugin's own examples.
   button opens the view with that field ready. In the note a comment's `[at::]` and
   `[by::]` are hidden like marks and said as a quiet chip after its words (`commentDrawing`
   in the editor's task-chips.ts).
-- The **Inbox** is `Inbox.md` at the root of each space, made by the first quick add that
-  names no note. It is an ordinary note, so it syncs and can be renamed; the space keeps
-  which note is its inbox in its own settings (`inbox:` in the space's settings file), so a
-  renamed inbox stays the inbox.
+- The **Inbox** is Orden's own, `.Inbox.md` at the root of each space (`INBOX_PATH` in
+  `@orden/bases/inbox`), made by the first task that names no note. Orden puts no file
+  into the space that the reader did not make (#1044), so it is hidden: the file list, the
+  search's walk, the link scan, the graph and Obsidian leave a dotted name out, and so
+  does the agent's write gate, bar this one. A note underneath all the same, so nothing
+  about a task changes: the rows read it with the space (`own` in `rows/store.ts`; its
+  tasks are rows named Inbox and it is no row of its own), the one write path edits it,
+  the Search panel reads it (`search/space.ts`), the account's connector writes it,
+  Shortcuts on a Mac writes it (`siri.rs`), and it is in any copy of the space's folder.
+  Sync carries it, the one hidden name it does (`carriedOwn`, and `carried` in
+  `space_watch/walk.rs`), and two copies of it never become two files: made on two
+  devices apart it is a mergeable create (`sync2/create.ts`), merged as every task of
+  both, once (`withTasksOf`, in `mergeDays`), and sync v1 settles a clash on it the same
+  way instead of writing a hidden conflict copy. A file at the root rather than a folder
+  of Orden's: two folders made apart would be two folders. `>Inbox`, `note: "Inbox"` and
+  the connector's `add_task` mean it where no note of the reader's has that name. The
+  reader can still choose a note of their own as a space's inbox ("make this note the
+  inbox"); the choice is kept by path and follows the note, so a renamed inbox stays the
+  inbox.
+- **The move from `Inbox.md`** (`rows/inbox-move.ts`). Before #1044 the inbox was
+  `Inbox.md` at the root, which Orden made. Once a space's rows are read and a sync pass
+  has had its turn, and again whenever an `Inbox.md` arrives, one that is still Orden's
+  (task lines, with what the task view writes under them, and nothing else) has its tasks
+  added to the space's own inbox, each once, and goes to the trash the way a delete does,
+  a version kept. One the reader made theirs (a heading, front matter, a line of prose) or
+  chose as the inbox is left exactly as it is, an ordinary note whose tasks stay where they
+  are. Running it again adds nothing; a note changed while it moves waits for the next
+  run; one brought back by an older Orden on another device moves again with what it
+  gained.
 
 **Notes that are tasks.** Notion's way, a page per task, is also supported: a note whose front
 matter has `status`, `due`, `priority` or `assignee` is a row like any other, and a view can
@@ -845,7 +872,7 @@ field out of the line. `entry.ts` writes the line (`taskLine`) and the descripti
 and says where it goes (`placeIn`: the end of the note's last list, a list of its own after a
 paragraph, the end of a heading's section, a heading made where there is none); `write.ts`
 resolves the note (`>` names one by path or name, made where it is missing; else the inbox
-through `rows.inbox`) and writes through `replaceInNotes`, one undo. `QuickAddSheet.svelte` is
+through `rows.inbox`, which `>Inbox` names too where no note has that name) and writes through `replaceInNotes`, one undo. `QuickAddSheet.svelte` is
 it inside the app, at the palette's place; **`showQuickAdd(prefill)` in `surfaces.svelte.ts`
 is the entry lane 4's panel row and a view's add button call**, with `{ note, tags, due }` as
 the view knows them, and the palette's Add task row is the same call. Settings, General has
@@ -1755,7 +1782,8 @@ them.
    time, so a phone that has not opened Orden since a task was added elsewhere still rings.
 6. **Orden in the tray** by default when the global quick add key is set or a reminder
    exists (Todoist's way), and off otherwise. Decided.
-7. **An inbox per space** (`Inbox.md` in each), shown together in the Inbox view. Decided.
+7. **An inbox per space** (`.Inbox.md`, hidden, in each; #1044), shown together in the Inbox
+   view. Decided.
 8. **Bases and templates are back; daily notes stay out** (Today is the daily list).
    Decided.
 

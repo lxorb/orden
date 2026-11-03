@@ -9,7 +9,7 @@
  *    rows.of(space?)            every row, of one space (by name or root) or of all
  *    rows.watch(listener)       each file's rows as they change; answers the way to stop
  *    rows.write(row, change)    a property or a task field, one edit, one undo
- *    rows.inbox(root?)          the space's inbox note, made the first time it is asked */
+ *    rows.inbox(root?)          the space's inbox, made the first time it is asked */
 
 import type { Row } from '@orden/bases'
 import { untrack } from 'svelte'
@@ -20,7 +20,7 @@ import { insideSpace } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { keeping } from '../workspace/file-ops'
-import { inboxes, inboxOf } from './inbox'
+import { INBOX, inboxes, inboxOf } from './inbox'
 import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
 import { type RowsListener, RowsStore } from './store'
@@ -37,6 +37,7 @@ const store = new RowsStore({
   }),
   breathe,
   now: () => Date.now(),
+  own: () => [INBOX],
   vault: isVault,
 })
 
@@ -46,6 +47,13 @@ links.hearSaves((path, content) => store.saved(path, content))
 workspace.fileOps.follow((op) => store.follow(op))
 workspace.fileOps.follow(keeping(inboxes))
 workspace.fileOps.follow(keeping(projectFolders))
+
+// An `Inbox.md` Orden made before the space had an inbox of its own is taken into it,
+// once the space is read and whenever one arrives (#1044); see inbox-move.ts. Never in
+// the glasses' plugin, which writes nothing of the kind.
+if (!__EVEN_PLUGIN__) {
+  store.watch((change) => void import('./inbox-moving').then((one) => one.heard(change)))
+}
 
 // The spaces as the window has them: a new one read, one gone forgotten, one renamed
 // renamed. Handed over untracked, so the store's own reads are never this effect's.

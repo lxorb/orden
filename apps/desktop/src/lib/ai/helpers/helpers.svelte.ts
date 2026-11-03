@@ -6,8 +6,9 @@
  *  So Orden's tool `run_agent` is shaped like Claude Code's own `Agent` tool and Codex's
  *  `spawn_agent` - a few words of description, the whole task, a model - and whatever
  *  asks it, the helper is a thread of its own on the provider that model is on, with
- *  that provider's account in use: in the thread list, on its parent's `/jobs`, and its
- *  last words the tool's answer.
+ *  that provider's account in use: a step of its parent's that opens it (never a chat
+ *  of its own in the list, #1062), on its parent's `/jobs`, and its last words the
+ *  tool's answer.
  *
  *  **Limits**, the ones Claude Code and Codex keep for their own subagents, tighter
  *  because a helper here spends a plan: at most `DEPTH` helpers deep under the thread
@@ -163,6 +164,9 @@ class Helpers {
     )
     const named = [asked.description, asked.prompt.split('\n')[0]?.slice(0, 60)].find(Boolean)
     thread.title = `↳ ${named ?? ''}`
+    // In its parent's steps, not in the list of chats (#1062); an outside agent's has
+    // no parent here and is a chat of its own.
+    if (parent) thread.parent = parent.id
     const helper: Helper = {
       id: thread.id,
       parent: parent?.id ?? null,

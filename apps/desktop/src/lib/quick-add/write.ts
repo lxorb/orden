@@ -7,6 +7,7 @@
  *  pane takes the line as an edit of its own, nothing typed there is lost, and the add
  *  is one thing to undo. Ctrl+Enter opens the note at the line. */
 
+import { meansInbox } from '@orden/bases/inbox'
 import { insideOnly } from '../automation/inside'
 import { changeOf } from '../search/replace'
 import { insideSpace, isMarkdownPath, relativeTo, withoutExtension } from '../space-paths'
@@ -55,11 +56,12 @@ function named(root: string, said: string): string | null {
 /** The path a task goes to, the note made where it is not there yet. Null where the
  *  words name somewhere outside the space, or no space is open. */
 async function targetOf(entry: Entry, root: string): Promise<string | null> {
-  if (entry.note === undefined) {
+  const existing = entry.note === undefined ? null : named(root, entry.note)
+  // `>Inbox`, where no note of the reader's has that name, is the inbox (#1044).
+  if (entry.note === undefined || (existing === null && meansInbox(entry.note))) {
     const { inboxNote } = await import('../rows/inbox-note')
     return inboxNote(root)
   }
-  const existing = named(root, entry.note)
   if (existing) return existing
 
   const relative = insideOnly(`${entry.note.replace(/\.md$/i, '')}.md`)

@@ -188,11 +188,14 @@ export function unbroken(buffer: IBuffer, cols: number, start: Cell, end: Cell):
   return null
 }
 
-/** The provider xterm.js asks as the pointer moves: rows are 1-based there. */
+/** The provider xterm.js asks as the pointer moves: rows are 1-based there. It finds
+ *  and underlines, and says which address the pointer is on (`pointed`); following one
+ *  is the session's, on the press itself, so xterm.js's own activation does nothing
+ *  and one press is never two openings (#1083; see `pressLink` in sessions.svelte.ts). */
 export class AddressLinks implements ILinkProvider {
   constructor(
     private readonly term: Terminal,
-    private readonly activate: (event: MouseEvent, uri: string) => void,
+    private readonly pointed: (uri: string | null) => void,
   ) {}
 
   provideLinks(y: number, callback: (links: ILink[] | undefined) => void): void {
@@ -205,7 +208,9 @@ export class AddressLinks implements ILinkProvider {
               start: { x: start.x + 1, y: start.y + 1 },
               end: { x: end.x + 1, y: end.y + 1 },
             },
-            activate: this.activate,
+            activate: () => undefined,
+            hover: (_event: MouseEvent, uri: string) => this.pointed(uri),
+            leave: () => this.pointed(null),
           }))
         : undefined,
     )

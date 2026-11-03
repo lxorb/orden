@@ -38,6 +38,7 @@
   import Explored from './Explored.svelte'
   import { lasted } from './numbers'
   import PartRow from './PartRow.svelte'
+  import Spawned from './Spawned.svelte'
   import StepLine from './StepLine.svelte'
   import { type Block, blocksOf, foldOf } from './steps'
   import TaskRows from './TaskRows.svelte'
@@ -264,6 +265,9 @@
         {/if}
       {/if}
     </p>
+    {#if block.notice.threads?.length}
+      <Spawned threads={block.notice.threads} />
+    {/if}
   {:else if block.kind === 'explored'}
     <div in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
       <Explored rows={block.rows} {live} />

@@ -293,7 +293,7 @@ describe('the shell', () => {
     // Which kinds have the bar at all is `hasStatusBar` in regions.ts; what is
     // asserted here is only that full screen takes it away as well.
     expect(app).toContain('{#if hasStatusBar(workspace.active?.kind) && !bare && !filled}')
-    expect(app).toContain('&& !bare}\n        <button class="fab"')
+    expect(app).toContain('&& !bare}\n    <button class="fab"')
 
     const gone = branches(app).find((one) => one.includes('class="panels"'))
     expect(gone, 'the panels are not left out').toBeDefined()
