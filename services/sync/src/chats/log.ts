@@ -30,6 +30,7 @@ import { note } from '../failed'
 import { askHub } from '../hub/reach'
 import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
 import type { Env } from '../types'
+import { noteUnusedBy } from '../unused'
 import {
   admit,
   type Asker,
@@ -62,6 +63,7 @@ export type ChatAsk =
   | 'erase'
   | 'profile'
   | 'open'
+  | 'held-files'
 
 /** A person a request or a socket is from, as the door or the route decided. */
 export type Person = Asker & { id: string; guest: boolean }
@@ -180,6 +182,10 @@ export class ChatLog implements DurableObject {
     if (ask === 'open') return openAnswer(this.hasSocketOf(headers.get(OPEN_HEADER) ?? ''))
     if (ask === 'revoke') {
       return await this.revoke(headers.get('x-nib-revoked') ?? '', headers.get('x-nib-role'))
+    }
+    // Which files somebody's held posts need; see `heldFiles` in used.ts.
+    if (ask === 'held-files') {
+      return Response.json({ hashes: this.heldFilesOf(headers.get('x-nib-held-by') ?? '') })
     }
     // Every ask below may say something to the sockets here, and none whose sign-in
     // has ended hears it.
@@ -505,6 +511,21 @@ export class ChatLog implements DurableObject {
   }
 
   /* ── Scheduled posts ──────────────────────────────────────────────────── */
+
+  /** Every blob this person's held posts name, the refused among them too, which its
+   *  author can still see and send again. */
+  private heldFilesOf(who: string): string[] {
+    const rows = this.sql.exec<{ post: string }>('select post from scheduled where author = ?', who)
+    return rows.toArray().flatMap((row) => {
+      const post = JSON.parse(row.post) as Post
+      return [
+        ...(post.files ?? []).flatMap((file) =>
+          file.preview ? [file.hash, file.preview] : [file.hash],
+        ),
+        ...(post.preview?.picture ? [post.preview.picture] : []),
+      ]
+    })
+  }
 
   private heldAnswer(id: string): Answer | null {
     const row = this.sql
@@ -922,7 +943,7 @@ export class ChatLog implements DurableObject {
   }
 
   /** The files a deleted or edited message named, let go of where no message still names
-   *  them. */
+   *  them, and written down for the one who posted it (unused.ts). A guest holds none. */
   private async freeFiles(effects: Effects): Promise<void> {
     const chat = this.chatId()
     if (!chat || !effects.freed.length) return
@@ -931,11 +952,15 @@ export class ChatLog implements DurableObject {
     )
     const loose = hashes.filter((hash) => !this.sql.exec(NAMES_FILE, hash).toArray().length)
     if (!loose.length) return
-    await this.env.DB.prepare(
-      `delete from chat_files where chat_id = ? and hash in (${places(loose.length)})`,
-    )
-      .bind(chat, ...loose)
-      .run()
+    const poster = effects.freedBy
+    await this.env.DB.batch([
+      ...(poster && !poster.startsWith('guest:')
+        ? [noteUnusedBy(this.env, hubIdOf(poster), loose, Date.now())]
+        : []),
+      this.env.DB.prepare(
+        `delete from chat_files where chat_id = ? and hash in (${places(loose.length)})`,
+      ).bind(chat, ...loose),
+    ])
   }
 
   /** Everybody the chat reaches, believed for a minute. */

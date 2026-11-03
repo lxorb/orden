@@ -54,6 +54,7 @@ export async function sendApns(
   )
   if (answer.status === 410) return 'gone'
   if (answer.ok) return 'sent'
+  if (answer.status === 429 || answer.status === 503) return 'busy'
   const said = await answer.text()
   return /BadDeviceToken|Unregistered/.test(said) ? 'gone' : 'failed'
 }

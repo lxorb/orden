@@ -5,7 +5,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
 import { base64url, fromBase64url } from '../src/push/keys'
-import { remindersIn, sendDue } from '../src/push/reminders'
+import { MOST_TRIES, remindersIn, sendDue, TRY_AGAIN_AFTER } from '../src/push/reminders'
 import { forgetAccess } from '../src/push/fcm'
 import { encrypted } from '../src/push/webpush'
 import { call, signIn, testEnv, type TestEnv } from './harness'
@@ -363,6 +363,159 @@ describe('sending', () => {
     expect(await sendDue(env, AT, none.send)).toBe(0)
     expect(none.asked).toEqual([])
     expect(env.db.prepare('select kind from push_targets').all()).toEqual([{ kind: 'apns' }])
+  })
+
+  describe('a push no service took', () => {
+    const OK = () => Response.json({ name: 'projects/nib-test/messages/1' })
+    const DOWN = () => new Response('down', { status: 503 })
+    const TOKEN = () => Response.json({ access_token: 'access', expires_in: 3600 })
+    const MINUTE = 60_000
+
+    /** A service answering every message with `reply`, counting what it was sent. */
+    function service(reply: () => Response) {
+      const ids: string[] = []
+      const send = ((input: string, init?: RequestInit) => {
+        if (input.includes('oauth2')) return Promise.resolve(TOKEN())
+        const body = JSON.parse(init?.body as string) as { message: { data: { id: string } } }
+        ids.push(body.message.data.id)
+        return Promise.resolve(reply())
+      }) as typeof fetch
+      return { ids, send }
+    }
+
+    async function due() {
+      env.FCM_SERVICE_ACCOUNT = await serviceAccount()
+      await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+      return await save('Plan.md', TASK)
+    }
+
+    test('is tried again after a wait, and rings once', async () => {
+      await due()
+
+      const down = service(DOWN)
+      expect(await sendDue(env, AT, down.send)).toBe(0)
+      expect(kept()).toMatchObject([{ sent_at: null }])
+
+      // Not the next minute.
+      expect(await sendDue(env, AT + MINUTE, down.send)).toBe(0)
+      expect(down.ids).toHaveLength(1)
+
+      const back = service(OK)
+      expect(await sendDue(env, AT + TRY_AGAIN_AFTER, back.send)).toBe(1)
+      expect(back.ids).toHaveLength(1)
+      expect(await sendDue(env, AT + TRY_AGAIN_AFTER + MINUTE, back.send)).toBe(0)
+      expect(back.ids).toHaveLength(1)
+    })
+
+    test.each([
+      ['too many requests', 429, true],
+      ['unavailable', 503, true],
+      ['an error it may have taken the message before', 500, false],
+      ['a gateway that may have got it there', 502, false],
+      ['a refusal of the sender', 403, false],
+    ])('is tried again only where it did not take it: %s', async (_, status, again) => {
+      await due()
+      const first = service(() => new Response('no', { status }))
+      await sendDue(env, AT, first.send)
+      const later = service(OK)
+      expect(await sendDue(env, AT + TRY_AGAIN_AFTER, later.send)).toBe(again ? 1 : 0)
+    })
+
+    test('and where the service could not be reached', async () => {
+      await due()
+      const unreachable = ((input: string) =>
+        input.includes('oauth2')
+          ? Promise.resolve(TOKEN())
+          : Promise.reject(new Error('connection reset'))) as typeof fetch
+      await sendDue(env, AT, unreachable)
+      expect(await sendDue(env, AT + TRY_AGAIN_AFTER, service(OK).send)).toBe(1)
+    })
+
+    test('is not tried again where another device of the account took it', async () => {
+      await due()
+      await register({ kind: 'fcm', token: 'other-phone', zone: ZONE })
+      await save('Plan.md', TASK)
+
+      const replies = [OK, DOWN]
+      const half = service(() => (replies.shift() ?? OK)())
+      expect(await sendDue(env, AT, half.send)).toBe(1)
+      expect(half.ids).toHaveLength(2)
+
+      const after = service(OK)
+      expect(await sendDue(env, AT + TRY_AGAIN_AFTER, after.send)).toBe(0)
+      expect(after.ids).toEqual([])
+    })
+
+    test('nor where a device beside it may have taken it', async () => {
+      await due()
+      await register({ kind: 'fcm', token: 'other-phone', zone: ZONE })
+      await save('Plan.md', TASK)
+
+      const replies = [() => new Response('no', { status: 500 }), DOWN]
+      await sendDue(env, AT, service(() => (replies.shift() ?? OK)()).send)
+      expect(await sendDue(env, AT + TRY_AGAIN_AFTER, service(OK).send)).toBe(0)
+    })
+
+    test('stops being tried once it is too late to be worth ringing', async () => {
+      await due()
+      const down = service(DOWN)
+      for (let minute = 0; minute <= 180; minute++) {
+        await sendDue(env, AT + minute * MINUTE, down.send)
+      }
+      expect(down.ids).toHaveLength(MOST_TRIES)
+      expect(kept()[0]?.sent_at).not.toBeNull()
+    })
+
+    test('is not tried again where a service has no keys', async () => {
+      await register({ kind: 'apns', token: 'iphone-token', zone: ZONE })
+      await save('Plan.md', TASK)
+      expect(await sendDue(env, AT, recorded().send)).toBe(0)
+      expect(kept()[0]?.sent_at).toBe(AT)
+    })
+
+    test('keeps its wait through a save of the note', async () => {
+      const made = (await due()).json as { note: { id: string; version: number } }
+      const down = service(DOWN)
+      await sendDue(env, AT, down.send)
+
+      await call(env, `/v1/notes/${made.note.id}`, {
+        method: 'PUT',
+        token,
+        body: { content: `${TASK}and a line\n`, baseVersion: made.note.version },
+      })
+      await sendDue(env, AT + MINUTE, down.send)
+      expect(down.ids).toHaveLength(1)
+    })
+
+    test('holds up no reminder due, and the tries of a whole minute stay bounded', async () => {
+      await due()
+      const row = env.db.prepare('select note_id, user_id, space_id from push_reminders').get() as {
+        note_id: string
+        user_id: string
+        space_id: string
+      }
+      env.db.prepare('delete from push_reminders').run()
+      const insert = env.db.prepare(
+        `insert into push_reminders
+           (note_id, id, user_id, space_id, at, title, body, path, hash, line, sent_at)
+         values (?, ?, ?, ?, ?, 'Due', 'Plan', 'Plan.md', 'h', 0, null)`,
+      )
+      for (let one = 0; one < 250; one++) {
+        insert.run(row.note_id, `due-${one}`, row.user_id, row.space_id, AT)
+      }
+
+      const down = service(DOWN)
+      await sendDue(env, AT, down.send)
+      expect(down.ids).toHaveLength(200)
+      await sendDue(env, AT + MINUTE, down.send)
+      expect(new Set(down.ids).size).toBe(250)
+      expect(down.ids).toHaveLength(250)
+
+      for (let minute = 2; minute <= 180; minute++) {
+        await sendDue(env, AT + minute * MINUTE, down.send)
+      }
+      expect(down.ids).toHaveLength(250 * MOST_TRIES)
+    })
   })
 
   test('a note deleted since is not pushed', async () => {

@@ -14,6 +14,7 @@ import { sweepChats } from '../src/chats/sweep'
 import { sweepLeftovers } from '../src/leftovers'
 import { purgeExpired } from '../src/trash'
 import { call, mail, type ShareView, signIn, type TestEnv, testEnv } from './harness'
+import { FakeSocket } from './room'
 import { framed, type Live, live } from './sync2'
 
 let env: TestEnv
@@ -222,6 +223,72 @@ describe('a note purged from Recently deleted', () => {
     env.db.exec("update chats set ended_at = null where id = 'c_file'")
     await sweepChats(env, Date.now())
     expect(ended()).not.toBeNull()
+  })
+})
+
+/** An id a purge retired is nothing a v1 write comes back through: on sync v2 a room could
+ *  not settle what the tree hides, for ever, and on v1 the tombstone came back alive. */
+describe('a write to a note purged since it was read', () => {
+  test.each([
+    ['on sync v1', false],
+    ['on sync v2', true],
+  ])('is answered as a note that is not there, %s', async (_, v2) => {
+    const id = (
+      await call(env, `/v1/spaces/${space}/notes`, {
+        token,
+        body: { path: 'Gone.md', content: 'secret words' },
+      })
+    ).json.note.id
+    if (v2) await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+    const { version } = env.db.prepare('select version from notes where id = ?').get(id) as {
+      version: number
+    }
+
+    const put = await call(env, `/v1/notes/${id}`, {
+      token,
+      method: 'PUT',
+      body: { content: 'edited offline', baseVersion: version },
+    })
+
+    expect(put.status).toBe(404)
+    expect(env.db.prepare('select deleted, deleted_at from notes where id = ?').get(id)).toEqual({
+      deleted: 1,
+      deleted_at: null,
+    })
+    expect((await call(env, `/v1/notes/${id}`, { token })).status).toBe(404)
+  })
+})
+
+/** An erased room is one that holds nothing, including the object still in memory that the
+ *  next join finds. */
+describe('a room erased while its object lives', () => {
+  test('hands the next socket none of its words, and opens again', async () => {
+    const id = await heldInARoom('Gone.md', 'TOP SECRET\n', 'more ')
+    const { room } = rooms.of(id)
+    const join = { noteId: id, spaceId: space, kind: 'words' as const }
+    const first = new FakeSocket()
+    await room.enter(first as unknown as WebSocket, join)
+    const memory = () => (room as unknown as { state: { doc: Y.Doc } }).state.doc
+    expect(memory().getText(TEXT).toJSON()).toContain('TOP SECRET')
+
+    const erased = await room.fetch(
+      new Request('https://room/', { headers: { 'x-nib-erase': 'yes' } }),
+    )
+    expect(erased.status).toBe(204)
+    expect(first.closed).toBe(true)
+    expect(memory().getText(TEXT).toJSON()).toBe('')
+
+    // Nothing of the old document, and a room that opens again: `held` is what a settle
+    // writes from.
+    await env.NOTES.delete(`spaces/${space}/${id}`)
+    env.db.prepare("update notes set epoch = 0, epoch_base = '' where id = ?").run(id)
+    const next = new FakeSocket()
+    await room.enter(next as unknown as WebSocket, join)
+    expect(next.closed).toBe(false)
+    expect(memory().getText(TEXT).toJSON()).toBe('')
+    expect((room as unknown as { held: unknown }).held).not.toBeNull()
   })
 })
 
