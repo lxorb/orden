@@ -32,6 +32,27 @@ export interface Places {
   documentAt(path: string): NoteDoc | null
 }
 
+/** What putting a draft away needs of the store besides. */
+export interface PuttingAway extends Places {
+  save(tab: Tab): Promise<string | null>
+  putAwayDone(tab: Tab, paneId: string, at: number): void
+}
+
+/** A draft that left the screen given its place behind that, on a phone and a tablet,
+ *  so the tab that took its place is not touched while somebody is typing in it. On the
+ *  closed stack once it has a file, so back opens the note; its words in Recently
+ *  deleted, as a closed draft's are, where it could not be given one. */
+export async function putAway(
+  ws: PuttingAway,
+  tab: Tab,
+  paneId: string,
+  at: number,
+): Promise<void> {
+  const path = await ws.save(tab)
+  ws.putAwayDone(tab, paneId, at)
+  if (path === null) await trashWords(ws, tab.note)
+}
+
 /** One open of one path at a time; see `opening` in open.ts. */
 type Claim = (path: string, run: () => Promise<NoteDoc | null>) => Promise<NoteDoc | null>
 

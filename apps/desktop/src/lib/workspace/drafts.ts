@@ -34,6 +34,20 @@ export function hasWords(note: NoteDoc): boolean {
   return note.kind === 'note' ? !note.blank : note.dirty
 }
 
+/** Whether a draft says anything a file should keep: not a list marker, a heading's
+ *  hashes or a zero-width space on their own, which nobody has written yet. */
+export function worthAFile(note: NoteDoc): boolean {
+  if (!hasWords(note)) return false
+  if (note.kind !== 'note') return true
+
+  return (
+    note.live.text
+      .sliceString(0, 4096)
+      .replace(/^[ \t]*(?:>[ \t]?)*(?:#{1,6}|[-*+]|\d+[.)])?(?:[ \t]+\[[ xX]\])?[ \t]*/gmu, '')
+      .replace(/[\s\u200B-\u200D\u2060\uFEFF]/gu, '') !== ''
+  )
+}
+
 /** The file a name comes to, under its kind's own ending, read the app's own way so
  *  `Plan.canvas` does not become `Plan.canvas.canvas`. */
 export function fileNamed(name: string, kind: TabKind): string {

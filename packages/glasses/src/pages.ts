@@ -260,8 +260,7 @@ export function pagesOf(source: string, paging: Paging): Page[] {
       // note opening on a page of nothing.
       if (taking.head && taking.taken.every((one) => one.line.level > 0 || one.line.under)) {
         taking.next = { section, rule }
-      }
-      else {
+      } else {
         cut(line.from)
         taking = empty(section, rule, section === '' ? null : line)
         continue

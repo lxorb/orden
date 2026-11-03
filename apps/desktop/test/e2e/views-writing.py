@@ -169,11 +169,30 @@ def keys(page):
     page.wait_for_timeout(100)
     holds(page, "and comes off", "**word** tail")
 
-    note(page, "a\n\n| x |\n| - |\n| 1 |\n\nb\n")
-    caret(page, "a")
+    note(page, "seed\n")
+    page.evaluate(
+        """() => {
+            const view = window.nib
+            const insert = '---\\ntitle: x\\n---\\n\\npara\\n\\n| a |\\n| - |\\n| 1 |\\n\\nlast ^abc123\\n'
+            view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert } })
+        }"""
+    )
+    page.wait_for_timeout(250)
+    caret(page, "para")
+    page.keyboard.press("Control+a")
+    page.keyboard.press("Control+b")
+    page.wait_for_timeout(250)
+    got = page.evaluate("() => window.nib.state.doc.toString()")
+    if got != "---\ntitle: x\n---\n\n**para**\n\n| a |\n| - |\n| 1 |\n\n**last** ^abc123\n":
+        wrong(f"bold over a whole note: {got!r}")
+    else:
+        say("ok: bold over a whole note leaves what is typed as it stands")
+
+    note(page, "start\n\n| x |\n| - |\n| 1 |\n\nb\n")
+    caret(page, "start")
     page.keyboard.press("Alt+ArrowDown")
     page.wait_for_timeout(100)
-    holds(page, "Alt Down steps over a table", "| x |\n| - |\n| 1 |\n\na\n\nb")
+    holds(page, "Alt Down steps over a table", "| x |\n| - |\n| 1 |\n\nstart\n\nb")
     if page.locator("table.nib-table").count() != 1:
         wrong("the table stopped being one")
 
@@ -208,6 +227,15 @@ def menus(page):
             wrong(f"the name of {name} is not on a line of its own: {got!r}, link {said!r}")
         else:
             say(f"ok: the name of {name} stands under it")
+    note(page, "before\n\n```\ncode\n``` ^old\n\nafter\n")
+    handle(page, "code")
+    choose(page, "Copy link")
+    page.wait_for_timeout(300)
+    if not page.evaluate("() => navigator.clipboard.readText()").rstrip(")]").endswith("^old"):
+        wrong("a fence an older build named got another name")
+    else:
+        say("ok: a fence an older build named keeps its name")
+
     if page.locator(".cm-content table.nib-table td", has_text="^").count():
         wrong("a table grew a cell with the name in it")
 
