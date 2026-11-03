@@ -367,6 +367,26 @@ describe('Always in a thread', () => {
     sayAlways(thread, 'read_note')
     expect(alwaysCovers(thread, 'read_note', undefined)).toBe(false)
     expect(alwaysCovers(thread, 'read_note', 'writing')).toBe(true)
+  })
+
+  test.each(['trashing', 'unread'])('nor one about %s', (category) => {
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(thread, 'trash_file')
+    expect(alwaysCovers(thread, 'trash_file', category)).toBe(false)
+    expect(alwaysOffered(category)).toBe(false)
+  })
+
+  test('said on one site, it is about that site', () => {
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(thread, 'browser_click', 'shop.example')
+    expect(alwaysCovers(thread, 'browser_click', 'writing', 'shop.example')).toBe(true)
+    expect(alwaysCovers(thread, 'browser_click', 'writing', 'evil.example')).toBe(false)
+    // A question on a site is no question for one said with none, as a thread kept from
+    // before says.
+    const before = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(before, 'browser_click')
+    expect(alwaysCovers(before, 'browser_click', 'writing', 'shop.example')).toBe(false)
+    expect(alwaysCovers(before, 'browser_click', 'writing')).toBe(true)
     expect(alwaysOffered('terminal')).toBe(false)
     expect(alwaysOffered('writing')).toBe(true)
   })
