@@ -5260,3 +5260,70 @@ describe('the words of the paper a page note holds', () => {
     expect(await hits('/renamed')).toEqual(['/renamed/Lecture.pages.pdf'])
   })
 })
+
+/** #1079: whichever way a pane's tab in front goes, the pane shows the tab used last of
+ *  those left, and only where none has been in front the neighbour of the one that went.
+ *  One rule, `successorOf` in panes.svelte.ts; each way in comes through it. */
+describe('the tab a pane comes back to', () => {
+  beforeEach(() => {
+    onePane()
+  })
+
+  /** One pane holding a, b and c, a in front and `before` the one used before it: b to
+   *  tell it from the end of the strip, c from the neighbour of a. */
+  async function strip(before: 'b' | 'c' = 'c') {
+    for (const name of ['a', 'b', 'c']) await workspace.open(`/space/${name}.md`)
+    const id = (name: string) => workspace.tabs.find((tab) => tab.name === `${name}.md`)?.id ?? ''
+    workspace.activate(id(before === 'b' ? 'c' : 'b'))
+    workspace.activate(id(before))
+    workspace.activate(id('a'))
+    const [only] = workspace.panes.all
+    if (!only || workspace.tabs.length !== 3) throw new Error('the strip did not open')
+    return { id, pane: only.id }
+  }
+
+  const shown = (pane: string) =>
+    workspace.tabs.find((tab) => tab.id === workspace.panes.at(pane)?.activeTabId)?.name
+
+  test('a tab dragged out to split leaves the one used before it, not the first', async () => {
+    const { id, pane } = await strip('b')
+    workspace.dropTab(id('a'), { kind: 'pane', paneId: pane, zone: 'right' })
+    expect(workspace.panes.count).toBe(2)
+    expect(shown(pane)).toBe('b.md')
+  })
+
+  test('and dragged into another pane the same, where it is the one used last', async () => {
+    const { id, pane } = await strip('b')
+    workspace.split('row')
+    const other = workspace.panes.focusedId
+    workspace.activate(id('a'))
+    workspace.dropTab(id('a'), { kind: 'strip', paneId: other, at: 0 })
+    expect(shown(pane)).toBe('b.md')
+    expect(shown(other)).toBe('a.md')
+  })
+
+  test('closing the tab in front shows the one used before it, not its neighbour', async () => {
+    const { id, pane } = await strip()
+    workspace.close(id('a'))
+    expect(shown(pane)).toBe('c.md')
+  })
+
+  test('with none of them ever in front, the neighbour of the one that went, right then left', async () => {
+    const { id, pane } = await strip()
+    workspace.panes.used = []
+    workspace.close(id('a'))
+    expect(shown(pane)).toBe('b.md')
+    workspace.activate(id('c'))
+    workspace.panes.used = []
+    workspace.close(id('c'))
+    expect(shown(pane)).toBe('b.md')
+  })
+
+  test('a launch keeps each pane’s order of use', async () => {
+    await strip()
+    const written = workspace.layout()
+    const recent = written.frame.kind === 'pane' ? written.frame.pane.recent : undefined
+    const names = workspace.tabs.map((tab) => tab.name)
+    expect(recent?.slice(0, 2).map((at) => names[at])).toEqual(['a.md', 'c.md'])
+  })
+})

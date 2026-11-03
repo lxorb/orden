@@ -245,7 +245,7 @@ class Sets {
       frame,
       // Every tab a pane holds: one holding only an essential is a pane still in use.
       (paneId) => workspace.heldIn(paneId).map((tab) => tab.id),
-      (strip) => workspace.panes.lastOf(strip),
+      (strip) => workspace.panes.successorOf(strip),
     )
   }
 
@@ -303,6 +303,7 @@ class Sets {
       const into = paneIn(set.frame, set.focused) ?? panesIn(set.frame)[0]
       if (into) {
         this.carry(moving, into.id)
+        workspace.panes.arrived(moving.map((tab) => tab.id))
         into.activeTabId = moving.at(-1)?.id ?? into.activeTabId
       }
     } else {
@@ -338,7 +339,7 @@ class Sets {
   private fresh(tabs: readonly Tab[], panel: Panel | null): Aside {
     const made = pane(identifier())
     this.carry(tabs, made.id)
-    made.activeTabId = workspace.panes.lastOf(tabs.map((tab) => tab.id)) ?? tabs.at(-1)?.id ?? null
+    made.activeTabId = workspace.panes.successorOf(tabs.map((tab) => tab.id))
     return {
       frame: made,
       focused: made.id,

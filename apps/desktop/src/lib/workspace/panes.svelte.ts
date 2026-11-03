@@ -7,6 +7,7 @@
  *  is a line they have to read past. Everything a key or a palette command does
  *  happens in the focused pane. */
 
+import { successor } from './recency'
 import { identifier } from '../identifier'
 import {
   type Along,
@@ -260,6 +261,25 @@ export class Panes {
   /** Of a pane's tabs, the one in front last. */
   lastOf(strip: readonly string[]): string | null {
     return this.used.find((id) => strip.includes(id)) ?? null
+  }
+
+  /** The one rule for what a pane shows once its tab in front has gone (#1079): the tab
+   *  used last of `left`, else the neighbour of the place `at` it went from. Every way a
+   *  tab leaves comes through here; see `successor` in recency.ts. */
+  successorOf(left: readonly string[], at?: number): string | null {
+    return successor(left, this.used, at)
+  }
+
+  /** Tabs arriving in a pane count as used there, the last of them most recently: a tab
+   *  carried in is what its new pane comes back to. */
+  arrived(tabIds: readonly string[]) {
+    for (const id of tabIds) this.usedNow(id)
+  }
+
+  /** The order of use a launch read back, behind everything used since: ids are made
+   *  fresh every run, so this is their first mention. */
+  recall(order: readonly string[]) {
+    this.used = [...this.used, ...order.filter((id) => !this.used.includes(id))].slice(0, 200)
   }
 
   private usedNow(tabId: string) {
