@@ -252,9 +252,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-02, to 5,767,900, for the open bug round's branches merged
  *  together on claude/bugs-2026-11: each raise above was measured without the others.
  *  Measured 5,767,345.
+ *
+ *  The code raised on 2026-11-03, to 5,770,000, for the views' hunt: a markdown link read by
+ *  hand so its brackets balance, and what a base's pattern may cost. Measured 5,769,369.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_767_900,
+  code: 5_770_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

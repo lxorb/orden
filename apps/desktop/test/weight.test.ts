@@ -994,8 +994,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-02, to 3,468,000, for the open bug round's branches merged together on
  *  claude/bugs-2026-11: each raise above was measured without the others. Measured
- *  3,467,409. */
-const BUDGET = 3_468_000
+ *  3,467,409.
+ *
+ *  Raised 2026-11-03, to 3,476,000, for the views' hunt: what a base's pattern may cost
+ *  (expr/pattern.ts), and a markdown link read by hand so its brackets balance (links.ts).
+ *  Measured 3,475,505. */
+const BUDGET = 3_476_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
