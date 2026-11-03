@@ -239,6 +239,10 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
     let _ = app.emit_to(window, event, said);
 }
 
+/// The name a press in a page is said under, through `BINDING`; see `SCRIPT` (#1080).
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+const PRESSED_IN: &str = "nib-pressed";
+
 /// The name a window the engine blocked is said under, through `BINDING`; see `PAGE_SCRIPT`.
 /// Orden's own Chromium's alone: `WebView2` says so on the request itself.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
@@ -404,6 +408,15 @@ pub const SCRIPT: &str = r"(function () {
     if (event.button === 0 && held && !event.altKey && !event.metaKey) asked(event)
     else if (event.button === 0 && !event.altKey && !event.metaKey) asked(event, 'blank')
   })
+
+  // A press anywhere in the page chooses its tab and its pane, said through nib's own
+  // binding where there is one (#1080): the window system says nothing of a press into a
+  // page that has the keyboard already. Never as a window: that would spend the press's
+  // activation, which the page's own `window.open` in the same press needs.
+  addEventListener('pointerdown', function (event) {
+    var asking = globalThis.nibAsked
+    if (event.isTrusted && typeof asking === 'function') asking(JSON.stringify(['', 'nib-pressed']))
+  }, true)
 
   addEventListener('nib-open-tab', function (event) {
     if (typeof event.detail === 'string') open(event.detail, 'nib-front')
@@ -956,6 +969,10 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
     }
     if name == BLOCKED {
         crate::web_tabs::popup_blocked(app, window, tab, &url);
+        return;
+    }
+    if name == PRESSED_IN {
+        crate::web_tabs::page_chosen(app, window, &crate::web_tabs::label_of(tab));
         return;
     }
     if let Some(asked) = placed(&name, true, Held::default(), false) {

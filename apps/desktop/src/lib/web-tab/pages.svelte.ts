@@ -279,6 +279,25 @@ interface Opening {
   behind: boolean
 }
 
+/** The tab a page chosen by a press or by the keyboard is the page of, as the crate says
+ *  it; see `page_chosen` in web_tabs.rs. */
+export function readChosen(value: unknown): string | null {
+  return typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { tab?: unknown }).tab === 'string'
+    ? (value as { tab: string }).tab
+    : null
+}
+
+/** A tab whose page a person is working in made the one being worked in: its pane takes
+ *  the focus and shows it, which is what a press in a pane of the app's own does. Nothing
+ *  where it is already. */
+export async function chooseTab(tab: string): Promise<void> {
+  const { workspace } = await import('../workspace.svelte')
+  if (workspace.activeTabId === tab || !workspace.tabs.some((one) => one.id === tab)) return
+  workspace.activate(tab)
+}
+
 export function readOpening(value: unknown): Opening | null {
   if (typeof value !== 'object' || value === null) return null
 
@@ -1496,6 +1515,13 @@ class Pages {
       await listen('nib://web-open', (event) => {
         const said = readOpening(event.payload)
         if (said && this.held.has(said.tab)) void this.openAsked(said)
+      })
+      // A person pressed in a tab's page, or the page took the keyboard: its tab and pane
+      // are the ones being worked in, as a press in the app's own page makes its pane's
+      // (#1080; `page_chosen` in web_tabs.rs). A press into a page never reaches this page.
+      await listen('nib://web-chosen', (event) => {
+        const tab = readChosen(event.payload)
+        if (tab !== null && this.held.has(tab)) void chooseTab(tab)
       })
       // A window the page asked for on its own, blocked the way Chrome blocks it: said on
       // the tab's bar, which offers it (#1074; `popup_blocked` in web_tabs.rs).

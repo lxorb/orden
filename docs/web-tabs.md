@@ -1482,6 +1482,16 @@ What a browser does with the page in front of it without being asked, each on
 `nib://web-found` and landed on the tab's state by `web-tab/heard.ts`. Elsewhere the
 engines say nothing, and what each one does there is said with it.
 
+- **A press in the page chooses its tab.** A press into a page, or the page taking the
+  keyboard, makes its tab and its pane the ones being worked in, as a press anywhere in
+  the app's own page makes its pane's (#1080) - the page is a native view, and the press
+  never reaches the app's HTML. One function says it, `page_chosen` in `web_tabs.rs`, heard by
+  the window as `nib://web-chosen`: each engine's word that the page has the keyboard
+  (`WebView2`'s `GotFocus`, the X server's `FocusIn` on CEF), the app's own page finding
+  the keyboard gone to a page (a Mac's word), and a press heard in the page itself through
+  nib's binding on Orden's own Chromium, for the page that has the keyboard already and of
+  which the window system says nothing. `scripts/choosing-drive.py` presses into the page
+  of the pane not being worked in, round after round.
 - **Find.** Ctrl+F opens the app's find bar under the bar - the one a note, a note
   being read and a PDF find with - and the engine's own find does the finding
   (`ICoreWebView2Find`): every match marked in the page, the lit one scrolled to, the

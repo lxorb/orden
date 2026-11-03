@@ -108,8 +108,24 @@ fn adopted_label(label: &str) -> bool {
     })
 }
 
+/// What the window hears a page chosen by a person on; see `page_chosen`.
+const CHOSEN: &str = "nib://web-chosen";
+
+/// A person pressed in a tab's page, or the page took the keyboard: its tab and its pane
+/// are the ones being worked in now, as a press anywhere in the app's own page makes its
+/// pane's (#1080). The one way every engine says so - the engine's own word that the page
+/// has the keyboard (`keyboard::page_took`), the app's own page finding the keyboard gone
+/// to a page (`keyboard_went`, which is a Mac's word), and a press heard in the page itself
+/// (`web_opens.rs`), which is what tells it where the page had the keyboard already and
+/// the window system says nothing. `page` is the webview's label; one that is no tab's,
+/// the app's own page or an agent's, chooses nothing.
+pub(crate) fn page_chosen(app: &AppHandle, window: &str, page: &str) {
+    if let Some(tab) = tab_of(page) {
+        let _ = app.emit_to(window, CHOSEN, serde_json::json!({ "tab": tab }));
+    }
+}
+
 /// The tab a webview is the page of, or nothing for one of the app's own.
-#[cfg_attr(not(any(feature = "cef", target_os = "macos")), allow(dead_code))]
 pub(crate) fn tab_of(label: &str) -> Option<String> {
     let adopted = ADOPTED.lock().ok().and_then(|held| {
         held.as_ref()?

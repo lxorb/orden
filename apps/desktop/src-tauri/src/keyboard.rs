@@ -182,6 +182,7 @@ pub const IN_PAGE: &str = "nib://keyboard-in-page";
 pub fn page_took(app: &AppHandle, window: &str, page: &str) {
     homes(|all| all.page_took(window, page));
     let _ = app.emit_to(window, IN_PAGE, ());
+    crate::web_tabs::page_chosen(app, window, page);
 }
 
 /// A web tab's page is on screen as it is built: the rectangle it was built at is the
@@ -308,6 +309,7 @@ pub fn keyboard_went(webview: Webview) -> bool {
         return false;
     };
     homes(|all| all.page_took(&window, &page));
+    crate::web_tabs::page_chosen(webview.app_handle(), &window, &page);
     true
 }
 
