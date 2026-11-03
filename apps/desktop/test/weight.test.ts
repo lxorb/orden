@@ -1094,9 +1094,15 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,509,500, and to 388 modules, for #1067: a popup fetched through
  *  a door plays its way out and turns round where it is when pressed again (Door.svelte,
  *  `letGo` in slide.ts, SpaceSwitcher.svelte, Pane.svelte, Tabs.svelte). Measured
- *  3,509,297, 387 modules. */
-const BUDGET = 3_509_500
-const MOST_FILES = 388
+ *  3,509,297, 387 modules.
+ *
+ *  Raised 2026-11-04, to 3,513,000 and 389 modules, for #1048: the last press in the
+ *  window remembered from the first paint, since a download flies from where it was
+ *  asked for and a menu's row or a save dialog has gone by then (downloads/started.ts).
+ *  The flight itself is fetched with the first download. Measured 3,512,869, 388
+ *  modules. */
+const BUDGET = 3_513_000
+const MOST_FILES = 389
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
