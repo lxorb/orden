@@ -371,6 +371,13 @@ function isId(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ID
 }
 
+/** An id a new entry may be made under: what a device or the account mints, hex digits
+ *  or a UUID, and nothing that reads as a path. An id comes from whoever wrote the op
+ *  and reaches every other member's device, so it never says where a file goes. */
+export function isEntryId(value: unknown): value is string {
+  return isId(value) && !/[/\\\p{Cc}]/u.test(value) && !value.includes('..')
+}
+
 function isCount(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 }
@@ -417,6 +424,9 @@ function listOf<T>(value: unknown, each: Checked<T>, most = Number.MAX_SAFE_INTE
 export function opOf(value: unknown): Op | null {
   if (!isRecord(value) || !isId(value.op) || !isCount(value.seen) || !isId(value.id)) return null
   const { op, seen, id } = value
+  // Only what makes an entry: one the account already holds can still be moved off, or
+  // deleted, by whoever has it, and an old device's outbox is not stopped by it.
+  if ((value.t === 'mkdir' || value.t === 'create') && !isEntryId(id)) return null
 
   switch (value.t) {
     case 'mkdir':
@@ -509,10 +519,24 @@ function feedItemOf(value: unknown): FeedItem | null {
   return item
 }
 
-/** One page of a space's feed, as a device reads it. */
+/** Whether a feed item is one a writer made under an id that reads as a path, or put
+ *  in a folder that has one, before the account refused them. */
+function namedAsPath(value: unknown): boolean {
+  if (!isRecord(value)) return false
+  const { id, parent } = value
+  if (typeof id === 'string' && !isEntryId(id)) return true
+  return typeof parent === 'string' && !isEntryId(parent)
+}
+
+/** One page of a space's feed, as a device reads it. Such an item is left out, and the
+ *  rest of the page read: refused whole, one writer's entry stopped the space's feed. */
 export function feedPageOf(value: unknown): FeedPage | null {
   if (!isRecord(value) || !isCount(value.cursor) || typeof value.more !== 'boolean') return null
-  const items = listOf(value.items, feedItemOf, FEED_PAGE)
+  if (!Array.isArray(value.items) || value.items.length > FEED_PAGE) return null
+  const items = listOf(
+    value.items.filter((one) => !namedAsPath(one)),
+    feedItemOf,
+  )
   return items ? { items, cursor: value.cursor, more: value.more } : null
 }
 
