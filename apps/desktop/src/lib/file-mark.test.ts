@@ -122,13 +122,14 @@ describe('the marks a row wears', () => {
    *  need not be the same array; see file-mark.ts.
    *
    *  All but the canvas, which is the library's `workflow` on the family's grid: the
-   *  drawing is Lucide's and the size is the set's. What that is and why is below. */
+   *  drawing is Lucide's and the size is the set's. What that is and why is below. And
+   *  the PDF, which is Lucide's page with its name on it; also below. */
   test('all of them come from the icon library rather than being drawn here', () => {
     const library = Object.values(lucide)
       .filter(Array.isArray)
       .map((one) => JSON.stringify(one))
 
-    for (const name of MARK_NAMES.filter((one) => one !== 'canvas')) {
+    for (const name of MARK_NAMES.filter((one) => one !== 'canvas' && one !== 'pdf')) {
       expect(library, name).toContain(JSON.stringify(MARKS[name]))
     }
   })
@@ -157,6 +158,44 @@ describe('the marks a row wears', () => {
       // A quarter of the card, which is the corner Lucide drew on a card of eight.
       expect(card?.[1].rx).toBe('2.25')
     }
+  })
+
+  /** #676: a PDF says it is one. The page is Lucide's own - the same outline as `file`
+   *  down to where the letters start, and the same folded corner - so it sits in a list
+   *  beside the note and the plain page as one family, and under it the three letters,
+   *  stroked like everything else so they take the list's colour in either theme. */
+  test('a PDF is Lucide s page with "PDF" written under it', () => {
+    const [outline, corner, ...letters] = MARKS.pdf
+    const [page, fold] = lucide.File
+
+    expect(corner).toEqual(fold)
+    // The page's own outline as far as the letters, from the bottom left round to the
+    // right: the same corners at the same radii.
+    expect(outline?.[1].d).toContain('2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8')
+    expect(String(page?.[1].d)).toContain(
+      '2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8',
+    )
+    // P, D and F: a stem and a bowl, a stem and a bowl, a stem, an arm and a bar.
+    expect(letters).toHaveLength(4)
+    for (const [tag] of letters) expect(tag).toBe('path')
+  })
+
+  /** On the grid the rest of the set fills and inside it: nothing past 2 or 22, and the
+   *  letters on the lower row from 14 to 21, where the page has stopped. */
+  test('and its letters sit under the page, inside the box', () => {
+    const numbers = (d: unknown) => (String(d).match(/-?\d*\.?\d+/g) ?? []).map(Number)
+    const [outline, , ...letters] = MARKS.pdf
+
+    // Every letter starts on the row: P at 3, D at 10, F's arm from 21, each at 14 or 21.
+    expect(letters.map(([, attrs]) => String(attrs.d).split(/[a-z]/i)[1])).toEqual([
+      '3 21',
+      '10 14',
+      '21 14',
+      '17 17.5',
+    ])
+    // And the page stops above them.
+    expect(Math.max(...numbers(outline?.[1].d).filter((one) => one > 0))).toBeLessThanOrEqual(20)
+    expect(String(outline?.[1].d)).toMatch(/^M4 11V/)
   })
 
   test('no two rows wear the same picture', () => {
@@ -196,6 +235,13 @@ describe('the mark a file or folder chose for itself', () => {
     // path, a name no set holds, and the moment before a set has arrived. `shown` is
     // the kind's mark, or a PDF's for a page note made from one (#676).
     expect(source).toContain('fallback={MARKS[shown]}')
+  })
+
+  /** What a file was made from is decided in one place, so no list can draw a page
+   *  note made from a PDF as a blank one (#676). */
+  test('and what it was made from is asked of the one place that decides it', () => {
+    expect(source).toContain('sourceMark(mark, path)')
+    expect(source).not.toContain('holdsPaper')
   })
 
   /** Which KIND a row is comes off its name: a website is `Svelte docs.url`, a

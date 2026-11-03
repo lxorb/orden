@@ -19,7 +19,10 @@ const papers = new Set<string>()
 vi.mock('./chosen-icon', () => ({
   chosenIcon: (path: string) => chosen[path] ?? null,
   chosenTint: (path: string) => tints[path] ?? null,
-  holdsPaper: (path: string) => papers.has(path),
+  // The rule as chosen-icon.ts has it, over the papers here; chosen-icon.test.ts holds
+  // the real one to it.
+  sourceMark: (mark: string, path: string | undefined) =>
+    mark === 'pages' && path !== undefined && papers.has(path) ? 'pdf' : mark,
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
