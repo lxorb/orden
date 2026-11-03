@@ -15,7 +15,7 @@
  *  the note; an untouched welcome never travels to an account. See welcome.ts. */
 
 import { type Moment, startsFresh } from './fresh-start'
-import { markSeeded, wasSeeded } from './seeded'
+import { markSeedSpace, markSeeded, wasSeeded } from './seeded'
 import { settings } from './settings.svelte'
 import { madeSpace } from './space-actions'
 import { joinPath } from './tauri'
@@ -36,6 +36,8 @@ class FirstSpace {
     try {
       const space = await madeSpace(WELCOME_SPACE)
       if (!space) return
+      // The default space, so signing in can tell it from one the reader made (#1077).
+      markSeedSpace(space.root)
       const note = await this.welcome(space)
       await this.arrive(space, note)
       // The first time on this device: the optional questions beside the note.

@@ -8,7 +8,10 @@
 
 import { account } from './account.svelte'
 import { api } from './api'
+import { forgetSeedSpace, seedSpaceRoot } from './seeded'
+import { untouchedSeedSpace } from './seed-space'
 import { planSpaces } from './space-plan'
+import { invoke } from './tauri'
 import { workspace } from './workspace.svelte'
 
 /** Where an engine keeps which folder is which space. */
@@ -49,7 +52,22 @@ async function rolesPaired(): Promise<void> {
   ;(await import('./sharing.svelte')).rememberRoles()
 }
 
+/** The default space's root where it is still untouched, for an account to take its
+ *  place; a guest's link lends spaces, not an account, so a guest keeps it. */
+async function untouchedDefault(): Promise<string | null> {
+  if (!account.user) return null
+  return await untouchedSeedSpace(
+    seedSpaceRoot(),
+    workspace.spaces.map((space) => space.root),
+    {
+      tree: (root) => invoke('read_tree', { root }),
+      note: (path) => invoke<string>('read_note', { path }),
+    },
+  )
+}
+
 async function pairOnce(token: string, pairing: Pairing): Promise<void> {
+  const seeded = seedSpaceRoot()
   const plan = planSpaces({
     local: workspace.spaces.map((space) => ({ name: space.name, root: space.root })),
     remote: account.spaces.map((space) => ({
@@ -59,6 +77,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     })),
     mirrors: pairing.pairs(),
     deleted: account.deletedSpaces,
+    untouched: await untouchedDefault(),
   })
 
   // Removals come first. Adopting runs after, and adopting reuses a folder of the same
@@ -73,6 +92,15 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     // copy left of what was read here.
     pairing.unpair(root)
     if (space) await workspace.deleteSpace(space.id, true)
+  }
+
+  // The default space a first visit was given, untouched, where the account has its own
+  // to open on (#1077): to this device's trash, like a removal, before anything is
+  // adopted under its name.
+  for (const root of plan.discard) {
+    const space = workspace.spaces.find((one) => one.root === root)
+    if (space) await workspace.deleteSpace(space.id, true)
+    forgetSeedSpace()
   }
 
   // Missing without a marker: not uploaded yet as far as anyone can tell, so the pairing
@@ -92,6 +120,10 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
       pairing.pair(space.root, remote.id, false)
     }
   }
+
+  // Paired or sent up, the default space is one of the account's from now on, touched or
+  // not, and no later sign-in takes it away.
+  if (seeded !== null && pairing.pairs().some((one) => one.root === seeded)) forgetSeedSpace()
 
   const paired = () => pairing.pairs()
   for (const space of plan.adopt) {

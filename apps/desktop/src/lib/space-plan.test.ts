@@ -16,7 +16,15 @@ describe('a machine that is already in step', () => {
       mirrors: [mirror('Work')],
     })
 
-    expect(result).toEqual({ pair: [], upload: [], adopt: [], drop: [], detach: [], remove: [] })
+    expect(result).toEqual({
+      pair: [],
+      upload: [],
+      adopt: [],
+      drop: [],
+      detach: [],
+      remove: [],
+      discard: [],
+    })
   })
 })
 
@@ -264,6 +272,74 @@ describe('a space somebody shared', () => {
       drop: [],
       detach: [],
       remove: [],
+      discard: [],
     })
+  })
+})
+
+/** #1077: the default space a first visit was given, still untouched, signing in. Which
+ *  space that is, and whether it is untouched, is seed-space.ts's to say; here it is
+ *  handed in as `untouched`. */
+describe('the untouched default space', () => {
+  const NOTES = '/spaces/Notes'
+
+  test('goes where the account has spaces of its own, and theirs take its place', () => {
+    const result = plan({
+      local: [local('Notes')],
+      remote: [remote('Work'), remote('Ideas')],
+      untouched: NOTES,
+    })
+    expect(result.discard).toEqual([NOTES])
+    expect(result.upload).toEqual([])
+    expect(result.pair).toEqual([])
+    expect(result.adopt.map((one) => one.name)).toEqual(['Work', 'Ideas'])
+  })
+
+  test('gives way to the account’s own Notes on a second device, with no Notes 2', () => {
+    const result = plan({
+      local: [local('Notes')],
+      remote: [remote('Notes')],
+      untouched: NOTES,
+    })
+    expect(result.discard).toEqual([NOTES])
+    expect(result.pair).toEqual([])
+    expect(result.adopt.map((one) => one.name)).toEqual(['Notes'])
+  })
+
+  test('becomes the first space of an empty account', () => {
+    const result = plan({ local: [local('Notes')], remote: [], untouched: NOTES })
+    expect(result.discard).toEqual([])
+    expect(result.upload.map((one) => one.root)).toEqual([NOTES])
+  })
+
+  test('and of one that holds only spaces somebody shared with it', () => {
+    const result = plan({
+      local: [local('Notes')],
+      remote: [{ ...remote('Theirs'), shared: true }],
+      untouched: NOTES,
+    })
+    expect(result.discard).toEqual([])
+    expect(result.upload.map((one) => one.root)).toEqual([NOTES])
+  })
+
+  test('is the account’s once a pass has paired it, and stays', () => {
+    const result = plan({
+      local: [local('Notes')],
+      remote: [remote('Notes'), remote('Work')],
+      mirrors: [mirror('Notes')],
+      untouched: NOTES,
+    })
+    expect(result.discard).toEqual([])
+  })
+
+  test('touched, travels as any space: into the account’s Notes, or as one of its own', () => {
+    const into = plan({ local: [local('Notes')], remote: [remote('Notes'), remote('Work')] })
+    expect(into.discard).toEqual([])
+    expect(into.pair).toEqual([{ root: NOTES, spaceId: 'id-Notes' }])
+    expect(into.adopt.map((one) => one.name)).toEqual(['Work'])
+
+    const apart = plan({ local: [local('Notes')], remote: [remote('Work')] })
+    expect(apart.discard).toEqual([])
+    expect(apart.upload.map((one) => one.root)).toEqual([NOTES])
   })
 })

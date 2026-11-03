@@ -159,7 +159,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { MOST_NOTE_BYTES, SCANNED_AT_ONCE, TOO_LARGE, seed, webInvoke } = await import('./commands')
 const { stamped, stampOf } = await import('../themes/stamp')
-const { forgetSeedStore, rememberSeedIn } = await import('../seeded')
+const { forgetSeedStore, rememberSeedIn, seedSpaceRoot } = await import('../seeded')
 const { WELCOME, WELCOME_PATH } = await import('../welcome')
 
 const write = (path: string, content = '') => webInvoke('write_note', { path, content })
@@ -1093,6 +1093,16 @@ describe('the welcome note', () => {
 
     await seed()
     expect(paths()).toEqual(['/Notes/Mine.md'])
+    // And the space those notes are in is the reader's, not a default to give way (#1077).
+    expect(seedSpaceRoot()).toBeNull()
+  })
+
+  /** #1077: the space it went into is the default one signing in can give way, named by
+   *  the root the browser lists it at. */
+  test('marks the space it went into as the default one', async () => {
+    await seed()
+    const listed = await webInvoke<{ name: string; path: string }[]>('list_spaces')
+    expect(listed.map((one) => one.path)).toEqual([seedSpaceRoot()])
   })
 
   test('and that device is not seeded later either, once it is empty', async () => {

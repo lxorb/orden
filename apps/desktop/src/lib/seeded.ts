@@ -12,7 +12,7 @@
  *  launch, the way it does for the session token. See even/keep.ts, and see
  *  welcome.ts for the whole of what went wrong. */
 
-import { keep, storedText } from './stored'
+import { forget, keep, storedText } from './stored'
 
 const KEY = 'nib:seeded'
 
@@ -51,4 +51,24 @@ export async function markSeeded(): Promise<void> {
   // One store failing is why there are two.
   keep(KEY, 'yes')
   await elsewhere?.write().catch(() => undefined)
+}
+
+/** Where the space a first visit was given is, by its root: the one the fresh start
+ *  made (first-space.svelte.ts), or the browser's `/Notes` its seed went into. Half of
+ *  what makes it the default space rather than one of the reader's own, whatever either
+ *  is called; the other half is what it holds (seed-space.ts). A space renamed has
+ *  another root, and is the reader's from then on (#1077). */
+const SPACE_KEY = 'nib:seed-space'
+
+export function markSeedSpace(root: string): void {
+  keep(SPACE_KEY, root)
+}
+
+export function seedSpaceRoot(): string | null {
+  return storedText(SPACE_KEY)
+}
+
+/** Said once the default space has gone, or become one of the account's. */
+export function forgetSeedSpace(): void {
+  forget(SPACE_KEY)
 }
