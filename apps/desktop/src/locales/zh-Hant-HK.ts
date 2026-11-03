@@ -2588,4 +2588,6 @@ export const zhHantHK: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS 是此空間的代理指示',
   '{title}, unread': '{title}，未讀',
   '{title}, running': '{title}，執行中',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden 不再將 AI 金鑰存放在 Mac 的鑰匙圈中，它一再要求輸入密碼。請重新輸入金鑰，並再次登入 ChatGPT。',
 }

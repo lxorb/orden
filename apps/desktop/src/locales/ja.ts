@@ -2640,4 +2640,6 @@ export const ja: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS はこのスペースのエージェントへの指示です',
   '{title}, unread': '{title}、未読',
   '{title}, running': '{title}、実行中',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden は AI キーを Mac のキーチェーンに保存しなくなりました。キーチェーンがパスワードを何度も求めていたためです。キーをもう一度入力し、ChatGPT にもう一度サインインしてください。',
 }

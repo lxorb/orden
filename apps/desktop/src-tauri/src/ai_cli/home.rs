@@ -8,9 +8,12 @@
 //! login, typed into a terminal; the program signs the reader in through its maker's own
 //! flow and keeps the login there, refreshing it as it always does. nib never opens what
 //! the program writes. A Codex home of Orden's is told to keep its login in the system's
-//! own store (`cli_auth_credentials_store = "keyring"`, keyed by the home); Claude Code
-//! keeps its own file in the folder on Windows and Linux and its Keychain entry, keyed by
-//! the folder, on a Mac.
+//! own store (`cli_auth_credentials_store = "keyring"`, keyed by the home) on Windows and
+//! Linux, and in a file in the home (`"file"`, `auth.json`, the owner's alone) on a Mac,
+//! whose keychain asks for the login password and asks again (#1090); a home made before
+//! that is told so the next time it is used, and its login asked for once more. Claude
+//! Code keeps its own file in the folder on Windows and Linux and its Keychain entry,
+//! keyed by the folder, on a Mac: the program's own, which Orden does not choose.
 //!
 //! **The reader's shell does not decide the account.** A key in the environment outranks
 //! a sign-in in both programs, so for a home of Orden's the variables that would say who is
@@ -32,8 +35,29 @@ const CLAUDE_OVERRIDES: [&str; 3] = [
 ];
 const CODEX_OVERRIDES: [&str; 2] = ["OPENAI_API_KEY", "CODEX_API_KEY"];
 
-/// What a Codex home of Orden's starts with: its login in the system's own store.
+/// What a Codex home of Orden's starts with: its login in the system's own store, and on a
+/// Mac in a file of the home's (#1090).
+#[cfg(not(target_os = "macos"))]
 const CODEX_CONFIG: &str = "cli_auth_credentials_store = \"keyring\"\n";
+#[cfg(target_os = "macos")]
+const CODEX_CONFIG: &str = "cli_auth_credentials_store = \"file\"\n";
+
+/// What a home made before #1090 starts with, which a Mac writes over with
+/// [`CODEX_CONFIG`]: only the file exactly as Orden wrote it, never one the reader changed.
+#[cfg_attr(not(any(test, target_os = "macos")), allow(dead_code))]
+const CODEX_CONFIG_BEFORE: &str = "cli_auth_credentials_store = \"keyring\"\n";
+
+/// The config a home's file should hold now: `None` to leave it as it is.
+#[cfg_attr(not(any(test, target_os = "macos")), allow(dead_code))]
+fn config_now(held: Option<&str>, now: &str) -> Option<&'static str> {
+    match held {
+        None => Some(CODEX_CONFIG),
+        Some(text) if text == CODEX_CONFIG_BEFORE && now != CODEX_CONFIG_BEFORE => {
+            Some(CODEX_CONFIG)
+        }
+        Some(_) => None,
+    }
+}
 
 /// A home of Orden's for one account.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -72,8 +96,9 @@ impl Home {
         crate::paths::made(&self.dir)?;
         if self.tool == Tool::Codex {
             let config = self.dir.join("config.toml");
-            if !config.exists() {
-                std::fs::write(&config, CODEX_CONFIG).map_err(|error| error.to_string())?;
+            let held = std::fs::read_to_string(&config).ok();
+            if let Some(text) = config_now(held.as_deref(), CODEX_CONFIG) {
+                std::fs::write(&config, text).map_err(|error| error.to_string())?;
             }
         }
         Ok(())
@@ -166,6 +191,26 @@ mod tests {
         removed(&codex).expect("removed");
         assert!(!codex.dir().exists());
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_codex_home_keeps_its_login_out_of_a_macs_keychain() {
+        // Made fresh: what this platform keeps a login in.
+        assert_eq!(config_now(None, CODEX_CONFIG), Some(CODEX_CONFIG));
+        // Made before #1090 on a Mac: written over once; anywhere else left as it is.
+        let file = "cli_auth_credentials_store = \"file\"\n";
+        assert_eq!(
+            config_now(Some(CODEX_CONFIG_BEFORE), file),
+            Some(CODEX_CONFIG)
+        );
+        assert_eq!(
+            config_now(Some(CODEX_CONFIG_BEFORE), CODEX_CONFIG_BEFORE),
+            None
+        );
+        // One the reader changed is theirs.
+        assert_eq!(config_now(Some("model = \"o3\"\n"), file), None);
+        #[cfg(target_os = "macos")]
+        assert_eq!(CODEX_CONFIG, file);
     }
 
     #[test]

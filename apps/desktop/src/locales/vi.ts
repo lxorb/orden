@@ -2638,4 +2638,6 @@ export const vi: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS là hướng dẫn cho tác tử của không gian này',
   '{title}, unread': '{title}, chưa đọc',
   '{title}, running': '{title}, đang chạy',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden không còn giữ khóa AI trong Chuỗi khóa của Mac, vốn cứ hỏi mật khẩu mãi. Hãy nhập lại khóa và đăng nhập ChatGPT thêm một lần nữa.',
 }

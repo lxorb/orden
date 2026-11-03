@@ -2718,4 +2718,6 @@ export const ptBR: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS são as instruções para agentes deste espaço',
   '{title}, unread': '{title}, não lido',
   '{title}, running': '{title}, em andamento',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'O Orden não guarda mais as chaves de IA nas Chaves do Mac, que pediam a senha repetidamente. Digite suas chaves e entre no ChatGPT mais uma vez.',
 }

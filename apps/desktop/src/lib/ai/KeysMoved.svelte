@@ -1,0 +1,88 @@
+<script lang="ts">
+  /** Said once to a Mac that had AI keys in the keychain (#1090): Orden keeps them in a
+   *  file of its own now and stopped asking for the keychain's password, so they are typed
+   *  once more. The update notice's card, at the foot of the window, with the way to
+   *  Settings › AI. See keys-moved.svelte.ts. */
+  import { fly } from 'svelte/transition'
+  import { cubicOut } from 'svelte/easing'
+  import { t } from '../i18n.svelte'
+  import { dur } from '../motion'
+  import { told } from '../said.svelte'
+  import { settings } from '../settings.svelte'
+  import { keysMoved } from './keys-moved.svelte'
+
+  const words = $derived(
+    t(
+      'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.',
+    ),
+  )
+</script>
+
+{#if keysMoved.showing}
+  <div
+    class="toast"
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    {@attach told(words)}
+  >
+    <p>{words}</p>
+    <div class="actions">
+      <button class="quiet" onclick={() => keysMoved.dismiss()}>{t('Dismiss')}</button>
+      <button
+        class="link"
+        onclick={() => {
+          keysMoved.dismiss()
+          settings.show('ai')
+        }}
+      >
+        {t('Settings › AI')}
+      </button>
+    </div>
+  </div>
+{/if}
+
+<style>
+  /* The middle track of the notices row, the rename notice's place, so it sits on neither
+     end's card; App.svelte places it. */
+  .toast {
+    grid-column: 2;
+    justify-self: center;
+    max-width: 24rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface-3);
+    box-shadow: var(--shadow-lg);
+  }
+
+  p {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    color: var(--text);
+  }
+
+  .actions {
+    display: flex;
+    gap: var(--space-3);
+  }
+
+  button {
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    cursor: default;
+  }
+
+  .quiet {
+    color: var(--muted);
+  }
+
+  .link {
+    color: var(--accent);
+  }
+</style>

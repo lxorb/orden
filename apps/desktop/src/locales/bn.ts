@@ -2663,4 +2663,6 @@ export const bn: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS হলো এই স্পেসের এজেন্ট নির্দেশনা',
   '{title}, unread': '{title}, অপঠিত',
   '{title}, running': '{title}, চলছে',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden আর Mac-এর কিচেইনে AI কী রাখে না, কারণ সেটি বারবার পাসওয়ার্ড চাইত। আপনার কী আবার দিন এবং ChatGPT-তে আরেকবার সাইন ইন করুন।',
 }

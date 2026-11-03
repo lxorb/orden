@@ -2760,4 +2760,6 @@ export const pl: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS to instrukcje dla agentów w tej przestrzeni',
   '{title}, unread': '{title}, nieprzeczytany',
   '{title}, running': '{title}, w toku',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden nie przechowuje już kluczy AI w pęku kluczy Maca, który ciągle prosił o hasło. Wpisz klucze jeszcze raz i zaloguj się ponownie do ChatGPT.',
 }

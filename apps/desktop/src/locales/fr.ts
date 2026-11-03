@@ -2750,4 +2750,6 @@ export const fr: Dictionary = {
     'AGENTS correspond aux instructions pour les agents de cet espace',
   '{title}, unread': '{title}, non lu',
   '{title}, running': '{title}, en cours',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden ne garde plus les clés d’IA dans le trousseau du Mac, qui redemandait sans cesse son mot de passe. Saisissez à nouveau vos clés et reconnectez-vous à ChatGPT.',
 }

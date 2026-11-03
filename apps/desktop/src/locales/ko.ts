@@ -2629,4 +2629,6 @@ export const ko: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS는 이 스페이스의 에이전트 지침입니다',
   '{title}, unread': '{title}, 읽지 않음',
   '{title}, running': '{title}, 실행 중',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden은 더 이상 AI 키를 Mac 키체인에 보관하지 않습니다. 키체인이 암호를 계속 물었기 때문입니다. 키를 다시 입력하고 ChatGPT에 한 번 더 로그인하세요.',
 }

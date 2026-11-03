@@ -2704,4 +2704,6 @@ export const ml: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS ഈ സ്പേസിന്റെ ഏജന്റ് നിർദ്ദേശങ്ങളാണ്',
   '{title}, unread': '{title}, വായിക്കാത്തത്',
   '{title}, running': '{title}, പ്രവർത്തിക്കുന്നു',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden ഇനി AI കീകൾ Mac-ന്റെ കീചെയിനിൽ സൂക്ഷിക്കുന്നില്ല, അത് വീണ്ടും വീണ്ടും പാസ്‌വേഡ് ചോദിച്ചിരുന്നു. നിങ്ങളുടെ കീകൾ വീണ്ടും നൽകി ChatGPT-ൽ ഒരിക്കൽ കൂടി സൈൻ ഇൻ ചെയ്യുക.',
 }

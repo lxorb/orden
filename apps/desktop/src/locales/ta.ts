@@ -2714,4 +2714,6 @@ export const ta: Dictionary = {
     'AGENTS என்பது இந்த இடத்தின் ஏஜென்ட் அறிவுறுத்தல்கள்',
   '{title}, unread': '{title}, படிக்காதது',
   '{title}, running': '{title}, இயங்குகிறது',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden இனி AI விசைகளை Mac இன் கீசெயினில் வைப்பதில்லை, அது திரும்பத் திரும்ப அதன் கடவுச்சொல்லைக் கேட்டது. உங்கள் விசைகளை மீண்டும் உள்ளிட்டு ChatGPT இல் மீண்டும் ஒருமுறை உள்நுழையுங்கள்.',
 }

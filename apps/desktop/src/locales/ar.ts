@@ -2780,4 +2780,6 @@ export const ar: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS هو تعليمات الوكلاء لهذه المساحة',
   '{title}, unread': '{title}، غير مقروءة',
   '{title}, running': '{title}، قيد التشغيل',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'لم يعد Orden يحفظ مفاتيح الذكاء الاصطناعي في سلسلة مفاتيح Mac، التي ظلت تطلب كلمة مرورها. أدخل مفاتيحك وسجّل الدخول إلى ChatGPT مرة أخرى.',
 }

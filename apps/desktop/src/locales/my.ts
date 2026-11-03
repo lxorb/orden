@@ -2653,4 +2653,6 @@ export const my: Dictionary = {
     'AGENTS သည် ဤနေရာ၏ အေးဂျင့် ညွှန်ကြားချက်များ ဖြစ်သည်',
   '{title}, unread': '{title}၊ မဖတ်ရသေး',
   '{title}, running': '{title}၊ လုပ်ဆောင်နေဆဲ',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden သည် AI သော့များကို Mac ၏ keychain တွင် မသိမ်းတော့ပါ၊ ၎င်းက စကားဝှက်ကို ထပ်ခါထပ်ခါ မေးနေခဲ့၍ဖြစ်သည်။ သင့်သော့များကို ထပ်ထည့်ပြီး ChatGPT သို့ နောက်တစ်ကြိမ် ဝင်ပါ။',
 }

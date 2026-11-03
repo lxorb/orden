@@ -2761,4 +2761,6 @@ export const ru: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS: инструкции для агентов этого пространства',
   '{title}, unread': '{title}, не прочитано',
   '{title}, running': '{title}, выполняется',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden больше не хранит ключи ИИ в связке ключей Mac, которая снова и снова спрашивала пароль. Введите ключи заново и ещё раз войдите в ChatGPT.',
 }
