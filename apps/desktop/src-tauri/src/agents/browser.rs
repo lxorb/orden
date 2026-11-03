@@ -678,6 +678,12 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::Press(pressing) => {
                 let key = keys::chord(&pressing.keys)
                     .map_err(|why| Answer::error(Code::BadArguments, why))?;
+                // Whichever key: the keyboard may have been tabbed into a denied frame.
+                if page.limits_sites() {
+                    if let Ok(Some(facts)) = page.active_facts() {
+                        page.may_act_in(&facts)?;
+                    }
+                }
                 // Facts are asked once, and only of a key they can matter to.
                 let facts = if key.judged_by_the_page() {
                     page.active_facts()?
@@ -756,29 +762,30 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             }
             Verb::Drag(drag) => {
                 let (from, to) = (element(page, &drag.from)?, element(page, &drag.to)?);
+                let (mut from_facts, to_facts) = (page.facts(&from)?, page.facts(&to)?);
+                page.may_act_in(&from_facts)?;
+                page.may_act_in(&to_facts)?;
+                // Picked up and put down elsewhere, no click lands on a plain element, and a
+                // card called Pay rent is carried, not pressed. On itself it is a click.
+                if drag.from != drag.to && !from_facts.control {
+                    from_facts.name.clear();
+                }
                 // A press on the one and a release on the other, which is a click on either
-                // to whatever only listens for those: judged as a press of each, or a drag
-                // of Pay onto itself is the one call round paying (9.3).
-                let key = approvals::key("browser_drag", Some(&tab), Some(&drag.from));
-                judged(
-                    app,
-                    caller,
-                    page,
-                    place,
-                    &page.facts(&from)?,
-                    Act::Press,
-                    &key,
-                )?;
-                let key = approvals::key("browser_drag_to", Some(&tab), Some(&drag.to));
-                judged(
-                    app,
-                    caller,
-                    page,
-                    place,
-                    &page.facts(&to)?,
-                    Act::Press,
-                    &key,
-                )?;
+                // to whatever only listens for those: one question for the whole drag, or a
+                // drag of Pay onto itself is the one call round paying (9.3).
+                let judged_by = match caller {
+                    Caller::Agent(grant) => policy::of_a_drag(
+                        grant,
+                        &from_facts,
+                        &to_facts,
+                        &page.url(),
+                        &page_hosts(page),
+                    ),
+                    Caller::Reader => &from_facts,
+                };
+                let ends = format!("{}>{}", drag.from, drag.to);
+                let key = approvals::key("browser_drag", Some(&tab), Some(&ends));
+                judged(app, caller, page, place, judged_by, Act::Press, &key)?;
                 page.drag(&from, &to)?;
                 acted(page)
             }
@@ -849,6 +856,14 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     .lock()
                     .unwrap_or_else(PoisonError::into_inner)
                     .console(asked.since, asked.level.as_deref());
+                let lines = lines
+                    .into_iter()
+                    .filter(|one| {
+                        one.source
+                            .as_deref()
+                            .is_none_or(|url| page.may_read_row(url))
+                    })
+                    .collect();
                 from_page(Answer::ok(ConsoleLines { lines, next }))
             }
             Verb::Network(asked) => {
@@ -863,6 +878,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     .lock()
                     .unwrap_or_else(PoisonError::into_inner)
                     .requests(asked.since, asked.matching.as_deref());
+                requests.retain(|one| page.may_read_row(&one.url));
                 if asked.bodies {
                     for row in requests.iter_mut().rev().take(BODIES) {
                         let found = heard

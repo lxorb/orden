@@ -254,6 +254,11 @@ pub struct Facts {
     pub in_form: bool,
     /// The form's fields, or the page's when it is in none.
     pub fields: Vec<Field>,
+    /// Whether it is, or is in, a control: a button, a link, a role that says so. What is
+    /// not has only its own short words for a name.
+    pub control: bool,
+    /// Whether the page was too big to read all its fields, so its form cannot be judged.
+    pub cut: bool,
     /// The address of the document it is in, then the origin of each frame round that:
     /// which frame it is in, for what the grant denies (`frame_allowed`).
     pub at: Vec<String>,
@@ -571,14 +576,16 @@ pub fn judge(
             }
         }
     }
-    if act == Act::Press && says(&facts.name, DELETING) {
+    // Not a link, which goes somewhere: a guide called How to delete is a page, and it is
+    // the press on that page that deletes.
+    if act == Act::Press && !facts.link && says(&facts.name, DELETING) {
         if let Some(question) = ask(Category::Deleting, on(&label, "Delete", &site)) {
             return Some(question);
         }
     }
 
     // What a press lands on cannot be read, so it can be anything on the list above.
-    if act == Act::Press && facts.opaque {
+    if act == Act::Press && (facts.opaque || (facts.cut && facts.submit)) {
         if let Some(question) = ask(Category::Unread, on("", "A press", &site)) {
             return Some(question);
         }
@@ -619,6 +626,26 @@ pub fn key_act(mut facts: Facts, key: &super::keys::Key) -> Option<(Facts, Act)>
     Some((facts, if key.sends() { Act::Enter } else { Act::Press }))
 }
 
+/// Which of a drag's two ends the one question for it is about: the graver, and a drop
+/// target only where it is a control, as dropping on a column is no press of what it holds.
+pub fn of_a_drag<'a>(
+    grant: &Grant,
+    from: &'a Facts,
+    to: &'a Facts,
+    url: &str,
+    hosts: &[String],
+) -> &'a Facts {
+    if !to.control {
+        return from;
+    }
+    let category = |facts| judge(grant, facts, Act::Press, url, hosts).map(|one| one.category);
+    match (category(from), category(to)) {
+        (None, Some(_)) => to,
+        (Some(Category::Writing), Some(other)) if other != Category::Writing => to,
+        _ => from,
+    }
+}
+
 /// A one-line summary: the press's own words, or a word for the category, and the site.
 /// What answering a dialog the page holds asks first, for an agent with this grant: a
 /// site's own sign-in box or its request for a client certificate answered yes signs in,
@@ -647,7 +674,8 @@ pub fn answering(
     if !matches!(kind, DialogKind::Confirm | DialogKind::Prompt) {
         return None;
     }
-    let said = short(message);
+    // The page's own words, said to be: they are not Orden's account of what will happen.
+    let said = format!("The page says \u{201c}{}\u{201d}", short(message));
     if says(message, PAYING) {
         if let Some(question) = ask(Category::Paying, on(&said, "Pay", &site)) {
             return Some(question);
@@ -2081,7 +2109,10 @@ mod tests {
         )
         .expect("asked");
         assert_eq!(question.category, Category::Paying);
-        assert_eq!(question.summary, "Pay 500 EUR now? on shop.example");
+        assert_eq!(
+            question.summary,
+            "The page says \u{201c}Pay 500 EUR now?\u{201d} on shop.example"
+        );
 
         let question = answering(
             &unsupervised,
@@ -2100,6 +2131,61 @@ mod tests {
         let mut full = grant();
         full.mode = Mode::Autonomous;
         assert!(answering(&full, DialogKind::Confirm, true, url, "Pay now?").is_none());
+    }
+
+    #[test]
+    fn a_link_is_no_delete_and_a_button_still_is() {
+        let url = "https://a.example/";
+        let mut link = press("How to delete your account");
+        link.link = true;
+        assert_eq!(category(&link, url), None);
+        assert_eq!(
+            category(&press("Delete account"), url),
+            Some(Category::Deleting)
+        );
+    }
+
+    #[test]
+    fn a_drag_is_one_question_about_its_graver_end() {
+        let url = "https://a.example/";
+        let unsupervised = grant();
+        let mut confirm = grant();
+        confirm.mode = Mode::Confirm;
+        let card = press("Card");
+        let mut column = press("Pay rent");
+        column.control = false;
+        let mut pay = press("Pay now");
+        pay.control = true;
+
+        // A column is no press, whatever it holds.
+        assert!(std::ptr::eq(
+            of_a_drag(&unsupervised, &card, &column, url, &[]),
+            &card
+        ));
+        // A real Pay is, under either mode, ahead of Confirm's every-change question.
+        assert!(std::ptr::eq(
+            of_a_drag(&unsupervised, &card, &pay, url, &[]),
+            &pay
+        ));
+        assert!(std::ptr::eq(
+            of_a_drag(&confirm, &card, &pay, url, &[]),
+            &pay
+        ));
+        assert!(std::ptr::eq(
+            of_a_drag(&confirm, &pay, &card, url, &[]),
+            &pay
+        ));
+    }
+
+    #[test]
+    fn a_page_too_big_to_read_asks_before_a_submit() {
+        let url = "https://a.example/";
+        let mut big = press("Go");
+        big.cut = true;
+        big.submit = true;
+        assert_eq!(category(&big, url), Some(Category::Unread));
+        big.submit = false;
+        assert_eq!(category(&big, url), None);
     }
 
     #[test]

@@ -80,7 +80,8 @@ pub fn placeholder_of(target: &Path) -> Option<PathBuf> {
 /// to hold back a delete. How long ago it was evicted says nothing, as a note may stay in
 /// the cloud for years.
 pub fn stands_for(bytes: &[u8], name: &str) -> bool {
-    let holds = |needle: &[u8]| !needle.is_empty() && bytes.windows(needle.len()).any(|at| at == needle);
+    let holds =
+        |needle: &[u8]| !needle.is_empty() && bytes.windows(needle.len()).any(|at| at == needle);
     let wide: Vec<u8> = name.encode_utf16().flat_map(u16::to_be_bytes).collect();
     bytes.starts_with(b"bplist") && (holds(name.as_bytes()) || holds(&wide))
 }
@@ -194,16 +195,24 @@ fn download(target: &Path) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{evicted, evicted_name, flags_are_dataless, is_dataless, placeholder_of, stands_for};
+    use super::{
+        evicted, evicted_name, flags_are_dataless, is_dataless, placeholder_of, stands_for,
+    };
 
     #[test]
     fn a_placeholder_is_a_property_list_with_the_name_in_it() {
-        assert!(stands_for(b"bplist00\xd4NSURLNameKey_\x10\x07Plan.md", "Plan.md"));
+        assert!(stands_for(
+            b"bplist00\xd4NSURLNameKey_\x10\x07Plan.md",
+            "Plan.md"
+        ));
         let wide: Vec<u8> = "Pl\u{e4}n.md"
             .encode_utf16()
             .flat_map(u16::to_be_bytes)
             .collect();
-        assert!(stands_for(&[b"bplist00".as_slice(), &wide].concat(), "Pl\u{e4}n.md"));
+        assert!(stands_for(
+            &[b"bplist00".as_slice(), &wide].concat(),
+            "Pl\u{e4}n.md"
+        ));
         // A stale stub of another note, or a file with nothing of one, holds nothing back.
         assert!(!stands_for(b"bplist00Other.md", "Plan.md"));
         assert!(!stands_for(b"Plan.md", "Plan.md"));

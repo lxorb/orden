@@ -93,6 +93,11 @@ export async function startAutomation(): Promise<() => void> {
     // Only now does the crate send what it was asked: an event before this listener
     // reached nobody, and the caller waited out the endpoint's patience for nothing.
     await invoke('automation_listening')
+    // A link that found this window still loading was held for it: see `hand_over` in
+    // uris.rs.
+    for (const uri of await invoke<string[]>('take_startup_uris').catch(() => [])) {
+      await follow(uri)
+    }
   }
 
   return () => {

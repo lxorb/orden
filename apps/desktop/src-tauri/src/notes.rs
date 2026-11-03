@@ -478,7 +478,15 @@ pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String>
 /// Whether a note that is not there is in iCloud all the same; see `icloud::evicted`.
 #[tauri::command(async)]
 pub fn note_evicted(app: AppHandle, path: String) -> Result<bool, String> {
-    Ok(icloud::evicted(&openable(&app, &path)?))
+    let target = openable(&app, &path)?;
+    #[cfg(target_os = "macos")]
+    return Ok(icloud::evicted(&target));
+    #[cfg(not(target_os = "macos"))]
+    {
+        // Only a Mac leaves these.
+        let _ = target;
+        Ok(false)
+    }
 }
 
 /// Whether anything at all - a file, a folder, a link - is at a path the reader

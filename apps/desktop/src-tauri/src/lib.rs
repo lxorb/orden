@@ -854,6 +854,16 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
 /// `web_opens.rs`. The app's own links are pressed through its own code, and each
 /// one says where it goes; see open-link.ts.
 fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
+    // A window's page loading afresh has no listener until it says so again; see
+    // `endpoint::Waiting`. A web tab is a webview of another label.
+    #[cfg(desktop)]
+    let builder = builder.on_page_load(|webview, payload| {
+        if payload.event() == tauri::webview::PageLoadEvent::Started {
+            if let Some(waiting) = webview.try_state::<endpoint::Waiting>() {
+                waiting.forget(webview.label());
+            }
+        }
+    });
     builder
         .plugin(
             tauri_plugin_opener::Builder::new()
