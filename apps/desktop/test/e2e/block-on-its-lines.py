@@ -17,6 +17,7 @@ DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
 DOC = "# Plan\n\nFirst line beta.\nSecond line alpha.\n\nthird\n"
+WORDS = "# Words\n\nLeft as they were.\n"
 
 MIDDLE = DOC.index("alpha")
 LINES = (DOC.index("First"), DOC.index("alpha.") + len("alpha."))
@@ -68,7 +69,7 @@ def put(page: Page, anchor: int, head: int) -> None:
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
-    DRIVE.seed(page, DOC)
+    DRIVE.seed(page, DOC, WORDS)
     DRIVE.open_note(page, "Plan")
 
     for row, (inside, selected) in CASES.items():
@@ -86,10 +87,21 @@ def drive(browser: Browser) -> None:
             wrong(f"{row} over two lines: {text!r}")
 
     say("Ctrl+Z takes the block back and leaves the words")
-    put(page, *LINES)
+    # A note of its own, whose history holds nothing for the undo to run together with.
+    DRIVE.open_note(page, "Words")
+    page.evaluate(
+        """(head) => {
+          window.nib.dispatch({ selection: { anchor: 0, head } })
+          window.nib.focus()
+        }""",
+        len(WORDS),
+    )
     run_row(page, "Code block")
+    if "```" not in page.evaluate("() => window.nib.state.doc.toString()"):
+        wrong("the selection was not wrapped")
+    page.wait_for_function("() => window.nib.hasFocus")
     page.keyboard.press("Control+z")
-    DRIVE.wait_for(page, "() => !window.nib.state.doc.toString().includes('```')", "the fence gone")
+    DRIVE.wait_for(page, f"() => window.nib.state.doc.toString() === {WORDS!r}", "the words as they were")
 
 
 if __name__ == "__main__":
