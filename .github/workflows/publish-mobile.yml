@@ -319,14 +319,19 @@ jobs:
             --title "unstable on a phone · $VERSION" \
             --notes ""
 
-      # A draft, and only release.yml publishes it, once the updater's manifest is on it:
-      # published from here it would be the latest release with no manifest yet, and
-      # whichever workflow gets here first would be the one to do that. See release.yml.
-      - name: Make the draft
+      # The tag's draft, which release.yml makes as a tag's run starts and publishes once the
+      # updater's manifest is on it: GitHub takes any number of drafts of one tag, so one
+      # workflow makes it. A tag starts both, and this one has built for minutes by now; the
+      # wait is for a runner queue, and running out of it is said rather than papered over.
+      - name: Wait for the draft
         if: needs.version.outputs.rolling != 'true'
         run: |
-          gh release view "$TAG" >/dev/null 2>&1 ||
-            gh release create "$TAG" --draft --title "$TAG" --notes ""
+          for _ in $(seq 60); do
+            gh release view "$TAG" >/dev/null 2>&1 && exit 0
+            sleep 30
+          done
+          echo "::error::$TAG has no release: release.yml's draft job makes it"
+          exit 1
 
       - name: Upload the files
         run: gh release upload "$TAG" uploads/* --clobber

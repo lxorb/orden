@@ -52,7 +52,7 @@ jobs:
   # What this build is called; see scripts/build-version.sh.
   version:
     runs-on: ubuntu-latest
-    # All but one of the jobs below may only read; the one that writes says so.
+    # All but two of the jobs below may only read; the ones that write say so.
     permissions:
       contents: read
     outputs:
@@ -68,6 +68,30 @@ jobs:
       - id: decide
         shell: bash
         run: bash scripts/build-version.sh edge
+
+  # A tag's release, as a draft until its manifest is up: `releases/latest/download/latest.json`
+  # is the address every install on the stable stream asks, and a published release is the
+  # latest at once, whose manifest would answer 404 until the upload ended, and for good if
+  # the job died first. A draft is nobody's latest; the last release goes on answering.
+  #
+  # Here and nowhere else, before anything is built: GitHub takes any number of drafts of
+  # one tag, so two workflows each asking whether it is there can make two. The phones
+  # (publish-mobile.yml) wait for this one. Looked for first, so a run again finds its own, and
+  # one published already stays so.
+  draft:
+    needs: version
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Make the draft
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "$TAG" --notes ""
 
   # A push to `unstable` is built only once the branch has been still for a few
   # minutes (`NIB_CI_SETTLE_S`, five by default): pushes come in bursts, and a build that
@@ -362,12 +386,12 @@ jobs:
   # src-tauri/src/updates.rs), and the one manifest serves them all. A build of
   # `unstable` puts both on `edge`.
   publish:
-    needs: [version, build, macos]
+    needs: [version, draft, build, macos]
     # Only `unstable` and tags: a dispatch on any other branch is a trial and
     # publishes nothing (it would otherwise replace edge).
-    if: ${{ !cancelled() && needs.build.result == 'success' && needs.macos.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
+    if: ${{ !cancelled() && needs.draft.result != 'failure' && needs.build.result == 'success' && needs.macos.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
-    # The one job that writes: the release and its files are the point of it.
+    # The release's files are the point of it, and the release itself once they are up.
     permissions:
       contents: write
       # To dispatch publish.yml, publish-linux.yml and packaging-bump.yml at the
@@ -421,18 +445,6 @@ jobs:
             exit 1
           fi
 
-      # A draft until its manifest is up: `releases/latest/download/latest.json` is the
-      # address every install on the stable stream asks, and a published release is the
-      # latest at once, whose manifest would answer 404 until the upload ended, and for good
-      # if the job died first. A draft is nobody's latest; the last release goes on answering.
-      # Looked for first, because GitHub takes any number of drafts of one tag: a run again
-      # finds its own, and the phones' (publish-mobile.yml), and one published already stays so.
-      - name: Make the draft
-        if: needs.version.outputs.rolling != 'true'
-        run: |
-          gh release view "$TAG" >/dev/null 2>&1 ||
-            gh release create "$TAG" --draft --title "$TAG" --notes ""
-
       # Made by the first release that needs it, and a pre-release, so it is never the
       # latest one.
       - name: The release the app downloads from
@@ -471,12 +483,18 @@ jobs:
           gh release upload "$TAG" latest.json --clobber
 
       # The release out, the moment its manifest is there; one a run before put out stays
-      # as it is, and keeps or loses being the latest by what came since.
+      # as it is. The latest only if no newer version is out: a publish is the latest unless
+      # told otherwise, and an old tag's draft run again must not take the address back.
       - name: Publish the release
         if: needs.version.outputs.rolling != 'true'
         run: |
           if [ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = true ]; then
-            gh release edit "$TAG" --draft=false --latest
+            out=$(gh release view --json tagName --jq .tagName 2>/dev/null || true)
+            if [ "$(printf '%s\n%s\n' "$out" "$TAG" | sort -V | tail -1)" = "$TAG" ]; then
+              gh release edit "$TAG" --draft=false --latest
+            else
+              gh release edit "$TAG" --draft=false --latest=false
+            fi
           fi
 
       # And off edge, everything this build did not put there: the last build's files,

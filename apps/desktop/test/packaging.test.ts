@@ -301,7 +301,12 @@ esac
       .filter((one) => /contents: write|gh release/.test(one[0]))
       .map((one) => one[1])
 
-    expect(writing).toEqual(['publish'])
+    // The draft a tag's run makes first runs nothing out of the repository, so what it may
+    // write is out of reach of anything a build fetched.
+    expect(writing).toEqual(['draft', 'publish'])
+    expect(/\n {2}draft:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n)/.exec(workflow)?.[1]).not.toContain(
+      'uses:',
+    )
   })
 })
 
