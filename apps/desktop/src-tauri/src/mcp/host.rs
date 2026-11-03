@@ -7,7 +7,7 @@ use std::collections::BTreeSet;
 
 use serde_json::Value;
 
-use super::results::{rendered as written, Outcome};
+use super::results::{rendered as written, Outcome, META};
 use super::server::{defaults, INSTRUCTIONS};
 use super::tools::{self, Tool};
 use crate::agents::grants::Grant;
@@ -45,4 +45,40 @@ pub(crate) fn with_defaults(tool: &str, args: Value) -> Value {
 pub(crate) fn rendered(tool: &str, args: &Value, status: u16, body: &str) -> Value {
     let said = serde_json::from_str(body).unwrap_or_else(|_| Value::String(body.to_owned()));
     written(tool, args, &Outcome::from_endpoint(status, &said))
+}
+
+/// A question's category beside its id in what the window reads, for its Always, which
+/// covers everyday questions and never paying or the terminal (ai/chat/approvals.ts). The
+/// window's alone: the answer an outside agent reads keeps 9.3's shape.
+pub(crate) fn categorized(
+    rendered: &mut Value,
+    category_of: impl Fn(&str) -> Option<crate::agents::verbs::Category>,
+) {
+    let Some(said) = rendered.pointer_mut("/_meta").and_then(|meta| meta.get_mut(META)) else {
+        return;
+    };
+    if said["status"] != "needs_approval" {
+        return;
+    }
+    if let Some(category) = said["approval"].as_str().and_then(category_of) {
+        said["category"] = serde_json::json!(category);
+    }
+}
+
+#[cfg(test)]
+mod category_tests {
+    use super::*;
+    use crate::agents::verbs::Category;
+    use serde_json::json;
+
+    #[test]
+    fn a_question_says_what_it_is_about_to_the_window() {
+        let mut asked = json!({ "_meta": { META: { "status": "needs_approval", "approval": "a1" } } });
+        categorized(&mut asked, |_| Some(Category::Terminal));
+        assert_eq!(asked["_meta"][META]["category"], "terminal");
+
+        let mut done = json!({ "_meta": { META: { "status": "ok" } } });
+        categorized(&mut done, |_| Some(Category::Terminal));
+        assert!(done["_meta"][META].get("category").is_none());
+    }
 }

@@ -280,7 +280,9 @@ pub fn ai_agent_call(
     let asked = asked_for(&tool, &args, thread.as_deref());
     let caller = Caller::Agent(Box::new(supervised(grant, mode)));
     let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
-    Ok(host::rendered(&tool, &args, status, &body))
+    let mut rendered = host::rendered(&tool, &args, status, &body);
+    host::categorized(&mut rendered, crate::agents::question_category);
+    Ok(rendered)
 }
 
 /// What every turn is sent about where the reader is (docs/ai-sidebar.md 4.2): the

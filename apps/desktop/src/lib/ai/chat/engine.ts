@@ -446,7 +446,7 @@ export function createApiEngine(setup: Setup): Engine {
         // question the first one stood in front of), it waits again, a few times at most.
         for (let asked = 0; output.approval && asked < MOST_ASKS; asked++) {
           const approval = output.approval
-          if (always(thread, call.name)) await answers.answer(approval, true)
+          if (always(thread, call.name, output.category)) await answers.answer(approval, true)
           else {
             written(call, output)
             if (!(await answers.answered(approval, signal))) {

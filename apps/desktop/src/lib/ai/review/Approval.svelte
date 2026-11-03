@@ -3,9 +3,10 @@
    *  in any mode paying. Drawn as a card in the call's own step, Codex's - what it would
    *  change, then Approve, Always and Deny in Codex's order (once, from now on, no) -
    *  and answered there or in the Activity panel, whichever comes first. Always says
-   *  yes to this tool for the rest of the thread. */
+   *  yes to this tool for the rest of the thread, as far as `alwaysOffered` goes: a
+   *  question it does not cover has no such button. */
   import { t } from '../../i18n.svelte'
-  import { crateAnswers, sayAlways } from '../chat/approvals'
+  import { alwaysOffered, crateAnswers, sayAlways } from '../chat/approvals'
   import type { Part, Thread } from '../chat/types'
   import Asked from './Asked.svelte'
 
@@ -30,7 +31,7 @@
     <button class="nib-button" disabled={answering} onclick={() => void answer(true)}
       >{t('Approve')}</button
     >
-    {#if thread}
+    {#if thread && alwaysOffered(part.result?.category)}
       <button
         class="nib-button is-quiet"
         disabled={answering}

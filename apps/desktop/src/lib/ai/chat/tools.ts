@@ -75,6 +75,7 @@ export function outputIn(value: unknown): ToolOutput {
       .map((one) => ({ mime: text(one.mimeType) || 'image/png', data: text(one.data) })),
     error: result.isError === true,
     ...(approval ? { approval } : {}),
+    ...(approval && text(meta.category) ? { category: text(meta.category) } : {}),
   }
 }
 

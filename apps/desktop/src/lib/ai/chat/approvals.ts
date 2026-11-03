@@ -7,7 +7,10 @@
  *  The question is the crate's (src-tauri/src/agents/approvals.rs), so the Activity
  *  panel shows it too and an answer there counts here. What this adds is the waiting,
  *  and the thread's own Always: a tool said Always to is answered yes as soon as it
- *  asks, for the rest of that thread. */
+ *  asks an everyday question, for the rest of that thread. Paying, sending, deleting,
+ *  signing in, publishing, the terminal and a file from outside are asked every time:
+ *  page text can steer a tool the reader trusted for a harmless press into any of them,
+ *  and the loop would answer for the reader. */
 
 import { invoke, isDesktop } from '../../tauri'
 import type { Thread } from './types'
@@ -17,6 +20,8 @@ interface Asked {
   id: string
   agent: string
   verb: string
+  /** What the question is about, as the crate's `Category`. */
+  category: string
 }
 
 /** The crate's questions, as the engines reach them; a fake in the tests. */
@@ -30,14 +35,22 @@ export interface Answers {
   asked(on: (asked: Asked) => void): Promise<() => void>
 }
 
-/** Whether the thread said Always to this tool. */
-export function always(thread: Thread, verb: string): boolean {
-  return thread.always?.includes(verb) ?? false
+/** What Always may stand in for the reader on. A question that does not say is none. */
+const EVERYDAY = new Set(['writing', 'settings', 'showing'])
+
+/** Whether a question can be said Always to. */
+export function alwaysOffered(category: string | undefined): boolean {
+  return category !== undefined && EVERYDAY.has(category)
+}
+
+/** Whether the thread said Always to this tool, and it covers a question about this. */
+export function always(thread: Thread, verb: string, category: string | undefined): boolean {
+  return alwaysOffered(category) && (thread.always?.includes(verb) ?? false)
 }
 
 /** Always, for the rest of the thread. */
 export function sayAlways(thread: Thread, verb: string): void {
-  if (!always(thread, verb)) thread.always = [...(thread.always ?? []), verb]
+  if (!thread.always?.includes(verb)) thread.always = [...(thread.always ?? []), verb]
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -92,7 +105,12 @@ export const crateAnswers: Answers = {
       const { kind, approval } = questionIn(payload)
       if (kind !== 'asked' || typeof approval.id !== 'string') return
       const words = (value: unknown) => (typeof value === 'string' ? value : '')
-      on({ id: approval.id, agent: words(approval.agent), verb: words(approval.verb) })
+      on({
+        id: approval.id,
+        agent: words(approval.agent),
+        verb: words(approval.verb),
+        category: words(approval.category),
+      })
     })
   },
 }

@@ -67,6 +67,8 @@ export interface ToolOutput {
   error: boolean
   /** The question's id, when the call asked the reader. */
   approval?: string
+  /** What that question is about, as the crate's `Category`. */
+  category?: string
   /** The helper's thread a `run_agent` or `agent_result` call is about (#1062). */
   agent?: string
 }
