@@ -56,6 +56,7 @@ import {
   type Session,
   writeSession,
 } from './workspace/session'
+import { FIRST_SESSION, sessionOf, slotOf, takeSlot } from './workspace/slot'
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
 import { Excluded } from './workspace/excluded.svelte'
@@ -209,7 +210,8 @@ const PLACEHOLDER: Record<NewKind, string> = {
 
 export type { Heading } from './outline'
 
-const STORAGE_KEY = 'nib:workspace'
+// One session per window; see workspace/slot.ts.
+const STORAGE_KEY = FIRST_SESSION
 const TREE_KEY = 'nib:tree'
 // Short enough that a crash costs a moment's typing, long enough that the strip
 // is not serialised on every keystroke.
@@ -856,7 +858,13 @@ class Workspace {
       }
     }
 
-    const state = readSession(stored(STORAGE_KEY))
+    this.sessionKey = null
+    const slot = await takeSlot()
+    this.sessionKey = sessionOf(slot)
+    this.slot = slot
+    // A window that has no session of its own yet starts on what the first one is
+    // looking at, with no tabs: what a new window of VS Code or Chrome opens to.
+    const state = readSession(stored(this.sessionKey)) ?? this.freshWindow(slot)
     this.layouts.restore()
 
     if (!state) {
@@ -875,6 +883,8 @@ class Workspace {
         const first = this.files[0]
         if (first) await this.openEntry(first.path)
       }
+
+      void this.takeWhatWasLeft(slot)
 
       // Nothing to open, and nothing is made up: a pane with no tab shows the kinds
       // a new one could be, which is a choice rather than a note nobody asked for.
@@ -944,11 +954,57 @@ class Workspace {
     // a desktop arrives as the one that had the focus; see `oneDocument`.
     this.oneDocument()
 
+    void this.takeWhatWasLeft(slot)
+
     // And whatever the sitting left in the pane, on screen: the last of the three paints
     // a launch is made of, after the shell and the file list. Which is a note, or the
     // empty pane of somebody who closed everything before they quit - either way it is
     // the frame the launch ends on.
     markPainted('active tab painted')
+  }
+
+  /** Which of the app's windows this is, once `readSitting` has asked; see slot.ts. */
+  private slot = 0
+  /** Where this window's session goes: nowhere while the slot is being asked for. */
+  private sessionKey: string | null = STORAGE_KEY
+
+  private freshWindow(slot: number): Session | null {
+    if (slot === 0) return null
+    const first = readSession(stored(STORAGE_KEY))
+    if (!first) return null
+    const { spaces, activeSpace, panel, right, rightPanel, lastRight, known } = first
+    return {
+      spaces,
+      activeSpace,
+      panel,
+      ...(right ? { right } : {}),
+      ...(rightPanel ? { rightPanel } : {}),
+      ...(lastRight ? { lastRight } : {}),
+      ...(known ? { known } : {}),
+    }
+  }
+
+  /** The words a window that is gone left in its session, as tabs here; see
+   *  workspace/sessions-left.ts. Nothing to fetch unless there is such an entry. */
+  private async takeWhatWasLeft(slot: number) {
+    let any = false
+    try {
+      for (let at = 0; at < localStorage.length && !any; at += 1) {
+        const taken = slotOf(localStorage.key(at) ?? '')
+        any = taken !== null && taken !== slot
+      }
+    } catch {
+      return
+    }
+    if (!any) return
+    const { takeSessionsLeft } = await import('./workspace/sessions-left')
+    await takeSessionsLeft(slot, async (drafts) => {
+      const paneId = this.panes.focusedId
+      const tabs = await this.tabsFrom(drafts, paneId)
+      this.tabs = byPin([...this.tabs, ...tabs])
+      // Written down here before the entry that held them goes.
+      this.persist()
+    })
   }
 
   /** Drafts as tabs. A file that was clean is re-read from disk, so an edit made
@@ -1347,6 +1403,9 @@ class Workspace {
 
   persist() {
     this.session.cancel()
+    // Before this window has its slot there is nothing here yet that the session holds
+    // and nothing to overwrite another window's with.
+    if (this.sessionKey === null) return
 
     const state: Session = {
       spaces: this.spaces,
@@ -1363,7 +1422,10 @@ class Workspace {
       sets: this.setsWritten(),
     }
 
-    writeSession(STORAGE_KEY, state)
+    writeSession(this.sessionKey, state)
+
+    // The next launch is the first window's.
+    if (this.slot !== 0) return
 
     // And what the next launch will ask for first, for the crate to read while the
     // webview starts: this space's tree and the notes a restore reads off the disk,
