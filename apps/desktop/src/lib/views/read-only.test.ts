@@ -20,6 +20,7 @@ const insideOf = (root: string, path: string) => path === root || path.startsWit
 
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => insideOf(root, path)),
+  trustsHtmlAt: () => true,
 }))
 
 /** Every address a press opened. */

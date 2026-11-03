@@ -49,6 +49,7 @@ import { writeFile } from '../../workspace/write-file'
 import { DocError, notes } from '../docs'
 import { asked } from './asks'
 import { nowOf } from '../../views/days'
+import { guardedAt } from '../../views/guard'
 import { withComment } from '../../views/task-body'
 import { type Call, done, flag, maybe, need, writerOf } from './call'
 import { at, made, noteOf } from './notes'
@@ -121,12 +122,21 @@ async function baseAt(
   }
 }
 
+/** A `.base` file read to be answered: somebody else's under the guard the app holds it
+ *  to, so a call does not freeze what a look at the file would not. */
+async function baseToAnswer(call: Call, name = 'path') {
+  const found = await baseAt(call, name)
+  const base = guardedAt(found.base, onDisk(found.place, found.relative))
+  if (!base) throw new Refused('bad_arguments', `${found.relative} could take too long to answer`)
+  return { ...found, base }
+}
+
 export async function listTasks(call: Call): Promise<AgentAnswer> {
   const places = spacesOf(call)
   const rows = await rowsStore()
   const all = places.flatMap((place) => rows.of(place.space.name))
   const view = maybe(call, 'view')
-  const base = view && /\.base$/i.test(view) ? await baseAt(call, 'view') : null
+  const base = view && /\.base$/i.test(view) ? await baseToAnswer(call, 'view') : null
   const names = new Set(
     all.filter((row) => row.kind === 'note').map((row) => row.file.basename.toLowerCase()),
   )
@@ -349,7 +359,7 @@ export async function queryBase(call: Call): Promise<AgentAnswer> {
   const yaml = maybe(call, 'yaml')
   const { place, base } =
     yaml === null
-      ? await baseAt(call)
+      ? await baseToAnswer(call)
       : (() => {
           try {
             return { place: placeOf(call), base: readBase(yaml) }

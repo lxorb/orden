@@ -9,7 +9,7 @@
 import { formatDate, msOf, readDate, relative } from '../dates'
 import { BasesError } from '../errors'
 import type { DateValue, Row, Value } from '../types'
-import { readPattern } from './pattern'
+import { readPattern, spend, stepsOfText } from './pattern'
 import {
   equal,
   FileRef,
@@ -143,8 +143,11 @@ function stringMethod(value: string, name: string, args: readonly Arg[]): { valu
       return { value: value.trim() }
     case 'reverse':
       return { value: Array.from(value).reverse().join('') }
-    case 'repeat':
-      return { value: value.repeat(Math.max(0, number(args[0]?.() ?? null, 'repeat'))) }
+    case 'repeat': {
+      const times = Math.max(0, number(args[0]?.() ?? null, 'repeat'))
+      spend(stepsOfText(value.length * times))
+      return { value: value.repeat(times) }
+    }
     case 'slice': {
       const [start, end] = evaluated(args)
       return {
@@ -161,6 +164,7 @@ function stringMethod(value: string, name: string, args: readonly Arg[]): { valu
         const copy = new RegExp(pattern.source, pattern.flags)
         return { value: readPattern(pattern, value, () => value.replace(copy, by)) }
       }
+      spend(stepsOfText(value.length * by.length))
       return { value: value.replaceAll(text(pattern), () => by) }
     }
     case 'split': {
@@ -169,6 +173,7 @@ function stringMethod(value: string, name: string, args: readonly Arg[]): { valu
         separator instanceof RegExp
           ? readPattern(separator, value, () => value.split(separator))
           : value.split(text(separator))
+      spend(parts.length)
       return { value: limit == null ? parts : parts.slice(0, number(limit, 'split')) }
     }
     default:
@@ -255,6 +260,8 @@ function listMethod(
     case 'sort':
       return { value: [...list].sort(sortCompare) as Value[] }
     case 'unique':
+      // Every item asked against the ones before it.
+      spend((list.length * list.length) / 64)
       return {
         value: list.filter(
           (one, at) => list.findIndex((other) => equal(one, other, scope)) === at,
@@ -359,12 +366,14 @@ export function callMethod(receiver: Val, name: string, args: readonly Arg[], sc
       found = { value: readPattern(receiver, value, () => pattern.test(value)) }
     }
   } else if (typeof receiver === 'string') {
+    spend(1 + stepsOfText(receiver.length))
     found = stringMethod(receiver, name, args)
   } else if (typeof receiver === 'number') {
     found = numberMethod(receiver, name, args)
   } else if (typeof receiver === 'boolean') {
     found = name === 'isEmpty' ? { value: false } : null
   } else if (Array.isArray(receiver)) {
+    spend(1 + receiver.length)
     found = listMethod(receiver, name, args, scope)
   } else if (isDate(receiver)) {
     found = dateMethod(receiver, name, args, scope)

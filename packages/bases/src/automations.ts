@@ -22,6 +22,7 @@
  *  nothing: they never trigger each other, as Notion's do not. Pure. */
 
 import { scopeFor } from './expr/compile'
+import { underGuard } from './expr/pattern'
 import { compileFilters } from './filter'
 import { scalarValue } from './note-values'
 import { fillTemplate, type Filling } from './templates'
@@ -175,5 +176,7 @@ export function fired(
  *  no filters is about every note of its space. */
 export function inBase(base: Base, row: Row, context: Context): boolean {
   if (row.kind !== 'note') return false
-  return compileFilters(base.filters).test(scopeFor(row, context, base.formulas))
+  return underGuard(base.guarded, () =>
+    compileFilters(base.filters).test(scopeFor(row, context, base.formulas)),
+  )
 }

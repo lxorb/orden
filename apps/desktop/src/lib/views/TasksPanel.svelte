@@ -54,6 +54,7 @@
   } from './project-actions'
   import { reorderDrag } from './reorder-drag'
   import { type ProjectNode, projectNotes, projectRows } from './project-tree'
+  import { guardedAt } from './guard'
   import { builtinBase } from './source'
   import { queryOf } from './filters'
   import { prompt } from '../prompt.svelte'
@@ -188,8 +189,9 @@
     }
   }
   function baseCount(path: string): number | null {
-    const base = read[path]
+    const written = read[path]
     const name = workspace.activeSpace?.name
+    const base = written && guardedAt(written, path)
     if (!base || name === undefined) return null
     try {
       const mine = all.filter((one) => one.space === name)

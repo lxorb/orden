@@ -231,6 +231,7 @@ vi.mock('../../tauri', async (original) => ({
 }))
 
 vi.mock('../../sharing.svelte', () => ({
+  trustsHtmlAt: () => true,
   isShared: (root: string) => root === '/s/Home',
   reachedByOthers: (path: string | null) =>
     path !== null && (path.startsWith('/s/Home/') || othersWrite.has(path)),

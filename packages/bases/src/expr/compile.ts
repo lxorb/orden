@@ -16,6 +16,7 @@ import { callGlobal, GLOBALS } from './globals'
 import { fileField, indexed, member, taskField } from './members'
 import { type Arg, callMethod } from './methods'
 import { type Node, parseExpression } from './parse'
+import { evaluation } from './pattern'
 import {
   add,
   arithmetic,
@@ -315,7 +316,8 @@ export function compile(source: string): Compiled {
   if (known) return known
 
   const facts: Facts = { local: true, clock: false, formulas: new Set() }
-  const run = compileNode(parseExpression(source), facts)
+  const node = compileNode(parseExpression(source), facts)
+  const run: Fn = (scope) => evaluation(node, scope)
   const compiled: Compiled = {
     source,
     local: facts.local,
