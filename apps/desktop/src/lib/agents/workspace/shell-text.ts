@@ -16,7 +16,21 @@ export function programOf(command: string): string {
  *  question. Short options are whole words, and `-O` takes its value attached; long ones
  *  are matched by any prefix, as git and npm both take one. */
 const PACKAGES = { short: [], long: ['--script-shell', '--node-options'] }
-const REACH: Record<string, { short: string[]; long: string[]; commands: string[] }> = {
+const PLAIN = ['--version', '--help', '-v', '-h', '--silent', '-s']
+const REACH: Record<
+  string,
+  {
+    short: string[]
+    long: string[]
+    commands: string[]
+    /** Options that take no value and may stand in front of the command. Anything else
+     *  there may be holding one, and that value would read as the command, so it asks. */
+    before: string[]
+    /** A letter that is only this reach under one command: `git push -u` is no
+     *  `git clone -u`, which names the program to run for the fetch. */
+    under?: Record<string, string>
+  }
+> = {
   git: {
     short: ['-c', '-C', '-p', '-x', '-O'],
     long: [
@@ -34,11 +48,32 @@ const REACH: Record<string, { short: string[]; long: string[]; commands: string[
       '--open-files-in-pager',
     ],
     commands: ['config', 'submodule', 'bisect', 'filter-branch', 'difftool', 'mergetool'],
+    before: [
+      '--version',
+      '--help',
+      '-v',
+      '-h',
+      '-P',
+      '--no-pager',
+      '--no-optional-locks',
+      '--no-replace-objects',
+      '--literal-pathspecs',
+    ],
+    under: { clone: 'u', archive: 'o' },
   },
-  npm: { ...PACKAGES, commands: ['exec', 'x', 'explore', 'init', 'create', 'innit'] },
-  pnpm: { ...PACKAGES, commands: ['exec', 'dlx', 'create', 'x'] },
-  yarn: { ...PACKAGES, commands: ['exec', 'dlx', 'create'] },
-  bun: { ...PACKAGES, commands: ['x', 'create'] },
+  npm: {
+    ...PACKAGES,
+    commands: ['exec', 'x', 'explore', 'init', 'create', 'innit'],
+    before: PLAIN,
+  },
+  pnpm: { ...PACKAGES, commands: ['exec', 'dlx', 'create', 'x'], before: PLAIN },
+  yarn: { ...PACKAGES, commands: ['exec', 'dlx', 'create'], before: PLAIN },
+  bun: {
+    short: ['-e', '-p'],
+    long: [...PACKAGES.long, '--eval', '--print'],
+    commands: ['x', 'create'],
+    before: PLAIN,
+  },
 }
 
 /** The programs whose whole work is to fetch something and run it. */
@@ -52,10 +87,18 @@ function argumentsStay(program: string, words: readonly string[]): boolean {
 
   // As the shell hands them over: `"-c"`, `-'c'` and `-\c` are all `-c`.
   const plain = words.map((word) => word.replace(/["'\\]/g, ''))
-  const command = plain.find((word) => !word.startsWith('-'))
+  const at = plain.findIndex((word) => !word.startsWith('-'))
+  const leading = at === -1 ? plain : plain.slice(0, at)
+  if (!leading.every((word) => reach.before.includes(word))) return false
+  const command = plain[at]
   if (command !== undefined && reach.commands.includes(command)) return false
 
+  // Short options bundle, and a value may hang on the end: `-qu ./x` and `-u./x`.
+  const letter = command === undefined ? undefined : reach.under?.[command]
+  const short = letter && new RegExp(`^-[a-zA-Z]*${letter}`)
+
   return !plain.some((word) => {
+    if (short && short.test(word)) return true
     if (word.startsWith('--')) {
       const name = word.split('=')[0] ?? word
       return name.length > 2 && reach.long.some((one) => one.startsWith(name))

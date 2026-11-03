@@ -154,3 +154,56 @@ describe('what a listed program is told to run', () => {
     }
   })
 })
+
+describe('an option in front of the command', () => {
+  const listed = ['git', 'npm', 'pnpm', 'yarn', 'bun']
+
+  test.each([
+    'git --namespace x config core.sshCommand "touch pwned"',
+    'git --namespace=x status',
+    'npm --prefix . exec -c "touch pwned"',
+    'pnpm --dir . exec touch pwned',
+    'pnpm -C . dlx cowsay',
+    'yarn --cwd . exec touch pwned',
+    'bun --cwd . x cowsay',
+    'git -- config core.sshCommand x',
+  ])('hides nothing: %s goes to the question', (line) => {
+    expect(onTheList(line, listed)).toBe(false)
+  })
+
+  test.each([
+    'git --no-pager log',
+    'git -P status',
+    'git --version',
+    'git status',
+    'git log --oneline',
+    'npm --version',
+    'npm ci',
+    'npm --silent ci',
+    'pnpm test',
+  ])('one that takes no value stays out of the way: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(true)
+  })
+
+  test.each([
+    'git clone -u ./x repo',
+    'git clone -q -u ./x repo',
+    'git clone -qu ./x repo',
+    'git clone -u./x repo',
+    'git archive -o out.tar HEAD',
+    'git archive HEAD -o../out.tar',
+    'bun -e "1"',
+    'bun --eval 1',
+    'bun --print 1',
+    'bun run -e 1',
+  ])('a short name for what is on the list goes too: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(false)
+  })
+
+  test.each(['git push -u origin main', 'git add -u', 'git log -o', 'git status'])(
+    "another command's own letter is that command's: %s",
+    (line) => {
+      expect(onTheList(line, listed)).toBe(true)
+    },
+  )
+})
