@@ -258,9 +258,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-03, to 5,743,700, for #1044: the space's inbox is a hidden
  *  note of Orden's own, which the rows read with the space, sync carries and merges as
  *  every task of both (packages/bases/src/inbox.ts). Measured 5,743,620.
+ *
+ *  The code raised on 2026-11-03, to 5,743,800, for #1052: the `?` after a setting's name
+ *  sits on the name's letters as a word of it, glued to the last word, rather than in a
+ *  flex row beside it (Hint.svelte). Measured 5,743,715.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_743_700,
+  code: 5_743_800,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
