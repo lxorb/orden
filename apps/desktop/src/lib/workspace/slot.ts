@@ -12,6 +12,7 @@
  *  locks there is one slot, and every window shares it as they used to. */
 
 import { ifFree, locksHere, locksWork } from '../locks'
+import { forget, keep } from '../stored'
 import { readSession, type Session } from './session'
 
 export const FIRST_SESSION = 'nib:workspace'
@@ -69,20 +70,10 @@ export function leftLately(slot: number, storage: Storage, now = Date.now()): bo
 
 /** Holds a slot from here on, and says so when the window goes. */
 function holdingFrom(slot: number): number {
-  try {
-    localStorage.removeItem(leavingMark(slot))
-    remember(slot)
-    if (typeof window !== 'undefined') {
-      window.addEventListener('pagehide', () => {
-        try {
-          localStorage.setItem(leavingMark(slot), String(Date.now()))
-        } catch {
-          // Storage gone with the page: the next window takes it at once, and only words move.
-        }
-      })
-    }
-  } catch {
-    // No storage, and so no session to mark.
+  forget(leavingMark(slot))
+  remember(slot)
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pagehide', () => keep(leavingMark(slot), String(Date.now())))
   }
   return slot
 }

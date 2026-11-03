@@ -49,25 +49,25 @@ export function ifFree(
 ): Promise<Held> {
   return new Promise((resolve) => {
     let answered = false
-    const say = (held: Held) => {
+    const answer = (held: Held) => {
       answered = true
       clearTimeout(timer)
       resolve(held)
     }
-    const timer = setTimeout(() => say('broken'), ANSWERS_WITHIN)
+    const timer = setTimeout(() => answer('broken'), ANSWERS_WITHIN)
     try {
       locks
         .request(name, { ifAvailable: true }, (lock) => {
           // Too late: this window has gone on without it.
           if (answered) return undefined
-          say(lock ? 'held' : 'taken')
+          answer(lock ? 'held' : 'taken')
           return lock ? work() : undefined
         })
         .catch(() => {
-          if (!answered) say('broken')
+          if (!answered) answer('broken')
         })
     } catch {
-      say('broken')
+      answer('broken')
     }
   })
 }
