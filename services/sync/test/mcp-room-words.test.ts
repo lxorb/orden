@@ -82,14 +82,14 @@ async function typed(id: string, words: string, known: string): Promise<void> {
 function afterItsRead(id: string, work: () => Promise<void>) {
   const get = env.NOTES.get.bind(env.NOTES)
   let done = false
-  env.NOTES.get = (async (key: string) => {
+  env.NOTES.get = async (key: string) => {
     const object = await get(key)
     if (!done && key === `spaces/${space}/${id}`) {
       done = true
       await work()
     }
     return object
-  })
+  }
 }
 
 /** The room's document, and a keystroke arriving in it with nothing awaited. */
@@ -158,7 +158,7 @@ describe('add_task on a note with a room', () => {
     await rooms.settle()
     const get = env.NOTES.get.bind(env.NOTES)
     let busy = false
-    env.NOTES.get = (async (key: string) => {
+    env.NOTES.get = async (key: string) => {
       const object = await get(key)
       if (key === `spaces/${space}/${id}` && !busy) {
         busy = true
@@ -167,7 +167,7 @@ describe('add_task on a note with a room', () => {
         busy = false
       }
       return object
-    })
+    }
 
     const answer = await tool('add_task', { note: 'Plan', text: 'from mcp' })
 
@@ -204,7 +204,7 @@ describe('update_task on a note with a room', () => {
     // And once more in the note it leaves, after the task has landed in the other.
     let armed = true
     const get = env.NOTES.get.bind(env.NOTES)
-    env.NOTES.get = (async (key: string) => {
+    env.NOTES.get = async (key: string) => {
       const object = await get(key)
       if (armed && key === `spaces/${space}/${from}` && (await body(into)).includes('Ship')) {
         armed = false
@@ -212,7 +212,7 @@ describe('update_task on a note with a room', () => {
         await rooms.settle()
       }
       return object
-    })
+    }
 
     const answer = JSON.parse(
       await tool('update_task', { at: tasks[0].at, move_to: { note: 'Later' } }),
