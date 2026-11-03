@@ -191,7 +191,7 @@ describe('a clean exit said too early', () => {
     const doc = await one.engine.hold(PLAN)
     const before = doc?.client
     await say(one.engine)
-    doc?.live?.transact(() => doc?.live?.getText(TEXT).insert(0, 'after '), HERE)
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'after '), HERE)
     await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
 
     // Gone at once.
@@ -209,7 +209,7 @@ describe('a clean exit said too early', () => {
     const one = await device()
     const doc = await one.engine.hold(PLAN)
     const before = doc?.client
-    doc?.live?.transact(() => doc?.live?.getText(TEXT).insert(0, 'kept '), HERE)
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'kept '), HERE)
     await one.engine.flush()
 
     one.engine.stop()

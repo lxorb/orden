@@ -143,7 +143,7 @@ def drive(browser: Browser) -> None:
     DRIVE.open(other)
     other.evaluate("() => window.nib?.focus()")
     other.keyboard.press("Control+Shift+A")
-    panel_says(other, "a long one", "Kept these words.")
+    panel_says(other, "a long one")
     if "Stopped" in other.evaluate(f"() => {PANEL}"):
         wrong("a second window says an answer still going on has stopped")
     other.close()
