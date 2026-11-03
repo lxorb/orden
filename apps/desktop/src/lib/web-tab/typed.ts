@@ -33,7 +33,7 @@ function searchOn(engine: string, words: string): string {
  *  every address on the web - a string with a space in it is words, and a single word
  *  with no dot and no port is words too. */
 const HOST =
-  /^(?:localhost|\[[0-9a-f:.]+\]|\d{1,3}(?:\.\d{1,3}){3}|[^\s/?#@:]+\.[^\s/?#@.:]{2,}|[a-z\d-]+(?=:\d))(?::\d{1,5})?(?:[/?#]|$)/i
+  /^(?:localhost|\[[0-9a-f:.]+\]|\d{1,3}(?:\.\d{1,3}){3}|[^\s/?#@]+\.[^\s/?#@.]{2,}|[a-z\d-]+(?=:\d))(?::\d{1,5})?(?:[/?#]|$)/i
 
 /** Schemes a word with digits after it is, rather than a host and a port: `tel:123`. */
 const NOT_HOSTS = new Set(['tel', 'sms', 'mailto', 'news', 'urn', 'magnet', 'about', 'data'])
@@ -113,10 +113,6 @@ const KNOWN_SCHEMES = new Set([
   'nib',
 ])
 
-/** A name and a password in front of a host, which is an address and never words: a search
- *  would tell the engine the password. */
-const CREDENTIALS = /^[^\s/?#@]+:[^\s/?#@]*@[^\s/?#@]+/
-
 /** Whether something typed opens with a scheme and is not a few words with a colon in them,
  *  by Chrome's rule: one it knows with nothing but the address after it, or any word with
  *  `//` after it. So `site:github.com orden` and `note: buy milk` are a search. */
@@ -125,11 +121,7 @@ function hasScheme(said: string): boolean {
   if (word === undefined) return false
 
   const rest = said.slice(word.length + 1)
-  return (
-    rest.startsWith('//') ||
-    CREDENTIALS.test(said) ||
-    (KNOWN_SCHEMES.has(word.toLowerCase()) && !/^\s/.test(rest))
-  )
+  return rest.startsWith('//') || (KNOWN_SCHEMES.has(word.toLowerCase()) && !/^\s/.test(rest))
 }
 
 /** An address half typed into a tab's field and left there: what the field held, what of
@@ -143,16 +135,44 @@ export interface HalfTyped {
   over: string
 }
 
-/** A Windows path: a drive letter, or a share. To `URL` it is a host called `c` or `nas`
- *  over http, and with a space in it words for the search engine, either of which tells
- *  the network what is on this machine. It means `file:`, which a tab does not open. */
-const WINDOWS_PATH = /^(?:[a-z]:(?:[\\/]|$)|\\\\)/i
+/** A Windows path: a drive letter, relative to that drive or not, or a share. To `URL` it is
+ *  a host called `c` or `nas` over http, and with a space in it words for the search engine,
+ *  either of which tells the network what is on this machine. It means `file:`, which a tab
+ *  does not open. A letter with a port is a host, and one with a space after it is words. */
+const WINDOWS_PATH = /^(?:[a-z]:(?!\s)(?!\d{1,5}(?:[/?#]|$))|\\\\)/i
 
-/** Whether something typed is a file on this machine, which a tab does not open, so the bar
- *  can say so rather than do nothing where a browser would have opened it. */
+/** A file, or a share on the network, by its scheme, whatever follows it. */
+const FILE_SCHEME = /^(?:file|smb|afp|nfs|cifs):/i
+
+/** A path as a Mac or Linux writes one: from the top, from home, or from here. Two slashes
+ *  are a host. */
+const UNIX_PATH = /^(?:~|\.{1,2})?\/(?!\/)/
+
+/** Whether something typed is a file on this machine or its network, which a tab does not
+ *  open, so the bar can say so rather than do nothing where a browser would have opened it. */
 export function isLocalFile(typed: string): boolean {
   const said = typed.trim()
-  return WINDOWS_PATH.test(said) || /^file:/i.test(said)
+  return WINDOWS_PATH.test(said) || FILE_SCHEME.test(said) || UNIX_PATH.test(said)
+}
+
+/** One word, a colon and more with no space anywhere: `root:hunter2`, `admin:pa/ss@router.lan`,
+ *  `otpauth:totp/x?secret=ABC`. `std::vector` is two colons and a name. */
+const WORD_AND_WORD = /^[^\s:/?#@]+:(?!:)\S+$/
+
+/** A name, a colon and at least two words with an `@` further on: `admin:pass word@router.lan`. */
+const NAME_AT_HOST = /^[^\s:/?#@]+:\S.*@/
+
+/** A word that says what comes after its colon is secret. */
+const NAMES_A_SECRET = /^(?:password|passwd|passcode|passphrase|pwd|secret|token|api[-_]?key)\s*:/i
+
+/** Whether something typed could be a credential, and so goes to no search engine, which
+ *  would keep it. Chrome would search for `root:hunter2`, and for a search operator with
+ *  nothing after it; this bar does nothing and says so. A phrase is words: a word with a
+ *  space after its colon, or `site:github.com orden`, unless the word names a secret or an
+ *  `@` follows. */
+export function mayBeSecret(typed: string): boolean {
+  const said = typed.trim()
+  return WORD_AND_WORD.test(said) || NAME_AT_HOST.test(said) || NAMES_A_SECRET.test(said)
 }
 
 /** An address with a name that is not ASCII in it, spelled as the page will say it is on,
@@ -189,7 +209,8 @@ export function typedAddress(typed: string): string | null {
  *  tries https"* - and a dev server, which serves plain http, answered nothing.
  *
  *  Then a scheme, taken as written, so `http://` pages still open and a
- *  `javascript:` one never does. A Windows path or a `file:` is nothing too. Anything left is words, and words are a search on
+ *  `javascript:` one never does. A local path and what could be a secret are nothing too.
+ *  Anything left is words, and words are a search on
  *  `engine`, the reader's choice of search engine. */
 export function webAddress(typed: string, engine = SEARCH): string | null {
   const said = typed.trim()
@@ -199,7 +220,7 @@ export function webAddress(typed: string, engine = SEARCH): string | null {
   if (address !== null) return address
   // An address this app refuses is nothing rather than something to search for.
   if (said.startsWith('//') || isHost(said) || hasScheme(said)) return null
-  if (isLocalFile(said)) return null
+  if (isLocalFile(said) || mayBeSecret(said)) return null
 
   return searchOn(engine, said)
 }
