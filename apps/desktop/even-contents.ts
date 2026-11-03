@@ -313,9 +313,8 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
  *  thread written down while it runs, the sync's scans, and an undo that waits for every
  *  gesture landing, measured together. Measured 5,805,262.
-
  *
- *  Raised on 2026-11-03, to 5,812,000, for one definition of front matter and a guarded
+ *  The code raised on 2026-11-03, to 5,812,000, for one definition of front matter and a guarded
  *  base's step count, both of which the package carries through the editor and the
  *  glasses. Measured 5,811,071. */
 export const BUDGETS: Record<Part, number> = {
