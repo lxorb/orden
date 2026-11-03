@@ -98,6 +98,7 @@ vi.mock('./tauri', async (importOriginal) => ({
       const at = pathOf(args)
       return Object.keys(notes).some((one) => one === at || one.startsWith(`${at}/`))
     }
+    if (command === 'trash_item') return { id: 'trashed' }
     if (command !== 'read_note') return undefined
 
     const path = pathOf(args)
@@ -3036,6 +3037,18 @@ describe('a note writes itself, wherever it is', () => {
   }
 
   const written = () => sent.filter((one) => one.command === 'write_note').map((one) => one.path)
+
+  /** The snapshot a delete keeps is read from the disk, which the last few words had
+   *  not reached yet: Undo put the note back without them. */
+  test('a note deleted straight after typing is on the disk when its snapshot is read', async () => {
+    await typedIn('/space/a.md')
+
+    await workspace.remove('/space/a.md', false)
+
+    const about = sent.filter((one) => one.path === '/space/a.md').map((one) => one.command)
+    expect(about.indexOf('write_note')).toBeGreaterThanOrEqual(0)
+    expect(about.lastIndexOf('write_note')).toBeLessThan(about.lastIndexOf('read_note'))
+  })
 
   test('a note in a space goes down well inside a second of the typing pausing', async () => {
     const tab = await typedIn('/space/a.md')

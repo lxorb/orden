@@ -50,6 +50,23 @@ const PRESET_KEY = 'nib:preset'
  *  same numbers the server enforces; see services/sync/src/settings.ts. */
 const MOST_OVERRIDES = 200
 
+/** The keys typing moves and breaks lines with. Space goes with the letters, being one
+ *  character. */
+const TYPING_KEYS: ReadonlySet<string> = new Set([
+  'Enter',
+  'Tab',
+  'Backspace',
+  'Delete',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Home',
+  'End',
+  'PageUp',
+  'PageDown',
+])
+
 class Shortcuts {
   /** Only what differs from the defaults, by id. A key, or null where the
    *  reader took the key away.
@@ -171,8 +188,10 @@ class Shortcuts {
 
   /** Whether a combination is one the app will accept at all. A bare letter
    *  or digit would fire on every keystroke that types it, so it is refused
-   *  with the reason rather than saved and wondered about later. */
-  refuse(key: string): string | null {
+   *  with the reason rather than saved and wondered about later. The keys typing
+   *  moves and breaks lines with go the same way for anything but a list's own row
+   *  (`row`), where nobody is typing. */
+  refuse(key: string, row?: string): string | null {
     const combination = parseCombination(key, this.platform)
     if (!combination) return t('That is not a key combination.')
     // The Windows key is the desktop's own outside a Mac.
@@ -181,11 +200,16 @@ class Shortcuts {
     const bare = !combination.ctrl && !combination.meta && !combination.alt
     // Named the way the platform names them: a Mac prints its keys as signs, and
     // Windows and Linux have no Cmd.
-    if (bare && combination.key.length === 1) {
+    const typing = TYPING_KEYS.has(combination.key) && !this.inAList(row)
+    if (bare && (combination.key.length === 1 || typing)) {
       return this.platform === 'mac' ? t('Hold ⌃, ⌥ or ⌘ as well.') : t('Hold Ctrl or Alt as well.')
     }
 
     return null
+  }
+
+  private inAList(row: string | undefined): boolean {
+    return SHORTCUTS.find((one) => one.id === row)?.scope === 'panel'
   }
 
   set(id: string, key: string | null) {

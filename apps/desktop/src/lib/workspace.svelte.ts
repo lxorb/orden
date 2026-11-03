@@ -4413,6 +4413,10 @@ class Workspace {
   /** Deletes, answering what puts it back; recorded by the caller. See `Binning`. */
   async bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
     const { source, madeHere = false } = how
+    // The snapshot is read from the disk, so whatever was typed in the last moment has
+    // to have reached it: Undo would put the note back without it.
+    this.flush()
+    await this.saving.settled()
     // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
     // is bytes and not words: there is no snapshot of one, so the only thing that
     // can put it back is the trash.
