@@ -137,6 +137,17 @@ def drive(browser: Browser) -> None:
     Model.words = ["Kept ", "these ", "words."]
     send(page, "a long one")
     panel_says(page, "Kept these words.")
+
+    say("a second window sees the answer going on, and no Stopped row with an Ask again")
+    other = page.context.new_page()
+    DRIVE.open(other)
+    other.evaluate("() => window.nib?.focus()")
+    other.keyboard.press("Control+Shift+A")
+    panel_says(other, "a long one", "Kept these words.")
+    if "Stopped" in other.evaluate(f"() => {PANEL}"):
+        wrong("a second window says an answer still going on has stopped")
+    other.close()
+
     page.reload()
     DRIVE.ready(page)
     Model.gate.set()

@@ -349,6 +349,14 @@ describe('choosing a key', () => {
     expect(shortcuts.refuse('Enter', 'tree.rename')).toBeNull()
   })
 
+  /** Where such a key is a row's own, setting it back to that is no harm. */
+  test('and so may a row whose own key it is', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.refuse('Delete', 'table.delete')).toBeNull()
+    expect(shortcuts.refuse('Enter', 'image.edit')).toBeNull()
+    expect(shortcuts.refuse('Enter', 'table.delete')).not.toBeNull()
+  })
+
   /** It said Ctrl, Alt or Cmd everywhere: a Cmd key on Windows, and on a Mac names
    *  for keys that every other place on a Mac shows as signs. */
   test('and the refusal names the keys the way the platform does', () => {

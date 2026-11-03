@@ -289,13 +289,17 @@ function closing(open: string[], name: string | null): string {
 /** The namespaces an HTML parser gives these two by itself and an XML one does not:
  *  there a bare `<svg>` is an XHTML element nobody has heard of, so a chart comes out
  *  as its labels run together, with no height and no lines. */
+const XHTML = 'http://www.w3.org/1999/xhtml'
 const FOREIGN_ROOTS: Record<string, string> = {
   svg: 'http://www.w3.org/2000/svg',
   math: 'http://www.w3.org/1998/Math/MathML',
 }
 
-function namespaceOf(name: string, attributes: string): string {
-  const space = FOREIGN_ROOTS[name.toLowerCase()]
+function namespaceOf(name: string, attributes: string, parent: string | undefined): string {
+  // And what a `foreignObject` holds is XHTML again, which it would not otherwise be: it
+  // would inherit the drawing's namespace and draw as nothing.
+  const inForeign = parent?.toLowerCase() === 'foreignobject'
+  const space = inForeign ? XHTML : FOREIGN_ROOTS[name.toLowerCase()]
   return space && !/\sxmlns=/.test(attributes) ? ` xmlns="${space}"` : ''
 }
 
@@ -335,7 +339,7 @@ export function toXhtml(html: string): string {
       case 'open': {
         const attributes = attributesOf(piece.attributes)
         const name = renamed(piece.name)
-        const space = namespaceOf(name, attributes)
+        const space = namespaceOf(name, attributes, open.at(-1))
 
         if (piece.empty || VOID_ELEMENTS.has(name.toLowerCase())) {
           out += `<${name}${space}${attributes} />`

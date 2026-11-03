@@ -3051,6 +3051,21 @@ describe('a note writes itself, wherever it is', () => {
     expect(about.lastIndexOf('write_note')).toBeLessThan(about.lastIndexOf('read_note'))
   })
 
+  /** A disk that does not answer must not hold a delete up for ever. */
+  test('a delete does not wait for ever on a write that never comes back', async () => {
+    await typedIn('/space/a.md')
+    let free = (_value?: unknown) => undefined as void
+    holding.write = new Promise((resolve) => (free = resolve))
+
+    const deleting = workspace.remove('/space/a.md', false)
+    await vi.advanceTimersByTimeAsync(5_000)
+    await deleting
+
+    expect(sent.map((one) => one.command)).toContain('trash_item')
+    holding.write = null
+    free()
+  })
+
   test('a note in a space goes down well inside a second of the typing pausing', async () => {
     const tab = await typedIn('/space/a.md')
 

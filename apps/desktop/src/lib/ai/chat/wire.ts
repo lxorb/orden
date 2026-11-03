@@ -64,8 +64,8 @@ export interface Heard {
 export interface Reader {
   readonly parts: Part[]
   heard(event: unknown): Heard
-  /** Whether the provider said the response is over, with `[DONE]` or in an event of
-   *  its own. A stream that only stopped was cut off: a dropped connection or a proxy's
+  /** Whether the provider said the response is over, with `[DONE]` or any end marker of
+   *  the wire's own: an end marker is an end, whichever a proxy kept. A stream that only stopped was cut off: a dropped connection or a proxy's
    *  timeout, which ends a body the same way a finished answer does. */
   finished(saidDone: boolean): boolean
   answer(): Answer

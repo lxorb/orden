@@ -407,6 +407,12 @@ describe('what a reader that checks the book insists on', () => {
     )
   })
 
+  test('what a foreignObject holds is XHTML again, not more of the drawing', () => {
+    expect(
+      toXhtml('<svg><foreignObject><div><span>A</span></div></foreignObject></svg>'),
+    ).toContain('<foreignObject><div xmlns="http://www.w3.org/1999/xhtml"><span>A</span></div>')
+  })
+
   test('a part that draws an SVG says so in the manifest', async () => {
     const drawn = await bookOf({
       body: '<h1>Drawn</h1>\n<figure class="diagram"><svg viewBox="0 0 2 2"></svg></figure>',

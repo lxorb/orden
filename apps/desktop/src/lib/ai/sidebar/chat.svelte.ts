@@ -18,7 +18,7 @@
 
 import { answerThreadSpaces } from '../../automation/caller'
 import { message, t } from '../../i18n.svelte'
-import { owes } from '../../parting'
+import { owes, writing } from '../../parting'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
 import { forget, keep, stored } from '../../stored'
@@ -616,7 +616,8 @@ class Chat implements Panel {
    *  going, which nothing else here would hear of; see parting.ts. */
   keepAnswers(): void {
     this.keepSoon.cancel()
-    for (const thread of this.unkept) void keepThread(thread).catch(() => undefined)
+    // Said to parting.ts as well, so a window closing waits for these.
+    for (const thread of this.unkept) writing(keepThread(thread))
     this.unkept.clear()
   }
 

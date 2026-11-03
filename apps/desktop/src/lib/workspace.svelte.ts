@@ -42,7 +42,8 @@ import type { Change } from './search/apply'
 import { startup } from './startup.svelte'
 import { nextTask } from './breathe'
 import { mark, markPainted } from './trace'
-import { afterQuiet } from './timing'
+import { afterQuiet, waited } from './timing'
+import { GIVE_UP } from './parting'
 import { isRecord, keep, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
 import {
@@ -4492,8 +4493,9 @@ class Workspace {
     const { source, madeHere = false } = how
     // The snapshot is read from the disk, so whatever was typed in the last moment has
     // to have reached it: Undo would put the note back without it.
-    this.flush()
-    await this.saving.settled()
+    // Not for ever: a disk that does not answer has no words to give it either.
+    this.saving.wordsNow()
+    await Promise.race([this.saving.settled(), waited(GIVE_UP)])
     // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
     // is bytes and not words: there is no snapshot of one, so the only thing that
     // can put it back is the trash.

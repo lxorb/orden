@@ -204,6 +204,7 @@ class ResponsesReader implements Reader {
       case 'response.output_item.done':
         return this.done(index, record(said.item))
       case 'response.completed':
+      case 'response.done':
       case 'response.incomplete': {
         this.over = true
         const response = record(said.response)
@@ -276,8 +277,8 @@ class ResponsesReader implements Reader {
     return { changed: [at] }
   }
 
-  finished(): boolean {
-    return this.over
+  finished(saidDone: boolean): boolean {
+    return saidDone || this.over
   }
 
   answer(): Answer {

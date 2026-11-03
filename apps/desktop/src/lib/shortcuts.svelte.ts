@@ -200,12 +200,18 @@ class Shortcuts {
     const bare = !combination.ctrl && !combination.meta && !combination.alt
     // Named the way the platform names them: a Mac prints its keys as signs, and
     // Windows and Linux have no Cmd.
-    const typing = TYPING_KEYS.has(combination.key) && !this.inAList(row)
+    const typing = TYPING_KEYS.has(combination.key) && !this.inAList(row) && !this.ownKey(row, key)
     if (bare && (combination.key.length === 1 || typing)) {
       return this.platform === 'mac' ? t('Hold ⌃, ⌥ or ⌘ as well.') : t('Hold Ctrl or Alt as well.')
     }
 
     return null
+  }
+
+  /** Whether this is the key a row starts with: the table's Delete, the picture's Enter.
+   *  One already saved for another row stays as it is; this only asks about a new one. */
+  private ownKey(row: string | undefined, key: string): boolean {
+    return row !== undefined && this.defaultFor(row) === key
   }
 
   private inAList(row: string | undefined): boolean {
