@@ -19,8 +19,8 @@
 use tauri::{AppHandle, Manager, Window};
 
 /// The presenter's window, which keeps the system's frame and no material: see
-/// `slides/presenter.ts`.
-const PRESENTER: &str = "nib-presenter";
+/// presenter.rs.
+pub(crate) const PRESENTER: &str = "nib-presenter";
 
 /// Every window whose edges are the app's own.
 fn ours(app: &AppHandle) -> Vec<Window> {

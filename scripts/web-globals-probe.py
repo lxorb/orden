@@ -1,4 +1,4 @@
-"""What a web tab hands a page: nothing. Windows only.
+"""What a web tab hands a page: nothing. Windows only; Linux's is scripts/globals-drive.py.
 
 Emil, 2026-09-30: every Google Sheet he opens in a web tab shows Google's own *"Loading
 issue - Troubleshoot this issue by clearing application resources"* over a sheet that had

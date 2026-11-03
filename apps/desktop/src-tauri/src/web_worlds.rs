@@ -575,8 +575,9 @@ pub use engine::{asking, sent, value};
 /// Orden's own Chromium: the same protocol `WebView2` is cleared with, spoken through the
 /// runtime's own door to the page's agent (see engine/devtools.rs). What the runtime puts
 /// in every page is two things there: a script it registers over the protocol, taken
-/// back here the way `WebView2`'s are, and `window.ipc`, which Orden's own renderer never
-/// gives a page that is not the app's (see cef/src/helper.rs).
+/// back here the way `WebView2`'s are, and `window.ipc`, which the runtime's renderer writes
+/// into every context and no script can take back, so that Orden's own renderer writes it
+/// at the app's own address only, and no page anywhere else has it (see engine/renderer.rs).
 #[cfg(feature = "cef")]
 mod engine {
     use std::time::Duration;
