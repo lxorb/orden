@@ -442,21 +442,21 @@ describe('two people each given one note of a space', () => {
     const env = testEnv()
     const owner = await signIn(env, OWNER)
     const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Shared' } })).json
-      .space.id as string
+      .space.id
     const note = async (name: string) =>
       (
         await call(env, `/v1/spaces/${space}/notes`, {
           token: owner,
           body: { path: name, content: 'words' },
         })
-      ).json.note.id as string
+      ).json.note.id
     const [a, b] = [await note('a.md'), await note('b.md')]
     const holder = await invited(env, owner, space, 'holder-a@example.com', 'read', a)
     const sameNote = await invited(env, owner, space, 'holder-a2@example.com', 'read', a)
     const elsewhere = await invited(env, owner, space, 'holder-b@example.com', 'read', b)
     const whole = await invited(env, owner, space, MEMBER, 'read')
     const sees = async (token: string, about: string) => {
-      const id = (await call(env, '/v1/me', { token: about })).json.user.id as string
+      const id = (await call(env, '/v1/me', { token: about })).json.user.id
       return (await call<PeopleReply>(env, `/v2/people?ids=${id}`, { token })).json.people.length
     }
 
