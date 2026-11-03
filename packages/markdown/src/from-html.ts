@@ -918,7 +918,7 @@ function converter(options: FromHtmlOptions): TurndownService {
         .trim()
       const first = (node as Element).previousElementSibling === null
       const table = (node as Element).closest('table')
-      const held = table ? (gapsOf(table).before.get(node as Element) ?? 0) : 0
+      const held = table ? (gapsOf(table).before.get(node) ?? 0) : 0
 
       return `${first ? '|' : ''}${'  |'.repeat(held)} ${said} |${'  |'.repeat(spanOf(node) - 1)}`
     },
