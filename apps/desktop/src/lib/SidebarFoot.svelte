@@ -11,8 +11,10 @@
    *  the Help menu.
    *
    *  One component on every device. A drawer is the sidebar, so a phone gets
-   *  this row at the bottom of the drawer, clear of the gesture bar, and it is
-   *  the same three controls in the same order. */
+   *  this row at the bottom of the drawer, clear of the gesture bar. A phone or a
+   *  tablet leaves out the download and the theme switch: it is already where the
+   *  app is had, and its light and dark are in Settings, so the row keeps to the
+   *  account, feedback and the settings. */
   import { fade } from 'svelte/transition'
   import { account } from './account.svelte'
   import { BASE } from './api'
@@ -27,6 +29,7 @@
   import { t } from './i18n.svelte'
   import { isNative, openExternal } from './tauri'
   import { theme } from './theme.svelte'
+  import { viewport } from './viewport.svelte'
   import { shortcuts } from './shortcuts.svelte'
 
   /** What to call whoever is here. Null while the stores are still being asked,
@@ -109,7 +112,7 @@
   {/if}
 
   <div class="acts">
-    {#if !isNative && !__EVEN_PLUGIN__}
+    {#if !isNative && !__EVEN_PLUGIN__ && !viewport.touch}
       <button
         class="nib-glyph act"
         title={t('Download the app')}
@@ -139,27 +142,29 @@
          side of it to show, and swapping it for a built-in is not the switch
          anybody pressed. See theme.svelte.ts. Said rather than `disabled`, which
          would swallow the right click that offers another theme. -->
-    <button
-      class="nib-glyph act"
-      title={theme.current === 'dark' ? t('Light') : t('Dark')}
-      aria-label={theme.current === 'dark' ? t('Light') : t('Dark')}
-      aria-disabled={!theme.switchable}
-      onclick={() => theme.toggle()}
-      oncontextmenu={pick}
-      use:longPress={pick}
-    >
-      {#if theme.current === 'dark'}
-        <svg viewBox="0 0 14 14"
-          ><circle cx="7" cy="7" r="3" /><path
-            d="M7 0v2M7 12v2M0 7h2M12 7h2M2.5 2.5l1.4 1.4M10.1 10.1l1.4 1.4M11.5 2.5l-1.4 1.4M3.9 10.1l-1.4 1.4"
-          /></svg
-        >
-      {:else}
-        <svg viewBox="0 0 14 14"
-          ><path d="M12 8.6A5.6 5.6 0 1 1 5.4 2a4.4 4.4 0 0 0 6.6 6.6z" /></svg
-        >
-      {/if}
-    </button>
+    {#if !viewport.touch}
+      <button
+        class="nib-glyph act"
+        title={theme.current === 'dark' ? t('Light') : t('Dark')}
+        aria-label={theme.current === 'dark' ? t('Light') : t('Dark')}
+        aria-disabled={!theme.switchable}
+        onclick={() => theme.toggle()}
+        oncontextmenu={pick}
+        use:longPress={pick}
+      >
+        {#if theme.current === 'dark'}
+          <svg viewBox="0 0 14 14"
+            ><circle cx="7" cy="7" r="3" /><path
+              d="M7 0v2M7 12v2M0 7h2M12 7h2M2.5 2.5l1.4 1.4M10.1 10.1l1.4 1.4M11.5 2.5l-1.4 1.4M3.9 10.1l-1.4 1.4"
+            /></svg
+          >
+        {:else}
+          <svg viewBox="0 0 14 14"
+            ><path d="M12 8.6A5.6 5.6 0 1 1 5.4 2a4.4 4.4 0 0 0 6.6 6.6z" /></svg
+          >
+        {/if}
+      </button>
+    {/if}
 
     <!-- No mark of syncing on it: a pass blinking in the corner was noise (#206). -->
     <button

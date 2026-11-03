@@ -6,9 +6,10 @@
  *  nothing back, `/subtask` leaves a copy running and its answer comes back here as a
  *  line. `/batch` is many subtasks, one a note, three at a time, and `/deep-research` is
  *  one that reads the web and writes a note. Every one is on the thread's task list
- *  until it ends, and `/stop` ends it; each helper is a thread of its own in the list,
- *  and the thread that started it keeps their ids for the review (lane 3), so one review
- *  covers every change they made. */
+ *  until it ends, and `/stop` ends it. A fork is a chat of its own in the list; every
+ *  other helper is its parent's (`Thread.parent`), opened from the line its answer comes
+ *  back as and in no list (#1062). The thread that started them keeps their ids for the
+ *  review (lane 3), so one review covers every change they made. */
 
 import { TAG_NAME } from '@orden/markdown/tags'
 import { t } from '../../i18n.svelte'
@@ -27,8 +28,9 @@ import type { Ended } from './types'
 const AT_ONCE = 3
 
 /** A copy of the thread to here, or a new thread on the same provider and model where
- *  there is nothing to copy or the helper should start clean. */
-function helperOf(parent: Thread, title: string, copy: boolean, mode?: Mode): Thread {
+ *  there is nothing to copy or the helper should start clean; `own` for a fork, which
+ *  is the reader's chat rather than its parent's helper. */
+function helperOf(parent: Thread, title: string, copy: boolean, mode?: Mode, own = false): Thread {
   const last = parent.turns.at(-1)
   const made =
     copy && last
@@ -44,6 +46,8 @@ function helperOf(parent: Thread, title: string, copy: boolean, mode?: Mode): Th
           title,
         }
   if (mode) made.mode = mode
+  if (own) delete made.parent
+  else made.parent = parent.id
   return made
 }
 
@@ -85,7 +89,7 @@ function answered(task: string, ended: Ended | null): string {
 
 /** `/fork [prompt]`: a copy left running while you stay. */
 export function fork(host: Host, parent: Thread, prompt: string): void {
-  const copy = helperOf(parent, parent.title, true)
+  const copy = helperOf(parent, parent.title, true, undefined, true)
   host.touched(parent)
   if (prompt) void run(host, parent, copy, 'fork', prompt)
   else host.adopt(copy)
@@ -97,7 +101,7 @@ export async function subtask(host: Host, parent: Thread, task: string): Promise
   host.touched(parent)
   const ended = await run(host, parent, copy, 'subtask', task)
   if (ended?.stop === 'stopped') return
-  host.line(parent, answered(task, ended))
+  host.line(parent, answered(task, ended), undefined, [copy.id])
 }
 
 const TAG_WORD = new RegExp(String.raw`^#${TAG_NAME}$`, 'u')
@@ -200,6 +204,7 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
   })
   let done = 0
   let next = 0
+  const started: string[] = []
   const one = async (): Promise<void> => {
     while (next < notes.length && !stopper.signal.aborted) {
       const path = notes[next++] ?? ''
@@ -209,6 +214,7 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
         false,
         parent.mode,
       )
+      started.push(helper.id)
       helpers.startedUnder(parent, helper)
       host.adopt(helper)
       const ended = await host
@@ -226,7 +232,7 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
   } finally {
     tasks.done(task.id)
   }
-  host.line(parent, `↳ ${instruction}\n\n✓ ${done}/${notes.length}`)
+  host.line(parent, `↳ ${instruction}\n\n✓ ${done}/${notes.length}`, undefined, started)
 }
 
 /** What `/deep-research` asks its helper. Not translated: the model's to read. */
@@ -248,5 +254,5 @@ export async function research(host: Host, parent: Thread, question: string): Pr
   host.touched(parent)
   const ended = await run(host, parent, helper, 'research', researchPrompt(question), question)
   if (ended?.stop === 'stopped') return
-  host.line(parent, answered(question, ended))
+  host.line(parent, answered(question, ended), undefined, [helper.id])
 }

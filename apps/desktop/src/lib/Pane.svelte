@@ -71,6 +71,7 @@
   import { viewport } from './viewport.svelte'
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'
+  import { paneCorners } from './pane-corners.svelte'
   import { EDGE, inside, type Zone, zoneAt } from './workspace/zones'
 
   const { pane }: { pane: Pane } = $props()
@@ -685,6 +686,12 @@
     {:catch}
       {@render unreachable()}
     {/await}
+  {/if}
+
+  <!-- What floats in the note's corners, in the pane with the keyboard and inside its
+       box, never the window's (#1076); see pane-corners.svelte.ts. -->
+  {#if paneCorners.draw && workspace.panes.focusedId === pane.id}
+    {@render paneCorners.draw()}
   {/if}
 
   <!-- Five places a drop can land: the pane itself, and each of its four sides,

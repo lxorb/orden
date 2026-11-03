@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { ranked, Walk } from './recency'
+import { ranked, successor, Walk } from './recency'
 
 const STRIP = ['a', 'b', 'c', 'd']
 
@@ -53,5 +53,22 @@ describe('Ctrl+Tab in order of use', () => {
 
   test('has nowhere to go in a strip of one', () => {
     expect(new Walk(['a'], 'a', ['a']).step(1)).toBeNull()
+  })
+})
+
+describe('the tab a pane shows once its tab in front has gone (#1079)', () => {
+  test('the one used last of those left', () => {
+    expect(successor(['a', 'b', 'c'], ['x', 'c', 'a'], 0)).toBe('c')
+  })
+
+  test('none used: the neighbour of the place it went from, right then left', () => {
+    expect(successor(['a', 'b', 'c'], ['x'], 1)).toBe('b')
+    expect(successor(['a', 'b'], [], 2)).toBe('b')
+    expect(successor(['a', 'b'], [], 0)).toBe('a')
+  })
+
+  test('no place known: the end of the strip, never the first for being first', () => {
+    expect(successor(['a', 'b', 'c'], [])).toBe('c')
+    expect(successor([], [])).toBeNull()
   })
 })

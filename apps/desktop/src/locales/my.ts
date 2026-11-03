@@ -30,7 +30,8 @@ export const my: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'ခွင့်ပြုချက် အပြည့်',
   'Auto mode': 'အလိုအလျောက် မုဒ်',
-  'Full permissions: nothing is asked first': 'ခွင့်ပြုချက် အပြည့်- ကြိုတင် ဘာမျှ မမေးပါ',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'ခွင့်ပြုချက် အပြည့်- ဝင်ရောက်ခြင်း၊ ပေးချေခြင်း၊ ပို့ခြင်း၊ ဖျက်ခြင်းပင် ဘာမျှ မမေးပါ၊ သင့်ထံ ပြန်မပေးပါ',
   // Import: Zen's tabs
   'Import from Zen': 'Zen မှ သွင်းပါ',
   'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
@@ -2650,4 +2651,6 @@ export const my: Dictionary = {
   'Agent instructions': 'အေးဂျင့် ညွှန်ကြားချက်များ',
   "AGENTS is this space's agent instructions":
     'AGENTS သည် ဤနေရာ၏ အေးဂျင့် ညွှန်ကြားချက်များ ဖြစ်သည်',
+  '{title}, unread': '{title}၊ မဖတ်ရသေး',
+  '{title}, running': '{title}၊ လုပ်ဆောင်နေဆဲ',
 }

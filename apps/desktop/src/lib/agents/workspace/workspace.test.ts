@@ -422,7 +422,7 @@ vi.mock('../../rows/rows.svelte', async () => {
           .filter(([at]) => at.startsWith(`${space.root}/`) && at.endsWith('.md'))
           .flatMap(([at, text]) => rowsOfText(space.name, at.slice(space.root.length + 1), text))
       },
-      inboxes: () => spaces.map((one) => ({ space: one.name, path: 'Inbox.md' })),
+      inboxes: () => spaces.map((one) => ({ space: one.name, path: '.Inbox.md' })),
     },
   }
 })
@@ -904,6 +904,18 @@ describe('the AI sidebar’s two modes that act', () => {
     }
   })
 
+  test('Full permissions (autonomous) refuses nothing kept to the reader’s hands (#1072)', async () => {
+    const acting = agent({ mode: 'autonomous' })
+    expect(await call('workspace_tabs', { op: 'close', tab: 't2' }, acting)).toMatchObject({
+      result: { closed: 't2' },
+    })
+    for (const id of ['close-window', 'new-window']) {
+      expect(await call('run_command', { id }, acting), id).not.toMatchObject({ code: 'by_hand' })
+    }
+    // Any other mode keeps them to the reader, as does the reader's own command line.
+    expect(await call('run_command', { id: 'close-window' })).toMatchObject({ code: 'by_hand' })
+  })
+
   test('Approve (confirm) asks before every change and never before a read', async () => {
     const approving = agent({ mode: 'confirm' })
     for (const [verb, args] of changes('light')) {
@@ -1064,6 +1076,7 @@ describe('the notes, on the road', () => {
 
   test('a note that is there and will not read is refused, and never made again over itself', async () => {
     unreadable.add('/s/Home/Inbox.md')
+    unreadable.add('/s/Home/.Inbox.md')
     const calls: [string, Record<string, unknown>][] = [
       ['write_note', { space: 'Home', path: 'Inbox', content: 'New.' }],
       ['append_note', { space: 'Home', path: 'Inbox', content: 'More.' }],
@@ -1355,21 +1368,29 @@ describe('to-dos and bases', () => {
     expect(await call('list_tasks', { filter: '(' })).toMatchObject({ code: 'bad_arguments' })
   })
 
-  test('a task added to an inbox that is not there yet makes it', async () => {
+  test('a task added to an inbox that is not there yet makes it, Orden’s own and no note', async () => {
     const added = await call('add_task', {
       space: 'Home',
       text: 'Call mum ⏫',
       fields: { due: '2026-10-06' },
     })
-    expect(files.get('/s/Home/Inbox.md')).toBe('- [ ] Call mum ⏫ 📅 2026-10-06\n')
+    expect(files.get('/s/Home/.Inbox.md')).toBe('- [ ] Call mum ⏫ 📅 2026-10-06\n')
+    // No file the reader did not make is put into the space (#1044).
+    expect(files.has('/s/Home/Inbox.md')).toBe(false)
     expect(added).toMatchObject({
-      result: { space: 'Home', at: expect.stringMatching(/^Inbox\.md#0:/) as unknown },
+      result: { space: 'Home', at: expect.stringMatching(/^\.Inbox\.md#0:/) as unknown },
     })
+  })
+
+  test('a task sent to the Inbox by name goes there, and makes no Inbox.md (#1044)', async () => {
+    await call('add_task', { space: 'Home', text: 'Call mum', note: 'Inbox' })
+    expect(files.get('/s/Home/.Inbox.md')).toBe('- [ ] Call mum\n')
+    expect(files.has('/s/Home/Inbox.md')).toBe(false)
   })
 
   test('a task in German words is read in an English app, as the connector reads it', async () => {
     await call('add_task', { space: 'Home', text: 'Zahnarzt anrufen morgen um 15 Uhr' })
-    expect(files.get('/s/Home/Inbox.md')).toMatch(
+    expect(files.get('/s/Home/.Inbox.md')).toMatch(
       // The day said is the day it starts: `🛫` (#371).
       /^- \[ \] Zahnarzt anrufen \[time:: 15:00\] 🛫 \d{4}-\d{2}-\d{2}\n$/u,
     )
@@ -1406,6 +1427,30 @@ describe('to-dos and bases', () => {
       '# Plan\n\n## Later\n- [ ] Write the intro 📅 2026-01-02\n',
       '# Thesis\n- [ ] Read 🔁 every day 📅 2026-01-01\n',
     ])
+  })
+
+  test('a task moved out of the inbox into a note and back, and no Inbox.md (#1044)', async () => {
+    const { taskHash } = await import('@orden/bases')
+    files.set('/s/Home/.Inbox.md', '- [ ] Call mum\n')
+    const hash = taskHash('Call mum')
+    const out = await call('update_task', {
+      space: 'Home',
+      at: `.Inbox.md#0:${hash}`,
+      move_to: { note: 'Soup' },
+    })
+    expect(out).toMatchObject({ result: { at: expect.stringMatching(/^Soup\.md#/) as unknown } })
+    expect(written()).toEqual(['# Soup\n\n- [ ] Buy milk #shop\n- [ ] Call mum\n', ''])
+
+    docs.writeNote.mockClear()
+    files.set('/s/Home/Soup.md', '# Soup\n\n- [ ] Buy milk #shop\n- [ ] Call mum\n')
+    files.set('/s/Home/.Inbox.md', '')
+    await call('update_task', {
+      space: 'Home',
+      at: `Soup.md#3:${hash}`,
+      move_to: { note: 'Inbox' },
+    })
+    expect(written()).toEqual(['- [ ] Call mum\n', '# Soup\n\n- [ ] Buy milk #shop\n'])
+    expect(files.has('/s/Home/Inbox.md')).toBe(false)
   })
 
   /** #325: an agent doing a task with AI asks about it on the task itself, as the

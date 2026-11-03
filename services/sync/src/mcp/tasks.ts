@@ -31,7 +31,8 @@ import {
   withProperties,
 } from '@orden/bases/agent'
 import { rowsOfText } from '@orden/bases/rows'
-import { taskHash } from '@orden/bases'
+import { INBOX_PATH, taskHash } from '@orden/bases'
+import { meansInbox } from '@orden/bases/inbox'
 import { appliedEdits } from '@orden/markdown/edits'
 import { taskLine } from '@orden/markdown/task-edits'
 import { objectIn } from '../body'
@@ -64,7 +65,7 @@ export const TASK_TOOLS = [
   {
     name: 'add_task',
     description:
-      "Add a to-do line to the space's Inbox.md, or to `note` under the heading `under`. `text` may carry Tasks plugin marks (🛫 2026-10-06 the day it starts, [deadline:: 2026-10-20] its deadline, ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
+      "Add a to-do line to the space's inbox, or to `note` under the heading `under`. `text` may carry Tasks plugin marks (🛫 2026-10-06 the day it starts, [deadline:: 2026-10-20] its deadline, ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -184,6 +185,15 @@ async function rowsOf(
   return { rows, partial }
 }
 
+/** The note a task names, or the space's inbox where it names none: "Inbox" by name
+ *  too, where the space has no note called that (#1044), so no `Inbox.md` is made. */
+async function placeNamed(env: Env, space: Writable, named: string | undefined): Promise<string> {
+  if (named === undefined) return INBOX_PATH
+  const path = notePath(named)
+  if (meansInbox(named) && (await wordsAt(env, space, path)) === null) return INBOX_PATH
+  return path
+}
+
 /** One note's words, or null where there is no note at that path. */
 async function wordsAt(env: Env, space: Writable, path: string): Promise<string | null> {
   const note = await env.DB.prepare(
@@ -271,7 +281,7 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
       ...(base ? { base: { base: base.base } } : view ? { view } : {}),
       ...(filter ? { filter } : {}),
       ...(typeof args.limit === 'number' ? { limit: args.limit } : {}),
-      inboxes: spaces.map((space) => ({ space: space.name, path: 'Inbox.md' })),
+      inboxes: spaces.map((space) => ({ space: space.name, path: INBOX_PATH })),
       ...(view?.trim().toLowerCase() === 'today' && (await undatedInToday(env, token.user_id))
         ? { undated: true }
         : {}),
@@ -308,7 +318,8 @@ async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promis
 /** The space a task goes to. */
 type Writable = Pick<Space, 'id' | 'name' | 'user_id'>
 
-/** A task added to a space the caller may write: to its Inbox.md, or to `note` under
+/** A task added to a space the caller may write: to its inbox (`INBOX_PATH`, Orden's
+ *  own, which puts no file into the space the reader did not make), or to `note` under
  *  `under`: the connector's `add_task`. Throws the sentence to answer with where it
  *  cannot. */
 async function addTaskTo(
@@ -320,7 +331,7 @@ async function addTaskTo(
   // language, and those are the two its tables have.
   const read = newTask(args, quickWords(['en', 'de'], new Date()))
   const { fields } = read
-  const path = notePath(words(args, 'note') ?? read.note ?? 'Inbox.md')
+  const path = await placeNamed(env, space, words(args, 'note') ?? read.note)
   const before = (await wordsAt(env, space, path)) ?? ''
   const placed = placeIn(before, [taskLine(fields)], words(args, 'under') ?? read.heading)
   await written(env, space, path, appliedEdits(before, [placedEdit(placed)]))
@@ -353,7 +364,10 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
 
   // Moved: the new note written first, so the task is never in neither.
   const target = typeof moveTo === 'object' ? (moveTo as Args) : { note: moveTo }
-  const into = typeof target.note === 'string' && target.note.trim() ? notePath(target.note) : path
+  const into =
+    typeof target.note === 'string' && target.note.trim()
+      ? await placeNamed(env, space, target.note)
+      : path
   const under = words(target, 'under')
   const block = taskBlock(
     edited.text,

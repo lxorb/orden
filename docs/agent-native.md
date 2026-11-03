@@ -594,7 +594,7 @@ agent hears about all of them instead:
 | a file chooser | never shown: answered by `browser_upload` or cancelled | `Page.setInterceptFileChooserDialog` |
 | `window.print()`, `showPicker()` | nothing | the engine raises no event for either and has no setting, so an agent's page gets one document-start script in its own world making `print` and the pickers' `showPicker` do nothing: the one thing about a page an agent tab changes |
 | full screen | nothing: no handler, so the page is full screen inside its own 1280 by 800 | `ContainsFullScreenElementChanged` not listened to |
-| basic authentication, a client certificate | refused, and said; the agent asks for a takeover | `BasicAuthenticationRequested`, `ClientCertificateRequested` |
+| basic authentication, a client certificate | held like a dialog, a `sign_in` or a `certificate`, until `browser_dialog` answers it: with a user name and a password, or the certificate to present. Answering yes signs in, which asks as the mode says - under Full permissions nothing (#1072); no, or nobody in 30 s, cancels the sign-in and goes on without a certificate | `BasicAuthenticationRequested`, `ClientCertificateRequested` with a deferral; on CEF the request handler's `GetAuthCredentials` and `OnSelectClientCertificate` |
 | a `<select>`, a date or colour picker | never opened natively; `browser_select` and `browser_type` set them through the page | the tools do not click them |
 
 ### 6.3 Which store
@@ -986,9 +986,14 @@ taken away stays away. "Always in this chat" is kept the way "Always on this sit
 The AI sidebar's own agents (one built-in grant per provider, "Orden · Claude") ask as the
 thread's mode says rather than as the grant does (docs/ai-sidebar.md 4.4), so Settings >
 Agents shows them no "Asks first": Approve lays `confirm` with every category on over the
-grant for each call, and Agent a third mode, `autonomous`, that asks for nothing but
+grant for each call, and Agent a third mode, `autonomous`, that asked for nothing but
 paying and is never kept on a grant. A Claude Code or Codex session of the sidebar's
 proves itself with a token lent for its thread's mode, so the endpoint knows which.
+
+Since #1072 `autonomous` asks for nothing at all, paying and signing in included, holds every
+scope, and refuses nothing on the grounds of the grant or of a step kept to the reader's
+hands. The one decision is `Grant::asks` and `Grant::holds` in the crate, and
+`fullPermissions` and `asked` in `lib/agents/workspace/asks.ts`, which every guard reads.
 
 ### 9.2 Sites
 
@@ -999,7 +1004,7 @@ site on top of the scope, because running script in a page is running as that pa
 ### 9.3 What it always asks first
 
 In both modes, unless the reader turned the category off for that agent (and in the AI
-sidebar's Agent mode, `autonomous`, only paying):
+sidebar's Full permissions, `autonomous`, nothing at all):
 
 | category | how it is recognised, without trusting the model |
 | --- | --- |
@@ -1007,7 +1012,7 @@ sidebar's Agent mode, `autonomous`, only paying):
 | **sending** | from the page, on any site: a press named `Send`, `Post`, `Reply`, `Publish`, `Comment` (every language) beside a message box - a `<textarea>` or an editable region that is no search box - or beside somebody to send to (an address or phone field, a field labelled To, Cc or recipient, an @-mention in the box); `Submit` beside a message box; any submit of a form that holds both; Enter or Control+Enter in a box that calls itself a message, a reply, a comment or a chat. A site on the mail, messaging and social list is one more signal. A search, a sign-in and a newsletter's Subscribe are none of these, and the tests hold them apart |
 | **publishing and sharing** | anything in Orden that puts words where somebody else can read them: publishing a space or a note, sharing a space, a room's door, a guest link; the palette's rows for them through `run_command` |
 | **deleting for good** | a press named `Delete`, `Remove`, `Erase` on a site; emptying Recently deleted; `restore_version` over a note |
-| **signing in** | any password field - by its type, its `autocomplete`, or masked by the page, so a show-password toggle is no way round - or a sign-in form: a takeover (7.3), never typed and never submitted. A press that submits one, Enter in one, and a press named `Sign in` beside a password field answer `password_field` |
+| **signing in** | any password field - by its type, its `autocomplete`, or masked by the page, so a show-password toggle is no way round - or a sign-in form: words typed into one, a press that submits one, Enter in one, and a press named `Sign in` beside a password field (`policy::credential_act`). It asks like every other category, and the reader may turn it off (#1072); before #1072 it was refused outright as a takeover |
 | **settings** | `write_setting` |
 | **the terminal** | any command not on the agent's list, in a shell nobody sees or typed into one of the reader's terminals; any key but `Ctrl+C` |
 
@@ -1025,8 +1030,10 @@ press as whatever it was told to; the card field is still a card field.
 
 ### 9.4 Credentials
 
-The agent never types a password and never reads one: `browser_type` refuses a password
-field, a screenshot of a page with a focused password field is refused, and in every other
+The agent never reads a password. It types into a password field or a sign-in form, and
+signs in, only where its mode clears it (signing in, 9.3; at once under Full permissions,
+#1072): otherwise `browser_type` there answers the question, and a screenshot of a page with
+a focused password field is refused, and in every other
 picture each filled secret field is painted over in flat grey; a page holding a filled one
 is not printed to a PDF at all, where nothing could paint it over. Nor does it
 read any other secret - a one-time code, a card's number, expiry or security code - by
@@ -1034,8 +1041,8 @@ any road: `browser_snapshot` writes such a field as `[filled]` or nothing, and n
 under it (the engine's own value for a password is one bullet a character, and its words
 inside the field the same, so either would say how long it is); `browser_find` never looks
 inside one; a name the engine builds out of a field's value has the value taken out; and
-`browser_read` and a clip carry no field's value in any shape. Signing in is a takeover, and so is
-submitting a sign-in form.
+`browser_read` and a clip carry no field's value in any shape. A page holding a filled one
+prints to a PDF only for a call cleared for signing in.
 The engine's password saving and autofill are off in agent tabs, so a saved password is
 not filled in behind the agent's back either.
 

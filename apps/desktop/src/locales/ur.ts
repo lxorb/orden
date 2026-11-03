@@ -30,7 +30,8 @@ export const ur: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'مکمل اجازتیں',
   'Auto mode': 'خودکار موڈ',
-  'Full permissions: nothing is asked first': 'مکمل اجازتیں: پہلے کچھ نہیں پوچھا جاتا',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'مکمل اجازتیں: کچھ نہیں پوچھا جاتا نہ آپ کو واپس سونپا جاتا ہے، سائن ان، ادائیگی، بھیجنا یا حذف کرنا بھی نہیں',
   // Import: Zen's tabs
   'Import from Zen': 'Zen سے امپورٹ کریں',
   'Containers stay in Zen': 'کنٹینر Zen ہی میں رہتے ہیں',
@@ -2658,4 +2659,6 @@ export const ur: Dictionary = {
   'Trust this space again': 'اس اسپیس پر دوبارہ بھروسا کریں',
   'Agent instructions': 'ایجنٹ کی ہدایات',
   "AGENTS is this space's agent instructions": 'AGENTS اس اسپیس کی ایجنٹ ہدایات ہیں',
+  '{title}, unread': '{title}، نہ پڑھا ہوا',
+  '{title}, running': '{title}، جاری ہے',
 }

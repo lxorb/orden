@@ -67,6 +67,8 @@ export interface ToolOutput {
   error: boolean
   /** The question's id, when the call asked the reader. */
   approval?: string
+  /** The helper's thread a `run_agent` or `agent_result` call is about (#1062). */
+  agent?: string
 }
 
 /** Why the engine says something between the words: a code the panel words, and the
@@ -109,7 +111,9 @@ export type Part =
       result?: ToolOutput
       change?: { path: string; added: number; removed: number }
     }
-  | { kind: 'notice'; code: NoticeCode; text: string }
+  /** `threads`: the helpers' threads a command's line reports on (`/subtask`, `/batch`,
+   *  `/deep-research`), each opened from the line (#1062). */
+  | { kind: 'notice'; code: NoticeCode; text: string; threads?: string[] }
 
 /** Something attached to a message: a note, a selection, a page, a picture. The panel
  *  builds these from its chips (4.2); the engine only sends them. */
@@ -224,6 +228,15 @@ export interface Thread {
   id: string
   space: string
   title: string
+  /** The thread this one runs work for, where it is a helper (a subagent): `run_agent`,
+   *  `/subtask`, `/batch`, `/deep-research`. Not a chat of its own: it lives in its
+   *  parent's steps and in no list (`chatsOf`), unless the parent is gone (#1062). */
+  parent?: string
+  /** When the agent last answered or asked the reader something, and when the reader
+   *  last saw the thread with that in view: it is unread while the one is later than
+   *  the other (#1064; `unreadOf` in threads.ts). */
+  answered?: number
+  seen?: number
   /** The provider's id in Settings > AI. */
   provider: string
   model: string
@@ -253,6 +266,11 @@ export interface Thread {
 export interface ThreadHead {
   id: string
   title: string
+  /** The thread's `parent`, where it is a helper. */
+  parent?: string
+  /** The thread's `answered` and `seen`, for the list's unread mark. */
+  answered?: number
+  seen?: number
   provider: string
   model: string
   updated: number

@@ -91,8 +91,20 @@ describe('from the keyboard', () => {
     workspace.undone.record({ kind: 'delete', path: 'A.md', content: 'a' })
     flushSync()
 
-    expect(card()?.getAttribute('role')).toBeNull()
+    expect(host.querySelector('[role="status"]')).toBeNull()
     expect(said.words).toBe('Deleted. Undo')
+  })
+
+  test('each action that joins it is said again, though the words are the same', async () => {
+    workspace.undone.record({ kind: 'delete', path: 'A.md', content: 'a' })
+    flushSync()
+    await vi.waitFor(() => expect(said.words).toBe('Deleted. Undo'))
+
+    workspace.undone.record({ kind: 'delete', path: 'B.md', content: 'b' })
+    flushSync()
+    // Emptied and put back, the only way a live region repeats itself.
+    expect(said.words).toBe('')
+    await vi.waitFor(() => expect(said.words).toBe('Deleted. Undo'))
   })
 
   test('the clock waits while the keyboard is on it, and starts as it leaves', () => {
@@ -141,11 +153,53 @@ describe('from the keyboard', () => {
     shown = mount(UndoToast, { target: host })
     from.remove()
   })
+})
 
-  test('it can be found by F6', () => {
+test('the keyboard in it keeps it up, as the pointer on it does', () => {
+  vi.useFakeTimers()
+  try {
     workspace.undone.record({ kind: 'delete', path: 'A.md', content: 'a' })
     flushSync()
+    const undo = host.querySelector<HTMLButtonElement>('button.undo')
+    undo?.focus()
 
-    expect(card()?.dataset.region).toBe('notices')
+    vi.advanceTimersByTime(UNDO_LINGER * 2)
+    flushSync()
+    expect(undoToast.kind).toBe('delete')
+
+    undo?.blur()
+    vi.advanceTimersByTime(UNDO_LINGER)
+    flushSync()
+    expect(undoToast.kind).toBeNull()
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+test('Undo pressed from the keyboard leaves the keyboard in the note, not on the page', async () => {
+  vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([
+    new DOMRect(0, 0, 10, 10),
+  ] as unknown as DOMRectList)
+  vi.spyOn(workspace, 'undoFileAction').mockImplementation(() => {
+    workspace.undone.drop()
+    return Promise.resolve()
   })
+  const note = document.createElement('div')
+  note.dataset.region = 'editor'
+  note.innerHTML = '<div class="cm-content" contenteditable="true" tabindex="0"></div>'
+  document.body.append(note)
+
+  try {
+    workspace.undone.record({ kind: 'delete', path: 'A.md', content: 'a' })
+    flushSync()
+    const undo = host.querySelector<HTMLButtonElement>('button.undo')
+    undo?.focus()
+    undo?.click()
+    flushSync()
+    await vi.waitFor(() =>
+      expect(document.activeElement?.classList.contains('cm-content')).toBe(true),
+    )
+  } finally {
+    note.remove()
+  }
 })

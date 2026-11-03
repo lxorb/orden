@@ -30,7 +30,8 @@ export const th: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'สิทธิ์เต็ม',
   'Auto mode': 'โหมดอัตโนมัติ',
-  'Full permissions: nothing is asked first': 'สิทธิ์เต็ม: ไม่ถามอะไรก่อน',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'สิทธิ์เต็ม: ไม่ถามและไม่ส่งคืนให้คุณ แม้แต่การลงชื่อเข้าใช้ การชำระเงิน การส่ง หรือการลบ',
   // Import: Zen's tabs
   'Import from Zen': 'นำเข้าจาก Zen',
   'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
@@ -2608,4 +2609,6 @@ export const th: Dictionary = {
   'Trust this space again': 'เชื่อถือพื้นที่นี้อีกครั้ง',
   'Agent instructions': 'คำสั่งสำหรับเอเจนต์',
   "AGENTS is this space's agent instructions": 'AGENTS คือคำสั่งสำหรับเอเจนต์ของพื้นที่นี้',
+  '{title}, unread': '{title}, ยังไม่ได้อ่าน',
+  '{title}, running': '{title}, กำลังทำงาน',
 }

@@ -5,7 +5,7 @@
   import { t } from './i18n.svelte'
   import { focusEditor } from './focus'
   import { dur } from './motion'
-  import { said as spoken } from './said.svelte'
+  import { told } from './said.svelte'
   import { reservedName } from './reserved-name.svelte'
   import { back } from './sync2/resurrected.svelte'
   import { undoToast } from './undo-toast.svelte'
@@ -15,7 +15,7 @@
   import { workspace } from './workspace.svelte'
 
   /** The one word for each thing the toast can take back. */
-  const said = $derived({
+  const word = $derived({
     delete: t('Deleted'),
     move: t('Moved'),
     archive: t('Archived'),
@@ -41,71 +41,108 @@
     if (undoToast.kind) untrack(() => failed.dismiss())
   })
 
-  // Said through the region that was on the page first, and not by a region arriving
-  // with its words, which most readers never announce; see said.svelte.ts (#523). Each
-  // action that joins the Undo is said again, though the words are the same.
-  $effect(() => {
-    if (undoToast.batch.length && undoToast.kind)
-      spoken.say(`${said[undoToast.kind]}. ${t('Undo')}`)
-  })
-  $effect(() => {
-    if (failed.retry) spoken.say(`${t('Not moved')}. ${t('Retry')}`)
-  })
-  $effect(() => {
-    if (reservedName.root) spoken.say(t("AGENTS is this space's agent instructions"))
-  })
-  $effect(() => {
-    if (unread.shown) spoken.say(t('That file could not be read'))
-  })
-  $effect(() => {
-    if (back.said)
-      spoken.say(
-        t('{name} is back: {device} was writing in it', {
-          name: back.said.name,
-          device: back.said.device,
-        }),
-      )
-  })
-  $effect(() => {
-    if (unsynced.said) spoken.say(t('Changes to {name} are not syncing', { name: unsynced.said }))
-  })
-
-  /** Whether a hand or the keyboard is on the Undo: either holds it against the clock,
-   *  and it lingers only once both have gone. */
-  let handOn = false
-  let keysOn = false
-
-  function rest() {
-    if (!handOn && !keysOn) undoToast.linger()
+  /** The Undo's words and the way back with them, said again for each action that joins
+   *  it though the words are the same: the batch is read so the attachment runs again. */
+  function toldUndo(kind: keyof typeof word) {
+    return told(undoToast.batch.length ? `${word[kind]}. ${t('Undo')}` : '')
   }
 
-  /** The keyboard, handed back to where it came from as a card goes from under it: by
-   *  its own Undo, or by Ctrl+Z pressed on it. */
-  function handsBack(card: HTMLElement) {
-    let from: HTMLElement | null = null
+  /** Which card is up, of the ones that take turns in one place. */
+  const turn = $derived(
+    reservedName.root
+      ? 'reserved'
+      : failed.retry
+        ? 'failed'
+        : undoToast.kind
+          ? 'undo'
+          : unread.shown
+            ? 'unread'
+            : null,
+  )
 
-    const entered = (event: FocusEvent) => {
-      const came = event.relatedTarget
-      if (came instanceof HTMLElement && !card.contains(came)) from = came
-    }
-    const left = (event: FocusEvent) => {
-      if (event.relatedTarget instanceof Node && !card.contains(event.relatedTarget)) from = null
-    }
-    card.addEventListener('focusin', entered)
-    card.addEventListener('focusout', left)
+  /** Whether each card is up, by the name `kept` is given. */
+  const up = {
+    reserved: () => turn === 'reserved',
+    failed: () => turn === 'failed',
+    undo: () => turn === 'undo',
+    back: () => !!back.said,
+    unsynced: () => !!unsynced.said,
+  }
 
-    return {
-      destroy() {
+  /** The card the keyboard is in or was last in, and what it came to the card from. */
+  let holding: { card: HTMLElement; name: keyof typeof up; from: HTMLElement | null } | null = null
+
+  /** The keyboard, handed back to where it came from as a card goes from under it. */
+  function handBack() {
+    const from = holding?.from
+    holding = null
+    if (from?.isConnected) from.focus({ preventScroll: true })
+    // In the page and out of reach is the same: a side shut since says nothing else.
+    if (!from || document.activeElement !== from) focusEditor()
+  }
+
+  // A card that goes while the keyboard is in it - Undo pressed, Ctrl+Z, a newer card
+  // in its place - hands the keyboard back. Before the page changes rather than
+  // after: a card on its way out is made inert at once, and the keyboard in it would
+  // be dropped on the page.
+  $effect.pre(() => {
+    for (const going of Object.values(up)) going()
+    untrack(() => {
+      if (!holding || up[holding.name]()) return
+      if (holding.card.contains(document.activeElement)) handBack()
+      else holding = null
+    })
+  })
+
+  /** Kept up while the pointer is on it or the keyboard is in it, and let go once
+   *  neither is: a hand on its way to Undo is not beaten to it by the clock, and nor
+   *  is a key that walked to it with F6 (#523). */
+  function kept(name: keyof typeof up, toast?: { hold(): void; linger(): void }) {
+    return (card: HTMLElement) => {
+      let pointer = false
+      let keys = false
+      let from: HTMLElement | null = null
+      const go = () => {
+        if (!pointer && !keys) toast?.linger()
+      }
+      const on = {
+        pointerenter: () => {
+          pointer = true
+          toast?.hold()
+        },
+        pointerleave: () => {
+          pointer = false
+          go()
+        },
+        focusin: (event: Event) => {
+          const came = (event as FocusEvent).relatedTarget
+          if (came instanceof HTMLElement && !card.contains(came)) from = came
+          keys = true
+          holding = { card, name, from }
+          toast?.hold()
+        },
+        focusout: (event: Event) => {
+          const to = (event as FocusEvent).relatedTarget
+          if (to instanceof Node && card.contains(to)) return
+          keys = false
+          // Nowhere is the window losing the keyboard or the card losing the page, and
+          // neither is the keyboard having gone somewhere else.
+          if (to instanceof Node) {
+            from = null
+            if (holding?.card === card) holding = null
+          }
+          if (up[name]()) go()
+        },
+      }
+      for (const [type, run] of Object.entries(on)) card.addEventListener(type, run)
+      return () => {
+        for (const [type, run] of Object.entries(on)) card.removeEventListener(type, run)
+        // Taken off the page with the keyboard in it, with no card going first.
         const at = document.activeElement
-        if (!from || (at !== document.body && at !== null && !card.contains(at))) return
-        const back = from
-        // After the card has left the page, or a press there has nothing to land on.
-        queueMicrotask(() => {
-          // In the page and out of reach is the same: a side shut since says nothing else.
-          if (back.isConnected) back.focus({ preventScroll: true })
-          if (document.activeElement !== back) focusEditor()
-        })
-      },
+        if (holding?.card === card && (at === document.body || at === null || card.contains(at)))
+          // After the card has left the page, or a press there has nothing to land on.
+          queueMicrotask(handBack)
+      }
     }
   }
 
@@ -129,9 +166,9 @@
        one line and the way there. See reserved-name.svelte.ts. -->
   <div
     class="toast"
-    data-region="notices"
-    use:handsBack
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    {@attach told(t("AGENTS is this space's agent instructions"))}
+    {@attach kept('reserved')}
   >
     <p>{t("AGENTS is this space's agent instructions")}</p>
     <button class="undo" onclick={() => reservedName.open()}>{t('Open')}</button>
@@ -140,45 +177,32 @@
   <!-- A card carried to a column whose note would not be written: it went back. -->
   <div
     class="toast"
-    data-region="notices"
-    use:handsBack
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    {@attach told(`${t('Not moved')}. ${t('Retry')}`)}
+    {@attach kept('failed')}
   >
     <p>{t('Not moved')}</p>
     <button class="undo" onclick={() => failed.again()}>{t('Retry')}</button>
   </div>
 {:else if undoToast.kind}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="toast"
-    data-region="notices"
-    use:handsBack
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    onpointerenter={() => {
-      handOn = true
-      undoToast.hold()
-    }}
-    onpointerleave={() => {
-      handOn = false
-      rest()
-    }}
-    onfocusin={() => {
-      keysOn = true
-      undoToast.hold()
-    }}
-    onfocusout={() => {
-      keysOn = false
-      rest()
-    }}
+    {@attach toldUndo(undoToast.kind)}
+    {@attach kept('undo', undoToast)}
   >
-    <p>{said[undoToast.kind]}</p>
+    <p>{word[undoToast.kind]}</p>
     <button class="undo" onclick={() => void undoToast.undo(workspace)}>{t('Undo')}</button>
   </div>
   <!-- A row clicked that opened nothing, because the file is there and would not
        read; see unread.svelte.ts. Nothing to press: there is no way back from a
        file another program holds, only the news that it does. -->
 {:else if unread.shown}
-  <div class="toast" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
+  <div
+    class="toast"
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    {@attach told(t('That file could not be read'))}
+  >
     <p>{t('That file could not be read')}</p>
   </div>
 {/if}{#if back.said}
@@ -186,31 +210,29 @@
        it; see sync2/resurrected.svelte.ts. Its own toast rather than a turn of the one
        above, so an Undo that is up is not taken away by it. Written against the block
        before it, because a line between two blocks is a space on the page. -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  {@const words = t('{name} is back: {device} was writing in it', {
+    name: back.said.name,
+    device: back.said.device,
+  })}
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    onpointerenter={() => back.hold()}
-    onpointerleave={() => back.linger()}
+    {@attach told(words)}
+    {@attach kept('back', back)}
   >
-    <p>
-      {t('{name} is back: {device} was writing in it', {
-        name: back.said.name,
-        device: back.said.device,
-      })}
-    </p>
+    <p>{words}</p>
   </div>
 {/if}{#if unsynced.said}
   <!-- A file whose edits here do not sync: its name and its kind disagree since a
        rename. See sync2/unsynced.svelte.ts. -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  {@const words = t('Changes to {name} are not syncing', { name: unsynced.said })}
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    onpointerenter={() => unsynced.hold()}
-    onpointerleave={() => unsynced.linger()}
+    {@attach told(words)}
+    {@attach kept('unsynced', unsynced)}
   >
-    <p>{t('Changes to {name} are not syncing', { name: unsynced.said })}</p>
+    <p>{words}</p>
   </div>
 {/if}
 

@@ -52,8 +52,8 @@ vi.mock('../workspace/write-file', () => ({
 }))
 vi.mock('../rows/inbox-note', () => ({
   inboxNote: (root: string) => {
-    made.push(`${root}/Inbox.md`)
-    return Promise.resolve(`${root}/Inbox.md`)
+    made.push(`${root}/.Inbox.md`)
+    return Promise.resolve(`${root}/.Inbox.md`)
   },
 }))
 
@@ -73,15 +73,24 @@ beforeEach(() => {
 describe('a task added', () => {
   test('goes into the inbox of a space that may be written in', async () => {
     expect(await addTask(entry())).not.toBeNull()
-    expect(written).toEqual([`${SPACE}/Inbox.md`])
+    expect(written).toEqual([`${SPACE}/.Inbox.md`])
   })
 
   test('goes into the inbox of the first space that takes it, the one in front shared to be read', async () => {
     readOnly.add(SPACE)
 
-    expect(await addTask(entry())).toEqual({ path: `${MINE}/Inbox.md`, line: expect.any(Number) })
-    expect(written).toEqual([`${MINE}/Inbox.md`])
-    expect(made).toEqual([`${MINE}/Inbox.md`])
+    expect(await addTask(entry())).toEqual({ path: `${MINE}/.Inbox.md`, line: expect.any(Number) })
+    expect(written).toEqual([`${MINE}/.Inbox.md`])
+    expect(made).toEqual([`${MINE}/.Inbox.md`])
+  })
+
+  test('sent to `>Inbox` by name goes into the inbox, and makes no Inbox.md (#1044)', async () => {
+    expect(await addTask(entry('Inbox'))).toEqual({
+      path: `${SPACE}/.Inbox.md`,
+      line: expect.any(Number),
+    })
+    expect(written).toEqual([`${SPACE}/.Inbox.md`])
+    expect(made).toEqual([`${SPACE}/.Inbox.md`])
   })
 
   test('goes nowhere where no space takes it, and makes no inbox anywhere', async () => {

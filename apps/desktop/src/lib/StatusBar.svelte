@@ -121,6 +121,8 @@
     position: absolute;
     inset-inline-start: 0;
     bottom: 0;
+    /* Drawn in the focused pane, over its note (#1076; pane-corners.svelte.ts). */
+    z-index: var(--z-float);
     padding: 4px var(--space-4);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
@@ -142,6 +144,7 @@
     position: absolute;
     inset-inline-end: 0;
     bottom: 0;
+    z-index: var(--z-float);
     display: flex;
     gap: var(--space-3);
     /* Room to aim at even while there is nothing in it yet. */

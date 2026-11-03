@@ -44,12 +44,24 @@
 //! A Mac and Linux keep a window's first responder and its focus widget across activation
 //! themselves, so only the second reading is theirs; the same record and the same commands,
 //! with the platform asked which page has the keyboard.
+//!
+//! **The app's own page is told as a page takes it** (#1036): `IN_PAGE`, to the window's
+//! own page, which then lets go of whatever of its elements had the keyboard; see
+//! lib/keyboard-home.ts. A press into a page never reaches the app's HTML, and the window's
+//! `blur` the engine sends it instead is not a promise: on CEF on Linux it sometimes never
+//! came, and the address field stayed focused with its address selected while the page was
+//! being used. So each engine's own word is passed on as well: `WebView2`'s `GotFocus` on
+//! each page, and on CEF the X server's `FocusIn` on each page's browser window, heard on
+//! the connection `web_keys.rs` already keeps. On a Mac a page taking the keyboard is the
+//! app's view resigning first responder, which `WebKit` always says to the page as its
+//! window's `blur`, so the page's own word is the one there. The page asks the record
+//! (`keyboard_went`) before it lets go, so a word that arrives late is never acted on.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::{LazyLock, Mutex, PoisonError};
 use std::time::Instant;
 
-use tauri::{AppHandle, Manager as _, Webview};
+use tauri::{AppHandle, Emitter as _, Manager as _, Webview};
 
 /// How long a page that was out of sight under a layer may still be handed the keyboard
 /// back as it comes into sight again: the layer's own way out, and a margin for the
@@ -156,13 +168,20 @@ fn now() -> u64 {
     u64::try_from(START.elapsed().as_millis()).unwrap_or(u64::MAX)
 }
 
-/// A page took the keyboard.
+/// What the window's own page is told as one of its pages takes the keyboard; `IN_PAGE` in
+/// lib/keyboard-home.ts.
+pub const IN_PAGE: &str = "nib://keyboard-in-page";
+
+/// A page took the keyboard, as its engine or the window system says the moment it does:
+/// written down, and the window's own page told, which lets go of it; see the top of this
+/// file. From any thread.
 #[cfg_attr(
-    not(windows),
-    allow(dead_code, reason = "only Windows says a page took it as it happens")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "a Mac's engine says it to the app's page itself")
 )]
-fn page_took(window: &str, page: &str) {
+pub fn page_took(app: &AppHandle, window: &str, page: &str) {
     homes(|all| all.page_took(window, page));
+    let _ = app.emit_to(window, IN_PAGE, ());
 }
 
 /// A web tab's page is on screen as it is built: the rectangle it was built at is the
@@ -203,7 +222,7 @@ pub fn closed(page: &str) {
 #[cfg(windows)]
 fn left(window: &str) {
     if let Some(page) = native::holding(window) {
-        page_took(window, &page);
+        homes(|all| all.page_took(window, &page));
     }
 }
 
@@ -521,11 +540,11 @@ mod native {
         unsafe_code,
         reason = "a page taking the keyboard is WebView2's own controller event, reached through COM"
     )]
-    pub fn page(platform: &PlatformWebview, label: &str, window: &str) {
+    pub fn page(app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
         let controller = platform.controller();
-        let (holder, named) = (window.to_string(), label.to_string());
+        let (app, holder, named) = (app.clone(), window.to_string(), label.to_string());
         let got = FocusChangedEventHandler::create(Box::new(move |_, _| {
-            super::page_took(&holder, &named);
+            super::page_took(&app, &holder, &named);
             Ok(())
         }));
         let mut token = 0i64;
@@ -623,7 +642,7 @@ mod native {
         unsafe_code,
         reason = "the runtime hands the page and its window over as bare pointers"
     )]
-    pub fn page(platform: &PlatformWebview, label: &str, window: &str) {
+    pub fn page(_app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
         // Safe: the runtime's own live objects, of the types it says, on the main thread.
         let (view, frame) = unsafe {
             (
@@ -683,7 +702,8 @@ mod native {
     /// Each reader's page: the window it is in, and its browser's X11 window.
     static PAGES: Mutex<Vec<(String, String, u32)>> = Mutex::new(Vec::new());
 
-    pub fn page(platform: &PlatformWebview, label: &str, window: &str) {
+    /// The X server says as its browser window takes the keyboard; see `web_keys::listen`.
+    pub fn page(_app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
         let Some(x11) = crate::web_keys::x11_window(platform) else {
             return;
         };
@@ -697,6 +717,19 @@ mod native {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .retain(|(one, _, _)| one != label);
+    }
+
+    /// The X server says this browser window took the keyboard; see `web_keys.rs`.
+    pub fn x11_took(app: &AppHandle, x11: u32) {
+        let found = PAGES
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .iter()
+            .find(|(_, _, one)| *one == x11)
+            .map(|(label, window, _)| (label.clone(), window.clone()));
+        if let Some((label, window)) = found {
+            super::page_took(app, &window, &label);
+        }
     }
 
     pub fn holding(window: &str) -> Option<String> {
@@ -730,7 +763,7 @@ mod native {
     use tauri::webview::PlatformWebview;
     use tauri::{AppHandle, Manager, Webview, Window};
 
-    pub fn page(_platform: &PlatformWebview, _label: &str, _window: &str) {}
+    pub fn page(_app: &AppHandle, _platform: &PlatformWebview, _label: &str, _window: &str) {}
 
     pub fn let_go_of(_label: &str) {}
 
@@ -751,6 +784,8 @@ mod native {
 }
 
 pub use native::page;
+#[cfg(feature = "cef")]
+pub use native::x11_took;
 
 #[cfg(test)]
 mod tests {
@@ -878,6 +913,35 @@ mod tests {
             webview2.contains("all.insert(window, platform.controller())"),
             "the window's own page is never kept"
         );
+    }
+
+    /// #1036: each engine that keeps its own word about a page taking the keyboard passes
+    /// it on to the window's own page, which lets go of whatever it had focused. Read off
+    /// the source, because each half is built only on its own platform and no runner
+    /// presses into a page.
+    #[test]
+    fn every_engine_tells_the_app_s_own_page_as_a_page_takes_the_keyboard() {
+        let source = include_str!("keyboard.rs");
+        let module = |mark: &str| {
+            let from = source.find(mark).expect(mark);
+            let rest = &source[from..];
+            &rest[..rest.find("\n}\n").expect("its end")]
+        };
+        let webview2 = module("#[cfg(all(windows, not(feature = \"cef\")))]\nmod native");
+        assert!(
+            webview2.contains("add_GotFocus") && webview2.contains("super::page_took(&app,"),
+            "WebView2's GotFocus is not passed on"
+        );
+        let cef = module("#[cfg(feature = \"cef\")]\nmod native");
+        assert!(
+            cef.contains("super::page_took(app,"),
+            "the X server's FocusIn is not passed on"
+        );
+        let keys = include_str!("web_keys.rs");
+        assert!(keys.contains("Event::FocusIn(") && keys.contains("crate::keyboard::x11_took("));
+        assert!(keys.contains("EventMask::FOCUS_CHANGE"));
+        let told = &source[source.find("pub fn page_took(").expect("page_took")..];
+        assert!(told[..told.find("\n}").expect("its end")].contains("emit_to(window, IN_PAGE"));
     }
 
     #[test]

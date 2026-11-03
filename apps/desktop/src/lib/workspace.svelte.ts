@@ -73,6 +73,7 @@ import {
 import { Layouts } from './workspace/layouts.svelte'
 import { OpenDocuments, secondWebTabs } from './workspace/open'
 import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
+import { successor } from './workspace/recency'
 import { type Landing, Panes } from './workspace/panes.svelte'
 import { byPin, pinnedRun, placeFor } from './workspace/pinning'
 import { type Around, closedAround } from './workspace/closing-around'
@@ -1168,7 +1169,26 @@ class Workspace {
       // not come back moves nothing - and the one after it where it is the one that
       // went; then the kept tabs to the head of it, which is where a run of them
       // belongs however the entry was written. See pinning.ts.
-      const shown = along[draft.active] ?? along.slice(draft.active).find((one) => one !== null)
+      // The pane's order of use as it was written down, behind whatever has been used
+      // since; and where the tab it showed did not come back, the one used before it.
+      const order = (draft.recent ?? []).flatMap((at) => {
+        const one = along[at]
+        return one ? [one.id] : []
+      })
+      this.panes.recall(order)
+      const shown =
+        along[draft.active] ??
+        (order.length
+          ? tabs.find(
+              (one) =>
+                one.id ===
+                successor(
+                  tabs.map((tab) => tab.id),
+                  order,
+                ),
+            )
+          : undefined) ??
+        along.slice(draft.active).find((one) => one !== null)
       showing.set(draft.id, (shown ?? tabs.at(-1))?.id ?? null)
       made.push(...byPin(tabs))
     }
@@ -1232,7 +1252,9 @@ class Workspace {
     // front of it.
     if (still) this.activeTabId = still.id
     else if (!this.activeTabId && this.tabs.length) {
-      this.activeTabId = this.tabsIn(this.panes.focusedId)[0]?.id ?? null
+      this.activeTabId = this.panes.successorOf(
+        this.tabsIn(this.panes.focusedId).map((one) => one.id),
+      )
     }
 
     // A phone and a tablet show one document at a time.
@@ -1257,9 +1279,15 @@ class Workspace {
         const tabs = this.tabsIn(pane.id).filter((tab) => !tab.inPrivate)
         // A pane put down with Ctrl+D writes the tab it showed last: showing nothing
         // is a moment's view, like a menu being open, and a launch brings the work back.
-        const shown = pane.activeTabId ?? this.panes.lastOf(tabs.map((tab) => tab.id))
+        const ids = tabs.map((tab) => tab.id)
+        const shown = pane.activeTabId ?? this.panes.lastOf(ids)
         return {
           tabs: tabs.map((tab) => this.draftOf(tab)),
+          // The pane's order of use, so a launch comes back to it (#1079).
+          recent: this.panes.used.flatMap((id) => {
+            const at = ids.indexOf(id)
+            return at < 0 ? [] : [at]
+          }),
           active: Math.max(
             0,
             tabs.findIndex((tab) => tab.id === shown),
@@ -3046,7 +3074,7 @@ class Workspace {
 
     for (const one of panes) {
       const strip = this.tabsIn(one.id).map((tab) => tab.id)
-      const back = this.panes.lastOf(strip) ?? strip[0]
+      const back = this.panes.successorOf(strip)
       if (back) this.panes.activate(one.id, back)
     }
   }
@@ -3370,11 +3398,15 @@ class Workspace {
       return
     }
 
-    // The tab beside it; for an essential, the one shown before it.
+    // The tab used last in this pane, as after every way a tab leaves (#1079).
     if (this.panes.at(paneId)?.activeTabId === id) {
-      const strip = left.map((one) => one.id)
-      const next = at < 0 ? this.panes.lastOf(strip) : (left[at] ?? left[left.length - 1])?.id
-      this.panes.activate(paneId, next ?? strip[strip.length - 1] ?? null)
+      this.panes.activate(
+        paneId,
+        this.panes.successorOf(
+          left.map((one) => one.id),
+          at,
+        ),
+      )
     }
 
     this.persist()
@@ -5032,6 +5064,7 @@ class Workspace {
     // Dropped back where it already is, with no place asked for: nothing moved.
     if (from === paneId && at === null) return
 
+    const was = this.tabsIn(from).findIndex((one) => one.id === id)
     tab.paneId = paneId
     this.tabs = this.placed(tab, paneId, at)
 
@@ -5039,7 +5072,14 @@ class Workspace {
       const left = this.tabsIn(from)
       if (!paneStays(left.length, this.showing(from))) this.closePaneOf(from)
       else if (this.panes.at(from)?.activeTabId === id) {
-        this.panes.activate(from, left[left.length - 1]?.id ?? null)
+        // The pane it left shows the tab used there last, not its first (#1079).
+        this.panes.activate(
+          from,
+          this.panes.successorOf(
+            left.map((one) => one.id),
+            was,
+          ),
+        )
       }
     }
 

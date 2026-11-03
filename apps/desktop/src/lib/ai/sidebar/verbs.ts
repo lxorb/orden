@@ -111,3 +111,16 @@ export function objectOf(args: unknown): string {
   }
   return ''
 }
+
+/** The helper's thread a `run_agent` or `agent_result` row is about, so the step opens
+ *  it (#1062): what the API loop wrote with the answer, or the agent named in the answer
+ *  a program's session had back through `nib mcp`. Null for any other row. */
+export function helperOf(part: {
+  verb: string
+  result?: { text: string; agent?: string } | undefined
+}): string | null {
+  const name = bareName(part.verb)
+  if (name !== 'run_agent' && name !== 'agent_result') return null
+  if (part.result?.agent) return part.result.agent
+  return /"agent"\s*:\s*"([\w-]+)"/.exec(part.result?.text ?? '')?.[1] ?? null
+}
