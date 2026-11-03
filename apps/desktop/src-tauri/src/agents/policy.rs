@@ -2158,23 +2158,14 @@ mod tests {
         pay.control = true;
 
         // A column is no press, whatever it holds.
-        assert!(std::ptr::eq(
-            of_a_drag(&unsupervised, &card, &column, url, &[]),
-            &card
-        ));
+        let of = |grant: &Grant, from: &Facts, to: &Facts| {
+            of_a_drag(grant, from, to, url, &[]).name.clone()
+        };
+        assert_eq!(of(&unsupervised, &card, &column), "Card");
         // A real Pay is, under either mode, ahead of Confirm's every-change question.
-        assert!(std::ptr::eq(
-            of_a_drag(&unsupervised, &card, &pay, url, &[]),
-            &pay
-        ));
-        assert!(std::ptr::eq(
-            of_a_drag(&confirm, &card, &pay, url, &[]),
-            &pay
-        ));
-        assert!(std::ptr::eq(
-            of_a_drag(&confirm, &pay, &card, url, &[]),
-            &pay
-        ));
+        assert_eq!(of(&unsupervised, &card, &pay), "Pay now");
+        assert_eq!(of(&confirm, &card, &pay), "Pay now");
+        assert_eq!(of(&confirm, &pay, &card), "Pay now");
     }
 
     #[test]
