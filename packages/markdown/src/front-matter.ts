@@ -18,7 +18,7 @@
  *  otherwise. */
 
 import { oneEdit, type TextEdit } from './edits'
-import { frontMatterLines } from './front-matter-lines'
+import { frontMatterLines, isKeyLine } from './front-matter-lines'
 import { flowItem, flowItems, listItem, scalar, uncommented, unquoted } from './yaml'
 
 /** Named here as well because the block is this module's business and yaml.ts is
@@ -59,7 +59,7 @@ interface KeyLine {
  *  its first colon with a blank or nothing after it, so `due date`, `日期` and `a.b`
  *  are keys as YAML has them. Indented lines are somebody else's key, a `#` line is
  *  a comment and a `- ` line is part of a list. */
-const KEY = /^([^\s#-].*?)[ \t]*:(?=\s|$)/
+const KEY = /^("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^\s#-].*?)[ \t]*:(?=\s|$)/
 
 /** A name `KEY` reads back as that same key, and YAML as a plain word: the one rule
  *  every writer of a key asks and the rows read by, so a key one of them writes is a
@@ -77,7 +77,13 @@ const NAME = /^(?![\s#\-?:,[\]{}&*!|>'"%@`])(?!.*:(?:\s|$))(?!.*\s#)[^\p{Cc}\p{Z
 
 /** Whether a key may be written under this name; see `NAME`. */
 export function isPropertyName(name: string): boolean {
-  return NAME.test(name)
+  return NAME.test(name) && isKeyLine(`${name}: x`)
+}
+
+/** A key as a line of a block says it: as it is, or in quotes where it would not read as
+ *  a key, a column another app called something long, so the block is still a block. */
+function keyWritten(key: string): string {
+  return isKeyLine(`${key}: x`) ? key : JSON.stringify(key)
 }
 
 /** Where the front matter block sits, or null when the note opens with anything
@@ -130,7 +136,7 @@ export type FrontMatterRow = readonly [
 export function writeFrontMatter(rows: readonly FrontMatterRow[]): string {
   if (!rows.length) return ''
 
-  const said = rows.map(([key, value]) => `${key}: ${valueOf(value)}`)
+  const said = rows.map(([key, value]) => `${keyWritten(key)}: ${valueOf(value)}`)
 
   return `---\n${said.join('\n')}\n---`
 }
@@ -230,6 +236,7 @@ export function frontMatterKeys(source: string): string[] {
     .split('\n')
     .map((line) => KEY.exec(line.replace(/\r$/, ''))?.[1])
     .filter((key): key is string => key !== undefined)
+    .map(unquoted)
 }
 
 /** The line a key is written on, or null when the block has no such key. The
@@ -247,12 +254,13 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
     const text = source.slice(at, stop)
     const found = KEY.exec(text)
 
-    if (found?.[1]?.toLowerCase() === wanted) {
+    const name = found?.[1] === undefined ? undefined : unquoted(found[1])
+    if (found && name?.toLowerCase() === wanted) {
       // The value ends where a comment starts, so a value set leaves the comment.
       const value = at + found[0].length
       const to = value + uncommented(text.slice(found[0].length)).length
       const line = { from: at, to: stop, value: { from: value, to } }
-      if (found[1] === key) return line
+      if (name === key) return line
       other ??= line
     }
 
@@ -320,7 +328,7 @@ export function frontMatterEdit(
 
   if (!block) {
     if (value === null) return null
-    return { from: 0, to: 0, insert: `---${nl}${key}: ${value}${nl}---${nl}` }
+    return { from: 0, to: 0, insert: `---${nl}${keyWritten(key)}: ${value}${nl}---${nl}` }
   }
 
   const found = keyLine(source, block, key)
@@ -346,7 +354,7 @@ export function frontMatterEdit(
     return { from: line.value.from, to, insert: ` ${value}` }
   }
 
-  return { from: block.close, to: block.close, insert: `${key}: ${value}${nl}` }
+  return { from: block.close, to: block.close, insert: `${keyWritten(key)}: ${value}${nl}` }
 }
 
 /** What a value on a line reads as, so two spellings of it can be compared: the

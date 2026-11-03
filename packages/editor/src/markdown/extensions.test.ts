@@ -50,8 +50,8 @@ describe('front matter being typed', () => {
   const language = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })
   const top = (state: EditorState): string => {
     const out: string[] = []
-    ensureSyntaxTree(state, state.doc.length, 5000)
-    for (let at = syntaxTree(state).topNode.firstChild; at; at = at.nextSibling) {
+    const tree = ensureSyntaxTree(state, state.doc.length, 5000) ?? syntaxTree(state)
+    for (let at = tree.topNode.firstChild; at; at = at.nextSibling) {
       out.push(`${at.name}@${at.from}-${at.to}`)
     }
     return out.join(' ')

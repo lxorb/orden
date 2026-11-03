@@ -86,10 +86,10 @@ function mapping(r: (n: number) => number): Record<string, unknown> {
 
 /** One of the spellings the library writes, which between them hold block scalars, both
  *  list indents, flow collections, quotes over lines and long folded lines. */
-function spelled(r: (n: number) => number, map: Record<string, unknown>): string {
+function spelled(r: (n: number) => number, map: Record<string, unknown>, style?: 'block'): string {
   return stringify(map, {
     indentSeq: r(2) === 0,
-    collectionStyle: (['any', 'block', 'flow'] as const)[r(3)] ?? 'any',
+    collectionStyle: style ?? (['any', 'block', 'flow'] as const)[r(3)] ?? 'any',
     lineWidth: [0, 20, 80][r(3)] ?? 0,
     defaultStringType:
       (['PLAIN', 'QUOTE_DOUBLE', 'QUOTE_SINGLE', 'BLOCK_LITERAL', 'BLOCK_FOLDED'] as const)[r(5)] ??
@@ -154,7 +154,9 @@ describe('front matter against the YAML library', () => {
     let held = 0
     for (let at = 0; at < 6000; at++) {
       // Between two keys, so it is no value's: a quote or a flow may hold any line.
-      const keys = Object.entries(mapping(r)).map(([key, one]) => spelled(r, { [key]: one }))
+      const keys = Object.entries(mapping(r)).map(([key, one]) =>
+        spelled(r, { [key]: one }, 'block'),
+      )
       keys.splice(r(keys.length + 1), 0, `\n${PROSE[r(PROSE.length)] ?? ''}\n\n`)
       const body = keys.join('')
       // A heading is a comment to YAML as well.

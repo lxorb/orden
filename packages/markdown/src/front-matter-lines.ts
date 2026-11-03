@@ -1,48 +1,58 @@
 /** Whether a note's opening `---` is front matter at all: the one definition, which
  *  every reader of a note asks, here and through `frontMatterBlock`.
  *
- *  A block is YAML that reads as a mapping. Every line between the fences has to be a
- *  key of it, what continues one (a value's further lines, a list under its key, a
- *  blank line, a comment), or else the fences are two rules with words between them
- *  and those words are the note's: a reader hiding them loses them, and a writer
- *  adding a key writes into them. Not a YAML parser, which the deck's scan could not
- *  afford on every note, and a line that only YAML itself would refuse (`title: a: b`)
- *  is still a key; what it tells apart is metadata from prose. A file with a first
- *  line of a sentence stays prose however it goes on, because a false no shows a few
- *  keys on the page while a false yes takes somebody's words off it.
+ *  Decided by how the block opens and by its shape, and never by whether every line of
+ *  it parses, because somebody is typing in it: a key has no colon yet for the moment
+ *  it takes to write one, and a block that stops being one at that moment is drawn
+ *  differently, read as empty by whatever an autosave wakes, and written into as if it
+ *  were not there. So:
+ *
+ *    - The first line that is not a comment says a key (`isKeyLine`). That is what tells
+ *      metadata from an essay or a deck's first slide under a rule.
+ *    - A line directly under what came before is the block's whatever it says.
+ *    - A line after a blank line has to be a key or what continues one (indented, a list
+ *      under its key, a comment); anything else is somebody's next paragraph, so the
+ *      fences are two rules with words between them, and those words are the note's.
+ *
+ *  Not a YAML parser, which the deck's scan could not afford on every note. A false no
+ *  shows a few keys on the page; a false yes takes somebody's words off it. Quotes and
+ *  brackets are followed only so that what they hold across lines is not read as lines.
  *
  *  A module of its own for the deck's scan, which is asked of every note and does not
  *  want the rest of front-matter.ts. The Rust twin is `block` in
  *  src-tauri/src/front_matter.rs; front-matter-table.json holds the two to the same
  *  answers and front-matter-yaml.test.ts in @orden/bases holds this to the YAML
- *  library. */
+ *  library and to what real tools write. */
 
 /** A fence: at the margin, three hyphens, and nothing else but blanks. An indented one
  *  is a line of a block scalar or an indented rule. */
 const FENCE = /^---[ \t]*$/
 
-/** The first line of a block has to say a key rather than merely hold a colon: a word
- *  as the fields of a plugin are named, or a name in anybody's language of a few words,
- *  quoted or not. `Priorität:`, `due date:`, `Size (cm):` and `日期:` are; `- a: b`,
- *  `http://x` and a sentence that has a colon in it are not. */
-const PLAIN_KEY = /^[\w.$-]+[ \t]*:(?:[ \t]|$)/
-const QUOTED_KEY = /^(?:"[^"]*"|'[^']*')[ \t]*:(?:[ \t]|$)/
-const NAMED_KEY = /^([^\s:#\-*+>|[\]{}!&%@`"',.?][^:.,!?;]*?)[ \t]*:(?:[ \t]|$)/u
-const MOST_KEY_WORDS = 4
+/** How long a key may be and still tell a block from a sentence that has a colon in it:
+ *  `Date of the first meeting held` is one. */
+const MOST_KEY_WORDS = 6
+const MOST_KEY_CHARACTERS = 80
+
+/** From how many words on a key and a value could be a sentence, if it ends like one:
+ *  `Note that we ship: on Tuesday, because of all of this.` */
+const SENTENCE_KEY_WORDS = 3
+const SENTENCE_VALUE_WORDS = 3
 
 /** YAML's own limit on a key written without a `?`. */
 const MOST_KEY_LENGTH = 1024
 
-/** A first character that makes a line a list, a quote or a YAML shape rather than a
- *  key, whatever colon it holds further on. */
-const NOT_A_KEY = '#*+>|[]{}!&%@`,'
+/** A first character that makes a line a quote, a table or a YAML shape rather than a key,
+ *  whatever colon it holds further on. A `+` or a `-` only with a blank after it, where
+ *  it is a bullet: `+1:` is a key. */
+const NOT_A_KEY = '#*>|[]{}!&%@`,'
 
-/** A value that is a block scalar's header, whose lines are the scalar's whatever they
- *  say. */
-const BLOCK_SCALAR = /^[|>][-+0-9]*[ \t]*(?:#.*)?$/
+/** What opens a list item or a piece of HTML on the first line of a note: prose. */
+const NOT_THE_FIRST_KEY = /^(?:[-+][ \t]|\d+[.)][ \t]|<[a-zA-Z/!?])/
 
-/** An anchor or a tag in front of a value. */
-const PROPERTIES = /^(?:[&!][^ \t]*(?:[ \t]+|$))+/
+/** A key written as Obsidian's own source view lets one be typed, with no blank after
+ *  its colon: `title:Foo`. A word first, so `12:30` is a time, and no `//` after it, so
+ *  an address is an address. */
+const TIGHT_KEY = /^[A-Za-z_][\w.$-]*:(?!\/\/)[^\s:]/
 
 /** What a value still has open at the end of its line: a quote, or how deep in brackets. */
 interface Open {
@@ -54,10 +64,32 @@ function isBlank(one: string | undefined): boolean {
   return one === ' ' || one === '\t'
 }
 
-function isKeyLine(text: string): boolean {
-  if (PLAIN_KEY.test(text) || QUOTED_KEY.test(text)) return true
-  const key = NAMED_KEY.exec(text)?.[1]
-  return key !== undefined && key.split(/\s+/).length <= MOST_KEY_WORDS
+function wordsIn(text: string): number {
+  return text.trim().split(/\s+/u).filter(Boolean).length
+}
+
+/** Whether a line says a key, as the first line of a block has to. Liberal, because a
+ *  key in anybody's language is anything up to a colon (`Done?`, `No. of pages`,
+ *  `og:title`, `日期`), and narrow only about what reads as a sentence: too long before
+ *  the colon, or a key of a few words and a value that ends as a sentence does. A quoted
+ *  key is never a sentence. */
+export function isKeyLine(text: string): boolean {
+  const past = pastKey(text, 0)
+  if (past === -1) return TIGHT_KEY.test(text)
+  if (NOT_THE_FIRST_KEY.test(text) || past === 1) return false
+  if (text[0] === '"' || text[0] === "'") return true
+
+  const key = text.slice(0, past - 1).trimEnd()
+  if (key.includes('://') || [...key].length > MOST_KEY_CHARACTERS) return false
+  const words = wordsIn(key)
+  if (words > MOST_KEY_WORDS) return false
+
+  const value = text.slice(past).trim()
+  return !(
+    words >= SENTENCE_KEY_WORDS &&
+    wordsIn(value) >= SENTENCE_VALUE_WORDS &&
+    /[.!?…]$/u.test(value)
+  )
 }
 
 /** Past the quote that opens at `at`, or -1 where it does not close on the line. */
@@ -76,7 +108,7 @@ function pastQuote(line: string, at: number): number {
 /** Just past the colon of the key that starts at `at`, or -1 where the line says none. */
 function pastKey(line: string, at: number): number {
   const first = line.charAt(at)
-  if (NOT_A_KEY.includes(first)) return -1
+  if (first === '' || NOT_A_KEY.includes(first)) return -1
 
   let from = at
   if (first === '"' || first === "'") {
@@ -128,15 +160,23 @@ function staysOpen(line: string, from: number, open: Open): boolean {
   return true
 }
 
+/** A value that is a block scalar's header, whose lines are the scalar's whatever they
+ *  say. */
+const BLOCK_SCALAR = /^[|>][-+0-9]*[ \t]*(?:#.*)?$/
+
+/** An anchor or a tag in front of a value. */
+const PROPERTIES = /^(?:[&!][^ \t]*(?:[ \t]+|$))+/
+
 /** The line a block's closing fence starts on, walking from `from`, which is just past
- *  the opening one; or -1 where no block closes there or a line of it is no YAML
- *  mapping's. */
+ *  the opening one; or -1 where no block closes there, or what is there is no metadata. */
 function closingFence(source: string, from: number): number {
   /** The indent of the mapping, once its first key is read. */
   let base = -1
   let comment = false
   /** Whether a `- ` at the mapping's own indent belongs to the key above it. */
   let list = false
+  /** Whether a blank line stands between the last line of the block and this one. */
+  let gap = false
   /** Lines indented past this are a block scalar's, or a plain value's next lines. */
   let scalar = -1
   let open: Open | null = null
@@ -169,7 +209,8 @@ function closingFence(source: string, from: number): number {
       let indent = 0
       while (isBlank(line[indent])) indent++
 
-      if (indent < line.length && !(scalar >= 0 && indent > scalar)) {
+      if (indent === line.length) gap = true
+      else if (!(scalar >= 0 && indent > scalar)) {
         scalar = -1
 
         if (line[indent] === '#') comment = true
@@ -180,7 +221,7 @@ function closingFence(source: string, from: number): number {
             const text = line.slice(indent)
             if (!isKeyLine(text) && !/^(?:\?(?:[ \t]|$)|\{)/.test(text)) return -1
             base = indent
-          } else if (indent < base) return -1
+          }
 
           let col = indent
           let dash = -1
@@ -190,32 +231,42 @@ function closingFence(source: string, from: number): number {
             while (isBlank(line[col])) col++
           }
           const own = indent === base
-          if (dash >= 0 && own && !list) return -1
 
           const complex =
             (line[col] === '?' || line[col] === ':') &&
             (col + 1 === line.length || isBlank(line[col + 1]))
           const past = complex ? col + 1 : pastKey(line, col)
-          if (past === -1 && own && dash < 0 && !(first && line[col] === '{')) return -1
+          const keyed = past !== -1 || TIGHT_KEY.test(line.slice(col))
+          // What only a line directly under the block may be: words with no colon yet, a
+          // list under a value, a line left of the mapping. After a blank line that is
+          // the note's next paragraph.
+          const continues = indent > base || (dash >= 0 && list)
+          if (gap && !keyed && !continues) return -1
+          gap = false
 
-          const keyed = past !== -1
-          let value = keyed ? past : col
+          let value = past !== -1 ? past : col
           while (isBlank(line[value])) value++
           const said = line.slice(value).replace(PROPERTIES, '')
           const start = said.charAt(0)
           const empty = said === '' || start === '#'
 
           if (own && dash < 0) list = empty
-          whole = first && start === '{' && !keyed
+          whole = first && start === '{' && past === -1
 
-          if (BLOCK_SCALAR.test(said)) scalar = keyed ? col : dash >= 0 ? dash : indent
-          else if (opens && (start === '"' || start === "'" || start === '[' || start === '{')) {
+          // Words with no key are one line's, whatever they start with.
+          const asValue = past !== -1 || dash >= 0 || indent > base || whole
+          if (BLOCK_SCALAR.test(said)) scalar = past !== -1 ? col : dash >= 0 ? dash : indent
+          else if (
+            opens &&
+            asValue &&
+            (start === '"' || start === "'" || start === '[' || start === '{')
+          ) {
             const opening: Open = { quote: '', depth: 0 }
             if (staysOpen(said, 0, opening)) {
               open = opening
               reread = stop + 1
             }
-          } else if (!empty) scalar = keyed ? col : dash >= 0 ? dash : indent - 1
+          } else if (!empty) scalar = past !== -1 ? col : dash >= 0 ? dash : indent - 1
         }
       }
     }

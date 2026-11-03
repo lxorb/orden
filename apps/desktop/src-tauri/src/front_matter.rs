@@ -38,8 +38,7 @@ pub struct Block {
 /// Three things make one, and the first two are Obsidian's: the opening fence is
 /// the note's first line at the left margin, and the block closes. An indented
 /// fence is an indented rule, and a block nobody closed is a note that opens with a
-/// rule. The third is that what is between the fences reads as the keys of a YAML
-/// mapping, so an essay under a rule is the note's words. See `closing_fence`.
+/// rule. The third is how it reads: see `closing_fence`.
 pub fn block(body: &str) -> Option<Block> {
     let first = body.find('\n')?;
     // Space after the fence is nothing; space before it is a fence that is not at
@@ -73,58 +72,88 @@ const fn is_blank(one: u8) -> bool {
     one == b' ' || one == b'\t'
 }
 
-/// The first line of a block has to say a key rather than merely hold a colon: a
-/// word as the fields of a plugin are named, or a name in anybody's language of a
-/// few words, quoted or not. `isKeyLine` in front-matter-lines.ts.
-fn is_key_line(text: &str) -> bool {
-    let bytes = text.as_bytes();
-    if let Some(&quote) = bytes.first().filter(|&&one| one == b'"' || one == b'\'') {
-        return bytes[1..]
-            .iter()
-            .position(|&one| one == quote)
-            .is_some_and(|inner| {
-                let rest = text[inner + 2..].trim_start_matches([' ', '\t']).as_bytes();
-                rest.first() == Some(&b':') && rest.get(1).is_none_or(|&next| is_blank(next))
-            });
-    }
+/// How long a key may be and still tell a block from a sentence that has a colon in it.
+const MOST_KEY_WORDS: usize = 6;
+const MOST_KEY_CHARACTERS: usize = 80;
 
-    let Some(colon) = text
-        .bytes()
-        .enumerate()
-        .find(|&(at, one)| {
-            one == b':'
-                && text
-                    .as_bytes()
-                    .get(at + 1)
-                    .is_none_or(|&next| is_blank(next))
-        })
-        .map(|(at, _)| at)
-    else {
-        return false;
-    };
-    let key = text[..colon].trim_end_matches([' ', '\t']);
-    if key.is_empty() {
-        return false;
-    }
-
-    if key
-        .bytes()
-        .all(|one| one.is_ascii_alphanumeric() || matches!(one, b'_' | b'.' | b'$' | b'-'))
-    {
-        return true;
-    }
-    let mut chars = key.chars();
-    let first = chars.next().unwrap_or(' ');
-    !first.is_whitespace()
-        && !":#-*+>|[]{}!&%@`\"',.?".contains(first)
-        && !chars.any(|one| ":.,!?;".contains(one))
-        && key.split_whitespace().count() <= MOST_KEY_WORDS
-}
-
-const MOST_KEY_WORDS: usize = 4;
+/// From how many words on a key and a value could be a sentence, if it ends like one.
+const SENTENCE_KEY_WORDS: usize = 3;
+const SENTENCE_VALUE_WORDS: usize = 3;
 
 /// YAML's own limit on a key written without a `?`.
 const MOST_KEY_LENGTH: usize = 1024;
+
+/// What opens a list item or a piece of HTML on the first line of a note: prose.
+fn not_the_first_key(text: &str) -> bool {
+    let bytes = text.as_bytes();
+    let Some(&first) = bytes.first() else {
+        return false;
+    };
+    let next = bytes.get(1).copied();
+    if (first == b'-' || first == b'+') && next.is_some_and(is_blank) {
+        return true;
+    }
+    if first == b'<'
+        && next.is_some_and(|one| one.is_ascii_alphabetic() || matches!(one, b'/' | b'!' | b'?'))
+    {
+        return true;
+    }
+    let digits = bytes.iter().take_while(|one| one.is_ascii_digit()).count();
+    digits > 0
+        && matches!(bytes.get(digits), Some(b'.' | b')'))
+        && bytes.get(digits + 1).copied().is_some_and(is_blank)
+}
+
+/// A key written with no blank after its colon: `title:Foo`. A word first, so `12:30` is a
+/// time, and no `//` after it, so an address is an address.
+fn is_tight_key(text: &str) -> bool {
+    let bytes = text.as_bytes();
+    let Some(&first) = bytes.first() else {
+        return false;
+    };
+    if !(first.is_ascii_alphabetic() || first == b'_') {
+        return false;
+    }
+    let word = bytes
+        .iter()
+        .take_while(|&&one| one.is_ascii_alphanumeric() || matches!(one, b'_' | b'.' | b'$' | b'-'))
+        .count();
+    if bytes.get(word) != Some(&b':') || text[word + 1..].starts_with("//") {
+        return false;
+    }
+    text[word + 1..]
+        .chars()
+        .next()
+        .is_some_and(|one| !one.is_whitespace() && one != ':')
+}
+
+/// Whether a line says a key, as the first line of a block has to. Liberal, and narrow
+/// only about what reads as a sentence. `isKeyLine` in front-matter-lines.ts.
+fn is_key_line(text: &str) -> bool {
+    let Some(past) = past_key(text.as_bytes(), 0) else {
+        return is_tight_key(text);
+    };
+    if not_the_first_key(text) || past == 1 {
+        return false;
+    }
+    if text.starts_with('"') || text.starts_with('\'') {
+        return true;
+    }
+
+    let key = text[..past - 1].trim_end();
+    if key.contains("://") || key.chars().count() > MOST_KEY_CHARACTERS {
+        return false;
+    }
+    let words = key.split_whitespace().count();
+    if words > MOST_KEY_WORDS {
+        return false;
+    }
+
+    let value = text[past..].trim();
+    !(words >= SENTENCE_KEY_WORDS
+        && value.split_whitespace().count() >= SENTENCE_VALUE_WORDS
+        && value.ends_with(['.', '!', '?', '…']))
+}
 
 /// Past the quote that opens at `at`, or None where it does not close on the line.
 fn past_quote(line: &[u8], at: usize) -> Option<usize> {
@@ -146,11 +175,11 @@ fn past_quote(line: &[u8], at: usize) -> Option<usize> {
 }
 
 /// Just past the colon of the key that starts at `at`, or None where the line says
-/// none: a line that is a list, a quote or a YAML shape is not a key whatever colon
-/// it holds further on.
+/// none: a line that is a quote, a table or a YAML shape is not a key whatever colon it
+/// holds further on.
 fn past_key(line: &[u8], at: usize) -> Option<usize> {
     let first = *line.get(at)?;
-    if b"#*+>|[]{}!&%@`,".contains(&first) {
+    if b"#*>|[]{}!&%@`,".contains(&first) {
         return None;
     }
 
@@ -261,9 +290,12 @@ fn without_properties(said: &[u8]) -> &[u8] {
 }
 
 /// The line a block's closing fence starts on, walking from `from`, just past the
-/// opening one; or None where no block closes there or a line of it is no YAML
-/// mapping's. Every line between the fences is a key, what continues one, a blank
-/// line or a comment; anything else makes them two rules with words between them.
+/// opening one; or None where no block closes there or what is there is no metadata.
+///
+/// Decided by how the block opens and by its shape, never by whether every line parses,
+/// because somebody is typing in it: the first line that is not a comment says a key, a
+/// line directly under what came before is the block's whatever it says, and a line
+/// after a blank one has to be a key or what continues one.
 ///
 /// The twin of `closingFence` in front-matter-lines.ts; both are held to
 /// front-matter-table.json, and that one to the YAML library.
@@ -274,6 +306,8 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
     let mut comment = false;
     // Whether a `- ` at the mapping's own indent belongs to the key above it.
     let mut list = false;
+    // Whether a blank line stands between the last line of the block and this one.
+    let mut gap = false;
     // Lines indented past this are a block scalar's, or a plain value's next lines.
     let mut scalar: Option<usize> = None;
     let mut open: Option<Open> = None;
@@ -312,7 +346,9 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
         } else {
             let indent = line.iter().take_while(|&&one| is_blank(one)).count();
 
-            if indent < line.len() && scalar.is_none_or(|past| indent <= past) {
+            if indent == line.len() {
+                gap = true;
+            } else if scalar.is_none_or(|past| indent <= past) {
                 scalar = None;
 
                 if line[indent] == b'#' {
@@ -329,9 +365,8 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                             return None;
                         }
                         base = Some(indent);
-                    } else if base.is_some_and(|one| indent < one) {
-                        return None;
                     }
+                    let mapping = base.unwrap_or(indent);
 
                     let mut col = indent;
                     let mut dash = None;
@@ -344,10 +379,7 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                             col += 1;
                         }
                     }
-                    let own = base == Some(indent);
-                    if dash.is_some() && own && !list {
-                        return None;
-                    }
+                    let own = indent == mapping;
 
                     let complex = matches!(line.get(col), Some(b'?' | b':'))
                         && line.get(col + 1).is_none_or(|&next| is_blank(next));
@@ -356,15 +388,15 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                     } else {
                         past_key(line, col)
                     };
-                    if past.is_none()
-                        && own
-                        && dash.is_none()
-                        && !(first && line.get(col) == Some(&b'{'))
-                    {
+                    let keyed = past.is_some() || is_tight_key(&text[col..]);
+                    // What only a line directly under the block may be: words with no
+                    // colon yet, a list under a value, a line left of the mapping.
+                    let continues = indent > mapping || (dash.is_some() && list);
+                    if gap && !keyed && !continues {
                         return None;
                     }
+                    gap = false;
 
-                    let keyed = past.is_some();
                     let mut value = past.unwrap_or(col);
                     while line.get(value).copied().is_some_and(is_blank) {
                         value += 1;
@@ -376,23 +408,28 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                     if own && dash.is_none() {
                         list = empty;
                     }
-                    whole = first && start == b'{' && !keyed;
+                    whole = first && start == b'{' && past.is_none();
 
-                    let parent = if keyed {
-                        Some(col)
-                    } else {
-                        dash.or_else(|| indent.checked_sub(1))
-                    };
+                    // Words with no key are one line's, whatever they start with.
+                    let as_value = past.is_some() || dash.is_some() || indent > mapping || whole;
                     if is_block_scalar(said) {
-                        scalar = Some(if keyed { col } else { dash.unwrap_or(indent) });
-                    } else if opens && matches!(start, b'"' | b'\'' | b'[' | b'{') {
+                        scalar = Some(if past.is_some() {
+                            col
+                        } else {
+                            dash.unwrap_or(indent)
+                        });
+                    } else if opens && as_value && matches!(start, b'"' | b'\'' | b'[' | b'{') {
                         let mut opening = Open::default();
                         if stays_open(said, &mut opening) {
                             open = Some(opening);
                             reread = stop + 1;
                         }
                     } else if !empty {
-                        scalar = parent;
+                        scalar = if past.is_some() {
+                            Some(col)
+                        } else {
+                            dash.or_else(|| indent.checked_sub(1))
+                        };
                     }
                 }
             }

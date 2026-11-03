@@ -67,15 +67,16 @@ export function closesFence(line: string, mark: string): boolean {
  *  fence after it inside out. So the rule, for every reader of a note, the Rust twin and
  *  the editor's grammar among them (fence-table.json):
  *
- *      A fence line followed by one name closes a fence that is open, never opens or
- *      names one, and only where the name is what that build wrote: `freeBlockId`'s
- *      six lowercase letters and digits. Anything else after the marks is code.
+ *      A fence line followed by one name closes a fence that is open, and never opens or
+ *      names one. A name is letters, digits and hyphens, as somebody naming a block by
+ *      hand writes one too (`^intro`). Anything else after the marks is code.
  *
- *  What is left: code showing a line just like that closes early. Six random characters
- *  after a fence are not what code shows, and a note that does can put more ticks round it. */
+ *  What is left: code showing a line just like that closes early. A fence with a caret
+ *  name after it is not what code shows, none was found in a search of real notes and
+ *  code, and a note that does show one can put more ticks round it. */
 export function fenceName(line: string): string | null {
   if (!couldBeFence(line)) return null
-  return /^ {0,3}(?:`{3,}|~{3,})[ \t]+\^([a-z0-9]{6})[ \t]*\r?$/.exec(line)?.[1] ?? null
+  return /^ {0,3}(?:`{3,}|~{3,})[ \t]+\^([A-Za-z0-9-]+)[ \t]*\r?$/.exec(line)?.[1] ?? null
 }
 
 /** Where a span of `length` backticks closes after `from`, or -1: at a run of

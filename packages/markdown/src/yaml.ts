@@ -170,7 +170,9 @@ function ambiguous(value: string): boolean {
     /:\s|:$|\s#/.test(value) ||
     /^(true|false|null|yes|no|on|off|~)$/i.test(value) ||
     /^[-+]?[\d._]+([eE][-+]?\d+)?$/.test(value) ||
-    /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value)
+    /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value) ||
+    // A sentence, plain, could make the key in front of it read as one: `isKeyLine`.
+    /\s\S+\s.*[.!?…]$/u.test(value)
   )
 }
 

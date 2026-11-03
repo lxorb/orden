@@ -265,8 +265,8 @@ fn closes_fence(line: &str, mark: u8, length: usize) -> bool {
 
 /// The block name on a closing fence, as an older build wrote it: ` ``` ^abc123`. A fence
 /// line followed by one name closes a fence that is open, never opens or names one, and
-/// only where the name is what that build wrote, six lowercase letters and digits; the
-/// rule and why in `fenceName` in fences.ts, both held to fence-table.json.
+/// a name is letters, digits and hyphens; the rule and why in `fenceName` in fences.ts,
+/// both held to fence-table.json.
 fn fence_name(line: &str, mark: u8) -> Option<&str> {
     let run = line[spaces_at(line, 0)..]
         .bytes()
@@ -278,10 +278,10 @@ fn fence_name(line: &str, mark: u8) -> Option<&str> {
         return None;
     }
     let name = spaced.strip_prefix('^')?.trim_end_matches([' ', '\t']);
-    (name.len() == 6
+    (!name.is_empty()
         && name
             .bytes()
-            .all(|one| one.is_ascii_lowercase() || one.is_ascii_digit()))
+            .all(|one| one.is_ascii_alphanumeric() || one == b'-'))
     .then_some(name)
 }
 
