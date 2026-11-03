@@ -326,9 +326,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-03, to 5,794,900, for #331: a window of the overview
  *  dragged to another place in its strip or into another pane (overview/drag.ts), and
  *  Alt Alt turning it back at any moment. Measured 5,794,727.
+ *
+ *  The code raised on 2026-11-04, to 5,795,200, for #676: a PDF's mark is a page with
+ *  "PDF" written under it, and what a file was made from is decided in one place
+ *  (`typeMark` in file-mark.ts, `sourceMark` in chosen-icon.ts). Measured 5,795,057.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_794_900,
+  code: 5_795_200,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

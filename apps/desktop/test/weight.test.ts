@@ -1048,8 +1048,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-03, to 3,482,700, for #331: the top bar's button for the tab overview,
  *  and the strip leaving a gap where a tab's window is out (Titlebar.svelte, Tabs.svelte).
- *  Measured 3,482,585, 385 modules. */
-const BUDGET = 3_482_700
+ *  Measured 3,482,585, 385 modules.
+ *
+ *  Raised 2026-11-04, to 3,485,100, for #676: a PDF's mark is Lucide's page with "PDF"
+ *  written under it (`typeMark` in file-mark.ts), and what a file was made from is
+ *  decided for every list in one place (`sourceMark` in chosen-icon.ts). Measured
+ *  3,484,939. */
+const BUDGET = 3_485_100
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
