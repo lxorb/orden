@@ -2766,4 +2766,6 @@ export const ru: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS: инструкции для агентов этого пространства',
   '{title}, unread': '{title}, не прочитано',
   '{title}, running': '{title}, выполняется',
+  'This PDF is locked, so its pages went out as pictures':
+    'Этот PDF заблокирован, поэтому его страницы вышли как изображения',
 }

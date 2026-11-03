@@ -2737,4 +2737,6 @@ export const ptPT: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS são as instruções para agentes deste espaço',
   '{title}, unread': '{title}, por ler',
   '{title}, running': '{title}, em curso',
+  'This PDF is locked, so its pages went out as pictures':
+    'Este PDF está bloqueado, por isso as páginas saíram como imagens',
 }

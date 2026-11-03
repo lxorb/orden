@@ -2666,4 +2666,6 @@ export const ur: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS اس اسپیس کی ایجنٹ ہدایات ہیں',
   '{title}, unread': '{title}، نہ پڑھا ہوا',
   '{title}, running': '{title}، جاری ہے',
+  'This PDF is locked, so its pages went out as pictures':
+    'یہ PDF مقفل ہے، اس لیے اس کے صفحات تصویروں کے طور پر نکلے',
 }

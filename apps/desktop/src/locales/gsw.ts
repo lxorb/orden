@@ -2693,4 +2693,6 @@ export const gsw: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS sind d Agänte-Aawiisige vo däm Beriich',
   '{title}, unread': '{title}, ungläse',
   '{title}, running': '{title}, lauft',
+  'This PDF is locked, so its pages went out as pictures':
+    'Das PDF isch gsperrt, drum sind sini Siite als Bilder usecho',
 }

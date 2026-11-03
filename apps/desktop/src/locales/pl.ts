@@ -2765,4 +2765,6 @@ export const pl: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS to instrukcje dla agentów w tej przestrzeni',
   '{title}, unread': '{title}, nieprzeczytany',
   '{title}, running': '{title}, w toku',
+  'This PDF is locked, so its pages went out as pictures':
+    'Ten PDF jest zablokowany, więc jego strony wyszły jako obrazy',
 }

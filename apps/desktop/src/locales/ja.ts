@@ -2644,4 +2644,6 @@ export const ja: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS はこのスペースのエージェントへの指示です',
   '{title}, unread': '{title}、未読',
   '{title}, running': '{title}、実行中',
+  'This PDF is locked, so its pages went out as pictures':
+    'このPDFはロックされているため、ページは画像として書き出されました',
 }

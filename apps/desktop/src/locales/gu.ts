@@ -2658,4 +2658,6 @@ export const gu: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS આ સ્પેસની એજન્ટ સૂચનાઓ છે',
   '{title}, unread': '{title}, ન વાંચેલું',
   '{title}, running': '{title}, ચાલુ છે',
+  'This PDF is locked, so its pages went out as pictures':
+    'આ PDF લૉક છે, તેથી તેનાં પાનાં ચિત્રો તરીકે નીકળ્યાં',
 }

@@ -2625,4 +2625,5 @@ export const am: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS የዚህ ቦታ የኤጀንት መመሪያዎች ነው',
   '{title}, unread': '{title}፣ ያልተነበበ',
   '{title}, running': '{title}፣ በመሥራት ላይ',
+  'This PDF is locked, so its pages went out as pictures': 'ይህ PDF ተቆልፏል፣ ስለዚህ ገጾቹ እንደ ስዕሎች ወጥተዋል',
 }

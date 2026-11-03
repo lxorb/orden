@@ -2710,4 +2710,6 @@ export const ha: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS shine umarnin wakilai na wannan wuri',
   '{title}, unread': '{title}, ba a karanta ba',
   '{title}, running': '{title}, yana gudana',
+  'This PDF is locked, so its pages went out as pictures':
+    'An kulle wannan PDF, don haka shafukansa sun fita a matsayin hotuna',
 }

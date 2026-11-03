@@ -2592,4 +2592,5 @@ export const zhHantHK: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS 是此空間的代理指示',
   '{title}, unread': '{title}，未讀',
   '{title}, running': '{title}，執行中',
+  'This PDF is locked, so its pages went out as pictures': '此 PDF 已鎖定，因此頁面以圖片形式匯出',
 }

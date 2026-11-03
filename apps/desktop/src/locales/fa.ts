@@ -2676,4 +2676,6 @@ export const fa: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS دستورالعمل‌های عامل این فضا است',
   '{title}, unread': '{title}، خوانده\u200cنشده',
   '{title}, running': '{title}، در حال اجرا',
+  'This PDF is locked, so its pages went out as pictures':
+    'این PDF قفل است، پس صفحاتش به‌صورت تصویر خارج شدند',
 }

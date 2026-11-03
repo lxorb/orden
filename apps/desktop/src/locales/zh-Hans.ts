@@ -2591,4 +2591,6 @@ export const zhHans: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS 是此空间的智能体指令',
   '{title}, unread': '{title}，未读',
   '{title}, running': '{title}，运行中',
+  'This PDF is locked, so its pages went out as pictures':
+    '此 PDF 已锁定，因此其页面以图片形式导出',
 }

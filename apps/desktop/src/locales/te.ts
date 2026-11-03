@@ -2686,4 +2686,6 @@ export const te: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS ఈ స్పేస్ యొక్క ఏజెంట్ సూచనలు',
   '{title}, unread': '{title}, చదవనిది',
   '{title}, running': '{title}, నడుస్తోంది',
+  'This PDF is locked, so its pages went out as pictures':
+    'ఈ PDF లాక్ అయింది, కాబట్టి దాని పేజీలు చిత్రాలుగా వెలువడ్డాయి',
 }

@@ -2719,4 +2719,6 @@ export const ta: Dictionary = {
     'AGENTS என்பது இந்த இடத்தின் ஏஜென்ட் அறிவுறுத்தல்கள்',
   '{title}, unread': '{title}, படிக்காதது',
   '{title}, running': '{title}, இயங்குகிறது',
+  'This PDF is locked, so its pages went out as pictures':
+    'இந்த PDF பூட்டப்பட்டுள்ளது, எனவே அதன் பக்கங்கள் படங்களாக வெளிவந்தன',
 }

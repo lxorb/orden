@@ -2711,4 +2711,6 @@ export const sw: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS ni maagizo ya mawakala ya nafasi hii',
   '{title}, unread': '{title}, haijasomwa',
   '{title}, running': '{title}, inaendelea',
+  'This PDF is locked, so its pages went out as pictures':
+    'PDF hii imefungwa, kwa hiyo kurasa zake zimetoka kama picha',
 }

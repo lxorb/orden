@@ -2668,4 +2668,6 @@ export const bn: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS হলো এই স্পেসের এজেন্ট নির্দেশনা',
   '{title}, unread': '{title}, অপঠিত',
   '{title}, running': '{title}, চলছে',
+  'This PDF is locked, so its pages went out as pictures':
+    'এই PDF লক করা, তাই এর পৃষ্ঠাগুলো ছবি হিসেবে বের হয়েছে',
 }

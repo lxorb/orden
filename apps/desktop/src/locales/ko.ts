@@ -2634,4 +2634,6 @@ export const ko: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS는 이 스페이스의 에이전트 지침입니다',
   '{title}, unread': '{title}, 읽지 않음',
   '{title}, running': '{title}, 실행 중',
+  'This PDF is locked, so its pages went out as pictures':
+    '이 PDF는 잠겨 있어 페이지가 그림으로 내보내졌습니다',
 }

@@ -2723,4 +2723,6 @@ export const ptBR: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS são as instruções para agentes deste espaço',
   '{title}, unread': '{title}, não lido',
   '{title}, running': '{title}, em andamento',
+  'This PDF is locked, so its pages went out as pictures':
+    'Este PDF está bloqueado, então suas páginas saíram como imagens',
 }

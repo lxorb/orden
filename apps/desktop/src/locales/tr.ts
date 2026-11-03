@@ -2686,4 +2686,6 @@ export const tr: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS bu alanın ajan talimatlarıdır',
   '{title}, unread': '{title}, okunmamış',
   '{title}, running': '{title}, çalışıyor',
+  'This PDF is locked, so its pages went out as pictures':
+    'Bu PDF kilitli, bu yüzden sayfaları resim olarak çıktı',
 }
