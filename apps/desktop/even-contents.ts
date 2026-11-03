@@ -344,9 +344,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  website's brand read off its address (icon-sets.ts, `siteBrand` in icons.ts); the
  *  logos and their names stay out (vite.even.config.ts, brand-names.even.ts). Measured
  *  5,801,561.
+ *
+ *  The code raised on 2026-11-04, to 5,813,700, for #331: All spaces, every space's
+ *  windows in a living membrane on the overview's canvas (overview/membrane.ts,
+ *  Cells.svelte), and a window plopped from one cell into another moved to that space
+ *  (overview/cells.ts). Measured 5,813,519.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_801_700,
+  code: 5_813_700,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
