@@ -252,9 +252,11 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-02, to 5,767,900, for the open bug round's branches merged
  *  together on claude/bugs-2026-11: each raise above was measured without the others.
  *  Measured 5,767,345.
- */
+ *
+ *  The code raised on 2026-11-03, to 5,768,300, for an undo that waits for the gesture
+ *  still landing and a Mac's menu key. Measured 5,768,261. */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_767_900,
+  code: 5_768_300,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
