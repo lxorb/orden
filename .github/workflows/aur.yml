@@ -2,7 +2,8 @@ name: aur
 
 # orden-git builds the newest main on the installing machine, so nothing is built
 # here: AUR helpers see new commits on main themselves. This pushes its recipe when
-# the recipe changes. orden-bin, the release package, is publish-linux.yml's.
+# the recipe changes, once it has built. orden-bin, the release package, is
+# publish-linux.yml's.
 on:
   push:
     branches: [main]
@@ -56,8 +57,34 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
 
+  # The lint above reads the recipe and never runs it, which let a recipe the app refuses
+  # to build stay green for months: this makes the package, on a change to the recipe, and
+  # a recipe that does not build is not pushed. No credentials, as the lint.
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - name: makepkg
+        env:
+          ARCH_IMAGE: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
+        run: |
+          cp -r packaging/aur/orden-git aur-package
+          docker run --rm -v "$PWD/aur-package:/build" "$ARCH_IMAGE" bash -euo pipefail -c '
+            pacman -Syu --noconfirm --needed
+            useradd -m builduser
+            echo "builduser ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builduser
+            chown -R builduser: /build
+            cd /build
+            sudo -u builduser makepkg --syncdeps --noconfirm
+          '
+
   publish:
-    needs: check
+    needs: [check, build]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: aur
