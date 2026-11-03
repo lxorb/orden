@@ -22,6 +22,7 @@ import { calloutOf } from '@orden/markdown/callouts'
 import { coverOf } from '@orden/markdown/cover'
 import { embedKind, embedSize, shownText, withoutBlockIds } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
+import { stemOf } from './naming'
 
 /** A run of text, and everything that can be true of it at once. Absent means
  *  no: a span carries only the marks it actually has, which keeps the shape a
@@ -422,7 +423,7 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
  *  on paper, the `<title>` of a page, the Word property, the ePub metadata - so
  *  one note cannot come out under two names. */
 export function titleOf(source: string, name: string): string {
-  return frontMatterValue(source, 'title') ?? documentTitle(source) ?? name.replace(/\.[^.]+$/, '')
+  return frontMatterValue(source, 'title') ?? documentTitle(source) ?? stemOf(name)
 }
 
 export interface DocumentOptions {

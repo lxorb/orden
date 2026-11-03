@@ -7,10 +7,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
  *  a closed note's words gone: the file was there, under a spelling the listing
  *  was compared to wrongly, or not yet in a listing read a moment before. */
 
-const { notes, disk, written } = vi.hoisted(() => ({
+const { notes, disk, written, told } = vi.hoisted(() => ({
   notes: [] as { path: string; name: string }[],
   disk: new Map<string, string>(),
   written: [] as string[],
+  told: [] as string[],
 }))
 
 vi.mock('../workspace.svelte', () => ({
@@ -36,6 +37,10 @@ vi.mock('../link-index.svelte', () => ({ links: { held: () => [] } }))
 // Every space here may be written in; which may not is write-read-only.test.ts's.
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 
+vi.mock('../reserved-name.svelte', () => ({
+  reservedName: { tell: (root: string) => told.push(root) },
+}))
+
 const { addTask } = await import('./write')
 
 const task = (note: string) =>
@@ -45,6 +50,7 @@ beforeEach(() => {
   notes.length = 0
   disk.clear()
   written.length = 0
+  told.length = 0
 })
 
 describe('a task sent to a note by name', () => {
@@ -76,5 +82,39 @@ describe('a task sent to a note by name', () => {
 
     expect(landed?.path).toBe('/s/Ideas.md')
     expect(written).toEqual(['/s/Ideas.md'])
+  })
+})
+
+/** The file at the top of a space is hidden from the notes `>` reads, so the name read as
+ *  a note nobody has, and the task went into the instructions or made them. */
+describe('a task sent to the name the space keeps for its instructions', () => {
+  test.each([['AGENTS'], ['agents'], ['AGENTS.md']])('%s is refused and said', async (note) => {
+    disk.set('/space/AGENTS.md', 'the instructions')
+    await vi.waitFor(async () => {
+      expect(await addTask(task(note), { root: '/space' })).toBeNull()
+      expect(told).toContain('/space')
+    })
+    expect(disk.get('/space/AGENTS.md')).toBe('the instructions')
+    expect(written).toEqual([])
+  })
+
+  test('and does not make them where there are none', async () => {
+    expect(await addTask(task('AGENTS'), { root: '/space' })).toBeNull()
+    expect(written).toEqual([])
+    expect(disk.has('/space/AGENTS.md')).toBe(false)
+  })
+
+  test('a note in a folder under the name is a note, and is written to', async () => {
+    notes.push({ path: '/space/sub/AGENTS.md', name: 'AGENTS.md' })
+    disk.set('/space/sub/AGENTS.md', 'a note')
+    expect((await addTask(task('sub/AGENTS'), { root: '/space' }))?.path).toBe(
+      '/space/sub/AGENTS.md',
+    )
+    expect(told).toEqual([])
+  })
+
+  test('a name nobody has in a folder is not made, as a link would not', async () => {
+    expect(await addTask(task('sub/AGENTS'), { root: '/space' })).toBeNull()
+    expect(written).toEqual([])
   })
 })

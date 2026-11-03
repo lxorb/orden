@@ -165,6 +165,7 @@ export async function unkeepInto(at: number, folder: string) {
   // Refused before the tile goes: the move would be, and the note then had neither its
   // tile nor its new folder.
   if (moves && !(canWriteAt(path) && canWriteAt(folder))) return
+  if (moves && workspace.refusedAsInstructions([path], folder)) return
   await workspace.undone.batch(async () => {
     keepAs(
       root,

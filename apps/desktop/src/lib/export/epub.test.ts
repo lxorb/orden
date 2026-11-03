@@ -645,3 +645,37 @@ describe('splitting', () => {
     expect(parts[1]).toBe('<h1>c</h1>\n')
   })
 })
+
+/** Text pasted from Word, PowerPoint or a PDF carries what XML 1.0 has no way to say,
+ *  and a reader refuses the whole book over one. */
+describe('characters XML cannot carry', () => {
+  const FORBIDDEN = /[^\t\n\r\u{20}-\u{D7FF}\u{E000}-\u{FFFD}\u{10000}-\u{10FFFF}]/u
+
+  test('leave no part of the book', async () => {
+    const one = await bookOf({
+      title: 'T\u0001itle',
+      author: 'A\ufffeuthor',
+      body: renderMarkdown(
+        '# He\u000bad\n\nword\u0001 <!-- no\u0001te --> <span da\u0001ta="v\u0001">x</span>\n',
+      ),
+    })
+    const parts = one.names.filter((name) => /\.(xhtml|opf|ncx|xml)$/.test(name))
+    expect(parts.length).toBeGreaterThan(3)
+    for (const path of parts) {
+      expect(FORBIDDEN.test(await bookText(one, path)), path).toBe(false)
+    }
+  })
+
+  test('nor a reference to one, while the rest stay', () => {
+    expect(toXhtml('<p>a&#1;b&#xFFFE;c&#0;d&#55296;e</p>')).toBe('<p>abcde</p>')
+    expect(toXhtml('<p>&#65;&#9;&#x1F600;</p>')).toBe('<p>&#65;&#9;&#x1F600;</p>')
+  })
+
+  test('a capital X in a reference is one XML cannot read either', () => {
+    expect(toXhtml('<p>&#X41;&#X1;</p>')).toBe('<p>&#x41;</p>')
+  })
+
+  test('and the words either side of a soft break stay words', () => {
+    expect(toXhtml('<p>one\u000btwo\u000cthree\u0001four</p>')).toBe('<p>one two threefour</p>')
+  })
+})

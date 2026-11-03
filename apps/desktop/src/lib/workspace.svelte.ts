@@ -3685,31 +3685,42 @@ class Workspace {
     return root ? linkedFiles(this.tree, root, carriedRows(transfer)) : []
   }
 
-  async moveMany(paths: string[], intoFolder: string, undoing = false) {
+  /** Whether a move into `intoFolder` would make one of `paths` the instructions of the
+   *  space it is the top of, which is said to the reader and not done. */
+  refusedAsInstructions(paths: string[], intoFolder: string): boolean {
+    if (
+      !paths.some((path) => isAgentsName(nameOf(path))) ||
+      !this.spaces.some((one) => samePath(one.root, intoFolder))
+    ) {
+      return false
+    }
+    void import('./reserved-name.svelte').then((one) => one.reservedName.tell(intoFolder))
+    return true
+  }
+
+  /** Answers whether the move was made: every refusal here is said to the reader, and a
+   *  caller with a name still to give or a caller of its own has to know. */
+  async moveMany(paths: string[], intoFolder: string, undoing = false): Promise<boolean> {
     // A note called AGENTS in a folder stays one, and moves between folders; at the top
     // of a space it would stop being a note and become the setting. Only an Undo puts one
     // back; see `movedIn` in automation/acts.ts, which refuses an agent's the same way.
-    if (
-      !undoing &&
-      paths.some((path) => isAgentsName(nameOf(path))) &&
-      this.spaces.some((one) => samePath(one.root, intoFolder))
-    ) {
-      void import('./reserved-name.svelte').then((one) => one.reservedName.tell(intoFolder))
+    if (!undoing && this.refusedAsInstructions(paths, intoFolder)) {
       this.clearSelection()
-      return
+      return false
     }
     // All or nothing, and before the folder a drop on a note makes: a move that left
     // half a selection behind, or nested a note it then put nothing in, is not one
     // anybody asked for. `move` refuses each of them as well.
     if (!(await this.writableAt(intoFolder, ...paths))) {
       this.clearSelection()
-      return
+      return false
     }
     await this.undone.batch(async () => {
       await this.nestFor(intoFolder, paths)
       for (const path of outermost(paths)) await this.move(path, intoFolder)
     })
     this.clearSelection()
+    return true
   }
 
   /** A drop on a note lands in the folder that note is about to become, so the

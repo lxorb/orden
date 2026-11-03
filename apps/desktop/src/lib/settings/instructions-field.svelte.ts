@@ -34,6 +34,13 @@ export interface FieldHands {
   make(path: string, text: string): Promise<void>
 }
 
+/** The words as a text box holds them, which is `\n` whatever the file is written in: the
+ *  crate keeps a CRLF file's endings on every write (`notes.rs`), so the two are one text,
+ *  and read as two every write would look crossed and keep a version. */
+function inField(words: string): string {
+  return words.replace(/\r\n?/g, '\n')
+}
+
 /** Both sides of a write that crossed the typing, losing neither: the merge sync's
  *  classifier reads. Fetched with the first that does. */
 async function merged(base: string, mine: string, theirs: string): Promise<string> {
@@ -73,7 +80,7 @@ export class InstructionsField {
     const words = await this.hands.read(this.path)
     if (words === null && (await this.hands.there(this.path))) this.unreadable = true
     if (!this.dirty) {
-      this.text = words ?? ''
+      this.text = inField(words ?? '')
       this.base = this.text
     }
     this.loaded = true
@@ -99,8 +106,8 @@ export class InstructionsField {
    *  while somebody is typing it waits for the write, which takes in both. */
   heard(words: string) {
     if (this.dirty) return
-    this.text = words
-    this.base = words
+    this.text = inField(words)
+    this.base = this.text
     this.unreadable = false
   }
 
@@ -140,9 +147,10 @@ export class InstructionsField {
         return
       }
 
-      const crossed = before !== this.base
-      const words = crossed ? await merged(this.base, after, before) : after
-      if (words !== before) {
+      const held = inField(before)
+      const crossed = held !== this.base
+      const words = crossed ? await merged(this.base, after, held) : after
+      if (words !== held) {
         await this.hands.write(this.path, before, words, crossed || !this.wrote)
         this.wrote = true
       }
