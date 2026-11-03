@@ -125,6 +125,6 @@ describe('sections and code', () => {
   })
 
   test('a comment in the front matter is no section', () => {
-    expect(cutSection('---\n# c\n---\n## A\n', 'c')).toBeNull()
+    expect(cutSection('---\n# c\na: 1\n---\n## A\n', 'c')).toBeNull()
   })
 })

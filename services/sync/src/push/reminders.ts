@@ -70,7 +70,7 @@ function taskLines(content: string): { line: number; text: string }[] {
   const lines = content.split(/\r?\n/)
   const found: { line: number; text: string }[] = []
   const block = frontMatterBlock(content)
-  let at = block ? content.slice(0, block.to).split('\n').length - 1 : 0
+  let at = block ? content.slice(0, block.close).split('\n').length : 0
   let fence: string | null = null
   for (; at < lines.length; at++) {
     const line = lines[at] ?? ''
