@@ -207,3 +207,92 @@ describe('an option in front of the command', () => {
     },
   )
 })
+
+describe('git, by what is known to be free', () => {
+  test.each([
+    'git clone -ccore.sshCommand=./pwn.sh https://x/y',
+    'git rebase -x./pwn.sh',
+    'git rebase -ix ./pwn.sh',
+    'git rebase -i',
+    'git clone --template=./t https://x/y',
+    'git init --template=./t',
+    'git clone --templ=./t https://x/y',
+    'git log -Ox',
+    'git log --unknown-option',
+    'git fetch --upload-pac=x',
+    'git status -zq',
+    'git somethingnew',
+    'git commit -vF ./x',
+  ])('asks: %s', (line) => {
+    expect(onTheList(line, ['git'])).toBe(false)
+  })
+
+  test.each([
+    'git status -sb',
+    'git status --short --branch',
+    'git log --oneline --graph -20 main',
+    'git log -n5 --format=%h',
+    'git log -n 5',
+    'git log -p',
+    'git diff --stat HEAD~1',
+    'git diff --cached',
+    'git show HEAD:a.md',
+    'git commit -am fix',
+    'git commit -m"fix"',
+    'git commit --amend --no-edit',
+    'git add -A',
+    'git add .',
+    'git push -u origin main',
+    'git push --force-with-lease',
+    'git pull --rebase',
+    'git fetch --all --prune',
+    'git checkout -b fix',
+    'git switch -c fix',
+    'git branch -vv',
+    'git merge --no-ff x',
+    'git rebase main',
+    'git rebase --continue',
+    'git clone --depth 1 https://x/y',
+    'git clone --depth=1 -b main https://x/y',
+    'git init -b main',
+    'git stash pop',
+    'git rev-parse --abbrev-ref HEAD',
+    'git log -- -x',
+  ])('goes: %s', (line) => {
+    expect(onTheList(line, ['git'])).toBe(true)
+  })
+})
+
+describe('the options a package manager takes in front of its command', () => {
+  const listed = ['npm', 'pnpm', 'yarn', 'bun']
+
+  test.each([
+    'pnpm --filter web build',
+    'pnpm --filter=web build',
+    'pnpm -F web test',
+    'pnpm -r test',
+    'pnpm --recursive test',
+    'pnpm -C apps/web build',
+    'npm --prefix x run b',
+    'npm -w web test',
+    'npm --workspace=web test',
+    'yarn --cwd x build',
+    'yarn workspace web build',
+    'bun --cwd x test',
+  ])('walks past them: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(true)
+  })
+
+  test.each([
+    'pnpm --filter web exec touch x',
+    'pnpm -r exec touch x',
+    'pnpm --filter=web dlx x',
+    'npm --prefix x exec y',
+    'pnpm --unknown web build',
+    'npm --prefix',
+    'bun -e1',
+    'bun -pe1',
+  ])('sees the command behind them: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(false)
+  })
+})
