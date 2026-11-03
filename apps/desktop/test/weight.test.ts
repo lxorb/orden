@@ -1080,9 +1080,14 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,501,100, for #1075: the door the live preview over a formula
  *  comes through, which fetches it with a note's first dollar (editor.ts); the preview
- *  itself is a chunk of its own. Measured 3,501,098. */
-const BUDGET = 3_501_100
-const MOST_FILES = 386
+ *  itself is a chunk of its own. Measured 3,501,098.
+ *
+ *  Raised 2026-11-04, to 3,505,500, and to 387 modules, for #1088: the window's corners,
+ *  a setting the theme paints before the first frame (corners.ts), and the tokens every
+ *  surface on the frame reads (App.svelte, Pane.svelte, PaneTree.svelte, Sidebar.svelte).
+ *  Measured 3,505,344, 386 modules. */
+const BUDGET = 3_505_500
+const MOST_FILES = 387
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

@@ -372,10 +372,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  formula being written (maths-preview.ts in the editor), a chunk of its own fetched
  *  with a note's first dollar, which splits the formula's drawing out of the chunks it
  *  shared. Measured 5,842,228.
+ *
+ *  The code raised on 2026-11-04, to 5,845,900, and the catalogues to 963,000, for #1088:
+ *  the window's corners as a setting beside the theme (corners.ts) and the Tab preview
+ *  delay (tab-strip/preview-delay.svelte.ts), with their six sentences in every
+ *  language. Measured 5,845,725 and 962,864.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_842_300,
-  catalogues: 956_700,
+  code: 5_845_900,
+  catalogues: 963_000,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,
