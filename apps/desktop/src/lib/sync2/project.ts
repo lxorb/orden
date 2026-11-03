@@ -24,6 +24,13 @@ export async function wrote(core: Core, entry: EntryRow, text: string): Promise<
   return [put('written', { id: entry.id, text: unixLines(text) }), put('entries', { ...entry })]
 }
 
+/** Tells the reader, once, that a file's edits here are not reaching the account. */
+export function saidUnsynced(core: Core, entry: EntryRow): void {
+  if (core.unsyncedTold.has(entry.id)) return
+  core.unsyncedTold.add(entry.id)
+  core.events.unsynced?.({ id: entry.id, name: entry.name })
+}
+
 /** Writes a document's words to its file where nothing on screen holds it, keeping what
  *  the file said before as a version on this device. Answers the changes to record, or
  *  nothing when there is no file to write yet or the file already says it. */
@@ -47,6 +54,13 @@ export async function project(
   // A file nobody here has named yet is in the way: it becomes an entry of its own
   // (ingest), and nothing is written over it.
   if (!entry.local_path && (was !== null || (await core.world.disk.exists(full)))) return []
+  // A file that is there and will not read, saved as another encoding or grown past what
+  // a note holds: what it says cannot be kept as a version, so nothing is written over
+  // it. Its document is unchanged, and folds it in like any edit once it reads.
+  if (was === null && entry.local_path && (await core.world.disk.exists(full))) {
+    saidUnsynced(core, entry)
+    return []
+  }
   if (was !== null && unixLines(was) === unixLines(text)) {
     entry.local_path = path
     const digest = await core.world.digest(unixLines(text))

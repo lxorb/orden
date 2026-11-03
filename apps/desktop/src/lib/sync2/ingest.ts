@@ -18,7 +18,7 @@
 import type { Core, Holding } from './core'
 import { MINE } from './docs'
 import { judge, readable, turn, unixLines } from './kinds'
-import { project, wrote } from './project'
+import { project, saidUnsynced, wrote } from './project'
 import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
 import type { SpaceState } from './places'
@@ -43,9 +43,7 @@ async function unsynced(core: Core, entry: EntryRow, full: string, read: string)
     core.unsyncedKept.add(kept)
     await core.world.disk.keep(full, read)
   }
-  if (core.unsyncedTold.has(entry.id)) return
-  core.unsyncedTold.add(entry.id)
-  core.events.unsynced?.({ id: entry.id, name: entry.name })
+  saidUnsynced(core, entry)
 }
 
 /** Folds another program's change to an entry's file into its document. Answers the
