@@ -2533,6 +2533,7 @@ export const ar: Dictionary = {
   'No {property}': 'بلا {property}',
   '{card} moved to {group}': 'تم نقل {card} إلى {group}',
   'Not moved': 'لم يتم النقل',
+  'Not undone': 'لم يتم التراجع',
   Retry: 'إعادة المحاولة',
   Calculate: 'حساب',
   'Remove sort': 'إزالة الترتيب',

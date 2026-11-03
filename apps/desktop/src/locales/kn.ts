@@ -2434,6 +2434,7 @@ export const kn: Dictionary = {
   'No {property}': '{property} ಇಲ್ಲ',
   '{card} moved to {group}': '{card} ಅನ್ನು {group} ಗೆ ಸರಿಸಲಾಗಿದೆ',
   'Not moved': 'ಸರಿಸಲಾಗಿಲ್ಲ',
+  'Not undone': 'ರದ್ದುಗೊಳಿಸಲಾಗಿಲ್ಲ',
   Retry: 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   Calculate: 'ಲೆಕ್ಕಹಾಕಿ',
   'Remove sort': 'ಕ್ರಮವನ್ನು ತೆಗೆದುಹಾಕಿ',

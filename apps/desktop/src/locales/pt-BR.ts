@@ -2456,6 +2456,7 @@ export const ptBR: Dictionary = {
   'No {property}': 'Sem {property}',
   '{card} moved to {group}': '{card} movido para {group}',
   'Not moved': 'Não movido',
+  'Not undone': 'Não desfeito',
   Retry: 'Tentar novamente',
   Calculate: 'Calcular',
   'Remove sort': 'Remover ordenação',

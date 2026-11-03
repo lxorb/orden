@@ -2410,6 +2410,7 @@ export const ur: Dictionary = {
   'No {property}': '{property} کے بغیر',
   '{card} moved to {group}': '{card} کو {group} میں منتقل کر دیا گیا',
   'Not moved': 'منتقل نہیں ہوا',
+  'Not undone': 'واپس نہیں ہوا',
   Retry: 'دوبارہ کوشش کریں',
   Calculate: 'حساب لگائیں',
   'Remove sort': 'ترتیب ہٹائیں',

@@ -2404,6 +2404,7 @@ export const gu: Dictionary = {
   'No {property}': '{property} વગર',
   '{card} moved to {group}': '{card} ને {group} માં ખસેડ્યું',
   'Not moved': 'ખસેડ્યું નહીં',
+  'Not undone': 'પૂર્વવત્ થયું નહીં',
   Retry: 'ફરી પ્રયાસ કરો',
   Calculate: 'ગણતરી કરો',
   'Remove sort': 'ગોઠવણી દૂર કરો',

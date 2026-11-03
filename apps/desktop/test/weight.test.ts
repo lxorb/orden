@@ -1040,8 +1040,14 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-03, to 3,480,600, for unstable's #1044 to #1079 merged into
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
- *  and the sum of their growth is what came. Measured 3,480,464, 385 modules. */
-const BUDGET = 3_480_600
+ *  and the sum of their growth is what came. Measured 3,480,464, 385 modules.
+ *
+ *  Raised 2026-11-04, to 3,484,100, for an undo that waits for every gesture landing within
+ *  a bound and says when it did not, the chat standing over what a space keeps at its side
+ *  (`chatLeaving` in workspace/panels.ts) and a Mac's menu key asking for its module.
+ *  Measured 3,484,011.
+ */
+const BUDGET = 3_484_100
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

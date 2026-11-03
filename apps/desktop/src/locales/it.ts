@@ -2479,6 +2479,7 @@ export const it: Dictionary = {
   'No {property}': 'Senza {property}',
   '{card} moved to {group}': '{card} spostato in {group}',
   'Not moved': 'Non spostato',
+  'Not undone': 'Non annullato',
   Retry: 'Riprova',
   Calculate: 'Calcola',
   'Remove sort': 'Rimuovi ordinamento',

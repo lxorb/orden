@@ -2482,6 +2482,7 @@ export const fr: Dictionary = {
   'No {property}': 'Sans {property}',
   '{card} moved to {group}': '{card} déplacé dans {group}',
   'Not moved': 'Non déplacé',
+  'Not undone': 'Non annulé',
   Retry: 'Réessayer',
   Calculate: 'Calculer',
   'Remove sort': 'Supprimer le tri',

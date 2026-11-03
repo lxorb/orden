@@ -2423,6 +2423,7 @@ export const tr: Dictionary = {
   'No {property}': '{property} yok',
   '{card} moved to {group}': '{card}, {group} grubuna taşındı',
   'Not moved': 'Taşınmadı',
+  'Not undone': 'Geri alınmadı',
   Retry: 'Tekrar dene',
   Calculate: 'Hesapla',
   'Remove sort': 'Sıralamayı kaldır',

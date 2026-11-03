@@ -2423,6 +2423,7 @@ export const te: Dictionary = {
   'No {property}': '{property} లేదు',
   '{card} moved to {group}': '{card} {group}కి తరలించబడింది',
   'Not moved': 'తరలించబడలేదు',
+  'Not undone': 'రద్దు చేయబడలేదు',
   Retry: 'మళ్లీ ప్రయత్నించండి',
   Calculate: 'లెక్కించు',
   'Remove sort': 'క్రమాన్ని తీసివేయి',

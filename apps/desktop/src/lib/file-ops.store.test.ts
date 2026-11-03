@@ -31,6 +31,9 @@ const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
+const { undoToast } = await import('./undo-toast.svelte')
+const { failed } = await import('./views/failed.svelte')
+const { LANDS_WITHIN } = await import('./workspace/undo.svelte')
 const { keeping } = await import('./workspace/file-ops')
 const { movedTo, within } = await import('./space-paths')
 type FileOp = import('./workspace/file-ops').FileOp
@@ -973,12 +976,10 @@ describe('a note renamed while a canvas showing it is open in the back of its pa
 })
 
 describe('an undo asked for while a move is on its way', () => {
-  test('takes back the move, not the step before it', async () => {
+  /** A move of Plan into Work whose rename answers when `land` is called. */
+  async function moving() {
     const one = disk.current
     if (!one) throw new Error('no disk')
-    // A step before the move, which is what the undo took back with the move in the air.
-    workspace.undone.record({ kind: 'create', path: `${ROOT}/Idea.md` })
-
     let renaming: (() => void) | undefined
     const asked = new Promise<void>((go) => (renaming = go))
     let land: (() => void) | undefined
@@ -991,16 +992,79 @@ describe('an undo asked for while a move is on its way', () => {
       }
       return real(command, args)
     })
-
-    const moving = workspace.moveMany([`${ROOT}/Plan.md`], `${ROOT}/Work`)
+    const gone = workspace.moveMany([`${ROOT}/Plan.md`], `${ROOT}/Work`)
     await asked
+    return {
+      one,
+      gone,
+      land: () => {
+        land?.()
+        held.mockRestore()
+      },
+    }
+  }
+
+  test('takes back the move, not the step before it', async () => {
+    // A step before the move, which is what the undo took back with the move in the air.
+    workspace.undone.record({ kind: 'create', path: `${ROOT}/Idea.md` })
+
+    const { one, gone, land } = await moving()
     const undoing = workspace.undoFileAction()
-    land?.()
-    await Promise.all([moving, undoing])
-    held.mockRestore()
+    land()
+    await Promise.all([gone, undoing])
 
     expect(one.files.has(`${ROOT}/Plan.md`)).toBe(true)
     expect(one.files.has(`${ROOT}/Work/Plan.md`)).toBe(false)
     expect(one.files.has(`${ROOT}/Idea.md`)).toBe(true)
+  })
+
+  // The toast's Undo is about the step it was offered for, which by then is not the top.
+  test('from the toast of the step before, takes back neither', async () => {
+    await workspace.remove(`${ROOT}/Idea.md`, false)
+    undoToast.dismiss()
+    undoToast.heard(workspace.undone.stack)
+
+    const { one, gone, land } = await moving()
+    const undoing = undoToast.undo(workspace)
+    land()
+    await Promise.all([gone, undoing])
+
+    expect(one.files.has(`${ROOT}/Work/Plan.md`)).toBe(true)
+    expect(one.files.has(`${ROOT}/Idea.md`)).toBe(false)
+    expect(workspace.undone.stack).toHaveLength(2)
+  })
+
+  test('that never lands gives up, says nothing was undone, and holds up no later one', async () => {
+    vi.useFakeTimers()
+    try {
+      workspace.undone.record({ kind: 'create', path: `${ROOT}/Idea.md` })
+      const { one, gone, land } = await moving()
+      const before = workspace.undone.stack.length
+
+      let over = false
+      void workspace.undoFileAction().then(() => (over = true))
+      await vi.advanceTimersByTimeAsync(LANDS_WITHIN - 1)
+      expect(over).toBe(false)
+      await vi.advanceTimersByTimeAsync(1)
+      expect(over).toBe(true)
+      expect(workspace.undone.stack).toHaveLength(before)
+      expect(one.files.has(`${ROOT}/Idea.md`)).toBe(true)
+      expect(failed.retry).not.toBeNull()
+
+      // At once, for as long as that one is still out.
+      over = false
+      void workspace.redoFileAction().then(() => (over = true))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(over).toBe(true)
+
+      land()
+      await gone
+      failed.dismiss()
+      await workspace.undoFileAction()
+      expect(one.files.has(`${ROOT}/Plan.md`)).toBe(true)
+    } finally {
+      failed.dismiss()
+      vi.useRealTimers()
+    }
   })
 })

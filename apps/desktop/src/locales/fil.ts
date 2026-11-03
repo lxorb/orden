@@ -2455,6 +2455,7 @@ export const fil: Dictionary = {
   'No {property}': 'Walang {property}',
   '{card} moved to {group}': 'Nailipat ang {card} sa {group}',
   'Not moved': 'Hindi nailipat',
+  'Not undone': 'Hindi na-undo',
   Retry: 'Subukang muli',
   Calculate: 'Kalkulahin',
   'Remove sort': 'Alisin ang pagsunod-sunod',

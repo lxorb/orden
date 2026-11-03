@@ -2457,6 +2457,7 @@ export const de: Dictionary = {
   'No {property}': 'Ohne {property}',
   '{card} moved to {group}': '{card} nach {group} verschoben',
   'Not moved': 'Nicht verschoben',
+  'Not undone': 'Nicht rückgängig gemacht',
   Retry: 'Erneut versuchen',
   Calculate: 'Berechnen',
   'Remove sort': 'Sortierung entfernen',

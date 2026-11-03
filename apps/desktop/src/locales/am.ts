@@ -2386,6 +2386,7 @@ export const am: Dictionary = {
   'No {property}': '{property} የሌለው',
   '{card} moved to {group}': '{card} ወደ {group} ተንቀሳቅሷል',
   'Not moved': 'አልተንቀሳቀሰም',
+  'Not undone': 'አልተመለሰም',
   Retry: 'እንደገና ይሞክሩ',
   Calculate: 'አስላ',
   'Remove sort': 'ቅደም ተከተሉን አስወግድ',

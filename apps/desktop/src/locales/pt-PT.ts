@@ -2469,6 +2469,7 @@ export const ptPT: Dictionary = {
   'No {property}': 'Sem {property}',
   '{card} moved to {group}': '{card} movido para {group}',
   'Not moved': 'Não movido',
+  'Not undone': 'Não anulado',
   Retry: 'Tentar novamente',
   Calculate: 'Calcular',
   'Remove sort': 'Remover ordenação',

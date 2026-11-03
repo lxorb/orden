@@ -2416,6 +2416,7 @@ export const fa: Dictionary = {
   'No {property}': 'بدون {property}',
   '{card} moved to {group}': '{card} به {group} منتقل شد',
   'Not moved': 'منتقل نشد',
+  'Not undone': 'واگرد نشد',
   Retry: 'تلاش دوباره',
   Calculate: 'محاسبه',
   'Remove sort': 'حذف مرتب‌سازی',

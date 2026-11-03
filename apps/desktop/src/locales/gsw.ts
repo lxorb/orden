@@ -2425,6 +2425,7 @@ export const gsw: Dictionary = {
   'No {property}': 'Ohni {property}',
   '{card} moved to {group}': '{card} nach {group} verschobe',
   'Not moved': 'Nöd verschobe',
+  'Not undone': 'Nöd rückgängig gmacht',
   Retry: 'Nomol probiere',
   Calculate: 'Berächne',
   'Remove sort': 'Sortierig entferne',
