@@ -735,6 +735,13 @@
     display: flex;
     flex-direction: column;
     background: var(--content-ground, var(--bg));
+    /* A card on the chrome (#1088): what it holds is cut to its corners, so a bar or a
+       page's own ground never stands square in a rounded card. */
+    border-radius: var(--card-radius);
+    overflow: clip;
+    box-shadow:
+      var(--card-shadow),
+      0 0 0 1px var(--card-edge);
   }
 
   .pane:has(> .head) {

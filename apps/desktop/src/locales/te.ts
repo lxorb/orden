@@ -558,6 +558,14 @@ export const te: Dictionary = {
   'Actual size': 'నిజ పరిమాణం',
   // Appearance
   Accent: 'యాక్సెంట్ రంగు',
+  'Window corners': 'విండో మూలలు',
+  Rounded: 'గుండ్రని',
+  Square: 'చతురస్రం',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'గుండ్రని తెరిచినదాన్ని విండో లోపలి కార్డులో తేలేలా చేస్తుంది; చతురస్రం దాన్ని అంచులకు తాకి ఉంచుతుంది.',
+  'Tab preview delay': 'ట్యాబ్ ప్రివ్యూ ఆలస్యం',
+  'How long the pointer rests on a tab before its preview shows.':
+    'ప్రివ్యూ కనిపించే ముందు పాయింటర్ ట్యాబ్‌పై ఎంత సేపు ఉండాలి.',
   'Accent: {name}': 'యాక్సెంట్: {name}',
   Violet: 'ఊదా',
   Blue: 'నీలం',

@@ -557,6 +557,14 @@ export const gu: Dictionary = {
   'Actual size': 'ખરું માપ',
   // Appearance
   Accent: 'ઉપસાવ રંગ',
+  'Window corners': 'વિન્ડોના ખૂણા',
+  Rounded: 'ગોળ',
+  Square: 'ચોરસ',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'ગોળ ખુલ્લી વસ્તુને વિન્ડોની અંદર કાર્ડમાં તરતી રાખે છે; ચોરસ તેને કિનારે લગોલગ રાખે છે.',
+  'Tab preview delay': 'ટેબ પૂર્વાવલોકન વિલંબ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'પૂર્વાવલોકન દેખાય તે પહેલાં પોઇન્ટર ટેબ પર કેટલો સમય રહે છે.',
   'Accent: {name}': 'ઉપસાવ: {name}',
   Violet: 'જાંબલી',
   Blue: 'વાદળી',

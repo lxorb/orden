@@ -554,6 +554,14 @@ export const yue: Dictionary = {
   'Actual size': '實際大小',
   // Appearance
   Accent: '強調色',
+  'Window corners': '視窗角',
+  Rounded: '圓角',
+  Square: '方角',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    '圓角會將打開咗嘅內容放喺視窗入面一張浮起嘅卡度；方角就貼住邊。',
+  'Tab preview delay': '分頁預覽延遲',
+  'How long the pointer rests on a tab before its preview shows.':
+    '指標喺分頁上面停幾耐先會顯示預覽。',
   'Accent: {name}': '強調色：{name}',
   Violet: '紫色',
   Blue: '藍色',

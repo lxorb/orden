@@ -562,6 +562,14 @@ export const de: Dictionary = {
   'Actual size': 'Originalgröße',
   // Appearance
   Accent: 'Akzent',
+  'Window corners': 'Fensterecken',
+  Rounded: 'Abgerundet',
+  Square: 'Eckig',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Abgerundet lässt das Geöffnete als Karte im Fenster schweben; Eckig hält es bündig.',
+  'Tab preview delay': 'Verzögerung der Tab-Vorschau',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Wie lange der Zeiger auf einem Tab ruht, bevor seine Vorschau erscheint.',
   'Accent: {name}': 'Akzent: {name}',
   Violet: 'Violett',
   Blue: 'Blau',

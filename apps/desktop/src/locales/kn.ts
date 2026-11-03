@@ -561,6 +561,14 @@ export const kn: Dictionary = {
   'Actual size': 'ನಿಜ ಗಾತ್ರ',
   // Appearance
   Accent: 'ಆಕ್ಸೆಂಟ್ ಬಣ್ಣ',
+  'Window corners': 'ವಿಂಡೋ ಮೂಲೆಗಳು',
+  Rounded: 'ದುಂಡಾದ',
+  Square: 'ಚೌಕ',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'ದುಂಡಾದವು ತೆರೆದಿರುವುದನ್ನು ವಿಂಡೋ ಒಳಗಿನ ಕಾರ್ಡ್‌ನಲ್ಲಿ ತೇಲಿಸುತ್ತದೆ; ಚೌಕವು ಅದನ್ನು ಅಂಚಿಗೆ ತಾಗಿಸಿ ಇಡುತ್ತದೆ.',
+  'Tab preview delay': 'ಟ್ಯಾಬ್ ಮುನ್ನೋಟದ ವಿಳಂಬ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'ಮುನ್ನೋಟ ತೋರುವ ಮೊದಲು ಪಾಯಿಂಟರ್ ಟ್ಯಾಬ್ ಮೇಲೆ ಎಷ್ಟು ಹೊತ್ತು ಇರಬೇಕು.',
   'Accent: {name}': 'ಆಕ್ಸೆಂಟ್: {name}',
   Violet: 'ನೇರಳೆ',
   Blue: 'ನೀಲಿ',

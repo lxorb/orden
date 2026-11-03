@@ -555,6 +555,14 @@ export const am: Dictionary = {
   'Actual size': 'እውነተኛ መጠን',
   // Appearance
   Accent: 'የማጉላት ቀለም',
+  'Window corners': 'የመስኮት ማዕዘኖች',
+  Rounded: 'የተጠጋጋ',
+  Square: 'ካሬ',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'የተጠጋጋ የተከፈተውን በመስኮቱ ውስጥ ባለ ካርድ ላይ ያንሳፍፋል፤ ካሬ ጠርዝ ላይ ያቆየዋል።',
+  'Tab preview delay': 'የትር ቅድመ እይታ መዘግየት',
+  'How long the pointer rests on a tab before its preview shows.':
+    'ቅድመ እይታው ከመታየቱ በፊት ጠቋሚው በትሩ ላይ የሚያርፍበት ጊዜ።',
   'Accent: {name}': 'ማጉላት: {name}',
   Violet: 'ወይንጠጅ',
   Blue: 'ሰማያዊ',

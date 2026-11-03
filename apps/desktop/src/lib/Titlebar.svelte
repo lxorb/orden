@@ -262,7 +262,7 @@
        which runs down to the bottom of the bar - covers it and becomes one surface
        with what is below: Chrome's active tab. See Tabs.svelte. */
     background: var(--tab-frame);
-    box-shadow: inset 0 -1px var(--line);
+    box-shadow: inset 0 -1px var(--chrome-seam);
   }
 
   /* With tabs in it, the strip draws the line, leaving the open tab out. */

@@ -421,7 +421,7 @@ async function hoverOver(tab: import('../../src/lib/workspace.svelte').Tab) {
   pane.setAttribute('data-pane', tab.paneId)
   pane.setAttribute('data-box', JSON.stringify({ x: 0, y: 0, width: 800, height: 600 }))
   document.body.append(pane)
-  hovering.enter({ tab, box: { left: 100, right: 300, bottom: 38 }, widest: 238, focused: true })
+  hovering.enter({ tab, box: { left: 100, right: 300, bottom: 38 }, focused: true })
   await frames()
   return () => hovering.hush()
 }
@@ -469,7 +469,7 @@ test('a hover card sliding on to the next tab takes its cut with it', async () =
   const done = await hoverOver(tab)
   expect(hollow()).toMatchObject({ x: 100 })
 
-  hovering.enter({ tab, box: { left: 420, right: 620, bottom: 38 }, widest: 238, focused: true })
+  hovering.enter({ tab, box: { left: 420, right: 620, bottom: 38 }, focused: true })
   await frames()
   expect(hovering.card?.sliding).toBe(true)
   expect(hollow()).toMatchObject({ x: 420 })

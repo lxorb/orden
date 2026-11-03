@@ -113,6 +113,34 @@
      round button wrote its own 18px, which is this at 56. */
   --radius-third: 0.32;
 
+  /* The window's frame (#1088): what is open - the panes, each a card of its own in a
+     split - floats a few pixels in from the window's chrome with rounded corners, and
+     the top bar and the sidebars are one surface round it with no line between them,
+     as Firefox draws its window. Every surface that touches the frame reads these and
+     nothing else: a pane, a split's gap, a web page's corners, a sidebar that floats,
+     the tab overview's windows. The Corners setting writes them (corners.ts): Rounded,
+     these, and Square, the window as it was - flush, square, divided by lines.
+
+     `--card-radius` is the card's corner and `--card-inset` how far it stands in from
+     the chrome; `--card-gap` the room between two cards of a split, which is a line's
+     pixel when there are no cards; `--card-edge` and `--card-shadow` what sets a card
+     off the chrome; `--card-room` how far what floats in a card's corner keeps from it,
+     so the corner never cuts it. `--chrome-ground` is the one surface the bar and the
+     sidebars stand on, `--chrome-seam` the line drawn between them and what is open,
+     `--side-ground` a sidebar's own ground over it and `--strip-line` the line under a
+     strip of tabs: unset for the theme's own (`initial`, which a `var()` reads as its
+     fallback). */
+  --card-radius: 10px;
+  --card-inset: 6px;
+  --card-gap: 6px;
+  --card-edge: var(--line);
+  --card-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  --card-room: calc(var(--card-radius) * 0.3);
+  --chrome-ground: var(--tab-frame);
+  --chrome-seam: transparent;
+  --side-ground: transparent;
+  --strip-line: transparent;
+
   /* How wide one column of a stacked pane is, and how wide the active one is. Two
      numbers rather than a share of the pane: a column is a column of words, and what
      makes it readable is its own width and not how many of them there happen to be. The

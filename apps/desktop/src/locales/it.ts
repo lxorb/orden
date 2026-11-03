@@ -567,6 +567,14 @@ export const it: Dictionary = {
   'Actual size': 'Dimensione reale',
   // Appearance
   Accent: 'Accento',
+  'Window corners': 'Angoli della finestra',
+  Rounded: 'Arrotondati',
+  Square: 'Squadrati',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Arrotondati fa fluttuare ciò che è aperto in una scheda dentro la finestra; Squadrati lo tiene a filo.',
+  'Tab preview delay': 'Ritardo dell’anteprima delle schede',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Quanto il puntatore resta su una scheda prima che compaia l’anteprima.',
   'Accent: {name}': 'Accento: {name}',
   Violet: 'Viola',
   Blue: 'Blu',

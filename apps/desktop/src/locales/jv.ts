@@ -554,6 +554,14 @@ export const jv: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna panandes',
+  'Window corners': 'Pojok jendhela',
+  Rounded: 'Bunder',
+  Square: 'Kothak',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Bunder ngambangake sing kabukak ing kertu ing jero jendhela; Kothak njaga rata.',
+  'Tab preview delay': 'Wektu tundha pratinjau tab',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Suwene pointer mandheg ing tab sadurunge pratinjaune katon.',
   'Accent: {name}': 'Panandes: {name}',
   Violet: 'Wungu',
   Blue: 'Biru',

@@ -1,6 +1,7 @@
 import { contrastCss } from '@orden/themes/contrast'
 import { everySurface } from '@orden/themes/write'
 import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
+import { cornersSetting } from './corners'
 import { tintSystemBars } from './insets'
 import { log } from './log'
 import { startup } from './startup.svelte'
@@ -200,7 +201,7 @@ const MORE = '(prefers-contrast: more)'
 
 /** The app's own settings, a function because their labels follow the language. */
 export function appSettings(): ThemeSetting[] {
-  return [accentSetting()]
+  return [accentSetting(), cornersSetting()]
 }
 
 function isValue(one: unknown): one is ThemeValue {

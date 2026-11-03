@@ -329,9 +329,10 @@ so a width change lays out that one tab and nothing beside it.
   window's material and every pane paints its own paper, so the merge is exact
   there too; and a web tab's fill is its page's own colour, the bar's, so the tab,
   the bar and the page are one surface (docs/design.md, Glass).
-- **Hover cards are Chrome's**, read off `tab_hover_card_controller.cc`: the first waits 300 ms
-  at a pinned tab's width and 800 at the standard one on a logarithmic scale, measured on the
-  widest tab of the strip, and half a second more once every name is whole; the next tab's
+- **Hover cards are Chrome's**, read off `tab_hover_card_controller.cc`, but for the wait
+  before the first: Chrome's grew with the tabs' width from 300 ms to 1.3 s, which felt as if
+  the card had not noticed (#1088), so it is the Tab preview delay in General, half a second
+  by default (Firefox's for a tooltip), from none to two seconds; the next tab's
   comes at once and the card slides across, 200 ms; back on the strip within 300 ms of leaving
   it, at once; a tab the keyboard arrives at, at once. The name in two lines, where the file
   lives (its space and folders) or the site's host - with, for a page of another space than

@@ -1,25 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { fromOf, showDelay, siteOf, spot, whereOf } from './card'
-import { WIDTH } from './layout'
-
-describe("the card's wait", () => {
-  test("is Chrome's 300 ms while the tabs are no wider than a pinned one", () => {
-    expect(showDelay(WIDTH.pinned)).toBe(300)
-    expect(showDelay(20)).toBe(300)
-  })
-
-  test('grows on a logarithmic scale towards 800 ms, fastest at the narrow end', () => {
-    const narrow = showDelay(WIDTH.pinned + 20) - showDelay(WIDTH.pinned)
-    const wide = showDelay(200) - showDelay(180)
-    expect(narrow).toBeGreaterThan(wide)
-    expect(showDelay(WIDTH.standard - 1)).toBeLessThanOrEqual(800)
-    expect(showDelay(WIDTH.standard - 1)).toBeGreaterThan(780)
-  })
-
-  test('and half a second more once every name is whole on its tab', () => {
-    expect(showDelay(WIDTH.standard)).toBe(1300)
-  })
-})
+import { fromOf, siteOf, spot, whereOf } from './card'
 
 describe("the card's place", () => {
   const anchor = { left: 100, right: 300, bottom: 38 }

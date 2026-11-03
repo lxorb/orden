@@ -557,6 +557,14 @@ export const hi: Dictionary = {
   'Actual size': 'वास्तविक आकार',
   // Appearance
   Accent: 'एक्सेंट',
+  'Window corners': 'विंडो के कोने',
+  Rounded: 'गोल',
+  Square: 'चौकोर',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'गोल खुली चीज़ को विंडो के अंदर एक कार्ड में तैराता है; चौकोर उसे किनारों से सटा रखता है।',
+  'Tab preview delay': 'टैब पूर्वावलोकन की देरी',
+  'How long the pointer rests on a tab before its preview shows.':
+    'पूर्वावलोकन दिखने से पहले पॉइंटर टैब पर कितनी देर रुकता है।',
   'Accent: {name}': 'एक्सेंट: {name}',
   Violet: 'बैंगनी',
   Blue: 'नीला',

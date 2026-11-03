@@ -572,6 +572,14 @@ export const ptPT: Dictionary = {
   'Actual size': 'Tamanho real',
   // Appearance
   Accent: 'Destaque',
+  'Window corners': 'Cantos da janela',
+  Rounded: 'Arredondados',
+  Square: 'Quadrados',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Arredondados faz o que está aberto flutuar num cartão dentro da janela; Quadrados mantém-no rente às margens.',
+  'Tab preview delay': 'Atraso da pré-visualização de separadores',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Quanto tempo o ponteiro fica sobre um separador antes de a pré-visualização aparecer.',
   'Accent: {name}': 'Destaque: {name}',
   Violet: 'Violeta',
   Blue: 'Azul',

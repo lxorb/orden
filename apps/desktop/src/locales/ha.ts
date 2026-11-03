@@ -562,6 +562,14 @@ export const ha: Dictionary = {
   'Actual size': 'Girman gaske',
   // Appearance
   Accent: 'Launin nuni',
+  'Window corners': 'Kusurwoyin taga',
+  Rounded: 'Mai zagaye',
+  Square: 'Mai murabba’i',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Mai zagaye yana sa abin da aka buɗe ya yi shawagi a cikin kati a cikin taga; Mai murabba’i yana barin shi a gefe.',
+  'Tab preview delay': 'Jinkirin samfoti na shafi',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Tsawon lokacin da mai nuni zai tsaya a kan shafi kafin samfotinsa ya bayyana.',
   'Accent: {name}': 'Launin nuni: {name}',
   Violet: 'Shuɗin kore',
   Blue: 'Shuɗi',

@@ -554,6 +554,14 @@ export const zhHans: Dictionary = {
   'Actual size': '实际大小',
   // Appearance
   Accent: '强调色',
+  'Window corners': '窗口圆角',
+  Rounded: '圆角',
+  Square: '直角',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    '圆角让打开的内容浮在窗口内的卡片中；直角让它贴边。',
+  'Tab preview delay': '标签页预览延迟',
+  'How long the pointer rests on a tab before its preview shows.':
+    '指针在标签页上停留多久后显示预览。',
   'Accent: {name}': '强调色：{name}',
   Violet: '紫色',
   Blue: '蓝色',

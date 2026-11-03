@@ -589,6 +589,14 @@ export const ar: Dictionary = {
   'Actual size': 'الحجم الفعلي',
   // Appearance
   Accent: 'اللون المميز',
+  'Window corners': 'زوايا النافذة',
+  Rounded: 'مستديرة',
+  Square: 'مربعة',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'المستديرة تعرض المحتوى المفتوح في بطاقة عائمة داخل النافذة، والمربعة تبقيه ملاصقًا للحواف.',
+  'Tab preview delay': 'تأخير معاينة علامة التبويب',
+  'How long the pointer rests on a tab before its preview shows.':
+    'المدة التي يستقر فيها المؤشر على علامة التبويب قبل ظهور معاينتها.',
   'Accent: {name}': 'اللون المميز: {name}',
   Violet: 'بنفسجي',
   Blue: 'أزرق',

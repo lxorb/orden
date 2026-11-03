@@ -1447,10 +1447,13 @@
     transition: background var(--dur-slow) var(--ease-out);
   }
 
+  /* The chrome round what is open: one surface for the top bar and the sidebars, which
+     the panes' cards float on (#1088; the frame block in tokens.css). */
   .middle {
     flex: 1;
     min-height: 0;
     display: flex;
+    background: var(--chrome-ground);
   }
 
   .panels {
@@ -1488,6 +1491,9 @@
     min-width: 0;
     min-height: 0;
     display: flex;
+    /* In from the chrome on every side but the bar's, whose strip the card's open tab
+       stands on. */
+    padding: 0 var(--card-inset) var(--card-inset);
   }
 
   .panes.under-pad {
@@ -1551,6 +1557,18 @@
      the bars that have gone. */
   main.full .panes {
     padding: var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left);
+  }
+
+  /* No card where the whole screen is the note, and none on a phone or a tablet, whose
+     screen is all the note there is room for: flush and square, as the window was. */
+  main.full,
+  :global([data-touch]) main {
+    --card-radius: 0px;
+    --card-inset: 0px;
+    --card-gap: 1px;
+    --card-edge: transparent;
+    --card-shadow: none;
+    --chrome-seam: var(--line);
   }
 
   /* A thumb's target rather than a pointer's; see FullscreenLeave.svelte. */

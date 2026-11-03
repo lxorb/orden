@@ -20,6 +20,15 @@
     "default": "",
     "description": "The face notes are written in; any font installed here, by its name."
   },
+  "appearance.corners": {
+    "type": "string",
+    "enum": [
+      "rounded",
+      "square"
+    ],
+    "default": "rounded",
+    "description": "Rounded floats what is open in a card inside the window; Square keeps it flush."
+  },
   "appearance.essentials": {
     "type": "string",
     "enum": [
@@ -405,6 +414,13 @@
     "type": "boolean",
     "default": true,
     "description": "Two fingers sideways on the touchpad go back and forward."
+  },
+  "general.tabPreviewDelay": {
+    "type": "number",
+    "min": 0,
+    "max": 2000,
+    "default": 500,
+    "description": "How long the pointer rests on a tab before its preview shows."
   },
   "general.terminalTextSize": {
     "type": "number",

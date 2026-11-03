@@ -554,6 +554,14 @@ export const id: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna aksen',
+  'Window corners': 'Sudut jendela',
+  Rounded: 'Membulat',
+  Square: 'Persegi',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Membulat mengapungkan yang terbuka dalam kartu di dalam jendela; Persegi membuatnya rata.',
+  'Tab preview delay': 'Jeda pratinjau tab',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Berapa lama penunjuk berada di atas tab sebelum pratinjaunya muncul.',
   'Accent: {name}': 'Aksen: {name}',
   Violet: 'Violet',
   Blue: 'Biru',

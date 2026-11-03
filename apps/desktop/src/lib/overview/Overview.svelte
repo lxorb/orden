@@ -326,7 +326,7 @@
     const slot = laid.slots.find((one) => one.id === id)
     if (!flight || !parts || !slot) return
     const pose = flight.pose
-    const styles = drawn(pose, slot.w, slot.h)
+    const styles = drawn(pose, slot.w, slot.h, corner)
     Object.assign(parts.window.style, styles.window)
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
@@ -362,11 +362,21 @@
     fly()
   }
 
+  /** A window's corner: the card's, read as the layer comes up (#1088). */
+  let corner = 0
+
+  function cardCorner(): number {
+    return (
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-radius')) || 0
+    )
+  }
+
   /** The layer comes up: every pane measured and copied while it is still itself, the
    *  windows put where their tabs are, and sent out. */
   function enter() {
     const again = shown
     if (!again) {
+      corner = cardCorner()
       lookAtSpace()
       measure()
       const copies: Record<string, HTMLElement> = {}

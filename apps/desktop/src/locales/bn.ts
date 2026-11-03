@@ -557,6 +557,14 @@ export const bn: Dictionary = {
   'Actual size': 'আসল আকার',
   // Appearance
   Accent: 'অ্যাকসেন্ট',
+  'Window corners': 'উইন্ডোর কোণ',
+  Rounded: 'গোলাকার',
+  Square: 'বর্গাকার',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'গোলাকার খোলা জিনিসকে উইন্ডোর ভেতরে একটি কার্ডে ভাসিয়ে রাখে; বর্গাকার এটিকে কিনারায় লাগিয়ে রাখে।',
+  'Tab preview delay': 'ট্যাব প্রিভিউয়ের বিলম্ব',
+  'How long the pointer rests on a tab before its preview shows.':
+    'প্রিভিউ দেখানোর আগে পয়েন্টার কতক্ষণ ট্যাবের ওপর থাকবে।',
   'Accent: {name}': 'অ্যাকসেন্ট: {name}',
   Violet: 'বেগুনি',
   Blue: 'নীল',

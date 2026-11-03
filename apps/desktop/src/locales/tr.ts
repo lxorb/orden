@@ -558,6 +558,14 @@ export const tr: Dictionary = {
   'Actual size': 'Gerçek boyut',
   // Appearance
   Accent: 'Vurgu rengi',
+  'Window corners': 'Pencere köşeleri',
+  Rounded: 'Yuvarlak',
+  Square: 'Köşeli',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Yuvarlak, açık olanı pencerenin içinde bir kartta yüzdürür; Köşeli onu kenarlara bitişik tutar.',
+  'Tab preview delay': 'Sekme önizleme gecikmesi',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Önizleme görünmeden önce işaretçinin sekme üzerinde ne kadar durduğu.',
   'Accent: {name}': 'Vurgu rengi: {name}',
   Violet: 'Mor',
   Blue: 'Mavi',

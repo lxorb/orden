@@ -554,6 +554,14 @@ export const ja: Dictionary = {
   'Actual size': '実際のサイズ',
   // Appearance
   Accent: 'アクセント',
+  'Window corners': 'ウィンドウの角',
+  Rounded: '丸',
+  Square: '四角',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    '丸は開いている内容をウィンドウ内のカードに浮かべます。四角は端にぴったり付けます。',
+  'Tab preview delay': 'タブのプレビューまでの時間',
+  'How long the pointer rests on a tab before its preview shows.':
+    'タブにポインターを置いてからプレビューが表示されるまでの時間です。',
   'Accent: {name}': 'アクセント: {name}',
   Violet: 'バイオレット',
   Blue: 'ブルー',

@@ -554,6 +554,14 @@ export const vi: Dictionary = {
   'Actual size': 'Cỡ thật',
   // Appearance
   Accent: 'Màu nhấn',
+  'Window corners': 'Góc cửa sổ',
+  Rounded: 'Bo tròn',
+  Square: 'Vuông',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Bo tròn đặt nội dung đang mở nổi trong một thẻ bên trong cửa sổ; Vuông giữ nó sát mép.',
+  'Tab preview delay': 'Độ trễ xem trước thẻ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Thời gian con trỏ dừng trên một thẻ trước khi bản xem trước hiện ra.',
   'Accent: {name}': 'Màu nhấn: {name}',
   Violet: 'Tím',
   Blue: 'Xanh lam',

@@ -560,6 +560,14 @@ export const pa: Dictionary = {
   'Actual size': 'ਅਸਲੀ ਆਕਾਰ',
   // Appearance
   Accent: 'ਉਭਾਰ ਰੰਗ',
+  'Window corners': 'ਵਿੰਡੋ ਦੇ ਕੋਨੇ',
+  Rounded: 'ਗੋਲ',
+  Square: 'ਚੌਰਸ',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'ਗੋਲ ਖੁੱਲ੍ਹੀ ਚੀਜ਼ ਨੂੰ ਵਿੰਡੋ ਦੇ ਅੰਦਰ ਇੱਕ ਕਾਰਡ ਵਿੱਚ ਤੈਰਾਉਂਦਾ ਹੈ; ਚੌਰਸ ਇਸਨੂੰ ਕਿਨਾਰਿਆਂ ਨਾਲ ਲਗਾ ਕੇ ਰੱਖਦਾ ਹੈ।',
+  'Tab preview delay': 'ਟੈਬ ਝਲਕ ਦੀ ਦੇਰੀ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'ਝਲਕ ਦਿਖਣ ਤੋਂ ਪਹਿਲਾਂ ਪੁਆਇੰਟਰ ਟੈਬ ਉੱਤੇ ਕਿੰਨੀ ਦੇਰ ਰੁਕਦਾ ਹੈ।',
   'Accent: {name}': 'ਉਭਾਰ: {name}',
   Violet: 'ਬੈਂਗਣੀ',
   Blue: 'ਨੀਲਾ',

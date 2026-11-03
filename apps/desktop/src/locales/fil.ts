@@ -562,6 +562,14 @@ export const fil: Dictionary = {
   'Actual size': 'Tunay na laki',
   // Appearance
   Accent: 'Kulay tampok',
+  'Window corners': 'Mga sulok ng window',
+  Rounded: 'Bilugan',
+  Square: 'Parisukat',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Pinalulutang ng Bilugan ang nakabukas sa isang card sa loob ng window; pinananatili itong pantay ng Parisukat.',
+  'Tab preview delay': 'Antala ng preview ng tab',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Gaano katagal nakapatong ang pointer sa tab bago lumabas ang preview nito.',
   'Accent: {name}': 'Kulay tampok: {name}',
   Violet: 'Lila',
   Blue: 'Asul',

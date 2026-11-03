@@ -569,6 +569,14 @@ export const fr: Dictionary = {
   'Actual size': 'Taille réelle',
   // Appearance
   Accent: 'Couleur',
+  'Window corners': 'Coins de la fenêtre',
+  Rounded: 'Arrondis',
+  Square: 'Carrés',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Arrondis fait flotter le contenu ouvert dans une carte à l’intérieur de la fenêtre ; Carrés le garde collé aux bords.',
+  'Tab preview delay': 'Délai de l’aperçu des onglets',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Le temps pendant lequel le pointeur reste sur un onglet avant que son aperçu apparaisse.',
   'Accent: {name}': 'Couleur : {name}',
   Violet: 'Violet',
   Blue: 'Bleu',

@@ -554,6 +554,14 @@ export const th: Dictionary = {
   'Actual size': 'ขนาดจริง',
   // Appearance
   Accent: 'สีเน้น',
+  'Window corners': 'มุมหน้าต่าง',
+  Rounded: 'มน',
+  Square: 'เหลี่ยม',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'มนทำให้สิ่งที่เปิดอยู่ลอยอยู่ในการ์ดภายในหน้าต่าง ส่วนเหลี่ยมจะให้ชิดขอบ',
+  'Tab preview delay': 'ระยะหน่วงของภาพตัวอย่างแท็บ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'ระยะเวลาที่ตัวชี้ต้องค้างบนแท็บก่อนภาพตัวอย่างจะแสดง',
   'Accent: {name}': 'สีเน้น: {name}',
   Violet: 'ม่วง',
   Blue: 'น้ำเงิน',

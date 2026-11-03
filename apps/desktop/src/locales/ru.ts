@@ -580,6 +580,14 @@ export const ru: Dictionary = {
   'Actual size': 'Реальный размер',
   // Appearance
   Accent: 'Акцент',
+  'Window corners': 'Углы окна',
+  Rounded: 'Скруглённые',
+  Square: 'Прямые',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Скруглённые помещают открытое в карточку внутри окна; прямые оставляют его вровень с краями.',
+  'Tab preview delay': 'Задержка превью вкладки',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Сколько указатель должен пробыть на вкладке, прежде чем появится её превью.',
   'Accent: {name}': 'Акцент: {name}',
   Violet: 'Фиолетовый',
   Blue: 'Синий',

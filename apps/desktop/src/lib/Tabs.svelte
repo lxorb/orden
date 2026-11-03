@@ -773,7 +773,7 @@
   let cards: Promise<typeof import('./tab-strip/hover-card.svelte')> | undefined
   const card = (tab: Tab, node: Element | null, focused = false) =>
     void (cards ??= import('./tab-strip/hover-card.svelte')).then(({ hovering }) =>
-      node ? hovering.restOn(tab, node, Math.max(0, ...widths), focused) : hovering.leave(tab.id),
+      node ? hovering.restOn(tab, node, focused) : hovering.leave(tab.id),
     )
 </script>
 
@@ -1154,7 +1154,7 @@
     min-width: 0;
     flex: 1 1 0;
     /* The frame's, though the open tab may wear the other scheme. */
-    --tab-line: var(--tab-edge);
+    --tab-line: var(--strip-line, var(--tab-edge));
   }
 
   /* The tabs are placed by hand inside this box, so it is only a box: as tall as

@@ -555,6 +555,14 @@ export const my: Dictionary = {
   'Actual size': 'အမှန်အရွယ်',
   // Appearance
   Accent: 'အသားပေးအရောင်',
+  'Window corners': 'ဝင်းဒိုး ထောင့်များ',
+  Rounded: 'လုံးဝိုင်း',
+  Square: 'လေးထောင့်',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'လုံးဝိုင်းသည် ဖွင့်ထားသည်ကို ဝင်းဒိုးအတွင်း ကတ်တစ်ခုပေါ်တွင် ပေါ်နေစေသည်၊ လေးထောင့်သည် အစွန်းနှင့် ကပ်ထားသည်။',
+  'Tab preview delay': 'တဘ် အစမ်းကြည့် နှောင့်နှေးချိန်',
+  'How long the pointer rests on a tab before its preview shows.':
+    'အစမ်းကြည့် ပေါ်လာမီ ညွှန်တံသည် တဘ်ပေါ်တွင် ကြာကြာနေရမည့်အချိန်။',
   'Accent: {name}': 'အသားပေးအရောင်: {name}',
   Violet: 'ခရမ်း',
   Blue: 'အပြာ',

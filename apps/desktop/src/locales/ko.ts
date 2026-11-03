@@ -554,6 +554,14 @@ export const ko: Dictionary = {
   'Actual size': '실제 크기',
   // Appearance
   Accent: '강조색',
+  'Window corners': '창 모서리',
+  Rounded: '둥글게',
+  Square: '각지게',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    '둥글게는 열린 내용을 창 안의 카드에 띄웁니다. 각지게는 가장자리에 붙여 둡니다.',
+  'Tab preview delay': '탭 미리보기 지연',
+  'How long the pointer rests on a tab before its preview shows.':
+    '미리보기가 나타나기 전에 포인터가 탭 위에 머무는 시간입니다.',
   'Accent: {name}': '강조색: {name}',
   Violet: '보라',
   Blue: '파랑',

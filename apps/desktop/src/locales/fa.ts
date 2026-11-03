@@ -557,6 +557,14 @@ export const fa: Dictionary = {
   'Actual size': 'اندازه واقعی',
   // Appearance
   Accent: 'رنگ تکیه',
+  'Window corners': 'گوشه‌های پنجره',
+  Rounded: 'گرد',
+  Square: 'مربعی',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'گرد محتوای باز را در کارتی شناور درون پنجره نشان می‌دهد؛ مربعی آن را هم‌تراز لبه‌ها نگه می‌دارد.',
+  'Tab preview delay': 'تأخیر پیش‌نمایش زبانه',
+  'How long the pointer rests on a tab before its preview shows.':
+    'مدتی که نشانگر روی زبانه می‌ماند تا پیش‌نمایش آن نمایش داده شود.',
   'Accent: {name}': 'تکیه: {name}',
   Violet: 'بنفش',
   Blue: 'آبی',

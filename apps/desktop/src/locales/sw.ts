@@ -562,6 +562,14 @@ export const sw: Dictionary = {
   'Actual size': 'Ukubwa halisi',
   // Appearance
   Accent: 'Rangi ya msisitizo',
+  'Window corners': 'Pembe za dirisha',
+  Rounded: 'Mviringo',
+  Square: 'Mraba',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Mviringo huelea kilichofunguliwa ndani ya kadi ndani ya dirisha; Mraba hukiweka sawa na kingo.',
+  'Tab preview delay': 'Muda wa kusubiri onyesho la kichupo',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Muda ambao kiashiria hukaa kwenye kichupo kabla onyesho lake halijaonekana.',
   'Accent: {name}': 'Msisitizo: {name}',
   Violet: 'Urujuani',
   Blue: 'Bluu',

@@ -557,6 +557,14 @@ export const ur: Dictionary = {
   'Actual size': 'اصل سائز',
   // Appearance
   Accent: 'نمایاں رنگ',
+  'Window corners': 'ونڈو کے کونے',
+  Rounded: 'گول',
+  Square: 'چوکور',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'گول کھلی چیز کو ونڈو کے اندر ایک کارڈ میں تیراتا ہے؛ چوکور اسے کناروں سے لگا رکھتا ہے۔',
+  'Tab preview delay': 'ٹیب پیش نظارہ کی تاخیر',
+  'How long the pointer rests on a tab before its preview shows.':
+    'پیش نظارہ دکھنے سے پہلے پوائنٹر ٹیب پر کتنی دیر رکتا ہے۔',
   'Accent: {name}': 'نمایاں رنگ: {name}',
   Violet: 'بنفشی',
   Blue: 'نیلا',

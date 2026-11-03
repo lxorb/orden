@@ -558,6 +558,14 @@ export const ta: Dictionary = {
   'Actual size': 'உண்மை அளவு',
   // Appearance
   Accent: 'சிறப்பு நிறம்',
+  'Window corners': 'சாளர மூலைகள்',
+  Rounded: 'வளைந்த',
+  Square: 'சதுரம்',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'வளைந்தது திறந்ததைச் சாளரத்துக்குள் ஒரு அட்டையில் மிதக்கச் செய்கிறது; சதுரம் அதை விளிம்பில் ஒட்டியே வைக்கிறது.',
+  'Tab preview delay': 'தாவல் முன்னோட்டத் தாமதம்',
+  'How long the pointer rests on a tab before its preview shows.':
+    'முன்னோட்டம் தோன்றும் முன் சுட்டி தாவலின் மேல் எவ்வளவு நேரம் இருக்க வேண்டும்.',
   'Accent: {name}': 'சிறப்பு நிறம்: {name}',
   Violet: 'ஊதா',
   Blue: 'நீலம்',

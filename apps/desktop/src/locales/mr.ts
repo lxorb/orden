@@ -557,6 +557,14 @@ export const mr: Dictionary = {
   'Actual size': 'खरा आकार',
   // Appearance
   Accent: 'ॲक्सेंट',
+  'Window corners': 'विंडोचे कोपरे',
+  Rounded: 'गोलाकार',
+  Square: 'चौकोनी',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'गोलाकार उघडलेले विंडोतील कार्डमध्ये तरंगते ठेवते; चौकोनी ते कडेला लागून ठेवते.',
+  'Tab preview delay': 'टॅब पूर्वावलोकनाचा विलंब',
+  'How long the pointer rests on a tab before its preview shows.':
+    'पूर्वावलोकन दिसण्यापूर्वी पॉइंटर टॅबवर किती वेळ थांबतो.',
   'Accent: {name}': 'ॲक्सेंट: {name}',
   Violet: 'जांभळा',
   Blue: 'निळा',

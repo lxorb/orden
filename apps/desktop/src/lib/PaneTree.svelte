@@ -123,7 +123,7 @@
    *  the whole and the pixel besides made the split a pixel wider than its room, under
    *  the right side by that much (#1076). */
   const share = (split: Split) =>
-    `minmax(0, ${split.fraction.toFixed(5)}fr) 1px minmax(0, ${(1 - split.fraction).toFixed(5)}fr)`
+    `minmax(0, ${split.fraction.toFixed(5)}fr) var(--card-gap) minmax(0, ${(1 - split.fraction).toFixed(5)}fr)`
 </script>
 
 {#if split}
@@ -185,19 +185,29 @@
     transition: none;
   }
 
+  /* Not clipped: each pane clips what it holds to its own card, and a card's shadow
+     falls into the gap. */
   .side {
     display: flex;
     min-width: 0;
     min-height: 0;
-    overflow: hidden;
   }
 
-  /* A line one pixel wide, with three pixels either side of it to take hold of:
-     a handle you can see is a handle in the way. */
+  /* The room between two cards, or a line one pixel wide where there are none, with
+     three pixels either side of it to take hold of: a handle you can see is a handle in
+     the way. Taken hold of, a line down its middle. */
   .divider {
     position: relative;
-    background: var(--line);
-    transition: background var(--dur-fast) var(--ease-out);
+    background: var(--chrome-seam) center / 2px 100% no-repeat;
+    background-image: linear-gradient(
+      var(--divider-lit, transparent),
+      var(--divider-lit, transparent)
+    );
+    transition: background-color var(--dur-fast) var(--ease-out);
+  }
+
+  .split.down > .divider {
+    background-size: 100% 2px;
   }
 
   .divider::after {
@@ -215,6 +225,6 @@
   .divider:hover,
   .divider:focus-visible,
   .split.sliding > .divider {
-    background: var(--accent);
+    --divider-lit: var(--accent);
   }
 </style>

@@ -580,6 +580,14 @@ export const uk: Dictionary = {
   'Actual size': 'Справжній розмір',
   // Appearance
   Accent: 'Акцент',
+  'Window corners': 'Кути вікна',
+  Rounded: 'Заокруглені',
+  Square: 'Прямі',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Заокруглені розміщують відкрите в картці всередині вікна; прямі тримають його врівень із краями.',
+  'Tab preview delay': 'Затримка попереднього перегляду вкладки',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Скільки вказівник має пробути на вкладці, перш ніж з’явиться її попередній перегляд.',
   'Accent: {name}': 'Акцент: {name}',
   Violet: 'Фіолетовий',
   Blue: 'Синій',

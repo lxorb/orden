@@ -558,6 +558,14 @@ export const gsw: Dictionary = {
   'Actual size': 'Originalgrössi',
   // Appearance
   Accent: 'Akzänt',
+  'Window corners': 'Fänschterecke',
+  Rounded: 'Abgrundet',
+  Square: 'Eggig',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Abgrundet lot s Offeni als Charte im Fänschter schwebe; Eggig hebts bündig.',
+  'Tab preview delay': 'Verzögerig vo de Tab-Vorschau',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Wie lang de Zeiger uf eme Tab ruet, bevor sini Vorschau chunnt.',
   'Accent: {name}': 'Akzänt: {name}',
   Violet: 'Violett',
   Blue: 'Blau',

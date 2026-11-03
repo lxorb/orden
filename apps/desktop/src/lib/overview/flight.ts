@@ -27,7 +27,9 @@ export interface Pose {
 const KEYS = ['x', 'y', 'w', 'h', 'tab', 'alpha'] as const
 
 /** A window's corner, and a tab's. */
-const WINDOW_RADIUS = 14
+/** A tab's corner, which a window has while it is still tab-shaped. A window's own is
+ *  the card's, the frame's token (`--card-radius` in tokens.css, #1088): a pane's card
+ *  and the window it becomes are one shape. */
 const TAB_RADIUS = 8
 
 export class Flight {
@@ -94,11 +96,11 @@ export class Flight {
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 
 /** The styles of a window `wide` by `tall` at `pose`, and of the tab's face inside it. */
-export function drawn(pose: Pose, wide: number, tall: number) {
+export function drawn(pose: Pose, wide: number, tall: number, corner: number) {
   const sx = Math.max(pose.w, 1) / wide
   const sy = Math.max(pose.h, 1) / tall
   const tab = clamp(pose.tab)
-  const radius = WINDOW_RADIUS + (TAB_RADIUS - WINDOW_RADIUS) * tab
+  const radius = corner + (TAB_RADIUS - corner) * tab
   return {
     window: {
       transform: `translate(${pose.x}px, ${pose.y}px) scale(${sx}, ${sy})`,
