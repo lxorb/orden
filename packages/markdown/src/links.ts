@@ -450,6 +450,10 @@ export function* lines(text: string): Generator<Row> {
   }
 }
 
+function rowsOf(text: string): Row[] {
+  return [...lines(text)]
+}
+
 /** The links on one line of prose, added in the order they were written. */
 function collect(line: string, offset: number, at: number, found: FoundLink[]) {
   const here: FoundLink[] = []
@@ -665,6 +669,10 @@ function blockSection(source: string, wanted: string): string | null {
   if (!found) return null
 
   const lines = source.split('\n')
+  if (ownLine(lines[found.line] ?? '') && !(lines[found.line - 1] ?? '').trim()) {
+    return blockAbove(source, lines, found.line)
+  }
+
   let start = found.line
   let end = found.line
   while (start > 0 && (lines[start - 1] ?? '').trim()) start--
@@ -674,6 +682,27 @@ function blockSection(source: string, wanted: string): string | null {
   block[found.line - start] = (lines[found.line] ?? '').replace(BLOCK_ID, '')
 
   return block.join('\n').trimEnd()
+}
+
+/** Whether a line holds a block's name and nothing else. */
+function ownLine(line: string): boolean {
+  return line.trim().startsWith('^') && blockIdOf(line.trim()) === line.trim().slice(1)
+}
+
+/** The block a name on a line of its own stands under, past the blank lines between
+ *  them and whatever blank lines a fence holds. */
+function blockAbove(source: string, lines: readonly string[], under: number): string {
+  const rows = rowsOf(source)
+  let end = under - 1
+  while (end > 0 && !(lines[end] ?? '').trim()) end--
+
+  let start = end
+  while (start > 0 && ((lines[start - 1] ?? '').trim() || rows[start - 1]?.code)) start--
+
+  return lines
+    .slice(start, end + 1)
+    .join('\n')
+    .trimEnd()
 }
 
 /** A name no block in the note has yet. Six characters of base 36, which is two
@@ -705,6 +734,65 @@ export function blockIds(text: string): { id: string; line: number }[] {
   return found
 }
 
+/** Whether a block starting at this row takes its name on a line of its own: on the
+ *  last line of a fence, a table, maths, a rule or HTML a name is no name, and breaks
+ *  what it is written on. A closing fence with words after it closes nothing. A blank
+ *  line above it, since under a table without one it is a row. Obsidian's own rule. */
+function nameStandsApart(row: Row, next: string): boolean {
+  if (row.code) return true
+  if (/^ {0,3}(?:\||\$\$|<)/u.test(row.text)) return true
+  if (/^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,})$/u.test(row.text.trimEnd())) {
+    return true
+  }
+  return next.includes('|') && /^[\s|:-]*-[\s|:-]*$/u.test(next)
+}
+
+/** The block starting at a line, named: what the note says with the name in it, the
+ *  note as it stands when the block has one already, and null where it can have none.
+ *  `id` is asked only for a name that is going to be written. */
+export function namedBlock(
+  source: string,
+  line: number,
+  id: () => string,
+): { id: string; source: string } | null {
+  const rows = rowsOf(source)
+  const row = rows[line]
+  if (!row || row.matter) return null
+
+  // The end of the run of lines the block is; a fence's own blank lines and all, and
+  // no further than the fence.
+  let end = line
+  for (;;) {
+    const next = rows[end + 1]
+    if (!next) break
+    if (rows[end]?.code ? !next.code : !next.text.trim()) break
+    end++
+  }
+
+  const lines = source.split('\n')
+  const last = lines[end] ?? ''
+  const ending = last.endsWith('\r') ? '\r' : ''
+
+  if (nameStandsApart(row, rows[line + 1]?.text ?? '')) {
+    const written = rows.slice(end + 1).find((one) => one.text.trim())
+    const had = written && ownLine(written.text) ? blockIdOf(written.text) : null
+    if (had) return { id: had, source }
+
+    const name = id()
+    const beneath = (rows[end + 1]?.text.trim() ?? '') === '' ? [] : [ending]
+    lines.splice(end + 1, 0, ending, `^${name}${ending}`, ...beneath)
+    return { id: name, source: lines.join('\n') }
+  }
+
+  const had = blockIdOf(last)
+  if (had) return { id: had, source }
+
+  const name = id()
+  // A CRLF note's `\r` stays on the line named, as on every other.
+  lines[end] = `${last.trimEnd()} ^${name}${ending}`
+  return { id: name, source: lines.join('\n') }
+}
+
 /** One block of a note: a run of lines with blank ones around it. */
 export interface NoteBlock {
   /** The line it starts on, counting from zero. */
@@ -729,6 +817,13 @@ export function blocksOf(text: string): NoteBlock[] {
   for (const row of lines(text)) {
     if (!row.code && row.text.trim() === '') {
       current = null
+      continue
+    }
+
+    // A name on a line of its own is the block above's.
+    const above = current ? null : found.at(-1)
+    if (above && !row.code && ownLine(row.text)) {
+      above.id = blockIdOf(row.text)
       continue
     }
 

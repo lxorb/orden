@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   blockIdOf,
   blockIds,
+  blocksOf,
   embedKind,
   embedSize,
   findLinks,
@@ -17,6 +18,7 @@ import {
   isWebTarget,
   MOST_LINKS,
   linkTarget,
+  namedBlock,
   pageFragment,
   parseWikilink,
   headingsOf,
@@ -602,5 +604,56 @@ describe('a markdown link that never closes', () => {
   test('still reads a title after blanks, and blanks with no title', () => {
     const found = findLinks('[a](One.md   "title"  ) [b](<Two.md>   )')
     expect(found.map((link) => link.target)).toEqual(['One.md', 'Two.md'])
+  })
+})
+
+describe('a block name on a line of its own', () => {
+  const FENCED = 'a\n\n```\nx\n\ny\n```\n\n^abc123\n\nb\n'
+
+  test('a link to it gets the block above, whatever blank lines that holds', () => {
+    expect(sectionOf(FENCED, { heading: null, block: 'abc123' })).toBe('```\nx\n\ny\n```')
+    expect(sectionOf('| a |\n| - |\n\n^tab\n\nb', { heading: null, block: 'tab' })).toBe(
+      '| a |\n| - |',
+    )
+  })
+
+  test('a run with the name under it stays as it was', () => {
+    expect(sectionOf('a\nb\n^n\n\nc', { heading: null, block: 'n' })).toBe('a\nb')
+  })
+
+  test('belongs to that block in the list of blocks', () => {
+    expect(blocksOf(FENCED).map((one) => [one.line, one.id])).toEqual([
+      [0, null],
+      [2, 'abc123'],
+      [10, null],
+    ])
+  })
+
+  test('naming one writes it where it can be read', () => {
+    const id = () => 'new123'
+
+    expect(namedBlock('a\n\n```\nx\n\ny\n```\n\nb\n', 2, id)).toEqual({
+      id: 'new123',
+      source: 'a\n\n```\nx\n\ny\n```\n\n^new123\n\nb\n',
+    })
+    expect(namedBlock('| a |\r\n| - |\r\n', 0, id)?.source).toBe(
+      '| a |\r\n| - |\r\n\r\n^new123\r\n',
+    )
+    expect(namedBlock('---\n\nb', 0, id)?.source).toBe('---\n\n^new123\n\nb')
+    expect(namedBlock('words\nmore\n\nb\n', 0, id)?.source).toBe('words\nmore ^new123\n\nb\n')
+    expect(namedBlock('words\r\n\r\nb', 0, id)?.source).toBe('words ^new123\r\n\r\nb')
+  })
+
+  test('naming one that has a name changes nothing', () => {
+    const id = () => 'new123'
+
+    const fence = 'a\n\n```\nx\n```\n\n^old\n'
+    expect(namedBlock(fence, 2, id)).toEqual({ id: 'old', source: fence })
+    expect(namedBlock('words ^old\n', 0, id)).toEqual({ id: 'old', source: 'words ^old\n' })
+  })
+
+  test('front matter takes no name', () => {
+    expect(namedBlock('---\nt: x\n---\n\nb\n', 1, () => 'new123')).toBeNull()
+    expect(namedBlock('a', 5, () => 'new123')).toBeNull()
   })
 })

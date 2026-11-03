@@ -127,18 +127,83 @@ export function blockTarget(view: EditorView, pos: number): string | null {
     return words ? `#${words}` : null
   }
 
-  // The end of the block is where a name goes, which is where Obsidian looks for
-  // one. A fence's name goes after its closing marks, not inside the code.
-  const last = doc.lineAt(span.to)
-  const already = blockIdOf(last.text)
+  // Front matter is the note's and not a block of it: a name on its closing line
+  // would leave it unclosed.
+  if (span.kind === 'properties') return null
+
+  const last = doc.lineAt(ownEnd(view.state, span))
+  const verbatim = verbatimLines(view.state, span.from, span.to).has(last.number)
+  // Where the name would already be: under the block, or at the end of its words.
+  const under = verbatim ? writtenLine(view.state, last.number + 1, 1) : null
+  const already =
+    under && under.text.trim().startsWith('^')
+      ? blockIdOf(under.text)
+      : !verbatim && blockIdOf(last.text)
   if (already) return `#^${already}`
 
   const taken = new Set(blockIds(doc.toString()).map((one) => one.id))
   const id = freeBlockId(taken)
-  const end = last.from + last.text.trimEnd().length
 
+  if (verbatim) {
+    // On a line of its own under the block, as Obsidian writes it. A name on a closing
+    // fence closes nothing, and on a table's last row is one more cell.
+    const below = last.number < doc.lines ? doc.line(last.number + 1).text.trim() : ''
+    const insert = `\n\n^${id}${below ? '\n' : ''}`
+    view.dispatch({ changes: { from: last.to, to: last.to, insert } })
+    return `#^${id}`
+  }
+
+  const end = last.from + last.text.trimEnd().length
   view.dispatch({ changes: { from: end, to: end, insert: ` ^${id}` } })
   return `#^${id}`
+}
+
+/** Blocks whose lines are typed exactly as they stand: no shape is put on them, and
+ *  a name on one is no name. */
+const VERBATIM = new Set([
+  'FencedCode',
+  'CodeBlock',
+  'Table',
+  'BlockMath',
+  'FrontMatter',
+  'HorizontalRule',
+  'HTMLBlock',
+  'CommentBlock',
+  'LinkReference',
+])
+
+/** Which lines between two positions belong to such a block, by number. */
+function verbatimLines(state: EditorState, from: number, to: number): Set<number> {
+  const found = new Set<number>()
+
+  syntaxTree(state).iterate({
+    from,
+    to,
+    enter: (node) => {
+      if (!VERBATIM.has(node.name)) return true
+
+      const last = state.doc.lineAt(Math.min(node.to, state.doc.length)).number
+      for (let at = state.doc.lineAt(node.from).number; at <= last; at++) found.add(at)
+      return false
+    },
+  })
+
+  return found
+}
+
+/** Where a block's own words end. An item with children ends before them: a name at
+ *  the very end of it is the name of the last child. */
+function ownEnd(state: EditorState, span: BlockSpan): number {
+  if (span.kind !== 'list') return span.to
+
+  const first = state.doc.lineAt(span.from)
+  const inner = blocksIn(state, Math.min(first.to + 1, span.to), span.to).find(
+    (one) => one.from > first.to,
+  )
+  if (!inner) return span.to
+
+  const before = writtenLine(state, state.doc.lineAt(inner.from).number - 1, -1)
+  return before ? before.to : span.to
 }
 
 /** Which kinds of block hold prose, and so have a line of words that could be a
@@ -152,6 +217,10 @@ export function blockTarget(view: EditorView, pos: number): string | null {
 const PROSE = new Set<BlockKind>(['heading', 'paragraph', 'list', 'quote'])
 
 /** Every block a press acted on, as the shape that was asked for.
+ *
+ *  A heading's block is its whole section, and only its own line turns: the section
+ *  holds what the reader did not press. A list or a quote may hold code or a table,
+ *  which keep every character.
  *
  *  A heading is one line in markdown, so a block turning into one puts its first
  *  line under the hashes and leaves the rest of it as the words beneath - which is
@@ -172,9 +241,11 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
 
   for (const span of spans) {
     const first = doc.lineAt(span.from).number
-    const last = doc.lineAt(Math.min(span.to, doc.length)).number
+    const last = span.kind === 'heading' ? first : doc.lineAt(Math.min(span.to, doc.length)).number
+    const verbatim = verbatimLines(view.state, span.from, doc.line(last).to)
 
     for (let number = first; number <= last; number++) {
+      if (verbatim.has(number)) continue
       const line = doc.line(number)
       // A blank line is what makes two paragraphs two paragraphs, and a marker in
       // front of nothing is an item nobody asked for.

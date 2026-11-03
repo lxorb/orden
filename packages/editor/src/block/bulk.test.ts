@@ -6,6 +6,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { blockIds } from '@orden/markdown/links'
 import { describe, expect, test } from 'vitest'
 import {
   blockTargets,
@@ -259,6 +260,81 @@ describe('a link to several blocks', () => {
 
     expect(blockTargets(view, 0)).toEqual(['#One'])
     expect(said()).toBe(doc)
+  })
+})
+
+describe('turning a heading', () => {
+  const SECTION =
+    '# Head\n\npara\n\n- item a\n- [ ] task b\n\n> quoted\n\n```py\n# comment\n- dash\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\n## Sub\n\nunder\n'
+
+  test('into another level changes its own line and none of its section', () => {
+    const { view, said } = viewOf(SECTION, 0)
+
+    expect(turnBlocksInto(view, 0, 'heading2')).toBe(true)
+    expect(said()).toBe(SECTION.replace('# Head', '## Head'))
+  })
+
+  test('into a list makes an item of the heading, not of its section', () => {
+    const { view, said } = viewOf(SECTION, 0)
+
+    expect(turnBlocksInto(view, 0, 'bullet')).toBe(true)
+    expect(said()).toBe(SECTION.replace('# Head', '- Head'))
+  })
+
+  test('over a selection leaves the code and the table it crosses', () => {
+    const { view, said } = viewOf(SECTION, 0, SECTION.indexOf('| 1 | 2 |'))
+
+    expect(turnBlocksInto(view, 0, 'paragraph')).toBe(true)
+    expect(said()).toContain('```py\n# comment\n- dash\n```')
+    expect(said()).toContain('| a | b |\n| --- | --- |')
+    expect(said()).toContain('\nitem a\n')
+  })
+
+  test('a list item with a fence in it keeps the code', () => {
+    const doc = '- one\n\n  ```\n  - code\n  ```\n'
+    const { view, said } = viewOf(doc, 0)
+
+    expect(turnBlocksInto(view, 0, 'task')).toBe(true)
+    expect(said()).toBe('- [ ] one\n\n  ```\n  - code\n  ```\n')
+  })
+})
+
+describe('a link to a block', () => {
+  const named = (doc: string, at: string) => {
+    const pos = doc.indexOf(at)
+    const { view, said } = viewOf(doc, pos)
+    const [target] = blockTargets(view, pos)
+    return { target, said: said() }
+  }
+
+  test.each([
+    ['a fence', 'a\n\n```py\ncode\n```\n\nb\n', 'code', 'a\n\n```py\ncode\n```\n\n^ID\n\nb\n'],
+    ['a table', '| a |\n| - |\n| 1 |\n\nb\n', '| 1 |', '| a |\n| - |\n| 1 |\n\n^ID\n\nb\n'],
+    ['maths', '$$\nx\n$$\n', 'x', '$$\nx\n$$\n\n^ID\n'],
+    ['a rule', 'a\n\n---\n\nb\n', '---', 'a\n\n---\n\n^ID\n\nb\n'],
+    ['a rule with words under it', '---\nb\n', '---', '---\n\n^ID\n\nb\n'],
+    ['a fence in a quote', '> ```\n> x\n> ```\n', '> ```', '> ```\n> x\n> ```\n\n^ID\n'],
+  ])('%s takes its name on a line of its own', (_kind, doc, at, wanted) => {
+    const { target, said } = named(doc, at)
+
+    expect(target).toMatch(/^#\^[a-z0-9]+$/u)
+    expect(said).toBe(wanted.replace('^ID', target?.slice(1) ?? ''))
+    expect(blockIds(said).map((one) => one.id)).toEqual([target?.slice(2)])
+  })
+
+  test('asked twice gives the name it already has', () => {
+    const doc = 'a\n\n```\ncode\n```\n\n^abc123\n\nb\n'
+    expect(named(doc, 'code')).toEqual({ target: '#^abc123', said: doc })
+  })
+
+  test('front matter has none', () => {
+    const doc = '---\ntitle: x\n---\n\nb\n'
+    expect(named(doc, 'title')).toEqual({ target: undefined, said: doc })
+  })
+
+  test('an item with children takes it on its own line', () => {
+    const { target, said } = named('- a\n  more\n  - nested\n- b\n', '- a')
+    expect(said).toBe(`- a\n  more ${target?.slice(1) ?? ''}\n  - nested\n- b\n`)
   })
 })
 

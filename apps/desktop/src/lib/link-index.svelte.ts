@@ -46,6 +46,7 @@ import {
   isTabFile,
   isWebTarget,
   type LinkKind,
+  namedBlock,
   withoutBlockIds,
 } from '@orden/markdown/links'
 import { breathe } from './breathe'
@@ -1946,23 +1947,14 @@ class Links {
     const before = await this.wordsOf(absolute, absolute, open)
     if (before === null) return null
 
-    const lines = before.split('\n')
-    // The name goes at the end of the block, which is the last line of the run
-    // that starts at `line`.
-    let end = line
-    while (end + 1 < lines.length && (lines[end + 1] ?? '').trim()) end++
+    const named = namedBlock(before, line, () =>
+      freeBlockId(new Set(blockIds(before).map((one) => one.id))),
+    )
+    if (!named) return null
+    if (named.source === before) return named.id
 
-    const existing = blockIdOf(lines[end] ?? '')
-    if (existing) return existing
-
-    const taken = new Set(blockIds(before).map((one) => one.id))
-    const id = freeBlockId(taken)
-
-    // A CRLF note's `\r` stays on the line named, as on every other.
-    const named = lines[end] ?? ''
-    const ending = named.endsWith('\r') ? '\r' : ''
-    lines[end] = `${named.trimEnd()} ^${id}${ending}`
-    const after = lines.join('\n')
+    const id = named.id
+    const after = named.source
 
     // Taken by the document in the same breath as its words were read, for the
     // reason `retarget` gives.
