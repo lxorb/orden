@@ -391,6 +391,7 @@ export const kn: Dictionary = {
   '{at} of {count}': '{count}ರಲ್ಲಿ {at}',
   Icons: 'ಐಕಾನ್‌ಗಳು',
   Emoji: 'ಎಮೋಜಿ',
+  Brands: 'ಬ್ರ್ಯಾಂಡ್‌ಗಳು',
   'That set is not here': 'ಆ ಸೆಟ್ ಇಲ್ಲಿ ಇಲ್ಲ',
   Plain: 'ಸರಳ',
   'Nothing found': 'ಏನೂ ಸಿಗಲಿಲ್ಲ',

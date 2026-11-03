@@ -388,6 +388,7 @@ export const ms: Dictionary = {
   '{at} of {count}': '{at} daripada {count}',
   Icons: 'Ikon',
   Emoji: 'Emoji',
+  Brands: 'Jenama',
   'That set is not here': 'Set itu tiada di sini',
   Plain: 'Biasa',
   'Nothing found': 'Tiada apa-apa ditemui',

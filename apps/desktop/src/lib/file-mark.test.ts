@@ -240,7 +240,7 @@ describe('the mark a file or folder chose for itself', () => {
   /** What a file was made from is decided in one place, so no list can draw a page
    *  note made from a PDF as a blank one (#676). */
   test('and what it was made from is asked of the one place that decides it', () => {
-    expect(source).toContain('sourceMark(mark, path)')
+    expect(source).toContain('sourceMark(mark, path, url)')
     expect(source).not.toContain('holdsPaper')
   })
 

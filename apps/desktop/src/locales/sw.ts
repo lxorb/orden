@@ -392,6 +392,7 @@ export const sw: Dictionary = {
   '{at} of {count}': '{at} ya {count}',
   Icons: 'Aikoni',
   Emoji: 'Emoji',
+  Brands: 'Chapa',
   'That set is not here': 'Seti hiyo haipo hapa',
   Plain: 'Kawaida',
   'Nothing found': 'Hakuna kilichopatikana',

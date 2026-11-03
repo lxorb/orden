@@ -393,6 +393,7 @@ export const ru: Dictionary = {
   '{at} of {count}': '{at} из {count}',
   Icons: 'Значки',
   Emoji: 'Эмодзи',
+  Brands: 'Бренды',
   'That set is not here': 'Этого набора здесь нет',
   Plain: 'Однотонный',
   'Nothing found': 'Ничего не найдено',

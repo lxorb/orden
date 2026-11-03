@@ -391,6 +391,7 @@ export const tr: Dictionary = {
   '{at} of {count}': '{count} içinde {at}',
   Icons: 'Simgeler',
   Emoji: 'Emoji',
+  Brands: 'Markalar',
   'That set is not here': 'Bu takım burada yok',
   Plain: 'Düz',
   'Nothing found': 'Bir şey bulunamadı',

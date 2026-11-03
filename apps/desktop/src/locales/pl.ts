@@ -393,6 +393,7 @@ export const pl: Dictionary = {
   '{at} of {count}': '{at} z {count}',
   Icons: 'Ikony',
   Emoji: 'Emoji',
+  Brands: 'Marki',
   'That set is not here': 'Tego zestawu tu nie ma',
   Plain: 'Zwykły',
   'Nothing found': 'Nic nie znaleziono',

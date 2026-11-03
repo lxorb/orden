@@ -387,6 +387,7 @@ export const vi: Dictionary = {
   '{at} of {count}': '{at} trên {count}',
   Icons: 'Biểu tượng',
   Emoji: 'Emoji',
+  Brands: 'Thương hiệu',
   'That set is not here': 'Không có bộ đó',
   Plain: 'Thường',
   'Nothing found': 'Không tìm thấy gì',

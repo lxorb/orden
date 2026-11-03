@@ -387,6 +387,7 @@ export const ja: Dictionary = {
   '{at} of {count}': '{count} 件中 {at} 件目',
   Icons: 'アイコン',
   Emoji: '絵文字',
+  Brands: 'ブランド',
   'That set is not here': 'このセットはありません',
   Plain: '無地',
   'Nothing found': '見つかりません',

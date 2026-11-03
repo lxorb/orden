@@ -390,6 +390,7 @@ export const gu: Dictionary = {
   '{at} of {count}': '{count}માંથી {at}',
   Icons: 'આઇકન',
   Emoji: 'Emoji',
+  Brands: 'બ્રાન્ડ',
   'That set is not here': 'એ સમૂહ અહીં નથી',
   Plain: 'સાદું',
   'Nothing found': 'કંઈ મળ્યું નથી',

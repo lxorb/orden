@@ -387,6 +387,7 @@ export const yue: Dictionary = {
   '{at} of {count}': '{at}/{count}',
   Icons: '圖標',
   Emoji: '表情',
+  Brands: '品牌',
   'That set is not here': '呢個圖標集用唔到',
   Plain: '單色',
   'Nothing found': '搵唔到結果',

@@ -390,6 +390,7 @@ export const fa: Dictionary = {
   '{at} of {count}': '{at} از {count}',
   Icons: 'نقشک‌ها',
   Emoji: 'Emoji',
+  Brands: 'برندها',
   'That set is not here': 'آن دسته اینجا نیست',
   Plain: 'ساده',
   'Nothing found': 'چیزی یافت نشد',

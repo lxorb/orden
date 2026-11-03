@@ -126,6 +126,81 @@ export const LUCIDE = 'lucide'
  *  others, and one id per tab is what keeps that honest. */
 export const EMOJI_SET = 'emoji'
 
+/** The id the brand logos go by: Simple Icons, under the prefix Iconify publishes it
+ *  with (#1082). A value is `simple-icons:github`. */
+export const BRANDS = 'simple-icons'
+
+/** The written value of a brand's logo, by Simple Icons' slug - `github`, `claude`,
+ *  `openai` - for code that wants a company's mark by its name rather than an icon
+ *  somebody chose: a website with no favicon of its own, an AI chat's provider (#1089).
+ *  A value like any other, drawn by Icon.svelte once the set has arrived; a slug the set
+ *  does not hold draws the caller's fallback. */
+export function brandIcon(slug: string): string {
+  return writtenIcon(BRANDS, slug)
+}
+
+/** The brand a website belongs to, by its address, for a website with no favicon of its
+ *  own (#1082).
+ *
+ *  Read off the host rather than looked up: the name a site is registered under is
+ *  nearly always the slug Simple Icons files its logo under - `github.com` is `github`,
+ *  `open.spotify.com` is `spotify`, `claude.ai` is `claude` - so the rule is one line and
+ *  covers the whole set, where a table would cover whatever somebody remembered to write
+ *  in it. The table below is only for the sites whose name is not their logo's. A host
+ *  whose name is no brand at all answers with a slug the set does not hold, which draws
+ *  the globe it would have drawn anyway; see `brandIcon` in icons.ts.
+ *
+ *  Here beside `brandIcon` rather than in a module of its own: the marks that ask it are
+ *  in the first chunk, and a module is parsed there whether it is three lines or three
+ *  hundred. The logos are fetched only once a row asks for one. */
+/** Hosts whose logo is not their name, by the whole host or by the name it is
+ *  registered under. */
+const SITES: Readonly<Record<string, string>> = {
+  'code.visualstudio.com': 'visualstudiocode',
+  'chat.openai.com': 'openai',
+  chatgpt: 'openai',
+  obsproject: 'obsstudio',
+  youtu: 'youtube',
+  twitter: 'x',
+  'gemini.google.com': 'googlegemini',
+  'drive.google.com': 'googledrive',
+  'docs.google.com': 'googledocs',
+  'calendar.google.com': 'googlecalendar',
+  'mail.google.com': 'gmail',
+  'maps.google.com': 'googlemaps',
+  'teams.microsoft.com': 'microsoftteams',
+}
+
+/** The labels a country writes in front of its own code for a kind of site -
+ *  `co.uk`, `com.au`, `ac.jp` - so the name is the label before them. */
+const SECOND_LEVEL = new Set(['co', 'com', 'org', 'net', 'ac', 'gov', 'edu', 'ne', 'or'])
+
+/** The Simple Icons slug a website's address points at, or null for an address that is
+ *  not a website's. */
+export function siteBrand(address: string | null | undefined): string | null {
+  if (!address) return null
+
+  let host: string
+  try {
+    const url = new URL(address)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+    host = url.hostname.toLowerCase().replace(/^www\./, '')
+  } catch {
+    return null
+  }
+
+  const own = SITES[host]
+  if (own) return own
+
+  const labels = host.split('.')
+  if (labels.length < 2 || /^\d+$/.test(labels.at(-1) ?? '')) return null
+
+  const at = labels.length >= 3 && SECOND_LEVEL.has(labels.at(-2) ?? '') ? -3 : -2
+  const name = labels.at(at) ?? ''
+
+  return SITES[name] ?? (/^[a-z\d]+$/.test(name) ? name : null)
+}
+
 /** What to write for an icon the picker offers: the emoji as itself, a Lucide icon
  *  as Lucide's own plain name, and anything else as `set:name`.
  *

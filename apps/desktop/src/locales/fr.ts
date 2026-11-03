@@ -394,6 +394,7 @@ export const fr: Dictionary = {
   '{at} of {count}': '{at} sur {count}',
   Icons: 'Icônes',
   Emoji: 'Émoji',
+  Brands: 'Marques',
   'That set is not here': 'Ce jeu n’est pas inclus',
   Plain: 'Uni',
   'Nothing found': 'Aucun résultat',

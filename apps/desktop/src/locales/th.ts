@@ -387,6 +387,7 @@ export const th: Dictionary = {
   '{at} of {count}': '{at} จาก {count}',
   Icons: 'ไอคอน',
   Emoji: 'อิโมจิ',
+  Brands: 'แบรนด์',
   'That set is not here': 'ไม่มีชุดนั้น',
   Plain: 'ธรรมดา',
   'Nothing found': 'ไม่พบอะไร',

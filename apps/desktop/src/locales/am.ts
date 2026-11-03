@@ -388,6 +388,7 @@ export const am: Dictionary = {
   '{at} of {count}': 'ከ{count} {at}',
   Icons: 'ምልክቶች',
   Emoji: 'Emoji',
+  Brands: 'ብራንዶች',
   'That set is not here': 'ያ ስብስብ እዚህ የለም',
   Plain: 'ተራ',
   'Nothing found': 'ምንም አልተገኘም',

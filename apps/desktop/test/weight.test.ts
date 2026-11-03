@@ -1059,6 +1059,11 @@ function holds(tail: string): boolean {
  *  again now the keychain is not asked, checked after the first paint (App.svelte,
  *  surfaces.svelte.ts). Measured 3,485,824.
  *
+ *  Raised 2026-11-04, to 3,490,500, for #1082: a website whose favicon has not come
+ *  wears its brand's logo, read off its address by `siteBrand` and decided with the
+ *  rest of a file's marks by `sourceMark` (icons.ts, chosen-icon.ts, FileMark.svelte).
+ *  The logos themselves are a chunk of their own. Measured 3,490,342.
+ *
  *  Raised 2026-11-03, to 3,521,400, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes (a phone's draft kept
  *  until it lands, charts, paste, block commands, links, a thread written down while it

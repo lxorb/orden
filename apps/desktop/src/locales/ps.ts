@@ -390,6 +390,7 @@ export const ps: Dictionary = {
   '{at} of {count}': '{at} له {count}',
   Icons: 'نښې',
   Emoji: 'Emoji',
+  Brands: 'برانډونه',
   'That set is not here': 'هغه ټولګه دلته نشته',
   Plain: 'ساده',
   'Nothing found': 'هيڅ نه وموندل شو',

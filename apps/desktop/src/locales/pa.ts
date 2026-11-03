@@ -390,6 +390,7 @@ export const pa: Dictionary = {
   '{at} of {count}': '{count} ਵਿੱਚੋਂ {at}',
   Icons: 'ਆਈਕਨ',
   Emoji: 'Emoji',
+  Brands: 'ਬ੍ਰਾਂਡ',
   'That set is not here': 'ਉਹ ਸਮੂਹ ਇੱਥੇ ਨਹੀਂ',
   Plain: 'ਸਾਦਾ',
   'Nothing found': 'ਕੁਝ ਨਹੀਂ ਮਿਲਿਆ',

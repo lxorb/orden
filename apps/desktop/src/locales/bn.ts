@@ -390,6 +390,7 @@ export const bn: Dictionary = {
   '{at} of {count}': '{count}-এর {at}',
   Icons: 'আইকন',
   Emoji: 'ইমোজি',
+  Brands: 'ব্র্যান্ড',
   'That set is not here': 'এই সেট এখানে নেই',
   Plain: 'একরঙা',
   'Nothing found': 'কিছু পাওয়া যায়নি',

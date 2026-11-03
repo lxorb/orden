@@ -340,6 +340,11 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  wheel, a touchpad and two fingers (overview/camera.ts), and a window dropped against a
  *  side making a pane there. Measured 5,799,795.
  *
+ *  The code raised on 2026-11-04, to 5,801,700, for #1082: the brands' tab and a
+ *  website's brand read off its address (icon-sets.ts, `siteBrand` in icons.ts); the
+ *  logos and their names stay out (vite.even.config.ts, brand-names.even.ts). Measured
+ *  5,801,561.
+ *
  *  The code raised on 2026-11-03, to 5,829,900, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
  *  thread written down while it runs, the sync's scans, and an undo that waits for every

@@ -391,6 +391,7 @@ export const ta: Dictionary = {
   '{at} of {count}': '{count} இல் {at}',
   Icons: 'சின்னங்கள்',
   Emoji: 'ஈமோஜி',
+  Brands: 'பிராண்டுகள்',
   'That set is not here': 'அந்தத் தொகுப்பு இங்கே இல்லை',
   Plain: 'எளிமை',
   'Nothing found': 'எதுவும் கிடைக்கவில்லை',

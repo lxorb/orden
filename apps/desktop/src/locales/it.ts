@@ -392,6 +392,7 @@ export const it: Dictionary = {
   '{at} of {count}': '{at} di {count}',
   Icons: 'Icone',
   Emoji: 'Emoji',
+  Brands: 'Marchi',
   'That set is not here': 'Quel set non è incluso',
   Plain: 'Semplice',
   'Nothing found': 'Nessun risultato',

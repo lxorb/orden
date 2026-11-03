@@ -392,6 +392,7 @@ export const ha: Dictionary = {
   '{at} of {count}': '{at} daga {count}',
   Icons: 'Alamomi',
   Emoji: 'Emoji',
+  Brands: 'Alamomin kasuwanci',
   'That set is not here': 'Wannan tarin ba nan yake ba',
   Plain: 'Sauƙi',
   'Nothing found': 'Ba a sami komai ba',
