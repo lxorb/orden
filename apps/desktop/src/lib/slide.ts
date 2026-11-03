@@ -68,6 +68,19 @@ export function leave(_node: Element, { y = -STEP, ms = SWAP }: Slip = {}): Tran
   return slip(y, ms)
 }
 
+/** What a popup's catch does while the popup leaves: lets presses through.
+ *
+ *  A catch is laid over the window so that a press past the popup closes it and does
+ *  nothing else (SpaceMenu.svelte, quick-add/Picker.svelte). It is part of what the
+ *  popup draws, so it stays while the popup plays its way out, and it went on taking
+ *  presses then: the second tap on the list of spaces, a moment after the first had
+ *  closed it, landed on the catch of a list already leaving and did nothing, where the
+ *  same tap on the switcher's own button opens it again from wherever it had got to
+ *  (#1067). `out:letGo`, as long as the popup's own way out takes. */
+export function letGo(_node: Element, { ms = SWAP }: { ms?: number } = {}): TransitionConfig {
+  return { duration: dur(ms), css: () => 'pointer-events: none' }
+}
+
 /** The raised surface a segmented control marks its choice with, as one element
  *  that moves rather than a background on each half.
  *

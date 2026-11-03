@@ -27,6 +27,7 @@
     setReadOnlyMode,
   } from '@orden/editor'
   import { untrack } from 'svelte'
+  import Door from './Door.svelte'
   import { alone } from './alone.svelte'
   import { isDeck } from '@orden/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
@@ -454,8 +455,8 @@
        Fetched the first time a key asks for it, like every other part of the app
        nothing is showing yet, and preloaded once the launch is over so the first
        Control+F is not a wait; see `warmDoors` in surfaces.svelte.ts. -->
-  {#if finding && writing}
-    {#await findBar() then FindBar}
+  <Door open={finding && writing} load={() => findBar()}>
+    {#snippet children(FindBar)}
       <FindBar
         query={spec.query}
         count={tally.count}
@@ -476,14 +477,16 @@
         onclose={shutFinding}
         onquery={(typed: string) => void look({ ...spec, query: typed })}
       />
-    {/await}
-  {/if}
+    {/snippet}
+  </Door>
 
   <!-- Something archived, opened anyway, with the way back. -->
-  {#if !__EVEN_PLUGIN__ && archived && tab?.path}
-    {#await archivedStrip() then ArchivedStrip}
-      <ArchivedStrip path={tab.path} />
-    {/await}
+  {#if !__EVEN_PLUGIN__}
+    <Door open={archived && !!tab?.path} load={() => archivedStrip()}>
+      {#snippet children(ArchivedStrip)}
+        <ArchivedStrip path={tab?.path ?? ''} />
+      {/snippet}
+    </Door>
   {/if}
 
   <!-- Every surface below the editor is fetched the first time a tab of its kind is

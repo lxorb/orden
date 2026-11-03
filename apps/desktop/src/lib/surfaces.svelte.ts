@@ -306,6 +306,9 @@ export const spaceSound = latched(() => import('./SpaceSound.svelte'))
 /** Chrome's speaker on a tab playing sound, fetched with the first sound. */
 export const soundMark = held(() => import('./SoundMark.svelte'))
 
+/** Chrome's mark on a private tab, fetched with the first one; see web-tab/private.ts. */
+export const privateMark = held(() => import('./web-tab/PrivateMark.svelte'))
+
 /** What a terminal's tab wears - the program in front, else its shell - fetched with the
  *  first terminal in the strip; see terminal/TerminalMark.svelte. */
 export const terminalMark = held(() =>

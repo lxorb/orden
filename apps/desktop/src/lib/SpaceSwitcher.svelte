@@ -13,6 +13,7 @@
    *  written for a phone. A drawer is a panel too, so a thumb gets exactly what a
    *  pointer gets. */
   import { arrive, leave } from './slide'
+  import Door from './Door.svelte'
   import NameField from './NameField.svelte'
   import { overlays } from './overlays'
   import { shortcuts } from './shortcuts.svelte'
@@ -115,14 +116,16 @@
   </button>
 {/if}
 
-{#if open}
-  <!-- The list itself, fetched with the first press rather than carried in front of
-       the first paint, and warmed at the launch's last turn so that press finds it
-       here; see SpaceMenu.svelte and surfaces.svelte.ts. -->
-  {#await spacesMenu() then SpaceMenu}
+<!-- The list itself, fetched with the first press rather than carried in front of
+     the first paint, and warmed at the launch's last turn so that press finds it
+     here; see SpaceMenu.svelte and surfaces.svelte.ts. Through a door that lets it
+     play its way out, and turn round where it is when pressed again (#1067; see
+     Door.svelte). -->
+<Door {open} load={() => spacesMenu()}>
+  {#snippet children(SpaceMenu)}
     <SpaceMenu close={() => (open = false)} />
-  {/await}
-{/if}
+  {/snippet}
+</Door>
 
 <style>
   /* The space's name, and the whole of what the switcher is. The width of the

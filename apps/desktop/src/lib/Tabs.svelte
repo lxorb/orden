@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount, tick, untrack } from 'svelte'
   import { staysOn } from './caret'
+  import Door from './Door.svelte'
   import { views } from './views.svelte'
   import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
@@ -16,7 +17,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import SharedMark from './SharedMark.svelte'
-  import { syncMark, soundMark, tabNameField, tabOverview } from './surfaces.svelte'
+  import { privateMark, syncMark, soundMark, tabNameField, tabOverview } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
@@ -1009,16 +1010,15 @@
               <UnsavedDot pressable />
             {/if}
             <!-- A private tab wears Chrome's mark for one; see web-tab/private.ts. -->
-            {#if tab.inPrivate}
-              {#await import('./web-tab/PrivateMark.svelte') then Private}<Private.default
-                />{/await}
-            {/if}
+            <Door open={tab.inPrivate} load={() => privateMark()}>
+              {#snippet children(Private)}<Private />{/snippet}
+            </Door>
             <!-- Chrome's speaker, struck through on a muted site. -->
             {#if tab.kind === 'web' && parts.title}
               {@const heard = pages.of(tab.id)}
-              {#if heard.playing}
-                {#await soundMark() then Sound}<Sound muted={heard.muted} />{/await}
-              {/if}
+              <Door open={heard.playing} load={() => soundMark()}>
+                {#snippet children(Sound)}<Sound muted={heard.muted} />{/snippet}
+              </Door>
             {/if}
             <!-- Not yours: this document is one somebody else shared on its own, and
                the tab says so in the mark the whole app says it with. On the tab
