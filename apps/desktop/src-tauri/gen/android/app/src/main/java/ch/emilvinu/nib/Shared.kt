@@ -271,7 +271,8 @@ object Shared {
   @Suppress("DEPRECATION")
   private fun foreign(context: Context, uri: Uri): Boolean =
     uri.scheme == android.content.ContentResolver.SCHEME_CONTENT &&
-      uri.authority?.startsWith(context.packageName) != true
+      // What is before an `@` is a user, and no part of whose provider this is.
+      uri.authority?.substringAfterLast('@')?.startsWith(context.packageName, ignoreCase = true) != true
 
   private fun stream(intent: Intent): Uri? = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
 
