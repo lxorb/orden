@@ -28,7 +28,15 @@
  *  icon-library.svelte.ts, which holds what has arrived, and the bundle test, which
  *  holds the sets out of the first chunk and out of the plugin. */
 
-import { EMOJI_SET, type IconEntry, type IconNode, loadIcons, LUCIDE, squash } from './icons'
+import {
+  EMOJI_SET,
+  type IconEntry,
+  type IconNode,
+  loadIcons,
+  LUCIDE,
+  squash,
+  writtenIcon,
+} from './icons'
 import { key } from './i18n.svelte'
 
 /** Lucide's own tags: what each of its icons is *for*, in the words people look for
@@ -94,7 +102,15 @@ export interface LoadedSet {
    *  Empty for a set that has none, which is every set but the emoji. */
   groups: { label: string; names: string[] }[]
   shape(name: string): IconShape | null
+  /** Where an icon sits in a tab it shares with a set that has groups, for a set
+   *  that has none of its own; see `mergeSets`. Absent where a set has its own tab. */
+  place?(name: string): IconPlace | null
 }
+
+/** Where an icon of a set without groups goes among the icons of the set it shares a
+ *  tab with, named by that set's own names: the same picture as one of them, which
+ *  is shown once; straight after one of them; or at the end of one of its groups. */
+export type IconPlace = { same: string } | { after: string } | { group: string }
 
 /** One set as the picker knows it before anything is loaded. */
 export interface IconSet {
@@ -321,12 +337,22 @@ function iconify(collection: IconifyCollection, tags: Map<string, string>): Load
 }
 
 async function loadFlatColour(): Promise<LoadedSet> {
-  const [collection, tags] = await Promise.all([
+  const [collection, tags, places] = await Promise.all([
     import('@iconify-json/flat-color-icons/icons.json'),
     loadTags(),
+    import('./flat-colour-places'),
   ])
 
-  return iconify(collection.default, tags)
+  const placed = new Map<string, IconPlace>()
+  for (const [name, emoji] of Object.entries(places.SAME)) placed.set(name, { same: emoji })
+  for (const [emoji, names] of Object.entries(places.BESIDE)) {
+    for (const name of names.split(' ')) placed.set(name, { after: emoji })
+  }
+  for (const [group, names] of Object.entries(places.LOOSE)) {
+    for (const name of names.split(' ')) placed.set(name, { group })
+  }
+
+  return { ...iconify(collection.default, tags), place: (name) => placed.get(name) ?? null }
 }
 
 /** A name as the words somebody would search for: `BookOpen` and `book-open` both
@@ -346,8 +372,9 @@ export const DEFAULT_SET = LUCIDE
 /** The id of the coloured set, so the credits and the tests can name it. */
 export const FLAT_COLOUR = 'flat-color-icons'
 
-/** Every set, in the order the picker shows them: the one the app is drawn in
- *  first, then the pictures. */
+/** Every set an icon can come from. Which tab of the picker shows it is
+ *  `ICON_TABS`'s business: a set is where a drawing is kept and what a file writes,
+ *  a tab is how a person browses. */
 export const ICON_SETS: readonly IconSet[] = [
   {
     id: LUCIDE,
@@ -371,4 +398,141 @@ export const ICON_SETS: readonly IconSet[] = [
 
 export function setNamed(id: string): IconSet | null {
   return ICON_SETS.find((one) => one.id === id) ?? null
+}
+
+/** One tab of the picker: the sets it browses as one collection. */
+export interface IconTab {
+  /** Also what the picker remembers it by; see icon-recent.svelte.ts. */
+  id: string
+  label: string
+  sets: readonly string[]
+  /** Whether a tint applies to what it holds: only to strokes, never to a picture
+   *  that already has its colours. */
+  tinted: boolean
+}
+
+/** The tabs, in the order the picker shows them. Two, because a reader sees two
+ *  kinds of icon and not three: a line the app tints, and a picture in its own
+ *  colours. The emoji and the coloured drawings were one tab each and looked the
+ *  same, so they are one collection, the emoji's groups with the drawings placed by
+ *  topic among them (#1071). A set added later joins whichever of the two it looks
+ *  like, with places of its own if it has no groups. */
+const LINE_TAB: IconTab = { id: LUCIDE, label: key('Line'), sets: [LUCIDE], tinted: true }
+
+export const ICON_TABS: readonly IconTab[] = [
+  LINE_TAB,
+  { id: EMOJI_SET, label: key('Emoji'), sets: [EMOJI_SET, FLAT_COLOUR], tinted: false },
+]
+
+/** The tab the picker opens on before one has been chosen: the set the app is drawn
+ *  in, as `DEFAULT_SET` is. */
+export const DEFAULT_TAB = LINE_TAB
+
+/** The tab a remembered id or a set's id means, or null for one this build does not
+ *  know. A set's id is how the picker remembered a tab before the tabs were merged,
+ *  so a stored "flat-color-icons" opens the tab that holds it now. */
+export function tabNamed(id: string): IconTab | null {
+  return (
+    ICON_TABS.find((tab) => tab.id === id) ?? ICON_TABS.find((tab) => tab.sets.includes(id)) ?? null
+  )
+}
+
+/** Who drew what a tab shows and under what licence, from every set in it that has
+ *  somebody to credit. */
+export function tabCredit(tab: IconTab): string {
+  return tab.sets
+    .map((id) => setNamed(id)?.credit ?? '')
+    .filter(Boolean)
+    .join('; ')
+}
+
+/** What a tab browses: every icon of its sets under the value a file writes for it,
+ *  which is what lets one grid hold icons of two sets whose names could be the same. */
+export interface TabHeld {
+  entries: IconEntry[]
+  groups: { label: string; names: string[] }[]
+}
+
+/** The sets of one tab as one collection.
+ *
+ *  The first set with groups is the frame: its groups in its order. Every other set
+ *  goes where its `place` says - beside the icon it is about, at the end of a group,
+ *  or not at all where it draws the same thing as an icon already there, whose
+ *  search words then take its words too. An icon with no place, or a place naming
+ *  something the frame does not hold, gets a group of its own at the end rather than
+ *  being lost. Without a frame there are no groups, and the sets follow one another
+ *  in the tab's order.
+ *
+ *  With groups, the entries are in the order the groups show them, which is the order
+ *  the arrows walk before anything is typed. */
+export function mergeSets(parts: readonly { id: string; held: LoadedSet }[]): TabHeld {
+  const frame = parts.find((part) => part.held.groups.length)
+  const entries = new Map<string, IconEntry>()
+  const after = new Map<string, string[]>()
+  const ends = new Map<string, string[]>()
+  const groups =
+    frame?.held.groups.map((group) => ({
+      label: group.label,
+      names: group.names.map((name) => writtenIcon(frame.id, name)),
+    })) ?? []
+  const labels = new Set(groups.map((group) => group.label))
+
+  const push = (map: Map<string, string[]>, key: string, written: string) => {
+    const held = map.get(key)
+    if (held) held.push(written)
+    else map.set(key, [written])
+  }
+
+  for (const part of [...(frame ? [frame] : []), ...parts.filter((one) => one !== frame)]) {
+    const unplaced: string[] = []
+
+    for (const one of part.held.entries) {
+      const written = writtenIcon(part.id, one.name)
+      if (entries.has(written)) continue
+
+      if (!frame || part === frame) {
+        entries.set(written, { ...one, name: written })
+        continue
+      }
+
+      const place = part.held.place?.(one.name) ?? null
+      const anchor =
+        place && !('group' in place)
+          ? writtenIcon(frame.id, 'same' in place ? place.same : place.after)
+          : null
+      const twin = anchor === null ? undefined : entries.get(anchor)
+
+      if (place && 'same' in place && twin) {
+        const terms = [twin.terms, one.words, one.terms].filter(Boolean).join(' ')
+        entries.set(twin.name, { ...twin, terms })
+        continue
+      }
+
+      entries.set(written, { ...one, name: written })
+
+      if (anchor !== null && twin) push(after, anchor, written)
+      else if (place && 'group' in place && labels.has(place.group))
+        push(ends, place.group, written)
+      else unplaced.push(written)
+    }
+
+    if (frame && unplaced.length) {
+      groups.push({ label: setNamed(part.id)?.label ?? part.id, names: unplaced })
+    }
+  }
+
+  if (!frame) return { entries: [...entries.values()], groups }
+
+  const shown = groups.map((group) => ({
+    label: group.label,
+    names: [
+      ...group.names.flatMap((name) => [name, ...(after.get(name) ?? [])]),
+      ...(ends.get(group.label) ?? []),
+    ],
+  }))
+
+  return {
+    entries: shown.flatMap((group) => group.names.flatMap((name) => entries.get(name) ?? [])),
+    groups: shown,
+  }
 }
