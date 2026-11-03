@@ -15,6 +15,7 @@ export function programOf(command: string): string {
  *  the plainest ways out of a line that looks like a read in front of the reader's
  *  question. Short options are whole words, and `-O` takes its value attached; long ones
  *  are matched by any prefix, as git and npm both take one. */
+const PACKAGES = { short: [], long: ['--script-shell', '--node-options'] }
 const REACH: Record<string, { short: string[]; long: string[]; commands: string[] }> = {
   git: {
     short: ['-c', '-C', '-p', '-x', '-O'],
@@ -34,15 +35,11 @@ const REACH: Record<string, { short: string[]; long: string[]; commands: string[
     ],
     commands: ['config', 'submodule', 'bisect', 'filter-branch', 'difftool', 'mergetool'],
   },
-  npm: {
-    short: [],
-    long: ['--script-shell', '--node-options'],
-    commands: ['exec', 'x', 'explore', 'init', 'create', 'innit'],
-  },
+  npm: { ...PACKAGES, commands: ['exec', 'x', 'explore', 'init', 'create', 'innit'] },
+  pnpm: { ...PACKAGES, commands: ['exec', 'dlx', 'create', 'x'] },
+  yarn: { ...PACKAGES, commands: ['exec', 'dlx', 'create'] },
+  bun: { ...PACKAGES, commands: ['x', 'create'] },
 }
-REACH.pnpm = { ...(REACH.npm as (typeof REACH)[string]), commands: ['exec', 'dlx', 'create', 'x'] }
-REACH.yarn = { ...(REACH.npm as (typeof REACH)[string]), commands: ['exec', 'dlx', 'create'] }
-REACH.bun = { ...(REACH.npm as (typeof REACH)[string]), commands: ['x', 'create'] }
 
 /** The programs whose whole work is to fetch something and run it. */
 const RUNS_WHAT_IT_FETCHES = new Set(['npx', 'pnpx', 'bunx'])
