@@ -1,20 +1,29 @@
 /** A command line and what a terminal printed, as words. Pure; see terminal.ts. */
 
-/** The program a command line starts, as a list of allowed programs names it: the
- *  first word, without its folder or its ending, in lower case. */
+/** The program a command line starts, as a list of allowed programs names it: the first
+ *  word in lower case, and only where it is a bare name the shell looks up on its path.
+ *  A word with a folder, an ending or a quote is whatever file that names - `./git`,
+ *  `/tmp/x/git.sh`, `"git"/../../bin/sh` - and no program on any list: the empty name. */
 export function programOf(command: string): string {
-  const first = /^\s*(?:"([^"]+)"|'([^']+)'|(\S+))/.exec(command)
-  const word = first?.[1] ?? first?.[2] ?? first?.[3] ?? ''
-  const name = word.split(/[\\/]/).pop() ?? ''
-  return name.replace(/\.(exe|cmd|bat|com|ps1|sh)$/i, '').toLowerCase()
+  const word = /^\s*(\S+)/.exec(command)?.[1] ?? ''
+  return /^[\w.+-]+$/.test(word) ? word.toLowerCase() : ''
+}
+
+/** Whether a line's first program is on a list. */
+export function onTheList(command: string, programs: readonly string[]): boolean {
+  const program = programOf(command)
+  return program !== '' && programs.some((one) => one.toLowerCase() === program)
 }
 
 /** Whether a line starts only its first program: no second command after a `;`, an
- *  `&` or a `|`, nothing run inside it with backticks or `$(`, and no file written or
- *  read with `>` or `<`. Only such a line can be let through for being on an agent's
- *  list; `git status; rm -rf ~` starts `git` and is not one. */
+ *  `&` or a `|`, nothing run inside it with backticks, `$(` or `(`, no file written or
+ *  read with `>` or `<`, and nothing out of the history with `!`. Only such a line can be
+ *  let through for being on an agent's list; `git status; rm -rf ~` starts `git` and is
+ *  not one. Nor is a line with a control or a separator character anywhere: typed into a
+ *  shell, Ctrl+U clears what came before it, Ctrl+O runs it, a backspace rubs it out and
+ *  a tab completes it, so the words before Enter are not the words that run. */
 export function startsOnlyOne(command: string): boolean {
-  return !/[;&|`<>]|\$\(/.test(command)
+  return !/[;&|`<>!()]|\$\(|[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(command)
 }
 
 /** What a terminal printed, as words: the escapes that colour and move things on a

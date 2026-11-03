@@ -5,7 +5,7 @@
  *  that an arrow is two different sequences depending on what the program in front
  *  asked for (application cursor keys, which vim and less switch on). */
 
-import { programOf, startsOnlyOne } from './shell-text'
+import { onTheList, startsOnlyOne } from './shell-text'
 
 /** The keys an agent may press, and what each sends. Nothing that opens a picker,
  *  nothing the app itself is bound to: these reach the shell and nothing else. */
@@ -63,7 +63,7 @@ export function typesFreely(
   if (!text && !enter) return keys.length > 0 && keys.every((name) => FREE.has(name))
   if (keys.length || !enter || !text.trim() || !startsOnlyOne(text)) return false
 
-  return programs.map((one) => one.toLowerCase()).includes(programOf(text))
+  return onTheList(text, programs)
 }
 
 /** One row of a terminal's buffer, as xterm.js hands it over. */

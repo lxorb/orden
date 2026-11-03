@@ -20,7 +20,7 @@ import { identifier } from '../../identifier'
 import { asked } from './asks'
 import { type Call, count, done, maybe, need } from './call'
 import { Refused } from './problem'
-import { plainOf, programOf, startsOnlyOne } from './shell-text'
+import { onTheList, plainOf, startsOnlyOne } from './shell-text'
 import { judged, onDisk, placeOf } from './spaces'
 
 /** How long a command may run when the agent does not say, and at the most. */
@@ -46,9 +46,7 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
   const shell = shells.chosen
   if (!shell) throw new Refused('unsupported_on_this_engine', 'there is no shell on this machine')
 
-  const allowed =
-    startsOnlyOne(command) &&
-    agent.programs.map((one) => one.toLowerCase()).includes(programOf(command))
+  const allowed = startsOnlyOne(command) && onTheList(command, agent.programs)
   const question = await asked(call, allowed ? null : 'terminal', command)
   if (question) return question
 
