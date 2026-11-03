@@ -48,6 +48,13 @@ workspace.fileOps.follow((op) => store.follow(op))
 workspace.fileOps.follow(keeping(inboxes))
 workspace.fileOps.follow(keeping(projectFolders))
 
+// An `Inbox.md` Orden made before the space had an inbox of its own is taken into it,
+// once the space is read and whenever one arrives (#1044); see inbox-move.ts. Never in
+// the glasses' plugin, which writes nothing of the kind.
+if (!__EVEN_PLUGIN__) {
+  store.watch((change) => void import('./inbox-moving').then((one) => one.heard(change)))
+}
+
 // The spaces as the window has them: a new one read, one gone forgotten, one renamed
 // renamed. Handed over untracked, so the store's own reads are never this effect's.
 $effect.root(() => {
