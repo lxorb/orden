@@ -68,6 +68,10 @@ export async function searchSpace(
     return
   }
 
+  // The space's own inbox, which the crate's walk leaves out as hidden (#1044).
+  const inbox = await (await import('./inbox')).inboxHits(root, query, limit)
+  if (inbox.length) onFound({ hits: inbox, loose: [] })
+
   const id = ++asked
   const { listen } = await import('@tauri-apps/api/event')
   // An event is a boundary, so what it carries is read rather than trusted: a

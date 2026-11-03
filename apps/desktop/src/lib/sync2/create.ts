@@ -20,6 +20,7 @@
  *  account answers `merged` and the pass folds this device's words into the one that
  *  was there, three ways against that text (section 5.9). */
 
+import { carriedOwn } from '@orden/bases/inbox'
 import { fileMade } from './files'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { kindOfName } from '@orden/sync-core/tree'
@@ -142,7 +143,10 @@ export async function made(
         name,
         seen,
       }
-  if (op.t === 'create' && what.mergeable !== undefined) op.mergeable = { text: what.mergeable }
+  // The space's own inbox is "this note, made if it is not there yet" wherever it was
+  // made, as a day's note is: two devices that each made it apart make one (#1044).
+  const mergeable = what.mergeable ?? (parent === null && carriedOwn(name) ? '' : undefined)
+  if (op.t === 'create' && mergeable !== undefined) op.mergeable = { text: mergeable }
   if (op.t === 'create' && bytes) op.hash = bytes.hash
   changes.push(...queue(core, space, op))
 

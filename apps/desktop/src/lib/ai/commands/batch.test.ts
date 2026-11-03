@@ -91,3 +91,25 @@ test('/batch over a folder and a tag takes both, and only those', async () => {
 test('/batch over a short folder still finds it behind many paths that only contain it', async () => {
   expect(await batched('fix every note in Data/')).toEqual(['Data/real'])
 })
+
+test('/batch runs helpers of the thread, which its line opens (#1062)', async () => {
+  const adopted: Thread[] = []
+  const line = vi.fn()
+  const ended: Ended = { stop: 'end', turn: null, usage: null }
+  const host = {
+    turn: () => Promise.resolve(ended),
+    adopt: (thread: Thread) => adopted.push(thread),
+    touched: vi.fn(),
+    line,
+  } as unknown as Host
+  const parent = newThread('space', 'p', 'm')
+  await batch(host, parent, 'tag every note in Inbox/ with done')
+  expect(adopted).toHaveLength(3)
+  expect(adopted.every((one) => one.parent === parent.id)).toBe(true)
+  expect(line).toHaveBeenCalledWith(
+    parent,
+    expect.any(String),
+    undefined,
+    adopted.map((one) => one.id),
+  )
+})

@@ -11,6 +11,7 @@ export { finish, nextOccurrence, type OccurrenceOptions, skip, tick } from './oc
 export { answer, cellValue, groupName, orderId, rowId } from './answer'
 export { readBase, writeBase } from './base-file'
 export { type BuiltinName, type BuiltinParams, builtinView, todayAs } from './builtins'
+export { INBOX_PATH } from './inbox'
 export { addDays, addMonths, dayNumber, daysInMonth, todayOf, weekday } from './dates'
 export { nextDate, parseRule, ruleText } from './recurrence'
 export { DEFAULT_SUMMARIES } from './summaries'

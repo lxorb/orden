@@ -671,7 +671,9 @@
         <button
           class="mode"
           title={mode === 'full'
-            ? t('Full permissions: nothing is asked first')
+            ? t(
+                'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting',
+              )
             : shortcuts.tooltip(t('Next mode'), 'ai.mode')}
           aria-haspopup="menu"
           onclick={modeMenu}

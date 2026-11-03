@@ -30,7 +30,8 @@ export const bn: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'সম্পূর্ণ অনুমতি',
   'Auto mode': 'স্বয়ংক্রিয় মোড',
-  'Full permissions: nothing is asked first': 'সম্পূর্ণ অনুমতি: আগে কিছুই জিজ্ঞাসা করা হয় না',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'সম্পূর্ণ অনুমতি: কিছুই জিজ্ঞাসা করা হয় না বা আপনাকে ফেরত দেওয়া হয় না, সাইন ইন, অর্থপ্রদান, পাঠানো বা মোছাও নয়',
   // Import: Zen's tabs
   'Import from Zen': 'Zen থেকে ইমপোর্ট',
   'Containers stay in Zen': 'কন্টেইনারগুলো Zen-এ থেকে যায়',
@@ -2660,4 +2661,6 @@ export const bn: Dictionary = {
   'Trust this space again': 'এই স্পেসে আবার ভরসা করুন',
   'Agent instructions': 'এজেন্টের নির্দেশনা',
   "AGENTS is this space's agent instructions": 'AGENTS হলো এই স্পেসের এজেন্ট নির্দেশনা',
+  '{title}, unread': '{title}, অপঠিত',
+  '{title}, running': '{title}, চলছে',
 }

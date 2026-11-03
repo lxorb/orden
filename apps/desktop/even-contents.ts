@@ -276,9 +276,41 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-03, to 5,769,000, for unstable's #523 and #1036 fixes merged
  *  into claude/bugs-2026-11: the two branches' raises above were measured without each
  *  other, and the fixes for one behaviour made one. Measured 5,768,860.
+ *
+ *  The code raised on 2026-11-03, to 5,743,700, for #1044: the space's inbox is a hidden
+ *  note of Orden's own, which the rows read with the space, sync carries and merges as
+ *  every task of both (packages/bases/src/inbox.ts). Measured 5,743,620.
+ *
+ *  The code raised on 2026-11-03, to 5,743,800, for #1052: the `?` after a setting's name
+ *  sits on the name's letters as a word of it, glued to the last word, rather than in a
+ *  flex row beside it (Hint.svelte). Measured 5,743,715.
+ *
+ *  The code raised on 2026-11-03, to 5,743,900, for #1060: the sliver the window is
+ *  dragged by is drawn by the strip in the titlebar, ahead of its own buttons, rather
+ *  than by the bar after them (Tabs.svelte, Titlebar.svelte). Measured 5,743,874.
+ *
+ *  The code raised on 2026-11-03, to 5,744,300, for #1064: the ✦ tab wears a dot while an
+ *  AI chat has an answer not yet seen (Sidebar.svelte, ai/UnreadDot.svelte,
+ *  ai/unread.svelte.ts). Measured 5,744,218.
+ *
+ *  The code raised on 2026-11-03, to 5,746,600, for #1064: the dot is read from the
+ *  chats' heads at launch, before the AI panel is opened (`lookAtLaunch` in
+ *  ai/unread.svelte.ts). Measured 5,746,478.
+ *
+ *  The code raised on 2026-11-04, to 5,747,000, for #1076: what floats in a note's
+ *  corners is drawn by the focused pane inside its own box (pane-corners.svelte.ts).
+ *  Measured 5,746,806.
+ *
+ *  The code raised on 2026-11-04, to 5,747,600, for #1079: a pane that loses its tab
+ *  in front comes back to the one used there last (workspace/recency.ts), and keeps
+ *  that order through a restart. Measured 5,747,488.
+ *
+ *  The code raised on 2026-11-03, to 5,775,600, for unstable's #1044 to #1079 merged into
+ *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
+ *  and the sum of their growth is what came. Measured 5,775,432.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_769_000,
+  code: 5_775_600,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

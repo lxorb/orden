@@ -632,7 +632,7 @@ in Auto and Plan:
 | --- | --- | --- |
 | Approve | everything the grant reaches | every change: the grant in `confirm` mode with every category on, so a write, a press in a page, a delete, a send, publishing, a setting and every terminal command waits for the reader; never a read |
 | Auto | everything the grant reaches | as the grant says (`unsupervised`): a write lands at once on the changes card (4.5) with Keep and Undo; each category Settings › AI › Access leaves on (sending, deleting, publishing, a setting, the terminal, paying, ...) waits for the reader. Claude Code's auto mode is the same idea, a judge in place of switches |
-| Full permissions | everything the grant reaches | nothing (`autonomous`): every change lands on the changes card (4.5) with Keep and Undo, a delete goes to Recently deleted, checkpoints rewind, the stop key stops it |
+| Full permissions | every tool: every scope, scripts on any site (#1072) | nothing (`autonomous`): every change lands on the changes card (4.5) with Keep and Undo, a delete goes to Recently deleted, checkpoints rewind, the stop key stops it |
 | Plan | the read-only ones (`readOnlyHint` in `apps/desktop/src-tauri/src/mcp/tools.json`), plus `create_note` for the plan itself | as the grant says |
 
 Nothing is asked in Full permissions, whatever the act (#372, Emil: _"Full permissions
@@ -642,11 +642,20 @@ terminal, a setting and a file all go ahead (`Grant::asks`), a **Show** puts the
 in front at once, and a **Take over** in one of the agent's own tabs does the same, the agent
 going on and waiting for the page to show the step done (`browser_wait`); each is still in
 the activity panel as a question answered as it was raised (`approvals::granted`). Every
-narrower mode asks as it did. What is not a question stays as it is in every mode: a
-**password or sign-in field** is refused outright, since it is the reader's, through a
-takeover (`docs/agent-native.md` 9.4). The mode is not drawn in red - neither its row in
+narrower mode asks as it did. Signing in is no exception (#1072, Emil: _"Full permissions
+means full permissions"_): a form the reader's password manager filled is submitted by the
+agent pressing its own button, and words into a sign-in form go in; in a narrower mode both
+ask as **Signing in** (`Category::SigningIn`) rather than being refused or handed over.
+Nothing is refused on the grounds of what the grant holds either (`Grant::holds`), and a
+palette row or a pinned tab kept to the reader's hands is the agent's to press
+(`readersOwn` in `agents/workspace/asks.ts`). What stays in every mode is what is not a
+permission: a secret's value is never written into a snapshot, a read or a find, and a
+filled one is painted over in a picture (`docs/agent-native.md` 9.4). The prompts say so
+too: Full permissions' system line tells the agent to sign in, pay, send, delete and change
+a setting itself and never to hand a step back. The mode is not drawn in red - neither its row in
 the mode's menu nor the button while it is on: it is chosen on purpose, and the button's
-tooltip says it asks for nothing. Claude Code's `bypassPermissions` and Codex's Full Access
+tooltip says what that takes in: nothing asked or handed back, not even signing in, paying,
+sending or deleting. Claude Code's `bypassPermissions` and Codex's Full Access
 are where the same idea comes from; the CLIs themselves already never prompt here (below),
 so Full permissions is Orden's own verbs asking nothing.
 
@@ -856,6 +865,13 @@ from there (and that the cache starts again where it does).
   thread holds the latest three.
 - **Several at once**: a thread keeps running when another is opened; the list marks the
   running ones, and the panel's tab wears a dot while one works out of sight.
+- **Unread** (#1064): a chat the agent answered, or asked the reader something in, since
+  the reader last saw it wears a dot in the accent before a stronger title, in the list and
+  the home alike, and the ✦ tab a dot; a running one keeps its ring instead. It is read
+  once it is open in the window in use with its end in view, never on a hover. The thread
+  keeps when it was answered and when it was seen (`answered`, `seen`), so the mark
+  outlasts a restart; a helper's answer is its chat's (`unreadOf` in `chat/threads.ts`).
+  Screen readers hear "unread" and "running" in the row's name.
 - **Edit, branch, fork**: 4.5 and the commands in 3.1.
 - **Retry with another model**: the retry glyph under an answer has a menu of the
   provider's models (ChatGPT's and Raycast's way of comparing).

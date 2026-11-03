@@ -1005,9 +1005,44 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-03, to 3,469,300, for unstable's #523 fixes merged into
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
- *  and the fixes for one behaviour made one. Measured 3,469,195. */
-const BUDGET = 3_469_300
-const MOST_FILES = 382
+ *  and the fixes for one behaviour made one. Measured 3,469,195.
+ *
+ *  Raised 2026-11-03, to 3,434,300, for #1044: a search reads the space's own inbox, which
+ *  the crate's walk leaves out as hidden (the call in search/space.ts; what it reads is
+ *  fetched with the first search). Measured 3,434,294.
+ *
+ *  Raised 2026-11-03, to 3,435,000, for #1060: the sliver the window is dragged by is
+ *  drawn by the strip in the titlebar, ahead of its own buttons, rather than by the bar
+ *  after them (Tabs.svelte, Titlebar.svelte). Measured 3,434,942.
+ *
+ *  Raised 2026-11-03, to 3,436,400, and to 384 modules, for #1064: the ✦ tab wears a dot
+ *  while an AI chat has an answer not yet seen, which the side reads without loading the
+ *  panel (ai/unread.svelte.ts, ai/UnreadDot.svelte). Measured 3,436,269, 383 modules.
+ *
+ *  Raised 2026-11-03, to 3,437,400, for #1064: the dot is read from the chats' heads at
+ *  launch, before the AI panel is opened (`lookAtLaunch` in ai/unread.svelte.ts; the
+ *  threads' module is fetched with it). Measured 3,437,263.
+ *
+ *  Raised 2026-11-03, to 3,437,800, for #1072: the AI panel's mode button says what Full
+ *  permissions takes in (Composer.svelte), and a step kept to the reader's hands is the
+ *  agent's under Full permissions (`readersOwn` in agents/workspace/asks.ts). Measured
+ *  3,437,422.
+ *
+ *  Raised 2026-11-04, to 3,440,400, and to 385 modules, for #1076: what floats in a note's
+ *  corners - the status bar and the new-note button - is drawn by the focused pane inside
+ *  its own box (pane-corners.svelte.ts, Pane.svelte, App.svelte), and a split's shares
+ *  leave the divider's pixel out (PaneTree.svelte). Measured 3,440,250, 384 modules.
+ *
+ *  Raised 2026-11-04, to 3,445,500, and to 386 modules, for #1079: the panes choose the
+ *  tab a pane comes back to by the one rule in workspace/recency.ts, now read with the
+ *  panes rather than with Ctrl+Tab's first press, and a pane's order of use is written
+ *  down with the session. Measured 3,445,347, 385 modules.
+ *
+ *  Raised 2026-11-03, to 3,480,600, for unstable's #1044 to #1079 merged into
+ *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
+ *  and the sum of their growth is what came. Measured 3,480,464, 385 modules. */
+const BUDGET = 3_480_600
+const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

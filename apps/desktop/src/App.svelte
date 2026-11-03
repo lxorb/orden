@@ -77,6 +77,7 @@
   import { startup } from './lib/startup.svelte'
   import { sync } from './lib/sync.svelte'
   import StatusBar from './lib/StatusBar.svelte'
+  import { paneCorners } from './lib/pane-corners.svelte'
   import Titlebar from './lib/Titlebar.svelte'
   import { modes } from './lib/modes.svelte'
   import { links } from './lib/link-index.svelte'
@@ -676,6 +677,15 @@
   /** A canvas and a page note, which have a bar of their own with a way to add. */
   const ownBar = (kind: TabKind | undefined) => kind !== undefined && TAB_KINDS[kind].ownBar
 
+  // What floats in the note's corners is the focused pane's to draw, inside its box
+  // (#1076); see pane-corners.svelte.ts.
+  $effect(() => {
+    paneCorners.draw = corners
+    return () => {
+      paneCorners.draw = null
+    }
+  })
+
   /** Every pair of panes in a list of them, each pair once. */
   function pairs(ids: string[]): [string, string][] {
     const out: [string, string][] = []
@@ -1180,28 +1190,6 @@
         {/if}
       </div>
 
-      <!-- Over a note and nowhere else: the graph, a canvas and a page note have no
-           words for it to count, so it is left out rather than drawn empty and F6
-           steps straight past it. One rule, in regions.ts, which is also what the
-           keyboard's own table describes. -->
-      {#if hasStatusBar(workspace.active?.kind) && !bare && !filled}
-        <StatusBar
-          doc={workspace.active?.doc ?? ''}
-          reading={modes.readOnly || !canWriteHere}
-          vimMode={modes.vimModeOf(view)}
-        />
-      {/if}
-
-      <!-- A thumb cannot reach the plus beside the tabs, and on a phone the
-           thing you came to do is write a note. Out of the way while the
-           keyboard is up, because then you are already writing one, and over a
-           canvas or a page note, where it read as adding to the page. -->
-      {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !bare}
-        <button class="fab" aria-label={fabLabel} onclick={writeNew}>
-          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-        </button>
-      {/if}
-
       <!-- The way back out of full screen; see FullscreenLeave.svelte. Never over a
            web page, which would draw over it. -->
       {#if fullscreen.on && workspace.active?.kind !== 'web'}
@@ -1224,6 +1212,33 @@
     {@render notices()}
   {/if}
 </main>
+
+<!-- What floats in the note's corners, drawn by the focused pane inside its own box
+     (#1076): never against the window, where the right side and the scratchpad beside
+     the note would be under it. See pane-corners.svelte.ts. -->
+{#snippet corners()}
+  <!-- Over a note and nowhere else: the graph, a canvas and a page note have no
+       words for it to count, so it is left out rather than drawn empty and F6
+       steps straight past it. One rule, in regions.ts, which is also what the
+       keyboard's own table describes. -->
+  {#if hasStatusBar(workspace.active?.kind) && !bare && !filled}
+    <StatusBar
+      doc={workspace.active?.doc ?? ''}
+      reading={modes.readOnly || !canWriteHere}
+      vimMode={modes.vimModeOf(view)}
+    />
+  {/if}
+
+  <!-- A thumb cannot reach the plus beside the tabs, and on a phone the
+       thing you came to do is write a note. Out of the way while the
+       keyboard is up, because then you are already writing one, and over a
+       canvas or a page note, where it read as adding to the page. -->
+  {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !bare}
+    <button class="fab" aria-label={fabLabel} onclick={writeNew}>
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+    </button>
+  {/if}
+{/snippet}
 
 {#snippet notices()}
   <div class="notices" data-notices data-region="notices" class:over={viewport.drawer}>
@@ -1508,8 +1523,9 @@
       calc(var(--space-3) + var(--inset-bottom)) max(var(--space-4), var(--inset-start));
   }
 
-  /* Clear of the new-note button in the same corner. */
-  main:has(.fab) .notices:has(> :global(*)) {
+  /* Clear of the new-note button in the same corner. Global, because the button is
+     drawn in the focused pane (the `corners` snippet), out of this file's sight. */
+  main:has(:global(.fab)) .notices:has(> :global(*)) {
     padding-inline-end: calc(
       max(var(--space-4), var(--inset-end)) + var(--touch-row) + var(--space-2)
     );

@@ -10,6 +10,7 @@
  *  And a space the grant does not reach does not exist: it is absent from every list
  *  and every lookup of it fails exactly as a name nobody has would (9.6). */
 
+import { INBOX_PATH } from '@orden/bases/inbox'
 import { threadSpaceOf } from '../../automation/caller'
 import { insideOnly } from '../../automation/inside'
 import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing.svelte'
@@ -89,9 +90,11 @@ export function judged(asked: string): string {
 
 /** The same, for a path the verb is about to change: nothing under a folder whose name
  *  starts with a dot either, which is where a space keeps what is not the reader's
- *  writing (a tool's settings, a repository), and what the file list does not show. */
+ *  writing (a tool's settings, a repository), and what the file list does not show.
+ *  Bar one: the space's own inbox (`INBOX_PATH`), where a task with no note goes. */
 export function judgedForWriting(asked: string): string {
   const safe = judged(asked)
+  if (safe === INBOX_PATH) return safe
   if (safe.split('/').some((step) => step.startsWith('.'))) {
     throw new Refused('bad_arguments', `${asked} is hidden, and an agent leaves it alone`)
   }

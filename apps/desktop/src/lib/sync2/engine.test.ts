@@ -827,6 +827,44 @@ describe('the folder watcher', () => {
     expect(await here.disk.exists(`${ROOT}/Work/Plan.md`)).toBe(true)
   })
 
+  test('hears the space’s own hidden inbox, and no other hidden file (#1044)', async () => {
+    const here = await device()
+    const heard: ((news: SpaceNews) => void)[] = []
+    watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
+      heard.push(hear)
+      return Promise.resolve()
+    })
+    const watched = watchFolders({
+      engine: here.engine,
+      own: () => false,
+      ready: () => true,
+      changed: () => undefined,
+    })
+    await here.disk.write(`${ROOT}/.Inbox.md`, '- [ ] Call the bank\n')
+    await here.disk.write(`${ROOT}/.secret.md`, 'not for anybody')
+    const made = (path: string) =>
+      ({ kind: 'created', path, dir: false, size: 1, mtime: 1, id: null }) as const
+    for (const hear of heard) {
+      hear({
+        root: ROOT,
+        changes: [made(`${ROOT}/.Inbox.md`), made(`${ROOT}/.secret.md`)],
+        scan: false,
+        gone: false,
+      })
+    }
+    const space = here.engine.core.spaces.get(SPACE)
+    await vi.waitFor(() => expect(space?.at('.Inbox.md')).toBeTruthy())
+    await settled()
+    expect(space?.at('.secret.md')).toBeFalsy()
+
+    await here.engine.pass(SPACE)
+    const account = await here.account.view()
+    const inbox = account.entries.find((one) => one.name === '.Inbox.md')
+    expect(inbox && account.texts[inbox.id]).toBe('- [ ] Call the bank\n')
+    expect(account.entries.some((one) => one.name === '.secret.md')).toBe(false)
+    watched.stop()
+  })
+
   /** #481: past the system's limit of watched folders, the watch says so with its scan,
    *  and the reader is told once a run, however often it is said. */
   test('tells the reader once when the limit of watched folders is reached', async () => {

@@ -31,7 +31,8 @@ export const it: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Permessi completi',
   'Auto mode': 'Modalità automatica',
-  'Full permissions: nothing is asked first': 'Permessi completi: non si chiede nulla prima',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Permessi completi: niente viene chiesto o restituito a te, nemmeno accedere, pagare, inviare o eliminare',
   // Import: Zen's tabs
   'Import from Zen': 'Importa da Zen',
   'Containers stay in Zen': 'I contenitori restano in Zen',
@@ -2742,4 +2743,6 @@ export const it: Dictionary = {
   'Agent instructions': 'Istruzioni per gli agenti',
   "AGENTS is this space's agent instructions":
     'AGENTS sono le istruzioni per gli agenti di questo spazio',
+  '{title}, unread': '{title}, non letto',
+  '{title}, running': '{title}, in corso',
 }

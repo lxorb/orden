@@ -31,7 +31,8 @@ export const sw: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Ruhusa kamili',
   'Auto mode': 'Hali ya kiotomatiki',
-  'Full permissions: nothing is asked first': 'Ruhusa kamili: hakuna kinachoulizwa kwanza',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Ruhusa kamili: hakuna kinachoulizwa wala kurudishwa kwako, hata kuingia, kulipa, kutuma au kufuta',
   // Import: Zen's tabs
   'Import from Zen': 'Ingiza kutoka Zen',
   'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
@@ -2703,4 +2704,6 @@ export const sw: Dictionary = {
   'Trust this space again': 'Amini nafasi hii tena',
   'Agent instructions': 'Maagizo ya mawakala',
   "AGENTS is this space's agent instructions": 'AGENTS ni maagizo ya mawakala ya nafasi hii',
+  '{title}, unread': '{title}, haijasomwa',
+  '{title}, running': '{title}, inaendelea',
 }
