@@ -2413,6 +2413,7 @@ export const hi: Dictionary = {
   'No {property}': '{property} के बिना',
   '{card} moved to {group}': '{card} को {group} में ले जाया गया',
   'Not moved': 'नहीं ले जाया गया',
+  'Not undone': 'पूर्ववत नहीं हुआ',
   Retry: 'फिर से कोशिश करें',
   Calculate: 'गणना करें',
   'Remove sort': 'क्रम हटाएँ',

@@ -2381,6 +2381,7 @@ export const ko: Dictionary = {
   'No {property}': '{property} 없음',
   '{card} moved to {group}': '{card}을(를) {group}(으)로 이동함',
   'Not moved': '이동하지 못함',
+  'Not undone': '실행 취소하지 못함',
   Retry: '다시 시도',
   Calculate: '계산',
   'Remove sort': '정렬 제거',

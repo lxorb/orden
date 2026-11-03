@@ -2394,6 +2394,7 @@ export const my: Dictionary = {
   'No {property}': '{property} မရှိ',
   '{card} moved to {group}': '{card} ကို {group} သို့ ရွှေ့ပြီး',
   'Not moved': 'မရွှေ့ရပါ',
+  'Not undone': 'ပြန်မဖျက်ရပါ',
   Retry: 'ထပ်စမ်းကြည့်ပါ',
   Calculate: 'တွက်ချက်',
   'Remove sort': 'စီခြင်းကို ဖယ်ရှား',

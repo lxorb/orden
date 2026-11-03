@@ -2419,6 +2419,7 @@ export const ps: Dictionary = {
   'No {property}': 'بې {property}',
   '{card} moved to {group}': '{card} {group} ته وخوځېد',
   'Not moved': 'ونه خوځېد',
+  'Not undone': 'بېرته نه شو',
   Retry: 'بیا هڅه وکړئ',
   Calculate: 'محاسبه',
   'Remove sort': 'ترتيب لرې کړئ',

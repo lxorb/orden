@@ -9,8 +9,9 @@
  *  running for as long as their tab is open, a file renamed or deleted under a tab nobody
  *  can see. A tab is on screen when its pane is in the frame on screen; the frames of
  *  the other sets are kept here with the rest of what belongs to them - which pane has
- *  the focus and which fills the window, both sides' panels, the preview, the tab the
- *  panels are held on, and whether the keyboard was in a page.
+ *  the focus and which fills the window, both sides' panels (but for an open chat, which
+ *  stays), the preview, the tab the panels are held on, and whether the keyboard was in
+ *  a page.
  *
  *  Every space keeps its own tabs (#674), so this is fetched by the first switch of
  *  space or move of a tab to another, and by a launch whose session holds sets, at its
@@ -133,7 +134,11 @@ class Sets {
     this.going = this.going.catch(() => undefined).then(() => this.swap(id))
     await this.going
 
-    if (shown) ws.panel ??= 'tree'
+    if (shown) {
+      // The sidebar asked for, with the chat over it there: the file list for when it shuts.
+      if (ws.panel === 'ask') ws.underChat ??= 'tree'
+      ws.panel ??= 'tree'
+    }
     ws.clearSelection()
     await ws.loadTree()
     ws.persist()
@@ -173,8 +178,9 @@ class Sets {
         frame: ws.panes.frame,
         focused: ws.panes.focusedId,
         fills: ws.panes.fills,
-        panel: ws.panel,
-        rightPanel: ws.rightPanel,
+        // The chat is nobody's to keep: it goes along with the reader (#332).
+        panel: ws.panel === 'ask' ? ws.underChat : ws.panel,
+        rightPanel: ws.rightPanel === 'ask' ? ws.underChat : ws.rightPanel,
         preview: ws.previewTabId,
         held: ws.heldTabId,
         inPage: inPage(),
@@ -194,9 +200,19 @@ class Sets {
     ws.panes.swapping = true
     ws.panes.restore(frame, set ? focusIn(frame, set.focused) : frame.id)
     ws.panes.fills = set?.fills && paneIn(frame, set.fills) ? set.fills : null
+    // The open chat stays open, over what this set keeps at its side (#332), also where a
+    // card is over it.
+    const side = ws.sideOf('ask')
+    const chatting = (side === 'right' ? ws.rightPanel : ws.panel) === 'ask'
+    ws.underChat = null
     if (set) {
-      ws.panel = set.panel
-      ws.rightPanel = set.rightPanel
+      ws.panel = set.panel === 'ask' ? null : set.panel
+      ws.rightPanel = set.rightPanel === 'ask' ? null : set.rightPanel
+      if (chatting) {
+        ws.underChat = side === 'right' ? ws.rightPanel : ws.panel
+        if (side === 'right') ws.rightPanel = 'ask'
+        else ws.panel = 'ask'
+      }
     }
     ws.previewTabId = set?.preview ?? null
     ws.heldTabId = set?.held ?? null

@@ -2405,6 +2405,7 @@ export const ms: Dictionary = {
   'No {property}': 'Tiada {property}',
   '{card} moved to {group}': '{card} dialihkan ke {group}',
   'Not moved': 'Tidak dialihkan',
+  'Not undone': 'Tidak dibuat asal',
   Retry: 'Cuba lagi',
   Calculate: 'Kira',
   'Remove sort': 'Buang susunan',

@@ -2354,6 +2354,7 @@ export const zhHantHK: Dictionary = {
   'No {property}': '無{property}',
   '{card} moved to {group}': '已將{card}移至{group}',
   'Not moved': '未有移動',
+  'Not undone': '未有復原',
   Retry: '重試',
   Calculate: '計算',
   'Remove sort': '移除排序',

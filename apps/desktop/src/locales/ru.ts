@@ -2506,6 +2506,7 @@ export const ru: Dictionary = {
   'No {property}': 'Без {property}',
   '{card} moved to {group}': 'Карточка {card} перемещена в {group}',
   'Not moved': 'Не перемещено',
+  'Not undone': 'Не отменено',
   Retry: 'Повторить',
   Calculate: 'Вычислить',
   'Remove sort': 'Убрать сортировку',

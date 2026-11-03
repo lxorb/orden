@@ -2416,6 +2416,7 @@ export const bn: Dictionary = {
   'No {property}': '{property} নেই',
   '{card} moved to {group}': '{card} {group}-এ সরানো হয়েছে',
   'Not moved': 'সরানো হয়নি',
+  'Not undone': 'পূর্বাবস্থায় ফেরানো হয়নি',
   Retry: 'আবার চেষ্টা করুন',
   Calculate: 'হিসাব করুন',
   'Remove sort': 'সাজানো সরান',

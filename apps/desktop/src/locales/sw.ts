@@ -2447,6 +2447,7 @@ export const sw: Dictionary = {
   'No {property}': 'Bila {property}',
   '{card} moved to {group}': '{card} imehamishwa hadi {group}',
   'Not moved': 'Haijahamishwa',
+  'Not undone': 'Haijatenduliwa',
   Retry: 'Jaribu tena',
   Calculate: 'Kokotoa',
   'Remove sort': 'Ondoa mpangilio',

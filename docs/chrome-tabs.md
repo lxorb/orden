@@ -121,8 +121,8 @@ own (`nib:space-tabs`) is read for this and forgotten (`handOver` in sets.svelte
 
 - **What a set is**: the tabs - notes, tabs with no file, web tabs, terminals, pinned
   and previewed ones - their order, the panes and splits, which tab is in front in each
-  and which pane has the keyboard, the pane filling the window, both sides' panels, the
-  tab the panels are held on, and whether the keyboard was in a page. The places inside
+  and which pane has the keyboard, the pane filling the window, both sides' panels (an
+  open chat stays, #332), the tab the panels are held on, and whether the keyboard was in a page. The places inside
   each tab - caret, scroll, a page's own history and zoom - are the tab's and come along.
   The sidebars' widths are not: a width is the screen's (sidebar-width.svelte.ts).
 - **A switch** puts the set on screen aside and brings the space's own in, in the step

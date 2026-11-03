@@ -2398,6 +2398,7 @@ export const ja: Dictionary = {
   'No {property}': '{property} なし',
   '{card} moved to {group}': '{card} を {group} に移動しました',
   'Not moved': '移動できませんでした',
+  'Not undone': '元に戻せませんでした',
   Retry: '再試行',
   Calculate: '計算',
   'Remove sort': '並べ替えを解除',

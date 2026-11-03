@@ -2443,6 +2443,7 @@ export const ml: Dictionary = {
   'No {property}': '{property} ഇല്ല',
   '{card} moved to {group}': '{card} {group}-ലേക്ക് നീക്കി',
   'Not moved': 'നീക്കിയില്ല',
+  'Not undone': 'പഴയപടിയാക്കിയില്ല',
   Retry: 'വീണ്ടും ശ്രമിക്കുക',
   Calculate: 'കണക്കാക്കുക',
   'Remove sort': 'ക്രമം നീക്കുക',

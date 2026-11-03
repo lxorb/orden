@@ -2352,6 +2352,7 @@ export const yue: Dictionary = {
   'No {property}': '冇{property}',
   '{card} moved to {group}': '已將{card}搬去{group}',
   'Not moved': '搬唔到',
+  'Not undone': '還原唔到',
   Retry: '再試一次',
   Calculate: '計算',
   'Remove sort': '移除排序',

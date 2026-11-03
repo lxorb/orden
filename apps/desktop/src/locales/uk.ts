@@ -2499,6 +2499,7 @@ export const uk: Dictionary = {
   'No {property}': 'Без {property}',
   '{card} moved to {group}': 'Картку {card} переміщено до {group}',
   'Not moved': 'Не переміщено',
+  'Not undone': 'Не скасовано',
   Retry: 'Повторити',
   Calculate: 'Обчислити',
   'Remove sort': 'Прибрати сортування',

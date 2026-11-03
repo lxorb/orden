@@ -2476,6 +2476,7 @@ export const es: Dictionary = {
   'No {property}': 'Sin {property}',
   '{card} moved to {group}': 'Se movió {card} a {group}',
   'Not moved': 'No se movió',
+  'Not undone': 'No se deshizo',
   Retry: 'Reintentar',
   Calculate: 'Calcular',
   'Remove sort': 'Quitar orden',

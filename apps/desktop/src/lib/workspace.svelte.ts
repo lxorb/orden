@@ -92,7 +92,7 @@ import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace/drafts'
 import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
-import { type Binning, FileActions, type Kept } from './workspace/undo.svelte'
+import { type Binning, type FileAction, FileActions, type Kept } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -385,6 +385,9 @@ class Workspace {
    *  about this screen, the way the sidebar's width is. */
   right = $state<Panel[]>(panels.rightFrom(undefined))
   rightPanel = $state<Panel | null>(null)
+  /** What this space keeps at the side the chat came over it on, a space being another
+   *  (#332): shown when the chat is shut, and put aside with the space. See sets.svelte.ts. */
+  underChat: Panel | null = null
   /** What the right side showed last, so its button goes back there. Nothing on
    *  screen reads it. */
   lastRight: Panel | null = null
@@ -4609,9 +4612,14 @@ class Workspace {
   /** Puts the last file operation back; what each kind means going back is
    *  workspace/undoing.ts, and what is on the stack is workspace/undo.svelte.ts.
    *  Fetched with the first undo, like the redo beside it: a window opens on a note
-   *  and not on a file operation to take back. See test/weight.test.ts. */
-  async undoFileAction() {
+   *  and not on a file operation to take back. See test/weight.test.ts.
+   *
+   *  `only`: this step and no other, for whoever offered it. A gesture still landing goes
+   *  on top of it while this waits. */
+  async undoFileAction(only?: FileAction) {
     await this.inTurn(async () => {
+      if (!(await this.landedFor(() => void this.undoFileAction(only)))) return
+      if (only && this.undone.last !== only) return
       const { undoLastFileAction } = await import('./workspace/undoing')
       await undoLastFileAction(this)
     })
@@ -4620,9 +4628,19 @@ class Workspace {
   /** Does the last undone file operation again; see workspace/redoing.ts. */
   async redoFileAction() {
     await this.inTurn(async () => {
+      if (!(await this.landedFor(() => void this.redoFileAction()))) return
       const { redoLastFileAction } = await import('./workspace/redoing')
       await redoLastFileAction(this)
     })
+  }
+
+  /** Whether what is under way has landed for an undo or a redo to go ahead; where it will
+   *  not, nothing is taken back, and the toast says so with the way to ask again. */
+  private async landedFor(again: () => void): Promise<boolean> {
+    if (await this.undone.landed()) return true
+    const { failed } = await import('./views/failed.svelte')
+    failed.tell(again, true)
+    return false
   }
 
   /** Undos and redos one at a time, each after the one before has landed. */
@@ -4943,7 +4961,9 @@ class Workspace {
     return { panel: this.panel, rightPanel: this.rightPanel, right: this.right, covered: pad.on }
   }
 
-  private set sides(next: Sides) {
+  private set sides(asked: Sides) {
+    const { sides: next, under } = panels.chatLeaving(this.sides, asked, this.underChat)
+    this.underChat = under
     this.panel = next.panel
     this.rightPanel = next.rightPanel
     this.right = next.right

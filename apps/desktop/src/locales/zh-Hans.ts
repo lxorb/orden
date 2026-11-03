@@ -2355,6 +2355,7 @@ export const zhHans: Dictionary = {
   'No {property}': '无{property}',
   '{card} moved to {group}': '已将{card}移至{group}',
   'Not moved': '未移动',
+  'Not undone': '未撤销',
   Retry: '重试',
   Calculate: '计算',
   'Remove sort': '移除排序',

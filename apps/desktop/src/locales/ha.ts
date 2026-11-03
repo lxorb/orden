@@ -2446,6 +2446,7 @@ export const ha: Dictionary = {
   'No {property}': 'Babu {property}',
   '{card} moved to {group}': 'An matsar da {card} zuwa {group}',
   'Not moved': 'Ba a matsar ba',
+  'Not undone': 'Ba a soke ba',
   Retry: 'Sake gwadawa',
   Calculate: 'Ƙididdige',
   'Remove sort': 'Cire tsari',

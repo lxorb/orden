@@ -2370,6 +2370,7 @@ export const th: Dictionary = {
   'No {property}': 'ไม่มี{property}',
   '{card} moved to {group}': 'ย้าย {card} ไปที่ {group} แล้ว',
   'Not moved': 'ไม่ได้ย้าย',
+  'Not undone': 'ไม่ได้เลิกทำ',
   Retry: 'ลองอีกครั้ง',
   Calculate: 'คำนวณ',
   'Remove sort': 'เอาการเรียงออก',

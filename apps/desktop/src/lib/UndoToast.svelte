@@ -174,14 +174,15 @@
     <button class="undo" onclick={() => reservedName.open()}>{t('Open')}</button>
   </div>
 {:else if failed.retry}
-  <!-- A card carried to a column whose note would not be written: it went back. -->
+  <!-- A card carried to a column whose note would not be written: it went back. Or an
+       undo that could not go ahead. -->
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told(`${t('Not moved')}. ${t('Retry')}`)}
+    {@attach told(`${failed.undoing ? t('Not undone') : t('Not moved')}. ${t('Retry')}`)}
     {@attach kept('failed')}
   >
-    <p>{t('Not moved')}</p>
+    <p>{failed.undoing ? t('Not undone') : t('Not moved')}</p>
     <button class="undo" onclick={() => failed.again()}>{t('Retry')}</button>
   </div>
 {:else if undoToast.kind}

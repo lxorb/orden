@@ -2403,6 +2403,7 @@ export const id: Dictionary = {
   'No {property}': 'Tanpa {property}',
   '{card} moved to {group}': '{card} dipindahkan ke {group}',
   'Not moved': 'Tidak dipindahkan',
+  'Not undone': 'Tidak dibatalkan',
   Retry: 'Coba lagi',
   Calculate: 'Hitung',
   'Remove sort': 'Hapus urutan',

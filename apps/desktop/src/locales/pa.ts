@@ -2421,6 +2421,7 @@ export const pa: Dictionary = {
   'No {property}': '{property} ਤੋਂ ਬਿਨਾਂ',
   '{card} moved to {group}': '{card} ਨੂੰ {group} ਵਿੱਚ ਭੇਜਿਆ',
   'Not moved': 'ਨਹੀਂ ਭੇਜਿਆ',
+  'Not undone': 'ਵਾਪਸ ਨਹੀਂ ਹੋਇਆ',
   Retry: 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   Calculate: 'ਗਿਣਤੀ ਕਰੋ',
   'Remove sort': 'ਲੜੀ ਹਟਾਓ',

@@ -76,6 +76,8 @@ STATE = """
     field: document.querySelector('.ask textarea')?.value ?? null,
     scroll: talk ? Math.round(talk.scrollTop) : null,
     space: window.nibApp.workspace.activeSpace?.name ?? null,
+    // In the page is not on the screen: a shut side keeps its panel built, and inert.
+    seen: !!document.querySelector('.ask')?.checkVisibility({ visibilityProperty: true }),
   }
 }
 """
@@ -111,7 +113,7 @@ def drive(browser: Browser, scheme: str) -> None:
     after = page.evaluate(STATE)
     shot(page, f"{scheme}-2-home")
     check(f"[{scheme}] the space changed: {before['space']} to {after['space']}", before["space"] != "Home" and after["space"] == "Home")
-    check(f"[{scheme}] the same chat is open: {after['title']!r}", after["title"] == before["title"] == "Quarterly plan")
+    check(f"[{scheme}] the same chat is open: {after['title']!r}", after["title"] == before["title"] == "Quarterly plan" and after["seen"])
     check(f"[{scheme}] the words in the field are still there", after["field"] == "and the budget for the second quarter")
     check(f"[{scheme}] at the same place: {before['scroll']} and {after['scroll']}", before["scroll"] and abs((after["scroll"] or 0) - before["scroll"]) <= 2)
 
@@ -128,7 +130,7 @@ def drive(browser: Browser, scheme: str) -> None:
     DRIVE.waited(page, "window.nibApp.workspace.activeSpace?.name !== 'Home'", "back to the first space")
     page.wait_for_timeout(500)
     back = page.evaluate(STATE)
-    check(f"[{scheme}] and back again, still the same: {back['title']!r}", back["title"] == "Quarterly plan" and back["field"] == "and the budget for the second quarter")
+    check(f"[{scheme}] and back again, still the same: {back['title']!r}", back["title"] == "Quarterly plan" and back["field"] == "and the budget for the second quarter" and back["seen"])
 
     # A new chat starts in the space in front.
     page.evaluate("(id) => window.nibApp.workspace.selectSpace(id)", made["home"])

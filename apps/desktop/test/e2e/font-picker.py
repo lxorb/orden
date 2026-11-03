@@ -1,7 +1,9 @@
 """A face for notes picked from the fonts installed, in the web app (#772).
 
 The browser lists the machine's fonts through the Local Font Access API, which asks the
-reader first; it is granted here as a reader would grant it. A face picked from the list
+reader first; it is granted here as a reader would grant it. WebKit has no such API and
+Playwright no such grant there, so it lists nothing, and what is left to hold is a typed
+name: the Mac's list comes from the crate, like the desktop app's everywhere. A face picked from the list
 is the notes' face at once, ahead of a theme's own; a name typed that nothing on the
 machine draws is said to be not installed, under the row, rather than drawn in the app's
 own face without a word. The desktop app lists the same through the crate
@@ -16,7 +18,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import WEBKIT, Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
@@ -28,12 +30,19 @@ def row_input(page: Page, name: str):
 
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 860})
-    context.grant_permissions(["local-fonts"])
+    if not WEBKIT:
+        context.grant_permissions(["local-fonts"])
     page = context.new_page()
     DRIVE.open(page)
     page.evaluate("() => window.nibApp.settings.show('appearance')")
     field = row_input(page, "Note font")
     field.scroll_into_view_if_needed()
+    if not WEBKIT:
+        picks_from_the_list(page, field)
+    missing(page, field)
+
+
+def picks_from_the_list(page: Page, field) -> None:
     field.click()
     listed = wait_for(
         page,
@@ -64,6 +73,8 @@ def drive(browser: Browser) -> None:
         wrong("an installed face is said to be missing")
     DRIVE.shot(page, "picked")
 
+
+def missing(page: Page, field) -> None:
     field.click()
     field.fill("Nonexistent Face Of Nobody")
     page.keyboard.press("Tab")

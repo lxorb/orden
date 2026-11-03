@@ -35,6 +35,7 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 await import('../../src/lib/workspace/sets.svelte')
 const { deleteSpace } = await import('../../src/lib/workspace/space-changes')
 const { pane } = await import('../../src/lib/workspace/pane-tree')
+const { shown: pad } = await import('../../src/lib/scratchpad/is.svelte')
 
 const PLAN = '/spaces/Work/Plan.md'
 const IDEAS = '/spaces/Work/Ideas.md'
@@ -77,6 +78,113 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.useRealTimers()
+})
+
+describe('the chat at a side', () => {
+  /** Work with the outline at its side, Home with nothing there, and the chat open in
+   *  Home: what the rules below start from. */
+  async function chattingInHome() {
+    await workspace.showSpace('work')
+    workspace.showPanel('outline')
+    await workspace.showSpace('home')
+    workspace.closePanel('right')
+    workspace.showPanel('ask')
+  }
+
+  afterEach(() => {
+    pad.on = false
+    workspace.closePanel('right')
+  })
+
+  // #332: the open chat stays open when the space changes, whatever the space kept there.
+  test('stays open through a space that had that side shut', async () => {
+    await workspace.showSpace('home')
+    workspace.closePanel('right')
+    await workspace.showSpace('work')
+    workspace.showPanel('ask')
+
+    await workspace.showSpace('home')
+    expect(workspace.openOn('right')).toBe('ask')
+    await workspace.showSpace('work')
+    expect(workspace.openOn('right')).toBe('ask')
+  })
+
+  test('leaves any other panel to the space that kept it', async () => {
+    await workspace.showSpace('home')
+    workspace.closePanel('right')
+    await workspace.showSpace('work')
+    workspace.showPanel('outline')
+
+    await workspace.showSpace('home')
+    expect(workspace.openOn('right')).toBe(null)
+    await workspace.showSpace('work')
+    expect(workspace.openOn('right')).toBe('outline')
+  })
+
+  test('stands over what a space keeps there, which is there when it is shut', async () => {
+    await chattingInHome()
+    await workspace.showSpace('work')
+    expect(workspace.openOn('right')).toBe('ask')
+
+    workspace.closePanel('right')
+    expect(workspace.openOn('right')).toBe('outline')
+  })
+
+  test('is not what a space keeps: shut elsewhere, a space has its own again', async () => {
+    await chattingInHome()
+    await workspace.showSpace('work')
+    await workspace.showSpace('home')
+    workspace.closePanel('right')
+
+    await workspace.showSpace('work')
+    expect(workspace.openOn('right')).toBe('outline')
+  })
+
+  test('shut in one space does not open again in the space it came from', async () => {
+    await chattingInHome()
+    await workspace.showSpace('work')
+    workspace.closePanel('right')
+
+    await workspace.showSpace('home')
+    expect(workspace.openOn('right')).toBe(null)
+  })
+
+  test('with another panel chosen over it, leaves that as what the space keeps', async () => {
+    await chattingInHome()
+    await workspace.showSpace('work')
+    workspace.showPanel('links')
+
+    await workspace.showSpace('home')
+    expect(workspace.openOn('right')).toBe(null)
+    await workspace.showSpace('work')
+    expect(workspace.openOn('right')).toBe('links')
+  })
+
+  test('stays through a switch under the scratchpad card', async () => {
+    await chattingInHome()
+    pad.on = true
+    await workspace.showSpace('work')
+    pad.on = false
+    expect(workspace.openOn('right')).toBe('ask')
+  })
+
+  // The switcher's way in shows the sidebar, and shut, the chat leaves the file list there.
+  test('moved to the left, has the file list under it where a switch asks for the sidebar', async () => {
+    workspace.movePanel('ask', 'left')
+    try {
+      await workspace.showSpace('home')
+      workspace.closePanel('left')
+      await workspace.showSpace('work')
+      workspace.showPanel('ask')
+
+      await workspace.showSpace('home')
+      expect(workspace.openOn('left')).toBe('ask')
+      workspace.closePanel('left')
+      expect(workspace.openOn('left')).toBe('tree')
+    } finally {
+      workspace.movePanel('ask', 'right')
+    }
+  })
 })
 
 describe('every space', () => {

@@ -2449,6 +2449,7 @@ export const ta: Dictionary = {
   'No {property}': '{property} இல்லை',
   '{card} moved to {group}': '{card} {group}-க்கு நகர்த்தப்பட்டது',
   'Not moved': 'நகர்த்தப்படவில்லை',
+  'Not undone': 'செயல்தவிர்க்கப்படவில்லை',
   Retry: 'மீண்டும் முயலவும்',
   Calculate: 'கணக்கிடு',
   'Remove sort': 'வரிசையை நீக்கு',

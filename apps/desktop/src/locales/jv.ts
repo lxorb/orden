@@ -2395,6 +2395,7 @@ export const jv: Dictionary = {
   'No {property}': 'Tanpa {property}',
   '{card} moved to {group}': '{card} dipindhah menyang {group}',
   'Not moved': 'Ora dipindhah',
+  'Not undone': 'Ora dibatalake',
   Retry: 'Coba maneh',
   Calculate: 'Etung',
   'Remove sort': 'Busak urutan',

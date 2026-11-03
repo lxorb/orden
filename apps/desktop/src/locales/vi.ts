@@ -2389,6 +2389,7 @@ export const vi: Dictionary = {
   'No {property}': 'Không có {property}',
   '{card} moved to {group}': 'Đã chuyển {card} sang {group}',
   'Not moved': 'Chưa chuyển được',
+  'Not undone': 'Chưa hoàn tác được',
   Retry: 'Thử lại',
   Calculate: 'Tính toán',
   'Remove sort': 'Bỏ sắp xếp',

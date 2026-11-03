@@ -2419,6 +2419,7 @@ export const mr: Dictionary = {
   'No {property}': '{property} नाही',
   '{card} moved to {group}': '{card} {group} मध्ये हलवले',
   'Not moved': 'हलवले नाही',
+  'Not undone': 'पूर्ववत झाले नाही',
   Retry: 'पुन्हा प्रयत्न करा',
   Calculate: 'गणना करा',
   'Remove sort': 'क्रम काढा',

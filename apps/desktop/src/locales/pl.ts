@@ -2506,6 +2506,7 @@ export const pl: Dictionary = {
   'No {property}': 'Bez {property}',
   '{card} moved to {group}': 'Przeniesiono {card} do {group}',
   'Not moved': 'Nie przeniesiono',
+  'Not undone': 'Nie cofnięto',
   Retry: 'Ponów',
   Calculate: 'Oblicz',
   'Remove sort': 'Usuń sortowanie',

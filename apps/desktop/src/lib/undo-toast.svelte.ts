@@ -87,7 +87,7 @@ export function nextBatch(
 /** What the undo stack has to give the toast. */
 interface Undoable {
   readonly undone: { readonly stack: readonly FileAction[]; readonly last: FileAction | undefined }
-  undoFileAction(): Promise<void>
+  undoFileAction(only?: FileAction): Promise<void>
 }
 
 class UndoToast {
@@ -138,7 +138,7 @@ class UndoToast {
 
     for (const action of [...batch].reverse()) {
       if (from.undone.last !== action) return
-      await from.undoFileAction()
+      await from.undoFileAction(action)
     }
   }
 
