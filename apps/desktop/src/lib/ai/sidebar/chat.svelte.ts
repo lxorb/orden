@@ -283,6 +283,7 @@ class Chat implements Panel {
       return
     }
     this.started = true
+    otherWindowWrote((id) => this.heardWritten(id))
     this.listing = false
     this.popover = null
     // A quick question carried on before the panel was ever drawn is already open.
@@ -1449,10 +1450,6 @@ class Chat implements Panel {
 }
 
 export const chat = new Chat()
-
-otherWindowWrote((id) => {
-  chat.heardWritten(id)
-})
 
 owes(() => chat.keepAnswers())
 

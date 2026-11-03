@@ -29,17 +29,32 @@ export class Windows {
   readonly me = crypto.randomUUID()
   private readonly hearing = new Map<string, Set<Hearing>>()
   private readonly here = new Set<string>()
-  private line: Line | null
+  private line: Line | null = null
+  private opened = false
 
-  constructor(line: Line | null) {
-    this.line = line
-    if (!line) return
-    line.onmessage = (event) => this.heard(event.data)
+  /** `open` runs at the first use: a page that never asks after another window (a package
+   *  with no second window, say) carries none of this. */
+  constructor(private readonly open: () => Line | null) {}
+
+  /** The channel, once it is asked for. */
+  private opening(): Line | null {
+    if (this.opened) return this.line
+    this.opened = true
+    this.line = this.open()
+    if (!this.line) return null
+    this.line.onmessage = (event) => this.heard(event.data)
     this.post({ kind: 'hello' })
+    // A page can come back from this, a close called off or the back and forward cache:
+    // the next thing it says is heard as a window being here.
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pagehide', () => this.post({ kind: 'bye' }))
+    }
+    return this.line
   }
 
   /** Whether any other window of this app is open, as far as anyone has said. */
   get alone(): boolean {
+    this.opening()
     return this.here.size === 0
   }
 
@@ -50,19 +65,15 @@ export class Windows {
 
   /** Hears one kind of thing from now on. Answers the way to stop. */
   hear(kind: string, listener: (said: Said) => void): () => void {
+    this.opening()
     const listeners = this.hearing.get(kind) ?? new Set<Hearing>()
     this.hearing.set(kind, listeners)
     listeners.add(listener)
     return () => listeners.delete(listener)
   }
 
-  /** This window is going. */
-  leaving(): void {
-    this.post({ kind: 'bye' })
-  }
-
   private post(message: Said): void {
-    this.line?.postMessage({ ...message, from: this.me })
+    this.opening()?.postMessage({ ...message, from: this.me })
   }
 
   private heard(data: unknown): void {
@@ -77,17 +88,9 @@ export class Windows {
   }
 }
 
-function opened(): Line | null {
-  return typeof BroadcastChannel === 'function' ? new BroadcastChannel('nib:windows') : null
-}
-
-export const windows = new Windows(opened())
-
-if (typeof window !== 'undefined') {
-  // A page can come back from this, a close called off or the back and forward cache:
-  // the next thing it says is heard as a window being here.
-  window.addEventListener('pagehide', () => windows.leaving())
-}
+export const windows = /* @__PURE__ */ new Windows(() =>
+  typeof BroadcastChannel === 'function' ? new BroadcastChannel('nib:windows') : null,
+)
 
 /** One write of a file at a time across the windows, with whatever it read first: what
  *  makes the history of a file one line, so a write always knows what it replaces.

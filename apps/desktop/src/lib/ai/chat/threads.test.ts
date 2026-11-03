@@ -57,7 +57,8 @@ vi.mock('../../windows', async (original) => {
     ends.push(line)
     return line
   }
-  return { Windows, windows: new Windows(end()), other: new Windows(end()) }
+  const [mine, theirs] = [end(), end()]
+  return { Windows, windows: new Windows(() => mine), other: new Windows(() => theirs) }
 })
 
 const { other } = (await import('../../windows')) as unknown as {

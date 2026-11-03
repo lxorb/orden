@@ -54,8 +54,13 @@ function foreign(path: string): boolean {
 
 /** Whether a path is something the engine keeps: a folder, a document, or - where the
  *  world carries bytes - any other file (files.ts). */
-function kept(engine: Engine, path: string, dir: boolean): boolean {
-  if (hidden(path) || foreign(path)) return false
+export function kept(engine: Engine, path: string, dir: boolean): boolean {
+  // Inside its space: the folder a space lives in may be under a dotted one of its own,
+  // `~/.local/share` on Linux, and everything heard there read as the app's.
+  const inside = [...engine.core.spaces.values()]
+    .map((space) => relative(space.row.root, path, engine.core.world.foldsCase))
+    .find((one) => one !== null)
+  if (hidden(inside ?? path) || foreign(path)) return false
   return dir || holdsDocument(kindOfName(path)) || !!engine.core.world.blobs
 }
 

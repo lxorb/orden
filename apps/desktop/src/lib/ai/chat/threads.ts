@@ -306,21 +306,27 @@ function saidAnswering(id: string): Promise<boolean> {
   })
 }
 
-windows.hear('thread-answering?', (said) => {
-  if (typeof said.id === 'string' && answeringHere.has(said.id)) {
-    windows.say('thread-answering', { id: said.id })
-  }
-})
-
-/** What another window holds of a thread this one is answering in, changed there while
- *  its copy could not be written: a name, a mode, a model, Archive. Only this window can
- *  write the file while it answers, so these go into the thread it is writing. */
-windows.hear('thread-fields', (said) => {
-  const thread = typeof said.id === 'string' ? answeringHere.get(said.id) : undefined
-  if (!thread || !isRecord(said.fields)) return
-  Object.assign(thread, said.fields)
-  void keepThread(thread).catch(() => undefined)
-})
+/** What this window answers the others about the threads it is answering in, from the
+ *  first thread it reads or writes. */
+let answersOthers = false
+function answerOthers(): void {
+  if (answersOthers) return
+  answersOthers = true
+  windows.hear('thread-answering?', (said) => {
+    if (typeof said.id === 'string' && answeringHere.has(said.id)) {
+      windows.say('thread-answering', { id: said.id })
+    }
+  })
+  // What another window holds of a thread this one is answering in, changed there while
+  // its copy could not be written: a name, a mode, a model, Archive. Only this window can
+  // write the file while it answers, so these go into the thread it is writing.
+  windows.hear('thread-fields', (said) => {
+    const thread = typeof said.id === 'string' ? answeringHere.get(said.id) : undefined
+    if (!thread || !isRecord(said.fields)) return
+    Object.assign(thread, said.fields)
+    void keepThread(thread).catch(() => undefined)
+  })
+}
 
 /** Hears that another window wrote a thread: an answer has grown or ended there. Answers
  *  the way to stop. */
@@ -639,6 +645,7 @@ function again(entry: { next: boolean }): boolean {
 
 export function keepThread(thread: Thread): Promise<void> {
   if (removed.has(thread.id)) return Promise.resolve()
+  answerOthers()
   if (thread.elsewhere) {
     windows.say('thread-fields', { id: thread.id, fields: ownFields(thread) })
     return Promise.resolve()

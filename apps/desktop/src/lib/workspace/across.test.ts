@@ -67,7 +67,7 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
     exists: async (path) => disk.has(path),
     keepVersion: async (_path, text) => void versions.push(text),
   }
-  const windows = new Windows(line)
+  const windows = new Windows(() => line)
   const across = new Across(desk, windows)
   const open = (text: string, kind: NoteDoc['kind'] = 'note') => {
     const note = new NoteDoc(
