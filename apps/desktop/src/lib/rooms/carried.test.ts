@@ -1,6 +1,14 @@
 import { describe, expect, test, vi } from 'vitest'
 import { SharedDoc } from '@orden/editor'
-import { readSync, receive, syncStep1, TEXT } from '@orden/rooms'
+import {
+  awarenessUpdate,
+  forget,
+  readSync,
+  receive,
+  syncStep1,
+  TEXT,
+  unattended,
+} from '@orden/rooms'
 import { ackFrame, epochFrame, NEW_EPOCH } from '@orden/sync-core/wire'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
@@ -254,6 +262,43 @@ describe('a room carrying the engine’s document', () => {
     for (let carried = 0; carried < 3; carried++) join(one).room.leave()
 
     expect(one.doc._observers.has('destroy')).toBe(false)
+  })
+
+  test('is seen at once by whoever stayed in the room when its socket comes back', () => {
+    const one = device(seeded('We ship.'))
+    const { room, socket } = join(one)
+
+    // The room in the Worker, passing on what it hears and taking a closed socket's
+    // caret away, and somebody else who stays in it throughout.
+    const hall = new Awareness(new Y.Doc())
+    unattended(hall)
+    const stayed = new Awareness(new Y.Doc())
+    hall.on(
+      'update',
+      ({ added, updated, removed }: Record<'added' | 'updated' | 'removed', number[]>) => {
+        const message = awarenessUpdate(hall, [...added, ...updated, ...removed])
+        receive(message, stayed.doc, stayed, 'room')
+      },
+    )
+    const speak = () => {
+      for (const said of socket.take()) receive(said, hall.doc, hall, 'socket')
+    }
+
+    socket.arrive()
+    speak()
+    expect(stayed.getStates().has(one.doc.clientID)).toBe(true)
+
+    socket.close(1006)
+    forget(hall, [one.doc.clientID], 'socket')
+    expect(stayed.getStates().has(one.doc.clientID)).toBe(false)
+
+    socket.arrive()
+    speak()
+    expect(stayed.getStates().has(one.doc.clientID)).toBe(true)
+
+    room.leave()
+    stayed.destroy()
+    hall.destroy()
   })
 
   test('hears the room’s acknowledgement and its new epoch, and lets go on 4001', async () => {

@@ -1438,6 +1438,7 @@ export const jv: Dictionary = {
   'The note': 'Cathetan',
   '{space} panel': 'Panel {space}',
   'Panel width': 'Amba panel',
+  'Pane size': 'Ukuran panel',
   Values: 'Nilai',
   Pages: 'Kaca',
   'Page {number} of {count}': 'Kaca {number}/{count}',
@@ -2490,6 +2491,8 @@ export const jv: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Bar judhul Orden dhewe, utawa kerangka jendhela sistem sampeyan.',
   'How large the text of notes is.': 'Sepira gedhene teks cathetan.',
+  'How large all of Orden is drawn on this device.':
+    'Sepira gedhéné kabèh Orden ditampilaké ing piranti iki.',
   'The space between the lines of a note.': 'Jarak antarane baris ing cathetan.',
   'How wide a line of a note grows before it wraps.':
     'Sepira ambane baris cathetan sadurunge mlebu baris anyar.',
@@ -2643,6 +2646,8 @@ export const jv: Dictionary = {
   'Move the chat': 'Pindhah obrolan',
   'Only the file': 'Mung berkase',
   'Trust this space again': 'Pitados papan iki maneh',
+  'Agent instructions': 'Instruksi agen',
+  "AGENTS is this space's agent instructions": 'AGENTS yaiku instruksi agen kanggo papan iki',
   '{title}, unread': '{title}, durung diwaca',
   '{title}, running': '{title}, lagi mlaku',
 }

@@ -104,6 +104,7 @@ export function rowKey(row: Row): string | null {
       return `host:${row.host.id}`
     case 'place':
     case 'make':
+    case 'agents':
     case 'address':
     case 'connect':
     case 'message':

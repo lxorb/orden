@@ -186,9 +186,10 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
   }
 }
 
-/** The keys a web tab is reloaded by, which run from anywhere: with the page holding the
- *  keyboard a key reaches the app only as a row; see `viewRows` in native-menu.ts. */
-const RELOADING = new Set(['web.reload', 'web.fresh'])
+/** The keys a web tab is reloaded and stepped by, which run from anywhere: with the page
+ *  holding the keyboard a key reaches the app only as a row; see `viewRows` in
+ *  native-menu.ts. */
+const RELOADING = new Set(['web.reload', 'web.fresh', 'web.back', 'web.forward'])
 
 /** View's rows for a web tab in front, greyed with anything else; see `viewRows`. */
 function reloadRows(context: MenuBarContext): MenuItem[] {
@@ -201,6 +202,14 @@ function reloadRows(context: MenuBarContext): MenuItem[] {
   return [
     entryRow('web.reload', context, { disabled: !web, run: step('reload') }),
     entryRow('web.fresh', context, { disabled: !web, run: step('fresh') }),
+    // Only with a page in front, rather than grey: Cmd and a bracket is what a note indents
+    // with, and a row in the way of the key is the key gone from the note (#397).
+    ...(web
+      ? [
+          entryRow('web.back', context, { run: () => workspace.goBack() }),
+          entryRow('web.forward', context, { run: () => workspace.goForward() }),
+        ]
+      : []),
   ]
 }
 

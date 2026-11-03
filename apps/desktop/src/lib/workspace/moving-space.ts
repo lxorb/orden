@@ -10,6 +10,8 @@
  *
  *  Fetched with the first move. */
 
+import { isAgentsName } from '../note-name'
+import { nameOf } from '../space-paths'
 import { canWriteAt } from '../sharing.svelte'
 import { moveHistory } from '../terminal/history'
 import { readSpec } from '../terminal/spec'
@@ -55,6 +57,12 @@ async function fileMoved(path: string, root: string, done: Map<string, boolean>)
   const before = done.get(path)
   if (before !== undefined) return before
 
+  // A note called AGENTS would become the setting of the space it lands in, so it stays.
+  if (isAgentsName(nameOf(path))) {
+    void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
+    done.set(path, false)
+    return false
+  }
   const ok = await workspace.move(path, root).then(
     () => true,
     () => false,

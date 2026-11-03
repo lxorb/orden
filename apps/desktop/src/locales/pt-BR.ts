@@ -1487,6 +1487,7 @@ export const ptBR: Dictionary = {
   'The note': 'A nota',
   '{space} panel': 'Painel de {space}',
   'Panel width': 'Largura do painel',
+  'Pane size': 'Tamanho do painel',
   Values: 'Valores',
   Pages: 'Páginas',
   'Page {number} of {count}': 'Página {number} de {count}',
@@ -2555,6 +2556,7 @@ export const ptBR: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'A barra de título do próprio Orden ou a moldura de janela do seu sistema.',
   'How large the text of notes is.': 'O tamanho do texto das notas.',
+  'How large all of Orden is drawn on this device.': 'O tamanho de todo o Orden neste dispositivo.',
   'The space between the lines of a note.': 'O espaço entre as linhas de uma nota.',
   'How wide a line of a note grows before it wraps.':
     'Até que largura uma linha de nota cresce antes de quebrar.',
@@ -2712,6 +2714,8 @@ export const ptBR: Dictionary = {
   'Move the chat': 'Mover a conversa',
   'Only the file': 'Só o arquivo',
   'Trust this space again': 'Confiar neste espaço de novo',
+  'Agent instructions': 'Instruções para agentes',
+  "AGENTS is this space's agent instructions": 'AGENTS são as instruções para agentes deste espaço',
   '{title}, unread': '{title}, não lido',
   '{title}, running': '{title}, em andamento',
 }

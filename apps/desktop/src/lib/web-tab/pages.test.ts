@@ -1127,3 +1127,107 @@ describe('a tab that closes itself when its download starts', () => {
     expect(commands()).not.toContain('take_keyboard')
   })
 })
+
+/** #791: a page whose process died was a white box for good, with nothing to press. */
+describe('a page whose process died', () => {
+  async function livePage(tab: string) {
+    const shown = pages.show(tab, SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+  }
+
+  const crash = async (tab: string) => {
+    const page = await hearing('nib://web-page')
+    page({ payload: { tab, said: 'crashed' } })
+    await settle()
+  }
+
+  test('goes, keeps its trail, and is not built again on its own', async () => {
+    await livePage('crashing')
+    calls.length = 0
+
+    await crash('crashing')
+    const page = pages.of('crashing')
+    expect(page.crashed).toBe(true)
+    expect(page.live).toBe(false)
+    expect(calls).toContainEqual({ command: 'web_close', args: { tab: 'crashing', keep: true } })
+
+    calls.length = 0
+    await pages.show('crashing', SITE, PANE)
+    expect(commands()).not.toContain('web_open')
+  })
+
+  test('comes back with Reload', async () => {
+    await livePage('reloading')
+    await crash('reloading')
+
+    await pages.step('reloading', 'reload')
+    expect(pages.of('reloading').crashed).toBe(false)
+
+    calls.length = 0
+    building = null
+    const shown = pages.show('reloading', SITE, PANE)
+    const arrive = await asked()
+    expect(commands()).toContain('web_open')
+    arrive()
+    await shown
+    expect(pages.of('reloading').live).toBe(true)
+  })
+
+  test('comes back with an address typed over it', async () => {
+    await livePage('typed')
+    await crash('typed')
+
+    await pages.go('typed', 'https://example.org/')
+    expect(pages.of('typed').crashed).toBe(false)
+  })
+
+  test('during its build is not lost', async () => {
+    const shown = pages.show('early', SITE, PANE)
+    const arrive = await asked()
+    await crash('early')
+    arrive()
+    await shown
+    await settle()
+
+    const page = pages.of('early')
+    expect(page.crashed).toBe(true)
+    expect(page.live).toBe(false)
+    expect(calls).toContainEqual({ command: 'web_close', args: { tab: 'early', keep: true } })
+  })
+
+  test('Reload closes what may be left of it first', async () => {
+    await livePage('left')
+    await crash('left')
+    calls.length = 0
+
+    await pages.step('left', 'reload')
+    expect(calls).toContainEqual({ command: 'web_close', args: { tab: 'left', keep: true } })
+    expect(pages.of('left').crashed).toBe(false)
+  })
+
+  test('a build that is refused after Reload offers Reload again', async () => {
+    await livePage('refused')
+    await crash('refused')
+    await pages.step('refused', 'reload')
+
+    building = null
+    refuse = true
+    const shown = pages.show('refused', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    refuse = false
+
+    expect(pages.of('refused').crashed).toBe(true)
+    expect(pages.of('refused').openable).toBe(true)
+  })
+
+  test('a page on its way out says so to nobody', async () => {
+    await livePage('parked')
+    await pages.park('parked')
+    await crash('parked')
+    expect(pages.of('parked').crashed).toBe(false)
+  })
+})

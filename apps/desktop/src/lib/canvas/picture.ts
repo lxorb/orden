@@ -15,7 +15,7 @@
  *  the one thing that both reads the same and rasterises at all. */
 
 import { escapeAll } from '@orden/markdown/html'
-import { inlineImages, printInFrame } from '../export'
+import { assetsOf, inlineImages, localSources, printInFrame, SHEET_POLICY } from '../export'
 import { writtenPdf } from '../export/print'
 import { chooseTarget, download } from '../export/save'
 import { type Canvas, type CanvasNode } from './format'
@@ -423,20 +423,37 @@ async function readySvg(drawing: Drawing, plain = false): Promise<string> {
   )
 }
 
-/** An SVG with every picture in it inlined. Also a page note's; see pages/out.ts. */
-export function inlinedSvg(svg: string): Promise<string> {
-  // `inlineImages` matches `<img src>`, which is what a card's markdown holds;
-  // an `<image href>` is swapped the same way by asking for the same resolver.
-  //
+/** A picture drawn on the plane, as `drawnNode` writes one. Also one an own card's HTML
+ *  wrote out as an `<image>` in an `<svg>` of its own, which is a picture to inline just
+ *  the same; a card's words cannot match, their `<` being escaped in the XML. */
+const DRAWN = /(<image\b[^>]*?\bhref=")([^"]*)(")/g
+
+/** An SVG with every picture in it inlined. Also a page note's; see pages/out.ts.
+ *
+ *  Two kinds of picture, each left the tag it is: an `<img src>` in a card's HTML,
+ *  which is what XHTML in a `foreignObject` shows, and an `<image href>` on the plane.
+ *  Neither is ever rewritten into the other: a regular expression over the whole SVG
+ *  also goes through what cards say, and `src="q"` in a card's code is words. */
+export async function inlinedSvg(svg: string): Promise<string> {
   // A picture on the plane is drawn there through `assetUrl`, so what the SVG
   // holds is an address rather than a path: `assetPath` is that journey back, and
   // it is the same one line on a desktop and in a browser.
-  return inlineImages(
-    svg.replace(/<image /g, '<img ').replace(/href="/g, 'src="'),
-    (src) => assetPath(src) ?? src,
-  )
-    .then((inlined) => inlined.replace(/<img /g, '<image ').replace(/src="/g, 'href="'))
-    .catch(() => svg)
+  const back = (src: string) => assetPath(src) ?? src
+
+  try {
+    const drawn = [...svg.matchAll(DRAWN)].map((match) => `<img src="${match[2] ?? ''}">`)
+    const found = await assetsOf(localSources(drawn.join('')), back)
+    return await inlineImages(
+      svg.replace(
+        DRAWN,
+        (_whole: string, before: string, src: string, after: string) =>
+          `${before}${found.get(src) ?? src}${after}`,
+      ),
+      back,
+    )
+  } catch {
+    return svg
+  }
 }
 
 export async function exportCanvasSvg(drawing: Drawing) {
@@ -486,7 +503,11 @@ async function sheetOf(drawing: Drawing) {
 
   // The paper is the drawing: a plane has no columns to break into pages, so it
   // goes on one sheet of its own size rather than being cut across A4.
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
+  //
+  // With the policy a note's page has. In a frame the sheet is under the app's own; for
+  // a PDF, and for the dialog on a Mac, it is a file in a window of its own, under
+  // nothing else, and a plane of one's own has markup on it. See trust.ts.
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${SHEET_POLICY}"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
 
   return { html, page: { width: width / 96, height: height / 96, margin: 0, landscape: false } }
 }

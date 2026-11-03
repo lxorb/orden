@@ -33,6 +33,17 @@ export function isReserved(name: string): boolean {
   return RESERVED.includes(stem.toUpperCase())
 }
 
+/** The file agents read at the top of a space (docs/ai-sidebar.md 4.6). That one is the
+ *  space's setting rather than one of its notes; see settings/SpacePane.svelte. */
+export const AGENTS_NAME = 'AGENTS.md'
+
+/** Whether a file of this name is a note called AGENTS, a name no note in a space is
+ *  given. Here rather than in naming.ts because a name made from a title is held to it
+ *  too; see `freeName` in the workspace. */
+export function isAgentsName(name: string): boolean {
+  return /^agents\.(md|markdown|mdown|mkd)$/i.test(name.trim())
+}
+
 /** The endings a document is known by rather than named after: markdown's four, a
  *  canvas, a page note, the two a website is written as, and a chat's pointer.
  *

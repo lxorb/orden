@@ -25,6 +25,7 @@ import json
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
+from settling import LANDED
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
@@ -67,6 +68,8 @@ FRONT = "() => window.nibApp.workspace.active?.path ?? null"
 
 def settled(page: Page, what: str) -> dict:
     """The row's boxes once the panel has stopped sliding in: the same twice running."""
+    # Under its own sheet: see `tags` below.
+    wait_for(page, LANDED, "the sheets")
     seen = None
     for _ in range(40):
         now = page.evaluate(BOXES)
@@ -78,10 +81,18 @@ def settled(page: Page, what: str) -> dict:
     return seen or {}
 
 
+def landing_on(page: Page, at: tuple[float, float], what: str, said: str) -> None:
+    """Until a press at `at` lands on `what`. A sidebar that has slid in stands where its
+    boxes say a moment before WebKit's presses find it: they went through to the note
+    under it, on the first press of a launch, and the note took the click."""
+    wait_for(page, f"() => !!document.elementFromPoint({at[0]}, {at[1]})?.closest({what!r})", f"{said}: the press to land there")
+
+
 def turned(page: Page, at: tuple[float, float], what: str) -> None:
     """A press at `at` turns the row, and the note in front stays the one it was."""
     was = page.evaluate(OPEN)
     front = page.evaluate(FRONT)
+    landing_on(page, at, ".twist", what)
     page.mouse.click(*at)
     try:
         wait_for(page, f"() => ({OPEN})() !== {json.dumps(was)}", what, 10)
@@ -194,6 +205,9 @@ def tags(browser: Browser) -> None:
         DRIVE.open(page)
         page.evaluate(TAGS)
         wait_for(page, f"() => !!document.querySelector(\"{TAG}\")", "the tag that holds tags")
+        # Measured under its own sheet: WebKit keeps a page's sheets back while one is on
+        # its way, and until then the mark in the twist stood 200 px tall, twice running.
+        wait_for(page, LANDED, "the sheets")
         seen = None
         for _ in range(40):
             now = page.evaluate(f"() => JSON.stringify(document.querySelector(\"{TAG}\").getBoundingClientRect())")
@@ -206,6 +220,7 @@ def tags(browser: Browser) -> None:
         middle = box["y"] + box["height"] / 2
         for x, what in ((box["x"] - 3, "3px before the tag's twist"), (box["x"] + box["width"] + 2, "2px after the tag's twist")):
             was = page.evaluate(TAG_OPEN)
+            landing_on(page, (x, middle), ".twist", what)
             page.mouse.click(x, middle)
             try:
                 wait_for(page, f"() => ({TAG_OPEN})() !== {json.dumps(was)}", what, 10)

@@ -16,7 +16,7 @@
  *  space or move of a tab to another, and by a launch whose session holds sets, at its
  *  last turn. */
 
-import { tick, untrack } from 'svelte'
+import { tick } from 'svelte'
 import { focusEditor } from '../focus'
 import { identifier } from '../identifier'
 import { without } from '../records'
@@ -421,32 +421,21 @@ class Sets {
   })
 
   /** A space deleted takes its set with it: its tabs close the way any tab closes, so an
-   *  unsaved note's words go to Recently deleted. An empty list is a listing that failed
-   *  rather than every space gone, and leaves the sets alone. */
-  private gone(spaces: readonly string[]) {
-    if (!spaces.length) return
-
-    for (const key of Object.keys(this.aside)) {
-      if (key === GLOBAL || spaces.includes(key)) continue
-      for (const tab of this.tabsOf(key)) workspace.close(tab.id)
-      this.aside = without(this.aside, key)
+   *  unsaved note's words go to Recently deleted. Only a delete says this. A space missing
+   *  from a listing may be a drive not mounted or a folder renamed elsewhere, and its set
+   *  stays. Asked after the switch away from it; the last space has none to switch to, and
+   *  what it showed becomes the window's own, for the next space made (`swap`). */
+  async gone(space: string): Promise<void> {
+    this.drafted = without(this.drafted, space)
+    await this.building.get(space)
+    if (space === this.on) {
+      this.on = GLOBAL
+      return
     }
-    for (const key of Object.keys(this.drafted)) {
-      if (key !== GLOBAL && !spaces.includes(key)) this.drafted = without(this.drafted, key)
-    }
-  }
-
-  /** Follows the list of spaces, for `gone`. */
-  watch() {
-    $effect.root(() => {
-      $effect(() => {
-        const spaces = workspace.spaces.map((one) => one.id)
-        untrack(() => this.gone(spaces))
-      })
-    })
+    for (const tab of this.tabsOf(space)) workspace.close(tab.id)
+    this.aside = without(this.aside, space)
   }
 }
 
 export const sets = new Sets()
-sets.watch()
 void sets.wake()

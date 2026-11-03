@@ -11,7 +11,8 @@
 
 /** What a hub socket carries. `who` is the account (or the guest) the hub is, as
  *  the door read it off the session; `session` is that session's id, which a
- *  device is bound to. */
+ *  device is bound to, or for a guest the hash its token is kept under, which is what
+ *  signing out finds it by. */
 export interface Attached {
   device: string
   who: string

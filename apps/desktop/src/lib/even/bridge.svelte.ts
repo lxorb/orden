@@ -114,7 +114,8 @@ function rowsOf(entry: Entry | null, folds: Folds, depth = 0): Row[] {
   const out: Row[] = []
   for (const child of entry.children) {
     // What the space archived is left off the glass as it is off the file list.
-    if (workspace.archive.has(child.path)) continue
+    // And so is the space's AGENTS.md.
+    if (workspace.archive.has(child.path) || workspace.instructionsAt(child.path)) continue
 
     if (child.is_dir) {
       const open = folds === null || folds(child.path)

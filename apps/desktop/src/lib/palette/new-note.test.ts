@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { noteToMake } from './new-note'
+import { namesAgents, noteToMake } from './new-note'
+import { withOffers } from './offers'
 
 describe('a name typed into the palette, as a note', () => {
   test('is a note at the top of the space', () => {
@@ -21,5 +22,31 @@ describe('a name typed into the palette, as a note', () => {
     expect(noteToMake('What?')).toBeNull()
     expect(noteToMake('CON/Notes')).toBeNull()
     expect(noteToMake('Done.')).toBeNull()
+  })
+})
+
+describe('the name AGENTS typed into the palette', () => {
+  test('makes no note, at the top or in a folder, and says it is the reserved name', () => {
+    for (const term of ['AGENTS', 'agents.md', 'Uni/AGENTS', 'Uni / agents']) {
+      expect(noteToMake(term), term).toBeNull()
+      expect(namesAgents(term), term).toBe(true)
+    }
+  })
+
+  test('is nothing to do with any other name', () => {
+    expect(namesAgents('Groceries')).toBe(false)
+    expect(namesAgents('AGENTS/Plan')).toBe(false)
+    expect(namesAgents('')).toBe(false)
+  })
+})
+
+describe('what the palette offers for the name', () => {
+  test('the way to the setting, keyboard-chosen like any row', () => {
+    expect(withOffers([], 'AGENTS', null, null)).toEqual([{ kind: 'agents' }])
+    expect(withOffers([], 'Uni/agents.md', null, null)).toEqual([{ kind: 'agents' }])
+  })
+
+  test('nothing of the kind for another name', () => {
+    expect(withOffers([], 'Plan', null, null)).toEqual([])
   })
 })

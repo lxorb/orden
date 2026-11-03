@@ -32,10 +32,12 @@ pub struct Changes {
 
 /// Makes the system hold exactly the reminders of `wanted` still to come. `nonce` names
 /// each one's Done. The first failure ends the pass and is answered, so the page knows
-/// the system did not take the plan and rings it itself.
+/// the system did not take the plan and rings it itself. `moved` are the ids whose moment
+/// is not the one they were handed at; see `moved` in reminders.rs.
 pub fn make_so(
     system: &impl System,
     wanted: &[(Planned, String)],
+    moved: &[String],
     words: &Words,
     now: i64,
 ) -> Result<Changes, String> {
@@ -43,7 +45,9 @@ pub fn make_so(
     let mut changes = Changes::default();
 
     for id in &held {
-        if !wanted.iter().any(|(one, _)| &one.id == id && one.at > now) {
+        // One at another moment goes too and comes back below at its own: left alone it
+        // would ring at the old one, stop being held, and be added for the new one as well.
+        if moved.contains(id) || !wanted.iter().any(|(one, _)| &one.id == id && one.at > now) {
             system.remove(id)?;
             changes.removed.push(id.clone());
         }
@@ -51,7 +55,7 @@ pub fn make_so(
     for (one, nonce) in wanted {
         // A moment already gone is refused by every system, and would ring at once by
         // the others: it is not handed over at all.
-        if one.at <= now || held.contains(&one.id) {
+        if one.at <= now || (held.contains(&one.id) && !moved.contains(&one.id)) {
             continue;
         }
         system.add(one, nonce, words)?;
@@ -123,6 +127,7 @@ pub(super) mod tests {
         let changes = make_so(
             &fake,
             &wanted(&[("kept", 2000), ("new", 3000)]),
+            &[],
             &Words::default(),
             1000,
         )
@@ -142,10 +147,10 @@ pub(super) mod tests {
     fn the_same_plan_twice_touches_nothing() {
         let fake = Fake::default();
         let plan = wanted(&[("a", 2000), ("b", 3000)]);
-        make_so(&fake, &plan, &Words::default(), 1000).expect("the first pass");
+        make_so(&fake, &plan, &[], &Words::default(), 1000).expect("the first pass");
         fake.asked.borrow_mut().clear();
 
-        let changes = make_so(&fake, &plan, &Words::default(), 1000).expect("the second");
+        let changes = make_so(&fake, &plan, &[], &Words::default(), 1000).expect("the second");
         assert_eq!(changes, Changes::default());
         assert!(fake.asked.borrow().is_empty());
     }
@@ -157,6 +162,7 @@ pub(super) mod tests {
         let changes = make_so(
             &fake,
             &wanted(&[("late", 900), ("past", 500)]),
+            &[],
             &Words::default(),
             1000,
         )
@@ -165,12 +171,31 @@ pub(super) mod tests {
         assert_eq!(changes.removed, ["late"]);
     }
 
+    // Left at its old moment it would ring there, stop being held, and be added at the new
+    // one by the next pass: two rings for one reminder.
+    #[test]
+    fn one_held_at_another_moment_is_set_again_at_its_own() {
+        let fake = Fake::default();
+        fake.held.borrow_mut().push("moved".into());
+        fake.held.borrow_mut().push("still".into());
+        let changes = make_so(
+            &fake,
+            &wanted(&[("moved", 3000), ("still", 2000)]),
+            &["moved".to_owned()],
+            &Words::default(),
+            1000,
+        )
+        .expect("the pass");
+        assert_eq!(changes.removed, ["moved"]);
+        assert_eq!(changes.added, ["moved"]);
+    }
+
     #[test]
     fn a_refusal_is_answered_so_the_page_rings_instead() {
         let fake = Fake {
             refuse: true,
             ..Fake::default()
         };
-        assert!(make_so(&fake, &wanted(&[("a", 2000)]), &Words::default(), 1000).is_err());
+        assert!(make_so(&fake, &wanted(&[("a", 2000)]), &[], &Words::default(), 1000).is_err());
     }
 }

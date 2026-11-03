@@ -713,6 +713,28 @@ describe('a site behind a password', () => {
     expect(read.text).toContain('Words.')
   })
 
+  /** The cookie was renamed with readers holding a month's tickets under the old name.
+   *  Signed with the site's own key, so whoever set it, it opens only what it opens. */
+  test('a ticket from before the cookie was renamed still lets its reader in', async () => {
+    const answer = await page('/plan', {
+      method: 'POST',
+      raw: `password=${encodeURIComponent(PASSWORD)}`,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+    const old = ticket.replace('__Host-', '')
+
+    const read = await page('/plan', { headers: { cookie: old } })
+    expect(read.text).toContain('Words.')
+
+    // Nor can a cookie set for the root shut that reader out, ahead of it or not.
+    const behind = await page('/plan', { headers: { cookie: `nib_site=0.0; ${old}` } })
+    expect(behind.text).toContain('Words.')
+
+    const forged = `nib_site=${String(Date.now() + 1000)}.${'0'.repeat(64)}`
+    expect((await page('/plan', { headers: { cookie: forged } })).text).toContain('type="password"')
+  })
+
   /** Every answer on a site behind a password, not only the gate: the feed and the
    *  sitemap are the site's words too. */
   test('and nothing a site behind a password answers is a shared cache’s', async () => {

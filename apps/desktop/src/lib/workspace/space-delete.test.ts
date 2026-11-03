@@ -50,6 +50,7 @@ function store() {
   return {
     spaces: [{ id: 'w', name: 'Work', root: '/s/Work' }],
     activeSpaceId: 'h',
+    tabs: [],
     tree: null,
     fileGone: () => Promise.resolve(),
     persist: () => undefined,

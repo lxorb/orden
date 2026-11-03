@@ -14,7 +14,7 @@
 import { oneEdit } from '@orden/markdown/edits'
 import { freePath } from '@orden/markdown/paths'
 import { sha256 } from '../bytes'
-import { applied, type Edit } from '../search/replace'
+import { applied, appliedToFile, type Edit, endingsLike } from '../search/replace'
 import type { Retargeting } from '../link-index.svelte'
 import type { Holding } from '../sync/holding'
 import { onDisk } from '../on-disk'
@@ -83,8 +83,11 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
   try {
     switch (action.kind) {
       case 'delete':
+        // Where it landed goes on the step, which beside a note made at its name since
+        // is not where it was: a redo deletes this note, not that one.
+        action.path = await putBack(action)
         // And the index reads it again, so the links to it resolve at once.
-        await ws.fileCame(await putBack(action), action.folder ? 'folder' : 'file')
+        await ws.fileCame(action.path, action.folder ? 'folder' : 'file')
         break
       case 'create': {
         // Into Recently deleted, and what that kept goes on the step for a redo.
@@ -396,15 +399,20 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
       continue
     }
 
-    const now = read.get(note.path) ?? note.after
-    await writeFile(note.path, now === note.after ? note.content : carriedPast(note, now))
+    const file = read.get(note.path) ?? note.after
+    const now = endingsLike(file, note.after)
+    await writeFile(note.path, now === note.after ? note.content : carriedPast(note, file, now))
   }
 }
 
 /** The edits that take a replacement back, applied to a file that has changed since
  *  by one span: those before it as they were, those after it moved by what it grew
  *  or shrank by, and those it overlaps left out. */
-function carriedPast(note: { after: string; edits: readonly Edit[] }, now: string): string {
+function carriedPast(
+  note: { after: string; edits: readonly Edit[] },
+  file: string,
+  now: string,
+): string {
   const since = oneEdit(note.after, now)
   if (!since) return applied(now, note.edits)
 
@@ -415,7 +423,8 @@ function carriedPast(note: { after: string; edits: readonly Edit[] }, now: strin
     return []
   })
 
-  return applied(now, carried)
+  // In the file's own line endings, where the replacement was worked out on one.
+  return file === now ? applied(now, carried) : appliedToFile(file, carried)
 }
 
 /** Puts a rename or a move back: the file where it was, and the links that

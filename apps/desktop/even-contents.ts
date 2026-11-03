@@ -235,6 +235,24 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  merged into unstable at 9163eeb16: its raises were measured without them. Measured
  *  5,738,198.
  *
+ *  The code raised on 2026-11-02, to 5,740,500, for #613: a move sync makes waits for
+ *  the write in the air (`holdingWrites` in saving.svelte.ts). Measured 5,740,275.
+ *
+ *  The code raised on 2026-11-02, to 5,742,000, for #790, #791 and #397: what the plugin
+ *  carries of a page whose process died, the zoom rows and a host's two spellings. The rule
+ *  for reading a name (web-tab/idn.ts) is left out. Measured 5,741,223.
+ *
+ *  The code raised on 2026-11-02, to 5,740,000, for #680: the interface's zoom in
+ *  modes.svelte.ts. Measured 5,739,049.
+ *
+ *  The code raised on 2026-11-02, to 5,748,000, for the space's AGENTS.md shown as a
+ *  field: the name refused on the glasses' own file list too, and the file left off it.
+ *  Measured 5,747,277.
+ *
+ *  The code raised on 2026-11-02, to 5,767,900, for the open bug round's branches merged
+ *  together on claude/bugs-2026-11: each raise above was measured without the others.
+ *  Measured 5,767,345.
+ *
  *  The code raised on 2026-11-02, to 5,739,500, for #523: a notice's words go through the
  *  one live region and the notices row is a region F6 walks to (UndoToast.svelte,
  *  said.svelte.ts, focus.ts). Measured 5,739,412, from 5,739,030 at ff4c0315c, which was
@@ -254,6 +272,10 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-02, to 5,741,000, for #1036: a web page taking the keyboard
  *  is the app's own page letting go of whatever it had focused, told by the crate as well
  *  as by the window's blur (keyboard-home.ts). Measured 5,740,924.
+ *
+ *  The code raised on 2026-11-03, to 5,769,000, for unstable's #523 and #1036 fixes merged
+ *  into claude/bugs-2026-11: the two branches' raises above were measured without each
+ *  other, and the fixes for one behaviour made one. Measured 5,768,860.
  *
  *  The code raised on 2026-11-03, to 5,743,700, for #1044: the space's inbox is a hidden
  *  note of Orden's own, which the rows read with the space, sync carries and merges as
@@ -282,9 +304,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,747,600, for #1079: a pane that loses its tab
  *  in front comes back to the one used there last (workspace/recency.ts), and keeps
  *  that order through a restart. Measured 5,747,488.
+ *
+ *  The code raised on 2026-11-03, to 5,775,600, for unstable's #1044 to #1079 merged into
+ *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
+ *  and the sum of their growth is what came. Measured 5,775,432.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_747_600,
+  code: 5_775_600,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

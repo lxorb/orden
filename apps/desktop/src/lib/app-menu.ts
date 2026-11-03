@@ -549,16 +549,20 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => run(view, unfoldEverything),
         },
         DIVIDER,
-        { label: t('Zoom in'), ...keyed('app.zoom-in'), run: () => modes.stepZoom(1) },
+        {
+          label: t('Zoom in'),
+          ...keyed('app.zoom-in'),
+          run: () => workspace.zoomPage('in') || modes.stepZoom(1),
+        },
         {
           label: t('Zoom out'),
           ...keyed('app.zoom-out'),
-          run: () => modes.stepZoom(-1),
+          run: () => workspace.zoomPage('out') || modes.stepZoom(-1),
         },
         {
           label: t('Actual size'),
           ...keyed('app.zoom-reset'),
-          run: () => modes.resetZoom(),
+          run: () => workspace.zoomPage('reset') || modes.resetZoom(),
         },
       ],
     },

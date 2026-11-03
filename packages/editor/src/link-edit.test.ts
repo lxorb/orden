@@ -1,6 +1,8 @@
+import { history, undo } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { syntaxTree } from '@codemirror/language'
 import { EditorState, type StateCommand } from '@codemirror/state'
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { editLink, linkPartsAt, removeLink } from './link-edit'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
@@ -38,7 +40,9 @@ describe('the link a press landed on', () => {
     ['see www.x.dev now', 'x.dev', 'www.x.dev', null],
     ['see [[Plan#Today|the plan]] now', 'plan', 'Plan#Today', 'the plan'],
     ['see [[Plan]] now', 'Plan', 'Plan', 'Plan'],
-    ['see [words][ref] now\n\n[ref]: https://r.dev', 'words', 'https://r.dev', 'words'],
+    ['see [words][ref] now\n\n[ref]: https://r.dev', 'words', 'ref', 'words'],
+    ['see [words][] now\n\n[words]: https://r.dev', 'words', '', 'words'],
+    ['see [words] now\n\n[words]: https://r.dev', 'words', '', 'words'],
     ['see [words]() now', 'words', '', 'words'],
   ])('%s', (doc, at, target, words) => {
     const parts = linkPartsAt(state(doc), inside(doc, at))
@@ -71,6 +75,181 @@ describe('editing it', () => {
   })
 })
 
+describe('editing a link by its label', () => {
+  /** What typing an address over the selection leaves, which has to be a link to it. */
+  function typed(doc: string) {
+    let current = state(doc)
+    editLink(inside(doc, 'words'))({
+      state: current,
+      dispatch: (transaction) => (current = transaction.state),
+    })
+    return current
+      .update(
+        current.changeByRange((range) => ({
+          range,
+          changes: { from: range.from, to: range.to, insert: 'https://new.dev' },
+        })),
+      )
+      .state.doc.toString()
+  }
+
+  test.each([
+    ['[words][ref]\n\n[ref]: https://r.dev', '[words][ref]\n\n[ref]: https://new.dev'],
+    ['[words][REF]\n\n[ref]: https://r.dev', '[words][REF]\n\n[ref]: https://new.dev'],
+    ['[words][]\n\n[words]: https://r.dev', '[words][]\n\n[words]: https://new.dev'],
+    ['[words]\n\n[words]: https://r.dev', '[words]\n\n[words]: https://new.dev'],
+    ['> [words][ref]\n>\n> [ref]: https://r.dev', '> [words][ref]\n>\n> [ref]: https://new.dev'],
+  ])('%s changes the address its definition holds', (doc, left) => {
+    expect(typed(doc)).toBe(left)
+  })
+
+  test.each([
+    ['[words][ref] now', '[words](https://new.dev) now'],
+    ['[words][] now', '[words](https://new.dev) now'],
+    ['[words] now', '[words](https://new.dev) now'],
+  ])('%s with no definition becomes a link to what is typed', (doc, left) => {
+    expect(typed(doc)).toBe(left)
+  })
+
+  test('selects a label nothing defines, written where an address goes', () => {
+    const done = after('[words][ref] now', editLink(1))
+    expect(done).toEqual({ ran: true, doc: '[words](ref) now', selected: 'ref' })
+  })
+
+  test('takes the first of two definitions, as a reader does', () => {
+    expect(typed('[words][a]\n\n[a]: https://one.dev\n[a]: https://two.dev')).toBe(
+      '[words][a]\n\n[a]: https://new.dev\n[a]: https://two.dev',
+    )
+  })
+})
+
+describe('editing a link by a label, in a long note', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const body = 'some words and a [link](https://x.dev) with *marks*\n\n'.repeat(2000)
+  const long = `[words][ref]\n\n${body}[ref]: https://r.dev\n`
+  /** As the note stands before the parser has reached its end: the link is read, the
+   *  definition is not. */
+  const unparsed = () =>
+    parsed(
+      EditorState.create({
+        doc: long,
+        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      }),
+      100,
+    )
+
+  test('finds a definition the parser had not reached, whatever the clock says', () => {
+    let current = unparsed()
+    expect(syntaxTree(current).length).toBeLessThan(long.length)
+    // Every read of the clock is past any budget, so nothing here depends on a machine.
+    let now = 0
+    vi.spyOn(Date, 'now').mockImplementation(() => (now += 300))
+    const ran = editLink(1)({
+      state: current,
+      dispatch: (transaction) => (current = transaction.state),
+    })
+    const { from, to } = current.selection.main
+    expect(ran).toBe(true)
+    expect(current.doc.toString()).toBe(long)
+    expect(current.doc.sliceString(from, to)).toBe('https://r.dev')
+  })
+
+  test('building the menu parses nothing', () => {
+    const current = unparsed()
+    // A parse is the one thing here that reads the clock, to know when to stop.
+    const clock = vi.spyOn(Date, 'now')
+    expect(linkPartsAt(current, 1)?.words).toBe('words')
+    expect(clock).not.toHaveBeenCalled()
+  })
+})
+
+describe('what counts as a label being defined', () => {
+  test.each([
+    ['[words][STRASSE]\n\n[Straße]: https://r.dev', 'https://r.dev'],
+    ['[words][Straße]\n\n[STRASSE]: https://r.dev', 'https://r.dev'],
+    ['[words][e]\n\n[e]: <>\n[e]: https://two.dev', '<>'],
+    ['[words][a  b]\n\n[A\tB]: https://r.dev', 'https://r.dev'],
+  ])('%s', (doc, selected) => {
+    expect(after(doc, editLink(1))).toEqual({ ran: true, doc, selected })
+  })
+
+  test('a definition written in a code block defines nothing', () => {
+    const doc = '[words][ref]\n\n```\n[ref]: https://r.dev\n```'
+    expect(after(doc, editLink(1)).doc).toBe(doc.replace('[ref]', '(ref)'))
+  })
+})
+
+describe('a label left behind by an edit nobody finished', () => {
+  /** Whether the text reads as one link with an address of its own. */
+  const linksOut = (doc: string) => {
+    const parts = linkPartsAt(state(doc), 1)
+    return parts?.to === doc.length && parts.label === undefined
+  }
+
+  test.each([
+    ['[words][ref]', '[words](ref)', 'ref'],
+    ['[words][Some  words]', '[words](<Some words>)', '<Some words>'],
+    ['[words][a(b]', '[words](<a(b>)', '<a(b>'],
+    ['[words][a<b]', '[words](<a%3Cb>)', '<a%3Cb>'],
+    ['[words][a\\]b]', '[words](<a\\]b>)', '<a\\]b>'],
+    ['[words][a\nb]', '[words](<a b>)', '<a b>'],
+    ['[words][]', '[words]()', ''],
+    ['[words]', '[words]()', ''],
+  ])('%s stays a link', (doc, left, selected) => {
+    expect(after(doc, editLink(1))).toEqual({ ran: true, doc: left, selected })
+    expect(linksOut(left), left).toBe(true)
+  })
+})
+
+describe('undoing an edit of a label', () => {
+  function editing(doc: string) {
+    let current = parsed(
+      EditorState.create({
+        doc,
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          history(),
+        ],
+      }),
+    )
+    const dispatch = (transaction: { state: EditorState }) => (current = transaction.state)
+    const type = (insert: string, at = current.selection.main) =>
+      (current = current.update({
+        changes: { from: at.from, to: at.to, insert },
+        selection: { anchor: at.from + insert.length },
+        userEvent: 'input.type',
+      }).state)
+    return {
+      edit: () => editLink(1)({ state: current, dispatch }),
+      type,
+      undo: () => undo({ state: current, dispatch }),
+      text: () => current.doc.toString(),
+    }
+  }
+
+  test('takes the swap back as one step of its own', () => {
+    const note = editing('[words][ref] now')
+    note.edit()
+    expect(note.text()).toBe('[words](ref) now')
+    note.undo()
+    expect(note.text()).toBe('[words][ref] now')
+  })
+
+  test('takes what was typed first and the swap after it, however quickly it was typed', () => {
+    const note = editing('[words][ref] now')
+    note.edit()
+    note.type('https://new.dev')
+    expect(note.text()).toBe('[words](https://new.dev) now')
+    note.undo()
+    expect(note.text()).toBe('[words](ref) now')
+    note.undo()
+    expect(note.text()).toBe('[words][ref] now')
+  })
+})
+
 describe('editing a reference to a definition', () => {
   test.each([
     ['see [words][ref] now\n\n[ref]: https://r.dev "t"', 'https://r.dev'],
@@ -85,7 +264,7 @@ describe('editing a reference to a definition', () => {
     })
   })
 
-  test.each(['see [words][ref] now', 'see [words][] now', 'see [words] now'])(
+  test.each(['see [words][] now', 'see [words] now'])(
     'with no definition, points nowhere yet and is typed between the brackets: %s',
     (doc) => {
       let current = state(doc)

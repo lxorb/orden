@@ -46,6 +46,8 @@ export type Row =
   | { kind: 'place'; line: number; text: string; depth: number; hint: string | null }
   /** The note a name typed would make. */
   | { kind: 'make'; make: NoteToMake }
+  /** The name no note in a space takes, and the way to the field that holds it. */
+  | { kind: 'agents' }
   /** An address typed, gone to: Chrome's what-you-typed row. */
   | { kind: 'address'; url: string; address: string }
   /** Another machine, a terminal on it opened: `pi`, or `ssh pi`. */

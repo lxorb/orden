@@ -4,6 +4,7 @@
 
 import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { sha256 } from '../src/crypto'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
 const DEVICE = 'device-laptop'
@@ -166,6 +167,8 @@ describe('the hub door', () => {
 
     const asked = door.asked.at(-1)
     expect(asked?.headers.get('x-nib-guest')).toBe('yes')
+    // The sign-in, so that signing out can find this socket; a guest's has no id.
+    expect(asked?.headers.get('x-nib-session')).toBe(await sha256(guest))
     expect(asked?.id).toBe(joined.json.guest.id)
     expect(asked?.id).not.toBe(userId('owner@example.com'))
   })

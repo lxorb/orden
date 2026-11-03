@@ -1461,6 +1461,7 @@ export const pa: Dictionary = {
   'The note': 'ਨੋਟ',
   '{space} panel': '{space} ਪੈਨਲ',
   'Panel width': 'ਪੈਨਲ ਚੌੜਾਈ',
+  'Pane size': 'ਖ਼ਾਨੇ ਦਾ ਆਕਾਰ',
   Values: 'ਮੁੱਲ',
   Pages: 'ਸਫ਼ੇ',
   'Page {number} of {count}': 'ਸਫ਼ਾ {number}/{count}',
@@ -2513,6 +2514,8 @@ export const pa: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ਦੀ ਆਪਣੀ ਸਿਰਲੇਖ ਪੱਟੀ, ਜਾਂ ਤੁਹਾਡੇ ਸਿਸਟਮ ਦਾ ਵਿੰਡੋ ਚੌਖਟਾ।',
   'How large the text of notes is.': 'ਨੋਟਾਂ ਦਾ ਲਿਖਤ ਕਿੰਨਾ ਵੱਡਾ ਹੈ।',
+  'How large all of Orden is drawn on this device.':
+    'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਪੂਰਾ Orden ਕਿੰਨਾ ਵੱਡਾ ਦਿਖਦਾ ਹੈ।',
   'The space between the lines of a note.': 'ਨੋਟ ਦੀਆਂ ਲਾਈਨਾਂ ਵਿਚਕਾਰ ਦੀ ਥਾਂ।',
   'How wide a line of a note grows before it wraps.':
     'ਨੋਟ ਦੀ ਲਾਈਨ ਮੁੜਨ ਤੋਂ ਪਹਿਲਾਂ ਕਿੰਨੀ ਚੌੜੀ ਹੁੰਦੀ ਹੈ।',
@@ -2668,6 +2671,8 @@ export const pa: Dictionary = {
   'Move the chat': 'ਚੈਟ ਭੇਜੋ',
   'Only the file': 'ਸਿਰਫ਼ ਫ਼ਾਈਲ',
   'Trust this space again': 'ਇਸ ਸਪੇਸ ਉੱਤੇ ਮੁੜ ਭਰੋਸਾ ਕਰੋ',
+  'Agent instructions': 'ਏਜੰਟ ਹਦਾਇਤਾਂ',
+  "AGENTS is this space's agent instructions": 'AGENTS ਇਸ ਸਪੇਸ ਦੀਆਂ ਏਜੰਟ ਹਦਾਇਤਾਂ ਹਨ',
   '{title}, unread': '{title}, ਅਣਪੜ੍ਹਿਆ',
   '{title}, running': '{title}, ਚੱਲ ਰਿਹਾ ਹੈ',
 }

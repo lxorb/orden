@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest'
-import { serveApp } from '../src/channel'
+import { serveApp, switchChannel } from '../src/channel'
 import { call, testEnv, type TestEnv } from './harness'
 
 /** The web serves two builds from one Worker: the release at the root and the edge of
@@ -119,24 +119,67 @@ describe('the folder itself', () => {
   })
 })
 
+/** Every published site is a name under the app's own root and may run a script of its
+ *  own, which may set a cookie for the whole root. A browser takes one with this prefix
+ *  only from the app's own hostname. */
+describe('a cookie another site set for the root', () => {
+  test('does not choose the build for a browser that chose one', async () => {
+    env = testEnv({ ASSETS: assets(BOTH) })
+    for (const cookie of [
+      'orden-channel=unstable; __Host-orden-channel=stable',
+      '__Host-orden-channel=stable; orden-channel=unstable',
+    ]) {
+      expect((await call(env, '/', { headers: { cookie } })).text, cookie).toBe('stable index')
+    }
+    const chosen = { cookie: 'orden-channel=; __Host-orden-channel=unstable' }
+    expect((await call(env, '/', { headers: chosen })).text).toBe('unstable index')
+  })
+
+  test('and a browser that chose before the rename stays where it is', async () => {
+    env = testEnv({ ASSETS: assets(BOTH) })
+    expect((await call(env, '/', { headers: ON_EDGE })).text).toBe('unstable index')
+  })
+})
+
 describe('?channel=', () => {
   test('unstable sets the cookie and comes back to the same page without it', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
     const answer = await call(env, '/s/x?a=1&channel=unstable')
     expect(answer.status).toBe(302)
     expect(answer.headers.get('location')).toBe('/s/x?a=1')
-    const cookie = answer.headers.get('set-cookie') ?? ''
-    expect(cookie).toMatch(/^orden-channel=unstable; Path=\/; Max-Age=\d+; SameSite=Lax; Secure$/)
+    const cookie = answer.headers.getSetCookie()[0] ?? ''
+    expect(cookie).toMatch(
+      /^__Host-orden-channel=unstable; Path=\/; Max-Age=\d+; SameSite=Lax; Secure$/,
+    )
     // The page reads it to say which build it is.
     expect(cookie).not.toMatch(/HttpOnly/i)
   })
 
-  test('stable clears it', async () => {
+  /** Said rather than only cleared: a cookie another site set for the root would be
+   *  the next thing asked, and would put the browser straight back on the edge. */
+  test('stable says so, and clears the one a browser chose before the rename', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
     const answer = await call(env, '/?channel=stable', { headers: ON_EDGE })
     expect(answer.status).toBe(302)
     expect(answer.headers.get('location')).toBe('/')
-    expect(answer.headers.get('set-cookie')).toMatch(/^orden-channel=; Path=\/; Max-Age=0;/)
+    const cookies = answer.headers.getSetCookie()
+    expect(cookies).toHaveLength(2)
+    expect(cookies[0]).toMatch(/^__Host-orden-channel=stable; Path=\/; Max-Age=\d+;.* Secure$/)
+    expect(cookies[1]).toMatch(/^orden-channel=; Path=\/; Max-Age=0;/)
+  })
+
+  /** A browser refuses the prefix without https: a machine running this for itself, and
+   *  the end-to-end drive (test/e2e/web-channel.py), keep the plain name. */
+  test('over plain http, keeps the name a browser takes there', () => {
+    env = testEnv({ ASSETS: assets(BOTH) })
+    const edge = switchChannel(new Request('http://localhost:8787/?channel=unstable'))
+    expect(edge?.headers.getSetCookie()).toEqual([
+      expect.stringMatching(/^orden-channel=unstable; Path=\/; Max-Age=\d+; SameSite=Lax$/),
+    ])
+    const release = switchChannel(new Request('http://localhost:8787/?channel=stable'))
+    expect(release?.headers.getSetCookie()).toEqual([
+      'orden-channel=; Path=/; Max-Age=0; SameSite=Lax',
+    ])
   })
 
   test('anything else is just a parameter', async () => {

@@ -1439,6 +1439,7 @@ export const ja: Dictionary = {
   'The note': 'ノート',
   '{space} panel': '{space} パネル',
   'Panel width': 'パネルの幅',
+  'Pane size': 'ペインのサイズ',
   Values: '値',
   Pages: 'ページ',
   'Page {number} of {count}': '{count} ページ中 {number} ページ',
@@ -2486,6 +2487,7 @@ export const ja: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden 独自のタイトルバーか、システムのウィンドウ枠かを選びます。',
   'How large the text of notes is.': 'ノートの文字の大きさです。',
+  'How large all of Orden is drawn on this device.': 'このデバイスで Orden 全体を表示する大きさ。',
   'The space between the lines of a note.': 'ノートの行と行の間隔です。',
   'How wide a line of a note grows before it wraps.': 'ノートの一行が折り返すまでの幅です。',
   'Typing an opening bracket or quote adds the closing one too.':
@@ -2634,6 +2636,8 @@ export const ja: Dictionary = {
   'Move the chat': 'チャットを移動',
   'Only the file': 'ファイルのみ',
   'Trust this space again': 'このスペースを再び信頼する',
+  'Agent instructions': 'エージェントへの指示',
+  "AGENTS is this space's agent instructions": 'AGENTS はこのスペースのエージェントへの指示です',
   '{title}, unread': '{title}、未読',
   '{title}, running': '{title}、実行中',
 }

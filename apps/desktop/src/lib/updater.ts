@@ -172,9 +172,16 @@ export async function restartToUpdate(install = true) {
 }
 
 /** Runs the staged installer. Called as the app closes, so nothing is
- *  interrupted; the update is in place for the next launch. Answers whether it was. */
-export async function installStaged(): Promise<boolean> {
+ *  interrupted; the update is in place for the next launch. Answers whether it was.
+ *
+ *  On Windows that ends every window, so the crate says whether this one may: `closing` is
+ *  one window going rather than the whole app. See `update_may_install` in lifecycle.rs. */
+export async function installStaged(closing = false): Promise<boolean> {
   if (!staged) return false
+  if (!(await invoke<boolean>('update_may_install', { closing }).catch(() => true))) {
+    if (closing) handOn()
+    return false
+  }
 
   try {
     await staged.install()
@@ -182,8 +189,35 @@ export async function installStaged(): Promise<boolean> {
   } catch (error) {
     // The working version stays, and is offered again; said, so a failure is seen.
     log('error', `update: ${error instanceof Error ? error.message : String(error)}`)
+    // Still here, so the installer did not end anything, and another window may try.
+    void invoke('update_install_failed').catch(() => undefined)
     return false
   } finally {
     staged = null
   }
+}
+
+const HANDING = 'nib:update-handed'
+
+/** What was downloaded goes with this window, and the last one closing is what installs:
+ *  so the others look now. One that closes before it has downloaded leaves it to the next
+ *  run. */
+function handOn() {
+  const channel = new BroadcastChannel(HANDING)
+  channel.postMessage(null)
+  channel.close()
+}
+
+/** `look` runs when another window hands on. Answers how to stop. */
+export function hearHandedOn(look: () => void): () => void {
+  const channel = new BroadcastChannel(HANDING)
+  channel.onmessage = () => look()
+  return () => channel.close()
+}
+
+/** Another window's installer is about to end this one: what is owed is waited for, as a
+ *  window going waits, and the crate told. See `before_installer` in lifecycle.rs. */
+export async function settledForInstaller(owed: () => Promise<unknown>): Promise<void> {
+  await Promise.race([owed().catch(() => undefined), waited(GIVE_UP)])
+  await invoke('update_settled').catch(() => undefined)
 }

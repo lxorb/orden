@@ -49,6 +49,21 @@ const told = vi.hoisted(() => ({
   views: [] as { view: unknown; mode: string; on: boolean }[],
 }))
 
+/** What the crate answers about the interface's zoom. */
+const crate = vi.hoisted(() => ({ refuses: false, asked: [] as unknown[] }))
+
+vi.mock('./tauri', async (importOriginal) => {
+  const real = await importOriginal<typeof import('./tauri')>()
+  return {
+    ...real,
+    invoke: (command: string, args?: Record<string, unknown>) => {
+      if (command !== 'interface_zoom_choose') return real.invoke(command, args)
+      crate.asked.push(args?.factor)
+      return crate.refuses ? Promise.reject(new Error('disk full')) : Promise.resolve()
+    },
+  }
+})
+
 vi.mock('@orden/editor', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@orden/editor')>()),
   setReadOnlyMode: (view: unknown, on: boolean) => {
@@ -1248,5 +1263,23 @@ describe('the faces to read in', () => {
     for (const bad of ['', 'a"; } body { color: red', "Fira'", 'x;y', '\\66 oo', 4, null]) {
       expect(familyName(bad)).toBe('')
     }
+  })
+})
+
+describe('the interface zoom', () => {
+  test('is worn once the crate has kept it', async () => {
+    crate.refuses = false
+    await modes.setInterfaceZoom(1.25)
+    expect(crate.asked.at(-1)).toBe(1.25)
+    expect(modes.interfaceZoom).toBe(1.25)
+  })
+
+  test('a write the crate refused changes nothing, and is no unhandled rejection', async () => {
+    crate.refuses = false
+    await modes.setInterfaceZoom(1.1)
+    crate.refuses = true
+    await expect(modes.setInterfaceZoom(1.5)).resolves.toBeUndefined()
+    expect(modes.interfaceZoom).toBe(1.1)
+    crate.refuses = false
   })
 })

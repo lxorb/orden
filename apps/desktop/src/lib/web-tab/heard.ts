@@ -3,7 +3,8 @@
  *  Four things, each of them something a browser shows without being asked: the page is
  *  playing sound, or is muted; something in it holds the whole screen; it was zoomed
  *  inside the page; and how many matches a find found and which one is lit. And how a
- *  page arrived, which settles an address the bar gave `https:` to; see upgrade.ts. The crate
+ *  page arrived, which settles an address the bar gave `https:` to; see upgrade.ts. And that
+ *  its process has died, which leaves a white box unless somebody says so. The crate
  *  says them (see web_page.rs and web_find.rs); this reads them, because an event is a
  *  boundary like any other, and puts them where the tab strip, the bar and the find bar
  *  read them. And what the page asks: its find or its address field, when its own keys
@@ -30,6 +31,7 @@ export type Said = { tab: string } & (
   | { said: 'fill'; on: boolean }
   | { said: 'zoom'; factor: number }
   | { said: 'arrived'; url: string; failure: Failure | null }
+  | { said: 'crashed' }
 )
 
 const FAILURES: readonly string[] = ['unreachable', 'certificate', 'other'] satisfies Failure[]
@@ -56,6 +58,7 @@ export function readSaid(value: unknown): Said | null {
     const failure = FAILURES.includes(value.failure as string) ? (value.failure as Failure) : null
     return { tab, said, url: value.url, failure }
   }
+  if (said === 'crashed') return { tab, said }
   return null
 }
 
@@ -75,7 +78,7 @@ export function readUnplayable(value: unknown): string | null {
 /** Where a page that did not arrive is sent instead: the tab and the address. */
 export type Go = (tab: string, url: string) => void
 
-export function heard(page: Page, said: Said, go?: Go): void {
+export function heard(page: Page, said: Said, go?: Go, crashed?: (tab: string) => void): void {
   switch (said.said) {
     case 'sound': {
       // When it fell quiet, which a page out of sight is not frozen for a while after;
@@ -97,6 +100,9 @@ export function heard(page: Page, said: Said, go?: Go): void {
       page.zoom = said.factor
       // A private page's size is kept for its tab only, and written nowhere.
       keepZoom(siteOf(page.url), said.factor, asideFor(said.tab, page))
+      return
+    case 'crashed':
+      crashed?.(said.tab)
       return
     case 'arrived': {
       // The https the bar chose for a host typed without a scheme, and nothing answered
@@ -124,11 +130,12 @@ export async function listening(
   listen: typeof Listen,
   page: (tab: string) => Page | undefined,
   go: Go,
+  crashed: (tab: string) => void,
 ): Promise<void> {
   await listen('nib://web-page', (event) => {
     const said = readSaid(event.payload)
     const one = said && page(said.tab)
-    if (one) heard(one, said, go)
+    if (one) heard(one, said, go, crashed)
   })
   await listen('nib://web-found', (event) => {
     const said = readFound(event.payload)
