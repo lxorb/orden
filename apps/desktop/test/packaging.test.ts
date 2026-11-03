@@ -184,39 +184,94 @@ esac
 
   /** `releases/latest/download/latest.json` is what every install asks: a tag's release
    *  is a draft until its manifest is up, so the address never answers 404 from a release
-   *  that is only half there. Both workflows that may make it make it a draft, and the
-   *  desktop's publish, the one holding the manifest, is the only one that publishes it. */
+   *  that is only half there. GitHub takes any number of drafts of one tag, so one job
+   *  makes it, first thing and before anything is built, and the phones wait for it. */
   describe('a tag', () => {
-    test('is a draft until its manifest is up, and handed on only after', () => {
-      const job = publishJob()
-      expect(stepRun('Make the draft')).toContain('--draft')
-      const steps = [
-        'Make the draft',
-        'Upload the files',
-        'Publish the release',
-        'Hand the release',
-      ]
-      const places = steps.map((name) => job.indexOf(`- name: ${name}`))
+    const job = (workflowText: string, name: string) =>
+      new RegExp(`\\n {2}${name}:\\n([\\s\\S]*?)(?=\\n {2}[a-z-]+:\\n|$)`).exec(
+        workflowText,
+      )?.[1] ?? ''
+
+    test('one job makes the draft, on a tag and before anything is built', () => {
+      const draft = job(workflow, 'draft')
+      expect(draft).toContain('--draft')
+      expect(draft).toContain('gh release view "$TAG"')
+      expect(draft).toContain("startsWith(github.ref, 'refs/tags/v')")
+      expect(draft).toMatch(/needs: \[?version\]?/)
+      expect(job(workflow, 'publish')).not.toContain('gh release create "$TAG"')
+      expect(job(workflow, 'publish')).toMatch(/needs: \[.*draft.*\]/)
+      expect(job(workflow, 'publish')).toContain("needs.draft.result != 'failure'")
+    })
+
+    test('is out only once its manifest is up, and handed on only after', () => {
+      const steps = ['Upload the files', 'Publish the release', 'Hand the release']
+      const places = steps.map((name) => publishJob().indexOf(`- name: ${name}`))
       expect(places.every((at) => at >= 0)).toBe(true)
       expect(places).toEqual([...places].sort((a, b) => a - b))
       expect(stepRun('Publish the release')).toContain('--draft=false')
     })
 
-    test('a run again never makes a second draft, nor publishes one already out', () => {
-      expect(stepRun('Make the draft')).toContain('gh release view "$TAG"')
-      expect(stepRun('Publish the release')).toContain('isDraft')
+    test('the phones wait for the draft, and neither make nor publish it', () => {
+      const mobile = repo('.github', 'workflows', 'publish-mobile.yml')
+      const tagged = /- name: Wait for the draft\n([\s\S]*?)(?=\n {6}- )/.exec(mobile)?.[1] ?? ''
+      expect(tagged).toContain('gh release view "$TAG"')
+      expect(tagged).toContain('exit 1')
+      expect(mobile.match(/gh release create/g)?.length).toBe(1)
+      expect(mobile).toMatch(/gh release create "\$TAG" --prerelease/)
+      expect(mobile).not.toContain('--draft')
     })
 
-    test('the phones add to the draft and never publish it', () => {
-      const mobile = repo('.github', 'workflows', 'publish-mobile.yml')
-      const step = /- name: Publish the release\n([\s\S]*?)(?=\n {6}- )/.exec(mobile)?.[1] ?? ''
-      const made = /- name: (?:Make the draft|Publish the release)\n([\s\S]*?)(?=\n {6}- )/.exec(
-        mobile,
-      )?.[1]
-      expect(step).toBe('')
-      expect(made).toContain('--draft')
-      expect(made).toContain('gh release view "$TAG"')
-      expect(mobile).not.toContain('--draft=false')
+    /** The publish step run against a `gh` that says what is out. */
+    function publish(tag: string, latest: string, draft: boolean) {
+      const at = mkdtempSync(join(tmpdir(), 'nib-release-'))
+      mkdirSync(join(at, 'bin'))
+      const log = join(at, 'gh.log')
+      writeFileSync(log, '')
+      writeFileSync(
+        join(at, 'bin', 'gh'),
+        `#!/bin/bash
+echo "$*" >> "${log}"
+case "$*" in
+  *isDraft*) echo ${draft} ;;
+  *tagName*) ${latest ? `echo ${latest}` : 'echo "release not found" >&2; exit 1'} ;;
+esac
+`,
+      )
+      chmodSync(join(at, 'bin', 'gh'), 0o755)
+      const ran = spawnSync('bash', ['-e', '-c', stepRun('Publish the release')], {
+        cwd: at,
+        encoding: 'utf8',
+        env: { ...process.env, PATH: `${join(at, 'bin')}:${process.env.PATH ?? ''}`, TAG: tag },
+      })
+      expect(ran.status, ran.stderr).toBe(0)
+      return readFileSync(log, 'utf8')
+        .split('\n')
+        .filter((one) => one.startsWith('release edit'))
+    }
+
+    describe.skipIf(process.platform === 'win32')('when it comes out', () => {
+      test('the newest version is the latest', () => {
+        expect(publish('v0.21.0', 'v0.20.0', true)).toEqual([
+          'release edit v0.21.0 --draft=false --latest',
+        ])
+        expect(publish('v0.10.0', 'v0.9.0', true)).toEqual([
+          'release edit v0.10.0 --draft=false --latest',
+        ])
+      })
+
+      test('an old tag run again does not take the latest back', () => {
+        expect(publish('v0.19.1', 'v0.20.0', true)).toEqual([
+          'release edit v0.19.1 --draft=false --latest=false',
+        ])
+      })
+
+      test('the first release there is, is the latest', () => {
+        expect(publish('v1.0.0', '', true)).toEqual(['release edit v1.0.0 --draft=false --latest'])
+      })
+
+      test('one already out is left as it is', () => {
+        expect(publish('v0.21.0', 'v0.21.0', false)).toEqual([])
+      })
     })
   })
 

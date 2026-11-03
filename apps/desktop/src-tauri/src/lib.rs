@@ -1170,8 +1170,10 @@ mod tests {
     /// What a body that waits says itself, whichever module it is in: the
     /// filesystem, a subprocess, the machine's own keychain, and the system's shell,
     /// which opens a file or shows it in its folder in its own time - the opener's own
-    /// commands are `async` for that reason.
-    const WAITS: [&str; 9] = [
+    /// commands are `async` for that reason. And building a webview, for which `WebView2`
+    /// runs a nested loop waiting on a callback it will not deliver into the handler a
+    /// sync command runs inside: a deadlock of the whole app (web_tabs.rs, `web_open`).
+    const WAITS: [&str; 11] = [
         "fs::",
         "File::",
         "OpenOptions",
@@ -1181,6 +1183,8 @@ mod tests {
         "delete_credential",
         "canonicalize",
         "tauri_plugin_opener::",
+        "WebviewWindowBuilder::new(",
+        "WebviewBuilder::new(",
     ];
 
     /// One function of the crate: the name it is called by, and the body it runs.
@@ -1366,6 +1370,18 @@ mod tests {
                 "{name} waits without saying async",
             );
         }
+    }
+
+    /// A command that builds a window, a call or two down, is one that waits.
+    #[test]
+    fn building_a_webview_is_waiting() {
+        let source = concat!(
+            "#[tauri::command]\npub fn opens() {\n    opened();\n}\n\n",
+            "fn opened() {\n    let _ = WebviewWindowBuilder::new(app, one, two);\n}\n\n",
+            "#[tauri::command]\npub fn child() {\n    let _ = WebviewBuilder::new(one, two);\n}\n",
+        );
+        let waits = waiting(&functions(source));
+        assert!(waits.contains("opens") && waits.contains("child"));
     }
 
     /// The three shapes the reader has to tell apart, and the chain it follows.

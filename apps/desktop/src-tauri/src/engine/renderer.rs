@@ -211,7 +211,6 @@ mod tests {
         assert!(own_origin("http://tauri.localhost/"));
         assert!(own_origin("http://tauri.localhost/quick-add.html"));
         assert!(own_origin("http://tauri.localhost/presenter.html?x=1#y"));
-        assert!(own_origin("tauri://localhost/"));
         for other in [
             "https://docs.google.com/spreadsheets/d/x/edit",
             "http://tauri.localhost.evil.example/",
@@ -235,12 +234,13 @@ mod tests {
         }
     }
 
-    /// A build served by the dev server is the one place the dev server is the app.
+    /// Linux's manifest has `custom-protocol` on for every build, `tauri dev` too, so the
+    /// app is served from the one address above and its `devUrl` is no address of the app's.
     #[test]
-    fn the_dev_server_is_the_app_only_in_a_build_that_uses_it() {
-        assert_eq!(own_origin("http://localhost:1420/"), tauri::is_dev());
-        assert!(!own_origin("http://localhost:1421/"));
-        assert!(!own_origin("http://127.0.0.1:1420/"));
+    fn the_dev_server_is_no_address_of_the_app_s() {
+        assert!(!tauri::is_dev());
+        assert!(!own_origin("http://localhost:1420/"));
+        assert!(!own_origin("tauri://localhost/"));
     }
 
     #[test]
@@ -260,13 +260,5 @@ mod tests {
             ])),
             Some(2)
         );
-    }
-
-    /// The address above is the one the config serves the app from.
-    #[test]
-    fn the_dev_server_named_is_the_config_s() {
-        let config =
-            std::fs::read_to_string(crate::app_dir().join("tauri.conf.json")).expect("the config");
-        assert!(config.contains(&format!("\"devUrl\": \"{}\"", super::DEV_ORIGIN)));
     }
 }
