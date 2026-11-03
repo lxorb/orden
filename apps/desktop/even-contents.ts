@@ -309,13 +309,22 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
  *  and the sum of their growth is what came. Measured 5,775,432.
  *
- *  The code raised on 2026-11-03, to 5,805,500, for the bug hunt's round one merged into
+ *  The code raised on 2026-11-03, to 5,777,800, for #1071: the icon picker's emoji and
+ *  coloured drawings are one tab, the sets merged into one collection
+ *  (`mergeSets` in icon-sets.ts); the drawings' places among the emoji stay out
+ *  (flat-colour-places.even.ts). Measured 5,777,606.
+ *
+ *  The code raised on 2026-11-04, to 5,778,300, for #1070: an agent opens and shows
+ *  everything behind the reader through one door (agents/workspace/reader-view.ts), and a
+ *  tab it opened wears its spark until looked at. Measured 5,778,101.
+ *
+ *  The code raised on 2026-11-03, to 5,808,200, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
  *  thread written down while it runs, the sync's scans, and an undo that waits for every
- *  gesture landing, measured together. Measured 5,805,262.
+ *  gesture landing, measured together. Measured 5,807,931.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_805_500,
+  code: 5_808_200,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

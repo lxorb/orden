@@ -1042,13 +1042,17 @@ function holds(tail: string): boolean {
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
  *  and the sum of their growth is what came. Measured 3,480,464, 385 modules.
  *
- *  Raised 2026-11-03, to 3,516,000, for the bug hunt's round one merged into
+ *  Raised 2026-11-04, to 3,481,400, for #1070: a tab an agent opened behind the reader
+ *  wears its spark until the reader looks at it (TabMark.svelte, agent-marks.svelte.ts).
+ *  Measured 3,481,273.
+ *
+ *  Raised 2026-11-03, to 3,516,800, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes (a phone's draft kept
  *  until it lands, charts, paste, block commands, links, a thread written down while it
  *  runs), what a base may cost, a tile's move, the sync's scans, and an undo that waits for
  *  every gesture landing, measured together. What could wait went behind a door on the
- *  branches. Measured 3,515,848, 385 modules. */
-const BUDGET = 3_516_000
+ *  branches. Measured 3,516,657, 385 modules. */
+const BUDGET = 3_516_800
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
