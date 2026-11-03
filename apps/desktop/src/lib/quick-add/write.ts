@@ -10,8 +10,17 @@
 import { meansInbox } from '@orden/bases/inbox'
 import { insideOnly } from '../automation/inside'
 import { changeOf } from '../search/replace'
-import { insideSpace, isMarkdownPath, relativeTo, withoutExtension } from '../space-paths'
+import {
+  folderOf,
+  insideSpace,
+  isMarkdownPath,
+  nameOf,
+  relativeTo,
+  samePath,
+  withoutExtension,
+} from '../space-paths'
 import { links } from '../link-index.svelte'
+import { isAgentsName } from '../note-name'
 import { onDisk } from '../on-disk'
 import { readIfThere, toldIfUnreadable } from '../read-if-there'
 import { canWriteAt } from '../sharing.svelte'
@@ -67,6 +76,13 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
   const relative = insideOnly(`${entry.note.replace(/\.md$/i, '')}.md`)
   if (relative === null) return null
   const path = insideSpace(root, relative)
+  // What nobody may name a note, `>` cannot either, as a link cannot (`followLink`). The
+  // file at the top is hidden from the notes read above, and is written by content; one
+  // in a folder the listing missed is a note, and is asked of the disk below.
+  if (isAgentsName(nameOf(path)) && (samePath(folderOf(path), root) || !(await onDisk(path)))) {
+    void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
+    return null
+  }
   // The listing is a round trip behind the disk, and a name it misses can still be
   // a note with words in it: writing the empty file then replaced them, with no
   // version kept. So the disk is asked first, and a note that is there is used.
