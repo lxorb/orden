@@ -1460,6 +1460,7 @@ export const tr: Dictionary = {
   'The note': 'Not',
   '{space} panel': '{space} paneli',
   'Panel width': 'Panel genişliği',
+  'Pane size': 'Bölme boyutu',
   Values: 'Değerler',
   Pages: 'Sayfalar',
   'Page {number} of {count}': 'Sayfa {number}/{count}',
@@ -2524,6 +2525,8 @@ export const tr: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden’in kendi başlık çubuğu ya da sisteminizin pencere çerçevesi.',
   'How large the text of notes is.': 'Notların yazısının ne kadar büyük olduğu.',
+  'How large all of Orden is drawn on this device.':
+    'Orden’ın tamamının bu cihazda ne kadar büyük görüneceği.',
   'The space between the lines of a note.': 'Bir notun satırları arasındaki boşluk.',
   'How wide a line of a note grows before it wraps.':
     'Bir not satırının alt satıra geçmeden önce ne kadar genişleyebileceği.',
@@ -2676,6 +2679,8 @@ export const tr: Dictionary = {
   'Move the chat': 'Sohbeti taşı',
   'Only the file': 'Yalnızca dosya',
   'Trust this space again': 'Bu alana yeniden güven',
+  'Agent instructions': 'Ajan talimatları',
+  "AGENTS is this space's agent instructions": 'AGENTS bu alanın ajan talimatlarıdır',
   '{title}, unread': '{title}, okunmamış',
   '{title}, running': '{title}, çalışıyor',
 }

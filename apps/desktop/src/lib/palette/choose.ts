@@ -27,6 +27,8 @@ export interface Hands {
   openGraph(view: string | undefined): void
   showSetting(section: Section, landing: string | null): void
   make(note: NoteToMake): void
+  /** The space's agent instructions, in its settings. */
+  agents(): void
   goto(line: number): void
   /** A terminal on a host, by its id, or on a destination nobody has kept yet. */
   openHost(id: string): void
@@ -89,6 +91,9 @@ export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen
       return openBookmark(row, ask, hands)
     case 'make':
       hands.make(row.make)
+      return 'close'
+    case 'agents':
+      hands.agents()
       return 'close'
     case 'place':
       hands.goto(row.line)

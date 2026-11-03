@@ -6,6 +6,7 @@ import {
   type Channel,
   discard,
   managedBy,
+  hearHandedOn,
   stageUpdate,
   stagedVersion,
 } from './updater'
@@ -114,6 +115,8 @@ class Updates {
     const timer = setInterval(() => void this.lookIfDue(), TICK)
     const returned = () => void this.lookIfDue()
     const typed = () => (this.typedAt = Date.now())
+    // A window going leaves its update to the last one, which may have none yet.
+    const stopHearing = hearHandedOn(() => void this.look())
 
     window.addEventListener('focus', returned)
     // Captured, so a keystroke the editor swallows still counts as typing.
@@ -122,6 +125,7 @@ class Updates {
     return () => {
       clearInterval(timer)
       clearTimeout(this.waiting)
+      stopHearing()
       window.removeEventListener('focus', returned)
       window.removeEventListener('keydown', typed, true)
     }

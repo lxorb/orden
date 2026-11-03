@@ -77,5 +77,8 @@ export function freePath(path: string, taken: (candidate: string) => boolean): s
  *  `keptBeside` in services/sync/src/rooms/room.ts. */
 export function conflictPath(path: string, on = new Date()): string {
   const stamp = on.toISOString().slice(0, 10)
-  return path.replace(/(\.[^./\\]+)$/u, ` (from another device ${stamp})$1`)
+  // A file with no extension takes the words at its end: without them its copy would
+  // be the file itself, and the other side's text would land on this side's.
+  const extension = /\.[^./\\]+$/u.exec(path)?.[0] ?? ''
+  return `${path.slice(0, path.length - extension.length)} (from another device ${stamp})${extension}`
 }

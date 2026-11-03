@@ -278,6 +278,12 @@ export interface Canvas {
   ink: InkStroke[]
   at: Record<string, number>
   gone: Record<string, number>
+  /** When each thing last moved in the stack, for what has moved. Apart from `at`, which
+   *  is what a thing says: a move on a copy with old words in it must not beat words
+   *  typed elsewhere. Under `nib.moved`, and left out with nothing in it, so a plane
+   *  nothing was moved on writes what it always did and an older reader, which keeps a
+   *  key it does not know, is none the worse. */
+  moved?: Record<string, number>
   /** What the canvas wears in the file list, as written, or null where it wears
    *  nothing. The same value a note keeps under `icon:` in its front matter, and
    *  read by the same icons.ts: Lucide's own name, Iconize's `LiFileText`, or an
@@ -685,6 +691,12 @@ function readTimes(value: unknown): Record<string, number> {
   return out
 }
 
+/** `moved` as a canvas holds it: not there at all where nothing has moved. */
+function movesIn(value: unknown): { moved?: Record<string, number> } {
+  const moved = readTimes(value)
+  return Object.keys(moved).length ? { moved } : {}
+}
+
 /** The nodes back in the order the file remembered, which is the order they
  *  stack in. A node the order does not name keeps its place among the ones it
  *  came with and goes after everything that is named: a canvas Obsidian added a
@@ -858,6 +870,7 @@ export function canvasIn(text: string): Canvas | null {
     ink,
     at: readTimes(nib.at),
     gone: readTimes(nib.gone),
+    ...movesIn(nib.moved),
     icon: iconWritten(nib.icon),
     iconColor: iconWritten(nib.iconColor),
     ...(holdsExtras(extras) ? { extras } : {}),
@@ -1096,6 +1109,7 @@ function ownRuns(canvas: Canvas): string[][] {
   const locked = canvas.nodes.filter((node) => node.locked).map((node) => node.id)
   const at = Object.keys(canvas.at).length ? timeLines(canvas.at) : null
   const gone = Object.keys(canvas.gone).length ? timeLines(canvas.gone) : null
+  const moved = canvas.moved && Object.keys(canvas.moved).length ? timeLines(canvas.moved) : null
   // First in `nib`, because it is the one key in there a person would ever open the
   // file to read: what the row in the file list wears.
   const icon = canvas.icon ? `,\n\t\t"icon": ${JSON.stringify(canvas.icon)}` : ''
@@ -1105,7 +1119,8 @@ function ownRuns(canvas: Canvas): string[][] {
     icon !== '' ||
     [pages, canvas.ink, shapes, order, words, locked].some((list) => list.length > 0) ||
     at !== null ||
-    gone !== null
+    gone !== null ||
+    moved !== null
 
   // Opens a list under `key` at `depth`, or writes it empty where it is.
   const opens = (key: string, depth: number, count: number, always = false) =>
@@ -1136,7 +1151,7 @@ function ownRuns(canvas: Canvas): string[][] {
     ],
     at ?? [],
     [gone ? ',\n\t\t"gone": ' : ''],
-    gone ?? [],
+    [...(gone ?? []), ...(moved ? [',\n\t\t"moved": ', ...moved] : [])],
     [nib ? '\n\t}\n}\n' : '\n}\n'],
   ]
 }

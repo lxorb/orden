@@ -27,7 +27,6 @@
   import { PROPERTY_CHOICES } from '../property-choices'
   import { shortcuts } from '../shortcuts.svelte'
   import { afterQuiet } from '../timing'
-  import { writeFile } from '../workspace/write-file'
   import { scratchpad } from './pad'
   import { shown, WIDTH } from './is.svelte'
   import { viewport } from '../viewport.svelte'
@@ -47,7 +46,7 @@
     save.cancel()
     if (!owed || path === null || !view) return
     owed = false
-    writing(writeFile(path, view.state.doc.toString()))
+    writing(scratchpad.writeDown(path, view.state.doc.toString()))
   }
   const save = afterQuiet(flush, SAVE_DELAY)
 

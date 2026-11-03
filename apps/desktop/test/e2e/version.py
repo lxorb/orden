@@ -26,7 +26,7 @@ PHONE = (
     " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 
-ROW = ".sheet .setting[role=button]"
+ROW = ".sheet .setting.pressable"
 
 #: What a build made with no version given says: the one in tauri.conf.json.
 VERSION = json.loads((harness.APP / "src-tauri" / "tauri.conf.json").read_text(encoding="utf-8"))["version"]

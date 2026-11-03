@@ -1117,3 +1117,53 @@ describe('the way an eraser went between two of its events', () => {
     expect(rubbedPath({ x: 0, y: 0 }, { x: 5, y: 0 }, 30)).toEqual([{ x: 5, y: 0 }])
   })
 })
+
+/** One hand on one screen, at another zoom: the pen writes as wide as it shows when
+ *  zoomed in (#369), so a stroke's taper has to come down with its width (#644). */
+describe('a tapered pen written zoomed in', () => {
+  /** How wide the ring is across `x`, on a stroke along the x axis. */
+  const across = (ring: readonly Point[], x: number) => {
+    const ys: number[] = []
+    for (const [index, one] of ring.entries()) {
+      const other = ring[(index + 1) % ring.length]
+      if (!other || (one.x - x) * (other.x - x) > 0 || one.x === other.x) continue
+      ys.push(one.y + ((other.y - one.y) * (x - one.x)) / (other.x - one.x))
+    }
+    return Math.max(...ys) - Math.min(...ys)
+  }
+
+  /** A line of 200 pixels on the screen, and how wide it shows 25 of them in. */
+  const shown = (tool: InkStroke['tool'], scale: number) => {
+    const points = Array.from({ length: 67 }, (_, at) => point((at * 3) / scale, 0))
+    const size = INK_STYLES[tool].size / scale
+    return across(outlineOf({ id: 's', tool, color: '#000', size, points }), 25 / scale) * scale
+  }
+
+  test.each(['fountain', 'pencil', 'brush'] as const)('%s shows the same at 400%%', (tool) => {
+    expect(shown(tool, 4)).toBeCloseTo(shown(tool, 1), 0)
+  })
+
+  /** The library does not clamp a taper to the stroke, so a short dab with a wide nib is
+   *  measured: at a taper in proportion it keeps most of its body, and does not vanish. */
+  test.each([
+    [14, 30],
+    [14, 60],
+    [30, 40],
+    [30, 120],
+  ])('a brush of %s over %s keeps a body in the middle', (size, length) => {
+    const shape = (nib: number, long: number) => {
+      const step = long / 40
+      const points = Array.from({ length: 41 }, (_, at) => point(at * step, 0))
+      const ring = outlineOf({ id: 's', tool: 'brush', color: '#000', size: nib, points })
+      return across(ring, long / 2) / nib
+    }
+    expect(shape(size, length)).toBeGreaterThan(0.3)
+  })
+
+  test('and a stroke at the width a tool starts at keeps the taper it always had', () => {
+    const points = Array.from({ length: 67 }, (_, at) => point(at * 3, 0))
+    const size = INK_STYLES.brush.size
+    const ring = outlineOf({ id: 's', tool: 'brush', color: '#000', size, points })
+    expect(across(ring, 8)).toBeCloseTo(5.09, 1)
+  })
+})

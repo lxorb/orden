@@ -377,7 +377,11 @@ export class CanvasStore implements PlaneSurface {
     // A room carries the plane and not the file, so what arrives says nothing
     // about the icon - and this is written back to the file a moment later, which
     // would take the icon out of it.
-    this.canvas = { ...canvas, icon: this.canvas.icon ?? null }
+    this.canvas = {
+      ...canvas,
+      icon: this.canvas.icon ?? null,
+      iconColor: this.canvas.iconColor ?? null,
+    }
     this.keepPicked()
     this.soon()
   }

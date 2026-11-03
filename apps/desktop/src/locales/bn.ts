@@ -1456,6 +1456,7 @@ export const bn: Dictionary = {
   'The note': 'নোট',
   '{space} panel': '{space} প্যানেল',
   'Panel width': 'প্যানেলের প্রস্থ',
+  'Pane size': 'প্যানের আকার',
   Values: 'মান',
   Pages: 'পাতা',
   'Page {number} of {count}': 'পাতা {number}/{count}',
@@ -2509,6 +2510,7 @@ export const bn: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden-এর নিজের টাইটেল বার, অথবা আপনার সিস্টেমের উইন্ডো ফ্রেম।',
   'How large the text of notes is.': 'নোটের লেখা কত বড়।',
+  'How large all of Orden is drawn on this device.': 'এই ডিভাইসে পুরো Orden কত বড় দেখানো হবে।',
   'The space between the lines of a note.': 'নোটের লাইনগুলোর মাঝের ফাঁক।',
   'How wide a line of a note grows before it wraps.':
     'পরের লাইনে যাওয়ার আগে নোটের একটি লাইন কতটা চওড়া হয়।',
@@ -2659,6 +2661,8 @@ export const bn: Dictionary = {
   'Move the chat': 'চ্যাট সরান',
   'Only the file': 'শুধু ফাইল',
   'Trust this space again': 'এই স্পেসে আবার ভরসা করুন',
+  'Agent instructions': 'এজেন্টের নির্দেশনা',
+  "AGENTS is this space's agent instructions": 'AGENTS হলো এই স্পেসের এজেন্ট নির্দেশনা',
   '{title}, unread': '{title}, অপঠিত',
   '{title}, running': '{title}, চলছে',
 }

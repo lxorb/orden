@@ -36,8 +36,8 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tauri::{
-    AppHandle, Emitter as _, LogicalPosition, LogicalSize, Manager as _, Url, Webview,
-    WebviewBuilder, WebviewUrl,
+    AppHandle, Emitter as _, LogicalSize, Manager as _, PhysicalPosition, PhysicalSize, Url,
+    Webview, WebviewBuilder, WebviewUrl,
 };
 
 /// The start of every popup's label: under the `web-` prefix every page of the web wears,
@@ -225,10 +225,11 @@ pub async fn extension_popup_open(
             crate::web_tabs::on_shared_session(builder, &window, &building, store.as_deref());
         #[cfg(not(all(windows, not(feature = "cef"))))]
         let _ = &store;
+        let scale = crate::page_scale::of(&window).unwrap_or(1.0);
         let made = crate::engine::add_child(
             &window,
             builder,
-            LogicalPosition::new(rect.x, rect.y),
+            PhysicalPosition::new(rect.x * scale, rect.y * scale),
             LogicalSize::new(SMALLEST, SMALLEST),
         )
         .map_err(|error| format!("that popup could not be opened: {error}"));
@@ -251,8 +252,13 @@ pub async fn extension_popup_open(
 pub fn extension_popup_place(app: AppHandle, rect: Rect) {
     if let Some(view) = answering(&app) {
         let _doing = crate::stall::doing("extension_popup_place");
-        let _ = view.set_position(LogicalPosition::new(rect.x, rect.y));
-        let _ = view.set_size(LogicalSize::new(rect.width.max(1.0), rect.height.max(1.0)));
+        // What the window measured, in the screen's pixels; see page_scale.rs.
+        let scale = crate::page_scale::of(&view.window()).unwrap_or(1.0);
+        let _ = view.set_position(PhysicalPosition::new(rect.x * scale, rect.y * scale));
+        let _ = view.set_size(PhysicalSize::new(
+            rect.width.max(1.0) * scale,
+            rect.height.max(1.0) * scale,
+        ));
     }
 }
 

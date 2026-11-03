@@ -1434,6 +1434,7 @@ export const vi: Dictionary = {
   'The note': 'Ghi chú',
   '{space} panel': 'Bảng của {space}',
   'Panel width': 'Chiều rộng bảng',
+  'Pane size': 'Kích thước ngăn',
   Values: 'Giá trị',
   Pages: 'Trang',
   'Page {number} of {count}': 'Trang {number}/{count}',
@@ -2484,6 +2485,8 @@ export const vi: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Thanh tiêu đề riêng của Orden hoặc khung cửa sổ của hệ thống.',
   'How large the text of notes is.': 'Cỡ chữ của ghi chú.',
+  'How large all of Orden is drawn on this device.':
+    'Kích thước hiển thị toàn bộ Orden trên thiết bị này.',
   'The space between the lines of a note.': 'Khoảng cách giữa các dòng của ghi chú.',
   'How wide a line of a note grows before it wraps.':
     'Một dòng ghi chú rộng đến đâu trước khi xuống dòng.',
@@ -2633,6 +2636,8 @@ export const vi: Dictionary = {
   'Move the chat': 'Chuyển cuộc trò chuyện',
   'Only the file': 'Chỉ tệp',
   'Trust this space again': 'Tin cậy lại không gian này',
+  'Agent instructions': 'Hướng dẫn cho tác tử',
+  "AGENTS is this space's agent instructions": 'AGENTS là hướng dẫn cho tác tử của không gian này',
   '{title}, unread': '{title}, chưa đọc',
   '{title}, running': '{title}, đang chạy',
 }

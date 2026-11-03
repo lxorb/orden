@@ -1416,6 +1416,7 @@ export const zhHans: Dictionary = {
   'The note': '笔记',
   '{space} panel': '{space}面板',
   'Panel width': '面板宽度',
+  'Pane size': '窗格大小',
   Values: '值',
   Pages: '页',
   'Page {number} of {count}': '第{number}页，共{count}页',
@@ -2440,6 +2441,7 @@ export const zhHans: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     '使用 Orden 自己的标题栏，或系统的窗口边框。',
   'How large the text of notes is.': '笔记文字的大小。',
+  'How large all of Orden is drawn on this device.': '整个 Orden 在此设备上的显示大小。',
   'The space between the lines of a note.': '笔记行与行之间的距离。',
   'How wide a line of a note grows before it wraps.': '笔记一行在换行前可达的宽度。',
   'Typing an opening bracket or quote adds the closing one too.':
@@ -2582,6 +2584,8 @@ export const zhHans: Dictionary = {
   'Move the chat': '移动对话',
   'Only the file': '仅文件',
   'Trust this space again': '再次信任此空间',
+  'Agent instructions': '智能体指令',
+  "AGENTS is this space's agent instructions": 'AGENTS 是此空间的智能体指令',
   '{title}, unread': '{title}，未读',
   '{title}, running': '{title}，运行中',
 }

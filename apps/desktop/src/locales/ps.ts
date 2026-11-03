@@ -1459,6 +1459,7 @@ export const ps: Dictionary = {
   'The note': 'يادښت',
   '{space} panel': 'د {space} تخته',
   'Panel width': 'د تختې پلنوالی',
+  'Pane size': 'د تختې اندازه',
   Values: 'ارزښتونه',
   Pages: 'مخونه',
   'Page {number} of {count}': 'مخ {number} له {count}',
@@ -2511,6 +2512,7 @@ export const ps: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'د Orden خپله سرلیک پټه، یا ستاسو د غونډال د کړکۍ چوکاټ.',
   'How large the text of notes is.': 'د یادښتونو متن څومره لوی وي.',
+  'How large all of Orden is drawn on this device.': 'په دې وسیله کې د ټول Orden د ښودلو اندازه.',
   'The space between the lines of a note.': 'د یادښت د کرښو ترمنځ واټن.',
   'How wide a line of a note grows before it wraps.':
     'د یادښت یوه کرښه له ماتېدو مخکې څومره پلنه کېږي.',
@@ -2663,6 +2665,8 @@ export const ps: Dictionary = {
   'Move the chat': 'خبرې اترې وخوځوه',
   'Only the file': 'یوازې فایل',
   'Trust this space again': 'په دې ځای بیا باور وکړئ',
+  'Agent instructions': 'د اجنټ لارښوونې',
+  "AGENTS is this space's agent instructions": 'AGENTS د دې ځای د اجنټ لارښوونې دي',
   '{title}, unread': '{title}، نالوستی',
   '{title}, running': '{title}، روان دی',
 }

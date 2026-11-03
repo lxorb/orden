@@ -484,3 +484,53 @@ describe('finding local images', () => {
     expect(localSources('<p>text</p>')).toEqual([])
   })
 })
+
+describe('a note that reaches for a file on the disk', () => {
+  const NOTE = [
+    '<iframe src="file:///home/u/.ssh/id_rsa"></iframe>',
+    '',
+    '<object data="file:///home/u/.ssh/id_rsa"></object>',
+    '',
+    '<embed src="file:///home/u/.ssh/id_rsa">',
+    '',
+    '<link rel="stylesheet" href="file:///home/u/.ssh/id_rsa">',
+    '',
+    '<meta http-equiv="refresh" content="0;url=file:///home/u/.ssh/id_rsa">',
+    '',
+    '<script>fetch("file:///home/u/.ssh/id_rsa")</script>',
+    '',
+    '<img src="x" onerror="fetch(\'file:///home/u/.ssh/id_rsa\')">',
+    '',
+    '![picture](file:///home/u/.ssh/id_rsa)',
+    '',
+    'the words of the note',
+  ].join('\n')
+
+  /** Every tag of the page's body that the engine would act on: as characters, a tag is
+   *  `&lt;iframe`, and is none of these. */
+  const live = (html: string) => {
+    const body = new JSDOM(html).window.document.body
+    return {
+      acting: [...body.querySelectorAll('iframe,object,embed,link,meta,script,base,frame')],
+      files: [...body.querySelectorAll('*')].filter((one) =>
+        [...one.attributes].some((name) => /^\s*file:/i.test(name.value)),
+      ),
+      handlers: [...body.querySelectorAll('*')].filter((one) =>
+        [...one.attributes].some((name) => /^on/i.test(name.name)),
+      ),
+      words: body.textContent,
+    }
+  }
+
+  test.each([
+    ['in a document from somebody else', true],
+    ["in a document of the reader's own", false],
+  ])('prints none of it %s', async (_, escapeHtml) => {
+    const page = live(await renderNote(NOTE, 'Note', { escapeHtml }))
+
+    expect(page.acting).toEqual([])
+    expect(page.files).toEqual([])
+    expect(page.words).toContain('the words of the note')
+    if (escapeHtml) expect(page.handlers).toEqual([])
+  })
+})

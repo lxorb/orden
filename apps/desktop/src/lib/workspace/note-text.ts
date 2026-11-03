@@ -20,7 +20,14 @@ import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
 import { lineStarts } from '../search/lines'
 import { isMarkdownPath, samePath } from '../space-paths'
-import { applied, changeOf, type Edit, reverse } from '../search/replace'
+import {
+  applied,
+  appliedToFile,
+  changeOf,
+  type Edit,
+  endingsLike,
+  reverse,
+} from '../search/replace'
 import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
@@ -285,16 +292,19 @@ async function writeClosed(
   change: Change,
   keeping: Keeping,
 ): Promise<Undone | null> {
-  const now = await invoke<string>('read_note', { path: change.path }).catch(() => null)
-  if (now === null) return null
+  const read = await invoke<string>('read_note', { path: change.path }).catch(() => null)
+  if (read === null) return null
 
+  const now = endingsLike(read, change.before)
+  // Worked out on one line ending, written into a file of others; see `appliedToFile`.
+  const foreign = now !== read
   const same = now === change.before
   const edits = same ? change.edits : carriedPast(change.before, now, change.edits)
   if (!edits) return null
   const after = same ? change.after : applied(now, edits)
 
-  await keep(change.path, now, keeping)
-  await writeFile(change.path, after)
+  await keep(change.path, read, keeping)
+  await writeFile(change.path, foreign ? appliedToFile(read, edits) : after)
 
   const late = ws.documentAt(change.path)
   const caught = late?.live.carried(edits, now)
@@ -302,7 +312,7 @@ async function writeClosed(
 
   return {
     path: change.path,
-    content: now,
+    content: read,
     after,
     edits: same ? change.back : reverse(now, edits),
   }

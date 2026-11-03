@@ -277,7 +277,7 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 /// until a click outside the page (#1022). So a key that never came back up is answered
 /// once the page is done with it, when it can still say whether the page took it. Not
 /// the find's keys and Ctrl+0, which are left to the engine, whose own answer then comes
-/// as a browser's would; and not Escape, where stopping it is how a page's dialog keeps
+/// as a browser's would (on Orden's own Chromium there is none; see `script`); and not Escape, where stopping it is how a page's dialog keeps
 /// its close from the page under it.
 ///
 /// A modifier tapped twice on its own asks by name as well, counted by the rules
@@ -772,19 +772,30 @@ pub const BINDING: &str = "nibAsked";
 /// have opened a window under - and through a window after all where the binding is not
 /// there, which opens the link as a tab in front rather than not at all. Looked for at each
 /// ask, since it arrives in a document just after this script has started there.
+///
+/// And the keys `SCRIPT` leaves to the engine once a page has only stopped them: Chromium
+/// under CEF's Alloy style has no find bar and no Ctrl+0 of its own, so left to it a site
+/// that stops every key had Ctrl+F do nothing at all (#397). Here they are Orden's as well.
 #[cfg(feature = "cef")]
 pub fn script() -> String {
-    without_store_button(SCRIPT).replacen(
-        "var open = window.open.bind(window)",
-        concat!(
-            "var opening = window.open.bind(window)\n  ",
-            "var open = function (url, name) {\n    ",
-            "if (typeof nibAsked === 'function') nibAsked(JSON.stringify([url, name]))\n    ",
-            "else opening(url, name)\n  }",
-        ),
-        1,
-    )
+    without_store_button(SCRIPT)
+        .replacen(
+            "var open = window.open.bind(window)",
+            concat!(
+                "var opening = window.open.bind(window)\n  ",
+                "var open = function (url, name) {\n    ",
+                "if (typeof nibAsked === 'function') nibAsked(JSON.stringify([url, name]))\n    ",
+                "else opening(url, name)\n  }",
+            ),
+            1,
+        )
+        .replacen(STOPPED_ENGINE_KEYS, "/^$/", 1)
 }
+
+/// The names of the keys `SCRIPT` leaves to the engine once a page has only stopped them,
+/// as the script spells them. See `script`.
+#[cfg(feature = "cef")]
+const STOPPED_ENGINE_KEYS: &str = "/^nib-(find|actual)/";
 
 /// What one call through `BINDING` asked, read as the window name `SCRIPT` names it
 /// with: a tab of its own for a link, the find or the address field, a chord, or a tap.
@@ -878,6 +889,9 @@ mod tests {
         assert!(!script.contains("var open = window.open.bind(window)"));
         // At each ask: the binding arrives in a document after this script has started.
         assert!(!script.contains("var open = typeof nibAsked"));
+        // No engine's answer to leave a stopped Ctrl+F or Ctrl+0 to; page-keys.test.ts.
+        assert!(SCRIPT.contains(super::STOPPED_ENGINE_KEYS));
+        assert!(!script.contains(super::STOPPED_ENGINE_KEYS));
     }
 
     #[test]

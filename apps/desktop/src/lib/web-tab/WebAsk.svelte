@@ -18,6 +18,7 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../i18n.svelte'
+  import { shownSite } from './idn'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
   import { takeKeyboard } from '../take-keyboard'
@@ -70,7 +71,7 @@
 <div
   class="ask nib-bubble is-pressable nib-host"
   role="dialog"
-  aria-label={asking.site}
+  aria-label={shownSite(asking.site)}
   tabindex="-1"
   bind:this={card}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
@@ -79,7 +80,7 @@
     {#if icon && marked}
       <img class="mark" src={icon} alt="" draggable="false" onerror={() => (marked = false)} />
     {/if}
-    <span><strong>{asking.site}</strong> {t('wants to')}</span>
+    <span><strong>{shownSite(asking.site)}</strong> {t('wants to')}</span>
   </p>
   <p class="which">{WANTS[asking.ask]()}</p>
 

@@ -184,6 +184,7 @@ test('what is written down survives being read back', () => {
 test('the site is the host as the bar shows it', () => {
   expect(siteOf('https://www.a.example/page?a=1')).toBe('a.example')
   expect(siteOf(null)).toBe('')
+  expect(siteOf('https://xn--mnchen-3ya.de/')).toBe('xn--mnchen-3ya.de')
 })
 
 // #787: a private tab's Allow was written to the store, and a normal tab on the same site

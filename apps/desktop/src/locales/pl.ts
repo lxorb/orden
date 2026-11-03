@@ -1532,6 +1532,7 @@ export const pl: Dictionary = {
   'The note': 'Notatka',
   '{space} panel': 'Panel przestrzeni {space}',
   'Panel width': 'Szerokość panelu',
+  'Pane size': 'Rozmiar panelu',
   Values: 'Wartości',
   Pages: 'Strony',
   'Page {number} of {count}': 'Strona {number} z {count}',
@@ -2602,6 +2603,7 @@ export const pl: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Własny pasek tytułu Orden albo ramka okna Twojego systemu.',
   'How large the text of notes is.': 'Jak duży jest tekst notatek.',
+  'How large all of Orden is drawn on this device.': 'Jak duży jest cały Orden na tym urządzeniu.',
   'The space between the lines of a note.': 'Odstęp między wierszami notatki.',
   'How wide a line of a note grows before it wraps.':
     'Jak szeroki staje się wiersz notatki, zanim się zawinie.',
@@ -2756,6 +2758,8 @@ export const pl: Dictionary = {
   'Move the chat': 'Przenieś czat',
   'Only the file': 'Tylko plik',
   'Trust this space again': 'Ponownie zaufaj tej przestrzeni',
+  'Agent instructions': 'Instrukcje dla agentów',
+  "AGENTS is this space's agent instructions": 'AGENTS to instrukcje dla agentów w tej przestrzeni',
   '{title}, unread': '{title}, nieprzeczytany',
   '{title}, running': '{title}, w toku',
 }

@@ -1556,19 +1556,19 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'zoom-in',
       label: t('Zoom in'),
       hint: shortcuts.hint('app.zoom-in'),
-      run: () => modes.stepZoom(1),
+      run: () => workspace.zoomPage('in') || modes.stepZoom(1),
     },
     {
       id: 'zoom-out',
       label: t('Zoom out'),
       hint: shortcuts.hint('app.zoom-out'),
-      run: () => modes.stepZoom(-1),
+      run: () => workspace.zoomPage('out') || modes.stepZoom(-1),
     },
     {
       id: 'zoom-reset',
       label: t('Actual size'),
       hint: shortcuts.hint('app.zoom-reset'),
-      run: () => modes.resetZoom(),
+      run: () => workspace.zoomPage('reset') || modes.resetZoom(),
     },
 
     // The window's own frame, which only a desktop has a window for. It says what it

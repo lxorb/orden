@@ -2,7 +2,7 @@
  *
  *  Found in the #419 bug hunt (#523): Rename and Remove for a text-valued property were
  *  the pointer's alone. Shift+F10 in the value's field is the field's own menu, and the
- *  key was a span nothing could stand on, renamed by a double click. The key is a button
+ *  key was a span nothing could stand on, renamed by a double click. The key is a control
  *  now: Enter, Space or F2 renames it - the pointer's single click still does nothing and
  *  its double click still renames - its menu key is the row's menu, and the keyboard comes
  *  back to it once the name is typed.
@@ -28,13 +28,13 @@ let host: HTMLElement
 let shown: ReturnType<typeof mount>
 
 const key = (name: string) =>
-  host.querySelector<HTMLButtonElement>(`[data-key="${name}"] button.key`)
+  host.querySelector<HTMLElement>(`[data-key="${name}"] .key[role="button"]`)
 
 beforeEach(() => {
   workspace.tabs = []
   workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
   workspace.activeSpaceId = 's'
-  workspace.openBlank('Card', '---\nstatus: draft\n---\nWords.\n')
+  workspace.openBlank('Card', '---\nstatus: draft\nowner: me\n---\nWords.\n')
   host = document.createElement('div')
   document.body.append(host)
   shown = mount(PropertiesPanel, { target: host, props: {} })
@@ -106,5 +106,19 @@ test('Escape leaves the name as it was, and the keyboard on it', async () => {
   )
   flushSync()
 
+  await vi.waitFor(() => expect(document.activeElement).toBe(key('status')))
+})
+
+test('a name another row has leaves the keyboard on the key it was refused for', async () => {
+  key('status')?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }))
+  flushSync()
+  await vi.waitFor(() => expect(document.activeElement?.classList.contains('rename')).toBe(true))
+
+  const field = document.activeElement as HTMLInputElement
+  field.value = 'owner'
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+  flushSync()
+
+  expect(workspace.tabs.at(-1)?.note.latest).toContain('status: draft')
   await vi.waitFor(() => expect(document.activeElement).toBe(key('status')))
 })

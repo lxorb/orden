@@ -1475,6 +1475,7 @@ export const sw: Dictionary = {
   'The note': 'Dokezo',
   '{space} panel': 'Paneli ya {space}',
   'Panel width': 'Upana wa paneli',
+  'Pane size': 'Ukubwa wa paneli',
   Values: 'Thamani',
   Pages: 'Kurasa',
   'Page {number} of {count}': 'Ukurasa {number} wa {count}',
@@ -2546,6 +2547,7 @@ export const sw: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Upau wa kichwa wa Orden wenyewe, au fremu ya dirisha ya mfumo wako.',
   'How large the text of notes is.': 'Ukubwa wa maandishi ya madokezo.',
+  'How large all of Orden is drawn on this device.': 'Ukubwa wa Orden yote kwenye kifaa hiki.',
   'The space between the lines of a note.': 'Nafasi kati ya mistari ya dokezo.',
   'How wide a line of a note grows before it wraps.':
     'Mstari wa dokezo unapanuka kwa upana gani kabla ya kukatika.',
@@ -2702,6 +2704,8 @@ export const sw: Dictionary = {
   'Move the chat': 'Hamisha gumzo',
   'Only the file': 'Faili pekee',
   'Trust this space again': 'Amini nafasi hii tena',
+  'Agent instructions': 'Maagizo ya mawakala',
+  "AGENTS is this space's agent instructions": 'AGENTS ni maagizo ya mawakala ya nafasi hii',
   '{title}, unread': '{title}, haijasomwa',
   '{title}, running': '{title}, inaendelea',
 }

@@ -241,6 +241,24 @@ mod engine {
 
     use super::{seconds, Clearing, PATIENCE};
 
+    /// `WebKit`'s name for the file systems (OPFS), on a macOS that has them.
+    ///
+    /// Looked up rather than named: the crate declares it as a plain static, which links
+    /// it strongly, and a symbol macOS 13.3 does not have would stop the app from starting
+    /// there. Rust has no weak link to give it, and `available!` only guards the read.
+    #[allow(
+        unsafe_code,
+        reason = "a constant only some versions of WebKit export is found through dlsym"
+    )]
+    pub(super) fn file_system_type() -> Option<&'static NSString> {
+        // SAFETY: dlsym only reads the dynamic linker's tables.
+        let found =
+            unsafe { libc::dlsym(libc::RTLD_DEFAULT, c"WKWebsiteDataTypeFileSystem".as_ptr()) };
+        // SAFETY: what WebKit exports under this name is an `NSString * const`, which lives
+        // for the program.
+        (!found.is_null()).then(|| unsafe { *found.cast::<&'static NSString>() })
+    }
+
     /// The types the two rows mean to `WKWebsiteDataStore`: all of them for both.
     #[allow(
         unsafe_code,
@@ -252,7 +270,7 @@ mod engine {
             return unsafe { WKWebsiteDataStore::allWebsiteDataTypes(mtm) };
         }
         // SAFETY: WebKit's own constants, which live for the program.
-        let named: Vec<&NSString> = unsafe {
+        let mut named: Vec<&NSString> = unsafe {
             if clearing.site {
                 vec![
                     WKWebsiteDataTypeCookies,
@@ -268,6 +286,9 @@ mod engine {
                 vec![WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache]
             }
         };
+        if clearing.site {
+            named.extend(file_system_type());
+        }
         NSSet::from_slice(&named)
     }
 
@@ -401,6 +422,15 @@ async fn within(
 #[cfg(test)]
 mod tests {
     use super::Clearing;
+
+    /// Found at run time, so it is what `WebKit` has and not a word of ours; `macos-latest`
+    /// is past the 14 it arrived in.
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    #[test]
+    fn a_mac_finds_the_file_systems_type() {
+        let found = super::engine::file_system_type().expect("macOS 14 or later");
+        assert_eq!(found.to_string(), "WKWebsiteDataTypeFileSystem");
+    }
 
     /// The window's words for it, read as the crate reads them.
     #[test]

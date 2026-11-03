@@ -26,10 +26,11 @@ use objc2_foundation::{
     NSString,
 };
 use objc2_user_notifications::{
-    UNAuthorizationOptions, UNCalendarNotificationTrigger, UNMutableNotificationContent,
-    UNNotification, UNNotificationAction, UNNotificationActionOptions, UNNotificationCategory,
-    UNNotificationCategoryOptions, UNNotificationPresentationOptions, UNNotificationRequest,
-    UNNotificationResponse, UNNotificationSound, UNNotificationTrigger,
+    UNAuthorizationOptions, UNAuthorizationStatus, UNCalendarNotificationTrigger,
+    UNMutableNotificationContent, UNNotification, UNNotificationAction,
+    UNNotificationActionOptions, UNNotificationCategory, UNNotificationCategoryOptions,
+    UNNotificationPresentationOptions, UNNotificationRequest, UNNotificationResponse,
+    UNNotificationSettings, UNNotificationSound, UNNotificationTrigger,
     UNTimeIntervalNotificationTrigger, UNUserNotificationCenter, UNUserNotificationCenterDelegate,
 };
 use tauri::AppHandle;
@@ -236,8 +237,26 @@ impl Requests {
         WORDS.lock().unwrap_or_else(PoisonError::into_inner).0 = Some(words.clone());
         categorise(&centre);
 
+        // The system takes a request it will never show without a word, so a plan handed
+        // to it would be answered as held. Refused here, the page rings them itself while
+        // it runs. Not yet decided is the question above, still up: a yes then is worth
+        // waiting for, and the next plan hears a no.
+        if authorization(&centre) == Some(UNAuthorizationStatus::Denied) {
+            return Err("notifications are turned off for Orden".into());
+        }
+
         Ok(Self { centre })
     }
+}
+
+/// What the system says about this app's notifications, if it says in time.
+fn authorization(centre: &UNUserNotificationCenter) -> Option<UNAuthorizationStatus> {
+    let (said, heard) = mpsc::channel();
+    let answer = RcBlock::new(move |settings: std::ptr::NonNull<UNNotificationSettings>| {
+        let _ = said.send(status_of(settings));
+    });
+    centre.getNotificationSettingsWithCompletionHandler(&answer);
+    heard.recv_timeout(PATIENCE).ok()
 }
 
 impl System for Requests {
@@ -299,6 +318,17 @@ impl System for Requests {
             .removePendingNotificationRequestsWithIdentifiers(&ids);
         Ok(())
     }
+}
+
+/// The status in the settings the centre handed over.
+#[allow(
+    unsafe_code,
+    reason = "the centre hands its answer over as a bare pointer for the length of the call"
+)]
+fn status_of(settings: std::ptr::NonNull<UNNotificationSettings>) -> UNAuthorizationStatus {
+    // SAFETY: the pointer is the settings the notification centre passes its completion
+    // handler, alive for the whole of the call this runs inside.
+    unsafe { settings.as_ref() }.authorizationStatus()
 }
 
 /// The identifiers of the requests the centre handed over.

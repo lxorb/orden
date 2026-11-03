@@ -37,6 +37,10 @@ test('the divider is a separator the arrows, Home, End and Enter move', () => {
   expect(divider?.tabIndex).toBe(0)
   expect(divider?.getAttribute('aria-orientation')).toBe('vertical')
   expect(divider?.getAttribute('aria-valuenow')).toBe('50')
+  // What the practices' window splitter says of itself besides.
+  expect(divider?.getAttribute('aria-label')).toBe('Pane size')
+  expect(divider?.getAttribute('aria-valuemin')).toBe('0')
+  expect(divider?.getAttribute('aria-valuemax')).toBe('100')
 
   const press = (key: string) => {
     divider?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))

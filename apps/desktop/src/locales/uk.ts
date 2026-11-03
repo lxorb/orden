@@ -1531,6 +1531,7 @@ export const uk: Dictionary = {
   'The note': 'Нотатка',
   '{space} panel': 'Панель простору {space}',
   'Panel width': 'Ширина панелі',
+  'Pane size': 'Розмір області',
   Values: 'Значення',
   Pages: 'Сторінки',
   'Page {number} of {count}': 'Сторінка {number} з {count}',
@@ -2596,6 +2597,8 @@ export const uk: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Власний рядок заголовка Orden або рамка вікна вашої системи.',
   'How large the text of notes is.': 'Розмір тексту нотаток.',
+  'How large all of Orden is drawn on this device.':
+    'Наскільки великим показується весь Orden на цьому пристрої.',
   'The space between the lines of a note.': 'Відстань між рядками нотатки.',
   'How wide a line of a note grows before it wraps.':
     'До якої ширини росте рядок нотатки, перш ніж перенестися.',
@@ -2749,6 +2752,8 @@ export const uk: Dictionary = {
   'Move the chat': 'Перемістити чат',
   'Only the file': 'Лише файл',
   'Trust this space again': 'Знову довіряти цьому простору',
+  'Agent instructions': 'Інструкції для агентів',
+  "AGENTS is this space's agent instructions": 'AGENTS: інструкції для агентів цього простору',
   '{title}, unread': '{title}, не прочитано',
   '{title}, running': '{title}, виконується',
 }

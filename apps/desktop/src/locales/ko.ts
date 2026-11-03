@@ -1432,6 +1432,7 @@ export const ko: Dictionary = {
   'The note': '노트',
   '{space} panel': '{space} 패널',
   'Panel width': '패널 너비',
+  'Pane size': '창 크기',
   Values: '값',
   Pages: '페이지',
   'Page {number} of {count}': '{count}쪽 중 {number}쪽',
@@ -2473,6 +2474,8 @@ export const ko: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden 자체의 제목 표시줄이나 시스템의 창 프레임 중에서 고릅니다.',
   'How large the text of notes is.': '노트 글자의 크기입니다.',
+  'How large all of Orden is drawn on this device.':
+    '이 기기에서 Orden 전체가 표시되는 크기입니다.',
   'The space between the lines of a note.': '노트의 줄과 줄 사이 간격입니다.',
   'How wide a line of a note grows before it wraps.':
     '노트의 한 줄이 줄바꿈되기 전까지의 너비입니다.',
@@ -2624,6 +2627,8 @@ export const ko: Dictionary = {
   'Move the chat': '채팅 옮기기',
   'Only the file': '파일만',
   'Trust this space again': '이 공간을 다시 신뢰',
+  'Agent instructions': '에이전트 지침',
+  "AGENTS is this space's agent instructions": 'AGENTS는 이 스페이스의 에이전트 지침입니다',
   '{title}, unread': '{title}, 읽지 않음',
   '{title}, running': '{title}, 실행 중',
 }

@@ -97,6 +97,8 @@ export function named(row: Row): string {
       return `# ${row.text}`
     case 'make':
       return `new ${row.make.name}`
+    case 'agents':
+      return 'agents'
     case 'address':
       return `go ${row.address}`
     case 'host':

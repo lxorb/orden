@@ -1454,6 +1454,7 @@ export const hi: Dictionary = {
   'The note': 'नोट',
   '{space} panel': '{space} का पैनल',
   'Panel width': 'पैनल की चौड़ाई',
+  'Pane size': 'फलक का आकार',
   Values: 'मान',
   Pages: 'पृष्ठ',
   'Page {number} of {count}': 'पृष्ठ {number}/{count}',
@@ -2507,6 +2508,7 @@ export const hi: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden का अपना टाइटल बार या आपके सिस्टम का विंडो फ़्रेम।',
   'How large the text of notes is.': 'नोट का टेक्स्ट कितना बड़ा है।',
+  'How large all of Orden is drawn on this device.': 'इस डिवाइस पर पूरा Orden कितना बड़ा दिखे।',
   'The space between the lines of a note.': 'नोट की पंक्तियों के बीच की जगह।',
   'How wide a line of a note grows before it wraps.':
     'नोट की पंक्ति मुड़ने से पहले कितनी चौड़ी होती है।',
@@ -2660,6 +2662,8 @@ export const hi: Dictionary = {
   'Move the chat': 'चैट ले जाएँ',
   'Only the file': 'सिर्फ़ फ़ाइल',
   'Trust this space again': 'इस स्पेस पर फिर से भरोसा करें',
+  'Agent instructions': 'एजेंट निर्देश',
+  "AGENTS is this space's agent instructions": 'AGENTS इस स्पेस के एजेंट निर्देश हैं',
   '{title}, unread': '{title}, अनपढ़ा',
   '{title}, running': '{title}, चल रहा है',
 }

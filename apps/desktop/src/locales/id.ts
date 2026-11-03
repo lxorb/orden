@@ -1444,6 +1444,7 @@ export const id: Dictionary = {
   'The note': 'Catatan',
   '{space} panel': 'Panel {space}',
   'Panel width': 'Lebar panel',
+  'Pane size': 'Ukuran panel',
   Values: 'Nilai',
   Pages: 'Halaman',
   'Page {number} of {count}': 'Halaman {number}/{count}',
@@ -2503,6 +2504,8 @@ export const id: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Bilah judul milik Orden, atau bingkai jendela sistem Anda.',
   'How large the text of notes is.': 'Seberapa besar teks catatan.',
+  'How large all of Orden is drawn on this device.':
+    'Seberapa besar seluruh Orden ditampilkan di perangkat ini.',
   'The space between the lines of a note.': 'Jarak antarbaris dalam catatan.',
   'How wide a line of a note grows before it wraps.':
     'Seberapa lebar baris catatan sebelum terlipat ke baris berikutnya.',
@@ -2657,6 +2660,8 @@ export const id: Dictionary = {
   'Move the chat': 'Pindahkan obrolan',
   'Only the file': 'Hanya berkasnya',
   'Trust this space again': 'Percayai ruang ini lagi',
+  'Agent instructions': 'Instruksi agen',
+  "AGENTS is this space's agent instructions": 'AGENTS adalah instruksi agen untuk ruang ini',
   '{title}, unread': '{title}, belum dibaca',
   '{title}, running': '{title}, sedang berjalan',
 }

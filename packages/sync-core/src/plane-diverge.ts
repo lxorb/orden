@@ -242,7 +242,15 @@ function resolvedPlane(
     return mine ? local[key] : remote[key]
   }
 
+  const moved: Record<string, number> = {}
+  for (const times of [local.moved, remote.moved]) {
+    for (const [id, when] of Object.entries(times ?? {})) {
+      if (placed.has(id)) moved[id] = Math.max(moved[id] ?? 0, when)
+    }
+  }
+
   const out: Canvas = { nodes, edges: edgesKept, ink, at, gone }
+  if (Object.keys(moved).length) out.moved = moved
   const icon = iconSide('icon')
   const iconColor = iconSide('iconColor')
   if (icon !== undefined) out.icon = icon

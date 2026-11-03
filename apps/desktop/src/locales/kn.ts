@@ -1468,6 +1468,7 @@ export const kn: Dictionary = {
   'The note': 'ಟಿಪ್ಪಣಿ',
   '{space} panel': '{space} ಪ್ಯಾನೆಲ್',
   'Panel width': 'ಪ್ಯಾನೆಲ್ ಅಗಲ',
+  'Pane size': 'ಪೇನ್ ಗಾತ್ರ',
   Values: 'ಮೌಲ್ಯಗಳು',
   Pages: 'ಪುಟಗಳು',
   'Page {number} of {count}': '{count}ರಲ್ಲಿ {number} ಪುಟ',
@@ -2537,6 +2538,8 @@ export const kn: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ನ ಸ್ವಂತ ಶೀರ್ಷಿಕೆ ಪಟ್ಟಿ, ಅಥವಾ ನಿಮ್ಮ ಸಿಸ್ಟಂನ ವಿಂಡೋ ಚೌಕಟ್ಟು.',
   'How large the text of notes is.': 'ಟಿಪ್ಪಣಿಗಳ ಪಠ್ಯ ಎಷ್ಟು ದೊಡ್ಡದು ಎಂಬುದು.',
+  'How large all of Orden is drawn on this device.':
+    'ಈ ಸಾಧನದಲ್ಲಿ ಇಡೀ Orden ಎಷ್ಟು ದೊಡ್ಡದಾಗಿ ಕಾಣಿಸುತ್ತದೆ.',
   'The space between the lines of a note.': 'ಟಿಪ್ಪಣಿಯ ಸಾಲುಗಳ ನಡುವಿನ ಅಂತರ.',
   'How wide a line of a note grows before it wraps.':
     'ಟಿಪ್ಪಣಿಯ ಸಾಲು ಮುಂದಿನ ಸಾಲಿಗೆ ಹೋಗುವ ಮುನ್ನ ಎಷ್ಟು ಅಗಲ ಬೆಳೆಯುತ್ತದೆ ಎಂಬುದು.',
@@ -2691,6 +2694,8 @@ export const kn: Dictionary = {
   'Move the chat': 'ಚಾಟ್ ಸರಿಸಿ',
   'Only the file': 'ಫೈಲ್ ಮಾತ್ರ',
   'Trust this space again': 'ಈ ಸ್ಪೇಸ್ ಅನ್ನು ಮತ್ತೆ ನಂಬಿ',
+  'Agent instructions': 'ಏಜೆಂಟ್ ಸೂಚನೆಗಳು',
+  "AGENTS is this space's agent instructions": 'AGENTS ಈ ಸ್ಪೇಸ್‌ನ ಏಜೆಂಟ್ ಸೂಚನೆಗಳು',
   '{title}, unread': '{title}, ಓದಿಲ್ಲ',
   '{title}, running': '{title}, ಚಾಲನೆಯಲ್ಲಿದೆ',
 }

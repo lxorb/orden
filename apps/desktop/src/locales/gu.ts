@@ -1451,6 +1451,7 @@ export const gu: Dictionary = {
   'The note': 'નોંધ',
   '{space} panel': '{space} પૅનલ',
   'Panel width': 'પૅનલની પહોળાઈ',
+  'Pane size': 'ખાનાનું કદ',
   Values: 'મૂલ્યો',
   Pages: 'પાનાં',
   'Page {number} of {count}': 'પાનું {number}/{count}',
@@ -2499,6 +2500,7 @@ export const gu: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ની પોતાની શીર્ષક પટ્ટી, કે તમારી સિસ્ટમનું વિન્ડો ચોકઠું.',
   'How large the text of notes is.': 'નોંધોનું લખાણ કેટલું મોટું છે.',
+  'How large all of Orden is drawn on this device.': 'આ ઉપકરણ પર આખું Orden કેટલું મોટું દેખાય.',
   'The space between the lines of a note.': 'નોંધની લીટીઓ વચ્ચેની જગ્યા.',
   'How wide a line of a note grows before it wraps.':
     'નોંધની લીટી વીંટાતાં પહેલાં કેટલી પહોળી થાય છે.',
@@ -2649,6 +2651,8 @@ export const gu: Dictionary = {
   'Move the chat': 'ચેટ ખસેડો',
   'Only the file': 'ફક્ત ફાઇલ',
   'Trust this space again': 'આ સ્પેસ પર ફરી વિશ્વાસ કરો',
+  'Agent instructions': 'એજન્ટ સૂચનાઓ',
+  "AGENTS is this space's agent instructions": 'AGENTS આ સ્પેસની એજન્ટ સૂચનાઓ છે',
   '{title}, unread': '{title}, ન વાંચેલું',
   '{title}, running': '{title}, ચાલુ છે',
 }

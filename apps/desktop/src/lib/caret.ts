@@ -35,6 +35,28 @@ export interface Claims {
   touch: boolean
 }
 
+/** The element a key left the keyboard on for a reason, until the keyboard moves on. */
+let stayingOn: Element | null = null
+
+/** A key closed a tab or a row out from under the keyboard and handed it to the one in
+ *  its place. The note that comes to the front as a result is not somebody opening one,
+ *  so the caret stays out of it, until the keyboard moves or somebody presses anything
+ *  there: Enter on that row opens a note the caret has to go into. */
+export function staysOn(at: Element): void {
+  stayingOn = at
+  const goes = ['focusout', 'keydown', 'pointerdown']
+  const gone = () => {
+    if (stayingOn === at) stayingOn = null
+    for (const event of goes) at.removeEventListener(event, gone, true)
+  }
+  for (const event of goes) at.addEventListener(event, gone, true)
+}
+
+/** Whether the keyboard is still where a key left it; see `staysOn`. */
+export function keyboardStays(): boolean {
+  return stayingOn !== null && document.activeElement === stayingOn
+}
+
 export function takesCaret(showing: Showing | null, claims: Claims): boolean {
   if (showing?.kind !== 'note' || showing.reading) return false
   return !claims.overlaid && !claims.renaming && !claims.presenting && !claims.touch

@@ -29,7 +29,8 @@ export interface InkStyle {
   opacity: number
   /** Whether the tool darkens what it crosses rather than covering it. */
   multiply: boolean
-  /** Whether the ends taper to a point rather than ending in a cap. */
+  /** Whether the ends taper to a point rather than ending in a cap, and how far along
+   *  at the width the tool starts at; a stroke's own is in proportion to its width. */
   taper: number
   /** A flat nib at this angle in degrees, or null for a round one. */
   nib: number | null
@@ -235,6 +236,11 @@ export function outlineOf(stroke: InkStroke, finished = true): Point[] {
 
   const dot = stroke.points.length === 1
   const points = evenly(said).map((point) => [point.x, point.y, point.pressure])
+  // Against the nib, as everything else about the shape is. A stroke written zoomed in
+  // has a nib the zoom's share of a tool's own, and a taper that stayed the tool's own
+  // was four times as long on the screen at 400%: the first word of a brush came out
+  // half its width (#644).
+  const taper = (style.taper * stroke.size) / style.size
   const ring = getStroke(points, {
     size: stroke.size,
     thinning: style.thinning,
@@ -246,7 +252,7 @@ export function outlineOf(stroke: InkStroke, finished = true): Point[] {
     // is one point leaves nothing at all - so a dot is capped, whatever this pen
     // does at the ends of a line.
     ...(style.taper && !dot
-      ? { start: { taper: style.taper }, end: { taper: style.taper } }
+      ? { start: { taper }, end: { taper } }
       : { start: { cap: true }, end: { cap: true } }),
   })
 

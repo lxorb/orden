@@ -1416,6 +1416,7 @@ export const zhHant: Dictionary = {
   'The note': '筆記',
   '{space} panel': '{space}面板',
   'Panel width': '面板寬度',
+  'Pane size': '窗格大小',
   Values: '值',
   Pages: '頁',
   'Page {number} of {count}': '第{number}頁，共{count}頁',
@@ -2441,6 +2442,7 @@ export const zhHant: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     '使用 Orden 自己的標題列，或系統的視窗框架。',
   'How large the text of notes is.': '筆記文字的大小。',
+  'How large all of Orden is drawn on this device.': '整個 Orden 在此裝置上的顯示大小。',
   'The space between the lines of a note.': '筆記行與行之間的距離。',
   'How wide a line of a note grows before it wraps.': '筆記一行在換行前可達的寬度。',
   'Typing an opening bracket or quote adds the closing one too.':
@@ -2584,6 +2586,8 @@ export const zhHant: Dictionary = {
   'Move the chat': '移動對話',
   'Only the file': '僅檔案',
   'Trust this space again': '再次信任此空間',
+  'Agent instructions': '代理指示',
+  "AGENTS is this space's agent instructions": 'AGENTS 是此空間的代理指示',
   '{title}, unread': '{title}，未讀',
   '{title}, running': '{title}，執行中',
 }

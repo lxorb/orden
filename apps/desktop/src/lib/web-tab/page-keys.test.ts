@@ -104,6 +104,41 @@ describe('the keys an engine or a page has its own use for', () => {
   })
 })
 
+/** Orden's own Chromium has no find and no Ctrl+0 of its own to fall back on, so a key a page
+ *  only stopped is Orden's to answer there, as it is to Chrome (#397). The replacement
+ *  `script()` in web_opens.rs makes; its own test holds it to this line. */
+describe('the same keys on the engine with no answer of its own', () => {
+  const onChromium = /const STOPPED_ENGINE_KEYS: &str = "(.*?)";/.exec(source)?.[1] ?? ''
+
+  test.each([
+    [70, 'nib-find'],
+    [71, 'nib-find-next'],
+    [48, 'nib-actual-size'],
+  ])('key %i kept from the page asks %s', async (code, name) => {
+    expect(onChromium).not.toBe('')
+    const dom = new JSDOM('<input id="field">', { runScripts: 'outside-only' })
+    const asked: string[] = []
+    const inside = dom.window as unknown as Window & typeof globalThis
+    inside.open = (_url?: string | URL, called?: string) => {
+      asked.push(called ?? '')
+      return null
+    }
+    inside.eval(script.replaceAll('!event.isTrusted', 'false').replace(onChromium, '/^$/'))
+    const field = inside.document.getElementById('field') as HTMLInputElement
+    field.addEventListener('keydown', (event) => event.stopPropagation())
+    const init: KeyboardEventInit & { keyCode: number } = {
+      bubbles: true,
+      cancelable: true,
+      key: 'x',
+      keyCode: code,
+      ctrlKey: true,
+    }
+    field.dispatchEvent(new inside.KeyboardEvent('keydown', init))
+    await new Promise((done) => inside.setTimeout(done, 5))
+    expect(asked).toEqual([name])
+  })
+})
+
 describe('the other chords, which only a preventDefault keeps', () => {
   test.each([
     [68, false, 'nib-ctrl-d'],
