@@ -12,7 +12,7 @@ import { log } from '../log'
 import { leftLately, slotLock, slotOf } from './slot'
 
 /** The tabs of a session whose words are nowhere else. */
-export function wordsOnlyIn(session: Session): Draft[] {
+function wordsOnlyIn(session: Session): Draft[] {
   const all = session.layout
     ? panesOf(session.layout.frame).flatMap((pane) => pane.tabs)
     : (session.tabs ?? [])
