@@ -1042,15 +1042,12 @@ function holds(tail: string): boolean {
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
  *  and the sum of their growth is what came. Measured 3,480,464, 385 modules.
  *
- *  Raised 2026-11-03, to 3,492,900, for the writing fixes of the views hunt, on top of
- *  unstable: a draft on a phone is written down with its name claimed until it lands
- *  (workspace.svelte.ts, drafts.ts, saving.svelte.ts, 2.5 KB), a chart reads block lists
- *  and comments (chart.ts, 2.5 KB), a selection of lines asks what they are and a heading
- *  trades a marker (commands.ts, 2 KB), a paste decides its door (paste.ts, 1.5 KB), a
- *  name on its own line or an old fence is read back (links.ts, fences.ts, 1.6 KB), words
- *  beside a picture win (images.ts, 1 KB). What could wait went behind a door: marks.ts,
- *  paste-place.ts, list-keys.ts, block-names.ts, putAway. Measured 3,492,709. */
-const BUDGET = 3_492_900
+ *  Raised 2026-11-03, to 3,512,500, for the bug hunt's round one merged into
+ *  claude/hunt-round-1: the views' and the desktop's writing fixes (a phone's draft kept
+ *  until it lands, charts, paste, block commands, links, a thread written down while it
+ *  runs), what a base may cost, a tile's move and the sync's scans, measured together.
+ *  What could wait went behind a door on the branches. Measured 3,512,301, 385 modules. */
+const BUDGET = 3_512_500
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
