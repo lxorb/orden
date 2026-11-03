@@ -12,7 +12,11 @@
    *  (flight.ts), so a change of mind mid-flight turns it round from where it is, at the
    *  speed it had. The springs write the styles themselves, once a frame, and nothing is
    *  laid out while anything flies. Asked for less movement, the windows are simply
-   *  where they go. */
+   *  where they go.
+   *
+   *  A window can be dragged: it stays under the hand exactly, the others make room for it
+   *  where it would land, and letting go moves the tab there - along its pane's strip, or
+   *  into another pane's (drag.ts). */
 
   import { untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
@@ -27,6 +31,7 @@
   import { pages } from '../web-tab/pages.svelte'
   import { isUnsaved } from '../workspace/drafts'
   import { type Tab, workspace } from '../workspace.svelte'
+  import { isDrag, type Landing, landingAt, withMoved } from './drag'
   import { drawn, Flight, type Pose } from './flight'
   import { type Box, type Laid, lay, seamPath, type Slot } from './layout'
   import { marked, mirrorOf, shownBox } from './mirror'
@@ -66,9 +71,25 @@
     return box && box.w > 0 && box.h > 0 ? box.w / box.h : 16 / 10
   }
 
+  const tabsOf = (paneId: string) => workspace.tabsIn(paneId).map((tab) => tab.id)
+
+  /** The window under the hand: which, where it was taken hold of (as a share of its
+   *  width and height), and where it would land now. */
+  let held = $state<{ id: string; fx: number; fy: number; landing: Landing | null } | null>(null)
+
+  /** The canvas without the window being dragged, which says where it would land. */
+  const without = $derived(
+    held
+      ? lay(frame, room, {
+          tabsOf: (paneId) => tabsOf(paneId).filter((one) => one !== held?.id),
+          shapeOf,
+        })
+      : null,
+  )
+
   const laid = $derived(
     lay(frame, room, {
-      tabsOf: (paneId) => workspace.tabsIn(paneId).map((tab) => tab.id),
+      tabsOf: held ? withMoved(tabsOf, held.id, held.landing) : tabsOf,
       shapeOf,
     }),
   )
@@ -157,7 +178,8 @@
     let moving = false
     for (const [id, flight] of flights) {
       if (!flight.step(seconds)) moving = true
-      paint(id)
+      if (id === held?.id) follow()
+      else paint(id)
     }
     if (moving) fly()
     else if (!out) gone()
@@ -189,7 +211,9 @@
 
   /** Sends every window where it goes: onto the canvas, or home. */
   function aimAll() {
+    const hand = untrack(() => held?.id)
     for (const { slot, tab } of untrack(() => windows)) {
+      if (tab.id === hand) continue
       const flight = flights.get(tab.id)
       flight?.aim(out ? lying(slot) : homeOf(tab, slot))
     }
@@ -234,6 +258,8 @@
 
   /** Every window home. */
   function leave() {
+    held = null
+    pressed = null
     out = false
     aimAll()
   }
@@ -300,6 +326,93 @@
   function open(tab: Tab) {
     workspace.activate(tab.id)
     close()
+  }
+
+  /** Where the pointer went down on a window, until it is a drag or a press. */
+  let pressed: { id: string; x: number; y: number; pointer: number } | null = null
+  /** Whether the press that just ended was a drag, so its click opens nothing. */
+  let dragged = false
+
+  function down(event: PointerEvent, id: string) {
+    if (event.button !== 0 || !out) return
+    pressed = { id, x: event.clientX, y: event.clientY, pointer: event.pointerId }
+    dragged = false
+  }
+
+  function moved(event: PointerEvent) {
+    if (pressed?.pointer !== event.pointerId) return
+    const id = pressed.id
+    if (!held) {
+      if (!isDrag(event.clientX - pressed.x, event.clientY - pressed.y)) return
+      const flight = flights.get(id)
+      if (!flight) return
+      const pose = flight.pose
+      const target = event.currentTarget as HTMLElement
+      target.setPointerCapture(event.pointerId)
+      held = {
+        id,
+        fx: (pressed.x - pose.x) / Math.max(pose.w, 1),
+        fy: (pressed.y - pose.y) / Math.max(pose.h, 1),
+        landing: null,
+      }
+      at = id
+    }
+    const landing = landingAt(without?.slots ?? [], event.clientX, event.clientY)
+    if (landing?.paneId !== held.landing?.paneId || landing?.before !== held.landing?.before) {
+      held = { ...held, landing }
+    }
+    hand = { x: event.clientX, y: event.clientY }
+    follow()
+    fly()
+  }
+
+  /** Where the pointer is, while a window is held. */
+  let hand = { x: 0, y: 0 }
+
+  /** The held window under the pointer, the point it was taken by under the pointer
+   *  exactly, growing or shrinking to the place it would land in. */
+  function follow() {
+    if (!held) return
+    const flight = flights.get(held.id)
+    const slot = laid.slots.find((one) => one.id === held?.id)
+    if (!flight || !slot) return
+    const { w, h } = flight.pose
+    flight.hold(hand.x - held.fx * w, hand.y - held.fy * h, slot.w, slot.h)
+    paint(held.id)
+  }
+
+  /** Let go: the tab moves where its window was let go, and the window settles there. */
+  function up(event: PointerEvent) {
+    if (pressed?.pointer !== event.pointerId) return
+    pressed = null
+    const hand = held
+    if (!hand) return
+    dragged = true
+    held = null
+    if (hand.landing) drop(hand.id, hand.landing)
+    aimAll()
+  }
+
+  function cancelled() {
+    pressed = null
+    held = null
+    aimAll()
+  }
+
+  /** The tab moved along its strip or into another pane's, before the tab it landed in
+   *  front of. */
+  function drop(id: string, landing: Landing) {
+    const strip = tabsOf(landing.paneId)
+    const back = strip.filter((one) => one !== id)
+    const into = landing.before === null ? back.length : back.indexOf(landing.before)
+    // Let go where it was: nothing moved.
+    if (strip.indexOf(id) === into && byId.get(id)?.paneId === landing.paneId) return
+
+    // Counted the way the workspace counts a strip: every tab of the pane but this one,
+    // its Essentials too.
+    const held = workspace.heldIn(landing.paneId).filter((one) => one.id !== id)
+    const before = landing.before === null ? -1 : held.findIndex((one) => one.id === landing.before)
+    workspace.moveTab(id, landing.paneId, before < 0 ? held.length : before)
   }
 
   function keyed(event: KeyboardEvent) {
@@ -377,8 +490,16 @@
         style:height="{slot.h}px"
         aria-label={tab.shown}
         aria-current={tab.id === workspace.activeTabId ? 'page' : undefined}
+        class:is-held={held?.id === tab.id}
         onfocus={() => (at = tab.id)}
-        onclick={() => open(tab)}
+        onclick={() => {
+          if (dragged) dragged = false
+          else open(tab)
+        }}
+        onpointerdown={(event) => down(event, tab.id)}
+        onpointermove={moved}
+        onpointerup={up}
+        onpointercancel={cancelled}
         use:placed={tab.id}
       >
         <span class="face-box" style:scale={slot.w / face.w}>
@@ -507,6 +628,16 @@
     will-change: transform;
     cursor: pointer;
     outline: none;
+    touch-action: none;
+  }
+
+  /* Under the hand, over the others, a little higher off the canvas. */
+  .window.is-held {
+    z-index: var(--z-raised);
+    box-shadow:
+      var(--shadow-lg),
+      0 32px 80px -16px rgb(0 0 0 / 0.35);
+    cursor: grabbing;
   }
 
   .face-box {

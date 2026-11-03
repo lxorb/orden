@@ -49,6 +49,23 @@ export class Flight {
     for (const key of KEYS) this.springs[key].to = to[key]
   }
 
+  /** Holds its corner at `x`, `y`, under a hand: no spring between the pointer and the
+   *  window. Its size still springs to `w` by `h`, the place it would land in. */
+  hold(x: number, y: number, w: number, h: number) {
+    for (const [key, value] of [
+      ['x', x],
+      ['y', y],
+    ] as const) {
+      const one = this.springs[key]
+      one.at = one.to = value
+      one.speed = 0
+    }
+    this.springs.w.to = w
+    this.springs.h.to = h
+    this.springs.tab.to = 0
+    this.springs.alpha.to = 1
+  }
+
   /** Puts it where it is pulled to, with no movement. */
   land() {
     for (const key of KEYS) land(this.springs[key])
