@@ -240,6 +240,10 @@ export interface Thread {
   /** The turn being answered while the thread is written mid-answer, so one read back
    *  with this still on it is an answer the window went on (`cutOff` in threads.ts). */
   answering?: string
+  /** The mode, model and effort that are the thread's own while one send runs on others
+   *  (`Once`, `run` in chat.svelte.ts). Those are what a write says: a send's own Auto read
+   *  back as the thread's would let later changes through without Approve. */
+  own?: Pick<Thread, 'mode' | 'model' | 'effort'>
   /** The provider's id in Settings > AI. */
   provider: string
   model: string

@@ -223,6 +223,29 @@ describe('a file read back', () => {
   })
 })
 
+describe('a thread on a send’s own mode', () => {
+  test('is written and copied with its own', async () => {
+    const thread = newThread('work', 'p', 'm', 'auto', 'approve')
+    thread.turns = [{ id: 'y1', role: 'you', at: 1, parts: [] }]
+    thread.answering = 'y1'
+    Object.assign(thread, {
+      own: { mode: 'approve', model: 'm', effort: 'auto' },
+      mode: 'auto',
+      model: 'other',
+    })
+    await keepThread(thread)
+
+    const read = await readThread('work', thread.id)
+    expect(read).toMatchObject({ mode: 'approve', model: 'm' })
+    expect(read).not.toHaveProperty('own')
+
+    const copy = branchThread(thread, 'y1')
+    expect(copy).toMatchObject({ mode: 'approve', model: 'm' })
+    expect(copy).not.toHaveProperty('own')
+    expect(copy).not.toHaveProperty('answering')
+  })
+})
+
 describe('a file written while its answer was on its way', () => {
   const cutOff = (parts: unknown[]) =>
     threadIn({

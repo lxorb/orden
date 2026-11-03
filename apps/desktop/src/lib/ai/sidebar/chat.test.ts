@@ -1520,6 +1520,40 @@ describe('an answer on its way', () => {
     })
   })
 
+  /** `/review`, `/summarize`, `/todos` and `/init` run in Auto for that one send, on a
+   *  thread the reader keeps in Approve. Read back from a window lost mid-answer, that
+   *  Auto was the thread's, and every later change went through without asking. */
+  test('is written with the thread’s own mode and model, not a one-shot send’s', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    const { newThread, readThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm', 'auto', 'approve')
+    const model: Turn = { id: 'answer', role: 'model', at: 2, parts: [] }
+    const engaged: ((event: EngineEvent) => void)[] = []
+    engine.send.mockImplementation(
+      (one: Thread, draft: Draft, on: (event: EngineEvent) => void) =>
+        new Promise<void>(() => {
+          const you: Turn = { id: 'message', role: 'you', at: 1, parts: [], draft }
+          one.turns.push(you, model)
+          on({ type: 'turn', turn: you })
+          on({ type: 'turn', turn: model })
+          engaged.push(on)
+        }),
+    )
+
+    void chat.turn(thread, 'Review this', { mode: 'auto', model: 'other', effort: 'high' })
+    await vi.waitFor(() => expect(engaged).toHaveLength(1))
+
+    await vi.waitFor(async () => {
+      const again = await readThread('work', thread.id)
+      expect(again?.turns).toHaveLength(2)
+      expect(again).toMatchObject({ mode: 'approve', model: 'm', effort: 'auto' })
+    })
+    // And the send itself still runs as asked.
+    expect(thread).toMatchObject({ mode: 'auto', model: 'other', effort: 'high' })
+  })
+
   test('is written without the mark once it has ended', async () => {
     const { model, one, written } = await answering()
     one.on({ type: 'done', stop: 'end' })

@@ -114,6 +114,10 @@ export function branchThread(thread: Thread, upTo: string, title?: string): Thre
   // A copy is the reader's own chat, even of a helper; a command that makes a helper of
   // it says so itself.
   delete copy.parent
+  // A copy is of what is written, and nothing is answering in it.
+  Object.assign(copy, copy.own)
+  delete copy.own
+  delete copy.answering
   const now = Date.now()
   return {
     ...copy,
@@ -426,8 +430,14 @@ export async function readThread(space: string, id: string): Promise<Thread | nu
   }
 }
 
+/** A thread as a file says it: its own mode and model, whatever one send is running on. */
+function asWritten({ own, ...thread }: Thread): Thread {
+  return { ...thread, ...own }
+}
+
 /** Writes a thread down, and its line in the space's list. */
-export async function writeThread(thread: Thread): Promise<void> {
+export async function writeThread(given: Thread): Promise<void> {
+  const thread = asWritten(given)
   const head = headOf(thread)
   const body = JSON.stringify(thread)
   if (isNative) {

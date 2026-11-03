@@ -796,6 +796,7 @@ class Chat implements Panel {
     once?.signal?.addEventListener('abort', stop)
     // A send's own mode, model and effort are the thread's for that send alone.
     const before = { mode: thread.mode, model: thread.model, effort: thread.effort }
+    if (once) thread.own = before
     Object.assign(thread, {
       ...(once?.mode ? { mode: once.mode } : {}),
       ...(once?.model ? { model: once.model } : {}),
@@ -824,6 +825,7 @@ class Chat implements Panel {
     } finally {
       once?.signal?.removeEventListener('abort', stop)
       if (once) Object.assign(thread, before)
+      if (once) delete thread.own
       await this.finish(thread, !stopper.signal.aborted)
     }
     send.settle?.(ended)
