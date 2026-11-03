@@ -21,6 +21,9 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 }))
 
 // The pages' own channel from the crate, which nothing here says anything on.
+vi.mock('../../src/lib/own-window', () => ({
+  hearHere: () => Promise.resolve(() => undefined),
+}))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
