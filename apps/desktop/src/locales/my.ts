@@ -1637,6 +1637,7 @@ export const my: Dictionary = {
   'Hard reload': 'အပြည့်အဝ ပြန်ဖွင့်ပါ',
   'Open in the browser': 'ဘရောက်ဇာတွင်ဖွင့်ပါ',
   "This media can't play here": 'ဤမီဒီယာကို ဤနေရာတွင် ဖွင့်၍မရပါ',
+  'Pop-up blocked': 'ပေါ့ပ်အပ်ကို ပိတ်ထားသည်',
   'Show it here': 'ဤတွင်ပြပါ',
   Website: 'ဝဘ်ဆိုက်',
   'Open a website': 'ဝဘ်ဆိုက်ဖွင့်ပါ',

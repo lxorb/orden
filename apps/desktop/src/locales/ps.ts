@@ -1657,6 +1657,7 @@ export const ps: Dictionary = {
   'Hard reload': 'بشپړ بېرته راوړل',
   'Open in the browser': 'په کوټګر کې پرانيستل',
   "This media can't play here": 'دا رسنۍ دلته نشي غږېدلای',
+  'Pop-up blocked': 'پاپ اپ بند شو',
   'Show it here': 'دلته ښودل',
   Website: 'ټاټوبی',
   'Open a website': 'ټاټوبی پرانيستل',

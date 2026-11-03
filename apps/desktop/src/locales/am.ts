@@ -1635,6 +1635,7 @@ export const am: Dictionary = {
   'Hard reload': 'ሙሉ በሙሉ እንደገና ጫን',
   'Open in the browser': 'በአሳሽ ክፈት',
   "This media can't play here": 'ይህ ሚዲያ እዚህ ሊጫወት አይችልም',
+  'Pop-up blocked': 'ብቅ-ባይ ታግዷል',
   'Show it here': 'እዚህ አሳይ',
   Website: 'ድረ ገጽ',
   'Open a website': 'ድረ ገጽ ክፈት',

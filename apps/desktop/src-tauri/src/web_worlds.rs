@@ -321,6 +321,10 @@ mod engine {
 
         let ours = scripts.is_empty() || registered(&core, scripts);
         let frames = scripts.is_empty() || following(&core, scripts);
+        // A tab's page has `window.open` kept to Chrome's rules in its own world (#1074).
+        if !scripts.is_empty() {
+            let _ = added(&core, crate::web_opens::PAGE_SCRIPT);
+        }
         Cleared {
             swept: taken.is_some(),
             counted: taken,
@@ -683,6 +687,14 @@ mod engine {
                 )
                 .is_some());
         let frames = scripts.is_empty() || following(view, scripts);
+        // A tab's page has `window.open` kept to Chrome's rules in its own world (#1074).
+        if !scripts.is_empty() {
+            let _ = called(
+                view,
+                "Page.addScriptToEvaluateOnNewDocument",
+                &json!({ "source": crate::web_opens::PAGE_SCRIPT }).to_string(),
+            );
+        }
 
         let _ = view.navigate(url.clone());
         Cleared {

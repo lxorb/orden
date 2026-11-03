@@ -1673,6 +1673,7 @@ export const ml: Dictionary = {
   'Hard reload': 'പൂർണ്ണമായി വീണ്ടും എടുക്കുക',
   'Open in the browser': 'ബ്രൗസറിൽ തുറക്കുക',
   "This media can't play here": 'ഈ മീഡിയ ഇവിടെ പ്ലേ ചെയ്യാൻ കഴിയില്ല',
+  'Pop-up blocked': 'പോപ്പ്-അപ്പ് തടഞ്ഞു',
   'Show it here': 'ഇവിടെ കാണിക്കുക',
   Website: 'വെബ്‌സൈറ്റ്',
   'Open a website': 'വെബ്‌സൈറ്റ് തുറക്കുക',

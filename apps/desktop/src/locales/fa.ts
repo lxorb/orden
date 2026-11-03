@@ -1657,6 +1657,7 @@ export const fa: Dictionary = {
   'Hard reload': 'بارگذاری دوباره کامل',
   'Open in the browser': 'گشودن در مرورگر',
   "This media can't play here": 'این رسانه اینجا پخش نمی‌شود',
+  'Pop-up blocked': 'پنجرهٔ بازشو مسدود شد',
   'Show it here': 'نمایش اینجا',
   Website: 'وب‌گاه',
   'Open a website': 'گشودن وب‌گاه',

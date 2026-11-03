@@ -1611,6 +1611,7 @@ export const zhHantHK: Dictionary = {
   'Hard reload': '強制重新載入',
   'Open in the browser': '在瀏覽器開啟',
   "This media can't play here": '無法在此播放此媒體',
+  'Pop-up blocked': '已封鎖彈出式視窗',
   'Show it here': '在此顯示',
   Website: '網站',
   'Open a website': '開啟網站',

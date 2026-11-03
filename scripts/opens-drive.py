@@ -5,9 +5,13 @@ what came of each. #1074: on some sites a press that opens a window did nothing.
 A page of this run's own, in a web tab, with one wide button or link for each way:
 
   - a link with `target="_blank"`, and with `rel="noopener"`: a tab at the address;
-  - `window.open(url)` in the press, after a `setTimeout` and after an `await`: a tab;
-  - `window.open(url, name, 'width=..,height=..')`, a sign-in's popup: the page gets the
-    window back, the popup has `window.opener` and its message reaches the page;
+  - `window.open(url)` in the press, after a `setTimeout` and after an `await`: opened;
+  - `window.open(url, name, 'width=..,height=..')`, a sign-in's popup, and
+    `window.open(url)` with nothing more, as Google's and GitHub's sign-ins open: the page
+    gets the window back, the popup has `window.opener` and its message reaches the page;
+  - `window.open(url, '_blank', 'noopener')`: `null`, as the call promises, and a tab;
+  - `window.open(url)` six seconds after the press, with nothing pressed for it: blocked
+    as Chrome blocks it, offered on the tab's bar, and opened by the bar's Open;
   - `window.open('about:blank')` and `window.open()`, then sent somewhere, and
     `window.open('')` written into: the page gets the window, and it goes there;
   - a form sent by POST to `target="_blank"`: the server hears a POST;
@@ -58,16 +62,29 @@ CASES = {
         "GET /signin?opener_yes",
         "GET /said?message_signed_in",
     ],
+    # A sign-in opened with nothing more than its address, as Google's and GitHub's are.
+    "open_plain_signin": [
+        "GET /said?open_plain_signin_win",
+        "GET /signin?opener_yes",
+        "GET /said?message_signed_in",
+    ],
+    "open_noopener": ["GET /said?open_noopener_null", "GET /landing?open_noopener"],
     "open_blank": ["GET /said?open_blank_win", "GET /landing?open_blank"],
     "open_nothing": ["GET /said?open_nothing_win", "GET /landing?open_nothing"],
     "open_written": ["GET /said?open_written_win", "GET /said?written"],
     "form_post": ["POST /posted?form_post"],
     "frame": ["GET /landing?frame"],
     "sandboxed": ["GET /landing?sandboxed"],
+    # Long after the press, so nothing pressed for it: blocked, said on the tab's bar, and
+    # opened by the bar's Open.
+    "blocked": ["GET /said?blocked_null", "GET /landing?blocked"],
     "download": ["GET /download.bin"],
 }
 
-BUTTON = "display:block;box-sizing:border-box;width:100%;height:40px;margin:0 0 4px;font:16px sans-serif"
+# How long after its press a case's window is asked for.
+LATE = {"blocked": 6.5}
+
+BUTTON = "display:block;box-sizing:border-box;width:100%;height:30px;margin:0 0 2px;font:14px sans-serif"
 OPENER = f"""<!doctype html><title>opener</title>
 <style>body{{margin:0}} a,button,iframe{{{BUTTON};border:0;background:#cde}}</style>
 <script>
@@ -89,12 +106,15 @@ addEventListener('load', () => {{
 <button data-case=open_later onclick="setTimeout(() => window.open('/landing?open_later'), 300)">open_later</button>
 <button data-case=open_await onclick="(async () => {{ await fetch('/tick'); window.open('/landing?open_await') }})()">open_await</button>
 <button data-case=open_sized onclick="kept('open_sized', window.open('/signin', 'signin', 'width=480,height=600'))">open_sized</button>
+<button data-case=open_plain_signin onclick="kept('open_plain_signin', window.open('/signin'))">open_plain_signin</button>
+<button data-case=open_noopener onclick="kept('open_noopener', window.open('/landing?open_noopener', '_blank', 'noopener'))">open_noopener</button>
 <button data-case=open_blank onclick="const w = kept('open_blank', window.open('about:blank')); if (w) w.location = '/landing?open_blank'">open_blank</button>
 <button data-case=open_nothing onclick="const w = kept('open_nothing', window.open()); if (w) w.location.href = '/landing?open_nothing'">open_nothing</button>
 <button data-case=open_written onclick="const w = kept('open_written', window.open('', '')); if (w) {{ w.document.write('<title>written</title>written<scr' + 'ipt>fetch(&quot;/said?written&quot;);setTimeout(() => close(), 500)</scr' + 'ipt>'); w.document.close() }}">open_written</button>
 <form method=post action="/posted?form_post" target=_blank style="margin:0"><input type=hidden name=a value=1><button data-case=form_post>form_post</button></form>
 <iframe data-case=frame src="/frame?frame"></iframe>
 <iframe data-case=sandboxed sandbox="allow-scripts allow-popups" src="/frame?sandboxed"></iframe>
+<button data-case=blocked onclick="setTimeout(() => kept('blocked', window.open('/landing?blocked')), 6000)">blocked</button>
 <button data-case=download onclick="window.open('/download.bin')">download</button>
 """
 FRAME = f"""<!doctype html><style>body{{margin:0}}button{{{BUTTON}}}</style>
@@ -277,8 +297,20 @@ for case, wanted in CASES.items():
         failures.append(f"{case}: not on the page")
         continue
     left, top = window()
+    # Where the page is now: the tab's bar above it comes and goes.
+    place = hole() or place
     began = len(heard)
     press(left + (place["x"] + at[0]) * RATIO, top + (place["y"] + at[1]) * RATIO)
+    if case in LATE:
+        time.sleep(LATE[case])
+        offered = run(f"nib.pages.of({json.dumps(OWN)}).blocked")
+        if offered != f"{SITE}/landing?blocked":
+            failures.append(f"{case}: the tab's bar offered {offered!r}")
+            print(f"::error::{case}: the tab's bar offered {offered!r}")
+        run(
+            "(() => { const open = [...document.querySelectorAll('[role=status] button')]"
+            ".find((one) => one.textContent.trim() === 'Open'); open && open.click(); return !!open })()"
+        )
     missing = wanted
     for _ in range(25):
         time.sleep(0.2)
@@ -292,7 +324,7 @@ for case, wanted in CASES.items():
     else:
         print(f"{case}: {asked}")
     run(OTHERS)
-    time.sleep(1.2)
+    time.sleep(2)
 
 (OUT / "opens.json").write_text(json.dumps({"failures": failures, "heard": heard}, indent=2))
 if failures:

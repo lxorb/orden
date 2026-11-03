@@ -1678,6 +1678,7 @@ export const ta: Dictionary = {
   'Hard reload': 'முழுமையாக மீண்டும் ஏற்று',
   'Open in the browser': 'உலாவியில் திற',
   "This media can't play here": 'இந்த மீடியாவை இங்கே இயக்க முடியாது',
+  'Pop-up blocked': 'பாப்-அப் தடுக்கப்பட்டது',
   'Show it here': 'இங்கே காட்டு',
   Website: 'இணையதளம்',
   'Open a website': 'இணையதளத்தைத் திற',

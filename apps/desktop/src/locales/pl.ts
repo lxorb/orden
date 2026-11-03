@@ -1730,6 +1730,7 @@ export const pl: Dictionary = {
   'Hard reload': 'Twarde przeładowanie',
   'Open in the browser': 'Otwórz w przeglądarce',
   "This media can't play here": 'Nie można tutaj odtworzyć tych multimediów',
+  'Pop-up blocked': 'Zablokowano wyskakujące okno',
   'Show it here': 'Pokaż tutaj',
   Website: 'Witryna',
   'Open a website': 'Otwórz witrynę',

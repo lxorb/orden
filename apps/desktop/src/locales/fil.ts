@@ -1682,6 +1682,7 @@ export const fil: Dictionary = {
   'Hard reload': 'Buong i-reload',
   'Open in the browser': 'Buksan sa browser',
   "This media can't play here": 'Hindi ma-play dito ang media na ito',
+  'Pop-up blocked': 'Na-block ang pop-up',
   'Show it here': 'Ipakita dito',
   Website: 'Website',
   'Open a website': 'Buksan ang website',

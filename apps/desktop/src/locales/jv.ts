@@ -1636,6 +1636,7 @@ export const jv: Dictionary = {
   'Hard reload': 'Emot maneh kabeh',
   'Open in the browser': 'Bukak ing panjelajah',
   "This media can't play here": 'Media iki ora bisa diputer ing kene',
+  'Pop-up blocked': 'Pop-up diblokir',
   'Show it here': 'Tuduhake ing kene',
   Website: 'Situs web',
   'Open a website': 'Bukak situs web',

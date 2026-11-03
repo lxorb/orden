@@ -1760,6 +1760,7 @@ export const ar: Dictionary = {
   'Hard reload': 'إعادة تحميل كاملة',
   'Open in the browser': 'فتح في المتصفح',
   "This media can't play here": 'لا يمكن تشغيل هذه الوسائط هنا',
+  'Pop-up blocked': 'تم حظر النافذة المنبثقة',
   'Show it here': 'إظهاره هنا',
   Website: 'موقع ويب',
   'Open a website': 'فتح موقع ويب',

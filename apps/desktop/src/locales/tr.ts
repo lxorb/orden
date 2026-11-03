@@ -1659,6 +1659,7 @@ export const tr: Dictionary = {
   'Hard reload': 'Sert yeniden yükleme',
   'Open in the browser': 'Tarayıcıda aç',
   "This media can't play here": 'Bu medya burada oynatılamıyor',
+  'Pop-up blocked': 'Açılır pencere engellendi',
   'Show it here': 'Burada göster',
   Website: 'Web sitesi',
   'Open a website': 'Web sitesi aç',

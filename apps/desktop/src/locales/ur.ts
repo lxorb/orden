@@ -1654,6 +1654,7 @@ export const ur: Dictionary = {
   'Hard reload': 'مکمل طور پر دوبارہ لوڈ کریں',
   'Open in the browser': 'براؤزر میں کھولیں',
   "This media can't play here": 'یہ میڈیا یہاں نہیں چل سکتا',
+  'Pop-up blocked': 'پاپ اپ مسدود کر دیا گیا',
   'Show it here': 'یہاں دکھائیں',
   Website: 'ویب سائٹ',
   'Open a website': 'ویب سائٹ کھولیں',

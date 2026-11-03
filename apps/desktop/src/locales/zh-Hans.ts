@@ -1612,6 +1612,7 @@ export const zhHans: Dictionary = {
   'Hard reload': '硬性重新加载',
   'Open in the browser': '在浏览器中打开',
   "This media can't play here": '无法在此处播放此媒体',
+  'Pop-up blocked': '已阻止弹出式窗口',
   'Show it here': '在此显示',
   Website: '网站',
   'Open a website': '打开网站',

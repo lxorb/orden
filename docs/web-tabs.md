@@ -1423,21 +1423,29 @@ app's own links say where they go in its own code, and `scripts/web-click-probe.
 presses every kind of link every way.
 
 What a window the page asks for becomes is one rule, `becomes` in `src-tauri/src/web_tabs.rs`,
-which every engine's handler answers by (#1074). A link, or `window.open` of an address
-with nothing more, is a tab in front. A page that has to keep hold of what it opened gets
-a window of its own that the engine builds, so `window.open` hands it the window back and
-`window.opener` is there in it: one asked for at a size of its own - a sign-in, a payment
-provider, a share dialog - which reports back through `window.opener` and closes itself,
-and one opened on `about:blank` (or with no address at all) to be sent somewhere or
-written into. A tab built afresh at the address could give it neither: the page was
-answered `null`, a sign-in in a popup never reported back, and a blank window opened
-nothing at all. On Orden's own Chromium that window is CEF's own popup, opener and all;
-on `WebView2` and `WKWebView` a framed window on the opener's own store. A form sent by
-POST to `target="_blank"` is sent into such a window, which the script in Orden's own
-world opens first under a name of its own, so the form's request is the one sent; a tab
-would have asked for its address by GET. `scripts/opens-drive.py` presses every way a page
-opens a window and fails on any that does not do what it asked for. Nib's own asks under
-a window name - a key the page let go by, a swipe - are never a window.
+which every engine's handler answers by (#1074). What a person pressed for is a tab in
+front, or behind for Ctrl and the middle button: every link, plain `target="_blank"`
+included, which the script in Orden's own world answers itself, and `window.open` with
+`noopener` or `noreferrer`, which promises the page nothing back. Everything else the page
+opens itself - `window.open` with or without a size, on an address or on `about:blank`,
+a form sent to `target="_blank"` - is a window of its own that the engine builds, so the
+page gets what it asked for: the window back, `window.opener` in it, a sign-in that
+reports back through it (Google's and GitHub's open with nothing but their address), a
+blank window it sends somewhere or writes into, and a form's own POST. A tab built
+afresh at the address could give it none of that: the page was answered `null` and a
+form's address was asked for by GET. On Orden's own Chromium that window is CEF's own
+popup, opener and all; on `WebView2` and `WKWebView` a framed window on the opener's own
+store. `WKWebView` runs none of Orden's scripts, so there a web address with nothing more
+stays a tab.
+
+A window nobody pressed for is blocked, as Chrome blocks it, and said: the tab's bar says
+"Pop-up blocked" and its Open opens the address as a tab in front, until the page moves
+or the bar is shut. Chromium blocks it before Orden hears of it, so the one script of
+Orden's in the page's own world - `window.open` wrapped in a `Proxy` of the engine's
+own (`PAGE_SCRIPT` in `web_opens.rs`) - says so; `WebView2` blocks nothing itself and says
+whether a person asked, which `becomes` reads. `scripts/opens-drive.py` presses every way a
+page opens a window and fails on any that does not do what it asked for. Orden's own asks
+under a window name - a key the page let go by, a swipe - are never a window.
 
 ## A link from another program
 

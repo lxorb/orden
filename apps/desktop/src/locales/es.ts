@@ -1696,6 +1696,7 @@ export const es: Dictionary = {
   'Hard reload': 'Recarga forzada',
   'Open in the browser': 'Abrir en el navegador',
   "This media can't play here": 'Este contenido no se puede reproducir aquí',
+  'Pop-up blocked': 'Ventana emergente bloqueada',
   'Show it here': 'Mostrarlo aquí',
   Website: 'Sitio web',
   'Open a website': 'Abrir un sitio web',

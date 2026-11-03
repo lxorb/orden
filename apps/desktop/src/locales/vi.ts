@@ -1632,6 +1632,7 @@ export const vi: Dictionary = {
   'Hard reload': 'Tải lại toàn bộ',
   'Open in the browser': 'Mở trong trình duyệt',
   "This media can't play here": 'Không thể phát nội dung này tại đây',
+  'Pop-up blocked': 'Đã chặn cửa sổ bật lên',
   'Show it here': 'Hiện ở đây',
   Website: 'Trang web',
   'Open a website': 'Mở một trang web',

@@ -1679,6 +1679,7 @@ export const de: Dictionary = {
   'Hard reload': 'Vollständig neu laden',
   'Open in the browser': 'Im Browser öffnen',
   "This media can't play here": 'Dieses Medium lässt sich hier nicht abspielen',
+  'Pop-up blocked': 'Pop-up blockiert',
   'Show it here': 'Hier anzeigen',
   Website: 'Webseite',
   'Open a website': 'Webseite öffnen',

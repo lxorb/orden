@@ -1638,6 +1638,7 @@ export const ja: Dictionary = {
   'Hard reload': 'ハード再読み込み',
   'Open in the browser': 'ブラウザーで開く',
   "This media can't play here": 'このメディアはここでは再生できません',
+  'Pop-up blocked': 'ポップアップがブロックされました',
   'Show it here': 'ここに表示',
   Website: 'ウェブサイト',
   'Open a website': 'ウェブサイトを開く',

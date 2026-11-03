@@ -1652,6 +1652,7 @@ export const hi: Dictionary = {
   'Hard reload': 'पूरी तरह फिर लोड करें',
   'Open in the browser': 'ब्राउज़र में खोलें',
   "This media can't play here": 'यह मीडिया यहाँ नहीं चल सकता',
+  'Pop-up blocked': 'पॉप-अप ब्लॉक किया गया',
   'Show it here': 'यहाँ दिखाएँ',
   Website: 'वेबसाइट',
   'Open a website': 'वेबसाइट खोलें',

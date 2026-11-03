@@ -1677,6 +1677,7 @@ export const ha: Dictionary = {
   'Hard reload': 'Sake ɗauko gaba ɗaya',
   'Open in the browser': 'Buɗe a birawuza',
   "This media can't play here": 'Ba za a iya kunna wannan kafar ba a nan',
+  'Pop-up blocked': 'An toshe taga mai tasowa',
   'Show it here': 'Nuna shi nan',
   Website: 'Gidan yanar',
   'Open a website': 'Buɗe gidan yanar',

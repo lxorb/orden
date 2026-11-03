@@ -1733,6 +1733,7 @@ export const ru: Dictionary = {
   'Hard reload': 'Жёсткая перезагрузка',
   'Open in the browser': 'Открыть в браузере',
   "This media can't play here": 'Этот файл здесь не воспроизводится',
+  'Pop-up blocked': 'Всплывающее окно заблокировано',
   'Show it here': 'Показать здесь',
   Website: 'Сайт',
   'Open a website': 'Открыть сайт',

@@ -284,6 +284,9 @@ const ASKED: &str = "nib://web-ask";
 /// which is what a browser answers `target="_blank"` with; see `on_new_window`.
 const OPENED: &str = "nib://web-open";
 
+/// What the window hears a blocked window on; see `popup_blocked`.
+const BLOCKED: &str = "nib://web-blocked";
+
 /// The largest page a clip reads, in characters. A note the account would refuse
 /// is worse than a clip that stops early, and 4 MB is what the API takes.
 const LONGEST_PAGE: usize = 4_000_000;
@@ -767,31 +770,65 @@ fn handed_over(url: &Url) -> Option<String> {
 /// handler answers by (#1074).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Becomes {
-    /// A tab beside the page, at this address: a link, or a page opening one.
+    /// A tab beside the page, at this address: a link, or what a person pressed for.
     Tab(String),
     /// A window of the page's own, which the engine builds, so the page keeps it: what
     /// `window.open` hands back, `window.opener` in it, and the two talking.
     Window,
+    /// Not opened, as Chrome does not open a window nobody pressed for, and said: the tab's
+    /// bar offers the address (`popup_blocked`).
+    Blocked(String),
     /// Nothing: an address no tab may be on.
     Nothing,
 }
 
-/// What a request for a window becomes (#1074).
+/// Whether this build's pages say which windows a person pressed for - every link, plain
+/// or with Ctrl, Shift or the middle button, which the script in nib's world in the page
+/// answers itself (`web_opens.rs`) - so that what is left is the page's own `window.open`
+/// or form. `WKWebView` runs no such script, and says nothing.
+const PRESSES_SAID: bool = cfg!(any(windows, feature = "cef"));
+
+/// What a request for a window becomes (#1074): the one rule each engine's handler answers
+/// by.
 ///
-/// A tab whenever a person pressed for one (`said`) or the page asked for a web address
-/// with nothing more: a link with `target="_blank"`, `window.open(url)`. A window of its
-/// own, built by the engine, when the page has to keep hold of what it opened - which a
-/// tab, a page of Orden's built afresh at the address, can never give it: `window.open`
-/// answered `null`, the opener gone, so a sign-in in a popup never reported back and a
-/// page that opens `about:blank` to send or write into it got nothing at all. That is a
-/// window asked for at a size of its own (an OAuth or SSO sign-in, a payment provider, a
-/// share dialog), and a window opened on `about:blank`. Anything else is dropped; see
-/// `handed_over`.
-pub(crate) fn becomes(url: &Url, sized: bool, said: bool) -> Becomes {
-    if !said && (sized || blank(url)) {
+/// A tab for what a person pressed for (`said`): a link, which is what a browser opens a
+/// tab for. A window the page asked for itself with no press behind it (`unasked`) is
+/// blocked, as Chrome blocks it, and the tab's bar offers it. Anything else the page asked
+/// for itself - `window.open`, with or without a size, on an address or on `about:blank`,
+/// a form sent to `target="_blank"` - is a window of its own built by the engine, because
+/// only that hands the page what it asked for: the window back, with `window.opener` in
+/// it, which a sign-in reports back through and a blank window is sent or written into. A
+/// tab built afresh at the address answered `null`, kept no opener, and asked for a form's
+/// address by GET. A tab cannot hold an engine's own window, so it is a window. Where the
+/// pages say nothing of presses, a web address with nothing more stays a tab, as before.
+/// An address no tab may be on opens nothing; see `handed_over`.
+pub(crate) fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Becomes {
+    if said {
+        return handed_over(url).map_or(Becomes::Nothing, Becomes::Tab);
+    }
+    if unasked {
+        return handed_over(url).map_or(Becomes::Nothing, Becomes::Blocked);
+    }
+    if sized || blank(url) || (PRESSES_SAID && tab_may_open(url)) {
         return Becomes::Window;
     }
     handed_over(url).map_or(Becomes::Nothing, Becomes::Tab)
+}
+
+/// Says to its window that the page in `tab` was kept from opening a window at `url`, as
+/// Chrome keeps a page from one nobody pressed for: the tab's bar offers it (#1074). Every
+/// engine's block comes here - the request `WebView2` raises for it, and the one Chromium
+/// refused before Orden heard of it, which the page's own world says (`web_opens.rs`).
+pub(crate) fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str) {
+    let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
+        return;
+    };
+    let payload = Opening {
+        tab: tab.to_string(),
+        url: address,
+        behind: false,
+    };
+    let _ = app.emit_to(window, BLOCKED, payload);
 }
 
 /// Whether a page asked for a window on nothing yet, which it is about to send somewhere
@@ -1477,8 +1514,13 @@ fn windows_asked(
             return NewWindowResponse::Deny;
         }
 
-        let address = match becomes(&url, features.size().is_some(), said.is_some()) {
+        let unasked = crate::web_opens::unasked(&asking);
+        let address = match becomes(&url, features.size().is_some(), said.is_some(), unasked) {
             Becomes::Nothing => return NewWindowResponse::Deny,
+            Becomes::Blocked(address) => {
+                popup_blocked(&opening, &holder, &asking, &address);
+                return NewWindowResponse::Deny;
+            }
             Becomes::Tab(address) => address,
             // The engine's own window on Orden's own Chromium: CEF keeps the opener, the
             // window `window.open` answers with, and a form's own request.
@@ -3243,39 +3285,60 @@ mod tests {
     };
     use tauri::Url;
 
-    /// #1074: every way a page asks for a window, and what it becomes. A page that has to
-    /// keep what it opened - a sign-in at a size of its own, a window opened on nothing to
-    /// be sent or written into - gets the engine's own window, opener and all; a link, or
-    /// a page opening an address with nothing more, a tab; nothing else is opened.
+    /// #1074: every way a page asks for a window, and what it becomes. What a person
+    /// pressed for is a tab; what the page opened itself with no press behind it is
+    /// blocked and said; anything else the page opened itself is the engine's own window,
+    /// opener and all, so `window.open` hands the page what it asked for; nothing else is
+    /// opened.
     #[test]
     fn a_window_a_page_asks_for_becomes_what_it_needs() {
         let at = |text: &str| Url::parse(text).expect("an address");
         let site = "https://accounts.example/o/oauth2/auth?client_id=1";
+        let web = |text: &str| Becomes::Tab(text.to_string());
 
+        // A link, plain or pressed with Ctrl, Shift or the middle button: a tab.
+        assert_eq!(
+            becomes(&at("https://example.com/a"), false, true, false),
+            web("https://example.com/a")
+        );
+        assert_eq!(becomes(&at(site), true, true, false), web(site));
         // window.open(url, name, 'width=500,height=600'): a sign-in that reports back.
-        assert_eq!(becomes(&at(site), true, false), Becomes::Window);
+        assert_eq!(becomes(&at(site), true, false, false), Becomes::Window);
         // window.open('about:blank') or window.open(), then sent somewhere or written in.
-        assert_eq!(becomes(&at(BLANK), false, false), Becomes::Window);
-        assert_eq!(becomes(&at("about:blank#x"), false, false), Becomes::Window);
-        // A link with target=_blank, or window.open(url): a tab at the address.
+        assert_eq!(becomes(&at(BLANK), false, false, false), Becomes::Window);
         assert_eq!(
-            becomes(&at("https://example.com/a"), false, false),
-            Becomes::Tab("https://example.com/a".into())
+            becomes(&at("about:blank#x"), false, false, false),
+            Becomes::Window
         );
-        // A person's press for a tab is a tab, whatever the size.
+        // window.open(url) with nothing more - a sign-in that opens so too - keeps its
+        // opener where the pages say which windows were pressed for, and is a tab where
+        // they cannot.
+        let plain = becomes(&at(site), false, false, false);
+        if super::PRESSES_SAID {
+            assert_eq!(plain, Becomes::Window);
+        } else {
+            assert_eq!(plain, web(site));
+        }
+        // With no press behind it: blocked, and offered.
         assert_eq!(
-            becomes(&at("https://example.com/a"), true, true),
-            Becomes::Tab("https://example.com/a".into())
+            becomes(&at(site), true, false, true),
+            Becomes::Blocked(site.to_string())
         );
+        assert_eq!(becomes(&at(BLANK), false, false, true), Becomes::Nothing);
         // An address no tab may be on opens nothing.
         for refused in ["nib://open?x", "file:///etc/passwd", "javascript:alert(1)"] {
             assert_eq!(
-                becomes(&at(refused), false, false),
+                becomes(&at(refused), false, true, false),
+                Becomes::Nothing,
+                "{refused}"
+            );
+            assert_eq!(
+                becomes(&at(refused), false, false, false),
                 Becomes::Nothing,
                 "{refused}"
             );
         }
-        assert_eq!(becomes(&at(BLANK), false, true), Becomes::Nothing);
+        assert_eq!(becomes(&at(BLANK), false, true, false), Becomes::Nothing);
     }
 
     fn at(url: &str) -> Url {

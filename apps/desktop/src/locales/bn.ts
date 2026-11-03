@@ -1653,6 +1653,7 @@ export const bn: Dictionary = {
   'Hard reload': 'পুরোপুরি আবার লোড করুন',
   'Open in the browser': 'ব্রাউজারে খুলুন',
   "This media can't play here": 'এই মিডিয়া এখানে চালানো যাচ্ছে না',
+  'Pop-up blocked': 'পপ-আপ ব্লক করা হয়েছে',
   'Show it here': 'এখানে দেখান',
   Website: 'ওয়েবসাইট',
   'Open a website': 'ওয়েবসাইট খুলুন',
