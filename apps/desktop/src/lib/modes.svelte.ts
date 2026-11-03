@@ -1687,11 +1687,12 @@ class Modes {
     }
     // Only what this window changed, onto what is there now: two windows writing in one
     // moment, before either has heard the other, keep both of what they set.
-    const merged = { ...now }
-    for (const name of Object.keys(seen)) if (!(name in fields)) delete merged[name]
-    for (const [name, value] of Object.entries(fields)) {
-      if (JSON.stringify(value) !== JSON.stringify(seen[name])) merged[name] = value
-    }
+    const merged = Object.fromEntries(
+      Object.entries(fields).map(([name, value]) => [
+        name,
+        JSON.stringify(value) === JSON.stringify(seen[name]) && name in now ? now[name] : value,
+      ]),
+    )
     keep(STORAGE_KEY, JSON.stringify(merged))
   }
 
