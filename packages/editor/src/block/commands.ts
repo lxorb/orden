@@ -17,10 +17,10 @@
  *  of selection. */
 
 import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
-import { indentLess, indentMore } from '@codemirror/commands'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
 import { blockIdOf, freeBlockId, blockIds } from '@orden/markdown/links'
+import { indentItems, outdentItems } from '../commands'
 import { headingLevel, headingText } from '../headings'
 import { enclosing } from '../nodes'
 import { copyBlock, cutBlock, moveBlock } from './move'
@@ -135,10 +135,9 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   const verbatim = verbatimLines(view.state, span.from, span.to).has(last.number)
   // Where the name would already be: under the block, or at the end of its words.
   const under = verbatim ? writtenLine(view.state, last.number + 1, 1) : null
-  const already =
-    under && under.text.trim().startsWith('^')
-      ? blockIdOf(under.text)
-      : !verbatim && blockIdOf(last.text)
+  const already = under?.text.trim().startsWith('^')
+    ? blockIdOf(under.text)
+    : !verbatim && blockIdOf(last.text)
   if (already) return `#^${already}`
 
   const taken = new Set(blockIds(doc.toString()).map((one) => one.id))
@@ -296,11 +295,11 @@ function overBlocks(view: EditorView, pos: number, command: StateCommand): boole
 
 /** One step further in, and one step back out. */
 export function indentBlocks(view: EditorView, pos: number): boolean {
-  return overBlocks(view, pos, indentMore)
+  return overBlocks(view, pos, indentItems)
 }
 
 export function outdentBlocks(view: EditorView, pos: number): boolean {
-  return overBlocks(view, pos, indentLess)
+  return overBlocks(view, pos, outdentItems)
 }
 
 /** The nearest line with something on it above or below a position, or null at the

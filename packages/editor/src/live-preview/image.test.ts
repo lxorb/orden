@@ -335,3 +335,12 @@ describe('where the caret goes to edit the markup', () => {
     expect(sourceCaret(state(doc), imageAt(state(doc), 0)!)).toBe(1)
   })
 })
+
+describe('brackets in alt text', () => {
+  test('are written so the picture stays a picture, and read back as typed', () => {
+    const insert = imageMarkup({ src: 'a.png', alt: 'a]b[c', title: '', zoom: 100 })
+    expect(insert).toBe('![a\\]b\\[c](a.png)')
+
+    expect(imageAt(state(insert), 0)?.alt).toBe('a]b[c')
+  })
+})

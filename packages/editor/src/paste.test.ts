@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { copiedFlavours, readyToCopy } from './copy'
 import { nibMarkdownExtensions } from './markdown/extensions'
-import { delimitedToTable, pastedMarkdown } from './paste'
+import { delimitedToTable, pastedMarkdown, placed, plainly } from './paste'
 import { linkedPaste } from './paste-link'
 
 // The renderer a copy writes its HTML with is fetched by the first selection; a test
@@ -227,5 +227,70 @@ describe('an address pasted over a selection', () => {
     )
     const spec = linkedPaste(state, URL)
     expect(spec && state.update(spec).state.doc.toString()).toBe(`[one](${URL}) [two](${URL})`)
+  })
+})
+
+describe('where a paste lands', () => {
+  const landed = (marked: string, text: string, how = placed) => {
+    const at = marked.indexOf('|')
+    const state = EditorState.create({ doc: marked.replace('|', ''), selection: { anchor: at } })
+    const next = state.update(how(state, text)).state
+    return { doc: next.doc.toString(), caret: next.selection.main.head }
+  }
+
+  const TABLE = '| a | b |\n| --- | --- |\n| c | d |'
+
+  test('a block starting in a line starts on its own', () => {
+    expect(landed('abc |', TABLE).doc).toBe(`abc\n\n${TABLE}`)
+    expect(landed('abc |def', TABLE).doc).toBe(`abc\n\n${TABLE}\n\ndef`)
+    expect(landed('abc def|', '## Head').doc).toBe('abc def\n\n## Head')
+    expect(landed('abc |def', TABLE).caret).toBe(5 + TABLE.length)
+  })
+
+  test('inside a list item or a quote stays there', () => {
+    expect(landed('- abc|', TABLE).doc).toBe(`- abc\n\n  ${TABLE.split('\n').join('\n  ')}`)
+    expect(landed('> abc|', '## H\n\nx').doc).toBe('> abc\n>\n> ## H\n>\n> x')
+  })
+
+  test('words stay in the line', () => {
+    expect(landed('abc |def', '**x** y').doc).toBe('abc **x** ydef')
+    expect(landed('|', '## Head').doc).toBe('## Head')
+    expect(landed('|def', '**x** y').doc).toBe('**x** ydef')
+  })
+
+  test('a heading does not take the words after it', () => {
+    expect(landed('abc |def', 'x\n\n## Head').doc).toBe('abc x\n\n## Head\n\ndef')
+  })
+
+  test('a list on an empty item takes the item', () => {
+    expect(landed('- |', '- x\n- y').doc).toBe('- x\n- y')
+    expect(landed('- a\n- |', '- x\n- y').doc).toBe('- a\n- x\n- y')
+    expect(landed('  - |', '- x\n- y').doc).toBe('  - x\n  - y')
+    expect(landed('  - |', '- x\n  - y').doc).toBe('  - x\n    - y')
+    expect(landed('> - |', '- x\n- y').doc).toBe('> - x\n> - y')
+    expect(landed('- [ ] |', '- x').doc).toBe('- x')
+    expect(landed('- |', '- x\n- y').caret).toBe(7)
+  })
+
+  test('anything else on an empty item stays under it', () => {
+    expect(landed('- |', TABLE).doc).toBe(`- ${TABLE.split('\n').join('\n  ')}`)
+    expect(landed('- |', 'one\n\ntwo').doc).toBe('- one\n\n  two')
+  })
+
+  test('plain text is itself unless it is a list on an empty item', () => {
+    expect(landed('abc |', '## Head', plainly).doc).toBe('abc ## Head')
+    expect(landed('- |', '- x\n- y', plainly).doc).toBe('- x\n- y')
+    expect(landed('- |', 'x\ny', plainly).doc).toBe('- x\ny')
+  })
+})
+
+describe('commas that are not a table', () => {
+  test('two lines of prose are two lines of prose', () => {
+    expect(delimitedToTable('Hello, world, again\nGoodbye, moon, soon')).toBeNull()
+  })
+
+  test('data written with a space after its commas is still data', () => {
+    expect(delimitedToTable('Name, Age, City\nBob, 3, Paris')).toContain('| Bob | 3 | Paris |')
+    expect(delimitedToTable('a,b,c\nd,e,f')).toContain('| d | e | f |')
   })
 })

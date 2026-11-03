@@ -25,6 +25,7 @@ const HIDDEN = new Set([
   'LinkMark',
   'URL',
   'LinkTitle',
+  'WikilinkMark',
 ])
 
 /** Schemes that cannot execute anything. Cell text is whatever someone typed,

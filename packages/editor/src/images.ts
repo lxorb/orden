@@ -37,6 +37,25 @@ function markdownFor(file: File, path: string): string {
   return formatWikilink({ target: name, heading: null, block: null, alias: null, embed: true })
 }
 
+/** Whether a clipboard with a file on it says something in words as well, and the
+ *  words are what was copied.
+ *
+ *  Excel, Word and Numbers put a picture of the cells or the paragraph on the clipboard
+ *  beside the cells and the words themselves, so a file is not enough to say this is a
+ *  picture. Words are in the HTML, past its tags and its styles, or in tabs in the
+ *  text. The name of a file, or the alt of a picture copied off a page, is not. */
+export function wordsBesidePicture(html: string, text: string): boolean {
+  if (!text.trim()) return false
+  if (text.includes('\t')) return true
+
+  const words = html
+    .replace(/<(style|script|head|title)\b[\s\S]*?<\/\1\s*>/giu, '')
+    .replace(/<!--[\s\S]*?-->/gu, '')
+    .replace(/<[^>]*>/gu, '')
+    .replace(/&nbsp;|&#160;/giu, ' ')
+  return words.trim() !== ''
+}
+
 const dropAt = StateEffect.define<number | null>()
 
 /** Where the drop being written landed, or null when nothing is being written.
@@ -120,8 +139,14 @@ export function imageHandling(sink: ImageSink): Extension {
         // file left behind by an insertion that was refused is litter.
         if (view.state.readOnly) return false
 
-        const files = [...(event.clipboardData?.files ?? [])]
+        const data = event.clipboardData
+        const files = [...(data?.files ?? [])]
         if (!files.some(isKept)) return false
+        if (
+          wordsBesidePicture(data?.getData('text/html') ?? '', data?.getData('text/plain') ?? '')
+        ) {
+          return false
+        }
 
         event.preventDefault()
         void receiveImages(view, files, sink, null)

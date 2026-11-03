@@ -89,13 +89,23 @@ function writtenAddress(src: string): string {
   return /[\s<>()]/.test(src) ? `<${src}>` : src
 }
 
+/** Alt text as markdown holds it: an unbalanced bracket typed into the field would
+ *  end the picture early or stop it being one at all. */
+function writtenAlt(alt: string): string {
+  return alt.replace(/[[\]]/g, '\\$&')
+}
+
+function readAlt(written: string): string {
+  return written.replace(/\\([[\]])/g, '$1')
+}
+
 function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | null {
   const url = node.getChild('URL')
   if (!url) return null
 
   // The parser leaves alt text as bare text between `![` and `]`.
   const [open, close] = node.getChildren('LinkMark')
-  const alt = open && close ? state.doc.sliceString(open.to, close.from) : ''
+  const alt = open && close ? readAlt(state.doc.sliceString(open.to, close.from)) : ''
   const title = node.getChild('LinkTitle')
 
   return {
@@ -141,7 +151,7 @@ export function imageEndingAt(state: EditorState, pos: number): ImageSpan | null
 export function imageMarkup(spec: ImageSpec): string {
   const zoomed = spec.zoom !== 100
   if (!zoomed && !spec.width) {
-    return `![${spec.alt}](${writtenAddress(spec.src)}${spec.title ? ` "${spec.title}"` : ''})`
+    return `![${writtenAlt(spec.alt)}](${writtenAddress(spec.src)}${spec.title ? ` "${spec.title}"` : ''})`
   }
 
   const attrs = [`src="${attributeValue(spec.src)}"`, `alt="${attributeValue(spec.alt)}"`]
@@ -155,7 +165,7 @@ export function imageMarkup(spec: ImageSpec): string {
  *  the part most worth changing by hand. */
 export function sourceCaret(state: EditorState, image: ImageSpan): number {
   const text = state.doc.sliceString(image.from, image.to)
-  if (text.startsWith('![')) return image.from + 2 + image.alt.length
+  if (text.startsWith('![')) return image.from + 2 + writtenAlt(image.alt).length
 
   const alt = /\balt\s*=\s*(["'])(.*?)\1/i.exec(text)
   return alt ? image.from + alt.index + alt[0].length - 1 : image.from + 1
