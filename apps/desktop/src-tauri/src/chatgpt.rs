@@ -10,7 +10,8 @@
 //! existed - borrowing the Codex CLI's own client id and calling `ChatGPT`'s private
 //! `backend-api` - which is somebody else's identity. See docs/ai.md.
 //!
-//! **Where the tokens are.** The refresh token is in the machine's keychain under a name
+//! **Where the tokens are.** The refresh token is where Orden keeps its secrets (secrets.rs:
+//! the system's store, or on a Mac a file of the app's own, #1090), under a name
 //! the page's own `secret_read` refuses (a dot is not a character a provider id has; see
 //! `named` in secrets.rs), so the webview never holds it. The access token lives here, in
 //! memory, for its hour, and the page asks for it per request (`chatgpt_token`) to make
@@ -31,7 +32,7 @@ use tauri::{AppHandle, Manager, Webview};
 
 use oauth::{Attempt, Callback, Tokens};
 
-/// Where the refresh token is kept: the keychain's nibeditor service, under a name no
+/// Where the refresh token is kept among Orden's secrets (secrets.rs), under a name no
 /// provider id can be.
 const REFRESH: &str = "chatgpt.refresh";
 
@@ -102,10 +103,10 @@ fn installation(app: &AppHandle) -> Result<Installation, String> {
     {
         return Ok(found);
     }
-    // The folder went and the keychain stayed: the installation is the one kept there.
-    if let Some(found) = kept_entry()
+    // The folder went and the secret store stayed: the installation is the one kept there.
+    if let Some(found) = crate::secrets::get(app, KEPT)
         .ok()
-        .and_then(|entry| entry.get_password().ok())
+        .flatten()
         .and_then(|text| serde_json::from_str::<Installation>(&text).ok())
         .filter(|found| !found.host.is_empty())
     {
@@ -124,27 +125,15 @@ fn installation(app: &AppHandle) -> Result<Installation, String> {
 
 fn keep(app: &AppHandle, installation: &Installation) -> Result<(), String> {
     let text = serde_json::to_vec(installation).map_err(|error| error.to_string())?;
-    // A copy in the keychain first, best effort: the file is what is read.
-    if let (Ok(entry), Ok(words)) = (kept_entry(), std::str::from_utf8(&text)) {
-        let _ = entry.set_password(words);
+    // A copy among the secrets first, best effort: the file is what is read.
+    if let Ok(words) = std::str::from_utf8(&text) {
+        let _ = crate::secrets::set(app, KEPT, words);
     }
     std::fs::write(installation_file(app)?, text).map_err(|error| error.to_string())
 }
 
-fn kept_entry() -> Result<keyring::Entry, String> {
-    keyring::Entry::new(crate::secrets::SERVICE, KEPT).map_err(|error| error.to_string())
-}
-
-fn refresh_entry() -> Result<keyring::Entry, String> {
-    keyring::Entry::new(crate::secrets::SERVICE, REFRESH).map_err(|error| error.to_string())
-}
-
-fn refresh_token() -> Result<Option<String>, String> {
-    match refresh_entry()?.get_password() {
-        Ok(token) => Ok(Some(token)),
-        Err(keyring::Error::NoEntry) => Ok(None),
-        Err(error) => Err(error.to_string()),
-    }
+fn refresh_token(app: &AppHandle) -> Result<Option<String>, String> {
+    crate::secrets::get(app, REFRESH)
 }
 
 fn client() -> Result<reqwest::Client, String> {
@@ -305,9 +294,7 @@ pub async fn chatgpt_sign_in(webview: Webview) -> Result<Account, String> {
         .refresh_token
         .clone()
         .ok_or_else(|| "OpenAI sent no refresh token".to_owned())?;
-    refresh_entry()?
-        .set_password(&refresh)
-        .map_err(|error| error.to_string())?;
+    crate::secrets::set(&app, REFRESH, &refresh)?;
 
     found.client = Some(client_id);
     found.email = got.id_token.as_deref().and_then(oauth::email_in);
@@ -326,7 +313,7 @@ fn fresh(got: &Tokens) -> (String, Instant) {
 #[tauri::command(async)]
 pub fn chatgpt_account(webview: Webview) -> Result<Option<Account>, String> {
     owner(&webview)?;
-    if refresh_token()?.is_none() {
+    if refresh_token(webview.app_handle())?.is_none() {
         return Ok(None);
     }
     let found = installation(webview.app_handle())?;
@@ -347,7 +334,7 @@ pub async fn chatgpt_token(webview: Webview) -> Result<String, String> {
         }
     }
 
-    let refresh = refresh_token()?.ok_or_else(|| "signed out".to_owned())?;
+    let refresh = refresh_token(&app)?.ok_or_else(|| "signed out".to_owned())?;
     let found = installation(&app)?;
     let client_id = found.client.ok_or_else(|| "signed out".to_owned())?;
     let got = match tokens(&[
@@ -361,15 +348,13 @@ pub async fn chatgpt_token(webview: Webview) -> Result<String, String> {
         Ok(got) => got,
         Err(error) => {
             if error == "signed out" {
-                let _ = refresh_entry()?.delete_credential();
+                let _ = crate::secrets::delete(&app, REFRESH);
             }
             return Err(error);
         }
     };
     if let Some(next) = &got.refresh_token {
-        refresh_entry()?
-            .set_password(next)
-            .map_err(|error| error.to_string())?;
+        crate::secrets::set(&app, REFRESH, next)?;
     }
     let (token, until) = fresh(&got);
     *access = Some((token.clone(), until));
@@ -386,13 +371,10 @@ pub async fn chatgpt_sign_out(webview: Webview) -> Result<(), String> {
     *state.access.lock().await = None;
 
     let mut found = installation(&app)?;
-    if let (Some(refresh), Some(client_id)) = (refresh_token()?, found.client.clone()) {
+    if let (Some(refresh), Some(client_id)) = (refresh_token(&app)?, found.client.clone()) {
         let _ = revoke(&refresh, &client_id).await;
     }
-    match refresh_entry()?.delete_credential() {
-        Ok(()) | Err(keyring::Error::NoEntry) => {}
-        Err(error) => return Err(error.to_string()),
-    }
+    crate::secrets::delete(&app, REFRESH)?;
     found.client = None;
     found.email = None;
     keep(&app, &found)

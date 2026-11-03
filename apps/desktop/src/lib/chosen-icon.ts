@@ -20,6 +20,7 @@
  *  mean. Every mark in the app asks here, so each of them follows. */
 
 import { isChatTarget, isPagesTarget } from '@orden/markdown/links'
+import type { FileMark } from './file-mark'
 import { isFolderNote } from './folder-notes'
 import { links } from './link-index.svelte'
 import { elsewhere } from './marks-elsewhere.svelte'
@@ -69,6 +70,20 @@ export function holdsPaper(path: string): boolean {
   const listed = workspace.entryAt(path)
   if (listed) return listed.paper === true
   return elsewhere.of(path)?.paper === true
+}
+
+/** The mark a file wears for what it was made from, where that is not its kind's: a
+ *  page note made from a PDF wears the PDF's (#676), and a page note started blank, or
+ *  anything else, wears the mark its kind does.
+ *
+ *  The one place a file's source decides its mark, so the file list, the tabs, a search
+ *  hit, a bookmark and every other list that draws a file agree; FileMark.svelte asks
+ *  it for every one of them. A source added later - a page note made from another kind
+ *  of document - is a line here and a lettered mark in file-mark.ts (`typeMark`). */
+export function sourceMark(mark: FileMark, path: string | undefined): FileMark {
+  if (path === undefined) return mark
+  if (mark === 'pages' && holdsPaper(path)) return 'pdf'
+  return mark
 }
 
 /** A website's own mark, as an address, or null for anything that is not one or has

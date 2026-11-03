@@ -2655,4 +2655,6 @@ export const jv: Dictionary = {
   "AGENTS is this space's agent instructions": 'AGENTS yaiku instruksi agen kanggo papan iki',
   '{title}, unread': '{title}, durung diwaca',
   '{title}, running': '{title}, lagi mlaku',
+  'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
+    'Orden ora nyimpen kunci AI ing keychain Mac maneh, sing terus njaluk sandine. Lebokna kunci sampeyan lan mlebu ChatGPT sepisan maneh.',
 }

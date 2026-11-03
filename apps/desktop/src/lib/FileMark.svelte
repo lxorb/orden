@@ -28,11 +28,11 @@
    *
    *  A page note made from a PDF wears the PDF's mark, because that is what the reader
    *  brought in and still thinks of it as (#676); a page note started blank wears the
-   *  page note's. See `holdsPaper`.
+   *  page note's. Which is decided once for every list, by `sourceMark`.
    *
    *  What a row holds is said at the far end of it and by the indentation of what
    *  follows, never by the mark: the mark says what the row is. */
-  import { chosenIcon, chosenTint, faviconFor, holdsPaper } from './chosen-icon'
+  import { chosenIcon, chosenTint, faviconFor, sourceMark } from './chosen-icon'
   import { type FileMark, MARKS } from './file-mark'
   import Icon from './Icon.svelte'
   import { readIcon } from './icons'
@@ -61,9 +61,7 @@
   const tint = $derived(path === undefined ? null : chosenTint(path))
 
   /** The kind's mark, but a PDF's for a page note made from one. */
-  const shown = $derived<FileMark>(
-    mark === 'pages' && path !== undefined && holdsPaper(path) ? 'pdf' : mark,
-  )
+  const shown = $derived<FileMark>(sourceMark(mark, path))
 
   /** The site's own mark for a website, the globe standing in until a page has shown
    *  one. Read through the same façade the chosen icon is, so this names no store of its

@@ -274,6 +274,13 @@ export const joinPending = latched(() => import('./JoinPending.svelte'))
  *  says it; see RenameNotice.svelte. */
 export const renameNotice = latched(() => import('./RenameNotice.svelte'))
 
+/** The line that says a Mac's AI keys are typed again (#1090), fetched only by a Mac
+ *  that had some; see ai/keys-moved.svelte.ts. */
+export const keysMovedNotice = latched(() => {
+  if (__EVEN_PLUGIN__) throw new Error('no AI keys in the Even Realities plugin')
+  return import('./ai/KeysMoved.svelte')
+})
+
 /** What the app menu's rows are built out of: every command in the app, named, asked
  *  whether it may run, with the export list and the shortcut hints beside them. Not a
  *  component but the same bargain - nothing of it is worth a byte before somebody

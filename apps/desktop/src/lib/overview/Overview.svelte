@@ -31,7 +31,19 @@
   import { pages } from '../web-tab/pages.svelte'
   import { isUnsaved } from '../workspace/drafts'
   import { type Tab, workspace } from '../workspace.svelte'
-  import { isDrag, type Landing, landingAt, withMoved } from './drag'
+  import {
+    boxToCanvas,
+    type Camera,
+    lookingAt,
+    pinched,
+    type Point,
+    showing,
+    toCanvas,
+    turned,
+    moved as panned,
+  } from './camera'
+  import { isDrag, type Landing, landingAt, MADE, withLanding, withMoved } from './drag'
+  import { places } from './places.svelte'
   import { drawn, Flight, type Pose } from './flight'
   import { type Box, type Laid, lay, seamPath, type Slot } from './layout'
   import { marked, mirrorOf, shownBox } from './mirror'
@@ -58,14 +70,38 @@
   let mirrors = $state<Record<string, HTMLElement>>({})
 
   const frame = $derived(workspace.panes.frame)
-  const room = $derived<Box>({
+  /** The room the windows are laid out in on the screen, at one to one. */
+  const screenRoom = $derived<Box>({
     x: MARGIN,
     y: TOP,
     w: Math.max(width - 2 * MARGIN, 200),
     h: Math.max(height - TOP - MARGIN, 160),
   })
 
-  const shapeOf = (paneId: string) => {
+  /** Which space's place the canvas lays this set of tabs out in: the space's own, or the
+   *  window's while it is in none. */
+  const spaceKey = $derived(workspace.activeSpaceId ?? 'global')
+  /** Where on the one canvas, kept from run to run (places.svelte.ts). */
+  const room = $derived<Box>(
+    places.at(spaceKey) ?? { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h },
+  )
+
+  /** Where the canvas is looked at from (camera.ts). */
+  let camera = $state<Camera>({ x: 0, y: 0, zoom: 1 })
+
+  /** The camera on the space being worked in, its place given it if it has none yet. */
+  function lookAtSpace() {
+    const place = places.place(spaceKey, { w: screenRoom.w, h: screenRoom.h })
+    camera = lookingAt(place, screenRoom)
+  }
+
+  const shapeOf = (paneId: string): number => {
+    // The pane a window against a side would make: half the pane it splits.
+    const landing = held?.landing
+    if (paneId === MADE && landing?.kind === 'side') {
+      const half = shapeOf(landing.paneId)
+      return landing.side === 'left' || landing.side === 'right' ? half / 2 : half * 2
+    }
     const measured = shownBox(paneId)
     const box = panes[paneId] ?? (measured && { w: measured.width, h: measured.height })
     return box && box.w > 0 && box.h > 0 ? box.w / box.h : 16 / 10
@@ -87,8 +123,10 @@
       : null,
   )
 
+  /** The canvas as it is, or with the held window where it would land - in a pane of
+   *  its own where it is against a side of one (drag.ts). */
   const laid = $derived(
-    lay(frame, room, {
+    lay(withLanding(frame, held?.landing ?? null), room, {
       tabsOf: held ? withMoved(tabsOf, held.id, held.landing) : tabsOf,
       shapeOf,
     }),
@@ -125,15 +163,18 @@
   function homeOf(tab: Tab, slot: Slot): Pose {
     if (workspace.panes.at(tab.paneId)?.activeTabId === tab.id) {
       const box = shownBox(tab.paneId)
-      if (box && box.width > 0)
-        return { x: box.x, y: box.y, w: box.width, h: box.height, tab: 0, alpha: 1 }
+      if (box && box.width > 0) return onCanvas(box, 0)
     }
     // The tab's own shape in the strip; see Tabs.svelte.
     const chip = marked('box', tab.id)?.getBoundingClientRect()
-    if (chip && chip.width > 0 && chip.right > 0 && chip.left < width) {
-      return { x: chip.x, y: chip.y, w: chip.width, h: chip.height, tab: 1, alpha: 1 }
-    }
+    if (chip && chip.width > 0 && chip.right > 0 && chip.left < width) return onCanvas(chip, 1)
     return { ...lifted(slot), alpha: 0 }
+  }
+
+  /** Where a box of the screen is on the canvas, as a pose `tab` much a tab. */
+  function onCanvas(box: DOMRect, tab: number): Pose {
+    const { x, y, w, h } = boxToCanvas(camera, { x: box.x, y: box.y, w: box.width, h: box.height })
+    return { x, y, w, h, tab, alpha: 1 }
   }
 
   /** A slot as the pose of a window lying in it. */
@@ -233,11 +274,10 @@
   function enter() {
     const again = shown
     if (!again) {
-      const measured: Record<string, { w: number; h: number }> = {}
+      lookAtSpace()
+      measure()
       const copies: Record<string, HTMLElement> = {}
       for (const pane of workspace.panes.all) {
-        const box = shownBox(pane.id)
-        if (box) measured[pane.id] = { w: box.width, h: box.height }
         const tab = pane.activeTabId ? byId.get(pane.activeTabId) : undefined
         // A page is its photograph: the copy of a pane holding a live webview is a hole.
         if (tab && tab.kind !== 'web') {
@@ -246,7 +286,6 @@
         }
         if (tab?.kind === 'web') void pages.shoot(tab.id)
       }
-      panes = measured
       mirrors = copies
       at = workspace.activeTabId
     }
@@ -254,6 +293,23 @@
     out = true
     tabOverview.out = workspace.tabs.map((tab) => tab.id)
     if (again) aimAll()
+  }
+
+  /** What each pane shows, measured: its windows take that shape. */
+  function measure() {
+    const measured: Record<string, { w: number; h: number }> = {}
+    for (const pane of workspace.panes.all) {
+      const box = shownBox(pane.id)
+      if (box) measured[pane.id] = { w: box.width, h: box.height }
+    }
+    panes = measured
+  }
+
+  /** Another space, picked while the view is up: the camera goes to its place. */
+  $effect(() => arrivedIn(spaceKey))
+
+  function arrivedIn(space: string) {
+    if (space && untrack(() => shown && out)) untrack(lookAtSpace)
   }
 
   /** Every window home. */
@@ -337,6 +393,7 @@
     if (event.button !== 0 || !out) return
     pressed = { id, x: event.clientX, y: event.clientY, pointer: event.pointerId }
     dragged = false
+    event.stopPropagation()
   }
 
   function moved(event: PointerEvent) {
@@ -349,25 +406,30 @@
       const pose = flight.pose
       const target = event.currentTarget as HTMLElement
       target.setPointerCapture(event.pointerId)
+      const grabbed = toCanvas(camera, pressed)
       held = {
         id,
-        fx: (pressed.x - pose.x) / Math.max(pose.w, 1),
-        fy: (pressed.y - pose.y) / Math.max(pose.h, 1),
+        fx: (grabbed.x - pose.x) / Math.max(pose.w, 1),
+        fy: (grabbed.y - pose.y) / Math.max(pose.h, 1),
         landing: null,
       }
       at = id
     }
-    const landing = landingAt(without?.slots ?? [], event.clientX, event.clientY)
-    if (landing?.paneId !== held.landing?.paneId || landing?.before !== held.landing?.before) {
-      held = { ...held, landing }
-    }
-    hand = { x: event.clientX, y: event.clientY }
+    hand = toCanvas(camera, { x: event.clientX, y: event.clientY })
+    const landing = landingAt(
+      without?.slots ?? [],
+      without?.rooms ?? [],
+      hand.x,
+      hand.y,
+      (paneId, side) => workspace.canLand(side, paneId, id),
+    )
+    if (JSON.stringify(landing) !== JSON.stringify(held.landing)) held = { ...held, landing }
     follow()
     fly()
   }
 
   /** Where the pointer is, while a window is held. */
-  let hand = { x: 0, y: 0 }
+  let hand: Point = { x: 0, y: 0 }
 
   /** The held window under the pointer, the point it was taken by under the pointer
    *  exactly, growing or shrinking to the place it would land in. */
@@ -402,6 +464,12 @@
   /** The tab moved along its strip or into another pane's, before the tab it landed in
    *  front of. */
   function drop(id: string, landing: Landing) {
+    if (landing.kind === 'side') {
+      workspace.dropTab(id, { kind: 'pane', paneId: landing.paneId, zone: landing.side })
+      // The panes have new shapes once the split is laid out.
+      requestAnimationFrame(measure)
+      return
+    }
     const strip = tabsOf(landing.paneId)
     const back = strip.filter((one) => one !== id)
     const into = landing.before === null ? back.length : back.indexOf(landing.before)
@@ -430,10 +498,75 @@
     if (!next) return
     event.preventDefault()
     at = next.tab.id
+    camera = showing(camera, next.slot, screenRoom)
     elements.get(next.tab.id)?.window.focus({ preventScroll: true })
   }
 
   const spaces = $derived(workspace.shownSpaces)
+
+  /** The wheel and two fingers on a touchpad move the canvas, a pinch brings it nearer.
+   *  Listened for by hand, since a passive listener cannot keep the page from zooming. */
+  function wheeled(node: HTMLElement) {
+    const turn = (event: WheelEvent) => {
+      event.preventDefault()
+      const { deltaX, deltaY, deltaMode, ctrlKey, metaKey, clientX, clientY } = event
+      camera = turned(camera, {
+        deltaX,
+        deltaY,
+        deltaMode,
+        ctrlKey,
+        metaKey,
+        x: clientX,
+        y: clientY,
+      })
+    }
+    node.addEventListener('wheel', turn, { passive: false })
+    return {
+      destroy() {
+        node.removeEventListener('wheel', turn)
+      },
+    }
+  }
+
+  /** The fingers or the mouse on the canvas itself, between the windows: one moves it,
+   *  two pinch it, and a press that moved neither puts the view away. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read by the handlers, never rendered
+  const touching = new Map<number, Point>()
+  let panning = false
+
+  function grounded(event: PointerEvent) {
+    if (!(event.target instanceof Element) || event.target.closest('.window, .spaces')) return
+    touching.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+    panning = touching.size > 1
+  }
+
+  function dragging(event: PointerEvent) {
+    const was = touching.get(event.pointerId)
+    if (!was) return
+    const now = { x: event.clientX, y: event.clientY }
+    const [first, second] = [...touching.entries()]
+    if (touching.size === 2 && first && second) {
+      const before: [Point, Point] = [first[1], second[1]]
+      touching.set(event.pointerId, now)
+      const after: [Point, Point] = [
+        touching.get(first[0]) ?? first[1],
+        touching.get(second[0]) ?? second[1],
+      ]
+      camera = pinched(camera, before, after)
+      return
+    }
+    if (!panning && !isDrag(now.x - was.x, now.y - was.y)) return
+    panning = true
+    camera = panned(camera, now.x - was.x, now.y - was.y)
+    touching.set(event.pointerId, now)
+  }
+
+  function letGo(event: PointerEvent) {
+    if (!touching.delete(event.pointerId)) return
+    if (!touching.size && !panning && event.type === 'pointerup') close()
+    if (!touching.size) panning = false
+  }
 </script>
 
 <svelte:window
@@ -453,10 +586,12 @@
     aria-label={t('Tabs')}
     tabindex="-1"
     use:trap
+    use:wheeled
     onkeydown={keyed}
-    onclick={(event) => {
-      if (event.target === event.currentTarget) close()
-    }}
+    onpointerdown={grounded}
+    onpointermove={dragging}
+    onpointerup={letGo}
+    onpointercancel={letGo}
   >
     {#if spaces.length > 1}
       <div class="spaces" class:is-out={out} role="group" aria-label={t('Spaces')}>
@@ -474,53 +609,56 @@
       </div>
     {/if}
 
-    <svg class="seams" class:is-out={out} {width} {height} aria-hidden="true">
-      {#each laid.seams as seam (seam.id)}
-        <path d={seamPath(seam)} />
-      {/each}
-    </svg>
+    <div class="world" style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})">
+      <svg class="seams" class:is-out={out} width="1" height="1" aria-hidden="true">
+        {#each laid.seams as seam (seam.id)}
+          <path d={seamPath(seam)} />
+        {/each}
+      </svg>
 
-    {#each windows as { slot, tab } (tab.id)}
-      {@const face = faceOf(slot)}
-      <button
-        class="window"
-        class:is-at={at === tab.id}
-        class:unsaved={isUnsaved(tab.note)}
-        style:width="{slot.w}px"
-        style:height="{slot.h}px"
-        aria-label={tab.shown}
-        aria-current={tab.id === workspace.activeTabId ? 'page' : undefined}
-        class:is-held={held?.id === tab.id}
-        onfocus={() => (at = tab.id)}
-        onclick={() => {
-          if (dragged) dragged = false
-          else open(tab)
-        }}
-        onpointerdown={(event) => down(event, tab.id)}
-        onpointermove={moved}
-        onpointerup={up}
-        onpointercancel={cancelled}
-        use:placed={tab.id}
-      >
-        <span class="face-box" style:scale={slot.w / face.w}>
-          <WindowFace {tab} mirror={mirrors[tab.id] ?? null} width={face.w} height={face.h} />
+      {#each windows as { slot, tab } (tab.id)}
+        {@const face = faceOf(slot)}
+        <button
+          class="window"
+          class:is-at={at === tab.id}
+          class:unsaved={isUnsaved(tab.note)}
+          style:width="{slot.w}px"
+          style:height="{slot.h}px"
+          aria-label={tab.shown}
+          aria-current={tab.id === workspace.activeTabId ? 'page' : undefined}
+          class:is-held={held?.id === tab.id}
+          onfocus={() => (at = tab.id)}
+          onclick={() => {
+            if (dragged) dragged = false
+            else open(tab)
+          }}
+          onpointerdown={(event) => down(event, tab.id)}
+          onpointermove={moved}
+          onpointerup={up}
+          onpointercancel={cancelled}
+          use:placed={tab.id}
+        >
+          <span class="face-box" style:scale={slot.w / face.w}>
+            <WindowFace {tab} mirror={mirrors[tab.id] ?? null} width={face.w} height={face.h} />
+          </span>
+          <span class="chip" aria-hidden="true">
+            <span class="chip-inner"
+              ><TabMark {tab} /><span class="chip-name">{tab.shown}</span></span
+            >
+          </span>
+          <span class="ring" aria-hidden="true"></span>
+        </button>
+        <span
+          class="caption"
+          style:translate="{slot.x}px {slot.y + slot.h + 8}px"
+          style:width="{slot.w}px"
+          aria-hidden="true"
+          use:captioned={tab.id}
+        >
+          <TabMark {tab} /><span class="caption-name">{tab.shown}</span>
         </span>
-        <span class="chip" aria-hidden="true">
-          <span class="chip-inner"><TabMark {tab} /><span class="chip-name">{tab.shown}</span></span
-          >
-        </span>
-        <span class="ring" aria-hidden="true"></span>
-      </button>
-      <span
-        class="caption"
-        style:translate="{slot.x}px {slot.y + slot.h + 8}px"
-        style:width="{slot.w}px"
-        aria-hidden="true"
-        use:captioned={tab.id}
-      >
-        <TabMark {tab} /><span class="caption-name">{tab.shown}</span>
-      </span>
-    {/each}
+      {/each}
+    </div>
   </div>
 {/if}
 
@@ -544,6 +682,7 @@
     z-index: var(--z-sheet);
     overflow: hidden;
     outline: none;
+    touch-action: none;
   }
 
   .spaces {
@@ -589,9 +728,21 @@
     background: var(--surface);
   }
 
+  /* The one canvas, which the camera moves and scales; see camera.ts. */
+  .world {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    transform-origin: 0 0;
+  }
+
   .seams {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    overflow: visible;
     pointer-events: none;
     opacity: 0;
     transition: opacity var(--dur-base) var(--ease-out);

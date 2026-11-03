@@ -86,7 +86,7 @@ The web app at orden.so is remotely hosted and does not offer it. Never the Code
 CLI's own client id, and never `chatgpt.com/backend-api`: that is the route tools used
 before this existed, and it is somebody else's identity.
 
-The refresh token is kept in the keychain under a name the page's own `secret_read`
+The refresh token is kept among Orden's secrets (`secrets.rs`) under a name the page's own `secret_read`
 refuses, so the webview only ever holds the hour's access token; the crate refreshes it,
 one refresh at a time, and **Sign out** revokes it. See `src-tauri/src/chatgpt.rs`.
 
@@ -234,7 +234,8 @@ which keeps everything under "Your own plan" true. The window names an account, 
 folder: the crate finds the account in the file and derives its home
 (`src-tauri/src/ai_cli/home.rs`). A Codex home of Orden's starts with
 `cli_auth_credentials_store = "keyring"`, so its login is in the system's own store,
-keyed by the home; Claude Code keeps its own `.credentials.json` in the folder on
+keyed by the home - and on a Mac `"file"`, its `auth.json` in the home, never the
+keychain (#1090); Claude Code keeps its own `.credentials.json` in the folder on
 Windows and Linux (mode 0600), and a Keychain entry keyed by the folder on a Mac. For
 such a home the variables that would outrank its login (`ANTHROPIC_API_KEY`,
 `ANTHROPIC_AUTH_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`, `OPENAI_API_KEY`, `CODEX_API_KEY`) are
@@ -294,14 +295,21 @@ lie:
 | Build | Store | What guards it |
 | --- | --- | --- |
 | Desktop app, Windows | Credential Manager | The account you are signed in as |
-| Desktop app, macOS | Keychain | The same, plus whatever you set on the item |
+| Desktop app, macOS | A file of Orden's own in its data folder (`secrets.json`, mode 0600) | The account you are signed in as, and the disk's encryption (#1090) |
 | Desktop app, Linux | Secret Service (gnome-keyring, KWallet) | The keyring, which may be locked |
 | Phone app, Android | `EncryptedSharedPreferences` | A key in the hardware Keystore, per app |
 | Phone app, iPhone and iPad | Keychain | The device's passcode, per app |
 | Browser | IndexedDB | Nothing but the origin |
 
 The desktop side is `apps/desktop/src-tauri/src/secrets.rs`, three commands over
-the `keyring` crate. The Android side is the `Secrets` bridge in
+one store per platform: the `keyring` crate on Windows and Linux, and on a Mac a file the
+way Claude Code and Codex keep a login on Linux. Never the Mac's keychain (#1090): every
+read of an item there asks for the login password whenever the app's signature and the
+item's access list disagree, and it asked again the moment it was answered. Nothing is
+read from the keychain either, so a key an older Orden kept there is typed once more, and
+ChatGPT signed in to again; a notice says so once (`KeysMoved.svelte`). The iPhone keeps
+its keychain, which asks nothing. test/no-keychain-on-mac.test.ts holds a Mac build to
+it. The Android side is the `Secrets` bridge in
 `MainActivity.kt`, which is where the activity already hands the page the things
 a page cannot see. The browser side is `web/commands.ts`, answering the same
 three command names out of the same store the themes live in.
