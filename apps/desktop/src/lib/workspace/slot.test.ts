@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { FIRST_SESSION, sessionOf, slotOf, takeSlot } from './slot'
 
 /** Web Locks as one browser's, enough of them for `ifAvailable`. */
@@ -32,7 +32,9 @@ describe('a window takes a session of its own', () => {
   })
 
   test('without locks there is the one', async () => {
-    expect(await takeSlot(undefined)).toBe(0)
+    vi.stubGlobal('navigator', {})
+    expect(await takeSlot()).toBe(0)
+    vi.unstubAllGlobals()
   })
 
   test('only a slot entry reads as one', () => {

@@ -4,7 +4,7 @@
  *  real engine, the real account, and the real queue; only the channel is a call. */
 
 import { CALM, simulate } from '@orden/sync-core/sim'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { Engine } from './engine'
 import { Owed, type Owing, takeOwed } from './owed'
 import { EngineDevice } from './sim-device'
@@ -180,5 +180,28 @@ describe('what a window with no engine owes', () => {
       { kind: 'wrote', path: '/b', text: 'two' },
     ])
     expect(owed.size).toBe(0)
+  })
+})
+
+describe('a thing said again', () => {
+  const engine = (id: string | null) => ({
+    saved: () => Promise.resolve(),
+    entryAt: () => (id === null ? null : { id }),
+  })
+  const removed = (id?: string): Owing => ({
+    id: '0',
+    what: {
+      kind: 'op',
+      op: { op: 'removed', path: '/s/a.md', kind: 'file', root: '/s' },
+      ...(id ? { entry: id } : {}),
+    },
+  })
+
+  test('takes away the note it was said of, and not a new one at that path', async () => {
+    const follow = vi.fn()
+    await takeOwed(engine('new'), removed('old'), follow)
+    expect(follow).not.toHaveBeenCalled()
+    await takeOwed(engine('old'), removed('old'), follow)
+    expect(follow).toHaveBeenCalledTimes(1)
   })
 })

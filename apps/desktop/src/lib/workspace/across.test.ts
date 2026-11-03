@@ -111,18 +111,11 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
   const save = async (note: NoteDoc) => {
     const path = note.path
     if (path === null) return null
-    const content = note.latest
-    const old = across.writing as unknown as (
-      n: NoteDoc,
-      p: string,
-      c: string,
-      w: (d: string) => Promise<void>,
-    ) => Promise<string | null>
-    const words = await old.call(across, note, path, content, async (down) => {
+    const written = await across.writing(note, path, async (down) => {
       disk.set(path, down)
     })
-    if (words !== null) note.dirty = note.latest !== words
-    return words
+    if (written !== null) note.dirty = note.latest !== written.words
+    return written
   }
   const type = (note: NoteDoc, words: string) => {
     note.live.edit([{ from: note.live.text.length, to: note.live.text.length, insert: words }])

@@ -1,18 +1,21 @@
 /** What one window does to the notes, heard by the others.
  *
- *  A note stays one document per window, as it does in two windows of VS Code. Between
- *  them what crosses is what happened: a write, as the words it replaced and the words it
- *  left, and a file operation, as `fileOps` said it. Without this, the second window's
- *  autosave overwrote the first's with no version, and a note deleted in one came back when
- *  the other typed.
+ *  A note stays one document per window, as it does in two windows of VS Code. Without
+ *  this, the second window's autosave overwrote the first's with no version, and a note
+ *  deleted in one came back when the other typed.
  *
- *  **Writes are one line.** With another window here, a write holds the file's lock, reads
- *  what is there and, where that is not what this window last knew it to hold, three-way
- *  merges it in first (`merge3`, the sides in a fixed order so two windows reach the same
- *  words, and a meeting keeps both). So every write descends from every other, and hearing
- *  one is the same merge against the words it replaced. Words typed here are never what
- *  gets dropped, and neither are the other window's. A plane's words are JSON, which this
- *  merge would break: the last write stands and what it replaced is kept as a version.
+ *  **The disk is the one line of history.** Each document knows the version of its file it
+ *  has taken in (`onDisk`). With another window here, whoever writes holds the file's lock,
+ *  reads the file, takes in what is new against that version (`merge3`, a meeting keeps both),
+ *  and only then reads the note's words and writes them. So every version on the disk
+ *  descends from every one before it. What crosses the channel is only that the file has a
+ *  new version: a window hearing so does the same under the same lock, whatever order the
+ *  news comes in and however late, and news of something already taken in finds nothing new.
+ *  Nothing is ever merged twice, because nothing is merged but what lies between the version
+ *  a window holds and the one on the disk. A plane's words are JSON, which this merge would
+ *  break: the last write stands and what it replaced is kept as a version.
+ *
+ *  **A file that will not read is not an empty file**: the write is refused and tried again.
  *
  *  **A file gone is gone.** One deleted elsewhere while words are unwritten here does not
  *  come back on the disk, and does not take those words with it: the tab stays, as a draft.
@@ -24,7 +27,7 @@ import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { samePath, within } from '../space-paths'
 import { invoke } from '../tauri'
-import { afterQuiet } from '../timing'
+import { afterQuiet, waited } from '../timing'
 import { oneWriteAt, type Windows, windows as theWindows } from '../windows'
 import type { NoteDoc } from './documents.svelte'
 import type { FileOp } from './file-ops'
@@ -53,22 +56,24 @@ export interface Desk {
   read(path: string): Promise<string | null>
   exists(path: string): Promise<boolean>
   keepVersion(path: string, text: string): Promise<unknown>
+  /** A moment, for news on its way. */
+  pause(): Promise<unknown>
 }
 
 /** The editor's line endings, whatever a file has. */
 const unixLines = (text: string) => text.replace(/\r\n?/g, '\n')
 
-/** A merge whose answer does not hang on which window is asking. */
-async function together(base: string, one: string, other: string): Promise<string> {
-  if (one === other) return one
-  const { merge3 } = await import('@orden/sync-core/merge3')
-  const [local, remote] = one < other ? [one, other] : [other, one]
-  return merge3(base, local, remote).text
+/** A write that went down: the words, and the note's revision at them. */
+export interface Written {
+  words: string
+  revision: number
 }
 
-/** How many such meetings a note remembers: one per write of another window's still in
- *  the air, which is never many. */
-const MET_KEPT = 8
+/** The file is not there, and the note knows it was. */
+const GONE = Symbol('gone')
+
+/** How long a file not there is given to turn out to be a rename. */
+const RENAME_NEWS = 500
 
 /** Whether a kind's words merge as text. */
 const asText = (note: NoteDoc) => note.kind === 'note'
@@ -102,8 +107,8 @@ export class Across {
     })
     windows.hear('list-again', () => this.listAgain())
     windows.hear('file-op', ({ op }) => this.inTurn(() => this.heardOp(op as FileOp)))
-    windows.hear('words', ({ path, base, text }) =>
-      this.inTurn(() => this.heardWords(String(path), String(base), String(text))),
+    windows.hear('words', ({ path, text }) =>
+      this.inTurn(() => this.heardWords(String(path), String(text))),
     )
   }
 
@@ -118,96 +123,116 @@ export class Across {
     })
   }
 
-  /** Writes a note's words with another window here, as above. Answers the words that went
-   *  down, or null where the file has gone and so nothing did. */
-  writing(
-    note: NoteDoc,
-    path: string,
-    content: string,
-    write: (words: string) => Promise<unknown>,
-  ): Promise<string | null> {
-    return oneWriteAt(path, async () => {
-      const was = await this.desk.read(path)
-      if (was === null && note.onDisk !== null && !(await this.desk.exists(path))) {
-        this.desk.draftOf(note)
-        return null
-      }
-      const disk = was === null ? null : unixLines(was)
-      let words = content
-      if (disk !== null && disk !== note.onDisk) {
-        if (note.onDisk !== null && asText(note)) {
-          words = await together(note.onDisk, content, disk)
-          await this.brought(note, content, words)
-          this.metOnDisk(note, disk)
-        } else {
-          // Nothing to merge against, or nothing that merges: what is there is kept.
-          await this.desk.keepVersion(path, was ?? '').catch(() => undefined)
-        }
-      }
-      await write(words)
-      note.onDisk = words
-      this.windows.say('words', { path, base: disk ?? '', text: words })
-      return words
-    })
-  }
-
-  /** Words a write met on the disk, whose news is still on its way: heard then, they are
-   *  already here, and merged a second time they would be here twice. */
-  private readonly met = new WeakMap<NoteDoc, string[]>()
-
-  private metOnDisk(note: NoteDoc, disk: string) {
-    this.met.set(note, [...(this.met.get(note) ?? []), disk].slice(-MET_KEPT))
-  }
-
   /** Waits for what has been heard so far. */
   heardSoFar(): Promise<unknown> {
     return this.hearing
   }
 
-  /** Words a merge left, put into the note. A key pressed since the merge read it is in the
-   *  note already and stays: what arrives is merged with it first. */
-  private async brought(note: NoteDoc, from: string, to: string) {
-    if (from === to) return
-    const joined = this.desk.joined(note)
-    const now = joined ? joined.text() : note.latest
-    const words = now === from ? to : await together(from, now, to)
-    if (joined) joined.put(words)
-    else note.took(fold(now, words), words)
+  /** Writes a note's words with another window here, as above. Answers the words that went
+   *  down and the note's revision at those words, or null where nothing did: the file has
+   *  gone, or the note moved on, in which case it is owed again where it is now. */
+  async writing(
+    note: NoteDoc,
+    path: string,
+    write: (words: string) => Promise<unknown>,
+  ): Promise<Written | null> {
+    const first = await oneWriteAt(path, () => this.attempt(note, path, write))
+    if (first !== GONE) return first
+    // Not there may be a rename whose news is on its way: a moment, and then it is known.
+    await this.desk.pause()
+    await this.hearing
+    if (!samePath(note.path, path)) {
+      if (note.path !== null) this.desk.owed(note)
+      return null
+    }
+    const second = await oneWriteAt(path, () => this.attempt(note, path, write))
+    if (second !== GONE) return second
+    this.desk.draftOf(note)
+    return null
   }
 
-  private async heardWords(path: string, base: string, text: string) {
+  private async attempt(
+    note: NoteDoc,
+    path: string,
+    write: (words: string) => Promise<unknown>,
+  ): Promise<Written | typeof GONE | null> {
+    if (!samePath(note.path, path)) {
+      if (note.path !== null) this.desk.owed(note)
+      return null
+    }
+    const disk = await this.onTheDisk(path)
+    if (disk === null && note.onDisk !== null) return GONE
+    if (disk !== null && disk !== note.onDisk) await this.takeIn(note, path, disk)
+    // Words a composition is holding back are in nothing yet that could be written.
+    if (note.live.holdingBack) {
+      this.desk.owed(note)
+      return null
+    }
+    // Read here, inside the turn and after all of that: not when the write was asked for.
+    const words = note.latest
+    const revision = note.revision
+    await write(words)
+    note.onDisk = words
+    this.windows.say('words', { path, text: words })
+    return { words, revision }
+  }
+
+  /** The file's words in the editor's line endings; null for a file that is not there. One
+   *  that is there and will not read is refused, whatever is asking. */
+  private async onTheDisk(path: string): Promise<string | null> {
+    const read = await this.desk.read(path)
+    if (read !== null) return unixLines(read)
+    if (await this.desk.exists(path)) throw new Error(`${path} would not read`)
+    return null
+  }
+
+  /** What lies between the version this note holds and `disk`, taken in. */
+  private async takeIn(note: NoteDoc, path: string, disk: string) {
+    const base = note.onDisk
+    if (base === null || !asText(note)) {
+      // Nothing to merge against, or nothing that merges: what is there is kept.
+      await this.desk.keepVersion(path, disk).catch(() => undefined)
+      note.onDisk = disk
+      return
+    }
+    const { merge3 } = await import('@orden/sync-core/merge3')
+    // From here to the note holding it nothing waits, so no key can land in between.
+    const joined = this.desk.joined(note)
+    const mine = joined ? joined.text() : note.latest
+    const words = mine === base ? disk : merge3(base, mine, disk).text
+    if (words !== mine) {
+      if (joined) joined.put(words)
+      else note.took(fold(mine, words), words)
+    }
+    note.onDisk = disk
+  }
+
+  /** Another window, or the engine, wrote this file. */
+  private async heardWords(path: string, text: string) {
     this.desk.noteSaved(path, text)
     const note = this.desk.documents.find((one) => samePath(one.path, path))
     if (!note) return
-    if (note.onDisk === base || note.onDisk === null) note.onDisk = text
-
-    if (!asText(note)) {
-      if (!note.dirty) note.replace(text, false)
-      else if (text !== note.latest) await this.desk.keepVersion(path, text)
-      return
-    }
-    const met = this.met.get(note)
-    if (met?.includes(text)) {
-      this.met.set(
-        note,
-        met.filter((one) => one !== text),
-      )
-      return
-    }
-    const joined = this.desk.joined(note)
-    const mine = joined ? joined.text() : note.latest
-    const words = await together(base, mine, text)
-    if (words === mine) {
-      if (words === text && !joined) note.dirty = false
-      return
-    }
-    await this.brought(note, mine, words)
-    if ((joined ? joined.text() : note.latest) === text) {
-      note.dirty = false
-      return
-    }
-    note.dirty = true
-    this.desk.owed(note)
+    await oneWriteAt(path, async () => {
+      if (!samePath(note.path, path)) return
+      // Gone is the file operation's to say, and unreadable is the next word's or write's.
+      const disk = await this.onTheDisk(path).catch(() => null)
+      if (disk === null || disk === note.onDisk) return
+      if (!note.dirty && note.onDisk === null) {
+        note.replace(disk, false)
+        return
+      }
+      if (!asText(note) && !note.dirty) {
+        note.replace(disk, false)
+        return
+      }
+      await this.takeIn(note, path, disk)
+      if (note.latest === disk && !note.live.holdingBack) {
+        note.dirty = false
+        return
+      }
+      note.dirty = true
+      this.desk.owed(note)
+    })
   }
 
   private async heardOp(op: FileOp) {
@@ -251,6 +276,7 @@ export async function startAcross(): Promise<Across> {
     read: (path) => invoke<string>('read_note', { path }).catch(() => null),
     exists: (path) => onDisk(path),
     keepVersion: (path, text) => invoke('snapshot_note', { path, content: text }),
+    pause: () => waited(RENAME_NEWS),
   })
   workspace.meetOthers(across)
   return across

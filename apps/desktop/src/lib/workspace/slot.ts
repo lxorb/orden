@@ -11,10 +11,14 @@
  *  to go (sessionStorage outlives a reload and nothing else does). Somewhere with no
  *  locks there is one slot, and every window shares it as they used to. */
 
+import { ifFree, locksHere, locksWork } from '../locks'
 import { readSession, type Session } from './session'
 
 export const FIRST_SESSION = 'nib:workspace'
 const REMEMBERED = 'nib:window-slot'
+
+/** More windows than anybody opens: past it, the first session, as with no locks. */
+const MOST_SLOTS = 64
 
 /** How long a reload waits for its own slot before it takes another. */
 const RELOAD_AT_MOST = 1_500
@@ -50,32 +54,69 @@ function remember(slot: number) {
   }
 }
 
-/** Holds a lock for the life of the page, and answers whether it was had. `wait` is how
- *  long to wait for it, in milliseconds; nothing means not at all. */
-function holding(locks: LockManager, name: string, wait?: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const forever = () => new Promise<never>(() => undefined)
-    if (wait === undefined) {
-      void locks.request(name, { ifAvailable: true }, (lock) => {
-        resolve(lock !== null)
-        return lock ? forever() : undefined
-      })
-      return
-    }
-    const giving = new AbortController()
-    const late = setTimeout(() => giving.abort(), wait)
-    locks
-      .request(name, { signal: giving.signal }, () => {
-        clearTimeout(late)
-        resolve(true)
-        return forever()
-      })
-      .catch(() => resolve(false))
-  })
+/** A window's session is being left, by a reload or for good: which the next window to
+ *  start cannot tell from its lock, which has gone either way. For this long the session is
+ *  left alone. */
+export const LEAVING_GRACE = 10_000
+
+const leavingMark = (slot: number) => `nib:window-left:${slot}`
+
+/** Whether a session was left just now, so its window may yet come back for it. */
+export function leftLately(slot: number, storage: Storage, now = Date.now()): boolean {
+  const at = Number(storage.getItem(leavingMark(slot)))
+  return at > 0 && now - at < LEAVING_GRACE
 }
 
-/** The browser's locks, where it has them. */
-export const locksHere = () => (globalThis.navigator as Navigator | undefined)?.locks
+/** Holds a slot from here on, and says so when the window goes. */
+function holdingFrom(slot: number): number {
+  try {
+    localStorage.removeItem(leavingMark(slot))
+    remember(slot)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pagehide', () => {
+        try {
+          localStorage.setItem(leavingMark(slot), String(Date.now()))
+        } catch {
+          // Storage gone with the page: the next window takes it at once, and only words move.
+        }
+      })
+    }
+  } catch {
+    // No storage, and so no session to mark.
+  }
+  return slot
+}
+
+const forever = () => new Promise<never>(() => undefined)
+
+/** A reload's own slot, waited for a moment: the page it replaces may hold it still. */
+function ownAgain(locks: LockManager, slot: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const giving = new AbortController()
+    let answered = false
+    const timer = setTimeout(() => {
+      answered = true
+      giving.abort()
+      resolve(false)
+    }, RELOAD_AT_MOST)
+    try {
+      locks
+        .request(slotLock(slot), { signal: giving.signal }, () => {
+          if (answered) return undefined
+          clearTimeout(timer)
+          resolve(true)
+          return forever()
+        })
+        .catch(() => {
+          clearTimeout(timer)
+          resolve(false)
+        })
+    } catch {
+      clearTimeout(timer)
+      resolve(false)
+    }
+  })
+}
 
 /** What a window with no session of its own starts on: what the first one is looking at,
  *  with no tabs, which is what a new window of VS Code or Chrome opens to. */
@@ -107,15 +148,16 @@ export function othersInStorage(slot: number): boolean {
   return false
 }
 
-/** Takes this window's slot. Held until the window goes. */
-export async function takeSlot(locks = locksHere()): Promise<number> {
-  if (!locks) return 0
+/** Takes this window's slot. Held until the window goes. Locks that do not work are one
+ *  slot, as no locks are: this never throws, and never waits for long. */
+export async function takeSlot(locks: LockManager | undefined = locksHere()): Promise<number> {
+  if (!(await locksWork(locks)) || !locks) return 0
   const again = remembered()
-  if (again !== null && (await holding(locks, slotLock(again), RELOAD_AT_MOST))) return again
-  for (let slot = 0; ; slot += 1) {
-    if (await holding(locks, slotLock(slot))) {
-      remember(slot)
-      return slot
-    }
+  if (again !== null && (await ownAgain(locks, again))) return holdingFrom(again)
+  for (let slot = 0; slot < MOST_SLOTS; slot += 1) {
+    const held = await ifFree(locks, slotLock(slot), forever)
+    if (held === 'broken') return 0
+    if (held === 'held') return holdingFrom(slot)
   }
+  return 0
 }

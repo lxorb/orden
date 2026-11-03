@@ -859,13 +859,14 @@ class Workspace {
     }
 
     this.sessionKey = null
-    const slots = await import('./workspace/slot')
-    const slot = await slots.takeSlot()
-    this.sessionKey = slots.sessionOf(slot)
+    // Whatever goes wrong here, a window is the first window, as it always was.
+    const slots = await import('./workspace/slot').catch(() => null)
+    const slot = (await slots?.takeSlot().catch(() => 0)) ?? 0
+    this.sessionKey = slots?.sessionOf(slot) ?? STORAGE_KEY
     this.slot = slot
     const state =
       readSession(stored(this.sessionKey)) ??
-      (slot === 0 ? null : slots.freshWindow(stored(STORAGE_KEY)))
+      (slot === 0 || !slots ? null : slots.freshWindow(stored(STORAGE_KEY)))
     this.layouts.restore()
 
     if (!state) {
@@ -982,15 +983,23 @@ class Workspace {
   /** The words a window that is gone left in its session, as tabs here; see
    *  workspace/sessions-left.ts. Nothing to fetch unless there is such an entry. */
   private async takeWhatWasLeft(slot: number) {
-    const { othersInStorage } = await import('./workspace/slot')
-    if (!othersInStorage(slot)) return
-    const { takeSessionsLeft } = await import('./workspace/sessions-left')
-    await takeSessionsLeft(slot, async (drafts) => {
-      const tabs = await this.tabsFrom(drafts, this.panes.focusedId)
-      this.tabs = byPin([...this.tabs, ...tabs])
-      // Written down here before the entry that held them goes.
-      this.persist()
-    })
+    try {
+      const { LEAVING_GRACE, othersInStorage } = await import('./workspace/slot')
+      if (!othersInStorage(slot)) return
+      const { asDrafts, takeSessionsLeft } = await import('./workspace/sessions-left')
+      const waiting = await takeSessionsLeft(slot, async (drafts) => {
+        const says = async (path: string) =>
+          this.opened.at(path)?.latest ??
+          (await invoke<string>('read_note', { path }).catch(() => null))
+        const tabs = await this.tabsFrom(await asDrafts(drafts, says), this.panes.focusedId)
+        this.tabs = byPin([...this.tabs, ...tabs])
+        // Written down here before the entry that held them lets them go.
+        this.persist()
+      })
+      if (waiting) setTimeout(() => void this.takeWhatWasLeft(slot), LEAVING_GRACE)
+    } catch (error) {
+      log('warn', `session: what another window left stays where it is - ${String(error)}`)
+    }
   }
 
   /** Drafts as tabs. A file that was clean is re-read from disk, so an edit made

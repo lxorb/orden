@@ -630,16 +630,19 @@ export class Saving {
     // Moved while the write was being got ready: the words follow the file.
     if (note.path !== null) path = note.path
 
-    // Another window here: what is on the disk is met first, and what goes down may be
-    // more than what this note said; see across.ts. A file that went from under it writes
+    // Another window here: what is on the disk is taken in first, and the words going down
+    // are read inside that turn; see across.ts. A file that went from under it writes
     // nothing, which is what stops a delete being undone.
     const across = this.across
     const writing = path
     const down = (words: string) => invoke('write_note', { path: writing, content: words })
-    const landing: Promise<string | null> =
+    const landing: Promise<{ words: string; revision: number } | null> =
       across && !across.alone
-        ? across.writing(note, path, content, down)
-        : down(content).then(() => (note.onDisk = content))
+        ? across.writing(note, path, down)
+        : down(content).then(() => {
+            note.onDisk = content
+            return { words: content, revision }
+          })
     const air: Promise<void> = landing.then(
       () => undefined,
       () => undefined,
@@ -650,13 +653,8 @@ export class Saving {
     })
     const landed = await landing
     if (landed === null) return
-    // More went down than this note said when it was asked: it may have been typed in
-    // since, so it is written once more, and that write finds nothing left to meet.
-    if (landed !== content) {
-      content = landed
-      this.owed(note)
-    }
-    note.written(path, nameOf(path), revision)
+    content = landed.words
+    note.written(path, nameOf(path), landed.revision)
     // Moved under the write by something that did not wait for it: the words are
     // owed again at the path the note is at now; see `written`.
     if (!samePath(note.path, path)) this.owed(note)

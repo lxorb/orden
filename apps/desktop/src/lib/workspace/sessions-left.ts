@@ -7,14 +7,20 @@
  *  where there is such an entry. */
 
 import { type Draft, panesOf, readSession, type Session } from './session'
-import { locksHere, slotLock, slotOf } from './slot'
+import { ifFree, locksHere, locksWork } from '../locks'
+import { log } from '../log'
+import { leftLately, slotLock, slotOf } from './slot'
 
 /** The tabs of a session whose words are nowhere else. */
 export function wordsOnlyIn(session: Session): Draft[] {
   const all = session.layout
     ? panesOf(session.layout.frame).flatMap((pane) => pane.tabs)
     : (session.tabs ?? [])
-  return all.filter((one) => one.dirty || (one.path === null && one.doc.trim() !== ''))
+  return all.filter(wordsOnly)
+}
+
+function wordsOnly(one: Draft): boolean {
+  return one.dirty || (one.path === null && one.doc.trim() !== '')
 }
 
 /** The entries in storage that are another window's session. */
@@ -28,25 +34,79 @@ function others(storage: Storage, mine: number): { key: string; slot: number }[]
   return out
 }
 
-/** Hands each session nobody holds to `take`, with the lock held meanwhile so that a window
- *  opening in that moment does not take it as well, and drops it once it is taken. The
- *  first window's entry stays: it is what the next launch reads and it is never a stranger's. */
+/** Hands the words in each session nobody holds to `take`, with the lock held meanwhile so
+ *  that a window opening in that moment does not take them as well, and then takes them out
+ *  of that session, so they move rather than copy: a reload does not take them twice. A
+ *  session just left may be a reload's, and is left alone for its grace. Answers whether any
+ *  was, for the caller to look again. */
 export async function takeSessionsLeft(
   mine: number,
   take: (drafts: Draft[]) => Promise<void>,
   storage: Storage = localStorage,
   locks = locksHere(),
-): Promise<void> {
-  if (!locks) return
+  now = Date.now(),
+): Promise<boolean> {
+  if (!locks || !(await locksWork(locks))) return false
+  let waiting = false
   for (const { key, slot } of others(storage, mine)) {
-    await locks.request(slotLock(slot), { ifAvailable: true }, async (lock) => {
-      if (!lock) return
-      const session = readSession(parsed(storage.getItem(key)))
+    if (leftLately(slot, storage, now)) {
+      waiting = true
+      continue
+    }
+    let working: Promise<void> = Promise.resolve()
+    const work = async () => {
+      const raw = parsed(storage.getItem(key))
+      const session = readSession(raw)
       const drafts = session ? wordsOnlyIn(session) : []
       if (drafts.length) await take(drafts)
+      // The first window's arrangement is what the next launch reads; only the words go.
       if (slot !== 0) storage.removeItem(key)
+      else if (drafts.length) storage.setItem(key, JSON.stringify(withoutWords(raw)))
+    }
+    await ifFree(locks, slotLock(slot), () => (working = work()))
+    await working.catch((error: unknown) => {
+      log('warn', `session: ${key} stays - ${String(error)}`)
     })
   }
+  return waiting
+}
+
+/** A session's entry as written, without the tabs `wordsOnlyIn` takes. */
+function withoutWords(raw: unknown): unknown {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return raw
+  const out: Record<string, unknown> = {}
+  for (const [name, value] of Object.entries(raw)) {
+    out[name] =
+      name === 'tabs' && Array.isArray(value)
+        ? value.filter((one) => !wordsOnly(one as Draft))
+        : name === 'sides' && Array.isArray(value)
+          ? value.map(withoutWords)
+          : name === 'layout' || name === 'frame' || name === 'pane'
+            ? withoutWords(value)
+            : value
+  }
+  return out
+}
+
+/** Those tabs as this window will hold them. A note with unwritten words has a file, and
+ *  this window or that file may have moved on since: its words are kept as a draft of its
+ *  own beside it, never merged into or dropped for what is there, and only where the file
+ *  or an open note here does not already say them. */
+export async function asDrafts(
+  drafts: readonly Draft[],
+  says: (path: string) => Promise<string | null>,
+): Promise<Draft[]> {
+  const out: Draft[] = []
+  for (const draft of drafts) {
+    if (draft.path === null || draft.path === undefined) {
+      out.push(draft)
+      continue
+    }
+    if ((await says(draft.path)) === draft.doc) continue
+    const { share: _share, ...rest } = draft
+    out.push({ ...rest, path: null, dirty: true })
+  }
+  return out
 }
 
 function parsed(text: string | null): unknown {
