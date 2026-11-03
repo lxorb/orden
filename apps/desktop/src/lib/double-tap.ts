@@ -13,10 +13,12 @@
  *  - **Either key.** The left Shift then the right counts; both at once does not.
  *  - **Answered on the second release**, not the second press: a Shift pressed twice
  *    and then held for a capital is typing.
- *  - **Once a burst.** Having answered, it waits for the presses to stop before it
- *    counts again, so five presses - which Windows reads as a request for Sticky Keys
- *    - open the palette once, and Windows still hears all five: nothing here takes a
- *    key from anyone.
+ *  - **Once a burst, for Shift.** Having answered, a double Shift waits for the presses
+ *    to stop before it counts again, so five presses - which Windows reads as a request
+ *    for Sticky Keys - open the palette once, and Windows still hears all five: nothing
+ *    here takes a key from anyone. The other modifiers have no such meaning, so the
+ *    next two taps are the next double tap at once: Alt Alt pressed again while the tab
+ *    overview is still opening turns it back (#331).
  *  - **Not while composing.** An input method's keys are the word being made.
  *  - A key held down and repeating is neither a press nor a break.
  *
@@ -149,7 +151,9 @@ export class DoubleTap {
       return null
     }
 
-    this.tap = { key: down.key, at: now, spent: twice }
+    // A double Shift spends its burst; any other starts counting afresh.
+    if (twice && down.key !== 'Shift') this.tap = null
+    else this.tap = { key: down.key, at: now, spent: twice }
     return twice ? down.key : null
   }
 }
