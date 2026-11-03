@@ -341,21 +341,36 @@ export const toggleOrderedList: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-/** Inserts a block on its own lines, leaving the caret where you type next. */
-function insertBlock(build: () => { text: string; caret: number }): StateCommand {
+/** What a block comes to, and where in it the caret goes. */
+interface Block {
+  text: string
+  caret: number
+}
+
+/** Inserts a block on its own lines, leaving the caret where you type next.
+ *
+ *  Words after the caret stay on a line of their own: on the closing line of a fence
+ *  they would close nothing, and every line below would read as code.
+ *
+ *  A selection is never written over. Whatever can hold words wraps them (`wrap`), as
+ *  Quote does; anything else goes below them. */
+function insertBlock(build: () => Block, wrap?: (selected: string) => Block): StateCommand {
   return ({ state, dispatch }) => {
     const range = state.selection.main
-    const line = state.doc.lineAt(range.from)
-    const atLineStart = range.from === line.from && range.empty
+    const from = wrap ? range.from : range.to
+    // The line break ending a selection of whole lines is not a word to wrap.
+    const to = wrap && state.sliceDoc(from, range.to).endsWith('\n') ? range.to - 1 : range.to
 
-    const { text, caret } = build()
-    const prefix = atLineStart || !line.text ? '' : '\n'
-    const insert = prefix + text
+    const line = state.doc.lineAt(from)
+    const { text, caret } = wrap && from < to ? wrap(state.sliceDoc(from, to)) : build()
+    const prefix = from === line.from || !line.text ? '' : '\n'
+    const follows = state.sliceDoc(to, state.doc.lineAt(to).to) !== ''
+    const insert = prefix + text + (follows && !text.endsWith('\n') ? '\n' : '')
 
     dispatch(
       state.update({
-        changes: { from: range.from, to: range.to, insert },
-        selection: { anchor: range.from + prefix.length + caret },
+        changes: { from, to, insert },
+        selection: { anchor: from + prefix.length + caret },
         scrollIntoView: true,
         userEvent: 'input',
       }),
@@ -364,7 +379,22 @@ function insertBlock(build: () => { text: string; caret: number }): StateCommand
   }
 }
 
-export const insertCodeFence = insertBlock(() => ({ text: '```\n\n```', caret: 3 }))
+/** A run of backticks that no line of `words` could close. */
+function fenceFor(words: string): string {
+  const longest = Math.max(
+    2,
+    ...words.split('\n').map((line) => /^ {0,3}(`+)/.exec(line)?.[1]?.length ?? 0),
+  )
+  return '`'.repeat(longest + 1)
+}
+
+export const insertCodeFence = insertBlock(
+  () => ({ text: '```\n\n```', caret: 3 }),
+  (selected) => {
+    const fence = fenceFor(selected)
+    return { text: `${fence}\n${selected}\n${fence}`, caret: fence.length }
+  },
+)
 
 /** A fence line: up to three spaces, then three or more backticks or tildes,
  *  then whatever names the language. A backtick fence may not have backticks
@@ -465,7 +495,10 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   )
   return true
 }
-export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }))
+export const insertMathBlock = insertBlock(
+  () => ({ text: '$$\n\n$$', caret: 3 }),
+  (selected) => ({ text: `$$\n${selected}\n$$`, caret: selected.length + 3 }),
+)
 
 /** A ` ```chart ` fence with a chart already in it.
  *
@@ -494,7 +527,16 @@ export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4
  *  sign written into every one of them would be a note full of punctuation nobody
  *  asked for; the two rows below are how one gets its sign without being typed by
  *  hand. See `callouts` in @orden/markdown. */
-export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 12 }))
+export const insertCallout = insertBlock(
+  () => ({ text: '> [!NOTE]\n> ', caret: 12 }),
+  (selected) => {
+    const text = `> [!NOTE]\n${selected
+      .split('\n')
+      .map((line) => `> ${line}`)
+      .join('\n')}`
+    return { text, caret: text.length }
+  },
+)
 
 /** The callout the caret is in: its marker line, where in that line the brackets
  *  start, and what the line says.

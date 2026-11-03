@@ -267,6 +267,54 @@ describe('blocks', () => {
   test('starts a block on its own line', () => {
     expect(run(insertCodeFence, 'text|')).toBe('text\n```\n\n```')
   })
+
+  /** Words glued to the closing fence close nothing: every line below read as code up
+   *  to the next fence, and a later code block came out inverted. */
+  test('ends a block on its own line where words follow', () => {
+    expect(run(insertCodeFence, 'one |two\nthree')).toBe('one \n```\n\n```\ntwo\nthree')
+    expect(run(insertMathBlock, 'one |two')).toBe('one \n$$\n\n$$\ntwo')
+    expect(run(insertTable(1, 1), 'one |two')).toBe('one \n| Column 1 |\n| --- |\n|     |\ntwo')
+    expect(run(insertCodeFence, '|two')).toBe('```\n\n```\ntwo')
+  })
+
+  test('adds no second line break to a block that ends in one', () => {
+    expect(run(insertToc, 'one |two')).toBe('one \n[toc]\ntwo')
+  })
+
+  test('keeps the caret inside the block', () => {
+    expect(runSelection(insertCodeFence, 'one |two')).toEqual([8, 8])
+  })
+
+  test('wraps the lines selected in a fence, a math block or a callout', () => {
+    expect(run(insertCodeFence, '[one\ntwo]\nthree')).toBe('```\none\ntwo\n```\nthree')
+    expect(run(insertMathBlock, '[one\ntwo]\nthree')).toBe('$$\none\ntwo\n$$\nthree')
+    expect(run(insertCallout, '[one\ntwo]\nthree')).toBe('> [!NOTE]\n> one\n> two\nthree')
+  })
+
+  test('wraps a word on its own lines, with what was round it on theirs', () => {
+    expect(run(insertCodeFence, 'a [word] b')).toBe('a \n```\nword\n```\n b')
+  })
+
+  test('leaves the line break that ends a selection of whole lines outside the block', () => {
+    expect(run(insertCodeFence, '[one\n]two')).toBe('```\none\n```\ntwo')
+  })
+
+  test('puts the caret where the language goes on a fence, and after the words otherwise', () => {
+    expect(runSelection(insertCodeFence, '[one]')).toEqual([3, 3])
+    expect(runSelection(insertMathBlock, '[one]')).toEqual([6, 6])
+  })
+
+  test('fences a selection that holds a fence with a longer one', () => {
+    expect(run(insertCodeFence, '[```\nx\n```]')).toBe('````\n```\nx\n```\n````')
+  })
+
+  /** Nothing to wrap in a table's cells or a rule: the words stay and it goes below. */
+  test('keeps the words of a selection a block has no room for', () => {
+    expect(run(insertTable(1, 1), '[one\ntwo]\nthree')).toBe(
+      'one\ntwo\n| Column 1 |\n| --- |\n|     |\nthree',
+    )
+    expect(run(insertToc, 'a [word] b')).toBe('a word\n[toc]\n b')
+  })
 })
 
 describe('links', () => {
