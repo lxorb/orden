@@ -47,7 +47,7 @@ const SIZES = [
 
 function inked(canvas: Canvas, page: PageNode, id: string, colour: string) {
   const point = { x: page.x + 40, y: page.y + 40, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }
-  canvas.ink = [...(canvas.ink ?? []), { id, tool: 'pen', color: colour, size: 4, points: [point] }]
+  canvas.ink = [...canvas.ink, { id, tool: 'pen', color: colour, size: 4, points: [point] }]
 }
 
 function paperNote(): Canvas {
@@ -142,8 +142,8 @@ describe('one page of a paper on two sheets', () => {
   test('makes two sheets, each with its own ink', async () => {
     held.bytes = await (await paper()).save()
     const canvas = paperNote()
-    const [first, second] = canvas.nodes as [PageNode, PageNode]
-    second.page = first.page
+    const [, second] = canvas.nodes as [PageNode, PageNode]
+    second.page = 1
     inked(canvas, second, 'b', '#0000ff')
 
     const bytes = await pagesPdf(out(canvas))
