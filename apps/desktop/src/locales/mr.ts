@@ -2661,4 +2661,6 @@ export const mr: Dictionary = {
   'Move the chat': 'चॅट हलवा',
   'Only the file': 'फक्त फाइल',
   'Trust this space again': 'या स्पेसवर पुन्हा विश्वास ठेवा',
+  '{title}, unread': '{title}, न वाचलेले',
+  '{title}, running': '{title}, चालू आहे',
 }

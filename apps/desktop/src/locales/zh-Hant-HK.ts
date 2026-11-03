@@ -2581,4 +2581,6 @@ export const zhHantHK: Dictionary = {
   'Move the chat': '移動對話',
   'Only the file': '只移檔案',
   'Trust this space again': '再次信任此空間',
+  '{title}, unread': '{title}，未讀',
+  '{title}, running': '{title}，執行中',
 }

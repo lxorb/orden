@@ -2689,4 +2689,6 @@ export const kn: Dictionary = {
   'Move the chat': 'ಚಾಟ್ ಸರಿಸಿ',
   'Only the file': 'ಫೈಲ್ ಮಾತ್ರ',
   'Trust this space again': 'ಈ ಸ್ಪೇಸ್ ಅನ್ನು ಮತ್ತೆ ನಂಬಿ',
+  '{title}, unread': '{title}, ಓದಿಲ್ಲ',
+  '{title}, running': '{title}, ಚಾಲನೆಯಲ್ಲಿದೆ',
 }

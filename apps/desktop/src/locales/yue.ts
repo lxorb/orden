@@ -2575,4 +2575,6 @@ export const yue: Dictionary = {
   'Move the chat': '移傾偈',
   'Only the file': '淨係個檔案',
   'Trust this space again': '再次信任呢個空間',
+  '{title}, unread': '{title}，未讀',
+  '{title}, running': '{title}，運行緊',
 }

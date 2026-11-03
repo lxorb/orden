@@ -2604,4 +2604,6 @@ export const th: Dictionary = {
   'Move the chat': 'ย้ายแชต',
   'Only the file': 'เฉพาะไฟล์',
   'Trust this space again': 'เชื่อถือพื้นที่นี้อีกครั้ง',
+  '{title}, unread': '{title}, ยังไม่ได้อ่าน',
+  '{title}, running': '{title}, กำลังทำงาน',
 }

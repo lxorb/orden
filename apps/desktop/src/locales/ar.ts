@@ -2773,4 +2773,6 @@ export const ar: Dictionary = {
   'Move the chat': 'انقل المحادثة',
   'Only the file': 'الملف فقط',
   'Trust this space again': 'الوثوق بهذه المساحة مجددًا',
+  '{title}, unread': '{title}، غير مقروءة',
+  '{title}, running': '{title}، قيد التشغيل',
 }

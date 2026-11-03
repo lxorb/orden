@@ -50,6 +50,7 @@ const {
   newThread,
   readThread,
   threadIn,
+  unreadOf,
   writeThread,
 } = await import('./threads')
 const choices = await import('./choices')
@@ -330,5 +331,31 @@ describe('a helper’s thread (#1062)', () => {
     expect((await readThread('space-1', deeper.id))?.parent).toBe(helper.id)
     expect((await readThread('space-1', fork.id))?.parent).toBeUndefined()
     expect(await findParents('space-1')).toBe(0)
+  })
+})
+
+describe('a chat’s unread mark (#1064)', () => {
+  test('is kept with the thread and its head, and a file says it back', async () => {
+    const thread = { ...had(), answered: 20, seen: 10 }
+    expect(headOf(thread)).toMatchObject({ answered: 20, seen: 10 })
+    await keepThread(thread)
+    expect(await readThread('space-1', thread.id)).toMatchObject({ answered: 20, seen: 10 })
+    expect((await listThreads('space-1'))[0]).toMatchObject({ answered: 20, seen: 10 })
+    expect(threadIn({ ...thread, answered: 'soon' })).not.toHaveProperty('answered')
+  })
+
+  test('is on a chat answered since it was seen, its helpers’ answers counted in it', () => {
+    const head = (id: string, more: object) => ({ ...headOf(had()), id, ...more })
+    const heads = [
+      head('read', { answered: 10, seen: 20 }),
+      head('new', { answered: 30, seen: 20 }),
+      head('never', { answered: 5 }),
+      head('quiet', {}),
+      head('parent', { answered: 10, seen: 20 }),
+      head('helper', { parent: 'parent', answered: 25, seen: 0 }),
+      head('deeper', { parent: 'helper', answered: 15 }),
+      head('orphan', { parent: 'gone', answered: 3 }),
+    ]
+    expect([...unreadOf(heads)].sort()).toEqual(['never', 'new', 'orphan', 'parent'])
   })
 })

@@ -2630,4 +2630,6 @@ export const vi: Dictionary = {
   'Move the chat': 'Chuyển cuộc trò chuyện',
   'Only the file': 'Chỉ tệp',
   'Trust this space again': 'Tin cậy lại không gian này',
+  '{title}, unread': '{title}, chưa đọc',
+  '{title}, running': '{title}, đang chạy',
 }

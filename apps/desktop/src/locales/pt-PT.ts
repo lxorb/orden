@@ -2725,4 +2725,6 @@ export const ptPT: Dictionary = {
   'Move the chat': 'Mover a conversa',
   'Only the file': 'Só o ficheiro',
   'Trust this space again': 'Confiar novamente neste espaço',
+  '{title}, unread': '{title}, por ler',
+  '{title}, running': '{title}, em curso',
 }

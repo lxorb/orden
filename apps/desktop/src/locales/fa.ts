@@ -2665,4 +2665,6 @@ export const fa: Dictionary = {
   'Move the chat': 'انتقال گفتگو',
   'Only the file': 'فقط فایل',
   'Trust this space again': 'دوباره به این فضا اعتماد کن',
+  '{title}, unread': '{title}، خوانده\u200cنشده',
+  '{title}, running': '{title}، در حال اجرا',
 }

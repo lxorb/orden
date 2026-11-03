@@ -2753,4 +2753,6 @@ export const ru: Dictionary = {
   'Move the chat': 'Переместить чат',
   'Only the file': 'Только файл',
   'Trust this space again': 'Снова доверять этому пространству',
+  '{title}, unread': '{title}, не прочитано',
+  '{title}, running': '{title}, выполняется',
 }

@@ -2728,4 +2728,6 @@ export const es: Dictionary = {
   'Move the chat': 'Mover el chat',
   'Only the file': 'Solo el archivo',
   'Trust this space again': 'Volver a confiar en este espacio',
+  '{title}, unread': '{title}, sin leer',
+  '{title}, running': '{title}, en curso',
 }

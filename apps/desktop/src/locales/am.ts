@@ -2614,4 +2614,6 @@ export const am: Dictionary = {
   'Move the chat': 'ውይይቱን አንቀሳቅስ',
   'Only the file': 'ፋይሉን ብቻ',
   'Trust this space again': 'ይህን ቦታ እንደገና እመን',
+  '{title}, unread': '{title}፣ ያልተነበበ',
+  '{title}, running': '{title}፣ በመሥራት ላይ',
 }

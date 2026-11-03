@@ -2621,4 +2621,6 @@ export const ko: Dictionary = {
   'Move the chat': '채팅 옮기기',
   'Only the file': '파일만',
   'Trust this space again': '이 공간을 다시 신뢰',
+  '{title}, unread': '{title}, 읽지 않음',
+  '{title}, running': '{title}, 실행 중',
 }

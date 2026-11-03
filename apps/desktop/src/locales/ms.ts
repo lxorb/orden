@@ -2654,4 +2654,6 @@ export const ms: Dictionary = {
   'Move the chat': 'Alihkan sembang',
   'Only the file': 'Fail sahaja',
   'Trust this space again': 'Percayai ruang ini semula',
+  '{title}, unread': '{title}, belum dibaca',
+  '{title}, running': '{title}, sedang berjalan',
 }

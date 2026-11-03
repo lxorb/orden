@@ -2654,4 +2654,6 @@ export const ur: Dictionary = {
   'Move the chat': 'چیٹ منتقل کریں',
   'Only the file': 'صرف فائل',
   'Trust this space again': 'اس اسپیس پر دوبارہ بھروسا کریں',
+  '{title}, unread': '{title}، نہ پڑھا ہوا',
+  '{title}, running': '{title}، جاری ہے',
 }

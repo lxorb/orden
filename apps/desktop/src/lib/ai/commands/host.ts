@@ -120,6 +120,8 @@ export function hostOf(panel: Panel): Host {
         ],
       })
       thread.updated = Date.now()
+      if (panel.answered) panel.answered(thread)
+      else thread.answered = thread.updated
       touched(thread)
     },
     async ask(thread, messages, signal) {

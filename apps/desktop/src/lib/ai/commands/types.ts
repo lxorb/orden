@@ -89,6 +89,9 @@ export interface Panel {
   /** A thread a command changed outside a send (its goal, a line it added): drawn again
    *  and written down. */
   touched?(thread: Thread): void
+  /** Something new said in a thread outside a send (a command's line): unread until the
+   *  reader sees it (#1064). */
+  answered?(thread: Thread): void
 }
 
 /** What a command runs with: the words after its name, the open thread, the panel. */

@@ -2753,4 +2753,6 @@ export const pl: Dictionary = {
   'Move the chat': 'Przenieś czat',
   'Only the file': 'Tylko plik',
   'Trust this space again': 'Ponownie zaufaj tej przestrzeni',
+  '{title}, unread': '{title}, nieprzeczytany',
+  '{title}, running': '{title}, w toku',
 }

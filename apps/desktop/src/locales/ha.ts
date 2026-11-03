@@ -2698,4 +2698,6 @@ export const ha: Dictionary = {
   'Move the chat': 'Matsar da hirar',
   'Only the file': 'Fayil kaɗai',
   'Trust this space again': 'Sake amincewa da wannan wuri',
+  '{title}, unread': '{title}, ba a karanta ba',
+  '{title}, running': '{title}, yana gudana',
 }

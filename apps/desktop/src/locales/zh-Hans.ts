@@ -2580,4 +2580,6 @@ export const zhHans: Dictionary = {
   'Move the chat': '移动对话',
   'Only the file': '仅文件',
   'Trust this space again': '再次信任此空间',
+  '{title}, unread': '{title}，未读',
+  '{title}, running': '{title}，运行中',
 }

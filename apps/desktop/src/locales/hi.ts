@@ -2657,4 +2657,6 @@ export const hi: Dictionary = {
   'Move the chat': 'चैट ले जाएँ',
   'Only the file': 'सिर्फ़ फ़ाइल',
   'Trust this space again': 'इस स्पेस पर फिर से भरोसा करें',
+  '{title}, unread': '{title}, अनपढ़ा',
+  '{title}, running': '{title}, चल रहा है',
 }

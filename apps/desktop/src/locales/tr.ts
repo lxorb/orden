@@ -2674,4 +2674,6 @@ export const tr: Dictionary = {
   'Move the chat': 'Sohbeti taşı',
   'Only the file': 'Yalnızca dosya',
   'Trust this space again': 'Bu alana yeniden güven',
+  '{title}, unread': '{title}, okunmamış',
+  '{title}, running': '{title}, çalışıyor',
 }

@@ -232,6 +232,11 @@ export interface Thread {
    *  `/subtask`, `/batch`, `/deep-research`. Not a chat of its own: it lives in its
    *  parent's steps and in no list (`chatsOf`), unless the parent is gone (#1062). */
   parent?: string
+  /** When the agent last answered or asked the reader something, and when the reader
+   *  last saw the thread with that in view: it is unread while the one is later than
+   *  the other (#1064; `unreadOf` in threads.ts). */
+  answered?: number
+  seen?: number
   /** The provider's id in Settings > AI. */
   provider: string
   model: string
@@ -263,6 +268,9 @@ export interface ThreadHead {
   title: string
   /** The thread's `parent`, where it is a helper. */
   parent?: string
+  /** The thread's `answered` and `seen`, for the list's unread mark. */
+  answered?: number
+  seen?: number
   provider: string
   model: string
   updated: number

@@ -2699,4 +2699,6 @@ export const sw: Dictionary = {
   'Move the chat': 'Hamisha gumzo',
   'Only the file': 'Faili pekee',
   'Trust this space again': 'Amini nafasi hii tena',
+  '{title}, unread': '{title}, haijasomwa',
+  '{title}, running': '{title}, inaendelea',
 }

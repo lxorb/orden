@@ -2741,4 +2741,6 @@ export const fr: Dictionary = {
   'Move the chat': 'Déplacer la discussion',
   'Only the file': 'Le fichier seul',
   'Trust this space again': 'Faire de nouveau confiance à cet espace',
+  '{title}, unread': '{title}, non lu',
+  '{title}, running': '{title}, en cours',
 }

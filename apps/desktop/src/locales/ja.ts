@@ -2633,4 +2633,6 @@ export const ja: Dictionary = {
   'Move the chat': 'チャットを移動',
   'Only the file': 'ファイルのみ',
   'Trust this space again': 'このスペースを再び信頼する',
+  '{title}, unread': '{title}、未読',
+  '{title}, running': '{title}、実行中',
 }

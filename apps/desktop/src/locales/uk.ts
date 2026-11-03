@@ -2746,4 +2746,6 @@ export const uk: Dictionary = {
   'Move the chat': 'Перемістити чат',
   'Only the file': 'Лише файл',
   'Trust this space again': 'Знову довіряти цьому простору',
+  '{title}, unread': '{title}, не прочитано',
+  '{title}, running': '{title}, виконується',
 }

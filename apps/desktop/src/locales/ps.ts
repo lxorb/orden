@@ -2660,4 +2660,6 @@ export const ps: Dictionary = {
   'Move the chat': 'خبرې اترې وخوځوه',
   'Only the file': 'یوازې فایل',
   'Trust this space again': 'په دې ځای بیا باور وکړئ',
+  '{title}, unread': '{title}، نالوستی',
+  '{title}, running': '{title}، روان دی',
 }

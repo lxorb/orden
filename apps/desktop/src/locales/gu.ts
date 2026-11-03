@@ -2646,4 +2646,6 @@ export const gu: Dictionary = {
   'Move the chat': 'ચેટ ખસેડો',
   'Only the file': 'ફક્ત ફાઇલ',
   'Trust this space again': 'આ સ્પેસ પર ફરી વિશ્વાસ કરો',
+  '{title}, unread': '{title}, ન વાંચેલું',
+  '{title}, running': '{title}, ચાલુ છે',
 }

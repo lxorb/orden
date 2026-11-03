@@ -2667,4 +2667,6 @@ export const pa: Dictionary = {
   'Move the chat': 'ਚੈਟ ਭੇਜੋ',
   'Only the file': 'ਸਿਰਫ਼ ਫ਼ਾਈਲ',
   'Trust this space again': 'ਇਸ ਸਪੇਸ ਉੱਤੇ ਮੁੜ ਭਰੋਸਾ ਕਰੋ',
+  '{title}, unread': '{title}, ਅਣਪੜ੍ਹਿਆ',
+  '{title}, running': '{title}, ਚੱਲ ਰਿਹਾ ਹੈ',
 }

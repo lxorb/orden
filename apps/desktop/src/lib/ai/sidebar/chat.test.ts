@@ -1331,3 +1331,82 @@ describe('the panel’s chats and their helpers (#1062)', () => {
     expect(chat.every).toHaveLength(5)
   })
 })
+
+describe('a chat’s unread mark (#1064)', () => {
+  beforeEach(() => {
+    kept.clear()
+    deleted.length = 0
+    localStorage.clear()
+  })
+
+  test('comes with an answer, goes once seen, and both outlast a restart', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    chat.text = 'how far is the moon'
+    chat.submit({ front: null, selection: '' })
+    const asked = String(chat.thread?.id)
+    await vi.waitFor(() => expect(chat.unread.has(asked)).toBe(true))
+
+    const again = await launched()
+    again.know(['work'])
+    await vi.waitFor(() => expect(again.unread.has(asked)).toBe(true))
+    await again.saw(asked)
+    expect(again.unread.has(asked)).toBe(false)
+
+    const third = await launched()
+    third.know(['work'])
+    await vi.waitFor(() => expect(third.every.map((one) => one.id)).toContain(asked))
+    expect(third.unread.has(asked)).toBe(false)
+  })
+
+  test('comes with a question for the reader, before the answer is over', async () => {
+    let release: () => void = () => undefined
+    engine.send.mockImplementationOnce(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) => {
+        thread.turns.push({ id: 'y', role: 'you', at: 1, parts: [], draft })
+        const part = {
+          kind: 'tool',
+          id: 'c1',
+          verb: 'edit_note',
+          args: {},
+          state: 'asking',
+        } as const
+        thread.turns.push({ id: 'm', role: 'model', at: 1, parts: [part] })
+        on({ type: 'part', turn: 'm', index: 0, part })
+        return new Promise<void>((done) => (release = done))
+      },
+    )
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    chat.text = 'tidy Birds'
+    chat.submit({ front: null, selection: '' })
+    const asked = String(chat.thread?.id)
+    await vi.waitFor(() => expect(chat.unread.has(asked)).toBe(true))
+    expect(chat.running).toContain(asked)
+    release()
+  })
+
+  test('a helper’s answer is its chat’s, and a command’s line is one too', async () => {
+    const parent = await had('work', 'Serie 6', 3_000)
+    const { keepThread } = await import('../chat/threads')
+    const helper = await had('work', '↳ Aufgabe 5', 4_000)
+    helper.parent = parent.id
+    await keepThread(helper)
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await vi.waitFor(() => expect(chat.every).toHaveLength(2))
+    expect(chat.unread.size).toBe(0)
+
+    chat.answered(helper)
+    expect([...chat.unread]).toEqual([parent.id])
+    await chat.saw(parent.id)
+    expect(chat.unread.size).toBe(0)
+
+    const { hostOf } = await import('../commands/host')
+    hostOf(chat).line(parent, '↳ done')
+    expect([...chat.unread]).toEqual([parent.id])
+  })
+})

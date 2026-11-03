@@ -1,8 +1,9 @@
 <script lang="ts">
   /** The space's threads (docs/ai-sidebar.md 4.11), as Codex's task history: the search
    *  at the top (and New chat over it in a tab's rail), then the threads newest first,
-   *  each its title and how long ago it moved, a ring on the ones still answering or
-   *  with work running out of sight (a goal, a loop, a helper), and a "..." on the one
+   *  each its title and how long ago it moved, a dot in the accent and a stronger title
+   *  on the ones with an answer not yet seen (#1064), a ring on the ones still
+   *  answering or with work running out of sight (a goal, a loop, a helper), and a "..." on the one
    *  pointed at for Rename, Archive and Delete. The archived ones are the list's last
    *  group, as Claude Code keeps them.
    *
@@ -23,7 +24,9 @@
   import { shortcuts } from '../../shortcuts.svelte'
   import type { ThreadHead } from '../chat/types'
   import { tasks } from '../commands/tasks.svelte'
+  import UnreadDot from '../UnreadDot.svelte'
   import { chat } from './chat.svelte'
+  import { type Marks, rowName } from './marks'
 
   const { rail = false }: { rail?: boolean } = $props()
 
@@ -33,6 +36,14 @@
   function matches(one: ThreadHead, words: string[]): boolean {
     const text = `${one.title} ${one.words} ${one.model}`.toLowerCase()
     return words.every((word) => text.includes(word))
+  }
+
+  /** Unread, and running: answering, or work out of sight (a goal, a loop, a helper). */
+  function marksOf(id: string): Marks {
+    return {
+      unread: chat.unread.has(id),
+      running: chat.running.includes(id) || tasks.of(id).length > 0,
+    }
   }
 
   const rows = $derived.by(() => {
@@ -125,21 +136,26 @@
       {#if index === archivedFrom}
         <li class="group archived" role="presentation">{t('Archived')}</li>
       {/if}
+      {@const marks = marksOf(one.id)}
       <li class="item" role="presentation">
         <button
           class="row"
           class:lit={index === lit}
           class:open={one.id === chat.head?.id}
           class:archived={one.archived}
+          class:is-unread={marks.unread}
+          aria-label={rowName(one.title, marks)}
           role="option"
           aria-selected={index === lit}
           onpointermove={() => (lit = index)}
           onclick={() => void chat.openThread(one.id)}
           oncontextmenu={(event) => rowMenu(event, one)}
         >
+          {#if marks.unread}<UnreadDot />{/if}
           <span class="title">{one.title || t('Untitled')}</span>
-          {#if chat.running.includes(one.id) || tasks.of(one.id).length}<span class="dot"
-            ></span>{:else}<span class="when">{agoShort(one.updated, i18n.language)}</span>{/if}
+          {#if marks.running}<span class="dot"></span>{:else}<span class="when"
+              >{agoShort(one.updated, i18n.language)}</span
+            >{/if}
         </button>
         <button
           class="nib-glyph more"
@@ -259,6 +275,12 @@
 
   .row.archived {
     color: var(--muted);
+  }
+
+  /* Unread (#1064): quiet but there, a dot in the accent before a stronger title. */
+  .row.is-unread .title {
+    color: var(--text-strong);
+    font-weight: var(--weight-strong);
   }
 
   /* The "..." over the end of the row pointed at, Codex's: the row's menu without a

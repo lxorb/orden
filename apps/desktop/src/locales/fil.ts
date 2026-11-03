@@ -2713,4 +2713,6 @@ export const fil: Dictionary = {
   'Move the chat': 'Ilipat ang chat',
   'Only the file': 'Ang file lang',
   'Trust this space again': 'Pagkatiwalaan muli ang space na ito',
+  '{title}, unread': '{title}, hindi pa nababasa',
+  '{title}, running': '{title}, tumatakbo',
 }

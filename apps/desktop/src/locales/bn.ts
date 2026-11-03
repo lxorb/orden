@@ -2656,4 +2656,6 @@ export const bn: Dictionary = {
   'Move the chat': 'চ্যাট সরান',
   'Only the file': 'শুধু ফাইল',
   'Trust this space again': 'এই স্পেসে আবার ভরসা করুন',
+  '{title}, unread': '{title}, অপঠিত',
+  '{title}, running': '{title}, চলছে',
 }

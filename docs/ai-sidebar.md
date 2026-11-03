@@ -839,6 +839,13 @@ from there (and that the cache starts again where it does).
   thread holds the latest three.
 - **Several at once**: a thread keeps running when another is opened; the list marks the
   running ones, and the panel's tab wears a dot while one works out of sight.
+- **Unread** (#1064): a chat the agent answered, or asked the reader something in, since
+  the reader last saw it wears a dot in the accent before a stronger title, in the list and
+  the home alike, and the ✦ tab a dot; a running one keeps its ring instead. It is read
+  once it is open in the window in use with its end in view, never on a hover. The thread
+  keeps when it was answered and when it was seen (`answered`, `seen`), so the mark
+  outlasts a restart; a helper's answer is its chat's (`unreadOf` in `chat/threads.ts`).
+  Screen readers hear "unread" and "running" in the row's name.
 - **Edit, branch, fork**: 4.5 and the commands in 3.1.
 - **Retry with another model**: the retry glyph under an answer has a menu of the
   provider's models (ChatGPT's and Raycast's way of comparing).

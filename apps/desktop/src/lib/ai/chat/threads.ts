@@ -72,6 +72,8 @@ export function headOf(thread: Thread): ThreadHead {
     id: thread.id,
     title: thread.title,
     ...(thread.parent ? { parent: thread.parent } : {}),
+    ...(thread.answered ? { answered: thread.answered } : {}),
+    ...(thread.seen ? { seen: thread.seen } : {}),
     provider: thread.provider,
     model: thread.model,
     updated: thread.updated,
@@ -238,13 +240,14 @@ export function threadIn(value: unknown): Thread | null {
   const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
   // Every field the engine reads is checked below; the rest (a goal, what was spent) is
   // kept as written.
-  const rest = without(without(without(value, 'always'), 'without'), 'parent')
+  const rest = ['always', 'without', 'parent', 'answered', 'seen'].reduce(without, value)
   return {
     ...(rest as unknown as Thread),
     id,
     space,
     title: isString(title) ? title : '',
     ...(isString(value.parent) && value.parent ? { parent: value.parent } : {}),
+    ...timesIn(value),
     provider,
     model,
     effort: isEffort(effort) ? effort : 'auto',
@@ -259,12 +262,21 @@ export function threadIn(value: unknown): Thread | null {
   }
 }
 
+/** A thread's `answered` and `seen`, where a file holds them as times. */
+function timesIn(value: Record<string, unknown>): { answered?: number; seen?: number } {
+  return {
+    ...(isNumber(value.answered) ? { answered: value.answered } : {}),
+    ...(isNumber(value.seen) ? { seen: value.seen } : {}),
+  }
+}
+
 function headIn(value: unknown): ThreadHead | null {
   if (!isRecord(value) || !isString(value.id)) return null
   return {
     id: value.id,
     title: isString(value.title) ? value.title : '',
     ...(isString(value.parent) && value.parent ? { parent: value.parent } : {}),
+    ...timesIn(value),
     provider: isString(value.provider) ? value.provider : '',
     model: isString(value.model) ? value.model : '',
     updated: isNumber(value.updated) ? value.updated : 0,
@@ -348,6 +360,30 @@ export async function findParents(space: string): Promise<number> {
     wrote++
   }
   return wrote
+}
+
+/** The chats of `heads` that are unread (#1064): the agent answered, or asked the
+ *  reader something, after the reader last saw the chat. A helper's answer is its
+ *  chat's, the top of its `parent`s (#1062): the reader sees it there, in the step. */
+export function unreadOf(heads: readonly ThreadHead[]): Set<string> {
+  const byId = new Map(heads.map((one) => [one.id, one]))
+  const topOf = (head: ThreadHead): ThreadHead => {
+    let at = head
+    for (const passed = new Set<string>(); at.parent && !passed.has(at.id);) {
+      passed.add(at.id)
+      const above = byId.get(at.parent)
+      if (!above) break
+      at = above
+    }
+    return at
+  }
+  const unread = new Set<string>()
+  for (const head of heads) {
+    if (!head.answered) continue
+    const top = topOf(head)
+    if (head.answered > (top.seen ?? 0)) unread.add(top.id)
+  }
+  return unread
 }
 
 /** One thread, whole, or null where there is none to read. */

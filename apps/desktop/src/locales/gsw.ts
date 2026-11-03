@@ -2680,4 +2680,6 @@ export const gsw: Dictionary = {
   'Move the chat': 'Chat verschiebe',
   'Only the file': 'Nur d Datei',
   'Trust this space again': 'Däm Bereich wider vertroue',
+  '{title}, unread': '{title}, ungläse',
+  '{title}, running': '{title}, lauft',
 }
