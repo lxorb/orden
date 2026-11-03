@@ -1064,8 +1064,14 @@ function holds(tail: string): boolean {
  *  until it lands, charts, paste, block commands, links, a thread written down while it
  *  runs), what a base may cost, a tile's move, the sync's scans, and an undo that waits for
  *  every gesture landing, measured together. What could wait went behind a door on the
- *  branches. Measured 3,521,208, 385 modules. */
-const BUDGET = 3_521_400
+ *  branches. Measured 3,521,208, 385 modules.
+ *
+ *  Raised 2026-11-04, to 3,528,800, for one device's windows being one (hunt2-windows): a
+ *  setting that writes only what changed and hears the other windows, what a note knows of
+ *  its file, a session per window and the turn a write takes through what the others did.
+ *  The channel, the merge, the slots and the engine's side are all behind doors already;
+ *  this is what is left on the paths they hang from. Measured 3,528,639, 386 modules. */
+const BUDGET = 3_528_800
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

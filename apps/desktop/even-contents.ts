@@ -344,9 +344,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
  *  thread written down while it runs, the sync's scans, and an undo that waits for every
  *  gesture landing, measured together. Measured 5,829,627.
+ *
+ *  And to 5,842,300 for a session per window and writes that meet other windows
+ *  (hunt2-windows): the plugin has one window, and these are on paths it shares. The merge
+ *  and the engine's side stay out. Measured 5,842,071.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_829_900,
+  code: 5_842_300,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
