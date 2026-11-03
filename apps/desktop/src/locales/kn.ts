@@ -1500,6 +1500,7 @@ export const kn: Dictionary = {
   'The provider answered {status}.': 'ಪೂರೈಕೆದಾರ {status} ಎಂದು ಉತ್ತರಿಸಿದೆ.',
   'Add an AI provider in Settings first.': 'ಮೊದಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ AI ಪೂರೈಕೆದಾರ ಸೇರಿಸಿ.',
   'The model did not answer.': 'ಮಾದರಿ ಉತ್ತರಿಸಲಿಲ್ಲ.',
+  'The connection closed before the answer was finished.': 'ಉತ್ತರ ಮುಗಿಯುವ ಮೊದಲೇ ಸಂಪರ್ಕ ಮುಚ್ಚಿತು.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'ನಿಮ್ಮ {plan} ಪ್ಲಾನ್ {time} ವರೆಗೆ ಮಿತಿ ತಲುಪಿದೆ.',

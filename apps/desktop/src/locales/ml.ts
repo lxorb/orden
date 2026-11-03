@@ -1506,6 +1506,7 @@ export const ml: Dictionary = {
   'The provider answered {status}.': 'പ്രൊവൈഡർ {status} എന്ന് മറുപടി നൽകി.',
   'Add an AI provider in Settings first.': 'ആദ്യം സെറ്റിംഗ്സിൽ ഒരു AI പ്രൊവൈഡർ ചേർക്കുക.',
   'The model did not answer.': 'മോഡൽ മറുപടി നൽകിയില്ല.',
+  'The connection closed before the answer was finished.': 'ഉത്തരം പൂർത്തിയാകുന്നതിന് മുമ്പ് കണക്ഷൻ അടഞ്ഞു.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'നിങ്ങളുടെ {plan} പ്ലാൻ {time} വരെ പരിധിയിലാണ്.',

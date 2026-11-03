@@ -1491,6 +1491,7 @@ export const ps: Dictionary = {
   'Add an AI provider in Settings first.':
     'لومړی په امستنو کې د مصنوعي ځيرکتيا برابرونکی ورزيات کړئ.',
   'The model did not answer.': 'ماډل ځواب ونه ورکړ.',
+  'The connection closed before the answer was finished.': 'اتصال د ځواب له پای ته رسېدو مخکې بند شو.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'ستاسو {plan} پلان تر {time} پورې خپل حد ته رسېدلی.',

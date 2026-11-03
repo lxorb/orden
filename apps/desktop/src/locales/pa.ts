@@ -1493,6 +1493,7 @@ export const pa: Dictionary = {
   'The provider answered {status}.': 'ਪ੍ਰਦਾਤਾ ਨੇ {status} ਜਵਾਬ ਦਿੱਤਾ।',
   'Add an AI provider in Settings first.': 'ਪਹਿਲਾਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ AI ਪ੍ਰਦਾਤਾ ਜੋੜੋ।',
   'The model did not answer.': 'ਮਾਡਲ ਨੇ ਜਵਾਬ ਨਹੀਂ ਦਿੱਤਾ।',
+  'The connection closed before the answer was finished.': 'ਜਵਾਬ ਪੂਰਾ ਹੋਣ ਤੋਂ ਪਹਿਲਾਂ ਕਨੈਕਸ਼ਨ ਬੰਦ ਹੋ ਗਿਆ।',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'ਤੁਹਾਡਾ {plan} ਪਲਾਨ {time} ਤੱਕ ਸੀਮਾ ’ਤੇ ਹੈ।',
   'Your {plan} plan is at its limit for now.': 'ਤੁਹਾਡਾ {plan} ਪਲਾਨ ਹਾਲੇ ਸੀਮਾ ’ਤੇ ਹੈ।',

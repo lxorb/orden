@@ -1496,6 +1496,7 @@ export const gsw: Dictionary = {
   'The provider answered {status}.': 'De Aabieter hät mit {status} gantwortet.',
   'Add an AI provider in Settings first.': 'Zerscht i de Iistellige en KI-Aabieter dezuetue.',
   'The model did not answer.': 'S Modäll hät nöd gantwortet.',
+  'The connection closed before the answer was finished.': 'D Verbindig isch abbroche, bevor d Antwort fertig gsi isch.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Dis {plan}-Abo isch bis {time} am Limit.',
   'Your {plan} plan is at its limit for now.': 'Dis {plan}-Abo isch für de Momänt am Limit.',

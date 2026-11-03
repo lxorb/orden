@@ -1469,6 +1469,7 @@ export const my: Dictionary = {
   'The provider answered {status}.': 'ပေးသူသည် {status} ဖြေသည်။',
   'Add an AI provider in Settings first.': 'ဦးစွာ ဆက်တင်တွင် AI ပေးသူ ထည့်ပါ။',
   'The model did not answer.': 'မော်ဒယ် မဖြေပါ။',
+  'The connection closed before the answer was finished.': 'အဖြေ မပြီးမီ ချိတ်ဆက်မှု ပိတ်သွားသည်။',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'သင်၏ {plan} အစီအစဉ်သည် {time} အထိ ကန့်သတ်ချက်ပြည့်နေသည်။',

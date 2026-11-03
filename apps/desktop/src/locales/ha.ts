@@ -1510,6 +1510,7 @@ export const ha: Dictionary = {
   'The provider answered {status}.': 'Mai bayarwa ya amsa {status}.',
   'Add an AI provider in Settings first.': 'Ƙara mai bayar da AI a Saituna da farko.',
   'The model did not answer.': 'Samfurin bai amsa ba.',
+  'The connection closed before the answer was finished.': 'Haɗin ya rufe kafin amsar ta ƙare.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Tsarin {plan} naka ya kai iyakarsa har zuwa {time}.',

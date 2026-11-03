@@ -130,7 +130,7 @@ def drive(browser: Browser) -> None:
     say("an answer of nothing says so")
     Model.mode = "nothing"
     send(page, "an empty one")
-    panel_says(page, "answered with nothing")
+    panel_says(page, "an empty one", "The model did not answer.")
 
     say("a reload mid-answer leaves the message and the words that arrived")
     Model.mode = "held"

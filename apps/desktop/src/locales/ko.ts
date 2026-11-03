@@ -1463,6 +1463,7 @@ export const ko: Dictionary = {
   'The provider answered {status}.': '공급자가 {status}로 답했습니다.',
   'Add an AI provider in Settings first.': '먼저 설정에서 AI 공급자를 추가하세요.',
   'The model did not answer.': '모델이 답하지 않았습니다.',
+  'The connection closed before the answer was finished.': '답변이 끝나기 전에 연결이 끊어졌습니다.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     '{plan} 요금제가 {time}까지 한도에 도달했습니다.',

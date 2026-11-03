@@ -1476,6 +1476,7 @@ export const id: Dictionary = {
   'The provider answered {status}.': 'Penyedia menjawab {status}.',
   'Add an AI provider in Settings first.': 'Tambahkan penyedia AI di Pengaturan dahulu.',
   'The model did not answer.': 'Model tidak menjawab.',
+  'The connection closed before the answer was finished.': 'Koneksi tertutup sebelum jawaban selesai.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Paket {plan} Anda mencapai batas hingga {time}.',

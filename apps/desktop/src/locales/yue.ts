@@ -1446,6 +1446,7 @@ export const yue: Dictionary = {
   'The provider answered {status}.': '服務商回應{status}。',
   'Add an AI provider in Settings first.': '請先喺設定中新增AI服務商。',
   'The model did not answer.': '模型冇回答。',
+  'The connection closed before the answer was finished.': '答案未完連線就斷咗。',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': '你嘅 {plan} 計劃已經用到上限，{time} 恢復。',
   'Your {plan} plan is at its limit for now.': '你嘅 {plan} 計劃暫時用到上限。',

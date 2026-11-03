@@ -1470,6 +1470,7 @@ export const jv: Dictionary = {
   'The provider answered {status}.': 'Panyedhiya mangsuli {status}.',
   'Add an AI provider in Settings first.': 'Tambah panyedhiya AI ing Setelan dhisik.',
   'The model did not answer.': 'Modele ora mangsuli.',
+  'The connection closed before the answer was finished.': 'Sambungan ketutup sadurunge wangsulan rampung.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Paket {plan} sampeyan wis tekan wates nganti {time}.',

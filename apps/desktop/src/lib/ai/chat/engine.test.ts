@@ -632,7 +632,7 @@ describe('an answer of nothing at all', () => {
 
     expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
     expect(one.turns.at(-1)?.parts).toEqual([
-      { kind: 'notice', code: 'error', text: expect.stringContaining('nothing') as string },
+      { kind: 'notice', code: 'error', text: expect.stringContaining('did not answer') as string },
     ])
   })
 

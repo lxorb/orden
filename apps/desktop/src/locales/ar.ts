@@ -1595,6 +1595,7 @@ export const ar: Dictionary = {
   'The provider answered {status}.': 'أجاب المزوّد بـ {status}.',
   'Add an AI provider in Settings first.': 'أضف مزوّد ذكاء اصطناعي في الإعدادات أولاً.',
   'The model did not answer.': 'لم يجب الطراز.',
+  'The connection closed before the answer was finished.': 'انقطع الاتصال قبل اكتمال الإجابة.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'بلغت خطة {plan} لديك حدها حتى {time}.',
   'Your {plan} plan is at its limit for now.': 'بلغت خطة {plan} لديك حدها في الوقت الحالي.',

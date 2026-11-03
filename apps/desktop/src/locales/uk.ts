@@ -1562,6 +1562,7 @@ export const uk: Dictionary = {
   'The provider answered {status}.': 'Постачальник відповів {status}.',
   'Add an AI provider in Settings first.': 'Спершу додайте постачальника ШІ в налаштуваннях.',
   'The model did not answer.': 'Модель не відповіла.',
+  'The connection closed before the answer was finished.': 'З’єднання закрилося до завершення відповіді.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Ваш план {plan} вичерпано до {time}.',
   'Your {plan} plan is at its limit for now.': 'Ваш план {plan} поки що вичерпано.',

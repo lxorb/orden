@@ -1466,6 +1466,7 @@ export const vi: Dictionary = {
   'The provider answered {status}.': 'Nhà cung cấp trả về {status}.',
   'Add an AI provider in Settings first.': 'Hãy thêm một nhà cung cấp AI trong Cài đặt trước.',
   'The model did not answer.': 'Mô hình không trả lời.',
+  'The connection closed before the answer was finished.': 'Kết nối đã đóng trước khi câu trả lời hoàn tất.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Gói {plan} của bạn đã chạm giới hạn đến {time}.',

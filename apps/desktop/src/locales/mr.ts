@@ -1487,6 +1487,7 @@ export const mr: Dictionary = {
   'The provider answered {status}.': 'पुरवठादाराने {status} उत्तर दिले.',
   'Add an AI provider in Settings first.': 'आधी सेटिंग्जमध्ये एक AI पुरवठादार जोडा.',
   'The model did not answer.': 'मॉडेलने उत्तर दिले नाही.',
+  'The connection closed before the answer was finished.': 'उत्तर पूर्ण होण्यापूर्वी कनेक्शन बंद झाले.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'तुमचा {plan} प्लॅन {time} पर्यंत मर्यादेवर आहे.',

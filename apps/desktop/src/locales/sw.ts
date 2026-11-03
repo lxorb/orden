@@ -1507,6 +1507,7 @@ export const sw: Dictionary = {
   'The provider answered {status}.': 'Mtoa huduma alijibu {status}.',
   'Add an AI provider in Settings first.': 'Ongeza mtoa huduma wa AI kwenye Mipangilio kwanza.',
   'The model did not answer.': 'Modeli haikujibu.',
+  'The connection closed before the answer was finished.': 'Muunganisho ulifungwa kabla jibu halijakamilika.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Mpango wako wa {plan} umefika kikomo hadi {time}.',

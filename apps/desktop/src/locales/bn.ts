@@ -1487,6 +1487,7 @@ export const bn: Dictionary = {
   'The provider answered {status}.': 'প্রদানকারী {status} উত্তর দিয়েছে।',
   'Add an AI provider in Settings first.': 'আগে সেটিংসে একটি AI প্রদানকারী যোগ করুন।',
   'The model did not answer.': 'মডেল উত্তর দেয়নি।',
+  'The connection closed before the answer was finished.': 'উত্তর শেষ হওয়ার আগেই সংযোগ বন্ধ হয়ে গেছে।',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'আপনার {plan} প্ল্যান {time} পর্যন্ত সীমায় পৌঁছেছে।',
