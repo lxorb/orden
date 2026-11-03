@@ -407,6 +407,11 @@ impl Page<'_> {
         let Some((facts, object)) = self.active_in(None)? else {
             return Ok(None);
         };
+        // Nothing of this document has it, which is also how the keyboard in a frame of
+        // another process can read from here once it has come back round to it.
+        if matches!(facts.tag.as_str(), "body" | "html") {
+            return Ok(Some(self.active_in_a_frame().unwrap_or(facts)));
+        }
         if !facts.frame_owner() {
             return Ok(Some(facts));
         }
@@ -428,6 +433,40 @@ impl Page<'_> {
                 "the keyboard is in a frame Orden cannot read: press or type there by ref",
             )),
         }
+    }
+
+    /// What has the keyboard in a frame in a process of its own: the frame that says it
+    /// has the focus first, or failing that one still holding an element, which at worst
+    /// asks about a press that lands nowhere.
+    fn active_in_a_frame(&self) -> Option<Facts> {
+        let frames = self
+            .heard()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .frames();
+        let mut held = None;
+        for (_, frame) in frames {
+            let Ok(Some((facts, _))) = self.active_in(Some(&frame.session)) else {
+                continue;
+            };
+            if !facts.pressable() && !facts.editable {
+                continue;
+            }
+            let focused = cdp::call_in(
+                self.view,
+                Some(&frame.session),
+                "Runtime.evaluate",
+                &json!({ "expression": "document.hasFocus()", "returnByValue": true }),
+                cdp::PATIENCE,
+            )
+            .ok()
+            .and_then(|said| said.pointer("/result/value").and_then(Value::as_bool));
+            if focused == Some(true) {
+                return Some(facts);
+            }
+            held.get_or_insert(facts);
+        }
+        held
     }
 
     /// What has the keyboard in one session, and a handle to it.

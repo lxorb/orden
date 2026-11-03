@@ -292,7 +292,13 @@ mod tests {
 
     #[test]
     fn space_and_enter_press_what_has_the_keyboard() {
-        for said in ["Space", "Enter", "Shift+Enter", "Control+Enter", "Control+Space"] {
+        for said in [
+            "Space",
+            "Enter",
+            "Shift+Enter",
+            "Control+Enter",
+            "Control+Space",
+        ] {
             assert!(chord(said).expect("key").presses(), "{said}");
         }
         for said in ["Tab", "a", "Escape", "ArrowDown"] {

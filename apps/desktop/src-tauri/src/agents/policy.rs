@@ -2082,8 +2082,14 @@ mod tests {
         assert!(site_allowed(&grant, "http://a.denied.example../", Store::Agent).is_err());
         assert!(site_allowed(&grant, "https://bank.example./", Store::Reader).is_err());
         assert!(site_allowed(&grant, "https://bank.example/", Store::Reader).is_err());
-        assert!(payment_host(host_of("https://js.stripe.com./").as_deref().unwrap_or("")));
-        assert!(social(host_of("https://mail.google.com./").as_deref().unwrap_or("")));
+        assert!(payment_host(
+            host_of("https://js.stripe.com./").as_deref().unwrap_or("")
+        ));
+        assert!(social(
+            host_of("https://mail.google.com./")
+                .as_deref()
+                .unwrap_or("")
+        ));
     }
 
     /// What a key does to what has the keyboard, judged: `keys` names the key.
@@ -2112,7 +2118,10 @@ mod tests {
             fields: vec![field("textarea", "Type a message"), field("email", "To")],
             ..press("Send")
         };
-        assert_eq!(keyed(&grant, send.clone(), "Space"), Some(Category::Sending));
+        assert_eq!(
+            keyed(&grant, send.clone(), "Space"),
+            Some(Category::Sending)
+        );
         assert_eq!(keyed(&grant, send, "Enter"), Some(Category::Sending));
         // Nothing to say about a key that presses nothing, or a harmless button.
         assert_eq!(keyed(&grant, press("Pay now"), "Tab"), None);
@@ -2128,14 +2137,8 @@ mod tests {
             ..press("Log in")
         };
         let grant = grant();
-        assert_eq!(
-            keyed(&grant, log_in(), "Space"),
-            Some(Category::SigningIn)
-        );
-        assert_eq!(
-            keyed(&grant, log_in(), "Enter"),
-            Some(Category::SigningIn)
-        );
+        assert_eq!(keyed(&grant, log_in(), "Space"), Some(Category::SigningIn));
+        assert_eq!(keyed(&grant, log_in(), "Enter"), Some(Category::SigningIn));
         let mut full = grant.clone();
         full.mode = Mode::Autonomous;
         assert_eq!(keyed(&full, log_in(), "Space"), None);
@@ -2151,7 +2154,11 @@ mod tests {
             ..Facts::default()
         };
         // Space types in it, and Enter is its form's or its message's to say.
-        assert!(key_act(boxed.clone(), &crate::agents::keys::chord("Space").expect("key")).is_none());
+        assert!(key_act(
+            boxed.clone(),
+            &crate::agents::keys::chord("Space").expect("key")
+        )
+        .is_none());
         let enter = key_act(boxed, &crate::agents::keys::chord("Enter").expect("key"));
         assert_eq!(enter.map(|(_, act)| act), Some(Act::Enter));
         // A page with nothing in focus has no button to press.
@@ -2170,7 +2177,10 @@ mod tests {
             fields: vec![field("password", "Password")],
             ..Facts::default()
         };
-        assert_eq!(keyed(&grant, tick.clone(), "Enter"), Some(Category::SigningIn));
+        assert_eq!(
+            keyed(&grant, tick.clone(), "Enter"),
+            Some(Category::SigningIn)
+        );
         assert_eq!(keyed(&grant, tick, "Space"), None);
     }
 

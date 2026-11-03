@@ -335,18 +335,34 @@ mod tests {
 
     #[test]
     fn an_allowance_is_for_the_site_and_the_element_it_was_asked_about() {
-        let asked = on_page("browser_press:a1:Enter", "http://localhost:9/pay", "Pay now");
-        assert_ne!(
-            asked,
-            on_page("browser_press:a1:Enter", "http://127.0.0.1:9/pay", "Pay now")
+        let asked = on_page(
+            "browser_press:a1:Enter",
+            "http://localhost:9/pay",
+            "Pay now",
         );
         assert_ne!(
             asked,
-            on_page("browser_press:a1:Enter", "http://localhost:9/pay", "Delete account")
+            on_page(
+                "browser_press:a1:Enter",
+                "http://127.0.0.1:9/pay",
+                "Pay now"
+            )
+        );
+        assert_ne!(
+            asked,
+            on_page(
+                "browser_press:a1:Enter",
+                "http://localhost:9/pay",
+                "Delete account"
+            )
         );
         assert_eq!(
             asked,
-            on_page("browser_press:a1:Enter", "http://localhost:9/other", "Pay  now")
+            on_page(
+                "browser_press:a1:Enter",
+                "http://localhost:9/other",
+                "Pay  now"
+            )
         );
         assert_eq!(verb_of(&asked), "browser_press");
     }

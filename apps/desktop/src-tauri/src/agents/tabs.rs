@@ -258,9 +258,8 @@ pub(super) fn web_address(url: &str) -> Result<Url, Answer> {
             format!("that is not an address: {error}"),
         )
     })?;
-    if crate::web_tabs::allowed(&address) && address.scheme() != "view-source"
-        || address.as_str() == "about:blank"
-    {
+    let web = crate::web_tabs::allowed(&address) && address.scheme() != "view-source";
+    if web || address.as_str() == "about:blank" {
         Ok(address)
     } else {
         Err(Answer::error(
@@ -831,7 +830,10 @@ mod tests {
         assert!(web_address("about:blank").is_ok());
         // What goes to the engine is what was judged, not what was said.
         assert_eq!(
-            web_address(" HTTP://Example.com/x").map(|one| one.to_string()).ok().as_deref(),
+            web_address(" HTTP://Example.com/x")
+                .map(|one| one.to_string())
+                .ok()
+                .as_deref(),
             Some("http://example.com/x")
         );
     }

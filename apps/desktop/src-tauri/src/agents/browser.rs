@@ -96,9 +96,7 @@ pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answe
 /// `browser_tabs`.
 fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
     let reader = match caller {
-        Caller::Reader => {
-            super::reader::tabs(app, &Spaces::All(super::grants::Every::All))
-        }
+        Caller::Reader => super::reader::tabs(app, &Spaces::All(super::grants::Every::All)),
         Caller::Agent(grant) if grant.holds(Scope::BrowserReader) => {
             super::reader::tabs(app, &grant.spaces)
         }
@@ -679,14 +677,12 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 };
                 // A key that types into a sign-in form is words into it, judged so.
                 if key.changes_words() {
-                    if let Some(facts) = facts.as_ref().filter(|one| {
-                        one.editable && (one.password() || one.sign_in())
-                    }) {
-                        let asked = approvals::key(
-                            "browser_press_words",
-                            Some(&tab),
-                            Some(&pressing.keys),
-                        );
+                    if let Some(facts) = facts
+                        .as_ref()
+                        .filter(|one| one.editable && (one.password() || one.sign_in()))
+                    {
+                        let asked =
+                            approvals::key("browser_press_words", Some(&tab), Some(&pressing.keys));
                         judged(app, caller, page, place, facts, Act::Write, &asked)?;
                     }
                 }
@@ -1112,10 +1108,26 @@ mod tests {
     fn a_file_is_in_reach_by_the_space_it_is_in() {
         let root = Path::new("/data/Spaces");
         let alpha = Spaces::Named(vec!["Alpha".into()]);
-        assert!(!beyond_the_grant(root, Path::new("/data/Spaces/Alpha/a.md"), &alpha));
-        assert!(!beyond_the_grant(root, Path::new("/data/Spaces/Alpha/deep/a.md"), &alpha));
-        assert!(beyond_the_grant(root, Path::new("/data/Spaces/Beta/secret.md"), &alpha));
-        assert!(beyond_the_grant(root, Path::new("/data/Spaces/loose.md"), &alpha));
+        assert!(!beyond_the_grant(
+            root,
+            Path::new("/data/Spaces/Alpha/a.md"),
+            &alpha
+        ));
+        assert!(!beyond_the_grant(
+            root,
+            Path::new("/data/Spaces/Alpha/deep/a.md"),
+            &alpha
+        ));
+        assert!(beyond_the_grant(
+            root,
+            Path::new("/data/Spaces/Beta/secret.md"),
+            &alpha
+        ));
+        assert!(beyond_the_grant(
+            root,
+            Path::new("/data/Spaces/loose.md"),
+            &alpha
+        ));
         assert!(!beyond_the_grant(
             root,
             Path::new("/data/Spaces/Beta/secret.md"),
