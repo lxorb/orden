@@ -29,15 +29,15 @@ def strokes(page: Page) -> list[list[float]]:
     )
 
 
-def pass_over(page: Page, kind: str) -> None:
-    say(f"a {kind} pass across the middle of a line cuts a hole in it")
+def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
+    say(f"a {kind} pass across the middle of a line, on a {maker}, cuts a hole in it")
     page.evaluate(
-        "async (name) => { const ws = window.nibApp.workspace; await ws.createCanvas(ws.activeSpace.root, name) }",
-        f"{kind}.canvas",
+        "async ([maker, name]) => { const ws = window.nibApp.workspace; await ws[maker](ws.activeSpace.root, name) }",
+        [maker, f"{kind}-{maker}"],
     )
-    page.wait_for_selector(".canvas")
-    box = page.locator(".canvas").bounding_box()
-    x, y = box["x"] + 300, box["y"] + 200
+    page.wait_for_selector(".canvas, .pages")
+    box = page.locator(".canvas, .pages").first.bounding_box()
+    x, y = box["x"] + (300 if maker == "createCanvas" else box["width"] / 2 - 100), box["y"] + 200
 
     page.keyboard.press("d")
     page.mouse.move(x, y)
@@ -82,6 +82,8 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     pass_over(page, "slow")
     pass_over(page, "quick")
+    pass_over(page, "slow", "createPages")
+    pass_over(page, "quick", "createPages")
 
 
 if __name__ == "__main__":
