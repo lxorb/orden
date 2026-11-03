@@ -54,6 +54,7 @@
   } from './project-actions'
   import { reorderDrag } from './reorder-drag'
   import { type ProjectNode, projectNotes, projectRows } from './project-tree'
+  import { refusedAsTag } from '../tag-actions'
   import { guardedAt } from './guard'
   import { builtinBase } from './source'
   import { queryOf } from './filters'
@@ -195,8 +196,14 @@
     if (!base || name === undefined) return null
     try {
       const mine = all.filter((one) => one.space === name)
-      return answer(base, 0, mine, contextFor({ rows: mine, today, now: `${today}T00:00:00` }))
-        .total
+      const said = answer(
+        base,
+        0,
+        mine,
+        contextFor({ rows: mine, today, now: `${today}T00:00:00` }),
+      )
+      // A count of what was read in time is no count of the base.
+      return said.partial ? null : said.total
     } catch {
       return null
     }
@@ -405,7 +412,7 @@
             .ask({ title: t('Rename'), value: tag, confirmLabel: t('Rename') })
             .then((words) => {
               const next = words?.trim().replace(/^#+/, '')
-              if (next && next !== tag && !/\s/.test(next)) void workspace.retagNotes(tag, next)
+              if (next && next !== tag && !refusedAsTag(next)) void workspace.retagNotes(tag, next)
             }),
       },
       DIVIDER,

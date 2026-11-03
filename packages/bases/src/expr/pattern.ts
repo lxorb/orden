@@ -16,8 +16,9 @@
  *  Patterns are one way to spend a second and lists are another: ten items mapped over
  *  ten items, seven deep, took three seconds, and ten deep would take the app. So a
  *  guarded base's evaluations are also counted in steps (`spend`), an item of a list a
- *  method is called on or a few characters of a string, `MOST_STEPS_ONE` to one
- *  evaluation and `MOST_STEPS_SECOND` to any second. Past either, the row answers nothing.
+ *  method is called on or a few characters of a string, `MOST_STEPS_ONE` to one evaluation,
+ *  and timed, `MOST_EVALUATING_MS` of any second. Past either, the row answers nothing, and
+ *  the answer says it is partial, so nobody takes it for the whole of the base.
  *
  *  Deliberately over-careful, and only where it is asked for: `^[a-z]+(-[a-z]+)*$` is
  *  safe and is refused in a guarded base, because telling it from `(a+-?)*` is the work
@@ -46,12 +47,15 @@ interface Cost {
   first: string | null
 }
 
-/** How many steps one evaluation of a guarded base may take: a few hundredths of a
- *  second, and far past a rollup over a row's links or a formula over a long list. */
-const MOST_STEPS_ONE = 1e5
+/** How many steps one evaluation of a guarded base may take: at most a quarter of a
+ *  second where every step is a list made, and far past a formula over a long list. */
+const MOST_STEPS_ONE = 1e6
 
-/** How many steps all of them may take in a second: half of it. */
-const MOST_STEPS_SECOND = 2e6
+/** How much of each second a guarded base's evaluations may take together. */
+const MOST_EVALUATING_MS = 500
+
+/** How many steps go by between looks at the clock. */
+const STEPS_A_LOOK = 4096
 
 const REFUSED: Cost = { open: Number.POSITIVE_INFINITY, ways: 1, first: null }
 
@@ -305,6 +309,7 @@ export function readPattern<T>(pattern: RegExp, value: string, read: () => T): T
   if (guarding === 0) return read()
 
   if (value.length > LONGEST_VALUE || !patternAllowed(pattern)) {
+    refused++
     throw new BasesError(`/${pattern.source}/ could take too long on this value`)
   }
 
@@ -313,7 +318,10 @@ export function readPattern<T>(pattern: RegExp, value: string, read: () => T): T
     since = start
     spent = 0
   }
-  if (spent >= MOST_MS) throw new BasesError(`/${pattern.source}/ has run for long enough`)
+  if (spent >= MOST_MS) {
+    refused++
+    throw new BasesError(`/${pattern.source}/ has run for long enough`)
+  }
   try {
     return read()
   } finally {
@@ -323,18 +331,34 @@ export function readPattern<T>(pattern: RegExp, value: string, read: () => T): T
 
 let evaluating = false
 let stepsOne = 0
-let stepsSecond = 0
-let stepsSince = Number.NEGATIVE_INFINITY
+let stepsUnseen = 0
+let evaluatingMs = 0
+let lookedAt = 0
+let evaluatingSince = Number.NEGATIVE_INFINITY
+/** How many times a guarded base has been told no: see `refusing`. */
+let refused = 0
+
+function tooLong(): BasesError {
+  refused++
+  return new BasesError('This takes too long to answer')
+}
+
+/** Whether what `run` did was told no anywhere, so its answer leaves something out. */
+export function refusing<T>(run: () => T): { value: T; partial: boolean } {
+  const before = refused
+  const value = run()
+  return { value, partial: refused > before }
+}
 
 /** One evaluation of an expression: the steps start over here, and a formula it reads
  *  is part of it. Nothing at all where no guarded base is running. */
 export function evaluation<T, A>(run: (arg: A) => T, arg: A): T {
   if (guarding === 0 || evaluating) return run(arg)
 
-  const start = performance.now()
-  if (start - stepsSince >= 1000 || start < stepsSince) {
-    stepsSince = start
-    stepsSecond = 0
+  lookedAt = performance.now()
+  if (lookedAt - evaluatingSince >= 1000 || lookedAt < evaluatingSince) {
+    evaluatingSince = lookedAt
+    evaluatingMs = 0
   }
   stepsOne = 0
   evaluating = true
@@ -350,11 +374,16 @@ export function evaluation<T, A>(run: (arg: A) => T, arg: A): T {
 export function spend(steps: number): void {
   if (guarding === 0) return
   stepsOne += steps
-  stepsSecond += steps
+  stepsUnseen += steps
   // Not `>`'s opposite, so that a count that is no number is refused too.
-  if (!(stepsOne <= MOST_STEPS_ONE && stepsSecond <= MOST_STEPS_SECOND)) {
-    throw new BasesError('This takes too long to answer')
+  if (!(stepsOne <= MOST_STEPS_ONE)) throw tooLong()
+  if (stepsUnseen >= STEPS_A_LOOK) {
+    stepsUnseen = 0
+    const now = performance.now()
+    evaluatingMs += Math.max(0, now - lookedAt)
+    lookedAt = now
   }
+  if (evaluatingMs >= MOST_EVALUATING_MS) throw tooLong()
 }
 
 /** The steps a string of this length stands for: it is copied, not walked by a closure. */

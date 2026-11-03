@@ -22,7 +22,7 @@
  *  nothing: they never trigger each other, as Notion's do not. Pure. */
 
 import { scopeFor } from './expr/compile'
-import { underGuard } from './expr/pattern'
+import { refusing, underGuard } from './expr/pattern'
 import { compileFilters } from './filter'
 import { scalarValue } from './note-values'
 import { fillTemplate, type Filling } from './templates'
@@ -170,6 +170,18 @@ export function fired(
     if (automation.notify !== undefined) effect.notify.push(fill(automation.notify))
   }
   return effect
+}
+
+/** The rows that are the base's own, and whether that is all of them: a guarded base past
+ *  what it may spend answers no for a row that may well be one. An id counted from that
+ *  is one somebody already has. */
+export function rowsInBase(
+  base: Base,
+  rows: readonly Row[],
+  context: Context,
+): { rows: Row[]; partial: boolean } {
+  const { value, partial } = refusing(() => rows.filter((row) => inBase(base, row, context)))
+  return { rows: value, partial }
 }
 
 /** Whether a row is one of the base's own: its filters, not any view's. A base with

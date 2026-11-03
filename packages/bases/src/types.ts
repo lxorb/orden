@@ -293,4 +293,6 @@ export interface Answer {
   groups: Group[]
   total: number
   summaries: Record<string, Value>
+  /** A guarded base ran out of what it may spend, so rows are left out; expr/pattern.ts. */
+  partial?: boolean
 }

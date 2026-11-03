@@ -19,7 +19,7 @@
  *  whole, which is still a loop over closures. */
 
 import { compile, formulaReader } from './expr/compile'
-import { underGuard } from './expr/pattern'
+import { refusing, underGuard } from './expr/pattern'
 import { fieldOf, type Scope, settled, sortCompare, text, type Val } from './expr/runtime'
 import { compileFilters } from './filter'
 import { summarize } from './summaries'
@@ -372,7 +372,10 @@ export function answer(
   rows: readonly Row[],
   context: Context,
 ): Answer {
-  return underGuard(base.guarded, () => answerOf(base, view, rows, context))
+  const { value, partial } = refusing(() =>
+    underGuard(base.guarded, () => answerOf(base, view, rows, context)),
+  )
+  return partial ? { ...value, partial } : value
 }
 
 function answerOf(

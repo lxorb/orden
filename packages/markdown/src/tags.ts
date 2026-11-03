@@ -152,7 +152,7 @@ export function tagNameAt(text: string, at: number): string | null {
  *  with its hash. `2024` is a number, `a.b` the tag `a` and a full stop, and `a,b` two
  *  tags in a list, so a note renamed to any of them has lost its tag. */
 export function isTagName(name: string): boolean {
-  return name !== '' && tagAt(`#${name}`, 0) === name
+  return name !== '' && !/\/\/|\/$/.test(name) && tagAt(`#${name}`, 0) === name
 }
 
 /** The tag whose hash is at `at`, or null where none opens there. */

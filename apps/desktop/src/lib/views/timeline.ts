@@ -84,19 +84,23 @@ export function barOf(
   }
 }
 
-/** How far from today a date can stretch the track, in days each way. One further off is
- *  most often a year mistyped: `1026-11-03` drew a track of five million pixels and a
- *  hundred thousand marks, with every other bar far away to the right. */
+/** How far from the middle of a base's dates a date can stretch the track, in days each
+ *  way. One further off is most often a year mistyped: `1026-11-03` drew a track of five
+ *  million pixels and a hundred thousand marks, with every other bar far away to the right. */
 const FURTHEST = 3650
 
 /** The days the timeline spans: from a little before the first bar to a little after
- *  the last, and never less than a month around today. A bar past `FURTHEST` does not
- *  stretch it, and is drawn at its edge (`drawnOf`). */
+ *  the last, and a month around today where today is anywhere near them, or around the
+ *  bars where they are all long ago. A bar past `FURTHEST` from the median of them does
+ *  not stretch it, and is drawn at its edge (`drawnOf`). */
 export function spanOf(bars: readonly Bar[], today: string): { first: string; last: string } {
-  const earliest = addDays(today, -FURTHEST)
-  const latest = addDays(today, FURTHEST)
-  let first = addDays(today, -7)
-  let last = addDays(today, 28)
+  const starts = bars.map((bar) => bar.start).sort()
+  const middle = starts[Math.floor(starts.length / 2)] ?? today
+  const earliest = addDays(middle, -FURTHEST)
+  const latest = addDays(middle, FURTHEST)
+  const around = today >= earliest && today <= latest ? today : middle
+  let first = addDays(around, -7)
+  let last = addDays(around, 28)
   for (const bar of bars) {
     if (bar.start < first && bar.start >= earliest) first = addDays(bar.start, -3)
     if (bar.end > last && bar.end <= latest) last = addDays(bar.end, 7)

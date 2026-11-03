@@ -6,8 +6,16 @@
 
 import { key, message, t } from './i18n.svelte'
 import { settings } from './settings.svelte'
+import { isTagName } from '@orden/markdown/tags'
 import { liftedFrom, renamedTo, type TagNode } from './tag-tree'
 import { workspace } from './workspace.svelte'
+
+/** Says so where a name would not read back as a tag, rather than doing nothing. */
+export function refusedAsTag(name: string): boolean {
+  if (isTagName(name)) return false
+  settings.error = t('{name} can’t be a tag', { name: `#${name}` })
+  return true
+}
 
 /** Renames a node, and everything under it, in every note that mentions it.
  *
@@ -26,6 +34,7 @@ export async function renameTag(node: TagNode) {
 
   const to = renamedTo(node.path, typed)
   if (!to || to === node.path) return
+  if (refusedAsTag(to)) return
 
   try {
     await workspace.retagNotes(node.path, to)

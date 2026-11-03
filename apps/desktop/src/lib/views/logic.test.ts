@@ -1,4 +1,4 @@
-import { answer, builtinView, readBase, writeBase } from '@orden/bases'
+import { addDays, answer, builtinView, readBase, writeBase } from '@orden/bases'
 import { changedTask } from '@orden/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
 import { daysShown, occurrences, place, placedByDay, stepped, timeOf } from './calendar'
@@ -32,7 +32,7 @@ import { rowKey } from './row-keys'
 import './task-keys'
 import { readSpec, sameView, writeSpec } from './spec'
 import { swiped } from './swipe-row'
-import { barOf, dragged, spanOf } from './timeline'
+import { barOf, dragged, drawnOf, spanOf } from './timeline'
 
 const TODAY = '2026-10-04'
 const context = (rows: Parameters<typeof contextFor>[0]['rows']) =>
@@ -618,16 +618,37 @@ describe('the calendar', () => {
 })
 
 describe('the timeline', () => {
+  test('a base of only old dates is drawn around them, and not stacked at an edge', () => {
+    const bars = ['2005-03-01', '2005-06-01', '2006-01-01'].map((start) => ({
+      row: taskRow('T.md', '- [ ] a'),
+      start,
+      end: start,
+      from: 'a',
+      to: 'a',
+    }))
+    const span = spanOf(bars, TODAY)
+    expect(span.first <= '2005-03-01').toBe(true)
+    expect(span.last >= '2006-01-01').toBe(true)
+    expect(span.last < '2016-01-01').toBe(true)
+    for (const bar of bars) expect(drawnOf(bar, span).far).toBe(false)
+  })
+
   test('a date years off, a year mistyped, does not stretch the track', () => {
-    const bars = (start: string) => [
-      { row: taskRow('T.md', '- [ ] a'), start, end: start, from: 'a', to: 'a' },
-    ]
-    const span = spanOf(bars('1026-11-03'), TODAY)
-    expect(span.first > '2015-01-01').toBe(true)
-    expect(span.last < '2036-01-01').toBe(true)
+    const bar = (start: string) => ({
+      row: taskRow('T.md', '- [ ] a'),
+      start,
+      end: start,
+      from: 'a',
+      to: 'a',
+    })
+    const near = [bar(addDays(TODAY, 2)), bar(addDays(TODAY, 5))]
+    const span = spanOf([bar('1026-11-03'), ...near], TODAY)
+    expect(span.first > addDays(TODAY, -30)).toBe(true)
+    expect(span.last < addDays(TODAY, 60)).toBe(true)
+    expect(drawnOf(bar('1026-11-03'), span)).toMatchObject({ start: span.first, far: true })
     // A real plan some years off is what the track is for.
-    expect(spanOf(bars('2029-03-01'), TODAY).last > '2029-03-01').toBe(true)
-    expect(spanOf(bars('2024-03-01'), TODAY).first < '2024-03-01').toBe(true)
+    expect(spanOf([bar('2029-03-01'), ...near], TODAY).last > '2029-03-01').toBe(true)
+    expect(spanOf([bar('2024-03-01'), ...near], TODAY).first < '2024-03-01').toBe(true)
   })
 
   test('a bar dragged keeps the times of day it says', () => {

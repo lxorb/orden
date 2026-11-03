@@ -28,22 +28,39 @@ export const HOLD = 350
 /** How far a thumb may wander in that time and still be holding. */
 export const THUMB_SLOP = SLOP * 2
 
+/** Whether a thumb, held long enough, is carrying something. */
+let thumbCarrying = false
+
+/** Says a held thumb has taken up what it is on, or let go of it. */
+export function carryThumb(on: boolean): void {
+  thumbCarrying = on
+}
+
+function keepThumb(event: TouchEvent) {
+  if (thumbCarrying && event.cancelable) event.preventDefault()
+}
+
+const listening = new WeakMap<HTMLElement, number>()
+
 /** Keeps a thumb that has been held long enough from the browser: Trello's and Todoist's
  *  way to tell a drag from a scroll. A thumb that sets off at once is the browser's, so
  *  a plain swipe scrolls as it always did and this leaves `touch-action` alone; one that
  *  moves after the hold has its first move refused, and only then does the browser not
- *  take the pan and cancel the pointer. On the node from the start, since a listener
- *  added once the touch began is one WebKit and the compositor do not wait for. */
-export function holdsThumb(node: HTMLElement, carrying: () => boolean) {
-  const moved = (event: TouchEvent) => {
-    if (carrying() && event.cancelable) event.preventDefault()
-  }
-  node.addEventListener('touchmove', moved, { passive: false })
+ *  take the pan and cancel the pointer. There from the start, since a listener added once
+ *  the touch began is one WebKit and the compositor do not wait for. On the list and not
+ *  on each of its rows: one listener however long the list. */
+export function holdsThumb(node: HTMLElement) {
+  const list = node.parentElement ?? node
+  const rows = listening.get(list) ?? 0
+  if (rows === 0) list.addEventListener('touchmove', keepThumb, { passive: false })
+  listening.set(list, rows + 1)
   // A held thumb on iOS would bring up the callout of a link or a picture under it.
   node.style.setProperty('-webkit-touch-callout', 'none')
   return {
     destroy() {
-      node.removeEventListener('touchmove', moved)
+      const left = (listening.get(list) ?? 1) - 1
+      listening.set(list, left)
+      if (left === 0) list.removeEventListener('touchmove', keepThumb)
     },
   }
 }
@@ -146,7 +163,9 @@ export function draggable(node: HTMLElement, start: Carry) {
   let frame = 0
   /** Whether the row has gone anywhere since it was lifted. */
   let went = false
-  const thumb = holdsThumb(node, () => lifted)
+  const thumb = holdsThumb(node)
+  /** Whether it was a thumb that lifted it. */
+  let thumbed = false
 
   const lift = () => {
     lifted = true
@@ -169,7 +188,8 @@ export function draggable(node: HTMLElement, start: Carry) {
       lift()
     }
     event.preventDefault()
-    went = true
+    // A thumb trembling under its hold has not gone anywhere: it can still ask for the menu.
+    if (!from || !thumbed || Math.hypot(at.x - from.x, at.y - from.y) > THUMB_SLOP) went = true
     dragging.x = at.x
     dragging.y = at.y
     const target = targetAt(at)
@@ -194,6 +214,8 @@ export function draggable(node: HTMLElement, start: Carry) {
     const row = dragging.row
     lifted = false
     went = false
+    if (thumbed) carryThumb(false)
+    thumbed = false
     from = null
     node.classList.remove('is-carried')
     target?.classList.remove('is-taking')
@@ -230,7 +252,13 @@ export function draggable(node: HTMLElement, start: Carry) {
     window.addEventListener('pointerup', up)
     window.addEventListener('pointercancel', cancel)
     window.addEventListener('keydown', key, true)
-    if (event.pointerType === 'touch') held = setTimeout(lift, HOLD)
+    if (event.pointerType === 'touch') {
+      held = setTimeout(() => {
+        carryThumb(true)
+        thumbed = true
+        lift()
+      }, HOLD)
+    }
   }
 
   /** A hold is the row's menu on a phone as well, a little later than its lift: a thumb

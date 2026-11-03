@@ -145,7 +145,7 @@ describe('a name a tag can be renamed to', () => {
     },
   )
 
-  test.each(['2024', 'a.b', 'a,b', 'a!', 'a b', '', '#a', '/a'])('%j is none', (name) => {
+  test.each(['2024', 'a.b', 'a,b', 'a!', 'a b', '', '#a', '/a', 'foo/', 'a//b'])('%j is none', (name) => {
     expect(isTagName(name)).toBe(false)
   })
 })

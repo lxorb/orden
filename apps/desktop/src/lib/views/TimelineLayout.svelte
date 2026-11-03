@@ -13,7 +13,7 @@
   import { dateAt } from './days'
   import { plain } from './inline'
   import type { Kit } from './kit'
-  import { HOLD, holdsThumb, THUMB_SLOP } from './drag.svelte'
+  import { carryThumb, HOLD, holdsThumb, THUMB_SLOP } from './drag.svelte'
   import {
     arrowsOf,
     type Bar,
@@ -80,8 +80,8 @@
   /** Where each task with an id ends, for the arrows from it. */
   const arrows = $derived(
     arrowsOf(bars).map((one) => ({
-      from: { x: x(one.from.bar.end) + width, y: one.from.at * ROW + ROW / 2 },
-      to: { x: x(one.to.bar.start), y: one.to.at * ROW + ROW / 2 },
+      from: { x: x(drawnOf(one.from.bar, span).end) + width, y: one.from.at * ROW + ROW / 2 },
+      to: { x: x(drawnOf(one.to.bar, span).start), y: one.to.at * ROW + ROW / 2 },
     })),
   )
 
@@ -102,6 +102,7 @@
     const hold = thumb
       ? setTimeout(() => {
           carrying = true
+          carryThumb(true)
         }, HOLD)
       : undefined
     const days = (to: number) => Math.round((to - start) / width)
@@ -114,6 +115,7 @@
       element.style.marginInlineStart = ''
       element.style.marginInlineEnd = ''
       carrying = false
+      carryThumb(false)
     }
     const move = (next: PointerEvent) => {
       if (thumb && !carrying) {
@@ -121,7 +123,7 @@
         return
       }
       const by = days(next.clientX)
-      if (Math.abs(next.clientX - start) > 3) moved = true
+      if (Math.abs(next.clientX - start) > (thumb ? THUMB_SLOP : 3)) moved = true
       if (part === 'move') element.style.translate = `${by * width}px 0`
       else if (part === 'start') {
         element.style.marginInlineStart = `${by * width}px`
@@ -191,7 +193,9 @@
           {#each ticks as tick (tick.day)}
             <span class="rule" style:inset-inline-start={`${x(tick.day)}px`}></span>
           {/each}
-          <span class="today" style:inset-inline-start={`${x(live.today) + width / 2}px`}></span>
+          {#if live.today >= span.first && live.today <= span.last}
+            <span class="today" style:inset-inline-start={`${x(live.today) + width / 2}px`}></span>
+          {/if}
           <svg class="arrows" width={total} height={bars.length * ROW} aria-hidden="true">
             {#each arrows as arrow, at (at)}
               <path
@@ -213,7 +217,7 @@
               style:inset-inline-start={`${x(drawn.start)}px`}
               style:width={`${long}px`}
               onpointerdown={(event) => drag(event, bar, 'move')}
-              use:holdsThumb={() => carrying}
+              use:holdsThumb
             >
               <span class="edge start" onpointerdown={(event) => drag(event, bar, 'start')}></span>
               <span class="words">{long >= NAMED ? words : ''}</span>
