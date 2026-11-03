@@ -600,7 +600,9 @@ draws for `@note` and it holds here.
   row, "Worked for 1m 23s", the way the Codex sidebar ends a turn; a turn where no tool ran
   keeps its one thinking row instead. The time is the turn's own (`Turn.took`).
   A call that asks is its own row turned into the question: the change it would make,
-  then **Approve**, **Deny** and **Always** (this tool, for the rest of the thread). The
+  then **Approve**, **Deny** and **Always** (this tool, for the rest of the thread: for an
+  everyday write, and never offered for paying, sending, deleting, signing in, publishing,
+  the terminal or a file from outside, which ask every time). The
   call waits there, and goes ahead or is told no once answered, here or in the Activity
   panel (`review/Approval.svelte`, `chat/approvals.ts`).
 - **Follow** (off by default, the eye on the thread menu, Zed's word): the note being

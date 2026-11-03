@@ -177,7 +177,7 @@ static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
 /// The form the element is in, or its document: what `FACTS_BODY` reads the fields of.
 const FIELDS_SCOPE: &str = "function () { const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return null; if (el.form) return el.form; for (let at = el; at; at = at.getRootNode().host) { const found = at.closest('form'); if (found) return found } return el.ownerDocument }";
 
-/// Every field a closed shadow root keeps from a script. Run with the field as `this`.
+/// A field described, for the policy alone. Run with the field as `this`.
 static DESCRIBED_ONLY: LazyLock<String> =
     LazyLock::new(|| ["function () {", FIELDS, "return describe(this) }"].concat());
 

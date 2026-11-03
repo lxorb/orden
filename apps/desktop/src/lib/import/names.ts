@@ -56,6 +56,8 @@ export function safeName(title: string): string {
     // A dot or a space at the end is dropped by Windows itself, so a note
     // called `Plans.` would be written and then not found again.
     .replace(/[. ]+$/, '')
+    // A dot at the start hides a file from the tree and from sync.
+    .replace(/^[. ]+/, '')
     .trim()
 
   const short = one.length > LONGEST ? one.slice(0, LONGEST).trimEnd() : one

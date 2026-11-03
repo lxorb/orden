@@ -14,6 +14,13 @@ describe('a title as a file name', () => {
     expect(safeName('Plans ')).toBe('Plans')
   })
 
+  test('loses a dot at the start, which hides a file from every list and from sync', () => {
+    expect(safeName('.NET plan')).toBe('NET plan')
+    expect(safeName('.Archive')).toBe('Archive')
+    expect(safeName('...')).toBe('Untitled')
+    expect(safeName('Node.js notes')).toBe('Node.js notes')
+  })
+
   test('a title of nothing gets a name', () => {
     expect(safeName('')).toBe('Untitled')
     expect(safeName('///')).toBe('Untitled')

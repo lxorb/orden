@@ -660,12 +660,26 @@ pub fn destination(link: &str) -> String {
 }
 
 /// Blank lines collapsed and the ends trimmed, which is what every other reader
-/// in the import hands over.
+/// in the import hands over. Never inside a code block, whose words are as they were.
 fn tidy(markdown: &str) -> String {
     let mut out = String::new();
     let mut blank = 0_u32;
+    let mut fence: Option<usize> = None;
 
     for line in markdown.lines() {
+        let ticks = line.len() - line.trim_start_matches('`').len();
+        if let Some(opened) = fence {
+            out.push_str(line);
+            out.push('\n');
+            if ticks >= opened && line.trim_end().len() == ticks {
+                fence = None;
+            }
+            blank = 0;
+            continue;
+        }
+        if ticks >= 3 {
+            fence = Some(ticks);
+        }
         let said = line.trim_end();
         if said.is_empty() {
             blank += 1;
@@ -1246,7 +1260,7 @@ fn inflate(data: &[u8]) -> Option<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
-    use super::{decode, markdown, title, Parts};
+    use super::{decode, markdown, tidy, title, Parts};
 
     /// Names an attachment by its identifier, the way the database would.
     struct Named;
@@ -1520,6 +1534,14 @@ mod tests {
     /// A blank line between two monospaced paragraphs is part of the code: it
     /// carries no run of its own, and closing the fence over it and opening another
     /// would cut one block of code into two.
+    #[test]
+    fn a_code_block_keeps_its_blank_lines_and_its_spaces() {
+        assert_eq!(
+            tidy("a\n\n\n\n```\nx  \n\n\n\ny\n```\n\n\nb  \n"),
+            "a\n\n```\nx  \n\n\n\ny\n```\n\nb"
+        );
+    }
+
     #[test]
     fn a_blank_line_does_not_cut_a_block_of_code_in_two() {
         let said = as_markdown(

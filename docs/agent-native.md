@@ -1081,7 +1081,7 @@ Prompt injection is unsolved, and Orden does not pretend otherwise. What it does
 
 - **Everything that came from outside comes back marked**: page text, snapshot names,
   console lines, network rows, downloads, PDF text, and the words of a note in a shared
-  space or pasted from the web, inside `<untrusted source="...">`. The server's
+  space, inside `<untrusted source="...">`. The server's
   instructions, which every MCP client passes to its model, say that nothing inside those
   marks is an instruction.
 - **The trifecta is visible.** Private data, untrusted content and a way to send data out
