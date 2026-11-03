@@ -971,8 +971,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-03, to 3,434,300, for #1044: a search reads the space's own inbox, which
  *  the crate's walk leaves out as hidden (the call in search/space.ts; what it reads is
- *  fetched with the first search). Measured 3,434,294. */
-const BUDGET = 3_434_300
+ *  fetched with the first search). Measured 3,434,294.
+ *
+ *  Raised 2026-11-03, to 3,435,000, for #1060: the sliver the window is dragged by is
+ *  drawn by the strip in the titlebar, ahead of its own buttons, rather than by the bar
+ *  after them (Tabs.svelte, Titlebar.svelte). Measured 3,434,942. */
+const BUDGET = 3_435_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
