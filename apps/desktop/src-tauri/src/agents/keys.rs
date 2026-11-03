@@ -77,6 +77,11 @@ impl Key {
         self.name == "Enter" && self.modifiers & (CONTROL | ALT | META) == 0
     }
 
+    /// Whether what this press does depends on what has the keyboard.
+    pub fn judged_by_the_page(&self) -> bool {
+        self.changes_words() || self.sends() || self.submits()
+    }
+
     /// Whether this press presses what has the keyboard, as a click would.
     pub fn presses(&self) -> bool {
         matches!(self.name.as_str(), " " | "Enter")
@@ -288,6 +293,16 @@ mod tests {
         assert!(chord("Alt+ArrowDown").expect("key").opens_a_picker());
         assert!(!chord("ArrowDown").expect("key").opens_a_picker());
         assert!(!chord("Control+Enter").expect("key").submits());
+    }
+
+    #[test]
+    fn a_key_that_presses_is_asked_of_the_page_whatever_is_held() {
+        for said in ["Control+Space", "Alt+Space", "Meta+Space", "Space", "Enter", "a"] {
+            assert!(chord(said).expect("key").judged_by_the_page(), "{said}");
+        }
+        for said in ["Tab", "Escape", "ArrowDown"] {
+            assert!(!chord(said).expect("key").judged_by_the_page(), "{said}");
+        }
     }
 
     #[test]

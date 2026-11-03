@@ -223,6 +223,12 @@ pub struct Grant {
     /// When it was made, in milliseconds since 1970.
     #[serde(default)]
     pub created: u64,
+    /// Whether it is a provider's own grant for the AI panel (`ai_agent.rs`): what lets a
+    /// call name a thread and start a helper without its reach being compared. Set by the
+    /// app when it makes one, never read off the name, and nothing the settings pane can
+    /// change.
+    #[serde(default)]
+    pub built_in: bool,
 }
 
 impl Grant {
@@ -253,6 +259,7 @@ impl Grant {
             programs: Vec::new(),
             limits: Limits::default(),
             created: crate::clock::now(),
+            built_in: false,
         }
     }
 
@@ -349,6 +356,13 @@ fn as_orden(grant: &mut Grant) {
             *label = format!("{SIDEBAR}{rest}");
         }
     }
+}
+
+/// Whether a grant kept without the mark is one the app made: a provider's id under the
+/// label only the app gives one. An outside client's id is made from its own name, so one
+/// called `nib-foo` holds no such label, and keeps its grant without the privileges.
+fn was_built_in(grant: &Grant) -> bool {
+    false
 }
 
 /// A grant kept from before helpers, given them as a new grant of its kind would be: the
@@ -919,6 +933,15 @@ mod tests {
     }
 
     #[test]
+    fn only_the_apps_label_makes_a_kept_grant_built_in() {
+        let kept = |id: &str, client: &str| Grant::own(id.into(), client);
+        assert!(was_built_in(&kept("nib-anthropic", "Orden \u{b7} Claude")));
+        assert!(!was_built_in(&kept("nib-foo", "nib-foo")));
+        assert!(!was_built_in(&kept("nib-2", "nib")));
+        assert!(!was_built_in(&kept("orden-claude", "Orden \u{b7} Claude")));
+    }
+
+    #[test]
     fn an_id_comes_from_the_name_and_is_free() {
         assert_eq!(free_id("Claude Code", &[]), "claude-code");
         assert_eq!(free_id("Claude Code", &["claude-code"]), "claude-code-2");
@@ -928,6 +951,10 @@ mod tests {
         );
         assert_eq!(free_id("  ", &[]), "agent");
         assert_eq!(free_id("nib-anthropic", &[]), "agent-nib-anthropic");
+        // Numbering earns no prefix either: `nib` taken makes no `nib-2`.
+        assert_eq!(free_id("nib", &[]), "agent-nib");
+        assert_eq!(free_id("nib", &["agent-nib"]), "agent-nib-2");
+        assert_eq!(free_id("NIB ", &["nib"]), "agent-nib");
         assert_eq!(free_id("Codex (CLI)", &[]), "codex-cli");
         assert_eq!(free_id("日本", &[]), "agent");
     }

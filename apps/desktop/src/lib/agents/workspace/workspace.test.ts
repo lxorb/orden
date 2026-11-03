@@ -378,6 +378,11 @@ vi.mock('../../commands', () => ({
     { id: 'undo-file', label: 'Undo', run: () => ran.push('undo-file') },
     { id: 'theme:night', label: 'Theme: Night', run: () => ran.push('theme') },
     { id: 'row-from-next-year', label: 'Something new', run: () => ran.push('new') },
+    { id: 'new-unique', label: 'New note', run: () => ran.push('new-unique') },
+    { id: 'new-canvas', label: 'New canvas', run: () => ran.push('new-canvas') },
+    { id: 'new-database', label: 'New base', run: () => ran.push('new-database') },
+    { id: 'export-pdf', label: 'Export', run: () => ran.push('export') },
+    { id: 'copy-uri', label: 'Copy link', run: () => ran.push('copy') },
   ],
 }))
 const ran: string[] = []
@@ -942,6 +947,25 @@ describe('what asks the reader first', () => {
     ).toMatchObject({ result: { id: 'row-from-next-year' } })
   })
 
+  test('the palette: a row that makes a file needs to write as well as to move the reader', async () => {
+    for (const id of ['new-unique', 'new-canvas', 'new-database']) {
+      ran.length = 0
+      expect(
+        await call('run_command', { id }, agent({ scopes: ['workspace', 'workspace.focus'] })),
+        id,
+      ).toMatchObject({ code: 'not_granted', message: expect.stringContaining('notes.write') })
+      expect(
+        await call('run_command', { id }, agent({ scopes: ['workspace', 'notes.write'] })),
+        id,
+      ).toMatchObject({ code: 'not_granted', message: expect.stringContaining('workspace.focus') })
+      expect(ran, id).toEqual([])
+      expect(await call('run_command', { id }), id).toMatchObject({ result: { id } })
+    }
+    for (const id of ['export-pdf', 'copy-uri']) {
+      expect(await call('run_command', { id }), id).toMatchObject({ code: 'by_hand' })
+    }
+  })
+
   test('in confirm mode every write asks, as a write', async () => {
     answer = { status: 'needs_approval', approval: 'a4', summary: 'Edit' }
     const careful = agent({ mode: 'confirm' })
@@ -1155,6 +1179,7 @@ describe('the notes, on the road', () => {
         scopes: EVERY,
         spaces: 'all',
         mode: 'unsupervised',
+        built_in: true,
         programs: [],
       },
       'thread-1',
@@ -1811,7 +1836,14 @@ describe('a note an agent names with a dot in it', () => {
 describe('a panel thread works in its own space', () => {
   const fromHome = () =>
     callerOf(
-      { id: 'nib-anthropic', name: 'Claude', scopes: EVERY, spaces: 'all', mode: 'unsupervised' },
+      {
+        id: 'nib-anthropic',
+        name: 'Claude',
+        scopes: EVERY,
+        spaces: 'all',
+        mode: 'unsupervised',
+        built_in: true,
+      },
       'thread-home',
     )
 
@@ -1896,7 +1928,14 @@ describe('a panel thread works in its own space', () => {
 
   test('the context of a grant that reaches the thread’s space alone names it, and no tab', async () => {
     const onlyHome = callerOf(
-      { id: 'nib-x', name: 'X', scopes: EVERY, spaces: ['Home'], mode: 'unsupervised' },
+      {
+        id: 'nib-x',
+        name: 'X',
+        scopes: EVERY,
+        spaces: ['Home'],
+        mode: 'unsupervised',
+        built_in: true,
+      },
       'thread-home',
     )
     expect(await call('get_context', {}, onlyHome)).toMatchObject({
@@ -1929,7 +1968,14 @@ describe('a panel thread works in its own space', () => {
         'write_note',
         { path: 'Broth', content: 'x' },
         callerOf(
-          { id: 'nib-x', name: 'X', scopes: EVERY, spaces: ['Work'], mode: 'unsupervised' },
+          {
+            id: 'nib-x',
+            name: 'X',
+            scopes: EVERY,
+            spaces: ['Work'],
+            mode: 'unsupervised',
+            built_in: true,
+          },
           'thread-home',
         ),
       ),
@@ -1970,14 +2016,26 @@ describe('run_agent from a narrower grant', () => {
     }
   })
 
-  test('an outside agent with no thread of its own cannot borrow one’s mode', () => {
+  test('a thread and a helper are a built-in grant’s by its mark, never its name', async () => {
+    const named = { id: 'nib-foo', name: 'x', scopes: FULL, spaces: ['Work'], mode: 'confirm' }
+    expect(callerOf(named, 'thread-1')).not.toHaveProperty('thread')
+    expect(await call('run_agent', { prompt: 'x' }, callerOf(named))).toMatchObject({
+      code: 'not_granted',
+    })
     const outside = callerOf(
       { id: 'claude-code', name: 'Claude Code', scopes: FULL, spaces: 'all', mode: 'unsupervised' },
       'thread-1',
     )
     expect(outside).not.toHaveProperty('thread')
     const panel = callerOf(
-      { id: 'nib-anthropic', name: 'Claude', scopes: FULL, spaces: 'all', mode: 'autonomous' },
+      {
+        id: 'nib-anthropic',
+        name: 'Claude',
+        scopes: FULL,
+        spaces: 'all',
+        mode: 'autonomous',
+        built_in: true,
+      },
       'thread-1',
     )
     expect(panel).toHaveProperty('thread', 'thread-1')

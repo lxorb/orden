@@ -827,6 +827,7 @@ mod tests {
         assert!(web_address("about:version").is_err());
         assert!(web_address("http://tauri.localhost/").is_err());
         assert!(web_address("https://nib.localhost/").is_err());
+        assert!(web_address("http://tauri.localhost./").is_err());
         assert!(web_address("about:blank").is_ok());
         // What goes to the engine is what was judged, not what was said.
         assert_eq!(

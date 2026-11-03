@@ -198,6 +198,10 @@ pub struct Facts {
     pub fields: Vec<Field>,
     /// The element itself, read the way each of `fields` is.
     pub field: Field,
+    /// The name of the button Enter in its form presses: the form's default button.
+    pub default_button: String,
+    /// Whether it has the keyboard and shows nothing that can be read; see `unreadable`.
+    pub opaque: bool,
 }
 
 /// One field of the form the element is in.
@@ -224,6 +228,12 @@ impl Facts {
     /// Whether it is a password field, however the page dresses it.
     pub fn password(&self) -> bool {
         self.kind == "password" || credential(&self.field)
+    }
+
+    /// Whether it has the keyboard and shows nothing that can be read: the host of a closed
+    /// shadow root, whose button no script can name.
+    pub fn unreadable(&self) -> bool {
+        self.opaque
     }
 
     /// Whether it is in a sign-in form: a form with a password field.
@@ -2142,6 +2152,97 @@ mod tests {
         let mut full = grant.clone();
         full.mode = Mode::Autonomous;
         assert_eq!(keyed(&full, log_in(), "Space"), None);
+    }
+
+    #[test]
+    fn enter_in_a_field_presses_its_forms_default_button() {
+        let grant = grant();
+        let field_of = |button: &str| Facts {
+            tag: "input".into(),
+            kind: "text".into(),
+            editable: true,
+            in_form: true,
+            default_button: button.into(),
+            field: field("text", "Name"),
+            ..Facts::default()
+        };
+        assert_eq!(
+            keyed(&grant, field_of("Delete account"), "Enter"),
+            Some(Category::Deleting)
+        );
+        assert_eq!(
+            keyed(&grant, field_of("Pay now"), "Enter"),
+            Some(Category::Paying)
+        );
+        assert_eq!(keyed(&grant, field_of("Search"), "Enter"), None);
+        // `browser_type` with submit is judged the same way, from the same facts.
+        let submitted = Facts {
+            submit: true,
+            ..field_of("Delete account")
+        };
+        let question = judge(&grant, &submitted, Act::Enter, "https://shop.example/", &[]);
+        assert_eq!(
+            question.as_ref().map(|one| one.category),
+            Some(Category::Deleting)
+        );
+        assert_eq!(
+            question.map(|one| one.summary).as_deref(),
+            Some("Delete account on shop.example")
+        );
+        // A checkbox's Enter is the same submit.
+        let tick = Facts {
+            kind: "checkbox".into(),
+            editable: false,
+            field: field("checkbox", "Sure"),
+            ..field_of("Delete account")
+        };
+        assert_eq!(keyed(&grant, tick, "Enter"), Some(Category::Deleting));
+        // In a box Enter is a new line, and nothing is pressed.
+        let boxed = Facts {
+            tag: "textarea".into(),
+            kind: String::new(),
+            field: field("textarea", "Notes"),
+            ..field_of("Delete account")
+        };
+        assert_eq!(keyed(&grant, boxed, "Enter"), None);
+        // And a press of another button is about that button.
+        let other = Facts {
+            default_button: "Delete account".into(),
+            in_form: true,
+            ..press("Open menu")
+        };
+        assert_eq!(keyed(&grant, other, "Space"), None);
+        let mut full = grant.clone();
+        full.mode = Mode::Autonomous;
+        assert_eq!(keyed(&full, field_of("Delete account"), "Enter"), None);
+    }
+
+    #[test]
+    fn a_press_on_what_cannot_be_read_asks() {
+        let grant = grant();
+        let host = || Facts {
+            tag: "x-pay".into(),
+            opaque: true,
+            ..Facts::default()
+        };
+        assert_eq!(keyed(&grant, host(), "Space"), Some(Category::Writing));
+        assert_eq!(keyed(&grant, host(), "Enter"), Some(Category::Writing));
+        let mut full = grant.clone();
+        full.mode = Mode::Autonomous;
+        assert_eq!(keyed(&full, host(), "Space"), None);
+    }
+
+    #[test]
+    fn the_apps_own_hosts_are_off_the_web_with_a_trailing_dot_too() {
+        for address in [
+            "http://tauri.localhost/",
+            "http://tauri.localhost./",
+            "https://IPC.localhost../x",
+            "http://asset.localhost./",
+            "http://nib.localhost./",
+        ] {
+            assert!(!on_the_web(address), "{address}");
+        }
     }
 
     #[test]

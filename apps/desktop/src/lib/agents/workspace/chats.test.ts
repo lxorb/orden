@@ -126,6 +126,7 @@ describe('the chats an agent sees', () => {
     answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
     const grant = {
       id: 'nib-claude',
+      built_in: true,
       name: 'Claude Code',
       scopes: ['chats.read'],
       spaces: 'all',

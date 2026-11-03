@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { plainOf, programOf, startsOnlyOne } from './shell-text'
+import { onTheList, plainOf, programOf, startsOnlyOne } from './shell-text'
 
 const ESC = String.fromCharCode(27)
 const BELL = String.fromCharCode(7)
@@ -73,6 +73,83 @@ describe('what actually runs', () => {
 
   test('nor does history or a subexpression run under the first word', () => {
     for (const line of ['git !!', 'git !-1', 'git (rm x)']) {
+      expect(startsOnlyOne(line), line).toBe(false)
+    }
+  })
+})
+
+describe('what a listed program is told to run', () => {
+  test('git’s config, exec and output options ask', () => {
+    for (const line of [
+      'git -c core.fsmonitor="touch x" status',
+      'git -p -c core.pager=touch status',
+      'git --paginate log',
+      'git -C /tmp/x status',
+      'git --config-env=core.pager=X log',
+      'git --exec-path=/tmp/x status',
+      'git --git-dir=/tmp/x/.git status',
+      'git --work-tree=/tmp/x status',
+      'git log --output=/home/me/.bashrc',
+      'git log --outp=/home/me/.bashrc',
+      'git diff --ext-diff',
+      'git fetch --upload-pack=touch origin',
+      'git rebase -x touch',
+      'git rebase --exec=touch',
+      'git grep -Ovim x',
+      'git grep --open-files-in-pager=touch x',
+      'git difftool -x touch',
+      'git config core.pager touch',
+      'git submodule foreach touch',
+      'git bisect run touch',
+      'git "-c" core.pager=touch log',
+      "git -'c' core.pager=touch log",
+      'git --out""put=x log',
+      'git -\\c core.pager=touch log',
+    ]) {
+      expect(onTheList(line, ['git']), line).toBe(false)
+    }
+  })
+
+  test('npm and its kind ask before they fetch and run', () => {
+    for (const [line, program] of [
+      ['npm exec touch', 'npm'],
+      ['npm x touch', 'npm'],
+      ['npm explore x', 'npm'],
+      ['npm test --script-shell=/tmp/x', 'npm'],
+      ['npx touch', 'npx'],
+      ['pnpm dlx touch', 'pnpm'],
+      ['pnpm exec touch', 'pnpm'],
+      ['pnpx touch', 'pnpx'],
+      ['yarn dlx touch', 'yarn'],
+      ['bunx touch', 'bunx'],
+    ] as const) {
+      expect(onTheList(line, [program]), line).toBe(false)
+    }
+  })
+
+  test('what they do every day goes', () => {
+    for (const [line, program] of [
+      ['git status --short', 'git'],
+      ['git log --oneline -5', 'git'],
+      ['git diff HEAD~1 -- src/a.ts', 'git'],
+      ['git commit -m fix', 'git'],
+      ['npm test', 'npm'],
+      ['pnpm run build', 'pnpm'],
+    ] as const) {
+      expect(onTheList(line, [program]), line).toBe(true)
+    }
+  })
+
+  test('expansion that builds an option under the first word asks', () => {
+    for (const line of [
+      'git @{a=calc}',
+      'git {-c,core.pager=touch} log',
+      'git x$IFS-c',
+      'git $X',
+      'git log *',
+      'git log ?c',
+      'git log [-]c',
+    ]) {
       expect(startsOnlyOne(line), line).toBe(false)
     }
   })
