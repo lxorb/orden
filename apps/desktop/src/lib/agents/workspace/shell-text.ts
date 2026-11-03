@@ -13,97 +13,339 @@ export function programOf(command: string): string {
  *  the program. This is not what makes a listed program safe, which nothing can: a program
  *  on the list is trusted with all it can do, as docs/agent-native.md 8.9 says. It keeps
  *  the plainest ways out of a line that looks like a read in front of the reader's
- *  question. Short options are whole words, and `-O` takes its value attached; long ones
- *  are matched by any prefix, as git and npm both take one. */
-const PACKAGES = { short: [], long: ['--script-shell', '--node-options'] }
+ *  question. Long options are matched by any prefix, as npm takes one. */
+const PACKAGES = { long: ['--script-shell', '--node-options'] }
 const PLAIN = ['--version', '--help', '-v', '-h', '--silent', '-s']
 const REACH: Record<
   string,
   {
-    short: string[]
+    short: RegExp | null
     long: string[]
     commands: string[]
-    /** Options that take no value and may stand in front of the command. Anything else
-     *  there may be holding one, and that value would read as the command, so it asks. */
+    /** Options that may stand in front of the command and take no value. */
     before: string[]
-    /** A letter that is only this reach under one command: `git push -u` is no
-     *  `git clone -u`, which names the program to run for the fetch. */
-    under?: Record<string, string>
+    /** And those that take one, as the next word or after a `=`. Anything else there may
+     *  be holding a value that would read as the command, so it asks. */
+    valued: string[]
   }
 > = {
-  git: {
-    short: ['-c', '-C', '-p', '-x', '-O'],
-    long: [
-      '--config-env',
-      '--exec-path',
-      '--git-dir',
-      '--work-tree',
-      '--paginate',
-      '--output',
-      '--ext-diff',
-      '--extcmd',
-      '--exec',
-      '--upload-pack',
-      '--receive-pack',
-      '--open-files-in-pager',
-    ],
-    commands: ['config', 'submodule', 'bisect', 'filter-branch', 'difftool', 'mergetool'],
-    before: [
-      '--version',
-      '--help',
-      '-v',
-      '-h',
-      '-P',
-      '--no-pager',
-      '--no-optional-locks',
-      '--no-replace-objects',
-      '--literal-pathspecs',
-    ],
-    under: { clone: 'u', archive: 'o' },
-  },
   npm: {
     ...PACKAGES,
+    short: null,
     commands: ['exec', 'x', 'explore', 'init', 'create', 'innit'],
     before: PLAIN,
+    valued: ['--prefix', '-w', '--workspace'],
   },
-  pnpm: { ...PACKAGES, commands: ['exec', 'dlx', 'create', 'x'], before: PLAIN },
-  yarn: { ...PACKAGES, commands: ['exec', 'dlx', 'create'], before: PLAIN },
+  pnpm: {
+    ...PACKAGES,
+    short: null,
+    commands: ['exec', 'dlx', 'create', 'x'],
+    before: [...PLAIN, '-r', '--recursive', '-w', '--workspace-root'],
+    valued: ['--filter', '-F', '--dir', '-C'],
+  },
+  yarn: {
+    ...PACKAGES,
+    short: null,
+    commands: ['exec', 'dlx', 'create'],
+    before: PLAIN,
+    valued: ['--cwd'],
+  },
   bun: {
-    short: ['-e', '-p'],
+    // `-e1` and `-pe1`: short options bundle, and a value may hang on the end.
+    short: /^-[a-zA-Z]*[ep]/,
     long: [...PACKAGES.long, '--eval', '--print'],
     commands: ['x', 'create'],
-    before: PLAIN,
+    before: PLAIN.filter((one) => one !== '-s'),
+    valued: ['--cwd'],
   },
 }
 
 /** The programs whose whole work is to fetch something and run it. */
 const RUNS_WHAT_IT_FETCHES = new Set(['npx', 'pnpx', 'bunx'])
 
+/** Git can be told to run something in more ways than a list of them would ever hold -
+ *  `-ccore.sshCommand=x`, `--template=x`, `rebase -x`, a config, an alias - so it goes the
+ *  other way round: the commands known to be free and their options, and anything else
+ *  asks. `flags` are the letters that take no value, in any bundle. `valued` are the
+ *  letters that take one, attached or as the next word. `long` is whole names, with a `=`
+ *  or the next word as their value: an abbreviation is not one of them. */
+interface Free {
+  flags?: string
+  valued?: string
+  long?: readonly string[]
+}
+
+const LOOKS = [
+  '--oneline',
+  '--graph',
+  '--decorate',
+  '--no-decorate',
+  '--stat',
+  '--shortstat',
+  '--numstat',
+  '--name-only',
+  '--name-status',
+  '--patch',
+  '--no-patch',
+  '--color',
+  '--no-color',
+  '--format',
+  '--pretty',
+  '--abbrev-commit',
+  '--date',
+  '--author',
+  '--grep',
+  '--since',
+  '--until',
+  '--after',
+  '--before',
+  '--all',
+  '--follow',
+  '--reverse',
+  '--max-count',
+  '--first-parent',
+  '--merges',
+  '--no-merges',
+  '--cached',
+  '--staged',
+  '--word-diff',
+  '--ignore-all-space',
+  '--unified',
+]
+const GIT_BEFORE = [
+  '--version',
+  '--help',
+  '-v',
+  '-h',
+  '-P',
+  '--no-pager',
+  '--no-optional-locks',
+  '--no-replace-objects',
+  '--literal-pathspecs',
+]
+const GIT: Record<string, Free> = {
+  status: {
+    flags: 'sbu',
+    long: ['--short', '--branch', '--long', '--porcelain', '--untracked-files', '--ignored'],
+  },
+  log: { flags: 'p', valued: 'n', long: LOOKS },
+  show: { flags: 'ps', long: LOOKS },
+  diff: { flags: 'pwb', valued: 'U', long: LOOKS },
+  blame: { flags: 'wsl', valued: 'L' },
+  shortlog: { flags: 'sne', long: ['--summary', '--numbered', '--email', '--all'] },
+  reflog: { valued: 'n', long: ['--oneline', '--all'] },
+  describe: { long: ['--tags', '--always', '--abbrev', '--dirty', '--long', '--exact-match'] },
+  'rev-parse': {
+    long: [
+      '--abbrev-ref',
+      '--short',
+      '--verify',
+      '--show-toplevel',
+      '--git-dir',
+      '--is-inside-work-tree',
+    ],
+  },
+  'ls-files': {
+    flags: 'cdmost',
+    long: ['--cached', '--deleted', '--modified', '--others', '--stage', '--exclude-standard'],
+  },
+  add: {
+    flags: 'Aunvpf',
+    long: ['--all', '--update', '--dry-run', '--verbose', '--patch', '--force', '--intent-to-add'],
+  },
+  rm: { flags: 'rfqn', long: ['--cached', '--force', '--quiet', '--dry-run'] },
+  mv: { flags: 'fkvn', long: ['--force', '--dry-run', '--verbose'] },
+  commit: {
+    flags: 'asqv',
+    valued: 'm',
+    long: [
+      '--all',
+      '--amend',
+      '--message',
+      '--no-edit',
+      '--signoff',
+      '--no-verify',
+      '--allow-empty',
+      '--quiet',
+      '--verbose',
+    ],
+  },
+  push: {
+    flags: 'uqvnfd',
+    long: [
+      '--set-upstream',
+      '--force',
+      '--force-with-lease',
+      '--tags',
+      '--follow-tags',
+      '--dry-run',
+      '--delete',
+      '--quiet',
+      '--verbose',
+      '--no-verify',
+    ],
+  },
+  pull: {
+    flags: 'qv',
+    long: [
+      '--rebase',
+      '--no-rebase',
+      '--ff-only',
+      '--no-ff',
+      '--ff',
+      '--quiet',
+      '--verbose',
+      '--tags',
+    ],
+  },
+  fetch: {
+    flags: 'qvp',
+    long: [
+      '--all',
+      '--prune',
+      '--tags',
+      '--depth',
+      '--quiet',
+      '--verbose',
+      '--no-tags',
+      '--unshallow',
+    ],
+  },
+  checkout: {
+    flags: 'qf',
+    valued: 'bB',
+    long: ['--quiet', '--force', '--track', '--ours', '--theirs'],
+  },
+  switch: {
+    flags: 'qf',
+    valued: 'cC',
+    long: ['--create', '--detach', '--quiet', '--force', '--track'],
+  },
+  restore: { flags: 'SWq', valued: 's', long: ['--staged', '--worktree', '--source', '--quiet'] },
+  reset: { flags: 'q', long: ['--soft', '--mixed', '--hard', '--keep', '--merge', '--quiet'] },
+  branch: {
+    flags: 'avrdDmMf',
+    long: [
+      '--all',
+      '--verbose',
+      '--remotes',
+      '--delete',
+      '--move',
+      '--list',
+      '--merged',
+      '--no-merged',
+      '--show-current',
+      '--force',
+    ],
+  },
+  tag: {
+    flags: 'adlf',
+    valued: 'm',
+    long: ['--annotate', '--delete', '--list', '--message', '--force', '--sort'],
+  },
+  merge: {
+    flags: 'q',
+    valued: 'm',
+    long: [
+      '--no-ff',
+      '--ff',
+      '--ff-only',
+      '--squash',
+      '--abort',
+      '--continue',
+      '--no-edit',
+      '--message',
+      '--quiet',
+    ],
+  },
+  rebase: {
+    flags: 'q',
+    long: ['--continue', '--abort', '--skip', '--onto', '--autostash', '--quiet'],
+  },
+  'cherry-pick': { flags: 'xn', long: ['--continue', '--abort', '--skip', '--no-commit'] },
+  revert: { flags: 'n', long: ['--continue', '--abort', '--no-edit', '--no-commit'] },
+  stash: { flags: 'um', long: ['--include-untracked', '--message'] },
+  remote: { flags: 'v', long: ['--verbose'] },
+  clone: {
+    flags: 'q',
+    valued: 'b',
+    long: ['--depth', '--branch', '--single-branch', '--quiet', '--no-tags', '--filter', '--bare'],
+  },
+  init: { flags: 'q', valued: 'b', long: ['--initial-branch', '--bare', '--quiet'] },
+  worktree: { flags: 'fq', valued: 'bB', long: ['--force', '--detach', '--quiet'] },
+  help: {},
+}
+
+/** Whether one option word is one this command is known to take freely. */
+function gitOptionFree(word: string, free: Free): boolean {
+  if (word.startsWith('--')) return (free.long ?? []).includes(word.split('=')[0] ?? word)
+  // `-20`: so many commits.
+  if (/^-\d+$/.test(word)) return free.valued?.includes('n') === true
+
+  // Letter by letter: flags go on, and a letter that takes a value ends the word, whatever
+  // hangs on the end of it. Any other letter is one nothing here has read.
+  for (const letter of word.slice(1)) {
+    if (free.valued?.includes(letter)) return true
+    if (!free.flags?.includes(letter)) return false
+  }
+  return word.length > 1
+}
+
+/** Whether a line of git is a command known to be free with options known to be. */
+function gitStays(plain: readonly string[]): boolean {
+  const at = plain.findIndex((word) => !word.startsWith('-'))
+  const leading = at === -1 ? plain : plain.slice(0, at)
+  if (!leading.every((word) => GIT_BEFORE.includes(word))) return false
+
+  const command = plain[at]
+  if (command === undefined) return true
+  const free = Object.hasOwn(GIT, command) ? GIT[command] : undefined
+  if (!free) return false
+
+  for (const word of plain.slice(at + 1)) {
+    // Past `--` everything is a path.
+    if (word === '--') return true
+    if (word.startsWith('-') && !gitOptionFree(word, free)) return false
+  }
+  return true
+}
+
 /** Whether a program's arguments stay out of what it can be told to run. */
 function argumentsStay(program: string, words: readonly string[]): boolean {
   if (RUNS_WHAT_IT_FETCHES.has(program)) return false
-  const reach = REACH[program]
-  if (!reach) return true
 
   // As the shell hands them over: `"-c"`, `-'c'` and `-\c` are all `-c`.
   const plain = words.map((word) => word.replace(/["'\\]/g, ''))
-  const at = plain.findIndex((word) => !word.startsWith('-'))
-  const leading = at === -1 ? plain : plain.slice(0, at)
-  if (!leading.every((word) => reach.before.includes(word))) return false
+  if (program === 'git') return gitStays(plain)
+
+  const reach = REACH[program]
+  if (!reach) return true
+
+  // The options in front of the command, walked: a value is not the command.
+  let at = 0
+  for (; at < plain.length; at++) {
+    const word = plain[at] ?? ''
+    if (!word.startsWith('-')) break
+    if (reach.before.includes(word)) continue
+    if (reach.valued.includes(word.split('=')[0] ?? word)) {
+      if (!word.includes('=')) {
+        at += 1
+        if (at === plain.length) return false
+      }
+      continue
+    }
+    return false
+  }
+
   const command = plain[at]
   if (command !== undefined && reach.commands.includes(command)) return false
 
-  // Short options bundle, and a value may hang on the end: `-qu ./x` and `-u./x`.
-  const letter = command === undefined ? undefined : reach.under?.[command]
-  const short = letter && new RegExp(`^-[a-zA-Z]*${letter}`)
-
   return !plain.some((word) => {
-    if (short && short.test(word)) return true
     if (word.startsWith('--')) {
       const name = word.split('=')[0] ?? word
       return name.length > 2 && reach.long.some((one) => one.startsWith(name))
     }
-    return reach.short.some((one) => word === one || (one === '-O' && word.startsWith('-O')))
+    return reach.short?.test(word) === true
   })
 }
 

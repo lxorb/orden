@@ -200,7 +200,7 @@ describe('an option in front of the command', () => {
     expect(onTheList(line, listed)).toBe(false)
   })
 
-  test.each(['git push -u origin main', 'git add -u', 'git log -o', 'git status'])(
+  test.each(['git push -u origin main', 'git add -u', 'git status'])(
     "another command's own letter is that command's: %s",
     (line) => {
       expect(onTheList(line, listed)).toBe(true)
