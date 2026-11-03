@@ -20,9 +20,11 @@
   import { dur } from '../../motion'
   import { scrollbar } from '../../scrollbar'
   import { settings } from '../../settings.svelte'
+  import UnreadDot from '../UnreadDot.svelte'
   import { chat } from './chat.svelte'
   import { sourcesFor } from './citations'
   import { hostHere } from './host'
+  import { rowName } from './marks'
   import Branches from '../review/Branches.svelte'
   import ChangesCard from '../review/ChangesCard.svelte'
   import Reply from './Reply.svelte'
@@ -55,6 +57,14 @@
   const listed = $derived(chat.heads.filter((one) => !one.archived).length)
   const recent = $derived(chat.heads.filter((one) => !one.archived).slice(0, 3))
   const here = hostHere()
+  /** The thread a helper's is a step of, which its conversation goes back to: a helper
+   *  is in no list of chats (#1062). Nothing where that thread is gone. */
+  const parent = $derived.by(() => {
+    const above = chat.head?.parent
+    if (!above) return null
+    const title = chat.threadOf(above)?.title ?? chat.every.find((one) => one.id === above)?.title
+    return title === undefined ? null : { id: above, title }
+  })
 
   /** What went with a message besides its passages, by name, so a message says what
    *  it was sent with. */
@@ -97,6 +107,29 @@
     follows(id)
     atEnd = true
   })
+
+  /** Bumped as the window comes back into focus or into view, which may be the reader
+   *  seeing what came while they were away. */
+  let looked = $state(0)
+  $effect(() => {
+    const look = () => looked++
+    window.addEventListener('focus', look)
+    document.addEventListener('visibilitychange', look)
+    return () => {
+      window.removeEventListener('focus', look)
+      document.removeEventListener('visibilitychange', look)
+    }
+  })
+
+  // Read (#1064) once the reader has the chat in front of them with its end in view: on
+  // screen, in the window they are using, scrolled down to what is new. Not on a hover.
+  $effect(() => {
+    follows(looked, turns)
+    if (!id || !chat.unread.has(id) || !atEnd) return
+    if (document.visibilityState !== 'visible' || !document.hasFocus()) return
+    if (talk?.checkVisibility && !talk.checkVisibility()) return
+    void chat.saw(id)
+  })
 </script>
 
 <div class="room">
@@ -109,6 +142,12 @@
       </p>
     {/if}
 
+    {#if parent}
+      <button class="nib-row is-short up" onclick={() => void chat.openThread(parent.id)}>
+        <span class="nib-row-label">↰ {parent.title || t('Untitled')}</span>
+      </button>
+    {/if}
+
     {#if hello && recent.length}
       <!-- Codex's home: no greeting, the latest chats under their heading and the way to
            all of them, over a composer that is at the foot from the start. -->
@@ -116,11 +155,21 @@
         <h2 class="heading">{t('Chats')}</h2>
         <ul class="recent">
           {#each recent as one (one.id)}
+            {@const marks = {
+              unread: chat.unread.has(one.id),
+              running: chat.running.includes(one.id),
+            }}
             <li>
-              <button class="nib-row is-short" onclick={() => void chat.openThread(one.id)}>
+              <button
+                class="nib-row is-short"
+                class:is-unread={marks.unread}
+                aria-label={rowName(one.title, marks)}
+                onclick={() => void chat.openThread(one.id)}
+              >
+                {#if marks.unread}<UnreadDot />{/if}
                 <span class="nib-row-label">{one.title || t('Untitled')}</span>
-                {#if chat.running.includes(one.id)}<span class="dot"></span>{:else}<span
-                    class="nib-row-meta">{agoShort(one.updated, i18n.language)}</span
+                {#if marks.running}<span class="dot"></span>{:else}<span class="nib-row-meta"
+                    >{agoShort(one.updated, i18n.language)}</span
                   >{/if}
               </button>
             </li>
@@ -306,7 +355,18 @@
     color: var(--muted);
   }
 
+  /* Unread (#1064), as the list draws it (Threads.svelte). */
+  .is-unread .nib-row-label {
+    color: var(--text-strong);
+    font-weight: var(--weight-strong);
+  }
+
   /* A thread still at work: the list's ring (Threads.svelte). */
+  .up {
+    flex: none;
+    color: var(--muted);
+  }
+
   .dot {
     flex: none;
     width: 7px;

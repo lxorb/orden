@@ -75,6 +75,9 @@ export interface PaneDraft {
   tabs: Draft[]
   /** Index into `tabs`, not an id: ids are handed out fresh on every run. */
   active: number
+  /** Indices into `tabs`, the one used last first: what the pane comes back to when its
+   *  tab in front goes (#1079). Absent in a session written before it was kept. */
+  recent?: number[]
   linked: boolean
   /** Whether the pane lays its notes out as columns side by side. Absent in a session
    *  written by a build that had never heard of it, which reads back as off - and off is
@@ -269,6 +272,7 @@ function readPane(value: unknown): PaneDraft | null {
     id: value.id,
     tabs: readDrafts(value.tabs),
     active: isNumber(value.active) ? value.active : 0,
+    ...(Array.isArray(value.recent) ? { recent: value.recent.filter(isNumber) } : {}),
     linked: value.linked === true,
     stacked: value.stacked === true,
   }
@@ -418,13 +422,24 @@ export function frameOf(draft: FrameDraft, showing: (pane: PaneDraft) => string 
  *  the tabs of a pane, already drafted, since only the workspace knows them. */
 export function frameDraft(
   frame: Frame,
-  strip: (pane: { id: string; activeTabId: string | null }) => { tabs: Draft[]; active: number },
+  strip: (pane: { id: string; activeTabId: string | null }) => {
+    tabs: Draft[]
+    active: number
+    recent?: number[]
+  },
 ): FrameDraft {
   if (frame.kind === 'pane') {
-    const { tabs, active } = strip(frame)
+    const { tabs, active, recent } = strip(frame)
     return {
       kind: 'pane',
-      pane: { id: frame.id, tabs, active, linked: frame.linked, stacked: frame.stacked },
+      pane: {
+        id: frame.id,
+        tabs,
+        active,
+        ...(recent?.length ? { recent } : {}),
+        linked: frame.linked,
+        stacked: frame.stacked,
+      },
     }
   }
 

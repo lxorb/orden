@@ -1,5 +1,5 @@
 {
-  "proves": "an agent reaches any of the reader's web tabs, in another space too, and keeps it whatever the reader does there: the reader's press and words in the same page take nothing from it, a password field the reader is in still refuses the agent's keys, and the keyboard never moves",
+  "proves": "an agent reaches any of the reader's web tabs, in another space too, and keeps it whatever the reader does there: the reader's press and words in the same page take nothing from it, the agent's keys into a password field the reader is in ask first, as the grant's mode says (#1072), and the keyboard never moves",
   "doc": "7.3",
   "steps": [
     {
@@ -137,8 +137,7 @@
         "keys": "a"
       },
       "expect": {
-        "status": "error",
-        "code": "password_field"
+        "status": "needs_approval"
       }
     },
     {
@@ -148,8 +147,7 @@
         "keys": "Backspace"
       },
       "expect": {
-        "status": "error",
-        "code": "password_field"
+        "status": "needs_approval"
       }
     },
     {
@@ -160,8 +158,7 @@
         "text": "guessed"
       },
       "expect": {
-        "status": "error",
-        "code": "password_field"
+        "status": "needs_approval"
       }
     },
     {

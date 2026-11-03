@@ -30,7 +30,8 @@ export const jv: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Idin lengkap',
   'Auto mode': 'Mode otomatis',
-  'Full permissions: nothing is asked first': 'Idin lengkap: ora ana sing ditakoni dhisik',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Idin lengkap: ora ana sing ditakoni utawa dibalekake menyang sampeyan, sanajan mlebu, mbayar, ngirim utawa mbusak',
   // Import: Zen's tabs
   'Import from Zen': 'Impor saka Zen',
   'Containers stay in Zen': 'Kontainer tetep ana ing Zen',
@@ -2647,4 +2648,6 @@ export const jv: Dictionary = {
   'Trust this space again': 'Pitados papan iki maneh',
   'Agent instructions': 'Instruksi agen',
   "AGENTS is this space's agent instructions": 'AGENTS yaiku instruksi agen kanggo papan iki',
+  '{title}, unread': '{title}, durung diwaca',
+  '{title}, running': '{title}, lagi mlaku',
 }

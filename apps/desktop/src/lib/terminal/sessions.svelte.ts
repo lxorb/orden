@@ -279,8 +279,13 @@ class Session {
       rightClickSelectsWord: false,
       theme: terminalTheme(),
       // A link a program marked itself (OSC 8) is followed the way any other is, with the
-      // whole address it carries, and not through xterm.js's own confirm box.
-      linkHandler: { activate: (event, uri) => this.follow(event, uri) },
+      // whole address it carries, and not through xterm.js's own confirm box: by the
+      // press, like every link here (`pressLink`), so its activation does nothing.
+      linkHandler: {
+        activate: () => undefined,
+        hover: (_event, uri) => (this.pointed = uri),
+        leave: () => (this.pointed = null),
+      },
       ...(conpty ? { windowsPty: conpty } : {}),
     })
 
@@ -301,9 +306,7 @@ class Session {
     this.term.loadAddon(this.serializing)
     this.term.loadAddon(new Unicode11Addon())
     this.term.unicode.activeVersion = '11'
-    this.term.registerLinkProvider(
-      new AddressLinks(this.term, (event, uri) => this.follow(event, uri)),
-    )
+    this.term.registerLinkProvider(new AddressLinks(this.term, (uri) => (this.pointed = uri)))
 
     this.term.onData((data) => this.typed(data, false))
     this.term.onBinary((data) => this.typed(data, true))
@@ -346,6 +349,15 @@ class Session {
       },
       true,
     )
+    // A press that follows a link is the terminal's alone (#1083), as it is in iTerm2
+    // and Windows Terminal: taken before xterm.js sees it, so a program that asked for
+    // the mouse never hears it too and opens the address a second time, and xterm.js's
+    // own activation has nothing to act on.
+    this.host.addEventListener('mousedown', (event) => this.pressLink(event), true)
+    this.host.addEventListener('mouseup', (event) => this.releaseLink(event), true)
+    for (const name of ['click', 'auxclick'] as const) {
+      this.host.addEventListener(name, (event) => this.spentLink(event), true)
+    }
     this.host.addEventListener(
       'contextmenu',
       (event) => {
@@ -1202,12 +1214,45 @@ class Session {
     this.focus()
   }
 
-  /** A link: followed with the modifier a browser follows one with, into a tab of its
-   *  own beside this one. A plain click is the terminal's own - it is how a line is
-   *  selected. See new-tab.ts. */
-  private follow(event: MouseEvent, uri: string) {
-    const ask = tabAsk(event)
-    if (ask !== 'plain') workspace.openPage(uri, ask, this.tab.id)
+  /** The link the pointer is on, as xterm.js underlines it: an address found on the
+   *  screen (links.ts) or one a program marked itself (OSC 8). */
+  private pointed: string | null = null
+  /** The link a press that is following one went down on, until it is let go. */
+  private pressing: string | null = null
+  /** Whether the click the last link press makes is still to come, and is spent. */
+  private spending = false
+
+  /** A link pressed with the modifier a browser follows one with, or the middle button:
+   *  the press is the link's, here and nowhere else. A plain press is the terminal's own
+   *  - it is how a line is selected - and goes on as it always did. See new-tab.ts. */
+  private pressLink(event: MouseEvent) {
+    // A click the last one never made (let go somewhere else) is not owed any more.
+    this.spending = false
+    const uri = this.pointed
+    if (uri === null || tabAsk(event) === 'plain') return
+    event.preventDefault()
+    event.stopPropagation()
+    this.pressing = uri
+  }
+
+  /** Let go on the link it went down on: followed once, into a tab of its own beside
+   *  this one. Let go anywhere else: nothing, as a browser does. */
+  private releaseLink(event: MouseEvent) {
+    const uri = this.pressing
+    if (uri === null) return
+    this.pressing = null
+    this.spending = true
+    event.preventDefault()
+    event.stopPropagation()
+    if (this.pointed === uri) workspace.openPage(uri, tabAsk(event), this.tab.id)
+  }
+
+  /** The click a link press makes, which is the press's and nobody else's. */
+  private spentLink(event: MouseEvent) {
+    if (!this.spending) return
+    this.spending = false
+    event.preventDefault()
+    event.stopPropagation()
   }
 
   /** Where a key goes; see keys.ts. */

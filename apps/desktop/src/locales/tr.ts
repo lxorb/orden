@@ -31,7 +31,8 @@ export const tr: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Tam izinler',
   'Auto mode': 'Otomatik mod',
-  'Full permissions: nothing is asked first': 'Tam izinler: önceden hiçbir şey sorulmaz',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Tam izinler: hiçbir şey sorulmaz ya da size geri verilmez; oturum açma, ödeme, gönderme veya silme bile',
   // Import: Zen's tabs
   'Import from Zen': 'Zen’den içe aktar',
   'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
@@ -2679,4 +2680,6 @@ export const tr: Dictionary = {
   'Trust this space again': 'Bu alana yeniden güven',
   'Agent instructions': 'Ajan talimatları',
   "AGENTS is this space's agent instructions": 'AGENTS bu alanın ajan talimatlarıdır',
+  '{title}, unread': '{title}, okunmamış',
+  '{title}, running': '{title}, çalışıyor',
 }

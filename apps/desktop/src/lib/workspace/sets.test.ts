@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Frame, pane, panesIn } from './pane-tree'
+import { successor } from './recency'
 import {
   focusIn,
   GLOBAL,
@@ -115,21 +116,14 @@ describe('a frame put right after its tabs changed out of sight', () => {
     expect(frame).toMatchObject({ kind: 'pane', id: 'only', activeTabId: null })
   })
 
-  test('a pane whose tab in front went shows the one in front last, else its first', () => {
+  test('a pane whose tab in front went shows the one used last, by the one rule (#1079)', () => {
     const strips: Record<string, string[]> = { left: ['b', 'x'], right: ['c', 'd'] }
-    const lastUsed = (strip: readonly string[]) => (strip.includes('x') ? 'x' : null)
-    const [left, right] = panesIn(tidied(two(), (id) => strips[id] ?? [], lastUsed))
+    const next = (strip: readonly string[]) => successor(strip, ['x'])
+    const [left, right] = panesIn(tidied(two(), (id) => strips[id] ?? [], next))
     expect(left?.activeTabId).toBe('x')
+    // Untouched: none of its tabs has been in front, and where the one in front was is
+    // not known any more, so the end of the strip - never the first for being first.
     expect(right?.activeTabId).toBe('c')
-
-    const [first] = panesIn(
-      tidied(
-        two(),
-        (id) => strips[id] ?? [],
-        () => null,
-      ),
-    )
-    expect(first?.activeTabId).toBe('b')
   })
 
   /** Ctrl+D showed nothing in that pane as the set was left, and it comes back so. */

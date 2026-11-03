@@ -35,7 +35,7 @@ import type { ReaderTab } from '../verbs'
 import { ACTIVE_FOR } from '../ui/marks'
 import { TYPING } from '../docs/edit'
 import { notes } from '../docs'
-import { asked } from './asks'
+import { asked, readersOwn } from './asks'
 import { type Call, done, flag, maybe, need, needScope, text, writerOf } from './call'
 import { Refused } from './problem'
 import {
@@ -489,7 +489,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
     case 'close': {
       const tab = tabNamed(call)
-      if (tab.pinned) throw new Refused('by_hand', "a pinned tab is the reader's to close")
+      if (tab.pinned) readersOwn(call, "a pinned tab is the reader's to close")
       if (front(tab)) needScope(call, 'workspace.focus', 'closing a tab the reader can see')
 
       workspace.close(tab.id)

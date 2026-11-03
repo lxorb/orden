@@ -27,8 +27,9 @@ export interface Host {
   adopt(thread: Thread, open?: boolean): void
   touched(thread: Thread): void
   /** A command's own line at the end of a thread, never sent to the model: words, or
-   *  under another code what the thread draws its own way (`tasks`). */
-  line(thread: Thread, text: string, code?: NoticeCode): void
+   *  under another code what the thread draws its own way (`tasks`); `threads`, the
+   *  helpers' threads it reports on, each opened from the line. */
+  line(thread: Thread, text: string, code?: NoticeCode, threads?: readonly string[]): void
   /** One question to the thread's provider and model, outside the thread. */
   ask(thread: Thread, messages: readonly Message[], signal?: AbortSignal): Promise<string>
 }
@@ -109,14 +110,18 @@ export function hostOf(panel: Panel): Host {
       else void keepThread(thread).catch(() => undefined)
     },
     touched,
-    line(thread, text, code = 'command') {
+    line(thread, text, code = 'command', threads = []) {
       thread.turns.push({
         id: crypto.randomUUID(),
         role: 'model',
         at: Date.now(),
-        parts: [{ kind: 'notice', code, text }],
+        parts: [
+          { kind: 'notice', code, text, ...(threads.length ? { threads: [...threads] } : {}) },
+        ],
       })
       thread.updated = Date.now()
+      if (panel.answered) panel.answered(thread)
+      else thread.answered = thread.updated
       touched(thread)
     },
     async ask(thread, messages, signal) {

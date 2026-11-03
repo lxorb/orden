@@ -167,7 +167,7 @@
   },
   {
     "name": "browser_type",
-    "description": "Type words into a field by ref. `replace` empties it first, `submit` presses Enter after. Refused on password fields: signing in is browser_takeover.",
+    "description": "Type words into a field by ref. `replace` empties it first, `submit` presses Enter after. A password field or a sign-in form asks the reader first where your mode asks about signing in.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -339,13 +339,15 @@
   },
   {
     "name": "browser_dialog",
-    "description": "Answer the alert, confirm or prompt the page is holding: accept (OK) or not, with `text` for a prompt. Every answer says when one is waiting.",
+    "description": "Answer the dialog the page holds: accept or not. `text` answers a prompt or names a certificate (else the first); a sign_in takes `username` and `password`.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "tab": { "type": "string" },
         "accept": { "type": "boolean" },
-        "text": { "type": "string" }
+        "text": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" }
       },
       "required": ["tab", "accept"]
     }
@@ -401,7 +403,7 @@
   },
   {
     "name": "browser_takeover",
-    "description": "Ask the reader to do one step in a tab: sign in, a captcha, a payment. `reason` is the one line they read. The tab stays yours: browser_wait for the page to change, or approval_status says done.",
+    "description": "Ask the reader to do one step in a tab that only a person can: a captcha, a code sent to their phone. Under Full permissions nothing is handed over: do the step yourself. `reason` is the one line they read. The tab stays yours: browser_wait for the page to change, or approval_status says done.",
     "inputSchema": {
       "type": "object",
       "properties": { "tab": { "type": "string" }, "reason": { "type": "string" } },

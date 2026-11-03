@@ -492,9 +492,16 @@ pub struct AnswerDialog {
     pub tab: TabId,
     /// OK, or Cancel.
     pub accept: bool,
-    /// What a `prompt` is answered with.
+    /// What a `prompt` is answered with; for a `certificate`, words of the subject of the
+    /// one to present, the first offered when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
+    /// The user name a `sign_in` box is answered with.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub username: Option<String>,
+    /// The password a `sign_in` box is answered with.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
 }
 
 /// `browser_downloads`.
@@ -753,7 +760,8 @@ pub struct Dialog {
     /// The page that raised it.
     pub url: String,
     /// How long it has been open, in milliseconds. An `alert` is accepted after 30 s
-    /// unanswered, and a `confirm`, a `prompt` or a `beforeunload` dismissed.
+    /// unanswered, and a `confirm`, a `prompt`, a `beforeunload`, a sign-in box or a
+    /// certificate request dismissed.
     pub open_ms: u64,
 }
 
@@ -769,6 +777,19 @@ pub enum DialogKind {
     Prompt,
     /// Leaving a page that asked to be asked.
     Beforeunload,
+    /// The site's own sign-in box, HTTP authentication: answered with a user name and a
+    /// password, as signing in is (#1072).
+    SignIn,
+    /// The site asking for a client certificate: answered with one of those offered, as
+    /// signing in is (#1072).
+    Certificate,
+}
+
+impl DialogKind {
+    /// Whether answering it yes signs in, which asks as the mode says (#1072).
+    pub fn signs_in(self) -> bool {
+        matches!(self, DialogKind::SignIn | DialogKind::Certificate)
+    }
 }
 
 /// Every answer, whatever the verb.
@@ -1150,7 +1171,7 @@ pub enum Category {
     Publishing,
     /// Delete, remove, erase: for good.
     Deleting,
-    /// A password field or a sign-in form, which is a takeover.
+    /// A password field or a sign-in form: typing into it, or signing in (#1072).
     SigningIn,
     /// `write_setting`.
     Settings,

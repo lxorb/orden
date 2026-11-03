@@ -399,7 +399,7 @@ fn failed(code: &str, message: &str) -> String {
         "no_such_ref" => "Take a new browser_snapshot and use its refs.",
         "no_such_tab" => "browser_tabs lists the browser's tabs, get_context every tab of Orden's.",
         "stopped" => "The reader pressed stop: stop working and tell the user.",
-        "password_field" => "Never type a password: ask the reader with browser_takeover.",
+        "password_field" => "Your mode keeps sign-ins and password fields to the reader; under Full permissions they go ahead.",
         "not_granted" => "The reader has not granted this; they can in Orden's Settings > Agents.",
         "denied" => "The reader said no: do not ask again for the same thing.",
         "limit" => "Close tabs you no longer need, or slow down.",

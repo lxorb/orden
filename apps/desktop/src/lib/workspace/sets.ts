@@ -77,7 +77,7 @@ export function ownerOf(
 export function tidied(
   frame: Frame,
   strip: (paneId: string) => readonly string[],
-  last: (strip: readonly string[]) => string | null,
+  next: (strip: readonly string[]) => string | null,
 ): Frame {
   let out = frame
   for (const one of panesIn(frame)) {
@@ -87,7 +87,7 @@ export function tidied(
   for (const one of panesIn(out)) {
     const tabs = strip(one.id)
     if (one.activeTabId === null ? tabs.length > 0 : tabs.includes(one.activeTabId)) continue
-    one.activeTabId = last(tabs) ?? tabs[0] ?? null
+    one.activeTabId = next(tabs)
   }
 
   return out

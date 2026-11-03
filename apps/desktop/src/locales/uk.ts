@@ -31,7 +31,8 @@ export const uk: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Повний доступ',
   'Auto mode': 'Автоматичний режим',
-  'Full permissions: nothing is asked first': 'Повний доступ: нічого не питається заздалегідь',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Повний доступ: нічого не питається і не передається вам, навіть вхід, оплата, надсилання чи видалення',
   // Import: Zen's tabs
   'Import from Zen': 'Імпорт з Zen',
   'Containers stay in Zen': 'Контейнери залишаються в Zen',
@@ -2751,4 +2752,6 @@ export const uk: Dictionary = {
   'Trust this space again': 'Знову довіряти цьому простору',
   'Agent instructions': 'Інструкції для агентів',
   "AGENTS is this space's agent instructions": 'AGENTS: інструкції для агентів цього простору',
+  '{title}, unread': '{title}, не прочитано',
+  '{title}, running': '{title}, виконується',
 }

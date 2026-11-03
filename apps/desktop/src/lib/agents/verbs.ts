@@ -205,7 +205,7 @@ export type Code =
 
 /** A dialog a page is holding open. */
 export interface Dialog {
-  kind: 'alert' | 'confirm' | 'prompt' | 'beforeunload'
+  kind: 'alert' | 'confirm' | 'prompt' | 'beforeunload' | 'sign_in' | 'certificate'
   message: string
   default_text?: string
   url: string

@@ -276,13 +276,16 @@ impl Grant {
         grant
     }
 
-    /// Whether it holds a scope.
+    /// Whether it holds a scope: every one under Full permissions (#1072), which refuses
+    /// nothing on the grounds of what was granted.
     pub fn holds(&self, scope: Scope) -> bool {
-        self.scopes.contains(&scope)
+        self.mode == Mode::Autonomous || self.scopes.contains(&scope)
     }
 
-    /// Whether a category asks for this agent: on unless the reader turned it off, and never
-    /// for an autonomous one (#372: Full permissions asks for nothing, paying included).
+    /// The one place a category's question is decided (#1072): on unless the reader turned
+    /// it off, and never for an autonomous one (#372: Full permissions asks for nothing,
+    /// paying and signing in included). Every guard that would ask, refuse or hand a step
+    /// to the reader reads this, or `asks_nothing`, rather than a rule of its own.
     pub fn asks(&self, category: Category) -> bool {
         let on = self.asks.get(&category).copied().unwrap_or(true);
         on && self.mode != Mode::Autonomous

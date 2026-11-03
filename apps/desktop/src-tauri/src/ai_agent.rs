@@ -105,7 +105,8 @@ fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
 
 /// The grant as a call in `mode` meets the policy: Approve asks before every change, and
 /// about every category, whatever was switched off; Auto as the grant is, so what the
-/// reader set in Settings > AI > Access is what asks; Full asks for nothing at all (#372);
+/// reader set in Settings > AI > Access is what asks; Full asks for nothing at all and
+/// holds every scope (#372, #1072);
 /// Plan, which changes nothing but its own note, as the grant is.
 fn supervised(mut grant: Grant, mode: Mode) -> Grant {
     match mode {
@@ -113,7 +114,12 @@ fn supervised(mut grant: Grant, mode: Mode) -> Grant {
             grant.mode = GrantMode::Confirm;
             grant.asks.clear();
         }
-        Mode::Full => grant.mode = GrantMode::Autonomous,
+        // Full permissions means full permissions (#1072): every scope, scripts on every
+        // site, and nothing asked, refused on the grounds of the grant or handed back.
+        Mode::Full => {
+            grant.mode = GrantMode::Autonomous;
+            grant.scopes = Scope::ALL.into_iter().collect();
+        }
         Mode::Auto | Mode::Plan => {}
     }
     grant
@@ -213,9 +219,10 @@ fn window_verbs(app: &AppHandle) -> Option<BTreeSet<String>> {
     )
 }
 
-/// The tools a mode lists for a grant, as `tools/list` would write them.
+/// The tools a mode lists for a grant, as `tools/list` would write them: the grant as the
+/// mode lays it over the call (`supervised`), so Full permissions lists every tool.
 fn listed(grant: &Grant, window: Option<&BTreeSet<String>>, mode: Mode) -> Vec<Value> {
-    host::listed(grant, window)
+    host::listed(&supervised(grant.clone(), mode), window)
         .into_iter()
         .filter(|tool| in_mode(mode, &tool.name, host::reads_only(tool)))
         .map(host::shown)
@@ -392,13 +399,15 @@ mod tests {
     #[test]
     fn the_permission_modes_list_everything_the_grant_reaches_and_no_more() {
         let grant = grant();
-        let agent = names(Mode::Full, &grant);
+        let agent = names(Mode::Auto, &grant);
         assert_eq!(names(Mode::Approve, &grant), agent);
-        assert_eq!(names(Mode::Auto, &grant), agent);
         assert!(agent.contains("edit_note") && agent.contains("browser_click"));
         // Emil's defaults leave scripts and settings out; the terminal is in.
         assert!(!agent.contains("browser_evaluate") && agent.contains("type_terminal"));
         assert!(names(Mode::Plan, &grant).is_subset(&agent));
+        // Full permissions holds every scope, so lists scripts too (#1072).
+        let full = names(Mode::Full, &grant);
+        assert!(agent.is_subset(&full) && full.contains("browser_evaluate"));
         for verb in [
             "create_note",
             "create_folder",
@@ -423,6 +432,10 @@ mod tests {
         assert!(agent.asks_nothing());
         for category in ASKED {
             assert!(!agent.asks(category), "{category:?}");
+        }
+        // Nor refused on the grounds of the grant: every scope (#1072).
+        for scope in Scope::ALL {
+            assert!(agent.holds(scope), "{scope:?}");
         }
     }
 

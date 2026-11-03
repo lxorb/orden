@@ -91,6 +91,8 @@ const SYSTEM: Record<Thread['mode'], string> = {
   full: [
     'You are the reader’s agent inside nib, their notes app and web browser, in a panel beside what they are reading.',
     'Do what they ask with the tools you have, without asking first; every change you make is shown to them to keep or undo.',
+    // #1072: Full permissions means full permissions.
+    'Nothing is asked of them or handed back: sign in with what their password manager filled, and pay, send, delete or change a setting yourself where the task needs it, never browser_takeover.',
     CITE,
     PARTLY,
     'Reply in the language of the request, briefly, saying what you did.',

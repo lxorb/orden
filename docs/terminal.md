@@ -438,7 +438,12 @@ word, as it does in every terminal there is. Cmd+W closes the tab on a Mac.
   sign-in link, is still one link: a row full to its last column runs on into the next
   when that goes on in address characters (iTerm2's right-edge heuristic), and copying
   part of it drops the breaks. A link the program marked (OSC 8) is followed the same
-  way. Local and online terminals alike; see `lib/terminal/links.ts`.
+  way. Local and online terminals alike; see `lib/terminal/links.ts`. One press is one
+  tab (#1083): the press that follows a link is the terminal's alone, taken before
+  xterm.js sees it, so a program that asked for the mouse (Claude Code, Codex, tmux,
+  vim) never hears it as well and opens the address a second time, and xterm.js's own
+  activation does nothing (`pressLink` in `sessions.svelte.ts`), as in iTerm2 and
+  Windows Terminal.
 - **A row of the file list** dropped on a terminal is its path at the prompt, spelled for
   the shell: quoted where it has a space, `/mnt/c/...` in WSL and `/c/...` in Git Bash -
   VS Code's drop into its terminal. See `spokenPath` in `lib/terminal/paste.ts`.

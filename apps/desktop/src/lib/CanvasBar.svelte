@@ -43,6 +43,7 @@
   import { hand } from './canvas/hand.svelte'
   import { DEFAULT_INK, shownInk } from './canvas/palette'
   import { nearestDock, pens, upright } from './canvas/pens.svelte'
+  import { frameOf } from './pane-corners.svelte'
   import { type Tool } from './canvas/pointer'
   import { tick } from './canvas/tick'
   import { shortcuts } from './shortcuts.svelte'
@@ -288,7 +289,12 @@
       ? { x: box.left + box.width / 2, y: box.top + box.height / 2 }
       : { x: event.clientX, y: event.clientY }
 
-    pens.dockTo(nearestDock(middle, window.innerWidth, window.innerHeight))
+    // The edges are the canvas's own, inside its pane, never the window's: with a side
+    // open the window's right edge is the side's, not the canvas's (#1076).
+    const frame = frameOf(cluster)
+    pens.dockTo(
+      nearestDock({ x: middle.x - frame.left, y: middle.y - frame.top }, frame.width, frame.height),
+    )
     // And the offset let go of, which is the spring: the bar is already at its new
     // edge, so easing the carry back to nothing is the movement that says so.
     carried = null

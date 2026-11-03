@@ -31,7 +31,8 @@ export const gsw: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Volli Berächtigunge',
   'Auto mode': 'Automatische Modus',
-  'Full permissions: nothing is asked first': 'Volli Berächtigunge: Es wird nüt vorher gfrogt',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Volli Berächtigunge: Nüt wird gfrogt oder dir zruggäh, au nöd Aamälde, Zahle, Schicke oder Lösche',
   // Import: Zen's tabs
   'Import from Zen': 'Us Zen importiere',
   'Containers stay in Zen': 'D Container blibe im Zen',
@@ -2685,4 +2686,6 @@ export const gsw: Dictionary = {
   'Trust this space again': 'Däm Bereich wider vertroue',
   'Agent instructions': 'Aawiisige für Agänte',
   "AGENTS is this space's agent instructions": 'AGENTS sind d Agänte-Aawiisige vo däm Beriich',
+  '{title}, unread': '{title}, ungläse',
+  '{title}, running': '{title}, lauft',
 }
