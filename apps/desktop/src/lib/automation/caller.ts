@@ -16,6 +16,9 @@ import type { Scope } from '../agents/verbs'
 /** What the window needs of an agent's grant. The crate holds the rest. */
 interface Agent {
   id: string
+  /** Whether it is a provider's own grant for the AI panel, by the crate's mark on it
+   *  and never its name (`built_in` in src-tauri/src/agents/grants.rs). */
+  builtIn: boolean
   name: string
   scopes: readonly string[]
   /** The spaces it may reach, by name; a space it may not reach does not exist to it. */
@@ -61,10 +64,6 @@ function texts(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
 }
 
-/** What every built-in grant's id starts with: the AI panel's own, `grant_id` in
- *  src-tauri/src/ai_agent.rs. */
-export const BUILT_IN_GRANT = 'nib-'
-
 /** The caller a request names: the reader when it names nobody, an agent otherwise. A
  *  thread is the AI panel's to say: an outside agent naming one would run its helper in
  *  that thread's mode, and read in that thread's space. */
@@ -73,13 +72,13 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
 
   const grant = isRecord(told) ? told : {}
   const id = typeof grant.id === 'string' && grant.id ? grant.id : 'agent'
+  const builtIn = grant.built_in === true
   const threadOf =
-    id.startsWith(BUILT_IN_GRANT) && typeof thread === 'string' && /^[\w-]{1,80}$/.test(thread)
-      ? { thread }
-      : {}
+    builtIn && typeof thread === 'string' && /^[\w-]{1,80}$/.test(thread) ? { thread } : {}
   return {
     agent: {
       id,
+      builtIn,
       name: typeof grant.name === 'string' && grant.name ? grant.name : id,
       scopes: texts(grant.scopes),
       spaces: grant.spaces === 'all' ? 'all' : texts(grant.spaces),

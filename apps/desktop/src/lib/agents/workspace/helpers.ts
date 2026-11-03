@@ -14,7 +14,6 @@
  *  thing it was narrowed by. */
 
 import type { AgentAnswer } from '../../automation/caller'
-import { BUILT_IN_GRANT } from '../../automation/caller'
 import { type Mode, modeOfGrant } from '../../ai/modes'
 import type { Scope } from '../verbs'
 import { type Call, done } from './call'
@@ -41,7 +40,7 @@ const BUILT_IN: readonly Scope[] = [
  *  AI panel's own sessions are that grant already. */
 function reachesAsFar(call: Call): void {
   const agent = call.caller.agent
-  if (!agent || agent.id.startsWith(BUILT_IN_GRANT)) return
+  if (!agent || agent.builtIn) return
 
   const whole =
     agent.spaces === 'all' &&

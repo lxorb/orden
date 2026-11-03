@@ -362,7 +362,7 @@ fn as_orden(grant: &mut Grant) {
 /// label only the app gives one. An outside client's id is made from its own name, so one
 /// called `nib-foo` holds no such label, and keeps its grant without the privileges.
 fn was_built_in(grant: &Grant) -> bool {
-    false
+    grant.id.starts_with("nib-") && grant.client.starts_with(SIDEBAR)
 }
 
 /// A grant kept from before helpers, given them as a new grant of its kind would be: the
@@ -484,6 +484,7 @@ impl Grants {
                             // settings.
                             client: one.grant.client.clone(),
                             created: one.grant.created,
+                            built_in: one.grant.built_in,
                             // A call's mode, never a grant's own.
                             mode: if grant.mode == Mode::Autonomous {
                                 one.grant.mode
@@ -563,6 +564,9 @@ fn read(path: &std::path::Path) -> Vec<Kept> {
                     as_orden(&mut one.grant);
                 }
             }
+            for one in &mut agents {
+                one.grant.built_in |= was_built_in(&one.grant);
+            }
             agents
         })
         .unwrap_or_default()
@@ -599,10 +603,10 @@ fn free_id(client: &str, taken: &[&str]) -> String {
     }
     let stem = stem.trim_end_matches('-');
     let stem = if stem.is_empty() { "agent" } else { stem };
-    // `nib-` is the AI panel's own grants' (`grant_id` in ai_agent.rs), which the window
-    // lets name a thread and start a helper: nothing somebody else names itself.
+    // `nib` and what numbering makes of it are the AI panel's own grants' to be called
+    // (`grant_id` in ai_agent.rs): nothing somebody else names itself.
     let kept = format!("agent-{stem}");
-    let stem = if stem.starts_with("nib-") {
+    let stem = if stem == "nib" || stem.starts_with("nib-") {
         kept.as_str()
     } else {
         stem
