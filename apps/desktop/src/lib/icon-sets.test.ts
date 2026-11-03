@@ -1,6 +1,17 @@
 import { describe, expect, test } from 'vitest'
 import { EMOJI_SET, LUCIDE, rankIcons } from './icons'
-import { FLAT_COLOUR, ICON_SETS, setNamed } from './icon-sets'
+import { BESIDE, LOOSE, SAME } from './flat-colour-places'
+import {
+  DEFAULT_TAB,
+  FLAT_COLOUR,
+  ICON_SETS,
+  ICON_TABS,
+  type LoadedSet,
+  mergeSets,
+  setNamed,
+  tabCredit,
+  tabNamed,
+} from './icon-sets'
 
 /** The three sets, loaded for real. Each is a chunk of its own in the app and a plain
  *  import here, which is the point of the test: the data has to be the shape the picker
@@ -194,5 +205,158 @@ describe('the stroked set', () => {
 
     expect(rankIcons(held.entries, '', 3)).toEqual(held.entries.slice(0, 3).map((one) => one.name))
     expect(rankIcons(held.entries, '  ', 1)).toEqual(['AArrowDown'])
+  })
+})
+
+/** Two tabs over three sets (#1071): the emoji and the coloured drawings are both
+ *  pictures in their own colours, and a reader could not tell their tabs apart. */
+describe('the tabs of the picker', () => {
+  test('are a line and a picture, and every set is in exactly one', () => {
+    expect(ICON_TABS.map((one) => one.sets)).toEqual([[LUCIDE], [EMOJI_SET, FLAT_COLOUR]])
+    expect(ICON_TABS.flatMap((one) => one.sets).sort()).toEqual(
+      ICON_SETS.map((one) => one.id).sort(),
+    )
+    expect(ICON_TABS.filter((one) => one.tinted)).toEqual([DEFAULT_TAB])
+    expect(DEFAULT_TAB.sets).toEqual([LUCIDE])
+  })
+
+  /** What the picker remembered before is a set's id, so a reader who was last in
+   *  "Colour" comes back to the tab the drawings are in now. */
+  test('a remembered set opens the tab that holds it', () => {
+    expect(tabNamed(FLAT_COLOUR)?.id).toBe(EMOJI_SET)
+    expect(tabNamed(EMOJI_SET)?.id).toBe(EMOJI_SET)
+    expect(tabNamed(LUCIDE)?.id).toBe(LUCIDE)
+    expect(tabNamed('some-future-set')).toBeNull()
+  })
+
+  test('and a tab credits whoever drew what it shows', () => {
+    expect(tabCredit(tabNamed(EMOJI_SET)!)).toBe(setNamed(FLAT_COLOUR)!.credit)
+    expect(tabCredit(DEFAULT_TAB)).toContain('ISC')
+  })
+})
+
+describe('the places of the coloured drawings among the emoji', () => {
+  test('name every drawing exactly once, beside emoji and in groups that exist', async () => {
+    const [emoji, flat] = await Promise.all([
+      setNamed(EMOJI_SET)!.load(),
+      setNamed(FLAT_COLOUR)!.load(),
+    ])
+    const named = [
+      ...Object.keys(SAME),
+      ...Object.values(BESIDE).flatMap((names) => names.split(' ')),
+      ...Object.values(LOOSE).flatMap((names) => names.split(' ')),
+    ]
+    const emojis = new Set(emoji.entries.map((one) => one.name))
+
+    expect([...named].sort()).toEqual([...flat.entries.map((one) => one.name)].sort())
+    for (const one of [...Object.values(SAME), ...Object.keys(BESIDE)]) {
+      expect(emojis.has(one), one).toBe(true)
+    }
+    for (const group of Object.keys(LOOSE)) {
+      expect(emoji.groups.map((one) => one.label)).toContain(group)
+    }
+  })
+})
+
+describe('the picture tab', () => {
+  const merged = async () => {
+    const parts = await Promise.all(
+      tabNamed(EMOJI_SET)!.sets.map(async (id) => ({ id, held: await setNamed(id)!.load() })),
+    )
+    return mergeSets(parts)
+  }
+
+  test('is the emoji s groups, with the drawings in them and every icon once', async () => {
+    const held = await merged()
+    const names = held.entries.map((one) => one.name)
+
+    expect(held.groups.map((one) => one.label)).toEqual(
+      (await setNamed(EMOJI_SET)!.load()).groups.map((one) => one.label),
+    )
+    expect(new Set(names).size).toBe(names.length)
+    // The order the arrows walk is the order the groups show.
+    expect(names).toEqual(held.groups.flatMap((one) => one.names))
+  })
+
+  /** By topic rather than in two blocks: the pie chart sits after the bar chart, the
+   *  SIM card after the phone. */
+  test('puts a drawing beside what it is about', async () => {
+    const objects = (await merged()).groups.find((one) => one.label === 'Objects')!.names
+    const at = (name: string) => objects.indexOf(name)
+
+    // Straight after it, in the set's own order, and before the next emoji.
+    const run = (emoji: string) => {
+      const from = at(emoji) + 1
+      let to = from
+      while (objects[to]?.startsWith(`${FLAT_COLOUR}:`)) to++
+      return objects.slice(from, to)
+    }
+
+    expect(run('📊')).toContain(`${FLAT_COLOUR}:pie-chart`)
+    expect(run('📱')).toContain(`${FLAT_COLOUR}:sim-card`)
+    // And the ones with no neighbour at the end of their group.
+    const loose = LOOSE.Objects!.split(' ').map((name) => `${FLAT_COLOUR}:${name}`)
+    expect([...objects.slice(-loose.length)].sort()).toEqual([...loose].sort())
+  })
+
+  /** The same calendar twice is one too many. The emoji stays, because the tab is two
+   *  thousand of those, and takes the drawing's words with it. */
+  test('shows a picture both sets draw once, as the emoji', async () => {
+    const held = await merged()
+    const names = new Set(held.entries.map((one) => one.name))
+
+    for (const name of Object.keys(SAME)) expect(names.has(`${FLAT_COLOUR}:${name}`)).toBe(false)
+    expect(names.has('📅')).toBe(true)
+    expect(rankIcons(held.entries, 'calendar', 2)).toContain('📅')
+  })
+
+  test('is searched as one, whichever set an answer is from', async () => {
+    const held = await merged()
+
+    expect(rankIcons(held.entries, 'rocket', 4)).toContain('🚀')
+    expect(rankIcons(held.entries, 'pie chart', 4)).toContain(`${FLAT_COLOUR}:pie-chart`)
+    expect(rankIcons(held.entries, 'directory', 8)).toContain('📁')
+  })
+
+  /** A drawing chosen before the tabs were merged keeps drawing: what it wrote is
+   *  still what its set draws, even when the grid shows its twin instead. */
+  test('leaves a drawing already chosen drawable', async () => {
+    const flat = await setNamed(FLAT_COLOUR)!.load()
+    expect(flat.shape('calendar')?.kind).toBe('drawn')
+  })
+})
+
+describe('merging sets', () => {
+  const set = (names: string[], groups: LoadedSet['groups'] = []): LoadedSet => ({
+    entries: names.map((name) => ({ name, words: name })),
+    groups,
+    shape: () => null,
+  })
+
+  /** A drawing whose place names nothing the frame holds is still shown, in a group
+   *  of its own, rather than dropped. */
+  test('keeps an icon whose place is nowhere', () => {
+    const frame = set(['a', 'b'], [{ label: 'Letters', names: ['a', 'b'] }])
+    const extra = {
+      ...set(['x', 'y']),
+      place: (name: string) => (name === 'x' ? { after: 'a' } : null),
+    }
+
+    const held = mergeSets([
+      { id: EMOJI_SET, held: frame },
+      { id: 'later', held: extra },
+    ])
+
+    expect(held.groups).toEqual([
+      { label: 'Letters', names: ['a', 'later:x', 'b'] },
+      { label: 'later', names: ['later:y'] },
+    ])
+  })
+
+  test('and without a frame is the sets one after another, under what they write', () => {
+    const held = mergeSets([{ id: LUCIDE, held: set(['BookOpen']) }])
+
+    expect(held.groups).toEqual([])
+    expect(held.entries.map((one) => one.name)).toEqual(['book-open'])
   })
 })

@@ -70,7 +70,7 @@ export async function createFile(
   call: Call,
   place: Place,
   kind: Exclude<FileKind, 'note'>,
-  make: (place: Place, relative: string, words: string, open: boolean) => Promise<object>,
+  make: (place: Place, relative: string, words: string, open: Call | null) => Promise<object>,
 ): Promise<AgentAnswer> {
   const relative = fileNamed(judgedForWriting(need(call, 'path')), kind)
   const path = onDisk(place, relative)
@@ -97,7 +97,7 @@ export async function createFile(
 
   // Said with the space, which a call that named none does not know (notes.ts).
   return done({
-    ...(await make(place, relative, words, flag(call, 'open'))),
+    ...(await make(place, relative, words, flag(call, 'open') ? call : null)),
     space: place.space.id,
   })
 }

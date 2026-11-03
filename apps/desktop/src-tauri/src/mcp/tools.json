@@ -394,7 +394,7 @@
   },
   {
     "name": "browser_show",
-    "description": "Ask to make one of your tabs a tab of the reader's, beside the one in front. Asks first, because it changes their screen.",
+    "description": "Make one of your tabs a tab of the reader's, behind the one in front with your mark on it, for them to look at when they choose. Asks first where your mode asks.",
     "inputSchema": {
       "type": "object",
       "properties": { "tab": { "type": "string" } },
@@ -1036,7 +1036,7 @@
   },
   {
     "name": "workspace_tabs",
-    "description": "The reader's tabs. open: a `path`, a `url` or a `view` (graph, scratchpad, settings at `section`). new: a tab of `kind` with no file (a note with `content`, a web tab with `url`, a terminal with `shell` and `cwd`). rename: a tab's `name`, a file's renamed with its links. save: an unsaved tab written at `path`. close, split, focus. Tabs open behind the reader's; `background` false, focus, split and closing the tab in front need workspace.focus.",
+    "description": "The reader's tabs. open: a `path`, a `url` or a `view` (graph, scratchpad, settings at `section`). new: a tab of `kind` with no file (a note with `content`, a web tab with `url`, a terminal with `shell` and `cwd`). rename: a tab's `name`, a file's renamed with its links. save: an unsaved tab written at `path`. close, split, focus. Tabs open behind the reader's, and nothing you do moves their screen, keyboard or scroll; `background` false, focus, split and closing the tab in front need workspace.focus and are only for when the reader asked, in their message, to be shown it.",
     "inputSchema": {
       "type": "object",
       "properties": {
