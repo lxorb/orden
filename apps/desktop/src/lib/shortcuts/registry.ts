@@ -720,14 +720,14 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Alt-o',
     run: () => workspace.panes.focusNext(),
   },
-  // Every tab at once, as cards: up, beside the two splits, the way three fingers swipe
-  // up for the windows (issue #331). The key again puts them away.
+  // Every tab at once, as windows on a canvas: Alt tapped twice, as Shift twice is the
+  // palette (issue #331). The key again puts them away; see overview/Overview.svelte.
   {
     id: 'app.tab-overview',
     label: () => t('Tabs'),
     category: 'view',
     scope: 'app',
-    key: 'Mod-Alt-ArrowUp',
+    key: 'Alt Alt',
     run: () => toggleTabOverview(),
   },
   // Shift twice, JetBrains' key and Emil's, and Ctrl+O. See tapped.ts.

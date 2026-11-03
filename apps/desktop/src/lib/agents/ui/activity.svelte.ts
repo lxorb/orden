@@ -73,8 +73,10 @@ export class Activity {
     const now = Date.now()
     this.meanwhile?.push(event)
     heard(this.seen, event, now)
-    // A Show nobody was asked about - an agent with Full permissions asks nothing, its
-    // tab shown as it says so (#372) - is put up by the window that holds the pages.
+    // A Show nobody was asked about - an agent with Full permissions asks nothing (#372) -
+    // is put up by the window that holds the pages, behind the tab in front: the agent
+    // never takes the reader's screen (#1070). The reader goes to it from its mark or
+    // the panel.
     const said = event.kind === 'answered' ? event.approval : null
     if (
       said?.answer === 'allowed' &&
@@ -83,7 +85,7 @@ export class Activity {
       this.holds &&
       !this.answering.has(said.id)
     ) {
-      void this.show(said.tab)
+      void this.show(said.tab, false)
     }
     if (event.kind === 'closed') this.frames = without(this.frames, event.id)
     this.now = now
@@ -188,18 +190,24 @@ export class Activity {
     this.answering.add(approval.id)
     const answered = await this.source.answer(approval.id, allow, always)
     if (answered.answer === 'allowed' && answered.category === 'showing' && answered.tab) {
-      await this.show(answered.tab)
+      await this.show(answered.tab, true)
     }
   }
 
   /** An agent's tab made a tab of the reader's, beside the one in front, without
-   *  loading it again (6.7). It goes on being acted in, framed. */
-  async show(agentTab: string): Promise<void> {
+   *  loading it again (6.7). It goes on being acted in, framed. In front only where the
+   *  reader pressed for it (`front`: its thumbnail, their own Allow); one the agent shows
+   *  of itself lands behind, wearing the agent's mark (#1070). */
+  async show(agentTab: string, front = true): Promise<void> {
     const held = this.seen.tabs[agentTab]
     if (!held || this.shown.has(agentTab)) return
     this.shown.add(agentTab)
 
-    const id = workspace.openPage(held.url, 'front', workspace.activeTabId ?? undefined)
+    const id = workspace.openPage(
+      held.url,
+      front ? 'front' : 'behind',
+      workspace.activeTabId ?? undefined,
+    )
     if (id === null) return
 
     const touch = this.seen.acting[agentTab]

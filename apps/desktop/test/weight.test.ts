@@ -1042,19 +1042,21 @@ function holds(tail: string): boolean {
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
  *  and the sum of their growth is what came. Measured 3,480,464, 385 modules.
  *
- *  Raised 2026-11-03, to 3,516,000, for the bug hunt's round one merged into
+ *  Raised 2026-11-04, to 3,481,400, for #1070: a tab an agent opened behind the reader
+ *  wears its spark until the reader looks at it (TabMark.svelte, agent-marks.svelte.ts).
+ *  Measured 3,481,273.
+ *
+ *  Raised 2026-11-03, to 3,482,700, for #331: the top bar's button for the tab overview,
+ *  and the strip leaving a gap where a tab's window is out (Titlebar.svelte, Tabs.svelte).
+ *  Measured 3,482,585, 385 modules.
+ *
+ *  Raised 2026-11-03, to 3,518,100, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes (a phone's draft kept
  *  until it lands, charts, paste, block commands, links, a thread written down while it
  *  runs), what a base may cost, a tile's move, the sync's scans, and an undo that waits for
  *  every gesture landing, measured together. What could wait went behind a door on the
- *  branches. Measured 3,515,848, 385 modules.
- *
- *  Raised 2026-11-03, to 3,522,500, for one device's windows being one (hunt2-windows): a
- *  setting that writes only what changed and hears the other windows, what a note knows of
- *  its file, a session per window and the turn a write takes through what the others did.
- *  The channel, the merge, the slots and the engine's side are all behind doors already;
- *  this is what is left on the paths they hang from. Measured 3,522,3xx, 385 modules. */
-const BUDGET = 3_522_500
+ *  branches. Measured 3,517,969, 385 modules. */
+const BUDGET = 3_518_100
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

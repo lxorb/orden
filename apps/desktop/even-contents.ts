@@ -140,6 +140,7 @@ export const APP_FOLDERS = [
   'import',
   'mobile',
   'online',
+  'overview',
   'pages',
   'palette',
   'pdf',
@@ -309,17 +310,30 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
  *  and the sum of their growth is what came. Measured 5,775,432.
  *
- *  The code raised on 2026-11-03, to 5,805,500, for the bug hunt's round one merged into
+ *  The code raised on 2026-11-03, to 5,777,800, for #1071: the icon picker's emoji and
+ *  coloured drawings are one tab, the sets merged into one collection
+ *  (`mergeSets` in icon-sets.ts); the drawings' places among the emoji stay out
+ *  (flat-colour-places.even.ts). Measured 5,777,606.
+ *
+ *  The code raised on 2026-11-04, to 5,778,300, for #1070: an agent opens and shows
+ *  everything behind the reader through one door (agents/workspace/reader-view.ts), and a
+ *  tab it opened wears its spark until looked at. Measured 5,778,101.
+ *
+ *  The code raised on 2026-11-03, to 5,792,500, for #331: every tab as a window on a
+ *  canvas, Alt Alt (overview/), which takes the place of the palette's tab cards.
+ *  Measured 5,792,326.
+ *
+ *  The code raised on 2026-11-03, to 5,794,900, for #331: a window of the overview
+ *  dragged to another place in its strip or into another pane (overview/drag.ts), and
+ *  Alt Alt turning it back at any moment. Measured 5,794,727.
+ *
+ *  The code raised on 2026-11-03, to 5,824,800, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
  *  thread written down while it runs, the sync's scans, and an undo that waits for every
- *  gesture landing, measured together. Measured 5,805,262.
- *
- *  And to 5,815,800 for a session per window and writes that meet other windows
- *  (hunt2-windows): the plugin has one window, and these are on paths it shares. The channel,
- *  the merge and the engine's side stay out. Measured 5,815,532.
+ *  gesture landing, measured together. Measured 5,824,556.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_815_800,
+  code: 5_824_800,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

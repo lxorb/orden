@@ -251,6 +251,11 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 /// the page itself has not already answered. Alt with the main button is the engine's
 /// own download, and the Windows key is not a browser's, so both are left to the engine.
 ///
+/// A form sent to a window of its own by POST (`target="_blank"`) is sent into one the
+/// page opens first on `about:blank` under a name of its own, which the engine builds as
+/// the page's own window (`becomes` in `web_tabs.rs`): a tab built afresh at the form's
+/// address would have asked for it by GET and lost what was sent (#1074).
+///
 /// Escape that nothing in the page took asks under `nib-escape`, and is left to the
 /// engine as well, which has a use of its own for it (a page still loading stops).
 ///
@@ -296,6 +301,7 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)
+  var windows = window.open.bind(window)
 
   var came = new WeakSet()
 
@@ -324,6 +330,24 @@ pub const SCRIPT: &str = r"(function () {
 
   last('auxclick', function (event) {
     if (event.button === 1) asked(event)
+  })
+
+  var posted = 0
+  last('submit', function (event) {
+    var form = event.target
+    if (!event.isTrusted || event.defaultPrevented || !(form instanceof HTMLFormElement)) return
+    var by = event.submitter && event.submitter.hasAttribute('formtarget') ? event.submitter : null
+    var method = event.submitter && event.submitter.getAttribute('formmethod') || form.method
+    var target = by ? by.getAttribute('formtarget') : form.target
+    if (String(method).toLowerCase() !== 'post' || target !== '_blank') return
+    var name = 'nib-post-' + (++posted)
+    if (!windows('about:blank', name)) return
+    if (by) by.setAttribute('formtarget', name)
+    else form.target = name
+    setTimeout(function () {
+      if (by) by.setAttribute('formtarget', target)
+      else form.target = target
+    })
   })
 
   last('click', function (event) {
@@ -533,7 +557,7 @@ pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
 /// Starts listening on one page, under the tab it belongs to and in the window it is in.
 /// Called on the window's thread, once, as the page is built.
 #[cfg(all(windows, not(feature = "cef")))]
-pub use heard::{closing, listen, taken};
+pub use heard::{closing, listen, ours, taken};
 
 #[cfg(all(windows, not(feature = "cef")))]
 mod heard {
@@ -567,6 +591,25 @@ mod heard {
         static SAID: RefCell<HashMap<String, Option<Asked>>> = RefCell::new(HashMap::new());
         /// The link each tab's own menu was last raised on.
         static MENU: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
+        /// The tabs whose last request was one of nib's own asks - a key, a swipe -
+        /// under a window name on `about:blank`, until `on_new_window` takes it: never a
+        /// window, though a page's own request on `about:blank` is one (#1074).
+        static OURS: RefCell<std::collections::HashSet<String>> =
+            RefCell::new(std::collections::HashSet::new());
+    }
+
+    /// Whether a window name is one of nib's own asks: a key, a chord, Ctrl+0, a swipe.
+    fn nibs_own(name: &str) -> bool {
+        crate::web_swipe::named(name).is_some()
+            || sought(name).is_some()
+            || chord(name).is_some()
+            || actual(name)
+    }
+
+    /// Whether the last request from this tab was one of nib's own asks, taken so it is
+    /// read once.
+    pub fn ours(tab: &str) -> bool {
+        OURS.with_borrow_mut(|ours| ours.remove(tab))
     }
 
     /// Closes a window a page asked for when its page closes itself, the way a sign-in
@@ -674,6 +717,10 @@ mod heard {
 
                 // A swipe over the page, said a frame at a time; see web_swipe.rs. Not a
                 // press, so nothing is asked of who made it beyond what the script asked.
+                // One of nib's own asks, which `on_new_window` then turns down.
+                if nibs_own(&name) {
+                    OURS.with_borrow_mut(|ours| ours.insert(asking.clone()));
+                }
                 if let Some(payload) = crate::web_swipe::named(&name) {
                     crate::web_swipe::heard(&app, &window, &asking, payload);
                     return Ok(());
@@ -785,7 +832,7 @@ pub fn script() -> String {
                 "var opening = window.open.bind(window)\n  ",
                 "var open = function (url, name) {\n    ",
                 "if (typeof nibAsked === 'function') nibAsked(JSON.stringify([url, name]))\n    ",
-                "else opening(url, name)\n  }",
+                "else if (url !== 'about:blank') opening(url, name)\n  }",
             ),
             1,
         )
@@ -844,6 +891,13 @@ pub fn listen(
 #[cfg(any(not(windows), feature = "cef"))]
 pub fn taken(_tab: &str) -> Option<Asked> {
     None
+}
+
+/// Whether a request was one of nib's own asks: on these engines they never come as a
+/// window request (`BINDING`, and `script` leaves `about:blank` alone).
+#[cfg(any(not(windows), feature = "cef"))]
+pub fn ours(_tab: &str) -> bool {
+    false
 }
 
 #[cfg(test)]

@@ -76,6 +76,23 @@ describe('Alt held', () => {
     expect(hold.holding).toBe(true)
   })
 
+  /** Alt Alt is the tab overview's key (#331): its second tap is no hold to show them for. */
+  test('a tap of Alt right after a tap shows nothing, and one long after shows them again', () => {
+    const hold = new AltHold()
+    expect(hold.down(stroke('Alt'), 1000)).toBe(true)
+    hold.released(1080)
+    expect(hold.down(stroke('Alt'), 1200)).toBe(false)
+    expect(hold.holding).toBe(false)
+    hold.released(1260)
+    // Alt Alt again at once, which puts the overview away: as quiet.
+    expect(hold.down(stroke('Alt'), 1380)).toBe(false)
+    hold.released(1440)
+    expect(hold.down(stroke('Alt'), 3000)).toBe(true)
+    // A hold let go of is no tap: Alt after it is a hold again.
+    hold.released(4000)
+    expect(hold.down(stroke('Alt'), 4100)).toBe(true)
+  })
+
   /** A held key repeats, and a repeat an engine does not flag as one is the same hold:
    *  it must not begin it again. */
   test('a repeat not flagged as one is the same hold, not a new one', () => {

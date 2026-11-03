@@ -590,7 +590,7 @@ struct Opening {
 /// What a window a page asked for at a size of its own is labelled, in front of a
 /// number. Neither `web-`, so nothing takes it for a tab's page, nor anything the
 /// capabilities name, so it is granted nothing; see `popup`.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(not(feature = "cef"))]
 const POPUP: &str = "popup-";
 
 /// Where a page was left, and where it is put back.
@@ -768,6 +768,43 @@ fn handed_over(url: &Url) -> Option<String> {
     tab_may_open(url).then(|| url.to_string())
 }
 
+/// What a window a page asks for becomes: the one rule every engine's new-window
+/// handler answers by (#1074).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum Becomes {
+    /// A tab beside the page, at this address: a link, or a page opening one.
+    Tab(String),
+    /// A window of the page's own, which the engine builds, so the page keeps it: what
+    /// `window.open` hands back, `window.opener` in it, and the two talking.
+    Window,
+    /// Nothing: an address no tab may be on.
+    Nothing,
+}
+
+/// What a request for a window becomes (#1074).
+///
+/// A tab whenever a person pressed for one (`said`) or the page asked for a web address
+/// with nothing more: a link with `target="_blank"`, `window.open(url)`. A window of its
+/// own, built by the engine, when the page has to keep hold of what it opened - which a
+/// tab, a page of Orden's built afresh at the address, can never give it: `window.open`
+/// answered `null`, the opener gone, so a sign-in in a popup never reported back and a
+/// page that opens `about:blank` to send or write into it got nothing at all. That is a
+/// window asked for at a size of its own (an OAuth or SSO sign-in, a payment provider, a
+/// share dialog), and a window opened on `about:blank`. Anything else is dropped; see
+/// `handed_over`.
+pub(crate) fn becomes(url: &Url, sized: bool, said: bool) -> Becomes {
+    if !said && (sized || blank(url)) {
+        return Becomes::Window;
+    }
+    handed_over(url).map_or(Becomes::Nothing, Becomes::Tab)
+}
+
+/// Whether a page asked for a window on nothing yet, which it is about to send somewhere
+/// or write into itself.
+fn blank(url: &Url) -> bool {
+    url.scheme() == "about" && url.path() == "blank"
+}
+
 /// A window a page asked for at a size of its own, as a window: the page that opened
 /// it keeps hold of it, which is the whole of how a sign-in in a popup reports back -
 /// `window.opener`, and the popup closing itself. A tab could hold the page but not the
@@ -785,7 +822,10 @@ fn handed_over(url: &Url) -> Option<String> {
 /// says nothing of its mode, and wry builds a controller as `incognito` says with no regard
 /// for the opener: left at false, a private tab's sign-in was offered the profile that
 /// lasts (#791). Private on the same environment is the opener's own private session.
-#[cfg(all(windows, not(feature = "cef")))]
+///
+/// The system's engines' alone: Orden's own Chromium builds such a window itself, opener
+/// and all (`becomes`).
+#[cfg(not(feature = "cef"))]
 fn popup(
     app: &AppHandle,
     url: &Url,
@@ -837,12 +877,15 @@ fn popup(
     // Cleared before it is handed back, which is before the engine sends it anywhere:
     // this runs on the window's own thread, where `with_webview` answers inline, and the
     // engine navigates the popup only once the request it came from is answered.
-    let closing = window.clone();
-    let _ = window.with_webview(move |platform| {
-        crate::web_opens::closing(&platform, closing);
-        let cleared = crate::web_worlds::cleared(&platform, "");
-        crate::trace::mark(&format!("web popup: {}", cleared.said()));
-    });
+    #[cfg(windows)]
+    {
+        let closing = window.clone();
+        let _ = window.with_webview(move |platform| {
+            crate::web_opens::closing(&platform, closing);
+            let cleared = crate::web_worlds::cleared(&platform, "");
+            crate::trace::mark(&format!("web popup: {}", cleared.said()));
+        });
+    }
     Some(window)
 }
 
@@ -1342,61 +1385,7 @@ pub async fn web_open(
     mark_private(&label_of(&tab), private);
     let builder = crate::engine::web_store(builder, &app, store.as_deref())?.incognito(private);
 
-    let opening = app.clone();
-    let asking = tab.clone();
-    let holder = webview.window().label().to_string();
-    // What the page asked for, unnamed: the type is the runtime's, and on Orden's
-    // own Chromium it carries two type parameters where the system's engine's
-    // carries none. The closure infers it either way; naming it would compile on
-    // one engine only. See src/engine.rs and docs/browser.md.
-    let builder = builder.on_new_window(move |url: Url, features| {
-        // A window the page asks for - `target="_blank"`, `window.open`, a Ctrl+click
-        // or the middle button on a link - becomes a tab in this window, which is what
-        // a browser answers it with and the whole of Orden being one. It used to leave
-        // for the system browser, which made a browser that sent you to another
-        // browser on the commonest link on the web.
-        //
-        // The engine still gets no second webview of its own: one over the pane would
-        // be a window with no frame and no way to close it. The address is handed to
-        // the interface instead, and the interface opens a tab beside the one that
-        // asked - behind it or in front, as the press said; see web_opens.rs and
-        // `openPage` in workspace.svelte.ts.
-        //
-        // Read before anything is refused, so it is about this request and no later one.
-        #[cfg(windows)]
-        let hushed = crate::extensions::welcome::taken(&asking);
-        let Some(address) = handed_over(&url) else {
-            return NewWindowResponse::Deny;
-        };
-        let said = crate::web_opens::taken(&asking);
-        // Nobody pressed for it, and an extension has just arrived in this store: the page
-        // it opens about its own install, which never opens; see extensions/welcome.rs.
-        #[cfg(windows)]
-        if hushed {
-            return NewWindowResponse::Deny;
-        }
-
-        // Unless nobody pressed anything and the page asked for a size: a sign-in or a
-        // share dialog, whose page talks to the one that opened it and closes itself.
-        // That is a window of its own, as in a browser; see `popup`.
-        #[cfg(all(windows, not(feature = "cef")))]
-        if said.is_none() && features.size().is_some() {
-            // One that could not be built is a tab, like any other window asked for.
-            if let Some(window) = popup(&opening, &url, features, &asking, &holder, private) {
-                return NewWindowResponse::Create { window };
-            }
-        }
-        #[cfg(not(all(windows, not(feature = "cef"))))]
-        let _ = features;
-
-        let payload = Opening {
-            tab: asking.clone(),
-            url: address,
-            behind: said == Some(crate::web_opens::Asked::Behind),
-        };
-        let _ = opening.emit_to(&holder, OPENED, payload);
-        NewWindowResponse::Deny
-    });
+    let builder = windows_asked(builder, &app, &tab, webview.window().label(), private);
 
     // A file the page hands over is saved the way a browser saves it, by the engine on
     // this webview's own profile, and the window is told; see downloads.rs.
@@ -1444,6 +1433,84 @@ pub async fn web_open(
     listening(&app, &tab, store, onward);
     tabs.walked(&tab, &url);
     Ok(crate::web_cut::CUTS)
+}
+
+/// A tab's builder, with every window its page asks for answered by `becomes` (#1074).
+fn windows_asked(
+    builder: WebviewBuilder<crate::Engine>,
+    app: &AppHandle,
+    tab: &str,
+    holder: &str,
+    private: bool,
+) -> WebviewBuilder<crate::Engine> {
+    // Only the system's engines build a window of their own, private as the tab is.
+    #[cfg(feature = "cef")]
+    let _ = private;
+    let opening = app.clone();
+    let asking = tab.to_string();
+    let holder = holder.to_string();
+    // What the page asked for, unnamed: the type is the runtime's, and on Orden's
+    // own Chromium it carries two type parameters where the system's engine's
+    // carries none. The closure infers it either way; naming it would compile on
+    // one engine only. See src/engine.rs and docs/browser.md.
+    builder.on_new_window(move |url: Url, features| {
+        // A window the page asks for - `target="_blank"`, `window.open`, a Ctrl+click
+        // or the middle button on a link - becomes a tab in this window, which is what
+        // a browser answers it with and the whole of Orden being one. It used to leave
+        // for the system browser, which made a browser that sent you to another
+        // browser on the commonest link on the web.
+        //
+        // The engine still gets no second webview of its own: one over the pane would
+        // be a window with no frame and no way to close it. The address is handed to
+        // the interface instead, and the interface opens a tab beside the one that
+        // asked - behind it or in front, as the press said; see web_opens.rs and
+        // `openPage` in workspace.svelte.ts.
+        //
+        // Read before anything is refused, so it is about this request and no later one.
+        #[cfg(windows)]
+        let hushed = crate::extensions::welcome::taken(&asking);
+        let said = crate::web_opens::taken(&asking);
+        // One of nib's own asks under a window name - a key the page let go by, a swipe -
+        // which `web_opens.rs` has already answered: never a window of its own.
+        if crate::web_opens::ours(&asking) {
+            return NewWindowResponse::Deny;
+        }
+        // Nobody pressed for it, and an extension has just arrived in this store: the page
+        // it opens about its own install, which never opens; see extensions/welcome.rs.
+        #[cfg(windows)]
+        if hushed {
+            return NewWindowResponse::Deny;
+        }
+
+        let address = match becomes(&url, features.size().is_some(), said.is_some()) {
+            Becomes::Nothing => return NewWindowResponse::Deny,
+            Becomes::Tab(address) => address,
+            // The engine's own window on Orden's own Chromium: CEF keeps the opener, the
+            // window `window.open` answers with, and a form's own request.
+            #[cfg(feature = "cef")]
+            Becomes::Window => return NewWindowResponse::Allow,
+            // A window of its own on the system's engines, on the opener's own store; one
+            // that could not be built is a tab, like any other window asked for.
+            #[cfg(not(feature = "cef"))]
+            Becomes::Window => {
+                if let Some(window) = popup(&opening, &url, features, &asking, &holder, private) {
+                    return NewWindowResponse::Create { window };
+                }
+                match handed_over(&url) {
+                    Some(address) => address,
+                    None => return NewWindowResponse::Deny,
+                }
+            }
+        };
+
+        let payload = Opening {
+            tab: asking.clone(),
+            url: address,
+            behind: said == Some(crate::web_opens::Asked::Behind),
+        };
+        let _ = opening.emit_to(&holder, OPENED, payload);
+        NewWindowResponse::Deny
+    })
 }
 
 /// A tab's builder, with what the page does said to the window: each load started and
@@ -3176,10 +3243,45 @@ mod shot {
 #[cfg(test)]
 mod tests {
     use super::{
-        address, allowed, capture_kinds, handed_over, is_ours, opening, origin_of, origin_written,
-        reader, tab_of, Place, Profile, Trail, WebTabs, BLANK,
+        address, allowed, becomes, capture_kinds, handed_over, is_ours, opening, origin_of,
+        origin_written, reader, tab_of, Becomes, Place, Profile, Trail, WebTabs, BLANK,
     };
     use tauri::Url;
+
+    /// #1074: every way a page asks for a window, and what it becomes. A page that has to
+    /// keep what it opened - a sign-in at a size of its own, a window opened on nothing to
+    /// be sent or written into - gets the engine's own window, opener and all; a link, or
+    /// a page opening an address with nothing more, a tab; nothing else is opened.
+    #[test]
+    fn a_window_a_page_asks_for_becomes_what_it_needs() {
+        let at = |text: &str| Url::parse(text).expect("an address");
+        let site = "https://accounts.example/o/oauth2/auth?client_id=1";
+
+        // window.open(url, name, 'width=500,height=600'): a sign-in that reports back.
+        assert_eq!(becomes(&at(site), true, false), Becomes::Window);
+        // window.open('about:blank') or window.open(), then sent somewhere or written in.
+        assert_eq!(becomes(&at(BLANK), false, false), Becomes::Window);
+        assert_eq!(becomes(&at("about:blank#x"), false, false), Becomes::Window);
+        // A link with target=_blank, or window.open(url): a tab at the address.
+        assert_eq!(
+            becomes(&at("https://example.com/a"), false, false),
+            Becomes::Tab("https://example.com/a".into())
+        );
+        // A person's press for a tab is a tab, whatever the size.
+        assert_eq!(
+            becomes(&at("https://example.com/a"), true, true),
+            Becomes::Tab("https://example.com/a".into())
+        );
+        // An address no tab may be on opens nothing.
+        for refused in ["nib://open?x", "file:///etc/passwd", "javascript:alert(1)"] {
+            assert_eq!(
+                becomes(&at(refused), false, false),
+                Becomes::Nothing,
+                "{refused}"
+            );
+        }
+        assert_eq!(becomes(&at(BLANK), false, true), Becomes::Nothing);
+    }
 
     fn at(url: &str) -> Url {
         Url::parse(url).expect("an address")

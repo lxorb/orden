@@ -14,6 +14,7 @@
   import Tabs from './Tabs.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
   import { settings } from './settings.svelte'
+  import { tabOverview, toggleTabOverview } from './surfaces.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { webChannel } from './updater'
   import { viewport } from './viewport.svelte'
@@ -131,6 +132,36 @@
   </button>
 {/snippet}
 
+<!-- Every tab as a window, for a hand that does not know Alt Alt (#331). -->
+{#snippet overviewGlyph()}
+  <button
+    class="nib-glyph overview"
+    class:is-on={tabOverview.open}
+    aria-pressed={tabOverview.open}
+    title={shortcuts.tooltip(t('Tabs'), 'app.tab-overview')}
+    aria-label={t('Tabs')}
+    onpointerdown={keepFocus}
+    onmousedown={keepFocus}
+    onclick={() => toggleTabOverview()}
+  >
+    <svg viewBox="0 0 14 14"
+      ><rect x="1.5" y="2.5" width="5" height="4" rx="1.2" /><rect
+        x="7.5"
+        y="2.5"
+        width="5"
+        height="4"
+        rx="1.2"
+      /><rect x="1.5" y="8" width="5" height="4" rx="1.2" /><rect
+        x="7.5"
+        y="8"
+        width="5"
+        height="4"
+        rx="1.2"
+      /></svg
+    >
+  </button>
+{/snippet}
+
 <!-- One row: the palette, the button that opens the file list, the open notes, and
      the window's own buttons. On a desktop the note's name lives in its tab, so there
      is no separate title; a phone and a tablet hold one document, so the name is the
@@ -139,6 +170,7 @@
 <header class:lights={cornered} data-chrome="top" data-theme={chrome.theme}>
   {#if !viewport.touch}
     {@render searchGlyph()}
+    {@render overviewGlyph()}
   {/if}
 
   <!-- Not while there is no space and no tab: a list of nothing, in the moment before a
@@ -247,6 +279,7 @@
   }
 
   .pad,
+  .overview,
   .search {
     align-self: center;
   }

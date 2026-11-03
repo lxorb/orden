@@ -24,6 +24,7 @@ import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need, text } from './call'
 import { Refused } from './problem'
+import { openChat } from './reader-view'
 import { placeFor, reachable } from './spaces'
 
 /** The most messages one `read_chat` answers, and one `search_chats`. */
@@ -187,8 +188,7 @@ export async function draftMessage(call: Call): Promise<AgentAnswer> {
   mayPost(chat)
   const parent = maybe(call, 'reply_to') ?? undefined
   if (chat.entry.path) {
-    const { openChat } = await import('../../chats/view/open')
-    openChat(chat.entry.path, { activate: false })
+    await openChat(chat.entry.path)
   }
   store.offer(chat.entry.id, words, parent ? { parent } : {})
   return done(`Drafted in #${chat.name}. The reader sends it.`)

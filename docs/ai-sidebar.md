@@ -639,7 +639,9 @@ Nothing is asked in Full permissions, whatever the act (#372, Emil: _"Full permi
 means the agent never asks for a permission or approval, whatever the action is: browser,
 files, shell, takeover or anything else"_): paying, sending, deleting, publishing, the
 terminal, a setting and a file all go ahead (`Grant::asks`), a **Show** puts the agent's tab
-in front at once, and a **Take over** in one of the agent's own tabs does the same, the agent
+beside the reader's at once, behind the one in front (#1070: an agent never takes the
+reader's screen; `docs/agent-native.md` 7.2), and a **Take over** in one of the agent's own
+tabs does the same, the agent
 going on and waiting for the page to show the step done (`browser_wait`); each is still in
 the activity panel as a question answered as it was raised (`approvals::granted`). Every
 narrower mode asks as it did. Signing in is no exception (#1072, Emil: _"Full permissions

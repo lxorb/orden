@@ -34,7 +34,7 @@
   import { terminalMark } from './surfaces.svelte'
   import { type Page, pages, siteMark } from './web-tab/pages.svelte'
   import { readWebFile } from './web-tab/shortcut'
-  import type { Tab } from './workspace.svelte'
+  import { type Tab, workspace } from './workspace.svelte'
   import { TAB_KINDS } from './workspace/tab-kinds'
 
   const { tab }: { tab: Tab } = $props()
@@ -66,6 +66,17 @@
    *  paused (docs/agent-native.md 7.1). It outranks a page on its way. */
   const worn = $derived(agentMarks.on[tab.id] ?? null)
 
+  /** A tab an agent opened behind the reader (#1070): its spark, still and muted, until
+   *  the reader has looked at the tab. */
+  const opened = $derived(tab.id in agentMarks.opened)
+  const front = $derived(workspace.showing(tab.paneId)?.id === tab.id)
+  $effect(() => {
+    if (!opened || !front) return
+    agentMarks.opened = Object.fromEntries(
+      Object.entries(agentMarks.opened).filter(([id]) => id !== tab.id),
+    )
+  })
+
   /** Whether the picture refused to arrive. A site whose mark has moved, or one the
    *  content policy will not fetch, leaves a broken picture where a mark should be,
    *  and the globe reads better than that. The bar over the page falls back the same
@@ -86,6 +97,10 @@
     style:--agent={worn.colour}
     aria-hidden="true"
   >
+    <svg viewBox="0 0 13 13"><path d={ASK_MARK} /></svg>
+  </span>
+{:else if opened && !front}
+  <span class="mark agent resting" aria-hidden="true">
     <svg viewBox="0 0 13 13"><path d={ASK_MARK} /></svg>
   </span>
 {:else if page?.loading}

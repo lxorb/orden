@@ -145,13 +145,14 @@ describe('what a double tap runs', () => {
   test('follows a rebind to another modifier, and is nothing once taken away', () => {
     const opened: string[] = []
 
-    // Alt, which nothing else is on: Ctrl twice is the quick question's.
-    shortcuts.set('app.palette', 'Alt Alt')
+    // The system key, which nothing else is on: Ctrl twice is the quick question's and
+    // Alt twice the tab overview's.
+    shortcuts.set('app.palette', 'Meta Meta')
     expect(runTap('Shift', context(opened))).toBe(false)
-    expect(runTap('Alt', context(opened))).toBe(true)
+    expect(runTap('Meta', context(opened))).toBe(true)
 
     shortcuts.set('app.palette', null)
-    expect(runTap('Alt', context(opened))).toBe(false)
+    expect(runTap('Meta', context(opened))).toBe(false)
     expect(opened).toEqual(['everything'])
   })
 

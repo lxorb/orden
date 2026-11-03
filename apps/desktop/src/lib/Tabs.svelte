@@ -16,7 +16,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import SharedMark from './SharedMark.svelte'
-  import { syncMark, soundMark, tabNameField } from './surfaces.svelte'
+  import { syncMark, soundMark, tabNameField, tabOverview } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
@@ -896,6 +896,7 @@
           class:chosen={picked.has(tab.id)}
           class:carried={lifted.includes(tab.id) && !drag.out}
           class:gone={lifted.includes(tab.id) && drag.out}
+          class:away={tabOverview.out.includes(tab.id)}
           class:settling={settling === tab.id}
           class:onbar={tab.kind === 'web'}
           data-theme={tab.id === activeId ? chrome.tabTheme(tab.id) : undefined}
@@ -1283,6 +1284,11 @@
      keeps the pointer, so it is only out of sight. */
   .tab.gone {
     opacity: 0;
+  }
+
+  /* Its window is out on the overview's canvas, or on its way back (#331). */
+  .tab.away {
+    visibility: hidden;
   }
 
   /* While a tab is being carried nothing else in the strip answers the pointer: a

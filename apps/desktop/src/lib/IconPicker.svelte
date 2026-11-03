@@ -5,11 +5,13 @@
    *  inside a tree of these components and a space is named somewhere else entirely;
    *  this is mounted once, over the whole page.
    *
-   *  Three sets, thousands of icons, one search field. Which set is a chooser rather
-   *  than three sheets, because the question is always the same question - what should
-   *  this wear - and the answer happens to live in three places; see icon-sets.ts. A
-   *  set's data arrives the first time its tab is opened, and the tab you were last in
-   *  is the one it opens on.
+   *  Three sets in two tabs, thousands of icons, one search field. Which tab is a
+   *  chooser rather than two sheets, because the question is always the same question -
+   *  what should this wear - and the answer happens to live in more than one place; see
+   *  icon-sets.ts. A tab is a line the app tints or a picture in its own colours, which
+   *  is the difference a reader sees, so the emoji and the coloured drawings are one
+   *  tab. Its sets arrive the first time it is opened. It opens on the tab that holds
+   *  what the thing wears, and on the one you were last in where it wears nothing.
    *
    *  The grid draws only the rows on screen. Two thousand emoji is two thousand
    *  elements, and a sheet that took a second to open every time would be a sheet
@@ -30,8 +32,16 @@
   import { iconChoice } from './icon-choice.svelte'
   import { iconLibrary } from './icon-library.svelte'
   import { iconRecent } from './icon-recent.svelte'
-  import { DEFAULT_SET, ICON_SETS } from './icon-sets'
-  import { rankIcons, readIcon, sameIcon, writtenIcon } from './icons'
+  import {
+    DEFAULT_TAB,
+    ICON_TABS,
+    type IconTab,
+    type LoadedSet,
+    mergeSets,
+    tabCredit,
+    tabNamed,
+  } from './icon-sets'
+  import { EMOJI_SET, rankIcons, readIcon, sameIcon } from './icons'
   import { t } from './i18n.svelte'
   import { dur, LAYER } from './motion'
   import { overlays } from './overlays'
@@ -39,6 +49,7 @@
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
+  import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fade, scale } from 'svelte/transition'
 
@@ -73,8 +84,11 @@
 
   const cell = $derived(viewport.touch ? TOUCH_CELL : POINTER_CELL)
   const target = $derived(iconChoice.target)
-  const set = $derived(iconRecent.set || DEFAULT_SET)
-  const held = $derived(iconLibrary.loaded[set])
+
+  /** The tab on screen: the one that holds what the thing wears, chosen afresh each
+   *  time the sheet opens, and otherwise the one last chosen. */
+  let opened = $state<IconTab | null>(null)
+  const tab = $derived(opened ?? tabNamed(iconRecent.set) ?? DEFAULT_TAB)
 
   /** What the thing being chosen for wears now, as written. */
   const worn = $derived(
@@ -87,11 +101,26 @@
 
   const written = $derived(readIcon(worn))
 
-  /** The value a cell of the open set would write. */
-  const value = (name: string) => writtenIcon(set, name)
+  /** Whether a set of the tab is still on its way. A set this build leaves out does
+   *  not hold the others back: the tab is what did arrive. */
+  const pending = $derived(tab.sets.some((id) => iconLibrary.loading(id)))
+  const absent = $derived(tab.sets.every((id) => iconLibrary.absent[id]))
 
-  /** Every cell of the open set, in the order it is shown: what a search found, or the
-   *  set's own order when nothing has been typed. */
+  /** The tab's sets as one collection, whose names are the values a cell writes. */
+  const held = $derived.by(() => {
+    if (pending || absent) return null
+
+    const parts: { id: string; held: LoadedSet }[] = []
+    for (const id of tab.sets) {
+      const one = iconLibrary.loaded[id]
+      if (one) parts.push({ id, held: one })
+    }
+
+    return parts.length ? mergeSets(parts) : null
+  })
+
+  /** Every cell of the open tab, in the order it is shown: what a search found, or the
+   *  tab's own order when nothing has been typed. */
   const cells = $derived(
     held ? rankIcons(held.entries, query, query ? FOUND : held.entries.length) : [],
   )
@@ -171,6 +200,13 @@
     const asked = iconChoice.target
     if (!asked) return
 
+    // Read once, as the sheet opens: a tint written while it is up changes what the
+    // thing wears, and is no reason to move the reader to another tab.
+    const wears = untrack(() =>
+      readIcon(asked.kind === 'space' ? workspace.iconFor(asked.id) : chosenIcon(asked.path)),
+    )
+    opened = wears ? tabNamed(iconLibrary.setFor(wears) ?? EMOJI_SET) : null
+
     query = ''
     at = 0
     top = 0
@@ -180,16 +216,16 @@
     focusing = setTimeout(() => field?.focus(), dur(FOCUS))
   })
 
-  // Whichever set the tab is on, fetched once; see icon-library.svelte.ts.
+  // Every set of the tab it is on, each fetched once; see icon-library.svelte.ts.
   $effect(() => {
-    if (target) iconLibrary.load(set)
+    if (target) for (const id of tab.sets) iconLibrary.load(id)
   })
 
   // A fresh set of answers starts at the first of them: the cell the arrows were on is
   // no longer the one under them.
   $effect(() => {
     reads(query)
-    reads(set)
+    reads(tab)
     at = 0
   })
 
@@ -199,6 +235,12 @@
   // Escape closes it, like everything else the app puts over a note; see overlays.ts.
   $effect(() => (target ? overlays.show(() => iconChoice.close()) : undefined))
   $effect(() => closeOnBack(target !== null, () => iconChoice.close()))
+
+  /** A tab chosen by hand, which is the one remembered for next time. */
+  function open(one: IconTab) {
+    opened = one
+    iconRecent.open(one.id)
+  }
 
   /** One written value onto the thing being chosen for, and the sheet shut. The three
    *  targets differ in nothing but where the value goes. */
@@ -252,7 +294,7 @@
     const here = cells[at]
     if (event.key === 'Enter' && here !== undefined) {
       event.preventDefault()
-      chose(value(here))
+      chose(here)
     }
   }
 
@@ -298,18 +340,18 @@
       autocorrect="off"
     />
 
-    <!-- Which set, as one control rather than three sheets. Somebody else drew two of
-         them, so the tab carries who and under what licence: that belongs where a
+    <!-- Which tab, as one control rather than two sheets. Somebody else drew two of
+         the sets, so a tab carries who and under what licence: that belongs where a
          person is looking at the drawings rather than in a panel nobody opens. The
          emoji have no credit, being the platform's own font. -->
     <div class="nib-segmented" role="radiogroup" aria-label={t('Icons')} use:segmented>
-      {#each ICON_SETS as one (one.id)}
+      {#each ICON_TABS as one (one.id)}
         <button
           type="button"
-          title={one.credit || undefined}
-          aria-pressed={one.id === set}
-          class:on={one.id === set}
-          onclick={() => iconRecent.open(one.id)}
+          title={tabCredit(one) || undefined}
+          aria-pressed={one.id === tab.id}
+          class:on={one.id === tab.id}
+          onclick={() => open(one)}
         >
           {t(one.label)}
         </button>
@@ -343,7 +385,7 @@
       bind:clientHeight={height}
       onscroll={() => (top = scroller?.scrollTop ?? 0)}
     >
-      {#if iconLibrary.absent[set]}
+      {#if absent}
         <!-- A set that is not in this build, or a chunk that would not come down.
              Said once, calmly, rather than left loading for ever. -->
         <p class="empty">{t('That set is not here')}</p>
@@ -358,19 +400,17 @@
               {#if 'head' in row}
                 <span class="head">{row.head}</span>
               {:else}
-                {#each row.names as name (name)}
-                  <!-- What this icon is written as and what it is called, once
-                       each: the cell asked the first three times and the second
-                       twice, over a window of a few hundred cells. -->
-                  {@const written = value(name)}
-                  {@const label = called(name)}
+                {#each row.names as written (written)}
+                  <!-- What this icon is called, once: the cell asked twice, over a
+                       window of a few hundred cells. -->
+                  {@const label = called(written)}
                   <button
                     type="button"
                     class="cell"
                     title={label}
                     aria-label={label}
                     class:active={sameIcon(written, worn)}
-                    class:at={cells[at] === name}
+                    class:at={cells[at] === written}
                     onclick={() => chose(written)}
                   >
                     <span class="glyph"><Icon icon={readIcon(written)} {tint} /></span>
@@ -386,7 +426,7 @@
     <!-- The colour a line icon is drawn in. Only for the line set: an emoji and a
          coloured drawing are already pictures in their own colours, and painting over
          one would be painting over somebody's drawing. -->
-    {#if set === DEFAULT_SET}
+    {#if tab.tinted}
       <div class="tints" role="group" aria-label={t('Colour')}>
         <button
           type="button"

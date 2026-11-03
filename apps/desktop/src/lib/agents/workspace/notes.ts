@@ -25,6 +25,7 @@ import { SCRATCHPAD } from '../../scratchpad/is.svelte'
 import { asked } from './asks'
 import { type Call, done, flag, maybe, need, text, writerOf } from './call'
 import { heldIndex, indexOf } from './links'
+import { openFile } from './reader-view'
 import { Refused } from './problem'
 import { createFile, fileKindOf } from './new-files'
 import { namedTab, tabsOwnSpace } from './tab-target'
@@ -156,7 +157,7 @@ export async function writeNote(call: Call): Promise<AgentAnswer> {
 
   // A note that is not there yet is made: the connector's write_note makes one too.
   if (!named.tab && (await workspace.noteText(onDisk(place, relative))) === null) {
-    return done(await made(place, relative, words, false))
+    return done(await made(place, relative, words, null))
   }
 
   return done(await notes.writeNote(writerOf(call), at(named), words, ifRev(call)))
@@ -174,7 +175,7 @@ export async function appendNote(call: Call): Promise<AgentAnswer> {
   // The day's note that is not there yet is the day's note to make, as nib://append
   // makes one.
   if (!named.tab && (await workspace.noteText(onDisk(place, relative))) === null) {
-    return done(await made(place, relative, words, false))
+    return done(await made(place, relative, words, null))
   }
 
   const under = maybe(call, 'under')
@@ -282,7 +283,12 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
 
   // Said with the space it was made in: one the call did not name is the one in front,
   // which a rewind of the thread later finds here rather than in the thread's own.
-  const answer = await made(place, relative, wordsSent(call) ?? '', flag(call, 'open'))
+  const answer = await made(
+    place,
+    relative,
+    wordsSent(call) ?? '',
+    flag(call, 'open') ? call : null,
+  )
   return done({ ...answer, space: place.space.id })
 }
 
@@ -290,7 +296,7 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
  *  only in the space the reader is in: opening one in another would move them. Refused
  *  in a space shared to be read: the verbs that come here ask first, but this is the
  *  one place every new note passes, so it does not rely on them. */
-export async function made(place: Place, relative: string, words: string, open: boolean) {
+export async function made(place: Place, relative: string, words: string, open: Call | null) {
   const path = onDisk(place, relative)
   writableAt(place, path)
   // Every caller makes the note because a read of it failed, and a read also fails for
@@ -306,7 +312,8 @@ export async function made(place: Place, relative: string, words: string, open: 
 
   if (place.open) {
     await workspace.loadTree()
-    if (open) await workspace.openEntry(path, { activate: false, beside: true })
+    // Behind the tab in front, through the one door an agent opens anything by.
+    if (open) await openFile(open, path, false)
   } else {
     heldIndex(place)?.noteSaved(path, words)
   }

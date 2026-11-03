@@ -53,7 +53,7 @@
     feedbackSheet,
     importSheet,
     spacePickerDialog,
-    tabOverviewSheet,
+    tabOverviewLayer,
     hostPickerDialog,
     paletteDoor,
     paletteWords,
@@ -1399,9 +1399,9 @@
     <SpacePicker />
   {/await}
 {/if}
-{#if tabOverviewSheet.asked}
-  {#await tabOverviewSheet.asked then TabOverview}
-    <TabOverview />
+{#if tabOverviewLayer.asked}
+  {#await tabOverviewLayer.asked then Overview}
+    <Overview />
   {/await}
 {/if}
 {#if hostPickerDialog.asked}
