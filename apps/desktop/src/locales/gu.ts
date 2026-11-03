@@ -1482,7 +1482,8 @@ export const gu: Dictionary = {
   'The provider answered {status}.': 'પ્રદાતાએ {status} જવાબ આપ્યો.',
   'Add an AI provider in Settings first.': 'પહેલાં ગોઠવણમાં AI પ્રદાતા ઉમેરો.',
   'The model did not answer.': 'મોડેલે જવાબ આપ્યો નહીં.',
-  'The connection closed before the answer was finished.': 'જવાબ પૂરો થાય તે પહેલાં કનેક્શન બંધ થઈ ગયું.',
+  'The connection closed before the answer was finished.':
+    'જવાબ પૂરો થાય તે પહેલાં કનેક્શન બંધ થઈ ગયું.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'તમારો {plan} પ્લાન {time} સુધી મર્યાદા પર છે.',
   'Your {plan} plan is at its limit for now.': 'તમારો {plan} પ્લાન હાલ મર્યાદા પર છે.',

@@ -1494,7 +1494,8 @@ export const te: Dictionary = {
   'The provider answered {status}.': 'ప్రొవైడర్ {status} అని బదులిచ్చింది.',
   'Add an AI provider in Settings first.': 'ముందు సెట్టింగ్‌లలో AI ప్రొవైడర్ జోడించండి.',
   'The model did not answer.': 'మోడల్ బదులివ్వలేదు.',
-  'The connection closed before the answer was finished.': 'సమాధానం పూర్తికాకముందే కనెక్షన్ మూసుకుపోయింది.',
+  'The connection closed before the answer was finished.':
+    'సమాధానం పూర్తికాకముందే కనెక్షన్ మూసుకుపోయింది.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'మీ {plan} ప్లాన్ {time} వరకు పరిమితికి చేరింది.',

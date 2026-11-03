@@ -1513,7 +1513,8 @@ export const de: Dictionary = {
   'Add an AI provider in Settings first.':
     'Zuerst in den Einstellungen einen KI-Anbieter hinzufügen.',
   'The model did not answer.': 'Das Modell hat nicht geantwortet.',
-  'The connection closed before the answer was finished.': 'Die Verbindung wurde beendet, bevor die Antwort fertig war.',
+  'The connection closed before the answer was finished.':
+    'Die Verbindung wurde beendet, bevor die Antwort fertig war.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Dein {plan}-Abo ist bis {time} am Limit.',
   'Your {plan} plan is at its limit for now.': 'Dein {plan}-Abo ist vorerst am Limit.',

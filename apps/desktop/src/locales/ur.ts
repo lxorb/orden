@@ -1488,7 +1488,8 @@ export const ur: Dictionary = {
   'The provider answered {status}.': 'فراہم کنندہ نے {status} جواب دیا۔',
   'Add an AI provider in Settings first.': 'پہلے ترتیبات میں AI فراہم کنندہ شامل کریں۔',
   'The model did not answer.': 'ماڈل نے جواب نہیں دیا۔',
-  'The connection closed before the answer was finished.': 'جواب مکمل ہونے سے پہلے کنکشن بند ہو گیا۔',
+  'The connection closed before the answer was finished.':
+    'جواب مکمل ہونے سے پہلے کنکشن بند ہو گیا۔',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'آپ کا {plan} پلان {time} تک حد پر ہے۔',
   'Your {plan} plan is at its limit for now.': 'آپ کا {plan} پلان فی الحال حد پر ہے۔',

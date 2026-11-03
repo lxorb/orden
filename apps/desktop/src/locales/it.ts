@@ -1536,7 +1536,8 @@ export const it: Dictionary = {
   'Add an AI provider in Settings first.':
     'Aggiungere prima un fornitore di IA nelle impostazioni.',
   'The model did not answer.': 'Il modello non ha risposto.',
-  'The connection closed before the answer was finished.': 'La connessione si è chiusa prima della fine della risposta.',
+  'The connection closed before the answer was finished.':
+    'La connessione si è chiusa prima della fine della risposta.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Il tuo piano {plan} ha raggiunto il limite fino alle {time}.',
