@@ -393,9 +393,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,848,800, for #1067: a popup fetched through a
  *  door plays its way out and turns round where it is when pressed again (Door.svelte,
  *  `letGo` in slide.ts). Measured 5,848,628.
+ *
+ *  The code raised on 2026-11-04, to 5,849,300, for #1055: an online terminal held by
+ *  one device at a time, its card saying who holds it with Take over (arrival.svelte.ts),
+ *  and its file a row of the list. Measured 5,849,083.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_848_800,
+  code: 5_849_300,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,

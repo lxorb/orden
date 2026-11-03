@@ -1100,8 +1100,12 @@ function holds(tail: string): boolean {
  *  window remembered from the first paint, since a download flies from where it was
  *  asked for and a menu's row or a save dialog has gone by then (downloads/started.ts).
  *  The flight itself is fetched with the first download. Measured 3,512,869, 388
- *  modules. */
-const BUDGET = 3_513_000
+ *  modules.
+ *
+ *  Raised 2026-11-04, to 3,513,500, for #1055: an online terminal's file is a row of the
+ *  list wearing the terminal's mark (`isTermTarget` in links.ts, file-mark.ts). Measured
+ *  3,513,238, 385 modules. */
+const BUDGET = 3_513_500
 const MOST_FILES = 389
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
