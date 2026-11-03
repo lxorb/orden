@@ -129,7 +129,19 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
       note.path = to
     }
   }
-  return { across, windows, open, save, type, heard, owed, versions, documents, failRead, renamedSoon }
+  return {
+    across,
+    windows,
+    open,
+    save,
+    type,
+    heard,
+    owed,
+    versions,
+    documents,
+    failRead,
+    renamedSoon,
+  }
 }
 
 const BASE = '# Both\n\nbase line\n'
@@ -364,7 +376,9 @@ describe('whatever order the news arrives in', () => {
         }
         await Promise.all(windows.map((one) => one.across.heardSoFar()))
         await tick()
-        await Promise.all(windows.map((one, at) => (notes[at]?.dirty ? one.save(notes[at]) : 0)))
+        await Promise.all(
+          windows.map(async (one, at) => (notes[at]?.dirty ? await one.save(notes[at]) : null)),
+        )
         await tick()
         await Promise.all(windows.map((one) => one.across.heardSoFar()))
       }

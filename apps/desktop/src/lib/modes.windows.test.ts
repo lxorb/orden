@@ -73,4 +73,14 @@ describe('settings across two windows', () => {
     expect(stored().lineHeight).toBe(2.1)
     expect(stored().typewriter).toBe(true)
   })
+
+  test('a field one window does not hold is not dropped by its write', async () => {
+    const a = await aWindow()
+    const b = await aWindow()
+    a.setLineSpacing(2.1)
+    const held = stored()
+    localStorage.setItem('nib:modes', JSON.stringify({ ...held, developer: true }))
+    b.toggleTypewriter()
+    expect(stored().developer).toBe(true)
+  })
 })

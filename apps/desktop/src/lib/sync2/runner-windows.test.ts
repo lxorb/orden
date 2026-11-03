@@ -198,7 +198,7 @@ describe('what a window owes', () => {
 
 describe('the engine’s window', () => {
   const engine = () => ({
-    core: { spaces: new Map(), store: {} },
+    core: { spaces: new Map(), store: { close: () => Promise.resolve() } },
     saved: vi.fn(() => Promise.resolve()),
     entryAt: () => null,
     quit: () => Promise.resolve(),

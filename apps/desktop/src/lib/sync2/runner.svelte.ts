@@ -28,7 +28,7 @@ import { isRecord, keep, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
 import { owesAtTheEnd, owesLast, writing } from '../parting'
-import { invoke, isDesktop, joinPath } from '../tauri'
+import { isDesktop, joinPath } from '../tauri'
 import { pathKey } from '../space-paths'
 import { oneWriteAt, type Said, windows } from '../windows'
 import { waited } from '../timing'
@@ -61,6 +61,9 @@ type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 /** How long a window with no engine waits on the one that has it: a pass is what can take
  *  this long, and a window nobody answers in is a window that has gone. */
 const ASKS_AT_MOST = 30_000
+
+/** How long signing out in such a window waits for the engine's to let go of the store. */
+const SIGN_OUT_WAITS = 10_000
 
 /** How long after a change here the pass that sends it waits, so a burst of saves is one
  *  pass. */
@@ -167,8 +170,8 @@ class Runner {
     this.hearLeader()
     const giving = new AbortController()
     this.giving = giving
-    const lead = await leadSync(giving.signal)
-    if (!lead || this.giving !== giving) {
+    const lead = await leadSync(giving.signal, user.id)
+    if (!lead || this.giving !== giving || account.user?.id !== user.id) {
       lead?.release()
       return
     }
@@ -177,8 +180,10 @@ class Runner {
     try {
       await this.running(user)
     } catch (error) {
+      // No engine, here: whoever waits next may fare better, and nothing is owed to nobody.
       this.lead = null
       lead.release()
+      this.owed.clear()
       throw error
     }
   }
@@ -280,9 +285,13 @@ class Runner {
   /** Signing out, while it runs. */
   private leaving: Promise<void> | null = null
 
-  private async halt(): Promise<void> {
+  private async halt(keepLead = false): Promise<void> {
     this.giving?.abort()
     this.giving = null
+    this.owed.clear()
+    this.seen = { spaces: [], notes: [] }
+    this.seenAt.clear()
+    this.noLeader()
     for (const stop of this.hearings.splice(0)) stop()
     for (const stop of this.stops.splice(0)) stop()
     for (const key of this.carried) uncarry(key)
@@ -301,6 +310,10 @@ class Runner {
       engine.stop()
       await engine.core.store.close().catch(() => undefined)
     }
+    if (!keepLead) this.letGoLead()
+  }
+
+  private letGoLead() {
     this.lead?.release()
     this.lead = null
   }
@@ -375,7 +388,7 @@ class Runner {
    *  reached. Answers whether v1 may start, false once `alive` says this session ended. */
   async walkBack(alive: () => boolean): Promise<boolean> {
     // One window walks it: an engine for this is an engine like any other.
-    const lead = await leadSync()
+    const lead = await leadSync(undefined, account.user?.id)
     try {
       for (let tries = 0; alive(); tries += 1) {
         if (await this.rollBack().catch(() => false)) return alive()
@@ -438,9 +451,23 @@ class Runner {
         log('warn', `sync: signing out kept no mirrors - ${String(error)}`)
       }
     }
-    await this.halt()
+    const led = !!engine || !!this.lead
+    await this.halt(true)
     this.firsts.clear()
+    if (led) {
+      // Held until the store is gone, so no window that has not heard yet opens it meanwhile.
+      await forgetSyncStore(accountId).finally(() => this.letGoLead())
+      return
+    }
+    // Another window runs the engine, and it hears this too (workspace/across.ts): the store
+    // goes once that window has let go of it, not from under it.
+    const giving = new AbortController()
+    const late = setTimeout(() => giving.abort(), SIGN_OUT_WAITS)
+    const lead = await leadSync(giving.signal, accountId)
+    clearTimeout(late)
     await forgetSyncStore(accountId)
+      .catch(() => undefined)
+      .finally(() => lead?.release())
   }
 
   // -------------------------------------------------------------------------
@@ -454,7 +481,10 @@ class Runner {
   /** Every space passed now, waited for: what automation and a link joining ask for.
    *  Answers whether anything moved. */
   async passNow(): Promise<boolean> {
-    if (!this.engine && this.accountId) return (await this.ask('pass', {})) === true
+    if (!this.engine) {
+      // Nobody to ask: starting, or an engine that would not start. Waiting would not help.
+      return this.leaderId ? (await this.ask('pass', {})) === true : false
+    }
     const before = this.lastSyncedAt
     this.kick()
     await this.passing_
@@ -465,7 +495,7 @@ class Runner {
   kick(space?: string) {
     const engine = this.engine
     if (!engine) {
-      if (this.accountId) windows.say('sync-kick', { space })
+      if (this.accountId) this.say('sync-kick', { space })
       return
     }
     if (space) {
@@ -483,7 +513,7 @@ class Runner {
   /** Something changed here: a pass in a moment, unless one is sooner. */
   nudge() {
     if (!this.engine) {
-      if (this.accountId) windows.say('sync-kick', {})
+      if (this.accountId) this.say('sync-kick', {})
       return
     }
     this.quiet = 0
@@ -699,9 +729,8 @@ class Runner {
         return
       }
       await oneWriteAt(path, async () => {
-        const was = await invoke<string>('read_note', { path }).catch(() => null)
         await write()
-        windows.say('words', { path, base: unixLines(was ?? ''), text })
+        windows.say('words', { path, text })
       })
     },
   }
@@ -718,7 +747,11 @@ class Runner {
   follow(op: FileOp): Promise<void> | undefined {
     const engine = this.engine
     if (!engine) {
-      if (this.accountId) this.owed.add({ kind: 'op', op: withoutKey(op) })
+      if (this.owedTo) {
+        const at = op.op === 'moved' ? op.from : op.op === 'removed' ? op.path : null
+        const entry = at === null ? undefined : this.seenAt.get(pathKey(at))?.id
+        this.owed.add({ kind: 'op', op: withoutKey(op), ...(entry ? { entry } : {}) })
+      }
       return undefined
     }
     const key =
@@ -759,7 +792,7 @@ class Runner {
   private readonly mergeables = new Set<string>()
 
   mergeable(path: string) {
-    if (!this.engine && this.accountId) windows.say('sync-mergeable', { path })
+    if (!this.engine && this.accountId) this.say('sync-mergeable', { path })
     this.mergeables.add(path)
   }
 
@@ -767,7 +800,7 @@ class Runner {
   async wrote(path: string, text: string): Promise<void> {
     const engine = this.engine
     if (!engine) {
-      if (this.accountId) this.owed.add({ kind: 'wrote', path, text })
+      if (this.owedTo) this.owed.add({ kind: 'wrote', path, text })
       return
     }
     await engine.saved(path, text).catch((error: unknown) => {
@@ -906,7 +939,52 @@ class Runner {
   /** The account's ids as the engine's window last said them. */
   private seen: Rows = { spaces: [], notes: [] }
   private seenAt = new Map<string, { id: string; version: number; hash: string }>()
-  private readonly owed = new Owed((item) => windows.say('sync-owed', { item }))
+  private readonly owed = new Owed((item) => this.say('sync-owed', { item }))
+  /** The window that runs the engine, as far as anyone has said. */
+  private leaderId: string | null = null
+  /** A visible window's pass on the clock, kept by the window that runs them. */
+  private beat: ReturnType<typeof setInterval> | undefined
+
+  /** Whether anything this window does has anywhere to go: to an engine on its way, here or
+   *  in the window that holds the lock, or to one that is running. */
+  private get owedTo(): boolean {
+    return !!this.giving || !!this.lead || !!this.leaderId
+  }
+
+  /** Said for this account's windows and heard from them alone: two accounts are two
+   *  stores, and another's words must never reach this one's. */
+  private say(kind: string, what: Record<string, unknown> = {}) {
+    windows.say(kind, { ...what, account: this.accountId })
+  }
+
+  private hear(kind: string, listener: (said: Said) => void) {
+    return windows.hear(kind, (said) => {
+      if (this.accountId && said.account === this.accountId) listener(said)
+    })
+  }
+
+  private leaderIs(id: unknown) {
+    if (typeof id !== 'string' || this.engine) return
+    this.leaderId = id
+    // Whoever is looking at this window is why a pass should not wait for that one to be
+    // looked at: its clock runs slow while it is hidden, this one keeps it to a visible
+    // window's. A window holding a lock is not frozen, so nobody need take over from it.
+    this.beat ??= setInterval(() => this.lookedAt(), FALLBACK)
+  }
+
+  /** Nobody runs the engine, as far as this window can say, and so nobody will answer. */
+  private noLeader() {
+    this.leaderId = null
+    clearInterval(this.beat)
+    this.beat = undefined
+    for (const answer of [...this.asked.values()]) answer(null)
+  }
+
+  private lookedAt() {
+    if (!this.engine && this.leaderId && document.visibilityState !== 'hidden') {
+      this.say('sync-kick')
+    }
+  }
   /** What this window hears while it is signed in, engine or not. */
   private readonly hearings: (() => void)[] = []
   /** Questions asked of the engine's window, by id. */
@@ -916,6 +994,7 @@ class Runner {
 
   /** Asks the engine's window. Nobody there, or nobody who answers soon: null. */
   private ask(what: string, args: Record<string, unknown>): Promise<unknown> {
+    if (!this.leaderId) return Promise.resolve(null)
     return new Promise((resolve) => {
       const id = crypto.randomUUID()
       const timer = setTimeout(() => {
@@ -927,7 +1006,7 @@ class Runner {
         this.asked.delete(id)
         resolve(value)
       })
-      windows.say('sync-ask', { id, what, args })
+      this.say('sync-ask', { id, what, args })
     })
   }
 
@@ -935,27 +1014,42 @@ class Runner {
    *  hearing these, and nobody says them to it any more. */
   private hearLeader() {
     if (this.hearings.length) return
+    if (typeof window !== 'undefined') {
+      const back = () => this.lookedAt()
+      window.addEventListener('focus', back)
+      document.addEventListener('visibilitychange', back)
+      this.hearings.push(() => {
+        window.removeEventListener('focus', back)
+        document.removeEventListener('visibilitychange', back)
+      })
+    }
     this.hearings.push(
-      windows.hear('sync-leader', () => {
-        this.owed.resend()
-        windows.say('sync-hello')
+      windows.hear('bye', (said) => {
+        if (said.from === this.leaderId) this.noLeader()
       }),
-      windows.hear('sync-took', (said) => {
+      this.hear('sync-leader', (said) => {
+        this.leaderIs(said.from)
+        this.owed.resend()
+        this.say('sync-hello')
+      }),
+      this.hear('sync-took', (said) => {
         if (said.to === windows.me && typeof said.id === 'string') this.owed.done(said.id)
       }),
-      windows.hear('sync-said', (said) => {
+      this.hear('sync-said', (said) => {
         if (said.to === windows.me && typeof said.id === 'string') {
           this.asked.get(said.id)?.(said.value)
         }
       }),
-      windows.hear('sync-light', (said) => {
+      this.hear('sync-light', (said) => {
         if (this.engine) return
+        this.leaderIs(said.from)
         this.status = said.status as Light
         this.lastError = (said.lastError as string | null) ?? null
         this.lastSyncedAt = (said.lastSyncedAt as number | null) ?? null
       }),
-      windows.hear('sync-rows', (said) => {
+      this.hear('sync-rows', (said) => {
         if (this.engine) return
+        this.leaderIs(said.from)
         this.seen = said.rows as Rows
         this.seenAt = new Map(
           this.seen.notes.map(({ path, id, version, hash }) => [
@@ -965,37 +1059,38 @@ class Runner {
         )
       }),
     )
-    windows.say('sync-hello')
+    this.say('sync-hello')
   }
 
   /** This window has the engine now: what it owed runs here, what the others owe comes
    *  here, and they are told, so whatever the last engine's window never answered is said
    *  again. */
   private async tookOver(engine: Engine) {
+    this.noLeader()
     this.stops.push(
-      windows.hear('sync-owed', (said) => {
+      this.hear('sync-owed', (said) => {
         const item = said.item as Owing
         this.inTurn(async () => {
           await this.took(engine, item)
-          windows.say('sync-took', { id: item.id, to: said.from })
+          this.say('sync-took', { id: item.id, to: said.from })
         })
       }),
-      windows.hear('sync-kick', (said) => {
+      this.hear('sync-kick', (said) => {
         this.kick(typeof said.space === 'string' ? said.space : undefined)
       }),
-      windows.hear('sync-mergeable', (said) => {
+      this.hear('sync-mergeable', (said) => {
         if (typeof said.path === 'string') this.mergeables.add(said.path)
       }),
-      windows.hear('sync-ask', (said) => {
+      this.hear('sync-ask', (said) => {
         this.inTurn(async () => {
-          windows.say('sync-said', {
+          this.say('sync-said', {
             id: said.id,
             to: said.from,
             value: await this.answering(said).catch(() => null),
           })
         })
       }),
-      windows.hear('sync-hello', () => this.sayAll()),
+      this.hear('sync-hello', () => this.sayAll()),
       $effect.root(() => {
         $effect(() => {
           const said = {
@@ -1003,11 +1098,11 @@ class Runner {
             lastError: this.lastError,
             lastSyncedAt: this.lastSyncedAt,
           }
-          untrack(() => windows.say('sync-light', said))
+          untrack(() => this.say('sync-light', said))
         })
       }),
     )
-    windows.say('sync-leader')
+    this.say('sync-leader')
     this.sayAll()
     for (const item of this.owed.drain()) {
       await this.took(engine, item).catch((error: unknown) => {
@@ -1043,7 +1138,7 @@ class Runner {
 
   private sayAll() {
     this.sayRows()
-    windows.say('sync-light', {
+    this.say('sync-light', {
       status: this.status,
       lastError: this.lastError,
       lastSyncedAt: this.lastSyncedAt,
@@ -1067,7 +1162,7 @@ class Runner {
         })
       }
     }
-    windows.say('sync-rows', { rows })
+    this.say('sync-rows', { rows })
   }
 
   /** The document a note on screen here is joined to, for what another window wrote into

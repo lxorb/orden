@@ -279,10 +279,10 @@ const ENDED: ReadonlySet<NoticeCode> = new Set<NoticeCode>([
   'refusal',
 ])
 
-/** How long a window waits for another to say it is answering. A live window hears at
- *  once whatever it is doing; a window that is gone says nothing however long it is
+/** How long a window waits for another to say it is answering. A live window hears as soon
+ *  as it has a moment, and one writing out a long answer may not have one at once; a window that is gone says nothing however long it is
  *  given, and a thread read from one must not wait for long. */
-const SAYS_WITHIN = 300
+const SAYS_WITHIN = 1_500
 
 /** The threads this window is answering in, as the channel asks after them. */
 const answeringHere = new Map<string, Thread>()
@@ -344,6 +344,22 @@ function ownFields(thread: Thread): Record<string, unknown> {
   return JSON.parse(
     JSON.stringify({ ...fields, elsewhere: undefined, answering: undefined }),
   ) as Record<string, unknown>
+}
+
+/** A thread another window is answering in, as it read here: what tells the fields somebody
+ *  changed here from the ones that window has moved on since, which are not to go back. */
+const readHere = new Map<string, Record<string, unknown>>()
+
+/** The fields changed here since it was read, which are all that may go across. */
+function changedHere(thread: Thread): Record<string, unknown> {
+  const fields = ownFields(thread)
+  const read = readHere.get(thread.id) ?? {}
+  readHere.set(thread.id, fields)
+  return Object.fromEntries(
+    Object.entries(fields).filter(
+      ([name, value]) => JSON.stringify(value) !== JSON.stringify(read[name]),
+    ),
+  )
 }
 
 /** A thread read from a file, or null for one that is not a thread. `gone` says the
@@ -543,7 +559,12 @@ export async function readThread(space: string, id: string): Promise<Thread | nu
     return null
   }
   const thread = threadIn(value)
-  if (!thread?.elsewhere || (await saidAnswering(id))) return thread
+  if (!thread?.elsewhere) return thread
+  if (await saidAnswering(id)) {
+    readHere.set(id, ownFields(thread))
+    return thread
+  }
+  readHere.delete(id)
   return threadIn(value, true)
 }
 
@@ -647,7 +668,8 @@ export function keepThread(thread: Thread): Promise<void> {
   if (removed.has(thread.id)) return Promise.resolve()
   answerOthers()
   if (thread.elsewhere) {
-    windows.say('thread-fields', { id: thread.id, fields: ownFields(thread) })
+    const fields = changedHere(thread)
+    if (Object.keys(fields).length) windows.say('thread-fields', { id: thread.id, fields })
     return Promise.resolve()
   }
   const answered = answeringHere.has(thread.id)

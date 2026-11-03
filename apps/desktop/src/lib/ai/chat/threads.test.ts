@@ -341,7 +341,7 @@ describe('whether anybody is answering is asked, not read off the clock', () => 
     const thread = answeringOne()
     inFile(thread)
     const reading = readThread('work', thread.id)
-    await vi.advanceTimersByTimeAsync(1_000)
+    await vi.advanceTimersByTimeAsync(2_000)
     const read = await reading
 
     expect(read?.elsewhere).toBeUndefined()
@@ -360,7 +360,7 @@ describe('whether anybody is answering is asked, not read off the clock', () => 
     const named: unknown[] = []
     const stopNamed = other.hear('thread-fields', (said) => named.push(said.fields))
     const reading = readThread('work', thread.id)
-    await vi.advanceTimersByTimeAsync(1_000)
+    await vi.advanceTimersByTimeAsync(2_000)
     const read = await reading
     expect(read?.elsewhere).toBe(true)
 
@@ -368,8 +368,8 @@ describe('whether anybody is answering is asked, not read off the clock', () => 
     if (read) await keepThread({ ...read, title: 'Herons' })
     expect(writes).toHaveLength(before)
     expect(named).toHaveLength(1)
-    expect(named[0]).toMatchObject({ title: 'Herons' })
-    expect(named[0]).not.toHaveProperty('turns')
+    // The name given here, and nothing that window has moved on from since.
+    expect(named[0]).toEqual({ title: 'Herons' })
     stop()
     stopNamed()
   })

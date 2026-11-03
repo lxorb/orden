@@ -308,6 +308,12 @@ export class SharedDoc {
    *  the room already has them. Taken in at the end of the composition. */
   private held: ChangeSet | null = null
 
+  /** Whether words that arrived are waiting for a composition to end, and so are in the
+   *  text nobody can read yet. */
+  get holdingBack(): boolean {
+    return this.held !== null
+  }
+
   /** Whoever wants to hear every change: see `listen`. */
   private readonly listeners = new Set<(heard: Heard) => void>()
 

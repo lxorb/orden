@@ -126,7 +126,7 @@ export function oneWriteAt<T>(path: string, run: () => Promise<T>): Promise<T> {
         () => undefined,
       )
     }
-    const timer = setTimeout(go, FILE_TURN_AT_MOST)
+    const timer = setTimeout(() => void go(), FILE_TURN_AT_MOST)
     try {
       locks.request(`nib:file:${path}`, go).catch(go)
     } catch {

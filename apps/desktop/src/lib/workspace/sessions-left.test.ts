@@ -63,7 +63,9 @@ describe('what a window that went left', () => {
   })
 
   test('stays where it is if it could not be taken', async () => {
-    const storage = memoryStorage({ 'nib:workspace:2': session([tab({ path: null, doc: draftWords })]) })
+    const storage = memoryStorage({
+      'nib:workspace:2': session([tab({ path: null, doc: draftWords })]),
+    })
     const take = vi.fn(() => Promise.reject(new Error('no')))
     await takeSessionsLeft(0, take, storage, locks).catch(() => undefined)
 

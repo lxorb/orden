@@ -594,7 +594,13 @@ class Chat implements Panel {
     const held = this.live.get(id)
     if (!held || this.running.includes(id)) return
     const fresh = await readThread(held.space, id).catch(() => null)
-    if (!fresh || this.live.get(id) !== held || this.running.includes(id)) return
+    if (this.live.get(id) !== held || this.running.includes(id)) return
+    if (!fresh) {
+      // Not read this time: what waits on it waits for the next.
+      if (this.queued[id]?.length)
+        this.askingAgain ??= setTimeout(() => this.askAgain(), ANSWER_BEAT)
+      return
+    }
     this.live.set(id, fresh)
     if (this.open === held) this.show(fresh)
     if (fresh.elsewhere) {

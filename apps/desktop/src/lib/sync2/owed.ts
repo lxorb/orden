@@ -14,8 +14,16 @@ type OwedOp = FileOp
 
 export interface Owing {
   id: string
-  what: { kind: 'wrote'; path: string; text: string } | { kind: 'op'; op: FileOp }
+  what:
+    | { kind: 'wrote'; path: string; text: string }
+    /** `entry` is the note the operation was about, by its id, where it had one. */
+    | { kind: 'op'; op: FileOp; entry?: string }
 }
+
+/** The most anybody owes: an engine's window that has not answered this many has not been
+ *  there for a long time, and what is dropped is an old autosave, whose words are on the
+ *  disk for the engine's own look at the folder to find. */
+const MOST_OWED = 1_000
 
 /** What the engine's window does with one thing owed. A thing said twice, or heard from
  *  the folder's watch first, finds the engine already holding it: a note made twice is
@@ -23,7 +31,7 @@ export interface Owing {
 export async function takeOwed(
   engine: {
     saved(path: string, text: string): Promise<void>
-    entryAt(path: string): unknown
+    entryAt(path: string): { id: string } | null | undefined
   },
   item: Owing,
   follow: (op: OwedOp) => unknown,
@@ -33,9 +41,13 @@ export async function takeOwed(
     return
   }
   const op = item.what.op
-  if (op.op === 'created' && engine.entryAt(op.path)) return
-  if (op.op === 'moved' && op.kind !== 'space' && !engine.entryAt(op.from)) return
-  if (op.op === 'removed' && op.kind !== 'space' && !engine.entryAt(op.path)) return
+  if (op.op === 'created') {
+    if (engine.entryAt(op.path)) return
+  } else if (op.kind !== 'space') {
+    // Said again over a new note that has since come to the same path: not that note.
+    const there = engine.entryAt(op.op === 'moved' ? op.from : op.path)
+    if (!there || (item.what.entry !== undefined && there.id !== item.what.entry)) return
+  }
   await follow(op)
 }
 
@@ -47,9 +59,26 @@ export class Owed {
 
   /** Owes one more, and says it. */
   add(what: Owing['what']): void {
+    // One note's later save says all an earlier one did, unless a move came between.
+    if (what.kind === 'wrote') {
+      const last = this.owing.map((one) => one.what.kind).lastIndexOf('op')
+      const at = this.owing.findIndex(
+        (one, index) => index > last && one.what.kind === 'wrote' && one.what.path === what.path,
+      )
+      if (at >= 0) this.owing.splice(at, 1)
+    }
+    if (this.owing.length >= MOST_OWED) {
+      const old = this.owing.findIndex((one) => one.what.kind === 'wrote')
+      this.owing.splice(Math.max(old, 0), 1)
+    }
     const item = { id: `${this.next++}`, what }
     this.owing.push(item)
     this.say(item)
+  }
+
+  /** Everything, for an account that has gone. */
+  clear(): void {
+    this.owing.length = 0
   }
 
   /** The engine's window has it. */

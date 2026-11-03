@@ -98,13 +98,14 @@ export async function asDrafts(
 ): Promise<Draft[]> {
   const out: Draft[] = []
   for (const draft of drafts) {
-    if (draft.path === null || draft.path === undefined) {
+    if (draft.path === null) {
       out.push(draft)
       continue
     }
     if ((await says(draft.path)) === draft.doc) continue
-    const { share: _share, ...rest } = draft
-    out.push({ ...rest, path: null, dirty: true })
+    const made: Draft = { ...draft, path: null, dirty: true }
+    delete made.share
+    out.push(made)
   }
   return out
 }

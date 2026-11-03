@@ -255,6 +255,16 @@ export async function startAcross(): Promise<Across> {
   const { workspace } = await import('../workspace.svelte')
   const { links } = await import('../link-index.svelte')
   const { sync } = await import('../sync.svelte')
+  // Signed out in one window is signed out: they share the session, and the store under it.
+  const { account } = await import('../account.svelte')
+  let told = false
+  account.forgetWithSession(() => {
+    if (!told) theWindows.say('signed-out')
+  })
+  theWindows.hear('signed-out', () => {
+    told = true
+    void account.signOut().finally(() => (told = false))
+  })
   const across = new Across({
     get documents() {
       return workspace.documents

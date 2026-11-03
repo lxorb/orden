@@ -1693,6 +1693,11 @@ class Modes {
         JSON.stringify(value) === JSON.stringify(seen[name]) && name in now ? now[name] : value,
       ]),
     )
+    // A field this window has no value for and another just set (`developer`, say), which
+    // this window did not take away: it never had it.
+    for (const [name, value] of Object.entries(now)) {
+      if (!(name in fields) && !(name in seen)) merged[name] = value
+    }
     keep(STORAGE_KEY, JSON.stringify(merged))
   }
 
