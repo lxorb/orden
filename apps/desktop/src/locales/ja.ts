@@ -1806,6 +1806,7 @@ export const ja: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'サイト情報',
   Downloads: 'ダウンロード',
+  'Downloading {name}': '{name} をダウンロード中',
   'Show in folder': 'フォルダに表示',
   'Show in Finder': 'Finderで表示',
   'Reveal in Finder': 'Finderで表示',

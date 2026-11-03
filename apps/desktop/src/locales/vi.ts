@@ -1796,6 +1796,7 @@ export const vi: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Thông tin trang web',
   Downloads: 'Tệp đã tải xuống',
+  'Downloading {name}': 'Đang tải xuống {name}',
   'Show in folder': 'Hiển thị trong thư mục',
   'Show in Finder': 'Hiển thị trong Finder',
   'Reveal in Finder': 'Hiển thị trong Finder',

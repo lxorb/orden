@@ -1894,6 +1894,7 @@ export const pl: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informacje o witrynie',
   Downloads: 'Pobrane',
+  'Downloading {name}': 'Pobieranie {name}',
   'Show in folder': 'Pokaż w folderze',
   'Show in Finder': 'Pokaż w Finderze',
   'Reveal in Finder': 'Pokaż w Finderze',

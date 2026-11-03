@@ -1827,6 +1827,7 @@ export const gsw: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Website-Infos',
   Downloads: 'Downloads',
+  'Downloading {name}': '{name} wird abeglade',
   'Show in folder': 'Im Ordner zeige',
   'Show in Finder': 'Im Finder zeige',
   'Reveal in Finder': 'Im Finder zeige',

@@ -133,6 +133,7 @@ export const APP_FOLDERS = [
   'automation',
   'back-swipe',
   'canvas',
+  'downloads',
   'even',
   'export',
   'foreign',

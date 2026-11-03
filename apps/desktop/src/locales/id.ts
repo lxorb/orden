@@ -1809,6 +1809,7 @@ export const id: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informasi situs',
   Downloads: 'Unduhan',
+  'Downloading {name}': 'Mengunduh {name}',
   'Show in folder': 'Tampilkan di folder',
   'Show in Finder': 'Tampilkan di Finder',
   'Reveal in Finder': 'Tampilkan di Finder',

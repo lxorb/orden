@@ -1845,6 +1845,7 @@ export const ha: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Bayanin gidan yanar',
   Downloads: 'Abubuwan da aka sauke',
+  'Downloading {name}': 'Ana sauke {name}',
   'Show in folder': 'Nuna a cikin babban fayil',
   'Show in Finder': 'Nuna a cikin Finder',
   'Reveal in Finder': 'Nuna a cikin Finder',

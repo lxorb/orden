@@ -1920,6 +1920,7 @@ export const ar: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'معلومات الموقع',
   Downloads: 'التنزيلات',
+  'Downloading {name}': 'جارٍ تنزيل {name}',
   'Show in folder': 'إظهار في المجلد',
   'Show in Finder': 'إظهار في Finder',
   'Reveal in Finder': 'إظهار في Finder',

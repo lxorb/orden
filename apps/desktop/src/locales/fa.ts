@@ -1817,6 +1817,7 @@ export const fa: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'اطلاعات سایت',
   Downloads: 'بارگیری‌ها',
+  'Downloading {name}': 'در حال دانلود {name}',
   'Show in folder': 'نمایش در پوشه',
   'Show in Finder': 'نمایش در Finder',
   'Reveal in Finder': 'نمایش در Finder',

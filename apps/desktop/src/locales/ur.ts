@@ -1813,6 +1813,7 @@ export const ur: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'سائٹ کی معلومات',
   Downloads: 'ڈاؤن لوڈز',
+  'Downloading {name}': '{name} ڈاؤن لوڈ ہو رہا ہے',
   'Show in folder': 'فولڈر میں دکھائیں',
   'Show in Finder': 'Finder میں دکھائیں',
   'Reveal in Finder': 'Finder میں دکھائیں',

@@ -1818,6 +1818,7 @@ export const mr: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'साइटची माहिती',
   Downloads: 'डाउनलोड',
+  'Downloading {name}': '{name} डाउनलोड होत आहे',
   'Show in folder': 'फोल्डरमध्ये दाखवा',
   'Show in Finder': 'Finder मध्ये दाखवा',
   'Reveal in Finder': 'Finder मध्ये दाखवा',

@@ -1793,6 +1793,7 @@ export const am: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'የጣቢያ መረጃ',
   Downloads: 'ውርዶች',
+  'Downloading {name}': '{name} በማውረድ ላይ',
   'Show in folder': 'በአቃፊ ውስጥ አሳይ',
   'Show in Finder': 'በFinder ውስጥ አሳይ',
   'Reveal in Finder': 'በFinder ውስጥ አሳይ',

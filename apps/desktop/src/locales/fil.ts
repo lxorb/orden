@@ -1852,6 +1852,7 @@ export const fil: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Impormasyon ng site',
   Downloads: 'Mga download',
+  'Downloading {name}': 'Dina-download ang {name}',
   'Show in folder': 'Ipakita sa folder',
   'Show in Finder': 'Ipakita sa Finder',
   'Reveal in Finder': 'Ipakita sa Finder',

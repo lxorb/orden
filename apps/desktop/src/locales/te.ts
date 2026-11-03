@@ -1823,6 +1823,7 @@ export const te: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'సైట్ సమాచారం',
   Downloads: 'డౌన్‌లోడ్‌లు',
+  'Downloading {name}': '{name} డౌన్‌లోడ్ అవుతోంది',
   'Show in folder': 'ఫోల్డర్‌లో చూపించు',
   'Show in Finder': 'Finderలో చూపించు',
   'Reveal in Finder': 'Finderలో చూపించు',

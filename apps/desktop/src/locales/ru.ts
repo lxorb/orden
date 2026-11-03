@@ -1894,6 +1894,7 @@ export const ru: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Сведения о сайте',
   Downloads: 'Загрузки',
+  'Downloading {name}': 'Загрузка {name}',
   'Show in folder': 'Показать в папке',
   'Show in Finder': 'Показать в Finder',
   'Reveal in Finder': 'Показать в Finder',

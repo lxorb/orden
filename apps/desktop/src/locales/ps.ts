@@ -1818,6 +1818,7 @@ export const ps: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'د ټاټوبي معلومات',
   Downloads: 'ډاونلوډونه',
+  'Downloading {name}': '{name} ډاونلوډ کېږي',
   'Show in folder': 'په فولډر کې وښایاست',
   'Show in Finder': 'په Finder کې وښایاست',
   'Reveal in Finder': 'په Finder کې وښایاست',

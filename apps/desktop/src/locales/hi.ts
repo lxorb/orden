@@ -1812,6 +1812,7 @@ export const hi: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'साइट जानकारी',
   Downloads: 'डाउनलोड',
+  'Downloading {name}': '{name} डाउनलोड हो रहा है',
   'Show in folder': 'फ़ोल्डर में दिखाएँ',
   'Show in Finder': 'Finder में दिखाएँ',
   'Reveal in Finder': 'Finder में दिखाएँ',

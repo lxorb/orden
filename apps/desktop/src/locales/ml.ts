@@ -1839,6 +1839,7 @@ export const ml: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'സൈറ്റ് വിവരങ്ങൾ',
   Downloads: 'ഡൗൺലോഡുകൾ',
+  'Downloading {name}': '{name} ഡൗൺലോഡ് ചെയ്യുന്നു',
   'Show in folder': 'ഫോൾഡറിൽ കാണിക്കുക',
   'Show in Finder': 'Finder-ൽ കാണിക്കുക',
   'Reveal in Finder': 'Finder-ൽ കാണിക്കുക',

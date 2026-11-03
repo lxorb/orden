@@ -1830,6 +1830,7 @@ export const kn: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ಸೈಟ್ ಮಾಹಿತಿ',
   Downloads: 'ಡೌನ್‌ಲೋಡ್‌ಗಳು',
+  'Downloading {name}': '{name} ಡೌನ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ',
   'Show in folder': 'ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ತೋರಿಸಿ',
   'Show in Finder': 'Finder ನಲ್ಲಿ ತೋರಿಸಿ',
   'Reveal in Finder': 'Finder ನಲ್ಲಿ ತೋರಿಸಿ',

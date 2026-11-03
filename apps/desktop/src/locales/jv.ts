@@ -1802,6 +1802,7 @@ export const jv: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informasi situs',
   Downloads: 'Undhuhan',
+  'Downloading {name}': 'Ngundhuh {name}',
   'Show in folder': 'Tampilake ing folder',
   'Show in Finder': 'Tampilake ing Finder',
   'Reveal in Finder': 'Tampilake ing Finder',

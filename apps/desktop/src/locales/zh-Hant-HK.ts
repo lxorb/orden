@@ -1768,6 +1768,7 @@ export const zhHantHK: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': '網站資料',
   Downloads: '下載',
+  'Downloading {name}': '正在下載 {name}',
   'Show in folder': '在資料夾中顯示',
   'Show in Finder': '在 Finder 中顯示',
   'Reveal in Finder': '在 Finder 中顯示',

@@ -1779,6 +1779,7 @@ export const th: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ข้อมูลเว็บไซต์',
   Downloads: 'ดาวน์โหลด',
+  'Downloading {name}': 'กำลังดาวน์โหลด {name}',
   'Show in folder': 'แสดงในโฟลเดอร์',
   'Show in Finder': 'แสดงใน Finder',
   'Reveal in Finder': 'แสดงใน Finder',

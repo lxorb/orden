@@ -349,6 +349,7 @@
     <button
       class="nib-glyph saving"
       data-opens="downloads"
+      data-tab={tab}
       class:is-on={progress !== null}
       title={t('Downloads')}
       aria-label={t('Downloads')}

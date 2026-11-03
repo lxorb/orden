@@ -1810,6 +1810,7 @@ export const ms: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Maklumat tapak',
   Downloads: 'Muat turun',
+  'Downloading {name}': 'Memuat turun {name}',
   'Show in folder': 'Tunjukkan dalam folder',
   'Show in Finder': 'Tunjukkan dalam Finder',
   'Reveal in Finder': 'Tunjukkan dalam Finder',

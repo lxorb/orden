@@ -1812,6 +1812,7 @@ export const bn: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'সাইটের তথ্য',
   Downloads: 'ডাউনলোড',
+  'Downloading {name}': '{name} ডাউনলোড হচ্ছে',
   'Show in folder': 'ফোল্ডারে দেখান',
   'Show in Finder': 'Finder-এ দেখান',
   'Reveal in Finder': 'Finder-এ দেখান',

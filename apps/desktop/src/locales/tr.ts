@@ -1823,6 +1823,7 @@ export const tr: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Site bilgileri',
   Downloads: 'İndirilenler',
+  'Downloading {name}': '{name} indiriliyor',
   'Show in folder': 'Klasörde göster',
   'Show in Finder': "Finder'da göster",
   'Reveal in Finder': "Finder'da göster",

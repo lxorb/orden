@@ -1789,6 +1789,7 @@ export const ko: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': '사이트 정보',
   Downloads: '다운로드',
+  'Downloading {name}': '{name} 다운로드 중',
   'Show in folder': '폴더에서 보기',
   'Show in Finder': 'Finder에서 보기',
   'Reveal in Finder': 'Finder에서 보기',

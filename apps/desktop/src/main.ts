@@ -6,6 +6,7 @@ import App from './App.svelte'
 import { mark, markPainted, watchFirstInput } from './lib/trace'
 import { serveAssets } from './lib/web/asset-worker'
 import { isDesktop, isMobile, platform } from './lib/tauri'
+import { watchPresses } from './lib/downloads/started'
 
 // Everything above this line is the webview evaluating the app's modules, which on
 // a slow machine is a real part of a launch and is not otherwise visible from
@@ -68,6 +69,10 @@ mark('mounting')
 // What somebody does first, whenever they do it: the one honest reading of
 // "interactive" is a key answered in the frame it was pressed in. See lib/trace.ts.
 watchFirstInput()
+
+// Where the last press was, which is where a download it starts flies from; see
+// lib/downloads/started.ts.
+watchPresses()
 
 const app = mount(App, { target })
 

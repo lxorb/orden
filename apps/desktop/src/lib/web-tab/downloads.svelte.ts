@@ -11,6 +11,7 @@
  *  For as long as the app runs, like Chrome's own bubble: a list of every file ever
  *  saved is the Downloads folder itself. */
 
+import { downloadStarted } from '../downloads/started'
 import { invoke } from '../tauri'
 
 type DownloadState = 'going' | 'done' | 'failed' | 'cancelled'
@@ -94,10 +95,12 @@ class Downloads {
   list = $state<Download[]>([])
 
   /** What the crate said about one download. True when it is one this list had not
-   *  heard of, which is the moment a download starts. */
+   *  heard of, which is the moment a download starts - and the moment it is seen to,
+   *  flying out of the tab's page to the glyph (see downloads/started.ts). */
   heard(one: Download): boolean {
     const fresh = !this.list.some((each) => each.id === one.id)
     this.list = merged(this.list, one)
+    if (fresh && one.state !== 'cancelled') downloadStarted(one.name, { tab: one.tab })
     return fresh
   }
 

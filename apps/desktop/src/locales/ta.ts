@@ -1844,6 +1844,7 @@ export const ta: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'தள விவரங்கள்',
   Downloads: 'பதிவிறக்கங்கள்',
+  'Downloading {name}': '{name} பதிவிறக்கப்படுகிறது',
   'Show in folder': 'கோப்புறையில் காட்டு',
   'Show in Finder': 'Finder-இல் காட்டு',
   'Reveal in Finder': 'Finder-இல் காட்டு',

@@ -1807,6 +1807,7 @@ export const gu: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'સાઇટની માહિતી',
   Downloads: 'ડાઉનલોડ્સ',
+  'Downloading {name}': '{name} ડાઉનલોડ થઈ રહ્યું છે',
   'Show in folder': 'ફોલ્ડરમાં બતાવો',
   'Show in Finder': 'Finderમાં બતાવો',
   'Reveal in Finder': 'Finderમાં બતાવો',

@@ -57,8 +57,9 @@ const CARDS = `${NOTICES} > *`
 
 /** The shapes the theme package gives every layer that floats (see base.css), the
  *  arrow a swipe brings in over a page, which is round and moves with the fingers (see
- *  back-swipe/SwipeArrow.svelte), and each card in the notices row. */
-const FLOATING = `.nib-layer, .nib-bubble, .nib-screen, .nib-swipe, ${CARDS}`
+ *  back-swipe/SwipeArrow.svelte), a file flying to the downloads glyph, which moves by
+ *  itself (see downloads/flight.ts), and each card in the notices row. */
+const FLOATING = `.nib-layer, .nib-bubble, .nib-screen, .nib-swipe, .nib-flight, ${CARDS}`
 /** And what covers all of a page without dimming it: the room a swipe's arrow comes in
  *  over, while the fingers are on (back-swipe/SwipeArrow.svelte). */
 const SCRIMS = '.nib-scrim, .nib-swipe-room'

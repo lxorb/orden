@@ -1801,6 +1801,7 @@ export const my: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ဆိုက် အချက်အလက်များ',
   Downloads: 'ဒေါင်းလုဒ်များ',
+  'Downloading {name}': '{name} ကို ဒေါင်းလုဒ်လုပ်နေသည်',
   'Show in folder': 'ဖိုင်တွဲတွင် ပြပါ',
   'Show in Finder': 'Finder တွင် ပြပါ',
   'Reveal in Finder': 'Finder တွင် ပြပါ',

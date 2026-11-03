@@ -1864,6 +1864,7 @@ export const es: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Información del sitio',
   Downloads: 'Descargas',
+  'Downloading {name}': 'Descargando {name}',
   'Show in folder': 'Mostrar en la carpeta',
   'Show in Finder': 'Mostrar en Finder',
   'Reveal in Finder': 'Mostrar en Finder',

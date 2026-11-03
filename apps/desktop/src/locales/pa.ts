@@ -1820,6 +1820,7 @@ export const pa: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ਸਾਈਟ ਜਾਣਕਾਰੀ',
   Downloads: 'ਡਾਊਨਲੋਡ',
+  'Downloading {name}': '{name} ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ',
   'Show in folder': 'ਫੋਲਡਰ ਵਿੱਚ ਦਿਖਾਓ',
   'Show in Finder': 'Finder ਵਿੱਚ ਦਿਖਾਓ',
   'Reveal in Finder': 'Finder ਵਿੱਚ ਦਿਖਾਓ',

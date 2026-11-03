@@ -1863,6 +1863,7 @@ export const ptPT: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informações do Website',
   Downloads: 'Transferências',
+  'Downloading {name}': 'A transferir {name}',
   'Show in folder': 'Mostrar na pasta',
   'Show in Finder': 'Mostrar no Finder',
   'Reveal in Finder': 'Mostrar no Finder',
