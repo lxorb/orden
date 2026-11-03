@@ -2633,4 +2633,15 @@ export const ko: Dictionary = {
   '{title}, running': '{title}, 실행 중',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden은 더 이상 AI 키를 Mac 키체인에 보관하지 않습니다. 키체인이 암호를 계속 물었기 때문입니다. 키를 다시 입력하고 ChatGPT에 한 번 더 로그인하세요.',
+  'Add images': '이미지 추가',
+  'Remove image': '이미지 제거',
+  'Paste, drop or add images (up to 4).': '이미지를 붙여넣거나 끌어다 놓거나 추가하세요(최대 4개).',
+  'That is more than 4 images.': '이미지가 4개를 넘습니다.',
+  'That file could not be used as an image.': '이 파일은 이미지로 사용할 수 없습니다.',
+  'Report received': '보고서 접수됨',
+  'Your report reached us. You can follow it here:':
+    '보고서가 접수되었습니다. 여기에서 진행 상황을 확인할 수 있습니다:',
+  'View your report': '보고서 보기',
+  'Not sent. Your text is kept, so you can try again.':
+    '보내지 못했습니다. 입력한 내용은 남아 있으니 다시 시도하세요.',
 }

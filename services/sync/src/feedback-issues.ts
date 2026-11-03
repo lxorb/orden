@@ -71,6 +71,9 @@ export interface Report {
   createdAt: number
   /** The account it came from, or null from somebody signed out. */
   account: { id: string; email: string } | null
+  /** Where the pictures that came with it are served, in the order they were sent
+   *  (#1087); see feedback-images.ts. */
+  images?: readonly string[]
 }
 
 /** The issue's title: the report's first sentence, every at sign in it followed by a
@@ -117,15 +120,22 @@ function fenced(text: string): string {
   return `${fence}\n${text}\n${fence}`
 }
 
-/** The issue's body: the words, the table of what the app added, and the log folded
- *  away, cut from its start where the whole would be past GitHub's limit. */
+/** The pictures, each drawn from where the service serves it. The address is the
+ *  service's own, so nothing a report says can make the issue fetch anything else. */
+function pictures(images: readonly string[] | undefined): string {
+  if (!images?.length) return ''
+  return `${images.map((url, at) => `![Image ${String(at + 1)}](${url})`).join('\n\n')}\n\n`
+}
+
+/** The issue's body: the words, the pictures, the table of what the app added, and the
+ *  log folded away, cut from its start where the whole would be past GitHub's limit. */
 export function issueBody(report: Report): string {
   const account = report.account
     ? `\`${report.account.id}\` · ${cell(report.account.email)}`
     : 'signed out'
   const head = `${fenced(report.text)}
 
-| | |
+${pictures(report.images)}| | |
 | --- | --- |
 | Version | ${cell(report.version || 'unknown')} |
 | Platform | ${cell(report.platform || 'unknown')} |
@@ -244,6 +254,39 @@ async function reportOf(env: Env, id: string): Promise<Row | null> {
     .first<Row>()
 }
 
+/** Where each picture of a report is served, in the order it was sent. */
+export async function imagesOf(env: Env, id: string): Promise<string[]> {
+  const { results } = await env.DB.prepare(
+    'select name from feedback_images where feedback_id = ? order by position',
+  )
+    .bind(id)
+    .all<{ name: string }>()
+  return results.map((one) => imageUrl(env, one.name))
+}
+
+/** The address one picture is served at. */
+function imageUrl(env: Env, name: string): string {
+  return `${env.APP_ORIGIN}/v1/feedback/images/${name}`
+}
+
+/** How a report's issue stands, for its page: open, closed as done, closed as not
+ *  planned, or null where GitHub could not say just now. */
+export type IssueState = 'open' | 'done' | 'not planned'
+
+export async function issueState(env: Env, number: number): Promise<IssueState | null> {
+  const to = github(env)
+  if (!to) return null
+  try {
+    const response = await asked(to, `/repos/${to.repo}/issues/${String(number)}`)
+    if (!response.ok) return null
+    const issue = await response.json<{ state?: string; state_reason?: string | null }>()
+    if (issue.state === 'open') return 'open'
+    return issue.state_reason === 'not_planned' ? 'not planned' : 'done'
+  } catch {
+    return null
+  }
+}
+
 /** Opens the issue for one report, where it has none and no other run has it in hand.
  *  Answers whether the report has its issue now. Never throws: a try that fails is
  *  written down and tried again later. */
@@ -272,6 +315,7 @@ export async function openIssue(env: Env, id: string, at = now()): Promise<boole
     account: row.user_id
       ? { id: row.user_id, email: row.email ?? 'an account since deleted' }
       : null,
+    images: await imagesOf(env, row.id),
   }
 
   try {

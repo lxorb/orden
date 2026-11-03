@@ -2708,4 +2708,16 @@ export const ml: Dictionary = {
   '{title}, running': '{title}, പ്രവർത്തിക്കുന്നു',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ഇനി AI കീകൾ Mac-ന്റെ കീചെയിനിൽ സൂക്ഷിക്കുന്നില്ല, അത് വീണ്ടും വീണ്ടും പാസ്‌വേഡ് ചോദിച്ചിരുന്നു. നിങ്ങളുടെ കീകൾ വീണ്ടും നൽകി ChatGPT-ൽ ഒരിക്കൽ കൂടി സൈൻ ഇൻ ചെയ്യുക.',
+  'Add images': 'ചിത്രങ്ങൾ ചേർക്കുക',
+  'Remove image': 'ചിത്രം നീക്കുക',
+  'Paste, drop or add images (up to 4).':
+    'ചിത്രങ്ങൾ ഒട്ടിക്കുക, വലിച്ചിടുക അല്ലെങ്കിൽ ചേർക്കുക (പരമാവധി 4).',
+  'That is more than 4 images.': 'ഇത് 4 ചിത്രങ്ങളിൽ കൂടുതലാണ്.',
+  'That file could not be used as an image.': 'ഈ ഫയൽ ചിത്രമായി ഉപയോഗിക്കാനാകില്ല.',
+  'Report received': 'റിപ്പോർട്ട് ലഭിച്ചു',
+  'Your report reached us. You can follow it here:':
+    'നിങ്ങളുടെ റിപ്പോർട്ട് ഞങ്ങൾക്ക് ലഭിച്ചു. ഇവിടെ അത് പിന്തുടരാം:',
+  'View your report': 'നിങ്ങളുടെ റിപ്പോർട്ട് കാണുക',
+  'Not sent. Your text is kept, so you can try again.':
+    'അയച്ചില്ല. നിങ്ങളുടെ എഴുത്ത് സൂക്ഷിച്ചിട്ടുണ്ട്, വീണ്ടും ശ്രമിക്കാം.',
 }

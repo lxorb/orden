@@ -2685,4 +2685,16 @@ export const te: Dictionary = {
   '{title}, running': '{title}, నడుస్తోంది',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ఇకపై AI కీలను Mac కీచెయిన్‌లో ఉంచదు, అది మళ్లీ మళ్లీ పాస్‌వర్డ్ అడిగేది. మీ కీలను మళ్లీ నమోదు చేసి ChatGPT లోకి మరోసారి సైన్ ఇన్ చేయండి.',
+  'Add images': 'చిత్రాలను జోడించు',
+  'Remove image': 'చిత్రాన్ని తీసివేయి',
+  'Paste, drop or add images (up to 4).':
+    'చిత్రాలను అతికించండి, లాగి వదలండి లేదా జోడించండి (గరిష్ఠంగా 4).',
+  'That is more than 4 images.': 'ఇవి 4 చిత్రాల కంటే ఎక్కువ.',
+  'That file could not be used as an image.': 'ఈ ఫైల్‌ను చిత్రంగా ఉపయోగించలేము.',
+  'Report received': 'నివేదిక అందింది',
+  'Your report reached us. You can follow it here:':
+    'మీ నివేదిక మాకు చేరింది. దీన్ని ఇక్కడ అనుసరించవచ్చు:',
+  'View your report': 'మీ నివేదికను చూడండి',
+  'Not sent. Your text is kept, so you can try again.':
+    'పంపలేదు. మీ వచనం అలాగే ఉంది, మళ్లీ ప్రయత్నించవచ్చు.',
 }

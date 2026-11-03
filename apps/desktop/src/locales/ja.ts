@@ -2644,4 +2644,15 @@ export const ja: Dictionary = {
   '{title}, running': '{title}、実行中',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden は AI キーを Mac のキーチェーンに保存しなくなりました。キーチェーンがパスワードを何度も求めていたためです。キーをもう一度入力し、ChatGPT にもう一度サインインしてください。',
+  'Add images': '画像を追加',
+  'Remove image': '画像を削除',
+  'Paste, drop or add images (up to 4).': '画像は貼り付け、ドロップ、追加ができます（最大4枚）。',
+  'That is more than 4 images.': '4枚を超えています。',
+  'That file could not be used as an image.': 'このファイルは画像として使えません。',
+  'Report received': 'レポートを受け付けました',
+  'Your report reached us. You can follow it here:':
+    'レポートは届きました。こちらで状況を確認できます：',
+  'View your report': 'レポートを見る',
+  'Not sent. Your text is kept, so you can try again.':
+    '送信できませんでした。入力内容は残っているので、もう一度お試しください。',
 }

@@ -2654,4 +2654,15 @@ export const jv: Dictionary = {
   '{title}, running': '{title}, lagi mlaku',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ora nyimpen kunci AI ing keychain Mac maneh, sing terus njaluk sandine. Lebokna kunci sampeyan lan mlebu ChatGPT sepisan maneh.',
+  'Add images': 'Tambah gambar',
+  'Remove image': 'Busak gambar',
+  'Paste, drop or add images (up to 4).': 'Tempel, seret, utawa tambah gambar (paling akèh 4).',
+  'That is more than 4 images.': 'Kuwi luwih saka 4 gambar.',
+  'That file could not be used as an image.': 'Berkas kuwi ora bisa dienggo minangka gambar.',
+  'Report received': 'Laporan wis ditampa',
+  'Your report reached us. You can follow it here:':
+    'Laporanmu wis tekan kéné. Kowé bisa ngetutaké ing kéné:',
+  'View your report': 'Deleng laporanmu',
+  'Not sent. Your text is kept, so you can try again.':
+    'Ora kekirim. Tulisanmu isih disimpen, dadi kowé bisa nyoba manèh.',
 }

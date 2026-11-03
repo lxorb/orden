@@ -2657,4 +2657,15 @@ export const gu: Dictionary = {
   '{title}, running': '{title}, ચાલુ છે',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden હવે AI કી Mac ના કીચેનમાં રાખતું નથી, જે વારંવાર તેનો પાસવર્ડ માંગતું હતું. તમારી કી ફરી દાખલ કરો અને ChatGPT માં ફરી સાઇન ઇન કરો.',
+  'Add images': 'છબીઓ ઉમેરો',
+  'Remove image': 'છબી દૂર કરો',
+  'Paste, drop or add images (up to 4).': 'છબીઓ પેસ્ટ કરો, ખેંચીને મૂકો અથવા ઉમેરો (વધુમાં વધુ 4).',
+  'That is more than 4 images.': 'આ 4 કરતાં વધુ છબીઓ છે.',
+  'That file could not be used as an image.': 'આ ફાઇલનો છબી તરીકે ઉપયોગ થઈ શકતો નથી.',
+  'Report received': 'રિપોર્ટ મળ્યો',
+  'Your report reached us. You can follow it here:':
+    'તમારો રિપોર્ટ અમને મળી ગયો છે. તમે તેને અહીં જોઈ શકો છો:',
+  'View your report': 'તમારો રિપોર્ટ જુઓ',
+  'Not sent. Your text is kept, so you can try again.':
+    'મોકલાયો નથી. તમારું લખાણ સાચવેલું છે, તમે ફરી પ્રયાસ કરી શકો છો.',
 }

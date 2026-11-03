@@ -2726,4 +2726,16 @@ export const fil: Dictionary = {
   '{title}, running': '{title}, tumatakbo',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Hindi na itinatago ng Orden ang mga AI key sa keychain ng Mac, na paulit-ulit na humihingi ng password nito. Ilagay muli ang iyong mga key at mag-sign in muli sa ChatGPT.',
+  'Add images': 'Magdagdag ng mga larawan',
+  'Remove image': 'Alisin ang larawan',
+  'Paste, drop or add images (up to 4).':
+    'I-paste, i-drop, o magdagdag ng mga larawan (hanggang 4).',
+  'That is more than 4 images.': 'Lampas na iyan sa 4 na larawan.',
+  'That file could not be used as an image.': 'Hindi magagamit bilang larawan ang file na iyan.',
+  'Report received': 'Natanggap ang ulat',
+  'Your report reached us. You can follow it here:':
+    'Natanggap namin ang iyong ulat. Masusundan mo ito rito:',
+  'View your report': 'Tingnan ang iyong ulat',
+  'Not sent. Your text is kept, so you can try again.':
+    'Hindi naipadala. Naitabi ang iyong teksto kaya maaari mong subukan ulit.',
 }

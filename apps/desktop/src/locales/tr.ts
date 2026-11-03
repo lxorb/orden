@@ -2686,4 +2686,16 @@ export const tr: Dictionary = {
   '{title}, running': '{title}, çalışıyor',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden artık yapay zekâ anahtarlarını Mac’in anahtar zincirinde tutmuyor; anahtar zinciri parolasını tekrar tekrar soruyordu. Anahtarlarınızı yeniden girin ve ChatGPT’ye bir kez daha oturum açın.',
+  'Add images': 'Görsel ekle',
+  'Remove image': 'Görseli kaldır',
+  'Paste, drop or add images (up to 4).':
+    'Görsel yapıştırın, sürükleyin ya da ekleyin (en fazla 4).',
+  'That is more than 4 images.': 'Bu, 4 görselden fazla.',
+  'That file could not be used as an image.': 'Bu dosya görsel olarak kullanılamıyor.',
+  'Report received': 'Rapor alındı',
+  'Your report reached us. You can follow it here:':
+    'Raporunuz bize ulaştı. Buradan takip edebilirsiniz:',
+  'View your report': 'Raporunuzu görüntüleyin',
+  'Not sent. Your text is kept, so you can try again.':
+    'Gönderilmedi. Metniniz duruyor, yeniden deneyebilirsiniz.',
 }

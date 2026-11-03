@@ -2701,4 +2701,15 @@ export const kn: Dictionary = {
   '{title}, running': '{title}, ಚಾಲನೆಯಲ್ಲಿದೆ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ಇನ್ನು AI ಕೀಗಳನ್ನು Mac ನ ಕೀಚೈನ್‌ನಲ್ಲಿ ಇಡುವುದಿಲ್ಲ, ಅದು ಪದೇಪದೇ ಅದರ ಪಾಸ್‌ವರ್ಡ್ ಕೇಳುತ್ತಿತ್ತು. ನಿಮ್ಮ ಕೀಗಳನ್ನು ಮತ್ತೆ ನಮೂದಿಸಿ ಮತ್ತು ChatGPT ಗೆ ಮತ್ತೊಮ್ಮೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
+  'Add images': 'ಚಿತ್ರಗಳನ್ನು ಸೇರಿಸಿ',
+  'Remove image': 'ಚಿತ್ರವನ್ನು ತೆಗೆದುಹಾಕಿ',
+  'Paste, drop or add images (up to 4).': 'ಚಿತ್ರಗಳನ್ನು ಅಂಟಿಸಿ, ಎಳೆದು ಬಿಡಿ ಅಥವಾ ಸೇರಿಸಿ (ಗರಿಷ್ಠ 4).',
+  'That is more than 4 images.': 'ಇವು 4 ಚಿತ್ರಗಳಿಗಿಂತ ಹೆಚ್ಚು.',
+  'That file could not be used as an image.': 'ಈ ಫೈಲ್ ಅನ್ನು ಚಿತ್ರವಾಗಿ ಬಳಸಲು ಸಾಧ್ಯವಿಲ್ಲ.',
+  'Report received': 'ವರದಿ ತಲುಪಿದೆ',
+  'Your report reached us. You can follow it here:':
+    'ನಿಮ್ಮ ವರದಿ ನಮಗೆ ತಲುಪಿದೆ. ಇದನ್ನು ಇಲ್ಲಿ ಅನುಸರಿಸಬಹುದು:',
+  'View your report': 'ನಿಮ್ಮ ವರದಿಯನ್ನು ನೋಡಿ',
+  'Not sent. Your text is kept, so you can try again.':
+    'ಕಳುಹಿಸಲಾಗಿಲ್ಲ. ನಿಮ್ಮ ಪಠ್ಯ ಉಳಿದಿದೆ, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಬಹುದು.',
 }

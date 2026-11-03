@@ -2642,4 +2642,15 @@ export const vi: Dictionary = {
   '{title}, running': '{title}, đang chạy',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden không còn giữ khóa AI trong Chuỗi khóa của Mac, vốn cứ hỏi mật khẩu mãi. Hãy nhập lại khóa và đăng nhập ChatGPT thêm một lần nữa.',
+  'Add images': 'Thêm hình ảnh',
+  'Remove image': 'Gỡ hình ảnh',
+  'Paste, drop or add images (up to 4).': 'Dán, kéo thả hoặc thêm hình ảnh (tối đa 4).',
+  'That is more than 4 images.': 'Đã quá 4 hình ảnh.',
+  'That file could not be used as an image.': 'Không thể dùng tệp này làm hình ảnh.',
+  'Report received': 'Đã nhận báo cáo',
+  'Your report reached us. You can follow it here:':
+    'Báo cáo của bạn đã đến với chúng tôi. Bạn có thể theo dõi tại đây:',
+  'View your report': 'Xem báo cáo của bạn',
+  'Not sent. Your text is kept, so you can try again.':
+    'Chưa gửi được. Nội dung của bạn vẫn được giữ, bạn có thể thử lại.',
 }

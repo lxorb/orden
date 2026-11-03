@@ -2722,4 +2722,15 @@ export const ptBR: Dictionary = {
   '{title}, running': '{title}, em andamento',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'O Orden não guarda mais as chaves de IA nas Chaves do Mac, que pediam a senha repetidamente. Digite suas chaves e entre no ChatGPT mais uma vez.',
+  'Add images': 'Adicionar imagens',
+  'Remove image': 'Remover imagem',
+  'Paste, drop or add images (up to 4).': 'Cole, arraste ou adicione imagens (até 4).',
+  'That is more than 4 images.': 'São mais de 4 imagens.',
+  'That file could not be used as an image.': 'Não foi possível usar esse arquivo como imagem.',
+  'Report received': 'Relatório recebido',
+  'Your report reached us. You can follow it here:':
+    'Seu relatório chegou até nós. Você pode acompanhá-lo aqui:',
+  'View your report': 'Ver seu relatório',
+  'Not sent. Your text is kept, so you can try again.':
+    'Não enviado. Seu texto foi mantido para você tentar de novo.',
 }

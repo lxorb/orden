@@ -2710,4 +2710,15 @@ export const sw: Dictionary = {
   '{title}, running': '{title}, inaendelea',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden haihifadhi tena funguo za AI kwenye keychain ya Mac, iliyokuwa ikiuliza nenosiri lake mara kwa mara. Weka funguo zako na uingie ChatGPT tena.',
+  'Add images': 'Ongeza picha',
+  'Remove image': 'Ondoa picha',
+  'Paste, drop or add images (up to 4).': 'Bandika, buruta au ongeza picha (hadi 4).',
+  'That is more than 4 images.': 'Hizo ni zaidi ya picha 4.',
+  'That file could not be used as an image.': 'Faili hiyo haiwezi kutumika kama picha.',
+  'Report received': 'Ripoti imepokelewa',
+  'Your report reached us. You can follow it here:':
+    'Ripoti yako imetufikia. Unaweza kuifuatilia hapa:',
+  'View your report': 'Tazama ripoti yako',
+  'Not sent. Your text is kept, so you can try again.':
+    'Haijatumwa. Maandishi yako yamehifadhiwa, kwa hivyo unaweza kujaribu tena.',
 }

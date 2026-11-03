@@ -2741,4 +2741,15 @@ export const es: Dictionary = {
   '{title}, running': '{title}, en curso',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ya no guarda las claves de IA en el llavero del Mac, que pedía su contraseña una y otra vez. Introduce tus claves e inicia sesión en ChatGPT una vez más.',
+  'Add images': 'Añadir imágenes',
+  'Remove image': 'Quitar imagen',
+  'Paste, drop or add images (up to 4).': 'Pega, suelta o añade imágenes (hasta 4).',
+  'That is more than 4 images.': 'Son más de 4 imágenes.',
+  'That file could not be used as an image.': 'Ese archivo no se puede usar como imagen.',
+  'Report received': 'Informe recibido',
+  'Your report reached us. You can follow it here:':
+    'Tu informe nos ha llegado. Puedes seguirlo aquí:',
+  'View your report': 'Ver tu informe',
+  'Not sent. Your text is kept, so you can try again.':
+    'No enviado. Tu texto se conserva para que puedas intentarlo de nuevo.',
 }

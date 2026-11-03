@@ -2657,4 +2657,16 @@ export const my: Dictionary = {
   '{title}, running': '{title}၊ လုပ်ဆောင်နေဆဲ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden သည် AI သော့များကို Mac ၏ keychain တွင် မသိမ်းတော့ပါ၊ ၎င်းက စကားဝှက်ကို ထပ်ခါထပ်ခါ မေးနေခဲ့၍ဖြစ်သည်။ သင့်သော့များကို ထပ်ထည့်ပြီး ChatGPT သို့ နောက်တစ်ကြိမ် ဝင်ပါ။',
+  'Add images': 'ပုံများ ထည့်ရန်',
+  'Remove image': 'ပုံကို ဖယ်ရန်',
+  'Paste, drop or add images (up to 4).':
+    'ပုံများကို ကူးထည့်ပါ၊ ဆွဲချပါ သို့မဟုတ် ထည့်ပါ (အများဆုံး 4 ပုံ)။',
+  'That is more than 4 images.': 'ပုံ 4 ပုံထက် ပိုနေသည်။',
+  'That file could not be used as an image.': 'ဤဖိုင်ကို ပုံအဖြစ် အသုံးမပြုနိုင်ပါ။',
+  'Report received': 'အစီရင်ခံစာ ရရှိပါပြီ',
+  'Your report reached us. You can follow it here:':
+    'သင့်အစီရင်ခံစာ ကျွန်ုပ်တို့ထံ ရောက်ရှိပါပြီ။ ဤနေရာတွင် ဆက်ကြည့်နိုင်သည်-',
+  'View your report': 'သင့်အစီရင်ခံစာကို ကြည့်ရန်',
+  'Not sent. Your text is kept, so you can try again.':
+    'မပို့ရသေးပါ။ သင့်စာသားကို သိမ်းထားသဖြင့် ထပ်မံကြိုးစားနိုင်သည်။',
 }

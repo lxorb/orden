@@ -2679,4 +2679,16 @@ export const pa: Dictionary = {
   '{title}, running': '{title}, ਚੱਲ ਰਿਹਾ ਹੈ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ਹੁਣ AI ਕੁੰਜੀਆਂ Mac ਦੀ ਕੀਚੇਨ ਵਿੱਚ ਨਹੀਂ ਰੱਖਦਾ, ਜੋ ਵਾਰ-ਵਾਰ ਉਸਦਾ ਪਾਸਵਰਡ ਮੰਗਦੀ ਸੀ। ਆਪਣੀਆਂ ਕੁੰਜੀਆਂ ਮੁੜ ਦਿਓ ਅਤੇ ChatGPT ਵਿੱਚ ਇੱਕ ਵਾਰ ਹੋਰ ਸਾਈਨ ਇਨ ਕਰੋ।',
+  'Add images': 'ਤਸਵੀਰਾਂ ਜੋੜੋ',
+  'Remove image': 'ਤਸਵੀਰ ਹਟਾਓ',
+  'Paste, drop or add images (up to 4).':
+    'ਤਸਵੀਰਾਂ ਪੇਸਟ ਕਰੋ, ਖਿੱਚ ਕੇ ਛੱਡੋ ਜਾਂ ਜੋੜੋ (ਵੱਧ ਤੋਂ ਵੱਧ 4)।',
+  'That is more than 4 images.': 'ਇਹ 4 ਤੋਂ ਵੱਧ ਤਸਵੀਰਾਂ ਹਨ।',
+  'That file could not be used as an image.': 'ਇਸ ਫ਼ਾਈਲ ਨੂੰ ਤਸਵੀਰ ਵਜੋਂ ਨਹੀਂ ਵਰਤਿਆ ਜਾ ਸਕਦਾ।',
+  'Report received': 'ਰਿਪੋਰਟ ਮਿਲ ਗਈ',
+  'Your report reached us. You can follow it here:':
+    'ਤੁਹਾਡੀ ਰਿਪੋਰਟ ਸਾਡੇ ਤੱਕ ਪਹੁੰਚ ਗਈ ਹੈ। ਤੁਸੀਂ ਇਸਨੂੰ ਇੱਥੇ ਦੇਖ ਸਕਦੇ ਹੋ:',
+  'View your report': 'ਆਪਣੀ ਰਿਪੋਰਟ ਦੇਖੋ',
+  'Not sent. Your text is kept, so you can try again.':
+    'ਨਹੀਂ ਭੇਜੀ ਗਈ। ਤੁਹਾਡਾ ਲਿਖਿਆ ਸੰਭਾਲਿਆ ਹੈ, ਤੁਸੀਂ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰ ਸਕਦੇ ਹੋ।',
 }

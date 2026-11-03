@@ -2784,4 +2784,14 @@ export const ar: Dictionary = {
   '{title}, running': '{title}، قيد التشغيل',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'لم يعد Orden يحفظ مفاتيح الذكاء الاصطناعي في سلسلة مفاتيح Mac، التي ظلت تطلب كلمة مرورها. أدخل مفاتيحك وسجّل الدخول إلى ChatGPT مرة أخرى.',
+  'Add images': 'إضافة صور',
+  'Remove image': 'إزالة الصورة',
+  'Paste, drop or add images (up to 4).': 'الصق الصور أو أفلتها أو أضفها (حتى 4).',
+  'That is more than 4 images.': 'هذه أكثر من 4 صور.',
+  'That file could not be used as an image.': 'تعذّر استخدام هذا الملف كصورة.',
+  'Report received': 'تم استلام البلاغ',
+  'Your report reached us. You can follow it here:': 'وصلنا بلاغك. يمكنك متابعته من هنا:',
+  'View your report': 'عرض بلاغك',
+  'Not sent. Your text is kept, so you can try again.':
+    'لم يُرسل. نصك محفوظ، لذا يمكنك المحاولة مرة أخرى.',
 }

@@ -2666,4 +2666,15 @@ export const id: Dictionary = {
   '{title}, running': '{title}, sedang berjalan',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden tidak lagi menyimpan kunci AI di rantai kunci Mac, yang terus meminta kata sandinya. Masukkan kunci Anda dan masuk ke ChatGPT sekali lagi.',
+  'Add images': 'Tambahkan gambar',
+  'Remove image': 'Hapus gambar',
+  'Paste, drop or add images (up to 4).': 'Tempel, seret, atau tambahkan gambar (maksimal 4).',
+  'That is more than 4 images.': 'Itu lebih dari 4 gambar.',
+  'That file could not be used as an image.': 'File itu tidak dapat digunakan sebagai gambar.',
+  'Report received': 'Laporan diterima',
+  'Your report reached us. You can follow it here:':
+    'Laporan Anda sudah kami terima. Anda dapat mengikutinya di sini:',
+  'View your report': 'Lihat laporan Anda',
+  'Not sent. Your text is kept, so you can try again.':
+    'Tidak terkirim. Teks Anda tetap disimpan, jadi Anda bisa mencoba lagi.',
 }

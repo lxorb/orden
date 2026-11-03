@@ -2625,4 +2625,14 @@ export const am: Dictionary = {
   '{title}, running': '{title}፣ በመሥራት ላይ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden የAI ቁልፎችን ከእንግዲህ በMac ቁልፍ ሰንሰለት ውስጥ አያስቀምጥም፤ የይለፍ ቃሉን ደጋግሞ ይጠይቅ ነበርና። ቁልፎችዎን ያስገቡ እና ወደ ChatGPT እንደገና ይግቡ።',
+  'Add images': 'ምስሎችን አክል',
+  'Remove image': 'ምስሉን አስወግድ',
+  'Paste, drop or add images (up to 4).': 'ምስሎችን ለጥፍ፣ ጎትተህ ጣል ወይም አክል (እስከ 4)።',
+  'That is more than 4 images.': 'ይህ ከ4 ምስሎች በላይ ነው።',
+  'That file could not be used as an image.': 'ይህ ፋይል እንደ ምስል ሊያገለግል አይችልም።',
+  'Report received': 'ሪፖርቱ ደርሷል',
+  'Your report reached us. You can follow it here:': 'ሪፖርትህ ደርሶናል። እዚህ መከታተል ትችላለህ፦',
+  'View your report': 'ሪፖርትህን ተመልከት',
+  'Not sent. Your text is kept, so you can try again.':
+    'አልተላከም። ጽሑፍህ ተቀምጧል፣ ስለዚህ እንደገና መሞከር ትችላለህ።',
 }

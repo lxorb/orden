@@ -2667,4 +2667,15 @@ export const bn: Dictionary = {
   '{title}, running': '{title}, চলছে',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden আর Mac-এর কিচেইনে AI কী রাখে না, কারণ সেটি বারবার পাসওয়ার্ড চাইত। আপনার কী আবার দিন এবং ChatGPT-তে আরেকবার সাইন ইন করুন।',
+  'Add images': 'ছবি যোগ করুন',
+  'Remove image': 'ছবি সরান',
+  'Paste, drop or add images (up to 4).': 'ছবি পেস্ট করুন, টেনে আনুন বা যোগ করুন (সর্বোচ্চ 4টি)।',
+  'That is more than 4 images.': 'এগুলো 4টির বেশি ছবি।',
+  'That file could not be used as an image.': 'এই ফাইলটি ছবি হিসেবে ব্যবহার করা যাচ্ছে না।',
+  'Report received': 'রিপোর্ট পাওয়া গেছে',
+  'Your report reached us. You can follow it here:':
+    'আপনার রিপোর্ট আমাদের কাছে পৌঁছেছে। এখানে এটি দেখতে পারেন:',
+  'View your report': 'আপনার রিপোর্ট দেখুন',
+  'Not sent. Your text is kept, so you can try again.':
+    'পাঠানো হয়নি। আপনার লেখা রাখা আছে, আবার চেষ্টা করতে পারেন।',
 }

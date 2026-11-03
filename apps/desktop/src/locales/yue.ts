@@ -2586,4 +2586,13 @@ export const yue: Dictionary = {
   '{title}, running': '{title}，運行緊',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden 唔再將 AI 鎖匙放喺 Mac 嘅鑰匙圈，佢成日問密碼。請再輸入一次你嘅鎖匙，再登入多次 ChatGPT。',
+  'Add images': '加圖片',
+  'Remove image': '移除圖片',
+  'Paste, drop or add images (up to 4).': '可以貼上、拖入嚟或者加圖片（最多 4 張）。',
+  'That is more than 4 images.': '超過咗 4 張圖片。',
+  'That file could not be used as an image.': '呢個檔案唔可以當圖片用。',
+  'Report received': '收到你嘅報告',
+  'Your report reached us. You can follow it here:': '我哋收到你嘅報告喇。可以喺呢度睇進度：',
+  'View your report': '睇你嘅報告',
+  'Not sent. Your text is kept, so you can try again.': '未送出。你寫嘅嘢仲喺度，可以再試多次。',
 }

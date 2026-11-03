@@ -2676,4 +2676,16 @@ export const fa: Dictionary = {
   '{title}, running': '{title}، در حال اجرا',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden دیگر کلیدهای هوش مصنوعی را در کلیدزنجیر Mac نگه نمی‌دارد، که مدام رمزش را می‌خواست. کلیدهایتان را دوباره وارد کنید و یک بار دیگر به ChatGPT وارد شوید.',
+  'Add images': 'افزودن تصویر',
+  'Remove image': 'حذف تصویر',
+  'Paste, drop or add images (up to 4).':
+    'تصویرها را جای‌گذاری کنید، بکشید و رها کنید یا بیفزایید (حداکثر 4).',
+  'That is more than 4 images.': 'بیش از 4 تصویر است.',
+  'That file could not be used as an image.': 'این فایل را نمی‌توان به‌عنوان تصویر استفاده کرد.',
+  'Report received': 'گزارش دریافت شد',
+  'Your report reached us. You can follow it here:':
+    'گزارش شما به دست ما رسید. می‌توانید آن را اینجا دنبال کنید:',
+  'View your report': 'دیدن گزارش شما',
+  'Not sent. Your text is kept, so you can try again.':
+    'ارسال نشد. متن شما حفظ شده است تا دوباره تلاش کنید.',
 }

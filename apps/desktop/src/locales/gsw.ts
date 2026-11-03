@@ -2692,4 +2692,15 @@ export const gsw: Dictionary = {
   '{title}, running': '{title}, lauft',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden speicheret KI-Schlüssel nümm im Schlüsselbund vom Mac, wo immer wieder nach em Passwort gfrogt het. Gib dini Schlüssel no einisch ii und meld di wieder bi ChatGPT aa.',
+  'Add images': 'Bilder dezuefüege',
+  'Remove image': 'Bild entferne',
+  'Paste, drop or add images (up to 4).': 'Bilder iifüege, inezie oder dezuefüege (bis zu 4).',
+  'That is more than 4 images.': 'Das sind meh als 4 Bilder.',
+  'That file could not be used as an image.': 'Die Datei chame nöd als Bild bruuche.',
+  'Report received': 'Bricht übercho',
+  'Your report reached us. You can follow it here:':
+    'Din Bricht isch bi eus aacho. Da chasch en verfolge:',
+  'View your report': 'Din Bricht aaluege',
+  'Not sent. Your text is kept, so you can try again.':
+    'Nöd gschickt. Din Text bliibt, so chasch es nomal probiere.',
 }

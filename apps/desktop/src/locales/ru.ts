@@ -2765,4 +2765,15 @@ export const ru: Dictionary = {
   '{title}, running': '{title}, выполняется',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden больше не хранит ключи ИИ в связке ключей Mac, которая снова и снова спрашивала пароль. Введите ключи заново и ещё раз войдите в ChatGPT.',
+  'Add images': 'Добавить изображения',
+  'Remove image': 'Убрать изображение',
+  'Paste, drop or add images (up to 4).': 'Вставьте, перетащите или добавьте изображения (до 4).',
+  'That is more than 4 images.': 'Это больше 4 изображений.',
+  'That file could not be used as an image.': 'Этот файл нельзя использовать как изображение.',
+  'Report received': 'Отчёт получен',
+  'Your report reached us. You can follow it here:':
+    'Ваш отчёт дошёл до нас. Следить за ним можно здесь:',
+  'View your report': 'Открыть ваш отчёт',
+  'Not sent. Your text is kept, so you can try again.':
+    'Не отправлено. Ваш текст сохранён, можно попробовать ещё раз.',
 }

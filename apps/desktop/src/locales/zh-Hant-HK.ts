@@ -2592,4 +2592,13 @@ export const zhHantHK: Dictionary = {
   '{title}, running': '{title}，執行中',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden 不再將 AI 金鑰存放在 Mac 的鑰匙圈中，它一再要求輸入密碼。請重新輸入金鑰，並再次登入 ChatGPT。',
+  'Add images': '加入圖片',
+  'Remove image': '移除圖片',
+  'Paste, drop or add images (up to 4).': '可貼上、拖放或加入圖片（最多 4 張）。',
+  'That is more than 4 images.': '超過了 4 張圖片。',
+  'That file could not be used as an image.': '這個檔案無法用作圖片。',
+  'Report received': '已收到報告',
+  'Your report reached us. You can follow it here:': '我們已收到你的報告。你可以在這裡查看進度：',
+  'View your report': '查看你的報告',
+  'Not sent. Your text is kept, so you can try again.': '未傳送。你的文字已保留，可以再試一次。',
 }

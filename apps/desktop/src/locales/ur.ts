@@ -2665,4 +2665,16 @@ export const ur: Dictionary = {
   '{title}, running': '{title}، جاری ہے',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden اب AI کیز Mac کی کی چین میں نہیں رکھتا، جو بار بار اس کا پاس ورڈ مانگتی تھی۔ اپنی کیز دوبارہ درج کریں اور ChatGPT میں ایک بار پھر سائن ان کریں۔',
+  'Add images': 'تصاویر شامل کریں',
+  'Remove image': 'تصویر ہٹائیں',
+  'Paste, drop or add images (up to 4).':
+    'تصاویر پیسٹ کریں، گھسیٹ کر چھوڑیں یا شامل کریں (زیادہ سے زیادہ 4)۔',
+  'That is more than 4 images.': 'یہ 4 تصاویر سے زیادہ ہیں۔',
+  'That file could not be used as an image.': 'یہ فائل تصویر کے طور پر استعمال نہیں ہو سکتی۔',
+  'Report received': 'رپورٹ موصول ہو گئی',
+  'Your report reached us. You can follow it here:':
+    'آپ کی رپورٹ ہم تک پہنچ گئی۔ آپ اسے یہاں دیکھ سکتے ہیں:',
+  'View your report': 'اپنی رپورٹ دیکھیں',
+  'Not sent. Your text is kept, so you can try again.':
+    'نہیں بھیجی گئی۔ آپ کا متن محفوظ ہے، دوبارہ کوشش کر سکتے ہیں۔',
 }

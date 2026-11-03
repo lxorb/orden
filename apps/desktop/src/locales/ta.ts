@@ -2718,4 +2718,16 @@ export const ta: Dictionary = {
   '{title}, running': '{title}, இயங்குகிறது',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden இனி AI விசைகளை Mac இன் கீசெயினில் வைப்பதில்லை, அது திரும்பத் திரும்ப அதன் கடவுச்சொல்லைக் கேட்டது. உங்கள் விசைகளை மீண்டும் உள்ளிட்டு ChatGPT இல் மீண்டும் ஒருமுறை உள்நுழையுங்கள்.',
+  'Add images': 'படங்களைச் சேர்',
+  'Remove image': 'படத்தை அகற்று',
+  'Paste, drop or add images (up to 4).':
+    'படங்களை ஒட்டவும், இழுத்து விடவும் அல்லது சேர்க்கவும் (அதிகபட்சம் 4).',
+  'That is more than 4 images.': 'இவை 4 படங்களுக்கு மேல்.',
+  'That file could not be used as an image.': 'இந்தக் கோப்பைப் படமாகப் பயன்படுத்த முடியாது.',
+  'Report received': 'அறிக்கை பெறப்பட்டது',
+  'Your report reached us. You can follow it here:':
+    'உங்கள் அறிக்கை எங்களை வந்தடைந்தது. இதை இங்கே பின்தொடரலாம்:',
+  'View your report': 'உங்கள் அறிக்கையைப் பார்',
+  'Not sent. Your text is kept, so you can try again.':
+    'அனுப்பப்படவில்லை. உங்கள் உரை வைக்கப்பட்டுள்ளது, மீண்டும் முயலலாம்.',
 }
