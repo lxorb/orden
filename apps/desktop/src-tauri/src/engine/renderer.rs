@@ -25,6 +25,9 @@
 //! arguments are in its order. Look again when the `tauri-runtime-cef` pin moves;
 //! scripts/globals-drive.py sends a command down this channel, so a drift fails there.
 
+// The `cef` crate's `wrap_*` macros write these transmutes; nothing here does.
+#![allow(clippy::transmute_ptr_to_ptr)]
+
 use cef::*;
 
 /// The message the runtime's browser side hears: `IPC_MESSAGE_NAME` in its `cef_impl/ipc.rs`.
