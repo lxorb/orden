@@ -750,6 +750,10 @@
     "type": "string",
     "description": "The key that runs Reading, as the keys file writes it; empty for none."
   },
+  "shortcuts.app-refresh": {
+    "type": "string",
+    "description": "The key that runs Reload, as the keys file writes it; empty for none."
+  },
   "shortcuts.app-region-next": {
     "type": "string",
     "description": "The key that runs Next section, as the keys file writes it; empty for none."

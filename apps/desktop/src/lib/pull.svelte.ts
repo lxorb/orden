@@ -4,9 +4,9 @@
  *  A phone has no keyboard to hang a shortcut off and no room for a row of
  *  buttons at the top of the screen, and there is exactly one movement a thumb
  *  can make that means nothing else: pulling a surface that is already at its top
- *  further down. Obsidian spends it on the command palette. Orden spends it on
- *  whichever command the reader says, and offers search to begin with - what a
- *  thumb reaches for on a phone is a note, and search is how a note is found.
+ *  further down. Every phone app spends it on reloading, and so does Orden to begin
+ *  with (#1065): a web tab's page again, a sync now everywhere else, the mark turning
+ *  until it is done (refresh.ts). A reader may give it any other command, or none.
  *
  *  The command is a registry id, like the buttons on the bar, and it runs through
  *  the same `runEntry`: the pull, the button and the key all press one command.
@@ -25,12 +25,18 @@
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { runnable } from './shortcuts/registry'
+import { viewport } from './viewport.svelte'
 import { forget, isString, keep, stored } from './stored'
 
 const STORAGE_KEY = 'nib:pull'
 
-/** What a fresh phone does: search this space. */
-export const DEFAULT_PULL = 'app.search'
+/** What a fresh phone does: reload, as every phone app's pull does (#1065) - a web
+ *  tab's page again, a sync now everywhere else; see refresh.ts. */
+export const DEFAULT_PULL = 'app.refresh'
+
+/** How long the mark keeps turning for a reload before it lets go and says so quietly:
+ *  a pass that is still going finishes on its own. */
+const WAITS = 15_000
 
 /** No gesture at all, which is a choice like any other: somebody who pulls a
  *  list about without meaning anything by it can have the pull do nothing. Not a
@@ -78,6 +84,40 @@ class Pull {
   /** How far the surface is pulled while a finger is down, in pixels. Zero when
    *  nothing is being pulled, which is also what the mark reads. */
   at = $state(0)
+
+  /** A reload let go of and still under way: the mark stays, turning (#1065). */
+  refreshing = $state(false)
+
+  /** A reload that did not finish, said for a moment by the mark. */
+  failed = $state(false)
+
+  /** What the lift presses: the reload waited for, so the mark turns until the page
+   *  has been asked again or the pass has run; any other command at once. */
+  async press(): Promise<void> {
+    if (this.id !== DEFAULT_PULL) {
+      this.runs?.()
+      return
+    }
+    if (this.refreshing) return
+    this.refreshing = true
+    this.failed = false
+    const { refreshHere } = await import('./refresh')
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const late = new Promise<boolean>((done) => (timer = setTimeout(() => done(false), WAITS)))
+    const ok = await Promise.race([
+      refreshHere().then(
+        () => true,
+        () => false,
+      ),
+      late,
+    ])
+    clearTimeout(timer)
+    this.refreshing = false
+    if (!ok) {
+      this.failed = true
+      setTimeout(() => (this.failed = false), 1_600)
+    }
+  }
 
   /** Whether letting go now would run the command. */
   get ready(): boolean {
@@ -176,6 +216,9 @@ class Pull {
       // Only from the top. A list scrolled halfway down is being read, and the
       // gesture there is a scroll.
       if (scroller.scrollTop > 0) return
+      // Never over what the reader is doing with the words: the keyboard is up, or a
+      // selection is being made or moved (#1065).
+      if (busyWithWords()) return
 
       startX = touch.clientX
       startY = touch.clientY
@@ -211,7 +254,7 @@ class Pull {
     const onEnd = () => {
       const go = claimed && this.ready
       clear()
-      if (go) this.runs?.()
+      if (go) void this.press()
     }
 
     scroller.addEventListener('touchstart', onStart, { passive: true })
@@ -227,6 +270,15 @@ class Pull {
       clear()
     }
   }
+}
+
+/** Whether the words are the reader's at the moment: the keyboard up, or a selection
+ *  that is more than a caret. A pull then is a thumb moving the selection or the page
+ *  under the keys, never a reload. */
+function busyWithWords(): boolean {
+  if (viewport.typing) return true
+  const chosen = typeof document === 'undefined' ? null : document.getSelection()
+  return !!chosen && !chosen.isCollapsed
 }
 
 /** A stored or received choice, cleaned: a command this version can press, the

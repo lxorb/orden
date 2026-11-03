@@ -13,12 +13,19 @@
    *  still sees it follow their own hand - what `stillness` takes away is the
    *  growing, which is the part the app animates rather than the part the reader
    *  is doing. */
+  import { t } from './i18n.svelte'
   import { pull, REACH } from './pull.svelte'
   import { stillness } from './motion'
   import { nameFor } from './toolbar.svelte'
 
-  const at = $derived(pull.at)
+  /** Let go of at the reach, a reload stays there turning until it is done, and a
+   *  reload that did not finish says so for a moment (#1065). */
+  const waiting = $derived(pull.refreshing || pull.failed)
+  const at = $derived(waiting ? REACH : pull.at)
   const ready = $derived(pull.ready)
+  const said = $derived(
+    pull.refreshing ? t('Syncing') : pull.failed ? t('Sync failed') : nameFor(pull.id),
+  )
   /** How far along the pull is, for the ring: one at the reach and no further. */
   const part = $derived(Math.min(1, at / REACH))
   const still = stillness()
@@ -28,10 +35,12 @@
   <div
     class="pull"
     role="status"
-    aria-label={nameFor(pull.id)}
+    aria-label={said}
     style:--at="{Math.round(at)}px"
-    style:--part={still ? 1 : part}
-    class:ready
+    style:--part={still || waiting ? 1 : part}
+    class:ready={ready && !waiting}
+    class:turning={pull.refreshing && !still}
+    class:failed={pull.failed}
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <!-- The ring fills as the pull reaches, drawn as one dash round a circle:
@@ -103,5 +112,35 @@
 
   .ready .arrow {
     stroke: var(--accent-ink);
+  }
+
+  /* A reload under way: the ring, a quarter of it, going round where the pull was let
+     go, until the page has been asked again or the pass has run. */
+  .turning .filling {
+    stroke-dashoffset: 49;
+    animation: turn 0.9s linear infinite;
+  }
+
+  .turning .arrow {
+    stroke: transparent;
+  }
+
+  /* One that did not finish: the ring in the colour of trouble, for a moment. */
+  .failed .filling {
+    stroke: var(--danger);
+  }
+
+  /* Still for a reader who asked for less movement: the quarter ring stands where it
+     is, and the mark staying up is what says the reload is under way. */
+  @media (prefers-reduced-motion: reduce) {
+    .turning .filling {
+      animation: none;
+    }
+  }
+
+  @keyframes turn {
+    to {
+      rotate: 270deg;
+    }
   }
 </style>
