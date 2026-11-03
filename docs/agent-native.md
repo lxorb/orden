@@ -369,19 +369,19 @@ web tab of any space the grant reaches, on screen or not. A reader's tab needs
 | --- | --- | --- |
 | `browser_tabs` | - | the reader's web tabs of every space's set (id, title, address, space, in front, on screen) and this agent's (id, address, title, loading) |
 | `browser_open` | `url`, `store`?: `reader` (default), `agent`, `space`; `space`?; `width`, `height`? | an agent tab, out of sight; answers its id and the store it is in, which is the agent's own for a site kept to it (6.3) whatever was asked |
-| `browser_navigate` | `tab`, `url` or `back`/`forward`/`reload` | |
+| `browser_navigate` | `tab`, `url` or `back`/`forward`/`reload` | `http`, `https` and `about:blank` alone, as `browser_open`: never `file:`, `chrome:`, `view-source:` or `javascript:`, and each engine's navigation and window events say the same of the page itself (with its own `blob:`) |
 | `browser_wait` | `tab`, `for`: `load`, `network_idle`, `{text}`, `{ref}`, `{url}`; `timeout_ms` | network idle is no request in flight for 500 ms, counted from the engine's own network events |
 | `browser_snapshot` | `tab`, `ref`? (a subtree), `max_chars`? | the accessibility tree as text: `- button "Save" [ref=e4812]`; refs are the engine's node ids, stable for as long as the element lives, `f2e17` inside a frame |
 | `browser_find` | `tab`, `text` or `role` and `name` | the refs that match |
 | `browser_read` | `tab`, `as`: `text`, `markdown` (default), `article`; `max_chars`? | the page as words, through the clipper's own converter (`@orden/markdown/from-html`), which the crate asks the window for (`agent.markdown`); the page's text when no window answers |
 | `browser_click` | `tab`, `ref` or `x` and `y`, `button`?, `count`?, `modifiers`? | scrolled into view, the engine's highlight for a beat, then pressed where it shows: its middle, or the middle of a quarter of it where something small sits over the middle. Or a point in the tab's viewport in CSS pixels (a pixel of `browser_screenshot` at its own scale), judged by the element there (#373) |
 | `browser_type` | `tab`, `ref`, `text`, `submit`?, `replace`? | into a field, as text rather than keys (`Input.insertText`); a date, time or colour field set through the page; refused on a password field and on every field of a sign-in form (9.4) |
-| `browser_press` | `tab`, `keys` (`Enter`, `Control+A`) | keys pressed **inside that page**: through the engine (`Input.dispatchKeyEvent`) in an agent's own tab, measured to move neither the window in front nor the keyboard; as the page's own key events in a reader's tab, whose page-first keys would hand an engine key to the window (7.2). Never through the system, never into the window, never a key that opens a picker |
+| `browser_press` | `tab`, `keys` (`Enter`, `Control+A`) | keys pressed **inside that page**: through the engine (`Input.dispatchKeyEvent`) in an agent's own tab, measured to move neither the window in front nor the keyboard; as the page's own key events in a reader's tab, whose page-first keys would hand an engine key to the window (7.2). Never through the system, never into the window, never a key that opens a picker. Space or Enter on a button or link is judged as a press of it, as `browser_click` would be |
 | `browser_scroll` | `tab`, `ref` or `dx`, `dy` | |
 | `browser_select` | `tab`, `ref`, `values` | a `<select>` set through the page, never by opening its native list (6.5) |
 | `browser_fill_form` | `tab`, `fields`: `[{ref, value}]` | several fields in one call |
 | `browser_hover`, `browser_drag` | `tab`, `ref` / `from`, `to` | |
-| `browser_upload` | `tab`, `ref`, `files`: paths inside a space | the file chooser is intercepted (`Page.setInterceptFileChooserDialog`) and answered with `DOM.setFileInputFiles`; a path outside every space asks (9.4) |
+| `browser_upload` | `tab`, `ref`, `files`: paths inside a space | the file chooser is intercepted (`Page.setInterceptFileChooserDialog`) and answered with `DOM.setFileInputFiles`; a path outside every space asks (9.4), and one in a space the grant does not reach is not there (9.6) |
 | `browser_screenshot` | `tab`, `ref`?, `full_page`?, `scale`? | a PNG; scaled to the page's CSS pixels unless asked |
 | `browser_console` | `tab`, `since`?, `level`? | the last 500 lines per tab |
 | `browser_network` | `tab`, `since`?, `match`?, `bodies`? | the last 500 requests per tab: method, address, status, type, time; bodies only with `browser.network` |
@@ -493,7 +493,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `run_terminal` | `command`, `cwd`? | only when the terminal tab exists, and only with `terminal` (8.9) |
 | `read_terminal` | `tab`, `lines`? | one of the reader's terminal tabs as words: scrollback and screen, wrapped lines joined, marked as the terminal's; one not shown since a restart answers the lines it came back with. `context` (8.9) |
 | `type_terminal` | `tab`, `text`?, `enter`?, `keys`?, `wait_ms`? | one line typed into the reader's own shell, Enter unless told otherwise, then named keys (`Ctrl+C`, the arrows, `Tab`...); answers what it printed until it went quiet. `terminal`, and it asks like `run_terminal` (8.9) |
-| `run_command` | `id` | one row of the palette's registry, as `orden commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3) |
+| `run_command` | `id` | one row of the palette's registry, as `orden commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3). A row needs the scope of the verb behind it (`workspace.focus` for closing or moving what the reader sees, `notes.write`, `tree`), and a row nobody has listed (`scopeOf` in commands.ts) is the reader's |
 | `attach_agent_log` | `note`, `session`? | this session's log, written into a note (9.5) |
 | `approval_status` | `id` | what the reader answered (9.3) |
 
