@@ -1730,7 +1730,6 @@ class Workspace {
 
     for (const other of this.tabs) {
       if (other.id === kept.id || !this.panes.at(other.paneId)) continue
-      if (this.keeping.has(other.id)) continue
       const words = isDraft(other.note) && hasWords(other.note)
       if (words && !this.tabs.some((one) => one !== other && one.note === other.note)) {
         void this.writtenAndClosed(other)
@@ -1738,12 +1737,18 @@ class Workspace {
     }
   }
 
-  /** A draft given its place and then put away; put away all the same where it could
-   *  not be given one, which leaves its words in Recently deleted. */
+  /** A draft put away at once and given its place behind that, so the tab that took its
+   *  place is not touched while somebody is already typing in it. On the closed stack
+   *  once it has a file, so back opens the note. Its words go to Recently deleted, as a
+   *  closed draft's do, where it could not be given one. */
   private async writtenAndClosed(tab: Tab) {
-    this.flush()
-    await this.save(tab)
-    if (this.active?.id !== tab.id) this.close(tab.id)
+    const paneId = tab.paneId
+    const at = Math.max(this.tabsIn(paneId).indexOf(tab), 0)
+    this.close(tab.id, false)
+
+    if ((await this.save(tab)) === null) void this.trashWords(tab.note)
+    this.closed.record({ draft: this.draftOf(tab), paneId, at })
+    this.persist()
   }
 
   /** One pane, one document: what a phone and a tablet come down to, wherever an

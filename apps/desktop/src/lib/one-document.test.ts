@@ -169,11 +169,13 @@ describe('a phone and a tablet', () => {
     workspace.openBlank()
     workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Shopping list\nmilk and eggs' }])
     await workspace.open('/space/One.md')
-    await vi.waitFor(() => expect(open()).toEqual(['One']))
+    expect(open()).toEqual(['One'])
 
-    expect(notes.get('/space/Shopping list.md')).toBe('Shopping list\nmilk and eggs')
-    expect(workspace.closed.stack.at(-1)?.draft).toMatchObject({
-      path: '/space/Shopping list.md',
+    await vi.waitFor(() => {
+      expect(notes.get('/space/Shopping list.md')).toBe('Shopping list\nmilk and eggs')
+      expect(workspace.closed.stack.at(-1)?.draft).toMatchObject({
+        path: '/space/Shopping list.md',
+      })
     })
 
     await workspace.reopenClosed()
@@ -187,8 +189,8 @@ describe('a phone and a tablet', () => {
     workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Shopping list' }])
     workspace.openBlank()
 
+    expect(workspace.tabs).toHaveLength(1)
     await vi.waitFor(() => expect(notes.get('/space/Shopping list.md')).toBe('Shopping list'))
-    await vi.waitFor(() => expect(workspace.tabs).toHaveLength(1))
   })
 
   test('an empty one just goes', async () => {
