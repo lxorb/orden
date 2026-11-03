@@ -892,8 +892,8 @@ describe('a closing fence an older build named', () => {
 
   test('code that only looks like one stays code', () => {
     expect(blockIds('```\n``` ^a b\n```\n')).toEqual([])
-    const shown = '```\n``` ^abc\n```\n\n[[L]] words\n'
-    expect(renderMarkdown(shown)).toContain('``` ^abc')
+    const shown = '```\n``` ^a b\n```\n\n[[L]] words\n'
+    expect(renderMarkdown(shown)).toContain('``` ^a b')
     expect(findLinks(shown).map((one) => one.target)).toEqual(['L'])
   })
 

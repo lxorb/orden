@@ -5,6 +5,8 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { describe, expect, test } from 'vitest'
 import { isMap, parseDocument, stringify } from 'yaml'
+import corpus from './front-matter-corpus.json'
+import { noteValues } from './note-values'
 
 /** The same runs on every machine: no wall clock and no Math.random. */
 function rng(seed: number) {
@@ -101,6 +103,29 @@ function reads(body: string): boolean {
   const doc = parseDocument(body)
   return doc.errors.length === 0 && isMap(doc.contents)
 }
+
+/** What real tools write, shown to the reviewer of this rule. A note in here that YAML
+ *  reads as a mapping is a block, but for the few the rule is honest about. */
+const HELD_BACK = new Set([
+  // Past YAML's own limit is no key to a reader; the library is more generous.
+  `---\n${'k'.repeat(1100)}: 2\n---\nrest`,
+])
+
+describe('the corpus of what real tools write', () => {
+  test.each(corpus)('%j', (note) => {
+    const body = note.slice(4, note.lastIndexOf('---\nrest'))
+    if (!reads(body) || HELD_BACK.has(note)) return
+    expect(frontMatterBlock(note)?.close).toBe(4 + body.length)
+  })
+})
+
+describe('a note saved in the middle of a key', () => {
+  test('keeps its block and every value the other lines say', () => {
+    const note = '---\nstatus: done\ntitle: x\nsta\n---\n# Note\n'
+    expect(frontMatterBlock(note)).not.toBeNull()
+    expect(noteValues(note)).toMatchObject({ status: 'done', title: 'x' })
+  })
+})
 
 describe('front matter against the YAML library', () => {
   test('whatever YAML reads as a mapping is a block, and closes where it does', () => {

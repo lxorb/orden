@@ -1,7 +1,7 @@
 import fenceTable from '../../../markdown/src/fence-table.json'
 import { nibMarkdownParser } from './extensions'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { syntaxTree } from '@codemirror/language'
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { nibMarkdownExtensions } from './extensions'
@@ -45,6 +45,68 @@ function namesOf(state: EditorState): string[] {
 function names(doc: string): string[] {
   return namesOf(stateFor(doc))
 }
+
+describe('front matter being typed', () => {
+  const language = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })
+  const top = (state: EditorState): string => {
+    const out: string[] = []
+    ensureSyntaxTree(state, state.doc.length, 5000)
+    for (let at = syntaxTree(state).topNode.firstChild; at; at = at.nextSibling) {
+      out.push(`${at.name}@${at.from}-${at.to}`)
+    }
+    return out.join(' ')
+  }
+  const fresh = (doc: string) => top(EditorState.create({ doc, extensions: [language] }))
+
+  /** Types `typed` at `at`, a key at a time, and holds the tree the keystrokes built to
+   *  the tree a note opened with those words gets. */
+  function typedAlong(doc: string, at: number, typed: string) {
+    let state = EditorState.create({ doc, extensions: [language] })
+    top(state)
+    let from = at
+    for (const one of typed) {
+      state = state.update({ changes: { from, insert: one }, userEvent: 'input.type' }).state
+      from += one.length
+      expect(top(state), JSON.stringify(state.doc.toString())).toBe(fresh(state.doc.toString()))
+    }
+    return state
+  }
+
+  test.each([60, 100, 120, 126, 130, 132, 140, 160, 200, 400, 1000, 6000])(
+    'a key under a value %i long is the same tree as a note opened with it',
+    (length) => {
+      const body = `title: x\nd: ${'y'.repeat(length)}\n`
+      const state = typedAlong(`---\n${body}---\n\nw\n`, 4 + body.length - 1, '\nk: v')
+      expect(top(state).split(' ')[0]).toMatch(/^FrontMatter/)
+    },
+  )
+
+  test('a key typed anywhere in the block leaves it a block at every keystroke', () => {
+    const doc = '---\ntitle: x\nother: y\n---\n\n# Heading\n\nwords\n'
+    let state = EditorState.create({ doc, extensions: [language] })
+    let from = doc.indexOf('other')
+    for (const one of 'status: open\n') {
+      state = state.update({ changes: { from, insert: one }, userEvent: 'input.type' }).state
+      from += 1
+      expect(top(state)).toBe(fresh(state.doc.toString()))
+      expect(top(state).split(' ')[0]).toMatch(/^FrontMatter/)
+    }
+  })
+
+  test('where a keystroke does turn a rule into a block or back, the trees agree', () => {
+    const tail = `\n\n# Heading\n\n${'words words\n'.repeat(40)}`
+    // The first line becoming a key, the fence closing, a blank line and words under it.
+    typedAlong(`---\n\n---${tail}`, 4, 'prose: x\n\nmore: y')
+    typedAlong(`---\nprose words\n---${tail}`, 4 + 11, ': ')
+    typedAlong(`---\ntitle: x\n${tail}`, 13, '---\n')
+    typedAlong(`---\ntitle: x\n\nsta\n---${tail}`, 17, ': done')
+    typedAlong(`---\ntitle: x\n---${tail}`, 12, '\n\nprose')
+  })
+
+  test('a block typed from nothing is the same tree at every keystroke', () => {
+    typedAlong(`${'\n'}# Heading\n\n${'words\n'.repeat(60)}`, 0, '---\ntitle: x\nb: 1\n---\n')
+  })
+})
 
 describe('a fence, as every parser of a note reads it', () => {
   test.each(fenceTable as [string, string, string[]][])('%j', (note, shape) => {

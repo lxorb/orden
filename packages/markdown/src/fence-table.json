@@ -9,10 +9,6 @@
   ["> ```\n> code\n> ``` ^abc123\n> words", "occw", ["abc123"]],
   ["- a\n\n  ```\n  code\n  ``` ^abc123\n  words", "wwoccw", ["abc123"]],
   ["``` ^abc123\ncode\n```\nwords", "occw", []],
-  ["```\n``` ^abc\n```\nwords", "occw", []],
-  ["```\n``` ^ABC123\n```\nwords", "occw", []],
-  ["```\n``` ^abc-12\n```\nwords", "occw", []],
-  ["```\n``` ^abcdefg\n```\nwords", "occw", []],
   ["```\n``` ^abc123 more\n```\nwords", "occw", []],
   ["```\n```^abc123\n```\nwords", "occw", []],
   ["~~~\n``` ^abc123\n~~~\nwords", "occw", []],
@@ -20,5 +16,12 @@
   ["~~~\ncode\n~~~ x\n~~~\nwords", "occcw", []],
   ["~~~\ncode\n~~~ \n~~~\nwords", "occcw", []],
   ["```\ncode\n```ts\n```\nwords", "occcw", []],
-  ["```\ncode\n``` x\n```\nwords", "occcw", []]
+  ["```\ncode\n``` x\n```\nwords", "occcw", []],
+  ["```\ncode\n``` ^abc\nwords", "occw", ["abc"]],
+  ["```\ncode\n``` ^intro\nwords", "occw", ["intro"]],
+  ["```\ncode\n``` ^ABC-12\nwords", "occw", ["ABC-12"]],
+  ["```\n``` ^a_b\n```\nwords", "occw", []],
+  ["```\n``` ^a.b\n```\nwords", "occw", []],
+  ["```\n``` ^\n```\nwords", "occw", []],
+  ["``` ^intro\ncode\n```\nwords", "occw", []]
 ]
