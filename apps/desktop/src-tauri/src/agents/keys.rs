@@ -79,7 +79,7 @@ impl Key {
 
     /// Whether what this press does depends on what has the keyboard.
     pub fn judged_by_the_page(&self) -> bool {
-        self.changes_words() || self.sends() || self.submits()
+        self.changes_words() || self.sends() || self.submits() || self.presses()
     }
 
     /// Whether this press presses what has the keyboard, as a click would.
@@ -297,7 +297,14 @@ mod tests {
 
     #[test]
     fn a_key_that_presses_is_asked_of_the_page_whatever_is_held() {
-        for said in ["Control+Space", "Alt+Space", "Meta+Space", "Space", "Enter", "a"] {
+        for said in [
+            "Control+Space",
+            "Alt+Space",
+            "Meta+Space",
+            "Space",
+            "Enter",
+            "a",
+        ] {
             assert!(chord(said).expect("key").judged_by_the_page(), "{said}");
         }
         for said in ["Tab", "Escape", "ArrowDown"] {

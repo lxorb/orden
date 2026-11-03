@@ -408,7 +408,11 @@ fn judged(
     let Some(question) = policy::judge(grant, facts, act, &page.url(), &hosts) else {
         return cleared();
     };
-    let key = approvals::on_page(key, &page.url(), &facts.name);
+    let key = approvals::on_page(
+        key,
+        &page.url(),
+        &format!("{} {}", facts.name, facts.default_button),
+    );
     if approvals::allowed(&grant.id, &key) {
         return cleared();
     }
@@ -670,17 +674,17 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let key = keys::chord(&pressing.keys)
                     .map_err(|why| Answer::error(Code::BadArguments, why))?;
                 // Facts are asked once, and only of a key they can matter to.
-                let facts = if key.changes_words() || key.sends() || key.submits() {
+                let facts = if key.judged_by_the_page() {
                     page.active_facts()?
                 } else {
                     None
                 };
                 // A key that types into a sign-in form is words into it, judged so.
                 if key.changes_words() {
-                    if let Some(facts) = facts
-                        .as_ref()
-                        .filter(|one| one.editable && (one.password() || one.sign_in()))
-                    {
+                    // Not Space or Enter on a button of the form, which is a press, below.
+                    if let Some(facts) = facts.as_ref().filter(|one| {
+                        (one.editable || !key.presses()) && (one.password() || one.sign_in())
+                    }) {
                         let asked =
                             approvals::key("browser_press_words", Some(&tab), Some(&pressing.keys));
                         judged(app, caller, page, place, facts, Act::Write, &asked)?;
@@ -1066,16 +1070,20 @@ fn files_of(
             if !path.is_file() {
                 return Err(absent());
             }
-            let inside = crate::paths::in_spaces(app, &path.to_string_lossy()).is_ok();
+            let mut inside = crate::paths::in_spaces(app, &path.to_string_lossy()).is_ok();
             if let (Caller::Agent(grant), Some(root)) = (caller, &root) {
                 if inside && beyond_the_grant(root, &path, &grant.spaces) {
                     return Err(absent());
                 }
+                // Where a link really goes: into another space it is not there, and out
+                // of the spaces folder (`Alpha/key -> ~/.ssh/id_rsa`) it asks.
                 let real = (std::fs::canonicalize(root), std::fs::canonicalize(&path));
-                if let (Ok(root), Ok(real)) = real {
-                    if real.starts_with(&root) && beyond_the_grant(&root, &real, &grant.spaces) {
-                        return Err(absent());
-                    }
+                let (Ok(root), Ok(real)) = real else {
+                    return Ok((path, false));
+                };
+                inside = inside && real.starts_with(&root);
+                if inside && beyond_the_grant(&root, &real, &grant.spaces) {
+                    return Err(absent());
                 }
             }
             Ok((path, inside))

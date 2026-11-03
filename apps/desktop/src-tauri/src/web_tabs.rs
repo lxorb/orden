@@ -706,9 +706,14 @@ pub(crate) fn allowed(url: &Url) -> bool {
         return false;
     }
 
-    let host = url.host_str().unwrap_or_default().to_ascii_lowercase();
-    !matches!(
-        host.as_str(),
+    !app_host(url.host_str().unwrap_or_default())
+}
+
+/// Whether a host is one of the app's own origins, however it is spelled: a trailing dot
+/// names the same host.
+pub(crate) fn app_host(host: &str) -> bool {
+    matches!(
+        host.trim_end_matches('.').to_ascii_lowercase().as_str(),
         "tauri.localhost" | "ipc.localhost" | "asset.localhost" | "nib.localhost"
     )
 }

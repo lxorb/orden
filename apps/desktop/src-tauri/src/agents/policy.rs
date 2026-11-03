@@ -67,7 +67,8 @@ pub fn on_the_web(url: &str) -> bool {
         return false;
     };
     match parsed.scheme() {
-        "http" | "https" | "blob" => true,
+        "http" | "https" => !parsed.host_str().is_some_and(crate::web_tabs::app_host),
+        "blob" => true,
         "about" => parsed.as_str() == "about:blank",
         _ => false,
     }
@@ -200,7 +201,8 @@ pub struct Facts {
     pub field: Field,
     /// The name of the button Enter in its form presses: the form's default button.
     pub default_button: String,
-    /// Whether it has the keyboard and shows nothing that can be read; see `unreadable`.
+    /// Whether it has the keyboard and shows nothing that can be read: the host of a closed
+    /// shadow root, whose button no script can name.
     pub opaque: bool,
 }
 
@@ -230,12 +232,6 @@ impl Facts {
         self.kind == "password" || credential(&self.field)
     }
 
-    /// Whether it has the keyboard and shows nothing that can be read: the host of a closed
-    /// shadow root, whose button no script can name.
-    pub fn unreadable(&self) -> bool {
-        self.opaque
-    }
-
     /// Whether it is in a sign-in form: a form with a password field.
     pub fn sign_in(&self) -> bool {
         self.in_form && self.fields.iter().any(credential)
@@ -262,11 +258,6 @@ impl Facts {
     /// nothing in focus.
     pub fn pressable(&self) -> bool {
         !self.editable && !matches!(self.tag.as_str(), "" | "body" | "html")
-    }
-
-    /// Whether it is a frame's element, which says nothing of what is in the frame.
-    pub fn frame_owner(&self) -> bool {
-        matches!(self.tag.as_str(), "iframe" | "frame")
     }
 
     /// Whether it opens one of the engine's own pickers when pressed (6.5).
@@ -484,6 +475,22 @@ pub fn judge(
         }
     }
 
+    // Enter that submits presses the form's default button, which is judged as a press of
+    // it, by its name: Enter in a field is no way round the Delete account beside it.
+    if act == Act::Enter && facts.submit && !facts.default_button.is_empty() && !body(&facts.field)
+    {
+        let pressed = Facts {
+            name: facts.default_button.clone(),
+            editable: false,
+            link: false,
+            default_button: String::new(),
+            ..facts.clone()
+        };
+        if let Some(question) = judge(grant, &pressed, Act::Press, url, hosts) {
+            return Some(question);
+        }
+    }
+
     if act != Act::Write {
         let paying = facts.card_form()
             || says(&facts.name, PAYING)
@@ -510,6 +517,13 @@ pub fn judge(
         }
     }
 
+    // What a press lands on cannot be read, so it can be anything on the list above.
+    if act == Act::Press && facts.opaque {
+        if let Some(question) = ask(Category::Writing, on("", "A press", &site)) {
+            return Some(question);
+        }
+    }
+
     // Confirm mode asks for every write, pressing included (9.3).
     (grant.mode == Mode::Confirm)
         .then(|| {
@@ -529,8 +543,13 @@ pub fn judge(
 /// and a message's send.
 pub fn key_act(mut facts: Facts, key: &super::keys::Key) -> Option<(Facts, Act)> {
     if key.presses() && facts.pressable() {
-        // Enter on an input that is no box submits its form, as a press of its submit does.
-        facts.submit |= facts.tag == "input" && facts.in_form && key.submits();
+        // Enter on an input that is no box and no button (a checkbox) submits its form,
+        // the same as Enter in a box of one.
+        let its_own_submit = matches!(facts.kind.as_str(), "submit" | "image" | "button" | "reset");
+        if key.submits() && facts.tag == "input" && !its_own_submit {
+            facts.submit = facts.in_form;
+            return Some((facts, Act::Enter));
+        }
         return Some((facts, Act::Press));
     }
     if !(key.sends() || key.submits()) {
