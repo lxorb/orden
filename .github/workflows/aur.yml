@@ -59,8 +59,11 @@ jobs:
 
   # The lint above reads the recipe and never runs it, which let a recipe the app refuses
   # to build stay green for months: this makes the package, on a change to the recipe, and
-  # a recipe that does not build is not pushed. No credentials, as the lint.
+  # a recipe that does not build is not pushed. No credentials, as the lint. Not on a pull
+  # request: the recipe clones main, so there it would build main and say nothing of the
+  # pull request's tree.
   build:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
