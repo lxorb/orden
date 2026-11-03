@@ -1119,14 +1119,34 @@ describe('a machine', () => {
   // owner out of their own terminal.
   test('watchers cannot take every socket on a terminal from its owner', async () => {
     const running = await machine(env, ID, user)
-    let refused = false
-    for (let at = 0; at < MOST_SOCKETS && !refused; at += 1) {
-      const watcher = await join(running, { who: `reader-${String(at)}`, role: 'read' })
-      refused = watcher.of('refused').length > 0
+    const fill = async (who: string, role: 'read' | 'write', typing: 'owner' | 'writers') => {
+      let joined = 0
+      for (let at = 0; at <= MOST_SOCKETS; at += 1) {
+        const one = await join(running, { who: `${who}-${String(at)}`, role, typing })
+        if (one.of('refused').length) return joined
+        joined += 1
+      }
+      return joined
     }
-    expect(refused).toBe(true)
-    const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
-    expect(owner.of('refused')).toEqual([])
+    // Refused ones are said so and closed, and hold nothing while that lands.
+    const readers = await fill('reader', 'read', 'owner')
+    expect(await fill('reader-again', 'read', 'owner')).toBe(0)
+    expect(readers).toBeLessThan(MOST_SOCKETS)
+    expect(running.state.getWebSockets('session-1')).toHaveLength(readers)
+
+    // Whoever was let in to type still gets in, past everybody who only watches.
+    const writers = await fill('writer', 'write', 'writers')
+    expect(writers).toBeGreaterThan(0)
+    expect(readers + writers).toBeLessThan(MOST_SOCKETS)
+
+    // And the owner past them all, up to the bound and no further.
+    let owners = 0
+    for (; owners <= MOST_SOCKETS; owners += 1) {
+      const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+      if (owner.of('refused').length) break
+    }
+    expect(owners).toBeGreaterThan(0)
+    expect(readers + writers + owners).toBe(MOST_SOCKETS)
   })
 
   test('a key and its echo pass through with no storage, no query and no wait', async () => {

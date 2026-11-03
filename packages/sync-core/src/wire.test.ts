@@ -168,6 +168,23 @@ describe('entry ids', () => {
     expect(page?.items.map((one) => one.id)).toEqual(['kept'])
     expect(page?.cursor).toBe(3)
   })
+
+  test('its delete still reaches a device that took it in before', () => {
+    const gone = {
+      id: '../../x',
+      kind: 'note',
+      parent: null,
+      name: 'a.md',
+      deleted: true,
+      seq: 1,
+      hash: '',
+      size: 0,
+      by: '',
+      at: 0,
+    }
+    const page = feedPageOf({ items: [gone], cursor: 1, more: false })
+    expect(page?.items.map((one) => one.id)).toEqual(['../../x'])
+  })
 })
 
 describe('names', () => {
