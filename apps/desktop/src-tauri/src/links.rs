@@ -940,7 +940,7 @@ fn closing_brackets(letters: &[char], from: usize) -> Option<usize> {
 const DEEPEST_PARENS: usize = 32;
 
 /// The `]` that closes the label opened at `open`. A label holds balanced brackets
-/// and escaped ones, as in CommonMark. A bracket pair that opens a link of its own
+/// and escaped ones, as in `CommonMark`. A bracket pair that opens a link of its own
 /// means this `[` opens none, since links do not nest; `[[` is a wikilink's. The twin
 /// of `labelEnd` in links.ts.
 fn label_end(letters: &[char], open: usize, stop: usize) -> Option<usize> {
