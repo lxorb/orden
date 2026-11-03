@@ -585,6 +585,14 @@ fn free_id(client: &str, taken: &[&str]) -> String {
     }
     let stem = stem.trim_end_matches('-');
     let stem = if stem.is_empty() { "agent" } else { stem };
+    // `nib-` is the AI panel's own grants' (`grant_id` in ai_agent.rs), which the window
+    // lets name a thread and start a helper: nothing somebody else names itself.
+    let kept = format!("agent-{stem}");
+    let stem = if stem.starts_with("nib-") {
+        kept.as_str()
+    } else {
+        stem
+    };
 
     if !taken.contains(&stem) {
         return stem.to_string();
@@ -919,6 +927,7 @@ mod tests {
             "claude-code-3"
         );
         assert_eq!(free_id("  ", &[]), "agent");
+        assert_eq!(free_id("nib-anthropic", &[]), "agent-nib-anthropic");
         assert_eq!(free_id("Codex (CLI)", &[]), "codex-cli");
         assert_eq!(free_id("日本", &[]), "agent");
     }

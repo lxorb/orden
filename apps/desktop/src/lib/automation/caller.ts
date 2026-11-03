@@ -61,13 +61,22 @@ function texts(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
 }
 
-/** The caller a request names: the reader when it names nobody, an agent otherwise. */
+/** What every built-in grant's id starts with: the AI panel's own, `grant_id` in
+ *  src-tauri/src/ai_agent.rs. */
+export const BUILT_IN_GRANT = 'nib-'
+
+/** The caller a request names: the reader when it names nobody, an agent otherwise. A
+ *  thread is the AI panel's to say: an outside agent naming one would run its helper in
+ *  that thread's mode, and read in that thread's space. */
 export function callerOf(told: unknown, thread?: unknown): Caller {
   if (told === undefined || told === null) return READER
-  const threadOf = typeof thread === 'string' && /^[\w-]{1,80}$/.test(thread) ? { thread } : {}
 
   const grant = isRecord(told) ? told : {}
   const id = typeof grant.id === 'string' && grant.id ? grant.id : 'agent'
+  const threadOf =
+    id.startsWith(BUILT_IN_GRANT) && typeof thread === 'string' && /^[\w-]{1,80}$/.test(thread)
+      ? { thread }
+      : {}
   return {
     agent: {
       id,
