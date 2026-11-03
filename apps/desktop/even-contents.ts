@@ -308,9 +308,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-03, to 5,775,600, for unstable's #1044 to #1079 merged into
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
  *  and the sum of their growth is what came. Measured 5,775,432.
+ *
+ *  Raised 2026-11-03, to 5,776,500, for claude/hunt-desktop: `moveMany` answers whether it
+ *  moved and shares its AGENTS refusal with a tile let go of over a space. Measured
+ *  5,776,403.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_775_600,
+  code: 5_776_500,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

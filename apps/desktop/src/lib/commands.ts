@@ -1008,12 +1008,12 @@ function moveCommand(): Command | null {
 
   // Into another space the tab goes with the note, as Move to space takes it; see
   // workspace/space-move.ts.
-  const moved = (into: string) => {
+  const moved = async (into: string) => {
     const space = workspace.spaces.find((one) => samePath(one.root, into))
     if (space && space.id !== workspace.activeSpaceId) {
       return toSpace().then((one) => one.toSpace([note.id], space.id))
     }
-    return workspace.moveMany([path], into)
+    await workspace.moveMany([path], into)
   }
 
   return {

@@ -1040,8 +1040,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-03, to 3,480,600, for unstable's #1044 to #1079 merged into
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
- *  and the sum of their growth is what came. Measured 3,480,464, 385 modules. */
-const BUDGET = 3_480_600
+ *  and the sum of their growth is what came. Measured 3,480,464, 385 modules.
+ *
+ *  Raised 2026-11-03, to 3,481,100, for claude/hunt-desktop: `moveMany` answers whether it
+ *  moved and shares its AGENTS refusal with a tile let go of over a space. Measured
+ *  3,481,010, 385 modules. */
+const BUDGET = 3_481_100
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

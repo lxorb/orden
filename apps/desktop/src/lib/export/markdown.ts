@@ -122,7 +122,7 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
       if (edit) edits.push(edit)
     }
 
-    const definition = paragraph ? null : DEFINITION.exec(line)
+    const definition: RegExpExecArray | null = paragraph ? null : DEFINITION.exec(line)
     if (definition) {
       const from = at + (definition[1]?.length ?? 0)
       const edit = sourceEdit(definition[2] ?? '', from, rename)
