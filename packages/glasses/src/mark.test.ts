@@ -645,3 +645,15 @@ describe('what it costs', () => {
     expect(took).toBeLessThan(1_000)
   })
 })
+
+describe('where a fence ends', () => {
+  test('its closing line says its own line of the note', () => {
+    const lines = markLines('```\na\nb\n```\n\nafter', { inner: 576 })
+    expect(lines.map((line) => line.at)).toEqual([1, 2, 3, 4, 6])
+  })
+
+  test('with a longer fence and nothing after it', () => {
+    const lines = markLines('````\na\n````', { inner: 576 })
+    expect(lines.map((line) => line.at)).toEqual([1, 2, 3])
+  })
+})
