@@ -350,10 +350,58 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  what a base may cost, a thread written down while it runs, the sync's scans, an undo that
  *  waits for every gesture landing, one definition of front matter and one device's windows
  *  being one. Measured 5,852,262.
+ *
+ *  The code raised on 2026-11-04, to 5,813,700, for #331: All spaces, every space's
+ *  windows in a living membrane on the overview's canvas (overview/membrane.ts,
+ *  Cells.svelte), and a window plopped from one cell into another moved to that space
+ *  (overview/cells.ts). Measured 5,813,519.
+ *
+ *  The code raised on 2026-11-04, to 5,813,900, for #1074: a web tab's bar saying a
+ *  window the page opened on its own was blocked, with its Open (WebTab.svelte, and the
+ *  words in every catalogue). Measured 5,813,707.
+ *
+ *  The code raised on 2026-11-04, to 5,814,600, for #1081: whether a row of the file
+ *  list stands open asked in one place, of the rows drawn (`standsOpen` and `anyOpen`
+ *  in tree-flat.ts), and the folders remembered open kept clean of the ones that went
+ *  (`keepOpen` in workspace/device.svelte.ts). Measured 5,814,220.
+ *
+ *  The code raised on 2026-11-04, to 5,819,500, and the catalogues to 956,700, for
+ *  #1087: Send feedback confirms a report with its page and carries pictures
+ *  (feedback-pictures.ts, FeedbackSheet.svelte), in nine strings in every language.
+ *  Measured 5,819,167 and 956,373.
+ *
+ *  The code raised on 2026-11-04, to 5,825,400, for #1065: a pull down past the top
+ *  reloads where the reader is, its mark turning until done (pull.svelte.ts, refresh.ts,
+ *  PullMark.svelte). Measured 5,825,175.
+ *
+ *  The code raised on 2026-11-04, to 5,842,300, for #1075: the live preview over a
+ *  formula being written (maths-preview.ts in the editor), a chunk of its own fetched
+ *  with a note's first dollar, which splits the formula's drawing out of the chunks it
+ *  shared. Measured 5,842,228.
+ *
+ *  The code raised on 2026-11-04, to 5,845,900, and the catalogues to 963,000, for #1088:
+ *  the window's corners as a setting beside the theme (corners.ts) and the Tab preview
+ *  delay (tab-strip/preview-delay.svelte.ts), with their six sentences in every
+ *  language. Measured 5,845,725 and 962,864.
+ *
+ *  The code raised on 2026-11-04, to 5,846,200, and the catalogues to 964,400, for
+ *  #1089: every AI chat in one state moved by one machine (ai/session-state.ts), the
+ *  rows that show it with their model's logo, Pin and Archive (ai/sidebar/ChatRow.svelte),
+ *  the slide to the next chat (ai/sidebar/slide.ts) and the question before a costly
+ *  switch of model (ai/switch-cost.ts), in nine strings in every language. Measured
+ *  5,846,057 and 964,246.
+ *
+ *  The code raised on 2026-11-04, to 5,848,600, for #1077: signing in gives the untouched
+ *  default space way to the account's own, decided in one place (seed-space.ts, and the
+ *  plan's `discard` in space-plan.ts). Measured 5,848,312.
+ *
+ *  The code raised on 2026-11-04, to 5,899,500, for the bug hunt's two rounds and the
+ *  above being in one build at last, on claude/hunt-round-1: nothing new, the two sums
+ *  together. Measured 5,899,267.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_852_500,
-  catalogues: 950_000,
+  code: 5_899_500,
+  catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,

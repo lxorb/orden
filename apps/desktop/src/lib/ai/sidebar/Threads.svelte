@@ -1,11 +1,11 @@
 <script lang="ts">
   /** The space's threads (docs/ai-sidebar.md 4.11), as Codex's task history: the search
-   *  at the top (and New chat over it in a tab's rail), then the threads newest first,
-   *  each its title and how long ago it moved, a dot in the accent and a stronger title
-   *  on the ones with an answer not yet seen (#1064), a ring on the ones still
-   *  answering or with work running out of sight (a goal, a loop, a helper), and a "..." on the one
-   *  pointed at for Rename, Archive and Delete. The archived ones are the list's last
-   *  group, as Claude Code keeps them.
+   *  at the top (and New chat over it in a tab's rail), then the chats in the order every
+   *  list of them has (#1089, `ordered` in session-state.ts): pinned first, then what
+   *  wants the reader, unread before read, the latest first. Each is a ChatRow: whose
+   *  model, the title, its state, how long ago; pointed at, Pin, Archive and a "..." for
+   *  Rename and Delete. The archived ones are out of the list, behind the row at its foot
+   *  that says how many there are.
    *
    *  In the panel it takes the conversation's place (the list glyph, or Ctrl+Shift+A
    *  twice); in a tab of its own it is the rail down the left, always there.
@@ -14,19 +14,17 @@
    *  an archived one comes back with Delete again), Shift+Delete deletes for good,
    *  Escape goes back to the open thread. */
   import { untrack } from 'svelte'
-  import { agoShort } from '../../ago'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
-  import { i18n, t } from '../../i18n.svelte'
+  import { t } from '../../i18n.svelte'
   import { menu } from '../../menu.svelte'
   import { dur } from '../../motion'
   import { scrollbar } from '../../scrollbar'
   import { shortcuts } from '../../shortcuts.svelte'
   import type { ThreadHead } from '../chat/types'
-  import { tasks } from '../commands/tasks.svelte'
-  import UnreadDot from '../UnreadDot.svelte'
+  import { ordered, stateOf } from '../session-state'
   import { chat } from './chat.svelte'
-  import { type Marks, rowName } from './marks'
+  import ChatRow from './ChatRow.svelte'
 
   const { rail = false }: { rail?: boolean } = $props()
 
@@ -38,22 +36,25 @@
     return words.every((word) => text.includes(word))
   }
 
-  /** Unread, and running: answering, or work out of sight (a goal, a loop, a helper). */
-  function marksOf(id: string): Marks {
-    return {
-      unread: chat.unread.has(id),
-      running: chat.running.includes(id) || tasks.of(id).length > 0,
-    }
-  }
+  /** Whether the archived chats are shown, under the rest: asked for at the list's foot. */
+  let archivedShown = $state(false)
 
-  const rows = $derived.by(() => {
+  const stateIn = (one: ThreadHead) => chat.states.get(one.id) ?? stateOf(one)
+
+  const found = $derived.by(() => {
     const words = chat.listQuery.toLowerCase().split(/\s+/).filter(Boolean)
-    const found = chat.heads.filter((one) => matches(one, words))
-    return [...found.filter((one) => !one.archived), ...found.filter((one) => one.archived)]
+    return chat.heads.filter((one) => matches(one, words))
   })
+  const archived = $derived(
+    found.filter((one) => stateIn(one) === 'archived').sort((a, b) => b.updated - a.updated),
+  )
+  const rows = $derived([
+    ...ordered(found, chat.states, chat.unread),
+    ...(archivedShown ? archived : []),
+  ])
 
   /** The one heading in the list, over its first archived thread. */
-  const archivedFrom = $derived(rows.findIndex((one) => one.archived))
+  const archivedFrom = $derived(rows.findIndex((one) => stateIn(one) === 'archived'))
 
   $effect(() => {
     const last = Math.max(0, rows.length - 1)
@@ -68,11 +69,19 @@
   function rowMenu(event: MouseEvent, one: ThreadHead) {
     menu.show(event, [
       { label: t('Rename'), asks: true, run: () => void chat.rename(undefined, one.id) },
+      one.pinned
+        ? { label: t('Unpin'), run: () => void chat.pin(one.id, false) }
+        : { label: t('Pin'), run: () => void chat.pin(one.id) },
       one.archived
         ? { label: t('Unarchive'), run: () => chat.unarchive(one.id) }
         : { label: t('Archive'), run: () => chat.archive(one.id) },
       { label: t('Delete'), danger: true, run: () => void chat.remove(one.id) },
     ])
+  }
+
+  function toggleArchived(one: ThreadHead) {
+    if (one.archived) chat.unarchive(one.id)
+    else chat.archive(one.id)
   }
 
   function onKey(event: KeyboardEvent) {
@@ -87,8 +96,7 @@
     } else if (event.key === 'Delete' && one) {
       event.preventDefault()
       if (event.shiftKey) void chat.remove(one.id)
-      else if (one.archived) chat.unarchive(one.id)
-      else chat.archive(one.id)
+      else toggleArchived(one)
     } else if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
@@ -136,44 +144,33 @@
       {#if index === archivedFrom}
         <li class="group archived" role="presentation">{t('Archived')}</li>
       {/if}
-      {@const marks = marksOf(one.id)}
-      <li class="item" role="presentation">
-        <button
-          class="row"
-          class:lit={index === lit}
-          class:open={one.id === chat.head?.id}
-          class:archived={one.archived}
-          class:is-unread={marks.unread}
-          aria-label={rowName(one.title, marks)}
-          role="option"
-          aria-selected={index === lit}
-          onpointermove={() => (lit = index)}
-          onclick={() => void chat.openThread(one.id)}
-          oncontextmenu={(event) => rowMenu(event, one)}
-        >
-          {#if marks.unread}<UnreadDot />{/if}
-          <span class="title">{one.title || t('Untitled')}</span>
-          {#if marks.running}<span class="dot"></span>{:else}<span class="when"
-              >{agoShort(one.updated, i18n.language)}</span
-            >{/if}
-        </button>
-        <button
-          class="nib-glyph more"
-          title={t('More')}
-          aria-label={t('More')}
-          aria-haspopup="menu"
-          onclick={(event) => rowMenu(event, one)}
-        >
-          <svg viewBox="0 0 13 13" aria-hidden="true"
-            ><path d="M3 6.5h.01M6.5 6.5h.01M10 6.5h.01" /></svg
-          >
-        </button>
-      </li>
+      <ChatRow
+        head={one}
+        state={stateIn(one)}
+        unread={chat.unread.has(one.id)}
+        open={one.id === chat.head?.id}
+        lit={index === lit}
+        role="option"
+        onpoint={() => (lit = index)}
+        onopen={() => void chat.openThread(one.id)}
+        onpin={() => void chat.pin(one.id, !one.pinned)}
+        onarchive={() => toggleArchived(one)}
+        onmenu={(event: MouseEvent) => rowMenu(event, one)}
+      />
     {:else}
       <li class="empty" role="presentation">
         {chat.listQuery ? t('No matches') : t('No chats yet')}
       </li>
     {/each}
+    {#if archived.length && !archivedShown}
+      <!-- The archived ones, out of the list and one press away (#1089). -->
+      <li role="presentation">
+        <button class="nib-row is-short shown-archived" onclick={() => (archivedShown = true)}>
+          <span class="nib-row-label">{t('Archived')}</span>
+          <span class="nib-row-meta">{archived.length}</span>
+        </button>
+      </li>
+    {/if}
   </ul>
 </div>
 
@@ -242,116 +239,8 @@
     list-style: none;
   }
 
-  .item {
-    position: relative;
-  }
-
-  .row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    width: 100%;
-    min-height: var(--row-height);
-    padding: 0 var(--row-pad);
-    border: 0;
-    border-radius: var(--radius-row);
-    background: none;
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-row);
-    text-align: start;
-    cursor: default;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  .row.lit {
-    background: var(--surface-hover);
-  }
-
-  .row.open {
-    background: var(--surface-press);
-    color: var(--text-strong);
-  }
-
-  .row.archived {
+  .shown-archived .nib-row-label {
     color: var(--muted);
-  }
-
-  /* Unread (#1064): quiet but there, a dot in the accent before a stronger title. */
-  .row.is-unread .title {
-    color: var(--text-strong);
-    font-weight: var(--weight-strong);
-  }
-
-  /* The "..." over the end of the row pointed at, Codex's: the row's menu without a
-     column of glyphs down a list of titles. */
-  .more {
-    position: absolute;
-    top: 50%;
-    inset-inline-end: 2px;
-    width: var(--row-height-sm);
-    height: var(--row-height-sm);
-    translate: 0 -50%;
-    opacity: 0;
-    transition: opacity var(--dur-fast) var(--ease-out);
-  }
-
-  .more svg {
-    stroke-width: 2.2;
-  }
-
-  .item:hover .more,
-  .more:focus-visible,
-  :global([data-touch]) .more {
-    opacity: 1;
-  }
-
-  .item:hover .row {
-    padding-inline-end: calc(var(--row-height-sm) + 4px);
-  }
-
-  /* How long ago, at the end of the row where the "..." comes on the one pointed at. */
-  .when {
-    flex: none;
-    color: var(--muted);
-    font-size: var(--text-xs);
-    font-variant-numeric: tabular-nums;
-    transition: opacity var(--dur-fast) var(--ease-out);
-  }
-
-  .item:hover .when {
-    opacity: 0;
-  }
-
-  /* A ring rather than a dot: a dot in the accent is a tab saving, and this is a thread
-     at work. */
-  .dot {
-    flex: none;
-    width: 7px;
-    height: 7px;
-    border: 1.5px solid var(--accent);
-    border-radius: 50%;
-    animation: breathe calc(var(--dur-slow) * 4) var(--ease-in-out) infinite;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .dot {
-      animation: none;
-    }
-  }
-
-  @keyframes breathe {
-    50% {
-      opacity: 0.35;
-    }
-  }
-
-  .title {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .group,

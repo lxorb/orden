@@ -555,6 +555,14 @@ export const my: Dictionary = {
   'Actual size': 'အမှန်အရွယ်',
   // Appearance
   Accent: 'အသားပေးအရောင်',
+  'Window corners': 'ဝင်းဒိုး ထောင့်များ',
+  Rounded: 'လုံးဝိုင်း',
+  Square: 'လေးထောင့်',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'လုံးဝိုင်းသည် ဖွင့်ထားသည်ကို ဝင်းဒိုးအတွင်း ကတ်တစ်ခုပေါ်တွင် ပေါ်နေစေသည်၊ လေးထောင့်သည် အစွန်းနှင့် ကပ်ထားသည်။',
+  'Tab preview delay': 'တဘ် အစမ်းကြည့် နှောင့်နှေးချိန်',
+  'How long the pointer rests on a tab before its preview shows.':
+    'အစမ်းကြည့် ပေါ်လာမီ ညွှန်တံသည် တဘ်ပေါ်တွင် ကြာကြာနေရမည့်အချိန်။',
   'Accent: {name}': 'အသားပေးအရောင်: {name}',
   Violet: 'ခရမ်း',
   Blue: 'အပြာ',
@@ -1638,6 +1646,7 @@ export const my: Dictionary = {
   'Hard reload': 'အပြည့်အဝ ပြန်ဖွင့်ပါ',
   'Open in the browser': 'ဘရောက်ဇာတွင်ဖွင့်ပါ',
   "This media can't play here": 'ဤမီဒီယာကို ဤနေရာတွင် ဖွင့်၍မရပါ',
+  'Pop-up blocked': 'ပေါ့ပ်အပ်ကို ပိတ်ထားသည်',
   'Show it here': 'ဤတွင်ပြပါ',
   Website: 'ဝဘ်ဆိုက်',
   'Open a website': 'ဝဘ်ဆိုက်ဖွင့်ပါ',
@@ -2657,9 +2666,31 @@ export const my: Dictionary = {
   "AGENTS is this space's agent instructions":
     'AGENTS သည် ဤနေရာ၏ အေးဂျင့် ညွှန်ကြားချက်များ ဖြစ်သည်',
   '{title}, unread': '{title}၊ မဖတ်ရသေး',
+  Working: 'လုပ်ဆောင်နေသည်',
+  'Needs input': 'ထည့်သွင်းချက် လိုအပ်သည်',
+  Interrupted: 'ရပ်တန့်သွားသည်',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} သို့ ပြောင်းမလား။',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'နောက်စာက စကားဝိုင်းတစ်ခုလုံးကို ထပ်ပို့မည်- တိုကင် {count} ခန့် ပိုကုန်မည်။',
+  'It is too long for this model, so it is compacted first.':
+    'ဤမော်ဒယ်အတွက် ရှည်လွန်းသဖြင့် ဦးစွာ ချုံ့ပါမည်။',
+  Switch: 'ပြောင်းရန်',
   '{title}, running': '{title}၊ လုပ်ဆောင်နေဆဲ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden သည် AI သော့များကို Mac ၏ keychain တွင် မသိမ်းတော့ပါ၊ ၎င်းက စကားဝှက်ကို ထပ်ခါထပ်ခါ မေးနေခဲ့၍ဖြစ်သည်။ သင့်သော့များကို ထပ်ထည့်ပြီး ChatGPT သို့ နောက်တစ်ကြိမ် ဝင်ပါ။',
   'This PDF is locked by its owner': 'ဤ PDF ကို ပိုင်ရှင်က လော့ခ်ချထားသည်',
   'Part of this could not be undone': 'ဤအရာ၏ တစ်စိတ်တစ်ပိုင်းကို ပြန်ဖျက်၍ မရပါ',
+  'Add images': 'ပုံများ ထည့်ရန်',
+  'Remove image': 'ပုံကို ဖယ်ရန်',
+  'Paste, drop or add images (up to 4).':
+    'ပုံများကို ကူးထည့်ပါ၊ ဆွဲချပါ သို့မဟုတ် ထည့်ပါ (အများဆုံး 4 ပုံ)။',
+  'That is more than 4 images.': 'ပုံ 4 ပုံထက် ပိုနေသည်။',
+  'That file could not be used as an image.': 'ဤဖိုင်ကို ပုံအဖြစ် အသုံးမပြုနိုင်ပါ။',
+  'Report received': 'အစီရင်ခံစာ ရရှိပါပြီ',
+  'Your report reached us. You can follow it here:':
+    'သင့်အစီရင်ခံစာ ကျွန်ုပ်တို့ထံ ရောက်ရှိပါပြီ။ ဤနေရာတွင် ဆက်ကြည့်နိုင်သည်-',
+  'View your report': 'သင့်အစီရင်ခံစာကို ကြည့်ရန်',
+  'Not sent. Your text is kept, so you can try again.':
+    'မပို့ရသေးပါ။ သင့်စာသားကို သိမ်းထားသဖြင့် ထပ်မံကြိုးစားနိုင်သည်။',
 }

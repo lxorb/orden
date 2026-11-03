@@ -20,6 +20,15 @@
     "default": "",
     "description": "The face notes are written in; any font installed here, by its name."
   },
+  "appearance.corners": {
+    "type": "string",
+    "enum": [
+      "rounded",
+      "square"
+    ],
+    "default": "rounded",
+    "description": "Rounded floats what is open in a card inside the window; Square keeps it flush."
+  },
   "appearance.essentials": {
     "type": "string",
     "enum": [
@@ -406,6 +415,13 @@
     "default": true,
     "description": "Two fingers sideways on the touchpad go back and forward."
   },
+  "general.tabPreviewDelay": {
+    "type": "number",
+    "min": 0,
+    "max": 2000,
+    "default": 500,
+    "description": "How long the pointer rests on a tab before its preview shows."
+  },
   "general.terminalTextSize": {
     "type": "number",
     "min": 9,
@@ -749,6 +765,10 @@
   "shortcuts.app-reading": {
     "type": "string",
     "description": "The key that runs Reading, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-refresh": {
+    "type": "string",
+    "description": "The key that runs Reload, as the keys file writes it; empty for none."
   },
   "shortcuts.app-region-next": {
     "type": "string",

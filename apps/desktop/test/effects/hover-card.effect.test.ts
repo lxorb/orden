@@ -1,6 +1,6 @@
 /** Chrome's hover card under a tab, with the clock in the test's hands.
  *
- *  What the drive cannot time exactly: the card waits Chrome's delay before the first
+ *  What the drive cannot time exactly: the card waits the reader's delay before the first
  *  showing and none before the next, goes when the pointer has left the strip and not
  *  when it only moved to the tab beside, goes on any press and stays away from the tab
  *  pressed, and never comes while anything of the app's is open or under a finger. See
@@ -28,7 +28,7 @@ Element.prototype.animate = () =>
   }) as unknown as Animation
 
 const { hovering } = await import('../../src/lib/tab-strip/hover-card.svelte')
-const { showDelay } = await import('../../src/lib/tab-strip/card')
+const { previewDelay } = await import('../../src/lib/tab-strip/preview-delay.svelte')
 const { overlays } = await import('../../src/lib/overlays')
 const { viewport } = await import('../../src/lib/viewport.svelte')
 type Tab = import('../../src/lib/workspace.svelte').Tab
@@ -40,7 +40,6 @@ function tab(id: string, shown: string): Tab {
 }
 
 const BOX = { left: 100, right: 300, bottom: 38 }
-const WIDEST = 238
 const alpha = tab('a', 'Alpha')
 const beta = tab('b', 'Beta')
 
@@ -51,6 +50,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  previewDelay.set(500)
   hovering.hush()
   hovering.leave('a')
   hovering.leave('b')
@@ -65,9 +65,10 @@ async function settle() {
   flushSync()
 }
 
-test("waits Chrome's delay before the first card, and is drawn", async () => {
-  hovering.enter({ tab: alpha, box: BOX, widest: WIDEST })
-  await vi.advanceTimersByTimeAsync(showDelay(WIDEST) - 50)
+test('waits the Tab preview delay before the first card, half a second, and is drawn', async () => {
+  expect(previewDelay.ms).toBe(500)
+  hovering.enter({ tab: alpha, box: BOX })
+  await vi.advanceTimersByTimeAsync(previewDelay.ms - 50)
   expect(shownFor()).toBeNull()
 
   await vi.advanceTimersByTimeAsync(60)
@@ -76,14 +77,26 @@ test("waits Chrome's delay before the first card, and is drawn", async () => {
   expect(document.querySelector('.card')?.textContent).toContain('Alpha')
 })
 
+test('waits as long as the setting says, two seconds at most', async () => {
+  previewDelay.set(5000)
+  expect(previewDelay.ms).toBe(2000)
+  previewDelay.set(1200)
+  hovering.enter({ tab: alpha, box: BOX })
+  await vi.advanceTimersByTimeAsync(1150)
+  expect(shownFor()).toBeNull()
+  await vi.advanceTimersByTimeAsync(60)
+  await settle()
+  expect(shownFor()).toBe('Alpha')
+})
+
 test('moves to the tab beside at once, and goes once the pointer has left the strip', async () => {
-  hovering.enter({ tab: alpha, box: BOX, widest: WIDEST })
-  await vi.advanceTimersByTimeAsync(showDelay(WIDEST) + 10)
+  hovering.enter({ tab: alpha, box: BOX })
+  await vi.advanceTimersByTimeAsync(previewDelay.ms + 10)
   await settle()
 
   // Left one tab for the next: the leave and the enter come in the same breath.
   hovering.leave('a')
-  hovering.enter({ tab: beta, box: { ...BOX, left: 300, right: 500 }, widest: WIDEST })
+  hovering.enter({ tab: beta, box: { ...BOX, left: 300, right: 500 } })
   await settle()
   expect(shownFor()).toBe('Beta')
   expect(hovering.card?.sliding).toBe(true)
@@ -93,21 +106,21 @@ test('moves to the tab beside at once, and goes once the pointer has left the st
   expect(shownFor()).toBeNull()
 
   // Back on the strip a moment later: at once, the pointer only slipped off.
-  hovering.enter({ tab: alpha, box: BOX, widest: WIDEST })
+  hovering.enter({ tab: alpha, box: BOX })
   await settle()
   expect(shownFor()).toBe('Alpha')
 })
 
 test('goes on a press, and says nothing more about the tab pressed', async () => {
-  hovering.enter({ tab: alpha, box: BOX, widest: WIDEST })
-  await vi.advanceTimersByTimeAsync(showDelay(WIDEST) + 10)
+  hovering.enter({ tab: alpha, box: BOX })
+  await vi.advanceTimersByTimeAsync(previewDelay.ms + 10)
   await settle()
 
   window.dispatchEvent(new PointerEvent('pointerdown'))
   expect(shownFor()).toBeNull()
 
-  hovering.enter({ tab: alpha, box: BOX, widest: WIDEST })
-  await vi.advanceTimersByTimeAsync(showDelay(WIDEST) + 10)
+  hovering.enter({ tab: alpha, box: BOX })
+  await vi.advanceTimersByTimeAsync(previewDelay.ms + 10)
   await settle()
   expect(shownFor()).toBeNull()
 })
@@ -115,8 +128,8 @@ test('goes on a press, and says nothing more about the tab pressed', async () =>
 test('never comes over a menu', async () => {
   const close = overlays.show(() => undefined)
   try {
-    hovering.enter({ tab: alpha, box: BOX, widest: WIDEST })
-    await vi.advanceTimersByTimeAsync(showDelay(WIDEST) + 10)
+    hovering.enter({ tab: alpha, box: BOX })
+    await vi.advanceTimersByTimeAsync(previewDelay.ms + 10)
     await settle()
     expect(shownFor()).toBeNull()
   } finally {
@@ -126,13 +139,13 @@ test('never comes over a menu', async () => {
 
 test('never under a finger', async () => {
   viewport.device = 'phone'
-  hovering.enter({ tab: alpha, box: BOX, widest: WIDEST, focused: true })
+  hovering.enter({ tab: alpha, box: BOX, focused: true })
   await settle()
   expect(shownFor()).toBeNull()
 })
 
 test('comes at once for a tab the keyboard arrives at', async () => {
-  hovering.enter({ tab: alpha, box: BOX, widest: WIDEST, focused: true })
+  hovering.enter({ tab: alpha, box: BOX, focused: true })
   await settle()
   expect(shownFor()).toBe('Alpha')
 })
@@ -157,7 +170,7 @@ test('says the space a page of another space is from, and nothing for the space 
       paneId: 'nowhere',
     }) as unknown as Tab
 
-  hovering.enter({ tab: page('u', null, 'home'), box: BOX, widest: WIDEST, focused: true })
+  hovering.enter({ tab: page('u', null, 'home'), box: BOX, focused: true })
   await settle()
   expect(hovering.card?.where).toBe('example.com')
   expect(hovering.card?.from).toEqual({ id: 'home', name: 'Home' })
@@ -168,7 +181,6 @@ test('says the space a page of another space is from, and nothing for the space 
   hovering.enter({
     tab: page('w', '/spaces/Work/Soup.url', null),
     box: BOX,
-    widest: WIDEST,
     focused: true,
   })
   await settle()

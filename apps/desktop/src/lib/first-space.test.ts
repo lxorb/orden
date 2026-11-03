@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { Listed } from './seed-space'
 
 /** A fresh start: the first space, made without a question, open on the welcome note.
  *
@@ -265,5 +266,36 @@ describe('a folder brought in as a space', () => {
         (one) => one.webkitRelativePath,
       ),
     ).toEqual(['Plan.md', 'a/b.md'])
+  })
+})
+
+/** #1077: the space a fresh start made is the default one signing in can tell from the
+ *  reader's own, by where it was made and what it still holds. */
+const { seedSpaceRoot } = await import('./seeded')
+const { untouchedSeedSpace } = await import('./seed-space')
+const { madeSpace } = await import('./space-actions')
+const { invoke } = await import('./tauri')
+
+describe('the space a fresh start made', () => {
+  const read = {
+    tree: (root: string) => invoke<Listed>('read_tree', { root }),
+    note: (path: string) => invoke<string>('read_note', { path }),
+  }
+  const roots = () => workspace.spaces.map((one) => one.root)
+
+  test('is the default space, and untouched until the reader writes in it', async () => {
+    await firstSpace.start(FRESH)
+    const root = `/spaces/${WELCOME_SPACE}`
+    expect(seedSpaceRoot()).toBe(root)
+    expect(await untouchedSeedSpace(seedSpaceRoot(), roots(), read)).toBe(root)
+
+    notes.set(`${root}/${WELCOME_NAME}`, `${WELCOME}\nmine\n`)
+    expect(await untouchedSeedSpace(seedSpaceRoot(), roots(), read)).toBeNull()
+  })
+
+  test('and a space the reader makes is never it', async () => {
+    await madeSpace(WELCOME_SPACE)
+    expect(seedSpaceRoot()).toBeNull()
+    expect(await untouchedSeedSpace(seedSpaceRoot(), roots(), read)).toBeNull()
   })
 })

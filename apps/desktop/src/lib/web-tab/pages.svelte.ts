@@ -279,6 +279,25 @@ interface Opening {
   behind: boolean
 }
 
+/** The tab a page chosen by a press or by the keyboard is the page of, as the crate says
+ *  it; see `page_chosen` in web_tabs.rs. */
+export function readChosen(value: unknown): string | null {
+  return typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { tab?: unknown }).tab === 'string'
+    ? (value as { tab: string }).tab
+    : null
+}
+
+/** A tab whose page a person is working in made the one being worked in: its pane takes
+ *  the focus and shows it, which is what a press in a pane of the app's own does. Nothing
+ *  where it is already. */
+export async function chooseTab(tab: string): Promise<void> {
+  const { workspace } = await import('../workspace.svelte')
+  if (workspace.activeTabId === tab || !workspace.tabs.some((one) => one.id === tab)) return
+  workspace.activate(tab)
+}
+
 export function readOpening(value: unknown): Opening | null {
   if (typeof value !== 'object' || value === null) return null
 
@@ -443,6 +462,11 @@ export class Page {
   /** Something on the page would not play, for want of a decoder, and the reader has not
    *  shut the bar that offers the browser; see web_media.rs. Until the page moves. */
   unplayable = $state(false)
+
+  /** A window the page asked for without a press that could have asked for it, which the
+   *  engine blocked as Chrome blocks one, and the address it would have opened: the bar
+   *  offers it, until the page moves or the reader shuts the bar (#1074). */
+  blocked = $state<string | null>(null)
 
   /** When this tab was last looked at: when it went out of sight, for one that has. */
   looked = Date.now()
@@ -1409,6 +1433,16 @@ class Pages {
 
   /** The tab a page asked for, beside the page that asked and in its pane: behind it
    *  or in front, as the press that asked said. */
+  /** The window a page was blocked from opening, opened as a tab in front of it: the
+   *  bar's Open. */
+  openBlocked(tabId: string): void {
+    const page = this.held.get(tabId)
+    const url = page?.blocked
+    if (!page || !url) return
+    page.blocked = null
+    void this.openAsked({ tab: tabId, url, behind: false })
+  }
+
   private async openAsked(said: Opening): Promise<void> {
     const { workspace } = await import('../workspace.svelte')
     const opened = workspace.openPage(said.url, said.behind ? 'behind' : 'front', said.tab)
@@ -1482,6 +1516,20 @@ class Pages {
         const said = readOpening(event.payload)
         if (said && this.held.has(said.tab)) void this.openAsked(said)
       })
+      // A person pressed in a tab's page, or the page took the keyboard: its tab and pane
+      // are the ones being worked in, as a press in the app's own page makes its pane's
+      // (#1080; `page_chosen` in web_tabs.rs). A press into a page never reaches this page.
+      await listen('nib://web-chosen', (event) => {
+        const tab = readChosen(event.payload)
+        if (tab !== null && this.held.has(tab)) void chooseTab(tab)
+      })
+      // A window the page asked for on its own, blocked the way Chrome blocks it: said on
+      // the tab's bar, which offers it (#1074; `popup_blocked` in web_tabs.rs).
+      await listen('nib://web-blocked', (event) => {
+        const said = readOpening(event.payload)
+        const page = said && this.held.get(said.tab)
+        if (said && page) page.blocked = said.url
+      })
       // A key the browser keeps for itself, pressed while a page had the keyboard: played
       // on the window as the key it was, so it means what it means everywhere else. See
       // keys.ts and web_keys.rs. Fetched with the first page rather than carried, like
@@ -1542,7 +1590,10 @@ class Pages {
 
         const was = page.loading
         const moved = said.url !== '' && said.url !== page.at
-        if (moved || (said.loading && !was)) page.unplayable = false
+        if (moved || (said.loading && !was)) {
+          page.unplayable = false
+          page.blocked = null
+        }
         page.loading = said.loading
         // A load beginning is a page arriving, and the mark it settles on is the one the
         // file keeps.

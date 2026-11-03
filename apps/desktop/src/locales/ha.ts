@@ -562,6 +562,14 @@ export const ha: Dictionary = {
   'Actual size': 'Girman gaske',
   // Appearance
   Accent: 'Launin nuni',
+  'Window corners': 'Kusurwoyin taga',
+  Rounded: 'Mai zagaye',
+  Square: 'Mai murabba’i',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Mai zagaye yana sa abin da aka buɗe ya yi shawagi a cikin kati a cikin taga; Mai murabba’i yana barin shi a gefe.',
+  'Tab preview delay': 'Jinkirin samfoti na shafi',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Tsawon lokacin da mai nuni zai tsaya a kan shafi kafin samfotinsa ya bayyana.',
   'Accent: {name}': 'Launin nuni: {name}',
   Violet: 'Shuɗin kore',
   Blue: 'Shuɗi',
@@ -1678,6 +1686,7 @@ export const ha: Dictionary = {
   'Hard reload': 'Sake ɗauko gaba ɗaya',
   'Open in the browser': 'Buɗe a birawuza',
   "This media can't play here": 'Ba za a iya kunna wannan kafar ba a nan',
+  'Pop-up blocked': 'An toshe taga mai tasowa',
   'Show it here': 'Nuna shi nan',
   Website: 'Gidan yanar',
   'Open a website': 'Buɗe gidan yanar',
@@ -2710,9 +2719,31 @@ export const ha: Dictionary = {
   'Agent instructions': 'Umarnin wakilai',
   "AGENTS is this space's agent instructions": 'AGENTS shine umarnin wakilai na wannan wuri',
   '{title}, unread': '{title}, ba a karanta ba',
+  Working: 'Yana aiki',
+  'Needs input': 'Yana bukatar amsa',
+  Interrupted: 'An katse',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'A canza zuwa {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Saƙo na gaba zai sake aika dukan tattaunawar: kusan ƙarin token {count}.',
+  'It is too long for this model, so it is compacted first.':
+    'Ta yi tsawo ga wannan samfurin, don haka za a taƙaita ta da farko.',
+  Switch: 'Canza',
   '{title}, running': '{title}, yana gudana',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ba ya ajiye maɓallan AI a cikin keychain na Mac kuma, wanda ke ta neman kalmar sirrinsa. Shigar da maɓallanka kuma ka sake shiga ChatGPT.',
   'This PDF is locked by its owner': 'Mai shi ya kulle wannan PDF',
   'Part of this could not be undone': 'Ba a iya soke wani ɓangare na wannan ba',
+  'Add images': 'Ƙara hotuna',
+  'Remove image': 'Cire hoton',
+  'Paste, drop or add images (up to 4).': 'Liƙa, ja ka sauke ko ƙara hotuna (har zuwa 4).',
+  'That is more than 4 images.': 'Hotunan sun wuce 4.',
+  'That file could not be used as an image.':
+    'Ba za a iya amfani da wannan fayil a matsayin hoto ba.',
+  'Report received': 'An karɓi rahoto',
+  'Your report reached us. You can follow it here:':
+    'Rahotonka ya iso gare mu. Za ka iya bin sa a nan:',
+  'View your report': 'Duba rahotonka',
+  'Not sent. Your text is kept, so you can try again.':
+    'Ba a aika ba. An adana rubutunka, don haka za ka iya sake gwadawa.',
 }

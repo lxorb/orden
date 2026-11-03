@@ -580,6 +580,14 @@ export const ru: Dictionary = {
   'Actual size': 'Реальный размер',
   // Appearance
   Accent: 'Акцент',
+  'Window corners': 'Углы окна',
+  Rounded: 'Скруглённые',
+  Square: 'Прямые',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Скруглённые помещают открытое в карточку внутри окна; прямые оставляют его вровень с краями.',
+  'Tab preview delay': 'Задержка превью вкладки',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Сколько указатель должен пробыть на вкладке, прежде чем появится её превью.',
   'Accent: {name}': 'Акцент: {name}',
   Violet: 'Фиолетовый',
   Blue: 'Синий',
@@ -1735,6 +1743,7 @@ export const ru: Dictionary = {
   'Hard reload': 'Жёсткая перезагрузка',
   'Open in the browser': 'Открыть в браузере',
   "This media can't play here": 'Этот файл здесь не воспроизводится',
+  'Pop-up blocked': 'Всплывающее окно заблокировано',
   'Show it here': 'Показать здесь',
   Website: 'Сайт',
   'Open a website': 'Открыть сайт',
@@ -2766,9 +2775,30 @@ export const ru: Dictionary = {
   'Agent instructions': 'Инструкции для агентов',
   "AGENTS is this space's agent instructions": 'AGENTS: инструкции для агентов этого пространства',
   '{title}, unread': '{title}, не прочитано',
+  Working: 'Работает',
+  'Needs input': 'Нужен ответ',
+  Interrupted: 'Прервано',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Переключиться на {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Следующее сообщение отправит весь разговор заново: примерно на {count} токенов больше.',
+  'It is too long for this model, so it is compacted first.':
+    'Он слишком длинный для этой модели, поэтому сначала будет сжат.',
+  Switch: 'Переключить',
   '{title}, running': '{title}, выполняется',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden больше не хранит ключи ИИ в связке ключей Mac, которая снова и снова спрашивала пароль. Введите ключи заново и ещё раз войдите в ChatGPT.',
   'This PDF is locked by its owner': 'Этот PDF заблокирован владельцем',
   'Part of this could not be undone': 'Часть этого не удалось отменить',
+  'Add images': 'Добавить изображения',
+  'Remove image': 'Убрать изображение',
+  'Paste, drop or add images (up to 4).': 'Вставьте, перетащите или добавьте изображения (до 4).',
+  'That is more than 4 images.': 'Это больше 4 изображений.',
+  'That file could not be used as an image.': 'Этот файл нельзя использовать как изображение.',
+  'Report received': 'Отчёт получен',
+  'Your report reached us. You can follow it here:':
+    'Ваш отчёт дошёл до нас. Следить за ним можно здесь:',
+  'View your report': 'Открыть ваш отчёт',
+  'Not sent. Your text is kept, so you can try again.':
+    'Не отправлено. Ваш текст сохранён, можно попробовать ещё раз.',
 }

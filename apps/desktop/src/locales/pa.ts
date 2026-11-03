@@ -560,6 +560,14 @@ export const pa: Dictionary = {
   'Actual size': 'ਅਸਲੀ ਆਕਾਰ',
   // Appearance
   Accent: 'ਉਭਾਰ ਰੰਗ',
+  'Window corners': 'ਵਿੰਡੋ ਦੇ ਕੋਨੇ',
+  Rounded: 'ਗੋਲ',
+  Square: 'ਚੌਰਸ',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'ਗੋਲ ਖੁੱਲ੍ਹੀ ਚੀਜ਼ ਨੂੰ ਵਿੰਡੋ ਦੇ ਅੰਦਰ ਇੱਕ ਕਾਰਡ ਵਿੱਚ ਤੈਰਾਉਂਦਾ ਹੈ; ਚੌਰਸ ਇਸਨੂੰ ਕਿਨਾਰਿਆਂ ਨਾਲ ਲਗਾ ਕੇ ਰੱਖਦਾ ਹੈ।',
+  'Tab preview delay': 'ਟੈਬ ਝਲਕ ਦੀ ਦੇਰੀ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'ਝਲਕ ਦਿਖਣ ਤੋਂ ਪਹਿਲਾਂ ਪੁਆਇੰਟਰ ਟੈਬ ਉੱਤੇ ਕਿੰਨੀ ਦੇਰ ਰੁਕਦਾ ਹੈ।',
   'Accent: {name}': 'ਉਭਾਰ: {name}',
   Violet: 'ਬੈਂਗਣੀ',
   Blue: 'ਨੀਲਾ',
@@ -1661,6 +1669,7 @@ export const pa: Dictionary = {
   'Hard reload': 'ਪੂਰੀ ਤਰ੍ਹਾਂ ਮੁੜ ਲੋਡ ਕਰੋ',
   'Open in the browser': 'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਖੋਲ੍ਹੋ',
   "This media can't play here": 'ਇਹ ਮੀਡੀਆ ਇੱਥੇ ਨਹੀਂ ਚੱਲ ਸਕਦਾ',
+  'Pop-up blocked': 'ਪੌਪ-ਅੱਪ ਬਲੌਕ ਕੀਤਾ ਗਿਆ',
   'Show it here': 'ਇੱਥੇ ਦਿਖਾਓ',
   Website: 'ਵੈੱਬਸਾਈਟ',
   'Open a website': 'ਵੈੱਬਸਾਈਟ ਖੋਲ੍ਹੋ',
@@ -2680,9 +2689,31 @@ export const pa: Dictionary = {
   'Agent instructions': 'ਏਜੰਟ ਹਦਾਇਤਾਂ',
   "AGENTS is this space's agent instructions": 'AGENTS ਇਸ ਸਪੇਸ ਦੀਆਂ ਏਜੰਟ ਹਦਾਇਤਾਂ ਹਨ',
   '{title}, unread': '{title}, ਅਣਪੜ੍ਹਿਆ',
+  Working: 'ਕੰਮ ਜਾਰੀ',
+  'Needs input': 'ਜਵਾਬ ਚਾਹੀਦਾ',
+  Interrupted: 'ਰੁਕਿਆ',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} ਤੇ ਬਦਲੀਏ?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'ਅਗਲਾ ਸੁਨੇਹਾ ਸਾਰੀ ਗੱਲਬਾਤ ਦੁਬਾਰਾ ਭੇਜੇਗਾ: ਲਗਭਗ {count} ਟੋਕਨ ਹੋਰ।',
+  'It is too long for this model, so it is compacted first.':
+    'ਇਹ ਇਸ ਮਾਡਲ ਲਈ ਬਹੁਤ ਲੰਮੀ ਹੈ, ਇਸ ਲਈ ਪਹਿਲਾਂ ਛੋਟੀ ਕੀਤੀ ਜਾਂਦੀ ਹੈ।',
+  Switch: 'ਬਦਲੋ',
   '{title}, running': '{title}, ਚੱਲ ਰਿਹਾ ਹੈ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ਹੁਣ AI ਕੁੰਜੀਆਂ Mac ਦੀ ਕੀਚੇਨ ਵਿੱਚ ਨਹੀਂ ਰੱਖਦਾ, ਜੋ ਵਾਰ-ਵਾਰ ਉਸਦਾ ਪਾਸਵਰਡ ਮੰਗਦੀ ਸੀ। ਆਪਣੀਆਂ ਕੁੰਜੀਆਂ ਮੁੜ ਦਿਓ ਅਤੇ ChatGPT ਵਿੱਚ ਇੱਕ ਵਾਰ ਹੋਰ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'This PDF is locked by its owner': 'ਇਹ PDF ਇਸਦੇ ਮਾਲਕ ਨੇ ਲੌਕ ਕੀਤੀ ਹੈ',
   'Part of this could not be undone': 'ਇਸਦਾ ਕੁਝ ਹਿੱਸਾ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ',
+  'Add images': 'ਤਸਵੀਰਾਂ ਜੋੜੋ',
+  'Remove image': 'ਤਸਵੀਰ ਹਟਾਓ',
+  'Paste, drop or add images (up to 4).':
+    'ਤਸਵੀਰਾਂ ਪੇਸਟ ਕਰੋ, ਖਿੱਚ ਕੇ ਛੱਡੋ ਜਾਂ ਜੋੜੋ (ਵੱਧ ਤੋਂ ਵੱਧ 4)।',
+  'That is more than 4 images.': 'ਇਹ 4 ਤੋਂ ਵੱਧ ਤਸਵੀਰਾਂ ਹਨ।',
+  'That file could not be used as an image.': 'ਇਸ ਫ਼ਾਈਲ ਨੂੰ ਤਸਵੀਰ ਵਜੋਂ ਨਹੀਂ ਵਰਤਿਆ ਜਾ ਸਕਦਾ।',
+  'Report received': 'ਰਿਪੋਰਟ ਮਿਲ ਗਈ',
+  'Your report reached us. You can follow it here:':
+    'ਤੁਹਾਡੀ ਰਿਪੋਰਟ ਸਾਡੇ ਤੱਕ ਪਹੁੰਚ ਗਈ ਹੈ। ਤੁਸੀਂ ਇਸਨੂੰ ਇੱਥੇ ਦੇਖ ਸਕਦੇ ਹੋ:',
+  'View your report': 'ਆਪਣੀ ਰਿਪੋਰਟ ਦੇਖੋ',
+  'Not sent. Your text is kept, so you can try again.':
+    'ਨਹੀਂ ਭੇਜੀ ਗਈ। ਤੁਹਾਡਾ ਲਿਖਿਆ ਸੰਭਾਲਿਆ ਹੈ, ਤੁਸੀਂ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰ ਸਕਦੇ ਹੋ।',
 }

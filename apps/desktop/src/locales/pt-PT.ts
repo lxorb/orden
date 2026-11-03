@@ -572,6 +572,14 @@ export const ptPT: Dictionary = {
   'Actual size': 'Tamanho real',
   // Appearance
   Accent: 'Destaque',
+  'Window corners': 'Cantos da janela',
+  Rounded: 'Arredondados',
+  Square: 'Quadrados',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Arredondados faz o que está aberto flutuar num cartão dentro da janela; Quadrados mantém-no rente às margens.',
+  'Tab preview delay': 'Atraso da pré-visualização de separadores',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Quanto tempo o ponteiro fica sobre um separador antes de a pré-visualização aparecer.',
   'Accent: {name}': 'Destaque: {name}',
   Violet: 'Violeta',
   Blue: 'Azul',
@@ -1700,6 +1708,7 @@ export const ptPT: Dictionary = {
   'Hard reload': 'Recarregamento forçado',
   'Open in the browser': 'Abrir no navegador',
   "This media can't play here": 'Não é possível reproduzir este conteúdo aqui',
+  'Pop-up blocked': 'Pop-up bloqueado',
   'Show it here': 'Mostrar aqui',
   Website: 'Sítio web',
   'Open a website': 'Abrir um sítio web',
@@ -2737,9 +2746,30 @@ export const ptPT: Dictionary = {
   'Agent instructions': 'Instruções para agentes',
   "AGENTS is this space's agent instructions": 'AGENTS são as instruções para agentes deste espaço',
   '{title}, unread': '{title}, por ler',
+  Working: 'A trabalhar',
+  'Needs input': 'Precisa de resposta',
+  Interrupted: 'Interrompida',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Mudar para {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'A próxima mensagem envia novamente toda a conversa: cerca de {count} tokens a mais.',
+  'It is too long for this model, so it is compacted first.':
+    'É demasiado longa para este modelo, por isso é compactada primeiro.',
+  Switch: 'Mudar',
   '{title}, running': '{title}, em curso',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'O Orden já não guarda as chaves de IA no porta-chaves do Mac, que pedia a palavra-passe repetidamente. Introduza as suas chaves e inicie sessão no ChatGPT mais uma vez.',
   'This PDF is locked by its owner': 'Este PDF está bloqueado pelo proprietário',
   'Part of this could not be undone': 'Não foi possível anular parte disto',
+  'Add images': 'Adicionar imagens',
+  'Remove image': 'Remover imagem',
+  'Paste, drop or add images (up to 4).': 'Cole, arraste ou adicione imagens (até 4).',
+  'That is more than 4 images.': 'São mais de 4 imagens.',
+  'That file could not be used as an image.': 'Não foi possível usar esse ficheiro como imagem.',
+  'Report received': 'Relatório recebido',
+  'Your report reached us. You can follow it here:':
+    'O seu relatório chegou até nós. Pode acompanhá-lo aqui:',
+  'View your report': 'Ver o seu relatório',
+  'Not sent. Your text is kept, so you can try again.':
+    'Não enviado. O seu texto foi mantido para poder tentar de novo.',
 }

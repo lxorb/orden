@@ -554,6 +554,14 @@ export const ja: Dictionary = {
   'Actual size': '実際のサイズ',
   // Appearance
   Accent: 'アクセント',
+  'Window corners': 'ウィンドウの角',
+  Rounded: '丸',
+  Square: '四角',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    '丸は開いている内容をウィンドウ内のカードに浮かべます。四角は端にぴったり付けます。',
+  'Tab preview delay': 'タブのプレビューまでの時間',
+  'How long the pointer rests on a tab before its preview shows.':
+    'タブにポインターを置いてからプレビューが表示されるまでの時間です。',
   'Accent: {name}': 'アクセント: {name}',
   Violet: 'バイオレット',
   Blue: 'ブルー',
@@ -1639,6 +1647,7 @@ export const ja: Dictionary = {
   'Hard reload': 'ハード再読み込み',
   'Open in the browser': 'ブラウザーで開く',
   "This media can't play here": 'このメディアはここでは再生できません',
+  'Pop-up blocked': 'ポップアップがブロックされました',
   'Show it here': 'ここに表示',
   Website: 'ウェブサイト',
   'Open a website': 'ウェブサイトを開く',
@@ -2644,9 +2653,30 @@ export const ja: Dictionary = {
   'Agent instructions': 'エージェントへの指示',
   "AGENTS is this space's agent instructions": 'AGENTS はこのスペースのエージェントへの指示です',
   '{title}, unread': '{title}、未読',
+  Working: '作業中',
+  'Needs input': '入力待ち',
+  Interrupted: '中断',
+  '{title}, {state}': '{title}、{state}',
+  'Switch to {model}?': '{model} に切り替えますか？',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    '次のメッセージで会話全体がもう一度送られます：約 {count} トークン多くかかります。',
+  'It is too long for this model, so it is compacted first.':
+    'このモデルには長すぎるため、先に圧縮されます。',
+  Switch: '切り替え',
   '{title}, running': '{title}、実行中',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden は AI キーを Mac のキーチェーンに保存しなくなりました。キーチェーンがパスワードを何度も求めていたためです。キーをもう一度入力し、ChatGPT にもう一度サインインしてください。',
   'This PDF is locked by its owner': 'このPDFは所有者によってロックされています',
   'Part of this could not be undone': '一部を元に戻せませんでした',
+  'Add images': '画像を追加',
+  'Remove image': '画像を削除',
+  'Paste, drop or add images (up to 4).': '画像は貼り付け、ドロップ、追加ができます（最大4枚）。',
+  'That is more than 4 images.': '4枚を超えています。',
+  'That file could not be used as an image.': 'このファイルは画像として使えません。',
+  'Report received': 'レポートを受け付けました',
+  'Your report reached us. You can follow it here:':
+    'レポートは届きました。こちらで状況を確認できます：',
+  'View your report': 'レポートを見る',
+  'Not sent. Your text is kept, so you can try again.':
+    '送信できませんでした。入力内容は残っているので、もう一度お試しください。',
 }

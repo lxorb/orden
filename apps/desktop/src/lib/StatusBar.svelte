@@ -119,8 +119,9 @@
      way so it reserves nothing while modal editing is off. */
   .mode {
     position: absolute;
-    inset-inline-start: 0;
-    bottom: 0;
+    /* Clear of the card's rounded corner (#1088; `--card-room` in tokens.css). */
+    inset-inline-start: var(--card-room);
+    bottom: var(--card-room);
     /* Drawn in the focused pane, over its note (#1076; pane-corners.svelte.ts). */
     z-index: var(--z-float);
     padding: 4px var(--space-4);
@@ -142,8 +143,8 @@
      an invisible bar never reserves a strip of empty space. */
   footer {
     position: absolute;
-    inset-inline-end: 0;
-    bottom: 0;
+    inset-inline-end: var(--card-room);
+    bottom: var(--card-room);
     z-index: var(--z-float);
     display: flex;
     gap: var(--space-3);

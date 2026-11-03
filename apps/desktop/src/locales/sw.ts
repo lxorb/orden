@@ -562,6 +562,14 @@ export const sw: Dictionary = {
   'Actual size': 'Ukubwa halisi',
   // Appearance
   Accent: 'Rangi ya msisitizo',
+  'Window corners': 'Pembe za dirisha',
+  Rounded: 'Mviringo',
+  Square: 'Mraba',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Mviringo huelea kilichofunguliwa ndani ya kadi ndani ya dirisha; Mraba hukiweka sawa na kingo.',
+  'Tab preview delay': 'Muda wa kusubiri onyesho la kichupo',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Muda ambao kiashiria hukaa kwenye kichupo kabla onyesho lake halijaonekana.',
   'Accent: {name}': 'Msisitizo: {name}',
   Violet: 'Urujuani',
   Blue: 'Bluu',
@@ -1676,6 +1684,7 @@ export const sw: Dictionary = {
   'Hard reload': 'Pakia upya kabisa',
   'Open in the browser': 'Fungua kwenye kivinjari',
   "This media can't play here": 'Midia hii haiwezi kuchezwa hapa',
+  'Pop-up blocked': 'Dirisha ibukizi limezuiwa',
   'Show it here': 'Ionyeshe hapa',
   Website: 'Tovuti',
   'Open a website': 'Fungua tovuti',
@@ -2711,9 +2720,30 @@ export const sw: Dictionary = {
   'Agent instructions': 'Maagizo ya mawakala',
   "AGENTS is this space's agent instructions": 'AGENTS ni maagizo ya mawakala ya nafasi hii',
   '{title}, unread': '{title}, haijasomwa',
+  Working: 'Inafanya kazi',
+  'Needs input': 'Inahitaji jibu',
+  Interrupted: 'Imekatizwa',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Badilisha kwenda {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Ujumbe unaofuata hutuma mazungumzo yote tena: takriban tokeni {count} zaidi.',
+  'It is too long for this model, so it is compacted first.':
+    'Ni marefu mno kwa modeli hii, kwa hiyo yanabanwa kwanza.',
+  Switch: 'Badilisha',
   '{title}, running': '{title}, inaendelea',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden haihifadhi tena funguo za AI kwenye keychain ya Mac, iliyokuwa ikiuliza nenosiri lake mara kwa mara. Weka funguo zako na uingie ChatGPT tena.',
   'This PDF is locked by its owner': 'PDF hii imefungwa na mmiliki wake',
   'Part of this could not be undone': 'Sehemu ya hili haikuweza kutenduliwa',
+  'Add images': 'Ongeza picha',
+  'Remove image': 'Ondoa picha',
+  'Paste, drop or add images (up to 4).': 'Bandika, buruta au ongeza picha (hadi 4).',
+  'That is more than 4 images.': 'Hizo ni zaidi ya picha 4.',
+  'That file could not be used as an image.': 'Faili hiyo haiwezi kutumika kama picha.',
+  'Report received': 'Ripoti imepokelewa',
+  'Your report reached us. You can follow it here:':
+    'Ripoti yako imetufikia. Unaweza kuifuatilia hapa:',
+  'View your report': 'Tazama ripoti yako',
+  'Not sent. Your text is kept, so you can try again.':
+    'Haijatumwa. Maandishi yako yamehifadhiwa, kwa hivyo unaweza kujaribu tena.',
 }

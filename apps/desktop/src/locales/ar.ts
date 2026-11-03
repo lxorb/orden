@@ -589,6 +589,14 @@ export const ar: Dictionary = {
   'Actual size': 'الحجم الفعلي',
   // Appearance
   Accent: 'اللون المميز',
+  'Window corners': 'زوايا النافذة',
+  Rounded: 'مستديرة',
+  Square: 'مربعة',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'المستديرة تعرض المحتوى المفتوح في بطاقة عائمة داخل النافذة، والمربعة تبقيه ملاصقًا للحواف.',
+  'Tab preview delay': 'تأخير معاينة علامة التبويب',
+  'How long the pointer rests on a tab before its preview shows.':
+    'المدة التي يستقر فيها المؤشر على علامة التبويب قبل ظهور معاينتها.',
   'Accent: {name}': 'اللون المميز: {name}',
   Violet: 'بنفسجي',
   Blue: 'أزرق',
@@ -1761,6 +1769,7 @@ export const ar: Dictionary = {
   'Hard reload': 'إعادة تحميل كاملة',
   'Open in the browser': 'فتح في المتصفح',
   "This media can't play here": 'لا يمكن تشغيل هذه الوسائط هنا',
+  'Pop-up blocked': 'تم حظر النافذة المنبثقة',
   'Show it here': 'إظهاره هنا',
   Website: 'موقع ويب',
   'Open a website': 'فتح موقع ويب',
@@ -2784,9 +2793,29 @@ export const ar: Dictionary = {
   'Agent instructions': 'تعليمات الوكلاء',
   "AGENTS is this space's agent instructions": 'AGENTS هو تعليمات الوكلاء لهذه المساحة',
   '{title}, unread': '{title}، غير مقروءة',
+  Working: 'قيد العمل',
+  'Needs input': 'يحتاج إلى رد',
+  Interrupted: 'مقاطعة',
+  '{title}, {state}': '{title}، {state}',
+  'Switch to {model}?': 'التبديل إلى {model}؟',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'الرسالة التالية ترسل المحادثة كلها مرة أخرى: نحو {count} رمز إضافي.',
+  'It is too long for this model, so it is compacted first.':
+    'إنها أطول من اللازم لهذا النموذج، لذا تُضغط أولًا.',
+  Switch: 'تبديل',
   '{title}, running': '{title}، قيد التشغيل',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'لم يعد Orden يحفظ مفاتيح الذكاء الاصطناعي في سلسلة مفاتيح Mac، التي ظلت تطلب كلمة مرورها. أدخل مفاتيحك وسجّل الدخول إلى ChatGPT مرة أخرى.',
   'This PDF is locked by its owner': 'ملف PDF هذا مقفل من قبل مالكه',
   'Part of this could not be undone': 'تعذّر التراجع عن جزء من هذا',
+  'Add images': 'إضافة صور',
+  'Remove image': 'إزالة الصورة',
+  'Paste, drop or add images (up to 4).': 'الصق الصور أو أفلتها أو أضفها (حتى 4).',
+  'That is more than 4 images.': 'هذه أكثر من 4 صور.',
+  'That file could not be used as an image.': 'تعذّر استخدام هذا الملف كصورة.',
+  'Report received': 'تم استلام البلاغ',
+  'Your report reached us. You can follow it here:': 'وصلنا بلاغك. يمكنك متابعته من هنا:',
+  'View your report': 'عرض بلاغك',
+  'Not sent. Your text is kept, so you can try again.':
+    'لم يُرسل. نصك محفوظ، لذا يمكنك المحاولة مرة أخرى.',
 }

@@ -49,10 +49,11 @@ describe('the note’s corners', () => {
     expect(bar).toContain('frameOf(cluster)')
   })
 
-  test('a split is as wide as its room: the divider’s pixel comes out of the shares', () => {
+  test('a split is as wide as its room: the divider’s room comes out of the shares', () => {
     const tree = read('lib/PaneTree.svelte')
     const share = /const share = \(split: Split\) =>\s*`([^`]*)`/.exec(tree)?.[1] ?? ''
-    expect(share).toContain('1px')
+    // A line's pixel, or the gap between two cards (#1088; --card-gap in tokens.css).
+    expect(share).toContain('var(--card-gap)')
     expect(share).not.toContain('%')
     expect(share).toMatch(/fr\)/)
   })

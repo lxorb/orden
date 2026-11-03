@@ -554,6 +554,14 @@ export const jv: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna panandes',
+  'Window corners': 'Pojok jendhela',
+  Rounded: 'Bunder',
+  Square: 'Kothak',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Bunder ngambangake sing kabukak ing kertu ing jero jendhela; Kothak njaga rata.',
+  'Tab preview delay': 'Wektu tundha pratinjau tab',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Suwene pointer mandheg ing tab sadurunge pratinjaune katon.',
   'Accent: {name}': 'Panandes: {name}',
   Violet: 'Wungu',
   Blue: 'Biru',
@@ -1638,6 +1646,7 @@ export const jv: Dictionary = {
   'Hard reload': 'Emot maneh kabeh',
   'Open in the browser': 'Bukak ing panjelajah',
   "This media can't play here": 'Media iki ora bisa diputer ing kene',
+  'Pop-up blocked': 'Pop-up diblokir',
   'Show it here': 'Tuduhake ing kene',
   Website: 'Situs web',
   'Open a website': 'Bukak situs web',
@@ -2655,9 +2664,30 @@ export const jv: Dictionary = {
   'Agent instructions': 'Instruksi agen',
   "AGENTS is this space's agent instructions": 'AGENTS yaiku instruksi agen kanggo papan iki',
   '{title}, unread': '{title}, durung diwaca',
+  Working: 'Lagi nyambut gawe',
+  'Needs input': 'Butuh wangsulan',
+  Interrupted: 'Kandheg',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Ganti menyang {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Pesen sabanjure ngirim maneh kabeh obrolan: kira-kira {count} token luwih akeh.',
+  'It is too long for this model, so it is compacted first.':
+    'Kedawan kanggo model iki, mula dipadhetake dhisik.',
+  Switch: 'Ganti',
   '{title}, running': '{title}, lagi mlaku',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ora nyimpen kunci AI ing keychain Mac maneh, sing terus njaluk sandine. Lebokna kunci sampeyan lan mlebu ChatGPT sepisan maneh.',
   'This PDF is locked by its owner': 'PDF iki dikunci déning sing nduwèni',
   'Part of this could not be undone': 'Sapérangan iki ora bisa dibatalaké',
+  'Add images': 'Tambah gambar',
+  'Remove image': 'Busak gambar',
+  'Paste, drop or add images (up to 4).': 'Tempel, seret, utawa tambah gambar (paling akèh 4).',
+  'That is more than 4 images.': 'Kuwi luwih saka 4 gambar.',
+  'That file could not be used as an image.': 'Berkas kuwi ora bisa dienggo minangka gambar.',
+  'Report received': 'Laporan wis ditampa',
+  'Your report reached us. You can follow it here:':
+    'Laporanmu wis tekan kéné. Kowé bisa ngetutaké ing kéné:',
+  'View your report': 'Deleng laporanmu',
+  'Not sent. Your text is kept, so you can try again.':
+    'Ora kekirim. Tulisanmu isih disimpen, dadi kowé bisa nyoba manèh.',
 }

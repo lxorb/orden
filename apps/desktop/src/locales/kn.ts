@@ -561,6 +561,14 @@ export const kn: Dictionary = {
   'Actual size': 'ನಿಜ ಗಾತ್ರ',
   // Appearance
   Accent: 'ಆಕ್ಸೆಂಟ್ ಬಣ್ಣ',
+  'Window corners': 'ವಿಂಡೋ ಮೂಲೆಗಳು',
+  Rounded: 'ದುಂಡಾದ',
+  Square: 'ಚೌಕ',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'ದುಂಡಾದವು ತೆರೆದಿರುವುದನ್ನು ವಿಂಡೋ ಒಳಗಿನ ಕಾರ್ಡ್‌ನಲ್ಲಿ ತೇಲಿಸುತ್ತದೆ; ಚೌಕವು ಅದನ್ನು ಅಂಚಿಗೆ ತಾಗಿಸಿ ಇಡುತ್ತದೆ.',
+  'Tab preview delay': 'ಟ್ಯಾಬ್ ಮುನ್ನೋಟದ ವಿಳಂಬ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'ಮುನ್ನೋಟ ತೋರುವ ಮೊದಲು ಪಾಯಿಂಟರ್ ಟ್ಯಾಬ್ ಮೇಲೆ ಎಷ್ಟು ಹೊತ್ತು ಇರಬೇಕು.',
   'Accent: {name}': 'ಆಕ್ಸೆಂಟ್: {name}',
   Violet: 'ನೇರಳೆ',
   Blue: 'ನೀಲಿ',
@@ -1668,6 +1676,7 @@ export const kn: Dictionary = {
   'Hard reload': 'ಪೂರ್ಣವಾಗಿ ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
   'Open in the browser': 'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆರೆ',
   "This media can't play here": 'ಈ ಮಾಧ್ಯಮವನ್ನು ಇಲ್ಲಿ ಪ್ಲೇ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ',
+  'Pop-up blocked': 'ಪಾಪ್-ಅಪ್ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ',
   'Show it here': 'ಇಲ್ಲಿ ತೋರಿಸು',
   Website: 'ಜಾಲತಾಣ',
   'Open a website': 'ಜಾಲತಾಣ ತೆರೆ',
@@ -2701,9 +2710,30 @@ export const kn: Dictionary = {
   'Agent instructions': 'ಏಜೆಂಟ್ ಸೂಚನೆಗಳು',
   "AGENTS is this space's agent instructions": 'AGENTS ಈ ಸ್ಪೇಸ್‌ನ ಏಜೆಂಟ್ ಸೂಚನೆಗಳು',
   '{title}, unread': '{title}, ಓದಿಲ್ಲ',
+  Working: 'ಕೆಲಸ ನಡೆಯುತ್ತಿದೆ',
+  'Needs input': 'ಉತ್ತರ ಬೇಕು',
+  Interrupted: 'ಅಡಚಣೆ',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}ಗೆ ಬದಲಿಸಬೇಕೆ?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'ಮುಂದಿನ ಸಂದೇಶ ಇಡೀ ಸಂಭಾಷಣೆಯನ್ನು ಮತ್ತೆ ಕಳುಹಿಸುತ್ತದೆ: ಸುಮಾರು {count} ಹೆಚ್ಚು ಟೋಕನ್‌ಗಳು.',
+  'It is too long for this model, so it is compacted first.':
+    'ಈ ಮಾದರಿಗೆ ಇದು ತುಂಬಾ ಉದ್ದ, ಆದ್ದರಿಂದ ಮೊದಲು ಸಂಕ್ಷೇಪಿಸಲಾಗುತ್ತದೆ.',
+  Switch: 'ಬದಲಿಸಿ',
   '{title}, running': '{title}, ಚಾಲನೆಯಲ್ಲಿದೆ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ಇನ್ನು AI ಕೀಗಳನ್ನು Mac ನ ಕೀಚೈನ್‌ನಲ್ಲಿ ಇಡುವುದಿಲ್ಲ, ಅದು ಪದೇಪದೇ ಅದರ ಪಾಸ್‌ವರ್ಡ್ ಕೇಳುತ್ತಿತ್ತು. ನಿಮ್ಮ ಕೀಗಳನ್ನು ಮತ್ತೆ ನಮೂದಿಸಿ ಮತ್ತು ChatGPT ಗೆ ಮತ್ತೊಮ್ಮೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'This PDF is locked by its owner': 'ಈ PDF ಅನ್ನು ಅದರ ಮಾಲೀಕರು ಲಾಕ್ ಮಾಡಿದ್ದಾರೆ',
   'Part of this could not be undone': 'ಇದರ ಒಂದು ಭಾಗವನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗಲಿಲ್ಲ',
+  'Add images': 'ಚಿತ್ರಗಳನ್ನು ಸೇರಿಸಿ',
+  'Remove image': 'ಚಿತ್ರವನ್ನು ತೆಗೆದುಹಾಕಿ',
+  'Paste, drop or add images (up to 4).': 'ಚಿತ್ರಗಳನ್ನು ಅಂಟಿಸಿ, ಎಳೆದು ಬಿಡಿ ಅಥವಾ ಸೇರಿಸಿ (ಗರಿಷ್ಠ 4).',
+  'That is more than 4 images.': 'ಇವು 4 ಚಿತ್ರಗಳಿಗಿಂತ ಹೆಚ್ಚು.',
+  'That file could not be used as an image.': 'ಈ ಫೈಲ್ ಅನ್ನು ಚಿತ್ರವಾಗಿ ಬಳಸಲು ಸಾಧ್ಯವಿಲ್ಲ.',
+  'Report received': 'ವರದಿ ತಲುಪಿದೆ',
+  'Your report reached us. You can follow it here:':
+    'ನಿಮ್ಮ ವರದಿ ನಮಗೆ ತಲುಪಿದೆ. ಇದನ್ನು ಇಲ್ಲಿ ಅನುಸರಿಸಬಹುದು:',
+  'View your report': 'ನಿಮ್ಮ ವರದಿಯನ್ನು ನೋಡಿ',
+  'Not sent. Your text is kept, so you can try again.':
+    'ಕಳುಹಿಸಲಾಗಿಲ್ಲ. ನಿಮ್ಮ ಪಠ್ಯ ಉಳಿದಿದೆ, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಬಹುದು.',
 }

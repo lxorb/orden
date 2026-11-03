@@ -1512,8 +1512,8 @@ takes the words and a space and nothing else.
 | Ctrl+Shift+Y                 | in Orden                                         | the Tasks panel (the next free letter; registry decides)  |
 | Ctrl+Enter                   | a task line                                    | tick (exists)                                             |
 | ↑ ↓, j k                     | a row in a view                                | the row below, above                                      |
-| Enter, Space                 | a row                                          | the task's own view; the note at the line beside the view |
-| e, Ctrl+Enter                | a row                                          | complete                                                  |
+| Enter, O                     | a row                                          | the task's own view; the note at the line beside the view |
+| e, Ctrl+Enter, Space         | a row                                          | complete                                                  |
 | t, Shift+T                   | a row                                          | the scheduler; the date taken away                        |
 | y, 1 2 3 4                   | a row                                          | priority: its menu, or one of them                        |
 | l, v, .                      | a row                                          | labels, move to a project or the Inbox, the task's menu   |

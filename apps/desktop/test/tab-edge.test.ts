@@ -212,7 +212,8 @@ describe('the open tab', () => {
   })
 
   test("is edged in the strip's own words, and eased in with its fill", () => {
-    expect(rule('.strip')).toMatch(/--tab-line: var\(--tab-edge\);/)
+    // Unless the window's corners leave the strip no line of its own (#1088).
+    expect(rule('.strip')).toMatch(/--tab-line: var\(--strip-line, var\(--tab-edge\)\);/)
     expect(rule('.tab.active .edge')).toMatch(/border-color: var\(--tab-line\);/)
     expect(rule('.tab.active .edge')).toMatch(/transition: border-color var\(--dur-fast\)/)
     expect(rule('.tab.active .fill')).toMatch(/opacity var\(--dur-fast\) var\(--ease-out\)/)

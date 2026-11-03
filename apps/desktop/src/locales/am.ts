@@ -555,6 +555,14 @@ export const am: Dictionary = {
   'Actual size': 'እውነተኛ መጠን',
   // Appearance
   Accent: 'የማጉላት ቀለም',
+  'Window corners': 'የመስኮት ማዕዘኖች',
+  Rounded: 'የተጠጋጋ',
+  Square: 'ካሬ',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'የተጠጋጋ የተከፈተውን በመስኮቱ ውስጥ ባለ ካርድ ላይ ያንሳፍፋል፤ ካሬ ጠርዝ ላይ ያቆየዋል።',
+  'Tab preview delay': 'የትር ቅድመ እይታ መዘግየት',
+  'How long the pointer rests on a tab before its preview shows.':
+    'ቅድመ እይታው ከመታየቱ በፊት ጠቋሚው በትሩ ላይ የሚያርፍበት ጊዜ።',
   'Accent: {name}': 'ማጉላት: {name}',
   Violet: 'ወይንጠጅ',
   Blue: 'ሰማያዊ',
@@ -1636,6 +1644,7 @@ export const am: Dictionary = {
   'Hard reload': 'ሙሉ በሙሉ እንደገና ጫን',
   'Open in the browser': 'በአሳሽ ክፈት',
   "This media can't play here": 'ይህ ሚዲያ እዚህ ሊጫወት አይችልም',
+  'Pop-up blocked': 'ብቅ-ባይ ታግዷል',
   'Show it here': 'እዚህ አሳይ',
   Website: 'ድረ ገጽ',
   'Open a website': 'ድረ ገጽ ክፈት',
@@ -2625,9 +2634,28 @@ export const am: Dictionary = {
   'Agent instructions': 'የኤጀንት መመሪያዎች',
   "AGENTS is this space's agent instructions": 'AGENTS የዚህ ቦታ የኤጀንት መመሪያዎች ነው',
   '{title}, unread': '{title}፣ ያልተነበበ',
+  Working: 'በመስራት ላይ',
+  'Needs input': 'ግብዓት ይፈልጋል',
+  Interrupted: 'ተቋርጧል',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'ወደ {model} ይቀየር?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'ቀጣዩ መልእክት ሙሉውን ውይይት እንደገና ይልካል፦ ወደ {count} ተጨማሪ ቶከኖች።',
+  'It is too long for this model, so it is compacted first.': 'ለዚህ ሞዴል በጣም ረጅም ስለሆነ መጀመሪያ ይታመቃል።',
+  Switch: 'ቀይር',
   '{title}, running': '{title}፣ በመሥራት ላይ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden የAI ቁልፎችን ከእንግዲህ በMac ቁልፍ ሰንሰለት ውስጥ አያስቀምጥም፤ የይለፍ ቃሉን ደጋግሞ ይጠይቅ ነበርና። ቁልፎችዎን ያስገቡ እና ወደ ChatGPT እንደገና ይግቡ።',
   'This PDF is locked by its owner': 'ይህ PDF በባለቤቱ ተቆልፏል',
   'Part of this could not be undone': 'የዚህ ክፍል ሊቀለበስ አልቻለም',
+  'Add images': 'ምስሎችን አክል',
+  'Remove image': 'ምስሉን አስወግድ',
+  'Paste, drop or add images (up to 4).': 'ምስሎችን ለጥፍ፣ ጎትተህ ጣል ወይም አክል (እስከ 4)።',
+  'That is more than 4 images.': 'ይህ ከ4 ምስሎች በላይ ነው።',
+  'That file could not be used as an image.': 'ይህ ፋይል እንደ ምስል ሊያገለግል አይችልም።',
+  'Report received': 'ሪፖርቱ ደርሷል',
+  'Your report reached us. You can follow it here:': 'ሪፖርትህ ደርሶናል። እዚህ መከታተል ትችላለህ፦',
+  'View your report': 'ሪፖርትህን ተመልከት',
+  'Not sent. Your text is kept, so you can try again.':
+    'አልተላከም። ጽሑፍህ ተቀምጧል፣ ስለዚህ እንደገና መሞከር ትችላለህ።',
 }

@@ -113,7 +113,7 @@ vi.mock('../own-window', () => ({
   },
 }))
 
-const { pages, readOpening } = await import('./pages.svelte')
+const { pages, readChosen, readOpening } = await import('./pages.svelte')
 
 // What the window's listeners are fetched with, behind the first page; see `listen` in
 // pages.svelte.ts. Fetched here first: a whole gate compiles them cold on a busy
@@ -1062,6 +1062,56 @@ describe('what a page asking for a window says', () => {
   test('names nothing a tab may not hold', () => {
     expect(readOpening({ tab: 't', url: 'file:///C:/Windows/', behind: true })).toBeNull()
     expect(readOpening({ url: 'https://example.com/' })).toBeNull()
+  })
+})
+
+/** #1080: a press in a web tab's page never reaches the app's own page, so the crate says
+ *  which page was chosen, and its tab and pane become the ones being worked in. */
+describe('a page a person presses in or types into', () => {
+  let did: string[] = []
+  let inFront = 'a'
+
+  beforeEach(async () => {
+    did = []
+    inFront = 'a'
+    const { workspace } = await import('../workspace.svelte')
+    vi.spyOn(workspace, 'activeTabId', 'get').mockImplementation(() => inFront)
+    vi.spyOn(workspace, 'tabs', 'get').mockReturnValue([{ id: 'a' }, { id: 'b' }] as Tab[])
+    vi.spyOn(workspace, 'activate').mockImplementation((id) => {
+      did.push(`activate ${id}`)
+      inFront = id
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('makes its tab, in the other pane, the one being worked in', async () => {
+    const shown = pages.show('b', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+
+    const chosen = await hearing('nib://web-chosen')
+    chosen({ payload: { tab: 'b' } })
+    await vi.waitFor(() => expect(did).toEqual(['activate b']))
+
+    // Pressed again, or the keyboard coming in after the press: nothing more to do.
+    chosen({ payload: { tab: 'b' } })
+    await settle()
+    expect(did).toEqual(['activate b'])
+  })
+
+  test('chooses no tab it does not hold, and reads nothing else as one', async () => {
+    const chosen = await hearing('nib://web-chosen')
+    chosen({ payload: { tab: 'elsewhere' } })
+    chosen({ payload: {} })
+    await settle()
+    expect(did).toEqual([])
+    expect(readChosen({ tab: 'b' })).toBe('b')
+    expect(readChosen({ tab: 3 })).toBeNull()
+    expect(readChosen(null)).toBeNull()
   })
 })
 

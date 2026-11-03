@@ -1064,15 +1064,46 @@ function holds(tail: string): boolean {
  *  rest of a file's marks by `sourceMark` (icons.ts, chosen-icon.ts, FileMark.svelte).
  *  The logos themselves are a chunk of their own. Measured 3,490,342.
  *
+ *  Raised 2026-11-04, to 3,491,500, for #1074: a web tab's bar saying a window the page
+ *  opened on its own was blocked, and the Open that opens it (WebTab.svelte,
+ *  pages.svelte.ts). Measured 3,491,408.
+ *
+ *  Raised 2026-11-04, to 3,495,600, for #1081: the Collapse button asks the rows drawn
+ *  whether one stands open rather than what is remembered open, and every listing
+ *  drops the folders remembered open that no row is (tree-flat.ts, workspace.svelte.ts,
+ *  workspace/device.svelte.ts). Measured 3,495,431.
+ *
+ *  Raised 2026-11-04, to 3,499,300, for #1065: a pull down past the top reloads where
+ *  the reader is and its mark turns until that is done, never over the keyboard or a
+ *  selection (pull.svelte.ts, PullMark.svelte, `app.refresh` in shortcuts/registry.ts).
+ *  Measured 3,499,105.
+ *
+ *  Raised 2026-11-04, to 3,501,100, for #1075: the door the live preview over a formula
+ *  comes through, which fetches it with a note's first dollar (editor.ts); the preview
+ *  itself is a chunk of its own. Measured 3,501,098.
+ *
+ *  Raised 2026-11-04, to 3,505,500, and to 387 modules, for #1088: the window's corners,
+ *  a setting the theme paints before the first frame (corners.ts), and the tokens every
+ *  surface on the frame reads (App.svelte, Pane.svelte, PaneTree.svelte, Sidebar.svelte).
+ *  Measured 3,505,344, 386 modules.
+ *
+ *  Raised 2026-11-04, to 3,506,100, for #1080: a press in a web tab's page making its tab
+ *  and pane the ones worked in, said by the crate (`chooseTab` in pages.svelte.ts).
+ *  Measured 3,505,980.
+ *
  *  Raised 2026-11-03, to 3,551,100, and to 387 modules, for the bug hunt's rounds one and
  *  two merged into claude/hunt-round-1, measured together: the views' and the desktop's
  *  writing fixes (a phone's draft kept until it lands, charts, paste, block commands,
  *  links, a thread written down while it runs), what a base may cost, a tile's move, the
  *  sync's scans, an undo that waits for every gesture landing, one definition of front
  *  matter (front-matter-lines.ts) and one device's windows being one. What could wait went
- *  behind a door on the branches. Measured 3,550,937, 386 modules. */
-const BUDGET = 3_551_100
-const MOST_FILES = 387
+ *  behind a door on the branches. Measured 3,550,937, 386 modules.
+ *
+ *  Raised 2026-11-04, to 3,566,700, and to 388 modules, for the bug hunt's two rounds and
+ *  the raises above being in one build at last, on claude/hunt-round-1: nothing new, the
+ *  two sums together. Measured 3,566,575, 387 modules. */
+const BUDGET = 3_566_700
+const MOST_FILES = 388
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

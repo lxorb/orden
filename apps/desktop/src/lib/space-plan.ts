@@ -52,6 +52,10 @@ export interface Plan {
   /** Folders whose space the account says was deleted, and folders whose space
    *  somebody stopped sharing. These go. */
   remove: string[]
+  /** The default space a first visit was given, still untouched, where the account
+   *  has spaces of its own to take its place (#1077). Nothing of the reader's is in
+   *  it, so it goes rather than becoming a space of the account beside them. */
+  discard: string[]
 }
 
 export function planSpaces(input: {
@@ -60,8 +64,10 @@ export function planSpaces(input: {
   mirrors: Pairing[]
   /** Ids the account says were deleted, which is a fact rather than a gap. */
   deleted?: string[]
+  /** The root of the default space where it is still untouched (seed-space.ts). */
+  untouched?: string | null
 }): Plan {
-  const { local, remote, mirrors, deleted = [] } = input
+  const { local, remote, mirrors, deleted = [], untouched = null } = input
 
   const mirrorByRoot = new Map(mirrors.map((one) => [one.root, one]))
   const remoteById = new Map(remote.map((one) => [one.id, one]))
@@ -69,8 +75,28 @@ export function planSpaces(input: {
   const remoteByName = new Map(remote.filter((one) => !one.shared).map((one) => [one.name, one]))
   const roots = new Set(local.map((one) => one.root))
 
-  const plan: Plan = { pair: [], upload: [], adopt: [], drop: [], detach: [], remove: [] }
+  const plan: Plan = {
+    pair: [],
+    upload: [],
+    adopt: [],
+    drop: [],
+    detach: [],
+    remove: [],
+    discard: [],
+  }
   const gone = new Set(deleted)
+
+  // The untouched default goes where the account has a space of its own to open on
+  // instead; an empty account, or one somebody else's spaces are all of, takes it as
+  // its first. Never once a pass has paired it: then it is the account's.
+  const discarding =
+    untouched !== null &&
+    roots.has(untouched) &&
+    !mirrorByRoot.has(untouched) &&
+    remote.some((one) => !one.shared)
+      ? untouched
+      : null
+  if (discarding !== null) plan.discard.push(discarding)
 
   // Worked out first, because a folder on its way out must not be paired with
   // anything, uploaded, or counted as already holding its name. Otherwise
@@ -87,7 +113,9 @@ export function planSpaces(input: {
   )
 
   for (const space of local) {
-    if (mirrorByRoot.has(space.root) || removing.has(space.root)) continue
+    if (mirrorByRoot.has(space.root) || removing.has(space.root) || space.root === discarding) {
+      continue
+    }
 
     const match = remoteByName.get(space.name)
     if (match && !spoken.has(match.id)) {
@@ -116,7 +144,11 @@ export function planSpaces(input: {
     if (
       !space.shared &&
       local.some(
-        (one) => one.name === space.name && !removing.has(one.root) && !claimed.has(one.root),
+        (one) =>
+          one.name === space.name &&
+          !removing.has(one.root) &&
+          one.root !== discarding &&
+          !claimed.has(one.root),
       )
     ) {
       continue

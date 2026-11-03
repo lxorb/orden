@@ -1053,8 +1053,8 @@ fn ready(
             }
             stall::watch_page(handle, window.as_ref(), "the window's");
         } else if uris::launched_quietly(handle) {
-            // Started by nothing but a reminder's Done: answered without a window on
-            // screen, from the tray; see reminders.rs.
+            // Started by nothing but a reminder's Done, or by an agent's `nib mcp` (#1091):
+            // answered without a window on screen, from the tray; see reminders.rs.
             let window = building.visible(false).build()?;
             top_edge::mind(&window.as_ref().window());
             stall::watch_page(handle, window.as_ref(), "the window's");

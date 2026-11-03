@@ -557,6 +557,14 @@ export const hi: Dictionary = {
   'Actual size': 'वास्तविक आकार',
   // Appearance
   Accent: 'एक्सेंट',
+  'Window corners': 'विंडो के कोने',
+  Rounded: 'गोल',
+  Square: 'चौकोर',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'गोल खुली चीज़ को विंडो के अंदर एक कार्ड में तैराता है; चौकोर उसे किनारों से सटा रखता है।',
+  'Tab preview delay': 'टैब पूर्वावलोकन की देरी',
+  'How long the pointer rests on a tab before its preview shows.':
+    'पूर्वावलोकन दिखने से पहले पॉइंटर टैब पर कितनी देर रुकता है।',
   'Accent: {name}': 'एक्सेंट: {name}',
   Violet: 'बैंगनी',
   Blue: 'नीला',
@@ -1654,6 +1662,7 @@ export const hi: Dictionary = {
   'Hard reload': 'पूरी तरह फिर लोड करें',
   'Open in the browser': 'ब्राउज़र में खोलें',
   "This media can't play here": 'यह मीडिया यहाँ नहीं चल सकता',
+  'Pop-up blocked': 'पॉप-अप ब्लॉक किया गया',
   'Show it here': 'यहाँ दिखाएँ',
   Website: 'वेबसाइट',
   'Open a website': 'वेबसाइट खोलें',
@@ -2669,9 +2678,31 @@ export const hi: Dictionary = {
   'Agent instructions': 'एजेंट निर्देश',
   "AGENTS is this space's agent instructions": 'AGENTS इस स्पेस के एजेंट निर्देश हैं',
   '{title}, unread': '{title}, अनपढ़ा',
+  Working: 'काम जारी',
+  'Needs input': 'जवाब चाहिए',
+  Interrupted: 'बाधित',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} पर स्विच करें?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'अगला संदेश पूरी बातचीत फिर से भेजेगा: लगभग {count} टोकन ज़्यादा।',
+  'It is too long for this model, so it is compacted first.':
+    'यह इस मॉडल के लिए बहुत लंबी है, इसलिए पहले संक्षिप्त की जाती है।',
+  Switch: 'स्विच करें',
   '{title}, running': '{title}, चल रहा है',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden अब AI कुंजियाँ Mac की कीचेन में नहीं रखता, जो बार-बार उसका पासवर्ड माँगती थी। अपनी कुंजियाँ फिर से डालें और ChatGPT में एक बार और साइन इन करें।',
   'This PDF is locked by its owner': 'यह PDF इसके स्वामी ने लॉक की है',
   'Part of this could not be undone': 'इसका एक हिस्सा पहले जैसा नहीं किया जा सका',
+  'Add images': 'चित्र जोड़ें',
+  'Remove image': 'चित्र हटाएँ',
+  'Paste, drop or add images (up to 4).': 'चित्र पेस्ट करें, खींचकर छोड़ें या जोड़ें (अधिकतम 4)।',
+  'That is more than 4 images.': 'ये 4 से ज़्यादा चित्र हैं।',
+  'That file could not be used as an image.':
+    'इस फ़ाइल को चित्र के रूप में इस्तेमाल नहीं किया जा सकता।',
+  'Report received': 'रिपोर्ट मिल गई',
+  'Your report reached us. You can follow it here:':
+    'आपकी रिपोर्ट हम तक पहुँच गई है। आप इसे यहाँ देख सकते हैं:',
+  'View your report': 'अपनी रिपोर्ट देखें',
+  'Not sent. Your text is kept, so you can try again.':
+    'नहीं भेजी गई। आपका लिखा हुआ सुरक्षित है, आप फिर से कोशिश कर सकते हैं।',
 }

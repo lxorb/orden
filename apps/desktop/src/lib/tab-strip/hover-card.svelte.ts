@@ -24,7 +24,8 @@ import { overlays } from '../overlays'
 import { viewport } from '../viewport.svelte'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
-import { type Anchor, type From, fromOf, REENTRY, showDelay, siteOf, spot, whereOf } from './card'
+import { type Anchor, type From, fromOf, REENTRY, siteOf, spot, whereOf } from './card'
+import { previewDelay } from './preview-delay.svelte'
 import TabCard from './TabCard.svelte'
 import { stillOf } from './thumb'
 
@@ -33,8 +34,6 @@ export interface Aim {
   tab: Tab
   /** The tab's body on the glass. */
   box: Anchor
-  /** The widest tab of its strip, which decides how long every tab of it waits. */
-  widest: number
   /** Arrived at by the keyboard, which gets its card at once. */
   focused?: boolean
 }
@@ -93,13 +92,12 @@ class Hovering {
   }
 
   /** A tab the pointer came to rest on, or the keyboard arrived at: the card hangs from
-   *  its body, and waits as long as the widest tab of its strip says. */
-  restOn(tab: Tab, node: Element, widest: number, focused = false) {
+   *  its body, and waits as long as the Tab preview delay says (preview-delay.svelte.ts). */
+  restOn(tab: Tab, node: Element, focused = false) {
     const body = (node.closest('.tab')?.querySelector('.fill') ?? node).getBoundingClientRect()
     this.enter({
       tab,
       box: { left: body.left, right: body.right, bottom: body.bottom },
-      widest,
       focused,
     })
   }
@@ -115,7 +113,7 @@ class Hovering {
 
     const now = this.card !== null || aim.focused === true || this.slippedBack()
     if (now) void this.show(aim)
-    else this.timer = setTimeout(() => void this.show(aim), showDelay(aim.widest))
+    else this.timer = setTimeout(() => void this.show(aim), previewDelay.ms)
   }
 
   /** The pointer left a tab, or the keyboard did. Maybe for the tab beside it, which

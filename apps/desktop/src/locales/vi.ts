@@ -554,6 +554,14 @@ export const vi: Dictionary = {
   'Actual size': 'Cỡ thật',
   // Appearance
   Accent: 'Màu nhấn',
+  'Window corners': 'Góc cửa sổ',
+  Rounded: 'Bo tròn',
+  Square: 'Vuông',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Bo tròn đặt nội dung đang mở nổi trong một thẻ bên trong cửa sổ; Vuông giữ nó sát mép.',
+  'Tab preview delay': 'Độ trễ xem trước thẻ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Thời gian con trỏ dừng trên một thẻ trước khi bản xem trước hiện ra.',
   'Accent: {name}': 'Màu nhấn: {name}',
   Violet: 'Tím',
   Blue: 'Xanh lam',
@@ -1634,6 +1642,7 @@ export const vi: Dictionary = {
   'Hard reload': 'Tải lại toàn bộ',
   'Open in the browser': 'Mở trong trình duyệt',
   "This media can't play here": 'Không thể phát nội dung này tại đây',
+  'Pop-up blocked': 'Đã chặn cửa sổ bật lên',
   'Show it here': 'Hiện ở đây',
   Website: 'Trang web',
   'Open a website': 'Mở một trang web',
@@ -2643,9 +2652,30 @@ export const vi: Dictionary = {
   'Agent instructions': 'Hướng dẫn cho tác tử',
   "AGENTS is this space's agent instructions": 'AGENTS là hướng dẫn cho tác tử của không gian này',
   '{title}, unread': '{title}, chưa đọc',
+  Working: 'Đang làm',
+  'Needs input': 'Cần phản hồi',
+  Interrupted: 'Bị gián đoạn',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Chuyển sang {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Tin nhắn tiếp theo gửi lại toàn bộ cuộc trò chuyện: thêm khoảng {count} token.',
+  'It is too long for this model, so it is compacted first.':
+    'Nó quá dài cho mô hình này nên sẽ được nén trước.',
+  Switch: 'Chuyển',
   '{title}, running': '{title}, đang chạy',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden không còn giữ khóa AI trong Chuỗi khóa của Mac, vốn cứ hỏi mật khẩu mãi. Hãy nhập lại khóa và đăng nhập ChatGPT thêm một lần nữa.',
   'This PDF is locked by its owner': 'PDF này bị chủ sở hữu khóa',
   'Part of this could not be undone': 'Không thể hoàn tác một phần của việc này',
+  'Add images': 'Thêm hình ảnh',
+  'Remove image': 'Gỡ hình ảnh',
+  'Paste, drop or add images (up to 4).': 'Dán, kéo thả hoặc thêm hình ảnh (tối đa 4).',
+  'That is more than 4 images.': 'Đã quá 4 hình ảnh.',
+  'That file could not be used as an image.': 'Không thể dùng tệp này làm hình ảnh.',
+  'Report received': 'Đã nhận báo cáo',
+  'Your report reached us. You can follow it here:':
+    'Báo cáo của bạn đã đến với chúng tôi. Bạn có thể theo dõi tại đây:',
+  'View your report': 'Xem báo cáo của bạn',
+  'Not sent. Your text is kept, so you can try again.':
+    'Chưa gửi được. Nội dung của bạn vẫn được giữ, bạn có thể thử lại.',
 }

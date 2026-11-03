@@ -1141,7 +1141,7 @@ keep their terminal as they were. See `src-tauri/src/ai_cli/enroll.rs`.
 arguments before anything of Tauri starts, and `mcp` is a loop over stdin and stdout that
 forwards each call to the running app's endpoint (the port and pid from `automation.json`,
 as `orden screenshot` finds them). It starts in a few milliseconds and opens no webview. If
-Orden is not running it starts it minimised and waits for the endpoint. So the installed app
+Orden is not running it starts it with no window on screen and waits for the endpoint. So the installed app
 is the whole of it: `claude mcp add orden -- "%LOCALAPPDATA%\Orden\nib.exe" mcp` (an
 install from before a rename keeps `%LOCALAPPDATA%\Nib` or `%LOCALAPPDATA%\nibeditor`,
 so a line pasted then still works), which Settings > Agents offers to copy. Not the Node CLI, which ships in no installer
@@ -1193,8 +1193,12 @@ local one writing one note merge instead of overwriting each other.
   shown `_meta`. The six tools shared with the connector answer in its words.
 - **Starting Orden**: on Windows through `cmd /c start /min` with no console, so the app's
   first window takes `SW_SHOWMINNOACTIVE` and none of the client's pipes; on a Mac `open -g
--j`; on Linux a plain detached launch. Only at the start of a session: a reader who quits
-  Orden later has ended the job, and a call says so.
+  -j`; on Linux a detached launch; every one with `--background` (#1091). An agent connecting
+  is not the reader opening Orden: a first launch so asked builds its window off the screen
+  and serves from the tray, and a second one is answered by nothing, so a running Orden's
+  window stays as the reader left it. The one rule is `launch::in_background`; only what the
+  reader does - the app, a file, a link - brings the window up. Only at the start of a
+  session: a reader who quits Orden later has ended the job, and a call says so.
 - `scripts/mcp-probe.py` drives all of it over real pipes against a probe build.
 
 **The endpoint stays what it is**, with two changes: a request may carry an agent's token

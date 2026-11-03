@@ -882,6 +882,18 @@ const APP_ENTRIES: Shortcut[] = [
     run: (context) => searchFrom(context.view),
   },
   {
+    // Reload where the reader is (#1065): a web tab's page again, or a sync now for
+    // everything else. What a pull down past the top does to begin with; no key, since
+    // F5 and Ctrl+R are already a page's reload. See refresh.ts.
+    id: 'app.refresh',
+    label: () => t('Reload'),
+    category: 'view',
+    scope: 'app',
+    key: null,
+    run: () =>
+      void import('../refresh').then(({ refreshHere }) => refreshHere()).catch(() => undefined),
+  },
+  {
     // What links here and what this links to. On B for the backlinks half, which
     // is what the panel is called everywhere else; L is the sidebar's own key.
     id: 'app.links',

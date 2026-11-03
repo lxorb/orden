@@ -9,6 +9,7 @@ import { recovery } from '../recovery.svelte'
 import { hasTray, residency } from '../reminders/residency.svelte'
 import { chatsGroups } from '../chats-settings'
 import { tabCycle } from '../tab-cycle.svelte'
+import { PREVIEW_DELAY, previewDelay } from '../tab-strip/preview-delay.svelte'
 import { isDesktop, isMobile, platform } from '../tauri'
 import { swipeChoice } from '../back-swipe/choice.svelte'
 import { BY_ID } from '../shortcuts/registry'
@@ -375,6 +376,28 @@ export function generalPane(): Pane {
             get: () => tabCycle.byUse,
             set: (on) => tabCycle.setByUse(on),
           },
+          // How long a tab is rested on before its card comes, at most two seconds
+          // (#1088). Not on a phone, whose tabs have no pointer to rest on them. See
+          // tab-strip/preview-delay.svelte.ts.
+          ...(isMobile
+            ? []
+            : ([
+                {
+                  kind: 'slider',
+                  key: 'general.tabPreviewDelay',
+                  store: { on: previewDelay, name: 'ms' },
+                  label: t('Tab preview delay'),
+                  hint: t('How long the pointer rests on a tab before its preview shows.'),
+                  words: ['hover', 'card', 'tooltip', 'preview', 'tabs'],
+                  min: PREVIEW_DELAY.least,
+                  max: PREVIEW_DELAY.most,
+                  step: PREVIEW_DELAY.step,
+                  unit: 'ms',
+                  initial: PREVIEW_DELAY.initial,
+                  get: () => previewDelay.ms,
+                  set: (value) => previewDelay.set(value),
+                },
+              ] satisfies Field[])),
           // Two fingers sideways for back and forward, as in every browser; off for a
           // hand that keeps doing it by accident. Not on a phone, whose side of the
           // screen is the system's own back. See back-swipe/swipes.ts.

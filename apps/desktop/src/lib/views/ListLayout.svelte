@@ -2,11 +2,12 @@
   /** The list layout: the view's groups, each a head with its count and its rows, the
    *  sub-tasks under their parents, and an add row at the end (docs/tasks.md 5.9).
    *
-   *  A task is Todoist's row of up to three lines (TaskRow.svelte), and how many is
-   *  arithmetic over what it carries (task-meta.ts), so the list still keeps a window
+   *  A task is Todoist's card of up to three lines (TaskRow.svelte, #1043), and how many
+   *  is arithmetic over what it carries (task-meta.ts), so the list still keeps a window
    *  of what is on screen without measuring a row: a Completed of ten thousand lines
-   *  mounts thirty (`Heights`, the chat's own). The three heights a line can be are
-   *  read off a probe once, and again when the box is resized. The keyboard walks the
+   *  mounts thirty (`Heights`, the chat's own). The three heights a line can be, and the
+   *  card's padding with the room under it, are read off a probe once, and again when
+   *  the box is resized. The keyboard walks the
    *  rows and every key of row-keys.ts works on the one it is on, or on every one
    *  selected (x, Ctrl or Shift and a press), with the bulk bar at the foot of the list
    *  for the same with a pointer. In a project grouped by its sections each head has the
@@ -177,8 +178,9 @@
 
   let list = $state<HTMLElement>()
   let probe = $state<HTMLElement>()
-  /** The three heights a task's lines come in, read off the probe. */
-  let pitch = $state({ head: 28, line: 18, foot: 6 })
+  /** The three heights a task's lines come in, and what its card adds round them (its
+   *  padding and the room under it), read off the probe. */
+  let pitch = $state({ head: 28, line: 18, foot: 6, card: 18 })
   const win = new ListView()
   $effect(() => {
     const box = list
@@ -186,10 +188,11 @@
     const touch = viewport.touch
     return untrack(() =>
       win.follow(box, () => {
-        const [head, line, foot] = [...(probe?.children ?? [])].map((one) =>
+        const [head, line, foot, card] = [...(probe?.children ?? [])].map((one) =>
           one instanceof HTMLElement ? one.offsetHeight : 0,
         )
-        if (head && line && foot !== undefined) pitch = { head, line, foot }
+        if (head && line && foot !== undefined && card !== undefined)
+          pitch = { head, line, foot, card }
         return tokenRow(touch)
       }),
     )
@@ -207,9 +210,9 @@
   /** How tall an item is drawn at rest. */
   function restingHeight(item: (typeof items)[number], many: number): number {
     const row = win.row || 28
-    const { head, line, foot } = pitch
+    const { head, line, foot, card } = pitch
     if (item.kind !== 'row' || !item.row.task) return row
-    return head + (many - 1) * line + (many > 1 ? foot : 0)
+    return card + head + (many - 1) * line + (many > 1 ? foot : 0)
   }
 
   const heights = $derived.by(
@@ -369,6 +372,7 @@
     <div class="probe-head"></div>
     <div class="probe-line"></div>
     <div class="probe-foot"></div>
+    <div class="probe-card"></div>
   </div>
   {#each items.slice(shown.first, shown.last + 1) as item, index (item.id)}
     <div
@@ -446,6 +450,7 @@
               {dated}
               {where}
               lines={lines[shown.first + index] ?? 1}
+              card
               editing={editing === item.id}
               onedit={(on) => {
                 editing = on ? item.id : null
@@ -516,12 +521,15 @@
 
 <style>
   /* A task's three heights: the line of its words, each line under them, and the room
-     under the last. Read back by the probe, so the arithmetic and the drawing are one
+     under the last; and its card's padding over and under them, and the room between
+     it and the next. Read back by the probe, so the arithmetic and the drawing are one
      number each. */
   .list {
     --task-head: var(--row-height);
     --task-line: 18px;
     --task-foot: 6px;
+    --task-pad: 5px;
+    --task-gap: 6px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -533,6 +541,8 @@
     --task-head: var(--touch-target);
     --task-line: 22px;
     --task-foot: 8px;
+    --task-pad: 6px;
+    --task-gap: 8px;
   }
 
   .probe {
@@ -554,6 +564,10 @@
 
   .probe-foot {
     height: var(--task-foot);
+  }
+
+  .probe-card {
+    height: calc(2 * var(--task-pad) + var(--task-gap));
   }
 
   .item {

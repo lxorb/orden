@@ -557,6 +557,14 @@ export const fa: Dictionary = {
   'Actual size': 'اندازه واقعی',
   // Appearance
   Accent: 'رنگ تکیه',
+  'Window corners': 'گوشه‌های پنجره',
+  Rounded: 'گرد',
+  Square: 'مربعی',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'گرد محتوای باز را در کارتی شناور درون پنجره نشان می‌دهد؛ مربعی آن را هم‌تراز لبه‌ها نگه می‌دارد.',
+  'Tab preview delay': 'تأخیر پیش‌نمایش زبانه',
+  'How long the pointer rests on a tab before its preview shows.':
+    'مدتی که نشانگر روی زبانه می‌ماند تا پیش‌نمایش آن نمایش داده شود.',
   'Accent: {name}': 'تکیه: {name}',
   Violet: 'بنفش',
   Blue: 'آبی',
@@ -1658,6 +1666,7 @@ export const fa: Dictionary = {
   'Hard reload': 'بارگذاری دوباره کامل',
   'Open in the browser': 'گشودن در مرورگر',
   "This media can't play here": 'این رسانه اینجا پخش نمی‌شود',
+  'Pop-up blocked': 'پنجرهٔ بازشو مسدود شد',
   'Show it here': 'نمایش اینجا',
   Website: 'وب‌گاه',
   'Open a website': 'گشودن وب‌گاه',
@@ -2676,9 +2685,31 @@ export const fa: Dictionary = {
   'Agent instructions': 'دستورالعمل‌های عامل',
   "AGENTS is this space's agent instructions": 'AGENTS دستورالعمل‌های عامل این فضا است',
   '{title}, unread': '{title}، خوانده\u200cنشده',
+  Working: 'در حال کار',
+  'Needs input': 'نیاز به پاسخ',
+  Interrupted: 'قطع شد',
+  '{title}, {state}': '{title}، {state}',
+  'Switch to {model}?': 'به {model} تغییر کند؟',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'پیام بعدی کل گفت‌وگو را دوباره می‌فرستد: حدود {count} توکن بیشتر.',
+  'It is too long for this model, so it is compacted first.':
+    'برای این مدل بیش از حد طولانی است، پس اول فشرده می‌شود.',
+  Switch: 'تغییر',
   '{title}, running': '{title}، در حال اجرا',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden دیگر کلیدهای هوش مصنوعی را در کلیدزنجیر Mac نگه نمی‌دارد، که مدام رمزش را می‌خواست. کلیدهایتان را دوباره وارد کنید و یک بار دیگر به ChatGPT وارد شوید.',
   'This PDF is locked by its owner': 'این PDF توسط مالک آن قفل شده است',
   'Part of this could not be undone': 'بخشی از این را نشد برگرداند',
+  'Add images': 'افزودن تصویر',
+  'Remove image': 'حذف تصویر',
+  'Paste, drop or add images (up to 4).':
+    'تصویرها را جای‌گذاری کنید، بکشید و رها کنید یا بیفزایید (حداکثر 4).',
+  'That is more than 4 images.': 'بیش از 4 تصویر است.',
+  'That file could not be used as an image.': 'این فایل را نمی‌توان به‌عنوان تصویر استفاده کرد.',
+  'Report received': 'گزارش دریافت شد',
+  'Your report reached us. You can follow it here:':
+    'گزارش شما به دست ما رسید. می‌توانید آن را اینجا دنبال کنید:',
+  'View your report': 'دیدن گزارش شما',
+  'Not sent. Your text is kept, so you can try again.':
+    'ارسال نشد. متن شما حفظ شده است تا دوباره تلاش کنید.',
 }

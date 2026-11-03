@@ -557,6 +557,14 @@ export const ps: Dictionary = {
   'Actual size': 'اصلي کچه',
   // Appearance
   Accent: 'ځانګړی رنګ',
+  'Window corners': 'د کړکۍ کونجونه',
+  Rounded: 'ګرد',
+  Square: 'مربع',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'ګرد پرانیستي شی د کړکۍ دننه په یوه کارت کې لامبو ورکوي؛ مربع یې له څنډو سره نښتی ساتي.',
+  'Tab preview delay': 'د ټب د مخکتنې ځنډ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'څومره وخت چې اشاره ګر په ټب پاتې کیږي مخکې له دې چې مخکتنه یې ښکاره شي.',
   'Accent: {name}': 'ځانګړی رنګ: {name}',
   Violet: 'بنفش',
   Blue: 'شين',
@@ -1659,6 +1667,7 @@ export const ps: Dictionary = {
   'Hard reload': 'بشپړ بېرته راوړل',
   'Open in the browser': 'په کوټګر کې پرانيستل',
   "This media can't play here": 'دا رسنۍ دلته نشي غږېدلای',
+  'Pop-up blocked': 'پاپ اپ بند شو',
   'Show it here': 'دلته ښودل',
   Website: 'ټاټوبی',
   'Open a website': 'ټاټوبی پرانيستل',
@@ -2672,9 +2681,31 @@ export const ps: Dictionary = {
   'Agent instructions': 'د اجنټ لارښوونې',
   "AGENTS is this space's agent instructions": 'AGENTS د دې ځای د اجنټ لارښوونې دي',
   '{title}, unread': '{title}، نالوستی',
+  Working: 'کار کوي',
+  'Needs input': 'ځواب ته اړتیا لري',
+  Interrupted: 'ودرول شو',
+  '{title}, {state}': '{title}، {state}',
+  'Switch to {model}?': '{model} ته واوړي؟',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'بل پیغام ټوله خبرې اترې بیا لېږي: شاوخوا {count} نور ټوکنونه.',
+  'It is too long for this model, so it is compacted first.':
+    'دا د دې ماډل لپاره ډېره اوږده ده، نو لومړی لنډېږي.',
+  Switch: 'واوړه',
   '{title}, running': '{title}، روان دی',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden نور د AI کیلي د Mac په کیچین کې نه ساتي، چې تل یې پټنوم غوښته. خپلې کیلي بیا ولیکئ او یو ځل بیا ChatGPT ته ننوځئ.',
   'This PDF is locked by its owner': 'دا PDF د خپل مالک لخوا قلف شوی دی',
   'Part of this could not be undone': 'د دې یوه برخه بېرته نه شوه راګرځول',
+  'Add images': 'انځورونه زیات کړئ',
+  'Remove image': 'انځور لرې کړئ',
+  'Paste, drop or add images (up to 4).':
+    'انځورونه پیسټ کړئ، کش یې کړئ یا زیات یې کړئ (تر 4 پورې).',
+  'That is more than 4 images.': 'دا له 4 انځورونو زیات دي.',
+  'That file could not be used as an image.': 'دا فایل د انځور په توګه نه شي کارول کېدای.',
+  'Report received': 'راپور ترلاسه شو',
+  'Your report reached us. You can follow it here:':
+    'ستاسو راپور موږ ته راورسېد. دلته یې تعقیبولی شئ:',
+  'View your report': 'خپل راپور وګورئ',
+  'Not sent. Your text is kept, so you can try again.':
+    'ونه لېږل شو. ستاسو متن ساتل شوی، بیا هڅه کولی شئ.',
 }

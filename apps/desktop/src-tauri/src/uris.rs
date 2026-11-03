@@ -148,9 +148,13 @@ fn link_window(windows: &[LinkWindow]) -> Option<String> {
 }
 
 /// Whether the app was started by nothing but a reminder's Done, which is answered
-/// without the window coming up; see reminders.rs.
+/// without the window coming up (see reminders.rs), or by an agent's `nib mcp`, which never
+/// brings it up (`launch::BACKGROUND_FLAG`, #1091).
 #[cfg(desktop)]
 pub fn launched_quietly(app: &AppHandle) -> bool {
+    if crate::launch::in_background(&std::env::args_os().collect::<Vec<_>>()) {
+        return true;
+    }
     let launched = said(
         app.deep_link()
             .get_current()

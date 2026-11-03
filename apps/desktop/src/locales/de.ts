@@ -562,6 +562,14 @@ export const de: Dictionary = {
   'Actual size': 'Originalgröße',
   // Appearance
   Accent: 'Akzent',
+  'Window corners': 'Fensterecken',
+  Rounded: 'Abgerundet',
+  Square: 'Eckig',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Abgerundet lässt das Geöffnete als Karte im Fenster schweben; Eckig hält es bündig.',
+  'Tab preview delay': 'Verzögerung der Tab-Vorschau',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Wie lange der Zeiger auf einem Tab ruht, bevor seine Vorschau erscheint.',
   'Accent: {name}': 'Akzent: {name}',
   Violet: 'Violett',
   Blue: 'Blau',
@@ -1681,6 +1689,7 @@ export const de: Dictionary = {
   'Hard reload': 'Vollständig neu laden',
   'Open in the browser': 'Im Browser öffnen',
   "This media can't play here": 'Dieses Medium lässt sich hier nicht abspielen',
+  'Pop-up blocked': 'Pop-up blockiert',
   'Show it here': 'Hier anzeigen',
   Website: 'Webseite',
   'Open a website': 'Webseite öffnen',
@@ -2730,9 +2739,31 @@ export const de: Dictionary = {
   "AGENTS is this space's agent instructions":
     'AGENTS sind die Agenten-Anweisungen dieses Bereichs',
   '{title}, unread': '{title}, ungelesen',
+  Working: 'Arbeitet',
+  'Needs input': 'Braucht Eingabe',
+  Interrupted: 'Unterbrochen',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Zu {model} wechseln?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Die nächste Nachricht sendet das ganze Gespräch erneut: etwa {count} Tokens mehr.',
+  'It is too long for this model, so it is compacted first.':
+    'Es ist zu lang für dieses Modell und wird deshalb zuerst verdichtet.',
+  Switch: 'Wechseln',
   '{title}, running': '{title}, läuft',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden speichert KI-Schlüssel nicht mehr im Schlüsselbund des Mac, der immer wieder nach seinem Passwort fragte. Gib deine Schlüssel noch einmal ein und melde dich erneut bei ChatGPT an.',
   'This PDF is locked by its owner': 'Dieses PDF ist von seinem Eigentümer gesperrt',
   'Part of this could not be undone': 'Ein Teil davon konnte nicht rückgängig gemacht werden',
+  'Add images': 'Bilder hinzufügen',
+  'Remove image': 'Bild entfernen',
+  'Paste, drop or add images (up to 4).':
+    'Bilder einfügen, hineinziehen oder hinzufügen (bis zu 4).',
+  'That is more than 4 images.': 'Das sind mehr als 4 Bilder.',
+  'That file could not be used as an image.': 'Diese Datei lässt sich nicht als Bild verwenden.',
+  'Report received': 'Bericht erhalten',
+  'Your report reached us. You can follow it here:':
+    'Dein Bericht ist bei uns angekommen. Hier kannst du ihn verfolgen:',
+  'View your report': 'Deinen Bericht ansehen',
+  'Not sent. Your text is kept, so you can try again.':
+    'Nicht gesendet. Dein Text bleibt erhalten, du kannst es noch einmal versuchen.',
 }

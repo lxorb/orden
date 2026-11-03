@@ -80,6 +80,11 @@ const NOTED: readonly string[] = [
   `insert or ignore into leftovers (what, since)
      select 'issues/' || issue_number, ?3 from feedback
       where user_id = ?1 and issue_number is not null`,
+  // And the pictures that came with them, which are served to anybody holding their
+  // names until their bytes are gone; see feedback-images.ts.
+  `insert or ignore into leftovers (what, since)
+     select 'feedback/' || feedback_id || '/' || name, ?3 from feedback_images
+      where feedback_id in (select id from feedback where user_id = ?1)`,
   // Its messages in other people's chats stay, as a deleted account's (decision 7.8);
   // the line saying who wrote a chat's last one names nobody now.
   `update chats set last_by = null
@@ -145,6 +150,10 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['unused_blobs', 'delete from unused_blobs where user_id = ?1'],
   ['blobs', 'delete from blobs where user_id = ?1'],
   ['sessions', 'delete from sessions where user_id = ?1'],
+  [
+    'feedback_images',
+    'delete from feedback_images where feedback_id in (select id from feedback where user_id = ?1)',
+  ],
   ['feedback', 'delete from feedback where user_id = ?1'],
   ['mcp_tokens', 'delete from mcp_tokens where user_id = ?1'],
   ['oauth_codes', 'delete from oauth_codes where user_id = ?1'],

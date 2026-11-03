@@ -71,7 +71,7 @@
   } from './row-window'
   import { ListView, tokenFloor, tokenRow } from './row-window.svelte'
   import { folderOf } from './space-paths'
-  import { flatRows, heldRows, rowIndex, type FlatRow } from './tree-flat'
+  import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from './tree-flat'
   import { steppedKey } from './direction'
   import { onTwist, treeStep, TREE_MOVES } from './tree-keys'
   import { viewport } from './viewport.svelte'
@@ -1296,7 +1296,7 @@
         oncommit={(typed: string) => commit(entry, own, typed)}
         oncancel={() => workspace.cancelNaming()}
       />
-      {#if nested.length}{@render twist(entry.path)}{/if}
+      {#if nested.length}{@render twist(entry)}{/if}
     </div>
   {:else}
     <!-- One row, because the list shows one kind of thing: a note, which may
@@ -1324,7 +1324,7 @@
       aria-setsize={among[index]?.size}
       aria-posinset={among[index]?.position}
       aria-selected={workspace.isSelected(entry.path)}
-      aria-expanded={entry.is_dir ? workspace.isExpanded(entry.path) : undefined}
+      aria-expanded={entry.is_dir ? standsOpen(entry, isOpen) : undefined}
       draggable="true"
       onclick={(event) => openRowAt(event, entry)}
       ondblclick={(event) =>
@@ -1363,16 +1363,16 @@
       {#if othersIn(opens)}<SharedMark label={t('Also open elsewhere')} />
       {:else if isSharedItem(opens)}<SharedMark />{/if}
       {#if syncMark.asked}{#await syncMark.asked then Held}<Held path={opens} />{/await}{/if}
-      {#if nested.length}{@render twist(entry.path)}{/if}
+      {#if nested.length}{@render twist(entry)}{/if}
     </button>
   {/if}
 {/snippet}
 
 <!-- What a row holds, said at the far end of it. One twist, whether the row is
      being read or being renamed. -->
-{#snippet twist(path: string)}
+{#snippet twist(entry: Entry)}
   <span class="nib-row-meta twist">
-    <Twist open={workspace.isExpanded(path)} />
+    <Twist open={standsOpen(entry, isOpen)} />
   </span>
 {/snippet}
 

@@ -99,20 +99,35 @@ export class MathWidget extends PictureWidget {
   }
 
   private draw(engine: ReturnType<typeof mathsEngine>, body: HTMLElement) {
-    engine?.render(prepare(this.tex), body, {
-      displayMode: this.block,
-      throwOnError: false,
-      errorColor: 'var(--danger)',
-      output: 'html',
-      // Typora enables these packages by default; matching keeps documents portable.
-      trust: false,
-      strict: false,
-      // The same ceiling the renderer uses, and for the same reason: a note is
-      // not always the reader's own, and `\rule{99999em}{99999em}` is one line
-      // of TeX that leaves nothing else on screen. See @orden/markdown.
-      maxSize: MOST_EMS,
-    })
+    if (engine) drawMaths(engine, this.tex, this.block, body)
   }
+}
+
+/** How a formula is drawn into a note: one place, so the preview over the source
+ *  (maths-preview.ts) draws exactly what the note will once the caret leaves.
+ *
+ *  `strict` throws KaTeX's own parse error rather than drawing the source in red,
+ *  which is what the preview needs to keep its last good picture up. */
+export function drawMaths(
+  engine: NonNullable<ReturnType<typeof mathsEngine>>,
+  tex: string,
+  block: boolean,
+  host: HTMLElement,
+  strict = false,
+) {
+  engine.render(prepare(tex), host, {
+    displayMode: block,
+    throwOnError: strict,
+    errorColor: 'var(--danger)',
+    output: 'html',
+    // Typora enables these packages by default; matching keeps documents portable.
+    trust: false,
+    strict: false,
+    // The same ceiling the renderer uses, and for the same reason: a note is
+    // not always the reader's own, and `\rule{99999em}{99999em}` is one line
+    // of TeX that leaves nothing else on screen. See @orden/markdown.
+    maxSize: MOST_EMS,
+  })
 }
 
 /** Fence languages Typora renders as pictures rather than code. The list itself

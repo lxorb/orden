@@ -563,6 +563,14 @@ export const ml: Dictionary = {
   'Actual size': 'യഥാർത്ഥ വലുപ്പം',
   // Appearance
   Accent: 'ആക്‌സന്റ് നിറം',
+  'Window corners': 'ജാലകത്തിന്റെ മൂലകൾ',
+  Rounded: 'വളഞ്ഞത്',
+  Square: 'ചതുരം',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'വളഞ്ഞത് തുറന്നിരിക്കുന്നതിനെ ജാലകത്തിനുള്ളിലെ കാർഡിൽ ഒഴുക്കുന്നു; ചതുരം അതിനെ അരികിനോട് ചേർത്തു നിർത്തുന്നു.',
+  'Tab preview delay': 'ടാബ് പ്രിവ്യൂ കാലതാമസം',
+  'How long the pointer rests on a tab before its preview shows.':
+    'പ്രിവ്യൂ കാണിക്കുന്നതിന് മുമ്പ് പോയിന്റർ ടാബിൽ എത്ര നേരം നിൽക്കണം.',
   'Accent: {name}': 'ആക്‌സന്റ്: {name}',
   Violet: 'വയലറ്റ്',
   Blue: 'നീല',
@@ -1675,6 +1683,7 @@ export const ml: Dictionary = {
   'Hard reload': 'പൂർണ്ണമായി വീണ്ടും എടുക്കുക',
   'Open in the browser': 'ബ്രൗസറിൽ തുറക്കുക',
   "This media can't play here": 'ഈ മീഡിയ ഇവിടെ പ്ലേ ചെയ്യാൻ കഴിയില്ല',
+  'Pop-up blocked': 'പോപ്പ്-അപ്പ് തടഞ്ഞു',
   'Show it here': 'ഇവിടെ കാണിക്കുക',
   Website: 'വെബ്‌സൈറ്റ്',
   'Open a website': 'വെബ്‌സൈറ്റ് തുറക്കുക',
@@ -2709,9 +2718,31 @@ export const ml: Dictionary = {
   'Agent instructions': 'ഏജന്റ് നിർദ്ദേശങ്ങൾ',
   "AGENTS is this space's agent instructions": 'AGENTS ഈ സ്പേസിന്റെ ഏജന്റ് നിർദ്ദേശങ്ങളാണ്',
   '{title}, unread': '{title}, വായിക്കാത്തത്',
+  Working: 'പ്രവർത്തിക്കുന്നു',
+  'Needs input': 'മറുപടി വേണം',
+  Interrupted: 'തടസ്സപ്പെട്ടു',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}-ലേക്ക് മാറണോ?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'അടുത്ത സന്ദേശം മുഴുവൻ സംഭാഷണവും വീണ്ടും അയയ്ക്കും: ഏകദേശം {count} ടോക്കൺ കൂടുതൽ.',
+  'It is too long for this model, so it is compacted first.':
+    'ഈ മോഡലിന് ഇത് വളരെ നീളമാണ്, അതിനാൽ ആദ്യം ചുരുക്കും.',
+  Switch: 'മാറ്റുക',
   '{title}, running': '{title}, പ്രവർത്തിക്കുന്നു',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ഇനി AI കീകൾ Mac-ന്റെ കീചെയിനിൽ സൂക്ഷിക്കുന്നില്ല, അത് വീണ്ടും വീണ്ടും പാസ്‌വേഡ് ചോദിച്ചിരുന്നു. നിങ്ങളുടെ കീകൾ വീണ്ടും നൽകി ChatGPT-ൽ ഒരിക്കൽ കൂടി സൈൻ ഇൻ ചെയ്യുക.',
   'This PDF is locked by its owner': 'ഈ PDF അതിന്റെ ഉടമ ലോക്ക് ചെയ്തതാണ്',
   'Part of this could not be undone': 'ഇതിന്റെ ഒരു ഭാഗം പഴയപടിയാക്കാനായില്ല',
+  'Add images': 'ചിത്രങ്ങൾ ചേർക്കുക',
+  'Remove image': 'ചിത്രം നീക്കുക',
+  'Paste, drop or add images (up to 4).':
+    'ചിത്രങ്ങൾ ഒട്ടിക്കുക, വലിച്ചിടുക അല്ലെങ്കിൽ ചേർക്കുക (പരമാവധി 4).',
+  'That is more than 4 images.': 'ഇത് 4 ചിത്രങ്ങളിൽ കൂടുതലാണ്.',
+  'That file could not be used as an image.': 'ഈ ഫയൽ ചിത്രമായി ഉപയോഗിക്കാനാകില്ല.',
+  'Report received': 'റിപ്പോർട്ട് ലഭിച്ചു',
+  'Your report reached us. You can follow it here:':
+    'നിങ്ങളുടെ റിപ്പോർട്ട് ഞങ്ങൾക്ക് ലഭിച്ചു. ഇവിടെ അത് പിന്തുടരാം:',
+  'View your report': 'നിങ്ങളുടെ റിപ്പോർട്ട് കാണുക',
+  'Not sent. Your text is kept, so you can try again.':
+    'അയച്ചില്ല. നിങ്ങളുടെ എഴുത്ത് സൂക്ഷിച്ചിട്ടുണ്ട്, വീണ്ടും ശ്രമിക്കാം.',
 }

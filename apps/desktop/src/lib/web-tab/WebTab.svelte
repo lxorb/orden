@@ -877,6 +877,25 @@
 
     <!-- Firefox's bar for a video it cannot decode, as Chrome draws a bar: in the column, so
          the page gives up the room and nothing has to be cut out of it. See web_media.rs. -->
+    <!-- Chrome's word for a window a page opened on its own, as a bar in the column like the
+         one under it: the page blocked from it says so, and one press opens it (#1074). -->
+    {#if page.blocked}
+      <div class="unplayable" role="status" transition:fade={{ duration: dur(140) }}>
+        <p>{t('Pop-up blocked')}</p>
+        <button class="nib-button is-quiet" onclick={() => pages.openBlocked(tab.id)}>
+          {t('Open')}
+        </button>
+        <button
+          class="nib-glyph"
+          aria-label={t('Close')}
+          title={t('Close')}
+          onclick={() => (page.blocked = null)}
+        >
+          <Cross small />
+        </button>
+      </div>
+    {/if}
+
     {#if page.unplayable}
       <div class="unplayable" role="status" transition:fade={{ duration: dur(140) }}>
         <p>{t("This media can't play here")}</p>

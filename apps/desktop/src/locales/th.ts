@@ -554,6 +554,14 @@ export const th: Dictionary = {
   'Actual size': 'ขนาดจริง',
   // Appearance
   Accent: 'สีเน้น',
+  'Window corners': 'มุมหน้าต่าง',
+  Rounded: 'มน',
+  Square: 'เหลี่ยม',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'มนทำให้สิ่งที่เปิดอยู่ลอยอยู่ในการ์ดภายในหน้าต่าง ส่วนเหลี่ยมจะให้ชิดขอบ',
+  'Tab preview delay': 'ระยะหน่วงของภาพตัวอย่างแท็บ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'ระยะเวลาที่ตัวชี้ต้องค้างบนแท็บก่อนภาพตัวอย่างจะแสดง',
   'Accent: {name}': 'สีเน้น: {name}',
   Violet: 'ม่วง',
   Blue: 'น้ำเงิน',
@@ -1622,6 +1630,7 @@ export const th: Dictionary = {
   'Hard reload': 'โหลดใหม่ทั้งหมด',
   'Open in the browser': 'เปิดในเบราว์เซอร์',
   "This media can't play here": 'เล่นสื่อนี้ที่นี่ไม่ได้',
+  'Pop-up blocked': 'บล็อกป๊อปอัปแล้ว',
   'Show it here': 'แสดงที่นี่',
   Website: 'เว็บไซต์',
   'Open a website': 'เปิดเว็บไซต์',
@@ -2615,9 +2624,29 @@ export const th: Dictionary = {
   'Agent instructions': 'คำสั่งสำหรับเอเจนต์',
   "AGENTS is this space's agent instructions": 'AGENTS คือคำสั่งสำหรับเอเจนต์ของพื้นที่นี้',
   '{title}, unread': '{title}, ยังไม่ได้อ่าน',
+  Working: 'กำลังทำงาน',
+  'Needs input': 'ต้องการคำตอบ',
+  Interrupted: 'ถูกขัดจังหวะ',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'เปลี่ยนเป็น {model} ไหม',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'ข้อความถัดไปจะส่งบทสนทนาทั้งหมดอีกครั้ง: เพิ่มประมาณ {count} โทเค็น',
+  'It is too long for this model, so it is compacted first.':
+    'ยาวเกินไปสำหรับโมเดลนี้ จึงจะถูกย่อก่อน',
+  Switch: 'เปลี่ยน',
   '{title}, running': '{title}, กำลังทำงาน',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ไม่เก็บคีย์ AI ไว้ในพวงกุญแจของ Mac อีกต่อไป ซึ่งคอยถามรหัสผ่านซ้ำแล้วซ้ำอีก ใส่คีย์ของคุณและลงชื่อเข้าใช้ ChatGPT อีกครั้ง',
   'This PDF is locked by its owner': 'PDF นี้ถูกล็อกโดยเจ้าของ',
   'Part of this could not be undone': 'ไม่สามารถเลิกทำบางส่วนได้',
+  'Add images': 'เพิ่มรูปภาพ',
+  'Remove image': 'นำรูปภาพออก',
+  'Paste, drop or add images (up to 4).': 'วาง ลากมาวาง หรือเพิ่มรูปภาพ (สูงสุด 4 รูป)',
+  'That is more than 4 images.': 'เกิน 4 รูปแล้ว',
+  'That file could not be used as an image.': 'ใช้ไฟล์นี้เป็นรูปภาพไม่ได้',
+  'Report received': 'ได้รับรายงานแล้ว',
+  'Your report reached us. You can follow it here:': 'รายงานของคุณมาถึงเราแล้ว ติดตามได้ที่นี่:',
+  'View your report': 'ดูรายงานของคุณ',
+  'Not sent. Your text is kept, so you can try again.':
+    'ยังไม่ได้ส่ง ข้อความของคุณยังอยู่ ลองอีกครั้งได้',
 }

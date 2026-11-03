@@ -569,6 +569,14 @@ export const fr: Dictionary = {
   'Actual size': 'Taille réelle',
   // Appearance
   Accent: 'Couleur',
+  'Window corners': 'Coins de la fenêtre',
+  Rounded: 'Arrondis',
+  Square: 'Carrés',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Arrondis fait flotter le contenu ouvert dans une carte à l’intérieur de la fenêtre ; Carrés le garde collé aux bords.',
+  'Tab preview delay': 'Délai de l’aperçu des onglets',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Le temps pendant lequel le pointeur reste sur un onglet avant que son aperçu apparaisse.',
   'Accent: {name}': 'Couleur : {name}',
   Violet: 'Violet',
   Blue: 'Bleu',
@@ -1709,6 +1717,7 @@ export const fr: Dictionary = {
   'Hard reload': 'Actualisation forcée',
   'Open in the browser': 'Ouvrir dans le navigateur',
   "This media can't play here": 'Ce média ne peut pas être lu ici',
+  'Pop-up blocked': 'Pop-up bloquée',
   'Show it here': 'Afficher ici',
   Website: 'Site web',
   'Open a website': 'Ouvrir un site web',
@@ -2755,9 +2764,30 @@ export const fr: Dictionary = {
   "AGENTS is this space's agent instructions":
     'AGENTS correspond aux instructions pour les agents de cet espace',
   '{title}, unread': '{title}, non lu',
+  Working: 'En cours',
+  'Needs input': 'Attend une réponse',
+  Interrupted: 'Interrompue',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Passer à {model} ?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Le prochain message renvoie toute la conversation : environ {count} jetons de plus.',
+  'It is too long for this model, so it is compacted first.':
+    'Elle est trop longue pour ce modèle, elle est donc d’abord compactée.',
+  Switch: 'Changer',
   '{title}, running': '{title}, en cours',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ne garde plus les clés d’IA dans le trousseau du Mac, qui redemandait sans cesse son mot de passe. Saisissez à nouveau vos clés et reconnectez-vous à ChatGPT.',
   'This PDF is locked by its owner': 'Ce PDF est verrouillé par son propriétaire',
   'Part of this could not be undone': 'Une partie n’a pas pu être annulée',
+  'Add images': 'Ajouter des images',
+  'Remove image': 'Retirer l’image',
+  'Paste, drop or add images (up to 4).': 'Collez, déposez ou ajoutez des images (jusqu’à 4).',
+  'That is more than 4 images.': 'Cela fait plus de 4 images.',
+  'That file could not be used as an image.': 'Ce fichier ne peut pas être utilisé comme image.',
+  'Report received': 'Signalement reçu',
+  'Your report reached us. You can follow it here:':
+    'Votre signalement nous est bien parvenu. Vous pouvez le suivre ici :',
+  'View your report': 'Voir votre signalement',
+  'Not sent. Your text is kept, so you can try again.':
+    'Non envoyé. Votre texte est conservé, vous pouvez réessayer.',
 }

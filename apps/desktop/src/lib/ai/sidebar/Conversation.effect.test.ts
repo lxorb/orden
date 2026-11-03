@@ -15,6 +15,10 @@ const panel = vi.hoisted(() => ({
   heads: [] as unknown[],
   every: [] as unknown[],
   unread: new Set<string>(),
+  states: new Map<string, string>(),
+  pin: vi.fn(),
+  archive: vi.fn(),
+  openThread: vi.fn(),
   saw: vi.fn((_id: string) => Promise.resolve()),
   threadOf: (_id: string) => null,
   running: [] as string[],
@@ -112,22 +116,59 @@ test('an unread chat open in the window in focus is read; with the window away, 
   panel.unread = new Set()
 })
 
-test('the home’s rows say unread and running to a screen reader', () => {
+test('the home’s rows say unread and their state to a screen reader', () => {
   panel.turns = []
   panel.heads = [
-    { id: 'a', title: 'Serie 6', updated: 1 },
-    { id: 'b', title: 'Garden', updated: 1 },
+    { id: 'a', title: 'Serie 6', updated: 1, state: 'done', provider: 'p', model: 'm' },
+    { id: 'b', title: 'Garden', updated: 1, state: 'running', provider: 'p', model: 'm' },
   ]
   panel.unread = new Set(['a'])
   panel.running = ['b']
   const shown = draw()
-  const names = [...shown.target.querySelectorAll('.recent button')].map((one) =>
+  const names = [...shown.target.querySelectorAll('.recent .row')].map((one) =>
     one.getAttribute('aria-label'),
   )
-  expect(names).toEqual(['Serie 6, unread', 'Garden, running'])
+  expect(names).toEqual(['Serie 6, unread, done', 'Garden, working'])
   expect(shown.target.querySelectorAll('.recent .unread')).toHaveLength(1)
   void shown.close()
   panel.heads = []
   panel.unread = new Set()
   panel.running = []
+})
+
+/** #1089: Show all grows the list where it is, rather than opening another view, and an
+ *  archived chat is in neither. */
+test('Show all shows the rest in place, and no archived chat', () => {
+  panel.turns = []
+  panel.heads = [
+    ...['one', 'two', 'three', 'four', 'five'].map((title, at) => ({
+      id: title,
+      title,
+      updated: 10 - at,
+      state: 'done',
+      provider: 'p',
+      model: 'm',
+    })),
+    {
+      id: 'gone',
+      title: 'gone',
+      updated: 99,
+      state: 'done',
+      archived: true,
+      provider: 'p',
+      model: 'm',
+    },
+  ]
+  const shown = draw()
+  const titles = () =>
+    [...shown.target.querySelectorAll('.recent .title')].map((one) => one.textContent)
+  expect(titles()).toEqual(['one', 'two', 'three'])
+  const all = shown.target.querySelector<HTMLButtonElement>('.recent .all')
+  expect(all?.textContent).toContain('5')
+  all?.click()
+  flushSync()
+  expect(titles()).toEqual(['one', 'two', 'three', 'four', 'five'])
+  expect(shown.target.querySelector('.recent .all')).toBeNull()
+  void shown.close()
+  panel.heads = []
 })

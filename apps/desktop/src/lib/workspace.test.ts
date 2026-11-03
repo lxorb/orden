@@ -54,6 +54,8 @@ const holding: { write: Promise<void> | null; read: Promise<void> | null; readPa
 /** This device's Recently deleted, as the crate keeps it: what a closed tab with no
  *  file left there. */
 const trash: { id: string; path: string; content: string }[] = []
+/** What the disk answers when a space is listed; left empty, the listing is nothing. */
+const disk: { tree: unknown } = { tree: undefined }
 
 // The desktop app, the one build that holds a web note's page in a tab of its own;
 // see `openWeb` in the workspace.
@@ -84,6 +86,7 @@ vi.mock('./tauri', async (importOriginal) => ({
       trash.push({ id, path: pathOf(args), content: String(args?.content) })
       return { id }
     }
+    if (command === 'read_tree') return disk.tree
     if (command === 'list_trash') return trash.map((one) => ({ id: one.id }))
     if (command === 'purge_trash') {
       const at = trash.findIndex((one) => one.id === args?.id)
@@ -1109,6 +1112,32 @@ describe('a note found in the file list', () => {
   })
 
   test('and folding the list shuts the rows of this space only', () => {
+    workspace.tree = {
+      name: 'space',
+      path: '/space',
+      is_dir: true,
+      modified: 0,
+      created: 0,
+      children: [
+        {
+          name: 'work',
+          path: '/space/work',
+          is_dir: true,
+          modified: 0,
+          created: 0,
+          children: [
+            {
+              name: 'a.md',
+              path: '/space/work/a.md',
+              is_dir: false,
+              modified: 0,
+              created: 0,
+              children: [],
+            },
+          ],
+        },
+      ],
+    }
     workspace.device.expanded = { '/space/work': true, '/other/x': true }
     expect(workspace.unfolded).toBe(true)
 
@@ -1116,6 +1145,120 @@ describe('a note found in the file list', () => {
 
     expect(workspace.device.expanded).toEqual({ '/other/x': true })
     expect(workspace.unfolded).toBe(false)
+  })
+})
+
+/** The Collapse button above the file list shows while folding would change what is
+ *  on screen, and only then (#1081). It used to ask what this machine remembers as
+ *  open, which kept folders that were deleted, moved, renamed or emptied, and folders
+ *  under one that was shut: the button stayed up over a list with every row shut. */
+describe('whether the file list has anything to fold', () => {
+  const note = (path: string): Entry => ({
+    name: path.split('/').pop()!,
+    path,
+    is_dir: false,
+    modified: 0,
+    created: 0,
+    children: [],
+  })
+  const folder = (path: string, children: Entry[]): Entry => ({
+    ...note(path),
+    is_dir: true,
+    children,
+  })
+  const work = (...children: Entry[]) =>
+    folder('/space', [folder('/space/work', [note('/space/work/work.md'), ...children])])
+  const PLANS = folder('/space/work/plans', [note('/space/work/plans/q3.md')])
+
+  beforeEach(() => {
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    workspace.tree = work(PLANS, note('/space/work/plan.md'))
+    workspace.device.expanded = { '/space/work': true }
+  })
+
+  afterEach(() => {
+    disk.tree = undefined
+    workspace.tree = null
+    workspace.device.expanded = {}
+    workspace.activeSpaceId = null
+  })
+
+  test('is something while a row stands open', () => {
+    expect(workspace.unfolded).toBe(true)
+  })
+
+  test('and nothing once every row is shut by hand', () => {
+    workspace.device.expanded = { '/space/work': true, '/space/work/plans': true }
+    workspace.toggleFolder('/space/work/plans')
+    workspace.toggleFolder('/space/work')
+
+    expect(workspace.unfolded).toBe(false)
+  })
+
+  test('nor when what is open is under a row that is shut', () => {
+    workspace.device.expanded = { '/space/work/plans': true }
+
+    expect(workspace.unfolded).toBe(false)
+  })
+
+  test('nor when a folder open in it is deleted', async () => {
+    await workspace.fileOps.tell({
+      op: 'removed',
+      path: '/space/work',
+      kind: 'folder',
+      root: '/space',
+    })
+    workspace.tree = folder('/space', [])
+
+    expect(workspace.device.expanded).toEqual({})
+    expect(workspace.unfolded).toBe(false)
+  })
+
+  test('and a folder renamed or moved stays open under its new name', async () => {
+    await workspace.fileOps.tell({
+      op: 'moved',
+      from: '/space/work',
+      to: '/space/job',
+      kind: 'folder',
+      root: '/space',
+    })
+    disk.tree = folder('/space', [
+      folder('/space/job', [note('/space/job/job.md'), note('/space/job/a.md')]),
+    ])
+    await workspace.loadTree()
+
+    expect(workspace.device.expanded).toEqual({ '/space/job': true })
+    expect(workspace.unfolded).toBe(true)
+  })
+
+  test('nor when the open note loses its last child', async () => {
+    workspace.tree = work()
+    expect(workspace.unfolded).toBe(false)
+
+    disk.tree = work()
+    await workspace.loadTree()
+    expect(workspace.device.expanded).toEqual({})
+  })
+
+  test('nor when another device deleted the folder and sync brought the news', async () => {
+    workspace.device.expanded = { '/space/work': true, '/space/gone': true, '/other/x': true }
+    disk.tree = folder('/space', [note('/space/a.md')])
+    await workspace.loadTree()
+
+    expect(workspace.device.expanded).toEqual({ '/other/x': true })
+    expect(workspace.unfolded).toBe(false)
+  })
+
+  test('and a folder under a shut one is still remembered for when it opens again', async () => {
+    workspace.device.expanded = { '/space/work/plans': true }
+    disk.tree = work(PLANS)
+    await workspace.loadTree()
+
+    expect(workspace.device.expanded).toEqual({ '/space/work/plans': true })
+    expect(workspace.unfolded).toBe(false)
+    workspace.toggleFolder('/space/work')
+    expect(workspace.visibleRows()).toContain('/space/work/plans/q3.md')
   })
 })
 

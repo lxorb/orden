@@ -26,9 +26,9 @@ import { isBaseTarget, isChatTarget, isWebTarget } from '@orden/markdown/links'
 import { assetType } from './asset-route'
 import { isReserved } from '../naming'
 import { assets, type FileRow, files, KEEP, meta, snapshots, stats } from './store'
-import { markSeeded, wasSeeded } from '../seeded'
+import { markSeedSpace, markSeeded, wasSeeded } from '../seeded'
 import { breathe } from '../breathe'
-import { WELCOME, WELCOME_PATH } from '../welcome'
+import { WELCOME, WELCOME_PATH, WELCOME_SPACE } from '../welcome'
 
 interface Entry {
   name: string
@@ -1303,5 +1303,8 @@ export async function seed(): Promise<boolean> {
 
   await writeNote(WELCOME_PATH, WELCOME)
   await markSeeded()
+  // The browser's default space, so signing in can tell it from one the reader made
+  // (#1077).
+  markSeedSpace(`/${WELCOME_SPACE}`)
   return true
 }

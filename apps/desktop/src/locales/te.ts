@@ -558,6 +558,14 @@ export const te: Dictionary = {
   'Actual size': 'నిజ పరిమాణం',
   // Appearance
   Accent: 'యాక్సెంట్ రంగు',
+  'Window corners': 'విండో మూలలు',
+  Rounded: 'గుండ్రని',
+  Square: 'చతురస్రం',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'గుండ్రని తెరిచినదాన్ని విండో లోపలి కార్డులో తేలేలా చేస్తుంది; చతురస్రం దాన్ని అంచులకు తాకి ఉంచుతుంది.',
+  'Tab preview delay': 'ట్యాబ్ ప్రివ్యూ ఆలస్యం',
+  'How long the pointer rests on a tab before its preview shows.':
+    'ప్రివ్యూ కనిపించే ముందు పాయింటర్ ట్యాబ్‌పై ఎంత సేపు ఉండాలి.',
   'Accent: {name}': 'యాక్సెంట్: {name}',
   Violet: 'ఊదా',
   Blue: 'నీలం',
@@ -1663,6 +1671,7 @@ export const te: Dictionary = {
   'Hard reload': 'పూర్తిగా మళ్ళీ లోడ్ చేయి',
   'Open in the browser': 'బ్రౌజర్‌లో తెరువు',
   "This media can't play here": 'ఈ మీడియాను ఇక్కడ ప్లే చేయలేము',
+  'Pop-up blocked': 'పాప్-అప్ బ్లాక్ చేయబడింది',
   'Show it here': 'ఇక్కడ చూపు',
   Website: 'వెబ్‌సైట్',
   'Open a website': 'వెబ్‌సైట్ తెరువు',
@@ -2686,9 +2695,31 @@ export const te: Dictionary = {
   'Agent instructions': 'ఏజెంట్ సూచనలు',
   "AGENTS is this space's agent instructions": 'AGENTS ఈ స్పేస్ యొక్క ఏజెంట్ సూచనలు',
   '{title}, unread': '{title}, చదవనిది',
+  Working: 'పని జరుగుతోంది',
+  'Needs input': 'సమాధానం కావాలి',
+  Interrupted: 'అంతరాయం',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}కి మార్చాలా?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'తదుపరి సందేశం మొత్తం సంభాషణను మళ్లీ పంపుతుంది: సుమారు {count} టోకెన్లు ఎక్కువ.',
+  'It is too long for this model, so it is compacted first.':
+    'ఈ మోడల్‌కు ఇది చాలా పొడవు, కాబట్టి ముందు కుదించబడుతుంది.',
+  Switch: 'మార్చు',
   '{title}, running': '{title}, నడుస్తోంది',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ఇకపై AI కీలను Mac కీచెయిన్‌లో ఉంచదు, అది మళ్లీ మళ్లీ పాస్‌వర్డ్ అడిగేది. మీ కీలను మళ్లీ నమోదు చేసి ChatGPT లోకి మరోసారి సైన్ ఇన్ చేయండి.',
   'This PDF is locked by its owner': 'ఈ PDF దాని యజమాని లాక్ చేశారు',
   'Part of this could not be undone': 'దీనిలో కొంత భాగాన్ని రద్దు చేయలేకపోయాము',
+  'Add images': 'చిత్రాలను జోడించు',
+  'Remove image': 'చిత్రాన్ని తీసివేయి',
+  'Paste, drop or add images (up to 4).':
+    'చిత్రాలను అతికించండి, లాగి వదలండి లేదా జోడించండి (గరిష్ఠంగా 4).',
+  'That is more than 4 images.': 'ఇవి 4 చిత్రాల కంటే ఎక్కువ.',
+  'That file could not be used as an image.': 'ఈ ఫైల్‌ను చిత్రంగా ఉపయోగించలేము.',
+  'Report received': 'నివేదిక అందింది',
+  'Your report reached us. You can follow it here:':
+    'మీ నివేదిక మాకు చేరింది. దీన్ని ఇక్కడ అనుసరించవచ్చు:',
+  'View your report': 'మీ నివేదికను చూడండి',
+  'Not sent. Your text is kept, so you can try again.':
+    'పంపలేదు. మీ వచనం అలాగే ఉంది, మళ్లీ ప్రయత్నించవచ్చు.',
 }

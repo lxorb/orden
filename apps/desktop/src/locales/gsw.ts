@@ -558,6 +558,14 @@ export const gsw: Dictionary = {
   'Actual size': 'Originalgrössi',
   // Appearance
   Accent: 'Akzänt',
+  'Window corners': 'Fänschterecke',
+  Rounded: 'Abgrundet',
+  Square: 'Eggig',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Abgrundet lot s Offeni als Charte im Fänschter schwebe; Eggig hebts bündig.',
+  'Tab preview delay': 'Verzögerig vo de Tab-Vorschau',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Wie lang de Zeiger uf eme Tab ruet, bevor sini Vorschau chunnt.',
   'Accent: {name}': 'Akzänt: {name}',
   Violet: 'Violett',
   Blue: 'Blau',
@@ -1664,6 +1672,7 @@ export const gsw: Dictionary = {
   'Hard reload': 'Vollständig neu lade',
   'Open in the browser': 'Im Browser ufmache',
   "This media can't play here": 'Das Medium lauft do nöd',
+  'Pop-up blocked': 'Pop-up blockiert',
   'Show it here': 'Da azeige',
   Website: 'Webssite',
   'Open a website': 'Webssite ufmache',
@@ -2693,9 +2702,30 @@ export const gsw: Dictionary = {
   'Agent instructions': 'Aawiisige für Agänte',
   "AGENTS is this space's agent instructions": 'AGENTS sind d Agänte-Aawiisige vo däm Beriich',
   '{title}, unread': '{title}, ungläse',
+  Working: 'Schaffet',
+  'Needs input': 'Bruucht Iigab',
+  Interrupted: 'Unterbroche',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Zu {model} wächsle?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Di nächscht Nachricht schickt s ganze Gspröch nomal: öppe {count} Tokens meh.',
+  'It is too long for this model, so it is compacted first.':
+    'Es isch z lang für das Modell und wird drum zerscht verdichtet.',
+  Switch: 'Wächsle',
   '{title}, running': '{title}, lauft',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden speicheret KI-Schlüssel nümm im Schlüsselbund vom Mac, wo immer wieder nach em Passwort gfrogt het. Gib dini Schlüssel no einisch ii und meld di wieder bi ChatGPT aa.',
   'This PDF is locked by its owner': 'Das PDF isch vo sim Bsitzer gsperrt',
   'Part of this could not be undone': 'En Teil devo het nöd chöne rückgängig gmacht werde',
+  'Add images': 'Bilder dezuefüege',
+  'Remove image': 'Bild entferne',
+  'Paste, drop or add images (up to 4).': 'Bilder iifüege, inezie oder dezuefüege (bis zu 4).',
+  'That is more than 4 images.': 'Das sind meh als 4 Bilder.',
+  'That file could not be used as an image.': 'Die Datei chame nöd als Bild bruuche.',
+  'Report received': 'Bricht übercho',
+  'Your report reached us. You can follow it here:':
+    'Din Bricht isch bi eus aacho. Da chasch en verfolge:',
+  'View your report': 'Din Bricht aaluege',
+  'Not sent. Your text is kept, so you can try again.':
+    'Nöd gschickt. Din Text bliibt, so chasch es nomal probiere.',
 }

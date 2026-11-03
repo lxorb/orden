@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { flatRows, heldRows, rowIndex } from './tree-flat'
+import { anyOpen, flatRows, heldRows, rowIndex, standsOpen } from './tree-flat'
 import type { Entry } from './workspace.svelte'
 
 const file = (path: string): Entry => ({
@@ -135,5 +135,48 @@ describe('where each row is', () => {
     expect(at.get('/s/Work/plan.md')).toBe(2)
     expect(at.get('/s/Read me.md')).toBe(4)
     expect(at.get('/s/Work/Work.md')).toBeUndefined()
+  })
+})
+
+/** What the Collapse button, the twist and the keys all ask (#1081): a row that is
+ *  drawn and holds rows, turned - not whatever this machine remembers as open. */
+describe('a row that stands open', () => {
+  /** A folder holding its own note and nothing else, which is a note on screen. */
+  const LEAF = folder('/s/Lone', [file('/s/Lone/Lone.md')])
+  const EMPTY = folder('/s/Empty', [])
+  const WITH_LEAVES = folder('/s', [LEAF, EMPTY, PROJECTS])
+
+  test('is a note that holds rows, its twist turned', () => {
+    expect(standsOpen(WORK, open('/s/Work'))).toBe(true)
+    expect(standsOpen(WORK, open())).toBe(false)
+  })
+
+  test('and never one that holds nothing, whatever is remembered', () => {
+    expect(standsOpen(LEAF, open('/s/Lone'))).toBe(false)
+    expect(standsOpen(EMPTY, open('/s/Empty'))).toBe(false)
+    expect(standsOpen(READ_ME, open('/s/Read me.md'))).toBe(false)
+  })
+
+  test('so a list of rows that hold nothing has nothing to fold', () => {
+    expect(anyOpen(WITH_LEAVES, open('/s/Lone', '/s/Empty'))).toBe(false)
+    expect(anyOpen(WITH_LEAVES, open('/s/Projects'))).toBe(true)
+  })
+
+  test('nor one whose open rows are all under a row that is shut', () => {
+    expect(anyOpen(SPACE, open('/s/Work/Notes'))).toBe(false)
+    expect(anyOpen(SPACE, open('/s/Work', '/s/Work/Notes'))).toBe(true)
+  })
+
+  test('nor one that remembers a row the list no longer has', () => {
+    expect(anyOpen(SPACE, open('/s/Gone', '/s/Work/Gone'))).toBe(false)
+    expect(anyOpen(null, open('/s/Work'))).toBe(false)
+  })
+
+  test('and a row with nothing under it adds no rows when it is remembered open', () => {
+    expect(flatRows(WITH_LEAVES, open('/s/Lone')).map((one) => one.entry.path)).toEqual([
+      '/s/Lone',
+      '/s/Empty',
+      '/s/Projects',
+    ])
   })
 })

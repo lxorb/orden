@@ -557,6 +557,14 @@ export const bn: Dictionary = {
   'Actual size': 'আসল আকার',
   // Appearance
   Accent: 'অ্যাকসেন্ট',
+  'Window corners': 'উইন্ডোর কোণ',
+  Rounded: 'গোলাকার',
+  Square: 'বর্গাকার',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'গোলাকার খোলা জিনিসকে উইন্ডোর ভেতরে একটি কার্ডে ভাসিয়ে রাখে; বর্গাকার এটিকে কিনারায় লাগিয়ে রাখে।',
+  'Tab preview delay': 'ট্যাব প্রিভিউয়ের বিলম্ব',
+  'How long the pointer rests on a tab before its preview shows.':
+    'প্রিভিউ দেখানোর আগে পয়েন্টার কতক্ষণ ট্যাবের ওপর থাকবে।',
   'Accent: {name}': 'অ্যাকসেন্ট: {name}',
   Violet: 'বেগুনি',
   Blue: 'নীল',
@@ -1655,6 +1663,7 @@ export const bn: Dictionary = {
   'Hard reload': 'পুরোপুরি আবার লোড করুন',
   'Open in the browser': 'ব্রাউজারে খুলুন',
   "This media can't play here": 'এই মিডিয়া এখানে চালানো যাচ্ছে না',
+  'Pop-up blocked': 'পপ-আপ ব্লক করা হয়েছে',
   'Show it here': 'এখানে দেখান',
   Website: 'ওয়েবসাইট',
   'Open a website': 'ওয়েবসাইট খুলুন',
@@ -2668,9 +2677,30 @@ export const bn: Dictionary = {
   'Agent instructions': 'এজেন্টের নির্দেশনা',
   "AGENTS is this space's agent instructions": 'AGENTS হলো এই স্পেসের এজেন্ট নির্দেশনা',
   '{title}, unread': '{title}, অপঠিত',
+  Working: 'কাজ চলছে',
+  'Needs input': 'উত্তর দরকার',
+  Interrupted: 'বাধাপ্রাপ্ত',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}-এ বদলাবেন?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'পরের বার্তাটি পুরো কথোপকথন আবার পাঠাবে: প্রায় {count}টি টোকেন বেশি।',
+  'It is too long for this model, so it is compacted first.':
+    'এই মডেলের জন্য এটি খুব লম্বা, তাই আগে সংক্ষিপ্ত করা হয়।',
+  Switch: 'বদলান',
   '{title}, running': '{title}, চলছে',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden আর Mac-এর কিচেইনে AI কী রাখে না, কারণ সেটি বারবার পাসওয়ার্ড চাইত। আপনার কী আবার দিন এবং ChatGPT-তে আরেকবার সাইন ইন করুন।',
   'This PDF is locked by its owner': 'এই PDF এর মালিক এটি লক করেছেন',
   'Part of this could not be undone': 'এর একটি অংশ পূর্বাবস্থায় ফেরানো যায়নি',
+  'Add images': 'ছবি যোগ করুন',
+  'Remove image': 'ছবি সরান',
+  'Paste, drop or add images (up to 4).': 'ছবি পেস্ট করুন, টেনে আনুন বা যোগ করুন (সর্বোচ্চ 4টি)।',
+  'That is more than 4 images.': 'এগুলো 4টির বেশি ছবি।',
+  'That file could not be used as an image.': 'এই ফাইলটি ছবি হিসেবে ব্যবহার করা যাচ্ছে না।',
+  'Report received': 'রিপোর্ট পাওয়া গেছে',
+  'Your report reached us. You can follow it here:':
+    'আপনার রিপোর্ট আমাদের কাছে পৌঁছেছে। এখানে এটি দেখতে পারেন:',
+  'View your report': 'আপনার রিপোর্ট দেখুন',
+  'Not sent. Your text is kept, so you can try again.':
+    'পাঠানো হয়নি। আপনার লেখা রাখা আছে, আবার চেষ্টা করতে পারেন।',
 }

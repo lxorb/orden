@@ -4,7 +4,8 @@
    *  or not, so every card of the view is one height (docs/design.md). A select's value
    *  is a pill in its option's tone, a list its first members and how many more, a date
    *  past in the danger tone unless the card is done. A note with task lines says how
-   *  many are done; a task wears its box and its chips.
+   *  many are done; a task wears its box, ringed in its priority's tone, and the meta
+   *  line a list's card has (TaskMeta.svelte, #1043), so a task is one card in both.
    *
    *  The card is one stop of the board's roving focus; its ⋯ beside it opens what the
    *  right button does. A card carried to another column and not written yet is drawn
@@ -12,14 +13,15 @@
   import { cellValue, type Row } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
   import { t } from '../i18n.svelte'
-  import { priorityTone } from '../quick-add/labels'
   import { cardLine, type CardLine } from './board'
-  import { chipsOf, toneColour, valueText } from './chips'
+  import { toneColour, valueText } from './chips'
   import { draggable } from './drag.svelte'
   import { plain } from './inline'
   import type { Kit } from './kit'
   import { optionsAt } from './options'
   import TaskBox from './TaskBox.svelte'
+  import TaskMeta from './TaskMeta.svelte'
+  import { metaOf } from './task-meta'
 
   const {
     kit,
@@ -82,10 +84,11 @@
   function keydown(event: KeyboardEvent) {
     if (event.target !== event.currentTarget) return
     // Each key is the card's alone, so the board's row keys do not do it a second time;
-    // but Ctrl+Enter on a task, which ticks it there.
+    // but Ctrl+Enter and Space on a task, which tick it there.
     if (event.key === 'Enter' || event.key === ' ') {
       const modded = event.ctrlKey || event.metaKey
       if (row.task && modded && event.key === 'Enter') return
+      if (row.task && !modded && event.key === ' ') return
       event.preventDefault()
       event.stopPropagation()
       kit.choose(row, modded)
@@ -126,7 +129,6 @@
   class:done
   class:tinted={tone !== null}
   style:--row-tone={tone}
-  style:--tone={row.task ? priorityTone(row.task.priority) : null}
   style:--title-lines={lines.title}
   role="listitem"
 >
@@ -153,11 +155,12 @@
     </div>
     {#if row.task}
       {#if lines.props}
-        <div class="line">
-          {#each chipsOf(row.task, live.today) as chip (chip.kind)}
-            <span class="words chip" class:late={chip.late && !done}>{chip.text}</span>
-          {/each}
-          {#if kit.spec.builtin !== 'project'}<span class="where">{row.file.basename}</span>{/if}
+        <div class="line meta">
+          <TaskMeta
+            {row}
+            meta={metaOf(row.task, live.today, true, undefined)}
+            where={kit.spec.builtin !== 'project'}
+          />
         </div>
       {/if}
     {:else}
@@ -190,7 +193,6 @@
     box-sizing: border-box;
     height: calc(100% - 6px);
     border: 1px solid var(--line);
-    border-inline-start: 3px solid var(--tone, var(--line));
     border-radius: var(--radius-md);
     background: var(--surface);
     color: var(--text);
@@ -217,7 +219,6 @@
   @media (hover: hover) {
     .card:hover {
       border-color: var(--line-strong);
-      border-inline-start-color: var(--tone, var(--line-strong));
       box-shadow: var(--shadow-sm);
     }
   }
@@ -276,8 +277,9 @@
     text-overflow: ellipsis;
   }
 
-  .chip {
-    flex: none;
+  .meta {
+    gap: var(--space-3);
+    font-variant-numeric: tabular-nums;
   }
 
   .late {
@@ -314,12 +316,6 @@
 
   .checklist.all {
     color: var(--success);
-  }
-
-  .where {
-    margin-inline-start: auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .menu {

@@ -188,6 +188,7 @@ vi.mock('./insets', () => ({ tintSystemBars: () => undefined }))
 
 const { chosenFirst, theme } = await import('./theme.svelte')
 const { stamped } = await import('./themes/stamp')
+const { cornerTokens, DEFAULT_CORNERS } = await import('./corners')
 // What the store fetches as a theme is worn, fetched before any test rather than by the
 // first that wears one: `settled` below counts turns, and compiling a module cold on a
 // loaded machine took more of them than it allows.
@@ -950,7 +951,7 @@ describe('the settings a theme offers', () => {
   test('are the app’s own on a theme that brings no palette of its own', () => {
     theme.init()
 
-    expect(theme.settings.map((one) => one.id)).toEqual(['accent'])
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'corners'])
     expect(theme.accentIsTheme).toBe(false)
   })
 
@@ -961,8 +962,14 @@ describe('the settings a theme offers', () => {
     expect(theme.accent).toBe('teal')
     expect(painted['--accent']).toBe('#33c7ba')
     // Six and not one: the hover, the press, the wash, the rule and the selection
-    // move with the colour, which is the whole reason a setting paints a map.
-    expect(Object.keys(painted).sort()).toEqual([
+    // move with the colour, which is the whole reason a setting paints a map. The
+    // window's corners paint their own beside them (corners.ts).
+    const frame = Object.keys(cornerTokens(DEFAULT_CORNERS))
+    expect(
+      Object.keys(painted)
+        .filter((one) => !frame.includes(one))
+        .sort(),
+    ).toEqual([
       '--accent',
       '--accent-hover',
       '--accent-line',
@@ -978,11 +985,12 @@ describe('the settings a theme offers', () => {
     theme.select('contrast')
     await settled()
 
-    expect(theme.settings).toEqual([])
+    // The accent's row goes; the window's corners, which the theme does not paint, stay.
+    expect(theme.settings.map((one) => one.id)).toEqual(['corners'])
     expect(theme.accentIsTheme).toBe(true)
     // And taken off the page with the row: a theme chosen from a picture of
     // itself must not be wearing the last theme's colour.
-    expect(painted).toEqual({})
+    expect(painted).toEqual(cornerTokens(DEFAULT_CORNERS))
   })
 
   test('and come back, still on the colour that was chosen, when the theme does', async () => {
@@ -1008,7 +1016,7 @@ describe('the settings a theme offers', () => {
 
     // Rose states no accent, so it inherits the app's - and inherits the answer
     // with it. A setting a theme declares is that theme's and is filed under it.
-    expect(theme.settings.map((one) => one.id)).toEqual(['accent'])
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'corners'])
     expect(theme.accent).toBe('pink')
   })
 
@@ -1019,7 +1027,7 @@ describe('the settings a theme offers', () => {
     theme.select('file:warm')
     await settled(() => theme.settings.length > 1)
 
-    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'warmth'])
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'corners', 'warmth'])
     expect(theme.values.warmth).toBe(40)
     expect(painted['--nib-warmth']).toBe('40%')
   })
@@ -1060,7 +1068,7 @@ describe('the settings a theme offers', () => {
     theme.select('file:warm')
     await settled(() => theme.settings.length === 1)
 
-    expect(theme.settings.map((one) => one.id)).toEqual(['accent'])
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'corners'])
     expect(painted['--nib-warmth']).toBeUndefined()
 
     folder.files.clear()
@@ -1380,7 +1388,7 @@ describe('the wallpaper theme', () => {
     // The Blur row is under the reader's pointer while this happens.
     expect(theme.settings.some((one) => one.id === 'blur')).toBe(true)
     await settled(() => injected().includes('--wallpaper-picture:'))
-    expect(theme.settings.map((one) => one.id)).toEqual(['accent', ...DIALS])
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'corners', ...DIALS])
   })
 
   test('is shown by the picker as it would be, and pointing away keeps nothing', async () => {
@@ -1399,7 +1407,7 @@ describe('the wallpaper theme', () => {
     theme.select('wallpaper')
     await settled(() => theme.settings.some((one) => one.id === 'dim'))
 
-    expect(theme.settings.map((one) => one.id)).toEqual(['accent', ...DIALS])
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'corners', ...DIALS])
     expect(theme.settings.filter((one) => one.own === true).map((one) => one.id)).toEqual(DIALS)
     theme.set('dim', 35)
     expect(painted['--nib-dim']).toBe('35%')

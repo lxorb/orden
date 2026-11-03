@@ -22,6 +22,13 @@ const GROUPS: readonly { title: () => string; ids: readonly string[] }[] = [
     title: () => t('Create'),
     ids: ['new', 'new-canvas', 'new-pages', 'new-from-template', 'new-terminal'],
   },
+  // Send feedback, there the moment the palette opens on every platform rather than a
+  // button in the sidebar's foot (#1049); last, since it is for when something went
+  // wrong. See FeedbackSheet.svelte.
+  {
+    title: () => t('Help'),
+    ids: ['feedback'],
+  },
 ]
 
 /** The rows, and the name over the group that starts at each place in them. */

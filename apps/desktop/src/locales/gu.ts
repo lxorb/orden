@@ -557,6 +557,14 @@ export const gu: Dictionary = {
   'Actual size': 'ખરું માપ',
   // Appearance
   Accent: 'ઉપસાવ રંગ',
+  'Window corners': 'વિન્ડોના ખૂણા',
+  Rounded: 'ગોળ',
+  Square: 'ચોરસ',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'ગોળ ખુલ્લી વસ્તુને વિન્ડોની અંદર કાર્ડમાં તરતી રાખે છે; ચોરસ તેને કિનારે લગોલગ રાખે છે.',
+  'Tab preview delay': 'ટેબ પૂર્વાવલોકન વિલંબ',
+  'How long the pointer rests on a tab before its preview shows.':
+    'પૂર્વાવલોકન દેખાય તે પહેલાં પોઇન્ટર ટેબ પર કેટલો સમય રહે છે.',
   'Accent: {name}': 'ઉપસાવ: {name}',
   Violet: 'જાંબલી',
   Blue: 'વાદળી',
@@ -1650,6 +1658,7 @@ export const gu: Dictionary = {
   'Hard reload': 'પૂરેપૂરું ફરી લાવો',
   'Open in the browser': 'બ્રાઉઝરમાં ખોલો',
   "This media can't play here": 'આ મીડિયા અહીં ચાલી શકતું નથી',
+  'Pop-up blocked': 'પૉપ-અપ અવરોધિત',
   'Show it here': 'અહીં બતાવો',
   Website: 'વેબસાઇટ',
   'Open a website': 'વેબસાઇટ ખોલો',
@@ -2658,9 +2667,30 @@ export const gu: Dictionary = {
   'Agent instructions': 'એજન્ટ સૂચનાઓ',
   "AGENTS is this space's agent instructions": 'AGENTS આ સ્પેસની એજન્ટ સૂચનાઓ છે',
   '{title}, unread': '{title}, ન વાંચેલું',
+  Working: 'કામ ચાલુ',
+  'Needs input': 'જવાબ જોઈએ',
+  Interrupted: 'અટકાવ્યું',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} પર બદલવું?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'આગલો સંદેશ આખી વાતચીત ફરી મોકલશે: લગભગ {count} ટોકન વધુ.',
+  'It is too long for this model, so it is compacted first.':
+    'આ મોડેલ માટે તે બહુ લાંબી છે, તેથી પહેલાં સંક્ષિપ્ત થાય છે.',
+  Switch: 'બદલો',
   '{title}, running': '{title}, ચાલુ છે',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden હવે AI કી Mac ના કીચેનમાં રાખતું નથી, જે વારંવાર તેનો પાસવર્ડ માંગતું હતું. તમારી કી ફરી દાખલ કરો અને ChatGPT માં ફરી સાઇન ઇન કરો.',
   'This PDF is locked by its owner': 'આ PDF તેના માલિકે લૉક કરેલી છે',
   'Part of this could not be undone': 'આનો એક ભાગ પૂર્વવત્ થઈ શક્યો નહીં',
+  'Add images': 'છબીઓ ઉમેરો',
+  'Remove image': 'છબી દૂર કરો',
+  'Paste, drop or add images (up to 4).': 'છબીઓ પેસ્ટ કરો, ખેંચીને મૂકો અથવા ઉમેરો (વધુમાં વધુ 4).',
+  'That is more than 4 images.': 'આ 4 કરતાં વધુ છબીઓ છે.',
+  'That file could not be used as an image.': 'આ ફાઇલનો છબી તરીકે ઉપયોગ થઈ શકતો નથી.',
+  'Report received': 'રિપોર્ટ મળ્યો',
+  'Your report reached us. You can follow it here:':
+    'તમારો રિપોર્ટ અમને મળી ગયો છે. તમે તેને અહીં જોઈ શકો છો:',
+  'View your report': 'તમારો રિપોર્ટ જુઓ',
+  'Not sent. Your text is kept, so you can try again.':
+    'મોકલાયો નથી. તમારું લખાણ સાચવેલું છે, તમે ફરી પ્રયાસ કરી શકો છો.',
 }

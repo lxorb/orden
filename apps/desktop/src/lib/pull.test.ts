@@ -21,6 +21,21 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
+/** What a reload does where the reader is, heard: see refresh.ts. */
+const refreshing = vi.hoisted(() => ({
+  calls: 0,
+  answer: (): Promise<void> => Promise.resolve(),
+}))
+vi.mock('./refresh', () => ({
+  refreshHere: () => {
+    refreshing.calls++
+    return refreshing.answer()
+  },
+}))
+/** Whether the keyboard is up. */
+const screen = vi.hoisted(() => ({ typing: false }))
+vi.mock('./viewport.svelte', () => ({ viewport: screen }))
+
 import {
   armed,
   CLAIM,
@@ -81,7 +96,8 @@ describe('how far the surface follows', () => {
 })
 
 describe('which command it runs', () => {
-  test('search, until somebody says otherwise', () => {
+  test('reload, until somebody says otherwise (#1065)', () => {
+    expect(DEFAULT_PULL).toBe('app.refresh')
     expect(pull.id).toBe(DEFAULT_PULL)
     expect(pull.changed).toBe(false)
   })
@@ -133,5 +149,75 @@ describe('what the account may say about it', () => {
     pull.choose('app.palette')
     pull.receive({})
     expect(pull.id).toBe('app.palette')
+  })
+})
+
+describe('a pull let go of (#1065)', () => {
+  test('reloads where the reader is, the mark turning until it is done', async () => {
+    let finish: () => void = () => undefined
+    refreshing.calls = 0
+    const waited = new Promise<void>((done) => (finish = done))
+    refreshing.answer = () => waited
+    const pressed = pull.press()
+    await vi.waitFor(() => expect(refreshing.calls).toBe(1))
+    expect(pull.refreshing).toBe(true)
+    // A second pull while the first is under way is the same reload.
+    await pull.press()
+    expect(refreshing.calls).toBe(1)
+    finish()
+    await pressed
+    expect(pull.refreshing).toBe(false)
+    expect(pull.failed).toBe(false)
+  })
+
+  test('says so quietly where the reload did not finish', async () => {
+    refreshing.answer = () => Promise.reject(new Error('offline'))
+    await pull.press()
+    expect(pull.refreshing).toBe(false)
+    expect(pull.failed).toBe(true)
+  })
+
+  test('presses another command at once where one was chosen', async () => {
+    const runs = vi.fn()
+    pull.runs = runs
+    refreshing.calls = 0
+    pull.choose('app.palette')
+    await pull.press()
+    expect(runs).toHaveBeenCalledOnce()
+    expect(refreshing.calls).toBe(0)
+    pull.runs = null
+  })
+})
+
+describe('a pull never over the reader’s words (#1065)', () => {
+  /** A surface at its top, a finger down on it and pulled down past the reach. */
+  function pulledDown(): void {
+    const surface = new EventTarget() as unknown as HTMLElement
+    Object.assign(surface, { scrollTop: 0 })
+    const stop = pull.follow(surface)
+    const at = (y: number) => [{ clientX: 0, clientY: y }]
+    const touch = (type: string, touches: { clientX: number; clientY: number }[]) => {
+      const event = Object.assign(new Event(type, { cancelable: true }), { touches })
+      surface.dispatchEvent(event)
+    }
+    touch('touchstart', at(0))
+    touch('touchmove', at(40))
+    touch('touchmove', at(400))
+    lastAt = pull.at
+    stop()
+  }
+  let lastAt = 0
+
+  test('follows the finger where the keyboard is down', () => {
+    screen.typing = false
+    pulledDown()
+    expect(lastAt).toBeGreaterThan(0)
+  })
+
+  test('and never while the keyboard is up', () => {
+    screen.typing = true
+    pulledDown()
+    expect(lastAt).toBe(0)
+    screen.typing = false
   })
 })

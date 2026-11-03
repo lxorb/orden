@@ -707,12 +707,16 @@ machine.
 
 A phone has no keyboard to hang a shortcut off and no room for a row of buttons
 along the top, and there is exactly one movement a thumb can make that means
-nothing else: pulling a surface that is already at its top further down. Obsidian
-spends it on the command palette. Orden spends it on whichever command the reader
-names in **Settings > Mobile**, and offers **Search this space** to begin with -
-what a thumb reaches for on a phone is a note, and search is how a note is found.
-`none` is a choice too, for somebody who pulls lists about without meaning
-anything by it.
+nothing else: pulling a surface that is already at its top further down. Every
+phone app spends it on reloading, and so does Orden to begin with (#1065, Emil:
+*"es sollte einfach ein Reload sein"*): **Reload** (`app.refresh`, `refresh.ts`)
+asks a web tab's page again, and anywhere else - a note, the file list, the
+sidebar, tasks, chats - syncs now, pulling what the other devices wrote and
+showing it as it lands, never rebuilding the app or dropping a word. The reader may
+name another command in **Settings > Mobile**, and one who chose one before keeps
+it; `none` is a choice too, for somebody who pulls lists about without meaning
+anything by it. A pull never starts while the keyboard is up or a selection is
+being made, so it is never in the way of the words.
 
 It listens on the two surfaces that scroll: the note's own scroller, attached in
 `Pane.svelte` because a view is built fresh for every note, and the file list's,
@@ -725,7 +729,10 @@ finger rather than animating - what a reader who has asked for less movement
 loses is the growing, not the following - and it says the command's name to
 anybody listening. The travel is rubber: the first stretch is nearly free and the
 rest gets heavier, which is what tells a thumb that something is being reached
-for.
+for. Let go of at the reach, a reload keeps the mark where it was let go, turning,
+until the page has been asked again or the pass has run (fifteen seconds at most),
+and one that did not get through turns its ring the colour of trouble for a
+moment and says so to anybody listening.
 
 **It never becomes the browser's own pull.** In a PWA a pull at the top of a
 scrolling document is pull-to-refresh, which would throw the page away and

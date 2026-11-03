@@ -4,8 +4,8 @@
  *
  *    ↑ ↓, j k             the row below, the row above
  *    Enter                the task's own view (a note: the note, beside the view)
- *    Space                the note at the line, beside the view
- *    e, Ctrl+Enter        complete
+ *    o                    the note at the line, beside the view
+ *    e, Ctrl+Enter, Space complete (Space: the card's box, #1043)
  *    t, Shift+T           the scheduler; the date taken away
  *    y, 1 2 3 4           priority: its menu, or one of them
  *    l, v, .              labels, move to a project, the task's menu
@@ -51,6 +51,7 @@ const ROW_KEYS: readonly (readonly [string, RowKey])[] = [
   ['tasks.next', { kind: 'step', by: 1 }],
   ['tasks.previous', { kind: 'step', by: -1 }],
   ['tasks.complete.alt', { kind: 'tick' }],
+  ['tasks.complete.alt2', { kind: 'tick' }],
   ['tasks.open', { kind: 'open' }],
   ['tasks.note', { kind: 'note' }],
   ['tasks.complete', { kind: 'tick' }],

@@ -28,6 +28,26 @@ export interface FlatRow {
   depth: number
 }
 
+/** Whether a row stands open: a note that holds rows of its own, its twist turned.
+ *
+ *  The one answer to "is this row open" for everything that draws or counts one:
+ *  the rows under it, the twist, the row's `aria-expanded`, the keys, and whether
+ *  the list has anything left to fold (#1081). What this machine remembers as open
+ *  (`DeviceView.expanded`) is a wish kept by path, and it can name a row that is no
+ *  longer drawn as one that holds anything: a note whose last child went, a folder
+ *  under one that is shut. Asked of the remembered set alone, the Collapse button
+ *  stayed up with every row in the list already shut. */
+export function standsOpen(entry: Entry, isOpen: (path: string) => boolean): boolean {
+  return entry.is_dir && isOpen(entry.path) && nestedIn(entry).length > 0
+}
+
+/** Whether any row the list draws stands open, which is whether folding it would
+ *  change what is on screen. Only the top rows need asking: a row further down is
+ *  drawn only while the one holding it stands open, and that one is asked first. */
+export function anyOpen(tree: Entry | null, isOpen: (path: string) => boolean): boolean {
+  return tree?.children.some((child) => standsOpen(child, isOpen)) ?? false
+}
+
 /** Every row the list shows, top to bottom: a note's children only while its
  *  twist is turned, which is what "the next row" means to an arrow, to a
  *  shift-click and to the window. */
@@ -45,7 +65,7 @@ export function flatRows(tree: Entry | null, isOpen: (path: string) => boolean):
       if (own?.path === child.path) continue
 
       out.push({ entry: child, depth })
-      if (child.is_dir && isOpen(child.path)) walk(child, depth + 1)
+      if (standsOpen(child, isOpen)) walk(child, depth + 1)
     }
   }
 
@@ -61,7 +81,7 @@ export function heldRows(entry: Entry, isOpen: (path: string) => boolean): numbe
   let count = 0
   for (const child of nestedIn(entry)) {
     count += 1
-    if (child.is_dir && isOpen(child.path)) count += heldRows(child, isOpen)
+    if (standsOpen(child, isOpen)) count += heldRows(child, isOpen)
   }
 
   return count

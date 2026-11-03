@@ -557,6 +557,14 @@ export const mr: Dictionary = {
   'Actual size': 'खरा आकार',
   // Appearance
   Accent: 'ॲक्सेंट',
+  'Window corners': 'विंडोचे कोपरे',
+  Rounded: 'गोलाकार',
+  Square: 'चौकोनी',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'गोलाकार उघडलेले विंडोतील कार्डमध्ये तरंगते ठेवते; चौकोनी ते कडेला लागून ठेवते.',
+  'Tab preview delay': 'टॅब पूर्वावलोकनाचा विलंब',
+  'How long the pointer rests on a tab before its preview shows.':
+    'पूर्वावलोकन दिसण्यापूर्वी पॉइंटर टॅबवर किती वेळ थांबतो.',
   'Accent: {name}': 'ॲक्सेंट: {name}',
   Violet: 'जांभळा',
   Blue: 'निळा',
@@ -1656,6 +1664,7 @@ export const mr: Dictionary = {
   'Hard reload': 'पूर्णपणे पुन्हा लोड करा',
   'Open in the browser': 'ब्राउझरमध्ये उघडा',
   "This media can't play here": 'हे मीडिया येथे चालू शकत नाही',
+  'Pop-up blocked': 'पॉप-अप अवरोधित केला',
   'Show it here': 'येथे दाखवा',
   Website: 'संस्थळ',
   'Open a website': 'संस्थळ उघडा',
@@ -2673,9 +2682,31 @@ export const mr: Dictionary = {
   'Agent instructions': 'एजंट सूचना',
   "AGENTS is this space's agent instructions": 'AGENTS या स्पेसच्या एजंट सूचना आहेत',
   '{title}, unread': '{title}, न वाचलेले',
+  Working: 'काम सुरू',
+  'Needs input': 'उत्तर हवे',
+  Interrupted: 'खंडित',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} वर बदलायचे?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'पुढचा संदेश संपूर्ण संभाषण पुन्हा पाठवतो: सुमारे {count} टोकन जास्त.',
+  'It is too long for this model, so it is compacted first.':
+    'हे या मॉडेलसाठी खूप लांब आहे, म्हणून आधी संक्षिप्त केले जाते.',
+  Switch: 'बदला',
   '{title}, running': '{title}, चालू आहे',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden आता AI की Mac च्या कीचेनमध्ये ठेवत नाही, जी सारखी तिचा पासवर्ड मागत होती. तुमच्या की पुन्हा टाका आणि ChatGPT मध्ये पुन्हा एकदा साइन इन करा.',
   'This PDF is locked by its owner': 'हा PDF त्याच्या मालकाने लॉक केला आहे',
   'Part of this could not be undone': 'याचा काही भाग पूर्ववत करता आला नाही',
+  'Add images': 'प्रतिमा जोडा',
+  'Remove image': 'प्रतिमा काढा',
+  'Paste, drop or add images (up to 4).':
+    'प्रतिमा पेस्ट करा, ओढून सोडा किंवा जोडा (जास्तीत जास्त 4).',
+  'That is more than 4 images.': 'या 4 पेक्षा जास्त प्रतिमा आहेत.',
+  'That file could not be used as an image.': 'ही फाइल प्रतिमा म्हणून वापरता येत नाही.',
+  'Report received': 'अहवाल मिळाला',
+  'Your report reached us. You can follow it here:':
+    'तुमचा अहवाल आमच्यापर्यंत पोहोचला. तुम्ही तो इथे पाहू शकता:',
+  'View your report': 'तुमचा अहवाल पाहा',
+  'Not sent. Your text is kept, so you can try again.':
+    'पाठवला नाही. तुमचा मजकूर जपून ठेवला आहे, पुन्हा प्रयत्न करू शकता.',
 }

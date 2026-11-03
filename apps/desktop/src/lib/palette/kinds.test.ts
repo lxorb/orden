@@ -250,3 +250,16 @@ describe('the headings of the note in front', () => {
     expect(rows.map((row) => (row.kind === 'place' ? row.depth : -1))).toEqual([0, 1])
   })
 })
+
+describe('a command found by its other words (#1049)', () => {
+  test('Send feedback, by feedback, bug or report', () => {
+    const feedback = {
+      ...command('feedback', 'Send feedback'),
+      also: ['feedback', 'bug', 'report'],
+    }
+    const all = candidates(world({ files: FILES, commands: [...COMMANDS, feedback] }))
+    for (const word of ['feedback', 'bug', 'report']) {
+      expect(ranked(word, all).map(named)[0], word).toBe('> Send feedback')
+    }
+  })
+})

@@ -554,6 +554,14 @@ export const ko: Dictionary = {
   'Actual size': '실제 크기',
   // Appearance
   Accent: '강조색',
+  'Window corners': '창 모서리',
+  Rounded: '둥글게',
+  Square: '각지게',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    '둥글게는 열린 내용을 창 안의 카드에 띄웁니다. 각지게는 가장자리에 붙여 둡니다.',
+  'Tab preview delay': '탭 미리보기 지연',
+  'How long the pointer rests on a tab before its preview shows.':
+    '미리보기가 나타나기 전에 포인터가 탭 위에 머무는 시간입니다.',
   'Accent: {name}': '강조색: {name}',
   Violet: '보라',
   Blue: '파랑',
@@ -1632,6 +1640,7 @@ export const ko: Dictionary = {
   'Hard reload': '강력 새로고침',
   'Open in the browser': '브라우저에서 열기',
   "This media can't play here": '이 미디어는 여기에서 재생할 수 없습니다',
+  'Pop-up blocked': '팝업이 차단됨',
   'Show it here': '여기에 표시',
   Website: '웹사이트',
   'Open a website': '웹사이트 열기',
@@ -2634,9 +2643,30 @@ export const ko: Dictionary = {
   'Agent instructions': '에이전트 지침',
   "AGENTS is this space's agent instructions": 'AGENTS는 이 스페이스의 에이전트 지침입니다',
   '{title}, unread': '{title}, 읽지 않음',
+  Working: '작업 중',
+  'Needs input': '입력 필요',
+  Interrupted: '중단됨',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}(으)로 전환할까요?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    '다음 메시지에서 대화 전체를 다시 보냅니다: 약 {count}개 토큰이 더 듭니다.',
+  'It is too long for this model, so it is compacted first.':
+    '이 모델에는 너무 길어서 먼저 압축합니다.',
+  Switch: '전환',
   '{title}, running': '{title}, 실행 중',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden은 더 이상 AI 키를 Mac 키체인에 보관하지 않습니다. 키체인이 암호를 계속 물었기 때문입니다. 키를 다시 입력하고 ChatGPT에 한 번 더 로그인하세요.',
   'This PDF is locked by its owner': '이 PDF는 소유자가 잠갔습니다',
   'Part of this could not be undone': '일부를 되돌리지 못했습니다',
+  'Add images': '이미지 추가',
+  'Remove image': '이미지 제거',
+  'Paste, drop or add images (up to 4).': '이미지를 붙여넣거나 끌어다 놓거나 추가하세요(최대 4개).',
+  'That is more than 4 images.': '이미지가 4개를 넘습니다.',
+  'That file could not be used as an image.': '이 파일은 이미지로 사용할 수 없습니다.',
+  'Report received': '보고서 접수됨',
+  'Your report reached us. You can follow it here:':
+    '보고서가 접수되었습니다. 여기에서 진행 상황을 확인할 수 있습니다:',
+  'View your report': '보고서 보기',
+  'Not sent. Your text is kept, so you can try again.':
+    '보내지 못했습니다. 입력한 내용은 남아 있으니 다시 시도하세요.',
 }

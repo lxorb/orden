@@ -196,3 +196,42 @@ describe('folding the whole list', () => {
     expect(view.isExpanded('/Notebook/A')).toBe(true)
   })
 })
+
+/** Which folders are open, kept clean of the ones no row is any more (#1081): left
+ *  behind, they held the Collapse button up over a list with every row shut. */
+describe('the folders remembered open', () => {
+  test('forget a folder that was deleted, and everything open under it', () => {
+    const view = new DeviceView()
+    view.expanded = { '/s/a': true, '/s/a/b': true, '/s/ab': true }
+    view.follow({ op: 'removed', path: '/s/a', kind: 'folder', root: '/s' })
+
+    expect(view.expanded).toEqual({ '/s/ab': true })
+    expect(new DeviceView().expanded).toEqual({ '/s/ab': true })
+  })
+
+  test('and every one of a space that went', () => {
+    const view = new DeviceView()
+    view.expanded = { '/s/a': true, '/t/a': true }
+    view.follow({ op: 'removed', path: '/s', kind: 'space', root: '/s' })
+
+    expect(view.expanded).toEqual({ '/t/a': true })
+  })
+
+  test('follow a folder that was moved or renamed', () => {
+    const view = new DeviceView()
+    view.expanded = { '/s/a': true, '/s/a/b': true }
+    view.follow({ op: 'moved', from: '/s/a', to: '/s/c', kind: 'folder', root: '/s' })
+
+    expect(view.expanded).toEqual({ '/s/c': true, '/s/c/b': true })
+  })
+
+  test('are checked against a listing of one space, and the others left alone', () => {
+    const view = new DeviceView()
+    view.expanded = { '/s/a': true, '/s/gone': true, '/s/Case': true, '/t/x': true }
+    const listed: Record<string, string> = { '/s/a': '/s/a', '/s/Case': '/s/case' }
+    view.keepOpen('/s', (path) => listed[path] ?? null)
+
+    expect(view.expanded).toEqual({ '/s/a': true, '/s/case': true, '/t/x': true })
+    expect(new DeviceView().expanded).toEqual(view.expanded)
+  })
+})

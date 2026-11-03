@@ -201,6 +201,11 @@ pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
 /// A second launch of the app, which belongs to the one already open: its window
 /// comes forward and takes whatever the launch was asked to open.
 fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
+    // An agent's `nib mcp` reaching an app that was there already: nothing for the window,
+    // which stays as the reader left it (#1091).
+    if in_background(argv) {
+        return;
+    }
     // `--quick-add` and `--stop-agents`: a key from any app, pressed by a desktop's own
     // shortcut where no key reaches the app otherwise; see hotkeys.rs. The key's own
     // window is what comes forward, if any.
@@ -258,7 +263,11 @@ fn token_in(argv: &[String]) -> Option<String> {
 /// A launch's arguments without the app's own, which no page or file is.
 fn without_ours(argv: &[String]) -> Vec<String> {
     argv.iter()
-        .filter(|one| !one.starts_with(TOKEN_FLAG) && !crate::hotkeys::Which::is_flag(one))
+        .filter(|one| {
+            !one.starts_with(TOKEN_FLAG)
+                && one.as_str() != BACKGROUND_FLAG
+                && !crate::hotkeys::Which::is_flag(one)
+        })
         .cloned()
         .collect()
 }
@@ -273,6 +282,21 @@ fn unread_link(argv: &[String]) -> Option<Vec<String>> {
 
 /// How a second launch's token travels with its arguments.
 pub const TOKEN_FLAG: &str = "--activation-token=";
+
+/// A launch the reader did not make, which brings no window up (#1091): `nib mcp`
+/// starting the app for an agent that connected, Claude Code or any other. The one rule
+/// every way in from outside goes by ([`in_background`]): a first launch with it builds its
+/// window and leaves it off the screen (lib.rs), a second launch with it is answered by
+/// nothing at all (`second_launch`). Only what the reader did themselves - opening the
+/// app, a file, a link - brings the window up.
+pub const BACKGROUND_FLAG: &str = "--background";
+
+/// Whether a launch asked for no window: see [`BACKGROUND_FLAG`].
+pub fn in_background<A: AsRef<std::ffi::OsStr>>(argv: &[A]) -> bool {
+    argv.iter()
+        .skip(1)
+        .any(|one| one.as_ref() == BACKGROUND_FLAG)
+}
 
 /// What arrived for the app, from whichever way it came, opened in the window in
 /// front.
@@ -562,8 +586,8 @@ fn free_label(app: &AppHandle) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        handed_by, is_document_window, receiver, token_in, unread_link, without_ours, Handed,
-        Handover, Pending, Seen,
+        handed_by, in_background, is_document_window, receiver, token_in, unread_link,
+        without_ours, Handed, Handover, Pending, Seen, BACKGROUND_FLAG,
     };
 
     fn window(label: &str, focused: bool, listening: bool) -> Seen {
@@ -680,6 +704,23 @@ mod tests {
         );
         let bare: Vec<String> = ["nib", "--activation-token="].map(String::from).into();
         assert_eq!(token_in(&bare), None);
+    }
+
+    /// #1091: an agent's `nib mcp` starting the app asks for no window, and the flag is no
+    /// page; the reader's own launch, with or without a page, is not one.
+    #[test]
+    fn an_agents_launch_asks_for_no_window() {
+        let agent: Vec<String> = ["nib", BACKGROUND_FLAG].map(String::from).into();
+        assert!(in_background(&agent));
+        assert_eq!(without_ours(&agent), vec!["nib".to_owned()]);
+        for reader in [
+            vec!["nib"],
+            vec!["nib", "https://orden.so"],
+            vec![BACKGROUND_FLAG],
+        ] {
+            let argv: Vec<String> = reader.into_iter().map(String::from).collect();
+            assert!(!in_background(&argv), "{argv:?}");
+        }
     }
 
     /// A link beside the launcher's token reaches the deep-link plugin as the launch's

@@ -27,7 +27,7 @@ import {
   stringList,
 } from '../stored'
 import { without, withOrWithout } from '../records'
-import { movedTo, samePath, withinSpace } from '../space-paths'
+import { movedTo, samePath, within, withinSpace } from '../space-paths'
 import type { FileOp } from './file-ops'
 
 export const RECENT_KEY = 'nib:recent'
@@ -196,8 +196,10 @@ export class DeviceView {
   /** What this machine keeps by path, following a file operation: the notes opened
    *  lately and the folders standing open keep their places under their new names,
    *  and a space folder that moved takes its icon and where its list was left
-   *  scrolled to; each is kept under the folder, and the folder is what moved. */
+   *  scrolled to; each is kept under the folder, and the folder is what moved. The
+   *  folders open under one that was deleted are forgotten with it. */
   follow(op: FileOp) {
+    this.forget(op)
     if (op.op !== 'moved') return
 
     if (op.kind === 'space') {
@@ -218,6 +220,37 @@ export class DeviceView {
       this.expanded = Object.fromEntries(open.map((path) => [moved(path), true]))
       keep(EXPANDED_KEY, JSON.stringify(this.expanded))
     }
+  }
+
+  /** What was open under a path that went: the folder deleted, or the space. Left
+   *  behind, it is a folder remembered open that no row is, and a folder made later
+   *  under the same name would come up open; see `keepOpen` for the ones this app
+   *  never hears about. */
+  private forget(op: FileOp) {
+    if (op.op !== 'removed') return
+
+    const kept = Object.keys(this.expanded).filter((path) => within(op.path, path) === null)
+    if (kept.length === Object.keys(this.expanded).length) return
+
+    this.expanded = Object.fromEntries(kept.map((path) => [path, true]))
+    keep(EXPANDED_KEY, JSON.stringify(this.expanded))
+  }
+
+  /** What is remembered open in one space, against what the space holds: `spelled`
+   *  answers the path a remembered folder is listed under, or null for one that no
+   *  longer is or no longer holds rows. Called with every listing, which is also what
+   *  clears what older builds left behind. See `keepOpenRows` in workspace.svelte.ts. */
+  keepOpen(root: string, spelled: (path: string) => string | null) {
+    const open = Object.keys(this.expanded)
+    const now = open.flatMap((path) => {
+      if (withinSpace(root, path) === null) return [path]
+      const listed = spelled(path)
+      return listed === null ? [] : [listed]
+    })
+    if (now.length === open.length && now.every((path, at) => path === open[at])) return
+
+    this.expanded = Object.fromEntries(now.map((path) => [path, true]))
+    keep(EXPANDED_KEY, JSON.stringify(this.expanded))
   }
 
   isTagOpen(path: string): boolean {

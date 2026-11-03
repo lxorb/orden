@@ -567,6 +567,14 @@ export const ptBR: Dictionary = {
   'Actual size': 'Tamanho real',
   // Appearance
   Accent: 'Destaque',
+  'Window corners': 'Cantos da janela',
+  Rounded: 'Arredondados',
+  Square: 'Quadrados',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Arredondados faz o que está aberto flutuar em um cartão dentro da janela; Quadrados o mantém rente às bordas.',
+  'Tab preview delay': 'Atraso da prévia de abas',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Quanto tempo o ponteiro fica sobre uma aba antes de a prévia aparecer.',
   'Accent: {name}': 'Destaque: {name}',
   Violet: 'Violeta',
   Blue: 'Azul',
@@ -1687,6 +1695,7 @@ export const ptBR: Dictionary = {
   'Hard reload': 'Recarregamento forçado',
   'Open in the browser': 'Abrir no navegador',
   "This media can't play here": 'Não é possível reproduzir esta mídia aqui',
+  'Pop-up blocked': 'Pop-up bloqueado',
   'Show it here': 'Mostrar aqui',
   Website: 'Site',
   'Open a website': 'Abrir um site',
@@ -2723,9 +2732,30 @@ export const ptBR: Dictionary = {
   'Agent instructions': 'Instruções para agentes',
   "AGENTS is this space's agent instructions": 'AGENTS são as instruções para agentes deste espaço',
   '{title}, unread': '{title}, não lido',
+  Working: 'Trabalhando',
+  'Needs input': 'Precisa de resposta',
+  Interrupted: 'Interrompida',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Mudar para {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'A próxima mensagem envia a conversa inteira de novo: cerca de {count} tokens a mais.',
+  'It is too long for this model, so it is compacted first.':
+    'Ela é longa demais para este modelo, então é compactada antes.',
+  Switch: 'Mudar',
   '{title}, running': '{title}, em andamento',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'O Orden não guarda mais as chaves de IA nas Chaves do Mac, que pediam a senha repetidamente. Digite suas chaves e entre no ChatGPT mais uma vez.',
   'This PDF is locked by its owner': 'Este PDF está bloqueado pelo proprietário',
   'Part of this could not be undone': 'Parte disso não pôde ser desfeita',
+  'Add images': 'Adicionar imagens',
+  'Remove image': 'Remover imagem',
+  'Paste, drop or add images (up to 4).': 'Cole, arraste ou adicione imagens (até 4).',
+  'That is more than 4 images.': 'São mais de 4 imagens.',
+  'That file could not be used as an image.': 'Não foi possível usar esse arquivo como imagem.',
+  'Report received': 'Relatório recebido',
+  'Your report reached us. You can follow it here:':
+    'Seu relatório chegou até nós. Você pode acompanhá-lo aqui:',
+  'View your report': 'Ver seu relatório',
+  'Not sent. Your text is kept, so you can try again.':
+    'Não enviado. Seu texto foi mantido para você tentar de novo.',
 }

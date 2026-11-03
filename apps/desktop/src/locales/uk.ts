@@ -580,6 +580,14 @@ export const uk: Dictionary = {
   'Actual size': 'Справжній розмір',
   // Appearance
   Accent: 'Акцент',
+  'Window corners': 'Кути вікна',
+  Rounded: 'Заокруглені',
+  Square: 'Прямі',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Заокруглені розміщують відкрите в картці всередині вікна; прямі тримають його врівень із краями.',
+  'Tab preview delay': 'Затримка попереднього перегляду вкладки',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Скільки вказівник має пробути на вкладці, перш ніж з’явиться її попередній перегляд.',
   'Accent: {name}': 'Акцент: {name}',
   Violet: 'Фіолетовий',
   Blue: 'Синій',
@@ -1730,6 +1738,7 @@ export const uk: Dictionary = {
   'Hard reload': 'Жорстке перезавантаження',
   'Open in the browser': 'Відкрити в браузері',
   "This media can't play here": 'Цей файл тут не відтворюється',
+  'Pop-up blocked': 'Спливне вікно заблоковано',
   'Show it here': 'Показати тут',
   Website: 'Сайт',
   'Open a website': 'Відкрити сайт',
@@ -2759,9 +2768,30 @@ export const uk: Dictionary = {
   'Agent instructions': 'Інструкції для агентів',
   "AGENTS is this space's agent instructions": 'AGENTS: інструкції для агентів цього простору',
   '{title}, unread': '{title}, не прочитано',
+  Working: 'Працює',
+  'Needs input': 'Потрібна відповідь',
+  Interrupted: 'Перервано',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Перейти на {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Наступне повідомлення надішле всю розмову знову: приблизно на {count} токенів більше.',
+  'It is too long for this model, so it is compacted first.':
+    'Вона задовга для цієї моделі, тому спершу буде стиснута.',
+  Switch: 'Перейти',
   '{title}, running': '{title}, виконується',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden більше не зберігає ключі ШІ у в’язці ключів Mac, яка знову й знову питала пароль. Введіть ключі ще раз і знову увійдіть у ChatGPT.',
   'This PDF is locked by its owner': 'Цей PDF заблоковано власником',
   'Part of this could not be undone': 'Частину цього не вдалося скасувати',
+  'Add images': 'Додати зображення',
+  'Remove image': 'Прибрати зображення',
+  'Paste, drop or add images (up to 4).': 'Вставте, перетягніть або додайте зображення (до 4).',
+  'That is more than 4 images.': 'Це більше ніж 4 зображення.',
+  'That file could not be used as an image.': 'Цей файл не можна використати як зображення.',
+  'Report received': 'Звіт отримано',
+  'Your report reached us. You can follow it here:':
+    'Ваш звіт дійшов до нас. Стежити за ним можна тут:',
+  'View your report': 'Переглянути ваш звіт',
+  'Not sent. Your text is kept, so you can try again.':
+    'Не надіслано. Ваш текст збережено, можна спробувати ще раз.',
 }

@@ -2,9 +2,10 @@
 
 What this drives, against the real rows store and the real files:
 
-  * A task in Today is its words, the first line of its description, and a meta line:
-    the day in the colour of how near it is, the sub-tasks done of all, the comments,
-    the labels, the deadline, and where it lives.
+  * A task in Today is Todoist's card (#1043): rounded, on a ground raised off the
+    list's, its words, the first line of its description, and a meta line: the day in
+    the colour of how near it is, the sub-tasks done of all, the comments, the labels
+    in their own colours, the deadline, and where it lives; ⋯ shows on the focus.
   * The row's calendar opens the scheduler beside it; Tomorrow writes tomorrow's date.
   * A phrase typed into the scheduler is read with quick add's grammar, shown, and
     written on Enter.
@@ -102,7 +103,7 @@ def the_row(page: Page) -> None:
     bank = row(page, "Call the bank")
     text = page.locator(bank).inner_text()
     say(f"[row] {json.dumps(text, ensure_ascii=False)}")
-    for wanted in ["Their number is on the back", "1/2", "#admin", "Errands", "Calls"]:
+    for wanted in ["Their number is on the back", "1/2", "admin", "Errands", "Calls"]:
         if wanted not in text:
             wrong(f"the bank's row does not say {wanted}")
     # Its start date has come, so it says nothing of it; its deadline, past, is said in the
@@ -118,6 +119,58 @@ def the_row(page: Page) -> None:
     if late != danger:
         wrong("a deadline past is not drawn in the danger tone")
     shot(page, "01-today")
+
+
+CARD = """(card) => {
+  const list = card?.closest('.view-tab')
+  const tag = card?.querySelector('.meta .bit.tag')
+  const more = card?.querySelector(".act[aria-label='More']")
+  if (!list || !tag || !more) return null
+  const ground = (one) => {
+    for (let at = one; at; at = at.parentElement) {
+      const colour = getComputedStyle(at).backgroundColor
+      if (colour !== 'rgba(0, 0, 0, 0)' && colour !== 'transparent') return colour
+    }
+    return ''
+  }
+  return {
+    radius: parseFloat(getComputedStyle(card).borderTopLeftRadius),
+    card: getComputedStyle(card).backgroundColor,
+    list: ground(card.parentElement.closest('.drop') ?? list),
+    tag: getComputedStyle(tag).color,
+    muted: getComputedStyle(card.querySelector('.meta')).color,
+    icons: [...card.querySelectorAll('.meta .bit')].every((one) => !!one.querySelector('svg')),
+    more: getComputedStyle(more.closest('.actions')).opacity,
+    gap: card.parentElement.getBoundingClientRect().bottom - card.getBoundingClientRect().bottom,
+  }
+}"""
+
+
+def the_card(page: Page) -> None:
+    for scheme in ("light", "dark"):
+        page.emulate_media(color_scheme=scheme)
+        page.locator(row(page, "Call the bank")).focus()
+        page.wait_for_timeout(400)
+        quiet(page)
+        drawn = page.locator(row(page, "Call the bank")).evaluate(CARD)
+        say(f"[card {scheme}] {json.dumps(drawn)}")
+        if drawn is None:
+            wrong("the bank's card has no label, no meta line or no menu")
+            return
+        if drawn["radius"] < 6:
+            wrong("the card is not rounded")
+        if drawn["card"] == drawn["list"]:
+            wrong("the card is on the list's own ground, not a raised one")
+        if drawn["tag"] == drawn["muted"]:
+            wrong("the label is not drawn in its own colour")
+        if not drawn["icons"]:
+            wrong("a bit of the meta line has no mark before it")
+        if drawn["more"] != "1":
+            wrong("the card's menu does not show on the focus")
+        if drawn["gap"] < 4:
+            wrong("there is no room between one card and the next")
+        shot(page, f"01-card-{scheme}")
+    page.emulate_media(color_scheme="light")
 
 
 def scheduler(page: Page, days: dict[str, str]) -> None:
@@ -289,6 +342,7 @@ def drive(browser: Browser) -> None:
     days = seed(page)
     open_today(page)
     the_row(page)
+    the_card(page)
     scheduler(page, days)
     reschedule(page, days)
     menu(page)

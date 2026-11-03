@@ -554,6 +554,14 @@ export const zhHans: Dictionary = {
   'Actual size': '实际大小',
   // Appearance
   Accent: '强调色',
+  'Window corners': '窗口圆角',
+  Rounded: '圆角',
+  Square: '直角',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    '圆角让打开的内容浮在窗口内的卡片中；直角让它贴边。',
+  'Tab preview delay': '标签页预览延迟',
+  'How long the pointer rests on a tab before its preview shows.':
+    '指针在标签页上停留多久后显示预览。',
   'Accent: {name}': '强调色：{name}',
   Violet: '紫色',
   Blue: '蓝色',
@@ -1613,6 +1621,7 @@ export const zhHans: Dictionary = {
   'Hard reload': '硬性重新加载',
   'Open in the browser': '在浏览器中打开',
   "This media can't play here": '无法在此处播放此媒体',
+  'Pop-up blocked': '已阻止弹出式窗口',
   'Show it here': '在此显示',
   Website: '网站',
   'Open a website': '打开网站',
@@ -2591,9 +2600,28 @@ export const zhHans: Dictionary = {
   'Agent instructions': '智能体指令',
   "AGENTS is this space's agent instructions": 'AGENTS 是此空间的智能体指令',
   '{title}, unread': '{title}，未读',
+  Working: '进行中',
+  'Needs input': '需要输入',
+  Interrupted: '已中断',
+  '{title}, {state}': '{title}，{state}',
+  'Switch to {model}?': '切换到 {model}？',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    '下一条消息会重新发送整个对话：大约多 {count} 个 token。',
+  'It is too long for this model, so it is compacted first.':
+    '对这个模型来说太长了，所以会先压缩。',
+  Switch: '切换',
   '{title}, running': '{title}，运行中',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden 不再把 AI 密钥存放在 Mac 的钥匙串中，它总是一再要求输入密码。请重新输入密钥，并再次登录 ChatGPT。',
   'This PDF is locked by its owner': '此 PDF 已被所有者锁定',
   'Part of this could not be undone': '部分内容无法撤销',
+  'Add images': '添加图片',
+  'Remove image': '移除图片',
+  'Paste, drop or add images (up to 4).': '可粘贴、拖入或添加图片（最多 4 张）。',
+  'That is more than 4 images.': '超过了 4 张图片。',
+  'That file could not be used as an image.': '这个文件无法用作图片。',
+  'Report received': '已收到报告',
+  'Your report reached us. You can follow it here:': '我们已收到你的报告。你可以在这里查看进展：',
+  'View your report': '查看你的报告',
+  'Not sent. Your text is kept, so you can try again.': '未发送。你的文字已保留，可以再试一次。',
 }

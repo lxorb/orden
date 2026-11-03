@@ -1167,8 +1167,8 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-inline-end: 1px solid var(--line);
-    background: var(--side-bar-bg-color);
+    border-inline-end: 1px solid var(--chrome-seam);
+    background: var(--side-ground, var(--side-bar-bg-color));
   }
 
   /* The hairline belongs between the panel and the note, so on the right side it
@@ -1176,7 +1176,7 @@
      column of the same rows, which is the whole point of one component. */
   aside.right {
     border-inline-end: 0;
-    border-inline-start: 1px solid var(--line);
+    border-inline-start: 1px solid var(--chrome-seam);
   }
 
   /* Wider than the line it sits on, so it can be caught, and drawn only while

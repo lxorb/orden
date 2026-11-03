@@ -555,6 +555,14 @@ export const ms: Dictionary = {
   'Actual size': 'Saiz sebenar',
   // Appearance
   Accent: 'Warna aksen',
+  'Window corners': 'Sudut tetingkap',
+  Rounded: 'Bulat',
+  Square: 'Segi empat',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Bulat mengapungkan yang dibuka dalam kad di dalam tetingkap; Segi empat mengekalkannya rata.',
+  'Tab preview delay': 'Lengah pratonton tab',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Berapa lama penuding berada pada tab sebelum pratontonnya muncul.',
   'Accent: {name}': 'Aksen: {name}',
   Violet: 'Ungu',
   Blue: 'Biru',
@@ -1644,6 +1652,7 @@ export const ms: Dictionary = {
   'Hard reload': 'Muat semula sepenuhnya',
   'Open in the browser': 'Buka dalam pelayar',
   "This media can't play here": 'Media ini tidak boleh dimainkan di sini',
+  'Pop-up blocked': 'Pop-up disekat',
   'Show it here': 'Tunjukkan di sini',
   Website: 'Laman web',
   'Open a website': 'Buka laman web',
@@ -2667,9 +2676,30 @@ export const ms: Dictionary = {
   'Agent instructions': 'Arahan ejen',
   "AGENTS is this space's agent instructions": 'AGENTS ialah arahan ejen untuk ruang ini',
   '{title}, unread': '{title}, belum dibaca',
+  Working: 'Sedang bekerja',
+  'Needs input': 'Perlu input',
+  Interrupted: 'Terganggu',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Tukar ke {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Mesej seterusnya menghantar semula seluruh perbualan: kira-kira {count} token lagi.',
+  'It is too long for this model, so it is compacted first.':
+    'Ia terlalu panjang untuk model ini, jadi dimampatkan dahulu.',
+  Switch: 'Tukar',
   '{title}, running': '{title}, sedang berjalan',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden tidak lagi menyimpan kunci AI dalam rantai kunci Mac, yang asyik meminta kata laluannya. Masukkan kunci anda dan log masuk ke ChatGPT sekali lagi.',
   'This PDF is locked by its owner': 'PDF ini dikunci oleh pemiliknya',
   'Part of this could not be undone': 'Sebahagian daripada ini tidak dapat dibuat asal',
+  'Add images': 'Tambah imej',
+  'Remove image': 'Alih keluar imej',
+  'Paste, drop or add images (up to 4).': 'Tampal, seret atau tambah imej (sehingga 4).',
+  'That is more than 4 images.': 'Itu lebih daripada 4 imej.',
+  'That file could not be used as an image.': 'Fail itu tidak boleh digunakan sebagai imej.',
+  'Report received': 'Laporan diterima',
+  'Your report reached us. You can follow it here:':
+    'Laporan anda telah sampai kepada kami. Anda boleh mengikutinya di sini:',
+  'View your report': 'Lihat laporan anda',
+  'Not sent. Your text is kept, so you can try again.':
+    'Tidak dihantar. Teks anda disimpan, jadi anda boleh cuba lagi.',
 }

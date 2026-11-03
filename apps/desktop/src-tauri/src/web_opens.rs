@@ -239,6 +239,58 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
     let _ = app.emit_to(window, event, said);
 }
 
+/// The name a press in a page is said under, through `BINDING`; see `SCRIPT` (#1080).
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+const PRESSED_IN: &str = "nib-pressed";
+
+/// The name a window the engine blocked is said under, through `BINDING`; see `PAGE_SCRIPT`.
+/// Orden's own Chromium's alone: `WebView2` says so on the request itself.
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+const BLOCKED: &str = "nib-popup-blocked";
+
+/// The one script of Orden's in a page's own world rather than nib's, on both Chromiums:
+/// `window.open`, wrapped so Chrome's rules for a window are kept and said (#1074).
+///
+/// Only the page's own world sees the page call `window.open`, and only the call says what
+/// the page wants of the window, so this is the one thing about a page's own world Orden
+/// changes - a `Proxy` of the engine's own, so it still reads as native code - and it adds
+/// no global:
+///
+/// - **A window asked for `noopener` or `noreferrer`** is one the page has said it will not
+///   hold, and the call answers `null` whatever happens. So it is a tab in front, as a
+///   link is, asked for by nib's world (`nib-open-tab`), rather than a window of its own.
+/// - **A window the engine blocked** - asked for without a press that could have asked for
+///   it, which Chromium refuses before Orden hears of it - is said (`nib-popup-blocked`),
+///   so the tab's bar offers it instead of nothing happening (`popup_blocked` in
+///   `web_tabs.rs`).
+///
+/// Everything else is the engine's `window.open`, untouched. The two are said as events on
+/// the window, which nib's world hears in the same turn (`SCRIPT`).
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+pub const PAGE_SCRIPT: &str = r"(function () {
+  var open = window.open
+  if (typeof open !== 'function' || typeof Proxy !== 'function') return
+  function said(kind, url) {
+    var at = null
+    try { at = String(new URL(url == null || url === '' ? 'about:blank' : String(url), location.href)) } catch (e) { return }
+    window.dispatchEvent(new CustomEvent(kind, { detail: at }))
+  }
+  window.open = new Proxy(open, {
+    apply: function (engine, self, args) {
+      var active = !navigator.userActivation || navigator.userActivation.isActive
+      var name = args.length > 1 && args[1] != null ? String(args[1]) : '_blank'
+      var features = args.length > 2 && args[2] != null ? String(args[2]).toLowerCase() : ''
+      if (/(^|[\s,])no(opener|referrer)(?=$|[\s,=])/.test(features) && (name === '_blank' || name === '')) {
+        said(active ? 'nib-open-tab' : 'nib-popup-blocked', args[0])
+        return null
+      }
+      var opened = Reflect.apply(engine, self, args)
+      if (!opened && !active) said('nib-popup-blocked', args[0])
+      return opened
+    }
+  })
+})()";
+
 /// The script in every page and every frame, in nib's own world there rather than the
 /// page's: it adds no global, patches nothing, and a page that wraps `window.open`,
 /// `addEventListener` or `Element.prototype.closest` wraps its own and not these. See
@@ -320,12 +372,13 @@ pub const SCRIPT: &str = r"(function () {
     }, true)
   }
 
-  function asked(event) {
+  function asked(event, front) {
     if (!event.isTrusted || event.defaultPrevented) return
     var link = event.target instanceof Element ? event.target.closest('a[href], area[href]') : null
     if (!link || typeof link.href !== 'string' || !/^https?:/i.test(link.href)) return
+    if (front === 'blank' && (link.target || '').toLowerCase() !== '_blank') return
     event.preventDefault()
-    open(link.href, event.shiftKey ? 'nib-front' : 'nib-behind')
+    open(link.href, front || event.shiftKey ? 'nib-front' : 'nib-behind')
   }
 
   last('auxclick', function (event) {
@@ -353,6 +406,25 @@ pub const SCRIPT: &str = r"(function () {
   last('click', function (event) {
     var held = event.ctrlKey || event.shiftKey
     if (event.button === 0 && held && !event.altKey && !event.metaKey) asked(event)
+    else if (event.button === 0 && !event.altKey && !event.metaKey) asked(event, 'blank')
+  })
+
+  // A press anywhere in the page chooses its tab and its pane, said through nib's own
+  // binding where there is one (#1080): the window system says nothing of a press into a
+  // page that has the keyboard already. Never as a window: that would spend the press's
+  // activation, which the page's own `window.open` in the same press needs.
+  addEventListener('pointerdown', function (event) {
+    var asking = globalThis.nibAsked
+    if (event.isTrusted && typeof asking === 'function') asking(JSON.stringify(['', 'nib-pressed']))
+  }, true)
+
+  addEventListener('nib-open-tab', function (event) {
+    if (typeof event.detail === 'string') open(event.detail, 'nib-front')
+  })
+  addEventListener('nib-popup-blocked', function (event) {
+    var asking = globalThis.nibAsked
+    if (typeof event.detail === 'string' && typeof asking === 'function')
+      asking(JSON.stringify([event.detail, 'nib-popup-blocked']))
   })
 
   last('keydown', function (event, stopped) {
@@ -557,7 +629,7 @@ pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
 /// Starts listening on one page, under the tab it belongs to and in the window it is in.
 /// Called on the window's thread, once, as the page is built.
 #[cfg(all(windows, not(feature = "cef")))]
-pub use heard::{closing, listen, ours, taken};
+pub use heard::{closing, listen, ours, taken, unasked};
 
 #[cfg(all(windows, not(feature = "cef")))]
 mod heard {
@@ -596,6 +668,26 @@ mod heard {
         /// window, though a page's own request on `about:blank` is one (#1074).
         static OURS: RefCell<std::collections::HashSet<String>> =
             RefCell::new(std::collections::HashSet::new());
+        /// The tabs whose last request no press could have asked for, until
+        /// `on_new_window` takes it: the window Chrome would block (#1074).
+        static UNASKED: RefCell<std::collections::HashSet<String>> =
+            RefCell::new(std::collections::HashSet::new());
+    }
+
+    /// What a tab's request said, kept for `on_new_window`: where its tab goes, and whether
+    /// a person asked at all.
+    fn noted(tab: &str, said: Option<Asked>, user: bool) {
+        SAID.with_borrow_mut(|all| all.insert(tab.to_string(), said));
+        if !user {
+            UNASKED.with_borrow_mut(|all| all.insert(tab.to_string()));
+        }
+    }
+
+    /// Whether the last request from this tab was the page's own with no press behind it,
+    /// taken so it is read once. `WebView2` blocks no window itself, and says whether a
+    /// person asked; Chrome's rule is kept on that (`becomes`).
+    pub fn unasked(tab: &str) -> bool {
+        UNASKED.with_borrow_mut(|unasked| unasked.remove(tab))
     }
 
     /// Whether a window name is one of nib's own asks: a key, a chord, Ctrl+0, a swipe.
@@ -762,8 +854,11 @@ mod heard {
                     shift: held(VK_SHIFT),
                     alt: false,
                 };
-                let said = placed(&name, user.as_bool(), keys, menu);
-                SAID.with_borrow_mut(|all| all.insert(asking.clone(), said));
+                noted(
+                    &asking,
+                    placed(&name, user.as_bool(), keys, menu),
+                    user.as_bool(),
+                );
                 Ok(())
             }));
             let mut token = 0i64;
@@ -872,6 +967,14 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
         crate::web_page::actual_size(app, window, tab);
         return;
     }
+    if name == BLOCKED {
+        crate::web_tabs::popup_blocked(app, window, tab, &url);
+        return;
+    }
+    if name == PRESSED_IN {
+        crate::web_tabs::page_chosen(app, window, &crate::web_tabs::label_of(tab));
+        return;
+    }
     if let Some(asked) = placed(&name, true, Held::default(), false) {
         crate::web_tabs::opened_beside(app, window, tab, &url, asked == Asked::Behind);
     }
@@ -897,6 +1000,14 @@ pub fn taken(_tab: &str) -> Option<Asked> {
 /// window request (`BINDING`, and `script` leaves `about:blank` alone).
 #[cfg(any(not(windows), feature = "cef"))]
 pub fn ours(_tab: &str) -> bool {
+    false
+}
+
+/// Whether a request was the page's own with no press behind it: never heard of on these
+/// engines, since Chromium blocks such a window before it is asked for (`PAGE_SCRIPT`
+/// says so) and `WKWebView` never raises one.
+#[cfg(any(not(windows), feature = "cef"))]
+pub fn unasked(_tab: &str) -> bool {
     false
 }
 

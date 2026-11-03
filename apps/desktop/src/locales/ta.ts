@@ -558,6 +558,14 @@ export const ta: Dictionary = {
   'Actual size': 'உண்மை அளவு',
   // Appearance
   Accent: 'சிறப்பு நிறம்',
+  'Window corners': 'சாளர மூலைகள்',
+  Rounded: 'வளைந்த',
+  Square: 'சதுரம்',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'வளைந்தது திறந்ததைச் சாளரத்துக்குள் ஒரு அட்டையில் மிதக்கச் செய்கிறது; சதுரம் அதை விளிம்பில் ஒட்டியே வைக்கிறது.',
+  'Tab preview delay': 'தாவல் முன்னோட்டத் தாமதம்',
+  'How long the pointer rests on a tab before its preview shows.':
+    'முன்னோட்டம் தோன்றும் முன் சுட்டி தாவலின் மேல் எவ்வளவு நேரம் இருக்க வேண்டும்.',
   'Accent: {name}': 'சிறப்பு நிறம்: {name}',
   Violet: 'ஊதா',
   Blue: 'நீலம்',
@@ -1680,6 +1688,7 @@ export const ta: Dictionary = {
   'Hard reload': 'முழுமையாக மீண்டும் ஏற்று',
   'Open in the browser': 'உலாவியில் திற',
   "This media can't play here": 'இந்த மீடியாவை இங்கே இயக்க முடியாது',
+  'Pop-up blocked': 'பாப்-அப் தடுக்கப்பட்டது',
   'Show it here': 'இங்கே காட்டு',
   Website: 'இணையதளம்',
   'Open a website': 'இணையதளத்தைத் திற',
@@ -2719,9 +2728,31 @@ export const ta: Dictionary = {
   "AGENTS is this space's agent instructions":
     'AGENTS என்பது இந்த இடத்தின் ஏஜென்ட் அறிவுறுத்தல்கள்',
   '{title}, unread': '{title}, படிக்காதது',
+  Working: 'வேலை நடக்கிறது',
+  'Needs input': 'பதில் தேவை',
+  Interrupted: 'இடைநின்றது',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model}-க்கு மாற்றவா?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'அடுத்த செய்தி முழு உரையாடலையும் மீண்டும் அனுப்பும்: சுமார் {count} கூடுதல் டோக்கன்கள்.',
+  'It is too long for this model, so it is compacted first.':
+    'இந்த மாதிரிக்கு இது மிக நீளம், எனவே முதலில் சுருக்கப்படும்.',
+  Switch: 'மாற்று',
   '{title}, running': '{title}, இயங்குகிறது',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden இனி AI விசைகளை Mac இன் கீசெயினில் வைப்பதில்லை, அது திரும்பத் திரும்ப அதன் கடவுச்சொல்லைக் கேட்டது. உங்கள் விசைகளை மீண்டும் உள்ளிட்டு ChatGPT இல் மீண்டும் ஒருமுறை உள்நுழையுங்கள்.',
   'This PDF is locked by its owner': 'இந்த PDF அதன் உரிமையாளரால் பூட்டப்பட்டுள்ளது',
   'Part of this could not be undone': 'இதன் ஒரு பகுதியைச் செயல்தவிர்க்க முடியவில்லை',
+  'Add images': 'படங்களைச் சேர்',
+  'Remove image': 'படத்தை அகற்று',
+  'Paste, drop or add images (up to 4).':
+    'படங்களை ஒட்டவும், இழுத்து விடவும் அல்லது சேர்க்கவும் (அதிகபட்சம் 4).',
+  'That is more than 4 images.': 'இவை 4 படங்களுக்கு மேல்.',
+  'That file could not be used as an image.': 'இந்தக் கோப்பைப் படமாகப் பயன்படுத்த முடியாது.',
+  'Report received': 'அறிக்கை பெறப்பட்டது',
+  'Your report reached us. You can follow it here:':
+    'உங்கள் அறிக்கை எங்களை வந்தடைந்தது. இதை இங்கே பின்தொடரலாம்:',
+  'View your report': 'உங்கள் அறிக்கையைப் பார்',
+  'Not sent. Your text is kept, so you can try again.':
+    'அனுப்பப்படவில்லை. உங்கள் உரை வைக்கப்பட்டுள்ளது, மீண்டும் முயலலாம்.',
 }

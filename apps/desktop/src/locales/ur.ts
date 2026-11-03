@@ -557,6 +557,14 @@ export const ur: Dictionary = {
   'Actual size': 'اصل سائز',
   // Appearance
   Accent: 'نمایاں رنگ',
+  'Window corners': 'ونڈو کے کونے',
+  Rounded: 'گول',
+  Square: 'چوکور',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'گول کھلی چیز کو ونڈو کے اندر ایک کارڈ میں تیراتا ہے؛ چوکور اسے کناروں سے لگا رکھتا ہے۔',
+  'Tab preview delay': 'ٹیب پیش نظارہ کی تاخیر',
+  'How long the pointer rests on a tab before its preview shows.':
+    'پیش نظارہ دکھنے سے پہلے پوائنٹر ٹیب پر کتنی دیر رکتا ہے۔',
   'Accent: {name}': 'نمایاں رنگ: {name}',
   Violet: 'بنفشی',
   Blue: 'نیلا',
@@ -1656,6 +1664,7 @@ export const ur: Dictionary = {
   'Hard reload': 'مکمل طور پر دوبارہ لوڈ کریں',
   'Open in the browser': 'براؤزر میں کھولیں',
   "This media can't play here": 'یہ میڈیا یہاں نہیں چل سکتا',
+  'Pop-up blocked': 'پاپ اپ مسدود کر دیا گیا',
   'Show it here': 'یہاں دکھائیں',
   Website: 'ویب سائٹ',
   'Open a website': 'ویب سائٹ کھولیں',
@@ -2666,9 +2675,31 @@ export const ur: Dictionary = {
   'Agent instructions': 'ایجنٹ کی ہدایات',
   "AGENTS is this space's agent instructions": 'AGENTS اس اسپیس کی ایجنٹ ہدایات ہیں',
   '{title}, unread': '{title}، نہ پڑھا ہوا',
+  Working: 'کام جاری',
+  'Needs input': 'جواب درکار',
+  Interrupted: 'رک گیا',
+  '{title}, {state}': '{title}، {state}',
+  'Switch to {model}?': '{model} پر جائیں؟',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'اگلا پیغام پوری گفتگو دوبارہ بھیجے گا: تقریباً {count} مزید ٹوکن۔',
+  'It is too long for this model, so it is compacted first.':
+    'یہ اس ماڈل کے لیے بہت لمبی ہے، اس لیے پہلے مختصر کی جاتی ہے۔',
+  Switch: 'بدلیں',
   '{title}, running': '{title}، جاری ہے',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden اب AI کیز Mac کی کی چین میں نہیں رکھتا، جو بار بار اس کا پاس ورڈ مانگتی تھی۔ اپنی کیز دوبارہ درج کریں اور ChatGPT میں ایک بار پھر سائن ان کریں۔',
   'This PDF is locked by its owner': 'یہ PDF اس کے مالک نے مقفل کی ہے',
   'Part of this could not be undone': 'اس کا کچھ حصہ واپس نہیں ہو سکا',
+  'Add images': 'تصاویر شامل کریں',
+  'Remove image': 'تصویر ہٹائیں',
+  'Paste, drop or add images (up to 4).':
+    'تصاویر پیسٹ کریں، گھسیٹ کر چھوڑیں یا شامل کریں (زیادہ سے زیادہ 4)۔',
+  'That is more than 4 images.': 'یہ 4 تصاویر سے زیادہ ہیں۔',
+  'That file could not be used as an image.': 'یہ فائل تصویر کے طور پر استعمال نہیں ہو سکتی۔',
+  'Report received': 'رپورٹ موصول ہو گئی',
+  'Your report reached us. You can follow it here:':
+    'آپ کی رپورٹ ہم تک پہنچ گئی۔ آپ اسے یہاں دیکھ سکتے ہیں:',
+  'View your report': 'اپنی رپورٹ دیکھیں',
+  'Not sent. Your text is kept, so you can try again.':
+    'نہیں بھیجی گئی۔ آپ کا متن محفوظ ہے، دوبارہ کوشش کر سکتے ہیں۔',
 }

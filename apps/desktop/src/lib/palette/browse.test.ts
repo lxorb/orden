@@ -9,6 +9,7 @@ const COMMANDS = [
   command('reading', 'Reading'),
   command('split-right', 'Split right'),
   command('history', 'Version history'),
+  command('feedback', 'Send feedback'),
 ]
 
 const named = (row: Row) => (row.kind === 'command' ? row.command.label : row.kind)
@@ -23,8 +24,14 @@ describe('the palette with nothing typed', () => {
       ...['Version history', 'Print'],
       'Reading',
       'New note',
+      'Send feedback',
     ])
-    expect(Object.fromEntries(heads)).toEqual({ 1: 'This note', 3: 'View', 4: 'Create' })
+    expect(Object.fromEntries(heads)).toEqual({
+      1: 'This note',
+      3: 'View',
+      4: 'Create',
+      5: 'Help',
+    })
   })
 
   test('leaves out a group none of whose rows is there', () => {
@@ -32,5 +39,13 @@ describe('the palette with nothing typed', () => {
 
     expect(rows.map(named)).toEqual(['New note'])
     expect(Object.fromEntries(heads)).toEqual({ 0: 'Create' })
+  })
+})
+
+describe('Send feedback (#1049)', () => {
+  test('is the last row of the menu the palette opens on, whatever else is there', () => {
+    const { rows, heads } = browse([], [command('feedback', 'Send feedback')])
+    expect(rows.map(named)).toEqual(['Send feedback'])
+    expect(Object.fromEntries(heads)).toEqual({ 0: 'Help' })
   })
 })

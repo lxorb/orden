@@ -558,6 +558,14 @@ export const tr: Dictionary = {
   'Actual size': 'Gerçek boyut',
   // Appearance
   Accent: 'Vurgu rengi',
+  'Window corners': 'Pencere köşeleri',
+  Rounded: 'Yuvarlak',
+  Square: 'Köşeli',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Yuvarlak, açık olanı pencerenin içinde bir kartta yüzdürür; Köşeli onu kenarlara bitişik tutar.',
+  'Tab preview delay': 'Sekme önizleme gecikmesi',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Önizleme görünmeden önce işaretçinin sekme üzerinde ne kadar durduğu.',
   'Accent: {name}': 'Vurgu rengi: {name}',
   Violet: 'Mor',
   Blue: 'Mavi',
@@ -1660,6 +1668,7 @@ export const tr: Dictionary = {
   'Hard reload': 'Sert yeniden yükleme',
   'Open in the browser': 'Tarayıcıda aç',
   "This media can't play here": 'Bu medya burada oynatılamıyor',
+  'Pop-up blocked': 'Açılır pencere engellendi',
   'Show it here': 'Burada göster',
   Website: 'Web sitesi',
   'Open a website': 'Web sitesi aç',
@@ -2686,9 +2695,31 @@ export const tr: Dictionary = {
   'Agent instructions': 'Ajan talimatları',
   "AGENTS is this space's agent instructions": 'AGENTS bu alanın ajan talimatlarıdır',
   '{title}, unread': '{title}, okunmamış',
+  Working: 'Çalışıyor',
+  'Needs input': 'Yanıt bekliyor',
+  Interrupted: 'Kesildi',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': '{model} modeline geçilsin mi?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Sonraki mesaj tüm konuşmayı yeniden gönderir: yaklaşık {count} token daha.',
+  'It is too long for this model, so it is compacted first.':
+    'Bu model için çok uzun, bu yüzden önce sıkıştırılır.',
+  Switch: 'Geç',
   '{title}, running': '{title}, çalışıyor',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden artık yapay zekâ anahtarlarını Mac’in anahtar zincirinde tutmuyor; anahtar zinciri parolasını tekrar tekrar soruyordu. Anahtarlarınızı yeniden girin ve ChatGPT’ye bir kez daha oturum açın.',
   'This PDF is locked by its owner': 'Bu PDF sahibi tarafından kilitlendi',
   'Part of this could not be undone': 'Bunun bir kısmı geri alınamadı',
+  'Add images': 'Görsel ekle',
+  'Remove image': 'Görseli kaldır',
+  'Paste, drop or add images (up to 4).':
+    'Görsel yapıştırın, sürükleyin ya da ekleyin (en fazla 4).',
+  'That is more than 4 images.': 'Bu, 4 görselden fazla.',
+  'That file could not be used as an image.': 'Bu dosya görsel olarak kullanılamıyor.',
+  'Report received': 'Rapor alındı',
+  'Your report reached us. You can follow it here:':
+    'Raporunuz bize ulaştı. Buradan takip edebilirsiniz:',
+  'View your report': 'Raporunuzu görüntüleyin',
+  'Not sent. Your text is kept, so you can try again.':
+    'Gönderilmedi. Metniniz duruyor, yeniden deneyebilirsiniz.',
 }

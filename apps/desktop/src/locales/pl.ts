@@ -580,6 +580,14 @@ export const pl: Dictionary = {
   'Actual size': 'Rozmiar rzeczywisty',
   // Appearance
   Accent: 'Akcent',
+  'Window corners': 'Narożniki okna',
+  Rounded: 'Zaokrąglone',
+  Square: 'Kwadratowe',
+  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
+    'Zaokrąglone sprawiają, że otwarta treść unosi się w karcie wewnątrz okna; Kwadratowe trzymają ją przy krawędziach.',
+  'Tab preview delay': 'Opóźnienie podglądu karty',
+  'How long the pointer rests on a tab before its preview shows.':
+    'Jak długo wskaźnik spoczywa na karcie, zanim pojawi się jej podgląd.',
   'Accent: {name}': 'Akcent: {name}',
   Violet: 'Fioletowy',
   Blue: 'Niebieski',
@@ -1732,6 +1740,7 @@ export const pl: Dictionary = {
   'Hard reload': 'Twarde przeładowanie',
   'Open in the browser': 'Otwórz w przeglądarce',
   "This media can't play here": 'Nie można tutaj odtworzyć tych multimediów',
+  'Pop-up blocked': 'Zablokowano wyskakujące okno',
   'Show it here': 'Pokaż tutaj',
   Website: 'Witryna',
   'Open a website': 'Otwórz witrynę',
@@ -2765,9 +2774,30 @@ export const pl: Dictionary = {
   'Agent instructions': 'Instrukcje dla agentów',
   "AGENTS is this space's agent instructions": 'AGENTS to instrukcje dla agentów w tej przestrzeni',
   '{title}, unread': '{title}, nieprzeczytany',
+  Working: 'Pracuje',
+  'Needs input': 'Czeka na odpowiedź',
+  Interrupted: 'Przerwano',
+  '{title}, {state}': '{title}, {state}',
+  'Switch to {model}?': 'Przełączyć na {model}?',
+  'The next message sends the whole conversation again: about {count} more tokens.':
+    'Następna wiadomość wyśle całą rozmowę ponownie: około {count} tokenów więcej.',
+  'It is too long for this model, so it is compacted first.':
+    'Jest za długa dla tego modelu, więc najpierw zostanie skrócona.',
+  Switch: 'Przełącz',
   '{title}, running': '{title}, w toku',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden nie przechowuje już kluczy AI w pęku kluczy Maca, który ciągle prosił o hasło. Wpisz klucze jeszcze raz i zaloguj się ponownie do ChatGPT.',
   'This PDF is locked by its owner': 'Ten PDF został zablokowany przez właściciela',
   'Part of this could not be undone': 'Części tego nie udało się cofnąć',
+  'Add images': 'Dodaj obrazy',
+  'Remove image': 'Usuń obraz',
+  'Paste, drop or add images (up to 4).': 'Wklej, upuść lub dodaj obrazy (maksymalnie 4).',
+  'That is more than 4 images.': 'To więcej niż 4 obrazy.',
+  'That file could not be used as an image.': 'Tego pliku nie można użyć jako obrazu.',
+  'Report received': 'Zgłoszenie otrzymane',
+  'Your report reached us. You can follow it here:':
+    'Twoje zgłoszenie do nas dotarło. Możesz je śledzić tutaj:',
+  'View your report': 'Zobacz swoje zgłoszenie',
+  'Not sent. Your text is kept, so you can try again.':
+    'Nie wysłano. Twój tekst został zachowany, możesz spróbować ponownie.',
 }

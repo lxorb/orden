@@ -5,7 +5,13 @@
  *  Emil: *"add this to the bottom left to orden as well please"*. Signed in or not: a
  *  report from somebody who cannot sign in is often the one that matters. The account's
  *  session goes with it where there is one, so the report says whose it is. See
- *  services/sync/src/feedback.ts, and FeedbackSheet.svelte for the sheet. */
+ *  services/sync/src/feedback.ts, and FeedbackSheet.svelte for the sheet.
+ *
+ *  What the service answers is the report's page (#1087): it says the report arrived
+ *  only once the service has kept it, and the sheet shows that page's address for the
+ *  reader to follow, in a tab of Orden's own. The repository the report's issue goes to
+ *  is private, so the page is what its sender can see. Pictures go with the words; see
+ *  feedback-pictures.ts. */
 
 import { account } from './account.svelte'
 import { request } from './api'
@@ -32,11 +38,22 @@ async function logTail(): Promise<string> {
   return tail.length > LOG_BYTES ? tail.slice(tail.length - LOG_BYTES) : tail
 }
 
+/** What the service answers a report it kept with. */
+interface Kept {
+  ok?: unknown
+  id?: unknown
+  url?: unknown
+}
+
 class Feedback {
   /** Whether the sheet is up. */
   open = $state(false)
+  /** The last report the service said it kept, and where its page is: what the sheet
+   *  confirms. Null until one has been, and again each time the sheet opens. */
+  received = $state<{ url: string | null } | null>(null)
 
   show() {
+    this.received = null
     this.open = true
   }
 
@@ -44,19 +61,23 @@ class Feedback {
     this.open = false
   }
 
-  /** The report on its way: the words, the version, the platform and the log's end.
-   *  Throws what the service said, for the sheet to show. */
-  async send(text: string): Promise<void> {
+  /** The report on its way: the words, the pictures, the version, the platform and the
+   *  log's end. Says it was received only once the service answers that it kept it;
+   *  throws what went wrong otherwise, for the sheet to show, and nothing is received. */
+  async send(text: string, pictures: readonly string[] = []): Promise<void> {
     const body = {
       text: text.trim(),
       version: __APP_VERSION__,
       platform: platformLine(),
       log: await logTail(),
+      ...(pictures.length ? { images: pictures } : {}),
     }
-    await request<{ ok: true }>('/v1/feedback', {
+    const kept = await request<Kept>('/v1/feedback', {
       body,
       ...(account.token ? { token: account.token } : {}),
     })
+    if (kept.ok !== true) throw new Error('the service did not say it kept the report')
+    this.received = { url: typeof kept.url === 'string' ? kept.url : null }
   }
 }
 

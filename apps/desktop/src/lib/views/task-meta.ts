@@ -8,9 +8,10 @@
  *  Pure, and in its own file because the row, the board's card and the list's
  *  arithmetic all ask it the same question and have to get one answer. */
 
-import { dayNumber, type Row, type TaskRow } from '@orden/bases'
+import { dayNumber, INBOX_PATH, type Row, type TaskRow } from '@orden/bases'
 import { dayWords, timeWords } from '@orden/editor/task-days'
 import { deadlineOf, startOf } from '@orden/markdown/task-dates'
+import { ACCENTS, accentColour, DEFAULT_ACCENT } from '../accents'
 
 /** How near a day is, which is the colour its words are drawn in: Todoist's red for
  *  a day gone by, green for today, orange for tomorrow, purple for the rest of the
@@ -29,7 +30,7 @@ export function dayTone(day: string, today: string): DayTone {
 /** One thing the meta line says. */
 export type Meta =
   | { kind: 'date'; text: string; tone: DayTone; repeat: boolean }
-  | { kind: 'deadline'; text: string; late: boolean }
+  | { kind: 'deadline'; text: string; late: boolean; repeat: boolean }
   | { kind: 'duration'; minutes: number }
   | { kind: 'remind' }
   | { kind: 'subtasks'; done: number; total: number }
@@ -85,29 +86,35 @@ export function metaOf(
   const out: Meta[] = []
   const open = !task.done && !task.cancelled
   const day = ahead(task, today)
+  const deadline = deadlineOf(task, task.dueReads)
+  // ↻ is said once, on the first day the line names: the start date while it is still
+  // to come, else the deadline (Todoist's `18 Sep ↻`), else on its own.
+  let repeat = task.recurrence !== undefined
   if (dated && day) {
     out.push({
       kind: 'date',
       text: dayWords(day, today, task.time),
       tone: open ? dayTone(day, today) : 'later',
-      repeat: task.recurrence !== undefined,
+      repeat,
     })
-  } else if (task.recurrence !== undefined || task.time) {
+    repeat = false
+  } else if (task.time || (repeat && !deadline)) {
     // A day the group already says, or one that has come, still has its time and its
     // repeat to say.
     out.push({
       kind: 'date',
       text: task.time ? timeWords(task.time) : '',
       tone: 'later',
-      repeat: task.recurrence !== undefined,
+      repeat: repeat && !deadline,
     })
+    if (!deadline) repeat = false
   }
-  const deadline = deadlineOf(task, task.dueReads)
   if (deadline) {
     out.push({
       kind: 'deadline',
       text: dayWords(deadline, today),
       late: open && deadline <= today,
+      repeat,
     })
   }
   if (task.duration !== undefined) out.push({ kind: 'duration', minutes: task.duration })
@@ -154,4 +161,33 @@ export function hasMeta(
  *  task's note always has. */
 export function lineCount(task: TaskRow, meta: boolean, where: boolean): number {
   return 1 + (task.description ? 1 : 0) + (meta || where ? 1 : 0)
+}
+
+/** Where a task lives, which its card's meta line ends with: the space's own inbox, or
+ *  its note and the heading it is under (not a note's title over the whole of it). */
+export interface Place {
+  inbox: boolean
+  name: string
+  section: string | undefined
+}
+
+export function placeOf(row: Row): Place {
+  const under = row.task?.section.at(-1)
+  return {
+    inbox: row.path === INBOX_PATH,
+    name: row.file.basename,
+    section: under === row.file.basename ? undefined : under,
+  }
+}
+
+/** The colour a task's label wears on its card (#1043), a function of its name the way
+ *  `accentFor` is, so a label is one colour on every card and device with nothing
+ *  stored; here and not in accents.ts, which the first paint carries. Slate is left out: grey beside the card's grey words is no colour at all. */
+export function labelColour(tag: string, scheme: 'dark' | 'light'): string {
+  const hues = ACCENTS.filter((one) => one.id !== 'slate')
+  let sum = 0
+  for (const character of tag.trim().toLowerCase()) {
+    sum = (sum + (character.codePointAt(0) ?? 0)) % 4093
+  }
+  return accentColour(hues[sum % hues.length]?.id ?? DEFAULT_ACCENT, scheme)
 }
