@@ -53,7 +53,9 @@ pub fn block(body: &str) -> Option<Block> {
     }
 
     let close = closing_fence(body, first + 1)?;
-    let end = body[close..].find('\n').map_or(body.len(), |one| close + one);
+    let end = body[close..]
+        .find('\n')
+        .map_or(body.len(), |one| close + one);
     Some(Block {
         from: first + 1,
         close,
@@ -90,7 +92,11 @@ fn is_key_line(text: &str) -> bool {
         .bytes()
         .enumerate()
         .find(|&(at, one)| {
-            one == b':' && text.as_bytes().get(at + 1).is_none_or(|&next| is_blank(next))
+            one == b':'
+                && text
+                    .as_bytes()
+                    .get(at + 1)
+                    .is_none_or(|&next| is_blank(next))
         })
         .map(|(at, _)| at)
     else {
@@ -243,7 +249,10 @@ fn is_block_scalar(said: &[u8]) -> bool {
 fn without_properties(said: &[u8]) -> &[u8] {
     let mut rest = said;
     while matches!(rest.first(), Some(b'&' | b'!')) {
-        let word = rest.iter().position(|&one| is_blank(one)).unwrap_or(rest.len());
+        let word = rest
+            .iter()
+            .position(|&one| is_blank(one))
+            .unwrap_or(rest.len());
         rest = &rest[word..];
         let blanks = rest.iter().take_while(|&&one| is_blank(one)).count();
         rest = &rest[blanks..];
@@ -314,7 +323,8 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                     let first = base.is_none();
                     if first {
                         let rest = &text[indent..];
-                        let complex = rest == "?" || rest.starts_with("? ") || rest.starts_with("?\t");
+                        let complex =
+                            rest == "?" || rest.starts_with("? ") || rest.starts_with("?\t");
                         if !is_key_line(rest) && !complex && !rest.starts_with('{') {
                             return None;
                         }
@@ -346,7 +356,11 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                     } else {
                         past_key(line, col)
                     };
-                    if past.is_none() && own && dash.is_none() && !(first && line.get(col) == Some(&b'{')) {
+                    if past.is_none()
+                        && own
+                        && dash.is_none()
+                        && !(first && line.get(col) == Some(&b'{'))
+                    {
                         return None;
                     }
 
