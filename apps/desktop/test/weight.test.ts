@@ -998,8 +998,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,445,500, and to 386 modules, for #1079: the panes choose the
  *  tab a pane comes back to by the one rule in workspace/recency.ts, now read with the
  *  panes rather than with Ctrl+Tab's first press, and a pane's order of use is written
- *  down with the session. Measured 3,445,347, 385 modules. */
-const BUDGET = 3_445_500
+ *  down with the session. Measured 3,445,347, 385 modules.
+ *
+ *  Raised 2026-11-03, to 3,449,100: a thread is written down while its answer runs, a
+ *  stream that stops short is told, and an export reads what a plane still holds.
+ *  Measured 3,448,847, modules unchanged. */
+const BUDGET = 3_449_100
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

@@ -338,7 +338,10 @@ export function createApiEngine(setup: Setup): Engine {
 
         const { ending, calls } = result.answer
         // A message with nothing under it reads as if the panel had hung.
-        if (ending === 'end' && !turn.parts.some((part) => part.kind === 'text' || part.kind === 'tool')) {
+        if (
+          ending === 'end' &&
+          !turn.parts.some((part) => part.kind === 'text' || part.kind === 'tool')
+        ) {
           throw new Error(t('The model did not answer.'))
         }
         if (ending === 'pause') continue

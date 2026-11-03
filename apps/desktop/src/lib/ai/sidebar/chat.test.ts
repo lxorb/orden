@@ -1495,7 +1495,7 @@ describe('an answer on its way', () => {
       id: 'c',
       verb: 'edit_note',
       args: {},
-      state: 'done',
+      state: 'ok',
       change: { path: 'Birds.md', added: 2, removed: 1 },
     } as const
     model.parts[0] = part

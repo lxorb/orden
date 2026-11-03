@@ -616,9 +616,7 @@ describe('a stream that stops before it says it is done', () => {
     expect((await send(claude, 'Say it')).at(-1)).toMatchObject({ type: 'done', stop: 'error' })
     expect(claude.turns.at(-1)?.parts[0]).toEqual({ kind: 'text', text: 'Hello' })
 
-    answers = [
-      cut({ type: 'response.output_text.delta', output_index: 0, delta: 'Hello' }),
-    ]
+    answers = [cut({ type: 'response.output_text.delta', output_index: 0, delta: 'Hello' })]
     const gpt = newThread('space', 'openai', 'gpt-5.4-mini', 'auto', 'full')
     expect((await send(gpt, 'Say it')).at(-1)).toMatchObject({ type: 'done', stop: 'error' })
   })
@@ -637,10 +635,13 @@ describe('an answer of nothing at all', () => {
   })
 
   test('is fine after a call, which may be all there was to do', async () => {
-    answers = [stream('anthropic-1'), lines(
-      { type: 'message_start', message: { model: 'claude-opus-5-5' } },
-      { type: 'message_delta', delta: { stop_reason: 'end_turn' } },
-    )]
+    answers = [
+      stream('anthropic-1'),
+      lines(
+        { type: 'message_start', message: { model: 'claude-opus-5-5' } },
+        { type: 'message_delta', delta: { stop_reason: 'end_turn' } },
+      ),
+    ]
     const one = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     expect((await send(one, 'What is in Birds.md?')).at(-1)).toEqual({ type: 'done', stop: 'end' })
   })

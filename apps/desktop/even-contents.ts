@@ -282,9 +282,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,747,600, for #1079: a pane that loses its tab
  *  in front comes back to the one used there last (workspace/recency.ts), and keeps
  *  that order through a restart. Measured 5,747,488.
+ *
+ *  The code raised on 2026-11-03, to 5,749,100: a thread is written down while its answer
+ *  runs, a stream that stops short is told, and an export reads what a plane still holds.
+ *  Measured 5,749,001.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_747_600,
+  code: 5_749_100,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

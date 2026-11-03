@@ -553,7 +553,6 @@ class Chat implements Panel {
   // ── An answer on its way, written down ─────────────────
 
   /** The threads whose answers have grown since they were last written. */
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly unkept = new Set<Thread>()
 
   /** Words arrive many times a second, and a write is the whole thread. */
