@@ -11,10 +11,12 @@ import { alongOf, madeFirst, type Side } from '../workspace/zones'
 import { around, type Room, type Slot } from './layout'
 
 /** Where a dragged tab would go: into a pane's strip, before a tab of it or at its end;
- *  or against a side of a pane, where it makes a pane of its own. */
+ *  or against a side of a pane, where it makes a pane of its own; or, in All spaces, into
+ *  another space's cell (cells.ts). */
 export type Landing =
   | { kind: 'strip'; paneId: string; before: string | null }
   | { kind: 'side'; paneId: string; side: Side }
+  | { kind: 'space'; key: string }
 
 /** How far past a pane's windows the pointer goes before it is against that side. */
 const EDGE = 40
@@ -29,6 +31,7 @@ export function withMoved(
   if (!landing) return tabsOf
   return (paneId) => {
     const rest = tabsOf(paneId).filter((one) => one !== id)
+    if (landing.kind === 'space') return rest
     if (landing.kind === 'side') return paneId === MADE ? [id] : rest
     if (paneId !== landing.paneId) return rest
     const at = landing.before === null ? -1 : rest.indexOf(landing.before)

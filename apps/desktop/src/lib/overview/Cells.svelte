@@ -1,0 +1,174 @@
+<script lang="ts">
+  /** The spaces' cells in All spaces: a membrane round each space's windows, moving on
+   *  its own every frame, stretched by a window held against it (issue #331). What a
+   *  membrane does is membrane.ts; this keeps one per space, moves each to its space's
+   *  windows on springs, and draws them, every frame for as long as it is up. Asked for
+   *  less movement, the membranes stand still and follow at once. */
+
+  import { onDestroy } from 'svelte'
+  import { stillness } from '../motion'
+  import type { Box } from './layout'
+  import { Membrane } from './membrane'
+  import { resting, spring, step, type Spring } from './spring'
+
+  interface Shown {
+    key: string
+    box: Box
+    name: string
+    tint: string | null
+    on: boolean
+  }
+
+  const {
+    cells,
+    pushed,
+    holding,
+  }: {
+    cells: readonly Shown[]
+    /** Whether a window is held, which a membrane standing still wakes for. */
+    holding: boolean
+    /** The window held, and the cell it is in now, read every frame. */
+    pushed: () => { key: string; box: Box } | null
+  } = $props()
+
+  interface Kept {
+    membrane: Membrane
+    box: Record<'x' | 'y' | 'w' | 'h', Spring>
+    path: SVGPathElement | null
+  }
+
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
+  const kept = new Map<string, Kept>()
+
+  function keptOf(cell: Shown): Kept {
+    const known = kept.get(cell.key)
+    if (known) return known
+    const made: Kept = {
+      membrane: new Membrane({ ...cell.box }),
+      box: {
+        x: spring(cell.box.x),
+        y: spring(cell.box.y),
+        w: spring(cell.box.w),
+        h: spring(cell.box.h),
+      },
+      path: null,
+    }
+    kept.set(cell.key, made)
+    return made
+  }
+
+  function drawn(node: SVGPathElement, key: string) {
+    const cell = cells.find((one) => one.key === key)
+    if (cell) keptOf(cell).path = node
+    return {
+      destroy() {
+        kept.delete(key)
+      },
+    }
+  }
+
+  /** The cell a window was last in, so its arrival in another is a plop. */
+  let lastIn: string | null = null
+  let frame = 0
+  let before = performance.now()
+
+  function tick(now: number) {
+    const seconds = Math.max(0, (now - before) / 1000)
+    before = now
+    const still = stillness()
+    const hand = pushed()
+    if (hand && lastIn && hand.key !== lastIn && !still) {
+      // The plop: the cell it left springs back in, the one it arrived in gives.
+      const middle = { x: hand.box.x + hand.box.w / 2, y: hand.box.y + hand.box.h / 2 }
+      kept.get(lastIn)?.membrane.shove(middle, -260)
+      kept.get(hand.key)?.membrane.shove(middle, 340)
+    }
+    lastIn = hand?.key ?? null
+
+    for (const cell of cells) {
+      const one = keptOf(cell)
+      for (const key of ['x', 'y', 'w', 'h'] as const) {
+        one.box[key].to = cell.box[key]
+        if (still) one.box[key].at = cell.box[key]
+        else step(one.box[key], seconds)
+      }
+      one.membrane.box = { x: one.box.x.at, y: one.box.y.at, w: one.box.w.at, h: one.box.h.at }
+      one.membrane.step(seconds, now / 1000, hand?.key === cell.key ? [hand.box] : [], still)
+      one.path?.setAttribute('d', one.membrane.pathOf())
+    }
+
+    // Never still, unless asked to be: then only while something is moving.
+    const moving =
+      !still ||
+      hand !== null ||
+      [...kept.values()].some((one) => Object.values(one.box).some((s) => !resting(s)))
+    frame = moving ? requestAnimationFrame(tick) : 0
+  }
+
+  /** A change of cells, or a window taken hold of, wakes a loop that stood still. */
+  $effect(() => {
+    if ((cells.length || holding) && !frame) {
+      before = performance.now()
+      frame = requestAnimationFrame(tick)
+    }
+  })
+
+  onDestroy(() => cancelAnimationFrame(frame))
+</script>
+
+<svg class="cells" width="1" height="1" aria-hidden="true">
+  {#each cells as cell (cell.key)}
+    <path
+      class="membrane"
+      class:is-on={cell.on}
+      style:--tint={cell.tint ?? 'var(--accent)'}
+      use:drawn={cell.key}
+    />
+  {/each}
+</svg>
+{#each cells as cell (cell.key)}
+  <span
+    class="name"
+    class:is-on={cell.on}
+    style:translate="{cell.box.x}px {cell.box.y - 64}px"
+    aria-hidden="true">{cell.name}</span
+  >
+{/each}
+
+<style>
+  .cells {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  /* A membrane: a faint wash of the space's colour inside, a soft line at its edge. */
+  .membrane {
+    fill: color-mix(in srgb, var(--tint) 7%, transparent);
+    stroke: color-mix(in srgb, var(--tint) 45%, transparent);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+  }
+
+  .membrane.is-on {
+    fill: color-mix(in srgb, var(--tint) 11%, transparent);
+    stroke: color-mix(in srgb, var(--tint) 70%, transparent);
+  }
+
+  .name {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: var(--muted);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-strong);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .name.is-on {
+    color: var(--text-strong);
+  }
+</style>

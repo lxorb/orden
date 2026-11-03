@@ -231,6 +231,14 @@ class Sets {
     return workspace.tabs.filter((tab) => panes.has(tab.paneId))
   }
 
+  /** The panes of a set: the window's for the set on screen, the one put aside for any
+   *  other, or null for a set not built yet. Read by the tab overview's All spaces, which
+   *  lays every space's panes out side by side (overview/Overview.svelte). */
+  frameOf(key: string): Frame | null {
+    if (key === this.on) return workspace.panes.frame
+    return this.aside[key]?.frame ?? null
+  }
+
   /** Which set out of sight a tab is in, or null. */
   private setOf(tab: Tab): string | null {
     for (const [key, set] of Object.entries(this.aside)) {

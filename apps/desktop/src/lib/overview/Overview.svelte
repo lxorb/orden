@@ -16,7 +16,12 @@
    *
    *  A window can be dragged: it stays under the hand exactly, the others make room for it
    *  where it would land, and letting go moves the tab there - along its pane's strip, or
-   *  into another pane's (drag.ts). */
+   *  into another pane's (drag.ts).
+   *
+   *  All spaces shows the other spaces too, each in its place on the one canvas inside a
+   *  living membrane (Cells.svelte); a window dragged out of its cell stretches it, and
+   *  dragged well into another's plops across, which moves its tab to that space when it
+   *  is let go (cells.ts). */
 
   import { untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
@@ -44,8 +49,15 @@
   } from './camera'
   import { isDrag, type Landing, landingAt, MADE, withLanding, withMoved } from './drag'
   import { places } from './places.svelte'
+  import { type Cell, cellAt, withPlop } from './cells'
+  import Cells from './Cells.svelte'
+  import { keep, storedText } from '../stored'
+  import { canWriteAt } from '../sharing.svelte'
+  import { mayCarry } from '../workspace/chat-carry'
+  import { panesIn, type Frame } from '../workspace/pane-tree'
+  import { movingOf, spacesFor } from '../workspace/space-move'
   import { drawn, Flight, type Pose } from './flight'
-  import { type Box, type Laid, lay, seamPath, type Slot } from './layout'
+  import { around, type Box, type Laid, lay, seamPath, type Slot } from './layout'
   import { marked, mirrorOf, shownBox } from './mirror'
   import { walk, wayOf } from './walk'
   import WindowFace from './WindowFace.svelte'
@@ -109,9 +121,48 @@
 
   const tabsOf = (paneId: string) => workspace.tabsIn(paneId).map((tab) => tab.id)
 
+  /** Current space or All spaces: whether the other spaces' cells are shown as well. The
+   *  same view either way. Remembered on this device. */
+  const ALL = 'nib:overview-all'
+  let all = $state(storedText(ALL) === 'yes')
+
+  function showAll(on: boolean) {
+    all = on
+    keep(ALL, on ? 'yes' : 'no')
+  }
+
+  /** The other spaces' panes, which the store of every space's set holds; fetched the
+   *  first time All spaces is shown (workspace/sets.svelte.ts). */
+  let sets = $state<{ frameOf: (key: string) => Frame | null } | null>(null)
+  $effect(() => {
+    if (all && !sets) void import('../workspace/sets.svelte').then((one) => (sets = one.sets))
+  })
+
+  /** The spaces whose windows are on the canvas: the one worked in first, and in All
+   *  spaces every other that has panes. */
+  const shownKeys = $derived.by((): string[] => {
+    const others = all && sets && workspace.activeSpaceId ? workspace.shownSpaces : []
+    const keys = others.map((one) => one.id).filter((key) => key !== spaceKey && sets?.frameOf(key))
+    return [spaceKey, ...keys]
+  })
+
+  /** Each space shown is given its place on the canvas, once (places.svelte.ts). */
+  $effect(() => {
+    for (const key of shownKeys)
+      untrack(() => places.place(key, { w: screenRoom.w, h: screenRoom.h }))
+  })
+
   /** The window under the hand: which, where it was taken hold of (as a share of its
    *  width and height), and where it would land now. */
-  let held = $state<{ id: string; fx: number; fy: number; landing: Landing | null } | null>(null)
+  let held = $state<{
+    id: string
+    fx: number
+    fy: number
+    landing: Landing | null
+    /** The space whose cell it was taken out of, and those it may go to. */
+    from: string
+    goes: readonly string[]
+  } | null>(null)
 
   /** The canvas without the window being dragged, which says where it would land. */
   const without = $derived(
@@ -125,11 +176,53 @@
 
   /** The canvas as it is, or with the held window where it would land - in a pane of
    *  its own where it is against a side of one (drag.ts). */
-  const laid = $derived(
-    lay(withLanding(frame, held?.landing ?? null), room, {
-      tabsOf: held ? withMoved(tabsOf, held.id, held.landing) : tabsOf,
-      shapeOf,
+  const laidCells = $derived(
+    shownKeys.flatMap((key) => {
+      const own = key === spaceKey
+      const panesOf = own ? frame : sets?.frameOf(key)
+      if (!panesOf) return []
+      const place = own ? room : (places.at(key) ?? room)
+      // A window over another cell is laid out at the end of that cell's first pane.
+      const plop = held?.landing?.kind === 'space' ? held.landing : null
+      let ofCell: (paneId: string) => readonly string[] = tabsOf
+      if (held && plop) {
+        const first = key === plop.key ? (panesIn(panesOf)[0]?.id ?? null) : null
+        ofCell = withPlop(tabsOf, held.id, first)
+      } else if (held && own) ofCell = withMoved(tabsOf, held.id, held.landing)
+      const shown = own && !plop ? withLanding(frame, held?.landing ?? null) : panesOf
+      return [{ key, laid: lay(shown, place, { tabsOf: ofCell, shapeOf }) }]
     }),
+  )
+
+  /** Every cell's windows, lines and rooms on the one canvas. */
+  const laid = $derived({
+    slots: laidCells.flatMap((one) => one.laid.slots),
+    seams: laidCells.flatMap((one) => one.laid.seams),
+    rooms: laidCells.flatMap((one) => one.laid.rooms),
+  })
+
+  /** Which cell each window lies in, by tab. */
+  const cellOf = $derived(
+    new Map(laidCells.flatMap((one) => one.laid.slots.map((slot) => [slot.id, one.key] as const))),
+  )
+
+  /** Each cell's windows, boxed, for the membranes and for which cell a window is over. */
+  const cellBoxes = $derived<Cell[]>(
+    laidCells.map((one) => ({
+      key: one.key,
+      box: around(one.laid.slots) ?? places.at(one.key) ?? room,
+    })),
+  )
+
+  const cellsShown = $derived(
+    all
+      ? cellBoxes.map((one) => ({
+          ...one,
+          name: workspace.spaces.find((space) => space.id === one.key)?.name ?? '',
+          tint: workspace.tintFor(one.key),
+          on: one.key === spaceKey,
+        }))
+      : [],
   )
 
   const byId = $derived(new Map(workspace.tabs.map((tab) => [tab.id, tab])))
@@ -381,7 +474,16 @@
    *  pane, while the others go home. */
   function open(tab: Tab) {
     workspace.activate(tab.id)
-    close()
+    // A tab of another space brings its space forward first, which takes a moment; the
+    // windows go home once its panes are the window's.
+    if (workspace.panes.at(tab.paneId)) close()
+    else void cameForward(tab).then(close)
+  }
+
+  async function cameForward(tab: Tab) {
+    for (let wait = 0; wait < 60 && !workspace.panes.at(tab.paneId); wait++) {
+      await new Promise((go) => requestAnimationFrame(go))
+    }
   }
 
   /** Where the pointer went down on a window, until it is a drag or a press. */
@@ -407,25 +509,51 @@
       const target = event.currentTarget as HTMLElement
       target.setPointerCapture(event.pointerId)
       const grabbed = toCanvas(camera, pressed)
+      const tab = byId.get(id)
       held = {
         id,
         fx: (grabbed.x - pose.x) / Math.max(pose.w, 1),
         fy: (grabbed.y - pose.y) / Math.max(pose.h, 1),
         landing: null,
+        from: cellOf.get(id) ?? spaceKey,
+        // The spaces Move to space would offer it, which are the cells it may plop into.
+        goes: tab
+          ? spacesFor([movingOf(tab)], workspace, canWriteAt, mayCarry).map((one) => one.id)
+          : [],
       }
       at = id
     }
     hand = toCanvas(camera, { x: event.clientX, y: event.clientY })
-    const landing = landingAt(
-      without?.slots ?? [],
-      without?.rooms ?? [],
-      hand.x,
-      hand.y,
-      (paneId, side) => workspace.canLand(side, paneId, id),
-    )
+    const landing = landingFor(id, hand)
     if (JSON.stringify(landing) !== JSON.stringify(held.landing)) held = { ...held, landing }
     follow()
     fly()
+  }
+
+  /** Where the held window would land with the pointer at `point`: in another space's
+   *  cell once it is well inside it, else in its own - in a strip or against a side, where
+   *  its own is the space worked in, whose panes are the window's. */
+  function landingFor(id: string, point: Point): Landing | null {
+    if (!held) return null
+    const from = held.from
+    const goes = held.goes
+    const now = held.landing?.kind === 'space' ? held.landing.key : from
+    const cells = cellBoxes.filter((one) => one.key === from || goes.includes(one.key))
+    const cell = all ? cellAt(cells, now, point.x, point.y) : from
+    if (cell !== from) return { kind: 'space', key: cell }
+    if (from !== spaceKey) return null
+    return landingAt(without?.slots ?? [], without?.rooms ?? [], point.x, point.y, (paneId, side) =>
+      workspace.canLand(side, paneId, id),
+    )
+  }
+
+  /** The held window and the cell it is in now, for the membranes. */
+  function pushedNow(): { key: string; box: Box } | null {
+    if (!held) return null
+    const pose = flights.get(held.id)?.pose
+    if (!pose) return null
+    const key = held.landing?.kind === 'space' ? held.landing.key : held.from
+    return { key, box: { x: pose.x, y: pose.y, w: pose.w, h: pose.h } }
   }
 
   /** Where the pointer is, while a window is held. */
@@ -464,6 +592,12 @@
   /** The tab moved along its strip or into another pane's, before the tab it landed in
    *  front of. */
   function drop(id: string, landing: Landing) {
+    if (landing.kind === 'space') {
+      // Move to space, the tab menu's own: the tab, its file where it has one, into the
+      // other space's set (workspace/moving-space.ts).
+      void import('../workspace/moving-space').then((one) => one.moveToSpace([id], landing.key))
+      return
+    }
     if (landing.kind === 'side') {
       workspace.dropTab(id, { kind: 'pane', paneId: landing.paneId, zone: landing.side })
       // The panes have new shapes once the split is laid out.
@@ -595,6 +729,23 @@
   >
     {#if spaces.length > 1}
       <div class="spaces" class:is-out={out} role="group" aria-label={t('Spaces')}>
+        <!-- Current space or All spaces: whether the other spaces' cells are there too. -->
+        <div class="which" role="radiogroup" aria-label={t('Spaces')}>
+          <button
+            class="space"
+            class:is-on={!all}
+            role="radio"
+            aria-checked={!all}
+            onclick={() => showAll(false)}>{t('This space')}</button
+          >
+          <button
+            class="space"
+            class:is-on={all}
+            role="radio"
+            aria-checked={all}
+            onclick={() => showAll(true)}>{t('All spaces')}</button
+          >
+        </div>
         {#each spaces as space (space.id)}
           <button
             class="space"
@@ -610,6 +761,9 @@
     {/if}
 
     <div class="world" style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})">
+      {#if cellsShown.length}
+        <Cells cells={cellsShown} pushed={pushedNow} holding={held !== null} />
+      {/if}
       <svg class="seams" class:is-out={out} width="1" height="1" aria-hidden="true">
         {#each laid.seams as seam (seam.id)}
           <path d={seamPath(seam)} />
@@ -703,6 +857,14 @@
   .spaces.is-out {
     translate: -50% 0;
     opacity: 1;
+  }
+
+  /* The switch between the two, a pill of two halves before the spaces. */
+  .which {
+    display: flex;
+    flex: none;
+    gap: 2px;
+    margin-inline-end: var(--space-4);
   }
 
   .space {
