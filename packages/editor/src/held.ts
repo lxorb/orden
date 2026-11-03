@@ -28,6 +28,28 @@ export interface StateView extends DocView {
   readonly scrollDOM: { scrollTop: number }
 }
 
+/** CodeMirror's keeper of an Android view's EditContext: the part a swap has to reach. */
+interface EditContextKeeper {
+  pendingContextChange: unknown
+  composing: unknown
+  reset(state: EditorState): void
+}
+
+/** Fills an Android view's EditContext again after a swap. `setState` does not tell it
+ *  (@codemirror/view 6.43), and it goes on holding the text and the positions of the note
+ *  the view was built on: each key then lands at a position out of the new note and
+ *  throws, and the keyboard suggests from the other note's words. No public call reaches
+ *  it, and turning it off gives up what Android's composing needs, so this asks the
+ *  keeper itself. test/e2e/android-swap.py is what notices if that ever goes. */
+function fillEditContext(view: StateView) {
+  const keeper = (view as { observer?: { editContext?: EditContextKeeper | null } }).observer
+    ?.editContext
+  if (!keeper) return
+  keeper.pendingContextChange = null
+  keeper.composing = null
+  keeper.reset(view.state)
+}
+
 export class HeldState implements DocView {
   private held: EditorState
   /** Where the note was left, as an effect a view can be handed. Null for a note
@@ -101,6 +123,7 @@ export class HeldState implements DocView {
     // note's. See `handOver` in shared.ts.
     this.note.handOver(this, view, () => {
       view.setState(this.held)
+      fillEditContext(view)
       // A note nobody has read opens at its top. The scroller is the same element
       // whichever note is in it, so without this the note would arrive at however
       // far down the last one was.
