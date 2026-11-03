@@ -235,7 +235,7 @@ describe('a move whose note will not let go', () => {
     const get = env.NOTES.get.bind(env.NOTES)
     let busy = false
     let at = 0
-    env.NOTES.get = (async (key: string) => {
+    env.NOTES.get = async (key: string) => {
       const object = await get(key)
       if (busy || key !== `spaces/${space}/${from}`) return object
       busy = true
@@ -243,7 +243,7 @@ describe('a move whose note will not let go', () => {
       if ((await there?.text())?.includes('Ship')) await change(at++)
       busy = false
       return object
-    })
+    }
   }
 
   test('says it is in both, and which to take it out of', async () => {
