@@ -271,6 +271,10 @@ fn gate<'a>(
         label,
         own,
         since,
+        limits: match caller {
+            Caller::Agent(grant) => Some((Grant::clone(grant), place.store())),
+            Caller::Reader => None,
+        },
         credentials: std::sync::atomic::AtomicBool::new(cleared),
     };
     if let Caller::Agent(grant) = caller {
@@ -404,6 +408,7 @@ fn judged(
     let Caller::Agent(grant) = caller else {
         return cleared();
     };
+    page.may_act_in(facts)?;
     let hosts = page_hosts(page);
     let Some(question) = policy::judge(grant, facts, act, &page.url(), &hosts) else {
         return cleared();
@@ -706,6 +711,9 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     .as_deref()
                     .map(|one| element(page, one))
                     .transpose()?;
+                if let Some(target) = &target {
+                    page.may_act_in(&page.facts(target)?)?;
+                }
                 page.scroll(target.as_ref(), scroll.dx, scroll.dy)?;
                 acted(page)
             }
@@ -722,6 +730,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 for field in &form.fields {
                     let target = element(page, &field.element)?;
                     let facts = page.facts(&target)?;
+                    page.may_act_in(&facts)?;
                     targets.push((target, facts));
                 }
                 // A sign-in form is judged by its credential field, which asks as the mode
@@ -740,14 +749,36 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 acted(page)
             }
             Verb::Hover(hover) => {
-                page.hover(&element(page, &hover.element)?)?;
+                let target = element(page, &hover.element)?;
+                page.may_act_in(&page.facts(&target)?)?;
+                page.hover(&target)?;
                 acted(page)
             }
             Verb::Drag(drag) => {
                 let (from, to) = (element(page, &drag.from)?, element(page, &drag.to)?);
-                let facts = page.facts(&from)?;
+                // A press on the one and a release on the other, which is a click on either
+                // to whatever only listens for those: judged as a press of each, or a drag
+                // of Pay onto itself is the one call round paying (9.3).
                 let key = approvals::key("browser_drag", Some(&tab), Some(&drag.from));
-                judged(app, caller, page, place, &facts, Act::Write, &key)?;
+                judged(
+                    app,
+                    caller,
+                    page,
+                    place,
+                    &page.facts(&from)?,
+                    Act::Press,
+                    &key,
+                )?;
+                let key = approvals::key("browser_drag_to", Some(&tab), Some(&drag.to));
+                judged(
+                    app,
+                    caller,
+                    page,
+                    place,
+                    &page.facts(&to)?,
+                    Act::Press,
+                    &key,
+                )?;
                 page.drag(&from, &to)?;
                 acted(page)
             }
@@ -785,8 +816,15 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                             &key,
                         ));
                     }
+                    // What is no file input is pressed to open its chooser, and is judged
+                    // as that press, whatever it turns out to do.
                     let facts = page.facts(&target)?;
-                    judged(app, caller, page, place, &facts, Act::Write, &key)?;
+                    let how = if facts.kind == "file" {
+                        Act::Write
+                    } else {
+                        Act::Press
+                    };
+                    judged(app, caller, page, place, &facts, how, &key)?;
                 }
                 let paths: Vec<String> = files
                     .iter()
@@ -877,12 +915,12 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 // asks as the mode says: nothing under Full permissions (#1072).
                 if let Caller::Agent(grant) = caller {
                     if let Some(question) =
-                        policy::answering(grant, held.kind, answer.accept, &held.url)
+                        policy::answering(grant, held.kind, answer.accept, &held.url, &held.message)
                     {
                         let key = approvals::on_page(
                             &approvals::key("browser_dialog", Some(place.id()), None),
                             &held.url,
-                            "",
+                            &held.message,
                         );
                         if !approvals::allowed(&grant.id, &key) {
                             return Err(ask(

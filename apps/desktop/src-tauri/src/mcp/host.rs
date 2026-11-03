@@ -54,7 +54,10 @@ pub(crate) fn categorized(
     rendered: &mut Value,
     category_of: impl Fn(&str) -> Option<crate::agents::verbs::Category>,
 ) {
-    let Some(said) = rendered.pointer_mut("/_meta").and_then(|meta| meta.get_mut(META)) else {
+    let Some(said) = rendered
+        .pointer_mut("/_meta")
+        .and_then(|meta| meta.get_mut(META))
+    else {
         return;
     };
     if said["status"] != "needs_approval" {
@@ -73,7 +76,8 @@ mod category_tests {
 
     #[test]
     fn a_question_says_what_it_is_about_to_the_window() {
-        let mut asked = json!({ "_meta": { META: { "status": "needs_approval", "approval": "a1" } } });
+        let mut asked =
+            json!({ "_meta": { META: { "status": "needs_approval", "approval": "a1" } } });
         categorized(&mut asked, |_| Some(Category::Terminal));
         assert_eq!(asked["_meta"][META]["category"], "terminal");
 
