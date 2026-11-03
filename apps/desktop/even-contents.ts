@@ -367,9 +367,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,825,400, for #1065: a pull down past the top
  *  reloads where the reader is, its mark turning until done (pull.svelte.ts, refresh.ts,
  *  PullMark.svelte). Measured 5,825,175.
+ *
+ *  The code raised on 2026-11-04, to 5,842,300, for #1075: the live preview over a
+ *  formula being written (maths-preview.ts in the editor), a chunk of its own fetched
+ *  with a note's first dollar, which splits the formula's drawing out of the chunks it
+ *  shared. Measured 5,842,228.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_825_400,
+  code: 5_842_300,
   catalogues: 956_700,
   styles: 290_000,
   fonts: 260_000,

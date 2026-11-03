@@ -1076,8 +1076,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,499,300, for #1065: a pull down past the top reloads where
  *  the reader is and its mark turns until that is done, never over the keyboard or a
  *  selection (pull.svelte.ts, PullMark.svelte, `app.refresh` in shortcuts/registry.ts).
- *  Measured 3,499,105. */
-const BUDGET = 3_499_300
+ *  Measured 3,499,105.
+ *
+ *  Raised 2026-11-04, to 3,501,100, for #1075: the door the live preview over a formula
+ *  comes through, which fetches it with a note's first dollar (editor.ts); the preview
+ *  itself is a chunk of its own. Measured 3,501,098. */
+const BUDGET = 3_501_100
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
