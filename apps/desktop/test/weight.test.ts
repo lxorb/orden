@@ -967,8 +967,12 @@ function holds(tail: string): boolean {
  *  rather than a `role="status"` card that arrives holding them. Measured 3,433,255.
  *
  *  Raised 2026-11-02, to 3,434,100, for #523: a sidebar opened from its toggle by a key
- *  takes the keyboard into it (`enterSide` in focus.ts). Measured 3,434,078. */
-const BUDGET = 3_434_100
+ *  takes the keyboard into it (`enterSide` in focus.ts). Measured 3,434,078.
+ *
+ *  Raised 2026-11-03, to 3,434,300, for #1044: a search reads the space's own inbox, which
+ *  the crate's walk leaves out as hidden (the call in search/space.ts; what it reads is
+ *  fetched with the first search). Measured 3,434,294. */
+const BUDGET = 3_434_300
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
