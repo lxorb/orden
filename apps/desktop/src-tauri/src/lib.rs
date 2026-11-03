@@ -419,6 +419,7 @@ macro_rules! desktop_commands {
         commands![
             endpoint::automation_result,
             endpoint::automation_listening,
+            endpoint::automation_claim,
             agents::grants::agents_read,
             agents::grants::agents_write,
             agents::grants::agents_mint,

@@ -47,6 +47,11 @@ use tauri::{AppHandle, Emitter, Manager};
 
 use crate::paths::{config_dir, made, write_privately};
 
+/// How long a window has to take a request before another is asked. A page's listener
+/// answers in a moment unless its thread is held, and one held that long is not the one to
+/// wait for while another could answer.
+const TAKES: Duration = Duration::from_millis(1500);
+
 /// What the window hears a request on.
 const ASKED: &str = "nib://automation";
 
@@ -114,6 +119,10 @@ pub struct Waiting(
     Mutex<HashMap<u64, SyncSender<String>>>,
     Mutex<HashSet<String>>,
     Condvar,
+    // Which window each request not yet taken was asked of.
+    Mutex<HashMap<u64, String>>,
+    // How many pages each window has started, for a request taken by one that has gone.
+    Mutex<HashMap<String, u64>>,
 );
 
 impl Waiting {
@@ -123,6 +132,64 @@ impl Waiting {
             heard.insert(label.to_owned());
         }
         self.2.notify_all();
+    }
+
+    /// A page of this window has started and hears requests.
+    fn page_started(&self, label: &str) {
+        if let Ok(mut pages) = self.4.lock() {
+            *pages.entry(label.to_owned()).or_default() += 1;
+        }
+        self.listens(label);
+    }
+
+    /// Which page of this window is up.
+    fn page_of(&self, label: &str) -> u64 {
+        self.4
+            .lock()
+            .map_or(0, |pages| pages.get(label).copied().unwrap_or_default())
+    }
+
+    /// A request is on its way to this window.
+    fn ask_of(&self, id: u64, label: &str) {
+        if let Ok(mut asked) = self.3.lock() {
+            asked.insert(id, label.to_owned());
+        }
+    }
+
+    /// The window takes a request, which only the one asked may, once: whatever it answers
+    /// is the answer. Whichever way that goes the window has shown it hears.
+    fn claim(&self, id: u64, label: &str) -> bool {
+        self.listens(label);
+        let Ok(mut asked) = self.3.lock() else {
+            return false;
+        };
+        if asked.get(&id).is_some_and(|one| one == label) {
+            asked.remove(&id);
+            self.2.notify_all();
+            return true;
+        }
+        false
+    }
+
+    /// Stops waiting for a window to take a request: true where it already had.
+    fn gave_up(&self, id: u64) -> bool {
+        self.3
+            .lock()
+            .map_or(true, |mut asked| asked.remove(&id).is_none())
+    }
+
+    /// Whether a request was taken within `patience`.
+    fn taken_within(&self, id: u64, patience: Duration) -> bool {
+        let deadline = Instant::now() + patience;
+        loop {
+            let Some(left) = deadline.checked_duration_since(Instant::now()) else {
+                return self.gave_up(id);
+            };
+            if self.3.lock().map_or(true, |asked| !asked.contains_key(&id)) {
+                return true;
+            }
+            std::thread::sleep(left.min(Duration::from_millis(5)));
+        }
     }
 
     /// This window hears nothing until it says so again: it has gone, or its page is
@@ -212,7 +279,17 @@ pub fn start(app: &AppHandle) {
 /// The window saying it listens for requests; see `Waiting`.
 #[tauri::command]
 pub fn automation_listening(window: tauri::Window, waiting: tauri::State<'_, Waiting>) {
-    waiting.listens(window.label());
+    waiting.page_started(window.label());
+}
+
+/// The window taking a request, before it runs it; see `Waiting::claim`.
+#[tauri::command]
+pub fn automation_claim(
+    window: tauri::Window,
+    waiting: tauri::State<'_, Waiting>,
+    id: u64,
+) -> bool {
+    waiting.claim(id, window.label())
 }
 
 /// The window's answer to one request, handed back to whoever asked.
@@ -516,10 +593,12 @@ fn ask_the_window_within(
         held.insert(id, send);
     }
 
-    let outcome = app
-        .emit_to(window.as_str(), ASKED, &*asked)
-        .map_err(|error| format!("the window could not be asked: {error}"))
-        .and_then(|()| awaited(&answered, deadline, || waiting.hears(window.as_str())));
+    let outcome = asked_of_one(app, &waiting, id, window, asked, deadline).and_then(|window| {
+        let page = waiting.page_of(&window);
+        awaited(&answered, deadline, || {
+            waiting.hears(&window) && waiting.page_of(&window) == page
+        })
+    });
 
     // However that went, nothing is left waiting: an entry per request that timed
     // out would be a map that only grows.
@@ -528,6 +607,35 @@ fn ask_the_window_within(
     }
 
     outcome
+}
+
+/// Sends a request to the windows in turn until one takes it, and answers which. A page that
+/// says nothing soon has no listener, whatever it last said, as a reload on some engines
+/// reports nothing: it is passed over and hears nothing more until it says so. A window only
+/// busy claims too late, finds the request gone, and runs nothing, so a verb runs once.
+fn asked_of_one(
+    app: &AppHandle,
+    waiting: &Waiting,
+    id: u64,
+    first: String,
+    asked: &serde_json::Value,
+    deadline: Instant,
+) -> Result<String, String> {
+    let mut window = first;
+    loop {
+        waiting.ask_of(id, &window);
+        app.emit_to(window.as_str(), ASKED, asked)
+            .map_err(|error| format!("the window could not be asked: {error}"))?;
+        let left = deadline.saturating_duration_since(Instant::now());
+        if waiting.taken_within(id, left.min(TAKES)) {
+            return Ok(window);
+        }
+        waiting.forget(&window);
+        let left = deadline.saturating_duration_since(Instant::now());
+        window = waiting
+            .listener_within(left, || answering_order(app))
+            .ok_or_else(|| "the window did not answer".to_owned())?;
+    }
 }
 
 /// The window's answer, or why there will be none: its page started loading afresh after
@@ -1002,6 +1110,19 @@ mod tests {
         waiting.forget("main");
         assert!(!waiting.claim(9, "main"), "too late");
         assert!(waiting.hears("main"), "but alive");
+    }
+
+    /// A page that says it has started is not the page that took the request.
+    #[test]
+    fn a_new_page_is_a_new_page() {
+        let waiting = Waiting::default();
+        waiting.page_started("main");
+        let page = waiting.page_of("main");
+        assert_eq!(waiting.page_of("main"), page);
+        waiting.claim(1, "main");
+        assert_eq!(waiting.page_of("main"), page, "a claim is no new page");
+        waiting.page_started("main");
+        assert_ne!(waiting.page_of("main"), page);
     }
 
     /// A page gone while it was asked is said at once, and an answer comes first.

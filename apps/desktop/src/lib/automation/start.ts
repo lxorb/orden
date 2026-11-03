@@ -121,6 +121,10 @@ interface Request {
 
 /** One request, answered. */
 async function answer(id: number, asked: Request) {
+  // Taken from the crate first, so a request it gave up on while this page was busy, and
+  // asked of another window, does not run in both.
+  if ((await invoke('automation_claim', { id }).catch(() => false)) !== true) return
+
   const verb = typeof asked.verb === 'string' ? asked.verb : ''
   const args = isRecord(asked.args) ? asked.args : {}
   const rest = Array.isArray(asked.rest) ? asked.rest.filter(isText) : []
