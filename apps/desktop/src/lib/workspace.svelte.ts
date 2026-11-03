@@ -106,7 +106,7 @@ import {
   unnesting,
 } from './folder-notes'
 import { carriedRows } from './drag-paths'
-import { flatRows } from './tree-flat'
+import { anyOpen, flatRows, standsOpen } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree, type SortMode } from './tree-order'
 import { Arranged, SpaceSorting } from './workspace/arranged.svelte'
@@ -2726,6 +2726,7 @@ class Workspace {
 
     // Rows that went away take themselves out of the selection.
     this.picked.keepOnly((path) => !!this.entryAt(path))
+    this.keepOpenRows(root)
     this.keepNaming()
 
     // And a note the account named that has since landed is the listing's row now
@@ -3632,7 +3633,7 @@ class Workspace {
     return flatRows(this.shownTree, (path) => this.isExpanded(path)).map(({ entry }) => ({
       path: entry.path,
       folder: entry.is_dir,
-      open: entry.is_dir && this.isExpanded(entry.path),
+      open: standsOpen(entry, (path) => this.isExpanded(path)),
     }))
   }
 
@@ -3935,16 +3936,36 @@ class Workspace {
     this.revealing = path
   }
 
+  /** What this machine remembers as open in a space, against the listing just read:
+   *  a folder that was deleted, moved or renamed somewhere this app did not hear of
+   *  (another device, through sync), or a note whose last child went, is no longer
+   *  remembered, and one remembered under another spelling of its name is kept under
+   *  the listing's. The rest is kept, including a folder under one that is shut, so
+   *  opening that one again brings its rows back the way they were. Against the disk
+   *  and the notes still arriving rather than the rows drawn: a folder kept out of
+   *  the list by the archive or the Essentials still exists. */
+  private keepOpenRows(root: string) {
+    const tree = this.tree
+    if (!tree || !samePath(tree.path, root)) return
+
+    const listed = arriving.coming.size ? withComing(tree, [...arriving.coming]) : tree
+    this.device.keepOpen(root, (path) => {
+      const entry = entryAt(listed, path)
+      return entry && standsOpen(entry, () => true) ? entry.path : null
+    })
+  }
+
   /** Every row of the open space folded. */
   foldList() {
     const root = this.activeSpace?.root
     if (root !== undefined) this.device.foldUnder(root)
   }
 
-  /** Whether folding the list would change anything. */
+  /** Whether folding the list would change anything: a row it draws stands open.
+   *  Asked of the rows rather than of what this machine remembers as open, which can
+   *  name a row that is not drawn or holds nothing (#1081); see `standsOpen`. */
   get unfolded(): boolean {
-    const root = this.activeSpace?.root ?? ''
-    return Object.keys(this.device.expanded).some((path) => withinSpace(root, path) !== null)
+    return anyOpen(this.shownTree, (path) => this.isExpanded(path))
   }
 
   /** Opens a note and lands on one of its headings, the way a link into a
