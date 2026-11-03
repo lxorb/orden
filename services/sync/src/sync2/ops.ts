@@ -9,7 +9,7 @@
  *  an edit against, so it goes to Recently deleted exactly as it always has) - so the
  *  rows, the paths and every v2 device's feed stay one story whichever app wrote. */
 
-import type { CreateOp, Op, OpContext, OpResult } from '@orden/sync-core'
+import { type CreateOp, isEntryId, type Op, type OpContext, type OpResult } from '@orden/sync-core'
 import { newId } from '../crypto'
 import type { Env } from '../types'
 import type { Reached } from '../spaces/space'
@@ -112,6 +112,12 @@ function applied(
   sizes: ReadonlyMap<string, number>,
   taken: ReadonlySet<string>,
 ): OpResult {
+  // A folder from before ids were refused: no device is handed what is in it. Refused
+  // here rather than by `opOf`, which would stop the whole batch of a device holding it.
+  const into = op.t === 'move' || op.t === 'create' || op.t === 'mkdir' ? op.parent : null
+  if (into !== null && !isEntryId(into) && !tree.answers(op.op)) {
+    return { op: op.op, refused: 'gone' }
+  }
   // Not written down as the op's answer, so that an op this space already answered -
   // sent again by a device that missed the answer - is still answered as it was.
   if ((op.t === 'create' || op.t === 'mkdir') && taken.has(op.id) && !tree.answers(op.op)) {

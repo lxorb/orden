@@ -23,6 +23,8 @@ import { carriedOwn, INBOX_PATH, withTasksOf } from '@orden/bases/inbox'
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import { conflictPath } from '@orden/markdown/paths'
 import { inForeignCopy } from '@orden/sync-core/foreign'
+import { hash32 } from '@orden/sync-core/seed'
+import { isEntryId } from '@orden/sync-core/wire'
 import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
 import { sha256 } from '../bytes'
 import { log } from '../log'
@@ -613,9 +615,9 @@ async function movedThere(
     // file wherever the record says it is: written down from before a round that
     // stopped halfway, the record names the old file, which by then can hold the words
     // of the note that took its name.
-    const aside = asideOf(was, remote.id)
+    const aside = isAside(was) ? null : await asideFound(mirror.root, was, remote.id)
     let at: string | null = null
-    if (!isAside(was) && (await present(full(aside)))) {
+    if (aside !== null) {
       rekey(mirror, was, aside)
       at = aside
     } else if (await present(full(was))) {
@@ -735,12 +737,38 @@ function rekey(mirror: Mirror, from: string, to: string) {
 
 const ASIDE = '.nib-moving-'
 
+/** What a note's waiting name starts with, by a hash of its id: spelled as it came, an
+ *  id is whatever the account's feed said, and a path in it would take the note there. */
+function asidePrefix(id: string): string {
+  return `${ASIDE}${hash32(id).toString(36)}-`
+}
+
 /** Where a note waits while another takes its name, beside it and with its own name
- *  at the end, so a page note's paper goes along: `.nib-moving-<id>-<name>`. Hidden,
+ *  at the end, so a page note's paper goes along: `.nib-moving-<hash>-<name>`. Hidden,
  *  so the list and the push never see it. */
-function asideOf(path: string, id: string): string {
+export function asideOf(path: string, id: string): string {
   const folder = folderOf(path)
-  return `${folder ? `${folder}/` : ''}${ASIDE}${id}-${nameOf(path)}`
+  return `${folder ? `${folder}/` : ''}${asidePrefix(id)}${nameOf(path)}`
+}
+
+/** The name a note waiting aside had, under the id an older version spelled it with too. */
+export function nameSetAside(aside: string, id: string): string {
+  const name = nameOf(aside)
+  for (const prefix of [asidePrefix(id), `${ASIDE}${id}-`]) {
+    if (name.startsWith(prefix)) return name.slice(prefix.length)
+  }
+  return name.slice(ASIDE.length)
+}
+
+/** Where a note's file waits aside, if it does: a quit under an older version left it
+ *  under its id, which is only looked for where it cannot lead anywhere else. */
+async function asideFound(root: string, path: string, id: string): Promise<string | null> {
+  const folder = folderOf(path)
+  const older = `${folder ? `${folder}/` : ''}${ASIDE}${id}-${nameOf(path)}`
+  for (const at of isEntryId(id) ? [asideOf(path, id), older] : [asideOf(path, id)]) {
+    if (await present(joinPath(root, at))) return at
+  }
+  return null
 }
 
 function isAside(path: string): boolean {
@@ -767,10 +795,7 @@ async function shownAgain(
   waiting?: Waiting,
 ): Promise<string> {
   const full = (path: string) => joinPath(mirror.root, path)
-  const prefix = `${ASIDE}${id}-`
-  const name = nameOf(aside).startsWith(prefix)
-    ? nameOf(aside).slice(prefix.length)
-    : nameOf(aside).slice(ASIDE.length)
+  const name = nameSetAside(aside, id)
   const folder = folderOf(aside)
   const dot = name.lastIndexOf('.')
   const stem = dot > 0 ? name.slice(0, dot) : name
@@ -1425,8 +1450,8 @@ export async function push(
     // Its words wait aside, from a swap a pass did not get to finish, and are never
     // read as a note gone from here: the next pull moves it on or puts it back.
     if (isAside(path) && (await present(joinPath(root, path)))) continue
-    const aside = asideOf(path, tracked.id)
-    if (await present(joinPath(root, aside))) {
+    const aside = await asideFound(root, path, tracked.id)
+    if (aside !== null) {
       await shownAgain(mirror, aside, tracked.id, new Set())
       continue
     }

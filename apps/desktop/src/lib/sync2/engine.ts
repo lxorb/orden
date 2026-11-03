@@ -181,9 +181,14 @@ export class Engine implements AskedEngine {
 
   /** The space a path on this disk is in, and where in it, with `/` between folders. */
   placed(path: string): Placed | null {
-    for (const space of this.core.spaces.values()) {
-      const inside = relative(space.row.root, path)
-      if (inside !== null) return { space, path: inside }
+    // The folder spelled like the path first; another spelling only on a disk where it
+    // is the same folder. On Linux `Notes` and `notes` are two spaces.
+    const spaces = [...this.core.spaces.values()]
+    for (const foldsCase of this.core.world.foldsCase ? [false, true] : [false]) {
+      for (const space of spaces) {
+        const inside = relative(space.row.root, path, foldsCase)
+        if (inside !== null) return { space, path: inside }
+      }
     }
     return null
   }
@@ -432,6 +437,10 @@ export class Engine implements AskedEngine {
       const placed = this.placed(path)
       const entry = placed?.space.at(placed.path)
       if (!entry) return
+      if (entry.kind === 'file' && this.core.touched.has(entry.id)) {
+        this.core.stampWaiting.set(entry.id, { mtime, size })
+        return
+      }
       entry.mtime = mtime
       entry.size = size
       await this.core.commit(this.core.entryChanges([entry]))
@@ -509,12 +518,13 @@ export class Engine implements AskedEngine {
 }
 
 /** A path relative to a root, with `/` between folders, or null outside it. */
-export function relative(root: string, path: string): string | null {
+export function relative(root: string, path: string, foldsCase: boolean): string | null {
   const norm = (value: string) => value.replace(/\\/g, '/').replace(/\/+$/, '')
   const base = norm(root)
   const full = norm(path)
   if (full.length <= base.length) return null
   const head = full.slice(0, base.length)
-  if (head.toLowerCase() !== base.toLowerCase() || full.charAt(base.length) !== '/') return null
+  const same = foldsCase ? head.toLowerCase() === base.toLowerCase() : head === base
+  if (!same || full.charAt(base.length) !== '/') return null
   return full.slice(base.length + 1)
 }

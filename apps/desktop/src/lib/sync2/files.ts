@@ -17,9 +17,10 @@
  *
  *  Only where the world can carry bytes (`World.blobs`): the simulator's cannot, and
  *  there files are not kept at all. Up to 64 MB a file, in one request; a larger one
- *  stays on this device. */
+ *  stays on this device, and nothing from the account is written over it. */
 
 import type { Core, Holding } from './core'
+import { readFine, readRefused, saidUnsynced } from './project'
 import { againstBytes, outgoingBytes } from './records'
 import type { Outboxed, SpaceState } from './places'
 import { put, type Change, type EntryRow } from './store'
@@ -41,9 +42,11 @@ export type Replaced =
 /** The world's road for bytes. Each request answers null when the account cannot be
  *  reached, as `Account.ask` does. */
 export interface Blobs {
-  /** A file's bytes on this disk, or null when it is not there. */
+  /** A file's bytes on this disk, or null when it is not there or will not read. */
   read(path: string): Promise<Uint8Array | null>
   write(path: string, bytes: Uint8Array): Promise<void>
+  /** How many bytes a file holds, where the world can say without reading it. */
+  size?(path: string): Promise<number | null>
   /** The hash a blob is named by. */
   hash(bytes: Uint8Array): Promise<string>
   /** The bytes, up to the account under their hash. Answers whether it keeps them now,
@@ -65,18 +68,40 @@ const LOST_EVERY = 6 * 60 * 60_000
 /** How many hashes one question names; the account's ceiling. */
 const ASKED_AT_ONCE = 90
 
-/** A file's bytes and their hash, read now; null for one that is not there, and for one
- *  too large to travel. */
+/** A file's bytes and their hash, read now; null for one that is not there. `large` for
+ *  one too large to travel and `unread` for one that is there and will not read: what
+ *  those say cannot be told from what this disk last held, so neither is "no change". */
 async function readBytes(
   core: Core,
   space: SpaceState,
   entry: EntryRow,
-): Promise<{ bytes: Uint8Array; hash: string } | null> {
+): Promise<{ bytes: Uint8Array; hash: string } | 'large' | 'unread' | null> {
   const blobs = core.world.blobs
   if (!blobs || !entry.local_path) return null
-  const bytes = await blobs.read(core.world.join(space.row.root, entry.local_path))
-  if (!bytes || bytes.byteLength > LARGEST) return null
+  const full = core.world.join(space.row.root, entry.local_path)
+  // Asked first: one past what travels would cross the IPC whole on every pass.
+  if (((await blobs.size?.(full)) ?? 0) > LARGEST) return 'large'
+  const bytes = await blobs.read(full)
+  if (!bytes) return (await core.world.disk.exists(full)) ? 'unread' : null
+  if (bytes.byteLength > LARGEST) return 'large'
   return { bytes, hash: await blobs.hash(bytes) }
+}
+
+/** What the launch scan saw of a file now read and in step, written down with the next
+ *  write of its entry. Whether there was any. */
+function stampLanded(core: Core, entry: EntryRow): boolean {
+  const stamp = core.stampWaiting.get(entry.id)
+  if (!stamp) return false
+  core.stampWaiting.delete(entry.id)
+  entry.mtime = stamp.mtime
+  return true
+}
+
+/** A file that is there and cannot be judged: told, at once where it will not change by
+ *  waiting, and once it lasts where it may. */
+function cannotJudge(core: Core, entry: EntryRow, how: 'large' | 'unread'): void {
+  if (how === 'large') saidUnsynced(core, entry)
+  else readRefused(core, entry)
 }
 
 /** A file made here: its hash and size, for the entry and its `create`. Null when this
@@ -87,7 +112,7 @@ export async function fileMade(
   entry: EntryRow,
 ): Promise<{ hash: string; size: number } | null> {
   const read = await readBytes(core, space, entry)
-  if (!read) return null
+  if (!read || typeof read === 'string') return null
   entry.file_key = null
   entry.written_hash = read.hash
   entry.size = read.bytes.byteLength
@@ -122,6 +147,15 @@ export async function sendMade(
     if (!entry) continue
     const read = await readBytes(core, space, entry)
     if (!read) continue
+    if (typeof read === 'string') {
+      // Nothing to send yet, as for bytes the account would not take: tried in a while,
+      // and `settleFiles` skips a waiting create, so this is the one place it is told.
+      cannotJudge(core, entry, read)
+      core.refusedBytes.set(op.id, { at: core.world.now(), hash: '', full: false })
+      waiting.add(op.id)
+      continue
+    }
+    readFine(core, op.id)
     // Sent without its bytes, the create would be refused `gone` and the file forgotten:
     // it waits, and the rest of the outbox goes.
     if (resting(core, op.id, read.hash, room)) {
@@ -171,11 +205,22 @@ export async function settleFiles(
     core.touched.delete(entry.id)
 
     const here = entry.local_path ? await readBytes(core, space, entry) : null
+    if (typeof here === 'string') {
+      // Nothing is written over what could not be judged: it stays as it is. One that
+      // will not read may be held by a program for a moment, and is read again.
+      cannotJudge(core, entry, here)
+      if (here === 'unread') core.touched.add(entry.id)
+      continue
+    }
+    readFine(core, entry.id)
     const changedHere = here !== null && here.hash !== entry.written_hash
 
     if (here?.hash === entry.file_key) {
       // Both say the same: in step, whichever moved.
-      if (entry.written_hash !== here.hash) await written(core, entry, here.hash, here.bytes)
+      const stamped = stampLanded(core, entry)
+      if (entry.written_hash !== here.hash || stamped) {
+        await written(core, entry, here.hash, here.bytes)
+      }
       continue
     }
     if (changedHere && changedThere) {
@@ -183,23 +228,23 @@ export async function settleFiles(
       continue
     }
     if (changedHere) {
+      // Still to be read until the account has answered, however this pass ends.
+      core.touched.add(entry.id)
       // Bytes the account refused a moment ago go again once the wait is over.
-      if (resting(core, entry.id, here.hash, room)) {
-        core.touched.add(entry.id)
-        continue
-      }
+      if (resting(core, entry.id, here.hash, room)) continue
       const stored = await blobs.up(here.hash, here.bytes)
       if (!alive() || stored === null) return false
       if (!(await taken(core, space, entry, here.hash, stored, room))) {
         // Bytes the account would not take, no room for them, say: this file waits, and
         // the rest of the space settles.
-        core.touched.add(entry.id)
         continue
       }
       const answer = await blobs.replace(space.id, entry.id, here.hash, entry.file_key ?? '')
       if (!alive() || answer === null) return false
+      core.touched.delete(entry.id)
       if ('ok' in answer) {
         entry.file_key = here.hash
+        stampLanded(core, entry)
         await written(core, entry, here.hash, here.bytes)
       } else if ('moved' in answer) {
         entry.file_key = answer.moved.hash
@@ -297,7 +342,7 @@ export async function recoverLost(
       if (entry.file_key === null || kept.has(entry.file_key)) continue
       const here = await readBytes(core, space, entry)
       // Changed here since, or gone: the next settle sends or fetches it as ever.
-      if (here?.hash !== entry.file_key) continue
+      if (!here || typeof here === 'string' || here.hash !== entry.file_key) continue
       const stored = await blobs.up(here.hash, here.bytes)
       if (!alive() || stored === null) return false
       await taken(core, space, entry, here.hash, stored, room)

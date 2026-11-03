@@ -24,6 +24,30 @@ export async function wrote(core: Core, entry: EntryRow, text: string): Promise<
   return [put('written', { id: entry.id, text: unixLines(text) }), put('entries', { ...entry })]
 }
 
+/** How many reads in a row a file has to refuse before the reader hears of it: a program
+ *  holding it for a moment is no news. */
+const READS_TO_TELL = 3
+
+/** Tells the reader, once, that a file's edits here are not reaching the account. */
+export function saidUnsynced(core: Core, entry: EntryRow): void {
+  if (core.unsyncedTold.has(entry.id)) return
+  core.unsyncedTold.add(entry.id)
+  core.events.unsynced?.({ id: entry.id, name: entry.name })
+}
+
+/** A file that is there refused a read, once more. */
+export function readRefused(core: Core, entry: EntryRow): void {
+  const times = (core.unreadFor.get(entry.id) ?? 0) + 1
+  core.unreadFor.set(entry.id, times)
+  if (times >= READS_TO_TELL) saidUnsynced(core, entry)
+}
+
+/** A file reads again: a later spell of not reading is news again. */
+export function readFine(core: Core, id: string): void {
+  core.unreadFor.delete(id)
+  core.unsyncedTold.delete(id)
+}
+
 /** Writes a document's words to its file where nothing on screen holds it, keeping what
  *  the file said before as a version on this device. Answers the changes to record, or
  *  nothing when there is no file to write yet or the file already says it. */
@@ -47,6 +71,13 @@ export async function project(
   // A file nobody here has named yet is in the way: it becomes an entry of its own
   // (ingest), and nothing is written over it.
   if (!entry.local_path && (was !== null || (await core.world.disk.exists(full)))) return []
+  // A file that is there and will not read, saved as another encoding or grown past what
+  // a note holds: what it says cannot be kept as a version, so nothing is written over
+  // it. Read again next pass (`readAgain` in ingest.ts), and folded in like any edit.
+  if (was === null && entry.local_path && (await core.world.disk.exists(full))) {
+    readRefused(core, entry)
+    return []
+  }
   if (was !== null && unixLines(was) === unixLines(text)) {
     entry.local_path = path
     const digest = await core.world.digest(unixLines(text))

@@ -215,6 +215,7 @@ describe('the app socket', () => {
 describe('the link', () => {
   const machines: MachineFrame[] = [
     { t: 'open', session: 's_1', cols: 80, rows: 24 },
+    { t: 'open', session: 's_1', cols: 80, rows: 24, watching: true },
     { t: 'in', session: 's_1', data: bytes(3) },
     { t: 'in', session: 's_1', data: bytes() },
     { t: 'size', session: 's_1', cols: 200, rows: 60 },

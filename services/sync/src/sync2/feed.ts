@@ -7,7 +7,7 @@
  *  document's words moving shows as its `docSeq` moving, which happens when its room
  *  settles - the moment its snapshot is there to pull. */
 
-import { FEED_PAGE, type FeedItem } from '@orden/sync-core'
+import { FEED_PAGE, type FeedItem, isEntryId } from '@orden/sync-core'
 import type { Env } from '../types'
 import { kindOfName } from './tree'
 import { prepareSpace } from './prepare'
@@ -55,8 +55,12 @@ export async function feedPage(
   }
 
   const page = rows.slice(0, FEED_PAGE)
+  // One made under an id that reads as a path before `opOf` refused them is not handed
+  // to a device from before `feedPageOf` left them out, but for its delete.
+  const safe = (row: Row) =>
+    row.deleted === 1 || (isEntryId(row.id) && (row.parent === null || isEntryId(row.parent)))
   return {
-    items: page.flatMap((row) => (row.name === null ? [] : [itemOf(row, row.name)])),
+    items: page.flatMap((row) => (row.name === null || !safe(row) ? [] : [itemOf(row, row.name)])),
     cursor: page.at(-1)?.seq ?? since,
     more: rows.length > FEED_PAGE,
   }

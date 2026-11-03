@@ -160,8 +160,13 @@ export class Nibd {
     switch (frame.t) {
       case 'open':
         if (!session) {
+          // Nor a new shell for a watcher: only a program still running in its holder.
+          if (frame.watching && !(await this.holderOf(frame.session))?.alive) return
+          if (this.sessions.has(frame.session)) return
           this.sessions.set(frame.session, this.session(frame.session, frame.cols, frame.rows))
-        } else if (!session.alive) {
+        } else if (!session.alive && !frame.watching) {
+          // Whoever may only watch does not start its shell again, which is `start`'s to
+          // ask for. `Machine` keeps no word of an ended shell across its own restart.
           session.restart()
         }
         return

@@ -2,7 +2,7 @@
   import { untrack } from 'svelte'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
+  import { plural, t } from './i18n.svelte'
   import { focusEditor } from './focus'
   import { dur } from './motion'
   import { told } from './said.svelte'
@@ -225,7 +225,11 @@
 {/if}{#if unsynced.said}
   <!-- A file whose edits here do not sync: its name and its kind disagree since a
        rename. See sync2/unsynced.svelte.ts. -->
-  {@const words = t('Changes to {name} are not syncing', { name: unsynced.said })}
+  {@const about =
+    unsynced.many > 1
+      ? plural(unsynced.many, { one: '{count} file', other: '{count} files' })
+      : unsynced.said}
+  {@const words = t('Changes to {name} are not syncing', { name: about })}
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}

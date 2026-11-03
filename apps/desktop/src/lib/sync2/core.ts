@@ -102,6 +102,12 @@ export class Core {
    *  were last read: what the next pass hashes (files.ts). Memory only - the launch
    *  scan says them again. */
   readonly touched = new Set<string>()
+  /** The launch scan's stamp of a file not yet read and in step with the account: written
+   *  down once it is, so a launch after one that stopped on the way up reads it again. */
+  readonly stampWaiting = new Map<string, { mtime: number; size: number }>()
+  /** How many times in a row each file that is there would not read: read again every
+   *  pass, and said to the reader once it lasts (project.ts). Memory only. */
+  readonly unreadFor = new Map<string, number>()
   /** Files whose bytes the account last refused, which, when, and whether for want of room:
    *  they wait a while before going again (files.ts). Memory only. */
   readonly refusedBytes = new Map<string, { at: number; hash: string; full: boolean }>()

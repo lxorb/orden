@@ -567,7 +567,11 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
   }
 
   const file = await fileIn(context.env, space.id, id)
-  if (!file) return context.json({ error: NO_SUCH_FILE }, 404)
+  // Nor one purged from Recently deleted, which `revive` cannot bring back: its row would
+  // take the hash and stay deleted, with no bytes for anybody who asks.
+  if (!file || (file.deleted && file.deleted_at === null)) {
+    return context.json({ error: NO_SUCH_FILE }, 404)
+  }
   if (file.hash !== base) {
     return context.json({ moved: { hash: file.hash, size: file.size, at: file.updated_at } })
   }

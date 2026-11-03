@@ -125,3 +125,38 @@ test('asked for its sessions, answers every one it has: none yet', async () => {
   await nibd.receive({ t: 'list' })
   expect(said).toEqual([{ t: 'sessions', sessions: [] }])
 })
+
+test('a watcher’s open starts no shell on a session nothing holds', async () => {
+  const { nibd, attach } = machine()
+  attach()
+  const held = nibd as unknown as { sessions: Map<string, unknown> }
+  await nibd.receive({ t: 'open', session: 's_none', cols: 80, rows: 24, watching: true })
+  expect(held.sessions.has('s_none')).toBe(false)
+})
+
+test('a watcher’s open finds a program still running in its holder', async () => {
+  const { nibd, attach } = machine()
+  attach()
+  const inner = nibd as unknown as {
+    sessions: Map<string, unknown>
+    holderOf: (id: string) => Promise<{ alive: boolean } | null>
+    session: (id: string) => unknown
+  }
+  inner.holderOf = () => Promise.resolve({ alive: true })
+  inner.session = () => ({ alive: true, detach: () => undefined })
+  await nibd.receive({ t: 'open', session: 's_held', cols: 80, rows: 24, watching: true })
+  expect(inner.sessions.has('s_held')).toBe(true)
+})
+
+test('an ended session is started again by an open, but not by a watcher’s', async () => {
+  const { nibd, attach } = machine()
+  attach()
+  let restarted = 0
+  const ended = { alive: false, restart: () => (restarted += 1), detach: () => undefined }
+  ;(nibd as unknown as { sessions: Map<string, unknown> }).sessions.set('s_1', ended)
+  const open = { t: 'open', session: 's_1', cols: 80, rows: 24 } as const
+  await nibd.receive({ ...open, watching: true })
+  expect(restarted).toBe(0)
+  await nibd.receive(open)
+  expect(restarted).toBe(1)
+})
