@@ -77,6 +77,35 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
     )
 
 
+def scrolled_under(page: Page) -> None:
+    say("a page scrolled under a held eraser cuts nothing it did not touch")
+    page.evaluate("async () => { const ws = window.nibApp.workspace; await ws.createPages(ws.activeSpace.root, 'scrolled') }")
+    page.wait_for_selector(".pages, .canvas")
+    box = page.locator(".pages, .canvas").first.bounding_box()
+    x, y = box["x"] + box["width"] / 2, box["y"] + 200
+
+    page.keyboard.press("d")
+    page.mouse.move(x - 100, y + 200)
+    page.mouse.down()
+    page.mouse.move(x + 100, y + 200, steps=8)
+    page.mouse.up()
+
+    # Pressed well clear of the line, above it, then the line scrolled up past the eraser.
+    page.keyboard.press("e")
+    page.mouse.move(x, y - 60)
+    page.mouse.down()
+    page.mouse.wheel(0, 500)
+    page.evaluate("() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))")
+    page.mouse.move(x + 1, y - 60)
+    page.mouse.up()
+    page.keyboard.press("v")
+
+    left = strokes(page)
+    say(f"  {len(left)} strokes")
+    if len(left) != 1:
+        wrong(f"a held eraser cut {len(left)} pieces out of ink it never touched")
+
+
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -84,6 +113,7 @@ def drive(browser: Browser) -> None:
     pass_over(page, "quick")
     pass_over(page, "slow", "createPages")
     pass_over(page, "quick", "createPages")
+    scrolled_under(page)
 
 
 if __name__ == "__main__":

@@ -862,17 +862,40 @@ function pointBetween(from: InkPoint, to: InkPoint, share: number): InkPoint {
 
 /** Where an eraser has to answer between two of its events: a quick swipe is a few
  *  events far apart, and a line it crossed between two of them was crossed all the
- *  same. Points no further apart than its reach, the last of them where it is now. */
+ *  same. Points no further apart than half its reach, the last of them where it is now:
+ *  circles a whole reach apart take a line down the middle of the swipe and leave one
+ *  near its edge in dashes. */
 export function rubbedPath(from: Point, to: Point, reach: number): Point[] {
   const dx = to.x - from.x
   const dy = to.y - from.y
-  const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / Math.max(reach, MIN_REACH)))
+  const step = Math.max(reach, MIN_REACH) / 2
+  const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / step))
 
   return Array.from({ length: steps }, (_unused, step) =>
     step + 1 === steps
       ? to
       : { x: from.x + (dx * (step + 1)) / steps, y: from.y + (dy * (step + 1)) / steps },
   )
+}
+
+/** How far past the hand the plane may seem to go, in pixels, before it counts as having
+ *  moved by itself: what rounding the two readings of one event can come to. */
+const HAND_SLACK = 2
+
+/** The same between two events as they were read, in the plane and on the screen. Where
+ *  the plane went further than the hand it moved by itself, a scroll or a zoom with the
+ *  eraser held, and the way between the two points is ink that went by under a still
+ *  hand: only where the eraser is now. */
+export function rubbedBetween(
+  before: { at: Point; screen: Point },
+  now: { at: Point; screen: Point },
+  scale: number,
+  reach: number,
+): Point[] {
+  const onPlane = Math.hypot(now.at.x - before.at.x, now.at.y - before.at.y) * scale
+  const onScreen = Math.hypot(now.screen.x - before.screen.x, now.screen.y - before.screen.y)
+
+  return onPlane > onScreen + HAND_SLACK ? [now.at] : rubbedPath(before.at, now.at, reach)
 }
 
 /** The least an eraser reaches in the steps above, so a plane zoomed a long way out

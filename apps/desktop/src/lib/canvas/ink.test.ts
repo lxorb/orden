@@ -1105,16 +1105,32 @@ describe('rubbing across a long straight segment', () => {
 })
 
 describe('the way an eraser went between two of its events', () => {
-  test('is points no further apart than its reach, ending where it is', () => {
-    expect(rubbedPath({ x: 0, y: 0 }, { x: 25, y: 0 }, 10)).toEqual([
-      { x: 25 / 3, y: 0 },
-      { x: 50 / 3, y: 0 },
-      { x: 25, y: 0 },
+  test('is points no further apart than half its reach, ending where it is', () => {
+    expect(rubbedPath({ x: 0, y: 0 }, { x: 15, y: 0 }, 10)).toEqual([
+      { x: 5, y: 0 },
+      { x: 10, y: 0 },
+      { x: 15, y: 0 },
     ])
   })
 
-  test('is only where it is, for a step inside its reach', () => {
+  test('is only where it is, for a step inside that', () => {
     expect(rubbedPath({ x: 0, y: 0 }, { x: 5, y: 0 }, 30)).toEqual([{ x: 5, y: 0 }])
+  })
+
+  /** Circles a whole reach apart leave a line near the edge of the swipe in dashes. */
+  test('takes a line near the edge of a swipe whole', () => {
+    const reach = 10
+    let left = [stroke([point(0, 9.5), point(100, 9.5)], { size: 0 })]
+    const swipe = [{ x: 0, y: 0 }, ...rubbedPath({ x: 0, y: 0 }, { x: 100, y: 0 }, reach)]
+    for (const at of swipe) {
+      left = left.flatMap((one) => erased(one, at, reach))
+    }
+    const longest = Math.max(
+      0,
+      ...left.map((one) => (one.points.at(-1)?.x ?? 0) - (one.points[0]?.x ?? 0)),
+    )
+
+    expect(longest).toBeLessThan(0.1)
   })
 })
 
