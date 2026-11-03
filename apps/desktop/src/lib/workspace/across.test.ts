@@ -1,6 +1,6 @@
 /** One note open in two windows, with real documents and one disk: H2-DESKTOP-14. */
 
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { Windows } from '../windows'
 import { NoteDoc } from './documents.svelte'
 import { Across, type Desk } from './across'
@@ -8,8 +8,29 @@ import type { FileOp } from './file-ops'
 
 vi.mock('../log', () => ({ log: vi.fn() }))
 
-/** Two windows' ends of one channel. Delivery is held until `deliver`, which is a window
- *  that has not heard yet; `at once` is one that has. */
+/** A browser's locks, one holder per name in the order asked. */
+function fakeLocks(): LockManager {
+  const tails = new Map<string, Promise<unknown>>()
+  return {
+    request(name: string, ...rest: unknown[]) {
+      const run = rest.at(-1) as (lock: unknown) => unknown
+      const options = (rest.length > 1 ? rest[0] : {}) as { ifAvailable?: boolean }
+      if (options.ifAvailable) return Promise.resolve(run({ name }))
+      const done = (tails.get(name) ?? Promise.resolve()).then(() => run({ name }))
+      tails.set(
+        name,
+        done.catch(() => undefined),
+      )
+      return done
+    },
+  } as unknown as LockManager
+}
+
+beforeEach(() => vi.stubGlobal('navigator', { locks: fakeLocks() }))
+afterEach(() => vi.unstubAllGlobals())
+
+/** Windows' ends of one channel. Delivery is held until asked for, in whatever order: which
+ *  is a window that has not heard yet. */
 function channel() {
   const ends: { onmessage: ((event: MessageEvent<unknown>) => void) | null }[] = []
   const flight: (() => void)[] = []
@@ -29,6 +50,7 @@ function channel() {
   }
   return {
     end,
+    flight,
     deliver: async () => {
       while (flight.length) {
         flight.shift()?.()
@@ -41,6 +63,8 @@ function channel() {
 const PATH = '/Notes/Both.md'
 
 function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<string, string>) {
+  let failing = false
+  let moved: (() => void) | null = null
   const documents: NoteDoc[] = []
   const heard: FileOp[] = []
   const owed: NoteDoc[] = []
@@ -63,8 +87,14 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
     },
     joined: () => null,
     noteSaved: () => undefined,
-    read: async (path) => disk.get(path) ?? null,
-    exists: async (path) => disk.has(path),
+    read: async (path) => {
+      await Promise.resolve()
+      return failing ? null : (disk.get(path) ?? null)
+    },
+    exists: async (path) => disk.has(path) || failing,
+    pause: async () => {
+      moved?.()
+    },
     keepVersion: async (_path, text) => void versions.push(text),
   }
   const windows = new Windows(() => line)
@@ -82,7 +112,13 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
     const path = note.path
     if (path === null) return null
     const content = note.latest
-    const words = await across.writing(note, path, content, async (down) => {
+    const old = across.writing as unknown as (
+      n: NoteDoc,
+      p: string,
+      c: string,
+      w: (d: string) => Promise<void>,
+    ) => Promise<string | null>
+    const words = await old.call(across, note, path, content, async (down) => {
       disk.set(path, down)
     })
     if (words !== null) note.dirty = note.latest !== words
@@ -92,7 +128,15 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
     note.live.edit([{ from: note.live.text.length, to: note.live.text.length, insert: words }])
     note.dirty = true
   }
-  return { across, windows, open, save, type, heard, owed, versions, documents }
+  const failRead = (on: boolean) => {
+    failing = on
+  }
+  const renamedSoon = (note: NoteDoc, to: string) => {
+    moved = () => {
+      note.path = to
+    }
+  }
+  return { across, windows, open, save, type, heard, owed, versions, documents, failRead, renamedSoon }
 }
 
 const BASE = '# Both\n\nbase line\n'
@@ -247,5 +291,149 @@ describe('one note in two windows', () => {
     await wires.deliver()
     expect(inA.latest).toBe('{"nodes":[2]}')
     expect(inA.dirty).toBe(false)
+  })
+})
+
+/** A token typed into a note, one of a kind, so a count of it says lost or twice. */
+function random(seed: number) {
+  let state = seed * 2654435761 + 1
+  return (below: number) => {
+    state = (state * 1664525 + 1013904223) >>> 0
+    return state % below
+  }
+}
+
+const count = (text: string, token: string) => text.split(token).length - 1
+
+describe('whatever order the news arrives in', () => {
+  test('a write that met the disk and then hears of it does not bring it in twice', async () => {
+    const { wires, disk, a, b } = twoWindows()
+    const inA = a.open(BASE)
+    const inB = b.open(BASE)
+    a.type(inA, 'ONE ')
+    await a.save(inA)
+    a.type(inA, 'TWO ')
+    await a.save(inA)
+    b.type(inB, 'BEE ')
+    await b.save(inB)
+    await wires.deliver()
+
+    for (const token of ['ONE ', 'TWO ', 'BEE ']) {
+      expect(count(disk.get(PATH) ?? '', token)).toBe(1)
+      expect(count(inA.latest, token)).toBe(1)
+      expect(count(inB.latest, token)).toBe(1)
+    }
+  })
+
+  test.each(Array.from({ length: 80 }, (_, seed) => seed))(
+    'three windows, seed %i: no word lost and none twice',
+    async (seed) => {
+      const pick = random(seed + 1)
+      const wires = channel()
+      const start = 'one\ntwo\nthree\nfour\nfive\n'
+      const disk = new Map([[PATH, start]])
+      const windows = [0, 1, 2].map(() => aWindow(wires.end(), disk))
+      const notes = windows.map((one) => one.open(start))
+      const tokens: string[] = []
+      const running: Promise<unknown>[] = []
+      const tick = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+      for (let step = 0; step < 30; step += 1) {
+        const at = pick(3)
+        const window = windows[at]
+        const note = notes[at]
+        if (!window || !note) continue
+        const move = pick(4)
+        if (move === 0) {
+          const token = `tk${String(tokens.length)}z`
+          tokens.push(token)
+          const lines = note.live.text.toString().split('\n')
+          const line = pick(lines.length)
+          const from = lines.slice(0, line).join('\n').length + (line ? 1 : 0)
+          note.live.edit([{ from, to: from, insert: `${token} ` }])
+          note.dirty = true
+        } else if (move === 1) {
+          running.push(window.save(note))
+        } else if (wires.flight.length) {
+          const [one] = wires.flight.splice(pick(wires.flight.length), 1)
+          one?.()
+        }
+        if (pick(2)) await tick()
+      }
+      await Promise.all(running)
+
+      // Everybody hears everything, in any order, and writes what they owe.
+      for (let round = 0; round < 12; round += 1) {
+        while (wires.flight.length) {
+          const [one] = wires.flight.splice(pick(wires.flight.length), 1)
+          one?.()
+          await tick()
+        }
+        await Promise.all(windows.map((one) => one.across.heardSoFar()))
+        await tick()
+        await Promise.all(windows.map((one, at) => (notes[at]?.dirty ? one.save(notes[at]) : 0)))
+        await tick()
+        await Promise.all(windows.map((one) => one.across.heardSoFar()))
+      }
+
+      const final = disk.get(PATH) ?? ''
+      for (const token of tokens) expect([token, count(final, token)]).toEqual([token, 1])
+      for (const note of notes) expect(note.latest).toBe(final)
+    },
+  )
+})
+
+describe('around one write', () => {
+  test('words that arrive while the disk is being read go down with it', async () => {
+    const { wires, disk, a, b } = twoWindows()
+    const inA = a.open(BASE)
+    const inB = b.open(BASE)
+    a.type(inA, 'FROM-A ')
+    await a.save(inA)
+    // B's save asked before it hears, A's news handled while B waits on its read.
+    b.type(inB, 'FROM-B ')
+    const saving = b.save(inB)
+    await wires.deliver()
+    await saving
+    await wires.deliver()
+    for (let round = 0; round < 3; round += 1) {
+      if (inB.dirty) await b.save(inB)
+      if (inA.dirty) await a.save(inA)
+      await wires.deliver()
+    }
+
+    expect(disk.get(PATH)).toContain('FROM-A')
+    expect(disk.get(PATH)).toContain('FROM-B')
+    expect(inA.latest).toBe(disk.get(PATH))
+    expect(inB.latest).toBe(disk.get(PATH))
+  })
+
+  test('a file that will not read is not an empty file: nothing doubles, and the write is refused', async () => {
+    const { disk, b } = twoWindows()
+    const inB = b.open(BASE)
+    b.type(inB, 'typed')
+    b.failRead(true)
+
+    await expect(b.save(inB)).rejects.toThrow()
+    expect(disk.get(PATH)).toBe(BASE)
+    expect(count(inB.latest, 'base line')).toBe(1)
+    b.failRead(false)
+    expect(await b.save(inB)).toBeTruthy()
+    expect(disk.get(PATH)).toBe(`${BASE}typed`)
+  })
+
+  test('a write racing a rename follows the note, and it does not go draft', async () => {
+    const { disk, b } = twoWindows()
+    const inB = b.open(BASE)
+    b.type(inB, 'typed')
+    disk.delete(PATH)
+    disk.set('/Notes/Moved.md', BASE)
+    // The rename's news comes while the write is out.
+    b.renamedSoon(inB, '/Notes/Moved.md')
+
+    expect(await b.save(inB)).toBeNull()
+    expect(inB.path).toBe('/Notes/Moved.md')
+    expect(b.owed).toEqual([inB])
+    expect(disk.has(PATH)).toBe(false)
   })
 })
