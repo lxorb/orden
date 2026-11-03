@@ -500,7 +500,7 @@ describe('an id that spells a path', () => {
 
     const moved = await send({ t: 'move', id: note, parent: '../../x', op: 'moved' })
     expect(moved.status).toBe(200)
-    expect((moved.json as OpsResponse).results[0]).toMatchObject({ refused: 'gone' })
+    expect((moved.json as unknown as OpsResponse).results[0]).toMatchObject({ refused: 'gone' })
     const { value } = await framed<FeedPage>(env, `/v2/spaces/${space}/feed`, token)
     expect(value.items.find((item) => item.id === note)?.parent).toBeNull()
   })
