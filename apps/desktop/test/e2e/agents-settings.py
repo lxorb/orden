@@ -54,18 +54,60 @@ def check(what: str, held: bool) -> None:
         wrong(what)
 
 
+#: Where to press a row: its middle, once that has stood still for a few looks and is the
+#: row a press there finds. Null after five seconds without that: a row covered, or still
+#: moving, is a failure rather than something to press anyway.
+STANDING = """
+(one) => new Promise((done) => {
+  const started = Date.now()
+  let was = ''
+  let same = 0
+  const look = () => {
+    const box = one.getBoundingClientRect()
+    const at = [box.x + box.width / 2, box.y + box.height / 2]
+    same = String(at) === was ? same + 1 : 0
+    was = String(at)
+    const found = one.contains(document.elementFromPoint(at[0], at[1]))
+    if (same >= 6 && found) done(at)
+    else if (Date.now() - started > 5000) done(null)
+    else setTimeout(look, 30)
+  }
+  look()
+})
+"""
+
+
+def press(page, row) -> None:
+    """A press on what is in the middle of the column, once it stands there. A click
+    scrolls what it presses into view by itself in Chromium; in WebKit it did not reach
+    into the sheet's column, or read the place off the column as it moved, and the column
+    does move: it is taken back to what the list's height allows a frame or two after
+    the list replaces an agent's page. The press landed below the window, on nothing, or
+    went down on one row and up on another, which is no click at all (#446)."""
+    row.evaluate("(one) => one.scrollIntoView({ block: 'center', behavior: 'instant' })")
+    quiet(page)
+    at = row.evaluate(STANDING)
+    if at is None:
+        raise SystemExit(f"nothing to press: {row} never stood still with nothing over it")
+    page.mouse.click(*at)
+
+
+def choose(page, name: str) -> None:
+    """Opens the agent of that name from the list, and it is that agent that opens."""
+    press(page, page.locator(".agents .agent", has_text=name))
+    page.wait_for_function(
+        "(name) => document.querySelector('.agents .who input.title')?.value === name",
+        arg=name,
+    )
+
+
 def switch(page, name: str) -> None:
-    """Presses the switch of that name, brought to the middle of the column first. A
-    click scrolls what it presses into view by itself in Chromium; in WebKit it did not
-    reach into the sheet's column, so the press landed below the window, on nothing,
-    and the switch never moved. Then until the switch says it moved, which is the
+    """Presses the switch of that name. Then until the switch says it moved, which is the
     grant written back through the crate's stand-in and drawn again: on a busy runner
     in WebKit that was now and then more than the 200 ms the drive used to give it."""
     row = page.locator(".agents [role=switch]", has_text=name)
-    row.evaluate("(one) => one.scrollIntoView({ block: 'center', behavior: 'instant' })")
-    quiet(page)
     was = row.get_attribute("aria-checked")
-    row.click()
+    press(page, row)
     moved = row.evaluate(
         "(one, was) => new Promise((done) => { const at = Date.now(); const look = () =>"
         " one.getAttribute('aria-checked') !== was ? done(true) : Date.now() - at > 5000 ?"
@@ -168,16 +210,14 @@ def look(browser, scheme: str, language: str) -> None:
     photograph("list")
 
     # Codex was granted no browser: no trifecta.
-    page.locator(".agents .agent", has_text="Codex").click()
-    page.wait_for_selector(".agents .who")
+    choose(page, "Codex")
     quiet(page)
     check(f"[{name}] no trifecta line on an agent with no browser", page.locator(".trifecta").count() == 0)
     page.locator(".agents .back").click()
     page.wait_for_selector(".agents .agent")
     quiet(page)
 
-    page.locator(".agents .agent", has_text="Claude Code").click()
-    page.wait_for_selector(".agents .who")
+    choose(page, "Claude Code")
     quiet(page)
     check(f"[{name}] the trifecta line is on the agent that reads and browses", page.locator(".trifecta").count() == 1)
     body_to(page, "top")

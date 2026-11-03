@@ -127,7 +127,7 @@ jobs:
       - name: The .deb, sway, Mesa and a session bus
         run: |
           sudo apt-get update
-          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder libnss3-tools
+          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus poppler-utils python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder libnss3-tools
       - name: Under Wayland, the portal's key reaching quick add
         env:
           OUT: wayland-out/portal
@@ -314,6 +314,26 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #483: a sign-in in a session cookie lasts across a restart.
+      - name: A web tab's session cookie is there after a restart, under sway
+        if: always()
+        env:
+          OUT: wayland-out/session
+          SESSION: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #483: Export PDF writes a file with pages and words, from a window nobody sees.
+      - name: Export PDF writes pages and words and nothing from the disk, under sway
+        if: always()
+        env:
+          OUT: wayland-out/pdf
+          EXPORTPDF: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #661: a press in a popup over a web tab's page chooses what it is on, and the
       # popup is not closed as though the press had been outside it; and the same on a
       # desktop scaled for X11 applications.
@@ -377,7 +397,7 @@ jobs:
       contents: read
     steps:
       - name: KWin, Xvfb and xdotool, as Fedora 44 has them
-        run: dnf install -y kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git ffmpeg-free python3-pillow
+        run: dnf install -y kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool xwd xmessage ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git ffmpeg-free python3-pillow
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -403,6 +423,17 @@ jobs:
           OUT: kwin-out/popups
           KWIN: '1'
           POPUP: '1'
+          NIB_CEF_SANDBOX: disabled
+        run: |
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
+      - name: A note dragged in the file list, and the interface zoomed, under KWin
+        if: always()
+        env:
+          OUT: kwin-out/page
+          KWIN: '1'
+          TREE: '1'
+          ZOOM: '1'
           NIB_CEF_SANDBOX: disabled
         run: |
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"

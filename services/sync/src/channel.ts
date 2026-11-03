@@ -7,12 +7,17 @@
  *  two builds can share the folder, and the edge keeps serving it without the Worker.
  *  Only the pages differ, and the pages are what this chooses between.
  *
- *  A browser asks for the edge with a cookie, `orden-channel=unstable`, and is served
+ *  A browser asks for the edge with a cookie, `__Host-orden-channel=unstable`, and is served
  *  the release without one. `?channel=unstable` and `?channel=stable` on any page of
  *  the app set and clear it and send the browser back to the same page without the
  *  parameter, which is the whole of the switch: Settings links there, and so can
  *  anyone with an address bar. The cookie is readable from the page on purpose,
  *  because the page is the one that shows which it is on.
+ *
+ *  `__Host-` because every published site is a name under the app's own root and may run
+ *  a script of its own, which may set a cookie for the whole root (#473). A browser takes
+ *  one with this prefix only from the hostname itself, and only over https; on plain
+ *  http, which is a machine running this for itself, the cookie has the old name.
  *
  *  The unstable build talks to this Worker, which is the release's, exactly as the
  *  unstable desktop builds do. See #424. */
@@ -20,8 +25,13 @@
 import { sameOriginPath } from './hosts'
 
 /** The cookie, its value for the edge, and the parameter that sets it. */
-const CHANNEL_COOKIE = 'orden-channel'
+const CHANNEL_COOKIE = '__Host-orden-channel'
+/** The name before the prefix, which browsers on the edge hold for a year. Read only
+ *  where the new one is not there, so anyone who has chosen since cannot be moved by one
+ *  set for the root; a browser that has not chosen still can be, until this goes. */
+const OLD_CHANNEL_COOKIE = 'orden-channel'
 const UNSTABLE = 'unstable'
+const STABLE = 'stable'
 const PARAMETER = 'channel'
 
 /** Where the deploy puts the unstable build's pages; nothing else knows this name. */
@@ -39,13 +49,18 @@ interface Assets {
 /** The channel a request asks for. Anything but the edge's own value is the release. */
 function channelOf(request: Request): Channel {
   const cookies = request.headers.get('cookie') ?? ''
+  const said = cookieIn(cookies, CHANNEL_COOKIE) ?? cookieIn(cookies, OLD_CHANNEL_COOKIE)
+  return said === UNSTABLE ? 'unstable' : 'stable'
+}
+
+/** The first value of one cookie in a `cookie` header. */
+function cookieIn(cookies: string, name: string): string | null {
   for (const part of cookies.split(';')) {
     const at = part.indexOf('=')
     if (at < 0) continue
-    if (part.slice(0, at).trim() !== CHANNEL_COOKIE) continue
-    return part.slice(at + 1).trim() === UNSTABLE ? 'unstable' : 'stable'
+    if (part.slice(0, at).trim() === name) return part.slice(at + 1).trim()
   }
-  return 'stable'
+  return null
 }
 
 /** `?channel=` on a page: the cookie set or cleared, and the same page again without
@@ -58,20 +73,30 @@ export function switchChannel(request: Request): Response | null {
   if (asked !== 'stable' && asked !== 'unstable') return null
 
   url.searchParams.delete(PARAMETER)
-  const secure = url.protocol === 'https:' ? '; Secure' : ''
-  const cookie =
-    asked === 'unstable'
-      ? `${CHANNEL_COOKIE}=${UNSTABLE}; Path=/; Max-Age=${KEPT_FOR}; SameSite=Lax${secure}`
-      : `${CHANNEL_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax${secure}`
-
-  return new Response(null, {
-    status: 302,
-    headers: {
-      location: sameOriginPath(url.pathname) + url.search,
-      'set-cookie': cookie,
-      'cache-control': 'no-store',
-    },
+  const headers = new Headers({
+    location: sameOriginPath(url.pathname) + url.search,
+    'cache-control': 'no-store',
   })
+
+  if (url.protocol !== 'https:') {
+    headers.append(
+      'set-cookie',
+      asked === 'unstable'
+        ? `${OLD_CHANNEL_COOKIE}=${UNSTABLE}; Path=/; Max-Age=${KEPT_FOR}; SameSite=Lax`
+        : `${OLD_CHANNEL_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`,
+    )
+    return new Response(null, { status: 302, headers })
+  }
+
+  // The release is said rather than cleared: with nothing under the new name, a cookie
+  // set for the root would be read next and put this browser back on the edge.
+  const value = asked === 'unstable' ? UNSTABLE : STABLE
+  headers.append(
+    'set-cookie',
+    `${CHANNEL_COOKIE}=${value}; Path=/; Max-Age=${KEPT_FOR}; SameSite=Lax; Secure`,
+  )
+  headers.append('set-cookie', `${OLD_CHANNEL_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax; Secure`)
+  return new Response(null, { status: 302, headers })
 }
 
 /** Whether a path is inside the unstable build's folder. Those are reached through the

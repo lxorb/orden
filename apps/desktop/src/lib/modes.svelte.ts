@@ -62,6 +62,13 @@ const STORAGE_KEY = 'nib:modes'
 const MOST_SPELL_WORDS = 500
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
 
+/** Settings > Appearance > Window > Zoom (#680), Chrome's own rungs: how large the whole
+ *  of the app is drawn, as VS Code's "Window: Zoom Level" and Slack's View > Zoom. The
+ *  crate keeps it on this device and applies it, being the engine's page zoom; see
+ *  src-tauri/src/page_scale.rs. Linux's CEF alone, the one engine that has been run with a
+ *  web tab under it; a browser has its own. */
+export const INTERFACE_ZOOMS = [0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2]
+
 /** How long the account keeps what a note said before, in days. A month, which
  *  is what it always kept, or a year. The same two the service takes; see
  *  services/sync/src/versions.ts. */
@@ -375,6 +382,7 @@ class Modes {
   strict = $state(DEFAULTS.strict)
   equationNumbers = $state(DEFAULTS.equationNumbers)
   zoom = $state(DEFAULTS.zoom)
+  interfaceZoom = $state(1)
   width = $state(DEFAULTS.width)
   lineHeight = $state(DEFAULTS.lineHeight)
   /** The webview's own spell checker, over the writing surface. On, because a
@@ -701,6 +709,21 @@ class Modes {
     this.alwaysOnTop = !this.alwaysOnTop
     this.applyAlwaysOnTop()
     this.persist()
+  }
+
+  /** The zoom the crate keeps, asked for as Settings is drawn. */
+  async askInterfaceZoom() {
+    this.interfaceZoom = await invoke<number>('interface_zoom_chosen')
+  }
+
+  /** Worn once the crate has kept and applied it: a refusal is the disk's, nothing has
+   *  changed, and the row goes on showing the zoom that is in force. */
+  async setInterfaceZoom(factor: number) {
+    await invoke('interface_zoom_choose', { factor })
+      .then(() => {
+        this.interfaceZoom = factor
+      })
+      .catch(() => undefined)
   }
 
   /** Tells the window. A refusal is the window manager's answer and there is

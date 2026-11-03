@@ -1535,6 +1535,7 @@ export const ru: Dictionary = {
   'The note': 'Заметка',
   '{space} panel': 'Панель пространства {space}',
   'Panel width': 'Ширина панели',
+  'Pane size': 'Размер области',
   Values: 'Значения',
   Pages: 'Страницы',
   'Page {number} of {count}': 'Страница {number} из {count}',
@@ -2600,6 +2601,8 @@ export const ru: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Собственная строка заголовка Orden или рамка окна вашей системы.',
   'How large the text of notes is.': 'Размер текста заметок.',
+  'How large all of Orden is drawn on this device.':
+    'Насколько крупно отображается весь Orden на этом устройстве.',
   'The space between the lines of a note.': 'Расстояние между строками заметки.',
   'How wide a line of a note grows before it wraps.':
     'До какой ширины растёт строка заметки, прежде чем перенестись.',
@@ -2754,6 +2757,8 @@ export const ru: Dictionary = {
   'Move the chat': 'Переместить чат',
   'Only the file': 'Только файл',
   'Trust this space again': 'Снова доверять этому пространству',
+  'Agent instructions': 'Инструкции для агентов',
+  "AGENTS is this space's agent instructions": 'AGENTS: инструкции для агентов этого пространства',
   '{title}, unread': '{title}, не прочитано',
   '{title}, running': '{title}, выполняется',
 }

@@ -11,7 +11,7 @@
  *  text carries a mark saying it came from here, and a change that arrives is
  *  applied to the note in the way the note does not report back. */
 
-import type { ChangeSet, SharedDoc } from '@orden/editor'
+import type { ChangeSet, SharedDoc, Text } from '@orden/editor'
 import type { Replacement } from '@orden/rooms/fold'
 import * as Y from 'yjs'
 import { HERE } from './door'
@@ -82,16 +82,36 @@ export function replace(text: Y.Text, change: Replacement) {
   if (change.insert) text.insert(change.from, change.insert)
 }
 
+/** The code unit at `at`, or nought past either end. */
+function unit(words: Text, at: number): number {
+  return at < 0 || at >= words.length ? 0 : words.sliceString(at, at + 1).charCodeAt(0)
+}
+
 /** A change set as the same edits, made to the shared text.
  *
  *  Each is applied at the place it names plus however much the ones before it
  *  moved the text along, because the positions are all in terms of the note as it
- *  was before any of them. */
-function apply(text: Y.Text, changes: ChangeSet) {
+ *  was before any of them.
+ *
+ *  `words` is the text as it reads after them. A change can begin or end between the
+ *  halves of a character and still leave a whole one, an emoji swapped for its
+ *  neighbour by its second half, and Yjs cut there writes U+FFFD over both halves
+ *  (#545). So a half kept beside the change goes in with it, and the shared text is
+ *  only ever cut between characters. */
+function apply(text: Y.Text, changes: ChangeSet, words: Text) {
   let adjust = 0
 
-  changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
-    replace(text, { from: fromA + adjust, to: toA + adjust, insert: inserted.toString() })
+  changes.iterChanges((fromA, toA, fromB, toB) => {
+    const before = unit(words, fromB - 1)
+    const after = unit(words, toB)
+    const front = before >= 0xd800 && before <= 0xdbff ? 1 : 0
+    const back = after >= 0xdc00 && after <= 0xdfff ? 1 : 0
+
+    replace(text, {
+      from: fromA + adjust - front,
+      to: toA + adjust + back,
+      insert: words.sliceString(fromB - front, toB + back),
+    })
     adjust += toB - fromB - (toA - fromA)
   })
 }
@@ -116,7 +136,7 @@ export function bind(note: SharedDoc, text: Y.Text, holds: () => boolean): () =>
       return
     }
 
-    doc.transact(() => apply(text, changes), HERE)
+    doc.transact(() => apply(text, changes, note.roomWords), HERE)
   }
 
   const heard = (event: Y.YTextEvent, transaction: Y.Transaction) => {

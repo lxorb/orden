@@ -1474,6 +1474,7 @@ export const ml: Dictionary = {
   'The note': 'കുറിപ്പ്',
   '{space} panel': '{space} പാനൽ',
   'Panel width': 'പാനൽ വീതി',
+  'Pane size': 'പെയിൻ വലിപ്പം',
   Values: 'മൂല്യങ്ങൾ',
   Pages: 'പേജുകൾ',
   'Page {number} of {count}': '{count}ൽ {number} പേജ്',
@@ -2543,6 +2544,8 @@ export const ml: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden-ന്റെ സ്വന്തം ടൈറ്റിൽ ബാർ, അല്ലെങ്കിൽ നിങ്ങളുടെ സിസ്റ്റത്തിന്റെ വിൻഡോ ഫ്രെയിം.',
   'How large the text of notes is.': 'കുറിപ്പുകളിലെ എഴുത്ത് എത്ര വലുതാണ് എന്നത്.',
+  'How large all of Orden is drawn on this device.':
+    'ഈ ഉപകരണത്തിൽ Orden മുഴുവൻ എത്ര വലുതായി കാണിക്കുന്നു.',
   'The space between the lines of a note.': 'ഒരു കുറിപ്പിലെ വരികൾക്കിടയിലുള്ള അകലം.',
   'How wide a line of a note grows before it wraps.':
     'ഒരു കുറിപ്പിലെ വരി അടുത്ത വരിയിലേക്ക് മടങ്ങുന്നതിന് മുമ്പ് എത്ര വീതിയിൽ വളരുന്നു എന്നത്.',
@@ -2697,6 +2700,8 @@ export const ml: Dictionary = {
   'Move the chat': 'ചാറ്റ് നീക്കുക',
   'Only the file': 'ഫയൽ മാത്രം',
   'Trust this space again': 'ഈ സ്പേസിനെ വീണ്ടും വിശ്വസിക്കുക',
+  'Agent instructions': 'ഏജന്റ് നിർദ്ദേശങ്ങൾ',
+  "AGENTS is this space's agent instructions": 'AGENTS ഈ സ്പേസിന്റെ ഏജന്റ് നിർദ്ദേശങ്ങളാണ്',
   '{title}, unread': '{title}, വായിക്കാത്തത്',
   '{title}, running': '{title}, പ്രവർത്തിക്കുന്നു',
 }

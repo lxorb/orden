@@ -5,9 +5,8 @@ import { root, watch } from './runes.svelte'
 /** A space's own tabs, on the real workspace: every space keeps its own (#674), a switch
  *  swaps them in one step, and a tab of a set out of sight comes forward with its space.
  *
- *  In the effects project because the store follows the list of spaces with an effect
- *  (a deleted space takes its set with it), and because "the first frame is the new
- *  set" is a question about what a watcher sees. The disk is a map; see test/disk.ts. */
+ *  In the effects project because "the first frame is the new set" is a question about
+ *  what a watcher sees. The disk is a map; see test/disk.ts. */
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
@@ -32,9 +31,9 @@ const { Disk } = await import('../disk')
 disk.current = new Disk()
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-// The sets' store, fetched as the app fetches it with the first switch; it follows the
-// list of spaces from then on.
+// The sets' store, fetched as the app fetches it with the first switch.
 await import('../../src/lib/workspace/sets.svelte')
+const { deleteSpace } = await import('../../src/lib/workspace/space-changes')
 const { pane } = await import('../../src/lib/workspace/pane-tree')
 
 const PLAN = '/spaces/Work/Plan.md'
@@ -202,7 +201,7 @@ describe('what is open in a set out of sight', () => {
     await workspace.showSpace('home')
     expect(workspace.tabs).toHaveLength(2)
 
-    workspace.spaces = workspace.spaces.filter((one) => one.id !== 'work')
+    await deleteSpace(workspace, 'work')
     flushSync()
     expect(workspace.tabs).toHaveLength(0)
   })

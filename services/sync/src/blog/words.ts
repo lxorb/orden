@@ -72,6 +72,6 @@ export async function keepWords(
 }
 
 /** And takes it out again, for a note that has gone for good. */
-export async function forgetWords(env: Env, noteId: string): Promise<void> {
-  await env.DB.prepare('delete from note_search where note_id = ?').bind(noteId).run()
+export function forgetWords(env: Env, noteId: string): D1PreparedStatement {
+  return env.DB.prepare('delete from note_search where note_id = ?').bind(noteId)
 }

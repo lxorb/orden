@@ -8,7 +8,7 @@ import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import type { Space } from '../workspace.svelte'
-import { type HoldsSpaces, selectSpace } from './spaces'
+import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 
 /** Creates a space folder under the one the app owns. The name is the only
  *  thing asked for; where it lives is not a decision worth making. */
@@ -130,15 +130,34 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   // workspace/file-ops.ts.
   await ws.fileGone(space.root, 'space')
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
-  if (ws.activeSpaceId !== id) {
-    ws.persist()
-    return
-  }
+  // The sets, fetched after the list so the shared set of older builds is not given to
+  // this space, and before the space on screen changes, since by the switch below they
+  // would take what is left of its tabs for the next space's. See `selectSpace`.
+  const fetched =
+    tabSets.fetched || ws.setsRead !== undefined || ws.tabs.length
+      ? (await import('./sets.svelte')).sets
+      : null
 
-  ws.activeSpaceId = ws.spaces[0]?.id ?? null
-  ws.tree = null
-  if (ws.activeSpaceId) await selectSpace(ws, ws.activeSpaceId)
-  else ws.persist()
+  if (ws.activeSpaceId === id) {
+    ws.activeSpaceId = ws.spaces[0]?.id ?? null
+    ws.tree = null
+    if (ws.activeSpaceId) await selectSpace(ws, ws.activeSpaceId)
+  }
+  await fetched?.gone(id)
+  ws.persist()
+}
+
+/** Whether what runs in a space's terminals may stop with it: the question closing their
+ *  tabs asks, since the question before a delete speaks only of its notes. */
+export async function mayEndSpace(ws: HoldsSpaces, id: string): Promise<boolean> {
+  const tabs = tabSets.fetched
+    ? (await import('./sets.svelte')).sets.tabsOf(id)
+    : ws.activeSpaceId === id
+      ? ws.tabs
+      : []
+  if (!tabs.some((tab) => tab.kind === 'terminal')) return true
+  const { mayEnd } = await import('../terminal/closing')
+  return await mayEnd(tabs)
 }
 
 /** Whether the account's Recently deleted would give back everything in a space, so

@@ -1342,6 +1342,29 @@ describe('searching a site', () => {
     expect(response.text).toContain('href="/found"')
   })
 
+  /** A purged note's words may outlive it in the index until the sweep comes back for
+   *  them (see `purgeNote`), so what answers a search is the pages, not the index. */
+  test('shows nothing of a purged note whose words are still in the index', async () => {
+    const note = (await addNote('gone.md', '# Gone\n\nA paragraph about hedgehogs.\n')).json.note
+    await addNote('kept.md', '# Kept\n\nAnother one about hedgehogs.\n')
+    await publish({ subdomain: 'field' })
+    await call(env, `/v1/notes/${note.id}`, { method: 'DELETE', token })
+    await call(env, `/v1/trash/notes/${note.id}`, { method: 'DELETE', token })
+    env.db
+      .prepare(
+        `insert into note_search (note_id, space_id, path, title, body)
+         values (?, ?, 'gone.md', 'Gone', 'A paragraph about hedgehogs')`,
+      )
+      .run(note.id, space)
+
+    const response = await call(env, '/search?q=hedgehogs', { host: 'field.nibeditor.com' })
+
+    expect(response.text).toContain('href="/kept"')
+    expect(response.text).not.toContain('href="/gone"')
+    expect(response.text).not.toContain('A <mark>paragraph')
+    expect(response.text).not.toContain('paragraph about')
+  })
+
   test('and a tag a note only half wrote is still words', async () => {
     // Half a tag, because the index strips whole ones: the page's own `</span>`
     // after it was what used to close this one.

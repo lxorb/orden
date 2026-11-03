@@ -17,7 +17,7 @@
 //! the plugin's own commands.
 
 use serde::Serialize;
-use tauri::{Manager, ResourceId, Runtime, Url, Webview};
+use tauri::{Manager, ResourceId, Url, Webview};
 use tauri_plugin_updater::UpdaterExt;
 
 /// The channel that follows every push to main, and the name the window asks for
@@ -166,11 +166,13 @@ fn endpoints(channel: &str) -> Option<Vec<Url>> {
 /// below `0.6.1` and stays where it is until a release passes it. See
 /// `scripts/build-version.sh`.
 #[tauri::command]
-pub async fn check_update<R: Runtime>(
-    webview: Webview<R>,
-    channel: String,
-) -> Result<Option<Found>, String> {
-    let mut builder = webview.updater_builder();
+pub async fn check_update(webview: Webview, channel: String) -> Result<Option<Found>, String> {
+    let (app, label) = (webview.app_handle().clone(), webview.label().to_owned());
+    // On Windows the install ends the process; see `before_installer`. The update belongs
+    // to this window, so this is the window that installs it.
+    let mut builder = webview
+        .updater_builder()
+        .on_before_exit(move || crate::lifecycle::before_installer(&app, &label));
 
     if let Some(endpoints) = endpoints(&channel) {
         builder = builder

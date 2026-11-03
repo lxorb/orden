@@ -73,6 +73,7 @@ const NIB_FIELDS = new Set([
   'locked',
   'at',
   'gone',
+  'moved',
   'outside',
 ])
 

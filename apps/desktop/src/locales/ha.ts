@@ -1478,6 +1478,7 @@ export const ha: Dictionary = {
   'The note': 'Bayanin kula',
   '{space} panel': 'Fanon {space}',
   'Panel width': 'Faɗin fanon',
+  'Pane size': 'Girman fanon',
   Values: 'Darajoji',
   Pages: 'Shafuka',
   'Page {number} of {count}': 'Shafi {number} daga {count}',
@@ -2544,6 +2545,8 @@ export const ha: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Sandar take ta Orden kanta, ko firam ɗin taga na tsarinka.',
   'How large the text of notes is.': 'Girman rubutun bayanan kula.',
+  'How large all of Orden is drawn on this device.':
+    'Yadda Orden gaba ɗaya yake da girma a wannan na’ura.',
   'The space between the lines of a note.': 'Tazarar da ke tsakanin layukan bayanin kula.',
   'How wide a line of a note grows before it wraps.':
     'Faɗin da layin bayanin kula ke kaiwa kafin ya naɗe.',
@@ -2699,6 +2702,8 @@ export const ha: Dictionary = {
   'Move the chat': 'Matsar da hirar',
   'Only the file': 'Fayil kaɗai',
   'Trust this space again': 'Sake amincewa da wannan wuri',
+  'Agent instructions': 'Umarnin wakilai',
+  "AGENTS is this space's agent instructions": 'AGENTS shine umarnin wakilai na wannan wuri',
   '{title}, unread': '{title}, ba a karanta ba',
   '{title}, running': '{title}, yana gudana',
 }

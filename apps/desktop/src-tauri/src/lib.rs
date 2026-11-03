@@ -217,7 +217,7 @@ mod web_certificate;
 // on a Mac.
 #[cfg(desktop)]
 mod web_clear;
-#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+#[cfg(any(windows, target_os = "macos", feature = "cef"))]
 mod web_cookies;
 #[cfg(desktop)]
 mod web_cut;
@@ -271,6 +271,9 @@ mod kept;
 // Which DNS the web tabs' pages look names up with (#766, #767); see secure_dns.rs.
 #[cfg(desktop)]
 mod secure_dns;
+// A drag out of the app's own page, which the page runs itself on Linux; see page_drag.rs.
+#[cfg(desktop)]
+mod page_drag;
 // How large the app's pages are drawn, and where a web tab's page goes; see
 // page_scale.rs.
 #[cfg(desktop)]
@@ -478,6 +481,8 @@ macro_rules! desktop_commands {
             secure_dns::dns_choose,
             gpu::gpu_line,
             page_scale::page_scale_seen,
+            page_scale::interface_zoom_chosen,
+            page_scale::interface_zoom_choose,
             page_scheme::page_scheme_seen,
             spelling::spell_languages,
             fonts::font_families,
@@ -504,6 +509,9 @@ macro_rules! desktop_commands {
             lifecycle::quit_confirmed,
             lifecycle::quit_others,
             lifecycle::quit_show,
+            lifecycle::update_install_failed,
+            lifecycle::update_may_install,
+            lifecycle::update_settled,
             document_window::show_document,
             menu_bar::hand_to_keyboard,
             placement::take_keyboard,
@@ -795,6 +803,21 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // in about twenty milliseconds and the webview starts behind it. See ground.rs.
     #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
+
+    // A web tab's page whose process died, on the two engines that say so to the app rather
+    // than to the page; see web_page.rs. CEF has no word for a normal end (its termination
+    // status starts at abnormal), and its killed is somebody else's doing, an out of memory
+    // killer or a task manager: closing a page says nothing here. A page the window has
+    // taken away is not live by then either; see `ended` in pages.svelte.ts.
+    #[cfg(feature = "cef")]
+    let builder = builder.on_web_content_process_terminate(|view, ended| {
+        use tauri::webview::WebContentProcessTerminationReason as Reason;
+        if !matches!(ended.reason, Reason::Normal) {
+            web_page::ended(view);
+        }
+    });
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    let builder = builder.on_web_content_process_terminate(web_page::ended);
 
     #[cfg(desktop)]
     let builder = builder.setup(move |app| ready(app, ui.as_ref()));

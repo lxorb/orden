@@ -661,6 +661,7 @@ class Sync {
       // as a move made here: the open tab, the links, the rows. Waited on, so each
       // hears the steps in the order they were made. The account made the move, so it
       // is not told it back: `follow` leaves out what is in `pulling`.
+      holdingWrites: (from, run, stalled) => workspace.holdingWrites(from, run, stalled),
       moved: async (from, to) => {
         const key = `${from}\n${to}`
         this.pulling.add(key)
@@ -810,7 +811,18 @@ class Sync {
 
       // Each page note's paper goes where the note goes (#551); not waited for.
       void import('./pages/carrying').then(({ carryNow, mirroredPages }) =>
-        carryNow(() => mirroredPages(Object.values(this.mirrors), (id) => this.reads(id))),
+        carryNow(
+          () => mirroredPages(Object.values(this.mirrors), (id) => this.reads(id)),
+          (note, failed) =>
+            record.wrote({
+              at: Date.now(),
+              space: note.space,
+              pulled: 0,
+              pushed: 0,
+              clashed: 0,
+              failed,
+            }),
+        ),
       )
 
       // Nothing else re-reads the folder for notes that arrived from another

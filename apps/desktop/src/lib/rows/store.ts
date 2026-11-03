@@ -18,6 +18,7 @@
 import type { Row } from '@orden/bases'
 import type { ScannedNote, SpaceLinks } from '../scan-note'
 import { scanNote } from '../scan-note'
+import { AGENTS_NAME } from '../note-name'
 import { scanRows } from '@orden/bases/scan'
 import { insideSpace, isMarkdownPath, pathKey, samePath, within } from '../space-paths'
 import { type FileOp } from '../workspace/file-ops'
@@ -194,6 +195,8 @@ export class RowsStore {
 
   /** A note's rows, read the way its space reads a task's dates. */
   private rowsIn(held: Held, read: NoteRead): Row[] {
+    // The file at the top of a space that its settings edit, and no row of any view.
+    if (samePath(read.path, AGENTS_NAME, held.root)) return []
     const rows = rowsOf(held.name, read)
     if (held.vault) for (const row of rows) if (row.task) row.task.dueReads = 'deadline'
     return rows

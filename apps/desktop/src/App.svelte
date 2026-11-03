@@ -5,7 +5,7 @@
   import { moveSection } from './lib/sections'
   import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
-  import { takesCaret } from './lib/caret'
+  import { keyboardStays, takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
   import { iconChoice } from './lib/icon-choice.svelte'
   import { menu, textFieldOf } from './lib/menu.svelte'
@@ -874,7 +874,7 @@
         touch: viewport.touch,
       })
 
-      if (may) current.focus()
+      if (may && !keyboardStays()) current.focus()
     })
 
     return () => cancelAnimationFrame(frame)
@@ -1147,16 +1147,18 @@
              enough to be waited for draws a line along the top of them. -->
         <div class="panes" data-panes class:under-pad={padOver} inert={padOver}>
           <Progress />
+          <!-- What the app says about itself, over the foot of the panes rather than
+               shoving them up (#218); a web page is cut round it (web-tab/covers.ts).
+               Ahead of the panes in the page and only there, since it is placed by hand:
+               Tab stays in a note it reaches, so a card after one was out of reach (#523). -->
+          {#if !viewport.drawer}
+            {@render notices()}
+          {/if}
           <PaneTree frame={workspace.panes.frame} />
           <!-- The note the window was left on, as it was left, until its editor is up;
                see first-screen.svelte.ts. Not on a pair of glasses. -->
           {#if !__EVEN_PLUGIN__}
             <FirstScreen />
-          {/if}
-          <!-- What the app says about itself, over the foot of the panes rather than
-               shoving them up (#218); a web page is cut round it (web-tab/covers.ts). -->
-          {#if !viewport.drawer}
-            {@render notices()}
           {/if}
         </div>
 

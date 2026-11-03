@@ -13,6 +13,8 @@ space does, with no choice to make. What this presses and looks at:
     never both and never neither.
   * **A restart**: the page loaded again comes back on Notes' split, and Home still has
     its own.
+  * **Deleted on screen** (#786): Home deleted while it shows a web tab takes that tab with
+    it, and it does not come back with the restart.
 
 Pausing a page out of sight is a native engine's, so that half is
 `scripts/space-tabs-probe.py`.
@@ -218,6 +220,29 @@ def drive(browser: Browser) -> None:
         if mixed or not names:
             wrong(f"a frame of the switch showed {names or 'no tabs at all'}")
             break
+    page.context.close()
+
+    # The space on screen deleted: its web tab, which no file closes, goes with it.
+    page, ids = opened(browser, "light")
+    switch(page, "Home")
+    page.evaluate("() => window.nibApp.workspace.openWebsite()")
+    wait_for(page, "window.nibApp.workspace.tabs.some((tab) => tab.kind === 'web')", "a web tab in Home")
+    page.evaluate(f"() => window.nibApp.workspace.deleteSpace({json.dumps(ids['home'])})")
+    wait_for(
+        page,
+        f"window.nibApp.workspace.activeSpaceId === {json.dumps(ids['notes'])}",
+        "Notes on screen after Home is deleted",
+    )
+    left = "window.nibApp.workspace.tabs.filter((tab) => tab.kind === 'web').length"
+    if page.evaluate(left) != 0:
+        wrong("a web tab of the deleted space stayed open out of sight")
+    page.evaluate("() => window.nibApp.workspace.persist()")
+    page.reload(wait_until="domcontentloaded")
+    DRIVE.ready(page)
+    wait_for(page, "window.nibApp.workspace.restored", "the session")
+    wait_for(page, "window.nibApp.workspace.panes.count === 2", "Notes' split after the restart")
+    if page.evaluate(left) != 0:
+        wrong("a web tab of the deleted space came back with the restart")
     page.context.close()
 
     # The menu in the dark.

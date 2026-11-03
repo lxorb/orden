@@ -33,7 +33,7 @@ import {
   withinSpace,
 } from './space-paths'
 import { t } from './i18n.svelte'
-import { nameFromContent, shownName } from './note-name'
+import { AGENTS_NAME, isAgentsName, nameFromContent, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
@@ -117,6 +117,13 @@ import { plainOrigin } from './web-tab/address'
 import { apartOf, readWebFile } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
+
+/** Whether a path is the AGENTS.md at the top of the space at `root`: one file, however
+ *  it is spelled, on a disk that sets case aside, and on one that does not, the spelling
+ *  agents read, with an `agents.md` beside it a note of its own. */
+function isInstructions(root: string, path: string): boolean {
+  return samePath(path, joinPath(root, AGENTS_NAME), root)
+}
 
 export interface Entry {
   name: string
@@ -453,7 +460,22 @@ class Workspace {
 
   get leftOut(): string[] {
     const root = this.activeSpace?.root
-    return root === undefined ? [] : this.leftOutOf(root)
+    return root === undefined ? [] : [...this.leftOutOf(root), this.instructionsName(root)]
+  }
+
+  /** The file at the top of a space as what leaves it out of a search has to say it, which
+   *  is by the exact name: as the listing spells it, where that is the space listed. */
+  instructionsName(root: string): string {
+    const tree = samePath(this.tree?.path, root) ? this.tree : null
+    const listed = tree?.children.find((one) => !one.is_dir && isInstructions(root, one.path))
+    return listed?.name ?? AGENTS_NAME
+  }
+
+  /** Whether a path is a space's AGENTS.md: the file at its top that its settings edit,
+   *  spelled as agents read it. One in a folder is a note like any other. */
+  instructionsAt(path: string): boolean {
+    const root = this.rootHolding(path)
+    return root !== null && isInstructions(root, path)
   }
   /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
   private readonly picked = new Selection()
@@ -483,6 +505,7 @@ class Workspace {
     // operation does names one of them. The open documents first, so that anything
     // asking about a note between two followers already meets its new path.
     this.fileOps.follow((op) => this.opened.follow(op, (id) => this.close(id)))
+    this.fileOps.follow((op) => this.saving.follow(op))
     this.fileOps.follow((op) => this.positions.follow(op))
     this.fileOps.follow((op) => this.device.follow(op))
     this.fileOps.follow((op) => this.closed.follow(op))
@@ -708,7 +731,10 @@ class Workspace {
       }
     }
     if (this.tree) walk(this.tree)
-    return out
+    // Not the space's AGENTS.md, which is a setting; `tree` still holds it, and that is
+    // what sync, an agent's listing and every lookup by path read.
+    const root = this.tree?.path
+    return root === undefined ? out : out.filter((one) => !isInstructions(root, one.path))
   })
 
   /** The notes among them. What everything that means words asks for: which note
@@ -737,7 +763,9 @@ class Workspace {
       this.tree && arriving.coming.size ? withComing(this.tree, [...arriving.coming]) : this.tree
     if (!coming) return null
 
-    return orderedTree(this.unkept(this.unarchived(coming)), this.sortMode, (folder) =>
+    const root = coming.path
+    const listed = withoutRows(coming, (entry) => !entry.is_dir && isInstructions(root, entry.path))
+    return orderedTree(this.unkept(this.unarchived(listed)), this.sortMode, (folder) =>
       this.arranged.listOf(folder),
     )
   })
@@ -976,6 +1004,13 @@ class Workspace {
         if (isScratchpad(draft.path)) {
           if (draft.dirty && draft.path)
             await writeFile(draft.path, draft.doc).catch(() => undefined)
+          made.push(null)
+          continue
+        }
+
+        // The space's AGENTS.md is its settings' now, so a clean tab of it goes. One with
+        // words unsaved is put back as it was, and is written and closed like any other.
+        if (draft.path && !draft.dirty && this.instructionsAt(draft.path)) {
           made.push(null)
           continue
         }
@@ -2870,6 +2905,15 @@ class Workspace {
       scratchpad.show()
       return
     }
+    // Nor the space's AGENTS.md: its field, the way the scratchpad is its card. A tab an
+    // earlier version left with words unsaved is still that tab.
+    if (this.instructionsAt(path) && !this.opened.at(path)) {
+      if (options.activate !== false) {
+        const root = this.rootHolding(path)
+        if (root !== null) (await import('./reserved-name.svelte')).openInstructions(root)
+      }
+      return
+    }
 
     // One open of a file at a time, whoever asked: a second click on the row, a link
     // followed twice, a note clicked while the session is still reading that very
@@ -3125,6 +3169,16 @@ class Workspace {
     const note = this.document({ kind: 'note', path, name: nameOf(path), text, dirty: false })
     tab.note = note
     return note
+  }
+
+  /** A zoom row or key with a page in front is the page's size, as in Chrome: true where it
+   *  was, and false where it is the words' size as it is anywhere else. */
+  zoomPage(step: 'in' | 'out' | 'reset'): boolean {
+    const tab = this.active
+    if (tab?.kind !== 'web' || !pages.of(tab.id).live) return false
+
+    void import('./web-tab/zoom').then((one) => one.zoomStep(tab.id, pages.of(tab.id), step))
+    return true
   }
 
   /** One step back, and one step on - or, for an arrow pressed with the middle button
@@ -3477,7 +3531,10 @@ class Workspace {
    *  has since been archived. */
   get recent(): string[] {
     return this.device.recent.filter(
-      (path) => !this.outside(path) && !(this.archive.any && this.archive.has(path)),
+      (path) =>
+        !this.outside(path) &&
+        !this.instructionsAt(path) &&
+        !(this.archive.any && this.archive.has(path)),
     )
   }
 
@@ -3597,7 +3654,19 @@ class Workspace {
     return root ? linkedFiles(this.tree, root, carriedRows(transfer)) : []
   }
 
-  async moveMany(paths: string[], intoFolder: string) {
+  async moveMany(paths: string[], intoFolder: string, undoing = false) {
+    // A note called AGENTS in a folder stays one, and moves between folders; at the top
+    // of a space it would stop being a note and become the setting. Only an Undo puts one
+    // back; see `movedIn` in automation/acts.ts, which refuses an agent's the same way.
+    if (
+      !undoing &&
+      paths.some((path) => isAgentsName(nameOf(path))) &&
+      this.spaces.some((one) => samePath(one.root, intoFolder))
+    ) {
+      void import('./reserved-name.svelte').then((one) => one.reservedName.tell(intoFolder))
+      this.clearSelection()
+      return
+    }
     // All or nothing, and before the folder a drop on a note makes: a move that left
     // half a selection behind, or nested a note it then put nothing in, is not one
     // anybody asked for. `move` refuses each of them as well.
@@ -4084,6 +4153,8 @@ class Workspace {
       wanted,
       (candidate) =>
         has(candidate) ||
+        // No new note takes the name, whatever words it came from; see `isAgentsName`.
+        isAgentsName(candidate) ||
         (/\.pages$/i.test(candidate) && has(`${candidate}.pdf`)) ||
         (/\.pages\.pdf$/i.test(candidate) && has(candidate.slice(0, -'.pdf'.length))),
     )
@@ -4262,6 +4333,12 @@ class Workspace {
    *  workspace/saving.svelte.ts. */
   holdingUnder(path: string, run: () => Promise<void>): Promise<void> {
     return this.saving.holdingUnder(path, run)
+  }
+
+  /** A move sync makes of everything open at or under `path`; see `holdingWrites` in
+   *  workspace/saving.svelte.ts. */
+  holdingWrites<T>(path: string, run: () => Promise<T>, stalled: () => Promise<T>): Promise<T> {
+    return this.saving.holdingWrites(path, run, stalled)
   }
 
   /** One file under another name in the same folder, and everything that owes: the
@@ -4709,6 +4786,11 @@ class Workspace {
     if (await onDisk(path)) return path
 
     if (!(await this.writableAt(path))) return null
+    // What nobody may name a note, a link cannot either; see `isAgentsName`.
+    if (isAgentsName(nameOf(path))) {
+      void import('./reserved-name.svelte').then((one) => one.reservedName.tell(root))
+      return null
+    }
     const content = `# ${noteName(relative)}\n\n`
     await writeFile(path, content)
     await this.loadTree()
@@ -5071,7 +5153,7 @@ class Workspace {
    *  ordinary open. */
   async openAside(path: string) {
     const from = this.panes.focusedId
-    if (viewport.touch || !this.panes.splittable('row', from)) {
+    if (viewport.touch || this.instructionsAt(path) || !this.panes.splittable('row', from)) {
       await this.openEntry(path)
       return
     }

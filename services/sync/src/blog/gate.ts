@@ -37,6 +37,13 @@ const LASTS = 30 * 24 * 60 * 60 * 1000
  *  own; a browser takes one by this name only from the hostname itself. */
 const TICKET = '__Host-nib_site'
 
+/** What the cookie was called until 2026-10, when readers already held a month's tickets
+ *  under it. Still read, and never set, so they are not asked again before those run
+ *  out; it can go once the rename has been deployed for a month. Any script
+ *  under the root can set one, so where this name is concerned the first value says
+ *  nothing and each is asked: see `ticketsIn`. */
+const OLD_TICKET = 'nib_site'
+
 /** How hard the hash is to try. A hundred thousand rounds of PBKDF2 is what a
  *  Worker can do inside one request and what a password guesser cannot do a
  *  million times. The tests hash at less; see rounds.ts. */
@@ -102,7 +109,7 @@ export async function newTicket(held: SitePassword, at: number): Promise<string>
 }
 
 /** Whether a ticket is this site's, and still good. */
-export async function ticketHolds(
+async function ticketHolds(
   held: SitePassword,
   ticket: string | null,
   at: number,
@@ -123,16 +130,33 @@ export function ticketCookie(ticket: string): string {
   return `${TICKET}=${ticket}; Path=/; Max-Age=${seconds}; HttpOnly; Secure; SameSite=Lax`
 }
 
-/** The ticket a request carries, if it carries one. */
-export function ticketIn(header: string | null): string | null {
-  if (!header) return null
+/** The tickets a request carries, the one under today's name first. More than one is
+ *  somebody's cookie for the root beside the reader's own; a ticket is signed with the
+ *  site's key, so asking about each lets in nobody the site has not. */
+function ticketsIn(header: string | null): string[] {
+  const current: string[] = []
+  const old: string[] = []
 
-  for (const part of header.split(';')) {
+  for (const part of (header ?? '').split(';')) {
     const [name, ...rest] = part.trim().split('=')
-    if (name === TICKET) return rest.join('=') || null
+    const value = rest.join('=')
+    if (name === TICKET && value) current.push(value)
+    if (name === OLD_TICKET && value) old.push(value)
   }
 
-  return null
+  return [...current, ...old]
+}
+
+/** Whether a request carries a ticket that is this site's, and still good. */
+export async function letIn(
+  held: SitePassword,
+  header: string | null,
+  at: number,
+): Promise<boolean> {
+  for (const ticket of ticketsIn(header)) {
+    if (await ticketHolds(held, ticket, at)) return true
+  }
+  return false
 }
 
 /** The form, which is the whole page a reader who has not been let in sees.

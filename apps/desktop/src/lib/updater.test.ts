@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { GIVE_UP } from './parting'
 
 /** The look for a new version where a package manager keeps the install: the version
  *  is found, and nothing is fetched, because the manager installs it. See
@@ -10,13 +11,21 @@ const world = vi.hoisted(() => ({
   downloads: 0,
   closes: 0,
   asked: [] as string[],
+  installs: 0,
+  mayInstall: true,
+  installFails: false,
+  askedToInstall: [] as unknown[],
 }))
 
 vi.mock('./tauri', () => ({
   isDesktop: true,
   isNative: true,
-  invoke: (command: string) => {
+  invoke: (command: string, args?: unknown) => {
     world.asked.push(command)
+    if (command === 'update_may_install') {
+      world.askedToInstall.push(args)
+      return Promise.resolve(world.mayInstall)
+    }
     if (command === 'install_manager') return Promise.resolve(world.manager)
     if (command === 'check_update') {
       return Promise.resolve({
@@ -44,6 +53,10 @@ vi.mock('@tauri-apps/plugin-updater', () => ({
       world.closes++
       return Promise.resolve()
     }
+    install() {
+      world.installs++
+      return world.installFails ? Promise.reject(new Error('refused')) : Promise.resolve()
+    }
   },
 }))
 
@@ -55,6 +68,10 @@ beforeEach(async () => {
   world.downloads = 0
   world.closes = 0
   world.asked = []
+  world.installs = 0
+  world.mayInstall = true
+  world.installFails = false
+  world.askedToInstall = []
   vi.resetModules()
   updater = await import('./updater')
 })
@@ -96,5 +113,86 @@ describe('where the app updates itself', () => {
     expect(world.downloads).toBe(1)
     expect(updater.stagedVersion()).toBe('1.4.0')
     expect(updater.announcedVersion()).toBe(null)
+  })
+})
+
+/** On Windows the installer ends the process with every window in it, so the crate says
+ *  whether this window may start it; see `update_may_install` in lifecycle.rs. */
+describe('the installer on the way out', () => {
+  test('a window told no leaves the update alone', async () => {
+    await updater.stageUpdate('stable')
+    world.mayInstall = false
+
+    expect(await updater.installStaged(true)).toBe(false)
+    expect(world.installs).toBe(0)
+    expect(world.askedToInstall).toEqual([{ closing: true }])
+  })
+
+  test('a window told no tells the others to look', async () => {
+    await updater.stageUpdate('stable')
+    world.mayInstall = false
+    let stop: () => void = () => undefined
+    const heard = new Promise<void>((resolve) => {
+      stop = updater.hearHandedOn(resolve)
+    })
+
+    await updater.installStaged(true)
+    await heard
+    stop()
+  })
+
+  test('an installer that did not start lets another window try', async () => {
+    await updater.stageUpdate('stable')
+    world.installFails = true
+
+    expect(await updater.installStaged()).toBe(false)
+    expect(world.asked).toContain('update_install_failed')
+  })
+
+  test('a window told yes runs it, once', async () => {
+    await updater.stageUpdate('stable')
+
+    expect(await updater.installStaged(true)).toBe(true)
+    expect(await updater.installStaged(true)).toBe(false)
+    expect(world.installs).toBe(1)
+  })
+
+  test('a restart asks as the whole app, not as a window closing', async () => {
+    await updater.stageUpdate('stable')
+
+    expect(await updater.installStaged()).toBe(true)
+    expect(world.askedToInstall).toEqual([{ closing: false }])
+  })
+})
+
+/** What a window does when another one is about to start the installer: its writes
+ *  land, then the crate hears, and a disk that does not answer does not hold it up. */
+describe('settling for another window s installer', () => {
+  test('says so once what is owed has landed', async () => {
+    let landed: () => void = () => undefined
+    const owed = new Promise<void>((resolve) => (landed = resolve))
+
+    const settling = updater.settledForInstaller(() => owed)
+    await Promise.resolve()
+    expect(world.asked).not.toContain('update_settled')
+
+    landed()
+    await settling
+    expect(world.asked).toContain('update_settled')
+  })
+
+  test('says so anyway once it has waited as long as a window going does', async () => {
+    vi.useFakeTimers()
+    try {
+      const settling = updater.settledForInstaller(() => new Promise(() => undefined))
+      await vi.advanceTimersByTimeAsync(GIVE_UP - 1)
+      expect(world.asked).not.toContain('update_settled')
+
+      await vi.advanceTimersByTimeAsync(1)
+      await settling
+      expect(world.asked).toContain('update_settled')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

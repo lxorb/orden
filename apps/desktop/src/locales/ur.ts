@@ -1457,6 +1457,7 @@ export const ur: Dictionary = {
   'The note': 'نوٹ',
   '{space} panel': '{space} کا پینل',
   'Panel width': 'پینل کی چوڑائی',
+  'Pane size': 'پین کا سائز',
   Values: 'قدریں',
   Pages: 'صفحات',
   'Page {number} of {count}': 'صفحہ {number} از {count}',
@@ -2504,6 +2505,7 @@ export const ur: Dictionary = {
   'Orden’s own title bar, or the window frame of your system.':
     'Orden کی اپنی ٹائٹل بار، یا آپ کے سسٹم کا ونڈو فریم۔',
   'How large the text of notes is.': 'نوٹس کا متن کتنا بڑا ہو۔',
+  'How large all of Orden is drawn on this device.': 'اس ڈیوائس پر پورا Orden کتنا بڑا دکھائی دے۔',
   'The space between the lines of a note.': 'نوٹ کی لائنوں کے درمیان فاصلہ۔',
   'How wide a line of a note grows before it wraps.': 'نوٹ کی ایک لائن مڑنے سے پہلے کتنی چوڑی ہو۔',
   'Typing an opening bracket or quote adds the closing one too.':
@@ -2655,6 +2657,8 @@ export const ur: Dictionary = {
   'Move the chat': 'چیٹ منتقل کریں',
   'Only the file': 'صرف فائل',
   'Trust this space again': 'اس اسپیس پر دوبارہ بھروسا کریں',
+  'Agent instructions': 'ایجنٹ کی ہدایات',
+  "AGENTS is this space's agent instructions": 'AGENTS اس اسپیس کی ایجنٹ ہدایات ہیں',
   '{title}, unread': '{title}، نہ پڑھا ہوا',
   '{title}, running': '{title}، جاری ہے',
 }

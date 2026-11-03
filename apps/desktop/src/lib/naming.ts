@@ -15,7 +15,7 @@
  *  nothing to decide; see naming.test.ts. */
 
 import { foldName } from '@orden/markdown/links'
-import { endingOf, isReserved } from './note-name'
+import { endingOf, isAgentsName, isReserved } from './note-name'
 
 export { isReserved }
 
@@ -26,7 +26,8 @@ export { isReserved }
  *  `empty` is the odd one. A field nobody has finished typing in is not a
  *  mistake and is never shown as one; it is here because it is still a name
  *  that cannot be written. */
-export type NameFault = 'empty' | 'separator' | 'illegal' | 'trailing' | 'reserved' | 'taken'
+export type NameFault =
+  'empty' | 'separator' | 'illegal' | 'trailing' | 'reserved' | 'agents' | 'taken'
 
 /** The characters Windows reserves. The separators are asked about on their own,
  *  because "a name cannot hold a slash" is a sentence and this list is not. */
@@ -49,10 +50,13 @@ export interface Naming {
   /** What else is in that folder, this row's own name left out - keeping it
    *  would make every name its own duplicate. */
   taken: readonly string[]
+  /** The name on disk of the file being renamed, where it has one: a note already
+   *  called AGENTS keeps its name and may change its case. */
+  current?: string | undefined
 }
 
 /** Why this name cannot be written, or null when it can. */
-export function nameFault({ typed, extension, taken }: Naming): NameFault | null {
+export function nameFault({ typed, extension, taken, current }: Naming): NameFault | null {
   const name = typed.trim()
 
   if (!name) return 'empty'
@@ -62,6 +66,13 @@ export function nameFault({ typed, extension, taken }: Naming): NameFault | null
   // file under a name other than the one that was typed.
   if (name.endsWith('.')) return 'trailing'
   if (isReserved(name)) return 'reserved'
+  // Anywhere in a space, and before `taken`: the file at its top is the space's agent
+  // instructions, so saying the name is taken would send nobody to the setting. Only a
+  // note: a folder or a space has no ending, and `AGENTS.canvas` is no agent's file.
+  // One that already has the name keeps it; see `isAgentsName`.
+  if (isAgentsName(nameToWrite(name, extension)) && !(current && isAgentsName(current))) {
+    return 'agents'
+  }
 
   // Against the name that would be written rather than against what was typed,
   // so `A` collides with `A.md` and not with the folder `A` beside it - which is

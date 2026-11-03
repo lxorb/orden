@@ -77,6 +77,54 @@ describe("the browser's disk, as the v2 engine sees it", () => {
   })
 })
 
+describe('a move the engine makes', () => {
+  /** A write that has not answered would land at the old path after the move. Rejected
+   *  while the file is where it was, the entry stays and the next pass asks again; see
+   *  `moves` in places.ts. */
+  test('is refused, the file left alone, under a write that has stalled', async () => {
+    notes.set('/s/Stuck.md', '# Stuck\n')
+    const told: string[] = []
+    const telling = {
+      touching: () => undefined,
+      holdingWrites: (_from: string, _run: unknown, stalled: () => Promise<void>) => stalled(),
+      moved: () => {
+        told.push('told')
+        return Promise.resolve()
+      },
+    } as unknown as Parameters<typeof appWorld>[1]
+
+    await expect(
+      appWorld(() => null, telling).disk.move('/s/Stuck.md', '/s/Moved too.md', 'file'),
+    ).rejects.toThrow('/s/Stuck.md')
+
+    expect(notes.has('/s/Stuck.md')).toBe(true)
+    expect(notes.has('/s/Moved too.md')).toBe(false)
+    expect(told).toEqual([])
+  })
+
+  test('waits for the writes of what it moves, its telling included', async () => {
+    notes.set('/s/Held.md', '# Held\n')
+    const order: string[] = []
+    const telling = {
+      touching: () => undefined,
+      holdingWrites: async (from: string, run: () => Promise<void>) => {
+        order.push(`held ${from}, ${String(notes.has(from))}`)
+        await run()
+        order.push('let go')
+      },
+      moved: () => {
+        order.push('told')
+        return Promise.resolve()
+      },
+    } as unknown as Parameters<typeof appWorld>[1]
+
+    await appWorld(() => null, telling).disk.move('/s/Held.md', '/s/Moved.md', 'file')
+
+    expect(order).toEqual(['held /s/Held.md, true', 'told', 'let go'])
+    expect(notes.has('/s/Moved.md')).toBe(true)
+  })
+})
+
 describe('a PDF another device turned into its page note', () => {
   // On the other device the PDF beside `X.pages` went to `X.pages.pdf`, the paper
   // that note holds. The move came here without saying so, the crate refused it as a
@@ -85,6 +133,7 @@ describe('a PDF another device turned into its page note', () => {
     notes.set('/s/X.pages', '{}')
     const telling = {
       touching: () => undefined,
+      holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
     const { disk } = appWorld(() => null, telling)
@@ -102,6 +151,7 @@ describe('a PDF another device turned into its page note', () => {
   test('holds nothing for any other move', async () => {
     const telling = {
       touching: () => undefined,
+      holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
     const { disk } = appWorld(() => null, telling)
@@ -123,6 +173,7 @@ describe('a PDF another device renamed, with its highlights', () => {
     notes.set('/s/A.pdf.highlights.json', '{"version":1}')
     const telling = {
       touching: () => undefined,
+      holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
     const { disk } = appWorld(() => null, telling)
@@ -143,6 +194,7 @@ describe('a page note another device renamed', () => {
     notes.set('/s/X.pages.pdf', '%PDF')
     const telling = {
       touching: () => undefined,
+      holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
     const { disk } = appWorld(() => null, telling)
@@ -165,6 +217,7 @@ describe('a highlighted PDF another device turned into its page note', () => {
     notes.set('/s/T.pdf.highlights.json', '{"version":1}')
     const telling = {
       touching: () => undefined,
+      holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
       gone: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]

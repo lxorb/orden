@@ -6,7 +6,8 @@
 #
 # With KWIN=1, KWin is the window manager on that server, and with DRAG=1 the window is
 # then moved by its tab strip, resized by its edge and maximised by a double click on the
-# strip with xdotool's pointer (scripts/window-drag.py, #427).
+# strip with xdotool's pointer (scripts/window-drag.py, #427). With TREE=1 or ZOOM=1, a note
+# is dragged in the file list and the interface is zoomed (scripts/page-drive.py).
 #
 # Run inside `dbus-run-session`, with the command that starts Orden:
 #
@@ -49,7 +50,7 @@ if [ "${KWIN:-0}" = 1 ]; then
 fi
 # With POPUP=1, a page of one colour served, for a web tab the popups open over.
 site=""
-if [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ]; then
+if [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${ZOOM:-0}" = 1 ]; then
   mkdir -p "$out/site"
   printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>' > "$out/site/index.html"
   # With FLASH=1, a dark page, which any white in it is not (#762).
@@ -58,7 +59,7 @@ if [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ]; then
   site=$!
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ]; then
+if [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TREE:-0}" = 1 ] || [ "${ZOOM:-0}" = 1 ]; then
   # The app's endpoint open to `eval`, for where its tab strip is.
   config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
   mkdir -p "$config"
@@ -105,6 +106,12 @@ if [ "$status" = 0 ] && [ "${FLASH:-0}" = 1 ]; then
 fi
 if [ "$status" = 0 ] && [ "${POPUP:-0}" = 1 ]; then
   python3 "$here/popup-drive.py" x11 "$out" "$app" || status=1
+fi
+if [ "$status" = 0 ] && [ "${TREE:-0}" = 1 ]; then
+  python3 "$here/page-drive.py" tree "$out" || status=1
+fi
+if [ "$status" = 0 ] && [ "${ZOOM:-0}" = 1 ]; then
+  python3 "$here/page-drive.py" zoom "$out" || status=1
 fi
 if [ "$status" = 0 ] && [ "${DRAG:-0}" = 1 ]; then
   python3 "$here/window-drag.py" x11 "$out" "$app" || status=1
