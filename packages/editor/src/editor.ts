@@ -8,7 +8,10 @@ import {
   EditorView,
   highlightActiveLine,
   keymap,
+  type PluginValue,
   rectangularSelection,
+  ViewPlugin,
+  type ViewUpdate,
 } from '@codemirror/view'
 import { remoteCarets } from './carets'
 import { completionExtensions } from './completion'
@@ -218,6 +221,9 @@ export function editorState(options: StateOptions): EditorState {
       // without the language rather than having it taken away a transaction later;
       // see `modeExtensions`.
       modeExtensions(text.length),
+      // The formula under the caret, drawn over its source as it is typed; in source
+      // mode as much as in live preview, so it sits beside the modes and not in them.
+      mathsPreview,
       // The part on screen parsed before it is drawn, wherever the note was opened;
       // see parse-ahead.ts.
       parseAhead,
@@ -334,6 +340,49 @@ export function editorState(options: StateOptions): EditorState {
   // says is shut opens shut whether or not this device has read it before.
   return withFolds(state, folds ?? [])
 }
+
+function hasDollar(text: Text): boolean {
+  for (const iter = text.iter(); !iter.next().done;) if (iter.value.includes('$')) return true
+  return false
+}
+
+/** The preview over a formula being written (maths-preview.ts), and the door it comes
+ *  through: fetched the first time the view holds a dollar, so a note without a formula
+ *  never loads it and the first paint carries none of it. */
+const mathsPreview = ViewPlugin.fromClass(
+  class {
+    private inner: (PluginValue & { update(update: ViewUpdate): void }) | null = null
+    private asked = false
+    private gone = false
+
+    constructor(view: EditorView) {
+      if (hasDollar(view.state.doc)) this.open(view)
+    }
+
+    update(update: ViewUpdate) {
+      if (this.inner) {
+        this.inner.update(update)
+        return
+      }
+      update.changes.iterChanges((_a, _b, _c, _d, inserted) => {
+        if (hasDollar(inserted)) this.open(update.view)
+      })
+    }
+
+    private open(view: EditorView) {
+      if (this.asked) return
+      this.asked = true
+      void import('./maths-preview').then(({ openPreview }) => {
+        if (!this.gone) this.inner = openPreview(view)
+      })
+    }
+
+    destroy() {
+      this.gone = true
+      this.inner?.destroy?.()
+    }
+  },
+)
 
 /** The bottom of the view kept clear by `coveredBelow`: CodeMirror keeps a scrolled-to
  *  caret this far from the edge, on top of its own margin. */

@@ -1584,6 +1584,57 @@
   color: var(--muted-strong);
 }
 
+/* The formula being written, drawn over its source as it is typed (#1075). Out of
+   the flow, so it never moves a line, and out of the pointer's way, so a press on
+   the words under it reaches them. The font size is the note's, set from the
+   editor, so it follows the zoom. */
+.nib-maths-preview {
+  position: absolute;
+  z-index: var(--z-drawn);
+  box-sizing: border-box;
+  max-width: calc(100% - 12px);
+  padding: 4px var(--space-3);
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-content);
+  pointer-events: none;
+  /* Runs each time it comes out of `hidden`, and not on a keystroke. */
+  animation: settle-in var(--dur-fast) var(--ease-out);
+}
+
+.nib-maths-preview[hidden] {
+  display: none;
+}
+
+.nib-maths-preview-body {
+  white-space: nowrap;
+}
+
+.nib-maths-preview-body .katex-display {
+  margin: 0.2em 0;
+}
+
+.nib-maths-preview-stale .nib-maths-preview-body {
+  opacity: 0.45;
+}
+
+.nib-maths-preview-error {
+  max-width: 32em;
+  padding-top: 2px;
+  color: var(--danger);
+  font-family: var(--font-ui);
+  font-size: 0.75em;
+  white-space: normal;
+}
+
+.nib-maths-preview-body:empty + .nib-maths-preview-error {
+  padding-top: 0;
+}
+
 /* ── Diagrams ────────────────────────────────────────────────────── */
 
 .nib-diagram {
