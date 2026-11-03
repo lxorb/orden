@@ -1089,9 +1089,14 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,506,100, for #1080: a press in a web tab's page making its tab
  *  and pane the ones worked in, said by the crate (`chooseTab` in pages.svelte.ts).
- *  Measured 3,505,980. */
-const BUDGET = 3_506_100
-const MOST_FILES = 387
+ *  Measured 3,505,980.
+ *
+ *  Raised 2026-11-04, to 3,509,500, and to 388 modules, for #1067: a popup fetched through
+ *  a door plays its way out and turns round where it is when pressed again (Door.svelte,
+ *  `letGo` in slide.ts, SpaceSwitcher.svelte, Pane.svelte, Tabs.svelte). Measured
+ *  3,509,297, 387 modules. */
+const BUDGET = 3_509_500
+const MOST_FILES = 388
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
