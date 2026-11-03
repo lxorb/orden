@@ -21,6 +21,8 @@ const world = vi.hoisted(() => ({
   here: 'main',
   listeners: [] as Heard[],
   ran: [] as string[],
+  /** What the crate answers a window that takes a request. */
+  claims: true,
 }))
 
 /** What `emit_to` does in the runtime. */
@@ -51,7 +53,8 @@ vi.mock('@tauri-apps/api/window', () => ({
 vi.mock('../tauri', () => ({
   isNative: true,
   isDesktop: true,
-  invoke: () => Promise.resolve([]),
+  invoke: (command: string) =>
+    Promise.resolve(command === 'automation_claim' ? world.claims : []),
   openExternal: () => Promise.resolve(),
 }))
 vi.mock('../web-tab/handed', () => ({ hearPages: () => Promise.resolve(() => undefined) }))
@@ -81,13 +84,21 @@ describe('with two windows open', () => {
   beforeEach(async () => {
     world.listeners.length = 0
     world.ran.length = 0
+    world.claims = true
     await openWindow('main')
     await openWindow('nib-2')
   })
 
-  test('a request of the endpoint runs once, in the window it was sent to', () => {
+  test('a request of the endpoint runs once, in the window it was sent to', async () => {
     sendTo('main', 'nib://automation', { id: 1, verb: 'run_terminal' })
-    expect(world.ran).toEqual(['run_terminal'])
+    await vi.waitFor(() => expect(world.ran).toEqual(['run_terminal']))
+  })
+
+  test('one the crate has given up on and asked of another does not run', async () => {
+    world.claims = false
+    sendTo('main', 'nib://automation', { id: 1, verb: 'run_terminal' })
+    await new Promise((settled) => setTimeout(settled, 0))
+    expect(world.ran).toEqual([])
   })
 
   test('a link runs once, in the window it was sent to', async () => {

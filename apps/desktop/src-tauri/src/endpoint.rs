@@ -982,6 +982,28 @@ mod tests {
         );
     }
 
+    /// A verb runs once: only the window asked may take it, once, and not after it was
+    /// given up on and asked of another. A window that claims anything is plainly alive.
+    #[test]
+    fn a_request_is_taken_once_by_the_window_it_is_asked_of() {
+        let waiting = Waiting::default();
+        waiting.ask_of(7, "main");
+        assert!(!waiting.claim(7, "nib-2"));
+        assert!(waiting.claim(7, "main"));
+        assert!(!waiting.claim(7, "main"));
+
+        waiting.ask_of(8, "main");
+        assert!(!waiting.gave_up(8), "still asked");
+        waiting.claim(8, "main");
+        assert!(waiting.gave_up(8), "taken in time");
+
+        waiting.ask_of(9, "main");
+        assert!(!waiting.gave_up(9));
+        waiting.forget("main");
+        assert!(!waiting.claim(9, "main"), "too late");
+        assert!(waiting.hears("main"), "but alive");
+    }
+
     /// A page gone while it was asked is said at once, and an answer comes first.
     #[test]
     fn a_window_that_reloads_while_asked_is_not_waited_out() {
