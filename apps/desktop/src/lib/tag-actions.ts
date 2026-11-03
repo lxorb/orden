@@ -13,7 +13,7 @@ import { workspace } from './workspace.svelte'
 /** Says so where a name would not read back as a tag, rather than doing nothing. */
 export function refusedAsTag(name: string): boolean {
   if (isTagName(name)) return false
-  settings.error = t('{name} can’t be a tag', { name: `#${name}` })
+  settings.error = t('That tag could not be renamed.')
   return true
 }
 

@@ -1053,11 +1053,11 @@ function holds(tail: string): boolean {
  *  every gesture landing, measured together. What could wait went behind a door on the
  *  branches. Measured 3,516,657, 385 modules.
  *
- *  Raised 2026-11-03, to 3,528,000, for one definition of front matter: every reader of a
+ *  Raised 2026-11-03, to 3,532,600, for one definition of front matter: every reader of a
  *  note, the deck's scan on every note among them, asks front-matter-lines.ts, one module
  *  that has to be there before anything is drawn, and evaluating a guarded base counts its
- *  steps. Measured 3,527,482, 386 modules. */
-const BUDGET = 3_528_000
+ *  steps and says when it is partial. Measured 3,532,420, 386 modules. */
+const BUDGET = 3_532_600
 const MOST_FILES = 387
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

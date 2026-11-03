@@ -130,7 +130,7 @@
     <p class="empty">{t('This base cannot be read')}</p>
   {:else}
     {#if live.answer?.partial}
-      <p class="partial" role="status">{t('Some rows took too long to read and are left out')}</p>
+      <p class="partial" role="status">{t('{name} took too long to answer.', { name: title })}</p>
     {/if}
     {#key layout}
       <div
