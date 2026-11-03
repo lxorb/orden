@@ -437,6 +437,10 @@ export class Engine implements AskedEngine {
       const placed = this.placed(path)
       const entry = placed?.space.at(placed.path)
       if (!entry) return
+      if (entry.kind === 'file' && this.core.touched.has(entry.id)) {
+        this.core.stampWaiting.set(entry.id, { mtime, size })
+        return
+      }
       entry.mtime = mtime
       entry.size = size
       await this.core.commit(this.core.entryChanges([entry]))

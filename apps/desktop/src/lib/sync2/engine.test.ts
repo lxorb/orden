@@ -1127,7 +1127,7 @@ describe('a note the disk will not read', () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const one = await device(account, 'd0')
     const desk = await device(account, 'd1')
-    const note = SEEDED[0] as Seeded
+    const note = SEEDED[0]!
     const path = `${ROOT}/${note.name}`
     const told: string[] = []
     one.engine.on('unsynced', (event) => told.push(event.name))
@@ -1200,7 +1200,7 @@ describe('a note the disk will not read', () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const one = await device(account, 'd0')
     const desk = await device(account, 'd1')
-    const note = SEEDED[0] as Seeded
+    const note = SEEDED[0]!
     const path = `${ROOT}/${note.name}`
     one.disk.files.delete(path)
     await desk.disk.write(path, `${note.text}and the desk wrote this\n`)

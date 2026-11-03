@@ -507,7 +507,9 @@ describe('an id that spells a path', () => {
 
   test('held from before, and deleted, the feed says so to whoever took it in', async () => {
     await send({ t: 'create', kind: 'note', parent: null, name: 'b.md', id: 'bad' })
-    env.db.prepare("update notes set id = '../../x', deleted = 1, deleted_at = 1 where id = 'bad'").run()
+    env.db
+      .prepare("update notes set id = '../../x', deleted = 1, deleted_at = 1 where id = 'bad'")
+      .run()
     const { value } = await framed<FeedPage>(env, `/v2/spaces/${space}/feed`, token)
     expect(value.items.map((item) => [item.id, item.deleted])).toEqual([['../../x', true]])
   })

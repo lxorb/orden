@@ -56,8 +56,9 @@ export async function feedPage(
 
   const page = rows.slice(0, FEED_PAGE)
   // One made under an id that reads as a path before `opOf` refused them is not handed
-  // to a device from before `feedPageOf` left them out.
-  const safe = (row: Row) => isEntryId(row.id) && (row.parent === null || isEntryId(row.parent))
+  // to a device from before `feedPageOf` left them out, but for its delete.
+  const safe = (row: Row) =>
+    row.deleted === 1 || (isEntryId(row.id) && (row.parent === null || isEntryId(row.parent)))
   return {
     items: page.flatMap((row) => (row.name === null || !safe(row) ? [] : [itemOf(row, row.name)])),
     cursor: page.at(-1)?.seq ?? since,

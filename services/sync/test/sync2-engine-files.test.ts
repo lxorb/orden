@@ -455,7 +455,7 @@ describe('a file whose bytes on this disk cannot be judged', () => {
 
   /** A device whose uploads hang once `hanging`, and says when one has begun. */
   const hangingDevice = async () => {
-    const hung = { hanging: false, begun: () => undefined as void, free: () => undefined as void }
+    const hung = { hanging: false, begun: (): void => undefined, free: (): void => undefined }
     const made = await (
       await kit()
     ).testDevice({

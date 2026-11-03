@@ -37,7 +37,7 @@ import * as Y from 'yjs'
 import { Core, type Holding } from './core'
 import type { Doc } from './docs'
 import { MINE } from './docs'
-import { foldIn } from './ingest'
+import { foldIn, readAgain } from './ingest'
 import { fileOfUpdates, judge, shapeOf, turn, unixLines } from './kinds'
 import { type Outboxed, settle, type SpaceState } from './places'
 import { project } from './project'
@@ -80,6 +80,8 @@ export async function pass(core: Core, space: SpaceState): Promise<Passed> {
   if (!alive()) return passed
   if (!(await settleFiles(core, space, alive, passed))) return passed
   if (!(await recoverLost(core, space, alive, passed))) return passed
+  await core.commit(await readAgain(core, space))
+  if (!alive()) return passed
   for (let round = 0; round < ROUNDS; round += 1) {
     const pulled = await pullDocs(core, space, alive)
     if (pulled === null) return passed

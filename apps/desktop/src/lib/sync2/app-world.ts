@@ -195,6 +195,10 @@ export function appWorld(token: () => string | null, telling: Telling): World {
       async read(path) {
         return await fileBytes(path).catch(() => null)
       },
+      async size(path) {
+        const stamp = await invoke<{ len: number } | null>('file_stamp', { path }).catch(() => null)
+        return stamp?.len ?? null
+      },
       async write(path, bytes) {
         const fresh = !(await stamped(path))
         telling.touching(path)

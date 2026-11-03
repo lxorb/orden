@@ -18,7 +18,7 @@
 import type { Core, Holding } from './core'
 import { MINE } from './docs'
 import { judge, readable, turn, unixLines } from './kinds'
-import { project, saidUnsynced, wrote } from './project'
+import { project, readFine, readRefused, saidUnsynced, wrote } from './project'
 import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
 import type { SpaceState } from './places'
@@ -46,27 +46,56 @@ async function unsynced(core: Core, entry: EntryRow, full: string, read: string)
   saidUnsynced(core, entry)
 }
 
+/** The notes of a space that would not read when last asked, asked again: what each
+ *  says now is folded in like any other edit, and what a pull could not write meanwhile
+ *  is written. With no word from the watcher, since a lock that lifts says nothing. */
+export async function readAgain(core: Core, space: SpaceState): Promise<Change[]> {
+  const changes: Change[] = []
+  for (const id of [...core.unreadFor.keys()]) {
+    const entry = space.entries.get(id)
+    if (!entry || entry.kind === 'file') continue
+    if (!entry.local_path || !space.isLive(id)) {
+      core.unreadFor.delete(id)
+      continue
+    }
+    if (core.isHeld(id) || core.pinned.has(id) || space.foreign(id)) continue
+    const folded = await foldIn(core, space, entry)
+    changes.push(...folded)
+    if (core.unreadFor.has(id) || core.isHeld(id) || folded.length) continue
+    const doc = await core.doc(id)
+    if (doc) changes.push(...(await project(core, space, entry, doc)))
+  }
+  return changes
+}
+
 /** Folds another program's change to an entry's file into its document. Answers the
  *  changes to write; nothing when the file says what Orden wrote. */
 export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Promise<Change[]> {
   if (!entry.local_path || core.isHeld(entry.id)) return []
   const full = core.world.join(space.row.root, entry.local_path)
   const read = await core.world.disk.read(full)
-  if (read === null) return []
+  if (read === null) {
+    // What it says now cannot be told from what Orden wrote, so it is read again.
+    if (await core.world.disk.exists(full)) readRefused(core, entry)
+    else core.unreadFor.delete(entry.id)
+    return []
+  }
+  core.unreadFor.delete(entry.id)
   const file = unixLines(read)
 
   const doc = await core.doc(entry.id)
   if (!doc) return []
   const ours = doc.text()
   const ancestor = (await writtenOf(core, entry.id)) ?? ours
-  if (file === ancestor) return []
-  if (file === ours) return await wrote(core, entry, file)
   // A plane another program left unreadable - cut short mid-write, or holding a merge's
   // conflict markers - is left for that program to finish, not taken for an empty one.
-  if (!readable(doc.shape, file)) {
+  if (file !== ancestor && file !== ours && !readable(doc.shape, file)) {
     await unsynced(core, entry, full, read)
     return []
   }
+  readFine(core, entry.id)
+  if (file === ancestor) return []
+  if (file === ours) return await wrote(core, entry, file)
 
   if (ours === ancestor) {
     doc.write((live) => turn(doc.shape, live, ours, file, MINE))

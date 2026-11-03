@@ -62,6 +62,7 @@ export async function testDevice(making: Making): Promise<TestDevice> {
       account: accountOver(reaching),
       blobs: {
         read: (path) => disk.readBytes(path),
+        size: (path) => Promise.resolve(disk.bytes.get(path)?.byteLength ?? null),
         write: (path, bytes) => disk.writeBytes(path, bytes),
         hash: (bytes) => sha256(bytes),
         ...remoteFiles(reaching),

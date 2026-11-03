@@ -171,8 +171,10 @@ const RECENT = 'recent'
 const METERED = 'metered'
 const GRACE = 'grace'
 const RESTORED = 'restored'
-/** How many of a terminal's sockets only its owner may take. */
-const KEPT_FOR_OWNER = 5
+/** How many of a terminal's sockets each tier of who may join keeps from the one below. */
+const KEPT_ABOVE = 5
+/** The tag of a socket let in only to be told why it is refused. */
+const REFUSED_SOCKET = 'refused'
 /** Sessions ended while there was no link to say it on, said on the next one. */
 const ENDING = 'ending'
 
@@ -397,6 +399,19 @@ export class Machine implements DurableObject {
    *  runtime to make the pair. `wake` is `yes` where the owner's socket may wake the
    *  machine, or why it may not. */
   async enter(server: WebSocket, viewer: Viewer, wake: string): Promise<void> {
+    // Each tier with room the one below cannot take: the owner's terminal is theirs, and
+    // whoever they invited to write is not shut out by those who follow a link to watch.
+    // A refused socket, here only to hear why, is not under the session's tag, and takes
+    // no room while its close lands.
+    const invitedWriter = !viewer.guest && viewer.role === 'write'
+    const room = viewer.owns ? MOST_SOCKETS : MOST_SOCKETS - KEPT_ABOVE * (invitedWriter ? 1 : 2)
+    if (this.ctx.getWebSockets(viewer.session).length >= room) {
+      this.ctx.acceptWebSocket(server, [REFUSED_SOCKET])
+      this.say(server, { t: 'refused', error: 'rate' })
+      server.close(4429, 'too many sockets on this terminal')
+      return
+    }
+
     this.ctx.acceptWebSocket(server, [
       viewer.session,
       viewer.who,
@@ -404,15 +419,6 @@ export class Machine implements DurableObject {
     ])
     server.serializeAttachment(viewer)
     this.next.set(server, -1)
-
-    // The last few only for its owner: watchers, who may be anybody with a link, cannot
-    // fill the bound and shut them out of their own terminal.
-    const room = viewer.owns ? MOST_SOCKETS : MOST_SOCKETS - KEPT_FOR_OWNER
-    if (this.ctx.getWebSockets(viewer.session).length > room) {
-      this.say(server, { t: 'refused', error: 'rate' })
-      server.close(4429, 'too many sockets on this terminal')
-      return
-    }
 
     const state = await this.state()
     this.say(server, { t: 'role', type: maySocketType(viewer) })

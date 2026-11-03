@@ -520,9 +520,10 @@ function feedItemOf(value: unknown): FeedItem | null {
 }
 
 /** Whether a feed item is one a writer made under an id that reads as a path, or put
- *  in a folder that has one, before the account refused them. */
+ *  in a folder that has one, before the account refused them. Its delete is not: a device
+ *  that took it in before hears it, and it goes to the trash from where it is. */
 function namedAsPath(value: unknown): boolean {
-  if (!isRecord(value)) return false
+  if (!isRecord(value) || value.deleted === true) return false
   const { id, parent } = value
   if (typeof id === 'string' && !isEntryId(id)) return true
   return typeof parent === 'string' && !isEntryId(parent)
