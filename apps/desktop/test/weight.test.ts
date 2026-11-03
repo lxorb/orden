@@ -983,8 +983,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-03, to 3,437,400, for #1064: the dot is read from the chats' heads at
  *  launch, before the AI panel is opened (`lookAtLaunch` in ai/unread.svelte.ts; the
- *  threads' module is fetched with it). Measured 3,437,263. */
-const BUDGET = 3_437_400
+ *  threads' module is fetched with it). Measured 3,437,263.
+ *
+ *  Raised 2026-11-03, to 3,437,800, for #1072: the AI panel's mode button says what Full
+ *  permissions takes in (Composer.svelte), and a step kept to the reader's hands is the
+ *  agent's under Full permissions (`readersOwn` in agents/workspace/asks.ts). Measured
+ *  3,437,422. */
+const BUDGET = 3_437_800
 const MOST_FILES = 384
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
