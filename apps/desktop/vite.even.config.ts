@@ -75,6 +75,9 @@ const LEFT_OUT = new Set([
   // and icon-library.svelte.ts, which says so calmly when one is not here.
   'unicode-emoji-json/data-by-group.json',
   '@iconify-json/flat-color-icons/icons.json',
+  // And the brands' logos, 4.7 MB more, for a picker the glasses never open; a website
+  // there wears the globe where its favicon is missing, as it did before (#1082).
+  '@iconify-json/simple-icons/icons.json',
   // And what those sets are searched by: Lucide's tags, another 256 KB, and the
   // emoji's keywords, which `node-emoji` brings along for the editor regardless and
   // which are named here for the rule rather than for the weight. The picker still

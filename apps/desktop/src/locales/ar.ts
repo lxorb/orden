@@ -394,6 +394,7 @@ export const ar: Dictionary = {
   '{at} of {count}': '{at} من {count}',
   Icons: 'أيقونات',
   Emoji: 'رموز تعبيرية',
+  Brands: 'علامات تجارية',
   'That set is not here': 'هذه المجموعة غير موجودة',
   Plain: 'عادي',
   'Nothing found': 'لا نتائج',

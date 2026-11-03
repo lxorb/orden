@@ -255,11 +255,26 @@ describe('a page note made from a PDF', () => {
   test('wears the PDF s mark, and nothing else does', () => {
     open('/Work')
 
-    expect(sourceMark('pages', '/Work/Made.pages')).toBe('pdf')
-    expect(sourceMark('pages', '/Work/Blank.pages')).toBe('pages')
-    expect(sourceMark('pages', undefined)).toBe('pages')
-    expect(sourceMark('note', '/Work/Made.pages')).toBe('note')
-    expect(sourceMark('pdf', '/Work/Paper.pdf')).toBe('pdf')
+    expect(sourceMark('pages', '/Work/Made.pages').mark).toBe('pdf')
+    expect(sourceMark('pages', '/Work/Blank.pages').mark).toBe('pages')
+    expect(sourceMark('pages', undefined).mark).toBe('pages')
+    expect(sourceMark('note', '/Work/Made.pages').mark).toBe('note')
+    expect(sourceMark('pdf', '/Work/Paper.pdf').mark).toBe('pdf')
+    expect(sourceMark('pages', '/Work/Made.pages').icon).toBeNull()
+  })
+
+  /** #1082: a website wears its brand's logo where its favicon has not come, by the
+   *  address it is at; nothing else wears one. */
+  test('a website wears its brand s logo by its address, and nothing else does', () => {
+    open('/Work')
+
+    expect(sourceMark('web', undefined, 'https://github.com/lxorb/orden')).toEqual({
+      mark: 'web',
+      icon: 'simple-icons:github',
+    })
+    expect(sourceMark('web', undefined, 'https://chatgpt.com/').icon).toBe('simple-icons:openai')
+    expect(sourceMark('web', undefined, 'not an address').icon).toBeNull()
+    expect(sourceMark('note', '/Work/Plan.md', 'https://github.com/').icon).toBeNull()
   })
 
   test('a file that is not a page note is never asked about', () => {

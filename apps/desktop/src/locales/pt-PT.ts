@@ -393,6 +393,7 @@ export const ptPT: Dictionary = {
   '{at} of {count}': '{at} de {count}',
   Icons: 'Ícones',
   Emoji: 'Emoji',
+  Brands: 'Marcas',
   'That set is not here': 'Esse conjunto não está aqui',
   Plain: 'Simples',
   'Nothing found': 'Nada encontrado',

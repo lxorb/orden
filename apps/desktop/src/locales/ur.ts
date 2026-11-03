@@ -390,6 +390,7 @@ export const ur: Dictionary = {
   '{at} of {count}': '{count} میں سے {at}',
   Icons: 'آئیکن',
   Emoji: 'ایموجی',
+  Brands: 'برانڈز',
   'That set is not here': 'یہ سیٹ یہاں نہیں',
   Plain: 'سادہ',
   'Nothing found': 'کچھ نہیں ملا',

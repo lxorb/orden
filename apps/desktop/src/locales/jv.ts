@@ -387,6 +387,7 @@ export const jv: Dictionary = {
   '{at} of {count}': '{at} saka {count}',
   Icons: 'Ikon',
   Emoji: 'Emoji',
+  Brands: 'Merek',
   'That set is not here': 'Set kuwi ora ana ing kene',
   Plain: 'Lugu',
   'Nothing found': 'Ora ketemu apa-apa',

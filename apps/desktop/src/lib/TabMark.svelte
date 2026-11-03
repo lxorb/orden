@@ -134,7 +134,13 @@
        one that chose nothing wears its kind's drawing. A tab with no file yet - an
        new note, a new plane - has no path to have chosen anything with, and gets
        its kind's drawing for the same reason. -->
-  <FileMark {mark} path={tab.path ?? undefined} />
+  <!-- And where the page is, so a website whose favicon will not come wears its
+       brand's logo by the address it is at (#1082). -->
+  <FileMark
+    {mark}
+    path={tab.path ?? undefined}
+    url={page ? (page.url ?? tab.address ?? file?.url ?? undefined) : undefined}
+  />
 {:else}
   <!-- Three notes and the edges between them: the space's own picture, which is what
        the panel that opens the graph and the bookmark that keeps a view of it already

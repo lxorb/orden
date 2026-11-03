@@ -387,6 +387,7 @@ export const id: Dictionary = {
   '{at} of {count}': '{at} dari {count}',
   Icons: 'Ikon',
   Emoji: 'Emoji',
+  Brands: 'Merek',
   'That set is not here': 'Kumpulan itu tidak ada di sini',
   Plain: 'Biasa',
   'Nothing found': 'Tidak ada yang ditemukan',

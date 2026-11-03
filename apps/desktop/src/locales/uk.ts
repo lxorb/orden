@@ -393,6 +393,7 @@ export const uk: Dictionary = {
   '{at} of {count}': '{at} з {count}',
   Icons: 'Значки',
   Emoji: 'Емодзі',
+  Brands: 'Бренди',
   'That set is not here': 'Цього набору тут немає',
   Plain: 'Однотонний',
   'Nothing found': 'Нічого не знайдено',

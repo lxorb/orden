@@ -387,6 +387,7 @@ export const zhHantHK: Dictionary = {
   '{at} of {count}': '{at}/{count}',
   Icons: '圖標',
   Emoji: '表情',
+  Brands: '品牌',
   'That set is not here': '此圖標集無法使用',
   Plain: '單色',
   'Nothing found': '找不到結果',

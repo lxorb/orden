@@ -388,6 +388,7 @@ export const my: Dictionary = {
   '{at} of {count}': '{count} အထဲ {at}',
   Icons: 'အိုင်ကွန်များ',
   Emoji: 'အီမိုဂျီ',
+  Brands: 'အမှတ်တံဆိပ်များ',
   'That set is not here': 'ထိုအစုံမရှိ',
   Plain: 'ရိုးရိုး',
   'Nothing found': 'ဘာမှမတွေ့',

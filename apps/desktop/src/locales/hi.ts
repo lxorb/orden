@@ -390,6 +390,7 @@ export const hi: Dictionary = {
   '{at} of {count}': '{count} में {at}',
   Icons: 'आइकन',
   Emoji: 'इमोजी',
+  Brands: 'ब्रांड',
   'That set is not here': 'वह सेट यहाँ नहीं है',
   Plain: 'सादा',
   'Nothing found': 'कुछ नहीं मिला',

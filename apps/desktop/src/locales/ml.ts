@@ -393,6 +393,7 @@ export const ml: Dictionary = {
   '{at} of {count}': '{count}ൽ {at}',
   Icons: 'ഐക്കണുകൾ',
   Emoji: 'ഇമോജി',
+  Brands: 'ബ്രാൻഡുകൾ',
   'That set is not here': 'ആ സെറ്റ് ഇവിടെയില്ല',
   Plain: 'ലളിതം',
   'Nothing found': 'ഒന്നും കിട്ടിയില്ല',

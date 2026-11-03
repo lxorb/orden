@@ -1,6 +1,6 @@
 /** The sets an icon can come from, and the data behind each one.
  *
- *  Three, and each earns its place by answering something the others cannot:
+ *  Four, and each earns its place by answering something the others cannot:
  *
  *  - **Emoji.** The whole Unicode set, drawn by the platform's own colour font. The
  *    breadth is the point - there is an emoji for very nearly anything somebody
@@ -15,12 +15,20 @@
  *    a folder, a graph, a suitcase. Icons8's set, MIT, 329 of them in 166 KB, which
  *    is small enough to be a set rather than a download. Where Lucide is a line and
  *    an emoji is a face, this is the drawing you would put on a filing cabinet.
+ *  - **Simple Icons.** The logos of products and companies - GitHub, Blender, Claude,
+ *    OpenAI, YouTube - for a note about one or a link to one (#1082). One drawing per
+ *    brand, filled in one colour, CC0; the marks are still their owners' trademarks,
+ *    which the credit says. The one set that is wanted by name as well as chosen: a
+ *    website with no favicon wears its brand's logo, and code asks for a company's
+ *    mark through `brandIcon`.
  *
  *  Two coloured sets with real breadth were weighed and refused on size: Twemoji
  *  (10.5 MB, CC-BY-4.0) and Fluent Emoji Flat (9.2 MB, MIT) both redraw the emoji
- *  the platform font already draws in colour, and Iconify's brand set (7.6 MB,
- *  CC0-1.0) is nine megabytes of other people's trademarks. Nothing here is worth
- *  nine megabytes when the same picture is already on the device.
+ *  the platform font already draws in colour, and Iconify's `logos` set (7.6 MB,
+ *  CC0-1.0) draws the same brands in their own colours at nearly twice the weight of
+ *  Simple Icons - and a brand's colour is the one a dark theme loses its black and its
+ *  navy marks in. Nothing here is worth nine megabytes when the same picture is
+ *  already on the device or lighter in another set.
  *
  *  Every set is fetched the first time somebody opens its tab, once however often
  *  it is asked for, and from the app's own build - never from a CDN, which would
@@ -29,6 +37,7 @@
  *  holds the sets out of the first chunk and out of the plugin. */
 
 import {
+  BRANDS,
   EMOJI_SET,
   type IconEntry,
   type IconNode,
@@ -355,6 +364,32 @@ async function loadFlatColour(): Promise<LoadedSet> {
   return { ...iconify(collection.default, tags), place: (name) => placed.get(name) ?? null }
 }
 
+/** The brand logos: Simple Icons, every one of them, as Iconify publishes the set
+ *  (#1082). CC0, and one drawing each in one colour, which is drawn in the colour of
+ *  the text around it - so GitHub's black mark is light on a dark theme rather than
+ *  lost in it. 3,700 logos in 4.7 MB of JSON, its own chunk, fetched the first time the
+ *  tab opens or a row wears one.
+ *
+ *  Named the way the brands write themselves where the slug squashes the name out of
+ *  recognition, and found by the other words people use for them; see brand-names.ts.
+ *  Every other logo is found by its slug, which is the brand's name in one word. */
+async function loadBrands(): Promise<LoadedSet> {
+  const [collection, names] = await Promise.all([
+    import('@iconify-json/simple-icons/icons.json'),
+    import('./brand-names'),
+  ])
+  const held = iconify(collection.default, new Map())
+
+  return {
+    ...held,
+    entries: held.entries.map((one) => ({
+      name: one.name,
+      words: (names.CALLED[one.name] ?? one.name).toLowerCase(),
+      terms: [one.name, names.ALSO[one.name] ?? ''].join(' ').trim(),
+    })),
+  }
+}
+
 /** A name as the words somebody would search for: `BookOpen` and `book-open` both
  *  read as "book open". */
 function spaced(name: string): string {
@@ -394,6 +429,15 @@ export const ICON_SETS: readonly IconSet[] = [
     credit: 'Flat Color Icons by Icons8, MIT',
     load: loadFlatColour,
   },
+  {
+    id: BRANDS,
+    label: key('Brands'),
+    // Simple Icons gives its drawings away under CC0 and says plainly that the marks are
+    // still their owners': a logo here names the product, as a link to it would, and
+    // nothing in the app is endorsed by any of them.
+    credit: 'Simple Icons, CC0 1.0. Brand names and logos are trademarks of their owners',
+    load: loadBrands,
+  },
 ]
 
 export function setNamed(id: string): IconSet | null {
@@ -411,9 +455,8 @@ export interface IconTab {
   tinted: boolean
 }
 
-/** The tabs, in the order the picker shows them. Two, because a reader sees two
- *  kinds of icon and not three: a line the app tints, and a picture in its own
- *  colours. The emoji and the coloured drawings were one tab each and looked the
+/** The tabs, in the order the picker shows them: a line the app tints, a picture in
+ *  its own colours, and a brand's logo. The emoji and the coloured drawings were one tab each and looked the
  *  same, so they are one collection, the emoji's groups with the drawings placed by
  *  topic among them (#1071). A set added later joins whichever of the two it looks
  *  like, with places of its own if it has no groups. */
@@ -422,6 +465,11 @@ const LINE_TAB: IconTab = { id: LUCIDE, label: key('Line'), sets: [LUCIDE], tint
 export const ICON_TABS: readonly IconTab[] = [
   LINE_TAB,
   { id: EMOJI_SET, label: key('Emoji'), sets: [EMOJI_SET, FLAT_COLOUR], tinted: false },
+  // A tab of their own rather than a place among the emoji: a logo names a product
+  // where an emoji or a drawing is a picture of a thing, and 3,700 of them interleaved
+  // with two thousand pictures would bury both. Nor among the lines, which are strokes
+  // the app tints; a logo is a filled mark drawn as its owner drew it (#1082).
+  { id: BRANDS, label: key('Brands'), sets: [BRANDS], tinted: false },
 ]
 
 /** The tab the picker opens on before one has been chosen: the set the app is drawn

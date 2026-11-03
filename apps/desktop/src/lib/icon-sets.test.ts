@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { EMOJI_SET, LUCIDE, rankIcons } from './icons'
+import { BRANDS, brandIcon, EMOJI_SET, LUCIDE, rankIcons, readIcon } from './icons'
 import { BESIDE, LOOSE, SAME } from './flat-colour-places'
 import {
   DEFAULT_TAB,
@@ -20,8 +20,8 @@ import {
  *  Slow-ish, and worth it: a set whose names or groups came out wrong is a picker full
  *  of blank cells, and nothing else in the app would notice. */
 describe('the sets an icon can come from', () => {
-  test('are the three the picker offers, each with an id nothing else uses', () => {
-    expect(ICON_SETS.map((one) => one.id)).toEqual([LUCIDE, EMOJI_SET, FLAT_COLOUR])
+  test('are the four the picker offers, each with an id nothing else uses', () => {
+    expect(ICON_SETS.map((one) => one.id)).toEqual([LUCIDE, EMOJI_SET, FLAT_COLOUR, BRANDS])
     expect(new Set(ICON_SETS.map((one) => one.id)).size).toBe(ICON_SETS.length)
   })
 
@@ -211,8 +211,8 @@ describe('the stroked set', () => {
 /** Two tabs over three sets (#1071): the emoji and the coloured drawings are both
  *  pictures in their own colours, and a reader could not tell their tabs apart. */
 describe('the tabs of the picker', () => {
-  test('are a line and a picture, and every set is in exactly one', () => {
-    expect(ICON_TABS.map((one) => one.sets)).toEqual([[LUCIDE], [EMOJI_SET, FLAT_COLOUR]])
+  test('are a line, a picture and a brand, and every set is in exactly one', () => {
+    expect(ICON_TABS.map((one) => one.sets)).toEqual([[LUCIDE], [EMOJI_SET, FLAT_COLOUR], [BRANDS]])
     expect(ICON_TABS.flatMap((one) => one.sets).sort()).toEqual(
       ICON_SETS.map((one) => one.id).sort(),
     )
@@ -358,5 +358,80 @@ describe('merging sets', () => {
 
     expect(held.groups).toEqual([])
     expect(held.entries.map((one) => one.name)).toEqual(['book-open'])
+  })
+})
+
+/** #1082: the logos of products and companies, Simple Icons' whole set. */
+describe('the brands', () => {
+  const brands = () => setNamed(BRANDS)!.load()
+
+  test('are every logo Simple Icons draws, each a finished drawing', async () => {
+    const held = await brands()
+
+    expect(held.entries.length).toBeGreaterThan(3000)
+    expect(held.groups).toEqual([])
+    for (const slug of [
+      'blender',
+      'obsstudio',
+      'anthropic',
+      'claude',
+      'openai',
+      'youtube',
+      'linkedin',
+      'github',
+      'google',
+      'discord',
+      'slack',
+      'spotify',
+      'figma',
+      'notion',
+      'visualstudiocode',
+    ]) {
+      expect(held.shape(slug)?.kind, slug).toBe('drawn')
+    }
+  })
+
+  /** Drawn in the colour of the text around them, which is what keeps GitHub's black
+   *  mark from vanishing into a dark theme: nothing in any logo names a colour of its
+   *  own. */
+  test('and are drawn in the colour of the text around them, in either theme', async () => {
+    const held = await brands()
+
+    for (const { name } of held.entries) {
+      const shape = held.shape(name)
+      if (shape?.kind !== 'drawn') throw new Error(name)
+      expect(shape.body, name).not.toMatch(/fill="#|stroke="#|fill="(?!currentColor|none)/)
+    }
+  })
+
+  /** A slug squashes a name - `visualstudiocode` - so the brands people reach for most
+   *  are found by what they are called, and by what else they go by. */
+  test('are found by name, and by the other words a brand goes by', async () => {
+    const held = await brands()
+
+    expect(rankIcons(held.entries, 'github', 1)).toEqual(['github'])
+    expect(rankIcons(held.entries, 'vs code', 4)).toContain('visualstudiocode')
+    expect(rankIcons(held.entries, 'chatgpt', 4)).toContain('openai')
+    expect(rankIcons(held.entries, 'claude code', 4)).toContain('claude')
+    expect(rankIcons(held.entries, 'obs', 8)).toContain('obsstudio')
+    expect(held.entries.find((one) => one.name === 'visualstudiocode')?.words).toBe(
+      'visual studio code',
+    )
+  })
+
+  /** For code that wants a company's mark by name: an AI chat's provider (#1089). */
+  test('and code asks for one by its slug', () => {
+    expect(brandIcon('claude')).toBe('simple-icons:claude')
+    expect(readIcon(brandIcon('openai'))).toEqual({ kind: 'set', set: BRANDS, name: 'openai' })
+  })
+
+  /** Simple Icons gives the drawings away and says the marks are still their owners'. */
+  test('credit the set, its licence and the owners of the marks', () => {
+    const credit = setNamed(BRANDS)!.credit
+
+    expect(credit).toContain('Simple Icons')
+    expect(credit).toContain('CC0')
+    expect(credit).toContain('trademarks')
+    expect(tabCredit(tabNamed(BRANDS)!)).toBe(credit)
   })
 })

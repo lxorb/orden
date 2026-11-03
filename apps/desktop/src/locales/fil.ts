@@ -392,6 +392,7 @@ export const fil: Dictionary = {
   '{at} of {count}': '{at} ng {count}',
   Icons: 'Mga icon',
   Emoji: 'Emoji',
+  Brands: 'Mga brand',
   'That set is not here': 'Wala rito ang set na iyon',
   Plain: 'Simple',
   'Nothing found': 'Walang nahanap',

@@ -89,7 +89,7 @@ One string, three things it can be:
 
 - an emoji, written as the character: `🚀`
 - a name on its own, which is Lucide's: `file-text`
-- `set:name` for any other set: `flat-color-icons:calendar`
+- `set:name` for any other set: `flat-color-icons:calendar`, `simple-icons:github`
 
 Lucide has no prefix because a bare name has always meant Lucide and files already
 say it that way. A set this build has never heard of reads as a set rather than as a
@@ -116,16 +116,34 @@ they are already pictures in their own colours.
 | Emoji | The whole Unicode set, drawn by the platform's own colour font. The breadth is the point, and the drawings cost nothing to ship. | 422 KB of index (`unicode-emoji-json`, MIT) | the font is the platform's; the index is MIT |
 | Lucide | The stroked set the interface itself is drawn in, so a chosen icon sits beside the app's own marks without looking borrowed. The one set a colour applies to. | already in the app | ISC |
 | Flat Color Icons | Everyday objects drawn flat and in colour: a calendar, a graph, a suitcase. Where Lucide is a line and an emoji is a face, this is the drawing you would put on a filing cabinet. | 166 KB, 329 icons | MIT, by Icons8 |
+| Simple Icons | The logos of products and companies: GitHub, Blender, Claude, OpenAI, YouTube. One filled drawing per brand, drawn in the colour of the text around it, so a black mark stays visible on a dark theme. | 4.7 MB, 3,700 logos | CC0 1.0; the marks themselves stay their owners' trademarks, which the credit says |
+
+The picker shows them in three tabs: **Line** (Lucide), **Emoji** (the emoji with
+the coloured drawings placed among them by topic, `flat-colour-places.ts`), and
+**Brands** (Simple Icons). Brands get their own tab because a logo names a product,
+while an emoji or a drawing is a picture of a thing. Mixed in among two thousand
+pictures, 3,700 logos would bury both. A brand is found by its slug, and the ones
+people reach for most also by their written name and the other words they go by
+(`brand-names.ts`: "vs code", "chatgpt").
+
+A brand is wanted by name as well as chosen. A website whose favicon has not been
+seen, or will not load, wears its brand's logo, read off its address
+(`siteBrand` in `icons.ts`), instead of the plain globe. Code that wants a company's mark
+asks for it by its slug with `brandIcon('claude')`. Both go through `sourceMark` in
+`chosen-icon.ts`, the one place that decides how a file is drawn from where it came
+from. A PDF's lettered mark is decided there too.
 
 Two coloured sets with real breadth were weighed and refused on size: Twemoji
 (10.5 MB, CC-BY-4.0) and Fluent Emoji Flat (9.2 MB, MIT) both redraw in colour the
-emoji the platform font already draws in colour, and Iconify's brand set (7.6 MB,
-CC0-1.0) is seven megabytes of other people's trademarks.
+emoji the platform font already draws in colour. Iconify's `logos` set (7.6 MB,
+CC0-1.0) draws the same brands as Simple Icons in their own colours, at nearly twice
+the weight, and a brand's own colour is exactly the one a dark theme loses its black
+and navy marks in.
 
 Every set is fetched the first time somebody opens its tab, once however often it is
 asked for, and out of the app's own build - never from a CDN, which would have a
-private notes app phone a stranger to draw a folder. The two that are data rather
-than drawing are left out of the Even Realities plugin build: half a megabyte of
+private notes app phone a stranger to draw a folder. The sets that are data rather
+than drawing are left out of the Even Realities plugin build: five megabytes of
 JSON for a picker whose one job on a phone is to put a mark on a folder, while the
 glasses draw a row as words with no mark in it. A set that is not in a build says so
 once rather than loading for ever.

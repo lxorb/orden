@@ -391,6 +391,7 @@ export const gsw: Dictionary = {
   '{at} of {count}': '{at} vo {count}',
   Icons: 'Sinnbilder',
   Emoji: 'Emoji',
+  Brands: 'Marke',
   'That set is not here': 'De Satz isch nöd debii',
   Plain: 'Eifach',
   'Nothing found': 'Nüt gfunde',

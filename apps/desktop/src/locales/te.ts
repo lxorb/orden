@@ -391,6 +391,7 @@ export const te: Dictionary = {
   '{at} of {count}': '{count}లో {at}',
   Icons: 'ఐకాన్‌లు',
   Emoji: 'ఎమోజీ',
+  Brands: 'బ్రాండ్‌లు',
   'That set is not here': 'ఆ సెట్ ఇక్కడ లేదు',
   Plain: 'సాధారణం',
   'Nothing found': 'ఏమీ దొరకలేదు',

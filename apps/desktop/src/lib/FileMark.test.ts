@@ -15,14 +15,18 @@ import { render } from 'svelte/server'
 const chosen: Record<string, string | null> = {}
 const tints: Record<string, string | null> = {}
 const papers = new Set<string>()
+const brands: Record<string, string> = {}
 
 vi.mock('./chosen-icon', () => ({
   chosenIcon: (path: string) => chosen[path] ?? null,
   chosenTint: (path: string) => tints[path] ?? null,
+  faviconFor: () => null,
   // The rule as chosen-icon.ts has it, over the papers here; chosen-icon.test.ts holds
   // the real one to it.
-  sourceMark: (mark: string, path: string | undefined) =>
-    mark === 'pages' && path !== undefined && papers.has(path) ? 'pdf' : mark,
+  sourceMark: (mark: string, path: string | undefined, url?: string) => ({
+    mark: mark === 'pages' && path !== undefined && papers.has(path) ? 'pdf' : mark,
+    icon: mark === 'web' && url ? (brands[url] ?? null) : null,
+  }),
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
@@ -178,5 +182,34 @@ describe('a page note', () => {
     const body = drawn('pages', 'Chosen.pages')
 
     for (const stroke of rocket) expect(body).toContain(stroke)
+  })
+})
+
+/** #1082: a website whose favicon has not come wears its brand's logo, by its address,
+ *  rather than the plain globe; one with no brand still wears the globe. */
+describe('a website with no favicon', () => {
+  const logo = '<path fill="currentColor" d="M3 3h18v18H3z"/>'
+  iconLibrary.loaded = {
+    ...iconLibrary.loaded,
+    'simple-icons': {
+      entries: [],
+      groups: [],
+      shape: (name) => (name === 'github' ? { kind: 'drawn', body: logo, box: '0 0 24 24' } : null),
+    },
+  }
+
+  const site = (url: string) => render(FileMark, { props: { mark: 'web', url } }).body
+
+  test('wears its brand s logo', () => {
+    brands['https://github.com/'] = 'simple-icons:github'
+    const body = site('https://github.com/')
+
+    expect(body).toContain('M3 3h18v18H3z')
+    expect(body).not.toContain(strokes(MARKS.web)[0])
+  })
+
+  test('and the globe where its brand is not one the set holds', () => {
+    brands['https://example.org/'] = 'simple-icons:example'
+    expect(site('https://example.org/')).toContain(strokes(MARKS.web)[0])
   })
 })

@@ -387,6 +387,7 @@ export const ko: Dictionary = {
   '{at} of {count}': '{count} 중 {at}',
   Icons: '아이콘',
   Emoji: 'Emoji',
+  Brands: '브랜드',
   'That set is not here': '그 모음은 여기에 없습니다',
   Plain: '기본',
   'Nothing found': '찾은 것이 없습니다',
