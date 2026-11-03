@@ -337,6 +337,10 @@ export function createApiEngine(setup: Setup): Engine {
         addedNow = [...addedNow, ...result.answer.messages]
 
         const { ending, calls } = result.answer
+        // A message with nothing under it reads as if the panel had hung.
+        if (ending === 'end' && !turn.parts.some((part) => part.kind === 'text' || part.kind === 'tool')) {
+          throw new Error(t('The model answered with nothing.'))
+        }
         if (ending === 'pause') continue
         if (ending === 'tool') {
           const outputs = await runCalls(thread, provider, calls, turn, on, signal)

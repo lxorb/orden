@@ -223,6 +223,51 @@ describe('a file read back', () => {
   })
 })
 
+describe('a file written while its answer was on its way', () => {
+  const cutOff = (parts: unknown[]) =>
+    threadIn({
+      ...newThread('work', 'p', 'm'),
+      answering: 'm1',
+      turns: [
+        { id: 'y1', role: 'you', at: 1, parts: [] },
+        { id: 'm1', role: 'model', at: 2, parts },
+      ],
+    })
+
+  test('keeps the words, the calls and what they changed, and says the answer stopped', () => {
+    const change = { path: 'Birds.md', added: 2, removed: 1 }
+    const read = cutOff([
+      { kind: 'text', text: 'Herons' },
+      { kind: 'tool', id: 'c', verb: 'edit_note', args: {}, state: 'ok', change },
+      { kind: 'tool', id: 'd', verb: 'edit_note', args: {}, state: 'running' },
+    ])
+
+    expect(read?.turns[1]?.parts).toEqual([
+      { kind: 'text', text: 'Herons' },
+      { kind: 'tool', id: 'c', verb: 'edit_note', args: {}, state: 'ok', change },
+      { kind: 'tool', id: 'd', verb: 'edit_note', args: {}, state: 'error' },
+      { kind: 'notice', code: 'stopped', text: '' },
+    ])
+  })
+
+  test('does not say so twice, or carry the mark on', () => {
+    const read = cutOff([{ kind: 'notice', code: 'error', text: 'Refused' }])
+
+    expect(read?.turns[1]?.parts).toHaveLength(1)
+    expect(read).not.toHaveProperty('answering')
+  })
+
+  test('says nothing of an answer that is not there', () => {
+    const read = threadIn({
+      ...newThread('work', 'p', 'm'),
+      answering: 'gone',
+      turns: [{ id: 'y1', role: 'you', at: 1, parts: [] }],
+    })
+
+    expect(read?.turns[0]?.parts).toEqual([])
+  })
+})
+
 describe('a branch', () => {
   test('is a copy up to a turn under a new id, with the compaction only if it is in it', () => {
     const thread = had()

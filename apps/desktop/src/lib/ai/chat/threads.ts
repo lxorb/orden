@@ -222,6 +222,23 @@ function turnIn(value: unknown): Turn | null {
   return turn
 }
 
+/** An answer the window went on, as the reader will find it: all that arrived, and
+ *  the row a stop leaves, whose Ask again is the way on. */
+function cutOff(turns: Turn[], answering: string): void {
+  const turn = turns.find((one) => one.id === answering)
+  if (!turn || turn.parts.some((one) => one.kind === 'notice' && ENDED.has(one.code))) return
+  turn.parts.push({ kind: 'notice', code: 'stopped', text: '' })
+}
+
+/** The notices an answer ends on. */
+const ENDED: ReadonlySet<NoticeCode> = new Set<NoticeCode>([
+  'stopped',
+  'error',
+  'steps',
+  'max_tokens',
+  'refusal',
+])
+
 /** A thread read from a file, or null for one that is not a thread. */
 export function threadIn(value: unknown): Thread | null {
   if (!isRecord(value)) return null
@@ -230,6 +247,7 @@ export function threadIn(value: unknown): Thread | null {
   const turns = Array.isArray(value.turns)
     ? value.turns.map(turnIn).filter((one): one is Turn => one !== null)
     : []
+  if (isString(value.answering)) cutOff(turns, value.answering)
   // A compaction's block is the provider's and goes back as it came, so only where it
   // starts is checked.
   const compaction =
@@ -240,7 +258,10 @@ export function threadIn(value: unknown): Thread | null {
   const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
   // Every field the engine reads is checked below; the rest (a goal, what was spent) is
   // kept as written.
-  const rest = ['always', 'without', 'parent', 'answered', 'seen'].reduce(without, value)
+  const rest = ['always', 'without', 'parent', 'answered', 'seen', 'answering'].reduce(
+    without,
+    value,
+  )
   return {
     ...(rest as unknown as Thread),
     id,

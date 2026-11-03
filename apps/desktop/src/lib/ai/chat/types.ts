@@ -237,6 +237,9 @@ export interface Thread {
    *  the other (#1064; `unreadOf` in threads.ts). */
   answered?: number
   seen?: number
+  /** The turn being answered while the thread is written mid-answer, so one read back
+   *  with this still on it is an answer the window went on (`cutOff` in threads.ts). */
+  answering?: string
   /** The provider's id in Settings > AI. */
   provider: string
   model: string

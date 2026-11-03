@@ -315,6 +315,10 @@ class AnthropicReader implements Reader {
     return this.parts.length - 1
   }
 
+  finished(): boolean {
+    return this.stop !== ''
+  }
+
   answer(): Answer {
     // Blocks that never stopped (a stream cut short) are kept as far as they came, so
     // the words that arrived are not lost; an unfinished call is not.

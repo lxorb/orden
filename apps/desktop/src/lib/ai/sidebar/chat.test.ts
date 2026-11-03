@@ -3,7 +3,7 @@
  *  The crate's per-space store is played here by a map, so what is kept where is seen. */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Draft, EngineEvent, Thread } from '../chat/types'
+import type { Draft, EngineEvent, Thread, Turn } from '../chat/types'
 
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
@@ -1408,5 +1408,126 @@ describe('a chat’s unread mark (#1064)', () => {
     const { hostOf } = await import('../commands/host')
     hostOf(chat).line(parent, '↳ done')
     expect([...chat.unread]).toEqual([parent.id])
+  })
+})
+
+describe('an answer on its way', () => {
+  beforeEach(() => {
+    kept.clear()
+    localStorage.clear()
+  })
+
+  /** The panel answering, with a hand on the engine's events: it never ends by itself. */
+  async function answering() {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    const model: Turn = { id: 'answer', role: 'model', at: 2, parts: [] }
+    const engaged: { on: (event: EngineEvent) => void; end: () => void; thread: Thread }[] = []
+    engine.send.mockImplementation(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) =>
+        new Promise<void>((resolve) => {
+          const you: Turn = { id: 'message', role: 'you', at: 1, parts: [], draft }
+          thread.turns.push(you, model)
+          on({ type: 'turn', turn: you })
+          on({ type: 'turn', turn: model })
+          engaged.push({ on, thread, end: resolve })
+        }),
+    )
+    chat.send('Tidy the herons')
+    await vi.waitFor(() => expect(engaged).toHaveLength(1))
+    const [one] = engaged
+    if (!one) throw new Error('never asked')
+    const written = async () => {
+      const body = kept.get('work')?.get(one.thread.id)?.body
+      return body ? (JSON.parse(body) as Thread) : null
+    }
+    const word = (text: string) => {
+      const part = { kind: 'text', text } as const
+      model.parts[0] = part
+      one.on({ type: 'part', turn: model.id, index: 0, part })
+    }
+    return { chat, model, one, written, word }
+  }
+
+  test('has the message written down as it begins, and that it is still answering', async () => {
+    const { written } = await answering()
+
+    await vi.waitFor(async () => {
+      const thread = await written()
+      expect(thread?.turns.map((one) => one.id)).toEqual(['message', 'answer'])
+      expect(thread?.answering).toBe('answer')
+    })
+  })
+
+  test('has its words written when the window goes, without waiting for the answer', async () => {
+    const { written, word } = await answering()
+    word('Herons stand')
+
+    const { settleUp } = await import('../../parting')
+    settleUp()
+
+    await vi.waitFor(async () =>
+      expect((await written())?.turns[1]?.parts[0]).toEqual({ kind: 'text', text: 'Herons stand' }),
+    )
+  })
+
+  test('has its words written every few seconds as they arrive', async () => {
+    const { written, word } = await answering()
+    await vi.waitFor(async () => expect((await written())?.answering).toBe('answer'))
+    vi.useFakeTimers()
+    try {
+      word('Herons')
+      await vi.advanceTimersByTimeAsync(10_000)
+    } finally {
+      vi.useRealTimers()
+    }
+
+    await vi.waitFor(async () =>
+      expect((await written())?.turns[1]?.parts[0]).toEqual({ kind: 'text', text: 'Herons' }),
+    )
+  })
+
+  test('has what a finished call changed written at once', async () => {
+    const { model, one, written } = await answering()
+    const part = {
+      kind: 'tool',
+      id: 'c',
+      verb: 'edit_note',
+      args: {},
+      state: 'done',
+      change: { path: 'Birds.md', added: 2, removed: 1 },
+    } as const
+    model.parts[0] = part
+    one.on({ type: 'part', turn: model.id, index: 0, part })
+
+    await vi.waitFor(async () => expect((await written())?.turns[1]?.parts[0]).toEqual(part))
+  })
+
+  test('reads back cut off, in the same thread, after a reload', async () => {
+    const { one, word } = await answering()
+    word('Herons stand')
+    const { settleUp } = await import('../../parting')
+    settleUp()
+    const { readThread } = await import('../chat/threads')
+
+    await vi.waitFor(async () => {
+      const again = await readThread('work', one.thread.id)
+      expect(again?.turns[1]?.parts).toEqual([
+        { kind: 'text', text: 'Herons stand' },
+        { kind: 'notice', code: 'stopped', text: '' },
+      ])
+    })
+  })
+
+  test('is written without the mark once it has ended', async () => {
+    const { model, one, written } = await answering()
+    one.on({ type: 'done', stop: 'end' })
+    one.end()
+
+    await vi.waitFor(async () => {
+      expect((await written())?.answering).toBeUndefined()
+      expect((await written())?.turns[1]?.id).toBe(model.id)
+    })
   })
 })

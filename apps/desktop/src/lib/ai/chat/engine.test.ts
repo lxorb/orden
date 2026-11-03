@@ -558,3 +558,90 @@ describe('the registry', () => {
     expect(asked).toEqual([setup])
   })
 })
+
+describe('a stream that stops before it says it is done', () => {
+  /** The bytes of a connection that closed, with no `[DONE]` after them. */
+  const cut =
+    (...events: unknown[]) =>
+    () =>
+      new Response(events.map((one) => `data: ${JSON.stringify(one)}\n\n`).join(''))
+  const words = (content: string) => ({ choices: [{ delta: { content } }] })
+
+  const thread = () => newThread('space', 'compatible-1', 'llama', 'auto', 'approve')
+
+  test('is an error, with the words that arrived kept', async () => {
+    answers = [cut(words('Hello '), words('world'))]
+    const one = thread()
+    const heard = await send(one, 'Say it')
+
+    expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+    expect(one.turns.at(-1)?.parts).toEqual([
+      { kind: 'text', text: 'Hello world' },
+      { kind: 'notice', code: 'error', text: expect.stringContaining('connection') as string },
+    ])
+  })
+
+  test('is a whole answer where a finish was said, with or without `[DONE]`', async () => {
+    answers = [cut(words('Hello'), { choices: [{ delta: {}, finish_reason: 'stop' }] })]
+    expect((await send(thread(), 'Say it')).at(-1)).toEqual({ type: 'done', stop: 'end' })
+  })
+
+  test('is a whole answer where only `[DONE]` was said, which some servers keep to', async () => {
+    answers = [lines(words('Hello'))]
+    expect((await send(thread(), 'Say it')).at(-1)).toEqual({ type: 'done', stop: 'end' })
+  })
+
+  test('runs no call it only heard half of', async () => {
+    answers = [
+      cut({
+        choices: [
+          { delta: { tool_calls: [{ index: 0, id: 'c', function: { name: 'read_note' } }] } },
+        ],
+      }),
+    ]
+    const heard = await send(thread(), 'Read it')
+
+    expect(calls).toEqual([])
+    expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+  })
+
+  test('of the other two wires is told the same', async () => {
+    answers = [
+      cut(
+        { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
+        { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Hello' } },
+      ),
+    ]
+    const claude = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    expect((await send(claude, 'Say it')).at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+    expect(claude.turns.at(-1)?.parts[0]).toEqual({ kind: 'text', text: 'Hello' })
+
+    answers = [
+      cut({ type: 'response.output_text.delta', output_index: 0, delta: 'Hello' }),
+    ]
+    const gpt = newThread('space', 'openai', 'gpt-5.4-mini', 'auto', 'full')
+    expect((await send(gpt, 'Say it')).at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+  })
+})
+
+describe('an answer of nothing at all', () => {
+  test('says so rather than leaving the message with nothing under it', async () => {
+    answers = [lines({ choices: [{ delta: {}, finish_reason: 'stop' }] })]
+    const one = newThread('space', 'compatible-1', 'llama', 'auto', 'approve')
+    const heard = await send(one, 'Say it')
+
+    expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+    expect(one.turns.at(-1)?.parts).toEqual([
+      { kind: 'notice', code: 'error', text: expect.stringContaining('nothing') as string },
+    ])
+  })
+
+  test('is fine after a call, which may be all there was to do', async () => {
+    answers = [stream('anthropic-1'), lines(
+      { type: 'message_start', message: { model: 'claude-opus-5-5' } },
+      { type: 'message_delta', delta: { stop_reason: 'end_turn' } },
+    )]
+    const one = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    expect((await send(one, 'What is in Birds.md?')).at(-1)).toEqual({ type: 'done', stop: 'end' })
+  })
+})
