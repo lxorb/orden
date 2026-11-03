@@ -2660,4 +2660,6 @@ export const my: Dictionary = {
   '{title}, running': '{title}၊ လုပ်ဆောင်နေဆဲ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden သည် AI သော့များကို Mac ၏ keychain တွင် မသိမ်းတော့ပါ၊ ၎င်းက စကားဝှက်ကို ထပ်ခါထပ်ခါ မေးနေခဲ့၍ဖြစ်သည်။ သင့်သော့များကို ထပ်ထည့်ပြီး ChatGPT သို့ နောက်တစ်ကြိမ် ဝင်ပါ။',
+  'This PDF is locked by its owner': 'ဤ PDF ကို ပိုင်ရှင်က လော့ခ်ချထားသည်',
+  'Part of this could not be undone': 'ဤအရာ၏ တစ်စိတ်တစ်ပိုင်းကို ပြန်ဖျက်၍ မရပါ',
 }

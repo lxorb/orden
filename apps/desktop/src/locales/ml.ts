@@ -2712,4 +2712,6 @@ export const ml: Dictionary = {
   '{title}, running': '{title}, പ്രവർത്തിക്കുന്നു',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ഇനി AI കീകൾ Mac-ന്റെ കീചെയിനിൽ സൂക്ഷിക്കുന്നില്ല, അത് വീണ്ടും വീണ്ടും പാസ്‌വേഡ് ചോദിച്ചിരുന്നു. നിങ്ങളുടെ കീകൾ വീണ്ടും നൽകി ChatGPT-ൽ ഒരിക്കൽ കൂടി സൈൻ ഇൻ ചെയ്യുക.',
+  'This PDF is locked by its owner': 'ഈ PDF അതിന്റെ ഉടമ ലോക്ക് ചെയ്തതാണ്',
+  'Part of this could not be undone': 'ഇതിന്റെ ഒരു ഭാഗം പഴയപടിയാക്കാനായില്ല',
 }

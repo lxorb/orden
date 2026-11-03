@@ -24,6 +24,16 @@ describe('the line across the top of the document', () => {
     expect(busy.active).toBe(false)
   })
 
+  /** Started and not waited on, so nobody else is there to say it. */
+  test('says what stopped work nobody is waiting on', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    busy.start('Exporting', () => Promise.reject(new Error('the file is locked')))
+    await vi.waitFor(() => expect(busy.active).toBe(false))
+
+    expect(busy.trouble).toBe('Exporting: the file is locked')
+    vi.restoreAllMocks()
+  })
+
   /** Counted rather than flagged: two exports at once, and the first to finish
    *  is not the one that turns the line off. */
   test('stays on until the last of them finishes', async () => {

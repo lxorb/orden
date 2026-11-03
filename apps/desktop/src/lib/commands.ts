@@ -217,6 +217,7 @@ export function exportCommands(): Command[] {
       name: name(),
       path: note()?.path ?? null,
       root: workspace.rootHolding(note()?.path ?? null),
+      shared: note()?.note.shared ?? null,
       trusted: target().trusted,
     })
 

@@ -2740,4 +2740,6 @@ export const ptPT: Dictionary = {
   '{title}, running': '{title}, em curso',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'O Orden já não guarda as chaves de IA no porta-chaves do Mac, que pedia a palavra-passe repetidamente. Introduza as suas chaves e inicie sessão no ChatGPT mais uma vez.',
+  'This PDF is locked by its owner': 'Este PDF está bloqueado pelo proprietário',
+  'Part of this could not be undone': 'Não foi possível anular parte disto',
 }

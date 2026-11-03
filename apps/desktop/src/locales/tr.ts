@@ -2689,4 +2689,6 @@ export const tr: Dictionary = {
   '{title}, running': '{title}, çalışıyor',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden artık yapay zekâ anahtarlarını Mac’in anahtar zincirinde tutmuyor; anahtar zinciri parolasını tekrar tekrar soruyordu. Anahtarlarınızı yeniden girin ve ChatGPT’ye bir kez daha oturum açın.',
+  'This PDF is locked by its owner': 'Bu PDF sahibi tarafından kilitlendi',
+  'Part of this could not be undone': 'Bunun bir kısmı geri alınamadı',
 }

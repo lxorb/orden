@@ -2670,4 +2670,6 @@ export const ms: Dictionary = {
   '{title}, running': '{title}, sedang berjalan',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden tidak lagi menyimpan kunci AI dalam rantai kunci Mac, yang asyik meminta kata laluannya. Masukkan kunci anda dan log masuk ke ChatGPT sekali lagi.',
+  'This PDF is locked by its owner': 'PDF ini dikunci oleh pemiliknya',
+  'Part of this could not be undone': 'Sebahagian daripada ini tidak dapat dibuat asal',
 }

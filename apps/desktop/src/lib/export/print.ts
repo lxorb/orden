@@ -96,6 +96,7 @@ export async function printOpen(): Promise<void> {
     path: target.path,
     // The space the document is in, which its cards are relative to.
     root: workspace.rootHolding(target.path),
+    shared: workspace.active?.note.shared ?? null,
     // Asked of the document the way its surface asks it (#612); see trust.ts.
     trusted: target.trusted,
   }

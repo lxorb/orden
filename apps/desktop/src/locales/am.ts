@@ -2628,4 +2628,6 @@ export const am: Dictionary = {
   '{title}, running': '{title}፣ በመሥራት ላይ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden የAI ቁልፎችን ከእንግዲህ በMac ቁልፍ ሰንሰለት ውስጥ አያስቀምጥም፤ የይለፍ ቃሉን ደጋግሞ ይጠይቅ ነበርና። ቁልፎችዎን ያስገቡ እና ወደ ChatGPT እንደገና ይግቡ።',
+  'This PDF is locked by its owner': 'ይህ PDF በባለቤቱ ተቆልፏል',
+  'Part of this could not be undone': 'የዚህ ክፍል ሊቀለበስ አልቻለም',
 }

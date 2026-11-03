@@ -2618,4 +2618,6 @@ export const th: Dictionary = {
   '{title}, running': '{title}, กำลังทำงาน',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ไม่เก็บคีย์ AI ไว้ในพวงกุญแจของ Mac อีกต่อไป ซึ่งคอยถามรหัสผ่านซ้ำแล้วซ้ำอีก ใส่คีย์ของคุณและลงชื่อเข้าใช้ ChatGPT อีกครั้ง',
+  'This PDF is locked by its owner': 'PDF นี้ถูกล็อกโดยเจ้าของ',
+  'Part of this could not be undone': 'ไม่สามารถเลิกทำบางส่วนได้',
 }

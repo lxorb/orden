@@ -85,9 +85,13 @@ function schemeFor(typed: string): 'http' | 'https' {
   return parsed.port && parsed.port !== '443' ? 'http' : 'https'
 }
 
+/** A time of day, which `URL` would read as the address 0.0.0.10 and a port. Only a real
+ *  one: a number with a port is a server somebody started, `8080:80` and `10:30/path`. */
+const CLOCK = /^(?:[01]?\d|2[0-3]):[0-5]\d$/
+
 /** Whether something typed is a host, and not a scheme of its own with digits after it. */
 function isHost(typed: string): boolean {
-  if (!HOST.test(typed)) return false
+  if (!HOST.test(typed) || CLOCK.test(typed)) return false
   const word = /^([a-z\d-]+):\d/i.exec(typed)?.[1]
   return !word || !NOT_HOSTS.has(word.toLowerCase())
 }
@@ -172,6 +176,7 @@ const NAMES_A_SECRET = /^(?:password|passwd|passcode|passphrase|pwd|secret|token
  *  `@` follows. */
 export function mayBeSecret(typed: string): boolean {
   const said = typed.trim()
+  if (CLOCK.test(said)) return false
   return WORD_AND_WORD.test(said) || NAME_AT_HOST.test(said) || NAMES_A_SECRET.test(said)
 }
 

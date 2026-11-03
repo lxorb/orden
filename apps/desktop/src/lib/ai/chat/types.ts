@@ -110,6 +110,9 @@ export type Part =
       state: ToolState
       result?: ToolOutput
       change?: { path: string; added: number; removed: number }
+      /** When the call was answered: where it comes among the agent's edits, for a rewind
+       *  to take them back in the true order (review/plan.ts). */
+      at?: number
     }
   /** `threads`: the helpers' threads a command's line reports on (`/subtask`, `/batch`,
    *  `/deep-research`), each opened from the line (#1062). */

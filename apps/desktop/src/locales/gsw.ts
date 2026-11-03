@@ -2696,4 +2696,6 @@ export const gsw: Dictionary = {
   '{title}, running': '{title}, lauft',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden speicheret KI-Schlüssel nümm im Schlüsselbund vom Mac, wo immer wieder nach em Passwort gfrogt het. Gib dini Schlüssel no einisch ii und meld di wieder bi ChatGPT aa.',
+  'This PDF is locked by its owner': 'Das PDF isch vo sim Bsitzer gsperrt',
+  'Part of this could not be undone': 'En Teil devo het nöd chöne rückgängig gmacht werde',
 }

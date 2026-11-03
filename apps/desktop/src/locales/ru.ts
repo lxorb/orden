@@ -2769,4 +2769,6 @@ export const ru: Dictionary = {
   '{title}, running': '{title}, выполняется',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden больше не хранит ключи ИИ в связке ключей Mac, которая снова и снова спрашивала пароль. Введите ключи заново и ещё раз войдите в ChatGPT.',
+  'This PDF is locked by its owner': 'Этот PDF заблокирован владельцем',
+  'Part of this could not be undone': 'Часть этого не удалось отменить',
 }

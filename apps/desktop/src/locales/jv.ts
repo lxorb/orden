@@ -2658,4 +2658,6 @@ export const jv: Dictionary = {
   '{title}, running': '{title}, lagi mlaku',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ora nyimpen kunci AI ing keychain Mac maneh, sing terus njaluk sandine. Lebokna kunci sampeyan lan mlebu ChatGPT sepisan maneh.',
+  'This PDF is locked by its owner': 'PDF iki dikunci déning sing nduwèni',
+  'Part of this could not be undone': 'Sapérangan iki ora bisa dibatalaké',
 }

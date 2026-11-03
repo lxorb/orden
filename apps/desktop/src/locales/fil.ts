@@ -2730,4 +2730,6 @@ export const fil: Dictionary = {
   '{title}, running': '{title}, tumatakbo',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Hindi na itinatago ng Orden ang mga AI key sa keychain ng Mac, na paulit-ulit na humihingi ng password nito. Ilagay muli ang iyong mga key at mag-sign in muli sa ChatGPT.',
+  'This PDF is locked by its owner': 'Naka-lock ng may-ari ang PDF na ito',
+  'Part of this could not be undone': 'Hindi na-undo ang bahagi nito',
 }

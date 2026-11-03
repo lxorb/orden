@@ -2787,4 +2787,6 @@ export const ar: Dictionary = {
   '{title}, running': '{title}، قيد التشغيل',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'لم يعد Orden يحفظ مفاتيح الذكاء الاصطناعي في سلسلة مفاتيح Mac، التي ظلت تطلب كلمة مرورها. أدخل مفاتيحك وسجّل الدخول إلى ChatGPT مرة أخرى.',
+  'This PDF is locked by its owner': 'ملف PDF هذا مقفل من قبل مالكه',
+  'Part of this could not be undone': 'تعذّر التراجع عن جزء من هذا',
 }

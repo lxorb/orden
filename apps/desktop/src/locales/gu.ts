@@ -2661,4 +2661,6 @@ export const gu: Dictionary = {
   '{title}, running': '{title}, ચાલુ છે',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden હવે AI કી Mac ના કીચેનમાં રાખતું નથી, જે વારંવાર તેનો પાસવર્ડ માંગતું હતું. તમારી કી ફરી દાખલ કરો અને ChatGPT માં ફરી સાઇન ઇન કરો.',
+  'This PDF is locked by its owner': 'આ PDF તેના માલિકે લૉક કરેલી છે',
+  'Part of this could not be undone': 'આનો એક ભાગ પૂર્વવત્ થઈ શક્યો નહીં',
 }

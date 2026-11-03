@@ -2714,4 +2714,6 @@ export const sw: Dictionary = {
   '{title}, running': '{title}, inaendelea',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden haihifadhi tena funguo za AI kwenye keychain ya Mac, iliyokuwa ikiuliza nenosiri lake mara kwa mara. Weka funguo zako na uingie ChatGPT tena.',
+  'This PDF is locked by its owner': 'PDF hii imefungwa na mmiliki wake',
+  'Part of this could not be undone': 'Sehemu ya hili haikuweza kutenduliwa',
 }

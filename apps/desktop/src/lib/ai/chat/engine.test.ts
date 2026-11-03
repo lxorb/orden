@@ -365,6 +365,26 @@ describe('where the reader is', () => {
   })
 })
 
+describe('tools a model refuses', () => {
+  test('leave their notice in the turn, above the answer that came without them', async () => {
+    answers = [
+      json(400, { error: { message: 'this model does not support tools' } }),
+      lines(
+        { choices: [{ delta: { content: 'Herons wade.' } }] },
+        { choices: [{ delta: {}, finish_reason: 'stop' }] },
+      ),
+    ]
+    const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'full')
+
+    await send(thread, 'Tell me about herons')
+
+    expect(learnt('compatible-1', 'llama').tools).toBe(false)
+    const parts = thread.turns.at(-1)?.parts ?? []
+    expect(parts.map((part) => part.kind)).toEqual(['notice', 'text'])
+    expect(parts[0]).toMatchObject({ code: 'no_tools' })
+  })
+})
+
 describe('an effort the model refuses', () => {
   test('is stepped to the nearest it takes, remembered, and the request made again', async () => {
     answers = [

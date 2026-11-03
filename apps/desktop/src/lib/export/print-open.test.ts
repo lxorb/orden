@@ -11,7 +11,7 @@ const world = vi.hoisted(() => ({
 vi.mock('../workspace.svelte', () => ({
   workspace: {
     get active() {
-      return { kind: world.kind }
+      return { kind: world.kind, note: {} }
     },
     rootHolding: () => '/space',
   },

@@ -28,14 +28,25 @@ function rootOf(change: FileChange, thread: Pick<Thread, 'space'>): string | nul
   return space?.root ?? null
 }
 
+/** The steps a rewind's own sending of a made note to Recently deleted left on the tree's
+ *  Undo. Not the thread's deletes: a note it deleted and then made again at that name has
+ *  two, and it is the older that comes back. */
+const unmade = new WeakSet()
+
 /** The step that deleted `path`, newest first, if it is still on the stack: on its own,
  *  or the first of a delete and the unnesting it caused. */
 function deletion(path: string): Extract<FileAction, { kind: 'delete' }> | null {
   for (const action of [...workspace.undone.stack].reverse()) {
     const step = action.kind === 'many' ? action.steps[0] : action
-    if (step?.kind === 'delete' && samePath(step.path, path)) return step
+    if (step?.kind === 'delete' && !unmade.has(step) && samePath(step.path, path)) return step
   }
   return null
+}
+
+/** The delete of `path` just made was a rewind's, of a note the thread made. */
+export function markUnmade(path: string): void {
+  const step = deletion(path)
+  if (step) unmade.add(step)
 }
 
 /** Takes one change back. Answers whether it was. */
@@ -73,10 +84,11 @@ export async function undoFile(
   }
 }
 
-/** Does a change taken back again: the move made again, the note deleted again. */
+/** Does a change taken back again: the move made again, the note deleted again. Throws
+ *  where it could not, for the Redo to stop and say. */
 export async function redoFile(change: FileChange, thread: Pick<Thread, 'space'>): Promise<void> {
   const root = rootOf(change, thread)
-  if (!root) return
-  if (change.kind === 'moved') await moved(root, change.from, change.path).catch(() => undefined)
-  else await workspace.remove(insideSpace(root, change.path), false).catch(() => undefined)
+  if (!root) throw new Error(`the space of ${change.path} is not here`)
+  if (change.kind === 'moved') await moved(root, change.from, change.path)
+  else await workspace.remove(insideSpace(root, change.path), false)
 }

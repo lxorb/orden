@@ -2669,4 +2669,6 @@ export const ur: Dictionary = {
   '{title}, running': '{title}، جاری ہے',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden اب AI کیز Mac کی کی چین میں نہیں رکھتا، جو بار بار اس کا پاس ورڈ مانگتی تھی۔ اپنی کیز دوبارہ درج کریں اور ChatGPT میں ایک بار پھر سائن ان کریں۔',
+  'This PDF is locked by its owner': 'یہ PDF اس کے مالک نے مقفل کی ہے',
+  'Part of this could not be undone': 'اس کا کچھ حصہ واپس نہیں ہو سکا',
 }

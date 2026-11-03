@@ -2637,4 +2637,6 @@ export const ko: Dictionary = {
   '{title}, running': '{title}, 실행 중',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden은 더 이상 AI 키를 Mac 키체인에 보관하지 않습니다. 키체인이 암호를 계속 물었기 때문입니다. 키를 다시 입력하고 ChatGPT에 한 번 더 로그인하세요.',
+  'This PDF is locked by its owner': '이 PDF는 소유자가 잠갔습니다',
+  'Part of this could not be undone': '일부를 되돌리지 못했습니다',
 }

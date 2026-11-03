@@ -2753,4 +2753,6 @@ export const it: Dictionary = {
   '{title}, running': '{title}, in corso',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden non conserva più le chiavi IA nel portachiavi del Mac, che continuava a chiederne la password. Inserisci di nuovo le chiavi e accedi ancora una volta a ChatGPT.',
+  'This PDF is locked by its owner': 'Questo PDF è bloccato dal proprietario',
+  'Part of this could not be undone': 'Non è stato possibile annullare una parte',
 }

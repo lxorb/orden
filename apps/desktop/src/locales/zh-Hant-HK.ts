@@ -2595,4 +2595,6 @@ export const zhHantHK: Dictionary = {
   '{title}, running': '{title}，執行中',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden 不再將 AI 金鑰存放在 Mac 的鑰匙圈中，它一再要求輸入密碼。請重新輸入金鑰，並再次登入 ChatGPT。',
+  'This PDF is locked by its owner': '此 PDF 已被擁有者鎖定',
+  'Part of this could not be undone': '部分內容無法復原',
 }

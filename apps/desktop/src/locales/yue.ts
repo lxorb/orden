@@ -2589,4 +2589,6 @@ export const yue: Dictionary = {
   '{title}, running': '{title}，運行緊',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden 唔再將 AI 鎖匙放喺 Mac 嘅鑰匙圈，佢成日問密碼。請再輸入一次你嘅鎖匙，再登入多次 ChatGPT。',
+  'This PDF is locked by its owner': '呢個 PDF 俾擁有者鎖咗',
+  'Part of this could not be undone': '有部分冇辦法復原',
 }

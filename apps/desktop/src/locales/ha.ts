@@ -2713,4 +2713,6 @@ export const ha: Dictionary = {
   '{title}, running': '{title}, yana gudana',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ba ya ajiye maɓallan AI a cikin keychain na Mac kuma, wanda ke ta neman kalmar sirrinsa. Shigar da maɓallanka kuma ka sake shiga ChatGPT.',
+  'This PDF is locked by its owner': 'Mai shi ya kulle wannan PDF',
+  'Part of this could not be undone': 'Ba a iya soke wani ɓangare na wannan ba',
 }

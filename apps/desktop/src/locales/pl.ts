@@ -2768,4 +2768,6 @@ export const pl: Dictionary = {
   '{title}, running': '{title}, w toku',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden nie przechowuje już kluczy AI w pęku kluczy Maca, który ciągle prosił o hasło. Wpisz klucze jeszcze raz i zaloguj się ponownie do ChatGPT.',
+  'This PDF is locked by its owner': 'Ten PDF został zablokowany przez właściciela',
+  'Part of this could not be undone': 'Części tego nie udało się cofnąć',
 }

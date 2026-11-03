@@ -2704,4 +2704,6 @@ export const kn: Dictionary = {
   '{title}, running': '{title}, ಚಾಲನೆಯಲ್ಲಿದೆ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ಇನ್ನು AI ಕೀಗಳನ್ನು Mac ನ ಕೀಚೈನ್‌ನಲ್ಲಿ ಇಡುವುದಿಲ್ಲ, ಅದು ಪದೇಪದೇ ಅದರ ಪಾಸ್‌ವರ್ಡ್ ಕೇಳುತ್ತಿತ್ತು. ನಿಮ್ಮ ಕೀಗಳನ್ನು ಮತ್ತೆ ನಮೂದಿಸಿ ಮತ್ತು ChatGPT ಗೆ ಮತ್ತೊಮ್ಮೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
+  'This PDF is locked by its owner': 'ಈ PDF ಅನ್ನು ಅದರ ಮಾಲೀಕರು ಲಾಕ್ ಮಾಡಿದ್ದಾರೆ',
+  'Part of this could not be undone': 'ಇದರ ಒಂದು ಭಾಗವನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗಲಿಲ್ಲ',
 }

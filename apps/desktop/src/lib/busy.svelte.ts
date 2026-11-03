@@ -67,9 +67,14 @@ class Busy {
     this.trouble = null
   }
 
-  /** The same for work that is started and not waited on. */
+  /** The same for work that is started and not waited on. Nobody is there to hear it
+   *  fail, so this says so: an export that throws and leaves no file and no word is
+   *  a command that seems to do nothing. */
   start(label: string, work: () => Promise<unknown>) {
-    void this.run(label, work).catch(() => undefined)
+    void this.run(label, work).catch((error: unknown) => {
+      console.error(error)
+      this.failed(`${label}: ${error instanceof Error ? error.message : String(error)}`)
+    })
   }
 }
 

@@ -2675,4 +2675,6 @@ export const ps: Dictionary = {
   '{title}, running': '{title}، روان دی',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden نور د AI کیلي د Mac په کیچین کې نه ساتي، چې تل یې پټنوم غوښته. خپلې کیلي بیا ولیکئ او یو ځل بیا ChatGPT ته ننوځئ.',
+  'This PDF is locked by its owner': 'دا PDF د خپل مالک لخوا قلف شوی دی',
+  'Part of this could not be undone': 'د دې یوه برخه بېرته نه شوه راګرځول',
 }

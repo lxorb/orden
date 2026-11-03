@@ -99,20 +99,8 @@ function keyOf(at: PaperAt): string {
  *  somebody deleted is a note you can still read your own writing on - but the sheet
  *  says so rather than coming out silently blank; see PagesPage.svelte. */
 export function paperOf(at: PaperAt, number: number): Promise<Paper | null> {
-  const key = keyOf(at)
-  if (!key) return Promise.resolve(null)
-
-  let one = held.get(key)
-  if (!one) {
-    const made: Held = { open: opened(at), drawn: new Map(), recent: [] }
-    // A paper that could not be opened is not kept as one: it may be on its way - from
-    // the account, or a pass from now (pages/carried.ts) - and the next ask tries again.
-    made.open.catch(() => {
-      if (held.get(key) === made) held.delete(key)
-    })
-    held.set(key, made)
-    one = made
-  }
+  const one = heldOf(at)
+  if (!one) return Promise.resolve(null)
 
   const already = one.drawn.get(number)
   if (already) {
@@ -126,6 +114,36 @@ export function paperOf(at: PaperAt, number: number): Promise<Paper | null> {
   forgetOldest(one)
 
   return drawing
+}
+
+/** Whether a paper's owner has set what may be done with it: a password to change it,
+ *  which is a paper that opens and draws for anyone and still is not to be copied out.
+ *  pdf.js answers no permissions at all for a paper with none set. False for a paper that
+ *  cannot be opened, which has nothing to be copied out. */
+export async function paperIsLocked(at: PaperAt): Promise<boolean> {
+  const one = heldOf(at)
+  if (!one) return false
+  const opened = await one.open.catch(() => null)
+  return !!opened && (await opened.doc.getPermissions()) !== null
+}
+
+/** The paper a page names, opened or on its way. */
+function heldOf(at: PaperAt): Held | null {
+  const key = keyOf(at)
+  if (!key) return null
+
+  let one = held.get(key)
+  if (!one) {
+    const made: Held = { open: opened(at), drawn: new Map(), recent: [] }
+    // A paper that could not be opened is not kept as one: it may be on its way - from
+    // the account, or a pass from now (pages/carried.ts) - and the next ask tries again.
+    made.open.catch(() => {
+      if (held.get(key) === made) held.delete(key)
+    })
+    held.set(key, made)
+    one = made
+  }
+  return one
 }
 
 /** The paper itself, opened at the first place that answers.

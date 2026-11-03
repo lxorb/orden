@@ -2733,4 +2733,6 @@ export const de: Dictionary = {
   '{title}, running': '{title}, läuft',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden speichert KI-Schlüssel nicht mehr im Schlüsselbund des Mac, der immer wieder nach seinem Passwort fragte. Gib deine Schlüssel noch einmal ein und melde dich erneut bei ChatGPT an.',
+  'This PDF is locked by its owner': 'Dieses PDF ist von seinem Eigentümer gesperrt',
+  'Part of this could not be undone': 'Ein Teil davon konnte nicht rückgängig gemacht werden',
 }

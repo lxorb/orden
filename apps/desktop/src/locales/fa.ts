@@ -2679,4 +2679,6 @@ export const fa: Dictionary = {
   '{title}, running': '{title}، در حال اجرا',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden دیگر کلیدهای هوش مصنوعی را در کلیدزنجیر Mac نگه نمی‌دارد، که مدام رمزش را می‌خواست. کلیدهایتان را دوباره وارد کنید و یک بار دیگر به ChatGPT وارد شوید.',
+  'This PDF is locked by its owner': 'این PDF توسط مالک آن قفل شده است',
+  'Part of this could not be undone': 'بخشی از این را نشد برگرداند',
 }

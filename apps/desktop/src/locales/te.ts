@@ -2689,4 +2689,6 @@ export const te: Dictionary = {
   '{title}, running': '{title}, నడుస్తోంది',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ఇకపై AI కీలను Mac కీచెయిన్‌లో ఉంచదు, అది మళ్లీ మళ్లీ పాస్‌వర్డ్ అడిగేది. మీ కీలను మళ్లీ నమోదు చేసి ChatGPT లోకి మరోసారి సైన్ ఇన్ చేయండి.',
+  'This PDF is locked by its owner': 'ఈ PDF దాని యజమాని లాక్ చేశారు',
+  'Part of this could not be undone': 'దీనిలో కొంత భాగాన్ని రద్దు చేయలేకపోయాము',
 }
