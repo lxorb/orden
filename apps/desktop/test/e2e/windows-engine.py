@@ -165,6 +165,9 @@ def main() -> int:
         a.close(run_before_unload=True)
         wait_for(b, engines, "[B] the engine, handed over")
         say("the first window closed, the second runs the engine")
+        # Making the note above put its tab in front.
+        b.evaluate("(p) => window.nibApp.workspace.openEntry(p)", path)
+        wait_for(b, "() => window.nibApp.workspace.active.note.latest.includes('FROM-A')", "[B] the note")
         type_at_end(b, "AFTER-HANDOVER ")
         if not on_account("AFTER-HANDOVER"):
             failed(f"after the hand-over nothing reached the account: {account()!r}")
