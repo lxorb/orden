@@ -1062,8 +1062,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,490,500, for #1082: a website whose favicon has not come
  *  wears its brand's logo, read off its address by `siteBrand` and decided with the
  *  rest of a file's marks by `sourceMark` (icons.ts, chosen-icon.ts, FileMark.svelte).
- *  The logos themselves are a chunk of their own. Measured 3,490,342. */
-const BUDGET = 3_490_500
+ *  The logos themselves are a chunk of their own. Measured 3,490,342.
+ *
+ *  Raised 2026-11-04, to 3,491,500, for #1074: a web tab's bar saying a window the page
+ *  opened on its own was blocked, and the Open that opens it (WebTab.svelte,
+ *  pages.svelte.ts). Measured 3,491,408. */
+const BUDGET = 3_491_500
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
