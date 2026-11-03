@@ -392,6 +392,9 @@ async function openThemesFolder() {
  *  menu-item.ts, which is why the app menu can pass one straight through. */
 export interface Command extends MenuItem {
   id: string
+  /** Other words the palette finds it by, never shown: what somebody looking for it
+   *  might type instead of its name. */
+  also?: readonly string[]
   /** Whether only somebody at the keyboard may run it: the palette, a key, a menu
    *  row, the command line on this machine - and never a `nib://` link.
    *
@@ -1384,6 +1387,9 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'feedback',
       label: t('Send feedback'),
+      // Found by what a reader with something wrong types (#1049), and a row of the
+      // palette's resting menu, which is the one door to it; see palette/browse.ts.
+      also: ['feedback', 'bug', 'report'],
       run: showFeedback,
     },
     {

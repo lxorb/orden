@@ -280,7 +280,12 @@ export function candidates(world: World): Candidate<Row>[] {
     const lift =
       (command.disabled ? LIFT.unavailable : 0) +
       (world.focused && command.id.startsWith(`${world.focused}-`) ? LIFT.about : 0)
-    out.push(candidate('command', command.label, { kind: 'command', command }, world, { lift }))
+    out.push(
+      candidate('command', command.label, { kind: 'command', command }, world, {
+        lift,
+        also: command.also ?? [],
+      }),
+    )
   }
 
   // A page counts its visits as well as the times it was chosen here: the history is

@@ -1,12 +1,11 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
 import { render } from 'svelte/server'
 
 /** The row at the bottom of the sidebar, rendered on the server as Sidebar.test
  *  renders the sidebar: what is under test is which buttons it holds. A phone or a
  *  tablet has no download (it is where the app is had) and no theme switch (light
- *  and dark are in Settings); a desktop browser keeps both. */
-
-vi.mock('./surfaces.svelte', () => ({ showFeedback: () => undefined }))
+ *  and dark are in Settings); a desktop browser keeps both. Send feedback is on none of
+ *  them: it is the palette's, there as it opens (#1049). */
 
 const { viewport } = await import('./viewport.svelte')
 const SidebarFoot = (await import('./SidebarFoot.svelte')).default
@@ -21,6 +20,12 @@ afterEach(() => {
 })
 
 describe('the foot of the sidebar', () => {
+  test('holds no Send feedback on any device: the palette does (#1049)', () => {
+    for (const device of ['desktop', 'phone', 'tablet'] as const) {
+      expect(drawn(device), device).not.toContain('Send feedback')
+    }
+  })
+
   test('in a desktop browser offers the app to download and the theme switch', () => {
     const html = drawn('desktop')
     expect(html).toContain('aria-label="Download the app"')
@@ -28,11 +33,10 @@ describe('the foot of the sidebar', () => {
   })
 
   for (const device of ['phone', 'tablet'] as const) {
-    test(`on a ${device} has neither, and keeps feedback and the settings`, () => {
+    test(`on a ${device} has neither, and keeps the settings`, () => {
       const html = drawn(device)
       expect(html).not.toContain('Download the app')
       expect(html).not.toMatch(/aria-label="(Light|Dark)"/)
-      expect(html).toContain('aria-label="Send feedback"')
       expect(html).toContain('aria-label="Settings"')
     })
   }
