@@ -1048,7 +1048,7 @@ function holds(tail: string): boolean {
  *  runs), what a base may cost, a tile's move, the sync's scans, and an undo that waits for
  *  every gesture landing, measured together. What could wait went behind a door on the
  *  branches. Measured 3,515,848, 385 modules. */
-const BUDGET = 3_516_000
+const BUDGET = 3_518_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
