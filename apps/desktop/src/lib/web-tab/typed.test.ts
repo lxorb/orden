@@ -252,3 +252,16 @@ describe('a name that is not ASCII', () => {
     expect(typedAddress('münchen.de')).toBe('https://xn--mnchen-3ya.de/')
   })
 })
+
+describe('a time of day', () => {
+  test.each(['10:30', '9:05', '10:30:15'])('%s is words, not a host and a port', (typed) => {
+    expect(typedAddress(typed)).toBeNull()
+    expect(mayBeSecret(typed)).toBe(false)
+    expect(webAddress(typed)).toBe(`https://www.google.com/search?q=${encodeURIComponent(typed)}`)
+  })
+
+  test('a word with a port is still a host', () => {
+    expect(webAddress('nas:5000')).toBe('http://nas:5000')
+    expect(webAddress('host1:5000')).toBe('http://host1:5000')
+  })
+})

@@ -31,9 +31,10 @@ function searchOn(engine: string, words: string): string {
 /** Something that could be a host: dotted labels, an address, `localhost`, or one word
  *  with a port - `nas:5000` - each with a path after it. Deliberately not a guess at
  *  every address on the web - a string with a space in it is words, and a single word
- *  with no dot and no port is words too. */
+ *  with no dot and no port is words too, and so is a number with one: `URL` reads `10:30`
+ *  as the address 0.0.0.10 and Chrome searches for it. */
 const HOST =
-  /^(?:localhost|\[[0-9a-f:.]+\]|\d{1,3}(?:\.\d{1,3}){3}|[^\s/?#@]+\.[^\s/?#@.]{2,}|[a-z\d-]+(?=:\d))(?::\d{1,5})?(?:[/?#]|$)/i
+  /^(?:localhost|\[[0-9a-f:.]+\]|\d{1,3}(?:\.\d{1,3}){3}|[^\s/?#@]+\.[^\s/?#@.]{2,}|(?!\d+:)[a-z\d-]+(?=:\d))(?::\d{1,5})?(?:[/?#]|$)/i
 
 /** Schemes a word with digits after it is, rather than a host and a port: `tel:123`. */
 const NOT_HOSTS = new Set(['tel', 'sms', 'mailto', 'news', 'urn', 'magnet', 'about', 'data'])
@@ -165,6 +166,9 @@ const NAME_AT_HOST = /^[^\s:/?#@]+:\S.*@/
 /** A word that says what comes after its colon is secret. */
 const NAMES_A_SECRET = /^(?:password|passwd|passcode|passphrase|pwd|secret|token|api[-_]?key)\s*:/i
 
+/** A time of day: `10:30`, `9:05:30`. */
+const CLOCK = /^\d{1,2}:\d{2}(?::\d{2})?$/
+
 /** Whether something typed could be a credential, and so goes to no search engine, which
  *  would keep it. Chrome would search for `root:hunter2`, and for a search operator with
  *  nothing after it; this bar does nothing and says so. A phrase is words: a word with a
@@ -172,6 +176,7 @@ const NAMES_A_SECRET = /^(?:password|passwd|passcode|passphrase|pwd|secret|token
  *  `@` follows. */
 export function mayBeSecret(typed: string): boolean {
   const said = typed.trim()
+  if (CLOCK.test(said)) return false
   return WORD_AND_WORD.test(said) || NAME_AT_HOST.test(said) || NAMES_A_SECRET.test(said)
 }
 

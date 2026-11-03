@@ -257,6 +257,9 @@ export function createApiEngine(setup: Setup): Engine {
     let stop: Stop = 'end'
     steering.set(thread.id, [])
 
+    /** Where the round in hand's parts begin in the turn. */
+    let start = turn.parts.length
+
     const adjusted = (change: Adjusted) => {
       if (change.effort) {
         thread.effort = change.effort
@@ -276,6 +279,8 @@ export function createApiEngine(setup: Setup): Engine {
       if (change.toolsRefused) {
         listing = { ...listing, tools: [] }
         say({ kind: 'notice', code: 'no_tools', text: '' })
+        // Said before the round's first part, which goes after it rather than over it.
+        start = turn.parts.length
       }
     }
 
@@ -293,7 +298,7 @@ export function createApiEngine(setup: Setup): Engine {
           stop = 'steps'
           break
         }
-        const start = turn.parts.length
+        start = turn.parts.length
         const result = await round(
           wire,
           {

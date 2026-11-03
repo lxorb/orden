@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { DECK_LAYOUT_SCRIPT } from '@orden/markdown/deck'
 import { CSP, META_CSP } from '../src/csp'
 
 /** One policy, in files that cannot import from each other: `src/csp.ts` is the
@@ -119,7 +120,8 @@ describe('the content policy', () => {
   })
 
   /** The inline scripts there are: the theme before the first paint in
-   *  `index.html`, and the frame script every sandboxed frame carries. Each is
+   *  `index.html`, the frame script every sandboxed frame carries, and the lines that
+   *  fit a deck to its sheets in the print frame. Each is
    *  allowed by the hash of its characters - so a change to those characters is a
    *  change to the policy, and this says which. The hash is taken of the text as a
    *  browser reads it, line endings folded to a newline the way the HTML parser
@@ -129,6 +131,7 @@ describe('the content policy', () => {
     const hashOf = (text: string) =>
       `'sha256-${createHash('sha256').update(text.replace(/\r\n?/g, '\n')).digest('base64')}'`
     const frames = hashOf(read('../../../packages/editor/src/frame-script.js'))
+    const deck = hashOf(DECK_LAYOUT_SCRIPT)
     const pages = Object.values(PAGES).flatMap((page) =>
       [...page.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((found) =>
         hashOf(found[1] ?? ''),
@@ -139,7 +142,7 @@ describe('the content policy', () => {
     const named = line(META_CSP, 'script-src')
       .split(' ')
       .filter((one) => one.startsWith("'sha256-"))
-    expect(named.sort()).toEqual([...new Set([...pages, frames])].sort())
+    expect(named.sort()).toEqual([...new Set([...pages, frames, deck])].sort())
   })
 
   /** The frame script is written into a `<script>` element as it is, so nothing in
