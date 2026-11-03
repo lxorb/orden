@@ -375,9 +375,23 @@ export class EngineDevice implements DeviceAdapter {
       case 'delete': {
         const target = this.chosen(this.live(engine), action.target)
         const path = target ? this.pathOf(engine, target.id) : null
-        if (!path) return
+        if (!target || !path) return
+        this.trashed(engine, target.id, path)
         await this.disk.remove(this.full(path))
         await engine.removed(this.full(path))
+        return
+      }
+      case 'restore': {
+        // As the app's trash does it today (trash.svelte.ts): what was deleted is put back
+        // on the disk where it was, and the engine hears of it as files made (#1068).
+        const item = this.trash.find((one) => one.ids.includes(action.id))
+        if (!item) return
+        this.trash = this.trash.filter((one) => one !== item)
+        if (await this.disk.exists(this.full(item.path))) return
+        for (const folder of item.folders) await this.disk.mkdir(this.full(folder))
+        for (const [path, text] of item.files) await this.disk.write(this.full(path), text)
+        for (const folder of item.folders) await engine.created(this.full(folder), true)
+        for (const [path, text] of item.files) await engine.created(this.full(path), false, text)
         return
       }
       case 'append-day': {
@@ -422,6 +436,34 @@ export class EngineDevice implements DeviceAdapter {
         await engine.pause()
         return
     }
+  }
+
+  /** What the person deleted here, as the trash keeps it: the files and folders under
+   *  what went, by path, and the ids they had. */
+  private trash: { path: string; ids: string[]; folders: string[]; files: [string, string][] }[] =
+    []
+
+  private trashed(engine: Engine, id: string, path: string) {
+    const inside = (one: string) => one === path || one.startsWith(`${path}/`)
+    const ids = this.live(engine)
+      .filter((entry) => {
+        const at = this.pathOf(engine, entry.id)
+        return entry.id === id || (at !== null && inside(at))
+      })
+      .map((entry) => entry.id)
+    const folders = [...this.disk.folders]
+      .map((one) => this.relativeOf(one))
+      .filter((one): one is string => one !== null && inside(one))
+      .sort((a, b) => a.length - b.length)
+    const files = [...this.disk.files]
+      .map(([one, text]): [string | null, string] => [this.relativeOf(one), text])
+      .filter((one): one is [string, string] => one[0] !== null && inside(one[0]))
+    this.trash.push({ path, ids, folders, files })
+  }
+
+  /** A full path on this disk, as the space speaks it; null outside the space. */
+  private relativeOf(full: string): string | null {
+    return full.startsWith(`${this.root}/`) ? full.slice(this.root.length + 1) : null
   }
 
   // -------------------------------------------------------------------------

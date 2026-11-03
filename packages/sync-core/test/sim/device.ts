@@ -91,6 +91,16 @@ interface Store {
   made: number
   pushes: number
   clean: boolean
+  /** What the person deleted here, kept to bring back: where it was, and its words. */
+  trash: Map<string, Trashed>
+}
+
+/** One thing in this device's trash. */
+interface Trashed {
+  kind: TreeEntry['kind']
+  parent: string | null
+  name: string
+  text: string
 }
 
 function textOf(...updates: Uint8Array[]): string {
@@ -181,6 +191,7 @@ export class ReferenceDevice implements DeviceAdapter {
       made: 0,
       pushes: 0,
       clean: true,
+      trash: new Map(),
     }
     this.build()
   }
@@ -260,10 +271,45 @@ export class ReferenceDevice implements DeviceAdapter {
     this.store.written.delete(id)
   }
 
+  /** Back from the trash, under the id it had (#1068). One the account holds comes back
+   *  by a restore, with its folders, and the feed brings its words down again (section
+   *  5.9); one the account never heard of - made and deleted before a pass - is made
+   *  again under the same id, where it was, with the words it had. */
+  private restore(id: string) {
+    const kept = this.store.trash.get(id)
+    this.store.trash.delete(id)
+    if (this.store.entries.has(id)) {
+      this.queue({ op: this.nextOp(), t: 'restore', id, seen: this.store.cursor })
+      return
+    }
+    if (!kept) return
+    const shown = this.shown().entries
+    const parent =
+      kept.parent !== null && shown.get(kept.parent)?.deleted === false ? kept.parent : null
+    if (kept.kind === 'folder') {
+      this.queue({
+        op: this.nextOp(),
+        t: 'mkdir',
+        id,
+        parent,
+        name: kept.name,
+        seen: this.store.cursor,
+      })
+      return
+    }
+    this.made(parent, kept.name, kept.text, undefined, id)
+  }
+
   /** A new note of this device's own: its document, and the create in the outbox. */
-  private made(parent: string | null, name: string, text: string, started?: string): string {
-    this.store.made += 1
-    const id = `${this.id}-${String(this.store.made)}`
+  private made(
+    parent: string | null,
+    name: string,
+    text: string,
+    started?: string,
+    again?: string,
+  ): string {
+    if (again === undefined) this.store.made += 1
+    const id = again ?? `${this.id}-${String(this.store.made)}`
     const stored: StoredDoc = {
       confirmed: Y.encodeStateAsUpdateV2(new Y.Doc()),
       seq: 0,
@@ -278,7 +324,7 @@ export class ReferenceDevice implements DeviceAdapter {
     doc.transact(() => doc.getText(TEXT).insert(0, text), LOCAL)
 
     const op: Op = {
-      op: `${id}.c`,
+      op: again === undefined ? `${id}.c` : this.nextOp(),
       t: 'create',
       id,
       kind: 'note',
@@ -435,13 +481,23 @@ export class ReferenceDevice implements DeviceAdapter {
         }
         this.queue({ op: this.nextOp(), t: 'delete', id: target.id, seen })
 
-        // The person threw these words away: nothing of them goes up any more.
+        // The person threw these words away: nothing of them goes up any more. Kept in
+        // the trash, which is where a restore takes them from.
         for (const entry of gone) {
+          this.store.trash.set(entry.id, {
+            kind: entry.kind,
+            parent: entry.parent,
+            name: entry.name,
+            text: this.textNow(entry.id) ?? '',
+          })
           this.store.held.delete(entry.id)
           this.drop(entry.id)
         }
         return
       }
+      case 'restore':
+        this.restore(action.id)
+        return
       case 'append-day': {
         const day = this.liveEntries('note').find(
           (entry) => entry.parent === null && nameKey(entry.name) === nameKey(action.name),

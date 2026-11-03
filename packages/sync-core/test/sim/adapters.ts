@@ -66,6 +66,9 @@ export type Action =
   | { t: 'rename'; target: Pick; name: string }
   | { t: 'move'; target: Pick; folder: Pick | null }
   | { t: 'delete'; target: Pick }
+  /** Brings back something this device deleted, from its trash (#1068). `id` is the
+   *  entry, chosen by the run among what this device took away. */
+  | { t: 'restore'; id: string }
   | { t: 'append-day'; name: string; words: string }
   | { t: 'edit-file'; note: Pick; at: number; words: string; cut: number }
   | { t: 'save' }
