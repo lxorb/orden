@@ -2053,6 +2053,8 @@ export const te: Dictionary = {
     'ఇది మీ నోట్‌లను చదువుతుంది, మీ లాగిన్‌తో బ్రౌజ్ చేస్తుంది, కాబట్టి ఏదైనా పేజీ వాటిని బయటకు పంపేలా చేయడానికి ప్రయత్నించవచ్చు.',
   Activity: 'కార్యకలాపం',
   'Add a site': 'సైట్‌ను జోడించు',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'ఈ జాబితాలోని ప్రోగ్రామ్ అడగకుండానే నడుస్తుంది, ఆ ప్రోగ్రామ్ చేయగలిగినదంతా చేయగలదు.',
   'Add a program': 'ప్రోగ్రామ్‌ను జోడించు',
   'Every space': 'ప్రతి స్పేస్',
   Sites: 'సైట్‌లు',

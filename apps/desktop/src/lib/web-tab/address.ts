@@ -32,7 +32,7 @@ export function isWebAddress(url: string): boolean {
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false
 
   return !['tauri.localhost', 'ipc.localhost', 'asset.localhost', 'nib.localhost'].includes(
-    parsed.hostname.toLowerCase(),
+    parsed.hostname.toLowerCase().replace(/\.+$/, ''),
   )
 }
 

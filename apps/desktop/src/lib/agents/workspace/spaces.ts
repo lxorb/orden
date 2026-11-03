@@ -15,7 +15,7 @@ import { threadSpaceOf } from '../../automation/caller'
 import { insideOnly } from '../../automation/inside'
 import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing.svelte'
 import { insideSpace, nameOf, relativeTo, within } from '../../space-paths'
-import { type Space, workspace } from '../../workspace.svelte'
+import { type Space, type Tab, workspace } from '../../workspace.svelte'
 import { type Call, maybe } from './call'
 import { Refused } from './problem'
 
@@ -35,6 +35,16 @@ function reaches(call: Call, space: Space): boolean {
 /** The spaces the caller may reach, in the switcher's order. */
 export function reachable(call: Call): Space[] {
   return workspace.spaces.filter((space) => reaches(call, space))
+}
+
+/** The reader's tabs the caller may know of: a window's tabs are every set's, and another
+ *  space's tabs do not exist to a grant that does not reach it (9.6). */
+export function tabsInReach(call: Call): Tab[] {
+  const agent = call.caller.agent
+  if (agent === null || agent.spaces === 'all') return workspace.tabs
+
+  const reached = new Set(reachable(call).map((one) => one.id))
+  return workspace.tabs.filter((tab) => reached.has(workspace.spaceOf(tab.note) ?? ''))
 }
 
 /** The space a verb names by id or name, or the one in the window when it names none.

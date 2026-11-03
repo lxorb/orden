@@ -2073,6 +2073,8 @@ export const sw: Dictionary = {
     'Husoma madokezo yako na kuvinjari ukiwa umeingia kama wewe, kwa hivyo ukurasa unaweza kujaribu kuifanya iyatume nje.',
   Activity: 'Shughuli',
   'Add a site': 'Ongeza tovuti',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Programu iliyo kwenye orodha hii huendeshwa bila kuuliza, na inaweza kufanya chochote ambacho programu hiyo inaweza kufanya.',
   'Add a program': 'Ongeza programu',
   'Every space': 'Kila nafasi',
   Sites: 'Tovuti',

@@ -2157,6 +2157,8 @@ export const ar: Dictionary = {
     'يقرأ ملاحظاتك ويتصفح مسجَّل الدخول باسمك، لذا قد تحاول صفحة أن تجعله يرسلها إلى الخارج.',
   Activity: 'النشاط',
   'Add a site': 'إضافة موقع',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'يعمل البرنامج المدرج في هذه القائمة دون سؤال، ويستطيع فعل كل ما يقدر عليه ذلك البرنامج.',
   'Add a program': 'إضافة برنامج',
   'Every space': 'كل المساحات',
   Sites: 'المواقع',

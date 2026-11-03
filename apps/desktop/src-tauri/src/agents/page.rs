@@ -110,12 +110,19 @@ const FACTS_BODY: &str = r"
   const tag = el.tagName.toLowerCase()
   const kind = tag === 'input' ? String(el.type || 'text').toLowerCase() : ''
   const pressed = el.closest('button, a, [role=button], [role=link], [role=menuitem], input[type=submit], input[type=button], input[type=image], summary') || el
-  const name = text(labelOf(pressed) || pressed.innerText || (pressed.tagName === 'INPUT' ? pressed.value : '') || pressed.getAttribute('title') || pressed.getAttribute('alt')).slice(0, 200)
+  const nameOf = (one) => text(labelOf(one) || one.innerText || (one.tagName === 'INPUT' ? one.value : '') || one.getAttribute('title') || one.getAttribute('alt')).slice(0, 200)
+  const name = nameOf(pressed)
   const form = el.form || el.closest('form')
   const buttonType = pressed.tagName === 'BUTTON' ? String(pressed.getAttribute('type') || 'submit').toLowerCase() : ''
   const submit = !!form && ((pressed.tagName === 'BUTTON' && buttonType === 'submit') || (pressed.tagName === 'INPUT' && ['submit', 'image'].includes(String(pressed.type).toLowerCase())))
   const link = pressed.tagName === 'A' && !/^\s*(#|javascript:|$)/i.test(String(pressed.getAttribute('href') || ''))
-  const editable = !!(el.isContentEditable || tag === 'textarea' || (tag === 'input' && !['checkbox', 'radio', 'submit', 'button', 'image', 'file', 'reset', 'hidden', 'range', 'color'].includes(kind)))
+  const said = String(el.getAttribute('role') || '').toLowerCase()
+  const editable = !!(el.isContentEditable || tag === 'textarea' || said === 'textbox' || said === 'searchbox' || (tag === 'input' && !['checkbox', 'radio', 'submit', 'button', 'image', 'file', 'reset', 'hidden', 'range', 'color'].includes(kind)))
+  // What Enter in the form presses: its first submit button, in the order the form holds them.
+  const first = form && form.elements ? Array.from(form.elements).find((one) => ['BUTTON', 'INPUT'].includes(one.tagName) && ['submit', 'image'].includes(String(one.type).toLowerCase())) : null
+  // A closed shadow root's host: it has the keyboard and shows nothing to read, not even that it has a root.
+  const native = ['input', 'select', 'textarea', 'button', 'a', 'area', 'summary', 'body', 'html', 'iframe', 'frame', 'object', 'embed', 'img', 'video', 'audio', 'canvas']
+  const opaque = !native.includes(tag) && !el.shadowRoot && !el.children.length && !text(el.innerText) && !name && !!root && root.activeElement === el
   // The form's fields, or the page's when it is in none: a webmail's Send and a chat
   // widget's are in no form, and their message box is an editable region.
   const fields = []
@@ -123,7 +130,7 @@ const FACTS_BODY: &str = r"
     if (fields.length >= 200) break
     fields.push(describe(one))
   }
-  return { tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el) }
+  return { tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque }
 ";
 
 /// `FACTS_BODY` with `FIELDS` in front of it, as the function the protocol runs.
@@ -168,10 +175,14 @@ struct Secret {
     filled: bool,
 }
 
-/// The element that has the keyboard, into frames of the same origin.
+/// The element that has the keyboard, into open shadow roots and frames of the same origin.
 const ACTIVE: &str = r"(() => {
   let at = document.activeElement
-  try { while (at && at.contentDocument && at.contentDocument.activeElement) at = at.contentDocument.activeElement } catch (_) {}
+  try { while (at) {
+    const inner = (at.shadowRoot && at.shadowRoot.activeElement) || (at.contentDocument && at.contentDocument.activeElement)
+    if (!inner) break
+    at = inner
+  } } catch (_) {}
   return at
 })()";
 
@@ -400,21 +411,138 @@ impl Page<'_> {
 
     /// What the element with the keyboard says about itself, if one has it.
     pub fn active_facts(&self) -> Result<Option<Facts>, Answer> {
-        let found = self.call(
-            "Runtime.evaluate",
-            &json!({ "expression": ACTIVE, "returnByValue": false }),
-        )?;
+        let Some((facts, object)) = self.active_in(None, None)? else {
+            return Ok(None);
+        };
+        // Nothing of this document has it, which is also how the keyboard in a frame of
+        // another process can read from here once it has come back round to it.
+        if matches!(facts.tag.as_str(), "body" | "html") {
+            return Ok(Some(self.active_in_a_frame().unwrap_or(facts)));
+        }
+        let Some(frame) = self.frame_held(None, &object) else {
+            return Ok(Some(facts));
+        };
+        // The keyboard is in a frame of another origin, whose document this one cannot
+        // read: what a key lands on is asked of the frame itself, through its session
+        // where it has a process of its own, through a world of ours in it where it
+        // shares this one (a frame of the same site).
+        let session = self.frame_session(&frame);
+        let inner = match &session {
+            Some(session) => self.active_in(Some(session), None)?,
+            None => match self.frame_world(&frame) {
+                Some(world) => self.active_in(None, Some(world))?,
+                None => None,
+            },
+        };
+        match inner {
+            Some((facts, object)) if self.frame_held(session.as_deref(), &object).is_none() => {
+                Ok(Some(facts))
+            }
+            _ => Err(Answer::error(
+                Code::Failed,
+                "the keyboard is in a frame Orden cannot read: take a snapshot, and press or type there by ref",
+            )),
+        }
+    }
+
+    /// The frame an element holds, whatever its tag: `<iframe>`, `<object>`, `<embed>`.
+    fn frame_held(&self, session: Option<&str>, object: &str) -> Option<String> {
+        cdp::call_in(
+            self.view,
+            session,
+            "DOM.describeNode",
+            &json!({ "objectId": object }),
+            cdp::PATIENCE,
+        )
+        .ok()?
+        .pointer("/node/frameId")?
+        .as_str()
+        .map(str::to_string)
+    }
+
+    /// A world of ours in a frame that shares this process.
+    fn frame_world(&self, frame: &str) -> Option<u64> {
+        self.call(
+            "Page.createIsolatedWorld",
+            &json!({ "frameId": frame, "worldName": WORLD }),
+        )
+        .ok()?
+        .get("executionContextId")?
+        .as_u64()
+    }
+
+    /// What has the keyboard in a frame in a process of its own: the frame that says it
+    /// has the focus first, or failing that one still holding an element, which at worst
+    /// asks about a press that lands nowhere.
+    fn active_in_a_frame(&self) -> Option<Facts> {
+        let frames = self
+            .heard()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .frames();
+        let mut held = None;
+        for (_, frame) in frames {
+            let Ok(Some((facts, _))) = self.active_in(Some(&frame.session), None) else {
+                continue;
+            };
+            if !facts.pressable() && !facts.editable {
+                continue;
+            }
+            let focused = cdp::call_in(
+                self.view,
+                Some(&frame.session),
+                "Runtime.evaluate",
+                &json!({ "expression": "document.hasFocus()", "returnByValue": true }),
+                cdp::PATIENCE,
+            )
+            .ok()
+            .and_then(|said| said.pointer("/result/value").and_then(Value::as_bool));
+            if focused == Some(true) {
+                return Some(facts);
+            }
+            held.get_or_insert(facts);
+        }
+        held
+    }
+
+    /// What has the keyboard in one session, and a handle to it.
+    fn active_in(
+        &self,
+        session: Option<&str>,
+        world: Option<u64>,
+    ) -> Result<Option<(Facts, String)>, Answer> {
+        let call = |method: &str, params: &Value| -> Result<Value, Answer> {
+            cdp::call_in(self.view, session, method, params, cdp::PATIENCE)
+                .map_err(|why| stale(&why))
+        };
+        let mut asked = json!({ "expression": ACTIVE, "returnByValue": false });
+        if let Some(world) = world {
+            asked["contextId"] = json!(world);
+        }
+        let found = call("Runtime.evaluate", &asked)?;
         let Some(object) = found.pointer("/result/objectId").and_then(Value::as_str) else {
             return Ok(None);
         };
-        let said = self.call(
+        let said = call(
             "Runtime.callFunctionOn",
             &json!({ "objectId": object, "functionDeclaration": FACTS.as_str(), "returnByValue": true }),
         )?;
         Ok(said
             .pointer("/result/value")
             .cloned()
-            .and_then(|value| serde_json::from_value(value).ok()))
+            .and_then(|value| serde_json::from_value(value).ok())
+            .map(|facts| (facts, object.to_string())))
+    }
+
+    /// The session of a frame in a process of its own, by the frame's id.
+    fn frame_session(&self, frame: &str) -> Option<String> {
+        self.heard()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .frames()
+            .into_iter()
+            .find(|(_, one)| one.id == frame)
+            .map(|(_, one)| one.session)
     }
 
     /// Runs an expression in nib's own world in the page's frame, answering its value.
@@ -639,15 +767,70 @@ impl Page<'_> {
         hit.get("backendNodeId").and_then(Value::as_u64)
     }
 
-    /// What a press at a point in the page's viewport lands on, as an element.
+    /// What a press at a point in the page's viewport lands on, as an element: inside a
+    /// frame of another origin where the point is in one, since the frame's element says
+    /// nothing of the button a press lands on (a card form, a pay button). A point in a
+    /// frame that cannot be read is refused, for a press by ref, rather than judged blind.
     pub fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
-        self.node_at(point)
-            .map(|backend| Element {
-                session: None,
-                frame: None,
-                backend,
-            })
-            .ok_or_else(|| Answer::error(Code::Failed, "nothing of the page is at that point"))
+        let backend = self
+            .node_at(point)
+            .ok_or_else(|| Answer::error(Code::Failed, "nothing of the page is at that point"))?;
+        let element = Element {
+            session: None,
+            frame: None,
+            backend,
+        };
+        let described = self.call("DOM.describeNode", &json!({ "backendNodeId": backend }))?;
+        // A frame by what it holds, whatever its tag: `<object>` and `<embed>` hold one too.
+        let Some(frame) = described.pointer("/node/frameId").and_then(Value::as_str) else {
+            return Ok(element);
+        };
+        // A frame the page can read is hit through: what came back is its edge.
+        let own = self.run_on(
+            &element,
+            "function () { try { return !!this.contentDocument } catch (_) { return false } }",
+            &[],
+        )?;
+        if own.as_bool() == Some(true) {
+            return Ok(element);
+        }
+        self.element_in_frame(frame, point).ok_or_else(|| {
+            Answer::error(
+                Code::Failed,
+                "that point is in a frame Orden cannot read: take a snapshot and press by ref",
+            )
+        })
+    }
+
+    /// What is at a point of the page's viewport inside a frame in a process of its own;
+    /// `None` when that cannot be told, or the point is in a frame inside that one.
+    fn element_in_frame(&self, frame: &str, (x, y): (f64, f64)) -> Option<Element> {
+        let session = self.frame_session(frame)?;
+        let inner = Element {
+            session: Some(session.clone()),
+            frame: Some(frame.to_string()),
+            backend: 0,
+        };
+        let (left, top) = self.frame_offset(&inner).ok()?;
+        let call = |method: &str, params: &Value| {
+            cdp::call_in(self.view, Some(&session), method, params, cdp::PATIENCE).ok()
+        };
+        let metrics = call("Page.getLayoutMetrics", &json!({}))?;
+        let scrolled = |path: &str| metrics.pointer(path).and_then(Value::as_f64).unwrap_or(0.0);
+        let hit = call(
+            "DOM.getNodeForLocation",
+            &json!({
+                "x": whole(x - left + scrolled("/cssLayoutViewport/pageX")),
+                "y": whole(y - top + scrolled("/cssLayoutViewport/pageY")),
+                "includeUserAgentShadowDOM": false,
+                "ignorePointerEventsNone": true,
+            }),
+        )?;
+        let backend = hit.get("backendNodeId").and_then(Value::as_u64)?;
+        let held = call("DOM.describeNode", &json!({ "backendNodeId": backend }))?;
+        held.pointer("/node/frameId")
+            .is_none()
+            .then_some(Element { backend, ..inner })
     }
 
     /// Where a frame in a process of its own sits in the page, for its elements' points.

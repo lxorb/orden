@@ -38,7 +38,15 @@ import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, writerOf } from './call'
 import { made } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, type Place, placeFor, placeOf, writableAt } from './spaces'
+import {
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeFor,
+  placeOf,
+  tabsInReach,
+  writableAt,
+} from './spaces'
 import { treeOf } from './tree'
 
 const SHAPES = [...CAPTURE_AS, 'link'] as const
@@ -73,6 +81,9 @@ async function pageIn(call: Call, tab: string, shape: Shape): Promise<Page> {
     // The reader's tabs belong to the space they are in; an agent that may not reach
     // it has no business with them.
     placeFor(call, null)
+    if (!tabsInReach(call).includes(reader)) {
+      throw new Refused('no_such_tab', `there is no tab ${tab}: browser_tabs lists them`)
+    }
     const known: Page = {
       url: pages.addressOf(tab) ?? workspace.webAddressOf(reader) ?? '',
       title: reader.shown,

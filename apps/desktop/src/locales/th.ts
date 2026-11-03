@@ -2003,6 +2003,8 @@ export const th: Dictionary = {
     'มันอ่านโน้ตของคุณและท่องเว็บโดยลงชื่อเข้าใช้ในนามคุณ หน้าเว็บจึงอาจพยายามให้มันส่งโน้ตออกไป',
   Activity: 'กิจกรรม',
   'Add a site': 'เพิ่มเว็บไซต์',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'โปรแกรมในรายการนี้ทำงานโดยไม่ถาม และทำได้ทุกอย่างที่โปรแกรมนั้นทำได้',
   'Add a program': 'เพิ่มโปรแกรม',
   'Every space': 'ทุกพื้นที่',
   Sites: 'เว็บไซต์',

@@ -2037,6 +2037,8 @@ export const ms: Dictionary = {
     'Ia membaca nota anda dan melayari web dengan log masuk anda, jadi halaman boleh cuba membuatnya menghantar nota itu keluar.',
   Activity: 'Aktiviti',
   'Add a site': 'Tambah laman',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Program dalam senarai ini berjalan tanpa bertanya, dan boleh melakukan apa sahaja yang boleh dilakukan oleh program itu.',
   'Add a program': 'Tambah program',
   'Every space': 'Setiap ruang',
   Sites: 'Laman',

@@ -9,17 +9,20 @@
    *  nothing; nothing leaves the field as it was, marked, so the reader can see what
    *  was not taken and put it right. */
   import Cross from '../../Cross.svelte'
+  import Hint from '../../Hint.svelte'
   import { t } from '../../i18n.svelte'
 
   const {
     words,
     placeholder,
+    hint,
     parse,
     onadd,
     onremove,
   }: {
     words: readonly string[]
     placeholder: string
+    hint?: string
     parse: (typed: string) => Promise<string | null>
     onadd: (word: string) => void
     onremove: (word: string) => void
@@ -63,6 +66,7 @@
     oninput={() => (refused = false)}
     onchange={(event) => void add(event.currentTarget)}
   />
+  {#if hint}<Hint text={hint} />{/if}
 </div>
 
 <style>

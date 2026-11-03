@@ -4,7 +4,9 @@
 # themselves (`yay -Syu --devel`), so this recipe changes only when the build does.
 # It bundles the same .deb a release ships and unpacks it as orden-bin does: the
 # bundler stamps the program as a .deb's, which tells the app that pacman, not its
-# own updater, keeps this install.
+# own updater, keeps this install. Linux is built on CEF (Chromium) from its own manifest,
+# by the Tauri CLI at that manifest's pin, which only scripts/linux-cef.sh runs: nothing
+# of WebKitGTK, whose build the app refuses. See packaging/linux.md.
 
 pkgname=orden-git
 _pkgname=nib
@@ -14,15 +16,18 @@ pkgdesc="Lightweight markdown editor with realtime inline preview (latest main)"
 arch=('x86_64' 'aarch64')
 url="https://orden.so"
 license=('AGPL-3.0-only')
-depends=('gtk3' 'webkit2gtk-4.1' 'hicolor-icon-theme')
-makedepends=('git' 'cargo' 'nodejs>=24' 'pnpm')
+# As orden-bin: what Chromium and its GTK 4 windows link from the system.
+depends=('gtk4>=4.14' 'nss' 'nspr' 'alsa-lib' 'libcups' 'at-spi2-core' 'libdrm' 'mesa'
+         'libxkbcommon' 'libxcomposite' 'libxdamage' 'libxrandr' 'libxfixes' 'pango'
+         'cairo' 'dbus' 'expat' 'hicolor-icon-theme')
+makedepends=('git' 'cargo' 'nodejs>=24' 'pnpm' 'npm' 'cmake' 'ninja' 'python' 'curl')
 optdepends=('pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
             'xdg-utils: open links and attachments in the desktop default application')
 provides=("orden=${pkgver}" "${_pkgname}=${pkgver}")
 conflicts=('orden' "${_pkgname}" 'nib-bin' 'nibeditor')
 # makepkg's LTO turns the C in SQLite and ring into GCC objects rustc's lld cannot
 # link. The release profile strips the program already, so a debug package is empty.
-options=('!lto' '!debug')
+options=('!lto' '!debug' '!strip' '!emptydirs')
 source=('orden::git+https://github.com/lxorb/orden.git')
 sha256sums=('SKIP')
 
@@ -39,13 +44,18 @@ prepare() {
 
 build() {
   cd orden
-  pnpm --filter @orden/desktop exec tauri build --bundles deb \
+  # The engine the pin names, fetched and checked against the digest the server gives.
+  export CEF_PATH="${srcdir}/cef"
+  bash scripts/linux-cef.sh cef "${CEF_PATH}"
+  bash scripts/linux-cef.sh tauri build --bundles deb --ignore-version-mismatches \
     --config '{"bundle":{"createUpdaterArtifacts":false}}'
 }
 
 package() {
-  bsdtar -O -xf orden/apps/desktop/src-tauri/target/release/bundle/deb/*.deb data.tar.gz |
+  bsdtar -O -xf orden/apps/desktop/src-tauri/target/release/bundle/deb/*.deb 'data.tar.*' |
     bsdtar -xf - -C "${pkgdir}" usr
+  # Chromium's sandbox helper, which only runs setuid root.
+  chmod 4755 "${pkgdir}/usr/share/Orden/chrome-sandbox"
 
   install -Dm644 orden/packaging/aur/nib-bin/nib.desktop \
     "${pkgdir}/usr/share/applications/${_pkgname}.desktop"

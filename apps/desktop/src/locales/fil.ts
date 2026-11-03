@@ -2085,6 +2085,8 @@ export const fil: Dictionary = {
     'Binabasa nito ang iyong mga tala at nagba-browse na naka-sign in bilang ikaw, kaya maaaring subukan ng isang page na ipadala nito ang mga iyon palabas.',
   Activity: 'Aktibidad',
   'Add a site': 'Magdagdag ng site',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Tumatakbo nang hindi nagtatanong ang programa sa listahang ito, at magagawa nito ang lahat ng kaya ng programang iyon.',
   'Add a program': 'Magdagdag ng program',
   'Every space': 'Bawat espasyo',
   Sites: 'Mga site',

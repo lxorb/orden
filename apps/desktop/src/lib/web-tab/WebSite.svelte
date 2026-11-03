@@ -75,7 +75,11 @@
    *  engine does not say, and then the address is all there is to go on. */
   let certificate = $state<Certificate | null>(null)
   $effect(() => {
-    if (!url?.startsWith('https:')) return
+    if (!url?.startsWith('https:')) {
+      // The page has gone from https to http: what the last one said is not about this one.
+      certificate = null
+      return
+    }
     let gone = false
     void invoke<Certificate | null>('web_certificate', { tab })
       .then((said) => {

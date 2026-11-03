@@ -44,10 +44,34 @@ use serde::Deserialize;
 use super::grants::{Grant, Mode, SiteRule};
 use super::verbs::{Category, DialogKind, Store};
 
-/// The host of an address, lower case.
+/// The host of an address, lower case, and without the root's dot that names the same
+/// host (`bank.example.`), which every rule below would otherwise read as another one.
 pub fn host_of(url: &str) -> Option<String> {
     let parsed: tauri::Url = url.parse().ok()?;
-    parsed.host_str().map(str::to_lowercase)
+    parsed
+        .host_str()
+        .map(|host| host.trim_end_matches('.').to_lowercase())
+}
+
+/// Whether a page an agent acts in may be at an address: the web. Beyond it, only what a
+/// page makes of its own and which reads nothing of the machine: `about:blank`, where a
+/// tab or a window starts (and the empty address the engine says for one), and a `blob:`
+/// the page wrote itself, how a site shows or hands over a file it built. Never `file:`,
+/// `chrome:`, `view-source:`, `javascript:`, an extension's page or a scheme somebody
+/// else registered, whichever road asks: an agent's own call, or the page it is on.
+pub fn on_the_web(url: &str) -> bool {
+    if url.is_empty() {
+        return true;
+    }
+    let Ok(parsed) = url.parse::<tauri::Url>() else {
+        return false;
+    };
+    match parsed.scheme() {
+        "http" | "https" => !parsed.host_str().is_some_and(crate::web_tabs::app_host),
+        "blob" => true,
+        "about" => parsed.as_str() == "about:blank",
+        _ => false,
+    }
 }
 
 /// The site a host is on: its registrable domain, as far as it can be told without the
@@ -98,13 +122,25 @@ pub fn rule_for(grant: &Grant, host: &str) -> Option<SiteRule> {
 
 /// Whether a site the reader named covers a host.
 fn covers(site: &str, host: &str) -> bool {
-    let site = site.trim().trim_start_matches("*.").to_lowercase();
+    let site = site
+        .trim()
+        .trim_start_matches("*.")
+        .trim_end_matches('.')
+        .to_lowercase();
     host == site || host.ends_with(&format!(".{site}"))
 }
 
-/// Whether an agent may be at an address in a tab of this store: a denied site nowhere,
-/// a site kept to the agent's own store only there.
+/// Whether an agent may be at an address in a tab of this store: nowhere off the web, a
+/// denied site nowhere, a site kept to the agent's own store only there. The page the
+/// engine shows for a load that failed is no address anybody asked for, and the tab has
+/// to stay the agent's to send elsewhere.
 pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String> {
+    if url.starts_with("chrome-error:") {
+        return Ok(());
+    }
+    if !on_the_web(url) {
+        return Err(format!("an agent stays on the web, and {url} is not on it"));
+    }
     let Some(host) = host_of(url) else {
         return Ok(());
     };
@@ -163,6 +199,11 @@ pub struct Facts {
     pub fields: Vec<Field>,
     /// The element itself, read the way each of `fields` is.
     pub field: Field,
+    /// The name of the button Enter in its form presses: the form's default button.
+    pub default_button: String,
+    /// Whether it has the keyboard and shows nothing that can be read: the host of a closed
+    /// shadow root, whose button no script can name.
+    pub opaque: bool,
 }
 
 /// One field of the form the element is in.
@@ -211,6 +252,12 @@ impl Facts {
                 said: self.name.clone(),
                 ..Field::default()
             })
+    }
+
+    /// Whether a key that presses lands on it: no box words go into, and no page with
+    /// nothing in focus.
+    pub fn pressable(&self) -> bool {
+        !self.editable && !matches!(self.tag.as_str(), "" | "body" | "html")
     }
 
     /// Whether it opens one of the engine's own pickers when pressed (6.5).
@@ -428,6 +475,22 @@ pub fn judge(
         }
     }
 
+    // Enter that submits presses the form's default button, which is judged as a press of
+    // it, by its name: Enter in a field is no way round the Delete account beside it.
+    if act == Act::Enter && facts.submit && !facts.default_button.is_empty() && !body(&facts.field)
+    {
+        let pressed = Facts {
+            name: facts.default_button.clone(),
+            editable: false,
+            link: false,
+            default_button: String::new(),
+            ..facts.clone()
+        };
+        if let Some(question) = judge(grant, &pressed, Act::Press, url, hosts) {
+            return Some(question);
+        }
+    }
+
     if act != Act::Write {
         let paying = facts.card_form()
             || says(&facts.name, PAYING)
@@ -454,6 +517,13 @@ pub fn judge(
         }
     }
 
+    // What a press lands on cannot be read, so it can be anything on the list above.
+    if act == Act::Press && facts.opaque {
+        if let Some(question) = ask(Category::Writing, on("", "A press", &site)) {
+            return Some(question);
+        }
+    }
+
     // Confirm mode asks for every write, pressing included (9.3).
     (grant.mode == Mode::Confirm)
         .then(|| {
@@ -465,6 +535,28 @@ pub fn judge(
             ask(Category::Writing, format!("{what} on {site}"))
         })
         .flatten()
+}
+
+/// What a key does to the element that has the keyboard, as `judge` reads it; `None` when
+/// it presses nothing. Space or Enter on what is no box is a press of it, the same as a
+/// click on it, whatever it is pressed by. In a box, Enter is the box's: its form's submit
+/// and a message's send.
+pub fn key_act(mut facts: Facts, key: &super::keys::Key) -> Option<(Facts, Act)> {
+    if key.presses() && facts.pressable() {
+        // Enter on an input that is no box and no button (a checkbox) submits its form,
+        // the same as Enter in a box of one.
+        let its_own_submit = matches!(facts.kind.as_str(), "submit" | "image" | "button" | "reset");
+        if key.submits() && facts.tag == "input" && !its_own_submit {
+            facts.submit = facts.in_form;
+            return Some((facts, Act::Enter));
+        }
+        return Some((facts, Act::Press));
+    }
+    if !(key.sends() || key.submits()) {
+        return None;
+    }
+    facts.submit = facts.in_form && key.submits();
+    Some((facts, if key.sends() { Act::Enter } else { Act::Press }))
 }
 
 /// A one-line summary: the press's own words, or a word for the category, and the site.
@@ -1959,6 +2051,257 @@ mod tests {
             ..Facts::default()
         }
         .picker());
+    }
+
+    #[test]
+    fn an_agent_stays_on_the_web() {
+        let grant = grant();
+        for address in [
+            "file:///etc/hostname",
+            "file://localhost/etc/hostname",
+            "file://server/share/secret.md",
+            "chrome://version",
+            "chrome-extension://abc/options.html",
+            "devtools://devtools/bundled/inspector.html",
+            "view-source:https://example.com/",
+            "javascript:alert(1)",
+            "JaVaScRiPt:alert(1)",
+            "java\nscript:alert(1)",
+            "data:text/html,<h1>x</h1>",
+            "about:version",
+            "tauri://localhost",
+            "nib://open",
+        ] {
+            assert!(
+                site_allowed(&grant, address, Store::Agent).is_err(),
+                "{address}"
+            );
+        }
+        for address in [
+            "https://example.com/",
+            "http://127.0.0.1:9/x",
+            "about:blank",
+            "blob:https://example.com/5d2f",
+            "",
+        ] {
+            assert!(
+                site_allowed(&grant, address, Store::Agent).is_ok(),
+                "{address}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_failed_load_leaves_the_tab_to_its_agent() {
+        assert!(site_allowed(&grant(), "chrome-error://chromewebdata/", Store::Agent).is_ok());
+    }
+
+    #[test]
+    fn a_trailing_dot_is_the_same_host() {
+        let mut grant = grant();
+        grant.sites.insert("denied.example".into(), SiteRule::Deny);
+        grant
+            .sites
+            .insert("bank.example.".into(), SiteRule::AgentStore);
+        assert_eq!(
+            host_of("http://Denied.Example.:8/").as_deref(),
+            Some("denied.example")
+        );
+        assert!(site_allowed(&grant, "http://denied.example./", Store::Agent).is_err());
+        assert!(site_allowed(&grant, "http://a.denied.example../", Store::Agent).is_err());
+        assert!(site_allowed(&grant, "https://bank.example./", Store::Reader).is_err());
+        assert!(site_allowed(&grant, "https://bank.example/", Store::Reader).is_err());
+        assert!(payment_host(
+            host_of("https://js.stripe.com./").as_deref().unwrap_or("")
+        ));
+        assert!(social(
+            host_of("https://mail.google.com./")
+                .as_deref()
+                .unwrap_or("")
+        ));
+    }
+
+    /// What a key does to what has the keyboard, judged: `keys` names the key.
+    fn keyed(grant: &Grant, facts: Facts, keys: &str) -> Option<Category> {
+        let key = crate::agents::keys::chord(keys).expect("key");
+        let (facts, act) = key_act(facts, &key)?;
+        judge(grant, &facts, act, "https://shop.example/", &[]).map(|one| one.category)
+    }
+
+    #[test]
+    fn a_key_on_a_button_is_a_press_of_it() {
+        let grant = grant();
+        for key in ["Space", "Enter", "Shift+Enter", "Control+Enter"] {
+            assert_eq!(
+                keyed(&grant, press("Pay now"), key),
+                Some(Category::Paying),
+                "{key}"
+            );
+            assert_eq!(
+                keyed(&grant, press("Delete account"), key),
+                Some(Category::Deleting),
+                "{key}"
+            );
+        }
+        let send = Facts {
+            fields: vec![field("textarea", "Type a message"), field("email", "To")],
+            ..press("Send")
+        };
+        assert_eq!(
+            keyed(&grant, send.clone(), "Space"),
+            Some(Category::Sending)
+        );
+        assert_eq!(keyed(&grant, send, "Enter"), Some(Category::Sending));
+        // Nothing to say about a key that presses nothing, or a harmless button.
+        assert_eq!(keyed(&grant, press("Pay now"), "Tab"), None);
+        assert_eq!(keyed(&grant, press("Open menu"), "Space"), None);
+    }
+
+    #[test]
+    fn a_key_on_a_sign_in_button_signs_in_as_the_mode_says() {
+        let log_in = || Facts {
+            submit: true,
+            in_form: true,
+            fields: vec![field("password", "Password")],
+            ..press("Log in")
+        };
+        let grant = grant();
+        assert_eq!(keyed(&grant, log_in(), "Space"), Some(Category::SigningIn));
+        assert_eq!(keyed(&grant, log_in(), "Enter"), Some(Category::SigningIn));
+        let mut full = grant.clone();
+        full.mode = Mode::Autonomous;
+        assert_eq!(keyed(&full, log_in(), "Space"), None);
+    }
+
+    #[test]
+    fn enter_in_a_field_presses_its_forms_default_button() {
+        let grant = grant();
+        let field_of = |button: &str| Facts {
+            tag: "input".into(),
+            kind: "text".into(),
+            editable: true,
+            in_form: true,
+            default_button: button.into(),
+            field: field("text", "Name"),
+            ..Facts::default()
+        };
+        assert_eq!(
+            keyed(&grant, field_of("Delete account"), "Enter"),
+            Some(Category::Deleting)
+        );
+        assert_eq!(
+            keyed(&grant, field_of("Pay now"), "Enter"),
+            Some(Category::Paying)
+        );
+        assert_eq!(keyed(&grant, field_of("Search"), "Enter"), None);
+        // `browser_type` with submit is judged the same way, from the same facts.
+        let submitted = Facts {
+            submit: true,
+            ..field_of("Delete account")
+        };
+        let question = judge(&grant, &submitted, Act::Enter, "https://shop.example/", &[]);
+        assert_eq!(
+            question.as_ref().map(|one| one.category),
+            Some(Category::Deleting)
+        );
+        assert_eq!(
+            question.map(|one| one.summary).as_deref(),
+            Some("Delete account on shop.example")
+        );
+        // A checkbox's Enter is the same submit.
+        let tick = Facts {
+            kind: "checkbox".into(),
+            editable: false,
+            field: field("checkbox", "Sure"),
+            ..field_of("Delete account")
+        };
+        assert_eq!(keyed(&grant, tick, "Enter"), Some(Category::Deleting));
+        // In a box Enter is a new line, and nothing is pressed.
+        let boxed = Facts {
+            tag: "textarea".into(),
+            kind: String::new(),
+            field: field("textarea", "Notes"),
+            ..field_of("Delete account")
+        };
+        assert_eq!(keyed(&grant, boxed, "Enter"), None);
+        // And a press of another button is about that button.
+        let other = Facts {
+            default_button: "Delete account".into(),
+            in_form: true,
+            ..press("Open menu")
+        };
+        assert_eq!(keyed(&grant, other, "Space"), None);
+        let mut full = grant.clone();
+        full.mode = Mode::Autonomous;
+        assert_eq!(keyed(&full, field_of("Delete account"), "Enter"), None);
+    }
+
+    #[test]
+    fn a_press_on_what_cannot_be_read_asks() {
+        let grant = grant();
+        let host = || Facts {
+            tag: "x-pay".into(),
+            opaque: true,
+            ..Facts::default()
+        };
+        assert_eq!(keyed(&grant, host(), "Space"), Some(Category::Writing));
+        assert_eq!(keyed(&grant, host(), "Enter"), Some(Category::Writing));
+        let mut full = grant.clone();
+        full.mode = Mode::Autonomous;
+        assert_eq!(keyed(&full, host(), "Space"), None);
+    }
+
+    #[test]
+    fn the_apps_own_hosts_are_off_the_web_with_a_trailing_dot_too() {
+        for address in [
+            "http://tauri.localhost/",
+            "http://tauri.localhost./",
+            "https://IPC.localhost../x",
+            "http://asset.localhost./",
+            "http://nib.localhost./",
+        ] {
+            assert!(!on_the_web(address), "{address}");
+        }
+    }
+
+    #[test]
+    fn a_key_in_a_box_is_not_a_press() {
+        let grant = grant();
+        let boxed = Facts {
+            tag: "textarea".into(),
+            name: "Pay this month's rent".into(),
+            editable: true,
+            ..Facts::default()
+        };
+        // Space types in it, and Enter is its form's or its message's to say.
+        assert!(key_act(
+            boxed.clone(),
+            &crate::agents::keys::chord("Space").expect("key")
+        )
+        .is_none());
+        let enter = key_act(boxed, &crate::agents::keys::chord("Enter").expect("key"));
+        assert_eq!(enter.map(|(_, act)| act), Some(Act::Enter));
+        // A page with nothing in focus has no button to press.
+        let page = Facts {
+            tag: "body".into(),
+            name: "Delete old notes in this list".into(),
+            ..Facts::default()
+        };
+        assert_eq!(keyed(&grant, page.clone(), "Space"), None);
+        assert!(key_act(page, &crate::agents::keys::chord("Space").expect("key")).is_none());
+        // Enter on a checkbox submits its form the way a press of its submit does.
+        let tick = Facts {
+            tag: "input".into(),
+            kind: "checkbox".into(),
+            in_form: true,
+            fields: vec![field("password", "Password")],
+            ..Facts::default()
+        };
+        assert_eq!(
+            keyed(&grant, tick.clone(), "Enter"),
+            Some(Category::SigningIn)
+        );
+        assert_eq!(keyed(&grant, tick, "Space"), None);
     }
 
     #[test]

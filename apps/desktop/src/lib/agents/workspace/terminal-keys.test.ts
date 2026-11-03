@@ -20,11 +20,17 @@ describe('what goes without asking', () => {
   test('one command line of a program on the list, with Enter', () => {
     expect(typesFreely('git status', true, [], programs)).toBe(true)
     expect(typesFreely('npm test', true, [], programs)).toBe(true)
-    expect(typesFreely('"C:\\Program Files\\Git\\bin\\git.exe" log', true, [], programs)).toBe(true)
   })
 
   test('nothing else: another program, a second command, no Enter, keys after it', () => {
     expect(typesFreely('rm -rf build', true, [], programs)).toBe(false)
+    // What a line edits before Enter is run is not what it says: the shell clears, runs
+    // or rubs out by a control character, so the first word proves nothing.
+    expect(typesFreely('git \u0015touch pwned', true, [], programs)).toBe(false)
+    expect(typesFreely('git status \u000ftouch pwned', true, [], programs)).toBe(false)
+    expect(typesFreely('git\u007f\u007f\u007ftouch pwned', true, [], programs)).toBe(false)
+    expect(typesFreely('/tmp/x/git.sh', true, [], programs)).toBe(false)
+    expect(typesFreely('./git status', true, [], programs)).toBe(false)
     expect(typesFreely('git status; rm -rf ~', true, [], programs)).toBe(false)
     expect(typesFreely('git log | sh', true, [], programs)).toBe(false)
     expect(typesFreely('git status', false, [], programs)).toBe(false)

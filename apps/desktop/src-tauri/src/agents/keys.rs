@@ -77,6 +77,16 @@ impl Key {
         self.name == "Enter" && self.modifiers & (CONTROL | ALT | META) == 0
     }
 
+    /// Whether what this press does depends on what has the keyboard.
+    pub fn judged_by_the_page(&self) -> bool {
+        self.changes_words() || self.sends() || self.submits() || self.presses()
+    }
+
+    /// Whether this press presses what has the keyboard, as a click would.
+    pub fn presses(&self) -> bool {
+        matches!(self.name.as_str(), " " | "Enter")
+    }
+
     /// Whether this press is what sends from a message box: Enter, or Control+Enter
     /// where Enter is a new line (a mail's body, a comment). Shift+Enter is the new line
     /// in a chat, and sends nothing.
@@ -283,6 +293,39 @@ mod tests {
         assert!(chord("Alt+ArrowDown").expect("key").opens_a_picker());
         assert!(!chord("ArrowDown").expect("key").opens_a_picker());
         assert!(!chord("Control+Enter").expect("key").submits());
+    }
+
+    #[test]
+    fn a_key_that_presses_is_asked_of_the_page_whatever_is_held() {
+        for said in [
+            "Control+Space",
+            "Alt+Space",
+            "Meta+Space",
+            "Space",
+            "Enter",
+            "a",
+        ] {
+            assert!(chord(said).expect("key").judged_by_the_page(), "{said}");
+        }
+        for said in ["Tab", "Escape", "ArrowDown"] {
+            assert!(!chord(said).expect("key").judged_by_the_page(), "{said}");
+        }
+    }
+
+    #[test]
+    fn space_and_enter_press_what_has_the_keyboard() {
+        for said in [
+            "Space",
+            "Enter",
+            "Shift+Enter",
+            "Control+Enter",
+            "Control+Space",
+        ] {
+            assert!(chord(said).expect("key").presses(), "{said}");
+        }
+        for said in ["Tab", "a", "Escape", "ArrowDown"] {
+            assert!(!chord(said).expect("key").presses(), "{said}");
+        }
     }
 
     #[test]

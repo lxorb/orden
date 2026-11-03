@@ -125,7 +125,8 @@ describe('the chats an agent sees', () => {
     const { answerThreadSpaces } = await import('../../automation/caller')
     answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
     const grant = {
-      id: 'claude',
+      id: 'nib-claude',
+      built_in: true,
       name: 'Claude Code',
       scopes: ['chats.read'],
       spaces: 'all',

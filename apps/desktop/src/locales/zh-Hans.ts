@@ -1990,6 +1990,8 @@ export const zhHans: Dictionary = {
     '它会读取你的笔记，并以你的登录身份浏览，因此网页可能试图让它把笔记发送出去。',
   Activity: '活动',
   'Add a site': '添加网站',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    '此列表中的程序无需询问即可运行，并能执行该程序能做的一切。',
   'Add a program': '添加程序',
   'Every space': '所有空间',
   Sites: '网站',

@@ -2054,6 +2054,8 @@ export const gsw: Dictionary = {
     'Er list dini Notize und surft aagmäldet als du, also chönnt e Siite probiere, ihn dezue z bringe, dass er sie wiiterschickt.',
   Activity: 'Aktivität',
   'Add a site': 'Websiite dezuefüege',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Es Programm uf dere Lischte lauft ohni Nachfrag und cha alles, was das Programm cha.',
   'Add a program': 'Programm dezuefüege',
   'Every space': 'All Ablage',
   Sites: 'Websiite',
