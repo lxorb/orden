@@ -1420,10 +1420,24 @@ a script in every webview that took a Ctrl+click, a Shift+click and a `target="_
 link away from the page to hand to the system browser, which no site is granted, so in a
 web tab those presses opened nothing at all. It is off (`src-tauri/src/lib.rs`), the
 app's own links say where they go in its own code, and `scripts/web-click-probe.py`
-presses every kind of link every way. A page that asks for a window at a size of
-its own - a sign-in, a share dialog - gets a framed window on the opener's own store,
-because that page reports back through `window.opener` and closes itself; on the
-other engines it is a tab, as before.
+presses every kind of link every way.
+
+What a window the page asks for becomes is one rule, `becomes` in `src-tauri/src/web_tabs.rs`,
+which every engine's handler answers by (#1074). A link, or `window.open` of an address
+with nothing more, is a tab in front. A page that has to keep hold of what it opened gets
+a window of its own that the engine builds, so `window.open` hands it the window back and
+`window.opener` is there in it: one asked for at a size of its own - a sign-in, a payment
+provider, a share dialog - which reports back through `window.opener` and closes itself,
+and one opened on `about:blank` (or with no address at all) to be sent somewhere or
+written into. A tab built afresh at the address could give it neither: the page was
+answered `null`, a sign-in in a popup never reported back, and a blank window opened
+nothing at all. On Orden's own Chromium that window is CEF's own popup, opener and all;
+on `WebView2` and `WKWebView` a framed window on the opener's own store. A form sent by
+POST to `target="_blank"` is sent into such a window, which the script in Orden's own
+world opens first under a name of its own, so the form's request is the one sent; a tab
+would have asked for its address by GET. `scripts/opens-drive.py` presses every way a page
+opens a window and fails on any that does not do what it asked for. Nib's own asks under
+a window name - a key the page let go by, a swipe - are never a window.
 
 ## A link from another program
 

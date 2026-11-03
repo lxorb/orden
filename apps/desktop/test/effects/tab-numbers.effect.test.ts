@@ -83,6 +83,9 @@ beforeEach(() => {
 
 afterEach(() => {
   release()
+  // And the window let go of, so the next test's Alt is not the second tap of this
+  // one's: Alt Alt is the tab overview's, and shows no numbers (#331).
+  window.dispatchEvent(new Event('blur'))
   vi.useRealTimers()
 })
 

@@ -1046,6 +1046,10 @@ function holds(tail: string): boolean {
  *  wears its spark until the reader looks at it (TabMark.svelte, agent-marks.svelte.ts).
  *  Measured 3,481,273.
  *
+ *  Raised 2026-11-03, to 3,482,700, for #331: the top bar's button for the tab overview,
+ *  and the strip leaving a gap where a tab's window is out (Titlebar.svelte, Tabs.svelte).
+ *  Measured 3,482,585, 385 modules.
+ *
  *  Raised 2026-11-03, to 3,516,800, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes (a phone's draft kept
  *  until it lands, charts, paste, block commands, links, a thread written down while it

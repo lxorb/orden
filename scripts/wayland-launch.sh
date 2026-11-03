@@ -78,6 +78,10 @@
 #     (#481, scripts/watch-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
+#   - with OPENS=1, a page of the run's own pressed with the compositor's pointer in every
+#     way a page opens a window - links, `window.open` in its forms, a sign-in's popup
+#     with its opener, a blank window sent somewhere or written into, a form sent by
+#     POST, frames - and each has to do what it asked for (#1074, scripts/opens-drive.py);
 #   - with CLOSING=1, web tabs opened, Orden started again on them, and closed one after
 #     another as fast as Ctrl+W closes them while their pages come up: the window has to
 #     go on answering (#1031, scripts/closing-drive.py);
@@ -393,13 +397,15 @@ if [ "${EXPORTPDF:-0}" = 1 ]; then
 fi
 # With CLOSING=1, the endpoint and no page (#1031).
 [ "${CLOSING:-0}" = 1 ] && endpoint
+# With OPENS=1, the endpoint and no page: the drive opens its own (#1074).
+[ "${OPENS:-0}" = 1 ] && endpoint
 # With CERT=1, the endpoint and a site over https, a real one: its certificate is the
 # point (#776).
 if [ "${CERT:-0}" = 1 ]; then
   endpoint
   set -- "$@" "https://${CERT_HOST:-example.com}/"
 fi
-if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TEXTSIZE:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TEXTSIZE:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${OPENS:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
@@ -619,6 +625,11 @@ fi
 if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then
   sleep 3
   python3 "$here/scheme-drive.py" sway "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${OPENS:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/opens-drive.py" sway "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${POPUP:-0}" = 1 ]; then

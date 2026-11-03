@@ -6,6 +6,7 @@
  *  shortcuts/registry.ts), read off the registry as they are bound now, so a number is
  *  never one the key does not keep. Pure; numbers.svelte.ts is what shows them. */
 
+import { WITHIN } from '../double-tap'
 import { parseCombination, type Platform } from '../keys'
 
 /** The keys, and the place along the strip each goes to. Eight places, the ninth, and
@@ -84,19 +85,35 @@ function isDigit(stroke: Stroke): boolean {
  *  still held Alt does not bring them back until Alt has been let go of. So does a press
  *  of the pointer or the wheel (`spent`), and Alt let go of or the window losing the
  *  keyboard (`released`). A held Alt repeats, and a repeat is the same hold - flagged as
- *  one or not, since an engine that did not flag it would otherwise start over. */
+ *  one or not, since an engine that did not flag it would otherwise start over.
+ *
+ *  And Alt pressed again a moment after a quick tap of it is the second half of Alt Alt,
+ *  the tab overview's key (#331), not a hold: the numbers would flash over the tabs
+ *  just as they become windows. So it shows nothing; the first tap still does, which a
+ *  tap of Alt alone always has. */
 export class AltHold {
   holding = false
   /** Alt is still down, but the hold was used for something else. */
   private spent = false
+  /** When the last quick tap of Alt alone was let go of, and when Alt went down. */
+  private tapped = Number.NEGATIVE_INFINITY
+  private since = Number.NEGATIVE_INFINITY
+  /** Alt is down as a tap that followed a tap, showing nothing. */
+  private quiet = false
 
   /** A key went down. Answers whether the numbers are to be put where the tabs are now:
    *  on a hold beginning, and on a digit, which has just moved the active tab. */
-  down(stroke: Stroke): boolean {
+  down(stroke: Stroke, now = Number.NaN): boolean {
     const alone = !stroke.ctrlKey && !stroke.shiftKey && !stroke.metaKey && !stroke.altGraph
 
     if (stroke.key === 'Alt') {
       if (stroke.repeat || this.holding || this.spent) return false
+      this.since = now
+      if (now - this.tapped <= WITHIN) {
+        this.spent = true
+        this.quiet = alone
+        return false
+      }
       this.holding = alone
       this.spent = !alone
       return this.holding
@@ -112,6 +129,9 @@ export class AltHold {
     // no Alt down there was none.
     this.spent = this.spent || this.holding || stroke.altKey
     this.holding = false
+    this.quiet = false
+    // A key between two taps of Alt makes them no double tap.
+    this.tapped = Number.NEGATIVE_INFINITY
     return false
   }
 
@@ -122,7 +142,11 @@ export class AltHold {
   }
 
   /** Alt let go of, or the window gone and with it any word of the release. */
-  released(): void {
+  released(now = Number.NaN): void {
+    // A quick tap, alone: the first half of what may be Alt Alt.
+    const tap = (this.holding || this.quiet) && now - this.since <= WITHIN
+    this.tapped = tap ? now : Number.NEGATIVE_INFINITY
+    this.quiet = false
     this.holding = false
     this.spent = false
   }
