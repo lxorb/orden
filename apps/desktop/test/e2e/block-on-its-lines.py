@@ -33,12 +33,12 @@ CASES = {
         "$$\nFirst line beta.\nSecond line alpha.\n$$",
     ),
     "Callout": (
-        "Second line \n> [!NOTE]\n> \nalpha.",
+        "Second line \n> [!NOTE]\n> \n\nalpha.",
         "> [!NOTE]\n> First line beta.\n> Second line alpha.",
     ),
     "Table": (
-        "|     |     |\nalpha.",
-        "First line beta.\nSecond line alpha.\n| Column 1",
+        "|     |     |\n\nalpha.",
+        "First line beta.\nSecond line alpha.\n\n| Column 1",
     ),
 }
 

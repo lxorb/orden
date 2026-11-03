@@ -347,25 +347,76 @@ interface Block {
   caret: number
 }
 
+/** What a block needs round it besides its own lines. */
+interface Room {
+  /** Wraps what is selected, rather than going below it. */
+  wrap?: (selected: string) => Block
+  /** A blank line above where words are: dashes under a line are its heading's underline,
+   *  and a line above a table is taken for its head. */
+  above?: boolean
+  /** A blank line below where words are: a line under a callout is more of it, and a line
+   *  under a table is a row of it. */
+  below?: boolean
+}
+
+/** A line whose words sit inside something: a list item, a quote, a heading, a row. */
+const STRUCTURED = /^\s*(?:[-*+]\s|\d+[.)]\s|>|#{1,6}\s|\|)/
+
+/** Whether the range takes a line of structure apart, leaving its marker behind empty. */
+function splitsStructure(state: EditorState, from: number, to: number): boolean {
+  const first = state.doc.lineAt(from)
+  const last = state.doc.lineAt(to)
+  if (from === to && from === first.from) return false
+
+  return (
+    (from > first.from && STRUCTURED.test(first.text)) ||
+    (to < last.to && STRUCTURED.test(last.text))
+  )
+}
+
+/** What a block's top needs to stand apart from what is above it at `at`. */
+function roomAbove(state: EditorState, at: number, blank: boolean): string {
+  const line = state.doc.lineAt(at)
+  if (at > line.from) return blank ? '\n\n' : '\n'
+  if (!blank || line.number === 1) return ''
+
+  return state.doc.line(line.number - 1).text.trim() ? '\n' : ''
+}
+
+/** What a block's foot needs to stand apart from what is below it at `at`. */
+function roomBelow(state: EditorState, at: number, text: string, blank: boolean): string {
+  const line = state.doc.lineAt(at)
+  if (state.sliceDoc(at, line.to) !== '') {
+    if (blank) return '\n\n'
+    return text.endsWith('\n') ? '' : '\n'
+  }
+  if (!blank || line.number === state.doc.lines) return ''
+
+  return state.doc.line(line.number + 1).text.trim() ? '\n' : ''
+}
+
 /** Inserts a block on its own lines, leaving the caret where you type next.
  *
  *  Words after the caret stay on a line of their own: on the closing line of a fence
  *  they would close nothing, and every line below would read as code.
  *
- *  A selection is never written over. Whatever can hold words wraps them (`wrap`), as
- *  Quote does; anything else goes below them. */
-function insertBlock(build: () => Block, wrap?: (selected: string) => Block): StateCommand {
+ *  A selection is never written over. Whatever can hold words wraps them, as Quote does;
+ *  anything else goes below them. And a line of structure is never split: the block goes
+ *  below the whole of it. */
+function insertBlock(build: () => Block, room: Room = {}): StateCommand {
   return ({ state, dispatch }) => {
     const range = state.selection.main
-    const from = wrap ? range.from : range.to
-    // The line break ending a selection of whole lines is not a word to wrap.
-    const to = wrap && state.sliceDoc(from, range.to).endsWith('\n') ? range.to - 1 : range.to
+    const splits = splitsStructure(state, range.from, range.to)
+    const wrap = splits ? undefined : room.wrap
+    const below = splits ? state.doc.lineAt(range.to).to : range.to
 
-    const line = state.doc.lineAt(from)
+    const from = wrap ? range.from : below
+    // The line break ending a selection of whole lines is not a word to wrap.
+    const to = wrap && state.sliceDoc(from, below).endsWith('\n') ? below - 1 : below
+
     const { text, caret } = wrap && from < to ? wrap(state.sliceDoc(from, to)) : build()
-    const prefix = from === line.from || !line.text ? '' : '\n'
-    const follows = state.sliceDoc(to, state.doc.lineAt(to).to) !== ''
-    const insert = prefix + text + (follows && !text.endsWith('\n') ? '\n' : '')
+    const prefix = roomAbove(state, from, !!room.above)
+    const insert = prefix + text + roomBelow(state, to, text, !!room.below)
 
     dispatch(
       state.update({
@@ -388,13 +439,12 @@ function fenceFor(words: string): string {
   return '`'.repeat(longest + 1)
 }
 
-export const insertCodeFence = insertBlock(
-  () => ({ text: '```\n\n```', caret: 3 }),
-  (selected) => {
+export const insertCodeFence = insertBlock(() => ({ text: '```\n\n```', caret: 3 }), {
+  wrap: (selected) => {
     const fence = fenceFor(selected)
     return { text: `${fence}\n${selected}\n${fence}`, caret: fence.length }
   },
-)
+})
 
 /** A fence line: up to three spaces, then three or more backticks or tildes,
  *  then whatever names the language. A backtick fence may not have backticks
@@ -495,10 +545,9 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   )
   return true
 }
-export const insertMathBlock = insertBlock(
-  () => ({ text: '$$\n\n$$', caret: 3 }),
-  (selected) => ({ text: `$$\n${selected}\n$$`, caret: selected.length + 3 }),
-)
+export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }), {
+  wrap: (selected) => ({ text: `$$\n${selected}\n$$`, caret: selected.length + 3 }),
+})
 
 /** A ` ```chart ` fence with a chart already in it.
  *
@@ -517,9 +566,11 @@ export const insertChart = insertBlock(() => ({
  *  Empty, unlike a chart: what goes in is a question in somebody's own words, and
  *  a question written for them would be a question to delete. The answer goes
  *  under the fence when it is asked; see ai/block.ts. */
-export const insertAiBlock = insertBlock(() => ({ text: '```ai\n\n```\n', caret: 7 }))
+export const insertAiBlock = insertBlock(() => ({ text: '```ai\n\n```\n', caret: 6 }))
 
-export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }))
+export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }), {
+  above: true,
+})
 
 /** A GitHub alert, which is the callout the renderer draws and the editor marks.
  *  `NOTE` because it is the one that says nothing beyond "read this"; the other
@@ -527,16 +578,16 @@ export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4
  *  sign written into every one of them would be a note full of punctuation nobody
  *  asked for; the two rows below are how one gets its sign without being typed by
  *  hand. See `callouts` in @orden/markdown. */
-export const insertCallout = insertBlock(
-  () => ({ text: '> [!NOTE]\n> ', caret: 12 }),
-  (selected) => {
+export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 12 }), {
+  below: true,
+  wrap: (selected) => {
     const text = `> [!NOTE]\n${selected
       .split('\n')
       .map((line) => `> ${line}`)
       .join('\n')}`
     return { text, caret: text.length }
   },
-)
+})
 
 /** The callout the caret is in: its marker line, where in that line the brackets
  *  start, and what the line says.
@@ -733,7 +784,16 @@ export function insertTable(rows = 2, columns = 2): StateCommand {
     () => `| ${Array.from({ length: columns }, () => '   ').join(' | ')} |`,
   )
 
-  return insertBlock(() => ({ text: [header, divider, ...body].join('\n'), caret: 2 }))
+  const block = insertBlock(() => ({ text: [header, divider, ...body].join('\n'), caret: 2 }), {
+    above: true,
+    below: true,
+  })
+
+  // No table in a table: its rows would only break the one around it.
+  return (target) => {
+    const line = target.state.doc.lineAt(target.state.selection.main.head)
+    return /^\s*\|/.test(line.text) ? false : block(target)
+  }
 }
 
 const INLINE_MARKERS = /(\*\*|\*|~~|==|`|(?<![\p{L}\p{N}])__?|__?(?![\p{L}\p{N}]))/gu
