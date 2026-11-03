@@ -12,6 +12,7 @@ import { api, BASE } from '../api'
 import { fileBytes, sha256, toBase64 } from '../bytes'
 import { deviceName } from '../device'
 import { links } from '../link-index.svelte'
+import { placeholderOf } from '../icloud-placeholder'
 import { onDisk } from '../on-disk'
 import { holderOf } from '../pages/held'
 import { scanSpace } from '../space-watch'
@@ -117,6 +118,8 @@ function diskOf(telling: Telling): Disk {
     },
     mkdir: (path) => invoke('create_folder', { path }).then(() => undefined),
     exists: stamped,
+    // Unknown counts as there: a delete goes to every device.
+    evicted: (path) => stamped(placeholderOf(path)).catch(() => true),
   }
 }
 

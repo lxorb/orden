@@ -322,6 +322,9 @@ export class Engine implements AskedEngine {
   private async remove(path: string): Promise<void> {
     const placed = this.placed(path)
     if (!placed) return
+    // Every road to here reads a file not found as gone. On macOS 13 a note iCloud took
+    // off this Mac is exactly that, and it would leave the account and every other device.
+    if (await this.core.world.disk.evicted(path)) return
     await this.core.commit(removed(this.core, placed.space, placed.path))
     await this.settle(placed.space)
     await this.held.refresh()
