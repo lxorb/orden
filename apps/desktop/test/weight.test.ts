@@ -1044,8 +1044,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,481,400, for #1070: a tab an agent opened behind the reader
  *  wears its spark until the reader looks at it (TabMark.svelte, agent-marks.svelte.ts).
- *  Measured 3,481,273. */
-const BUDGET = 3_481_400
+ *  Measured 3,481,273.
+ *
+ *  Raised 2026-11-03, to 3,482,700, for #331: the top bar's button for the tab overview,
+ *  and the strip leaving a gap where a tab's window is out (Titlebar.svelte, Tabs.svelte).
+ *  Measured 3,482,585, 385 modules. */
+const BUDGET = 3_482_700
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

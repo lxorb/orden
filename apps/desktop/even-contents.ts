@@ -140,6 +140,7 @@ export const APP_FOLDERS = [
   'import',
   'mobile',
   'online',
+  'overview',
   'pages',
   'palette',
   'pdf',
@@ -317,9 +318,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,778,300, for #1070: an agent opens and shows
  *  everything behind the reader through one door (agents/workspace/reader-view.ts), and a
  *  tab it opened wears its spark until looked at. Measured 5,778,101.
+ *
+ *  The code raised on 2026-11-03, to 5,792,500, for #331: every tab as a window on a
+ *  canvas, Alt Alt (overview/), which takes the place of the palette's tab cards.
+ *  Measured 5,792,326.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_778_300,
+  code: 5_792_500,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
