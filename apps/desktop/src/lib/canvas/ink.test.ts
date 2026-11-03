@@ -16,6 +16,7 @@ import {
   nearStroke,
   outlineOf,
   penFelt,
+  rubbedPath,
   simplified,
   smoothed,
   strokeBox,
@@ -437,8 +438,8 @@ describe('the eraser', () => {
     const pieces = erased(one, { x: 10, y: 0 }, 2)
 
     expect(pieces).toHaveLength(2)
-    expect(pieces[0]?.points.at(-1)?.x).toBe(7)
-    expect(pieces[1]?.points[0]?.x).toBe(13)
+    expect(pieces[0]?.points.at(-1)?.x).toBe(8)
+    expect(pieces[1]?.points[0]?.x).toBe(12)
   })
 
   test('the first piece keeps the name, so a sync has nothing to argue over', () => {
@@ -453,7 +454,7 @@ describe('the eraser', () => {
 
   test('rubbed off one end shortens the line and leaves one piece', () => {
     expect(erased(one, { x: 0, y: 0 }, 3)).toHaveLength(1)
-    expect(erased(one, { x: 0, y: 0 }, 3)[0]?.points[0]?.x).toBe(4)
+    expect(erased(one, { x: 0, y: 0 }, 3)[0]?.points[0]?.x).toBe(3)
   })
 
   test('rubbed over the whole of it leaves nothing', () => {
@@ -472,11 +473,17 @@ describe('the eraser', () => {
     expect(second?.id).not.toBe('s')
   })
 
-  test('a speck with nothing to draw between is not ink', () => {
-    // Two points left either side would each be one point on their own.
-    expect(
-      erased(stroke([point(0, 0), point(10, 0), point(20, 0)], { size: 0 }), { x: 10, y: 0 }, 2),
-    ).toEqual([])
+  test('a line of few points still has what lies either side of the eraser', () => {
+    const pieces = erased(
+      stroke([point(0, 0), point(10, 0), point(20, 0)], { size: 0 }),
+      { x: 10, y: 0 },
+      2,
+    )
+
+    expect(pieces.map((piece) => piece.points.map((at) => at.x))).toEqual([
+      [0, 8],
+      [12, 20],
+    ])
   })
 })
 
@@ -1050,5 +1057,63 @@ describe('the cards a loop goes round', () => {
 
   test('and none for a loop of fewer than three points', () => {
     expect(cardsInLasso([card('in', 10, 10)], loop.slice(0, 2))).toEqual([])
+  })
+})
+
+describe('rubbing across a long straight segment', () => {
+  const long = (): InkStroke =>
+    stroke([point(0, 0, 0.2, 0), point(100, 0, 0.8, 100)], { id: 's', size: 2 })
+
+  test('cuts the segment where it meets the eraser, with no recorded point near', () => {
+    const pieces = erased(long(), { x: 50, y: 0 }, 9)
+
+    expect(pieces.map((one) => one.points.map((at) => at.x))).toEqual([
+      [0, 40],
+      [60, 100],
+    ])
+  })
+
+  test('gives the cut ends what the pen was doing there, and each piece its own clock', () => {
+    const [first, second] = erased(long(), { x: 50, y: 0 }, 9)
+
+    expect(first?.points[1]?.pressure).toBeCloseTo(0.44)
+    expect(first?.points[1]?.t).toBeCloseTo(40)
+    expect(second?.points[0]?.pressure).toBeCloseTo(0.56)
+    expect(second?.points[0]?.t).toBe(0)
+    expect(second?.points[1]?.t).toBeCloseTo(40)
+  })
+
+  test('shortens the line from the end the eraser is on, under the same name', () => {
+    const pieces = erased(long(), { x: 0, y: 0 }, 9)
+
+    expect(pieces.map((one) => one.id)).toEqual(['s'])
+    expect(pieces[0]?.points.map((at) => at.x)).toEqual([10, 100])
+  })
+
+  test('leaves a line it only comes near untouched, the same object back', () => {
+    const one = long()
+
+    expect(erased(one, { x: 50, y: 11 }, 9)[0]).toBe(one)
+  })
+
+  test('takes a dot it is on and leaves one it is not', () => {
+    const dot = stroke([point(0, 0)], { size: 2 })
+
+    expect(erased(dot, { x: 0, y: 0 }, 9)).toEqual([])
+    expect(erased(dot, { x: 50, y: 0 }, 9)[0]).toBe(dot)
+  })
+})
+
+describe('the way an eraser went between two of its events', () => {
+  test('is points no further apart than its reach, ending where it is', () => {
+    expect(rubbedPath({ x: 0, y: 0 }, { x: 25, y: 0 }, 10)).toEqual([
+      { x: 25 / 3, y: 0 },
+      { x: 50 / 3, y: 0 },
+      { x: 25, y: 0 },
+    ])
+  })
+
+  test('is only where it is, for a step inside its reach', () => {
+    expect(rubbedPath({ x: 0, y: 0 }, { x: 5, y: 0 }, 30)).toEqual([{ x: 5, y: 0 }])
   })
 })

@@ -19,6 +19,7 @@
 import { settledTurn, TURN_DEADBAND, turnedBy } from '../camera'
 import type { InkPoint, InkTool, Shape, Side } from './format'
 import type { Box, HandleId, Point } from './geometry'
+import { rubbedPath } from './ink'
 
 /** What the bar is set to. The arrow is the one everything else falls back to;
  *  the last seven are the shapes, which the format already names. */
@@ -270,7 +271,7 @@ type Gesture =
    *  a connector rather than a line lying across them. */
   | { kind: 'pull'; tool: PutTool; from: Point; to: Point; fromNode: string | null }
   | { kind: 'draw'; stroke: PendingStroke; id: number }
-  | { kind: 'erase'; whole: boolean; id: number }
+  | { kind: 'erase'; whole: boolean; id: number; last: Point }
   /** A loop drawn by hand, or a box pulled out. Either way it is the ring it
    *  caught things with, so what draws it and what reads it know one shape. */
   | { kind: 'lasso'; from: Point; points: Point[]; box: boolean; cards?: boolean }
@@ -398,7 +399,10 @@ function rubbingOut(held: Machine, input: Down, context: Context): Step {
   const rub = rubbing(context, input.shift, input.pointer === 'touch')
 
   return {
-    machine: { ...held, gesture: { kind: 'erase', whole: rub.whole, id: input.id } },
+    machine: {
+      ...held,
+      gesture: { kind: 'erase', whole: rub.whole, id: input.id, last: input.at },
+    },
     effects: [rubbed(rub, input.at)],
   }
 }
@@ -1026,7 +1030,11 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
       if (input.id !== one.id) return { machine, effects: [] }
 
       const touch = machine.driver?.kind === 'touch'
-      return { machine, effects: [rubbed(rubbing(context, one.whole, touch), input.at)] }
+      const rub = rubbing(context, one.whole, touch)
+      return {
+        machine: { ...machine, gesture: { ...one, last: input.at } },
+        effects: rubbedPath(one.last, input.at, rub.reach).map((at) => rubbed(rub, at)),
+      }
     }
 
     case 'lasso':

@@ -836,6 +836,25 @@ describe('rubbing out', () => {
     ])
   })
 
+  /** A quick swipe is a few events far apart, and a line it crossed between two of
+   *  them was crossed all the same. */
+  test('answers along the way it went between two events, not only at each', () => {
+    const { effects } = play(
+      [
+        down(),
+        { kind: 'move', id: 1, at: { x: 25, y: 0 }, screen: HERE, samples: [], hit: NOTHING },
+      ],
+      context({ tool: 'erase', eraser: { whole: false, size: 10, stroke: STROKE_RUB }, scale: 1 }),
+    )
+
+    expect(effects).toEqual([
+      { do: 'cut', at: HERE, reach: 10 },
+      { do: 'cut', at: { x: 25 / 3, y: 0 }, reach: 10 },
+      { do: 'cut', at: { x: 50 / 3, y: 0 }, reach: 10 },
+      { do: 'cut', at: { x: 25, y: 0 }, reach: 10 },
+    ])
+  })
+
   /** A finger has the room to miss a line by that a tap on one has, on top of the
    *  stroke eraser's width; a pen and a mouse are precise. */
   test('takes a whole line 8 px off under a finger, and not under a pen', () => {

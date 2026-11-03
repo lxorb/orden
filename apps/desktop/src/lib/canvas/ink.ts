@@ -811,33 +811,117 @@ export function nearStroke(stroke: InkStroke, point: Point, reach: number): bool
   return false
 }
 
+/** Which stretch of a segment lies inside a circle, as shares of its length, or null
+ *  where none of it does. */
+function underCircle(
+  from: Point,
+  to: Point,
+  centre: Point,
+  radius: number,
+): { enters: number; leaves: number } | null {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const fx = from.x - centre.x
+  const fy = from.y - centre.y
+
+  const a = dx * dx + dy * dy
+  const c = fx * fx + fy * fy - radius * radius
+  // Two points on one spot: all of it or none of it.
+  if (a === 0) return c <= 0 ? { enters: 0, leaves: 1 } : null
+
+  const b = fx * dx + fy * dy
+  const root = b * b - a * c
+  if (root <= 0) return null
+
+  const enters = (-b - Math.sqrt(root)) / a
+  const leaves = (-b + Math.sqrt(root)) / a
+  if (leaves <= 0 || enters >= 1) return null
+
+  return { enters: Math.max(0, enters), leaves: Math.min(1, leaves) }
+}
+
+/** A point part of the way along a segment, with what the pen was doing there. */
+function pointBetween(from: InkPoint, to: InkPoint, share: number): InkPoint {
+  const at = (one: number, other: number) => one + (other - one) * share
+
+  return {
+    x: at(from.x, to.x),
+    y: at(from.y, to.y),
+    pressure: at(from.pressure, to.pressure),
+    tiltX: at(from.tiltX, to.tiltX),
+    tiltY: at(from.tiltY, to.tiltY),
+    t: at(from.t, to.t),
+  }
+}
+
+/** Where an eraser has to answer between two of its events: a quick swipe is a few
+ *  events far apart, and a line it crossed between two of them was crossed all the
+ *  same. Points no further apart than its reach, the last of them where it is now. */
+export function rubbedPath(from: Point, to: Point, reach: number): Point[] {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / Math.max(reach, MIN_REACH)))
+
+  return Array.from({ length: steps }, (_unused, step) =>
+    step + 1 === steps
+      ? to
+      : { x: from.x + (dx * (step + 1)) / steps, y: from.y + (dy * (step + 1)) / steps },
+  )
+}
+
+/** The least an eraser reaches in the steps above, so a plane zoomed a long way out
+ *  cannot ask for a walk of millions of them. */
+const MIN_REACH = 0.01
+
 /** The stroke with the part under the eraser taken out. One stroke goes in and
  *  nought, one or several come out: rubbing through the middle of a line leaves
  *  the two ends, which is what a partial eraser means and what a stroke eraser
  *  deliberately does not do.
  *
+ *  The line is cut where it meets the eraser's circle rather than at the points
+ *  recorded along it: a line drawn fast, or tidied, is a few points far apart, and
+ *  an eraser passing between two of them still crossed it.
+ *
  *  A piece of one point is dropped: a stroke with nothing to draw between is not
  *  ink, it is a speck the eraser missed. */
 export function erased(stroke: InkStroke, at: Point, reach: number): InkStroke[] {
   const room = reach + stroke.size / 2
+  const [only] = stroke.points
+
+  if (only && stroke.points.length === 1) {
+    return Math.hypot(only.x - at.x, only.y - at.y) <= room ? [] : [stroke]
+  }
+
   const pieces: InkPoint[][] = []
   let piece: InkPoint[] = []
+  let touched = false
 
-  for (const point of stroke.points) {
-    if (Math.hypot(point.x - at.x, point.y - at.y) <= room) {
-      if (piece.length > 1) pieces.push(piece)
-      piece = []
+  for (let one = 1; one < stroke.points.length; one++) {
+    const from = stroke.points[one - 1]
+    const to = stroke.points[one]
+    if (!from || !to) continue
+
+    const under = underCircle(from, to, at, room)
+    if (!under) {
+      if (!piece.length) piece.push(from)
+      piece.push(to)
       continue
     }
 
-    piece.push(point)
+    touched = true
+    if (under.enters > 0) {
+      if (!piece.length) piece.push(from)
+      piece.push(pointBetween(from, to, under.enters))
+    }
+    if (piece.length > 1) pieces.push(piece)
+    piece = under.leaves < 1 ? [pointBetween(from, to, under.leaves), to] : []
   }
 
   if (piece.length > 1) pieces.push(piece)
 
   // Untouched: the same object back, so a rub that met nothing costs nothing and
   // the caller can tell in one comparison.
-  if (pieces.length === 1 && pieces[0]?.length === stroke.points.length) return [stroke]
+  if (!touched) return [stroke]
 
   return pieces.map((points, index) => ({
     ...stroke,

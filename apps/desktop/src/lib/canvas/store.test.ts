@@ -552,6 +552,7 @@ describe('something locked in place', () => {
     // The line written across it cut through, and then rubbed out whole.
     run.cut(store, { x: 100, y: 30 }, 20)
     run.rub(store, { x: 10, y: 30 }, 20)
+    run.rub(store, { x: 190, y: 30 }, 20)
     expect(store.canvas.ink).toEqual([])
     expect(store.canvas.nodes).toBe(before)
   })
