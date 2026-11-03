@@ -278,9 +278,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,747,000, for #1076: what floats in a note's
  *  corners is drawn by the focused pane inside its own box (pane-corners.svelte.ts).
  *  Measured 5,746,806.
+ *
+ *  The code raised on 2026-11-04, to 5,747,600, for #1079: a pane that loses its tab
+ *  in front comes back to the one used there last (workspace/recency.ts), and keeps
+ *  that order through a restart. Measured 5,747,488.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_747_000,
+  code: 5_747_600,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

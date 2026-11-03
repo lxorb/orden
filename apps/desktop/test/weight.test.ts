@@ -993,9 +993,14 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,440,400, and to 385 modules, for #1076: what floats in a note's
  *  corners - the status bar and the new-note button - is drawn by the focused pane inside
  *  its own box (pane-corners.svelte.ts, Pane.svelte, App.svelte), and a split's shares
- *  leave the divider's pixel out (PaneTree.svelte). Measured 3,440,250, 384 modules. */
-const BUDGET = 3_440_400
-const MOST_FILES = 385
+ *  leave the divider's pixel out (PaneTree.svelte). Measured 3,440,250, 384 modules.
+ *
+ *  Raised 2026-11-04, to 3,445,500, and to 386 modules, for #1079: the panes choose the
+ *  tab a pane comes back to by the one rule in workspace/recency.ts, now read with the
+ *  panes rather than with Ctrl+Tab's first press, and a pane's order of use is written
+ *  down with the session. Measured 3,445,347, 385 modules. */
+const BUDGET = 3_445_500
+const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
