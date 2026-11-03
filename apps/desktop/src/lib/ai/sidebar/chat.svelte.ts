@@ -597,10 +597,16 @@ class Chat implements Panel {
     this.live.set(id, fresh)
     if (this.open === held) this.show(fresh)
     if (fresh.elsewhere) {
-      if (this.queued[id]?.length) this.askingAgain ??= setTimeout(() => this.askAgain(), ANSWER_BEAT)
+      if (this.queued[id]?.length)
+        this.askingAgain ??= setTimeout(() => this.askAgain(), ANSWER_BEAT)
     } else if (this.queued[id]?.length) {
       this.next(fresh)
     }
+  }
+
+  /** Another window wrote a thread down. */
+  heardWritten(id: string): void {
+    void this.readAgain(id)
   }
 
   private askingAgain: ReturnType<typeof setTimeout> | null = null
@@ -611,8 +617,6 @@ class Chat implements Panel {
       if (this.live.get(id)?.elsewhere) void this.readAgain(id)
     }
   }
-
-  private readonly hearingOthers = otherWindowWrote((id) => void this.readAgain(id))
 
   /** What says the answers here are alive, while there are any. */
   private beat: ReturnType<typeof setInterval> | null = null
@@ -1445,6 +1449,10 @@ class Chat implements Panel {
 }
 
 export const chat = new Chat()
+
+otherWindowWrote((id) => {
+  chat.heardWritten(id)
+})
 
 owes(() => chat.keepAnswers())
 

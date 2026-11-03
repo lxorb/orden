@@ -43,6 +43,26 @@ struct Held {
     account: String,
     path: PathBuf,
     store: Store,
+    /// Whether the window running the engine has asked for this store yet.
+    led: bool,
+}
+
+impl Held {
+    /// What one who asks for the store already open hears; see `sync_store_open`.
+    fn opened_for(&mut self, lead: bool) -> Result<Opened, String> {
+        if lead && self.led {
+            let was_clean = self
+                .store
+                .mark_clean(false)
+                .map_err(|failed| failed.to_string())?;
+            return Ok(Opened {
+                was_clean,
+                ..self.store.opened.clone()
+            });
+        }
+        self.led |= lead;
+        Ok(self.store.opened.clone())
+    }
 }
 
 impl Stores {
@@ -84,15 +104,26 @@ fn account_name(account: &str) -> Result<&str, String> {
 /// Opens the account's store, or answers the one already open for it: the device id,
 /// whether the last session ended cleanly, the schema, and whether a damaged file had to
 /// be replaced. A different account's store is closed first.
+///
+/// `lead` is the window running the device's one engine asking. The store outlives any
+/// window, so the first such window hears how the last launch ended, and each one after it
+/// is taking over: it hears how the one before it ended, which a crashed window never said
+/// was clean, and the session is marked not ended again. Anyone else asking (the hub, for
+/// the device id) changes nothing.
 #[tauri::command(async)]
-pub fn sync_store_open(app: AppHandle, account: String) -> Result<Opened, String> {
+pub fn sync_store_open(
+    app: AppHandle,
+    account: String,
+    lead: Option<bool>,
+) -> Result<Opened, String> {
+    let lead = lead.unwrap_or(false);
     let path = store_path(&app, &account)?;
     let stores = app.state::<Stores>();
     let mut held = stores.lock();
 
-    if let Some(open) = held.as_ref() {
+    if let Some(open) = held.as_mut() {
         if open.account == account {
-            return Ok(open.store.opened.clone());
+            return open.opened_for(lead);
         }
     }
     if let Some(other) = held.take() {
@@ -107,6 +138,7 @@ pub fn sync_store_open(app: AppHandle, account: String) -> Result<Opened, String
         account,
         path,
         store,
+        led: lead,
     });
     Ok(opened)
 }
@@ -222,7 +254,36 @@ fn with_store<T>(
 
 #[cfg(test)]
 mod tests {
-    use super::{account_name, sent_bytes};
+    /// The store outlives a window. A window taking the engine over hears how the one before
+    /// it ended, and the hub asking for the device id changes nothing.
+    #[test]
+    fn a_window_taking_over_hears_how_the_last_ended() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let path = dir.path().join("sync.db");
+        let store = Store::open(&path).expect("a store");
+        let mut held = Held {
+            account: "a".to_string(),
+            path,
+            store,
+            led: false,
+        };
+        // A new store has no history for a rotation to protect: the launch's word.
+        assert!(held.opened_for(false).expect("a look").was_clean);
+        assert!(held.opened_for(true).expect("the first").was_clean);
+        // That window crashed, saying nothing: the next must rotate, as must the one after.
+        assert!(!held.opened_for(true).expect("after a crash").was_clean);
+        assert!(!held.opened_for(true).expect("again").was_clean);
+        // A real end says so, and the one who takes over is the session not ended again.
+        held.store.mark_clean(true).expect("said");
+        assert!(held.opened_for(true).expect("after a quit").was_clean);
+        assert!(!held.opened_for(true).expect("and it crashed").was_clean);
+        // A look in between changes nothing.
+        held.store.mark_clean(true).expect("said");
+        let _ = held.opened_for(false).expect("a look");
+        assert!(held.opened_for(true).expect("still").was_clean);
+    }
+
+    use super::{account_name, sent_bytes, Held, Store};
     use tauri::ipc::InvokeBody;
 
     #[test]

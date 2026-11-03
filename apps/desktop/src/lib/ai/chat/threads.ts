@@ -333,9 +333,11 @@ export function otherWindowWrote(listener: (id: string) => void): () => void {
 /** What goes across for `thread-fields`: a thread's own fields, never its turns or what
  *  says who is answering. */
 function ownFields(thread: Thread): Record<string, unknown> {
-  const fields: Record<string, unknown> = { ...thread, ...thread.own }
-  for (const name of ['turns', 'elsewhere', 'answering', 'own']) delete fields[name]
-  return JSON.parse(JSON.stringify(fields)) as Record<string, unknown>
+  const fields = { ...thread, ...thread.own, turns: undefined, own: undefined }
+  // As a file says it: what `undefined` was given is not a field.
+  return JSON.parse(
+    JSON.stringify({ ...fields, elsewhere: undefined, answering: undefined }),
+  ) as Record<string, unknown>
 }
 
 /** A thread read from a file, or null for one that is not a thread. `gone` says the

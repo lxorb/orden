@@ -28,7 +28,7 @@ export type Kind = 'file' | 'folder' | 'space'
  *  itself: its old root and its new. A file
  *  made for a document that was already open without one - a new tab given its place
  *  - names that document by its `key` (see documents.svelte.ts). */
-export type FileOp =
+export type FileOp = (
   | {
       op: 'created'
       path: string
@@ -45,6 +45,12 @@ export type FileOp =
       into?: string | null
     }
   | { op: 'removed'; path: string; kind: Kind; root: string | null }
+) & {
+  /** Done by another window and heard here (workspace/across.ts): everything kept in this
+   *  window follows it, and whatever tells the disk or the account leaves that to the
+   *  window that did it. */
+  heard?: true
+}
 
 /** Whatever keeps files by path. What it has left to do - telling the account - it
  *  answers as a promise, which the operation waits for before it goes on, so two

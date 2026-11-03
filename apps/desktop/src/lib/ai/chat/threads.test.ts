@@ -41,7 +41,10 @@ vi.mock('../../tauri', () => ({
 /** Two windows' ends of the channel: the code under test holds one, `other` the other. */
 vi.mock('../../windows', async (original) => {
   const { Windows } = await original<typeof import('../../windows')>()
-  const ends: { onmessage: ((event: MessageEvent<unknown>) => void) | null; postMessage(m: unknown): void }[] = []
+  const ends: {
+    onmessage: ((event: MessageEvent<unknown>) => void) | null
+    postMessage(m: unknown): void
+  }[] = []
   const end = () => {
     const line = {
       onmessage: null as ((event: MessageEvent<unknown>) => void) | null,

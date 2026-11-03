@@ -88,3 +88,11 @@ if (typeof window !== 'undefined') {
   // the next thing it says is heard as a window being here.
   window.addEventListener('pagehide', () => windows.leaving())
 }
+
+/** One write of a file at a time across the windows, with whatever it read first: what
+ *  makes the history of a file one line, so a write always knows what it replaces.
+ *  Somewhere with no locks, none of that: as it has always been. */
+export function oneWriteAt<T>(path: string, run: () => Promise<T>): Promise<T> {
+  const locks = (globalThis.navigator as Navigator | undefined)?.locks
+  return locks ? (locks.request(`nib:file:${path}`, run) as Promise<T>) : run()
+}

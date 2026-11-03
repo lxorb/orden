@@ -56,7 +56,7 @@ import {
   type Session,
   writeSession,
 } from './workspace/session'
-import { FIRST_SESSION, sessionOf, slotOf, takeSlot } from './workspace/slot'
+import type { Across } from './workspace/across'
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
 import { Excluded } from './workspace/excluded.svelte'
@@ -210,8 +210,8 @@ const PLACEHOLDER: Record<NewKind, string> = {
 
 export type { Heading } from './outline'
 
-// One session per window; see workspace/slot.ts.
-const STORAGE_KEY = FIRST_SESSION
+// The first window's; each window has its own, see workspace/slot.ts.
+const STORAGE_KEY = 'nib:workspace'
 const TREE_KEY = 'nib:tree'
 // Short enough that a crash costs a moment's typing, long enough that the strip
 // is not serialised on every keystroke.
@@ -547,7 +547,7 @@ class Workspace {
     // A board's manual order names its cards by path, so it follows them as links do.
     this.fileOps.follow((op) => {
       const tree = this.tree
-      if (op.op !== 'moved' || op.kind === 'space' || !op.root || !tree) return
+      if (op.op !== 'moved' || op.kind === 'space' || !op.root || !tree || op.heard) return
       if (!samePath(op.root, this.activeSpace?.root ?? '')) return
       return import('./views/order-paths').then(
         ({ orderMoved }) => orderMoved(tree, op.root ?? '', op.from, op.to),
@@ -859,12 +859,13 @@ class Workspace {
     }
 
     this.sessionKey = null
-    const slot = await takeSlot()
-    this.sessionKey = sessionOf(slot)
+    const slots = await import('./workspace/slot')
+    const slot = await slots.takeSlot()
+    this.sessionKey = slots.sessionOf(slot)
     this.slot = slot
-    // A window that has no session of its own yet starts on what the first one is
-    // looking at, with no tabs: what a new window of VS Code or Chrome opens to.
-    const state = readSession(stored(this.sessionKey)) ?? this.freshWindow(slot)
+    const state =
+      readSession(stored(this.sessionKey)) ??
+      (slot === 0 ? null : slots.freshWindow(stored(STORAGE_KEY)))
     this.layouts.restore()
 
     if (!state) {
@@ -963,44 +964,29 @@ class Workspace {
     markPainted('active tab painted')
   }
 
+  /** Writes from here on keep in step with the other windows; see workspace/across.ts. */
+  meetOthers(across: Across) {
+    this.saving.across = across
+  }
+
+  /** A note's words are owed to its file: another window's merged in, say. */
+  owedWords(note: NoteDoc) {
+    this.saving.owed(note)
+  }
+
   /** Which of the app's windows this is, once `readSitting` has asked; see slot.ts. */
   private slot = 0
   /** Where this window's session goes: nowhere while the slot is being asked for. */
   private sessionKey: string | null = STORAGE_KEY
 
-  private freshWindow(slot: number): Session | null {
-    if (slot === 0) return null
-    const first = readSession(stored(STORAGE_KEY))
-    if (!first) return null
-    const { spaces, activeSpace, panel, right, rightPanel, lastRight, known } = first
-    return {
-      spaces,
-      activeSpace,
-      panel,
-      ...(right ? { right } : {}),
-      ...(rightPanel ? { rightPanel } : {}),
-      ...(lastRight ? { lastRight } : {}),
-      ...(known ? { known } : {}),
-    }
-  }
-
   /** The words a window that is gone left in its session, as tabs here; see
    *  workspace/sessions-left.ts. Nothing to fetch unless there is such an entry. */
   private async takeWhatWasLeft(slot: number) {
-    let any = false
-    try {
-      for (let at = 0; at < localStorage.length && !any; at += 1) {
-        const taken = slotOf(localStorage.key(at) ?? '')
-        any = taken !== null && taken !== slot
-      }
-    } catch {
-      return
-    }
-    if (!any) return
+    const { othersInStorage } = await import('./workspace/slot')
+    if (!othersInStorage(slot)) return
     const { takeSessionsLeft } = await import('./workspace/sessions-left')
     await takeSessionsLeft(slot, async (drafts) => {
-      const paneId = this.panes.focusedId
-      const tabs = await this.tabsFrom(drafts, paneId)
+      const tabs = await this.tabsFrom(drafts, this.panes.focusedId)
       this.tabs = byPin([...this.tabs, ...tabs])
       // Written down here before the entry that held them goes.
       this.persist()
@@ -2804,6 +2790,7 @@ class Workspace {
     } catch {
       this.tree = null
     }
+    this.saving.across?.listed()
 
     // The three marks around this read are the launch's largest single step on a space
     // of a few thousand notes, and they are three rather than one so that the answer

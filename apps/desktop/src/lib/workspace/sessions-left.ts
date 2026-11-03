@@ -7,7 +7,7 @@
  *  where there is such an entry. */
 
 import { type Draft, panesOf, readSession, type Session } from './session'
-import { slotLock, slotOf } from './slot'
+import { locksHere, slotLock, slotOf } from './slot'
 
 /** The tabs of a session whose words are nowhere else. */
 export function wordsOnlyIn(session: Session): Draft[] {
@@ -35,7 +35,7 @@ export async function takeSessionsLeft(
   mine: number,
   take: (drafts: Draft[]) => Promise<void>,
   storage: Storage = localStorage,
-  locks: LockManager | undefined = globalThis.navigator?.locks,
+  locks = locksHere(),
 ): Promise<void> {
   if (!locks) return
   for (const { key, slot } of others(storage, mine)) {

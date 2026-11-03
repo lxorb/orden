@@ -11,6 +11,8 @@
  *  to go (sessionStorage outlives a reload and nothing else does). Somewhere with no
  *  locks there is one slot, and every window shares it as they used to. */
 
+import { readSession, type Session } from './session'
+
 export const FIRST_SESSION = 'nib:workspace'
 const REMEMBERED = 'nib:window-slot'
 
@@ -72,10 +74,41 @@ function holding(locks: LockManager, name: string, wait?: number): Promise<boole
   })
 }
 
+/** The browser's locks, where it has them. */
+export const locksHere = () => (globalThis.navigator as Navigator | undefined)?.locks
+
+/** What a window with no session of its own starts on: what the first one is looking at,
+ *  with no tabs, which is what a new window of VS Code or Chrome opens to. */
+export function freshWindow(first: unknown): Session | null {
+  const session = readSession(first)
+  if (!session) return null
+  const { spaces, activeSpace, panel, right, rightPanel, lastRight, known } = session
+  return {
+    spaces,
+    activeSpace,
+    panel,
+    ...(right ? { right } : {}),
+    ...(rightPanel ? { rightPanel } : {}),
+    ...(lastRight ? { lastRight } : {}),
+    ...(known ? { known } : {}),
+  }
+}
+
+/** Whether another window's session is in storage: all a window alone has to ask. */
+export function othersInStorage(slot: number): boolean {
+  try {
+    for (let at = 0; at < localStorage.length; at += 1) {
+      const held = slotOf(localStorage.key(at) ?? '')
+      if (held !== null && held !== slot) return true
+    }
+  } catch {
+    // No storage to look in, and so nothing left in it.
+  }
+  return false
+}
+
 /** Takes this window's slot. Held until the window goes. */
-export async function takeSlot(
-  locks: LockManager | undefined = globalThis.navigator?.locks,
-): Promise<number> {
+export async function takeSlot(locks = locksHere()): Promise<number> {
   if (!locks) return 0
   const again = remembered()
   if (again !== null && (await holding(locks, slotLock(again), RELOAD_AT_MOST))) return again

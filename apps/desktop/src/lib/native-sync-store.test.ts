@@ -46,7 +46,7 @@ describe('the native store', () => {
     calls.answer = opened
     const store = await openNative('account')
     expect(store.opened).toEqual(opened)
-    expect(calls.made).toEqual([{ command: 'sync_store_open', args: { account: 'account' } }])
+    expect(calls.made).toEqual([{ command: 'sync_store_open', args: { account: 'account', lead: false } }])
   })
 
   test('sends a batch as one envelope of bytes', async () => {

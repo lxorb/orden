@@ -31,6 +31,7 @@ import type { Entry } from '../workspace.svelte'
 import { holdsWords, type NoteDoc, type Tab } from './documents.svelte'
 import type { FileOp } from './file-ops'
 import { isDraft } from './drafts'
+import type { Across } from './across'
 
 /** Pauses in a row that ended in a refused write before the light says so. One is
  *  a virus scanner holding the file for a moment; three is a file that will not be
@@ -70,6 +71,9 @@ export interface Writes {
 export const IN_THE_AIR_AT_MOST = 10_000
 
 export class Saving {
+  /** What keeps writes in step with the other windows, once it is fetched. */
+  across: Across | null = null
+
   /** The write that waits for a pause in the changes; see timing.ts. */
   private readonly soon = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY, SAVE_AT_MOST)
 
@@ -600,8 +604,8 @@ export class Saving {
     // The words going down, and which revision of the note they are, both read
     // once. A keystroke landing inside the round trip belongs to the next write,
     // and the note has to be told which one it just had.
-    const content = note.text
-    const revision = note.revision
+    let content = note.text
+    let revision = note.revision
 
     // The words the file held when this sitting began, kept as a version before the
     // first write replaces them. Every write is not a version: a note written as
@@ -626,7 +630,16 @@ export class Saving {
     // Moved while the write was being got ready: the words follow the file.
     if (note.path !== null) path = note.path
 
-    const landing = invoke('write_note', { path, content })
+    // Another window here: what is on the disk is met first, and what goes down may be
+    // more than what this note said; see across.ts. A file that went from under it writes
+    // nothing, which is what stops a delete being undone.
+    const across = this.across
+    const writing = path
+    const down = (words: string) => invoke('write_note', { path: writing, content: words })
+    const landing: Promise<string | null> =
+      across && !across.alone
+        ? across.writing(note, path, content, down)
+        : down(content).then(() => (note.onDisk = content))
     const air: Promise<void> = landing.then(
       () => undefined,
       () => undefined,
@@ -635,7 +648,12 @@ export class Saving {
     void air.then(() => {
       if (this.inTheAir.get(note) === air) this.inTheAir.delete(note)
     })
-    await landing
+    const landed = await landing
+    if (landed === null) return
+    if (landed !== content) {
+      content = landed
+      revision = note.revision
+    }
     note.written(path, nameOf(path), revision)
     // Moved under the write by something that did not wait for it: the words are
     // owed again at the path the note is at now; see `written`.

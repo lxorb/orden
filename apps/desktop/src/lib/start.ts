@@ -218,6 +218,13 @@ export function start(): () => void {
     void startup.turn('rooms').then(() => import('./web-tab/one-window.svelte'))
   }
 
+  // The other windows' writes and file operations; see workspace/across.ts.
+  if (!__EVEN_PLUGIN__) {
+    void startup
+      .turn('rooms')
+      .then(() => import('./workspace/across').then(({ startAcross }) => startAcross()))
+  }
+
   // Quick add's key over every other app, a desktop's alone and after the launch
   // order: the window it opens is made the first time the key is pressed. See
   // quick-add/anywhere.svelte.ts.

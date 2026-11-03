@@ -50,7 +50,8 @@ beforeEach(() => {
   })
 })
 
-const stored = () => JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
+const stored = () =>
+  JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
 
 describe('settings across two windows', () => {
   test('a setting made in one is heard in the other, and its next write keeps it', async () => {
