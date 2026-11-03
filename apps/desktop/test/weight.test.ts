@@ -1040,8 +1040,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-03, to 3,480,600, for unstable's #1044 to #1079 merged into
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
- *  and the sum of their growth is what came. Measured 3,480,464, 385 modules. */
-const BUDGET = 3_480_600
+ *  and the sum of their growth is what came. Measured 3,480,464, 385 modules.
+ *
+ *  Raised 2026-11-03, to 3,488,300: a thread is written down while its answer runs, a
+ *  stream that stops short is told, a block leaves a list whole, and a save no longer says
+ *  the session ended. Measured 3,488,170, modules unchanged. */
+const BUDGET = 3_488_300
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
