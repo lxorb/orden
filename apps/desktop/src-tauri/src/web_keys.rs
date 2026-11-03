@@ -367,6 +367,17 @@ pub fn vk_of(keyval: u32) -> Option<u32> {
 pub fn listen(_webview: &tauri::webview::PlatformWebview, _app: tauri::AppHandle, _window: String) {
 }
 
+/// Whether the X server's `FocusIn` on a page's browser window, by its mode and its
+/// detail, is the page taking the keyboard (#1036; see keyboard.rs). Not one of the chords
+/// below being grabbed or let go of, which moves nothing, and not the keyboard following
+/// the pointer over the page while a window round it holds it: neither is a press into
+/// the page or the page being handed it.
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+fn page_took_focus(mode: u8, detail: u8) -> bool {
+    // `NotifyGrab` and `NotifyUngrab`; `NotifyPointer`, `NotifyPointerRoot`, `NotifyDetailNone`.
+    !matches!(mode, 1 | 2) && !matches!(detail, 5..=7)
+}
+
 /// CEF, on Linux: the chords taken from the page by the window system; see `grabbed`.
 /// And, from the same connection to it, which page has the keyboard (keyboard.rs).
 #[cfg(feature = "cef")]
@@ -402,11 +413,14 @@ mod grabbed {
 
     use tauri::{AppHandle, Emitter, Manager};
     use x11rb::connection::Connection as _;
-    use x11rb::protocol::xproto::{ConnectionExt as _, GrabMode, Keycode, Keysym, ModMask};
+    use x11rb::protocol::xproto::{
+        ChangeWindowAttributesAux, ConnectionExt as _, EventMask, GrabMode, Keycode, Keysym,
+        ModMask,
+    };
     use x11rb::protocol::Event;
     use x11rb::rust_connection::RustConnection;
 
-    use super::{meaning, reloading, vk_of, Held, Pressed, PRESSED};
+    use super::{meaning, page_took_focus, reloading, vk_of, Held, Pressed, PRESSED};
 
     /// The keys a chord is made with, as X11 names them: T, W, N and R, Tab, Page Up and
     /// Page Down, the digits on the top row, F5, F6 and F11.
@@ -532,6 +546,14 @@ mod grabbed {
         fn hear(&self, app: &AppHandle) {
             while let Ok(event) = self.x.wait_for_event() {
                 let (window, code, state, down) = match event {
+                    // A page's browser window took the keyboard: the app's own page lets
+                    // go of it, whether or not CEF tells it; see keyboard.rs.
+                    Event::FocusIn(focus) => {
+                        if page_took_focus(u8::from(focus.mode), u8::from(focus.detail)) {
+                            crate::keyboard::x11_took(app, focus.event);
+                        }
+                        continue;
+                    }
                     Event::KeyPress(key) => (key.event, key.detail, u16::from(key.state), true),
                     Event::KeyRelease(key) => (key.event, key.detail, u16::from(key.state), false),
                     Event::MappingNotify(_) => {
@@ -659,6 +681,10 @@ mod grabbed {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .insert(page, window);
+        // And told as the page takes the keyboard, on this connection's own mask, which
+        // leaves CEF's on the same window as it is.
+        let focus = ChangeWindowAttributesAux::new().event_mask(EventMask::FOCUS_CHANGE);
+        let _ = grabs.x.change_window_attributes(page, &focus);
         grabs.grab(page);
     }
 
@@ -685,7 +711,30 @@ mod grabbed {
 
 #[cfg(test)]
 mod tests {
-    use super::{meaning, told, Held};
+    use super::{meaning, page_took_focus, told, Held};
+
+    /// #1036: a press into the page, or the page handed the keyboard, is told to the app's
+    /// own page; a chord's grab and the pointer merely crossing the page are not.
+    #[test]
+    fn a_page_takes_the_keyboard_on_a_real_focus_in_only() {
+        // NotifyNormal and NotifyWhileGrabbed, with the focus on the page's window, inside
+        // it, or coming to it from inside.
+        for mode in [0, 3] {
+            for detail in 0..=4 {
+                assert!(
+                    page_took_focus(mode, detail),
+                    "mode {mode}, detail {detail}"
+                );
+            }
+        }
+        // NotifyGrab and NotifyUngrab: a chord taken from the page and given back.
+        assert!(!page_took_focus(1, 3));
+        assert!(!page_took_focus(2, 3));
+        // NotifyPointer, NotifyPointerRoot and NotifyDetailNone.
+        for detail in 5..=7 {
+            assert!(!page_took_focus(0, detail));
+        }
+    }
 
     const CTRL: Held = Held {
         ctrl: true,

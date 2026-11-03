@@ -152,6 +152,9 @@ const fake = vi.hoisted(() => {
         if (bytes === undefined) throw new Error(`no such file: ${path}`)
         return new TextEncoder().encode(bytes).buffer as T
       }
+      case 'list_snapshots':
+        // No versions kept on this disk: what two copies last agreed on is unknown.
+        return [] as T
       default:
         return undefined as T
     }
@@ -274,6 +277,8 @@ const fake = vi.hoisted(() => {
       Object.assign(note, { path, content, version: note.version + 1, seq: ++remote.seq })
       return { note: await wire(note) }
     },
+    // The account keeps no versions here either.
+    saidAs: async () => null,
     deleteNote: async (_token: string, id: string) => {
       remote.calls.push(`deleteNote ${id}`)
       const note = remote.notes.find((one) => one.id === id)
@@ -2120,5 +2125,49 @@ describe('what the account holds of a file', () => {
     await workspace.remove('/Notes/Work', true)
 
     expect(fake.remote.local).toContain('delete_folder /Notes/Work')
+  })
+})
+
+describe("the space's own inbox, a hidden note (#1044)", () => {
+  async function withAnInbox() {
+    accountWithNotes()
+    fake.addRemoteNote('s-Account', '.Inbox.md', '- [ ] Call the bank\n')
+    await signIn()
+    account.settled()
+    await sync.pass()
+  }
+
+  test('comes down, and stays on the account though the list leaves it out', async () => {
+    await withAnInbox()
+    expect(fake.disk.get('/Account/.Inbox.md')).toBe('- [ ] Call the bank\n')
+
+    await sync.pass()
+    expect(fake.remote.calls.filter((one) => one.startsWith('deleteNote'))).toEqual([])
+    expect(fake.remote.notes.find((one) => one.path === '.Inbox.md')?.deleted).toBe(false)
+  })
+
+  test('goes up when a task is added here', async () => {
+    await withAnInbox()
+    fake.disk.set('/Account/.Inbox.md', '- [ ] Call the bank\n- [ ] Buy milk\n')
+    await sync.pass()
+
+    expect(fake.remote.notes.find((one) => one.path === '.Inbox.md')?.content).toBe(
+      '- [ ] Call the bank\n- [ ] Buy milk\n',
+    )
+  })
+
+  test('written on two devices apart keeps every task of both, and no hidden copy', async () => {
+    await withAnInbox()
+    fake.disk.set('/Account/.Inbox.md', '- [ ] Call the bank\n- [ ] Buy milk\n')
+    fake.writeRemoteNote('s-Account', '.Inbox.md', '- [ ] Call the bank\n- [ ] Post the letter\n')
+    await sync.pass()
+    await sync.pass()
+
+    const here = fake.disk.get('/Account/.Inbox.md') ?? ''
+    for (const task of ['Call the bank', 'Buy milk', 'Post the letter']) {
+      expect(here.split(task)).toHaveLength(2)
+    }
+    expect(fake.remote.notes.find((one) => one.path === '.Inbox.md')?.content).toBe(here)
+    expect([...fake.disk.keys()].filter((path) => path.includes('from another device'))).toEqual([])
   })
 })

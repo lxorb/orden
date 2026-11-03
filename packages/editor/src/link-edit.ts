@@ -8,9 +8,10 @@ import { enclosingNamed } from './nodes'
  *  words kept. What Chrome's editors, Obsidian, Notion and Typora all offer on a right
  *  click, and all of it a change to the text, so the undo takes it back as one step.
  *
- *  Every spelling of a link a note holds: `[words](address)`, `<address>`, an address
- *  written out, and `[[Note|words]]`. A picture is not one of them - its menu is its
- *  own - and neither is `![[embed]]`, which is a thing shown rather than a link. */
+ *  Every spelling of a link a note holds: `[words](address)`, `[words][ref]` and its
+ *  short forms, `<address>`, an address written out, and `[[Note|words]]`. A picture
+ *  is not one of them - its menu is its own - and neither is `![[embed]]`, which is a
+ *  thing shown rather than a link. */
 
 /** Where a link is, where it points, and what is left of it without the link. */
 export interface LinkParts {
@@ -70,8 +71,14 @@ const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCas
  *  from part of a note, and the background parse has usually finished by now anyway. */
 const WHOLE_NOTE = 1e9
 
-/** The address the first definition of a label holds, wherever in the note it is. */
-function definedAddress(state: EditorState, tree: Tree, label: string): SyntaxNode | null {
+/** The address the first definition of a label holds, wherever in the note it is, without
+ *  its `<` `>`: what is typed over it then stays in them, and may hold a blank. An empty
+ *  `<>` has nothing to select, and is selected whole. */
+function definedAddress(
+  state: EditorState,
+  tree: Tree,
+  label: string,
+): { from: number; to: number } | null {
   const key = labelKey(label)
   let first: SyntaxNode | null = null
   tree.iterate({
@@ -84,7 +91,10 @@ function definedAddress(state: EditorState, tree: Tree, label: string): SyntaxNo
       return false
     },
   })
-  return (first as SyntaxNode | null)?.getChild('URL') ?? null
+  const url = (first as SyntaxNode | null)?.getChild('URL')
+  if (!url) return null
+  const angled = state.doc.sliceString(url.from, url.from + 1) === '<' && url.to - url.from > 2
+  return angled ? { from: url.from + 1, to: url.to - 1 } : { from: url.from, to: url.to }
 }
 
 /** A label's text as an address a link can hold: bare where it can be, in `<>` where it

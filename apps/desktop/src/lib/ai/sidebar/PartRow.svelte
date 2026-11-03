@@ -4,7 +4,8 @@
    *  +3 −2". Open, it shows what the provider summarised of the thinking, a command's
    *  output, or the call's arguments and what it answered. A call still going breathes;
    *  one waiting for the reader is the question with its answers in place
-   *  (review/Approval.svelte).
+   *  (review/Approval.svelte). A helper's row (`run_agent`) opens to the helper's own
+   *  thread as well, which is where what it did is: it is in no list of chats (#1062).
    *
    *  Folded by default because the answer is what was asked for; Ctrl+O opens them all
    *  (Claude Code's Focus view, the other way round). */
@@ -18,8 +19,9 @@
   import Approval from '../review/Approval.svelte'
   import { chat } from './chat.svelte'
   import { seconds } from './numbers'
+  import Spawned from './Spawned.svelte'
   import StepLine from './StepLine.svelte'
-  import { bareName, objectOf, verbOf } from './verbs'
+  import { bareName, helperOf, objectOf, verbOf } from './verbs'
 
   type Row = Extract<Part, { kind: 'thinking' | 'tool' }>
   const { part, live = false }: { part: Row; live?: boolean } = $props()
@@ -42,6 +44,9 @@
   )
 
   const going = $derived(live && (part.kind === 'thinking' ? !part.ms : part.state === 'running'))
+
+  /** The helper's thread a `run_agent` row started, which it opens to. */
+  const helper = $derived(part.kind === 'tool' ? helperOf(part) : null)
 
   /** A command run: its words in the code face, and its row opens to what it said. */
   const command = $derived(part.kind === 'tool' && verbOf(part.verb) === 'Ran')
@@ -83,6 +88,10 @@
 
   {#if part.kind === 'tool' && part.state === 'asking' && part.result?.approval}
     <Approval {part} thread={chat.thread} />
+  {/if}
+
+  {#if helper && (open || going)}
+    <Spawned threads={[helper]} />
   {/if}
 
   {#if open && detail}

@@ -109,14 +109,15 @@ Nine, in the order the window draws them, which is the order Tab already walks:
 | `list` | whichever panel is open, under them |
 | `foot` | the row under it: the account, the theme, the settings |
 | `tabs` | the strip of notes |
-| `notices` | a card with something to press on it, Undo or Retry, while one is up. Drawn over the foot of the note and ahead of it in the page, since Tab cannot leave a note: Shift+F6 from the note reaches it, and Tab from the strip |
+| `notices` | the cards over the note's foot - an Undo, a warning - while one is up. Ahead of the note in the page, since Tab cannot leave a note: Shift+F6 from the note reaches them, and Tab from the strip |
 | `editor` | the note |
 | `status` | the bar under it, over a note |
 | `right` | the other side of the window, while it is showing |
 
 They are marked in the page with one `data-region` attribute each, so the order
 F6 walks is the order the window is built in and cannot drift from it. What is
-not on screen is not in the ring: the sidebar may be shut, a phone has no strip,
+not on screen is not in the ring: the sidebar may be shut, the notices row is
+empty most of the time, a phone has no strip,
 the graph and a canvas have no status bar - the bar counts the words of a note,
 and neither of those has a note for it to count, while a page note keeps its bar
 for the one thing it does have to say, which page of how many is in front; see

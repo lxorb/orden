@@ -10,6 +10,8 @@
   import { landsIn } from './move-targets'
   import { shortcuts } from './shortcuts.svelte'
   import { agentMarks } from './agent-marks.svelte'
+  import { chatsUnread, lookAtLaunch } from './ai/unread.svelte'
+  import UnreadDot from './ai/UnreadDot.svelte'
   import { account } from './account.svelte'
   import {
     AGENTS_MARK,
@@ -195,6 +197,11 @@
     { id: 'ask', label: t('Ask'), path: ASK_MARK },
     { id: 'agents', label: t('Agents'), path: AGENTS_MARK },
   ]
+
+  // The ✦ tab's dot is right from launch, the panel opened or not (#1064).
+  $effect(() => {
+    void lookAtLaunch(workspace.spaces.map((one) => one.id))
+  })
 
   /** The tabs this side holds, in the order it shows them; see
    *  workspace.panelsOn. */
@@ -666,7 +673,9 @@
             data-tab={item.id}
             role="tab"
             title={shortcuts.tooltip(item.label, commandOf(item.id))}
-            aria-label={item.label}
+            aria-label={item.id === 'ask' && chatsUnread.any
+              ? t('{title}, unread', { title: item.label })
+              : item.label}
             aria-selected={showing === item.id}
             onclick={() => workspace.showPanel(item.id)}
             oncontextmenu={(event) => showTabMenu(event, item.id, item.label)}
@@ -678,6 +687,10 @@
               <span class="waiting" transition:fade={{ duration: dur(140) }}>
                 {agentMarks.waiting}
               </span>
+            {/if}
+            <!-- A chat with an answer not yet seen (#1064). -->
+            {#if item.id === 'ask' && chatsUnread.any}
+              <UnreadDot corner />
             {/if}
           </button>
         {/each}

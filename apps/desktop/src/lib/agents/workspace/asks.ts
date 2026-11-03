@@ -13,6 +13,22 @@ import { refusal } from '../../automation/caller'
 import { invoke } from '../../tauri'
 import type { Category } from '../verbs'
 import type { Call } from './call'
+import { Refused } from './problem'
+
+/** Whether the call's agent has Full permissions (`autonomous`): asked nothing, handed
+ *  nothing back, and refused nothing on the grounds of what only the reader may do
+ *  (#1072). The one test every guard on this side reads, beside `asked`; the crate's
+ *  half is `Grant::asks`. */
+function fullPermissions(call: Call): boolean {
+  return call.caller.agent?.mode === 'autonomous'
+}
+
+/** A step kept to the reader's own hands (a pinned tab closed, a palette row only a
+ *  person presses), refused - except to an agent with Full permissions, which does it.
+ *  The reader's command line and links never do: they are other programs. */
+export function readersOwn(call: Call, why: string): void {
+  if (!fullPermissions(call)) throw new Refused('by_hand', why)
+}
 
 /** What a call is about, for finding its question again: the verb and its arguments
  *  with their keys in order, so the same call asked twice is the same key. */
@@ -45,7 +61,7 @@ export async function asked(
   site?: string,
 ): Promise<AgentAnswer | null> {
   const agent = call.caller.agent
-  if (agent === null || agent.mode === 'autonomous') return null
+  if (agent === null || fullPermissions(call)) return null
 
   const about = category ?? (agent.mode === 'confirm' ? 'writing' : null)
   if (about === null) return null

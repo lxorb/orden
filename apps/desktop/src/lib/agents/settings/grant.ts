@@ -61,11 +61,12 @@ const ALL_SCOPES: readonly Scope[] = [
 
 /** The questions the reader may turn off, and what an agent needs to hold for the
  *  question ever to come up: asking before paying means nothing to an agent with no
- *  browser. Signing in is not here: a password is never typed by an agent, whatever
- *  the grant says (9.4), so there is nothing to turn off. */
+ *  browser. Signing in is one like the rest (#1072): pressing a sign-in form's button
+ *  once a password manager has filled it, or typing into one, asks as this says. */
 export const ASKS: readonly { category: Category; needs: readonly Scope[] }[] = [
   { category: 'paying', needs: ['browser', 'browser.reader'] },
   { category: 'sending', needs: ['browser', 'browser.reader'] },
+  { category: 'signing_in', needs: ['browser', 'browser.reader'] },
   { category: 'publishing', needs: ['workspace', 'chats.write'] },
   { category: 'deleting', needs: ['browser', 'browser.reader', 'tree'] },
   { category: 'files', needs: ['browser', 'browser.reader'] },

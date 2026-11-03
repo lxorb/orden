@@ -113,7 +113,13 @@ export const crateTools: Tools = {
     if (name === 'run_agent' || name === 'agent_result') {
       const { answerText, helperHere } = await import('../helpers/run')
       const answered = await helperHere(name, record(args), { thread: thread ?? null, mode })
-      return { text: answerText(answered), images: [], error: 'refused' in answered }
+      return {
+        text: answerText(answered),
+        images: [],
+        error: 'refused' in answered,
+        // The step the call is in the parent opens the helper's thread (#1062).
+        ...('agent' in answered ? { agent: answered.agent } : {}),
+      }
     }
     try {
       const answered = await invoke<unknown>('ai_agent_call', {

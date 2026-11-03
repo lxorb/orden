@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Each space's inbox: `Inbox.md` unless the space says otherwise, following its note
- *  through a rename, and made the first time it is needed and never over one there. */
+/** Each space's inbox: Orden's own `.Inbox.md` unless the reader chose a note of
+ *  theirs, which follows its note through a rename; made the first time it is needed
+ *  and never over one there (#1044). */
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -47,8 +48,19 @@ vi.mock('../tauri', async (original) => ({
   },
 }))
 
-const { ensureInbox, INBOX, inboxes, inboxOf, inboxSpace, rememberInbox, setInbox, STORAGE_KEY } =
-  await import('./inbox')
+const {
+  chosenInbox,
+  ensureInbox,
+  INBOX,
+  inboxes,
+  inboxOf,
+  inboxSpace,
+  isInternalInbox,
+  OLD_INBOX,
+  rememberInbox,
+  setInbox,
+  STORAGE_KEY,
+} = await import('./inbox')
 
 const ROOT = '/spaces/Work'
 
@@ -61,8 +73,12 @@ beforeEach(() => {
 })
 
 describe('the inbox of a space', () => {
-  test('is Inbox.md at its root until the space says otherwise, which is kept only then', () => {
+  test("is Orden's own until the reader chooses a note, which is kept only then", () => {
+    expect(INBOX).toBe('.Inbox.md')
+    expect(isInternalInbox(INBOX)).toBe(true)
+    expect(isInternalInbox(OLD_INBOX)).toBe(false)
     expect(inboxOf(ROOT)).toBe(INBOX)
+    expect(chosenInbox(ROOT)).toBeNull()
 
     setInbox(ROOT, 'Capture/Later.md')
     expect(inboxOf(ROOT)).toBe('Capture/Later.md')
@@ -70,9 +86,19 @@ describe('the inbox of a space', () => {
     setInbox(ROOT, INBOX)
     expect(inboxOf(ROOT)).toBe(INBOX)
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+
+    // A note of the reader's named Inbox.md is theirs to choose like any other.
+    setInbox(ROOT, OLD_INBOX)
+    expect(inboxOf(ROOT)).toBe(OLD_INBOX)
+    expect(chosenInbox(ROOT)).toBe(OLD_INBOX)
   })
 
   test('follows its note when it is renamed or its folder moves, and nothing else', () => {
+    // A note named Inbox.md the reader never chose is not the inbox, renamed or not.
+    inboxes.moved?.(`${ROOT}/Inbox.md`, `${ROOT}/Triage.md`, ROOT)
+    expect(inboxOf(ROOT)).toBe(INBOX)
+
+    setInbox(ROOT, 'Inbox.md')
     inboxes.moved?.(`${ROOT}/Inbox.md`, `${ROOT}/Triage.md`, ROOT)
     expect(inboxOf(ROOT)).toBe('Triage.md')
 
@@ -102,14 +128,16 @@ describe('the inbox of a space', () => {
       return Promise.resolve()
     }
 
-    expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/Inbox.md`)
-    disk.set(`${ROOT}/Inbox.md`, '- [ ] already here\n')
-    expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/Inbox.md`)
-    expect(made).toEqual([`${ROOT}/Inbox.md`])
+    expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/.Inbox.md`)
+    disk.set(`${ROOT}/.Inbox.md`, '- [ ] already here\n')
+    expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/.Inbox.md`)
+    expect(made).toEqual([`${ROOT}/.Inbox.md`])
+    // Nothing is made at the space's root, where the reader's own notes are.
+    expect(disk.has(`${ROOT}/Inbox.md`)).toBe(false)
   })
 
   test('that is there and will not read is refused, never made again over itself', async () => {
-    unreadable.add(`${ROOT}/Inbox.md`)
+    unreadable.add(`${ROOT}/.Inbox.md`)
     const made: string[] = []
     const make = (path: string) => {
       made.push(path)

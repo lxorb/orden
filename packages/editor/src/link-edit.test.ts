@@ -250,6 +250,32 @@ describe('undoing an edit of a label', () => {
   })
 })
 
+describe('editing a reference to a definition', () => {
+  test.each([
+    ['see [words][ref] now\n\n[ref]: https://r.dev "t"', 'https://r.dev'],
+    ['see [words][] now\n\n[Words]: <https://w.dev>', 'https://w.dev'],
+    ['see [Some  words] now\n\n> [some words]: https://s.dev', 'https://s.dev'],
+    ['see [words][ref] now\n\n[ref]: https://one.dev\n[ref]: https://two.dev', 'https://one.dev'],
+  ])('selects the address it is defined with: %s', (doc, address) => {
+    expect(after(doc, editLink(inside(doc, 'words')))).toEqual({
+      ran: true,
+      doc,
+      selected: address,
+    })
+  })
+
+  test.each(['see [words][] now', 'see [words] now'])(
+    'with no definition, points nowhere yet and is typed between the brackets: %s',
+    (doc) => {
+      let current = state(doc)
+      editLink(inside(doc, 'words'))({ state: current, dispatch: (tr) => (current = tr.state) })
+      expect(current.doc.toString()).toBe('see [words]() now')
+      expect(current.selection.main.empty).toBe(true)
+      expect(current.selection.main.head).toBe('see [words]('.length)
+    },
+  )
+})
+
 describe('taking it away', () => {
   test.each([
     ['see [the *docs*](https://x.dev) now', 'docs', 'see the *docs* now'],

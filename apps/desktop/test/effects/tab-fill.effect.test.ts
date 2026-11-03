@@ -182,7 +182,9 @@ function chrome() {
     sidebar: target.querySelector('aside')?.outerHTML ?? null,
     strips: [...target.querySelectorAll('[role="tab"], .tab')].map((one) => one.textContent),
     panes: [...target.querySelectorAll('[data-pane]')].map((one) => one.getAttribute('data-pane')),
-    heads: target.querySelectorAll('[data-pane] > [data-chrome]').length,
+    // A pane's own strip of tabs, at its top: the status bar is the focused pane's too
+    // now, at its foot (#1076), and is counted apart below.
+    heads: target.querySelectorAll('[data-pane] > [data-chrome="top"]').length,
     status: target.querySelector('[data-region="status"]') !== null,
   }
 }

@@ -24,6 +24,7 @@
   import { t } from './i18n.svelte'
   import { dur } from './motion'
   import { renamed } from './renamed.svelte'
+  import { told } from './said.svelte'
 
   /** Long enough to read six words twice. */
   const STAYS = 6000
@@ -44,7 +45,11 @@
   })
 </script>
 
-<div class="notice" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
+<div
+  class="notice"
+  transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+  {@attach told(said)}
+>
   <img
     class="mark"
     src="/icon-256.png"

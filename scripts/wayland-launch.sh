@@ -74,6 +74,9 @@
 #     (#481, scripts/watch-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
+#   - with CLOSING=1, web tabs opened, Orden started again on them, and closed one after
+#     another as fast as Ctrl+W closes them while their pages come up: the window has to
+#     go on answering (#1031, scripts/closing-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
 #     chosen from with the compositor's pointer, over a web tab's page, round after
 #     round (#661, scripts/popup-drive.py);
@@ -377,6 +380,8 @@ if [ "${EXPORTPDF:-0}" = 1 ]; then
   export NIB_SPACES_DIR
   endpoint
 fi
+# With CLOSING=1, the endpoint and no page (#1031).
+[ "${CLOSING:-0}" = 1 ] && endpoint
 # With CERT=1, the endpoint and a site over https, a real one: its certificate is the
 # point (#776).
 if [ "${CERT:-0}" = 1 ]; then
@@ -579,6 +584,19 @@ if [ "$status" = 0 ] && [ "${WATCH:-0}" = 1 ]; then
       sudo sysctl -q fs.inotify.max_user_watches="$was"
     fi
     chmod 755 "$space/locked"
+  fi
+fi
+
+# Web tabs left open, the app started again on them, and closed as fast as Ctrl+W
+# closes them while their pages are still being built (#1031). The tabs are kept in the
+# page's local storage, which Chromium writes to the disk a few seconds after it changes.
+if [ "$status" = 0 ] && [ "${CLOSING:-0}" = 1 ]; then
+  sleep 3
+  if python3 "$here/closing-drive.py" "$out" open; then
+    sleep 10
+    again && python3 "$here/closing-drive.py" "$out" close || status=1
+  else
+    status=1
   fi
 fi
 

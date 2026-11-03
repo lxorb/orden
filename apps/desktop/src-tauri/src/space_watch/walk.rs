@@ -15,7 +15,9 @@
 //!   Orden's own half-written temp files, which are hidden so that no list ever shows one.
 //!   So is what an operating system leaves in every folder it opens (`Thumbs.db`,
 //!   `desktop.ini`, an open Office file's `~$` owner file): a folder full of those
-//!   arriving on a Mac is noise, and none of them is anybody's writing.
+//!   arriving on a Mac is noise, and none of them is anybody's writing. Bar one hidden
+//!   name: the space's own inbox (`.Inbox.md`, #1044), hidden from every list and a note
+//!   every device needs.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -56,8 +58,21 @@ pub fn ignored(name: &str) -> bool {
         || name == "Icon\r"
 }
 
+/// What sync carries though it is hidden: the space's own inbox (#1044), at its root,
+/// where a task with no note of the reader's goes. Hidden from every list, and a note
+/// every device needs. The window says the same (`carriedOwn` in
+/// packages/bases/src/inbox.ts).
+const CARRIED: &str = ".Inbox.md";
+
+fn carried(rel: &Path) -> bool {
+    rel.as_os_str() == CARRIED
+}
+
 /// Whether any part of a path inside a space is a name sync leaves alone.
 pub fn ignored_path(rel: &Path) -> bool {
+    if carried(rel) {
+        return false;
+    }
     rel.components()
         .any(|part| part.as_os_str().to_str().is_none_or(ignored))
 }
@@ -116,7 +131,7 @@ pub fn walk(
     let mut names: Vec<String> = listing
         .flatten()
         .filter_map(|entry| entry.file_name().into_string().ok())
-        .filter(|name| !ignored(name))
+        .filter(|name| !ignored(name) || carried(&rel.join(name)))
         .collect();
     names.sort_unstable();
 
@@ -224,6 +239,29 @@ mod tests {
         let mut left = 1;
         let refused = walk(root, Path::new(""), &mut left, &mut |_| {});
         assert!(refused.expect_err("too many").contains("files and folders"));
+    }
+
+    #[test]
+    fn the_spaces_own_inbox_is_carried_and_no_other_hidden_file() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let root = dir.path();
+        fs::write(root.join(".Inbox.md"), "- [ ] milk").expect("the inbox");
+        fs::write(root.join(".other.md"), "").expect("another hidden note");
+        fs::create_dir_all(root.join("Work")).expect("a folder");
+        fs::write(root.join("Work").join(".Inbox.md"), "").expect("not it");
+        fs::write(root.join("Plan.md"), "").expect("a note");
+
+        assert_eq!(
+            rels(root),
+            [
+                PathBuf::from(".Inbox.md"),
+                PathBuf::from("Plan.md"),
+                PathBuf::from("Work"),
+            ]
+        );
+        assert!(!super::ignored_path(Path::new(".Inbox.md")));
+        assert!(super::ignored_path(Path::new(".other.md")));
+        assert!(super::ignored_path(&Path::new("Work").join(".Inbox.md")));
     }
 
     #[test]

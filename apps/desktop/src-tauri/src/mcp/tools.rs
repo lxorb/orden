@@ -88,9 +88,12 @@ pub fn reaches(grant: &Grant, name: &str) -> bool {
         "browser_open" | "browser_close" | "browser_show" | "browser_downloads" => {
             grant.holds(Scope::Browser)
         }
-        // Scripts need the scope and at least one site they are allowed on (9.2).
+        // Scripts need the scope and at least one site they are allowed on (9.2), which
+        // under Full permissions is every site (#1072).
         "browser_evaluate" => {
-            browsing && grant.holds(Scope::BrowserScript) && !grant.scripts.is_empty()
+            browsing
+                && grant.holds(Scope::BrowserScript)
+                && (grant.asks_nothing() || !grant.scripts.is_empty())
         }
         name if name.starts_with("browser_") => browsing,
         name => AGENT_VERBS

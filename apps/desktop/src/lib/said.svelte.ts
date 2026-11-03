@@ -88,3 +88,14 @@ class Said {
 }
 
 export const said = new Said()
+
+/** A notice's words, said through the region above as it comes up and again
+ *  whenever they change: `{@attach told(words)}` on the card.
+ *
+ *  The cards in the notices row used to be `role="status"` themselves, and each of
+ *  them arrives already holding its text - the very region that is mostly never
+ *  announced (#523). So a card is just a card, and what it says goes through the
+ *  region that was on the page first. */
+export function told(words: string): () => void {
+  return () => said.say(words)
+}

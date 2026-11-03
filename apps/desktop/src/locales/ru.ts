@@ -31,7 +31,8 @@ export const ru: Dictionary = {
   // AI: the three permission modes
   'Full permissions': 'Полный доступ',
   'Auto mode': 'Автоматический режим',
-  'Full permissions: nothing is asked first': 'Полный доступ: ничего не спрашивается заранее',
+  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
+    'Полный доступ: ничего не спрашивается и не передаётся вам, даже вход, оплата, отправка или удаление',
   // Import: Zen's tabs
   'Import from Zen': 'Импорт из Zen',
   'Containers stay in Zen': 'Контейнеры остаются в Zen',
@@ -2758,4 +2759,6 @@ export const ru: Dictionary = {
   'Trust this space again': 'Снова доверять этому пространству',
   'Agent instructions': 'Инструкции для агентов',
   "AGENTS is this space's agent instructions": 'AGENTS: инструкции для агентов этого пространства',
+  '{title}, unread': '{title}, не прочитано',
+  '{title}, running': '{title}, выполняется',
 }
