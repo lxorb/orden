@@ -42,7 +42,7 @@
 use serde::Deserialize;
 
 use super::grants::{Grant, Mode, SiteRule};
-use super::verbs::{Category, Store};
+use super::verbs::{Category, DialogKind, Store};
 
 /// The host of an address, lower case.
 pub fn host_of(url: &str) -> Option<String> {
@@ -468,6 +468,23 @@ pub fn judge(
 }
 
 /// A one-line summary: the press's own words, or a word for the category, and the site.
+/// What answering a dialog the page holds asks first, for an agent with this grant: a
+/// site's own sign-in box or its request for a client certificate answered yes signs in,
+/// and asks under `SigningIn` as the mode says - nothing at all under Full permissions
+/// (#1072). Every other answer, and any no, goes ahead.
+pub fn answering(grant: &Grant, kind: DialogKind, accept: bool, url: &str) -> Option<Question> {
+    if !accept || !kind.signs_in() {
+        return None;
+    }
+    let site = site_of(&host_of(url).unwrap_or_default());
+    (grant.asks(Category::SigningIn) && !grant.always(&site, Category::SigningIn)).then(|| {
+        Question {
+            category: Category::SigningIn,
+            summary: on("", "Sign in", &site),
+        }
+    })
+}
+
 fn on(label: &str, fallback: &str, site: &str) -> String {
     let what = if label.is_empty() { fallback } else { label };
     format!("{what} on {site}")
@@ -1824,6 +1841,40 @@ mod tests {
         approve.mode = Mode::Confirm;
         let question = judge(&approve, &typed, Act::Write, url, &[]);
         assert_eq!(question.map(|one| one.category), Some(Category::SigningIn));
+    }
+
+    #[test]
+    fn a_site_s_sign_in_box_and_certificate_ask_as_the_mode_says() {
+        // #1072: HTTP authentication and a client certificate are signing in.
+        let url = "https://intranet.example/";
+        let mut full = grant();
+        full.mode = Mode::Autonomous;
+        for kind in [DialogKind::SignIn, DialogKind::Certificate] {
+            assert!(answering(&full, kind, true, url).is_none(), "{kind:?}");
+        }
+
+        let mut approve = grant();
+        approve.mode = Mode::Confirm;
+        let unsupervised = grant();
+        for asking in [&approve, &unsupervised] {
+            for kind in [DialogKind::SignIn, DialogKind::Certificate] {
+                let question = answering(asking, kind, true, url).expect("asked");
+                assert_eq!(question.category, Category::SigningIn);
+                assert_eq!(question.summary, "Sign in on intranet.example");
+                // Saying no to the site never asks.
+                assert!(answering(asking, kind, false, url).is_none());
+            }
+        }
+
+        // Turned off, or always allowed on the site, it goes ahead.
+        let mut off = grant();
+        off.asks.insert(Category::SigningIn, false);
+        assert!(answering(&off, DialogKind::SignIn, true, url).is_none());
+
+        // A page's own alert, confirm or prompt is never a question.
+        for kind in [DialogKind::Alert, DialogKind::Confirm, DialogKind::Prompt] {
+            assert!(answering(&approve, kind, true, url).is_none(), "{kind:?}");
+        }
     }
 
     #[test]

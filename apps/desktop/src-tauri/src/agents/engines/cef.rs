@@ -24,7 +24,8 @@
 //! windows the page opens made more windowless agent tabs with their opener kept,
 //! permissions refused, downloads into the agent's folder under the ceiling, the file
 //! chooser intercepted (and refused should it ever get past), sign-in boxes and client
-//! certificates refused, no context menu, no sound, and a site the agent may not visit
+//! certificate requests held for `browser_dialog` like any dialog (#1072), no context
+//! menu, no sound, and a site the agent may not visit
 //! stopped before it loads.
 //!
 //! **Only for somebody who uses agents.** Off-screen rendering is a switch CEF reads once
@@ -53,7 +54,7 @@ use serde_json::{json, Value};
 use tauri::AppHandle;
 
 use super::super::cdp;
-use super::super::quiet::{self, Owner};
+use super::super::quiet::{self, Owner, Said};
 use super::super::tabs;
 use super::super::verbs::{Dialog, DialogKind, Download, DownloadState};
 use super::View;
@@ -105,7 +106,21 @@ struct Page {
     waiting: Mutex<HashMap<i32, SyncSender<Result<Value, String>>>>,
     hearing: Mutex<Vec<Hearing>>,
     /// The dialog the page holds: its number, and how it is answered.
-    dialog: Mutex<Option<(u64, JsdialogCallback)>>,
+    dialog: Mutex<Option<(u64, Answering)>>,
+}
+
+/// How a held dialog is answered, by its kind.
+enum Answering {
+    /// `alert`, `confirm`, `prompt`, `beforeunload`.
+    Script(JsdialogCallback),
+    /// The site's sign-in box.
+    SignIn(AuthCallback),
+    /// The site's request for a client certificate, with those it may be answered with
+    /// and the words each is known by.
+    Certificate(
+        SelectClientCertificateCallback,
+        Vec<(X509Certificate, String)>,
+    ),
 }
 
 impl Page {
@@ -527,21 +542,16 @@ fn answer(message: &Value) -> Result<Value, String> {
     Ok(message.get("result").cloned().unwrap_or(Value::Null))
 }
 
-/// Answers the dialog a page holds: OK or Cancel, and a prompt's words.
-pub fn answer_dialog(
-    _app: &AppHandle,
-    label: &str,
-    accept: bool,
-    text: Option<String>,
-) -> Result<(), String> {
+/// Answers the dialog a page holds; see `quiet::Said`.
+pub fn answer_dialog(_app: &AppHandle, label: &str, said: Said) -> Result<(), String> {
     let found = page(label).ok_or("the page has closed")?;
-    settle(&found.page, None, accept, text);
+    settle(&found.page, None, said);
     Ok(())
 }
 
 /// Gives the engine its answer to a held dialog: the one with `number` when named,
 /// whichever is held otherwise.
-fn settle(page: &Arc<Page>, number: Option<u64>, accept: bool, text: Option<String>) {
+fn settle(page: &Arc<Page>, number: Option<u64>, said: Said) {
     let held = {
         let mut dialog = page.dialog.lock().unwrap_or_else(PoisonError::into_inner);
         if dialog
@@ -553,13 +563,32 @@ fn settle(page: &Arc<Page>, number: Option<u64>, accept: bool, text: Option<Stri
             None
         }
     };
-    let Some((_, callback)) = held else {
+    let Some((_, answering)) = held else {
         return;
     };
     quiet::release(&page.owner.label);
-    on_ui(move || {
-        let words = text.map(|one| CefString::from(one.as_str()));
-        callback.cont(i32::from(accept), words.as_ref());
+    on_ui(move || match answering {
+        Answering::Script(callback) => {
+            let words = said.text.as_deref().map(CefString::from);
+            callback.cont(i32::from(said.accept), words.as_ref());
+        }
+        Answering::SignIn(callback) => {
+            if said.accept {
+                let name = CefString::from(said.username.as_deref().unwrap_or_default());
+                let password = CefString::from(said.password.as_deref().unwrap_or_default());
+                callback.cont(Some(&name), Some(&password));
+            } else {
+                callback.cancel();
+            }
+        }
+        Answering::Certificate(callback, offered) => {
+            // None chosen, or no: on without a certificate, as a browser's Cancel goes.
+            let mut chosen = said
+                .chosen(offered.iter().map(|(_, words)| words.as_str()))
+                .and_then(|at| offered.into_iter().nth(at))
+                .map(|(one, _)| one);
+            callback.select(chosen.as_mut());
+        }
     });
 }
 
@@ -570,10 +599,10 @@ fn hold(
     message: String,
     default: String,
     url: String,
-    callback: JsdialogCallback,
+    answering: Answering,
 ) {
     let number = quiet::NUMBER.fetch_add(1, Ordering::Relaxed);
-    *page.dialog.lock().unwrap_or_else(PoisonError::into_inner) = Some((number, callback));
+    *page.dialog.lock().unwrap_or_else(PoisonError::into_inner) = Some((number, answering));
     quiet::hold(
         &page.owner.label,
         Dialog {
@@ -587,7 +616,7 @@ fn hold(
     let late = Arc::clone(page);
     std::thread::spawn(move || {
         std::thread::sleep(quiet::DIALOG_PATIENCE);
-        settle(&late, Some(number), kind == DialogKind::Alert, None);
+        settle(&late, Some(number), Said::only(kind == DialogKind::Alert));
     });
 }
 
@@ -812,7 +841,7 @@ wrap_jsdialog_handler! {
                 text(message_text),
                 text(default_prompt_text),
                 text(origin_url),
-                callback.clone(),
+                Answering::Script(callback.clone()),
             );
             1
         }
@@ -834,7 +863,7 @@ wrap_jsdialog_handler! {
                 text(message_text),
                 String::new(),
                 url,
-                callback.clone(),
+                Answering::Script(callback.clone()),
             );
             1
         }
@@ -1063,37 +1092,68 @@ wrap_request_handler! {
             1
         }
 
+        // The site's sign-in box and its request for a client certificate, held for the
+        // agent like any dialog: `browser_dialog` answers them, and answering yes signs in,
+        // which asks as the mode says - nothing at all under Full permissions (#1072,
+        // `policy::answering`).
         fn auth_credentials(
             &self,
             _browser: Option<&mut Browser>,
-            _origin_url: Option<&CefString>,
+            origin_url: Option<&CefString>,
             _is_proxy: ::std::os::raw::c_int,
             _host: Option<&CefString>,
             _port: ::std::os::raw::c_int,
-            _realm: Option<&CefString>,
+            realm: Option<&CefString>,
             _scheme: Option<&CefString>,
-            _callback: Option<&mut AuthCallback>,
+            callback: Option<&mut AuthCallback>,
         ) -> ::std::os::raw::c_int {
-            self.page.say(
-                "Orden refused the site's sign-in box: ask the reader with browser_takeover".into(),
+            let Some(callback) = callback else {
+                return 0;
+            };
+            hold(
+                &self.page,
+                DialogKind::SignIn,
+                quiet::signing_in(&text(realm)),
+                String::new(),
+                text(origin_url),
+                Answering::SignIn(callback.clone()),
             );
-            0
+            1
         }
 
         fn on_select_client_certificate(
             &self,
             _browser: Option<&mut Browser>,
             _is_proxy: ::std::os::raw::c_int,
-            _host: Option<&CefString>,
+            host: Option<&CefString>,
             _port: ::std::os::raw::c_int,
-            _certificates: Option<&[Option<X509Certificate>]>,
+            certificates: Option<&[Option<X509Certificate>]>,
             callback: Option<&mut SelectClientCertificateCallback>,
         ) -> ::std::os::raw::c_int {
-            if let Some(callback) = callback {
-                callback.select(None);
-            }
-            self.page
-                .say("Orden refused the site's request for a client certificate".into());
+            let Some(callback) = callback else {
+                return 0;
+            };
+            let offered: Vec<(X509Certificate, String)> = certificates
+                .unwrap_or_default()
+                .iter()
+                .flatten()
+                .map(|one| {
+                    let words = one
+                        .subject()
+                        .map(|subject| CefString::from(&subject.display_name()).to_string())
+                        .unwrap_or_default();
+                    (one.clone(), words)
+                })
+                .collect();
+            let message = quiet::certificates(offered.iter().map(|(_, words)| words.as_str()));
+            hold(
+                &self.page,
+                DialogKind::Certificate,
+                message,
+                String::new(),
+                format!("https://{}/", text(host)),
+                Answering::Certificate(callback.clone(), offered),
+            );
             1
         }
     }
@@ -1175,12 +1235,12 @@ wrap_load_handler! {
             error_text: Option<&CefString>,
             failed_url: Option<&CefString>,
         ) {
-            // A sign-in box this style of browser never shows: the engine answers it with
-            // no credentials itself, and the agent hears why here.
+            // A sign-in the site turned down, or one answered no: the agent hears it here.
             if frame.is_some_and(|frame| frame.is_main() != 0) && text(error_text).contains("AUTH") {
                 self.page.say(format!(
-                    "Orden refused the site's sign-in box at {}: ask the reader with browser_takeover",
-                    text(failed_url)
+                    "The site at {} did not sign in: {}",
+                    text(failed_url),
+                    text(error_text)
                 ));
             }
         }

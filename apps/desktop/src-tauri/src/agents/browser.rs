@@ -851,13 +851,39 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 from_page(Answer::ok(Evaluated { value }))
             }
             Verb::Dialog(answer) => {
-                if super::quiet::dialog_of(&page.label).is_none() {
+                let Some(held) = super::quiet::dialog_of(&page.label) else {
                     return Err(Answer::error(
                         Code::NoDialog,
                         "the page is holding no dialog",
                     ));
+                };
+                // A site's sign-in box or certificate request answered yes signs in, and
+                // asks as the mode says: nothing under Full permissions (#1072).
+                if let Caller::Agent(grant) = caller {
+                    if let Some(question) =
+                        policy::answering(grant, held.kind, answer.accept, &held.url)
+                    {
+                        let key = approvals::key("browser_dialog", Some(place.id()), None);
+                        if !approvals::allowed(&grant.id, &key) {
+                            return Err(ask(
+                                app,
+                                grant,
+                                question.category,
+                                question.summary,
+                                Some(&held.url),
+                                place.id(),
+                                &key,
+                            ));
+                        }
+                    }
                 }
-                super::quiet::answer_dialog(app, &page.label, answer.accept, answer.text)
+                let said = super::quiet::Said {
+                    accept: answer.accept,
+                    text: answer.text,
+                    username: answer.username,
+                    password: answer.password,
+                };
+                super::quiet::answer_dialog(app, &page.label, said)
                     .map_err(|why| Answer::error(Code::Failed, why))?;
                 std::thread::sleep(Duration::from_millis(50));
                 page.settle(page.navigations());

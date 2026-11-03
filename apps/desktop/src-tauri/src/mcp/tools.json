@@ -339,13 +339,15 @@
   },
   {
     "name": "browser_dialog",
-    "description": "Answer the alert, confirm or prompt the page is holding: accept (OK) or not, with `text` for a prompt. Every answer says when one is waiting.",
+    "description": "Answer the dialog the page holds: accept or not. `text` answers a prompt or names a certificate (else the first); a sign_in takes `username` and `password`.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "tab": { "type": "string" },
         "accept": { "type": "boolean" },
-        "text": { "type": "string" }
+        "text": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" }
       },
       "required": ["tab", "accept"]
     }
