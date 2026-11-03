@@ -1,7 +1,7 @@
 import type { Input } from '@lezer/common'
 import { tags } from '@lezer/highlight'
 import type { BlockContext, Line, MarkdownConfig } from '@lezer/markdown'
-import { opensFrontMatter } from '@orden/markdown/front-matter'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { parseWikilink, shownSpan } from '@orden/markdown/links'
 import { tagAt } from '@orden/markdown/tags'
 import { markTags } from './tags'
@@ -365,19 +365,20 @@ const FrontMatter: MarkdownConfig = {
         // A document may legitimately open with a horizontal rule. Require the
         // block to be one the readers of a note take for front matter before
         // committing, since a block parser cannot rewind once it has consumed lines.
-        // `opensFrontMatter` rather than a look for a word and a colon: `Priorität: hoch`
+        // `frontMatterBlock` rather than a look for a word and a colon: `Priorität: hoch`
         // is a key, and read as a rule and a heading it was drawn as one and rewritten by
-        // Format. And not `frontMatterBlock`, which an essay under a rule also passes.
+        // Format.
         // The context holds its input but does not type it, and offers no other way to
         // look further than the next line; the tests of this construct would catch it going.
         const { input } = cx as unknown as { input: Input }
-        if (!opensFrontMatter(input.read(0, input.length))) return false
+        const block = frontMatterBlock(input.read(0, input.length))
+        if (!block) return false
 
-        const marks = [cx.elt('FrontMatterMark', 0, 3)]
-        let to = 3
+        const marks = [cx.elt('FrontMatterMark', block.from, block.from + 3)]
+        let to = block.from + 3
 
         while (cx.nextLine()) {
-          if (line.text.trim() === '---') {
+          if (cx.lineStart === block.close) {
             marks.push(cx.elt('FrontMatterMark', cx.lineStart, cx.lineStart + 3))
             to = cx.lineStart + 3
             cx.nextLine()

@@ -53,13 +53,14 @@ const names = (files: readonly string[]) =>
   files.map((one) => one.split(/[\\/]/).pop() ?? one).sort()
 
 describe('what showing a note loads', () => {
-  test('the deck reader is five modules and the markdown lexer', () => {
+  test('the deck reader is six modules and the markdown lexer', () => {
     const { files, packages } = graphOf(resolve(MARKDOWN, 'slides.ts'))
 
     expect([...packages].sort()).toEqual(['marked'])
     expect(names(files)).toEqual([
       'blocks.ts',
       'fences.ts',
+      'front-matter-lines.ts',
       'slide-breaks.ts',
       'slides.ts',
       'starts.ts',
@@ -73,7 +74,7 @@ describe('what showing a note loads', () => {
     const { files, packages } = graphOf(resolve(MARKDOWN, 'slide-breaks.ts'))
 
     expect([...packages]).toEqual([])
-    expect(names(files)).toEqual(['fences.ts', 'slide-breaks.ts'])
+    expect(names(files)).toEqual(['fences.ts', 'front-matter-lines.ts', 'slide-breaks.ts'])
   })
 
   test('and no formula engine, no chemistry pack and no emoji table', () => {

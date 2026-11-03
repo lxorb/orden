@@ -7,6 +7,7 @@ import {
   type SelectionRange,
   type StateCommand,
 } from '@codemirror/state'
+import { opensFrontMatter } from '@orden/markdown/front-matter'
 import { type Callout, calloutOf } from '@orden/markdown/callouts'
 import { closesFence } from '@orden/markdown/fences'
 import { blockIdOf } from '@orden/markdown/links'
@@ -703,7 +704,7 @@ export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))
  *  somewhere invisible, would look like a command that did nothing. See
  *  hidden-front-matter.ts. */
 export const insertFrontMatter: StateCommand = ({ state, dispatch }) => {
-  if (state.doc.line(1).text.trim() === '---') {
+  if (opensFrontMatter(state.doc.toString())) {
     const inside = state.doc.line(Math.min(2, state.doc.lines))
     dispatch(
       state.update({

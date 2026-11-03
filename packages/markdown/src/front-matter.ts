@@ -18,6 +18,7 @@
  *  otherwise. */
 
 import { oneEdit, type TextEdit } from './edits'
+import { frontMatterLines } from './front-matter-lines'
 import { flowItem, flowItems, listItem, scalar, uncommented, unquoted } from './yaml'
 
 /** Named here as well because the block is this module's business and yaml.ts is
@@ -84,67 +85,26 @@ export function isPropertyName(name: string): boolean {
  *
  *  The opening fence has to be the note's first line and the closing one a line
  *  that says nothing but `---`, so a horizontal rule in the middle of a note
- *  cannot be read as the end of a block that never started. */
+ *  cannot be read as the end of a block that never started. And what is between
+ *  them has to read as YAML's keys, so an essay under a rule, or a deck's first
+ *  slide, is the note's words rather than its metadata. See front-matter-lines.ts. */
 export function frontMatterBlock(source: string): FrontMatterBlock | null {
-  const from = source.startsWith('\uFEFF') ? 1 : 0
-  if (!source.startsWith('---', from)) return null
+  const lines = frontMatterLines(source)
+  if (!lines) return null
 
-  const first = source.indexOf('\n')
-  if (first === -1 || source.slice(from, first).trim() !== '---') return null
-
-  let at = first + 1
-  while (at <= source.length) {
-    const end = source.indexOf('\n', at)
-    const stop = end === -1 ? source.length : end
-
-    if (source.slice(at, stop).trim() === '---') {
-      return {
-        from,
-        to: end === -1 ? source.length : end + 1,
-        body: { from: first + 1, to: at },
-        close: at,
-      }
-    }
-
-    if (end === -1) break
-    at = end + 1
+  const end = source.indexOf('\n', lines.close)
+  return {
+    from: lines.from,
+    to: end === -1 ? source.length : end + 1,
+    body: { from: lines.body, to: lines.close },
+    close: lines.close,
   }
-
-  return null
 }
 
-/** A line that reads as a key and its colon: a word as the fields of a plugin are
- *  named, or a name in anybody's language of a few words, quoted or not. `Priorität:`,
- *  `due date:`, `Size (cm):` and `日期:` are; `- a: b` and a sentence that has a colon
- *  in it are not. */
-const PLAIN_KEY = /^\s*[\w.$-]+\s*:/
-const QUOTED_KEY = /^\s*(?:"[^"]*"|'[^']*')\s*:/
-const NAMED_KEY = /^\s*([^\s:#\-*+>|[\]{}!&%@`"',.?][^:.,!?;]*?)\s*:(?:\s|$)/u
-const MOST_KEY_WORDS = 4
-
-function isKeyLine(line: string): boolean {
-  if (PLAIN_KEY.test(line) || QUOTED_KEY.test(line)) return true
-  const key = NAMED_KEY.exec(line)?.[1]
-  return key !== undefined && key.split(/\s+/).length <= MOST_KEY_WORDS
-}
-
-/** Whether a note's opening `---` is front matter to the editor, rather than a rule
- *  with words below it: a block, whose first line that is not a comment is a key, or
- *  with nothing in it at all. An editor hides the block from the caret, from find and
- *  from whoever is typing, so an essay under a rule is not one, nor a deck's first
- *  slide, however many `---` come after them. A heading reads as a comment, which is
- *  why a comment has to lead to a key.
- *
- *  Narrower than `frontMatterBlock`, which every reader of a note's metadata takes. */
+/** Whether a note's opening `---` is front matter, rather than a rule with words below
+ *  it. The same question as `frontMatterBlock`, for a caller with no use for where. */
 export function opensFrontMatter(source: string): boolean {
-  const block = frontMatterBlock(source)
-  if (!block) return false
-  if (block.body.from === block.body.to) return true
-
-  for (const line of source.slice(block.body.from, block.body.to).split('\n')) {
-    if (!/^\s*#/.test(line)) return isKeyLine(line)
-  }
-  return false
+  return frontMatterLines(source) !== null
 }
 
 /** What a written row holds: one key, and either a value or a list of them. A

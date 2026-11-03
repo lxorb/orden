@@ -35,9 +35,11 @@ pub struct Block {
 /// Where the block sits, or None where the note opens with anything else, which
 /// is most notes.
 ///
-/// Two things make one, and both are Obsidian's: the opening fence is the note's
-/// first line at the left margin, and the block closes. An indented fence is an
-/// indented rule, and a block nobody closed is a note that opens with a rule.
+/// Three things make one, and the first two are Obsidian's: the opening fence is
+/// the note's first line at the left margin, and the block closes. An indented
+/// fence is an indented rule, and a block nobody closed is a note that opens with a
+/// rule. The third is that what is between the fences reads as the keys of a YAML
+/// mapping, so an essay under a rule is the note's words. See `closing_fence`.
 pub fn block(body: &str) -> Option<Block> {
     let first = body.find('\n')?;
     // Space after the fence is nothing; space before it is a fence that is not at
@@ -46,26 +48,347 @@ pub fn block(body: &str) -> Option<Block> {
     let opening = body[..first]
         .strip_prefix('\u{feff}')
         .unwrap_or(&body[..first]);
-    if opening.trim_end() != "---" {
+    if !is_fence(opening.strip_suffix('\r').unwrap_or(opening)) {
         return None;
     }
 
-    let mut at = first + 1;
-    while at <= body.len() {
-        let end = body[at..].find('\n').map_or(body.len(), |one| at + one);
-        if body[at..end].trim() == "---" {
-            return Some(Block {
-                from: first + 1,
-                close: at,
-                end,
+    let close = closing_fence(body, first + 1)?;
+    let end = body[close..].find('\n').map_or(body.len(), |one| close + one);
+    Some(Block {
+        from: first + 1,
+        close,
+        end,
+    })
+}
+
+/// A fence: at the margin, three hyphens, and nothing else but blanks.
+fn is_fence(line: &str) -> bool {
+    line.strip_prefix("---")
+        .is_some_and(|rest| rest.bytes().all(is_blank))
+}
+
+const fn is_blank(one: u8) -> bool {
+    one == b' ' || one == b'\t'
+}
+
+/// The first line of a block has to say a key rather than merely hold a colon: a
+/// word as the fields of a plugin are named, or a name in anybody's language of a
+/// few words, quoted or not. `isKeyLine` in front-matter-lines.ts.
+fn is_key_line(text: &str) -> bool {
+    let bytes = text.as_bytes();
+    if let Some(&quote) = bytes.first().filter(|&&one| one == b'"' || one == b'\'') {
+        return bytes[1..]
+            .iter()
+            .position(|&one| one == quote)
+            .is_some_and(|inner| {
+                let rest = text[inner + 2..].trim_start_matches([' ', '\t']).as_bytes();
+                rest.first() == Some(&b':') && rest.get(1).is_none_or(|&next| is_blank(next))
             });
-        }
-        if end >= body.len() {
-            break;
-        }
-        at = end + 1;
     }
 
+    let Some(colon) = text
+        .bytes()
+        .enumerate()
+        .find(|&(at, one)| {
+            one == b':' && text.as_bytes().get(at + 1).is_none_or(|&next| is_blank(next))
+        })
+        .map(|(at, _)| at)
+    else {
+        return false;
+    };
+    let key = text[..colon].trim_end_matches([' ', '\t']);
+    if key.is_empty() {
+        return false;
+    }
+
+    if key
+        .bytes()
+        .all(|one| one.is_ascii_alphanumeric() || matches!(one, b'_' | b'.' | b'$' | b'-'))
+    {
+        return true;
+    }
+    let mut chars = key.chars();
+    let first = chars.next().unwrap_or(' ');
+    !first.is_whitespace()
+        && !":#-*+>|[]{}!&%@`\"',.?".contains(first)
+        && !chars.any(|one| ":.,!?;".contains(one))
+        && key.split_whitespace().count() <= MOST_KEY_WORDS
+}
+
+const MOST_KEY_WORDS: usize = 4;
+
+/// YAML's own limit on a key written without a `?`.
+const MOST_KEY_LENGTH: usize = 1024;
+
+/// Past the quote that opens at `at`, or None where it does not close on the line.
+fn past_quote(line: &[u8], at: usize) -> Option<usize> {
+    let quote = line[at];
+    let mut over = at + 1;
+    while over < line.len() {
+        if quote == b'"' && line[over] == b'\\' {
+            over += 1;
+        } else if line[over] == quote {
+            if quote == b'\'' && line.get(over + 1) == Some(&b'\'') {
+                over += 1;
+            } else {
+                return Some(over + 1);
+            }
+        }
+        over += 1;
+    }
+    None
+}
+
+/// Just past the colon of the key that starts at `at`, or None where the line says
+/// none: a line that is a list, a quote or a YAML shape is not a key whatever colon
+/// it holds further on.
+fn past_key(line: &[u8], at: usize) -> Option<usize> {
+    let first = *line.get(at)?;
+    if b"#*+>|[]{}!&%@`,".contains(&first) {
+        return None;
+    }
+
+    let mut from = at;
+    if first == b'"' || first == b'\'' {
+        from = past_quote(line, at)?;
+        while line.get(from).copied().is_some_and(is_blank) {
+            from += 1;
+        }
+        if line.get(from) != Some(&b':') {
+            return None;
+        }
+    }
+
+    for (over, &one) in line.iter().enumerate().skip(from) {
+        if one == b':' {
+            if over - at > MOST_KEY_LENGTH {
+                return None;
+            }
+            if line.get(over + 1).is_none_or(|&next| is_blank(next)) {
+                return Some(over + 1);
+            }
+        }
+    }
+    None
+}
+
+/// What a value still has open at the end of its line: a quote, or how deep in brackets.
+#[derive(Default, Clone, Copy)]
+struct Open {
+    quote: u8,
+    depth: i32,
+}
+
+/// Reads a value's text with a quote or a bracket open, and says whether it stays
+/// open past this line. A quote only opens where a value could start: `[don't, x]`
+/// holds a plain word.
+fn stays_open(line: &[u8], open: &mut Open) -> bool {
+    let mut starts = true;
+    let mut at = 0;
+    while at < line.len() {
+        let one = line[at];
+        if open.quote != 0 {
+            if open.quote == b'"' && one == b'\\' {
+                at += 1;
+            } else if one == open.quote {
+                if open.quote == b'\'' && line.get(at + 1) == Some(&b'\'') {
+                    at += 1;
+                } else {
+                    open.quote = 0;
+                    if open.depth == 0 {
+                        return false;
+                    }
+                    starts = false;
+                }
+            }
+        } else if one == b'#' && (at == 0 || is_blank(line[at - 1])) {
+            return true;
+        } else if (one == b'"' || one == b'\'') && starts {
+            open.quote = one;
+        } else if one == b'[' || one == b'{' {
+            open.depth += 1;
+            starts = true;
+        } else if one == b']' || one == b'}' {
+            open.depth -= 1;
+            if open.depth <= 0 {
+                return false;
+            }
+            starts = false;
+        } else if one == b',' || one == b':' {
+            starts = true;
+        } else if !is_blank(one) {
+            starts = false;
+        }
+        at += 1;
+    }
+    true
+}
+
+/// A value that is a block scalar's header, whose lines are the scalar's whatever
+/// they say: `|`, `>-`, `|2`, and perhaps a comment.
+fn is_block_scalar(said: &[u8]) -> bool {
+    if !matches!(said.first(), Some(b'|' | b'>')) {
+        return false;
+    }
+    let after = said[1..]
+        .iter()
+        .take_while(|&&one| one == b'+' || one == b'-' || one.is_ascii_digit())
+        .count();
+    let rest = &said[1 + after..];
+    let text = rest.iter().position(|&one| !is_blank(one));
+    text.is_none_or(|at| rest[at] == b'#')
+}
+
+/// A value past the anchors and tags in front of it.
+fn without_properties(said: &[u8]) -> &[u8] {
+    let mut rest = said;
+    while matches!(rest.first(), Some(b'&' | b'!')) {
+        let word = rest.iter().position(|&one| is_blank(one)).unwrap_or(rest.len());
+        rest = &rest[word..];
+        let blanks = rest.iter().take_while(|&&one| is_blank(one)).count();
+        rest = &rest[blanks..];
+    }
+    rest
+}
+
+/// The line a block's closing fence starts on, walking from `from`, just past the
+/// opening one; or None where no block closes there or a line of it is no YAML
+/// mapping's. Every line between the fences is a key, what continues one, a blank
+/// line or a comment; anything else makes them two rules with words between them.
+///
+/// The twin of `closingFence` in front-matter-lines.ts; both are held to
+/// front-matter-table.json, and that one to the YAML library.
+#[allow(clippy::too_many_lines)]
+fn closing_fence(body: &str, from: usize) -> Option<usize> {
+    // The indent of the mapping, once its first key is read.
+    let mut base: Option<usize> = None;
+    let mut comment = false;
+    // Whether a `- ` at the mapping's own indent belongs to the key above it.
+    let mut list = false;
+    // Lines indented past this are a block scalar's, or a plain value's next lines.
+    let mut scalar: Option<usize> = None;
+    let mut open: Option<Open> = None;
+    // Whether the mapping was written whole as a `{...}`, which nothing can follow.
+    let mut whole = false;
+    // Whether a quote or a bracket holds a value open past its line, and the line
+    // after the one that did.
+    let mut opens = true;
+    let mut reread = 0;
+
+    let mut at = from;
+    while at <= body.len() {
+        let end = body[at..].find('\n').map(|one| at + one);
+        let stop = end.unwrap_or(body.len());
+        let text = &body[at..stop];
+        let text = text.strip_suffix('\r').unwrap_or(text);
+        let line = text.as_bytes();
+
+        if is_fence(text) {
+            if open.is_none() {
+                return (base.is_some() || !comment).then_some(at);
+            }
+            // Nothing closed that value, so it was one line's words. The lines it took
+            // are read again, once, which keeps the walk from growing with every value
+            // that opens.
+            open = None;
+            opens = false;
+            at = reread;
+            continue;
+        }
+
+        if let Some(state) = open.as_mut() {
+            if !stays_open(line, state) {
+                open = None;
+            }
+        } else {
+            let indent = line.iter().take_while(|&&one| is_blank(one)).count();
+
+            if indent < line.len() && scalar.is_none_or(|past| indent <= past) {
+                scalar = None;
+
+                if line[indent] == b'#' {
+                    comment = true;
+                } else if whole {
+                    return None;
+                } else {
+                    let first = base.is_none();
+                    if first {
+                        let rest = &text[indent..];
+                        let complex = rest == "?" || rest.starts_with("? ") || rest.starts_with("?\t");
+                        if !is_key_line(rest) && !complex && !rest.starts_with('{') {
+                            return None;
+                        }
+                        base = Some(indent);
+                    } else if base.is_some_and(|one| indent < one) {
+                        return None;
+                    }
+
+                    let mut col = indent;
+                    let mut dash = None;
+                    while line.get(col) == Some(&b'-')
+                        && line.get(col + 1).is_none_or(|&next| is_blank(next))
+                    {
+                        dash = Some(col);
+                        col += 1;
+                        while line.get(col).copied().is_some_and(is_blank) {
+                            col += 1;
+                        }
+                    }
+                    let own = base == Some(indent);
+                    if dash.is_some() && own && !list {
+                        return None;
+                    }
+
+                    let complex = matches!(line.get(col), Some(b'?' | b':'))
+                        && line.get(col + 1).is_none_or(|&next| is_blank(next));
+                    let past = if complex {
+                        Some(col + 1)
+                    } else {
+                        past_key(line, col)
+                    };
+                    if past.is_none() && own && dash.is_none() && !(first && line.get(col) == Some(&b'{')) {
+                        return None;
+                    }
+
+                    let keyed = past.is_some();
+                    let mut value = past.unwrap_or(col);
+                    while line.get(value).copied().is_some_and(is_blank) {
+                        value += 1;
+                    }
+                    let said = without_properties(line.get(value..).unwrap_or_default());
+                    let start = said.first().copied().unwrap_or(0);
+                    let empty = said.is_empty() || start == b'#';
+
+                    if own && dash.is_none() {
+                        list = empty;
+                    }
+                    whole = first && start == b'{' && !keyed;
+
+                    let parent = if keyed {
+                        Some(col)
+                    } else {
+                        dash.or_else(|| indent.checked_sub(1))
+                    };
+                    if is_block_scalar(said) {
+                        scalar = Some(if keyed { col } else { dash.unwrap_or(indent) });
+                    } else if opens && matches!(start, b'"' | b'\'' | b'[' | b'{') {
+                        let mut opening = Open::default();
+                        if stays_open(said, &mut opening) {
+                            open = Some(opening);
+                            reread = stop + 1;
+                        }
+                    } else if !empty {
+                        scalar = parent;
+                    }
+                }
+            }
+        }
+
+        match end {
+            Some(_) => at = stop + 1,
+            None => return None,
+        }
+    }
     None
 }
 
@@ -221,6 +544,20 @@ mod tests {
 
         assert_eq!(&note[found.from..found.close], "icon: rocket\n");
         assert_eq!(&note[found.end..], "\n\n# Plan\n");
+    }
+
+    /// The notes front-matter.test.ts is held to as well, each with whether it opens
+    /// with a block.
+    #[test]
+    fn what_counts_as_front_matter_is_the_table_both_read() {
+        let table: Vec<(String, bool)> = serde_json::from_str(include_str!(
+            "../../../../packages/markdown/src/front-matter-table.json"
+        ))
+        .expect("the table parses");
+
+        for (note, expected) in table {
+            assert_eq!(block(&note).is_some(), expected, "{note:?}");
+        }
     }
 
     #[test]

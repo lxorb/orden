@@ -1,7 +1,7 @@
 import type { SyntaxNode, Tree } from '@lezer/common'
 import type { StateCommand } from '@codemirror/state'
 import { closesFence, fenceMark } from '@orden/markdown/fences'
-import { frontMatterBlock, opensFrontMatter } from '@orden/markdown/front-matter'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { nibMarkdownParser } from './markdown/extensions'
 import { parseTable, serializeTable } from './table/model'
 
@@ -108,7 +108,7 @@ export function reformat(source: string): string {
  *  The same test the parser makes (see `FrontMatter` in markdown/constructs.ts) so
  *  that the two agree on what a leading `---` is. */
 function readFrontMatter(source: string): number | null {
-  const block = opensFrontMatter(source) ? frontMatterBlock(source) : null
+  const block = frontMatterBlock(source)
   return block && source.slice(0, block.close).split('\n').length
 }
 

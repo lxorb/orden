@@ -34,6 +34,9 @@
   ["---\n{a: 1, b: 2}\n---\n", true],
   ["---\nurl: https://example.com:8080/a\nratio: 16:9\n---\n", true],
   ["---\nWarning: do not\n---\nrest", true],
+  ["---\ntitle: \"Foo\nother: 1\n---\nrest", true],
+  ["---\ntags: [a, b\n---\nrest", true],
+  ["---\ntags: [a,\nother: \"x\nthird: 1\n---\nrest", true],
   ["---\ntitle: a: b\n---\nrest", true],
 
   ["---\nprose words\n---\nrest", false],

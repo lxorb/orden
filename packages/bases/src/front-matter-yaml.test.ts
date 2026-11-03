@@ -17,8 +17,32 @@ function rng(seed: number) {
   }
 }
 
-const KEYS = ['title', 'due date', 'Priorität', 'a.b', 'R&D', 'Size (cm)', '日期', 'x-y', 'n1', '"q k"']
-const WORDS = ['word', "don't", '"quoted"', '[open', 'a: b', '# hash', '- item', '---', '{', 'x]', '|', '> y']
+const KEYS = [
+  'title',
+  'due date',
+  'Priorität',
+  'a.b',
+  'R&D',
+  'Size (cm)',
+  '日期',
+  'x-y',
+  'n1',
+  '"q k"',
+]
+const WORDS = [
+  'word',
+  "don't",
+  '"quoted"',
+  '[open',
+  'a: b',
+  '# hash',
+  '- item',
+  '---',
+  '{',
+  'x]',
+  '|',
+  '> y',
+]
 
 function words(r: (n: number) => number): string {
   const out: string[] = []
@@ -65,9 +89,9 @@ function spelled(r: (n: number) => number, map: Record<string, unknown>): string
     indentSeq: r(2) === 0,
     collectionStyle: (['any', 'block', 'flow'] as const)[r(3)] ?? 'any',
     lineWidth: [0, 20, 80][r(3)] ?? 0,
-    defaultStringType: (['PLAIN', 'QUOTE_DOUBLE', 'QUOTE_SINGLE', 'BLOCK_LITERAL', 'BLOCK_FOLDED'] as const)[
-      r(5)
-    ],
+    defaultStringType: (
+      ['PLAIN', 'QUOTE_DOUBLE', 'QUOTE_SINGLE', 'BLOCK_LITERAL', 'BLOCK_FOLDED'] as const
+    )[r(5)],
     aliasDuplicateObjects: false,
   })
 }
@@ -94,7 +118,14 @@ describe('front matter against the YAML library', () => {
 
   test('a line of prose at the margin takes a block away', () => {
     const r = rng(11)
-    const PROSE = ['prose words', 'A sentence without a colon.', 'word', '## Section', '> quoted', '* item']
+    const PROSE = [
+      'prose words',
+      'A sentence without a colon.',
+      'word',
+      '## Section',
+      '> quoted',
+      '* item',
+    ]
     let held = 0
     for (let at = 0; at < 6000; at++) {
       // Between two keys, so it is no value's: a quote or a flow may hold any line.
