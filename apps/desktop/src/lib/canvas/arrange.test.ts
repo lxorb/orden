@@ -189,3 +189,46 @@ describe('the order of the stack', () => {
     for (const node of after.nodes) expect(canvas.nodes).toContain(node)
   })
 })
+
+describe('a frame with handwriting in it', () => {
+  const frame: CanvasNode = { id: 'f', type: 'group', x: 100, y: 0, width: 300, height: 300 }
+  const stroke = (id: string, x: number) => ({
+    id,
+    tool: 'pen' as const,
+    color: '#000000',
+    size: 2,
+    points: [
+      { x, y: 50, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 },
+      { x: x + 20, y: 60, pressure: 0.5, tiltX: 0, tiltY: 0, t: 1 },
+    ],
+  })
+  const canvas: Canvas = {
+    ...plane([frame, card('in', 120, 40, 40, 40), card('far', 0, 500, 40, 40)]),
+    ink: [stroke('s', 200), stroke('out', 700)],
+  }
+  const inkAt = (from: Canvas) => from.ink.map((one) => [one.id, one.points[0]?.x])
+
+  test('takes it along when it is lined up', () => {
+    const lined = aligned(canvas, ['f', 'far'], 'left')
+    expect(at(lined)[0]).toEqual(['f', 0, 0])
+    expect(at(lined)[1]).toEqual(['in', 20, 40])
+    expect(inkAt(lined)).toEqual([
+      ['s', 100],
+      ['out', 700],
+    ])
+  })
+
+  test('and when it is spread out', () => {
+    const spread = distributed(
+      { ...canvas, nodes: [...canvas.nodes, card('end', 1000, 0, 40, 40)] },
+      ['far', 'f', 'end'],
+      'x',
+    )
+    const moved = (spread.nodes.find((one) => one.id === 'f')?.x ?? 0) - 100
+    expect(moved).not.toBe(0)
+    expect(inkAt(spread)).toEqual([
+      ['s', 200 + moved],
+      ['out', 700],
+    ])
+  })
+})
