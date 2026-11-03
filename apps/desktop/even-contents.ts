@@ -313,9 +313,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  coloured drawings are one tab, the sets merged into one collection
  *  (`mergeSets` in icon-sets.ts); the drawings' places among the emoji stay out
  *  (flat-colour-places.even.ts). Measured 5,777,606.
+ *
+ *  The code raised on 2026-11-04, to 5,778,300, for #1070: an agent opens and shows
+ *  everything behind the reader through one door (agents/workspace/reader-view.ts), and a
+ *  tab it opened wears its spark until looked at. Measured 5,778,101.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_777_800,
+  code: 5_778_300,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
