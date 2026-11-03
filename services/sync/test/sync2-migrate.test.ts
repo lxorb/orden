@@ -35,11 +35,13 @@ interface Entry {
 interface SpaceState {
   id: string
   entries: Map<string, Entry>
+  outbox: unknown[]
 }
 
 interface Core {
   spaces: Map<string, SpaceState>
   held: Map<string, unknown>
+  world: { list?: (root: string) => Promise<unknown> } & object
   addSpace(id: string, root: string, role: string): unknown[]
   commit(changes: unknown[]): Promise<void>
 }
@@ -54,8 +56,10 @@ interface Device {
     move(from: string, to: string): Promise<void>
     remove(path: string): Promise<void>
   }
+  store: { open(): unknown }
   engine: {
     core: Core
+    stop(): void
     pass(space: string): Promise<{ finished: boolean } | null>
     waiting(space: string): boolean
     moved(from: string, to: string): Promise<void>

@@ -21,7 +21,7 @@ import { noteKey } from './notes'
 import { picturesOf } from './pictures'
 import { readSpaceFiles } from './spaces/files'
 import type { Env } from './types'
-import { versionKey } from './versions'
+import { picturesOfVersion, versionKey } from './versions'
 
 /** A space that has not been emptied for good: a purged space keeps its row as a marker
  *  (trash.ts), and what is still named under it - a chat's files, kept a month - is not
@@ -191,7 +191,8 @@ export interface Reading {
   asks: number
   /** By account: the blobs its held posts name, or null for one that could not be asked. */
   held: Map<string, Set<string> | null>
-  /** By account: the pictures versions show in its spaces, or null for too many to read. */
+  /** By account: the pictures versions show in its spaces, or null while some of them are
+   *  still to be read. */
   versions: Map<string, Set<string> | null>
 }
 
@@ -243,9 +244,14 @@ async function heldFiles(env: Env, userId: string, done: Reading): Promise<Set<s
   return found
 }
 
-/** The pictures the versions of the notes in an account's spaces show, read from their
- *  bodies, or null where they are more than is left to read. Every address in raw HTML
- *  counts, as `liveHtml` has it: that only keeps bytes. */
+/** The pictures the versions of the notes in an account's spaces show, as each version's
+ *  row says, or null while some have none written down yet.
+ *
+ *  A version's row has them from when it was kept (versions.ts). One from before there
+ *  was anywhere to put them (0068) is read here as far as what is left goes and written
+ *  down, so what one sweep read the next does not read again, and an account with more
+ *  of them than one request reads gets to the end of them over several. Until it does
+ *  nothing it holds as a picture is let go of. */
 async function versionPictures(
   env: Env,
   userId: string,
@@ -254,29 +260,55 @@ async function versionPictures(
   const known = done.versions.get(userId)
   if (known !== undefined) return known
 
-  const { results: versions } = await env.DB.prepare(
+  const { results: unread } = await env.DB.prepare(
     `select distinct v.hash from note_versions v join notes n on n.id = v.note_id
        join spaces sp on sp.id = n.space_id
-      where ${LIVE} and ${ITS_SPACES} limit ?2`,
+      where v.pictures is null and ${LIVE} and ${ITS_SPACES} limit ?2`,
   )
     .bind(userId, done.left + 1)
     .all<{ hash: string }>()
 
-  if (versions.length > done.left) {
+  let whole = unread.length <= done.left
+  const reading = unread.slice(0, done.left)
+  done.left -= reading.length
+  for (let from = 0; from < reading.length; from += 25) {
+    const some = reading.slice(from, from + 25)
+    const read = await Promise.all(
+      some.map(async (one) => {
+        const object = await env.NOTES.get(versionKey(one.hash))
+        return picturesOfVersion(object ? await object.text() : '')
+      }),
+    )
+    const writes = some.flatMap((one, at) => {
+      const pictures = read[at]
+      if (pictures === null || pictures === undefined) {
+        whole = false
+        return []
+      }
+      return [
+        env.DB.prepare(
+          'update note_versions set pictures = ?1 where hash = ?2 and pictures is null',
+        ).bind(pictures, one.hash),
+      ]
+    })
+    if (writes.length) await env.DB.batch(writes)
+  }
+  if (!whole) {
     done.versions.set(userId, null)
     return null
   }
-  done.left -= versions.length
+
+  const { results } = await env.DB.prepare(
+    `select distinct v.pictures from note_versions v join notes n on n.id = v.note_id
+       join spaces sp on sp.id = n.space_id
+      where v.pictures != '[]' and ${LIVE} and ${ITS_SPACES}`,
+  )
+    .bind(userId)
+    .all<{ pictures: string }>()
 
   const found = new Set<string>()
-  for (let from = 0; from < versions.length; from += 25) {
-    const bodies = await Promise.all(
-      versions.slice(from, from + 25).map(async (one) => {
-        const object = await env.NOTES.get(versionKey(one.hash))
-        return object ? await object.text() : ''
-      }),
-    )
-    for (const body of bodies) for (const hash of picturesOf(body, true)) found.add(hash)
+  for (const row of results) {
+    for (const hash of JSON.parse(row.pictures) as string[]) found.add(hash)
   }
   done.versions.set(userId, found)
   return found
