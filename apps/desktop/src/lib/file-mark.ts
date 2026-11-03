@@ -90,7 +90,7 @@ const PAGE_TOP: IconNode = [
  *  or dark, like every other mark here.
  *
  *  A type added later writes its own letters on the same row and is one line here. */
-export function typeMark(letters: IconNode): IconNode {
+function typeMark(letters: IconNode): IconNode {
   return [...PAGE_TOP, ...letters]
 }
 
