@@ -388,9 +388,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,848,600, for #1077: signing in gives the untouched
  *  default space way to the account's own, decided in one place (seed-space.ts, and the
  *  plan's `discard` in space-plan.ts). Measured 5,848,312.
+ *
+ *  The code raised on 2026-11-04, to 5,848,800, for #1067: a popup fetched through a
+ *  door plays its way out and turns round where it is when pressed again (Door.svelte,
+ *  `letGo` in slide.ts). Measured 5,848,628.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_848_600,
+  code: 5_848_800,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
