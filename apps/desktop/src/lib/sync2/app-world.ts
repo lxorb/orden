@@ -12,6 +12,7 @@ import { api, BASE } from '../api'
 import { fileBytes, sha256, toBase64 } from '../bytes'
 import { deviceName } from '../device'
 import { links } from '../link-index.svelte'
+import { evictedHere } from '../icloud-placeholder'
 import { onDisk } from '../on-disk'
 import { holderOf } from '../pages/held'
 import { scanSpace } from '../space-watch'
@@ -117,6 +118,7 @@ function diskOf(telling: Telling): Disk {
     },
     mkdir: (path) => invoke('create_folder', { path }).then(() => undefined),
     exists: stamped,
+    evicted: evictedHere,
   }
 }
 

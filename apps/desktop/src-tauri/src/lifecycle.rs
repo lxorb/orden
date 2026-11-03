@@ -211,6 +211,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             if let Some(pending) = app.try_state::<launch::Pending>() {
                 pending.forget(&label);
             }
+            app.state::<crate::endpoint::Waiting>().forget(&label);
             // Nothing is left of it for an installer to wait on.
             app.state::<Installer>().gone(&label);
             // Its terminals go with it; see terminal.rs.

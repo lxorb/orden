@@ -141,6 +141,8 @@ pub fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
             .status()
             .map_err(|error| error.to_string())?;
         if !copied.success() {
+            // Half a copy is what the next launch would start, as one already there.
+            let _ = std::fs::remove_dir_all(&to);
             return Err(format!("could not copy the app to {}", to.display()));
         }
         // What a download carries, and what translocated the copy in the first place.

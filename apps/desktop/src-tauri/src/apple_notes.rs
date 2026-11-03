@@ -946,10 +946,10 @@ mod mac {
         let extension = name.rsplit('.').next().unwrap_or("").to_lowercase();
 
         if PICTURES.contains(&extension.as_str()) {
-            return format!("![]({path})");
+            return format!("![]({})", target(path));
         }
 
-        format!("[{name}]({path})")
+        format!("[{}]({})", label(name), target(path))
     }
 
     /// A note's title as the words of a link: a bracket of its own would end them,
@@ -1297,7 +1297,7 @@ mod mac {
 
             for shown in [
                 "![](assets/Drawing.png)",
-                "![](assets/Scan Page.jpg)",
+                "![](assets/Scan%20Page.jpg)",
                 "![](assets/page-two.png)",
                 "[Scan.pdf](assets/Scan.pdf)",
             ] {

@@ -51,6 +51,8 @@ export const CATEGORY_WORDS: Record<Category, () => string> = {
   terminal: () => t('Commands not on its list'),
   files: () => t('Files from outside your spaces'),
   writing: () => t('Every change'),
+  trashing: () => t('Every change'),
+  unread: () => t('Every change'),
   showing: () => t('Showing its tabs'),
   takeover: () => t('Handing a tab to you'),
   pairing: () => t('Connect'),

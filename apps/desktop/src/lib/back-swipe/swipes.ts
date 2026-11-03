@@ -452,12 +452,12 @@ export function listen(): () => void {
   let unlisten: (() => void) | null = null
   let stopped = false
   if (isDesktop) {
-    void import('@tauri-apps/api/event').then(async ({ listen: hear }) => {
-      const off = await hear('nib://web-swipe', (event) => {
+    void import('../own-window').then(async ({ hearHere }) => {
+      const off = await hearHere('nib://web-swipe', (event) => {
         const said = readSaid(event.payload)
         if (said) pageSaid(said)
       })
-      const offPad = await hear('nib://touchpad', (event) => {
+      const offPad = await hearHere('nib://touchpad', (event) => {
         const fingers = readFingers(event.payload)
         if (fingers !== null) touchpad(fingers)
       })

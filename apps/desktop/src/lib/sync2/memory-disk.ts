@@ -3,6 +3,7 @@
  *  case, as on Windows and a Mac. */
 
 import { nameKey } from '@orden/sync-core/tree'
+import { placeholderOf } from '../icloud-placeholder'
 import { folderOf } from './places'
 import type { Disk } from './world'
 
@@ -77,6 +78,10 @@ export class MemoryDisk implements Disk {
 
   private mkdirNow(path: string) {
     for (let at = path; at && at !== '/'; at = folderOf(at)) this.folders.add(at)
+  }
+
+  evicted(path: string): Promise<boolean> {
+    return this.exists(placeholderOf(path))
   }
 
   exists(path: string): Promise<boolean> {

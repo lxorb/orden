@@ -33,7 +33,7 @@ use std::cmp::Reverse;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::fuzzy::{without_words, Fuzzy, FuzzyHit};
 use crate::matcher::{Hit, Matcher, Note};
@@ -286,7 +286,7 @@ struct Batch {
 /// cost it a read and then a filter.
 #[tauri::command(async)]
 pub fn search_space(
-    app: AppHandle,
+    window: tauri::Window,
     root: String,
     query: Query,
     terms: Vec<String>,
@@ -294,7 +294,8 @@ pub fn search_space(
     id: u32,
     excluded: Vec<String>,
 ) -> Result<(), String> {
-    let dir = in_spaces(&app, &root)?;
+    let app = window.app_handle();
+    let dir = in_spaces(app, &root)?;
     let left: HashSet<&str> = excluded.iter().map(String::as_str).collect();
     let fuzzy = Fuzzy::new(&terms);
     // What a note has to answer before its lines are worth guessing about: the
@@ -337,7 +338,7 @@ pub fn search_space(
             pending.append(&mut hits);
 
             if pending.len() >= BATCH {
-                send(&app, id, &mut pending, Vec::new());
+                send(&window, id, &mut pending, Vec::new());
             }
             continue;
         }
@@ -366,7 +367,7 @@ pub fn search_space(
         }
     }
 
-    send(&app, id, &mut pending, best(loose, limit));
+    send(&window, id, &mut pending, best(loose, limit));
     Ok(())
 }
 
@@ -377,14 +378,16 @@ fn best(mut loose: Vec<FuzzyHit>, most: usize) -> Vec<FuzzyHit> {
     loose
 }
 
-/// Hands whatever has been found to the window. A window that has gone is not
-/// a search failure, so a send that fails is let go.
-fn send(app: &AppHandle, id: u32, pending: &mut Vec<Hit>, loose: Vec<FuzzyHit>) {
+/// Hands whatever has been found to the window that asked, whose own numbering the id
+/// is: another window's search under the same number is another search. A window that has
+/// gone is not a search failure, so a send that fails is let go.
+fn send(window: &tauri::Window, id: u32, pending: &mut Vec<Hit>, loose: Vec<FuzzyHit>) {
     if pending.is_empty() && loose.is_empty() {
         return;
     }
 
-    let _ = app.emit(
+    let _ = window.app_handle().emit_to(
+        window.label(),
         HITS,
         Batch {
             id,

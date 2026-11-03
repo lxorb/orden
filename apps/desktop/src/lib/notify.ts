@@ -83,8 +83,8 @@ export function unshow(tag: string): void {
 }
 
 function shownByTheCrate(one: Notice): void {
-  listening ??= import('@tauri-apps/api/event').then(({ listen }) =>
-    listen<unknown>(PRESSED, (event) => pressed(event.payload)),
+  listening ??= import('./own-window').then(({ hearHere }) =>
+    hearHere<unknown>(PRESSED, (event) => pressed(event.payload)),
   )
 
   const id = fresh()

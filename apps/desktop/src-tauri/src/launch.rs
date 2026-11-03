@@ -308,6 +308,25 @@ pub fn hand_over(app: &AppHandle, handed: Handed, arrived: Vec<String>) {
     }
 }
 
+/// A window comes forward for what somebody asked of the app, from the tray too.
+pub fn brought_up(window: &tauri::Window) {
+    if crate::placement::away().is_none() {
+        let _ = window.show();
+    }
+    bring_forward(window);
+}
+
+/// Something is held for the next window that asks: with no window at all - a Mac app
+/// lives on in the Dock with every window closed - one has to be opened to ask.
+pub fn open_for_what_waits(app: &AppHandle) {
+    let launched = app
+        .try_state::<Pending>()
+        .is_some_and(|pending| pending.0.lock().is_ok_and(|waiting| waiting.launched));
+    if launched && document_windows(app).is_empty() {
+        let _ = open_again(app);
+    }
+}
+
 /// What the Dock icon means when it is clicked with no window on screen: a window,
 /// the way VS Code, `TextEdit` and Obsidian answer it. One that is only minimised
 /// or hidden comes back rather than a second one being opened beside it.

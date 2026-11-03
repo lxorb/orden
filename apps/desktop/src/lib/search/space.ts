@@ -73,11 +73,11 @@ export async function searchSpace(
   if (inbox.length) onFound({ hits: inbox, loose: [] })
 
   const id = ++asked
-  const { listen } = await import('@tauri-apps/api/event')
+  const { hearHere } = await import('../own-window')
   // An event is a boundary, so what it carries is read rather than trusted: a
   // handful from a crate that has not learnt about loose hits yet is a handful
   // of exact ones.
-  const stop = await listen<{ id: number; hits?: Hit[]; loose?: FuzzyHit[] }>(HITS, (event) => {
+  const stop = await hearHere<{ id: number; hits?: Hit[]; loose?: FuzzyHit[] }>(HITS, (event) => {
     const batch = event.payload
     if (batch.id !== id) return
 

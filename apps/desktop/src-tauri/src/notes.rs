@@ -475,6 +475,20 @@ pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String>
     Ok(stamp_of(&openable(&app, &path)?))
 }
 
+/// Whether a note that is not there is in iCloud all the same; see `icloud::evicted`.
+#[tauri::command(async)]
+pub fn note_evicted(app: AppHandle, path: String) -> Result<bool, String> {
+    let target = openable(&app, &path)?;
+    #[cfg(target_os = "macos")]
+    return Ok(icloud::evicted(&target));
+    #[cfg(not(target_os = "macos"))]
+    {
+        // Only a Mac leaves these.
+        let _ = target;
+        Ok(false)
+    }
+}
+
 /// Whether anything at all - a file, a folder, a link - is at a path the reader
 /// may write to. What an export asks before it writes a picture or a page beside
 /// the file the save dialog was given: the dialog asked about that one file, so

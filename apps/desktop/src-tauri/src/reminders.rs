@@ -35,6 +35,7 @@ mod toasts;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, PoisonError};
 
 use serde::{Deserialize, Serialize};
@@ -121,6 +122,9 @@ const ANSWERED_FOR_MS: i64 = 7 * 86_400_000;
 
 /// What the window is told when a press is waiting.
 const PRESSED: &str = "nib://reminder";
+
+/// `came_up_quietly`, until the window has answered once.
+static LAUNCHED_QUIETLY: AtomicBool = AtomicBool::new(false);
 
 /// The file the nonces are kept in, beside the settings.
 const FILE: &str = "reminders.json";
@@ -371,6 +375,11 @@ pub fn pressed(app: &AppHandle, act: Act, id: &str, nonce: &str) {
 #[cfg(target_os = "macos")]
 pub fn pressed_by_id(app: &AppHandle, act: Act, id: &str) {
     press(app, act, id, None);
+    // No window open and the app still in the Dock: one comes up, and answers what waits as
+    // it starts.
+    if crate::agents::shell::host(app).is_none() {
+        crate::launch::reopen(app);
+    }
 }
 
 fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
@@ -389,7 +398,10 @@ fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
             crate::placement::raised(&window);
         }
     }
-    let _ = app.emit(PRESSED, ());
+    // To one window, the one brought forward: it is the one that opens the note.
+    if let Some(window) = crate::agents::shell::host(app) {
+        let _ = app.emit_to(window.label(), PRESSED, ());
+    }
 }
 
 /// A `nib://` link that arrived, answered here if it is a reminder's. Answers whether it
@@ -411,13 +423,26 @@ pub fn answer_link(app: &AppHandle, url: &str) -> bool {
 #[tauri::command(async)]
 pub fn reminders_quietly(webview: tauri::Webview, app: AppHandle) -> Result<(), String> {
     crate::agents::from_the_app(&webview)?;
+    let quiet = LAUNCHED_QUIETLY.swap(false, Ordering::Relaxed);
     let hidden =
         crate::agents::shell::host(&app).is_some_and(|window| !window.is_visible().unwrap_or(true));
-    if hidden && !crate::agents::shell::in_tray() {
+    if goes_again(quiet, hidden, crate::agents::shell::in_tray()) {
         // Out of sight, with nothing it opened: nobody to ask, and nothing to ask about.
         crate::lifecycle::quit_now(&app);
     }
     Ok(())
+}
+
+/// Whether answering a press ends the app: only what a launch for that press was for. Out
+/// of sight is not that: a window minimized on a Mac is not visible, and the reader's
+/// terminals and turns would end with it.
+fn goes_again(launched_quietly: bool, hidden: bool, in_tray: bool) -> bool {
+    launched_quietly && hidden && !in_tray
+}
+
+/// This run came up without its window, for a reminder's Done.
+pub fn came_up_quietly() {
+    LAUNCHED_QUIETLY.store(true, Ordering::Relaxed);
 }
 
 /// Whether a launch was asked for by nothing but a reminder's Done: the app then comes
@@ -433,6 +458,16 @@ pub fn quiet_launch(urls: &[String]) -> bool {
 mod tests {
     use super::schedule::tests::planned;
     use super::*;
+
+    #[test]
+    fn only_a_launch_for_a_done_goes_again_after_it() {
+        assert!(goes_again(true, true, false));
+        // A window minimized, or hidden, with no tray, in a run the reader started.
+        assert!(!goes_again(false, true, false));
+        // The reader opened the window meanwhile, or the tray keeps it.
+        assert!(!goes_again(true, false, false));
+        assert!(!goes_again(true, true, true));
+    }
 
     #[test]
     fn a_reminder_keeps_its_nonce_and_one_that_rang_is_kept_a_week() {

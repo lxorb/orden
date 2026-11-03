@@ -12,7 +12,7 @@ const { forgetLearnt, learnt } = await import('./learned')
 const { newThread } = await import('./threads')
 const { body } = await import('./recorded/read')
 const { watching } = await import('./sends')
-const { sayAlways } = await import('./approvals')
+const { always: alwaysCovers, alwaysOffered, sayAlways } = await import('./approvals')
 
 import type { Provider } from '../providers'
 import type { EngineEvent, Mode, Thread, ToolOutput } from './types'
@@ -241,41 +241,49 @@ describe('a tool the thread is not given', () => {
   })
 })
 
-describe('a call that asks the reader first', () => {
-  /** A crate that asks once for every call, and a reader who answers as each test says. */
-  function asking(answer: (id: string) => boolean | null) {
-    const given: { id: string; allow: boolean }[] = []
-    const waited: string[] = []
-    let asked = 0
-    const engine = createApiEngine({
-      provider: (id) => Object.values(PROVIDERS).find((one) => one.id === id) ?? null,
-      tools: {
-        ...tools,
-        call: async (provider, mode, name, args) => {
-          const allowed = given.some((one) => one.id === `q${asked}` && one.allow)
-          if (!allowed) {
-            asked += 1
-            return { text: 'Read Birds.md', images: [], error: false, approval: `q${asked}` }
+/** A crate that asks once for every call, and a reader who answers as each test says. */
+function askingOf(answer: (id: string) => boolean | null, category = 'writing') {
+  const given: { id: string; allow: boolean }[] = []
+  const waited: string[] = []
+  let asked = 0
+  const engine = createApiEngine({
+    provider: (id) => Object.values(PROVIDERS).find((one) => one.id === id) ?? null,
+    tools: {
+      ...tools,
+      call: async (provider, mode, name, args) => {
+        const allowed = given.some((one) => one.id === `q${asked}` && one.allow)
+        if (!allowed) {
+          asked += 1
+          return {
+            text: 'Read Birds.md',
+            images: [],
+            error: false,
+            approval: `q${asked}`,
+            category,
           }
-          return tools.call(provider, mode, name, args)
-        },
+        }
+        return tools.call(provider, mode, name, args)
       },
-      answers: {
-        answer: (id, allow) => {
-          given.push({ id, allow })
-          return Promise.resolve()
-        },
-        answered: (id) => {
-          waited.push(id)
-          const said = answer(id)
-          if (said !== null) given.push({ id, allow: said })
-          return Promise.resolve(said === true)
-        },
-        asked: () => Promise.resolve(() => undefined),
+    },
+    answers: {
+      answer: (id, allow) => {
+        given.push({ id, allow })
+        return Promise.resolve()
       },
-    })
-    return { engine, given, waited }
-  }
+      answered: (id) => {
+        waited.push(id)
+        const said = answer(id)
+        if (said !== null) given.push({ id, allow: said })
+        return Promise.resolve(said === true)
+      },
+      asked: () => Promise.resolve(() => undefined),
+    },
+  })
+  return { engine, given, waited }
+}
+
+describe('a call that asks the reader first', () => {
+  const asking = askingOf
 
   async function sent(engine: ReturnType<typeof asking>['engine'], thread: Thread) {
     const heard: EngineEvent[] = []
@@ -330,6 +338,57 @@ describe('a call that asks the reader first', () => {
     expect(waited).toEqual([])
     expect(given).toEqual([{ id: 'q1', allow: true }])
     expect(thread.turns[1]?.parts[2]).toMatchObject({ state: 'ok' })
+  })
+})
+
+describe('Always in a thread', () => {
+  test.each(['paying', 'sending', 'deleting', 'signing_in', 'terminal', 'publishing', 'files'])(
+    'never answers a question about %s',
+    async (category) => {
+      answers = [stream('anthropic-1'), stream('anthropic-2')]
+      const { engine, given, waited } = askingOf(() => false, category)
+      const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+      sayAlways(thread, 'read_note')
+      await engine.send(
+        thread,
+        { text: 'What is in Birds.md?', attachments: [] },
+        () => undefined,
+        new AbortController().signal,
+      )
+
+      expect(waited).toEqual(['q1'])
+      expect(given).toEqual([{ id: 'q1', allow: false }])
+      expect(calls).toEqual([])
+    },
+  )
+
+  test('nor a question that says nothing of what it is about', () => {
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(thread, 'read_note')
+    expect(alwaysCovers(thread, 'read_note', undefined)).toBe(false)
+    expect(alwaysCovers(thread, 'read_note', 'writing')).toBe(true)
+  })
+
+  test.each(['trashing', 'unread'])('nor one about %s', (category) => {
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(thread, 'trash_file')
+    expect(alwaysCovers(thread, 'trash_file', category)).toBe(false)
+    expect(alwaysOffered(category)).toBe(false)
+  })
+
+  test('said on one site, it is about that site', () => {
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(thread, 'browser_click', 'shop.example')
+    expect(alwaysCovers(thread, 'browser_click', 'writing', 'shop.example')).toBe(true)
+    expect(alwaysCovers(thread, 'browser_click', 'writing', 'evil.example')).toBe(false)
+    // A question on a site is no question for one said with none, as a thread kept from
+    // before says.
+    const before = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(before, 'browser_click')
+    expect(alwaysCovers(before, 'browser_click', 'writing', 'shop.example')).toBe(false)
+    expect(alwaysCovers(before, 'browser_click', 'writing')).toBe(true)
+    expect(alwaysOffered('terminal')).toBe(false)
+    expect(alwaysOffered('writing')).toBe(true)
   })
 })
 

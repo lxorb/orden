@@ -120,8 +120,8 @@ class KeyboardHome {
     })
     if (isDesktop) {
       void invoke('keyboard_watch').catch(() => undefined)
-      void import('@tauri-apps/api/event')
-        .then(({ listen }) => listen(IN_PAGE, () => void this.went()))
+      void import('./own-window')
+        .then(({ hearHere }) => hearHere(IN_PAGE, () => void this.went()))
         .catch(() => undefined)
     }
   }

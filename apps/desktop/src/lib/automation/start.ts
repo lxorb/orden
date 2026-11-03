@@ -15,6 +15,7 @@
 import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
 import { log } from '../log'
+import { hearHere } from '../own-window'
 import { invoke, isDesktop, isNative, openExternal } from '../tauri'
 import { callerOf } from './caller'
 import { callbackKind, isFileUri, readUri, withOutcome } from './uri'
@@ -50,7 +51,6 @@ export async function startAutomation(): Promise<() => void> {
   }
 
   const stopping: (() => void)[] = []
-  const { listen } = await import('@tauri-apps/api/event')
 
   // A link clicked in another program, which a desktop hands over once nib is its
   // browser; see web-tab/handed.ts. First, because asking for those pages is also how
@@ -70,7 +70,7 @@ export async function startAutomation(): Promise<() => void> {
   }
 
   stopping.push(
-    await listen<string[]>('nib://open-url', (event) => {
+    await hearHere<string[]>('nib://open-url', (event) => {
       void followAll(event.payload)
     }),
   )
@@ -78,10 +78,12 @@ export async function startAutomation(): Promise<() => void> {
   // The command line, which only a desktop has: a phone has no terminal and a
   // browser tab has no socket. The answer goes back through a command rather than
   // an event because it belongs to one request - the crate is holding a socket open
-  // for it, and nothing else should hear it. See src-tauri/src/endpoint.rs.
+  // for it, and nothing else should hear it. See src-tauri/src/endpoint.rs. Heard on this
+  // window alone, as the link above is: the crate sends each to one window, and a verb
+  // heard by every window ran once in each.
   if (isDesktop) {
     stopping.push(
-      await listen<Request>('nib://automation', (event) => {
+      await hearHere<Request>('nib://automation', (event) => {
         const asked = event.payload
         if (typeof asked.id !== 'number') return
 
@@ -91,6 +93,11 @@ export async function startAutomation(): Promise<() => void> {
     // Only now does the crate send what it was asked: an event before this listener
     // reached nobody, and the caller waited out the endpoint's patience for nothing.
     await invoke('automation_listening')
+    // A link that found this window still loading was held for it: see `hand_over` in
+    // uris.rs.
+    for (const uri of await invoke<string[]>('take_startup_uris').catch(() => [])) {
+      await follow(uri)
+    }
   }
 
   return () => {
@@ -114,6 +121,10 @@ interface Request {
 
 /** One request, answered. */
 async function answer(id: number, asked: Request) {
+  // Taken from the crate first, so a request it gave up on while this page was busy, and
+  // asked of another window, does not run in both.
+  if ((await invoke('automation_claim', { id }).catch(() => false)) !== true) return
+
   const verb = typeof asked.verb === 'string' ? asked.verb : ''
   const args = isRecord(asked.args) ? asked.args : {}
   const rest = Array.isArray(asked.rest) ? asked.rest.filter(isText) : []

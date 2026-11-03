@@ -530,6 +530,11 @@ pub fn agents_answer(
     Ok(approval)
 }
 
+/// What a question is about, by its id, and the site where a page is.
+pub fn question_category(id: &str) -> Option<(verbs::Category, Option<String>)> {
+    approvals::any(id).map(|one| (one.category, one.site))
+}
+
 /// A question the window raises for one of its own verbs on an agent's behalf (writing
 /// a setting, publishing): `ok` when the reader already allowed this very call, which
 /// spends the allowance, or said "Always" for what `site` names (`chat:<id>`, a chat

@@ -30,10 +30,11 @@ use serde_json::{json, Value};
 
 use super::cdp::{self, Heard};
 use super::engines::View;
+use super::grants::Grant;
 use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::snapshot::{self, Part};
-use super::verbs::{Answer, Code, Cookie, FieldValue, Match, Moment, Picture, Until};
+use super::verbs::{Answer, Code, Cookie, FieldValue, Match, Moment, Picture, Store, Until};
 use crate::pdf::{printing, PdfPage};
 
 /// What an agent's refs are resolved and scripts run under, in the page.
@@ -65,12 +66,14 @@ const TALLEST: f64 = 16_384.0;
 /// @-mentions somebody - and leaves every judgement to `policy`.
 const FIELDS: &str = r"
   const text = (one) => String(one || '').replace(/\s+/g, ' ').trim()
+  const CONTROLS = 'button, a, [role=button], [role=link], [role=menuitem], input[type=submit], input[type=button], input[type=image], summary'
   const labelOf = (field) => {
     const parts = [field.getAttribute('aria-label')]
     if (field.labels) for (const one of field.labels) parts.push(one.innerText)
     const by = field.getAttribute('aria-labelledby')
     if (by) for (const id of by.split(/\s+/)) {
-      const named = field.ownerDocument.getElementById(id)
+      const home = field.getRootNode()
+      const named = (home.getElementById && home.getElementById(id)) || field.ownerDocument.getElementById(id)
       if (named) parts.push(named.innerText)
     }
     return text(parts.filter(Boolean).join(' '))
@@ -109,10 +112,56 @@ const FACTS_BODY: &str = r"
   if (root && root.host && ['INPUT', 'SELECT', 'TEXTAREA'].includes(root.host.tagName)) el = root.host
   const tag = el.tagName.toLowerCase()
   const kind = tag === 'input' ? String(el.type || 'text').toLowerCase() : ''
-  const pressed = el.closest('button, a, [role=button], [role=link], [role=menuitem], input[type=submit], input[type=button], input[type=image], summary') || el
-  const nameOf = (one) => text(labelOf(one) || one.innerText || (one.tagName === 'INPUT' ? one.value : '') || one.getAttribute('title') || one.getAttribute('alt')).slice(0, 200)
+  const control = el.closest(CONTROLS)
+  const pressed = control || el
+  // A button named by its picture says so through the picture: what the engine's tree names it too.
+  const pictured = (one) => {
+    const said = []
+    for (const kid of one.querySelectorAll('img[alt], input[alt], area[alt], [aria-label], [title], svg title')) said.push(kid.getAttribute('alt') || kid.getAttribute('aria-label') || kid.getAttribute('title') || kid.textContent)
+    return said.join(' ')
+  }
+  // What is no control has no name in what it holds: a column of cards is not called Pay rent, nor a mail's row Delete for an icon in it. Its own words, down through what is plainly part of them, and only if they are short enough to be a name.
+  const INLINE = ['SPAN', 'B', 'I', 'EM', 'STRONG', 'SMALL', 'U', 'MARK', 'ABBR', 'FONT', 'LABEL']
+  const ownWords = (one) => {
+    let said = ''
+    for (const node of one.childNodes) {
+      if (node.nodeType === 3) said += node.textContent
+      else if (node.nodeType === 1 && !node.matches(CONTROLS) && !['SCRIPT', 'STYLE'].includes(node.tagName) && (one.children.length === 1 || INLINE.includes(node.tagName))) said += ' ' + ownWords(node)
+    }
+    return said
+  }
+  const onlyPicture = (one) => {
+    const kid = one.children.length === 1 ? one.children[0] : null
+    return kid ? kid.getAttribute('alt') || kid.getAttribute('aria-label') || kid.getAttribute('title') || (kid.tagName.toLowerCase() === 'svg' ? (kid.querySelector('title') || {}).textContent : '') || onlyPicture(kid) : ''
+  }
+  const plainName = (one) => {
+    const words = text(ownWords(one))
+    return text(labelOf(one) || (words.length > 60 ? '' : words) || (one.tagName === 'INPUT' ? one.value : '') || one.getAttribute('title') || one.getAttribute('alt') || (words ? '' : onlyPicture(one)))
+  }
+  // A design system's inner button, with its label on the host round its shadow root.
+  const hostLabel = (one) => {
+    for (let at = one.getRootNode().host; at; at = at.getRootNode().host) {
+      const said = text(at.getAttribute('aria-label') || at.getAttribute('title'))
+      if (said) return said
+    }
+    return ''
+  }
+  const controlName = (one) => {
+    const said = text((labelOf(one) || one.innerText || (one.tagName === 'INPUT' ? one.value : '') || one.getAttribute('title') || one.getAttribute('alt') || '') + ' ' + pictured(one))
+    return said || hostLabel(one)
+  }
+  const nameOf = (one) => (one.matches(CONTROLS) ? controlName(one) : plainName(one)).slice(0, 200)
   const name = nameOf(pressed)
-  const form = el.form || el.closest('form')
+  // Through the shadow roots it is in: a design system's button is in the form round its host.
+  const formOf = () => {
+    if (el.form) return el.form
+    for (let at = el; at; at = at.getRootNode().host) {
+      const found = at.closest('form')
+      if (found) return found
+    }
+    return null
+  }
+  const form = formOf()
   const buttonType = pressed.tagName === 'BUTTON' ? String(pressed.getAttribute('type') || 'submit').toLowerCase() : ''
   const submit = !!form && ((pressed.tagName === 'BUTTON' && buttonType === 'submit') || (pressed.tagName === 'INPUT' && ['submit', 'image'].includes(String(pressed.type).toLowerCase())))
   const link = pressed.tagName === 'A' && !/^\s*(#|javascript:|$)/i.test(String(pressed.getAttribute('href') || ''))
@@ -125,42 +174,65 @@ const FACTS_BODY: &str = r"
   const opaque = !native.includes(tag) && !el.shadowRoot && !el.children.length && !text(el.innerText) && !name && !!root && root.activeElement === el
   // The form's fields, or the page's when it is in none: a webmail's Send and a chat
   // widget's are in no form, and their message box is an editable region.
+  // Into the open shadow roots under it; a closed one is the crate's (`closed_fields`).
+  // So far and no further on a page of a million nodes, and it says so: the press then asks.
   const fields = []
-  for (const one of (form || el.ownerDocument).querySelectorAll('input, select, textarea, [contenteditable]:not([contenteditable=false])')) {
-    if (fields.length >= 200) break
-    fields.push(describe(one))
+  let walked = 0
+  const fieldsIn = (under) => {
+    for (const one of under.querySelectorAll('*')) {
+      if (fields.length >= 200 || walked >= 50000) return
+      walked += 1
+      if (one.matches('input, select, textarea, [contenteditable]:not([contenteditable=false])')) fields.push(describe(one))
+      if (one.shadowRoot) fieldsIn(one.shadowRoot)
+    }
   }
-  return { tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque }
+  fieldsIn(form || el.ownerDocument)
+  // The document it is in and the origins round it, which is the frame it is in.
+  const place = el.ownerDocument.location
+  const at = place ? [place.href, ...Array.from(place.ancestorOrigins || [])] : []
+  return { at, cut: walked >= 50000, control: !!control, tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque }
 ";
 
 /// `FACTS_BODY` with `FIELDS` in front of it, as the function the protocol runs.
 static FACTS: LazyLock<String> =
     LazyLock::new(|| ["function () {", FIELDS, FACTS_BODY, "}"].concat());
 
-/// Every field words can be typed into, over the page and its frames of the same origin:
-/// the array the secret scan reads, one element at a time.
-const TYPED_INTO: &str = r"(() => {
-  const all = []
-  const walk = (doc) => {
-    for (const one of doc.querySelectorAll('input, textarea')) all.push(one)
-    for (const frame of doc.querySelectorAll('iframe, frame')) { try { if (frame.contentDocument) walk(frame.contentDocument) } catch (_) {} }
-  }
-  walk(document)
-  return all
-})()";
-
 /// What the secret scan's handles are held under, and let go of together.
 const SECRETS: &str = "nib-agent-secrets";
 
-/// Each of `TYPED_INTO`'s fields described, in its order, and whether it holds anything.
+/// A field described, and whether it holds anything. Run with the field as `this`.
 static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
     [
         "function () {",
         FIELDS,
-        "return this.map((one) => Object.assign(describe(one), { filled: String(one.value || '') !== '' })) }",
+        "return Object.assign(describe(this), { filled: String(this.value || '') !== '' }) }",
     ]
     .concat()
 });
+
+/// The form the element is in, or its document: what `FACTS_BODY` reads the fields of.
+const FIELDS_SCOPE: &str = "function () { const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return null; if (el.form) return el.form; for (let at = el; at; at = at.getRootNode().host) { const found = at.closest('form'); if (found) return found } return el.ownerDocument }";
+
+/// A field described, for the policy alone. Run with the field as `this`.
+static DESCRIBED_ONLY: LazyLock<String> =
+    LazyLock::new(|| ["function () {", FIELDS, "return describe(this) }"].concat());
+
+/// The element whose name a press is judged by, for the engine to name; see `FACTS_BODY`.
+static PRESSED: LazyLock<String> = LazyLock::new(|| {
+    [
+        "function () {",
+        FIELDS,
+        "const el = this.nodeType === 1 ? this : this.parentElement; return el ? el.closest(CONTROLS) : null }",
+    ]
+    .concat()
+});
+
+/// How many fields of one page are each asked about themselves, one by one. Past it, each
+/// counts as a secret: over-careful about a page of a thousand inputs, and never a leak.
+const MOST_FIELDS_ASKED: usize = 500;
+
+/// How many secrets a picture is painted over. Past it there is no picture.
+const MOST_PAINTED: usize = 500;
 
 /// The grey a filled secret field is painted in a picture of the page.
 const PAINTED: [u8; 3] = [128, 128, 128];
@@ -275,6 +347,9 @@ pub struct Page<'a> {
     pub own: bool,
     /// The stop the call started under.
     pub since: u64,
+    /// What the agent may reach and the store the tab is in; none for the reader's own
+    /// command line.
+    pub limits: Option<(Grant, Store)>,
     /// Whether this call may touch a credential: type into a sign-in form, photograph a
     /// focused password field, print a page with a filled one. Set by the one decision
     /// (`judged` in browser.rs, from the grant's mode, #1072), never by the page.
@@ -406,7 +481,115 @@ impl Page<'_> {
     /// What an element says about itself and its form.
     pub fn facts(&self, element: &Element) -> Result<Facts, Answer> {
         let said = self.run_on(element, &FACTS, &[])?;
-        Ok(serde_json::from_value(said).unwrap_or_default())
+        let mut facts: Facts = serde_json::from_value(said).unwrap_or_default();
+        if !facts.cut {
+            facts.fields.extend(self.closed_fields(element));
+        }
+        if facts.control {
+            if let Some(name) = self.engine_name(element) {
+                facts.name = joined_name(&facts.name, &name);
+            }
+        }
+        Ok(facts)
+    }
+
+    /// What the engine's own tree calls the control an element is in, which is what the
+    /// snapshot says it is called: the two agree whatever the page built it from.
+    fn engine_name(&self, element: &Element) -> Option<String> {
+        let object = self.object(element).ok()?;
+        let control = self
+            .call_on(
+                element,
+                "Runtime.callFunctionOn",
+                &json!({ "objectId": object, "functionDeclaration": PRESSED.as_str() }),
+            )
+            .ok()?;
+        let control = control.pointer("/result/objectId")?.as_str()?;
+        let tree = self
+            .call_on(
+                element,
+                "Accessibility.getPartialAXTree",
+                &json!({ "objectId": control, "fetchRelatives": false }),
+            )
+            .ok()?;
+        tree.pointer("/nodes/0/name/value")?
+            .as_str()
+            .map(str::to_string)
+    }
+
+    /// Whether the frame an element is in may be acted in (9.2): a denied site does not
+    /// open for being in a frame.
+    pub fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
+        match &self.limits {
+            Some((grant, store)) => policy::frame_allowed(grant, &facts.at, *store)
+                .map_err(|why| Answer::error(Code::SiteDenied, why)),
+            None => Ok(()),
+        }
+    }
+
+    /// Whether the agent's grant has a rule for any site, so that a frame can be denied.
+    pub fn limits_sites(&self) -> bool {
+        self.limits
+            .as_ref()
+            .is_some_and(|(grant, _)| !grant.sites.is_empty())
+    }
+
+    /// Whether a frame's words may be read, by where it is.
+    fn may_read_frame(&self, at: &[String]) -> bool {
+        self.limits
+            .as_ref()
+            .is_none_or(|(grant, store)| policy::frame_allowed(grant, at, *store).is_ok())
+    }
+
+    /// The fields of an element's form, or its page, inside a closed shadow root, which no
+    /// script of the page's can see into and the engine can.
+    fn closed_fields(&self, element: &Element) -> Vec<Field> {
+        let session = element.session.as_deref();
+        let call = |method: &str, params: &Value| {
+            cdp::call_in(self.view, session, method, params, cdp::PATIENCE).ok()
+        };
+        let Ok(object) = self.object(element) else {
+            return Vec::new();
+        };
+        let Some(scope) = call(
+            "Runtime.callFunctionOn",
+            &json!({ "objectId": object, "functionDeclaration": FIELDS_SCOPE }),
+        )
+        .and_then(|said| {
+            said.pointer("/result/objectId")
+                .and_then(Value::as_str)
+                .map(str::to_string)
+        }) else {
+            return Vec::new();
+        };
+        let Some(tree) = call(
+            "DOM.describeNode",
+            &json!({ "objectId": scope, "depth": -1, "pierce": true }),
+        )
+        .and_then(|said| said.get("node").cloned()) else {
+            return Vec::new();
+        };
+        let mut backends = Vec::new();
+        typed_into(&tree, false, false, &mut backends);
+        backends
+            .into_iter()
+            .take(200)
+            .filter_map(|backend| {
+                let field = call(
+                    "DOM.resolveNode",
+                    &json!({ "backendNodeId": backend, "objectGroup": WORLD }),
+                )?;
+                let said = call(
+                    "Runtime.callFunctionOn",
+                    &json!({
+                        "objectId": field.pointer("/object/objectId")?.as_str()?,
+                        "functionDeclaration": DESCRIBED_ONLY.as_str(),
+                        "returnByValue": true,
+                    }),
+                )?;
+                serde_json::from_value(said.pointer("/result/value")?.clone()).ok()
+            })
+            .collect()
     }
 
     /// What the element with the keyboard says about itself, if one has it.
@@ -885,14 +1068,16 @@ impl Page<'_> {
         if inside.pointer("/result/value").and_then(Value::as_bool) != Some(false) {
             return Ok(());
         }
+        // Its tag and nothing it says: a refusal goes to the model unmarked, and the page's
+        // words would read as Orden's. The snapshot has its name, marked as the page's.
         let what = self
-            .run_on(&covered, "function () { const el = this.nodeType === 1 ? this : this.parentElement; return el ? (el.getAttribute('aria-label') || el.innerText || el.tagName).replace(/\\s+/g, ' ').trim().slice(0, 80) : '' }", &[])
+            .run_on(&covered, "function () { const el = this.nodeType === 1 ? this : this.parentElement; return el ? el.tagName.toLowerCase() : '' }", &[])
             .ok()
             .and_then(|value| value.as_str().map(str::to_string))
             .unwrap_or_default();
         Err(Answer::error(
             Code::Failed,
-            format!("e{} is covered by e{hit} (\u{201c}{what}\u{201d}) where it would be pressed: deal with that first, or, where the element is what shows there, press there with browser_click's x and y", element.backend),
+            format!("e{} is covered by e{hit} (a {what}) where it would be pressed: deal with that first, or, where the element is what shows there, press there with browser_click's x and y", element.backend),
         ))
     }
 
@@ -1533,16 +1718,26 @@ impl Page<'_> {
         size: (u32, u32),
     ) -> Result<String, Answer> {
         let (across, down) = (f64::from(size.0) / clip.2, f64::from(size.1) / clip.3);
-        let rects: Vec<[f64; 4]> = self
+        let secrets: Vec<Secret> = self
             .secrets(self.every_part())
             .into_iter()
             .filter(|one| one.filled)
+            .collect();
+        if secrets.len() > MOST_PAINTED {
+            return Err(Answer::error(
+                Code::Failed,
+                "this page has too many secret fields to hide in a picture, so there is none",
+            ));
+        }
+        let rects: Vec<[f64; 4]> = secrets
+            .into_iter()
             .filter_map(|one| {
                 let element = self
                     .element(&format!("{}e{}", one.prefix, one.backend))
                     .ok()?;
                 self.page_rect(&element).ok()
             })
+            .chain(self.denied_frames())
             .map(|[left, top, right, bottom]| {
                 [
                     (left - clip.0) * across,
@@ -1603,7 +1798,17 @@ impl Page<'_> {
             true,
             &mut same,
         );
+        let mut places = HashMap::new();
+        frame_places(
+            tree.get("frameTree").unwrap_or(&Value::Null),
+            &[],
+            &mut places,
+        );
         for frame in same.into_iter().filter(|one| !away_ids.contains(one)) {
+            // A frame on a site the agent may not reach is no part of what it reads.
+            if !places.get(&frame).is_none_or(|at| self.may_read_frame(at)) {
+                continue;
+            }
             let Ok(nodes) = self.call("Accessibility.getFullAXTree", &json!({ "frameId": frame }))
             else {
                 continue;
@@ -1617,6 +1822,10 @@ impl Page<'_> {
         }
         // Frames in processes of their own, through their sessions.
         for (number, frame) in away {
+            let at = self.frame_address(&frame);
+            if !self.may_read_frame(&at) {
+                continue;
+            }
             let Ok(nodes) = cdp::call_in(
                 self.view,
                 Some(&frame.session),
@@ -1635,6 +1844,67 @@ impl Page<'_> {
         }
         let secret = self.secret_fields(&parts);
         Ok((parts, secret))
+    }
+
+    /// Where each frame on a site the agent may not reach is on the page, to paint over: a
+    /// picture of a page is a reading of it. Its owner's box, in the page's own document.
+    fn denied_frames(&self) -> Vec<[f64; 4]> {
+        if self.limits.is_none() {
+            return Vec::new();
+        }
+        let mut frames: Vec<(String, Vec<String>)> = Vec::new();
+        if let Ok(tree) = self.call("Page.getFrameTree", &json!({})) {
+            let mut places = HashMap::new();
+            frame_places(
+                tree.get("frameTree").unwrap_or(&Value::Null),
+                &[],
+                &mut places,
+            );
+            frames.extend(places);
+        }
+        let away = self
+            .heard()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .frames();
+        for (_, frame) in away {
+            frames.push((frame.id.clone(), self.frame_address(&frame)));
+        }
+        frames
+            .into_iter()
+            .filter(|(_, at)| !self.may_read_frame(at))
+            .filter_map(|(id, _)| {
+                let owner = self
+                    .call("DOM.getFrameOwner", &json!({ "frameId": id }))
+                    .ok()?;
+                self.page_rect(&Element {
+                    session: None,
+                    frame: None,
+                    backend: owner.get("backendNodeId")?.as_u64()?,
+                })
+                .ok()
+            })
+            .collect()
+    }
+
+    /// Whether a row of the console or the network is about a site the agent may read.
+    pub fn may_read_row(&self, url: &str) -> bool {
+        self.may_read_frame(&[url.to_string()])
+    }
+
+    /// Where a frame in a process of its own is now, as the frame says: the address it was
+    /// attached at may be older than a navigation inside it.
+    fn frame_address(&self, frame: &cdp::Frame) -> Vec<String> {
+        cdp::call_in(
+            self.view,
+            Some(&frame.session),
+            "Runtime.evaluate",
+            &json!({ "expression": "[location.href, ...Array.from(location.ancestorOrigins || [])]", "returnByValue": true }),
+            cdp::PATIENCE,
+        )
+        .ok()
+        .and_then(|said| serde_json::from_value(said.pointer("/result/value")?.clone()).ok())
+        .unwrap_or_else(|| vec![frame.url.clone()])
     }
 
     /// The frame element a frame hangs under: the part holding it, and its node.
@@ -1663,8 +1933,9 @@ impl Page<'_> {
     }
 
     /// Every secret field (`policy::secret`: a password, a one-time code, a card) in the
-    /// page's parts with these prefixes. The page describes each field it has; the policy
-    /// judges; only the secret ones are resolved to nodes.
+    /// page's parts with these prefixes. The nodes are the engine's, so a shadow root, open
+    /// or closed, and a frame sharing the process, of any origin, hide none of them from
+    /// this; each describes itself and the policy judges.
     fn secrets(&self, prefixes: impl IntoIterator<Item = String>) -> Vec<Secret> {
         let mut found = Vec::new();
         for prefix in prefixes {
@@ -1686,68 +1957,52 @@ impl Page<'_> {
             let call = |method: &str, params: &Value| {
                 cdp::call_in(self.view, session.as_deref(), method, params, cdp::PATIENCE)
             };
-            let Some(list) = call(
-                "Runtime.evaluate",
-                &json!({ "expression": TYPED_INTO, "objectGroup": SECRETS }),
-            )
-            .ok()
-            .and_then(|value| {
-                value
-                    .pointer("/result/objectId")
-                    .and_then(Value::as_str)
-                    .map(str::to_string)
-            }) else {
+            let Some(tree) = call("DOM.getDocument", &json!({ "depth": -1, "pierce": true }))
+                .ok()
+                .and_then(|value| value.get("root").cloned())
+            else {
                 continue;
             };
-            let secret: HashMap<String, bool> = call(
-                "Runtime.callFunctionOn",
-                &json!({ "objectId": list, "functionDeclaration": DESCRIBED.as_str(), "returnByValue": true }),
-            )
-            .ok()
-            .and_then(|value| value.pointer("/result/value")?.as_array().cloned())
-            .unwrap_or_default()
-            .into_iter()
-            .enumerate()
-            .filter(|(_, said)| {
-                serde_json::from_value::<Field>(said.clone()).is_ok_and(|field| policy::secret(&field))
-            })
-            .map(|(at, said)| {
-                let filled = said.get("filled").and_then(Value::as_bool) != Some(false);
-                (at.to_string(), filled)
-            })
-            .collect();
-            if !secret.is_empty() {
-                let properties = call(
-                    "Runtime.getProperties",
-                    &json!({ "objectId": list, "ownProperties": true }),
+            let mut fields = Vec::new();
+            typed_into(&tree, false, true, &mut fields);
+            for (at, backend) in fields.into_iter().enumerate() {
+                if at >= MOST_FIELDS_ASKED {
+                    found.push(Secret {
+                        prefix: prefix.clone(),
+                        backend,
+                        filled: true,
+                    });
+                    continue;
+                }
+                let Some(field) = call(
+                    "DOM.resolveNode",
+                    &json!({ "backendNodeId": backend, "objectGroup": SECRETS }),
                 )
-                .unwrap_or_default();
-                for one in properties
-                    .get("result")
-                    .and_then(Value::as_array)
-                    .into_iter()
-                    .flatten()
-                {
-                    let Some(&filled) = one
-                        .get("name")
+                .ok()
+                .and_then(|value| {
+                    value
+                        .pointer("/object/objectId")
                         .and_then(Value::as_str)
-                        .and_then(|at| secret.get(at))
-                    else {
-                        continue;
-                    };
-                    let Some(field) = one.pointer("/value/objectId").and_then(Value::as_str) else {
-                        continue;
-                    };
-                    if let Some(backend) = call("DOM.describeNode", &json!({ "objectId": field }))
-                        .ok()
-                        .and_then(|described| described.pointer("/node/backendNodeId")?.as_u64())
-                    {
-                        found.push(Secret {
-                            prefix: prefix.clone(),
-                            backend,
-                            filled,
-                        });
-                    }
+                        .map(str::to_string)
+                }) else {
+                    continue;
+                };
+                let Some(said) = call(
+                    "Runtime.callFunctionOn",
+                    &json!({ "objectId": field, "functionDeclaration": DESCRIBED.as_str(), "returnByValue": true }),
+                )
+                .ok()
+                .and_then(|value| value.pointer("/result/value").cloned()) else {
+                    continue;
+                };
+                if serde_json::from_value::<Field>(said.clone())
+                    .is_ok_and(|field| policy::secret(&field))
+                {
+                    found.push(Secret {
+                        prefix: prefix.clone(),
+                        backend,
+                        filled: said.get("filled").and_then(Value::as_bool) != Some(false),
+                    });
                 }
             }
             let _ = call(
@@ -1983,11 +2238,21 @@ impl Page<'_> {
                 .and_then(Value::as_i64)
                 .unwrap_or_default()
                 + by;
-            let entry = history
+            let found = history
                 .get("entries")
                 .and_then(Value::as_array)
                 .and_then(|all| all.get(usize::try_from(at).ok()?))
-                .and_then(|one| one.get("id"))
+                .ok_or_else(|| Answer::error(Code::BadArguments, "there is nowhere to step to"))?;
+            // The tab's history is the reader's too, and goes through sites they may reach
+            // and the agent may not.
+            if let (Some((grant, store)), Some(url)) =
+                (&self.limits, found.get("url").and_then(Value::as_str))
+            {
+                policy::site_allowed(grant, url, *store)
+                    .map_err(|why| Answer::error(Code::SiteDenied, why))?;
+            }
+            let entry = found
+                .get("id")
                 .cloned()
                 .ok_or_else(|| Answer::error(Code::BadArguments, "there is nowhere to step to"))?;
             self.call("Page.navigateToHistoryEntry", &json!({ "entryId": entry }))?;
@@ -2041,8 +2306,17 @@ impl Page<'_> {
             .collect())
     }
 
-    /// Sets a cookie for the page's address.
+    /// Sets a cookie for the page's address, or a domain the page is on: a cookie for any
+    /// other would plant it for a site the agent may not reach at all.
     pub fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer> {
+        if let Some(domain) = &cookie.domain {
+            if !policy::host_of(&self.url()).is_some_and(|host| cookie_fits(domain, &host)) {
+                return Err(Answer::error(
+                    Code::SiteDenied,
+                    "a cookie here is for this page's own site",
+                ));
+            }
+        }
         let mut params = json!({
             "name": cookie.name, "value": cookie.value, "path": cookie.path.clone().unwrap_or_else(|| "/".into()),
             "httpOnly": cookie.http_only, "secure": cookie.secure,
@@ -2165,6 +2439,123 @@ fn nodes_of(tree: &Value) -> Vec<Value> {
         .and_then(Value::as_array)
         .cloned()
         .unwrap_or_default()
+}
+
+/// A control's name as the page's script read it and as the engine's tree says it, both
+/// where they differ: a press is judged by all that it is called.
+fn joined_name(read: &str, engine: &str) -> String {
+    let (read, engine) = (read.trim(), engine.trim());
+    if read.contains(engine) {
+        read.to_string()
+    } else if engine.contains(read) {
+        engine.to_string()
+    } else {
+        format!("{read} {engine}")
+    }
+}
+
+/// Whether a cookie's domain is the host's, or one the host is under, short of a name
+/// nobody owns.
+fn cookie_fits(domain: &str, host: &str) -> bool {
+    let domain = domain
+        .trim_start_matches('.')
+        .trim_end_matches('.')
+        .to_lowercase();
+    let host = host.to_lowercase();
+    let site = policy::site_of(&host);
+    (domain == host || host.ends_with(&format!(".{domain}")))
+        && (domain == site || domain.ends_with(&format!(".{site}")))
+}
+
+/// Where each frame under this one is: its address, then those of the frames round it,
+/// the nearest first, for one with no address of its own (`policy::frame_allowed`).
+fn frame_places(tree: &Value, around: &[String], out: &mut HashMap<String, Vec<String>>) {
+    let mut at = Vec::with_capacity(around.len() + 1);
+    if let Some(url) = tree.pointer("/frame/url").and_then(Value::as_str) {
+        at.push(url.to_string());
+    }
+    at.extend_from_slice(around);
+    if let Some(id) = tree.pointer("/frame/id").and_then(Value::as_str) {
+        out.insert(id.to_string(), at.clone());
+    }
+    for child in tree
+        .get("childFrames")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        frame_places(child, &at, out);
+    }
+}
+
+/// The fields words can be typed into in a node tree the engine gave with `pierce`, by
+/// node. `everywhere` is the secret scan's, which takes every shadow root and the frames
+/// sharing the process; otherwise only what a closed shadow root holds, which is all a
+/// script of the page's cannot reach, in the document it was asked about. The inside of an
+/// engine's own control is no field of the page's, and a type that takes no words is none.
+fn typed_into(node: &Value, closed: bool, everywhere: bool, out: &mut Vec<u64>) {
+    let name = node
+        .get("nodeName")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if (everywhere || closed) && matches!(name, "INPUT" | "TEXTAREA") && takes_words(node) {
+        if let Some(backend) = node.get("backendNodeId").and_then(Value::as_u64) {
+            out.push(backend);
+        }
+    }
+    let list = |key: &str| {
+        node.get(key)
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
+    };
+    for child in list("children") {
+        typed_into(&child, closed, everywhere, out);
+    }
+    for root in list("shadowRoots") {
+        match root.get("shadowRootType").and_then(Value::as_str) {
+            Some("user-agent") => {}
+            Some("closed") => typed_into(&root, true, everywhere, out),
+            _ => typed_into(&root, closed, everywhere, out),
+        }
+    }
+    if everywhere {
+        if let Some(document) = node.get("contentDocument") {
+            typed_into(document, closed, everywhere, out);
+        }
+    }
+}
+
+/// Whether an input's `type`, in a node's flat list of attributes, is one that holds words.
+fn takes_words(node: &Value) -> bool {
+    let attributes = node
+        .get("attributes")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let kind = attributes
+        .chunks(2)
+        .find(|pair| {
+            pair[0]
+                .as_str()
+                .is_some_and(|name| name.eq_ignore_ascii_case("type"))
+        })
+        .and_then(|pair| pair.get(1)?.as_str())
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    !matches!(
+        kind.as_str(),
+        "hidden"
+            | "submit"
+            | "button"
+            | "image"
+            | "reset"
+            | "checkbox"
+            | "radio"
+            | "file"
+            | "range"
+            | "color"
+    )
 }
 
 /// Every frame under the page's own, by id.
@@ -2428,6 +2819,73 @@ mod tests {
         assert!(CLIPPED.contains("input[type=password]"));
         assert!(CLIPPED.contains("removeAttribute('value')"));
         assert!(WHOLE.contains("unvalued(document.body"));
+    }
+
+    #[test]
+    fn a_controls_name_is_what_the_page_and_the_engine_call_it() {
+        assert_eq!(joined_name("", "Pay now"), "Pay now");
+        assert_eq!(joined_name("Pay now", ""), "Pay now");
+        assert_eq!(joined_name("Pay now", "Pay now"), "Pay now");
+        assert_eq!(joined_name("OK", "OK Pay now"), "OK Pay now");
+        assert_eq!(joined_name("Continue", "Pay now"), "Continue Pay now");
+    }
+
+    #[test]
+    fn a_cookie_is_for_the_pages_own_site() {
+        assert!(cookie_fits("shop.example", "www.shop.example"));
+        assert!(cookie_fits(".shop.example", "www.shop.example"));
+        assert!(cookie_fits("www.shop.example", "www.shop.example"));
+        assert!(!cookie_fits("denied.example", "www.shop.example"));
+        assert!(!cookie_fits("example", "www.shop.example"));
+        assert!(!cookie_fits("github.io", "shop.github.io"));
+        assert!(!cookie_fits("op.example", "shop.example"));
+    }
+
+    #[test]
+    fn every_field_is_found_through_roots_and_frames() {
+        let input = |id: u64, kind: &str| json!({ "nodeName": "INPUT", "backendNodeId": id, "attributes": ["type", kind] });
+        let tree = json!({ "nodeName": "#document", "children": [
+            input(1, "text"),
+            input(2, "hidden"),
+            { "nodeName": "X-CARD", "shadowRoots": [
+                { "nodeName": "#document-fragment", "shadowRootType": "open", "children": [input(3, "text")] },
+            ] },
+            { "nodeName": "X-PW", "shadowRoots": [
+                { "nodeName": "#document-fragment", "shadowRootType": "closed", "children": [input(4, "password")] },
+            ] },
+            { "nodeName": "INPUT", "backendNodeId": 5, "shadowRoots": [
+                { "nodeName": "#document-fragment", "shadowRootType": "user-agent", "children": [input(6, "text")] },
+            ] },
+            { "nodeName": "IFRAME", "contentDocument": { "nodeName": "#document", "children": [input(7, "text")] } },
+        ] });
+
+        let mut every = Vec::new();
+        typed_into(&tree, false, true, &mut every);
+        assert_eq!(every, [1, 3, 4, 5, 7]);
+
+        // The closed root alone, and nothing of another document, for what a script missed.
+        let mut closed = Vec::new();
+        typed_into(&tree, false, false, &mut closed);
+        assert_eq!(closed, [4]);
+    }
+
+    #[test]
+    fn a_frame_with_no_address_of_its_own_is_where_it_sits() {
+        let tree = json!({ "frame": { "id": "top", "url": "https://a.example/" }, "childFrames": [
+            { "frame": { "id": "denied", "url": "https://denied.example/" }, "childFrames": [
+                { "frame": { "id": "blank", "url": "about:blank" } },
+            ] },
+        ] });
+        let mut places = HashMap::new();
+        frame_places(&tree, &[], &mut places);
+        assert_eq!(
+            places["blank"],
+            [
+                "about:blank",
+                "https://denied.example/",
+                "https://a.example/"
+            ]
+        );
     }
 
     #[test]

@@ -74,6 +74,34 @@ pub fn on_the_web(url: &str) -> bool {
     }
 }
 
+/// The suffixes of the public suffix list's private section that an Always on one site
+/// would most hand to a stranger: `shop.github.io` is no reason to trust `evil.github.io`.
+const SHARED_HOSTS: &[&str] = &[
+    "github.io",
+    "gitlab.io",
+    "pages.dev",
+    "workers.dev",
+    "vercel.app",
+    "netlify.app",
+    "web.app",
+    "firebaseapp.com",
+    "herokuapp.com",
+    "onrender.com",
+    "fly.dev",
+    "azurewebsites.net",
+    "cloudfront.net",
+    "s3.amazonaws.com",
+    "blogspot.com",
+    "wordpress.com",
+    "notion.site",
+    "glitch.me",
+    "surge.sh",
+    "ngrok.io",
+    "ngrok.app",
+    "ngrok-free.app",
+    "repl.co",
+];
+
 /// The site a host is on: its registrable domain, as far as it can be told without the
 /// public suffix list.
 pub fn site_of(host: &str) -> String {
@@ -82,6 +110,13 @@ pub fn site_of(host: &str) -> String {
         return host;
     }
     let labels: Vec<&str> = host.split('.').collect();
+    // Under a host where anybody may have a name, the name is the site.
+    if let Some(shared) = SHARED_HOSTS
+        .iter()
+        .find(|one| host.ends_with(&format!(".{one}")))
+    {
+        return labels[labels.len() - shared.split('.').count() - 1..].join(".");
+    }
     let keep = match labels.as_slice() {
         [.., second, top]
             if top.len() == 2
@@ -154,6 +189,28 @@ pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String
     }
 }
 
+/// Whether a frame may be read and acted in: its address or, for a frame with none of its
+/// own (`about:blank`, a `srcdoc`), the origin round it, by the same rules a tab is. `at` is
+/// `Facts::at`. A denied site in a frame of an allowed page is still denied (9.2).
+pub fn frame_allowed(grant: &Grant, at: &[String], store: Store) -> Result<(), String> {
+    let Some(host) = at.iter().find_map(|one| {
+        tauri::Url::parse(one)
+            .ok()
+            .filter(|url| matches!(url.scheme(), "http" | "https"))
+            .and_then(|_| host_of(one))
+    }) else {
+        return Ok(());
+    };
+    match rule_for(grant, &host) {
+        Some(SiteRule::Deny) => Err(format!("{} is denied to this agent", site_of(&host))),
+        Some(SiteRule::AgentStore) if store != Store::Agent => Err(format!(
+            "{} is only for this agent's own store",
+            site_of(&host)
+        )),
+        _ => Ok(()),
+    }
+}
+
 /// `site_allowed` for an agent by id, from the grants already read; the reader's own
 /// command line and an agent whose grant is gone may go anywhere the page goes.
 pub fn site_allowed_for(agent: &str, url: &str, store: Store) -> Result<(), String> {
@@ -197,6 +254,14 @@ pub struct Facts {
     pub in_form: bool,
     /// The form's fields, or the page's when it is in none.
     pub fields: Vec<Field>,
+    /// Whether it is, or is in, a control: a button, a link, a role that says so. What is
+    /// not has only its own short words for a name.
+    pub control: bool,
+    /// Whether the page was too big to read all its fields, so its form cannot be judged.
+    pub cut: bool,
+    /// The address of the document it is in, then the origin of each frame round that:
+    /// which frame it is in, for what the grant denies (`frame_allowed`).
+    pub at: Vec<String>,
     /// The element itself, read the way each of `fields` is.
     pub field: Field,
     /// The name of the button Enter in its form presses: the form's default button.
@@ -511,15 +576,17 @@ pub fn judge(
             }
         }
     }
-    if act == Act::Press && says(&facts.name, DELETING) {
+    // Not a link, which goes somewhere: a guide called How to delete is a page, and it is
+    // the press on that page that deletes.
+    if act == Act::Press && !facts.link && says(&facts.name, DELETING) {
         if let Some(question) = ask(Category::Deleting, on(&label, "Delete", &site)) {
             return Some(question);
         }
     }
 
     // What a press lands on cannot be read, so it can be anything on the list above.
-    if act == Act::Press && facts.opaque {
-        if let Some(question) = ask(Category::Writing, on("", "A press", &site)) {
+    if act == Act::Press && (facts.opaque || (facts.cut && facts.submit)) {
+        if let Some(question) = ask(Category::Unread, on("", "A press", &site)) {
             return Some(question);
         }
     }
@@ -559,22 +626,70 @@ pub fn key_act(mut facts: Facts, key: &super::keys::Key) -> Option<(Facts, Act)>
     Some((facts, if key.sends() { Act::Enter } else { Act::Press }))
 }
 
+/// Which of a drag's two ends the one question for it is about: the graver, and a drop
+/// target only where it is a control, as dropping on a column is no press of what it holds.
+pub fn of_a_drag<'a>(
+    grant: &Grant,
+    from: &'a Facts,
+    to: &'a Facts,
+    url: &str,
+    hosts: &[String],
+) -> &'a Facts {
+    if !to.control {
+        return from;
+    }
+    let category = |facts| judge(grant, facts, Act::Press, url, hosts).map(|one| one.category);
+    match (category(from), category(to)) {
+        (None, Some(_)) => to,
+        (Some(Category::Writing), Some(other)) if other != Category::Writing => to,
+        _ => from,
+    }
+}
+
 /// A one-line summary: the press's own words, or a word for the category, and the site.
 /// What answering a dialog the page holds asks first, for an agent with this grant: a
 /// site's own sign-in box or its request for a client certificate answered yes signs in,
 /// and asks under `SigningIn` as the mode says - nothing at all under Full permissions
-/// (#1072). Every other answer, and any no, goes ahead.
-pub fn answering(grant: &Grant, kind: DialogKind, accept: bool, url: &str) -> Option<Question> {
-    if !accept || !kind.signs_in() {
+/// (#1072). A `confirm` or a `prompt` that says it pays, sends or deletes is that press:
+/// the button before it may have been called anything. Every other answer, and any no,
+/// goes ahead.
+pub fn answering(
+    grant: &Grant,
+    kind: DialogKind,
+    accept: bool,
+    url: &str,
+    message: &str,
+) -> Option<Question> {
+    if !accept {
         return None;
     }
     let site = site_of(&host_of(url).unwrap_or_default());
-    (grant.asks(Category::SigningIn) && !grant.always(&site, Category::SigningIn)).then(|| {
-        Question {
-            category: Category::SigningIn,
-            summary: on("", "Sign in", &site),
+    let ask = |category: Category, summary: String| {
+        (grant.asks(category) && !grant.always(&site, category))
+            .then_some(Question { category, summary })
+    };
+    if kind.signs_in() {
+        return ask(Category::SigningIn, on("", "Sign in", &site));
+    }
+    if !matches!(kind, DialogKind::Confirm | DialogKind::Prompt) {
+        return None;
+    }
+    // The page's own words, said to be: they are not Orden's account of what will happen.
+    let said = format!("The page says \u{201c}{}\u{201d}", short(message));
+    if says(message, PAYING) {
+        if let Some(question) = ask(Category::Paying, on(&said, "Pay", &site)) {
+            return Some(question);
         }
-    })
+    }
+    if says_sending(message) {
+        if let Some(question) = ask(Category::Sending, on(&said, "Send", &site)) {
+            return Some(question);
+        }
+    }
+    if says(message, DELETING) {
+        return ask(Category::Deleting, on(&said, "Delete", &site));
+    }
+    None
 }
 
 fn on(label: &str, fallback: &str, site: &str) -> String {
@@ -1406,6 +1521,15 @@ mod tests {
     }
 
     #[test]
+    fn a_name_on_a_shared_host_is_a_site_of_its_own() {
+        assert_eq!(site_of("shop.github.io"), "shop.github.io");
+        assert_eq!(site_of("a.shop.github.io"), "shop.github.io");
+        assert_eq!(site_of("x.pages.dev"), "x.pages.dev");
+        assert_eq!(site_of("github.io"), "github.io");
+        assert_eq!(site_of("www.github.com"), "github.com");
+    }
+
+    #[test]
     fn a_rule_covers_its_site_and_every_host_under_it() {
         let mut grant = grant();
         grant
@@ -1942,7 +2066,7 @@ mod tests {
         let mut full = grant();
         full.mode = Mode::Autonomous;
         for kind in [DialogKind::SignIn, DialogKind::Certificate] {
-            assert!(answering(&full, kind, true, url).is_none(), "{kind:?}");
+            assert!(answering(&full, kind, true, url, "").is_none(), "{kind:?}");
         }
 
         let mut approve = grant();
@@ -1950,23 +2074,142 @@ mod tests {
         let unsupervised = grant();
         for asking in [&approve, &unsupervised] {
             for kind in [DialogKind::SignIn, DialogKind::Certificate] {
-                let question = answering(asking, kind, true, url).expect("asked");
+                let question = answering(asking, kind, true, url, "").expect("asked");
                 assert_eq!(question.category, Category::SigningIn);
                 assert_eq!(question.summary, "Sign in on intranet.example");
                 // Saying no to the site never asks.
-                assert!(answering(asking, kind, false, url).is_none());
+                assert!(answering(asking, kind, false, url, "").is_none());
             }
         }
 
         // Turned off, or always allowed on the site, it goes ahead.
         let mut off = grant();
         off.asks.insert(Category::SigningIn, false);
-        assert!(answering(&off, DialogKind::SignIn, true, url).is_none());
+        assert!(answering(&off, DialogKind::SignIn, true, url, "").is_none());
 
-        // A page's own alert, confirm or prompt is never a question.
+        // A page's own alert, confirm or prompt about nothing much is never a question.
         for kind in [DialogKind::Alert, DialogKind::Confirm, DialogKind::Prompt] {
-            assert!(answering(&approve, kind, true, url).is_none(), "{kind:?}");
+            assert!(
+                answering(&approve, kind, true, url, "Leave this page?").is_none(),
+                "{kind:?}"
+            );
         }
+    }
+
+    #[test]
+    fn a_confirm_that_says_it_pays_or_deletes_asks() {
+        let url = "https://shop.example/";
+        let unsupervised = grant();
+        let question = answering(
+            &unsupervised,
+            DialogKind::Confirm,
+            true,
+            url,
+            "Pay 500 EUR now?",
+        )
+        .expect("asked");
+        assert_eq!(question.category, Category::Paying);
+        assert_eq!(
+            question.summary,
+            "The page says \u{201c}Pay 500 EUR now?\u{201d} on shop.example"
+        );
+
+        let question = answering(
+            &unsupervised,
+            DialogKind::Confirm,
+            true,
+            url,
+            "Delete this repository?",
+        )
+        .expect("asked");
+        assert_eq!(question.category, Category::Deleting);
+
+        // Cancel is never a question, an alert says and does nothing, and Full permissions
+        // asks nothing.
+        assert!(answering(&unsupervised, DialogKind::Confirm, false, url, "Pay now?").is_none());
+        assert!(answering(&unsupervised, DialogKind::Alert, true, url, "Pay now?").is_none());
+        let mut full = grant();
+        full.mode = Mode::Autonomous;
+        assert!(answering(&full, DialogKind::Confirm, true, url, "Pay now?").is_none());
+    }
+
+    #[test]
+    fn a_link_is_no_delete_and_a_button_still_is() {
+        let url = "https://a.example/";
+        let mut link = press("How to delete your account");
+        link.link = true;
+        assert_eq!(category(&link, url), None);
+        assert_eq!(
+            category(&press("Delete account"), url),
+            Some(Category::Deleting)
+        );
+    }
+
+    #[test]
+    fn a_drag_is_one_question_about_its_graver_end() {
+        let url = "https://a.example/";
+        let unsupervised = grant();
+        let mut confirm = grant();
+        confirm.mode = Mode::Confirm;
+        let card = press("Card");
+        let mut column = press("Pay rent");
+        column.control = false;
+        let mut pay = press("Pay now");
+        pay.control = true;
+
+        // A column is no press, whatever it holds.
+        let of = |grant: &Grant, from: &Facts, to: &Facts| {
+            of_a_drag(grant, from, to, url, &[]).name.clone()
+        };
+        assert_eq!(of(&unsupervised, &card, &column), "Card");
+        // A real Pay is, under either mode, ahead of Confirm's every-change question.
+        assert_eq!(of(&unsupervised, &card, &pay), "Pay now");
+        assert_eq!(of(&confirm, &card, &pay), "Pay now");
+        assert_eq!(of(&confirm, &pay, &card), "Pay now");
+    }
+
+    #[test]
+    fn a_page_too_big_to_read_asks_before_a_submit() {
+        let url = "https://a.example/";
+        let mut big = press("Go");
+        big.cut = true;
+        big.submit = true;
+        assert_eq!(category(&big, url), Some(Category::Unread));
+        big.submit = false;
+        assert_eq!(category(&big, url), None);
+    }
+
+    #[test]
+    fn a_denied_site_in_a_frame_is_denied() {
+        let mut owner = grant();
+        owner.sites.insert("denied.example".into(), SiteRule::Deny);
+        owner
+            .sites
+            .insert("mine.example".into(), SiteRule::AgentStore);
+        let at = |urls: &[&str]| urls.iter().map(ToString::to_string).collect::<Vec<_>>();
+
+        assert!(frame_allowed(&owner, &at(&["https://a.example/"]), Store::Reader).is_ok());
+        assert!(frame_allowed(&owner, &at(&["https://denied.example/x"]), Store::Agent).is_err());
+        // With no address of its own, a frame is where it sits.
+        assert!(frame_allowed(
+            &owner,
+            &at(&[
+                "about:srcdoc",
+                "https://denied.example",
+                "https://a.example"
+            ]),
+            Store::Agent
+        )
+        .is_err());
+        assert!(frame_allowed(
+            &owner,
+            &at(&["about:blank", "https://a.example"]),
+            Store::Agent
+        )
+        .is_ok());
+        // A site for the agent's own store is not read through the reader's.
+        assert!(frame_allowed(&owner, &at(&["https://mine.example/"]), Store::Reader).is_err());
+        assert!(frame_allowed(&owner, &at(&["https://mine.example/"]), Store::Agent).is_ok());
     }
 
     #[test]
@@ -2244,8 +2487,8 @@ mod tests {
             opaque: true,
             ..Facts::default()
         };
-        assert_eq!(keyed(&grant, host(), "Space"), Some(Category::Writing));
-        assert_eq!(keyed(&grant, host(), "Enter"), Some(Category::Writing));
+        assert_eq!(keyed(&grant, host(), "Space"), Some(Category::Unread));
+        assert_eq!(keyed(&grant, host(), "Enter"), Some(Category::Unread));
         let mut full = grant.clone();
         full.mode = Mode::Autonomous;
         assert_eq!(keyed(&full, host(), "Space"), None);

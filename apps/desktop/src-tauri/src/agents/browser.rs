@@ -271,6 +271,10 @@ fn gate<'a>(
         label,
         own,
         since,
+        limits: match caller {
+            Caller::Agent(grant) => Some((Grant::clone(grant), place.store())),
+            Caller::Reader => None,
+        },
         credentials: std::sync::atomic::AtomicBool::new(cleared),
     };
     if let Caller::Agent(grant) = caller {
@@ -404,6 +408,7 @@ fn judged(
     let Caller::Agent(grant) = caller else {
         return cleared();
     };
+    page.may_act_in(facts)?;
     let hosts = page_hosts(page);
     let Some(question) = policy::judge(grant, facts, act, &page.url(), &hosts) else {
         return cleared();
@@ -673,6 +678,12 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::Press(pressing) => {
                 let key = keys::chord(&pressing.keys)
                     .map_err(|why| Answer::error(Code::BadArguments, why))?;
+                // Whichever key: the keyboard may have been tabbed into a denied frame.
+                if page.limits_sites() {
+                    if let Ok(Some(facts)) = page.active_facts() {
+                        page.may_act_in(&facts)?;
+                    }
+                }
                 // Facts are asked once, and only of a key they can matter to.
                 let facts = if key.judged_by_the_page() {
                     page.active_facts()?
@@ -706,6 +717,9 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     .as_deref()
                     .map(|one| element(page, one))
                     .transpose()?;
+                if let Some(target) = &target {
+                    page.may_act_in(&page.facts(target)?)?;
+                }
                 page.scroll(target.as_ref(), scroll.dx, scroll.dy)?;
                 acted(page)
             }
@@ -722,6 +736,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 for field in &form.fields {
                     let target = element(page, &field.element)?;
                     let facts = page.facts(&target)?;
+                    page.may_act_in(&facts)?;
                     targets.push((target, facts));
                 }
                 // A sign-in form is judged by its credential field, which asks as the mode
@@ -740,14 +755,37 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 acted(page)
             }
             Verb::Hover(hover) => {
-                page.hover(&element(page, &hover.element)?)?;
+                let target = element(page, &hover.element)?;
+                page.may_act_in(&page.facts(&target)?)?;
+                page.hover(&target)?;
                 acted(page)
             }
             Verb::Drag(drag) => {
                 let (from, to) = (element(page, &drag.from)?, element(page, &drag.to)?);
-                let facts = page.facts(&from)?;
-                let key = approvals::key("browser_drag", Some(&tab), Some(&drag.from));
-                judged(app, caller, page, place, &facts, Act::Write, &key)?;
+                let (mut from_facts, to_facts) = (page.facts(&from)?, page.facts(&to)?);
+                page.may_act_in(&from_facts)?;
+                page.may_act_in(&to_facts)?;
+                // Picked up and put down elsewhere, no click lands on a plain element, and a
+                // card called Pay rent is carried, not pressed. On itself it is a click.
+                if drag.from != drag.to && !from_facts.control {
+                    from_facts.name.clear();
+                }
+                // A press on the one and a release on the other, which is a click on either
+                // to whatever only listens for those: one question for the whole drag, or a
+                // drag of Pay onto itself is the one call round paying (9.3).
+                let judged_by = match caller {
+                    Caller::Agent(grant) => policy::of_a_drag(
+                        grant,
+                        &from_facts,
+                        &to_facts,
+                        &page.url(),
+                        &page_hosts(page),
+                    ),
+                    Caller::Reader => &from_facts,
+                };
+                let ends = format!("{}>{}", drag.from, drag.to);
+                let key = approvals::key("browser_drag", Some(&tab), Some(&ends));
+                judged(app, caller, page, place, judged_by, Act::Press, &key)?;
                 page.drag(&from, &to)?;
                 acted(page)
             }
@@ -785,8 +823,15 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                             &key,
                         ));
                     }
+                    // What is no file input is pressed to open its chooser, and is judged
+                    // as that press, whatever it turns out to do.
                     let facts = page.facts(&target)?;
-                    judged(app, caller, page, place, &facts, Act::Write, &key)?;
+                    let how = if facts.kind == "file" {
+                        Act::Write
+                    } else {
+                        Act::Press
+                    };
+                    judged(app, caller, page, place, &facts, how, &key)?;
                 }
                 let paths: Vec<String> = files
                     .iter()
@@ -811,6 +856,14 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     .lock()
                     .unwrap_or_else(PoisonError::into_inner)
                     .console(asked.since, asked.level.as_deref());
+                let lines = lines
+                    .into_iter()
+                    .filter(|one| {
+                        one.source
+                            .as_deref()
+                            .is_none_or(|url| page.may_read_row(url))
+                    })
+                    .collect();
                 from_page(Answer::ok(ConsoleLines { lines, next }))
             }
             Verb::Network(asked) => {
@@ -825,6 +878,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     .lock()
                     .unwrap_or_else(PoisonError::into_inner)
                     .requests(asked.since, asked.matching.as_deref());
+                requests.retain(|one| page.may_read_row(&one.url));
                 if asked.bodies {
                     for row in requests.iter_mut().rev().take(BODIES) {
                         let found = heard
@@ -877,12 +931,12 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 // asks as the mode says: nothing under Full permissions (#1072).
                 if let Caller::Agent(grant) = caller {
                     if let Some(question) =
-                        policy::answering(grant, held.kind, answer.accept, &held.url)
+                        policy::answering(grant, held.kind, answer.accept, &held.url, &held.message)
                     {
                         let key = approvals::on_page(
                             &approvals::key("browser_dialog", Some(place.id()), None),
                             &held.url,
-                            "",
+                            &held.message,
                         );
                         if !approvals::allowed(&grant.id, &key) {
                             return Err(ask(

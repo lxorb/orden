@@ -31,6 +31,9 @@ export interface Disk {
   remove(path: string, kind: FileKind): Promise<void>
   mkdir(path: string): Promise<void>
   exists(path: string): Promise<boolean>
+  /** Whether a file that is not there is on a cloud's side all the same: its placeholder
+   *  is where it was (notes/icloud.rs). Never a delete. */
+  evicted(path: string): Promise<boolean>
 }
 
 /** The account: one request, answered with the envelope read back (still unknown until a

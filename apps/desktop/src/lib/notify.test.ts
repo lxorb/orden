@@ -16,8 +16,8 @@ vi.mock('./tauri', () => ({
   },
 }))
 
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: (_name: string, heard: (event: { payload: unknown }) => void) => {
+vi.mock('./own-window', () => ({
+  hearHere: (_name: string, heard: (event: { payload: unknown }) => void) => {
     world.pressed = heard
     return Promise.resolve(() => undefined)
   },

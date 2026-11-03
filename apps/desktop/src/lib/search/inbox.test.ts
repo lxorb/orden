@@ -17,7 +17,7 @@ vi.mock('../tauri', async (original) => ({
     return Promise.resolve()
   },
 }))
-vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
+vi.mock('../own-window', () => ({ hearHere: () => Promise.resolve(() => undefined) }))
 vi.mock('../pdf/papers', () => ({
   papersFor: () => Promise.resolve(),
   searchPapers: () => [],

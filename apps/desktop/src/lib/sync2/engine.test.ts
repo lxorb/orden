@@ -753,6 +753,28 @@ test('a line said from beside the passes reaches the log and whoever has it open
 })
 
 describe('an outbox folded while offline', () => {
+  test('a note iCloud took off this Mac is no delete, by the watcher or a scan', async () => {
+    // macOS 13: `Plan.md` becomes `.Plan.md.icloud`, which no list holds. Taken for gone,
+    // the note left the account and every other device with it.
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account)
+    await here.disk.remove(`${ROOT}/Plan.md`)
+    await here.disk.write(`${ROOT}/.Plan.md.icloud`, 'bplist')
+
+    await here.engine.removed(`${ROOT}/Plan.md`)
+    await here.engine.pass(SPACE)
+
+    const names = (await account.view()).entries.map((entry) => entry.name)
+    expect(names).toContain('Plan.md')
+    expect(here.store.rows('outbox')).toEqual([])
+
+    // And the placeholder gone with no file back is a delete after all.
+    await here.disk.remove(`${ROOT}/.Plan.md.icloud`)
+    await here.engine.removed(`${ROOT}/Plan.md`)
+    await here.engine.pass(SPACE)
+    expect((await account.view()).entries.map((entry) => entry.name)).toEqual(['Ideas.md'])
+  })
+
   test('a note moved into a folder made and deleted here is deleted on the account too', async () => {
     // The folder and its delete cancel before the account hears of either, and what was
     // only moved into it is deleted instead - a delete the fold makes, under an op id of

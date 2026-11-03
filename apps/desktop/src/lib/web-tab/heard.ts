@@ -16,7 +16,7 @@
  *  size that site opens at next time. See sites.ts. Fetched with the first page, like
  *  the rest of what the pages' listeners need. */
 
-import type { listen as Listen } from '@tauri-apps/api/event'
+import type { hearHere } from '../own-window'
 import { isRecord } from '../stored'
 import { mute } from './mute'
 import type { Page } from './pages.svelte'
@@ -127,7 +127,7 @@ export function found(page: Page, said: Found): void {
  *  nothing for a tab that has gone. Started with the first page; see `listen` in
  *  pages.svelte.ts. */
 export async function listening(
-  listen: typeof Listen,
+  listen: typeof hearHere,
   page: (tab: string) => Page | undefined,
   go: Go,
   crashed: (tab: string) => void,
