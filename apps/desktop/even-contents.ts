@@ -309,13 +309,16 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  claude/bugs-2026-11: the two branches' raises above were measured without each other,
  *  and the sum of their growth is what came. Measured 5,775,432.
  *
+ *  The code raised on 2026-11-03, to 5,806,000, for what a window hears on itself alone and
+ *  a placeholder iCloud left counted as no delete. Measured 5,805,864.
+ *
  *  The code raised on 2026-11-03, to 5,805,500, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
  *  thread written down while it runs, the sync's scans, and an undo that waits for every
  *  gesture landing, measured together. Measured 5,805,262.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_805_500,
+  code: 5_806_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

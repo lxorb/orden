@@ -38,7 +38,6 @@
  *  Fetched at the launch's last turn, where it listens for itself; see `warmDoors`. */
 
 import { overlays } from './overlays'
-import { hearHere } from './own-window'
 import { invoke, isDesktop } from './tauri'
 import { IN_A_PAGE } from './trap'
 
@@ -121,7 +120,9 @@ class KeyboardHome {
     })
     if (isDesktop) {
       void invoke('keyboard_watch').catch(() => undefined)
-      void hearHere(IN_PAGE, () => void this.went()).catch(() => undefined)
+      void import('./own-window')
+        .then(({ hearHere }) => hearHere(IN_PAGE, () => void this.went()))
+        .catch(() => undefined)
     }
   }
 

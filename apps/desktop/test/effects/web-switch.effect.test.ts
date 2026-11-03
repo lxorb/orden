@@ -53,8 +53,8 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 
 // The one listener the store starts for the window. Tauri's own needs the window's
 // internals, which a test has none of.
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: () => Promise.resolve(() => undefined),
+vi.mock('../../src/lib/own-window', () => ({
+  hearHere: () => Promise.resolve(() => undefined),
 }))
 
 /** jsdom never lays anything out, so nothing is ever resized; what each observer is

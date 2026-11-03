@@ -11,7 +11,6 @@
  *  showing in the order the scores put it, and the scores are not all in until
  *  the space has been read. Both sides send them last; see fuzzy.ts. */
 
-import { hearHere } from '../own-window'
 import { invoke, isNative } from '../tauri'
 import type { FuzzyHit } from './fuzzy'
 import type { Hit } from './match'
@@ -74,6 +73,7 @@ export async function searchSpace(
   if (inbox.length) onFound({ hits: inbox, loose: [] })
 
   const id = ++asked
+  const { hearHere } = await import('../own-window')
   // An event is a boundary, so what it carries is read rather than trusted: a
   // handful from a crate that has not learnt about loose hits yet is a handful
   // of exact ones.

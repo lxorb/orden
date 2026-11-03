@@ -1297,7 +1297,7 @@ mod mac {
 
             for shown in [
                 "![](assets/Drawing.png)",
-                "![](assets/Scan Page.jpg)",
+                "![](assets/Scan%20Page.jpg)",
                 "![](assets/page-two.png)",
                 "[Scan.pdf](assets/Scan.pdf)",
             ] {

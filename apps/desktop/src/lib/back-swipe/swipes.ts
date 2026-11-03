@@ -31,7 +31,6 @@
 
 import { mount, unmount } from 'svelte'
 import { overlays } from '../overlays'
-import { hearHere } from '../own-window'
 import { reading } from '../direction'
 import { dur } from '../motion'
 import { isDesktop, isMobile } from '../tauri'
@@ -453,10 +452,11 @@ export function listen(): () => void {
   let unlisten: (() => void) | null = null
   let stopped = false
   if (isDesktop) {
-    void hearHere('nib://web-swipe', (event) => {
-      const said = readSaid(event.payload)
-      if (said) pageSaid(said)
-    }).then(async (off) => {
+    void import('../own-window').then(async ({ hearHere }) => {
+      const off = await hearHere('nib://web-swipe', (event) => {
+        const said = readSaid(event.payload)
+        if (said) pageSaid(said)
+      })
       const offPad = await hearHere('nib://touchpad', (event) => {
         const fingers = readFingers(event.payload)
         if (fingers !== null) touchpad(fingers)

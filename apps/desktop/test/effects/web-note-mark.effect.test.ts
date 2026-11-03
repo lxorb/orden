@@ -27,8 +27,8 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 
 /** The window's listeners, by event, so the test says what the engine would. */
 const heard = new Map<string, (event: { payload: unknown }) => void>()
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: (name: string, handler: (event: { payload: unknown }) => void) => {
+vi.mock('../../src/lib/own-window', () => ({
+  hearHere: (name: string, handler: (event: { payload: unknown }) => void) => {
     heard.set(name, handler)
     return Promise.resolve(() => undefined)
   },
