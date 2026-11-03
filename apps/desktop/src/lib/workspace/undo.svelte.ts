@@ -149,15 +149,15 @@ export class FileActions {
   async batch<T>(work: () => Promise<T>): Promise<T> {
     if (this.#held) return work()
     const held: FileAction[] = (this.#held = [])
-    const done = Promise.withResolvers<void>()
-    this.#landing = done.promise
+    let landed: (() => void) | undefined
+    this.#landing = new Promise((go) => (landed = go))
     try {
       return await work()
     } finally {
       this.#held = null
       const [only, ...more] = held
       if (only) this.record(more.length ? { kind: 'many', steps: held } : only)
-      done.resolve()
+      landed?.()
     }
   }
 

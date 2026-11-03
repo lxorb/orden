@@ -402,7 +402,11 @@ def drive_pointer(browser: Browser) -> None:
     if together["moving"] < 1:
         wrong("folding everything moved nothing")
 
-    page.wait_for_timeout(700)
+    # Up to the marks rather than for a fixed while: the first fold of a window's life is
+    # half a second before anything shows in WebKit on a runner, and three under load, and
+    # the palette stood in front of the note until then.
+    wait_for(page, "() => document.querySelectorAll('.nib-folded').length >= 2", "the marks of everything folded", 15)
+    page.wait_for_timeout(300)
     outline = state(page)
     say(f"[desktop] the outline: {json.dumps(outline['shown'])}")
     shot(page, "08-outline")

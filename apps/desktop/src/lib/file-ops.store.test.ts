@@ -181,7 +181,7 @@ describe('a write in the air while a file moves', () => {
     const { land, writing } = await typedAndWriting('# Plan\ntyped before the move\n')
 
     const moving = workspace.move(`${ROOT}/Plan.md`, `${ROOT}/Work`)
-    land()
+    land?.()
     await Promise.all([writing, moving])
     await workspace.writesSettled()
 
@@ -199,7 +199,7 @@ describe('a write in the air while a file moves', () => {
     const { land, writing } = await typedAndWriting('# Notes\ntyped before the rename\n')
 
     const renaming = workspace.rename(`${ROOT}/Work`, 'Desk')
-    land()
+    land?.()
     await Promise.all([writing, renaming])
     await workspace.writesSettled()
 
@@ -220,7 +220,7 @@ describe('a write in the air while a file moves', () => {
     // long enough for a move back that did not wait to have happened.
     const undoing = workspace.undoFileAction()
     await new Promise((resolve) => setTimeout(resolve, 20))
-    land()
+    land?.()
     await Promise.all([writing, undoing])
     await workspace.writesSettled()
 
@@ -979,21 +979,23 @@ describe('an undo asked for while a move is on its way', () => {
     // A step before the move, which is what the undo took back with the move in the air.
     workspace.undone.record({ kind: 'create', path: `${ROOT}/Idea.md` })
 
-    const asked = Promise.withResolvers<void>()
-    const landing = Promise.withResolvers<void>()
+    let renaming: (() => void) | undefined
+    const asked = new Promise<void>((go) => (renaming = go))
+    let land: (() => void) | undefined
+    const landing = new Promise<void>((go) => (land = go))
     const real = one.invoke.bind(one)
     const held = vi.spyOn(one, 'invoke').mockImplementation(async (command, args) => {
       if (command === 'rename_note') {
-        asked.resolve()
-        await landing.promise
+        renaming?.()
+        await landing
       }
       return real(command, args)
     })
 
     const moving = workspace.moveMany([`${ROOT}/Plan.md`], `${ROOT}/Work`)
-    await asked.promise
+    await asked
     const undoing = workspace.undoFileAction()
-    landing.resolve()
+    land?.()
     await Promise.all([moving, undoing])
     held.mockRestore()
 
