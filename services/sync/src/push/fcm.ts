@@ -1,8 +1,9 @@
 /** Firebase Cloud Messaging, HTTP v1: a message to an Android phone's token.
  *
- *  Sent as data rather than as a notification, so the app decides what to show: a phone
- *  that already set the alarm for this reminder itself (Reminders.kt) knows its id and
- *  stays quiet, and one that has not opened Orden since the task was written rings it.
+ *  Sent as data rather than as a notification, so the app is the one to decide what to
+ *  show. The Android app has no FCM receiver yet, so nothing reads a data message there:
+ *  no ring comes of it, and a phone that set the alarm itself (Reminders.kt) rings that.
+ *  `Reminders.known` is what a receiver would ask to stay quiet; nothing calls it today.
  *  Signed in as the project's service account, whose key is the Worker's secret
  *  `FCM_SERVICE_ACCOUNT` (the JSON Google hands out); the hour's access token is kept
  *  for the isolate's life and asked again a minute before it runs out. */

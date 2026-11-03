@@ -1,5 +1,5 @@
 /** Reminders pushed from here, so a phone that has not opened Orden since a task was
- *  written elsewhere still rings (docs/tasks.md 5.10 and decision 5).
+ *  written elsewhere can ring (docs/tasks.md 5.10 and decision 5).
  *
  *  **Kept from the notes as they arrive.** Every note is written through one place
  *  (`saveNote` and the two that make a note, notes.ts), and each hands its words here:
@@ -13,8 +13,10 @@
  *  service took is tried again after a wait, a few times (`MOST_TRIES`). A
  *  reminder in a note deleted since, or of a space deleted since, is not sent.
  *
- *  The id is the one every device makes for the same reminder, so a phone that set the
- *  alarm itself knows this push and stays quiet; see Reminders.kt. */
+ *  The id is the one every device makes for the same reminder, so a phone could tell this
+ *  push from an alarm it set itself. None does yet: the Android app has no FCM receiver and
+ *  nothing calls `Reminders.known`, so a push there rings nothing and nothing is kept quiet
+ *  by it. See fcm.ts, Reminders.kt. */
 
 import { taskHash } from '@orden/bases'
 import { readTask } from '@orden/markdown/task-line'
