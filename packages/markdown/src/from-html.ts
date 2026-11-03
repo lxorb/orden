@@ -700,8 +700,8 @@ function converter(options: FromHtmlOptions): TurndownService {
   service.addRule('emphasis', {
     filter: (node) => marksFor(node) !== null,
     replacement: (content, node) => {
-      const marks = marksFor(node as Element) ?? ''
-      const element = node as Element
+      const element: Element = node
+      const marks = marksFor(element) ?? ''
       if (!content.trim() || !marks) return content
       if (element.id.startsWith('docs-internal-guid')) return content
       if (element.querySelector(BLOCKS)) return content
@@ -710,7 +710,7 @@ function converter(options: FromHtmlOptions): TurndownService {
       }
       if (!marksHold(content, element)) return content
 
-      return `${marks}${content}${[...marks].reverse().join('')}`
+      return `${marks}${content}${marks.split('').reverse().join('')}`
     },
   })
 
@@ -836,7 +836,7 @@ function converter(options: FromHtmlOptions): TurndownService {
         .trim()
       const first = (node as Element).previousElementSibling === null
 
-      return `${first ? '| ' : ' '}${said} |${'  |'.repeat(spanOf(node as Element) - 1)}`
+      return `${first ? '| ' : ' '}${said} |${'  |'.repeat(spanOf(node) - 1)}`
     },
   })
 
