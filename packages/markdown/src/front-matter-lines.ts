@@ -77,10 +77,10 @@ export function isKeyLine(text: string): boolean {
   const past = pastKey(text, 0)
   if (past === -1) return TIGHT_KEY.test(text)
   if (NOT_THE_FIRST_KEY.test(text) || past === 1) return false
-  if (text[0] === '"' || text[0] === "'") return true
+  if (text.startsWith('"') || text.startsWith("'")) return true
 
   const key = text.slice(0, past - 1).trimEnd()
-  if (key.includes('://') || [...key].length > MOST_KEY_CHARACTERS) return false
+  if (key.includes('://') || Array.from(key).length > MOST_KEY_CHARACTERS) return false
   const words = wordsIn(key)
   if (words > MOST_KEY_WORDS) return false
 

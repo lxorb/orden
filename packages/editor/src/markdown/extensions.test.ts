@@ -104,7 +104,7 @@ describe('front matter being typed', () => {
   })
 
   test('a block typed from nothing is the same tree at every keystroke', () => {
-    typedAlong(`${'\n'}# Heading\n\n${'words\n'.repeat(60)}`, 0, '---\ntitle: x\nb: 1\n---\n')
+    typedAlong(`\n# Heading\n\n${'words\n'.repeat(60)}`, 0, '---\ntitle: x\nb: 1\n---\n')
   })
 })
 
