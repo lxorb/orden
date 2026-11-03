@@ -58,6 +58,12 @@ pub fn key(verb: &str, tab: Option<&str>, element: Option<&str>) -> String {
     )
 }
 
+/// What a call is about on the page it would land on: an allowance is for one press on
+/// one site, so the same key or ref after the tab has moved on is another question.
+pub fn on_page(key: &str, _url: &str, _element: &str) -> String {
+    key.to_string()
+}
+
 /// Whether the reader allowed this call: spends the allowance if so.
 pub fn allowed(agent: &str, key: &str) -> bool {
     let mut all = held();
@@ -323,6 +329,24 @@ mod tests {
         assert_eq!(verb_of("browser_click:a1:e7"), "browser_click");
         assert_eq!(verb_of(r#"edit_note:{"path":"a.md"}"#), "edit_note");
         assert_eq!(verb_of(""), "");
+    }
+
+    #[test]
+    fn an_allowance_is_for_the_site_and_the_element_it_was_asked_about() {
+        let asked = on_page("browser_press:a1:Enter", "http://localhost:9/pay", "Pay now");
+        assert_ne!(
+            asked,
+            on_page("browser_press:a1:Enter", "http://127.0.0.1:9/pay", "Pay now")
+        );
+        assert_ne!(
+            asked,
+            on_page("browser_press:a1:Enter", "http://localhost:9/pay", "Delete account")
+        );
+        assert_eq!(
+            asked,
+            on_page("browser_press:a1:Enter", "http://localhost:9/other", "Pay  now")
+        );
+        assert_eq!(verb_of(&asked), "browser_press");
     }
 
     #[test]

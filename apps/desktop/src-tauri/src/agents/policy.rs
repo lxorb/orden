@@ -467,6 +467,16 @@ pub fn judge(
         .flatten()
 }
 
+/// What a key does to the element that has the keyboard, as `judge` reads it; `None` when
+/// it presses nothing.
+pub fn key_act(mut facts: Facts, key: &super::keys::Key) -> Option<(Facts, Act)> {
+    if !(key.sends() || key.submits()) {
+        return None;
+    }
+    facts.submit = facts.in_form && key.submits();
+    Some((facts, if key.sends() { Act::Enter } else { Act::Press }))
+}
+
 /// A one-line summary: the press's own words, or a word for the category, and the site.
 /// What answering a dialog the page holds asks first, for an agent with this grant: a
 /// site's own sign-in box or its request for a client certificate answered yes signs in,
@@ -1959,6 +1969,156 @@ mod tests {
             ..Facts::default()
         }
         .picker());
+    }
+
+    #[test]
+    fn an_agent_stays_on_the_web() {
+        let grant = grant();
+        for address in [
+            "file:///etc/hostname",
+            "file://localhost/etc/hostname",
+            "file://server/share/secret.md",
+            "chrome://version",
+            "chrome-extension://abc/options.html",
+            "devtools://devtools/bundled/inspector.html",
+            "view-source:https://example.com/",
+            "javascript:alert(1)",
+            "JaVaScRiPt:alert(1)",
+            "java\nscript:alert(1)",
+            "data:text/html,<h1>x</h1>",
+            "about:version",
+            "tauri://localhost",
+            "nib://open",
+        ] {
+            assert!(
+                site_allowed(&grant, address, Store::Agent).is_err(),
+                "{address}"
+            );
+        }
+        for address in [
+            "https://example.com/",
+            "http://127.0.0.1:9/x",
+            "about:blank",
+            "blob:https://example.com/5d2f",
+            "",
+        ] {
+            assert!(
+                site_allowed(&grant, address, Store::Agent).is_ok(),
+                "{address}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_failed_load_leaves_the_tab_to_its_agent() {
+        assert!(site_allowed(&grant(), "chrome-error://chromewebdata/", Store::Agent).is_ok());
+    }
+
+    #[test]
+    fn a_trailing_dot_is_the_same_host() {
+        let mut grant = grant();
+        grant.sites.insert("denied.example".into(), SiteRule::Deny);
+        grant
+            .sites
+            .insert("bank.example.".into(), SiteRule::AgentStore);
+        assert_eq!(
+            host_of("http://Denied.Example.:8/").as_deref(),
+            Some("denied.example")
+        );
+        assert!(site_allowed(&grant, "http://denied.example./", Store::Agent).is_err());
+        assert!(site_allowed(&grant, "http://a.denied.example../", Store::Agent).is_err());
+        assert!(site_allowed(&grant, "https://bank.example./", Store::Reader).is_err());
+        assert!(site_allowed(&grant, "https://bank.example/", Store::Reader).is_err());
+        assert!(payment_host(host_of("https://js.stripe.com./").as_deref().unwrap_or("")));
+        assert!(social(host_of("https://mail.google.com./").as_deref().unwrap_or("")));
+    }
+
+    /// What a key does to what has the keyboard, judged: `keys` names the key.
+    fn keyed(grant: &Grant, facts: Facts, keys: &str) -> Option<Category> {
+        let key = crate::agents::keys::chord(keys).expect("key");
+        let (facts, act) = key_act(facts, &key)?;
+        judge(grant, &facts, act, "https://shop.example/", &[]).map(|one| one.category)
+    }
+
+    #[test]
+    fn a_key_on_a_button_is_a_press_of_it() {
+        let grant = grant();
+        for key in ["Space", "Enter", "Shift+Enter", "Control+Enter"] {
+            assert_eq!(
+                keyed(&grant, press("Pay now"), key),
+                Some(Category::Paying),
+                "{key}"
+            );
+            assert_eq!(
+                keyed(&grant, press("Delete account"), key),
+                Some(Category::Deleting),
+                "{key}"
+            );
+        }
+        let send = Facts {
+            fields: vec![field("textarea", "Type a message"), field("email", "To")],
+            ..press("Send")
+        };
+        assert_eq!(keyed(&grant, send.clone(), "Space"), Some(Category::Sending));
+        assert_eq!(keyed(&grant, send, "Enter"), Some(Category::Sending));
+        // Nothing to say about a key that presses nothing, or a harmless button.
+        assert_eq!(keyed(&grant, press("Pay now"), "Tab"), None);
+        assert_eq!(keyed(&grant, press("Open menu"), "Space"), None);
+    }
+
+    #[test]
+    fn a_key_on_a_sign_in_button_signs_in_as_the_mode_says() {
+        let log_in = || Facts {
+            submit: true,
+            in_form: true,
+            fields: vec![field("password", "Password")],
+            ..press("Log in")
+        };
+        let grant = grant();
+        assert_eq!(
+            keyed(&grant, log_in(), "Space"),
+            Some(Category::SigningIn)
+        );
+        assert_eq!(
+            keyed(&grant, log_in(), "Enter"),
+            Some(Category::SigningIn)
+        );
+        let mut full = grant.clone();
+        full.mode = Mode::Autonomous;
+        assert_eq!(keyed(&full, log_in(), "Space"), None);
+    }
+
+    #[test]
+    fn a_key_in_a_box_is_not_a_press() {
+        let grant = grant();
+        let boxed = Facts {
+            tag: "textarea".into(),
+            name: "Pay this month's rent".into(),
+            editable: true,
+            ..Facts::default()
+        };
+        // Space types in it, and Enter is its form's or its message's to say.
+        assert!(key_act(boxed.clone(), &crate::agents::keys::chord("Space").expect("key")).is_none());
+        let enter = key_act(boxed, &crate::agents::keys::chord("Enter").expect("key"));
+        assert_eq!(enter.map(|(_, act)| act), Some(Act::Enter));
+        // A page with nothing in focus has no button to press.
+        let page = Facts {
+            tag: "body".into(),
+            name: "Delete old notes in this list".into(),
+            ..Facts::default()
+        };
+        assert_eq!(keyed(&grant, page.clone(), "Space"), None);
+        assert!(key_act(page, &crate::agents::keys::chord("Space").expect("key")).is_none());
+        // Enter on a checkbox submits its form the way a press of its submit does.
+        let tick = Facts {
+            tag: "input".into(),
+            kind: "checkbox".into(),
+            in_form: true,
+            fields: vec![field("password", "Password")],
+            ..Facts::default()
+        };
+        assert_eq!(keyed(&grant, tick.clone(), "Enter"), Some(Category::SigningIn));
+        assert_eq!(keyed(&grant, tick, "Space"), None);
     }
 
     #[test]

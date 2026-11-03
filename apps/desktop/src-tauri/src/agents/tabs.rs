@@ -815,5 +815,17 @@ mod tests {
         assert!(web_address("tauri://localhost").is_err());
         assert!(web_address("javascript:alert(1)").is_err());
         assert!(web_address("not an address").is_err());
+        assert!(web_address("chrome://version").is_err());
+        assert!(web_address("view-source:https://example.com/").is_err());
+        assert!(web_address("data:text/html,x").is_err());
+        assert!(web_address("about:version").is_err());
+        assert!(web_address("http://tauri.localhost/").is_err());
+        assert!(web_address("https://nib.localhost/").is_err());
+        assert!(web_address("about:blank").is_ok());
+        // What goes to the engine is what was judged, not what was said.
+        assert_eq!(
+            web_address(" HTTP://Example.com/x").map(|one| one.to_string()).ok().as_deref(),
+            Some("http://example.com/x")
+        );
     }
 }

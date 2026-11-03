@@ -77,6 +77,11 @@ impl Key {
         self.name == "Enter" && self.modifiers & (CONTROL | ALT | META) == 0
     }
 
+    /// Whether this press presses what has the keyboard, as a click would.
+    pub fn presses(&self) -> bool {
+        false
+    }
+
     /// Whether this press is what sends from a message box: Enter, or Control+Enter
     /// where Enter is a new line (a mail's body, a comment). Shift+Enter is the new line
     /// in a chat, and sends nothing.
@@ -283,6 +288,16 @@ mod tests {
         assert!(chord("Alt+ArrowDown").expect("key").opens_a_picker());
         assert!(!chord("ArrowDown").expect("key").opens_a_picker());
         assert!(!chord("Control+Enter").expect("key").submits());
+    }
+
+    #[test]
+    fn space_and_enter_press_what_has_the_keyboard() {
+        for said in ["Space", "Enter", "Shift+Enter", "Control+Enter", "Control+Space"] {
+            assert!(chord(said).expect("key").presses(), "{said}");
+        }
+        for said in ["Tab", "a", "Escape", "ArrowDown"] {
+            assert!(!chord(said).expect("key").presses(), "{said}");
+        }
     }
 
     #[test]

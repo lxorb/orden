@@ -1047,10 +1047,36 @@ fn files_of(app: &AppHandle, asked: &[String]) -> Result<Vec<(PathBuf, bool)>, A
         .collect()
 }
 
+/// Whether a path in the spaces folder is in a space the grant does not reach, or in none.
+fn beyond_the_grant(
+    _root: &std::path::Path,
+    _path: &std::path::Path,
+    _spaces: &super::grants::Spaces,
+) -> bool {
+    false
+}
+
 #[cfg(test)]
 mod tests {
-    use super::modifiers;
+    use super::{beyond_the_grant, modifiers};
+    use crate::agents::grants::{Every, Spaces};
     use crate::agents::verbs::Modifier;
+    use std::path::Path;
+
+    #[test]
+    fn a_file_is_in_reach_by_the_space_it_is_in() {
+        let root = Path::new("/data/Spaces");
+        let alpha = Spaces::Named(vec!["Alpha".into()]);
+        assert!(!beyond_the_grant(root, Path::new("/data/Spaces/Alpha/a.md"), &alpha));
+        assert!(!beyond_the_grant(root, Path::new("/data/Spaces/Alpha/deep/a.md"), &alpha));
+        assert!(beyond_the_grant(root, Path::new("/data/Spaces/Beta/secret.md"), &alpha));
+        assert!(beyond_the_grant(root, Path::new("/data/Spaces/loose.md"), &alpha));
+        assert!(!beyond_the_grant(
+            root,
+            Path::new("/data/Spaces/Beta/secret.md"),
+            &Spaces::All(Every::All)
+        ));
+    }
 
     #[test]
     fn modifiers_are_the_protocols_bits() {
