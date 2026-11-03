@@ -17,6 +17,7 @@ import {
   lines,
   shownText,
 } from '@orden/markdown/links'
+import { stripFrontMatter } from '@orden/markdown/front-matter'
 import { encodeTarget } from '../link-rewrite'
 
 /** A stretch of the source, and what goes in its place. */
@@ -52,6 +53,9 @@ const DEFINITION = new RegExp(
   String.raw`^([ >]*\[(?!\^)[^\]]+\]:[ \t]*)(<[^>]*>|[^\s<]\S*)(${TITLE})[ \t]*$`,
 )
 
+/** A line that ends whatever came before it: a heading or a rule. */
+const STANDS_ALONE = /^(?:#{1,6}(?:\s|$)|(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_[ \t]*){3,}$)/
+
 /** The link as markdown: the words it showed, pointing where it now points. */
 function asLink(link: FoundLink, target: string): string {
   const anchor = link.heading ? `#${link.heading}` : ''
@@ -79,35 +83,54 @@ function balanced(path: string): boolean {
   return open === 0
 }
 
+/** A source as it means once its backslashes are read, which is how the document names it. */
+function unescaped(written: string): string {
+  return written.replace(/\\([!-/:-@[-`{-~])/g, '$1')
+}
+
+/** The edit that moves the source `written` at `from`, or null where it stays. */
+function sourceEdit(
+  written: string,
+  from: number,
+  rename: (src: string) => string | null,
+): Edit | null {
+  const bare = unescaped(written.startsWith('<') ? written.slice(1, -1) : written)
+  const wanted = rename(bare)
+  if (wanted === null || wanted === bare) return null
+  return { from, to: from + written.length, text: asSource(wanted, written) }
+}
+
 /** Where every picture's source sits in the text, outside code: code as the links
  *  are read (`lines` in links.ts), so a block closes on its own mark only and a fence
- *  in a quote or a list item is code too. */
+ *  in a quote or a list item is code too. And outside front matter, which is the note's
+ *  own. A definition cannot interrupt a paragraph, so a line right under one is words. */
 function pictureEdits(source: string, rename: (src: string) => string | null): Edit[] {
   const edits: Edit[] = []
+  const body = source.length - stripFrontMatter(source).length
+  let paragraph = false
 
   for (const { text: line, from: at, code } of lines(source)) {
-    if (code) continue
+    if (code || at < body) {
+      paragraph = false
+      continue
+    }
 
     for (const match of line.matchAll(PICTURE)) {
       const written = match[2] ?? ''
-      const bare = written.startsWith('<') ? written.slice(1, -1) : written
-      const wanted = rename(bare)
-      if (wanted === null || wanted === bare) continue
-
       const from = at + match.index + match[0].indexOf(written, match[1]?.length ?? 0)
-      edits.push({ from, to: from + written.length, text: asSource(wanted, written) })
+      const edit = sourceEdit(written, from, rename)
+      if (edit) edits.push(edit)
     }
 
-    const definition = DEFINITION.exec(line)
+    const definition = paragraph ? null : DEFINITION.exec(line)
     if (definition) {
-      const written = definition[2] ?? ''
-      const bare = written.startsWith('<') ? written.slice(1, -1) : written
-      const wanted = rename(bare)
-      if (wanted === null || wanted === bare) continue
-
       const from = at + (definition[1]?.length ?? 0)
-      edits.push({ from, to: from + written.length, text: asSource(wanted, written) })
+      const edit = sourceEdit(definition[2] ?? '', from, rename)
+      if (edit) edits.push(edit)
     }
+
+    const words = line.replace(/^[ >]*/, '')
+    paragraph = !definition && words !== '' && !STANDS_ALONE.test(words)
   }
 
   return edits
@@ -135,7 +158,8 @@ export function toMarkdown(source: string, options: MarkdownOptions = {}): strin
     for (const found of findLinks(source)) {
       if (found.kind !== 'wikilink') continue
 
-      const picture = options.picture ? pictureEmbed(found, options.picture) : null
+      const inBody = found.from >= source.length - stripFrontMatter(source).length
+      const picture = options.picture && inBody ? pictureEmbed(found, options.picture) : null
       if (picture !== null) {
         edits.push({ from: found.from, to: found.to, text: picture })
         continue

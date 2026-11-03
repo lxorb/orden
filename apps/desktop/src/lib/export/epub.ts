@@ -135,7 +135,8 @@ function legalReference(reference: string): boolean {
 function escaped(text: string, quotes: boolean): string {
   return legalXml(text).replace(CHARACTER, (whole: string, name: string | undefined) => {
     if (name !== undefined) return referenceOf(name)
-    if (whole.startsWith('&#')) return legalReference(whole) ? whole : ''
+    // XML reads only a small x, where HTML takes either.
+    if (whole.startsWith('&#')) return legalReference(whole) ? whole.replace('&#X', '&#x') : ''
     if (whole === '&') return '&amp;'
     if (whole === '<') return '&lt;'
     if (whole === '>') return '&gt;'

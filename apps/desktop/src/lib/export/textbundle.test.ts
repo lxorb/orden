@@ -247,7 +247,7 @@ describe('a picture however it was written', () => {
   })
 
   test('front matter is the note’s own, whatever it looks like', () => {
-    const front = '---\n[r]: pic.png\nalt: ![a](pic.png)\n---\n'
+    const front = '---\n[r]: pic.png\nalt: ![a](pic.png)\ncover: "![[pic.png]]"\n---\n'
     expect(asked(`${front}\n![a](pic.png)\n`, 'pic.png', 'p.png')).toBe(
       `${front}\n![a](assets/p.png)\n`,
     )
