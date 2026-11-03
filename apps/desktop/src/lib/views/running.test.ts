@@ -7,7 +7,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
  *  written, `../Private` moved a note into another space, or made the day's note
  *  there over whatever was there. */
 
-const { written, template, moved, plan, before, writing } = vi.hoisted(() => ({
+const { written, template, moved, plan, before, writing, trusted, ran } = vi.hoisted(() => ({
+  trusted: { yes: true },
+  ran: [] as { base: { guarded?: boolean } }[][],
   writing: { pairs: [] as unknown[], changed: true },
   before: [] as unknown[][],
   written: new Map<string, string>(),
@@ -24,8 +26,9 @@ vi.mock('@orden/bases', async (importOriginal) => ({
   readAutomations: () => [],
 }))
 vi.mock('./automate', () => ({
-  planned: (_bases: unknown, removed: unknown[]) => {
+  planned: (bases: { base: { guarded?: boolean } }[], removed: unknown[]) => {
     before.push(removed)
+    ran.push(bases)
     return {
       writes: writing.pairs,
       moves: plan.folder
@@ -78,7 +81,7 @@ vi.mock('../workspace/write-file', () => ({
 }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 // Every space here may be written in; one that may not is read-only.test.ts's.
-vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
+vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true, trustsHtmlAt: () => trusted.yes }))
 
 const { heard, heardChange, readHeld, repeatTemplates } = await import('./running')
 const { moving } = await import('./moving')
@@ -87,6 +90,22 @@ beforeEach(() => {
   before.length = 0
   written.clear()
   moved.length = 0
+})
+
+describe('a base somebody else could have written', () => {
+  test('runs under the guard any other reader of it runs under', async () => {
+    plan.folder = ''
+    trusted.yes = false
+    ran.length = 0
+    try {
+      await readHeld('/s/Shared/Tasks.base')
+      heard('Shared', 'Inbox/a.md', [])
+      await new Promise((done) => setTimeout(done, 150))
+    } finally {
+      trusted.yes = true
+    }
+    expect(ran.at(-1)?.map((one) => one.base.guarded)).toEqual([true])
+  })
 })
 
 describe("a base's automation that moves a note", () => {

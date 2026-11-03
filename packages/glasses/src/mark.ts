@@ -28,7 +28,7 @@ import { useEmoji } from '@orden/markdown/engines'
 import { calloutOf, opensCallout } from '@orden/markdown/callouts'
 import { readChart } from '@orden/markdown/chart'
 import { captionIn, languageIn } from '@orden/markdown/code'
-import { blockIdOf, embedKind, type Wikilink } from '@orden/markdown/links'
+import { embedKind, type Wikilink, withoutBlockIds } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
 import {
   type Compaction,
@@ -220,9 +220,10 @@ export function workDone(): Work {
  *  and there is nothing left to search for; those fall back to the start of the
  *  quote, which is where a reader sent there would want to be anyway. */
 class Locator {
-  private at = 0
-
-  constructor(private readonly source: string) {}
+  constructor(
+    private readonly source: string,
+    private at = 0,
+  ) {}
 
   /** The offset of `raw`, with the cursor moved past it. */
   take(raw: string): number {
@@ -586,7 +587,8 @@ class Sheet {
     for (const [at, part] of text.split('\n').entries()) {
       // Folded here, at the one place a line is made, so that every line of a
       // note is a line the firmware can actually draw. See `firmware.ts`.
-      const whole = fold(`${lead}${at === 0 ? part : hang + part.trimStart()}`)
+      // The hang is what a line starts with, the bars and the indent of `lead` included.
+      const whole = fold(at === 0 ? `${lead}${part}` : `${hang}${part.trimStart()}`)
       if (at === 0) hang = hangOf(whole)
 
       // Each part is a line of the file in its own right, so it carries that line's
@@ -711,7 +713,7 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
         sheet.add(`${PICTURE} ${picture}`, from, nest)
         break
       }
-      const words = unnamed(inlineWords(kids, sheet.marks, sheet.flow))
+      const words = inlineWords(kids, sheet.marks, sheet.flow)
       if (words) sheet.add(words, from, nest)
       break
     }
@@ -733,7 +735,7 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
     case 'text':
       sheet.add(
-        unnamed(kids.length ? inlineWords(kids, sheet.marks, sheet.flow) : textOf(token)),
+        kids.length ? inlineWords(kids, sheet.marks, sheet.flow) : textOf(token),
         where.take(raw),
         nest,
       )
@@ -766,26 +768,6 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     default:
       sheet.add(textOf(token), where.take(raw), nest)
   }
-}
-
-/** Words without the block name at the end of a line: a marker for a link to point at,
- *  which nothing that shows a note shows; see `withoutBlockIds`. */
-function unnamed(words: string): string {
-  if (!words.includes('^')) return words
-
-  return words
-    .split('\n')
-    .map((line) => {
-      const id = blockIdOf(line)
-      return id
-        ? line
-            .trimEnd()
-            .slice(0, -id.length - 1)
-            .trimEnd()
-        : line
-    })
-    .join('\n')
-    .trimEnd()
 }
 
 /** A fence, with the lines it was written between and its code as it stands.
@@ -1019,12 +1001,16 @@ export function markLines(source: string, options: MarkOptions): Line[] {
   // keep those offsets exact and leave a run of spaces mid-sentence, or an
   // indent deep enough to read as code: a gap on a 27 pixel line is worse than
   // a tap landing a few characters early.
-  const kept = withoutComments(source)
+  // A block's name is no word of the note either, and one on a closing fence is what
+  // an older build wrote: read as the page reads it, with the name gone.
+  const kept = withoutComments(withoutBlockIds(source))
   const body = stripFrontMatter(kept)
   // The locator searches the whole of what was kept, so an offset it finds is
-  // an offset into that.
+  // an offset into that. From past the front matter, which holds no line of the page:
+  // a word under `title: Words` is found where it is written, not in there.
   const sheet = new Sheet(new Lines(kept), options.inner, options)
-  walk(lexMarkdown(body), new Locator(kept), { depth: 0, quote: 0 }, sheet)
+  const where = new Locator(kept, kept.length - body.length)
+  walk(lexMarkdown(body), where, { depth: 0, quote: 0 }, sheet)
 
   return sheet.lines
 }

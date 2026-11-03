@@ -17,6 +17,7 @@ import {
   insertFrontMatter,
   insertLink,
   insertHorizontalRule,
+  insertSlideBreak,
   insertMathBlock,
   insertTable,
   insertToc,
@@ -117,6 +118,50 @@ function runSelection(command: StateCommand, marked: string): [number, number] {
   const { doc, from, to } = marks(marked)
   return apply(command, doc, from, to).selection
 }
+
+describe('a block that holds its lines', () => {
+  const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |\n| 5 | 6 |'
+
+  test('a block goes under a table, not under the row the caret is in', () => {
+    const said = apply(insertHorizontalRule, TABLE, TABLE.indexOf('2')).doc
+    expect(said).toBe(`${TABLE}\n\n---\n`)
+  })
+
+  test('and under a fence, whatever line of it the caret is on', () => {
+    expect(run(insertHorizontalRule, '```\nco|de\nmore\n```\nb')).toBe(
+      '```\ncode\nmore\n```\n\n---\n\nb',
+    )
+  })
+
+  test('and under maths', () => {
+    const state = parsed(
+      EditorState.create({
+        doc: '$$\na\nb\n$$',
+        selection: EditorSelection.cursor(4),
+        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      }),
+    )
+    let next = state
+    insertHorizontalRule({ state, dispatch: (one: Transaction) => (next = one.state) })
+    expect(next.doc.toString()).toBe('$$\na\nb\n$$\n\n---\n')
+  })
+
+  test('and under a quote, which a line of it does not end', () => {
+    expect(run(insertHorizontalRule, '> on|e\n> two\n\nb')).toBe('> one\n> two\n\n---\n\n\nb')
+  })
+
+  test('a slide break goes after the selection and keeps it', () => {
+    expect(run(insertSlideBreak, 'abc [def] ghi')).toBe('abc def\n\n---\n\n ghi')
+    expect(run(insertSlideBreak, 'abc |def')).toBe('abc \n\n---\n\ndef')
+  })
+
+  test('a line moved with part of a table selected goes nowhere', () => {
+    const doc = `words\n\n${TABLE}`
+    const to = doc.indexOf('| a') + 3
+    expect(apply(moveLineOver(1), doc, 0, to).doc).toBe(doc)
+    expect(apply(moveLineOver(-1), doc, 0, to).doc).toBe(doc)
+  })
+})
 
 describe('inline wrapping', () => {
   const strong = toggleWrap('**')

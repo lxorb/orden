@@ -11,6 +11,7 @@
 
 import { addMonths, dateAt, dayNumber, msOf, readDate } from '../dates'
 import { BasesError } from '../errors'
+import { spend, stepsOfText } from './pattern'
 import type {
   Context,
   DateValue,
@@ -378,8 +379,15 @@ export function add(a: Val, b: Val): Val {
   if (isDate(b) && isDuration(a)) return shifted(b, a, 1)
   if (isDuration(a) && isDuration(b))
     return { kind: 'duration', ms: a.ms + b.ms, months: a.months + b.months }
-  if (typeof a === 'string' || typeof b === 'string') return text(a) + text(b)
-  if (Array.isArray(a) && Array.isArray(b)) return [...a, ...b] as Value[]
+  if (typeof a === 'string' || typeof b === 'string') {
+    const [left, right] = [text(a), text(b)]
+    spend(stepsOfText(left.length + right.length))
+    return left + right
+  }
+  if (Array.isArray(a) && Array.isArray(b)) {
+    spend(a.length + b.length)
+    return [...a, ...b] as Value[]
+  }
   if (a === null || b === null) return null
   throw new BasesError(`Cannot add ${kindName(b)} to ${kindName(a)}`)
 }

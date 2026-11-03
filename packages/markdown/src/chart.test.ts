@@ -108,6 +108,18 @@ describe('reading a chart out of a fence', () => {
   })
 })
 
+describe('a flow list over several lines', () => {
+  test('reads as the one list it is', () => {
+    const chart = readChart(
+      'labels: [\n  a,\n  b\n]\nseries:\n  - title: s\n    data: [\n      1,\n      2\n    ]\n',
+    )
+    expect(chart?.labels).toEqual(['a', 'b'])
+    expect(chart?.series[0]?.data).toEqual([1, 2])
+    expect(readChart('data: [\n1,\n2\n]\n')).toBeNull()
+    expect(readChart('series: [\n1,\n2\n]\n')?.series[0]?.data).toEqual([1, 2])
+  })
+})
+
 describe('drawing it', () => {
   test('a bar per number, in the colours the tokens name', () => {
     const svg = chartSvg(readChart(SALES)!)

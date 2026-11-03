@@ -8,7 +8,7 @@
  *  status is more than quick add can carry, and there the view's own add row writes
  *  the words as they were typed, with the prefill's fields, through `addTask`. */
 
-import { type Base, inBase, nextId, type Priority, type Value } from '@orden/bases'
+import { type Base, nextId, type Priority, rowsInBase, type Value } from '@orden/bases'
 import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
 import { joinPath } from '../tauri'
 import { insideOnly } from '../automation/inside'
@@ -124,8 +124,10 @@ function idFor(base: Base): Record<string, string> {
   if (!id || !space) return {}
   const mine = rows.of(space.name)
   const context = contextFor({ rows: mine, today: todayHere(), now: nowHere() })
-  const own = mine.filter((row) => inBase(base, row, context))
-  return { [id.property]: nextId(own, id.property, id.prefix) }
+  // An id counted from rows left out is one somebody has: this note goes without, and
+  // takes one when the base can be read again.
+  const own = rowsInBase(base, mine, context)
+  return own.partial ? {} : { [id.property]: nextId(own.rows, id.property, id.prefix) }
 }
 
 /** A new note for a view of notes: in the folder its filter names, with the

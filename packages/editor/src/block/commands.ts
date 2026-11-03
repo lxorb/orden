@@ -19,7 +19,6 @@
 import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
-import { fenceName } from '@orden/markdown/fences'
 import { blockIdOf, freeBlockId, blockIds, lines, ownLine } from '@orden/markdown/links'
 import { indentItems, outdentItems } from '../list-keys'
 import { headingLevel, headingText } from '../headings'
@@ -140,7 +139,7 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   const rows = [...lines(doc.toString())]
   if (rows[first.number - 1]?.code) {
     for (let at = first.number - 1; rows[at]?.code; at++) {
-      const old = fenceName(rows[at]?.text ?? '')
+      const old = rows[at]?.fenceName
       if (old) return `#^${old}`
     }
     if (!verbatimLines(view.state, span.from, span.to).has(first.number)) return null

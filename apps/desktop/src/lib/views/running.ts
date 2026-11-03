@@ -15,6 +15,7 @@ import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { writeEach } from './act'
 import { type HeldBase, planned } from './automate'
+import { guardedAt } from './guard'
 import { contextFor } from './context'
 import { leaveIdsBy } from './copied'
 import { landing, onLanded } from './moving'
@@ -32,6 +33,15 @@ export function basesAre(paths: readonly string[]) {
 
 /** Whether any base is worth running at all. */
 const running = (): boolean => held.size > 0
+
+/** The bases of a space as they may run now: a held one is the file as it reads, and a
+ *  shared one runs under the limits any other reader of it does. */
+function heldIn(space: string): HeldBase[] {
+  return [...held.entries()].flatMap(([path, one]) => {
+    const base = one.space === space ? guardedAt(one.base, path) : null
+    return base ? [{ ...one, base }] : []
+  })
+}
 /** Notes the runner just wrote, whose next change is its own. */
 const ours = new Set<string>()
 /** Notes waiting for their quiet moment, with the rows they had before it. One written
@@ -86,9 +96,7 @@ function rowsOf(space: string, path: string): readonly Row[] {
 /** The space holding a path, and the bases of it that number their rows. */
 function numbering(path: string) {
   const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
-  const bases = space
-    ? [...held.values()].filter((one) => one.space === space.name && one.base.nib.id)
-    : []
+  const bases = space ? heldIn(space.name).filter((one) => one.base.nib.id) : []
   return { space, bases }
 }
 
@@ -117,7 +125,7 @@ leaveIdsBy({ numbers: (path) => numbering(path).bases.length > 0, without: witho
  *  shared with this account to be read: what they write and move would be refused by
  *  the sync on every pass, and the space's own people run them where they write. */
 async function run(space: string, path: string, removed: readonly Row[]) {
-  const bases = [...held.values()].filter((one) => one.space === space)
+  const bases = heldIn(space)
   const root = workspace.spaces.find((one) => one.name === space)?.root
   if (!bases.length || root === undefined || !canWriteAt(root)) return
   const all = rows.of(space)

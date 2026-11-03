@@ -5,13 +5,110 @@ import {
   frontMatterEdits,
   frontMatterKeys,
   frontMatterList,
+  frontMatterBlock,
   frontMatterValue,
+  isPropertyName,
+  opensFrontMatter,
   stripFrontMatter,
   writeFrontMatter,
 } from './front-matter'
+import table from './front-matter-table.json'
+import { addProperty, renameProperty, writeProperty } from './property-edits'
+import { renderMarkdown } from './index'
+import { bodyStart } from './slide-breaks'
 
 /** What the block is read as. The three readers of it - an export, a search and
  *  the icon a row wears - all come through these. */
+/** The notes both this package and front_matter.rs are held to, each with whether it
+ *  opens with a block. */
+const TABLE = table as [string, boolean][]
+
+describe('what counts as front matter', () => {
+  test.each(TABLE)('%j is a block: %s', (note, block) => {
+    expect(frontMatterBlock(note) !== null).toBe(block)
+    expect(opensFrontMatter(note)).toBe(block)
+    expect(bodyStart(note)).toBe(frontMatterBlock(note)?.to ?? 0)
+    expect(stripFrontMatter(note)).toBe(frontMatterBlock(note) ? note.slice(bodyStart(note)) : note)
+  })
+
+  test('an indented fence inside a block scalar does not close the block', () => {
+    const note = '---\ntext: |\n  a\n  ---\n  b\n---\nrest'
+    expect(stripFrontMatter(note)).toBe('rest')
+  })
+
+  test('the words between two rules stay on the page and out of a writer', () => {
+    const note = '---\nprose words\n---\nrest'
+    expect(renderMarkdown(note)).toContain('prose words')
+    expect(frontMatterEdit(note, 'icon', 'x')).toEqual({
+      from: 0,
+      to: 0,
+      insert: '---\nicon: x\n---\n',
+    })
+    expect(frontMatterValue(note, 'prose words')).toBeNull()
+  })
+})
+
+describe('what a writer makes is what a reader takes', () => {
+  const NAMES = [
+    'Date of the first meeting held',
+    'Done?',
+    'No. of pages',
+    'Author, editor',
+    '+1',
+    'Nr. der Rechnung',
+    'og:title',
+    'a;b',
+    'x.y z',
+    'Why!',
+    'Last edited by whom now',
+    'a/b',
+    'Заголовок',
+    '💰 cost',
+    '1. Item',
+    'One two three four five six seven eight nine',
+    'k'.repeat(200),
+  ]
+  const apply = (source: string, edit: { from: number; to: number; insert: string } | null) =>
+    edit ? source.slice(0, edit.from) + edit.insert + source.slice(edit.to) : source
+  const fences = (source: string) => source.split('\n').filter((one) => one === '---').length
+
+  test.each(NAMES)('%s', (name) => {
+    if (!isPropertyName(name)) {
+      expect(addProperty('# Note\n', name)).toBeNull()
+      // A row an import carries is written whatever it is called, and read back.
+      const written = `${writeFrontMatter([[name, 'x']])}\n`
+      expect(frontMatterBlock(written)).not.toBeNull()
+      expect(frontMatterValue(written, name)).toBe('x')
+      return
+    }
+
+    let note = apply('# Note\n', addProperty('# Note\n', name))
+    expect(frontMatterBlock(note), note).not.toBeNull()
+    for (const value of ['x', 'What we did, and why we did it.', 'Is this it, then?']) {
+      note = apply(note, writeProperty(note, name, value))
+      expect(frontMatterBlock(note), note).not.toBeNull()
+      expect(frontMatterValue(note, name)).toBe(value)
+    }
+    note = apply(note, writeProperty(note, 'status', 'open'))
+    expect(fences(note), note).toBe(2)
+
+    const second = apply('---\ntitle: x\n---\n', addProperty('---\ntitle: x\n---\n', name))
+    expect(frontMatterKeys(second)).toEqual(['title', name])
+
+    const renamed = apply(
+      '---\ntitle: x\nb: 2\n---\n',
+      renameProperty('---\ntitle: x\nb: 2\n---\n', 'title', name),
+    )
+    expect(frontMatterKeys(renamed)).toEqual([name, 'b'])
+
+    const left = `---\ntitle: x\n${name}: 2\n---\nbody\n`
+    expect(frontMatterBlock(apply(left, frontMatterEdit(left, 'title', null)))).not.toBeNull()
+
+    const written = `${writeFrontMatter([[name, 'What we did, and why we did it.']])}\n`
+    expect(frontMatterBlock(written), written).not.toBeNull()
+  })
+})
+
 describe('reading the front matter', () => {
   test('the block, and nothing where a note has none', () => {
     expect(frontMatter('---\ntitle: Hi\n---\n\nBody')).toBe('title: Hi')

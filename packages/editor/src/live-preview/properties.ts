@@ -23,6 +23,7 @@
 
 import { EditorSelection, Facet } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { type Property, propertiesTable, readProperties } from '@orden/markdown/properties'
 import {
   type ListItem,
@@ -334,11 +335,6 @@ function addProperty(view: EditorView, count: number): void {
  *  came from is not in hand. */
 function closingFence(view: EditorView): number | null {
   const doc = view.state.doc
-  if (doc.line(1).text.trim() !== '---') return null
-
-  for (let number = 2; number <= doc.lines; number++) {
-    if (doc.line(number).text.trim() === '---') return number
-  }
-
-  return null
+  const block = frontMatterBlock(doc.toString())
+  return block && doc.lineAt(block.close).number
 }

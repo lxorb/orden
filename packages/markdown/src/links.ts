@@ -15,7 +15,7 @@
  *  Imported on its own - `@orden/markdown/links` - by the editor, which wants the
  *  grammar and not the renderer that stands on it. */
 
-import { closingTicks, CodeBlocks, fenceName, WORDS } from './fences'
+import { closingTicks, CodeBlocks, WORDS } from './fences'
 import { frontMatterBlock } from './front-matter'
 
 /** What one link between notes says. */
@@ -382,6 +382,8 @@ const SIZE = /^(\d+)(?:x(\d+))?$/
  *  which of the two `300x200` means. */
 export function embedSize(alias: string | null): { width: number; height: number | null } | null {
   const found = alias === null ? null : SIZE.exec(alias)
+  // A width of nothing is a picture nobody would see, which is no thing to ask for.
+  if (found && Number(found[1]) === 0) return null
   if (!found) return null
 
   const height = found[2]
@@ -395,7 +397,8 @@ export function sizedAlt(alt: string): {
   size: { width: number; height: number | null } | null
 } {
   const found = /^(.*?)\\?\|(\d+(?:x\d+)?)$/su.exec(alt)
-  return found ? { alt: found[1] ?? '', size: embedSize(found[2] ?? '') } : { alt, size: null }
+  const size = found ? embedSize(found[2] ?? '') : null
+  return found && size ? { alt: found[1] ?? '', size } : { alt, size: null }
 }
 
 /** The page a fragment names, or null when it names none.
@@ -559,6 +562,8 @@ export interface Row {
   code: boolean
   /** True on the front matter's lines: YAML, where `#` opens no heading. */
   matter: boolean
+  /** The name on a closing fence, as an older build wrote it: see `fenceName`. */
+  fenceName: string | null
 }
 
 /** Every line of some markdown, so the walks here do not each carry their own
@@ -591,7 +596,15 @@ export function* lines(text: string): Generator<Row> {
     const row = text.slice(at, end === -1 ? text.length : end)
 
     const matters = at < wordsAt
-    yield { text: row, from: at, line, code: !matters && code.line(row) !== WORDS, matter: matters }
+    const isCode = !matters && code.line(row) !== WORDS
+    yield {
+      text: row,
+      from: at,
+      line,
+      code: isCode,
+      matter: matters,
+      fenceName: isCode ? code.closedName : null,
+    }
 
     if (end === -1) break
     at = end + 1
@@ -908,7 +921,7 @@ export function blockIds(text: string): { id: string; line: number }[] {
   const found: { id: string; line: number }[] = []
 
   for (const row of lines(text)) {
-    const id = row.code ? fenceName(row.text) : blockIdOf(row.text)
+    const id = row.code ? row.fenceName : blockIdOf(row.text)
     if (id) found.push({ id, line: row.line })
   }
 
@@ -973,7 +986,7 @@ export function withoutBlockIds(text: string): string {
   let at = 0
 
   for (const row of lines(text)) {
-    const id = row.code ? fenceName(row.text) : blockIdOf(row.text)
+    const id = row.code ? row.fenceName : blockIdOf(row.text)
     if (!id) continue
 
     const end = row.from + row.text.trimEnd().length

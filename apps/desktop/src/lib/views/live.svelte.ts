@@ -17,17 +17,16 @@ import {
   type Base,
   cellValue,
   type Context,
-  refusedPattern,
   type Row,
   type View,
 } from '@orden/bases'
 import { rows as store } from '../rows/rows.svelte'
-import { trustsHtmlAt } from '../sharing.svelte'
 import { afterQuiet } from '../timing'
 import { toneColour } from './chips'
 import { columnsOf } from './columns'
 import { contextFor } from './context'
 import { displayed } from './display'
+import { guardedAt } from './guard'
 import { nowHere, todayHere, untilMidnightHere } from './days'
 
 export interface Source {
@@ -158,9 +157,8 @@ export class LiveView {
       const loaded = await this.source.load()
       // A base somebody else could have written may not freeze the app for whoever opens
       // it; the reader's own runs whatever it says. The same line raw HTML is held to.
-      const guarded = !trustsHtmlAt(this.source.path ?? null)
-      if (guarded && refusedPattern(loaded) !== null) throw new Error('refused')
-      const base = guarded ? { ...loaded, guarded } : loaded
+      const base = guardedAt(loaded, this.source.path ?? null)
+      if (!base) throw new Error('refused')
       this.base = base
       const named = this.source.view
       const at = named === undefined ? -1 : base.views.findIndex((one) => one.name === named)

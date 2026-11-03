@@ -185,12 +185,13 @@ function quoted(value: string): string {
  *  quotes looks like something a machine made. */
 export function scalar(value: string): string {
   const said = oneLine(value)
-  return ambiguous(said) ? quoted(said) : said
+  // A sentence, plain, could make the key in front of it read as one: `isKeyLine`.
+  return ambiguous(said) || /\s\S+\s.*[.!?…]$/u.test(said) ? quoted(said) : said
 }
 
 /** A member of a flow sequence, which is how a note writes `tags:`. A scalar's
  *  rules, plus the characters that would end the member or the list itself. */
 export function flowItem(value: string): string {
   const said = oneLine(value)
-  return /[,[\]{}]/.test(said) ? quoted(said) : scalar(said)
+  return /[,[\]{}]/.test(said) || ambiguous(said) ? quoted(said) : said
 }

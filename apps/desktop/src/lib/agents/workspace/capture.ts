@@ -20,7 +20,7 @@
  *  marked as the page's: the note is named after what the page calls itself. */
 
 import { freePath } from '@orden/markdown/paths'
-import { writeFrontMatter } from '@orden/markdown/front-matter'
+import { stripFrontMatter, writeFrontMatter } from '@orden/markdown/front-matter'
 import { asWords } from '@orden/markdown/words'
 import type { AgentAnswer } from '../../automation/caller'
 import { attachmentFolder } from '../../attachments'
@@ -194,7 +194,7 @@ function frontMatter(page: Page, title: string): string {
 /** The body of a capture without its front matter: what goes under a heading of a note
  *  that is already there, where a second block of front matter would be words. */
 function body(words: string): string {
-  return words.replace(/^---\n[\s\S]*?\n---\n+/, '').trim()
+  return stripFrontMatter(words).trim()
 }
 
 /** A note path nobody has in a place, from a page's title. */

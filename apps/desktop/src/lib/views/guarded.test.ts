@@ -13,6 +13,7 @@ vi.mock('../sharing.svelte', () => ({
 }))
 
 const { LiveView } = await import('./live.svelte')
+const { guardedAt } = await import('./guard')
 
 const risky = readBase(`formulas:
   f: /(a+)+$/.matches(note.x)
@@ -61,5 +62,33 @@ describe('a base with a pattern that could freeze the app', () => {
     const live = await opened(fine)
     expect(live.failed).toBe(false)
     expect(live.base?.guarded).toBe(true)
+  })
+})
+
+describe('a base read from a file by anything that answers it', () => {
+  beforeEach(() => {
+    shared = false
+  })
+
+  test('is the reader own as it is', () => {
+    expect(guardedAt(risky, 'space/A.base')).toBe(risky)
+  })
+
+  test('is refused where it holds a pattern it may not run', () => {
+    shared = true
+    expect(guardedAt(risky, 'space/A.base')).toBeNull()
+  })
+
+  test('is marked, the one copy for the one base, so what an answer keeps stays', () => {
+    shared = true
+    const once = guardedAt(fine, 'space/A.base')
+    expect(once?.guarded).toBe(true)
+    expect(guardedAt(fine, 'space/A.base')).toBe(once)
+  })
+
+  test('follows the space when it comes to be shared after the read', () => {
+    expect(guardedAt(fine, 'space/A.base')?.guarded).toBeUndefined()
+    shared = true
+    expect(guardedAt(fine, 'space/A.base')?.guarded).toBe(true)
   })
 })

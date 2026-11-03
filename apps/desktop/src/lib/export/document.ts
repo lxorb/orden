@@ -20,6 +20,7 @@ import {
 } from '@orden/markdown'
 import { calloutOf } from '@orden/markdown/callouts'
 import { coverOf } from '@orden/markdown/cover'
+import { stripFrontMatter } from '@orden/markdown/front-matter'
 import { embedKind, embedSize, shownText, withoutBlockIds } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
 import { stemOf } from './naming'
@@ -441,9 +442,7 @@ export function documentOf(source: string, name: string, options: DocumentOption
   const hard = options.hardBreaks ?? hardBreaks()
   // Front matter is metadata, a block's name is a marker and a comment is a note
   // to the writer, exactly as the HTML renderer treats all three.
-  const body = withoutComments(
-    withoutBlockIds(source.startsWith('---') ? stripFront(source) : source),
-  )
+  const body = withoutComments(withoutBlockIds(stripFrontMatter(source)))
 
   // The note's cover, where it names one, as the document's first picture: the
   // banner is the top of the note, so a note whose cover is a photograph opens on
@@ -547,13 +546,6 @@ function flowed(blocks: Block[], hard: boolean): Block[] {
         return block
     }
   })
-}
-
-/** Front matter off, keeping the rest character for character. Not imported
- *  from the renderer because that one also has to answer for a note that has
- *  none, and here the caller has already asked. */
-function stripFront(source: string): string {
-  return source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '')
 }
 
 /** Every picture the document names, in the order it names them, each once. */

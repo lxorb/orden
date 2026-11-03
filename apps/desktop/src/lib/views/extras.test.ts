@@ -36,6 +36,33 @@ function plan(removed: Row[], added: Row[], all: Row[]) {
   return planned(held, removed, added, all, context, filling)
 }
 
+describe('a guarded base that could not read all of its rows', () => {
+  test('gives no id, since one counted from what it read is one somebody has', () => {
+    const list = '[1,2,3,4,5,6,7,8,9,10]'
+    let deep = '1'
+    for (let at = 0; at < 7; at++) deep = `${list}.map(${deep})`
+    const guarded = {
+      ...readBase(`filters: 'if(note.heavy, (${deep}) != 1, true)'
+nib:
+  id: { property: id, prefix: BUG }
+`),
+      guarded: true,
+    }
+    const heavy = noteRow('Bugs/Old.md', 'id: BUG-7\nheavy: true')
+    const made = noteRow('Bugs/New.md', 'status: x')
+    const context = contextFor({ rows: [heavy, made], today: TODAY, now: `${TODAY}T09:30:00` })
+    const out = planned(
+      [{ name: 'Bugs', space: 'Notes', base: guarded }],
+      [],
+      [made],
+      [heavy, made],
+      context,
+      filling,
+    )
+    expect(out.writes).toEqual([])
+  })
+})
+
 describe('a base at work on a change', () => {
   const older = noteRow('Bugs/Crash.md', 'id: BUG-1\nstatus: Doing', { ctime: day('2026-01-01') })
 

@@ -234,6 +234,10 @@ export function moveLineOver(delta: -1 | 1): StateCommand {
     const last = state.doc.lineAt(range.to)
     const table = tableBeside(state, delta < 0 ? first : last, delta)
     const inside = enclosingNamed(syntaxTree(state).resolveInner(first.from, 1), 'Table')
+    const endsIn = enclosingNamed(syntaxTree(state).resolveInner(last.from, 1), 'Table')
+    // Part of a table and something else: no way of moving that leaves a table. Held by
+    // the key rather than handed on, which would take the rows out from under the head.
+    if (inside?.from !== endsIn?.from) return true
     if (!table || inside || state.readOnly) return library(target)
 
     // A line left beside the table's new place: over its head it is no table, and under

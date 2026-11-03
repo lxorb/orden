@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { namedBlock } from './block-names'
+import fenceTable from './fence-table.json'
+import { CodeBlocks } from './fences'
 import { renderMarkdown } from './index'
 import {
   blockIdOf,
@@ -870,16 +872,53 @@ describe('naming a block by where it ends', () => {
   })
 })
 
+describe('a size of nothing', () => {
+  test('is no size: the picture is not drawn away', () => {
+    expect(sizedAlt('x|0')).toEqual({ alt: 'x|0', size: null })
+    expect(embedSize('0')).toBeNull()
+    expect(embedSize('0x20')).toBeNull()
+    expect(embedSize('300')).toEqual({ width: 300, height: null })
+  })
+})
+
 describe('a closing fence an older build named', () => {
-  const OLD = 'a\n\n```\nx\n``` ^old\n\n# After\n\nb\n'
+  const OLD = 'a\n\n```\nx\n``` ^abc123\n\n# After\n\nb\n'
 
   test('closes the fence, and the name is found', () => {
-    expect(blockIds(OLD)).toEqual([{ id: 'old', line: 4 }])
+    expect(blockIds(OLD)).toEqual([{ id: 'abc123', line: 4 }])
     expect(withoutBlockIds(OLD)).toBe('a\n\n```\nx\n```\n\n# After\n\nb\n')
     expect(renderMarkdown(OLD)).toContain('<h1')
   })
 
   test('code that only looks like one stays code', () => {
     expect(blockIds('```\n``` ^a b\n```\n')).toEqual([])
+    const shown = '```\n``` ^a b\n```\n\n[[L]] words\n'
+    expect(renderMarkdown(shown)).toContain('``` ^a b')
+    expect(findLinks(shown).map((one) => one.target)).toEqual(['L'])
+  })
+
+  test('on the fence that opens is its info string and no name', () => {
+    const opener = '``` ^abc123\ncode\n```\n'
+    expect(blockIds(opener)).toEqual([])
+    expect(withoutBlockIds(opener)).toBe(opener)
+  })
+
+  test('in a quote or a list item is read past what the fence is in', () => {
+    const quoted = '> ```\n> code\n> ``` ^abc123\n> words [[L]]\n'
+    expect(blockIds(quoted)).toEqual([{ id: 'abc123', line: 2 }])
+    expect(renderMarkdown(quoted)).not.toContain('^abc123')
+    expect(renderMarkdown(quoted)).toMatch(/<p>words/)
+    const listed = '- a\n\n    ```\n    code\n    ``` ^abc123\n'
+    expect(blockIds(listed)).toEqual([{ id: 'abc123', line: 4 }])
+    expect(renderMarkdown(listed)).not.toContain('^abc123')
+  })
+
+  // The same notes every parser of a fence is held to: fences.test.ts, code_blocks.rs,
+  // the editor's grammar in @orden/editor and the glasses.
+  test.each(fenceTable as [string, string, string[]][])('%j', (note, shape, ids) => {
+    const code = new CodeBlocks()
+    const said = note.split('\n').map((line) => 'wco'[code.line(line)])
+    expect(said.join('')).toBe(shape)
+    expect(blockIds(note).map((one) => one.id)).toEqual(ids)
   })
 })

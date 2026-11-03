@@ -20,6 +20,7 @@
  *  address into the app it came from is a fact about where the note used to live,
  *  and rewriting it to nothing would lose that. */
 
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { foldName } from '@orden/markdown/links'
 
 import { linkTo } from '../composer'
@@ -698,9 +699,8 @@ function withMath(text: string, code: [number, number][]): [number, number][] {
 /** How many lines the properties at the top of the note take, the two `---` lines
  *  included, or nothing for a note that has none. */
 function propertiesEnd(lines: readonly string[]): number {
-  if (lines[0]?.trimEnd() !== '---') return 0
-  const closing = lines.findIndex((line, at) => at > 0 && /^(?:---|\.\.\.)\s*$/.test(line))
-  return closing < 0 ? 0 : closing + 1
+  const block = frontMatterBlock(lines.join('\n'))
+  return block ? lines.join('\n').slice(0, block.close).split('\n').length : 0
 }
 
 /** Where the properties at the top of the note end, as an offset into its text, or

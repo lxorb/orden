@@ -19,6 +19,7 @@
  *  by it. See fcm.ts, Reminders.kt. */
 
 import { taskHash } from '@orden/bases'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { readTask } from '@orden/markdown/task-line'
 import { momentOf, plainWords, reminderId, remindTimes } from '@orden/markdown/task-reminders'
 import type { Env } from '../types'
@@ -68,11 +69,8 @@ interface Kept {
 function taskLines(content: string): { line: number; text: string }[] {
   const lines = content.split(/\r?\n/)
   const found: { line: number; text: string }[] = []
-  let at = 0
-  if (lines[0] === '---') {
-    const close = lines.findIndex((one, index) => index > 0 && (one === '---' || one === '...'))
-    if (close > 0) at = close + 1
-  }
+  const block = frontMatterBlock(content)
+  let at = block ? content.slice(0, block.close).split('\n').length : 0
   let fence: string | null = null
   for (; at < lines.length; at++) {
     const line = lines[at] ?? ''

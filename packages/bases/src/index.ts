@@ -45,6 +45,7 @@ export {
   type Effect,
   fired,
   inBase,
+  rowsInBase,
   readAutomations,
   type Trigger,
   withAutomations,

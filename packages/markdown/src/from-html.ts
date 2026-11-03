@@ -288,6 +288,58 @@ function spanOf(cell: Element): number {
 
 const MOST_COLUMNS = 100
 
+const MOST_ROWS_SPANNED = 1000
+
+/** How many rows a cell covers below its own. */
+function rowsBelow(cell: Element): number {
+  const said = Number(cell.getAttribute('rowspan'))
+  return Number.isInteger(said) && said > 1 ? Math.min(said, MOST_ROWS_SPANNED) - 1 : 0
+}
+
+/** How many empty cells to write in front of each cell of a row, and after its last, for
+ *  the columns a cell of a row above still covers. Markdown has no way to say so either,
+ *  and a cell written where that one stands has moved to another column. */
+interface Gaps {
+  before: Map<Element, number>
+  after: Map<Element, number>
+}
+
+const gapsOfTable = new WeakMap<Element, Gaps>()
+
+function gapsOf(table: HTMLTableElement): Gaps {
+  const known = gapsOfTable.get(table)
+  if (known) return known
+
+  const gaps: Gaps = { before: new Map(), after: new Map() }
+  /** By column, how many more rows a cell above covers. */
+  const covered: number[] = []
+  for (const row of Array.from(table.rows)) {
+    let column = 0
+    for (const cell of Array.from(row.cells)) {
+      let skipped = 0
+      while ((covered[column] ?? 0) > 0) {
+        covered[column] = (covered[column] ?? 0) - 1
+        column++
+        skipped++
+      }
+      if (skipped) gaps.before.set(cell, skipped)
+      const across = spanOf(cell)
+      for (let over = 0; over < across; over++) covered[column + over] = rowsBelow(cell)
+      column += across
+    }
+    let after = 0
+    for (let at = column; at < covered.length; at++) {
+      if ((covered[at] ?? 0) > 0) {
+        covered[at] = (covered[at] ?? 0) - 1
+        after = at + 1 - column
+      }
+    }
+    if (after) gaps.after.set(row, after)
+  }
+  gapsOfTable.set(table, gaps)
+  return gaps
+}
+
 /** The line of dashes under a heading cell, by the way the cell is aligned. */
 const ALIGNED: Readonly<Record<string, string>> = { left: ':--', right: '--:', center: ':-:' }
 
@@ -865,8 +917,10 @@ function converter(options: FromHtmlOptions): TurndownService {
         .replace(/\|/g, '\\|')
         .trim()
       const first = (node as Element).previousElementSibling === null
+      const table = (node as Element).closest('table')
+      const held = table ? (gapsOf(table).before.get(node) ?? 0) : 0
 
-      return `${first ? '| ' : ' '}${said} |${'  |'.repeat(spanOf(node) - 1)}`
+      return `${first ? '|' : ''}${'  |'.repeat(held)} ${said} |${'  |'.repeat(spanOf(node) - 1)}`
     },
   })
 
@@ -879,7 +933,8 @@ function converter(options: FromHtmlOptions): TurndownService {
       const table = row.closest('table')
       // The first row only: a second line of dashes is a row of dashes.
       const heading = table !== null && table.rows[0] === row && headed(table)
-      if (!heading) return `\n${content}`
+      const after = table ? (gapsOf(table).after.get(row) ?? 0) : 0
+      if (!heading) return `\n${content}${'  |'.repeat(after)}`
 
       const borders = [...row.cells].flatMap((one) => {
         const align = (one.getAttribute('align') ?? '').toLowerCase()
