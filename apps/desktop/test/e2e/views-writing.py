@@ -246,10 +246,10 @@ def phone(browser):
         wrong("the new tab is not empty")
     say("ok: a draft the plus put away is a note")
 
-    # A tap first: on this Android agent keys pressed right after the plus, with a note
+    # A press first: on this Android agent keys sent right after the plus, with a note
     # with words before it, reach CodeMirror's EditContext and not the note, with or
     # without a draft being written down.
-    tap(page, page.locator(".cm-content"))
+    page.locator(".cm-content").first.click()
     page.keyboard.type("Second thought")
     page.wait_for_timeout(1000)
     if page.evaluate("() => window.nib.state.doc.toString()") != "Second thought":
