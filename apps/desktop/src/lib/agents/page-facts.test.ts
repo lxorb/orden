@@ -25,6 +25,8 @@ interface Said {
   name: string
   in_form: boolean
   submit: boolean
+  link: boolean
+  control: boolean
   fields: { type: string; autocomplete: string; said: string }[]
   at: string[]
 }
@@ -122,5 +124,104 @@ describe('a form with its fields in a shadow root', () => {
 describe('where an element is', () => {
   test('its document says, for the frame it is in', () => {
     expect(pressOn(page('<button>Go</button>')).at[0]).toBe('https://shop.example/a')
+  })
+})
+
+function named(document: Document, selector: string): Said {
+  const found = document.querySelector(selector)
+  if (!found) throw new Error(`no ${selector}`)
+  return factsOf(found)
+}
+
+describe('what is no control is not named by all it holds', () => {
+  test('a column of cards', () => {
+    const facts = named(
+      page(
+        '<div id="c"><h3>To do</h3><div class="card">Pay rent</div><div class="card">Buy milk</div></div>',
+      ),
+      '#c',
+    )
+    expect(facts.control).toBe(false)
+    expect(facts.name).not.toContain('Pay')
+    expect(facts.name).not.toContain('Buy')
+  })
+
+  test('a mail row with an icon labelled Delete', () => {
+    for (const icon of [
+      '<button aria-label="Delete"></button>',
+      '<svg aria-label="Delete"></svg>',
+      '<img alt="Delete">',
+    ]) {
+      const facts = named(page(`<div id="r"><span>Ann</span> Lunch? ${icon}</div>`), '#r')
+      expect(facts.name, icon).not.toContain('Delete')
+      expect(facts.name, icon).toContain('Lunch')
+    }
+  })
+
+  test('a long stretch of words is no name', () => {
+    const words =
+      'Pay attention to this long paragraph of writing about nothing much at all, please'
+    expect(named(page(`<div id="p">${words}</div>`), '#p').name).toBe('')
+  })
+
+  test.each([
+    ['its own words', '<div id="x" onclick="pay()">Pay now</div>'],
+    ['a span in it', '<div id="x"><span>Pay now</span></div>'],
+    ['one thing inside one thing', '<div id="x"><div><b>Pay now</b></div></div>'],
+    ['its own label', '<div id="x" aria-label="Pay now"><i></i><i></i></div>'],
+    ['nothing but a picture', '<div id="x"><img alt="Pay now"></div>'],
+  ])('and the true asks stay: %s', (_how, html) => {
+    expect(named(page(html), '#x').name).toContain('Pay now')
+  })
+
+  test('a control says it is one', () => {
+    for (const html of [
+      '<button id="x">a</button>',
+      '<a id="x" href="/y">a</a>',
+      '<div id="x" role="button">a</div>',
+    ]) {
+      expect(named(page(html), '#x').control, html).toBe(true)
+    }
+    expect(named(page('<div id="x">a</div>'), '#x').control).toBe(false)
+  })
+
+  test('a link around a picture is a link', () => {
+    const facts = named(page('<a id="x" href="/h"><img alt="How to delete things"></a>'), '#x')
+    expect(facts.link).toBe(true)
+  })
+})
+
+describe('a name from round a shadow root', () => {
+  test('the inner button of a host with a label', () => {
+    const document = page('<div id="host" aria-label="Pay now"></div>')
+    const button = rooted(document, '<button></button>').querySelector('button')
+    if (!button) throw new Error('no button')
+    expect(factsOf(button).name).toContain('Pay now')
+  })
+
+  test('aria-labelledby inside the root', () => {
+    const document = page('<div id="host"></div>')
+    const button = rooted(
+      document,
+      '<span id="n">Pay now</span><button aria-labelledby="n"></button>',
+    ).querySelector('button')
+    if (!button) throw new Error('no button')
+    expect(factsOf(button).name).toContain('Pay now')
+  })
+})
+
+describe('a huge page', () => {
+  test('is walked only so far', () => {
+    const document = page('<div id="x">a</div><button>Go</button>')
+    const body = document.body
+    for (let at = 0; at < 60_000; at++) body.append(document.createElement('i'))
+    const input = document.createElement('input')
+    body.append(input)
+    const started = performance.now()
+    const facts = pressOn(document)
+    // Stopped short of the field, and it says it did.
+    expect(facts.fields).toEqual([])
+    expect(facts as unknown as { cut: boolean }).toMatchObject({ cut: true })
+    expect(performance.now() - started).toBeLessThan(30_000)
   })
 })
