@@ -38,6 +38,7 @@ import {
   listEveryThread,
   type Listed,
   newThread,
+  otherWindowWrote,
   readThread,
 } from '../chat/threads'
 import type {
@@ -583,6 +584,36 @@ class Chat implements Panel {
     if (!listed) void kept.then(() => this.refreshHeads())
   }
 
+  /** A thread another window has written, read again here, so what this window shows
+   *  and what it writes next is what the file holds. Nothing of one answering here,
+   *  which is the one writing it. What was queued behind that answer goes once it is over,
+   *  and while it is not, whether that window is still there is asked again at every
+   *  beat: a window that crashed says nothing. */
+  private async readAgain(id: string): Promise<void> {
+    const held = this.live.get(id)
+    if (!held || this.running.includes(id)) return
+    const fresh = await readThread(held.space, id).catch(() => null)
+    if (!fresh || this.live.get(id) !== held || this.running.includes(id)) return
+    this.live.set(id, fresh)
+    if (this.open === held) this.show(fresh)
+    if (fresh.elsewhere) {
+      if (this.queued[id]?.length) this.askingAgain ??= setTimeout(() => this.askAgain(), ANSWER_BEAT)
+    } else if (this.queued[id]?.length) {
+      this.next(fresh)
+    }
+  }
+
+  private askingAgain: ReturnType<typeof setTimeout> | null = null
+
+  private askAgain(): void {
+    this.askingAgain = null
+    for (const id of Object.keys(this.queued)) {
+      if (this.live.get(id)?.elsewhere) void this.readAgain(id)
+    }
+  }
+
+  private readonly hearingOthers = otherWindowWrote((id) => void this.readAgain(id))
+
   /** What says the answers here are alive, while there are any. */
   private beat: ReturnType<typeof setInterval> | null = null
 
@@ -770,8 +801,11 @@ class Chat implements Panel {
   /** A send in a thread: run at once, or queued behind the one running there. */
   private enqueue(thread: Thread, send: Queued): void {
     this.live.set(thread.id, thread)
-    if (this.running.includes(thread.id)) {
+    // Behind an answer another window is giving too: sent now, this copy's turns would go
+    // over that answer in the file. It goes when that one has ended; see `readAgain`.
+    if (this.running.includes(thread.id) || thread.elsewhere) {
       this.queued = { ...this.queued, [thread.id]: [...(this.queued[thread.id] ?? []), send] }
+      if (thread.elsewhere) void this.readAgain(thread.id)
       return
     }
     void this.run(thread, send)
