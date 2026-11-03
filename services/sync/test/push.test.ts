@@ -374,8 +374,8 @@ describe('sending', () => {
     /** A service answering every message with `reply`, counting what it was sent. */
     function service(reply: () => Response) {
       const ids: string[] = []
-      const send = ((input: RequestInfo | URL, init?: RequestInit) => {
-        if (input.toString().includes('oauth2')) return Promise.resolve(TOKEN())
+      const send = ((input: string, init?: RequestInit) => {
+        if (input.includes('oauth2')) return Promise.resolve(TOKEN())
         const body = JSON.parse(init?.body as string) as { message: { data: { id: string } } }
         ids.push(body.message.data.id)
         return Promise.resolve(reply())
@@ -423,8 +423,8 @@ describe('sending', () => {
 
     test('and where the service could not be reached', async () => {
       await due()
-      const unreachable = ((input: RequestInfo | URL) =>
-        input.toString().includes('oauth2')
+      const unreachable = ((input: string) =>
+        input.includes('oauth2')
           ? Promise.resolve(TOKEN())
           : Promise.reject(new Error('connection reset'))) as typeof fetch
       await sendDue(env, AT, unreachable)
