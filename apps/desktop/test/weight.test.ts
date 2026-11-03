@@ -975,9 +975,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-03, to 3,435,000, for #1060: the sliver the window is dragged by is
  *  drawn by the strip in the titlebar, ahead of its own buttons, rather than by the bar
- *  after them (Tabs.svelte, Titlebar.svelte). Measured 3,434,942. */
-const BUDGET = 3_435_000
-const MOST_FILES = 382
+ *  after them (Tabs.svelte, Titlebar.svelte). Measured 3,434,942.
+ *
+ *  Raised 2026-11-03, to 3,436,400, and to 384 modules, for #1064: the ✦ tab wears a dot
+ *  while an AI chat has an answer not yet seen, which the side reads without loading the
+ *  panel (ai/unread.svelte.ts, ai/UnreadDot.svelte). Measured 3,436,269, 383 modules. */
+const BUDGET = 3_436_400
+const MOST_FILES = 384
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

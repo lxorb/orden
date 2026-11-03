@@ -266,9 +266,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-03, to 5,743,900, for #1060: the sliver the window is
  *  dragged by is drawn by the strip in the titlebar, ahead of its own buttons, rather
  *  than by the bar after them (Tabs.svelte, Titlebar.svelte). Measured 5,743,874.
+ *
+ *  The code raised on 2026-11-03, to 5,744,300, for #1064: the ✦ tab wears a dot while an
+ *  AI chat has an answer not yet seen (Sidebar.svelte, ai/UnreadDot.svelte,
+ *  ai/unread.svelte.ts). Measured 5,744,218.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_743_900,
+  code: 5_744_300,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
