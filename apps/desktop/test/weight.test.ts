@@ -988,9 +988,14 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-03, to 3,437,800, for #1072: the AI panel's mode button says what Full
  *  permissions takes in (Composer.svelte), and a step kept to the reader's hands is the
  *  agent's under Full permissions (`readersOwn` in agents/workspace/asks.ts). Measured
- *  3,437,422. */
-const BUDGET = 3_437_800
-const MOST_FILES = 384
+ *  3,437,422.
+ *
+ *  Raised 2026-11-04, to 3,440,400, and to 385 modules, for #1076: what floats in a note's
+ *  corners - the status bar and the new-note button - is drawn by the focused pane inside
+ *  its own box (pane-corners.svelte.ts, Pane.svelte, App.svelte), and a split's shares
+ *  leave the divider's pixel out (PaneTree.svelte). Measured 3,440,250, 384 modules. */
+const BUDGET = 3_440_400
+const MOST_FILES = 385
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
