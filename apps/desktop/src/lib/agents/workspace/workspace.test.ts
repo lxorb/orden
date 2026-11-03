@@ -730,6 +730,35 @@ describe('the reader tabs', () => {
     expect(workspace.activate).not.toHaveBeenCalled()
   })
 
+  test('nothing an agent does moves the reader, whatever it may (#1070)', async () => {
+    // An agent that holds everything, workspace.focus included, while the reader is in
+    // Plan.md: what it opens or makes lands behind, and the front is never touched.
+    const everything = agent({ mode: 'autonomous' })
+    vi.mocked(workspace.openEntry).mockClear()
+    for (const [verb, args] of [
+      ['workspace_tabs', { op: 'open', path: 'Pinned.md' }],
+      ['create_note', { path: 'Fresh.md', content: '# Fresh', open: true }],
+      ['write_note', { path: 'Plan.md', content: '# Plan\n' }],
+      ['create_folder', { path: 'Later' }],
+      ['move_file', { path: 'Fresh.md', to: 'Later/Fresh.md' }],
+      ['read_note', { path: 'Plan.md' }],
+      ['get_context', {}],
+    ] as const) {
+      await call(verb, args, everything)
+    }
+    expect(workspace.openEntry).toHaveBeenCalled()
+    for (const [, how] of vi.mocked(workspace.openEntry).mock.calls as unknown as [
+      string,
+      Record<string, unknown>,
+    ][]) {
+      expect(how).toMatchObject({ activate: false })
+    }
+    expect(workspace.activeTabId).toBe('t1')
+    expect(workspace.activate).not.toHaveBeenCalled()
+    expect(workspace.showSpace).not.toHaveBeenCalled()
+    expect(workspace.split).not.toHaveBeenCalled()
+  })
+
   test('a pinned tab is the reader to close', async () => {
     expect(await call('workspace_tabs', { op: 'close', tab: 't2' })).toMatchObject({
       code: 'by_hand',

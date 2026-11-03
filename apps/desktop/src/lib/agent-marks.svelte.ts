@@ -29,6 +29,10 @@ class AgentMarks {
   /** Whether an agent has spoken in this run: the activity panel has a tab from then. */
   heard = $state(false)
 
+  /** Tabs an agent opened or made behind the reader, by tab id, with the agent's name:
+   *  the quiet mark a tab wears until the reader looks at it (#1070). */
+  opened = $state<Record<string, string>>({})
+
   /** Questions waiting: the badge on that tab. */
   waiting = $state(0)
 

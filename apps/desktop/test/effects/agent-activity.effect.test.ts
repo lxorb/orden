@@ -221,7 +221,10 @@ describe('the activity panel', () => {
 describe('Full permissions', () => {
   /** #372: an agent with Full permissions asks nothing, a Show included; the crate answers
    *  its Show as it raises it, and the window that holds the pages puts the tab up. */
-  test('an agent that asks nothing has its tab shown without a question', async () => {
+  test('an agent that asks nothing has its tab shown without a question, behind the reader', async () => {
+    const { workspace } = await import('../../src/lib/workspace.svelte')
+    workspace.openBlank('Reading', '# Reading')
+    const reading = workspace.activeTabId
     fake.connect('claude', 'Claude Code')
     const tab = fake.open('claude', 'https://shop.example/', 'Shop')
     await settled()
@@ -233,6 +236,9 @@ describe('Full permissions', () => {
       expect(fake.asked.find((one) => one.command === 'adopt')?.args[0]).toBe(tab.id),
     )
     expect(fake.asked.some((one) => one.command === 'answer')).toBe(false)
+    // #1070: the reader is still where they were; the shown tab is beside it, behind.
+    expect(workspace.activeTabId).toBe(reading)
+    expect(workspace.tabs.some((one) => one.kind === 'web' && one.id !== reading)).toBe(true)
   })
 })
 

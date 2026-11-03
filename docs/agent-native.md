@@ -708,6 +708,17 @@ the page, and the window in front and the app's focus window never changed. The 
 no verb that raises, focuses, moves or resizes the window, and `workspace_tabs` opens
 behind the tab in front unless it holds `workspace.focus`.
 
+An agent at work never takes the reader's screen (#1070): no tab switched to, nothing
+jumped to, no keyboard, selection or scroll moved. Every verb that opens, makes, shows or
+moves to something comes through one door, `lib/agents/workspace/reader-view.ts`: what it
+opens lands behind the tab in front and wears the agent's spark, still and muted, until
+the reader looks at it; the front only where the call asked for it (`background` false,
+`focus`, `split`, the graph, Settings, another space), with `workspace.focus`, which the
+tool descriptions keep for when the reader asked to be shown it. A **Show** the agent makes
+of itself puts its tab beside the reader's, behind; only the reader's own press (its
+thumbnail, their Allow) brings one forward. test/agents-in-the-background.test.ts holds
+every verb to the door.
+
 ### 7.3 Shared, never taken
 
 Emil, 2026-10-05: *"an agent should be able to use any of a user's tabs, and it should not

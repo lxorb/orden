@@ -19,7 +19,7 @@
 import { documentOf } from '@orden/editor'
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, nameOf, relativeTo, within } from '../../space-paths'
-import { type Section, settings } from '../../settings.svelte'
+import type { Section } from '../../settings.svelte'
 import { ptyOf } from '../../terminal/running'
 import { views } from '../../views.svelte'
 import { isWebAddress } from '../../web-tab/address'
@@ -36,7 +36,7 @@ import { ACTIVE_FOR } from '../ui/marks'
 import { TYPING } from '../docs/edit'
 import { notes } from '../docs'
 import { asked, readersOwn } from './asks'
-import { type Call, done, flag, maybe, need, needScope, text, writerOf } from './call'
+import { type Call, done, maybe, need, needScope, text, writerOf } from './call'
 import { Refused } from './problem'
 import {
   docSource,
@@ -50,6 +50,7 @@ import {
   sharedSource,
   writableAt,
 } from './spaces'
+import * as view from './reader-view'
 import { tabWithId } from './tab-target'
 import { entryIn, moveFile } from './tree'
 
@@ -202,12 +203,6 @@ function tabNamed(call: Call): Tab {
   return tabWithId(need(call, 'tab'))
 }
 
-/** Whether a call asked for its tab behind the one in front, which is the default:
- *  `background` false asks for the front, and needs `workspace.focus`. */
-function behind(call: Call): boolean {
-  return !('background' in call.args) || flag(call, 'background')
-}
-
 /** A tab made or opened, answered as its row; null where nothing came of it. */
 function answered(tab: Tab | null | undefined, place?: Place): AgentAnswer {
   return done(
@@ -244,13 +239,10 @@ function webOf(call: Call, url: string): string {
   return url
 }
 
-/** A page in a tab of the reader's: behind the tab in front unless asked for the front. */
+/** A page in a tab of the reader's: behind the tab in front unless asked for the front;
+ *  see reader-view.ts. */
 function openPage(call: Call, url: string): AgentAnswer {
-  const back = behind(call)
-  if (!back) needScope(call, 'workspace.focus', 'opening in front')
-
-  const id = workspace.openPage(webOf(call, url), back ? 'behind' : 'plain')
-  return answered(workspace.tabs.find((one) => one.id === id))
+  return answered(view.openPage(call, webOf(call, url)))
 }
 
 /** The sections of Settings an agent may open it at, as the sheet names them. */
@@ -271,12 +263,11 @@ const SECTIONS: readonly Section[] = [
  *  is only ever in front, and what is in it is read and written by `read_setting` and
  *  `write_setting`. */
 function showSettings(call: Call): AgentAnswer {
-  needScope(call, 'workspace.focus', 'Settings')
   const asked = maybe(call, 'section') ?? 'general'
   const section = SECTIONS.find((one) => one === asked)
   if (!section) throw new Refused('bad_arguments', `section is one of ${SECTIONS.join(', ')}`)
 
-  settings.show(section)
+  view.showSettings(call, section)
   return done({ settings: section })
 }
 
@@ -285,42 +276,25 @@ async function openSomething(call: Call): Promise<AgentAnswer> {
   const url = maybe(call, 'url')
   if (url !== null) return openPage(call, url)
 
-  const view = maybe(call, 'view')
-  if (view === 'graph') {
-    // The graph only opens in front of its pane.
-    needScope(call, 'workspace.focus', 'the graph')
-    workspace.openGraph()
-    return answered(workspace.active)
-  }
+  const shown = maybe(call, 'view')
+  if (shown === 'graph') return answered(view.showGraph(call))
   // A card and never a tab: up, with the keyboard only for an agent that may take it.
-  if (view === 'scratchpad') {
-    const back = behind(call)
-    if (!back) needScope(call, 'workspace.focus', 'opening in front')
-    const { scratchpad } = await import('../../scratchpad/pad')
-    scratchpad.show(null, !back)
-    return done({ scratchpad: true })
-  }
-  if (view === 'settings') return showSettings(call)
-  if (view !== null) throw new Refused('bad_arguments', 'view is graph, scratchpad or settings')
+  if (shown === 'scratchpad') return view.showScratchpad(call)
+  if (shown === 'settings') return showSettings(call)
+  if (shown !== null) throw new Refused('bad_arguments', 'view is graph, scratchpad or settings')
 
   const place = placeOf(call)
   const relative = judged(need(call, 'path'))
   const path = onDisk(place, relative)
-  const back = behind(call)
-  if (!back || !place.open) {
-    needScope(call, 'workspace.focus', place.open ? 'opening in front' : 'another space')
-  }
+  if (!place.open) needScope(call, 'workspace.focus', 'another space')
   if (!(await entryIn(place, relative))) {
     throw new Refused('no_such_file', `there is nothing at ${relative}`)
   }
 
-  if (!place.open) await workspace.showSpace(place.space.id)
-  await workspace.openEntry(path, back ? { activate: false, beside: true } : {})
-
-  return answered(
-    workspace.tabs.find((one) => one.path === path),
-    place,
-  )
+  const tab = place.open
+    ? await view.openFile(call, path)
+    : await view.openInSpace(call, place.space.id, path)
+  return answered(tab, place)
 }
 
 /** The kind a `new` asks for. */
@@ -339,9 +313,8 @@ function newKindOf(call: Call): NewKind {
 async function newTab(call: Call): Promise<AgentAnswer> {
   const kind = newKindOf(call)
   const place = placeFor(call, null)
-  const back = behind(call)
-  if (!back) needScope(call, 'workspace.focus', 'a new tab in front')
-  const beside = back ? workspace.activeTabId : null
+  // Whether it is asked for in front, refused here before anything is made.
+  view.asksFront(call, 'a new tab in front')
 
   const question = await asked(call, null, `A new ${kind} tab`)
   if (question) return question
@@ -370,35 +343,22 @@ async function newTab(call: Call): Promise<AgentAnswer> {
 
       const cwd = maybe(call, 'cwd')
       const folder = cwd === null ? undefined : onDisk(place, judged(cwd))
-      const { openTerminal } = await import('../../terminal/open')
-      const made = await openTerminal(shell.id, {
-        ...(folder === undefined ? {} : { folder }),
-        ...(beside ? { beside } : {}),
-        activate: !back,
-      })
-      return answered(made)
+      return answered(await view.openTerminal(call, shell.id, folder))
     }
 
     case 'canvas': {
       const { blankCanvas } = await import('../../canvas/format')
-      return answered(workspace.openUnsaved('canvas', blankCanvas(), undefined, beside, !back))
+      return answered(view.openUnsaved(call, 'canvas', blankCanvas()))
     }
 
     case 'pages': {
       const { blankPages } = await import('@orden/markdown/pages')
       const { modes } = await import('../../modes.svelte')
-      const made = workspace.openUnsaved(
-        'pages',
-        blankPages(modes.pagesPaper),
-        undefined,
-        beside,
-        !back,
-      )
-      return answered(made)
+      return answered(view.openUnsaved(call, 'pages', blankPages(modes.pagesPaper)))
     }
 
     case 'note': {
-      const made = workspace.openUnsaved('note', '', undefined, beside, !back)
+      const made = view.openUnsaved(call, 'note', '')
       // The words go in as the agent's own edit, so they are one step to undo with its
       // caret on them, the way every agent edit is.
       const words = text(call, 'content')
@@ -497,16 +457,13 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
     }
 
     case 'split': {
-      needScope(call, 'workspace.focus', 'a split')
-      const tab = tabNamed(call)
-      workspace.split('row', tab.id)
+      view.splitBeside(call, tabNamed(call))
       return done(workspace.tabs.map(tabOf))
     }
 
     case 'focus': {
-      needScope(call, 'workspace.focus', 'bringing a tab to the front')
       const tab = tabNamed(call)
-      workspace.activate(tab.id)
+      view.showTab(call, tab)
       return answered(tab)
     }
 
