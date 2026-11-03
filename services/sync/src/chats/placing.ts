@@ -41,12 +41,13 @@ export interface Asker {
 
 /** What a placed event set going that is not the log's: the people a post calls (and
  *  the author of the message a reply answers), the files it brought, and the files a
- *  delete or an edit let go of. */
+ *  delete or an edit let go of, with who posted them. */
 export interface Effects {
   called: Mention[]
   answered: Who | null
   files: FileRef[]
   freed: FileRef[]
+  freedBy: Who | null
 }
 
 export interface EventRow extends Record<string, SqlStorageValue> {
@@ -282,6 +283,7 @@ export function place(
             ? (event.files ?? [])
             : [],
       freed: before && !before.deleted && frees(event) ? namedBy(before.files, before.preview) : [],
+      freedBy: before?.author ?? null,
     },
   }
 }

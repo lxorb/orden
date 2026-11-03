@@ -45,13 +45,30 @@ export function noteUnused(
   )
 }
 
-/** The statement that writes down the files a chat stops naming (`where`, on `f`, `?1` the
- *  moment and the rest its own), for whoever in the chat's space holds them.
+/** The statement that writes down the files somebody's deleted chat message stopped
+ *  naming, for them: a chat knows who posted a message, and nobody else's row is theirs to
+ *  ask about (see above). */
+export function noteUnusedBy(
+  env: Env,
+  userId: string,
+  hashes: readonly string[],
+  at: number,
+): D1PreparedStatement {
+  return env.DB.prepare(
+    `insert or ignore into unused_blobs (user_id, hash, since)
+       select user_id, hash, ?3 from blobs
+        where user_id = ?1 and hash in (select value from json_each(?2))`,
+  ).bind(userId, JSON.stringify(hashes), at)
+}
+
+/** The statement that writes down the files a chat that has gone named (`where`, on `f`,
+ *  `?1` the moment and the rest its own).
  *
- *  `chat_files` does not say who posted a file, so its holders are found through `blobs`,
- *  and only among the space's owner and members, who are who could have. An account
- *  outside the space that holds the same bytes has nothing to do with this chat, and may
- *  keep them for something not written yet. A member's own use is what `letGo` asks. */
+ *  Nothing left says who posted them: `chat_files` has no such column, and the row of
+ *  somebody who did not may be for a note not written yet, as above. So only where
+ *  somebody in the chat's space alone holds the bytes, since a post needs a row: theirs is
+ *  the one that posted it, or the one it was handed to. Where two hold them neither is
+ *  asked about, and the poster's goes on counting. */
 export function noteChatFiles(
   env: Env,
   where: string,
@@ -68,7 +85,8 @@ export function noteChatFiles(
         where ${where}
           and (b.user_id = sp.user_id
                or exists (select 1 from space_members m join users u on u.email = m.email
-                           where m.space_id = sp.id and u.id = b.user_id))`,
+                           where m.space_id = sp.id and u.id = b.user_id))
+          and not exists (select 1 from blobs o where o.hash = b.hash and o.user_id <> b.user_id)`,
   ).bind(at, ...bound)
 }
 

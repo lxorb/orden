@@ -80,7 +80,8 @@ export async function sendFcm(
   const service = account(serviceJson)
   if (!service) return 'off'
   const access = await accessToken(service, options.now, send)
-  if (!access) return 'failed'
+  // Nothing has been sent yet.
+  if (!access) return 'busy'
 
   const answer = await send(
     `https://fcm.googleapis.com/v1/projects/${encodeURIComponent(service.project_id)}/messages:send`,
@@ -94,6 +95,7 @@ export async function sendFcm(
   )
   if (answer.ok) return 'sent'
   if (answer.status === 404) return 'gone'
+  if (answer.status === 429 || answer.status === 503) return 'busy'
   const said = await answer.text()
   // A token that was never one, or one for another app: as gone as one unregistered.
   return answer.status === 400 && /registration token|UNREGISTERED/i.test(said) ? 'gone' : 'failed'

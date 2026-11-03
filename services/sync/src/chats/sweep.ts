@@ -5,8 +5,8 @@
  *  deleted, or its whole space purged. In Recently deleted it is still the chat, and put
  *  back it is the chat as it was. Once ended, the log is kept 30 days more, then its
  *  rows go and its object is emptied with the other leftovers (leftovers.ts), which is
- *  safe to repeat. The files it named are written down for whoever holds them (unused.ts)
- *  before the rows that say so go. */
+ *  safe to repeat. The files it named are written down where that says who to ask
+ *  (`noteChatFiles`, unused.ts) before the rows that say so go. */
 
 import { AT_A_TIME, places } from '../bound'
 import type { Env } from '../types'

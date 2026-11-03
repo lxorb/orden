@@ -16,10 +16,12 @@
  *  somebody wrote into a note of their own does not make the bytes theirs. */
 
 import { FRONT_REV } from './blog/front'
+import { askChat } from './chats/ask'
 import { noteKey } from './notes'
 import { picturesOf } from './pictures'
 import { readSpaceFiles } from './spaces/files'
 import type { Env } from './types'
+import { versionKey } from './versions'
 
 /** A space that has not been emptied for good: a purged space keeps its row as a marker
  *  (trash.ts), and what is still named under it - a chat's files, kept a month - is not
@@ -91,14 +93,22 @@ export async function usedElsewhere(
 }
 
 /** What else of an account's own holds a blob, beside its spaces' notes, files and
- *  chats (`usedElsewhere` with `own`): `used` for its face or the theme of one of its
- *  sites, `unknown` for a picture while one of its own notes was written before its
- *  pictures were and has not been read since, and null for neither. */
+ *  chats (`usedElsewhere` with `own`). `used` for:
+ *  - its face or the theme of one of its sites;
+ *  - any chat naming it, of whoever's space: the account may have posted it there, which
+ *    nothing says, and editing that message asks for a row of its own (`holds` in
+ *    chats/log.ts), so it is not handed over;
+ *  - a post it holds for later, in any chat, which needs the row when it goes;
+ *  - a picture in a version of a note in a space it is in, which restoring would show.
+ *  `unknown` while one of those cannot be asked or read yet, or for a picture while one of
+ *  its own notes was written before its pictures were and has not been read since. And
+ *  null for none. */
 export async function ownOtherwise(
   env: Env,
   userId: string,
   hash: string,
   picture: boolean,
+  done: Reading = reading(),
 ): Promise<'used' | 'unknown' | null> {
   const held = await env.DB.prepare(
     `select 1 as one from users where id = ?1 and instr(coalesce(avatar, ''), ?2) > 0
@@ -110,7 +120,25 @@ export async function ownOtherwise(
     .bind(userId, hash)
     .first()
   if (held) return 'used'
+
+  const named = await env.DB.prepare(
+    `select 1 as one from chat_files f join chats c on c.id = f.chat_id
+       join spaces sp on sp.id = c.space_id
+      where f.hash = ?1 and ${LIVE} limit 1`,
+  )
+    .bind(hash)
+    .first()
+  if (named) return 'used'
+
+  const posts = await heldFiles(env, userId, done)
+  if (posts === null) return 'unknown'
+  if (posts.has(hash)) return 'used'
+
   if (!picture) return null
+
+  const shown = await versionPictures(env, userId, done)
+  if (shown === null) return 'unknown'
+  if (shown.has(hash)) return 'used'
 
   const unread = await env.DB.prepare(
     `select 1 as one from notes n join spaces sp on sp.id = n.space_id
@@ -147,6 +175,9 @@ export function handedTo(
  *  what one request asks of the bucket. */
 const MOST_READ = 250
 
+/** How many chats' objects one request asks what is held for later. */
+const MOST_ASKED = 100
+
 /** What has been read of the notes written before their pictures were, kept across
  *  every question one request asks: a space's unread notes are the same bodies whoever
  *  asks and about whichever picture, so a sweep that asks about many reads them once,
@@ -156,10 +187,99 @@ export interface Reading {
   /** By space (and note, for somebody handed one note): the pictures its unread notes
    *  show, and whether every one of them was read. */
   read: Map<string, { pictures: Set<string>; whole: boolean }>
+  /** How many chats' objects may still be asked. */
+  asks: number
+  /** By account: the blobs its held posts name, or null for one that could not be asked. */
+  held: Map<string, Set<string> | null>
+  /** By account: the pictures versions show in its spaces, or null for too many to read. */
+  versions: Map<string, Set<string> | null>
 }
 
 export function reading(): Reading {
-  return { left: MOST_READ, read: new Map() }
+  return {
+    left: MOST_READ,
+    read: new Map(),
+    asks: MOST_ASKED,
+    held: new Map(),
+    versions: new Map(),
+  }
+}
+
+/** The spaces an account is in, on a space aliased `sp` with the account at `?1`. */
+const ITS_SPACES = `(sp.user_id = ?1
+  or exists (select 1 from space_members m join users u on u.email = m.email
+              where m.space_id = sp.id and u.id = ?1))`
+
+/** The blobs an account's held posts name, in any chat it can reach. They live in each
+ *  chat's own object, where nothing can be asked of them together, so each is asked; null
+ *  where one did not answer, or there are more than are left to ask. */
+async function heldFiles(env: Env, userId: string, done: Reading): Promise<Set<string> | null> {
+  const known = done.held.get(userId)
+  if (known !== undefined) return known
+
+  const { results: chats } = await env.DB.prepare(
+    `select c.id from chats c join spaces sp on sp.id = c.space_id
+      where c.ended_at is null and ${LIVE} and ${ITS_SPACES} limit ?2`,
+  )
+    .bind(userId, done.asks + 1)
+    .all<{ id: string }>()
+
+  let found: Set<string> | null = chats.length > done.asks ? null : new Set()
+  if (found) {
+    done.asks -= chats.length
+    for (const chat of chats) {
+      const answer = await askChat(env, chat.id, 'held-files', {
+        'x-nib-held-by': `user:${userId}`,
+      })
+      if (!answer?.ok) {
+        found = null
+        break
+      }
+      const { hashes } = await answer.json<{ hashes: string[] }>()
+      for (const hash of hashes) found.add(hash)
+    }
+  }
+  done.held.set(userId, found)
+  return found
+}
+
+/** The pictures the versions of the notes in an account's spaces show, read from their
+ *  bodies, or null where they are more than is left to read. Every address in raw HTML
+ *  counts, as `liveHtml` has it: that only keeps bytes. */
+async function versionPictures(
+  env: Env,
+  userId: string,
+  done: Reading,
+): Promise<Set<string> | null> {
+  const known = done.versions.get(userId)
+  if (known !== undefined) return known
+
+  const { results: versions } = await env.DB.prepare(
+    `select distinct v.hash from note_versions v join notes n on n.id = v.note_id
+       join spaces sp on sp.id = n.space_id
+      where ${LIVE} and ${ITS_SPACES} limit ?2`,
+  )
+    .bind(userId, done.left + 1)
+    .all<{ hash: string }>()
+
+  if (versions.length > done.left) {
+    done.versions.set(userId, null)
+    return null
+  }
+  done.left -= versions.length
+
+  const found = new Set<string>()
+  for (let from = 0; from < versions.length; from += 25) {
+    const bodies = await Promise.all(
+      versions.slice(from, from + 25).map(async (one) => {
+        const object = await env.NOTES.get(versionKey(one.hash))
+        return object ? await object.text() : ''
+      }),
+    )
+    for (const body of bodies) for (const hash of picturesOf(body, true)) found.add(hash)
+  }
+  done.versions.set(userId, found)
+  return found
 }
 
 /** And the pictures in notes written before their pictures were written down, which

@@ -12,8 +12,10 @@ import { sendApns } from './apns'
 import { sendFcm } from './fcm'
 import { sendWebPush, type SubscriptionKeys } from './webpush'
 
-/** What a push came to. */
-export type Delivery = 'sent' | 'gone' | 'failed' | 'off'
+/** What a push came to. `busy` is a push the service did not take and may yet: it could
+ *  not be reached, or answered 429 or 503. `failed` is any other refusal, which says
+ *  nothing about whether the device hears of it, so it is not tried again. */
+export type Delivery = 'sent' | 'gone' | 'failed' | 'busy' | 'off'
 
 export type TargetKind = 'webpush' | 'fcm' | 'apns'
 
@@ -109,13 +111,13 @@ export async function push(
     }
   } catch {
     // A service that could not be reached, or a key it could not be signed with: this
-    // push failed, and the next one tries again.
-    delivery = 'failed'
+    // push did not go, and the next one tries again.
+    delivery = 'busy'
   }
 
   if (delivery === 'gone') {
     await env.DB.prepare('delete from push_targets where id = ?').bind(target.id).run()
-  } else if (delivery === 'failed') {
+  } else if (delivery === 'failed' || delivery === 'busy') {
     await env.DB.prepare('update push_targets set failed_at = ? where id = ?')
       .bind(now, target.id)
       .run()

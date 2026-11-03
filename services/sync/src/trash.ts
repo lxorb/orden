@@ -403,8 +403,8 @@ async function purgeSpace(
     await env.DB.batch([
       ...noteUnused(env, space.id, theme ? [...listed, theme] : listed, at),
       // And what its chats' members posted in them, while the rows that say who the members
-      // are still stand. Nobody reaches those chats now, and a month from now nothing
-      // would say who posted (chats/sweep.ts).
+      // are still stand. Nobody reaches those chats now, and a month from now only the
+      // owner could be asked about (chats/sweep.ts).
       noteChatFiles(env, 'c.space_id = ?2', at, space.id),
       env.DB.prepare('delete from folders where space_id = ?').bind(space.id),
       env.DB.prepare('delete from tree_ops where space_id = ?').bind(space.id),

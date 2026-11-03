@@ -30,7 +30,7 @@ import { note } from '../failed'
 import { askHub } from '../hub/reach'
 import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
 import type { Env } from '../types'
-import { noteChatFiles } from '../unused'
+import { noteUnusedBy } from '../unused'
 import {
   admit,
   type Asker,
@@ -63,6 +63,7 @@ export type ChatAsk =
   | 'erase'
   | 'profile'
   | 'open'
+  | 'held-files'
 
 /** A person a request or a socket is from, as the door or the route decided. */
 export type Person = Asker & { id: string; guest: boolean }
@@ -105,16 +106,6 @@ const NAMES_FILE = `select 1 from messages m
   where m.deleted = 0
     and (json_extract(m.json, '$.preview.picture') = ?1
          or exists (select 1 from json_each(m.json, '$.files') f
-                     where json_extract(f.value, '$.hash') = ?1
-                        or json_extract(f.value, '$.preview') = ?1))
-  limit 1`
-
-/** Whether a post held for later names a file (`?1` its hash), as `NAMES_FILE` asks of a
- *  message: its author holds the bytes for when it goes. */
-const HELD_FOR_FILE = `select 1 from scheduled s
-  where s.refused is null
-    and (json_extract(s.post, '$.preview.picture') = ?1
-         or exists (select 1 from json_each(s.post, '$.files') f
                      where json_extract(f.value, '$.hash') = ?1
                         or json_extract(f.value, '$.preview') = ?1))
   limit 1`
@@ -191,6 +182,10 @@ export class ChatLog implements DurableObject {
     if (ask === 'open') return openAnswer(this.hasSocketOf(headers.get(OPEN_HEADER) ?? ''))
     if (ask === 'revoke') {
       return await this.revoke(headers.get('x-nib-revoked') ?? '', headers.get('x-nib-role'))
+    }
+    // Which files somebody's held posts need; see `heldFiles` in used.ts.
+    if (ask === 'held-files') {
+      return Response.json({ hashes: this.heldFilesOf(headers.get('x-nib-held-by') ?? '') })
     }
     // Every ask below may say something to the sockets here, and none whose sign-in
     // has ended hears it.
@@ -516,6 +511,21 @@ export class ChatLog implements DurableObject {
   }
 
   /* ── Scheduled posts ──────────────────────────────────────────────────── */
+
+  /** Every blob this person's held posts name, the refused among them too, which its
+   *  author can still see and send again. */
+  private heldFilesOf(who: string): string[] {
+    const rows = this.sql.exec<{ post: string }>('select post from scheduled where author = ?', who)
+    return rows.toArray().flatMap((row) => {
+      const post = JSON.parse(row.post) as Post
+      return [
+        ...(post.files ?? []).flatMap((file) =>
+          file.preview ? [file.hash, file.preview] : [file.hash],
+        ),
+        ...(post.preview?.picture ? [post.preview.picture] : []),
+      ]
+    })
+  }
 
   private heldAnswer(id: string): Answer | null {
     const row = this.sql
@@ -933,8 +943,7 @@ export class ChatLog implements DurableObject {
   }
 
   /** The files a deleted or edited message named, let go of where no message still names
-   *  them, and written down for whoever holds them (unused.ts) unless a post held for
-   *  later needs them. */
+   *  them, and written down for the one who posted it (unused.ts). A guest holds none. */
   private async freeFiles(effects: Effects): Promise<void> {
     const chat = this.chatId()
     if (!chat || !effects.freed.length) return
@@ -943,15 +952,11 @@ export class ChatLog implements DurableObject {
     )
     const loose = hashes.filter((hash) => !this.sql.exec(NAMES_FILE, hash).toArray().length)
     if (!loose.length) return
-    const unheld = loose.filter((hash) => !this.sql.exec(HELD_FOR_FILE, hash).toArray().length)
+    const poster = effects.freedBy
     await this.env.DB.batch([
-      noteChatFiles(
-        this.env,
-        'f.chat_id = ?2 and f.hash in (select value from json_each(?3))',
-        Date.now(),
-        chat,
-        JSON.stringify(unheld),
-      ),
+      ...(poster && !poster.startsWith('guest:')
+        ? [noteUnusedBy(this.env, hubIdOf(poster), loose, Date.now())]
+        : []),
       this.env.DB.prepare(
         `delete from chat_files where chat_id = ? and hash in (${places(loose.length)})`,
       ).bind(chat, ...loose),

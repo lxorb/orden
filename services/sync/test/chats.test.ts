@@ -1358,9 +1358,9 @@ describe('chats', () => {
         await deleted(people.writer, chat, post.message)
 
         const held = env.CHATS
-        env.CHATS = undefined as unknown as typeof env.CHATS
+        Reflect.deleteProperty(env, 'CHATS')
         expect(await sweepUnused(env)).toBe(0)
-        env.CHATS = held
+        Object.assign(env, { CHATS: held })
         expect(holders(hash)).toEqual([{ user_id: ids.writer }])
         expect(unused()).toEqual([{ user_id: ids.writer, hash }])
       })
