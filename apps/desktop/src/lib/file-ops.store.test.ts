@@ -181,7 +181,7 @@ describe('a write in the air while a file moves', () => {
     const { land, writing } = await typedAndWriting('# Plan\ntyped before the move\n')
 
     const moving = workspace.move(`${ROOT}/Plan.md`, `${ROOT}/Work`)
-    land?.()
+    land()
     await Promise.all([writing, moving])
     await workspace.writesSettled()
 
@@ -199,7 +199,7 @@ describe('a write in the air while a file moves', () => {
     const { land, writing } = await typedAndWriting('# Notes\ntyped before the rename\n')
 
     const renaming = workspace.rename(`${ROOT}/Work`, 'Desk')
-    land?.()
+    land()
     await Promise.all([writing, renaming])
     await workspace.writesSettled()
 
@@ -220,7 +220,7 @@ describe('a write in the air while a file moves', () => {
     // long enough for a move back that did not wait to have happened.
     const undoing = workspace.undoFileAction()
     await new Promise((resolve) => setTimeout(resolve, 20))
-    land?.()
+    land()
     await Promise.all([writing, undoing])
     await workspace.writesSettled()
 
