@@ -396,9 +396,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: KWin, Xvfb and xdotool, as Fedora 44 has them
-        # Without the updates repo: its kwin 6.8 obsoletes kwin-x11 and ships no `kwin_x11`,
-        # so it installs happily and the session then has no window manager to start. And
+      - name: KWin on X11 as Fedora 44 released it, Xvfb and xdotool
+        # Pinned to the release, without the updates repo: its kwin 6.8 obsoletes kwin-x11 and
+        # ships no `kwin_x11`, so it installs happily and the session then has no window
+        # manager to start. Lift it when this job runs KWin's Wayland session rather than X11,
+        # or when Fedora's updates carry a `kwin_x11` again. And
         # xterm as the other window a drive takes the focus to, not xmessage: the AppImage's
         # hook about user namespaces asks through xmessage where it finds one and waits for
         # an answer, which a container that allows none never gives (fix-namespaces.hook).
