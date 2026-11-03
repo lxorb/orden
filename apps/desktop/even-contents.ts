@@ -358,10 +358,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  list stands open asked in one place, of the rows drawn (`standsOpen` and `anyOpen`
  *  in tree-flat.ts), and the folders remembered open kept clean of the ones that went
  *  (`keepOpen` in workspace/device.svelte.ts). Measured 5,814,220.
+ *
+ *  The code raised on 2026-11-04, to 5,819,500, and the catalogues to 956,700, for
+ *  #1087: Send feedback confirms a report with its page and carries pictures
+ *  (feedback-pictures.ts, FeedbackSheet.svelte), in nine strings in every language.
+ *  Measured 5,819,167 and 956,373.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_814_600,
-  catalogues: 950_000,
+  code: 5_819_500,
+  catalogues: 956_700,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,
