@@ -5,13 +5,47 @@ import {
   frontMatterEdits,
   frontMatterKeys,
   frontMatterList,
+  frontMatterBlock,
   frontMatterValue,
+  opensFrontMatter,
   stripFrontMatter,
   writeFrontMatter,
 } from './front-matter'
+import table from './front-matter-table.json'
+import { renderMarkdown } from './index'
+import { bodyStart } from './slide-breaks'
 
 /** What the block is read as. The three readers of it - an export, a search and
  *  the icon a row wears - all come through these. */
+/** The notes both this package and front_matter.rs are held to, each with whether it
+ *  opens with a block. */
+const TABLE = table as [string, boolean][]
+
+describe('what counts as front matter', () => {
+  test.each(TABLE)('%j is a block: %s', (note, block) => {
+    expect(frontMatterBlock(note) !== null).toBe(block)
+    expect(opensFrontMatter(note)).toBe(block)
+    expect(bodyStart(note)).toBe(frontMatterBlock(note)?.to ?? 0)
+    expect(stripFrontMatter(note)).toBe(frontMatterBlock(note) ? note.slice(bodyStart(note)) : note)
+  })
+
+  test('an indented fence inside a block scalar does not close the block', () => {
+    const note = '---\ntext: |\n  a\n  ---\n  b\n---\nrest'
+    expect(stripFrontMatter(note)).toBe('rest')
+  })
+
+  test('the words between two rules stay on the page and out of a writer', () => {
+    const note = '---\nprose words\n---\nrest'
+    expect(renderMarkdown(note)).toContain('prose words')
+    expect(frontMatterEdit(note, 'icon', 'x')).toEqual({
+      from: 0,
+      to: 0,
+      insert: '---\nicon: x\n---\n',
+    })
+    expect(frontMatterValue(note, 'prose words')).toBeNull()
+  })
+})
+
 describe('reading the front matter', () => {
   test('the block, and nothing where a note has none', () => {
     expect(frontMatter('---\ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
