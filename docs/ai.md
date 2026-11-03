@@ -427,8 +427,13 @@ creating an astra subagent in the same way as it would create a subagent of clau
 `sonnet`, `gpt-6-astra`, `astra`, or nothing for the asking agent's own), an `effort`, and
 a `subagent_type` naming an agent profile (a note whose front matter says `agent:`, 4.7 in
 docs/ai-sidebar.md). The helper is a thread of its own on the provider that model is on,
-answered by that provider's account in use: titled `↳ description` in the thread list, its
-answer this call's result. So Opus in the AI panel starts an Astra helper the way it would
+answered by that provider's account in use: titled `↳ description`, its answer this call's
+result. It is not a chat of its own: the thread records its `parent`, no list of chats
+shows it (`chatsOf` in `chat/threads.ts`, one rule for every list, its count, search and
+mentions), and the parent's `run_agent` step opens it; `/subtask`, `/batch` and
+`/deep-research` helpers are their parent's the same way, opened from the line their
+answer comes back as, while a `/fork` is a chat of its own. A helper whose parent is
+gone is listed as a chat, so none is out of reach (#1062). So Opus in the AI panel starts an Astra helper the way it would
 start a subagent, Astra starts a Claude one the same way, and an API key's loop, Claude
 Code and Codex all call the same tool (`lib/ai/helpers`). The sidebar's Claude Code has no
 subagent tool of its own (`--tools ""`), so this is its subagent tool.

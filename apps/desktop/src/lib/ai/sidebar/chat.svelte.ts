@@ -27,7 +27,9 @@ import { unlisted } from '../chat/catalogue'
 import { nextEffort, within } from '../chat/effort'
 import {
   branchThread,
+  chatsOf,
   deleteThread,
+  findParents,
   isDeleted,
   staysDeleted,
   keepThread,
@@ -92,6 +94,8 @@ export interface Queued {
 export interface Head {
   id: string
   title: string
+  /** The thread it is a helper of, which its conversation goes back to. */
+  parent: string | null
   provider: string
   model: string
   effort: Effort
@@ -121,6 +125,7 @@ function headOf(thread: Thread): Head {
   return {
     id: thread.id,
     title: thread.title,
+    parent: thread.parent ?? null,
     provider: thread.provider,
     model: thread.model,
     effort: thread.effort,
@@ -133,9 +138,16 @@ function headOf(thread: Thread): Head {
   }
 }
 
+/** Where a space's helpers were told their parents, once (`findParentsOnce`). */
+const PARENTS_KEY = 'nib:ai-helpers-parented'
+
 class Chat implements Panel {
-  /** Every space's threads, newest first, each with the space it is kept in. */
-  heads = $state.raw<Listed[]>([])
+  /** Every space's threads, newest first, each with the space it is kept in: helpers
+   *  too, which the lists leave out. */
+  every = $state.raw<Listed[]>([])
+  /** The chats, as every list of them shows them (#1062): `every` without the helpers,
+   *  which are their parents' steps. */
+  heads = $derived(chatsOf(this.every))
   /** The open thread, as the controls show it. */
   head = $state.raw<Head | null>(null)
   /** Its turns, as the conversation draws them. */
@@ -275,9 +287,10 @@ class Chat implements Panel {
   private async arrive(opening: boolean): Promise<void> {
     const spaces = this.spaces
     for (const space of spaces) await this.adoptOldAsk(space)
-    const heads = await listEveryThread(spaces).catch(() => this.heads)
+    const heads = await listEveryThread(spaces).catch(() => this.every)
     if (this.spaces !== spaces) return
-    this.heads = heads
+    this.every = heads
+    void this.findParentsOnce(spaces)
     if (!opening) return
     const { last, before } = lastOpen()
     const id =
@@ -301,13 +314,30 @@ class Chat implements Panel {
 
   private async refreshHeads(): Promise<void> {
     const spaces = this.spaces
-    const heads = await listEveryThread(spaces).catch(() => this.heads)
-    if (this.spaces === spaces) this.heads = heads
+    const heads = await listEveryThread(spaces).catch(() => this.every)
+    if (this.spaces === spaces) this.every = heads
+  }
+
+  /** Each space's helpers kept before a helper said whose it was (#1062) told so once,
+   *  in the background, and the lists drawn again without them. */
+  private async findParentsOnce(spaces: readonly string[]): Promise<void> {
+    let wrote = 0
+    for (const space of spaces) {
+      const key = `${PARENTS_KEY}:${space}`
+      if (!space || stored(key) === true) continue
+      try {
+        wrote += await findParents(space)
+        keep(key, 'true')
+      } catch {
+        // Tried again next launch.
+      }
+    }
+    if (wrote) await this.refreshHeads()
   }
 
   /** The space a thread is kept in: its line's, else the space in front. */
   private spaceOf(id: string): string {
-    return this.live.get(id)?.space ?? this.heads.find((one) => one.id === id)?.space ?? this.space
+    return this.live.get(id)?.space ?? this.every.find((one) => one.id === id)?.space ?? this.space
   }
 
   /** A new thread on the provider Used for > Ask names, in the last mode picked. Not
@@ -1267,7 +1297,7 @@ export const chat = new Chat()
 // A call of a thread's that names no space works in the thread's space, not the one in
 // front (docs/ai-sidebar.md 4.11): its helpers' too, which are threads of their own.
 answerThreadSpaces(
-  (id) => chat.threadOf(id)?.space ?? chat.heads.find((one) => one.id === id)?.space ?? null,
+  (id) => chat.threadOf(id)?.space ?? chat.every.find((one) => one.id === id)?.space ?? null,
 )
 
 /** The space a thread works in: its own, and the one in front where it names none this

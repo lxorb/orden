@@ -55,6 +55,14 @@
   const listed = $derived(chat.heads.filter((one) => !one.archived).length)
   const recent = $derived(chat.heads.filter((one) => !one.archived).slice(0, 3))
   const here = hostHere()
+  /** The thread a helper's is a step of, which its conversation goes back to: a helper
+   *  is in no list of chats (#1062). Nothing where that thread is gone. */
+  const parent = $derived.by(() => {
+    const above = chat.head?.parent
+    if (!above) return null
+    const title = chat.threadOf(above)?.title ?? chat.every.find((one) => one.id === above)?.title
+    return title === undefined ? null : { id: above, title }
+  })
 
   /** What went with a message besides its passages, by name, so a message says what
    *  it was sent with. */
@@ -107,6 +115,12 @@
         {t('Add an AI provider in Settings first.')}
         <button class="link" onclick={() => settings.show('ai')}>{t('Settings › AI')}</button>
       </p>
+    {/if}
+
+    {#if parent}
+      <button class="nib-row is-short up" onclick={() => void chat.openThread(parent.id)}>
+        <span class="nib-row-label">↰ {parent.title || t('Untitled')}</span>
+      </button>
     {/if}
 
     {#if hello && recent.length}
@@ -307,6 +321,11 @@
   }
 
   /* A thread still at work: the list's ring (Threads.svelte). */
+  .up {
+    flex: none;
+    color: var(--muted);
+  }
+
   .dot {
     flex: none;
     width: 7px;

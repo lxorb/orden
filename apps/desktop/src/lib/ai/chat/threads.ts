@@ -71,12 +71,22 @@ export function headOf(thread: Thread): ThreadHead {
   return {
     id: thread.id,
     title: thread.title,
+    ...(thread.parent ? { parent: thread.parent } : {}),
     provider: thread.provider,
     model: thread.model,
     updated: thread.updated,
     ...(thread.archived ? { archived: true } : {}),
     words,
   }
+}
+
+/** The chats a list shows, wherever chats are listed (#1062): the threads the reader
+ *  started, never a helper (`Thread.parent`), which lives in its parent's steps instead.
+ *  A helper whose parent is not among `heads` (deleted, or its space gone) stands as a
+ *  chat of its own, so nothing kept is out of reach. */
+export function chatsOf<T extends ThreadHead>(heads: readonly T[]): T[] {
+  const ids = new Set(heads.map((one) => one.id))
+  return heads.filter((one) => !one.parent || !ids.has(one.parent))
 }
 
 /** A deep copy that also takes a thread the panel holds as reactive state, which
@@ -99,6 +109,9 @@ export function branchThread(thread: Thread, upTo: string, title?: string): Thre
   delete copy.goal
   // A copy has started nothing yet: what the original's helpers did is its review's.
   delete (copy as Thread & { helpers?: string[] }).helpers
+  // A copy is the reader's own chat, even of a helper; a command that makes a helper of
+  // it says so itself.
+  delete copy.parent
   const now = Date.now()
   return {
     ...copy,
@@ -150,6 +163,7 @@ function outputIn(value: unknown): ToolOutput | undefined {
     images,
     error: value.error === true,
     ...(isString(value.approval) ? { approval: value.approval } : {}),
+    ...(isString(value.agent) ? { agent: value.agent } : {}),
   }
 }
 
@@ -162,7 +176,10 @@ function partIn(value: unknown): Part | null {
     return isString(text) ? { kind, text, ms: isNumber(value.ms) ? value.ms : 0 } : null
   if (kind === 'notice') {
     const code = NOTICES.find((one) => one === value.code)
-    return code ? { kind, code, text: isString(text) ? text : '' } : null
+    const threads = Array.isArray(value.threads) ? value.threads.filter(isString) : []
+    return code
+      ? { kind, code, text: isString(text) ? text : '', ...(threads.length ? { threads } : {}) }
+      : null
   }
   if (kind !== 'tool' || !isString(value.id) || !isString(value.verb)) return null
   // A call that was still running when the thread was written never answered.
@@ -221,11 +238,13 @@ export function threadIn(value: unknown): Thread | null {
   const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
   // Every field the engine reads is checked below; the rest (a goal, what was spent) is
   // kept as written.
+  const rest = without(without(without(value, 'always'), 'without'), 'parent')
   return {
-    ...(without(without(value, 'always'), 'without') as unknown as Thread),
+    ...(rest as unknown as Thread),
     id,
     space,
     title: isString(title) ? title : '',
+    ...(isString(value.parent) && value.parent ? { parent: value.parent } : {}),
     provider,
     model,
     effort: isEffort(effort) ? effort : 'auto',
@@ -245,6 +264,7 @@ function headIn(value: unknown): ThreadHead | null {
   return {
     id: value.id,
     title: isString(value.title) ? value.title : '',
+    ...(isString(value.parent) && value.parent ? { parent: value.parent } : {}),
     provider: isString(value.provider) ? value.provider : '',
     model: isString(value.model) ? value.model : '',
     updated: isNumber(value.updated) ? value.updated : 0,
@@ -296,6 +316,38 @@ export async function listEveryThread(spaces: readonly string[]): Promise<Listed
     ),
   )
   return each.flat().sort((a, b) => b.updated - a.updated)
+}
+
+/** Writes each helper of a space its parent, where it was kept before helpers said so
+ *  (#1062): the parents' `helpers` list every thread started under them at any depth,
+ *  and a helper's parent is the deepest of the threads that list it. A `/fork` copy is
+ *  listed too but is the reader's own chat; it bears its parent's title, which a helper
+ *  never does. Answers how many it wrote; reads every thread of the space, so it is
+ *  asked once a space (see `findParentsOnce` in sidebar/chat.svelte.ts). */
+export async function findParents(space: string): Promise<number> {
+  const threads = new Map<string, Thread & { helpers?: unknown }>()
+  for (const head of await listThreads(space)) {
+    const thread = await readThread(space, head.id).catch(() => null)
+    if (thread) threads.set(thread.id, thread)
+  }
+  const holders = new Map<string, string[]>()
+  for (const thread of threads.values()) {
+    const under = Array.isArray(thread.helpers) ? thread.helpers.filter(isString) : []
+    for (const child of under) holders.set(child, [...(holders.get(child) ?? []), thread.id])
+  }
+  const depth = (id: string) => holders.get(id)?.length ?? 0
+  let wrote = 0
+  for (const [id, above] of holders) {
+    const child = threads.get(id)
+    if (!child || child.parent || above.includes(id)) continue
+    const parent = above.reduce((best, one) => (depth(one) > depth(best) ? one : best))
+    const title = threads.get(parent)?.title
+    if (title !== undefined && child.title === title && !child.title.startsWith('↳')) continue
+    child.parent = parent
+    await keepThread(child)
+    wrote++
+  }
+  return wrote
 }
 
 /** One thread, whole, or null where there is none to read. */

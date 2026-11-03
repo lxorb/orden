@@ -40,7 +40,9 @@ vi.mock('../../tauri', () => ({
 
 const {
   branchThread,
+  chatsOf,
   deleteThread,
+  findParents,
   forgetSpace,
   headOf,
   keepThread,
@@ -261,5 +263,72 @@ describe('writing while a write is on its way', () => {
     await Promise.all([first, last])
     expect(writes).toHaveLength(2)
     expect(JSON.parse(writes[1] ?? '{}')).toMatchObject({ title: 'two' })
+  })
+})
+
+describe('a helper’s thread (#1062)', () => {
+  test('says whose it is, in its head too, and a file says so back', async () => {
+    const thread = { ...had(), parent: 'p-1' }
+    expect(headOf(thread)).toMatchObject({ parent: 'p-1' })
+    await keepThread(thread)
+    expect((await readThread('space-1', thread.id))?.parent).toBe('p-1')
+    expect((await listThreads('space-1'))[0]).toMatchObject({ parent: 'p-1' })
+    expect(threadIn({ ...thread, parent: 7 })).not.toHaveProperty('parent')
+  })
+
+  test('is in no list while its parent is, and in the list once it is gone', () => {
+    const heads = [
+      { ...headOf(had()), id: 'a' },
+      { ...headOf(had()), id: 'b', parent: 'a' },
+      { ...headOf(had()), id: 'c', parent: 'b' },
+      { ...headOf(had()), id: 'd', parent: 'gone' },
+    ]
+    expect(chatsOf(heads).map((one) => one.id)).toEqual(['a', 'd'])
+  })
+
+  test('a branch of it is the reader’s own chat', () => {
+    expect(branchThread({ ...had(), parent: 'p-1' }, 'y2')).not.toHaveProperty('parent')
+  })
+
+  test('the step that started it keeps its id through a file', () => {
+    const thread = had()
+    thread.turns.push({
+      id: 'm2',
+      role: 'model',
+      at: 4,
+      parts: [
+        {
+          kind: 'tool',
+          id: 't2',
+          verb: 'run_agent',
+          args: {},
+          state: 'ok',
+          result: { text: 'done', images: [], error: false, agent: 'h-1' },
+        },
+        { kind: 'notice', code: 'command', text: '↳ check', threads: ['h-2', 4] as string[] },
+      ],
+    })
+    const back = threadIn(JSON.parse(JSON.stringify(thread)))
+    expect(back?.turns.at(-1)?.parts).toEqual([
+      expect.objectContaining({ result: expect.objectContaining({ agent: 'h-1' }) }),
+      { kind: 'notice', code: 'command', text: '↳ check', threads: ['h-2'] },
+    ])
+  })
+
+  test('kept before helpers said whose they were is told its parent, not a fork', async () => {
+    const parent = { ...had(), title: 'Serie 6' }
+    const helper = { ...newThread('space-1', 'a', 'm'), title: '↳ Aufgabe 5' }
+    const deeper = { ...newThread('space-1', 'a', 'm'), title: '↳ Aufgabe 5b' }
+    const fork = { ...newThread('space-1', 'a', 'm'), title: 'Serie 6' }
+    await keepThread({ ...parent, helpers: [helper.id, deeper.id, fork.id] } as Thread)
+    await keepThread({ ...helper, helpers: [deeper.id] } as Thread)
+    await keepThread(deeper)
+    await keepThread(fork)
+
+    expect(await findParents('space-1')).toBe(2)
+    expect((await readThread('space-1', helper.id))?.parent).toBe(parent.id)
+    expect((await readThread('space-1', deeper.id))?.parent).toBe(helper.id)
+    expect((await readThread('space-1', fork.id))?.parent).toBeUndefined()
+    expect(await findParents('space-1')).toBe(0)
   })
 })
