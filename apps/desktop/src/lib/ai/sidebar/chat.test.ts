@@ -3,7 +3,7 @@
  *  The crate's per-space store is played here by a map, so what is kept where is seen. */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Draft, EngineEvent, Thread } from '../chat/types'
+import type { Draft, EngineEvent, Thread, Turn } from '../chat/types'
 
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
@@ -1408,5 +1408,196 @@ describe('a chat’s unread mark (#1064)', () => {
     const { hostOf } = await import('../commands/host')
     hostOf(chat).line(parent, '↳ done')
     expect([...chat.unread]).toEqual([parent.id])
+  })
+})
+
+describe('an answer on its way', () => {
+  beforeEach(() => {
+    kept.clear()
+    localStorage.clear()
+  })
+
+  /** The panel answering, with a hand on the engine's events: it never ends by itself. */
+  async function answering() {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    const model: Turn = { id: 'answer', role: 'model', at: 2, parts: [] }
+    const engaged: { on: (event: EngineEvent) => void; end: () => void; thread: Thread }[] = []
+    engine.send.mockImplementation(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) =>
+        new Promise<void>((resolve) => {
+          const you: Turn = { id: 'message', role: 'you', at: 1, parts: [], draft }
+          thread.turns.push(you, model)
+          on({ type: 'turn', turn: you })
+          on({ type: 'turn', turn: model })
+          engaged.push({ on, thread, end: resolve })
+        }),
+    )
+    chat.send('Tidy the herons')
+    await vi.waitFor(() => expect(engaged).toHaveLength(1))
+    const [one] = engaged
+    if (!one) throw new Error('never asked')
+    const written = async () => {
+      const body = kept.get('work')?.get(one.thread.id)?.body
+      return body ? (JSON.parse(body) as Thread) : null
+    }
+    const word = (text: string) => {
+      const part = { kind: 'text', text } as const
+      model.parts[0] = part
+      one.on({ type: 'part', turn: model.id, index: 0, part })
+    }
+    return { chat, model, one, written, word }
+  }
+
+  test('has the message written down as it begins, and that it is still answering', async () => {
+    const { written } = await answering()
+
+    await vi.waitFor(async () => {
+      const thread = await written()
+      expect(thread?.turns.map((one) => one.id)).toEqual(['message', 'answer'])
+      expect(thread?.answering).toBe('answer')
+    })
+  })
+
+  test('has its words written when the window goes, without waiting for the answer', async () => {
+    const { written, word } = await answering()
+    word('Herons stand')
+
+    const { settleUp } = await import('../../parting')
+    settleUp()
+
+    await vi.waitFor(async () =>
+      expect((await written())?.turns[1]?.parts[0]).toEqual({ kind: 'text', text: 'Herons stand' }),
+    )
+  })
+
+  test('has its words written every few seconds as they arrive', async () => {
+    const { written, word } = await answering()
+    await vi.waitFor(async () => expect((await written())?.answering).toBe('answer'))
+    vi.useFakeTimers()
+    try {
+      word('Herons')
+      await vi.advanceTimersByTimeAsync(10_000)
+    } finally {
+      vi.useRealTimers()
+    }
+
+    await vi.waitFor(async () =>
+      expect((await written())?.turns[1]?.parts[0]).toEqual({ kind: 'text', text: 'Herons' }),
+    )
+  })
+
+  test('has what a finished call changed written at once', async () => {
+    const { model, one, written } = await answering()
+    const part = {
+      kind: 'tool',
+      id: 'c',
+      verb: 'edit_note',
+      args: {},
+      state: 'ok',
+      change: { path: 'Birds.md', added: 2, removed: 1 },
+    } as const
+    model.parts[0] = part
+    one.on({ type: 'part', turn: model.id, index: 0, part })
+
+    await vi.waitFor(async () => expect((await written())?.turns[1]?.parts[0]).toEqual(part))
+  })
+
+  test('reads back cut off, in the same thread, after a reload', async () => {
+    const { one, word } = await answering()
+    word('Herons stand')
+    const { settleUp } = await import('../../parting')
+    settleUp()
+    const { readThread } = await import('../chat/threads')
+
+    await vi.waitFor(async () => {
+      const again = await readThread('work', one.thread.id)
+      expect(again?.turns[1]?.parts).toEqual([
+        { kind: 'text', text: 'Herons stand' },
+        { kind: 'notice', code: 'stopped', text: '' },
+      ])
+    })
+  })
+
+  /** `/review`, `/summarize`, `/todos` and `/init` run in Auto for that one send, on a
+   *  thread the reader keeps in Approve. Read back from a window lost mid-answer, that
+   *  Auto was the thread's, and every later change went through without asking. */
+  test('is written with the thread’s own mode and model, not a one-shot send’s', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    const { newThread, readThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm', 'auto', 'approve')
+    const model: Turn = { id: 'answer', role: 'model', at: 2, parts: [] }
+    const engaged: ((event: EngineEvent) => void)[] = []
+    engine.send.mockImplementation(
+      (one: Thread, draft: Draft, on: (event: EngineEvent) => void) =>
+        new Promise<void>(() => {
+          const you: Turn = { id: 'message', role: 'you', at: 1, parts: [], draft }
+          one.turns.push(you, model)
+          on({ type: 'turn', turn: you })
+          on({ type: 'turn', turn: model })
+          engaged.push(on)
+        }),
+    )
+
+    void chat.turn(thread, 'Review this', { mode: 'auto', model: 'other', effort: 'high' })
+    await vi.waitFor(() => expect(engaged).toHaveLength(1))
+
+    await vi.waitFor(async () => {
+      const again = await readThread('work', thread.id)
+      expect(again?.turns).toHaveLength(2)
+      expect(again).toMatchObject({ mode: 'approve', model: 'm', effort: 'auto' })
+    })
+    // And the send itself still runs as asked.
+    expect(thread).toMatchObject({ mode: 'auto', model: 'other', effort: 'high' })
+  })
+
+  test('is written again while nothing arrives, so another window knows it is alive', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] })
+    try {
+      const { one, written } = await answering()
+      await vi.waitFor(async () => expect((await written())?.answering).toBe('answer'))
+      const first = (await written()) as Thread & { answeringAt: number }
+      await vi.advanceTimersByTimeAsync(60_000)
+
+      await vi.waitFor(async () => {
+        const now = (await written()) as Thread & { answeringAt: number }
+        expect(now.answeringAt).toBeGreaterThan(first.answeringAt)
+      })
+      one.end()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('in another window is not asked again from this one', async () => {
+    const chat = await launched()
+    chat.here('work')
+    const { newThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [
+      { id: 'y', role: 'you', at: 1, parts: [], draft: { text: 'Hi', attachments: [] } },
+      { id: 'm', role: 'model', at: 2, parts: [] },
+    ]
+    thread.elsewhere = true
+    engine.send.mockClear()
+
+    chat.retry(undefined, thread)
+
+    expect(engine.send).not.toHaveBeenCalled()
+    expect(thread.turns).toHaveLength(2)
+  })
+
+  test('is written without the mark once it has ended', async () => {
+    const { model, one, written } = await answering()
+    one.on({ type: 'done', stop: 'end' })
+    one.end()
+
+    await vi.waitFor(async () => {
+      expect((await written())?.answering).toBeUndefined()
+      expect((await written())?.turns[1]?.id).toBe(model.id)
+    })
   })
 })

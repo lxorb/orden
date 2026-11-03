@@ -32,9 +32,10 @@ export interface Target {
 /** The note in front of somebody, read as text.
  *
  *  Flushed first: the editor's last few keystrokes are still a rope until
- *  something asks for them as a string, and this is asking. */
+ *  something asks for them as a string, and this is asking. So are a plane's last
+ *  strokes, which it commits after a pause. */
 export function openTarget(): Target {
-  workspace.flush()
+  workspace.wordsNow()
   const note = workspace.active
 
   return {

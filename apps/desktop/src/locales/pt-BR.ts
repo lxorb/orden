@@ -1520,6 +1520,8 @@ export const ptBR: Dictionary = {
   'The provider answered {status}.': 'O provedor respondeu {status}.',
   'Add an AI provider in Settings first.': 'Primeiro adicione um provedor de IA nas configurações.',
   'The model did not answer.': 'O modelo não respondeu.',
+  'The connection closed before the answer was finished.':
+    'A conexão foi encerrada antes de a resposta terminar.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Seu plano {plan} atingiu o limite até {time}.',
   'Your {plan} plan is at its limit for now.': 'Seu plano {plan} atingiu o limite por enquanto.',

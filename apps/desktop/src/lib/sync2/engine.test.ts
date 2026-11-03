@@ -181,6 +181,50 @@ describe('a keystroke', () => {
   })
 })
 
+/** A session that said it ended and then did not: the window hid, the close was called
+ *  off, the page came back. Whatever it writes after that was not ended by that word,
+ *  and a client id reused after a crash is two histories under one name, which a device
+ *  and its room never reconcile. */
+describe('a clean exit said too early', () => {
+  async function typedAfter(say: (engine: Engine) => Promise<void>) {
+    const one = await device()
+    const doc = await one.engine.hold(PLAN)
+    const before = doc?.client
+    await say(one.engine)
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'after '), HERE)
+    await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
+
+    // Gone at once.
+    one.engine.stop()
+    const again = await one.launch()
+    return { before, after: (await again.hold(PLAN))?.client }
+  }
+
+  test('is taken back by the next write: the client turns over after a crash', async () => {
+    const { before, after } = await typedAfter((engine) => engine.quit())
+    expect(after).not.toBe(before)
+  })
+
+  test('a save writes everything down and says no such thing', async () => {
+    const one = await device()
+    const doc = await one.engine.hold(PLAN)
+    const before = doc?.client
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'kept '), HERE)
+    await one.engine.flush()
+
+    one.engine.stop()
+    const again = await one.launch()
+    const read = await again.hold(PLAN)
+    expect(read?.text().startsWith('kept We ship')).toBe(true)
+    expect(read?.client).not.toBe(before)
+  })
+
+  test('a save, then typing, then a crash turns the client over too', async () => {
+    const { before, after } = await typedAfter((engine) => engine.flush())
+    expect(after).not.toBe(before)
+  })
+})
+
 describe('a crash', () => {
   test('loses only what was typed since the last pause, and the next launch turns the client over', async () => {
     const one = await device()

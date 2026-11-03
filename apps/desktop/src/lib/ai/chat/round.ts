@@ -110,7 +110,11 @@ export async function round(
   const reader = wire.reader(ask.model.window)
   let usage: Usage | null = null
   let model = ''
-  for await (const event of sseEvents(response.body)) {
+  let saidDone = false
+  const done = () => {
+    saidDone = true
+  }
+  for await (const event of sseEvents(response.body, done)) {
     const said = reader.heard(event)
     // A failed response carries its complaint inside it, the way complete.ts reads one.
     if (said.trouble) {
@@ -119,6 +123,9 @@ export async function round(
     if (said.model) model = said.model
     if (said.usage) usage = said.usage
     if (said.changed.length) heard(reader.parts, said.changed, model)
+  }
+  if (!reader.finished(saidDone)) {
+    throw new Error(t('The connection closed before the answer was finished.'))
   }
   return { answer: reader.answer(), parts: reader.parts, usage, model }
 }

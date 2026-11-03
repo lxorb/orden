@@ -36,7 +36,7 @@ function shortcutFields(): Field[] {
       label: one.label(),
       hint: `The key that runs ${one.label()}, as the keys file writes it; empty for none.`,
       placeholder: '',
-      check: (key) => (key === '' ? null : shortcuts.refuse(key)),
+      check: (key) => (key === '' ? null : shortcuts.refuse(key, one.id)),
       get: () => shortcuts.keyFor(one.id) ?? '',
       set: (key) => shortcuts.set(one.id, key === '' ? null : key),
     })),

@@ -1511,6 +1511,8 @@ export const ta: Dictionary = {
   'The provider answered {status}.': 'வழங்குநர் {status} என்று பதிலளித்தது.',
   'Add an AI provider in Settings first.': 'முதலில் அமைப்புகளில் AI வழங்குநரைச் சேர்க்கவும்.',
   'The model did not answer.': 'மாடல் பதிலளிக்கவில்லை.',
+  'The connection closed before the answer was finished.':
+    'பதில் முடிவதற்கு முன் இணைப்பு மூடப்பட்டது.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'உங்கள் {plan} திட்டம் {time} வரை வரம்பை எட்டியுள்ளது.',

@@ -9,12 +9,14 @@ import { describe, expect, test } from 'vitest'
 import {
   calloutSign,
   closeFence,
+  insertAiBlock,
   insertCallout,
   insertCodeFence,
   insertComment,
   insertFootnote,
   insertFrontMatter,
   insertLink,
+  insertHorizontalRule,
   insertMathBlock,
   insertTable,
   insertToc,
@@ -27,7 +29,6 @@ import {
   toggleTask,
   toggleTaskList,
   toggleWrap,
-  insertHorizontalRule,
   tickTaskAtCaret,
 } from './commands'
 import { selectWord } from './keymap'
@@ -269,6 +270,106 @@ describe('blocks', () => {
 
   test('starts a block on its own line', () => {
     expect(run(insertCodeFence, 'text|')).toBe('text\n```\n\n```')
+  })
+
+  /** Words glued to the closing fence close nothing: every line below read as code up
+   *  to the next fence, and a later code block came out inverted. */
+  test('ends a block on its own line where words follow', () => {
+    expect(run(insertCodeFence, 'one |two\nthree')).toBe('one \n```\n\n```\ntwo\nthree')
+    expect(run(insertMathBlock, 'one |two')).toBe('one \n$$\n\n$$\ntwo')
+    expect(run(insertTable(1, 1), 'one |two')).toBe('one \n\n| Column 1 |\n| --- |\n|     |\n\ntwo')
+    expect(run(insertCodeFence, '|two')).toBe('```\n\n```\ntwo')
+  })
+
+  /** Dashes straight under words are the underline of a heading. */
+  test('sets a rule apart from the words above it', () => {
+    expect(run(insertHorizontalRule, '[words]')).toBe('words\n\n---\n')
+    expect(run(insertHorizontalRule, 'words|')).toBe('words\n\n---\n')
+    expect(run(insertHorizontalRule, 'words\n|')).toBe('words\n\n---\n')
+    expect(run(insertHorizontalRule, 'words\n\n|')).toBe('words\n\n---\n')
+    expect(run(insertHorizontalRule, '|')).toBe('---\n')
+  })
+
+  /** Part of a list item, a quote or a heading is not words that can leave it: the marker
+   *  stays behind empty and the list comes apart. */
+  test('goes below a line of structure rather than splitting it', () => {
+    expect(run(insertCodeFence, '- [item]\n- two')).toBe('- item\n```\n\n```\n- two')
+    expect(run(insertCodeFence, '> [quoted]')).toBe('> quoted\n```\n\n```')
+    expect(run(insertCodeFence, '# [Title]\nwords')).toBe('# Title\n```\n\n```\nwords')
+    expect(run(insertMathBlock, '1. it[em] b')).toBe('1. item b\n$$\n\n$$')
+    expect(run(insertCodeFence, '- it|em')).toBe('- item\n```\n\n```')
+    expect(run(insertCallout, '- [item]')).toBe('- item\n> [!NOTE]\n> ')
+  })
+
+  test('still wraps such lines selected whole', () => {
+    expect(run(insertCodeFence, '[- one\n- two]')).toBe('```\n- one\n- two\n```')
+  })
+
+  /** A line under a callout is more of it, and a line round a table is a row of it. */
+  test('closes a callout with a blank line where words follow', () => {
+    expect(run(insertCallout, '[hello] world')).toBe('> [!NOTE]\n> hello\n\n world')
+    expect(run(insertCallout, 'one |two')).toBe('one \n> [!NOTE]\n> \n\ntwo')
+    expect(run(insertCallout, '[hello]\n\nnext')).toBe('> [!NOTE]\n> hello\n\nnext')
+    expect(runSelection(insertCallout, 'one |two')).toEqual([17, 17])
+  })
+
+  test('sets a table apart from the words round it', () => {
+    expect(run(insertTable(1, 1), 'he [llo] world')).toBe(
+      'he llo\n\n| Column 1 |\n| --- |\n|     |\n\n world',
+    )
+    expect(run(insertTable(1, 1), '[words]\nnext')).toBe(
+      'words\n\n| Column 1 |\n| --- |\n|     |\n\nnext',
+    )
+    expect(run(insertTable(1, 1), 'above\n|')).toBe('above\n\n| Column 1 |\n| --- |\n|     |')
+  })
+
+  test('does not put a table inside a table', () => {
+    const inside = '| a | b |\n| --- | --- |'
+    expect(apply(insertTable(1, 1), inside, 2, 3).doc).toBe(inside)
+  })
+
+  test('puts the caret of an AI block on its empty line', () => {
+    expect(run(insertAiBlock, '|')).toBe('```ai\n\n```\n')
+    expect(runSelection(insertAiBlock, '|')).toEqual([6, 6])
+  })
+
+  test('adds no second line break to a block that ends in one', () => {
+    expect(run(insertToc, 'one |two')).toBe('one \n[toc]\ntwo')
+  })
+
+  test('keeps the caret inside the block', () => {
+    expect(runSelection(insertCodeFence, 'one |two')).toEqual([8, 8])
+  })
+
+  test('wraps the lines selected in a fence, a math block or a callout', () => {
+    expect(run(insertCodeFence, '[one\ntwo]\nthree')).toBe('```\none\ntwo\n```\nthree')
+    expect(run(insertMathBlock, '[one\ntwo]\nthree')).toBe('$$\none\ntwo\n$$\nthree')
+    expect(run(insertCallout, '[one\ntwo]\nthree')).toBe('> [!NOTE]\n> one\n> two\n\nthree')
+  })
+
+  test('wraps a word on its own lines, with what was round it on theirs', () => {
+    expect(run(insertCodeFence, 'a [word] b')).toBe('a \n```\nword\n```\n b')
+  })
+
+  test('leaves the line break that ends a selection of whole lines outside the block', () => {
+    expect(run(insertCodeFence, '[one\n]two')).toBe('```\none\n```\ntwo')
+  })
+
+  test('puts the caret where the language goes on a fence, and after the words otherwise', () => {
+    expect(runSelection(insertCodeFence, '[one]')).toEqual([3, 3])
+    expect(runSelection(insertMathBlock, '[one]')).toEqual([6, 6])
+  })
+
+  test('fences a selection that holds a fence with a longer one', () => {
+    expect(run(insertCodeFence, '[```\nx\n```]')).toBe('````\n```\nx\n```\n````')
+  })
+
+  /** Nothing to wrap in a table's cells or a rule: the words stay and it goes below. */
+  test('keeps the words of a selection a block has no room for', () => {
+    expect(run(insertTable(1, 1), '[one\ntwo]\nthree')).toBe(
+      'one\ntwo\n\n| Column 1 |\n| --- |\n|     |\n\nthree',
+    )
+    expect(run(insertToc, 'a [word] b')).toBe('a word\n[toc]\n b')
   })
 })
 
@@ -697,7 +798,7 @@ describe('a block inserted in the middle of a line', () => {
   })
 
   test('a rule writes its own line break', () => {
-    expect(run(insertHorizontalRule, 'a|b')).toBe('a\n---\nb')
+    expect(run(insertHorizontalRule, 'a|b')).toBe('a\n\n---\nb')
   })
 })
 

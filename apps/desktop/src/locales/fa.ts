@@ -1492,6 +1492,7 @@ export const fa: Dictionary = {
   'The provider answered {status}.': 'فراهم‌کننده {status} پاسخ داد.',
   'Add an AI provider in Settings first.': 'نخست در تنظیم یک فراهم‌کننده هوش مصنوعی بیفزایید.',
   'The model did not answer.': 'مدل پاسخ نداد.',
+  'The connection closed before the answer was finished.': 'اتصال پیش از پایان پاسخ قطع شد.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'طرح {plan} شما تا {time} به سقف رسیده است.',
   'Your {plan} plan is at its limit for now.': 'طرح {plan} شما فعلاً به سقف رسیده است.',

@@ -503,11 +503,22 @@ export class Engine implements AskedEngine {
   // -------------------------------------------------------------------------
   // Life
 
+  /** Everything written down, with the session going on: a save. */
+  flush(): Promise<void> {
+    return this.core.use(() => this.writtenDown())
+  }
+
   /** Everything written down, and the session marked as ended cleanly. */
-  async quit(): Promise<void> {
+  quit(): Promise<void> {
+    return this.core.use(async () => {
+      await this.writtenDown()
+      await this.core.endedCleanly()
+    })
+  }
+
+  private async writtenDown(): Promise<void> {
     for (const doc of this.core.docs.values()) doc.flush()
     await this.core.commit(this.core.dirtyChanges())
-    await this.core.store.cleanExit(true)
   }
 
   /** Stops at once: anything still in the air finds it is too late. */

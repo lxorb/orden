@@ -27,7 +27,7 @@ import { readMirror, type Mirror } from '../sync/mirror'
 import { isRecord, keep, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
-import { owesLast, writing } from '../parting'
+import { owesAtTheEnd, owesLast, writing } from '../parting'
 import { isDesktop, joinPath } from '../tauri'
 import { waited } from '../timing'
 import { appWorld, type Telling } from './app-world'
@@ -261,6 +261,18 @@ class Runner {
       engine.stop()
       await engine.core.store.close().catch(() => undefined)
     }
+  }
+
+  /** A save: everything typed written down, after autosave's own last writes. */
+  flushing() {
+    const engine = this.engine
+    if (!engine) return
+    writing(
+      workspace
+        .writesSettled()
+        .then(() => engine.flush())
+        .catch(() => undefined),
+    )
   }
 
   /** The window going: everything typed written down, and the session marked ended
@@ -952,7 +964,8 @@ function unreachable(error: unknown): boolean {
 
 export const runner = new Runner()
 
-owesLast(() => runner.parting())
+owesLast(() => runner.flushing())
+owesAtTheEnd(() => runner.parting())
 
 /** How many rounds of passes the way back gives what is pending to go up and be taken. */
 const SENDING_ROUNDS = 4

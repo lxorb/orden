@@ -1472,6 +1472,7 @@ export const ja: Dictionary = {
   'The provider answered {status}.': 'プロバイダは {status} を返しました。',
   'Add an AI provider in Settings first.': 'まず設定で AI プロバイダを追加してください。',
   'The model did not answer.': 'モデルは応答しませんでした。',
+  'The connection closed before the answer was finished.': '回答が終わる前に接続が切れました。',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     '{plan} プランは {time} まで上限に達しています。',

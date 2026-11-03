@@ -18,10 +18,11 @@
 
 import { answerThreadSpaces } from '../../automation/caller'
 import { message, t } from '../../i18n.svelte'
+import { owes, writing } from '../../parting'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
 import { forget, keep, stored } from '../../stored'
-import { onceAFrame } from '../../timing'
+import { afterQuiet, onceAFrame } from '../../timing'
 import { workspace } from '../../workspace.svelte'
 import { unlisted } from '../chat/catalogue'
 import { nextEffort, within } from '../chat/effort'
@@ -46,6 +47,7 @@ import type {
   Goal,
   Mode,
   ModelInfo,
+  Part,
   Thread,
   Turn,
   Usage,
@@ -78,6 +80,16 @@ import { editMessage, lastMessage, openRewind } from '../review'
 /** How long after a plan resets a message waiting for it goes again: the window ends by
  *  the provider's clock, not this one. */
 const AFTER_RESET = 30_000
+
+/** How long words on their way wait to be written, and how long they wait at most while
+ *  more keep coming. */
+const KEEP_QUIET = 1_000
+const KEEP_AT_MOST = 3_000
+
+/** How often an answer with nothing new is written anyway: a long call is silent, and
+ *  another window tells an answer alive from a window gone by the time in the file
+ *  (`GONE_AFTER` in chat/threads.ts). */
+const ANSWER_BEAT = 30_000
 
 /** A message waiting behind a running turn. */
 export interface Queued {
@@ -529,15 +541,84 @@ class Chat implements Panel {
       if (event.turn.role === 'you') {
         if (event.turn.steered) this.tookSteered(thread, event.turn.draft?.text ?? '')
         else this.pending = without(this.pending, thread.id)
+      } else {
+        this.answeringIn(thread, event.turn)
       }
     } else if (event.type === 'part') {
       this.changed.add(event.turn)
       // A question for the reader is an answer they have not seen, until they do.
       if (event.part.kind === 'tool' && event.part.state === 'asking') this.answered(thread)
+      this.grew(thread, event.part)
     } else if (event.type === 'done') {
       this.everything = true
     }
     if (thread === this.open) this.draw()
+  }
+
+  // ── An answer on its way, written down ─────────────────
+
+  /** Whether another window is still answering in the chat in front, which Ask again
+   *  would answer a second time. */
+  get answeredElsewhere(): boolean {
+    return !!this.open?.elsewhere
+  }
+
+  /** The threads whose answers have grown since they were last written. */
+  private readonly unkept = new Set<Thread>()
+
+  /** Words arrive many times a second, and a write is the whole thread. */
+  private readonly keepSoon = afterQuiet(() => this.keepAnswers(), KEEP_QUIET, KEEP_AT_MOST)
+
+  /** An answer begins: the message that asked it is written now, with the mark that
+   *  says it is still answering, so a window going from here on leaves the message, and
+   *  a chat that has only just started is one the next launch can find. */
+  private answeringIn(thread: Thread, turn: Turn): void {
+    thread.answering = turn.id
+    delete thread.elsewhere
+    this.beat ??= setInterval(() => this.answersAlive(), ANSWER_BEAT)
+    this.unkept.delete(thread)
+    const listed = this.every.some((one) => one.id === thread.id)
+    const kept = keepThread(thread).catch(() => undefined)
+    if (thread === this.open) rememberOpen(thread.id)
+    if (!listed) void kept.then(() => this.refreshHeads())
+  }
+
+  /** What says the answers here are alive, while there are any. */
+  private beat: ReturnType<typeof setInterval> | null = null
+
+  private answersAlive(): void {
+    const answering = this.running.flatMap((id) => {
+      const thread = this.live.get(id)
+      return thread?.answering ? [thread] : []
+    })
+    if (answering.length) {
+      for (const thread of answering) void keepThread(thread).catch(() => undefined)
+      return
+    }
+    if (this.beat !== null) clearInterval(this.beat)
+    this.beat = null
+  }
+
+  /** A part of an answer arrived or changed. A call that has finished is written now:
+   *  what it did to the notes is done, and its row is the record of that for the
+   *  changes card and the rewind. Words can wait a moment. */
+  private grew(thread: Thread, part: Part): void {
+    if (part.kind === 'tool' && part.state !== 'running' && part.state !== 'asking') {
+      this.unkept.delete(thread)
+      void keepThread(thread).catch(() => undefined)
+      return
+    }
+    this.unkept.add(thread)
+    this.keepSoon()
+  }
+
+  /** Every answer that has grown, written now: the pause is over, or the window is
+   *  going, which nothing else here would hear of; see parting.ts. */
+  keepAnswers(): void {
+    this.keepSoon.cancel()
+    // Said to parting.ts as well, so a window closing waits for these.
+    for (const thread of this.unkept) writing(keepThread(thread))
+    this.unkept.clear()
   }
 
   // ── Sending ────────────────────────────────────────────
@@ -745,6 +826,7 @@ class Chat implements Panel {
     once?.signal?.addEventListener('abort', stop)
     // A send's own mode, model and effort are the thread's for that send alone.
     const before = { mode: thread.mode, model: thread.model, effort: thread.effort }
+    if (once) thread.own = before
     Object.assign(thread, {
       ...(once?.mode ? { mode: once.mode } : {}),
       ...(once?.model ? { model: once.model } : {}),
@@ -773,6 +855,7 @@ class Chat implements Panel {
     } finally {
       once?.signal?.removeEventListener('abort', stop)
       if (once) Object.assign(thread, before)
+      if (once) delete thread.own
       await this.finish(thread, !stopper.signal.aborted)
     }
     send.settle?.(ended)
@@ -807,6 +890,8 @@ class Chat implements Panel {
    *  answer the reader did not stop is one for them to see (`replied`). */
   private async finish(thread: Thread, replied = false): Promise<void> {
     if (replied && thread.turns.at(-1)?.role === 'model') thread.answered = Date.now()
+    delete thread.answering
+    this.unkept.delete(thread)
     this.stoppers.delete(thread.id)
     this.running = this.running.filter((one) => one !== thread.id)
     this.pending = without(this.pending, thread.id)
@@ -1018,7 +1103,7 @@ class Chat implements Panel {
   /** The last message again, in place of its answer (Ask again); with a model named,
    *  that model answers this time and from here on (retry with another model). */
   retry(model?: { provider: string; id: string }, thread = this.open): void {
-    if (!thread || this.running.includes(thread.id)) return
+    if (!thread || this.running.includes(thread.id) || thread.elsewhere) return
     if (model) this.setModel(model.provider, model.id)
     let at = thread.turns.length - 1
     while (at >= 0 && (thread.turns[at]?.role !== 'you' || thread.turns[at]?.steered)) at--
@@ -1326,6 +1411,8 @@ class Chat implements Panel {
 }
 
 export const chat = new Chat()
+
+owes(() => chat.keepAnswers())
 
 // The ✦ tab's dot, kept with the list (#1064).
 panelKeepsUnread()

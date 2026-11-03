@@ -42,7 +42,8 @@ import type { Change } from './search/apply'
 import { startup } from './startup.svelte'
 import { nextTask } from './breathe'
 import { mark, markPainted } from './trace'
-import { afterQuiet } from './timing'
+import { afterQuiet, waited } from './timing'
+import { GIVE_UP } from './parting'
 import { isRecord, keep, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
 import {
@@ -3532,6 +3533,11 @@ class Workspace {
     this.saving.flush()
   }
 
+  /** The same, and whatever else holds words of its own; see saving.svelte.ts. */
+  wordsNow() {
+    this.saving.wordsNow()
+  }
+
   /** Text put into a note from somewhere other than the editor: a version
    *  restored from the history, a note pulled in by a sync. */
   replace(text: string, target?: Tab) {
@@ -4527,6 +4533,11 @@ class Workspace {
   /** Deletes, answering what puts it back; recorded by the caller. See `Binning`. */
   async bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
     const { source, madeHere = false } = how
+    // The snapshot is read from the disk, so whatever was typed in the last moment has
+    // to have reached it: Undo would put the note back without it.
+    // Not for ever: a disk that does not answer has no words to give it either.
+    this.saving.wordsNow()
+    await Promise.race([this.saving.settled(), waited(GIVE_UP)])
     // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
     // is bytes and not words: there is no snapshot of one, so the only thing that
     // can put it back is the trash.

@@ -141,7 +141,7 @@ export function exportCommands(): Command[] {
   // something asks for them as text, and an export is asking. Only ever from a
   // row's `run`, never while the rows are built; see `kind` below.
   const source = () => {
-    workspace.flush()
+    workspace.wordsNow()
     return note()?.doc ?? ''
   }
   const name = () => note()?.name ?? 'Untitled.md'
@@ -502,7 +502,8 @@ function tabCommands(): Command[] {
     {
       id: 'rename',
       label: t('Rename'),
-      hint: shortcuts.hint('tabs.rename'),
+      // No key beside it: F2 is a focused tab's or row's, and here the caret is in the
+      // note, where the press goes to the editor.
       // Not a file in a space shared to be read, whose name is the space's to keep.
       disabled:
         !tab || !workspace.canRenameFromTab(tab) || (tab.path !== null && !canWriteAt(tab.path)),

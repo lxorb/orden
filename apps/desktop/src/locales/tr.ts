@@ -1493,6 +1493,7 @@ export const tr: Dictionary = {
   'The provider answered {status}.': 'Sağlayıcı {status} yanıtı verdi.',
   'Add an AI provider in Settings first.': 'Önce Ayarlar’da bir YZ sağlayıcısı ekleyin.',
   'The model did not answer.': 'Model yanıt vermedi.',
+  'The connection closed before the answer was finished.': 'Yanıt bitmeden bağlantı kapandı.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     '{plan} planınız {time} saatine kadar sınırında.',

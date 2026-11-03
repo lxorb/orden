@@ -342,7 +342,7 @@
           <svg viewBox="0 0 13 13"><path d="M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8" /></svg>
         </button>
       {/if}
-      {#if last && ai.providers.length}
+      {#if last && ai.providers.length && !chat.answeredElsewhere}
         <button
           class="nib-glyph act"
           title={t('Ask again')}

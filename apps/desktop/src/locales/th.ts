@@ -1457,6 +1457,7 @@ export const th: Dictionary = {
   'The provider answered {status}.': 'ผู้ให้บริการตอบ {status}',
   'Add an AI provider in Settings first.': 'เพิ่มผู้ให้บริการ AI ในการตั้งค่าก่อน',
   'The model did not answer.': 'โมเดลไม่ตอบ',
+  'The connection closed before the answer was finished.': 'การเชื่อมต่อปิดลงก่อนที่คำตอบจะเสร็จ',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'แพ็กเกจ {plan} ของคุณถึงขีดจำกัดจนถึง {time}',
   'Your {plan} plan is at its limit for now.': 'แพ็กเกจ {plan} ของคุณถึงขีดจำกัดแล้วในตอนนี้',

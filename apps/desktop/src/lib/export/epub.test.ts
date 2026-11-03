@@ -392,6 +392,27 @@ describe('what a reader that checks the book insists on', () => {
     )
   })
 
+  test('a drawing the page wrote with no namespace is still a drawing', () => {
+    // An HTML parser gives a bare `<svg>` its namespace by itself. An XML one reads
+    // it as an XHTML element nobody has heard of: a chart comes out as its labels
+    // run together, with no height and no lines.
+    expect(toXhtml('<svg viewBox="0 0 2 2"><path d="M0 0" /></svg>')).toContain(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2">',
+    )
+    expect(toXhtml('<math><mi>x</mi></math>')).toContain(
+      '<math xmlns="http://www.w3.org/1998/Math/MathML">',
+    )
+    expect(toXhtml('<svg xmlns="http://www.w3.org/2000/svg"></svg>')).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+    )
+  })
+
+  test('what a foreignObject holds is XHTML again, not more of the drawing', () => {
+    expect(
+      toXhtml('<svg><foreignObject><div><span>A</span></div></foreignObject></svg>'),
+    ).toContain('<foreignObject><div xmlns="http://www.w3.org/1999/xhtml"><span>A</span></div>')
+  })
+
   test('a part that draws an SVG says so in the manifest', async () => {
     const drawn = await bookOf({
       body: '<h1>Drawn</h1>\n<figure class="diagram"><svg viewBox="0 0 2 2"></svg></figure>',

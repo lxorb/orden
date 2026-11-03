@@ -1515,6 +1515,8 @@ export const fil: Dictionary = {
   'The provider answered {status}.': 'Sumagot ang provider ng {status}.',
   'Add an AI provider in Settings first.': 'Magdagdag muna ng AI provider sa Mga setting.',
   'The model did not answer.': 'Hindi sumagot ang modelo.',
+  'The connection closed before the answer was finished.':
+    'Nagsara ang koneksyon bago natapos ang sagot.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Naabot na ng iyong {plan} plan ang limitasyon hanggang {time}.',

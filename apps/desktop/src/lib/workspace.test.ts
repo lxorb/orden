@@ -98,6 +98,7 @@ vi.mock('./tauri', async (importOriginal) => ({
       const at = pathOf(args)
       return Object.keys(notes).some((one) => one === at || one.startsWith(`${at}/`))
     }
+    if (command === 'trash_item') return { id: 'trashed' }
     if (command !== 'read_note') return undefined
 
     const path = pathOf(args)
@@ -3037,6 +3038,37 @@ describe('a note writes itself, wherever it is', () => {
   }
 
   const written = () => sent.filter((one) => one.command === 'write_note').map((one) => one.path)
+
+  /** The snapshot a delete keeps is read from the disk, which the last few words had
+   *  not reached yet: Undo put the note back without them. */
+  test('a note deleted straight after typing is on the disk when its snapshot is read', async () => {
+    await typedIn('/space/a.md')
+
+    await workspace.remove('/space/a.md', false)
+
+    const about = sent.filter((one) => one.path === '/space/a.md').map((one) => one.command)
+    expect(about.indexOf('write_note')).toBeGreaterThanOrEqual(0)
+    expect(about.lastIndexOf('write_note')).toBeLessThan(about.lastIndexOf('read_note'))
+  })
+
+  /** A disk that does not answer must not hold a delete up for ever. */
+  test('a delete does not wait for ever on a write that never comes back', async () => {
+    await typedIn('/space/a.md')
+    const gate = { free: () => undefined as unknown }
+    holding.write = new Promise<void>((resolve) => {
+      gate.free = () => {
+        resolve()
+      }
+    })
+
+    const deleting = workspace.remove('/space/a.md', false)
+    await vi.advanceTimersByTimeAsync(5_000)
+    await deleting
+
+    expect(sent.map((one) => one.command)).toContain('trash_item')
+    holding.write = null
+    gate.free()
+  })
 
   test('a note in a space goes down well inside a second of the typing pausing', async () => {
     const tab = await typedIn('/space/a.md')

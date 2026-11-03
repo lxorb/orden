@@ -1448,6 +1448,7 @@ export const zhHans: Dictionary = {
   'The provider answered {status}.': '服务商返回{status}。',
   'Add an AI provider in Settings first.': '请先在设置中添加AI服务商。',
   'The model did not answer.': '模型没有回答。',
+  'The connection closed before the answer was finished.': '回答结束前连接已关闭。',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': '你的 {plan} 套餐已达上限，{time} 恢复。',
   'Your {plan} plan is at its limit for now.': '你的 {plan} 套餐目前已达上限。',

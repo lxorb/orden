@@ -33,10 +33,12 @@ import {
 } from './geometry'
 import { strokeBox } from './ink'
 import { inkSvg } from './svg'
+import { paletteOf } from './palette'
 import type { Palette } from './paint'
 import { cardHtml, fileUrl, isPicture } from './render'
 import { assetPath, invoke, isDesktop } from '../tauri'
 import { message, t } from '../i18n.svelte'
+import { settings } from '../settings.svelte'
 
 /** Room left round the drawing, in plane units. */
 const PADDING = 32
@@ -63,6 +65,7 @@ export function styles(palette: Palette): string {
     .card code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92em }
     .card a { color: ${palette.accent ?? '#4c6ef5'}; text-decoration: none }
     .label { font: 550 13px/1 ui-sans-serif, system-ui, sans-serif }
+    .words { font: 13px/1 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif }
   `
 }
 
@@ -138,7 +141,7 @@ function plainCard(text: string, box: Box, palette: Palette): string {
     )
     .join('')
 
-  return `<text font-size="${CARD_FONT}" fill="${palette.text ?? '#111'}" class="label">${spans}</text>`
+  return `<text font-size="${CARD_FONT}" fill="${palette.text ?? '#111'}" class="words">${spans}</text>`
 }
 
 function cardBody(node: CanvasNode, canvasPath: string | null, trusted: boolean): string {
@@ -417,10 +420,18 @@ export interface Drawing {
 }
 
 /** The SVG, with every picture in it inlined so the file stands alone. */
-async function readySvg(drawing: Drawing, plain = false): Promise<string> {
+async function readySvg(drawing: Drawing, palette: Palette, plain = false): Promise<string> {
   return inlinedSvg(
-    canvasSvg(drawing.canvas, drawing.palette, drawing.path, drawing.root, plain, drawing.trusted),
+    canvasSvg(drawing.canvas, palette, drawing.path, drawing.root, plain, drawing.trusted),
   )
+}
+
+/** The colours a picture that leaves the app is in: Settings > Export > Appearance,
+ *  which is the note's answer too (`look` in export/context.ts), and the screen's only
+ *  where that says as the app is now. */
+function chosenPalette(drawing: Drawing): Palette {
+  const chosen = settings.exportAppearance
+  return chosen === 'app' ? drawing.palette : paletteOf(chosen)
 }
 
 /** A picture drawn on the plane, as `drawnNode` writes one. Also one an own card's HTML
@@ -457,7 +468,7 @@ export async function inlinedSvg(svg: string): Promise<string> {
 }
 
 export async function exportCanvasSvg(drawing: Drawing) {
-  const svg = await readySvg(drawing)
+  const svg = await readySvg(drawing, chosenPalette(drawing))
   const file = `${stem(drawing.name)}.svg`
 
   if (!isDesktop) {
@@ -476,7 +487,9 @@ export async function exportCanvasSvg(drawing: Drawing) {
  *  the app's own file commands write text, and a picture is bytes. The browser's
  *  own save is what every other binary download in the app uses too. */
 export async function exportCanvasPng(drawing: Drawing) {
-  const blob = await svgToPng(await readySvg(drawing, true)).catch(() => null)
+  const blob = await svgToPng(await readySvg(drawing, chosenPalette(drawing), true)).catch(
+    () => null,
+  )
   if (!blob) {
     message(new Error('that drawing could not be turned into a picture'), t('Nothing here'))
     return
@@ -494,9 +507,10 @@ export async function exportCanvasPng(drawing: Drawing) {
 
 /** The plane on a page, through the same printer a note goes through. */
 /** The plane as one sheet of paper: the page the PDF is printed from, and the page
- *  printing puts in front of the print engine, so the two cannot differ. */
+ *  printing puts in front of the print engine, so the two cannot differ. Always the
+ *  light side, as a note's PDF and print are: it is going on paper. */
 async function sheetOf(drawing: Drawing) {
-  const svg = await readySvg(drawing)
+  const svg = await readySvg(drawing, paletteOf('light'))
   const size = /viewBox="(-?\d+) (-?\d+) (\d+) (\d+)"/.exec(svg)
   const width = Number(size?.[3] ?? 800)
   const height = Number(size?.[4] ?? 600)

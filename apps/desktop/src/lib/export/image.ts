@@ -80,6 +80,17 @@ function namespaced(xhtml: string): string {
   return `<div xmlns="${XHTML}">${xhtml}</div>`
 }
 
+/** The scheme the page asks for, said where this picture's stylesheet can hear it.
+ *
+ *  In an SVG image `:root` is the `<svg>`, not the `<html>` inside the
+ *  `foreignObject`. Tokens that `:root` alone gives, the ground under the note among
+ *  them, are read off it and inherited, so with nothing said there they came out dark
+ *  under the page's dark text. */
+function schemeOf(html: string): string {
+  const scheme = /<html\b[^>]*\sdata-theme="([^"]*)"/.exec(html)?.[1]
+  return scheme ? ` data-theme="${escapeAll(scheme)}"` : ''
+}
+
 /** The note as one SVG picture the browser can draw in a single step.
  *
  *  The document goes in through `toXhtml`, the same transformer the ePub is
@@ -93,7 +104,7 @@ function namespaced(xhtml: string): string {
  *  are smoothed against the colour they will be read on. */
 export function svgOf(html: string, size: { width: number; height: number }, background: string) {
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size.width}" height="${size.height}" viewBox="0 0 ${size.width} ${size.height}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg"${schemeOf(html)} width="${size.width}" height="${size.height}" viewBox="0 0 ${size.width} ${size.height}">`,
     `<rect width="100%" height="100%" fill="${escapeAll(background)}" />`,
     '<foreignObject width="100%" height="100%">',
     namespaced(toXhtml(html)),

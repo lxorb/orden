@@ -1471,6 +1471,7 @@ export const am: Dictionary = {
   'The provider answered {status}.': 'አቅራቢው {status} መለሰ።',
   'Add an AI provider in Settings first.': 'መጀመሪያ በማስተካከያ የAI አቅራቢ ጨምር።',
   'The model did not answer.': 'ሞዴሉ አልመለሰም።',
+  'The connection closed before the answer was finished.': 'መልሱ ከማለቁ በፊት ግንኙነቱ ተዘጋ።',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'የእርስዎ {plan} ዕቅድ እስከ {time} ድረስ ገደቡ ላይ ደርሷል።',
   'Your {plan} plan is at its limit for now.': 'የእርስዎ {plan} ዕቅድ ለጊዜው ገደቡ ላይ ደርሷል።',

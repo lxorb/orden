@@ -22,7 +22,7 @@ import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
-import { owesLast, settleUp } from '../parting'
+import { owesLast, surfacesToWords, writeOwed } from '../parting'
 import { movedTo, nameOf, samePath, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
@@ -186,6 +186,17 @@ export class Saving {
     for (const note of this.ws.documents) note.flush()
   }
 
+  /** Everything that holds words of its own on the way to a document, handed over: a
+   *  table cell, the card being written in, a plane that commits after a pause. For
+   *  whatever is about to read a document and show it to somebody: an export read
+   *  before the plane's pause was over came out without the last strokes. */
+  wordsNow() {
+    flushTableEdits()
+    flushCardEdits()
+    surfacesToWords()
+    this.flush()
+  }
+
   /** Text put into a note from somewhere other than the editor: a version
    *  restored from the history, a note pulled in by a sync. It reaches every pane
    *  showing that note, since they are all views of the one document. */
@@ -233,7 +244,7 @@ export class Saving {
     // make sure they landed. Then everything else that writes on a timer.
     flushTableEdits()
     flushCardEdits()
-    settleUp()
+    writeOwed()
 
     const tab = this.ws.active
     if (tab) this.ws.keep(tab.id)

@@ -214,6 +214,10 @@ class CompletionsReader implements Reader {
     return arriving.part
   }
 
+  finished(saidDone: boolean): boolean {
+    return saidDone || this.finish !== ''
+  }
+
   answer(): Answer {
     const calls: Call[] = [...this.calls.entries()]
       .sort(([a], [b]) => a - b)

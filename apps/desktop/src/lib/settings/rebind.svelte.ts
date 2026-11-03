@@ -88,7 +88,7 @@ export class Rebind {
 
   /** A key for a row, taken if nothing is against it and nobody else holds it. */
   private take(id: string, key: string) {
-    const reason = shortcuts.refuse(key)
+    const reason = shortcuts.refuse(key, id)
     if (reason) {
       this.turnedDown = { id, reason }
       this.listening = null
