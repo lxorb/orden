@@ -97,18 +97,37 @@ function numberOf(written: string): number | null {
   return read !== '' && Number.isFinite(value) ? value : null
 }
 
+/** A value without the comment after it. A flow list up to its closing bracket: YAML
+ *  has no comment inside one here, since `[#1, #2]` was always two labels. */
+function valueOf(written: string): string {
+  const value = written.trim()
+  if (!value.startsWith('[')) return uncommented(written)
+
+  let depth = 0
+  let quote = ''
+  for (let at = 0; at < value.length; at++) {
+    const char = value.charAt(at)
+    if (quote) {
+      if (char === quote) quote = ''
+    } else if ((char === '"' || char === "'") && /[[,]\s*$/u.test(value.slice(0, at))) {
+      quote = char
+    } else if (char === '[') depth++
+    else if (char === ']' && --depth === 0) return value.slice(0, at + 1)
+  }
+  return value
+}
+
 /** One line split at its first colon, when it is a mapping at all. */
-function pair(line: string): { indent: number; key: string; value: string } | null {
+function pair(
+  line: string,
+): { indent: number; key: string; value: string; written: string } | null {
   const indent = line.length - line.trimStart().length
   const rest = line.trim().replace(/^-\s*/, '')
   const at = rest.indexOf(':')
   if (at <= 0) return null
 
-  return {
-    indent,
-    key: rest.slice(0, at).trim().toLowerCase(),
-    value: uncommented(rest.slice(at + 1)),
-  }
+  const written = rest.slice(at + 1)
+  return { indent, key: rest.slice(0, at).trim().toLowerCase(), value: valueOf(written), written }
 }
 
 /** The chart a fence's body describes, or null when it describes none.
@@ -173,7 +192,8 @@ export function readChart(source: string): Chart | null {
       // the reader can see what they asked for and change it. Silently drawing a bar
       // chart instead was the right numbers saying the wrong thing.
       if (found.key === 'type') kind = KINDS.get(unquoted(found.value).toLowerCase()) ?? null
-      else if (found.key === 'title') title = unquoted(found.value) || null
+      // `#1 Sales` is a title for all a reader can tell; nothing else is lost by it.
+      else if (found.key === 'title') title = unquoted(found.value || found.written) || null
       else if (found.key === 'labels') {
         if (found.value.trim() === '') {
           labels = []

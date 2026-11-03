@@ -4,17 +4,50 @@
 
 import { blockIdOf, ownLine, type Row, rowsOf } from './links'
 
-/** Whether a block starting at this row takes its name on a line of its own: on the
- *  last line of a fence, a table, maths, a rule or HTML a name is no name, and breaks
- *  what it is written on. A closing fence with words after it closes nothing. A blank
- *  line above it, since under a table without one it is a row. Obsidian's own rule. */
-function nameStandsApart(row: Row, next: string): boolean {
-  if (row.code) return true
-  if (/^ {0,3}(?:\||\$\$|<)/u.test(row.text)) return true
-  if (/^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,})$/u.test(row.text.trimEnd())) {
+/** A rule, or the underline of a heading. */
+const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)$/u
+
+/** The line of dashes a table has under its head. */
+const TABLE_RULE = /^[\s|:-]*-[\s|:-]*$/u
+
+/** Whether a run of lines ends in something a name cannot be written on: on a closing
+ *  fence, a table row, a rule, maths or HTML a name is no name, and breaks what it is
+ *  written on. A closing fence with words after it closes nothing. So it goes under
+ *  the block with a blank line above it, or under a table it is a row; Obsidian's rule. */
+function nameStandsApart(run: readonly Row[]): boolean {
+  const last = run.at(-1)?.text.trimEnd() ?? ''
+  if (run.at(-1)?.code) return true
+  if (/^ {0,3}(?:\||\$\$|<)/u.test(last) || /(?:\||\$\$|>)$/u.test(last) || RULE.test(last)) {
     return true
   }
-  return next.includes('|') && /^[\s|:-]*-[\s|:-]*$/u.test(next)
+  return run.some((row) => row.text.includes('|') && TABLE_RULE.test(row.text))
+}
+
+/** Blocks that run past their blank lines to a closer of their own. */
+const CLOSERS: readonly (readonly [RegExp, string])[] = [
+  [/^ {0,3}\$\$\s*$/u, '$$'],
+  [/^ {0,3}<!--/u, '-->'],
+  [/^ {0,3}<(?:pre|script|style)\b/iu, '</'],
+]
+
+/** Where the block starting at a line ends: the run of lines it is, a fence's own blank
+ *  lines and all and no further than the fence, and maths or a comment to its closer. */
+function endOf(rows: readonly Row[], line: number): number {
+  const first = rows[line]?.text ?? ''
+  const closer = CLOSERS.find(([opens]) => opens.test(first))?.[1]
+  if (closer !== undefined && !first.slice(first.indexOf(closer) + 1).includes(closer)) {
+    for (let at = line + 1; at < rows.length; at++) {
+      if (rows[at]?.text.includes(closer)) return at
+    }
+  }
+
+  let end = line
+  for (;;) {
+    const next = rows[end + 1]
+    if (!next) return end
+    if (rows[end]?.code ? !next.code : !next.text.trim()) return end
+    end++
+  }
 }
 
 /** The block starting at a line, named: what the note says with the name in it, the
@@ -29,35 +62,25 @@ export function namedBlock(
   const row = rows[line]
   if (!row || row.matter) return null
 
-  // The end of the run of lines the block is; a fence's own blank lines and all, and
-  // no further than the fence.
-  let end = line
-  for (;;) {
-    const next = rows[end + 1]
-    if (!next) break
-    if (rows[end]?.code ? !next.code : !next.text.trim()) break
-    end++
-  }
-
+  const end = endOf(rows, line)
   const lines = source.split('\n')
   const last = lines[end] ?? ''
   const ending = last.endsWith('\r') ? '\r' : ''
 
-  if (nameStandsApart(row, rows[line + 1]?.text ?? '')) {
-    const written = rows.slice(end + 1).find((one) => one.text.trim())
-    const had = written && ownLine(written.text) ? blockIdOf(written.text) : null
-    if (had) return { id: had, source }
+  // A name the block has on a line of its own under it, or on its last line.
+  const under = rows.slice(end + 1).find((one) => one.text.trim())
+  const had =
+    (under && !under.code && ownLine(under.text) ? blockIdOf(under.text) : null) ??
+    (rows[end]?.code ? null : blockIdOf(last))
+  if (had) return { id: had, source }
 
-    const name = id()
+  const name = id()
+  if (nameStandsApart(rows.slice(line, end + 1))) {
     const beneath = (rows[end + 1]?.text.trim() ?? '') === '' ? [] : [ending]
     lines.splice(end + 1, 0, ending, `^${name}${ending}`, ...beneath)
     return { id: name, source: lines.join('\n') }
   }
 
-  const had = blockIdOf(last)
-  if (had) return { id: had, source }
-
-  const name = id()
   // A CRLF note's `\r` stays on the line named, as on every other.
   lines[end] = `${last.trimEnd()} ^${name}${ending}`
   return { id: name, source: lines.join('\n') }

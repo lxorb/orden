@@ -57,7 +57,15 @@ export function closesFence(line: string, mark: string): boolean {
   if (!found) return false
 
   const run = found[1] ?? ''
-  return run.startsWith(mark.charAt(0)) && run.length >= mark.length && !found[2]
+  if (!run.startsWith(mark.charAt(0)) || run.length < mark.length) return false
+  return !found[2] || fenceName(line) !== null
+}
+
+/** The block name on a closing fence, as an older build wrote it: ` ``` ^abc123`. Read
+ *  as closing, or everything under it in such a note would be code. */
+export function fenceName(line: string): string | null {
+  if (!couldBeFence(line)) return null
+  return /^ {0,3}(?:`{3,}|~{3,})[ \t]+\^([A-Za-z0-9-]+)[ \t]*\r?$/.exec(line)?.[1] ?? null
 }
 
 /** Where a span of `length` backticks closes after `from`, or -1: at a run of

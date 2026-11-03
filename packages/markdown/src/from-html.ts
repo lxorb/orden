@@ -486,7 +486,7 @@ function altOf(image: Element): string {
   // A picture inside a link: marked does not read an escaped bracket there, and the
   // whole of it comes out as words. Round brackets say the same thing.
   if (image.closest('a')) {
-    return words.replace(/\\/g, '\\\\').replace(/\[/g, '(').replace(/\]/g, ')')
+    return words.replace(/\\/g, '/').replace(/\[/g, '(').replace(/\]/g, ')')
   }
 
   return words.replace(/([\\[\]])/g, '\\$1')
@@ -561,15 +561,39 @@ function marksFor(node: Element): string | null {
   return `${heavy ? '**' : ''}${slanted ? '*' : ''}`
 }
 
-/** Whether marks can sit around these words where they are. A run closes only where
- *  the character in front of it is no punctuation or the one after it is none of a
- *  word, so `**"x"**y` is two pairs of literal stars; opening is the same way round. */
-function marksHold(content: string, node: Element): boolean {
-  const words = node.textContent
-  const before = /\s$/u.test(words) ? '' : (node.nextSibling?.textContent ?? '')
-  const after = /^\s/u.test(words) ? '' : (node.previousSibling?.textContent ?? '')
-  const closes = /[\p{P}\p{S}]$/u.test(content) && /^[\p{L}\p{N}]/u.test(before)
-  const opens = /^[\p{P}\p{S}]/u.test(content) && /[\p{L}\p{N}]$/u.test(after)
+/** The element beside this one when it asks for the same marks and nothing stands
+ *  between them, so the two are one run: `**foo****bar**` is literal stars. */
+function sameRun(node: Element, next: Node | null): Element | null {
+  if (next?.nodeType !== 1) return null
+
+  const other = next as Element
+  const touching = !/\s$/u.test(node.textContent) && !/^\s/u.test(other.textContent)
+  return touching && other.textContent !== '' && marksFor(other) === marksFor(node) ? other : null
+}
+
+/** Whether marks can sit around a run of these elements where it is. A run closes only
+ *  where the character in front of it is no punctuation or the one after it is none of
+ *  a word, so `**"x"**y` is two pairs of literal stars; opening is the same way round. */
+function marksHold(node: Element): boolean {
+  let first = node
+  let last = node
+  for (
+    let one = sameRun(first, first.previousSibling);
+    one;
+    one = sameRun(first, one.previousSibling)
+  ) {
+    first = one
+  }
+  for (let one = sameRun(last, last.nextSibling); one; one = sameRun(last, one.nextSibling)) {
+    last = one
+  }
+
+  const opening = first.textContent
+  const closing = last.textContent
+  const after = /\s$/u.test(closing) ? '' : (last.nextSibling?.textContent ?? '')
+  const before = /^\s/u.test(opening) ? '' : (first.previousSibling?.textContent ?? '')
+  const closes = /[\p{P}\p{S}]$/u.test(closing.trimEnd()) && /^[\p{L}\p{N}]/u.test(after)
+  const opens = /^[\p{P}\p{S}]/u.test(opening.trimStart()) && /[\p{L}\p{N}]$/u.test(before)
   return !closes && !opens
 }
 
@@ -594,7 +618,7 @@ function linkedBlocks(content: string, target: string): string {
       }
       if (block.includes('\n') || /^(?:-{3,}|\*{3,}|_{3,})$/u.test(block)) return block
 
-      const found = /^(#{1,6} |> |[-+*] |\d+[.)] )?(.*)$/u.exec(block.trim())
+      const found = /^(#{1,6} |> |(?:[-+*] |\d+[.)] )(?:\[[ x]\] )?)?(.*)$/u.exec(block.trim())
       return `${found?.[1] ?? ''}[${found?.[2] ?? ''}](${target})`
     })
 
@@ -708,9 +732,15 @@ function converter(options: FromHtmlOptions): TurndownService {
       if (element.nodeName === 'SPAN' && element.closest('code,pre,h1,h2,h3,h4,h5,h6')) {
         return content
       }
-      if (!marksHold(content, element)) return content
+      if (!marksHold(element)) return content
 
-      return `${marks}${content}${marks.split('').reverse().join('')}`
+      // A line break at either end stays outside: `**a  \n**b` closes nothing.
+      const words = /^(\s*)([\s\S]*?)(\s*)$/u.exec(content)
+      const opening = sameRun(element, element.previousSibling) ? '' : marks
+      const closing = sameRun(element, element.nextSibling)
+        ? ''
+        : marks.split('').reverse().join('')
+      return `${words?.[1] ?? ''}${opening}${words?.[2] ?? ''}${closing}${words?.[3] ?? ''}`
     },
   })
 
@@ -847,9 +877,8 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (content, node) => {
       const row = node as HTMLTableRowElement
       const table = row.closest('table')
-      const heading =
-        row.parentElement?.nodeName === 'THEAD' ||
-        (table !== null && table.rows[0] === row && headed(table))
+      // The first row only: a second line of dashes is a row of dashes.
+      const heading = table !== null && table.rows[0] === row && headed(table)
       if (!heading) return `\n${content}`
 
       const borders = [...row.cells].flatMap((one) => {
@@ -949,7 +978,9 @@ function converter(options: FromHtmlOptions): TurndownService {
       if (!mayPointAt(href, options)) return content
 
       const target = `${destination(href)}${titleOf(node)}`
-      if (content.includes('\n\n')) return linkedBlocks(content, target)
+      if (content.includes('\n\n') || node.querySelector(BLOCKS)) {
+        return linkedBlocks(content, target)
+      }
 
       return `[${content}](${target})`
     },

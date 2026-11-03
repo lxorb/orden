@@ -450,7 +450,9 @@ describe('what a comment is not', () => {
   })
 
   test('a key whose list is below it still opens with a comment beside it', () => {
-    const chart = readChart('labels: # the months\n  - a\nseries: # all\n  - data: # one\n      - 1\n')
+    const chart = readChart(
+      'labels: # the months\n  - a\nseries: # all\n  - data: # one\n      - 1\n',
+    )
     expect(chart?.labels).toEqual(['a'])
     expect(chart?.series[0]?.data).toEqual([1])
   })

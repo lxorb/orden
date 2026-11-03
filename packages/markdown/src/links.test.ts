@@ -664,7 +664,11 @@ describe('naming a block by where it ends', () => {
 
   test.each([
     ['a fence under words', 'para\n```\nx\n```\n\nafter', 'para\n```\nx\n```\n\n^new123\n\nafter'],
-    ['a table under words', 'para\n\n| a |\n| - |\n| 1 |', 'para\n\n| a |\n| - |\n| 1 |\n\n^new123'],
+    [
+      'a table under words',
+      'para\n\n| a |\n| - |\n| 1 |',
+      'para\n\n| a |\n| - |\n| 1 |\n\n^new123',
+    ],
     ['a rule under words', 'para\n***\n\nb', 'para\n***\n\n^new123\n\nb'],
     ['a setext heading', 'Title\n---\n\nb', 'Title\n---\n\n^new123\n\nb'],
     ['a setext one', 'Title\n===\n\nb', 'Title\n===\n\n^new123\n\nb'],

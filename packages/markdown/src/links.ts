@@ -15,7 +15,7 @@
  *  Imported on its own - `@orden/markdown/links` - by the editor, which wants the
  *  grammar and not the renderer that stands on it. */
 
-import { closingTicks, CodeBlocks, WORDS } from './fences'
+import { closingTicks, CodeBlocks, fenceName, WORDS } from './fences'
 import { frontMatterBlock } from './front-matter'
 
 /** What one link between notes says. */
@@ -726,8 +726,7 @@ export function blockIds(text: string): { id: string; line: number }[] {
   const found: { id: string; line: number }[] = []
 
   for (const row of lines(text)) {
-    if (row.code) continue
-    const id = blockIdOf(row.text)
+    const id = row.code ? fenceName(row.text) : blockIdOf(row.text)
     if (id) found.push({ id, line: row.line })
   }
 
@@ -792,9 +791,7 @@ export function withoutBlockIds(text: string): string {
   let at = 0
 
   for (const row of lines(text)) {
-    if (row.code) continue
-
-    const id = blockIdOf(row.text)
+    const id = row.code ? fenceName(row.text) : blockIdOf(row.text)
     if (!id) continue
 
     const end = row.from + row.text.trimEnd().length
