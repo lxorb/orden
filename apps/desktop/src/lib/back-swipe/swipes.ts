@@ -453,11 +453,10 @@ export function listen(): () => void {
   let unlisten: (() => void) | null = null
   let stopped = false
   if (isDesktop) {
-    void (async () => {
-      const off = await hearHere('nib://web-swipe', (event) => {
-        const said = readSaid(event.payload)
-        if (said) pageSaid(said)
-      })
+    void hearHere('nib://web-swipe', (event) => {
+      const said = readSaid(event.payload)
+      if (said) pageSaid(said)
+    }).then(async (off) => {
       const offPad = await hearHere('nib://touchpad', (event) => {
         const fingers = readFingers(event.payload)
         if (fingers !== null) touchpad(fingers)
@@ -468,7 +467,7 @@ export function listen(): () => void {
       }
       if (stopped) both()
       else unlisten = both
-    })()
+    })
   }
 
   return () => {

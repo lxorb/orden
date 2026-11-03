@@ -105,7 +105,7 @@ function filesUnder(dir: string, ending: RegExp): string[] {
   return readdirSync(dir).flatMap((name) => {
     const full = join(dir, name)
     if (statSync(full).isDirectory()) return filesUnder(full, ending)
-    return ending.test(name) && !/\.test\.ts$/.test(name) ? [full] : []
+    return ending.test(name) && !name.endsWith('.test.ts') ? [full] : []
   })
 }
 
@@ -116,7 +116,7 @@ function sentToOneWindow(): Set<string> {
     const source = readFileSync(file, 'utf8')
     for (const [, name] of source.matchAll(/emit_to\(\s*[^,]+,\s*([A-Z_]+|"nib:[^"]+")\s*,/g)) {
       if (name?.startsWith('"')) {
-        events.add(name.slice(1, -1))
+        events.add(name.replaceAll('"', ''))
         continue
       }
       const value = new RegExp(`const ${name}: &str = "(nib://[^"]+)"`).exec(source)?.[1]

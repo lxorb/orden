@@ -41,7 +41,7 @@ function page(html: string): Document {
 }
 
 function factsOf(element: Element): Said {
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func -- the script under test is a string in the crate
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the script under test is a string in the crate
   return new Function(script).call(element) as Said
 }
 

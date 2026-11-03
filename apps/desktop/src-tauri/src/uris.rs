@@ -107,7 +107,11 @@ pub fn launched_quietly(app: &AppHandle) -> bool {
             .flatten()
             .unwrap_or_default(),
     );
-    crate::reminders::quiet_launch(&launched)
+    let quiet = crate::reminders::quiet_launch(&launched);
+    if quiet {
+        crate::reminders::came_up_quietly();
+    }
+    quiet
 }
 
 /// Handed to the window once it is ready; clearing them stops a reload from
