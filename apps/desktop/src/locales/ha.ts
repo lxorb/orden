@@ -562,6 +562,7 @@ export const ha: Dictionary = {
   'Actual size': 'Girman gaske',
   // Appearance
   Accent: 'Launin nuni',
+  'Swipe in from the edge to see your notes.': 'Goge daga gefe zuwa ciki don ganin bayananka.',
   'Window corners': 'Kusurwoyin taga',
   Rounded: 'Mai zagaye',
   Square: 'Mai murabba’i',

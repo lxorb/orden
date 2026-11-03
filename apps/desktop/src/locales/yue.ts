@@ -554,6 +554,7 @@ export const yue: Dictionary = {
   'Actual size': '實際大小',
   // Appearance
   Accent: '強調色',
+  'Swipe in from the edge to see your notes.': '由邊緣向內掃就睇到你嘅筆記。',
   'Window corners': '視窗角',
   Rounded: '圓角',
   Square: '方角',

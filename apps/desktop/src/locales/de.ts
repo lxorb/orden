@@ -562,6 +562,7 @@ export const de: Dictionary = {
   'Actual size': 'Originalgröße',
   // Appearance
   Accent: 'Akzent',
+  'Swipe in from the edge to see your notes.': 'Wische vom Rand herein, um deine Notizen zu sehen.',
   'Window corners': 'Fensterecken',
   Rounded: 'Abgerundet',
   Square: 'Eckig',

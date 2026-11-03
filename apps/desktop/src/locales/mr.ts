@@ -557,6 +557,7 @@ export const mr: Dictionary = {
   'Actual size': 'खरा आकार',
   // Appearance
   Accent: 'ॲक्सेंट',
+  'Swipe in from the edge to see your notes.': 'तुमच्या नोंदी पाहण्यासाठी कडेपासून आत स्वाइप करा.',
   'Window corners': 'विंडोचे कोपरे',
   Rounded: 'गोलाकार',
   Square: 'चौकोनी',

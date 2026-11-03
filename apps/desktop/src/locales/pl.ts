@@ -580,6 +580,7 @@ export const pl: Dictionary = {
   'Actual size': 'Rozmiar rzeczywisty',
   // Appearance
   Accent: 'Akcent',
+  'Swipe in from the edge to see your notes.': 'Przesuń od krawędzi, aby zobaczyć swoje notatki.',
   'Window corners': 'Narożniki okna',
   Rounded: 'Zaokrąglone',
   Square: 'Kwadratowe',

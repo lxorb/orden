@@ -567,6 +567,7 @@ export const ptBR: Dictionary = {
   'Actual size': 'Tamanho real',
   // Appearance
   Accent: 'Destaque',
+  'Swipe in from the edge to see your notes.': 'Deslize a partir da borda para ver suas notas.',
   'Window corners': 'Cantos da janela',
   Rounded: 'Arredondados',
   Square: 'Quadrados',

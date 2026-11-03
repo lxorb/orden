@@ -557,6 +557,7 @@ export const bn: Dictionary = {
   'Actual size': 'আসল আকার',
   // Appearance
   Accent: 'অ্যাকসেন্ট',
+  'Swipe in from the edge to see your notes.': 'আপনার নোট দেখতে কিনারা থেকে ভেতরে সোয়াইপ করুন।',
   'Window corners': 'উইন্ডোর কোণ',
   Rounded: 'গোলাকার',
   Square: 'বর্গাকার',

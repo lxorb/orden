@@ -554,6 +554,8 @@ export const jv: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna panandes',
+  'Swipe in from the edge to see your notes.':
+    'Gesek mlebu saka pinggir kanggo ndeleng cathetanmu.',
   'Window corners': 'Pojok jendhela',
   Rounded: 'Bunder',
   Square: 'Kothak',

@@ -562,6 +562,8 @@ export const fil: Dictionary = {
   'Actual size': 'Tunay na laki',
   // Appearance
   Accent: 'Kulay tampok',
+  'Swipe in from the edge to see your notes.':
+    'Mag-swipe papasok mula sa gilid para makita ang iyong mga tala.',
   'Window corners': 'Mga sulok ng window',
   Rounded: 'Bilugan',
   Square: 'Parisukat',

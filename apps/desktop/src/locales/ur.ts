@@ -557,6 +557,7 @@ export const ur: Dictionary = {
   'Actual size': 'اصل سائز',
   // Appearance
   Accent: 'نمایاں رنگ',
+  'Swipe in from the edge to see your notes.': 'اپنے نوٹس دیکھنے کے لیے کنارے سے اندر سوائپ کریں۔',
   'Window corners': 'ونڈو کے کونے',
   Rounded: 'گول',
   Square: 'چوکور',

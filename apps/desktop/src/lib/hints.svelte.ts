@@ -26,7 +26,7 @@ import { keep, stored, stringList } from './stored'
  *  reader to sign in was a nag, not a hint, and went (#415). Signing in is where
  *  somebody looks for it, the panel's foot and Settings > Account. A `sign-in` an
  *  earlier version put away under `nib:hints` is simply not read back. */
-export const HINTS = ['graph', 'palette'] as const
+export const HINTS = ['drawer', 'graph', 'palette'] as const
 export type Hint = (typeof HINTS)[number]
 
 const KEY = 'nib:hints'

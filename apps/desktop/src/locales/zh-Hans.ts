@@ -554,6 +554,7 @@ export const zhHans: Dictionary = {
   'Actual size': '实际大小',
   // Appearance
   Accent: '强调色',
+  'Swipe in from the edge to see your notes.': '从边缘向内滑动即可查看笔记。',
   'Window corners': '窗口圆角',
   Rounded: '圆角',
   Square: '直角',

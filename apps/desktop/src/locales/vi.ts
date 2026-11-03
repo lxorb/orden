@@ -554,6 +554,7 @@ export const vi: Dictionary = {
   'Actual size': 'Cỡ thật',
   // Appearance
   Accent: 'Màu nhấn',
+  'Swipe in from the edge to see your notes.': 'Vuốt vào từ mép để xem ghi chú của bạn.',
   'Window corners': 'Góc cửa sổ',
   Rounded: 'Bo tròn',
   Square: 'Vuông',

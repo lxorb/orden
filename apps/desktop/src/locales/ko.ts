@@ -554,6 +554,7 @@ export const ko: Dictionary = {
   'Actual size': '실제 크기',
   // Appearance
   Accent: '강조색',
+  'Swipe in from the edge to see your notes.': '가장자리에서 안쪽으로 밀어 노트를 보세요.',
   'Window corners': '창 모서리',
   Rounded: '둥글게',
   Square: '각지게',

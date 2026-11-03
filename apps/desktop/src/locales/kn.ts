@@ -561,6 +561,8 @@ export const kn: Dictionary = {
   'Actual size': 'ನಿಜ ಗಾತ್ರ',
   // Appearance
   Accent: 'ಆಕ್ಸೆಂಟ್ ಬಣ್ಣ',
+  'Swipe in from the edge to see your notes.':
+    'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಅಂಚಿನಿಂದ ಒಳಗೆ ಸ್ವೈಪ್ ಮಾಡಿ.',
   'Window corners': 'ವಿಂಡೋ ಮೂಲೆಗಳು',
   Rounded: 'ದುಂಡಾದ',
   Square: 'ಚೌಕ',

@@ -580,6 +580,7 @@ export const uk: Dictionary = {
   'Actual size': 'Справжній розмір',
   // Appearance
   Accent: 'Акцент',
+  'Swipe in from the edge to see your notes.': 'Проведіть від краю, щоб побачити нотатки.',
   'Window corners': 'Кути вікна',
   Rounded: 'Заокруглені',
   Square: 'Прямі',

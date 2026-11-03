@@ -554,6 +554,7 @@ export const th: Dictionary = {
   'Actual size': 'ขนาดจริง',
   // Appearance
   Accent: 'สีเน้น',
+  'Swipe in from the edge to see your notes.': 'ปัดเข้ามาจากขอบเพื่อดูโน้ตของคุณ',
   'Window corners': 'มุมหน้าต่าง',
   Rounded: 'มน',
   Square: 'เหลี่ยม',

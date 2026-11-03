@@ -557,6 +557,7 @@ export const gu: Dictionary = {
   'Actual size': 'ખરું માપ',
   // Appearance
   Accent: 'ઉપસાવ રંગ',
+  'Swipe in from the edge to see your notes.': 'તમારી નોંધો જોવા માટે કિનારેથી અંદર સ્વાઇપ કરો.',
   'Window corners': 'વિન્ડોના ખૂણા',
   Rounded: 'ગોળ',
   Square: 'ચોરસ',

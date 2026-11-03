@@ -562,6 +562,7 @@ export const sw: Dictionary = {
   'Actual size': 'Ukubwa halisi',
   // Appearance
   Accent: 'Rangi ya msisitizo',
+  'Swipe in from the edge to see your notes.': 'Telezesha kutoka ukingoni kuona madokezo yako.',
   'Window corners': 'Pembe za dirisha',
   Rounded: 'Mviringo',
   Square: 'Mraba',

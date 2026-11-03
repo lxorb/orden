@@ -560,6 +560,7 @@ export const pa: Dictionary = {
   'Actual size': 'ਅਸਲੀ ਆਕਾਰ',
   // Appearance
   Accent: 'ਉਭਾਰ ਰੰਗ',
+  'Swipe in from the edge to see your notes.': 'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਕਿਨਾਰੇ ਤੋਂ ਅੰਦਰ ਸਵਾਈਪ ਕਰੋ।',
   'Window corners': 'ਵਿੰਡੋ ਦੇ ਕੋਨੇ',
   Rounded: 'ਗੋਲ',
   Square: 'ਚੌਰਸ',

@@ -554,6 +554,7 @@ export const id: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna aksen',
+  'Swipe in from the edge to see your notes.': 'Geser masuk dari tepi untuk melihat catatanmu.',
   'Window corners': 'Sudut jendela',
   Rounded: 'Membulat',
   Square: 'Persegi',

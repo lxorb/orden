@@ -555,6 +555,8 @@ export const my: Dictionary = {
   'Actual size': 'အမှန်အရွယ်',
   // Appearance
   Accent: 'အသားပေးအရောင်',
+  'Swipe in from the edge to see your notes.':
+    'သင့်မှတ်စုများကို ကြည့်ရန် အစွန်းမှ အတွင်းသို့ ပွတ်ဆွဲပါ။',
   'Window corners': 'ဝင်းဒိုး ထောင့်များ',
   Rounded: 'လုံးဝိုင်း',
   Square: 'လေးထောင့်',

@@ -557,6 +557,7 @@ export const fa: Dictionary = {
   'Actual size': 'اندازه واقعی',
   // Appearance
   Accent: 'رنگ تکیه',
+  'Swipe in from the edge to see your notes.': 'برای دیدن یادداشت‌هایتان از لبه به داخل بکشید.',
   'Window corners': 'گوشه‌های پنجره',
   Rounded: 'گرد',
   Square: 'مربعی',
