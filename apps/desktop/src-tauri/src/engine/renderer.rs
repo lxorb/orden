@@ -40,29 +40,20 @@ const POST_MESSAGE: &str = "postMessage";
 /// `API_VERSION_SWITCH` in the runtime's `runtime.rs`, which keeps both to itself.
 const API_VERSION_SWITCH: &str = "tauri-cef-api-version";
 
-/// Where a build with no `custom-protocol` serves the app from: `devUrl` in tauri.conf.json.
-const DEV_ORIGIN: &str = "http://localhost:1420";
-
-/// Whether a frame's address is the app's own. By scheme, host and port, and only those:
-/// `*.localhost` is the loopback in Chromium, so another port of the same name is whatever
-/// is listening there. `tauri://localhost` is what the runtime serves where it is not
-/// asked for http.
+/// Whether a frame's address is the app's own: `http://tauri.localhost`, by scheme, host and
+/// port, since `*.localhost` is the loopback in Chromium and another port of that name is
+/// whatever is listening there. There is no second address: Linux's manifest has
+/// `custom-protocol` on for every build, `tauri dev` too, so `devUrl` is never the app's.
+///
+/// **The address, and not which browser the frame is in.** A renderer cannot be told that: the
+/// only thing it hears of a browser's maker is `extra_info`, which the runtime builds every
+/// browser with none of. So a web tab sent to `http://tauri.localhost/`, which the web's
+/// profile answers with nothing unless something listens on the loopback's port 80, or a frame
+/// of it, is given the channel too. It holds no key, so its `postMessage` is refused.
 pub(crate) fn own_origin(address: &str) -> bool {
-    let Ok(url) = tauri::Url::parse(address) else {
-        return false;
-    };
-    let is = |scheme: &str, host: &str| {
-        url.scheme() == scheme && url.host_str() == Some(host) && url.port().is_none()
-    };
-    if is("http", "tauri.localhost") || is("tauri", "localhost") {
-        return true;
-    }
-    tauri::is_dev()
-        && tauri::Url::parse(DEV_ORIGIN).is_ok_and(|dev| {
-            url.scheme() == dev.scheme()
-                && url.host_str() == dev.host_str()
-                && url.port() == dev.port()
-        })
+    tauri::Url::parse(address).is_ok_and(|url| {
+        url.scheme() == "http" && url.host_str() == Some("tauri.localhost") && url.port().is_none()
+    })
 }
 
 wrap_v8_handler! {

@@ -577,7 +577,7 @@ pub use engine::{asking, sent, value};
 /// in every page is two things there: a script it registers over the protocol, taken
 /// back here the way `WebView2`'s are, and `window.ipc`, which the runtime's renderer writes
 /// into every context and no script can take back, so that Orden's own renderer writes it
-/// in the app's own origin only and no page here ever has it (see engine/renderer.rs).
+/// at the app's own address only, and no page anywhere else has it (see engine/renderer.rs).
 #[cfg(feature = "cef")]
 mod engine {
     use std::time::Duration;

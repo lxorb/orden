@@ -2066,7 +2066,8 @@ the same script was the same `SyntaxError` on Linux, and no script of Orden's co
 back. There every process CEF starts beside the app is the app's own executable, so the
 handler is the app's to choose: `cef_helper` runs the renderer in
 `src-tauri/src/engine/renderer.rs`, which writes `ipc` where the frame's address is the
-app's own origin and nowhere else. Nothing else needed it on a page: the app's own commands
+app's own, `http://tauri.localhost`, and nowhere else: by address, since a renderer cannot be
+told which browser it is drawing for. Nothing else needed it on a page: the app's own commands
 are out of a page's reach without the key, and what nib's world says goes through `DevTools`
 bindings. Measured 2026-11-03 under Xvfb on the same public sheet, on the build before and
 after: "Loading issue" and `RITZ_initializeModules` undefined; the editor up, no dialog, and
