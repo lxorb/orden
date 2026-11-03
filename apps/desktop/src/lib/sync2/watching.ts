@@ -152,6 +152,11 @@ export function watchFolders(how: Watching): Watched {
 
 async function changed(how: Watching, change: SpaceChange): Promise<void> {
   const engine = how.engine
+  // A space's first pass is what matches its files to their entries, and reads the whole
+  // folder when it does. Before that a note v1 tracks has no entry, and a create queued
+  // for it here is the same note twice (as `scanned` waits, for the same reason).
+  const placed = engine.placed(change.path)
+  if (placed && !how.ready(placed.space.id)) return
   if (change.kind === 'renamed') {
     if (how.own(change.from) || !kept(engine, change.path, change.dir)) return
     if (engine.entryAt(change.from)) {
@@ -170,7 +175,10 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
     if (!change.dir) await engine.foreign(change.path)
     return
   }
-  if (change.kind === 'created') await made(engine, change.path, change.dir)
+  // A file with no entry that changed is a file with no entry: its `created` may have
+  // met it locked (a picture half copied on Windows), and nothing else would ask again
+  // before the next launch. A folder's change says nothing about the folder.
+  if (change.kind === 'created' || !change.dir) await made(engine, change.path, change.dir)
 }
 
 /** Whether the tree already has a folder where `path` is: the engine makes one on this

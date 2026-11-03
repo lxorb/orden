@@ -36,6 +36,7 @@
  *  only thing holding them. */
 
 import { byteLength, cleanPersonName, now, sha256 } from './crypto'
+import { picturesOf } from './pictures'
 import type { Env, Note } from './types'
 
 /** How long the account keeps a version, in days: a month, or a year. The two
@@ -116,6 +117,17 @@ export function versionKey(hash: string): string {
 
 export function presentVersion(version: Version) {
   return { at: version.at, size: version.size, by: version.by, hash: version.hash }
+}
+
+/** The pictures a version's words show, for its `pictures` column, or null where they
+ *  could not be read, which leaves it for `versionPictures` in used.ts to read again.
+ *  Every address in raw HTML counts, as `liveHtml` has it: that only keeps bytes. */
+export function picturesOfVersion(content: string): string | null {
+  try {
+    return JSON.stringify([...picturesOf(content, true)])
+  } catch {
+    return null
+  }
 }
 
 /** The name a device sent for itself, as far as it is worth keeping.
@@ -214,6 +226,7 @@ export async function keepVersion(
       .bind(note.id, device)
       .first<{ at: number; hash: string; held: number; before: number | null }>()
 
+    const pictures = picturesOfVersion(content)
     const at = now()
     const folds =
       mine !== null &&
@@ -228,10 +241,10 @@ export async function keepVersion(
       // would be on no version at all.
       const to = mine.at === last?.at ? Math.max(at, mine.at) : Math.max(at, (last?.at ?? 0) + 1)
       const folded = await env.DB.prepare(
-        `update or ignore note_versions set at = ?4, hash = ?5, size = ?6, by = ?7
+        `update or ignore note_versions set at = ?4, hash = ?5, size = ?6, by = ?7, pictures = ?9
           where note_id = ?1 and at = ?2 and hash = ?3 and held = 0 and device is ?8`,
       )
-        .bind(note.id, mine.at, mine.hash, to, note.hash, note.size, by, device)
+        .bind(note.id, mine.at, mine.hash, to, note.hash, note.size, by, device, pictures)
         .run()
       if (!folded.meta.changes) continue
 
@@ -240,10 +253,10 @@ export async function keepVersion(
     }
 
     const kept = await env.DB.prepare(
-      `insert or ignore into note_versions (note_id, at, hash, size, by, device)
-       values (?, ?, ?, ?, ?, ?)`,
+      `insert or ignore into note_versions (note_id, at, hash, size, by, device, pictures)
+       values (?, ?, ?, ?, ?, ?, ?)`,
     )
-      .bind(note.id, Math.max(at, (last?.at ?? 0) + 1), note.hash, note.size, by, device)
+      .bind(note.id, Math.max(at, (last?.at ?? 0) + 1), note.hash, note.size, by, device, pictures)
       .run()
     if (!kept.meta.changes) continue
 
@@ -297,9 +310,17 @@ export async function keepVersionNow(
     .first<{ at: number | null }>()
 
   await env.DB.prepare(
-    'insert or ignore into note_versions (note_id, at, hash, size, by, held) values (?, ?, ?, ?, ?, 1)',
+    `insert or ignore into note_versions (note_id, at, hash, size, by, held, pictures)
+     values (?, ?, ?, ?, ?, 1, ?)`,
   )
-    .bind(noteId, Math.max(now(), (newest?.at ?? 0) + 1), hash, byteLength(content), deviceIn(by))
+    .bind(
+      noteId,
+      Math.max(now(), (newest?.at ?? 0) + 1),
+      hash,
+      byteLength(content),
+      deviceIn(by),
+      picturesOfVersion(content),
+    )
     .run()
 
   await keepAtMost(env, noteId)

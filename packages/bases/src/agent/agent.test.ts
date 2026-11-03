@@ -243,6 +243,12 @@ describe('lists', () => {
     ).toEqual(['Call the bank', 'Find the card'])
   })
 
+  test('a limit of nothing answers no tasks, and the total', () => {
+    const { total, tasks } = listTasks(rows, { limit: 0 }, context)
+    expect(tasks).toEqual([])
+    expect(total).toBeGreaterThan(0)
+  })
+
   test('a limit, and the total past it', () => {
     const { total, tasks } = listTasks(rows, { limit: 1 }, context)
     expect(total).toBe(4)

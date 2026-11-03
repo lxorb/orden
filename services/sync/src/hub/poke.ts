@@ -37,6 +37,16 @@ export function pokeSpace(
   return Promise.resolve()
 }
 
+/** The same, waited for: a caller with no request context to hand the work to. */
+export async function pokeNow(
+  env: Env,
+  spaceId: string,
+  seq: number,
+  from?: string,
+): Promise<void> {
+  if (env.HUB) await poking(env, spaceId, seq, from ?? '')
+}
+
 /** A route's own `waitUntil`, or one that lets the work run on its own where the
  *  request came with no execution context: a test calling the app directly. */
 export function laterOf(context: Context): Later {

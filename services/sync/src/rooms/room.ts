@@ -1696,8 +1696,10 @@ export class NoteRoom implements DurableObject {
     const held = this.held
     if (!asked || !held || (held.epoch ?? 0) < 1) return { refused: 'gone' }
 
-    if ((await sha256(fileOf(held.kind, this.state.doc))) !== held.hash) await this.settle()
+    const unsettled = (await sha256(fileOf(held.kind, this.state.doc))) !== held.hash
+    const settled = !unsettled || (await this.settle())
 
+    const level = held.hash
     const row = await this.env.DB.prepare('select * from notes where id = ?')
       .bind(held.noteId)
       .first<Note>()
@@ -1708,6 +1710,22 @@ export class NoteRoom implements DurableObject {
     if (!readsAs(held.kind, asked.text)) return { refused: UNREADABLE }
 
     const current = fileOf(held.kind, this.state.doc)
+    // A writer naming a version wrote on that version's words, so the document has to
+    // be holding them, or the difference between the two takes out what it holds besides.
+    // Text that says what the document says takes nothing out: a v1 rename. Words the
+    // settle would not write are no conflict of the writer's, so it is asked again
+    // rather than made to keep a second copy; a keystroke that arrived while the row was
+    // read or this was hashed is one. Nothing is awaited below.
+    if (asked.base !== undefined && asked.text !== current) {
+      if (!settled) return { refused: 'unsaved' }
+      if (
+        (await sha256(current)) !== level ||
+        held.hash !== level ||
+        fileOf(held.kind, this.state.doc) !== current
+      ) {
+        return { conflict: true }
+      }
+    }
     const update = ingested(held.kind, this.state.doc, held.noteId, current, asked.text)
     if (!update) return { note: row }
 

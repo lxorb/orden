@@ -183,9 +183,12 @@ describe('a note purged from Recently deleted', () => {
     expect(JSON.stringify(value)).not.toContain('PURGE')
   })
 
-  test('has its room emptied by the sweep', async () => {
+  test('has its room emptied at once, and the sweep still names it', async () => {
     const id = await purged()
-    expect(kept(id)).toBeGreaterThan(0)
+    expect(kept(id)).toBe(0)
+    expect(env.db.prepare('select what from leftovers where what = ?').get(`rooms/${id}`)).toEqual({
+      what: `rooms/${id}`,
+    })
 
     await sweepLeftovers(env)
     expect(kept(id)).toBe(0)

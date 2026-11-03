@@ -127,7 +127,7 @@ interface Listed {
   children?: Listed[]
 }
 
-async function listed(root: string): Promise<{ path: string; dir: boolean }[]> {
+async function listed(root: string): Promise<{ path: string; dir: boolean }[] | null> {
   const base = root.replace(/\\/g, '/').replace(/\/+$/, '')
   const inside = (path: string): string | null => {
     const at = path.replace(/\\/g, '/')
@@ -160,7 +160,8 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[]> {
       if (child.is_dir) walk(child)
     }
   }
-  if (tree) walk(tree)
+  if (!tree) return null
+  walk(tree)
   // The list leaves a dotted file out as the app's own; sync carries the space's own
   // inbox all the same (#1044), as the crate's scan does on a desktop.
   const inbox = `${base}/${INBOX_PATH}`

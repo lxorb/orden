@@ -69,6 +69,12 @@ const { appWorld } = await import('./app-world')
 describe("the browser's disk, as the v2 engine sees it", () => {
   const telling = {} as Parameters<typeof appWorld>[1]
 
+  test('says a listing it could not read, rather than an empty folder', async () => {
+    const world = appWorld(() => null, telling)
+
+    expect(await world.list?.('/s')).toBeNull()
+  })
+
   test('has a note that is there, and not one that is not', async () => {
     const { disk } = appWorld(() => null, telling)
 
