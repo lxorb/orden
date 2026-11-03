@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { dotCom, isLocalFile, typedAddress, webAddress } from './typed'
+import { dotCom, isLocalFile, mayBeSecret, typedAddress, webAddress } from './typed'
 
 /** Ctrl+Enter in the address field, which every browser has had for thirty years. */
 describe('the dot-com press', () => {
@@ -93,26 +93,57 @@ describe('what somebody typed', () => {
 })
 
 /** A word and a colon is not a scheme because it looks like one: Chrome takes a scheme it
- *  knows, or anything written with `//`, as an address, and the rest as words. The bar did
- *  nothing at all for these. */
+ *  knows, or anything written with `//`, as an address. Of the rest, a phrase is words for
+ *  the engine, and what could be a name and a password, or one of them, goes nowhere. */
 describe('a word with a colon after it', () => {
   test.each([
     ['site:github.com orden'],
-    ['site:github.com'],
-    ['site:github.com/lxorb'],
     ['TypeError: x is not a function'],
-    ['define:serendipity'],
     ['filetype:pdf rust'],
     ['note: buy milk'],
-    ['a:b'],
+    ['what is this: foo'],
     ['note:'],
     ['http: is a protocol'],
     ['mailto: somebody'],
+    ['std::vector'],
+    ['C: drive is full'],
   ])('%s is words', (typed) => {
     expect(webAddress(typed)).toBe(
       `https://www.google.com/search?q=${encodeURIComponent(typed.trim())}`,
     )
     expect(typedAddress(typed)).toBeNull()
+    expect(mayBeSecret(typed)).toBe(false)
+  })
+
+  test.each([
+    ['admin:secret@router.lan'],
+    ['admin:pa/ss@router.lan'],
+    ['admin:pa?ss@router.lan'],
+    ['admin:pass word@router.lan'],
+    ['admin:secret@'],
+    ['root:hunter2'],
+    ['user_1:hunter2'],
+    ['password:hunter2'],
+    ['password: hunter2'],
+    ['Passwd: two words'],
+    ['api_key: abc'],
+    ['otpauth:totp/x?secret=ABC'],
+    ['site:github.com'],
+    ['site:github.com/lxorb'],
+    ['define:serendipity'],
+    ['a:b'],
+  ])('%s could be a secret, and stays out of the search', (typed) => {
+    expect(webAddress(typed)).toBeNull()
+    expect(typedAddress(typed)).toBeNull()
+  })
+
+  test.each([
+    ['admin:secret@'],
+    ['root:hunter2'],
+    ['password: hunter2'],
+    ['admin:pass word@router.lan'],
+  ])('%s is told it went nowhere', (typed) => {
+    expect(mayBeSecret(typed)).toBe(true)
   })
 
   test.each([
@@ -129,24 +160,54 @@ describe('a word with a colon after it', () => {
     expect(webAddress(typed)).toBeNull()
   })
 
-  test('a password in front of a host stays out of the search', () => {
-    expect(webAddress('admin:secret@router.lan')).toBeNull()
-  })
-
-  test('a file stays out of the search however it is written', () => {
-    expect(webAddress('file:notes.txt')).toBeNull()
-    expect(webAddress('file: notes.txt')).toBeNull()
-    expect(webAddress('FILE:///etc/passwd')).toBeNull()
-    expect(webAddress('C:')).toBeNull()
-    expect(webAddress('C:\\My Documents\\a.txt')).toBeNull()
-  })
-
   test('an address still goes where it says', () => {
     expect(webAddress('view-source:https://example.com')).toBe('view-source:https://example.com')
     expect(webAddress('HTTP://example.com')).toBe('HTTP://example.com')
     expect(webAddress('nas:5000')).toBe('http://nas:5000')
+    expect(webAddress('c:8080')).toBe('http://c:8080')
     expect(webAddress('example.com:8080/a')).toBe('http://example.com:8080/a')
     expect(webAddress('[::1]:3000/a')).toBe('http://[::1]:3000/a')
+  })
+
+  test('a colon after a host with nothing in the port is still that host', () => {
+    expect(webAddress('example.com.:8080')).toBe('http://example.com.:8080')
+    expect(webAddress('example.com:/a')).toBe('https://example.com:/a')
+    expect(webAddress('www.example.com:')).toBe('https://www.example.com:')
+  })
+})
+
+/** Nothing on this machine or its network goes to the engine, however it is written. */
+describe('a local path', () => {
+  test.each([
+    ['file:notes.txt'],
+    ['file: notes.txt'],
+    ['FILE:///etc/passwd'],
+    ['C:'],
+    ['D:thesis.pdf'],
+    ['D:my thesis.pdf'],
+    ['D:2024.pdf'],
+    ['C:Users\\me\\secret.txt'],
+    ['C:Users\\my name\\secret.txt'],
+    ['C:\\My Documents\\a.txt'],
+    ['smb:nas/share'],
+    ['smb:nas/my share'],
+    ['smb://nas/my share'],
+    ['afp:nas/x y'],
+    ['nfs:nas/x y'],
+    ['/etc/passwd'],
+    ['/home/me/my thesis.pdf'],
+    ['~/secret.txt'],
+    ['./a b.txt'],
+    ['../a b.txt'],
+  ])('%s stays out of the search, and is said to be a file', (typed) => {
+    expect(webAddress(typed)).toBeNull()
+    expect(typedAddress(typed)).toBeNull()
+    expect(isLocalFile(typed)).toBe(true)
+  })
+
+  test('two slashes are a host and not a path', () => {
+    expect(isLocalFile('//svelte.dev')).toBe(false)
+    expect(webAddress('//svelte.dev')).toBe('https://svelte.dev')
   })
 })
 

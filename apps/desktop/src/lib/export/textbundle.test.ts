@@ -220,6 +220,7 @@ describe('a picture however it was written', () => {
     ['![a](photo(1).png)\n'],
     ['![a](<my photo.png>)\n'],
     ["![a](pic.png 'T')\n"],
+    ['![x](pic\\(1\\).png)\n'],
     ['![x][ref]\n\n[ref]: pic.png\n'],
     ['![ref]\n\n[ref]: <my pic.png> "T"\n'],
   ])('%j: what the document finds is what the text gives up', (source) => {
@@ -228,5 +229,34 @@ describe('a picture however it was written', () => {
     const text = asked(source, src ?? '', 'landed.png')
     expect(text).toContain('assets/landed.png')
     expect(text).not.toContain(src)
+  })
+
+  test('a line of a paragraph is not a definition', () => {
+    const source = '![x][r]\n\npara\n[r]: pic.png\n'
+    expect(asked(source, 'pic.png', 'p.png')).toBe(source)
+  })
+
+  test('a definition after a blank line, a heading or another definition is', () => {
+    expect(asked('# T\n[r]: pic.png\n', 'pic.png', 'p.png')).toBe('# T\n[r]: assets/p.png\n')
+    expect(asked('[a]: b.png\n[r]: pic.png\n', 'pic.png', 'p.png')).toBe(
+      '[a]: b.png\n[r]: assets/p.png\n',
+    )
+    expect(asked('> q\n>\n> [r]: pic.png\n', 'pic.png', 'p.png')).toBe(
+      '> q\n>\n> [r]: assets/p.png\n',
+    )
+  })
+
+  test('front matter is the note’s own, whatever it looks like', () => {
+    const front = '---\n[r]: pic.png\nalt: ![a](pic.png)\n---\n'
+    expect(asked(`${front}\n![a](pic.png)\n`, 'pic.png', 'p.png')).toBe(
+      `${front}\n![a](assets/p.png)\n`,
+    )
+  })
+
+  test('an escaped parenthesis is the parenthesis', () => {
+    expect(asked('![x](pic\\(1\\).png)\n', 'pic(1).png', 'p.png')).toBe('![x](assets/p.png)\n')
+    expect(asked('![x][r]\n\n[r]: pic\\(1.png\n', 'pic(1.png', 'p.png')).toBe(
+      '![x][r]\n\n[r]: assets/p.png\n',
+    )
   })
 })

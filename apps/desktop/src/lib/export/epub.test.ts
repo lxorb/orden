@@ -671,6 +671,10 @@ describe('characters XML cannot carry', () => {
     expect(toXhtml('<p>&#65;&#9;&#x1F600;</p>')).toBe('<p>&#65;&#9;&#x1F600;</p>')
   })
 
+  test('a capital X in a reference is one XML cannot read either', () => {
+    expect(toXhtml('<p>&#X41;&#X1;</p>')).toBe('<p>&#x41;</p>')
+  })
+
   test('and the words either side of a soft break stay words', () => {
     expect(toXhtml('<p>one\u000btwo\u000cthree\u0001four</p>')).toBe('<p>one two threefour</p>')
   })

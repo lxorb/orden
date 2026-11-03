@@ -58,14 +58,90 @@ describe('a nested AGENTS.md moved to the top under another name', () => {
     expect(hard.files.get(`${ROOT}/X.md`)).toBe('a note')
   })
 
-  test('refused where the name in its own folder is taken, and nothing moves', async () => {
+  test('moves though the name in its own folder is taken', async () => {
     hard.files.set(`${ROOT}/a/X.md`, 'in the way')
+    hard.files.set(`${ROOT}/X 2.md`, 'in the way too')
     await workspace.loadTree()
 
-    await expect(movedIn(ROOT, 'a/AGENTS.md', 'X.md')).rejects.toThrow()
+    await expect(movedIn(ROOT, 'a/AGENTS.md', 'X.md')).resolves.toBe('X.md')
     expect(hard.files.get(`${ROOT}/AGENTS.md`)).toBe('the instructions')
-    expect(hard.files.get(`${ROOT}/a/AGENTS.md`)).toBe('a note')
+    expect(hard.files.get(`${ROOT}/X.md`)).toBe('a note')
     expect(hard.files.get(`${ROOT}/a/X.md`)).toBe('in the way')
+    expect(hard.files.get(`${ROOT}/X 2.md`)).toBe('in the way too')
+    expect(hard.files.has(`${ROOT}/a/AGENTS.md`)).toBe(false)
+  })
+})
+
+describe('a move that ends at the top under the reserved name', () => {
+  test.each([
+    ['a/AGENTS.md', 'AGENTS.markdown'],
+    ['a/AGENTS.md', 'agents.md'],
+    ['a/x.md', 'AGENTS.markdown'],
+    ['a/x.md', 'agents.md'],
+  ])('%s to %s is refused, and nothing moves', async (from, to) => {
+    hard.files.set(`${ROOT}/x.md`, 'the x at the top')
+    await workspace.loadTree()
+    const before = new Map(hard.files)
+
+    await expect(movedIn(ROOT, from, to)).rejects.toThrow('instructions')
+    expect(hard.files).toEqual(before)
+  })
+
+  test('the instructions may still be respelled', async () => {
+    await expect(movedIn(ROOT, 'AGENTS.md', 'agents.md')).resolves.toBe('agents.md')
+    expect(hard.files.get(`${ROOT}/agents.md`)).toBe('the instructions')
+  })
+
+  test('a refusal moveMany gives is an error, not a success', async () => {
+    const refused = vi.spyOn(workspace, 'moveMany').mockResolvedValue(false)
+    try {
+      await expect(movedIn(ROOT, 'a/x.md', 'b/x.md')).rejects.toThrow('refused')
+      await expect(movedIn(ROOT, 'a/x.md', 'b/y.md')).rejects.toThrow('refused')
+    } finally {
+      refused.mockRestore()
+    }
+    expect(hard.files.get(`${ROOT}/a/x.md`)).toBe('the x in a')
+  })
+})
+
+describe('moveMany', () => {
+  test('answers whether it moved', async () => {
+    await expect(workspace.moveMany([`${ROOT}/a/x.md`], `${ROOT}/b`)).resolves.toBe(true)
+    await expect(workspace.moveMany([`${ROOT}/a/AGENTS.md`], ROOT)).resolves.toBe(false)
+  })
+})
+
+describe('the stop on the way', () => {
+  test('is never the instructions, with none at the top', async () => {
+    hard.files.delete(`${ROOT}/AGENTS.md`)
+    hard.files.set(`${ROOT}/x.md`, 'the x at the top')
+    hard.files.set(`${ROOT}/b/x.md`, 'the x in b')
+    await workspace.loadTree()
+    const invoked = vi.spyOn(hard, 'invoke')
+
+    await expect(movedIn(ROOT, 'x.md', 'b/AGENTS.md')).resolves.toBe('b/AGENTS.md')
+
+    const renames = invoked.mock.calls
+      .filter(([command]) => command === 'rename_note')
+      .map(([, args]) => (args as { to: string }).to)
+    invoked.mockRestore()
+    expect(renames).not.toContain(`${ROOT}/AGENTS.md`)
+    expect(hard.files.get(`${ROOT}/b/AGENTS.md`)).toBe('the x at the top')
+    expect(hard.files.get(`${ROOT}/b/x.md`)).toBe('the x in b')
+    expect(hard.files.has(`${ROOT}/x.md`)).toBe(false)
+  })
+
+  test('is a free name where both ends of the two-step are taken', async () => {
+    hard.files.set(`${ROOT}/b/x.md`, 'the x in b')
+    hard.files.set(`${ROOT}/a/y.md`, 'the y in a')
+    await workspace.loadTree()
+
+    await expect(movedIn(ROOT, 'a/x.md', 'b/y.md')).resolves.toBe('b/y.md')
+
+    expect(hard.files.get(`${ROOT}/b/y.md`)).toBe('the x in a')
+    expect(hard.files.get(`${ROOT}/b/x.md`)).toBe('the x in b')
+    expect(hard.files.get(`${ROOT}/a/y.md`)).toBe('the y in a')
+    expect([...hard.files.keys()].filter((one) => one.includes(' 2'))).toEqual([])
   })
 })
 
