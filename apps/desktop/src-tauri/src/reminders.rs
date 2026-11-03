@@ -389,7 +389,10 @@ fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
             crate::placement::raised(&window);
         }
     }
-    let _ = app.emit(PRESSED, ());
+    // To one window, the one brought forward: it is the one that opens the note.
+    if let Some(window) = crate::agents::shell::host(app) {
+        let _ = app.emit_to(window.label(), PRESSED, ());
+    }
 }
 
 /// A `nib://` link that arrived, answered here if it is a reminder's. Answers whether it

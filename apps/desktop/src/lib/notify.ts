@@ -8,6 +8,7 @@
  *  and the page answers it here. Where the system has a field to answer in (a Windows
  *  toast, a Mac's banner), `reply` offers one, and what was typed comes back to it. */
 
+import { hearHere } from './own-window'
 import { invoke, isDesktop } from './tauri'
 
 /** What a desktop's press says: which notice, and what was done with it. */
@@ -83,9 +84,7 @@ export function unshow(tag: string): void {
 }
 
 function shownByTheCrate(one: Notice): void {
-  listening ??= import('@tauri-apps/api/event').then(({ listen }) =>
-    listen<unknown>(PRESSED, (event) => pressed(event.payload)),
-  )
+  listening ??= hearHere<unknown>(PRESSED, (event) => pressed(event.payload))
 
   const id = fresh()
   if (one.tag) {

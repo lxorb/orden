@@ -60,7 +60,15 @@ pub fn watch(app: &AppHandle) {
             crate::placement::raised(&window);
         }
 
-        let _ = opened.emit(OPENED, urls);
+        // To one window, the one brought forward: a link followed by every window open
+        // made its note or its task once in each.
+        #[cfg(desktop)]
+        let window = crate::agents::shell::host(&opened).map(|one| one.label().to_string());
+        #[cfg(not(desktop))]
+        let window = Some("main".to_string());
+        if let Some(window) = window {
+            let _ = opened.emit_to(window.as_str(), OPENED, urls);
+        }
     });
 
     // The link that started the app, which no handler above can have heard: it

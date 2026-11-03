@@ -28,6 +28,7 @@
  *  a parked tab again opens the page where it was, at the place it was at. */
 
 import { landed } from '../glass/chrome.svelte'
+import { hearHere } from '../own-window'
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
@@ -1446,7 +1447,7 @@ class Pages {
     // plugin is never a desktop, and says so first so its package leaves all of it out.
     if (__EVEN_PLUGIN__ || !isDesktop || typeof window === 'undefined') return Promise.resolve()
     this.listening ??= (async () => {
-      const { listen } = await import('@tauri-apps/api/event')
+      const listen = hearHere
 
       // A site has asked for the camera, the microphone, where you are, notifications or
       // the clipboard to read. The request is held open in the engine until this is

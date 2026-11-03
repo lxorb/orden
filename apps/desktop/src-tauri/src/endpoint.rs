@@ -50,10 +50,6 @@ use crate::paths::{config_dir, made, write_privately};
 /// What the window hears a request on.
 const ASKED: &str = "nib://automation";
 
-/// The window that answers. A second window is a second view of the same notes,
-/// so the one the CLI drives is the one the app started with.
-const WINDOW: &str = "main";
-
 /// How much of a request is read. A note is the longest thing anybody sends, and
 /// this is the same ceiling a note has everywhere else.
 const MOST_BYTES: usize = 8 * 1024 * 1024;
@@ -455,9 +451,13 @@ fn ask_the_window_within(
     // The window, not the webview window: a window with a page in a tab is not one
     // of those, and every request would be refused for as long as a website was
     // open. See web_tabs.rs.
-    if app.get_window(WINDOW).is_none() {
+    // The window that answers. A second window is a second view of the same notes,
+    // so the one the CLI drives is the one the app started with, or failing that one
+    // still open (`shell::host`). One by label, and start.ts hears on that window
+    // alone: a verb every window heard ran once in each.
+    let Some(window) = crate::agents::shell::host(app) else {
         return Err("the app has no window open to ask".to_owned());
-    }
+    };
 
     let Some(body) = asked.as_object_mut() else {
         return Err("that body is not an object".to_owned());
@@ -481,7 +481,7 @@ fn ask_the_window_within(
     }
 
     let outcome = app
-        .emit_to(WINDOW, ASKED, &*asked)
+        .emit_to(window.label(), ASKED, &*asked)
         .map_err(|error| format!("the window could not be asked: {error}"))
         .and_then(|()| {
             answered

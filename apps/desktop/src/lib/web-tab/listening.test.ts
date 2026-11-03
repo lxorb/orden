@@ -29,8 +29,8 @@ vi.mock('../tauri', async (importOriginal) => ({
 let release: () => void = () => undefined
 const slow = new Promise<void>((go) => (release = go))
 
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: async (name: string) => {
+vi.mock('../own-window', () => ({
+  hearHere: async (name: string) => {
     if (order.length === 0) await slow
     order.push(name)
     return () => undefined

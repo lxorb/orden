@@ -9,6 +9,7 @@
 import { untrack } from 'svelte'
 import { answer, wordSaid } from '../mobile/bridge'
 import { modes } from '../modes.svelte'
+import { hearHere } from '../own-window'
 import { quickAdd } from '../quick-add/asked.svelte'
 import { rows } from '../rows/rows.svelte'
 import { insideSpace } from '../space-paths'
@@ -125,9 +126,7 @@ $effect.root(() => {
 // The presses: any that started the app, and every one after it as it arrives.
 void answerAll()
 if (isDesktop) {
-  void import('@tauri-apps/api/event').then(({ listen }) =>
-    listen('nib://reminder', () => void answerAll()),
-  )
+  void hearHere('nib://reminder', () => void answerAll())
 } else {
   answer('__nibReminders', () => void answerAll())
 }
