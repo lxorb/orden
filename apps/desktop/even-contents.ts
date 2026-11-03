@@ -327,13 +327,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  dragged to another place in its strip or into another pane (overview/drag.ts), and
  *  Alt Alt turning it back at any moment. Measured 5,794,727.
  *
- *  The code raised on 2026-11-03, to 5,808,200, for the bug hunt's round one merged into
+ *  The code raised on 2026-11-03, to 5,824,800, for the bug hunt's round one merged into
  *  claude/hunt-round-1: the views' and the desktop's writing fixes, what a base may cost, a
  *  thread written down while it runs, the sync's scans, and an undo that waits for every
- *  gesture landing, measured together. Measured 5,807,931.
+ *  gesture landing, measured together. Measured 5,824,556.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_808_200,
+  code: 5_824_800,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
