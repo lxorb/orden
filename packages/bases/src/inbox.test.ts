@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import { carriedOwn, INBOX_PATH, withTasksOf } from './inbox'
+import { rowsOfText } from './note-rows'
 
-/** The space's own inbox (#1044): the one hidden file sync carries, and two lists of
- *  tasks merged without losing one. */
+/** The space's own inbox (#1044): a hidden note whose tasks are rows named Inbox, the
+ *  one hidden file sync carries, and two lists of tasks merged without losing one. */
 
 describe("the space's own inbox", () => {
   test('is a hidden note at the root, the one hidden path sync carries', () => {
@@ -12,6 +13,20 @@ describe("the space's own inbox", () => {
     expect(carriedOwn('Inbox.md')).toBe(false)
     expect(carriedOwn('Work/.Inbox.md')).toBe(false)
     expect(carriedOwn('.obsidian/app.json')).toBe(false)
+  })
+
+  test('has its tasks as rows named Inbox, and no row of its own', () => {
+    const rows = rowsOfText('Work', INBOX_PATH, '- [ ] Call the bank\n- [x] Post it\n')
+    expect(rows.map((row) => row.kind)).toEqual(['task', 'task'])
+    expect(rows.map((row) => [row.path, row.file.basename, row.file.name])).toEqual([
+      ['.Inbox.md', 'Inbox', 'Inbox.md'],
+      ['.Inbox.md', 'Inbox', 'Inbox.md'],
+    ])
+    // A note of the reader's is a row as ever.
+    expect(rowsOfText('Work', 'Inbox.md', '- [ ] x\n').map((row) => row.kind)).toEqual([
+      'note',
+      'task',
+    ])
   })
 })
 

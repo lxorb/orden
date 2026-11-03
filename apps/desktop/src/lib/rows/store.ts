@@ -56,6 +56,10 @@ export interface Host {
   breathe(): Promise<void>
   /** Milliseconds since the epoch, for a note just written. */
   now(): number
+  /** The notes of a space that no scan reads, being in Orden's own hidden folder: its
+   *  inbox (rows/inbox.ts), relative to the space. Read with the space, and kept
+   *  current like any note, by the saves and file operations that name them. */
+  own?(root: string): readonly string[]
   /** Whether a space is an Obsidian vault - `.obsidian` at its root - where a `📅` is a
    *  deadline rather than a start date (#371, `@orden/markdown/task-dates`). */
   vault(root: string): Promise<boolean>
@@ -412,6 +416,18 @@ export class RowsStore {
       }
       if (++counted % CHUNK === 0) await this.host.breathe()
     }
+
+    // The notes the scan leaves out because they are Orden's own, read one by one.
+    for (const relative of this.host.own?.(held.root) ?? []) {
+      const content = await this.host.read(insideSpace(held.root, relative))
+      if (content === null || this.spaces.get(pathKey(held.root)) !== held) continue
+      const stamp = { size: content.length, mtime: 0, ctime: 0 }
+      files.set(
+        pathKey(relative, held.root),
+        this.rowsIn(held, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp })),
+      )
+    }
+    if (this.spaces.get(pathKey(held.root)) !== held) return
 
     for (const change of held.since) change(files)
     held.since = []

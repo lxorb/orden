@@ -7,8 +7,9 @@
 //! changes (`rememberInbox` in apps/desktop/src/lib/rows/inbox.ts) and this keeps in a
 //! file, since the crate cannot read local storage and the app may not be open when a
 //! task comes. Where nothing was said, or it is not in the spaces folder any more, the
-//! inbox is `Inbox.md` in the first space on disk, alphabetical, the way the space list
-//! orders them. Made where it is not there yet.
+//! inbox is Orden's own in the first space on disk, alphabetical, the way the space list
+//! orders them: `.Inbox.md`, hidden, so no file the reader did not make is put into the
+//! space (#1044). Made where it is not there yet.
 //!
 //! **Whether to offer it** is the signature's call: the system lists an app's App
 //! Intents in Shortcuts only when a developer team signed it, so Settings shows the
@@ -28,8 +29,9 @@ use crate::paths::{
     SPACES_DIR, SPACES_KEPT, TRASH,
 };
 
-/// The inbox of a space that says nothing else.
-const INBOX: &str = "Inbox.md";
+/// The inbox of a space that says nothing else: Orden's own, hidden (`INBOX_PATH` in
+/// packages/bases/src/inbox.ts).
+const INBOX: &str = ".Inbox.md";
 
 /// The file in the settings folder that holds the inbox of the space in front.
 const FRONT: &str = "inbox.txt";
@@ -108,7 +110,7 @@ fn add_to_inbox(spaces: &Path, front: Option<&Path>, text: &str) -> Result<PathB
 }
 
 /// The inbox the page named, while it is still in a space under `spaces` and its folder
-/// is there; else the first space's `Inbox.md`.
+/// is there; else the first space's own.
 fn inbox_in(spaces: &Path, front: Option<&Path>) -> Result<PathBuf, String> {
     let named = front.filter(|path| {
         inside(spaces, path)
@@ -305,11 +307,13 @@ mod tests {
     }
 
     #[test]
-    fn a_missing_inbox_is_made() {
+    fn a_missing_inbox_is_made_hidden_and_nothing_the_reader_sees() {
         let dir = tempfile::tempdir().unwrap();
         fs::create_dir(dir.path().join("Notes")).unwrap();
         let inbox = add_to_inbox(dir.path(), None, "milk").unwrap();
+        assert_eq!(inbox, dir.path().join("Notes").join(".Inbox.md"));
         assert_eq!(fs::read_to_string(inbox).unwrap(), "- [ ] milk\n");
+        assert!(!dir.path().join("Notes").join("Inbox.md").exists());
     }
 
     #[test]

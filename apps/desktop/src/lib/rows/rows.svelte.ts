@@ -9,7 +9,7 @@
  *    rows.of(space?)            every row, of one space (by name or root) or of all
  *    rows.watch(listener)       each file's rows as they change; answers the way to stop
  *    rows.write(row, change)    a property or a task field, one edit, one undo
- *    rows.inbox(root?)          the space's inbox note, made the first time it is asked */
+ *    rows.inbox(root?)          the space's inbox, made the first time it is asked */
 
 import type { Row } from '@orden/bases'
 import { untrack } from 'svelte'
@@ -20,7 +20,7 @@ import { insideSpace } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { keeping } from '../workspace/file-ops'
-import { inboxes, inboxOf } from './inbox'
+import { INBOX, inboxes, inboxOf } from './inbox'
 import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
 import { type RowsListener, RowsStore } from './store'
@@ -37,6 +37,7 @@ const store = new RowsStore({
   }),
   breathe,
   now: () => Date.now(),
+  own: () => [INBOX],
   vault: isVault,
 })
 

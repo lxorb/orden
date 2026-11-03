@@ -375,3 +375,72 @@ describe('the rows of every space', () => {
     expect(tasks(store.of())).toEqual(['Work:Plan.md:Saved since'])
   })
 })
+
+describe("a space's own notes, which no scan reads (#1044)", () => {
+  const INBOX = '.Inbox.md'
+
+  /** A host whose scan leaves out dotted names, as `scan_links` does. */
+  function hidden(disk: Record<string, string>) {
+    const files = new Map(Object.entries(disk))
+    const host: Host = {
+      scan: (root) =>
+        Promise.resolve({
+          notes: [...files]
+            .filter(([path]) => path.startsWith(`${root}/`) && !path.includes('/.'))
+            .map(([path, text]) => scanned(path.slice(root.length + 1), text)),
+          files: [],
+        }),
+      read: (path) => Promise.resolve(files.get(path) ?? null),
+      open: () => ({ root: null, scanned: () => Promise.resolve(), notes: () => [] }),
+      breathe: () => Promise.resolve(),
+      now: () => 42,
+      vault: () => Promise.resolve(false),
+      own: () => [INBOX],
+    }
+    return { store: new RowsStore(host), files }
+  }
+
+  const settle = async () => {
+    for (let turn = 0; turn < 20; turn++) await Promise.resolve()
+  }
+
+  test('are read with their space: their tasks are rows, and they are no note', async () => {
+    const { store } = hidden({
+      [`${WORK}/Plan.md`]: '- [ ] Write the plan\n',
+      [`${WORK}/${INBOX}`]: '- [ ] Call the bank\n',
+    })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settle()
+
+    expect(tasks(store.of('Work'))).toEqual([
+      'Work:Plan.md:Write the plan',
+      `Work:${INBOX}:Call the bank`,
+    ])
+    expect(
+      store
+        .of('Work')
+        .filter((row) => row.kind === 'note')
+        .map((row) => row.path),
+    ).toEqual(['Plan.md'])
+    expect(store.at(`${WORK}/${INBOX}`).map((row) => row.task?.text)).toEqual(['Call the bank'])
+  })
+
+  test('are kept current by a save, as any note is', async () => {
+    const { store } = hidden({ [`${WORK}/Plan.md`]: '' })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settle()
+    expect(tasks(store.of('Work'))).toEqual([])
+
+    store.saved(`${WORK}/${INBOX}`, '- [ ] Buy milk\n- [x] Post the letter\n')
+    expect(tasks(store.of('Work'))).toEqual([
+      `Work:${INBOX}:Buy milk`,
+      `Work:${INBOX}:Post the letter`,
+    ])
+    expect(
+      store
+        .of('Work')
+        .filter((row) => row.kind === 'note')
+        .map((row) => row.path),
+    ).toEqual(['Plan.md'])
+  })
+})

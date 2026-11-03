@@ -10,6 +10,9 @@
  *  write here. */
 export const INBOX_PATH = '.Inbox.md'
 
+/** What a view calls the inbox's note: its name without the dot that hides it. */
+export const INBOX_NAME = 'Inbox'
+
 /** Whether a path inside a space, relative to it, is a hidden one sync carries all the
  *  same: the space's own inbox, and nothing else. The crate's walk says the same
  *  (`carried` in src-tauri/src/space_watch/walk.rs). */
@@ -60,3 +63,9 @@ export function withTasksOf(into: string, from: string): string {
   return `${head ? `${head}\n` : ''}${added.join('\n')}\n`
 }
 
+/** Whether a note a task names (`>Inbox`, `note: "Inbox"`) means the space's inbox: the
+ *  word, with `.md` or without, where the space has no note of that name. Without this
+ *  a task sent to the Inbox by name made `Inbox.md` in the space. */
+export function meansInbox(said: string): boolean {
+  return /^\s*inbox(?:\.md)?\s*$/i.test(said)
+}
