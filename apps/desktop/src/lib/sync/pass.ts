@@ -27,7 +27,7 @@ import { hash32 } from '@orden/sync-core/seed'
 import { isEntryId } from '@orden/sync-core/wire'
 import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
 import { sha256 } from '../bytes'
-import { placeholderOf } from '../icloud-placeholder'
+import { evictedHere } from '../icloud-placeholder'
 import { log } from '../log'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
@@ -1452,7 +1452,7 @@ export async function push(
     // read as a note gone from here: the next pull moves it on or puts it back.
     if (isAside(path) && (await present(joinPath(root, path)))) continue
     // Taken off this Mac by iCloud, whose placeholder no list holds; see sync2's `remove`.
-    if (await present(placeholderOf(joinPath(root, path)))) continue
+    if (await evictedHere(joinPath(root, path))) continue
     const aside = await asideFound(root, path, tracked.id)
     if (aside !== null) {
       await shownAgain(mirror, aside, tracked.id, new Set())

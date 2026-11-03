@@ -75,6 +75,39 @@ pub fn placeholder_of(target: &Path) -> Option<PathBuf> {
     Some(target.with_file_name(format!(".{name}{SUFFIX}")))
 }
 
+/// Whether a placeholder's bytes stand for a file of this name: the property list iCloud
+/// writes, with the name inside it. A stray file that only has the name of one is no reason
+/// to hold back a delete. How long ago it was evicted says nothing, as a note may stay in
+/// the cloud for years.
+pub fn stands_for(bytes: &[u8], name: &str) -> bool {
+    let holds = |needle: &[u8]| !needle.is_empty() && bytes.windows(needle.len()).any(|at| at == needle);
+    let wide: Vec<u8> = name.encode_utf16().flat_map(u16::to_be_bytes).collect();
+    bytes.starts_with(b"bplist") && (holds(name.as_bytes()) || holds(&wide))
+}
+
+/// Whether a file that is not there has a placeholder that stands for it, which sync must
+/// never read as a delete. Not a rename in the Finder of a note evicted on macOS 13: that
+/// renames the placeholder, and nothing here can tell it from a delete of the old name.
+pub fn evicted(target: &Path) -> bool {
+    /// A placeholder is a few hundred bytes.
+    const LONGEST: u64 = 64 * 1024;
+
+    if std::fs::symlink_metadata(target).is_ok() {
+        return false;
+    }
+    let (Some(placeholder), Some(name)) = (
+        placeholder_of(target),
+        target.file_name().and_then(|one| one.to_str()),
+    ) else {
+        return false;
+    };
+    std::fs::File::open(placeholder).is_ok_and(|file| {
+        use std::io::Read as _;
+        let mut bytes = Vec::new();
+        file.take(LONGEST).read_to_end(&mut bytes).is_ok() && stands_for(&bytes, name)
+    })
+}
+
 /// Makes sure a file is on this Mac before it is read: where only its placeholder
 /// is, or it is there by name only, iCloud is asked for it and this waits until it
 /// has arrived.
@@ -161,7 +194,33 @@ fn download(target: &Path) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{evicted_name, flags_are_dataless, is_dataless, placeholder_of};
+    use super::{evicted, evicted_name, flags_are_dataless, is_dataless, placeholder_of, stands_for};
+
+    #[test]
+    fn a_placeholder_is_a_property_list_with_the_name_in_it() {
+        assert!(stands_for(b"bplist00\xd4NSURLNameKey_\x10\x07Plan.md", "Plan.md"));
+        let wide: Vec<u8> = "Pl\u{e4}n.md"
+            .encode_utf16()
+            .flat_map(u16::to_be_bytes)
+            .collect();
+        assert!(stands_for(&[b"bplist00".as_slice(), &wide].concat(), "Pl\u{e4}n.md"));
+        // A stale stub of another note, or a file with nothing of one, holds nothing back.
+        assert!(!stands_for(b"bplist00Other.md", "Plan.md"));
+        assert!(!stands_for(b"Plan.md", "Plan.md"));
+    }
+
+    #[test]
+    fn a_file_with_a_placeholder_is_evicted_and_one_without_is_gone() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let note = dir.path().join("Plan.md");
+        assert!(!evicted(&note));
+        std::fs::write(dir.path().join(".Plan.md.icloud"), b"nothing").expect("written");
+        assert!(!evicted(&note));
+        std::fs::write(dir.path().join(".Plan.md.icloud"), b"bplist00Plan.md").expect("written");
+        assert!(evicted(&note));
+        std::fs::write(&note, "words").expect("written");
+        assert!(!evicted(&note));
+    }
     use std::path::{Path, PathBuf};
 
     #[test]

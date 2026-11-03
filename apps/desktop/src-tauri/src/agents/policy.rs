@@ -579,7 +579,7 @@ pub fn judge(
 
     // What a press lands on cannot be read, so it can be anything on the list above.
     if act == Act::Press && facts.opaque {
-        if let Some(question) = ask(Category::Writing, on("", "A press", &site)) {
+        if let Some(question) = ask(Category::Unread, on("", "A press", &site)) {
             return Some(question);
         }
     }
@@ -2410,8 +2410,8 @@ mod tests {
             opaque: true,
             ..Facts::default()
         };
-        assert_eq!(keyed(&grant, host(), "Space"), Some(Category::Writing));
-        assert_eq!(keyed(&grant, host(), "Enter"), Some(Category::Writing));
+        assert_eq!(keyed(&grant, host(), "Space"), Some(Category::Unread));
+        assert_eq!(keyed(&grant, host(), "Enter"), Some(Category::Unread));
         let mut full = grant.clone();
         full.mode = Mode::Autonomous;
         assert_eq!(keyed(&full, host(), "Space"), None);

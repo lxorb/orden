@@ -7,8 +7,10 @@
  *  The question is the crate's (src-tauri/src/agents/approvals.rs), so the Activity
  *  panel shows it too and an answer there counts here. What this adds is the waiting,
  *  and the thread's own Always: a tool said Always to is answered yes as soon as it
- *  asks an everyday question, for the rest of that thread. Paying, sending, deleting,
- *  signing in, publishing, the terminal and a file from outside are asked every time:
+ *  asks an everyday question, on that site where a page is what it asks about, for the
+ *  rest of that thread. Paying, sending, deleting, moving to Recently deleted, a press on
+ *  what cannot be read, signing in, publishing, the terminal and a file from outside are
+ *  asked every time:
  *  page text can steer a tool the reader trusted for a harmless press into any of them,
  *  and the loop would answer for the reader. */
 
@@ -22,6 +24,8 @@ interface Asked {
   verb: string
   /** What the question is about, as the crate's `Category`. */
   category: string
+  /** The site it is about, where a page is. */
+  site?: string
 }
 
 /** The crate's questions, as the engines reach them; a fake in the tests. */
@@ -43,14 +47,26 @@ export function alwaysOffered(category: string | undefined): boolean {
   return category !== undefined && EVERYDAY.has(category)
 }
 
+/** What a thread keeps for an Always: the tool, and the site where a page is what it was
+ *  said about, so a press trusted on one site is asked again on another. */
+function alwaysKey(verb: string, site: string | undefined): string {
+  return site ? `${verb}@${site}` : verb
+}
+
 /** Whether the thread said Always to this tool, and it covers a question about this. */
-export function always(thread: Thread, verb: string, category: string | undefined): boolean {
-  return alwaysOffered(category) && (thread.always?.includes(verb) ?? false)
+export function always(
+  thread: Thread,
+  verb: string,
+  category: string | undefined,
+  site?: string,
+): boolean {
+  return alwaysOffered(category) && (thread.always?.includes(alwaysKey(verb, site)) ?? false)
 }
 
 /** Always, for the rest of the thread. */
-export function sayAlways(thread: Thread, verb: string): void {
-  if (!thread.always?.includes(verb)) thread.always = [...(thread.always ?? []), verb]
+export function sayAlways(thread: Thread, verb: string, site?: string): void {
+  const key = alwaysKey(verb, site)
+  if (!thread.always?.includes(key)) thread.always = [...(thread.always ?? []), key]
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -110,6 +126,7 @@ export const crateAnswers: Answers = {
         agent: words(approval.agent),
         verb: words(approval.verb),
         category: words(approval.category),
+        ...(words(approval.site) ? { site: words(approval.site) } : {}),
       })
     })
   },

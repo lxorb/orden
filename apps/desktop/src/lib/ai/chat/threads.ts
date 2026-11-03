@@ -171,6 +171,7 @@ function outputIn(value: unknown): ToolOutput | undefined {
     error: value.error === true,
     ...(isString(value.approval) ? { approval: value.approval } : {}),
     ...(isString(value.category) ? { category: value.category } : {}),
+    ...(isString(value.site) ? { site: value.site } : {}),
     ...(isString(value.agent) ? { agent: value.agent } : {}),
   }
 }

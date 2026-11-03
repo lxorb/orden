@@ -19,7 +19,7 @@
     const approval = part.result?.approval
     if (!approval || answering) return
     answering = true
-    if (always && thread) sayAlways(thread, part.verb)
+    if (always && thread) sayAlways(thread, part.verb, part.result?.site)
     await crateAnswers.answer(approval, allow)
   }
 </script>

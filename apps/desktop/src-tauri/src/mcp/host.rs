@@ -52,7 +52,7 @@ pub(crate) fn rendered(tool: &str, args: &Value, status: u16, body: &str) -> Val
 /// window's alone: the answer an outside agent reads keeps 9.3's shape.
 pub(crate) fn categorized(
     rendered: &mut Value,
-    category_of: impl Fn(&str) -> Option<crate::agents::verbs::Category>,
+    category_of: impl Fn(&str) -> Option<(crate::agents::verbs::Category, Option<String>)>,
 ) {
     let Some(said) = rendered
         .pointer_mut("/_meta")
@@ -63,8 +63,12 @@ pub(crate) fn categorized(
     if said["status"] != "needs_approval" {
         return;
     }
-    if let Some(category) = said["approval"].as_str().and_then(category_of) {
-        said["category"] = serde_json::json!(category);
+    let Some(question) = said["approval"].as_str().and_then(category_of) else {
+        return;
+    };
+    said["category"] = serde_json::json!(question.0);
+    if let Some(site) = question.1 {
+        said["site"] = serde_json::json!(site);
     }
 }
 
@@ -78,11 +82,14 @@ mod category_tests {
     fn a_question_says_what_it_is_about_to_the_window() {
         let mut asked =
             json!({ "_meta": { META: { "status": "needs_approval", "approval": "a1" } } });
-        categorized(&mut asked, |_| Some(Category::Terminal));
-        assert_eq!(asked["_meta"][META]["category"], "terminal");
+        categorized(&mut asked, |_| {
+            Some((Category::Writing, Some("shop.example".to_owned())))
+        });
+        assert_eq!(asked["_meta"][META]["category"], "writing");
+        assert_eq!(asked["_meta"][META]["site"], "shop.example");
 
         let mut done = json!({ "_meta": { META: { "status": "ok" } } });
-        categorized(&mut done, |_| Some(Category::Terminal));
+        categorized(&mut done, |_| Some((Category::Terminal, None)));
         assert!(done["_meta"][META].get("category").is_none());
     }
 }

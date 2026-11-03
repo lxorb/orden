@@ -508,7 +508,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         )
         const part = turn.parts[at]
         if (part?.kind !== 'tool') return
-        if (always(thread, asked.verb, asked.category)) {
+        if (always(thread, asked.verb, asked.category, asked.site)) {
           void answers.answer(asked.id, true)
           return
         }
@@ -521,6 +521,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
             error: false,
             approval: asked.id,
             category: asked.category,
+            ...(asked.site ? { site: asked.site } : {}),
           },
         })
       })

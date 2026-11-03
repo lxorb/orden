@@ -76,6 +76,7 @@ export function outputIn(value: unknown): ToolOutput {
     error: result.isError === true,
     ...(approval ? { approval } : {}),
     ...(approval && text(meta.category) ? { category: text(meta.category) } : {}),
+    ...(approval && text(meta.site) ? { site: text(meta.site) } : {}),
   }
 }
 

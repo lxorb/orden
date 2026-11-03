@@ -329,7 +329,7 @@ mod tests {
     use crate::agents::verbs::Category;
 
     /// Every question a call can raise about itself (pairing is a client's, not a call's).
-    const ASKED: [Category; 11] = [
+    const ASKED: [Category; 13] = [
         Category::Paying,
         Category::Sending,
         Category::Publishing,
@@ -339,6 +339,8 @@ mod tests {
         Category::Terminal,
         Category::Files,
         Category::Writing,
+        Category::Trashing,
+        Category::Unread,
         Category::Showing,
         Category::Takeover,
     ];
