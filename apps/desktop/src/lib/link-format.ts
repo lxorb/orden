@@ -83,8 +83,9 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
     return `${bang}[[${inner}${shown ? `|${shown}` : ''}]]`
   }
 
-  // A brackets' worth of words would close the label, so they are written escaped.
-  const label = (shown || target.name || bareFragment(fragment)).replace(/[[\]]/g, '\\$&')
+  // A bracket would close the label and a backslash escape what closes it, and a bar
+  // would cut the row of a table the link stands in, so all are written escaped.
+  const label = (shown || target.name || bareFragment(fragment)).replace(/[\\[\]|]/g, '\\$&')
   const anchor = fragment ? `#${markdownFragment(fragment)}` : ''
   const path = pathFor(target, format === 'wikilink' ? 'shortest' : format)
 

@@ -65,10 +65,11 @@ export interface FoundLink extends Wikilink {
  *  brackets" would be two grammars. */
 export const WIKILINK_INNER = '[^[\\]\\n]+'
 
-/** `[[…]]`, or `![[…]]`. The lookbehind is what makes `\[[Note]]` text: a
- *  backslash escapes the bracket in markdown, and a link nobody wrote must not
- *  be rewritten when a note is renamed. */
-const WIKILINK = new RegExp(`(?<!\\\\)(!?)\\[\\[(${WIKILINK_INNER})\\]\\]`, 'g')
+/** `[[…]]`, or `![[…]]`, read from just past its `[[`. A `[` after a backslash is passed
+ *  over by the walk in `collect`, which is what makes `\\[[Note]]` text: a backslash
+ *  escapes the bracket in markdown, and a link nobody wrote must not be rewritten when a
+ *  note is renamed. */
+const WIKILINK = new RegExp(`(${WIKILINK_INNER})\\]\\]`, 'y')
 
 /** How far a `[label](target)` may run before it is not one. A label is a phrase and
  *  a target is a path, so this is room and then some, and it is what keeps the walk
@@ -82,6 +83,12 @@ const DEEPEST_PARENS = 32
 
 const BLANK = /\s/
 
+/** Whether a character is one `\s` matches, without asking it about the printable ones:
+ *  this is asked of every character of a target, of every bracket that opens one. */
+function endsTarget(one: string): boolean {
+  return (one <= ' ' || one >= '\u0080') && BLANK.test(one)
+}
+
 /** One `[label](target)` on a line, and where its parts are. */
 interface MarkdownLink {
   label: string
@@ -92,27 +99,34 @@ interface MarkdownLink {
   to: number
 }
 
-/** The `]` that closes the label opened at `open`, or -1. A label holds balanced
- *  brackets and escaped ones, as in CommonMark. A bracket pair that opens a link of
- *  its own means this `[` opens none, since links do not nest; `[[` is a wikilink's. */
-function labelEnd(line: string, open: number, stop: number): number {
-  let depth = 1
+/** The `]` that closes the label each `[` of a line opens, for those that open one. A
+ *  label holds balanced brackets and escaped ones, as in CommonMark. A bracket pair that
+ *  opens a link of its own means the brackets around it open none, since links do not
+ *  nest; `[[` is a wikilink's.
+ *
+ *  One pass over the line rather than a scan from each `[`: `a[` over a megabyte, which
+ *  is one line of a note somebody shared, was a thousand characters read per bracket.
+ *  Exported to say so in a test; the twin is `label_ends` in links.rs. */
+export function labelEnds(line: string): Map<number, number> {
+  const ends = new Map<number, number>()
+  const open: number[] = []
 
-  for (let at = open + 1; at < stop; at++) {
+  for (let at = 0; at < line.length; at++) {
     const one = line[at]
     if (one === '\\') {
       at++
     } else if (one === '[') {
-      if (line[at - 1] === '[' || line[at + 1] === '[') return -1
-      depth++
+      if (line[at - 1] === '[' || line[at + 1] === '[') open.length = 0
+      if (line[at + 1] !== '[') open.push(at)
     } else if (one === ']') {
-      depth--
-      if (depth === 0) return at
-      if (line[at + 1] === '(') return -1
+      const from = open.pop()
+      if (from === undefined) continue
+      ends.set(from, at)
+      if (line[at + 1] === '(') open.length = 0
     }
   }
 
-  return -1
+  return ends
 }
 
 /** Just past a bare target starting at `from`, which ends at a blank or at a `)` it did
@@ -123,7 +137,7 @@ function bareTargetEnd(line: string, from: number, stop: number): number {
 
   while (at < stop) {
     const one = line[at] ?? ''
-    if (BLANK.test(one)) break
+    if (endsTarget(one)) break
     if (one === '\\') {
       at += 2
       continue
@@ -145,16 +159,20 @@ function bareTargetEnd(line: string, from: number, stop: number): number {
  *
  *  The twin of `markdown_link` in apps/desktop/src-tauri/src/links.rs. By hand rather
  *  than a pattern, because a target's parentheses and a label's brackets balance. */
-function markdownLinkAt(line: string, open: number): MarkdownLink | null {
+function markdownLinkAt(
+  line: string,
+  open: number,
+  ends: ReadonlyMap<number, number>,
+): MarkdownLink | null {
   const stop = Math.min(line.length, open + LONGEST_LINK)
   const skipBlanks = (from: number) => {
     let at = from
-    while (at < stop && BLANK.test(line[at] ?? '')) at++
+    while (at < stop && endsTarget(line[at] ?? '')) at++
     return at
   }
 
-  const close = labelEnd(line, open, stop)
-  if (close === -1 || line[close + 1] !== '(') return null
+  const close = ends.get(open)
+  if (close === undefined || close >= stop || line[close + 1] !== '(') return null
 
   let at = skipBlanks(close + 2)
   let writtenFrom = at
@@ -370,6 +388,16 @@ export function embedSize(alias: string | null): { width: number; height: number
   return { width: Number(found[1]), height: height === undefined ? null : Number(height) }
 }
 
+/** The size at the end of a markdown picture's words, where Obsidian writes it:
+ *  `![a cat|300](a.png)`, or `![|100x200](a.png)`, its bar escaped in a table. */
+export function sizedAlt(alt: string): {
+  alt: string
+  size: { width: number; height: number | null } | null
+} {
+  const found = /^(.*?)\\?\|(\d+(?:x\d+)?)$/su.exec(alt)
+  return found ? { alt: found[1] ?? '', size: embedSize(found[2] ?? '') } : { alt, size: null }
+}
+
 /** The page a fragment names, or null when it names none.
  *
  *  `[[paper.pdf#page=3]]` is Obsidian's spelling and also the one a browser's own
@@ -571,42 +599,50 @@ export function* lines(text: string): Generator<Row> {
   }
 }
 
-/** The links on one line of prose, added in the order they were written. */
+/** The links on one line of prose, added in the order they were written. One walk over
+ *  its brackets, as `links_on` in links.rs walks them: whichever link opens first has the
+ *  line up to its end, so `[x]([[a]])` is a link to `[[a]]` and `[[\\]](x)` a wikilink. */
 function collect(line: string, offset: number, at: number, found: FoundLink[]) {
-  const here: FoundLink[] = []
-
-  for (const match of line.matchAll(WIKILINK)) {
-    const [whole, bang = '', inner = ''] = match
-    const link = parseWikilink(inner, bang === '!')
-    if (!link) continue
-
-    const from = offset + match.index
-    // Where the target sits: past the `!`, the `[[`, and any space trimmed off
-    // the front of it.
-    const openTo = from + bang.length + 2
-    const targetFrom = openTo + (inner.length - inner.trimStart().length)
-
-    here.push({
-      ...link,
-      kind: 'wikilink',
-      from,
-      to: from + whole.length,
-      targetFrom,
-      targetTo: targetFrom + link.target.length,
-      line: at,
-    })
-  }
+  if (!line.includes('[')) return
+  // No `](`, no markdown link, and that is nearly every line with a bracket on it.
+  const ends = line.includes('](') ? labelEnds(line) : new Map<number, number>()
 
   for (let open = line.indexOf('['); open !== -1; open = line.indexOf('[', open + 1)) {
     if (line[open - 1] === '\\') continue
 
-    const link = markdownLinkAt(line, open)
+    // A backslash in front of the bang escapes the bang and leaves the link.
+    const embed = line[open - 1] === '!' && line[open - 2] !== '\\'
+    const from = offset + (embed ? open - 1 : open)
+
+    if (line[open + 1] === '[') {
+      WIKILINK.lastIndex = open + 2
+      const inner = WIKILINK.exec(line)?.[1]
+      if (inner === undefined) continue
+
+      const link = parseWikilink(inner, embed)
+      const closed = open + 2 + inner.length + 2
+      if (link) {
+        // Where the target sits: past the `!`, the `[[`, and any space trimmed off
+        // the front of it.
+        const targetFrom = offset + open + 2 + (inner.length - inner.trimStart().length)
+        found.push({
+          ...link,
+          kind: 'wikilink',
+          from,
+          to: offset + closed,
+          targetFrom,
+          targetTo: targetFrom + link.target.length,
+          line: at,
+        })
+      }
+      open = closed - 1
+      continue
+    }
+
+    const link = markdownLinkAt(line, open, ends)
     if (!link) continue
 
     const { written, writtenFrom, label } = link
-    // A backslash in front of the bang escapes the bang and leaves the link.
-    const embed = line[open - 1] === '!' && line[open - 2] !== '\\'
-    const start = embed ? open - 1 : open
     open = link.to - 1
     if (!isNoteTarget(written)) continue
 
@@ -615,14 +651,13 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
     const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
     if (!target && !fragment) continue
 
-    const from = offset + start
     const targetFrom = offset + writtenFrom
     // `#^a1b2c3` names a block in a markdown link exactly as in a wikilink, which
     // is how Obsidian writes one and how Orden writes one when the Links setting
     // asks for markdown links; see link-format.ts in the app.
     const block = fragment.startsWith('^') ? fragment.slice(1) : null
 
-    here.push({
+    found.push({
       target: decodeTarget(target),
       heading: block === null ? fragment || null : null,
       block,
@@ -636,9 +671,6 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
       line: at,
     })
   }
-
-  here.sort((one, other) => one.from - other.from)
-  found.push(...here)
 }
 
 /** One or more percent escapes in a row: how a heading's words are written in a link

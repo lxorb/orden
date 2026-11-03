@@ -16,7 +16,13 @@
  *  answering that needs the whole space, and none of this needs to know about
  *  one. */
 
-import { encodeTarget, findLinks, type FoundLink, wikilinkCannotName } from '@orden/markdown/links'
+import {
+  embedSize,
+  encodeTarget,
+  findLinks,
+  type FoundLink,
+  wikilinkCannotName,
+} from '@orden/markdown/links'
 import { formatLink } from './link-format'
 import { shownName } from './note-name'
 import { folderOf, nameOf, relativePath } from './space-paths'
@@ -91,13 +97,17 @@ export function retargetLinks(
 function asMarkdown(link: FoundLink, source: string, placed: string | Placed): string {
   const path = typeof placed === 'string' ? placed : placed.path
   const fragment = link.block === null ? link.heading : `^${link.block}`
+  // Words in a table's wikilink hold their bar escaped, and the label escapes it afresh.
+  const words = link.alias?.replace(/\\\|/g, '|') ?? null
+  // A picture's size has a place in the other spelling too; see `sizedAlt`.
+  const shown = link.embed && embedSize(words) ? `|${words ?? ''}` : words
   return formatLink(
     {
       name: shownName(nameOf(path)),
       path,
       from: source,
       fragment,
-      shown: link.alias,
+      shown,
       embed: link.embed,
     },
     'relative',

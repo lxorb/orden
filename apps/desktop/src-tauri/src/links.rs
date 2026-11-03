@@ -877,6 +877,7 @@ fn without_code(line: &str) -> Cow<'_, str> {
 /// reached. See `MOST_LINKS`.
 fn links_on(line: &str, most: usize) -> Vec<Link> {
     let letters: Vec<char> = line.chars().collect();
+    let ends = label_ends(&letters);
     let mut found = Vec::new();
     let mut at = 0;
 
@@ -903,7 +904,7 @@ fn links_on(line: &str, most: usize) -> Vec<Link> {
             continue;
         }
 
-        if let Some((end, label, target)) = markdown_link(&letters, at) {
+        if let Some((end, label, target)) = markdown_link(&letters, at, &ends) {
             if let Some(link) = note_link(&label, &target, embed) {
                 found.push(link);
             }
@@ -939,30 +940,43 @@ fn closing_brackets(letters: &[char], from: usize) -> Option<usize> {
 /// How deep a target's parentheses may go, which is cmark's own limit.
 const DEEPEST_PARENS: usize = 32;
 
-/// The `]` that closes the label opened at `open`. A label holds balanced brackets
-/// and escaped ones, as in `CommonMark`. A bracket pair that opens a link of its own
-/// means this `[` opens none, since links do not nest; `[[` is a wikilink's. The twin
-/// of `labelEnd` in links.ts.
-fn label_end(letters: &[char], open: usize, stop: usize) -> Option<usize> {
-    let mut depth = 1;
-    let mut at = open + 1;
+/// Whether a character ends a bare target, as JavaScript's `\s` reads it, so both
+/// readings of a line agree: U+FEFF is a blank there and U+0085 is not.
+fn is_blank(one: char) -> bool {
+    one == '\u{FEFF}' || (one != '\u{85}' && one.is_whitespace())
+}
 
-    while at < stop {
+/// The `]` that closes the label each `[` of a line opens, for those that open one. A
+/// label holds balanced brackets and escaped ones, as in `CommonMark`. A bracket pair
+/// that opens a link of its own means the brackets around it open none, since links do
+/// not nest; `[[` is a wikilink's.
+///
+/// One pass over the line rather than a scan from each `[`: `a[` over a megabyte, which
+/// is one line of a note somebody shared, was a thousand characters read per bracket.
+/// The twin of `labelEnds` in links.ts.
+fn label_ends(letters: &[char]) -> Vec<Option<usize>> {
+    let mut ends = vec![None; letters.len()];
+    let mut open: Vec<usize> = Vec::new();
+    let mut at = 0;
+
+    while at < letters.len() {
         match letters[at] {
             '\\' => at += 1,
             '[' => {
-                if letters[at - 1] == '[' || letters.get(at + 1) == Some(&'[') {
-                    return None;
+                let doubles = letters.get(at + 1) == Some(&'[');
+                if doubles || (at > 0 && letters[at - 1] == '[') {
+                    open.clear();
                 }
-                depth += 1;
+                if !doubles {
+                    open.push(at);
+                }
             }
             ']' => {
-                depth -= 1;
-                if depth == 0 {
-                    return Some(at);
-                }
-                if letters.get(at + 1) == Some(&'(') {
-                    return None;
+                if let Some(from) = open.pop() {
+                    ends[from] = Some(at);
+                    if letters.get(at + 1) == Some(&'(') {
+                        open.clear();
+                    }
                 }
             }
             _ => {}
@@ -970,7 +984,7 @@ fn label_end(letters: &[char], open: usize, stop: usize) -> Option<usize> {
         at += 1;
     }
 
-    None
+    ends
 }
 
 /// Just past a bare target starting at `from`, which ends at a blank or at a `)` it
@@ -982,7 +996,7 @@ fn bare_target_end(letters: &[char], from: usize, stop: usize) -> Option<usize> 
 
     while at < stop {
         match letters[at] {
-            one if one.is_whitespace() => break,
+            one if is_blank(one) => break,
             '\\' => {
                 at += 2;
                 continue;
@@ -1010,7 +1024,11 @@ fn bare_target_end(letters: &[char], from: usize, stop: usize) -> Option<usize> 
 /// A `[label](target)` starting at `at`: where it ends, what it is labelled, and
 /// where it points. Titles and `<>` around the target are both understood. The twin
 /// of `markdownLinkAt` in links.ts.
-fn markdown_link(letters: &[char], at: usize) -> Option<(usize, String, String)> {
+fn markdown_link(
+    letters: &[char],
+    at: usize,
+    ends: &[Option<usize>],
+) -> Option<(usize, String, String)> {
     // Every scan below stops here rather than at the end of the line, and that is
     // what keeps the walk over a line linear. A `[` that turns out not to open a
     // link moves the walk on by one character and the next `[` is read from there,
@@ -1023,13 +1041,13 @@ fn markdown_link(letters: &[char], at: usize) -> Option<(usize, String, String)>
     let stop = letters.len().min(at + LONGEST_LINK);
     let skip_blanks = |from: usize| {
         let mut scan = from;
-        while scan < stop && letters[scan].is_whitespace() {
+        while scan < stop && is_blank(letters[scan]) {
             scan += 1;
         }
         scan
     };
 
-    let close = label_end(letters, at, stop)?;
+    let close = ends[at].filter(|close| *close < stop)?;
     if letters.get(close + 1) != Some(&'(') {
         return None;
     }
@@ -1106,7 +1124,11 @@ fn anchors(fragment: &str) -> (Option<String>, Option<String>) {
 fn wikilink(inner: &str, embed: bool) -> Option<Link> {
     let (named, alias) = match inner.split_once('|') {
         // Everything after the first bar, so an alias may hold one itself.
-        Some((named, alias)) => (named, Some(alias.trim()).filter(|one| !one.is_empty())),
+        // `\\|` is how a table cell writes the bar, and its backslash names nothing.
+        Some((named, alias)) => (
+            named.strip_suffix('\\').unwrap_or(named),
+            Some(alias.trim()).filter(|one| !one.is_empty()),
+        ),
         None => (inner, None),
     };
 

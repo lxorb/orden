@@ -9,7 +9,7 @@
 import { formatDate, msOf, readDate, relative } from '../dates'
 import { BasesError } from '../errors'
 import type { DateValue, Row, Value } from '../types'
-import { mayRead } from './pattern'
+import { readPattern } from './pattern'
 import {
   equal,
   FileRef,
@@ -158,15 +158,17 @@ function stringMethod(value: string, name: string, args: readonly Arg[]): { valu
       const [pattern = null, replacement = null] = evaluated(args)
       const by = text(replacement)
       if (pattern instanceof RegExp) {
-        if (!mayRead(pattern, value)) return { value }
-        return { value: value.replace(new RegExp(pattern.source, pattern.flags), by) }
+        const copy = new RegExp(pattern.source, pattern.flags)
+        return { value: readPattern(pattern, value, () => value.replace(copy, by)) }
       }
       return { value: value.replaceAll(text(pattern), () => by) }
     }
     case 'split': {
       const [separator = null, limit] = evaluated(args)
-      if (separator instanceof RegExp && !mayRead(separator, value)) return { value: [value] }
-      const parts = value.split(separator instanceof RegExp ? separator : text(separator))
+      const parts =
+        separator instanceof RegExp
+          ? readPattern(separator, value, () => value.split(separator))
+          : value.split(text(separator))
       return { value: limit == null ? parts : parts.slice(0, number(limit, 'split')) }
     }
     default:
@@ -354,7 +356,7 @@ export function callMethod(receiver: Val, name: string, args: readonly Arg[], sc
     if (name === 'matches') {
       const pattern = new RegExp(receiver.source, receiver.flags.replace('g', ''))
       const value = text(args[0]?.() ?? null)
-      found = { value: mayRead(receiver, value) && pattern.test(value) }
+      found = { value: readPattern(receiver, value, () => pattern.test(value)) }
     }
   } else if (typeof receiver === 'string') {
     found = stringMethod(receiver, name, args)

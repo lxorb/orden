@@ -16,7 +16,6 @@ import { callGlobal, GLOBALS } from './globals'
 import { fileField, indexed, member, taskField } from './members'
 import { type Arg, callMethod } from './methods'
 import { type Node, parseExpression } from './parse'
-import { longestInput } from './pattern'
 import {
   add,
   arithmetic,
@@ -163,13 +162,6 @@ function compileNode(node: Node, facts: Facts): Fn {
       } catch {
         throw new BasesError(`/${node.pattern}/ is not a pattern`)
       }
-      let readable = false
-      try {
-        readable = longestInput(pattern) > 0
-      } catch {
-        // Nested past what a walk down it can hold, which is no pattern anybody wrote.
-      }
-      if (!readable) throw new BasesError(`/${node.pattern}/ could take too long to run`)
       return literal(pattern)
     }
     case 'list': {

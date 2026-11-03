@@ -17,10 +17,12 @@ import {
   type Base,
   cellValue,
   type Context,
+  refusedPattern,
   type Row,
   type View,
 } from '@orden/bases'
 import { rows as store } from '../rows/rows.svelte'
+import { trustsHtmlAt } from '../sharing.svelte'
 import { afterQuiet } from '../timing'
 import { toneColour } from './chips'
 import { columnsOf } from './columns'
@@ -153,7 +155,12 @@ export class LiveView {
   /** Reads the base again from where it is kept. */
   async reload() {
     try {
-      const base = await this.source.load()
+      const loaded = await this.source.load()
+      // A base somebody else could have written may not freeze the app for whoever opens
+      // it; the reader's own runs whatever it says. The same line raw HTML is held to.
+      const guarded = !trustsHtmlAt(this.source.path ?? null)
+      if (guarded && refusedPattern(loaded) !== null) throw new Error('refused')
+      const base = guarded ? { ...loaded, guarded } : loaded
       this.base = base
       const named = this.source.view
       const at = named === undefined ? -1 : base.views.findIndex((one) => one.name === named)
@@ -162,8 +169,9 @@ export class LiveView {
       if (this.at >= base.views.length) this.at = 0
       this.failed = false
     } catch {
-      // A base file that is not YAML, or is gone: the view says nothing rather than
-      // something wrong, and a write that fixes the file reads again.
+      // A base file that is not YAML, or is gone, or with a pattern it may not run: the
+      // view says nothing rather than something wrong, and a write that fixes the file
+      // reads again.
       this.failed = true
     }
   }

@@ -19,6 +19,7 @@
  *  whole, which is still a loop over closures. */
 
 import { compile, formulaReader } from './expr/compile'
+import { underGuard } from './expr/pattern'
 import { fieldOf, type Scope, settled, sortCompare, text, type Val } from './expr/runtime'
 import { compileFilters } from './filter'
 import { summarize } from './summaries'
@@ -371,6 +372,15 @@ export function answer(
   rows: readonly Row[],
   context: Context,
 ): Answer {
+  return underGuard(base.guarded, () => answerOf(base, view, rows, context))
+}
+
+function answerOf(
+  base: Base,
+  view: string | number | undefined,
+  rows: readonly Row[],
+  context: Context,
+): Answer {
   const views = compiledViews.get(base) ?? new Map<string | number, CompiledView>()
   compiledViews.set(base, views)
   const key = view ?? 0
@@ -386,5 +396,5 @@ export function answer(
 export function cellValue(base: Base, property: string, row: Row, context: Context): Value {
   const read = formulaReader(base.formulas)
   const scope: Scope = { row, context, locals: null, formula: (name, at) => read(name, at, scope) }
-  return settled(getter(property).run(scope))
+  return underGuard(base.guarded, () => settled(getter(property).run(scope)))
 }

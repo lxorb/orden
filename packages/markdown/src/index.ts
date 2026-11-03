@@ -14,7 +14,7 @@ import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
-import { isNoteTarget, slugify, withoutBlockIds } from './links'
+import { isNoteTarget, sizedAlt, slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref } from './tags'
 import { iframeCard, isIframeTag, splitIframe, webCard } from './web-embed'
@@ -321,11 +321,15 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
 
         // Through the text renderer, so markdown in the alt text comes out as
         // the words it stands for rather than as tags inside an attribute.
-        const alt = this.parser.parseInline(token.tokens, this.parser.textRenderer)
+        const { alt, size } = sizedAlt(
+          this.parser.parseInline(token.tokens, this.parser.textRenderer),
+        )
         const src = safeSrc(token.href) ? attributeUrl(token.href) : ''
         if (!src) return escape(alt)
 
         const attributes = [` src="${src}"`, ` alt="${escape(alt)}"`]
+        if (size) attributes.push(` width="${String(size.width)}"`)
+        if (size?.height) attributes.push(` height="${String(size.height)}"`)
         if (token.title) attributes.push(` title="${escape(token.title)}"`)
         return `<img${attributes.join('')}>`
       },

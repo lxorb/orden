@@ -323,10 +323,7 @@ describe('a pattern in a base of ones own', () => {
     ['/^#(\\w+\\/)*\\w+$/.matches("#a/b")', true],
     ['/^(foo|far)+$/.matches("foofar")', true],
     ['/(\\w)\\1/.matches("aa")', true],
-    [
-      '/^\\s*(\\w+)\\s*:\\s*(.*)$/.matches("a long key : with a long value after it, past twenty")',
-      true,
-    ],
+    ['/^\\s*(\\w+)\\s*:\\s*(.*)$/.matches("key : with a long value after it, past twenty")', true],
     ['/.*foo.*bar.*baz.*/.matches("foo bar baz")', true],
     ['"a1b".replace(/\\d+/, "x")', 'axb'],
     ['"a,b".split(/,/)', ['a', 'b']],
@@ -389,7 +386,7 @@ describe('a pattern in a base somebody else could have written', () => {
 
   test('a counted repeat that is not one is read as what it is', () => {
     // No `u`: `\u{61}` is the letter u sixty-one times, and `+` over a group of one way.
-    expect(patternAllowed(/^(\u{61})+$/)).toBe(true)
+    expect(patternAllowed(new RegExp('^(\\u{61})+$'))).toBe(true)
     expect(patternAllowed(/^\p{L}+$/u)).toBe(true)
   })
 
@@ -431,20 +428,18 @@ describe('a pattern in a base somebody else could have written', () => {
 
   test('a guarded base spends a share of the clock on patterns and no more', () => {
     let now = 0
-    const clock = vi.spyOn(performance, 'now').mockImplementation(() => now)
+    let step = 0
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => (now += step))
     const base = guardedBase('"x".replace(/x/, note.y)')
     const row = noteRow('A.md', { y: 'z' })
     try {
       expect(cellValue(base, 'formula.f', row, context)).toBe('z')
-      now += 1000 // A read that took a whole second, seen after it: the next is refused.
-      const slow = vi.spyOn(RegExp.prototype, Symbol.replace as never)
-      slow.mockImplementationOnce((() => {
-        now += 400
-        return 'late'
-      }) as never)
-      expect(cellValue(base, 'formula.f', row, context)).toBe('late')
+      now += 1000
+      // Each look at the clock sees 400 ms gone, so this read took them all.
+      step = 400
+      expect(cellValue(base, 'formula.f', row, context)).toBe('z')
+      step = 0
       expect(cellValue(base, 'formula.f', row, context)).toBeNull()
-      slow.mockRestore()
       now += 1000
       expect(cellValue(base, 'formula.f', row, context)).toBe('z')
     } finally {
