@@ -1053,8 +1053,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,485,100, for #676: a PDF's mark is Lucide's page with "PDF"
  *  written under it (`typeMark` in file-mark.ts), and what a file was made from is
  *  decided for every list in one place (`sourceMark` in chosen-icon.ts). Measured
- *  3,484,939. */
-const BUDGET = 3_485_100
+ *  3,484,939.
+ *
+ *  Raised 2026-11-04, to 3,486,000, for #1090: a Mac told once that its AI keys are typed
+ *  again now the keychain is not asked, checked after the first paint (App.svelte,
+ *  surfaces.svelte.ts). Measured 3,485,824. */
+const BUDGET = 3_486_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

@@ -330,9 +330,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,795,200, for #676: a PDF's mark is a page with
  *  "PDF" written under it, and what a file was made from is decided in one place
  *  (`typeMark` in file-mark.ts, `sourceMark` in chosen-icon.ts). Measured 5,795,057.
+ *
+ *  The code raised on 2026-11-04, to 5,795,500, for #1090: the window's door to the
+ *  notice a Mac's AI keys are typed again by, which the plugin never opens
+ *  (surfaces.svelte.ts). Measured 5,795,317.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_795_200,
+  code: 5_795_500,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
