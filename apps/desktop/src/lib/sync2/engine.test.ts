@@ -384,7 +384,7 @@ describe('a key typed while a note and its document are brought together', () =>
     const note = new SharedDoc(mine)
     const keepLost = one.engine.keepLost.bind(one.engine)
     one.engine.keepLost = async (...args) => {
-      note.arrived([{ from: 0, insert: 'X' }])
+      note.arrived([{ from: 0, to: 0, insert: 'X' }])
       await keepLost(...args)
     }
     const part = await attach(
