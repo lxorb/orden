@@ -2,17 +2,15 @@
  *
  *  Every kind of tab is reached this way as well as by its path, so "the tab in front"
  *  is one id whatever it holds: a note with a file, a note with none yet, a canvas or
- *  page note drawn but never saved, a terminal. The tabs are
- *  the open space's - another space's are not in the window until the reader goes there
- *  - so an agent that may not reach that space has no tab to name. */
+ *  page note drawn but never saved, a terminal. The window holds every space's tabs, so an
+ *  agent that may not reach a space has no tab of it to name (`tabsInReach`). */
 
 import type { Tab } from '../../workspace.svelte'
-import { workspace } from '../../workspace.svelte'
 import { within } from '../../space-paths'
 import type { TabKind } from '../../workspace/documents.svelte'
 import { type Call, maybe, need } from './call'
 import { Refused } from './problem'
-import { type Place, placeFor } from './spaces'
+import { type Place, placeFor, tabsInReach } from './spaces'
 
 /** A tab, found: the tab itself, the space it is shown in, and its file's path inside
  *  that space - null for a tab with no file there (a draft, a terminal,
@@ -24,8 +22,8 @@ interface Named {
 }
 
 /** The tab with this id among the reader's, or a refusal naming the list to ask. */
-export function tabWithId(id: string): Tab {
-  const found = workspace.tabs.find((one) => one.id === id)
+export function tabWithId(call: Call, id: string): Tab {
+  const found = tabsInReach(call).find((one) => one.id === id)
   if (!found) throw new Refused('no_such_tab', `there is no tab ${id}: get_context lists them`)
 
   return found
@@ -34,7 +32,7 @@ export function tabWithId(id: string): Tab {
 /** The tab a call names under `tab`, of one of the kinds given. */
 export function namedTab(call: Call, kinds: readonly TabKind[], what: string): Named {
   const place = placeFor(call, null)
-  const tab = tabWithId(need(call, 'tab'))
+  const tab = tabWithId(call, need(call, 'tab'))
   if (!kinds.includes(tab.kind)) {
     throw new Refused('bad_arguments', `tab ${tab.id} is a ${tab.kind} tab, not ${what}`)
   }

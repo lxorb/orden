@@ -733,10 +733,10 @@ describe('the reader tabs', () => {
     }
     const onlyWork = () => agent({ spaces: ['Work'] })
     beforeEach(() => {
-      tabs.push(away as (typeof tabs)[number])
+      tabs.push(away as unknown as (typeof tabs)[number])
     })
     afterEach(() => {
-      tabs.splice(tabs.indexOf(away as (typeof tabs)[number]), 1)
+      tabs.splice(tabs.indexOf(away as unknown as (typeof tabs)[number]), 1)
     })
 
     test('are not listed, in either list', async () => {
@@ -1878,7 +1878,7 @@ describe('a panel thread works in its own space', () => {
 
   test('the context of a grant that reaches the thread’s space alone names it, and no tab', async () => {
     const onlyHome = callerOf(
-      { id: 'x', name: 'X', scopes: EVERY, spaces: ['Home'], mode: 'unsupervised' },
+      { id: 'nib-x', name: 'X', scopes: EVERY, spaces: ['Home'], mode: 'unsupervised' },
       'thread-home',
     )
     expect(await call('get_context', {}, onlyHome)).toMatchObject({
@@ -1911,7 +1911,7 @@ describe('a panel thread works in its own space', () => {
         'write_note',
         { path: 'Broth', content: 'x' },
         callerOf(
-          { id: 'x', name: 'X', scopes: EVERY, spaces: ['Work'], mode: 'unsupervised' },
+          { id: 'nib-x', name: 'X', scopes: EVERY, spaces: ['Work'], mode: 'unsupervised' },
           'thread-home',
         ),
       ),
