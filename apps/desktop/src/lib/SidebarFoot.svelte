@@ -209,8 +209,10 @@
 </div>
 
 <style>
-  /* The same height as the head at the other end of the panel, and set apart by
-     the same hairline the head's menu is. */
+  /* The same height as the head at the other end of the panel. Set apart by the
+     chrome's own seam (#1105): none where the window is one rounded surface (#1088),
+     which has no hard cuts, and the hairline it always had where it is Square. The
+     row's height keeps it a row of its own either way. */
   .foot {
     position: relative;
     flex: none;
@@ -219,7 +221,7 @@
     gap: var(--space-1);
     min-height: var(--header-height);
     padding: 0 var(--space-1);
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--chrome-seam);
   }
 
   /* The account row only: a bare scoped `button` out-specifies `.nib-glyph`. */

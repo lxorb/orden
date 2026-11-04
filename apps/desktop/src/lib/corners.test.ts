@@ -36,6 +36,8 @@ test('every surface on the frame reads its tokens rather than a corner of its ow
     'PaneTree.svelte': ['--card-gap', '--chrome-seam'],
     '../App.svelte': ['--card-inset', '--chrome-ground'],
     'Sidebar.svelte': ['--side-ground', '--chrome-seam'],
+    // The line over the sidebar's foot, which Rounded leaves out (#1105).
+    'SidebarFoot.svelte': ['--chrome-seam'],
     'Titlebar.svelte': ['--chrome-seam'],
     'Tabs.svelte': ['--strip-line'],
     'StatusBar.svelte': ['--card-room'],
@@ -44,5 +46,14 @@ test('every surface on the frame reads its tokens rather than a corner of its ow
   for (const [file, tokens] of Object.entries(readers)) {
     const text = read(`./${file}`)
     for (const token of tokens) expect(text, `${file} ${token}`).toContain(token)
+  }
+})
+
+/** #1105: no hairline drawn with the theme's own line anywhere on the sidebar's chrome,
+ *  where Rounded has no hard cuts: only the seam, which Square draws. */
+test('the sidebar draws its separators with the seam, never with a line of its own', () => {
+  for (const file of ['Sidebar.svelte', 'SidebarFoot.svelte']) {
+    const style = /<style[^>]*>([\s\S]*)<\/style>/.exec(read(`./${file}`))?.[1] ?? ''
+    expect(style, file).not.toMatch(/border(?:-[a-z]+)*:\s*1px solid var\(--line\)/)
   }
 })
