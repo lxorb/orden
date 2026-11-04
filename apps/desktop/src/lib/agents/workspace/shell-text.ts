@@ -495,11 +495,12 @@ export function wordsOf(line: string): string[] | null {
     const one = line.charAt(at)
     if (quote === "'") {
       if (one === "'") quote = null
-      else word += one
+      else word = (word ?? '') + one
     } else if (quote === '"') {
       if (one === '"') quote = null
-      else if (one === '\\' && /["\\$`]/.test(line.charAt(at + 1))) word += line.charAt(++at)
-      else word += one
+      else if (one === '\\' && /["\\$`]/.test(line.charAt(at + 1)))
+        word = (word ?? '') + line.charAt(++at)
+      else word = (word ?? '') + one
     } else if (one === '"' || one === "'") {
       quote = one
       word ??= ''

@@ -466,7 +466,11 @@ describe('a control named by a label as well as by its words', () => {
 describe('a secret region in what is read', () => {
   const read = (document: Document, hidden: number[]) => {
     // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the script under test is a string in the crate
-    return new Function('document', 'hidden', constant('MASKED_TEXT'))(document, hidden) as string
+    const run = new Function('document', 'hidden', constant('MASKED_TEXT')) as (
+      document: Document,
+      hidden: number[],
+    ) => string
+    return run(document, hidden)
   }
 
   test('is a mark, and every other word stays', () => {
@@ -491,7 +495,11 @@ describe('a secret region in what is read', () => {
     const document = page('<p>not</p><div contenteditable>not</div><div contenteditable>4111</div>')
     const copy = document.body.cloneNode(true) as Element
     // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the script under test is a string in the crate
-    new Function('copy', 'hidden', constant('MASKED_CLONE'))(copy, [0, 1])
+    const run = new Function('copy', 'hidden', constant('MASKED_CLONE')) as (
+      copy: Element,
+      hidden: number[],
+    ) => void
+    run(copy, [0, 1])
     expect(copy.querySelector('p')?.textContent).toBe('not')
     expect(copy.innerHTML).not.toContain('4111')
     expect(copy.innerHTML).toContain('[hidden]')
