@@ -12,7 +12,7 @@ vi.mock('./tauri', async (importOriginal) => ({
   invoke: (command: string, args?: Record<string, unknown>) => {
     if (command === 'snapshot_note') versions.push(String(args?.content))
     if (command === 'write_note') writes.push(String(args?.content))
-    return (disk.current as NonNullable<typeof disk.current>).invoke(command, args)
+    return disk.current!.invoke(command, args)
   },
 }))
 const versions: string[] = []
@@ -161,7 +161,7 @@ describe('the closed stack', () => {
     writes.length = 0
     await workspace.reopenClosed()
     await workspace.writesSettled()
-    expect(workspace.active?.note.latest).toBe(outside)
+    expect(workspace.tabs.at(-1)?.note.latest).toBe(outside)
     expect(writes).toEqual([])
     expect(d.files.get('/s/a.md')).toBe(outside)
   })
@@ -200,7 +200,7 @@ describe('the closed stack', () => {
     workspace.close(tab.id)
     await workspace.reopenClosed()
     await workspace.writesSettled()
-    expect(workspace.active?.note.latest).toBe('# a\njust typed\n')
+    expect(workspace.tabs.at(-1)?.note.latest).toBe('# a\njust typed\n')
     expect(d.files.get('/s/a.md')).toBe('# a\njust typed\n')
   })
 

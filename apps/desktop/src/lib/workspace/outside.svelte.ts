@@ -100,7 +100,12 @@ async function gone(path: string, dir: boolean) {
   // A note deleted and put straight back is said to be deleted after it is back.
   if (await onDisk(path)) return
   workspace.draftUnwrittenUnder(path)
-  await told({ op: 'removed', path, kind: dir ? 'folder' : 'file', root: workspace.rootHolding(path) })
+  await told({
+    op: 'removed',
+    path,
+    kind: dir ? 'folder' : 'file',
+    root: workspace.rootHolding(path),
+  })
   listAgain()
 }
 
@@ -118,7 +123,12 @@ async function moved(from: string, to: string, dir: boolean) {
 }
 
 async function came(path: string, dir: boolean) {
-  await told({ op: 'created', path, kind: dir ? 'folder' : 'file', root: workspace.rootHolding(path) })
+  await told({
+    op: 'created',
+    path,
+    kind: dir ? 'folder' : 'file',
+    root: workspace.rootHolding(path),
+  })
   listAgain()
 }
 
