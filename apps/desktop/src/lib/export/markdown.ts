@@ -108,16 +108,22 @@ function spansByBlock(
   all: readonly { text: string; from: number; code: boolean }[],
 ): [number, number][] {
   const spans: [number, number][] = []
-  let run: { from: number; to: number } | null = null
+  let start = -1
+  let stop = -1
   const end = () => {
-    if (!run) return
-    const { from, to } = run
-    for (const [a, b] of codeSpans(source.slice(from, to))) spans.push([from + a, from + b])
-    run = null
+    if (start < 0) return
+    for (const [a, b] of codeSpans(source.slice(start, stop))) {
+      spans.push([start + a, start + b])
+    }
+    start = -1
   }
   for (const { text, from, code } of all) {
-    if (code || !text.trim()) end()
-    else run = { from: run?.from ?? from, to: from + text.length }
+    if (code || !text.trim()) {
+      end()
+    } else {
+      if (start < 0) start = from
+      stop = from + text.length
+    }
   }
   end()
   return spans
