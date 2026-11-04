@@ -1147,8 +1147,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,545,700, for #1030: a phone opens the scratchpad from the
  *  drawer's foot (SidebarFoot.svelte, `scratchFromDrawer` in scratchpad/is.svelte.ts)
- *  rather than from a switch in every note's bar. Measured 3,545,505. */
-const BUDGET = 3_545_700
+ *  rather than from a switch in every note's bar. Measured 3,545,505.
+ *
+ *  Raised 2026-11-04, to 3,549,500, for #1098: a web note wears the icon chosen for it over
+ *  the site's mark, kept in its `.url` and carried by every rewrite of one
+ *  (`rewriteShortcut` in web-tab/shortcut.ts, `wearsChosen` in chosen-icon.ts).
+ *  Measured 3,549,413. */
+const BUDGET = 3_549_500
 const MOST_FILES = 391
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

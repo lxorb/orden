@@ -444,10 +444,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,868,500, for #331: the tab overview's cells, round
  *  and holding every window on every frame (overview/membrane.ts, overview/Cells.svelte).
  *  Measured 5,868,335.
+ *
+ *  The catalogues raised on 2026-11-04, to 964,800, for #1098: Reset to site icon, the row
+ *  that gives a web note back the site's own mark, in every catalogue. Measured 964,739.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 5_868_500,
-  catalogues: 964_400,
+  catalogues: 964_800,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,
