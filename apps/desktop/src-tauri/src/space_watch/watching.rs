@@ -201,22 +201,22 @@ impl Armed {
         })
     }
 
-    /// Takes the place of `old`. Past the limit of watched folders it is `old` holding
-    /// the folders this one was refused, and they are the same folders: this one is
-    /// armed again once they are free, or it would watch next to nothing for the whole
-    /// of the run (#481). Made before `old` is let go all the same, so a watcher the
-    /// system refuses outright leaves the spaces watched as they were.
+    /// About to take the place of `old`, which stays with the caller to replace once this
+    /// one has started, so a watch that cannot start leaves the spaces watched as they were.
+    /// Past the limit of watched folders it is `old` holding the folders this one was
+    /// refused, and they are the same folders: `old` is let go here and this one armed again
+    /// once they are free, or it would watch next to nothing for the whole of the run (#481).
     pub fn replacing(mut self, old: &mut Option<Watch>) -> Self {
-        let refused = self.unwatched.contains(&Some(Unwatched::Limit));
-        match old.take() {
-            Some(old) if refused => {
-                old.let_go();
-                for (at, root) in self.roots.iter().enumerate() {
-                    let _ = self.watcher.unwatch(&root.real);
-                    self.unwatched[at] = arm(&mut self.watcher, root);
-                }
-            }
-            _ => {}
+        if !self.unwatched.contains(&Some(Unwatched::Limit)) {
+            return self;
+        }
+        let Some(old) = old.take() else {
+            return self;
+        };
+        old.let_go();
+        for (at, root) in self.roots.iter().enumerate() {
+            let _ = self.watcher.unwatch(&root.real);
+            self.unwatched[at] = arm(&mut self.watcher, root);
         }
         self
     }
@@ -692,7 +692,8 @@ mod tests {
         assert_eq!(first[0].unwatched, None);
     }
 
-    /// One that was not refused leaves `old` to the caller, who drops it.
+    /// One that was not refused leaves `old` to the caller, and running, so a start that
+    /// fails has not cost the spaces their watch.
     #[cfg(target_os = "linux")]
     #[test]
     fn a_watch_not_refused_has_nothing_armed_twice() {
@@ -700,13 +701,22 @@ mod tests {
 
         let dir = tempfile::tempdir().expect("a folder");
         let root = fs::canonicalize(dir.path()).expect("a real path");
-        let made = armed(vec![Root {
-            given: root.clone(),
-            real: root.clone(),
-        }])
-        .expect("armed");
-        let mut old = None;
-        assert_eq!(made.replacing(&mut old).unwatched, vec![None]);
+        let spelled = || {
+            vec![Root {
+                given: root.clone(),
+                real: root.clone(),
+            }]
+        };
+        let mut old = Some(
+            armed(spelled())
+                .expect("armed")
+                .start(Box::new(|_| true))
+                .expect("started"),
+        );
+        let made = armed(spelled()).expect("armed").replacing(&mut old);
+        assert!(old.is_some());
+        assert_eq!(made.unwatched, vec![None]);
+        assert_eq!(holders(&root), 2);
     }
 
     /// The whole life of a note as another program lives it, one step at a time, each
