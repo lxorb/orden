@@ -982,7 +982,9 @@ describe('a space somebody shared', () => {
     const real = fake.api.createNote
     fake.api.createNote = (token, spaceId, path, content) =>
       path === 'A too big.md'
-        ? Promise.reject(new ApiError(400, 'that note is too large'))
+        ? Promise.reject(
+            new ApiError(400, 'that note is too large', { error: 'that note is too large' }),
+          )
         : real(token, spaceId, path, content)
     try {
       await sync.pass()
