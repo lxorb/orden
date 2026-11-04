@@ -1,5 +1,7 @@
 import { expect, test } from 'vitest'
-import { overlaps, settled, stripLanding } from './free'
+import { overlaps, roomFor, settled, stripLanding } from './free'
+import { cellAt } from './cells'
+import { around } from './layout'
 import type { Slot } from './layout'
 
 const at = (id: string, x: number, y: number, paneId = 'p'): Slot => ({
@@ -76,4 +78,25 @@ test('a window is never pushed onto the name under another, however much room th
     }
   }
   expect(after.every((a, i) => after.every((b, j) => i === j || !overlaps(a, b, named)))).toBe(true)
+})
+
+test('a held window pushes only the windows of the cell it is in, so a cell of one window it comes to is still there to point into', () => {
+  // Space a with two windows, space b with one; a's window is held right over b's.
+  const windows = [at('a1', 0, 0), at('a2', 240, 0), at('b1', 900, 0), at('held', 0, 0)]
+  const cell = (id: string) => (id.startsWith('b') ? 'b' : 'a')
+  const over = { x: 880, y: 10, w: 200, h: 120 }
+  const inA = roomFor(windows, 'held', over, (id) => cell(id) === 'a')
+  // b's one window stays where it lies under the hand, and the pointer on it is in b.
+  expect(inA.find((one) => one.id === 'b1')).toEqual(windows[2])
+  const box = (key: string) =>
+    around(inA.filter((one) => one.id !== 'held' && cell(one.id) === key)) ?? over
+  const cells = ['a', 'b'].map((key) => ({ key, box: box(key) }))
+  expect(cellAt(cells, 'a', 980, 60)).toBe('b')
+  // Once it is in b, b's window makes room for it, and a's are left alone.
+  const inB = roomFor(windows, 'held', over, (id) => cell(id) === 'b')
+  expect(inB.find((one) => one.id === 'b1')).not.toEqual(windows[2])
+  expect(inB.filter((one) => cell(one.id) === 'a' && one.id !== 'held')).toEqual(
+    windows.slice(0, 2),
+  )
+  expect(clear(inB.filter((one) => one.id !== 'a1' && one.id !== 'a2'))).toBe(true)
 })

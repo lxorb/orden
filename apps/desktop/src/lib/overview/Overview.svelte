@@ -22,7 +22,7 @@
    *
    *  All spaces shows the other spaces too, each in its place on the one canvas inside a
    *  bubble that is its windows (Cells.svelte); a window dragged out of its cell takes the
-   *  bubble with it, and dragged well into another's plops across, which moves its tab to
+   *  bubble with it, and pointed into another's plops across, which moves its tab to
    *  that space when it is let go (cells.ts). */
 
   import { tick as laidOut, untrack } from 'svelte'
@@ -67,7 +67,7 @@
   import { faces } from './faces.svelte'
   import { drawn, Flight, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
-  import { settled, stripLanding } from './free'
+  import { roomFor, settled, stripLanding } from './free'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot } from './layout'
   import { marked, mirrorOf, shownBox, tabCopyOf } from './mirror'
   import { walk, wayOf } from './walk'
@@ -276,16 +276,6 @@
     return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)), namedRoom)
   })
 
-  /** And with one held: that one under the hand, where it stays when it is let go, and
-   *  every other pushed out of its way - back where it was once the hand moves on. */
-  const slots = $derived.by((): Slot[] => {
-    const hand = held?.box
-    const id = held?.id
-    if (!hand || !id) return resting
-    const lying = resting.map((slot) => (slot.id === id ? { ...slot, ...hand } : slot))
-    return settled(lying, new Set([id]), namedRoom)
-  })
-
   /** Which cell each window lies in, by tab: its space's, or the one the held window is
    *  over. */
   const cellOf = $derived.by(() => {
@@ -295,6 +285,18 @@
     )
     if (held?.landing?.kind === 'space') map.set(held.id, held.landing.key)
     return map
+  })
+
+  /** And with one held: that one under the hand, where it stays when it is let go, and
+   *  every other of the cell it is in pushed out of its way - back where it was once the
+   *  hand moves on. Another cell's windows stay put, which the hand points into (free.ts
+   *  `roomFor`). */
+  const slots = $derived.by((): Slot[] => {
+    const hand = held?.box
+    const id = held?.id
+    if (!hand || !id) return resting
+    const key = cellOf.get(id)
+    return roomFor(resting, id, hand, (one) => cellOf.get(one) === key, namedRoom)
   })
 
   /** Every window, and the lines between each split's sides. */
@@ -308,11 +310,15 @@
     ),
   })
 
-  /** Each cell's windows, boxed, for which cell a window is over and for the camera: the
-   *  held one left out, which never decides where the cell it is leaving is. */
+  /** Each cell's windows, boxed, for which cell a window is over and for the camera: as
+   *  they lie at rest, not as the held one pushes them, so where a cell is pointed into
+   *  never moves under the hand; the held one left out, which never decides where the
+   *  cell it is leaving is. */
   const cellBoxes = $derived<Cell[]>(
     gridCells.map((one) => {
-      const inside = slots.filter((slot) => cellOf.get(slot.id) === one.key && slot.id !== held?.id)
+      const inside = resting.filter(
+        (slot) => cellOf.get(slot.id) === one.key && slot.id !== held?.id,
+      )
       // A cell whose one window is held is where that window was taken from.
       const from = resting.filter(
         (slot) => slot.id === held?.id && one.slots.some((own) => own.id === slot.id),
@@ -850,14 +856,14 @@
   }
 
   /** Whether the held window, with the pointer at `point`, is over another space's cell:
-   *  once it is well inside it (cells.ts). */
+   *  once the pointer is nearer that cell's windows than its own's (cells.ts). */
   function landingFor(point: Point): (Landing & { kind: 'space' }) | null {
     if (!held) return null
     const from = held.from
     const goes = held.goes
     const now = held.landing?.key ?? from
     const cells = cellBoxes.filter((one) => one.key === from || goes.includes(one.key))
-    const cell = all ? cellAt(cells, now, point.x, point.y) : from
+    const cell = all ? cellAt(cells, now, point.x, point.y, camera.zoom) : from
     return cell === from ? null : { kind: 'space', key: cell }
   }
 

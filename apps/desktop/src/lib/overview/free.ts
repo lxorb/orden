@@ -76,6 +76,24 @@ export function settled<T extends Box & { id: string }>(
   return out
 }
 
+/** The windows with one of them held at `box`: that one there, and the windows of the
+ *  cell it is in now (`mate`) moved out of its way, as `settled` moves them. The windows
+ *  of every other cell stay where they lie, so a cell the hand comes near never runs from
+ *  it - a cell of one window would, its window being pushed out from under the pointer
+ *  that is pointing into it - and only the cell it plops into makes room for it. */
+export function roomFor<T extends Box & { id: string }>(
+  windows: readonly T[],
+  id: string,
+  box: Box,
+  mate: (id: string) => boolean,
+  named = 0,
+): T[] {
+  const lying = windows.map((one) => (one.id === id ? { ...one, ...box } : one))
+  const among = lying.filter((one) => one.id === id || mate(one.id))
+  const moved = new Map(settled(among, new Set([id]), named).map((one) => [one.id, one]))
+  return lying.map((one) => moved.get(one.id) ?? one)
+}
+
 /** Whether `a` comes before `b` in the order a page is read: the higher row first, and
  *  along a row from the left. Two windows whose middles are within half the lower one's
  *  height of each other are on one row. */
