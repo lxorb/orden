@@ -452,9 +452,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  #331: a window of the tab overview lying wherever it was let go, the others pushed out
  *  of its way, and Tidy up (overview/free.ts) in every language. Measured 5,869,405 and
  *  965,023.
+ *
+ *  The code raised on 2026-11-04, to 5,870,900, for #1055: an online terminal not saved,
+ *  which the plugin never opens, kept as its `.term` when it is (workspace/placing.ts,
+ *  drafts.ts). Measured 5,870,576.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_869_600,
+  code: 5_870_900,
   catalogues: 965_200,
   styles: 290_000,
   fonts: 260_000,
