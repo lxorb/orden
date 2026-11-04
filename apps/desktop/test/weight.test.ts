@@ -1189,8 +1189,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,562,000, for #1068: the file list reads a hand-arranged
  *  folder from each row's own place where the account keeps them, and turns a drop into
- *  them (workspace/arranged.svelte.ts). Measured 3,561,350. */
-const BUDGET = 3_562_000
+ *  them (workspace/arranged.svelte.ts). Measured 3,561,350.
+ *
+ *  Raised 2026-11-04, to 3,563,500, for #1097: an emoji's outline takes a tint like a line,
+ *  and a row wearing one is held back as a line is (`takesTint` in icons.ts, Icon.svelte,
+ *  FileMark.svelte). The outlines themselves are a chunk of their own. Measured 3,562,612. */
+const BUDGET = 3_563_500
 const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
