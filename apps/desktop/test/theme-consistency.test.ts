@@ -153,9 +153,12 @@ describe('what a theme reaches, now that contrast is one', () => {
 })
 
 /** A note stands on the note's paper wherever it is written, and the scratchpad is a
- *  note. Its card stood on `--surface`, the colour a menu floats on, which is opaque in
- *  every theme: a near-black block beside a see-through note under glass and the
- *  wallpaper, and a step off the page in the plain themes. */
+ *  note. Its card stood on `--surface`, the colour a menu floats on: a step off the page
+ *  in the plain themes. On the see-through paper then, as a pane is, it was a narrow, tall
+ *  strip of whatever is behind the window - glass's pair turning to its second colour
+ *  towards the bottom corner - which read as a second ground under its lower half
+ *  (#1110). So it is the paper itself, whole, and a pane is the one surface that lays the
+ *  see-through paper. */
 describe('the paper a note is written on', () => {
   const PAPER = 'background: var(--content-ground, var(--bg));'
 
@@ -166,10 +169,21 @@ describe('the paper a note is written on', () => {
     return opens.exec(text)?.[1] ?? ''
   }
 
-  test.each([
-    ['lib/Pane.svelte', 'pane'],
-    ['lib/scratchpad/ScratchpadCard.svelte', 'card'],
-  ])('is what %s lays under .%s', (name, selector) => {
-    expect(ruleOf(name, selector)).toContain(PAPER)
+  test('is what a pane lays under itself', () => {
+    expect(ruleOf('lib/Pane.svelte', 'pane')).toContain(PAPER)
+  })
+
+  test('is the page itself, whole, under the scratchpad', () => {
+    expect(ruleOf('lib/scratchpad/ScratchpadCard.svelte', 'card')).toContain(
+      'background: var(--bg);',
+    )
+  })
+
+  test('is see-through under a pane alone', () => {
+    const offenders = components
+      .filter((one) => one.name !== 'lib/Pane.svelte' && /var\(--content-ground\b/.test(one.text))
+      .map((one) => one.name)
+
+    expect(offenders, `these lay the see-through paper: ${offenders.join(', ')}`).toEqual([])
   })
 })
