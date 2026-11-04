@@ -1,7 +1,7 @@
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
 import { changes, edited, note } from '../test/markdown'
-import { merge3 } from './merge3'
+import { merge3, mergedOn } from './merge3'
 
 describe('merge3', () => {
   test('one side untouched is the other side', () => {
@@ -152,5 +152,90 @@ describe('merge3', () => {
       }),
       { numRuns: 1000 },
     )
+  })
+})
+
+/** Words one side wrote and the other went on from: a write that landed unheard. */
+describe('mergedOn', () => {
+  test.each([
+    [
+      'a line, and then more',
+      'base\n',
+      'base\ntyped\n',
+      'base\ntyped\nmore\n',
+      'base\ntyped\nmore\n',
+    ],
+    [
+      'the same read the other way',
+      'base\n',
+      'base\ntyped\nmore\n',
+      'base\ntyped\n',
+      'base\ntyped\nmore\n',
+    ],
+    [
+      'in a line',
+      '# T\n\nalpha\n',
+      '# T\n\nalpha typed\n',
+      '# T\n\nalpha typed more\n',
+      '# T\n\nalpha typed more\n',
+    ],
+    [
+      'a passage',
+      'b\n',
+      'b\nsome long words here\n',
+      'b\nsome long words here and more\n',
+      'b\nsome long words here and more\n',
+    ],
+    [
+      'a line in common, then each its own',
+      'b\n',
+      'b\none\nmine\n',
+      'b\none\ntheirs\n',
+      'b\none\nmine\ntheirs\n',
+    ],
+    ['more written before', 'b\n', 'b\ntyped\n', 'b\nmore\ntyped\n', 'b\nmore\ntyped\n'],
+    [
+      'in the middle of what the other wrote',
+      'b\n',
+      'b\ntyped words\n',
+      'b\nfirst typed words last\n',
+      'b\nfirst typed words last\n',
+    ],
+    ['the same word on both', 'x\n', 'x\nsame\n', 'x\nsame\n', 'x\nsame\n'],
+  ])('%s: once', (_, base, local, remote, out) => {
+    expect(mergedOn(base, local, remote)).toBe(out)
+  })
+
+  test.each([
+    ['words apart', 'a\n\nb\n', 'a\nmine\n\nb\n', 'a\n\nb\ntheirs\n', 'a\nmine\n\nb\ntheirs\n'],
+    ['two things at one point', 'x\n', 'x\nmilk\n', 'x\neggs\n', 'x\nmilk\neggs\n'],
+    ['a deletion', 'one\ntwo\n', 'one\n', 'one\ntwo\nthree\n', 'one\nthree\n'],
+  ])('%s: as any merge', (_, base, local, remote, out) => {
+    expect(mergedOn(base, local, remote)).toBe(out)
+    expect(merge3(base, local, remote).text).toBe(out)
+  })
+
+  test('words typed anywhere, the other side going on from them, are there once', () => {
+    let seed = 7
+    const next = (under: number) => {
+      seed = (seed * 48271) % 2147483647
+      return seed % under
+    }
+    const lines = Array.from({ length: 12 }, (_, at) => `line ${at} of the note`)
+    for (let round = 0; round < 300; round += 1) {
+      const base = `${lines.join('\n')}\n`
+      const at = base.indexOf('\n', next(base.length - 2))
+      const typed = next(2) ? `\nTYPED${round}` : ` TYPED${round}`
+      const local = base.slice(0, at) + typed + base.slice(at)
+      const further = next(2) ? ` and on ${round}` : `\nand on ${round}`
+      const remote = base.slice(0, at) + typed + further + base.slice(at)
+      for (const [one, other] of [
+        [local, remote],
+        [remote, local],
+      ]) {
+        const out = mergedOn(base, one!, other!)
+        expect(out, `${JSON.stringify(typed)} ${JSON.stringify(further)}`).toBe(remote)
+      }
+    }
   })
 })

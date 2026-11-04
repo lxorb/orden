@@ -111,3 +111,24 @@ describe('a closed tab whose write landed', () => {
     expect(stack.stack[0]?.draft).toMatchObject({ dirty: true, doc: 'typed' })
   })
 })
+
+describe('an entry of the run before', () => {
+  test('its words being what the file says now, it comes back from the file', () => {
+    const stack = new ClosedTabs()
+    const draft = {
+      kind: 'note' as const,
+      path: '/Notes/a.md',
+      name: 'a.md',
+      doc: 'words\n',
+      dirty: true,
+      cursor: 0,
+      scroll: 0,
+      share: 'k-old',
+    }
+    stack.restore([{ draft, paneId: 'p', at: 0 }])
+    stack.wroteAll('/Notes/a.md', 'k-new', 'other words\n')
+    expect(stack.stack[0]?.draft.dirty).toBe(true)
+    stack.wroteAll('/Notes/a.md', 'k-new', 'words\n')
+    expect(stack.stack[0]?.draft.dirty).toBe(false)
+  })
+})
