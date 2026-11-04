@@ -184,14 +184,15 @@ class Runner {
    *  does; see "The other windows" below. The wait for the lead is outside the lane, so
    *  a stop meanwhile is never queued behind it. */
   async start(): Promise<void> {
-    if (this.local) await this.inLane(() => this.letGo())
+    if (this.local) await this.inLane(() => this.letGo(true))
     const user = account.user
     if (!user || this.current || this.giving) return
     this.accountId = user.id
     this.hearLeader()
     const giving = new AbortController()
     this.giving = giving
-    const lead = await leadSync(giving.signal, user.id)
+    const held = await this.holdStore()
+    const lead = held && !giving.signal.aborted ? await leadSync(giving.signal, user.id) : null
     if (!lead || this.giving !== giving || account.user?.id !== user.id) {
       lead?.release()
       return
@@ -203,8 +204,7 @@ class Runner {
       if (engine) await this.tookOver(engine)
     } catch (error) {
       // No engine, here: whoever waits next may fare better, and nothing is owed to nobody.
-      this.lead = null
-      lead.release()
+      this.letGoLead()
       this.owed.clear()
       throw error
     }
@@ -214,6 +214,46 @@ class Runner {
   private giving: AbortController | null = null
   /** This window's being the one that runs the engine. */
   private lead: Leadership | null = null
+
+  /** This window's being the one that may open a store at all. The crate keeps one store
+   *  for every window of the app and closes whichever it holds, so an engine in one window
+   *  - the account's or the one kept signed out - would have its store closed under it by
+   *  another's starting or letting go. Whoever runs either engine holds this first, and
+   *  holds it from the one kept signed out to the account's and back, so no other window
+   *  ever comes between. Account ids are UUIDs, so no account's lead is ever this one. */
+  private storeLead: Leadership | null = null
+  /** The wait for it, shared by whoever asks meanwhile: the lock is nobody's twice. */
+  private storeWait: Promise<Leadership | null> | null = null
+  private storeGiving: AbortController | null = null
+
+  /** Waits until this window holds the device's store; null once the wait is given up. */
+  private holdStore(): Promise<Leadership | null> {
+    if (this.storeLead) return Promise.resolve(this.storeLead)
+    if (this.storeWait) return this.storeWait
+    const giving = new AbortController()
+    this.storeGiving = giving
+    const wait = leadSync(giving.signal, LOCAL_STORE).then((lead) => {
+      if (this.storeWait === wait) {
+        this.storeWait = null
+        this.storeGiving = null
+      }
+      if (!lead || giving.signal.aborted) {
+        lead?.release()
+        return null
+      }
+      this.storeLead = lead
+      return lead
+    })
+    this.storeWait = wait
+    return wait
+  }
+
+  /** Stops waiting for the device's store; one held is let go with the store, after it. */
+  private stopHolding() {
+    this.storeGiving?.abort()
+    this.storeGiving = null
+    this.storeWait = null
+  }
 
   /** Opens the account's store and starts its engine, in the lane: answers it, or null
    *  once this session has moved on meanwhile. */
@@ -303,7 +343,10 @@ class Runner {
    *  and what the file list does is said to the engine by id as it is signed in. Its
    *  store is its own (`LOCAL_STORE`), and nothing in it reaches the network: no hub,
    *  no rooms, no light in the corner. Answers once it runs, or once it will not. */
-  startLocal(): Promise<void> {
+  async startLocal(): Promise<void> {
+    if (account.user) return
+    // One window keeps it for all of them: the others wait, and take it when that one goes.
+    if (!(await this.holdStore())) return
     return this.inLane(() => this.startLocalNow())
   }
 
@@ -343,9 +386,12 @@ class Runner {
   /** The spaces used signed out let go of for good: what signing in does, so a later
    *  signed-out session starts from the folders as they are then, never from a tree a
    *  week old that the disk would be made to agree with. */
-  dropLocal(): Promise<void> {
+  async dropLocal(): Promise<void> {
+    // Only the window holding the device's store forgets it: another window may still be
+    // keeping it, and lets go of it first when it hears the same.
+    if (!(await this.holdStore())) return
     return this.inLane(async () => {
-      if (this.local) await this.letGo()
+      if (this.local) await this.letGo(true)
       await forgetSyncStore(LOCAL_STORE).catch((error: unknown) => {
         log('warn', `sync: the store kept signed out stays - ${String(error)}`)
       })
@@ -380,6 +426,7 @@ class Runner {
   private halt(keepLead = false): Promise<void> {
     this.giving?.abort()
     this.giving = null
+    this.stopHolding()
     this.owed.clear()
     this.seen = { spaces: [], notes: [] }
     this.seenAt.clear()
@@ -410,9 +457,13 @@ class Runner {
     if (!keepLead) this.letGoLead()
   }
 
+  /** No longer the window that runs the engine, nor the one that may open a store: said
+   *  once its store is closed, so the next window's opens after it. */
   private letGoLead() {
     this.lead?.release()
     this.lead = null
+    this.storeLead?.release()
+    this.storeLead = null
   }
 
   /** A save: everything typed written down, after autosave's own last writes. */
@@ -451,7 +502,7 @@ class Runner {
    *  from mirrors older than what v2 did here would delete every note v2 renamed. */
   rollBack(): Promise<boolean> {
     return this.inLane(async () => {
-      if (this.local) await this.letGo()
+      if (this.local) await this.letGo(true)
       return await this.rollBackNow()
     })
   }
@@ -562,7 +613,8 @@ class Runner {
         log('warn', `sync: signing out kept no mirrors - ${String(error)}`)
       }
     }
-    const led = !!engine || !!this.lead
+    // Holding the device's store, this window is the one any engine would be in.
+    const led = !!engine || !!this.lead || !!this.storeLead
     await this.halt(true)
     this.firsts.clear()
     if (led) {

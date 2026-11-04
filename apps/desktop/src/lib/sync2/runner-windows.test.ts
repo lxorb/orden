@@ -267,6 +267,8 @@ describe('the engine’s window', () => {
 describe('signing out in a window with no engine', () => {
   test('tells nothing to delete under the engine: the store goes once its window let go', async () => {
     signedInAs('a')
+    // The engine's window holds the device's store as well as the account's lead.
+    locks.busy('nib-sync:local')
     locks.busy('nib-sync:a')
     void runner.start()
     await flush()
@@ -276,6 +278,7 @@ describe('signing out in a window with no engine', () => {
     expect(opening.forgotten).toEqual([])
 
     locks.free('nib-sync:a')
+    locks.free('nib-sync:local')
     await leaving
     expect(opening.forgotten).toEqual(['a'])
     expect(windows).toBeDefined()
