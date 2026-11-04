@@ -1167,8 +1167,11 @@ function holds(tail: string): boolean {
  *  button said and not shown where a swipe from the edge pulls the list out, on the
  *  swipe's own condition, asked in one place (swipe-opens.ts, Titlebar.svelte,
  *  SidebarToggle.svelte), put back after the #1056 rebase dropped them. Measured
- *  3,556,148, 392 modules. */
-const BUDGET = 3_556_300
+ *  3,556,148, 392 modules.
+ *
+ *  Raised 2026-11-04, to 3,556,800, for #1088: a web tab's page given its rounded card's
+ *  corner with every placement (`cardCorner` in pages.svelte.ts). Measured 3,556,693. */
+const BUDGET = 3_556_800
 const MOST_FILES = 393
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
