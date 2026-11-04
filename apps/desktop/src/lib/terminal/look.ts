@@ -77,6 +77,16 @@ function clear(colour: string): string {
   return `rgba(${String(r)}, ${String(g)}, ${String(b)}, 0)`
 }
 
+/** The ground a terminal draws of its own under `theme`, or null where it draws none and
+ *  stands on the pane's - a see-through theme's, `clear` above. The open tab of a
+ *  terminal stands on the same (#1110): Emil's online terminal sat under a tab of the
+ *  note's paper, a step lighter than the terminal it was the tab of. */
+export function terminalGround(theme: ITheme): string | null {
+  const ground = theme.background?.trim()
+  if (!ground || /,\s*0(\.0*)?\)$/.test(ground) || ground === 'transparent') return null
+  return ground
+}
+
 /** The sixteen colours' names, in xterm.js's own order. */
 const SIXTEEN = [
   'black',

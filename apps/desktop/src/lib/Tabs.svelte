@@ -1071,8 +1071,10 @@
           class:away={tabOverview.out.includes(tab.id)}
           class:settling={settling === tab.id}
           class:onbar={tab.kind === 'web'}
+          class:onterminal={tab.kind === 'terminal'}
           data-theme={tab.id === activeId ? chrome.tabTheme(tab.id) : undefined}
           style:--web-ground={chrome.barOf(tab.id)?.colour}
+          style:--terminal-paper={tab.kind === 'terminal' ? chrome.terminal : null}
           style:width="{box.width}px"
           style:transform="translateX({box.x * i18n.factor}px)"
           style:--w="{box.width}px"
@@ -1346,7 +1348,8 @@
     /* What the active tab is filled with: the ground of whatever is directly under
        the strip, so the two are one surface. A note's page by default; a tab that
        brings a bar of its own says so with `.onbar`. */
-    --tab-ground: var(--paper, var(--bg));
+    --tab-paper: var(--paper, var(--bg));
+    --tab-ground: var(--tab-paper);
     /* What the pointer lights on the frame - a tab, the plus, the two steps: a lift of
        the ink over whatever the frame is, a tone past it, which is Chrome's header
        hover. It was the paper 40% of the way, Chrome's old rule, and on a frame one
@@ -1476,6 +1479,13 @@
      page's own colour. */
   .tab.onbar {
     --tab-ground: var(--web-ground, var(--surface));
+  }
+
+  /* A terminal's: the ground it draws of its own, its theme's terminal colours or the
+     one palette Settings keeps, or, see-through, the pane's ground it stands on - and
+     never the note's paper, which a terminal is not written on (#1110). */
+  .tab.onterminal {
+    --tab-ground: var(--terminal-paper, var(--terminal-ground, var(--tab-paper)));
   }
 
   /* The body: a rounded box from the frame down, a hair inside the tab's own box

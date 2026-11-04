@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { AA, ratio, rgbOf } from '../legibility'
-import { FIXED_PALETTE, terminalPalette, type TerminalTokens } from './look'
+import { FIXED_PALETTE, terminalGround, terminalPalette, type TerminalTokens } from './look'
 
 const THEMES = fileURLToPath(new URL('../../../../../packages/themes/src/', import.meta.url))
 
@@ -137,5 +137,27 @@ describe('a terminal in the theme', () => {
       expect(on(palette, bright(name))).toBeGreaterThanOrEqual(AA)
     }
     expect(on(palette, 'brightBlack')).toBeGreaterThanOrEqual(3)
+  })
+})
+
+/** #1110: the open tab of a terminal stands on the ground the terminal draws, which is
+ *  not the note's paper - the theme's terminal colours, or the one kept palette. */
+describe("the ground a terminal's open tab stands on", () => {
+  test('is the one the terminal draws', () => {
+    expect(terminalGround(FIXED_PALETTE)).toBe('#16181d')
+    expect(terminalGround({ background: '#0b0d10' })).toBe('#0b0d10')
+  })
+
+  test('is none where the terminal is see-through and stands on the pane', () => {
+    expect(terminalGround({ background: 'rgba(22, 24, 29, 0)' })).toBeNull()
+    expect(terminalGround({})).toBeNull()
+  })
+
+  test("is what the strip wears on a terminal's open tab", () => {
+    const tabs = readFileSync(fileURLToPath(new URL('../Tabs.svelte', import.meta.url)), 'utf8')
+    expect(tabs).toMatch(/\.tab\.onterminal \{\s*--tab-ground: var\(--terminal-paper,/)
+    expect(tabs).toContain(
+      "style:--terminal-paper={tab.kind === 'terminal' ? chrome.terminal : null}",
+    )
   })
 })
