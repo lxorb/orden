@@ -738,18 +738,6 @@
     padding: var(--space-1) var(--space-1) var(--space-2);
   }
 
-  /* The conversation fades out under the top of the foot, Codex's sticky composer,
-     rather than being cut off at a line. */
-  .foot::before {
-    content: '';
-    position: absolute;
-    inset-inline: 0;
-    bottom: 100%;
-    height: var(--space-4);
-    background: linear-gradient(to top, var(--ground), transparent);
-    pointer-events: none;
-  }
-
   :global(.ask.wide) .foot {
     padding-inline: var(--space-4);
   }

@@ -187,3 +187,27 @@ describe('the paper a note is written on', () => {
     expect(offenders, `these lay the see-through paper: ${offenders.join(', ')}`).toEqual([])
   })
 })
+
+/** A list or a thread that runs out under something fades out by a mask, so what shows
+ *  through is whatever it stands on. A colour laid over its end is a token's guess at
+ *  that ground: the AI panel's thread faded to the side's colour while the side stood
+ *  on the chrome's, a darker strip and a band of the real ground above the field
+ *  (#1110). */
+describe('what runs out under something', () => {
+  const style = (name: string) => components.find((one) => one.name === name)?.text ?? ''
+
+  test('the AI panel’s thread fades by a mask', () => {
+    expect(style('lib/ai/sidebar/Conversation.svelte')).toMatch(
+      /\.talk\s*\{[^}]*mask-image:\s*linear-gradient\(to bottom/,
+    )
+  })
+
+  test('and nothing fades to a ground colour over the end of a scroller', () => {
+    const offenders = components
+      .filter((one) =>
+        /linear-gradient\(\s*to (?:top|bottom),\s*var\(--[a-z-]+\),\s*transparent\)/.test(one.text),
+      )
+      .map((one) => one.name)
+    expect(offenders, `these fade to a guessed ground: ${offenders.join(', ')}`).toEqual([])
+  })
+})
