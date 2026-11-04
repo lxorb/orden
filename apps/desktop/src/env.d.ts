@@ -45,6 +45,10 @@ declare const __DRIVEABLE__: boolean
  *  vite.config.ts. */
 declare const __APP_VERSION__: string
 
+/** The commit a bundle was built from, short, or empty from a dev server and a tree with
+ *  no git in it; see vite.config.ts. */
+declare const __APP_COMMIT__: string
+
 /** Whether this build offers Claude Code in Settings > AI.
  *
  *  Anthropic lets a product run Claude Code for its users when the product's maker has

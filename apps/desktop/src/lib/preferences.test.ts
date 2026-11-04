@@ -370,7 +370,7 @@ describe('the version', () => {
     const last = group?.fields.at(-1)
     expect(last?.label).toBe('Version')
     expect(last?.kind).toBe('value')
-    expect(last?.get()).toBe('under test · Stable')
+    expect(last?.get()).toBe('under test (c0ffee1) · Stable')
     expect(last?.words).toEqual(expect.arrayContaining(['version', 'about']))
   })
 })
