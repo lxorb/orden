@@ -532,12 +532,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  and #1115's quick question started as a chat came to claude/hunt-round-1, net of what the
  *  latter took out. Measured 6,002,001.
  *
- *  Raised on 2026-11-04 for the leftovers of the bug round: the code to 6,002,800, one tab per
- *  document on a reopen and a refused write saying why, measured 6,002,692. The catalogues to
+ *  Raised on 2026-11-04 for the leftovers of the bug round: the code to 6,003,000, one tab per
+ *  document on a reopen and a refused write saying why, measured 6,002,821. The catalogues to
  *  982,500: that reason in every catalogue, measured 982,425.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_002_800,
+  code: 6_003_000,
   catalogues: 982_500,
   styles: 290_000,
   fonts: 260_000,

@@ -1265,10 +1265,11 @@ function holds(tail: string): boolean {
  *  3,663,693: the same hook, with a move and a delete made in the file's turn inside it. No new
  *  module. Measured 3,665,764, 394 modules.
  *
- *  Raised on 2026-11-04, to 3,666,600, for the leftovers of the bug round: one tab per
- *  document on a reopen, and a refused write saying why. No new module. Measured 3,666,480.
+ *  Raised on 2026-11-04, to 3,666,900, for the leftovers of the bug round: one tab per
+ *  document on a reopen, a refused write saying why, and a put back said as one. No new
+ *  module. Measured 3,666,714.
  */
-const BUDGET = 3_666_600
+const BUDGET = 3_666_900
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
