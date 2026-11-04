@@ -842,7 +842,8 @@
   // at a line, so this lands on top.
   $effect(() => {
     const asked = workspace.goto
-    if (!asked || !view || workspace.active?.path !== asked.path) return
+    // A note in its reading view goes there itself; see Reading.svelte.
+    if (!asked || !view || workspace.active?.path !== asked.path || workspace.active.reading) return
 
     // Taking the ask down runs this effect again, so nothing is returned to
     // undo the frame: a teardown here would cancel the very jump just asked

@@ -168,13 +168,45 @@ export function withoutComments(source: string): string {
   return out.join('\n')
 }
 
-/** A whole note with its comments gone, its front matter as it is: a value there is
- *  no writer's aside. `50%% off` or a `<!--` in one would otherwise run on down the note,
- *  and take the block's closing fence and the words under it along. The same order as the
- *  renderer, which takes the block off first. */
+/** A whole note with its comments gone, what is below its front matter as `withoutComments`
+ *  has it. In the block a comment is one that closes, on its line, or of whole lines: what
+ *  somebody wrote to themselves there reaches no page either (#453). An opener nothing
+ *  closes like that is the value's own, `50%% off`, or it would run on down the note and
+ *  take the block's closing fence and the words under it along. */
 export function noteWithoutComments(source: string): string {
   const block = frontMatterBlock(source)
-  return block
-    ? source.slice(0, block.to) + withoutComments(source.slice(block.to))
-    : withoutComments(source)
+  if (!block) return withoutComments(source)
+  return (
+    source.slice(0, block.body.from) +
+    valuesWithoutComments(source.slice(block.body.from, block.body.to)) +
+    source.slice(block.body.to, block.to) +
+    withoutComments(source.slice(block.to))
+  )
+}
+
+function valuesWithoutComments(body: string): string {
+  if (!COMMENTS.some((one) => body.includes(one.open))) return body
+
+  const lines = body.split('\n')
+  const out: string[] = []
+  for (let at = 0; at < lines.length; at++) {
+    const line = lines[at] ?? ''
+    const { text, inside } = stripLine(line, null)
+    if (inside === null) {
+      out.push(text)
+      continue
+    }
+
+    const closes =
+      text.trim() === '' ? lines.findIndex((one, below) => below > at && one.includes(inside)) : -1
+    if (closes === -1) {
+      out.push(line)
+      continue
+    }
+    // The lines stay, empty, as `withoutComments` leaves them.
+    out.push(text, ...lines.slice(at + 1, closes).map(() => ''))
+    out.push(stripLine(lines[closes] ?? '', inside).text)
+    at = closes
+  }
+  return out.join('\n')
 }

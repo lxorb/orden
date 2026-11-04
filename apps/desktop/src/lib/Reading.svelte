@@ -450,6 +450,27 @@
     )
   }
 
+  // Where the workspace was asked to go in this note, a followed link's heading or block,
+  // once there is a page to go there on.
+  $effect(() => {
+    const asked = workspace.goto
+    if (!asked || !html || workspace.active?.id !== tab.id || tab.path !== asked.path) return
+
+    workspace.goto = null
+    void tick().then(() => requestAnimationFrame(() => land(asked.line)))
+  })
+
+  /** A line of the note brought into view: its block if it has a name, else by where it
+   *  is, which is exact for a heading. */
+  function land(line: number) {
+    const named = blockIds(tab.doc).find((one) => one.line === line)
+    if (named) jump(`^${named.id}`)
+    else show(offsetOf(line))
+  }
+
+  const offsetOf = (line: number) =>
+    tab.doc.split('\n').slice(0, line).join('\n').length + (line ? 1 : 0)
+
   /** A target as the name it stands for: what a note writes in a link is a URL. */
   function written(target: string): string {
     return decodeTarget(target)
@@ -472,7 +493,7 @@
     }
     if (!said.startsWith('^')) return
     const line = blockIds(tab.doc).find((one) => one.id === said.slice(1))?.line
-    if (line !== undefined) show(tab.doc.split('\n').slice(0, line).join('\n').length + 1)
+    if (line !== undefined) show(offsetOf(line))
   }
 
   /** Copying, and the way back out. What a right click on a page that cannot be

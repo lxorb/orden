@@ -327,8 +327,8 @@ export function frontMatterEdits(
  *    every reader of a markdown file looks for it.
  *  - taking the key away: its line goes. A block that held nothing else goes
  *    with it, along with the blank lines it was standing on, because an empty
- *    pair of fences at the top of a note is litter rather than metadata. Null where
- *    what would be left is no block but holds something.
+ *    pair of fences at the top of a note is litter rather than metadata. Where what
+ *    would be left is no block but holds something, the key stays with no value.
  *
  *  The line ending is whatever the note already uses, so a file written on
  *  Windows does not come back with one line in the other convention.
@@ -361,11 +361,16 @@ export function frontMatterEdit(
     if (!rest.trim()) return { from: block.from, to: blankAfter(source, block.to), insert: '' }
 
     // What is left has to still be a block, the same one: a comment or a line of words
-    // alone is not, and the page would show them and two rules. Nothing is written then
-    // rather than lose them or put them on the page.
+    // alone is not, and the page would show them and two rules. So there the key stays
+    // and says nothing: a reader of it finds no value, and they are where they were.
     const to = cutTo(source, line)
     const left = frontMatterBlock(source.slice(0, line.from) + source.slice(to))
-    if (left?.close !== block.close - (to - line.from)) return null
+    if (left?.close !== block.close - (to - line.from)) {
+      const end = source[line.value.to - 1] === '\r' ? line.value.to - 1 : line.value.to
+      return source.slice(line.value.from, end).trim()
+        ? { from: line.value.from, to: end, insert: '' }
+        : null
+    }
 
     return { from: line.from, to, insert: '' }
   }

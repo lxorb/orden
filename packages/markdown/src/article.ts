@@ -233,8 +233,9 @@ const NEVER_KEPT = /^(?:on|style$|srcdoc$|formaction$|xlink:href$)/i
 /** What a note never contains, plus what the page itself says is decoration. */
 export function clean(root: ParentNode): void {
   keepMaths(root)
-  for (const element of root.querySelectorAll(NOT_CONTENT)) element.remove()
+  // Forms first, since how many fields one has is what tells them apart.
   for (const form of root.querySelectorAll('form')) if (!formSays(form)) form.remove()
+  for (const element of root.querySelectorAll(NOT_CONTENT)) element.remove()
 
   // The root as well as what is under it: a selection can begin inside the very
   // element that carries the handler.

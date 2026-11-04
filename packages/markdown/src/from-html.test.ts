@@ -1220,7 +1220,7 @@ describe('a table with a cell over several rows', () => {
 
 describe('a form', () => {
   test('its words are kept and its controls are not', () => {
-    const said = htmlToMarkdown('<p>intro</p><form><p>body</p><input><button>Send</button></form>')
+    const said = htmlToMarkdown('<p>intro</p><form><p>body</p><button>Send</button></form>')
     expect(said).toContain('intro')
     expect(said).toContain('body')
     expect(said).not.toContain('Send')
@@ -1232,5 +1232,29 @@ describe('a form', () => {
         '<p>intro</p><form><label>Mail</label><input><select><option>a</option></select></form>',
       ),
     ).toBe('intro')
+  })
+})
+
+describe('a form that asks for something', () => {
+  const said = (form: string) => htmlToMarkdown(`<p>intro</p>${form}`)
+
+  test('is no words of the page', () => {
+    for (const form of [
+      '<form><p>Sign in to read more</p><label>Email</label><input type="email"><a href="/x">Forgot your password?</a></form>',
+      '<form><p>Search this site</p><input type="search"></form>',
+      '<form><p>Subscribe to our newsletter for the latest news and offers every week.</p><input type="email"><button>Go</button></form>',
+      '<form><h3>Leave a Reply</h3><p>Your email address will not be published. Required fields are marked.</p><label>Comment</label><textarea></textarea><label>Name</label><input><label>Email</label><input><input type="checkbox"><label>Save my name, email, and website in this browser for the next time I comment.</label><input type="submit" value="Post"></form>',
+    ]) {
+      expect(said(form)).toBe('intro')
+    }
+  })
+
+  test('a page in one is the page, a field or not', () => {
+    const results = Array.from({ length: 12 }, (_, at) => `<li>Result ${at} about something</li>`)
+    const page = said(
+      `<form><input type="hidden"><input type="search"><ul>${results.join('')}</ul></form>`,
+    )
+    expect(page).toContain('Result 11')
+    expect(said('<form><input type="hidden"><p>body</p></form>')).toContain('body')
   })
 })

@@ -547,13 +547,18 @@ describe('a value across lines', () => {
     expect(apply('---\ntitle: x\n# about\nz: 1\n---\nrest\n', 'title', null)).toBe(
       '---\n# about\nz: 1\n---\nrest\n',
     )
-    for (const note of [
-      '---\ntitle: x\n# keep me\n---\nrest\n',
-      '---\ntitle: x\nsome words\n---\nrest\n',
-      '---\ntitle: x\nsome words\nz: 1\n---\nrest\n',
-    ]) {
+    // What is left would be no block, so the key stays and says nothing: what it said
+    // is gone, a reader of it finds no value, and the comment is still a comment.
+    for (const [note, after] of [
+      ['---\ntitle: x\n# keep me\n---\nrest\n', '---\ntitle:\n# keep me\n---\nrest\n'],
+      ['---\ntitle: x\nsome words\n---\nrest\n', '---\ntitle:\nsome words\n---\nrest\n'],
+      ['---\ntitle: [\n  a,\n]\n# c\n---\nrest\n', '---\ntitle:\n# c\n---\nrest\n'],
+    ] as const) {
       expect(opensFrontMatter(note)).toBe(true)
-      expect(frontMatterEdit(note, 'title', null)).toBeNull()
+      expect(apply(note, 'title', null)).toBe(after)
+      expect(frontMatterValue(after, 'title')).toBeNull()
+      expect(opensFrontMatter(after)).toBe(true)
+      expect(frontMatterEdit(after, 'title', null)).toBeNull()
     }
   })
 })

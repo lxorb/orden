@@ -257,3 +257,29 @@ describe('a tag in a flow list across lines', () => {
     expect(tagsIn('---\ntags: [a\nz: b\n---\n').map((one) => one.replace(/^#/, ''))).toEqual(['a'])
   })
 })
+
+describe('a tag after a comment in a flow list across lines', () => {
+  test('is found where it is written', () => {
+    for (const nl of ['\n', '\r\n']) {
+      const note = [
+        '---',
+        'tags: [',
+        '  work, # my comment',
+        '  b,',
+        '  c,',
+        ']',
+        'z: 1',
+        '---',
+        'rest',
+        '',
+      ].join(nl)
+      for (const name of ['work', 'b', 'c']) {
+        const [span] = tagSpans(note, name)
+        expect(span && note.slice(span.from, span.to)).toBe(name)
+      }
+      const [cut] = tagCuts(note, 'b')
+      expect(cut && note.slice(cut.from, cut.to)).toContain('b')
+      expect(cut && note.slice(cut.from, cut.to)).not.toContain('comment')
+    }
+  })
+})

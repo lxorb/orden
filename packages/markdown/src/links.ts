@@ -982,59 +982,58 @@ export function blocksOf(text: string): NoteBlock[] {
  *  published page, not an embed. The editor hides it the way it hides any other
  *  syntax mark, and brings it back when the caret is on its line. */
 export function withoutBlockIds(text: string): string {
-  return replacingBlockIds(text, () => '')
+  return replacingBlockIds(text, (kept) => kept)
 }
 
-/** The same with each name written over in blanks, so every offset in the note stays
- *  what it was. Only where the line ends its paragraph: two blanks before a line of the
- *  same paragraph would break it there. */
+/** The same with each name written over, so every offset in the note stays what it was.
+ *  In tabs, since two blanks at the end of a line of words break the line; in blanks on a
+ *  closing fence, the one thing a fence closes with. */
 export function blockIdsBlanked(text: string): string {
-  return replacingBlockIds(text, (length, end) =>
-    lineBelow(text, end).trim() === '' ? ' '.repeat(length) : '',
+  return replacingBlockIds(
+    text,
+    (kept, length, row) => kept + (row.code ? ' ' : '\t').repeat(length),
   )
-}
-
-/** The line under the one `at` is on, empty at the end of the text. */
-function lineBelow(text: string, at: number): string {
-  const next = text.indexOf('\n', at)
-  if (next === -1) return ''
-  const under = text.indexOf('\n', next + 1)
-  return text.slice(next + 1, under === -1 ? text.length : under)
 }
 
 /** Around a block's name while a page is rendered. */
 const ANCHOR_OPEN = '\uE0F0'
 const ANCHOR_CLOSE = '\uE0F1'
 
-/** A line a mark cannot stand on: a heading takes its words for its id, a table row would
- *  have one cell more, a callout a title and raw HTML one inside a tag. */
-const NO_ANCHOR_IN = /^\s*(?:>\s*)*(?:#{1,6}\s|\||<|\[!)|\|\s*(?:\^[\w-]*)?\s*$/
+/** A table's own line under its head. */
+const TABLE_RULE = /^\s*\|?[\s:|-]+\|?\s*$/
 
-/** The same with each name left as a mark `blockAnchorsDrawn` makes an id of, where a
- *  line of words can hold one: a link to the block lands on it. After a blank, so what
- *  closes an emphasis is still at the end of a word. */
-export function blockIdsAnchored(text: string): string {
-  return replacingBlockIds(text, (_length, end, row, id) => {
-    const heading = /^\s*(?:=+|-+)\s*$/.test(lineBelow(text, end))
-    return row.code || heading || NO_ANCHOR_IN.test(row.text)
-      ? ''
-      : ` ${ANCHOR_OPEN}${id}${ANCHOR_CLOSE}`
+/** The same with each name left as a mark `blockAnchorsDrawn` makes an id of, on the lines
+ *  `holds` says a mark can stand on: `line` is the line's number, the words what is left
+ *  of it. After a blank, so what closes an emphasis is still at the end of a word, and
+ *  inside a table row's last cell, since another cell would be dropped. */
+export function blockIdsAnchored(
+  text: string,
+  holds: (line: number, words: string) => boolean,
+): string {
+  return replacingBlockIds(text, (kept, _length, row, id) => {
+    const words = kept.slice(kept.lastIndexOf('\n') + 1)
+    if (row.code || !holds(row.line, words) || TABLE_RULE.test(words)) return kept
+    const mark = `${ANCHOR_OPEN}${id}${ANCHOR_CLOSE}`
+    return /\|\s*$/.test(words) ? kept.replace(/\|\s*$/, `${mark} |`) : `${kept} ${mark}`
   })
 }
 
-/** The marks of `blockIdsAnchored` as the empty elements a page scrolls to. */
+/** The marks of `blockIdsAnchored` as the empty elements a page scrolls to. A mark inside a
+ *  tag, in an attribute, goes as the name would have: nothing a tag says is a place. */
 export function blockAnchorsDrawn(html: string): string {
   if (!html.includes(ANCHOR_OPEN)) return html
-  const anchor = (id: string) => `<span id="^${id}"></span>`
   const mark = `${ANCHOR_OPEN}([\\w-]+)${ANCHOR_CLOSE}`
+  const anywhere = new RegExp(`\\s?${mark}`, 'g')
+  const anchor = (id: string) => `<span id="^${id}"></span>`
   return html
+    .replace(/<[a-z/](?:"[^"]*"|'[^']*'|[^'">])*>/gi, (tag) => tag.replace(anywhere, ''))
     .replace(new RegExp(`<p>\\s*${mark}\\s*</p>`, 'g'), (_, id: string) => anchor(id))
     .replace(new RegExp(mark, 'g'), (_, id: string) => anchor(id))
 }
 
 function replacingBlockIds(
   text: string,
-  by: (length: number, end: number, row: Row, id: string) => string,
+  by: (kept: string, length: number, row: Row, id: string) => string,
 ): string {
   let out = ''
   let at = 0
@@ -1049,7 +1048,7 @@ function replacingBlockIds(
     const before = text[caret - 1]
     const from = before === ' ' || before === '\t' ? caret - 1 : caret
 
-    out += text.slice(at, from) + by(end - from, end, row, id)
+    out += by(text.slice(at, from), end - from, row, id)
     at = end
   }
 

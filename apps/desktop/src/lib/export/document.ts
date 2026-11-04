@@ -121,7 +121,25 @@ interface Marks {
  *  around them already folded in. */
 function spansOf(tokens: readonly Token[] | undefined, marks: Marks = {}): Span[] {
   const out: Span[] = []
-  for (const token of tokens ?? []) out.push(...spansOfToken(token, marks))
+  /** The element in the line being passed over: its words are not shown. */
+  let passing: string | null = null
+  for (const token of tokens ?? []) {
+    if (token.type === 'html') {
+      const [, closing, written] = /^<(\/?)([a-z][\w-]*)/i.exec(token.raw.trim()) ?? []
+      const name = written?.toLowerCase()
+      if (passing !== null) {
+        if (closing && name === passing) passing = null
+        continue
+      }
+      if (name && !closing && !token.raw.trimEnd().endsWith('/>')) {
+        if (NOT_SHOWN.test(name) || HIDDEN.test(token.raw)) {
+          passing = name
+          continue
+        }
+      }
+    }
+    if (passing === null) out.push(...spansOfToken(token, marks))
+  }
 
   // An empty run says nothing, so it goes - but a picture and a footnote mark
   // both carry what they mean somewhere other than in their text.
@@ -428,26 +446,60 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
   return out
 }
 
-/** Elements whose words are no words of the page. */
+/** Elements whose words are no words of the page: never drawn, or what a browser draws
+ *  only where it cannot draw them. */
 const NOT_SHOWN =
-  /^(?:script|style|template|head|title|noscript|textarea|select|svg|canvas|object)$/i
+  /^(?:script|style|template|head|title|noscript|textarea|select|svg|canvas|object|video|audio|iframe|embed|dialog)$/i
+
+/** What keeps an element off the page wherever it is. An open dialog is drawn. */
+const HIDDEN =
+  /\shidden(?:[\s=/>])|\sstyle\s*=\s*(?:"[^"]*display\s*:\s*none[^"]*"|'[^']*display\s*:\s*none[^']*')/i
+
+/** Elements that have no end of their own. */
+const VOID = /^(?:area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i
 
 /** Elements that start a line of their own. A cell does not: a row is the line. */
 const STARTS_LINE =
   /^(?:address|article|aside|blockquote|center|dd|details|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|menu|nav|ol|p|pre|section|summary|table|tbody|tfoot|thead|tr|ul)$/i
 
-const ENTITIES: Record<string, string> = {
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
-  nbsp: ' ',
-}
+/** Latin-1 from 160 on, in order, which is most of what a note names by name. */
+const LATIN =
+  'nbsp iexcl cent pound curren yen brvbar sect uml copy ordf laquo not shy reg macr deg plusmn sup2 sup3 acute micro para middot cedil sup1 ordm raquo frac14 frac12 frac34 iquest Agrave Aacute Acirc Atilde Auml Aring AElig Ccedil Egrave Eacute Ecirc Euml Igrave Iacute Icirc Iuml ETH Ntilde Ograve Oacute Ocirc Otilde Ouml times Oslash Ugrave Uacute Ucirc Uuml Yacute THORN szlig agrave aacute acirc atilde auml aring aelig ccedil egrave eacute ecirc euml igrave iacute icirc iuml eth ntilde ograve oacute ocirc otilde ouml divide oslash ugrave uacute ucirc uuml yacute thorn yuml'
+
+const ENTITIES = new Map<string, string>([
+  ...LATIN.split(' ').map((name, at): [string, string] => [name, String.fromCodePoint(160 + at)]),
+  ['nbsp', ' '],
+  ['amp', '&'],
+  ['lt', '<'],
+  ['gt', '>'],
+  ['quot', '"'],
+  ['apos', "'"],
+  ['ndash', '–'],
+  ['mdash', '—'],
+  ['lsquo', '‘'],
+  ['rsquo', '’'],
+  ['sbquo', '‚'],
+  ['ldquo', '“'],
+  ['rdquo', '”'],
+  ['bdquo', '„'],
+  ['hellip', '…'],
+  ['bull', '•'],
+  ['euro', '€'],
+  ['trade', '™'],
+  ['larr', '←'],
+  ['rarr', '→'],
+  ['uarr', '↑'],
+  ['darr', '↓'],
+  ['minus', '−'],
+  ['ne', '≠'],
+  ['le', '≤'],
+  ['ge', '≥'],
+  ['dagger', '†'],
+])
 
 function entitiesRead(text: string): string {
   return text.replace(/&(?:#(\d+)|#x([\da-f]+)|(\w+));/gi, (whole, ten, hex, name: string) => {
-    if (name) return ENTITIES[name.toLowerCase()] ?? whole
+    if (name) return ENTITIES.get(name) ?? whole
     const code = ten ? Number(ten) : Number.parseInt(String(hex), 16)
     return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole
   })
@@ -458,7 +510,8 @@ function entitiesRead(text: string): string {
 export function wordsOfHtml(html: string): string[] {
   const out: string[] = []
   let line = ''
-  let skipping: string | null = null
+  /** The element being passed over, and how many of its name are open inside it. */
+  let skipping: { name: string; depth: number } | null = null
   let pre = 0
   let at = 0
 
@@ -473,24 +526,28 @@ export function wordsOfHtml(html: string): string[] {
   }
 
   for (const found of html.matchAll(
-    /<!--[\s\S]*?(?:-->|$)|<(\/?)([a-z][\w-]*)(?:"[^"]*"|'[^']*'|[^'">])*>/gi,
+    /<!--[\s\S]*?(?:-->|$)|<[!?][^>]*>|<(\/?)([a-z][\w-]*)(?:"[^"]*"|'[^']*'|[^'">])*>/gi,
   )) {
     read(html.slice(at, found.index))
     at = found.index + found[0].length
 
-    const [, closing, name = ''] = found
-    if (!name) continue
+    const [tag, closing, written = ''] = found
+    if (!written) continue
+    const name = written.toLowerCase()
+    const alone = VOID.test(name) || tag.endsWith('/>')
     if (skipping !== null) {
-      if (closing && name.toLowerCase() === skipping) skipping = null
+      if (name === skipping.name && !alone) skipping.depth += closing ? -1 : 1
+      if (skipping.depth === 0) skipping = null
       continue
     }
-    if (NOT_SHOWN.test(name)) {
-      if (!closing && !found[0].endsWith('/>')) skipping = name.toLowerCase()
-    } else if (/^br$/i.test(name)) line += '\n'
+    const drawn = name === 'dialog' && /\sopen[\s=/>]/i.test(tag)
+    if (!closing && (HIDDEN.test(tag) || (NOT_SHOWN.test(name) && !drawn))) {
+      if (!alone) skipping = { name, depth: 1 }
+    } else if (name === 'br') line += '\n'
     else if (STARTS_LINE.test(name)) {
       end()
-      if (/^pre$/i.test(name)) pre += closing ? -1 : 1
-    } else if (/^t[dh]$/i.test(name) && !closing && line.trim()) line += ' '
+      if (name === 'pre') pre += closing ? -1 : 1
+    } else if (/^t[dh]$/.test(name) && !closing && line.trim()) line += ' '
   }
   read(html.slice(at))
   end()

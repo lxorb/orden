@@ -127,7 +127,9 @@ export async function noteText(ws: HoldsNotes, path: string): Promise<string | n
  *  have put its next occurrence above the row, before the row could be drawn again.
  *
  *  One at a time for a note: a second box pressed while the first is being written reads
- *  the note the first has written, or the later write puts the first box back. */
+ *  the note the first has written, or the later write puts the first box back. Not for
+ *  good, though: a write that never answers holds the ticks after it up for `TICK_WAITS`,
+ *  and a late one is read against the file again (`replaceInNotes`) before it is written. */
 export function toggleTaskAt(
   ws: HoldsNotes,
   path: string,
@@ -135,7 +137,8 @@ export function toggleTaskAt(
   hash?: string,
 ): Promise<boolean> {
   const toggle = () => toggled(ws, path, asked, hash)
-  const running = (toggling.get(path) ?? Promise.resolve(false)).then(toggle, toggle)
+  const before = toggling.get(path)
+  const running = (before ? waitedFor(before) : Promise.resolve()).then(toggle)
   const done = () => {
     if (toggling.get(path) === running) toggling.delete(path)
   }
@@ -146,6 +149,21 @@ export function toggleTaskAt(
 
 /** The tick being written in each note, the last asked for. */
 const toggling = new Map<string, Promise<boolean>>()
+
+/** How long a tick waits for the one before it, far past a slow disk. */
+const TICK_WAITS = 10_000
+
+/** When a tick may go on after this one: it has answered, either way, or it never will. */
+function waitedFor(tick: Promise<boolean>): Promise<void> {
+  return new Promise((go) => {
+    const timer = setTimeout(go, TICK_WAITS)
+    const done = () => {
+      clearTimeout(timer)
+      go()
+    }
+    tick.then(done, done)
+  })
+}
 
 async function toggled(
   ws: HoldsNotes,

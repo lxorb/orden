@@ -145,6 +145,32 @@ def drive_block_links(page: Page) -> None:
         }"""
     )
     say(f"[other note] {shown}")
+    # A tab of the note already in its reading view lands too, and a table row exactly.
+    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.wait_for_timeout(600)
+    near = page.evaluate(
+        """() => {
+          const far = document.getElementById('^far')
+          return far ? far.getBoundingClientRect().top : null
+        }"""
+    )
+    say(f"[other note, reading, before] {near}")
+    DRIVE.open_note(page, "Own block")
+    page.wait_for_timeout(400)
+    page.locator("a.wikilink").nth(1).click()
+    page.wait_for_timeout(1200)
+    near = page.evaluate(
+        """() => {
+          const ws = window.nibApp.workspace
+          const far = document.getElementById('^far')
+          return { name: ws.active?.name, reading: ws.active?.reading, top: far ? far.getBoundingClientRect().top : null, height: innerHeight }
+        }"""
+    )
+    say(f"[other note, reading] {near}")
+    if near["reading"] and (near["top"] is None or not 0 <= near["top"] <= near["height"]):
+        wrong(f"a link to a block of a note in its reading view did not land on it: {near}")
+    if near["reading"]:
+        page.evaluate("() => window.nibApp.workspace.toggleReading()")
     if not str(shown["name"]).startswith("Other block"):
         wrong(f"the link to a block of another note opened {shown['name']}")
     if "far one" not in str(shown["line"]):
@@ -198,9 +224,15 @@ def drive_fixed(page: Page) -> None:
     DRIVE.open_note(page, "Quoted fence")
     DRIVE.reading(page)
     held = base_block(page)
-    say(f"[free] {free} [quoted] {held}")
-    if not free or not held or held["buttons"] >= free["buttons"]:
-        wrong(f"a fence in a quote offers what one that can be written back does: {free} {held}")
+    labels = page.evaluate(
+        "() => [...document.querySelectorAll('.base-block [aria-label]')].map((one) => one.getAttribute('aria-label'))"
+    )
+    say(f"[free] {free} [quoted] {labels}")
+    for offered in ("New view", "Filter", "Sort", "Settings"):
+        if offered in labels:
+            wrong(f"a fence in a quote offers {offered}, which it cannot keep: {labels}")
+    if "New note" not in labels:
+        wrong(f"a fence in a quote can no longer add a note: {labels}")
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
 
 

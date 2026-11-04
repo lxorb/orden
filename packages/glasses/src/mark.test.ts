@@ -713,6 +713,21 @@ describe('a block name', () => {
     expect(marked.map((one) => one.text).join('\n')).not.toContain('^blk')
   })
 
+  test('moves no line in a list, or in a paragraph that goes on under it', () => {
+    const list = Array.from({ length: 6 }, (_, at) => `- item ${at} ^blk00${at}\n`).join('')
+    const items = markLines(list, { inner: BODY_INNER })
+    expect(items.map((one) => one.from)).toEqual([0, 17, 34, 51, 68, 85])
+    const paragraph = 'one ^abc\ntwo\n'
+    for (const compaction of ['aggressive', undefined] as const) {
+      const marked = markLines(paragraph, {
+        inner: BODY_INNER,
+        ...(compaction ? { compaction } : {}),
+      })
+      expect(marked.map((one) => one.text).join(' ')).toBe('one two')
+    }
+    expect(markLines(paragraph, { inner: BODY_INNER }).at(-1)?.from).toBe(paragraph.indexOf('two'))
+  })
+
   test('is set the same as with it cut, and in every kind of block', () => {
     const shown = (source: string) =>
       markLines(source, { inner: BODY_INNER }).map((one) => one.text.trimEnd())

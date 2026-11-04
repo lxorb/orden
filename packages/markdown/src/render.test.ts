@@ -1152,7 +1152,6 @@ describe('a named block on a page a link to it is followed on', () => {
     for (const [named, plain] of [
       ['# Title ^abc\n', '# Title\n'],
       ['Title ^abc\n===\n', 'Title\n===\n'],
-      ['| a |\n| --- |\n| 1 | ^abc\n', '| a |\n| --- |\n| 1 |\n'],
       ['> [!note] ^abc\n> said\n', '> [!note]\n> said\n'],
       ['```ts\ncode\n``` ^abc\n', '```ts\ncode\n```\n'],
       ['<div title="a ^abc\n"></div>\n', '<div title="a\n"></div>\n'],
@@ -1174,5 +1173,37 @@ describe('a link to a block', () => {
     expect(page('[[Note#^x]]\n')).toContain('href="Note#%5Ex"')
     expect(page('[[#^abc]]\n')).toContain('href="#%5Eabc"')
     expect(page('[[Note#Part]]\n')).toContain('href="Note#part"')
+  })
+})
+
+describe('a named block on a line that is no words of a paragraph or an item', () => {
+  const anchored = (source: string) => renderMarkdown(source, { blockAnchors: true })
+
+  test('is drawn as without one', () => {
+    for (const [named, plain] of [
+      ['$$\na ^2\n$$\n', '$$\na\n$$\n'],
+      ['- item\n\n  $$\n  a ^2\n  $$\n', '- item\n\n  $$\n  a\n  $$\n'],
+      ['--- ^id\n', '---\n'],
+      ['*** ^id\n', '***\n'],
+      ['___ ^id\n', '___\n'],
+      ['$$x$$ ^id\n', '$$x$$\n'],
+      ['[ref]: http://x ^id\n\n[ref]\n', '[ref]: http://x\n\n[ref]\n'],
+      ['*[HTML]: Hyper Text ^id\n\nHTML here\n', '*[HTML]: Hyper Text\n\nHTML here\n'],
+      ['<div>\nwords ^id\n</div>\n', '<div>\nwords\n</div>\n'],
+    ] as const) {
+      expect(anchored(named)).toBe(renderMarkdown(plain))
+    }
+  })
+
+  test('never leaves a mark in an attribute', () => {
+    const html = anchored('text <b title="a ^id\nb">x</b>\n')
+    expect(html).not.toContain('')
+    expect(html).not.toContain('<span id="^id"')
+  })
+
+  test('a table row holds one in its last cell', () => {
+    const html = anchored('| a | b |\n| --- | --- |\n| 1 | 2 | ^t1\n| 3 | 4 |\n')
+    expect(html).toContain('<span id="^t1"></span>')
+    expect(html.match(/<td/g)).toHaveLength(4)
   })
 })

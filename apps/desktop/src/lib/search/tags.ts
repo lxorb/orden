@@ -190,7 +190,13 @@ function readFront(body: string, front: FrontMatterBlock, out: TagUse[]) {
       // of it is YAML's comment; here a hash on a name is the name's, as on the key's line.
       const closes = valueClosesAt(body, value, front.close)
       if (closes !== -1) {
-        readValues(value, body.slice(value, closes).replace(/(^|\s)#\s.*$/gm, '$1'), out)
+        // Blanked and not cut, so what follows is read at the offset it stands at.
+        const said = body.slice(value, closes)
+        const words = said.replace(
+          /(^|\s)(#\s.*)$/gm,
+          (_, gap: string, comment: string) => `${gap}${' '.repeat(comment.length)}`,
+        )
+        readValues(value, words, out)
         at = closes + 1
         continue
       }

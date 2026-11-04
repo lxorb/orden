@@ -34,6 +34,28 @@ describe('a block of raw HTML', () => {
     expect(said('<div>a<br>b <span class="x">c</span></div>\n')).toEqual(['a\nb c'])
   })
 
+  test('says nothing of what a reader is not shown', () => {
+    expect(said('<!DOCTYPE html>\n<div>w1</div>\n')).toEqual(['w1'])
+    expect(said('<?xml version="1.0"?>\n\n<div>w1</div>\n')).toEqual(['w1'])
+    expect(said('<video src="a"><p>No video</p></video>\n')).toEqual([])
+    expect(said('<audio src="a">No audio</audio>\n')).toEqual([])
+    expect(said('<iframe src="a">No frame</iframe>\n')).toEqual([])
+    expect(said('<dialog>secret</dialog>\n')).toEqual([])
+    expect(said('w1 <span hidden>secret</span> w2\n')).toEqual(['w1  w2'])
+    expect(said('<div hidden>secret</div>\n')).toEqual([])
+    expect(said('<div hidden><div>secret</div>more</div><p>w1</p>\n')).toEqual(['w1'])
+    expect(said('<div style="color: red; display:none">secret</div>\n')).toEqual([])
+    expect(said('<div style="display: none"><br>secret</div>\n')).toEqual([])
+    expect(said('<div title="hidden">w1</div>\n')).toEqual(['w1'])
+    expect(said('<dialog open>w1</dialog>\n')).toEqual(['w1'])
+  })
+
+  test('reads the entities a note holds', () => {
+    expect(said('<p>f&uuml;r &mdash; &euro; &copy; &hellip; &#252; &#xfc; &nope;</p>\n')).toEqual([
+      'für — € © … ü ü &nope;',
+    ])
+  })
+
   test('says nothing of what never shows', () => {
     expect(said('<script>let a = 1</script>\n')).toEqual([])
     expect(said('<style>p { color: red }</style>\n')).toEqual([])

@@ -276,6 +276,30 @@ describe('a space shared to be read', () => {
     expect(said.split('\n').filter((one) => one.startsWith('- [ ] Alpha'))).toHaveLength(1)
   })
 
+  test('a tick that never answers holds the next ones up for a while, not for good', async () => {
+    const { taskHash } = await import('@orden/bases')
+    const path = `${SPACE}/todo.md`
+    const { ws } = space({ [path]: '- [ ] Alpha\n- [ ] Bravo\n' })
+    vi.useFakeTimers()
+    try {
+      holding = { command: 'read_note', until: new Promise(() => undefined) }
+      void toggleTaskAt(ws, path, 0, taskHash('Alpha'))
+      await vi.advanceTimersByTimeAsync(1000)
+      holding = null
+
+      let done = false
+      const next = toggleTaskAt(ws, path, 1, taskHash('Bravo')).then((one) => ((done = true), one))
+      await vi.advanceTimersByTimeAsync(1000)
+      expect(done).toBe(false)
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(done).toBe(true)
+      expect(await next).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
+    expect(disk.get(path)).toContain('- [x] Bravo')
+  })
+
   test('ticks no task', async () => {
     const { ws } = space({ [`${SPACE}/todo.md`]: '- [ ] wash up\n' })
     readOnly.add(SPACE)

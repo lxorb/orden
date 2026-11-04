@@ -11,6 +11,8 @@
  *  Each answers a `Source` (live.svelte.ts), so the view on screen never knows which. */
 
 import { type Base, builtinView, readBase, type Row, todayAs, writeBase } from '@orden/bases'
+import { CodeBlocks, OPENS } from '@orden/markdown/fences'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
 import { rows } from '../rows/rows.svelte'
@@ -121,22 +123,76 @@ export function tabSource(tab: Tab): Source {
   }
 }
 
-/** The fence a base came from, found again in its note: the one ` ```base ` fence at
- *  the margin holding exactly these words. Null for one this cannot find to write into,
- *  in a quote or a list item, and for two with the same words, where nothing says which. */
-export function fenceAt(text: string, code: string): { from: number; to: number } | null {
-  const fences = /^(`{3,}|~{3,})base[ \t]*\r?\n([\s\S]*?)^\1[ \t]*$/gm
-  const words = (body: string) => body.replace(/\r?\n$/, '').replace(/\r\n/g, '\n')
-  let one: { from: number; to: number } | null = null
-  for (let found = fences.exec(text); found; found = fences.exec(text)) {
-    const body = found[2] ?? ''
-    if (words(body) === words(code)) {
-      if (one) return null
-      const from = found.index + found[0].indexOf(body)
-      one = { from, to: from + body.length }
+/** A base fence as the page draws it: every one, in a quote or a list item too, and none
+ *  shown inside a code block or a front matter value. The one reading of where a fence is,
+ *  which is `CodeBlocks`, the renderer's. */
+interface DrawnFence {
+  /** Its words with what its container puts on each line off. */
+  words: string
+  /** Where its lines are in the note, the closing fence's left out. */
+  from: number
+  to: number
+  /** Whether it stands at the margin, where its lines are its words and can be written. */
+  margin: boolean
+}
+
+function drawnFences(text: string): DrawnFence[] {
+  const out: DrawnFence[] = []
+  const code = new CodeBlocks()
+  const matter = frontMatterBlock(text)
+  let at = matter ? matter.to : 0
+  let open: { from: number; prefix: number; lines: string[] } | null = null
+
+  const close = (to: number) => {
+    if (open) {
+      out.push({
+        words: open.lines.join('\n'),
+        from: open.from,
+        to,
+        margin: open.prefix === 0,
+      })
     }
+    open = null
   }
-  return one
+
+  while (at < text.length) {
+    const end = text.indexOf('\n', at)
+    const next = end === -1 ? text.length : end + 1
+    const raw = text.slice(at, end === -1 ? text.length : end)
+    const kind = code.line(raw)
+
+    if (open && code.fence === null) close(at)
+    else if (open) {
+      const { prefix }: { prefix: number } = open
+      // A quote's marks and an item's indent, up to as far in as the opening fence stood.
+      const inner = prefix ? raw.replace(new RegExp(`^[ \\t>]{0,${prefix}}`), '') : raw
+      ;(open as { lines: string[] }).lines.push(inner)
+    }
+
+    if (kind === OPENS && code.fence !== null) {
+      const prefix = raw.indexOf(code.fence)
+      const info = raw.slice(prefix + code.fence.length).trim()
+      if (info.split(/\s+/)[0] === 'base') open = { from: next, prefix, lines: [] }
+    }
+    at = next
+  }
+  close(text.length)
+  return out
+}
+
+/** A fence's words as they are compared: however its lines end and however many blank
+ *  ones it ends on, none of which the view reads. */
+const fenceWords = (words: string) => words.replace(/\r/g, '').trimEnd()
+
+/** The fence a base came from, found again in its note, where a change to the base can be
+ *  written into it: the only drawn fence with these words, at the margin. Null otherwise,
+ *  since a fence in a container has lines that are not its words, and with two nothing says
+ *  which one the view is. */
+export function fenceAt(text: string, code: string): { from: number; to: number } | null {
+  const wanted = fenceWords(code)
+  const same = drawnFences(text).filter((one) => fenceWords(one.words) === wanted)
+  const [only] = same
+  return only?.margin && same.length === 1 ? { from: only.from, to: only.to } : null
 }
 
 /** Where the reader was in each fence, by its note and its words. The editor draws a
