@@ -16,6 +16,7 @@
  *
  *  Fetched with the panel, never in the first paint; see surfaces.svelte.ts. */
 
+import { untrack } from 'svelte'
 import { answerThreadSpaces } from '../../automation/caller'
 import { i18n, message, t } from '../../i18n.svelte'
 import { prompt } from '../../prompt.svelte'
@@ -129,7 +130,7 @@ export type Host = 'side' | 'tab'
 
 /** What the panel needs from around it at the moment of sending: the note in front and
  *  its selection, where their chips are on. */
-interface Around {
+export interface Around {
   front: Front | null
   selection: string
   /** The document the selection is in, which says whose words it may be. */
@@ -320,7 +321,10 @@ class Chat implements Panel {
     const id =
       heads.find((one) => one.id === last)?.id ??
       heads.find((one) => before.includes(one.id) && !one.archived)?.id
-    if (id && !this.open?.turns.length) await this.openThread(id, false)
+    // A first message on its way (the panel's, or a quick question's) is a chat in front.
+    const open = this.open
+    if (id && !open?.turns.length && !(open && this.running.includes(open.id)))
+      await this.openThread(id, false)
   }
 
   /** The Ask panel's conversation for this space, made a thread once. */
@@ -527,6 +531,47 @@ class Chat implements Panel {
     return made
   }
 
+  /** A new chat started outside the panel - the quick question, Ctrl Ctrl (#1115): the
+   *  chat a message typed into the panel starts, the same context, tools, permissions,
+   *  model and history, in the panel's list at once and opened there like any other,
+   *  while the chat open in the panel stays open. `around` and `chips` are what was in
+   *  front where it was asked, read the way the panel reads them (around.ts). Answers the
+   *  thread, which `sendIn` goes on in, and how the message ended. */
+  startHere(
+    text: string,
+    chips: Mention[],
+    around: Around,
+  ): { thread: Thread; ended: Promise<Ended> } {
+    // Where the panel has never been drawn, the store learns the spaces here.
+    this.know(workspace.spaces.map((one) => one.id))
+    this.here(workspace.activeSpaceId ?? '')
+    const thread = this.fresh()
+    this.live.set(thread.id, thread)
+    return { thread, ended: this.sendIn(thread, text, chips, around) }
+  }
+
+  /** A message more in a chat, from outside the panel: a quick question's follow-up. */
+  sendIn(thread: Thread, text: string, chips: Mention[], around: Around): Promise<Ended> {
+    return new Promise((settle) => {
+      this.enqueue(thread, { id: crypto.randomUUID(), text, chips, around, settle })
+    })
+  }
+
+  /** The turns of the chat drawn somewhere besides the panel (the quick question's
+   *  sheet), brought up to date once a frame as its answer arrives. */
+  watched = $state.raw<{ id: string; turns: readonly Turn[] } | null>(null)
+  private watching: Thread | null = null
+  private readonly drawWatched = onceAFrame(() => {
+    const thread = this.watching
+    this.watched = thread ? { id: thread.id, turns: [...thread.turns] } : null
+  })
+
+  /** Draws `thread`'s turns into `watched` as they change, or stops. */
+  watch(thread: Thread | null): void {
+    this.watching = thread
+    this.watched = thread ? { id: thread.id, turns: [...thread.turns] } : null
+  }
+
   /** A thread a command made (a fork, a subtask, a batch's helper): written down, in the
    *  list, and in front where `open` says. */
   adopt(thread: Thread, open = false): void {
@@ -645,6 +690,7 @@ class Chat implements Panel {
       this.everything = true
     }
     if (thread === this.open) this.draw()
+    if (thread === this.watching) this.drawWatched()
   }
 
   // ── Sending ────────────────────────────────────────────
@@ -934,6 +980,7 @@ class Chat implements Panel {
     const followed = this.following.delete(thread.id)
     this.everything = true
     if (thread === this.open) this.redraw()
+    if (thread === this.watching) this.drawWatched()
     if (!thread.turns.length) {
       // Nothing was sent after all: it follows the reader's space again, and the
       // provider Ask uses where it did before the send (not one picked for it).
@@ -1067,7 +1114,11 @@ class Chat implements Panel {
    *  arrived stays. */
   stop(): void {
     const id = this.open?.id
-    if (!id) return
+    if (id) this.stopIn(id)
+  }
+
+  /** The same, for any chat: one the quick question's sheet draws. */
+  stopIn(id: string): void {
     this.stoppers.get(id)?.abort()
     void import('../helpers/helpers.svelte').then(({ helpers }) => {
       helpers.stopUnder(id)
@@ -1540,6 +1591,27 @@ panelKeepsUnread()
 $effect.root(() => {
   $effect(() => {
     chatsUnread.any = chat.unread.size > 0
+  })
+
+  // The space in front is where a new chat starts, and nothing more: the chats are one
+  // list, every space's, and the open one stays open as the space changes (#332). Kept by
+  // the store rather than by the panel (#1115): a chat started where the panel is not
+  // drawn - Ctrl Ctrl - is one of these spaces' and in their list like any other.
+  // Untracked, so what the store reads while it changes threads is not something these
+  // effects wait on: only the space, and which spaces there are.
+  $effect(() => {
+    const space = workspace.activeSpaceId ?? ''
+    untrack(() => chat.here(space))
+  })
+  $effect(() => {
+    const spaces = workspace.spaces.map((one) => one.id)
+    untrack(() => chat.know(spaces))
+  })
+
+  // A thread not yet sent asks whichever provider Ask is set to now.
+  $effect(() => {
+    const provider = ai.providerFor('ask')
+    untrack(() => chat.follow(provider))
   })
 })
 

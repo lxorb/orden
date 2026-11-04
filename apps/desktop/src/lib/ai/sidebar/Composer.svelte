@@ -26,6 +26,7 @@
   import { workspace, type Entry } from '../../workspace.svelte'
   import { estimateText } from '../chat/usage'
   import { canTranscribe } from '../hears'
+  import { noteInFront, SELECTION_CHIP, selectionHere } from './around'
   import { chat } from './chat.svelte'
   import { dictation } from './dictate.svelte'
   import type { Front } from './gather'
@@ -65,13 +66,11 @@
 
   // ── What goes along on its own ─────────────────────────
 
-  /** The note in front, while it is a note of this space. */
+  /** The note in front, while it is a note of this space: the one reading every place a
+   *  chat starts from shares (around.ts, #1115). */
   const front = $derived.by((): (Front & { key: string }) | null => {
-    const tab = workspace.panelTab
-    if (tab?.kind !== 'note' || !tab.path || !root) return null
-    const path = withinSpace(root, tab.path)
-    if (path === null) return null
-    return { key: `note:${path}`, path, name: tab.shown, text: tab.note.latest }
+    const note = noteInFront(root)
+    return note ? { ...note, key: `note:${note.path}` } : null
   })
 
   const selection = $derived(views.chosen > 0 ? views.selectedText() : '')
@@ -82,15 +81,13 @@
   /** What the panel says is around the field, read at the moment of sending. */
   function around() {
     const on = front && !chat.dropped.includes(front.key) ? front : null
-    const picked = views.chosen > 0 ? views.selectedText() : ''
-    const pickedOn = !!picked.trim() && !chat.dropped.includes(`selection:${picked.slice(0, 60)}`)
-    const holder = pickedOn
-      ? workspace.tabs.find((tab) => tab.note.live === views.selectedIn())
-      : null
+    const picked = selectionHere()
+    const pickedOn =
+      !!picked.text && !chat.dropped.includes(`selection:${picked.text.slice(0, 60)}`)
     return {
       front: on ? { path: on.path, name: on.name, text: on.text } : null,
-      selection: pickedOn ? picked : '',
-      picked: holder ? { path: holder.path, shared: holder.note.shared } : null,
+      selection: pickedOn ? picked.text : '',
+      picked: pickedOn ? picked.picked : null,
     }
   }
   chat.around = around
@@ -99,7 +96,7 @@
   function sentChips(): Mention[] {
     const chips = chat.chips.filter((one) => one.kind !== 'picture' || chat.model?.images !== false)
     return selectionOn && !chips.some((one) => one.kind === 'selection')
-      ? [...chips, { kind: 'selection', id: 'selection', label: 'selection' }]
+      ? [...chips, SELECTION_CHIP]
       : chips
   }
 

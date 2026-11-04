@@ -141,7 +141,7 @@ describe('kept and read back', () => {
   test('what is written reads back the same', () => {
     const state = used(
       activated(made('anthropic', 'anthropic', 'openai'), 'anthropic-2'),
-      'quick',
+      'block',
       'openai',
     )
     const changed = updated(state, 'anthropic-2', { name: 'Work', model: 'opus' })

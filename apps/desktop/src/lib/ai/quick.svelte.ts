@@ -2,54 +2,113 @@
  *  window, what the reader is looking at going along with it, the answer streamed in
  *  place, and gone again with Escape.
  *
- *  A thread while it is up - a follow-up goes with the turns before it, as Raycast's
- *  quick AI keeps one - and nothing once it is closed: a question on the side is not a
- *  conversation anybody comes back to, and the Ask panel is the one that is kept. The
- *  next press starts again with what is in front then.
+ *  A shortcut to the AI panel's own chat, not a second kind of one (#1115): the question
+ *  starts the chat a message typed into the panel starts - the same context with the date
+ *  and the place the reader is in, the same tools and permissions, the provider and model
+ *  Ask uses, kept with its history - in the panel's list at once, while the chat open there
+ *  stays open. The sheet draws that chat's words while it is up; put away, the chat goes
+ *  on and is in the panel like any other, to be opened and carried on. What is in front goes along as the panel sends it
+ *  (sidebar/around.ts): the note, the words selected in it, or the page.
  *
- *  Every request goes through `complete()` with the provider Settings > AI > Used for
- *  gives a quick question, so a key, a ChatGPT plan, Claude Code and Codex all answer
- *  it. What it is sent with is quick.ts; the sheet is QuickQuestion.svelte, fetched by
- *  the first press through the door in surfaces.svelte.ts. */
+ *  The sheet is QuickQuestion.svelte, fetched by the first press through the door in
+ *  surfaces.svelte.ts; the chat's store is fetched by the first question. */
 
 import type { EditorView } from '@orden/editor'
-import { message, t } from '../i18n.svelte'
 import { quickSheet } from '../surfaces.svelte'
 import { views } from '../views.svelte'
-import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'
-import { complete, wasStopped } from './complete'
-import type { Said } from './history'
-import { type Context, insertion, quickMessages } from './quick'
-import { fitted } from './retrieve'
+import { type ContextKind, insertion } from './quick'
+import type { Thread, Turn } from './chat/types'
+import type { Ended } from './commands/types'
 import { ai } from './store.svelte'
+import { noteInFront, SELECTION_CHIP, selectionHere } from './sidebar/around'
+import type { Around } from './sidebar/chat.svelte'
+import type { Mention } from './sidebar/mentions'
 
-/** How much of a page is read before it is cut down to what goes along; see quick.ts. */
-const PAGE_TOKENS = 8000
+type Chat = (typeof import('./sidebar/chat.svelte'))['chat']
+
+/** What goes along with the first question, as its chip says it. */
+interface Context {
+  kind: ContextKind
+  /** The note's or the page's name, or the selected words. */
+  name: string
+  around: Around
+  chips: Mention[]
+}
+
+/** One line of the sheet's conversation. */
+export interface Said {
+  role: 'you' | 'model'
+  text: string
+}
+
+/** A turn's words as the sheet draws them: a message as it was typed, an answer's text. */
+function saidOf(turn: Turn): Said {
+  if (turn.role === 'you') return { role: 'you', text: turn.draft?.text ?? '' }
+  const text = turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join('\n\n')
+  return { role: 'model', text }
+}
+
+/** The chat's store, fetched once. */
+let store: Promise<Chat> | null = null
+const chatStore = () => (store ??= import('./sidebar/chat.svelte').then((one) => one.chat))
 
 class Quick {
   open = $state(false)
   question = $state('')
-  turns = $state<Said[]>([])
-  running = $state(false)
-  trouble = $state<string | null>(null)
-  /** What goes along with the next question, until its chip is pressed. */
+  /** What goes along with the first question, until its chip is pressed. */
   context = $state<Context | null>(null)
+  /** The chat the sheet's questions are in, once the first is asked. */
+  private thread = $state.raw<Thread | null>(null)
+  /** The chat's store, here once a question has fetched it. */
+  private chat = $state.raw<Chat | null>(null)
+  /** What went wrong before the chat could say it: no provider, no engine. */
+  private failed = $state<string | null>(null)
 
   /** The note a context came from, and where in it the answer goes: under the
    *  selection, or under the caret's line. Null where the context was not a note. */
   private target: { view: EditorView; at: number } | null = null
-  /** A page still being read; a question asked meanwhile waits for it. */
-  private reading: Promise<void> | null = null
-  /** Which opening a page being read belongs to, so one that arrives after its chip was
-   *  taken off, or after the sheet was put away, puts nothing back. */
-  private round = 0
-  private stopper: AbortController | null = null
 
-  /** Whether anything can be asked: a provider set up, the Ask panel's question of
-   *  the same store. */
+  /** Whether anything can be asked: a provider for the panel's chats. */
   get ready(): boolean {
-    return ai.providerFor('quick') !== null
+    return ai.providerFor('ask') !== null
+  }
+
+  /** The sheet's chat's turns, as the store draws them for it. */
+  private get drawn(): readonly Turn[] {
+    const watched = this.chat?.watched
+    return watched && watched.id === this.thread?.id ? watched.turns : []
+  }
+
+  /** The conversation so far: the chat's words, and a message on its way before it is
+   *  a turn. */
+  get turns(): Said[] {
+    const thread = this.thread
+    if (!this.chat || !thread) return []
+    const said = this.drawn.map(saidOf).filter((one) => one.role === 'you' || one.text)
+    const pending = this.chat.pending[thread.id]
+    return pending !== undefined ? [...said, { role: 'you', text: pending }] : said
+  }
+
+  /** Whether the chat waits on the reader: a question its agent asked, answered in the
+   *  panel. */
+  get asking(): boolean {
+    return this.drawn.some((turn) =>
+      turn.parts.some((part) => part.kind === 'tool' && part.state === 'asking'),
+    )
+  }
+
+  get running(): boolean {
+    return !!this.thread && !!this.chat?.running.includes(this.thread.id)
+  }
+
+  /** What went wrong: the store's word for the chat in front, else the notice an answer
+   *  ended on. */
+  get trouble(): string | null {
+    if (this.running) return null
+    const parts = this.drawn.at(-1)?.parts ?? []
+    const notice = parts.filter((part) => part.kind === 'notice' && part.code === 'error').at(-1)
+    return notice?.kind === 'notice' ? notice.text : this.failed
   }
 
   /** Opens it, with what is in front as its context. Pressed while it is up, it closes,
@@ -66,137 +125,98 @@ class Quick {
     this.open = true
   }
 
+  /** Puts the sheet away. Its chat is the panel's and goes on there. */
   close() {
-    this.stopper?.abort()
     this.open = false
     this.reset()
   }
 
   private reset() {
-    this.round++
-    this.stopper = null
     this.question = ''
-    this.turns = []
-    this.running = false
-    this.trouble = null
     this.context = null
     this.target = null
-    this.reading = null
+    this.thread = null
+    this.failed = null
+    this.chat?.watch(null)
   }
 
-  /** What is in front: the note's selection, else the note, else the page. */
+  /** What is in front, read the way the panel reads it: the selection in the note, else
+   *  the note, else the page. */
   private gather() {
-    const tab = workspace.active
+    const tab = workspace.panelTab
     if (!tab) return
 
-    if (tab.kind === 'note') {
-      const view = views.of(workspace.panes.focusedId)
-      const range = view?.state.selection.main
-      if (view) this.target = { view, at: range?.to ?? 0 }
-
-      const picked =
-        view && range && !range.empty ? view.state.doc.sliceString(range.from, range.to) : ''
-      const text = picked || tab.note.latest
-      if (text.trim()) this.context = { kind: picked ? 'selection' : 'note', name: tab.shown, text }
+    if (tab.kind === 'web') {
+      const chip: Mention = { kind: 'tab', id: tab.id, label: tab.shown }
+      this.context = { kind: 'page', name: tab.shown, around: nothing(), chips: [chip] }
       return
     }
 
-    if (tab.kind === 'web') this.reading = this.readPage(tab.id, tab.shown, this.round)
-  }
-
-  /** A page's selection, else its article, as markdown: what the clipper reads. A
-   *  browser build cannot read a site's frame, and has nothing to send. */
-  private async readPage(tabId: string, shown: string, round: number): Promise<void> {
-    const read = await pages.read(tabId, true)
-    if (!read?.html.trim() || round !== this.round) return
-
-    const { htmlToMarkdown } = await import('@orden/markdown/from-html')
-    const text = fitted(htmlToMarkdown(read.html).trim(), PAGE_TOKENS)
-    if (round === this.round && text) {
-      this.context = { kind: 'page', name: read.title || shown, text }
+    if (tab.kind !== 'note') return
+    const view = views.of(workspace.panes.focusedId)
+    const range = view?.state.selection.main
+    if (view) this.target = { view, at: range?.to ?? 0 }
+    const front = noteInFront(workspace.activeSpace?.root ?? null)
+    const picked = selectionHere()
+    const around: Around = { front, selection: picked.text, picked: picked.picked }
+    if (picked.text) {
+      const name = picked.text.slice(0, 120)
+      this.context = { kind: 'selection', name, around, chips: [SELECTION_CHIP] }
+    } else if (front?.text.trim()) {
+      this.context = { kind: 'note', name: front.name, around, chips: [] }
     }
   }
 
-  /** The chip pressed: the next question goes without it. */
+  /** The chip pressed: the question goes without it. */
   drop() {
-    this.round++
     this.context = null
-    this.reading = null
   }
 
   /** Stops the answer on its way; what arrived stays. */
   stop() {
-    this.stopper?.abort()
-    this.stopper = null
-    this.running = false
+    if (this.thread) this.chat?.stopIn(this.thread.id)
   }
 
-  /** Asks what is in the field. The question is on screen at once; the answer's turn
-   *  is made when its first words arrive, so a refusal leaves the question with a
-   *  sentence under it rather than an empty answer. */
+  /** Asks what is in the field: the first question starts the chat, a follow-up goes on
+   *  in it. The question is on screen at once, as the panel draws it. */
   async ask() {
     const question = this.question.trim()
-    const provider = ai.providerFor('quick')
-    if (!question || this.running || !provider) return
-
-    const before = this.turns
+    if (!question || this.running || !this.ready) return
     this.question = ''
-    this.trouble = null
-    this.turns = [...before, { role: 'you', text: question }]
 
-    const stopper = new AbortController()
-    this.stopper = stopper
-    this.running = true
-
-    try {
-      await this.reading
-      if (this.stopper !== stopper) return
-
-      const answer = { yet: false }
-      await complete({
-        provider,
-        model: provider.model,
-        messages: quickMessages(this.context, before, question),
-        stream: (piece) => {
-          if (this.stopper !== stopper) return
-          const last = this.turns.at(-1)
-          if (!answer.yet || last?.role !== 'model') {
-            answer.yet = true
-            this.turns = [...this.turns, { role: 'model', text: piece }]
-            return
-          }
-          this.turns = [...this.turns.slice(0, -1), { role: 'model', text: last.text + piece }]
-        },
-        signal: stopper.signal,
-      })
-
-      if (this.stopper === stopper && !answer.yet) this.trouble = t('The model did not answer.')
-    } catch (error) {
-      if (this.stopper === stopper && !wasStopped(error)) {
-        this.trouble = message(error, t('The model did not answer.'))
-      }
-    } finally {
-      if (this.stopper === stopper) {
-        this.stopper = null
-        this.running = false
-      }
+    this.failed = null
+    const chat = await chatStore()
+    this.chat = chat
+    if (!this.open) return
+    let ended: Promise<Ended>
+    if (this.thread) ended = chat.sendIn(this.thread, question, [], nothing())
+    else {
+      const context = this.context
+      this.context = null
+      const started = chat.startHere(question, context?.chips ?? [], context?.around ?? nothing())
+      this.thread = started.thread
+      chat.watch(started.thread)
+      ended = started.ended
     }
+    const thread = this.thread
+    const end = await ended
+    // Put away meanwhile, or asked again from a fresh sheet: nothing here is about it.
+    if (this.thread !== thread) return
+    // Read where it was asked: the panel's list has no answer here the reader has not seen.
+    void chat.saw(thread.id)
+    // A refusal before any turn (no provider, no engine) has nowhere else to be said.
+    if (end.stop === 'error' && !end.turn && end.error) this.failed = end.error
   }
 
-  /** The conversation so far, carried on as a thread of the AI panel, and the sheet
-   *  put away: Raycast's and Arc's way from a quick answer to a conversation. The panel
-   *  and its store are fetched by the press. */
+  /** The chat in the panel and the sheet put away: it is the panel's already, so this is
+   *  only where it is drawn. */
   async continueInPanel() {
-    const turns = this.turns.filter((one) => one.text.trim())
-    if (!turns.length || this.running || !workspace.offers('ask')) return
-    const space = workspace.activeSpaceId ?? ''
+    const thread = this.thread
+    if (!thread || !workspace.offers('ask')) return
     this.close()
-    const [{ chat }, { revealChat }] = await Promise.all([
-      import('./sidebar/chat.svelte'),
-      import('./sidebar/reveal'),
-    ])
+    const [chat, { revealChat }] = await Promise.all([chatStore(), import('./sidebar/reveal')])
     revealChat()
-    chat.continueFrom(turns, space)
+    await chat.openThread(thread.id)
   }
 
   /** An answer into the note it was asked about, on lines of its own under the
@@ -224,6 +244,11 @@ class Quick {
     await scratchpad.append(text)
     this.close()
   }
+}
+
+/** Nothing around a message: a follow-up, or a question with its chip taken off. */
+function nothing(): Around {
+  return { front: null, selection: '', picked: null }
 }
 
 export const quick = new Quick()
