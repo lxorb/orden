@@ -598,14 +598,14 @@ impl FrameMap {
         self.across.0 * self.down.1 - self.across.1 * self.down.0
     }
 
-    fn into_page(&self, (x, y): (f64, f64)) -> (f64, f64) {
+    fn to_page(&self, (x, y): (f64, f64)) -> (f64, f64) {
         (
             self.origin.0 + self.across.0 * x + self.down.0 * y,
             self.origin.1 + self.across.1 * x + self.down.1 * y,
         )
     }
 
-    fn into_frame(&self, (x, y): (f64, f64)) -> Option<(f64, f64)> {
+    fn to_frame(&self, (x, y): (f64, f64)) -> Option<(f64, f64)> {
         let det = self.determinant();
         if det.abs() <= 1e-6 {
             return None;
@@ -1366,7 +1366,7 @@ impl Page<'_> {
         let map = self.frame_map(element)?;
         Ok(pressable(&quad)
             .into_iter()
-            .map(|point| map.into_page(point))
+            .map(|point| map.to_page(point))
             .collect())
     }
 
@@ -1535,7 +1535,7 @@ impl Page<'_> {
             frame: Some(frame.to_string()),
             backend: 0,
         };
-        let (x, y) = self.frame_map(&inner).ok()?.into_frame((x, y))?;
+        let (x, y) = self.frame_map(&inner).ok()?.to_frame((x, y))?;
         let call = |method: &str, params: &Value| {
             cdp::call_in(self.view, Some(&session), method, params, cdp::PATIENCE).ok()
         };
@@ -2303,7 +2303,7 @@ impl Page<'_> {
         let (_, _, x, y) = self.viewport()?;
         let corners: Vec<(f64, f64)> = border
             .chunks(2)
-            .map(|one| map.into_page((one[0], one[1])))
+            .map(|one| map.to_page((one[0], one[1])))
             .collect();
         let xs: Vec<f64> = corners.iter().map(|one| one.0).collect();
         let ys: Vec<f64> = corners.iter().map(|one| one.1).collect();
@@ -3556,8 +3556,8 @@ mod tests {
             100.0,
         )
         .expect("a straight quad");
-        assert_eq!(half.into_frame((75.0, 25.0)), Some((150.0, 50.0)));
-        assert_eq!(half.into_page((150.0, 50.0)), (75.0, 25.0));
+        assert_eq!(half.to_frame((75.0, 25.0)), Some((150.0, 50.0)));
+        assert_eq!(half.to_page((150.0, 50.0)), (75.0, 25.0));
         // Moved and scaled, as translateX(50px) scale(.5).
         let moved = FrameMap::of(
             &[50.0, 0.0, 150.0, 0.0, 150.0, 50.0, 50.0, 50.0],
@@ -3565,7 +3565,7 @@ mod tests {
             100.0,
         )
         .expect("a straight quad");
-        assert_eq!(moved.into_frame((75.0, 25.0)), Some((50.0, 50.0)));
+        assert_eq!(moved.to_frame((75.0, 25.0)), Some((50.0, 50.0)));
         // Turned a quarter.
         let turned = FrameMap::of(
             &[100.0, 0.0, 100.0, 200.0, 0.0, 200.0, 0.0, 0.0],
@@ -3573,8 +3573,8 @@ mod tests {
             100.0,
         )
         .expect("a straight quad");
-        assert_eq!(turned.into_page((10.0, 20.0)), (80.0, 10.0));
-        assert_eq!(turned.into_frame((80.0, 10.0)), Some((10.0, 20.0)));
+        assert_eq!(turned.to_page((10.0, 20.0)), (80.0, 10.0));
+        assert_eq!(turned.to_frame((80.0, 10.0)), Some((10.0, 20.0)));
         // Nothing, or what a straight mapping cannot follow.
         assert!(FrameMap::of(
             &[0.0, 0.0, 100.0, 10.0, 90.0, 50.0, 10.0, 40.0],
@@ -3584,7 +3584,7 @@ mod tests {
         .is_none());
         assert!(FrameMap::of(&[0.0; 8], 200.0, 100.0).is_none());
         assert!(FrameMap::of(&[], 200.0, 100.0).is_none());
-        assert_eq!(FrameMap::same().into_page((3.0, 4.0)), (3.0, 4.0));
+        assert_eq!(FrameMap::same().to_page((3.0, 4.0)), (3.0, 4.0));
     }
 
     #[test]

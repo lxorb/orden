@@ -55,6 +55,15 @@ function factsOf(element: unknown, heard?: Element): Said {
   return new Function('heard', script).call(element, heard) as Said
 }
 
+function maskedText(document: Document, hidden: number[]): string {
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the script under test is a string in the crate
+  const run = new Function('document', 'hidden', constant('MASKED_TEXT')) as (
+    document: Document,
+    hidden: number[],
+  ) => string
+  return run(document, hidden)
+}
+
 function pressOn(document: Document): Said {
   const button = document.querySelector('button')
   if (!button) throw new Error('no button')
@@ -263,13 +272,10 @@ describe('a press no control holds goes to what acts for it', () => {
 
   test('a listener only the engine can see', () => {
     const document = page('<div id=round><div>Pay now</div><div id=hit>20.00 EUR</div></div>')
-    const facts = factsOf(
-      document.querySelector('#hit') as Element,
-      document.querySelector('#round') as Element,
-    )
+    const facts = factsOf(document.querySelector('#hit')!, document.querySelector('#round')!)
     expect(facts.held).toEqual(['Pay now'])
     expect(facts.name).toBe('20.00 EUR')
-    expect(factsOf(document.querySelector('#hit') as Element).held).toEqual([])
+    expect(factsOf(document.querySelector('#hit')!).held).toEqual([])
   })
 
   test('a label on it', () => {
@@ -479,14 +485,7 @@ describe('a control named by a label as well as by its words', () => {
 })
 
 describe('a secret region in what is read', () => {
-  const read = (document: Document, hidden: number[]) => {
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the script under test is a string in the crate
-    const run = new Function('document', 'hidden', constant('MASKED_TEXT')) as (
-      document: Document,
-      hidden: number[],
-    ) => string
-    return run(document, hidden)
-  }
+  const read = maskedText
 
   test('is a mark, and every other word stays', () => {
     const document = page(
@@ -557,9 +556,9 @@ describe('what acts for a press offers its lines to the policy', () => {
       hit('<table><tr onclick="x()"><td id=hit>Stripe</td><td>Pay now</td></tr></table>').held,
     ).toEqual(['Stripe'])
     const document = page('<div id=round><span id=hit>Home</span><div>Delete account</div></div>')
-    expect(
-      factsOf(document.querySelector('#hit'), document.querySelector('#round') as Element).held,
-    ).toEqual(['Home'])
+    expect(factsOf(document.querySelector('#hit'), document.querySelector('#round')!).held).toEqual(
+      ['Home'],
+    )
   })
 
   test('nothing of what is no one control, and nothing for a control', () => {
@@ -573,13 +572,13 @@ describe('what acts for a press offers its lines to the policy', () => {
 
   test('the words of its pseudo-elements, which is all some labels are', () => {
     const document = page('<div id=hit onclick="x()"></div>')
-    const element = document.querySelector('#hit') as Element
-    const view = document.defaultView as Window & typeof globalThis
+    const element = document.querySelector('#hit')!
+    const view = document.defaultView!
     const native = view.getComputedStyle.bind(view)
     view.getComputedStyle = ((one: Element, pseudo?: string) => {
       const said = native(one)
       return pseudo === '::before'
-        ? Object.assign(Object.create(said), { content: '"Pay now"' })
+        ? Object.assign(Object.create(said) as CSSStyleDeclaration, { content: '"Pay now"' })
         : said
     }) as typeof view.getComputedStyle
     expect(factsOf(element).held).toEqual(['Pay now'])
@@ -648,21 +647,13 @@ describe('a read with a secret on the way', () => {
     const document = page(
       '<div style="display:none">123456<div contenteditable aria-label="PIN">9876</div></div><p>after</p>',
     )
-    const run = new Function('document', 'hidden', constant('MASKED_TEXT')) as (
-      document: Document,
-      hidden: number[],
-    ) => string
-    const text = run(document, [0])
+    const text = maskedText(document, [0])
     expect(text).not.toContain('123456')
     expect(text).toContain('after')
   })
 
   test('counts a textbox built of a div as a region', () => {
     const document = page('<div role="textbox" aria-label="PIN">123456</div><p>after</p>')
-    const run = new Function('document', 'hidden', constant('MASKED_TEXT')) as (
-      document: Document,
-      hidden: number[],
-    ) => string
-    expect(run(document, [0])).not.toContain('123456')
+    expect(maskedText(document, [0])).not.toContain('123456')
   })
 })
