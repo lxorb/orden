@@ -48,6 +48,7 @@ import type { Carried } from '../pages/carried'
 import { holdsDocument, joinsAs, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
+import { isLocal, LOCAL_STORE, localFirst, localSpaceId } from './local'
 import { forgetSyncStore, get, openSyncStore, put } from './store'
 import { Refused } from './transport'
 import { pairsFromV1 } from './v1-pairs'
@@ -115,7 +116,14 @@ class Runner {
    *  not. */
   heldNotes = $state.raw<readonly Held[]>([])
 
-  engine: Engine | null = null
+  /** The engine running, the account's or the one kept signed out. */
+  private current: Engine | null = null
+
+  /** The account's engine, while one runs: what everything that asks the account about
+   *  an entry reads ids off. The one kept signed out is nobody's to ask about. */
+  get engine(): Engine | null {
+    return this.local ? null : this.current
+  }
   private accountId: string | null = null
 
   /** Whose store is open now. */
@@ -144,10 +152,32 @@ class Runner {
   /** The space folders' watch, on the desktop; see watching.ts. */
   private watched: Watched | null = null
 
-  /** Starts the engine for the account signed in. */
-  async start(): Promise<void> {
+  /** Whether the engine running is the one for the spaces used signed out (local.ts). */
+  private local = false
+
+  /** Whatever opens or closes a store, one after another: the crate keeps one store
+   *  open at a time and closes whichever that is, so an engine starting while another
+   *  let go of its own would have its store closed under it. */
+  private lane: Promise<unknown> = Promise.resolve()
+
+  private inLane<T>(work: () => Promise<T>): Promise<T> {
+    const next = this.lane.then(work)
+    this.lane = next.catch(() => undefined)
+    return next
+  }
+
+  /** Starts the engine for the account signed in, after the one kept signed out has
+   *  let go. */
+  start(): Promise<void> {
+    return this.inLane(async () => {
+      if (this.local) await this.letGo()
+      await this.startNow()
+    })
+  }
+
+  private async startNow(): Promise<void> {
     const user = account.user
-    if (!user || this.engine) return
+    if (!user || this.current) return
     this.accountId = user.id
     const store = await openSyncStore(user.id)
     const engine = await Engine.start(
@@ -161,7 +191,7 @@ class Runner {
       await store.close()
       return
     }
-    this.engine = engine
+    this.current = engine
     engine.held.changed = (notes) => (this.heldNotes = notes)
     this.heldNotes = engine.held.notes
 
@@ -228,10 +258,64 @@ class Runner {
     this.kick()
   }
 
+  /** Starts the engine with no account behind it, for the spaces used signed out
+   *  (#1068, step 4b; local.ts): every folder, note and file has an id from the start,
+   *  and what the file list does is said to the engine by id as it is signed in. Its
+   *  store is its own (`LOCAL_STORE`), and nothing in it reaches the network: no hub,
+   *  no rooms, no light in the corner. Answers once it runs, or once it will not. */
+  startLocal(): Promise<void> {
+    return this.inLane(() => this.startLocalNow())
+  }
+
+  private async startLocalNow(): Promise<void> {
+    if (this.current || account.user) return
+    const store = await openSyncStore(LOCAL_STORE)
+    const engine = await Engine.start(
+      appWorld(() => null, this.telling),
+      store,
+    )
+    // Signed in while the store was opening: the account's engine is next in line.
+    if (signedIn()) {
+      engine.stop()
+      await store.close().catch(() => undefined)
+      return
+    }
+    this.local = true
+    this.current = engine
+    this.stops.push(workspace.fileOps.doneBy(this.doer))
+    if (isDesktop) {
+      const { watchFolders } = await import('./watching')
+      const watched = watchFolders({
+        engine,
+        ready: (id) => this.firsts.has(id),
+        changed: () => this.nudge(),
+        moved: (from, to, kind) => this.telling.moved(from, to, kind),
+      })
+      this.watched = watched
+      this.stops.push(() => {
+        watched.stop()
+        this.watched = null
+      })
+    }
+    this.kick()
+  }
+
+  /** The spaces used signed out let go of for good: what signing in does, so a later
+   *  signed-out session starts from the folders as they are then, never from a tree a
+   *  week old that the disk would be made to agree with. */
+  dropLocal(): Promise<void> {
+    return this.inLane(async () => {
+      if (this.local) await this.letGo()
+      await forgetSyncStore(LOCAL_STORE).catch((error: unknown) => {
+        log('warn', `sync: the store kept signed out stays - ${String(error)}`)
+      })
+    })
+  }
+
   /** A held note answered: Keep mine, Keep theirs or Keep both. Answers the copy's path
    *  for the third. */
   async answer(id: string, answer: HeldAnswer): Promise<string | undefined> {
-    const engine = this.engine
+    const engine = this.current
     if (!engine) return undefined
     const copy = await engine.held.answer(id, answer)
     this.nudge()
@@ -253,7 +337,11 @@ class Runner {
   /** Signing out, while it runs. */
   private leaving: Promise<void> | null = null
 
-  private async halt(): Promise<void> {
+  private halt(): Promise<void> {
+    return this.inLane(() => this.letGo())
+  }
+
+  private async letGo(): Promise<void> {
     for (const stop of this.stops.splice(0)) stop()
     for (const key of this.carried) uncarry(key)
     this.carried.clear()
@@ -262,9 +350,10 @@ class Runner {
     for (const one of this.bound.values()) one.part()
     this.bound.clear()
     clearTimeout(this.timer)
-    const engine = this.engine
-    this.engine = null
+    const engine = this.current
+    this.current = null
     this.accountId = null
+    this.local = false
     this.status = 'off'
     if (engine) {
       await engine.quit().catch(() => undefined)
@@ -276,7 +365,7 @@ class Runner {
   /** The window going: everything typed written down, and the session marked ended
    *  cleanly, after autosave's own last writes. */
   parting() {
-    const engine = this.engine
+    const engine = this.current
     if (!engine) return
     writing(
       workspace
@@ -295,7 +384,14 @@ class Runner {
    *
    *  Answers whether v1 may start. Not while the account cannot be reached: v1 starting
    *  from mirrors older than what v2 did here would delete every note v2 renamed. */
-  async rollBack(): Promise<boolean> {
+  rollBack(): Promise<boolean> {
+    return this.inLane(async () => {
+      if (this.local) await this.letGo()
+      return await this.rollBackNow()
+    })
+  }
+
+  private async rollBackNow(): Promise<boolean> {
     const user = account.user
     const token = account.token
     if (!user || !token) return false
@@ -378,7 +474,7 @@ class Runner {
   }
 
   private async leave(accountId: string): Promise<void> {
-    const engine = this.engine
+    const engine = this.current
     if (engine) {
       try {
         const done = await this.kept(engine)
@@ -412,7 +508,7 @@ class Runner {
 
   /** A pass soon over one space, or all of them. */
   kick(space?: string) {
-    const engine = this.engine
+    const engine = this.current
     if (!engine) return
     if (space) {
       if (engine.core.spaces.has(space)) this.due.add(space)
@@ -428,29 +524,31 @@ class Runner {
 
   /** Something changed here: a pass in a moment, unless one is sooner. */
   nudge() {
-    if (!this.engine) return
+    if (!this.current) return
     this.quiet = 0
     clearTimeout(this.timer)
     this.timer = setTimeout(() => this.kick(), NUDGE)
   }
 
   private schedule() {
-    const engine = this.engine
+    const engine = this.current
     if (!engine) return
     clearTimeout(this.timer)
     const waiting = [...engine.core.spaces.keys()].some((id) => engine.waiting(id))
     const delay = waiting
       ? NUDGE
-      : hub.state === 'open'
-        ? document.hidden
-          ? HIDDEN_FALLBACK
-          : FALLBACK
-        : pollDelay(this.quiet, document.hidden)
+      : this.local
+        ? HIDDEN_FALLBACK
+        : hub.state === 'open'
+          ? document.hidden
+            ? HIDDEN_FALLBACK
+            : FALLBACK
+          : pollDelay(this.quiet, document.hidden)
     this.timer = setTimeout(() => this.kick(), delay)
   }
 
   private async run(): Promise<void> {
-    const engine = this.engine
+    const engine = this.current
     if (!engine) return
     this.status = 'syncing'
     this.lastError = null
@@ -460,18 +558,24 @@ class Runner {
       if (this.due.delete('') || Date.now() - this.reconciledAt >= RECONCILE_INTERVAL) {
         // The account out of reach is the hollow light, never the red one: the passes
         // below find the same and stop quietly.
-        await this.reconcile(engine).catch((error: unknown) => {
+        const reconciling = this.local ? this.pairLocal(engine) : this.reconcile(engine)
+        await reconciling.catch((error: unknown) => {
           if (!unreachable(error)) throw error
           offline = true
         })
       }
-      while (this.due.size && this.engine === engine) {
+      while (this.due.size && this.current === engine) {
         const [id] = this.due
         if (id === undefined) break
         this.due.delete(id)
         const space = engine.core.spaces.get(id)
         if (!space) continue
-        if (!(await this.firstDone(engine, id))) {
+        if (!(await this.firstDone(engine, id)) && isLocal(id)) {
+          if (!(await localFirst(engine.core, space))) continue
+          await engine.core.commit([put('meta', { key: `${FIRST}${id}`, value: 1 })])
+          this.firsts.add(id)
+          this.watched?.follow()
+        } else if (!(await this.firstDone(engine, id))) {
           const v1 = await wholeV1(
             space.row.root,
             this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null,
@@ -489,7 +593,7 @@ class Runner {
           this.watched?.follow()
         }
         const passed = await engine.pass(id)
-        this.placesHeard(engine, space.row.root)
+        if (!this.local) this.placesHeard(engine, space.row.root)
         if (passed?.full) this.full.add(id)
         else if (passed?.finished) this.full.delete(id)
         for (const one of this.full) if (!engine.core.spaces.has(one)) this.full.delete(one)
@@ -499,7 +603,11 @@ class Runner {
         if (passed?.pulled && id === this.spaceOnScreen(engine)) await workspace.loadTree()
       }
       this.quiet = moved ? 0 : Math.min(this.quiet + 1, 8)
-      if (this.engine !== engine) return
+      if (this.current !== engine) return
+      if (this.local) {
+        this.status = 'idle'
+        return
+      }
       // The paper each page note holds goes where the note goes (#551), kept by the
       // note's id rather than as a file of the tree; see pages/carried.ts. Not waited
       // for: a paper is megabytes, and nothing in the pass is behind it.
@@ -512,7 +620,7 @@ class Runner {
       this.lastSyncedAt = Date.now()
       this.status = offline ? 'offline' : 'idle'
     } catch (error) {
-      if (this.engine !== engine) return
+      if (this.current !== engine) return
       // The session ended on the account: signed out here too, as every other request
       // signs out.
       if ((error instanceof Refused || error instanceof ApiError) && error.status === 401) {
@@ -548,6 +656,28 @@ class Runner {
     const root = workspace.activeSpace?.root
     for (const space of engine.core.spaces.values()) if (space.row.root === root) return space.id
     return null
+  }
+
+  /** Which folder is which space, signed out: every space of the workspace is one kept
+   *  here, and one that left the workspace is let go of. A space's folder moved is told
+   *  by the file list as it moves (`follow`), so its tree goes with it. */
+  private async pairLocal(engine: Engine) {
+    this.reconciledAt = Date.now()
+    const core = engine.core
+    const roots = workspace.spaces.map((space) => space.root)
+    const changes: Parameters<typeof core.commit>[0][number][] = []
+    for (const space of [...core.spaces.values()]) {
+      if (!roots.some((root) => samePath(root, space.row.root))) {
+        changes.push(...core.forgetSpace(space.id))
+      }
+    }
+    for (const root of roots) {
+      if ([...core.spaces.values()].some((space) => samePath(space.row.root, root))) continue
+      changes.push(...core.addSpace(localSpaceId(Math.random), root, 'owner'))
+    }
+    await core.commit(changes)
+    this.watched?.follow()
+    for (const id of core.spaces.keys()) this.due.add(id)
   }
 
   /** Which folder is which space: v1's rules, with the pairing in the sync store. */
@@ -640,7 +770,7 @@ class Runner {
    *  said to the engine by the id of what is there before the disk has it, and the
    *  disk's part made inside that (`moving` and `removing` in engine.ts). */
   readonly doer: Doer = async (op, run) => {
-    const engine = this.engine
+    const engine = this.current
     if (!engine || op.kind === 'space' || op.op === 'created') {
       await run()
       return
@@ -662,7 +792,7 @@ class Runner {
    *  do, which the operation waits for, so the account hears operations in the order
    *  they were done. */
   follow(op: FileOp): Promise<void> | undefined {
-    const engine = this.engine
+    const engine = this.current
     if (!engine) return undefined
     const key =
       op.op === 'moved' ? `moved:${op.from}` : op.op === 'removed' ? `removed:${op.path}` : ''
@@ -710,7 +840,7 @@ class Runner {
 
   /** Autosave wrote a note: recorded, and what was typed is one more pending update. */
   async wrote(path: string, text: string): Promise<void> {
-    const engine = this.engine
+    const engine = this.current
     if (!engine) return
     await engine.saved(path, text).catch((error: unknown) => {
       log('error', `sync: saved ${path} - ${String(error)}`)
@@ -795,7 +925,7 @@ class Runner {
 
   /** A space deleted here: its rows go with it. */
   async forget(root: string): Promise<void> {
-    const engine = this.engine
+    const engine = this.current
     const space = [...(engine?.core.spaces.values() ?? [])].find((one) => one.row.root === root)
     if (engine && space) await engine.core.commit(engine.core.forgetSpace(space.id))
   }
@@ -844,7 +974,7 @@ class Runner {
   }
 
   private async bindNow(open: typeof workspace.openNotes) {
-    const engine = this.engine
+    const engine = this.current
     if (!engine) return
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away within this call
     const wanted = new Map<string, { id: string; on: On; arrivals: () => number }>()
@@ -967,6 +1097,11 @@ class Runner {
       if (plane && entered?.hand) plane.hand = entered.hand.bind(entered)
     })
   }
+}
+
+/** Whether somebody is signed in now: read again after every wait. */
+function signedIn(): boolean {
+  return account.user !== null
 }
 
 /** What an open note is joined through: its views, or a canvas's surface. */

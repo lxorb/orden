@@ -100,7 +100,7 @@ export async function pass(core: Core, space: SpaceState): Promise<Passed> {
 }
 
 /** Every pause's worth of typing, into the store. */
-function flushAll(core: Core): Change[] {
+export function flushAll(core: Core): Change[] {
   for (const doc of core.docs.values()) doc.flush()
   return core.dirtyChanges()
 }
@@ -302,7 +302,12 @@ function changesOf(core: Core, space: SpaceState, batch: readonly Outboxed[]): C
 
 /** An op the account would not apply. Nothing of this device's is lost by any of them:
  *  the op comes out of what is shown, and the tree reads as the account has it. */
-async function refused(core: Core, space: SpaceState, op: Op, why: string): Promise<Change[]> {
+export async function refused(
+  core: Core,
+  space: SpaceState,
+  op: Op,
+  why: string,
+): Promise<Change[]> {
   // A delete of something another device had written in since: the note stays, and
   // this device is told so once its words are back.
   if (op.t === 'delete' && why === 'edited') {
@@ -436,7 +441,7 @@ export async function readFeed(
 }
 
 /** The disk, made to agree with the tree. */
-async function settleDisk(core: Core, space: SpaceState) {
+export async function settleDisk(core: Core, space: SpaceState) {
   const forgets: Change[] = []
   const moved = await settle(space, {
     disk: core.world.disk,

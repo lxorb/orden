@@ -69,7 +69,7 @@ function engineWithOneSpace() {
 
 describe('signing out', () => {
   test('writes the mirrors before the store is closed, though syncing stops at once', async () => {
-    Object.assign(runner, { engine: engineWithOneSpace() })
+    Object.assign(runner, { current: engineWithOneSpace() })
 
     const leaving = runner.signedOut('u1')
     const stopping = runner.stop()

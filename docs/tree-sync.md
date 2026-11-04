@@ -96,6 +96,25 @@ whose file is not there yet - is the engine's own work under way and nothing to 
 made that is gone again went again. What is left is somebody else's doing: a program, or
 a person in Explorer or Finder.
 
+## Signed out
+
+A space used with nobody signed in is kept by the same engine, with no account behind it
+(apps/desktop/src/lib/sync2/local.ts): on the desktop, every space of the workspace is a
+space of a store of its own (`local`, never an account's), named as no account names
+one (`local-…`). Its first pass makes an entry of everything in the folder, each with an
+id, and each note a document holding its words; after that, what the file list, an agent
+or an undo does is said to the engine by id before the disk has it, and what another
+program does is heard by the folder's watcher, exactly as signed in. A pass asks nothing
+of the network: this device is the space's account, so the outbox is applied to the
+tree it holds by the rules the account applies, every change its own, and what was typed
+is confirmed as it stands. Something whose making the rules refuse - its folder gone - is
+made again where its file is, under a new id, rather than being taken off the disk.
+
+Signing in lets that store go: the engine kept signed out stops before the account's opens
+its store (the crate keeps one open at a time), and the store is deleted, so a later
+session signed out starts from the folders as they are then and never makes the disk agree
+with a tree from before. The account's first pass of each space is as it always was.
+
 ## What is kept about an entry
 
 A folder's icon and its colour are kept on the account by the folder's id, and a

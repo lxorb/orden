@@ -16,7 +16,7 @@ import { startup } from './startup.svelte'
 import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
-import { invoke, joinPath } from './tauri'
+import { invoke, isDesktop, joinPath } from './tauri'
 import {
   MIRRORS_KEY,
   type Mirror,
@@ -125,6 +125,9 @@ class Sync {
   version = $state<1 | 2>(1)
   /** v2's runner, once it is fetched; see sync2/runner.svelte.ts. */
   private v2: Runner | null = null
+  /** The same runner while it keeps the spaces used signed out (#1068, step 4b): ids for
+   *  everything in them, and nothing sent anywhere. */
+  private local: Runner | null = null
 
   /** v2's runner while it runs: what a drive reads the held notes off. */
   get engine(): Runner | null {
@@ -143,6 +146,7 @@ class Sync {
 
   start() {
     this.generation++
+    this.leaveLocal()
     if (this.wantsV2()) {
       this.startV2()
       return
@@ -191,6 +195,34 @@ class Sync {
     })()
   }
 
+  /** The spaces used signed out kept by the engine with no account behind it, once
+   *  the launch has come far enough and the account has said nobody is signed in: on
+   *  the desktop, which keeps its spaces as folders. The browser and the phone keep
+   *  theirs otherwise. */
+  private startLocal(mine: number) {
+    if (!V2 || !isDesktop) return
+    void (async () => {
+      await startup.turn('rooms')
+      const { runner } = await import('./sync2/runner.svelte')
+      await known()
+      if (mine !== this.generation || account.user || account.token) return
+      this.local = runner
+      await runner.startLocal()
+    })()
+  }
+
+  /** Signing in: the engine kept signed out lets go, and its store goes with it, so the
+   *  next session signed out starts from the folders as they are then. */
+  private leaveLocal() {
+    if (!V2 || !isDesktop) return
+    this.local = null
+    void (async () => {
+      await startup.turn('rooms')
+      const { runner } = await import('./sync2/runner.svelte')
+      await runner.dropLocal()
+    })()
+  }
+
   private startV1() {
     this.owner = account.user?.id ?? null
     const held = this.load(this.owner)
@@ -228,13 +260,16 @@ class Sync {
 
   stop() {
     this.generation++
+    const mine = this.generation
+    let stopping: Promise<void> = Promise.resolve()
     if (V2 && this.v2) {
       const runner = this.v2
       this.v2 = null
       this.unmirror?.()
       this.unmirror = null
-      void runner.stop()
+      stopping = runner.stop()
     }
+    void stopping.then(() => this.startLocal(mine))
     if (this.timer) clearTimeout(this.timer)
     this.timer = null
 
@@ -279,6 +314,7 @@ class Sync {
    *  has no id for; a note or a folder moving is told to the account. */
   follow(op: FileOp): Promise<void> | undefined {
     if (V2 && this.v2) return this.v2.follow(op)
+    if (V2 && this.local) return this.local.follow(op)
     if (op.op !== 'moved') return undefined
     if (this.pulling.has(`${op.from}\n${op.to}`)) return undefined
     if (op.kind !== 'space') return this.moved(op.from, op.to)
@@ -358,6 +394,7 @@ class Sync {
    *  is done is what was said. Unknown, the account's copy is left alone: deleting
    *  a space after saying "Leave" is the one mistake here nobody can take back. */
   async forget(root: string, role: SpaceRole | null) {
+    if (V2 && this.local) await this.local.forget(root)
     const spaceId = this.remoteIdFor(root)
     if (spaceId === null) return
     // v1 keeps its own word that the space is somebody else's, which no role
@@ -410,6 +447,7 @@ class Sync {
    *  becomes a pending update in the sync store; v1 reads the file at its next pass. */
   wrote(path: string, content: string): void {
     if (V2 && this.v2) void this.v2.wrote(path, content)
+    else if (V2 && this.local) void this.local.wrote(path, content)
     else this.nudge()
   }
 
@@ -417,7 +455,7 @@ class Sync {
    *  note the append action makes. Under v2 the account merges it into one of the same
    *  name another device made meanwhile; v1 has no such thing. */
   mergeable(path: string): void {
-    if (V2) this.v2?.mergeable(path)
+    if (V2) (this.v2 ?? this.local)?.mergeable(path)
   }
 
   /** Something changed here, so the next pass should not wait out whatever slow
