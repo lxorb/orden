@@ -1220,8 +1220,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,581,600, for #1033: Alt+H, J, K and L between the panes and
  *  the pane under the pointer the active one (pane-moves.ts, `paneToward` in
- *  workspace/pane-tree.ts), and their five words in every language. Measured 3,580,980. */
-const BUDGET = 3_581_600
+ *  workspace/pane-tree.ts), and their five words in every language. Measured 3,580,980.
+ *
+ *  Raised 2026-11-04, to 3,583,000, for #1106: a tab drawn as its icon keeps its cross
+ *  from a press until it has opened out under the pointer (Tabs.svelte, tab-strip/
+ *  layout.ts). Measured 3,582,252. */
+const BUDGET = 3_583_000
 const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
