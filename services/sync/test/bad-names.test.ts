@@ -41,7 +41,10 @@ async function tool(name: string, args: Record<string, unknown>): Promise<string
 
 async function feed(): Promise<{ read: { items: FeedItem[] } | null; raw: FeedItem[] }> {
   const answer = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
-  return { read: feedPageOf(answer.json), raw: (answer.json as unknown as { items: FeedItem[] }).items }
+  return {
+    read: feedPageOf(answer.json),
+    raw: (answer.json as unknown as { items: FeedItem[] }).items,
+  }
 }
 
 async function baseFile(path: string, text: string) {
@@ -167,7 +170,7 @@ test('a copy kept beside a note named near the limit, or under a bad folder, sti
 
   const lost = await noteBeside(
     env,
-    { ...(held!), path: '../../Other/pwn.md', id: 'e'.repeat(32) },
+    { ...held!, path: '../../Other/pwn.md', id: 'e'.repeat(32) },
     'words under a bad folder',
   )
   expect(lost?.path.startsWith('pwn')).toBe(true)
