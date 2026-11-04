@@ -45,6 +45,7 @@ export function carried(): readonly string[] {
 export function carriedNothing() {
   carrying = []
   carryingTile = false
+  carryingMark = null
 }
 
 export function isTreeDrag(transfer: DataTransfer | null): boolean {
@@ -132,6 +133,16 @@ export function carryBookmark(transfer: DataTransfer | null, at: number, tile = 
   transfer.setData(BOOKMARK, String(at))
   transfer.effectAllowed = 'move'
   carryingTile = tile
+  carryingMark = at
+}
+
+/** Which bookmark the drag under way carries, by its place in the list, or null: read
+ *  over a strip, which makes room for the tab it becomes (#1110), and may not read the
+ *  transfer until the drop. */
+let carryingMark: number | null = null
+
+export function carriedMark(): number | null {
+  return carryingMark
 }
 
 export function isBookmarkDrag(transfer: DataTransfer | null): boolean {

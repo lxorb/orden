@@ -8,6 +8,8 @@
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
   import {
+    carried,
+    carriedMark,
     dragged,
     draggedBookmark,
     isBookmarkDrag,
@@ -61,6 +63,8 @@
     worthKeeping,
   } from './tab-strip/layout'
   import { initialOf, siteLook, twins } from './tab-strip/twins'
+  import { insideSpace, nameOf } from './space-paths'
+  import { shownName } from './note-name'
   import { chosenIcon } from './chosen-icon'
   import { pages } from './web-tab/pages.svelte'
   import { workspace, type Tab } from './workspace.svelte'
@@ -322,6 +326,33 @@
     landing?.kind === 'strip' && landing.paneId === paneId && !drag.on ? landing.at : null,
   )
 
+  /** A tab as it is drawn once another has come in front of it. */
+  const behind = (one: (typeof sized)[number]) => ({ ...one, active: false, icon: icons })
+
+  /** How wide the tab that something dropped here becomes wants to be, while tabs are as
+   *  wide as their names: a tab carried in from another pane, an essential or a
+   *  bookmark, a row out of the file list. Not known for a link from another app,
+   *  whose page has not said its name yet. */
+  const arriving = $derived.by(() => {
+    if (incoming === null || !fitTabs.on) return undefined
+    const carriedTab = workspace.panes.dragging?.tabId
+    const tab = carriedTab ? workspace.tabs.find((one) => one.id === carriedTab) : undefined
+    if (tab) return fits[tab.id]
+    const mark = carriedMark()
+    const path =
+      mark === null
+        ? carried()[0]
+        : (() => {
+            const kept = workspace.bookmarks.list[mark]
+            const root = workspace.activeSpace?.root
+            return kept?.kind === 'note' && root ? insideSpace(root, kept.path) : undefined
+          })()
+    if (path === undefined) return undefined
+    const name = workspace.opened.at(path)?.shown ?? shownName(nameOf(path))
+    const width = measured(name)
+    return width > 0 ? fitted(width) : undefined
+  })
+
   /** Where each tab is drawn, and where the tabs end. */
   const layout = $derived.by(() => {
     const boxes: Record<string, Bounds> = {}
@@ -351,12 +382,14 @@
     }
 
     if (incoming !== null) {
-      // A tab's worth of room where it would land, and the rest shrunk to make it,
-      // exactly as they would be with the tab already there.
+      // Room where it would land for the tab it becomes, and the rest made way for it,
+      // exactly as they would be with that tab already there: in front, as a drop puts
+      // it (`moveTab`), as wide as its name where tabs are (#1114), and every other tab
+      // as a tab not in front is - an icon while Icon tabs is on (#1110).
       const withGap = [
-        ...sized.slice(0, incoming),
-        { id: '', icon: false, active: false },
-        ...sized.slice(incoming),
+        ...sized.slice(0, incoming).map(behind),
+        { id: '', icon: false, active: true, fit: arriving },
+        ...sized.slice(incoming).map(behind),
       ]
       const bounds = placed(widthsFor(withGap, room))
       for (const [at, one] of withGap.entries()) {
