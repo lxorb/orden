@@ -29,6 +29,7 @@ import type { IconNode } from 'lucide'
 // types for these paths are declared, and icons.ts, which loads the index lazily.
 import File from 'lucide/dist/esm/icons/file.mjs'
 import FileText from 'lucide/dist/esm/icons/file-text.mjs'
+import Folder from 'lucide/dist/esm/icons/folder.mjs'
 import Globe from 'lucide/dist/esm/icons/globe.mjs'
 import Image from 'lucide/dist/esm/icons/image.mjs'
 import MessageSquare from 'lucide/dist/esm/icons/message-square.mjs'
@@ -105,11 +106,15 @@ const Pdf: IconNode = typeMark([
   ['path', { d: 'M17 17.5h3' }],
 ])
 
-/** The marks there are, and there is no folder among them, because no row is a
- *  folder: a note that holds notes is drawn as the note, and a folder out of
- *  somebody's vault that has no note of its own is drawn as `file` - a page with
- *  nothing written on it, which is exactly what such a row is until somebody
- *  writes in it. See folder-notes.ts and docs/tree.md.
+/** The marks there are. No row is a folder: a note that holds notes is drawn as the
+ *  note, and a folder out of somebody's vault that has no note of its own is drawn as
+ *  `file` - a page with nothing written on it, which is exactly what such a row is
+ *  until somebody writes in it. See folder-notes.ts and docs/tree.md.
+ *
+ *  `folder` is what a note that says nothing yet wears where it holds notes, and
+ *  `file` where it holds none (#1042): such a row is a place to put things or an empty
+ *  page, not a page with writing on. Decided by `sourceMark` in chosen-icon.ts, never
+ *  by a name, which is why `fileMark` below never answers it.
  *
  *  `file` is also the mark for a name this build has no shape for, so a list can
  *  always draw a row.
@@ -126,6 +131,7 @@ const Pdf: IconNode = typeMark([
  *  now it is a name like every other kind here. See web-tab/shortcut.ts. */
 export type FileMark =
   | 'note'
+  | 'folder'
   | 'canvas'
   | 'pages'
   | 'pdf'
@@ -190,6 +196,8 @@ export function markOf(kind: TabKind): FileMark | null {
  *  arriving in it make it the page with writing on. */
 export const MARKS: Record<FileMark, IconNode> = {
   note: FileText,
+  // A note that says nothing and holds notes (#1042): Lucide's folder.
+  folder: Folder,
   canvas: Workflow,
   // A pad with a pen on it, which is the one shape in the set that says "paper you
   // write on by hand" rather than "a file with words in it". The nib is what tells

@@ -94,6 +94,7 @@ describe('the marks a row wears', () => {
   // The terminal is a tab's mark, and a row's for an online terminal's file.
   const MARK_NAMES: Mark[] = [
     'note',
+    'folder',
     'canvas',
     'pages',
     'pdf',
@@ -106,9 +107,14 @@ describe('the marks a row wears', () => {
     'chat',
   ]
 
-  /** And no folder among them: no row in the list is a folder, so there is no
-   *  drawing of one to reach for. See folder-notes.ts. */
+  /** The folder among them is no kind of row: it is what a note that says nothing yet
+   *  wears where it holds notes (#1042), decided by `sourceMark` in chosen-icon.ts and
+   *  never by a name. See folder-notes.ts. */
   test('every kind of row has one, and a folder is not a kind of row', () => {
+    for (const name of ['Box', 'Box/', 'Box/Box.md', 'Box.md', 'index.md']) {
+      expect(fileMark(name), name).not.toBe('folder')
+    }
+
     for (const name of MARK_NAMES) {
       expect(MARKS[name], name).toBeDefined()
       expect(MARKS[name].length, name).toBeGreaterThan(0)

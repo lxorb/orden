@@ -18,6 +18,8 @@ const FILES: Record<string, string> = {
     '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nNib-Icon=data:image/png;base64,AA\r\n',
   '/Home/Lecture.pages': '{"nodes":[],"edges":[]}',
   '/Home/Sketch.pages': '{"nodes":[],"edges":[]}',
+  '/Home/Blank.md': '# Blank\n\n',
+  '/Home/Written.md': '# Written\n\nWords.\n',
 }
 
 /** The papers on the disk: a page note made from a PDF holds one beside it. */
@@ -27,10 +29,16 @@ const asked: string[] = []
 
 /** What the open space's index says, by the path as that space speaks it - which
  *  is all the index ever holds. */
-const index: { root: string; icons: Record<string, string>; tints: Record<string, string> } = {
+const index: {
+  root: string
+  icons: Record<string, string>
+  tints: Record<string, string>
+  bare: Set<string>
+} = {
   root: '/Work',
   icons: {},
   tints: {},
+  bare: new Set(['Empty.md', 'Box/Box.md', 'Lone/Lone.md']),
 }
 const reads: string[] = []
 
@@ -57,6 +65,7 @@ vi.mock('./link-index.svelte', () => ({
     rootOf: () => index.root,
     iconOf: (path: string) => index.icons[relative(path)] ?? null,
     tintOf: (path: string) => index.tints[relative(path)] ?? null,
+    saysNothing: (path: string) => index.bare.has(relative(path)),
     faviconOf: () => null,
     shortcutOf: () => null,
   },
@@ -70,6 +79,30 @@ vi.mock('./web-tab/pages.svelte', () => ({
   siteMark: (shown: string | null, _url: string | null, written?: string | null) =>
     shown ?? written ?? null,
 }))
+
+/** A file in the listing, and a folder holding what it is given. */
+const file = (path: string) => ({
+  name: path.split('/').pop() ?? path,
+  path,
+  is_dir: false,
+  children: [],
+})
+const folder = (path: string, ...children: ReturnType<typeof file>[]) => ({
+  name: path.split('/').pop() ?? path,
+  path,
+  is_dir: true,
+  children,
+})
+
+/** The folders of the open space's listing: a note holding another, a note holding
+ *  nothing, a folder out of a vault with no note of its own and things in it, and one
+ *  with nothing at all. */
+const FOLDERS: Record<string, ReturnType<typeof folder>> = {
+  '/Work/Box': folder('/Work/Box', file('/Work/Box/Box.md'), file('/Work/Box/Inside.md')),
+  '/Work/Lone': folder('/Work/Lone', file('/Work/Lone/Lone.md')),
+  '/Work/Vault': folder('/Work/Vault', file('/Work/Vault/Loose.md')),
+  '/Work/Hollow': folder('/Work/Hollow'),
+}
 
 /** The tabs open in the window. */
 const tabs: { kind: string; path: string | null; id: string }[] = []
@@ -91,7 +124,7 @@ vi.mock('./workspace.svelte', () => ({
         ? { path, paper: true }
         : path === '/Work/Blank.pages'
           ? { path }
-          : null,
+          : (FOLDERS[path] ?? null),
   },
 }))
 
@@ -275,6 +308,35 @@ describe('a page note made from a PDF', () => {
     expect(sourceMark('web', undefined, 'https://chatgpt.com/').icon).toBe('simple-icons:openai')
     expect(sourceMark('web', undefined, 'not an address').icon).toBeNull()
     expect(sourceMark('note', '/Work/Plan.md', 'https://github.com/').icon).toBeNull()
+  })
+
+  /** #1042: a note that says nothing yet - whitespace, or its own name as a heading -
+   *  wears the empty page, and the folder where it holds notes; so does a folder that
+   *  has no note of its own. Whatever the reader chose is worn over it, by FileMark. */
+  test('a note that says nothing yet wears the empty page, or the folder', () => {
+    open('/Work')
+
+    expect(sourceMark('note', '/Work/Empty.md').mark).toBe('file')
+    expect(sourceMark('note', '/Work/Plan.md').mark).toBe('note')
+    expect(sourceMark('note', '/Work/Box/Box.md').mark).toBe('folder')
+    expect(sourceMark('note', '/Work/Lone/Lone.md').mark).toBe('file')
+    expect(sourceMark('file', '/Work/Vault').mark).toBe('folder')
+    expect(sourceMark('file', '/Work/Hollow').mark).toBe('file')
+    // A file that is a file is no empty page, and holds nothing.
+    expect(sourceMark('file', '/Work/Notes.md.bak').mark).toBe('file')
+    expect(sourceMark('note', undefined).mark).toBe('note')
+    expect(sourceMark('canvas', '/Work/Empty.md').mark).toBe('canvas')
+  })
+
+  test('and a note of another space, out of what its file says', async () => {
+    open('/Work')
+
+    sourceMark('note', '/Home/Blank.md')
+    sourceMark('note', '/Home/Written.md')
+    await vi.waitFor(() => expect(sourceMark('note', '/Home/Blank.md').mark).toBe('file'))
+    await vi.waitFor(() => expect(reads).toContain('/Home/Written.md'))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(sourceMark('note', '/Home/Written.md').mark).toBe('note')
   })
 
   test('a file that is not a page note is never asked about', () => {

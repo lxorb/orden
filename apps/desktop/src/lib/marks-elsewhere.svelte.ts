@@ -17,8 +17,9 @@
 import { frontMatterValue } from '@orden/markdown/front-matter'
 import { isCanvasTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import { SvelteMap } from 'svelte/reactivity'
+import { saysNothing } from './scan-note'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
-import { isMarkdownPath, pathKey, within } from './space-paths'
+import { isMarkdownPath, noteName, pathKey, within } from './space-paths'
 import { invoke } from './tauri'
 import { readWebFile } from './web-tab/shortcut'
 
@@ -30,9 +31,19 @@ interface Worn {
   address: string | null
   /** A page note made from a PDF, which wears its mark (#676). */
   paper: boolean
+  /** A note that says nothing yet, which wears the empty page (#1042); see
+   *  `saysNothing` in scan-note.ts. */
+  bare: boolean
 }
 
-const NOTHING: Worn = { icon: null, iconColor: null, favicon: null, address: null, paper: false }
+const NOTHING: Worn = {
+  icon: null,
+  iconColor: null,
+  favicon: null,
+  address: null,
+  paper: false,
+  bare: false,
+}
 
 /** Whether a file can wear anything at all: a folder, a picture and a PDF cannot,
  *  and are never read. */
@@ -70,6 +81,7 @@ async function wornBy(path: string, content: string): Promise<Worn> {
     ...NOTHING,
     icon: frontMatterValue(content, ICON_KEY),
     iconColor: frontMatterValue(content, ICON_COLOUR_KEY),
+    bare: saysNothing(content, noteName(path)),
   }
 }
 

@@ -21,11 +21,11 @@
 
 import { isChatTarget, isPagesTarget } from '@orden/markdown/links'
 import type { FileMark } from './file-mark'
-import { isFolderNote } from './folder-notes'
+import { folderNote, isFolderNote } from './folder-notes'
 import { brandIcon, siteBrand } from './icons'
 import { links } from './link-index.svelte'
 import { elsewhere } from './marks-elsewhere.svelte'
-import { folderOf, samePath, withinSpace } from './space-paths'
+import { folderOf, isMarkdownPath, samePath, withinSpace } from './space-paths'
 import { pages, siteMark } from './web-tab/pages.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -73,11 +73,45 @@ export function holdsPaper(path: string): boolean {
   return elsewhere.of(path)?.paper === true
 }
 
+/** Whether the note at `path` says nothing yet (#1042): the scan's word for the open
+ *  space's notes (`bare`, see `saysNothing` in scan-note.ts), and for another space's what that file says,
+ *  read once on its own. Never a read of the file per row. */
+function saysNothing(path: string): boolean {
+  return awayIn(path) === null ? links.saysNothing(path) : elsewhere.of(path)?.bare === true
+}
+
+/** Whether a row is an empty page: a note that says nothing yet, or a folder with no
+ *  note of its own, which is the note it would be before anybody writes in it. A `file`
+ *  that is a file - `Notes.md.bak` - is neither. */
+function isEmpty(mark: FileMark, path: string): boolean {
+  if (mark === 'note') return saysNothing(path)
+  return workspace.entryAt(path)?.is_dir === true
+}
+
+/** Whether the row a note or a folder is drawn as holds anything: for a note, whether it
+ *  is its folder's own note and the folder has more in it; for a folder that has no note,
+ *  whether it has anything at all. A folder the listing did not read into is taken to
+ *  hold something, since it was left unread for holding too much. The open space's
+ *  listing; another space's rows are not listed, and hold nothing as far as this knows. */
+function holdsMore(path: string): boolean {
+  const listed = workspace.entryAt(path)
+  if (listed?.is_dir) return listed.unlisted === true || listed.children.length > 0
+  if (!isMarkdownPath(path)) return false
+
+  const folder = workspace.entryAt(folderOf(path))
+  const own = folder ? folderNote(folder) : null
+  if (!folder || !own || !samePath(own.path, path)) return false
+  return folder.unlisted === true || folder.children.some((one) => !samePath(one.path, path))
+}
+
 /** What a file wears for what it is and where it came from, where its kind's own mark
  *  does not say it, and where nobody chose an icon for it.
  *
  *  - `mark`: a page note made from a PDF wears the PDF's (#676); a page note started
- *    blank, or anything else, wears its kind's.
+ *    blank, or anything else, wears its kind's. A note that says nothing yet - only
+ *    whitespace, or only its own name as its heading - wears the empty page, and the
+ *    folder where it holds notes; so does a folder that has no note of its own (#1042).
+ *    An icon the reader chose is worn over all of these; see FileMark.svelte.
  *  - `icon`: a website wears its brand's logo, read off its address (#1082) - the
  *    stand-in for a site whose favicon has not been seen or will not load, in place of
  *    the plain globe. A written value, drawn once the logos have arrived; null for
@@ -99,6 +133,9 @@ export function sourceMark(
   }
 
   if (path !== undefined && mark === 'pages' && holdsPaper(path)) return { mark: 'pdf', icon: null }
+  if (path !== undefined && (mark === 'note' || mark === 'file') && isEmpty(mark, path)) {
+    return { mark: holdsMore(path) ? 'folder' : 'file', icon: null }
+  }
   return { mark, icon: null }
 }
 

@@ -102,6 +102,7 @@ export function markedPlane(path: string, marks: PlaneMarks): ScannedNote {
     address: null,
     // Nor a cover: the whole of a plane is a picture already.
     cover: null,
+    bare: false,
     links: marks.links,
   }
 }

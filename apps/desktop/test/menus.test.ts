@@ -164,10 +164,14 @@ describe('making a folder', () => {
     expect(everywhere).not.toContain('createFolder')
   })
 
-  /** The mark went with the gesture, so there is not even a drawing of a folder
-   *  left for a row to reach for; see file-mark.ts. */
-  test('and no row can be drawn as one', () => {
-    expect(read('lib/file-mark.ts')).not.toContain("'folder'")
+  /** The mark went with the gesture, and came back for one row only (#1042): a note
+   *  that says nothing yet and holds notes wears the folder, decided once in
+   *  `sourceMark` (chosen-icon.ts). Nothing else draws a row as one - not a name, which
+   *  `fileMark` reads, and not a component or a menu; see file-mark.ts. */
+  test('and no row can be drawn as one but an empty note that holds notes', () => {
+    const marks = read('lib/file-mark.ts')
+    const byName = marks.slice(marks.indexOf('export function fileMark'))
+    expect(byName.slice(0, byName.indexOf('\n}\n'))).not.toContain('folder')
     expect(everywhere).not.toContain("mark: 'folder'")
     expect(everywhere).not.toContain("'folder-open'")
   })
