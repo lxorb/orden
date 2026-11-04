@@ -23,7 +23,7 @@ import { byteLength, newId, now } from '../crypto'
 import { laterOf, pokeSpace } from '../hub/poke'
 import { mayChangeTree } from '../limits'
 import { NOT_AN_OBJECT, TOO_MANY_CHANGES } from '../refused'
-import { readBookmarks } from '../spaces/bookmarks'
+import { bookmarkId, readBookmarks } from '../spaces/bookmarks'
 import { MOST_BYTES } from '../spaces/columns'
 import { readExcluded } from '../spaces/excluded'
 import { readGraph } from '../spaces/graph'
@@ -130,6 +130,25 @@ function pathOfKey(tree: Tree, key: string): string | null {
   return entry && !entry.deleted ? tree.pathOf(key) : null
 }
 
+/** The kinds of bookmark that point at an entry of the tree, and so the ones an id
+ *  finds again; the app's `POINTS_AT_A_FILE`. */
+const POINTS_AT_AN_ENTRY = new Set(['note', 'folder', 'heading', 'block'])
+
+/** A bookmark with its path written from where its entry is now, when it says which
+ *  entry that is (#1068): a rename or a move on any device then reaches every list,
+ *  a v1 app's too, the way a folder's icon does. A block bookmark keeps its `#` part. */
+function locatedBookmark(tree: Tree, value: Record<string, unknown>): Record<string, unknown> {
+  const id = bookmarkId(value.id)
+  const path = value.path
+  if (!id || typeof path !== 'string' || !POINTS_AT_AN_ENTRY.has(String(value.kind))) return value
+  const entry = tree.entry(id)
+  if (!entry || entry.deleted) return value
+  const cut = value.kind === 'block' ? path.indexOf('#') : -1
+  const file = cut === -1 ? path : path.slice(0, cut)
+  const now = tree.pathOf(id)
+  return now === file ? value : { ...value, path: now + path.slice(file.length) }
+}
+
 /** The v1 columns a set of entries says, each through its own reader, so what a v1 app
  *  is handed is exactly what its own write would have kept. */
 function projected(entries: readonly Kept[], tree: Tree): Record<string, string> {
@@ -139,6 +158,7 @@ function projected(entries: readonly Kept[], tree: Tree): Record<string, string>
     .map((one) => one.value as Record<string, unknown>)
     .sort((a, b) => Number(a.at) - Number(b.at))
     .map(unplaced)
+    .map((one) => locatedBookmark(tree, one))
 
   const icons: Record<string, string> = {}
   const tints: Record<string, string> = {}
@@ -358,9 +378,21 @@ function entriesFromV1(map: MapName, value: unknown, tree: Tree, mine: readonly 
       // entry says is that entry, and keeps its key; the rest are new.
       const left = [...mine]
       return (Array.isArray(value) ? value : []).map((bookmark: unknown, index) => {
-        const same = left.findIndex((one) => sameBookmark(one.value, bookmark))
-        const key = same >= 0 ? (left.splice(same, 1)[0]?.key ?? newId()) : newId()
-        return { map, key, value: { ...(bookmark as object), at: index + 1 } }
+        // Against the kept entry where its id now puts it, which is what the v1 app was
+        // handed: the entry's own path is the one it was written with.
+        const same = left.findIndex((one) =>
+          sameBookmark(
+            isRecord(one.value) ? locatedBookmark(tree, one.value) : one.value,
+            bookmark,
+          ),
+        )
+        const was = same >= 0 ? left.splice(same, 1)[0] : undefined
+        const key = was?.key ?? newId()
+        // A v1 app reads no id and writes none back, so the one the entry had stays.
+        const kept = isRecord(was?.value) ? bookmarkId(was.value.id) : null
+        const sent = isRecord(bookmark) ? bookmark : {}
+        const id = bookmarkId(sent.id) ?? kept
+        return { map, key, value: { ...sent, ...(id ? { id } : {}), at: index + 1 } }
       })
     }
     case 'icon': {
@@ -430,7 +462,11 @@ export async function backfillMaps(env: Env, spaceId: string): Promise<void> {
  *  folder renamed on a v2 device keeps its icon and its order on a v1 one too. */
 export async function reproject(env: Env, spaceId: string): Promise<void> {
   const kept = await keptIn(env, spaceId)
-  if (!kept.some((one) => one.map === 'icon' || one.map === 'order')) return
+  const byTree = (one: Kept) =>
+    one.map === 'icon' ||
+    one.map === 'order' ||
+    (one.map === 'bookmark' && isRecord(one.value) && bookmarkId(one.value.id) !== null)
+  if (!kept.some(byTree)) return
   const columns = projected(kept, await readTree(env, spaceId))
   if (!fitting(columns)) return
   await env.DB.batch(writing(env, spaceId, [], columns, '', 0))

@@ -30,6 +30,7 @@ import type { Joined, Waiting } from './sync/pass'
 import { record } from './sync/record.svelte'
 import type { Folded } from './sync/web-copies'
 import { workspace } from './workspace.svelte'
+import { sayEntryIds } from './workspace/entry-ids'
 import type { FileOp } from './workspace/file-ops'
 import { samePath } from './space-paths'
 
@@ -599,6 +600,18 @@ class Sync {
     return null
   }
 
+  /** Sync v2's id for what is at a path in a space, relative to its root, and where an
+   *  id is now: what a bookmark is found by (#1068). V1's ids are of notes only, and
+   *  not the ones the account keys a space's tree by, so they are not said. */
+  entryIdAt(root: string, path: string): string | null {
+    return V2 ? (this.v2?.tracked(joinPath(root, path))?.id ?? null) : null
+  }
+
+  entryPathOf(root: string, id: string): string | null {
+    const file = V2 ? this.v2?.fileOf(id) : null
+    return file ? within(root, file) : null
+  }
+
   tracked(path: string): { id: string; version: number; hash: string } | null {
     if (V2 && this.v2) return this.v2.tracked(path)
     for (const mirror of Object.values(this.mirrors)) {
@@ -1073,3 +1086,8 @@ record.notes = {
   of: (path) => sync.tracked(path)?.id ?? null,
   moved: (from, to) => sync.moved(from, to),
 }
+// A bookmark keeps the id of what it points at, and is found by it; see bookmarks.svelte.ts.
+sayEntryIds({
+  idOf: (root, path) => sync.entryIdAt(root, path),
+  pathOf: (root, id) => sync.entryPathOf(root, id),
+})
