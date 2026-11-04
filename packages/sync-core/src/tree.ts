@@ -58,6 +58,12 @@ export interface TreeEntry {
   /** The cursor of the delete that took it, so a folder restored brings back what
    *  was deleted with it and nothing that was deleted before. */
   deletedIn?: number
+  /** Where its latest change was to its words: the cursor and the device of the change
+   *  before them that was to its place - made, renamed, moved, deleted or restored - so a
+   *  folder delete can tell who put it where it is from who wrote in it last (#1068).
+   *  Nothing where its latest change was to its place, which `seq` and `by` then say. */
+  placedSeq?: number
+  placedBy?: string
 }
 
 export interface TreeState {
@@ -168,10 +174,16 @@ function holds(state: TreeState, ancestor: string, id: string | null): boolean {
  *  the folder deleted next, from the same device that never saw the note in it, took the
  *  note and its words (#514). */
 function changed(state: TreeState, entry: TreeEntry, device: string | undefined, seen?: number) {
+  // Its place as its placer left it: words written in since do not make their writer the
+  // one whose move this device had seen (#1068).
+  const place = placing(entry)
   const unseen =
-    seen !== undefined && entry.seq > seen && entry.by !== undefined && entry.by !== device
+    seen !== undefined && place.seq > seen && place.by !== undefined && place.by !== device
   entry.seq = tick(state)
-  if (unseen) return
+  if (unseen) {
+    if (place.by !== undefined) entry.by = place.by
+    return
+  }
   if (device === undefined) delete entry.by
   else entry.by = device
 }
@@ -241,11 +253,25 @@ function writtenSince(entry: TreeEntry, seen: number, device: string | undefined
   return entry.docSeq > seen && byOther(entry.docBy)
 }
 
+/** The latest change to an entry's place: its cursor and its device. The entry's own
+ *  `seq` and `by` where that was its latest change of any sort, and what was kept of it
+ *  when words were written in since (`placedSeq`). An entry from before that was kept
+ *  answers as it always did. */
+function placing(entry: TreeEntry): { seq: number; by: string | undefined } {
+  const wordsLast = entry.seq === entry.docSeq && entry.placedSeq !== undefined
+  return wordsLast
+    ? { seq: entry.placedSeq ?? entry.seq, by: entry.placedBy }
+    : { seq: entry.seq, by: entry.by }
+}
+
 /** Whether a delete of the folder around an entry has to leave it: something about it
- *  changed after `seen`, by another device. */
+ *  changed after `seen`, by another device. Its place as its placer left it, and its
+ *  words as their writer did: a device that wrote in a note somebody else moved into the
+ *  folder had still never seen it there, and its folder delete leaves it (#1068). */
 function changedSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
-  const byOther = device === undefined || entry.by !== device
-  return (entry.seq > seen && byOther) || writtenSince(entry, seen, device)
+  const place = placing(entry)
+  const byOther = device === undefined || place.by !== device
+  return (place.seq > seen && byOther) || writtenSince(entry, seen, device)
 }
 
 /** Whether a delete of the entry itself has to leave it: another device wrote in it,
@@ -253,8 +279,9 @@ function changedSince(entry: TreeEntry, seen: number, device: string | undefined
  *  the account's own bookkeeping - folders it made from paths when the space moved to
  *  v2 - is nobody's word against a delete. */
 function othersSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
-  const byOther = entry.by !== undefined && (device === undefined || entry.by !== device)
-  return (entry.seq > seen && byOther) || writtenSince(entry, seen, device)
+  const place = placing(entry)
+  const byOther = place.by !== undefined && (device === undefined || place.by !== device)
+  return (place.seq > seen && byOther) || writtenSince(entry, seen, device)
 }
 
 /** The rules, with one op's device in hand. */
@@ -459,6 +486,12 @@ export function contentChanged(state: TreeState, id: string, device?: string): n
   if (entry.deleted) {
     reviveAbove(state, entry.parent, device)
     revive(state, entry, device)
+  }
+  // Who last put it where it is, kept before the words make their writer its last changer.
+  if (entry.seq !== entry.docSeq || entry.placedSeq === undefined) {
+    entry.placedSeq = entry.seq
+    if (entry.by === undefined) delete entry.placedBy
+    else entry.placedBy = entry.by
   }
   changed(state, entry, device)
   entry.docSeq = entry.seq

@@ -47,6 +47,12 @@ the same tree. An operation carries its own id, so one that arrives twice is app
 | delete and restore | The restore brings the entry back under its id, with its folders. A restore of something already back still counts as that person's change, so a delete that had not seen it leaves the entry. |
 | two creates of the day's note | One note, both texts merged (docs/sync-v2.md 5.9). |
 
+Who last put an entry where it is and who last wrote in it are two things the account
+keeps apart (`placed_seq` and `placed_by` on a note, 0068). Writing in a note makes its
+writer the last to change it, but not the one who put it in its folder: a device that
+wrote in a note somebody else had moved into a folder, never having seen it there, has
+still not seen it there, and its delete of the folder leaves it.
+
 A delete is a fact, not an absence: the account keeps the entry with a tombstone and the
 cursor it was deleted at, so a device that comes back after a week does not send up the
 entry it still holds as though it were new. Deleted entries go to Recently deleted, where
@@ -75,12 +81,6 @@ and with the app's own sync engine as every device (`apps/desktop/src/lib/sync2/
 What the tree walks found when they were first run, each pinned as an expected failure
 until the step of #1068 that removes it lands:
 
-- **A folder delete takes a note its device wrote in but never saw there.** A note
-  another device moved into a folder, written in by a device that never heard of the move,
-  goes with the folder when that device deletes it: a content change makes the writing
-  device the entry's last changer, so the folder delete reads the note as its own. The
-  account has to keep who last placed an entry apart from who last wrote in it (reference
-  seed 632).
 - **A restore from this device's trash makes a new note.** The trash puts the files back
   on the disk and the engine hears them as files made, so the note comes back under a new
   id, beside its own tombstone. Restoring has to be an operation on the id.

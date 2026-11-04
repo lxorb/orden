@@ -29,12 +29,9 @@ describe('the tree, walked at random on five devices', () => {
   )
 
   /** A note another device moved into a folder, which this device then wrote in without
-   *  ever having seen it there, is taken with the folder when this device deletes it, words
-   *  and all: a content change makes the writing device the entry's last changer, so the
-   *  folder delete reads the note as its own to take. The rule (`changedSince` in
-   *  src/tree.ts) needs the device that last placed an entry apart from the one that last
-   *  wrote in it, which is a column of the account's; a step of #1068 of its own. */
-  test.fails('seed 632 loses no words to a folder delete', async () => {
+   *  ever having seen it there, was taken with the folder when this device deleted it,
+   *  words and all: its writing had made it the note's last changer (#1068). */
+  test('seed 632 loses no words to a folder delete', async () => {
     expect((await simulate({ seed: 632, devices: 5, steps: 80, mix: 'tree' })).failures).toEqual([])
   })
 })

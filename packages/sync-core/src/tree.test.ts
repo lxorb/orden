@@ -240,6 +240,33 @@ describe('tree', () => {
     expect(live(state, 'n')).toBe(true)
   })
 
+  /** #1068, the reference walk's seed 632: the folder delete of a device that wrote in a
+   *  note another device had moved into the folder, and renamed it, never having seen it
+   *  there, took the note and its words. Writing in it made that device its last changer. */
+  test('a folder delete leaves a note its device wrote in but never saw there', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    create(state, 'n', 'Plan.md')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'move', id: 'n', parent: 'f', seen }, PHONE)
+    contentChanged(state, 'n', OWNER.device)
+    applyOp(state, { op: opId(), t: 'rename', id: 'n', name: 'Plan 1.md', seen }, OWNER)
+
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'f', seen }, OWNER)).toMatchObject({
+      refused: 'edited',
+    })
+    expect([live(state, 'f'), live(state, 'n')]).toEqual([true, true])
+  })
+
+  test('and its own writing in a note it placed itself never stands against its delete', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    create(state, 'n', 'Plan.md', 'f')
+    contentChanged(state, 'n', OWNER.device)
+    applyOp(state, { op: opId(), t: 'delete', id: 'f', seen: state.cursor - 1 }, OWNER)
+    expect([live(state, 'f'), live(state, 'n')]).toEqual([false, false])
+  })
+
   test('the account’s own bookkeeping is nobody’s word against a delete', () => {
     // A folder made from paths when the space moved to v2 has no device behind it.
     const state = treeState([

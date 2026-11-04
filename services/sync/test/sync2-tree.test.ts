@@ -326,6 +326,26 @@ describe('tree operations', () => {
     expect(folders()[0]?.deleted).toBe(0)
   })
 
+  /** #1068: who last put a note where it is is kept apart from who last wrote in it, so a
+   *  device that wrote in a note somebody else had moved into a folder, never having seen
+   *  it there, does not take it, words and all, with the folder. */
+  test('leave a note in a deleted folder that another device moved in, though this one wrote in it', async () => {
+    const id = await made('Plan.md', 'first\n')
+    const { cursor } = await ops([op('mkdir', { id: 'f', parent: null, name: 'Folder' })])
+    await one(op('move', { id, parent: 'f' }, cursor), other)
+
+    const put = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'first\nmine\n', baseVersion: row(id).version },
+    })
+    expect(put.status, put.text).toBe(200)
+
+    expect(await one(op('delete', { id: 'f' }, cursor))).toMatchObject({ refused: 'edited' })
+    expect(row(id).deleted).toBe(0)
+    expect(folders()[0]?.deleted).toBe(0)
+  })
+
   test('keep the path of five hundred notes current when their folder is renamed', async () => {
     const creates = Array.from({ length: 500 }, (_, at) =>
       op('create', {
