@@ -14,7 +14,13 @@ pkgdesc="Lightweight markdown editor with realtime inline preview (latest main)"
 arch=('x86_64' 'aarch64')
 url="https://orden.so"
 license=('AGPL-3.0-only')
-depends=('gtk3' 'webkit2gtk-4.1' 'hicolor-icon-theme')
+# Orden on CEF (Chromium), as every release's .deb is: the recipe built WebKitGTK's
+# Orden until #427, the engine whose web process aborted against a newer system's
+# libraries. The .deb carries the engine itself in /usr/share/Orden; what is named here
+# is what Chromium and its GTK 4 windows link from the system, as in nib-bin.
+depends=('gtk4>=4.14' 'nss' 'nspr' 'alsa-lib' 'libcups' 'at-spi2-core' 'libdrm' 'mesa'
+         'libxkbcommon' 'libxcomposite' 'libxdamage' 'libxrandr' 'libxfixes' 'pango'
+         'cairo' 'dbus' 'expat' 'hicolor-icon-theme')
 makedepends=('git' 'cargo' 'nodejs>=24' 'pnpm')
 optdepends=('pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
             'xdg-utils: open links and attachments in the desktop default application')
@@ -39,7 +45,9 @@ prepare() {
 
 build() {
   cd orden
-  pnpm --filter @orden/desktop exec tauri build --bundles deb \
+  # Linux's manifest, on CEF, and the Tauri CLI at its pin, as release.yml builds it;
+  # see scripts/linux-cef.sh.
+  bash scripts/linux-cef.sh tauri build --bundles deb \
     --config '{"bundle":{"createUpdaterArtifacts":false}}'
 }
 
