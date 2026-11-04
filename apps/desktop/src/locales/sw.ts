@@ -576,11 +576,6 @@ export const sw: Dictionary = {
   'Show other tabs as icons': 'Onyesha vichupo vingine kama aikoni',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kila kichupo isipokuwa cha mbele kinaonyesha aikoni yake tu; ukielekeza kimoja, jina lake linaonekana.',
-  'Window corners': 'Pembe za dirisha',
-  Rounded: 'Mviringo',
-  Square: 'Mraba',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Mviringo huelea kilichofunguliwa ndani ya kadi ndani ya dirisha; Mraba hukiweka sawa na kingo.',
   'Tab preview delay': 'Muda wa kusubiri onyesho la kichupo',
   'How long the pointer rests on a tab before its preview shows.':
     'Muda ambao kiashiria hukaa kwenye kichupo kabla onyesho lake halijaonekana.',

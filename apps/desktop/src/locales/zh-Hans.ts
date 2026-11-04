@@ -568,11 +568,6 @@ export const zhHans: Dictionary = {
   'Show other tabs as icons': '其他标签页只显示图标',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的标签页外，每个标签页只显示图标；指向某个标签页时会显示其名称。',
-  'Window corners': '窗口圆角',
-  Rounded: '圆角',
-  Square: '直角',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    '圆角让打开的内容浮在窗口内的卡片中；直角让它贴边。',
   'Tab preview delay': '标签页预览延迟',
   'How long the pointer rests on a tab before its preview shows.':
     '指针在标签页上停留多久后显示预览。',

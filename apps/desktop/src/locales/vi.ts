@@ -568,11 +568,6 @@ export const vi: Dictionary = {
   'Show other tabs as icons': 'Hiện các thẻ khác dưới dạng biểu tượng',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Mọi thẻ trừ thẻ ở phía trước chỉ hiện biểu tượng; trỏ vào một thẻ sẽ thấy tên của nó.',
-  'Window corners': 'Góc cửa sổ',
-  Rounded: 'Bo tròn',
-  Square: 'Vuông',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Bo tròn đặt nội dung đang mở nổi trong một thẻ bên trong cửa sổ; Vuông giữ nó sát mép.',
   'Tab preview delay': 'Độ trễ xem trước thẻ',
   'How long the pointer rests on a tab before its preview shows.':
     'Thời gian con trỏ dừng trên một thẻ trước khi bản xem trước hiện ra.',

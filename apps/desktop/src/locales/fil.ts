@@ -577,11 +577,6 @@ export const fil: Dictionary = {
   'Show other tabs as icons': 'Ipakita ang ibang tab bilang icon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Bawat tab maliban sa nasa harap ay icon lang ang ipinapakita; kapag tinuro ang isa, lalabas ang pangalan nito.',
-  'Window corners': 'Mga sulok ng window',
-  Rounded: 'Bilugan',
-  Square: 'Parisukat',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Pinalulutang ng Bilugan ang nakabukas sa isang card sa loob ng window; pinananatili itong pantay ng Parisukat.',
   'Tab preview delay': 'Antala ng preview ng tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Gaano katagal nakapatong ang pointer sa tab bago lumabas ang preview nito.',

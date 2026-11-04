@@ -299,7 +299,7 @@ export async function chooseTab(tab: string): Promise<void> {
 }
 
 /** The corner of the card a page fills, in the window's own pixels: the frame's token
- *  where the panes are (#1088), which Square and full screen make nothing. The page's own
+ *  where the panes are (#1088), which full screen makes nothing. The page's own
  *  bottom corners take it, so it stands in the card rather than out of its corners. */
 export function cardCorner(): number {
   if (typeof document === 'undefined') return 0

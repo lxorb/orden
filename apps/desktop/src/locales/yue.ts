@@ -568,11 +568,6 @@ export const yue: Dictionary = {
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除咗前面嗰個，每個分頁淨係顯示圖示；指住其中一個就會見到佢個名。',
-  'Window corners': '視窗角',
-  Rounded: '圓角',
-  Square: '方角',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    '圓角會將打開咗嘅內容放喺視窗入面一張浮起嘅卡度；方角就貼住邊。',
   'Tab preview delay': '分頁預覽延遲',
   'How long the pointer rests on a tab before its preview shows.':
     '指標喺分頁上面停幾耐先會顯示預覽。',

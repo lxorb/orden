@@ -1485,7 +1485,7 @@ engines say nothing, and what each one does there is said with it.
 - **The card's corners.** What is open stands in a card with rounded corners (Window
   corners, #1088), and a page fills its card to the bottom, so its own two bottom corners
   are the card's: the window says the card's corner with every placement (`cardCorner`,
-  the frame's `--card-radius` where the panes are, nothing for Square and full screen),
+  the frame's `--card-radius` where the panes are, nothing in full screen),
   and `web_cut.rs` gives the page that corner in the shape it already cuts layers out of
   - a region on `WebView2`, the X server's shape on CEF - and on a Mac the page's own
   layer, rounded at the bottom. `scripts/corner-drive.py` photographs it.

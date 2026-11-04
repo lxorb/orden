@@ -568,11 +568,6 @@ export const ko: Dictionary = {
   'Show other tabs as icons': '다른 탭을 아이콘으로 보기',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '앞에 있는 탭을 빼고 모든 탭이 아이콘만 보여 주며, 가리키면 이름이 나타납니다.',
-  'Window corners': '창 모서리',
-  Rounded: '둥글게',
-  Square: '각지게',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    '둥글게는 열린 내용을 창 안의 카드에 띄웁니다. 각지게는 가장자리에 붙여 둡니다.',
   'Tab preview delay': '탭 미리보기 지연',
   'How long the pointer rests on a tab before its preview shows.':
     '미리보기가 나타나기 전에 포인터가 탭 위에 머무는 시간입니다.',

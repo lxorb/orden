@@ -572,11 +572,6 @@ export const tr: Dictionary = {
   'Show other tabs as icons': 'Diğer sekmeleri simge olarak göster',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Öndeki dışındaki her sekme yalnızca simgesini gösterir; birinin üzerine gelince adı görünür.',
-  'Window corners': 'Pencere köşeleri',
-  Rounded: 'Yuvarlak',
-  Square: 'Köşeli',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Yuvarlak, açık olanı pencerenin içinde bir kartta yüzdürür; Köşeli onu kenarlara bitişik tutar.',
   'Tab preview delay': 'Sekme önizleme gecikmesi',
   'How long the pointer rests on a tab before its preview shows.':
     'Önizleme görünmeden önce işaretçinin sekme üzerinde ne kadar durduğu.',

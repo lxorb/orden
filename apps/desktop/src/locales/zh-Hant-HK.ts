@@ -568,11 +568,6 @@ export const zhHantHK: Dictionary = {
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的分頁外，每個分頁只顯示圖示；指向某個分頁時會顯示其名稱。',
-  'Window corners': '視窗角',
-  Rounded: '圓角',
-  Square: '直角',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    '圓角讓開啟的內容浮在視窗內的卡片中；直角讓它貼邊。',
   'Tab preview delay': '分頁預覽延遲',
   'How long the pointer rests on a tab before its preview shows.':
     '指標在分頁上停留多久後顯示預覽。',

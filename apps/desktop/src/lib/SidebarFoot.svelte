@@ -211,8 +211,8 @@
 <style>
   /* The same height as the head at the other end of the panel. Set apart by the
      chrome's own seam (#1105): none where the window is one rounded surface (#1088),
-     which has no hard cuts, and the hairline it always had where it is Square. The
-     row's height keeps it a row of its own either way. */
+     which has no hard cuts, and a hairline where the window is flush (`flush` in
+     App.svelte). The row's height keeps it a row of its own either way. */
   .foot {
     position: relative;
     flex: none;

@@ -569,11 +569,6 @@ export const ms: Dictionary = {
   'Show other tabs as icons': 'Tunjukkan tab lain sebagai ikon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Setiap tab kecuali yang di hadapan hanya menunjukkan ikonnya; tuding pada satu untuk melihat namanya.',
-  'Window corners': 'Sudut tetingkap',
-  Rounded: 'Bulat',
-  Square: 'Segi empat',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Bulat mengapungkan yang dibuka dalam kad di dalam tetingkap; Segi empat mengekalkannya rata.',
   'Tab preview delay': 'Lengah pratonton tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Berapa lama penuding berada pada tab sebelum pratontonnya muncul.',

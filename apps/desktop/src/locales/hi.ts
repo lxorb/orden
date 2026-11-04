@@ -572,11 +572,6 @@ export const hi: Dictionary = {
   'Show other tabs as icons': 'बाकी टैब आइकन के रूप में दिखाएँ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'सामने वाले को छोड़ हर टैब सिर्फ़ अपना आइकन दिखाता है; किसी पर पॉइंटर ले जाने पर उसका नाम दिखता है।',
-  'Window corners': 'विंडो के कोने',
-  Rounded: 'गोल',
-  Square: 'चौकोर',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'गोल खुली चीज़ को विंडो के अंदर एक कार्ड में तैराता है; चौकोर उसे किनारों से सटा रखता है।',
   'Tab preview delay': 'टैब पूर्वावलोकन की देरी',
   'How long the pointer rests on a tab before its preview shows.':
     'पूर्वावलोकन दिखने से पहले पॉइंटर टैब पर कितनी देर रुकता है।',

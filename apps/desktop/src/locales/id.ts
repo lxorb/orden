@@ -568,11 +568,6 @@ export const id: Dictionary = {
   'Show other tabs as icons': 'Tampilkan tab lain sebagai ikon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Setiap tab kecuali yang di depan hanya menampilkan ikonnya; arahkan ke salah satunya untuk melihat namanya.',
-  'Window corners': 'Sudut jendela',
-  Rounded: 'Membulat',
-  Square: 'Persegi',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Membulat mengapungkan yang terbuka dalam kartu di dalam jendela; Persegi membuatnya rata.',
   'Tab preview delay': 'Jeda pratinjau tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Berapa lama penunjuk berada di atas tab sebelum pratinjaunya muncul.',

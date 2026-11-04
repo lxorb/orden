@@ -199,8 +199,6 @@ describe('the Appearance pane', () => {
       'Style',
       'Mode',
       'Accent',
-      // The window's frame, beside the theme (#1088; corners.ts).
-      'Window corners',
     ])
   })
 

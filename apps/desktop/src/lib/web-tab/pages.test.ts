@@ -1064,7 +1064,7 @@ describe('what a page asking for a window says', () => {
 
 /** #1088: a page fills the bottom of a rounded card, so each placement says the card's
  *  corner, as the frame's token has it where the panes are, for the page's own two bottom
- *  corners; Square and full screen make it nothing. */
+ *  corners; full screen makes it nothing. */
 describe("the card's corner a page is placed with", () => {
   /** A window whose panes stand in a card with corners `radius` across, as the frame's
    *  token says; only the two names `cardCorner` reads, set and taken away again. */

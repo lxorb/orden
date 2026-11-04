@@ -20,15 +20,6 @@
     "default": "",
     "description": "The face notes are written in; any font installed here, by its name."
   },
-  "appearance.corners": {
-    "type": "string",
-    "enum": [
-      "rounded",
-      "square"
-    ],
-    "default": "rounded",
-    "description": "Rounded floats what is open in a card inside the window; Square keeps it flush."
-  },
   "appearance.essentials": {
     "type": "string",
     "enum": [

@@ -571,11 +571,6 @@ export const ur: Dictionary = {
   'Show other tabs as icons': 'دوسرے ٹیب آئیکن کے طور پر دکھائیں',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'سامنے والے کے سوا ہر ٹیب صرف اپنا آئیکن دکھاتا ہے؛ کسی پر پوائنٹر لے جائیں تو اس کا نام دکھتا ہے۔',
-  'Window corners': 'ونڈو کے کونے',
-  Rounded: 'گول',
-  Square: 'چوکور',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'گول کھلی چیز کو ونڈو کے اندر ایک کارڈ میں تیراتا ہے؛ چوکور اسے کناروں سے لگا رکھتا ہے۔',
   'Tab preview delay': 'ٹیب پیش نظارہ کی تاخیر',
   'How long the pointer rests on a tab before its preview shows.':
     'پیش نظارہ دکھنے سے پہلے پوائنٹر ٹیب پر کتنی دیر رکتا ہے۔',

@@ -571,11 +571,6 @@ export const ps: Dictionary = {
   'Show other tabs as icons': 'نور ټبونه د نښو په توګه ښکاره کړئ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'له مخکني پرته هر ټب یوازې خپله نښه ښيي؛ کله چې یو ته اشاره وکړئ، نوم یې ښکاره کېږي.',
-  'Window corners': 'د کړکۍ کونجونه',
-  Rounded: 'ګرد',
-  Square: 'مربع',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'ګرد پرانیستي شی د کړکۍ دننه په یوه کارت کې لامبو ورکوي؛ مربع یې له څنډو سره نښتی ساتي.',
   'Tab preview delay': 'د ټب د مخکتنې ځنډ',
   'How long the pointer rests on a tab before its preview shows.':
     'څومره وخت چې اشاره ګر په ټب پاتې کیږي مخکې له دې چې مخکتنه یې ښکاره شي.',

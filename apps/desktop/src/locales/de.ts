@@ -576,11 +576,6 @@ export const de: Dictionary = {
   'Show other tabs as icons': 'Andere Tabs als Symbole zeigen',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jeder Tab außer dem vorderen zeigt nur sein Symbol; zeigst du auf einen, erscheint sein Name.',
-  'Window corners': 'Fensterecken',
-  Rounded: 'Abgerundet',
-  Square: 'Eckig',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Abgerundet lässt das Geöffnete als Karte im Fenster schweben; Eckig hält es bündig.',
   'Tab preview delay': 'Verzögerung der Tab-Vorschau',
   'How long the pointer rests on a tab before its preview shows.':
     'Wie lange der Zeiger auf einem Tab ruht, bevor seine Vorschau erscheint.',

@@ -594,11 +594,6 @@ export const pl: Dictionary = {
   'Show other tabs as icons': 'Pokazuj pozostałe karty jako ikony',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Każda karta poza tą na wierzchu pokazuje tylko ikonę; po wskazaniu pokazuje swoją nazwę.',
-  'Window corners': 'Narożniki okna',
-  Rounded: 'Zaokrąglone',
-  Square: 'Kwadratowe',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Zaokrąglone sprawiają, że otwarta treść unosi się w karcie wewnątrz okna; Kwadratowe trzymają ją przy krawędziach.',
   'Tab preview delay': 'Opóźnienie podglądu karty',
   'How long the pointer rests on a tab before its preview shows.':
     'Jak długo wskaźnik spoczywa na karcie, zanim pojawi się jej podgląd.',

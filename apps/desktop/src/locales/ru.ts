@@ -594,11 +594,6 @@ export const ru: Dictionary = {
   'Show other tabs as icons': 'Показывать остальные вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Все вкладки, кроме передней, показывают только значок; при наведении появляется название.',
-  'Window corners': 'Углы окна',
-  Rounded: 'Скруглённые',
-  Square: 'Прямые',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Скруглённые помещают открытое в карточку внутри окна; прямые оставляют его вровень с краями.',
   'Tab preview delay': 'Задержка превью вкладки',
   'How long the pointer rests on a tab before its preview shows.':
     'Сколько указатель должен пробыть на вкладке, прежде чем появится её превью.',

@@ -582,11 +582,6 @@ export const es: Dictionary = {
   'Show other tabs as icons': 'Mostrar las demás pestañas como iconos',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada pestaña salvo la del frente muestra solo su icono; al señalar una, muestra su nombre.',
-  'Window corners': 'Esquinas de la ventana',
-  Rounded: 'Redondeadas',
-  Square: 'Cuadradas',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Redondeadas hace flotar lo abierto en una tarjeta dentro de la ventana; Cuadradas lo deja a ras.',
   'Tab preview delay': 'Retraso de la vista previa de pestañas',
   'How long the pointer rests on a tab before its preview shows.':
     'Cuánto descansa el puntero sobre una pestaña antes de que aparezca su vista previa.',

@@ -578,11 +578,6 @@ export const ml: Dictionary = {
   'Show other tabs as icons': 'മറ്റ് ടാബുകൾ ഐക്കണുകളായി കാണിക്കുക',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'മുന്നിലുള്ളതൊഴികെ ഓരോ ടാബും ഐക്കൺ മാത്രം കാണിക്കുന്നു; ഒന്നിലേക്ക് ചൂണ്ടുമ്പോൾ പേര് കാണാം.',
-  'Window corners': 'ജാലകത്തിന്റെ മൂലകൾ',
-  Rounded: 'വളഞ്ഞത്',
-  Square: 'ചതുരം',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'വളഞ്ഞത് തുറന്നിരിക്കുന്നതിനെ ജാലകത്തിനുള്ളിലെ കാർഡിൽ ഒഴുക്കുന്നു; ചതുരം അതിനെ അരികിനോട് ചേർത്തു നിർത്തുന്നു.',
   'Tab preview delay': 'ടാബ് പ്രിവ്യൂ കാലതാമസം',
   'How long the pointer rests on a tab before its preview shows.':
     'പ്രിവ്യൂ കാണിക്കുന്നതിന് മുമ്പ് പോയിന്റർ ടാബിൽ എത്ര നേരം നിൽക്കണം.',

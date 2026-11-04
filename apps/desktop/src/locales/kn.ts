@@ -576,11 +576,6 @@ export const kn: Dictionary = {
   'Show other tabs as icons': 'ಇತರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಐಕಾನ್‌ಗಳಾಗಿ ತೋರಿಸಿ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ಮುಂದಿನದನ್ನು ಬಿಟ್ಟು ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್ ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ; ಒಂದರ ಮೇಲೆ ಪಾಯಿಂಟರ್ ಇಟ್ಟರೆ ಹೆಸರು ಕಾಣುತ್ತದೆ.',
-  'Window corners': 'ವಿಂಡೋ ಮೂಲೆಗಳು',
-  Rounded: 'ದುಂಡಾದ',
-  Square: 'ಚೌಕ',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'ದುಂಡಾದವು ತೆರೆದಿರುವುದನ್ನು ವಿಂಡೋ ಒಳಗಿನ ಕಾರ್ಡ್‌ನಲ್ಲಿ ತೇಲಿಸುತ್ತದೆ; ಚೌಕವು ಅದನ್ನು ಅಂಚಿಗೆ ತಾಗಿಸಿ ಇಡುತ್ತದೆ.',
   'Tab preview delay': 'ಟ್ಯಾಬ್ ಮುನ್ನೋಟದ ವಿಳಂಬ',
   'How long the pointer rests on a tab before its preview shows.':
     'ಮುನ್ನೋಟ ತೋರುವ ಮೊದಲು ಪಾಯಿಂಟರ್ ಟ್ಯಾಬ್ ಮೇಲೆ ಎಷ್ಟು ಹೊತ್ತು ಇರಬೇಕು.',

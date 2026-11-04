@@ -576,11 +576,6 @@ export const ha: Dictionary = {
   'Show other tabs as icons': 'Nuna sauran shafuka a matsayin gumaka',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kowane shafi banda na gaba yana nuna gumakinsa kawai; idan ka nuna ɗaya, sunansa zai bayyana.',
-  'Window corners': 'Kusurwoyin taga',
-  Rounded: 'Mai zagaye',
-  Square: 'Mai murabba’i',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Mai zagaye yana sa abin da aka buɗe ya yi shawagi a cikin kati a cikin taga; Mai murabba’i yana barin shi a gefe.',
   'Tab preview delay': 'Jinkirin samfoti na shafi',
   'How long the pointer rests on a tab before its preview shows.':
     'Tsawon lokacin da mai nuni zai tsaya a kan shafi kafin samfotinsa ya bayyana.',

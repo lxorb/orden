@@ -583,11 +583,6 @@ export const fr: Dictionary = {
   'Show other tabs as icons': 'Afficher les autres onglets en icônes',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Chaque onglet sauf celui au premier plan n’affiche que son icône ; en le pointant, son nom apparaît.',
-  'Window corners': 'Coins de la fenêtre',
-  Rounded: 'Arrondis',
-  Square: 'Carrés',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Arrondis fait flotter le contenu ouvert dans une carte à l’intérieur de la fenêtre ; Carrés le garde collé aux bords.',
   'Tab preview delay': 'Délai de l’aperçu des onglets',
   'How long the pointer rests on a tab before its preview shows.':
     'Le temps pendant lequel le pointeur reste sur un onglet avant que son aperçu apparaisse.',

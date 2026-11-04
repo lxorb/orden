@@ -572,11 +572,6 @@ export const gsw: Dictionary = {
   'Show other tabs as icons': 'Anderi Tabs als Symbol zeige',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jede Tab usser em vordere zeigt nur sis Symbol; wenn du druf zeigsch, chunnt sin Name.',
-  'Window corners': 'Fänschterecke',
-  Rounded: 'Abgrundet',
-  Square: 'Eggig',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Abgrundet lot s Offeni als Charte im Fänschter schwebe; Eggig hebts bündig.',
   'Tab preview delay': 'Verzögerig vo de Tab-Vorschau',
   'How long the pointer rests on a tab before its preview shows.':
     'Wie lang de Zeiger uf eme Tab ruet, bevor sini Vorschau chunnt.',

@@ -569,11 +569,6 @@ export const am: Dictionary = {
   'Show other tabs as icons': 'ሌሎች ትሮችን እንደ አዶ አሳይ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ከፊት ካለው በስተቀር እያንዳንዱ ትር አዶውን ብቻ ያሳያል፤ ወደ አንዱ ሲጠቁሙ ስሙን ያሳያል።',
-  'Window corners': 'የመስኮት ማዕዘኖች',
-  Rounded: 'የተጠጋጋ',
-  Square: 'ካሬ',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'የተጠጋጋ የተከፈተውን በመስኮቱ ውስጥ ባለ ካርድ ላይ ያንሳፍፋል፤ ካሬ ጠርዝ ላይ ያቆየዋል።',
   'Tab preview delay': 'የትር ቅድመ እይታ መዘግየት',
   'How long the pointer rests on a tab before its preview shows.':
     'ቅድመ እይታው ከመታየቱ በፊት ጠቋሚው በትሩ ላይ የሚያርፍበት ጊዜ።',

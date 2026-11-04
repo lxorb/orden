@@ -1,33 +1,33 @@
 import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
-import { cornersSetting, cornerTokens, DEFAULT_CORNERS } from './corners'
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
 
-test('both choices write the same tokens, so switching leaves nothing of the other behind', () => {
-  expect(Object.keys(cornerTokens('square')).sort()).toEqual(
-    Object.keys(cornerTokens('rounded')).sort(),
-  )
-  expect(cornerTokens('nonsense')).toEqual(cornerTokens(DEFAULT_CORNERS))
-  expect(cornersSetting().paint('square', 'dark')).toEqual(cornerTokens('square'))
-})
+/** The window's frame is the one look since #1102: a rounded card a few pixels in from
+ *  the chrome, the chrome one surface round it. tokens.css says it, and nothing writes
+ *  another; full screen and a touch screen alone are flush (App.svelte). */
+const ROUNDED: Record<string, string> = {
+  '--card-radius': '10px',
+  '--card-inset': '6px',
+  '--card-gap': '6px',
+  '--card-edge': 'var(--line)',
+  '--card-shadow': '0 1px 3px rgb(0 0 0 / 0.12)',
+  '--chrome-ground': 'var(--tab-frame)',
+  '--chrome-seam': 'transparent',
+  '--side-ground': 'transparent',
+  '--strip-line': 'transparent',
+}
 
-test('Square is the window as it was: flush, square, divided by lines', () => {
-  const square = cornerTokens('square')
-  expect(square['--card-radius']).toBe('0px')
-  expect(square['--card-inset']).toBe('0px')
-  expect(square['--card-gap']).toBe('1px')
-  expect(square['--chrome-seam']).toBe('var(--line)')
-  // The theme's own sidebar ground and strip line, by leaving them unset.
-  expect(square['--side-ground']).toBe('initial')
-  expect(square['--strip-line']).toBe('initial')
-})
-
-test('the stylesheet starts where Rounded does, before the setting is read', () => {
+test('the stylesheet is the rounded frame, the only one', () => {
   const sheet = read('../../../../packages/themes/src/tokens.css')
-  for (const [token, value] of Object.entries(cornerTokens('rounded'))) {
+  for (const [token, value] of Object.entries(ROUNDED)) {
     expect(sheet, token).toContain(`${token}: ${value};`)
   }
+})
+
+test('nothing offers another frame: no setting, no file of its choices', () => {
+  expect(read('./theme.svelte.ts')).not.toMatch(/cornersSetting|'\.\/corners'/)
+  expect(read('../../../../packaging/nix/settings-schema.json')).not.toContain('appearance.corners')
 })
 
 test('every surface on the frame reads its tokens rather than a corner of its own', () => {
@@ -50,7 +50,7 @@ test('every surface on the frame reads its tokens rather than a corner of its ow
 })
 
 /** #1105: no hairline drawn with the theme's own line anywhere on the sidebar's chrome,
- *  where Rounded has no hard cuts: only the seam, which Square draws. */
+ *  which has no hard cuts: only the seam, which full screen and a touch screen draw. */
 test('the sidebar draws its separators with the seam, never with a line of its own', () => {
   for (const file of ['Sidebar.svelte', 'SidebarFoot.svelte']) {
     const style = /<style[^>]*>([\s\S]*)<\/style>/.exec(read(`./${file}`))?.[1] ?? ''

@@ -1,7 +1,6 @@
 import { contrastCss } from '@orden/themes/contrast'
 import { everySurface } from '@orden/themes/write'
 import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
-import { cornersSetting } from './corners'
 import { tintSystemBars } from './insets'
 import { log } from './log'
 import { startup } from './startup.svelte'
@@ -202,7 +201,7 @@ const MORE = '(prefers-contrast: more)'
 
 /** The app's own settings, a function because their labels follow the language. */
 export function appSettings(): ThemeSetting[] {
-  return [accentSetting(), cornersSetting()]
+  return [accentSetting()]
 }
 
 function isValue(one: unknown): one is ThemeValue {
@@ -358,6 +357,19 @@ class Themes {
         recordOf(values, isValue),
       ]),
     )
+
+    // The app's drawer holds the app's own settings and nothing else: a value of one the
+    // app no longer has - the window's corners, which are always rounded now (#1102) -
+    // is taken out and the drawer written back without it, once.
+    const app = drawers[SHARED]
+    if (app) {
+      const own = new Set(appSettings().map((one) => one.id))
+      const kept = Object.fromEntries(Object.entries(app).filter(([id]) => own.has(id)))
+      if (Object.keys(kept).length !== Object.keys(app).length) {
+        drawers[SHARED] = kept
+        keepJson(SETTINGS_KEY, drawers)
+      }
+    }
 
     const accent = storedText(ACCENT_KEY)
     if (accent !== null && drawers[SHARED]?.accent === undefined) {

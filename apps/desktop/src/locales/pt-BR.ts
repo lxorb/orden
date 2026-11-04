@@ -581,11 +581,6 @@ export const ptBR: Dictionary = {
   'Show other tabs as icons': 'Mostrar as outras abas como ícones',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada aba, exceto a da frente, mostra só o ícone; ao apontar para uma, aparece o nome dela.',
-  'Window corners': 'Cantos da janela',
-  Rounded: 'Arredondados',
-  Square: 'Quadrados',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Arredondados faz o que está aberto flutuar em um cartão dentro da janela; Quadrados o mantém rente às bordas.',
   'Tab preview delay': 'Atraso da prévia de abas',
   'How long the pointer rests on a tab before its preview shows.':
     'Quanto tempo o ponteiro fica sobre uma aba antes de a prévia aparecer.',

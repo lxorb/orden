@@ -594,11 +594,6 @@ export const uk: Dictionary = {
   'Show other tabs as icons': 'Показувати інші вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Кожна вкладка, крім передньої, показує лише значок; якщо навести на неї, з’являється назва.',
-  'Window corners': 'Кути вікна',
-  Rounded: 'Заокруглені',
-  Square: 'Прямі',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Заокруглені розміщують відкрите в картці всередині вікна; прямі тримають його врівень із краями.',
   'Tab preview delay': 'Затримка попереднього перегляду вкладки',
   'How long the pointer rests on a tab before its preview shows.':
     'Скільки вказівник має пробути на вкладці, перш ніж з’явиться її попередній перегляд.',

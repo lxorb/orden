@@ -573,11 +573,6 @@ export const te: Dictionary = {
   'Show other tabs as icons': 'ఇతర ట్యాబ్‌లను ఐకాన్‌లుగా చూపించు',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ముందున్నది తప్ప ప్రతి ట్యాబ్ తన ఐకాన్ మాత్రమే చూపిస్తుంది; ఒకదానిపై పాయింటర్ ఉంచితే పేరు కనిపిస్తుంది.',
-  'Window corners': 'విండో మూలలు',
-  Rounded: 'గుండ్రని',
-  Square: 'చతురస్రం',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'గుండ్రని తెరిచినదాన్ని విండో లోపలి కార్డులో తేలేలా చేస్తుంది; చతురస్రం దాన్ని అంచులకు తాకి ఉంచుతుంది.',
   'Tab preview delay': 'ట్యాబ్ ప్రివ్యూ ఆలస్యం',
   'How long the pointer rests on a tab before its preview shows.':
     'ప్రివ్యూ కనిపించే ముందు పాయింటర్ ట్యాబ్‌పై ఎంత సేపు ఉండాలి.',

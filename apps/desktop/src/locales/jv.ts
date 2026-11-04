@@ -569,11 +569,6 @@ export const jv: Dictionary = {
   'Show other tabs as icons': 'Tampilake tab liyane minangka lambang',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Saben tab kajaba sing ngarep mung nampilake lambange; yen diarahake, jenenge katon.',
-  'Window corners': 'Pojok jendhela',
-  Rounded: 'Bunder',
-  Square: 'Kothak',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Bunder ngambangake sing kabukak ing kertu ing jero jendhela; Kothak njaga rata.',
   'Tab preview delay': 'Wektu tundha pratinjau tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Suwene pointer mandheg ing tab sadurunge pratinjaune katon.',
