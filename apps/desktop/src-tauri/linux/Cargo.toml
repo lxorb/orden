@@ -192,6 +192,7 @@ zbus = { version = "5", default-features = false, features = ["async-io", "block
 x11rb = { version = "0.13", default-features = false, features = ["cursor", "resource_manager", "shape", "xinput"] }
 libc = "0.2"
 raw-window-handle = "0.6"
+str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 file-id = "0.2"

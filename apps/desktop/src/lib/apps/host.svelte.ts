@@ -9,7 +9,12 @@
  *  Developer mode's, on a desktop, while signed in (App.svelte starts it). The crate
  *  decides what may run - an installed application by the id it found itself, a program
  *  by its path only once the reader here said yes - and where: a display of its own, on
- *  Linux; on Windows and macOS nothing is started yet, and the tab is told why. */
+ *  Linux; on Windows and macOS nothing is started yet, and the tab is told why.
+ *
+ *  And its picture (step 4): the holder's signalling, `signal` frames, handed to the
+ *  crate as they come (`apps_host/stream.rs`), which answers the offer and sends the
+ *  picture to that device directly; and its answer said back. A new holder, or none,
+ *  ends the picture the last one had. */
 
 import {
   type AppFile,
@@ -73,7 +78,12 @@ export interface Runner {
    *  whether it is. Starts nothing. */
   watch(key: string, said: (what: Said) => void): Promise<boolean>
   stop(key: string): Promise<void>
+  /** Hands the holder's signalling to the crate; answers what to say back, if anything. */
+  signal(key: string, data: string): Promise<string | null>
 }
+
+/** What ends the picture a holder had: the wire's goodbye. */
+export const BYE = JSON.stringify({ bye: true })
 
 /** A socket to the relay, as much of one as an application's host uses. */
 export interface Speaking {
@@ -88,6 +98,11 @@ class Hosting {
   private state: StateFrame = { t: 'state', state: 'stopped' }
   /** Whether a restart is waiting for the stop it began with. */
   private restarting = false
+  /** The device holding it, as the relay last said. */
+  private holder: string | null = null
+  /** The holder's signalling, handed to the crate one message at a time, in order: a
+   *  candidate that overtook its offer would find no picture to add to. */
+  private signalling: Promise<unknown> = Promise.resolve()
   private ended = false
   readonly link: Speaking
 
@@ -131,11 +146,32 @@ class Hosting {
           else void this.start()
         }
         return
-      case 'dropped':
       case 'viewer':
-      case 'signal':
+        // Another device, or none: the picture the last one had ends.
+        if (what.device !== this.holder && this.holder !== null) this.bye()
+        this.holder = what.device
+        return
+      case 'signal': {
+        const { data } = what
+        this.signalling = this.signalling
+          .then(() => this.runner.signal(this.key, data))
+          .then((back) => {
+            if (back !== null && !this.ended) this.link.say({ t: 'signal', data: back })
+          })
+          .catch(() => undefined)
+        return
+      }
+      case 'dropped':
+        // The picture goes peer to peer, so the relay's socket coming and going is no
+        // reason to end it.
         return
     }
+  }
+
+  private bye(): void {
+    this.signalling = this.signalling
+      .then(() => this.runner.signal(this.key, BYE))
+      .catch(() => undefined)
   }
 
   private async start(): Promise<void> {
@@ -175,6 +211,7 @@ class Hosting {
   end(stop: boolean): void {
     this.ended = true
     this.link.close()
+    this.bye()
     if (stop) void this.runner.stop(this.key)
   }
 }
@@ -293,6 +330,9 @@ async function appWorld(): Promise<{
     },
     async stop(key) {
       await native.invoke('apps_stop', { key }).catch(() => undefined)
+    },
+    async signal(key, data) {
+      return native.invoke<string | null>('apps_signal', { key, data }).catch(() => null)
     },
   }
 

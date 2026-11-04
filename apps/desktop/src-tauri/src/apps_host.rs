@@ -26,12 +26,18 @@
 //! leaves and when this window reloads - the window asks again, and hears where it
 //! stands - and stops when it is stopped, when its file goes, and when Orden quits, with
 //! everything it started: it runs in a process group of its own, which is what is ended.
+//!
+//! **Its picture** goes to the device holding it, peer to peer (`stream.rs`, step 4),
+//! once that device offers to take it; the offer and the answer come and go through the
+//! window and the relay (`apps_signal`).
 
 #![cfg_attr(not(target_os = "linux"), allow(dead_code))]
 
 #[cfg(target_os = "linux")]
 mod display;
 mod installed;
+#[cfg(target_os = "linux")]
+mod stream;
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -61,12 +67,30 @@ pub enum Run {
     },
 }
 
-/// The holder's view, which the display is made to: CSS pixels at a ratio.
+/// The holder's view, which the display is made to: CSS pixels at a ratio, and the
+/// refresh rate its picture is read at.
 #[derive(Clone, Copy, Debug, Deserialize)]
 pub struct View {
     pub width: f64,
     pub height: f64,
     pub dpr: f64,
+    #[serde(default = "sixty")]
+    pub hz: f64,
+}
+
+/// The refresh rate of a view that says none.
+fn sixty() -> f64 {
+    60.0
+}
+
+/// The display an application draws on, as its picture is read from it: its name, its
+/// size in device pixels, and the holder's refresh rate.
+#[derive(Clone, Debug)]
+pub struct Screen {
+    pub display: String,
+    pub width: u32,
+    pub height: u32,
+    pub hz: f64,
 }
 
 /// Where the application stands, as the window hears it and says it on to the relay:
@@ -85,6 +109,8 @@ struct Running {
     events: Mutex<Option<Channel<Said>>>,
     /// Whether it was stopped, rather than ending by itself.
     stopping: AtomicBool,
+    /// Its display.
+    screen: Screen,
 }
 
 impl Running {
@@ -100,11 +126,14 @@ impl Running {
 }
 
 /// Every application this computer runs, by the key the window gave it (its file's id),
-/// and the programs the reader here said yes to.
+/// the programs the reader here said yes to, and the picture of each that a device is
+/// taking.
 #[derive(Default)]
 pub struct Hosted {
     apps: Mutex<HashMap<String, Arc<Running>>>,
     allowed: Mutex<Option<HashSet<String>>>,
+    #[cfg(target_os = "linux")]
+    peers: Mutex<HashMap<String, stream::Peer>>,
 }
 
 impl Hosted {
@@ -112,6 +141,20 @@ impl Hosted {
         self.apps
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    #[cfg(target_os = "linux")]
+    fn peers(&self) -> MutexGuard<'_, HashMap<String, stream::Peer>> {
+        self.peers
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    /// Ends the picture of one application, if a device was taking it.
+    #[cfg(target_os = "linux")]
+    fn end_peer(&self, key: &str) {
+        let gone = self.peers().remove(key);
+        drop(gone);
     }
 }
 
@@ -253,6 +296,12 @@ fn run_on_its_display(
         pid: child.id(),
         events: Mutex::new(Some(events)),
         stopping: AtomicBool::new(false),
+        screen: Screen {
+            display: display.name(),
+            width,
+            height,
+            hz: view.hz,
+        },
     });
     app.state::<Hosted>()
         .apps()
@@ -269,10 +318,14 @@ fn run_on_its_display(
         drop(display);
         let hosted = app.state::<Hosted>();
         let mut apps = hosted.apps();
-        if apps.get(&key).is_some_and(|one| Arc::ptr_eq(one, &running)) {
+        let ours = apps.get(&key).is_some_and(|one| Arc::ptr_eq(one, &running));
+        if ours {
             apps.remove(&key);
         }
         drop(apps);
+        if ours {
+            hosted.end_peer(&key);
+        }
         let stopped = running.stopping.load(Ordering::SeqCst);
         running.tell(Said {
             state: if stopped { "stopped" } else { "exited" },
@@ -316,6 +369,55 @@ pub fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
         end(&running, std::time::Duration::from_secs(3));
     }
     Ok(())
+}
+
+/// What the device holding it says of its picture, `data` of its `signal` frame
+/// (`stream.rs`): an offer is answered, a candidate taken, a goodbye ends it. Answers
+/// what to send back, if anything: the answer, or why there is no picture.
+#[tauri::command(async)]
+pub fn apps_signal(webview: Webview, key: String, data: String) -> Result<Option<String>, String> {
+    owner(&webview)?;
+    usable(&key)?;
+    Ok(signal_here(&webview.state::<Hosted>(), &key, &data))
+}
+
+#[cfg(not(target_os = "linux"))]
+fn signal_here(_hosted: &Hosted, _key: &str, data: &str) -> Option<String> {
+    // Nothing runs here yet (`isolation`), so there is no picture to offer.
+    data.contains("\"offer\"")
+        .then(|| serde_json::json!({ "cannot": "stopped" }).to_string())
+}
+
+#[cfg(target_os = "linux")]
+fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
+    use stream::FromViewer;
+
+    match serde_json::from_str::<FromViewer>(data).ok()? {
+        FromViewer::Offer { offer } => {
+            // A new offer is a new picture: whatever was sent before ends first.
+            hosted.end_peer(key);
+            let Some(running) = hosted.apps().get(key).cloned() else {
+                return Some(stream::cannot_text("stopped"));
+            };
+            match stream::Peer::answer(running.screen.clone(), &offer) {
+                Ok((peer, answer)) => {
+                    hosted.peers().insert(key.to_owned(), peer);
+                    Some(stream::answer_text(&answer))
+                }
+                Err(why) => Some(stream::cannot_text(why.word())),
+            }
+        }
+        FromViewer::Candidate { candidate } => {
+            if let Some(peer) = hosted.peers().get(key) {
+                peer.candidate(&candidate.candidate);
+            }
+            None
+        }
+        FromViewer::Bye { .. } => {
+            hosted.end_peer(key);
+            None
+        }
+    }
 }
 
 /// Asks its group to end, and makes it after `grace`.
@@ -377,6 +479,8 @@ pub fn end_all(app: &AppHandle) {
         return;
     };
     let all: Vec<Arc<Running>> = hosted.apps().drain().map(|(_, one)| one).collect();
+    #[cfg(target_os = "linux")]
+    hosted.peers().clear();
     if all.is_empty() {
         return;
     }

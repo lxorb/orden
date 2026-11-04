@@ -79,3 +79,23 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   display of its own yet (step 8).
 - **Not yet**: a host serves the applications of the space it has open; a program that speaks
   only Wayland needs a headless compositor (weston), which comes with the capture in step 4.
+
+## The picture (step 4)
+
+- **The host sends it** (`apps_host/stream.rs`): the holder offers a receive-only video and a
+  data channel, and the host answers, peer to peer. The signalling is the relay's `signal`
+  frames, whose `data` is JSON: `{"offer": sdp}` and `{"candidate": {...}}` from the holder,
+  `{"bye": true}` when it is done; `{"answer": sdp}` with every host candidate in it, or
+  `{"cannot": "encoder" | "offer" | "network" | "stopped"}`, from the host. The window hands
+  them to the crate (`apps_signal`) and says its answer back; a new holder, or none, ends the
+  picture the last one had. No server change: the relay already passes `signal` between the
+  holder and the host only.
+- **`str0m`**, WebRTC with no threads or sockets of its own, its DTLS and SRTP in RustCrypto (its certificate made with aws-lc-rs, built from source):
+  one UDP socket for each address the host has (and the loopback), a thread for each, one for
+  its timers. It gathers nothing and has no TURN client; the host needs none, since the
+  viewer's engine does TURN.
+- **ffmpeg**, a program the host runs as it runs Xvfb: `x11grab` reads the display, libvpx
+  encodes VP8 in its realtime mode with no frame held back, and each frame is written to a
+  pipe as IVF the moment it is made. VP8 because every viewer's engine decodes it (Orden's
+  CEF has no H.264). It starts once the viewer is connected, so the first frame is a key
+  frame; another comes every two seconds. Not installed: the viewer is told `encoder`.

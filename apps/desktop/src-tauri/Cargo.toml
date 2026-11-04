@@ -420,6 +420,13 @@ libc = "0.2"
 # A window's own X11 window, for what only the window manager is told: quick add
 # floated (linux.rs). In the lock file already, through the runtime's windowing.
 raw-window-handle = "0.6"
+# The picture of an application this computer hosts, sent peer to peer to the device
+# holding it (apps_host/stream.rs, issue 1063): WebRTC with no threads or sockets of its
+# own, its DTLS and SRTP in RustCrypto (`rust-crypto`), so no build links the system's
+# OpenSSL. Its DTLS certificate is made by rcgen on aws-lc-rs, which that backend asks for
+# and which is built from source by its own crate. Linux only, the one platform that
+# hosts an application yet.
+str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # What a file *is*, apart from where it is: the volume and the file id, asked of an open

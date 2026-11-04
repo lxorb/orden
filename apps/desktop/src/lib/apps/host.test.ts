@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest'
 import type { LinkWorld, Opened } from '../online/link'
 import {
   applicationFiles,
+  BYE,
   FIRST_VIEW,
   host,
   HostLink,
@@ -12,9 +13,9 @@ import {
   type Speaking,
 } from './host.svelte'
 
-/** This computer as an application's host (issue 1063, step 3; host.svelte.ts): which
- *  files it hosts, what it does with the holder's Start, Stop and Restart, and what it
- *  says back - with the crate and the relay played here. */
+/** This computer as an application's host (issue 1063, steps 3 and 4; host.svelte.ts):
+ *  which files it hosts, what it does with the holder's Start, Stop and Restart and its
+ *  signalling, and what it says back - with the crate and the relay played here. */
 
 const GIMP: AppFile = {
   v: 1,
@@ -51,6 +52,13 @@ function world(files: Record<string, AppFile | string>) {
       asked.push(`stop ${key}`)
       tell?.({ state: 'stopped', code: null })
       return Promise.resolve()
+    },
+    async signal(key, data) {
+      asked.push(`signal ${key} ${data}`)
+      // An offer takes the crate a while to answer; a candidate after it waits for it.
+      if (data.includes('offer')) await tick()
+      asked.push(`signalled ${key}`)
+      return data.includes('offer') ? '{"answer":"v=0"}' : null
     },
   }
   const made: HostWorld = {
@@ -172,6 +180,56 @@ describe('an application’s host', () => {
     here.stop()
     expect(here.links[1]?.closed).toBe(true)
     expect(here.asked).not.toContain('stop id-sTwoapplication')
+  })
+})
+
+describe('an application’s picture', () => {
+  test('the holder’s signalling goes to the crate, and its answer back', async () => {
+    const here = world({ '/s/GIMP.application': GIMP })
+    await tick()
+    const heard = here.links[0]?.heard
+    heard?.({ t: 'viewer', device: 'device-phone', name: 'Phone' })
+    heard?.({ t: 'signal', data: '{"offer":"v=0"}' })
+    heard?.({ t: 'signal', data: '{"candidate":{"candidate":""}}' })
+    await tick()
+    await tick()
+    expect(here.asked.filter((one) => one.startsWith('signal'))).toEqual([
+      'signal id-sGIMPapplication {"offer":"v=0"}',
+      'signalled id-sGIMPapplication',
+      'signal id-sGIMPapplication {"candidate":{"candidate":""}}',
+      'signalled id-sGIMPapplication',
+    ])
+    // Only the answer is said back; a candidate has nothing to say.
+    expect(here.said).toEqual([{ t: 'signal', data: '{"answer":"v=0"}' }])
+  })
+
+  test('another holder, or none, ends the picture the last one had', async () => {
+    const here = world({ '/s/GIMP.application': GIMP })
+    await tick()
+    const heard = here.links[0]?.heard
+    const byes = () => here.asked.filter((one) => one === `signal id-sGIMPapplication ${BYE}`)
+    heard?.({ t: 'viewer', device: 'device-phone', name: 'Phone' })
+    heard?.({ t: 'viewer', device: 'device-phone', name: 'Phone' })
+    await tick()
+    expect(byes()).toHaveLength(0)
+    heard?.({ t: 'viewer', device: 'device-tablet', name: 'Tablet' })
+    await tick()
+    expect(byes()).toHaveLength(1)
+    heard?.({ t: 'viewer', device: null, name: '' })
+    await tick()
+    expect(byes()).toHaveLength(2)
+  })
+
+  test('the relay’s socket dropping leaves the picture; hosting ending ends it', async () => {
+    const here = world({ '/s/GIMP.application': GIMP })
+    await tick()
+    here.links[0]?.heard({ t: 'viewer', device: 'device-phone', name: 'Phone' })
+    here.links[0]?.heard({ t: 'dropped' })
+    await tick()
+    expect(here.asked).not.toContain(`signal id-sGIMPapplication ${BYE}`)
+    here.stop()
+    await tick()
+    expect(here.asked).toContain(`signal id-sGIMPapplication ${BYE}`)
   })
 })
 
