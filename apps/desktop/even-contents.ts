@@ -516,11 +516,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The styles raised on 2026-11-04, to 290,400, for #331: the tab overview's close button
  *  as the app's quiet grey one with its cross red, its hover and its press
  *  (overview/Overview.svelte). Measured 290,153.
+ *
+ *  The styles raised on 2026-11-04, to 290,700, for #331: the tab overview happens in the
+ *  window, its sidebars sliding away under its spring and its canvas a clear scrim under
+ *  the bar (overview/Overview.svelte). Measured 290,456.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 5_903_500,
   catalogues: 973_000,
-  styles: 290_400,
+  styles: 290_700,
   fonts: 260_000,
   pages: 40_000,
 }
