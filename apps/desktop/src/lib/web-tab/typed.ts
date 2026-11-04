@@ -90,13 +90,16 @@ function schemeFor(typed: string): 'http' | 'https' {
 const CLOCK = /^(?:[01]?\d|2[0-3]):[0-5]\d$/
 
 /** What no name on the web is: an empty label (`foo..bar`), a number at the end that is no
- *  whole address (`3.14`), which `URL` would read as 3.0.0.14, or a web scheme and its address
+ *  whole address and has no port (`3.14`), which `URL` would read as 3.0.0.14, or a web scheme and its address
  *  with no slashes (`http:example.com`). */
 function noName(typed: string): boolean {
   if (typed.startsWith('[')) return false
   if (/^https?:\D/i.test(typed)) return true
   const name = typed.split(/[/?#:]/, 1)[0] ?? ''
-  return name.includes('..') || (/\.\d+$/.test(name) && !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(name))
+  if (name.includes('..')) return true
+  // With a port it is a server somebody started: `127.1:3000`.
+  if (typed[name.length] === ':') return false
+  return /\.\d+$/.test(name) && !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(name)
 }
 
 /** Whether something typed is a host, and not a scheme of its own with digits after it. */
