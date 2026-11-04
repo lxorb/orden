@@ -1139,9 +1139,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,542,900, for #1032: the right side is one side whatever it
  *  shows, shut whole by its one button and opened on what it showed last, with the
  *  scratchpad one of its tabs (`rightShows`, `showRight` and `closeRight` in
- *  workspace.svelte.ts; Sidebar.svelte, App.svelte). Measured 3,542,782. */
-const BUDGET = 3_542_900
-const MOST_FILES = 390
+ *  workspace.svelte.ts; Sidebar.svelte, App.svelte). Measured 3,542,782.
+ *
+ *  Raised 2026-11-04, to 3,545,000, and to 391 modules, for a part the strip or a pane
+ *  fetched that lands after it has gone, which does nothing now (while-here.ts, Tabs.svelte,
+ *  Pane.svelte). Measured 3,544,879, 390 modules. */
+const BUDGET = 3_545_000
+const MOST_FILES = 391
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
