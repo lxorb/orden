@@ -102,3 +102,14 @@ export function heldForLife(name: string, run: () => Promise<unknown>, signal?: 
     }
   })
 }
+
+/** Holds a lock if nobody does, until the answer is called; null where somebody does. Locks
+ *  that do not work hold nothing, and answer as if they did: one window, on its own. */
+export async function holdIfFree(name: string): Promise<(() => void) | null> {
+  const locks = locksHere()
+  if (!locks || !(await locksWork(locks))) return () => undefined
+  let release = () => undefined as void
+  const holding = new Promise<void>((done) => (release = done))
+  const held = await ifFree(locks, name, () => holding)
+  return held === 'taken' ? null : release
+}

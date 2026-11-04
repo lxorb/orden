@@ -1,4 +1,5 @@
 import { invoke } from '../tauri'
+import { writeTaking } from '../workspace/in-turn'
 
 /** Writes a note that came from elsewhere, keeping whatever the file said before
  *  it as a version first.
@@ -31,5 +32,5 @@ export async function writeDown(path: string, content: string, was?: string | nu
     await invoke('snapshot_note', { path, content: previous }).catch(() => undefined)
   }
 
-  await invoke('write_note', { path, content })
+  await writeTaking(path, content)
 }

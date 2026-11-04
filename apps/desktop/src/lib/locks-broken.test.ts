@@ -3,7 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { leadSync } from './sync2/lead'
-import { heldForLife } from './locks'
+import { heldForLife, holdIfFree } from './locks'
 import { oneWriteAt } from './windows'
 import { takeSlot } from './workspace/slot'
 
@@ -43,6 +43,12 @@ describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
     expect(run).toHaveBeenCalledTimes(1)
   })
 
+  test('a name is free to claim', async () => {
+    const held = holdIfFree('nib:test')
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(await held).toBeTypeOf('function')
+  })
+
   test('the window takes the first session', async () => {
     const taken = takeSlot()
     await vi.advanceTimersByTimeAsync(10_000)
@@ -63,5 +69,36 @@ describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
     await vi.advanceTimersByTimeAsync(10_000)
     expect(await written).toBe('words')
     expect(run).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('with locks that work', () => {
+  /** One holder per name, the way the browser's are, and nobody waits. */
+  function working(): LockManager {
+    const holders = new Set<string>()
+    return {
+      request: async (name: string, ...rest: unknown[]) => {
+        const run = rest.at(-1) as (lock: unknown) => unknown
+        const { ifAvailable } = (rest.length > 1 ? rest[0] : {}) as { ifAvailable?: boolean }
+        if (ifAvailable && holders.has(name)) return run(null)
+        holders.add(name)
+        try {
+          return await run({ name })
+        } finally {
+          holders.delete(name)
+        }
+      },
+    } as unknown as LockManager
+  }
+
+  test('a name one window holds is not free to the next, until it lets go', async () => {
+    vi.stubGlobal('navigator', { locks: working() })
+    const first = await holdIfFree('nib:claim:/s/Plan.md')
+    expect(first).toBeTypeOf('function')
+    expect(await holdIfFree('nib:claim:/s/Plan.md')).toBeNull()
+    expect(await holdIfFree('nib:claim:/s/Other.md')).toBeTypeOf('function')
+    first?.()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(await holdIfFree('nib:claim:/s/Plan.md')).toBeTypeOf('function')
   })
 })

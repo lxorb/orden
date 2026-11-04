@@ -220,6 +220,9 @@ const SESSION_DELAY = 400
 /** The most words of a document with a file the session copies: longer than a book,
  *  a fifth of what storage holds. A plane of ten thousand strokes is seven million. */
 const WORDS_KEPT = 1_000_000
+
+/** How long a launch's writes wait to have met the other windows, should that not come. */
+const MEETING_AT_MOST = 3_000
 /** How far back one tab remembers. Longer than anybody follows a link in one
  *  sitting, short enough that a trail is never what a session is made of. */
 const TRAIL = 30
@@ -966,11 +969,21 @@ class Workspace {
     markPainted('active tab painted')
   }
 
-  /** Writes from here on keep in step with the other windows; see workspace/across.ts. */
+  /** Writes wait for `meeting`, the launch's meeting with the other windows, or a moment. */
+  expectOthers(meeting: Promise<unknown>) {
+    const met: Promise<unknown> = Promise.race([meeting, waited(MEETING_AT_MOST)])
+      .catch(() => undefined)
+      .then(() => {
+        if (this.saving.meeting === met) this.saving.meeting = null
+      })
+    this.saving.meeting = met
+  }
+
   get across(): Across | null {
     return this.saving.across
   }
 
+  /** Writes from here on keep in step with the other windows; see workspace/across.ts. */
   meetOthers(across: Across) {
     this.saving.across = across
   }

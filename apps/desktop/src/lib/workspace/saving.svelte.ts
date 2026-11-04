@@ -20,6 +20,7 @@ import { SAVE_AT_MOST, SAVE_DELAY, saveRetryDelay } from '../backoff'
 import { flushCardEdits } from '../canvas/writing'
 import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
+import { holdIfFree } from '../locks'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { owesLast, surfacesToWords, writeOwed } from '../parting'
@@ -73,6 +74,11 @@ export const IN_THE_AIR_AT_MOST = 10_000
 export class Saving {
   /** What keeps writes in step with the other windows, once it is fetched. */
   across: Across | null = null
+
+  /** The launch's meeting with the other windows until it is over: a write before it would
+   *  go down blind, over whatever another window wrote since a restore read the file, and
+   *  say nothing to anybody. See `expectOthers` in workspace.svelte.ts. */
+  meeting: Promise<unknown> | null = null
 
   /** The write that waits for a pause in the changes; see timing.ts. */
   private readonly soon = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY, SAVE_AT_MOST)
@@ -461,6 +467,12 @@ export class Saving {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly claimed = new Set<string>()
 
+  /** The same across the windows, which each have their own `claimed`: the lock of each path
+   *  claimed here, held until it has landed. Two windows placing one name in one moment
+   *  would otherwise both find it free, and the second's write take the first's note. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  private readonly claimHeld = new Map<string, () => void>()
+
   private isClaimed(path: string): boolean {
     return [...this.claimed].some((one) => samePath(one, path))
   }
@@ -493,6 +505,8 @@ export class Saving {
       await this.saveWaiting()
     } finally {
       this.claimed.delete(path)
+      this.claimHeld.get(path)?.()
+      this.claimHeld.delete(path)
     }
     return path
   }
@@ -522,19 +536,29 @@ export class Saving {
           this.ws.freeName(folder, candidate) !== candidate,
       )
       const path = joinPath(folder, name)
+      const release = await holdIfFree(`nib:claim:${path}`)
+      if (release === null) {
+        found.push(name)
+        continue
+      }
       // The other half of a page note's pair as well: a page note landing beside a PDF
       // named as its paper takes that PDF for its own, and the listing that would have
       // said so is not this space's either.
       const other = pairOf(name)
       const taken =
         (await onDisk(path)) || (other !== null && (await onDisk(joinPath(folder, other))))
-      if (note.path !== null) return null
+      if (note.path !== null) {
+        release()
+        return null
+      }
       if (taken) found.push(name)
       else if (!this.isClaimed(path) && this.ws.freeName(folder, name) === name) {
         note.path = path
         this.claimed.add(path)
+        this.claimHeld.set(path, release)
         return path
       }
+      release()
     }
   }
 
@@ -615,6 +639,8 @@ export class Saving {
     if (before?.trim() && before !== content) {
       await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
     }
+
+    if (this.meeting) await this.meeting
 
     // Sync is moving the file: the words go down where it lands, below.
     for (let move = this.syncMoving.get(note); move; move = this.syncMoving.get(note)) await move

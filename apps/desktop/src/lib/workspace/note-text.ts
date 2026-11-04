@@ -35,7 +35,8 @@ import type { NoteDoc } from './documents.svelte'
 import type { FileAction, FileActions } from './undo.svelte'
 import { oneWriteAt } from '../windows'
 import type { Across } from './across'
-import { writeFile, writeInTurn } from './write-file'
+import { writeInTurn } from './in-turn'
+import { writeFile } from './write-file'
 
 /** What writing across a space needs of the store it belongs to. */
 export interface HoldsNotes {

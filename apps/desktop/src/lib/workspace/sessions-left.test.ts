@@ -333,7 +333,7 @@ describe('words on a file that went on without them', () => {
 
   test('do not come where the file has gone on with them in it', async () => {
     const out = await asDrafts(
-      [note({ path: '/s/a.md', doc: 'base\nmine\n', base: 'base\n', dirty: true })],
+      [note({ kind: 'note', path: '/s/a.md', doc: 'base\nmine\n', base: 'base\n', dirty: true })],
       () => Promise.resolve('base\nmine\nand a newer line\n'),
     )
     expect(out).toEqual([])

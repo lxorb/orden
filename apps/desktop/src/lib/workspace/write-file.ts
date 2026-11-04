@@ -16,20 +16,11 @@
 
 import { links } from '../link-index.svelte'
 import { invoke } from '../tauri'
-import { oneWriteAt, windows } from '../windows'
+import { writeTaking } from './in-turn'
 
 export async function writeFile(path: string, content: string): Promise<void> {
-  await oneWriteAt(path, () => writeInTurn(path, content))
+  await writeTaking(path, content)
   links.noteSaved(path, content)
-}
-
-/** The write itself, for a caller already holding the file's turn because of what it read
- *  first; see `oneWriteAt`. Said to the other windows, whose note of it takes it in the way
- *  it takes in one of their own writes (across.ts): a link rewritten by a rename, a tag, a
- *  task ticked in results and a quick add all come through here. */
-export async function writeInTurn(path: string, content: string): Promise<void> {
-  await invoke('write_note', { path, content })
-  if (!windows.alone) windows.say('words', { path, text: content })
 }
 
 /** Bytes, as base64, written whole: whatever the index knows by name alone. */

@@ -45,6 +45,9 @@ import { workspace } from './workspace.svelte'
 
 const DAY = 24 * 60 * 60 * 1000
 
+/** How long a window that has just said hello gives the others to say they are here. */
+const HEARD_BACK = 100
+
 /** Brings everything up. Answers the teardown for what it started, so the root
  *  component can hand it to `onDestroy`. */
 export function start(): () => void {
@@ -220,9 +223,13 @@ export function start(): () => void {
 
   // The other windows' writes and file operations; see workspace/across.ts.
   if (!__EVEN_PLUGIN__) {
-    void startup
-      .turn('rooms')
-      .then(() => import('./workspace/across').then(({ startAcross }) => startAcross()))
+    workspace.expectOthers(
+      startup
+        .turn('rooms')
+        .then(() => import('./workspace/across').then(({ startAcross }) => startAcross()))
+        // Anybody here answers this window's first word within a moment.
+        .then(() => waited(HEARD_BACK)),
+    )
   }
 
   // Quick add's key over every other app, a desktop's alone and after the launch
