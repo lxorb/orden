@@ -915,8 +915,8 @@ const APP_ENTRIES: Shortcut[] = [
   ...(__EVEN_PLUGIN__
     ? []
     : [
-        // Todos as a tab, the left side's checkbox (#1047); the Tasks panel lives on the
-        // right now, and its own tab opens it.
+        // Todos as a tab (#1047), as a double press on the right side's Todos icon does
+        // (#1110); a single press there opens the Tasks panel.
         {
           id: 'app.tasks',
           label: () => t('Tasks'),

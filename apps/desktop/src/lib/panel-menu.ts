@@ -4,6 +4,7 @@
 
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry } from './menu-item'
+import { hasTab, openAsTab } from './panel-tab'
 import { search, type SearchSort } from './search.svelte'
 import { mayLiveOn } from './workspace/panels'
 import { type Panel, type PanelSide, workspace } from './workspace.svelte'
@@ -55,7 +56,12 @@ export function panelMenu(
   side: PanelSide | undefined,
   making: MenuEntry[] = [],
 ): MenuEntry[] {
-  const own = id === 'tree' ? sortMenu(making) : id === 'search' ? resultsMenu() : []
+  const sorts = id === 'tree' ? sortMenu(making) : id === 'search' ? resultsMenu() : []
+  // A panel that is a tab as well opens as one, as a double press on its icon does (#1110).
+  const asTab: MenuEntry[] = hasTab(id)
+    ? [{ label: t('Open in new tab'), run: () => openAsTab(id) }]
+    : []
+  const own = [...asTab, ...(asTab.length && sorts.length ? [DIVIDER] : []), ...sorts]
   const there: PanelSide = side === 'right' ? 'left' : 'right'
 
   // On every tab, and last: which side a panel sits on is a thing to do to the

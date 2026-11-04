@@ -28,6 +28,8 @@ vi.mock('../workspace.svelte', () => ({
   workspace: {
     noteText: (path: string) =>
       Promise.resolve(fake.unreadable.has(path) ? null : (fake.disk.get(path) ?? null)),
+    // No tab has the scratchpad open as a note here; see scratchpad-session.effect.test.ts.
+    documentAt: () => null,
   },
 }))
 
