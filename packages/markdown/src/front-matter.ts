@@ -18,7 +18,7 @@
  *  otherwise. */
 
 import { oneEdit, type TextEdit } from './edits'
-import { frontMatterLines, isKeyLine } from './front-matter-lines'
+import { frontMatterLines, isKeyLine, valueClosesAt } from './front-matter-lines'
 import { flowItem, flowItems, listItem, scalar, uncommented, unquoted } from './yaml'
 
 /** Named here as well because the block is this module's business and yaml.ts is
@@ -27,6 +27,7 @@ import { flowItem, flowItems, listItem, scalar, uncommented, unquoted } from './
  *  and used as the note's heading - asks the same rule that the block was built
  *  with rather than a rule of its own. */
 export { oneLine } from './yaml'
+export { valueClosesAt }
 
 /** Where a note's front matter sits.
  *
@@ -186,6 +187,14 @@ export function frontMatterList(source: string, key: string): string[] {
 
   const value = source.slice(line.value.from, line.value.to).trim()
 
+  // A flow sequence across lines, as Prettier breaks a long one, is one value.
+  const closes = valueClosesAt(source, line.value.from, block.body.to)
+  if (closes !== -1) {
+    const lines = source.slice(line.value.from, closes).split('\n')
+    const joined = lines.map((one) => uncommented(one.trim())).join(' ')
+    return (flowItems(joined) ?? [unquoted(joined)]).filter(Boolean)
+  }
+
   // On the line: a flow sequence, or a single value standing for a list of one.
   if (value) return (flowItems(value) ?? [unquoted(value)]).filter(Boolean)
 
@@ -264,6 +273,13 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
       other ??= line
     }
 
+    // What a value holds open across lines says no key, whatever it looks like.
+    const closes = found ? valueClosesAt(source, at + found[0].length, block.body.to) : -1
+    if (closes !== -1) {
+      at = closes + 1
+      continue
+    }
+
     if (end === -1) break
     at = end + 1
   }
@@ -311,7 +327,8 @@ export function frontMatterEdits(
  *    every reader of a markdown file looks for it.
  *  - taking the key away: its line goes. A block that held nothing else goes
  *    with it, along with the blank lines it was standing on, because an empty
- *    pair of fences at the top of a note is litter rather than metadata.
+ *    pair of fences at the top of a note is litter rather than metadata. Where what
+ *    would be left is no block but holds something, the key stays with no value.
  *
  *  The line ending is whatever the note already uses, so a file written on
  *  Windows does not come back with one line in the other convention.
@@ -343,7 +360,19 @@ export function frontMatterEdit(
       source.slice(block.body.from, line.from) + source.slice(cutTo(source, line), block.body.to)
     if (!rest.trim()) return { from: block.from, to: blankAfter(source, block.to), insert: '' }
 
-    return { from: line.from, to: cutTo(source, line), insert: '' }
+    // What is left has to still be a block, the same one: a comment or a line of words
+    // alone is not, and the page would show them and two rules. So there the key stays
+    // and says nothing: a reader of it finds no value, and they are where they were.
+    const to = cutTo(source, line)
+    const left = frontMatterBlock(source.slice(0, line.from) + source.slice(to))
+    if (left?.close !== block.close - (to - line.from)) {
+      const end = source[line.value.to - 1] === '\r' ? line.value.to - 1 : line.value.to
+      return source.slice(line.value.from, end).trim()
+        ? { from: line.value.from, to: end, insert: '' }
+        : null
+    }
+
+    return { from: line.from, to, insert: '' }
   }
 
   if (line) {
@@ -375,8 +404,10 @@ function readAs(value: string): string {
  *  it only where more of it follows: inside a `|` or `>` value it is one of the value's
  *  own lines, and what is indented after it is still the value. */
 function withUnder(source: string, block: FrontMatterBlock, line: KeyLine): KeyLine {
-  let to = line.to
-  let at = line.to
+  // A quote or a bracket open across lines holds them at the margin too.
+  const closes = valueClosesAt(source, line.value.from, block.body.to)
+  let to = closes === -1 ? line.to : closes
+  let at = to
   while (at + 1 < block.body.to) {
     const stop = source.indexOf('\n', at + 1)
     const text = source.slice(at + 1, stop).trimEnd()

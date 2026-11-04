@@ -296,7 +296,9 @@ describe('setting a key', () => {
       expect(applied(`---\n${key}: a\n# note\n---\n`, key, 'b')).toBe(
         `---\n${key}: b\n# note\n---\n`,
       )
-      expect(applied(`---\n${key}: a\n# note\n---\n`, key, null)).toBe('---\n# note\n---\n')
+      expect(applied(`---\n${key}: a\n# note\nz: 1\n---\n`, key, null)).toBe(
+        '---\n# note\nz: 1\n---\n',
+      )
     }
   })
 
@@ -478,5 +480,85 @@ describe('writing a block', () => {
     const block = writeFrontMatter([['title', 'Fine\n---\n\n<img src=x>']])
 
     expect(block).toBe('---\ntitle: Fine --- <img src=x>\n---')
+  })
+})
+
+/** A value YAML reads across lines is one value, and a block that would stop being one
+ *  says so rather than handing its lines to the page. */
+describe('a value across lines', () => {
+  const apply = (source: string, key: string, value: string | null) => {
+    const edit = frontMatterEdit(source, key, value)
+    return edit ? source.slice(0, edit.from) + edit.insert + source.slice(edit.to) : source
+  }
+
+  test('a flow list broken over lines is the list', () => {
+    const note = '---\ntags: [\n  work,\n  "b, c",\n]\nz: 1\n---\nrest\n'
+    expect(frontMatterList(note, 'tags')).toEqual(['work', 'b, c'])
+    expect(frontMatterList(note, 'z')).toEqual(['1'])
+    expect(frontMatterList('---\ntags: [ # mine\n  a, # one\n  b\n]\n---\n', 'tags')).toEqual([
+      'a',
+      'b',
+    ])
+  })
+
+  test('setting or taking away a value takes all its lines', () => {
+    const list = '---\ntags: [\n  a,\n  b,\n]\nz: 1\n---\nrest\n'
+    expect(apply(list, 'tags', '[c]')).toBe('---\ntags: [c]\nz: 1\n---\nrest\n')
+    expect(apply(list, 'tags', null)).toBe('---\nz: 1\n---\nrest\n')
+    const quote = '---\ntitle: "a\nb"\nz: 1\n---\nrest\n'
+    expect(apply(quote, 'title', 'c')).toBe('---\ntitle: c\nz: 1\n---\nrest\n')
+    expect(apply(quote, 'title', null)).toBe('---\nz: 1\n---\nrest\n')
+    const crlf = '---\r\ntags: [\r\n  a,\r\n]\r\nz: 1\r\n---\r\nrest\r\n'
+    expect(apply(crlf, 'tags', '[c]')).toBe('---\r\ntags: [c]\r\nz: 1\r\n---\r\nrest\r\n')
+    expect(apply(crlf, 'tags', null)).toBe('---\r\nz: 1\r\n---\r\nrest\r\n')
+  })
+
+  test('a line a value holds open is not a key of the block', () => {
+    const note = '---\ntitle: "a\nz: b"\nz: 1\n---\nrest\n'
+    expect(apply(note, 'z', '2')).toBe('---\ntitle: "a\nz: b"\nz: 2\n---\nrest\n')
+  })
+
+  test('what only looks open is the one line it is', () => {
+    const cases: [string, string, string][] = [
+      ['---\ntitle: [draft\nz: 1\n---\nrest\n', 'title', '---\ntitle: new\nz: 1\n---\nrest\n'],
+      ['---\ntitle: "Foo\nz: 1\n---\nrest\n', 'title', '---\ntitle: new\nz: 1\n---\nrest\n'],
+      ["---\nnote: it's\nz: 1\n---\nrest\n", 'note', '---\nnote: new\nz: 1\n---\nrest\n'],
+      ['---\na: [1, 2]\nz: 1\n---\nrest\n', 'a', '---\na: new\nz: 1\n---\nrest\n'],
+      ["---\na: 'x'\nb: 'y'\n---\nrest\n", 'a', "---\na: new\nb: 'y'\n---\nrest\n"],
+      ['---\na: "x" and more\nb: "y"\n---\nrest\n', 'a', '---\na: new\nb: "y"\n---\nrest\n'],
+      ['---\na: [b] # [c\nz: 1\n---\nrest\n', 'a', '---\na: new # [c\nz: 1\n---\nrest\n'],
+      ['---\na: |\n  [x\nz: 1\n---\nrest\n', 'a', '---\na: new\nz: 1\n---\nrest\n'],
+      ['---\na:\n  - [x]\n  - y\nz: 1\n---\nrest\n', 'a', '---\na: new\nz: 1\n---\nrest\n'],
+      ['---\na: x\n  y\nz: 1\n---\nrest\n', 'a', '---\na: new\nz: 1\n---\nrest\n'],
+    ]
+    for (const [note, key, after] of cases) {
+      expect(frontMatterBlock(note)).not.toBeNull()
+      expect(apply(note, key, 'new')).toBe(after)
+    }
+    expect(frontMatterList('---\ntags: [draft\nz: 1\n---\n', 'tags')).toEqual(['[draft'])
+    expect(frontMatterList('---\ntags: [a, b]\nz: 1\n---\n', 'tags')).toEqual(['a', 'b'])
+    expect(frontMatterList('---\ntags: "a"\nz: "b"\n---\n', 'tags')).toEqual(['a'])
+  })
+
+  test('taking away a key leaves a block or nothing, never its lines on the page', () => {
+    expect(apply('---\ntitle: x\n---\nrest\n', 'title', null)).toBe('rest\n')
+    expect(apply('---\ntitle: x\nz: 1\n---\nrest\n', 'title', null)).toBe('---\nz: 1\n---\nrest\n')
+    expect(apply('---\nz: 1\ntitle: x\n---\nrest\n', 'title', null)).toBe('---\nz: 1\n---\nrest\n')
+    expect(apply('---\ntitle: x\n# about\nz: 1\n---\nrest\n', 'title', null)).toBe(
+      '---\n# about\nz: 1\n---\nrest\n',
+    )
+    // What is left would be no block, so the key stays and says nothing: what it said
+    // is gone, a reader of it finds no value, and the comment is still a comment.
+    for (const [note, after] of [
+      ['---\ntitle: x\n# keep me\n---\nrest\n', '---\ntitle:\n# keep me\n---\nrest\n'],
+      ['---\ntitle: x\nsome words\n---\nrest\n', '---\ntitle:\nsome words\n---\nrest\n'],
+      ['---\ntitle: [\n  a,\n]\n# c\n---\nrest\n', '---\ntitle:\n# c\n---\nrest\n'],
+    ] as const) {
+      expect(opensFrontMatter(note)).toBe(true)
+      expect(apply(note, 'title', null)).toBe(after)
+      expect(frontMatterValue(after, 'title')).toBeNull()
+      expect(opensFrontMatter(after)).toBe(true)
+      expect(frontMatterEdit(after, 'title', null)).toBeNull()
+    }
   })
 })

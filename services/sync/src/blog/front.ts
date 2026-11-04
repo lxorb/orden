@@ -15,7 +15,7 @@
  *  to speak of, and what happens to it is the site's default; see
  *  spaces/site.ts. */
 
-import { documentTitle, withoutComments } from '@orden/markdown'
+import { documentTitle, noteWithoutComments, withoutComments } from '@orden/markdown'
 import { frontMatterList, frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { findLinks } from '@orden/markdown/links'
 import { objectIn } from '../body'
@@ -162,7 +162,7 @@ export function frontOf(written: string): NoteFront | null {
   // A comment is the writer's note to themselves: nothing in one is a title, a
   // summary, a tag or a link of the page, and nothing read here goes anywhere but a
   // page, a feed, a listing or a search (#453).
-  const source = withoutComments(written)
+  const source = noteWithoutComments(written)
   const front: NoteFront = {}
 
   const publish = flag(frontMatterValue(source, 'publish'))

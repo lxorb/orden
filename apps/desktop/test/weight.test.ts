@@ -1108,8 +1108,13 @@ function holds(tail: string): boolean {
  *
  *  Raised on 2026-11-04, to 3,552,000, for the sync hunt's round three: v1 going past a space
  *  that throws and telling of a note the disk refuses. Measured 3,551,945.
+ *
+ *  Raised 2026-11-04, to 3,574,900, for the bug hunt's third round on the views: a value
+ *  across lines read by the block's own rule, the id a named block gets on the page, what
+ *  a file shared on its own is held to, and a tick written one at a time, all in modules
+ *  the first paint already has. Measured 3,574,630, 387 modules.
  */
-const BUDGET = 3_567_200
+const BUDGET = 3_574_900
 const MOST_FILES = 388
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

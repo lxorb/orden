@@ -93,6 +93,12 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     const path = notePath(row)
     return path === null || canWriteAt(path)
   }
+  /** Whether where the base is kept takes writes at all, its fence found or not. A note
+   *  added to the view is a note of its own, and asks only this. */
+  const reachable = () => {
+    const at = live.writtenAt
+    return at === null || canWriteAt(at)
+  }
   const kit: Kit = {
     live,
     spec,
@@ -100,11 +106,10 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     compact,
     writes,
     get writable() {
-      const at = live.writtenAt
-      return at === null || canWriteAt(at)
+      return !live.fixed && reachable()
     },
     get adds() {
-      if (!kit.writable) return false
+      if (!reachable()) return false
       const root = workspace.activeSpace?.root
       const notes = (live.view?.nib.rows ?? 'notes') === 'notes'
       const to = notes ? (file ?? root) : (prefillOf(spec, live.today).path ?? root)
@@ -150,7 +155,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       const kinds = live.view?.nib.rows ?? 'notes'
       if (base && kinds === 'notes') {
         // The note's own space is asked by addNote, which every way of adding one takes.
-        if (kit.writable) {
+        if (reachable()) {
           void addNote(base, live.at, file, group, template === undefined ? {} : { template })
         }
         return null

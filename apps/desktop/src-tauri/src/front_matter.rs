@@ -259,6 +259,47 @@ fn stays_open(line: &[u8], open: &mut Open) -> bool {
     true
 }
 
+/// Where a value that starts at `from` and holds a quote or a bracket open past its line
+/// closes: the break at the end of the line that closes it, read before `limit`. None
+/// where it closes on its own line, or nothing closes it, which makes it that one line's
+/// words.
+///
+/// The twin of `valueClosesAt` in front-matter-lines.ts.
+pub fn value_closes_at(body: &str, from: usize, limit: usize) -> Option<usize> {
+    let bytes = body.as_bytes();
+    let line_end = |at: usize| {
+        bytes[at..limit]
+            .iter()
+            .position(|&one| one == b'\n')
+            .map_or(limit, |one| at + one)
+    };
+    let without_return =
+        |line: &'_ [u8]| -> usize { line.len() - usize::from(line.last() == Some(&b'\r')) };
+
+    let mut stop = line_end(from);
+    let first = &bytes[from..stop];
+    let blanks = first.iter().take_while(|&&one| is_blank(one)).count();
+    let said = without_properties(&first[blanks..]);
+    let said = &said[..without_return(said)];
+    if !matches!(said.first(), Some(b'"' | b'\'' | b'[' | b'{')) {
+        return None;
+    }
+    let mut open = Open::default();
+    if !stays_open(said, &mut open) {
+        return None;
+    }
+
+    while stop + 1 < limit {
+        let at = stop + 1;
+        stop = line_end(at);
+        let line = &bytes[at..stop];
+        if !stays_open(&line[..without_return(line)], &mut open) {
+            return Some(stop);
+        }
+    }
+    None
+}
+
 /// A value that is a block scalar's header, whose lines are the scalar's whatever
 /// they say: `|`, `>-`, `|2`, and perhaps a comment.
 fn is_block_scalar(said: &[u8]) -> bool {
@@ -468,6 +509,24 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
         let Some(said) = named(line, key) else {
             continue;
         };
+
+        // A flow list across lines, as Prettier breaks a long one, is one value.
+        let from = line.as_ptr() as usize - body.as_ptr() as usize;
+        let past = line.find(':').map_or(0, |one| one + 1);
+        if let Some(close) = value_closes_at(body, from + past, block.close) {
+            let joined: Vec<&str> = body[from + past..close]
+                .lines()
+                .map(|one| {
+                    let line = one.trim();
+                    if line.starts_with('#') {
+                        ""
+                    } else {
+                        line.split(" #").next().unwrap_or_default().trim()
+                    }
+                })
+                .collect();
+            return flow_items(&joined.join(" "));
+        }
 
         // A key with nothing after it is a list written underneath it.
         return if said.is_empty() {
@@ -713,6 +772,20 @@ mod tests {
             icon("---\r\nicon: rocket\r\n---\r\n").as_deref(),
             Some("rocket")
         );
+    }
+
+    #[test]
+    fn reads_a_list_written_across_lines() {
+        assert_eq!(
+            aliases("---\naliases: [\n  One, # first\n  # a note\n  \"Two\",\n]\nz: 1\n---\n"),
+            vec!["One", "Two"]
+        );
+        assert_eq!(
+            aliases("---\r\naliases: [\r\n  One,\r\n]\r\nz: 1\r\n---\r\n"),
+            vec!["One"]
+        );
+        // Nothing closes it, so it is what the line says.
+        assert_eq!(aliases("---\naliases: [One\nz: 1\n---\n"), vec!["[One"]);
     }
 
     #[test]

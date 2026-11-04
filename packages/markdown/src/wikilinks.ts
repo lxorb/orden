@@ -157,8 +157,10 @@ function anchor(link: Wikilink, resolve: LinkResolver | undefined, text: string)
 }
 
 /** The `#…` an anchor carries: the page of a PDF as it was written, since that
- *  is what a PDF viewer reads, and a heading as the id it becomes on the page. */
+ *  is what a PDF viewer reads, a heading as the id it becomes on the page, and a block
+ *  as its name, which `blockAnchors` makes an id of. */
 function anchored(link: Wikilink): string {
+  if (link.block !== null) return `#${fragment(`^${link.block}`)}`
   if (link.heading === null) return ''
 
   const page = pageFragment(link.heading)

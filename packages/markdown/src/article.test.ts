@@ -434,3 +434,27 @@ describe('a page a web tab wrote down', () => {
     expect(marked.ran).toBeUndefined()
   })
 })
+
+describe('a page whose words stand in a form', () => {
+  const page = (body: string) =>
+    new DOMParser().parseFromString(`<html><body>${body}</body></html>`, 'text/html')
+  const clipped = (body: string) => extract(page(body), 'page', 'https://a.example/').html
+
+  test('keeps them', () => {
+    expect(clipped('<form><table><tr><td>Result A</td><td>12</td></tr></table></form>')).toContain(
+      'Result A',
+    )
+    const list = clipped('<form><p>Search results</p><ul><li>r1</li></ul></form>')
+    expect(list).toContain('Search results')
+    expect(list).toContain('r1')
+  })
+
+  test('leaves its controls, and a form of nothing else', () => {
+    const shown = clipped(
+      `<article><p>${'Long words of an article. '.repeat(40)}</p><form><label>Mail</label><input><button>Go</button></form></article>`,
+    )
+    expect(shown).toContain('Long words')
+    expect(shown).not.toContain('Mail')
+    expect(shown).not.toContain('Go<')
+  })
+})

@@ -25,6 +25,7 @@ import {
   sortCompare,
   TaskRef,
   text,
+  textsOf,
   ThisRef,
   truthy,
   type Val,
@@ -160,11 +161,11 @@ function stringMethod(value: string, name: string, args: readonly Arg[]): { valu
     case 'replace': {
       const [pattern = null, replacement = null] = evaluated(args)
       const by = text(replacement)
+      spend(stepsOfText(value.length * by.length))
       if (pattern instanceof RegExp) {
         const copy = new RegExp(pattern.source, pattern.flags)
         return { value: readPattern(pattern, value, () => value.replace(copy, by)) }
       }
-      spend(stepsOfText(value.length * by.length))
       return { value: value.replaceAll(text(pattern), () => by) }
     }
     case 'split': {
@@ -253,8 +254,11 @@ function listMethod(
     }
     case 'flat':
       return { value: flattened(list) }
-    case 'join':
-      return { value: list.map(text).join(text(args[0]?.() ?? ',')) }
+    case 'join': {
+      const by = text(args[0]?.() ?? ',')
+      spend(stepsOfText(by.length * list.length))
+      return { value: textsOf(list).join(by) }
+    }
     case 'reverse':
       return { value: [...list].reverse() as Value[] }
     case 'sort':
@@ -385,6 +389,7 @@ export function callMethod(receiver: Val, name: string, args: readonly Arg[], sc
       const row = fileOf(receiver, scope)
       found = { value: row ? linksTo(row, args[0]?.() ?? null, scope) : false }
     } else {
+      spend(1 + stepsOfText(receiver.target.length))
       found = stringMethod(receiver.target, name, args)
     }
   } else if (isObject(receiver)) {
@@ -396,10 +401,10 @@ export function callMethod(receiver: Val, name: string, args: readonly Arg[], sc
 }
 
 /** A list with every list inside it opened, to any depth. */
-function flattened(list: readonly Val[]): Value[] {
-  const out: Value[] = []
+function flattened(list: readonly Val[], out: Value[] = []): Value[] {
+  spend(list.length)
   for (const one of list) {
-    if (Array.isArray(one)) out.push(...flattened(one))
+    if (Array.isArray(one)) flattened(one, out)
     else out.push(one as Value)
   }
   return out

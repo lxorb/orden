@@ -167,6 +167,30 @@ const BLOCK_SCALAR = /^[|>][-+0-9]*[ \t]*(?:#.*)?$/
 /** An anchor or a tag in front of a value. */
 const PROPERTIES = /^(?:[&!][^ \t]*(?:[ \t]+|$))+/
 
+/** Where a value that starts at `from` and holds a quote or a bracket open past its line
+ *  closes: the break at the end of the line that closes it, read before `limit`. -1 where
+ *  it closes on its own line, or nothing closes it, which makes it that one line's words,
+ *  as the walk below has it. For a reader that takes a value by its lines. */
+export function valueClosesAt(source: string, from: number, limit: number): number {
+  const lineEnd = (at: number) => {
+    const end = source.indexOf('\n', at)
+    return end === -1 || end > limit ? limit : end
+  }
+
+  let stop = lineEnd(from)
+  const said = source.slice(from, stop).trimStart().replace(PROPERTIES, '')
+  if (!/^["'[{]/.test(said)) return -1
+  const open: Open = { quote: '', depth: 0 }
+  if (!staysOpen(said.replace(/\r$/, ''), 0, open)) return -1
+
+  while (stop + 1 < limit) {
+    const at = stop + 1
+    stop = lineEnd(at)
+    if (!staysOpen(source.slice(at, stop).replace(/\r$/, ''), 0, open)) return stop
+  }
+  return -1
+}
+
 /** The line a block's closing fence starts on, walking from `from`, which is just past
  *  the opening one; or -1 where no block closes there, or what is there is no metadata. */
 function closingFence(source: string, from: number): number {

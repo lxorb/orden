@@ -22,13 +22,13 @@
  *  `firmware.ts`, which is also why a fence is written with `‘‘‘` rather than
  *  ``` - the font has no backtick, and three of them drew nothing at all. */
 
-import { lexMarkdown, stripFrontMatter, withoutComments } from '@orden/markdown'
+import { lexMarkdown, noteWithoutComments, stripFrontMatter } from '@orden/markdown'
 import * as emoji from 'node-emoji'
 import { useEmoji } from '@orden/markdown/engines'
 import { calloutOf, opensCallout } from '@orden/markdown/callouts'
 import { readChart } from '@orden/markdown/chart'
 import { captionIn, languageIn } from '@orden/markdown/code'
-import { embedKind, type Wikilink, withoutBlockIds } from '@orden/markdown/links'
+import { blockIdsBlanked, embedKind, type Wikilink } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
 import {
   type Compaction,
@@ -588,7 +588,8 @@ class Sheet {
       // Folded here, at the one place a line is made, so that every line of a
       // note is a line the firmware can actually draw. See `firmware.ts`.
       // The hang is what a line starts with, the bars and the indent of `lead` included.
-      const whole = fold(at === 0 ? `${lead}${part}` : `${hang}${part.trimStart()}`)
+      // Blanks at its end are what a block's name left, and no firmware needs them.
+      const whole = fold(at === 0 ? `${lead}${part.trimEnd()}` : `${hang}${part.trim()}`)
       if (at === 0) hang = hangOf(whole)
 
       // Each part is a line of the file in its own right, so it carries that line's
@@ -1002,8 +1003,10 @@ export function markLines(source: string, options: MarkOptions): Line[] {
   // indent deep enough to read as code: a gap on a 27 pixel line is worse than
   // a tap landing a few characters early.
   // A block's name is no word of the note either, and one on a closing fence is what
-  // an older build wrote: read as the page reads it, with the name gone.
-  const kept = withoutComments(withoutBlockIds(source))
+  // an older build wrote: read as the page reads it, with the name gone. Blanked rather
+  // than cut: at the end of a line that shows nothing, and there is one on every line of
+  // some notes, which would move each line under it by all the names above.
+  const kept = noteWithoutComments(blockIdsBlanked(source))
   const body = stripFrontMatter(kept)
   // The locator searches the whole of what was kept, so an offset it finds is
   // an offset into that. From past the front matter, which holds no line of the page:

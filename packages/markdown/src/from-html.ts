@@ -50,7 +50,6 @@ export const NEVER = [
   'iframe',
   'object',
   'embed',
-  'form',
   'button',
   'select',
   'textarea',
@@ -59,6 +58,40 @@ export const NEVER = [
   'video',
   'audio',
 ]
+
+/** What only a form's own controls say. */
+const CONTROL_WORDS = new Set(['label', 'legend', 'option', 'button', 'select', 'textarea'])
+
+/** What asks somebody to type or pick something. */
+const NOT_A_FIELD = new Set(['hidden', 'submit', 'button', 'image', 'reset'])
+
+/** How many words of its own a form holds for each field and still is the page. */
+const WORDS_A_FIELD = 20
+
+/** Whether a form is words of the page rather than something the page asks. ASP.NET wraps
+ *  a whole page in one and a search page its results, a search box above them or not: words
+ *  and few fields. A sign-in, a newsletter's box, a comment form are a sentence and fields.
+ *  What a control and its label say counts for neither. */
+export function formSays(form: Node): boolean {
+  let words = 0
+  let fields = 0
+  const walk = (node: Node) => {
+    for (const one of node.childNodes) {
+      if (one.nodeType === 3) words += (one.textContent ?? '').split(/\s+/).filter(Boolean).length
+      if (one.nodeType !== 1) continue
+      const name = one.nodeName.toLowerCase()
+      if (name === 'img' || name === 'picture') words += WORDS_A_FIELD
+      if (name === 'textarea' || name === 'select') fields++
+      if (name === 'input') {
+        const type = (one as Element).getAttribute('type')?.toLowerCase() ?? 'text'
+        if (!NOT_A_FIELD.has(type)) fields++
+      }
+      if (!CONTROL_WORDS.has(name) && !NEVER.includes(name)) walk(one)
+    }
+  }
+  walk(form)
+  return fields === 0 ? words > 0 : words >= fields * WORDS_A_FIELD
+}
 
 export interface FromHtmlOptions {
   /** What a picture becomes. The default writes the address the page gave it. */
@@ -750,7 +783,10 @@ function converter(options: FromHtmlOptions): TurndownService {
   // the list is one. For a clip this is a second line of defence behind the
   // extractor's own DOM cleaning; for a paste it is the only one, since a clipboard's HTML
   // arrives as a whole document with a head on it.
-  service.remove((node) => NEVER.includes(node.nodeName.toLowerCase()))
+  service.remove((node) => {
+    const name = node.nodeName.toLowerCase()
+    return NEVER.includes(name) || (name === 'form' && !formSays(node))
+  })
 
   // Turndown asks its rules before what it removes, so the elements of the list
   // that point at a file are links instead for the caller that keeps the files.

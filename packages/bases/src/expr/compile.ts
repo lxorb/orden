@@ -16,7 +16,7 @@ import { callGlobal, GLOBALS } from './globals'
 import { fileField, indexed, member, taskField } from './members'
 import { type Arg, callMethod } from './methods'
 import { type Node, parseExpression } from './parse'
-import { evaluation } from './pattern'
+import { evaluation, spend } from './pattern'
 import {
   add,
   arithmetic,
@@ -33,6 +33,7 @@ import {
   ThisRef,
   truthy,
   type Val,
+  weigh,
 } from './runtime'
 
 type Fn = (scope: Scope) => Val
@@ -126,6 +127,15 @@ function thunks(args: readonly Fn[], scope: Scope): Arg[] {
   )
 }
 
+/** How many closures of an expression cost one step. */
+const NODES_A_STEP = 32
+
+/** How many nodes a part of the tree has. */
+function sizeOf(part: unknown): number {
+  if (typeof part !== 'object' || part === null) return 0
+  return Object.values(part).reduce<number>((sum, one) => sum + sizeOf(one), 1)
+}
+
 function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
   const args = node.args.map((arg) => compileNode(arg, facts))
   const { callee } = node
@@ -146,7 +156,14 @@ function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
     if (READS_OTHERS.has(callee.name)) facts.local = false
     const receiver = compileNode(callee.object, facts)
     const name = callee.name
-    return (scope) => callMethod(receiver(scope), name, thunks(args, scope), scope)
+    // A list method runs its words once per item, and an item is counted as one step
+    // however long they are.
+    const each = Math.floor(sizeOf(node.args) / NODES_A_STEP)
+    return (scope) => {
+      const on = receiver(scope)
+      if (each > 0 && Array.isArray(on)) spend(on.length * each)
+      return callMethod(on, name, thunks(args, scope), scope)
+    }
   }
 
   throw new BasesError('Only a function or a method can be called', node.at)
@@ -167,7 +184,10 @@ function compileNode(node: Node, facts: Facts): Fn {
     }
     case 'list': {
       const items = node.items.map((item) => compileNode(item, facts))
-      return (scope) => items.map((item) => item(scope)) as Value[]
+      return (scope) => {
+        spend(items.length)
+        return items.map((item) => item(scope)) as Value[]
+      }
     }
     case 'object': {
       const entries = node.entries.map(([key, value]) => [key, compileNode(value, facts)] as const)
@@ -317,7 +337,7 @@ export function compile(source: string): Compiled {
 
   const facts: Facts = { local: true, clock: false, formulas: new Set() }
   const node = compileNode(parseExpression(source), facts)
-  const run: Fn = (scope) => evaluation(node, scope)
+  const run: Fn = (scope) => evaluation(node, scope, weigh)
   const compiled: Compiled = {
     source,
     local: facts.local,

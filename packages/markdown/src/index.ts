@@ -14,7 +14,14 @@ import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
-import { isNoteTarget, sizedAlt, slugify, withoutBlockIds } from './links'
+import {
+  blockAnchorsDrawn,
+  blockIdsAnchored,
+  isNoteTarget,
+  sizedAlt,
+  slugify,
+  withoutBlockIds,
+} from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref } from './tags'
 import { iframeCard, isIframeTag, splitIframe, webCard } from './web-embed'
@@ -64,6 +71,9 @@ export interface RenderOptions {
    *  leave it to the default. An export uses this to draw diagrams and to
    *  colour code, which need more than a renderer has. */
   code?: (code: string, language: string) => string | null
+  /** Whether a named block gets an id of `^` and its name, for a page a `[[#^name]]` link
+   *  is followed on. */
+  blockAnchors?: boolean
   /** Where a `[[wikilink]]` points on this page. Without it a wikilink renders
    *  as the words it showed, which is what an export wants: a document has no
    *  space around it to point into. */
@@ -507,12 +517,73 @@ function inside(options: RenderOptions): RenderOptions {
   // And no banner: a cover is the top of the note it belongs to, not a picture
   // pushed into the middle of whichever note quotes it.
   delete rest.cover
+  delete rest.blockAnchors
   return rest
 }
 
 /** The page, or the words as they are for a note nested past what the parser's stack
  *  can follow: `> ` four thousand times is eight kilobytes, and a note arrives from a
  *  share. The stack is the only limit on that depth, so it is the overflow that says so. */
+/** A note with its block names left as marks where a page can hold one: the words of a
+ *  paragraph or a list item, a table's row, or a name on its own line under one of those.
+ *  Asked of the note as the parser reads it with the names gone, since a name is what
+ *  makes `--- ^x` a paragraph and `---` a rule. Anything else is a heading, whose words are
+ *  its id, a formula, a rule, a definition, raw HTML: drawn as if there were no name. */
+function anchored(words: string): string {
+  const cut = withoutComments(withoutBlockIds(words))
+  let tokens: Token[]
+  try {
+    tokens = lexMarkdown(cut)
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error
+    return withoutBlockIds(words)
+  }
+
+  /** What stands on each line: true where a mark can, the words of its leaves in a list or
+   *  a quote, where a formula or a fence may stand beside them. */
+  const lines: (boolean | Set<string>)[] = []
+  let above: boolean | Set<string> = false
+  for (const token of tokens) {
+    const here: boolean | Set<string> =
+      token.type === 'space'
+        ? above
+        : token.type === 'paragraph' || token.type === 'table'
+          ? true
+          : token.type === 'list' || token.type === 'blockquote'
+            ? leafLines(token)
+            : false
+    if (token.type !== 'space') above = here
+    const count = token.raw.split('\n').length - (token.raw.endsWith('\n') ? 1 : 0)
+    for (let one = 0; one < count; one++) lines.push(here)
+  }
+
+  return blockIdsAnchored(words, (line, kept) => {
+    const here = lines[line] ?? above
+    if (NO_ANCHOR.test(kept)) return false
+    if (typeof here === 'boolean') return here
+    const said = kept.trim()
+    return said === '' || [...here].some((one) => said.endsWith(one))
+  })
+}
+
+/** A callout's first line, whose words would be its title, and an abbreviation's. */
+const NO_ANCHOR = /^\s*(?:>\s*)*(?:\[!|\*\[)/
+
+/** The lines of words a list or a quote holds, however deep. */
+function leafLines(token: Token): Set<string> {
+  const out = new Set<string>()
+  const walk = (one: Token) => {
+    if (one.type === 'paragraph' || one.type === 'text') {
+      for (const line of one.raw.split('\n')) if (line.trim()) out.add(line.trim())
+      return
+    }
+    const inside = one as { tokens?: Token[]; items?: Token[] }
+    for (const child of inside.tokens ?? inside.items ?? []) walk(child)
+  }
+  walk(token)
+  return out
+}
+
 function parsedOrPlain(marked: Marked, body: string, breaks: boolean): string {
   try {
     return marked.parse(body, { async: false, breaks })
@@ -537,12 +608,14 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   // Front matter is metadata, a block's name is a marker and a comment is a note
   // to the writer; none of the three is a word of the note, so none of them
   // reaches the page. See comments.ts for why the comment goes before the parse.
-  const body = withoutComments(withoutBlockIds(stripFrontMatter(source)))
+  const words = stripFrontMatter(source)
+  const body = withoutComments(options.blockAnchors ? anchored(words) : withoutBlockIds(words))
   // `breaks` is asked for per parse rather than built into the renderer, so the
   // two shared ones above serve a deck as well as a document: marked merges a
   // call's options over the instance's and leaves the instance alone. A caller
   // that says nothing gets the reader's own answer; see `setHardBreaks`.
   let html = parsedOrPlain(marked, body, options.breaks ?? hardBreaks())
+  if (options.blockAnchors) html = blockAnchorsDrawn(html)
 
   html = markAbbreviations(html, collectAbbreviations(body))
 
@@ -669,7 +742,7 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
   }
 }
 
-export { withoutComments } from './comments'
+export { noteWithoutComments, withoutComments } from './comments'
 
 /** The ceiling a formula's own sizes are held to, which the editor's renderer
  *  needs as well: one number, so a note that will not fit the panel in the app

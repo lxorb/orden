@@ -31,7 +31,13 @@
   import { theme } from './theme.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
-  import { decodeFragment, decodeTarget, isTabFile, pageFragment } from '@orden/markdown/links'
+  import {
+    blockIds,
+    decodeFragment,
+    decodeTarget,
+    isTabFile,
+    pageFragment,
+  } from '@orden/markdown/links'
   import { links } from './link-index.svelte'
   import { pressRow } from './query-block'
 
@@ -68,7 +74,11 @@
     let stopped = false
     void import('./views/mount').then(({ mountBases }) => {
       if (stopped) return
-      stop = mountBases(page, from)
+      stop = mountBases(
+        page,
+        from,
+        untrack(() => tab.note.shared !== null),
+      )
       // The placeholders the find bar may have read are gone from the page now.
       changed()
       if (untrack(() => finding)) reveal()
@@ -425,12 +435,14 @@
       : (resolveRelative(index, target) ?? resolveNote(index, target))
     if (!found) return
 
+    const said = fragment ? decodeFragment(fragment) : null
+    const block = said?.startsWith('^') ? said.slice(1) : null
     void workspace.followLink(
       {
         path: found.path,
         target,
-        heading: fragment ? decodeFragment(fragment) : null,
-        block: null,
+        heading: block === null ? said : null,
+        block,
         page: null,
       },
       ask,
@@ -438,19 +450,50 @@
     )
   }
 
+  // Where the workspace was asked to go in this note, a followed link's heading or block,
+  // once there is a page to go there on.
+  $effect(() => {
+    const asked = workspace.goto
+    if (!asked || !html || workspace.active?.id !== tab.id || tab.path !== asked.path) return
+
+    workspace.goto = null
+    void tick().then(() => requestAnimationFrame(() => land(asked.line)))
+  })
+
+  /** A line of the note brought into view: its block if it has a name, else by where it
+   *  is, which is exact for a heading. */
+  function land(line: number) {
+    const named = blockIds(tab.doc).find((one) => one.line === line)
+    if (named) jump(`^${named.id}`)
+    else show(offsetOf(line))
+  }
+
+  const offsetOf = (line: number) =>
+    tab.doc.split('\n').slice(0, line).join('\n').length + (line ? 1 : 0)
+
   /** A target as the name it stands for: what a note writes in a link is a URL. */
   function written(target: string): string {
     return decodeTarget(target)
   }
 
-  /** Scrolls to a heading on this page, the way the browser would if it were
-   *  allowed to navigate. */
+  /** Scrolls to a heading or a named block on this page, the way the browser would if
+   *  it were allowed to navigate. A block a line of words could not hold an id in, a
+   *  table row or a heading, is gone to by where it is in the note. */
   function jump(fragment: string) {
     const page = surface
     if (!page) return
 
-    const found = page.querySelector(`[id="${CSS.escape(written(fragment))}"]`)
-    found?.scrollIntoView({ block: 'start' })
+    const said = decodeFragment(fragment)
+    const found = page.querySelector(`[id="${CSS.escape(said)}"]`)
+    if (found) {
+      // A block's id stands at its end, and it is the block that is gone to.
+      const block = said.startsWith('^') ? found.closest('p, li, blockquote') : null
+      ;(block ?? found).scrollIntoView({ block: 'start' })
+      return
+    }
+    if (!said.startsWith('^')) return
+    const line = blockIds(tab.doc).find((one) => one.id === said.slice(1))?.line
+    if (line !== undefined) show(offsetOf(line))
   }
 
   /** Copying, and the way back out. What a right click on a page that cannot be

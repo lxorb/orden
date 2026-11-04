@@ -243,3 +243,43 @@ describe('what taking a tag away has to cut', () => {
     expect(without('---\ntags: [work, other]\n---\n', 'work')).toBe('---\ntags: [other]\n---\n')
   })
 })
+
+describe('a tag in a flow list across lines', () => {
+  const note = '---\ntags: [\n  work, # mine\n  # a line of comment\n  "b",\n]\nz: 1\n---\nrest\n'
+
+  test('is a tag, each at its own place', () => {
+    expect(tagsIn(note).map((one) => one.replace(/^#/, ''))).toEqual(['work', 'b'])
+    const [span] = tagSpans(note, 'work')
+    expect(span && note.slice(span.from, span.to)).toBe('work')
+  })
+
+  test('a list nothing closes reads as it did', () => {
+    expect(tagsIn('---\ntags: [a\nz: b\n---\n').map((one) => one.replace(/^#/, ''))).toEqual(['a'])
+  })
+})
+
+describe('a tag after a comment in a flow list across lines', () => {
+  test('is found where it is written', () => {
+    for (const nl of ['\n', '\r\n']) {
+      const note = [
+        '---',
+        'tags: [',
+        '  work, # my comment',
+        '  b,',
+        '  c,',
+        ']',
+        'z: 1',
+        '---',
+        'rest',
+        '',
+      ].join(nl)
+      for (const name of ['work', 'b', 'c']) {
+        const [span] = tagSpans(note, name)
+        expect(span && note.slice(span.from, span.to)).toBe(name)
+      }
+      const [cut] = tagCuts(note, 'b')
+      expect(cut && note.slice(cut.from, cut.to)).toContain('b')
+      expect(cut && note.slice(cut.from, cut.to)).not.toContain('comment')
+    }
+  })
+})

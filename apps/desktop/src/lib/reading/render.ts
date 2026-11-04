@@ -36,9 +36,9 @@ export interface Note {
  *  the reading view. */
 export function pointer(note: Note): (link: Wikilink) => { href: string | null } | null {
   return (link) => {
-    // `[[#Heading]]` names a place on this very page, and the `#anchor` the
-    // renderer writes after the target is the whole of what it needs.
-    if (!link.target) return link.heading === null ? null : { href: '' }
+    // `[[#Heading]]` and `[[#^block]]` name a place on this very page, and the `#anchor`
+    // the renderer writes after the target is the whole of what it needs.
+    if (!link.target) return link.heading === null && link.block === null ? null : { href: '' }
 
     // Through the index's own resolver rather than over the notes it holds: both
     // read a target the same way, and only one of them has the name index and the
@@ -102,7 +102,7 @@ export async function readingHtml(
     prepareFences(note.text, scheme, {
       query: async (code, language) =>
         language === 'tasks' && !__EVEN_PLUGIN__
-          ? (await import('../tasks-block')).tasksRowsHtml(code, t('Nothing found'), root)
+          ? (await import('../tasks-block')).tasksRowsHtml(code, t('Nothing found'), root, !trusted)
           : queryRowsHtml(code, t('Nothing found'), root),
       // A base fence is a box the reading view draws the view into; see views/mount.ts.
       base: true,
@@ -114,6 +114,7 @@ export async function readingHtml(
   const html = withPictures(
     renderMarkdown(note.text, {
       footnotes: true,
+      blockAnchors: true,
       // The note's own metadata, the way the reader asked for it in the editor -
       // rows, source, or neither. Reading a note is being in the app looking at it,
       // so it says the same thing either way; a document that has left does not, and

@@ -122,12 +122,66 @@ export async function noteText(ws: HoldsNotes, path: string): Promise<string | n
  *
  *  Answers whether there was a box: the line is read again here rather than
  *  trusted from the row, so a note edited since the list was drawn is ticked
- *  where it says a task is now, or not at all. */
-export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): Promise<boolean> {
+ *  where it says a task is now, or not at all. With `hash`, the `taskHash` of the words
+ *  a row was drawn from, that task wherever it stands now: one ticked a moment ago may
+ *  have put its next occurrence above the row, before the row could be drawn again.
+ *
+ *  One at a time for a note: a second box pressed while the first is being written reads
+ *  the note the first has written, or the later write puts the first box back. Not for
+ *  good, though: a write that never answers holds the ticks after it up for `TICK_WAITS`,
+ *  and a late one is read against the file again (`replaceInNotes`) before it is written. */
+export function toggleTaskAt(
+  ws: HoldsNotes,
+  path: string,
+  asked: number,
+  hash?: string,
+): Promise<boolean> {
+  const toggle = () => toggled(ws, path, asked, hash)
+  const before = toggling.get(path)
+  const running = (before ? waitedFor(before) : Promise.resolve()).then(toggle)
+  const done = () => {
+    if (toggling.get(path) === running) toggling.delete(path)
+  }
+  toggling.set(path, running)
+  running.then(done, done)
+  return running
+}
+
+/** The tick being written in each note, the last asked for. */
+const toggling = new Map<string, Promise<boolean>>()
+
+/** How long a tick waits for the one before it, far past a slow disk. */
+const TICK_WAITS = 10_000
+
+/** When a tick may go on after this one: it has answered, either way, or it never will. */
+function waitedFor(tick: Promise<boolean>): Promise<void> {
+  return new Promise((go) => {
+    const timer = setTimeout(go, TICK_WAITS)
+    const done = () => {
+      clearTimeout(timer)
+      go()
+    }
+    tick.then(done, done)
+  })
+}
+
+async function toggled(
+  ws: HoldsNotes,
+  path: string,
+  asked: number,
+  hash?: string,
+): Promise<boolean> {
   const before = await noteText(ws, path)
   if (before === null) return false
 
   const starts = lineStarts(before)
+  let line = asked
+  if (hash !== undefined) {
+    const { taskLine } = await import('../rows/write')
+    const found = taskLine(before, { line, hash })
+    if (!found) return false
+    line = starts.lastIndexOf(found.from)
+  }
   const from = starts[line]
   if (from === undefined) return false
 

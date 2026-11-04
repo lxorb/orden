@@ -401,9 +401,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  The code raised on 2026-11-04, to 5,855,000, for the sync hunt's round three: a note the
  *  disk refuses staying wanted, a space's trouble being that space's. Measured 5,854,964.
+ *
+ *  The code raised on 2026-11-04, to 5,915,000, for the bug hunt's third round on the
+ *  views: what walking a value costs a guarded base, words of raw HTML in an export, a
+ *  fence found by what is drawn, and the head offering what can be kept. Measured 5,914,633.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_899_500,
+  code: 5_915_000,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,

@@ -40,6 +40,10 @@ export interface Source {
   /** The file the base is kept in, on this disk: a base file, or the note a fence is
    *  in. None for a tab's own view, whose words are the tab's. */
   path?: string | null
+  /** Whether it stands in a file somebody shared on its own, which has no path to ask. */
+  stranger?: boolean
+  /** Whether a change to the base has nowhere to go, as this last read it. */
+  fixed?: () => boolean
   /** Bases' `this`: the note embedding the view. */
   self?: () => Row | undefined
   /** Which view of the base to show first, by name. */
@@ -93,6 +97,9 @@ export class LiveView {
   private readonly quiet = afterQuiet(() => (this.searched = this.typed.trim()), SEARCH_QUIET)
 
   /** Where the base is written; see `Source.path`. */
+  /** See `Source.fixed`. */
+  fixed = $state(false)
+
   get writtenAt(): string | null {
     return this.source.path ?? null
   }
@@ -157,8 +164,9 @@ export class LiveView {
       const loaded = await this.source.load()
       // A base somebody else could have written may not freeze the app for whoever opens
       // it; the reader's own runs whatever it says. The same line raw HTML is held to.
-      const base = guardedAt(loaded, this.source.path ?? null)
+      const base = guardedAt(loaded, this.source.path ?? null, this.source.stranger)
       if (!base) throw new Error('refused')
+      this.fixed = this.source.fixed?.() ?? false
       this.base = base
       const named = this.source.view
       const at = named === undefined ? -1 : base.views.findIndex((one) => one.name === named)
