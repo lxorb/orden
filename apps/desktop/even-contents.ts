@@ -489,10 +489,16 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The catalogues raised on 2026-11-04, to 967,400, for #1041: the switch that shows every
  *  tab but the one in front as its icon, with its hint, in every catalogue
  *  (general-pane.ts). Measured 967,294.
+ *
+ *  The code raised on 2026-11-04, to 5,892,500, and the catalogues to 969,500, for #1054
+ *  and #1116: the icon picker's Web icons - the account's sites, held on the device and
+ *  drawn as pictures, in every catalogue - and a cell's marks on its own box
+ *  (web-tab/site-icons.svelte.ts, IconPicker.svelte, Icon.svelte). Measured 5,891,756
+ *  and 968,905.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_884_400,
-  catalogues: 967_400,
+  code: 5_892_500,
+  catalogues: 969_500,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,

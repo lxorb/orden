@@ -1202,8 +1202,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,567,000, for #1068: a move or a delete in the file list is
  *  said to sync before the disk has it, through the one hook every operation goes
  *  through (`doing` in workspace/file-ops.ts, `renameOnDisk` and `bin` in
- *  workspace.svelte.ts). Measured 3,565,800. */
-const BUDGET = 3_567_000
+ *  workspace.svelte.ts). Measured 3,565,800.
+ *
+ *  Raised 2026-11-04, to 3,568,500, for #1054 and #1116: the icon picker's Web icons, the
+ *  account's sites first in the grid and a site's mark drawn as a picture, and a cell's
+ *  marks on its own box (IconPicker.svelte, Icon.svelte). The list and its pictures are a
+ *  chunk of their own. Measured 3,567,023. */
+const BUDGET = 3_568_500
 const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
