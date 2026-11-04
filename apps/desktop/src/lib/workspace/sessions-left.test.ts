@@ -392,3 +392,53 @@ describe('one document in two places of a left session', () => {
     expect(out).toHaveLength(1)
   })
 })
+
+describe('two different drafts of one document', () => {
+  const held = {
+    kind: 'note' as const,
+    path: '/spaces/One/a.md',
+    name: 'a.md',
+    dirty: true,
+    cursor: 0,
+    scroll: 0,
+    share: 'k1',
+    base: 'base\n',
+  }
+  const says = () => Promise.resolve('base\n')
+
+  test('each saying the other, one of them stays', async () => {
+    const out = await asDrafts(
+      [
+        { ...held, doc: 'base\nfoo ' },
+        { ...held, doc: 'base\n foo' },
+      ],
+      says,
+    )
+    expect(out).toHaveLength(1)
+  })
+
+  test('however many there are of them', async () => {
+    const out = await asDrafts(
+      [
+        { ...held, doc: 'base\nfoo  ' },
+        { ...held, doc: 'base\n foo ' },
+        { ...held, doc: 'base\n  foo' },
+      ],
+      says,
+    )
+    expect(out.length).toBeGreaterThan(0)
+  })
+
+  /** Which was written later a session does not say, so the one holding the other stands: a
+   *  deletion made on top of words that never reached the file comes back in the draft. */
+  test('the one holding the other is kept, even where the other came later', async () => {
+    const out = await asDrafts(
+      [
+        { ...held, doc: 'base\nkeep this\n' },
+        { ...held, doc: 'base\nkeep\n' },
+      ],
+      says,
+    )
+    expect(out.map((one) => one.doc)).toEqual(['base\nkeep this\n'])
+  })
+})

@@ -239,3 +239,129 @@ describe('mergedOn', () => {
     }
   })
 })
+
+describe('mergedOn takes nothing from either side', () => {
+  /** The lines of a note, each a word of its own that can be looked for. */
+  const baseOf = (lines: number, ending: boolean) => {
+    const made = Array.from({ length: lines }, (_, at) => `b${at}x`).join('\n')
+    return ending ? `${made}\n` : made
+  }
+
+  test.each([
+    ['a line break first, the other side a line', 'a\n', 'a\n\nmine\n', 'a\nfoo\n'],
+    ['the same with a heading', 'base\n', 'base\n\nmine\n', 'base\n# Agent heading\n'],
+    ['one character the other side wrote', 'base\n', 'base\n\nmine\n', 'base\nX'],
+  ])('%s', (_, base, local, remote) => {
+    const out = mergedOn(base, local, remote)
+    expect(out).toBe(merge3(base, local, remote).text)
+  })
+
+  test.each([
+    ['a number', 'x y', 'x 5 y', 'x 50 y'],
+    ['a short word another starts with', 'x y', 'x no y', 'x not sure y'],
+    ['a word another ends with', 'x y', 'x art y', 'x start y'],
+    ['a passage inside a longer word', 'x y', 'x wordsmith y', 'x a wordsmithing y'],
+  ])("a reader's word is theirs: %s", (_, base, local, remote) => {
+    expect(mergedOn(base, local, remote)).toBe(merge3(base, local, remote).text)
+  })
+
+  test.each([
+    ['a whole word first', 'x y', 'x no y', 'x no way y', 'x no way y'],
+    ['a whole word last', 'x y', 'x way y', 'x no way y', 'x no way y'],
+    ['a whole line', 'x\n', 'x\nmilk\n', 'x\nmilk\neggs\n', 'x\nmilk\neggs\n'],
+    ['words ending in a mark', 'x y', 'x - y', 'x - b y', 'x - b y'],
+  ])('what is whole is said once: %s', (_, base, local, remote, out) => {
+    expect(mergedOn(base, local, remote)).toBe(out)
+  })
+
+  /** A deletion in the air: a later state with less in it reads the same as an earlier one,
+   *  and the longer stands. No word lost, and said plainly at `mergedOn`. */
+  test('words taken out of what the other side went on from come back', () => {
+    expect(mergedOn('b\n', 'b\ntyped\n', 'b\ntyped more\n')).toBe('b\ntyped more\n')
+  })
+
+  /** Seeded, and counted rather than timed. Each side made of the base as a person makes it:
+   *  words put in, lines put in, lines taken out, at the end with or without a line break, and
+   *  half the time the one side going on from the other. */
+  test('against merge3 over many shapes: no insert lost, no deletion undone, no doubling', () => {
+    let seed = 20261104
+    const next = (under: number) => {
+      seed = (seed * 48271) % 2147483647
+      return seed % under
+    }
+    let word = 0
+    const fresh = () => `T${(word += 1)}z`
+    const shapes = [
+      (one: string) => one,
+      (one: string) => `\n${one}`,
+      (one: string) => ` ${one}`,
+      (one: string) => `${one} `,
+      (one: string) => `${one}\n`,
+      (one: string) => `\n${one}\n`,
+      (one: string) => `# ${one}\n`,
+    ]
+    const shaped = (one: string) => shapes[next(shapes.length)]!(one)
+    const edit = (text: string, into: Set<string>, gone: Set<string>) => {
+      let out = text
+      for (let times = next(3) + 1; times > 0; times -= 1) {
+        const lines = out.split('\n')
+        if (next(4) === 0 && lines.length > 2) {
+          const at = next(lines.length - 1)
+          const line = lines[at]!
+          if (/^b\d+x$/.test(line)) gone.add(line)
+          lines.splice(at, 1)
+          out = lines.join('\n')
+          continue
+        }
+        const token = fresh()
+        into.add(token)
+        const at = next(2) ? out.length : out.indexOf('\n', next(Math.max(out.length, 1)))
+        const point = at < 0 ? out.length : at
+        out = out.slice(0, point) + shaped(token) + out.slice(point)
+      }
+      return out
+    }
+
+    const count = (text: string, token: string) =>
+      (text.match(new RegExp(`(?<![A-Za-z0-9])${token}(?![A-Za-z0-9])`, 'g')) ?? []).length
+    let goneOn = 0
+    for (let round = 0; round < 40_000; round += 1) {
+      const base = baseOf(next(8) + 1, next(4) !== 0)
+      const inLocal = new Set<string>()
+      const inRemote = new Set<string>()
+      const gone = new Set<string>()
+      const local = edit(base, inLocal, gone)
+      const onward = next(2) === 0
+      if (onward) goneOn += 1
+      const remote = onward ? edit(local, inRemote, gone) : edit(base, inRemote, gone)
+      const told = `${JSON.stringify(base)} ${JSON.stringify(local)} ${JSON.stringify(remote)}`
+
+      for (const [one, other] of [
+        [local, remote],
+        [remote, local],
+      ] as const) {
+        const out = mergedOn(base, one, other)
+        const reference = merge3(base, one, other).text
+        for (const token of [...inLocal, ...inRemote]) {
+          // Nothing merge3 keeps is lost, and nothing is said more than merge3 says it.
+          const here = count(out, token)
+          const there = count(reference, token)
+          if ((there > 0 && here === 0) || here > Math.max(there, 1)) {
+            expect.fail(`${token}: ${here} here, ${there} in merge3, in ${told}`)
+          }
+          // The one side went on from the other, all its words there: said once.
+          if (onward && inLocal.has(token) && here > 1 && remote.includes(token)) {
+            const wholeRemote = count(remote, token)
+            if (wholeRemote === 1 && there <= 1) expect.fail(`${token} doubled in ${told}`)
+          }
+        }
+        for (const line of gone) {
+          if (count(reference, line) === 0 && count(out, line) > 0) {
+            expect.fail(`${line} came back in ${told}`)
+          }
+        }
+      }
+    }
+    expect(goneOn).toBeGreaterThan(15_000)
+  }, 120_000)
+})

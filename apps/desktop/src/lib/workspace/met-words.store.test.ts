@@ -158,6 +158,66 @@ describe('unwritten words meeting an open document', () => {
     expect(file).toContain('elsewhere')
   })
 
+  test('a note clicked and typed in a launch, then a kill: two tabs of it fold into one', async () => {
+    const other = `${ROOT}/z.md`
+    d.files.set(other, 'z\n')
+    await workspace.loadTree()
+    await workspace.applyLayout(
+      layout(
+        tab({ path: other, name: 'z.md', doc: '', dirty: false, base: undefined, share: 'z' }),
+        tab({ share: 'read' }),
+        tab({ share: 'typed in the gap', doc: 'base\nmore\n' }),
+      ),
+      false,
+    )
+    await workspace.writesSettled()
+
+    expect(workspace.tabs.map((one) => one.path)).toEqual([other, PATH])
+    const file = d.files.get(PATH)!
+    expect(file).toContain('typed')
+    expect(file).toContain('more')
+  })
+
+  test('the tab folded away was in front: the one it folded into is', async () => {
+    const shown = layout(tab({ share: 'read' }), tab({ share: 'gap', doc: 'base\nmore\n' })) as {
+      frame: { pane: { active: number } }
+    }
+    shown.frame.pane.active = 1
+    await workspace.applyLayout(shown as never, false)
+    await workspace.writesSettled()
+
+    expect(workspace.tabs).toHaveLength(1)
+    expect(workspace.active?.path).toBe(PATH)
+  })
+
+  test('two panes of one note are still two tabs of it', async () => {
+    const twoPanes = {
+      panel: null,
+      focused: 'p1',
+      frame: {
+        kind: 'split',
+        id: 's',
+        along: 'row',
+        fraction: 0.5,
+        sides: [
+          {
+            kind: 'pane',
+            pane: { id: 'p1', active: 0, linked: false, tabs: [tab({ share: 'a' })] },
+          },
+          {
+            kind: 'pane',
+            pane: { id: 'p2', active: 0, linked: false, tabs: [tab({ share: 'b' })] },
+          },
+        ],
+      },
+    }
+    await workspace.applyLayout(twoPanes as never, false)
+    await workspace.writesSettled()
+
+    expect(workspace.tabs).toHaveLength(2)
+    expect(new Set(workspace.tabs.map((one) => one.note)).size).toBe(1)
+  })
+
   test('a closed entry of the document still open is a view of it, not words to bring back', async () => {
     await workspace.open(PATH)
     const note = workspace.tabs[0]!.note
