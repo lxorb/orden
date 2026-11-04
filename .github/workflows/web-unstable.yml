@@ -8,8 +8,9 @@ name: web-unstable
 # main's, and not main's newest commit but the one live now: the one whose migrations
 # check.yml ran when it deployed it, and which it named in the version's message. So this
 # migrates nothing, builds the release's web app from that same commit, puts the edge's
-# beside it and deploys that Worker again, containers untouched. Until main has deployed
-# a Worker that says which commit it is, there is nothing to deploy beside and this says so.
+# beside it and deploys that Worker again, containers untouched. A live Worker that is not
+# known to be one of main's has nothing to deploy beside, and the run is red until main
+# deploys again.
 #
 # The unstable web app talks to that Worker, exactly as the unstable desktop builds do:
 # whatever needs a server change only works on the web once it is released.
@@ -62,21 +63,42 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The live version's message, as check.yml writes it: `main <sha> unstable <sha>`.
+      # The live version's message, as check.yml writes it: `main <sha> unstable <sha>`. A
+      # version made by changing a secret (`wrangler secret put`) is the deployment before
+      # it with that one secret changed, and carries no message: the live one was such a
+      # version for a week, and every push here said so in a notice and deployed nothing
+      # while the run stayed green (#1112). So the deployments are walked back
+      # from the live one through such versions to the code they kept, and the main that
+      # code says it is. Any other version with no main in it - one uploaded by hand, a
+      # rollback to a version from before the message - is not known to be main's, and
+      # the run is red: nothing beside it is a deploy that did not happen, said in green.
       - name: Which main is live
         id: live
         working-directory: services/sync
         run: |
-          version=$(pnpm exec wrangler deployments status --json |
-            jq -r '.versions | sort_by(-.percentage) | .[0].version_id')
-          message=$(pnpm exec wrangler versions view "$version" --json |
-            jq -r '.annotations["workers/message"] // ""')
-          main=$(grep -oE '^main [0-9a-f]{40}' <<<"$message" | cut -d' ' -f2 || true)
+          deployments=$(pnpm exec wrangler deployments list --json)
+          # Newest first, each by the version that takes the most of its traffic.
+          versions=$(jq -r 'sort_by(.created_on) | reverse | .[] |
+            .versions | sort_by(-.percentage) | .[0].version_id' <<<"$deployments")
+          live=$(head -1 <<<"$versions")
+          main=""
+          for version in $versions; do
+            annotations=$(pnpm exec wrangler versions view "$version" --json | jq -c '.annotations // {}')
+            main=$(jq -r '.["workers/message"] // ""' <<<"$annotations" |
+              grep -oE '^main [0-9a-f]{40}' | cut -d' ' -f2 || true)
+            [ -n "$main" ] && break
+            by=$(jq -r '.["workers/triggered_by"] // ""' <<<"$annotations")
+            if [ "$by" != secret ]; then
+              echo "::error::The live Worker ($live) is $version's code, which does not say which main it is (made by '$by'). Deploy main to put a known one live; nothing deployed."
+              exit 1
+            fi
+            echo "$version changed a secret and kept the code deployed before it"
+          done
           if [ -z "$main" ]; then
-            echo "::notice::The live Worker ($version) does not say which main it is; main's next deploy will. Nothing deployed."
-            exit 0
+            echo "::error::No deployment of the Worker says which main it is. Deploy main; nothing deployed."
+            exit 1
           fi
-          echo "Live: main $main, version $version"
+          echo "Live: main $main, from version $live"
           echo "main=$main" >> "$GITHUB_OUTPUT"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -86,7 +108,6 @@ jobs:
       # their folders below, never by their names: main may still call them by the old
       # ones (#367).
       - name: Check out that main
-        if: steps.live.outputs.main
         run: |
           git fetch --no-tags --depth=1 origin "$MAIN"
           git worktree add --detach "$RUNNER_TEMP/main" FETCH_HEAD
@@ -96,11 +117,9 @@ jobs:
           MAIN: ${{ steps.live.outputs.main }}
 
       - name: Build the unstable web app
-        if: steps.live.outputs.main
         run: VITE_ORDEN_CHANNEL=unstable pnpm --filter @orden/desktop build
 
       - name: Build the release's web app and put the two together
-        if: steps.live.outputs.main
         working-directory: ${{ runner.temp }}/main
         run: |
           pnpm --filter ./apps/desktop build
@@ -108,7 +127,6 @@ jobs:
 
       # The Worker's bundle carries nibd for the machines it hands it to, as main's does.
       - name: Build nibd for the Worker's bundle
-        if: steps.live.outputs.main
         working-directory: ${{ runner.temp }}/main
         run: pnpm --filter ./services/machine build
 
@@ -116,7 +134,6 @@ jobs:
       # machines' image is main's, built and rolled out by main's deploy, and nothing
       # here changes it.
       - name: Deploy the Worker with the edge's pages
-        if: steps.live.outputs.main
         working-directory: ${{ runner.temp }}/main
         run: |
           pnpm --filter ./services/sync run deploy \
