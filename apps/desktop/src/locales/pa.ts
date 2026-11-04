@@ -577,6 +577,9 @@ export const pa: Dictionary = {
   'Show other tabs as icons': 'ਹੋਰ ਟੈਬ ਆਈਕਨ ਵਜੋਂ ਦਿਖਾਓ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ਅੱਗੇ ਵਾਲੀ ਤੋਂ ਬਿਨਾਂ ਹਰ ਟੈਬ ਸਿਰਫ਼ ਆਪਣਾ ਆਈਕਨ ਦਿਖਾਉਂਦੀ ਹੈ; ਕਿਸੇ ਉੱਤੇ ਪੁਆਇੰਟਰ ਲਿਆਉਣ ਨਾਲ ਨਾਂ ਦਿਖਦਾ ਹੈ।',
+  'Tabs as wide as their names': 'ਨਾਂ ਜਿੰਨੀਆਂ ਚੌੜੀਆਂ ਟੈਬਾਂ',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'ਹਰ ਟੈਬ ਸਿਰਫ਼ ਓਨੀ ਚੌੜੀ ਹੁੰਦੀ ਹੈ ਜਿੰਨੀ ਉਸਦੇ ਆਈਕਨ, ਨਾਂ ਅਤੇ ਬੰਦ ਕਰਨ ਵਾਲੇ ਬਟਨ ਨੂੰ ਲੋੜ ਹੈ; ਬੰਦ ਹੋਣ ਤੇ ਸਾਰੀਆਂ ਟੈਬਾਂ ਬਰਾਬਰ ਚੌੜੀਆਂ ਹੁੰਦੀਆਂ ਹਨ।',
   'Tab preview delay': 'ਟੈਬ ਝਲਕ ਦੀ ਦੇਰੀ',
   'How long the pointer rests on a tab before its preview shows.':
     'ਝਲਕ ਦਿਖਣ ਤੋਂ ਪਹਿਲਾਂ ਪੁਆਇੰਟਰ ਟੈਬ ਉੱਤੇ ਕਿੰਨੀ ਦੇਰ ਰੁਕਦਾ ਹੈ।',

@@ -585,6 +585,9 @@ export const es: Dictionary = {
   'Show other tabs as icons': 'Mostrar las demás pestañas como iconos',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada pestaña salvo la del frente muestra solo su icono; al señalar una, muestra su nombre.',
+  'Tabs as wide as their names': 'Pestañas tan anchas como sus nombres',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Cada pestaña mide solo lo que necesitan su icono, su nombre y su botón de cerrar; desactivado, todas miden lo mismo.',
   'Tab preview delay': 'Retraso de la vista previa de pestañas',
   'How long the pointer rests on a tab before its preview shows.':
     'Cuánto descansa el puntero sobre una pestaña antes de que aparezca su vista previa.',

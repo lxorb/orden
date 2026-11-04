@@ -580,6 +580,9 @@ export const fil: Dictionary = {
   'Show other tabs as icons': 'Ipakita ang ibang tab bilang icon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Bawat tab maliban sa nasa harap ay icon lang ang ipinapakita; kapag tinuro ang isa, lalabas ang pangalan nito.',
+  'Tabs as wide as their names': 'Mga tab na kasinlapad ng pangalan nila',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Kasinlapad lang ang bawat tab ng kailangan ng icon, pangalan at close button nito; kapag naka-off, pare-pareho ang lapad ng lahat.',
   'Tab preview delay': 'Antala ng preview ng tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Gaano katagal nakapatong ang pointer sa tab bago lumabas ang preview nito.',

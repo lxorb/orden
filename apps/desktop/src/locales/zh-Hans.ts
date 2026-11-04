@@ -571,6 +571,9 @@ export const zhHans: Dictionary = {
   'Show other tabs as icons': '其他标签页只显示图标',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的标签页外，每个标签页只显示图标；指向某个标签页时会显示其名称。',
+  'Tabs as wide as their names': '标签页宽度随名称',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    '每个标签页只占其图标、名称和关闭按钮所需的宽度；关闭后，所有标签页宽度相同。',
   'Tab preview delay': '标签页预览延迟',
   'How long the pointer rests on a tab before its preview shows.':
     '指针在标签页上停留多久后显示预览。',

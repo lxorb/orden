@@ -579,6 +579,9 @@ export const ha: Dictionary = {
   'Show other tabs as icons': 'Nuna sauran shafuka a matsayin gumaka',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kowane shafi banda na gaba yana nuna gumakinsa kawai; idan ka nuna ɗaya, sunansa zai bayyana.',
+  'Tabs as wide as their names': 'Shafuka masu faɗin sunayensu',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Kowace shafi tana da faɗin da alamarta, sunanta da maɓallin rufewa ke buƙata kawai; idan an kashe, duk shafuka faɗinsu ɗaya.',
   'Tab preview delay': 'Jinkirin samfoti na shafi',
   'How long the pointer rests on a tab before its preview shows.':
     'Tsawon lokacin da mai nuni zai tsaya a kan shafi kafin samfotinsa ya bayyana.',

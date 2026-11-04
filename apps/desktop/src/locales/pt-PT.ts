@@ -589,6 +589,9 @@ export const ptPT: Dictionary = {
   'Show other tabs as icons': 'Mostrar os outros separadores como ícones',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada separador, exceto o da frente, mostra só o ícone; ao apontar para um, aparece o nome.',
+  'Tabs as wide as their names': 'Separadores da largura dos seus nomes',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Cada separador tem apenas a largura de que precisam o ícone, o nome e o botão de fechar; desligado, todos têm a mesma largura.',
   'Tab preview delay': 'Atraso da pré-visualização de separadores',
   'How long the pointer rests on a tab before its preview shows.':
     'Quanto tempo o ponteiro fica sobre um separador antes de a pré-visualização aparecer.',

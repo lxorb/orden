@@ -572,6 +572,9 @@ export const ms: Dictionary = {
   'Show other tabs as icons': 'Tunjukkan tab lain sebagai ikon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Setiap tab kecuali yang di hadapan hanya menunjukkan ikonnya; tuding pada satu untuk melihat namanya.',
+  'Tabs as wide as their names': 'Tab selebar namanya',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Setiap tab hanya selebar yang diperlukan oleh ikon, nama dan butang tutupnya; jika dimatikan, semua tab sama lebar.',
   'Tab preview delay': 'Lengah pratonton tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Berapa lama penuding berada pada tab sebelum pratontonnya muncul.',

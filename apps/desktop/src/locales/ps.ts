@@ -574,6 +574,9 @@ export const ps: Dictionary = {
   'Show other tabs as icons': 'نور ټبونه د نښو په توګه ښکاره کړئ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'له مخکني پرته هر ټب یوازې خپله نښه ښيي؛ کله چې یو ته اشاره وکړئ، نوم یې ښکاره کېږي.',
+  'Tabs as wide as their names': 'ټبونه د خپلو نومونو په پلنوالي',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'هر ټب یوازې هومره پلن دی چې د هغه نښه، نوم او د تړلو تڼۍ ورته اړتیا لري؛ کله چې بند وي، ټول ټبونه یو شان پلن وي.',
   'Tab preview delay': 'د ټب د مخکتنې ځنډ',
   'How long the pointer rests on a tab before its preview shows.':
     'څومره وخت چې اشاره ګر په ټب پاتې کیږي مخکې له دې چې مخکتنه یې ښکاره شي.',

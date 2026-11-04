@@ -45,6 +45,7 @@
     type Bounds,
     crossTakes,
     endOf,
+    fitted,
     holds,
     keptWidths,
     MAGNETISM,
@@ -54,6 +55,7 @@
     placed,
     separated,
     slotAt,
+    trailing,
     widened,
     widthsFor,
     worthKeeping,
@@ -63,7 +65,7 @@
   import { pages } from './web-tab/pages.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import type { Landing } from './workspace/panes.svelte'
-  import { iconTabs } from './tab-strip/icon-tabs.svelte'
+  import { fitTabs, iconTabs } from './tab-strip/icon-tabs.svelte'
   import { isDraft } from './workspace/drafts'
   import { inside } from './workspace/zones'
   import { initial } from './icons'
@@ -191,11 +193,68 @@
   /** Every tab but the one being read drawn as its mark alone, while Icon tabs is on and
    *  the strip is a pointer's (#1041); see tab-strip/icon-tabs.svelte.ts. */
   const icons = $derived(iconTabs.on && !viewport.touch)
+  /** Each tab's own width while tabs are as wide as their contents (#1114): its name as
+   *  long as it is drawn in the type `measurer` wears, which is the names' own, and the
+   *  marks after it; see `fitted` in layout.ts. Empty while the switch is off, and
+   *  wherever nothing could be measured. */
+  let measurer = $state<HTMLSpanElement | undefined>()
+  let fits = $state<Record<string, number>>({})
+  let names: Record<string, number> = {}
+  let namesFont = ''
+  let pen: CanvasRenderingContext2D | null | undefined
+
+  /** How long `name` is drawn in a tab, or 0 where it cannot be measured. */
+  function measured(name: string): number {
+    if (!measurer) return 0
+    const type = getComputedStyle(measurer)
+    const font = `${type.fontStyle} ${type.fontWeight} ${type.fontSize} ${type.fontFamily}`
+    if (font !== namesFont) {
+      names = {}
+      namesFont = font
+    }
+    let width = names[name]
+    if (width === undefined) {
+      pen ??= document.createElement('canvas').getContext('2d')
+      if (!pen) return 0
+      pen.font = font
+      width = pen.measureText(name).width
+      names[name] = width
+    }
+    return width
+  }
+
+  $effect(() => {
+    const next: Record<string, number> = {}
+    if (fitTabs.on && measurer) {
+      for (const tab of tabs) {
+        const name = measured(tab.shown)
+        if (name <= 0) continue
+        const seen = rooms.seen[tab.note.key]
+        next[tab.id] = fitted(
+          name,
+          trailing({
+            reading: tab.reading,
+            sound: tab.kind === 'web' && pages.of(tab.id).playing,
+            shared: !!tab.note.shared,
+            draft: isDraft(tab.note),
+            faces: Math.min(seen?.people.length ?? 0, 3),
+            dots: Math.min(seen?.mine ?? rooms.present[tab.note.key] ?? 0, 3),
+          }),
+        )
+      }
+    }
+    const now = untrack(() => fits)
+    const keys = Object.keys(next)
+    if (keys.length !== Object.keys(now).length || keys.some((id) => now[id] !== next[id]))
+      fits = next
+  })
+
   const sized = $derived(
     tabs.map((tab) => ({
       id: tab.id,
       icon: icons && tab.id !== activeId,
       active: tab.id === activeId,
+      fit: fits[tab.id],
     })),
   )
 
@@ -244,7 +303,7 @@
     const shared =
       (closing?.widths ? keptWidths(sized, closing.widths) : null) ?? widthsFor(sized, room)
     const at = opened === null ? -1 : sized.findIndex((one) => one.id === opened)
-    return at < 0 ? shared : widened(shared, at, room)
+    return at < 0 ? shared : widened(shared, at, room, sized[at]?.fit)
   })
   const base = $derived(placed(widths))
 
@@ -949,6 +1008,8 @@
     oncontextmenu={showStripMenu}
     use:longPress={showStripMenu}
   >
+    <!-- The names' own type, which a tab's name is measured in; see `fits`. -->
+    <span class="measure" aria-hidden="true" bind:this={measurer}></span>
     <div class="lane" class:shrinking style:width="max(100%, {span}px)">
       {#each tabs as tab, at (tab.id)}
         <!-- Who else is in this note, once and at most three of each: the other people,
@@ -1085,6 +1146,7 @@
                still what it says to a reader who cannot see it. -->
             <span
               class="label"
+              class:whole={(fits[tab.id] ?? Infinity) <= box.width}
               class:hidden={!parts.title && !icon}
               class:quiet={icon}
               class:naming={tab.naming}>{tab.shown}</span
@@ -1645,6 +1707,21 @@
 
   .label.quiet {
     opacity: 0;
+  }
+
+  /* A tab as wide as its contents has the whole of its name to show, and no end to
+     fade out (#1114). */
+  .label.whole,
+  :global(:root[dir='rtl']) .label.whole {
+    mask-image: none;
+  }
+
+  .measure {
+    position: absolute;
+    visibility: hidden;
+    pointer-events: none;
+    font-family: var(--font-ui);
+    font-size: var(--text-row);
   }
 
   /* Under the field typing it, holding its place. */

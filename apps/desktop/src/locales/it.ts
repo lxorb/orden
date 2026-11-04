@@ -584,6 +584,9 @@ export const it: Dictionary = {
   'Show other tabs as icons': 'Mostra le altre schede come icone',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Ogni scheda tranne quella in primo piano mostra solo la sua icona; puntandone una ne appare il nome.',
+  'Tabs as wide as their names': 'Schede larghe quanto il loro nome',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Ogni scheda è larga solo quanto servono la sua icona, il suo nome e il pulsante di chiusura; disattivato, tutte hanno la stessa larghezza.',
   'Tab preview delay': 'Ritardo dell’anteprima delle schede',
   'How long the pointer rests on a tab before its preview shows.':
     'Quanto il puntatore resta su una scheda prima che compaia l’anteprima.',

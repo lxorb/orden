@@ -571,6 +571,9 @@ export const ko: Dictionary = {
   'Show other tabs as icons': '다른 탭을 아이콘으로 보기',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '앞에 있는 탭을 빼고 모든 탭이 아이콘만 보여 주며, 가리키면 이름이 나타납니다.',
+  'Tabs as wide as their names': '이름만큼 넓은 탭',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    '각 탭은 아이콘, 이름, 닫기 버튼에 필요한 만큼만 넓어집니다. 끄면 모든 탭이 같은 너비가 됩니다.',
   'Tab preview delay': '탭 미리보기 지연',
   'How long the pointer rests on a tab before its preview shows.':
     '미리보기가 나타나기 전에 포인터가 탭 위에 머무는 시간입니다.',

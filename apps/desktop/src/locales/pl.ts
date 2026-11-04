@@ -597,6 +597,9 @@ export const pl: Dictionary = {
   'Show other tabs as icons': 'Pokazuj pozostałe karty jako ikony',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Każda karta poza tą na wierzchu pokazuje tylko ikonę; po wskazaniu pokazuje swoją nazwę.',
+  'Tabs as wide as their names': 'Karty szerokie jak ich nazwy',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Każda karta jest tak szeroka, jak potrzebują jej ikona, nazwa i przycisk zamykania; po wyłączeniu wszystkie mają tę samą szerokość.',
   'Tab preview delay': 'Opóźnienie podglądu karty',
   'How long the pointer rests on a tab before its preview shows.':
     'Jak długo wskaźnik spoczywa na karcie, zanim pojawi się jej podgląd.',

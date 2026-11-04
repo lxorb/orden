@@ -4,6 +4,7 @@ import {
   clampedStart,
   crossTakes,
   endOf,
+  fitted,
   holds,
   keptWidths,
   moved,
@@ -15,6 +16,7 @@ import {
   reorderSlack,
   separated,
   slotAt,
+  trailing,
   widened,
   OPENED_LEAST,
   WIDTH,
@@ -329,5 +331,60 @@ describe("a tab's cross as it opens out under the pointer", () => {
       'utf8',
     )
     expect(tokens).toContain(`--dur-base: ${OPENING}ms;`)
+  })
+})
+
+/** #1114: with the switch on, a tab is as wide as its contents, not every tab the
+ *  standard width while there is room. Emil's "Orden" tab beside one icon tab. */
+describe('tabs as wide as their contents', () => {
+  const orden = fitted(38)
+  const tabs = [
+    { icon: false, active: true, fit: orden },
+    { icon: true, active: false, fit: fitted(120) },
+  ]
+
+  test('is the mark, the name, the close button and the insets', () => {
+    // 11 in from either edge, 16 of mark, 6 of gap, the name, 20 of cross.
+    expect(orden).toBe(11 + 16 + 6 + 38 + 20 + 11)
+  })
+
+  test('with the room, the active tab is its own width and an icon tab its mark', () => {
+    expect(widthsFor(tabs, 2000)).toEqual([orden, WIDTH.icon])
+  })
+
+  test('still shrinks as before once the room runs out', () => {
+    const narrow = widthsFor(
+      [
+        { icon: false, active: true, fit: fitted(200) },
+        { icon: false, active: false, fit: fitted(200) },
+      ],
+      200,
+    )
+    expect(total(narrow)).toBeLessThanOrEqual(200)
+    expect(narrow[0]).toBeGreaterThanOrEqual(WIDTH.active)
+  })
+
+  test('never grows past the standard width, and off is the standard width again', () => {
+    expect(widthsFor([{ icon: false, active: true, fit: fitted(900) }], 2000)).toEqual([
+      WIDTH.standard,
+    ])
+    expect(widthsFor([{ icon: false, active: true }], 2000)).toEqual([WIDTH.standard])
+  })
+
+  test('keeps a tab not in front wide enough to show its cross', () => {
+    const short = fitted(4)
+    expect(partsFor(short, { icon: false, active: false }).close).toBe(true)
+  })
+
+  test('opens an icon tab under the pointer to its own width, not the standard one', () => {
+    const fit = fitted(40)
+    expect(widened([orden, WIDTH.icon], 1, 2000, fit)[1]).toBe(fit)
+    expect(widened([orden, WIDTH.icon], 1, 2000, fitted(400))[1]).toBe(WIDTH.standard)
+  })
+
+  test('counts what the tab wears after its name', () => {
+    expect(trailing({})).toBe(0)
+    expect(trailing({ reading: true, draft: true })).toBe(19 + 12)
+    expect(fitted(40, trailing({ sound: true }))).toBe(fitted(40) + 19)
   })
 })

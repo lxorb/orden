@@ -597,6 +597,9 @@ export const uk: Dictionary = {
   'Show other tabs as icons': 'Показувати інші вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Кожна вкладка, крім передньої, показує лише значок; якщо навести на неї, з’являється назва.',
+  'Tabs as wide as their names': 'Вкладки завширшки з назву',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Кожна вкладка завширшки лише з свій значок, назву й кнопку закриття; якщо вимкнено, усі вкладки однакової ширини.',
   'Tab preview delay': 'Затримка попереднього перегляду вкладки',
   'How long the pointer rests on a tab before its preview shows.':
     'Скільки вказівник має пробути на вкладці, перш ніж з’явиться її попередній перегляд.',

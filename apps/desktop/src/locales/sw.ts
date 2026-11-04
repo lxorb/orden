@@ -579,6 +579,9 @@ export const sw: Dictionary = {
   'Show other tabs as icons': 'Onyesha vichupo vingine kama aikoni',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kila kichupo isipokuwa cha mbele kinaonyesha aikoni yake tu; ukielekeza kimoja, jina lake linaonekana.',
+  'Tabs as wide as their names': 'Vichupo vyenye upana wa majina yao',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Kila kichupo kina upana unaohitajika na aikoni, jina na kitufe chake cha kufunga tu; kikizimwa, vichupo vyote vina upana sawa.',
   'Tab preview delay': 'Muda wa kusubiri onyesho la kichupo',
   'How long the pointer rests on a tab before its preview shows.':
     'Muda ambao kiashiria hukaa kwenye kichupo kabla onyesho lake halijaonekana.',

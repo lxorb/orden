@@ -571,6 +571,9 @@ export const ja: Dictionary = {
   'Show other tabs as icons': 'ほかのタブをアイコンで表示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '手前のタブ以外はアイコンだけを表示し、ポインターを当てると名前が出ます。',
+  'Tabs as wide as their names': 'タブを名前の幅にする',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    '各タブはアイコン、名前、閉じるボタンに必要な幅だけになります。オフにすると、すべてのタブが同じ幅になります。',
   'Tab preview delay': 'タブのプレビューまでの時間',
   'How long the pointer rests on a tab before its preview shows.':
     'タブにポインターを置いてからプレビューが表示されるまでの時間です。',

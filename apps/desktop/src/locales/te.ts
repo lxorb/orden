@@ -576,6 +576,9 @@ export const te: Dictionary = {
   'Show other tabs as icons': 'ఇతర ట్యాబ్‌లను ఐకాన్‌లుగా చూపించు',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ముందున్నది తప్ప ప్రతి ట్యాబ్ తన ఐకాన్ మాత్రమే చూపిస్తుంది; ఒకదానిపై పాయింటర్ ఉంచితే పేరు కనిపిస్తుంది.',
+  'Tabs as wide as their names': 'పేరంత వెడల్పు ట్యాబ్‌లు',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'ప్రతి ట్యాబ్ తన ఐకాన్, పేరు, మూసే బటన్‌కు అవసరమైనంత వెడల్పు మాత్రమే ఉంటుంది; ఆఫ్ చేస్తే అన్ని ట్యాబ్‌లు ఒకే వెడల్పు.',
   'Tab preview delay': 'ట్యాబ్ ప్రివ్యూ ఆలస్యం',
   'How long the pointer rests on a tab before its preview shows.':
     'ప్రివ్యూ కనిపించే ముందు పాయింటర్ ట్యాబ్‌పై ఎంత సేపు ఉండాలి.',

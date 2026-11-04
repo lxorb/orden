@@ -579,6 +579,9 @@ export const kn: Dictionary = {
   'Show other tabs as icons': 'ಇತರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಐಕಾನ್‌ಗಳಾಗಿ ತೋರಿಸಿ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ಮುಂದಿನದನ್ನು ಬಿಟ್ಟು ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್ ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ; ಒಂದರ ಮೇಲೆ ಪಾಯಿಂಟರ್ ಇಟ್ಟರೆ ಹೆಸರು ಕಾಣುತ್ತದೆ.',
+  'Tabs as wide as their names': 'ಹೆಸರಿನಷ್ಟು ಅಗಲದ ಟ್ಯಾಬ್‌ಗಳು',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್, ಹೆಸರು ಮತ್ತು ಮುಚ್ಚುವ ಬಟನ್‌ಗೆ ಬೇಕಾದಷ್ಟು ಮಾತ್ರ ಅಗಲವಿರುತ್ತದೆ; ಆಫ್ ಇದ್ದಾಗ ಎಲ್ಲ ಟ್ಯಾಬ್‌ಗಳು ಒಂದೇ ಅಗಲ.',
   'Tab preview delay': 'ಟ್ಯಾಬ್ ಮುನ್ನೋಟದ ವಿಳಂಬ',
   'How long the pointer rests on a tab before its preview shows.':
     'ಮುನ್ನೋಟ ತೋರುವ ಮೊದಲು ಪಾಯಿಂಟರ್ ಟ್ಯಾಬ್ ಮೇಲೆ ಎಷ್ಟು ಹೊತ್ತು ಇರಬೇಕು.',

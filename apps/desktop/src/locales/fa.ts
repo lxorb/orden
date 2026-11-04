@@ -574,6 +574,9 @@ export const fa: Dictionary = {
   'Show other tabs as icons': 'نمایش زبانه‌های دیگر به‌صورت نماد',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'هر زبانه جز زبانهٔ جلو فقط نمادش را نشان می‌دهد؛ با اشاره به یکی، نامش نمایان می‌شود.',
+  'Tabs as wide as their names': 'زبانه‌ها به پهنای نامشان',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'هر زبانه فقط به اندازه‌ای پهن است که نماد، نام و دکمهٔ بستنش لازم دارند؛ خاموش، همهٔ زبانه‌ها یک پهنا دارند.',
   'Tab preview delay': 'تأخیر پیش‌نمایش زبانه',
   'How long the pointer rests on a tab before its preview shows.':
     'مدتی که نشانگر روی زبانه می‌ماند تا پیش‌نمایش آن نمایش داده شود.',

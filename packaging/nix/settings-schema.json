@@ -264,6 +264,11 @@
     "default": "",
     "description": "The address of a DNS over HTTPS server, starting with https://"
   },
+  "general.fitTabs": {
+    "type": "boolean",
+    "default": true,
+    "description": "Each tab is only as wide as its icon, name and close button need; off, every tab is the same width."
+  },
   "general.hardwareAcceleration": {
     "type": "boolean",
     "default": true,

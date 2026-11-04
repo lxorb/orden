@@ -574,6 +574,9 @@ export const mr: Dictionary = {
   'Show other tabs as icons': 'इतर टॅब चिन्हांच्या रूपात दाखवा',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'पुढच्या टॅबशिवाय प्रत्येक टॅब फक्त त्याचे चिन्ह दाखवतो; एकावर पॉइंटर नेल्यास त्याचे नाव दिसते.',
+  'Tabs as wide as their names': 'नावाइतके रुंद टॅब',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'प्रत्येक टॅब त्याच्या आयकॉन, नाव आणि बंद करण्याच्या बटणाला लागेल तितकाच रुंद असतो; बंद असताना सर्व टॅब सारख्या रुंदीचे असतात.',
   'Tab preview delay': 'टॅब पूर्वावलोकनाचा विलंब',
   'How long the pointer rests on a tab before its preview shows.':
     'पूर्वावलोकन दिसण्यापूर्वी पॉइंटर टॅबवर किती वेळ थांबतो.',

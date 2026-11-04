@@ -579,6 +579,9 @@ export const de: Dictionary = {
   'Show other tabs as icons': 'Andere Tabs als Symbole zeigen',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jeder Tab außer dem vorderen zeigt nur sein Symbol; zeigst du auf einen, erscheint sein Name.',
+  'Tabs as wide as their names': 'Tabs so breit wie ihre Namen',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Jeder Tab ist nur so breit, wie Symbol, Name und Schließen-Knopf brauchen; aus, sind alle Tabs gleich breit.',
   'Tab preview delay': 'Verzögerung der Tab-Vorschau',
   'How long the pointer rests on a tab before its preview shows.':
     'Wie lange der Zeiger auf einem Tab ruht, bevor seine Vorschau erscheint.',

@@ -576,6 +576,9 @@ export const ta: Dictionary = {
   'Show other tabs as icons': 'மற்ற தாவல்களை உருவங்களாகக் காட்டு',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'முன்னால் உள்ளதைத் தவிர ஒவ்வொரு தாவலும் உருவத்தை மட்டும் காட்டும்; ஒன்றின் மேல் சுட்டினால் அதன் பெயர் தெரியும்.',
+  'Tabs as wide as their names': 'பெயர் அளவு அகலமான தாவல்கள்',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'ஒவ்வொரு தாவலும் அதன் ஐகான், பெயர், மூடும் பொத்தான் ஆகியவற்றுக்குத் தேவையான அகலம் மட்டுமே; அணைத்தால் எல்லாத் தாவல்களும் ஒரே அகலம்.',
   'Tab preview delay': 'தாவல் முன்னோட்டத் தாமதம்',
   'How long the pointer rests on a tab before its preview shows.':
     'முன்னோட்டம் தோன்றும் முன் சுட்டி தாவலின் மேல் எவ்வளவு நேரம் இருக்க வேண்டும்.',

@@ -586,6 +586,9 @@ export const fr: Dictionary = {
   'Show other tabs as icons': 'Afficher les autres onglets en icônes',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Chaque onglet sauf celui au premier plan n’affiche que son icône ; en le pointant, son nom apparaît.',
+  'Tabs as wide as their names': 'Onglets aussi larges que leur nom',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Chaque onglet n’est large que de ce qu’il faut à son icône, son nom et son bouton de fermeture ; désactivé, tous ont la même largeur.',
   'Tab preview delay': 'Délai de l’aperçu des onglets',
   'How long the pointer rests on a tab before its preview shows.':
     'Le temps pendant lequel le pointeur reste sur un onglet avant que son aperçu apparaisse.',

@@ -574,6 +574,9 @@ export const gu: Dictionary = {
   'Show other tabs as icons': 'બીજી ટૅબ આઇકન તરીકે બતાવો',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'આગળની ટૅબ સિવાય દરેક ટૅબ ફક્ત તેનું આઇકન બતાવે છે; કોઈ પર પોઇન્ટર રાખતાં તેનું નામ દેખાય છે.',
+  'Tabs as wide as their names': 'નામ જેટલી પહોળી ટૅબ',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'દરેક ટૅબ તેના આઇકન, નામ અને બંધ કરવાના બટનને જોઈએ એટલી જ પહોળી હોય છે; બંધ હોય ત્યારે બધી ટૅબ સરખી પહોળી હોય છે.',
   'Tab preview delay': 'ટેબ પૂર્વાવલોકન વિલંબ',
   'How long the pointer rests on a tab before its preview shows.':
     'પૂર્વાવલોકન દેખાય તે પહેલાં પોઇન્ટર ટેબ પર કેટલો સમય રહે છે.',

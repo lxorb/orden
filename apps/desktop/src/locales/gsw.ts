@@ -575,6 +575,9 @@ export const gsw: Dictionary = {
   'Show other tabs as icons': 'Anderi Tabs als Symbol zeige',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jede Tab usser em vordere zeigt nur sis Symbol; wenn du druf zeigsch, chunnt sin Name.',
+  'Tabs as wide as their names': 'Tabs so breit wie iri Näme',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Jede Tab isch nur so breit, wie Symbol, Name und Zuemache-Chnopf bruuched; uus, sind alli Tabs glich breit.',
   'Tab preview delay': 'Verzögerig vo de Tab-Vorschau',
   'How long the pointer rests on a tab before its preview shows.':
     'Wie lang de Zeiger uf eme Tab ruet, bevor sini Vorschau chunnt.',

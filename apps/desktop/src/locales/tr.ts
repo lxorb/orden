@@ -576,6 +576,9 @@ export const tr: Dictionary = {
   'Show other tabs as icons': 'Diğer sekmeleri simge olarak göster',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Öndeki dışındaki her sekme yalnızca simgesini gösterir; birinin üzerine gelince adı görünür.',
+  'Tabs as wide as their names': 'Adları kadar geniş sekmeler',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Her sekme yalnızca simgesinin, adının ve kapatma düğmesinin gerektirdiği kadar geniştir; kapalıyken tüm sekmeler aynı genişlikte olur.',
   'Tab preview delay': 'Sekme önizleme gecikmesi',
   'How long the pointer rests on a tab before its preview shows.':
     'Önizleme görünmeden önce işaretçinin sekme üzerinde ne kadar durduğu.',

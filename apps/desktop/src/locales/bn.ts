@@ -574,6 +574,9 @@ export const bn: Dictionary = {
   'Show other tabs as icons': 'অন্য ট্যাবগুলো আইকন হিসেবে দেখান',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'সামনের ট্যাব ছাড়া প্রতিটি ট্যাব শুধু আইকন দেখায়; কোনোটির ওপর পয়েন্টার রাখলে নাম দেখায়।',
+  'Tabs as wide as their names': 'নামের মাপে ট্যাব',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'প্রতিটি ট্যাব কেবল তার আইকন, নাম আর বন্ধ করার বোতামের যতটা দরকার ততটাই চওড়া; বন্ধ থাকলে সব ট্যাব সমান চওড়া।',
   'Tab preview delay': 'ট্যাব প্রিভিউয়ের বিলম্ব',
   'How long the pointer rests on a tab before its preview shows.':
     'প্রিভিউ দেখানোর আগে পয়েন্টার কতক্ষণ ট্যাবের ওপর থাকবে।',

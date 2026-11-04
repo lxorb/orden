@@ -571,6 +571,9 @@ export const zhHant: Dictionary = {
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的分頁外，每個分頁只顯示圖示；指向某個分頁時會顯示其名稱。',
+  'Tabs as wide as their names': '分頁寬度隨名稱',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    '每個分頁只佔其圖示、名稱和關閉按鈕所需的寬度；關閉後，所有分頁寬度相同。',
   'Tab preview delay': '分頁預覽延遲',
   'How long the pointer rests on a tab before its preview shows.':
     '指標在分頁上停留多久後顯示預覽。',
