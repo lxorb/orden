@@ -583,7 +583,7 @@ impl Shared {
 
 #[cfg(test)]
 mod tests {
-    use super::{armed, watch, Heard, Root, Unwatched, MOST_CHANGES, QUIET};
+    use super::{watch, Heard, Root, MOST_CHANGES, QUIET};
     use crate::space_watch::known::Seen;
     use std::fs;
     use std::path::{Path, PathBuf};
@@ -656,6 +656,8 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn a_watch_refused_past_the_limit_is_armed_again_once_the_old_lets_go() {
+        use super::{armed, Unwatched};
+
         let dir = tempfile::tempdir().expect("a folder");
         let root = fs::canonicalize(dir.path()).expect("a real path");
         fs::create_dir(root.join("Deep")).expect("a folder");
@@ -694,6 +696,8 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn a_watch_not_refused_has_nothing_armed_twice() {
+        use super::armed;
+
         let dir = tempfile::tempdir().expect("a folder");
         let root = fs::canonicalize(dir.path()).expect("a real path");
         let made = armed(vec![Root {
