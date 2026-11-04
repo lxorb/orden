@@ -6,9 +6,9 @@
  *  What decides it is here, with the clock and the window handed in, so every rule is
  *  a line a test can play; the column it brings out is Sidebar.svelte's (`peek`).
  *
- *  - **A moment at the edge** (`DWELL`), not a touch of it: a pointer sweeping across
- *    to a window beside this one, or flung at the corner for the close button of a
- *    window under it, passes the edge without stopping.
+ *  - **At once.** The move that reaches the edge brings it out, on the frame that move
+ *    is drawn in, with no wait for the pointer to rest there: a wait for intent read as
+ *    the app lagging the hand (#1034), the class #1050 is about.
  *  - **Nothing held down.** A press dragged to the edge is a selection being made, a
  *    tab or a row being carried, or a window being moved, and none of those is asking
  *    for the file list.
@@ -21,10 +21,11 @@
  *    a row's menu, which hangs past its edge - nor while a name in it is being typed or
  *    a row is being carried out of it. */
 
-/** How long the pointer rests at the edge before the list comes out. */
-export const DWELL = 140
-/** How long it may be away from the list before the list goes. */
-export const GRACE = 320
+/** How long it may be away from the list before the list goes: enough for a pointer
+ *  that slips a few pixels past its edge on the way to a row, and no more, or the list
+ *  hangs over the note after the hand has gone back to it. Also the top bar's, which a
+ *  filled window brings down the same way (tab-fill/FillBar.svelte). */
+export const GRACE = 150
 /** How near the edge counts as at it, in pixels: a pointer stopped by the screen's own
  *  edge is at 0, and a window a pixel or two in from it still is. */
 export const EDGE = 3
@@ -58,7 +59,6 @@ export class EdgePeek {
   out = $state(false)
 
   private room: Room | null = null
-  private coming: Timer | null = null
   private going: Timer | null = null
 
   /** Starts listening to the window, until the answer is called. */
@@ -66,7 +66,7 @@ export class EdgePeek {
     this.room = room
     return () => {
       this.room = null
-      this.stop()
+      this.stay()
       this.out = false
     }
   }
@@ -83,26 +83,17 @@ export class EdgePeek {
     }
 
     const edge = room.rtl() ? event.clientX >= room.width() - 1 - EDGE : event.clientX <= EDGE
-    const asking = edge && event.buttons === 0 && event.pointerType !== 'touch' && room.may()
-    if (!asking) {
-      this.cancelComing()
-      return
-    }
-    this.coming ??= setTimeout(() => {
-      this.coming = null
-      if (this.room?.may()) this.out = true
-    }, DWELL)
+    if (edge && event.buttons === 0 && event.pointerType !== 'touch' && room.may()) this.out = true
   }
 
   /** The pointer left the window altogether. */
   away() {
-    this.cancelComing()
     if (this.out) this.leave()
   }
 
   /** Put away at once: Escape, a press past it, or the sidebar opened for good. */
   hide() {
-    this.stop()
+    this.stay()
     this.out = false
   }
 
@@ -126,17 +117,6 @@ export class EdgePeek {
       return
     }
     this.out = false
-  }
-
-  private cancelComing() {
-    if (this.coming === null) return
-    clearTimeout(this.coming)
-    this.coming = null
-  }
-
-  private stop() {
-    this.cancelComing()
-    this.stay()
   }
 }
 

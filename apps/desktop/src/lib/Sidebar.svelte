@@ -180,28 +180,28 @@
   })
   const shut = $derived(!open || !entered)
 
-  /** Brought out over the note by the pointer resting at the window's edge, while the
+  /** Brought out over the note by the pointer reaching the window's edge, while the
    *  left side is shut: Zen's way (#1034; see edge-peek.svelte.ts). Not opened: the
    *  note does not move, and the list goes again once the pointer has left it. */
   const peek = $derived(side === 'left' && shut && edgePeek.out)
   /** Whether it is floating over the note at all, which outlasts `peek` by the slide
-   *  back; and whether it has slid in, a frame after it floats, so the slide plays. */
+   *  back. No frame waited for between the two: shut, the panel already stands past the
+   *  window's edge (see `.column.shut`), so the slide in starts on the style change that
+   *  floats it, and the first frame drawn after the pointer reached the edge has it
+   *  moving (#1034). */
   let floating = $state(false)
-  let slidIn = $state(false)
   $effect(() => {
     if (peek) {
       floating = true
-      const next = requestAnimationFrame(() => (slidIn = true))
-      return () => cancelAnimationFrame(next)
+      return
     }
-    slidIn = false
     // Opened for good, it is the column again at once, with no slide back to wait out.
     if (!shut) {
       floating = false
       return
     }
     if (!untrack(() => floating)) return
-    const settled = setTimeout(() => (floating = false), dur(190))
+    const settled = setTimeout(() => (floating = false), dur(130))
     return () => clearTimeout(settled)
   })
 
@@ -681,7 +681,7 @@
   class:right={side === 'right'}
   class:shut
   class:floating
-  class:slid={slidIn}
+  class:peek
   class:moving
   class:resizing={size.dragging}
   ontransitionend={slid}
@@ -1278,9 +1278,20 @@
       visibility 0s var(--dur-base);
   }
 
-  /* Brought out by the pointer at the window's edge (#1034): over the note rather than
-     beside it, so the column keeps no room and nothing moves, and slid in from the edge
-     it hides behind. */
+  /* Shut and at rest, the left panel stands past the window's edge it hides behind, with
+     its shadow: there is nothing to see of it, and the slide out over the note has its
+     start already, so it begins on the style change that floats it rather than a frame
+     after, and slides back to it once the pointer has gone. Only where it can come out:
+     a drawer's panel is placed by its drawer. */
+  :global(:root:not([data-touch], [data-drawer])) .column.shut:not(.moving, .right, .peek) aside {
+    transform: translateX(calc(var(--dir) * (-100% - var(--card-inset) - var(--space-6))));
+  }
+
+  /* Brought out by the pointer at the window's edge (#1034): a card over the note, in
+     from the window's edges as the note's own card is, with its corners and its shadow,
+     rather than a slab flush with the edge. Over the note rather than beside it, so the
+     column keeps no room and nothing moves. Quick, and quickest at its start: it follows
+     the hand rather than playing at it. */
   .column.shut.floating {
     position: relative;
     visibility: visible;
@@ -1290,18 +1301,24 @@
 
   .column.shut.floating aside {
     position: absolute;
-    inset-block: 0;
-    inset-inline-start: 0;
+    inset-block: var(--card-inset);
+    inset-inline-start: var(--card-inset);
     z-index: var(--z-drawer);
+    border: 0;
+    border-radius: var(--card-radius);
     /* Its own ground under its own: at rest it stands on the window's chrome and lets
        it show through, and over the note there is no chrome under it. */
     background: linear-gradient(var(--side-ground), var(--side-ground)), var(--chrome-ground);
-    box-shadow: var(--shadow-lg);
-    transform: translateX(calc(var(--dir) * -100%));
-    transition: transform var(--dur-base) var(--ease-out);
+    box-shadow:
+      var(--card-shadow),
+      0 0 0 1px var(--card-edge),
+      var(--shadow-lg);
+    /* Begun a frame in: a transition is drawn at its start on the frame it begins, which
+       is a frame with nothing of the list to see yet. */
+    transition: transform var(--dur-fast) var(--ease-out) -16ms;
   }
 
-  .column.shut.floating.slid aside {
+  .column.shut.floating.peek aside {
     transform: none;
   }
 

@@ -22,6 +22,7 @@
    *  rules.ts and fill.ts. */
 
   import { onDestroy, type Snippet, tick, untrack } from 'svelte'
+  import { GRACE } from '../edge-peek.svelte'
   import { focusEditor } from '../focus'
   import { overlays } from '../overlays'
   import { workspace } from '../workspace.svelte'
@@ -31,14 +32,13 @@
 
   const { children }: { children: Snippet } = $props()
 
-  /** How long the pointer rests at the top edge before the bar comes: long enough that a
-   *  pointer on its way past the top of the window, to a screen above or the taskbar of
-   *  one, brings nothing down. */
-  const COMES_AFTER = 120
-
-  /** How long the bar stays once nothing holds it: long enough to cross a gap to a menu it
-   *  opened, or to come back to it from a pointer that overshot. */
-  const GOES_AFTER = 500
+  /** How long the bar stays once nothing holds it: long enough to come back to it from
+   *  a pointer that overshot, and no longer, or it hangs over the tab after the hand has
+   *  gone back to it. It comes the moment the pointer reaches the edge, with no wait for
+   *  it to rest there: a wait for intent read as the app lagging the hand (#1034, #1050).
+   *  The file list brought out at the start edge keeps the same time. A menu it opened
+   *  holds it by itself, so this need not cover the way there. */
+  const GOES_AFTER = GRACE
 
   /** Whether the bar is down over the tab. */
   let shown = $state(false)
@@ -53,7 +53,6 @@
   /** The bar, which the pointer is measured against. */
   let bar = $state<HTMLElement>()
 
-  let coming: ReturnType<typeof setTimeout> | undefined
   let going: ReturnType<typeof setTimeout> | undefined
 
   /** A Mac keeps its three lights at the top left of the window, over whatever is there,
@@ -72,16 +71,9 @@
       return
     }
 
-    if (!atEdge(y)) {
-      clearTimeout(coming)
-      coming = undefined
-      return
-    }
-    coming ??= setTimeout(() => {
-      coming = undefined
-      shown = true
-      pointer = true
-    }, COMES_AFTER)
+    if (!atEdge(y)) return
+    shown = true
+    pointer = true
   }
 
   /** The bar goes, a moment after the last thing holding it has let go. Counted from the
@@ -138,7 +130,6 @@
   // However the fill ended, the chrome comes back from its edges once it is on the page;
   // and a focus that was in the bar, which has gone, goes to the document.
   onDestroy(() => {
-    clearTimeout(coming)
     clearTimeout(going)
     const stranded = within
     void tick().then(() => {
