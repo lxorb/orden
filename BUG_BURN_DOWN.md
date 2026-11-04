@@ -1080,9 +1080,21 @@ What the reviews found in a fix is folded into its row; only bugs older than the
 | B776 | Low | Hunt 3, desktop and windows: Recently deleted's own restore after a space rename goes to the old path; a restore beside its name loses its aside track; a Latin-1 file refuses writes unsaid (R-9); a folder's rename holds only its name; LF version of a CRLF file; extra first version; a move outside like an undo step; a set's `base` when storage is short | Open, accepted | Per item | - | hunt3-desktop, hunt3-windows |
 | B777 | Low | Hunt 3, sync: Windows v1 cannot land `Con.md`; a name past 255 bytes holds that v1 space's cursor; an unreadable v1 note holds that space's first v2 pass | Open, accepted | Per item | - | hunt3-sync |
 | B778 | Low | Hunt 3, tauri: a page's own timer between look and press; 205 closed fields ask on every press; 1100 empty inputs no picture; a bare counter asks; `terminated`, `wipes`, `destroyed`, `debited`, `discard` no word; `bun a:b`; frames churning, worst 41 s per picture, one past 240 s; `90 minutes` to `1 minutes` goes | Open, accepted | Per item | - | hunt3-tauri; most fail closed |
-| B779 | Low | Hunt 3, views: a name on math, rule, fence or raw HTML lands approximately; column menus on a fixed fence no-op; a cookie text in a one-box form passes; `50%% and 60%%` in a value loses its middle; sort re-walks a list value | Open, accepted | Per item | - | hunt3-views |
+| B779 | Low | Hunt 3, views: a name on math, rule, fence or raw HTML lands approximately; a cookie text in a one-box form passes; `50%% and 60%%` in a value loses its middle; sort re-walks a list value | Open, accepted | Per item | - | hunt3-views |
 | B780 | Low | Hunt 4, sync: `place` on a folder moves its seq only (H4-SYNC-L3, rule question, no device sends it); a relay not told at once at sign-out; 403 on a file still ends the pass; a rename and a heavy rewrite in one go reads as a delete | Open, accepted | Per item | - | hunt4-sync |
 | B781 | Low | Hunt 4, desktop, views and windows: a bare name with no extension survives the log scrub; a kept layout with no tab left stays orphaned; two spaces of one name do not move stores; folding by `rowId` across spaces; a deletion in the air comes back (R4, stated); typing on inside a word doubled | Open, accepted | Per item | - | hunt4-desktop, hunt4-views, hunt4-windows |
+| B782 | Low | Leftovers: a watch replaced past the inotify limit keeps the old one's folders, so the new one watches next to nothing (#481) | Fixed | `a_watch_refused_past_the_limit_is_armed_again_once_the_old_lets_go`, watch-drive `limit` on wayland | d98f850b1 | hunt-leftovers |
+| B783 | Low | Leftovers: a closed tab reopened over its note open again in the strip leaves two tabs of one document | Fixed | met-words.store.test, workspace.test | 9bbda91f1 | hunt-leftovers |
+| B784 | Low | Leftovers: a file changed during a first pass waits for the next launch scan | Fixed | watching.test | dec75cca0 | hunt-leftovers |
+| B785 | Low | Leftovers: an open file gone non-UTF-8 or over 64 MB refuses writes with no reason said | Fixed | saving.test, across.test | 665b1dd84 | hunt-leftovers |
+| B786 | Low | Leftovers: Recently deleted restores to the old path after a space's rename; what was deleted before a space went stays out of a new one of its name | Fixed | trash.rs tests, web commands.test | bdfc45e36 | hunt-leftovers |
+| B787 | Low | Leftovers: a note put back beside its name has no agent track, and Redo after a rewind sends the reader's own note at the name to Recently deleted | Fixed | review.test | e5032f651 | hunt-leftovers |
+| B788 | Low | Leftovers: `takeIn` keeps an LF version of a CRLF file | Fixed | across.test | 30ed992f1 | hunt-leftovers |
+| B789 | Low | Leftovers: column menus and header sort on a fixed fence do nothing, silently (from B779) | Fixed | fixed-head.test | 7ad11a2ec | hunt-leftovers |
+| B790 | Low | Leftovers: press gate lets dialogs saying `terminated`, `wipes`, `destroyed`, `debited`, `discard`, `deletion` pass | Fixed | policy.rs test | 01d66a9c4 | hunt-leftovers |
+| B791 | Low | Leftovers: export rewrites an alt saying the same as its source, and pictures in inline code | Fixed | export/markdown.test | 69081f53c | hunt-leftovers |
+| B792 | Low | Leftovers: address bar opens `3.14` and `foo..bar`, and does nothing for `http:example.com` | Fixed | typed.test | 4172dbbed | hunt-leftovers |
+| B793 | Low | Leftovers: `Engine.move` across spaces makes a note that will not read an empty note | Fixed | engine.test | 8b9274bb8 | hunt-leftovers |
 
 ### Hunt status
 
@@ -1094,7 +1106,7 @@ The reviews found many bugs in the fixes, folded above, and older ones with thei
 | Critical | 2 | 2 | 0 |
 | High | 57 | 57 | 0 |
 | Medium | 106 | 106 | 0 |
-| Low | 32 | 18 | 14 |
+| Low | 44 | 30 | 14 |
 
 No Critical, High or Medium is wholly open. Left in part or as a limit: a typed reply with no window on macOS (B683); plain `<a href=/delete-account>` and a listener on a link's ancestor stay free, and a button that says nothing goes (B713, B717); a secret field shown and gone inside 70 ms between two scans (B702); an app killed in a pull batch can double those notes, up to `PULL_BATCH` (B705); a kill after the crate's write and before the session's persist writes old words back (B737); a fold's first stall in WebKit, cause not found (hunt-known 8); wayland deb's "a click on another tab" until `f645b7fb6` reaches this branch (hunt4-integ).
 Needs a decision: H1-TAURI2-17, H1-TAURI2-18, H4-SYNC-L3 (B770, B780); `write_note`'s whole-text replace (B773).
