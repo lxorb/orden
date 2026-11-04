@@ -231,6 +231,29 @@ describe('chats through the connector', () => {
     expect(said).not.toContain('Draft of chapter 3')
   })
 
+  test('a name is resolved over every chat, however far down the listing', async () => {
+    const pointer = env.db.prepare(
+      `insert into notes (id, space_id, path, seq, updated_at, size, hash)
+       values (?, ?, ?, 1, 1, 0, 'h')`,
+    )
+    const made = env.db.prepare(
+      'insert into chats (id, space_id, file_id, created_at) values (?, ?, ?, ?)',
+    )
+    for (let at = 0; at < 505; at++) {
+      pointer.run(`file-${String(at)}`, space, `f${String(at)}.chat`)
+      made.run(`c_f${String(at)}`, space, `file-${String(at)}`, T0 + 50_000)
+    }
+    pointer.run('file-twin', space, 'old/thesis.chat')
+    made.run('c_twin', space, 'file-twin', 1)
+    const key = await connector(owner)
+
+    const said = await tool(key, 'post_message', { chat: 'thesis', text: 'to which?' })
+    expect(said).toContain('2 chats are called')
+    expect(said).toContain('c_twin')
+    expect((await state(owner)).map((one) => one.body)).not.toContain('to which?')
+    expect(await tool(key, 'read_chat', { chat: 'c_twin' })).not.toContain('No chat called')
+  })
+
   test('an account of more chats than one statement may bind reaches them all', async () => {
     for (let at = 0; at < 101; at++) {
       const made = (

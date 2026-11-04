@@ -148,8 +148,10 @@ let device: Device
 /** Every note offered, by path: what a create or write said. */
 let offers: string[]
 /** What the account answers to an offer instead of the Worker, where it should. */
-let answering: { to: RegExp; status: number; left: number } | null
+let answering: { to: RegExp; status: number; left: number; page?: boolean } | null
 let told: string[]
+/** Every list of files said to the account. */
+let listsSaid: { path: string; hash: string }[][]
 
 /** The path a create or a write names. */
 async function offeredIn(asked: Request): Promise<string | null> {
@@ -165,11 +167,16 @@ beforeEach(async () => {
   env = testEnv()
   offers = []
   told = []
+  listsSaid = []
   answering = null
   device = new world.Device()
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     const asked = new Request(url, init)
     const offered = await offeredIn(asked)
+    if (asked.method === 'PUT' && asked.url.endsWith('/files')) {
+      const { files } = (await asked.clone().json()) as { files: { path: string; hash: string }[] }
+      listsSaid.push(files)
+    }
     if (offered !== null) offers.push(offered)
     if (
       answering &&
@@ -177,7 +184,10 @@ beforeEach(async () => {
       answering.to.test(`${asked.method} ${asked.url} ${String(offered)}`)
     ) {
       answering.left -= 1
-      return new Response('{"error":"no"}', { status: answering.status })
+      // An edge between here and the account answers with a page of its own.
+      return new Response(answering.page ? '<html>too large</html>' : '{"error":"no"}', {
+        status: answering.status,
+      })
     }
     return worker.fetch(asked, env)
   })
@@ -417,4 +427,240 @@ test('a list of more PDFs than a space keeps leaves the notes going', async () =
   expect(lists).toBe(1)
   expect(told).toHaveLength(201)
   expect(mirror.files).toEqual({})
+})
+
+/** What the account holds of a note that left its path, by id. */
+async function wordsOf(id: string): Promise<string> {
+  return (await call<{ content: string }>(env, `/v1/notes/${id}`, { token })).json.content
+}
+
+test('a folder renamed past the path limit keeps its notes on the account', async () => {
+  put('notes/one.md', 'one\n')
+  put('notes/two.md', 'two\n')
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+
+  device.disk.delete(`${ROOT}/notes/one.md`)
+  device.disk.delete(`${ROOT}/notes/two.md`)
+  put(`${'long/'.repeat(90)}one.md`, 'one\n')
+  put(`${'long/'.repeat(90)}two.md`, 'two\n')
+  await pass(mirror)
+  await pass(mirror)
+
+  expect(await pathsOnAccount()).toEqual(['notes/one.md', 'notes/two.md'])
+  expect(mirror.notes['notes/one.md']).toBeDefined()
+
+  // Gone from there too, the delete lands: no words are waiting any more.
+  device.disk.delete(`${ROOT}/${'long/'.repeat(90)}one.md`)
+  device.disk.delete(`${ROOT}/${'long/'.repeat(90)}two.md`)
+  await pass(mirror)
+  expect(await pathsOnAccount()).toEqual([])
+})
+
+test('a note renamed and grown past the limit stays on the account', async () => {
+  const words = 'the first line\nthe second line\n'
+  put('a.md', words)
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+  const id = mirror.notes['a.md']?.id ?? ''
+
+  device.disk.delete(`${ROOT}/a.md`)
+  put('b.md', `${words}${BIG}\n`)
+  await pass(mirror)
+  await pass(mirror)
+
+  expect(await pathsOnAccount()).toEqual(['a.md'])
+  expect(await wordsOf(id)).toBe(words)
+
+  // Back under the limit it goes up as what it is, and the old name goes.
+  put('b.md', words)
+  await pass(mirror)
+  expect(await pathsOnAccount()).toEqual(['b.md'])
+})
+
+test('a note renamed to a kind v1 cannot carry stays on the account', async () => {
+  put('a.md', 'the words\n')
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+
+  device.disk.delete(`${ROOT}/a.md`)
+  put('a.base', 'the words\n')
+  await pass(mirror)
+
+  expect(await pathsOnAccount()).toEqual(['a.md'])
+})
+
+test('a base of the same name holding other words does not hold a delete', async () => {
+  put('tasks.md', 'a list of things\n')
+  put('tasks.base', 'views: []\n')
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+
+  device.disk.delete(`${ROOT}/tasks.md`)
+  await pass(mirror)
+
+  expect(await pathsOnAccount()).toEqual([])
+})
+
+test('a delete waits where the account would not say what the note held', async () => {
+  put('a.md', 'the words\n')
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+
+  device.disk.delete(`${ROOT}/a.md`)
+  put('b.md', `the words\n${BIG}`)
+  answering = { to: new RegExp(`GET .*/v1/notes/${mirror.notes['a.md']?.id ?? ''}`), status: 500, left: 1 }
+  await pass(mirror)
+  expect(await pathsOnAccount()).toEqual(['a.md'])
+
+  // Asked again, it says, and big words that share nothing let the delete go.
+  put('b.md', BIG)
+  await pass(mirror)
+  expect(await pathsOnAccount()).toEqual([])
+})
+
+test('a full account still takes a delete, and says it is full', async () => {
+  put('gone.md', 'going\n')
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+
+  device.disk.delete(`${ROOT}/gone.md`)
+  put('new.md', 'other words\n')
+  put('z.md', 'more words\n')
+  answering = { to: /POST .*new\.md$/, status: 507, left: 1 }
+  await expect(pass(mirror)).rejects.toMatchObject({ status: 507 })
+
+  expect(await pathsOnAccount()).toEqual([])
+  // Nothing more is offered to an account that just said it is full.
+  expect(offers.filter((one) => one === 'z.md')).toEqual([])
+  expect(told).toEqual([])
+
+  await pass(mirror)
+  expect(await pathsOnAccount()).toEqual(['new.md', 'z.md'])
+})
+
+test('a note renamed on a full account stays until the new name lands', async () => {
+  put('a.md', 'the words\n')
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+
+  device.disk.delete(`${ROOT}/a.md`)
+  put('b.md', 'the words\n')
+  answering = { to: /POST .*b\.md$/, status: 507, left: 1 }
+  await expect(pass(mirror)).rejects.toMatchObject({ status: 507 })
+  expect(await pathsOnAccount()).toEqual(['a.md'])
+
+  await pass(mirror)
+  expect(await pathsOnAccount()).toEqual(['b.md'])
+})
+
+test('a note behind one the full account stopped at holds its delete as well', async () => {
+  put('z.md', 'the words\n')
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+
+  device.disk.delete(`${ROOT}/z.md`)
+  put('a.md', 'other words\n')
+  put('y.md', 'the words\n')
+  answering = { to: /POST .*a\.md$/, status: 507, left: 1 }
+  await expect(pass(mirror)).rejects.toMatchObject({ status: 507 })
+
+  expect(await pathsOnAccount()).toEqual(['z.md'])
+})
+
+for (const [status, on] of [
+  [413, /POST .*a\.md$/],
+  [400, /POST .*a\.md$/],
+] as const) {
+  test(`an edge's own ${String(status)} on a create ends the pass and is tried again`, async () => {
+    put('a.md', 'first\n')
+    const mirror = newMirror(spaceId, ROOT)
+    answering = { to: on, status, left: 1, page: true }
+
+    await expect(pass(mirror)).rejects.toMatchObject({ status })
+    expect(told).toEqual([])
+
+    await pass(mirror)
+    expect(await pathsOnAccount()).toEqual(['a.md'])
+  })
+}
+
+test("an edge's own 413 on a write is sent again", async () => {
+  put('a.md', 'first\n')
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+  put('a.md', 'second\n')
+  answering = { to: /PUT .*a\.md$/, status: 413, left: 1, page: true }
+
+  await expect(pass(mirror)).rejects.toMatchObject({ status: 413 })
+  await pass(mirror)
+
+  expect(await wordsOf(mirror.notes['a.md']?.id ?? '')).toBe('second\n')
+})
+
+test('a PDF on the list stays on it, as it was, when its new bytes are refused', async () => {
+  put('paper.pdf', '%PDF-1.7 small\n')
+  put('other.pdf', '%PDF-1.7 other\n')
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+  const was = mirror.files['paper.pdf']?.hash ?? ''
+  expect(was).not.toBe('')
+
+  put('paper.pdf', '%PDF-1.7 too big now\n')
+  device.written.set(`${ROOT}/paper.pdf`, 5)
+  answering = { to: /PUT .*\/v1\/blobs\//, status: 413, left: 1 }
+  await pass(mirror)
+
+  expect(told).toEqual(['paper.pdf'])
+  expect(mirror.files['paper.pdf']?.hash).toBe(was)
+  expect(listsSaid.at(-1)?.find((one) => one.path === 'paper.pdf')?.hash).toBe(was)
+
+  // And the next pass says nothing new: the list stands as the account has it.
+  const lists = listsSaid.length
+  await pass(mirror)
+  expect(listsSaid).toHaveLength(lists)
+  expect(mirror.files['paper.pdf']?.hash).toBe(was)
+})
+
+test('a merge past the limit is that note’s trouble, and the notes after it go', async () => {
+  const shared = `${'x'.repeat(70)}\n`.repeat(46_000)
+  put('a.md', `top\n${shared}bottom\n`)
+  const mirror = newMirror(spaceId, ROOT)
+  await pass(mirror)
+  const entry = mirror.notes['a.md']
+  world.use(device)
+  await pull(mirror, token, NOBODY)
+
+  // The account moves on between this device's pull and its push, and both sides grow.
+  await call(env, `/v1/notes/${entry?.id ?? ''}`, {
+    token,
+    method: 'PUT',
+    body: {
+      path: 'a.md',
+      content: `${'t'.repeat(600_000)}\ntop\n${shared}bottom\n`,
+      baseVersion: entry?.version,
+    },
+  })
+  put('a.md', `top\n${shared}bottom\n${'b'.repeat(600_000)}\n`)
+  put('zz.md', 'after\n')
+  await push(mirror, token, NOBODY, { refused: (path) => told.push(path) })
+
+  expect(told).toEqual(['a.md'])
+  expect(await pathsOnAccount()).toEqual(['a.md', 'zz.md'])
+})
+
+test('a create paired with a note, whose write is refused, stays paired and goes on', async () => {
+  put('a.md', 'theirs\n')
+  const other = newMirror(spaceId, ROOT)
+  await pass(other)
+  put('z.md', 'after\n')
+  put('a.md', 'mine\n')
+  const mirror = newMirror(spaceId, ROOT)
+  world.use(device)
+  answering = { to: /PUT .*a\.md$/, status: 400, left: 1 }
+  await push(mirror, token, NOBODY, { refused: (path) => told.push(path) })
+
+  expect(told).toEqual(['a.md'])
+  expect(mirror.notes['a.md']).toBeDefined()
+  expect(await pathsOnAccount()).toEqual(['a.md', 'z.md'])
 })

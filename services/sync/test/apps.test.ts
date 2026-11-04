@@ -3,7 +3,7 @@
  *  ever see. */
 
 import { subprotocol } from '@orden/rooms'
-import { HOLD_GRACE } from '@orden/online/wire'
+import { HOLD_GRACE, HOLD_QUIET } from '@orden/online/wire'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { AppRelay, type Party } from '../src/apps/relay'
 import { sha256 } from '../src/crypto'
@@ -332,6 +332,36 @@ describe('an application’s door', () => {
       expect(host.closedWith?.code).toBe(4404)
       expect(viewer.closedWith?.code).toBe(4404)
       expect(state.alarm).toBeNull()
+    })
+
+    test('a lock handed on tells the host once', async () => {
+      const { made, join } = await sockets()
+      const host = await join('host', 'desktop')
+      const say = (socket: MachineSocket) =>
+        made.webSocketMessage(
+          socket as unknown as WebSocket,
+          JSON.stringify({ t: 'hello', hold: true }),
+        )
+      const laptop = await join('viewer', 'laptop')
+      await say(laptop)
+      const phone = await join('viewer', 'phone')
+      await say(phone)
+
+      // The laptop goes quiet, and the grace passes with no timer: the object slept.
+      vi.setSystemTime(Date.now() + HOLD_QUIET + 1000)
+      phone.beatAt = new Date()
+      await made.alarm()
+      expect(laptop.closedWith?.code).toBe(4408)
+      vi.setSystemTime(Date.now() + HOLD_GRACE + 1000)
+      phone.beatAt = new Date()
+      const before = host.of('viewer').length
+      await made.alarm()
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(phone.of('hold')).toEqual([{ t: 'hold' }])
+      expect(host.of('viewer').slice(before)).toEqual([
+        { t: 'viewer', device: 'phone', name: 'phone' },
+      ])
     })
 
     test('a database that does not answer ends nothing', async () => {

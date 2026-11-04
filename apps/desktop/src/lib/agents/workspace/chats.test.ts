@@ -179,6 +179,36 @@ describe('the chats an agent sees', () => {
     }
   })
 
+  test('by name from a thread whose space has none, are not settled by the tab in front', async () => {
+    const twin = store.add('thesis', [{ who: ME, name: 'Emil', role: 'owner' }], {
+      root: '/spaces/Secret',
+      path: '/spaces/Secret/thesis.chat',
+    })
+    const { answerThreadSpaces } = await import('../../automation/caller')
+    // A thread that works in a space holding no chat of that name; `Notes` is in front.
+    answerThreadSpaces((thread) => (thread === 'in-third' ? 'third' : null))
+    workspace.spaces.push({ id: 'third', name: 'Third', root: '/spaces/Third' } as never)
+    const grant = {
+      id: 'nib-claude',
+      built_in: true,
+      name: 'Claude Code',
+      scopes: ['chats.read'],
+      spaces: 'all',
+      mode: 'confirm',
+    }
+    try {
+      const asked = JSON.stringify(
+        await call('read_chat', { chat: 'thesis' }, callerOf(grant, 'in-third')),
+      )
+      expect(asked).toContain('ambiguous')
+      expect(asked).toContain(twin)
+      expect(asked).not.toContain('Draft of chapter 3')
+    } finally {
+      workspace.spaces.pop()
+      answerThreadSpaces(() => null)
+    }
+  })
+
   test('are those of the spaces it reaches', async () => {
     const listed = said(await call('list_chats', {}))
     expect(listed).toContain('#thesis')
