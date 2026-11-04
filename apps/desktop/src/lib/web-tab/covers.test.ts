@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 import { describe, expect, test } from 'vitest'
 import {
+  ALL,
   bringsLayer,
   clearOf,
   cutOf,
   layersOver,
   noticeRows,
+  settled,
   watchArrivals,
+  type Cut,
   type Layer,
 } from './covers'
 
@@ -227,5 +230,32 @@ describe('a layer arriving by itself', () => {
       .append(Object.assign(document.createElement('div'), { className: 'nib-layer' }))
     await Promise.resolve()
     expect([one, other]).toEqual([1, 2])
+  })
+})
+
+/** #1050: a page hidden whole behind its picture is told nothing of what moves over it. */
+describe('what is told of a cut', () => {
+  const arrow = (x: number): Cut => ({
+    all: true,
+    hollows: [{ x, y: 100, width: 40, height: 40, radius: 20 }],
+  })
+
+  test('is the same for every step of an arrow over a page standing as its picture', () => {
+    expect(settled(arrow(10), true, true)).toEqual(settled(arrow(30), true, true))
+    expect(settled(arrow(10), true, true)).toEqual(ALL)
+  })
+
+  test('cuts round the arrow while there is no picture yet, on an engine that cuts', () => {
+    expect(settled(arrow(10), false, true)).toEqual(arrow(10))
+  })
+
+  test('is all of the page on an engine that cannot cut', () => {
+    expect(settled(arrow(10), false, false)).toEqual(ALL)
+  })
+
+  test('leaves a menu over a page that is not hidden alone', () => {
+    const menu: Cut = { all: false, hollows: [{ x: 1, y: 2, width: 3, height: 4, radius: 5 }] }
+    expect(settled(menu, true, true)).toBe(menu)
+    expect(settled(null, true, true)).toBeNull()
   })
 })

@@ -422,16 +422,17 @@ describe('gestures replayed on a precision touchpad, which says when the fingers
     expect(arrow()?.classList.contains('went')).toBe(true)
   })
 
+  /** From the side and from the fingers' first step (#1050), not from the start. */
   test('the arrow comes in with the fingers, pixel for pixel', () => {
     replay([
       ['fingers', 2],
       ['sweep', 12, -1],
     ])
-    expect(swiping.travel).toBe(120 - 60)
+    expect(swiping.travel).toBe(120)
     const box = arrow() as HTMLElement
-    expect(box.style.transform).toMatch(new RegExp(`^translate\\(${120 - 60 - 40}px, \\d+px\\)$`))
+    expect(box.style.transform).toMatch(new RegExp(`^translate\\(${120 - 40}px, \\d+px\\)$`))
     replay([['sweep', 3, 1]])
-    expect(swiping.travel).toBe(90 - 60)
+    expect(swiping.travel).toBe(90)
     replay([['fingers', 0]])
   })
 

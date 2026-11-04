@@ -61,8 +61,10 @@
   })
   const across = $derived(swiping.room ? whole(swiping.room.x + shift) - swiping.room.x : 0)
 
-  /** Faded in over the first third of the way, and out as it plays out. */
-  const shade = $derived(swiping.stage === 'tracking' ? Math.min(1, swiping.progress * 3) : 0)
+  /** Whole from its first pixel, which is the side of the pane it slides in from behind
+   *  (#1050): a fade over the first stretch was the arrow showing up late. Out as it
+   *  plays out. */
+  const shade = $derived(swiping.stage === 'tracking' ? 1 : 0)
 
   /** How much of the ring is filled: the way to where letting go goes. */
   const filled = $derived(Math.min(1, Math.max(0, swiping.progress)))

@@ -89,6 +89,9 @@ interface Live {
   first: number
   at: number
   heardAt: number
+  /** Where the arrow comes in, measured once as the arrow first comes out rather than at
+   *  every step: a step is drawn by the compositor, never by a layout. */
+  room: Room | null
 }
 
 let live: Live | null = null
@@ -137,13 +140,17 @@ function roomOf(pane: HTMLElement): Room {
   return { x: box.left, y: top, width: box.width, height: box.bottom - top }
 }
 
-/** Says where the arrow is now. */
+/** Says where the arrow is now, in the turn the step was heard in: nothing waits for a
+ *  frame, a timer or an answer from anywhere (#1050). */
 function draw(one: Live) {
   const { phase, side, progress } = one.swipe.shown
-  const pane = paneOf(one.tab)
-  if (!pane) return
+  if (!one.room) {
+    const pane = paneOf(one.tab)
+    if (!pane) return
+    one.room = roomOf(pane)
+  }
   swiping.tab = one.tab.id
-  swiping.room = roomOf(pane)
+  swiping.room = one.room
   swiping.side = side
   swiping.stage = phase === 'went' ? 'went' : phase === 'stayed' ? 'stayed' : 'tracking'
   swiping.progress = progress
@@ -201,6 +208,7 @@ export function heard(step: Heard): void {
     first: step.at,
     at: step.at,
     heardAt: now,
+    room: null,
   }
   const one = live
   one.at = step.at
@@ -220,10 +228,20 @@ export function heard(step: Heard): void {
   }
   const shown = one.swipe.turn(turn)
 
-  if (shown.phase === 'tracking') {
+  // Out with the fingers from the first step that leans towards somewhere to go, before
+  // the stream is a swipe; see gesture.ts.
+  if (shown.phase === 'tracking' || (shown.phase === 'gathering' && shown.travel > 0)) {
     clearTimeout(clearing)
     one.shown = true
     draw(one)
+  } else if (shown.phase === 'gathering' && one.shown) {
+    draw(one)
+  } else if (shown.phase === 'content' && one.shown && !one.stepped) {
+    // It was a scroll after all: the arrow goes back the way it came, and nothing steps.
+    one.stepped = true
+    swiping.stage = 'stayed'
+    swiping.turn++
+    played()
   } else if ((shown.phase === 'went' || shown.phase === 'stayed') && !one.stepped) {
     if (one.shown) draw(one)
     decided(one, shown.phase, shown.side)

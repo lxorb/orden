@@ -45,6 +45,7 @@
   import { filling } from './filling.svelte'
   import {
     ALL,
+    settled,
     clearOf,
     cutOf,
     layersOver,
@@ -313,7 +314,9 @@
       return
     }
 
-    const { box: at, cut } = coverOf(box)
+    const covered = coverOf(box)
+    const at = covered.box
+    const cut = settled(covered.cut, page.shot !== null, pages.cuts)
     last = at
     const visible = cut === null
 

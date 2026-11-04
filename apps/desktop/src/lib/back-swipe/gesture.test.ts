@@ -46,13 +46,26 @@ const times = (count: number, step: readonly [number, number]) =>
   Array.from({ length: count }, () => step)
 
 describe('the start', () => {
-  test('nothing shows until the stream has gone the start sideways', () => {
+  test('is no swipe until the stream has gone the start sideways', () => {
     const one = swipe()
     const { shown } = stream(one, times(6, [-10, 0]))
     expect(shown.phase).toBe('gathering')
-    expect(shown.progress).toBe(0)
 
     expect(stream(one, [[-10, 0]], {}, 2000).shown.phase).toBe('tracking')
+  })
+
+  /** #1050: the arrow is glued to the fingers from their first step, not from the start. */
+  test('but the arrow is out from the first step that leans sideways', () => {
+    const one = swipe()
+    expect(stream(one, [[-3, 0]]).shown).toMatchObject({ phase: 'gathering', travel: 3 })
+    expect(one.shown.progress).toBeGreaterThan(0)
+    expect(stream(one, [[-4, 1]], {}, 2000).shown.travel).toBe(7)
+  })
+
+  test('and not for a step that leans down, nor towards nowhere to go', () => {
+    expect(stream(swipe(), [[-3, 4]]).shown.travel).toBe(0)
+    const none = stream(swipe(), [[-3, 0]], { goes: { left: false, right: true } })
+    expect(none.shown.travel).toBe(0)
   })
 
   test('the side is the one the scroll pushes against', () => {
@@ -288,10 +301,26 @@ describe('a touchpad that says when the fingers lift', () => {
     expect(one.lift(at + 200).phase).toBe('stayed')
   })
 
-  test('the arrow is where the fingers are, pixel for pixel past the start', () => {
+  test('the arrow is where the fingers are, pixel for pixel, back to the side', () => {
     const one = told()
-    expect(stream(one, times(10, [-10, 0])).shown.travel).toBe(100 - START.touchpad)
-    expect(stream(one, times(5, [4, 0]), {}, 2000).shown.travel).toBe(100 - START.touchpad - 20)
+    expect(stream(one, times(10, [-10, 0])).shown.travel).toBe(100)
+    expect(stream(one, times(5, [4, 0]), {}, 2000).shown.travel).toBe(80)
+    // Back past where the swipe began, to the side and no further.
+    expect(stream(one, times(30, [4, 0]), {}, 3000).shown.travel).toBe(0)
+    expect(stream(one, times(5, [-4, 0]), {}, 4000).shown.travel).toBe(20)
+  })
+
+  /** Letting go goes exactly where the arrow says it does: full at one. */
+  test('is full exactly where letting go goes', () => {
+    const one = told()
+    const past = distance('touchpad', 800, 600) + START.touchpad
+    const { at } = stream(one, times(past / 10, [-10, 0]))
+    expect(one.shown.progress).toBe(1)
+    expect(one.lift(at + QUIET).phase).toBe('went')
+    const short = told()
+    const end = stream(short, times(past / 10 - 1, [-10, 0])).at
+    expect(short.shown.progress).toBeLessThan(1)
+    expect(short.lift(end + QUIET).phase).toBe('stayed')
   })
 
   test('a scroll down that turns sideways in the same gesture stays a scroll', () => {
