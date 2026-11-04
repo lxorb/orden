@@ -2713,4 +2713,5 @@ export const ur: Dictionary = {
   'View your report': 'اپنی رپورٹ دیکھیں',
   'Not sent. Your text is kept, so you can try again.':
     'نہیں بھیجی گئی۔ آپ کا متن محفوظ ہے، دوبارہ کوشش کر سکتے ہیں۔',
+  'Reset to site icon': 'سائٹ کے آئیکن پر واپس جائیں',
 }

@@ -36,7 +36,9 @@ const OLD_NAME = /(?<![A-Za-z])(?:Nib|[Nn]ib[Ee]ditor)(?![A-Za-z])/g
 function identifier(text: string, at: number, length: number): boolean {
   const before = text[at - 1] ?? ''
   const after = text.slice(at + length)
-  return /[\\/]/.test(before) || /^(?:[\\/]|\.[A-Za-z]|-(?:Added|Home|Icon|Data)\b)/.test(after)
+  return (
+    /[\\/]/.test(before) || /^(?:[\\/]|\.[A-Za-z]|-(?:Added|Home|Icon|Data|Chosen)\b)/.test(after)
+  )
 }
 
 /** Strings that say an old name because they have to, by the file that holds them. */
@@ -211,6 +213,7 @@ describe('the name a reader sees', () => {
     expect(oldNames('/Applications/Nib.app')).toEqual([])
     expect(oldNames('Nib-Icon=https://a.example/favicon.ico')).toEqual([])
     expect(oldNames('Nib-Data=3f9a0c17e2b4d685')).toEqual([])
+    expect(oldNames('Nib-Chosen-Icon=rocket')).toEqual([])
     expect(oldNames('https://nibeditor.com/handoff')).toEqual([])
     expect(oldNames('Notes from nibeditor.com')).toEqual([])
     expect(oldNames('github.com/lxorb/nibeditor')).toEqual([])

@@ -2748,4 +2748,5 @@ export const kn: Dictionary = {
   'View your report': 'ನಿಮ್ಮ ವರದಿಯನ್ನು ನೋಡಿ',
   'Not sent. Your text is kept, so you can try again.':
     'ಕಳುಹಿಸಲಾಗಿಲ್ಲ. ನಿಮ್ಮ ಪಠ್ಯ ಉಳಿದಿದೆ, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಬಹುದು.',
+  'Reset to site icon': 'ಸೈಟ್ ಐಕಾನ್‌ಗೆ ಮರುಹೊಂದಿಸಿ',
 }

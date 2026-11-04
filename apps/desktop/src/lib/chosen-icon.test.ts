@@ -16,6 +16,8 @@ const FILES: Record<string, string> = {
   '/Home/Plain.chat': '{"v":1,"chat":"c_0f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"}\n',
   '/Home/Docs.url':
     '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nNib-Icon=data:image/png;base64,AA\r\n',
+  '/Home/Chosen.url':
+    '[InternetShortcut]\r\nURL=https://docs.dev/\r\nNib-Icon=data:image/png;base64,AA\r\nNib-Chosen-Icon=rocket\r\n',
   '/Home/Lecture.pages': '{"nodes":[],"edges":[]}',
   '/Home/Sketch.pages': '{"nodes":[],"edges":[]}',
   '/Home/Blank.md': '# Blank\n\n',
@@ -194,6 +196,16 @@ describe('two spaces with a tab each', () => {
   test('a website of another space wears the mark its file wrote down', async () => {
     open('/Work')
 
+    expect(await settled(() => faviconFor('/Home/Docs.url'))).toBe('data:image/png;base64,AA')
+  })
+
+  /** #1098: an icon the reader chose for a web note is worn over the site's mark. */
+  test('a website wears the icon chosen for it over its own mark', async () => {
+    open('/Work')
+
+    expect(await settled(() => chosenIcon('/Home/Chosen.url'))).toBe('rocket')
+    expect(faviconFor('/Home/Chosen.url')).toBeNull()
+    // And one nobody chose an icon for still wears the site's.
     expect(await settled(() => faviconFor('/Home/Docs.url'))).toBe('data:image/png;base64,AA')
   })
 

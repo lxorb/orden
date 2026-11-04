@@ -34,6 +34,8 @@ const SPACE: Record<string, string> = {
   '/space/only.md': '---\nicon: rocket\n---\n\n# Only an icon\n',
   '/space/Board.canvas': BOARD,
   '/space/Marked.canvas': MARKED_BOARD,
+  '/space/Docs.url':
+    '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nNib-Added=2026-01-01T00:00:00.000Z\r\nNib-Icon=data:image/png;base64,AA\r\n',
   '/space/Team.chat': `{"v":1,"chat":"${CHAT}"}\n`,
   '/space/Damaged.chat': 'Team\n',
 }
@@ -170,6 +172,24 @@ describe('the icon a note is given', () => {
 
     await setFileIcon('/space/marked.md', 'feather')
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+  })
+})
+
+/** #1098: a web note keeps its chosen icon in its `.url`, over the site's mark, and
+ *  "Reset to site icon" takes it away again; nothing else the file says changes. */
+describe('the icon a web note is given', () => {
+  test('is written into its file, and taken away again', async () => {
+    fresh()
+    await setFileIcon('/space/Docs.url', 'rocket', 'violet')
+    const chosen = written('/space/Docs.url') ?? ''
+    expect(chosen).toContain('Nib-Chosen-Icon=rocket\r\n')
+    expect(chosen).toContain('Nib-Chosen-Color=violet\r\n')
+    expect(chosen).toContain('Nib-Icon=data:image/png;base64,AA\r\n')
+
+    notes['/space/Docs.url'] = chosen
+    sent.length = 0
+    await setFileIcon('/space/Docs.url', null)
+    expect(written('/space/Docs.url')).toBe(SPACE['/space/Docs.url'])
   })
 })
 

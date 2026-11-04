@@ -38,6 +38,8 @@ describe('the file a website is written as', () => {
       home: null,
       icon: null,
       own: null,
+      chosen: null,
+      chosenColour: null,
     })
   })
 

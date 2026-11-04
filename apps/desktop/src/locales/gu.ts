@@ -2704,4 +2704,5 @@ export const gu: Dictionary = {
   'View your report': 'તમારો રિપોર્ટ જુઓ',
   'Not sent. Your text is kept, so you can try again.':
     'મોકલાયો નથી. તમારું લખાણ સાચવેલું છે, તમે ફરી પ્રયાસ કરી શકો છો.',
+  'Reset to site icon': 'સાઇટના આઇકન પર પાછા જાઓ',
 }

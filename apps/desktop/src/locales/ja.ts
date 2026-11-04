@@ -2691,4 +2691,5 @@ export const ja: Dictionary = {
   'View your report': 'レポートを見る',
   'Not sent. Your text is kept, so you can try again.':
     '送信できませんでした。入力内容は残っているので、もう一度お試しください。',
+  'Reset to site icon': 'サイトのアイコンに戻す',
 }

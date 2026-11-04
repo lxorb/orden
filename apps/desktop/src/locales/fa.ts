@@ -2724,4 +2724,5 @@ export const fa: Dictionary = {
   'View your report': 'دیدن گزارش شما',
   'Not sent. Your text is kept, so you can try again.':
     'ارسال نشد. متن شما حفظ شده است تا دوباره تلاش کنید.',
+  'Reset to site icon': 'بازگشت به نماد سایت',
 }

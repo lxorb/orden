@@ -2801,4 +2801,5 @@ export const fr: Dictionary = {
   'View your report': 'Voir votre signalement',
   'Not sent. Your text is kept, so you can try again.':
     'Non envoyé. Votre texte est conservé, vous pouvez réessayer.',
+  'Reset to site icon': 'Rétablir l’icône du site',
 }

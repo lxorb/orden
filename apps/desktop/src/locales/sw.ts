@@ -2757,4 +2757,5 @@ export const sw: Dictionary = {
   'View your report': 'Tazama ripoti yako',
   'Not sent. Your text is kept, so you can try again.':
     'Haijatumwa. Maandishi yako yamehifadhiwa, kwa hivyo unaweza kujaribu tena.',
+  'Reset to site icon': 'Rudisha ikoni ya tovuti',
 }

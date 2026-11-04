@@ -2774,4 +2774,5 @@ export const fil: Dictionary = {
   'View your report': 'Tingnan ang iyong ulat',
   'Not sent. Your text is kept, so you can try again.':
     'Hindi naipadala. Naitabi ang iyong teksto kaya maaari mong subukan ulit.',
+  'Reset to site icon': 'Ibalik sa icon ng site',
 }

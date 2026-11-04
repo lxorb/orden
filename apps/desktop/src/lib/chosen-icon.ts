@@ -22,7 +22,7 @@
 import { isChatTarget, isPagesTarget } from '@orden/markdown/links'
 import type { FileMark } from './file-mark'
 import { folderNote, isFolderNote } from './folder-notes'
-import { brandIcon, siteBrand } from './icons'
+import { brandIcon, readIcon, siteBrand } from './icons'
 import { links } from './link-index.svelte'
 import { elsewhere } from './marks-elsewhere.svelte'
 import { folderOf, isMarkdownPath, samePath, withinSpace } from './space-paths'
@@ -154,7 +154,16 @@ export function sourceMark(
  *  and the last of it after; see `filedUnder`. */
 export function faviconFor(path: string | undefined, url?: string | null): string | null {
   if (path === undefined) return siteMark(null, url)
+  if (wearsChosen(path)) return null
   return siteMark(liveMarkOf(path), url ?? addressOf(path), writtenMarkOf(path))
+}
+
+/** Whether the file at `path` wears an icon the reader chose, which is worn over the
+ *  site's own mark wherever a website is drawn - the row, the tab, the overview, a
+ *  bookmark, a hit (#1098). Asked here, beside the two it decides between, so no surface
+ *  weighs them itself. */
+export function wearsChosen(path: string | null | undefined): boolean {
+  return !!path && readIcon(chosenIcon(path)) !== null
 }
 
 /** Where the website at `path` points, as its row asks the cache: what the index read

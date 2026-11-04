@@ -2734,4 +2734,5 @@ export const tr: Dictionary = {
   'View your report': 'Raporunuzu görüntüleyin',
   'Not sent. Your text is kept, so you can try again.':
     'Gönderilmedi. Metniniz duruyor, yeniden deneyebilirsiniz.',
+  'Reset to site icon': 'Site simgesine dön',
 }

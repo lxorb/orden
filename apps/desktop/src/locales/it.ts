@@ -2796,4 +2796,5 @@ export const it: Dictionary = {
   'View your report': 'Vedi la tua segnalazione',
   'Not sent. Your text is kept, so you can try again.':
     'Non inviata. Il tuo testo resta qui, così puoi riprovare.',
+  'Reset to site icon': 'Ripristina l’icona del sito',
 }

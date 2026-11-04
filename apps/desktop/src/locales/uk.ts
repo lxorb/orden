@@ -2805,4 +2805,5 @@ export const uk: Dictionary = {
   'View your report': 'Переглянути ваш звіт',
   'Not sent. Your text is kept, so you can try again.':
     'Не надіслано. Ваш текст збережено, можна спробувати ще раз.',
+  'Reset to site icon': 'Повернути значок сайту',
 }

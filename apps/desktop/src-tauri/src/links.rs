@@ -536,8 +536,10 @@ fn shortcut_note(relative: String, content: &str) -> Note {
         blocks: Vec::new(),
         links: Vec::new(),
         tags: Vec::new(),
-        icon: None,
-        icon_color: None,
+        // The icon the reader chose over the site's mark (#1098): `Nib-Chosen-Icon`,
+        // which web-tab/shortcut.ts writes.
+        icon: key_of(content, "nib-chosen-icon"),
+        icon_color: key_of(content, "nib-chosen-color"),
         aliases: Vec::new(),
         // What `url:` means here is a note that is a website in the old format and
         // wants converting; a shortcut is already one. See shortcut.ts.
@@ -1306,6 +1308,20 @@ mod tests {
         // A shortcut is a name, a mark and an address, and nothing else the index reads.
         assert!(read.url.is_none());
         assert!(read.icon.is_none());
+    }
+
+    /// A website wears the icon the reader chose over the site's mark, kept in its own
+    /// file (#1098); the twin of `scanShortcut` in the app.
+    #[test]
+    fn a_website_wears_the_icon_chosen_for_it() {
+        let read = shortcut_note(
+            "Svelte docs.url".to_string(),
+            "[InternetShortcut]\r\nURL=https://svelte.dev/\r\nNib-Icon=data:image/png;base64,AA\r\nNib-Chosen-Icon=rocket\r\nNib-Chosen-Color=violet\r\n",
+        );
+
+        assert_eq!(read.icon.as_deref(), Some("rocket"));
+        assert_eq!(read.icon_color.as_deref(), Some("violet"));
+        assert_eq!(read.favicon.as_deref(), Some("data:image/png;base64,AA"));
     }
 
     /// A `.webloc` says where it points in a plist, which is the other half of the

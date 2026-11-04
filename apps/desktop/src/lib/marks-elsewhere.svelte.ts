@@ -61,7 +61,14 @@ function wears(path: string): boolean {
 async function wornBy(path: string, content: string): Promise<Worn> {
   if (isWebTarget(path)) {
     const said = readWebFile(path, content)
-    return { ...NOTHING, favicon: said?.icon ?? null, address: said?.url ?? null }
+    return {
+      ...NOTHING,
+      // The icon the reader chose over the site's mark (#1098).
+      icon: said?.chosen ?? null,
+      iconColor: said?.chosenColour ?? null,
+      favicon: said?.icon ?? null,
+      address: said?.url ?? null,
+    }
   }
 
   // The glasses' plugin carries no chats, nor their reader.

@@ -2670,4 +2670,5 @@ export const am: Dictionary = {
   'View your report': 'ሪፖርትህን ተመልከት',
   'Not sent. Your text is kept, so you can try again.':
     'አልተላከም። ጽሑፍህ ተቀምጧል፣ ስለዚህ እንደገና መሞከር ትችላለህ።',
+  'Reset to site icon': 'ወደ የጣቢያው አዶ መልስ',
 }

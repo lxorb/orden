@@ -2638,4 +2638,5 @@ export const zhHant: Dictionary = {
   'Your report reached us. You can follow it here:': '我們已收到你的回報。你可以在這裡查看進度：',
   'View your report': '查看你的回報',
   'Not sent. Your text is kept, so you can try again.': '未送出。你的文字已保留，可以再試一次。',
+  'Reset to site icon': '還原為網站圖示',
 }

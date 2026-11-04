@@ -2788,4 +2788,5 @@ export const es: Dictionary = {
   'View your report': 'Ver tu informe',
   'Not sent. Your text is kept, so you can try again.':
     'No enviado. Tu texto se conserva para que puedas intentarlo de nuevo.',
+  'Reset to site icon': 'Restablecer el icono del sitio',
 }

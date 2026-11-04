@@ -2812,4 +2812,5 @@ export const ru: Dictionary = {
   'View your report': 'Открыть ваш отчёт',
   'Not sent. Your text is kept, so you can try again.':
     'Не отправлено. Ваш текст сохранён, можно попробовать ещё раз.',
+  'Reset to site icon': 'Вернуть значок сайта',
 }

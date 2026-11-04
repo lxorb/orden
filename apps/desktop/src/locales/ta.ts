@@ -2766,4 +2766,5 @@ export const ta: Dictionary = {
   'View your report': 'உங்கள் அறிக்கையைப் பார்',
   'Not sent. Your text is kept, so you can try again.':
     'அனுப்பப்படவில்லை. உங்கள் உரை வைக்கப்பட்டுள்ளது, மீண்டும் முயலலாம்.',
+  'Reset to site icon': 'தளத்தின் ஐகானுக்குத் திரும்பு',
 }

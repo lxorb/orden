@@ -22,7 +22,7 @@
 
 import { frontMatterEdits } from '@orden/markdown/front-matter'
 import { scalar } from '@orden/markdown/yaml'
-import { isCanvasTarget, isChatTarget, isPagesTarget } from '@orden/markdown/links'
+import { isCanvasTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import { oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { isFolderNote } from './folder-notes'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
@@ -76,14 +76,16 @@ export async function setFileIcon(
   // A note's icon goes in as a scalar, because the block edit writes what it is
   // handed as it stands: the keycap `#` emoji written bare is a comment, and `*` an
   // alias.
-  const edit = isChatTarget(path)
-    ? await chatIconEdit(before, value, colour)
-    : isCanvasTarget(path) || isPagesTarget(path)
-      ? (await import('@orden/markdown/canvas')).canvasIconEdit(before, value, colour)
-      : frontMatterEdits(before, [
-          [ICON_KEY, value === null ? null : scalar(value)],
-          [ICON_COLOUR_KEY, colour],
-        ])
+  const edit = isWebTarget(path)
+    ? await webIconEdit(path, before, value, colour)
+    : isChatTarget(path)
+      ? await chatIconEdit(before, value, colour)
+      : isCanvasTarget(path) || isPagesTarget(path)
+        ? (await import('@orden/markdown/canvas')).canvasIconEdit(before, value, colour)
+        : frontMatterEdits(before, [
+            [ICON_KEY, value === null ? null : scalar(value)],
+            [ICON_COLOUR_KEY, colour],
+          ])
   if (!edit) return
 
   try {
@@ -92,6 +94,22 @@ export async function setFileIcon(
   } catch (error) {
     settings.error = message(error, key('That icon could not be written.'))
   }
+}
+
+/** A web note's file written again wearing the icon, over the site's mark (#1098), or
+ *  null where it already does or the file says nothing this app can write - a
+ *  `.webloc`, whose plist has no key for one. The writer is the one every rewrite of a
+ *  `.url` goes through, so nothing else the file says is lost. */
+async function webIconEdit(
+  path: string,
+  before: string,
+  icon: string | null,
+  colour: string | null,
+): Promise<TextEdit | null> {
+  const { readWebFile, rewriteShortcut } = await import('./web-tab/shortcut')
+  const said = /\.webloc$/i.test(path.trim()) ? null : readWebFile(path, before)
+  if (!said) return null
+  return oneEdit(before, rewriteShortcut(said, { chosen: icon, chosenColour: colour }))
 }
 
 /** A chat's pointer written again wearing the icon, as the smallest edit there is, or

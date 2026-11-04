@@ -2830,4 +2830,5 @@ export const ar: Dictionary = {
   'View your report': 'عرض بلاغك',
   'Not sent. Your text is kept, so you can try again.':
     'لم يُرسل. نصك محفوظ، لذا يمكنك المحاولة مرة أخرى.',
+  'Reset to site icon': 'العودة إلى أيقونة الموقع',
 }

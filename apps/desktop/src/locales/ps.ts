@@ -2719,4 +2719,5 @@ export const ps: Dictionary = {
   'View your report': 'خپل راپور وګورئ',
   'Not sent. Your text is kept, so you can try again.':
     'ونه لېږل شو. ستاسو متن ساتل شوی، بیا هڅه کولی شئ.',
+  'Reset to site icon': 'د سایټ نښې ته بیرته راګرځول',
 }

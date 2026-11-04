@@ -2705,4 +2705,5 @@ export const my: Dictionary = {
   'View your report': 'သင့်အစီရင်ခံစာကို ကြည့်ရန်',
   'Not sent. Your text is kept, so you can try again.':
     'မပို့ရသေးပါ။ သင့်စာသားကို သိမ်းထားသဖြင့် ထပ်မံကြိုးစားနိုင်သည်။',
+  'Reset to site icon': 'ဆိုက်၏ အိုင်ကွန်သို့ ပြန်ထားရန်',
 }

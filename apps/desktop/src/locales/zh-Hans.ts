@@ -2636,4 +2636,5 @@ export const zhHans: Dictionary = {
   'Your report reached us. You can follow it here:': '我们已收到你的报告。你可以在这里查看进展：',
   'View your report': '查看你的报告',
   'Not sent. Your text is kept, so you can try again.': '未发送。你的文字已保留，可以再试一次。',
+  'Reset to site icon': '恢复为网站图标',
 }

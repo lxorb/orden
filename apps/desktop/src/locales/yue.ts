@@ -2630,4 +2630,5 @@ export const yue: Dictionary = {
   'Your report reached us. You can follow it here:': '我哋收到你嘅報告喇。可以喺呢度睇進度：',
   'View your report': '睇你嘅報告',
   'Not sent. Your text is kept, so you can try again.': '未送出。你寫嘅嘢仲喺度，可以再試多次。',
+  'Reset to site icon': '還原做網站圖示',
 }

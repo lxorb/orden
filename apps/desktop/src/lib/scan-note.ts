@@ -172,8 +172,9 @@ export function scanShortcut(path: string, content: string): ScannedNote {
     headings: [],
     blocks: [],
     tags: [],
-    icon: null,
-    iconColor: null,
+    // The icon the reader chose over the site's mark, kept in the file (#1098).
+    icon: said?.chosen ?? null,
+    iconColor: said?.chosenColour ?? null,
     aliases: [],
     // What `url:` means is a note that is a website in the old format and wants
     // converting; a shortcut is already one. See web-tab/shortcut.ts.
