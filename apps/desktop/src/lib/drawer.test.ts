@@ -27,6 +27,7 @@ function box(overflowX: string, scrollWidth: number, touchAction = 'auto'): Elem
     clientWidth: 320,
     touchAction,
     parentElement: null,
+    hasAttribute: () => false,
   } as unknown as Element
 }
 
