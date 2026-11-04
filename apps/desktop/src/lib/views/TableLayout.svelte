@@ -401,6 +401,12 @@
     }
   }
 
+  /* Nothing to press on a fixed fence, and still the column's name to read. */
+  .name:disabled {
+    opacity: 1;
+    cursor: default;
+  }
+
   .arrow {
     margin-inline-start: 0.3em;
     color: var(--accent);
