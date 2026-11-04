@@ -40,6 +40,7 @@ const NOT_LAYERS: Record<string, string> = {
   'lib/web-tab/WebTab.svelte': 'a press hides the native page before what it opens is drawn',
   'lib/web-tab/AddressField.svelte': 'a press says where the keyboard goes once it is over',
   'lib/downloads/started.ts': 'a press says where a download was asked for, to fly from',
+  'lib/views/pressed-away.ts': 'a press past the rows selected lets them go, no layer up',
 }
 
 /** Layers that still close themselves this way, in files other work has open at the

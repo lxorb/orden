@@ -39,6 +39,7 @@
     withPicked,
   } from './list-items'
   import { parentOf } from './columns'
+  import { hearPressesAway } from './pressed-away'
   import { rowKey } from './row-keys'
   import { foldsOf, keepFolds, viewKey } from './kept-views'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
@@ -326,6 +327,25 @@
     if (key.kind === 'tick' || key.kind === 'delete') unpick()
   }
 
+  /** The bulk bar's own room, which a press in does not clear the selection from. */
+  let bulk = $state<HTMLElement>()
+
+  // A press past the rows selected, or past the one row the keyboard is on, lets them go
+  // (#1110); see pressed-away.ts.
+  $effect(() => {
+    if (selected === null && !picked.size) return
+    return untrack(() =>
+      hearPressesAway(
+        () => list,
+        () => bulk,
+        () => {
+          unpick()
+          selected = null
+        },
+      ),
+    )
+  })
+
   function select(id: string) {
     selected = id
     queueMicrotask(() =>
@@ -363,7 +383,10 @@
   aria-label={view?.name ?? ''}
   onkeydown={keydown}
   onfocus={(event) => {
-    if (event.target === event.currentTarget && rows[0]) select(rows[0].id)
+    // The keyboard coming in, by Tab, lands on the first row; a press in the list's own
+    // room is a press past the rows, which selects none (#1110).
+    if (event.target !== event.currentTarget || !rows[0]) return
+    if (event.currentTarget.matches(':focus-visible')) select(rows[0].id)
   }}
   style:padding-top="{shown.above}px"
   style:padding-bottom="{shown.below}px"
@@ -516,7 +539,9 @@
   {/if}
 </div>
 {#if pickedRows.length}
-  <BulkBar rows={pickedRows.map((one) => one.row)} {kit} onclear={unpick} />
+  <div class="bulk" bind:this={bulk}>
+    <BulkBar rows={pickedRows.map((one) => one.row)} {kit} onclear={unpick} />
+  </div>
 {/if}
 
 <style>
@@ -683,6 +708,11 @@
     font-size: var(--text-xs);
     text-transform: none;
     letter-spacing: 0;
+  }
+
+  /* No box of its own: the bar inside is held to the foot of what scrolls. */
+  .bulk {
+    display: contents;
   }
 
   .head:global(.is-taking),

@@ -92,6 +92,33 @@ def drive(browser: Browser) -> None:
             wrong(f"the panel's list for {name} is {words}, not {sorted(wanted)}")
     shot(page, "01-chosen")
 
+    # The panel's rows select as a tab's view's do: Ctrl or Cmd and a press anywhere on a
+    # card, past its controls, and Shift and a press for every row between; a press past
+    # them lets them go (#1110).
+    card = page.locator(".tasks .chosen .task:has(.words:text-is('Call the bank'))")
+    box = card.bounding_box()
+    if box is None:
+        wrong("the bank's card is not drawn")
+    else:
+        card.click(modifiers=["Control"], position={"x": 4, "y": box["height"] - 4})
+        page.locator(".tasks .chosen .task:has(.words:text-is('Read a book')) .words").click(
+            modifiers=["Shift"], position={"x": 4, "y": 4}
+        )
+        picked = page.locator(".tasks .chosen .task.is-picked").count()
+        say(f"[picked] {picked}, tabs {page.evaluate(TABS)}")
+        if picked != 3:
+            wrong(f"Ctrl and Shift selected {picked} of the panel's 3 rows")
+        if page.evaluate(TABS) != tabs:
+            wrong("selecting in the panel changed the number of tabs")
+        shot(page, "01-picked")
+        page.locator(".tasks .chosen .task:has(.words:text-is('Water the plants'))").focus()
+        page.mouse.click(700, 600)
+        DRIVE.waited(
+            page,
+            "() => !document.querySelector('.tasks .chosen .task:is(.is-picked, .is-on)')",
+            "a press past the rows letting them go",
+        )
+
     row(page, "admin").click(modifiers=["Control"])
     if DRIVE.waited(page, f"() => ({TABS})() === {tabs + 1}", "Ctrl and a press opening a tab"):
         if page.evaluate("() => window.nibApp.workspace.active?.preview === true"):
