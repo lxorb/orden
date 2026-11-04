@@ -376,6 +376,19 @@ static PRESSED: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
+/// How long a frame in a process of its own has to answer what the scans ask. A frame that is
+/// reloading loses the question, and one that hangs never answers: either way it is a part
+/// not read, which is safe, and no reason to hold up the rest of the page for the full wait.
+const FRAME_PATIENCE: Duration = Duration::from_secs(8);
+
+fn patience_in(session: Option<&str>) -> Duration {
+    if session.is_some() {
+        FRAME_PATIENCE
+    } else {
+        cdp::PATIENCE
+    }
+}
+
 /// The node of the secret that stands for a whole part of the page no field of which could
 /// be told: nothing of that part is written, and no picture of the page is taken.
 const UNREAD: u64 = 0;
@@ -759,7 +772,7 @@ impl Page<'_> {
                 session,
                 "DOM.resolveNode",
                 &json!({ "backendNodeId": backend, "objectGroup": group, "executionContextId": world }),
-                cdp::PATIENCE,
+                patience_in(session),
             )
             .ok()
             .and_then(|said| {
@@ -799,7 +812,7 @@ impl Page<'_> {
             session,
             "Page.getFrameTree",
             &json!({}),
-            cdp::PATIENCE,
+            patience_in(session),
         );
         let mut frames = Vec::new();
         if let Ok(tree) = tree {
@@ -877,7 +890,7 @@ impl Page<'_> {
             session,
             "Page.createIsolatedWorld",
             &json!({ "frameId": frame, "worldName": WORLD }),
-            cdp::PATIENCE,
+            patience_in(session),
         )
         .map_err(|why| stale(&why))?;
         let world = made
@@ -1201,7 +1214,7 @@ impl Page<'_> {
             session,
             "DOMSnapshot.captureSnapshot",
             &json!({ "computedStyles": [] }),
-            cdp::PATIENCE,
+            patience_in(session),
         )
         .ok()
     }
@@ -2787,7 +2800,13 @@ impl Page<'_> {
         for prefix in prefixes {
             let session = self.session_of_part(&prefix);
             let call = |method: &str, params: &Value| {
-                cdp::call_in(self.view, session.as_deref(), method, params, cdp::PATIENCE)
+                cdp::call_in(
+                    self.view,
+                    session.as_deref(),
+                    method,
+                    params,
+                    patience_in(session.as_deref()),
+                )
             };
             let Some(capture) = self.capture(session.as_deref()) else {
                 // A part that cannot be read may hold anything (`UNREAD`).
@@ -4081,7 +4100,12 @@ mod tests {
     fn a_field_a_thousand_levels_down_is_found() {
         let mut nodes: Vec<(i64, &str, u64, &[&str])> = vec![(-1, "#document", 5000, &[])];
         for level in 0..1000u64 {
-            nodes.push((i64::try_from(level).expect("small"), "DIV", 6000 + level, &[]));
+            nodes.push((
+                i64::try_from(level).expect("small"),
+                "DIV",
+                6000 + level,
+                &[],
+            ));
         }
         nodes.push((1000, "INPUT", 7, &["autocomplete", "cc-number"]));
         let capture = captured(&nodes, &[]);
