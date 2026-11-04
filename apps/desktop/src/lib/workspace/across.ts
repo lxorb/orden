@@ -243,7 +243,7 @@ export class Across {
     try {
       note.took(fold(mine, words), words)
     } catch (error) {
-      log('error', `across: ${note.path ?? note.name} took the whole words - ${String(error)}`)
+      log('error', `across: ${note.path ?? 'a draft'} took the whole words - ${String(error)}`)
       note.tookWhole(words)
     }
   }

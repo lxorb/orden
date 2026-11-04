@@ -2606,7 +2606,7 @@ class Workspace {
       return saved
     } catch (error) {
       // The tab keeps its words and its dot, and Save can be asked again.
-      log('error', `save: ${tab.shown} - ${String(error)}`)
+      log('error', `save: ${tab.path ?? 'a draft'} - ${String(error)}`)
       return null
     } finally {
       this.keeping.delete(tab.id)

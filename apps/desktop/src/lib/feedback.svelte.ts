@@ -15,6 +15,7 @@
 
 import { account } from './account.svelte'
 import { request } from './api'
+import { scrubbedLog } from './feedback-log'
 import { recentLog } from './log'
 import { invoke, isDesktop, isMobile, isNative, platform } from './tauri'
 
@@ -31,10 +32,10 @@ export function platformLine(): string {
 }
 
 /** The end of the app's log: the file the native app writes, or what a page kept of
- *  this visit. */
+ *  this visit, with the reader's paths out of it (feedback-log.ts). */
 async function logTail(): Promise<string> {
   const whole = isNative ? await invoke<string>('read_log').catch(() => '') : recentLog().join('\n')
-  const tail = whole.split('\n').slice(-LOG_LINES).join('\n')
+  const tail = scrubbedLog(whole.split('\n').slice(-LOG_LINES).join('\n'))
   return tail.length > LOG_BYTES ? tail.slice(tail.length - LOG_BYTES) : tail
 }
 

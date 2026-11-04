@@ -299,7 +299,7 @@ export class Saving {
         this.write(note).catch((error: unknown) => {
           refused.push(note)
           this.waiting.add(note)
-          log('error', `save: ${note.path ?? note.name} - ${String(error)}`)
+          log('error', `save: ${note.path ?? 'a draft'} - ${String(error)}`)
         }),
       ),
     )

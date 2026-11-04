@@ -20,6 +20,7 @@ vi.mock('./api', () => ({
 vi.mock('./account.svelte', () => ({ account: { token: null } }))
 
 const { feedback } = await import('./feedback.svelte')
+const { log } = await import('./log')
 
 beforeEach(() => {
   api.answer = null
@@ -39,6 +40,15 @@ describe('a report', () => {
       text: 'It broke.',
       images: ['data:image/png;base64,AAAA'],
     })
+  })
+
+  test('sends the log without the reader’s paths, which is what the sheet says', async () => {
+    api.answer = { ok: true, id: 'r1' }
+    log('error', 'save: /home/anna/Notes/Divorce lawyer.md - disk full')
+    await feedback.send('It broke.')
+    const { log: sent } = api.sent[0]?.body as { log: string }
+    expect(sent).toContain('error save: <path 1>.md - disk full')
+    expect(sent).not.toMatch(/anna|Divorce/)
   })
 
   test('sends no pictures where there are none', async () => {
