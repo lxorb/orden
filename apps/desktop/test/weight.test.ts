@@ -1285,9 +1285,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,577,000, for #1068: a bookmark keeps the id of what it points
  *  at, and is found by it where its path names nothing (workspace/bookmarks.svelte.ts,
  *  workspace/entry-ids.ts). Measured 3,576,390.
+ *
+ *  Raised on 2026-11-04, to 3,677,500, as #1063 and #1068 (a bookmark by id) came to
+ *  claude/hunt-round-1, on the 3,668,789 above. One module more, 395. Measured 3,677,304.
  */
-const BUDGET = 3_669_000
-const MOST_FILES = 395
+const BUDGET = 3_677_500
+const MOST_FILES = 396
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

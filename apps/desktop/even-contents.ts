@@ -552,9 +552,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,894,600, for #1068: a bookmark keeps the id of
  *  what it points at, and is found by it (workspace/bookmarks.svelte.ts,
  *  workspace/entry-ids.ts). Measured 5,894,413.
+ *
+ *  The code raised on 2026-11-04, to 6,013,800, as #1063 and #1068 came to claude/hunt-round-1.
+ *  Measured 6,013,571.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_011_300,
+  code: 6_013_800,
   catalogues: 984_100,
   styles: 290_000,
   fonts: 260_000,
