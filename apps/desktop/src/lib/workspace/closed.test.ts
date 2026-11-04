@@ -88,3 +88,26 @@ describe('the stack of closed tabs', () => {
     expect(stack.take()).toHaveLength(1)
   })
 })
+
+describe('a closed tab whose write landed', () => {
+  const owed = (path: string, share: string): ClosedTab => ({
+    draft: { ...draft('a.md'), path, doc: 'typed', dirty: true, base: 'was', share },
+    paneId: 'p1',
+    at: 0,
+  })
+
+  test('comes back from its file, without what it was typed on', () => {
+    const stack = new ClosedTabs()
+    stack.record(owed('/Notes/a.md', 'k1'))
+    stack.wroteAll('/Notes/a.md', 'k1')
+    expect(stack.stack[0]?.draft).toMatchObject({ dirty: false, doc: '' })
+    expect(stack.stack[0]?.draft).not.toHaveProperty('base')
+  })
+
+  test('another document at the path says nothing of it', () => {
+    const stack = new ClosedTabs()
+    stack.record(owed('/Notes/a.md', 'k1'))
+    stack.wroteAll('/Notes/a.md', 'k2')
+    expect(stack.stack[0]?.draft).toMatchObject({ dirty: true, doc: 'typed' })
+  })
+})

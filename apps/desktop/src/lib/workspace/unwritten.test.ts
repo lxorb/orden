@@ -30,13 +30,14 @@ function disk(says: string | null, exists = says !== null) {
       exists: () => Promise.resolve(exists),
       keepVersion,
       spaceOf: () => 'space-1',
+      reachable: () => Promise.resolve(true),
     },
   }
 }
 
 describe('a tab with unwritten words', () => {
   test('where the file has not moved: as it was, and owed', async () => {
-    const { desk, keepVersion } = disk(BASE)
+    const { desk } = disk(BASE)
     expect(await cameBack(draft(), desk)).toEqual({
       path: '/s/Both.md',
       text: OLD,
@@ -44,7 +45,6 @@ describe('a tab with unwritten words', () => {
       onDisk: BASE,
       home: null,
     })
-    expect(keepVersion).not.toHaveBeenCalled()
   })
 
   test('where the file says them already: clean, nothing to write', async () => {
@@ -154,5 +154,46 @@ describe('with no version to go by: a session of an older build, a note not yet 
     const { desk, keepVersion } = disk(OLD)
     expect(await cameBack(draft(none), desk)).toMatchObject({ dirty: false, onDisk: OLD })
     expect(keepVersion).not.toHaveBeenCalled()
+  })
+})
+
+describe('over a file that has gone on', () => {
+  test('a few characters alike somewhere else are not the words typed', async () => {
+    const { desk } = disk('# T\nbody\n\n## To do\nx\n')
+    const back = await cameBack(draft({ base: '# T\nbody\n', doc: '# To\nbody\n' }), desk)
+    expect(back.dirty).toBe(true)
+    expect(back.text).toContain('# To\nbody')
+    expect(back.text).toContain('## To do')
+  })
+
+  test('words with long enough a run beside them are', async () => {
+    const left = 'a line long enough to say where this was typed\n'
+    const { desk } = disk(`${left}typed\nand the rest\nNEWER\n`)
+    const back = await cameBack(draft({ base: `${left}and the rest\n`, doc: `${left}typed\nand the rest\n` }), desk)
+    expect(back).toMatchObject({ dirty: false })
+  })
+
+  test('at the very end, with what followed since', async () => {
+    const { desk } = disk('# n\nmine\nmore\n')
+    const back = await cameBack(draft({ base: '# n\n', doc: '# n\nmine\n' }), desk)
+    expect(back).toMatchObject({ text: '# n\nmine\nmore\n', dirty: false })
+  })
+})
+
+describe('a share not answering at the launch', () => {
+  test('is no file gone: the words wait on the file, owed', async () => {
+    const { desk } = disk(null)
+    const back = await cameBack(draft(), { ...desk, reachable: () => Promise.resolve(false) })
+    expect(back).toMatchObject({ path: '/s/Both.md', dirty: true, onDisk: BASE })
+  })
+})
+
+describe('a file back at the version the words were typed on', () => {
+  /** The words landed, the session did not hear, and somebody took them out again: from
+   *  here that is a write that never landed, so the file is kept before it is replaced. */
+  test('is kept as a version before they go down', async () => {
+    const { desk, keepVersion } = disk(BASE)
+    await cameBack(draft(), desk)
+    expect(keepVersion).toHaveBeenCalledWith('/s/Both.md', BASE)
   })
 })

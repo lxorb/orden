@@ -62,6 +62,7 @@ const { FileActions } = await import('./undo.svelte')
 const { undoLastFileAction } = await import('./undoing')
 type PutsBack = import('./undoing').PutsBack
 const { NoteDoc } = await import('./documents.svelte')
+const { meetAcross } = await import('./in-turn')
 type HoldsNotes = import('./note-text').HoldsNotes
 
 const SPACE = '/space'
@@ -734,6 +735,32 @@ describe('a closed note written to after the change was worked out', () => {
 })
 
 describe('with another window here', () => {
+  afterEach(() => meetAcross(null))
+
+  test('a write that throws leaves the note owed and the rest of the list written', async () => {
+    const { ws } = space({ '/space/a.md': 'one\n', '/space/b.md': 'two\n' }, '/space/a.md')
+    const owed = vi.fn()
+    meetAcross({
+      alone: false,
+      owe: owed,
+      writing: () => Promise.reject(new Error('refused')),
+    } as never)
+    const change = (path: string, before: string, after: string) => ({
+      path,
+      before,
+      after,
+      edits: [{ from: 0, to: 3, insert: after.slice(0, 3) }],
+      back: [{ from: 0, to: 3, insert: before.slice(0, 3) }],
+    })
+    await replaceInNotes(ws, [
+      change('/space/a.md', 'one\n', 'ONE\n'),
+      change('/space/b.md', 'two\n', 'TWO\n'),
+    ])
+    expect(owed).toHaveBeenCalledWith(ws.documents[0])
+    expect(ws.documents[0]?.dirty).toBe(true)
+    expect(disk.get('/space/b.md')).toBe('TWO\n')
+  })
+
   test('a note open here goes down through the turn that takes in what is on the disk', async () => {
     const { ws } = space({ '/space/a.md': 'one\ntwo\n' }, '/space/a.md')
     const note = ws.documents[0]
@@ -752,7 +779,7 @@ describe('with another window here', () => {
         return { words: one.latest, revision: one.revision }
       },
     }
-    ;(ws as unknown as { across: unknown }).across = across
+    meetAcross(across as never)
 
     await replaceInNotes(ws, [
       {
@@ -775,10 +802,7 @@ describe('with another window here', () => {
     const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
     const note = ws.documents[0]
     if (!note) throw new Error('no note')
-    ;(ws as unknown as { across: unknown }).across = {
-      alone: false,
-      writing: () => Promise.resolve(null),
-    }
+    meetAcross({ alone: false, writing: () => Promise.resolve(null) } as never)
     let letGo = () => undefined as unknown
     holding = { command: 'snapshot_note', until: new Promise((go) => (letGo = () => go())) }
     const writing = replaceInNotes(ws, [
@@ -801,10 +825,7 @@ describe('with another window here', () => {
     const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
     const note = ws.documents[0]
     if (!note) throw new Error('no note')
-    ;(ws as unknown as { across: unknown }).across = {
-      alone: false,
-      writing: () => Promise.resolve(null),
-    }
+    meetAcross({ alone: false, writing: () => Promise.resolve(null) } as never)
     await replaceInNotes(ws, [
       {
         path: '/space/a.md',
@@ -821,7 +842,7 @@ describe('with another window here', () => {
   test('a window alone writes as it always has', async () => {
     const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
     const writing = vi.fn()
-    ;(ws as unknown as { across: unknown }).across = { alone: true, writing }
+    meetAcross({ alone: true, writing } as never)
     await replaceInNotes(ws, [
       {
         path: '/space/a.md',
@@ -839,9 +860,11 @@ describe('with another window here', () => {
     const { ws } = space({ '/space/a.md': 'one\n' })
     const turns: string[] = []
     const locks = {
-      request: async (name: string, run: () => Promise<unknown>) => {
+      request: async (name: string, ...rest: unknown[]) => {
+        const run = rest.at(-1) as (lock: unknown) => Promise<unknown>
+        if (!name.startsWith('nib:file:')) return run({ name })
         turns.push(`in ${name}`)
-        const answer = await run()
+        const answer = await run({ name })
         turns.push(`out ${name}`)
         return answer
       },

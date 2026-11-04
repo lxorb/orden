@@ -3,7 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { leadSync } from './sync2/lead'
-import { heldForLife, holdIfFree } from './locks'
+import { heldForLife, holdIfFree, ifFree, locksWork } from './locks'
 import { oneWriteAt } from './windows'
 import { takeSlot } from './workspace/slot'
 
@@ -75,7 +75,10 @@ describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
 describe('with locks that work', () => {
   test('a turn whose work throws at once is refused, and is over', async () => {
     vi.stubGlobal('navigator', {
-      locks: { request: (_name: string, run: () => unknown) => Promise.resolve(run()) },
+      locks: {
+        request: (_name: string, ...rest: unknown[]) =>
+          Promise.resolve((rest.at(-1) as (lock: unknown) => unknown)({})),
+      },
     })
     await expect(
       oneWriteAt('/a.md', () => {
@@ -111,5 +114,82 @@ describe('with locks that work', () => {
     first?.()
     await vi.advanceTimersByTimeAsync(0)
     expect(await holdIfFree('nib:claim:/s/Plan.md')).toBeTypeOf('function')
+  })
+})
+
+describe('a main thread busy past the timer', () => {
+  /** Locks that work, whose answers come `late` ms after the asking: what a task of two
+   *  seconds does to them. */
+  function slow(late: number): LockManager {
+    return {
+      request: (_name: string, ...rest: unknown[]) => {
+        const run = rest.at(-1) as (lock: unknown) => unknown
+        return new Promise((resolve) => setTimeout(() => resolve(run({})), late))
+      },
+    } as unknown as LockManager
+  }
+
+  test('the timer gives an answer on its way a moment more', async () => {
+    const answer = locksWork(slow(2_001))
+    await vi.advanceTimersByTimeAsync(5_000)
+    expect(await answer).toBe(true)
+  })
+
+  test('a free lock too', async () => {
+    const answer = ifFree(slow(2_001), 'nib:window:1', () => Promise.resolve())
+    await vi.advanceTimersByTimeAsync(5_000)
+    expect(await answer).toBe('held')
+  })
+
+  test('an answer later than that still counts from then on', async () => {
+    const locks = slow(4_000)
+    const first = locksWork(locks)
+    await vi.advanceTimersByTimeAsync(2_500)
+    expect(await first).toBe(false)
+    await vi.advanceTimersByTimeAsync(2_000)
+    expect(await locksWork(locks)).toBe(true)
+  })
+
+  test('what leads for good waits in line where locks only looked broken', async () => {
+    const locks = slow(4_000)
+    vi.stubGlobal('navigator', { locks })
+    const requested = vi.spyOn(locks, 'request')
+    const run = vi.fn(() => new Promise<void>(() => undefined))
+    heldForLife('nib:hub', run)
+    await vi.advanceTimersByTimeAsync(3_000)
+    expect(run).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(requested.mock.calls.some(([name]) => name === 'nib:hub')).toBe(true)
+  })
+})
+
+describe('locks that never answer and many files', () => {
+  test('each file does not wait its own three seconds', async () => {
+    vi.stubGlobal('navigator', { locks: { request: () => new Promise(() => undefined) } })
+    let wrote = 0
+    const all = (async () => {
+      for (let one = 0; one < 8; one += 1) {
+        await oneWriteAt(`/${String(one)}.md`, () => Promise.resolve((wrote += 1)))
+      }
+    })()
+    await vi.advanceTimersByTimeAsync(4_000)
+    expect(wrote).toBe(8)
+    await all
+  })
+
+  test('two spellings of one file are one turn', async () => {
+    const names: string[] = []
+    vi.stubGlobal('navigator', {
+      locks: {
+        request: (name: string, ...rest: unknown[]) => {
+          names.push(name)
+          return Promise.resolve((rest.at(-1) as (lock: unknown) => unknown)({ name }))
+        },
+      },
+    })
+    await oneWriteAt('/s/a.md', () => Promise.resolve())
+    await oneWriteAt('/s//a.md', () => Promise.resolve())
+    const files = names.filter((name) => name.startsWith('nib:file:'))
+    expect(files[0]).toBe(files[1])
   })
 })

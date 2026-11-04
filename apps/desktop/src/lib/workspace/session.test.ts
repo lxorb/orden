@@ -588,3 +588,48 @@ describe('a pane that stacks its notes', () => {
     expect(back.kind === 'pane' && back.stacked).toBe(true)
   })
 })
+
+describe('what the words were typed on', () => {
+  test('goes before the words do, when storage is short', () => {
+    const written: string[] = []
+    const storage = {
+      setItem: (key: string, value: string) => {
+        if (value.includes('THE VERSION')) throw new DOMException('full', 'QuotaExceededError')
+        written.push(value)
+      },
+    }
+    vi.stubGlobal('localStorage', storage)
+    try {
+      const layout = {
+        panel: null,
+        focused: 'p',
+        frame: {
+          kind: 'pane' as const,
+          pane: {
+            id: 'p',
+            active: 0,
+            linked: false,
+            tabs: [
+              {
+                kind: 'note' as const,
+                path: '/s/a.md',
+                name: 'a.md',
+                doc: 'UNWRITTEN',
+                base: 'THE VERSION',
+                dirty: true,
+                cursor: 0,
+                scroll: 0,
+              },
+            ],
+          },
+        },
+      }
+      expect(
+        writeSession('k', { spaces: [], activeSpace: null, panel: null, closed: [], layout }),
+      ).toBe(true)
+      expect(written.at(-1)).toContain('UNWRITTEN')
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+})

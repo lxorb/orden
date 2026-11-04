@@ -737,6 +737,22 @@ describe('a merge that throws does not stop the saving', () => {
     expect(inA.dirty).toBe(false)
   })
 
+  test('the fallback leaves the version the first write keeps as it was', () => {
+    const note = new NoteDoc(
+      { kind: 'note', path: PATH, name: 'Both.md', text: BASE, dirty: false },
+      () => undefined,
+    )
+    const { disk, a } = twoWindows()
+    a.documents.push(note)
+    note.live.edit([{ from: 0, to: 0, insert: 'X' }])
+    const restore = refusing(note)
+    disk.set(PATH, `${BASE}NEWER`)
+    return a.save(note).then(() => {
+      restore()
+      expect(note.firstVersion()).toBe(BASE)
+    })
+  })
+
   test('where nothing will take them, the write says so rather than saying nothing', async () => {
     const { wires, disk, a, b } = twoWindows()
     const inA = a.open(BASE)
