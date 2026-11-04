@@ -1694,6 +1694,19 @@
   color: var(--muted-strong);
 }
 
+/* A footnote's number, in the words and at the foot: pressed, it goes to the other
+   one, so it says so to the pointer; see live-preview/footnotes.ts in @orden/editor. */
+.nib-footnote-number {
+  cursor: pointer;
+}
+
+/* The card a footnote's mark shows: the note preview's card, at the size of what a
+   footnote says. */
+.nib-note-preview.nib-footnote-preview {
+  width: min(24rem, 78vw);
+  max-height: 14em;
+}
+
 /* A definition sits under its term, indented the way it renders. */
 .cm-line.nib-definition {
   padding-inline-start: 1.6em;
