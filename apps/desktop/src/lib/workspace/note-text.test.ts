@@ -254,13 +254,26 @@ describe('a space shared to be read', () => {
 
   test('a row keeps its own task when a tick above it has moved the lines', async () => {
     const { taskHash } = await import('@orden/bases')
-    readOnly.delete(SPACE)
     const { ws } = space({ [`${SPACE}/todo.md`]: '- [ ] new\n- [ ] Alpha\n- [ ] Bravo\n' })
     // Drawn when Bravo was on line 1.
     expect(await toggleTaskAt(ws, `${SPACE}/todo.md`, 1, taskHash('Bravo'))).toBe(true)
     const said = (await noteText(ws, `${SPACE}/todo.md`)) ?? ''
     expect(said).toMatch(/^- \[ \] new\n- \[ \] Alpha\n- \[x\] Bravo/)
     expect(await toggleTaskAt(ws, `${SPACE}/todo.md`, 0, taskHash('gone'))).toBe(false)
+  })
+
+  test('two boxes pressed at once are both ticked', async () => {
+    const { taskHash } = await import('@orden/bases')
+    const path = `${SPACE}/todo.md`
+    const { ws } = space({ [path]: '- [ ] Alpha 🔁 every day 📅 2026-11-04\n- [ ] Bravo\n' })
+    await Promise.all([
+      toggleTaskAt(ws, path, 0, taskHash('Alpha')),
+      toggleTaskAt(ws, path, 1, taskHash('Bravo')),
+    ])
+    const said = (await noteText(ws, path)) ?? ''
+    expect(said).toMatch(/- \[x\] Bravo/)
+    expect(said).toMatch(/- \[x\] Alpha/)
+    expect(said.split('\n').filter((one) => one.startsWith('- [ ] Alpha'))).toHaveLength(1)
   })
 
   test('ticks no task', async () => {

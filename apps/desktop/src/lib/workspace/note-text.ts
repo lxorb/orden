@@ -124,8 +124,30 @@ export async function noteText(ws: HoldsNotes, path: string): Promise<string | n
  *  trusted from the row, so a note edited since the list was drawn is ticked
  *  where it says a task is now, or not at all. With `hash`, the `taskHash` of the words
  *  a row was drawn from, that task wherever it stands now: one ticked a moment ago may
- *  have put its next occurrence above the row, before the row could be drawn again. */
-export async function toggleTaskAt(
+ *  have put its next occurrence above the row, before the row could be drawn again.
+ *
+ *  One at a time for a note: a second box pressed while the first is being written reads
+ *  the note the first has written, or the later write puts the first box back. */
+export function toggleTaskAt(
+  ws: HoldsNotes,
+  path: string,
+  asked: number,
+  hash?: string,
+): Promise<boolean> {
+  const toggle = () => toggled(ws, path, asked, hash)
+  const running = (toggling.get(path) ?? Promise.resolve(false)).then(toggle, toggle)
+  const done = () => {
+    if (toggling.get(path) === running) toggling.delete(path)
+  }
+  toggling.set(path, running)
+  running.then(done, done)
+  return running
+}
+
+/** The tick being written in each note, the last asked for. */
+const toggling = new Map<string, Promise<boolean>>()
+
+async function toggled(
   ws: HoldsNotes,
   path: string,
   asked: number,
