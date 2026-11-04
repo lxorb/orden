@@ -218,6 +218,8 @@ def drive(browser: Browser) -> None:
         # takes back both.
         marked(page)
         row(page, "Plan.md").click()
+        # A folder deleted is forgotten as open, undone or not (#1081), and comes back shut.
+        page.evaluate("() => window.nibApp.workspace.device.expand(window.nibApp.workspace.activeSpace.root.replace(/\\/$/, '') + '/Work')")
         row(page, "Work/Ideas.md").click(modifiers=["Alt"])
         # The click opened Plan, whose note took the keyboard; Delete is the list's. On a
         # Mac it is Cmd+Backspace, as the registry says, which a drive in WebKit is: a bare

@@ -30,6 +30,7 @@ function box(overflowX: string, scrollWidth: number, clientWidth = 320, touchAct
     clientWidth,
     touchAction,
     parentElement: null,
+    hasAttribute: () => false,
   } as unknown as Element
 }
 
@@ -77,6 +78,11 @@ describe('what owns the gesture under the finger', () => {
 
   test('and the ink layer inside one, wherever the stroke landed', () => {
     expect(ownsGesture(nest(host, drawing(), box('visible', 320)), host)).toBe(true)
+  })
+
+  test("a phone's board, which turns its columns on a sideways swipe", () => {
+    const board = Object.assign(box('visible', 320), { hasAttribute: () => true })
+    expect(ownsGesture(nest(host, board, box('visible', 320)), host)).toBe(true)
   })
 
   test('not the note, which leaves the sideways drag to whoever wants it', () => {

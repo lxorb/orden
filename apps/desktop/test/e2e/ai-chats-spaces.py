@@ -95,6 +95,8 @@ def drive(browser: Browser, scheme: str) -> None:
     DRIVE.open(page)
     made = page.evaluate(SETUP)
 
+    # The note's editor comes a moment after the launch's last turn, on a busy machine.
+    DRIVE.wait_for(page, "window.nib", "the note's editor")
     page.evaluate("() => window.nib.focus()")
     page.keyboard.press("Control+Shift+A")
     DRIVE.waited(page, f"document.querySelector('{FIELD}')", "the panel's field")

@@ -966,6 +966,7 @@
     {#if phoneColumn}
       <div
         class="one"
+        data-turns-pages
         onpointerdown={swipeStart}
         onpointerup={swipeEnd}
         onpointercancel={() => (swipeFrom = null)}

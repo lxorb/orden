@@ -173,6 +173,14 @@ def board_on(browser, width, height, name):
             wrong(f"[{name}] a swipe lifted a card")
     touch(cdp, "touchEnd", [])
     page.wait_for_timeout(500)
+    # On a phone the columns are pages (#1046): the swipe turned it, and A is on the one before.
+    # And the swipe is the board's: a drawer that took it too stayed held over the page, as
+    # the card it began on went with the column and its touchend reached nobody.
+    if name == "phone":
+        if page.evaluate("() => !!document.querySelector('.scrim')"):
+            wrong(f"[{name}] a swipe on the board pulled a drawer out")
+        page.locator('.strip [role="tab"]', has_text="To do").click()
+        page.wait_for_timeout(300)
     if in_column(page, "A") != after:
         wrong(f"[{name}] a swipe moved a card")
     context.close()
