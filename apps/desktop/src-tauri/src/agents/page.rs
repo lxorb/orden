@@ -3713,9 +3713,23 @@ fn gone_fields(parts: &[Part], seen: &HashSet<(String, u64)>) -> Vec<(String, u6
     parts
         .iter()
         .flat_map(|part| {
+            // Not what is inside another: the inner box of a field is the engine's own, and
+            // the scan has no account of it.
+            let holders: HashSet<&str> = part
+                .nodes
+                .iter()
+                .filter(|node| snapshot::holds_words(node))
+                .filter_map(|node| node.get("nodeId")?.as_str())
+                .collect();
             part.nodes
                 .iter()
                 .filter(|node| snapshot::holds_words(node))
+                .filter(move |node| {
+                    !node
+                        .get("parentId")
+                        .and_then(Value::as_str)
+                        .is_some_and(|parent| holders.contains(parent))
+                })
                 .filter_map(|node| node.get("backendDOMNodeId").and_then(Value::as_u64))
                 .filter(|backend| !seen.contains(&(part.prefix.clone(), *backend)))
                 .map(|backend| (part.prefix.clone(), backend))
@@ -4054,6 +4068,8 @@ mod tests {
                     field(3, ""),
                     json!({ "backendDOMNodeId": 4 }),
                     json!({ "backendDOMNodeId": 5, "properties": [{ "name": "editable", "value": { "value": "plaintext" } }] }),
+                    json!({ "nodeId": "6", "backendDOMNodeId": 6, "value": { "value": "seen" } }),
+                    json!({ "parentId": "6", "backendDOMNodeId": 7, "properties": [{ "name": "editable", "value": { "value": "plaintext" } }] }),
                 ],
                 owner: None,
             },
@@ -4063,7 +4079,9 @@ mod tests {
                 owner: None,
             },
         ];
-        let seen: HashSet<(String, u64)> = [(String::new(), 2)].into_iter().collect();
+        let seen: HashSet<(String, u64)> = [(String::new(), 2), (String::new(), 6)]
+            .into_iter()
+            .collect();
         let gone = gone_fields(&parts, &seen);
         assert_eq!(
             gone,
