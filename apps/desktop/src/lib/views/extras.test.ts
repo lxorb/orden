@@ -10,7 +10,7 @@ import { planned } from './automate'
 import { contextFor } from './context'
 import { noteRow } from './fixture'
 import { formatted } from './format'
-import { listItems } from './list-items'
+import { foldKey, listItems } from './list-items'
 import { optionsFor, renamedIn, renamedInBase, reprefixed, valuesOf } from './options'
 import { parentOf } from './columns'
 
@@ -284,6 +284,12 @@ describe('notes as sub-items', () => {
   })
 
   test('fold under their parent, and two that name each other are not lost', () => {
-    expect(items(new Set(['Epic.md'])).map(([path]) => path)).toEqual(['Epic.md', 'A.md', 'B.md'])
+    const epic = rows.find((one) => one.path === 'Epic.md')
+    if (!epic) throw new Error('no epic')
+    expect(items(new Set([foldKey(epic)])).map(([path]) => path)).toEqual([
+      'Epic.md',
+      'A.md',
+      'B.md',
+    ])
   })
 })

@@ -1231,11 +1231,12 @@ function holds(tail: string): boolean {
  *  claude/hunt-round-1: nothing new beyond one guard fewer for a launch's first write.
  *  Measured 3,645,071, 394 modules.
  *
- *  Raised on 2026-11-04, to 3,646,200, for the bug hunt's fourth round on views: a block's
- *  name found by where its line is (`anchored`), and a chat's state told apart from other
- *  windows' (`heard`, `settled`). Measured 3,646,061, 394 modules.
+ *  Raised on 2026-11-04, to 3,646,500, for the bug hunt's fourth round on views: a block's
+ *  name found by where its line is (`anchored`), a chat's state told apart from other
+ *  windows' (`heard`, `settled`), and text escaped whatever marked says of it. Measured
+ *  3,646,423, 394 modules.
  */
-const BUDGET = 3_646_200
+const BUDGET = 3_646_500
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

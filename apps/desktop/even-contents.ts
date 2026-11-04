@@ -512,12 +512,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  and what came to unstable meanwhile in one build at last, on claude/hunt-round-1: nothing
  *  new beyond one guard fewer for a launch's first write. Measured 5,965,187.
  *
- *  The code raised on 2026-11-04, to 5,977,200, for the bug hunt's fourth round on views: a
+ *  The code raised on 2026-11-04, to 5,978,500, for the bug hunt's fourth round on views: a
  *  row under several labels, a space's views following its name, labels of the open space
- *  alone, a block's name by its line. Measured 5,976,912.
+ *  alone, a block's name by its line, text escaped whatever marked says. Measured 5,978,231.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_977_200,
+  code: 5_978_500,
   catalogues: 967_400,
   styles: 290_000,
   fonts: 260_000,
