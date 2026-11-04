@@ -389,13 +389,15 @@ fn one_time(field: &Field) -> bool {
     }
     // Word by word, with a number after it as `pin1` has: a PIN in any case but `Pin to top`,
     // and a TAN only in its capitals, as Tan is a colour.
-    said.split(|one: char| !one.is_alphanumeric())
-        .map(|word| word.trim_end_matches(|one: char| one.is_ascii_digit()))
-        .any(|word| {
-            word.ends_with("TAN")
-                || word.eq_ignore_ascii_case("otp")
-                || (word.eq_ignore_ascii_case("pin") && !body(field) && !says(&said, NOT_A_PIN))
-        })
+    said.trim() == "tan"
+        || said
+            .split(|one: char| !one.is_alphanumeric())
+            .map(|word| word.trim_end_matches(|one: char| one.is_ascii_digit()))
+            .any(|word| {
+                word.ends_with("TAN")
+                    || word.eq_ignore_ascii_case("otp")
+                    || (word.eq_ignore_ascii_case("pin") && !body(field) && !says(&said, NOT_A_PIN))
+            })
 }
 
 /// What has a pin in it and no secret.
@@ -894,7 +896,7 @@ const ONE_TIME: &[&str] = &[
 ];
 
 /// What is a one-time code only as a field's whole label.
-const ONE_TIME_ALONE: &[&str] = &["code", "otp", "pin", "tan", "one time", "authenticator"];
+const ONE_TIME_ALONE: &[&str] = &["code", "otp", "pin", "one time", "authenticator"];
 
 /// More of what card fields are called, as whole words with their marks read as spaces:
 /// `card no` is in `card notes`.

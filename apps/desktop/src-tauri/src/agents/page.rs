@@ -1113,10 +1113,8 @@ impl Page<'_> {
             &json!({ "objectId": object }),
             cdp::PATIENCE,
         )
-        .ok()?
-        .pointer("/node/frameId")?
-        .as_str()
-        .map(str::to_string)
+        .ok()
+        .and_then(|said| said.get("node").and_then(frame_of_holder))
     }
 
     /// A world of ours in a frame that shares this process.
@@ -1509,17 +1507,12 @@ impl Page<'_> {
             backend,
         };
         let described = self.call("DOM.describeNode", &json!({ "backendNodeId": backend }))?;
-        // A frame by what it holds, whatever its tag: `<object>` and `<embed>` hold one too.
-        // A document has the id of the frame it is, and is no holder.
+        // A frame by what it holds: `<object>` and `<embed>` hold one too.
         let node = described.get("node").cloned().unwrap_or_default();
-        let holder = node.get("nodeName").and_then(Value::as_str) != Some("#document");
-        let Some(frame) = node
-            .get("frameId")
-            .and_then(Value::as_str)
-            .filter(|_| holder)
-        else {
+        let Some(frame) = frame_of_holder(&node) else {
             return Ok(element);
         };
+        let frame = frame.as_str();
         // A frame in this process is hit through, so what came back is its edge. The
         // engine says so, as it gives its document only for one here.
         if node.get("contentDocument").is_some() {
@@ -1560,7 +1553,8 @@ impl Page<'_> {
         let backend = hit.get("backendNodeId").and_then(Value::as_u64)?;
         let backend = self.originating(Some(&session), backend);
         let held = call("DOM.describeNode", &json!({ "backendNodeId": backend }))?;
-        held.pointer("/node/frameId")
+        held.get("node")
+            .and_then(frame_of_holder)
             .is_none()
             .then_some(Element { backend, ..inner })
     }
@@ -3086,6 +3080,20 @@ fn thrown(answered: &Value) -> Result<(), Answer> {
     ))
 }
 
+/// The frame a node holds, as `DOM.describeNode` tells it. The engine gives a frame's id on
+/// its document and its root as well, which hold nothing: a press on an empty stretch of a
+/// page is no press in a frame.
+fn frame_of_holder(node: &Value) -> Option<String> {
+    let name = node.get("nodeName").and_then(Value::as_str)?;
+    matches!(
+        name.to_ascii_uppercase().as_str(),
+        "IFRAME" | "FRAME" | "OBJECT" | "EMBED" | "FENCEDFRAME"
+    )
+    .then(|| node.get("frameId").and_then(Value::as_str))
+    .flatten()
+    .map(str::to_string)
+}
+
 /// What the page's answer says of an element. An answer that says nothing, or nothing that
 /// reads, is an element no one can name: `opaque`, which `policy::judge` asks about, and
 /// never `Facts::default()`, which it would let go as nothing at all.
@@ -3525,6 +3533,18 @@ mod tests {
         assert!(clipped.contains("removeAttribute('value')"));
         assert!(!clipped.contains("__HIDE__"));
         assert!(whole_hiding(&[]).contains("unvalued(copy)"));
+    }
+
+    #[test]
+    fn only_what_holds_a_frame_holds_one() {
+        let node = |name: &str| json!({ "nodeName": name, "frameId": "F" });
+        for name in ["IFRAME", "OBJECT", "EMBED", "FRAME"] {
+            assert_eq!(frame_of_holder(&node(name)).as_deref(), Some("F"), "{name}");
+        }
+        for name in ["HTML", "#document", "DIV"] {
+            assert_eq!(frame_of_holder(&node(name)), None, "{name}");
+        }
+        assert_eq!(frame_of_holder(&json!({ "nodeName": "IFRAME" })), None);
     }
 
     #[test]
