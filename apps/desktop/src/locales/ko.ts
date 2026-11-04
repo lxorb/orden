@@ -2093,6 +2093,8 @@ export const ko: Dictionary = {
   'Read and change files anywhere on this computer': '이 컴퓨터 어디서나 파일 읽기 및 변경',
   Programs: '프로그램',
   'Run programs on this computer': '이 컴퓨터에서 프로그램 실행',
+  'Web requests': '웹 요청',
+  'Send requests to any site, outside your tabs': '탭 밖에서 모든 사이트로 요청 보내기',
   Paying: '결제',
   'Sending messages': '메시지 보내기',
   'Publishing and sharing': '게시 및 공유',

@@ -2135,6 +2135,9 @@ export const gsw: Dictionary = {
     'Dateie überall uf däm Computer läse und ändere',
   Programs: 'Programm',
   'Run programs on this computer': 'Programm uf däm Computer usfüere',
+  'Web requests': 'Web-Aafrooge',
+  'Send requests to any site, outside your tabs':
+    'Aafrooge a jedi Websiite schicke, usserhalb vo dine Tabs',
   Paying: 'Zahle',
   'Sending messages': 'Nachrichte schicke',
   'Publishing and sharing': 'Veröffentliche und Teile',

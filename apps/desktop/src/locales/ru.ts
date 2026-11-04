@@ -2209,6 +2209,9 @@ export const ru: Dictionary = {
     'Читать и изменять файлы в любом месте этого компьютера',
   Programs: 'Программы',
   'Run programs on this computer': 'Запускать программы на этом компьютере',
+  'Web requests': 'Веб-запросы',
+  'Send requests to any site, outside your tabs':
+    'Отправлять запросы на любой сайт вне ваших вкладок',
   Paying: 'Оплата',
   'Sending messages': 'Отправка сообщений',
   'Publishing and sharing': 'Публикация и доступ',

@@ -2126,6 +2126,8 @@ export const ps: Dictionary = {
     'په دې کمپیوټر کې هر چېرته فایلونه لوستل او بدلول',
   Programs: 'پروګرامونه',
   'Run programs on this computer': 'په دې کمپیوټر کې پروګرامونه چلول',
+  'Web requests': 'د وېب غوښتنې',
+  'Send requests to any site, outside your tabs': 'ستاسو له ټبونو بهر هر سایټ ته غوښتنې لېږل',
   Paying: 'تادیه',
   'Sending messages': 'پیغامونه لېږل',
   'Publishing and sharing': 'خپرول او شریکول',

@@ -91,6 +91,38 @@ pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Files) -> Answer 
     }
 }
 
+/// Where another verb may write a file for an agent - `http`'s `save_to` (#1078) - under
+/// exactly the rules a `write` keeps: the `files` scope, never behind a fence, and the
+/// question a write raises. The path made absolute, or what the call answers instead.
+pub(super) fn writable(app: &AppHandle, caller: &Caller, asked: &str) -> Result<PathBuf, Answer> {
+    let write = Files {
+        op: FilesOp::Write,
+        path: asked.to_owned(),
+        to: None,
+        content: None,
+        base64: false,
+        glob: None,
+        text: None,
+        since: None,
+    };
+    if !caller.holds(Scope::Files) {
+        return Err(Answer::error(
+            Code::NotGranted,
+            "saving to a file needs the files scope, which the reader grants in Settings > Agents",
+        ));
+    }
+    let path = resolved(app, asked).map_err(|why| Answer::error(Code::BadArguments, why))?;
+    if let Caller::Agent(grant) = caller {
+        if let Some(refused) = refused(&fences(app), FilesOp::Write, &path, None) {
+            return Err(refused);
+        }
+        if let Some(question) = question(app, grant, &write, &path, None) {
+            return Err(question);
+        }
+    }
+    Ok(path)
+}
+
 /// Whether an op answers what files say, which is the files' words and not the reader's.
 fn reads(op: FilesOp) -> bool {
     matches!(

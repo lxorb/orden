@@ -2123,6 +2123,8 @@ export const bn: Dictionary = {
     'এই কম্পিউটারের যেকোনো জায়গার ফাইল পড়া ও বদলানো',
   Programs: 'প্রোগ্রাম',
   'Run programs on this computer': 'এই কম্পিউটারে প্রোগ্রাম চালানো',
+  'Web requests': 'ওয়েব অনুরোধ',
+  'Send requests to any site, outside your tabs': 'আপনার ট্যাবের বাইরে যেকোনো সাইটে অনুরোধ পাঠানো',
   Paying: 'অর্থ প্রদান',
   'Sending messages': 'বার্তা পাঠানো',
   'Publishing and sharing': 'প্রকাশ ও শেয়ার করা',

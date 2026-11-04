@@ -2166,6 +2166,9 @@ export const de: Dictionary = {
     'Dateien überall auf diesem Computer lesen und ändern',
   Programs: 'Programme',
   'Run programs on this computer': 'Programme auf diesem Computer ausführen',
+  'Web requests': 'Web-Anfragen',
+  'Send requests to any site, outside your tabs':
+    'Anfragen an beliebige Websites senden, außerhalb deiner Tabs',
   Paying: 'Bezahlen',
   'Sending messages': 'Nachrichten senden',
   'Publishing and sharing': 'Veröffentlichen und Teilen',

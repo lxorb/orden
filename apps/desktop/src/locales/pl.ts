@@ -2209,6 +2209,9 @@ export const pl: Dictionary = {
     'Odczyt i zmiana plików w dowolnym miejscu na tym komputerze',
   Programs: 'Programy',
   'Run programs on this computer': 'Uruchamianie programów na tym komputerze',
+  'Web requests': 'Żądania sieciowe',
+  'Send requests to any site, outside your tabs':
+    'Wysyłanie żądań do dowolnej witryny, poza Twoimi kartami',
   Paying: 'Płacenie',
   'Sending messages': 'Wysyłanie wiadomości',
   'Publishing and sharing': 'Publikowanie i udostępnianie',

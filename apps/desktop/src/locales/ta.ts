@@ -2157,6 +2157,9 @@ export const ta: Dictionary = {
     'இந்தக் கணினியில் எங்கும் உள்ள கோப்புகளைப் படித்து மாற்றுதல்',
   Programs: 'நிரல்கள்',
   'Run programs on this computer': 'இந்தக் கணினியில் நிரல்களை இயக்கு',
+  'Web requests': 'இணையக் கோரிக்கைகள்',
+  'Send requests to any site, outside your tabs':
+    'உங்கள் தாவல்களுக்கு வெளியே எந்தத் தளத்திற்கும் கோரிக்கைகளை அனுப்பு',
   Paying: 'பணம் செலுத்துதல்',
   'Sending messages': 'செய்திகளை அனுப்புதல்',
   'Publishing and sharing': 'வெளியிடுதல், பகிர்தல்',

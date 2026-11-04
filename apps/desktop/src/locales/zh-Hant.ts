@@ -2070,6 +2070,8 @@ export const zhHant: Dictionary = {
   'Read and change files anywhere on this computer': '讀取及變更此電腦上任何位置的檔案',
   Programs: '程式',
   'Run programs on this computer': '在這台電腦上執行程式',
+  'Web requests': '網路請求',
+  'Send requests to any site, outside your tabs': '在你的分頁以外向任何網站傳送請求',
   Paying: '付款',
   'Sending messages': '傳送訊息',
   'Publishing and sharing': '發佈與共用',

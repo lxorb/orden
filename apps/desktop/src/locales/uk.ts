@@ -2202,6 +2202,9 @@ export const uk: Dictionary = {
     'Читати й змінювати файли будь-де на цьому комп’ютері',
   Programs: 'Програми',
   'Run programs on this computer': 'Запускати програми на цьому комп’ютері',
+  'Web requests': 'Веб-запити',
+  'Send requests to any site, outside your tabs':
+    'Надсилати запити на будь-який сайт поза вашими вкладками',
   Paying: 'Оплата',
   'Sending messages': 'Надсилання повідомлень',
   'Publishing and sharing': 'Публікація й поширення',

@@ -2154,6 +2154,9 @@ export const sw: Dictionary = {
     'Kusoma na kubadilisha faili popote kwenye kompyuta hii',
   Programs: 'Programu',
   'Run programs on this computer': 'Kuendesha programu kwenye kompyuta hii',
+  'Web requests': 'Maombi ya wavuti',
+  'Send requests to any site, outside your tabs':
+    'Kutuma maombi kwa tovuti yoyote, nje ya vichupo vyako',
   Paying: 'Kulipa',
   'Sending messages': 'Kutuma ujumbe',
   'Publishing and sharing': 'Kuchapisha na kushiriki',

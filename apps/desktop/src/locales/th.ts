@@ -2084,6 +2084,8 @@ export const th: Dictionary = {
     'อ่านและเปลี่ยนไฟล์ได้ทุกที่ในคอมพิวเตอร์เครื่องนี้',
   Programs: 'โปรแกรม',
   'Run programs on this computer': 'เรียกใช้โปรแกรมบนคอมพิวเตอร์เครื่องนี้',
+  'Web requests': 'คำขอเว็บ',
+  'Send requests to any site, outside your tabs': 'ส่งคำขอไปยังเว็บไซต์ใดก็ได้ นอกแท็บของคุณ',
   Paying: 'การชำระเงิน',
   'Sending messages': 'การส่งข้อความ',
   'Publishing and sharing': 'การเผยแพร่และแชร์',

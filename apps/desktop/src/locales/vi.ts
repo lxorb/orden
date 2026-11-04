@@ -2101,6 +2101,9 @@ export const vi: Dictionary = {
     'Đọc và thay đổi tệp ở bất kỳ đâu trên máy tính này',
   Programs: 'Chương trình',
   'Run programs on this computer': 'Chạy chương trình trên máy tính này',
+  'Web requests': 'Yêu cầu web',
+  'Send requests to any site, outside your tabs':
+    'Gửi yêu cầu đến bất kỳ trang nào, bên ngoài các thẻ của bạn',
   Paying: 'Thanh toán',
   'Sending messages': 'Gửi tin nhắn',
   'Publishing and sharing': 'Xuất bản và chia sẻ',

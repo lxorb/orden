@@ -2238,6 +2238,8 @@ export const ar: Dictionary = {
     'قراءة الملفات وتغييرها في أي مكان على هذا الكمبيوتر',
   Programs: 'البرامج',
   'Run programs on this computer': 'تشغيل البرامج على هذا الكمبيوتر',
+  'Web requests': 'طلبات الويب',
+  'Send requests to any site, outside your tabs': 'إرسال طلبات إلى أي موقع خارج علاماتك',
   Paying: 'الدفع',
   'Sending messages': 'إرسال الرسائل',
   'Publishing and sharing': 'النشر والمشاركة',

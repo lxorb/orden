@@ -477,6 +477,19 @@ describe('a tab of every kind, made behind the reader', () => {
     expect(workspace.openUnsaved).toHaveBeenLastCalledWith('note', '', undefined, null, true)
   })
 
+  test('a denied site by another spelling is denied all the same (#1078)', async () => {
+    for (const url of [
+      'https://login.bank.example./',
+      'https://LOGIN.Bank.Example/',
+      'https://bank.example.:443/x',
+    ]) {
+      expect(await call('workspace_tabs', { op: 'new', kind: 'web', url }), url).toMatchObject({
+        code: 'site_denied',
+      })
+    }
+    expect(workspace.openPage).not.toHaveBeenCalled()
+  })
+
   test('a web tab on its page, never a denied site or something not on the web', async () => {
     expect(
       await call('workspace_tabs', { op: 'new', kind: 'web', url: 'https://docs.example/' }),

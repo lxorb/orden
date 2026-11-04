@@ -2126,6 +2126,9 @@ export const fa: Dictionary = {
   'Read and change files anywhere on this computer': 'خواندن و تغییر فایل‌ها در هر جای این رایانه',
   Programs: 'برنامه‌ها',
   'Run programs on this computer': 'اجرای برنامه‌ها روی این رایانه',
+  'Web requests': 'درخواست‌های وب',
+  'Send requests to any site, outside your tabs':
+    'ارسال درخواست به هر سایتی، بیرون از زبانه‌های شما',
   Paying: 'پرداخت',
   'Sending messages': 'فرستادن پیام',
   'Publishing and sharing': 'انتشار و اشتراک‌گذاری',

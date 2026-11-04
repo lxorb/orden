@@ -2146,6 +2146,9 @@ export const kn: Dictionary = {
     'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಎಲ್ಲಿಯಾದರೂ ಫೈಲ್‌ಗಳನ್ನು ಓದಿ ಬದಲಿಸಿ',
   Programs: 'ಪ್ರೋಗ್ರಾಂಗಳು',
   'Run programs on this computer': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಪ್ರೋಗ್ರಾಂಗಳನ್ನು ಚಲಾಯಿಸಿ',
+  'Web requests': 'ವೆಬ್ ವಿನಂತಿಗಳು',
+  'Send requests to any site, outside your tabs':
+    'ನಿಮ್ಮ ಟ್ಯಾಬ್‌ಗಳ ಹೊರಗೆ ಯಾವುದೇ ಸೈಟ್‌ಗೆ ವಿನಂತಿಗಳನ್ನು ಕಳುಹಿಸಿ',
   Paying: 'ಪಾವತಿ',
   'Sending messages': 'ಸಂದೇಶಗಳನ್ನು ಕಳುಹಿಸುವುದು',
   'Publishing and sharing': 'ಪ್ರಕಟಿಸುವುದು ಮತ್ತು ಹಂಚಿಕೊಳ್ಳುವುದು',

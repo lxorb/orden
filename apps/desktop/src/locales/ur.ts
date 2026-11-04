@@ -2122,6 +2122,9 @@ export const ur: Dictionary = {
     'اس کمپیوٹر پر کہیں بھی فائلیں پڑھنا اور بدلنا',
   Programs: 'پروگرام',
   'Run programs on this computer': 'اس کمپیوٹر پر پروگرام چلائیں',
+  'Web requests': 'ویب درخواستیں',
+  'Send requests to any site, outside your tabs':
+    'اپنے ٹیبز سے باہر کسی بھی سائٹ کو درخواستیں بھیجیں',
   Paying: 'ادائیگی',
   'Sending messages': 'پیغامات بھیجنا',
   'Publishing and sharing': 'شائع کرنا اور شیئر کرنا',

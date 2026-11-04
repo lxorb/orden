@@ -2109,6 +2109,9 @@ export const jv: Dictionary = {
     'Maca lan ngowahi file ing ngendi wae ing komputer iki',
   Programs: 'Program',
   'Run programs on this computer': 'Mlaku program ing komputer iki',
+  'Web requests': 'Panjaluk web',
+  'Send requests to any site, outside your tabs':
+    'Ngirim panjaluk menyang situs apa wae, ing njaba tab sampeyan',
   Paying: 'Mbayar',
   'Sending messages': 'Ngirim pesen',
   'Publishing and sharing': 'Nerbitake lan nuduhake',

@@ -2112,6 +2112,8 @@ export const ja: Dictionary = {
     'このコンピュータのどこにあるファイルでも読み書きする',
   Programs: 'プログラム',
   'Run programs on this computer': 'このコンピューターでプログラムを実行',
+  'Web requests': 'Web リクエスト',
+  'Send requests to any site, outside your tabs': 'タブの外から任意のサイトにリクエストを送信',
   Paying: '支払い',
   'Sending messages': 'メッセージの送信',
   'Publishing and sharing': '公開と共有',

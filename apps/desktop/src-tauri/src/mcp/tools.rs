@@ -100,6 +100,8 @@ pub fn reaches(grant: &Grant, name: &str) -> bool {
         "files" => grant.holds(Scope::Files),
         // Programs on this computer (#1078).
         "process" => grant.holds(Scope::Processes),
+        // Requests to any site (#1078).
+        "http" => grant.holds(Scope::Network),
         name => AGENT_VERBS
             .iter()
             .find(|(verb, _)| *verb == name)
@@ -476,6 +478,8 @@ mod tests {
     /// characters, listed only to a grant holding processes, from a table at 35 789.
     /// Raised to 36 900 the next day for a terminal of the reader's, online ones too, to run
     /// a command in (#1125): `run_terminal`'s `tab`, 75 characters, from a table at 36 732.
+    /// Raised to 37 500 on 2026-11-05 for requests (#1078, step 3): one tool, `http`, 631
+    /// characters, listed only to a grant holding network, from a table at 36 807.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -484,7 +488,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 36_900,
+            total < 37_500,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

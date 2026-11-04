@@ -2108,6 +2108,9 @@ export const my: Dictionary = {
     'ဤကွန်ပျူတာပေါ်ရှိ မည်သည့်နေရာမှ ဖိုင်များကိုမဆို ဖတ်ပြီး ပြောင်းရန်',
   Programs: 'ပရိုဂရမ်များ',
   'Run programs on this computer': 'ဤကွန်ပျူတာပေါ်တွင် ပရိုဂရမ်များ လုပ်ဆောင်ရန်',
+  'Web requests': 'ဝဘ် တောင်းဆိုမှုများ',
+  'Send requests to any site, outside your tabs':
+    'သင့်တက်ဘ်များ အပြင်ဘက်မှ မည်သည့်ဆိုက်သို့မဆို တောင်းဆိုမှုများ ပို့ရန်',
   Paying: 'ငွေပေးချေခြင်း',
   'Sending messages': 'မက်ဆေ့ချ် ပို့ခြင်း',
   'Publishing and sharing': 'ထုတ်ဝေခြင်းနှင့် မျှဝေခြင်း',

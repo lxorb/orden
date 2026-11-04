@@ -64,6 +64,7 @@ mod approvals;
 )]
 mod capture;
 mod files;
+mod http;
 #[cfg_attr(
     not(any(windows, feature = "cef")),
     allow(
@@ -340,6 +341,10 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
             // So do programs (#1078).
             if let Verb::Process(asked) = &browsing {
                 return process::answer(app, caller, asked, since);
+            }
+            // And requests to any site (#1078).
+            if let Verb::Http(asked) = &browsing {
+                return http::answer(app, caller, asked, since);
             }
             browse(app, caller, browsing, since)
         }

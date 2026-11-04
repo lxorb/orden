@@ -2187,6 +2187,9 @@ export const it: Dictionary = {
     'Leggere e modificare file ovunque su questo computer',
   Programs: 'Programmi',
   'Run programs on this computer': 'Eseguire programmi su questo computer',
+  'Web requests': 'Richieste web',
+  'Send requests to any site, outside your tabs':
+    'Inviare richieste a qualsiasi sito, fuori dalle tue schede',
   Paying: 'Pagare',
   'Sending messages': 'Inviare messaggi',
   'Publishing and sharing': 'Pubblicare e condividere',

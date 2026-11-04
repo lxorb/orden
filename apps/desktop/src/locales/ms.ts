@@ -2118,6 +2118,9 @@ export const ms: Dictionary = {
     'Baca dan ubah fail di mana-mana pada komputer ini',
   Programs: 'Program',
   'Run programs on this computer': 'Jalankan program pada komputer ini',
+  'Web requests': 'Permintaan web',
+  'Send requests to any site, outside your tabs':
+    'Hantar permintaan ke mana-mana tapak, di luar tab anda',
   Paying: 'Membayar',
   'Sending messages': 'Menghantar mesej',
   'Publishing and sharing': 'Menerbitkan dan berkongsi',

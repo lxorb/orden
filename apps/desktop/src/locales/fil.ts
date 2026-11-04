@@ -2168,6 +2168,9 @@ export const fil: Dictionary = {
     'Basahin at baguhin ang mga file saanman sa computer na ito',
   Programs: 'Mga program',
   'Run programs on this computer': 'Magpatakbo ng mga program sa computer na ito',
+  'Web requests': 'Mga web request',
+  'Send requests to any site, outside your tabs':
+    'Magpadala ng mga request sa anumang site, labas sa iyong mga tab',
   Paying: 'Pagbabayad',
   'Sending messages': 'Pagpapadala ng mensahe',
   'Publishing and sharing': 'Pag-publish at pagbabahagi',

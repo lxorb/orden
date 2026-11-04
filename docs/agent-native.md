@@ -492,6 +492,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `capture_to_note` | `tab`, `note`?, `as`: `clip`, `screenshot`, `pdf`, `link`; `under`?, `full_page`?, `folder`?, `space`? | a page into a note, from an agent's tab or the reader's: the clipper's markdown with `source:`, a screenshot or a PDF kept beside the note and embedded, or the address; answers the note |
 | `files` | `op`: `read`, `write`, `append`, `list`, `stat`, `mkdir`, `move`, `copy`, `delete`, `search`, `changes`; `path`, `to`?, `content`?, `base64`?, `glob`?, `text`?, `since`? | files and folders anywhere the user account reaches, outside the spaces, with `files` (8.11) |
 | `process` | `op`: `run`, `start`, `list`, `read`, `write`, `kill`; `program`?, `args`?, `env`?, `cwd`?, `stdin`?, `timeout_ms`?, `id`?, `since`?, `wait_ms`?, `close`? | a program on this computer, never through a shell: run to its end, or started and read, written to and ended, with `processes` (8.12) |
+| `http` | `url`, `method`?, `headers`?, `body`?, `base64`?, `save_to`?, `timeout_ms`? | one request to any site, outside every tab and with none of the reader's cookies; the body answered, or written to a file under `files`' rules, with `network` (8.13) |
 | `run_terminal` | `command`, `cwd`?, `tab`? | only when the terminal tab exists, and only with `terminal` (8.9); with `tab`, typed into that terminal of the reader's, local or online, and what it printed until it went quiet |
 | `read_terminal` | `tab`, `lines`? | one of the reader's terminal tabs as words: scrollback and screen, wrapped lines joined, marked as the terminal's; one not shown since a restart answers the lines it came back with. `context` (8.9) |
 | `type_terminal` | `tab`, `text`?, `enter`?, `keys`?, `wait_ms`? | one line typed into the reader's own shell, Enter unless told otherwise, then named keys (`Ctrl+C`, the arrows, `Tab`...); answers what it printed until it went quiet. `terminal`, and it asks like `run_terminal` (8.9) |
@@ -1038,6 +1039,35 @@ the reader's own agents hold and a third party is granted (`process.rs`).
   bytes of it, and an agent has at most eight running. What a program printed is its
   words, marked untrusted (9.6).
 
+### 8.13 Requests
+
+An agent sends requests as a VS Code extension's `fetch` does (#1078): `http` sends one -
+an API, a download, a page's source - outside every tab and with none of the reader's
+cookies, and answers the status, the headers and the body (text, or base64 for what is
+not; a megabyte at most, `truncated` past it). `save_to` writes the body to a file
+instead, as it arrives and a gigabyte at most, under exactly the rules a `files` write
+keeps: the `files` scope, the fences, and its question. It is the `network` scope, which
+the reader's own agents hold and a third party is granted (`http.rs`).
+
+- **A denied site by every name.** A site the reader denied is refused, whatever case,
+  dot at the end or alphabet its name is written in (`bank.example.`, `BÜCHER.example`,
+  `xn--bcher-kva.example`); the same spelling rule holds for the browser's tabs and the
+  window's `workspace_tabs` now.
+- **Asked as #1072 decided.** In `confirm` mode a site not reached yet in this run asks
+  once, under *writing*, with "Always" for it (kept as `http:<site>`); a site the reader
+  allowed asks nothing. Full permissions, which a client connected over MCP always has
+  (#1099), asks nothing.
+- **Every hop.** Redirects are followed by hand, at most ten, each held to the rules of
+  the first: `http` or `https` only (never `file:`), a denied site refused, a new one
+  asked about, and `Authorization` and `Cookie` dropped on the way to another site. A
+  303, or a 301 or 302 after a `POST`, goes on as a `GET`, as browsers do. Each name is
+  resolved once and the connection pinned to the address checked.
+- **Never the app itself.** No request reaches the endpoint's port on any of this
+  machine's own addresses (`localhost`, `127.1`, `2130706433`, `[::1]`, `0.0.0.0`): the
+  endpoint is the agents' own door, and one agent knocking on it as another is no grant.
+  Every other address, this machine's dev servers included, is reached.
+- What a site said is its words, marked untrusted (9.6).
+
 ---
 
 ## 9. Safety and permissions
@@ -1055,7 +1085,7 @@ Each agent holds:
 
 | part | what it is | Emil's default |
 | --- | --- | --- |
-| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `processes`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
+| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `processes`, `network`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
 | spaces | which spaces it may reach; another space's tabs and notes do not exist to it | every space |
 | sites | allow, deny, and "agent store only", by site (registrable domain, as `siteOf`) | none set |
 | mode | `unsupervised` or `confirm` | unsupervised |
@@ -1063,9 +1093,9 @@ Each agent holds:
 | limits | tabs, calls a minute, pages a minute, browser memory | 4 tabs, 600 calls, 60 navigations, no memory limit |
 
 A third-party agent starts with `context` off, `browser.reader` off, both chats scopes off
-(a chat is other people's words), the terminal, helpers, files anywhere and programs off,
-and `confirm` mode. A grant kept from before #1078 has no `files` or `processes` until the
-reader turns them on. A grant kept from before chats were
+(a chat is other people's words), the terminal, helpers, files anywhere, programs and
+requests off, and `confirm` mode. A grant kept from before #1078 has no `files`,
+`processes` or `network` until the reader turns them on. A grant kept from before chats were
 is given `chats.read` and `chats.write` where it holds `notes.read` and `notes.write` and is
 the reader's own (it holds `context`); once the file has been written with them, a scope
 taken away stays away. "Always in this chat" is kept the way "Always on this site" is, under

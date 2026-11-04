@@ -2128,6 +2128,9 @@ export const pa: Dictionary = {
     'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਕਿਤੇ ਵੀ ਫ਼ਾਈਲਾਂ ਪੜ੍ਹੋ ਅਤੇ ਬਦਲੋ',
   Programs: 'ਪ੍ਰੋਗਰਾਮ',
   'Run programs on this computer': 'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਪ੍ਰੋਗਰਾਮ ਚਲਾਓ',
+  'Web requests': 'ਵੈੱਬ ਬੇਨਤੀਆਂ',
+  'Send requests to any site, outside your tabs':
+    'ਆਪਣੀਆਂ ਟੈਬਾਂ ਤੋਂ ਬਾਹਰ ਕਿਸੇ ਵੀ ਸਾਈਟ ਨੂੰ ਬੇਨਤੀਆਂ ਭੇਜੋ',
   Paying: 'ਭੁਗਤਾਨ',
   'Sending messages': 'ਸੁਨੇਹੇ ਭੇਜਣਾ',
   'Publishing and sharing': 'ਪ੍ਰਕਾਸ਼ਿਤ ਅਤੇ ਸਾਂਝਾ ਕਰਨਾ',

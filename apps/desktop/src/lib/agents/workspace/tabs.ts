@@ -215,17 +215,28 @@ function sourceOfTab(tab: Tab): string | null {
 }
 
 /** The site rule that denies an address to this agent, as the crate matches one: the
- *  host, or a host under it (`covers` in policy.rs). */
+ *  host, or a host under it (`covers` in policy.rs), by every spelling of either - a
+ *  capital, the dot a fully qualified name ends on, letters typed or as an address
+ *  writes them (#1078). */
 function deniedSite(call: Call, url: string): string | null {
-  const host = hostOf(url)
+  const host = hostOf(url)?.replace(/\.+$/, '')
   const sites = call.caller.agent?.sites ?? {}
   if (!host) return null
 
   return (
-    Object.keys(sites).find(
-      (site) => sites[site] === 'deny' && (host === site || host.endsWith(`.${site}`)),
-    ) ?? null
+    Object.keys(sites).find((site) => {
+      const named = siteNamed(site)
+      return (
+        sites[site] === 'deny' && named !== '' && (host === named || host.endsWith(`.${named}`))
+      )
+    }) ?? null
   )
+}
+
+/** A site as an address names it, as `named` in policy.rs does. */
+function siteNamed(site: string): string {
+  const bare = site.trim().replace(/^\*\./, '').replace(/\.+$/, '')
+  return (hostOf(`http://${bare}/`) ?? bare).replace(/\.+$/, '').toLowerCase()
 }
 
 /** An address an agent may open in one of the reader's tabs. */

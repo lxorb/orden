@@ -807,6 +807,59 @@ pub struct ProcessEntry {
     pub exit: Option<i32>,
 }
 
+/// `http`: one request to any site (#1078), the way a VS Code extension's `fetch` makes
+/// one, with no cookie of the reader's. See http.rs.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Http {
+    /// Where: an `http` or `https` address.
+    pub url: String,
+    /// `GET` when not said.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub method: Option<String>,
+    /// Headers sent with it.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub headers: std::collections::BTreeMap<String, String>,
+    /// What it sends.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
+    /// Whether `body` is base64.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub base64: bool,
+    /// A file the answer's body is written to rather than answered, under `files`'
+    /// rules.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub save_to: Option<String>,
+    /// How long it may take, in milliseconds.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_ms: Option<u64>,
+}
+
+/// What `http` answers.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HttpDone {
+    /// The status.
+    pub status: u16,
+    /// Where it was answered from, after any redirect.
+    pub url: String,
+    /// The answer's headers, each name once, in lower case.
+    pub headers: std::collections::BTreeMap<String, String>,
+    /// The body: text, or base64 for what is not.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
+    /// Whether `body` is base64.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub base64: bool,
+    /// Whether the body was cut short.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub truncated: bool,
+    /// The file `save_to` wrote.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub saved: Option<String>,
+    /// How large the body was, in bytes, as far as it was read.
+    pub size: u64,
+}
+
 /// `approval_status`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -934,6 +987,8 @@ verbs! {
     "files" => Files(Files) -> FilesDone,
     /// Programs on this computer, run or started and talked to (#1078).
     "process" => Process(Process) -> ProcessDone,
+    /// One request to any site (#1078).
+    "http" => Http(Http) -> HttpDone,
     /// This agent's grant, tabs, questions and pauses.
     "agent_status" => Status(Nothing) -> Status,
     /// What the reader answered.

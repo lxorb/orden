@@ -2116,6 +2116,9 @@ export const id: Dictionary = {
     'Membaca dan mengubah file di mana saja di komputer ini',
   Programs: 'Program',
   'Run programs on this computer': 'Menjalankan program di komputer ini',
+  'Web requests': 'Permintaan web',
+  'Send requests to any site, outside your tabs':
+    'Mengirim permintaan ke situs mana pun, di luar tab Anda',
   Paying: 'Membayar',
   'Sending messages': 'Mengirim pesan',
   'Publishing and sharing': 'Menerbitkan dan berbagi',

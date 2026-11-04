@@ -2164,6 +2164,9 @@ export const ptBR: Dictionary = {
     'Ler e alterar arquivos em qualquer lugar deste computador',
   Programs: 'Programas',
   'Run programs on this computer': 'Executar programas neste computador',
+  'Web requests': 'Requisições web',
+  'Send requests to any site, outside your tabs':
+    'Enviar requisições a qualquer site, fora das suas abas',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensagens',
   'Publishing and sharing': 'Publicar e compartilhar',

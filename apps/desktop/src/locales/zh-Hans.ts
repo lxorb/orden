@@ -2070,6 +2070,8 @@ export const zhHans: Dictionary = {
   'Read and change files anywhere on this computer': '读取和更改此电脑上任何位置的文件',
   Programs: '程序',
   'Run programs on this computer': '在这台电脑上运行程序',
+  'Web requests': '网络请求',
+  'Send requests to any site, outside your tabs': '在你的标签页之外向任意网站发送请求',
   Paying: '付款',
   'Sending messages': '发送消息',
   'Publishing and sharing': '发布与共享',

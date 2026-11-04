@@ -36,6 +36,7 @@ export const SCOPE_GROUPS = [
   { id: 'terminal', scopes: ['terminal'] },
   { id: 'files', scopes: ['files'] },
   { id: 'processes', scopes: ['processes'] },
+  { id: 'network', scopes: ['network'] },
   { id: 'helpers', scopes: ['agents'] },
 ] as const satisfies readonly { id: string; scopes: readonly Scope[] }[]
 
@@ -60,6 +61,7 @@ const ALL_SCOPES: readonly Scope[] = [
   'terminal',
   'files',
   'processes',
+  'network',
   'agents',
 ]
 
@@ -249,6 +251,7 @@ export function thirdPartyGrant(id: string, client: string, created: number): Gr
           'terminal',
           'files',
           'processes',
+          'network',
         ].includes(one),
     ),
     mode: 'confirm',

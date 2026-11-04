@@ -2152,6 +2152,9 @@ export const ml: Dictionary = {
     'ഈ കമ്പ്യൂട്ടറിൽ എവിടെയുമുള്ള ഫയലുകൾ വായിക്കാനും മാറ്റാനും',
   Programs: 'പ്രോഗ്രാമുകൾ',
   'Run programs on this computer': 'ഈ കമ്പ്യൂട്ടറിൽ പ്രോഗ്രാമുകൾ പ്രവർത്തിപ്പിക്കുക',
+  'Web requests': 'വെബ് അഭ്യർത്ഥനകൾ',
+  'Send requests to any site, outside your tabs':
+    'നിങ്ങളുടെ ടാബുകൾക്ക് പുറത്ത് ഏത് സൈറ്റിലേക്കും അഭ്യർത്ഥനകൾ അയയ്ക്കുക',
   Paying: 'പണമടയ്ക്കൽ',
   'Sending messages': 'സന്ദേശങ്ങൾ അയയ്ക്കൽ',
   'Publishing and sharing': 'പ്രസിദ്ധീകരിക്കലും പങ്കിടലും',

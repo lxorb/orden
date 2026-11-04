@@ -62,6 +62,24 @@
     "annotations": { "destructiveHint": true, "openWorldHint": true }
   },
   {
+    "name": "http",
+    "description": "One HTTP request to any site, outside every tab and without the reader's cookies. Answers status, headers and body (text, or base64). save_to writes the body to a file instead, as files writes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "method": { "type": "string" },
+        "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "body": { "type": "string" },
+        "base64": { "type": "boolean", "description": "body is base64" },
+        "save_to": { "type": "string", "description": "an absolute or ~/ path" },
+        "timeout_ms": { "type": "integer" }
+      },
+      "required": ["url"]
+    },
+    "annotations": { "openWorldHint": true }
+  },
+  {
     "name": "agent_status",
     "description": "Your grant (what you may reach), your tabs, the questions waiting for the reader, and whether you are stopped.",
     "inputSchema": { "type": "object", "properties": {} },

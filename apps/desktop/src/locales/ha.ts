@@ -2155,6 +2155,9 @@ export const ha: Dictionary = {
     'Karanta da canza fayiloli a ko’ina a wannan kwamfuta',
   Programs: 'Shirye-shirye',
   'Run programs on this computer': 'Gudanar da shirye-shirye a wannan kwamfuta',
+  'Web requests': 'Buƙatun yanar gizo',
+  'Send requests to any site, outside your tabs':
+    'Aika buƙatu zuwa kowane shafi, a wajen shafukanka',
   Paying: 'Biyan kuɗi',
   'Sending messages': 'Aika saƙonni',
   'Publishing and sharing': 'Wallafa da rabawa',

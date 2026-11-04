@@ -2190,6 +2190,9 @@ export const fr: Dictionary = {
     'Lire et modifier des fichiers partout sur cet ordinateur',
   Programs: 'Programmes',
   'Run programs on this computer': 'Lancer des programmes sur cet ordinateur',
+  'Web requests': 'Requêtes web',
+  'Send requests to any site, outside your tabs':
+    'Envoyer des requêtes à n’importe quel site, hors de vos onglets',
   Paying: 'Payer',
   'Sending messages': 'Envoyer des messages',
   'Publishing and sharing': 'Publier et partager',
