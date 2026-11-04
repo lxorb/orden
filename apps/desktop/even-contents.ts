@@ -535,11 +535,17 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  todo's card leaving the keyboard on itself (panel-tab.ts,
  *  workspace/documents.svelte.ts, terminal/TerminalMark.svelte, icon-target.ts,
  *  views/TaskRow.svelte). Measured 5,913,084.
+ *
+ *  The code raised on 2026-11-04, to 5,916,700, the catalogues to 977,400 and the styles
+ *  to 291,500, for #1114 and #1110: tabs as wide as their names and the switch's two
+ *  lines in every language, and the strip's and the Essentials' fixes with them
+ *  (Tabs.svelte, tab-strip/, Bookmarks.svelte, base.css). Measured 5,916,205, 976,970 and
+ *  291,204.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_913_700,
-  catalogues: 973_000,
-  styles: 290_800,
+  code: 5_916_700,
+  catalogues: 977_400,
+  styles: 291_500,
   fonts: 260_000,
   pages: 40_000,
 }

@@ -1242,8 +1242,15 @@ function holds(tail: string): boolean {
  *  file in the editor's count of its line endings (workspace/documents.svelte.ts,
  *  `flatEdits` in search/replace.ts), and an online terminal's row wearing its tab's mark
  *  and the icon chosen for it (FileMark.svelte, chosen-icon.ts,
- *  marks-elsewhere.svelte.ts). Measured 3,607,291. */
-const BUDGET = 3_608_000
+ *  marks-elsewhere.svelte.ts). Measured 3,607,291.
+ *
+ *  Raised 2026-11-04, to 3,617,200, for #1114 and #1110: tabs as wide as their names,
+ *  each name measured, and the switch under General > Tabs with its two lines; the room
+ *  a tab carried in is given, the numbers following their tabs, a terminal's open tab on
+ *  its ground, an essential's ring while its tab is in front and its press in a split
+ *  window (Tabs.svelte, tab-strip/, drag-paths.ts, Bookmarks.svelte, essentials.svelte.ts).
+ *  Measured 3,616,365. */
+const BUDGET = 3_617_200
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
