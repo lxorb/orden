@@ -41,7 +41,7 @@ async function tool(name: string, args: Record<string, unknown>): Promise<string
 
 async function feed(): Promise<{ read: { items: FeedItem[] } | null; raw: FeedItem[] }> {
   const answer = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
-  return { read: feedPageOf(answer.json), raw: (answer.json as { items: FeedItem[] }).items }
+  return { read: feedPageOf(answer.json), raw: (answer.json as unknown as { items: FeedItem[] }).items }
 }
 
 async function baseFile(path: string, text: string) {
@@ -159,15 +159,15 @@ test('a copy kept beside a note named near the limit, or under a bad folder, sti
   const held = await env.DB.prepare('select * from notes where id = ?')
     .bind(made.json.note.id)
     .first<Note>()
-  const copy = await noteBeside(env, held as Note, 'other words')
+  const copy = await noteBeside(env, held!, 'other words')
   expect(cleanPath(copy?.path ?? '')).toBe(copy?.path)
-  const second = await noteBeside(env, held as Note, 'more other words')
+  const second = await noteBeside(env, held!, 'more other words')
   expect(second?.path).not.toBe(copy?.path)
   expect(cleanPath(second?.path ?? '')).toBe(second?.path)
 
   const lost = await noteBeside(
     env,
-    { ...(held as Note), path: '../../Other/pwn.md', id: 'e'.repeat(32) },
+    { ...(held!), path: '../../Other/pwn.md', id: 'e'.repeat(32) },
     'words under a bad folder',
   )
   expect(lost?.path.startsWith('pwn')).toBe(true)

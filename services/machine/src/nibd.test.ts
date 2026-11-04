@@ -165,14 +165,14 @@ test('a want right behind a watcher’s open is not lost while the holder is ask
       order.push(`want ${String(since)}`)
       return Promise.resolve()
     },
-    input: (data: string) => order.push(`in ${data}`),
+    input: () => order.push('in'),
   })
   const open = nibd.receive({ t: 'open', session: 's_held', cols: 80, rows: 24, watching: true })
   const want = nibd.receive({ t: 'want', session: 's_held', since: 7 })
-  const typed = nibd.receive({ t: 'in', session: 's_held', data: 'x' })
+  const typed = nibd.receive({ t: 'in', session: 's_held', data: new Uint8Array([120]) })
   answer({ alive: true })
   await Promise.all([open, want, typed])
-  expect(order).toEqual(['want 7', 'in x'])
+  expect(order).toEqual(['want 7', 'in'])
 })
 
 test('a want behind an open that finds nothing is nothing, and frames after it go on', async () => {
