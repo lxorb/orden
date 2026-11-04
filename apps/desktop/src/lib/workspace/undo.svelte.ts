@@ -21,6 +21,9 @@ export type FileAction =
       /** Caused by the step before (an unnesting), or made its folder (a nesting). */
       follows?: boolean
       nests?: boolean
+      /** A move to another space, whose tabs went with it (moving-space.ts) and go back
+       *  with it. */
+      carries?: boolean
     }
   | {
       kind: 'delete'

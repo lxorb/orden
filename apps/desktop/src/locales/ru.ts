@@ -2067,8 +2067,10 @@ export const ru: Dictionary = {
   'Send feedback': 'Отправить отзыв',
   'Describe the issue': 'Опишите проблему',
   Sent: 'Отправлено',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Этот отчёт содержит ваше описание, версию Orden, вашу платформу и недавний журнал приложения. Ваших заметок в нём никогда нет.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Этот отчёт содержит ваше описание, версию Orden, вашу платформу и недавний журнал приложения, без путей к файлам.',
+  'Its space is archived': 'Его пространство в архиве',
+  'Back as {name}, edits and all': 'Вернулась как {name}, вместе с правками',
   'Send into the running answer': 'Отправить в текущий ответ',
   'Stop the answer': 'Остановить ответ',
   'Open every step': 'Раскрыть все шаги',

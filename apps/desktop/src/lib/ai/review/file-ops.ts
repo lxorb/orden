@@ -5,7 +5,10 @@
  *  step is dropped so it cannot write the note a second time. Both are fetched with the
  *  first Undo: the move's machinery carries the app's menus with it. */
 
-import { insideSpace, samePath } from '../../space-paths'
+import { busy } from '../../busy.svelte'
+import { t } from '../../i18n.svelte'
+import { shownName } from '../../note-name'
+import { insideSpace, nameOf, samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import type { FileAction } from '../../workspace/undo.svelte'
 import type { Thread } from '../chat/types'
@@ -76,6 +79,11 @@ export async function undoFile(
     )
     await workspace.fileCame(back, 'file')
     await workspace.loadTree()
+    // Something else took the name since, so it came back beside that, and its track waits
+    // at the old name: what the agent wrote is still in it, which is worth saying.
+    if (!samePath(back, insideSpace(root, change.path))) {
+      busy.failed(t('Back as {name}, edits and all', { name: shownName(nameOf(back)) }))
+    }
     return true
   } catch {
     // Something has since taken the name, or the copy is gone: left as it is, and the

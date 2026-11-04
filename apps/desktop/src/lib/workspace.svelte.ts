@@ -2605,7 +2605,7 @@ class Workspace {
       return saved
     } catch (error) {
       // The tab keeps its words and its dot, and Save can be asked again.
-      log('error', `save: ${tab.shown} - ${String(error)}`)
+      log('error', `save: ${tab.path ?? 'a draft'} - ${String(error)}`)
       return null
     } finally {
       this.keeping.delete(tab.id)
@@ -2977,7 +2977,7 @@ class Workspace {
   }
 
   /** Moves a note or folder into another folder; `how`, see undo.svelte.ts. */
-  async move(from: string, intoFolder: string, how?: 'follows' | 'nests') {
+  async move(from: string, intoFolder: string, how?: 'follows' | 'nests' | 'carries') {
     const name = nameOf(from)
     const target = joinPath(intoFolder, name)
 
@@ -3613,8 +3613,12 @@ class Workspace {
           if (!(await untrash(trashed))) continue
         }
 
+        const { reopening } = await import('./workspace/moving-space')
+        const draft = await reopening(closed.draft)
+        if (!draft) continue
+
         const paneId = this.panes.at(closed.paneId) ? closed.paneId : this.panes.focusedId
-        const [tab] = await this.tabsFrom([closed.draft], paneId)
+        const [tab] = await this.tabsFrom([draft], paneId)
         if (!tab) continue
 
         this.tabs = this.placed(tab, paneId, closed.at)

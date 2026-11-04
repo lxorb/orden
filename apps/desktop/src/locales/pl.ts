@@ -2068,8 +2068,10 @@ export const pl: Dictionary = {
   'Send feedback': 'Wyślij opinię',
   'Describe the issue': 'Opisz problem',
   Sent: 'Wysłano',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Ten raport zawiera twój opis, wersję Orden, twoją platformę i ostatni dziennik aplikacji. Nigdy nie zawiera twoich notatek.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Ten raport zawiera Twój opis, wersję Orden, Twoją platformę i najnowszy dziennik aplikacji, bez ścieżek plików.',
+  'Its space is archived': 'Jej przestrzeń jest zarchiwizowana',
+  'Back as {name}, edits and all': 'Wróciła jako {name}, ze zmianami',
   'Send into the running answer': 'Wyślij do trwającej odpowiedzi',
   'Stop the answer': 'Zatrzymaj odpowiedź',
   'Open every step': 'Rozwiń wszystkie kroki',

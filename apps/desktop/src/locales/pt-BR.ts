@@ -2022,8 +2022,10 @@ export const ptBR: Dictionary = {
   'Send feedback': 'Enviar feedback',
   'Describe the issue': 'Descreva o problema',
   Sent: 'Enviado',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Este relatório inclui sua descrição, a versão do Orden, sua plataforma e o registro recente do app. Nunca inclui suas notas.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Este relatório inclui sua descrição, a versão do Orden, sua plataforma e o registro recente do app, sem os caminhos de arquivos.',
+  'Its space is archived': 'O espaço dela está arquivado',
+  'Back as {name}, edits and all': 'De volta como {name}, com as edições',
   'Send into the running answer': 'Enviar para a resposta em andamento',
   'Stop the answer': 'Parar a resposta',
   'Open every step': 'Abrir todas as etapas',

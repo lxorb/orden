@@ -64,6 +64,7 @@
   import { toneColour, valueText } from './chips'
   import { editorOf, displayName } from './columns'
   import { dragging, droppable, placeAmong, type Point } from './drag.svelte'
+  import { drawer, rightDrawer } from '../drawer.svelte'
   import { claimsGesture, isFinger } from '../swipe'
   import { type Drop, dropInto } from './drop'
   import {
@@ -787,6 +788,9 @@
     const from = swipeFrom
     swipeFrom = null
     if (from?.id !== event.pointerId || dragging.row) return
+    // From a drawer's edge strip the drawer has it (swipe.ts), and a page turned too would
+    // take the card it began on out from under its touch's end.
+    if (drawer.held || rightDrawer.held) return
     const dx = event.clientX - from.x
     const dy = event.clientY - from.y
     if (Math.abs(dx) < 64 || !claimsGesture(dx, dy)) return
@@ -1130,6 +1134,14 @@
 
   .one .column {
     width: 100%;
+  }
+
+  /* Up and down are the browser's, and sideways the page turn's: left to the browser it
+     cancels the pointer as it decides, and `swipeEnd` never hears the swipe end. On the
+     column's scroller as well, as an element's own decides for a pan up to its scroller. */
+  .one,
+  .one :global(.scroll) {
+    touch-action: pan-y pinch-zoom;
   }
 
   .lanes {

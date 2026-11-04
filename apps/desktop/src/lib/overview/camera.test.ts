@@ -5,6 +5,7 @@ import {
   isNotch,
   notched,
   FARTHEST,
+  isOnView,
   lookingAt,
   NEAREST,
   pinched,
@@ -99,4 +100,14 @@ test('a notch of the wheel with Ctrl eases to its zoom, a pinch follows the fing
   expect(toCanvas(camera, { x: 300, y: 200 }).x).toBeCloseTo(300)
   // The first frame already moves: no wait before it starts.
   expect(eased(still, goal, { x: 0, y: 0 }, 1 / 60).zoom).toBeGreaterThan(1.05)
+})
+
+test('a box is on view while its middle is, at the camera’s own zoom', () => {
+  const room = { x: 0, y: 0, w: 1000, h: 800 }
+  const box = { x: 1500, y: 100, w: 700, h: 400 }
+  expect(isOnView(still, box, room)).toBe(false)
+  expect(isOnView({ x: -1500, y: 0, zoom: 1 }, box, room)).toBe(true)
+  expect(isOnView({ x: 0, y: 0, zoom: 0.4 }, box, room)).toBe(true)
+  // A sliver at the edge is not somewhere to open at.
+  expect(isOnView({ x: -600, y: 0, zoom: 1 }, box, room)).toBe(false)
 })

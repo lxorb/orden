@@ -1967,8 +1967,10 @@ export const jv: Dictionary = {
   'Send feedback': 'Kirim masukan',
   'Describe the issue': 'Jlentrehna masalahe',
   Sent: 'Wis dikirim',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Laporan iki isine katrangan sampeyan, versi Orden, platform sampeyan lan log aplikasi anyar. Cathetan sampeyan ora tau melu.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Laporan iki ngemot katrangan panjenengan, versi Orden, platform panjenengan lan log aplikasi pungkasan, tanpa path berkas.',
+  'Its space is archived': 'Papané diarsipaké',
+  'Back as {name}, edits and all': 'Bali dadi {name}, sakèhing suntingané',
   'Send into the running answer': 'Kirim menyang wangsulan sing lagi mlaku',
   'Stop the answer': 'Mandhegake wangsulan',
   'Open every step': 'Bukak kabeh langkah',

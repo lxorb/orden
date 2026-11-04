@@ -1969,8 +1969,10 @@ export const ja: Dictionary = {
   'Send feedback': 'フィードバックを送信',
   'Describe the issue': '問題を説明してください',
   Sent: '送信しました',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'このレポートには、説明、Orden のバージョン、プラットフォーム、最近のアプリのログが含まれます。ノートの内容は含まれません。',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'このレポートには、説明、Orden のバージョン、プラットフォーム、最近のアプリのログが含まれます。ファイルのパスは取り除かれます。',
+  'Its space is archived': 'そのスペースはアーカイブされています',
+  'Back as {name}, edits and all': '{name} として戻りました(編集を含む)',
   'Send into the running answer': '実行中の回答に送る',
   'Stop the answer': '回答を停止',
   'Open every step': 'すべてのステップを開く',

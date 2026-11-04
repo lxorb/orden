@@ -2001,8 +2001,10 @@ export const kn: Dictionary = {
   'Send feedback': 'ಪ್ರತಿಕ್ರಿಯೆ ಕಳುಹಿಸಿ',
   'Describe the issue': 'ಸಮಸ್ಯೆಯನ್ನು ವಿವರಿಸಿ',
   Sent: 'ಕಳುಹಿಸಲಾಗಿದೆ',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ಈ ವರದಿಯಲ್ಲಿ ನಿಮ್ಮ ವಿವರಣೆ, Orden ಆವೃತ್ತಿ, ನಿಮ್ಮ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಮತ್ತು ಆ್ಯಪ್‌ನ ಇತ್ತೀಚಿನ ಲಾಗ್ ಇರುತ್ತದೆ. ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳು ಎಂದಿಗೂ ಇರುವುದಿಲ್ಲ.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ಈ ವರದಿಯಲ್ಲಿ ನಿಮ್ಮ ವಿವರಣೆ, Orden ಆವೃತ್ತಿ, ನಿಮ್ಮ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಮತ್ತು ಇತ್ತೀಚಿನ ಆ್ಯಪ್ ಲಾಗ್ ಇರುತ್ತದೆ, ಫೈಲ್ ಪಾತ್‌ಗಳನ್ನು ತೆಗೆದು.',
+  'Its space is archived': 'ಇದರ ಸ್ಪೇಸ್ ಆರ್ಕೈವ್ ಆಗಿದೆ',
+  'Back as {name}, edits and all': '{name} ಆಗಿ ಮರಳಿದೆ, ಸಂಪಾದನೆಗಳೊಂದಿಗೆ',
   'Send into the running answer': 'ನಡೆಯುತ್ತಿರುವ ಉತ್ತರಕ್ಕೆ ಕಳುಹಿಸಿ',
   'Stop the answer': 'ಉತ್ತರ ನಿಲ್ಲಿಸಿ',
   'Open every step': 'ಪ್ರತಿ ಹಂತ ತೆರೆಯಿರಿ',

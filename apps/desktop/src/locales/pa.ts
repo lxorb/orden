@@ -1986,8 +1986,10 @@ export const pa: Dictionary = {
   'Send feedback': 'ਫੀਡਬੈਕ ਭੇਜੋ',
   'Describe the issue': 'ਸਮੱਸਿਆ ਦੱਸੋ',
   Sent: 'ਭੇਜ ਦਿੱਤਾ',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ਇਸ ਰਿਪੋਰਟ ਵਿੱਚ ਤੁਹਾਡਾ ਵੇਰਵਾ, Orden ਦਾ ਰੂਪ, ਤੁਹਾਡਾ ਪਲੇਟਫਾਰਮ ਅਤੇ ਐਪ ਦਾ ਹਾਲੀਆ ਲੌਗ ਹੁੰਦਾ ਹੈ। ਤੁਹਾਡੇ ਨੋਟ ਕਦੇ ਨਹੀਂ।',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ਇਸ ਰਿਪੋਰਟ ਵਿੱਚ ਤੁਹਾਡਾ ਵੇਰਵਾ, Orden ਦਾ ਸੰਸਕਰਣ, ਤੁਹਾਡਾ ਪਲੇਟਫਾਰਮ ਅਤੇ ਹਾਲੀਆ ਐਪ ਲੌਗ ਸ਼ਾਮਲ ਹੈ, ਫਾਈਲ ਪਾਥ ਹਟਾ ਕੇ।',
+  'Its space is archived': 'ਇਸਦੀ ਸਪੇਸ ਪੁਰਾਲੇਖ ਕੀਤੀ ਗਈ ਹੈ',
+  'Back as {name}, edits and all': '{name} ਵਜੋਂ ਵਾਪਸ, ਸੋਧਾਂ ਸਮੇਤ',
   'Send into the running answer': 'ਚੱਲ ਰਹੇ ਜਵਾਬ ਵਿੱਚ ਭੇਜੋ',
   'Stop the answer': 'ਜਵਾਬ ਰੋਕੋ',
   'Open every step': 'ਹਰ ਕਦਮ ਖੋਲ੍ਹੋ',

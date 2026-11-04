@@ -484,6 +484,9 @@ function carriedPast(
 /** Puts a rename or a move back: the file where it was, and the links that
  *  followed it pointed at the old name again. */
 async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
+  if (action.kind === 'move' && action.carries) {
+    ;(await import('./moving-space')).followsTo(action.from)
+  }
   const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
   // A move back into another space takes its chats back first, as the move did, and
   // the account refusing keeps the step to be asked for again; see chat-leaving.ts.
@@ -517,6 +520,10 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   // A nesting made the folder; refused where something else is in it now.
   if (action.nests) {
     await invoke('remove_empty_folder', { path: folderOf(action.to) }).catch(() => undefined)
+  }
+  // Its tabs went to the other space with it, and come back with it.
+  if (action.kind === 'move' && action.carries) {
+    await (await import('./moving-space')).tabsFollow(action.from)
   }
 }
 

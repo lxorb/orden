@@ -1235,6 +1235,10 @@ function holds(tail: string): boolean {
  *  name found by where its line is (`anchored`), a chat's state told apart from other
  *  windows' (`heard`, `settled`), and text escaped whatever marked says of it. Measured
  *  3,646,423, 394 modules.
+ *
+ *  Raised on 2026-11-04, to 3,646,100, for the bug hunt's fourth round: a move's step that
+ *  knows its tabs went with it, a closed tab that goes back to its space, the notices over
+ *  the overview, a board's page turn giving way to a drawer's edge. Measured 3,645,970.
  */
 const BUDGET = 3_646_500
 const MOST_FILES = 395

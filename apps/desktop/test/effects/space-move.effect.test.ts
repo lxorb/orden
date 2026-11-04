@@ -209,6 +209,144 @@ describe('what is never lost', () => {
   })
 })
 
+describe('a move taken back', () => {
+  test('undone, the tab goes back with its file; redone, it follows again', async () => {
+    await workspace.openEntry(IDEAS)
+    await workspace.openEntry(PLAN)
+    await moveToSpace([tabAt(PLAN).id], 'home')
+    expect(onScreen()).not.toContain('Plan.md')
+
+    await workspace.undoFileAction()
+    expect(files().has(PLAN)).toBe(true)
+    expect(onScreen()).toContain('Plan.md')
+
+    await workspace.redoFileAction()
+    expect(files().has('/spaces/Home/Plan.md')).toBe(true)
+    expect(onScreen()).not.toContain('Plan.md')
+    await workspace.showSpace('home')
+    expect(onScreen()).toContain('Plan.md')
+  })
+
+  test('a move within a space stays the tab’s own business', async () => {
+    files().set('/spaces/Work/Old/x.md', '# x\n')
+    await workspace.loadTree()
+    await workspace.openEntry(PLAN)
+    await workspace.move(PLAN, '/spaces/Work/Old')
+    await workspace.undoFileAction()
+    expect(onScreen()).toContain('Plan.md')
+  })
+})
+
+describe('a move that was refused', () => {
+  test('says so, with the way to try again, and answers that nothing moved', async () => {
+    const { failed } = await import('../../src/lib/views/failed.svelte')
+    failed.dismiss()
+    files().set('/spaces/Home/Plan.md', '# theirs\n')
+    await workspace.openEntry(PLAN)
+    expect(await moveToSpace([tabAt(PLAN).id], 'home')).toBe(false)
+    expect(failed.retry).not.toBe(null)
+    expect(onScreen()).toContain('Plan.md')
+    failed.dismiss()
+
+    files().delete('/spaces/Home/Plan.md')
+    expect(await moveToSpace([tabAt(PLAN).id], 'home')).toBe(true)
+    expect(failed.retry).toBe(null)
+  })
+})
+
+describe('a tab closed in another space, reopened', () => {
+  test('goes back to its space, not into the strip on screen', async () => {
+    await workspace.showSpace('home')
+    await workspace.openEntry(FOOD)
+    workspace.close(tabAt(FOOD).id)
+    await workspace.showSpace('work')
+    await workspace.openEntry(PLAN)
+
+    await workspace.reopenClosed()
+    expect(workspace.activeSpaceId).toBe('home')
+    expect(onScreen()).toContain('Food.md')
+    expect(workspace.active?.path).toBe(FOOD)
+    await workspace.showSpace('work')
+    expect(onScreen()).toEqual(['Plan.md'])
+  })
+
+  test('one closed in the space on screen stays where it is', async () => {
+    await workspace.openEntry(PLAN)
+    workspace.close(tabAt(PLAN).id)
+    await workspace.reopenClosed()
+    expect(workspace.activeSpaceId).toBe('work')
+    expect(onScreen()).toContain('Plan.md')
+  })
+})
+
+describe('a tab with nowhere to come back to', () => {
+  test('closed in another space and deleted since: no switch for nothing', async () => {
+    await workspace.showSpace('home')
+    await workspace.openEntry(FOOD)
+    workspace.close(tabAt(FOOD).id)
+    files().delete(FOOD)
+    await workspace.showSpace('work')
+    await workspace.openEntry(PLAN)
+
+    const went: (string | null)[] = []
+    const show = vi.spyOn(workspace, 'showSpace').mockImplementation((id) => {
+      went.push(id)
+      return Promise.resolve()
+    })
+    await workspace.reopenClosed()
+    show.mockRestore()
+    expect(went).toEqual([])
+    expect(workspace.activeSpaceId).toBe('work')
+    expect(onScreen()).toEqual(['Plan.md'])
+  })
+
+  test('closed in a space archived since: stays closed, and says so', async () => {
+    const { busy } = await import('../../src/lib/busy.svelte')
+    busy.clear()
+    await workspace.showSpace('home')
+    await workspace.openEntry(FOOD)
+    workspace.close(tabAt(FOOD).id)
+    await workspace.showSpace('work')
+    await workspace.openEntry(PLAN)
+    workspace.archivedSpaces.set('/spaces/Home', true)
+
+    await workspace.reopenClosed()
+    workspace.archivedSpaces.set('/spaces/Home', false)
+    expect(onScreen()).toEqual(['Plan.md'])
+    expect(busy.trouble).toBeTruthy()
+  })
+
+  test('a move whose space is archived since: not undone, file and tab together, and said', async () => {
+    const { failed } = await import('../../src/lib/views/failed.svelte')
+    failed.dismiss()
+    await workspace.openEntry(PLAN)
+    await moveToSpace([tabAt(PLAN).id], 'home')
+    workspace.archivedSpaces.set('/spaces/Work', true)
+    await workspace.undoFileAction()
+    workspace.archivedSpaces.set('/spaces/Work', false)
+    expect(files().has('/spaces/Home/Plan.md')).toBe(true)
+    expect(failed.retry).not.toBe(null)
+    failed.dismiss()
+    workspace.undone.stack = []
+  })
+
+  test('a redo into a space archived since: not done, and said', async () => {
+    const { failed } = await import('../../src/lib/views/failed.svelte')
+    failed.dismiss()
+    await workspace.openEntry(PLAN)
+    await moveToSpace([tabAt(PLAN).id], 'home')
+    await workspace.undoFileAction()
+    workspace.archivedSpaces.set('/spaces/Home', true)
+    await workspace.redoFileAction()
+    workspace.archivedSpaces.set('/spaces/Home', false)
+    expect(files().has(PLAN)).toBe(true)
+    expect(onScreen()).toContain('Plan.md')
+    expect(failed.retry).not.toBe(null)
+    failed.dismiss()
+    workspace.undone.ahead = []
+  })
+})
+
 describe('the session', () => {
   test('writes the tab under the space it went to', async () => {
     const draft = blank('notes')

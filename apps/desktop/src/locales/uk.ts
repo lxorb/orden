@@ -2061,8 +2061,10 @@ export const uk: Dictionary = {
   'Send feedback': 'Надіслати відгук',
   'Describe the issue': 'Опишіть проблему',
   Sent: 'Надіслано',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Цей звіт містить ваш опис, версію Orden, вашу платформу та недавній журнал застосунку. Ваших нотаток у ньому ніколи немає.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Цей звіт містить ваш опис, версію Orden, вашу платформу й недавній журнал застосунку, без шляхів до файлів.',
+  'Its space is archived': 'Його простір в архіві',
+  'Back as {name}, edits and all': 'Повернулася як {name}, разом із правками',
   'Send into the running answer': 'Надіслати в поточну відповідь',
   'Stop the answer': 'Зупинити відповідь',
   'Open every step': 'Розгорнути всі кроки',

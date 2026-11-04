@@ -88,8 +88,13 @@ let open: Promise<IDBDatabase> | null = null
 
 function database(): Promise<IDBDatabase> {
   open ??= new Promise((resolve, reject) => {
-    const request = indexedDB.open(NAME, 1)
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE)
+    const request = indexedDB.open(NAME, 2)
+    request.onupgradeneeded = ({ oldVersion }) => {
+      if (oldVersion < 1) request.result.createObjectStore(STORE)
+      // Version 1 kept private tabs' pictures too, under the name any web page has, so no
+      // web page's stays; each is taken again the next time it is covered.
+      else request.transaction?.objectStore(STORE).delete(IDBKeyRange.bound('web:', 'web:\uffff'))
+    }
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('the faces store did not open'))
   })
@@ -108,6 +113,12 @@ function settled<T>(request: IDBRequest<T>): Promise<T> {
 async function asked<T>(mode: IDBTransactionMode, ask: (store: IDBObjectStore) => IDBRequest<T>) {
   const db = await database()
   return settled(ask(db.transaction(STORE, mode).objectStore(STORE)))
+}
+
+/** The store brought up to this version, which is what wipes what an earlier one should
+ *  not have kept: at launch, not the first time the overview asks. */
+export async function upgradeFaces(): Promise<void> {
+  await database().catch(() => undefined)
 }
 
 /** Every picture kept, by the lasting name of its tab; none where the store will not

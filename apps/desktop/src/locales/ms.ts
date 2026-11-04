@@ -1975,8 +1975,10 @@ export const ms: Dictionary = {
   'Send feedback': 'Hantar maklum balas',
   'Describe the issue': 'Terangkan masalahnya',
   Sent: 'Dihantar',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Laporan ini mengandungi penerangan anda, versi Orden, platform anda dan log aplikasi terkini. Nota anda tidak pernah disertakan.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Laporan ini mengandungi penerangan anda, versi Orden, platform anda dan log aplikasi terkini, tanpa laluan fail.',
+  'Its space is archived': 'Ruangnya diarkibkan',
+  'Back as {name}, edits and all': 'Kembali sebagai {name}, bersama suntingannya',
   'Send into the running answer': 'Hantar ke jawapan yang sedang berjalan',
   'Stop the answer': 'Hentikan jawapan',
   'Open every step': 'Buka semua langkah',

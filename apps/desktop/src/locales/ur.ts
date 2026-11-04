@@ -1979,8 +1979,10 @@ export const ur: Dictionary = {
   'Send feedback': 'رائے بھیجیں',
   'Describe the issue': 'مسئلہ بیان کریں',
   Sent: 'بھیج دیا',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'اس رپورٹ میں آپ کی تفصیل، Orden کا ورژن، آپ کا پلیٹ فارم اور ایپ کا حالیہ لاگ شامل ہوتا ہے۔ آپ کے نوٹس کبھی شامل نہیں ہوتے۔',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'اس رپورٹ میں آپ کی تفصیل، Orden کا ورژن، آپ کا پلیٹ فارم اور حالیہ ایپ لاگ شامل ہے، فائل پاتھ ہٹا کر۔',
+  'Its space is archived': 'اس کی اسپیس محفوظ شدہ ہے',
+  'Back as {name}, edits and all': '{name} کے طور پر واپس، ترامیم سمیت',
   'Send into the running answer': 'جاری جواب میں بھیجیں',
   'Stop the answer': 'جواب روکیں',
   'Open every step': 'ہر قدم کھولیں',

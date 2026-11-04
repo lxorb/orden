@@ -2037,8 +2037,10 @@ export const es: Dictionary = {
   'Send feedback': 'Enviar comentarios',
   'Describe the issue': 'Describe el problema',
   Sent: 'Enviado',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Este informe incluye tu descripción, la versión de Orden, tu plataforma y el registro reciente de la app. Nunca incluye tus notas.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Este informe incluye tu descripción, la versión de Orden, tu plataforma y el registro reciente de la app, sin rutas de archivos.',
+  'Its space is archived': 'Su espacio está archivado',
+  'Back as {name}, edits and all': 'De vuelta como {name}, con sus cambios',
   'Send into the running answer': 'Enviar a la respuesta en curso',
   'Stop the answer': 'Detener la respuesta',
   'Open every step': 'Abrir todos los pasos',

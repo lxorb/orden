@@ -174,6 +174,11 @@ def board_on(browser, width, height, name):
     touch(cdp, "touchEnd", [])
     page.wait_for_timeout(500)
     # On a phone the columns are pages (#1046): the swipe turned it, and A is on the one before.
+    if name == "phone":
+        turned = page.evaluate("() => document.querySelector('.strip [aria-selected=true]')?.textContent")
+        say(f"[{name}] a swipe across a card: the column is {turned!r}")
+        if not turned or "Doing" not in turned:
+            wrong(f"[{name}] a swipe across a card did not turn the column: {turned!r}")
     # And the swipe is the board's: a drawer that took it too stayed held over the page, as
     # the card it began on went with the column and its touchend reached nobody.
     if name == "phone":
@@ -183,6 +188,86 @@ def board_on(browser, width, height, name):
         page.wait_for_timeout(300)
     if in_column(page, "A") != after:
         wrong(f"[{name}] a swipe moved a card")
+
+    # The edge strip is the drawer's, as Google Docs' and Spotify's: with no button on the
+    # bar it is the way to the file list from a board, and the column stays as it was.
+    if name == "phone":
+        column = page.evaluate("() => document.querySelector('.strip [aria-selected=true]')?.textContent")
+        # On the column itself, the card it holds, not any margin beside it.
+        left = page.evaluate(
+            "() => document.querySelector('[data-turns-pages]').getBoundingClientRect().x"
+        )
+        start = box(page, ".face", "B")["y"] if in_column(page, "B") == column else 300
+        x0, y0 = max(left + 2, 2), start
+        say(f"[{name}] column starts at {left}, under ({x0}, {y0}):" + page.evaluate(
+            "([x, y]) => { const e = document.elementFromPoint(x, y); return e.tagName + '.' + e.className + (e.closest('[data-turns-pages]') ? ' in the column' : ' outside') }",
+            [x0, y0],
+        ))
+        touch(cdp, "touchStart", [(x0, y0)])
+        for step in range(1, 13):
+            touch(cdp, "touchMove", [(x0 + 26 * step, y0)])
+            page.wait_for_timeout(16)
+        touch(cdp, "touchEnd", [])
+        page.wait_for_timeout(600)
+        panel = page.evaluate("() => window.nibApp.workspace.panel")
+        say(f"[{name}] from the edge strip: panel {panel}")
+        if not panel:
+            wrong(f"[{name}] a swipe from the edge did not open the drawer over a board")
+        if page.evaluate("() => document.querySelector('.strip [aria-selected=true]')?.textContent") != column:
+            wrong(f"[{name}] a swipe from the edge turned the board's page too")
+        page.evaluate("() => window.nibApp.workspace.closePanel()")
+        page.wait_for_timeout(400)
+
+        # A swipe from the right edge has nothing to bring out over a board.
+        touch(cdp, "touchStart", [(384, y0)])
+        for step in range(1, 13):
+            touch(cdp, "touchMove", [(384 - 26 * step, y0)])
+            page.wait_for_timeout(16)
+        touch(cdp, "touchEnd", [])
+        page.wait_for_timeout(600)
+        if page.evaluate("() => window.nibApp.workspace.rightShows"):
+            wrong(f"[{name}] a swipe from the right edge opened an empty drawer")
+        page.locator('.strip [role="tab"]', has_text="To do").click()
+        page.wait_for_timeout(300)
+
+        # A card held in the strip and carried sideways is a carry, and no drawer with it.
+        a = box(page, ".face", "A")
+        x1 = max(left + 2, 2)
+        touch(cdp, "touchStart", [(x1 + 9, a["y"])])
+        page.wait_for_timeout(450)
+        lifted = carried(page)
+        for step in range(1, 10):
+            touch(cdp, "touchMove", [(x1 + 9 + 22 * step, a["y"] + step)])
+            page.wait_for_timeout(16)
+        panel = page.evaluate("() => window.nibApp.workspace.panel")
+        touch(cdp, "touchEnd", [])
+        page.wait_for_timeout(500)
+        say(f"[{name}] held in the strip: lifted {lifted}, panel {panel}")
+        if not lifted:
+            wrong(f"[{name}] a card held in the strip did not lift")
+        if panel:
+            wrong(f"[{name}] a card carried in the strip also opened the drawer")
+
+        # A long column still scrolls under a thumb going up and down.
+        page.evaluate(WRITE, [[[f"Items/Long {n}.md", "---\nstatus: To do\n---\n\nwords\n"] for n in range(30)]])
+        page.wait_for_timeout(1200)
+        scroller = page.evaluate(
+            """() => { const s = [...document.querySelectorAll('[data-turns-pages] *')].find((o) => o.scrollHeight > o.clientHeight + 40); if (!s) return null; window.__long = s; return { top: s.scrollTop } }"""
+        )
+        if not scroller:
+            wrong(f"[{name}] no long column to scroll")
+        else:
+            for step in range(1, 11):
+                if step == 1:
+                    touch(cdp, "touchStart", [(200, 600)])
+                touch(cdp, "touchMove", [(200, 600 - 30 * step)])
+                page.wait_for_timeout(16)
+            touch(cdp, "touchEnd", [])
+            page.wait_for_timeout(500)
+            top = page.evaluate("() => window.__long.scrollTop")
+            say(f"[{name}] a thumb up the column: scrolled to {top}")
+            if top <= 0:
+                wrong(f"[{name}] a thumb up the column did not scroll it")
     context.close()
 
 

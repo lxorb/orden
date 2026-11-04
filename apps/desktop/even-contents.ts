@@ -521,10 +521,18 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,978,500, for the bug hunt's fourth round on views: a
  *  row under several labels, a space's views following its name, labels of the open space
  *  alone, a block's name by its line, text escaped whatever marked says. Measured 5,978,231.
+ *
+ *  The code raised on 2026-11-04, to 5,971,000, for the bug hunt's fourth round: mostly a
+ *  report's log with the reader's paths out of it (feedback-log.ts). Measured 5,970,582.
+ *
+ *  Raised on 2026-11-04 after that round's review: the code to 5,975,200, the scrubber's
+ *  addresses and quotes and a closed tab's way back (moving-space.ts), measured 5,975,028;
+ *  the catalogues to 975,800, the sheet's new words and two messages in every catalogue,
+ *  measured 975,705.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 5_978_500,
-  catalogues: 967_400,
+  catalogues: 975_800,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,

@@ -1952,8 +1952,10 @@ export const ko: Dictionary = {
   'Send feedback': '피드백 보내기',
   'Describe the issue': '문제를 설명해 주세요',
   Sent: '보냄',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    '이 보고서에는 설명, Orden 버전, 플랫폼, 최근 앱 로그가 포함됩니다. 노트는 절대 포함되지 않습니다.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    '이 보고서에는 설명, Orden 버전, 플랫폼, 최근 앱 로그가 포함되며 파일 경로는 제거됩니다.',
+  'Its space is archived': '이 스페이스는 보관되었습니다',
+  'Back as {name}, edits and all': '{name}(으)로 돌아왔습니다. 편집 내용도 그대로입니다',
   'Send into the running answer': '진행 중인 답변에 보내기',
   'Stop the answer': '답변 중지',
   'Open every step': '모든 단계 펼치기',
