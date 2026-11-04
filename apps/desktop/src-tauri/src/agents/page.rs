@@ -4081,7 +4081,7 @@ mod tests {
     fn a_field_a_thousand_levels_down_is_found() {
         let mut nodes: Vec<(i64, &str, u64, &[&str])> = vec![(-1, "#document", 5000, &[])];
         for level in 0..1000u64 {
-            nodes.push((level as i64, "DIV", 6000 + level, &[]));
+            nodes.push((i64::try_from(level).expect("small"), "DIV", 6000 + level, &[]));
         }
         nodes.push((1000, "INPUT", 7, &["autocomplete", "cc-number"]));
         let capture = captured(&nodes, &[]);
