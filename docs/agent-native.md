@@ -1139,7 +1139,8 @@ inside one; a name the engine builds out of a field's value has the value taken 
 leaves `[hidden]` (in markdown, `\[hidden\]`), by the node and never by its words: every other
 word of the page stands as it is, whatever a field holds. What holds a value in the tree and has gone by the scan after it, a field remounted while the page
 was being read, is written as a secret too, as nothing can now say it is not; a picture is painted
-for what was there before it and after it; and a read whose secret regions change while it is made
+for what was there before it and after it, taken again once if the secrets differ and then refused;
+and a read whose secret regions change while it is made
 is made again once and then refused. The value is cut only from a name the
 engine builds out of that field, by the engine's own account of where a name came from, and
 leaves `[hidden]` there too; the same words the page prints anywhere else, an `<output>` of the

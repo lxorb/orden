@@ -2588,24 +2588,36 @@ impl Page<'_> {
             ));
         }
         let wanted = scale.unwrap_or(1.0).clamp(0.1, 4.0);
-        // Before the picture and after it: a field that goes in between is in it all the same.
-        let hidden = self.hidden_rects()?;
-        let shot = self.call(
-            "Page.captureScreenshot",
-            &json!({
-                "format": "png",
-                "captureBeyondViewport": full || element.is_some(),
-                "clip": { "x": clip.0, "y": clip.1, "width": clip.2, "height": clip.3, "scale": wanted / self.ratio() },
-            }),
-        )?;
-        let png = shot
-            .get("data")
-            .and_then(Value::as_str)
-            .unwrap_or_default()
-            .to_string();
-        let (width, height) = png_size(&png).unwrap_or_default();
-        let png = self.painted_over(png, clip, (width, height), hidden)?;
-        Ok(Picture { png, width, height })
+        // The same secrets before the picture and after it, each painted where it was either
+        // time: a field that goes in between is in the picture all the same.
+        for _ in 0..2 {
+            let (before, mut rects) = self.hidden_rects()?;
+            let shot = self.call(
+                "Page.captureScreenshot",
+                &json!({
+                    "format": "png",
+                    "captureBeyondViewport": full || element.is_some(),
+                    "clip": { "x": clip.0, "y": clip.1, "width": clip.2, "height": clip.3, "scale": wanted / self.ratio() },
+                }),
+            )?;
+            let (after, later) = self.hidden_rects()?;
+            if before != after {
+                continue;
+            }
+            rects.extend(later);
+            let png = shot
+                .get("data")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string();
+            let (width, height) = png_size(&png).unwrap_or_default();
+            let png = painted_over(png, clip, (width, height), &rects)?;
+            return Ok(Picture { png, width, height });
+        }
+        Err(Answer::error(
+            Code::Failed,
+            "this page's secret fields keep changing, so there is no picture of it",
+        ))
     }
 
     /// Where an element is on the page, in CSS pixels from the page's top left: its
@@ -2646,46 +2658,11 @@ impl Page<'_> {
         Ok([left + x, top + y, right + x, bottom + y])
     }
 
-    /// A picture of the page with every filled secret field in it painted over (9.4): a
-    /// password's bullets say how long it is, and a card's number is its digits. A field
-    /// that is not drawn is not in the picture; one that cannot be painted over keeps the
-    /// picture from being handed out at all.
-    fn painted_over(
-        &self,
-        png: String,
-        clip: (f64, f64, f64, f64),
-        size: (u32, u32),
-        before: Vec<[f64; 4]>,
-    ) -> Result<String, Answer> {
-        let (across, down) = (f64::from(size.0) / clip.2, f64::from(size.1) / clip.3);
-        let rects: Vec<[f64; 4]> = before
-            .into_iter()
-            .chain(self.hidden_rects()?)
-            .map(|[left, top, right, bottom]| {
-                [
-                    (left - clip.0) * across,
-                    (top - clip.1) * down,
-                    (right - clip.0) * across,
-                    (bottom - clip.1) * down,
-                ]
-            })
-            .collect();
-        if rects.is_empty() {
-            return Ok(png);
-        }
-        paint_over(&png, &rects).map_err(|why| {
-            Answer::error(
-                Code::Failed,
-                format!(
-                    "a secret field could not be hidden in the picture, so there is none: {why}"
-                ),
-            )
-        })
-    }
-
-    /// Where on the page a picture of it is to be painted over, in CSS pixels: each filled
-    /// secret field and each frame of a denied site. What cannot be told refuses the picture.
-    fn hidden_rects(&self) -> Result<Vec<[f64; 4]>, Answer> {
+    /// Where on the page a picture of it is to be painted over (9.4), in CSS pixels, and which
+    /// secrets those are: each filled secret field, as a password's bullets say how long it is
+    /// and a card's number is its digits, and each frame of a denied site. A field that is not
+    /// drawn is not in the picture; what cannot be told keeps the picture from being handed out.
+    fn hidden_rects(&self) -> Result<(HashSet<(String, u64)>, Vec<[f64; 4]>), Answer> {
         let secrets: Vec<Secret> = self
             .secrets(self.every_part()?)
             .into_iter()
@@ -2705,6 +2682,10 @@ impl Page<'_> {
         }
         // One that is not drawn is not in the picture. One that cannot be told keeps it back.
         let mut drawn = Vec::with_capacity(secrets.len());
+        let which = secrets
+            .iter()
+            .map(|one| (one.prefix.clone(), one.backend))
+            .collect();
         for one in secrets {
             let Ok(element) = self.element(&format!("{}e{}", one.prefix, one.backend)) else {
                 continue;
@@ -2716,7 +2697,7 @@ impl Page<'_> {
             }
         }
         drawn.extend(self.denied_frames()?);
-        Ok(drawn)
+        Ok((which, drawn))
     }
 
     /// Follows every frame down, however deep, or says a part of the page cannot be reached.
@@ -3577,6 +3558,36 @@ fn undrawn(message: &str) -> bool {
     message.contains("Could not compute box model")
         || message.contains("is not on the page")
         || message.contains("gone")
+}
+
+/// A picture with these places, in CSS pixels on the page, painted over.
+fn painted_over(
+    png: String,
+    clip: (f64, f64, f64, f64),
+    size: (u32, u32),
+    rects: &[[f64; 4]],
+) -> Result<String, Answer> {
+    let (across, down) = (f64::from(size.0) / clip.2, f64::from(size.1) / clip.3);
+    let rects: Vec<[f64; 4]> = rects
+        .iter()
+        .map(|[left, top, right, bottom]| {
+            [
+                (left - clip.0) * across,
+                (top - clip.1) * down,
+                (right - clip.0) * across,
+                (bottom - clip.1) * down,
+            ]
+        })
+        .collect();
+    if rects.is_empty() {
+        return Ok(png);
+    }
+    paint_over(&png, &rects).map_err(|why| {
+        Answer::error(
+            Code::Failed,
+            format!("a secret field could not be hidden in the picture, so there is none: {why}"),
+        )
+    })
 }
 
 /// Whether what a field said cannot be read as a field, which counts as a secret.
