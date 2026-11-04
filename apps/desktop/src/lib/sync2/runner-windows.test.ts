@@ -152,7 +152,7 @@ describe('a window with no engine and nobody who has one', () => {
     signedInAs('a')
     // A store still opening holds the lane every store goes through, so it refuses in the
     // end: a stop after it would otherwise wait on it for good.
-    let refuse = () => undefined as void
+    let refuse: () => void = () => undefined
     opening.open = () =>
       new Promise((_, reject) => (refuse = () => reject(new Error('the store refused'))))
     const starting = runner.start().catch(() => undefined)
