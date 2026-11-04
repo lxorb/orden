@@ -1017,6 +1017,20 @@ fn dismisses(name: &str) -> bool {
 /// What a dialog's words may be in, past the commands the press lists have: `Your files get
 /// deleted`, `Your card is charged`.
 const DIALOG_DELETING: &[&str] = &[
+    "deletion",
+    "terminated",
+    "terminates",
+    "terminating",
+    "wipes",
+    "wiped",
+    "wiping",
+    "destroyed",
+    "destroys",
+    "destroying",
+    "discard",
+    "discards",
+    "discarded",
+    "discarding",
     "eliminada",
     "eliminados",
     "eliminadas",
@@ -1043,6 +1057,8 @@ const DIALOG_DELETING: &[&str] = &[
     "rimosso",
 ];
 const DIALOG_PAYING: &[&str] = &[
+    "debited",
+    "debits",
     "charged",
     "charge",
     "billed",
@@ -1912,6 +1928,12 @@ mod tests {
                 Category::Deleting,
             ),
             ("OK", "Please confirm: delete account", Category::Deleting),
+            ("OK", "Your account will be terminated.", Category::Deleting),
+            ("Continue", "This wipes your phone.", Category::Deleting),
+            ("OK", "All your data is destroyed.", Category::Deleting),
+            ("Yes", "Discard this draft?", Category::Deleting),
+            ("Agree", "We start the deletion of your data.", Category::Deleting),
+            ("Confirm", "20 EUR is debited today.", Category::Paying),
             (
                 "OK",
                 "Are you sure? All your files get deleted.",
