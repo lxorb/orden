@@ -1074,14 +1074,19 @@ export async function webInvoke<T>(
       const from = normalise(args.from as string)
       if (from !== target) {
         await renameNote(args.from as string, target)
-        // What was deleted out of it goes back to where it is now; see `space_renamed`.
+        // What was deleted out of it goes back to where it is now; see `follows` in trash.rs.
         const entries = await trashEntries()
-        if (entries.some((one) => one.from.startsWith(`${from}/`))) {
+        const gone = Math.max(
+          -Infinity,
+          ...entries
+            .filter((one) => one.kind === 'space' && one.from === from)
+            .map((one) => one.trashedAt),
+        )
+        const follows = (one: TrashEntry) => one.from.startsWith(`${from}/`) && one.trashedAt > gone
+        if (entries.some(follows)) {
           await saveTrash(
             entries.map((one) =>
-              one.from.startsWith(`${from}/`)
-                ? { ...one, from: `${target}${one.from.slice(from.length)}` }
-                : one,
+              follows(one) ? { ...one, from: `${target}${one.from.slice(from.length)}` } : one,
             ),
           )
         }
