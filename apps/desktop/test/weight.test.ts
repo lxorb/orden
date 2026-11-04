@@ -1100,7 +1100,16 @@ function holds(tail: string): boolean {
  *  behind a door on the branches. Measured 3,550,937, 386 modules.
  *
  *  Raised 2026-11-04, to 3,566,700, and to 388 modules, for the bug hunt's two rounds and
- *XX
+ *  the raises above being in one build at last, on claude/hunt-round-1: nothing new, the
+ *  two sums together. Measured 3,566,575, 387 modules.
+ *
+ *  Raised 2026-11-04, to 3,574,900, and to 389 modules, for one note across windows: a file's
+ *  turn taken by every whole-file write (workspace/in-turn.ts), a note's words in one line
+ *  ending, and a dirty tab saying what it was typed on. What could wait is behind doors: the
+ *  windows' bus, the locks, the merge on restore. Measured 3,574,813, 388 modules. */
+const BUDGET = 3_574_900
+const MOST_FILES = 389
+
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
  *
