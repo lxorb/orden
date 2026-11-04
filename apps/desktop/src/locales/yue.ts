@@ -86,6 +86,15 @@ export const yue: Dictionary = {
   // Tasks: the Display menu
   Display: '顯示',
   'Completed tasks': '已完成任務',
+  Smart: '智能',
+  Grouping: '分組',
+  Sorting: '排序',
+  'Last 30 days': '過去 30 日',
+  'Assigned to me': '指派畀我',
+  Unassigned: '未指派',
+  'Reset all': '全部重設',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    '版面將工作顯示成清單、看板或者日曆。分組將佢哋分成組，即係看板嘅欄。排序排好每一組。篩選器收埋你唔需要嘅嘢。全部都會為呢個檢視保留。',
   // Tasks: several lines pasted into quick add
   'One task': '一個任務',
   'One per line': '每行一個',
@@ -554,11 +563,11 @@ export const yue: Dictionary = {
   'Actual size': '實際大小',
   // Appearance
   Accent: '強調色',
-  'Window corners': '視窗角',
-  Rounded: '圓角',
-  Square: '方角',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    '圓角會將打開咗嘅內容放喺視窗入面一張浮起嘅卡度；方角就貼住邊。',
+  'Tidy up': '整理',
+  'Swipe in from the edge to see your notes.': '由邊緣向內掃就睇到你嘅筆記。',
+  'Show other tabs as icons': '其他分頁只顯示圖示',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    '除咗前面嗰個，每個分頁淨係顯示圖示；指住其中一個就會見到佢個名。',
   'Tab preview delay': '分頁預覽延遲',
   'How long the pointer rests on a tab before its preview shows.':
     '指標喺分頁上面停幾耐先會顯示預覽。',
@@ -1767,6 +1776,7 @@ export const yue: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': '網站資料',
   Downloads: '下載',
+  'Downloading {name}': '下載緊 {name}',
   'Show in folder': '喺資料夾度顯示',
   'Show in Finder': '喺 Finder 度顯示',
   'Reveal in Finder': '喺 Finder 度顯示',
@@ -1860,6 +1870,9 @@ export const yue: Dictionary = {
   'Exited with code {code}': '以代碼 {code} 結束咗',
   'Could not start {shell}': '開唔到 {shell}',
   'Restore history': '還原歷史紀錄',
+  'Colours follow the theme': '顏色跟主題',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    '用主題嘅顏色畫終端機；熄咗就用一套固定嘅色板。',
   'Restored {time}': '已還原 {time}',
   'Stop what is running in {name}?': '要停止 {name} 入面運行緊嘅嘢嗎？',
   'Stop what is running in these terminals?': '要停止呢啲終端機入面運行緊嘅嘢嗎？',
@@ -2004,6 +2017,8 @@ export const yue: Dictionary = {
   'Every space': '所有空間',
   Sites: '網站',
   'Asks first': '先問',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    '佢經 MCP 連接，喺嗰邊自己管理權限：Orden 乜都唔會問。下面你嘅空間、封鎖咗嘅網站同上限照樣有效。',
   Limits: '限制',
   'Clear what {name} did?': '清除 {name} 做過嘅嘢？',
   'Show earlier': '顯示更早',
@@ -2245,6 +2260,12 @@ export const yue: Dictionary = {
   // The online terminal
   'Online terminal': '網上終端機',
   'New online terminal': '新網上終端機',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': '另一部裝置',
+  'Taken over by {device}': '已被 {device} 接手',
+  'Open on {device} since {time}': '自 {time} 起喺 {device} 開咗',
+  'Take over': '接手',
+  'Take back': '攞返',
   'Start online machine': '開啟網上機器',
   'Stop online machine': '停止網上機器',
   Resume: '繼續',
@@ -2289,6 +2310,8 @@ export const yue: Dictionary = {
   'Take photo': '影相',
   Pronouns: '代名詞',
   Bio: '簡介',
+  'A few words about you': '講幾句關於你嘅嘢',
+  'What’s happening?': '而家點呀？',
   'Clear after': '幾耐之後清除',
   '30 minutes': '30 分鐘',
   '1 hour': '1 個鐘',
@@ -2618,4 +2641,5 @@ export const yue: Dictionary = {
   'Your report reached us. You can follow it here:': '我哋收到你嘅報告喇。可以喺呢度睇進度：',
   'View your report': '睇你嘅報告',
   'Not sent. Your text is kept, so you can try again.': '未送出。你寫嘅嘢仲喺度，可以再試多次。',
+  'Reset to site icon': '還原做網站圖示',
 }

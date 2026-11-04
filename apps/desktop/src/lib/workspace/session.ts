@@ -17,7 +17,7 @@ import type { FoldLines } from '@orden/editor'
 import { isBaseTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import { identifier } from '../identifier'
 import { roomKind } from '../rooms/kind'
-import { isNumber, isRecord, isString, keep, stringList } from '../stored'
+import { isNumber, isRecord, isString, keepJson, stringList } from '../stored'
 import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
 import { type Along, type Frame, pane } from './pane-tree'
@@ -54,9 +54,6 @@ export interface Draft {
   reading?: boolean | undefined
   /** Source mode; absent means the default. */
   source?: boolean | undefined
-  /** Whether the tab was held at the front of its strip. Absent for the tabs
-   *  that were not, which is most of them. */
-  pinned?: boolean | undefined
   /** For a PDF: the page it was open at and how far it was zoomed. Absent for a
    *  tab holding a note, which keeps a caret and a scroll instead. */
   page?: number | undefined
@@ -236,7 +233,9 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom, pinned, address, space, source, apart, base } = value
+  // A `pinned` an older build wrote is not read: there is no pinning in the strip any
+  // more (#1041), and the tab comes back where it was, as any other.
+  const { folds, page, zoom, address, space, source, apart, base } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -256,7 +255,6 @@ export function readDraft(value: unknown): Draft | null {
     ...(isString(share) ? { share } : {}),
     ...(reading === true ? { reading: true } : {}),
     ...(typeof source === 'boolean' ? { source } : {}),
-    ...(pinned === true ? { pinned: true } : {}),
     ...(isNumber(page) && page >= 1 ? { page } : {}),
     ...(isNumber(zoom) && zoom > 0 ? { zoom } : {}),
     ...(isString(address) ? { address } : {}),
@@ -528,5 +526,5 @@ export function writeSession(key: string, state: Session): boolean {
  *  that allows no site data at all, and either way the entry already there stays,
  *  which is a better place to come back to than none. */
 function put(key: string, state: Session): boolean {
-  return keep(key, JSON.stringify({ version: VERSION, ...state }))
+  return keepJson(key, { version: VERSION, ...state })
 }

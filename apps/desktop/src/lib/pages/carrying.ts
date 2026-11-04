@@ -7,7 +7,7 @@
 import { account } from '../account.svelte'
 import { api } from '../api'
 import { fileBytes, sha256, toBase64 } from '../bytes'
-import { keep, recordOf, stored, isString } from '../stored'
+import { keepJson, recordOf, stored, isString } from '../stored'
 import { invoke, isNative, joinPath } from '../tauri'
 import { isPagesTarget } from '@orden/markdown/links'
 import type { Mirror } from '../sync/mirror'
@@ -61,7 +61,7 @@ function how(token: string, whose: string, said: Carrying['said'] = () => undefi
     },
     down: (id) => api.notePaper(token, id),
     carried,
-    kept: () => void keep(KEY + whose, JSON.stringify(Object.fromEntries(carried))),
+    kept: () => void keepJson(KEY + whose, Object.fromEntries(carried)),
     said,
   }
 }

@@ -277,7 +277,7 @@ class Session {
       cursorInactiveStyle: 'outline',
       minimumContrastRatio: terminalContrast(),
       rightClickSelectsWord: false,
-      theme: terminalTheme(),
+      theme: terminalTheme(document.documentElement, !shells.themed),
       // A link a program marked itself (OSC 8) is followed the way any other is, with the
       // whole address it carries, and not through xterm.js's own confirm box: by the
       // press, like every link here (`pressLink`), so its activation does nothing.
@@ -635,10 +635,15 @@ class Session {
     this.focus()
   }
 
-  /** The online card's button, and Enter under it: Try again, or - where the session is
-   *  no more, which trying again cannot change - a new online terminal in this tab's
-   *  place, as a deleted codespace offers a new one where it was. */
+  /** The online card's button, and Enter under it: Take over where another device holds
+   *  the session; Try again; or - where the session is no more, which trying again cannot
+   *  change - a new online terminal in this tab's place, as a deleted codespace offers a
+   *  new one where it was. */
   retry() {
+    if (this.arrival.holder !== null) {
+      this.source?.take?.()
+      return
+    }
     if (!this.arrival.gone) {
       this.reconnect()
       return
@@ -773,11 +778,15 @@ class Session {
     this.named()
 
     const source = this.online
-      ? (await import('../online/source')).onlineSource(() => this.tab.path, {
-          tab: () => this.tab.id,
-          front: () => this.inFront && workspace.activeTabId === this.tab.id,
-          offer: (url) => this.offer(url),
-        })
+      ? (await import('../online/source')).onlineSource(
+          () => this.tab.path,
+          () => this.tab.doc,
+          {
+            tab: () => this.tab.id,
+            front: () => this.inFront && workspace.activeTabId === this.tab.id,
+            offer: (url) => this.offer(url),
+          },
+        )
       : new PtySource(id, spec.shell, spec.folder, this.remote)
     if (this.pty !== id) {
       source.end()
@@ -873,7 +882,13 @@ class Session {
       if (what.connected && this.screened) this.landed()
       else this.live = false
     } else if ('typing' in what) this.mayType = what.typing
-    else if ('note' in what) {
+    else if ('held' in what) {
+      // Another device holds it: its last screen stays, dimmed, under who has it.
+      if (what.held) {
+        this.live = false
+        this.arrival.held(what.held)
+      } else this.arrival.unheld()
+    } else if ('note' in what) {
       if (this.live) this.say(what.note)
       else this.notes.push(what.note)
     } else if (this.online && (!this.live || what.gone === true)) {
@@ -1086,7 +1101,7 @@ class Session {
   /** A key in an online terminal: Reconnect, Try again or Resume where they are up, a new shell
    *  after one ended, and otherwise the session's - if this window may type in it. */
   private typedOnline(data: string, binary: boolean) {
-    if (this.offline || this.arrival.failure !== null) {
+    if (this.offline || this.arrival.failure !== null || this.arrival.holder !== null) {
       if (data === '\r') this.retry()
       return
     }
@@ -1561,10 +1576,10 @@ function watch() {
 
   let frame = 0
   let painted = ''
-  const repaint = () => {
+  const repaint = (themed = shells.themed) => {
     cancelAnimationFrame(frame)
     frame = requestAnimationFrame(() => {
-      const theme = terminalTheme()
+      const theme = terminalTheme(document.documentElement, !themed)
       const family = monospace()
       const contrast = terminalContrast()
       // The page's style moves for other reasons too - the zoom, the keyboard on a
@@ -1575,7 +1590,18 @@ function watch() {
       for (const one of sessions.values()) one.repaint(theme, family, contrast)
     })
   }
-  const page = new MutationObserver(repaint)
+  // And a reader keeping one palette, or giving it up, in Settings: only when that
+  // changes, so a terminal that has just been drawn is not drawn a second time for it.
+  let themedWas = shells.themed
+  $effect.root(() => {
+    $effect(() => {
+      const themed = shells.themed
+      if (themed === themedWas) return
+      themedWas = themed
+      untrack(() => repaint(themed))
+    })
+  })
+  const page = new MutationObserver(() => repaint())
   page.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-theme', 'style', 'class'],

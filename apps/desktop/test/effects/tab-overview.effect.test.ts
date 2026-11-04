@@ -132,3 +132,74 @@ test('a web tab’s window shows its page as it was left, a tab nowhere in the f
   // Every tab here is a draft or a page nobody kept.
   expect(windows().every((one) => one.classList.contains('unsaved'))).toBe(true)
 })
+
+test('nothing in it is chosen as text, and a drag is never the browser’s own', async () => {
+  await opened()
+  for (const at of [layer(), windows()[0], document.querySelector('.caption')]) {
+    for (const kind of ['selectstart', 'dragstart']) {
+      const event = new Event(kind, { bubbles: true, cancelable: true })
+      at?.dispatchEvent(event)
+      expect(event.defaultPrevented).toBe(true)
+    }
+  }
+})
+
+test('it comes back where the camera was left', async () => {
+  await opened()
+  const world = () => document.querySelector<HTMLElement>('.world')?.style.transform
+  const canvas = layer()
+  canvas?.dispatchEvent(
+    new WheelEvent('wheel', { deltaX: 120, deltaY: 40, bubbles: true, cancelable: true }),
+  )
+  flushSync()
+  const moved = world()
+  expect(overlays.escape()).toBe(true)
+  flushSync()
+  await tick()
+  await opened()
+  expect(world()).toBe(moved)
+})
+
+test('Tidy up puts every window back where its panes put it', async () => {
+  const { places } = await import('../../src/lib/overview/places.svelte')
+  const id = workspace.tabs[0]?.id ?? ''
+  places.keepWindows({ [id]: { x: 4000, y: 4000, w: 300, h: 200 } }, workspace.tabs)
+  await opened()
+  expect(places.windows[id]).toEqual({ x: 4000, y: 4000, w: 300, h: 200 })
+  document.querySelector<HTMLButtonElement>('.tidy')?.click()
+  flushSync()
+  await tick()
+  expect(places.windows).toEqual({})
+})
+
+test('a window put by hand is found again by the next run, whose tabs have new ids', async () => {
+  const { places } = await import('../../src/lib/overview/places.svelte')
+  const [first] = workspace.tabs
+  places.keepWindows({ [first?.id ?? '']: { x: 3000, y: 10, w: 300, h: 200 } }, workspace.tabs)
+  // The next run: the same tabs, every id new.
+  const again = workspace.tabs.map((one) => ({
+    id: `${one.id}-again`,
+    kind: one.kind,
+    path: one.path,
+    shown: one.shown,
+  }))
+  places.recall(again)
+  expect(places.windows[`${first?.id}-again`]).toEqual({ x: 3000, y: 10, w: 300, h: 200 })
+})
+
+test('a window’s cross closes its tab the strip’s way, which asks where that asks, and the view stays', async () => {
+  await opened()
+  const closing = vi.spyOn(workspace, 'closeAsking')
+  const [first] = windows()
+  const id = workspace.tabs.find((one) => one.shown === first?.getAttribute('aria-label'))?.id
+  const cross = first?.nextElementSibling as HTMLButtonElement | null
+  expect(cross?.classList.contains('closer')).toBe(true)
+  expect(cross?.getAttribute('aria-label')).toBe('Close')
+  cross?.click()
+  flushSync()
+  await tick()
+  expect(closing).toHaveBeenCalledWith(id)
+  // The press was the cross's: the window was not opened and the view is still up.
+  expect(tabOverview.open).toBe(true)
+  expect(layer()).not.toBe(null)
+})

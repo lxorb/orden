@@ -9,7 +9,7 @@
  *  space the reader picked by name, and the rest is Orden's own. One from a space
  *  somebody else can reach goes inside the untrusted mark, as its words are theirs. Not translated: nobody reads it but the model. */
 
-import { isBoolean, keep, stored } from '../../stored'
+import { isBoolean, keepJson, stored } from '../../stored'
 import type { Thread } from '../chat/types'
 import { foundNamed, rootOfSpace, wordsOf } from './found'
 import { actsAlone } from '../modes'
@@ -46,7 +46,7 @@ function remembers(): boolean {
 }
 
 export function setRemembers(on: boolean): void {
-  keep(MEMORY_KEY, JSON.stringify(on))
+  keepJson(MEMORY_KEY, on)
 }
 
 /** How remembering is done: an edit to a note the reader can read, never a hidden

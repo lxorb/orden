@@ -13,6 +13,7 @@
   import type { Shown } from '../api'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import { downloadStarted } from '../../downloads/started'
   import { amount, t } from '../../i18n.svelte'
   import { dur } from '../../motion'
   import { followHref } from '../../open-link'
@@ -257,6 +258,7 @@
           class="file"
           href={fileUrl(page.id, file.hash)}
           download={file.name}
+          onclick={(event) => downloadStarted(file.name, { element: event.currentTarget })}
           use:tip={() => file.name}
         >
           <Glyph name="file" />

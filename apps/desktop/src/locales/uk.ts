@@ -92,6 +92,15 @@ export const uk: Dictionary = {
   // Tasks: the Display menu
   Display: 'Вигляд',
   'Completed tasks': 'Виконані завдання',
+  Smart: 'Розумне',
+  Grouping: 'Групування',
+  Sorting: 'Сортування',
+  'Last 30 days': 'Останні 30 днів',
+  'Assigned to me': 'Призначені мені',
+  Unassigned: 'Без виконавця',
+  'Reset all': 'Скинути все',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Макет показує завдання списком, дошкою або календарем. Групування ділить їх на групи, які є стовпцями дошки. Сортування впорядковує кожну групу. Фільтри приховують те, що вам не потрібно. Усе це зберігається для цього подання.',
   // Tasks: several lines pasted into quick add
   'One task': 'Одне завдання',
   'One per line': 'По одному на рядок',
@@ -580,11 +589,11 @@ export const uk: Dictionary = {
   'Actual size': 'Справжній розмір',
   // Appearance
   Accent: 'Акцент',
-  'Window corners': 'Кути вікна',
-  Rounded: 'Заокруглені',
-  Square: 'Прямі',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Заокруглені розміщують відкрите в картці всередині вікна; прямі тримають його врівень із краями.',
+  'Tidy up': 'Упорядкувати',
+  'Swipe in from the edge to see your notes.': 'Проведіть від краю, щоб побачити нотатки.',
+  'Show other tabs as icons': 'Показувати інші вкладки значками',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Кожна вкладка, крім передньої, показує лише значок; якщо навести на неї, з’являється назва.',
   'Tab preview delay': 'Затримка попереднього перегляду вкладки',
   'How long the pointer rests on a tab before its preview shows.':
     'Скільки вказівник має пробути на вкладці, перш ніж з’явиться її попередній перегляд.',
@@ -1890,6 +1899,7 @@ export const uk: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Інформація про сайт',
   Downloads: 'Завантаження',
+  'Downloading {name}': 'Завантаження {name}',
   'Show in folder': 'Показати в папці',
   'Show in Finder': 'Показати у Finder',
   'Reveal in Finder': 'Показати у Finder',
@@ -1983,6 +1993,9 @@ export const uk: Dictionary = {
   'Exited with code {code}': 'Завершено з кодом {code}',
   'Could not start {shell}': 'Не вдалося запустити {shell}',
   'Restore history': 'Відновлювати історію',
+  'Colours follow the theme': 'Кольори відповідають темі',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Фарбує термінали в кольори теми; якщо вимкнено, лишається одна стала палітра.',
   'Restored {time}': 'Відновлено {time}',
   'Stop what is running in {name}?': 'Зупинити те, що виконується в {name}?',
   'Stop what is running in these terminals?': 'Зупинити те, що виконується в цих терміналах?',
@@ -2139,6 +2152,8 @@ export const uk: Dictionary = {
   'Every space': 'Усі простори',
   Sites: 'Сайти',
   'Asks first': 'Спершу питає',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Він під’єднується через MCP і сам керує своїми дозволами там: Orden ні про що його не питає. Ваші простори, заблоковані сайти й обмеження нижче й далі діють.',
   Limits: 'Обмеження',
   'Clear what {name} did?': 'Стерти те, що зробив {name}?',
   'Show earlier': 'Показати раніші',
@@ -2391,6 +2406,12 @@ export const uk: Dictionary = {
   // The online terminal
   'Online terminal': 'Онлайн-термінал',
   'New online terminal': 'Новий онлайн-термінал',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'інший пристрій',
+  'Taken over by {device}': 'Перехоплено пристроєм {device}',
+  'Open on {device} since {time}': 'Відкрито на {device} з {time}',
+  'Take over': 'Перехопити',
+  'Take back': 'Повернути',
   'Start online machine': 'Запустити онлайн-машину',
   'Stop online machine': 'Зупинити онлайн-машину',
   Resume: 'Продовжити',
@@ -2436,6 +2457,8 @@ export const uk: Dictionary = {
   'Take photo': 'Зробити фото',
   Pronouns: 'Займенники',
   Bio: 'Про себе',
+  'A few words about you': 'Кілька слів про себе',
+  'What’s happening?': 'Що відбувається?',
   'Clear after': 'Очистити через',
   '30 minutes': '30 хвилин',
   '1 hour': '1 годину',
@@ -2794,4 +2817,5 @@ export const uk: Dictionary = {
   'View your report': 'Переглянути ваш звіт',
   'Not sent. Your text is kept, so you can try again.':
     'Не надіслано. Ваш текст збережено, можна спробувати ще раз.',
+  'Reset to site icon': 'Повернути значок сайту',
 }

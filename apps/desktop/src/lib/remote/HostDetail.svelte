@@ -103,7 +103,7 @@
 </script>
 
 <header class="who">
-  <button class="back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
+  <button class="nib-glyph back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
     <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
   </button>
   <HostMark colour={host.colour} />
@@ -128,7 +128,7 @@
     <span class="name">{t('Address')}</span>
     {#if host.own}
       <input
-        class="field"
+        class="nib-field is-value address"
         value={host.hostname
           ? said({ user: host.user, hostname: host.hostname, port: host.port })
           : ''}
@@ -144,12 +144,14 @@
 
   <div class="nib-setting">
     <span class="name">{t('Colour')}</span>
-    <Swatches
-      options={colours}
-      label={t('Colour')}
-      chosen={host.colour ?? ''}
-      onchoose={(value: string) => about({ colour: (value || undefined) as About['colour'] })}
-    />
+    <div class="nib-setting-value is-wrapping">
+      <Swatches
+        options={colours}
+        label={t('Colour')}
+        chosen={host.colour ?? ''}
+        onchoose={(value: string) => about({ colour: (value || undefined) as About['colour'] })}
+      />
+    </div>
   </div>
 
   <div class="nib-setting">
@@ -204,37 +206,10 @@
     min-width: 0;
   }
 
-  /* Back to the list, as a host's page in Agents has it. */
+  /* Back to the list: the square is `.nib-glyph`; it stands out into the margin by
+     the room round its arrow, so the arrow lines up with the title above. */
   .back {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
     margin-inline-start: -6px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  .back svg {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  @media (hover: hover) {
-    .back:hover {
-      color: var(--text-strong);
-    }
   }
 
   /* The name, in the type a pane's own title is set in; a field only where it can
@@ -258,23 +233,9 @@
     border-bottom-color: var(--accent);
   }
 
-  .field {
-    flex: none;
-    width: 14rem;
-    max-width: 55%;
-    padding: 6px 9px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
+  /* An address is read letter by letter; the box is every setting value's. */
+  .address {
     font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    outline: none;
-    transition: border-color var(--dur-fast) var(--ease-out);
-  }
-
-  .field:focus {
-    border-color: var(--accent);
   }
 
   .value {

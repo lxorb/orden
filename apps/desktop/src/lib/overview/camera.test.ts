@@ -1,6 +1,9 @@
 import { expect, test } from 'vitest'
 import {
   boxToCanvas,
+  eased,
+  isNotch,
+  notched,
   FARTHEST,
   lookingAt,
   NEAREST,
@@ -72,4 +75,28 @@ test('a window walked to off screen is brought just into view', () => {
     w: 50,
     h: 25,
   })
+})
+
+test('a notch of the wheel with Ctrl eases to its zoom, a pinch follows the fingers', () => {
+  const notch = { ...turn, deltaY: -100, ctrlKey: true, x: 300, y: 200 }
+  expect(isNotch(notch)).toBe(true)
+  expect(isNotch({ ...notch, deltaY: -3.5 })).toBe(false)
+  expect(isNotch({ ...notch, deltaY: -1, deltaMode: 1 })).toBe(true)
+  // Two notches in quick succession aim twice as far, not from where it has got to.
+  const goal = notched(notched(1, notch), notch)
+  expect(goal).toBeCloseTo(Math.exp(0.4))
+  // On its way there frame by frame: never past it, never back, the pointer's point
+  // still under the pointer, and there within half a second.
+  let camera = still
+  let before = camera.zoom
+  for (let frame = 0; frame < 30; frame++) {
+    camera = eased(camera, goal, { x: 300, y: 200 }, 1 / 60)
+    expect(camera.zoom).toBeGreaterThanOrEqual(before)
+    expect(camera.zoom).toBeLessThanOrEqual(goal)
+    before = camera.zoom
+  }
+  expect(camera.zoom).toBe(goal)
+  expect(toCanvas(camera, { x: 300, y: 200 }).x).toBeCloseTo(300)
+  // The first frame already moves: no wait before it starts.
+  expect(eased(still, goal, { x: 0, y: 0 }, 1 / 60).zoom).toBeGreaterThan(1.05)
 })

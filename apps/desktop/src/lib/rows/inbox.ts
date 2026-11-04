@@ -18,7 +18,7 @@ import { carriedOwn, INBOX_PATH } from '@orden/bases/inbox'
 import { insideItsSpace, insideSpace, movedTo, relativeTo, samePath } from '../space-paths'
 import { readIfThere } from '../read-if-there'
 import { without } from '../records'
-import { forget, isRecord, isString, keep, stored } from '../stored'
+import { forget, isRecord, isString, keepJson, stored } from '../stored'
 import { invoke, isDesktop, platform } from '../tauri'
 import type { KeptByPath } from '../workspace/file-ops'
 
@@ -46,7 +46,7 @@ function read(): Record<string, string> {
 }
 
 function write(all: Record<string, string>) {
-  if (Object.keys(all).length) keep(STORAGE_KEY, JSON.stringify(all))
+  if (Object.keys(all).length) keepJson(STORAGE_KEY, all)
   else forget(STORAGE_KEY)
 }
 

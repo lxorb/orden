@@ -14,8 +14,15 @@
    *  this row at the bottom of the drawer, clear of the gesture bar. A phone or a
    *  tablet leaves out the download and the theme switch: it is already where the
    *  app is had, and its light and dark are in Settings, so the row keeps to the
-   *  account and the settings. Send feedback is the palette's, there as it opens
-   *  (#1049; palette/browse.ts). */
+   *  account, feedback and the settings. Send feedback is the palette's as well, there
+   *  as it opens (#1049; palette/browse.ts), and the bug stays here on every device
+   *  (#1100): a hand that knows where it was finds it there.
+   *
+   *  And on a phone and a tablet, the scratchpad (#1030): beside the settings, because
+   *  it is the app's like they are - the one note in no space - and a drawer's foot is
+   *  where a reader looks for what belongs to no note. A glyph like its neighbours, quiet
+   *  until wanted; it was a switch in a note's bar, where it sat on every note as if it
+   *  were the note's. On a desktop it is the right side's tab (#1032). */
   import { fade } from 'svelte/transition'
   import { account } from './account.svelte'
   import { BASE } from './api'
@@ -26,11 +33,14 @@
   import { DIVIDER, menu } from './menu.svelte'
   import { dur } from './motion'
   import { settings } from './settings.svelte'
+  import { showFeedback } from './surfaces.svelte'
   import { t } from './i18n.svelte'
   import { isNative, openExternal } from './tauri'
   import { theme } from './theme.svelte'
   import { viewport } from './viewport.svelte'
   import { shortcuts } from './shortcuts.svelte'
+  import { SCRATCHPAD_MARK } from './panel-marks'
+  import { scratchFromDrawer, shown as pad } from './scratchpad/is.svelte'
 
   /** What to call whoever is here. Null while the stores are still being asked,
    *  which is a third state and not the same as being signed out. */
@@ -123,6 +133,22 @@
       </button>
     {/if}
 
+    <!-- Send feedback (#548): a bug, beside the account and the settings, on every
+         build, for whatever went wrong. See feedback.svelte.ts. Back after #1049 took
+         it to the palette alone (#1100). -->
+    <button
+      class="nib-glyph act"
+      title={t('Send feedback')}
+      aria-label={t('Send feedback')}
+      onclick={showFeedback}
+    >
+      <svg class="bug" viewBox="0 0 14 14"
+        ><path
+          d="M4.6 4.2a2.4 2.4 0 0 1 4.8 0M3.9 5.4h6.2v3.4a3.1 3.1 0 0 1-6.2 0zM7 5.4v6.4M3.9 7.4H1.6M10.1 7.4h2.3M4.2 9.9l-1.9 1.4M9.8 9.9l1.9 1.4M4.4 5.4 2.6 3.8M9.6 5.4l1.8-1.6"
+        /></svg
+      >
+    </button>
+
     <!-- Off while the theme in force has only the one scheme: there is no other
          side of it to show, and swapping it for a built-in is not the switch
          anybody pressed. See theme.svelte.ts. Said rather than `disabled`, which
@@ -151,6 +177,19 @@
       </button>
     {/if}
 
+    {#if viewport.touch && !__EVEN_PLUGIN__}
+      <button
+        class="nib-glyph act"
+        class:is-on={pad.on}
+        aria-pressed={pad.on}
+        title={shortcuts.tooltip(t('Scratchpad'), 'app.scratchpad')}
+        aria-label={t('Scratchpad')}
+        onclick={scratchFromDrawer}
+      >
+        <svg viewBox="0 0 13 13"><path d={SCRATCHPAD_MARK} /></svg>
+      </button>
+    {/if}
+
     <!-- No mark of syncing on it: a pass blinking in the corner was noise (#206). -->
     <button
       class="nib-glyph act"
@@ -170,8 +209,10 @@
 </div>
 
 <style>
-  /* The same height as the head at the other end of the panel, and set apart by
-     the same hairline the head's menu is. */
+  /* The same height as the head at the other end of the panel. Set apart by the
+     chrome's own seam (#1105): none where the window is one rounded surface (#1088),
+     which has no hard cuts, and a hairline where the window is flush (`flush` in
+     App.svelte). The row's height keeps it a row of its own either way. */
   .foot {
     position: relative;
     flex: none;
@@ -180,7 +221,7 @@
     gap: var(--space-1);
     min-height: var(--header-height);
     padding: 0 var(--space-1);
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--chrome-seam);
   }
 
   /* The account row only: a bare scoped `button` out-specifies `.nib-glyph`. */
@@ -287,6 +328,11 @@
      padding is none. */
   .act .gear {
     stroke-width: 1.6;
+  }
+
+  .act .bug {
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   @media (prefers-reduced-motion: reduce) {

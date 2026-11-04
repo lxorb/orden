@@ -298,6 +298,15 @@ export async function chooseTab(tab: string): Promise<void> {
   workspace.activate(tab)
 }
 
+/** The corner of the card a page fills, in the window's own pixels: the frame's token
+ *  where the panes are (#1088), which full screen makes nothing. The page's own
+ *  bottom corners take it, so it stands in the card rather than out of its corners. */
+export function cardCorner(): number {
+  if (typeof document === 'undefined') return 0
+  const panes = document.querySelector('main') ?? document.documentElement
+  return parseFloat(getComputedStyle(panes).getPropertyValue('--card-radius')) || 0
+}
+
 export function readOpening(value: unknown): Opening | null {
   if (typeof value !== 'object' || value === null) return null
 
@@ -483,8 +492,6 @@ export class Page {
   edited = false
   /** When it last stopped being heard; see heard.ts. */
   heard = 0
-  /** Set by the pane, like `path`. */
-  pinned = false
   /** A private tab's page: the engine's private mode, and nothing of it written down -
    *  no history, no mark, no place - and never parked, which would end its session. Set
    *  as the tab is made and never after; see private.ts. */
@@ -578,6 +585,12 @@ class Pages {
   /** What the tab is pointing at, for the session and for the bar. */
   addressOf(tabId: string): string | null {
     return this.held.get(tabId)?.url ?? null
+  }
+
+  /** Whether words half typed into the tab's address field wait for it (#381), which a
+   *  new tab left alone keeps it for (#1040). Asked without making the tab's state. */
+  typedInto(tabId: string): boolean {
+    return (this.held.get(tabId)?.halfTyped ?? null) !== null
   }
 
   /** Puts the page where the pane says, opening it if it is not there, and lets it be
@@ -927,6 +940,7 @@ class Pages {
         visible: one.visible,
         frame: one.frame,
         cut: one.cut,
+        corner: cardCorner(),
       })
       cutting = cuts === true
     } catch (error) {

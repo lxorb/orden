@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import {
   closing,
+  leftPanelFrom,
+  mayLiveOn,
   moving,
   openOn,
   PANELS,
@@ -196,31 +198,51 @@ describe('where a panel lives until somebody moves it', () => {
       'footnotes',
       'ask',
       'agents',
-    ])
-    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual([
-      'tree',
-      'search',
       'tasks',
-      'chats',
     ])
+    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual(['tree', 'search', 'chats'])
   })
 
   test('and a window arranged before the homes keeps its own arrangement', () => {
     // A build with five panels wrote this: the outline moved over, the rest left.
-    expect(rightFrom(['outline'])).toEqual(['outline', 'properties', 'ask', 'agents'])
+    expect(rightFrom(['outline'])).toEqual(['outline', 'properties', 'ask', 'agents', 'tasks'])
     // And one that had everything on the left wrote nothing at all.
     expect(rightFrom(undefined)).toEqual(STARTS_RIGHT)
   })
 
   test('and the agents are homed on the right in a window that knew every panel before them', () => {
     const before = PANELS.filter((one) => one !== 'agents')
-    expect(rightFrom(['ask'], before)).toEqual(['ask', 'agents'])
-    expect(rightFrom([], before)).toEqual(['agents'])
+    expect(rightFrom(['ask'], before)).toEqual(['ask', 'agents', 'tasks'])
+    expect(rightFrom([], before)).toEqual(['agents', 'tasks'])
   })
 
-  test('while one that knew every panel is kept exactly, however empty', () => {
-    expect(rightFrom([], PANELS)).toEqual([])
-    expect(rightFrom(['ask'], PANELS)).toEqual(['ask'])
+  test('while one that knew every panel is kept exactly, but for the Tasks panel', () => {
+    expect(rightFrom([], PANELS)).toEqual(['tasks'])
+    expect(rightFrom(['ask'], PANELS)).toEqual(['ask', 'tasks'])
+    expect(rightFrom(['tasks', 'ask'], PANELS)).toEqual(['tasks', 'ask'])
+  })
+})
+
+/** The left side's way to Todos is the checkbox in its top row, which opens it as a tab;
+ *  the Tasks panel is the list beside the note, on the right (#1047). */
+describe('the Tasks panel', () => {
+  test('lives on the right, in a window arranged with it on the left as well', () => {
+    expect(panelsOn(rightFrom([], PANELS), 'left', PANELS)).not.toContain('tasks')
+    expect(sideOf(rightFrom(['outline'], PANELS), 'tasks')).toBe('right')
+  })
+
+  test('and is never moved to the left', () => {
+    const sides = { ...fresh(), right: ['tasks' as const], rightPanel: 'tasks' as const }
+    expect(moving(sides, 'tasks', 'left')).toBe(sides)
+    expect(mayLiveOn('tasks', 'left')).toBe(false)
+    expect(mayLiveOn('tasks', 'right')).toBe(true)
+    expect(mayLiveOn('tree', 'left')).toBe(true)
+  })
+
+  test('so a window left on it on the left opens with that side shut', () => {
+    expect(leftPanelFrom('tasks')).toBeNull()
+    expect(leftPanelFrom('tree')).toBe('tree')
+    expect(leftPanelFrom(undefined)).toBeNull()
   })
 })
 

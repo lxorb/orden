@@ -78,6 +78,8 @@
 #     (#481, scripts/watch-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
+#   - with CORNER=1, a web tab's page of one colour photographed in its rounded card: its
+#     two bottom corners have to be the card's, not square (#1088, scripts/corner-drive.py);
 #   - with CHOOSING=1, two panes each with a web tab, and the page of the one not being
 #     worked in pressed with the compositor's pointer, round after round: its tab and pane
 #     have to be chosen each time (#1080, scripts/choosing-drive.py);
@@ -404,6 +406,8 @@ fi
 [ "${OPENS:-0}" = 1 ] && endpoint
 # With CHOOSING=1, the same (#1080).
 [ "${CHOOSING:-0}" = 1 ] && endpoint
+# With CORNER=1, the same (#1088).
+[ "${CORNER:-0}" = 1 ] && endpoint
 # With CERT=1, the endpoint and a site over https, a real one: its certificate is the
 # point (#776).
 if [ "${CERT:-0}" = 1 ]; then
@@ -630,6 +634,11 @@ fi
 if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then
   sleep 3
   python3 "$here/scheme-drive.py" sway "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${CORNER:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/corner-drive.py" sway "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${CHOOSING:-0}" = 1 ]; then

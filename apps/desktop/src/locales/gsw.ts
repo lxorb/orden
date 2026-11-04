@@ -90,6 +90,15 @@ export const gsw: Dictionary = {
   // Tasks: the Display menu
   Display: 'Aazeig',
   'Completed tasks': 'Erledigti Ufgabe',
+  Smart: 'Gschiid',
+  Grouping: 'Gruppierig',
+  Sorting: 'Sortierig',
+  'Last 30 days': 'Letschti 30 Täg',
+  'Assigned to me': 'Mir zuegwise',
+  Unassigned: 'Nöd zuegwise',
+  'Reset all': 'Alles zruggsetze',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'S Layout zeigt d Ufgabe als Lischte, Board oder Kalender. D Gruppierig teilt si i Gruppe, das sind d Spalte vomene Board. D Sortierig ordnet jedi Gruppe. Filter blände us, was du nöd bruchsch. Alles wird für die Aasicht gmerkt.',
   // Tasks: several lines pasted into quick add
   'One task': 'Ei Ufgab',
   'One per line': 'Eini pro Ziile',
@@ -558,11 +567,11 @@ export const gsw: Dictionary = {
   'Actual size': 'Originalgrössi',
   // Appearance
   Accent: 'Akzänt',
-  'Window corners': 'Fänschterecke',
-  Rounded: 'Abgrundet',
-  Square: 'Eggig',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Abgrundet lot s Offeni als Charte im Fänschter schwebe; Eggig hebts bündig.',
+  'Tidy up': 'Ufrume',
+  'Swipe in from the edge to see your notes.': 'Wisch vom Rand ine, zum dini Notize z gseh.',
+  'Show other tabs as icons': 'Anderi Tabs als Symbol zeige',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Jede Tab usser em vordere zeigt nur sis Symbol; wenn du druf zeigsch, chunnt sin Name.',
   'Tab preview delay': 'Verzögerig vo de Tab-Vorschau',
   'How long the pointer rests on a tab before its preview shows.':
     'Wie lang de Zeiger uf eme Tab ruet, bevor sini Vorschau chunnt.',
@@ -1829,6 +1838,7 @@ export const gsw: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Website-Infos',
   Downloads: 'Downloads',
+  'Downloading {name}': '{name} wird abeglade',
   'Show in folder': 'Im Ordner zeige',
   'Show in Finder': 'Im Finder zeige',
   'Reveal in Finder': 'Im Finder zeige',
@@ -1922,6 +1932,9 @@ export const gsw: Dictionary = {
   'Exited with code {code}': 'Beändet mit Code {code}',
   'Could not start {shell}': '{shell} het nöd chöne gstartet wärde',
   'Restore history': 'Verlauf widerherstelle',
+  'Colours follow the theme': 'Farbe folged em Design',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Färbt Terminals i de Farbe vom Design; uus bhaltet ei feschti Palette.',
   'Restored {time}': 'Widerhergstellt {time}',
   'Stop what is running in {name}?': 'Beände, was i {name} lauft?',
   'Stop what is running in these terminals?': 'Beände, was i dene Terminals lauft?',
@@ -2072,6 +2085,8 @@ export const gsw: Dictionary = {
   'Every space': 'All Ablage',
   Sites: 'Websiite',
   'Asks first': 'Fragt vorher',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Es verbindet sich über MCP und regelt sini Berächtigunge det sälber: Orden fröggt’s nüt. Dini Spaces, gsperrte Websites und Gränze une gälte witerhin.',
   Limits: 'Gränze',
   'Clear what {name} did?': 'Lösche, was {name} gmacht hät?',
   'Show earlier': 'Früecheri aazeige',
@@ -2321,6 +2336,12 @@ export const gsw: Dictionary = {
   // The online terminal
   'Online terminal': 'Online-Terminal',
   'New online terminal': 'Neus Online-Terminal',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'es anders Grät',
+  'Taken over by {device}': 'Übernoo vo {device}',
+  'Open on {device} since {time}': 'Offe uf {device} sit {time}',
+  'Take over': 'Übernää',
+  'Take back': 'Zrugghole',
   'Start online machine': 'Online-Maschine starte',
   'Stop online machine': 'Online-Maschine stoppe',
   Resume: 'Wiitermache',
@@ -2366,6 +2387,8 @@ export const gsw: Dictionary = {
   'Take photo': 'Foti mache',
   Pronouns: 'Pronome',
   Bio: 'Bio',
+  'A few words about you': 'Es paar Wort über dich',
+  'What’s happening?': 'Was lauft?',
   'Clear after': 'Lösche nach',
   '30 minutes': '30 Minute',
   '1 hour': '1 Stund',
@@ -2728,4 +2751,5 @@ export const gsw: Dictionary = {
   'View your report': 'Din Bricht aaluege',
   'Not sent. Your text is kept, so you can try again.':
     'Nöd gschickt. Din Text bliibt, so chasch es nomal probiere.',
+  'Reset to site icon': 'Uf s Websiite-Symbol zruggsetze',
 }

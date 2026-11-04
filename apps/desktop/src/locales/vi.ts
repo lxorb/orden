@@ -86,6 +86,15 @@ export const vi: Dictionary = {
   // Tasks: the Display menu
   Display: 'Hiển thị',
   'Completed tasks': 'Việc đã xong',
+  Smart: 'Thông minh',
+  Grouping: 'Nhóm',
+  Sorting: 'Sắp xếp',
+  'Last 30 days': '30 ngày qua',
+  'Assigned to me': 'Giao cho tôi',
+  Unassigned: 'Chưa giao',
+  'Reset all': 'Đặt lại tất cả',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Bố cục hiển thị công việc dưới dạng danh sách, bảng hoặc lịch. Nhóm chia chúng thành các nhóm, chính là các cột của bảng. Sắp xếp sắp thứ tự từng nhóm. Bộ lọc ẩn những gì bạn không cần. Tất cả được giữ cho chế độ xem này.',
   // Tasks: several lines pasted into quick add
   'One task': 'Một việc',
   'One per line': 'Mỗi dòng một việc',
@@ -554,11 +563,11 @@ export const vi: Dictionary = {
   'Actual size': 'Cỡ thật',
   // Appearance
   Accent: 'Màu nhấn',
-  'Window corners': 'Góc cửa sổ',
-  Rounded: 'Bo tròn',
-  Square: 'Vuông',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Bo tròn đặt nội dung đang mở nổi trong một thẻ bên trong cửa sổ; Vuông giữ nó sát mép.',
+  'Tidy up': 'Sắp xếp gọn',
+  'Swipe in from the edge to see your notes.': 'Vuốt vào từ mép để xem ghi chú của bạn.',
+  'Show other tabs as icons': 'Hiện các thẻ khác dưới dạng biểu tượng',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Mọi thẻ trừ thẻ ở phía trước chỉ hiện biểu tượng; trỏ vào một thẻ sẽ thấy tên của nó.',
   'Tab preview delay': 'Độ trễ xem trước thẻ',
   'How long the pointer rests on a tab before its preview shows.':
     'Thời gian con trỏ dừng trên một thẻ trước khi bản xem trước hiện ra.',
@@ -1798,6 +1807,7 @@ export const vi: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Thông tin trang web',
   Downloads: 'Tệp đã tải xuống',
+  'Downloading {name}': 'Đang tải xuống {name}',
   'Show in folder': 'Hiển thị trong thư mục',
   'Show in Finder': 'Hiển thị trong Finder',
   'Reveal in Finder': 'Hiển thị trong Finder',
@@ -1891,6 +1901,9 @@ export const vi: Dictionary = {
   'Exited with code {code}': 'Đã thoát với mã {code}',
   'Could not start {shell}': 'Không thể khởi động {shell}',
   'Restore history': 'Khôi phục lịch sử',
+  'Colours follow the theme': 'Màu theo chủ đề',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Tô màu terminal bằng màu của chủ đề; tắt thì giữ một bảng màu cố định.',
   'Restored {time}': 'Đã khôi phục {time}',
   'Stop what is running in {name}?': 'Dừng những gì đang chạy trong {name}?',
   'Stop what is running in these terminals?': 'Dừng những gì đang chạy trong các terminal này?',
@@ -2038,6 +2051,8 @@ export const vi: Dictionary = {
   'Every space': 'Mọi không gian',
   Sites: 'Trang web',
   'Asks first': 'Hỏi trước',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Nó kết nối qua MCP và tự quản lý quyền của mình ở đó: Orden không hỏi gì. Các không gian, trang đã chặn và giới hạn bên dưới vẫn có hiệu lực.',
   Limits: 'Giới hạn',
   'Clear what {name} did?': 'Xóa những gì {name} đã làm?',
   'Show earlier': 'Hiện cũ hơn',
@@ -2281,6 +2296,12 @@ export const vi: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal trực tuyến',
   'New online terminal': 'Terminal trực tuyến mới',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'một thiết bị khác',
+  'Taken over by {device}': 'Đã bị {device} tiếp quản',
+  'Open on {device} since {time}': 'Đang mở trên {device} từ {time}',
+  'Take over': 'Tiếp quản',
+  'Take back': 'Lấy lại',
   'Start online machine': 'Khởi động máy trực tuyến',
   'Stop online machine': 'Dừng máy trực tuyến',
   Resume: 'Tiếp tục',
@@ -2326,6 +2347,8 @@ export const vi: Dictionary = {
   'Take photo': 'Chụp ảnh',
   Pronouns: 'Danh xưng',
   Bio: 'Giới thiệu',
+  'A few words about you': 'Vài lời về bạn',
+  'What’s happening?': 'Bạn đang làm gì?',
   'Clear after': 'Xóa sau',
   '30 minutes': '30 phút',
   '1 hour': '1 giờ',
@@ -2678,4 +2701,5 @@ export const vi: Dictionary = {
   'View your report': 'Xem báo cáo của bạn',
   'Not sent. Your text is kept, so you can try again.':
     'Chưa gửi được. Nội dung của bạn vẫn được giữ, bạn có thể thử lại.',
+  'Reset to site icon': 'Đặt lại biểu tượng trang web',
 }

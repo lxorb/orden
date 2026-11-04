@@ -90,6 +90,15 @@ export const ha: Dictionary = {
   // Tasks: the Display menu
   Display: 'Nuni',
   'Completed tasks': 'Ayyukan da aka kammala',
+  Smart: 'Mai wayo',
+  Grouping: 'Tarawa',
+  Sorting: 'Jerawa',
+  'Last 30 days': 'Kwanaki 30 da suka wuce',
+  'Assigned to me': 'An ba ni',
+  Unassigned: 'Ba a ba kowa ba',
+  'Reset all': 'Sake saita duka',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Tsari yana nuna ayyuka a matsayin jeri, allo ko kalanda. Tarawa tana raba su zuwa rukuni, waɗanda su ne ginshiƙan allo. Jerawa tana jera kowane rukuni. Matattara suna ɓoye abin da ba ka buƙata. Ana adana duka don wannan duba.',
   // Tasks: several lines pasted into quick add
   'One task': 'Aiki ɗaya',
   'One per line': 'Ɗaya kowane layi',
@@ -562,11 +571,11 @@ export const ha: Dictionary = {
   'Actual size': 'Girman gaske',
   // Appearance
   Accent: 'Launin nuni',
-  'Window corners': 'Kusurwoyin taga',
-  Rounded: 'Mai zagaye',
-  Square: 'Mai murabba’i',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Mai zagaye yana sa abin da aka buɗe ya yi shawagi a cikin kati a cikin taga; Mai murabba’i yana barin shi a gefe.',
+  'Tidy up': 'Tsara',
+  'Swipe in from the edge to see your notes.': 'Goge daga gefe zuwa ciki don ganin bayananka.',
+  'Show other tabs as icons': 'Nuna sauran shafuka a matsayin gumaka',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Kowane shafi banda na gaba yana nuna gumakinsa kawai; idan ka nuna ɗaya, sunansa zai bayyana.',
   'Tab preview delay': 'Jinkirin samfoti na shafi',
   'How long the pointer rests on a tab before its preview shows.':
     'Tsawon lokacin da mai nuni zai tsaya a kan shafi kafin samfotinsa ya bayyana.',
@@ -1846,6 +1855,7 @@ export const ha: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Bayanin gidan yanar',
   Downloads: 'Abubuwan da aka sauke',
+  'Downloading {name}': 'Ana sauke {name}',
   'Show in folder': 'Nuna a cikin babban fayil',
   'Show in Finder': 'Nuna a cikin Finder',
   'Reveal in Finder': 'Nuna a cikin Finder',
@@ -1940,6 +1950,9 @@ export const ha: Dictionary = {
   'Exited with code {code}': 'An ƙare da lamba {code}',
   'Could not start {shell}': 'Ba a iya fara {shell} ba',
   'Restore history': 'Maido da tarihi',
+  'Colours follow the theme': 'Launuka suna bin jigo',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Yana zana tasha da launukan jigo; idan a kashe, ana riƙe launuka guda ɗaya tsayayye.',
   'Restored {time}': 'An maido {time}',
   'Stop what is running in {name}?': 'A dakatar da abin da ke gudana a {name}?',
   'Stop what is running in these terminals?': 'A dakatar da abin da ke gudana a waɗannan tashoshi?',
@@ -2090,6 +2103,8 @@ export const ha: Dictionary = {
   'Every space': 'Kowane wuri',
   Sites: 'Shafuka',
   'Asks first': 'Yana tambaya da farko',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Yana haɗuwa ta MCP kuma yana sarrafa izininsa da kansa a can: Orden ba ya tambayarsa komai. Wurarenka, shafukan da ka toshe da iyakoki a ƙasa suna nan daram.',
   Limits: 'Iyakoki',
   'Clear what {name} did?': 'Share abin da {name} ya yi?',
   'Show earlier': 'Nuna na baya',
@@ -2338,6 +2353,12 @@ export const ha: Dictionary = {
   // The online terminal
   'Online terminal': 'Tashar kan layi',
   'New online terminal': 'Sabuwar tashar kan layi',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'wata na’ura',
+  'Taken over by {device}': '{device} ya karɓe shi',
+  'Open on {device} since {time}': 'A buɗe a {device} tun {time}',
+  'Take over': 'Karɓe',
+  'Take back': 'Mayar',
   'Start online machine': 'Kunna na’urar kan layi',
   'Stop online machine': 'Dakatar da na’urar kan layi',
   Resume: 'Ci gaba',
@@ -2383,6 +2404,8 @@ export const ha: Dictionary = {
   'Take photo': 'Ɗauki hoto',
   Pronouns: 'Karin suna',
   Bio: 'Bayani',
+  'A few words about you': 'Wasu kalmomi game da kai',
+  'What’s happening?': 'Me ke faruwa?',
   'Clear after': 'Share bayan',
   '30 minutes': 'Minti 30',
   '1 hour': 'Awa 1',
@@ -2746,4 +2769,5 @@ export const ha: Dictionary = {
   'View your report': 'Duba rahotonka',
   'Not sent. Your text is kept, so you can try again.':
     'Ba a aika ba. An adana rubutunka, don haka za ka iya sake gwadawa.',
+  'Reset to site icon': 'Mayar da gunkin shafin',
 }

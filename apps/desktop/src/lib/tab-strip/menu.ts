@@ -40,7 +40,7 @@ import { isUnsaved } from '../workspace/drafts'
 import { askPlace } from '../save-place/door'
 import { duplicateTab, moveToOtherPane, renameFromTab, renamesFromTab } from './ops'
 import { spaceEntry } from './to-space'
-import { chosen, duplicateMany, moveManyToOtherPane, pinMany } from './picking.svelte'
+import { chosen, duplicateMany, moveManyToOtherPane } from './picking.svelte'
 
 /** Move to space, on a touch screen only (#303). Under a pointer a tab is carried onto
  *  the space in the switcher, and the palette's Move to space asks which; a held finger
@@ -217,11 +217,6 @@ function tabEntries(tab: Tab): MenuEntry[] {
           },
         ]
       : []),
-    {
-      label: tab.pinned ? t('Unpin') : t('Pin'),
-      hint: shortcuts.hint('app.pin'),
-      run: () => workspace.togglePin(tab.id),
-    },
     ...bookmarkAll(tab.path === null ? [] : [tab.path]),
   ]
 }
@@ -258,12 +253,10 @@ function reopenEntry(): MenuEntry[] {
 }
 
 /** The tab, and the strip around it. Greyed where there is nothing around it to
- *  close; a pinned tab is never one of the tabs these take. */
+ *  close. */
 function closeEntries(tab: Tab): MenuEntry[] {
   return [
     {
-      // A pinned tab has no cross, so this row and the key beside it are the
-      // two ways it closes - which is why the row says the key as well.
       label: t('Close'),
       hint: shortcuts.hint('app.close'),
       run: () => void workspace.closeAsking(tab.id),
@@ -299,14 +292,14 @@ function saveEntry(tab: Tab): MenuEntry[] {
 }
 
 /** What a pick of tabs offers, all of it about every tab picked: Chrome's rows for a
- *  selection - reload, duplicate, pin, close, close the others, move - and the bookmark
+ *  selection - reload, duplicate, close, close the others, move - and the bookmark
  *  a row of the file list has. The others the strip closes are the tabs not picked, and
  *  the ones to the right are right of the last of them. */
 function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
   const ids = tabs.map((one) => one.id)
   const web = tabs.filter((one) => one.kind === 'web')
   const last = tabs.at(-1)?.id ?? ''
-  const others = workspace.tabsIn(paneId).filter((one) => !ids.includes(one.id) && !one.pinned)
+  const others = workspace.tabsIn(paneId).filter((one) => !ids.includes(one.id))
   const copies = tabs.every((one) => workspace.canDuplicateTab(one) && one.kind !== 'terminal')
   const paths = tabs.flatMap((one) => (one.path === null ? [] : [one.path]))
 
@@ -331,11 +324,6 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
           },
         ]
       : []),
-    {
-      label: tabs.some((one) => !one.pinned) ? t('Pin') : t('Unpin'),
-      hint: shortcuts.hint('app.pin'),
-      run: () => pinMany(tabs),
-    },
     ...bookmarkAll(paths),
     ...movedToSpace(tabs),
     DIVIDER,

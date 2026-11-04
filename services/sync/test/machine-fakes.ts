@@ -144,6 +144,8 @@ export class MachineSocket {
   readonly bytes: Uint8Array[] = []
   readyState = 1
   closedWith: { code: number | undefined; reason: string | undefined } | null = null
+  /** When the runtime last answered this socket's beat, as it does without the object. */
+  beatAt: Date | null = null
   readonly tags: string[] = []
   private attachment: unknown = null
 
@@ -180,6 +182,9 @@ export interface Running {
 /** A machine named `id` for `user`, told who it is the way a route tells it. */
 export async function machine(env: Env, id: string, user: string): Promise<Running> {
   const state = new HubState()
+  Object.assign(state, {
+    getWebSocketAutoResponseTimestamp: (socket: MachineSocket) => socket.beatAt,
+  })
   const host = new FakeHost()
   const made = new Machine(state as unknown as DurableObjectState, env, host)
   host.onSleep = () => void made.fromNibd({ t: 'saved' })

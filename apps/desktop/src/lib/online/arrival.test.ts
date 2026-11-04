@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { Arrival, BOOT_PATIENCE, PATIENCE, statusLine } from './arrival.svelte'
+import { Arrival, BOOT_PATIENCE, heldLine, PATIENCE, statusLine } from './arrival.svelte'
 import { refusalWords } from './words'
 
 /** A clock that runs only when told: what is due, and the time it is due at. */
@@ -167,5 +167,50 @@ describe('a terminal whose session is gone', () => {
     expect(arrival.status).toEqual({ waiting: 'connecting' })
     arrival.fail('Could not reach your machine')
     expect(arrival.status).toEqual({ failed: 'Could not reach your machine' })
+  })
+})
+
+describe('an online terminal another device holds (issue 1055)', () => {
+  test('says who and since when, and is no wait that runs out', () => {
+    const { clock, arrival } = arriving()
+    arrival.linkedNow(true)
+    const since = new Date(2026, 10, 3, 14, 5).getTime()
+    arrival.held({ by: 'Emil’s phone', since, taken: false })
+    expect(arrival.status).toEqual({
+      held: heldLine({ by: 'Emil’s phone', since, taken: false }),
+      taken: false,
+    })
+    expect(statusLine(arrival.status)).toMatch(/^Open on Emil’s phone since /)
+
+    clock.pass(PATIENCE * 10)
+    arrival.heard()
+    expect(arrival.failure).toBeNull()
+    expect('held' in arrival.status).toBe(true)
+  })
+
+  test('taken from this one says by whom; handed back, it waits for its screen', () => {
+    const { arrival } = arriving()
+    arrival.held({ by: 'Laptop', since: 1, taken: true })
+    expect(statusLine(arrival.status)).toBe('Taken over by Laptop')
+
+    arrival.unheld()
+    expect(arrival.status).toEqual({ waiting: 'connecting' })
+    arrival.arrived()
+    expect(arrival.holder).toBeNull()
+  })
+
+  test('a device with no name is another device, and a drop forgets who held it', () => {
+    const { arrival } = arriving()
+    arrival.held({ by: '', since: 1, taken: true })
+    expect(statusLine(arrival.status)).toBe('Taken over by another device')
+    arrival.linkedNow(false)
+    expect(arrival.status).toEqual({ waiting: 'connecting' })
+  })
+
+  test('says the day as well where it was taken before today', () => {
+    const now = new Date(2026, 10, 3, 9).getTime()
+    const today = heldLine({ by: 'Phone', since: now - 60_000, taken: false }, now)
+    const before = heldLine({ by: 'Phone', since: now - 2 * 86_400_000, taken: false }, now)
+    expect(before.length).toBeGreaterThan(today.length)
   })
 })

@@ -1,7 +1,7 @@
 [
   {
     "name": "get_context",
-    "description": "Where the reader is: the space, every open tab (id, kind, title, path or url, pane, front, pinned, unsaved, preview), the selected tab and what is selected in it (a note's words, caret and lines on screen; a canvas's picked ids; a terminal's selection; a PDF's page), and whether they are typing. Each kind's tools take its tab id: notes, canvases, terminals, and web tabs through browser_ tools.",
+    "description": "Where the reader is: the space, every open tab (id, kind, title, path or url, pane, front, unsaved, preview), the selected tab and what is selected in it (a note's words, caret and lines on screen; a canvas's picked ids; a terminal's selection; a PDF's page), and whether they are typing. Each kind's tools take its tab id: notes, canvases, terminals, and web tabs through browser_ tools.",
     "inputSchema": { "type": "object", "properties": {} },
     "annotations": { "readOnlyHint": true, "openWorldHint": false }
   },

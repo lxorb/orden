@@ -33,6 +33,8 @@ describe('two copies of a web note', () => {
       home: 'https://docs.dev/',
       icon: 'data:older',
       own: null,
+      chosen: null,
+      chosenColour: null,
     })
   })
 

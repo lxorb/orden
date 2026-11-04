@@ -11,7 +11,7 @@
 
 import { without } from '../records'
 import { insideItsSpace, insideSpace, movedTo, pathKey, relativeTo, samePath } from '../space-paths'
-import { forget, isRecord, isString, keep, stored } from '../stored'
+import { forget, isRecord, isString, keepJson, stored } from '../stored'
 import type { KeptByPath } from '../workspace/file-ops'
 
 const STORAGE_KEY = 'nib:projects'
@@ -31,7 +31,7 @@ function read(): Record<string, string> {
 }
 
 function write(all: Record<string, string>) {
-  if (Object.keys(all).length) keep(STORAGE_KEY, JSON.stringify(all))
+  if (Object.keys(all).length) keepJson(STORAGE_KEY, all)
   else forget(STORAGE_KEY)
 }
 

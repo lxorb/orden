@@ -303,6 +303,16 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #1088: a web tab's page wears its rounded card's corners at its bottom.
+      - name: A web tab's page has its card's rounded corners, under sway
+        if: always()
+        env:
+          OUT: wayland-out/corner
+          CORNER: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #1080: a press into the page of a pane not being worked in chooses its tab and pane.
       - name: A press into a web tab's page chooses its tab and its pane, under sway
         if: always()

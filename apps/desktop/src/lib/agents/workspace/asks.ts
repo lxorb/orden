@@ -23,8 +23,7 @@ function fullPermissions(call: Call): boolean {
   return call.caller.agent?.mode === 'autonomous'
 }
 
-/** A step kept to the reader's own hands (a pinned tab closed, a palette row only a
- *  person presses), refused - except to an agent with Full permissions, which does it.
+/** A step kept to the reader's own hands (a palette row only a person presses), refused - except to an agent with Full permissions, which does it.
  *  The reader's command line and links never do: they are other programs. */
 export function readersOwn(call: Call, why: string): void {
   if (!fullPermissions(call)) throw new Refused('by_hand', why)

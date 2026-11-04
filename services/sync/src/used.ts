@@ -246,7 +246,7 @@ async function heldFiles(env: Env, userId: string, done: Reading): Promise<Set<s
  *  row says: `used`, `unknown` while a version has none written down yet, or null.
  *
  *  A version's row has them from when it was kept (versions.ts). One from before there
- *  was anywhere to put them (0068) is read here as far as what is left goes and written
+ *  was anywhere to put them (0071) is read here as far as what is left goes and written
  *  down, so what one sweep read the next does not read again, and an account with more
  *  of them than one request reads gets to the end of them over several. Until it does
  *  nothing it holds as a picture is let go of. */

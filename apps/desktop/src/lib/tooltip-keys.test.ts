@@ -26,8 +26,8 @@ describe('a tooltip', () => {
 
   test('is the name alone where nothing holds a key', () => {
     expect(tooltip('Downloads')).toBe('Downloads')
-    // Pin has no key out of the box.
-    expect(tooltip('Pin', 'app.pin')).toBe('Pin')
+    // Random note has no key out of the box.
+    expect(tooltip('Random note', 'app.random-note')).toBe('Random note')
   })
 
   test('says the key the reader chose, the moment it is chosen', () => {

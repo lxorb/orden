@@ -118,8 +118,8 @@
      the top bar and the sidebars are one surface round it with no line between them,
      as Firefox draws its window. Every surface that touches the frame reads these and
      nothing else: a pane, a split's gap, a web page's corners, a sidebar that floats,
-     the tab overview's windows. The Corners setting writes them (corners.ts): Rounded,
-     these, and Square, the window as it was - flush, square, divided by lines.
+     the tab overview's windows. The one look since #1102: full screen and a touch
+     screen alone write them flush and square (`flush` in App.svelte).
 
      `--card-radius` is the card's corner and `--card-inset` how far it stands in from
      the chrome; `--card-gap` the room between two cards of a split, which is a line's
@@ -173,6 +173,9 @@
   --row-pad: var(--space-2);
   --row-gap: var(--space-2);
   --row-indent: 14px;
+  /* The column every value at the end of a setting's row is drawn in: the
+     dropdowns, the fields, the swatches. See `.nib-field.is-value` in base.css. */
+  --setting-value: 14rem;
   /* The corner a selected block is drawn with. Its own token because it is read
      back as a number and traced into the outline rather than declared on a box;
      see selection/shape.ts in @orden/editor. A plain length, no calc. */

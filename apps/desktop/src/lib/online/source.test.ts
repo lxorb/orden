@@ -57,6 +57,7 @@ vi.mock('./link', async (real) => ({
 const source = () =>
   new OnlineSource(
     () => '/space/Terminal.term',
+    () => '',
     () => Promise.resolve('device'),
     { tab: () => 't1', front: () => true, offer: () => undefined },
     { pages: false, native: false },

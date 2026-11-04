@@ -1,0 +1,109 @@
+"""The Tasks panel chooses, and opens a tab only when asked (#374), in the built app.
+
+What this drives, against the real rows store and the real files:
+
+  * A press on Tasks, on a favourite and on a label chooses that row: it is marked, its
+    list is drawn in the panel under the rows, and the number of tabs stays as it was.
+  * Ctrl and a press, the middle button, and the row's menu's Open in new tab each open
+    the row in a tab of its own, kept rather than a preview.
+
+    python apps/desktop/test/e2e/tasks-panel.py
+
+Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/tasks-panel/`.
+"""
+
+from __future__ import annotations
+
+import json
+
+from playwright.sync_api import Browser, Page
+
+from harness import Drive
+from settling import quiet
+
+DRIVE = Drive(__file__)
+say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
+
+ERRANDS = """# Errands
+
+- [ ] Call the bank #admin
+- [ ] Water the plants #home
+- [ ] Read a book
+"""
+
+WRITE = """async ([files]) => {
+  const ws = window.nibApp.workspace
+  const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
+  for (const [path, text] of files) await window.tasks.writeFile(`${root}/${path}`, text)
+  await ws.loadTree()
+}"""
+
+TABS = "() => window.nibApp.workspace.tabs.length"
+
+
+def shot(page: Page, name: str) -> None:
+    quiet(page)
+    DRIVE.shot(page, name)
+
+
+def panel_words(page: Page) -> list[str]:
+    return page.evaluate(  # type: ignore[no-any-return]
+        "() => [...document.querySelectorAll('.tasks .chosen .task .words')].map((one) => one.textContent.trim())"
+    )
+
+
+def chosen(page: Page) -> str:
+    return page.evaluate(  # type: ignore[no-any-return]
+        "() => document.querySelector('.tasks .nib-row[aria-pressed=true] .nib-row-label')?.textContent.trim() ?? ''"
+    )
+
+
+def row(page: Page, name: str):  # type: ignore[no-untyped-def]
+    return page.locator(".tasks > .nib-row", has=page.locator(f".nib-row-label:text-is('{name}')")).first
+
+
+def drive(browser: Browser) -> None:
+    page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
+    DRIVE.open(page)
+    wait_for(page, "window.nibApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    page.evaluate(WRITE, [[["Errands.md", ERRANDS]]])
+    wait_for(page, "() => window.tasks.rows.of().some((one) => one.task?.text === 'Read a book')", "the rows")
+    page.evaluate("window.nibApp.workspace.bookmarks.toggle({ kind: 'note', path: 'Errands.md', text: '' })")
+    page.evaluate("window.nibApp.workspace.showPanel('tasks')")
+    wait_for(page, "document.querySelector('.tasks .chosen .task')", "the chosen list in the panel")
+    tabs = page.evaluate(TABS)
+    say(f"[tabs at the start] {tabs}")
+
+    for name, wanted in (
+        ("admin", ["Call the bank"]),
+        ("Errands", ["Call the bank", "Water the plants", "Read a book"]),
+        ("home", ["Water the plants"]),
+        ("Tasks", ["Call the bank", "Water the plants", "Read a book"]),
+    ):
+        row(page, name).click()
+        DRIVE.waited(page, f"() => document.querySelector('.tasks .nib-row[aria-pressed=true] .nib-row-label')?.textContent.trim() === {json.dumps(name)}", f"{name} chosen")
+        quiet(page)
+        words = sorted(panel_words(page))
+        say(f"[{name}] chosen {chosen(page)!r}, list {json.dumps(words)}, tabs {page.evaluate(TABS)}")
+        if page.evaluate(TABS) != tabs:
+            wrong(f"pressing {name} changed the number of tabs")
+        if words != sorted(wanted):
+            wrong(f"the panel's list for {name} is {words}, not {sorted(wanted)}")
+    shot(page, "01-chosen")
+
+    row(page, "admin").click(modifiers=["Control"])
+    if DRIVE.waited(page, f"() => ({TABS})() === {tabs + 1}", "Ctrl and a press opening a tab"):
+        if page.evaluate("() => window.nibApp.workspace.active?.preview === true"):
+            wrong("the tab Ctrl and a press opened is a preview")
+    row(page, "home").click(button="middle")
+    DRIVE.waited(page, f"() => ({TABS})() === {tabs + 2}", "the middle button opening a tab")
+    row(page, "Errands").click(button="right")
+    page.locator(".nib-menu [role=menuitem], [role=menu] [role=menuitem]", has_text="Open in new tab").first.click()
+    DRIVE.waited(page, f"() => ({TABS})() === {tabs + 3}", "Open in new tab opening a tab")
+    shot(page, "02-opened")
+    page.close()
+
+
+if __name__ == "__main__":
+    raise SystemExit(DRIVE.run(drive, "the Tasks panel chooses, and opens a tab only when asked"))

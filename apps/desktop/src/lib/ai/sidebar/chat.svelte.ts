@@ -21,7 +21,7 @@ import { i18n, message, t } from '../../i18n.svelte'
 import { owes, writing } from '../../parting'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
-import { forget, keep, stored, storedText } from '../../stored'
+import { forget, keep, keepJson, stored, storedText } from '../../stored'
 import { afterQuiet, onceAFrame } from '../../timing'
 import { workspace } from '../../workspace.svelte'
 import { unlisted } from '../chat/catalogue'
@@ -343,7 +343,7 @@ class Chat implements Panel {
     const thread = threadFromAsk(old, space, provider.id, provider.model)
     if (thread) await keepThread(thread).catch(() => undefined)
     const rest = Object.fromEntries(Object.entries(spaces).filter(([id]) => id !== space))
-    if (Object.keys(rest).length) keep(OLD_KEY, JSON.stringify({ spaces: rest }))
+    if (Object.keys(rest).length) keepJson(OLD_KEY, { spaces: rest })
     else forget(OLD_KEY)
   }
 
@@ -418,7 +418,7 @@ class Chat implements Panel {
       if (!space || stored(key) === true) continue
       try {
         wrote += await findParents(space)
-        keep(key, 'true')
+        keepJson(key, true)
       } catch {
         // Tried again next launch.
       }
@@ -1237,10 +1237,17 @@ class Chat implements Panel {
   }
 
   /** The last message again, in place of its answer (Ask again); with a model named,
-   *  that model answers this time and from here on (retry with another model). */
+   *  that model answers this time and from here on (retry with another model) - once the
+   *  switch has been asked about like any other (`chooseModel`), and not at all where the
+   *  reader said no. */
   retry(model?: { provider: string; id: string }, thread = this.open): void {
     if (!thread || this.running.includes(thread.id) || thread.elsewhere) return
-    if (model) this.setModel(model.provider, model.id)
+    if (model) {
+      void this.chooseModel(model.provider, model.id).then((switched) => {
+        if (switched) this.retry(undefined, thread)
+      })
+      return
+    }
     let at = thread.turns.length - 1
     while (at >= 0 && (thread.turns[at]?.role !== 'you' || thread.turns[at]?.steered)) at--
     const asked = thread.turns[at]
@@ -1325,13 +1332,16 @@ class Chat implements Panel {
     return list
   }
 
-  /** Another model picked for this thread (the model picker): asked about first where the
-   *  switch sends the conversation again (#1089, switch-cost.ts) - how many tokens that
-   *  is about, and that it is compacted first where it does not fit the new model - unless
-   *  the reader said not to ask again. */
-  async chooseModel(provider: string, model: string): Promise<void> {
+  /** Another model for the open thread, by whatever way it was asked for - the model
+   *  picker, `/model`, an agent's profile, Ask again with another model. The one door a
+   *  thread changes model through: `switchModel`, which does it, is this class's own.
+   *  Asked about first where the switch sends the conversation again (#1089,
+   *  switch-cost.ts) - how many tokens that is about, and that it is compacted first where
+   *  it does not fit the new model - unless the reader said not to ask again. Whether it
+   *  switched. */
+  async chooseModel(provider: string, model: string): Promise<boolean> {
     const thread = this.open
-    if (!thread) return
+    if (!thread) return false
     const info = this.models[provider]?.find((one) => one.id === model)
     const cost = switchCost(
       thread.usage,
@@ -1356,16 +1366,19 @@ class Chat implements Panel {
         ],
         tick: t("Don't ask again"),
       })
-      if (answer?.id !== 'switch') return
+      if (answer?.id !== 'switch') return false
       if (answer.ticked) keep(SWITCH_KEY, 'never')
     }
     // Compacted by the model that has read it, before another one has to.
     if (cost?.compacts && this.open === thread) await this.compacted()
-    if (this.open === thread) this.setModel(provider, model)
+    if (this.open !== thread) return false
+    this.switchModel(provider, model)
+    return true
   }
 
-  /** Another model for this thread, and the effort last used with it. */
-  setModel(provider: string, model: string): void {
+  /** Another model for this thread, and the effort last used with it: only ever through
+   *  `chooseModel`. */
+  private switchModel(provider: string, model: string): void {
     const thread = this.open
     if (!thread) return
     const changed = thread.provider !== provider
@@ -1392,7 +1405,7 @@ class Chat implements Panel {
         (one) => one.id.toLowerCase().includes(want) || one.name.toLowerCase().includes(want),
       )
     if (!found || !provider) return false
-    this.setModel(provider.id, found.id)
+    void this.chooseModel(provider.id, found.id)
     return true
   }
 

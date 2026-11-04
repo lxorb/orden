@@ -86,6 +86,15 @@ export const jv: Dictionary = {
   // Tasks: the Display menu
   Display: 'Tampilan',
   'Completed tasks': 'Tugas rampung',
+  Smart: 'Pinter',
+  Grouping: 'Pangelompokan',
+  Sorting: 'Urutan',
+  'Last 30 days': '30 dina pungkasan',
+  'Assigned to me': 'Diwènèhaké marang aku',
+  Unassigned: 'Durung diwènèhaké',
+  'Reset all': 'Atur ulang kabèh',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Tata letak nuduhaké tugas minangka dhaftar, papan utawa tanggalan. Pangelompokan mbagi dadi klompok, yaiku kolom-kolom papan. Urutan ngurutaké saben klompok. Filter ndhelikaké sing ora kok butuhaké. Kabèh disimpen kanggo tampilan iki.',
   // Tasks: several lines pasted into quick add
   'One task': 'Siji tugas',
   'One per line': 'Siji saben baris',
@@ -554,11 +563,12 @@ export const jv: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna panandes',
-  'Window corners': 'Pojok jendhela',
-  Rounded: 'Bunder',
-  Square: 'Kothak',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Bunder ngambangake sing kabukak ing kertu ing jero jendhela; Kothak njaga rata.',
+  'Tidy up': 'Rapèkaké',
+  'Swipe in from the edge to see your notes.':
+    'Gesek mlebu saka pinggir kanggo ndeleng cathetanmu.',
+  'Show other tabs as icons': 'Tampilake tab liyane minangka lambang',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Saben tab kajaba sing ngarep mung nampilake lambange; yen diarahake, jenenge katon.',
   'Tab preview delay': 'Wektu tundha pratinjau tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Suwene pointer mandheg ing tab sadurunge pratinjaune katon.',
@@ -1804,6 +1814,7 @@ export const jv: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informasi situs',
   Downloads: 'Undhuhan',
+  'Downloading {name}': 'Ngundhuh {name}',
   'Show in folder': 'Tampilake ing folder',
   'Show in Finder': 'Tampilake ing Finder',
   'Reveal in Finder': 'Tampilake ing Finder',
@@ -1898,6 +1909,9 @@ export const jv: Dictionary = {
   'Exited with code {code}': 'Rampung kanthi kode {code}',
   'Could not start {shell}': 'Ora bisa miwiti {shell}',
   'Restore history': 'Balèkaké riwayat',
+  'Colours follow the theme': 'Werna ngetutké tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Mènèhi werna terminal nganggo werna tema; yèn dipatèni, siji palet tetep dijaga.',
   'Restored {time}': 'Dibalèkaké {time}',
   'Stop what is running in {name}?': 'Mandhegake sing mlaku ing {name}?',
   'Stop what is running in these terminals?': 'Mandhegake sing mlaku ing terminal iki?',
@@ -2045,6 +2059,8 @@ export const jv: Dictionary = {
   'Every space': 'Saben papan',
   Sites: 'Situs',
   'Asks first': 'Takon dhisik',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Iki nyambung liwat MCP lan ngatur idin dhewe ing kana: Orden ora takon apa-apa. Space, situs sing diblokir lan watesan ing ngisor tetep ditrapake.',
   Limits: 'Watesan',
   'Clear what {name} did?': 'Busak apa sing ditindakake {name}?',
   'Show earlier': 'Tampilake sadurunge',
@@ -2287,6 +2303,12 @@ export const jv: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Terminal online anyar',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'piranti liya',
+  'Taken over by {device}': 'Dijupuk {device}',
+  'Open on {device} since {time}': 'Kabukak ing {device} wiwit {time}',
+  'Take over': 'Jupuk alih',
+  'Take back': 'Jupuk maneh',
   'Start online machine': 'Wiwiti mesin online',
   'Stop online machine': 'Mandhegake mesin online',
   Resume: 'Terusake',
@@ -2332,6 +2354,8 @@ export const jv: Dictionary = {
   'Take photo': 'Njupuk foto',
   Pronouns: 'Tembung sesulih',
   Bio: 'Bio',
+  'A few words about you': 'Sawetara tembung babagan sampeyan',
+  'What’s happening?': 'Ana apa?',
   'Clear after': 'Busak sawise',
   '30 minutes': '30 menit',
   '1 hour': '1 jam',
@@ -2690,4 +2714,5 @@ export const jv: Dictionary = {
   'View your report': 'Deleng laporanmu',
   'Not sent. Your text is kept, so you can try again.':
     'Ora kekirim. Tulisanmu isih disimpen, dadi kowé bisa nyoba manèh.',
+  'Reset to site icon': 'Balekake menyang lambang situs',
 }

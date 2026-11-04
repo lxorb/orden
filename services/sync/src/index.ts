@@ -38,6 +38,7 @@ import { onlineAdmin } from './machines/admin'
 import { sweepAudit } from './machines/audit'
 import { machineBundle } from './machines/bundle'
 import { onlineDoor } from './machines/door'
+import { appsDoor } from './apps/door'
 import { isMachineHost, machineDomain } from './machines/hetzner-host'
 import { online } from './machines/routes'
 import { settings } from './settings'
@@ -126,6 +127,8 @@ app.route('/v2/chats', chatDoor)
 // subprotocol. Only `/:term/socket` is answered here; the rest of `/v2/online` is
 // behind the guard below. See machines/door.ts and docs/online-terminal.md.
 app.route('/v2/online', onlineDoor)
+// An application's, the same way (apps/door.ts, issue 1063).
+app.route('/v2/apps', appsDoor)
 // The machine's bundle, which a Hetzner server fetches with no session; see
 // machines/bundle.ts.
 app.route('/v2/online/machine', machineBundle)
@@ -463,3 +466,4 @@ export default { fetch: serve, scheduled }
 export { NoteRoom } from './rooms/room'
 export { AccountHub } from './hub/hub'
 export { ChatLog } from './chats/log'
+export { AppRelay } from './apps/relay'

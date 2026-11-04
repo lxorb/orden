@@ -36,7 +36,7 @@
   import { t } from './i18n.svelte'
   import { dur } from './motion'
   import { SEARCH_MARK } from './panel-marks'
-  import { arrive, leave } from './slide'
+  import { arrive } from './slide'
   import { shortcuts } from './shortcuts.svelte'
   import Cross from './Cross.svelte'
 
@@ -146,7 +146,7 @@
 <!-- A bar under the strip rather than a layer over the note: what is being
      searched has to stay where it was, and a bar that covered the first line of
      it would be a bar that hid the first match. -->
-<div class="findbar" in:arrive out:leave>
+<div class="findbar" transition:arrive>
   <div class="line">
     <div class="box">
       <!-- The same magnifier every search in the app wears, in the field's own

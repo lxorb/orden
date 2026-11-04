@@ -132,6 +132,21 @@ export async function historyOf(place: Place): Promise<History | null> {
   return readHistory(found)
 }
 
+/** What a terminal had on its screen last time, only looked at: the tab overview's
+ *  window of a terminal not in front (#331). Unlike `historyOf` it leaves a closed tab's
+ *  lines where they are, for Reopen closed tab to put back. */
+export async function peekHistory(place: Place): Promise<History | null> {
+  if (!place.key) return null
+  const kept = closed.get(place.key)
+  if (kept) return kept
+  await turns.get(place.key)
+  const found = await invoke<unknown>('terminal_history_read', {
+    space: place.space,
+    key: place.key,
+  }).catch(() => null)
+  return readHistory(found)
+}
+
 /** A terminal's screen, written down in place of the last. */
 export function keepHistory(place: Place, history: History): void {
   if (!place.key) return

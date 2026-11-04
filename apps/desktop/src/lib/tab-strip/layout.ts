@@ -21,8 +21,9 @@ export const WIDTH = {
   active: 38,
   /** The narrowest any other tab gets, which is a sliver of its mark. */
   inactive: 14,
-  /** A pinned tab, which is its mark and never changes. */
-  pinned: 46,
+  /** A tab drawn as its mark alone, which every tab but the one being read is while
+   *  Icon tabs is on (#1041); see icon-tabs.svelte.ts. */
+  icon: 46,
 } as const
 
 /** From the tab's edge to its contents: half the gap between two tabs, and the
@@ -40,9 +41,10 @@ const CLOSE = 16 + 4
 const CLOSE_FROM = 68
 const CLOSE_FROM_TOUCH = 100
 
-/** What the layout needs to know about a tab. */
+/** What the layout needs to know about a tab: whether it is the one being read, and
+ *  whether it is drawn as its mark alone. */
 export interface Sized {
-  readonly pinned: boolean
+  readonly icon: boolean
   readonly active: boolean
 }
 
@@ -61,7 +63,7 @@ const sum = (values: readonly number[]): number => values.reduce((all, one) => a
 
 /** The three widths a tab has in the three totals the layout is solved against. */
 function limits(tab: Sized): { least: number; crossover: number; preferred: number } {
-  if (tab.pinned) return { least: WIDTH.pinned, crossover: WIDTH.pinned, preferred: WIDTH.pinned }
+  if (tab.icon) return { least: WIDTH.icon, crossover: WIDTH.icon, preferred: WIDTH.icon }
 
   return {
     least: tab.active ? WIDTH.active : WIDTH.inactive,
@@ -118,6 +120,20 @@ export function widthsFor(tabs: readonly Sized[], room: number | null): number[]
   })
 }
 
+/** How wide a tab drawn as its mark alone opens out to while the pointer rests on it
+ *  (#1041): to the standard width where the strip has the room, and never narrower than
+ *  enough of its name to read. Only that tab changes, so every tab in front of it - and
+ *  the one under the pointer - stays where it was, and the ones after it make way. */
+export const OPENED_LEAST = 160
+
+export function widened(widths: readonly number[], at: number, room: number | null): number[] {
+  const now = widths[at]
+  if (now === undefined) return [...widths]
+  const free = room === null ? 0 : Math.max(0, room - sum(widths))
+  const wide = Math.max(OPENED_LEAST, Math.min(WIDTH.standard, now + free))
+  return widths.map((width, index) => (index === at ? Math.max(width, wide) : width))
+}
+
 /** Where each tab starts, given how wide each one is: one after the other. */
 export function placed(widths: readonly number[]): Bounds[] {
   let x = 0
@@ -148,12 +164,14 @@ export interface Parts {
 
 /** Chrome's order of giving things up as a tab narrows: the active tab keeps its
  *  close button whatever happens and the mark goes first; any other tab keeps its
- *  mark and drops the close button once its contents are under 68 pixels. A pinned
- *  tab is its mark, and a tab narrower than the least inactive width is nothing at
- *  all - it is on its way in or out. */
+ *  mark and drops the close button once its contents are under 68 pixels. A tab drawn
+ *  as an icon is its mark, and a tab narrower than the least inactive width is nothing
+ *  at all - it is on its way in or out. */
 export function partsFor(width: number, tab: Sized, touch = false): Parts {
   if (width < WIDTH.inactive) return { mark: false, close: false, title: false, centred: false }
-  if (tab.pinned) return { mark: true, close: false, title: false, centred: true }
+  // At its leading edge rather than centred, where it stays as the tab opens out under
+  // the pointer: a mark that moved over as the name came in would be a jump (#1041).
+  if (tab.icon) return { mark: true, close: false, title: false, centred: false }
 
   const contents = width - 2 * INSET
   let left = contents
@@ -176,18 +194,9 @@ export function partsFor(width: number, tab: Sized, touch = false): Parts {
 
 /** Which place in a strip a point along it is at: before every tab whose middle it
  *  has not reached. What a note out of the file list, or a tab out of another pane,
- *  is dropped at.
- *
- *  A pinned tab heads the strip against every drop, so what arrives unpinned
- *  arrives after the last of them. */
-export function slotAt(
-  bounds: readonly Bounds[],
-  along: number,
-  pinnedRun: number,
-  pinned = false,
-): number {
-  const at = bounds.filter((one) => one.x + one.width / 2 < along).length
-  return pinned ? Math.min(at, pinnedRun) : Math.max(at, pinnedRun)
+ *  is dropped at. */
+export function slotAt(bounds: readonly Bounds[], along: number): number {
+  return bounds.filter((one) => one.x + one.width / 2 < along).length
 }
 
 /** The strip's order with one tab taken from `from` and put in at `to`. */
@@ -201,28 +210,23 @@ export function moved<T>(order: readonly T[], from: number, to: number): T[] {
 
 /** Where a tab would start if it were moved from `from` to `to`, given every
  *  tab's width in the strip as it stands. Moving a tab changes no width - only
- *  which tab is active or pinned does - so the widths travel with their tabs. */
+ *  which tab is active does - so the widths travel with their tabs. */
 function startIf(widths: readonly number[], from: number, to: number): number {
   return sum(moved(widths, from, to).slice(0, to))
 }
 
 /** The slot a tab being dragged belongs in: the one whose start is nearest to
  *  where the tab is being drawn. Which is Chrome's rule, and the same as saying a
- *  neighbour gives way once the dragged tab has passed its middle.
- *
- *  Only the slots its kind may have: a pinned tab among the pinned, any other
- *  after them. Ties go to the slot it is in, so a drag that has gone nowhere has
- *  moved nothing. */
+ *  neighbour gives way once the dragged tab has passed its middle. Ties go to the slot
+ *  it is in, so a drag that has gone nowhere has moved nothing. */
 export function nearestSlot(
   widths: readonly number[],
   from: number,
   x: number,
-  pinnedRun: number,
-  pinned: boolean,
   current = from,
 ): number {
-  const low = pinned ? 0 : pinnedRun
-  const high = pinned ? Math.max(pinnedRun - 1, 0) : widths.length - 1
+  const low = 0
+  const high = widths.length - 1
 
   let best = clamp(current, low, high)
   let nearest = Math.abs(x - startIf(widths, from, best))
@@ -305,7 +309,7 @@ export function keptWidths(
   for (const tab of tabs) {
     const width = kept.get(tab.id)
     if (width === undefined) return null
-    widths.push(tab.active && !tab.pinned ? Math.max(width, WIDTH.active) : width)
+    widths.push(tab.active && !tab.icon ? Math.max(width, WIDTH.active) : width)
   }
 
   return widths

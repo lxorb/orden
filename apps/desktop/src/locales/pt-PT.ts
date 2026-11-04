@@ -91,6 +91,15 @@ export const ptPT: Dictionary = {
   // Tasks: the Display menu
   Display: 'Visualização',
   'Completed tasks': 'Tarefas concluídas',
+  Smart: 'Inteligente',
+  Grouping: 'Agrupamento',
+  Sorting: 'Ordenação',
+  'Last 30 days': 'Últimos 30 dias',
+  'Assigned to me': 'Atribuídas a mim',
+  Unassigned: 'Sem responsável',
+  'Reset all': 'Repor tudo',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'O esquema mostra as tarefas como lista, quadro ou calendário. O agrupamento divide-as em grupos, que são as colunas de um quadro. A ordenação ordena cada grupo. Os filtros ocultam o que não precisa. Tudo fica guardado para esta vista.',
   // Tasks: several lines pasted into quick add
   'One task': 'Uma tarefa',
   'One per line': 'Uma por linha',
@@ -572,11 +581,11 @@ export const ptPT: Dictionary = {
   'Actual size': 'Tamanho real',
   // Appearance
   Accent: 'Destaque',
-  'Window corners': 'Cantos da janela',
-  Rounded: 'Arredondados',
-  Square: 'Quadrados',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Arredondados faz o que está aberto flutuar num cartão dentro da janela; Quadrados mantém-no rente às margens.',
+  'Tidy up': 'Arrumar',
+  'Swipe in from the edge to see your notes.': 'Deslize a partir da margem para ver as suas notas.',
+  'Show other tabs as icons': 'Mostrar os outros separadores como ícones',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Cada separador, exceto o da frente, mostra só o ícone; ao apontar para um, aparece o nome.',
   'Tab preview delay': 'Atraso da pré-visualização de separadores',
   'How long the pointer rests on a tab before its preview shows.':
     'Quanto tempo o ponteiro fica sobre um separador antes de a pré-visualização aparecer.',
@@ -1865,6 +1874,7 @@ export const ptPT: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informações do Website',
   Downloads: 'Transferências',
+  'Downloading {name}': 'A transferir {name}',
   'Show in folder': 'Mostrar na pasta',
   'Show in Finder': 'Mostrar no Finder',
   'Reveal in Finder': 'Mostrar no Finder',
@@ -1960,6 +1970,9 @@ export const ptPT: Dictionary = {
   'Exited with code {code}': 'Terminado com o código {code}',
   'Could not start {shell}': 'Não foi possível iniciar {shell}',
   'Restore history': 'Restaurar histórico',
+  'Colours follow the theme': 'As cores seguem o tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Pinta os terminais com as cores do tema; desligado, mantém uma paleta fixa.',
   'Restored {time}': 'Restaurado {time}',
   'Stop what is running in {name}?': 'Parar o que está a ser executado em {name}?',
   'Stop what is running in these terminals?': 'Parar o que está a ser executado nestes terminais?',
@@ -2115,6 +2128,8 @@ export const ptPT: Dictionary = {
   'Every space': 'Todos os espaços',
   Sites: 'Sites',
   'Asks first': 'Pergunta antes',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Liga-se por MCP e gere lá as suas próprias permissões: o Orden não lhe pergunta nada. Os seus espaços, sites bloqueados e limites abaixo continuam a aplicar-se.',
   Limits: 'Limites',
   'Clear what {name} did?': 'Apagar o que {name} fez?',
   'Show earlier': 'Mostrar anteriores',
@@ -2365,6 +2380,12 @@ export const ptPT: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Novo terminal online',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'outro dispositivo',
+  'Taken over by {device}': 'Assumido por {device}',
+  'Open on {device} since {time}': 'Aberto em {device} desde as {time}',
+  'Take over': 'Assumir',
+  'Take back': 'Retomar',
   'Start online machine': 'Iniciar máquina online',
   'Stop online machine': 'Parar máquina online',
   Resume: 'Retomar',
@@ -2410,6 +2431,8 @@ export const ptPT: Dictionary = {
   'Take photo': 'Tirar fotografia',
   Pronouns: 'Pronomes',
   Bio: 'Bio',
+  'A few words about you': 'Algumas palavras sobre si',
+  'What’s happening?': 'O que se passa?',
   'Clear after': 'Limpar após',
   '30 minutes': '30 minutos',
   '1 hour': '1 hora',
@@ -2772,4 +2795,5 @@ export const ptPT: Dictionary = {
   'View your report': 'Ver o seu relatório',
   'Not sent. Your text is kept, so you can try again.':
     'Não enviado. O seu texto foi mantido para poder tentar de novo.',
+  'Reset to site icon': 'Repor o ícone do site',
 }

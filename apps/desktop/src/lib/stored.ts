@@ -70,6 +70,14 @@ export function keep(key: string, value: string): boolean {
   }
 }
 
+/** Writes a value down as JSON: the one way to keep a shape, a number or a flag, read
+ *  back with `stored`. A word kept with `keep` is read back with `storedText`; the two
+ *  are never crossed (#1095, test/stored-pairs.test.ts), because a word read as JSON
+ *  reads as nothing and the setting it was never comes back. */
+export function keepJson(key: string, value: unknown): boolean {
+  return keep(key, JSON.stringify(value))
+}
+
 /** Whether the log has heard about it already. Once for the whole run: the reason
  *  is the same every time, so is what follows from it, and forty lines of that is
  *  a log nobody reads. Said at all because a machine that has stopped remembering

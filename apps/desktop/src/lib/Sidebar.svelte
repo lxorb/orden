@@ -25,6 +25,7 @@
     ORDER_MARK,
     OUTLINE_MARK,
     PROPERTIES_MARK,
+    SCRATCHPAD_MARK,
     TASKS_MARK,
   } from './panel-marks'
   import { newSpace } from './space-actions'
@@ -42,9 +43,11 @@
     linksPanel,
     pagesNavigator,
     propertiesPanel,
+    scratchpadCard,
     searchPanel,
     tasksPanel,
   } from './surfaces.svelte'
+  import { shown as pad } from './scratchpad/is.svelte'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, PanelSide } from './workspace.svelte'
@@ -55,6 +58,10 @@
   import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
+  import { edgePeek } from './edge-peek.svelte'
+  import { overlays } from './overlays'
+  import { fullscreen } from './fullscreen.svelte'
+  import { alone } from './alone.svelte'
   import { hiddenKinds } from './settings.svelte'
   import { canWriteAt } from './sharing.svelte'
   import Bookmarks from './Bookmarks.svelte'
@@ -136,7 +143,13 @@
 
   /** Whether this side is open. Shut, the panel stays where it is, built and laid
    *  out, and only its column closes over it; see `.column`. */
-  const open = $derived(workspace.openOn(side) !== null)
+  /** Whether the scratchpad is one of this side's tabs: the right side's, on a desktop.
+   *  A phone's card is the one note there is, opened from the drawer's foot (#1030). */
+  const padHere = $derived(side === 'right' && !viewport.touch && !__EVEN_PLUGIN__)
+
+  const open = $derived(
+    side === 'right' ? workspace.rightShows !== null : workspace.openOn(side) !== null,
+  )
 
   /** The panel showing on this side, which every row below reads instead of
    *  `workspace.panel`: the left side's is that, and the right side's is its
@@ -147,7 +160,9 @@
    *  and a right side built on the file list - which never lives there - was a second
    *  tree made for nothing and torn down by the first press. */
   let lastShown: Panel = untrack(() => workspace.openOn(side)) ?? 'tree'
-  const showing = $derived.by(() => {
+  const showing = $derived.by((): Panel | 'scratchpad' => {
+    // The scratchpad's card is the right side's while it is up (#1032).
+    if (side === 'right' && padHere && pad.on) return 'scratchpad'
     const open = workspace.openOn(side)
     if (open) return (lastShown = open)
     return side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown
@@ -164,6 +179,97 @@
     return () => cancelAnimationFrame(next)
   })
   const shut = $derived(!open || !entered)
+
+  /** Brought out over the note by the pointer resting at the window's edge, while the
+   *  left side is shut: Zen's way (#1034; see edge-peek.svelte.ts). Not opened: the
+   *  note does not move, and the list goes again once the pointer has left it. */
+  const peek = $derived(side === 'left' && shut && edgePeek.out)
+  /** Whether it is floating over the note at all, which outlasts `peek` by the slide
+   *  back; and whether it has slid in, a frame after it floats, so the slide plays. */
+  let floating = $state(false)
+  let slidIn = $state(false)
+  $effect(() => {
+    if (peek) {
+      floating = true
+      const next = requestAnimationFrame(() => (slidIn = true))
+      return () => cancelAnimationFrame(next)
+    }
+    slidIn = false
+    // Opened for good, it is the column again at once, with no slide back to wait out.
+    if (!shut) {
+      floating = false
+      return
+    }
+    if (!untrack(() => floating)) return
+    const settled = setTimeout(() => (floating = false), dur(190))
+    return () => clearTimeout(settled)
+  })
+
+  /** Whether a row is being carried out of the list, which keeps it out until it lands. */
+  let carrying = false
+
+  // The edge is watched by the left side alone, and only with a pointer: a drawer has
+  // an edge of its own, dragged by a finger.
+  $effect(() => {
+    if (side !== 'left' || viewport.touch) return
+    const stop = edgePeek.watch({
+      may: () =>
+        workspace.panel === null &&
+        !viewport.drawer &&
+        !fullscreen.on &&
+        !alone.on &&
+        workspace.panes.fills === null &&
+        overlays.depth === 0,
+      width: () => window.innerWidth,
+      rtl: () => getComputedStyle(document.documentElement).direction === 'rtl',
+      over: (x, y) => {
+        const box = aside?.getBoundingClientRect()
+        return !!box && x >= box.left && x <= box.right && y >= box.top && y <= box.bottom
+      },
+      busy: () => {
+        const on = document.activeElement
+        const typing =
+          !!on &&
+          !!aside?.contains(on) &&
+          (on.matches('input, textarea') || on.closest('[contenteditable="true"]') !== null)
+        // Its own place on the stack is one; anything over it is a menu it opened.
+        return carrying || typing || overlays.depth > 1
+      },
+    })
+    const moved = (event: PointerEvent) => edgePeek.moved(event)
+    const out = (event: MouseEvent) => {
+      if (event.relatedTarget === null) edgePeek.away()
+    }
+    const carried = (event: DragEvent) => {
+      carrying = event.type === 'dragstart' && !!aside?.contains(event.target as Node)
+    }
+    window.addEventListener('pointermove', moved, { passive: true })
+    document.addEventListener('mouseout', out)
+    window.addEventListener('dragstart', carried, true)
+    window.addEventListener('dragend', carried, true)
+    return () => {
+      stop()
+      window.removeEventListener('pointermove', moved)
+      document.removeEventListener('mouseout', out)
+      window.removeEventListener('dragstart', carried, true)
+      window.removeEventListener('dragend', carried, true)
+    }
+  })
+
+  // Out over the note, it is a layer like any other: Escape and a press past it put it
+  // away, and a web page under it steps aside for it; see overlays.ts. Opened for good,
+  // it is no longer out.
+  $effect(() =>
+    peek
+      ? overlays.show(
+          () => edgePeek.hide(),
+          () => [aside],
+        )
+      : undefined,
+  )
+  $effect(() => {
+    if (side === 'left' && !shut) untrack(() => edgePeek.hide())
+  })
 
   /** Whether the column is sliding, which is the only time it clips: at rest an
    *  open panel draws past its edge wherever something of it reaches over the note.
@@ -211,22 +317,32 @@
       PANELS.map((one) => one.id),
     )
 
-    // The agents' tab only once one has spoken; see agent-marks.svelte.ts.
-    return held.flatMap((id) =>
-      PANELS.filter(
-        (one) =>
-          one.id === id &&
-          (id !== 'agents' || agentMarks.heard) &&
-          (id !== 'chats' || !!account.accountToken) &&
-          // The AI panel is the desktop's and the browser's; the glasses' plugin has none.
-          (id !== 'ask' || !__EVEN_PLUGIN__),
-      ),
+    // The agents' tab only once one has spoken; see agent-marks.svelte.ts. The
+    // scratchpad last on the right, the one tab that is no panel (#1032).
+    const pads: { id: Panel | 'scratchpad'; label: string; path: string }[] = padHere
+      ? [{ id: 'scratchpad', label: t('Scratchpad'), path: SCRATCHPAD_MARK }]
+      : []
+    const panelsHere: { id: Panel | 'scratchpad'; label: string; path: string }[] = held.flatMap(
+      (id) =>
+        PANELS.filter(
+          (one) =>
+            one.id === id &&
+            (id !== 'agents' || agentMarks.heard) &&
+            (id !== 'chats' || !!account.accountToken) &&
+            // The AI panel is the desktop's and the browser's; the glasses' plugin has none.
+            (id !== 'ask' || !__EVEN_PLUGIN__),
+        ),
     )
+    return [...panelsHere, ...pads]
   })
 
   /** The shortcut a panel's tab opens it with: the Files tab's command is older than
    *  the panel's id. */
-  const commandOf = (id: Panel) => `app.${id === 'tree' ? 'files' : id}`
+  const commandOf = (id: Panel | 'scratchpad') => `app.${id === 'tree' ? 'files' : id}`
+
+  /** A tab pressed: its panel, or the scratchpad, on this side; see `showRight`. */
+  const choose = (id: Panel | 'scratchpad') =>
+    id === 'scratchpad' ? workspace.showRight('scratchpad') : workspace.showPanel(id)
 
   /** The row, its tools and a tab's mark, measured: the pill gets the row less its
    *  `--space-1` padding and the tools, and a tab gives down to its mark and
@@ -258,7 +374,7 @@
       strip.behind.map((item) => ({
         label: item.label,
         hint: shortcuts.hint(commandOf(item.id)),
-        run: () => workspace.showPanel(item.id),
+        run: () => choose(item.id),
       })),
       { title: t('More') },
     )
@@ -344,7 +460,7 @@
    *  the same hold and two copies of one rule is one of them going stale; see
    *  `holdable` there for which panels and which machines. */
   const held = $derived(workspace.held)
-  const holdable = $derived(workspace.holdable(showing))
+  const holdable = $derived(showing !== 'scratchpad' && workspace.holdable(showing))
 
   /** The palette's keys as this reader has them, for its hint; none, no hint. */
   const paletteKey = $derived(shortcuts.hint('app.palette'))
@@ -564,11 +680,13 @@
   class="column"
   class:right={side === 'right'}
   class:shut
+  class:floating
+  class:slid={slidIn}
   class:moving
   class:resizing={size.dragging}
   ontransitionend={slid}
   ontransitioncancel={slid}
-  inert={shut && !viewport.drawer}
+  inert={shut && !peek && !viewport.drawer}
   style:--panel-width={size.pixels !== null && !viewport.touch ? `${size.pixels}px` : undefined}
 >
   <!-- Named, because a region of the page that has no name is one a reader cannot
@@ -636,10 +754,24 @@
         {/if}
 
         <!-- It takes the rest of the head, so the whole row is the control that
-         opens the list of spaces. Nothing stands beside it: the pen that made a
-         note here is gone (issue #229), and a new note is its key, the
+         opens the list of spaces. Only Todos stands beside it (#1047): the pen that
+         made a note here is gone (issue #229), and a new note is its key, the
          palette, the file list's menu and the new tab's chooser. -->
         <SpaceSwitcher />
+
+        <!-- Todos, as a tab: the space's tasks in one view, brought forward where it is
+         open already. In place of the Tasks panel, which lives on the right now, as the
+         list beside the note being written (#1047; see todos-entry.ts). -->
+        {#if !__EVEN_PLUGIN__}
+          <button
+            class="nib-glyph tool todos"
+            title={shortcuts.tooltip(t('Tasks'), 'app.tasks')}
+            aria-label={t('Tasks')}
+            onclick={() => void import('./todos-entry').then(({ showTodos }) => showTodos())}
+          >
+            <svg viewBox="0 0 13 13"><path d={TASKS_MARK} /></svg>
+          </button>
+        {/if}
       </div>
     {/if}
 
@@ -677,9 +809,13 @@
               ? t('{title}, unread', { title: item.label })
               : item.label}
             aria-selected={showing === item.id}
-            onclick={() => workspace.showPanel(item.id)}
-            oncontextmenu={(event) => showTabMenu(event, item.id, item.label)}
-            use:longPress={(event) => showTabMenu(event, item.id, item.label)}
+            onclick={() => choose(item.id)}
+            oncontextmenu={(event) => {
+              if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
+            }}
+            use:longPress={(event) => {
+              if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
+            }}
           >
             <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
             <!-- The questions agents are waiting on. -->
@@ -1083,6 +1219,12 @@
             {#await linksPanel() then Links}
               <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
             {/await}
+          {:else if showing === 'scratchpad'}
+            <!-- The scratchpad's card, as the right side's own (#1032): the side's width,
+                 and no edge of its own to drag. -->
+            {#await scratchpadCard() then Card}
+              <Card docked />
+            {/await}
           {:else if showing === 'search'}
             <!-- The one panel with a ranking engine behind it, fetched the first time
                  the tab is chosen rather than carried into the first paint; see
@@ -1134,6 +1276,33 @@
     transition:
       width var(--dur-base) var(--ease-out),
       visibility 0s var(--dur-base);
+  }
+
+  /* Brought out by the pointer at the window's edge (#1034): over the note rather than
+     beside it, so the column keeps no room and nothing moves, and slid in from the edge
+     it hides behind. */
+  .column.shut.floating {
+    position: relative;
+    visibility: visible;
+    overflow: visible;
+    transition: none;
+  }
+
+  .column.shut.floating aside {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: var(--z-drawer);
+    /* Its own ground under its own: at rest it stands on the window's chrome and lets
+       it show through, and over the note there is no chrome under it. */
+    background: linear-gradient(var(--side-ground), var(--side-ground)), var(--chrome-ground);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(calc(var(--dir) * -100%));
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .column.shut.floating.slid aside {
+    transform: none;
   }
 
   /* Clipped while it slides and while it is shut, rather than scrolled: `clip` is

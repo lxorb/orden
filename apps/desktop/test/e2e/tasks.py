@@ -2,7 +2,8 @@
 
 What this drives, against the real rows store and the real files:
 
-  * The Tasks panel lists Inbox, Today and Upcoming with their counts, the projects
+  * The Tasks panel lists the space's one Todos view with its count, and the labels; the
+    engine's Today and Upcoming, opened by name, still answer as they did; the projects
     and the labels; Today's count is in the danger tone while something is overdue.
   * Today holds what is overdue and what is due today and nothing later; Upcoming
     holds what is later and nothing of today.
@@ -157,13 +158,18 @@ def the_panel(page: Page) -> None:
     quiet(page)
     rows = texts(page, ".tasks .nib-row")
     say(f"[panel] {json.dumps(rows, ensure_ascii=False)}")
-    for wanted in ["Inbox", "Today", "Upcoming", "Bugs", "Errands", "Thesis", "admin"]:
+    # One view of the space's tasks and the labels (#1046): no Inbox, Upcoming,
+    # Completed, filters, projects or notes of its own any more.
+    for wanted in ["Tasks", "admin"]:
         if not any(one.startswith(wanted) for one in rows):
             wrong(f"the panel has no {wanted} row")
+    for gone in ["Inbox", "Upcoming", "Completed", "Thesis"]:
+        if any(one.startswith(gone) for one in rows):
+            wrong(f"the panel still has a {gone} row")
     # Overdue is a deadline past (#371): the passport's.
     late = page.evaluate("!!document.querySelector('.tasks .nib-row-meta.late')")
     if not late:
-        wrong("Today's count is not in the danger tone while something is overdue")
+        wrong("Todos' count is not in the danger tone while something is overdue")
     shot(page, "01-panel")
 
 

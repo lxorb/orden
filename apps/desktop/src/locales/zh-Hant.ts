@@ -86,6 +86,15 @@ export const zhHant: Dictionary = {
   // Tasks: the Display menu
   Display: '顯示',
   'Completed tasks': '已完成任務',
+  Smart: '智慧',
+  Grouping: '分組',
+  Sorting: '排序',
+  'Last 30 days': '過去 30 天',
+  'Assigned to me': '指派給我',
+  Unassigned: '未指派',
+  'Reset all': '全部重設',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    '版面將工作顯示為清單、看板或日曆。分組將工作分成若干組，即看板的欄。排序為每一組排好順序。篩選會隱藏你不需要的內容。所有設定都會為此檢視保留。',
   // Tasks: several lines pasted into quick add
   'One task': '一個任務',
   'One per line': '每行一個',
@@ -554,11 +563,11 @@ export const zhHant: Dictionary = {
   'Actual size': '實際大小',
   // Appearance
   Accent: '強調色',
-  'Window corners': '視窗角',
-  Rounded: '圓角',
-  Square: '直角',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    '圓角讓開啟的內容浮在視窗內的卡片中；直角讓它貼邊。',
+  'Tidy up': '整理',
+  'Swipe in from the edge to see your notes.': '從邊緣向內滑動即可查看筆記。',
+  'Show other tabs as icons': '其他分頁只顯示圖示',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    '除前面的分頁外，每個分頁只顯示圖示；指向某個分頁時會顯示其名稱。',
   'Tab preview delay': '分頁預覽延遲',
   'How long the pointer rests on a tab before its preview shows.':
     '指標在分頁上停留多久後顯示預覽。',
@@ -1770,6 +1779,7 @@ export const zhHant: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': '網站資訊',
   Downloads: '下載',
+  'Downloading {name}': '正在下載 {name}',
   'Show in folder': '在資料夾中顯示',
   'Show in Finder': '在 Finder 中顯示',
   'Reveal in Finder': '在 Finder 中顯示',
@@ -1863,6 +1873,9 @@ export const zhHant: Dictionary = {
   'Exited with code {code}': '已結束，代碼 {code}',
   'Could not start {shell}': '無法啟動 {shell}',
   'Restore history': '還原歷史記錄',
+  'Colours follow the theme': '顏色跟隨主題',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    '以主題的顏色繪製終端機；關閉則保留一套固定的調色盤。',
   'Restored {time}': '已還原 {time}',
   'Stop what is running in {name}?': '要停止 {name} 中正在執行的內容嗎？',
   'Stop what is running in these terminals?': '要停止這些終端機中正在執行的內容嗎？',
@@ -2007,6 +2020,8 @@ export const zhHant: Dictionary = {
   'Every space': '所有空間',
   Sites: '網站',
   'Asks first': '先詢問',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    '它透過 MCP 連線，並在那裡自行管理權限：Orden 不會詢問它任何事。下方的空間、已封鎖的網站和限制依然有效。',
   Limits: '限制',
   'Clear what {name} did?': '清除 {name} 的活動？',
   'Show earlier': '顯示更早',
@@ -2248,6 +2263,12 @@ export const zhHant: Dictionary = {
   // The online terminal
   'Online terminal': '線上終端機',
   'New online terminal': '新增線上終端機',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': '另一台裝置',
+  'Taken over by {device}': '已被 {device} 接管',
+  'Open on {device} since {time}': '自 {time} 起在 {device} 上開啟',
+  'Take over': '接管',
+  'Take back': '取回',
   'Start online machine': '啟動線上機器',
   'Stop online machine': '停止線上機器',
   Resume: '繼續',
@@ -2292,6 +2313,8 @@ export const zhHant: Dictionary = {
   'Take photo': '拍照',
   Pronouns: '代名詞',
   Bio: '簡介',
+  'A few words about you': '簡單介紹一下自己',
+  'What’s happening?': '在忙什麼？',
   'Clear after': '清除時間',
   '30 minutes': '30 分鐘',
   '1 hour': '1 小時',
@@ -2626,4 +2649,5 @@ export const zhHant: Dictionary = {
   'Your report reached us. You can follow it here:': '我們已收到你的回報。你可以在這裡查看進度：',
   'View your report': '查看你的回報',
   'Not sent. Your text is kept, so you can try again.': '未送出。你的文字已保留，可以再試一次。',
+  'Reset to site icon': '還原為網站圖示',
 }

@@ -89,6 +89,15 @@ export const am: Dictionary = {
   // Tasks: the Display menu
   Display: 'አቀራረብ',
   'Completed tasks': 'የተጠናቀቁ ተግባራት',
+  Smart: 'ብልጥ',
+  Grouping: 'መቧደን',
+  Sorting: 'መደርደር',
+  'Last 30 days': 'ያለፉት 30 ቀናት',
+  'Assigned to me': 'ለእኔ የተመደቡ',
+  Unassigned: 'ያልተመደቡ',
+  'Reset all': 'ሁሉንም ዳግም አስጀምር',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'አቀማመጥ ተግባሮቹን እንደ ዝርዝር፣ ሰሌዳ ወይም ቀን መቁጠሪያ ያሳያል። መቧደን በቡድኖች ይከፍላቸዋል፤ እነዚህም የሰሌዳ ዓምዶች ናቸው። መደርደር እያንዳንዱን ቡድን ያስተካክላል። ማጣሪያዎች የማያስፈልግዎትን ይደብቃሉ። ሁሉም ለዚህ እይታ ይቀመጣል።',
   // Tasks: several lines pasted into quick add
   'One task': 'አንድ ተግባር',
   'One per line': 'በየመስመሩ አንድ',
@@ -555,11 +564,11 @@ export const am: Dictionary = {
   'Actual size': 'እውነተኛ መጠን',
   // Appearance
   Accent: 'የማጉላት ቀለም',
-  'Window corners': 'የመስኮት ማዕዘኖች',
-  Rounded: 'የተጠጋጋ',
-  Square: 'ካሬ',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'የተጠጋጋ የተከፈተውን በመስኮቱ ውስጥ ባለ ካርድ ላይ ያንሳፍፋል፤ ካሬ ጠርዝ ላይ ያቆየዋል።',
+  'Tidy up': 'አስተካክል',
+  'Swipe in from the edge to see your notes.': 'ማስታወሻዎችዎን ለማየት ከጠርዙ ወደ ውስጥ ያንሸራትቱ።',
+  'Show other tabs as icons': 'ሌሎች ትሮችን እንደ አዶ አሳይ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ከፊት ካለው በስተቀር እያንዳንዱ ትር አዶውን ብቻ ያሳያል፤ ወደ አንዱ ሲጠቁሙ ስሙን ያሳያል።',
   'Tab preview delay': 'የትር ቅድመ እይታ መዘግየት',
   'How long the pointer rests on a tab before its preview shows.':
     'ቅድመ እይታው ከመታየቱ በፊት ጠቋሚው በትሩ ላይ የሚያርፍበት ጊዜ።',
@@ -1794,6 +1803,7 @@ export const am: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'የጣቢያ መረጃ',
   Downloads: 'ውርዶች',
+  'Downloading {name}': '{name} በማውረድ ላይ',
   'Show in folder': 'በአቃፊ ውስጥ አሳይ',
   'Show in Finder': 'በFinder ውስጥ አሳይ',
   'Reveal in Finder': 'በFinder ውስጥ አሳይ',
@@ -1887,6 +1897,9 @@ export const am: Dictionary = {
   'Exited with code {code}': 'በኮድ {code} ተጠናቋል',
   'Could not start {shell}': '{shell}ን ማስጀመር አልተቻለም',
   'Restore history': 'ታሪክን መልስ',
+  'Colours follow the theme': 'ቀለሞች ገጽታውን ይከተላሉ',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ተርሚናሎችን በገጽታው ቀለሞች ይቀባል፤ ሲጠፋ አንድ ቋሚ የቀለም ስብስብ ይይዛል።',
   'Restored {time}': 'ተመልሷል {time}',
   'Stop what is running in {name}?': 'በ{name} ውስጥ የሚሰራው ይቁም?',
   'Stop what is running in these terminals?': 'በእነዚህ ተርሚናሎች ውስጥ የሚሰራው ይቁም?',
@@ -2035,6 +2048,8 @@ export const am: Dictionary = {
   'Every space': 'ሁሉም ቦታዎች',
   Sites: 'ጣቢያዎች',
   'Asks first': 'መጀመሪያ ይጠይቃል',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'በMCP ይገናኛል እና ፈቃዶቹን እዚያ ራሱ ያስተዳድራል፤ Orden ምንም አይጠይቀውም። ከታች ያሉት ቦታዎችህ፣ የታገዱ ጣቢያዎች እና ገደቦች ግን ይቀጥላሉ።',
   Limits: 'ገደቦች',
   'Clear what {name} did?': '{name} ያደረገውን ይጽዱ?',
   'Show earlier': 'ቀደም ያሉትን አሳይ',
@@ -2282,6 +2297,12 @@ export const am: Dictionary = {
   // The online terminal
   'Online terminal': 'የመስመር ላይ ተርሚናል',
   'New online terminal': 'አዲስ የመስመር ላይ ተርሚናል',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'ሌላ መሣሪያ',
+  'Taken over by {device}': 'በ{device} ተወስዷል',
+  'Open on {device} since {time}': 'ከ{time} ጀምሮ በ{device} ላይ ክፍት',
+  'Take over': 'ተረከብ',
+  'Take back': 'መልሰህ ውሰድ',
   'Start online machine': 'የመስመር ላይ ማሽን አስጀምር',
   'Stop online machine': 'የመስመር ላይ ማሽን አቁም',
   Resume: 'ቀጥል',
@@ -2326,6 +2347,8 @@ export const am: Dictionary = {
   'Take photo': 'ፎቶ አንሳ',
   Pronouns: 'ተውላጠ ስሞች',
   Bio: 'ስለ እኔ',
+  'A few words about you': 'ስለ እርስዎ ጥቂት ቃላት',
+  'What’s happening?': 'ምን እየሆነ ነው?',
   'Clear after': 'ከዚህ በኋላ አጽዳ',
   '30 minutes': '30 ደቂቃ',
   '1 hour': '1 ሰዓት',
@@ -2658,4 +2681,5 @@ export const am: Dictionary = {
   'View your report': 'ሪፖርትህን ተመልከት',
   'Not sent. Your text is kept, so you can try again.':
     'አልተላከም። ጽሑፍህ ተቀምጧል፣ ስለዚህ እንደገና መሞከር ትችላለህ።',
+  'Reset to site icon': 'ወደ የጣቢያው አዶ መልስ',
 }

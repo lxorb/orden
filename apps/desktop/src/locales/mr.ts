@@ -89,6 +89,15 @@ export const mr: Dictionary = {
   // Tasks: the Display menu
   Display: 'प्रदर्शन',
   'Completed tasks': 'पूर्ण कार्ये',
+  Smart: 'स्मार्ट',
+  Grouping: 'गटबद्धता',
+  Sorting: 'क्रमवारी',
+  'Last 30 days': 'मागील 30 दिवस',
+  'Assigned to me': 'मला नेमलेली',
+  Unassigned: 'कोणालाही न नेमलेली',
+  'Reset all': 'सर्व रीसेट करा',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'मांडणी कामे यादी, बोर्ड किंवा दिनदर्शिका म्हणून दाखवते. गटबद्धता त्यांना गटांत विभागते, जे बोर्डचे स्तंभ असतात. क्रमवारी प्रत्येक गट क्रमाने लावते. फिल्टर तुम्हाला नको असलेले लपवतात. हे सर्व या दृश्यासाठी जपले जाते.',
   // Tasks: several lines pasted into quick add
   'One task': 'एक कार्य',
   'One per line': 'प्रत्येक ओळीला एक',
@@ -557,11 +566,11 @@ export const mr: Dictionary = {
   'Actual size': 'खरा आकार',
   // Appearance
   Accent: 'ॲक्सेंट',
-  'Window corners': 'विंडोचे कोपरे',
-  Rounded: 'गोलाकार',
-  Square: 'चौकोनी',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'गोलाकार उघडलेले विंडोतील कार्डमध्ये तरंगते ठेवते; चौकोनी ते कडेला लागून ठेवते.',
+  'Tidy up': 'नीटनेटके करा',
+  'Swipe in from the edge to see your notes.': 'तुमच्या नोंदी पाहण्यासाठी कडेपासून आत स्वाइप करा.',
+  'Show other tabs as icons': 'इतर टॅब चिन्हांच्या रूपात दाखवा',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'पुढच्या टॅबशिवाय प्रत्येक टॅब फक्त त्याचे चिन्ह दाखवतो; एकावर पॉइंटर नेल्यास त्याचे नाव दिसते.',
   'Tab preview delay': 'टॅब पूर्वावलोकनाचा विलंब',
   'How long the pointer rests on a tab before its preview shows.':
     'पूर्वावलोकन दिसण्यापूर्वी पॉइंटर टॅबवर किती वेळ थांबतो.',
@@ -1820,6 +1829,7 @@ export const mr: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'साइटची माहिती',
   Downloads: 'डाउनलोड',
+  'Downloading {name}': '{name} डाउनलोड होत आहे',
   'Show in folder': 'फोल्डरमध्ये दाखवा',
   'Show in Finder': 'Finder मध्ये दाखवा',
   'Reveal in Finder': 'Finder मध्ये दाखवा',
@@ -1913,6 +1923,9 @@ export const mr: Dictionary = {
   'Exited with code {code}': 'कोड {code} सह बंद झाले',
   'Could not start {shell}': '{shell} सुरू करता आले नाही',
   'Restore history': 'इतिहास पुनर्संचयित करा',
+  'Colours follow the theme': 'रंग थीमचे अनुसरण करतात',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'टर्मिनलना थीमच्या रंगांत रंगवते; बंद असल्यास एक ठरलेली रंगसंगती राहते.',
   'Restored {time}': 'पुनर्संचयित {time}',
   'Stop what is running in {name}?': '{name} मध्ये चालू असलेले थांबवायचे?',
   'Stop what is running in these terminals?': 'या टर्मिनलमध्ये चालू असलेले थांबवायचे?',
@@ -2063,6 +2076,8 @@ export const mr: Dictionary = {
   'Every space': 'प्रत्येक स्पेस',
   Sites: 'साइट्स',
   'Asks first': 'आधी विचारतो',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'हे MCP द्वारे जोडले जाते आणि तिथे स्वतःच्या परवानग्या स्वतः सांभाळते: Orden याला काहीही विचारत नाही. खालील तुमचे स्पेस, ब्लॉक केलेल्या साइट आणि मर्यादा तरीही लागू राहतात.',
   Limits: 'मर्यादा',
   'Clear what {name} did?': '{name} ने जे केले ते साफ करायचे?',
   'Show earlier': 'आधीचे दाखवा',
@@ -2311,6 +2326,12 @@ export const mr: Dictionary = {
   // The online terminal
   'Online terminal': 'ऑनलाइन टर्मिनल',
   'New online terminal': 'नवीन ऑनलाइन टर्मिनल',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'दुसरे डिव्हाइस',
+  'Taken over by {device}': '{device} ने घेतले',
+  'Open on {device} since {time}': '{time} पासून {device} वर उघडे',
+  'Take over': 'ताब्यात घ्या',
+  'Take back': 'परत घ्या',
   'Start online machine': 'ऑनलाइन मशीन सुरू करा',
   'Stop online machine': 'ऑनलाइन मशीन थांबवा',
   Resume: 'पुन्हा सुरू करा',
@@ -2356,6 +2377,8 @@ export const mr: Dictionary = {
   'Take photo': 'फोटो काढा',
   Pronouns: 'सर्वनामे',
   Bio: 'परिचय',
+  'A few words about you': 'तुमच्याबद्दल काही शब्द',
+  'What’s happening?': 'काय चालू आहे?',
   'Clear after': 'यानंतर साफ करा',
   '30 minutes': '30 मिनिटे',
   '1 hour': '1 तास',
@@ -2709,4 +2732,5 @@ export const mr: Dictionary = {
   'View your report': 'तुमचा अहवाल पाहा',
   'Not sent. Your text is kept, so you can try again.':
     'पाठवला नाही. तुमचा मजकूर जपून ठेवला आहे, पुन्हा प्रयत्न करू शकता.',
+  'Reset to site icon': 'साइटच्या आयकॉनवर परत जा',
 }

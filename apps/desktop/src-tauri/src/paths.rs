@@ -149,6 +149,17 @@ pub fn is_chat(path: &Path) -> bool {
         .is_some_and(|extension| extension.eq_ignore_ascii_case("chat"))
 }
 
+/// Whether a path names an online terminal: one line of JSON naming the session on its
+/// owner's machine (docs/online-terminal.md 4.5). Text, like a chat's pointer, and for the
+/// same reason the crate has to agree it is a file the window lists and opens: one that
+/// was not had no row in the file list, and a phone's or a browser's mirror, which walks
+/// this tree, never sent it to the reader's other devices (issue 1055).
+pub fn is_term(path: &Path) -> bool {
+    path.extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("term"))
+}
+
 /// Whether a path names a website: a shortcut file rather than words.
 ///
 /// `.url` is the Windows Internet Shortcut - an INI file with an address in it,

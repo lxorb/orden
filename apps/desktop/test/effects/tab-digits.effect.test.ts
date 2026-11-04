@@ -155,16 +155,6 @@ test('the ninth is the ninth, not the last', async () => {
   expect(inFront()).toBe('Ten')
 })
 
-test('a pinned tab counts, where the strip puts it', () => {
-  const five = workspace.tabs.find((tab) => tab.shown === 'Five')
-  if (five) workspace.togglePin(five.id)
-
-  altDigit(document.body, 1)
-  expect(inFront()).toBe('Five')
-  altDigit(document.body, 2)
-  expect(inFront()).toBe('One')
-})
-
 test('AltGr typing a character is the character, not a tab', () => {
   const note = writing()
   altDigit(note, 1)

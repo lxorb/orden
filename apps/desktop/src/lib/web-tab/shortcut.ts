@@ -55,6 +55,11 @@ const ADDED_KEY = 'nib-added'
 const HOME_KEY = 'nib-home'
 const ICON_KEY = 'nib-icon'
 const DATA_KEY = 'nib-data'
+/** The icon the reader chose for the web note, over the site's own mark (#1098), and its
+ *  colour: the two values a note keeps under `icon:` and `icon-color:`, said here the
+ *  way this file says everything. */
+const CHOSEN_KEY = 'nib-chosen-icon'
+const CHOSEN_COLOUR_KEY = 'nib-chosen-color'
 
 /** What a web note's own web data is named by: sixteen lower case hex digits. */
 const OWN = /^[0-9a-f]{16}$/
@@ -102,9 +107,19 @@ export interface Shortcut {
   /** The id of the note's own web data (#239; web-data.svelte.ts), or null for the
    *  store every page shares. In the file, so it moves and syncs with the note. */
   own: string | null
+  /** The icon the reader chose, over the site's mark, as an `icon:` value, and the
+   *  colour it is drawn in; null where nobody chose one (#1098). In the file, so it
+   *  syncs with the note; see `setFileIcon`. */
+  chosen: string | null
+  chosenColour: string | null
 }
 
-/** A shortcut file, from its parts.
+/** A new shortcut file, from its parts: a web note nobody has chosen an icon for yet.
+ *
+ *  For a file that is already there, `rewriteShortcut`, which starts from what the file
+ *  says - so a key one writer has never heard of, the reader's chosen icon above all,
+ *  is not dropped by the next writer to come along (#1098; test/shortcut-writers.test.ts
+ *  holds every writer to one or the other).
  *
  *  `home` and `icon` are left out when there is nothing to say, so the ordinary file
  *  is the three lines it always was: a note nobody has browsed out of writes exactly
@@ -117,6 +132,43 @@ export function writeShortcut(
   icon?: string | null,
   own?: string | null,
 ): string {
+  return shortcutText({ url, title, when, home, icon, own, chosen: null, chosenColour: null })
+}
+
+/** What a shortcut file is changed to: what it said, with `change` over it. The one way
+ *  an existing `.url` is written again, so whatever it said and the change does not
+ *  touch - the chosen icon, its own web data, when it was first written down - comes
+ *  through. */
+export function rewriteShortcut(
+  was: Shortcut,
+  change: Partial<Omit<Shortcut, 'added'>> & { when?: Date },
+  fallbackTitle = '',
+): string {
+  const next = { ...was, ...change }
+  const added = was.added ? new Date(was.added) : new Date()
+  return shortcutText({
+    url: next.url,
+    title: next.title ?? fallbackTitle,
+    when: change.when ?? (Number.isNaN(added.getTime()) ? new Date() : added),
+    home: next.home,
+    icon: next.icon,
+    own: next.own,
+    chosen: next.chosen,
+    chosenColour: next.chosen === null ? null : next.chosenColour,
+  })
+}
+
+function shortcutText(parts: {
+  url: string
+  title: string
+  when: Date
+  home?: string | null | undefined
+  icon?: string | null | undefined
+  own?: string | null | undefined
+  chosen: string | null
+  chosenColour: string | null
+}): string {
+  const { url, title, when, home, icon, own, chosen, chosenColour } = parts
   const rows = [
     `URL=${oneLine(url)}`,
     `Title=${oneLine(title.trim() || url)}`,
@@ -126,6 +178,8 @@ export function writeShortcut(
   if (home && home !== url) rows.push(`Nib-Home=${oneLine(home)}`)
   if (icon) rows.push(`Nib-Icon=${oneLine(icon)}`)
   if (own && OWN.test(own)) rows.push(`Nib-Data=${own}`)
+  if (chosen) rows.push(`Nib-Chosen-Icon=${oneLine(chosen)}`)
+  if (chosen && chosenColour) rows.push(`Nib-Chosen-Color=${oneLine(chosenColour)}`)
 
   return `[InternetShortcut]\r\n${rows.join('\r\n')}\r\n`
 }
@@ -183,6 +237,8 @@ export function readShortcut(text: string | null | undefined): Shortcut | null {
     home: nothing(said.get(HOME_KEY)),
     icon: nothing(said.get(ICON_KEY)),
     own: ownOf(said.get(DATA_KEY)),
+    chosen: nothing(said.get(CHOSEN_KEY)),
+    chosenColour: nothing(said.get(CHOSEN_COLOUR_KEY)),
   }
 }
 
@@ -208,7 +264,18 @@ export function readWebFile(path: string, text: string | null | undefined): Shor
   if (!/\.webloc$/i.test(path.trim())) return readShortcut(text)
 
   const url = readWebloc(text)
-  return url === null ? null : { url, title: null, added: null, home: null, icon: null, own: null }
+  return url === null
+    ? null
+    : {
+        url,
+        title: null,
+        added: null,
+        home: null,
+        icon: null,
+        own: null,
+        chosen: null,
+        chosenColour: null,
+      }
 }
 
 /** A web tab's own web data, or null for the store every page shares: what its file says,

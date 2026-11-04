@@ -10,6 +10,11 @@
  *  - No marker appears twice in one note: nothing was merged in twice.
  *  - Nothing exists on the account that no person made: no conflict copies, no notes
  *    the sync invented.
+ *  - No folder is inside itself, however many moves crossed (#1068).
+ *  - No marker is live in two notes at once: nothing was copied beside itself, bar the
+ *    copy a person asked for by keeping both (#1068).
+ *  - What a person restored is there, under the id it had, unless somebody deleted it
+ *    again afterwards (#1068).
  *  - The modal was asked exactly when `diverge` says so.
  *
  *  Each failure is one sentence, so a failing seed says what went wrong. */
@@ -35,10 +40,24 @@ export interface Ledger {
   lost: Set<string>
   /** Every id a person made, or the run started with. */
   made: Set<string>
+  /** Notes a person made by keeping both sides of a question: copies on purpose. */
+  copies: Set<string>
+  /** Each id a person restored, and the step it was restored at. */
+  restored: Map<string, number>
+  /** Each id a person deleted, and the last step it was deleted at. */
+  deleted: Map<string, number>
 }
 
 export function ledger(initial: Iterable<string>): Ledger {
-  return { typed: new Set(), retired: new Set(), lost: new Set(), made: new Set(initial) }
+  return {
+    typed: new Set(),
+    retired: new Set(),
+    lost: new Set(),
+    made: new Set(initial),
+    copies: new Set(),
+    restored: new Map(),
+    deleted: new Map(),
+  }
 }
 
 function sortedEntries(entries: readonly EntryView[]): string {
@@ -88,6 +107,36 @@ export function judge(
       failures.push(`${entry.id} is in ${entry.parent}, which is not a live folder`)
     }
     if (!book.made.has(entry.id)) failures.push(`${entry.id} (${entry.name}) was made by nobody`)
+  }
+
+  for (const entry of account.entries) {
+    const above = new Set<string>([entry.id])
+    for (let at = entry.parent; at !== null; at = live.get(at)?.parent ?? null) {
+      if (above.has(at)) {
+        failures.push(`${entry.id} is inside itself`)
+        break
+      }
+      above.add(at)
+    }
+  }
+
+  const holder = new Map<string, string>()
+  for (const [id, text] of Object.entries(account.texts)) {
+    if (!live.has(id) || book.copies.has(id)) continue
+    for (const marker of new Set(markersIn(text))) {
+      const other = holder.get(marker)
+      if (other !== undefined && other !== id) {
+        failures.push(`${marker} is in ${other} and in ${id}`)
+      }
+      holder.set(marker, id)
+    }
+  }
+
+  for (const [id, at] of book.restored) {
+    const again = book.deleted.get(id)
+    if (!live.has(id) && (again === undefined || again < at)) {
+      failures.push(`${id} was restored and is not there`)
+    }
   }
 
   const everywhere = [...Object.values(account.texts), ...account.versions].join('\n')

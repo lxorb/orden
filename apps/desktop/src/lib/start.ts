@@ -204,6 +204,16 @@ export function start(): () => void {
   // last turn of the launch order; never the glasses' plugin. See chats/start.svelte.ts.
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./chats/start.svelte'))
 
+  // A new tab nothing was done with, gone once it is left (#1040); a phone and the
+  // glasses' plugin make none. See workspace/blank-tabs.svelte.ts.
+  if (!__EVEN_PLUGIN__) {
+    void startup.turn('right').then(() => import('./workspace/blank-tabs.svelte'))
+  }
+
+  // The pictures the tab overview keeps of the windows not in front, taken as each
+  // leaves the screen (#331); never the glasses' plugin. See overview/faces.svelte.ts.
+  if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./overview/faces.svelte'))
+
   // The account's hub, beside the sockets the open notes join, after the first paint;
   // never the glasses' plugin, which stays on sync v1. See sync2/connect.svelte.ts.
   if (!__EVEN_PLUGIN__) {

@@ -73,6 +73,7 @@
       ? overlays.show(
           () => menu.hide(),
           () => [element],
+          menu.from ?? undefined,
         )
       : undefined,
   )

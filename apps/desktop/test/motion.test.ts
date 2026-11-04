@@ -41,8 +41,9 @@ const DURATION = /duration:\s*([^,}\n]+)/g
 /** The two spellings that reach the setting: `dur(ms)`, and the pair of named
  *  durations every layer the app puts up arrives with - `LAYER.fade` and
  *  `LAYER.rise`, both of which are `dur` behind a name. That they really are is
- *  held next door, in src/lib/motion.test.ts. */
-const THROUGH_DUR = /^(dur\(|LAYER\.(fade|rise)\b)/
+ *  held next door, in src/lib/motion.test.ts. And `calm(ms)`, which says in as many
+ *  words that it is an opacity kept for that reader on purpose; see motion.ts. */
+const THROUGH_DUR = /^(dur\(|calm\(|LAYER\.(fade|rise)\b)/
 
 describe('the durations JavaScript hands out', () => {
   test('the scan finds them', () => {

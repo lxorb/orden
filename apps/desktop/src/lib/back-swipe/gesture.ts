@@ -11,9 +11,12 @@
  *    fling along a carousel from turning into Back as the carousel runs out.
  *  - **Sideways on purpose.** The scroll has to have gone 60 pixels sideways (50 for a
  *    finger on the screen) and at least two and a half times as far sideways as down
- *    before anything shows; a stream that went down first is a scroll down to its end.
- *  - **Shown before it happens.** Past the start the arrow follows the fingers pixel for
- *    pixel; nothing happens until they lift, and then it goes if they had come far enough
+ *    before it is a swipe; a stream that went down first is a scroll down to its end.
+ *    But the arrow does not wait for that (#1050): from the first step that leans
+ *    sideways towards somewhere to go it is out with the fingers, pixel for pixel from
+ *    the side, and goes back out of the way if the stream turns out to be a scroll.
+ *  - **Shown before it happens.** The arrow follows the fingers pixel for pixel, from the
+ *    first step and back to the side if they turn back; nothing happens until they lift, and then it goes if they had come far enough
  *    along - three tenths of the window's longer side, less the start, on a touchpad, and
  *    a quarter on a screen, but never more than `MOST` - or were moving towards it at more
  *    than 1100 pixels a second. Lifted short of that, brought back, or flicked back the
@@ -135,7 +138,8 @@ export interface Shown {
   phase: Phase
   side: Side
   progress: number
-  /** How far past the start the fingers have come, in pixels: where the arrow is. */
+  /** How far sideways the fingers have come from where the stream began, in pixels:
+   *  where the arrow is, from the very first step. */
   travel: number
 }
 
@@ -158,8 +162,12 @@ export class Swipe {
   /** Sideways and down, added up while gathering. */
   private across = 0
   private down = 0
-  /** How far past the start the fingers have come, towards the arrow's side. */
+  /** How far past the start the fingers have come, towards the arrow's side: below
+   *  nought, down to minus the start, for fingers brought back towards where they began. */
   private travel = 0
+  /** While gathering, whether the stream so far leans sideways towards somewhere to go,
+   *  which is when the arrow is out before the stream is a swipe. */
+  private leaning = false
   /** Where the fingers have been towards the arrow's side, never clamped, and when: the
    *  speed at a lift is read off it. Newest last, and only the last moments of it. */
   private pushed = 0
@@ -177,15 +185,12 @@ export class Swipe {
     private readonly told = source === 'touch',
   ) {}
 
-  /** What there is to draw. */
+  /** What there is to draw: how far the arrow is in, from the side, and how much of
+   *  the way to where letting go goes that is - one exactly where it goes. */
   get shown(): Shown {
-    const progress = this.progress()
-    return {
-      phase: this.phase,
-      side: this.side,
-      progress,
-      travel: progress === 0 ? 0 : this.travel,
-    }
+    const travel = this.drawn()
+    const progress = travel / (this.far() + START[this.source])
+    return { phase: this.phase, side: this.side, progress, travel }
   }
 
   /** Whether the next step's `scrolls` is read at all: only until the stream has said
@@ -237,6 +242,7 @@ export class Swipe {
 
   private reset() {
     this.phase = 'idle'
+    this.leaning = false
     this.across = 0
     this.down = 0
     this.travel = 0
@@ -260,14 +266,21 @@ export class Swipe {
 
     if (down > start && down > across * RATIO) {
       this.phase = 'content'
+      this.leaning = false
       return
     }
-    if (across <= start || across <= down * RATIO) return
+    // Not yet a swipe, but leaning towards one: the arrow is out where the fingers are.
+    if (across <= start || across <= down * RATIO) {
+      this.leaning = across > 0 && across > down * RATIO && step.goes[sideOf(this.across)]
+      if (this.leaning) this.side = sideOf(this.across)
+      return
+    }
 
+    this.leaning = false
     this.side = sideOf(this.across)
     // Nowhere to go that way: no arrow, and the rest of the stream is nobody's.
     this.phase = step.goes[this.side] ? 'tracking' : 'stayed'
-    this.travel = this.phase === 'tracking' ? across - start : 0
+    this.travel = this.phase === 'tracking' ? across - start : -start
     this.pushed = this.travel
     this.trail = [{ at: step.at, pushed: this.pushed }]
   }
@@ -276,7 +289,7 @@ export class Swipe {
     // Towards the arrow's side is further along; the other way brings it back, never
     // past where it started.
     const along = this.side === 'left' ? -step.dx : step.dx
-    this.travel = Math.max(0, this.travel + along)
+    this.travel = Math.max(-START[this.source], this.travel + along)
     this.pushed += along
     const recent = this.trail.filter((one) => one.at >= step.at - WINDOW * 2)
     this.trail = [...recent, { at: step.at, pushed: this.pushed }]
@@ -310,10 +323,17 @@ export class Swipe {
     this.phase = went && speed > -BACKING ? 'went' : 'stayed'
   }
 
-  private progress(): number {
-    if (this.phase === 'idle' || this.phase === 'gathering' || this.phase === 'content') return 0
+  /** How far the fingers travel past the start to go, in this window now. */
+  private far(): number {
     const { width, height } = this.room()
-    return this.travel / distance(this.source, width, height)
+    return distance(this.source, width, height)
+  }
+
+  /** Where the arrow is, from the side: the fingers' whole way sideways. */
+  private drawn(): number {
+    if (this.phase === 'gathering') return this.leaning ? Math.abs(this.across) : 0
+    if (this.phase === 'idle' || this.phase === 'content') return 0
+    return Math.max(0, this.travel + START[this.source])
   }
 }
 

@@ -86,6 +86,15 @@ export const id: Dictionary = {
   // Tasks: the Display menu
   Display: 'Tampilan',
   'Completed tasks': 'Tugas selesai',
+  Smart: 'Cerdas',
+  Grouping: 'Pengelompokan',
+  Sorting: 'Pengurutan',
+  'Last 30 days': '30 hari terakhir',
+  'Assigned to me': 'Ditugaskan kepada saya',
+  Unassigned: 'Belum ditugaskan',
+  'Reset all': 'Atur ulang semua',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Tata letak menampilkan tugas sebagai daftar, papan, atau kalender. Pengelompokan membaginya ke dalam grup, yaitu kolom-kolom papan. Pengurutan mengurutkan setiap grup. Filter menyembunyikan yang tidak Anda perlukan. Semuanya disimpan untuk tampilan ini.',
   // Tasks: several lines pasted into quick add
   'One task': 'Satu tugas',
   'One per line': 'Satu per baris',
@@ -554,11 +563,11 @@ export const id: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna aksen',
-  'Window corners': 'Sudut jendela',
-  Rounded: 'Membulat',
-  Square: 'Persegi',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Membulat mengapungkan yang terbuka dalam kartu di dalam jendela; Persegi membuatnya rata.',
+  'Tidy up': 'Rapikan',
+  'Swipe in from the edge to see your notes.': 'Geser masuk dari tepi untuk melihat catatanmu.',
+  'Show other tabs as icons': 'Tampilkan tab lain sebagai ikon',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Setiap tab kecuali yang di depan hanya menampilkan ikonnya; arahkan ke salah satunya untuk melihat namanya.',
   'Tab preview delay': 'Jeda pratinjau tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Berapa lama penunjuk berada di atas tab sebelum pratinjaunya muncul.',
@@ -1811,6 +1820,7 @@ export const id: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informasi situs',
   Downloads: 'Unduhan',
+  'Downloading {name}': 'Mengunduh {name}',
   'Show in folder': 'Tampilkan di folder',
   'Show in Finder': 'Tampilkan di Finder',
   'Reveal in Finder': 'Tampilkan di Finder',
@@ -1905,6 +1915,9 @@ export const id: Dictionary = {
   'Exited with code {code}': 'Selesai dengan kode {code}',
   'Could not start {shell}': 'Tidak dapat memulai {shell}',
   'Restore history': 'Pulihkan riwayat',
+  'Colours follow the theme': 'Warna mengikuti tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Mewarnai terminal dengan warna tema; jika mati, satu palet tetap dipertahankan.',
   'Restored {time}': 'Dipulihkan {time}',
   'Stop what is running in {name}?': 'Hentikan yang berjalan di {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang berjalan di terminal ini?',
@@ -2053,6 +2066,8 @@ export const id: Dictionary = {
   'Every space': 'Setiap ruang',
   Sites: 'Situs',
   'Asks first': 'Bertanya dulu',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Ia terhubung lewat MCP dan mengatur izinnya sendiri di sana: Orden tidak menanyakan apa pun. Space, situs yang diblokir, dan batas di bawah tetap berlaku.',
   Limits: 'Batas',
   'Clear what {name} did?': 'Hapus apa yang dilakukan {name}?',
   'Show earlier': 'Tampilkan sebelumnya',
@@ -2295,6 +2310,12 @@ export const id: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Terminal online baru',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'perangkat lain',
+  'Taken over by {device}': 'Diambil alih oleh {device}',
+  'Open on {device} since {time}': 'Terbuka di {device} sejak {time}',
+  'Take over': 'Ambil alih',
+  'Take back': 'Ambil kembali',
   'Start online machine': 'Mulai mesin online',
   'Stop online machine': 'Hentikan mesin online',
   Resume: 'Lanjutkan',
@@ -2340,6 +2361,8 @@ export const id: Dictionary = {
   'Take photo': 'Ambil foto',
   Pronouns: 'Kata ganti',
   Bio: 'Bio',
+  'A few words about you': 'Beberapa kata tentang Anda',
+  'What’s happening?': 'Apa yang sedang terjadi?',
   'Clear after': 'Hapus setelah',
   '30 minutes': '30 menit',
   '1 hour': '1 jam',
@@ -2702,4 +2725,5 @@ export const id: Dictionary = {
   'View your report': 'Lihat laporan Anda',
   'Not sent. Your text is kept, so you can try again.':
     'Tidak terkirim. Teks Anda tetap disimpan, jadi Anda bisa mencoba lagi.',
+  'Reset to site icon': 'Kembalikan ke ikon situs',
 }

@@ -86,6 +86,15 @@ export const my: Dictionary = {
   // Tasks: the Display menu
   Display: 'ပြသပုံ',
   'Completed tasks': 'ပြီးစီးသော လုပ်ငန်းများ',
+  Smart: 'စမတ်',
+  Grouping: 'အုပ်စုဖွဲ့ခြင်း',
+  Sorting: 'စီခြင်း',
+  'Last 30 days': 'ပြီးခဲ့သော ရက် ၃၀',
+  'Assigned to me': 'ကျွန်ုပ်ထံ တာဝန်ပေးထားသော',
+  Unassigned: 'တာဝန်မပေးရသေးသော',
+  'Reset all': 'အားလုံး ပြန်သတ်မှတ်ရန်',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'အပြင်အဆင်သည် လုပ်ငန်းများကို စာရင်း၊ ဘုတ် သို့မဟုတ် ပြက္ခဒိန်အဖြစ် ပြသည်။ အုပ်စုဖွဲ့ခြင်းသည် ၎င်းတို့ကို အုပ်စုများအဖြစ် ခွဲပြီး ဘုတ်၏ ကော်လံများ ဖြစ်သည်။ စီခြင်းသည် အုပ်စုတစ်ခုစီကို စီစဉ်သည်။ စစ်ထုတ်မှုများသည် မလိုအပ်သည်ကို ဖျောက်ထားသည်။ ယင်းအားလုံးကို ဤမြင်ကွင်းအတွက် သိမ်းထားသည်။',
   // Tasks: several lines pasted into quick add
   'One task': 'လုပ်ငန်းတစ်ခု',
   'One per line': 'တစ်ကြောင်းလျှင် တစ်ခု',
@@ -555,11 +564,12 @@ export const my: Dictionary = {
   'Actual size': 'အမှန်အရွယ်',
   // Appearance
   Accent: 'အသားပေးအရောင်',
-  'Window corners': 'ဝင်းဒိုး ထောင့်များ',
-  Rounded: 'လုံးဝိုင်း',
-  Square: 'လေးထောင့်',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'လုံးဝိုင်းသည် ဖွင့်ထားသည်ကို ဝင်းဒိုးအတွင်း ကတ်တစ်ခုပေါ်တွင် ပေါ်နေစေသည်၊ လေးထောင့်သည် အစွန်းနှင့် ကပ်ထားသည်။',
+  'Tidy up': 'စနစ်တကျ စီရန်',
+  'Swipe in from the edge to see your notes.':
+    'သင့်မှတ်စုများကို ကြည့်ရန် အစွန်းမှ အတွင်းသို့ ပွတ်ဆွဲပါ။',
+  'Show other tabs as icons': 'အခြားတဘ်များကို အိုင်ကွန်အဖြစ် ပြပါ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ရှေ့ရှိတဘ်မှလွဲ၍ တဘ်တိုင်းသည် အိုင်ကွန်ကိုသာ ပြသည်၊ တစ်ခုကို ညွှန်လျှင် ၎င်း၏အမည် ပေါ်လာသည်။',
   'Tab preview delay': 'တဘ် အစမ်းကြည့် နှောင့်နှေးချိန်',
   'How long the pointer rests on a tab before its preview shows.':
     'အစမ်းကြည့် ပေါ်လာမီ ညွှန်တံသည် တဘ်ပေါ်တွင် ကြာကြာနေရမည့်အချိန်။',
@@ -1802,6 +1812,7 @@ export const my: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ဆိုက် အချက်အလက်များ',
   Downloads: 'ဒေါင်းလုဒ်များ',
+  'Downloading {name}': '{name} ကို ဒေါင်းလုဒ်လုပ်နေသည်',
   'Show in folder': 'ဖိုင်တွဲတွင် ပြပါ',
   'Show in Finder': 'Finder တွင် ပြပါ',
   'Reveal in Finder': 'Finder တွင် ပြပါ',
@@ -1895,6 +1906,9 @@ export const my: Dictionary = {
   'Exited with code {code}': 'ကုဒ် {code} ဖြင့် ပြီးဆုံးသည်',
   'Could not start {shell}': '{shell} ကို စတင်၍ မရပါ',
   'Restore history': 'မှတ်တမ်းကို ပြန်ယူရန်',
+  'Colours follow the theme': 'အရောင်များသည် အပြင်အဆင်ကို လိုက်သည်',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'တာမီနယ်များကို အပြင်အဆင်၏ အရောင်များဖြင့် ခြယ်သည်။ ပိတ်ထားလျှင် ပုံသေအရောင်စု တစ်ခုကို ထားသည်။',
   'Restored {time}': 'ပြန်ယူထားသည် {time}',
   'Stop what is running in {name}?': '{name} တွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
   'Stop what is running in these terminals?': 'ဤတာမင်နယ်များတွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
@@ -2043,6 +2057,8 @@ export const my: Dictionary = {
   'Every space': 'အလုပ်ခွင်တိုင်း',
   Sites: 'ဆိုက်များ',
   'Asks first': 'ဦးစွာမေးသည်',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    '၎င်းသည် MCP ဖြင့် ချိတ်ဆက်ပြီး ခွင့်ပြုချက်များကို ထိုနေရာတွင် ကိုယ်တိုင် စီမံသည်- Orden က ဘာမျှ မမေးပါ။ အောက်ပါ သင့် space များ၊ ပိတ်ထားသော ဆိုက်များနှင့် ကန့်သတ်ချက်များ ဆက်လက် သက်ရောက်ပါသည်။',
   Limits: 'ကန့်သတ်ချက်များ',
   'Clear what {name} did?': '{name} လုပ်ခဲ့သည်များကို ရှင်းလင်းမလား။',
   'Show earlier': 'အစောပိုင်းများ ပြရန်',
@@ -2286,6 +2302,12 @@ export const my: Dictionary = {
   // The online terminal
   'Online terminal': 'အွန်လိုင်း တာမင်နယ်',
   'New online terminal': 'အွန်လိုင်း တာမင်နယ် အသစ်',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'အခြားစက်',
+  'Taken over by {device}': '{device} က ယူသွားသည်',
+  'Open on {device} since {time}': '{time} မှစ၍ {device} တွင် ဖွင့်ထားသည်',
+  'Take over': 'လွှဲယူရန်',
+  'Take back': 'ပြန်ယူရန်',
   'Start online machine': 'အွန်လိုင်း စက်ကို စတင်ရန်',
   'Stop online machine': 'အွန်လိုင်း စက်ကို ရပ်ရန်',
   Resume: 'ဆက်လုပ်ရန်',
@@ -2331,6 +2353,8 @@ export const my: Dictionary = {
   'Take photo': 'ဓာတ်ပုံရိုက်ရန်',
   Pronouns: 'နာမ်စားများ',
   Bio: 'အကြောင်း',
+  'A few words about you': 'သင့်အကြောင်း စကားအနည်းငယ်',
+  'What’s happening?': 'ဘာဖြစ်နေလဲ။',
   'Clear after': 'ရှင်းလင်းမည့်အချိန်',
   '30 minutes': 'မိနစ် 30',
   '1 hour': '1 နာရီ',
@@ -2693,4 +2717,5 @@ export const my: Dictionary = {
   'View your report': 'သင့်အစီရင်ခံစာကို ကြည့်ရန်',
   'Not sent. Your text is kept, so you can try again.':
     'မပို့ရသေးပါ။ သင့်စာသားကို သိမ်းထားသဖြင့် ထပ်မံကြိုးစားနိုင်သည်။',
+  'Reset to site icon': 'ဆိုက်၏ အိုင်ကွန်သို့ ပြန်ထားရန်',
 }

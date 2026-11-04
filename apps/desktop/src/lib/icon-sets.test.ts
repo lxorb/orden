@@ -2,15 +2,15 @@ import { describe, expect, test } from 'vitest'
 import { BRANDS, brandIcon, EMOJI_SET, LUCIDE, rankIcons, readIcon } from './icons'
 import { BESIDE, LOOSE, SAME } from './flat-colour-places'
 import {
-  DEFAULT_TAB,
   FLAT_COLOUR,
   ICON_SETS,
-  ICON_TABS,
+  LATER_SETS,
   type LoadedSet,
   mergeSets,
+  ORDEN,
+  PICKER_SETS,
+  pickerCredit,
   setNamed,
-  tabCredit,
-  tabNamed,
 } from './icon-sets'
 
 /** The three sets, loaded for real. Each is a chunk of its own in the app and a plain
@@ -208,30 +208,31 @@ describe('the stroked set', () => {
   })
 })
 
-/** Two tabs over three sets (#1071): the emoji and the coloured drawings are both
- *  pictures in their own colours, and a reader could not tell their tabs apart. */
-describe('the tabs of the picker', () => {
-  test('are a line, a picture and a brand, and every set is in exactly one', () => {
-    expect(ICON_TABS.map((one) => one.sets)).toEqual([[LUCIDE], [EMOJI_SET, FLAT_COLOUR], [BRANDS]])
-    expect(ICON_TABS.flatMap((one) => one.sets).sort()).toEqual(
-      ICON_SETS.map((one) => one.id).sort(),
+/** One search over every set, and no tabs (#1096). */
+describe('the sets the picker searches', () => {
+  test('are every set, each once, the brands waiting for a search', () => {
+    expect([...PICKER_SETS].sort()).toEqual(ICON_SETS.map((one) => one.id).sort())
+    expect(new Set(PICKER_SETS).size).toBe(PICKER_SETS.length)
+    expect([...LATER_SETS]).toEqual([BRANDS])
+  })
+
+  test('credit whoever drew each of them', () => {
+    for (const set of ICON_SETS) expect(pickerCredit()).toContain(set.credit)
+  })
+
+  test('are one list: the emoji s groups, then the line icons and the brands', async () => {
+    const parts = await Promise.all(
+      PICKER_SETS.map(async (id) => ({ id, held: await setNamed(id)!.load() })),
     )
-    expect(ICON_TABS.filter((one) => one.tinted)).toEqual([DEFAULT_TAB])
-    expect(DEFAULT_TAB.sets).toEqual([LUCIDE])
-  })
+    const held = mergeSets(parts)
+    const labels = held.groups.map((one) => one.label)
 
-  /** What the picker remembered before is a set's id, so a reader who was last in
-   *  "Colour" comes back to the tab the drawings are in now. */
-  test('a remembered set opens the tab that holds it', () => {
-    expect(tabNamed(FLAT_COLOUR)?.id).toBe(EMOJI_SET)
-    expect(tabNamed(EMOJI_SET)?.id).toBe(EMOJI_SET)
-    expect(tabNamed(LUCIDE)?.id).toBe(LUCIDE)
-    expect(tabNamed('some-future-set')).toBeNull()
-  })
-
-  test('and a tab credits whoever drew what it shows', () => {
-    expect(tabCredit(tabNamed(EMOJI_SET)!)).toBe(setNamed(FLAT_COLOUR)!.credit)
-    expect(tabCredit(DEFAULT_TAB)).toContain('ISC')
+    expect(labels.slice(-2)).toEqual(['Line', 'Brands'])
+    expect(new Set(held.entries.map((one) => one.name)).size).toBe(held.entries.length)
+    // A search ranks across the sets: a rocket is a line, an emoji and a drawing.
+    const found = rankIcons(held.entries, 'rocket', 20)
+    expect(found).toContain('rocket')
+    expect(found).toContain('🚀')
   })
 })
 
@@ -261,7 +262,7 @@ describe('the places of the coloured drawings among the emoji', () => {
 describe('the picture tab', () => {
   const merged = async () => {
     const parts = await Promise.all(
-      tabNamed(EMOJI_SET)!.sets.map(async (id) => ({ id, held: await setNamed(id)!.load() })),
+      [EMOJI_SET, FLAT_COLOUR].map(async (id) => ({ id, held: await setNamed(id)!.load() })),
     )
     return mergeSets(parts)
   }
@@ -432,6 +433,17 @@ describe('the brands', () => {
     expect(credit).toContain('Simple Icons')
     expect(credit).toContain('CC0')
     expect(credit).toContain('trademarks')
-    expect(tabCredit(tabNamed(BRANDS)!)).toBe(credit)
+    expect(pickerCredit()).toContain(credit)
+  })
+
+  /** #1096: Orden's own mark is a brand like the rest, one colour, found by its name. */
+  test('hold Orden s own mark, drawn in the text s colour', async () => {
+    const brands = await setNamed(BRANDS)!.load()
+
+    expect(rankIcons(brands.entries, 'orden', 3)[0]).toBe(ORDEN)
+    const drawn = brands.shape(ORDEN)
+    expect(drawn?.kind).toBe('drawn')
+    expect(drawn?.kind === 'drawn' && drawn.body).toContain('currentColor')
+    expect(drawn?.kind === 'drawn' && drawn.box).toBe('0 0 24 24')
   })
 })

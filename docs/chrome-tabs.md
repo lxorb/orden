@@ -37,9 +37,9 @@ A Chrome width includes the 18 of overlap; Orden's is the pitch, Chrome's minus 
 Distribution (`tab_strip_layout.cc`):
 
 1. Sum the three totals: preferred P (all standard), crossover C (all at min-active),
-   minimum M (active at min-active, the rest at min-inactive). Pinned tabs are the
-   pinned width in all three.
-2. Room W >= C: every unpinned tab is `lerp(min-active, standard, f)`,
+   minimum M (active at min-active, the rest at min-inactive). A tab drawn as its
+   mark alone (Show other tabs as icons, #1041) is the icon width in all three.
+2. Room W >= C: every other tab is `lerp(min-active, standard, f)`,
    `f = clamp((W - C) / (P - C))`. Active and inactive are the same width.
 3. W < C: the active tab stays at min-active, the others are
    `lerp(min-inactive, min-active, f)`, `f = clamp((W - M) / (C - M))`.
@@ -89,8 +89,7 @@ saved where Save offers first; **Don't save** closes it with its words kept twic
 the closed stack for Ctrl+Shift+T and in Recently deleted for fourteen days, from where it
 is restored as the note it would have been (`trash_words` in `trash.rs`,
 `workspace/placing.ts`); **Cancel**, the key Enter lands on, keeps it. An empty one just
-goes, a note with a file writes itself and is never asked about, and a pinned one closed
-by key asks this rather than whether to close a pinned tab. The window closing asks
+goes, and a note with a file writes itself and is never asked about. The window closing asks
 nothing about them: the next window brings every tab with no file back with its words.
 See `workspace/closing-unsaved.ts`.
 
@@ -187,26 +186,31 @@ See `workspace/space-move.ts` for the rules and `workspace/moving-space.ts` for 
 
 ### The scratchpad
 
-**One note in no space, for pasting and jotting before deciding where it goes.** A
-switch, never a tab (Emil, 2026-10-05): the pad glyph at the bar's top right, beside the
-right sidebar's, is pressed while its card is up. Raycast's notes and Apple's Quick Note
-are one key both ways; VS Code's layout buttons sit in the same corner:
+**One note in no space, for pasting and jotting before deciding where it goes.** On a
+desktop it is one of the right side's tabs (#1032): the bar's top right has one button,
+the right side's, and the scratchpad is chosen in the side like any panel there. It
+used to have a switch of its own beside the side's, and the two fought: each turned the
+right edge into the other, and pressing one again brought the other back. Now the side's
+button shuts the side whole, whatever it shows, and opens it again on what it showed
+last, the scratchpad or a panel (`toggleSidebar` and `showRight` in the workspace). A
+phone and a tablet open it from the drawer's foot, beside the settings (#1030): it is the
+app's like they are, and a note's bar is the note's:
 
-- **A card docked at the window's edge.** The note's own live-preview editor in a card
-  under the bar, the panes narrowed beside it - docked rather than floating, because a
-  web tab's page is a native view that would draw over a floating card. Over the note
-  where the panels are drawers. It scales in from the glyph's corner.
+- **The right side's card.** The note's own live-preview editor in the right side's body,
+  at the side's width - docked rather than floating, because a web tab's page is a
+  native view that would draw over a floating card. A panel tab of the side puts it
+  away, its tab brings it back. On a phone it is a card over the note.
 - **Never a tab.** Not in a strip, Ctrl+Tab, the closed tabs or the session's tabs;
   opening its file from anywhere (a search hit, an agent) shows the card. A Scratchpad
   tab an older session left is dropped on the way in, its unwritten words written first.
-- **The switch, the key, Escape.** The glyph shows and hides it and leaves the keyboard
-  where it is. Ctrl+N (Ctrl+Shift+X as its second key) and the palette's **Scratchpad** do the same, but with the
-  card up and the keyboard elsewhere they put the keyboard in it, as VS Code's terminal
-  key does. Escape inside puts it away. Shown by a person it takes the keyboard, and
-  hidden it hands it back where it was.
+- **The tab, the key, Escape.** Ctrl+N (Ctrl+Shift+X as its second key) and the
+  palette's **Scratchpad** show it in the right side; with the card up and the keyboard
+  elsewhere they put the keyboard in it, as VS Code's terminal key does, and pressed
+  again they shut the side. Escape inside shuts the side too. Shown by a person it takes
+  the keyboard, and hidden it hands it back where it was.
 - **Written as it changes**, a pause after the typing stops and at once as the card or
-  the window goes; no dot. Whether it is up and how wide (its edge drags) are kept per
-  window and are the same in every space, since it is the one note in no space.
+  the window goes; no dot. Whether it is up is kept per window and is the same in every
+  space, since it is the one note in no space.
 - **The app's own, not a space's.** `Scratchpad.md` beside `custom.css` in the app's
   settings folder (`scratchpad_path` in themes.rs; `openable` admits it), the same note
   from every space; the browser build keeps it in a dot folder no space lists. Its name
@@ -253,7 +257,6 @@ so a width change lays out that one tab and nothing beside it.
 | Where it lands | the slot whose ideal x is nearest the dragged tab's x, i.e. past a neighbour's midpoint | `CalculateInsertionIndex` |
 | Hysteresis | reorder only after the pointer moved more than `16 x target tab width / standard width` since the last reorder | `kHorizontalMoveThreshold` |
 | The others | slide to their new slots with the 200 ms bounds animation | `AnimateToIdealBounds` |
-| Pinned | a pinned tab stays among the pinned, an unpinned one after them | `TabStripModel` |
 | Drop | the tab animates from where it is to its slot, 200 ms | `ResetDraggingStateDelegate` |
 | Detach | the pointer more than 15 above or below the strip (50 on touch), or past its ends: the tab tears off into a new window that follows the pointer | `kVerticalDetachMagnetism`, `DoesTabStripContain` |
 | Attach | over another window's strip (same magnetism), the tab joins it at the nearest slot and its tabs make room | `GetDragTargetForPoint` |
@@ -290,13 +293,17 @@ so a width change lays out that one tab and nothing beside it.
   the strip makes room for it the way it does for a tab; it never replaces the tab
   under it. See `tab-strip/dropped.ts`.
 - **The tab menu is Chrome's, VS Code's and Obsidian's rows** that Orden has
-  something behind: Reload and Copy link on a web tab, Rename, Duplicate, Pin,
-  Close, Close others, Close tabs to the right (to the left in a language that
-  reads the other way), Close all, Reopen, Split, Move to other pane. A pinned tab
-  is never one the closes around a tab take. See `tab-strip/menu.ts`.
-- **Ctrl+W on a pinned tab asks first**, which Chrome does not: a key closes
-  whatever is in front, and the tab's own Close row and the middle button, which
-  are aimed at it, still close it outright. See `workspace/closing-pinned.ts`.
+  something behind: Reload and Copy link on a web tab, Rename, Duplicate, Close,
+  Close others, Close tabs to the right (to the left in a language that reads the
+  other way), Close all, Reopen, Split, Move to other pane. There is no Pin: every
+  tab but the one in front is drawn as its mark alone already (#1041), and the
+  Essentials are what is kept to hand. See `tab-strip/menu.ts`.
+- **Every tab but the one in front is its mark alone**, while Show other tabs as icons
+  is on (General > Tabs, on out of the box): the pointer on one opens it out to its
+  name at once, the tabs in front of it staying where they were and the rest making
+  way, and it closes again as the pointer leaves (`widened` in `tab-strip/layout.ts`).
+  Where two would wear the same drawing, two notes that chose no icon or two pages of
+  one site, each wears its first letter on it (`tab-strip/twins.ts`).
 - **The empty strip's menu is New tab, Reopen closed tab and Close all tabs**, each
   about that strip's pane. Chrome's other rows there - bookmark all tabs, name the
   window, the task manager - have nothing behind them in Orden. A held finger asks for

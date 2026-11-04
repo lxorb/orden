@@ -13,7 +13,7 @@
 
 import { t } from '../i18n.svelte'
 import { withOrWithout } from '../records'
-import { isRecord, keep, stored, storedText } from '../stored'
+import { isRecord, keep, keepJson, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 
 export interface Shell {
@@ -27,6 +27,7 @@ const SIZE_KEY = 'nib:terminal-size'
 const RESTORE_KEY = 'nib:terminal-restore'
 const WARN_KEY = 'nib:terminal-quit-warn'
 const WAYS_KEY = 'nib:terminal-keys'
+const THEMED_KEY = 'nib:terminal-themed'
 
 /** Whose a key that is both is, once somebody has said: the app's command, or the
  *  shell's character. Not there at all is asking every time. */
@@ -94,6 +95,9 @@ class Shells {
   /** Whether a terminal's last lines are kept for the next launch: on, as VS Code,
    *  Windows Terminal and Warp all start. See history.ts. */
   restoring = $state(storedText(RESTORE_KEY) !== 'no')
+  /** Whether a terminal's colours follow the theme (#1069), which they do until a reader
+   *  keeps one palette instead (look.ts, `FIXED_PALETTE`). */
+  themed = $state(storedText(THEMED_KEY) !== 'no')
   /** When quitting asks first; see `WARNINGS`. */
   warning = $state<Warning>(asWarning(storedText(WARN_KEY)))
   /** Whose each key that is both is, by the app command on it; see two-ways.ts. */
@@ -146,11 +150,16 @@ class Shells {
    *  again for null. */
   setWay(command: string, way: Way | null) {
     this.ways = withOrWithout(this.ways, command, way)
-    keep(WAYS_KEY, JSON.stringify(this.ways))
+    keepJson(WAYS_KEY, this.ways)
   }
 
   /** Off forgets every terminal's lines at once, rather than only writing no more of
    *  them: what somebody turns this off for is what is already written. */
+  setThemed(on: boolean) {
+    this.themed = on
+    keep(THEMED_KEY, on ? 'yes' : 'no')
+  }
+
   setRestoring(on: boolean) {
     this.restoring = on
     keep(RESTORE_KEY, on ? 'yes' : 'no')

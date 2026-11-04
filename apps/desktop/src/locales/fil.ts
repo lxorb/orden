@@ -89,6 +89,15 @@ export const fil: Dictionary = {
   // Tasks: the Display menu
   Display: 'Pagpapakita',
   'Completed tasks': 'Mga natapos na gawain',
+  Smart: 'Matalino',
+  Grouping: 'Pagpapangkat',
+  Sorting: 'Pagsasaayos',
+  'Last 30 days': 'Huling 30 araw',
+  'Assigned to me': 'Nakatalaga sa akin',
+  Unassigned: 'Walang nakatalaga',
+  'Reset all': 'I-reset lahat',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Ipinapakita ng layout ang mga gawain bilang listahan, board o kalendaryo. Hinahati sila ng pagpapangkat sa mga grupo, na siyang mga column ng board. Inaayos ng pagsasaayos ang bawat grupo. Itinatago ng mga filter ang hindi mo kailangan. Lahat ng ito ay itinatago para sa view na ito.',
   // Tasks: several lines pasted into quick add
   'One task': 'Isang gawain',
   'One per line': 'Isa bawat linya',
@@ -562,11 +571,12 @@ export const fil: Dictionary = {
   'Actual size': 'Tunay na laki',
   // Appearance
   Accent: 'Kulay tampok',
-  'Window corners': 'Mga sulok ng window',
-  Rounded: 'Bilugan',
-  Square: 'Parisukat',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Pinalulutang ng Bilugan ang nakabukas sa isang card sa loob ng window; pinananatili itong pantay ng Parisukat.',
+  'Tidy up': 'Ayusin',
+  'Swipe in from the edge to see your notes.':
+    'Mag-swipe papasok mula sa gilid para makita ang iyong mga tala.',
+  'Show other tabs as icons': 'Ipakita ang ibang tab bilang icon',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Bawat tab maliban sa nasa harap ay icon lang ang ipinapakita; kapag tinuro ang isa, lalabas ang pangalan nito.',
   'Tab preview delay': 'Antala ng preview ng tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Gaano katagal nakapatong ang pointer sa tab bago lumabas ang preview nito.',
@@ -1854,6 +1864,7 @@ export const fil: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Impormasyon ng site',
   Downloads: 'Mga download',
+  'Downloading {name}': 'Dina-download ang {name}',
   'Show in folder': 'Ipakita sa folder',
   'Show in Finder': 'Ipakita sa Finder',
   'Reveal in Finder': 'Ipakita sa Finder',
@@ -1948,6 +1959,9 @@ export const fil: Dictionary = {
   'Exited with code {code}': 'Natapos na may code {code}',
   'Could not start {shell}': 'Hindi masimulan ang {shell}',
   'Restore history': 'Ibalik ang history',
+  'Colours follow the theme': 'Sumusunod ang mga kulay sa tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Kinukulayan ang mga terminal ng mga kulay ng tema; kapag naka-off, isang nakapirming palette ang nananatili.',
   'Restored {time}': 'Naibalik {time}',
   'Stop what is running in {name}?': 'Ihinto ang tumatakbo sa {name}?',
   'Stop what is running in these terminals?': 'Ihinto ang tumatakbo sa mga terminal na ito?',
@@ -2103,6 +2117,8 @@ export const fil: Dictionary = {
   'Every space': 'Bawat espasyo',
   Sites: 'Mga site',
   'Asks first': 'Nagtatanong muna',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Kumokonekta ito sa MCP at doon nito pinamamahalaan ang sarili nitong mga pahintulot: walang itinatanong dito ang Orden. Nananatili ang iyong mga space, mga naka-block na site at mga limitasyon sa ibaba.',
   Limits: 'Mga limitasyon',
   'Clear what {name} did?': 'Burahin ang ginawa ni {name}?',
   'Show earlier': 'Ipakita ang mas nauna',
@@ -2351,6 +2367,12 @@ export const fil: Dictionary = {
   // The online terminal
   'Online terminal': 'Online na terminal',
   'New online terminal': 'Bagong online na terminal',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'ibang device',
+  'Taken over by {device}': 'Kinuha ng {device}',
+  'Open on {device} since {time}': 'Bukas sa {device} mula {time}',
+  'Take over': 'Kunin',
+  'Take back': 'Bawiin',
   'Start online machine': 'Simulan ang online na makina',
   'Stop online machine': 'Ihinto ang online na makina',
   Resume: 'Ituloy',
@@ -2396,6 +2418,8 @@ export const fil: Dictionary = {
   'Take photo': 'Kumuha ng litrato',
   Pronouns: 'Mga panghalip',
   Bio: 'Bio',
+  'A few words about you': 'Ilang salita tungkol sa iyo',
+  'What’s happening?': 'Ano ang nangyayari?',
   'Clear after': 'I-clear pagkatapos ng',
   '30 minutes': '30 minuto',
   '1 hour': '1 oras',
@@ -2763,4 +2787,5 @@ export const fil: Dictionary = {
   'View your report': 'Tingnan ang iyong ulat',
   'Not sent. Your text is kept, so you can try again.':
     'Hindi naipadala. Naitabi ang iyong teksto kaya maaari mong subukan ulit.',
+  'Reset to site icon': 'Ibalik sa icon ng site',
 }

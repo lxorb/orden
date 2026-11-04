@@ -90,6 +90,15 @@ export const tr: Dictionary = {
   // Tasks: the Display menu
   Display: 'Görünüm',
   'Completed tasks': 'Tamamlanan görevler',
+  Smart: 'Akıllı',
+  Grouping: 'Gruplama',
+  Sorting: 'Sıralama',
+  'Last 30 days': 'Son 30 gün',
+  'Assigned to me': 'Bana atananlar',
+  Unassigned: 'Atanmamış',
+  'Reset all': 'Tümünü sıfırla',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Düzen görevleri liste, pano veya takvim olarak gösterir. Gruplama onları panonun sütunları olan gruplara ayırır. Sıralama her grubu düzenler. Filtreler ihtiyacınız olmayanı gizler. Hepsi bu görünüm için saklanır.',
   // Tasks: several lines pasted into quick add
   'One task': 'Tek görev',
   'One per line': 'Satır başına bir',
@@ -558,11 +567,11 @@ export const tr: Dictionary = {
   'Actual size': 'Gerçek boyut',
   // Appearance
   Accent: 'Vurgu rengi',
-  'Window corners': 'Pencere köşeleri',
-  Rounded: 'Yuvarlak',
-  Square: 'Köşeli',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Yuvarlak, açık olanı pencerenin içinde bir kartta yüzdürür; Köşeli onu kenarlara bitişik tutar.',
+  'Tidy up': 'Düzenle',
+  'Swipe in from the edge to see your notes.': 'Notlarını görmek için kenardan içeri kaydır.',
+  'Show other tabs as icons': 'Diğer sekmeleri simge olarak göster',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Öndeki dışındaki her sekme yalnızca simgesini gösterir; birinin üzerine gelince adı görünür.',
   'Tab preview delay': 'Sekme önizleme gecikmesi',
   'How long the pointer rests on a tab before its preview shows.':
     'Önizleme görünmeden önce işaretçinin sekme üzerinde ne kadar durduğu.',
@@ -1824,6 +1833,7 @@ export const tr: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Site bilgileri',
   Downloads: 'İndirilenler',
+  'Downloading {name}': '{name} indiriliyor',
   'Show in folder': 'Klasörde göster',
   'Show in Finder': "Finder'da göster",
   'Reveal in Finder': "Finder'da göster",
@@ -1918,6 +1928,9 @@ export const tr: Dictionary = {
   'Exited with code {code}': '{code} koduyla sonlandı',
   'Could not start {shell}': '{shell} başlatılamadı',
   'Restore history': 'Geçmişi geri yükle',
+  'Colours follow the theme': 'Renkler temayı izler',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Terminalleri temanın renkleriyle boyar; kapalıyken tek bir sabit palet kullanır.',
   'Restored {time}': 'Geri yüklendi {time}',
   'Stop what is running in {name}?': '{name} içinde çalışan durdurulsun mu?',
   'Stop what is running in these terminals?': 'Bu terminallerde çalışan durdurulsun mu?',
@@ -2070,6 +2083,8 @@ export const tr: Dictionary = {
   'Every space': 'Her alan',
   Sites: 'Siteler',
   'Asks first': 'Önce sorar',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'MCP üzerinden bağlanır ve izinlerini orada kendisi yönetir: Orden ona hiçbir şey sormaz. Aşağıdaki alanların, engellediğin siteler ve sınırlar yine geçerlidir.',
   Limits: 'Sınırlar',
   'Clear what {name} did?': '{name} ne yaptıysa silinsin mi?',
   'Show earlier': 'Öncekileri göster',
@@ -2318,6 +2333,12 @@ export const tr: Dictionary = {
   // The online terminal
   'Online terminal': 'Çevrimiçi terminal',
   'New online terminal': 'Yeni çevrimiçi terminal',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'başka bir cihaz',
+  'Taken over by {device}': '{device} devraldı',
+  'Open on {device} since {time}': '{time} saatinden beri {device} üzerinde açık',
+  'Take over': 'Devral',
+  'Take back': 'Geri al',
   'Start online machine': 'Çevrimiçi makineyi başlat',
   'Stop online machine': 'Çevrimiçi makineyi durdur',
   Resume: 'Devam et',
@@ -2363,6 +2384,8 @@ export const tr: Dictionary = {
   'Take photo': 'Fotoğraf çek',
   Pronouns: 'Zamirler',
   Bio: 'Biyografi',
+  'A few words about you': 'Kendinden birkaç söz',
+  'What’s happening?': 'Neler oluyor?',
   'Clear after': 'Şu süre sonra temizle',
   '30 minutes': '30 dakika',
   '1 hour': '1 saat',
@@ -2722,4 +2745,5 @@ export const tr: Dictionary = {
   'View your report': 'Raporunuzu görüntüleyin',
   'Not sent. Your text is kept, so you can try again.':
     'Gönderilmedi. Metniniz duruyor, yeniden deneyebilirsiniz.',
+  'Reset to site icon': 'Site simgesine dön',
 }

@@ -17,7 +17,7 @@
  *  was; see test/weight.test.ts. */
 
 import { modes } from './modes.svelte'
-import { keep, stored, stringList } from './stored'
+import { keepJson, stored, stringList } from './stored'
 
 /** Every hint there is, by the control it is about, first the one that matters most:
  *  a session's one hint is the first of these whose control wants it.
@@ -26,7 +26,7 @@ import { keep, stored, stringList } from './stored'
  *  reader to sign in was a nag, not a hint, and went (#415). Signing in is where
  *  somebody looks for it, the panel's foot and Settings > Account. A `sign-in` an
  *  earlier version put away under `nib:hints` is simply not read back. */
-export const HINTS = ['graph', 'palette'] as const
+export const HINTS = ['drawer', 'graph', 'palette'] as const
 export type Hint = (typeof HINTS)[number]
 
 const KEY = 'nib:hints'
@@ -94,7 +94,7 @@ class Hints {
 
     this.put = [...this.put, hint]
     this.seen = this.put
-    keep(KEY, JSON.stringify(this.put))
+    keepJson(KEY, this.put)
   }
 
   private pick() {

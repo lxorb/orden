@@ -4,7 +4,7 @@
  *  Kept on this device; see `stored.ts`. */
 
 import type { Message } from '@orden/chats'
-import { isNumber, isRecord, isString, keep, stored } from '../../stored'
+import { isNumber, isRecord, isString, keepJson, stored } from '../../stored'
 
 const KEY = 'nib:chats-saved'
 
@@ -62,7 +62,7 @@ class Saved {
             ...rest,
           ]
         : rest
-    keep(KEY, JSON.stringify(this.list))
+    keepJson(KEY, this.list)
   }
 }
 

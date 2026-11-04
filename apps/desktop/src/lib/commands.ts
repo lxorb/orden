@@ -1317,16 +1317,6 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => workspace.goForward(),
     },
     {
-      id: 'pin',
-      label: workspace.active?.pinned === true ? t('Unpin') : t('Pin'),
-      hint: shortcuts.hint('app.pin'),
-      disabled: !workspace.active,
-      run: () => {
-        const id = workspace.activeTabId
-        if (id) workspace.togglePin(id)
-      },
-    },
-    {
       id: 'reopen',
       label: t('Reopen closed tab'),
       hint: shortcuts.hint('app.reopen'),
@@ -1804,6 +1794,17 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.graph'),
       run: () => workspace.openGraph(),
     },
+    // Todos as a tab, the same as the left side's checkbox and its key (#1047).
+    ...(__EVEN_PLUGIN__
+      ? []
+      : [
+          {
+            id: 'todos',
+            label: t('Tasks'),
+            hint: shortcuts.hint('app.tasks'),
+            run: () => void import('./todos-entry').then(({ showTodos }) => showTodos()),
+          },
+        ]),
     // Round the regions of the window, and round the spaces. Here as well as on a
     // key, because the palette is where somebody looks for a thing they have not
     // learned the key for yet - and because a browser may take F6 before the app

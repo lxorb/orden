@@ -4,7 +4,7 @@
 import { api } from './api'
 import { account } from './account.svelte'
 import { message } from './i18n.svelte'
-import { isRecord, keep, stored, storedText } from './stored'
+import { isRecord, keep, keepJson, stored, storedText } from './stored'
 
 const STORAGE_KEY = 'nib:llm'
 const CLIENT_KEY = 'nib:llm-client'
@@ -120,7 +120,7 @@ class Connectors {
     try {
       const { token } = await api.issueConnector(account.accountToken, this.readOnly)
       this.freshToken = token
-      keep(STORAGE_KEY, JSON.stringify({ readOnly: this.readOnly }))
+      keepJson(STORAGE_KEY, { readOnly: this.readOnly })
       await this.load()
     } catch (error) {
       this.error = message(error, 'could not create a token')
@@ -150,7 +150,7 @@ class Connectors {
 
   setReadOnly(on: boolean) {
     this.readOnly = on
-    keep(STORAGE_KEY, JSON.stringify({ readOnly: on }))
+    keepJson(STORAGE_KEY, { readOnly: on })
   }
 }
 

@@ -9,7 +9,7 @@
  *
  *  Pure: the frame, each pane's tabs and shape, and the room, in; boxes out. */
 
-import type { Frame } from '../workspace/pane-tree'
+import { type Frame, panesIn } from '../workspace/pane-tree'
 
 export interface Box {
   x: number
@@ -34,16 +34,9 @@ export interface Seam {
   to: { x: number; y: number }
 }
 
-/** The room a pane's windows were given: where a window dropped against its side
- *  makes a pane there. */
-export interface Room extends Box {
-  paneId: string
-}
-
 export interface Laid {
   slots: Slot[]
   seams: Seam[]
-  rooms: Room[]
 }
 
 /** What `lay` needs to know of the panes. */
@@ -56,6 +49,8 @@ export interface Panes {
 
 /** The room between two windows, and between a split's sides, which the seam runs in. */
 const GAP = 28
+/** And between two rows, which holds the name under each window of the upper. */
+const ROW_GAP = 60
 const SEAM_GAP = 56
 
 /** No window wider than this share of the room, so one tab alone is a window on a
@@ -82,7 +77,7 @@ export function gridFor(count: number, shape: number, room: Box, widest: number)
   for (let across = 1; across <= Math.max(count, 1); across++) {
     const down = Math.ceil(count / across)
     const byWidth = (room.w - (across - 1) * GAP) / across
-    const byHeight = ((room.h - (down - 1) * GAP) / down) * shape
+    const byHeight = ((room.h - (down - 1) * ROW_GAP) / down) * shape
     const w = Math.min(byWidth, byHeight, widest)
     if (w > best.w + 0.5) best = { across, w }
   }
@@ -96,7 +91,7 @@ function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
   const { across, w } = gridFor(ids.length, shape, room, widest)
   const h = w / shape
   const down = Math.ceil(ids.length / across)
-  const tall = down * h + (down - 1) * GAP
+  const tall = down * h + (down - 1) * ROW_GAP
   const top = room.y + (room.h - tall) / 2
 
   return ids.map((id, index) => {
@@ -108,7 +103,7 @@ function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
       id,
       paneId,
       x: left + (index % across) * (w + GAP),
-      y: top + row * (h + GAP),
+      y: top + row * (h + ROW_GAP),
       w,
       h,
     }
@@ -130,7 +125,6 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
     return {
       slots: grid(frame.id, room, panes, widest),
       seams: [],
-      rooms: [{ ...room, paneId: frame.id }],
     }
   }
 
@@ -148,7 +142,6 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
   const right = layIn(second, b, panes, widest)
   const slots = [...left.slots, ...right.slots]
   const seams = [...left.seams, ...right.seams]
-  const rooms = [...left.rooms, ...right.rooms]
 
   // Down the middle of the gap, as long as the windows on either side reach.
   const reach = around(slots)
@@ -171,12 +164,52 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
     )
   }
 
-  return { slots, seams, rooms }
+  return { slots, seams }
 }
 
 /** Every window and seam of `frame` in `room`. */
 export function lay(frame: Frame, room: Box, panes: Panes): Laid {
   return layIn(frame, room, panes, room.w * WIDEST)
+}
+
+/** The seams between a split's sides where its windows lie anywhere (free.ts): down the
+ *  middle of the gap between the two sides' windows, where there is one to run in. Two
+ *  sides whose windows were moved in among each other's have no line between them,
+ *  rather than one drawn across a window. */
+export function seamsAmong(frame: Frame, slots: readonly Slot[]): Seam[] {
+  if (frame.kind === 'pane') return []
+  const [first, second] = frame.sides
+  const inside = (side: Frame) => {
+    const ids = new Set(panesIn(side).map((one) => one.id))
+    return slots.filter((one) => ids.has(one.paneId))
+  }
+  const seams = [...seamsAmong(first, slots), ...seamsAmong(second, slots)]
+  const a = around(inside(first))
+  const b = around(inside(second))
+  if (!a || !b) return seams
+  const across = frame.along === 'row'
+  const [lo, hi] = across ? (a.x <= b.x ? [a, b] : [b, a]) : a.y <= b.y ? [a, b] : [b, a]
+  const gap = across ? hi.x - (lo.x + lo.w) : hi.y - (lo.y + lo.h)
+  if (gap < SEAM_GAP / 3) return seams
+  const reach = around([a, b])
+  if (!reach) return seams
+  const middle = across ? lo.x + lo.w + gap / 2 : lo.y + lo.h + gap / 2
+  seams.push(
+    across
+      ? {
+          id: frame.id,
+          along: 'row',
+          from: { x: middle, y: reach.y },
+          to: { x: middle, y: reach.y + reach.h },
+        }
+      : {
+          id: frame.id,
+          along: 'column',
+          from: { x: reach.x, y: middle },
+          to: { x: reach.x + reach.w, y: middle },
+        },
+  )
+  return seams
 }
 
 /** A seam as a path: a gentle S from one end to the other, bowing a little to either

@@ -21,6 +21,7 @@ import {
   isNumber,
   isString,
   keep,
+  keepJson,
   recordOf,
   stored,
   storedText,
@@ -129,7 +130,7 @@ export class DeviceView {
       0,
       RECENT_LIMIT,
     )
-    keep(RECENT_KEY, JSON.stringify(this.recent))
+    keepJson(RECENT_KEY, this.recent)
     // And a use of it; see frecency.ts.
     void import('../frecency').then((one) => one.frecency.use(`note:${path}`))
   }
@@ -137,7 +138,7 @@ export class DeviceView {
   /** One note off the list: Shift+Delete in the palette. */
   unremember(path: string) {
     this.recent = this.recent.filter((entry) => !samePath(entry, path))
-    keep(RECENT_KEY, JSON.stringify(this.recent))
+    keepJson(RECENT_KEY, this.recent)
   }
 
   isExpanded(path: string): boolean {
@@ -149,7 +150,7 @@ export class DeviceView {
       ? without(this.expanded, path)
       : { ...this.expanded, [path]: true }
 
-    keep(EXPANDED_KEY, JSON.stringify(this.expanded))
+    keepJson(EXPANDED_KEY, this.expanded)
   }
 
   /** Which groups of bookmarks are open, by the group's own name. Its own record
@@ -164,7 +165,7 @@ export class DeviceView {
     this.expandedGroups = this.isGroupOpen(id)
       ? without(this.expandedGroups, id)
       : { ...this.expandedGroups, [id]: true }
-    keep(GROUPS_KEY, JSON.stringify(this.expandedGroups))
+    keepJson(GROUPS_KEY, this.expandedGroups)
   }
 
   showEssentialTiles(on: boolean) {
@@ -189,7 +190,7 @@ export class DeviceView {
 
     this.writing = setTimeout(() => {
       this.writing = null
-      keep(LIST_AT_KEY, JSON.stringify(this.listScroll))
+      keepJson(LIST_AT_KEY, this.listScroll)
     }, SETTLING)
   }
 
@@ -212,13 +213,13 @@ export class DeviceView {
     const recent = this.recent.map(moved)
     if (recent.some((one, at) => one !== this.recent[at])) {
       this.recent = recent
-      keep(RECENT_KEY, JSON.stringify(recent))
+      keepJson(RECENT_KEY, recent)
     }
 
     const open = Object.keys(this.expanded)
     if (open.some((path) => moved(path) !== path)) {
       this.expanded = Object.fromEntries(open.map((path) => [moved(path), true]))
-      keep(EXPANDED_KEY, JSON.stringify(this.expanded))
+      keepJson(EXPANDED_KEY, this.expanded)
     }
   }
 
@@ -233,7 +234,7 @@ export class DeviceView {
     if (kept.length === Object.keys(this.expanded).length) return
 
     this.expanded = Object.fromEntries(kept.map((path) => [path, true]))
-    keep(EXPANDED_KEY, JSON.stringify(this.expanded))
+    keepJson(EXPANDED_KEY, this.expanded)
   }
 
   /** What is remembered open in one space, against what the space holds: `spelled`
@@ -250,7 +251,7 @@ export class DeviceView {
     if (now.length === open.length && now.every((path, at) => path === open[at])) return
 
     this.expanded = Object.fromEntries(now.map((path) => [path, true]))
-    keep(EXPANDED_KEY, JSON.stringify(this.expanded))
+    keepJson(EXPANDED_KEY, this.expanded)
   }
 
   isTagOpen(path: string): boolean {
@@ -262,7 +263,7 @@ export class DeviceView {
       ? without(this.expandedTags, path)
       : { ...this.expandedTags, [path]: true }
 
-    keep(TAGS_KEY, JSON.stringify(this.expandedTags))
+    keepJson(TAGS_KEY, this.expandedTags)
   }
 
   /** Opens a folder without closing one that is already open: making a note
@@ -280,7 +281,7 @@ export class DeviceView {
     if (Object.keys(kept).length === Object.keys(this.expanded).length) return
 
     this.expanded = kept
-    keep(EXPANDED_KEY, JSON.stringify(this.expanded))
+    keepJson(EXPANDED_KEY, this.expanded)
   }
 
   iconOf(root: string): string | null {
@@ -333,11 +334,11 @@ export class DeviceView {
 
   private writeIcons(next: Record<string, string>) {
     this.icons = next
-    keep(ICONS_KEY, JSON.stringify(next))
+    keepJson(ICONS_KEY, next)
   }
 
   private writeTints(next: Record<string, string>) {
     this.iconTints = next
-    keep(ICON_TINTS_KEY, JSON.stringify(next))
+    keepJson(ICON_TINTS_KEY, next)
   }
 }

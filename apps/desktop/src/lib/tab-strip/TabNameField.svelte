@@ -36,6 +36,9 @@
 
     // The name it was showing, typed back unchanged, is not a name of its own: a
     // program's title would otherwise be frozen by a press of Enter.
+    // Not dropped once the field is gone, which it is the moment the name is settled: the
+    // rename is the terminal's, not the field's (while-here.ts is for what a component
+    // does with what it fetched).
     if (commit && typed.trim() !== was.trim()) {
       void import('../terminal/rename').then(({ renameTerminal }) => renameTerminal(tab, typed))
     }

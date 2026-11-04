@@ -12,6 +12,8 @@
  *  envelope instead of JSON: base64 would cost a third more on every update, and an
  *  update is what sync sends most. See `frame`. */
 
+import { isPosition } from './order'
+
 // ---------------------------------------------------------------------------
 // The tree and the feed
 
@@ -55,6 +57,9 @@ export interface FeedItem {
   by: string
   /** When the account took it, on the account's clock. */
   at: number
+  /** Where somebody put it among the others in its folder, by hand (order.ts, #1068);
+   *  nothing where nobody has. */
+  pos?: string
 }
 
 /** `GET /v2/spaces/:space/feed?since=<seq>`. */
@@ -62,6 +67,9 @@ export interface FeedPage {
   items: FeedItem[]
   cursor: number
   more: boolean
+  /** Whether the account keeps positions (`place`, and `pos` on the rest; #1068). An
+   *  account from before them says nothing, and is sent neither. */
+  order?: true
 }
 
 /** The most items one page of the feed carries. */
@@ -84,6 +92,8 @@ export interface MkdirOp extends OpBase {
   id: string
   parent: string | null
   name: string
+  /** Where it goes among the rest of its folder, put there by hand (order.ts). */
+  pos?: string
 }
 
 /** A note, canvas, page note, web note or file made.
@@ -101,6 +111,7 @@ export interface CreateOp extends OpBase {
   /** The blob's hash, for a file. */
   hash?: string
   mergeable?: { text: string }
+  pos?: string
 }
 
 export interface RenameOp extends OpBase {
@@ -109,12 +120,21 @@ export interface RenameOp extends OpBase {
   name: string
 }
 
-/** A move to another folder, renamed on the way when `name` is given. */
+/** A move to another folder, renamed on the way when `name` is given, and put where it
+ *  was dropped there when `pos` is. */
 export interface MoveOp extends OpBase {
   t: 'move'
   id: string
   parent: string | null
   name?: string
+  pos?: string
+}
+
+/** An entry put somewhere else among the rest of its folder, by hand (#1068). */
+export interface PlaceOp extends OpBase {
+  t: 'place'
+  id: string
+  pos: string
 }
 
 export interface DeleteOp extends OpBase {
@@ -128,7 +148,7 @@ export interface RestoreOp extends OpBase {
   id: string
 }
 
-export type Op = MkdirOp | CreateOp | RenameOp | MoveOp | DeleteOp | RestoreOp
+export type Op = MkdirOp | CreateOp | RenameOp | MoveOp | DeleteOp | RestoreOp | PlaceOp
 
 /** Why the account would not apply an op.
  *
@@ -429,9 +449,13 @@ export function opOf(value: unknown): Op | null {
   if ((value.t === 'mkdir' || value.t === 'create') && !isEntryId(id)) return null
 
   switch (value.t) {
-    case 'mkdir':
+    case 'mkdir': {
       if (!isParent(value.parent) || !isName(value.name)) return null
-      return { op, t: 'mkdir', id, parent: value.parent, name: value.name, seen }
+      if (value.pos !== undefined && !isPosition(value.pos)) return null
+      const made: MkdirOp = { op, t: 'mkdir', id, parent: value.parent, name: value.name, seen }
+      if (value.pos !== undefined) made.pos = value.pos
+      return made
+    }
 
     case 'create': {
       const { kind, parent, name, hash, mergeable } = value
@@ -440,7 +464,9 @@ export function opOf(value: unknown): Op | null {
       if (mergeable !== undefined && !(isRecord(mergeable) && typeof mergeable.text === 'string')) {
         return null
       }
+      if (value.pos !== undefined && !isPosition(value.pos)) return null
       const made: CreateOp = { op, t: 'create', id, kind, parent, name, seen }
+      if (value.pos !== undefined) made.pos = value.pos
       if (hash !== undefined) made.hash = hash
       if (isRecord(mergeable) && typeof mergeable.text === 'string') {
         made.mergeable = { text: mergeable.text }
@@ -454,10 +480,15 @@ export function opOf(value: unknown): Op | null {
     case 'move': {
       if (!isParent(value.parent)) return null
       if (value.name !== undefined && !isName(value.name)) return null
+      if (value.pos !== undefined && !isPosition(value.pos)) return null
       const moved: MoveOp = { op, t: 'move', id, parent: value.parent, seen }
       if (value.name !== undefined) moved.name = value.name
+      if (value.pos !== undefined) moved.pos = value.pos
       return moved
     }
+
+    case 'place':
+      return isPosition(value.pos) ? { op, t: 'place', id, pos: value.pos, seen } : null
 
     case 'delete':
       return { op, t: 'delete', id, seen }
@@ -503,19 +534,35 @@ export function opsResponseOf(value: unknown): OpsResponse | null {
 
 function feedItemOf(value: unknown): FeedItem | null {
   if (!isRecord(value)) return null
-  const { id, kind, parent, name, deleted, seq, docSeq, epoch, epochBase, hash, size, by, at } =
-    value
+  const {
+    id,
+    kind,
+    parent,
+    name,
+    deleted,
+    seq,
+    docSeq,
+    epoch,
+    epochBase,
+    hash,
+    size,
+    by,
+    at,
+    pos,
+  } = value
   if (!isId(id) || !isKind(kind) || !isParent(parent) || !isName(name)) return null
   if (typeof deleted !== 'boolean' || !isCount(seq) || typeof hash !== 'string') return null
   if (!isCount(size) || typeof by !== 'string' || !isTime(at)) return null
   if (docSeq !== undefined && !isCount(docSeq)) return null
   if (epoch !== undefined && !isCount(epoch)) return null
   if (epochBase !== undefined && typeof epochBase !== 'string') return null
+  if (pos !== undefined && !isPosition(pos)) return null
 
   const item: FeedItem = { id, kind, parent, name, deleted, seq, hash, size, by, at }
   if (docSeq !== undefined) item.docSeq = docSeq
   if (epoch !== undefined) item.epoch = epoch
   if (epochBase !== undefined) item.epochBase = epochBase
+  if (pos !== undefined) item.pos = pos
   return item
 }
 
@@ -565,7 +612,10 @@ export function feedPageOf(value: unknown): FeedPage | null {
   if (!isRecord(value) || !isCount(value.cursor) || typeof value.more !== 'boolean') return null
   if (!Array.isArray(value.items) || value.items.length > FEED_PAGE) return null
   const items = listOf(value.items.filter((one) => !namedAsPath(one)).map(withHeldName), feedItemOf)
-  return items ? { items, cursor: value.cursor, more: value.more } : null
+  if (!items) return null
+  const page: FeedPage = { items, cursor: value.cursor, more: value.more }
+  if (value.order === true) page.order = true
+  return page
 }
 
 function pullDocOf(value: unknown): PullDoc | null {

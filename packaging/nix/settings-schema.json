@@ -20,15 +20,6 @@
     "default": "",
     "description": "The face notes are written in; any font installed here, by its name."
   },
-  "appearance.corners": {
-    "type": "string",
-    "enum": [
-      "rounded",
-      "square"
-    ],
-    "default": "rounded",
-    "description": "Rounded floats what is open in a card inside the window; Square keeps it flush."
-  },
   "appearance.essentials": {
     "type": "string",
     "enum": [
@@ -282,6 +273,11 @@
     "default": "ask",
     "description": "What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time."
   },
+  "general.iconTabs": {
+    "type": "boolean",
+    "default": true,
+    "description": "Every tab but the one in front shows only its icon; pointing at one shows its name."
+  },
   "general.keepVersionEvery": {
     "type": "string",
     "enum": [
@@ -428,6 +424,11 @@
     "max": 28,
     "default": 13,
     "description": "How large the text in terminals is."
+  },
+  "general.terminalThemed": {
+    "type": "boolean",
+    "default": true,
+    "description": "Paints terminals in the theme’s colours; off keeps one fixed palette."
   },
   "general.undatedInToday": {
     "type": "boolean",
@@ -725,10 +726,6 @@
   "shortcuts.app-palette": {
     "type": "string",
     "description": "The key that runs Command palette, as the keys file writes it; empty for none."
-  },
-  "shortcuts.app-pin": {
-    "type": "string",
-    "description": "The key that runs Pin, as the keys file writes it; empty for none."
   },
   "shortcuts.app-present": {
     "type": "string",

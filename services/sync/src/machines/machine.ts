@@ -81,6 +81,7 @@ import {
   type SessionNow,
   text,
 } from '@orden/online/wire'
+import { SocketLock } from '../locks/sockets'
 import { reachAgain } from './reach'
 import { stillSignedIn } from '../signins'
 import { serviceOf } from './service'
@@ -205,6 +206,15 @@ export interface Viewer {
   /** The hash of the sign-in the socket arrived with, which it lasts no longer than.
    *  Empty on a socket let in before sockets carried one. */
   login?: string
+  /** The name the device gave itself, which another device is told it by. */
+  name?: string
+  /** Whether the socket said it takes part in the session's lock (locks/holding.ts): an
+   *  Orden from before it does not, and is let drive as it always was. */
+  hold?: boolean
+  /** Whether another device holds the session, so this socket is sent nothing of it;
+   *  and whether it held the session itself until that one took it. */
+  parked?: boolean
+  lost?: boolean
 }
 
 /** The tag a socket is found by through the sign-in it arrived with. */
@@ -297,6 +307,8 @@ export class Machine implements DurableObject {
   private backupNow = false
   /** Settings' lists waiting for `nibd` to say every session it has. */
   private listing: ((sessions: SessionNow[] | null) => void)[] = []
+  /** Who of the sockets holds each session: one device at a time (locks/sockets.ts). */
+  private readonly lock: SocketLock<Viewer>
 
   constructor(
     private readonly ctx: DurableObjectState,
@@ -304,6 +316,18 @@ export class Machine implements DurableObject {
     host?: MachineHost,
   ) {
     this.given = host ?? null
+    this.lock = new SocketLock<Viewer>({
+      ctx,
+      viewerOf,
+      drives,
+      say: (socket, frame) => {
+        this.say(socket, frame)
+      },
+      parked: (socket) => this.next.set(socket, -1),
+      handed: (session) => {
+        this.people(session)
+      },
+    })
     // The app's heartbeat, answered without waking the object (lib/online/link.ts).
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(BEAT, BEAT_ANSWER))
   }
@@ -447,19 +471,39 @@ export class Machine implements DurableObject {
   }
 
   async webSocketMessage(socket: WebSocket, message: ArrayBuffer | string): Promise<void> {
+    this.lock.heard(socket)
     const viewer = viewerOf(socket)
     if (!viewer) return
 
     if (typeof message !== 'string') {
-      this.input(socket, viewer, new Uint8Array(message))
+      // Held by another device: nothing it types goes anywhere (locks/holding.ts).
+      if (!viewer.parked) this.input(socket, viewer, new Uint8Array(message))
       return
     }
 
     const frame = clientFrameOf(message)
     if (!frame) return
+    if (viewer.parked && frame.t !== 'hello' && frame.t !== 'take' && frame.t !== 'leave') return
     switch (frame.t) {
-      case 'hello':
-        await this.hello(socket, { ...viewer, cols: frame.cols, rows: frame.rows }, frame.since)
+      case 'hello': {
+        const said = {
+          ...viewer,
+          cols: frame.cols,
+          rows: frame.rows,
+          ...(frame.hold ? { hold: true } : {}),
+        }
+        socket.serializeAttachment(said)
+        if (drives(said) && !(await this.lock.claim(socket, false))) break
+        await this.hello(socket, viewerOf(socket) ?? said, frame.since)
+        break
+      }
+      case 'take':
+        if (!drives(viewer)) this.say(socket, { t: 'refused', error: 'role' })
+        // The socket says hello again once it holds it, and is sent what it missed.
+        else if (await this.lock.claim(socket, true)) this.say(socket, { t: 'hold' })
+        break
+      case 'leave':
+        await this.lock.leave(socket)
         break
       case 'in':
         this.input(socket, viewer, encoder.encode(frame.data))
@@ -496,6 +540,8 @@ export class Machine implements DurableObject {
     this.next.delete(socket)
     const viewer = viewerOf(socket)
     if (!viewer) return
+    // A holder that dropped keeps the session for its grace, to come back to.
+    if (drives(viewer) && !viewer.parked) await this.lock.settle(viewer.session, socket)
     this.people(viewer.session, socket)
     const me = await this.me()
     if (me) await audit(this.env, me.id, 'close', { who: viewer.who, device: viewer.device })
@@ -509,8 +555,10 @@ export class Machine implements DurableObject {
     this.next.set(socket, since ?? -1)
     this.ensureOpen(viewer)
     // Before anybody typed, the pty is the size of whoever may type and arrived; after,
-    // the latest typist's (4.6).
-    if (maySocketType(viewer) && !this.typed.get(viewer.session)?.length) {
+    // the latest typist's (4.6). The device holding the session is the one typing on
+    // it, so a phone that takes it over gets a terminal that fits it at once.
+    if (drives(viewer)) this.typedBy(viewer, Date.now())
+    else if (maySocketType(viewer) && !this.typed.get(viewer.session)?.length) {
       this.tell(viewer.session, {
         t: 'size',
         session: viewer.session,
@@ -664,7 +712,9 @@ export class Machine implements DurableObject {
     if (!within(this.opens, OPENS_A_MINUTE)) return
     const owners = this.ctx.getWebSockets(session).flatMap((socket) => {
       const viewer = viewerOf(socket)
-      return viewer?.owns && socket.readyState === OPEN ? [{ socket, viewer }] : []
+      return viewer?.owns && !viewer.parked && socket.readyState === OPEN
+        ? [{ socket, viewer }]
+        : []
     })
     const device = this.lastDevice.get(session)
     const chosen =
@@ -855,7 +905,7 @@ export class Machine implements DurableObject {
           await this.ctx.storage.put(RESTORED, { ...restored, [session]: screen.restored.program })
         }
         for (const socket of this.ctx.getWebSockets(session)) {
-          if ((this.next.get(socket) ?? -1) >= screen.seq) continue
+          if ((this.next.get(socket) ?? -1) >= screen.seq || viewerOf(socket)?.parked) continue
           this.say(socket, { t: 'screen', ...screen })
           this.next.set(socket, screen.seq)
         }
@@ -916,6 +966,8 @@ export class Machine implements DurableObject {
     for (const socket of this.ctx.getWebSockets(session)) {
       const next = this.next.get(socket) ?? -1
       if (next === -1) {
+        // Held by another device: sent nothing of the session (locks/holding.ts).
+        if (viewerOf(socket)?.parked) continue
         // Waiting for a screen: a stream from the very start is as good as one, drawn
         // on a cleared terminal.
         if (seq !== 0) continue
@@ -1599,15 +1651,26 @@ export class Machine implements DurableObject {
       }
       this.reattach(socket, { ...viewer, role: one.role, owns: one.owns, typing: one.typing })
     }
+
+    // A lock whose holder went while nothing was here to time its grace: an object
+    // evicted, a deploy.
+    const held = new Set(sockets.flatMap(({ viewer }) => (viewer.parked ? [viewer.session] : [])))
+    for (const session of held) await this.lock.settle(session)
   }
 
   /** A socket's rights changed: kept on it, and said when typing changed. */
   private reattach(socket: WebSocket, viewer: Viewer): void {
     const before = viewerOf(socket)
-    socket.serializeAttachment(viewer)
+    // Who may only watch takes no part in the lock: one held off is let watch, and one
+    // that held it lets go of it, after its grace as a socket that went would.
+    const watches = viewer.parked === true && !drives(viewer)
+    socket.serializeAttachment(watches ? { ...viewer, parked: false, lost: false } : viewer)
     if (before && maySocketType(before) !== maySocketType(viewer)) {
       this.say(socket, { t: 'role', type: maySocketType(viewer) })
     }
+    if (watches) this.say(socket, { t: 'hold' })
+    else if (before && drives(before) && !before.parked && !drives(viewer))
+      aside('machine hold', this.lock.settle(viewer.session))
   }
 
   private retype(term: string, typing: string | null): void {
@@ -1650,6 +1713,7 @@ export class Machine implements DurableObject {
       await this.ctx.storage.put(ENDING, [...new Set([...ending, session])])
     }
     this.opened.delete(session)
+    await this.lock.drop(session)
     for (const socket of this.ctx.getWebSockets(session)) {
       this.say(socket, { t: 'ended', code: null })
       socket.close(4404, 'this session ended')
@@ -1733,7 +1797,7 @@ export class Machine implements DurableObject {
     const seen = new Set<string>()
     const people = this.ctx.getWebSockets(session).flatMap((socket) => {
       const viewer = viewerOf(socket)
-      if (!viewer || socket === except || socket.readyState !== OPEN) return []
+      if (!viewer || socket === except || socket.readyState !== OPEN || viewer.parked) return []
       const key = `${viewer.who}\n${viewer.device}`
       if (seen.has(key)) return []
       seen.add(key)
@@ -1785,6 +1849,12 @@ function maySocketType(viewer: Viewer): boolean {
   return mayType(viewer.role, viewer.guest, viewer.owns, viewer.typing)
 }
 
+/** Whether a socket takes part in its session's lock: one that may type, from an Orden
+ *  that knows the lock. Who may only watch is never held off (locks/holding.ts). */
+function drives(viewer: Viewer): boolean {
+  return viewer.hold === true && maySocketType(viewer)
+}
+
 /** What the door decided, off the headers it handed the object. */
 function viewerFrom(headers: Headers): Viewer {
   const role = headers.get('x-nib-role')
@@ -1801,6 +1871,16 @@ function viewerFrom(headers: Headers): Viewer {
     rows: 24,
     seen: Date.now(),
     login: headers.get('x-nib-login') ?? '',
+    name: unescaped(headers.get('x-nib-device-name') ?? ''),
+  }
+}
+
+/** A header's escaped words, or nothing where they are not escaped words. */
+function unescaped(value: string): string {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return ''
   }
 }
 

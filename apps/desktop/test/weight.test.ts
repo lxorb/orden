@@ -1129,9 +1129,105 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,581,100, for words worked out inside a file's turn (rename, undo,
  *  a block named), an open note's write through the other windows, and restored words
  *  waiting to have met them. Measured 3,580,965, 388 modules.
+ *
+ *  Raised 2026-11-04, to 3,509,500, and to 388 modules, for #1067: a popup fetched through
+ *  a door plays its way out and turns round where it is when pressed again (Door.svelte,
+ *  `letGo` in slide.ts, SpaceSwitcher.svelte, Pane.svelte, Tabs.svelte). Measured
+ *  3,509,297, 387 modules.
+ *
+ *  Raised 2026-11-04, to 3,513,000 and 389 modules, for #1048: the last press in the
+ *  window remembered from the first paint, since a download flies from where it was
+ *  asked for and a menu's row or a save dialog has gone by then (downloads/started.ts).
+ *  The flight itself is fetched with the first download. Measured 3,512,869, 388
+ *  modules.
+ *
+ *  Raised 2026-11-04, to 3,513,500, for #1055: an online terminal's file is a row of the
+ *  list wearing the terminal's mark (`isTermTarget` in links.ts, file-mark.ts). Measured
+ *  3,513,238, 385 modules.
+ *
+ *  Raised 2026-11-04, to 3,514,700, for #1051: the Essentials ask for their Alt letters
+ *  once the launch has drawn, and a double click keeps one as a tab (Bookmarks.svelte).
+ *  Measured 3,514,549.
+ *
+ *  Raised 2026-11-04, to 3,519,800, for #1039: a second press on what opened a menu or a
+ *  popover closes it, the control noticed by overlays.ts as its click goes by, and a
+ *  menu a button opens hangs from the button (menu.svelte.ts). Measured 3,519,657.
+ *
+ *  Raised 2026-11-04, to 3,525,800, for #1042: a note that says nothing yet wears the empty
+ *  page, and Lucide's folder where it holds notes, read on the scan the index already
+ *  makes (`saysNothing` in scan-note.ts) and decided in `sourceMark` (chosen-icon.ts).
+ *  Measured 3,525,768.
+ *
+ *  Raised 2026-11-04, to 3,527,900, for #1040: a new tab nothing was done with goes once
+ *  it is left, judged in one place (`isBlankTab` and `closeLeftBlank` in
+ *  workspace.svelte.ts, `typedInto` in web-tab/pages.svelte.ts); when is fetched at the
+ *  launch's last turn. Measured 3,527,726.
+ *
+ *  Raised 2026-11-04, to 3,528,400, for #1051: a strip of tabs taking an
+ *  essential let go of on it, and fetching what keeps it as a tab (Tabs.svelte). Measured
+ *  3,528,260, 388 modules.
+ *
+ *  Raised 2026-11-04, to 3,537,900, and to 390 modules, for #1034: the shut file list
+ *  comes out over the note when the pointer rests at the window's edge, and goes once it
+ *  leaves (edge-peek.svelte.ts, Sidebar.svelte). Measured 3,537,714, 389 modules.
+ *
+ *  Raised 2026-11-04, to 3,538,300, for #1059: the palette finds a website by its address
+ *  as well as its name (kinds.ts, Palette.svelte), and the index says which websites the
+ *  space holds (`websitesHere` in link-index.svelte.ts). Measured 3,538,162.
+ *
+ *  Raised 2026-11-04, to 3,542,900, for #1032: the right side is one side whatever it
+ *  shows, shut whole by its one button and opened on what it showed last, with the
+ *  scratchpad one of its tabs (`rightShows`, `showRight` and `closeRight` in
+ *  workspace.svelte.ts; Sidebar.svelte, App.svelte). Measured 3,542,782.
+ *
+ *  Raised 2026-11-04, to 3,545,000, and to 391 modules, for a part the strip or a pane
+ *  fetched that lands after it has gone, which does nothing now (while-here.ts, Tabs.svelte,
+ *  Pane.svelte). Measured 3,544,879, 390 modules.
+ *
+ *  Raised 2026-11-04, to 3,545,700, for #1030: a phone opens the scratchpad from the
+ *  drawer's foot (SidebarFoot.svelte, `scratchFromDrawer` in scratchpad/is.svelte.ts)
+ *  rather than from a switch in every note's bar. Measured 3,545,505.
+ *
+ *  Raised 2026-11-04, to 3,549,500, for #1098: a web note wears the icon chosen for it over
+ *  the site's mark, kept in its `.url` and carried by every rewrite of one
+ *  (`rewriteShortcut` in web-tab/shortcut.ts, `wearsChosen` in chosen-icon.ts).
+ *  Measured 3,549,413.
+ *
+ *  Raised 2026-11-04, to 3,551,400, for #1047: a checkbox in the left side's top row
+ *  that opens Todos as a tab, fetched with the press (Sidebar.svelte, todos-entry.ts), and
+ *  the Tasks panel homed on the right (workspace/panels.ts). Measured 3,551,274.
+ *
+ *  Raised 2026-11-04, to 3,553,700 and 392 modules, for #1055: a new online terminal is a
+ *  tab not saved, told apart by its words (`isOnlineTab` reads them with `termOf`, the
+ *  `.term` reader, which is the module more), and saved as its `.term`; and every kind a tab
+ *  opens is shown without its ending (note-name.ts). Measured 3,553,422, 391 modules.
+ *
+ *  Raised 2026-11-04, to 3,556,300, and to 393 modules, for #1066 again: the file list's
+ *  button said and not shown where a swipe from the edge pulls the list out, on the
+ *  swipe's own condition, asked in one place (swipe-opens.ts, Titlebar.svelte,
+ *  SidebarToggle.svelte), put back after the #1056 rebase dropped them. Measured
+ *  3,556,148, 392 modules.
+ *
+ *  Raised 2026-11-04, to 3,556,800, for #1088: a web tab's page given its rounded card's
+ *  corner with every placement (`cardCorner` in pages.svelte.ts). Measured 3,556,693.
+ *
+ *  Raised 2026-11-04, to 3,557,900, for #1100: Send feedback's bug back in the sidebar's
+ *  foot on every device (SidebarFoot.svelte). Measured 3,557,767.
+ *
+ *  Raised 2026-11-04, to 3,558,200, for #331: the pictures the tab overview keeps of windows,
+ *  taken as each leaves the screen (overview/faces.ts, overview/faces.svelte.ts).
+ *  Measured 3,558,037.
+ *
+ *  Raised 2026-11-04, to 3,559,000, for #331: each kind's way of drawing its window in the
+ *  tab overview (overview/previews.ts, workspace/tab-kinds.ts).
+ *  Measured 3,558,887.
+ *
+ *  Raised 2026-11-04, to 394 modules, for #1041: every tab but the one in front is its
+ *  icon, opening out to its name under the pointer, with a letter on look-alikes
+ *  (tab-strip/icon-tabs.svelte.ts, tab-strip/twins.ts). Measured 3,556,835, 393 modules.
  */
 const BUDGET = 3_581_100
-const MOST_FILES = 389
+const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

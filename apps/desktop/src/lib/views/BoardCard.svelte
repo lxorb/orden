@@ -214,6 +214,9 @@
     border-radius: inherit;
     outline: none;
     cursor: default;
+    /* Carried, not selected: a drag across the board selects no words. */
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   @media (hover: hover) {
@@ -338,7 +341,11 @@
     opacity: 1;
   }
 
+  /* Always there under a thumb, and as tall as the title's line, so it never covers the
+     meta line under it on a card of two lines. */
   :global([data-touch]) .menu {
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
     opacity: 1;
   }
 

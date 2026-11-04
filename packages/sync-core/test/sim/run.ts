@@ -56,6 +56,10 @@ export interface Options {
   device?: (id: string, clock: Clock, random: Random, seeded: readonly Seeded[]) => DeviceAdapter
   /** A marker to follow through the run, into the trace. */
   watch?: string
+  /** What the random steps are mostly about: the words (the default, the mix every
+   *  pinned seed was drawn from), or the tree - moves, renames, deletes and restores
+   *  crossing on many devices (#1068). */
+  mix?: 'words' | 'tree'
 }
 
 export interface Report {
@@ -138,10 +142,24 @@ class Run {
     return filler.join(' ')
   }
 
-  private action(): Action {
-    const r = this.random
-    const pick = () => r.next()
-    const kind = r.weighted<Action['t']>([
+  /** What a device deleted and may bring back from its trash, by device. */
+  private readonly trash = new Map<number, string[]>()
+
+  /** The kinds of action the random steps draw, and how often. */
+  private kinds(): [Action['t'], number][] {
+    if (this.options.mix === 'tree') {
+      return [
+        ['type', 12],
+        ['create', 10],
+        ['mkdir', 8],
+        ['rename', 12],
+        ['move', 18],
+        ['delete', 10],
+        ['restore', 8],
+        ['save', 6],
+      ]
+    }
+    return [
       ['type', 30],
       ['cut', 6],
       ['drop-paragraph', 3],
@@ -153,7 +171,13 @@ class Run {
       ['append-day', 6],
       ['edit-file', 5],
       ['save', 10],
-    ])
+    ]
+  }
+
+  private action(device: number): Action {
+    const r = this.random
+    const pick = () => r.next()
+    const kind = r.weighted<Action['t']>(this.kinds())
     switch (kind) {
       case 'type':
         return { t: 'type', note: pick(), at: pick(), words: this.words() }
@@ -180,6 +204,11 @@ class Run {
         return { t: 'move', target: pick(), folder: r.chance(0.4) ? null : pick() }
       case 'delete':
         return { t: 'delete', target: pick() }
+      case 'restore': {
+        const trash = this.trash.get(device) ?? []
+        const id = trash[r.int(Math.max(trash.length, 1))]
+        return id === undefined ? { t: 'save' } : { t: 'restore', id }
+      }
       case 'append-day':
         return { t: 'append-day', name: DAY, words: this.words() }
       case 'edit-file':
@@ -206,7 +235,7 @@ class Run {
       return { t: 'answer', device, choice: r.pick(['mine', 'theirs', 'both'] as const) ?? 'mine' }
 
     return r.weighted<Step>([
-      [{ t: 'act', device, action: this.action() }, 60],
+      [{ t: 'act', device, action: this.action(device) }, 60],
       [{ t: 'pass', device }, 20],
       [{ t: 'wait', ticks: r.between(1, 30) }, 10],
       [
@@ -248,7 +277,9 @@ class Run {
         for (const marker of after) if (!before.has(marker)) this.book.typed.add(marker)
         // Taken out by the person, who could see them.
         for (const marker of before) if (!after.has(marker)) this.book.retired.add(marker)
-        for (const id of await this.idsOf(device)) if (!idsBefore.has(id)) this.book.made.add(id)
+        const idsAfter = await this.idsOf(device)
+        for (const id of idsAfter) if (!idsBefore.has(id)) this.book.made.add(id)
+        this.noteTree(step.device, step.action, idsBefore, idsAfter)
         break
       }
       case 'answer': {
@@ -256,7 +287,11 @@ class Run {
         if (!device || !held) break
         const idsBefore = await this.idsOf(device)
         await device.answer(held.id, step.choice)
-        for (const id of await this.idsOf(device)) if (!idsBefore.has(id)) this.book.made.add(id)
+        for (const id of await this.idsOf(device)) {
+          if (idsBefore.has(id)) continue
+          this.book.made.add(id)
+          this.book.copies.add(id)
+        }
         break
       }
       case 'pass':
@@ -293,6 +328,29 @@ class Run {
 
     for (const one of this.devices) this.classifications.push(...one.classified())
     await this.tick()
+  }
+
+  /** What a person's delete took away and a restore asked back, for the checks and for
+   *  the trash a later restore is drawn from. */
+  private noteTree(
+    device: number,
+    action: Action,
+    before: ReadonlySet<string>,
+    after: ReadonlySet<string>,
+  ) {
+    const at = this.trace.length
+    if (action.t === 'delete') {
+      const gone = [...before].filter((id) => !after.has(id))
+      for (const id of gone) this.book.deleted.set(id, at)
+      this.trash.set(device, [...(this.trash.get(device) ?? []), ...gone])
+    }
+    if (action.t === 'restore') {
+      this.book.restored.set(action.id, at)
+      this.trash.set(
+        device,
+        (this.trash.get(device) ?? []).filter((id) => id !== action.id),
+      )
+    }
   }
 
   private async tick() {

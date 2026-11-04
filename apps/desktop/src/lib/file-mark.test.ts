@@ -17,6 +17,8 @@ describe('the mark a file wears', () => {
     expect(fileMark('Deep Learning.pdf')).toBe('pdf')
     expect(fileMark('Bugs.base')).toBe('base')
     expect(fileMark('shot.png')).toBe('picture')
+    // An online terminal's file, as its tab is (issue 1055).
+    expect(fileMark('Build.term')).toBe('terminal')
   })
 
   test('every extension a picture is written in', () => {
@@ -89,10 +91,10 @@ describe('the mark a file wears', () => {
  *  chosen but that the set is one set: every mark has a drawing, every drawing
  *  is Lucide's own, and no two marks are the same picture. */
 describe('the marks a row wears', () => {
-  // The terminal is a tab's mark and never a row's, and is here because the two share
-  // one drawing each; see file-mark.ts.
+  // The terminal is a tab's mark, and a row's for an online terminal's file.
   const MARK_NAMES: Mark[] = [
     'note',
+    'folder',
     'canvas',
     'pages',
     'pdf',
@@ -105,9 +107,14 @@ describe('the marks a row wears', () => {
     'chat',
   ]
 
-  /** And no folder among them: no row in the list is a folder, so there is no
-   *  drawing of one to reach for. See folder-notes.ts. */
+  /** The folder among them is no kind of row: it is what a note that says nothing yet
+   *  wears where it holds notes (#1042), decided by `sourceMark` in chosen-icon.ts and
+   *  never by a name. See folder-notes.ts. */
   test('every kind of row has one, and a folder is not a kind of row', () => {
+    for (const name of ['Box', 'Box/', 'Box/Box.md', 'Box.md', 'index.md']) {
+      expect(fileMark(name), name).not.toBe('folder')
+    }
+
     for (const name of MARK_NAMES) {
       expect(MARKS[name], name).toBeDefined()
       expect(MARKS[name].length, name).toBeGreaterThan(0)

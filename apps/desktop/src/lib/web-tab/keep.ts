@@ -27,7 +27,7 @@ import { canWriteAt } from '../sharing.svelte'
 import { invoke } from '../tauri'
 import { afterQuiet, type Later } from '../timing'
 import { isWebAddress } from './address'
-import { aimWebloc, readWebFile, writeShortcut } from './shortcut'
+import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from './shortcut'
 
 /** What one web note's file needs to be brought up to date. Named rather than
  *  positional because four strings in a row is four chances to swap two. */
@@ -148,15 +148,7 @@ async function writeFile(kept: Kept, home: string | null, icon: string | null): 
  *  nib nor Finder could open again. */
 function shortcutFor(kept: Kept, text: string, home: string | null, icon: string | null): string {
   const said = readWebFile(kept.path, text)
-  const added = said?.added
-  const when = added ? new Date(added) : new Date()
+  if (!said) return writeShortcut(kept.url, '', new Date(), home, icon)
 
-  return writeShortcut(
-    kept.url,
-    said?.title ?? '',
-    Number.isNaN(when.getTime()) ? new Date() : when,
-    home,
-    icon,
-    said?.own,
-  )
+  return rewriteShortcut(said, { url: kept.url, home, icon })
 }

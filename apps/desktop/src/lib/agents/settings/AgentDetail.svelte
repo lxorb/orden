@@ -17,26 +17,21 @@
   import { prompt } from '../../prompt.svelte'
   import Select from '../../Select.svelte'
   import { workspace } from '../../workspace.svelte'
-  import type { Category, Grant, Scope } from '../verbs'
+  import type { Grant, Scope } from '../verbs'
   import AgentLog from './AgentLog.svelte'
   import AgentMark from './AgentMark.svelte'
   import {
-    ASKS,
     LIMITS,
     LIMIT_NAMES,
     type Limit,
     SCOPE_GROUPS,
-    askApplies,
-    asks,
     reaches,
     sidebars,
     sitesOf,
     trifecta,
-    withAsk,
     withEverySpace,
     withLimit,
     withListed,
-    withMode,
     withName,
     withoutAlways,
     withScope,
@@ -81,7 +76,6 @@
       )
     })
   })
-  const asked = $derived(ASKS.filter((one) => askApplies(grant, one.category)))
   const ruleChoices = $derived(
     (['allow', 'deny', 'agent-store'] as const).map((value) => ({
       value,
@@ -108,10 +102,6 @@
 
   function toggleScope(scope: Scope) {
     change((one) => withScope(one, scope, !one.scopes.includes(scope)))
-  }
-
-  function toggleAsk(category: Category) {
-    change((one) => withAsk(one, category, !asks(one, category)))
   }
 
   async function remove() {
@@ -161,7 +151,7 @@
 {/snippet}
 
 <header class="who">
-  <button class="back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
+  <button class="nib-glyph back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
     <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
   </button>
   <AgentMark name={grant.name} />
@@ -203,7 +193,20 @@
 <h3>{t('Activity')}</h3>
 <AgentLog {pane} {grant} />
 
-{#each SCOPE_GROUPS as group (group.id)}
+<!-- A client connected over MCP has Full permissions: the agent on the other end has a
+     permission system of its own and answers for what it does, so Orden asks it nothing
+     and there is nothing to switch (#1099; `connected` in src-tauri/src/agents/mod.rs).
+     Its spaces, its blocked sites and its limits are the reader's own and stay. The AI
+     sidebar's own agents ask as their thread's mode says, and reach what these grant. -->
+{#if !sidebars(grant)}
+  <p class="connected">
+    {t(
+      'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.',
+    )}
+  </p>
+{/if}
+
+{#each sidebars(grant) ? SCOPE_GROUPS : [] as group (group.id)}
   <h3>{GROUP_WORDS[group.id]()}</h3>
   <div class="card">
     {#each group.scopes as scope (scope)}
@@ -259,7 +262,7 @@
           <span class="always">
             {#each always as category (category)}
               <button
-                class="said"
+                class="nib-tag"
                 title={t('Remove')}
                 onclick={() => {
                   change((one) => withoutAlways(one, site, category))
@@ -272,7 +275,7 @@
         {/if}
       </span>
       {#if rule}
-        <div class="pick">
+        <div class="nib-setting-value">
           <Select
             value={rule}
             options={ruleChoices}
@@ -284,7 +287,7 @@
           />
         </div>
         <button
-          class="drop"
+          class="nib-glyph is-danger"
           aria-label={t('Remove')}
           title={t('Remove')}
           onclick={() => {
@@ -304,20 +307,6 @@
     onremove={() => undefined}
   />
 </div>
-
-{#if !sidebars(grant)}
-  <h3>{t('Asks first')}</h3>
-  <div class="card">
-    {@render toggle(CATEGORY_WORDS.writing(), grant.mode === 'confirm', () => {
-      change((one) => withMode(one, one.mode !== 'confirm'))
-    })}
-    {#each asked as { category } (category)}
-      {@render toggle(CATEGORY_WORDS[category](), asks(grant, category), () => {
-        toggleAsk(category)
-      })}
-    {/each}
-  </div>
-{/if}
 
 <h3>{t('Limits')}</h3>
 <div class="card">
@@ -352,38 +341,10 @@
 </div>
 
 <style>
-  /* Back to the list, in front of the agent it leaves, as a phone's bar has it: the
-     pane's own title stays above, so this is a step rather than a heading. */
+  /* Back to the list: the square is `.nib-glyph`; it stands out into the margin by
+     the room round its arrow, so the arrow lines up with the title above. */
   .back {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
     margin-inline-start: -6px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  .back svg {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  @media (hover: hover) {
-    .back:hover {
-      color: var(--text-strong);
-    }
   }
 
   .who {
@@ -434,6 +395,15 @@
   }
 
   /* The one warning on the page, in the colour a callout warns in. */
+  /* What a client connected over MCP is told instead of switches: quiet words. */
+  .connected {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
   .trifecta {
     display: flex;
     align-items: flex-start;
@@ -464,68 +434,6 @@
     flex-wrap: wrap;
     gap: var(--space-1);
     margin-block-start: 2px;
-  }
-
-  .said {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35em;
-    padding: 0 0.5em;
-    border: none;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .said:hover {
-      background: var(--danger-soft);
-      color: var(--danger);
-    }
-  }
-
-  .pick {
-    flex: none;
-    width: 12rem;
-  }
-
-  .drop {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  .drop :global(svg) {
-    width: 12px;
-    height: 12px;
-    stroke-width: 1.5;
-  }
-
-  .said :global(svg) {
-    width: 8px;
-    height: 8px;
-    stroke-width: 1.4;
-  }
-
-  @media (hover: hover) {
-    .drop:hover {
-      color: var(--danger);
-    }
   }
 
   .value {

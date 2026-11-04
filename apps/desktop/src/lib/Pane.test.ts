@@ -61,6 +61,6 @@ describe('a kind with a surface of its own', () => {
 
   test("has no editor's find bar drawn over it", () => {
     expect(TAB_KINDS.channel.editor).toBe(false)
-    expect(SOURCE).toContain('{#if finding && writing}')
+    expect(SOURCE).toContain('<Door open={finding && writing} load={() => findBar()}>')
   })
 })

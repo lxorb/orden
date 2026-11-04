@@ -377,6 +377,7 @@
   }
 
   .card .task {
+    --actions-ground: var(--surface);
     border-radius: var(--radius-md);
     background: var(--surface);
     box-shadow: inset 0 0 0 1px var(--line);
@@ -424,6 +425,7 @@
   }
 
   .head {
+    position: relative;
     flex: none;
     display: flex;
     align-items: center;
@@ -484,11 +486,21 @@
     cursor: default;
   }
 
+  /* Over the end of the words rather than beside them, so a narrow list - the Tasks
+     panel's (#374) - gives the words the whole row until the pointer or the focus is on
+     it; on the row's own ground then, so the words under them do not show through. */
   .actions {
-    flex: none;
+    position: absolute;
+    inset-inline-end: 0;
+    top: 50%;
     display: flex;
     gap: 2px;
+    padding-inline-start: var(--space-2);
+    border-radius: var(--radius-row);
+    background: var(--actions-ground, var(--bg));
     opacity: 0;
+    pointer-events: none;
+    translate: 0 -50%;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
 
@@ -496,6 +508,21 @@
   .task.is-on .actions,
   .task:focus-within .actions {
     opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (hover: hover) {
+    .task:hover {
+      --actions-ground: var(--surface-hover);
+    }
+  }
+
+  .task.is-on {
+    --actions-ground: var(--surface-selected);
+  }
+
+  .task.is-picked {
+    --actions-ground: var(--accent-soft);
   }
 
   :global([data-touch]) .actions {

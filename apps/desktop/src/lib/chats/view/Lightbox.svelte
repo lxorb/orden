@@ -7,6 +7,7 @@
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../../backstack.svelte'
+  import { downloadStarted } from '../../downloads/started'
   import { t } from '../../i18n.svelte'
   import { LAYER } from '../../motion'
   import { overlays } from '../../overlays'
@@ -102,6 +103,7 @@
         class="nib-glyph"
         href={fileUrl(chat, file.hash)}
         download={file.name}
+        onclick={(event) => downloadStarted(file.name, { element: event.currentTarget })}
         aria-label={t('Save')}
         title={t('Save')}><Glyph name="save" /></a
       >

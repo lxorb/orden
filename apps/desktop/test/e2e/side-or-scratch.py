@@ -1,12 +1,14 @@
 """The right side or the scratchpad, never both.
 
-Emil, 2026-10-13: "should be EITHER right sidebar or scratchpad, never both". What it
-walks: the outline open on the right, the scratchpad's switch pressed - the card takes
-the edge and the outline goes under it - and the note's width read on every frame of
-that swap, so "no jump" is a number: the note eases from one width to the other, never
-more than a third of the way in one frame. Then the card put away brings the outline
-back; the right side's button puts the card away; a reload with the card up comes back
-with the card alone; and on a phone the right drawer and the card take the same turns.
+Emil, 2026-10-13: "should be EITHER right sidebar or scratchpad, never both". Since #1032
+the scratchpad is one of the right side's own tabs, so the two take turns in one place.
+What it walks: the outline open on the right, the scratchpad's tab pressed - the card
+takes the side and the outline goes under it - and the note's width read on every frame
+of that swap, so "no jump" is a number: the note never goes past either width. Then the
+outline's tab brings the outline back; the right side's one button with the card up
+shuts the side whole, and again opens it on the card; a reload with the card up comes
+back with the card alone; and on a phone, where the scratchpad is in the left drawer's
+foot (#1030), the right drawer and the card take the same turns.
 
     python apps/desktop/test/e2e/side-or-scratch.py
 
@@ -26,11 +28,13 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 EDGE = """
 () => {
   const ws = window.nibApp.workspace
-  const pad = document.querySelector('[data-scratchpad]')
+  // The card's own element, docked in the right side on a desktop and the one note on a
+  // phone: the side showing it, and it drawn.
+  const card = document.querySelector('[data-scratchpad-card]')
   return {
     side: ws.openOn('right'),
     kept: ws.rightPanel,
-    pad: !!pad && !pad.classList.contains('shut'),
+    pad: ws.rightShows === 'scratchpad' && !!card && !card.closest('.shut'),
   }
 }
 """
@@ -55,8 +59,13 @@ async (press) => {
 }
 """
 
-PAD = "header button.pad"
+#: The scratchpad's tab and the outline's on the right side, and the side's one button.
+PAD = '[data-tab="scratchpad"]'
+OUTLINE = '[data-tab="outline"]'
+RIGHT = 'header [data-side-toggle="right"]'
 PRESS_PAD = f"document.querySelector('{PAD}').click()"
+#: A phone's scratchpad, in the left drawer's foot.
+FOOT_PAD = '[data-region="foot"] button[aria-label="Scratchpad"]'
 
 
 def smooth(frames: list[list[int]], what: str) -> None:
@@ -88,33 +97,42 @@ def desktop(browser: Browser) -> None:
     smooth(widths, "outline to card")
     now = edge(page)
     say(f"card up: {now}")
-    if now != {"side": None, "kept": "outline", "pad": True}:
-        wrong(f"the card and the right side are not taking turns: {now}")
+    if not now["pad"] or now["side"] is not None or now["kept"] != "outline":
+        wrong(f"the card and the outline are not taking turns on the right side: {now}")
     shot(page, "02-card-over-the-side")
 
-    widths = page.evaluate(WIDTHS, PAD)
+    widths = page.evaluate(WIDTHS, OUTLINE)
     smooth(widths, "card to outline")
     now = edge(page)
-    say(f"card away: {now}")
+    say(f"outline's tab: {now}")
     if now != {"side": "outline", "kept": "outline", "pad": False}:
         wrong(f"the outline did not come back as the card went: {now}")
     shot(page, "03-outline-back")
 
+    # The side's one button with the card up shuts the side whole, and again opens it
+    # on what it showed: the card (#1032).
     page.evaluate(f"() => {PRESS_PAD}")
     page.wait_for_timeout(400)
-    widths = page.evaluate(WIDTHS, "header button.toggle")
+    widths = page.evaluate(WIDTHS, RIGHT)
     smooth(widths, "card to the side's button")
     now = edge(page)
     say(f"the side's button over the card: {now}")
-    if now != {"side": "outline", "kept": "outline", "pad": False}:
-        wrong(f"the right side's button did not take the edge back: {now}")
+    if now["side"] is not None or now["pad"]:
+        wrong(f"the right side's button did not shut the side whole: {now}")
+    page.locator(RIGHT).click()
+    page.wait_for_timeout(500)
+    now = edge(page)
+    say(f"the side's button again: {now}")
+    if not now["pad"] or now["side"] is not None:
+        wrong(f"the right side did not open again on the card it showed: {now}")
 
-    page.evaluate("() => window.nibApp.workspace.closePanel('right')")
+    page.evaluate("() => window.nibApp.workspace.closeRight()")
     page.wait_for_timeout(400)
     if edge(page)["pad"]:
-        wrong("the card came back when the side shut")
+        wrong("the card stayed when the side shut")
 
     page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.wait_for_timeout(300)
     page.evaluate(f"() => {PRESS_PAD}")
     page.wait_for_timeout(500)
     page.evaluate("() => window.nibApp.workspace.flush?.()")
@@ -150,7 +168,11 @@ def phone(browser: Browser) -> None:
     page.wait_for_timeout(500)
     shot(page, "05-phone-drawer")
 
-    page.evaluate(f"() => {PRESS_PAD}")
+    # The scratchpad's glyph is in the left drawer's foot (#1030).
+    page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
+    wait_for(page, f"document.querySelector('{FOOT_PAD}')", "the drawer's foot")
+    page.wait_for_timeout(400)
+    page.locator(FOOT_PAD).tap()
     page.wait_for_timeout(500)
     now = edge(page)
     say(f"phone, card up: {now}")

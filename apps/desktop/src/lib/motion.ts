@@ -34,6 +34,15 @@ export function dur(ms: number): number {
   return stillness() ? 0 : ms
 }
 
+/** The duration of a change that moves nothing - an opacity, and only that - which
+ *  is kept for a reader who asked for less movement, because it is how they are told
+ *  something happened at all: the downloads glyph dimming once as a file reaches it,
+ *  where everybody else sees the file fly (see downloads/flight.ts). Never for a
+ *  transform; `dur` is for those. */
+export function calm(ms: number): number {
+  return ms
+}
+
 /** How a layer arrives: the scrim fades, the surface rises into it.
  *
  *  One set of numbers for every layer the app puts up - a sheet, the palette, the

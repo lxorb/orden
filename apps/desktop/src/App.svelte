@@ -27,6 +27,7 @@
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
+  import { swipeOpens } from './lib/swipe-opens'
   import { escapeLeaves, fullscreen } from './lib/fullscreen.svelte'
   import { alone } from './lib/alone.svelte'
   import { chrome } from './lib/glass/chrome.svelte'
@@ -146,6 +147,8 @@
   /** Whether a tab fills the window; see lib/tab-fill. */
   const filled = $derived(workspace.panes.fills !== null)
   const bare = $derived(fullscreen.on || alone.on)
+  /** Nothing of the app's round what is open: the card flush (#1103). */
+  const flush = $derived(bare || filled)
   /** Whether each side's panel is built. Once it has been open it stays built, shut
    *  or not, and the launch's last turns build it shut where it never was: opening
    *  it is then a column sliding open over rows already laid out, never a panel made
@@ -155,9 +158,17 @@
    *  unbuilt. */
   const built = { left: false, right: false }
   const keptLeft = $derived((built.left ||= workspace.panel !== null || startup.reached('left')))
+  /** Whether the scratchpad is the right side's tab, which a desktop's is (#1032). */
+  const padDocked = $derived(!viewport.touch && !__EVEN_PLUGIN__)
+  /** Whether the right side is open: showing a panel, or on a desktop the scratchpad. */
+  const rightOpen = $derived(
+    padDocked ? workspace.rightShows !== null : workspace.openOn('right') !== null,
+  )
   const keptRight = $derived(
     (built.right ||=
-      workspace.rightPanel !== null || (startup.reached('right') && workspace.nextRight !== null)),
+      workspace.rightPanel !== null ||
+      (padDocked && pad.on) ||
+      (startup.reached('right') && (workspace.nextRight !== null || padDocked))),
   )
   let palette = $state(false)
   /** The palette itself, for the one thing a flag cannot say: Ctrl+Shift+P opens it
@@ -430,9 +441,7 @@
   // The same for the other side, which is a drawer over the note wherever the
   // left one is; see the right-hand rules in the stylesheet below.
   $effect(() =>
-    viewport.drawer && workspace.openOn('right')
-      ? overlays.show(() => workspace.closePanel('right'))
-      : undefined,
+    viewport.drawer && rightOpen ? overlays.show(() => workspace.closeRight()) : undefined,
   )
 
   // On a phone each of these is a screen of its own, so back closes it rather
@@ -448,10 +457,10 @@
   // only wakes what reads it when its own value changes, so a drawer that stays
   // open through three panels is one layer and one entry.
   const covered = $derived(!!workspace.panel)
-  const coveredRight = $derived(!!workspace.openOn('right'))
+  const coveredRight = $derived(rightOpen)
 
   $effect(() => closeOnBack(covered, () => workspace.closePanel()))
-  $effect(() => closeOnBack(coveredRight, () => workspace.closePanel('right')))
+  $effect(() => closeOnBack(coveredRight, () => workspace.closeRight()))
   $effect(() =>
     closeOnBack(palette, () => {
       palette = false
@@ -487,7 +496,7 @@
   // first drag is a thumb that arrives well after the first paint.
   $effect(() => {
     const host = middle
-    if (!host || !viewport.drawer || bare) return
+    if (!host || !swipeOpens()) return
 
     let stop: (() => void) | null = null
     let live = true
@@ -663,6 +672,12 @@
                 ]).then(([{ chats }, open]) => ({ chats, ...open })),
           agents: { standIn },
           ai,
+          // The AI panel's chats, which a drive lays out without a provider to make them
+          // with; see test/e2e/chat-rows.py.
+          aiChats: () =>
+            __EVEN_PLUGIN__
+              ? Promise.reject(new Error('no AI panel in the Even Realities plugin'))
+              : import('./lib/ai/sidebar/chat.svelte').then(({ chat }) => chat),
           // The AI accounts on every device, which a drive of two devices reads and
           // steers; see test/e2e/ai-vault.py.
           aiVault: () =>
@@ -1053,6 +1068,7 @@
 <main
   class:focus={modes.focus}
   class:full={bare}
+  class:flush
   inert={workspace.nothingToShow}
   style:height={pageHeight()}
 >
@@ -1113,7 +1129,7 @@
       style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
     >
-      {#if (workspace.panel ?? workspace.openOn('right')) !== null && !bare}
+      {#if (workspace.panel !== null || rightOpen) && !bare}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <!-- One scrim for both drawers, which is why it fades with whichever of
              them a finger is on. Only one can be moving: a gesture belongs to one
@@ -1122,13 +1138,13 @@
              was drawn over the drawer it was meant to be under. -->
         <div
           class="scrim"
-          class:over={!!workspace.openOn('right')}
+          class:over={rightOpen}
           class:held={drawer.held || rightDrawer.held}
           class:dragging={drawer.at !== null || rightDrawer.at !== null}
           style:opacity={drawer.progress ?? rightDrawer.progress ?? undefined}
           onclick={() => {
             workspace.closePanel()
-            workspace.closePanel('right')
+            workspace.closeRight()
           }}
         ></div>
       {/if}
@@ -1180,18 +1196,19 @@
           {/if}
         </div>
 
-        <!-- Docked, so a web page narrows rather than covers it; see scratchpad/pad.ts. -->
-        {#if !bare && !filled && !__EVEN_PLUGIN__}
+        <!-- A phone's and a tablet's card, over the note; see scratchpad/pad.ts. On a
+             desktop the card is the right side's own tab, in the column below (#1032). -->
+        {#if !bare && !filled && !__EVEN_PLUGIN__ && viewport.touch}
           <PadColumn />
         {/if}
 
-        {#if workspace.right.length && !bare && !filled}
+        {#if (workspace.right.length || padDocked) && !bare && !filled}
           <div
             class="panels right"
             data-chrome="end"
             data-theme={chrome.theme}
-            inert={viewport.drawer && !workspace.openOn('right')}
-            class:open={!!workspace.openOn('right')}
+            inert={viewport.drawer && !rightOpen}
+            class:open={rightOpen}
             class:held={rightDrawer.held}
             class:dragging={rightDrawer.at !== null}
             class:settling={rightDrawer.settle !== null}
@@ -1567,9 +1584,9 @@
     padding: var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left);
   }
 
-  /* No card where the whole screen is the note, and none on a phone or a tablet, whose
-     screen is all the note there is room for: flush and square, as the window was. */
-  main.full,
+  /* No card where the whole window is the note (`flush`), and none on a phone or a tablet,
+     whose screen is all the note there is room for: flush and square, as the window was. */
+  main.flush,
   :global([data-touch]) main {
     --card-radius: 0px;
     --card-inset: 0px;

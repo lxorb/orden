@@ -175,7 +175,7 @@
        and keeps the focus while the arrow keys walk the list. -->
   <button
     type="button"
-    class="trigger"
+    class="trigger nib-field is-value"
     {disabled}
     role="combobox"
     aria-haspopup="listbox"
@@ -264,35 +264,15 @@
     min-width: 0;
   }
 
-  /* The closed control reads like every other input in the app. */
+  /* The closed control is the value box every setting's field is, `.nib-field
+     is-value` in the themes package, so a dropdown and the field above it are one
+     height, one corner and one hairline (#1056). The box is said there; what is left
+     here is that it is a button holding words and a chevron. Its height comes from
+     `--row-height` through the field, which is what makes it a thumb's target: 28
+     under a pointer, 56 under a finger. */
   .trigger {
     width: 100%;
-    display: flex;
-    align-items: center;
     gap: var(--space-2);
-    /* Said rather than left to the padding, which is what makes it a thumb's
-       target: 28 under a pointer, 56 under a finger, and the words and their room
-       take it past 28 anyway. It was 36px tall on every screen, so the one kind
-       of control the settings are mostly made of was the one thing on a phone
-       under the touch floor. */
-    min-height: var(--row-height);
-    padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--bg);
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    line-height: 1.4;
-    text-align: start;
-    cursor: default;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      box-shadow var(--dur-fast) var(--ease-out);
-  }
-
-  .trigger:hover {
-    border-color: var(--muted);
   }
 
   /* Open, which is a state and not a focus: the list is hanging off it, and it

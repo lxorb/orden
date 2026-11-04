@@ -133,6 +133,7 @@ export const APP_FOLDERS = [
   'automation',
   'back-swipe',
   'canvas',
+  'downloads',
   'even',
   'export',
   'foreign',
@@ -406,10 +407,110 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,915,000, for the bug hunt's third round on the
  *  views: what walking a value costs a guarded base, words of raw HTML in an export, a
  *  fence found by what is drawn, and the head offering what can be kept. Measured 5,914,633.
+ *
+ *  The code raised on 2026-11-04, to 5,848,800, for #1067: a popup fetched through a
+ *  door plays its way out and turns round where it is when pressed again (Door.svelte,
+ *  `letGo` in slide.ts). Measured 5,848,628.
+ *
+ *  The code raised on 2026-11-04, to 5,849,300, for #1055: an online terminal held by
+ *  one device at a time, its card saying who holds it with Take over (arrival.svelte.ts),
+ *  and its file a row of the list. Measured 5,849,083.
+ *
+ *  The code raised on 2026-11-04, to 5,852,200, for #1051: the Essentials' Alt letters
+ *  (tab-strip/letters.ts, tab-strip/letters.svelte.ts) and a double click that keeps an
+ *  Essential as a tab. Measured 5,852,018.
+ *
+ *  The code raised on 2026-11-04, to 5,853,500, for #1039: a second press on what
+ *  opened a menu or a popover closes it (overlays.ts, menu.svelte.ts). Measured
+ *  5,853,362.
+ *
+ *  The code raised on 2026-11-04, to 5,859,300, for #1056: the value box and column every
+ *  setting's value is drawn in (`.nib-field.is-value`, `--setting-value` in base.css),
+ *  which the stylesheet's raw text carries for export. Measured 5,859,138.
+ *
+ *  The code raised on 2026-11-04, to 5,860,400, for #1042: a note that says nothing yet
+ *  wears the empty page, and Lucide's folder where it holds notes, read on the scan the
+ *  index makes (`saysNothing` in scan-note.ts) and decided in `sourceMark`
+ *  (chosen-icon.ts). Measured 5,860,304.
+ *
+ *  The code raised on 2026-11-04, to 5,861,700, for #1040: a new tab nothing was done
+ *  with goes once it is left (workspace.svelte.ts, workspace/blank-tabs.svelte.ts).
+ *  Measured 5,861,488.
+ *
+ *  The code raised on 2026-11-04, to 5,862,600, for #1051: an essential let go of on
+ *  a strip of tabs kept as a tab where it landed (tab-strip/essential-drop.ts, Tabs.svelte).
+ *  Measured 5,862,455.
+ *
+ *  The code raised on 2026-11-04, to 5,865,000, for #1034: the shut file list comes out
+ *  over the note when the pointer rests at the window's edge (edge-peek.svelte.ts,
+ *  Sidebar.svelte). Measured 5,864,844.
+ *
+ *  The code raised on 2026-11-04, to 5,865,700, for #1059: the palette finds a website
+ *  by its address as well as its name (kinds.ts), and the index says which websites the
+ *  space holds (link-index.svelte.ts). Measured 5,865,507.
+ *
+ *  The code raised on 2026-11-04, to 5,866,200, for #1046: Todos, one view of a space's
+ *  tasks with Todoist's Display menu over it - its groupings, sortings and filters and
+ *  the count of what differs (display.ts, DisplayBuilder.svelte), a space's own kept
+ *  layout (kept-views.ts) and GitHub's column heads (BoardHead.svelte). Measured
+ *  5,865,852.
+ *
+ *  The code raised on 2026-11-04, to 5,866,700, for #1032: the right side shut whole by its
+ *  one button, with the scratchpad one of its tabs (workspace.svelte.ts, Sidebar.svelte).
+ *  Measured 5,866,534.
+ *
+ *  The code raised on 2026-11-04, to 5,868,500, for #331: the tab overview's cells, round
+ *  and holding every window on every frame (overview/membrane.ts, overview/Cells.svelte).
+ *  Measured 5,868,335.
+ *
+ *  The catalogues raised on 2026-11-04, to 964,800, for #1098: Reset to site icon, the row
+ *  that gives a web note back the site's own mark, in every catalogue. Measured 964,739.
+ *
+ *  The code raised on 2026-11-04, to 5,869,600, and the catalogues to 965,200, for
+ *  #331: a window of the tab overview lying wherever it was let go, the others pushed out
+ *  of its way, and Tidy up (overview/free.ts) in every language. Measured 5,869,405 and
+ *  965,023.
+ *
+ *  The code raised on 2026-11-04, to 5,870,900, for #1055: an online terminal not saved,
+ *  which the plugin never opens, kept as its `.term` when it is (workspace/placing.ts,
+ *  drafts.ts). Measured 5,870,576.
+ *
+ *  The code raised on 2026-11-04, to 5,872,500, for #1066 again: the file list's button
+ *  said and not shown where a swipe from the edge pulls the list out, and the one hint
+ *  about the swipe (Titlebar.svelte, SidebarToggle.svelte, hints.svelte.ts), put back
+ *  after the #1056 rebase dropped them. Measured 5,872,382.
+ *
+ *  The code raised on 2026-11-04, to 5,873,000, for #1100: Send feedback's bug back in
+ *  the sidebar's foot (SidebarFoot.svelte). Measured 5,872,846.
+ *
+ *  The code raised on 2026-11-04, to 5,875,200, for #1057: the shapes every settings
+ *  button is drawn with (`.nib-tag`, `.nib-setting-mark`, `.nib-glyph.is-danger`, a
+ *  busy `.nib-chip` in base.css), which the stylesheet's raw text carries for export.
+ *  Measured 5,875,013.
+ *
+ *  The code raised on 2026-11-04, to 5,875,900, for #331: the cross on a window of the tab overview that
+ *  closes its tab (overview/Overview.svelte).
+ *  Measured 5,875,759.
+ *
+ *  The code raised on 2026-11-04, to 5,880,800, for #331: the pictures the tab overview keeps of windows,
+ *  taken as each leaves the screen (overview/faces.ts, overview/faces.svelte.ts).
+ *  Measured 5,880,642.
+ *
+ *  The code raised on 2026-11-04, to 5,882,900, for #331: the tab overview handing over to the app and
+ *  back with no frame of difference (overview/Overview.svelte, overview/mirror.ts).
+ *  Measured 5,882,737.
+ *
+ *  The code raised on 2026-11-04, to 5,884,400, for #331: each kind's way of drawing its window in the
+ *  tab overview (overview/previews.ts, workspace/tab-kinds.ts).
+ *  Measured 5,884,223.
+ *
+ *  The catalogues raised on 2026-11-04, to 967,400, for #1041: the switch that shows every
+ *  tab but the one in front as its icon, with its hint, in every catalogue
+ *  (general-pane.ts). Measured 967,294.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 5_915_000,
-  catalogues: 964_400,
+  catalogues: 967_400,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,

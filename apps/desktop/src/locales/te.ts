@@ -90,6 +90,15 @@ export const te: Dictionary = {
   // Tasks: the Display menu
   Display: 'ప్రదర్శన',
   'Completed tasks': 'పూర్తయిన పనులు',
+  Smart: 'స్మార్ట్',
+  Grouping: 'సమూహీకరణ',
+  Sorting: 'క్రమబద్ధీకరణ',
+  'Last 30 days': 'గత 30 రోజులు',
+  'Assigned to me': 'నాకు కేటాయించినవి',
+  Unassigned: 'కేటాయించనివి',
+  'Reset all': 'అన్నీ రీసెట్ చేయండి',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'లేఅవుట్ పనులను జాబితా, బోర్డు లేదా క్యాలెండర్‌గా చూపుతుంది. సమూహీకరణ వాటిని సమూహాలుగా విభజిస్తుంది, అవే బోర్డు నిలువు వరుసలు. క్రమబద్ధీకరణ ప్రతి సమూహాన్ని క్రమంలో పెడుతుంది. ఫిల్టర్లు మీకు అవసరం లేనిదాన్ని దాచుతాయి. ఇవన్నీ ఈ వీక్షణ కోసం ఉంచబడతాయి.',
   // Tasks: several lines pasted into quick add
   'One task': 'ఒక పని',
   'One per line': 'ప్రతి పంక్తికి ఒకటి',
@@ -558,11 +567,12 @@ export const te: Dictionary = {
   'Actual size': 'నిజ పరిమాణం',
   // Appearance
   Accent: 'యాక్సెంట్ రంగు',
-  'Window corners': 'విండో మూలలు',
-  Rounded: 'గుండ్రని',
-  Square: 'చతురస్రం',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'గుండ్రని తెరిచినదాన్ని విండో లోపలి కార్డులో తేలేలా చేస్తుంది; చతురస్రం దాన్ని అంచులకు తాకి ఉంచుతుంది.',
+  'Tidy up': 'చక్కదిద్దు',
+  'Swipe in from the edge to see your notes.':
+    'మీ నోట్‌లను చూడడానికి అంచు నుండి లోపలికి స్వైప్ చేయండి.',
+  'Show other tabs as icons': 'ఇతర ట్యాబ్‌లను ఐకాన్‌లుగా చూపించు',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ముందున్నది తప్ప ప్రతి ట్యాబ్ తన ఐకాన్ మాత్రమే చూపిస్తుంది; ఒకదానిపై పాయింటర్ ఉంచితే పేరు కనిపిస్తుంది.',
   'Tab preview delay': 'ట్యాబ్ ప్రివ్యూ ఆలస్యం',
   'How long the pointer rests on a tab before its preview shows.':
     'ప్రివ్యూ కనిపించే ముందు పాయింటర్ ట్యాబ్‌పై ఎంత సేపు ఉండాలి.',
@@ -1825,6 +1835,7 @@ export const te: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'సైట్ సమాచారం',
   Downloads: 'డౌన్‌లోడ్‌లు',
+  'Downloading {name}': '{name} డౌన్‌లోడ్ అవుతోంది',
   'Show in folder': 'ఫోల్డర్‌లో చూపించు',
   'Show in Finder': 'Finderలో చూపించు',
   'Reveal in Finder': 'Finderలో చూపించు',
@@ -1918,6 +1929,9 @@ export const te: Dictionary = {
   'Exited with code {code}': 'కోడ్ {code}తో ముగిసింది',
   'Could not start {shell}': '{shell}ను ప్రారంభించలేకపోయాము',
   'Restore history': 'చరిత్రను పునరుద్ధరించు',
+  'Colours follow the theme': 'రంగులు థీమ్‌ను అనుసరిస్తాయి',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'టెర్మినల్‌లకు థీమ్ రంగులను వేస్తుంది; ఆపివేస్తే ఒక స్థిర పాలెట్ ఉంటుంది.',
   'Restored {time}': 'పునరుద్ధరించబడింది {time}',
   'Stop what is running in {name}?': '{name}లో నడుస్తున్నదాన్ని ఆపాలా?',
   'Stop what is running in these terminals?': 'ఈ టెర్మినల్స్‌లో నడుస్తున్నదాన్ని ఆపాలా?',
@@ -2071,6 +2085,8 @@ export const te: Dictionary = {
   'Every space': 'ప్రతి స్పేస్',
   Sites: 'సైట్‌లు',
   'Asks first': 'ముందుగా అడుగుతుంది',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'ఇది MCP ద్వారా కలుస్తుంది మరియు అక్కడ తన అనుమతులను తానే చూసుకుంటుంది: Orden దీనిని ఏమీ అడగదు. కింద ఉన్న మీ స్పేస్‌లు, బ్లాక్ చేసిన సైట్‌లు, పరిమితులు ఇప్పటికీ వర్తిస్తాయి.',
   Limits: 'పరిమితులు',
   'Clear what {name} did?': '{name} చేసినదాన్ని క్లియర్ చేయాలా?',
   'Show earlier': 'మునుపటివి చూపించు',
@@ -2319,6 +2335,12 @@ export const te: Dictionary = {
   // The online terminal
   'Online terminal': 'ఆన్‌లైన్ టెర్మినల్',
   'New online terminal': 'కొత్త ఆన్‌లైన్ టెర్మినల్',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'మరో పరికరం',
+  'Taken over by {device}': '{device} తీసుకుంది',
+  'Open on {device} since {time}': '{time} నుండి {device}లో తెరిచి ఉంది',
+  'Take over': 'తీసుకోండి',
+  'Take back': 'తిరిగి తీసుకోండి',
   'Start online machine': 'ఆన్‌లైన్ మెషీన్‌ను ప్రారంభించండి',
   'Stop online machine': 'ఆన్‌లైన్ మెషీన్‌ను ఆపండి',
   Resume: 'కొనసాగించండి',
@@ -2364,6 +2386,8 @@ export const te: Dictionary = {
   'Take photo': 'ఫోటో తీయి',
   Pronouns: 'సర్వనామాలు',
   Bio: 'పరిచయం',
+  'A few words about you': 'మీ గురించి కొన్ని మాటలు',
+  'What’s happening?': 'ఏమి జరుగుతోంది?',
   'Clear after': 'ఇంత తర్వాత తొలగించు',
   '30 minutes': '30 నిమిషాలు',
   '1 hour': '1 గంట',
@@ -2722,4 +2746,5 @@ export const te: Dictionary = {
   'View your report': 'మీ నివేదికను చూడండి',
   'Not sent. Your text is kept, so you can try again.':
     'పంపలేదు. మీ వచనం అలాగే ఉంది, మళ్లీ ప్రయత్నించవచ్చు.',
+  'Reset to site icon': 'సైట్ చిహ్నానికి రీసెట్ చేయండి',
 }

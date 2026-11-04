@@ -5,7 +5,7 @@ import { connectors } from './connectors.svelte'
 import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './paper'
-import { isRecord, isString, keep, stored, storedText, stringList } from './stored'
+import { isRecord, isString, keep, keepJson, stored, storedText, stringList } from './stored'
 import { invoke, isDesktop, isNative } from './tauri'
 import { viewport } from './viewport.svelte'
 
@@ -124,7 +124,7 @@ class Settings {
 
   setPage(patch: Partial<PageSetup>) {
     this.page = { ...this.page, ...patch }
-    keep(PAGE_KEY, JSON.stringify(this.page))
+    keepJson(PAGE_KEY, this.page)
   }
 
   setNoteIdFormat(format: string) {

@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest'
 import { terminalMark } from '../terminal/naming'
 import { cityOf, onlineOf } from './calls'
 import { ownSession } from './own'
-import { isMadeName, isOnlineTab, isTermTarget, termName } from './path'
+import { isTermTarget } from '@orden/markdown/links'
+import { isMadeName, isOnlineTab, termName } from './path'
 import { resumeCommand } from './resume'
 
 describe('an online terminal, told apart', () => {
@@ -14,6 +15,15 @@ describe('an online terminal, told apart', () => {
     expect(isOnlineTab({ kind: 'terminal', path: '/n/Terminal.term' })).toBe(true)
     expect(isOnlineTab({ kind: 'terminal', path: null })).toBe(false)
     expect(isOnlineTab({ kind: 'note', path: '/n/Terminal.term' })).toBe(false)
+  })
+
+  /** Not saved yet (issue 1055): no file, its words a `.term`'s; a local shell's words
+   *  are its spec, which is no `.term`. */
+  test('or one not saved yet, whose words name its session', () => {
+    const words = '{"v":1,"machine":"m_1","session":"s_1"}\n'
+    expect(isOnlineTab({ kind: 'terminal', path: null, doc: words })).toBe(true)
+    expect(isOnlineTab({ kind: 'terminal', path: null, doc: '{"shell":"bash"}' })).toBe(false)
+    expect(isOnlineTab({ kind: 'note', path: null, doc: words })).toBe(false)
   })
 
   /** The file's name is the tab's, unless it is still the one it was made with. */

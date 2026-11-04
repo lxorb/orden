@@ -28,9 +28,8 @@ export const THRESHOLD = 10
 /** A press on a tab, before it has become anything. */
 export interface Press {
   tabId: string
-  /** Its place in the strip, and whether it is pinned: which slots it may take. */
+  /** Its place in the strip. */
   from: number
-  pinned: boolean
   /** Where along the strip the pointer went down, and where on the glass. */
   along: number
   x: number
@@ -46,7 +45,6 @@ export interface Frame {
   widths: readonly number[]
   /** How much room there is for tabs, the empty stretch after the last included. */
   room: number
-  pinnedRun: number
 }
 
 /** How a drag ended. */
@@ -114,14 +112,7 @@ export class TabDrag {
       return true
     }
 
-    const nearest = nearestSlot(
-      frame.widths,
-      press.from,
-      this.x,
-      frame.pinnedRun,
-      press.pinned,
-      this.slot,
-    )
+    const nearest = nearestSlot(frame.widths, press.from, this.x, this.slot)
 
     if (this.out) {
       this.out = false

@@ -333,6 +333,7 @@ describe('an open note', () => {
         noteSaved: () => undefined,
         read: (at) => Promise.resolve(one.disk.files.get(at) ?? null),
         exists: (at) => Promise.resolve(one.disk.files.has(at)),
+        reachable: () => Promise.resolve(true),
         keepVersion: () => Promise.resolve(),
         pause: () => Promise.resolve(),
       },

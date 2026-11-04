@@ -363,31 +363,8 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         say(f"[{name}] no palette: {why}")
     dismiss(page)
 
-    # The app's own menu: the bars at the left of the title bar on a desktop, the
-    # three dots at the right of it on a handheld.
-    # With the panel shut first, because on a handheld in portrait the panel is a
-    # drawer over the note and the title bar is under it: a forced click then lands
-    # on the drawer, and the menu never opens. Which is what used to happen on two
-    # of the six devices - and the sleep after it meant the shot was taken anyway,
-    # of the drawer.
-    if finger:
-        page.evaluate("() => window.nibApp.workspace.closePanel()")
-
-    trigger = (
-        page.locator("header button.dots")
-        if finger
-        else page.locator("header button[aria-label]").first
-    )
-    if trigger.count():
-        try:
-            # Not forced: a click Playwright had to wait to make is a click the
-            # thing it was aimed at received.
-            trigger.click()
-            page.wait_for_selector("[role=menu]", state="visible", timeout=8000)
-            shot("menu")
-        except Exception as why:
-            say(f"[{name}] no menu: {why}")
-        dismiss(page)
+    # No shot of an app menu: the window has had no menu button since a0c3c6957 (#304);
+    # the palette above, a note's dots and the strip hold what it did.
 
     if finger:
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")

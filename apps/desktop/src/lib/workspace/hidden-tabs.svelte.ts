@@ -31,7 +31,7 @@
 
 import { agentMarks } from '../agent-marks.svelte'
 import { key, t } from '../i18n.svelte'
-import { keep, stored } from '../stored'
+import { keepJson, stored } from '../stored'
 import { pages } from '../web-tab/pages.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
 import { type HiddenTabs, isHiddenTabs, onLeaving } from './sets'
@@ -61,7 +61,7 @@ class Hidden {
    *  already out of sight follows at once. */
   set(choice: HiddenTabs) {
     this.choice = choice
-    keep(STORAGE_KEY, JSON.stringify(choice))
+    keepJson(STORAGE_KEY, choice)
 
     if (choice === 'pause') {
       for (const tab of this.hidden()) this.pause(tab.id)

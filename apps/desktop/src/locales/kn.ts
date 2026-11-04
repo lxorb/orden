@@ -90,6 +90,15 @@ export const kn: Dictionary = {
   // Tasks: the Display menu
   Display: 'ಪ್ರದರ್ಶನ',
   'Completed tasks': 'ಪೂರ್ಣಗೊಂಡ ಕಾರ್ಯಗಳು',
+  Smart: 'ಸ್ಮಾರ್ಟ್',
+  Grouping: 'ಗುಂಪುಗೊಳಿಸುವಿಕೆ',
+  Sorting: 'ವಿಂಗಡಣೆ',
+  'Last 30 days': 'ಕಳೆದ 30 ದಿನಗಳು',
+  'Assigned to me': 'ನನಗೆ ನಿಯೋಜಿಸಿದವು',
+  Unassigned: 'ನಿಯೋಜಿಸದವು',
+  'Reset all': 'ಎಲ್ಲವನ್ನೂ ಮರುಹೊಂದಿಸಿ',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'ಲೇಔಟ್ ಕಾರ್ಯಗಳನ್ನು ಪಟ್ಟಿ, ಬೋರ್ಡ್ ಅಥವಾ ಕ್ಯಾಲೆಂಡರ್ ಆಗಿ ತೋರಿಸುತ್ತದೆ. ಗುಂಪುಗೊಳಿಸುವಿಕೆ ಅವುಗಳನ್ನು ಗುಂಪುಗಳಾಗಿ ವಿಭಜಿಸುತ್ತದೆ, ಅವು ಬೋರ್ಡ್‌ನ ಕಾಲಮ್‌ಗಳು. ವಿಂಗಡಣೆ ಪ್ರತಿ ಗುಂಪನ್ನು ಕ್ರಮಗೊಳಿಸುತ್ತದೆ. ಫಿಲ್ಟರ್‌ಗಳು ನಿಮಗೆ ಬೇಡವಾದುದನ್ನು ಮರೆಮಾಡುತ್ತವೆ. ಇವೆಲ್ಲವೂ ಈ ವೀಕ್ಷಣೆಗಾಗಿ ಉಳಿಯುತ್ತವೆ.',
   // Tasks: several lines pasted into quick add
   'One task': 'ಒಂದು ಕಾರ್ಯ',
   'One per line': 'ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು',
@@ -561,11 +570,12 @@ export const kn: Dictionary = {
   'Actual size': 'ನಿಜ ಗಾತ್ರ',
   // Appearance
   Accent: 'ಆಕ್ಸೆಂಟ್ ಬಣ್ಣ',
-  'Window corners': 'ವಿಂಡೋ ಮೂಲೆಗಳು',
-  Rounded: 'ದುಂಡಾದ',
-  Square: 'ಚೌಕ',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'ದುಂಡಾದವು ತೆರೆದಿರುವುದನ್ನು ವಿಂಡೋ ಒಳಗಿನ ಕಾರ್ಡ್‌ನಲ್ಲಿ ತೇಲಿಸುತ್ತದೆ; ಚೌಕವು ಅದನ್ನು ಅಂಚಿಗೆ ತಾಗಿಸಿ ಇಡುತ್ತದೆ.',
+  'Tidy up': 'ಅಚ್ಚುಕಟ್ಟು ಮಾಡಿ',
+  'Swipe in from the edge to see your notes.':
+    'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಅಂಚಿನಿಂದ ಒಳಗೆ ಸ್ವೈಪ್ ಮಾಡಿ.',
+  'Show other tabs as icons': 'ಇತರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಐಕಾನ್‌ಗಳಾಗಿ ತೋರಿಸಿ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ಮುಂದಿನದನ್ನು ಬಿಟ್ಟು ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್ ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ; ಒಂದರ ಮೇಲೆ ಪಾಯಿಂಟರ್ ಇಟ್ಟರೆ ಹೆಸರು ಕಾಣುತ್ತದೆ.',
   'Tab preview delay': 'ಟ್ಯಾಬ್ ಮುನ್ನೋಟದ ವಿಳಂಬ',
   'How long the pointer rests on a tab before its preview shows.':
     'ಮುನ್ನೋಟ ತೋರುವ ಮೊದಲು ಪಾಯಿಂಟರ್ ಟ್ಯಾಬ್ ಮೇಲೆ ಎಷ್ಟು ಹೊತ್ತು ಇರಬೇಕು.',
@@ -1831,6 +1841,7 @@ export const kn: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ಸೈಟ್ ಮಾಹಿತಿ',
   Downloads: 'ಡೌನ್‌ಲೋಡ್‌ಗಳು',
+  'Downloading {name}': '{name} ಡೌನ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ',
   'Show in folder': 'ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ತೋರಿಸಿ',
   'Show in Finder': 'Finder ನಲ್ಲಿ ತೋರಿಸಿ',
   'Reveal in Finder': 'Finder ನಲ್ಲಿ ತೋರಿಸಿ',
@@ -1926,6 +1937,9 @@ export const kn: Dictionary = {
   'Exited with code {code}': 'ಕೋಡ್ {code} ನೊಂದಿಗೆ ಮುಗಿಯಿತು',
   'Could not start {shell}': '{shell} ಪ್ರಾರಂಭಿಸಲಾಗಲಿಲ್ಲ',
   'Restore history': 'ಇತಿಹಾಸವನ್ನು ಮರುಸ್ಥಾಪಿಸಿ',
+  'Colours follow the theme': 'ಬಣ್ಣಗಳು ಥೀಮ್ ಅನುಸರಿಸುತ್ತವೆ',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ಟರ್ಮಿನಲ್‌ಗಳನ್ನು ಥೀಮ್‌ನ ಬಣ್ಣಗಳಲ್ಲಿ ಬಣ್ಣಿಸುತ್ತದೆ; ಆಫ್ ಆದರೆ ಒಂದು ಸ್ಥಿರ ಪ್ಯಾಲೆಟ್ ಉಳಿಯುತ್ತದೆ.',
   'Restored {time}': 'ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ {time}',
   'Stop what is running in {name}?': '{name} ನಲ್ಲಿ ನಡೆಯುತ್ತಿರುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',
   'Stop what is running in these terminals?': 'ಈ ಟರ್ಮಿನಲ್‌ಗಳಲ್ಲಿ ನಡೆಯುತ್ತಿರುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',
@@ -2080,6 +2094,8 @@ export const kn: Dictionary = {
   'Every space': 'ಪ್ರತಿ ಸ್ಪೇಸ್',
   Sites: 'ಸೈಟ್‌ಗಳು',
   'Asks first': 'ಮೊದಲು ಕೇಳುತ್ತದೆ',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'ಇದು MCP ಮೂಲಕ ಸಂಪರ್ಕಿಸುತ್ತದೆ ಮತ್ತು ಅಲ್ಲಿ ತನ್ನ ಅನುಮತಿಗಳನ್ನು ತಾನೇ ನಿರ್ವಹಿಸುತ್ತದೆ: Orden ಏನನ್ನೂ ಕೇಳುವುದಿಲ್ಲ. ಕೆಳಗಿನ ನಿಮ್ಮ ಸ್ಪೇಸ್‌ಗಳು, ನಿರ್ಬಂಧಿಸಿದ ಸೈಟ್‌ಗಳು ಮತ್ತು ಮಿತಿಗಳು ಇನ್ನೂ ಅನ್ವಯಿಸುತ್ತವೆ.',
   Limits: 'ಮಿತಿಗಳು',
   'Clear what {name} did?': '{name} ಮಾಡಿದ್ದನ್ನು ಅಳಿಸಬೇಕೆ?',
   'Show earlier': 'ಹಿಂದಿನವನ್ನು ತೋರಿಸಿ',
@@ -2329,6 +2345,12 @@ export const kn: Dictionary = {
   // The online terminal
   'Online terminal': 'ಆನ್‌ಲೈನ್ ಟರ್ಮಿನಲ್',
   'New online terminal': 'ಹೊಸ ಆನ್‌ಲೈನ್ ಟರ್ಮಿನಲ್',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'ಇನ್ನೊಂದು ಸಾಧನ',
+  'Taken over by {device}': '{device} ತೆಗೆದುಕೊಂಡಿದೆ',
+  'Open on {device} since {time}': '{time} ರಿಂದ {device} ನಲ್ಲಿ ತೆರೆದಿದೆ',
+  'Take over': 'ವಹಿಸಿಕೊಳ್ಳಿ',
+  'Take back': 'ಹಿಂಪಡೆಯಿರಿ',
   'Start online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ಪ್ರಾರಂಭಿಸಿ',
   'Stop online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ನಿಲ್ಲಿಸಿ',
   Resume: 'ಮುಂದುವರಿಸಿ',
@@ -2374,6 +2396,8 @@ export const kn: Dictionary = {
   'Take photo': 'ಫೋಟೋ ತೆಗೆಯಿರಿ',
   Pronouns: 'ಸರ್ವನಾಮಗಳು',
   Bio: 'ಪರಿಚಯ',
+  'A few words about you': 'ನಿಮ್ಮ ಬಗ್ಗೆ ಕೆಲವು ಮಾತುಗಳು',
+  'What’s happening?': 'ಏನು ನಡೆಯುತ್ತಿದೆ?',
   'Clear after': 'ಇದರ ನಂತರ ಅಳಿಸಿ',
   '30 minutes': '30 ನಿಮಿಷ',
   '1 hour': '1 ಗಂಟೆ',
@@ -2736,4 +2760,5 @@ export const kn: Dictionary = {
   'View your report': 'ನಿಮ್ಮ ವರದಿಯನ್ನು ನೋಡಿ',
   'Not sent. Your text is kept, so you can try again.':
     'ಕಳುಹಿಸಲಾಗಿಲ್ಲ. ನಿಮ್ಮ ಪಠ್ಯ ಉಳಿದಿದೆ, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಬಹುದು.',
+  'Reset to site icon': 'ಸೈಟ್ ಐಕಾನ್‌ಗೆ ಮರುಹೊಂದಿಸಿ',
 }

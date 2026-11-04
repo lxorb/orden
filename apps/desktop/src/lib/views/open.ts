@@ -38,7 +38,21 @@ function openSpec(spec: ViewSpec, name: string, path: string | null = null, how:
   return workspace.openView(writeSpec(spec), name, path, how)
 }
 
-/** A view Orden ships: Inbox, Today, Upcoming, Completed. */
+/** A space's tasks in one view (#1046), as it was left in that space; the open space's
+ *  where none is named. */
+export function openTodos(space = workspace.activeSpace?.name, how: OpenHow = {}) {
+  return openSpec(
+    space === undefined ? { builtin: 'todos' } : { builtin: 'todos', space },
+    builtinName('todos'),
+    null,
+    how,
+  )
+}
+
+/** A view Orden ships: Inbox, Today, Upcoming, Completed. No row of the panel opens these
+ *  since Todos took their place (#1046); a drive opens them by name through
+ *  `window.nibApp.tasks()`, which is how test/e2e reaches the engine's own answers.
+ *  @public */
 export function openBuiltin(builtin: Builtin, how: OpenHow = {}) {
   return openSpec({ builtin }, builtinName(builtin), null, how)
 }

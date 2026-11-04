@@ -89,6 +89,15 @@ export const ps: Dictionary = {
   // Tasks: the Display menu
   Display: 'ښودنه',
   'Completed tasks': 'بشپړې دندې',
+  Smart: 'هوښیار',
+  Grouping: 'ډله‌بندي',
+  Sorting: 'ترتیب',
+  'Last 30 days': 'وروستۍ ۳۰ ورځې',
+  'Assigned to me': 'ما ته سپارل شوي',
+  Unassigned: 'نه سپارل شوي',
+  'Reset all': 'ټول بیا تنظیم کړئ',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'ترتیب‌بندي دندې د لېست، تختې یا کلیزې په بڼه ښيي. ډله‌بندي یې په ډلو وېشي، چې د تختې ستنې دي. ترتیب هره ډله منظموي. فلټرونه هغه پټوي چې تاسو ورته اړتیا نه لرئ. دا ټول د دې لید لپاره ساتل کېږي.',
   // Tasks: several lines pasted into quick add
   'One task': 'یوه دنده',
   'One per line': 'په هره کرښه کې یوه',
@@ -557,11 +566,11 @@ export const ps: Dictionary = {
   'Actual size': 'اصلي کچه',
   // Appearance
   Accent: 'ځانګړی رنګ',
-  'Window corners': 'د کړکۍ کونجونه',
-  Rounded: 'ګرد',
-  Square: 'مربع',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'ګرد پرانیستي شی د کړکۍ دننه په یوه کارت کې لامبو ورکوي؛ مربع یې له څنډو سره نښتی ساتي.',
+  'Tidy up': 'ترتیب کړئ',
+  'Swipe in from the edge to see your notes.': 'خپلې یادښتونه د لیدو لپاره له څنډې دننه سوایپ کړئ.',
+  'Show other tabs as icons': 'نور ټبونه د نښو په توګه ښکاره کړئ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'له مخکني پرته هر ټب یوازې خپله نښه ښيي؛ کله چې یو ته اشاره وکړئ، نوم یې ښکاره کېږي.',
   'Tab preview delay': 'د ټب د مخکتنې ځنډ',
   'How long the pointer rests on a tab before its preview shows.':
     'څومره وخت چې اشاره ګر په ټب پاتې کیږي مخکې له دې چې مخکتنه یې ښکاره شي.',
@@ -1820,6 +1829,7 @@ export const ps: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'د ټاټوبي معلومات',
   Downloads: 'ډاونلوډونه',
+  'Downloading {name}': '{name} ډاونلوډ کېږي',
   'Show in folder': 'په فولډر کې وښایاست',
   'Show in Finder': 'په Finder کې وښایاست',
   'Reveal in Finder': 'په Finder کې وښایاست',
@@ -1913,6 +1923,9 @@ export const ps: Dictionary = {
   'Exited with code {code}': 'د {code} کوډ سره پای ته ورسید',
   'Could not start {shell}': '{shell} پیل نشو',
   'Restore history': 'تاریخچه بېرته راوړل',
+  'Colours follow the theme': 'رنګونه د موضوع پیروي کوي',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ټرمینلونه د موضوع په رنګونو رنګوي؛ بند وي نو یوه ثابته رنګ‌پاڼه ساتي.',
   'Restored {time}': 'بېرته راوړل شو {time}',
   'Stop what is running in {name}?': 'په {name} کې روان کار ودرول شي؟',
   'Stop what is running in these terminals?': 'په دې ټرمینلونو کې روان کار ودرول شي؟',
@@ -2063,6 +2076,8 @@ export const ps: Dictionary = {
   'Every space': 'هر ځای',
   Sites: 'سایټونه',
   'Asks first': 'لومړی پوښتي',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'دا د MCP له لارې نښلي او هلته خپل اجازې پخپله اداره کوي: Orden ترې هېڅ نه پوښتي. لاندې ستاسو ځایونه، بند شوي سایټونه او حدونه لا هم پلي دي.',
   Limits: 'حدونه',
   'Clear what {name} did?': 'هغه څه پاک شي چې {name} کړي؟',
   'Show earlier': 'پخواني وښیئ',
@@ -2311,6 +2326,12 @@ export const ps: Dictionary = {
   // The online terminal
   'Online terminal': 'آنلاین ټرمینل',
   'New online terminal': 'نوی آنلاین ټرمینل',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'بله وسیله',
+  'Taken over by {device}': '{device} واخیست',
+  'Open on {device} since {time}': 'له {time} راهیسې په {device} پرانیستی',
+  'Take over': 'واخلئ',
+  'Take back': 'بیرته واخلئ',
   'Start online machine': 'آنلاین ماشین پیل کړئ',
   'Stop online machine': 'آنلاین ماشین ودروئ',
   Resume: 'بیا پیل',
@@ -2356,6 +2377,8 @@ export const ps: Dictionary = {
   'Take photo': 'انځور اخيستل',
   Pronouns: 'ضميرونه',
   Bio: 'پېژندنه',
+  'A few words about you': 'ستاسو په اړه څو کلمې',
+  'What’s happening?': 'څه پېښېږي؟',
   'Clear after': 'له دې وروسته پاکول',
   '30 minutes': '۳۰ دقيقې',
   '1 hour': '۱ ساعت',
@@ -2708,4 +2731,5 @@ export const ps: Dictionary = {
   'View your report': 'خپل راپور وګورئ',
   'Not sent. Your text is kept, so you can try again.':
     'ونه لېږل شو. ستاسو متن ساتل شوی، بیا هڅه کولی شئ.',
+  'Reset to site icon': 'د سایټ نښې ته بیرته راګرځول',
 }

@@ -8,6 +8,11 @@
  *  - **Output** is a binary frame, its offset and its bytes. A frame from before the
  *    offset (sent again across a reconnect) loses what was drawn; a screen starts the
  *    count again at its own.
+ *  - **One device at a time** (issue 1055): the hello says it takes part in the session's
+ *    lock. Held off by another device, it is told so and sent nothing; `take` asks for
+ *    the session, and once it holds it (`hold`) it says hello again, with what it last
+ *    drew, and is sent the rest. Closing it says `leave`, so the session is free at once
+ *    rather than after the grace a drop is given.
  *  - **Dropping** brings it back by itself, sooner first and then less often: a laptop
  *    that slept, a train in a tunnel. Not after a refusal that waiting cannot change - no
  *    role, not on the list, the month's hours used - which waits for the reader instead.
@@ -185,11 +190,7 @@ export class Link {
               this.tries = 0
               this.quiet = 0
               this.beat(socket)
-              this.say({
-                t: 'hello',
-                ...this.size,
-                ...(this.since === null ? {} : { since: this.since }),
-              })
+              this.hello()
               this.heard({ t: 'open' })
             },
             heard: (data) => {
@@ -322,6 +323,8 @@ export class Link {
     const frame = serverFrameOf(data)
     if (!frame) return
     if (frame.t === 'screen') this.since = frame.seq
+    // Held off until now: what it missed is asked for as on any other hello.
+    if (frame.t === 'hold') this.hello()
     if (frame.t === 'refused' && FINAL.includes(frame.error)) this.stopped = frame.error
     this.heard(frame)
   }
@@ -335,6 +338,22 @@ export class Link {
     // Keys going into a socket that is gone would be felt at once: looked at now.
     if (frame.t === 'in') this.probe()
     return true
+  }
+
+  /** The hello a socket opens with: the screen's size, the offset drawn up to, and that it
+   *  takes part in the session's lock. */
+  private hello(): void {
+    this.say({
+      t: 'hello',
+      ...this.size,
+      ...(this.since === null ? {} : { since: this.since }),
+      hold: true,
+    })
+  }
+
+  /** Take over: the session handed to this device, where another holds it. */
+  take(): boolean {
+    return this.say({ t: 'take' })
   }
 
   /** Bytes up, as they were made: a key xterm.js encoded itself. */
@@ -371,6 +390,8 @@ export class Link {
     this.unwatch = null
     const socket = this.socket
     this.socket = null
+    // The session let go of now, for another device to have at once.
+    if (socket?.open) this.send(socket, text({ t: 'leave' }))
     socket?.close()
   }
 }

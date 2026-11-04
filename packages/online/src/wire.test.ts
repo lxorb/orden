@@ -27,6 +27,10 @@ describe('the app socket', () => {
     { t: 'hello', cols: 120, rows: 40 },
     { t: 'hello', since: 0, cols: 1, rows: 1 },
     { t: 'hello', since: 2 ** 40, cols: 1000, rows: 1000 },
+    { t: 'hello', cols: 80, rows: 24, hold: true },
+    { t: 'hello', since: 7, cols: 80, rows: 24, hold: true },
+    { t: 'take' },
+    { t: 'leave' },
     { t: 'in', data: 'ls -la\r' },
     { t: 'in', data: '' },
     { t: 'in', data: '\u001b[A\u0003ü😀' },
@@ -87,6 +91,9 @@ describe('the app socket', () => {
     { t: 'note', note: 'disk' },
     { t: 'image', id: '0123456789abcdef0123', path: '/home/nib/.cache/nib/images/x.png' },
     { t: 'image', id: '0123456789abcdef0123', path: null },
+    { t: 'held', by: 'Emil’s MacBook', since: 1_759_000_000_000, taken: false },
+    { t: 'held', by: '', since: 1, taken: true },
+    { t: 'hold' },
   ]
 
   it.each(servers)('reads back what the Machine sent: %j', (one) => {
@@ -120,6 +127,14 @@ describe('the app socket', () => {
     '{"t":"image","id":"0123456789abcdef0123","kind":"png","part":""}',
   ])('drops a client frame that does not check: %s', (raw) => {
     expect(clientFrameOf(raw)).toBeNull()
+  })
+
+  it('reads a hello that does not say it holds as one from an Orden before the lock', () => {
+    expect(clientFrameOf('{"t":"hello","cols":80,"rows":24,"hold":"yes"}')).toEqual({
+      t: 'hello',
+      cols: 80,
+      rows: 24,
+    })
   })
 
   it('drops input larger than a frame may be', () => {
@@ -161,6 +176,9 @@ describe('the app socket', () => {
     '{"t":"browse"}',
     '{"t":"called","url":"https://claude.ai/","status":200}',
     '{"t":"note","note":"anything"}',
+    '{"t":"held","by":"x","since":1}',
+    '{"t":"held","by":3,"since":1,"taken":false}',
+    '{"t":"held","by":"x","since":"1","taken":false}',
     '{"t":"called","url":"http://localhost:1/","status":-1}',
     '{"t":"image","id":"0123456789abcdef0123","path":"relative.png"}',
     '{"t":"image","id":"short","path":null}',

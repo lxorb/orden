@@ -11,7 +11,7 @@ import { canWriteAt } from '../sharing.svelte'
 import { nameOf } from '../space-paths'
 import type { Tab } from '../workspace/documents.svelte'
 import { writeFile } from '../workspace/write-file'
-import { aimWebloc, readWebFile, writeShortcut } from './shortcut'
+import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from './shortcut'
 
 export async function aimed(
   ws: { keep(id: string): void; persist(): void },
@@ -34,7 +34,9 @@ export async function aimed(
   // A `.webloc` keeps its plist, and every other key in it: only the address changes.
   const content = /\.webloc$/i.test(tab.path.trim())
     ? aimWebloc(tab.doc, url)
-    : writeShortcut(url, title, new Date(), null, null, was?.own)
+    : was
+      ? rewriteShortcut(was, { url, title, when: new Date(), home: null, icon: null })
+      : writeShortcut(url, title, new Date())
   tab.note.replace(content, false)
 
   await writeFile(tab.path, content).catch(() => undefined)

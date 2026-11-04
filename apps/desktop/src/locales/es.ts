@@ -91,6 +91,15 @@ export const es: Dictionary = {
   // Tasks: the Display menu
   Display: 'Visualización',
   'Completed tasks': 'Tareas completadas',
+  Smart: 'Inteligente',
+  Grouping: 'Agrupación',
+  Sorting: 'Orden',
+  'Last 30 days': 'Últimos 30 días',
+  'Assigned to me': 'Asignadas a mí',
+  Unassigned: 'Sin asignar',
+  'Reset all': 'Restablecer todo',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'El diseño muestra las tareas como lista, tablero o calendario. La agrupación las divide en grupos, que son las columnas de un tablero. El orden ordena cada grupo. Los filtros ocultan lo que no necesitas. Todo se guarda para esta vista.',
   // Tasks: several lines pasted into quick add
   'One task': 'Una tarea',
   'One per line': 'Una por línea',
@@ -568,11 +577,11 @@ export const es: Dictionary = {
   'Actual size': 'Tamaño real',
   // Appearance
   Accent: 'Acento',
-  'Window corners': 'Esquinas de la ventana',
-  Rounded: 'Redondeadas',
-  Square: 'Cuadradas',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Redondeadas hace flotar lo abierto en una tarjeta dentro de la ventana; Cuadradas lo deja a ras.',
+  'Tidy up': 'Ordenar',
+  'Swipe in from the edge to see your notes.': 'Desliza desde el borde para ver tus notas.',
+  'Show other tabs as icons': 'Mostrar las demás pestañas como iconos',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Cada pestaña salvo la del frente muestra solo su icono; al señalar una, muestra su nombre.',
   'Tab preview delay': 'Retraso de la vista previa de pestañas',
   'How long the pointer rests on a tab before its preview shows.':
     'Cuánto descansa el puntero sobre una pestaña antes de que aparezca su vista previa.',
@@ -1866,6 +1875,7 @@ export const es: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Información del sitio',
   Downloads: 'Descargas',
+  'Downloading {name}': 'Descargando {name}',
   'Show in folder': 'Mostrar en la carpeta',
   'Show in Finder': 'Mostrar en Finder',
   'Reveal in Finder': 'Mostrar en Finder',
@@ -1961,6 +1971,9 @@ export const es: Dictionary = {
   'Exited with code {code}': 'Terminó con el código {code}',
   'Could not start {shell}': 'No se pudo iniciar {shell}',
   'Restore history': 'Restaurar historial',
+  'Colours follow the theme': 'Los colores siguen el tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Pinta las terminales con los colores del tema; desactivado mantiene una paleta fija.',
   'Restored {time}': 'Restaurado {time}',
   'Stop what is running in {name}?': '¿Detener lo que se ejecuta en {name}?',
   'Stop what is running in these terminals?': '¿Detener lo que se ejecuta en estos terminales?',
@@ -2117,6 +2130,8 @@ export const es: Dictionary = {
   'Every space': 'Todos los espacios',
   Sites: 'Sitios',
   'Asks first': 'Pregunta antes',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Se conecta por MCP y gestiona allí sus propios permisos: Orden no le pregunta nada. Tus espacios, sitios bloqueados y límites de abajo siguen valiendo.',
   Limits: 'Límites',
   'Clear what {name} did?': '¿Borrar lo que hizo {name}?',
   'Show earlier': 'Mostrar anteriores',
@@ -2368,6 +2383,12 @@ export const es: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal en línea',
   'New online terminal': 'Nuevo terminal en línea',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'otro dispositivo',
+  'Taken over by {device}': 'Tomado por {device}',
+  'Open on {device} since {time}': 'Abierto en {device} desde {time}',
+  'Take over': 'Tomar el control',
+  'Take back': 'Recuperar',
   'Start online machine': 'Iniciar máquina en línea',
   'Stop online machine': 'Detener máquina en línea',
   Resume: 'Reanudar',
@@ -2413,6 +2434,8 @@ export const es: Dictionary = {
   'Take photo': 'Hacer foto',
   Pronouns: 'Pronombres',
   Bio: 'Biografía',
+  'A few words about you': 'Unas palabras sobre ti',
+  'What’s happening?': '¿Qué está pasando?',
   'Clear after': 'Borrar después de',
   '30 minutes': '30 minutos',
   '1 hour': '1 hora',
@@ -2777,4 +2800,5 @@ export const es: Dictionary = {
   'View your report': 'Ver tu informe',
   'Not sent. Your text is kept, so you can try again.':
     'No enviado. Tu texto se conserva para que puedas intentarlo de nuevo.',
+  'Reset to site icon': 'Restablecer el icono del sitio',
 }

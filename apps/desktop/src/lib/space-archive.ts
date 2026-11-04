@@ -19,7 +19,7 @@
 
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
-import { keep, stored } from './stored'
+import { keepJson, stored } from './stored'
 import { type Space, workspace } from './workspace.svelte'
 
 /** Whether this device has put a space away or back since the account last heard. */
@@ -106,7 +106,7 @@ export async function reconcile(): Promise<void> {
 async function tell(): Promise<void> {
   const token = account.accountToken
   if (!token) return
-  keep(OWED_KEY, 'true')
+  keepJson(OWED_KEY, true)
 
   const { sync } = await import('./sync.svelte')
   const idOf = (space: Space) => sync.remoteIdFor(space.root)
@@ -122,7 +122,7 @@ async function tell(): Promise<void> {
   try {
     await api.saveSettings(token, { archivedSpaces: ids })
     heard = ids
-    keep(OWED_KEY, 'false')
+    keepJson(OWED_KEY, false)
   } catch {
     // Still owed; the next start or listing sends it.
   }

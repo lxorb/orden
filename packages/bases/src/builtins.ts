@@ -13,7 +13,7 @@
 import type { Base, Filter, View } from './types'
 
 export type BuiltinName =
-  'inbox' | 'today' | 'upcoming' | 'logbook' | 'project' | 'label' | 'assigned'
+  'todos' | 'inbox' | 'today' | 'upcoming' | 'logbook' | 'project' | 'label' | 'assigned'
 
 export interface BuiltinParams {
   /** Each space's inbox note: Inbox. */
@@ -22,6 +22,8 @@ export interface BuiltinParams {
   note?: { space: string; path: string }
   /** The tag, without `#`: a label. */
   tag?: string
+  /** The space, by its name: Todos. */
+  space?: string
   /** Today: a task with no day of its own, neither a start date nor a scheduled one, is
    *  in it, as one whose start date has come. The reader's setting; off, as Todoist's
    *  Today leaves a task with no date out. */
@@ -34,6 +36,23 @@ const TODAY = 'task.date <= today() || task.deadline <= today()'
 const UNDATED = '!task.start && !task.scheduled'
 
 const quote = (text: string) => JSON.stringify(text)
+
+/** When a task is due, as Todos groups it (#1046): `overdue`, `today`, `tomorrow`,
+ *  `later`, or no value for a task with no deadline. Only a deadline makes a task due
+ *  (#371); a start date only says when it shows. */
+export const WHEN =
+  'if(!task.deadline, null, if(task.deadline < today(), "overdue", if(task.deadline == today(), "today", if(task.deadline == today() + "1d", "tomorrow", "later"))))'
+
+/** The order of WHEN's groups; the group of no value comes after them. */
+export const WHEN_GROUPS = ['overdue', 'today', 'tomorrow', 'later']
+
+/** Todoist's smart order: the most pressing first - by priority, then by deadline, then
+ *  by the time of day. What Todos sorts by until the reader picks another. */
+export const SMART_SORT: View['sort'] = [
+  { property: 'task.priority', direction: 'ASC' },
+  { property: 'task.deadline', direction: 'ASC' },
+  { property: 'task.time', direction: 'ASC' },
+]
 
 const inNote = (space: string, path: string) =>
   `file.space == ${quote(space)} && file.path == ${quote(path)}`
@@ -55,6 +74,26 @@ function base(
 /** A built-in view as a Base. */
 export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base {
   switch (name) {
+    case 'todos':
+      // Every task of one space that can be worked on now, in one view (#1046): what
+      // Inbox, Today and Upcoming were, grouped by when it is due. A task whose start
+      // date has not come waits for it, as everywhere (#371); done ones show only when
+      // the view says so.
+      return base(
+        {
+          type: 'list',
+          // The head says the tab's name, in the reader's language (ViewHead.svelte).
+          name: 'Todos',
+          filters:
+            params.space === undefined
+              ? 'task.started'
+              : { and: ['task.started', `file.space == ${quote(params.space)}`] },
+          sort: SMART_SORT,
+          groupBy: { property: 'formula.when', direction: 'ASC' },
+          nib: { rows: 'tasks', groups: [...WHEN_GROUPS], kept: {} },
+        },
+        { when: WHEN },
+      )
     case 'inbox': {
       const inboxes = params.inboxes ?? []
       const filters: Filter = inboxes.length

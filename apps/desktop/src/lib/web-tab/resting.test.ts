@@ -23,7 +23,6 @@ function page(id: string, minutes: number, more: Partial<Resting> = {}): Resting
     calling: false,
     notifying: false,
     edited: false,
-    pinned: false,
     inPrivate: false,
     ...more,
   }
@@ -113,7 +112,6 @@ describe('with Memory saver on', () => {
     ['waiting to notify', { notifying: true }],
     ['acted in by an agent', { acting: true }],
     ['typed into', { edited: true }],
-    ['pinned', { pinned: true }],
     ['private', { inPrivate: true }],
   ])('never one %s, by its time or its count', (_, more) => {
     expect(rest(page('a', 10 * 60, { frozen: true, ...more }), 'maximum', NOW).act).toBeNull()

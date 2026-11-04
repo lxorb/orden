@@ -95,8 +95,10 @@ export class Flight {
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 
-/** The styles of a window `wide` by `tall` at `pose`, and of the tab's face inside it. */
-export function drawn(pose: Pose, wide: number, tall: number, corner: number) {
+/** The styles of a window `wide` by `tall` at `pose`, and of the tab's face inside it,
+ *  on a canvas the camera draws `zoom` times its size: the tab's face is drawn at the
+ *  tab's own size on the screen, whatever either scale is. */
+export function drawn(pose: Pose, wide: number, tall: number, corner: number, zoom = 1) {
   const sx = Math.max(pose.w, 1) / wide
   const sy = Math.max(pose.h, 1) / tall
   const tab = clamp(pose.tab)
@@ -112,9 +114,9 @@ export function drawn(pose: Pose, wide: number, tall: number, corner: number) {
     face: { opacity: String(clamp(1 - (tab - 0.35) / 0.55)) },
     chip: {
       opacity: String(clamp((tab - 0.35) / 0.55)),
-      width: `${Math.max(pose.w, 1)}px`,
-      height: `${Math.max(pose.h, 1)}px`,
-      transform: `scale(${1 / sx}, ${1 / sy})`,
+      width: `${Math.max(pose.w, 1) * zoom}px`,
+      height: `${Math.max(pose.h, 1) * zoom}px`,
+      transform: `scale(${1 / (sx * zoom)}, ${1 / (sy * zoom)})`,
     },
   }
 }

@@ -7,7 +7,7 @@ import { mount, unmount, untrack } from 'svelte'
 import { account } from '../../account.svelte'
 import { request } from '../../api'
 import { deviceName } from '../../device'
-import { forget, keep, parsed, storedText } from '../../stored'
+import { forget, keep, keepJson, parsed, storedText } from '../../stored'
 import { hub } from '../../sync2/hub.svelte'
 import { NoWord, wordSaid } from '../../mobile/bridge'
 import { isNative } from '../../tauri'
@@ -103,7 +103,7 @@ const world: VaultWorld = {
   },
   loadBase: (id) => (parsed(storedText(baseKey(id))) as Base | null) ?? null,
   keepBase: (id, base) => {
-    if (base) keep(baseKey(id), JSON.stringify(base))
+    if (base) keepJson(baseKey(id), base)
     else forget(baseKey(id))
   },
 }

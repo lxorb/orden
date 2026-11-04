@@ -89,6 +89,15 @@ export const fa: Dictionary = {
   // Tasks: the Display menu
   Display: 'نمایش',
   'Completed tasks': 'کارهای انجام‌شده',
+  Smart: 'هوشمند',
+  Grouping: 'گروه‌بندی',
+  Sorting: 'مرتب‌سازی',
+  'Last 30 days': '۳۰ روز گذشته',
+  'Assigned to me': 'واگذارشده به من',
+  Unassigned: 'واگذارنشده',
+  'Reset all': 'بازنشانی همه',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'چیدمان کارها را به‌صورت فهرست، تخته یا تقویم نشان می‌دهد. گروه‌بندی آن‌ها را به گروه‌هایی تقسیم می‌کند که ستون‌های تخته‌اند. مرتب‌سازی هر گروه را مرتب می‌کند. فیلترها آنچه را لازم ندارید پنهان می‌کنند. همهٔ این‌ها برای این نما نگه داشته می‌شود.',
   // Tasks: several lines pasted into quick add
   'One task': 'یک کار',
   'One per line': 'یکی برای هر خط',
@@ -557,11 +566,11 @@ export const fa: Dictionary = {
   'Actual size': 'اندازه واقعی',
   // Appearance
   Accent: 'رنگ تکیه',
-  'Window corners': 'گوشه‌های پنجره',
-  Rounded: 'گرد',
-  Square: 'مربعی',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'گرد محتوای باز را در کارتی شناور درون پنجره نشان می‌دهد؛ مربعی آن را هم‌تراز لبه‌ها نگه می‌دارد.',
+  'Tidy up': 'مرتب‌سازی',
+  'Swipe in from the edge to see your notes.': 'برای دیدن یادداشت‌هایتان از لبه به داخل بکشید.',
+  'Show other tabs as icons': 'نمایش زبانه‌های دیگر به‌صورت نماد',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'هر زبانه جز زبانهٔ جلو فقط نمادش را نشان می‌دهد؛ با اشاره به یکی، نامش نمایان می‌شود.',
   'Tab preview delay': 'تأخیر پیش‌نمایش زبانه',
   'How long the pointer rests on a tab before its preview shows.':
     'مدتی که نشانگر روی زبانه می‌ماند تا پیش‌نمایش آن نمایش داده شود.',
@@ -1818,6 +1827,7 @@ export const fa: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'اطلاعات سایت',
   Downloads: 'بارگیری‌ها',
+  'Downloading {name}': 'در حال دانلود {name}',
   'Show in folder': 'نمایش در پوشه',
   'Show in Finder': 'نمایش در Finder',
   'Reveal in Finder': 'نمایش در Finder',
@@ -1913,6 +1923,9 @@ export const fa: Dictionary = {
   'Exited with code {code}': 'با کد {code} پایان یافت',
   'Could not start {shell}': '{shell} اجرا نشد',
   'Restore history': 'بازیابی تاریخچه',
+  'Colours follow the theme': 'رنگ‌ها از پوسته پیروی می‌کنند',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'پایانه‌ها را با رنگ‌های پوسته رنگ می‌کند؛ خاموش، یک جعبه‌رنگ ثابت نگه می‌دارد.',
   'Restored {time}': 'بازیابی‌شده {time}',
   'Stop what is running in {name}?': 'آنچه در {name} اجرا می‌شود متوقف شود؟',
   'Stop what is running in these terminals?': 'آنچه در این ترمینال‌ها اجرا می‌شود متوقف شود؟',
@@ -2063,6 +2076,8 @@ export const fa: Dictionary = {
   'Every space': 'همه فضاها',
   Sites: 'سایت‌ها',
   'Asks first': 'اول می‌پرسد',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'از راه MCP وصل می‌شود و مجوزهایش را همان‌جا خودش مدیریت می‌کند: Orden چیزی از آن نمی‌پرسد. فضاها، سایت‌های مسدود و محدودیت‌های زیر همچنان برقرارند.',
   Limits: 'محدودیت‌ها',
   'Clear what {name} did?': 'آنچه {name} کرده پاک شود؟',
   'Show earlier': 'نمایش قدیمی‌تر',
@@ -2311,6 +2326,12 @@ export const fa: Dictionary = {
   // The online terminal
   'Online terminal': 'ترمینال آنلاین',
   'New online terminal': 'ترمینال آنلاین جدید',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'دستگاهی دیگر',
+  'Taken over by {device}': '{device} آن را گرفت',
+  'Open on {device} since {time}': 'باز روی {device} از {time}',
+  'Take over': 'در دست گرفتن',
+  'Take back': 'پس گرفتن',
   'Start online machine': 'روشن کردن ماشین آنلاین',
   'Stop online machine': 'خاموش کردن ماشین آنلاین',
   Resume: 'ادامه',
@@ -2356,6 +2377,8 @@ export const fa: Dictionary = {
   'Take photo': 'گرفتن عکس',
   Pronouns: 'ضمیرها',
   Bio: 'درباره',
+  'A few words about you': 'چند کلمه درباره شما',
+  'What’s happening?': 'چه خبر؟',
   'Clear after': 'پاک کردن پس از',
   '30 minutes': '۳۰ دقیقه',
   '1 hour': '۱ ساعت',
@@ -2712,4 +2735,5 @@ export const fa: Dictionary = {
   'View your report': 'دیدن گزارش شما',
   'Not sent. Your text is kept, so you can try again.':
     'ارسال نشد. متن شما حفظ شده است تا دوباره تلاش کنید.',
+  'Reset to site icon': 'بازگشت به نماد سایت',
 }

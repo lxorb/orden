@@ -23,6 +23,7 @@
   import { recentFirst } from './fuzzy'
   import { t } from './i18n.svelte'
   import Icon from './Icon.svelte'
+  import { links } from './link-index.svelte'
   import { middleOpens } from './new-tab'
   import { AGENTS_NAME, shownName } from './note-name'
   import { scanHeadings } from './outline'
@@ -162,6 +163,7 @@
       hosts,
       worth: (key) => frecency.worth(key),
       now: Date.now(),
+      addressOf: (path) => links.shortcutOf(path),
     }
   })
 

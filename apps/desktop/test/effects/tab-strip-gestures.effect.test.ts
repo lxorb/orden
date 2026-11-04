@@ -76,6 +76,12 @@ const Tabs = (await import('../../src/lib/Tabs.svelte')).default
 await import('../../src/lib/tab-strip/closing.svelte')
 await import('../../src/lib/tab-strip/picking.svelte')
 
+/** Waits for what a press leads to. Generously: closing a tab asks about it first, through
+ *  parts fetched and compiled on a run that may be loaded down, and a second was the
+ *  wall one loaded run hit while the strip was doing nothing wrong. Nothing here is about
+ *  how long it takes; see vitest.config.ts. */
+const settles = <T>(check: () => T) => vi.waitFor(check, { timeout: 10_000 })
+
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
 
@@ -107,7 +113,7 @@ async function strip() {
   workspace.activate(tabs[1]?.id ?? '')
   workspace.activate(tabs[0]?.id ?? '')
   shown = mount(Tabs, { target, props: { paneId } })
-  await vi.waitFor(() => {
+  await settles(() => {
     flushSync()
     expect(target.querySelector<HTMLElement>('.tab')?.style.width).not.toBe('')
   })
@@ -143,7 +149,7 @@ test('Ctrl and Shift pick tabs, their menu is about all of them, and Ctrl+W clos
   const [one, two, three, four] = ids as [string, string, string, string]
 
   press(two, { ctrlKey: true })
-  await vi.waitFor(() => expect(picks.loaded).not.toBeNull())
+  await settles(() => expect(picks.loaded).not.toBeNull())
   flushSync()
   expect(picked()).toEqual([one, two])
   expect(workspace.activeTabId).toBe(two)
@@ -171,7 +177,7 @@ test('Ctrl and Shift pick tabs, their menu is about all of them, and Ctrl+W clos
   expect(shortcuts.handle(event, { palette: () => undefined, fullscreen: () => undefined })).toBe(
     true,
   )
-  await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.id)).not.toContain(two))
+  await settles(() => expect(workspace.tabs.map((tab) => tab.id)).not.toContain(two))
   expect(workspace.tabs.map((tab) => tab.id)).not.toContain(four)
   expect(workspace.tabs).toHaveLength(NAMES.length - 2)
 })
@@ -181,7 +187,7 @@ test('a plain click on a picked tab picks it alone; a Ctrl click on one keeps th
   const [one, two, three] = ids as [string, string, string]
 
   press(two, { ctrlKey: true })
-  await vi.waitFor(() => expect(picks.loaded).not.toBeNull())
+  await settles(() => expect(picks.loaded).not.toBeNull())
   press(three, { ctrlKey: true })
   expect(picked()).toEqual([one, two, three])
 
@@ -200,13 +206,13 @@ test('a tab closed with its cross goes as no longer in front, and the rest hold 
   const { ids } = await strip()
   const [one, two] = ids as [string, string]
   // Tabs.svelte fetches the held widths as it mounts.
-  await vi.waitFor(() => expect(box(one)?.querySelector('.shut')).not.toBeNull())
+  await settles(() => expect(box(one)?.querySelector('.shut')).not.toBeNull())
   await new Promise((done) => setTimeout(done, 0))
 
   const before = new Map(ids.map((id) => [id, box(id)?.style.width]))
   const cross = box(one)?.querySelector<HTMLButtonElement>('.shut')
   cross?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }))
-  await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.id)).not.toContain(one))
+  await settles(() => expect(workspace.tabs.map((tab) => tab.id)).not.toContain(one))
   flushSync()
 
   // Still on the page, shrinking - and drawn as a tab that is not in front, nothing of
@@ -237,6 +243,6 @@ test('Delete on a tab leaves the keyboard on the tab in front after it, the one 
   pick(one)?.dispatchEvent(
     new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }),
   )
-  await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.id)).not.toContain(one))
-  await vi.waitFor(() => expect(document.activeElement).toBe(pick(two)))
+  await settles(() => expect(workspace.tabs.map((tab) => tab.id)).not.toContain(one))
+  await settles(() => expect(document.activeElement).toBe(pick(two)))
 })

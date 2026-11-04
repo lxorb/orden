@@ -19,6 +19,7 @@ import { SIGN_IN } from '../refused'
 import type { Env } from '../types'
 import { askMachine } from './ask'
 import { whyNotWake } from './gate'
+import { deviceName } from '../locks/device-name'
 import { DOOR, reachedOf, type Row, WHO } from './reach'
 import { refusedSocket } from './refuse'
 import { serviceOf } from './service'
@@ -67,12 +68,18 @@ onlineDoor.get('/:term/socket', async (context) => {
   const reached = row ? reachedOf(row) : null
   if (!reached) return refusedSocket('gone', `${DEVICE_PROTOCOL}${device}`)
 
-  const wake = reached.owns ? ((await whyNotWake(env, reached.owner, at, service)) ?? 'yes') : 'no'
+  // Asked at once: whether the owner may wake the machine, and what the device is called,
+  // which another device holding the session off is told it by (locks/holding.ts).
+  const [wake, name] = await Promise.all([
+    reached.owns ? whyNotWake(env, reached.owner, at, service).then((why) => why ?? 'yes') : 'no',
+    deviceName(env, device, reached.who),
+  ])
   const answer = await askMachine(env, reached.machine, 'join', {
     upgrade: 'websocket',
     'x-nib-user': reached.owner,
     'x-nib-who': reached.who,
     'x-nib-device': device,
+    'x-nib-device-name': name,
     'x-nib-term': reached.term,
     'x-nib-session': reached.session,
     'x-nib-guest': reached.guest ? 'yes' : 'no',

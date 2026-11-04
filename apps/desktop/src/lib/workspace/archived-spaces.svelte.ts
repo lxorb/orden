@@ -9,7 +9,7 @@
  *  a space, under one key of its own. */
 
 import { samePath } from '../space-paths'
-import { keep, stored, stringList } from '../stored'
+import { keepJson, stored, stringList } from '../stored'
 
 const KEY = 'nib:archived-spaces'
 
@@ -32,7 +32,7 @@ export class ArchivedSpaces {
     this.roots = archived
       ? [...this.roots, root].slice(-MOST)
       : this.roots.filter((one) => !samePath(one, root))
-    keep(KEY, JSON.stringify(this.roots))
+    keepJson(KEY, this.roots)
     return true
   }
 }

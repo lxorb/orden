@@ -90,6 +90,15 @@ export const ta: Dictionary = {
   // Tasks: the Display menu
   Display: 'காட்சி',
   'Completed tasks': 'முடிந்த பணிகள்',
+  Smart: 'ஸ்மார்ட்',
+  Grouping: 'குழுவாக்கம்',
+  Sorting: 'வரிசைப்படுத்தல்',
+  'Last 30 days': 'கடந்த 30 நாட்கள்',
+  'Assigned to me': 'எனக்கு ஒதுக்கப்பட்டவை',
+  Unassigned: 'ஒதுக்கப்படாதவை',
+  'Reset all': 'அனைத்தையும் மீட்டமை',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'தளவமைப்பு பணிகளைப் பட்டியல், பலகை அல்லது நாட்காட்டியாகக் காட்டும். குழுவாக்கம் அவற்றைக் குழுக்களாகப் பிரிக்கும்; அவையே பலகையின் நெடுவரிசைகள். வரிசைப்படுத்தல் ஒவ்வொரு குழுவையும் ஒழுங்குபடுத்தும். வடிப்பான்கள் உங்களுக்குத் தேவையில்லாததை மறைக்கும். இவை அனைத்தும் இந்தக் காட்சிக்காக வைக்கப்படும்.',
   // Tasks: several lines pasted into quick add
   'One task': 'ஒரு பணி',
   'One per line': 'வரிக்கு ஒன்று',
@@ -558,11 +567,12 @@ export const ta: Dictionary = {
   'Actual size': 'உண்மை அளவு',
   // Appearance
   Accent: 'சிறப்பு நிறம்',
-  'Window corners': 'சாளர மூலைகள்',
-  Rounded: 'வளைந்த',
-  Square: 'சதுரம்',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'வளைந்தது திறந்ததைச் சாளரத்துக்குள் ஒரு அட்டையில் மிதக்கச் செய்கிறது; சதுரம் அதை விளிம்பில் ஒட்டியே வைக்கிறது.',
+  'Tidy up': 'ஒழுங்குபடுத்து',
+  'Swipe in from the edge to see your notes.':
+    'உங்கள் குறிப்புகளைப் பார்க்க ஓரத்திலிருந்து உள்ளே தேய்க்கவும்.',
+  'Show other tabs as icons': 'மற்ற தாவல்களை உருவங்களாகக் காட்டு',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'முன்னால் உள்ளதைத் தவிர ஒவ்வொரு தாவலும் உருவத்தை மட்டும் காட்டும்; ஒன்றின் மேல் சுட்டினால் அதன் பெயர் தெரியும்.',
   'Tab preview delay': 'தாவல் முன்னோட்டத் தாமதம்',
   'How long the pointer rests on a tab before its preview shows.':
     'முன்னோட்டம் தோன்றும் முன் சுட்டி தாவலின் மேல் எவ்வளவு நேரம் இருக்க வேண்டும்.',
@@ -1846,6 +1856,7 @@ export const ta: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'தள விவரங்கள்',
   Downloads: 'பதிவிறக்கங்கள்',
+  'Downloading {name}': '{name} பதிவிறக்கப்படுகிறது',
   'Show in folder': 'கோப்புறையில் காட்டு',
   'Show in Finder': 'Finder-இல் காட்டு',
   'Reveal in Finder': 'Finder-இல் காட்டு',
@@ -1941,6 +1952,9 @@ export const ta: Dictionary = {
   'Exited with code {code}': 'குறியீடு {code} உடன் முடிந்தது',
   'Could not start {shell}': '{shell} ஐத் தொடங்க முடியவில்லை',
   'Restore history': 'வரலாற்றை மீட்டமை',
+  'Colours follow the theme': 'வண்ணங்கள் தீமைப் பின்பற்றும்',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'முனையங்களைத் தீமின் வண்ணங்களில் தீட்டும்; அணைத்தால் ஒரு நிலையான வண்ணத் தொகுப்பு இருக்கும்.',
   'Restored {time}': 'மீட்டமைக்கப்பட்டது {time}',
   'Stop what is running in {name}?': '{name} இல் இயங்குவதை நிறுத்தவா?',
   'Stop what is running in these terminals?': 'இந்த முனையங்களில் இயங்குவதை நிறுத்தவா?',
@@ -2092,6 +2106,8 @@ export const ta: Dictionary = {
   'Every space': 'ஒவ்வொரு இடமும்',
   Sites: 'தளங்கள்',
   'Asks first': 'முதலில் கேட்கும்',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'இது MCP வழியாக இணைந்து, அங்கேயே தன் அனுமதிகளைத் தானே நிர்வகிக்கிறது: Orden எதையும் கேட்பதில்லை. கீழே உள்ள உங்கள் ஸ்பேஸ்கள், தடுத்த தளங்கள், வரம்புகள் இன்னும் பொருந்தும்.',
   Limits: 'வரம்புகள்',
   'Clear what {name} did?': '{name} செய்ததை அழிக்கவா?',
   'Show earlier': 'முந்தையவற்றைக் காட்டு',
@@ -2341,6 +2357,12 @@ export const ta: Dictionary = {
   // The online terminal
   'Online terminal': 'ஆன்லைன் முனையம்',
   'New online terminal': 'புதிய ஆன்லைன் முனையம்',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'வேறொரு சாதனம்',
+  'Taken over by {device}': '{device} எடுத்துக்கொண்டது',
+  'Open on {device} since {time}': '{time} முதல் {device} இல் திறந்துள்ளது',
+  'Take over': 'எடுத்துக்கொள்',
+  'Take back': 'திரும்பப் பெறு',
   'Start online machine': 'ஆன்லைன் இயந்திரத்தைத் தொடங்கு',
   'Stop online machine': 'ஆன்லைன் இயந்திரத்தை நிறுத்து',
   Resume: 'தொடர்',
@@ -2386,6 +2408,8 @@ export const ta: Dictionary = {
   'Take photo': 'புகைப்படம் எடு',
   Pronouns: 'பிரதிப்பெயர்கள்',
   Bio: 'அறிமுகம்',
+  'A few words about you': 'உங்களைப் பற்றி சில வார்த்தைகள்',
+  'What’s happening?': 'என்ன நடக்கிறது?',
   'Clear after': 'இதன் பின் அழி',
   '30 minutes': '30 நிமிடங்கள்',
   '1 hour': '1 மணிநேரம்',
@@ -2755,4 +2779,5 @@ export const ta: Dictionary = {
   'View your report': 'உங்கள் அறிக்கையைப் பார்',
   'Not sent. Your text is kept, so you can try again.':
     'அனுப்பப்படவில்லை. உங்கள் உரை வைக்கப்பட்டுள்ளது, மீண்டும் முயலலாம்.',
+  'Reset to site icon': 'தளத்தின் ஐகானுக்குத் திரும்பு',
 }

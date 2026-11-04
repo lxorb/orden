@@ -7,7 +7,7 @@
  *  from the same note read by the first scan. */
 
 import { COVER_KEY } from '@orden/markdown/cover'
-import { frontMatterList, frontMatterValue } from '@orden/markdown/front-matter'
+import { frontMatterList, frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@orden/markdown/links'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
 import type { ScannedTask, Stamp } from '@orden/bases/scan'
@@ -81,6 +81,12 @@ export interface ScannedNote {
    *  surface that draws the banner reads it out of the note. See cover.ts in
    *  @orden/markdown. */
   cover: string | null
+  /** Whether the note says nothing yet: whitespace, or its own name as its heading and
+   *  nothing under it. It then wears the empty page, and the folder where it holds
+   *  notes (#1042). Read on this pass for the reason the icon is: every row wants it,
+   *  and the space is already being read. False for a canvas and a website. The twin of
+   *  the same field in links.rs; see `saysNothing` in scan-note.ts. */
+  bare: boolean
   /** The rows of a space ride on the same pass (docs/tasks.md 5.3): the front matter
    *  as written, the task lines with the headings above them, and the file's size and
    *  times. What the crate's scan and the browser's carry for every note; a note read
@@ -104,9 +110,10 @@ const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 const CONTEXT = 200
 
 export function scanNote(path: string, content: string): ScannedNote {
+  const name = (path.split('/').pop() ?? path).replace(MARKDOWN, '')
   return {
     path,
-    name: (path.split('/').pop() ?? path).replace(MARKDOWN, ''),
+    name,
     headings: headingsOf(content),
     blocks: blockIds(content).map((one) => one.id),
     tags: noteTags(content),
@@ -119,6 +126,7 @@ export function scanNote(path: string, content: string): ScannedNote {
     favicon: null,
     address: null,
     cover: frontMatterValue(content, COVER_KEY),
+    bare: saysNothing(content, name),
     links: findLinks(content).map((link) => ({
       kind: link.kind,
       target: link.target,
@@ -164,8 +172,9 @@ export function scanShortcut(path: string, content: string): ScannedNote {
     headings: [],
     blocks: [],
     tags: [],
-    icon: null,
-    iconColor: null,
+    // The icon the reader chose over the site's mark, kept in the file (#1098).
+    icon: said?.chosen ?? null,
+    iconColor: said?.chosenColour ?? null,
     aliases: [],
     // What `url:` means is a note that is a website in the old format and wants
     // converting; a shortcut is already one. See web-tab/shortcut.ts.
@@ -174,6 +183,7 @@ export function scanShortcut(path: string, content: string): ScannedNote {
     favicon: said?.icon ?? null,
     address: said?.url ?? null,
     cover: null,
+    bare: false,
     links: [],
   }
 }
@@ -195,4 +205,41 @@ function contextAt(text: string, at: number): string {
     .slice(from, end === -1 ? text.length : end)
     .trim()
     .slice(0, CONTEXT)
+}
+
+/** A heading line and its words, as markdown reads it: up to three spaces of indent. A
+ *  closing run of hashes is taken off below, the way `heading_of` in links.rs does. */
+const BARE_HEADING = /^ {0,3}#{1,6}[ \t](.*)$/
+
+/** A title and a name put the same way, so the two can be compared: what `nameFromTitle`
+ *  in note-name.ts turns into spaces is a space here, and the runs and ends go. */
+function loose(words: string): string {
+  return words
+    .replace(/[<>:"/\\|?* -]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/^[.\s]+|[.\s]+$/g, '')
+}
+
+/** Whether a note says nothing yet (#1042): nothing but whitespace, or nothing but its
+ *  own name as a heading - which is what a new note is written with (`# Name`, see
+ *  `createNote` in the workspace) - with any front matter above it, a `title:` there
+ *  included. Such a note wears the empty page rather than the page with writing on,
+ *  and the folder where it holds notes; see `sourceMark` in chosen-icon.ts.
+ *
+ *  Asked once per reading of a note, by the scan the link index already makes of it
+ *  (`scanNote` below, and `bare` in links.rs, its twin), never by a row as it draws.
+ *
+ *  "Its own name" the way a name is made from a title: the characters a file name
+ *  cannot hold are spaces in either, so `# Q1: costs` is the title of `Q1 costs`. */
+export function saysNothing(content: string, name: string): boolean {
+  const lines = stripFrontMatter(content)
+    .split(/\r?\n/)
+    .filter((line) => line.trim() !== '')
+  if (lines.length === 0) return true
+  if (lines.length > 1) return false
+
+  const heading = BARE_HEADING.exec(lines[0] ?? '')
+  if (heading === null) return false
+  const words = (heading[1] ?? '').trim().replace(/#+$/, '').trim()
+  return loose(name) !== '' && loose(words) === loose(name)
 }

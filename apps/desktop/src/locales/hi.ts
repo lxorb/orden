@@ -89,6 +89,15 @@ export const hi: Dictionary = {
   // Tasks: the Display menu
   Display: 'प्रदर्शन',
   'Completed tasks': 'पूरे किए गए कार्य',
+  Smart: 'स्मार्ट',
+  Grouping: 'समूहीकरण',
+  Sorting: 'क्रम',
+  'Last 30 days': 'पिछले 30 दिन',
+  'Assigned to me': 'मुझे सौंपे गए',
+  Unassigned: 'किसी को नहीं सौंपे गए',
+  'Reset all': 'सब रीसेट करें',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'लेआउट कामों को सूची, बोर्ड या कैलेंडर के रूप में दिखाता है। समूहीकरण उन्हें समूहों में बाँटता है, जो बोर्ड के कॉलम हैं। क्रम हर समूह को क्रम में रखता है। फ़िल्टर वह छिपाते हैं जिसकी आपको ज़रूरत नहीं। यह सब इस व्यू के लिए रखा जाता है।',
   // Tasks: several lines pasted into quick add
   'One task': 'एक कार्य',
   'One per line': 'हर पंक्ति पर एक',
@@ -557,11 +566,12 @@ export const hi: Dictionary = {
   'Actual size': 'वास्तविक आकार',
   // Appearance
   Accent: 'एक्सेंट',
-  'Window corners': 'विंडो के कोने',
-  Rounded: 'गोल',
-  Square: 'चौकोर',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'गोल खुली चीज़ को विंडो के अंदर एक कार्ड में तैराता है; चौकोर उसे किनारों से सटा रखता है।',
+  'Tidy up': 'व्यवस्थित करें',
+  'Swipe in from the edge to see your notes.':
+    'अपने नोट्स देखने के लिए किनारे से अंदर स्वाइप करें।',
+  'Show other tabs as icons': 'बाकी टैब आइकन के रूप में दिखाएँ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'सामने वाले को छोड़ हर टैब सिर्फ़ अपना आइकन दिखाता है; किसी पर पॉइंटर ले जाने पर उसका नाम दिखता है।',
   'Tab preview delay': 'टैब पूर्वावलोकन की देरी',
   'How long the pointer rests on a tab before its preview shows.':
     'पूर्वावलोकन दिखने से पहले पॉइंटर टैब पर कितनी देर रुकता है।',
@@ -1814,6 +1824,7 @@ export const hi: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'साइट जानकारी',
   Downloads: 'डाउनलोड',
+  'Downloading {name}': '{name} डाउनलोड हो रहा है',
   'Show in folder': 'फ़ोल्डर में दिखाएँ',
   'Show in Finder': 'Finder में दिखाएँ',
   'Reveal in Finder': 'Finder में दिखाएँ',
@@ -1907,6 +1918,9 @@ export const hi: Dictionary = {
   'Exited with code {code}': 'कोड {code} के साथ बंद हुआ',
   'Could not start {shell}': '{shell} शुरू नहीं हो सका',
   'Restore history': 'इतिहास पुनर्स्थापित करें',
+  'Colours follow the theme': 'रंग थीम का पालन करते हैं',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'टर्मिनलों को थीम के रंगों में रंगता है; बंद होने पर एक स्थिर पैलेट रहता है।',
   'Restored {time}': 'पुनर्स्थापित {time}',
   'Stop what is running in {name}?': '{name} में जो चल रहा है उसे रोकें?',
   'Stop what is running in these terminals?': 'इन टर्मिनलों में जो चल रहा है उसे रोकें?',
@@ -2057,6 +2071,8 @@ export const hi: Dictionary = {
   'Every space': 'हर स्पेस',
   Sites: 'साइटें',
   'Asks first': 'पहले पूछता है',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'यह MCP से जुड़ता है और वहीं अपनी अनुमतियाँ खुद सँभालता है: Orden इससे कुछ नहीं पूछता। नीचे आपके स्पेस, ब्लॉक की गई साइटें और सीमाएँ फिर भी लागू रहती हैं।',
   Limits: 'सीमाएँ',
   'Clear what {name} did?': '{name} ने जो किया उसे साफ़ करें?',
   'Show earlier': 'पहले के दिखाएँ',
@@ -2305,6 +2321,12 @@ export const hi: Dictionary = {
   // The online terminal
   'Online terminal': 'ऑनलाइन टर्मिनल',
   'New online terminal': 'नया ऑनलाइन टर्मिनल',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'कोई दूसरा डिवाइस',
+  'Taken over by {device}': '{device} ने ले लिया',
+  'Open on {device} since {time}': '{time} से {device} पर खुला',
+  'Take over': 'अपने हाथ लें',
+  'Take back': 'वापस लें',
   'Start online machine': 'ऑनलाइन मशीन शुरू करें',
   'Stop online machine': 'ऑनलाइन मशीन रोकें',
   Resume: 'फिर से शुरू करें',
@@ -2350,6 +2372,8 @@ export const hi: Dictionary = {
   'Take photo': 'फ़ोटो लें',
   Pronouns: 'सर्वनाम',
   Bio: 'परिचय',
+  'A few words about you': 'अपने बारे में कुछ शब्द',
+  'What’s happening?': 'क्या चल रहा है?',
   'Clear after': 'इसके बाद हटाएँ',
   '30 minutes': '30 मिनट',
   '1 hour': '1 घंटा',
@@ -2705,4 +2729,5 @@ export const hi: Dictionary = {
   'View your report': 'अपनी रिपोर्ट देखें',
   'Not sent. Your text is kept, so you can try again.':
     'नहीं भेजी गई। आपका लिखा हुआ सुरक्षित है, आप फिर से कोशिश कर सकते हैं।',
+  'Reset to site icon': 'साइट के आइकन पर लौटें',
 }

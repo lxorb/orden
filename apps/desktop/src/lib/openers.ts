@@ -18,6 +18,7 @@ import {
   isBaseTarget,
   isCanvasTarget,
   isChatTarget,
+  isTermTarget,
   isPagesTarget,
   isPdfTarget,
   isWebTarget,
@@ -67,7 +68,7 @@ export function openerFor(
   // A base is a view of rows, a board or a calendar, which the glasses cannot draw.
   if (isBaseTarget(path)) return build.isPlugin ? null : 'view'
   if (isChatTarget(path)) return build.isPlugin ? null : 'chat'
-  if (/.term$/i.test(path)) return build.isPlugin ? null : 'term'
+  if (isTermTarget(path)) return build.isPlugin ? null : 'term'
 
   return 'note'
 }

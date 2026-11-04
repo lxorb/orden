@@ -19,7 +19,7 @@ import { DIAGRAM_NAMED } from '@orden/markdown/diagrams'
 import { Hono } from 'hono'
 import { now } from '../crypto'
 import { laterOf, pokeSpace } from '../hub/poke'
-import { atNextSeq, TAKEN_SEQ } from '../notes'
+import { atNextSeq, placedOn, TAKEN_SEQ } from '../notes'
 import { OUT_OF_SPACE } from '../refused'
 import { atLeast, spaceOf } from '../spaces/space'
 import { fits, fitsSql } from '../storage'
@@ -593,7 +593,8 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
     space.id,
     context.env.DB.prepare(
       `update notes set hash = ?2, size = ?3, seq = ${TAKEN_SEQ}, doc_seq = ${TAKEN_SEQ},
-                        doc_by = ?4, updated_by = ?4, version = version + 1, updated_at = ?5
+                        doc_by = ?4, updated_by = ?4, version = version + 1, updated_at = ?5,
+                        ${placedOn('1')}
         where id = ?6 and hash = ?7`,
     ).bind(space.id, hash, size, device, now(), id, base),
   )

@@ -1,11 +1,12 @@
-/** What the Tasks panel lists, with its counts: Inbox, Today and Upcoming as the views
- *  they open answer them, then the notes (every note with open tasks, the most
- *  recently written first) and the labels (every tag on an open task).
+/** What the Tasks panel lists, with its counts: the open space's Todos as its view
+ *  answers it (#1046), then the notes (every note with open tasks, the most recently
+ *  written first, which the favourites are counted by) and the labels (every tag on an
+ *  open task).
  *
- *  Inbox, Today and Upcoming are counted by the engine answering the very bases their
- *  tabs open (`builtinView`), so a number in the panel and the rows behind it can never
- *  disagree. The notes and labels are one pass over the open tasks. Pure: the panel
- *  hands in the rows and the day, and draws the answer. */
+ *  Todos is counted by the engine answering the very base its tab opens (`builtinView`),
+ *  so a number in the panel and the rows behind it can never disagree. The notes and
+ *  labels are one pass over the open tasks. Pure: the panel hands in the rows and the
+ *  day, and draws the answer. */
 
 import { answer, type Base, builtinView, type Row } from '@orden/bases'
 import { contextFor } from './context'
@@ -26,37 +27,24 @@ interface Label {
 }
 
 export interface PanelCounts {
-  inbox: number
-  today: number
-  /** Whether any of Today's tasks are overdue, which turns its count to the danger tone. */
+  /** The open tasks of the space's Todos. */
+  todos: number
+  /** Whether any of them are overdue, which turns the count to the danger tone. */
   overdue: boolean
-  upcoming: number
-  /** Every note with open tasks, which the panel sorts into projects and the rest. */
+  /** Every note with open tasks. */
   notes: Project[]
   labels: Label[]
 }
 
-/** The built-in bases, made once per set of inboxes and each way Today can be set, so
- *  the engine compiles each once and keeps what it knows about every row between two
- *  counts. */
+/** Each space's Todos, made once, so the engine compiles it once and keeps what it knows
+ *  about every row between two counts. */
 const made = new Map<string, Base>()
 
-function builtin(
-  name: 'inbox' | 'today' | 'upcoming',
-  inboxes: { space: string; path: string }[],
-  undated = false,
-): Base {
-  const key =
-    name === 'inbox'
-      ? `inbox\n${JSON.stringify(inboxes)}`
-      : name === 'today'
-        ? `today\n${String(undated)}`
-        : name
+function todosOf(space: string | undefined): Base {
+  const key = space ?? ''
   let base = made.get(key)
   if (!base) {
-    base = builtinView(name, { inboxes, ...(undated ? { undated } : {}) })
-    if (name === 'inbox')
-      for (const old of made.keys()) if (old.startsWith('inbox\n')) made.delete(old)
+    base = builtinView('todos', space === undefined ? {} : { space })
     made.set(key, base)
   }
   return base
@@ -65,16 +53,14 @@ function builtin(
 const isOpen = (row: Row) =>
   row.kind === 'task' && !!row.task && !row.task.done && !row.task.cancelled
 
-/** The panel's lists and counts over these rows, on this day; with `undated`, Today's
- *  count holds the tasks with no start date, as its view does (`modes.undatedInToday`). */
+/** The panel's lists and counts over these rows, on this day, for the open space. */
 export function panelCounts(
   rows: readonly Row[],
   today: string,
-  inboxes: { space: string; path: string }[],
-  undated = false,
+  space: string | undefined,
 ): PanelCounts {
   const context = contextFor({ rows, today, now: `${today}T00:00:00` })
-  const todayAnswer = answer(builtin('today', inboxes, undated), 0, rows, context)
+  const todos = answer(todosOf(space), 0, rows, context)
 
   const projects = new Map<string, Project>()
   const labels = new Map<string, number>()
@@ -96,10 +82,8 @@ export function panelCounts(
   }
 
   return {
-    inbox: answer(builtin('inbox', inboxes), 0, rows, context).total,
-    today: todayAnswer.total,
-    overdue: todayAnswer.groups.some((group) => group.key === true && group.rows.length > 0),
-    upcoming: answer(builtin('upcoming', inboxes), 0, rows, context).total,
+    todos: todos.total,
+    overdue: todos.groups.some((group) => group.key === 'overdue' && group.rows.length > 0),
     notes: [...projects.values()].sort((a, b) => b.mtime - a.mtime || a.name.localeCompare(b.name)),
     labels: [...labels.entries()]
       .map(([tag, count]) => ({ tag, count }))
@@ -116,6 +100,3 @@ export function openByPath(
   for (const one of notes) if (one.space === space) out.set(one.path, one.count)
   return out
 }
-
-/** How many notes the panel lists before the rest go under More. */
-export const NOTES_SHOWN = 7

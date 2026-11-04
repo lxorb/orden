@@ -24,7 +24,7 @@ import { pollDelay, RECONCILE_INTERVAL } from '../backoff'
 import { log } from '../log'
 import { type Pairing, pairSpaces } from '../space-pairing'
 import { readMirror, type Mirror } from '../sync/mirror'
-import { isRecord, keep, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
 import { owesAtTheEnd, owesLast, writing } from '../parting'
@@ -375,7 +375,7 @@ class Runner {
       )
       const done = new Set([...kept].filter((id) => !gone.has(id)))
       const mirrors = await this.mirrorsNow(engine, user.id, listings, done, gone)
-      back = keep(MIRRORS, JSON.stringify({ account: user.id, seen: true, mirrors }))
+      back = keepJson(MIRRORS, { account: user.id, seen: true, mirrors })
       return back
     } catch (error) {
       log('warn', `sync: the way back to v1 waits - ${String(error)}`)
@@ -454,7 +454,7 @@ class Runner {
       try {
         const done = await this.kept(engine)
         const mirrors = done.size ? await this.mirrorsNow(engine, accountId, null, done) : null
-        if (mirrors) keep(MIRRORS, JSON.stringify({ account: accountId, seen: true, mirrors }))
+        if (mirrors) keepJson(MIRRORS, { account: accountId, seen: true, mirrors })
       } catch (error) {
         log('warn', `sync: signing out kept no mirrors - ${String(error)}`)
       }

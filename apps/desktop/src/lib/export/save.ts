@@ -10,9 +10,14 @@
  *
  *  Text and bytes take the same road. DOCX, ePub, JPG, PNG, a TextPack and the
  *  pictures inside a TextBundle are bytes, and `write_bytes` in the crate is the
- *  text writer's twin: the same path check, the same atomic write. */
+ *  text writer's twin: the same path check, the same atomic write.
+ *
+ *  And all three say the file has started on its way, here and nowhere else - a place
+ *  chosen in the dialog, a file handed to the browser, a file into the phone's folder -
+ *  so every export flies to the downloads glyph and is said; see downloads/started.ts. */
 
 import { toBase64 } from '../bytes'
+import { downloadStarted } from '../downloads/started'
 import { keep, storedText } from '../stored'
 import { folderOf, nameOf } from '../space-paths'
 import { invoke, isDesktop, isMobile, isNative, joinPath } from '../tauri'
@@ -64,10 +69,12 @@ export async function chooseTarget(
   // A browser told to keep no site data starts wherever the dialog last was.
   const folder = storedText(FOLDER_KEY)
 
-  return save({
+  const target = await save({
     defaultPath: folder ? joinPath(folder, file) : file,
     filters: [{ name: label, extensions: [extension] }],
   })
+  if (target) downloadStarted(nameOf(target))
+  return target
 }
 
 /** A browser has no file dialog to offer; the file is handed to it to save. */
@@ -83,6 +90,12 @@ export function download(name: string, payload: Payload) {
         // Blob would take the whole buffer behind it.
         new Blob([payload.bytes.slice()], { type: payload.mime })
 
+  handOver(name, blob)
+}
+
+/** Bytes already made into a file, handed to the browser to save under `name`. */
+export function handOver(name: string, blob: Blob) {
+  downloadStarted(name)
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -213,6 +226,7 @@ async function saveOnPhone(file: string, payload: Payload): Promise<string> {
   const folder = joinPath(root, EXPORTS)
   const target = joinPath(folder, freeName(file, await namesIn(folder)))
 
+  downloadStarted(nameOf(target))
   await writePayload(target, payload)
   return target
 }

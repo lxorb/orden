@@ -558,18 +558,11 @@ Features Typora does not have, which are the reason this exists.
       same `^name` a link would give it, and the row is the block's own first
       words, because `^a1b2c3` is not something to read in a list. Opening it
       lands on the block with the tint above
-- [x] A tab can be pinned. It sits at the head of its strip wearing only its
-      mark - the icon the note chose, where it chose one - and it has no cross:
-      what somebody kept is not closed by the hand that happened to be passing
-      over it. `Ctrl+W` and the row in the tab's own menu still close it, which
-      is what a browser does with a pinned tab, and a tab dropped in front of the
-      run lands behind it instead. It is never the tab a click in the file list
-      takes over. What somebody keeps open all day, kept open: the daily note,
-      the one being written towards. Pinning keeps the note as well, since a tab
-      nobody wants taken over is a tab that is being kept, and a pin is this
-      machine's own - it goes into the session with everything else that is open,
-      survives a restart and never reaches the account. There is no default key
-      for it, because the tab it is done to is already in front of you
+- [x] Every tab but the one in front wears only its mark (General > Tabs, on out of
+      the box), and opens out to its name under the pointer; two that would look the
+      same wear their first letters. A tab could be pinned until #1041, which took
+      pinning out of the strip: every tab looked pinned already, and the Essentials
+      are what is kept to hand.
 - [x] Back and forward, per tab. A tab that moves on from one note to another
       leaves a trail, and `Alt+Left` and `Alt+Right` walk back along it and on
       again - the keys every browser uses, and the mouse's own two side buttons

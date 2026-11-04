@@ -592,20 +592,25 @@ def what_the_widget_draws(page: Page) -> None:
     if any(".md" in one["name"] for one in last["notes"]):
         wrong(f"the widget names notes by their files: {last['notes']}")
 
-    # A pinned note is the one being kept to hand, and it goes to the top.
+    # A note among the space's Essentials is the one being kept to hand, and it goes to
+    # the top. These were the pinned tabs until the strip lost its pinning (#1041). The
+    # one taken is the widget's last row, so it can only be first for being kept.
     page.evaluate(
-        """() => {
+        """(row) => {
              const ws = window.nibApp.workspace
-             const last = ws.notes[ws.notes.length - 1]
-             return ws.openEntry(last.path, { activate: true }).then(() => ws.togglePin(ws.active.id))
-           }"""
+             const last = ws.notes.find((one) => one.path.endsWith(row))
+             return ws.openEntry(last.path, { activate: true }).then(() =>
+               ws.bookmarks.toggle(ws.bookmarks.forEntry({ path: last.path, is_dir: false })),
+             )
+           }""",
+        last["notes"][-1]["path"],
     )
     page.wait_for_timeout(900)
 
-    pinned = json.loads(page.evaluate("() => window.__android.said.widgets.at(-1)"))
+    listed = json.loads(page.evaluate("() => window.__android.said.widgets.at(-1)"))
     kept = page.evaluate("() => window.nibApp.workspace.active.name")
-    say(f"[widget] with {kept!r} kept open: {json.dumps(pinned)}")
-    first = (pinned.get("notes") or [{}])[0].get("name")
+    say(f"[widget] with {kept!r} kept open: {json.dumps(listed)}")
+    first = (listed.get("notes") or [{}])[0].get("name")
     if first != kept.replace(".md", ""):
         wrong(f"the kept note is not at the top of the widget: {first!r} rather than {kept!r}")
 

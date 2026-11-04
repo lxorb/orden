@@ -43,7 +43,7 @@
     cardLines,
     cardProperties,
     checklists,
-    DEFAULT_SIZE,
+    sizeOf,
     droppableBy,
     indexWithout,
     isDoneGroup,
@@ -62,7 +62,8 @@
   import { cardEntries, columnEntries, optionFor, renameOption } from './board-menus'
   import { toneColour, valueText } from './chips'
   import { editorOf, displayName } from './columns'
-  import { droppable, placeAmong, type Point } from './drag.svelte'
+  import { dragging, droppable, placeAmong, type Point } from './drag.svelte'
+  import { claimsGesture, isFinger } from '../swipe'
   import { type Drop, dropInto } from './drop'
   import {
     placeColumn,
@@ -78,6 +79,8 @@
   import type { Kit } from './kit'
   import { holdsLists, optionsAt } from './options'
   import { priorityTone } from '../quick-add/labels'
+  import { theme } from '../theme.svelte'
+  import { labelColour } from './task-meta'
   import { rowKey } from './row-keys'
   import { runKey } from './task-actions'
   import { dayHead, groupLabel, noteNames, propertyName, summaryName } from './words'
@@ -208,7 +211,8 @@
     shownGroups.some((group) => group.rows.some((row) => checked.has(noteKey(row)))),
   )
   const lines = $derived(
-    cardLines(view?.nib.cardSize ?? DEFAULT_SIZE, shown.length, !notes || anyChecklist),
+    // A task's card draws its one meta line whatever the view's properties are.
+    cardLines(sizeOf(view?.nib.cardSize, notes), notes ? shown.length : 0, !notes || anyChecklist),
   )
   const height = $derived(cardHeight(lines, viewport.touch))
 
@@ -232,6 +236,8 @@
   function columnName(group: Group): string {
     if (project && sectionOf(group) === null) return t('None')
     if (days) return dayHead(group.key, live.today)
+    // Todos' tasks with no deadline are No date, as its list says.
+    if (property === 'formula.when') return groupLabel(property, group.key, live.today)
     if (group.key === null || group.key === '') return nothing
     return groupLabel(property, group.key, live.today, noteCounts)
   }
@@ -243,6 +249,20 @@
     if (property === 'task.status' && typeof key === 'string')
       return key === '/' ? 'var(--canvas-3)' : key.toLowerCase() === 'x' ? 'var(--canvas-4)' : null
     if (property === 'task.priority' && typeof key === 'number') return priorityTone(key) ?? null
+    // A label's own colour, as its cards wear it; when a task is due, as a card's day is
+    // drawn (#1046).
+    if (property === 'task.tags' && typeof key === 'string' && key)
+      return labelColour(key, theme.current)
+    if (property === 'formula.when')
+      return key === 'overdue'
+        ? 'var(--danger)'
+        : key === 'today'
+          ? 'var(--success)'
+          : key === 'tomorrow'
+            ? 'var(--canvas-2)'
+            : key === 'later'
+              ? 'var(--canvas-6)'
+              : null
     return toneColour(optionFor(base, property ?? '', key)?.tone)
   }
 
@@ -753,6 +773,29 @@
     shownGroups.find((group) => groupName(group.key) === showing) ?? shownGroups[0],
   )
 
+  /** On a phone the columns are pages: a finger swiped across the one shown turns to
+   *  the next or the one before, as the strip's tabs do (#1046). A card being carried
+   *  is the carry's, not a swipe. */
+  let swipeFrom: { x: number; y: number; id: number } | null = null
+  function swipeStart(event: PointerEvent) {
+    swipeFrom = isFinger(event.pointerType)
+      ? { x: event.clientX, y: event.clientY, id: event.pointerId }
+      : null
+  }
+  function swipeEnd(event: PointerEvent) {
+    const from = swipeFrom
+    swipeFrom = null
+    if (from?.id !== event.pointerId || dragging.row) return
+    const dx = event.clientX - from.x
+    const dy = event.clientY - from.y
+    if (Math.abs(dx) < 64 || !claimsGesture(dx, dy)) return
+    const at = phoneColumn ? shownGroups.indexOf(phoneColumn) : -1
+    // Towards where the words read from is back.
+    const forward = dx < 0 !== (document.documentElement.dir === 'rtl')
+    const next = shownGroups[at + (forward ? 1 : -1)]
+    if (next) showing = groupName(next.key)
+  }
+
   // Only a New pressed while the board is up opens a page: a board drawn again, its
   // layout switched back to, opens nothing for the presses before it.
   let addingSeen = untrack(() => adding)
@@ -842,6 +885,7 @@
         count={group.rows.length}
         sums={sumsOf(group)}
         muted={unlisted(group)}
+        circle={!notes}
         carries={!project || section !== null}
         canAdd={pages}
         onmenu={(event: MouseEvent) => columnMenu(event, group)}
@@ -862,7 +906,7 @@
   {@const tone = toneOfGroup(group)}
   <div
     class="column"
-    class:washed={tone !== null}
+    class:washed={tone !== null && notes}
     class:closed={!carries}
     style:--wash={tone}
     data-section={section ?? undefined}
@@ -920,7 +964,14 @@
       {/each}
     </div>
     {#if phoneColumn}
-      <div class="one">{@render column(phoneColumn, undefined, phoneColumn.rows)}</div>
+      <div
+        class="one"
+        onpointerdown={swipeStart}
+        onpointerup={swipeEnd}
+        onpointercancel={() => (swipeFrom = null)}
+      >
+        {@render column(phoneColumn, undefined, phoneColumn.rows)}
+      </div>
     {/if}
   {:else if lanes.length}
     <div class="lanes">

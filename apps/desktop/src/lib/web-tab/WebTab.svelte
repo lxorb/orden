@@ -45,6 +45,7 @@
   import { filling } from './filling.svelte'
   import {
     ALL,
+    settled,
     clearOf,
     cutOf,
     layersOver,
@@ -313,7 +314,9 @@
       return
     }
 
-    const { box: at, cut } = coverOf(box)
+    const covered = coverOf(box)
+    const at = covered.box
+    const cut = settled(covered.cut, page.shot !== null, pages.cuts)
     last = at
     const visible = cut === null
 
@@ -573,11 +576,9 @@
   })
 
   // Which file this tab is showing, so the store can write down where the reading got
-  // to under the note rather than under this visit to it; see place.ts. And whether it
-  // is pinned, which Memory saver never takes; see resting.ts.
+  // to under the note rather than under this visit to it; see place.ts.
   $effect(() => {
     page.path = tab.path
-    page.pinned = tab.pinned
   })
 
   // Where the reading has got to, in the file. That is what makes reopening the note -
@@ -825,6 +826,8 @@
         // so. A link followed inside the page is not; see `workspace.webAimed`.
         void workspace.webAimed(tab, url)
       }}
+      onnote={(path: string) =>
+        void import('./web-notes').then((one) => one.openWebNote(workspace, tab, path))}
       onmenu={(event: MouseEvent) =>
         menu.show(event, webRows(page, page.zoom, actions), { title: t('Website') })}
       onsite={() => {

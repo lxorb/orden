@@ -93,6 +93,15 @@ export const ar: Dictionary = {
   // Tasks: the Display menu
   Display: 'العرض',
   'Completed tasks': 'المهام المكتملة',
+  Smart: 'ذكي',
+  Grouping: 'التجميع',
+  Sorting: 'الترتيب',
+  'Last 30 days': 'آخر 30 يومًا',
+  'Assigned to me': 'المسندة إليّ',
+  Unassigned: 'غير مسندة',
+  'Reset all': 'إعادة تعيين الكل',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'يعرض التخطيط المهام كقائمة أو لوحة أو تقويم. يقسمها التجميع إلى مجموعات هي أعمدة اللوحة. يرتب الترتيب كل مجموعة. تخفي عوامل التصفية ما لا تحتاج إليه. ويُحفظ كل ذلك لهذا العرض.',
   // Tasks: several lines pasted into quick add
   'One task': 'مهمة واحدة',
   'One per line': 'واحدة لكل سطر',
@@ -589,11 +598,11 @@ export const ar: Dictionary = {
   'Actual size': 'الحجم الفعلي',
   // Appearance
   Accent: 'اللون المميز',
-  'Window corners': 'زوايا النافذة',
-  Rounded: 'مستديرة',
-  Square: 'مربعة',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'المستديرة تعرض المحتوى المفتوح في بطاقة عائمة داخل النافذة، والمربعة تبقيه ملاصقًا للحواف.',
+  'Tidy up': 'ترتيب',
+  'Swipe in from the edge to see your notes.': 'اسحب من الحافة لترى ملاحظاتك.',
+  'Show other tabs as icons': 'اعرض علامات التبويب الأخرى كأيقونات',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'كل علامة تبويب غير التي في الواجهة تعرض أيقونتها فقط، وتظهر اسمها عند الإشارة إليها.',
   'Tab preview delay': 'تأخير معاينة علامة التبويب',
   'How long the pointer rests on a tab before its preview shows.':
     'المدة التي يستقر فيها المؤشر على علامة التبويب قبل ظهور معاينتها.',
@@ -1921,6 +1930,7 @@ export const ar: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'معلومات الموقع',
   Downloads: 'التنزيلات',
+  'Downloading {name}': 'جارٍ تنزيل {name}',
   'Show in folder': 'إظهار في المجلد',
   'Show in Finder': 'إظهار في Finder',
   'Reveal in Finder': 'إظهار في Finder',
@@ -2015,6 +2025,9 @@ export const ar: Dictionary = {
   'Exited with code {code}': 'انتهى بالرمز {code}',
   'Could not start {shell}': 'تعذّر تشغيل {shell}',
   'Restore history': 'استعادة السجل',
+  'Colours follow the theme': 'الألوان تتبع السمة',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'يلوّن الطرفيات بألوان السمة؛ عند الإيقاف تبقى لوحة ألوان ثابتة واحدة.',
   'Restored {time}': 'تمت الاستعادة {time}',
   'Stop what is running in {name}?': 'إيقاف ما يعمل في {name}؟',
   'Stop what is running in these terminals?': 'إيقاف ما يعمل في هذه الطرفيات؟',
@@ -2174,6 +2187,8 @@ export const ar: Dictionary = {
   'Every space': 'كل المساحات',
   Sites: 'المواقع',
   'Asks first': 'يسأل أولًا',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'يتصل عبر MCP ويدير أذوناته بنفسه هناك: لا يسأله Orden شيئًا. لكن مساحاتك والمواقع المحظورة والحدود أدناه تبقى سارية.',
   Limits: 'الحدود',
   'Clear what {name} did?': 'مسح ما فعله {name}؟',
   'Show earlier': 'عرض الأقدم',
@@ -2429,6 +2444,12 @@ export const ar: Dictionary = {
   // The online terminal
   'Online terminal': 'طرفية عبر الإنترنت',
   'New online terminal': 'طرفية جديدة عبر الإنترنت',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'جهاز آخر',
+  'Taken over by {device}': 'استولى عليه {device}',
+  'Open on {device} since {time}': 'مفتوح على {device} منذ {time}',
+  'Take over': 'استلام',
+  'Take back': 'استعادة',
   'Start online machine': 'تشغيل الجهاز عبر الإنترنت',
   'Stop online machine': 'إيقاف الجهاز عبر الإنترنت',
   Resume: 'استئناف',
@@ -2473,6 +2494,8 @@ export const ar: Dictionary = {
   'Take photo': 'التقاط صورة',
   Pronouns: 'الضمائر',
   Bio: 'نبذة',
+  'A few words about you': 'بضع كلمات عنك',
+  'What’s happening?': 'ما الجديد؟',
   'Clear after': 'المسح بعد',
   '30 minutes': '30 دقيقة',
   '1 hour': 'ساعة واحدة',
@@ -2818,4 +2841,5 @@ export const ar: Dictionary = {
   'View your report': 'عرض بلاغك',
   'Not sent. Your text is kept, so you can try again.':
     'لم يُرسل. نصك محفوظ، لذا يمكنك المحاولة مرة أخرى.',
+  'Reset to site icon': 'العودة إلى أيقونة الموقع',
 }

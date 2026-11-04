@@ -47,6 +47,11 @@ vi.mock('../stored', () => ({
     fake.kept.set(key, value)
     return true
   },
+  keepJson: (key: string, value: unknown) => {
+    if (fake.full) return false
+    fake.kept.set(key, JSON.stringify(value))
+    return true
+  },
   forget: (key: string) => fake.kept.delete(key),
 }))
 

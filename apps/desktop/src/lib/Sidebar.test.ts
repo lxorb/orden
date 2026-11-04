@@ -62,18 +62,43 @@ describe('the panel tabs', () => {
   test('are the space on the left and the note in front on the right, as Obsidian has them', () => {
     open('# Head\n')
 
-    expect(strip('left')).toEqual(['Files', 'Tasks'])
-    expect(strip('right')).toEqual(['Outline', 'Links', 'Properties', 'Footnotes', 'Ask'])
+    // The Tasks panel lives on the right; the left side opens Todos from its top row (#1047).
+    expect(strip('left')).toEqual(['Files'])
+    // And the scratchpad, the one tab on a desktop's right that is no panel (#1032).
+    expect(strip('right')).toEqual([
+      'Outline',
+      'Links',
+      'Properties',
+      'Footnotes',
+      'Ask',
+      'Tasks',
+      'Scratchpad',
+    ])
   })
 
   test('and a panel moved over is on the other side, at the end of its strip', () => {
     open('# Head\n')
     workspace.movePanel('outline', 'left')
 
-    expect(strip('left')).toEqual(['Files', 'Outline', 'Tasks'])
-    expect(strip('right')).toEqual(['Links', 'Properties', 'Footnotes', 'Ask'])
+    expect(strip('left')).toEqual(['Files', 'Outline'])
+    expect(strip('right')).toEqual([
+      'Links',
+      'Properties',
+      'Footnotes',
+      'Ask',
+      'Tasks',
+      'Scratchpad',
+    ])
     workspace.movePanel('outline', 'right')
-    expect(strip('right')).toEqual(['Links', 'Properties', 'Footnotes', 'Ask', 'Outline'])
+    expect(strip('right')).toEqual([
+      'Links',
+      'Properties',
+      'Footnotes',
+      'Ask',
+      'Tasks',
+      'Outline',
+      'Scratchpad',
+    ])
     workspace.right = [...STARTS_RIGHT]
   })
 
@@ -98,9 +123,11 @@ describe('the panel tabs', () => {
     agentMarks.heard = false
 
     // Emil's 840 px panel: six tabs, and the Ask panel's Chats beside them looking
-    // like a seventh. All six are tabs of the one list; Chats is a tool after it.
+    // like a seventh. All six are tabs of the one list, and the scratchpad's with them
+    // (#1032), and the Tasks panel's since it lives on the right (#1047); Chats is a tool
+    // after it.
     expect(html.match(/role="tablist"/g)).toHaveLength(1)
-    expect(pill.match(/role="tab"/g)).toHaveLength(6)
+    expect(pill.match(/role="tab"/g)).toHaveLength(8)
     expect(after).not.toContain('role="tab"')
     expect(after).toContain('aria-label="Chats"')
     expect(after).toContain('aria-label="New chat"')

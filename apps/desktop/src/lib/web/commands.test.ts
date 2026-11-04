@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { AssetRow, FileRow, SnapshotRow } from './store'
+import type { Opener } from '../openers'
 
 /** The browser's stand-in for the file commands, driven against a disk that
  *  lives in a Map rather than in IndexedDB. Node has no IndexedDB, and the
@@ -161,6 +162,7 @@ const { MOST_NOTE_BYTES, SCANNED_AT_ONCE, TOO_LARGE, seed, webInvoke } = await i
 const { stamped, stampOf } = await import('../themes/stamp')
 const { forgetSeedStore, rememberSeedIn, seedSpaceRoot } = await import('../seeded')
 const { WELCOME, WELCOME_PATH } = await import('../welcome')
+const { openerFor } = await import('../openers')
 
 const write = (path: string, content = '') => webInvoke('write_note', { path, content })
 const read = (path: string) => webInvoke<string>('read_note', { path })
@@ -593,6 +595,33 @@ describe('the tree', () => {
     const tree = await webInvoke<{ children: { name: string }[] }>('read_tree', { root: '/Notes' })
 
     expect(tree.children.map((one) => one.name)).toEqual(['a.md', 'Board.canvas', 'Journal.pages'])
+  })
+
+  /** Every kind a tab opens is a row of the list, and so something the mirror sends:
+   *  an online terminal's file was neither (issue 1055). One name for each opener, so a
+   *  kind added to `Opener` fails here until it is listed. */
+  test('lists a file of every kind a tab can hold', async () => {
+    const one: Record<Exclude<Opener, 'pdf'>, string> = {
+      note: 'a.md',
+      web: 'Docs.url',
+      pages: 'Journal.pages',
+      canvas: 'Board.canvas',
+      view: 'Bugs.base',
+      chat: 'Team.chat',
+      term: 'Build.term',
+    }
+    const build = { evenBuild: false, isPlugin: false }
+    for (const [kind, name] of Object.entries(one)) {
+      expect(
+        openerFor(name, () => false, build),
+        name,
+      ).toBe(kind)
+      await write(`/Notes/${name}`, '{}')
+    }
+
+    const tree = await webInvoke<{ children: { name: string }[] }>('read_tree', { root: '/Notes' })
+
+    expect(tree.children.map((child) => child.name).sort()).toEqual(Object.values(one).sort())
   })
 
   test('keeps an empty folder alive through its marker, and shows no marker', async () => {

@@ -1,7 +1,6 @@
 import { contrastCss } from '@orden/themes/contrast'
 import { everySurface } from '@orden/themes/write'
 import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
-import { cornersSetting } from './corners'
 import { tintSystemBars } from './insets'
 import { log } from './log'
 import { startup } from './startup.svelte'
@@ -15,6 +14,7 @@ import {
   isRecord,
   isString,
   keep,
+  keepJson,
   recordOf,
   stored,
   storedText,
@@ -201,7 +201,7 @@ const MORE = '(prefers-contrast: more)'
 
 /** The app's own settings, a function because their labels follow the language. */
 export function appSettings(): ThemeSetting[] {
-  return [accentSetting(), cornersSetting()]
+  return [accentSetting()]
 }
 
 function isValue(one: unknown): one is ThemeValue {
@@ -358,6 +358,19 @@ class Themes {
       ]),
     )
 
+    // The app's drawer holds the app's own settings and nothing else: a value of one the
+    // app no longer has - the window's corners, which are always rounded now (#1102) -
+    // is taken out and the drawer written back without it, once.
+    const app = drawers[SHARED]
+    if (app) {
+      const own = new Set(appSettings().map((one) => one.id))
+      const kept = Object.fromEntries(Object.entries(app).filter(([id]) => own.has(id)))
+      if (Object.keys(kept).length !== Object.keys(app).length) {
+        drawers[SHARED] = kept
+        keepJson(SETTINGS_KEY, drawers)
+      }
+    }
+
     const accent = storedText(ACCENT_KEY)
     if (accent !== null && drawers[SHARED]?.accent === undefined) {
       drawers[SHARED] = { ...drawers[SHARED], accent }
@@ -381,7 +394,7 @@ class Themes {
 
     if (stillGiven && held !== FIRST_LOOK.accent) {
       drawers[SHARED] = { ...drawers[SHARED], accent: FIRST_LOOK.accent }
-      keep(SETTINGS_KEY, JSON.stringify(drawers))
+      keepJson(SETTINGS_KEY, drawers)
     }
     keep(GIVEN_KEY, stillGiven ? FIRST_LOOK.accent : '')
   }
@@ -661,7 +674,7 @@ class Themes {
       }
     }
     this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
-    keep(SETTINGS_KEY, JSON.stringify(this.chosen))
+    keepJson(SETTINGS_KEY, this.chosen)
   }
 
   /** Turns one dial, and keeps it. */
@@ -672,7 +685,7 @@ class Themes {
     const drawer = this.drawerOf(setting)
     this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
     this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
-    keep(SETTINGS_KEY, JSON.stringify(this.chosen))
+    keepJson(SETTINGS_KEY, this.chosen)
     if (id === 'accent') keep(GIVEN_KEY, '')
     this.paintSettings()
     if (setting.reapplies === true) this.apply()
@@ -866,7 +879,7 @@ class Themes {
       return
     }
 
-    if (earlySheet()?.css !== css) keep(SHEET_KEY, JSON.stringify({ id: theme.id, css }))
+    if (earlySheet()?.css !== css) keepJson(SHEET_KEY, { id: theme.id, css })
   }
 
   /** What the theme declares, once the grammar behind its door arrives; the sheet

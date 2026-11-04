@@ -21,7 +21,6 @@ interface FakeTab {
   kind: string
   path: string | null
   paneId: string
-  pinned: boolean
   shown: string
   doc: string
   page?: number
@@ -41,7 +40,6 @@ function tab(id: string, kind: string, path: string | null, more: Partial<FakeTa
     kind,
     path,
     paneId: 'p1',
-    pinned: false,
     shown: id,
     doc: '',
     note: { kind, path, shared: null, home: 'work', name: 'Untitled', live: { readerAt: null } },
@@ -316,7 +314,7 @@ beforeEach(() => {
       shown: 'PowerShell',
       doc: JSON.stringify({ shell: 'pwsh', folder: null, key: 'k1' }),
     }),
-    tab('s1', 'note', '/s/Work/Pinned.md', { shown: 'Pinned', pinned: true }),
+    tab('s1', 'note', '/s/Work/Pinned.md', { shown: 'Pinned' }),
   ]
   showing.p1 = 'n1'
   showing.p2 = 'c1'
@@ -343,7 +341,7 @@ describe('where the reader is', () => {
         { id: 'd1', unsaved: true, preview: true, front: false },
         { id: 'c1', kind: 'canvas', unsaved: true, pane: 'p2', front: true, selected: false },
         { id: 't1', kind: 'terminal', running: false },
-        { id: 's1', path: 'Pinned.md', pinned: true },
+        { id: 's1', path: 'Pinned.md' },
       ],
     })
   })

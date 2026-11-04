@@ -92,6 +92,15 @@ export const pl: Dictionary = {
   // Tasks: the Display menu
   Display: 'Wyświetlanie',
   'Completed tasks': 'Ukończone zadania',
+  Smart: 'Inteligentne',
+  Grouping: 'Grupowanie',
+  Sorting: 'Sortowanie',
+  'Last 30 days': 'Ostatnie 30 dni',
+  'Assigned to me': 'Przypisane do mnie',
+  Unassigned: 'Nieprzypisane',
+  'Reset all': 'Resetuj wszystko',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Układ pokazuje zadania jako listę, tablicę lub kalendarz. Grupowanie dzieli je na grupy, które są kolumnami tablicy. Sortowanie porządkuje każdą grupę. Filtry ukrywają to, czego nie potrzebujesz. Wszystko jest zapamiętywane dla tego widoku.',
   // Tasks: several lines pasted into quick add
   'One task': 'Jedno zadanie',
   'One per line': 'Jedno na wiersz',
@@ -580,11 +589,11 @@ export const pl: Dictionary = {
   'Actual size': 'Rozmiar rzeczywisty',
   // Appearance
   Accent: 'Akcent',
-  'Window corners': 'Narożniki okna',
-  Rounded: 'Zaokrąglone',
-  Square: 'Kwadratowe',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Zaokrąglone sprawiają, że otwarta treść unosi się w karcie wewnątrz okna; Kwadratowe trzymają ją przy krawędziach.',
+  'Tidy up': 'Uporządkuj',
+  'Swipe in from the edge to see your notes.': 'Przesuń od krawędzi, aby zobaczyć swoje notatki.',
+  'Show other tabs as icons': 'Pokazuj pozostałe karty jako ikony',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Każda karta poza tą na wierzchu pokazuje tylko ikonę; po wskazaniu pokazuje swoją nazwę.',
   'Tab preview delay': 'Opóźnienie podglądu karty',
   'How long the pointer rests on a tab before its preview shows.':
     'Jak długo wskaźnik spoczywa na karcie, zanim pojawi się jej podgląd.',
@@ -1896,6 +1905,7 @@ export const pl: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informacje o witrynie',
   Downloads: 'Pobrane',
+  'Downloading {name}': 'Pobieranie {name}',
   'Show in folder': 'Pokaż w folderze',
   'Show in Finder': 'Pokaż w Finderze',
   'Reveal in Finder': 'Pokaż w Finderze',
@@ -1990,6 +2000,9 @@ export const pl: Dictionary = {
   'Exited with code {code}': 'Zakończono z kodem {code}',
   'Could not start {shell}': 'Nie udało się uruchomić {shell}',
   'Restore history': 'Przywracaj historię',
+  'Colours follow the theme': 'Kolory zgodne z motywem',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Barwi terminale kolorami motywu; wyłączone zachowuje jedną stałą paletę.',
   'Restored {time}': 'Przywrócono {time}',
   'Stop what is running in {name}?': 'Zatrzymać to, co działa w {name}?',
   'Stop what is running in these terminals?': 'Zatrzymać to, co działa w tych terminalach?',
@@ -2146,6 +2159,8 @@ export const pl: Dictionary = {
   'Every space': 'Każda przestrzeń',
   Sites: 'Witryny',
   'Asks first': 'Pyta najpierw',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Łączy się przez MCP i sam zarządza tam swoimi uprawnieniami: Orden o nic go nie pyta. Twoje przestrzenie, zablokowane witryny i limity poniżej nadal obowiązują.',
   Limits: 'Limity',
   'Clear what {name} did?': 'Wyczyścić to, co zrobił {name}?',
   'Show earlier': 'Pokaż wcześniejsze',
@@ -2398,6 +2413,12 @@ export const pl: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Nowy terminal online',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'inne urządzenie',
+  'Taken over by {device}': 'Przejęte przez {device}',
+  'Open on {device} since {time}': 'Otwarte na {device} od {time}',
+  'Take over': 'Przejmij',
+  'Take back': 'Odbierz',
   'Start online machine': 'Uruchom maszynę online',
   'Stop online machine': 'Zatrzymaj maszynę online',
   Resume: 'Wznów',
@@ -2443,6 +2464,8 @@ export const pl: Dictionary = {
   'Take photo': 'Zrób zdjęcie',
   Pronouns: 'Zaimki',
   Bio: 'Bio',
+  'A few words about you': 'Kilka słów o sobie',
+  'What’s happening?': 'Co słychać?',
   'Clear after': 'Wyczyść po',
   '30 minutes': '30 minutach',
   '1 hour': '1 godzinie',
@@ -2800,4 +2823,5 @@ export const pl: Dictionary = {
   'View your report': 'Zobacz swoje zgłoszenie',
   'Not sent. Your text is kept, so you can try again.':
     'Nie wysłano. Twój tekst został zachowany, możesz spróbować ponownie.',
+  'Reset to site icon': 'Przywróć ikonę witryny',
 }

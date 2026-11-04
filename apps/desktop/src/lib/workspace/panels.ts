@@ -88,7 +88,7 @@ export function closing(sides: Sides, side: PanelSide): Sides {
  *  leaving the right side means. */
 export function moving(sides: Sides, panel: Panel, side: PanelSide): Sides {
   const was = sideOf(sides.right, panel)
-  if (was === side) return sides
+  if (was === side || !mayLiveOn(panel, side)) return sides
 
   const open = heldOn(sides, was) === panel
 
@@ -120,7 +120,24 @@ export const STARTS_RIGHT: readonly Panel[] = [
   'footnotes',
   'ask',
   'agents',
+  'tasks',
 ]
+
+/** The panels that live on the right and are never moved to the left. The Tasks panel
+ *  is the Todos list beside the note being written; the left side's way to Todos is
+ *  the checkbox in its top row, which opens it as a tab (#1047). */
+const RIGHT_ONLY: readonly Panel[] = ['tasks']
+
+/** Whether a panel may sit on a side. */
+export function mayLiveOn(panel: Panel, side: PanelSide): boolean {
+  return side === 'right' || !RIGHT_ONLY.includes(panel)
+}
+
+/** The panel the left side was left open on, or none where that panel lives on the
+ *  right now: a window that last showed the Tasks panel on the left opens shut there. */
+export function leftPanelFrom(saved: Panel | null | undefined): Panel | null {
+  return saved && mayLiveOn(saved, 'left') ? saved : null
+}
 
 /** Every panel there is, in the order the left side's strip shows them. */
 export const PANELS: readonly Panel[] = [
@@ -147,7 +164,12 @@ export function rightFrom(
 ): Panel[] {
   if (!saved) return [...STARTS_RIGHT]
 
-  return [...saved, ...STARTS_RIGHT.filter((one) => !saved.includes(one) && !known.includes(one))]
+  const right = [
+    ...saved,
+    ...STARTS_RIGHT.filter((one) => !saved.includes(one) && !known.includes(one)),
+  ]
+  // And whatever lives only on the right, wherever the session that wrote this had it.
+  return [...right, ...RIGHT_ONLY.filter((one) => !right.includes(one))]
 }
 
 /** How many of a side's tabs the strip draws: all where they fit at their narrowest

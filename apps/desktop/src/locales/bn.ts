@@ -89,6 +89,15 @@ export const bn: Dictionary = {
   // Tasks: the Display menu
   Display: 'প্রদর্শন',
   'Completed tasks': 'সম্পন্ন কাজ',
+  Smart: 'স্মার্ট',
+  Grouping: 'গ্রুপ করা',
+  Sorting: 'সাজানো',
+  'Last 30 days': 'গত ৩০ দিন',
+  'Assigned to me': 'আমাকে দেওয়া',
+  Unassigned: 'কাউকে দেওয়া নয়',
+  'Reset all': 'সব রিসেট করুন',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'লেআউট কাজগুলো তালিকা, বোর্ড বা ক্যালেন্ডার হিসেবে দেখায়। গ্রুপ করা এগুলোকে দলে ভাগ করে, যেগুলো বোর্ডের কলাম। সাজানো প্রতিটি দলকে ক্রমে সাজায়। ফিল্টার যা দরকার নেই তা লুকায়। এ সবই এই ভিউয়ের জন্য রাখা হয়।',
   // Tasks: several lines pasted into quick add
   'One task': 'একটি কাজ',
   'One per line': 'প্রতি লাইনে একটি',
@@ -557,11 +566,11 @@ export const bn: Dictionary = {
   'Actual size': 'আসল আকার',
   // Appearance
   Accent: 'অ্যাকসেন্ট',
-  'Window corners': 'উইন্ডোর কোণ',
-  Rounded: 'গোলাকার',
-  Square: 'বর্গাকার',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'গোলাকার খোলা জিনিসকে উইন্ডোর ভেতরে একটি কার্ডে ভাসিয়ে রাখে; বর্গাকার এটিকে কিনারায় লাগিয়ে রাখে।',
+  'Tidy up': 'গুছিয়ে নিন',
+  'Swipe in from the edge to see your notes.': 'আপনার নোট দেখতে কিনারা থেকে ভেতরে সোয়াইপ করুন।',
+  'Show other tabs as icons': 'অন্য ট্যাবগুলো আইকন হিসেবে দেখান',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'সামনের ট্যাব ছাড়া প্রতিটি ট্যাব শুধু আইকন দেখায়; কোনোটির ওপর পয়েন্টার রাখলে নাম দেখায়।',
   'Tab preview delay': 'ট্যাব প্রিভিউয়ের বিলম্ব',
   'How long the pointer rests on a tab before its preview shows.':
     'প্রিভিউ দেখানোর আগে পয়েন্টার কতক্ষণ ট্যাবের ওপর থাকবে।',
@@ -1814,6 +1823,7 @@ export const bn: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'সাইটের তথ্য',
   Downloads: 'ডাউনলোড',
+  'Downloading {name}': '{name} ডাউনলোড হচ্ছে',
   'Show in folder': 'ফোল্ডারে দেখান',
   'Show in Finder': 'Finder-এ দেখান',
   'Reveal in Finder': 'Finder-এ দেখান',
@@ -1907,6 +1917,9 @@ export const bn: Dictionary = {
   'Exited with code {code}': 'কোড {code} দিয়ে বন্ধ হয়েছে',
   'Could not start {shell}': '{shell} চালু করা যায়নি',
   'Restore history': 'ইতিহাস পুনরুদ্ধার করুন',
+  'Colours follow the theme': 'রং থিম অনুসরণ করে',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'টার্মিনালগুলো থিমের রঙে রাঙায়; বন্ধ থাকলে একটি স্থির রঙের প্যালেট থাকে।',
   'Restored {time}': 'পুনরুদ্ধার করা হয়েছে {time}',
   'Stop what is running in {name}?': '{name}-এ যা চলছে তা বন্ধ করবেন?',
   'Stop what is running in these terminals?': 'এই টার্মিনালগুলিতে যা চলছে তা বন্ধ করবেন?',
@@ -2060,6 +2073,8 @@ export const bn: Dictionary = {
   'Every space': 'প্রতিটি স্পেস',
   Sites: 'সাইট',
   'Asks first': 'আগে জিজ্ঞাসা করে',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'এটি MCP দিয়ে যুক্ত হয় এবং সেখানে নিজের অনুমতি নিজেই সামলায়: Orden একে কিছু জিজ্ঞেস করে না। নিচের তোমার স্পেস, ব্লক করা সাইট ও সীমা তবুও বহাল থাকে।',
   Limits: 'সীমা',
   'Clear what {name} did?': '{name} যা করেছে তা মুছবেন?',
   'Show earlier': 'আগের গুলো দেখান',
@@ -2308,6 +2323,12 @@ export const bn: Dictionary = {
   // The online terminal
   'Online terminal': 'অনলাইন টার্মিনাল',
   'New online terminal': 'নতুন অনলাইন টার্মিনাল',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'অন্য একটি ডিভাইস',
+  'Taken over by {device}': '{device} নিয়ে নিয়েছে',
+  'Open on {device} since {time}': '{time} থেকে {device}-এ খোলা',
+  'Take over': 'নিয়ে নিন',
+  'Take back': 'ফিরিয়ে নিন',
   'Start online machine': 'অনলাইন মেশিন চালু করুন',
   'Stop online machine': 'অনলাইন মেশিন বন্ধ করুন',
   Resume: 'আবার শুরু করুন',
@@ -2353,6 +2374,8 @@ export const bn: Dictionary = {
   'Take photo': 'ছবি তুলুন',
   Pronouns: 'সর্বনাম',
   Bio: 'পরিচিতি',
+  'A few words about you': 'আপনার সম্পর্কে কয়েকটি কথা',
+  'What’s happening?': 'কী চলছে?',
   'Clear after': 'এর পরে মুছুন',
   '30 minutes': '৩০ মিনিট',
   '1 hour': '১ ঘণ্টা',
@@ -2703,4 +2726,5 @@ export const bn: Dictionary = {
   'View your report': 'আপনার রিপোর্ট দেখুন',
   'Not sent. Your text is kept, so you can try again.':
     'পাঠানো হয়নি। আপনার লেখা রাখা আছে, আবার চেষ্টা করতে পারেন।',
+  'Reset to site icon': 'সাইটের আইকনে ফিরুন',
 }

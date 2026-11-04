@@ -91,6 +91,15 @@ export const ptBR: Dictionary = {
   // Tasks: the Display menu
   Display: 'Exibição',
   'Completed tasks': 'Tarefas concluídas',
+  Smart: 'Inteligente',
+  Grouping: 'Agrupamento',
+  Sorting: 'Ordenação',
+  'Last 30 days': 'Últimos 30 dias',
+  'Assigned to me': 'Atribuídas a mim',
+  Unassigned: 'Sem responsável',
+  'Reset all': 'Redefinir tudo',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'O layout mostra as tarefas como lista, quadro ou calendário. O agrupamento as divide em grupos, que são as colunas de um quadro. A ordenação ordena cada grupo. Os filtros ocultam o que você não precisa. Tudo fica guardado para esta visualização.',
   // Tasks: several lines pasted into quick add
   'One task': 'Uma tarefa',
   'One per line': 'Uma por linha',
@@ -567,11 +576,11 @@ export const ptBR: Dictionary = {
   'Actual size': 'Tamanho real',
   // Appearance
   Accent: 'Destaque',
-  'Window corners': 'Cantos da janela',
-  Rounded: 'Arredondados',
-  Square: 'Quadrados',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Arredondados faz o que está aberto flutuar em um cartão dentro da janela; Quadrados o mantém rente às bordas.',
+  'Tidy up': 'Organizar',
+  'Swipe in from the edge to see your notes.': 'Deslize a partir da borda para ver suas notas.',
+  'Show other tabs as icons': 'Mostrar as outras abas como ícones',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Cada aba, exceto a da frente, mostra só o ícone; ao apontar para uma, aparece o nome dela.',
   'Tab preview delay': 'Atraso da prévia de abas',
   'How long the pointer rests on a tab before its preview shows.':
     'Quanto tempo o ponteiro fica sobre uma aba antes de a prévia aparecer.',
@@ -1851,6 +1860,7 @@ export const ptBR: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informações do site',
   Downloads: 'Downloads',
+  'Downloading {name}': 'Baixando {name}',
   'Show in folder': 'Mostrar na pasta',
   'Show in Finder': 'Mostrar no Finder',
   'Reveal in Finder': 'Mostrar no Finder',
@@ -1946,6 +1956,9 @@ export const ptBR: Dictionary = {
   'Exited with code {code}': 'Encerrado com o código {code}',
   'Could not start {shell}': 'Não foi possível iniciar {shell}',
   'Restore history': 'Restaurar histórico',
+  'Colours follow the theme': 'As cores seguem o tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Pinta os terminais com as cores do tema; desligado, mantém uma paleta fixa.',
   'Restored {time}': 'Restaurado {time}',
   'Stop what is running in {name}?': 'Parar o que está em execução em {name}?',
   'Stop what is running in these terminals?': 'Parar o que está em execução nestes terminais?',
@@ -2101,6 +2114,8 @@ export const ptBR: Dictionary = {
   'Every space': 'Todos os espaços',
   Sites: 'Sites',
   'Asks first': 'Pergunta antes',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Ele se conecta por MCP e gerencia as próprias permissões lá: o Orden não pergunta nada. Seus espaços, sites bloqueados e limites abaixo continuam valendo.',
   Limits: 'Limites',
   'Clear what {name} did?': 'Apagar o que {name} fez?',
   'Show earlier': 'Mostrar anteriores',
@@ -2352,6 +2367,12 @@ export const ptBR: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Novo terminal online',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'outro dispositivo',
+  'Taken over by {device}': 'Assumido por {device}',
+  'Open on {device} since {time}': 'Aberto em {device} desde {time}',
+  'Take over': 'Assumir',
+  'Take back': 'Retomar',
   'Start online machine': 'Iniciar máquina online',
   'Stop online machine': 'Parar máquina online',
   Resume: 'Retomar',
@@ -2397,6 +2418,8 @@ export const ptBR: Dictionary = {
   'Take photo': 'Tirar foto',
   Pronouns: 'Pronomes',
   Bio: 'Bio',
+  'A few words about you': 'Algumas palavras sobre você',
+  'What’s happening?': 'O que está acontecendo?',
   'Clear after': 'Limpar após',
   '30 minutes': '30 minutos',
   '1 hour': '1 hora',
@@ -2758,4 +2781,5 @@ export const ptBR: Dictionary = {
   'View your report': 'Ver seu relatório',
   'Not sent. Your text is kept, so you can try again.':
     'Não enviado. Seu texto foi mantido para você tentar de novo.',
+  'Reset to site icon': 'Voltar ao ícone do site',
 }

@@ -81,6 +81,38 @@ const PAGE = 800
 const PINCH = 0.01
 const MOST = 40
 
+/** Whether a turn with Ctrl or Cmd is a notch of a mouse's wheel rather than a pinch:
+ *  a notch says lines, or a hundred pixels or so at once, where a pinch says a few at a
+ *  time and rarely whole ones. A notch is eased towards (`eased`); a pinch follows the
+ *  fingers one to one. */
+export function isNotch(turn: Turn): boolean {
+  return turn.deltaMode !== 0 || (Math.abs(turn.deltaY) >= 50 && Number.isInteger(turn.deltaY))
+}
+
+/** How much nearer a pixel of a notch brings the zoom it aims at: a notch of a hundred is
+ *  about a fifth, as a browser's own zoom is. */
+const NOTCH = 0.002
+
+/** The zoom a notch aims at, from the one aimed at before it, so notches in quick
+ *  succession add up rather than each starting from where the camera has got to. */
+export function notched(goal: number, turn: Turn): number {
+  const unit = turn.deltaMode === 1 ? LINE : turn.deltaMode === 2 ? PAGE : 1
+  return Math.min(NEAREST, Math.max(FARTHEST, goal * Math.exp(-turn.deltaY * unit * NOTCH)))
+}
+
+/** How quickly an eased zoom closes on its goal: most of the way in a sixth of a second. */
+const EASE = 0.08
+
+/** The camera `seconds` further on its way to `zoom` about `at` on the screen, which
+ *  stays where it is: the same share of the way, in the zoom's own scale, every moment,
+ *  so it starts at once and settles softly. There once it is within three thousandths. */
+export function eased(camera: Camera, zoom: number, at: Point, seconds: number): Camera {
+  const gap = Math.log(zoom / camera.zoom)
+  const next =
+    Math.abs(gap) < 0.003 ? zoom : camera.zoom * Math.exp(gap * (1 - Math.exp(-seconds / EASE)))
+  return zoomedAt(camera, at, next / camera.zoom)
+}
+
 /** The camera after a turn of the wheel: two fingers on a touchpad and the wheel move
  *  the canvas; a pinch, or Ctrl or Cmd with the wheel, zooms about the pointer. */
 export function turned(camera: Camera, turn: Turn): Camera {

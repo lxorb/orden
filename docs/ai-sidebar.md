@@ -652,7 +652,7 @@ means full permissions"_): a form the reader's password manager filled is submit
 agent pressing its own button, and words into a sign-in form go in; in a narrower mode both
 ask as **Signing in** (`Category::SigningIn`) rather than being refused or handed over.
 Nothing is refused on the grounds of what the grant holds either (`Grant::holds`), and a
-palette row or a pinned tab kept to the reader's hands is the agent's to press
+palette row kept to the reader's hands is the agent's to press
 (`readersOwn` in `agents/workspace/asks.ts`). What stays in every mode is what is not a
 permission: a secret's value is never written into a snapshot, a read or a find, and a
 filled one is painted over in a picture (`docs/agent-native.md` 9.4). The prompts say so
@@ -833,7 +833,8 @@ the last effort used with that model. Switching model
 mid-thread keeps the conversation and says, in a line between messages, which model answers
 from there (and that the cache starts again where it does). Because the cache is per model,
 the next message sends the whole conversation again. On a chat long enough for that to
-matter, the picker asks first (#1089, `switch-cost.ts`): about how many tokens it is, and
+matter, every way of switching asks first (#1089, `switch-cost.ts`): the picker, `/model`,
+an agent's profile and Ask again with another model all go through `chooseModel`: about how many tokens it is, and
 that the conversation is compacted first by the model that has it where it does not fit
 the new one. **Don't ask again** stops the question on this device.
 

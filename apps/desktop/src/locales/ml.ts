@@ -90,6 +90,15 @@ export const ml: Dictionary = {
   // Tasks: the Display menu
   Display: 'പ്രദർശനം',
   'Completed tasks': 'പൂർത്തിയായ ജോലികൾ',
+  Smart: 'സ്മാർട്ട്',
+  Grouping: 'ഗ്രൂപ്പ് ചെയ്യൽ',
+  Sorting: 'ക്രമീകരണം',
+  'Last 30 days': 'കഴിഞ്ഞ 30 ദിവസം',
+  'Assigned to me': 'എനിക്ക് നൽകിയവ',
+  Unassigned: 'ആർക്കും നൽകാത്തവ',
+  'Reset all': 'എല്ലാം പുനഃസജ്ജമാക്കുക',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'ലേഔട്ട് ജോലികളെ ലിസ്റ്റ്, ബോർഡ് അല്ലെങ്കിൽ കലണ്ടർ ആയി കാണിക്കുന്നു. ഗ്രൂപ്പ് ചെയ്യൽ അവയെ ഗ്രൂപ്പുകളായി തിരിക്കുന്നു, അവയാണ് ബോർഡിന്റെ കോളങ്ങൾ. ക്രമീകരണം ഓരോ ഗ്രൂപ്പിനെയും ക്രമപ്പെടുത്തുന്നു. ഫിൽട്ടറുകൾ നിങ്ങൾക്ക് വേണ്ടാത്തത് മറയ്ക്കുന്നു. ഇതെല്ലാം ഈ കാഴ്ചയ്ക്കായി സൂക്ഷിക്കുന്നു.',
   // Tasks: several lines pasted into quick add
   'One task': 'ഒരു ജോലി',
   'One per line': 'ഓരോ വരിക്കും ഒന്ന്',
@@ -563,11 +572,12 @@ export const ml: Dictionary = {
   'Actual size': 'യഥാർത്ഥ വലുപ്പം',
   // Appearance
   Accent: 'ആക്‌സന്റ് നിറം',
-  'Window corners': 'ജാലകത്തിന്റെ മൂലകൾ',
-  Rounded: 'വളഞ്ഞത്',
-  Square: 'ചതുരം',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'വളഞ്ഞത് തുറന്നിരിക്കുന്നതിനെ ജാലകത്തിനുള്ളിലെ കാർഡിൽ ഒഴുക്കുന്നു; ചതുരം അതിനെ അരികിനോട് ചേർത്തു നിർത്തുന്നു.',
+  'Tidy up': 'ക്രമീകരിക്കുക',
+  'Swipe in from the edge to see your notes.':
+    'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ അരികിൽ നിന്ന് അകത്തേക്ക് സ്വൈപ്പ് ചെയ്യുക.',
+  'Show other tabs as icons': 'മറ്റ് ടാബുകൾ ഐക്കണുകളായി കാണിക്കുക',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'മുന്നിലുള്ളതൊഴികെ ഓരോ ടാബും ഐക്കൺ മാത്രം കാണിക്കുന്നു; ഒന്നിലേക്ക് ചൂണ്ടുമ്പോൾ പേര് കാണാം.',
   'Tab preview delay': 'ടാബ് പ്രിവ്യൂ കാലതാമസം',
   'How long the pointer rests on a tab before its preview shows.':
     'പ്രിവ്യൂ കാണിക്കുന്നതിന് മുമ്പ് പോയിന്റർ ടാബിൽ എത്ര നേരം നിൽക്കണം.',
@@ -1841,6 +1851,7 @@ export const ml: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'സൈറ്റ് വിവരങ്ങൾ',
   Downloads: 'ഡൗൺലോഡുകൾ',
+  'Downloading {name}': '{name} ഡൗൺലോഡ് ചെയ്യുന്നു',
   'Show in folder': 'ഫോൾഡറിൽ കാണിക്കുക',
   'Show in Finder': 'Finder-ൽ കാണിക്കുക',
   'Reveal in Finder': 'Finder-ൽ കാണിക്കുക',
@@ -1935,6 +1946,9 @@ export const ml: Dictionary = {
   'Exited with code {code}': 'കോഡ് {code} ഉപയോഗിച്ച് അവസാനിച്ചു',
   'Could not start {shell}': '{shell} ആരംഭിക്കാനായില്ല',
   'Restore history': 'ചരിത്രം പുനഃസ്ഥാപിക്കുക',
+  'Colours follow the theme': 'നിറങ്ങൾ തീം പിന്തുടരുന്നു',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ടെർമിനലുകൾക്ക് തീമിന്റെ നിറങ്ങൾ നൽകുന്നു; ഓഫാക്കിയാൽ ഒരു സ്ഥിര പാലറ്റ് നിലനിർത്തും.',
   'Restored {time}': 'പുനഃസ്ഥാപിച്ചു {time}',
   'Stop what is running in {name}?': '{name}-ൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
   'Stop what is running in these terminals?': 'ഈ ടെർമിനലുകളിൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
@@ -2087,6 +2101,8 @@ export const ml: Dictionary = {
   'Every space': 'എല്ലാ സ്പേസും',
   Sites: 'സൈറ്റുകൾ',
   'Asks first': 'ആദ്യം ചോദിക്കും',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'ഇത് MCP വഴി ബന്ധിപ്പിക്കുകയും അവിടെ സ്വന്തം അനുമതികൾ സ്വയം കൈകാര്യം ചെയ്യുകയും ചെയ്യുന്നു: Orden ഒന്നും ചോദിക്കില്ല. താഴെയുള്ള നിങ്ങളുടെ സ്പേസുകൾ, തടഞ്ഞ സൈറ്റുകൾ, പരിധികൾ എന്നിവ ഇപ്പോഴും ബാധകമാണ്.',
   Limits: 'പരിധികൾ',
   'Clear what {name} did?': '{name} ചെയ്തത് മായ്ക്കണോ?',
   'Show earlier': 'മുമ്പത്തേത് കാണിക്കുക',
@@ -2335,6 +2351,12 @@ export const ml: Dictionary = {
   // The online terminal
   'Online terminal': 'ഓൺലൈൻ ടെർമിനൽ',
   'New online terminal': 'പുതിയ ഓൺലൈൻ ടെർമിനൽ',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'മറ്റൊരു ഉപകരണം',
+  'Taken over by {device}': '{device} ഏറ്റെടുത്തു',
+  'Open on {device} since {time}': '{time} മുതൽ {device}-ൽ തുറന്നിരിക്കുന്നു',
+  'Take over': 'ഏറ്റെടുക്കുക',
+  'Take back': 'തിരിച്ചെടുക്കുക',
   'Start online machine': 'ഓൺലൈൻ മെഷീൻ ആരംഭിക്കുക',
   'Stop online machine': 'ഓൺലൈൻ മെഷീൻ നിർത്തുക',
   Resume: 'തുടരുക',
@@ -2380,6 +2402,8 @@ export const ml: Dictionary = {
   'Take photo': 'ഫോട്ടോ എടുക്കുക',
   Pronouns: 'സർവ്വനാമങ്ങൾ',
   Bio: 'ആമുഖം',
+  'A few words about you': 'നിങ്ങളെക്കുറിച്ച് ചില വാക്കുകൾ',
+  'What’s happening?': 'എന്താണ് വിശേഷം?',
   'Clear after': 'ഇതിനു ശേഷം മായ്ക്കുക',
   '30 minutes': '30 മിനിറ്റ്',
   '1 hour': '1 മണിക്കൂർ',
@@ -2745,4 +2769,5 @@ export const ml: Dictionary = {
   'View your report': 'നിങ്ങളുടെ റിപ്പോർട്ട് കാണുക',
   'Not sent. Your text is kept, so you can try again.':
     'അയച്ചില്ല. നിങ്ങളുടെ എഴുത്ത് സൂക്ഷിച്ചിട്ടുണ്ട്, വീണ്ടും ശ്രമിക്കാം.',
+  'Reset to site icon': 'സൈറ്റിന്റെ ഐക്കണിലേക്ക് മടങ്ങുക',
 }

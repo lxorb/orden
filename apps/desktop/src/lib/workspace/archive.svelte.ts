@@ -7,7 +7,7 @@
  *  copies meet, and docs/archive.md. */
 
 import { insideItsSpace, relativeTo, within } from '../space-paths'
-import { isNumber, isRecord, keep } from '../stored'
+import { isNumber, isRecord, keepJson } from '../stored'
 import { filledIn, type Folded, readSpaces, without } from '../records'
 import { carried, moving } from './file-ops'
 
@@ -192,6 +192,6 @@ export class Archive {
   }
 
   private write() {
-    keep(STORAGE_KEY, JSON.stringify(this.spaces))
+    keepJson(STORAGE_KEY, this.spaces)
   }
 }

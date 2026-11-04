@@ -17,7 +17,7 @@
 import { escapeAll } from '@orden/markdown/html'
 import { assetsOf, inlineImages, localSources, printInFrame, SHEET_POLICY } from '../export'
 import { writtenPdf } from '../export/print'
-import { chooseTarget, download } from '../export/save'
+import { chooseTarget, download, handOver } from '../export/save'
 import { type Canvas, type CanvasNode } from './format'
 import {
   arrowAt,
@@ -495,14 +495,9 @@ export async function exportCanvasPng(drawing: Drawing) {
     return
   }
 
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${stem(drawing.name)}.png`
-  link.click()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-
-  return link.download
+  const name = `${stem(drawing.name)}.png`
+  handOver(name, blob)
+  return name
 }
 
 /** The plane on a page, through the same printer a note goes through. */

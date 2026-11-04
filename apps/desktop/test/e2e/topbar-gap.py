@@ -10,7 +10,8 @@ What this measures, in every state the row has:
 
   - the buttons from the strip's last one to the window's own are one group, every one
     against the next with the same step, nothing between them;
-  - the scratchpad's switch is in the same place whether the note's `⋯` is there or not,
+  - the right side's button - the scratchpad's switch until it became one of the right
+    side's tabs (#1032) - is in the same place whether the note's `⋯` is there or not,
     so nothing jumps as a web tab and a note change places;
   - there is always a stretch to drag the window by, at least the sliver wide, ahead of
     that group, however many tabs there are.
@@ -42,7 +43,6 @@ MEASURE = """
   const shown = (one) => one && one.getClientRects().length > 0
   const group = [
     ...bar.querySelectorAll(':scope > .strip > button'),
-    bar.querySelector(':scope > .pad'),
     bar.querySelector(':scope > [data-side-toggle="right"]'),
     ...bar.querySelectorAll(':scope > .controls > button'),
   ].filter(shown)
@@ -55,8 +55,8 @@ MEASURE = """
     .map((one) => one.getBoundingClientRect())
     .filter((box) => box.right <= first + 0.5)
     .map((box) => box.width)
-  const pad = bar.querySelector(':scope > .pad')?.getBoundingClientRect()
-  return { boxes, drag: Math.max(0, ...drags), pad: pad ? pad.left : null }
+  const right = bar.querySelector(':scope > [data-side-toggle="right"]')?.getBoundingClientRect()
+  return { boxes, drag: Math.max(0, ...drags), right: right ? right.left : null }
 }
 """
 
@@ -87,8 +87,10 @@ def drive(browser: Any) -> None:
     page.evaluate("() => window.nibApp.workspace.openWebsite()")
     wait_for(page, "window.nibApp.workspace.active?.note?.kind === 'web'", "the web tab")
     web = row(page, "02-web-tab")
-    if note["pad"] is not None and abs(note["pad"] - web["pad"]) > 0.5:
-        wrong(f"the scratchpad's switch moves between a note and a web tab: {note['pad']} -> {web['pad']}")
+    if note["right"] is None or web["right"] is None:
+        wrong(f"the right side's button is not in the bar: {note['right']}, {web['right']}")
+    elif abs(note["right"] - web["right"]) > 0.5:
+        wrong(f"the right side's button moves between a note and a web tab: {note['right']} -> {web['right']}")
 
     DRIVE.open_note(page, "Plan")
     page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
@@ -96,7 +98,6 @@ def drive(browser: Any) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleSidebar('right')")
     row(page, "04-right-toggled")
     page.evaluate("() => window.nibApp.workspace.toggleSidebar('right')")
-    page.evaluate("() => window.nibApp.scratchpad?.toggle?.()")
 
     page.set_viewport_size({"width": 640, "height": 760})
     row(page, "05-narrow")

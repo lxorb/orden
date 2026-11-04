@@ -50,7 +50,7 @@ import {
 import { glassesKey } from './even/key.svelte'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
-import { isNumber, isRecord, isString, keep, stored, stringList } from './stored'
+import { isNumber, isRecord, isString, keepJson, stored, stringList } from './stored'
 import { currentWindow, invoke, isDesktop } from './tauri'
 import { theme } from './theme.svelte'
 import { opening } from './workspace/documents.svelte'
@@ -1688,7 +1688,7 @@ class Modes {
     this.written = fields
     const now = stored(STORAGE_KEY)
     if (!seen || !isRecord(now)) {
-      keep(STORAGE_KEY, JSON.stringify(fields))
+      keepJson(STORAGE_KEY, fields)
       return
     }
     // Only what this window changed, onto what is there now: two windows writing in one
@@ -1704,7 +1704,7 @@ class Modes {
     for (const [name, value] of Object.entries(now)) {
       if (!(name in fields) && !(name in seen)) merged[name] = value
     }
-    keep(STORAGE_KEY, JSON.stringify(merged))
+    keepJson(STORAGE_KEY, merged)
   }
 
   private state(): Saved {

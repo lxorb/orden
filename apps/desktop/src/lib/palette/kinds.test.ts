@@ -263,3 +263,17 @@ describe('a command found by its other words (#1049)', () => {
     }
   })
 })
+
+describe('a website of the space', () => {
+  const addressOf = (path: string) =>
+    path === `${ROOT}/Moodle.url` ? 'https://moodle-app2.let.ethz.ch/my/courses' : null
+
+  test('is found by its address as well as its name, as the address field finds it (#1059)', () => {
+    expect(top('ethz', { addressOf }, 1)).toEqual(['Moodle.url'])
+    expect(top('courses', { addressOf }, 1)).toEqual(['Moodle.url'])
+  })
+
+  test('and not by an address it does not have', () => {
+    expect(top('ethz', {}, 1)).not.toEqual(['Moodle.url'])
+  })
+})

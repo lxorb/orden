@@ -89,6 +89,15 @@ export const gu: Dictionary = {
   // Tasks: the Display menu
   Display: 'પ્રદર્શન',
   'Completed tasks': 'પૂર્ણ કાર્યો',
+  Smart: 'સ્માર્ટ',
+  Grouping: 'જૂથબંધી',
+  Sorting: 'ગોઠવણી',
+  'Last 30 days': 'છેલ્લા 30 દિવસ',
+  'Assigned to me': 'મને સોંપાયેલા',
+  Unassigned: 'સોંપાયેલા નથી',
+  'Reset all': 'બધું રીસેટ કરો',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'લેઆઉટ કાર્યોને યાદી, બોર્ડ અથવા કૅલેન્ડર તરીકે બતાવે છે. જૂથબંધી તેમને જૂથોમાં વહેંચે છે, જે બોર્ડના કૉલમ છે. ગોઠવણી દરેક જૂથને ક્રમમાં મૂકે છે. ફિલ્ટર તમને જરૂર ન હોય તે છુપાવે છે. આ બધું આ દૃશ્ય માટે રાખવામાં આવે છે.',
   // Tasks: several lines pasted into quick add
   'One task': 'એક કાર્ય',
   'One per line': 'દરેક લીટીએ એક',
@@ -557,11 +566,11 @@ export const gu: Dictionary = {
   'Actual size': 'ખરું માપ',
   // Appearance
   Accent: 'ઉપસાવ રંગ',
-  'Window corners': 'વિન્ડોના ખૂણા',
-  Rounded: 'ગોળ',
-  Square: 'ચોરસ',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'ગોળ ખુલ્લી વસ્તુને વિન્ડોની અંદર કાર્ડમાં તરતી રાખે છે; ચોરસ તેને કિનારે લગોલગ રાખે છે.',
+  'Tidy up': 'વ્યવસ્થિત કરો',
+  'Swipe in from the edge to see your notes.': 'તમારી નોંધો જોવા માટે કિનારેથી અંદર સ્વાઇપ કરો.',
+  'Show other tabs as icons': 'બીજી ટૅબ આઇકન તરીકે બતાવો',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'આગળની ટૅબ સિવાય દરેક ટૅબ ફક્ત તેનું આઇકન બતાવે છે; કોઈ પર પોઇન્ટર રાખતાં તેનું નામ દેખાય છે.',
   'Tab preview delay': 'ટેબ પૂર્વાવલોકન વિલંબ',
   'How long the pointer rests on a tab before its preview shows.':
     'પૂર્વાવલોકન દેખાય તે પહેલાં પોઇન્ટર ટેબ પર કેટલો સમય રહે છે.',
@@ -1809,6 +1818,7 @@ export const gu: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'સાઇટની માહિતી',
   Downloads: 'ડાઉનલોડ્સ',
+  'Downloading {name}': '{name} ડાઉનલોડ થઈ રહ્યું છે',
   'Show in folder': 'ફોલ્ડરમાં બતાવો',
   'Show in Finder': 'Finderમાં બતાવો',
   'Reveal in Finder': 'Finderમાં બતાવો',
@@ -1902,6 +1912,9 @@ export const gu: Dictionary = {
   'Exited with code {code}': 'કોડ {code} સાથે બંધ થયું',
   'Could not start {shell}': '{shell} શરૂ કરી શકાયું નહીં',
   'Restore history': 'ઇતિહાસ પુનઃસ્થાપિત કરો',
+  'Colours follow the theme': 'રંગો થીમને અનુસરે છે',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ટર્મિનલને થીમના રંગોમાં રંગે છે; બંધ હોય ત્યારે એક નિશ્ચિત પૅલેટ રહે છે.',
   'Restored {time}': 'પુનઃસ્થાપિત {time}',
   'Stop what is running in {name}?': '{name} માં જે ચાલે છે તે બંધ કરવું?',
   'Stop what is running in these terminals?': 'આ ટર્મિનલોમાં જે ચાલે છે તે બંધ કરવું?',
@@ -2052,6 +2065,8 @@ export const gu: Dictionary = {
   'Every space': 'દરેક જગ્યા',
   Sites: 'સાઇટ્સ',
   'Asks first': 'પહેલાં પૂછે છે',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'તે MCP દ્વારા જોડાય છે અને ત્યાં પોતાની પરવાનગીઓ જાતે સંભાળે છે: Orden તેને કંઈ પૂછતું નથી. નીચેની તમારી સ્પેસ, બ્લૉક કરેલી સાઇટ અને મર્યાદાઓ હજુ લાગુ રહે છે.',
   Limits: 'મર્યાદાઓ',
   'Clear what {name} did?': '{name}એ જે કર્યું તે સાફ કરીએ?',
   'Show earlier': 'પહેલાંના બતાવો',
@@ -2300,6 +2315,12 @@ export const gu: Dictionary = {
   // The online terminal
   'Online terminal': 'ઑનલાઇન ટર્મિનલ',
   'New online terminal': 'નવું ઑનલાઇન ટર્મિનલ',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'બીજું ઉપકરણ',
+  'Taken over by {device}': '{device} એ લઈ લીધું',
+  'Open on {device} since {time}': '{time} થી {device} પર ખુલ્લું',
+  'Take over': 'લઈ લો',
+  'Take back': 'પાછું લો',
   'Start online machine': 'ઑનલાઇન મશીન શરૂ કરો',
   'Stop online machine': 'ઑનલાઇન મશીન બંધ કરો',
   Resume: 'ફરી ચાલુ કરો',
@@ -2345,6 +2366,8 @@ export const gu: Dictionary = {
   'Take photo': 'ફોટો લો',
   Pronouns: 'સર્વનામ',
   Bio: 'પરિચય',
+  'A few words about you': 'તમારા વિશે થોડા શબ્દો',
+  'What’s happening?': 'શું ચાલી રહ્યું છે?',
   'Clear after': 'આટલા પછી સાફ કરો',
   '30 minutes': '30 મિનિટ',
   '1 hour': '1 કલાક',
@@ -2693,4 +2716,5 @@ export const gu: Dictionary = {
   'View your report': 'તમારો રિપોર્ટ જુઓ',
   'Not sent. Your text is kept, so you can try again.':
     'મોકલાયો નથી. તમારું લખાણ સાચવેલું છે, તમે ફરી પ્રયાસ કરી શકો છો.',
+  'Reset to site icon': 'સાઇટના આઇકન પર પાછા જાઓ',
 }

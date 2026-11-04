@@ -91,6 +91,19 @@ interface Store {
   made: number
   pushes: number
   clean: boolean
+  /** What the person deleted here, kept to bring back: where it was, and its words. */
+  trash: Map<string, Trashed>
+  /** What a restore in the air may have to make again, should the account never have
+   *  had it. */
+  restoring: Map<string, Trashed>
+}
+
+/** One thing in this device's trash. */
+interface Trashed {
+  kind: TreeEntry['kind']
+  parent: string | null
+  name: string
+  text: string
 }
 
 function textOf(...updates: Uint8Array[]): string {
@@ -181,6 +194,8 @@ export class ReferenceDevice implements DeviceAdapter {
       made: 0,
       pushes: 0,
       clean: true,
+      trash: new Map(),
+      restoring: new Map(),
     }
     this.build()
   }
@@ -260,10 +275,47 @@ export class ReferenceDevice implements DeviceAdapter {
     this.store.written.delete(id)
   }
 
+  /** Back from the trash, under the id it had (#1068): a restore, which the account
+   *  answers by bringing it back with its folders, and the feed brings its words down
+   *  again (section 5.9). Where the account answers that it never had it - made and
+   *  deleted here before a pass - it is made again under the same id, where it was, with
+   *  the words it had; see `sendOps`. */
+  private restore(id: string) {
+    const kept = this.store.trash.get(id)
+    this.store.trash.delete(id)
+    if (kept) this.store.restoring.set(id, kept)
+    this.queue({ op: this.nextOp(), t: 'restore', id, seen: this.store.cursor })
+  }
+
+  /** Makes again what the account never had, from the trash. */
+  private remade(id: string, kept: Trashed) {
+    const shown = this.shown().entries
+    const parent =
+      kept.parent !== null && shown.get(kept.parent)?.deleted === false ? kept.parent : null
+    if (kept.kind === 'folder') {
+      this.queue({
+        op: this.nextOp(),
+        t: 'mkdir',
+        id,
+        parent,
+        name: kept.name,
+        seen: this.store.cursor,
+      })
+      return
+    }
+    this.made(parent, kept.name, kept.text, undefined, id)
+  }
+
   /** A new note of this device's own: its document, and the create in the outbox. */
-  private made(parent: string | null, name: string, text: string, started?: string): string {
-    this.store.made += 1
-    const id = `${this.id}-${String(this.store.made)}`
+  private made(
+    parent: string | null,
+    name: string,
+    text: string,
+    started?: string,
+    again?: string,
+  ): string {
+    if (again === undefined) this.store.made += 1
+    const id = again ?? `${this.id}-${String(this.store.made)}`
     const stored: StoredDoc = {
       confirmed: Y.encodeStateAsUpdateV2(new Y.Doc()),
       seq: 0,
@@ -278,7 +330,7 @@ export class ReferenceDevice implements DeviceAdapter {
     doc.transact(() => doc.getText(TEXT).insert(0, text), LOCAL)
 
     const op: Op = {
-      op: `${id}.c`,
+      op: again === undefined ? `${id}.c` : this.nextOp(),
       t: 'create',
       id,
       kind: 'note',
@@ -435,13 +487,23 @@ export class ReferenceDevice implements DeviceAdapter {
         }
         this.queue({ op: this.nextOp(), t: 'delete', id: target.id, seen })
 
-        // The person threw these words away: nothing of them goes up any more.
+        // The person threw these words away: nothing of them goes up any more. Kept in
+        // the trash, which is where a restore takes them from.
         for (const entry of gone) {
+          this.store.trash.set(entry.id, {
+            kind: entry.kind,
+            parent: entry.parent,
+            name: entry.name,
+            text: this.textNow(entry.id) ?? '',
+          })
           this.store.held.delete(entry.id)
           this.drop(entry.id)
         }
         return
       }
+      case 'restore':
+        this.restore(action.id)
+        return
       case 'append-day': {
         const day = this.liveEntries('note').find(
           (entry) => entry.parent === null && nameKey(entry.name) === nameKey(action.name),
@@ -580,6 +642,13 @@ export class ReferenceDevice implements DeviceAdapter {
         this.store.merging.set(one.op.id, { into: result.merged, create: one.op })
       } else if ('ok' in result && (one.op.t === 'create' || one.op.t === 'mkdir')) {
         this.store.known.add(one.op.id)
+      }
+      if (one.op.t === 'restore') {
+        const kept = this.store.restoring.get(one.op.id)
+        this.store.restoring.delete(one.op.id)
+        if (kept && 'refused' in result && !this.store.known.has(one.op.id)) {
+          this.remade(one.op.id, kept)
+        }
       }
     }
     return true

@@ -86,6 +86,15 @@ export const ja: Dictionary = {
   // Tasks: the Display menu
   Display: '表示',
   'Completed tasks': '完了したタスク',
+  Smart: 'スマート',
+  Grouping: 'グループ化',
+  Sorting: '並べ替え',
+  'Last 30 days': '過去30日',
+  'Assigned to me': '自分に割り当て',
+  Unassigned: '未割り当て',
+  'Reset all': 'すべてリセット',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'レイアウトはタスクをリスト、ボード、カレンダーで表示します。グループ化はタスクをグループに分け、それがボードの列になります。並べ替えは各グループの順序を決めます。フィルターは不要なものを隠します。すべてこのビューに保存されます。',
   // Tasks: several lines pasted into quick add
   'One task': '1つのタスク',
   'One per line': '1行に1つ',
@@ -554,11 +563,11 @@ export const ja: Dictionary = {
   'Actual size': '実際のサイズ',
   // Appearance
   Accent: 'アクセント',
-  'Window corners': 'ウィンドウの角',
-  Rounded: '丸',
-  Square: '四角',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    '丸は開いている内容をウィンドウ内のカードに浮かべます。四角は端にぴったり付けます。',
+  'Tidy up': '整列',
+  'Swipe in from the edge to see your notes.': '端から内側へスワイプするとノートが見られます。',
+  'Show other tabs as icons': 'ほかのタブをアイコンで表示',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    '手前のタブ以外はアイコンだけを表示し、ポインターを当てると名前が出ます。',
   'Tab preview delay': 'タブのプレビューまでの時間',
   'How long the pointer rests on a tab before its preview shows.':
     'タブにポインターを置いてからプレビューが表示されるまでの時間です。',
@@ -1807,6 +1816,7 @@ export const ja: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'サイト情報',
   Downloads: 'ダウンロード',
+  'Downloading {name}': '{name} をダウンロード中',
   'Show in folder': 'フォルダに表示',
   'Show in Finder': 'Finderで表示',
   'Reveal in Finder': 'Finderで表示',
@@ -1901,6 +1911,9 @@ export const ja: Dictionary = {
   'Exited with code {code}': 'コード {code} で終了しました',
   'Could not start {shell}': '{shell} を起動できませんでした',
   'Restore history': '履歴を復元',
+  'Colours follow the theme': '色をテーマに合わせる',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ターミナルをテーマの色で表示します。オフにすると固定のパレットを使います。',
   'Restored {time}': '{time} から復元',
   'Stop what is running in {name}?': '{name} で実行中のものを停止しますか？',
   'Stop what is running in these terminals?': 'これらのターミナルで実行中のものを停止しますか？',
@@ -2048,6 +2061,8 @@ export const ja: Dictionary = {
   'Every space': 'すべてのスペース',
   Sites: 'サイト',
   'Asks first': '先に確認',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'MCP で接続し、権限はそちら側で自分で管理します。Orden は何も尋ねません。下のスペース、ブロックしたサイト、上限はそのまま有効です。',
   Limits: '上限',
   'Clear what {name} did?': '{name} の操作記録を消去しますか？',
   'Show earlier': '以前のものを表示',
@@ -2290,6 +2305,12 @@ export const ja: Dictionary = {
   // The online terminal
   'Online terminal': 'オンラインターミナル',
   'New online terminal': '新しいオンラインターミナル',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': '別のデバイス',
+  'Taken over by {device}': '{device} に引き継がれました',
+  'Open on {device} since {time}': '{time} から {device} で開いています',
+  'Take over': '引き継ぐ',
+  'Take back': '取り戻す',
   'Start online machine': 'オンラインマシンを起動',
   'Stop online machine': 'オンラインマシンを停止',
   Resume: '再開',
@@ -2335,6 +2356,8 @@ export const ja: Dictionary = {
   'Take photo': '写真を撮る',
   Pronouns: '代名詞',
   Bio: '自己紹介',
+  'A few words about you': 'あなたについてひとこと',
+  'What’s happening?': 'いまどうしてる？',
   'Clear after': 'クリアまでの時間',
   '30 minutes': '30分',
   '1 hour': '1時間',
@@ -2679,4 +2702,5 @@ export const ja: Dictionary = {
   'View your report': 'レポートを見る',
   'Not sent. Your text is kept, so you can try again.':
     '送信できませんでした。入力内容は残っているので、もう一度お試しください。',
+  'Reset to site icon': 'サイトのアイコンに戻す',
 }

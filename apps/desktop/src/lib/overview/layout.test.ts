@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { type Frame, pane } from '../workspace/pane-tree'
-import { around, type Box, gridFor, lay, seamPath } from './layout'
+import { around, type Box, gridFor, lay, seamPath, seamsAmong } from './layout'
 
 const room: Box = { x: 0, y: 0, w: 1200, h: 800 }
 
@@ -71,4 +71,26 @@ test('the grid chosen gives each window the most room', () => {
   // Four windows in a wide room: two rows of two beat one row of four.
   expect(gridFor(4, 16 / 10, { x: 0, y: 0, w: 1000, h: 700 }, 1000).across).toBe(2)
   expect(gridFor(3, 16 / 10, { x: 0, y: 0, w: 2000, h: 300 }, 2000).across).toBe(3)
+})
+
+test('windows moved anywhere still have a seam between a split’s sides, where there is a gap', () => {
+  const frame: Frame = {
+    kind: 'split',
+    id: 's',
+    along: 'row',
+    fraction: 0.5,
+    sides: [pane('left'), pane('right')],
+  }
+  const slot = (id: string, paneId: string, x: number, y: number) => ({
+    id,
+    paneId,
+    x,
+    y,
+    w: 100,
+    h: 60,
+  })
+  const apart = seamsAmong(frame, [slot('a', 'left', 0, 0), slot('b', 'right', 300, 200)])
+  expect(apart).toEqual([{ id: 's', along: 'row', from: { x: 200, y: 0 }, to: { x: 200, y: 260 } }])
+  // One side's window moved in among the other's: no line across a window.
+  expect(seamsAmong(frame, [slot('a', 'left', 0, 0), slot('b', 'right', 50, 100)])).toEqual([])
 })

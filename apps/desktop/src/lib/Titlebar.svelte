@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { swipeOpens } from './swipe-opens'
   import { chrome } from './glass/chrome.svelte'
   import { i18n, t } from './i18n.svelte'
   import { keepFocus } from './focus'
@@ -16,12 +17,25 @@
   import { settings } from './settings.svelte'
   import { tabOverview, toggleTabOverview } from './surfaces.svelte'
   import { shortcuts } from './shortcuts.svelte'
+  import { startup } from './startup.svelte'
   import { webChannel } from './updater'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
 
   const { onpalette }: { onpalette: () => void } = $props()
+
+  /** Whether the file list is a drawer a swipe from the edge pulls out, which is what makes
+   *  its button redundant to an eye (#1066). */
+  const swiped = $derived(swipeOpens())
+
+  /** The list pulled out, by its swipe or any other way: the swipe has been found, so the
+   *  hint about it is put away for good. Fetched only then, through the hints' door. */
+  $effect(() => {
+    if (swiped && workspace.openOn('left')) {
+      void import('./hints.svelte').then(({ hints }) => hints.dismiss('drawer'))
+    }
+  })
 
   /** What the middle button says. Read off the window itself rather than off its
    *  own clicks, because dragging a maximised window off the top of the screen
@@ -93,30 +107,6 @@
   {/if}
 {/snippet}
 
-<!-- The scratchpad's switch. It leaves the keyboard where it is, and has no menu: the
-     scratchpad is in no space, so nothing a tab's or a file's menu offers is its; see
-     scratchpad/pad.ts. -->
-{#snippet padGlyph()}
-  {#if !__EVEN_PLUGIN__}
-    <button
-      class="nib-glyph pad"
-      class:is-on={pad.on}
-      aria-pressed={pad.on}
-      title={shortcuts.tooltip(t('Scratchpad'), 'app.scratchpad')}
-      aria-label={t('Scratchpad')}
-      onpointerdown={keepFocus}
-      onmousedown={keepFocus}
-      onclick={() => pad.toggle()}
-    >
-      <svg viewBox="0 0 14 14"
-        ><rect x="2.5" y="2.5" width="9" height="10" rx="1.6" /><path
-          d="M5 1.2v2.6M9 1.2v2.6M4.9 7h4.2M4.9 9.6h2.8"
-        /></svg
-      >
-    </button>
-  {/if}
-{/snippet}
-
 <!-- The palette, for a hand that does not know its keys; the tooltip says them (#304).
      It keeps the keyboard where it was, for the palette to hand back. -->
 {#snippet searchGlyph()}
@@ -174,9 +164,24 @@
   {/if}
 
   <!-- Not while there is no space and no tab: a list of nothing, in the moment before a
-       fresh start's space is made (fresh-start.ts). -->
+       fresh start's space is made (fresh-start.ts). Where a swipe from the edge pulls the
+       list out as a drawer - a phone, a tablet held upright - the button is said and not
+       shown (#1066): a screen reader and a keyboard still have it, and so does its key,
+       and somebody new is told about the swipe once (hints.svelte.ts). -->
   {#if !listless}
-    <SidebarToggle />
+    <SidebarToggle unseen={swiped} />
+    {#if swiped && startup.settled && !__EVEN_PLUGIN__}
+      <span class="swipe-hint">
+        {#await import('./HintCard.svelte') then card}
+          <card.default
+            hint="drawer"
+            side="below"
+            text={t('Swipe in from the edge to see your notes.')}
+            onpress={() => workspace.toggleSidebar()}
+          />
+        {/await}
+      </span>
+    {/if}
   {/if}
 
   {#if viewport.touch}
@@ -193,7 +198,6 @@
 
     {@render edgeMark()}
     {@render searchGlyph()}
-    {@render padGlyph()}
   {:else}
     <!-- One pane keeps its tabs up here; split, each pane has its own (Pane.svelte). -->
     {#if only}
@@ -203,16 +207,17 @@
     <!-- What the window is dragged by, while the panes have the strips. A strip up here
          is the caption itself, and keeps the sliver it can always be dragged by ahead of
          its own buttons (Tabs.svelte), so they and the switches after them are one row
-         (#1060). Then the scratchpad's switch. -->
+         (#1060). -->
     {#if !only}
       <div class="drag" data-tauri-drag-region></div>
     {/if}
     {@render edgeMark()}
-    {@render padGlyph()}
   {/if}
 
-  <!-- The other side's own button, while that side holds a panel. -->
-  {#if workspace.right.length}
+  <!-- The right side's one button, whatever it shows: the scratchpad is one of its tabs
+       on a desktop, so this opens it on what it showed last and shuts it whole (#1032).
+       A phone's scratchpad is in the drawer's foot (#1030). -->
+  {#if workspace.right.length || (!viewport.touch && !__EVEN_PLUGIN__)}
     <SidebarToggle side="right" />
   {/if}
 
@@ -278,7 +283,14 @@
     padding-left: var(--traffic-lights);
   }
 
-  .pad,
+  /* Where the hint about the swipe hangs from: the bar's start, as tall as the bar, so the
+     card comes down under it there (HintCard.svelte). It takes no room in the row. */
+  .swipe-hint {
+    position: relative;
+    flex: none;
+    width: 0;
+  }
+
   .overview,
   .search {
     align-self: center;

@@ -4,7 +4,7 @@ import type { EditorView } from '@orden/editor'
 
 import { focusEditor } from '../focus'
 import { nameOf } from '../space-paths'
-import { isRecord, keep, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
 
 export const SCRATCHPAD = 'Scratchpad.md'
@@ -16,7 +16,8 @@ export function isScratchpad(path: string | null | undefined): boolean {
 
 // Guarded for the workspace's tests, which have no page.
 const inCard = () =>
-  typeof document !== 'undefined' && !!document.activeElement?.closest('[data-scratchpad]')
+  typeof document !== 'undefined' &&
+  !!document.activeElement?.closest('[data-scratchpad], [data-scratchpad-card]')
 
 class Shown {
   on = $state(false)
@@ -61,16 +62,37 @@ class Shown {
 
   private set(on: boolean) {
     this.on = on
-    keep('nib:scratchpad', JSON.stringify({ on, width: this.width }))
+    keepJson('nib:scratchpad', { on, width: this.width })
   }
 }
 
 export const shown = new Shown()
 
 /** Up with the keyboard elsewhere, the keyboard in (VS Code's terminal key); else the
- *  switch. */
+ *  switch. Shut, it shuts the right side it is shown in, and nothing comes back from
+ *  under it (#1032); see `toggleSidebar` in the workspace. */
 export function toggleScratchpad(): void {
   if (__EVEN_PLUGIN__) return
   if (shown.on && !inCard()) shown.calling = true
-  else shown.toggle()
+  else if (shown.on) workspace.closeRight()
+  else workspace.showRight('scratchpad')
+}
+
+/** The card put away by its own Escape: the right side it is, shut. */
+export function closeScratchpad(): void {
+  if (shown.on) workspace.closeRight()
+}
+
+/** The scratchpad from a phone's drawer (#1030): up, over the note, with the drawer out
+ *  of the way; pressed while it is up, put away. The doors the right side's button uses
+ *  (`showRight` and `closeRight` in the workspace), so every device opens and shuts it
+ *  one way. */
+export function scratchFromDrawer(): void {
+  if (__EVEN_PLUGIN__) return
+  if (shown.on) {
+    workspace.closeRight()
+    return
+  }
+  workspace.closePanel()
+  workspace.showRight('scratchpad')
 }

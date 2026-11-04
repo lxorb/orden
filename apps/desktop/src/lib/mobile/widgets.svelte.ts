@@ -6,10 +6,11 @@
  *  notes - what is kept to hand, what was written in last - and because here it
  *  can be read and tested.
  *
- *  A pinned note comes first. That is what "open a chosen note" means on the home
- *  screen: the app already has one gesture for keeping a note to hand, and a
+ *  The space's Essentials come first. That is what "open a chosen note" means on the
+ *  home screen: the app already has one gesture for keeping a note to hand, and a
  *  picker written in Kotlin would be a second file list in a second language
- *  answering a question the app has already answered.
+ *  answering a question the app has already answered. They were the pinned tabs
+ *  until the strip lost its pinning (#1041); the Essentials are the kept notes now.
  *
  *  The words are handed over too, not only the rows, so the heading and the line
  *  for a space with nothing in it are in the reader's own language - Android's own
@@ -22,6 +23,7 @@ import { shownName } from '../note-name'
 import { insideSpace } from '../space-paths'
 import { afterQuiet } from '../timing'
 import { type Entry, workspace } from '../workspace.svelte'
+import { isTile } from '../workspace/bookmarks.svelte'
 import { frameWord, method, wordSaid } from './bridge'
 
 /** As many rows as the layout has; see res/layout/widget_notes.xml. */
@@ -70,8 +72,8 @@ export function todayRows(
   })
 }
 
-/** The rows, in the order they are drawn: the notes being kept open first, in the
- *  order they were pinned, then everything else by when it was last written in.
+/** The rows, in the order they are drawn: the notes being kept to hand first, in the
+ *  Essentials' order, then everything else by when it was last written in.
  *
  *  Pure, and given its lists rather than reading them, so what the home screen
  *  will say can be asked without a home screen. */
@@ -101,7 +103,10 @@ export function widgetRows(
 
 /** What the app would hand over now, Today's tasks as they were last read. */
 function widgetState(today: TodayRow[]): WidgetState {
-  const kept = workspace.tabs.filter((one) => one.pinned).map((one) => one.path ?? '')
+  const root = workspace.activeSpace?.root
+  const kept = root
+    ? workspace.bookmarks.list.filter(isTile).map((one) => insideSpace(root, one.path))
+    : []
 
   return {
     title: workspace.activeSpace?.name ?? t('Notes'),
@@ -119,7 +124,7 @@ function widgetState(today: TodayRow[]): WidgetState {
 /** Keeps the home screen in step with the space, and answers how to stop.
  *
  *  One line across the bridge whenever what it would draw changes, and nothing at
- *  all when it has not: switching tabs changes the pinned list only sometimes, and
+ *  all when it has not: changing the Essentials changes the list only sometimes, and
  *  a widget redrawn for nothing is a launcher woken for nothing. */
 export function watchWidgets(): () => void {
   const push = method('widgets')

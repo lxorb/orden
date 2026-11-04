@@ -9,7 +9,16 @@
    *  as that brand's logo; then the title, stronger where something came the reader has
    *  not seen; at the end its state's mark and how long ago it moved. Pointed at, Pin and
    *  Archive at its end, where the time was, and the list's own "..." after them where
-   *  the list has a menu. */
+   *  the list has a menu.
+   *
+   *  The end is one group at the row's own spacing (#1101): the state, then one place
+   *  that holds the time and the actions on top of each other, as wide as the wider of
+   *  the two. Pointed at, the actions take the time's place right after the state - no
+   *  room kept for them past the end, which left a gap the width of three buttons
+   *  between the state and the buttons, and nothing moves sideways between the two,
+   *  since the place is as wide either way. The title has the rest and gives way to the
+   *  group. On a touch screen, which points at nothing, the actions are there and the
+   *  time is not. */
   import { agoShort } from '../../ago'
   import Icon from '../../Icon.svelte'
   import { brandIcon, readIcon } from '../../icons'
@@ -68,68 +77,82 @@
     onclick={onopen}
     oncontextmenu={onmenu}
   >
-    <span class="logo" aria-hidden="true"
-      >{#if logo}<Icon icon={logo} />{/if}</span
-    >
-    {#if unread}<UnreadDot />{/if}
-    <span class="title">{head.title || t('Untitled')}</span>
-    {#if head.pinned}
-      <svg class="pinned" viewBox="0 0 13 13" aria-hidden="true"><path d={PIN} /></svg>
-    {/if}
-    <StateMark {state} />
-    <span class="when">{agoShort(head.updated, i18n.language)}</span>
+    <span class="main">
+      <span class="logo" aria-hidden="true"
+        >{#if logo}<Icon icon={logo} />{/if}</span
+      >
+      {#if unread}<UnreadDot />{/if}
+      <span class="title">{head.title || t('Untitled')}</span>
+      {#if head.pinned}
+        <svg class="pinned" viewBox="0 0 13 13" aria-hidden="true"><path d={PIN} /></svg>
+      {/if}
+    </span>
   </button>
-  <span class="acts">
-    {#if !archived}
-      <button
-        class="nib-glyph act"
-        class:on={!!head.pinned}
-        title={head.pinned ? t('Unpin') : t('Pin')}
-        aria-label={head.pinned ? t('Unpin') : t('Pin')}
-        aria-pressed={!!head.pinned}
-        onclick={onpin}
-      >
-        <svg viewBox="0 0 13 13" aria-hidden="true"><path d={PIN} /></svg>
-      </button>
-    {/if}
-    <button
-      class="nib-glyph act"
-      title={archived ? t('Unarchive') : t('Archive')}
-      aria-label={archived ? t('Unarchive') : t('Archive')}
-      onclick={onarchive}
-    >
-      <svg viewBox="0 0 13 13" aria-hidden="true"
-        ><path d="M2 3h9v2.2H2zM2.8 5.2v4.8h7.4V5.2M5.3 7h2.4" /></svg
-      >
-    </button>
-    {#if onmenu}
-      <button
-        class="nib-glyph act"
-        title={t('More')}
-        aria-label={t('More')}
-        aria-haspopup="menu"
-        onclick={onmenu}
-      >
-        <svg viewBox="0 0 13 13" aria-hidden="true"
-          ><path class="dots" d="M3 6.5h.01M6.5 6.5h.01M10 6.5h.01" /></svg
+  <span class="tail">
+    <StateMark {state} />
+    <span class="slot">
+      <span class="when">{agoShort(head.updated, i18n.language)}</span>
+      <span class="acts">
+        {#if !archived}
+          <button
+            class="nib-glyph act"
+            class:on={!!head.pinned}
+            title={head.pinned ? t('Unpin') : t('Pin')}
+            aria-label={head.pinned ? t('Unpin') : t('Pin')}
+            aria-pressed={!!head.pinned}
+            onclick={onpin}
+          >
+            <svg viewBox="0 0 13 13" aria-hidden="true"><path d={PIN} /></svg>
+          </button>
+        {/if}
+        <button
+          class="nib-glyph act"
+          title={archived ? t('Unarchive') : t('Archive')}
+          aria-label={archived ? t('Unarchive') : t('Archive')}
+          onclick={onarchive}
         >
-      </button>
-    {/if}
+          <svg viewBox="0 0 13 13" aria-hidden="true"
+            ><path d="M2 3h9v2.2H2zM2.8 5.2v4.8h7.4V5.2M5.3 7h2.4" /></svg
+          >
+        </button>
+        {#if onmenu}
+          <button
+            class="nib-glyph act"
+            title={t('More')}
+            aria-label={t('More')}
+            aria-haspopup="menu"
+            onclick={onmenu}
+          >
+            <svg viewBox="0 0 13 13" aria-hidden="true"
+              ><path class="dots" d="M3 6.5h.01M6.5 6.5h.01M10 6.5h.01" /></svg
+            >
+          </button>
+        {/if}
+      </span>
+    </span>
   </span>
 </li>
 
 <style>
+  /* Two columns: the title's, which takes what is left, and the end group's, as wide as
+     it is. The row's button lies under both, so the whole width is one press and one
+     highlight; the group sits over its own column, and only its buttons take a press. */
   .item {
     position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 
   .row {
-    display: flex;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: subgrid;
     align-items: center;
-    gap: var(--space-2);
     width: 100%;
     min-height: var(--row-height);
-    padding: 0 var(--row-pad);
+    padding: 0;
     border: 0;
     border-radius: var(--radius-row);
     background: none;
@@ -139,6 +162,16 @@
     text-align: start;
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  /* What the row says, in the first column: the logo, the unread dot, the title. */
+  .main {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--row-gap);
+    min-width: 0;
+    padding-inline-start: var(--row-pad);
   }
 
   .row.lit {
@@ -195,25 +228,44 @@
     color: var(--muted);
   }
 
+  /* The end group: the state and the place after it, at the row's own gap, and the
+     row's own padding at its end. A press on it reaches the row under it, but for its
+     buttons. */
+  .tail {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--row-gap);
+    padding-inline: var(--row-gap) var(--row-pad);
+    pointer-events: none;
+  }
+
+  /* The time and the actions in one cell, so it is as wide as the wider and the state
+     before it never moves. */
+  .slot {
+    display: grid;
+    align-items: center;
+    justify-items: start;
+  }
+
+  .slot > * {
+    grid-area: 1 / 1;
+  }
+
   .when {
-    flex: none;
     color: var(--muted);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
-    transition: opacity var(--dur-fast) var(--ease-out);
+    white-space: nowrap;
   }
 
-  /* Pin, Archive and the list's "...", over the end of the row pointed at where the
-     time was: the row's actions without a column of glyphs down a list of titles. */
+  /* Faded rather than hidden at rest, so the keyboard still reaches them, and they
+     show as it does. */
   .acts {
-    position: absolute;
-    top: 50%;
-    inset-inline-end: 2px;
     display: flex;
     gap: 1px;
-    translate: 0 -50%;
     opacity: 0;
-    pointer-events: none;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
 
@@ -238,17 +290,8 @@
   }
 
   .item:hover .when,
-  .item:focus-within .when {
-    opacity: 0;
-  }
-
-  .item:hover .row,
-  .item:focus-within .row {
-    padding-inline-end: calc(var(--row-height-sm) * 2 + 6px);
-  }
-
-  .item.has-menu:hover .row,
-  .item.has-menu:focus-within .row {
-    padding-inline-end: calc(var(--row-height-sm) * 3 + 8px);
+  .item:focus-within .when,
+  :global([data-touch]) .when {
+    visibility: hidden;
   }
 </style>

@@ -32,7 +32,7 @@
 import { untrack } from 'svelte'
 import { door } from '@orden/markdown/door'
 import { insideItsSpace, movedTo, nameOf, relativeTo, samePath, within } from '../space-paths'
-import { isRecord, isString, keep, recordOf, stored } from '../stored'
+import { isRecord, isString, keepJson, recordOf, stored } from '../stored'
 import { FIRST_MODE, isSortMode, renamedIn, type SortMode, withoutName } from '../tree-order'
 import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { carried, type Moving, moving } from './file-ops'
@@ -472,7 +472,7 @@ export class Arranged {
   }
 
   private writeAll() {
-    keep(STORAGE_KEY, JSON.stringify(this.spaces))
+    keepJson(STORAGE_KEY, this.spaces)
   }
 }
 
@@ -521,7 +521,7 @@ function readSorts(): Record<string, Sorted> {
   const taken = Object.fromEntries(
     Object.entries(before).map(([root, mode]) => [root, { mode, account: null, sent: true }]),
   )
-  if (Object.keys(taken).length) keep(SORT_KEY, JSON.stringify(taken))
+  if (Object.keys(taken).length) keepJson(SORT_KEY, taken)
   return taken
 }
 
@@ -611,6 +611,6 @@ export class SpaceSorting {
   }
 
   private write() {
-    keep(SORT_KEY, JSON.stringify(this.spaces))
+    keepJson(SORT_KEY, this.spaces)
   }
 }

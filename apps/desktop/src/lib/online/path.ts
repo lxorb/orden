@@ -1,16 +1,19 @@
 /** Whether a file is an online terminal - a `.term`, whose words name a session on its
  *  owner's machine - and what its tab is called (docs/online-terminal.md 4.5, 4.10). */
 
+import { isTermTarget } from '@orden/markdown/links'
+import { termOf } from '@orden/online/term'
+
 const TERM = /\.term$/i
 
-/** Whether a path or a name is a `.term`. */
-export function isTermTarget(path: string | null): boolean {
-  return path !== null && TERM.test(path)
-}
-
-/** Whether a tab is an online terminal: a terminal whose file is a `.term`. */
-export function isOnlineTab(tab: { kind: string; path: string | null }): boolean {
-  return tab.kind === 'terminal' && isTermTarget(tab.path)
+/** Whether a tab is an online terminal: a terminal whose file is a `.term`, or one not
+ *  saved yet, whose words are a `.term`'s and name its session (issue 1055: a new one is
+ *  a tab like any other, in the sidebar only once the reader saves it). */
+export function isOnlineTab(tab: { kind: string; path: string | null; doc?: string }): boolean {
+  // The glasses' plugin has no terminal, and so no `.term` reader in its package.
+  if (__EVEN_PLUGIN__ || tab.kind !== 'terminal') return false
+  if (tab.path !== null) return isTermTarget(tab.path)
+  return tab.doc !== undefined && termOf(tab.doc) !== null
 }
 
 /** The name a new online terminal's file is made with, numbered after the first. */

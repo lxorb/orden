@@ -653,3 +653,27 @@ describe('the Linux publishing workflow', () => {
     expect(linux.split(stable)).toHaveLength(3)
   })
 })
+
+/** #427: Linux runs Orden on CEF (Chromium), and WebKitGTK's Orden - whose web process
+ *  aborted on Fedora 44 against libraries newer than the ones it was built with - is no
+ *  package's any more. The AUR's orden-git built it from source the WebKitGTK way until
+ *  then, with WebKitGTK as a dependency, long after every release had moved. */
+describe('the engine a Linux package runs', () => {
+  const recipes = readdirSync(join(ROOT, 'aur')).filter((one) => !one.includes('.'))
+
+  test.each(recipes)('%s needs no WebKitGTK', (name) => {
+    const recipe = read('aur', name, 'PKGBUILD')
+    const named = /depends=\(([^)]*)\)/.exec(recipe)?.[1] ?? ''
+    expect(named).not.toMatch(/webkit/i)
+    expect(named).toContain('nss')
+  })
+
+  test('and one built from source builds on CEF, as the release does', () => {
+    const recipe = read('aur', 'orden-git', 'PKGBUILD')
+    const build = /build\(\) \{([\s\S]*?)\n\}/.exec(recipe)?.[1] ?? ''
+    expect(build).toContain('scripts/linux-cef.sh tauri build')
+    expect(repo('.github', 'workflows', 'release.yml')).toContain(
+      'scripts/linux-cef.sh tauri build',
+    )
+  })
+})

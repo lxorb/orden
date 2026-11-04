@@ -143,7 +143,8 @@ describe('the mark that says shared', () => {
     // saving dot, which is what a dot means from now on, and the pulse on a
     // request waiting to be let in, in its sheet and in its pill. The foot's sync light went too (#206), and
     // the switcher, which is where the shared dot was, is not among them. An AI chat with
-    // an answer not yet seen wears one too (#1064), drawn in its one component.
+    // an answer not yet seen wears one too (#1064), drawn in its one component, and a
+    // row of the views' Display menu set otherwise than the view came, Todoist's (#1046).
     const dots = components
       .filter((one) => {
         const style = declarations(one.style)
@@ -164,6 +165,7 @@ describe('the mark that says shared', () => {
       'lib/JoinSheet.svelte',
       'lib/Tabs.svelte',
       'lib/ai/UnreadDot.svelte',
+      'lib/views/DisplayBuilder.svelte',
     ])
   })
 

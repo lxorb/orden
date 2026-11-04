@@ -447,7 +447,11 @@
     {#if viewport.touch}
       <header class="bar">
         {#if !settings.listing}
-          <button class="icon" aria-label={t('Back')} onclick={() => (settings.listing = true)}>
+          <button
+            class="nib-glyph"
+            aria-label={t('Back')}
+            onclick={() => (settings.listing = true)}
+          >
             <svg class="nib-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
           </button>
         {/if}
@@ -456,7 +460,7 @@
           {settings.listing ? t('Settings') : titleOf(settings.section)}
         </h1>
 
-        <button class="icon" aria-label={t('Close')} onclick={() => (settings.open = false)}>
+        <button class="nib-glyph" aria-label={t('Close')} onclick={() => (settings.open = false)}>
           <Cross />
         </button>
       </header>
@@ -696,15 +700,17 @@
     <!-- The one control whose options are colours rather than words: nine names
          would say what nine dots already say. The same row of dots the theme
          picker has at its foot; see Swatches.svelte. -->
-    <div class="nib-setting setting swatched" class:declared={!!field.declared}>
+    <div class="nib-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
-      <Swatches
-        options={field.options}
-        label={field.label}
-        chosen={field.get()}
-        onchoose={(value: string) => field.set(value)}
-        pair={field.pair}
-      />
+      <div class="nib-setting-value is-wrapping">
+        <Swatches
+          options={field.options}
+          label={field.label}
+          chosen={field.get()}
+          onchoose={(value: string) => field.set(value)}
+          pair={field.pair}
+        />
+      </div>
     </div>
   {:else if field.kind === 'picture'}
     <!-- A picture per side, shown as itself: pressing one chooses another, the way a
@@ -797,7 +803,7 @@
            kind waits for the field to be left, because half a word is a phrase
            that matches nothing. -->
         <input
-          class="inline"
+          class="nib-field is-value"
           type="text"
           value={field.get()}
           placeholder={field.placeholder}
@@ -812,7 +818,7 @@
   {:else if field.kind === 'select'}
     <div class="nib-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
-      <div class="pick">
+      <div class="nib-setting-value">
         <Select
           value={field.get()}
           options={field.options}
@@ -852,7 +858,7 @@
           /></span
         >{#if declared.holds('general.searchEngine')}{@render fileNote()}{/if}</span
       >
-      <div class="pick">
+      <div class="nib-setting-value">
         <Select
           value={customising ? CUSTOM : searchEngine.id}
           options={[
@@ -882,7 +888,7 @@
           >{#if declared.holds('general.searchEngineAddress')}{@render fileNote()}{/if}</span
         >
         <input
-          class="inline"
+          class="nib-field is-value"
           type="url"
           value={searchEngine.custom}
           placeholder="https://example.com/search?q=%s"
@@ -926,7 +932,7 @@
         <div class="chips">
           {#each modes.spellWords as word (word)}
             <button
-              class="chip"
+              class="nib-tag"
               title={t('Remove')}
               onclick={() => modes.toggleSpellWord(word, view)}
             >
@@ -936,7 +942,7 @@
         </div>
       {/if}
       <input
-        class="inline"
+        class="nib-field is-value add"
         type="text"
         placeholder={t('Add a word')}
         spellcheck="false"
@@ -1025,7 +1031,7 @@
             ></span
           >
           <input
-            class="inline"
+            class="nib-field is-value"
             value={account.user.name ?? ''}
             placeholder={t('Your name')}
             spellcheck="false"
@@ -1034,7 +1040,7 @@
         </label>
         <div class="nib-setting setting">
           <span class="name">{t('Email')}</span>
-          <span class="text">{account.user.email}</span>
+          <span class="nib-field is-value is-read">{account.user.email}</span>
         </div>
       </div>
 
@@ -1117,7 +1123,7 @@
         <label class="nib-setting setting">
           <span class="name">{t('Your name')}</span>
           <input
-            class="inline"
+            class="nib-field is-value"
             value={account.guest.name}
             placeholder={t('Your name')}
             spellcheck="false"
@@ -1224,7 +1230,7 @@
           /></span
         ></span
       >
-      <div class="pick">
+      <div class="nib-setting-value">
         <Select
           value={shortcuts.preset}
           options={presetChoices}
@@ -1296,7 +1302,7 @@
               {rebind.listening === entry.id ? t('Press a key…') : (shown(key) ?? t('Not set'))}
             </button>
             <button
-              class="revert"
+              class="nib-glyph revert"
               disabled={!shortcuts.changed(entry.id)}
               title={t('Reset')}
               aria-label={t('Reset')}
@@ -1317,8 +1323,10 @@
                 name: rebind.clash.holders.map((one) => one.label()).join(', '),
               })}
             </span>
-            <button class="take" onclick={() => rebind.takeOver()}>{t('Take it over')}</button>
-            <button class="give" onclick={() => (rebind.clash = null)}>{t('Cancel')}</button>
+            <button class="nib-chip" onclick={() => rebind.takeOver()}>{t('Take it over')}</button>
+            <button class="nib-chip is-quiet" onclick={() => (rebind.clash = null)}
+              >{t('Cancel')}</button
+            >
           </div>
         {/if}
       {/each}
@@ -1382,7 +1390,7 @@
         {@render mark(id)}
         <span class="name">{nameFor(id)}</span>
         <button
-          class="revert"
+          class="nib-glyph revert"
           disabled={at === 0}
           title={t('Move up')}
           aria-label={t('Move up')}
@@ -1391,7 +1399,7 @@
           <svg viewBox="0 0 16 16"><path d="M4.5 9.5L8 6l3.5 3.5" /></svg>
         </button>
         <button
-          class="revert"
+          class="nib-glyph revert"
           disabled={at === toolbar.ids.length - 1}
           title={t('Move down')}
           aria-label={t('Move down')}
@@ -1400,7 +1408,7 @@
           <svg viewBox="0 0 16 16"><path d="M4.5 6.5L8 10l3.5-3.5" /></svg>
         </button>
         <button
-          class="revert"
+          class="nib-glyph revert"
           title={t('Take it off')}
           aria-label={t('Take it off')}
           onclick={() => toolbar.remove(id)}
@@ -1429,7 +1437,7 @@
           /></span
         ></span
       >
-      <div class="pick">
+      <div class="nib-setting-value">
         <Select
           value={pull.id}
           options={pullChoices}
@@ -1461,7 +1469,7 @@
           {@render mark(entry.id)}
           <span class="name">{entry.label()}</span>
           <button
-            class="revert"
+            class="nib-glyph revert"
             title={t('Put it on the bar')}
             aria-label={t('Put it on the bar')}
             onclick={() => toolbar.add(entry.id)}
@@ -1517,7 +1525,7 @@
           ></span
         >
         <input
-          class="inline"
+          class="nib-field is-value"
           type="password"
           value=""
           placeholder="sk-"
@@ -1541,7 +1549,7 @@
             /></span
           ></span
         >
-        <div class="pick">
+        <div class="nib-setting-value">
           <Select
             value={modes.glassesModel}
             options={offered.models.map((one) => ({ value: one, label: one }))}
@@ -1559,7 +1567,7 @@
             /></span
           ></span
         >
-        <div class="pick">
+        <div class="nib-setting-value">
           <Select
             value={modes.glassesEffort}
             options={EFFORT_WORDS.map((one) => ({ value: one.value, label: t(one.label) }))}
@@ -1806,14 +1814,7 @@
      width let the chosen half stand out past its end. */
   .setting .nib-segmented {
     flex: none;
-    min-width: 14rem;
-  }
-
-  .setting .text {
-    color: var(--muted-strong);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: var(--setting-value);
   }
 
   .setting .value {
@@ -1847,15 +1848,6 @@
     stroke-width: 1.5;
     stroke-linecap: round;
     stroke-linejoin: round;
-  }
-
-  /* Never narrower than the column the choices line up in, and as wide as the
-     chosen one's words where they need more, so a value is read rather than
-     guessed from its first half: at one width for every language, German read
-     `Ansicht: In diesem Bere…`. */
-  .pick {
-    flex: none;
-    min-width: 14rem;
   }
 
   /* A row that is itself a control: it shows what it does when pointed at. */
@@ -1981,39 +1973,10 @@
 
   /* Back to the key it came with. Present only once it is not on it, so the
      row stays quiet until something was actually changed. */
-  .revert {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
+  /* The square is `.nib-glyph`; one with nothing to do is not there at all, so a
+     row that was never changed shows no way to change it back. */
   .revert:disabled {
     visibility: hidden;
-  }
-
-  @media (hover: hover) {
-    .revert:hover:not(:disabled) {
-      color: var(--text-strong);
-    }
-  }
-
-  .revert :global(svg) {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
 
   /* What is in the way, and the two ways out of it. Nothing is written until
@@ -2032,25 +1995,6 @@
   .clash span {
     flex: 1;
     min-width: 12rem;
-  }
-
-  .clash button {
-    flex: none;
-    padding: 5px 10px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-  }
-
-  .clash .take {
-    border-color: transparent;
-    background: var(--accent);
-    color: var(--accent-ink);
   }
 
   /* A key that may never arrive. Quiet rather than red: on a browser several of
@@ -2190,113 +2134,14 @@
     gap: var(--space-2);
   }
 
-  .words .inline {
-    width: 100%;
-    text-align: start;
-    border-color: var(--line);
+  .words > .add {
+    inline-size: auto;
   }
 
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
-  }
-
-  /* One word, and the way to take it back. The whole chip is the button, so
-     there is no small cross to aim at. */
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4em;
-    padding: 0.1em 0.55em;
-    border: none;
-    border-radius: 99px;
-    background: var(--surface-2);
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .chip :global(svg) {
-    width: 8px;
-    height: 8px;
-    color: var(--muted);
-    stroke-width: 1.4;
-  }
-
-  @media (hover: hover) {
-    .chip:hover {
-      background: var(--danger-soft);
-      color: var(--danger);
-    }
-
-    .chip:hover :global(svg) {
-      color: inherit;
-    }
-  }
-
-  /* An input in a row: the value at the right, no box until it is typed in. */
-  .inline {
-    flex: none;
-    width: 12rem;
-    padding: 6px 9px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: end;
-    outline: none;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  .inline::placeholder {
-    color: var(--muted);
-  }
-
-  /* An address no search can go to: said in the one colour the app says no in. */
-  .inline[aria-invalid='true'] {
-    border-color: var(--danger);
-  }
-
-  @media (hover: hover) {
-    .inline:hover {
-      border-color: var(--line);
-    }
-  }
-
-  /* The ground the box appears on, and only that: the turn is the themes
-     package's answer for a box with a caret in it, which outweighs both the
-     hairline above and the hover above that. */
-  .inline:focus {
-    background: var(--bg);
-  }
-
-  /* A row whose control is a row of dots rather than one word. It wraps, unlike
-     every other setting row: the control is as wide as the theme's list is long,
-     and a list that does not fit belongs under the name rather than squeezed
-     beside it. */
-  .swatched {
-    flex-wrap: wrap;
-  }
-
-  .swatched > :global(.swatches) {
-    flex: 1;
-    justify-content: flex-end;
-  }
-
-  /* Under a thumb the dots are what a thumb needs, which is wider than the row has
-     beside a name, so the name takes the first line and they take the rest. */
-  .sheet.phone .swatched > :global(.swatches) {
-    flex-basis: 100%;
-    justify-content: flex-start;
   }
 
   /* The part of a dial's track its floor keeps it off: grey rather than the accent, so
@@ -2458,34 +2303,6 @@
   /* Without a back button before it, the title lines up with the cards. */
   .sheet.phone .bar h1.inset {
     padding-inline-start: 10px;
-  }
-
-  .sheet.phone .bar .icon {
-    flex: none;
-    width: var(--touch-target);
-    height: var(--touch-target);
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-md);
-    background: none;
-    color: var(--text);
-    cursor: default;
-  }
-
-  .sheet.phone .bar .icon:active {
-    background: var(--surface-2);
-  }
-
-  .sheet.phone .bar .icon :global(svg) {
-    width: var(--touch-icon);
-    height: var(--touch-icon);
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
 
   .sheet.phone nav {
@@ -2655,11 +2472,6 @@
     width: 100%;
   }
 
-  .sheet.phone .pick {
-    min-width: 0;
-    max-width: 60%;
-  }
-
   /* An action in a card is a row of the grouped list on a phone: the card's own
      side padding, the accent, and the hairline above it. The panes drawn inside
      this sheet - security, sync, the AI providers - hold actions too, so it is
@@ -2688,13 +2500,6 @@
     font-size: var(--text-sm);
   }
 
-  /* The floor, not a size of its own: three of these in a row is what a button
-     on the bar carries, and a thumb has to land on each. */
-  .sheet.phone .revert {
-    width: var(--touch-target);
-    height: var(--touch-target);
-  }
-
   .sheet.phone .setting .mark {
     width: 34px;
     height: 34px;
@@ -2703,18 +2508,6 @@
 
   .sheet.phone .clash {
     padding: 10px var(--touch-pad);
-  }
-
-  .sheet.phone .inline {
-    width: 55%;
-    min-height: var(--touch-target);
-    padding: 8px 10px;
-    font-size: var(--touch-text);
-  }
-
-  .sheet.phone .setting .text {
-    max-width: 60%;
-    font-size: var(--touch-text);
   }
 
   .sheet.phone .hint,

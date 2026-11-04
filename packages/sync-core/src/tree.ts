@@ -18,9 +18,12 @@
  *  - **A mergeable create** ("this note, if it is not there yet": the append action,
  *    the journal) that lands on a live note of the same name is answered `merged`
  *    with that note's id, and the device merges its words into it.
- *  - **An edit beats a delete.** A note written in after the delete's `seen` is not
- *    deleted (`edited`). A folder delete takes only what its device had seen; what
- *    was made, moved in, renamed or written in since stays, and keeps the folder.
+ *  - **An edit beats a delete, and so does anything else the deleting device had not
+ *    seen.** A delete takes only what its device had seen: a note another device wrote
+ *    in, restored, renamed or moved after the delete's `seen` is not deleted (`edited`),
+ *    and a folder delete leaves what was made, moved in, renamed, restored or written in
+ *    since, which keeps the folder. A restore is a person asking for the note back; a
+ *    delete that never knew of it does not undo that (#1068).
  *    A content change landing on a deleted note brings it back.
  *  - **A move or a create into a deleted folder brings the folder back**, with its
  *    ancestors.
@@ -55,6 +58,15 @@ export interface TreeEntry {
   /** The cursor of the delete that took it, so a folder restored brings back what
    *  was deleted with it and nothing that was deleted before. */
   deletedIn?: number
+  /** Where its latest change was to its words: the cursor and the device of the change
+   *  before them that was to its place - made, renamed, moved, deleted or restored - so a
+   *  folder delete can tell who put it where it is from who wrote in it last (#1068).
+   *  Nothing where its latest change was to its place, which `seq` and `by` then say. */
+  placedSeq?: number
+  placedBy?: string
+  /** Where somebody put it among the others in its folder, by hand (order.ts); nothing
+   *  where nobody has, and then it stands after every entry that has one. */
+  pos?: string
 }
 
 export interface TreeState {
@@ -174,10 +186,16 @@ function holds(state: TreeState, ancestor: string, id: string | null): boolean {
  *  the folder deleted next, from the same device that never saw the note in it, took the
  *  note and its words (#514). */
 function changed(state: TreeState, entry: TreeEntry, device: string | undefined, seen?: number) {
+  // Its place as its placer left it: words written in since do not make their writer the
+  // one whose move this device had seen (#1068).
+  const place = placing(entry)
   const unseen =
-    seen !== undefined && entry.seq > seen && entry.by !== undefined && entry.by !== device
+    seen !== undefined && place.seq > seen && place.by !== undefined && place.by !== device
   entry.seq = tick(state)
-  if (unseen) return
+  if (unseen) {
+    if (place.by !== undefined) entry.by = place.by
+    return
+  }
   if (device === undefined) delete entry.by
   else entry.by = device
 }
@@ -247,11 +265,35 @@ function writtenSince(entry: TreeEntry, seen: number, device: string | undefined
   return entry.docSeq > seen && byOther(entry.docBy)
 }
 
+/** The latest change to an entry's place: its cursor and its device. The entry's own
+ *  `seq` and `by` where that was its latest change of any sort, and what was kept of it
+ *  when words were written in since (`placedSeq`). An entry from before that was kept
+ *  answers as it always did. */
+function placing(entry: TreeEntry): { seq: number; by: string | undefined } {
+  const wordsLast = entry.seq === entry.docSeq && entry.placedSeq !== undefined
+  return wordsLast
+    ? { seq: entry.placedSeq ?? entry.seq, by: entry.placedBy }
+    : { seq: entry.seq, by: entry.by }
+}
+
 /** Whether a delete of the folder around an entry has to leave it: something about it
- *  changed after `seen`, by another device. */
+ *  changed after `seen`, by another device. Its place as its placer left it, and its
+ *  words as their writer did: a device that wrote in a note somebody else moved into the
+ *  folder had still never seen it there, and its folder delete leaves it (#1068). */
 function changedSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
-  const byOther = device === undefined || entry.by !== device
-  return (entry.seq > seen && byOther) || writtenSince(entry, seen, device)
+  const place = placing(entry)
+  const byOther = device === undefined || place.by !== device
+  return (place.seq > seen && byOther) || writtenSince(entry, seen, device)
+}
+
+/** Whether a delete of the entry itself has to leave it: another device wrote in it,
+ *  restored, renamed or moved it after `seen` (#1068). Only a device's change counts:
+ *  the account's own bookkeeping - folders it made from paths when the space moved to
+ *  v2 - is nobody's word against a delete. */
+function othersSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
+  const place = placing(entry)
+  const byOther = place.by !== undefined && (device === undefined || place.by !== device)
+  return (place.seq > seen && byOther) || writtenSince(entry, seen, device)
 }
 
 /** The rules, with one op's device in hand. */
@@ -263,7 +305,14 @@ class Rules {
 
   /** Places a new entry: its parent brought back if it was deleted, its name
    *  numbered if taken. */
-  made(op: Op, id: string, kind: EntryKind, parent: string | null, wanted: string): OpResult {
+  made(
+    op: Op,
+    id: string,
+    kind: EntryKind,
+    parent: string | null,
+    wanted: string,
+    pos?: string,
+  ): OpResult {
     const { state, device } = this
     const existing = state.entries.get(id)
     if (existing) return existing.deleted ? { op: op.op, refused: 'gone' } : placement(op, existing)
@@ -279,6 +328,7 @@ class Rules {
       seq: 0,
       docSeq: 0,
     }
+    if (pos !== undefined) entry.pos = pos
     changed(state, entry, device)
     state.entries.set(id, entry)
     return placement(op, entry)
@@ -331,10 +381,28 @@ class Rules {
     if (!isEntry(entry)) return entry
     reviveAbove(state, op.parent, device)
     const name = freeName(state, op.parent, op.name ?? entry.name, entry.kind, entry.id)
-    if (name !== entry.name || op.parent !== entry.parent) {
+    // A move that does not say where it was dropped keeps the position it had only in
+    // the folder it had it in: carried elsewhere, it stands with the unplaced.
+    const pos = op.pos ?? (op.parent === entry.parent ? entry.pos : undefined)
+    if (name !== entry.name || op.parent !== entry.parent || pos !== entry.pos) {
       entry.name = name
       entry.parent = op.parent
+      if (pos === undefined) delete entry.pos
+      else entry.pos = pos
       changed(state, entry, device, op.seen)
+    }
+    return placement(op, entry)
+  }
+
+  /** Put somewhere else in its folder (#1068). The later of two such to arrive stands,
+   *  as with a rename; two moved into one gap stand side by side, the ids between them.
+   *  Nothing to put where the entry is gone. */
+  placed(op: Op & { t: 'place' }): OpResult {
+    const entry = this.state.entries.get(op.id)
+    if (!entry || entry.deleted) return { op: op.op, refused: 'gone' }
+    if (entry.pos !== op.pos) {
+      entry.pos = op.pos
+      changed(this.state, entry, this.device, op.seen)
     }
     return placement(op, entry)
   }
@@ -347,12 +415,16 @@ class Rules {
     if (entry.deleted) return { op: op.op, ok: true }
 
     if (entry.kind !== 'folder') {
-      if (writtenSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
+      if (othersSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
       entry.deleted = true
       changed(state, entry, device)
       entry.deletedIn = entry.seq
       return { op: op.op, ok: true }
     }
+
+    // A folder another device brought back, renamed or moved since stays whole, as a
+    // note does (#1068).
+    if (othersSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
 
     // What the deleting device had not seen stays, and so does every folder between
     // it and the one deleted.
@@ -387,7 +459,13 @@ class Rules {
     const { state, device } = this
     const entry = state.entries.get(op.id)
     if (!entry) return { op: op.op, refused: 'gone' }
-    if (!entry.deleted) return placement(op, entry)
+    // Back already, by somebody else's restore: still a person asking for it, and noted
+    // as a change of theirs - whatever they had seen - so a delete that had not seen this
+    // one leaves it (#1068).
+    if (!entry.deleted) {
+      changed(state, entry, device)
+      return placement(op, entry)
+    }
 
     const batch = entry.deletedIn
     reviveAbove(state, entry.parent, device)
@@ -404,9 +482,9 @@ class Rules {
   applied(op: Op): OpResult {
     switch (op.t) {
       case 'mkdir':
-        return this.made(op, op.id, 'folder', op.parent, op.name)
+        return this.made(op, op.id, 'folder', op.parent, op.name, op.pos)
       case 'create':
-        return this.merged(op) ?? this.made(op, op.id, op.kind, op.parent, op.name)
+        return this.merged(op) ?? this.made(op, op.id, op.kind, op.parent, op.name, op.pos)
       case 'rename':
         return this.renamed(op)
       case 'move':
@@ -415,6 +493,8 @@ class Rules {
         return this.deleted(op)
       case 'restore':
         return this.restored(op)
+      case 'place':
+        return this.placed(op)
     }
   }
 }
@@ -446,6 +526,12 @@ export function contentChanged(state: TreeState, id: string, device?: string): n
   if (entry.deleted) {
     reviveAbove(state, entry.parent, device)
     revive(state, entry, device)
+  }
+  // Who last put it where it is, kept before the words make their writer its last changer.
+  if (entry.seq !== entry.docSeq || entry.placedSeq === undefined) {
+    entry.placedSeq = entry.seq
+    if (entry.by === undefined) delete entry.placedBy
+    else entry.placedBy = entry.by
   }
   changed(state, entry, device)
   entry.docSeq = entry.seq

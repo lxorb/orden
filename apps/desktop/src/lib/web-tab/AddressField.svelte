@@ -44,7 +44,11 @@
    *    takes it, and Enter goes where it says;
    *  * a few pages open before hang under the field, walked with the arrows, taken with
    *    Enter or a press, closed with Escape, and taken out of the history with
-   *    Shift+Delete, which is how Chrome forgets one.
+   *    Shift+Delete, which is how Chrome forgets one;
+   *  * and the space's own websites among them, found the palette's way by their name
+   *    and their address and marked as saved, which open as the note they are (#1059;
+   *    see web-notes.ts). Tab takes the row the arrows are on, or what the field
+   *    finished, into the field to type on from.
    *
    *  Alt+Enter goes there in a tab of its own, which is Chrome's too.
    *
@@ -60,10 +64,20 @@
   import { t } from '../i18n.svelte'
   import { overlays } from '../overlays'
   import Suggest from '../Suggest.svelte'
+  import { frecency } from '../frecency'
+  import { links } from '../link-index.svelte'
+  import { pieces } from '../palette/pieces'
   import { dotCom, type HalfTyped } from './typed'
   import { shownAddress } from './omnibox'
   import { visited } from './visited'
+  import { leads, noteKey, webNotesFor, webNotesOf, type WebNote } from './web-notes'
   import type { Visit } from './visits'
+
+  /** One row under the field: a page of the history, or a website of the space. */
+  type Offer = { kind: 'page'; visit: Visit } | { kind: 'note'; note: WebNote }
+
+  /** What a website's row is known by in the list, which no address can be. */
+  const NOTE = 'nib-note:'
 
   const {
     resting,
@@ -71,6 +85,7 @@
     book,
     onenter,
     ontyping,
+    onnote,
     held = { halfTyped: null },
   }: {
     /** What the field reads while nobody is typing in it. */
@@ -84,6 +99,9 @@
      *  is what was typed before the field finished it. */
     onenter: (said: string, aside: boolean, typed: string) => void
     ontyping: (on: boolean) => void
+    /** A website of the space was chosen from the list: the tab opens that note. Left
+     *  out, the list offers none - a private tab's field, which keeps to its own. */
+    onnote?: ((path: string) => void) | undefined
     /** Where what was half typed waits while the field is not on screen: the tab's own
      *  page, so going to another tab and back finds it (#381). Kept in memory with the
      *  tab and not in the session, as Chrome keeps an address being typed per tab and
@@ -98,7 +116,7 @@
   let editing = $state(false)
   /** What the reader typed, without whatever the field wrote after it. */
   let typed = $state('')
-  let rows = $state<Visit[]>([])
+  let rows = $state<Offer[]>([])
   /** The row the arrows are on, or -1 for the field itself. */
   let active = $state(-1)
   /** Escape closed the list; the next letter opens it again. */
@@ -106,7 +124,45 @@
   let composing = false
 
   const listing = $derived(editing && !shut && rows.length > 0)
-  const titles = $derived(new Map(rows.map((one) => [one.url, one.title])))
+  /** Each row by the value the list knows it by. */
+  const byValue = $derived(new Map(rows.map((one) => [valueOf(one), one])))
+
+  function valueOf(offer: Offer): string {
+    return offer.kind === 'note' ? `${NOTE}${offer.note.path}` : offer.visit.url
+  }
+
+  function urlOf(offer: Offer): string {
+    return offer.kind === 'note' ? offer.note.url : offer.visit.url
+  }
+
+  /** What was typed offered: the space's websites the palette's way, and the pages of
+   *  the history, one row per place. A website found well stands first; one found only
+   *  by letters spread through it goes under the pages, which agree with what the field
+   *  finished the word to. */
+  function offersFor(said: string): Offer[] {
+    const pages = visited.suggest(book, said)
+    const root = links.rootOf()
+    if (!onnote || root === null) return pages.map((visit) => ({ kind: 'page', visit }))
+
+    const notes = webNotesFor(
+      said,
+      webNotesOf(links.websitesHere, root, (key) => frecency.worth(key)),
+    )
+    const saved = new Set(notes.map((one) => one.url))
+    const first: Offer[] = []
+    const after: Offer[] = []
+    for (const note of notes) {
+      const offer: Offer = { kind: 'note', note }
+      ;(leads(note, said, frecency.worth(noteKey(note.path)) > 0) ? first : after).push(offer)
+    }
+    return [
+      ...first,
+      ...pages
+        .filter((one) => !saved.has(one.url))
+        .map((visit): Offer => ({ kind: 'page', visit })),
+      ...after,
+    ]
+  }
 
   /** Puts the resting face back on a field nobody is typing in. Done by writing the
    *  value rather than by binding it: a bound value fights the keys somebody is
@@ -251,7 +307,7 @@
     typed = box.value
     active = -1
     shut = false
-    rows = visited.suggest(book, typed)
+    rows = offersFor(typed)
     remember()
 
     // Only a letter typed at the end: a deletion is somebody taking the offer away,
@@ -286,9 +342,42 @@
     active = next
 
     const row = rows[active]
-    box.value = row ? shownAddress(row.url) : typed
+    box.value = row ? shownAddress(urlOf(row)) : typed
     box.setSelectionRange(box.value.length, box.value.length)
     if (!row) finish()
+  }
+
+  /** Tab: what the field reads becomes what was typed, to go on from - the row the
+   *  arrows are on, or the rest of the address the field wrote after the caret. False
+   *  where there is nothing to take, so the key moves on as Tab does. */
+  function complete(): boolean {
+    const box = field
+    if (!box) return false
+    const row = rows[active]
+    const offered = box.selectionStart !== box.selectionEnd && box.selectionEnd === box.value.length
+    if (!row && !offered) return false
+
+    const text = row ? shownAddress(urlOf(row)) : box.value
+    box.value = text
+    box.setSelectionRange(text.length, text.length)
+    typed = text
+    active = -1
+    rows = offersFor(typed)
+    remember()
+    return true
+  }
+
+  /** A row chosen: a website opens as its note, a page goes where it is. */
+  function choose(value: string, aside = false) {
+    const row = byValue.get(value)
+    if (row?.kind === 'note' && onnote && !aside) {
+      frecency.use(noteKey(row.note.path))
+      onnote(row.note.path)
+      field?.blur()
+      held.halfTyped = null
+      return
+    }
+    go(row ? urlOf(row) : value, aside)
   }
 
   function go(said: string, aside = false) {
@@ -311,13 +400,19 @@
     }
 
     const row = rows[active]
-    if (listing && row && event.key === 'Delete' && event.shiftKey) {
+    // Out of the history; a website is a file of the space, and stays.
+    if (listing && row?.kind === 'page' && event.key === 'Delete' && event.shiftKey) {
       event.preventDefault()
-      visited.remove(book, row.url)
-      rows = visited.suggest(book, typed)
+      visited.remove(book, row.visit.url)
+      rows = offersFor(typed)
       active = Math.min(active, rows.length - 1)
       const next = rows[active]
-      box.value = next ? shownAddress(next.url) : typed
+      box.value = next ? shownAddress(urlOf(next)) : typed
+      return
+    }
+
+    if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.altKey) {
+      if (complete()) event.preventDefault()
       return
     }
 
@@ -332,7 +427,8 @@
       // Ctrl+Enter is the `.com` press every browser has, and it is about what was
       // typed rather than what the field offered after it; see `dotCom` in typed.ts.
       const dotted = event.ctrlKey || event.metaKey ? dotCom(typed) : null
-      go(row?.url ?? dotted ?? resolved(box.value), event.altKey)
+      if (row) choose(valueOf(row), event.altKey)
+      else go(dotted ?? resolved(box.value), event.altKey)
       return
     }
 
@@ -386,21 +482,36 @@
     <Suggest
       id="{id}-pages"
       label={t('Address')}
-      values={rows.map((one) => one.url)}
+      values={rows.map(valueOf)}
       {typed}
       {active}
-      shown={shownAddress}
-      aside={(url: string) => titles.get(url) ?? ''}
+      shown={(value: string) => {
+        const row = byValue.get(value)
+        return row?.kind === 'note' ? row.note.title : shownAddress(row ? urlOf(row) : value)
+      }}
+      aside={(value: string) => {
+        const row = byValue.get(value)
+        if (row?.kind === 'note') return row.note.shown
+        return row?.visit.title ?? ''
+      }}
+      marks={(value: string, text: string) =>
+        byValue.get(value)?.kind === 'note' ? pieces(text, typed) : null}
+      badge={(value: string) => (byValue.get(value)?.kind === 'note' ? t('Saved') : '')}
       lead={site}
-      onchoose={go}
+      onchoose={(value: string) => choose(value)}
     />
   {/if}
 </div>
 
 <!-- The site's mark in front of each page offered, the one its tab wore: Chrome's
      omnibox rows, and the first thing an eye finds in a list of addresses. -->
-{#snippet site(url: string)}
-  <FileMark mark="web" {url} />
+{#snippet site(value: string)}
+  {@const row = byValue.get(value)}
+  {#if row?.kind === 'note'}
+    <FileMark mark="web" path={row.note.path} />
+  {:else}
+    <FileMark mark="web" url={row ? urlOf(row) : value} />
+  {/if}
 {/snippet}
 
 <style>

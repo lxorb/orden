@@ -35,7 +35,6 @@ function resting(pages: Held): Resting[] {
       calling: allowed('camera') || allowed('microphone'),
       notifying: allowed('notifications'),
       edited: page.edited,
-      pinned: page.pinned,
       inPrivate: page.inPrivate,
     }
   })

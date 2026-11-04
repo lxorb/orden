@@ -12,16 +12,18 @@ import {
   reorderSlack,
   separated,
   slotAt,
+  widened,
+  OPENED_LEAST,
   WIDTH,
   widthsFor,
   worthKeeping,
 } from './layout'
 
-/** A strip written as letters: `a` an inactive tab, `A` the active one, `p` a
- *  pinned tab and `P` the active pinned one. */
+/** A strip written as letters: `a` an inactive tab, `A` the active one, `p` a tab
+ *  drawn as its mark alone (#1041) and `P` an active one drawn so. */
 function strip(shape: string) {
   return Array.from({ length: shape.length }, (_, at) => shape.charAt(at)).map((letter) => ({
-    pinned: letter === 'p' || letter === 'P',
+    icon: letter === 'p' || letter === 'P',
     active: letter === 'A' || letter === 'P',
   }))
 }
@@ -34,7 +36,7 @@ describe('how wide the tabs are', () => {
   })
 
   test('before the strip is measured, too', () => {
-    expect(widthsFor(strip('aAap'), null)).toEqual([238, 238, 238, WIDTH.pinned])
+    expect(widthsFor(strip('aAap'), null)).toEqual([238, 238, 238, WIDTH.icon])
   })
 
   test('short of room they share it out evenly and fill it exactly', () => {
@@ -45,9 +47,9 @@ describe('how wide the tabs are', () => {
     expect(widths[0]).toBeGreaterThanOrEqual(widths[3] ?? 0)
   })
 
-  test('a pinned tab keeps its width whatever the room', () => {
+  test('a tab drawn as its mark keeps its width whatever the room', () => {
     for (const room of [100, 400, 5000]) {
-      expect(widthsFor(strip('pPaA'), room).slice(0, 2)).toEqual([WIDTH.pinned, WIDTH.pinned])
+      expect(widthsFor(strip('pPaA'), room).slice(0, 2)).toEqual([WIDTH.icon, WIDTH.icon])
     }
   })
 
@@ -87,8 +89,8 @@ describe('where the tabs are', () => {
 })
 
 describe('what fits in a tab', () => {
-  const inactive = { pinned: false, active: false }
-  const active = { pinned: false, active: true }
+  const inactive = { icon: false, active: false }
+  const active = { icon: false, active: true }
 
   test('a standard tab shows everything', () => {
     expect(partsFor(238, inactive)).toEqual({
@@ -131,12 +133,13 @@ describe('what fits in a tab', () => {
     })
   })
 
-  test('a pinned tab is its mark and never a cross', () => {
-    expect(partsFor(WIDTH.pinned, { pinned: true, active: true })).toEqual({
+  test('a tab drawn as an icon is its mark at its leading edge, and never a cross', () => {
+    // Not centred, so the mark stays put as the tab opens out under the pointer.
+    expect(partsFor(WIDTH.icon, { icon: true, active: true })).toEqual({
       mark: true,
       close: false,
       title: false,
-      centred: true,
+      centred: false,
     })
   })
 
@@ -145,20 +148,35 @@ describe('what fits in a tab', () => {
   })
 })
 
+describe('a tab drawn as its mark, opened out under the pointer (#1041)', () => {
+  test('opens to the standard width where there is room, the rest where they were', () => {
+    const widths = [46, 238, 46, 46]
+    const opened = widened(widths, 2, 2000)
+    expect(opened[2]).toBe(WIDTH.standard)
+    expect(opened.filter((_, at) => at !== 2)).toEqual([46, 238, 46])
+  })
+
+  test('opens far enough to read even with no room, pushing the rest along', () => {
+    const widths = [46, 238, 46, 46]
+    expect(widened(widths, 0, 376)[0]).toBe(OPENED_LEAST)
+    // Every tab in front of it, and so it, starts where it did.
+    expect(placed(widened(widths, 2, 376))[2]?.x).toBe(placed(widths)[2]?.x)
+  })
+
+  test('never narrows a tab', () => {
+    expect(widened([238, 238], 1, 476)[1]).toBe(238)
+  })
+})
+
 describe('where a drop from outside lands', () => {
   const bounds = placed([100, 100, 100])
 
   test('before the tab whose middle the pointer has not reached', () => {
-    expect(slotAt(bounds, 10, 0)).toBe(0)
-    expect(slotAt(bounds, 60, 0)).toBe(1)
-    expect(slotAt(bounds, 149, 0)).toBe(1)
-    expect(slotAt(bounds, 151, 0)).toBe(2)
-    expect(slotAt(bounds, 1000, 0)).toBe(3)
-  })
-
-  test('after the pinned run, unless it is pinned itself', () => {
-    expect(slotAt(bounds, 10, 2)).toBe(2)
-    expect(slotAt(bounds, 1000, 2, true)).toBe(2)
+    expect(slotAt(bounds, 10)).toBe(0)
+    expect(slotAt(bounds, 60)).toBe(1)
+    expect(slotAt(bounds, 149)).toBe(1)
+    expect(slotAt(bounds, 151)).toBe(2)
+    expect(slotAt(bounds, 1000)).toBe(3)
   })
 })
 
@@ -166,33 +184,28 @@ describe('where a dragged tab belongs', () => {
   const widths = [100, 100, 100, 100]
 
   test("where it is, until it has passed a neighbour's middle", () => {
-    expect(nearestSlot(widths, 0, 0, 0, false)).toBe(0)
-    expect(nearestSlot(widths, 0, 49, 0, false)).toBe(0)
-    expect(nearestSlot(widths, 0, 51, 0, false)).toBe(1)
-    expect(nearestSlot(widths, 0, 290, 0, false)).toBe(3)
+    expect(nearestSlot(widths, 0, 0)).toBe(0)
+    expect(nearestSlot(widths, 0, 49)).toBe(0)
+    expect(nearestSlot(widths, 0, 51)).toBe(1)
+    expect(nearestSlot(widths, 0, 290)).toBe(3)
   })
 
   test('and back the same way', () => {
-    expect(nearestSlot(widths, 3, 251, 0, false)).toBe(3)
-    expect(nearestSlot(widths, 3, 249, 0, false)).toBe(2)
-    expect(nearestSlot(widths, 3, -40, 0, false)).toBe(0)
+    expect(nearestSlot(widths, 3, 251)).toBe(3)
+    expect(nearestSlot(widths, 3, 249)).toBe(2)
+    expect(nearestSlot(widths, 3, -40)).toBe(0)
   })
 
   test('with tabs of different widths it measures the slot, not the tab', () => {
-    // The narrow pinned-looking first tab: moving the wide one to the front puts
+    // The narrow first tab, as a tab drawn as its mark is: moving the wide one to the front puts
     // it at 0, and leaving it second puts it at 40.
-    expect(nearestSlot([40, 200, 100], 1, 19, 0, false)).toBe(0)
-    expect(nearestSlot([40, 200, 100], 1, 21, 0, false)).toBe(1)
+    expect(nearestSlot([40, 200, 100], 1, 19)).toBe(0)
+    expect(nearestSlot([40, 200, 100], 1, 21)).toBe(1)
   })
 
   test('a tie keeps the slot it has', () => {
-    expect(nearestSlot(widths, 0, 50, 0, false)).toBe(0)
-    expect(nearestSlot(widths, 0, 50, 0, false, 1)).toBe(1)
-  })
-
-  test('a pinned tab stays among the pinned, and the rest after them', () => {
-    expect(nearestSlot([46, 46, 100, 100], 0, 500, 2, true)).toBe(1)
-    expect(nearestSlot([46, 46, 100, 100], 3, -100, 2, false)).toBe(2)
+    expect(nearestSlot(widths, 0, 50)).toBe(0)
+    expect(nearestSlot(widths, 0, 50, 1)).toBe(1)
   })
 
   test('a narrower tab needs less movement before the next reorder', () => {
@@ -242,15 +255,15 @@ describe('closing tabs with the pointer', () => {
       ['c', 120],
     ])
     const left = [
-      { id: 'a', pinned: false, active: false },
-      { id: 'c', pinned: false, active: true },
+      { id: 'a', icon: false, active: false },
+      { id: 'c', icon: false, active: true },
     ]
     expect(keptWidths(left, kept)).toEqual([120, 120])
   })
 
   test('a narrow tab that becomes active is let out to the active least width', () => {
     const kept = new Map([['a', 20]])
-    expect(keptWidths([{ id: 'a', pinned: false, active: true }], kept)).toEqual([WIDTH.active])
+    expect(keptWidths([{ id: 'a', icon: false, active: true }], kept)).toEqual([WIDTH.active])
   })
 
   test('and a tab that was not there ends it', () => {
@@ -258,8 +271,8 @@ describe('closing tabs with the pointer', () => {
     expect(
       keptWidths(
         [
-          { id: 'a', pinned: false, active: false },
-          { id: 'new', pinned: false, active: true },
+          { id: 'a', icon: false, active: false },
+          { id: 'new', icon: false, active: true },
         ],
         kept,
       ),

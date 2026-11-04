@@ -86,6 +86,15 @@ export const zhHans: Dictionary = {
   // Tasks: the Display menu
   Display: '显示',
   'Completed tasks': '已完成任务',
+  Smart: '智能',
+  Grouping: '分组',
+  Sorting: '排序',
+  'Last 30 days': '过去 30 天',
+  'Assigned to me': '分配给我',
+  Unassigned: '未分配',
+  'Reset all': '全部重置',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    '布局将任务显示为列表、看板或日历。分组将任务分成若干组，即看板的列。排序为每一组排好顺序。筛选会隐藏你不需要的内容。所有这些都会为此视图保留。',
   // Tasks: several lines pasted into quick add
   'One task': '一个任务',
   'One per line': '每行一个',
@@ -554,11 +563,11 @@ export const zhHans: Dictionary = {
   'Actual size': '实际大小',
   // Appearance
   Accent: '强调色',
-  'Window corners': '窗口圆角',
-  Rounded: '圆角',
-  Square: '直角',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    '圆角让打开的内容浮在窗口内的卡片中；直角让它贴边。',
+  'Tidy up': '整理',
+  'Swipe in from the edge to see your notes.': '从边缘向内滑动即可查看笔记。',
+  'Show other tabs as icons': '其他标签页只显示图标',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    '除前面的标签页外，每个标签页只显示图标；指向某个标签页时会显示其名称。',
   'Tab preview delay': '标签页预览延迟',
   'How long the pointer rests on a tab before its preview shows.':
     '指针在标签页上停留多久后显示预览。',
@@ -1770,6 +1779,7 @@ export const zhHans: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': '网站信息',
   Downloads: '下载',
+  'Downloading {name}': '正在下载 {name}',
   'Show in folder': '在文件夹中显示',
   'Show in Finder': '在访达中显示',
   'Reveal in Finder': '在访达中显示',
@@ -1863,6 +1873,9 @@ export const zhHans: Dictionary = {
   'Exited with code {code}': '已退出，代码 {code}',
   'Could not start {shell}': '无法启动 {shell}',
   'Restore history': '恢复历史记录',
+  'Colours follow the theme': '颜色跟随主题',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    '用主题的颜色绘制终端；关闭则保留一套固定的调色板。',
   'Restored {time}': '已恢复 {time}',
   'Stop what is running in {name}?': '停止 {name} 中正在运行的内容？',
   'Stop what is running in these terminals?': '停止这些终端中正在运行的内容？',
@@ -2007,6 +2020,8 @@ export const zhHans: Dictionary = {
   'Every space': '所有空间',
   Sites: '网站',
   'Asks first': '先询问',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    '它通过 MCP 连接，并在那里自行管理权限：Orden 不会询问它任何事。下方的空间、已屏蔽的网站和限制依然有效。',
   Limits: '限制',
   'Clear what {name} did?': '清除 {name} 的活动？',
   'Show earlier': '显示更早',
@@ -2248,6 +2263,12 @@ export const zhHans: Dictionary = {
   // The online terminal
   'Online terminal': '在线终端',
   'New online terminal': '新建在线终端',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': '另一台设备',
+  'Taken over by {device}': '已被 {device} 接管',
+  'Open on {device} since {time}': '自 {time} 起在 {device} 上打开',
+  'Take over': '接管',
+  'Take back': '收回',
   'Start online machine': '启动在线机器',
   'Stop online machine': '停止在线机器',
   Resume: '继续',
@@ -2292,6 +2313,8 @@ export const zhHans: Dictionary = {
   'Take photo': '拍照',
   Pronouns: '代词',
   Bio: '简介',
+  'A few words about you': '简单介绍一下自己',
+  'What’s happening?': '在忙什么？',
   'Clear after': '清除时间',
   '30 minutes': '30 分钟',
   '1 hour': '1 小时',
@@ -2624,4 +2647,5 @@ export const zhHans: Dictionary = {
   'Your report reached us. You can follow it here:': '我们已收到你的报告。你可以在这里查看进展：',
   'View your report': '查看你的报告',
   'Not sent. Your text is kept, so you can try again.': '未发送。你的文字已保留，可以再试一次。',
+  'Reset to site icon': '恢复为网站图标',
 }

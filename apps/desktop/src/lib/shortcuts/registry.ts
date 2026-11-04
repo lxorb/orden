@@ -478,21 +478,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => workspace.goForward(),
   },
   {
-    // No default chord: pinning is done to a tab that is already in front of
-    // you, and every key with a hand on it is spoken for. The row in the tab's
-    // own menu and the palette are the two ways in, and this is here so a reader
-    // who wants a key can give it one.
-    id: 'app.pin',
-    label: () => (workspace.active?.pinned === true ? t('Unpin') : t('Pin')),
-    category: 'view',
-    scope: 'app',
-    key: null,
-    run: () => {
-      const id = workspace.activeTabId
-      if (id) workspace.togglePin(id)
-    },
-  },
-  {
     // The key a browser and Obsidian both use for it, so no hand has to be told.
     id: 'app.reopen',
     label: () => t('Reopen closed tab'),
@@ -909,13 +894,15 @@ const APP_ENTRIES: Shortcut[] = [
   ...(__EVEN_PLUGIN__
     ? []
     : [
+        // Todos as a tab, the left side's checkbox (#1047); the Tasks panel lives on the
+        // right now, and its own tab opens it.
         {
           id: 'app.tasks',
           label: () => t('Tasks'),
           category: 'view',
           scope: 'app',
           key: 'Mod-Shift-y',
-          run: () => revealPanel('tasks'),
+          run: () => void import('../todos-entry').then(({ showTodos }) => showTodos()),
         } satisfies Shortcut,
         // The Chats panel, and two keys a chat answers itself (docs/chats.md 4.16).
         {
@@ -1688,8 +1675,7 @@ function closeAroundActive(which: Around) {
  *  it makes, for a hand that would rather not. It stops at either end rather than
  *  wrapping round, as Chrome's does: walking a strip is a loop, moving a tab is a
  *  rearrangement, and a key that carried the first tab of forty to the far end
- *  because it was pressed once too often would be a key nobody could trust. A
- *  pinned tab stays among the pinned; see `placeFor` in workspace/pinning.ts. */
+ *  because it was pressed once too often would be a key nobody could trust. */
 function moveTab(direction: number) {
   const paneId = workspace.panes.focusedId
   const tabs = workspace.tabsIn(paneId)

@@ -17,7 +17,7 @@
  *  sync pane, and the sweep over the copies already made - settles them the same way.
  *  See sync/pass.ts and sync/web-copies.ts. */
 
-import { readWebFile, type Shortcut, writeShortcut } from './shortcut'
+import { readWebFile, rewriteShortcut, type Shortcut } from './shortcut'
 
 /** The one file two copies of the web note at `path` come to. `theirsNewer` says
  *  which side was written last. A side that is not a shortcut at all - a `.webloc`,
@@ -36,15 +36,21 @@ export function settleShortcuts(
   const stale = readWebFile(path, older)
   if (!fresh || !stale || /\.webloc$/i.test(path.trim())) return newer
 
-  const settled = writeShortcut(
-    fresh.url,
-    fresh.title ?? stale.title ?? '',
-    firstAdded(fresh, stale),
-    fresh.home ?? fresh.url,
-    fresh.icon ?? stale.icon,
+  // The icon the reader chose from whichever side has one, the newer first, as the
+  // site's mark is: a page moving on rewrites its file far more often than anybody
+  // chooses an icon, and a copy written by a device that had not heard of the choice
+  // yet must not take it away (#1098).
+  const chosen = fresh.chosen ?? stale.chosen
+  const settled = rewriteShortcut(fresh, {
+    title: fresh.title ?? stale.title ?? '',
+    when: firstAdded(fresh, stale),
+    home: fresh.home ?? fresh.url,
+    icon: fresh.icon ?? stale.icon,
     // The newer side's word on the note's own web data.
-    fresh.own,
-  )
+    own: fresh.own,
+    chosen,
+    chosenColour: fresh.chosen ? fresh.chosenColour : stale.chosenColour,
+  })
 
   // Nothing the older side said is missing from the newer one: the newer file as it
   // was written, rather than rewritten in this app's own spelling of it.
@@ -80,7 +86,9 @@ function sameShortcut(one: Shortcut | null, other: Shortcut): boolean {
     one.added === other.added &&
     (one.home ?? null) === (other.home ?? null) &&
     one.icon === other.icon &&
-    one.own === other.own
+    one.own === other.own &&
+    one.chosen === other.chosen &&
+    one.chosenColour === other.chosenColour
   )
 }
 

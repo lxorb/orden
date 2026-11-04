@@ -720,6 +720,29 @@ class Links {
     return map
   })
 
+  /** The notes that say nothing yet - whitespace, or their own name as a heading -
+   *  by path (#1042). The same shape as the covers: a lookup a row asks as it draws,
+   *  derived so a row turns from the empty page to the written one by itself the
+   *  moment a save says so. See `saysNothing` in scan-note.ts and `sourceMark` in
+   *  chosen-icon.ts. */
+  private readonly bare = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const set = new Set<string>()
+
+    for (const note of this.notes) {
+      if (note.bare) set.add(note.path)
+    }
+
+    return set
+  })
+
+  /** Whether the note at this path says nothing yet. Takes either spelling of a path,
+   *  like the icon below. */
+  saysNothing(path: string): boolean {
+    const relative = this.relative(path) ?? path.replace(/\\/g, '/')
+    return this.bare.has(relative)
+  }
+
   /** What the note at this path says it wears, as written, or null where it says
    *  nothing. The value is read in icons.ts, which knows the conventions.
    *
@@ -766,6 +789,14 @@ class Links {
   shortcutOf(path: string): string | null {
     const relative = this.relative(path) ?? path.replace(/\\/g, '/')
     return this.websites.get(relative)?.address ?? null
+  }
+
+  /** Every website in the open space, by its path relative to the space: what the
+   *  address field offers beside the history (#1059; see web-tab/web-notes.ts). The
+   *  map itself, which is a new one whenever any website changes, so a caller can keep
+   *  what it built from it for as long as it is the same map. */
+  get websitesHere(): ReadonlyMap<string, { address: string | null; favicon: string | null }> {
+    return this.websites
   }
 
   /** Whether this space still holds a website written as a note, which is what the

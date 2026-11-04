@@ -85,10 +85,10 @@
   }
 </script>
 
-<span class="picker" bind:this={host}>
+<span class="picker nib-setting-value" bind:this={host}>
   <input
     bind:this={field}
-    class="inline"
+    class="nib-field is-value"
     type="text"
     role="combobox"
     aria-expanded={open}
@@ -144,45 +144,10 @@
 {/if}
 
 <style>
+  /* In the value column, and the box is the one every setting's value is: see
+     `.nib-field.is-value` in the themes package. */
   .picker {
     position: relative;
-    flex: none;
-  }
-
-  /* The settings' own field, written out because this is a component of its own. */
-  .inline {
-    width: 12rem;
-    padding: 6px 9px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: end;
-    outline: none;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  .inline::placeholder {
-    color: var(--muted);
-  }
-
-  .inline[aria-invalid='true'] {
-    border-color: var(--danger);
-  }
-
-  @media (hover: hover) {
-    .inline:hover {
-      border-color: var(--line);
-    }
-  }
-
-  .inline:focus {
-    background: var(--bg);
-    text-align: start;
   }
 
   .list {

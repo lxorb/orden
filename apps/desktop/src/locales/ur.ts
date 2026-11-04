@@ -89,6 +89,15 @@ export const ur: Dictionary = {
   // Tasks: the Display menu
   Display: 'نمائش',
   'Completed tasks': 'مکمل کام',
+  Smart: 'سمارٹ',
+  Grouping: 'گروپ بندی',
+  Sorting: 'ترتیب',
+  'Last 30 days': 'پچھلے 30 دن',
+  'Assigned to me': 'مجھے سونپے گئے',
+  Unassigned: 'کسی کو نہیں سونپے گئے',
+  'Reset all': 'سب ری سیٹ کریں',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'لے آؤٹ کاموں کو فہرست، بورڈ یا کیلنڈر کے طور پر دکھاتا ہے۔ گروپ بندی انہیں گروپوں میں بانٹتی ہے، جو بورڈ کے کالم ہیں۔ ترتیب ہر گروپ کو ترتیب دیتی ہے۔ فلٹر وہ چھپاتے ہیں جس کی آپ کو ضرورت نہیں۔ یہ سب اس منظر کے لیے رکھا جاتا ہے۔',
   // Tasks: several lines pasted into quick add
   'One task': 'ایک کام',
   'One per line': 'ہر سطر کا ایک',
@@ -557,11 +566,11 @@ export const ur: Dictionary = {
   'Actual size': 'اصل سائز',
   // Appearance
   Accent: 'نمایاں رنگ',
-  'Window corners': 'ونڈو کے کونے',
-  Rounded: 'گول',
-  Square: 'چوکور',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'گول کھلی چیز کو ونڈو کے اندر ایک کارڈ میں تیراتا ہے؛ چوکور اسے کناروں سے لگا رکھتا ہے۔',
+  'Tidy up': 'ترتیب دیں',
+  'Swipe in from the edge to see your notes.': 'اپنے نوٹس دیکھنے کے لیے کنارے سے اندر سوائپ کریں۔',
+  'Show other tabs as icons': 'دوسرے ٹیب آئیکن کے طور پر دکھائیں',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'سامنے والے کے سوا ہر ٹیب صرف اپنا آئیکن دکھاتا ہے؛ کسی پر پوائنٹر لے جائیں تو اس کا نام دکھتا ہے۔',
   'Tab preview delay': 'ٹیب پیش نظارہ کی تاخیر',
   'How long the pointer rests on a tab before its preview shows.':
     'پیش نظارہ دکھنے سے پہلے پوائنٹر ٹیب پر کتنی دیر رکتا ہے۔',
@@ -1815,6 +1824,7 @@ export const ur: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'سائٹ کی معلومات',
   Downloads: 'ڈاؤن لوڈز',
+  'Downloading {name}': '{name} ڈاؤن لوڈ ہو رہا ہے',
   'Show in folder': 'فولڈر میں دکھائیں',
   'Show in Finder': 'Finder میں دکھائیں',
   'Reveal in Finder': 'Finder میں دکھائیں',
@@ -1908,6 +1918,9 @@ export const ur: Dictionary = {
   'Exited with code {code}': 'کوڈ {code} کے ساتھ ختم ہوا',
   'Could not start {shell}': '{shell} شروع نہیں ہو سکا',
   'Restore history': 'ہسٹری بحال کریں',
+  'Colours follow the theme': 'رنگ تھیم کی پیروی کرتے ہیں',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ٹرمینلز کو تھیم کے رنگوں میں رنگتا ہے؛ بند ہو تو ایک مقررہ پیلیٹ رہتا ہے۔',
   'Restored {time}': 'بحال کیا گیا {time}',
   'Stop what is running in {name}?': '{name} میں جو چل رہا ہے اسے روکیں؟',
   'Stop what is running in these terminals?': 'ان ٹرمینلز میں جو چل رہا ہے اسے روکیں؟',
@@ -2058,6 +2071,8 @@ export const ur: Dictionary = {
   'Every space': 'ہر اسپیس',
   Sites: 'سائٹس',
   'Asks first': 'پہلے پوچھتا ہے',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'یہ MCP کے ذریعے جڑتا ہے اور وہیں اپنی اجازتیں خود سنبھالتا ہے: Orden اس سے کچھ نہیں پوچھتا۔ نیچے آپ کی اسپیسز، بلاک کی گئی سائٹیں اور حدود پھر بھی لاگو رہتی ہیں۔',
   Limits: 'حدود',
   'Clear what {name} did?': 'جو {name} نے کیا وہ صاف کریں؟',
   'Show earlier': 'پرانے دکھائیں',
@@ -2306,6 +2321,12 @@ export const ur: Dictionary = {
   // The online terminal
   'Online terminal': 'آن لائن ٹرمینل',
   'New online terminal': 'نیا آن لائن ٹرمینل',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'کوئی اور آلہ',
+  'Taken over by {device}': '{device} نے لے لیا',
+  'Open on {device} since {time}': '{time} سے {device} پر کھلا',
+  'Take over': 'سنبھالیں',
+  'Take back': 'واپس لیں',
   'Start online machine': 'آن لائن مشین شروع کریں',
   'Stop online machine': 'آن لائن مشین روکیں',
   Resume: 'دوبارہ شروع کریں',
@@ -2351,6 +2372,8 @@ export const ur: Dictionary = {
   'Take photo': 'تصویر کھینچیں',
   Pronouns: 'ضمائر',
   Bio: 'تعارف',
+  'A few words about you': 'اپنے بارے میں چند الفاظ',
+  'What’s happening?': 'کیا ہو رہا ہے؟',
   'Clear after': 'اس کے بعد صاف کریں',
   '30 minutes': '30 منٹ',
   '1 hour': '1 گھنٹہ',
@@ -2702,4 +2725,5 @@ export const ur: Dictionary = {
   'View your report': 'اپنی رپورٹ دیکھیں',
   'Not sent. Your text is kept, so you can try again.':
     'نہیں بھیجی گئی۔ آپ کا متن محفوظ ہے، دوبارہ کوشش کر سکتے ہیں۔',
+  'Reset to site icon': 'سائٹ کے آئیکن پر واپس جائیں',
 }

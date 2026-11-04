@@ -89,6 +89,15 @@ export const pa: Dictionary = {
   // Tasks: the Display menu
   Display: 'ਦਿਖਾਵਾ',
   'Completed tasks': 'ਪੂਰੇ ਹੋਏ ਕੰਮ',
+  Smart: 'ਸਮਾਰਟ',
+  Grouping: 'ਸਮੂਹਬੰਦੀ',
+  Sorting: 'ਤਰਤੀਬ',
+  'Last 30 days': 'ਪਿਛਲੇ 30 ਦਿਨ',
+  'Assigned to me': 'ਮੈਨੂੰ ਸੌਂਪੇ',
+  Unassigned: 'ਕਿਸੇ ਨੂੰ ਨਹੀਂ ਸੌਂਪੇ',
+  'Reset all': 'ਸਭ ਰੀਸੈੱਟ ਕਰੋ',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'ਲੇਆਉਟ ਕੰਮਾਂ ਨੂੰ ਸੂਚੀ, ਬੋਰਡ ਜਾਂ ਕੈਲੰਡਰ ਵਜੋਂ ਦਿਖਾਉਂਦਾ ਹੈ। ਸਮੂਹਬੰਦੀ ਇਹਨਾਂ ਨੂੰ ਸਮੂਹਾਂ ਵਿੱਚ ਵੰਡਦੀ ਹੈ, ਜੋ ਬੋਰਡ ਦੇ ਕਾਲਮ ਹਨ। ਤਰਤੀਬ ਹਰ ਸਮੂਹ ਨੂੰ ਕ੍ਰਮ ਵਿੱਚ ਰੱਖਦੀ ਹੈ। ਫਿਲਟਰ ਉਹ ਲੁਕਾਉਂਦੇ ਹਨ ਜਿਸ ਦੀ ਤੁਹਾਨੂੰ ਲੋੜ ਨਹੀਂ। ਇਹ ਸਭ ਇਸ ਦ੍ਰਿਸ਼ ਲਈ ਰੱਖਿਆ ਜਾਂਦਾ ਹੈ।',
   // Tasks: several lines pasted into quick add
   'One task': 'ਇੱਕ ਕੰਮ',
   'One per line': 'ਹਰ ਲਾਈਨ ਲਈ ਇੱਕ',
@@ -560,11 +569,11 @@ export const pa: Dictionary = {
   'Actual size': 'ਅਸਲੀ ਆਕਾਰ',
   // Appearance
   Accent: 'ਉਭਾਰ ਰੰਗ',
-  'Window corners': 'ਵਿੰਡੋ ਦੇ ਕੋਨੇ',
-  Rounded: 'ਗੋਲ',
-  Square: 'ਚੌਰਸ',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'ਗੋਲ ਖੁੱਲ੍ਹੀ ਚੀਜ਼ ਨੂੰ ਵਿੰਡੋ ਦੇ ਅੰਦਰ ਇੱਕ ਕਾਰਡ ਵਿੱਚ ਤੈਰਾਉਂਦਾ ਹੈ; ਚੌਰਸ ਇਸਨੂੰ ਕਿਨਾਰਿਆਂ ਨਾਲ ਲਗਾ ਕੇ ਰੱਖਦਾ ਹੈ।',
+  'Tidy up': 'ਤਰਤੀਬ ਦਿਓ',
+  'Swipe in from the edge to see your notes.': 'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਕਿਨਾਰੇ ਤੋਂ ਅੰਦਰ ਸਵਾਈਪ ਕਰੋ।',
+  'Show other tabs as icons': 'ਹੋਰ ਟੈਬ ਆਈਕਨ ਵਜੋਂ ਦਿਖਾਓ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ਅੱਗੇ ਵਾਲੀ ਤੋਂ ਬਿਨਾਂ ਹਰ ਟੈਬ ਸਿਰਫ਼ ਆਪਣਾ ਆਈਕਨ ਦਿਖਾਉਂਦੀ ਹੈ; ਕਿਸੇ ਉੱਤੇ ਪੁਆਇੰਟਰ ਲਿਆਉਣ ਨਾਲ ਨਾਂ ਦਿਖਦਾ ਹੈ।',
   'Tab preview delay': 'ਟੈਬ ਝਲਕ ਦੀ ਦੇਰੀ',
   'How long the pointer rests on a tab before its preview shows.':
     'ਝਲਕ ਦਿਖਣ ਤੋਂ ਪਹਿਲਾਂ ਪੁਆਇੰਟਰ ਟੈਬ ਉੱਤੇ ਕਿੰਨੀ ਦੇਰ ਰੁਕਦਾ ਹੈ।',
@@ -1822,6 +1831,7 @@ export const pa: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ਸਾਈਟ ਜਾਣਕਾਰੀ',
   Downloads: 'ਡਾਊਨਲੋਡ',
+  'Downloading {name}': '{name} ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ',
   'Show in folder': 'ਫੋਲਡਰ ਵਿੱਚ ਦਿਖਾਓ',
   'Show in Finder': 'Finder ਵਿੱਚ ਦਿਖਾਓ',
   'Reveal in Finder': 'Finder ਵਿੱਚ ਦਿਖਾਓ',
@@ -1915,6 +1925,9 @@ export const pa: Dictionary = {
   'Exited with code {code}': 'ਕੋਡ {code} ਨਾਲ ਬੰਦ ਹੋਇਆ',
   'Could not start {shell}': '{shell} ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕਿਆ',
   'Restore history': 'ਇਤਿਹਾਸ ਬਹਾਲ ਕਰੋ',
+  'Colours follow the theme': 'ਰੰਗ ਥੀਮ ਦੀ ਪਾਲਣਾ ਕਰਦੇ ਹਨ',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ਟਰਮੀਨਲਾਂ ਨੂੰ ਥੀਮ ਦੇ ਰੰਗਾਂ ਵਿੱਚ ਰੰਗਦਾ ਹੈ; ਬੰਦ ਹੋਣ ’ਤੇ ਇੱਕ ਸਥਿਰ ਪੈਲੇਟ ਰਹਿੰਦਾ ਹੈ।',
   'Restored {time}': 'ਬਹਾਲ ਕੀਤਾ {time}',
   'Stop what is running in {name}?': '{name} ਵਿੱਚ ਜੋ ਚੱਲ ਰਿਹਾ ਹੈ ਉਸਨੂੰ ਰੋਕੀਏ?',
   'Stop what is running in these terminals?': 'ਇਹਨਾਂ ਟਰਮੀਨਲਾਂ ਵਿੱਚ ਜੋ ਚੱਲ ਰਿਹਾ ਹੈ ਉਸਨੂੰ ਰੋਕੀਏ?',
@@ -2065,6 +2078,8 @@ export const pa: Dictionary = {
   'Every space': 'ਹਰ ਥਾਂ',
   Sites: 'ਸਾਈਟਾਂ',
   'Asks first': 'ਪਹਿਲਾਂ ਪੁੱਛਦਾ ਹੈ',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'ਇਹ MCP ਰਾਹੀਂ ਜੁੜਦਾ ਹੈ ਅਤੇ ਉੱਥੇ ਆਪਣੀਆਂ ਇਜਾਜ਼ਤਾਂ ਆਪ ਸੰਭਾਲਦਾ ਹੈ: Orden ਇਸ ਤੋਂ ਕੁਝ ਨਹੀਂ ਪੁੱਛਦਾ। ਹੇਠਾਂ ਤੁਹਾਡੇ ਸਪੇਸ, ਬਲੌਕ ਕੀਤੀਆਂ ਸਾਈਟਾਂ ਅਤੇ ਸੀਮਾਵਾਂ ਫਿਰ ਵੀ ਲਾਗੂ ਰਹਿੰਦੀਆਂ ਹਨ।',
   Limits: 'ਹੱਦਾਂ',
   'Clear what {name} did?': '{name} ਨੇ ਜੋ ਕੀਤਾ ਉਹ ਸਾਫ਼ ਕਰਨਾ ਹੈ?',
   'Show earlier': 'ਪਹਿਲਾਂ ਵਾਲੇ ਦਿਖਾਓ',
@@ -2313,6 +2328,12 @@ export const pa: Dictionary = {
   // The online terminal
   'Online terminal': 'ਔਨਲਾਈਨ ਟਰਮੀਨਲ',
   'New online terminal': 'ਨਵਾਂ ਔਨਲਾਈਨ ਟਰਮੀਨਲ',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'ਕੋਈ ਹੋਰ ਡਿਵਾਈਸ',
+  'Taken over by {device}': '{device} ਨੇ ਲੈ ਲਿਆ',
+  'Open on {device} since {time}': '{time} ਤੋਂ {device} ’ਤੇ ਖੁੱਲ੍ਹਾ',
+  'Take over': 'ਸੰਭਾਲੋ',
+  'Take back': 'ਵਾਪਸ ਲਓ',
   'Start online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਸ਼ੁਰੂ ਕਰੋ',
   'Stop online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਰੋਕੋ',
   Resume: 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ',
@@ -2358,6 +2379,8 @@ export const pa: Dictionary = {
   'Take photo': 'ਫ਼ੋਟੋ ਖਿੱਚੋ',
   Pronouns: 'ਪੜਨਾਂਵ',
   Bio: 'ਜਾਣ-ਪਛਾਣ',
+  'A few words about you': 'ਤੁਹਾਡੇ ਬਾਰੇ ਕੁਝ ਸ਼ਬਦ',
+  'What’s happening?': 'ਕੀ ਹੋ ਰਿਹਾ ਹੈ?',
   'Clear after': 'ਇਸ ਤੋਂ ਬਾਅਦ ਹਟਾਓ',
   '30 minutes': '30 ਮਿੰਟ',
   '1 hour': '1 ਘੰਟਾ',
@@ -2716,4 +2739,5 @@ export const pa: Dictionary = {
   'View your report': 'ਆਪਣੀ ਰਿਪੋਰਟ ਦੇਖੋ',
   'Not sent. Your text is kept, so you can try again.':
     'ਨਹੀਂ ਭੇਜੀ ਗਈ। ਤੁਹਾਡਾ ਲਿਖਿਆ ਸੰਭਾਲਿਆ ਹੈ, ਤੁਸੀਂ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰ ਸਕਦੇ ਹੋ।',
+  'Reset to site icon': 'ਸਾਈਟ ਦੇ ਆਈਕਨ ’ਤੇ ਵਾਪਸ ਜਾਓ',
 }

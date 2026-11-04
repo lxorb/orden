@@ -11,7 +11,12 @@
   import { account } from '../account.svelte'
   import { ACCENTS, accentColour } from '../accents'
   import { chooseFiles, PICTURES } from '../choose-files'
+  import Glyph from '../chats/view/Glyph.svelte'
+  import type { Box } from '../chats/view/place'
+  import Cross from '../Cross.svelte'
   import { key, message, t } from '../i18n.svelte'
+  import { menu } from '../menu.svelte'
+  import { portal } from '../portal'
   import Select from '../Select.svelte'
   import Swatches from '../Swatches.svelte'
   import { theme } from '../theme.svelte'
@@ -29,6 +34,8 @@
   let source = $state<{ file: Blob } | { camera: true } | null>(null)
   let clears = $state<Clears>('today')
   let wrong = $state<string | null>(null)
+  /** Where the emoji picker hangs from while it is up. */
+  let picking = $state<Box | null>(null)
 
   /** Whether there is a camera to offer: a computer's webcam, shown in the sheet through
    *  the browser's own question, or a phone's own camera app, through the picker. */
@@ -88,6 +95,26 @@
     else source = { camera: true }
   }
 
+  /** One press for a new picture, as there is one for taking it away: a file, or
+   *  where there is a camera, a menu of the two ways a face comes in. */
+  function change(event: MouseEvent) {
+    if (!camera) return void choose()
+    const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
+    menu.show(
+      new MouseEvent('contextmenu', { clientX: box.left, clientY: box.bottom }),
+      [
+        { label: t('Choose a picture'), asks: true, run: () => void choose() },
+        { label: t('Take photo'), asks: true, run: takePhoto },
+      ],
+      { title: t('Picture') },
+    )
+  }
+
+  function pickEmoji(from: HTMLElement) {
+    const box = from.getBoundingClientRect()
+    picking = { left: box.left, top: box.top, right: box.right, bottom: box.bottom }
+  }
+
   function given(files: FileList | null | undefined) {
     const file = [...(files ?? [])].find((one) => one.type.startsWith('image/'))
     if (file) source = { file }
@@ -122,23 +149,11 @@
         ></span
       >
       <span class="ends">
-        <button class="nib-chip" onclick={() => void choose()}>{t('Change')}</button>
-        {#if camera}
-          <button
-            class="nib-glyph"
-            title={t('Take photo')}
-            aria-label={t('Take photo')}
-            onclick={takePhoto}
-          >
-            <svg viewBox="0 0 16 16"
-              ><path d="M2 5.5h2.5L6 3.5h4l1.5 2H14v7H2z" /><circle cx="8" cy="9" r="2.3" /></svg
-            >
-          </button>
-        {/if}
+        <button class="nib-chip" aria-haspopup={camera ? 'menu' : undefined} onclick={change}
+          >{t('Change')}</button
+        >
         {#if user.avatar}
-          <button class="nib-chip is-quiet" onclick={() => void kept(removeFace)}
-            >{t('Remove')}</button
-          >
+          <button class="nib-chip" onclick={() => void kept(removeFace)}>{t('Remove')}</button>
         {/if}
       </span>
     </div>
@@ -152,9 +167,9 @@
         ></span
       >
       <input
-        class="inline"
-        class:empty={!user.pronouns}
+        class="nib-field is-value"
         value={user.pronouns ?? ''}
+        placeholder={t('Optional')}
         maxlength="40"
         spellcheck="false"
         onchange={(event) =>
@@ -162,7 +177,7 @@
       />
     </label>
 
-    <label class="nib-setting setting tall">
+    <label class="nib-setting setting is-tall">
       <span class="name"
         ><span class="nib-named"
           >{t('Bio')}<Hint
@@ -171,16 +186,16 @@
         ></span
       >
       <textarea
-        class="inline"
-        class:empty={!user.bio}
+        class="nib-field is-value"
         rows="3"
         maxlength="190"
+        placeholder={t('A few words about you')}
         value={user.bio ?? ''}
         onchange={(event) => void kept(() => changeProfile({ bio: event.currentTarget.value }))}
       ></textarea>
     </label>
 
-    <div class="nib-setting setting">
+    <div class="nib-setting setting is-tall">
       <span class="name"
         ><span class="nib-named"
           >{t('Status')}<Hint
@@ -188,47 +203,73 @@
           /></span
         ></span
       >
-      <!-- The two halves of one status, kept together: where the row has no room for
-           both beside the name, they go under it as a pair. -->
-      <span class="ends said">
-        <input
-          class="inline emoji"
-          class:empty={!status?.emoji}
-          value={status?.emoji ?? ''}
-          maxlength="16"
+      <!-- One field: the emoji is pressed in front of the words, as a chat's composer
+           has it, and the cross at the end takes the whole status away. -->
+      <span class="nib-field is-value">
+        <button
+          type="button"
+          class="nib-glyph"
           aria-label={t('Emoji')}
-          onchange={(event) => withStatus({ emoji: event.currentTarget.value.trim() })}
-        />
+          title={t('Emoji')}
+          onclick={(event) => pickEmoji(event.currentTarget)}
+          >{#if status?.emoji}{status.emoji}{:else}<Glyph name="smile" />{/if}</button
+        >
         <input
-          class="inline"
-          class:empty={!status?.text}
           value={status?.text ?? ''}
           maxlength="100"
           aria-label={t('Status')}
+          placeholder={t('What’s happening?')}
           onchange={(event) => withStatus({ text: event.currentTarget.value })}
         />
+        {#if [status?.emoji, status?.text].some(Boolean)}
+          <button
+            type="button"
+            class="nib-glyph"
+            aria-label={t('Clear')}
+            title={t('Clear')}
+            onclick={() => withStatus({ emoji: '', text: '' })}><Cross /></button
+          >
+        {/if}
       </span>
     </div>
 
-    <div class="nib-setting setting">
-      <span class="name"
-        ><span class="nib-named"
-          >{t('Clear after')}<Hint text={t('When your status is taken away again.')} /></span
-        ></span
-      >
-      <div class="pick">
-        <Select
-          value={clears}
-          options={CLEARS.map((one) => ({ value: one, label: t(CLEAR_WORDS[one]) }))}
-          label={t('Clear after')}
-          plain={viewport.touch}
-          onchange={(value: string) => {
-            clears = value as Clears
-            if (status) withStatus({})
-          }}
-        />
+    {#if picking}
+      {#await Promise.all( [import('../chats/view/Float.svelte'), import('../emoji/EmojiPicker.svelte')] ) then [float, picker]}
+        <div use:portal>
+          <float.default at={picking} label={t('Emoji')} onclose={() => (picking = null)}>
+            <picker.default
+              onpick={(emoji: string) => {
+                picking = null
+                withStatus({ emoji })
+              }}
+            />
+          </float.default>
+        </div>
+      {/await}
+    {/if}
+
+    <!-- When the status goes again, which is only a question while there is one. -->
+    {#if status}
+      <div class="nib-setting setting">
+        <span class="name"
+          ><span class="nib-named"
+            >{t('Clear after')}<Hint text={t('When your status is taken away again.')} /></span
+          ></span
+        >
+        <div class="nib-setting-value">
+          <Select
+            value={clears}
+            options={CLEARS.map((one) => ({ value: one, label: t(CLEAR_WORDS[one]) }))}
+            label={t('Clear after')}
+            plain={viewport.touch}
+            onchange={(value: string) => {
+              clears = value as Clears
+              withStatus({})
+            }}
+          />
+        </div>
       </div>
-    </div>
+    {/if}
 
     <div
       class="nib-setting setting pressable"
@@ -258,12 +299,14 @@
           >{t('Accent')}<Hint text={t('The colour the others see beside your name.')} /></span
         ></span
       >
-      <Swatches
-        options={accents}
-        label={t('Accent')}
-        chosen={user.accent ?? ''}
-        onchoose={(value: string) => void kept(() => changeProfile({ accent: value }))}
-      />
+      <div class="nib-setting-value is-wrapping">
+        <Swatches
+          options={accents}
+          label={t('Accent')}
+          chosen={user.accent ?? ''}
+          onchoose={(value: string) => void kept(() => changeProfile({ accent: value }))}
+        />
+      </div>
     </div>
 
     <div
@@ -316,56 +359,6 @@
     flex: 1;
   }
 
-  .tall {
-    align-items: flex-start;
-    padding-block: var(--space-2);
-  }
-
-  .inline {
-    flex: none;
-    width: 12rem;
-    padding: 6px 9px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: end;
-    outline: none;
-    resize: none;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  textarea.inline {
-    text-align: start;
-  }
-
-  .inline:focus {
-    background: var(--bg);
-  }
-
-  .inline.emoji {
-    width: 3rem;
-    text-align: center;
-  }
-
-  /* A value is read where it stands, like every value in the list; a field with
-     nothing in it would be nothing at all, so it shows the box it is until it holds
-     something. */
-  .inline.empty {
-    border-color: var(--line);
-  }
-
-  /* The dropdown's column, the one every pane's dropdowns line up in; see
-     SettingsPanel.svelte. */
-  .pick {
-    flex: none;
-    width: 14rem;
-  }
-
   /* What a row holds at its end, kept together: where there is no room for all of it
      beside the name, it goes under the name as one, at the end. */
   .ends {
@@ -401,35 +394,6 @@
     inset-inline-end: 0;
     height: 1px;
     background: var(--line);
-  }
-
-  :global(.sheet.phone) .pick {
-    width: auto;
-    max-width: 60%;
-  }
-
-  :global(.sheet.phone) .inline {
-    width: 55%;
-    min-height: var(--touch-target);
-    padding: 8px 10px;
-    font-size: var(--touch-text);
-  }
-
-  /* The pair takes the rest of the row, the words the most of it. */
-  :global(.sheet.phone) .said {
-    flex: 1 1 12rem;
-    min-width: 0;
-  }
-
-  :global(.sheet.phone) .said .inline {
-    flex: 1;
-    width: auto;
-    min-width: 0;
-  }
-
-  :global(.sheet.phone) .said .inline.emoji {
-    flex: none;
-    width: 4rem;
   }
 
   .pressable {

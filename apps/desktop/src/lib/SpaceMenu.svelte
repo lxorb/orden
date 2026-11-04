@@ -16,7 +16,7 @@
   import { roving } from './roving'
   import RowMore from './RowMore.svelte'
   import SharedMark from './SharedMark.svelte'
-  import { arrive, leave, LIST_STEP } from './slide'
+  import { arrive, letGo, LIST_STEP } from './slide'
   import { newSpace, spaceMenu } from './space-actions'
   import SpaceList from './SpaceList.svelte'
   import { spacePicker } from './space-picker.svelte'
@@ -93,9 +93,11 @@
 <!-- Takes the press that closes it, and the scroll that would otherwise reach
      the list underneath. No colour: this is a menu inside the panel, not a
      layer over the app. A tap's click comes after the catch has gone, and is
-     spent rather than reaching what was under it (#411; see spent-click.ts). -->
+     spent rather than reaching what was under it (#411; see spent-click.ts). While the
+     list leaves it lets presses through, so a tap on the switcher then opens the list
+     again from where it had got to (#1067; see `letGo` in slide.ts). -->
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-<div class="catch" onclick={close} onpointerdown={spendClick}></div>
+<div class="catch" onclick={close} onpointerdown={spendClick} out:letGo></div>
 
 <!-- The same walk and the same one tab stop every list in the app has, and the
      same trap every layer has: the arrows move, a digit or a name typed finds a
@@ -120,8 +122,7 @@
       return true
     },
   }}
-  in:arrive={{ y: -LIST_STEP }}
-  out:leave={{ y: -LIST_STEP }}
+  transition:arrive={{ y: -LIST_STEP }}
 >
   <!-- Every space, the rows the switcher in the middle of the window has too; see
        SpaceList.svelte. -->

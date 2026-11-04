@@ -7,13 +7,13 @@ import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { askMachine } from '../src/machines/ask'
-import { MOST_SOCKETS, PING_EVERY, QUIET_FOR } from '@orden/online/wire'
+import { HOLD_GRACE, HOLD_QUIET, MOST_SOCKETS, PING_EVERY, QUIET_FOR } from '@orden/online/wire'
 import { Machine, resumeOf } from '../src/machines/machine'
 import { reachAgain } from '../src/machines/reach'
 import { eraseAccount } from '../src/erase'
 import { purgeExpired } from '../src/trash'
 import { call, signIn, type TestEnv, testEnv } from './harness'
-import { doorway, fire, join, machine, nibd, say } from './machine-fakes'
+import { doorway, fire, join, machine, type MachineSocket, nibd, say } from './machine-fakes'
 
 const DEVICE = 'device-laptop'
 
@@ -249,6 +249,27 @@ describe('the door', () => {
     expect(term.status).toBe(200)
     return { ...people, term: term.json }
   }
+
+  test('names the device a socket comes from, its own and nobody else’s', async () => {
+    const { owner, writer } = await made()
+    const add = (id: string, email: string, name: string) =>
+      env.db
+        .prepare(
+          `insert into devices (id, user_id, name, platform, created_at)
+           values (?, ?, ?, 'macos', 1)`,
+        )
+        .run(id, idOf(email), name)
+    add(DEVICE, OWNER, 'Emil’s MacBook')
+    door.asked.length = 0
+    await knock('term-1', owner)
+    const name = door.asked[0]?.headers.get('x-nib-device-name') ?? ''
+    expect(decodeURIComponent(name)).toBe('Emil’s MacBook')
+
+    // The same id named by somebody else's socket is not their device.
+    door.asked.length = 0
+    await knock('term-1', writer)
+    expect(door.asked[0]?.headers.get('x-nib-device-name')).toBe('')
+  })
 
   test('a session is made once per file, on the maker’s own machine', async () => {
     const { owner, term } = await made()
@@ -2344,5 +2365,247 @@ describe('the dev host', () => {
     expect(DevHost.of(env)).toBeNull()
     local.close()
     remote.close()
+  })
+})
+
+describe('one device at a time (issue 1055)', () => {
+  const ID = 'm_test'
+  let user: string
+
+  beforeEach(async () => {
+    await world()
+    serviceOn()
+    allow(OWNER)
+    user = idOf(OWNER)
+    env.db.prepare('insert into machines (id, user_id, created_at) values (?, ?, 1)').run(ID, user)
+    env.db
+      .prepare(
+        `insert into term_sessions (term, machine, session, user_id, created_at)
+         values ('term-1', ?, 'session-1', ?, 1)`,
+      )
+      .run(ID, user)
+  })
+
+  const bytes = (text: string) => new TextEncoder().encode(text)
+  const hold = (running: Running) =>
+    (running.state.kept.get('hold:session-1') ?? null) as { device: string; name: string } | null
+
+  type Running = Awaited<ReturnType<typeof machine>>
+
+  /** The owner on one of their devices, the terminal open on it. */
+  async function on(running: Running, device: string, since?: number): Promise<MachineSocket> {
+    const socket = await join(
+      running,
+      { who: user, owns: true, role: 'owner', device, name: `${device}’s screen` },
+      'yes',
+    )
+    await say(running, socket, {
+      t: 'hello',
+      cols: 80,
+      rows: 24,
+      hold: true,
+      ...(since === undefined ? {} : { since }),
+    })
+    return socket
+  }
+
+  async function closed(running: Running, socket: MachineSocket) {
+    socket.close(1006, 'gone')
+    await running.machine.webSocketClose(socket as unknown as WebSocket)
+    running.state.drop(socket as never)
+  }
+
+  test('the first device holds it; the second is told by whom and since when, and gets nothing', async () => {
+    const running = await machine(env, ID, user)
+    const laptop = await on(running, 'laptop')
+    const at = Date.now()
+    vi.setSystemTime(at + 5_000)
+    const phone = await on(running, 'phone')
+
+    expect(laptop.of('held')).toEqual([])
+    expect(phone.of('held')).toEqual([
+      { t: 'held', by: 'laptop’s screen', since: at, taken: false },
+    ])
+    running.host.link_?.take()
+    await nibd(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hi') })
+    expect(laptop.bytes).toHaveLength(1)
+    expect(phone.bytes).toHaveLength(0)
+
+    // Its keys, its size and its new shell go nowhere.
+    await say(running, phone, { t: 'in', data: 'rm -rf ~\r' })
+    await running.machine.webSocketMessage(phone as unknown as WebSocket, new ArrayBuffer(3))
+    await say(running, phone, { t: 'size', cols: 40, rows: 10 })
+    await say(running, phone, { t: 'start' })
+    expect(running.host.link_?.take()).toEqual([])
+  })
+
+  test('Take over hands it to the new device at once; the old one is told and can take it back', async () => {
+    const running = await machine(env, ID, user)
+    const laptop = await on(running, 'laptop')
+    await nibd(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('build…') })
+    const phone = await on(running, 'phone')
+    running.host.link_?.take()
+
+    await say(running, phone, { t: 'take' })
+    expect(phone.of('hold')).toEqual([{ t: 'hold' }])
+    expect(laptop.of('held')).toEqual([
+      { t: 'held', by: 'phone’s screen', since: Date.now(), taken: true },
+    ])
+    expect(hold(running)?.device).toBe('phone')
+
+    // The phone says hello again and is sent what it missed; nothing restarts.
+    await say(running, phone, { t: 'hello', cols: 40, rows: 20, hold: true })
+    const told = running.host.link_?.take() ?? []
+    expect(told).toContainEqual({ t: 'want', session: 'session-1', since: 0 })
+    expect(told).toContainEqual({ t: 'size', session: 'session-1', cols: 40, rows: 20 })
+    expect(told.filter((one) => one.t === 'close' || one.t === 'open')).toEqual([])
+    await nibd(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('build… done') })
+    expect(phone.bytes).toHaveLength(1)
+    expect(laptop.bytes).toHaveLength(1)
+
+    // The laptop's keys go nowhere now; Take back makes it the holder again.
+    await say(running, laptop, { t: 'in', data: 'x' })
+    expect(running.host.link_?.take()).toEqual([])
+    await say(running, laptop, { t: 'take' })
+    expect(laptop.of('hold')).toEqual([{ t: 'hold' }])
+    expect(phone.of('held').at(-1)).toMatchObject({ by: 'laptop’s screen', taken: true })
+    await say(running, laptop, { t: 'hello', cols: 80, rows: 24, hold: true, since: 6 })
+    expect(running.host.link_?.take()).toContainEqual({
+      t: 'want',
+      session: 'session-1',
+      since: 6,
+    })
+  })
+
+  test('scrollback: the new holder is sent the whole screen, and the one held off is not', async () => {
+    const running = await machine(env, ID, user)
+    const laptop = await on(running, 'laptop')
+    const phone = await on(running, 'phone')
+    await say(running, phone, { t: 'take' })
+    await say(running, phone, { t: 'hello', cols: 80, rows: 24, hold: true })
+    await nibd(running, {
+      t: 'screen',
+      session: 'session-1',
+      seq: 5000,
+      cols: 80,
+      rows: 24,
+      data: 'line 1\r\n…line 5000',
+    })
+    expect(phone.of('screen')).toEqual([
+      { t: 'screen', seq: 5000, cols: 80, rows: 24, data: 'line 1\r\n…line 5000' },
+    ])
+    expect(laptop.of('screen')).toEqual([])
+  })
+
+  test('two devices taking over at once end with exactly one holder', async () => {
+    const running = await machine(env, ID, user)
+    await on(running, 'laptop')
+    const phone = await on(running, 'phone')
+    const tablet = await on(running, 'tablet')
+
+    await Promise.all([say(running, phone, { t: 'take' }), say(running, tablet, { t: 'take' })])
+
+    const holding = [phone, tablet].filter((one) => one.of('held').at(-1)?.taken !== true)
+    expect(holding).toHaveLength(1)
+    expect(hold(running)?.device).toBe(holding[0] === phone ? 'phone' : 'tablet')
+    const other = holding[0] === phone ? tablet : phone
+    expect(other.of('held').at(-1)).toMatchObject({ taken: true })
+  })
+
+  test('two devices opening a free session at once: one holds it, the other is held off', async () => {
+    const running = await machine(env, ID, user)
+    const [laptop, phone] = await Promise.all([on(running, 'laptop'), on(running, 'phone')])
+    const held = [laptop, phone].filter((one) => one.of('held').length > 0)
+    expect(held).toHaveLength(1)
+    expect(hold(running)?.device).toBe(held[0] === laptop ? 'phone' : 'laptop')
+  })
+
+  test('a drop keeps it for the grace, and a device back within it holds it still', async () => {
+    const running = await machine(env, ID, user)
+    const laptop = await on(running, 'laptop')
+    const phone = await on(running, 'phone')
+
+    await closed(running, laptop)
+    await vi.advanceTimersByTimeAsync(HOLD_GRACE - 5_000)
+    expect(phone.of('hold')).toEqual([])
+
+    const back = await on(running, 'laptop', 2)
+    expect(back.of('held')).toEqual([])
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(phone.of('hold')).toEqual([])
+    expect(hold(running)?.device).toBe('laptop')
+  })
+
+  test('a device that does not come back lets go after the grace, and the one waiting has it', async () => {
+    const running = await machine(env, ID, user)
+    const laptop = await on(running, 'laptop')
+    const phone = await on(running, 'phone')
+
+    await closed(running, laptop)
+    phone.beatAt = new Date(Date.now() + HOLD_GRACE)
+    await vi.advanceTimersByTimeAsync(HOLD_GRACE + 100)
+    expect(phone.of('hold')).toEqual([{ t: 'hold' }])
+    expect(hold(running)?.device).toBe('phone')
+  })
+
+  test('a device that crashed with its socket half open is let go of, and never holds it for ever', async () => {
+    const running = await machine(env, ID, user)
+    const laptop = await on(running, 'laptop')
+
+    // Beating: still there, however long.
+    vi.setSystemTime(Date.now() + 10 * 60_000)
+    laptop.beatAt = new Date()
+    const phone = await on(running, 'phone')
+    expect(phone.of('held')).toHaveLength(1)
+    expect(laptop.closedWith).toBeNull()
+
+    // Silent past HOLD_QUIET: closed, and the session free once its grace is over.
+    vi.setSystemTime(Date.now() + HOLD_QUIET + 1_000)
+    phone.beatAt = new Date()
+    await say(running, phone, { t: 'hello', cols: 80, rows: 24, hold: true })
+    expect(laptop.closedWith?.code).toBe(4408)
+    phone.beatAt = new Date(Date.now() + HOLD_GRACE)
+    await vi.advanceTimersByTimeAsync(HOLD_GRACE + 100)
+    expect(phone.of('hold')).toEqual([{ t: 'hold' }])
+  })
+
+  test('closing the tab lets go at once', async () => {
+    const running = await machine(env, ID, user)
+    const laptop = await on(running, 'laptop')
+    const phone = await on(running, 'phone')
+    await say(running, laptop, { t: 'leave' })
+    expect(phone.of('hold')).toEqual([{ t: 'hold' }])
+    expect(hold(running)?.device).toBe('phone')
+  })
+
+  test('who may only watch, and an Orden from before the lock, are never held off', async () => {
+    const running = await machine(env, ID, user)
+    await on(running, 'laptop')
+    const reader = await join(running, { who: 'reader', device: 'theirs' })
+    await say(running, reader, { t: 'hello', cols: 80, rows: 24, hold: true })
+    const older = await join(running, { who: user, owns: true, role: 'owner', device: 'old' })
+    await say(running, older, { t: 'hello', cols: 80, rows: 24 })
+    await nibd(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hi') })
+
+    expect(reader.of('held')).toEqual([])
+    expect(older.of('held')).toEqual([])
+    expect(reader.bytes).toHaveLength(1)
+    expect(older.bytes).toHaveLength(1)
+    // A reader cannot take it over.
+    await say(running, reader, { t: 'take' })
+    expect(reader.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
+    expect(hold(running)?.device).toBe('laptop')
+  })
+
+  test('ending the session lets go of its lock', async () => {
+    const running = await machine(env, ID, user)
+    await on(running, 'laptop')
+    expect(hold(running)).not.toBeNull()
+    await running.machine.fetch(
+      new Request('https://machine.invalid/end', {
+        headers: { 'x-nib-machine': 'end', 'x-nib-session': 'session-1' },
+      }),
+    )
+    expect(hold(running)).toBeNull()
   })
 })

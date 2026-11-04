@@ -7,7 +7,8 @@
  *  never one the key does not keep. Pure; numbers.svelte.ts is what shows them. */
 
 import { WITHIN } from '../double-tap'
-import { parseCombination, type Platform } from '../keys'
+import type { Platform } from '../keys'
+import { underAlt } from './letters'
 
 /** The keys, and the place along the strip each goes to. Eight places, the ninth, and
  *  the last, which Alt+0 goes to. */
@@ -16,14 +17,6 @@ const PLACES: readonly (readonly [string, number | 'last'])[] = [
   ['app.note-ninth', 8],
   ['app.note-9.alt', 'last'],
 ]
-
-/** What a key bound under Alt alone is called on a tab: its one character. Nothing for a
- *  key held with anything else, or a key that is not a character. */
-function underAlt(key: string | null, platform: Platform): string | null {
-  const combination = key === null ? null : parseCombination(key, platform)
-  if (!combination?.alt || combination.ctrl || combination.meta || combination.shift) return null
-  return combination.key.length === 1 ? combination.key.toUpperCase() : null
-}
 
 /** The number each of a strip's `count` tabs wears, in its order, or null for a tab no
  *  key reaches. The first eight wear their places and the ninth its own, since Alt+9
@@ -69,23 +62,26 @@ function isDigit(stroke: Stroke): boolean {
   )
 }
 
-/** Whether the numbers are up: exactly while Alt is held, on its own or going from tab to
- *  tab with its digits.
+/** Whether the numbers are up: exactly while Alt is held, and nothing else (#1053).
  *
  *  Emil, 2026-10-01: *"It should always display, even if I press and hold Alt and then
- *  press a number. The only condition should be Alt held."* Alt going down shows them,
- *  and so does a digit pressed with Alt alone, which catches an Alt that went down where
- *  the window could not hear it. A digit keeps them, so a hand stepping Alt+1, Alt+2,
- *  Alt+3 sees where it is going all the way.
+ *  press a number. The only condition should be Alt held."* And #1053: switching tabs or
+ *  panes does not put them away, nor a digit, nor any other key, nor the pointer, nor the
+ *  keyboard going into a web page or a terminal - only Alt let go of.
+ *
+ *  So the hold is one piece of state, fed by every word there is of Alt: Alt going down
+ *  (`down`) and up (`released`), and every key and every press of the pointer, which say
+ *  whether Alt is down as they happen (`sense`) - the correction for an Alt let go of
+ *  where the window could not hear it, after Alt+Tab or inside a page, and for one that
+ *  went down there. A key while it is held answers that the numbers be put where the
+ *  tabs are now, since a digit, a letter (#1051) or a pane's key (#1033) may just have
+ *  moved what is in front.
  *
  *  AltGr never shows them - a German or Swiss keyboard types `@`, `[` and `{` with it,
  *  and Windows says it as Ctrl and Alt - and nor does Alt with Shift, the system's switch
- *  between keyboards. Any other key pressed with Alt ends the hold, which is Alt+F4,
- *  Alt+Tab, Alt and an arrow: the chord is about something else, and a repeat of the
- *  still held Alt does not bring them back until Alt has been let go of. So does a press
- *  of the pointer or the wheel (`spent`), and Alt let go of or the window losing the
- *  keyboard (`released`). A held Alt repeats, and a repeat is the same hold - flagged as
- *  one or not, since an engine that did not flag it would otherwise start over.
+ *  between keyboards: an Alt that went down with either is `spent` until it is let go of.
+ *  A held Alt repeats, and a repeat is the same hold - flagged as one or not, since an
+ *  engine that did not flag it would otherwise start over.
  *
  *  And Alt pressed again a moment after a quick tap of it is the second half of Alt Alt,
  *  the tab overview's key (#331), not a hold: the numbers would flash over the tabs
@@ -93,7 +89,7 @@ function isDigit(stroke: Stroke): boolean {
  *  tap of Alt alone always has. */
 export class AltHold {
   holding = false
-  /** Alt is still down, but the hold was used for something else. */
+  /** Alt is down, but went down with AltGr or Shift, or as Alt Alt's second tap. */
   private spent = false
   /** When the last quick tap of Alt alone was let go of, and when Alt went down. */
   private tapped = Number.NEGATIVE_INFINITY
@@ -102,8 +98,9 @@ export class AltHold {
   private quiet = false
 
   /** A key went down. Answers whether the numbers are to be put where the tabs are now:
-   *  on a hold beginning, and on a digit, which has just moved the active tab. */
-  down(stroke: Stroke, now = Number.NaN): boolean {
+   *  on a hold beginning, and on any key while it lasts. `claimed` is a letter an
+   *  Essential wears (see letters.ts), which begins a hold as a digit does. */
+  down(stroke: Stroke, now = Number.NaN, claimed = false): boolean {
     const alone = !stroke.ctrlKey && !stroke.shiftKey && !stroke.metaKey && !stroke.altGraph
 
     if (stroke.key === 'Alt') {
@@ -119,26 +116,34 @@ export class AltHold {
       return this.holding
     }
 
-    if (stroke.altKey && alone && isDigit(stroke)) {
-      this.holding = true
-      this.spent = false
-      return true
-    }
-
-    // Any other key: with Alt down it is a chord of its own, and the hold is over; with
-    // no Alt down there was none.
-    this.spent = this.spent || this.holding || stroke.altKey
-    this.holding = false
-    this.quiet = false
     // A key between two taps of Alt makes them no double tap.
     this.tapped = Number.NEGATIVE_INFINITY
-    return false
+    if (!stroke.altKey) {
+      this.forget()
+      return false
+    }
+    if (this.holding) return true
+    // A digit or an Essential's letter with Alt alone is a hold: Alt went down where
+    // the window could not hear it - in a page, or in another program - or went down
+    // spent, and the hand is going from tab to tab with it all the same.
+    if (!alone || !(isDigit(stroke) || claimed)) return false
+    this.holding = true
+    this.spent = false
+    this.quiet = false
+    return true
   }
 
-  /** A press of the pointer or the wheel, with Alt still down. */
-  used(): void {
-    this.spent = this.spent || this.holding
-    this.holding = false
+  /** What any key or press of the pointer says of Alt as it happens: let go of where the
+   *  window did not hear it, or held where it did not hear it go down. Answers whether the
+   *  numbers are to be put up now. */
+  sense(alt: boolean, altGraph = false): boolean {
+    if (!alt) {
+      this.forget()
+      return false
+    }
+    if (this.holding || this.spent || altGraph) return false
+    this.holding = true
+    return true
   }
 
   /** Alt let go of, or the window gone and with it any word of the release. */
@@ -149,5 +154,12 @@ export class AltHold {
     this.quiet = false
     this.holding = false
     this.spent = false
+  }
+
+  /** Alt is up, whatever was heard of it: no hold, and no tap waiting for its second. */
+  private forget() {
+    this.holding = false
+    this.spent = false
+    this.quiet = false
   }
 }

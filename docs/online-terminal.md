@@ -329,9 +329,16 @@ renaming the tab; **Move to space** moves the audience; **bookmarks, search by n
 the file list and the session restore** carry it; **Reopen closed tab** reopens it; and
 another device of the same person opens the same file and so the same session.
 
-- **Made** by the new tab's card, in the folder new notes go to, named `Terminal`, `Terminal 2`...
-  A session is opened on the maker's own machine, which is started if it sleeps. Making one in
-  somebody else's space is making a terminal on **your** machine that their people can watch.
+- **Made** by the new tab's card as a tab **not saved** (issue 1055), as every new tab is:
+  no file and no row in the list, its words a `.term`'s naming its session, which the
+  account keys by the session's own id and only its owner reaches. **Saving it** - Ctrl+S,
+  or the tab dropped on the list - writes the `.term` (`keepTerm` in workspace/placing.ts),
+  named after the tab, and the account gives the session the file's id once sync has sent
+  it (`adopt` in routes.ts); from then on everything below holds. Until then it is on this
+  device's tabs alone: another device does not see it, though the session runs on and is
+  in Settings' list. A `.term` an older Orden wrote at once stays where it is.
+  A session is opened on the maker's own machine, which is started if it sleeps. Saving one in
+  somebody else's space is putting a terminal on **your** machine that their people can watch.
 - **Closing its tab** never ends the session: the shell and everything in it go on, as tmux's
   do when a client leaves.
 - **`exit`**, or the shell ending: the file stays, the last screen stays readable with the
@@ -929,6 +936,33 @@ tmux started from a service dies with it unless it is moved to a scope of its ow
   rather than written over under the holders that have it loaded.
 - **The first restart after this is deployed** still ends the shells there are: a `nibd`
   without holders started them.
+
+### 4.17 One device at a time
+
+Issue 1055, lxorb: an online terminal is a file in the sidebar like any note, synced and
+reopened on every device, and **one device at a time** drives it.
+
+- **Saveable, and then listed.** A new online terminal is not saved (4.5); saved, its `.term` is a row of the file list (`is_term` in the crate's `tree.rs`, `listed`
+  in `web/commands.ts`) wearing the terminal's mark. It was neither: no row, and a phone's or
+  a browser's mirror, which walks that list, never sent it to the reader's other devices.
+  `web/commands.test.ts` lists a file of every `Opener` kind, so a new kind fails until listed.
+- **The lock** is `Machine`'s (`services/sync/src/locks/`, shared with applications' `AppRelay`, issue 1063), one storage key a
+  session, every change made in one queue: two Take overs at once end with the second's device
+  holding it. It is among the sockets that may type and whose hello says `hold`; who may only
+  watch, and an Orden from before it, are never held off, so old and new apps and servers meet
+  harmlessly (an old server ignores `hold`, `take` and `leave`; an old app is never sent `held`).
+- **Held off**, a socket is sent nothing of the session and its keys go nowhere; it is told
+  `held {by, since, taken}` - the device's name (`devices.name`, which the door hands on) - and
+  its tab shows its last screen dimmed under _Open on <device> since <time>_ and **Take over**,
+  or _Taken over by <device>_ and **Take back**. Enter is the button.
+- **Take over** (`take`) hands it on at once: the old holder is told `held` with `taken`, the new
+  one `hold`, and says hello again with what it last drew, so `nibd` sends the rest or the whole
+  screen with its scrollback. Nothing restarts; the pty takes the holder's size.
+- **Let go**: closing the tab says `leave`, free at once. A socket that closed, or said nothing -
+  not even the runtime-answered beat - for `HOLD_QUIET` (45 s, then closed with 4408), keeps it
+  for `HOLD_GRACE` (30 s) to come back to; then the device waiting for it that was heard from
+  last has it. The minute alarm looks again where an evicted object lost the timer.
+- **Ending** the session drops its lock.
 
 ## 5. What Orden does not do
 

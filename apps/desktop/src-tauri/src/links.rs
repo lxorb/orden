@@ -253,6 +253,12 @@ pub struct Note {
     /// read, because no list asks it; the surface that draws the banner reads it
     /// out of the note itself. See cover.ts in @orden/markdown.
     cover: Option<String>,
+    /// Whether the note says nothing yet: whitespace, or its own name as its heading and
+    /// nothing under it, below any front matter. It then wears the empty page, and the
+    /// folder where it holds notes (#1042). Read on this pass for the reason the icon is:
+    /// every row wants it. False for a canvas and a website. The twin of `saysNothing`
+    /// in the app's scan-note.ts, which the re-read of a saved note and the browser use.
+    bare: bool,
     /// The note's front matter as written, the lines between the fences, or None for
     /// a note that opens with anything else. Raw, because the window reads properties
     /// with the parser it already has (properties.ts in @orden/markdown) and the rows
@@ -360,6 +366,12 @@ fn note_at(relative: String, body: &str) -> Note {
             .and_then(|one| front_matter::value(body, one, key))
     };
 
+    // Under the block, which says what the note is rather than anything in it.
+    let under = block
+        .as_ref()
+        .map_or(body, |one| body.get(one.end..).unwrap_or(""));
+    let bare = says_nothing(under, &name);
+
     Note {
         path: relative,
         name,
@@ -378,6 +390,7 @@ fn note_at(relative: String, body: &str) -> Note {
         favicon: None,
         address: None,
         cover: said("cover"),
+        bare,
         // The last line's break is the fence's, not the block's: the twin of
         // `frontMatter` in @orden/markdown, which takes one off and no more.
         front: block.as_ref().and_then(|one| {
@@ -496,6 +509,7 @@ fn canvas_note(relative: String, body: &str) -> Note {
         address: None,
         // And a plane has no cover: the whole of it is a picture already.
         cover: None,
+        bare: false,
         // Nor rows: the words on a card are a drawing's, not a list anybody keeps.
         front: None,
         tasks: Vec::new(),
@@ -522,8 +536,10 @@ fn shortcut_note(relative: String, content: &str) -> Note {
         blocks: Vec::new(),
         links: Vec::new(),
         tags: Vec::new(),
-        icon: None,
-        icon_color: None,
+        // The icon the reader chose over the site's mark (#1098): `Nib-Chosen-Icon`,
+        // which web-tab/shortcut.ts writes.
+        icon: key_of(content, "nib-chosen-icon"),
+        icon_color: key_of(content, "nib-chosen-color"),
         aliases: Vec::new(),
         // What `url:` means here is a note that is a website in the old format and
         // wants converting; a shortcut is already one. See shortcut.ts.
@@ -531,6 +547,7 @@ fn shortcut_note(relative: String, content: &str) -> Note {
         favicon: favicon_of(content),
         address: address_of(content),
         cover: None,
+        bare: false,
         front: None,
         tasks: Vec::new(),
         stamp: None,
@@ -764,6 +781,42 @@ fn stamp_of(meta: &Metadata) -> Stamp {
         mtime,
         ctime: millis(meta.created()).unwrap_or(mtime),
     }
+}
+
+/// A title and a name put the same way so the two can be compared: what a file name
+/// cannot hold is a space, as `nameFromTitle` in the app's note-name.ts has it, and the
+/// runs and the ends go. The twin of `loose` in scan-note.ts.
+fn loose(words: &str) -> String {
+    let spaced: String = words
+        .chars()
+        .map(|one| {
+            if "<>:\"/\\|?* -".contains(one) || one.is_whitespace() {
+                ' '
+            } else {
+                one
+            }
+        })
+        .collect();
+    let joined = spaced.split_whitespace().collect::<Vec<_>>().join(" ");
+    joined
+        .trim_matches(|one: char| one == '.' || one.is_whitespace())
+        .to_string()
+}
+
+/// Whether a note's body - what is under its front matter - says nothing: only
+/// whitespace, or only one heading whose words are the note's own name. The twin of
+/// `saysNothing` in scan-note.ts.
+fn says_nothing(body: &str, name: &str) -> bool {
+    let mut lines = body.lines().filter(|line| !line.trim().is_empty());
+    let Some(first) = lines.next() else {
+        return true;
+    };
+    if lines.next().is_some() {
+        return false;
+    }
+
+    let name = loose(name);
+    heading_of(first).is_some_and(|(_, words)| !name.is_empty() && loose(&words) == name)
 }
 
 /// The level and the words of a heading line, or nothing when the line is not one.
@@ -1357,6 +1410,28 @@ mod tests {
         assert!(read.cover.is_none());
     }
 
+    /// A note that says nothing yet wears the empty page (#1042): whitespace, or its own
+    /// name as its heading, under any front matter. The same cases as says-nothing.test.ts,
+    /// since the app reads a saved note again with that twin.
+    #[test]
+    fn a_note_that_says_nothing_yet_is_bare() {
+        let bare = |path: &str, body: &str| note_at(path.to_string(), body).bare;
+
+        assert!(bare("Plan.md", ""));
+        assert!(bare("Plan.md", "  \n\n\t\n"));
+        assert!(bare("Plan.md", "# Plan\n\n"));
+        assert!(bare("Trips/Plan.md", "## Plan ##\r\n\r\n"));
+        assert!(bare("Q1 costs.md", "# Q1: costs\n"));
+        assert!(bare("Plan.md", "---\nicon: rocket\ntitle: Plan\n---\n\n"));
+        assert!(bare("Plan.md", "---\ntitle: Plan\n---\n# Plan\n"));
+
+        assert!(!bare("Plan.md", "# Plan\n\nWords.\n"));
+        assert!(!bare("Plan.md", "# Another\n"));
+        assert!(!bare("Plan.md", "Plan\n"));
+        assert!(!bare("Plan.md", "# Plan\n- [ ] task\n"));
+        assert!(!bare("Plan.md", "#Plan\n"));
+    }
+
     /// A website carries the site's own mark for the file list, out of its `Nib-Icon`
     /// key. Emil, 2026-09-13: *"the website favicon should also be used in the
     /// sidebar."* Read on the same pass as everything else, so a row has the favicon
@@ -1378,6 +1453,20 @@ mod tests {
         // A shortcut is a name, a mark and an address, and nothing else the index reads.
         assert!(read.url.is_none());
         assert!(read.icon.is_none());
+    }
+
+    /// A website wears the icon the reader chose over the site's mark, kept in its own
+    /// file (#1098); the twin of `scanShortcut` in the app.
+    #[test]
+    fn a_website_wears_the_icon_chosen_for_it() {
+        let read = shortcut_note(
+            "Svelte docs.url".to_string(),
+            "[InternetShortcut]\r\nURL=https://svelte.dev/\r\nNib-Icon=data:image/png;base64,AA\r\nNib-Chosen-Icon=rocket\r\nNib-Chosen-Color=violet\r\n",
+        );
+
+        assert_eq!(read.icon.as_deref(), Some("rocket"));
+        assert_eq!(read.icon_color.as_deref(), Some("violet"));
+        assert_eq!(read.favicon.as_deref(), Some("data:image/png;base64,AA"));
     }
 
     /// A `.webloc` says where it points in a plist, which is the other half of the

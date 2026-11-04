@@ -9,6 +9,7 @@ import { recovery } from '../recovery.svelte'
 import { hasTray, residency } from '../reminders/residency.svelte'
 import { chatsGroups } from '../chats-settings'
 import { tabCycle } from '../tab-cycle.svelte'
+import { iconTabs } from '../tab-strip/icon-tabs.svelte'
 import { PREVIEW_DELAY, previewDelay } from '../tab-strip/preview-delay.svelte'
 import { isDesktop, isMobile, platform } from '../tauri'
 import { swipeChoice } from '../back-swipe/choice.svelte'
@@ -88,6 +89,17 @@ function terminalGroup(): Group {
         initial: SIZES.initial,
         get: () => shells.size,
         set: (size) => shells.setSize(size),
+      },
+      {
+        kind: 'switch',
+        key: 'general.terminalThemed',
+        store: { on: shells, name: 'themed' },
+        label: t('Colours follow the theme'),
+        hint: t('Paints terminals in the theme’s colours; off keeps one fixed palette.'),
+        words: ['colour', 'color', 'palette', 'ansi', 'theme', 'dark', 'light'],
+        initial: true,
+        get: () => shells.themed,
+        set: (on) => shells.setThemed(on),
       },
       {
         kind: 'switch',
@@ -382,6 +394,21 @@ export function generalPane(): Pane {
           ...(isMobile
             ? []
             : ([
+                // Every tab but the one in front as its mark alone, opening out under
+                // the pointer (#1041); see tab-strip/icon-tabs.svelte.ts.
+                {
+                  kind: 'switch',
+                  key: 'general.iconTabs',
+                  store: { on: iconTabs, name: 'on' },
+                  label: t('Show other tabs as icons'),
+                  hint: t(
+                    'Every tab but the one in front shows only its icon; pointing at one shows its name.',
+                  ),
+                  words: ['icon', 'compact', 'pinned', 'title', 'tabs'],
+                  initial: true,
+                  get: () => iconTabs.on,
+                  set: (on) => iconTabs.set(on),
+                },
                 {
                   kind: 'slider',
                   key: 'general.tabPreviewDelay',

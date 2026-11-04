@@ -27,7 +27,7 @@ import { account } from './account.svelte'
 import { message } from './i18n.svelte'
 import { rooms } from './rooms.svelte'
 import { samePath } from './space-paths'
-import { forget, keep, parsed, storedText } from './stored'
+import { forget, keepJson, Shared } from './stored'
 import { within } from './sync/mirror'
 import { sync } from './sync.svelte'
 import { type Origin, originOf, trustsHtml } from './trust'
@@ -80,14 +80,7 @@ function kept(root: string): unknown {
 }
 
 function keptRoles(): Record<string, unknown> {
-  const text = storedText(ROLES_KEY)
-  if (text !== rolesText) {
-    rolesText = text
-    const value = parsed(text)
-    rolesRead = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
-  }
-
-  return rolesRead
+  return roles.get()
 }
 
 /** What was kept follows a space's folder as it moves, and goes with it: the next
@@ -98,7 +91,7 @@ function rekeep(from: string, to: string | null): void {
   if (at === undefined) return
 
   const { [at]: one, ...rest } = roles
-  keep(ROLES_KEY, JSON.stringify(to === null ? rest : { ...rest, [to]: one }))
+  keepJson(ROLES_KEY, to === null ? rest : { ...rest, [to]: one })
 }
 
 workspace.fileOps.follow(
@@ -151,8 +144,10 @@ function onceFrom(one: RemoteSpace, before: Kept | null): Pick<Kept, 'once' | 'o
   }
 }
 
-let rolesText: string | null = null
-let rolesRead: Record<string, unknown> = {}
+/** Read again only when the text under the key changes; see `Shared` in stored.ts. */
+const roles = new Shared<Record<string, unknown>>(ROLES_KEY, (value) =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : {},
+)
 
 function roleIn(value: unknown): SpaceRole | null {
   return value === 'owner' || value === 'write' || value === 'read' ? value : null
@@ -180,7 +175,7 @@ export function rememberRoles(): void {
     }
   }
 
-  if (paired) keep(ROLES_KEY, JSON.stringify(roles))
+  if (paired) keepJson(ROLES_KEY, roles)
 }
 
 // What the account said of its spaces is the account's, and the next session
@@ -387,7 +382,7 @@ export async function trustAgain(space: Space): Promise<void> {
   const at = Object.keys(roles).find((root) => samePath(root, space.root))
   const one = at === undefined ? null : keptAt(at)
   if (at !== undefined && one) {
-    keep(ROLES_KEY, JSON.stringify({ ...roles, [at]: { ...one, once: false, onceItems: [] } }))
+    keepJson(ROLES_KEY, { ...roles, [at]: { ...one, once: false, onceItems: [] } })
   }
 
   await account.loadSpaces().catch(() => undefined)

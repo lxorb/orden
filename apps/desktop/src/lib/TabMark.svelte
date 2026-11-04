@@ -28,6 +28,7 @@
    *  pictures. */
   import LoaderCircle from 'lucide/dist/esm/icons/loader-circle.mjs'
   import { agentMarks } from './agent-marks.svelte'
+  import { wearsChosen } from './chosen-icon'
   import { markOf } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { ASK_MARK, GRAPH_MARK } from './panel-marks'
@@ -59,7 +60,9 @@
    *  frame - else the one its file wrote down. Where none says, the row's own reading of
    *  the file answers below. See `siteMark`. */
   const found = $derived(
-    page ? siteMark(page.icon, page.url ?? tab.address ?? file?.url, file?.icon) : null,
+    page && !wearsChosen(tab.path)
+      ? siteMark(page.icon, page.url ?? tab.address ?? file?.url, file?.icon)
+      : null,
   )
 
   /** An agent acting here: its spark in its colour, turning, or still and muted while

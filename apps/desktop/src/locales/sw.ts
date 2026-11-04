@@ -90,6 +90,15 @@ export const sw: Dictionary = {
   // Tasks: the Display menu
   Display: 'Mwonekano',
   'Completed tasks': 'Kazi zilizokamilika',
+  Smart: 'Mahiri',
+  Grouping: 'Kupanga kwa vikundi',
+  Sorting: 'Kupanga',
+  'Last 30 days': 'Siku 30 zilizopita',
+  'Assigned to me': 'Nilizopewa mimi',
+  Unassigned: 'Hazijakabidhiwa',
+  'Reset all': 'Weka upya yote',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Mpangilio unaonyesha kazi kama orodha, ubao au kalenda. Kupanga kwa vikundi kunazigawa katika vikundi, ambavyo ni safu za ubao. Kupanga kunapanga kila kikundi. Vichujio huficha usichohitaji. Yote huhifadhiwa kwa mwonekano huu.',
   // Tasks: several lines pasted into quick add
   'One task': 'Kazi moja',
   'One per line': 'Moja kwa kila mstari',
@@ -562,11 +571,11 @@ export const sw: Dictionary = {
   'Actual size': 'Ukubwa halisi',
   // Appearance
   Accent: 'Rangi ya msisitizo',
-  'Window corners': 'Pembe za dirisha',
-  Rounded: 'Mviringo',
-  Square: 'Mraba',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Mviringo huelea kilichofunguliwa ndani ya kadi ndani ya dirisha; Mraba hukiweka sawa na kingo.',
+  'Tidy up': 'Panga',
+  'Swipe in from the edge to see your notes.': 'Telezesha kutoka ukingoni kuona madokezo yako.',
+  'Show other tabs as icons': 'Onyesha vichupo vingine kama aikoni',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Kila kichupo isipokuwa cha mbele kinaonyesha aikoni yake tu; ukielekeza kimoja, jina lake linaonekana.',
   'Tab preview delay': 'Muda wa kusubiri onyesho la kichupo',
   'How long the pointer rests on a tab before its preview shows.':
     'Muda ambao kiashiria hukaa kwenye kichupo kabla onyesho lake halijaonekana.',
@@ -1846,6 +1855,7 @@ export const sw: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Maelezo ya tovuti',
   Downloads: 'Vipakuliwa',
+  'Downloading {name}': 'Inapakua {name}',
   'Show in folder': 'Onyesha kwenye folda',
   'Show in Finder': 'Onyesha kwenye Finder',
   'Reveal in Finder': 'Onyesha kwenye Finder',
@@ -1940,6 +1950,9 @@ export const sw: Dictionary = {
   'Exited with code {code}': 'Imemalizika kwa msimbo {code}',
   'Could not start {shell}': 'Imeshindwa kuanzisha {shell}',
   'Restore history': 'Rejesha historia',
+  'Colours follow the theme': 'Rangi zinafuata mandhari',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Hupaka vituo kwa rangi za mandhari; ikizimwa, huweka paleti moja isiyobadilika.',
   'Restored {time}': 'Imerejeshwa {time}',
   'Stop what is running in {name}?': 'Simamisha kinachoendeshwa katika {name}?',
   'Stop what is running in these terminals?': 'Simamisha kinachoendeshwa katika terminali hizi?',
@@ -2091,6 +2104,8 @@ export const sw: Dictionary = {
   'Every space': 'Kila nafasi',
   Sites: 'Tovuti',
   'Asks first': 'Huuliza kwanza',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Huunganishwa kupitia MCP na husimamia ruhusa zake huko yenyewe: Orden haiulizi chochote. Nafasi zako, tovuti ulizozuia na mipaka iliyo hapa chini bado inatumika.',
   Limits: 'Vikomo',
   'Clear what {name} did?': 'Futa alichofanya {name}?',
   'Show earlier': 'Onyesha za awali',
@@ -2339,6 +2354,12 @@ export const sw: Dictionary = {
   // The online terminal
   'Online terminal': 'Terminali ya mtandaoni',
   'New online terminal': 'Terminali mpya ya mtandaoni',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'kifaa kingine',
+  'Taken over by {device}': 'Kimechukuliwa na {device}',
+  'Open on {device} since {time}': 'Kimefunguliwa kwenye {device} tangu {time}',
+  'Take over': 'Chukua',
+  'Take back': 'Rudisha',
   'Start online machine': 'Washa mashine ya mtandaoni',
   'Stop online machine': 'Zima mashine ya mtandaoni',
   Resume: 'Endelea',
@@ -2384,6 +2405,8 @@ export const sw: Dictionary = {
   'Take photo': 'Piga picha',
   Pronouns: 'Viwakilishi',
   Bio: 'Maelezo',
+  'A few words about you': 'Maneno machache kukuhusu',
+  'What’s happening?': 'Kuna nini?',
   'Clear after': 'Futa baada ya',
   '30 minutes': 'Dakika 30',
   '1 hour': 'Saa 1',
@@ -2746,4 +2769,5 @@ export const sw: Dictionary = {
   'View your report': 'Tazama ripoti yako',
   'Not sent. Your text is kept, so you can try again.':
     'Haijatumwa. Maandishi yako yamehifadhiwa, kwa hivyo unaweza kujaribu tena.',
+  'Reset to site icon': 'Rudisha ikoni ya tovuti',
 }

@@ -14,7 +14,7 @@
  *  it through a `$derived` that changes when the colour does - on a page landing, a
  *  navigation, a tab switch - and never on a frame. */
 
-import { forget, isNumber, isRecord, isString, keep, stored } from '../stored'
+import { forget, isNumber, isRecord, isString, keepJson, stored } from '../stored'
 
 export type Scheme = 'dark' | 'light'
 
@@ -189,7 +189,7 @@ class Chrome {
     const text = JSON.stringify(next)
     if (text === this.written) return
     this.written = text
-    keep(KEY, text)
+    keepJson(KEY, next)
   }
 
   /** Forgets the colour kept for the next launch: the reader left glass. */

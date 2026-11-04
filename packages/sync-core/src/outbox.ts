@@ -75,6 +75,9 @@ export function coalesce(ops: readonly Op[]): Op[] {
   const renaming = new Map<string, number>()
   /** Ids with an op that stayed in the queue after their waiting create. */
   const stuck = new Set<string>()
+  /** Where the last drag of each id within its folder stands, while nothing else has
+   *  touched the id. */
+  const placing = new Map<string, number>()
 
   for (let at = 0; at < queue.length; at++) {
     const op = queue[at]
@@ -120,6 +123,16 @@ export function coalesce(ops: readonly Op[]): Op[] {
       renaming.set(op.id, at)
       continue
     }
+
+    // Only the last of a row's drags within its folder has to go: the account keeps one
+    // position, the latest (#1068).
+    if (op.t === 'place') {
+      const earlier = placing.get(op.id)
+      if (earlier !== undefined) queue[earlier] = null
+      placing.set(op.id, at)
+      continue
+    }
+    placing.delete(op.id)
 
     renaming.delete(op.id)
     if (op.t !== 'delete' || !create) continue

@@ -1980,6 +1980,8 @@ fn say(
 /// `cut` is what of the page the app's layers are over, taken out of the page instead of
 /// the page hidden (`web_cut.rs`). The answer says whether this build cuts at all; a window
 /// told no hides the page under a layer, with its still picture, as it always has.
+/// `corner` is the corner of the card the page fills, in the window's own units, which
+/// the page's two bottom corners take (#1088); nothing for a square one.
 #[tauri::command]
 pub fn web_place(
     app: AppHandle,
@@ -1988,6 +1990,7 @@ pub fn web_place(
     visible: bool,
     frame: Option<crate::web_follow::Frame>,
     cut: Option<crate::web_cut::Cut>,
+    corner: Option<f64>,
 ) -> Result<bool, String> {
     let view = found(&app, &tab)?;
 
@@ -2044,7 +2047,14 @@ pub fn web_place(
     // a layer never draws a frame over it.
     if visible {
         let _doing = crate::stall::doing("web_place: cut");
-        crate::web_cut::apply(&view, cut.clone(), width, height, scale);
+        crate::web_cut::apply(
+            &view,
+            cut.clone(),
+            width,
+            height,
+            scale,
+            corner.unwrap_or(0.0),
+        );
     }
 
     if visible {

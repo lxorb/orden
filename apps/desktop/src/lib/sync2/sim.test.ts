@@ -274,3 +274,66 @@ describe('random walks, the engine as every device', () => {
     expect(await walked(seed, 1)).toEqual([])
   })
 })
+
+/** The tree walked at random (#1068): moves, renames, deletes and restores crossing on
+ *  four devices, the engine as every one. A restore here is what the app's trash does
+ *  today - the files put back where they were, and heard as files made - so a note comes
+ *  back under a new id: the step of #1068 that has the file list say what it did by id
+ *  makes it come back as itself. Until then that one failure is expected and every other
+ *  check holds. */
+describe('the tree walked at random, the engine as every device', () => {
+  const SEEDS = 40
+  const AS_ITSELF = 'was restored and is not there'
+
+  async function treeWalk(seed: number): Promise<string[]> {
+    const report = await simulate({
+      seed,
+      devices: 4,
+      steps: 60,
+      mix: 'tree',
+      device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
+    })
+    return report.failures
+  }
+
+  test(`${String(SEEDS)} seeds converge with nothing duplicated, lost or cycled`, async () => {
+    const failed: string[] = []
+    for (let seed = 1; seed <= SEEDS; seed++) {
+      const said = (await treeWalk(seed)).filter((one) => !one.endsWith(AS_ITSELF))
+      if (said.length) failed.push(`seed ${String(seed)}: ${said.join('; ')}`)
+    }
+    expect(failed).toEqual([])
+  }, 600_000)
+
+  /** The road #1068 names: a note moved into a folder and deleted on one device while
+   *  another, offline, still has it where it was. Deleted everywhere, once. */
+  test('a note moved and deleted on one device is deleted on the one that was away', async () => {
+    // Live entries are picked in id order: the folder (a UUID) before n1 and n2.
+    const NOTE = 0.4
+    const report = await run([
+      { t: 'act', device: 0, action: { t: 'mkdir', folder: null, name: 'Work' } },
+      { t: 'pass', device: 0 },
+      settle,
+      { t: 'pass', device: 1 },
+      settle,
+      { t: 'offline', device: 1 },
+      { t: 'act', device: 0, action: { t: 'move', target: NOTE, folder: 0 } },
+      { t: 'act', device: 0, action: { t: 'delete', target: NOTE } },
+      { t: 'pass', device: 0 },
+      settle,
+      { t: 'online', device: 1 },
+      { t: 'pass', device: 1 },
+      settle,
+      { t: 'pass', device: 0 },
+      settle,
+    ])
+
+    expect(report.failures).toEqual([])
+    expect(report.account.entries.map((one) => one.name).sort()).toEqual(['Ideas.md', 'Work'])
+  })
+
+  test.fails('a note restored from the trash comes back as itself', async () => {
+    // Seed 3 restores the seeded Plan.md (n1) on one device.
+    expect(await treeWalk(3)).toEqual([])
+  })
+})

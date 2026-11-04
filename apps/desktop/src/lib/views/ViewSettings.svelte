@@ -9,7 +9,7 @@
   import { segmented } from '../slide'
   import { viewport } from '../viewport.svelte'
   import ArrangeBuilder from './ArrangeBuilder.svelte'
-  import { CARD_SIZES, DEFAULT_SIZE } from './board'
+  import { CARD_SIZES, sizeOf } from './board'
   import { displayName, knownProperties } from './columns'
   import { setColumns, setViewNib } from './edit'
   import type { Kit } from './kit'
@@ -150,7 +150,7 @@
     <p class="nib-section">{t('Card size')}</p>
     <div class="nib-segmented" role="radiogroup" aria-label={t('Card size')} use:segmented>
       {#each CARD_SIZES as size (size)}
-        {@const on = (view?.nib.cardSize ?? DEFAULT_SIZE) === size}
+        {@const on = sizeOf(view?.nib.cardSize, (view?.nib.rows ?? 'notes') === 'notes') === size}
         <button
           type="button"
           role="radio"

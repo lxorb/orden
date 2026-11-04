@@ -127,6 +127,19 @@ export function noteKey(spaceId: string, noteId: string): string {
  *  first. */
 export const TAKEN_SEQ = '(select next - 1 from space_cursor where space_id = ?1)'
 
+/** Who last put a note where it is, kept as words land on it, from the row as it stood
+ *  (0068, #1068): where its latest change was to its place, that change. Words make
+ *  their writer the note's last changer, and a folder delete must still tell who put it
+ *  in the folder; see `placing` in @orden/sync-core/tree. `words` is the SQL that says
+ *  whether these are words: a parameter, or `1`. */
+export function placedOn(words: string): string {
+  const now = `${words} and (doc_seq is null or seq <> doc_seq or placed_seq is null)`
+  return `placed_seq = case when ${now} then seq else placed_seq end,
+          placed_by = case when ${now} then updated_by else placed_by end`
+}
+
+const PLACED_ON_WORDS = placedOn('?9')
+
 /** The statement that moves a space's cursor on, for the batch that writes under it. */
 export function takeSeq(env: Env, spaceId: string): D1PreparedStatement {
   return env.DB.prepare(
@@ -434,7 +447,8 @@ export async function saveNote(
       `update notes set path = ?2, seq = ${TAKEN_SEQ}, version = ?3, updated_at = ?4, deleted = 0,
                         size = ?5, hash = ?6, front = ?7, front_rev = ?8,
                         doc_seq = case when ?9 then ${TAKEN_SEQ} else ?10 end, doc_by = ?11,
-                        updated_by = ?12
+                        updated_by = ?12,
+                        ${PLACED_ON_WORDS}
         where id = ?13 and version = ?14 and epoch = ?15`,
     ).bind(
       note.space_id,

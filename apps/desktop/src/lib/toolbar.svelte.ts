@@ -28,7 +28,7 @@ import type { IconNode } from 'lucide'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { BY_ID, runnable } from './shortcuts/registry'
-import { forget, isString, keep, stored } from './stored'
+import { forget, isString, keepJson, stored } from './stored'
 
 const STORAGE_KEY = 'nib:toolbar'
 
@@ -204,7 +204,7 @@ class Toolbar {
     // Through `keep`, which is the one place that writes: a browser told to keep
     // no site data still has a bar, and it is this run's bar rather than this
     // device's. See stored.ts.
-    if (this.chosen) keep(STORAGE_KEY, JSON.stringify(this.chosen))
+    if (this.chosen) keepJson(STORAGE_KEY, this.chosen)
     else forget(STORAGE_KEY)
 
     this.share()
@@ -227,7 +227,7 @@ class Toolbar {
     if (JSON.stringify(usableOnes) === JSON.stringify(this.chosen)) return
 
     this.chosen = usableOnes
-    if (usableOnes) keep(STORAGE_KEY, JSON.stringify(usableOnes))
+    if (usableOnes) keepJson(STORAGE_KEY, usableOnes)
     else forget(STORAGE_KEY)
   }
 

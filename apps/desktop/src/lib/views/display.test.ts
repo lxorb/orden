@@ -3,8 +3,12 @@ import { taskRowsOfText } from '@orden/bases/tasks'
 import { describe, expect, test } from 'vitest'
 import { contextFor } from './context'
 import {
+  ASSIGNED_TO_ME,
+  changedFrom,
   displayed,
   groupingOf,
+  shippedGrouping,
+  shippedSorting,
   notesIn,
   onlyFilter,
   onlyOf,
@@ -13,6 +17,7 @@ import {
   withGrouping,
   withOnly,
   withSorting,
+  UNASSIGNED,
 } from './display'
 import { dropInto } from './drop'
 import { groupLabel, noteNames } from './words'
@@ -150,5 +155,123 @@ describe('a view grouped by note', () => {
     const said = many.map((key) => groupLabel('file.path', key, TODAY, names))
     expect(performance.now() - started).toBeLessThan(150)
     expect(said[0]).toBe('Note 0 · Folder 0')
+  })
+})
+
+// #1046: one view of a space's tasks, with Todoist's Display over it.
+describe('the Display menu over Todos', () => {
+  const rows = taskRowsOfText(
+    'Notes',
+    'Errands.md',
+    [
+      '- [ ] Late #admin [deadline:: 2026-10-12] 🔺 ➕ 2026-10-01',
+      '- [ ] Now #home #admin [deadline:: 2026-10-13] [assignee:: Emil] ➕ 2026-10-13',
+      '- [/] Doing it [deadline:: 2026-10-14] ➕ 2026-10-10',
+      '- [ ] Some day ⏫',
+      '- [x] Done already ✅ 2026-10-12',
+    ].join('\n'),
+  )
+  const here = contextFor({ rows, today: TODAY, now: `${TODAY}T09:00:00`, me: 'Emil' })
+  const todos = builtinView('todos', { space: 'Notes' })
+  const original = todos.views[0] ?? null
+  const grouped = (base: ReturnType<typeof builtinView>) =>
+    answer(displayed(base, 0), 0, rows, here).groups.map((group) => [
+      group.key,
+      group.rows.map((row) => row.task?.text),
+    ])
+
+  test('comes grouped by when each task is due, sorted the smart way, and says nothing changed', () => {
+    expect(shippedGrouping(original)).toBe('due')
+    expect(shippedSorting(original)).toBe('smart')
+    const view = todos.views[0]
+    if (!view) throw new Error('no view')
+    expect(changedFrom(view, original)).toEqual({ sort: 0, filter: 0, total: 0 })
+    expect(grouped(todos)).toEqual([
+      ['overdue', ['Late']],
+      ['today', ['Now']],
+      ['tomorrow', ['Doing it']],
+      [null, ['Some day']],
+    ])
+  })
+
+  test('groups by label, a task under each of its labels, and by status', () => {
+    const byLabel = withGrouping(todos, 0, 'tag', original)
+    expect(grouped(byLabel)).toEqual([
+      ['admin', ['Late', 'Now']],
+      ['home', ['Now']],
+      // The smart order: the high priority first.
+      [null, ['Some day', 'Doing it']],
+    ])
+    const byStatus = withGrouping(todos, 0, 'status', original)
+    expect(grouped(byStatus).map(([key]) => key)).toEqual([' ', '/'])
+    const view = byLabel.views[0]
+    if (!view) throw new Error('no view')
+    expect(changedFrom(view, original)).toEqual({ sort: 1, filter: 0, total: 1 })
+    // Its own grouping chosen again is the view as it came, its order of groups and all.
+    const back = withGrouping(byLabel, 0, 'default', original)
+    expect(back.views[0]?.nib.groups).toEqual(original?.nib.groups)
+  })
+
+  test('a view of another kind grouped by date gets the formula it groups by', () => {
+    const today = builtinView('today')
+    const byDue = withGrouping(today, 0, 'due', today.views[0] ?? null)
+    expect(byDue.formulas.when).toBeDefined()
+    expect(groupingOf(byDue.views[0]!, today.views[0] ?? null)).toBe('due')
+  })
+
+  test('sorts the smart way, by when it was written down, and counts each change', () => {
+    const byCreated = withSorting(todos, 0, 'created', true, original)
+    expect(sortingOf(byCreated.views[0]!, original)).toEqual({ sorting: 'created', down: true })
+    const smart = withSorting(byCreated, 0, 'smart', false, original)
+    expect(sortingOf(smart.views[0]!, original).sorting).toBe('default')
+    const many = withCompleted(withOnly(byCreated, 0, { priority: 1, label: 'admin' }), 0, true)
+    expect(changedFrom(many.views[0]!, original)).toEqual({ sort: 1, filter: 2, total: 4 })
+  })
+
+  test('narrows to when a task was written down and who it is assigned to', () => {
+    const words = (base: ReturnType<typeof builtinView>) =>
+      answer(displayed(base, 0), 0, rows, here).groups.flatMap((group) =>
+        group.rows.map((row) => row.task?.text),
+      )
+    expect(words(withOnly(todos, 0, { created: 'today' }))).toEqual(['Now'])
+    expect(words(withOnly(todos, 0, { created: 'week' })).sort()).toEqual(['Doing it', 'Now'])
+    expect(words(withOnly(todos, 0, { created: 'month' })).sort()).toEqual([
+      'Doing it',
+      'Late',
+      'Now',
+    ])
+    expect(words(withOnly(todos, 0, { assignee: ASSIGNED_TO_ME }))).toEqual(['Now'])
+    expect(words(withOnly(todos, 0, { assignee: 'Emil' }))).toEqual(['Now'])
+    expect(words(withOnly(todos, 0, { assignee: UNASSIGNED })).sort()).toEqual([
+      'Doing it',
+      'Late',
+      'Some day',
+    ])
+    const view = withOnly(todos, 0, { created: 'week', assignee: 'Emil' }).views[0]
+    if (!view) throw new Error('no view')
+    expect(onlyOf(view)).toEqual({ created: 'week', assignee: 'Emil' })
+  })
+
+  test('a card carried to another group changes what it is grouped by', () => {
+    const [late, now] = rows
+    if (!late || !now) throw new Error('no rows')
+    expect(dropInto('formula.when', 'today', late, TODAY)).toEqual({
+      change: { task: { deadline: TODAY } },
+    })
+    expect(dropInto('formula.when', 'tomorrow', late, TODAY)).toEqual({
+      change: { task: { deadline: '2026-10-14' } },
+    })
+    expect(dropInto('formula.when', null, now, TODAY)).toEqual({
+      change: { task: { deadline: null } },
+    })
+    // Overdue and Later name no one day.
+    expect(dropInto('formula.when', 'later', now, TODAY)).toBeNull()
+    expect(dropInto('task.tags', 'work', now, TODAY, 'home')).toEqual({
+      change: { task: { tags: ['admin', 'work'] } },
+    })
+    expect(dropInto('task.tags', null, now, TODAY, 'home')).toEqual({
+      change: { task: { tags: ['admin'] } },
+    })
+    expect(dropInto('task.tags', 'admin', now, TODAY, 'admin')).toBeNull()
   })
 })

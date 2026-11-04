@@ -81,7 +81,7 @@ vi.mock('../rows/rows.svelte', () => ({
 }))
 vi.mock('./act', () => ({ addTask: async () => null }))
 
-const { addNote } = await import('./add')
+const { addNote, prefillOf } = await import('./add')
 
 const inFolder = (folder: string) =>
   readBase(
@@ -157,5 +157,27 @@ describe('a note added to a base with a template, from a tab of another space', 
     const path = await addNote(journal(), 0, '/s/Shared/Board.base', undefined, { open: false })
 
     expect(written.get(path ?? '')).toContain('the shared journal')
+  })
+})
+
+// #1046: a task added in a group of Todos starts as that group says.
+describe('a task added in a group of Todos', () => {
+  const todos = { builtin: 'todos' as const, space: 'Mine' }
+  const today = '2026-10-13'
+
+  test('is due today or tomorrow, wears the label, or goes into the project', () => {
+    expect(prefillOf(todos, today, { property: 'formula.when', key: 'today' })).toEqual({
+      deadline: today,
+    })
+    expect(prefillOf(todos, today, { property: 'formula.when', key: 'tomorrow' })).toEqual({
+      deadline: '2026-10-14',
+    })
+    expect(prefillOf(todos, today, { property: 'formula.when', key: null })).toEqual({})
+    expect(prefillOf(todos, today, { property: 'task.tags', key: 'home' })).toEqual({
+      tags: ['home'],
+    })
+    expect(prefillOf(todos, today, { property: 'file.path', key: 'Errands.md' })).toEqual({
+      path: '/s/Private/Errands.md',
+    })
   })
 })

@@ -12,7 +12,14 @@
  *  makes its next occurrence as a tick in the editor would. */
 
 import { deadlineField, deadlineOf, startField, startOf } from '@orden/markdown/task-dates'
-import { groupName, type Priority, type Row, type TaskChange, type Value } from '@orden/bases'
+import {
+  addDays,
+  groupName,
+  type Priority,
+  type Row,
+  type TaskChange,
+  type Value,
+} from '@orden/bases'
 import type { RowChange } from '../rows/write'
 import { bare, isNoteProperty } from './columns'
 import { dayIn } from './values'
@@ -112,7 +119,29 @@ export function dropInto(
   today: string,
   from?: Value,
 ): Drop | null {
+  // A task carried from one label to another swaps that label alone, as a list
+  // property's card does; to no label, it loses that one (#1046).
+  if (property === 'task.tags') {
+    const task = row.task
+    if (!task) return null
+    const now = swapped(task.tags, key, from)
+    const tags = Array.isArray(now) ? now.filter((one) => typeof one === 'string') : []
+    return JSON.stringify(tags) === JSON.stringify(task.tags)
+      ? null
+      : { change: { task: { tags } } }
+  }
   if (property.startsWith('task.')) return taskDrop(property.slice(5), key, row, today)
+
+  // Todos' groups of when a task is due (`WHEN` in @orden/bases): today and tomorrow are
+  // its deadline, no date takes the deadline away. Overdue and Later name no one day, so
+  // a card carried there goes back; the scheduler is the way to a day of them.
+  if (property === 'formula.when') {
+    if (!row.task || row.task.done || row.task.cancelled) return null
+    if (key === 'today') return taskDrop('deadline', today, row, today)
+    if (key === 'tomorrow') return taskDrop('deadline', addDays(today, 1), row, today)
+    if (key === null || key === '') return taskDrop('deadline', null, row, today)
+    return null
+  }
 
   // The built-in views' own groupings: Today's overdue half and its today half, and
   // Upcoming's days. Their names are the builtins' (see builtins.ts in @orden/bases).

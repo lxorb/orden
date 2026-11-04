@@ -14,9 +14,7 @@
  *  that brings a tab to the front has put the pick down without having to say so. */
 
 import { workspace, type Tab } from '../workspace.svelte'
-import { closesPinned } from '../workspace/closing-pinned'
 import type { Landing } from '../workspace/panes.svelte'
-import { pinnedRun } from '../workspace/pinning'
 import { type Bounds, endOf, moved, placed, widthsFor } from './layout'
 import { duplicateTab, moveToOtherPane } from './ops'
 
@@ -138,7 +136,7 @@ export function gathered<T extends { readonly id: string }>(
 /** A tab as the strip lays it out. */
 interface Laid {
   readonly id: string
-  readonly pinned: boolean
+  readonly icon: boolean
   readonly active: boolean
 }
 
@@ -150,8 +148,7 @@ interface Held {
   readonly out: boolean
 }
 
-/** A drag of several: every tab picked with the one pressed that is pinned as it is,
- *  carried as one block - gathered beside the dragged tab as it lifts, along the strip
+/** A drag of several: every tab picked with the one pressed, carried as one block - gathered beside the dragged tab as it lifts, along the strip
  *  as one tab as wide as all of them, and put down together wherever it is let go, the
  *  way Chrome drags a selection. Made on the press, from the strip as it stands; the
  *  strip asks it where its tabs are drawn for as long as the drag lasts. */
@@ -171,13 +168,13 @@ export class Block {
   /** What a press on `tab` carries, or null where it carries the tab alone. */
   static of(paneId: string, tab: Tab, sized: readonly Laid[], widths: readonly number[]) {
     const picked = chosen.of(paneId)
-    const ids = picked.filter((one) => one.pinned === tab.pinned).map((one) => one.id)
+    const ids = picked.map((one) => one.id)
     return picked.includes(tab) && ids.length > 1 ? new Block(tab.id, ids, sized, widths) : null
   }
 
   /** What the drag measures slots in: the block as one tab. */
-  frame(room: number): { widths: number[]; room: number; pinnedRun: number } {
-    return { widths: this.strip.widths, room, pinnedRun: pinnedRun(this.strip.order) }
+  frame(room: number): { widths: number[]; room: number } {
+    return { widths: this.strip.widths, room }
   }
 
   /** Where each tab is drawn while the block is carried: along the strip, or out over
@@ -270,19 +267,7 @@ export function duplicateMany(ids: readonly string[]) {
   for (const id of ids) duplicateTab(id)
 }
 
-/** A pick pinned, or let go of, together: Pin while any of them is not, as Chrome's row
- *  says. Pinned in their order, each joining the back of the run, and let go of the
- *  other way round, each landing at the front of what is not pinned - so the order the
- *  strip had is the order it keeps. */
-export function pinMany(tabs: readonly Tab[]) {
-  const pinning = tabs.some((one) => !one.pinned)
-  const turning = pinning ? tabs.filter((one) => !one.pinned) : [...tabs].reverse()
-  for (const one of turning) workspace.togglePin(one.id)
-}
-
-/** Ctrl+W on a pick: all of it goes, as in Chrome, with the one question a pinned tab
- *  closed by key is asked, once for the lot. */
+/** Ctrl+W on a pick: all of it goes, as in Chrome. */
 export async function closeChosen(tabs: readonly Tab[]) {
-  if (tabs.some((one) => one.pinned) && !(await closesPinned())) return
   await workspace.closeMany(tabs.map((one) => one.id))
 }

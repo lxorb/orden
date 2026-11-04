@@ -10,7 +10,7 @@
  *  typed.ts, which is deliberately not in front of the first paint. See the web row in
  *  new-kinds.ts and test/weight.test.ts. */
 
-import { isRecord, isString, keep, stored } from '../stored'
+import { isRecord, isString, keepJson, stored } from '../stored'
 import { SEARCH } from './typed'
 import { engineById, engineHome, isEngineAddress } from './engines'
 
@@ -79,7 +79,7 @@ class SearchEngine {
 
   private write(next: Choice) {
     this.choice = next
-    keep(KEY, JSON.stringify(next))
+    keepJson(KEY, next)
   }
 }
 

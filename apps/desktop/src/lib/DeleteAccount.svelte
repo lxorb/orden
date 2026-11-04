@@ -149,7 +149,7 @@
       <label class="nib-setting setting">
         <span class="name">{t('Code sent to')} <strong>{account.user?.email}</strong></span>
         <input
-          class="inline"
+          class="nib-field is-value code"
           bind:this={field}
           bind:value={code}
           placeholder="000000"
@@ -163,7 +163,7 @@
         <label class="nib-setting setting" transition:fade={{ duration: dur(130) }}>
           <span class="name">{t('App code to delete')}</span>
           <input
-            class="inline"
+            class="nib-field is-value code"
             bind:value={fromApp}
             placeholder="000000"
             aria-label={t('App code to delete')}
@@ -228,35 +228,11 @@
     margin-inline-end: auto;
   }
 
-  .inline {
+  /* Six digits, so the field takes what they need and no more; the box is
+     `.nib-field.is-value` in the themes package. */
+  .setting > .code {
     flex: none;
-    width: 8rem;
-    padding: 6px 9px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: end;
-    outline: none;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  .inline::placeholder {
-    color: var(--muted);
-  }
-
-  .inline:focus {
-    background: var(--bg);
-  }
-
-  @media (hover: hover) {
-    .inline:hover {
-      border-color: var(--line);
-    }
+    inline-size: 8rem;
   }
 
   .hint {
@@ -268,12 +244,6 @@
 
   .hint.bad {
     color: var(--danger);
-  }
-
-  :global(.sheet.phone) .inline {
-    min-height: var(--touch-target);
-    padding: 8px 10px;
-    font-size: var(--touch-text);
   }
 
   :global(.sheet.phone) .setting {

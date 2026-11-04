@@ -11,7 +11,7 @@ use tauri::AppHandle;
 use crate::clock;
 use crate::paths::{
     cannot, held_paper, in_spaces, inside, is_base, is_canvas, is_chat, is_markdown, is_pages,
-    is_pdf, is_shortcut, paper_of, space_root, spaces_dir, Seen, MAX_DEPTH,
+    is_pdf, is_shortcut, is_term, paper_of, space_root, spaces_dir, Seen, MAX_DEPTH,
 };
 
 /// How many notes and folders one read may put in the tree.
@@ -207,13 +207,15 @@ fn walk(
                         || is_pages(&child)
                         || is_base(&child)
                         || is_shortcut(&child)
-                        || is_chat(&child))
+                        || is_chat(&child)
+                        || is_term(&child))
                         // But a page note's paper, which is part of the note beside it
                         // rather than a file of its own; see `held_paper`.
                         && (options.papers || !held_paper(&child)))
                 {
                     // The notes, the PDFs beside them, the canvases, the stacks
-                    // of paper, the websites and the chats: the things a tab can hold.
+                    // of paper, the websites, the chats and the online terminals: the
+                    // things a tab can hold.
                     // Everything else in a space belongs to a note rather than
                     // standing on its own - a picture, a PDF's own highlights -
                     // and a file list nobody can act on is noise.
@@ -387,6 +389,7 @@ mod tests {
         std::fs::write(here.join("Journal.pages"), "{}").expect("a page note");
         std::fs::write(here.join("Svelte docs.url"), "[InternetShortcut]").expect("a website");
         std::fs::write(here.join("Team.chat"), "{}").expect("a chat");
+        std::fs::write(here.join("Build.term"), "{}").expect("an online terminal");
         std::fs::write(here.join("paper.pdf"), "").expect("a pdf");
         std::fs::write(here.join("paper.pdf.highlights.json"), "{}").expect("its highlights");
         std::fs::write(here.join("shot.png"), "").expect("a picture");
@@ -398,6 +401,7 @@ mod tests {
             [
                 "Reading",
                 "Board.canvas",
+                "Build.term",
                 "Idea.md",
                 "Journal.pages",
                 // After the paper, because the list folds case before it sorts.

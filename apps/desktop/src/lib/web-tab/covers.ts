@@ -57,8 +57,9 @@ const CARDS = `${NOTICES} > *`
 
 /** The shapes the theme package gives every layer that floats (see base.css), the
  *  arrow a swipe brings in over a page, which is round and moves with the fingers (see
- *  back-swipe/SwipeArrow.svelte), and each card in the notices row. */
-const FLOATING = `.nib-layer, .nib-bubble, .nib-screen, .nib-swipe, ${CARDS}`
+ *  back-swipe/SwipeArrow.svelte), a file flying to the downloads glyph, which moves by
+ *  itself (see downloads/flight.ts), and each card in the notices row. */
+const FLOATING = `.nib-layer, .nib-bubble, .nib-screen, .nib-swipe, .nib-flight, ${CARDS}`
 /** And what covers all of a page without dimming it: the room a swipe's arrow comes in
  *  over, while the fingers are on (back-swipe/SwipeArrow.svelte). */
 const SCRIMS = '.nib-scrim, .nib-swipe-room'
@@ -95,6 +96,17 @@ export function cutOf(hole: Rect, layers: readonly Layer[]): Cut | null {
 
 /** A cut of all of the page. */
 export const ALL: Cut = { all: true, hollows: [] }
+
+/** What of a cut the crate is told, once the page is hidden whole behind its still
+ *  picture: all of it, and nothing of the layers over it, which move over the picture
+ *  and not over the page. A swipe's arrow moves on every step (#1050), and each move
+ *  told was a placement of the page and a fresh photograph of it every few tenths of a
+ *  second, for a page nobody could see. The layers still count while there is no
+ *  picture, on an engine that cuts them out round each one; one that cannot cut hides
+ *  the page whole either way. */
+export function settled(cut: Cut | null, pictured: boolean, cuts: boolean): Cut | null {
+  return cut?.all && (pictured || !cuts) ? ALL : cut
+}
 
 /** How much of a page has to be left above the notices for the page to stand clear of
  *  them rather than behind its still: half of it. */

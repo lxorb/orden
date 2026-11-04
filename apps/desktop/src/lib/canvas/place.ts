@@ -16,7 +16,7 @@
  *  somebody looked at, oldest first out. */
 
 import type { Camera } from '../camera'
-import { isRecord, keep, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../stored'
 
 const STORAGE_KEY = 'nib:canvas-views'
 
@@ -83,5 +83,5 @@ export function viewKept(path: string | null, view: KeptView) {
 
   // A device that cannot keep this opens the plane fitted to everything on it, which is
   // what a canvas with no place does.
-  keep(STORAGE_KEY, JSON.stringify(Object.fromEntries(kept)))
+  keepJson(STORAGE_KEY, Object.fromEntries(kept))
 }

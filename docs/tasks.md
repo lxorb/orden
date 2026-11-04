@@ -46,9 +46,11 @@ Nothing here loosens any of them.
 5. **Views are `.base` files**, Obsidian's format, with Orden's additions under one key, `nib:`,
    that Obsidian leaves alone. Table, list, cards, board, calendar, timeline and chart; the
    built-in Inbox, Today and Upcoming are bases Orden ships and a reader can copy and change.
-6. **A Tasks panel on the left** beside the files and the search: Inbox, Today, Upcoming,
-   then the reader's saved views, projects and labels, each with its count. A row opens its
-   view in a tab, the way the graph opens. The panel is navigation, the tab is the work.
+6. **A Tasks panel on the left** beside the files and the search: the space's one Todos
+   view (#1046), then the favourites and labels, each with its count. A press chooses a
+   row and draws its list in the panel under the rows; Ctrl or Cmd and a press, the middle
+   button or the row's menu opens it in a tab of its own (#374). Todos' Display menu is
+   where Inbox, Today, Upcoming, Completed and the filters went.
 7. **Quick add from anywhere**: a global key opens a one-line field over whatever is in
    front, and the palette has the same field. `Call mum tomorrow 4pm #family p1 every
 sunday` becomes chips as it is typed, in English and German, and a chip pressed turns
@@ -720,35 +722,46 @@ navigation, never a list of tasks itself, the way Todoist's sidebar is:
 │ [Files] [Search] [Tasks]       │
 ├────────────────────────────────┤
 │  ⊕  Add task          Ctrl+…  │   the quick add row, a field on press
-│  ▢  Inbox                  4   │
-│  ◷  Today                  7   │   7 in the danger tone if any are overdue
-│  ▦  Upcoming                   │
-│  ✓  Completed                  │
-│ VIEWS                          │
-│  ▤  Reading list           31  │   a .base file, its own icon
-│  ▥  Bugs board             12  │
-│ PROJECTS                       │
-│  ◻  Thesis                  9  │   notes with open tasks, by last edit
-│  ◻  Moving flat             5  │
-│  ◻  Errands                 3  │
-│     More                       │   past seven, the rest
+│  ◷  Tasks                  7   │   the space's Todos; 7 in the danger tone if any are overdue
+│ FAVORITES                      │
+│  ▤  Reading list           31  │   a bookmarked .base file or note with tasks
 │ LABELS                         │
 │  #  admin                   6  │
 │  #  family                  2  │
 └────────────────────────────────┘
 ```
 
+- **One view, Todos** (#1046): every task of the open space that can be worked on now
+  (`builtinView('todos')`), grouped by when it is due - Overdue, Today, Tomorrow, Later, No
+  date, by its deadline (#371) - and sorted the smart way (priority, deadline, time). Inbox,
+  Upcoming, Completed, the Filters, Projects and Notes sections are gone from the panel; the
+  engine still answers those built-in views for the agent and the glasses. Todoist's G then
+  T, U or I opens Todos.
+- **Display** sits in its head, `Display 2` where two settings differ from the view as it
+  came: Layout (List, Board, Calendar), Completed tasks, Sort (Grouping: none, priority,
+  label, date, project, status; Sorting: smart, deadline, priority, name, created, manual)
+  and Filter (project, priority, label, created, assignee in a shared space), each folded
+  with a badge, a dot beside each changed row, Reset all at the foot and a `?` that says
+  what each does. On a phone it is a sheet. Everything is kept per space on this device
+  (`todosView` in kept-views.ts), whichever tab changed it.
+- **Grouped as a board**, the columns are GitHub's: a status circle in the group's colour,
+  the name, a count badge, ⋯ and +. A card carried to another column writes what the board
+  is grouped by: a priority, a label swapped for another, a status, a project, a deadline of
+  today or tomorrow, or none; Overdue and Later name no one day and send the card back. The
+  card's menu has Move to, Alt and an arrow carries it, and on a phone the columns are pages
+  a finger swipes through. A task's card is a line of words and a line of meta, no room
+  left over.
 - **Rows** are `.nib-row`s with the existing section labels; counts are the badge shape; no
-  sentence anywhere. Bookmarked views, notes and tags come first, as favourites.
-- **A row opens its view in a tab** of its own kind (a view tab, as the graph is a tab):
-  full width, so a board and a calendar have the room they need, splittable beside a note,
-  restored with the session. A project row opens the note itself; the note's menu has
-  "Open as board" and "Open as calendar" for its own tasks.
-- **Saved views** are the `.base` files in the space, listed here as well as in the file
-  tree. A Todoist filter typed in a view's field and saved becomes one.
-- **On the right instead**: the panel can be moved right like any panel; a reader who wants
-  Today next to the note they write in moves it there and gets Today as a list in the panel
-  (the panel draws the view's list layout when it is on the right).
+  sentence anywhere. Bookmarked views and notes come first, as favourites.
+- **A press chooses a row** (#374): it is marked, and its list is drawn in the panel under
+  the rows; no tab opens. **A tab is asked for**: Ctrl or Cmd and a press, the middle
+  button, or the row's menu, Open in new tab, opens it in a view tab of its own kind (as the
+  graph is a tab), kept rather than a preview: full width, so a board and a calendar have
+  the room they need, splittable beside a note, restored with the session. Which a press
+  is, is decided in one place (`choose` in panel-press.ts). A note's menu has "Open as
+  board" and "Open as calendar" for its own tasks.
+- **On the right instead**: the panel can be moved right like any panel, and is the same
+  there: the rows, and the chosen row's list under them beside the note being written.
 - **On a phone** it is the drawer's third tab; a row opens the view as the page.
 
 Why both a panel and tabs: the panel answers "where are my things" in one glance with counts,
@@ -1524,7 +1537,7 @@ takes the words and a space and nothing else.
 | Shift+E                      | a row                                          | fold its sub-tasks                                        |
 | Shift+Delete, Ctrl+Shift+C   | a row                                          | delete; copy its link                                     |
 | a, Shift+A                   | a view                                         | add a task at the end, at the top                         |
-| G then T, U, I               | a view or the panel                            | go to Today, Upcoming, Inbox (Todoist's own)              |
+| G then T, U, I               | a view or the panel                            | go to Todos, the one view (Todoist's own keys, #1046)      |
 
 The row keys act on every selected row where any are selected (Ctrl or Cmd and a press,
 Shift and a press for a range, `x`), and the bulk bar at the foot of the list does the

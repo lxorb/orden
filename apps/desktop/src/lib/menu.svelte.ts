@@ -1,4 +1,4 @@
-import { isCanvasTarget, isChatTarget, isPagesTarget } from '@orden/markdown/links'
+import { isCanvasTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import { DIVIDER, type MenuEntry } from './menu-item'
 import { chosenIcon } from './chosen-icon'
 import { iconChoice } from './icon-choice.svelte'
@@ -43,6 +43,11 @@ class ContextMenu {
   lit = $state(-1)
   /** Where a press still held opened it; see menu-release.ts. */
   heldAt: { x: number; y: number } | null = null
+  /** The control a click opened it from - the `⋯` on a web tab's bar, a row's three dots -
+   *  which a second click on closes it from, or null for a right click, a long press or a
+   *  key; see overlays.ts. Said here as well as noticed there, because a menu whose rows
+   *  had to be fetched opens after that click is long gone. */
+  from: Element | null = null
 
   /** Opens at the pointer. The caller has already decided what belongs here,
    *  so an empty list means "no menu" rather than an empty box. */
@@ -59,8 +64,14 @@ class ContextMenu {
     this.keepFocus = !!options.keepFocus
     this.up = !!options.up
     this.lit = -1
-    this.x = event.clientX
-    this.y = event.clientY
+    this.from = event.type === 'click' ? openerOf(event) : null
+    // Hung from the control a click opened it from rather than from the pointer: at the
+    // pointer it covered the control, and the second click that should close it landed in
+    // the menu instead (#1039) - and a key's click, which has no pointer, put it in the
+    // window's corner.
+    const under = this.from?.getBoundingClientRect()
+    this.x = under ? under.left : event.clientX
+    this.y = under ? (this.up ? under.top : under.bottom) : event.clientY
     this.heldAt = event.buttons ? { x: event.clientX, y: event.clientY } : null
     this.open = true
   }
@@ -76,6 +87,13 @@ class ContextMenu {
   hide() {
     this.open = false
   }
+}
+
+/** The control a click on it landed in, wherever in it the click landed. */
+function openerOf(event: MouseEvent): Element | null {
+  const at = event.currentTarget ?? event.target
+  if (typeof Element === 'undefined' || !(at instanceof Element)) return null
+  return at.closest('button, [role="button"], a[href], [aria-haspopup]')
 }
 
 /** Drops leading, trailing and doubled dividers. */
@@ -161,11 +179,15 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
  *  every list that shows one can offer it - the tree today, a search result or a
  *  bookmark whenever one of those grows a menu of its own.
  *
- *  A note, a canvas, a chat or a folder. Not a PDF and not a picture: those are files
- *  with nowhere to keep an icon - a note has front matter, a canvas has its `nib` key,
- *  a chat its pointer,
- *  and a folder is not a file at all, so its icon is kept by the space. The two
- *  words are the same either way, which is the point of asking here.
+ *  A note, a canvas, a chat, a web note or a folder. Not a PDF and not a picture: those
+ *  are files with nowhere to keep an icon - a note has front matter, a canvas has its
+ *  `nib` key, a chat its pointer, a web note its `.url` (#1098) - and a folder is not a
+ *  file at all, so its icon is kept by the space. The two words are the same either
+ *  way, which is the point of asking here, but for a web note's second, which gives it
+ *  back the site's own mark: "Reset to site icon".
+ *
+ *  The pair a web tab's own menu is to offer for the file it is on too, asked by the
+ *  tab's path (#1098).
  *
  *  `folder` rather than a second function, because the tree knows which its row is
  *  and nothing else about a row differs. */
@@ -175,7 +197,11 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
   if (!path || !canWriteAt(path)) return []
   // Not a chat in the glasses' plugin, which carries none.
   const chat = !__EVEN_PLUGIN__ && isChatTarget(path)
-  const kept = chat || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
+  // A web note keeps its chosen icon in its `.url`, over the site's mark (#1098); a
+  // `.webloc` is a plist with no key for one.
+  const web = isWebTarget(path) && !/\.webloc$/i.test(path.trim())
+  const kept =
+    chat || web || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
   if (!folder && !kept) return []
 
   // The writing is fetched by the press, as a cover's is below: every menu carried it.
@@ -189,7 +215,9 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
       label: t('Choose an icon'),
       run: () => (folder ? iconChoice.folder(path) : iconChoice.file(path)),
     },
-    ...(chosenIcon(path) === null ? [] : [{ label: t('Remove icon'), run: take }]),
+    ...(chosenIcon(path) === null
+      ? []
+      : [{ label: web ? t('Reset to site icon') : t('Remove icon'), run: take }]),
   ]
 }
 

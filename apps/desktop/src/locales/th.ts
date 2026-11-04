@@ -86,6 +86,15 @@ export const th: Dictionary = {
   // Tasks: the Display menu
   Display: 'การแสดงผล',
   'Completed tasks': 'งานที่เสร็จแล้ว',
+  Smart: 'อัจฉริยะ',
+  Grouping: 'การจัดกลุ่ม',
+  Sorting: 'การเรียงลำดับ',
+  'Last 30 days': '30 วันที่ผ่านมา',
+  'Assigned to me': 'มอบหมายให้ฉัน',
+  Unassigned: 'ยังไม่ได้มอบหมาย',
+  'Reset all': 'รีเซ็ตทั้งหมด',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'เลย์เอาต์แสดงงานเป็นรายการ บอร์ด หรือปฏิทิน การจัดกลุ่มแบ่งงานเป็นกลุ่ม ซึ่งเป็นคอลัมน์ของบอร์ด การเรียงลำดับจัดลำดับแต่ละกลุ่ม ตัวกรองซ่อนสิ่งที่คุณไม่ต้องการ ทั้งหมดนี้จะถูกเก็บไว้สำหรับมุมมองนี้',
   // Tasks: several lines pasted into quick add
   'One task': 'งานเดียว',
   'One per line': 'บรรทัดละงาน',
@@ -554,11 +563,11 @@ export const th: Dictionary = {
   'Actual size': 'ขนาดจริง',
   // Appearance
   Accent: 'สีเน้น',
-  'Window corners': 'มุมหน้าต่าง',
-  Rounded: 'มน',
-  Square: 'เหลี่ยม',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'มนทำให้สิ่งที่เปิดอยู่ลอยอยู่ในการ์ดภายในหน้าต่าง ส่วนเหลี่ยมจะให้ชิดขอบ',
+  'Tidy up': 'จัดระเบียบ',
+  'Swipe in from the edge to see your notes.': 'ปัดเข้ามาจากขอบเพื่อดูโน้ตของคุณ',
+  'Show other tabs as icons': 'แสดงแท็บอื่นเป็นไอคอน',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ทุกแท็บยกเว้นแท็บด้านหน้าแสดงแค่ไอคอน ชี้ที่แท็บใดก็จะเห็นชื่อ',
   'Tab preview delay': 'ระยะหน่วงของภาพตัวอย่างแท็บ',
   'How long the pointer rests on a tab before its preview shows.':
     'ระยะเวลาที่ตัวชี้ต้องค้างบนแท็บก่อนภาพตัวอย่างจะแสดง',
@@ -1780,6 +1789,7 @@ export const th: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ข้อมูลเว็บไซต์',
   Downloads: 'ดาวน์โหลด',
+  'Downloading {name}': 'กำลังดาวน์โหลด {name}',
   'Show in folder': 'แสดงในโฟลเดอร์',
   'Show in Finder': 'แสดงใน Finder',
   'Reveal in Finder': 'แสดงใน Finder',
@@ -1873,6 +1883,9 @@ export const th: Dictionary = {
   'Exited with code {code}': 'จบด้วยรหัส {code}',
   'Could not start {shell}': 'ไม่สามารถเริ่ม {shell}',
   'Restore history': 'กู้คืนประวัติ',
+  'Colours follow the theme': 'สีตามธีม',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ระบายสีเทอร์มินัลด้วยสีของธีม ถ้าปิดจะใช้ชุดสีคงที่ชุดเดียว',
   'Restored {time}': 'กู้คืนแล้ว {time}',
   'Stop what is running in {name}?': 'หยุดสิ่งที่กำลังทำงานใน {name} หรือไม่',
   'Stop what is running in these terminals?': 'หยุดสิ่งที่กำลังทำงานในเทอร์มินัลเหล่านี้หรือไม่',
@@ -2020,6 +2033,8 @@ export const th: Dictionary = {
   'Every space': 'ทุกพื้นที่',
   Sites: 'เว็บไซต์',
   'Asks first': 'ถามก่อน',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'เชื่อมต่อผ่าน MCP และจัดการสิทธิ์ของตัวเองที่นั่น: Orden จะไม่ถามอะไร ส่วนพื้นที่ เว็บไซต์ที่บล็อก และขีดจำกัดด้านล่างยังมีผลอยู่',
   Limits: 'ขีดจำกัด',
   'Clear what {name} did?': 'ล้างสิ่งที่ {name} ทำไหม',
   'Show earlier': 'แสดงก่อนหน้า',
@@ -2262,6 +2277,12 @@ export const th: Dictionary = {
   // The online terminal
   'Online terminal': 'เทอร์มินัลออนไลน์',
   'New online terminal': 'เทอร์มินัลออนไลน์ใหม่',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'อุปกรณ์อื่น',
+  'Taken over by {device}': '{device} รับช่วงไปแล้ว',
+  'Open on {device} since {time}': 'เปิดอยู่บน {device} ตั้งแต่ {time}',
+  'Take over': 'รับช่วง',
+  'Take back': 'เอาคืน',
   'Start online machine': 'เปิดเครื่องออนไลน์',
   'Stop online machine': 'หยุดเครื่องออนไลน์',
   Resume: 'ทำต่อ',
@@ -2307,6 +2328,8 @@ export const th: Dictionary = {
   'Take photo': 'ถ่ายรูป',
   Pronouns: 'สรรพนาม',
   Bio: 'ประวัติย่อ',
+  'A few words about you': 'เล่าเกี่ยวกับตัวคุณสักหน่อย',
+  'What’s happening?': 'กำลังทำอะไรอยู่',
   'Clear after': 'ล้างหลังจาก',
   '30 minutes': '30 นาที',
   '1 hour': '1 ชั่วโมง',
@@ -2649,4 +2672,5 @@ export const th: Dictionary = {
   'View your report': 'ดูรายงานของคุณ',
   'Not sent. Your text is kept, so you can try again.':
     'ยังไม่ได้ส่ง ข้อความของคุณยังอยู่ ลองอีกครั้งได้',
+  'Reset to site icon': 'กลับไปใช้ไอคอนของเว็บไซต์',
 }

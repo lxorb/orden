@@ -20,7 +20,7 @@
 import { isWebTarget } from '@orden/markdown/links'
 import { log } from '../log'
 import { insideSpace, withinSpace } from '../space-paths'
-import { forget, isRecord, keep, stored } from '../stored'
+import { forget, isRecord, keepJson, stored } from '../stored'
 import { invoke } from '../tauri'
 import type { FileOp } from '../workspace/file-ops'
 import type { Answer, Clash } from './conflicts'
@@ -278,7 +278,7 @@ class Record {
   private persist() {
     // A browser with storage turned off, and a full one, still sync; they just
     // forget the log.
-    keep(STORAGE_KEY, JSON.stringify({ passes: this.passes, clashes: this.clashes }))
+    keepJson(STORAGE_KEY, { passes: this.passes, clashes: this.clashes })
   }
 }
 

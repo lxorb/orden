@@ -212,6 +212,97 @@ describe('tree', () => {
     expect(live(state, 'gone-before')).toBe(false)
   })
 
+  /** #1068: a restore is a person asking for the note back, and a delete made on a device
+   *  that had not seen it does not undo that - for a note, a folder, and a restore made of
+   *  something already back. */
+  test('a restore stands against a delete that had not seen it', () => {
+    const state = treeState()
+    create(state, 'n', 'Plan.md')
+    mkdir(state, 'f', 'Work')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'delete', id: 'f', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'restore', id: 'n', seen: state.cursor }, OWNER)
+    applyOp(state, { op: opId(), t: 'restore', id: 'f', seen: state.cursor }, OWNER)
+
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, PHONE)).toMatchObject({
+      refused: 'edited',
+    })
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'f', seen }, PHONE)).toMatchObject({
+      refused: 'edited',
+    })
+    expect([live(state, 'n'), live(state, 'f')]).toEqual([true, true])
+
+    // Having seen the restore, the delete stands.
+    applyOp(state, { op: opId(), t: 'delete', id: 'n', seen: state.cursor }, PHONE)
+    expect(live(state, 'n')).toBe(false)
+  })
+
+  test('a restore of something already back still stands against a stale delete', () => {
+    const state = treeState()
+    create(state, 'n', 'Plan.md')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'restore', id: 'n', seen: state.cursor }, OWNER)
+    const restored = state.cursor
+    // Another device restores it too, without having heard of the first restore.
+    applyOp(state, { op: opId(), t: 'restore', id: 'n', seen }, PHONE)
+
+    // The first device deletes it, having seen only its own restore.
+    expect(
+      applyOp(state, { op: opId(), t: 'delete', id: 'n', seen: restored }, OWNER),
+    ).toMatchObject({ refused: 'edited' })
+    expect(live(state, 'n')).toBe(true)
+  })
+
+  test('a delete of a note another device renamed or moved unseen leaves it', () => {
+    const state = treeState()
+    create(state, 'n', 'Plan.md')
+    mkdir(state, 'f', 'Work')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'move', id: 'n', parent: 'f', seen }, PHONE)
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, OWNER)).toMatchObject({
+      refused: 'edited',
+    })
+    expect(live(state, 'n')).toBe(true)
+  })
+
+  /** #1068, the reference walk's seed 632: the folder delete of a device that wrote in a
+   *  note another device had moved into the folder, and renamed it, never having seen it
+   *  there, took the note and its words. Writing in it made that device its last changer. */
+  test('a folder delete leaves a note its device wrote in but never saw there', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    create(state, 'n', 'Plan.md')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'move', id: 'n', parent: 'f', seen }, PHONE)
+    contentChanged(state, 'n', OWNER.device)
+    applyOp(state, { op: opId(), t: 'rename', id: 'n', name: 'Plan 1.md', seen }, OWNER)
+
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'f', seen }, OWNER)).toMatchObject({
+      refused: 'edited',
+    })
+    expect([live(state, 'f'), live(state, 'n')]).toEqual([true, true])
+  })
+
+  test('and its own writing in a note it placed itself never stands against its delete', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    create(state, 'n', 'Plan.md', 'f')
+    contentChanged(state, 'n', OWNER.device)
+    applyOp(state, { op: opId(), t: 'delete', id: 'f', seen: state.cursor - 1 }, OWNER)
+    expect([live(state, 'f'), live(state, 'n')]).toEqual([false, false])
+  })
+
+  test('the account’s own bookkeeping is nobody’s word against a delete', () => {
+    // A folder made from paths when the space moved to v2 has no device behind it.
+    const state = treeState([
+      { id: 'f', kind: 'folder', parent: null, name: 'Before', deleted: false, seq: 5, docSeq: 0 },
+    ])
+    applyOp(state, { op: opId(), t: 'delete', id: 'f', seen: 1 }, OWNER)
+    expect(live(state, 'f')).toBe(false)
+  })
+
   test('a create or a move into a deleted folder brings it back with its ancestors', () => {
     const state = treeState()
     mkdir(state, 'a', 'A')
@@ -244,6 +335,32 @@ describe('tree', () => {
     ).toMatchObject({
       refused: 'cycle',
     })
+  })
+
+  /** #1068: a position is the entry's own. Two devices dragging different rows of one
+   *  folder each move only their row; the later of two drags of one row stands; a rename
+   *  keeps it; a move elsewhere leaves it behind unless it says where it was dropped. */
+  test('positions: each drag moves only its row, and stays with it through a rename', () => {
+    const state = treeState()
+    create(state, 'a', 'A.md')
+    create(state, 'b', 'B.md')
+    mkdir(state, 'f', 'Work')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'place', id: 'a', pos: 'k', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'place', id: 'b', pos: 'G', seen }, PHONE)
+    applyOp(state, { op: opId(), t: 'place', id: 'b', pos: 'K', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'rename', id: 'a', name: 'Z.md', seen }, PHONE)
+    expect([state.entries.get('a')?.pos, state.entries.get('b')?.pos]).toEqual(['k', 'K'])
+
+    applyOp(state, { op: opId(), t: 'move', id: 'a', parent: 'f', seen }, OWNER)
+    expect(state.entries.get('a')?.pos).toBeUndefined()
+    applyOp(state, { op: opId(), t: 'move', id: 'b', parent: 'f', pos: 'V', seen }, OWNER)
+    expect(state.entries.get('b')?.pos).toBe('V')
+
+    applyOp(state, { op: opId(), t: 'delete', id: 'b', seen: state.cursor }, OWNER)
+    expect(
+      applyOp(state, { op: opId(), t: 'place', id: 'b', pos: 'W', seen: state.cursor }, OWNER),
+    ).toMatchObject({ refused: 'gone' })
   })
 
   test('rename against rename: the later wins', () => {

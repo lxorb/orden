@@ -27,15 +27,16 @@ interface Row {
   by: string | null
   at: number
   folder: number
+  pos: string | null
 }
 
 const CHANGED = `select * from (
     select id, kind, folder_id as parent, name, deleted, seq, doc_seq, epoch, epoch_base, hash,
-           size, updated_by as by, updated_at as at, 0 as folder
+           size, updated_by as by, updated_at as at, 0 as folder, pos
       from notes where space_id = ?1 and seq > ?2
     union all
     select id, 'folder', parent_id, name, deleted, seq, null, null, null, '', 0, updated_by,
-           updated_at, 1
+           updated_at, 1, pos
       from folders where space_id = ?1 and seq > ?2
   ) order by seq limit ?3`
 
@@ -44,7 +45,7 @@ export async function feedPage(
   env: Env,
   spaceId: string,
   since: number,
-): Promise<{ items: FeedItem[]; cursor: number; more: boolean }> {
+): Promise<{ items: FeedItem[]; cursor: number; more: boolean; order: true }> {
   let rows = await changedSince(env, spaceId, since)
 
   // A note a v1 app wrote while the space was being prepared has no place yet: it is
@@ -69,6 +70,8 @@ export async function feedPage(
     ),
     cursor: page.at(-1)?.seq ?? since,
     more: rows.length > FEED_PAGE,
+    // This account keeps positions, so a device may send them (#1068).
+    order: true,
   }
 }
 
@@ -92,6 +95,7 @@ function itemOf(row: Row, name: string): FeedItem {
     by: row.by ?? '',
     at: row.at,
   }
+  if (row.pos !== null) item.pos = row.pos
   if (!row.folder) {
     item.docSeq = row.doc_seq ?? row.seq
     item.epoch = row.epoch ?? 0

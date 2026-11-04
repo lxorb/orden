@@ -4,8 +4,9 @@
  *  numbers for the different tabs."* And 2026-10-01: *"It should always display, even if
  *  I press and hold Alt and then press a number. The only condition should be Alt
  *  held."* What is asked is what a hand would see: the numbers in the frame Alt goes down
- *  in, kept through the digits that move from tab to tab, and none of them once Alt is let
- *  go of, a chord of its own is pressed with it, the pointer presses or the window goes.
+ *  in, kept through the digits that move from tab to tab and through every other key and
+ *  the pointer (#1053), and none of them once Alt is let go of, a key or the pointer says
+ *  it is up, or the window goes.
  *  AltGr never shows them. A web page's Alt, which the crate tells the window, shows them
  *  too. See lib/tab-strip/numbers.svelte.ts.
  *
@@ -199,29 +200,37 @@ test('never come for AltGr, alone or with a digit', () => {
   expect(worn()).toEqual([])
 })
 
-test('Alt+F4 puts them away, and the held Alt repeating does not bring them back', () => {
+/** #1053: Alt held is the only condition. A chord of its own, the pointer and the wheel
+ *  keep them; only Alt let go of, or a word that it is up, puts them away. */
+test('stay through Alt+F4, Alt and an arrow, Alt and Shift, the pointer and the wheel', () => {
   press('Alt', { altKey: true })
   wait(FRAME)
-  expect(worn()).toHaveLength(3)
-
-  press('F4', { altKey: true })
-  flushSync()
-  expect(worn()).toEqual([])
-  press('Alt', { altKey: true, repeat: true })
-  press('Alt', { altKey: true })
-  wait(FRAME * 4)
+  for (const [at, other] of [
+    () => press('F4', { altKey: true }),
+    () => press('ArrowLeft', { altKey: true }),
+    () => press('Shift', { altKey: true, shiftKey: true }),
+    () => window.dispatchEvent(new PointerEvent('pointerdown', { altKey: true })),
+    () => window.dispatchEvent(new WheelEvent('wheel', { altKey: true })),
+    () => press('Alt', { altKey: true, repeat: true }),
+  ].entries()) {
+    other()
+    wait(FRAME)
+    expect(worn(), String(at)).toHaveLength(3)
+  }
+  release()
   expect(worn()).toEqual([])
 })
 
-test('go on Alt and an arrow, Alt and Shift, the pointer, the wheel and the window going', () => {
+test('go at Alt let go of, at a key or the pointer saying it is up, and the window going', () => {
   for (const [at, end] of [
-    () => press('ArrowLeft', { altKey: true }),
-    () => press('Shift', { altKey: true, shiftKey: true }),
-    () => window.dispatchEvent(new PointerEvent('pointerdown')),
+    () => release(),
+    () => press('a', { code: 'KeyA' }),
+    () => window.dispatchEvent(new PointerEvent('pointermove')),
     () => window.dispatchEvent(new WheelEvent('wheel')),
     () => window.dispatchEvent(new FocusEvent('blur')),
   ].entries()) {
     release()
+    window.dispatchEvent(new FocusEvent('blur'))
     press('Alt', { altKey: true })
     wait(FRAME)
     expect(worn(), String(at)).toHaveLength(3)
@@ -232,7 +241,7 @@ test('go on Alt and an arrow, Alt and Shift, the pointer, the wheel and the wind
   }
 })
 
-test("come over a web page, stay through the digit the crate takes, go at the page's next key", () => {
+test("come over a web page, stay through the page's keys, go at the release it tells", () => {
   const said = (key: string, code: string, down = true) =>
     replay({ key, code, ctrl: false, shift: false, alt: true, repeat: false, down })
 
@@ -248,14 +257,10 @@ test("come over a web page, stay through the digit the crate takes, go at the pa
 
   // Any other key the page had while Alt was held, which the crate names for nothing.
   said('Unidentified', '')
-  flushSync()
-  expect(worn()).toEqual([])
+  wait(FRAME)
+  expect(worn()).toEqual(['1', '2', '0'])
 
   // And the release, told from the page as well.
-  said('Alt', 'AltLeft', false)
-  said('Alt', 'AltLeft')
-  wait(FRAME)
-  expect(worn()).toHaveLength(3)
   said('Alt', 'AltLeft', false)
   flushSync()
   expect(worn()).toEqual([])

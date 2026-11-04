@@ -92,6 +92,15 @@ export const ru: Dictionary = {
   // Tasks: the Display menu
   Display: 'Вид',
   'Completed tasks': 'Выполненные задачи',
+  Smart: 'Умная',
+  Grouping: 'Группировка',
+  Sorting: 'Сортировка',
+  'Last 30 days': 'Последние 30 дней',
+  'Assigned to me': 'Назначенные мне',
+  Unassigned: 'Без исполнителя',
+  'Reset all': 'Сбросить всё',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Макет показывает задачи списком, доской или календарём. Группировка делит их на группы, которые становятся столбцами доски. Сортировка упорядочивает каждую группу. Фильтры скрывают то, что вам не нужно. Всё это сохраняется для этого представления.',
   // Tasks: several lines pasted into quick add
   'One task': 'Одна задача',
   'One per line': 'По одной на строку',
@@ -580,11 +589,11 @@ export const ru: Dictionary = {
   'Actual size': 'Реальный размер',
   // Appearance
   Accent: 'Акцент',
-  'Window corners': 'Углы окна',
-  Rounded: 'Скруглённые',
-  Square: 'Прямые',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    'Скруглённые помещают открытое в карточку внутри окна; прямые оставляют его вровень с краями.',
+  'Tidy up': 'Упорядочить',
+  'Swipe in from the edge to see your notes.': 'Проведите от края, чтобы увидеть заметки.',
+  'Show other tabs as icons': 'Показывать остальные вкладки значками',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Все вкладки, кроме передней, показывают только значок; при наведении появляется название.',
   'Tab preview delay': 'Задержка превью вкладки',
   'How long the pointer rests on a tab before its preview shows.':
     'Сколько указатель должен пробыть на вкладке, прежде чем появится её превью.',
@@ -1896,6 +1905,7 @@ export const ru: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Сведения о сайте',
   Downloads: 'Загрузки',
+  'Downloading {name}': 'Загрузка {name}',
   'Show in folder': 'Показать в папке',
   'Show in Finder': 'Показать в Finder',
   'Reveal in Finder': 'Показать в Finder',
@@ -1989,6 +1999,9 @@ export const ru: Dictionary = {
   'Exited with code {code}': 'Завершено с кодом {code}',
   'Could not start {shell}': 'Не удалось запустить {shell}',
   'Restore history': 'Восстанавливать историю',
+  'Colours follow the theme': 'Цвета следуют теме',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Окрашивает терминалы в цвета темы; если выключено, остаётся одна постоянная палитра.',
   'Restored {time}': 'Восстановлено {time}',
   'Stop what is running in {name}?': 'Остановить то, что выполняется в {name}?',
   'Stop what is running in these terminals?': 'Остановить то, что выполняется в этих терминалах?',
@@ -2146,6 +2159,8 @@ export const ru: Dictionary = {
   'Every space': 'Все пространства',
   Sites: 'Сайты',
   'Asks first': 'Спрашивает сначала',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Он подключается через MCP и сам управляет своими разрешениями там: Orden ни о чём его не спрашивает. Ваши пространства, заблокированные сайты и лимиты ниже по-прежнему действуют.',
   Limits: 'Ограничения',
   'Clear what {name} did?': 'Стереть то, что сделал {name}?',
   'Show earlier': 'Показать раньше',
@@ -2398,6 +2413,12 @@ export const ru: Dictionary = {
   // The online terminal
   'Online terminal': 'Онлайн-терминал',
   'New online terminal': 'Новый онлайн-терминал',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': 'другое устройство',
+  'Taken over by {device}': 'Перехвачено устройством {device}',
+  'Open on {device} since {time}': 'Открыто на {device} с {time}',
+  'Take over': 'Перехватить',
+  'Take back': 'Вернуть',
   'Start online machine': 'Запустить онлайн-машину',
   'Stop online machine': 'Остановить онлайн-машину',
   Resume: 'Продолжить',
@@ -2443,6 +2464,8 @@ export const ru: Dictionary = {
   'Take photo': 'Сделать фото',
   Pronouns: 'Местоимения',
   Bio: 'О себе',
+  'A few words about you': 'Пара слов о себе',
+  'What’s happening?': 'Что происходит?',
   'Clear after': 'Очистить через',
   '30 minutes': '30 минут',
   '1 hour': '1 час',
@@ -2801,4 +2824,5 @@ export const ru: Dictionary = {
   'View your report': 'Открыть ваш отчёт',
   'Not sent. Your text is kept, so you can try again.':
     'Не отправлено. Ваш текст сохранён, можно попробовать ещё раз.',
+  'Reset to site icon': 'Вернуть значок сайта',
 }

@@ -23,7 +23,7 @@ import type { EditorView } from '@orden/editor'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { applied, type Edit } from '../search/replace'
-import { forget, isRecord, isString, keep, stored, storedText } from '../stored'
+import { forget, isRecord, isString, keepJson, stored, storedText } from '../stored'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
@@ -114,10 +114,11 @@ class Scratchpad {
   /** The card's words to the file, held until they are there. Storage too full to hold
    *  them leaves nothing older in their place, which the next launch would write. */
   async writeDown(path: string, words: string): Promise<void> {
-    const mine = JSON.stringify({ words, over: this.mayBe() } satisfies Owed)
-    if (!keep(WRITING, mine)) {
+    const owed: Owed = { words, over: this.mayBe() }
+    const mine = JSON.stringify(owed)
+    if (!keepJson(WRITING, owed)) {
       forget(WRITING)
-      keep(WRITING, mine)
+      keepJson(WRITING, owed)
     }
 
     await this.landed(path, words)

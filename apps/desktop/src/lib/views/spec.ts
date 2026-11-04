@@ -14,13 +14,14 @@
 import { isRecord, isString, parsed } from '../stored'
 
 /** The views Orden ships; see `builtinView` in @orden/bases. */
-const BUILTINS = ['inbox', 'today', 'upcoming', 'logbook', 'project', 'label'] as const
+const BUILTINS = ['todos', 'inbox', 'today', 'upcoming', 'logbook', 'project', 'label'] as const
 export type Builtin = (typeof BUILTINS)[number]
 
 export interface ViewSpec {
   /** A built-in view, or absent for the view of a base file (the tab's path). */
   builtin?: Builtin
-  /** A project: the note, by its space's name and its path within it. */
+  /** A project: the note, by its space's name and its path within it. Todos: the
+   *  space it is of. */
   space?: string
   path?: string
   /** A label: the tag, without `#`. */

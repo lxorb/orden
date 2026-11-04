@@ -10,6 +10,7 @@
  *  unsaved."* Pure: when and where are the workspace's and saving.svelte.ts's. */
 
 import { endingOf, nameFromContent, nameFromTitle, shownName, TITLE_CHARS } from '../note-name'
+import { isOnlineTab } from '../online/path'
 import { isMarkdownPath } from '../space-paths'
 import { holdsWords, type NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
 import { TAB_KINDS } from './tab-kinds'
@@ -21,11 +22,14 @@ export function isDraft(note: NoteDoc): boolean {
   return note.path === null && note.shared === null && holdsWords(note.kind)
 }
 
-/** Whether a document is waiting for a place: a draft, or a web tab nobody has kept,
- *  which wears no dot - a browser tab has nothing unwritten in it - but is saved the
- *  same way. */
+/** Whether a document is waiting for a place: a draft, or a web tab or an online
+ *  terminal nobody has kept, which wear no dot - nothing unwritten is in either, and
+ *  closing one loses nothing, since its page or its session goes on - but are saved the
+ *  same way (issue 1055). */
 export function isUnsaved(note: NoteDoc): boolean {
-  return isDraft(note) || (note.kind === 'web' && note.path === null && note.shared === null)
+  if (isDraft(note)) return true
+  if (note.path !== null || note.shared !== null) return false
+  return note.kind === 'web' || isOnlineTab({ kind: note.kind, path: null, doc: note.text })
 }
 
 /** Whether a draft has anything in it worth keeping: a note once it holds a character

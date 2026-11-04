@@ -8,7 +8,7 @@
  *  status is more than quick add can carry, and there the view's own add row writes
  *  the words as they were typed, with the prefill's fields, through `addTask`. */
 
-import { type Base, nextId, type Priority, rowsInBase, type Value } from '@orden/bases'
+import { addDays, type Base, nextId, type Priority, rowsInBase, type Value } from '@orden/bases'
 import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
 import { joinPath } from '../tauri'
 import { insideOnly } from '../automation/inside'
@@ -33,6 +33,7 @@ export interface Prefill {
   path?: string
   heading?: string
   due?: string
+  deadline?: string
   tags?: string[]
   priority?: Priority
   status?: string
@@ -44,7 +45,8 @@ export function openQuickAdd(prefill: Prefill = {}): boolean {
   if (
     prefill.heading !== undefined ||
     prefill.priority !== undefined ||
-    prefill.status !== undefined
+    prefill.status !== undefined ||
+    prefill.deadline !== undefined
   )
     return false
   const root = workspace.activeSpace?.root ?? null
@@ -80,7 +82,15 @@ export function prefillOf(
   if (property === 'task.section' && typeof key === 'string') out.heading = key
   else if (property === 'task.priority' && isPriority(key)) out.priority = key
   else if (property === 'task.status' && typeof key === 'string') out.status = key
-  else if (property === 'formula.day' || /^task\.(due|date|scheduled)$/.test(property)) {
+  else if (property === 'task.tags' && typeof key === 'string' && key) out.tags = [key]
+  else if (property === 'formula.when' && (key === 'today' || key === 'tomorrow')) {
+    // Todos' due today, due tomorrow (#1046).
+    out.deadline = key === 'today' ? today : addDays(today, 1)
+  } else if (property === 'file.path' && typeof key === 'string' && key && spec.space) {
+    // A project's column of Todos: the task goes into that note.
+    const space = workspace.spaces.find((one) => one.name === spec.space)
+    if (space) out.path = insideSpace(space.root, key)
+  } else if (property === 'formula.day' || /^task\.(due|date|scheduled)$/.test(property)) {
     // A day of Upcoming, a date column: the day the group is.
     const day = dayIn(key)
     if (day) out.due = day
@@ -99,6 +109,7 @@ export async function addTyped(words: string, prefill: Prefill): Promise<boolean
     {
       text,
       ...(prefill.due ? { due: prefill.due } : {}),
+      ...(prefill.deadline ? { deadline: prefill.deadline } : {}),
       ...(prefill.tags ? { tags: prefill.tags } : {}),
       ...(prefill.priority ? { priority: prefill.priority } : {}),
       ...(prefill.status ? { status: prefill.status } : {}),

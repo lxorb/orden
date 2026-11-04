@@ -33,6 +33,14 @@ export interface TabKindTraits {
   readonly selection: 'words' | 'drawing' | 'terminal' | 'page' | null
   /** Its title is somebody else's words (`namedOutside`). */
   readonly outsideTitle: boolean
+  /** How the tab overview draws its window while it is not in front (#331; see
+   *  overview/WindowFace.svelte): `reading`, its words as they are now through the
+   *  reading renderer, from the line it was left at, sharp at any zoom; `scrollback`, the
+   *  last of its screen as written down (terminal/history.ts); `photograph`, the
+   *  engine's picture of a page nothing else can draw again; `picture`, what it last
+   *  drew, kept (overview/faces.ts), until it has a way of its own to be drawn from
+   *  what it holds. */
+  readonly preview: 'reading' | 'scrollback' | 'photograph' | 'picture'
 }
 
 /** The kinds, in the order a written session has always listed them. */
@@ -52,6 +60,7 @@ export const TAB_KINDS = {
     exports: 'note',
     selection: 'words',
     outsideTitle: false,
+    preview: 'reading',
   },
   graph: {
     words: false,
@@ -68,6 +77,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: false,
+    preview: 'picture',
   },
   pdf: {
     words: false,
@@ -84,6 +94,7 @@ export const TAB_KINDS = {
     exports: 'file',
     selection: 'page',
     outsideTitle: false,
+    preview: 'picture',
   },
   canvas: {
     words: true,
@@ -100,6 +111,7 @@ export const TAB_KINDS = {
     exports: 'canvas',
     selection: 'drawing',
     outsideTitle: false,
+    preview: 'picture',
   },
   pages: {
     words: true,
@@ -116,6 +128,7 @@ export const TAB_KINDS = {
     exports: 'pages',
     selection: 'drawing',
     outsideTitle: false,
+    preview: 'picture',
   },
   web: {
     words: false,
@@ -132,6 +145,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: true,
+    preview: 'photograph',
   },
   terminal: {
     words: false,
@@ -148,6 +162,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: 'terminal',
     outsideTitle: true,
+    preview: 'scrollback',
   },
   view: {
     words: false,
@@ -164,6 +179,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: false,
+    preview: 'picture',
   },
   chat: {
     words: false,
@@ -180,6 +196,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: false,
+    preview: 'picture',
   },
   channel: {
     words: false,
@@ -196,6 +213,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: false,
+    preview: 'picture',
   },
 } as const satisfies Record<string, TabKindTraits>
 

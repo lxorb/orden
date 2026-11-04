@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { readGrant } from './crate'
 import { FakeCrate, freeId, seeded, standIn } from './fake'
-import { ownGrant, thirdPartyGrant, withAsk, withScope, withSite } from './grant'
+import { ownGrant, thirdPartyGrant, withScope, withSite } from './grant'
 import { AgentsPane } from './pane.svelte'
 import { reach } from './reach.svelte'
 
@@ -32,12 +32,10 @@ describe('the pane over the crate', () => {
     const pane = await opened(fake)
 
     await pane.change('claude-code', (grant) => withScope(grant, 'terminal', true))
-    await pane.change('claude-code', (grant) => withAsk(grant, 'paying', false))
     await pane.change('claude-code', (grant) => withSite(grant, 'bank.example', 'agent-store'))
 
     const kept = fake.grants[0]
     expect(kept?.scopes).toContain('terminal')
-    expect(kept?.asks).toEqual({ paying: false })
     expect(kept?.sites).toEqual({ 'bank.example': 'agent-store' })
     expect(pane.grants).toEqual(fake.grants)
     // Who it was made for and when are the crate's facts, whatever the pane sends.

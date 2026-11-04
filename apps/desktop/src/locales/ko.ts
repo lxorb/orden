@@ -86,6 +86,15 @@ export const ko: Dictionary = {
   // Tasks: the Display menu
   Display: '보기',
   'Completed tasks': '완료된 작업',
+  Smart: '스마트',
+  Grouping: '그룹화',
+  Sorting: '정렬',
+  'Last 30 days': '최근 30일',
+  'Assigned to me': '나에게 할당됨',
+  Unassigned: '할당되지 않음',
+  'Reset all': '모두 초기화',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    '레이아웃은 작업을 목록, 보드 또는 캘린더로 보여 줍니다. 그룹화는 작업을 그룹으로 나누며, 이 그룹이 보드의 열이 됩니다. 정렬은 각 그룹의 순서를 정합니다. 필터는 필요 없는 것을 숨깁니다. 모두 이 보기에 저장됩니다.',
   // Tasks: several lines pasted into quick add
   'One task': '작업 하나',
   'One per line': '줄마다 하나',
@@ -554,11 +563,11 @@ export const ko: Dictionary = {
   'Actual size': '실제 크기',
   // Appearance
   Accent: '강조색',
-  'Window corners': '창 모서리',
-  Rounded: '둥글게',
-  Square: '각지게',
-  'Rounded floats what is open in a card inside the window; Square keeps it flush.':
-    '둥글게는 열린 내용을 창 안의 카드에 띄웁니다. 각지게는 가장자리에 붙여 둡니다.',
+  'Tidy up': '정리',
+  'Swipe in from the edge to see your notes.': '가장자리에서 안쪽으로 밀어 노트를 보세요.',
+  'Show other tabs as icons': '다른 탭을 아이콘으로 보기',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    '앞에 있는 탭을 빼고 모든 탭이 아이콘만 보여 주며, 가리키면 이름이 나타납니다.',
   'Tab preview delay': '탭 미리보기 지연',
   'How long the pointer rests on a tab before its preview shows.':
     '미리보기가 나타나기 전에 포인터가 탭 위에 머무는 시간입니다.',
@@ -1791,6 +1800,7 @@ export const ko: Dictionary = {
   // What a site may do, behind the mark at the left of that field.
   'Site information': '사이트 정보',
   Downloads: '다운로드',
+  'Downloading {name}': '{name} 다운로드 중',
   'Show in folder': '폴더에서 보기',
   'Show in Finder': 'Finder에서 보기',
   'Reveal in Finder': 'Finder에서 보기',
@@ -1884,6 +1894,9 @@ export const ko: Dictionary = {
   'Exited with code {code}': '코드 {code}(으)로 종료됨',
   'Could not start {shell}': '{shell}을(를) 시작할 수 없음',
   'Restore history': '기록 복원',
+  'Colours follow the theme': '색상이 테마를 따름',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    '터미널을 테마 색상으로 칠합니다. 끄면 고정된 팔레트 하나를 유지합니다.',
   'Restored {time}': '{time} 복원됨',
   'Stop what is running in {name}?': '{name}에서 실행 중인 것을 중지할까요?',
   'Stop what is running in these terminals?': '이 터미널들에서 실행 중인 것을 중지할까요?',
@@ -2031,6 +2044,8 @@ export const ko: Dictionary = {
   'Every space': '모든 공간',
   Sites: '사이트',
   'Asks first': '먼저 묻기',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'MCP로 연결되며 권한은 그쪽에서 스스로 관리합니다. Orden은 아무것도 묻지 않습니다. 아래의 스페이스, 차단한 사이트, 한도는 그대로 적용됩니다.',
   Limits: '한도',
   'Clear what {name} did?': '{name}의 활동을 지울까요?',
   'Show earlier': '이전 항목 보기',
@@ -2273,6 +2288,12 @@ export const ko: Dictionary = {
   // The online terminal
   'Online terminal': '온라인 터미널',
   'New online terminal': '새 온라인 터미널',
+  // One device at a time on an online terminal (issue 1055)
+  'another device': '다른 기기',
+  'Taken over by {device}': '{device}에서 가져갔습니다',
+  'Open on {device} since {time}': '{time}부터 {device}에서 열려 있음',
+  'Take over': '가져오기',
+  'Take back': '되찾기',
   'Start online machine': '온라인 머신 시작',
   'Stop online machine': '온라인 머신 중지',
   Resume: '이어서 하기',
@@ -2318,6 +2339,8 @@ export const ko: Dictionary = {
   'Take photo': '사진 찍기',
   Pronouns: '대명사',
   Bio: '소개',
+  'A few words about you': '나에 대한 몇 마디',
+  'What’s happening?': '무슨 일이 있나요?',
   'Clear after': '지우기',
   '30 minutes': '30분',
   '1 hour': '1시간',
@@ -2669,4 +2692,5 @@ export const ko: Dictionary = {
   'View your report': '보고서 보기',
   'Not sent. Your text is kept, so you can try again.':
     '보내지 못했습니다. 입력한 내용은 남아 있으니 다시 시도하세요.',
+  'Reset to site icon': '사이트 아이콘으로 되돌리기',
 }

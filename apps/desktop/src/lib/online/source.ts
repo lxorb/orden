@@ -154,9 +154,11 @@ export class OnlineSource implements Source {
   private readonly pictures = new Map<string, (path: string | null) => void>()
 
   /** `path` is the `.term` file's, read as it starts: a file renamed or moved keeps its
-   *  id, and the socket with it. */
+   *  id, and the socket with it. `words` are the tab's, which name the session of a
+   *  terminal not saved yet - no file, no id - whose socket its own id names. */
   constructor(
     private readonly path: () => string | null,
+    private readonly words: () => string,
     private readonly device: () => Promise<string>,
     private readonly place: Place,
     build: Build,
@@ -175,11 +177,14 @@ export class OnlineSource implements Source {
       return
     }
     const path = this.path()
-    if (path === null) {
+    const unsaved = path === null ? termOf(this.words()) : null
+    if (path === null && !unsaved) {
       said({ refused: refusalWords('other') ?? '' })
       return
     }
-    const found = await socketName(path, Date.now() + WAIT)
+    const found = unsaved
+      ? { name: unsaved.session }
+      : await socketName(path ?? '', Date.now() + WAIT)
     if ('refused' in found) {
       said({ refused: found.refused })
       return
@@ -266,6 +271,13 @@ export class OnlineSource implements Source {
           said({ note: t('Your machine’s disk is almost full') })
         }
         return
+      // Another device holds the session, or this one does now (issue 1055).
+      case 'held':
+        said({ held: { by: frame.by, since: frame.since, taken: frame.taken } })
+        return
+      case 'hold':
+        said({ held: null })
+        return
       // Who is here, and whose input came last: the people popover's and the cursor's,
       // which come later (4.6).
       case 'people':
@@ -340,6 +352,11 @@ export class OnlineSource implements Source {
     this.link?.say({ t: 'start' })
   }
 
+  /** Take over, from the device holding the session. */
+  take(): void {
+    this.link?.take()
+  }
+
   /** The socket closed; the session goes on without this window. */
   end(): void {
     this.ended = true
@@ -351,9 +368,14 @@ export class OnlineSource implements Source {
 }
 
 /** The source for an online terminal's tab, whose file is at `path` as it starts. */
-export function onlineSource(path: () => string | null, place: Place): OnlineSource {
+export function onlineSource(
+  path: () => string | null,
+  words: () => string,
+  place: Place,
+): OnlineSource {
   return new OnlineSource(
     path,
+    words,
     async () => (await import('../sync2/hub.svelte')).deviceId(),
     place,
     { pages: isDesktop && viewport.device !== 'phone', native: isNative },
