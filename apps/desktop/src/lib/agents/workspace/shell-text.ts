@@ -486,7 +486,7 @@ function gitStays(plain: readonly string[]): boolean {
 /** A line's words as a POSIX shell hands them over: quotes and backslashes gone, and what
  *  they held one word. `null` for a quote left open, which the shell would go on reading
  *  past Enter. */
-export function wordsOf(line: string): string[] | null {
+function wordsOf(line: string): string[] | null {
   const words: string[] = []
   let word: string | null = null
   let quote: '"' | "'" | null = null
