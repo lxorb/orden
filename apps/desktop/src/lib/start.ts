@@ -201,6 +201,10 @@ export function start(): () => void {
     void startup.turn('right').then(() => import('./workspace/blank-tabs.svelte'))
   }
 
+  // The pictures the tab overview keeps of the windows not in front, taken as each
+  // leaves the screen (#331); never the glasses' plugin. See overview/faces.svelte.ts.
+  if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./overview/faces.svelte'))
+
   // The account's hub, beside the sockets the open notes join, after the first paint;
   // never the glasses' plugin, which stays on sync v1. See sync2/connect.svelte.ts.
   if (!__EVEN_PLUGIN__) {

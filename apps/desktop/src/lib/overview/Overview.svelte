@@ -61,6 +61,7 @@
   import { mayCarry } from '../workspace/chat-carry'
   import type { Frame } from '../workspace/pane-tree'
   import { movingOf, spacesFor } from '../workspace/space-move'
+  import { faces } from './faces.svelte'
   import { drawn, Flight, type Pose } from './flight'
   import { settled, stripLanding } from './free'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot } from './layout'
@@ -498,6 +499,7 @@
     if (!again) {
       corner = cardCorner()
       places.recall(workspace.tabs)
+      void faces.read()
       // Where it was left, once there is somewhere; the space worked in the first time.
       measure()
       lookAtSpace()
@@ -509,6 +511,8 @@
         if (tab && tab.kind !== 'web') {
           const copy = mirrorOf(pane.id)
           if (copy) copies[tab.id] = copy
+          // And kept, for the next time it is not in front.
+          faces.take(pane.id, tab)
         }
         if (tab?.kind === 'web') void pages.shoot(tab.id)
       }
@@ -988,7 +992,13 @@
           use:placed={tab.id}
         >
           <span class="face-box" style:scale={slot.w / face.w}>
-            <WindowFace {tab} mirror={mirrors[tab.id] ?? null} width={face.w} height={face.h} />
+            <WindowFace
+              {tab}
+              mirror={mirrors[tab.id] ?? null}
+              face={faces.of(tab.id)}
+              width={face.w}
+              height={face.h}
+            />
           </span>
           <span class="chip" aria-hidden="true">
             <span class="chip-inner"
