@@ -60,7 +60,8 @@ function seenBy(call: Call, store: Chats): Seen[] {
 
 /** The chat a call names, by its id or its name (with or without `#`): where two spaces
  *  have one by the name, the one of the space its AI panel thread works in, then the
- *  space in front's. */
+ *  space in front's. Where that still leaves several, they are named back by id rather
+ *  than chosen between: a message goes to whoever is in the chat. */
 function chatFor(call: Call, store: Chats): Seen {
   const named = need(call, 'chat')
   const folded = named.replace(/^#/, '').trim().toLowerCase()
@@ -68,13 +69,21 @@ function chatFor(call: Call, store: Chats): Seen {
   const byName = seen.filter((one) => one.name.toLowerCase() === folded)
   const home = workspace.spaces.find((one) => one.id === threadSpaceOf(call.caller))?.root
   const front = workspace.activeSpace?.root
-  const found =
-    seen.find((one) => one.entry.id === named) ??
-    byName.find((one) => one.entry.root === home) ??
-    byName.find((one) => one.entry.root === front) ??
-    byName[0]
+  const byId = seen.find((one) => one.entry.id === named)
+  if (byId) return byId
+  const inHome = byName.filter((one) => one.entry.root === home)
+  const inFront = byName.filter((one) => one.entry.root === front)
+  const fitting = inHome.length ? inHome : inFront.length ? inFront : byName
+  const [found, ...others] = fitting
   if (!found)
     throw new Refused('not_found', `there is no chat called ${named}: list_chats names them`)
+  if (others.length) {
+    const ids = fitting.map((one) => `${one.entry.id} in ${one.space}`).join(', ')
+    throw new Refused(
+      'ambiguous',
+      `${String(fitting.length)} chats are called ${named}: ${ids}. Name one by its id`,
+    )
+  }
   return found
 }
 

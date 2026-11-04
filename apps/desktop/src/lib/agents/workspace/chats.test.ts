@@ -144,6 +144,41 @@ describe('the chats an agent sees', () => {
     }
   })
 
+  test('by name, are asked about where neither the thread nor the front settles it', async () => {
+    const twin = store.add('thesis', [{ who: ME, name: 'Emil', role: 'owner' }], {
+      root: '/spaces/Secret',
+      path: '/spaces/Secret/thesis.chat',
+    })
+    const third = store.add('thesis', [{ who: ME, name: 'Emil', role: 'owner' }], {
+      root: '/spaces/Secret',
+      path: '/spaces/Secret/old/thesis.chat',
+    })
+    store.speak(twin, ME, 'the other thesis')
+    const { answerThreadSpaces } = await import('../../automation/caller')
+    answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
+    const grant = {
+      id: 'nib-claude',
+      built_in: true,
+      name: 'Claude Code',
+      scopes: ['chats.read'],
+      spaces: 'all',
+      mode: 'confirm',
+    }
+    try {
+      const asked = await call('read_chat', { chat: 'thesis' }, callerOf(grant, 'in-secret'))
+      expect(asked.ok).toBe(false)
+      expect(JSON.stringify(asked)).toContain('ambiguous')
+      expect(JSON.stringify(asked)).toContain(twin)
+      expect(JSON.stringify(asked)).toContain(third)
+      expect(JSON.stringify(asked)).not.toContain('the other thesis')
+      expect(said(await call('read_chat', { chat: twin }, callerOf(grant, 'in-secret')))).toContain(
+        'the other thesis',
+      )
+    } finally {
+      answerThreadSpaces(() => null)
+    }
+  })
+
   test('are those of the spaces it reaches', async () => {
     const listed = said(await call('list_chats', {}))
     expect(listed).toContain('#thesis')
