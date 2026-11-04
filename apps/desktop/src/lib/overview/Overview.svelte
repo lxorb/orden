@@ -42,6 +42,7 @@
     type Camera,
     eased,
     isNotch,
+    isOnView,
     lookingAt,
     notched,
     pinched,
@@ -596,10 +597,16 @@
       corner = cardCorner()
       places.recall(workspace.tabs)
       void faces.read()
-      // Where it was left, once there is somewhere; the space worked in the first time.
+      // Where it was left, once there is somewhere; the space worked in the first time, and
+      // whenever where it was left shows nothing of the tab in front, as after a switch to
+      // another space: the keyboard is on that window.
       measure()
       lookAtSpace()
-      camera = places.camera ?? camera
+      const kept = places.camera
+      const front =
+        slots.find((one) => one.id === workspace.activeTabId) ??
+        cellBoxes.find((one) => one.key === spaceKey)?.box
+      if (kept && (!front || isOnView(kept, front, screenRoom))) camera = kept
       const copies: Record<string, HTMLElement> = {}
       for (const pane of workspace.panes.all) {
         const tab = pane.activeTabId ? byId.get(pane.activeTabId) : undefined
@@ -884,7 +891,12 @@
     if (landing.kind === 'space') {
       // Move to space, the tab menu's own: the tab, its file where it has one, into the
       // other space's set (workspace/moving-space.ts).
-      void import('../workspace/moving-space').then((one) => one.moveToSpace([id], landing.key))
+      // Refused, the toast says so, and the window does not stay parked among that space's.
+      void import('../workspace/moving-space')
+        .then((one) => one.moveToSpace([id], landing.key))
+        .then((went) => {
+          if (!went) places.forgetWindow(id, workspace.tabs)
+        })
       return
     }
     const strip = tabsOf(landing.paneId)

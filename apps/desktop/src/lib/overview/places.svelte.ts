@@ -128,6 +128,12 @@ class Places {
     keepJson(WINDOWS, written)
   }
 
+  /** The window of tab `id` back where its panes would put it. */
+  forgetWindow(id: string, tabs: readonly Keyed[]) {
+    this.put = Object.fromEntries(Object.entries(this.put).filter(([one]) => one !== id))
+    this.keepWindows({}, tabs)
+  }
+
   /** Every space and window back where its panes would put it, the spaces in a row
    *  again: the overview's Tidy up. */
   tidy() {
