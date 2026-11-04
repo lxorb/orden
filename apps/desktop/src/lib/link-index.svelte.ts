@@ -1805,7 +1805,7 @@ class Links {
         doc && rewrite && !isPagesTarget(note.path) ? await rewrite.drawnPlane(doc) : null
       // In the same tick as the words: the entry that describes them.
       let read = listed?.(note.path) ?? note
-      const plane = { relinked: false }
+      const drawing = { relinked: false }
 
       // A plane is JSON, and is rewritten as JSON; see canvas-rewrite.ts.
       const file = card ?? moving
@@ -1836,11 +1836,11 @@ class Links {
             // keystroke falls between the two; one landing while the write is in the air
             // is the document's own, and marks it for its next write.
             const knew = doc.onDisk
-            plane.relinked =
+            drawing.relinked =
               drawn !== null &&
               rewrite !== null &&
               drawn.relinked((canvas) => rewrite.retargetPlane(canvas, source, file, to))
-            if (plane.relinked) words = doc.text
+            if (drawing.relinked) words = doc.text
             else {
               const edit = oneEdit(before, words)
               if (edit) doc.edited([edit], words)
@@ -1862,7 +1862,7 @@ class Links {
             return words
           }).catch(refused)
       if (after === null) continue
-      if (plane.relinked) doc?.wroteAs(after)
+      if (drawing.relinked) doc?.wroteAs(after)
       for (const hear of hearing) hear(target, after)
       told?.push(target)
 
