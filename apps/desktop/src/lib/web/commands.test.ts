@@ -444,6 +444,18 @@ describe('a file the app reads as words, written as bytes', () => {
 })
 
 describe('the trash', () => {
+  test('a note deleted out of a space goes back to the space under its new name', async () => {
+    await webInvoke('create_folder', { path: '/Notes' })
+    await webInvoke('write_note', { path: '/Notes/Idea.md', content: 'words' })
+    const entry = await webInvoke<{ id: string }>('trash_item', {
+      path: '/Notes/Idea.md',
+      kind: 'note',
+    })
+    await webInvoke('rename_space', { from: '/Notes', name: 'Ideas' })
+
+    expect(await webInvoke('restore_trash', { id: entry.id })).toBe('/Ideas/Idea.md')
+  })
+
   test('holds what was deleted and puts it back where it came from', async () => {
     await write('/Notes/Idea.md', '# Idea')
 

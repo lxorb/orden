@@ -1071,8 +1071,20 @@ export async function webInvoke<T>(
       if (!wanted) throw new Error('that name cannot be used')
 
       const target = `/${wanted}`
-      if (normalise(args.from as string) !== target) {
+      const from = normalise(args.from as string)
+      if (from !== target) {
         await renameNote(args.from as string, target)
+        // What was deleted out of it goes back to where it is now; see `space_renamed`.
+        const entries = await trashEntries()
+        if (entries.some((one) => one.from.startsWith(`${from}/`))) {
+          await saveTrash(
+            entries.map((one) =>
+              one.from.startsWith(`${from}/`)
+                ? { ...one, from: `${target}${one.from.slice(from.length)}` }
+                : one,
+            ),
+          )
+        }
       }
       return { name: wanted, path: target } as T
     }
