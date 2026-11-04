@@ -52,6 +52,7 @@ import { holdsDocument, joinsAs, turn, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put, remove } from './store'
+import { eachDue, reachable, sentAll } from './rounds'
 import { Refused } from './transport'
 import { pairsFromV1 } from './v1-pairs'
 import { usage } from '../usage.svelte'
@@ -363,11 +364,14 @@ class Runner {
     )
     let back = false
     try {
-      const done = await this.kept(engine)
-      if (!done.size) return (back = true)
-      if (!(await sentAll(engine, done))) return false
-      const listings = await listingsOf(token, done)
-      const mirrors = await this.mirrorsNow(engine, user.id, listings, done)
+      const kept = await this.kept(engine)
+      if (!kept.size) return (back = true)
+      const settling = () => waited(SETTLING)
+      if (!(await sentAll(engine, kept, SENDING_ROUNDS, settling))) return false
+      const { listings, gone } = await reachable(kept, (id) => listingOf(token, id))
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once on the way back; nothing renders from it
+      const done = new Set([...kept].filter((id) => !gone.has(id)))
+      const mirrors = await this.mirrorsNow(engine, user.id, listings, done, gone)
       back = keep(MIRRORS, JSON.stringify({ account: user.id, seen: true, mirrors }))
       return back
     } catch (error) {
@@ -417,6 +421,7 @@ class Runner {
     accountId: string,
     listings: ReadonlyMap<string, V1Listing> | null,
     done: ReadonlySet<string>,
+    gone: ReadonlySet<string> = new Set(),
   ): Promise<Record<string, unknown>> {
     const out: Record<string, unknown> = {}
     const saved = stored(MIRRORS)
@@ -424,7 +429,7 @@ class Runner {
       const held = isRecord(saved.mirrors) ? saved.mirrors : saved
       for (const [root, one] of Object.entries(held)) {
         const mirror = readMirror(root, one)
-        if (mirror && !done.has(mirror.spaceId)) out[root] = one
+        if (mirror && !done.has(mirror.spaceId) && !gone.has(mirror.spaceId)) out[root] = one
       }
     }
     return { ...out, ...(await mirrorsFrom(engine.core, listings, (id) => done.has(id))) }
@@ -552,39 +557,43 @@ class Runner {
           offline = true
         })
       }
-      while (this.due.size && this.engine === engine) {
-        const [id] = this.due
-        if (id === undefined) break
-        this.due.delete(id)
-        const space = engine.core.spaces.get(id)
-        if (!space) continue
-        if (!(await this.firstDone(engine, id))) {
-          const v1 = await wholeV1(
-            space.row.root,
-            this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null,
-          )
-          const first = `${FIRST}${id}`
-          if (!(await firstPass(engine.core, space, v1, [put('meta', { key: first, value: 1 })]))) {
-            offline = true
-            await engine.core.commit([
-              ...engine.core.forgetSpace(id),
-              ...engine.core.addSpace(id, space.row.root, space.row.role),
-              remove('meta', first),
-            ])
-            continue
+      // One space's trouble is that space's: the others have their turn, and it is said after.
+      await eachDue(
+        this.due,
+        () => this.engine === engine,
+        async (id) => {
+          const space = engine.core.spaces.get(id)
+          if (!space) return
+          if (!(await this.firstDone(engine, id))) {
+            const v1 = await wholeV1(
+              space.row.root,
+              this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null,
+            )
+            const first = `${FIRST}${id}`
+            if (
+              !(await firstPass(engine.core, space, v1, [put('meta', { key: first, value: 1 })]))
+            ) {
+              offline = true
+              await engine.core.commit([
+                ...engine.core.forgetSpace(id),
+                ...engine.core.addSpace(id, space.row.root, space.row.role),
+                remove('meta', first),
+              ])
+              return
+            }
+            this.firsts.add(id)
+            this.watched?.follow()
           }
-          this.firsts.add(id)
-          this.watched?.follow()
-        }
-        const passed = await engine.pass(id)
-        if (passed?.full) this.full.add(id)
-        else if (passed?.finished) this.full.delete(id)
-        for (const one of this.full) if (!engine.core.spaces.has(one)) this.full.delete(one)
-        usage.syncFull(this.full.size > 0)
-        if (!passed?.finished) offline = true
-        if (passed && (passed.pulled || passed.pushed)) moved = true
-        if (passed?.pulled && id === this.spaceOnScreen(engine)) await workspace.loadTree()
-      }
+          const passed = await engine.pass(id)
+          if (passed?.full) this.full.add(id)
+          else if (passed?.finished) this.full.delete(id)
+          for (const one of this.full) if (!engine.core.spaces.has(one)) this.full.delete(one)
+          usage.syncFull(this.full.size > 0)
+          if (!passed?.finished) offline = true
+          if (passed && (passed.pulled || passed.pushed)) moved = true
+          if (passed?.pulled && id === this.spaceOnScreen(engine)) await workspace.loadTree()
+        },
+      )
       this.quiet = moved ? 0 : Math.min(this.quiet + 1, 8)
       if (this.engine !== engine) return
       // The paper each page note holds goes where the note goes (#551), kept by the
@@ -1359,33 +1368,6 @@ const SENDING_ROUNDS = 4
 
 /** How long between them: a room takes what was pushed a moment after the push. */
 const SETTLING = 1_500
-
-/** Passes over the spaces until nothing in them waits to go up, or a few rounds have
- *  gone by. Answers false where the account could not be reached. What still waits
- *  after that - refused, or held for the question - is left to v1's own judgement,
- *  through the words the mirrors say this device confirmed. */
-async function sentAll(engine: Engine, spaces: ReadonlySet<string>): Promise<boolean> {
-  for (let round = 0; round < SENDING_ROUNDS; round += 1) {
-    if (round) await waited(SETTLING)
-    for (const id of spaces) {
-      const passed = await engine.pass(id)
-      if (!passed?.finished) return false
-    }
-    if (![...spaces].some((id) => engine.waiting(id))) return true
-  }
-  return true
-}
-
-/** v1's whole listing of each space. */
-async function listingsOf(
-  token: string,
-  spaces: ReadonlySet<string>,
-): Promise<ReadonlyMap<string, V1Listing>> {
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once on the way back; nothing renders from it
-  const out = new Map<string, V1Listing>()
-  for (const id of spaces) out.set(id, await listingOf(token, id))
-  return out
-}
 
 /** v1's whole listing of a space, deleted notes too, page by page. */
 async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
