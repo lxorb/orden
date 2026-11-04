@@ -9,7 +9,7 @@
  *
  *  Pure: the frame, each pane's tabs and shape, and the room, in; boxes out. */
 
-import type { Frame } from '../workspace/pane-tree'
+import { type Frame, panesIn } from '../workspace/pane-tree'
 
 export interface Box {
   x: number
@@ -170,6 +170,46 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
 /** Every window and seam of `frame` in `room`. */
 export function lay(frame: Frame, room: Box, panes: Panes): Laid {
   return layIn(frame, room, panes, room.w * WIDEST)
+}
+
+/** The seams between a split's sides where its windows lie anywhere (free.ts): down the
+ *  middle of the gap between the two sides' windows, where there is one to run in. Two
+ *  sides whose windows were moved in among each other's have no line between them,
+ *  rather than one drawn across a window. */
+export function seamsAmong(frame: Frame, slots: readonly Slot[]): Seam[] {
+  if (frame.kind === 'pane') return []
+  const [first, second] = frame.sides
+  const inside = (side: Frame) => {
+    const ids = new Set(panesIn(side).map((one) => one.id))
+    return slots.filter((one) => ids.has(one.paneId))
+  }
+  const seams = [...seamsAmong(first, slots), ...seamsAmong(second, slots)]
+  const a = around(inside(first))
+  const b = around(inside(second))
+  if (!a || !b) return seams
+  const across = frame.along === 'row'
+  const [lo, hi] = across ? (a.x <= b.x ? [a, b] : [b, a]) : a.y <= b.y ? [a, b] : [b, a]
+  const gap = across ? hi.x - (lo.x + lo.w) : hi.y - (lo.y + lo.h)
+  if (gap < SEAM_GAP / 3) return seams
+  const reach = around([a, b])
+  if (!reach) return seams
+  const middle = across ? lo.x + lo.w + gap / 2 : lo.y + lo.h + gap / 2
+  seams.push(
+    across
+      ? {
+          id: frame.id,
+          along: 'row',
+          from: { x: middle, y: reach.y },
+          to: { x: middle, y: reach.y + reach.h },
+        }
+      : {
+          id: frame.id,
+          along: 'column',
+          from: { x: reach.x, y: middle },
+          to: { x: reach.x + reach.w, y: middle },
+        },
+  )
+  return seams
 }
 
 /** A seam as a path: a gentle S from one end to the other, bowing a little to either

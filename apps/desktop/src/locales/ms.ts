@@ -564,6 +564,7 @@ export const ms: Dictionary = {
   'Actual size': 'Saiz sebenar',
   // Appearance
   Accent: 'Warna aksen',
+  'Tidy up': 'Kemaskan',
   'Window corners': 'Sudut tetingkap',
   Rounded: 'Bulat',
   Square: 'Segi empat',

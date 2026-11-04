@@ -566,6 +566,7 @@ export const hi: Dictionary = {
   'Actual size': 'वास्तविक आकार',
   // Appearance
   Accent: 'एक्सेंट',
+  'Tidy up': 'व्यवस्थित करें',
   'Window corners': 'विंडो के कोने',
   Rounded: 'गोल',
   Square: 'चौकोर',

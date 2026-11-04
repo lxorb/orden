@@ -576,6 +576,7 @@ export const ptBR: Dictionary = {
   'Actual size': 'Tamanho real',
   // Appearance
   Accent: 'Destaque',
+  'Tidy up': 'Organizar',
   'Window corners': 'Cantos da janela',
   Rounded: 'Arredondados',
   Square: 'Quadrados',

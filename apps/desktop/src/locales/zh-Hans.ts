@@ -563,6 +563,7 @@ export const zhHans: Dictionary = {
   'Actual size': '实际大小',
   // Appearance
   Accent: '强调色',
+  'Tidy up': '整理',
   'Window corners': '窗口圆角',
   Rounded: '圆角',
   Square: '直角',

@@ -569,6 +569,7 @@ export const pa: Dictionary = {
   'Actual size': 'ਅਸਲੀ ਆਕਾਰ',
   // Appearance
   Accent: 'ਉਭਾਰ ਰੰਗ',
+  'Tidy up': 'ਤਰਤੀਬ ਦਿਓ',
   'Window corners': 'ਵਿੰਡੋ ਦੇ ਕੋਨੇ',
   Rounded: 'ਗੋਲ',
   Square: 'ਚੌਰਸ',

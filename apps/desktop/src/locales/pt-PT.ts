@@ -581,6 +581,7 @@ export const ptPT: Dictionary = {
   'Actual size': 'Tamanho real',
   // Appearance
   Accent: 'Destaque',
+  'Tidy up': 'Arrumar',
   'Window corners': 'Cantos da janela',
   Rounded: 'Arredondados',
   Square: 'Quadrados',

@@ -567,6 +567,7 @@ export const gsw: Dictionary = {
   'Actual size': 'Originalgrössi',
   // Appearance
   Accent: 'Akzänt',
+  'Tidy up': 'Ufrume',
   'Window corners': 'Fänschterecke',
   Rounded: 'Abgrundet',
   Square: 'Eggig',

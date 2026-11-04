@@ -566,6 +566,7 @@ export const gu: Dictionary = {
   'Actual size': 'ખરું માપ',
   // Appearance
   Accent: 'ઉપસાવ રંગ',
+  'Tidy up': 'વ્યવસ્થિત કરો',
   'Window corners': 'વિન્ડોના ખૂણા',
   Rounded: 'ગોળ',
   Square: 'ચોરસ',

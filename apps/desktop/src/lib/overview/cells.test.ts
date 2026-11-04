@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { cellAt, withPlop } from './cells'
+import { cellAt } from './cells'
 
 const cells = [
   { key: 'a', box: { x: 0, y: 0, w: 400, h: 300 } },
@@ -16,11 +16,4 @@ test('a window stays in its own cell near it, and plops into another well inside
 
 test('never between cells or outside every one', () => {
   expect(cellAt(cells, 'a', 5000, 5000)).toBe('a')
-})
-
-test('the cell it is over lays it out at the end of its first pane', () => {
-  const tabs: Record<string, string[]> = { p: ['x', 'y'], q: ['z'] }
-  const of = withPlop((pane) => tabs[pane] ?? [], 'x', 'q')
-  expect(of('p')).toEqual(['y'])
-  expect(of('q')).toEqual(['z', 'x'])
 })

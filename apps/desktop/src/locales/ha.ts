@@ -571,6 +571,7 @@ export const ha: Dictionary = {
   'Actual size': 'Girman gaske',
   // Appearance
   Accent: 'Launin nuni',
+  'Tidy up': 'Tsara',
   'Window corners': 'Kusurwoyin taga',
   Rounded: 'Mai zagaye',
   Square: 'Mai murabba’i',

@@ -563,6 +563,7 @@ export const ko: Dictionary = {
   'Actual size': '실제 크기',
   // Appearance
   Accent: '강조색',
+  'Tidy up': '정리',
   'Window corners': '창 모서리',
   Rounded: '둥글게',
   Square: '각지게',

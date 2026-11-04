@@ -598,6 +598,7 @@ export const ar: Dictionary = {
   'Actual size': 'الحجم الفعلي',
   // Appearance
   Accent: 'اللون المميز',
+  'Tidy up': 'ترتيب',
   'Window corners': 'زوايا النافذة',
   Rounded: 'مستديرة',
   Square: 'مربعة',

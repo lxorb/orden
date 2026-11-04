@@ -564,6 +564,7 @@ export const my: Dictionary = {
   'Actual size': 'အမှန်အရွယ်',
   // Appearance
   Accent: 'အသားပေးအရောင်',
+  'Tidy up': 'စနစ်တကျ စီရန်',
   'Window corners': 'ဝင်းဒိုး ထောင့်များ',
   Rounded: 'လုံးဝိုင်း',
   Square: 'လေးထောင့်',

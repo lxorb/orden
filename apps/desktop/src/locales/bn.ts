@@ -566,6 +566,7 @@ export const bn: Dictionary = {
   'Actual size': 'আসল আকার',
   // Appearance
   Accent: 'অ্যাকসেন্ট',
+  'Tidy up': 'গুছিয়ে নিন',
   'Window corners': 'উইন্ডোর কোণ',
   Rounded: 'গোলাকার',
   Square: 'বর্গাকার',

@@ -564,6 +564,7 @@ export const am: Dictionary = {
   'Actual size': 'እውነተኛ መጠን',
   // Appearance
   Accent: 'የማጉላት ቀለም',
+  'Tidy up': 'አስተካክል',
   'Window corners': 'የመስኮት ማዕዘኖች',
   Rounded: 'የተጠጋጋ',
   Square: 'ካሬ',

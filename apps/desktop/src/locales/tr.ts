@@ -567,6 +567,7 @@ export const tr: Dictionary = {
   'Actual size': 'Gerçek boyut',
   // Appearance
   Accent: 'Vurgu rengi',
+  'Tidy up': 'Düzenle',
   'Window corners': 'Pencere köşeleri',
   Rounded: 'Yuvarlak',
   Square: 'Köşeli',

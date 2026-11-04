@@ -566,6 +566,7 @@ export const fa: Dictionary = {
   'Actual size': 'اندازه واقعی',
   // Appearance
   Accent: 'رنگ تکیه',
+  'Tidy up': 'مرتب‌سازی',
   'Window corners': 'گوشه‌های پنجره',
   Rounded: 'گرد',
   Square: 'مربعی',

@@ -566,6 +566,7 @@ export const ps: Dictionary = {
   'Actual size': 'اصلي کچه',
   // Appearance
   Accent: 'ځانګړی رنګ',
+  'Tidy up': 'ترتیب کړئ',
   'Window corners': 'د کړکۍ کونجونه',
   Rounded: 'ګرد',
   Square: 'مربع',

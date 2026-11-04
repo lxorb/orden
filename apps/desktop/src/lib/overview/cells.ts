@@ -30,16 +30,3 @@ export function cellAt(cells: readonly Cell[], now: string, x: number, y: number
   const other = cells.find((one) => one.key !== now && within(one.box, x, y, -TAKES))
   return other?.key ?? now
 }
-
-/** A cell's tabs, pane by pane, with `id` taken out of `from` and put at the end of the
- *  first pane of `to`: what the canvas lays out while a window is over another cell. */
-export function withPlop(
-  tabsOf: (paneId: string) => readonly string[],
-  id: string,
-  firstPaneOf: string | null,
-): (paneId: string) => readonly string[] {
-  return (paneId) => {
-    const rest = tabsOf(paneId).filter((one) => one !== id)
-    return paneId === firstPaneOf ? [...rest, id] : rest
-  }
-}

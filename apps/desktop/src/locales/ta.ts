@@ -567,6 +567,7 @@ export const ta: Dictionary = {
   'Actual size': 'உண்மை அளவு',
   // Appearance
   Accent: 'சிறப்பு நிறம்',
+  'Tidy up': 'ஒழுங்குபடுத்து',
   'Window corners': 'சாளர மூலைகள்',
   Rounded: 'வளைந்த',
   Square: 'சதுரம்',

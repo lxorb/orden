@@ -159,3 +159,30 @@ test('it comes back where the camera was left', async () => {
   await opened()
   expect(world()).toBe(moved)
 })
+
+test('Tidy up puts every window back where its panes put it', async () => {
+  const { places } = await import('../../src/lib/overview/places.svelte')
+  const id = workspace.tabs[0]?.id ?? ''
+  places.keepWindows({ [id]: { x: 4000, y: 4000, w: 300, h: 200 } }, workspace.tabs)
+  await opened()
+  expect(places.windows[id]).toEqual({ x: 4000, y: 4000, w: 300, h: 200 })
+  document.querySelector<HTMLButtonElement>('.tidy')?.click()
+  flushSync()
+  await tick()
+  expect(places.windows).toEqual({})
+})
+
+test('a window put by hand is found again by the next run, whose tabs have new ids', async () => {
+  const { places } = await import('../../src/lib/overview/places.svelte')
+  const [first] = workspace.tabs
+  places.keepWindows({ [first?.id ?? '']: { x: 3000, y: 10, w: 300, h: 200 } }, workspace.tabs)
+  // The next run: the same tabs, every id new.
+  const again = workspace.tabs.map((one) => ({
+    id: `${one.id}-again`,
+    kind: one.kind,
+    path: one.path,
+    shown: one.shown,
+  }))
+  places.recall(again)
+  expect(places.windows[`${first?.id}-again`]).toEqual({ x: 3000, y: 10, w: 300, h: 200 })
+})

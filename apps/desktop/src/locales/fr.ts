@@ -578,6 +578,7 @@ export const fr: Dictionary = {
   'Actual size': 'Taille réelle',
   // Appearance
   Accent: 'Couleur',
+  'Tidy up': 'Ranger',
   'Window corners': 'Coins de la fenêtre',
   Rounded: 'Arrondis',
   Square: 'Carrés',

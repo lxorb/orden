@@ -23,7 +23,7 @@
    *  dragged well into another's plops across, which moves its tab to that space when it
    *  is let go (cells.ts). */
 
-  import { untrack } from 'svelte'
+  import { tick as laidOut, untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
   import { t } from '../i18n.svelte'
   import { chorded } from '../keys'
@@ -50,18 +50,19 @@
     turned,
     moved as panned,
   } from './camera'
-  import { isDrag, type Landing, landingAt, withMoved } from './drag'
+  import { isDrag, type Landing } from './drag'
   import { places } from './places.svelte'
-  import { type Cell, cellAt, withPlop } from './cells'
+  import { type Cell, cellAt } from './cells'
   import Cells from './Cells.svelte'
   import { shapeOf as membraneOf } from './membrane'
   import { keep, storedText } from '../stored'
   import { canWriteAt } from '../sharing.svelte'
   import { mayCarry } from '../workspace/chat-carry'
-  import { panesIn, type Frame } from '../workspace/pane-tree'
+  import type { Frame } from '../workspace/pane-tree'
   import { movingOf, spacesFor } from '../workspace/space-move'
   import { drawn, Flight, type Pose } from './flight'
-  import { around, type Box, type Laid, lay, seamPath, type Slot } from './layout'
+  import { settled, stripLanding } from './free'
+  import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot } from './layout'
   import { marked, mirrorOf, shownBox } from './mirror'
   import { walk, wayOf } from './walk'
   import WindowFace from './WindowFace.svelte'
@@ -113,9 +114,71 @@
     // nearer than one to one.
     const cell = cellBoxes.find((one) => one.key === spaceKey)
     if (!all || !cell) return
-    const { cx, cy, a, b } = membraneOf(cell.box)
+    camera = lookingAt(wholeOf([cell]), screenRoom)
+  }
+
+  /** Where some cells are drawn, their membranes and names and all. */
+  function wholeOf(cells: readonly Cell[]): Box {
     const named = NAME_ROOM * Math.max(1, 1 / camera.zoom)
-    camera = lookingAt({ x: cx - a, y: cy - b - named, w: 2 * a, h: 2 * b + named }, screenRoom)
+    const boxes = cells.map((one) => {
+      const { cx, cy, a, b } = membraneOf(one.box)
+      return { x: cx - a, y: cy - b - named, w: 2 * a, h: 2 * b + named }
+    })
+    return around(boxes) ?? room
+  }
+
+  /** Tidy up: every window of every space back where its panes put it, the spaces in a
+   *  row again, and the camera brought round to all of them (places.svelte.ts). */
+  async function tidy() {
+    places.tidy()
+    for (const key of shownKeys) places.place(key, { w: screenRoom.w, h: screenRoom.h })
+    await laidOut()
+    flyTo(lookingAt(wholeOf(cellBoxes), screenRoom))
+  }
+
+  /** Where the camera is flying to, as Tidy up moves it: a share of the way each frame,
+   *  the zoom in its own scale; a hand on the canvas takes over at once. */
+  let flyGoal: Camera | null = null
+  let flyFrame = 0
+  let flyLast = 0
+
+  function flyTo(goal: Camera) {
+    if (stillness()) {
+      camera = goal
+      return
+    }
+    flyGoal = goal
+    if (flyFrame) return
+    flyLast = performance.now()
+    flyFrame = requestAnimationFrame(flying)
+  }
+
+  function flying(now: number) {
+    const goal = flyGoal
+    if (!goal) return (flyFrame = 0)
+    const share = 1 - Math.exp(-Math.min(1 / 30, Math.max(0, (now - flyLast) / 1000)) / 0.12)
+    flyLast = now
+    const zoom = camera.zoom * Math.exp(Math.log(goal.zoom / camera.zoom) * share)
+    const near = Math.abs(goal.x - camera.x) + Math.abs(goal.y - camera.y) < 0.5
+    camera =
+      near && Math.abs(Math.log(goal.zoom / camera.zoom)) < 0.003
+        ? goal
+        : {
+            x: camera.x + (goal.x - camera.x) * share,
+            y: camera.y + (goal.y - camera.y) * share,
+            zoom,
+          }
+    if (camera === goal) {
+      flyGoal = null
+      flyFrame = 0
+    } else flyFrame = requestAnimationFrame(flying)
+  }
+
+  /** A hand on the canvas: whatever the camera was flying to, it is the hand's now. */
+  function handTakes() {
+    flyGoal = null
+    cancelAnimationFrame(flyFrame)
+    flyFrame = 0
   }
 
   /** The room a cell's name takes over its membrane. */
@@ -162,62 +225,83 @@
   })
 
   /** The window under the hand: which, where it was taken hold of (as a share of its
-   *  width and height), and where it would land now. */
+   *  width and height), where it lies now, and whether it is over another space's cell. */
   let held = $state<{
     id: string
     fx: number
     fy: number
-    landing: Landing | null
+    /** Where it lies under the hand, on the canvas; null until the hand has moved. */
+    box: Box | null
+    landing: (Landing & { kind: 'space' }) | null
     /** The space whose cell it was taken out of, and those it may go to. */
     from: string
     goes: readonly string[]
   } | null>(null)
 
-  /** The canvas without the window being dragged, which says where it would land. */
-  const without = $derived(
-    held
-      ? lay(frame, room, {
-          tabsOf: (paneId) => tabsOf(paneId).filter((one) => one !== held?.id),
-          shapeOf,
-        })
-      : null,
-  )
-
-  /** The canvas as it is, or with the held window where it would land (drag.ts). */
-  const laidCells = $derived(
+  /** Each cell's windows where its panes would put them (layout.ts), with its panes,
+   *  which the lines between a split's sides are drawn from. */
+  const gridCells = $derived(
     shownKeys.flatMap((key) => {
       const own = key === spaceKey
       const panesOf = own ? frame : sets?.frameOf(key)
       if (!panesOf) return []
       const place = own ? room : (places.at(key) ?? room)
-      // A window over another cell is laid out at the end of that cell's first pane.
-      const plop = held?.landing?.kind === 'space' ? held.landing : null
-      let ofCell: (paneId: string) => readonly string[] = tabsOf
-      if (held && plop) {
-        const first = key === plop.key ? (panesIn(panesOf)[0]?.id ?? null) : null
-        ofCell = withPlop(tabsOf, held.id, first)
-      } else if (held && own) ofCell = withMoved(tabsOf, held.id, held.landing)
-      return [{ key, laid: lay(panesOf, place, { tabsOf: ofCell, shapeOf }) }]
+      return [{ key, frame: panesOf, slots: lay(panesOf, place, { tabsOf, shapeOf }).slots }]
     }),
   )
 
-  /** Every cell's windows and lines on the one canvas. */
-  const laid = $derived({
-    slots: laidCells.flatMap((one) => one.laid.slots),
-    seams: laidCells.flatMap((one) => one.laid.seams),
+  /** Every window where it lies, with nothing held: where it was put by hand, or else
+   *  where its panes would put it, out of the way of the ones put by hand (free.ts). */
+  const resting = $derived.by(() => {
+    const put = places.windows
+    const all = gridCells.flatMap((one) => one.slots)
+    const lying = all.map((slot) => {
+      const box = put[slot.id]
+      return box ? { ...slot, x: box.x, y: box.y, w: box.w, h: box.h } : slot
+    })
+    return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)))
   })
 
-  /** Which cell each window lies in, by tab. */
-  const cellOf = $derived(
-    new Map(laidCells.flatMap((one) => one.laid.slots.map((slot) => [slot.id, one.key] as const))),
-  )
+  /** And with one held: that one under the hand, where it stays when it is let go, and
+   *  every other pushed out of its way - back where it was once the hand moves on. */
+  const slots = $derived.by((): Slot[] => {
+    const hand = held?.box
+    const id = held?.id
+    if (!hand || !id) return resting
+    const lying = resting.map((slot) => (slot.id === id ? { ...slot, ...hand } : slot))
+    return settled(lying, new Set([id]))
+  })
 
-  /** Each cell's windows, boxed, for the membranes and for which cell a window is over. */
+  /** Which cell each window lies in, by tab: its space's, or the one the held window is
+   *  over. */
+  const cellOf = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- made afresh by the derived, never changed after
+    const map = new Map(
+      gridCells.flatMap((one) => one.slots.map((slot) => [slot.id, one.key] as const)),
+    )
+    if (held?.landing?.kind === 'space') map.set(held.id, held.landing.key)
+    return map
+  })
+
+  /** Every window, and the lines between each split's sides. */
+  const laid = $derived({
+    slots,
+    seams: gridCells.flatMap((one) =>
+      seamsAmong(
+        one.frame,
+        slots.filter((slot) => cellOf.get(slot.id) === one.key && slot.id !== held?.id),
+      ),
+    ),
+  })
+
+  /** Each cell's windows, boxed, for the membranes and for which cell a window is over:
+   *  the held one left out, which is the membrane's to stretch round and never what
+   *  decides where the cell is. */
   const cellBoxes = $derived<Cell[]>(
-    laidCells.map((one) => ({
-      key: one.key,
-      box: captioned(around(one.laid.slots) ?? places.at(one.key) ?? room),
-    })),
+    gridCells.map((one) => {
+      const inside = slots.filter((slot) => cellOf.get(slot.id) === one.key && slot.id !== held?.id)
+      return { key: one.key, box: captioned(around(inside) ?? places.at(one.key) ?? room) }
+    }),
   )
 
   const cellsShown = $derived(
@@ -411,6 +495,7 @@
     const again = shown
     if (!again) {
       corner = cardCorner()
+      places.recall(workspace.tabs)
       // Where it was left, once there is somewhere; the space worked in the first time.
       measure()
       lookAtSpace()
@@ -567,6 +652,7 @@
         id,
         fx: (grabbed.x - pose.x) / Math.max(pose.w, 1),
         fy: (grabbed.y - pose.y) / Math.max(pose.h, 1),
+        box: null,
         landing: null,
         from: cellOf.get(id) ?? spaceKey,
         // The spaces Move to space would offer it, which are the cells it may plop into.
@@ -577,25 +663,26 @@
       at = id
     }
     hand = toCanvas(camera, { x: event.clientX, y: event.clientY })
-    const landing = landingFor(hand)
-    if (JSON.stringify(landing) !== JSON.stringify(held.landing)) held = { ...held, landing }
+    // Its own size, the point it was taken by under the pointer.
+    const own = resting.find((one) => one.id === id)
+    const w = own?.w ?? 1
+    const h = own?.h ?? 1
+    const box = { x: hand.x - held.fx * w, y: hand.y - held.fy * h, w, h }
+    held = { ...held, box, landing: landingFor(hand) }
     follow()
     fly()
   }
 
-  /** Where the held window would land with the pointer at `point`: in another space's
-   *  cell once it is well inside it, else in its own - in a strip, where its own is the
-   *  space worked in, whose panes are the window's. */
-  function landingFor(point: Point): Landing | null {
+  /** Whether the held window, with the pointer at `point`, is over another space's cell:
+   *  once it is well inside it (cells.ts). */
+  function landingFor(point: Point): (Landing & { kind: 'space' }) | null {
     if (!held) return null
     const from = held.from
     const goes = held.goes
-    const now = held.landing?.kind === 'space' ? held.landing.key : from
+    const now = held.landing?.key ?? from
     const cells = cellBoxes.filter((one) => one.key === from || goes.includes(one.key))
     const cell = all ? cellAt(cells, now, point.x, point.y) : from
-    if (cell !== from) return { kind: 'space', key: cell }
-    if (from !== spaceKey) return null
-    return landingAt(without?.slots ?? [], point.x, point.y)
+    return cell === from ? null : { kind: 'space', key: cell }
   }
 
   /** The held window and the cell it is in now, for the membranes. */
@@ -603,7 +690,7 @@
     if (!held) return null
     const pose = flights.get(held.id)?.pose
     if (!pose) return null
-    const key = held.landing?.kind === 'space' ? held.landing.key : held.from
+    const key = held.landing?.key ?? held.from
     return { key, box: { x: pose.x, y: pose.y, w: pose.w, h: pose.h } }
   }
 
@@ -611,26 +698,38 @@
   let hand: Point = { x: 0, y: 0 }
 
   /** The held window under the pointer, the point it was taken by under the pointer
-   *  exactly, growing or shrinking to the place it would land in. */
+   *  exactly. */
   function follow() {
-    if (!held) return
-    const flight = flights.get(held.id)
-    const slot = laid.slots.find((one) => one.id === held?.id)
-    if (!flight || !slot) return
-    const { w, h } = flight.pose
-    flight.hold(hand.x - held.fx * w, hand.y - held.fy * h, slot.w, slot.h)
+    const box = held?.box
+    const flight = held && flights.get(held.id)
+    if (!box || !flight || !held) return
+    flight.hold(box.x, box.y, box.w, box.h)
     paint(held.id)
   }
 
-  /** Let go: the tab moves where its window was let go, and the window settles there. */
+  /** Let go: the window stays exactly where it was let go, and every window keeps where
+   *  it lies now, the ones it pushed aside too (places.svelte.ts). Over another space's
+   *  cell, its tab moves to that space; in its own, the space worked in, it takes its
+   *  place in the strip of the pane it was let go among, where it reads among that
+   *  pane's windows (free.ts). */
   function up(event: PointerEvent) {
     if (pressed?.pointer !== event.pointerId) return
     pressed = null
     const hand = held
     if (!hand) return
     dragged = true
+    const lying = laid.slots
+    const box = hand.box
     held = null
+    if (box) {
+      places.keepWindows(Object.fromEntries(lying.map((one) => [one.id, one])), workspace.tabs)
+    }
     if (hand.landing) drop(hand.id, hand.landing)
+    else if (box && hand.from === spaceKey) {
+      const own = lying.filter((one) => cellOf.get(one.id) === spaceKey)
+      const strip = stripLanding(own, hand.id, box)
+      if (strip) drop(hand.id, { kind: 'strip', ...strip })
+    }
     aimAll()
   }
 
@@ -715,6 +814,7 @@
       event.preventDefault()
       const { deltaX, deltaY, deltaMode, ctrlKey, metaKey, clientX, clientY } = event
       const said = { deltaX, deltaY, deltaMode, ctrlKey, metaKey, x: clientX, y: clientY }
+      handTakes()
       if ((ctrlKey || metaKey) && isNotch(said)) {
         const zoom = notched(zoomGoal?.zoom ?? camera.zoom, said)
         if (stillness()) {
@@ -748,6 +848,7 @@
 
   function grounded(event: PointerEvent) {
     if (!(event.target instanceof Element) || event.target.closest('.window, .top')) return
+    handTakes()
     touching.set(event.pointerId, { x: event.clientX, y: event.clientY })
     ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
     panning = touching.size > 1
@@ -807,9 +908,9 @@
     onselectstart={(event) => event.preventDefault()}
     ondragstart={(event) => event.preventDefault()}
   >
-    {#if spaces.length > 1}
-      <!-- All spaces or This space: whether the other spaces' cells are there too. -->
-      <div class="top" class:is-out={out}>
+    <div class="top" class:is-out={out}>
+      {#if spaces.length > 1}
+        <!-- All spaces or This space: whether the other spaces' cells are there too. -->
         <Select
           value={all ? 'all' : 'this'}
           options={[
@@ -819,8 +920,11 @@
           onchange={(value) => showAll(value === 'all')}
           label={t('Spaces')}
         />
-      </div>
-    {/if}
+      {/if}
+      <button class="nib-button is-quiet tidy" type="button" onclick={() => void tidy()}
+        >{t('Tidy up')}</button
+      >
+    </div>
 
     <div
       class="world"
@@ -933,6 +1037,11 @@
     transition:
       opacity var(--dur-base) var(--ease-out),
       translate var(--dur-base) var(--ease-out);
+  }
+
+  /* Tidy up, the app's own button, beside the dropdown. */
+  .tidy {
+    white-space: nowrap;
   }
 
   .top.is-out {

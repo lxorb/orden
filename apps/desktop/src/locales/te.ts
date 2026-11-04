@@ -567,6 +567,7 @@ export const te: Dictionary = {
   'Actual size': 'నిజ పరిమాణం',
   // Appearance
   Accent: 'యాక్సెంట్ రంగు',
+  'Tidy up': 'చక్కదిద్దు',
   'Window corners': 'విండో మూలలు',
   Rounded: 'గుండ్రని',
   Square: 'చతురస్రం',

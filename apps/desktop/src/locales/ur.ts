@@ -566,6 +566,7 @@ export const ur: Dictionary = {
   'Actual size': 'اصل سائز',
   // Appearance
   Accent: 'نمایاں رنگ',
+  'Tidy up': 'ترتیب دیں',
   'Window corners': 'ونڈو کے کونے',
   Rounded: 'گول',
   Square: 'چوکور',

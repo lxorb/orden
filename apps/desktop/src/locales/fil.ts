@@ -571,6 +571,7 @@ export const fil: Dictionary = {
   'Actual size': 'Tunay na laki',
   // Appearance
   Accent: 'Kulay tampok',
+  'Tidy up': 'Ayusin',
   'Window corners': 'Mga sulok ng window',
   Rounded: 'Bilugan',
   Square: 'Parisukat',

@@ -589,6 +589,7 @@ export const ru: Dictionary = {
   'Actual size': 'Реальный размер',
   // Appearance
   Accent: 'Акцент',
+  'Tidy up': 'Упорядочить',
   'Window corners': 'Углы окна',
   Rounded: 'Скруглённые',
   Square: 'Прямые',

@@ -563,6 +563,7 @@ export const vi: Dictionary = {
   'Actual size': 'Cỡ thật',
   // Appearance
   Accent: 'Màu nhấn',
+  'Tidy up': 'Sắp xếp gọn',
   'Window corners': 'Góc cửa sổ',
   Rounded: 'Bo tròn',
   Square: 'Vuông',

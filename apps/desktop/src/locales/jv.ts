@@ -563,6 +563,7 @@ export const jv: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna panandes',
+  'Tidy up': 'Rapèkaké',
   'Window corners': 'Pojok jendhela',
   Rounded: 'Bunder',
   Square: 'Kothak',

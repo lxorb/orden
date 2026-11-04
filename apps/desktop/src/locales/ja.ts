@@ -563,6 +563,7 @@ export const ja: Dictionary = {
   'Actual size': '実際のサイズ',
   // Appearance
   Accent: 'アクセント',
+  'Tidy up': '整列',
   'Window corners': 'ウィンドウの角',
   Rounded: '丸',
   Square: '四角',

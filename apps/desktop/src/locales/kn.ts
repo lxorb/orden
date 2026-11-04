@@ -570,6 +570,7 @@ export const kn: Dictionary = {
   'Actual size': 'ನಿಜ ಗಾತ್ರ',
   // Appearance
   Accent: 'ಆಕ್ಸೆಂಟ್ ಬಣ್ಣ',
+  'Tidy up': 'ಅಚ್ಚುಕಟ್ಟು ಮಾಡಿ',
   'Window corners': 'ವಿಂಡೋ ಮೂಲೆಗಳು',
   Rounded: 'ದುಂಡಾದ',
   Square: 'ಚೌಕ',

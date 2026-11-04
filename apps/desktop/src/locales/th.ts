@@ -563,6 +563,7 @@ export const th: Dictionary = {
   'Actual size': 'ขนาดจริง',
   // Appearance
   Accent: 'สีเน้น',
+  'Tidy up': 'จัดระเบียบ',
   'Window corners': 'มุมหน้าต่าง',
   Rounded: 'มน',
   Square: 'เหลี่ยม',

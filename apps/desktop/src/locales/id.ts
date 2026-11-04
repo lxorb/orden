@@ -563,6 +563,7 @@ export const id: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna aksen',
+  'Tidy up': 'Rapikan',
   'Window corners': 'Sudut jendela',
   Rounded: 'Membulat',
   Square: 'Persegi',

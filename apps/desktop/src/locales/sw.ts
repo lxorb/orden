@@ -571,6 +571,7 @@ export const sw: Dictionary = {
   'Actual size': 'Ukubwa halisi',
   // Appearance
   Accent: 'Rangi ya msisitizo',
+  'Tidy up': 'Panga',
   'Window corners': 'Pembe za dirisha',
   Rounded: 'Mviringo',
   Square: 'Mraba',

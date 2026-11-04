@@ -572,6 +572,7 @@ export const ml: Dictionary = {
   'Actual size': 'യഥാർത്ഥ വലുപ്പം',
   // Appearance
   Accent: 'ആക്‌സന്റ് നിറം',
+  'Tidy up': 'ക്രമീകരിക്കുക',
   'Window corners': 'ജാലകത്തിന്റെ മൂലകൾ',
   Rounded: 'വളഞ്ഞത്',
   Square: 'ചതുരം',
