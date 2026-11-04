@@ -52,7 +52,7 @@ describe('a block of raw HTML', () => {
 
   test('reads the entities a note holds', () => {
     expect(said('<p>f&uuml;r &mdash; &euro; &copy; &hellip; &#252; &#xfc; &nope;</p>\n')).toEqual([
-      'für — € © … ü ü &nope;',
+      'für \u2014 € © … ü ü &nope;',
     ])
   })
 

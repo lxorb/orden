@@ -527,7 +527,8 @@ mod tests {
         assert_eq!(tags_in(note), vec!["#work", "#b"]);
         // Nothing closes this one, so it is the one line's.
         assert_eq!(tags_in("---\ntags: [a\nz: b\n---\n"), vec!["#a"]);
-        assert_eq!(tags_in("---\ntags: [\n  a# b,\n]\n---\n"), vec!["#a", "#b"]);
+        // A hash in a word opens no comment, and is no name of a tag either.
+        assert_eq!(tags_in("---\ntags: [\n  a# b,\n]\n---\n"), vec!["#b"]);
         assert_eq!(tags_in("---\ntags: [a, b]\nz: 1\n---\n"), vec!["#a", "#b"]);
     }
 

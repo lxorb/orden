@@ -475,7 +475,7 @@ const ENTITIES = new Map<string, string>([
   ['quot', '"'],
   ['apos', "'"],
   ['ndash', '–'],
-  ['mdash', '—'],
+  ['mdash', '\u2014'],
   ['lsquo', '‘'],
   ['rsquo', '’'],
   ['sbquo', '‚'],

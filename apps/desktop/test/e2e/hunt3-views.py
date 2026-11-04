@@ -155,8 +155,13 @@ def drive_block_links(page: Page) -> None:
         }"""
     )
     say(f"[other note, reading, before] {near}")
-    DRIVE.open_note(page, "Own block")
-    page.wait_for_timeout(400)
+    page.evaluate(
+        """async () => {
+          const ws = window.nibApp.workspace
+          await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Own block')).path, { activate: true })
+        }"""
+    )
+    wait_for(page, "document.querySelectorAll('a.wikilink').length > 1", "the links of the note")
     page.locator("a.wikilink").nth(1).click()
     page.wait_for_timeout(1200)
     near = page.evaluate(
