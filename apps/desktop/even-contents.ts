@@ -499,9 +499,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,894,100, for #1063: an application as a kind of
  *  file and tab in developer mode, which the plugin never opens. Its words fit in the
  *  catalogues' room. Measured 5,893,553.
+ *
+ *  The code raised on 2026-11-04, to 5,894,600, for #1068: a bookmark keeps the id of
+ *  what it points at, and is found by it (workspace/bookmarks.svelte.ts,
+ *  workspace/entry-ids.ts). Measured 5,894,413.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_894_100,
+  code: 5_894_600,
   catalogues: 969_500,
   styles: 290_000,
   fonts: 260_000,

@@ -1212,8 +1212,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,572,000, for #1063: an application is a kind of file and tab
  *  in developer mode - its row's mark, its opener, its tab's traits, its name shown
  *  without its ending and the new tab's card (links.ts, file-mark.ts, openers.ts,
- *  note-name.ts, tab-kinds.ts, new-kinds.ts). Measured 3,571,413. */
-const BUDGET = 3_572_000
+ *  note-name.ts, tab-kinds.ts, new-kinds.ts). Measured 3,571,413.
+ *
+ *  Raised 2026-11-04, to 3,577,000, for #1068: a bookmark keeps the id of what it points
+ *  at, and is found by it where its path names nothing (workspace/bookmarks.svelte.ts,
+ *  workspace/entry-ids.ts). Measured 3,576,390. */
+const BUDGET = 3_577_000
 const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
