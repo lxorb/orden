@@ -25,7 +25,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { startAcross } = await import('./workspace/across')
 await startAcross()
-const { followOwnMoves, heardChange, heardNews } = await import('./workspace/outside.svelte')
+const outside = await import('./workspace/outside.svelte')
+const { followOwnMoves, heardChange, heardNews } = outside
 
 const SPACE = '/s'
 
@@ -323,5 +324,132 @@ describe('what the watch says, with no engine to hear it', () => {
     await heardChange({ kind: 'renamed', from: '/s/x.md', path: '/s/y.md', ...stat })
     stop()
     expect(heard).toEqual([])
+  })
+})
+
+describe('from the review', () => {
+  const stat = { size: 1, mtime: 1, id: null, dir: false }
+  const renamed = (from: string, path: string) => ({ kind: 'renamed' as const, from, path, ...stat })
+  const removed = (path: string) => ({ kind: 'removed' as const, path, dir: false, id: null })
+
+  test('words only a closed tab holds outlive the file going, heard or not', async () => {
+    for (const heard of [true, false]) {
+      await fresh({ '/s/n.md': 'old\n' })
+      await workspace.open('/s/n.md')
+      const tab = workspace.active
+      if (!tab) throw new Error('not open')
+      d.unreadable.add('/s/n.md')
+      typed('PRECIOUS\n')
+      workspace.close(tab.id)
+      d.unreadable.clear()
+      d.files.delete('/s/n.md')
+      if (heard) await heardChange(removed('/s/n.md'))
+      else await workspace.fileGone('/s/n.md', 'file')
+      await workspace.reopenClosed()
+      expect(workspace.tabs.at(-1)?.note.latest).toContain('PRECIOUS')
+      expect(workspace.tabs.at(-1)?.note.path).toBe(null)
+      await workspace.writesSettled()
+      expect(d.files.has('/s/n.md')).toBe(false)
+    }
+  })
+
+  test('a write from another document at the path does not spend the words of the first', async () => {
+    await fresh({ '/s/n.md': 'old\n' })
+    workspace.closed.stack = [
+      {
+        paneId: workspace.panes.focusedId,
+        at: 0,
+        draft: {
+          kind: 'note',
+          path: '/s/n.md',
+          name: 'n.md',
+          doc: 'old\nPRECIOUS\n',
+          dirty: true,
+          cursor: 0,
+          scroll: 0,
+          share: 'a document long gone',
+        },
+      },
+    ]
+    await workspace.open('/s/n.md')
+    typed('other\n')
+    await workspace.writesSettled()
+    expect(workspace.closed.stack.at(-1)?.draft.doc).toContain('PRECIOUS')
+  })
+
+  test('a rename said back through another window leaves its own step whole', async () => {
+    await fresh({ '/s/x.md': 'x\n' })
+    followOwnMoves()
+    await workspace.rename('/s/x.md', 'y.md')
+    await workspace.fileOps.tell({
+      op: 'moved',
+      from: '/s/x.md',
+      to: '/s/y.md',
+      kind: 'file',
+      root: SPACE,
+      heard: true,
+    })
+    await workspace.undoFileAction()
+    expect([...d.files.keys()]).toEqual(['/s/x.md'])
+  })
+
+  test('seventy notes moved in one burst all go back', async () => {
+    const files: Record<string, string> = {}
+    for (let at = 0; at < 70; at++) files[`/s/n${String(at)}.md`] = 'n\n'
+    await fresh({ ...files, '/s/in/keep.md': 'k\n' })
+    followOwnMoves()
+    const paths = Object.keys(files)
+    await workspace.moveMany(paths, '/s/in')
+    for (const path of paths) {
+      await heardChange(renamed(path, `/s/in/${path.slice(3)}`))
+    }
+    await workspace.undoFileAction()
+    for (const path of paths) expect(d.files.has(path)).toBe(true)
+  })
+
+  test('a move still under way is not taken for another program', async () => {
+    await fresh({ '/s/w.md': 'w\n' })
+    followOwnMoves()
+    await workspace.rename('/s/w.md', 'x.md')
+    const { moving } = await import('./views/moving')
+    const heard: string[] = []
+    const stop = workspace.fileOps.follow((op) => heard.push(op.op))
+    await moving('/s/y.md', async () => {
+      d.files.set('/s/y.md', d.files.get('/s/x.md') ?? '')
+      d.files.delete('/s/x.md')
+      await heardChange(renamed('/s/x.md', '/s/y.md'))
+    })
+    stop()
+    expect(heard).toEqual([])
+  })
+
+  test('a move there and back with nothing said leaves a later move outside heard', async () => {
+    await fresh({ '/s/a.md': 'a\n' })
+    followOwnMoves()
+    await workspace.open('/s/a.md')
+    await workspace.rename('/s/a.md', 'b.md')
+    await workspace.rename('/s/b.md', 'a.md')
+    d.files.delete('/s/a.md')
+    d.files.set('/s/b.md', 'a\n')
+    await heardChange(renamed('/s/a.md', '/s/b.md'))
+    expect(workspace.active?.path).toBe('/s/b.md')
+  })
+
+  test('a file that vanishes outside and returns has lost nothing kept by path', async () => {
+    await fresh({ '/s/n.md': 'n\n' })
+    await workspace.open('/s/n.md')
+    workspace.folderIcons.set('/s/n.md', 'star')
+    const heard: string[] = []
+    const stop = workspace.fileOps.follow((op) => heard.push(op.op))
+    d.files.delete('/s/n.md')
+    await heardChange(removed('/s/n.md'))
+    stop()
+    expect(heard).toEqual([])
+    expect(workspace.tabs).toEqual([])
+    expect(workspace.folderIcons.iconOf('/s/n.md')).toBe('star')
+
+    d.files.set('/s/n.md', 'n\n')
+    await workspace.reopenClosed()
+    expect(workspace.active?.path).toBe('/s/n.md')
   })
 })

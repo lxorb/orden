@@ -31,7 +31,7 @@ const { workspace } = await import('../workspace.svelte')
 const { account } = await import('../account.svelte')
 const { sync } = await import('../sync.svelte')
 const { onUnwatched, unwatchSpaces } = await import('../space-watch')
-const { TheWatch } = await import('./outside.svelte')
+const { hearsUnwatched, TheWatch } = await import('./outside.svelte')
 
 const settle = async () => {
   for (let turn = 0; turn < 5; turn++) await new Promise((go) => setTimeout(go, 0))
@@ -79,6 +79,28 @@ describe('the watch of the spaces', () => {
       ['/s', '/t'],
       ['/s', '/t'],
     ])
+    stop()
+  })
+
+  test('the engine letting go in another window is heard here', async () => {
+    watching.roots.length = 0
+    const said: Record<string, () => void> = {}
+    const line = {
+      say: (kind: string) => said[kind]?.(),
+      hear: (kind: string, listener: () => void) => {
+        said[kind] = listener
+        return () => undefined
+      },
+    }
+    const watch = new TheWatch()
+    watch.settle()
+    await settle()
+    const first = watching.roots.length
+    // What another window's `onUnwatched` says, on the channel this one hears.
+    const stop = hearsUnwatched(watch, line)
+    line.say('spaces-unwatched')
+    await settle()
+    expect(watching.roots.length).toBe(first + 1)
     stop()
   })
 })

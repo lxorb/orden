@@ -52,6 +52,15 @@ describe('undo after the space was renamed', () => {
     expect([...d.files.keys()]).toEqual(['/t/x.md'])
   })
 
+  test('renamed away and back, a delete comes back at its own name', async () => {
+    await fresh({ '/s/x.md': 'words\n' })
+    await workspace.remove('/s/x.md', false)
+    await spaceRenamed('/t')
+    await spaceRenamed('/s')
+    await workspace.undoFileAction()
+    expect([...d.files.keys()]).toEqual(['/s/x.md'])
+  })
+
   test('a rename goes back, and nothing is left on top', async () => {
     await fresh({ '/s/x.md': 'words\n' })
     await workspace.rename('/s/x.md', 'y.md')

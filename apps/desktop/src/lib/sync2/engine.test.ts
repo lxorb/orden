@@ -4,6 +4,9 @@ import { TEXT } from '@orden/rooms'
 import { hash32 } from '@orden/sync-core/seed'
 import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@orden/sync-core/sim'
 import { type DocRefusal, frame, type PushRequest, unframe } from '@orden/sync-core/wire'
+import { Across } from '../workspace/across'
+import { NoteDoc } from '../workspace/documents.svelte'
+import { Windows } from '../windows'
 import { attach } from './binding'
 import { inline } from './classify'
 import { HERE } from './docs'
@@ -282,6 +285,51 @@ describe('a full store (road 7)', () => {
 })
 
 describe('an open note', () => {
+  test('a foreign edit it took in is not merged in again by the note\u2019s next write', async () => {
+    const one = await device()
+    const path = `${ROOT}/Plan.md`
+    const before = one.disk.files.get(path) ?? ''
+    const note = new NoteDoc(
+      { kind: 'note', path, name: 'Plan.md', text: before, dirty: false },
+      () => undefined,
+    )
+    const part = await attach(one.engine, PLAN, note, () => true)
+
+    const appended = `${before}\nAPPENDED BY GIT\n`
+    one.disk.files.set(path, appended)
+    await one.engine.foreign(path)
+    expect(note.latest).toBe(appended)
+
+    const end = note.live.text.length
+    note.live.edit([{ from: end, to: end, insert: 'typed on\n' }], { userEvent: 'input' })
+    note.flush()
+
+    const across = new Across(
+      {
+        documents: [note],
+        tell: () => Promise.resolve(),
+        follow: () => undefined,
+        loadTree: () => Promise.resolve(),
+        loadSpaces: () => Promise.resolve(),
+        owed: () => undefined,
+        draftOf: () => undefined,
+        joined: () => null,
+        noteSaved: () => undefined,
+        read: (at) => Promise.resolve(one.disk.files.get(at) ?? null),
+        exists: (at) => Promise.resolve(one.disk.files.has(at)),
+        keepVersion: () => Promise.resolve(),
+        pause: () => Promise.resolve(),
+      },
+      new Windows(() => null),
+    )
+    await across.writing(note, path, (words) => {
+      one.disk.files.set(path, words)
+      return Promise.resolve()
+    })
+    expect(one.disk.files.get(path)?.split('APPENDED BY GIT').length).toBe(2)
+    part?.()
+  })
+
   test('opens with its file’s words, and the document joins without changing them', async () => {
     const one = await device()
     const note = new SharedDoc(one.disk.files.get(`${ROOT}/Plan.md`) ?? '')
