@@ -193,7 +193,12 @@ const { Tab } = await import('./workspace/documents.svelte')
 const { isDraft } = await import('./workspace/drafts')
 const { apartOf, readShortcut, readWebloc, writeShortcut } = await import('./web-tab/shortcut')
 const { STARTS_RIGHT } = await import('./workspace/panels')
-const { shown: pad, toggleScratchpad, closeScratchpad } = await import('./scratchpad/is.svelte')
+const {
+  shown: pad,
+  toggleScratchpad,
+  closeScratchpad,
+  scratchFromDrawer,
+} = await import('./scratchpad/is.svelte')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -704,6 +709,19 @@ describe('the right side and the scratchpad take turns', () => {
     toggleScratchpad()
     expect(workspace.rightShows).toBe('scratchpad')
     closeScratchpad()
+    expect(pad.on).toBe(false)
+    expect(workspace.rightShows).toBeNull()
+  })
+
+  /** #1030: a phone's drawer opens it over the note through the same door, and puts
+   *  itself away; pressed again, the card goes and nothing comes back from under it. */
+  test('the drawer opens it out of the way of itself, and shuts it the same way', () => {
+    workspace.panel = 'tree'
+    workspace.rightPanel = 'outline'
+    scratchFromDrawer()
+    expect(pad.on).toBe(true)
+    expect(workspace.panel).toBeNull()
+    scratchFromDrawer()
     expect(pad.on).toBe(false)
     expect(workspace.rightShows).toBeNull()
   })

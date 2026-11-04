@@ -39,5 +39,19 @@ describe('the foot of the sidebar', () => {
       expect(html).not.toMatch(/aria-label="(Light|Dark)"/)
       expect(html).toContain('aria-label="Settings"')
     })
+
+    /** #1030: the scratchpad is the drawer's, beside the settings, where it was a switch
+     *  on every note's bar. */
+    test(`on a ${device} offers the scratchpad beside the settings`, () => {
+      const html = drawn(device)
+      expect(html).toContain('aria-label="Scratchpad"')
+      expect(html.indexOf('aria-label="Scratchpad"')).toBeLessThan(
+        html.indexOf('aria-label="Settings"'),
+      )
+    })
   }
+
+  test('and on a desktop leaves the scratchpad to the right side (#1032)', () => {
+    expect(drawn('desktop')).not.toContain('aria-label="Scratchpad"')
+  })
 })

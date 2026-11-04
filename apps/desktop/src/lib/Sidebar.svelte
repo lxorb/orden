@@ -144,7 +144,7 @@
   /** Whether this side is open. Shut, the panel stays where it is, built and laid
    *  out, and only its column closes over it; see `.column`. */
   /** Whether the scratchpad is one of this side's tabs: the right side's, on a desktop.
-   *  A phone's card is the one note there is, with a switch of its own (#1030). */
+   *  A phone's card is the one note there is, opened from the drawer's foot (#1030). */
   const padHere = $derived(side === 'right' && !viewport.touch && !__EVEN_PLUGIN__)
 
   const open = $derived(

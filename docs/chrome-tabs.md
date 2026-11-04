@@ -194,7 +194,8 @@ used to have a switch of its own beside the side's, and the two fought: each tur
 right edge into the other, and pressing one again brought the other back. Now the side's
 button shuts the side whole, whatever it shows, and opens it again on what it showed
 last, the scratchpad or a panel (`toggleSidebar` and `showRight` in the workspace). A
-phone keeps the scratchpad's switch in its bar for now (#1030):
+phone and a tablet open it from the drawer's foot, beside the settings (#1030): it is the
+app's like they are, and a note's bar is the note's:
 
 - **The right side's card.** The note's own live-preview editor in the right side's body,
   at the side's width - docked rather than floating, because a web tab's page is a

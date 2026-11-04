@@ -93,30 +93,6 @@
   {/if}
 {/snippet}
 
-<!-- The scratchpad's switch. It leaves the keyboard where it is, and has no menu: the
-     scratchpad is in no space, so nothing a tab's or a file's menu offers is its; see
-     scratchpad/pad.ts. -->
-{#snippet padGlyph()}
-  {#if !__EVEN_PLUGIN__}
-    <button
-      class="nib-glyph pad"
-      class:is-on={pad.on}
-      aria-pressed={pad.on}
-      title={shortcuts.tooltip(t('Scratchpad'), 'app.scratchpad')}
-      aria-label={t('Scratchpad')}
-      onpointerdown={keepFocus}
-      onmousedown={keepFocus}
-      onclick={() => pad.toggle()}
-    >
-      <svg viewBox="0 0 14 14"
-        ><rect x="2.5" y="2.5" width="9" height="10" rx="1.6" /><path
-          d="M5 1.2v2.6M9 1.2v2.6M4.9 7h4.2M4.9 9.6h2.8"
-        /></svg
-      >
-    </button>
-  {/if}
-{/snippet}
-
 <!-- The palette, for a hand that does not know its keys; the tooltip says them (#304).
      It keeps the keyboard where it was, for the palette to hand back. -->
 {#snippet searchGlyph()}
@@ -193,7 +169,6 @@
 
     {@render edgeMark()}
     {@render searchGlyph()}
-    {@render padGlyph()}
   {:else}
     <!-- One pane keeps its tabs up here; split, each pane has its own (Pane.svelte). -->
     {#if only}
@@ -212,7 +187,7 @@
 
   <!-- The right side's one button, whatever it shows: the scratchpad is one of its tabs
        on a desktop, so this opens it on what it showed last and shuts it whole (#1032).
-       A phone keeps the scratchpad's own switch above, for now (#1030). -->
+       A phone's scratchpad is in the drawer's foot (#1030). -->
   {#if workspace.right.length || (!viewport.touch && !__EVEN_PLUGIN__)}
     <SidebarToggle side="right" />
   {/if}
@@ -279,7 +254,6 @@
     padding-left: var(--traffic-lights);
   }
 
-  .pad,
   .overview,
   .search {
     align-self: center;

@@ -15,7 +15,13 @@
    *  tablet leaves out the download and the theme switch: it is already where the
    *  app is had, and its light and dark are in Settings, so the row keeps to the
    *  account and the settings. Send feedback is the palette's, there as it opens
-   *  (#1049; palette/browse.ts). */
+   *  (#1049; palette/browse.ts).
+   *
+   *  And on a phone and a tablet, the scratchpad (#1030): beside the settings, because
+   *  it is the app's like they are - the one note in no space - and a drawer's foot is
+   *  where a reader looks for what belongs to no note. A glyph like its neighbours, quiet
+   *  until wanted; it was a switch in a note's bar, where it sat on every note as if it
+   *  were the note's. On a desktop it is the right side's tab (#1032). */
   import { fade } from 'svelte/transition'
   import { account } from './account.svelte'
   import { BASE } from './api'
@@ -31,6 +37,8 @@
   import { theme } from './theme.svelte'
   import { viewport } from './viewport.svelte'
   import { shortcuts } from './shortcuts.svelte'
+  import { SCRATCHPAD_MARK } from './panel-marks'
+  import { scratchFromDrawer, shown as pad } from './scratchpad/is.svelte'
 
   /** What to call whoever is here. Null while the stores are still being asked,
    *  which is a third state and not the same as being signed out. */
@@ -148,6 +156,19 @@
             ><path d="M12 8.6A5.6 5.6 0 1 1 5.4 2a4.4 4.4 0 0 0 6.6 6.6z" /></svg
           >
         {/if}
+      </button>
+    {/if}
+
+    {#if viewport.touch && !__EVEN_PLUGIN__}
+      <button
+        class="nib-glyph act"
+        class:is-on={pad.on}
+        aria-pressed={pad.on}
+        title={shortcuts.tooltip(t('Scratchpad'), 'app.scratchpad')}
+        aria-label={t('Scratchpad')}
+        onclick={scratchFromDrawer}
+      >
+        <svg viewBox="0 0 13 13"><path d={SCRATCHPAD_MARK} /></svg>
       </button>
     {/if}
 

@@ -108,6 +108,15 @@ test('the bar has one button for the right side and no switch of the scratchpad�
   expect(target.querySelectorAll('header button[aria-label$="right sidebar"]')).toHaveLength(1)
 })
 
+/** #1030: a phone's note bar has no scratchpad on it either: it is in the drawer's foot. */
+test('a phone’s bar has no switch of the scratchpad’s', async () => {
+  const { viewport } = await import('../../src/lib/viewport.svelte')
+  viewport.device = 'phone'
+  undo.push(() => (viewport.device = 'desktop'))
+  bar()
+  expect(target.querySelector('header [aria-label="Scratchpad"]')).toBeNull()
+})
+
 test('pressed with the card up it shuts the side whole, and again it brings the card back', () => {
   bar()
   const tabs = workspace.tabs.length

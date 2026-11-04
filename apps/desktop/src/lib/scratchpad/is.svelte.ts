@@ -82,3 +82,17 @@ export function toggleScratchpad(): void {
 export function closeScratchpad(): void {
   if (shown.on) workspace.closeRight()
 }
+
+/** The scratchpad from a phone's drawer (#1030): up, over the note, with the drawer out
+ *  of the way; pressed while it is up, put away. The doors the right side's button uses
+ *  (`showRight` and `closeRight` in the workspace), so every device opens and shuts it
+ *  one way. */
+export function scratchFromDrawer(): void {
+  if (__EVEN_PLUGIN__) return
+  if (shown.on) {
+    workspace.closeRight()
+    return
+  }
+  workspace.closePanel()
+  workspace.showRight('scratchpad')
+}
