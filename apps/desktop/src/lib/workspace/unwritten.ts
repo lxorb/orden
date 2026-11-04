@@ -24,6 +24,8 @@ export interface Asks {
   keepVersion(path: string, text: string): Promise<unknown>
   /** The space a file there would be in, for its words as a draft. */
   spaceOf(path: string): string | null
+  /** Whether the folder of the path's space answers; see `reachable` in across.ts. */
+  reachable(path: string): Promise<boolean>
 }
 
 /** What the document is made from. */
@@ -57,7 +59,8 @@ export async function cameBack(draft: Draft & { path: string }, asks: Asks): Pro
   if (read === null) {
     // Not read is not gone: the words wait on it, and a write says what is wrong.
     if (await asks.exists(draft.path)) return onFile(true, base)
-    return base === null ? onFile(true, null) : asDraft()
+    if (base === null || !(await asks.reachable(draft.path))) return onFile(true, base)
+    return asDraft()
   }
 
   const disk = unixLines(read)
@@ -67,7 +70,12 @@ export async function cameBack(draft: Draft & { path: string }, asks: Asks): Pro
     await asks.keepVersion(draft.path, read).catch(() => undefined)
     return onFile(true, null)
   }
-  if (disk === base) return onFile(true, base)
+  if (disk === base) {
+    // Words that never landed, or that landed unheard and were taken out again, which reads
+    // the same from here: what goes under them stays in the note's versions.
+    await asks.keepVersion(draft.path, read).catch(() => undefined)
+    return onFile(true, base)
+  }
   // The plugin carries no merge: it has one window and nothing writing beside it.
   if (draft.kind !== 'note' || __EVEN_PLUGIN__) return asDraft()
 
@@ -75,7 +83,8 @@ export async function cameBack(draft: Draft & { path: string }, asks: Asks): Pro
   return onFile(merged !== disk, disk, merged)
 }
 
-/** How much of the words around a change is looked for with it. */
+/** How much of the words around a change is looked for with it, unless all of them are. A
+ *  few characters are there by chance: `# To` is in `## To do`. */
 const AROUND = 40
 
 /** Words typed on `base`, brought onto a file that has gone on since. A file that went on
@@ -87,7 +96,11 @@ export async function mergedOver(base: string, words: string, disk: string): Pro
   if (typed?.insert) {
     const left = base.slice(Math.max(0, typed.from - AROUND), typed.from)
     const right = base.slice(typed.to, typed.to + AROUND)
-    if (disk.includes(left + typed.insert) && (left !== '' || disk.includes(typed.insert + right)))
+    if (
+      disk.includes(left + typed.insert + right) ||
+      (left.length === AROUND && disk.includes(left + typed.insert)) ||
+      (right.length === AROUND && disk.includes(typed.insert + right))
+    )
       return disk
   }
   if (__EVEN_PLUGIN__) return words

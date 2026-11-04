@@ -129,6 +129,11 @@ export class Across {
     })
   }
 
+  /** A note's words that did not go down, owed again. */
+  owe(note: NoteDoc) {
+    this.desk.owed(note)
+  }
+
   /** Waits for what has been heard so far. */
   heardSoFar(): Promise<unknown> {
     return this.hearing
@@ -237,10 +242,7 @@ export class Across {
       note.took(fold(mine, words), words)
     } catch (error) {
       log('error', `across: ${note.path ?? note.name} took the whole words - ${String(error)}`)
-      const { dirty, onDisk } = note
-      note.replace(words, false)
-      note.dirty = dirty
-      note.onDisk = onDisk
+      note.tookWhole(words)
     }
   }
 

@@ -93,6 +93,7 @@ test('a restored tab waits for the meeting, and goes down once met', async () =>
 
 test('closing it lets it go', async () => {
   disk.current?.files.set(PATH, 'base\n')
+  await workspace.loadTree()
   workspace.expectOthers()
   await workspace.applyLayout(single(tab({})) as never, false)
   const id = workspace.tabs[0]?.id
@@ -112,4 +113,23 @@ test('words typed in a note this launch opened do not wait for anybody', async (
   note.replace('base\nnew\n')
   await workspace.writesSettled()
   expect(disk.current?.files.get(PATH)).toBe('base\nnew\n')
+})
+
+test('a tab closed within the pause: once the write has landed the entry holds no words', async () => {
+  disk.current?.files.set(PATH, 'base\n')
+  await workspace.loadTree()
+  await workspace.open(PATH)
+  const tab = workspace.tabs[0]
+  if (!tab) throw new Error('no tab')
+  tab.note.replace('base\nCHANGED-MY-MIND\n')
+  const { id } = tab
+  workspace.close(id)
+  await workspace.writesSettled()
+  expect(disk.current?.files.get(PATH)).toBe('base\nCHANGED-MY-MIND\n')
+  const session = JSON.parse(
+    (workspace.persist(), localStorage.getItem('nib:workspace')) ?? 'null',
+  ) as { closed?: { draft: { dirty: boolean; doc: string } }[] } | null
+  if (session?.closed?.length) {
+    expect(session.closed.at(-1)?.draft).toMatchObject({ dirty: false, doc: '' })
+  }
 })

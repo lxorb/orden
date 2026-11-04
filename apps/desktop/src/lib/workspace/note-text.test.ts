@@ -20,6 +20,8 @@ const disk = new Map<string, string>()
 let holding: { command: string; until: Promise<void> } | null = null
 
 vi.mock('../tauri', () => ({
+  isNative: false,
+  platform: () => 'linux',
   invoke: async (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     const content = typeof args?.content === 'string' ? args.content : ''

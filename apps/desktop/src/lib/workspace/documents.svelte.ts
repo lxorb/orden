@@ -359,6 +359,14 @@ export class NoteDoc {
     if (!this.behind) this.words = to
   }
 
+  /** The same where the one span would not go in: the words whole, and the carets with them.
+   *  Nothing about the file changes by it. */
+  tookWhole(to: string) {
+    this.quietly(() => this.live.replace(to, false))
+    this.words = to
+    this.behind = false
+  }
+
   /** The one tab that previews a note, moving on to another one.
    *
    *  The document takes the new note on rather than being swapped for another,

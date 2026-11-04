@@ -8,9 +8,9 @@
  *  Bounded, and the oldest goes first: a sitting that closes a hundred notes
  *  should not carry the text of all hundred around with it. */
 
-import { movedTo, nameOf } from '../space-paths'
+import { movedTo, nameOf, samePath } from '../space-paths'
 import type { FileOp } from './file-ops'
-import type { ClosedTab } from './session'
+import type { ClosedTab, Draft } from './session'
 
 /** Far more than anybody reaches back through, and few enough that what is kept
  *  with each entry cannot fill the session on its own. */
@@ -52,6 +52,26 @@ export class ClosedTabs {
       return path === null
         ? closed
         : { ...closed, draft: { ...closed.draft, path, name: nameOf(path) } }
+    })
+    if (stack.some((one, at) => one !== this.stack[at])) this.stack = stack
+  }
+
+  /** A note's file says all its document does: an entry made from that document holds
+   *  what is on the disk or older, and coming back with those is a write of them over
+   *  whatever the file says by then, an agent's edit or a sync pull. From here on it comes
+   *  back from its file, as a tab with nothing unwritten does. Only that document's: the
+   *  words of another at the path may have been refused, and these say nothing of them. */
+  wroteAll(path: string, key: string) {
+    const stack = this.stack.map((closed) => {
+      if (
+        !closed.draft.dirty ||
+        closed.draft.share !== key ||
+        !samePath(closed.draft.path, path)
+      )
+        return closed
+      const draft: Draft = { ...closed.draft, dirty: false, doc: '' }
+      delete draft.base
+      return { ...closed, draft }
     })
     if (stack.some((one, at) => one !== this.stack[at])) this.stack = stack
   }

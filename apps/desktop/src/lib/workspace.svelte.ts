@@ -94,7 +94,7 @@ import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace
 import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
 import { type Binning, type FileAction, FileActions, type Kept } from './workspace/undo.svelte'
-import { inFileTurn } from './workspace/in-turn'
+import { inFileTurn, meetAcross } from './workspace/in-turn'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -223,6 +223,9 @@ const WORDS_KEPT = 1_000_000
 
 /** How long a launch's writes wait to have met the other windows, should that not come. */
 const MEETING_AT_MOST = 3_000
+
+/** How long a window that has just said hello gives the others to say they are here. */
+const HEARD_BACK = 100
 /** How far back one tab remembers. Longer than anybody follows a link in one
  *  sitting, short enough that a trail is never what a session is made of. */
 const TRAIL = 30
@@ -969,23 +972,44 @@ class Workspace {
     markPainted('active tab painted')
   }
 
-  /** Writes wait for `meeting`, the launch's meeting with the other windows, or a moment. */
-  expectOthers(meeting: Promise<unknown>) {
-    const met: Promise<unknown> = Promise.race([meeting, waited(MEETING_AT_MOST)])
-      .catch(() => undefined)
-      .then(() => {
-        if (this.saving.meeting === met) this.saving.meeting = null
-      })
-    this.saving.meeting = met
+  /** This launch will meet the other windows: tabs it brings back with unwritten words wait
+   *  for that, or a moment, before they go down. A write before it would go blind over
+   *  whatever another window wrote since the restore read the file, and say nothing to
+   *  anybody. Only those tabs: anything else written waits for nobody, and a window going
+   *  takes them along in its session. */
+  expectOthers() {
+    this.unmet = new Set()
   }
 
-  get across(): Across | null {
-    return this.saving.across
+  /** Those tabs' documents until the meeting; null with no meeting to wait for. */
+  private unmet: Set<NoteDoc> | null = null
+
+  private owedOnceMet(note: NoteDoc) {
+    if (!this.unmet) {
+      this.saving.owed(note)
+      return
+    }
+    if (!this.unmet.size) void waited(MEETING_AT_MOST).then(() => this.met())
+    this.unmet.add(note)
+  }
+
+  private met() {
+    const notes = this.unmet ?? []
+    this.unmet = null
+    for (const note of notes) this.saving.owed(note)
+  }
+
+  /** A note's file says all its document does; see `wroteAll` in workspace/closed.svelte.ts. */
+  wroteAll(path: string, key: string) {
+    this.closed.wroteAll(path, key)
   }
 
   /** Writes from here on keep in step with the other windows; see workspace/across.ts. */
   meetOthers(across: Across) {
     this.saving.across = across
+    meetAcross(across)
+    // Anybody here answers this window's first word within a moment.
+    void waited(HEARD_BACK).then(() => this.met())
   }
 
   /** A note's words are owed to its file: another window's merged in, say. */
@@ -1140,7 +1164,7 @@ class Workspace {
       // Words that came back without their file having them - a window that was
       // killed before the pause, a tab closed a moment after its last keystroke -
       // go down now. A draft's stay in the session until it is given a place.
-      for (const tab of made) if (tab?.note.dirty) this.saving.owed(tab.note)
+      for (const tab of made) if (tab?.note.dirty) this.owedOnceMet(tab.note)
 
       return made
     })
@@ -1157,6 +1181,9 @@ class Workspace {
   private already(draft: Draft): NoteDoc | null {
     const shared = draft.share ? this.opened.withKey(draft.share) : null
     if (shared && samePath(shared.path, draft.path)) return shared
+    // The other pane of a note whose file has gone: its draft, made a moment ago.
+    const draftOfIt = draft.share ? this.opened.draftOf(draft.share) : null
+    if (draftOfIt) return draftOfIt
 
     return draft.path ? this.opened.at(draft.path) : null
   }
@@ -1174,6 +1201,10 @@ class Workspace {
         exists: onDisk,
         keepVersion: (one, content) => invoke('snapshot_note', { path: one, content }),
         spaceOf: (one) => this.spaces.find((space) => within(space.root, one) !== null)?.id ?? null,
+        reachable: (one) => {
+          const root = this.rootHolding(one)
+          return root === null ? Promise.resolve(true) : onDisk(root)
+        },
       },
     )
     const note = this.opened.make({
@@ -1185,6 +1216,7 @@ class Workspace {
       home: back.home,
     })
     note.onDisk = back.onDisk
+    if (back.path === null && draft.share !== undefined) this.opened.wentDraft(draft.share, note)
     return note
   }
 
@@ -3530,6 +3562,8 @@ class Workspace {
 
     this.tabs = this.tabs.filter((one) => one.id !== id)
     if (this.previewTabId === id) this.previewTabId = null
+    if (this.unmet?.delete(tab.note) && !this.tabs.some((one) => one.note === tab.note))
+      this.saving.owed(tab.note)
     this.saving.closed(tab.note)
 
     // A set out of sight is put right as it comes back; see sets.svelte.ts.

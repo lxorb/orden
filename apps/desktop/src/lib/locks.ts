@@ -5,22 +5,32 @@
 /** How long a lock nobody else can hold may take to come, before it counts as broken. */
 const ANSWERS_WITHIN = 2_000
 
+/** A moment past that, for an answer on its way: a task that kept the main thread two
+ *  seconds leaves the timer and the answer both waiting, in either order. */
+const OR_ALMOST = 100
+
 /** The browser's locks, where it has them. */
 export const locksHere = () => (globalThis.navigator as Navigator | undefined)?.locks
 
 const probed = new WeakMap<LockManager, Promise<boolean>>()
 
 /** Whether these locks answer: a lock of a name nobody has ever asked for comes at once
- *  from locks that work. */
+ *  from locks that work. An answer later than the wait still counts from then on: locks
+ *  that do answer are not broken for the rest of the page's life by one busy moment. */
 export function locksWork(locks: LockManager | undefined = locksHere()): Promise<boolean> {
   if (!locks) return Promise.resolve(false)
   let answer = probed.get(locks)
   if (!answer) {
     answer = new Promise<boolean>((resolve) => {
-      const timer = setTimeout(() => resolve(false), ANSWERS_WITHIN)
+      let waited = false
+      const timer = setTimeout(() => {
+        waited = true
+        setTimeout(() => resolve(false), OR_ALMOST)
+      }, ANSWERS_WITHIN)
       const said = (works: boolean) => {
         clearTimeout(timer)
         resolve(works)
+        if (waited && works) probed.set(locks, Promise.resolve(true))
       }
       try {
         locks
@@ -54,7 +64,9 @@ export function ifFree(
       clearTimeout(timer)
       resolve(held)
     }
-    const timer = setTimeout(() => answer('broken'), ANSWERS_WITHIN)
+    let timer = setTimeout(() => {
+      timer = setTimeout(() => answer('broken'), OR_ALMOST)
+    }, ANSWERS_WITHIN)
     try {
       locks
         .request(name, { ifAvailable: true }, (lock) => {
@@ -88,7 +100,13 @@ export function heldForLife(name: string, run: () => Promise<unknown>, signal?: 
     void go()
     return
   }
-  void locksWork(locks).then((works) => {
+  void (async () => {
+    let works = await locksWork(locks)
+    // Asked again: this takes a window's lead for good, beside whoever really holds it.
+    if (!works) {
+      await new Promise((later) => setTimeout(later, ANSWERS_WITHIN))
+      works = await locksWork(locks)
+    }
     if (!works) {
       if (!signal?.aborted) void go()
       return
@@ -100,7 +118,7 @@ export function heldForLife(name: string, run: () => Promise<unknown>, signal?: 
     } catch {
       if (!signal?.aborted) void go()
     }
-  })
+  })()
 }
 
 /** Holds a lock if nobody does, until the answer is called; null where somebody does. Locks

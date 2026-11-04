@@ -10,7 +10,8 @@
  *  Who is here is what `hello`, `here` and `bye` say. A window that crashed never says
  *  `bye`, and all that costs is a write that looks at the disk first. */
 
-import { locksHere } from './locks'
+import { locksHere, locksWork } from './locks'
+import { pathKey } from './space-paths'
 
 /** One thing said. `kind` says what; the rest is that kind's. */
 export interface Said {
@@ -110,9 +111,10 @@ const FILE_TURN_AT_MOST = 3_000
  *  makes the history of a file one line, so a write always knows what it replaces.
  *  `run` runs once whatever the locks do: with them where they work, and where they are
  *  missing, refuse or do not answer, without them, as it has always been. */
-export function oneWriteAt<T>(path: string, run: () => Promise<T>): Promise<T> {
+export async function oneWriteAt<T>(path: string, run: () => Promise<T>): Promise<T> {
   const locks = locksHere()
-  if (!locks) return run()
+  // Locks known not to answer are not waited for again, file after file.
+  if (!locks || !(await locksWork(locks))) return run()
   return new Promise<T>((resolve, reject) => {
     let started = false
     const go = () => {
@@ -130,7 +132,7 @@ export function oneWriteAt<T>(path: string, run: () => Promise<T>): Promise<T> {
     }
     const timer = setTimeout(() => void go(), FILE_TURN_AT_MOST)
     try {
-      locks.request(`nib:file:${path}`, go).catch(go)
+      locks.request(`nib:file:${pathKey(path)}`, go).catch(go)
     } catch {
       void go()
     }

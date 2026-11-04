@@ -15,7 +15,7 @@ import { oneEdit } from '@orden/markdown/edits'
 import { freePath } from '@orden/markdown/paths'
 import { sha256 } from '../bytes'
 import { applied, appliedToFile, type Edit, endingsLike } from '../search/replace'
-import type { Retargeting } from '../link-index.svelte'
+import { links, type Retargeting } from '../link-index.svelte'
 import type { Holding } from '../sync/holding'
 import { onDisk } from '../on-disk'
 import { folderOf, isMarkdownPath, samePath } from '../space-paths'
@@ -26,6 +26,7 @@ import type { NoteDoc } from './documents.svelte'
 import type { Kind } from './file-ops'
 import type { Binning, FileAction, FileActions, Kept } from './undo.svelte'
 import type { Bookmark } from './bookmarks.svelte'
+import { inFileTurn, writeEdited, writeInTurn } from './in-turn'
 import { writeFile } from './write-file'
 
 /** What putting a file operation back needs of the store holding it. */
@@ -380,12 +381,10 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
   // note is unchanged, and taking it for one wrote the old words over that file or
   // brought a deleted note back. So it leaves the whole replacement where it is, on
   // the stack, rather than half of it put back.
-  const read = new Map<string, string>()
   for (const note of action.notes) {
     if (ws.documentAt(note.path)) continue
     const now = await invoke<string>('read_note', { path: note.path }).catch(() => null)
     if (now === null) throw new Error(`${note.path} will not read, so nothing is written over it`)
-    read.set(note.path, now)
   }
 
   for (const note of action.notes) {
@@ -394,14 +393,24 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
       open.flush()
       const edits = open.live.carried(note.edits, note.after, true) ?? note.edits
       const back = applied(open.text, edits)
+      const knew = open.onDisk
       open.edited(edits, back)
-      await writeFile(note.path, back)
+      const written = await writeEdited(open, note.path, back, knew)
+      if (written !== null) links.noteSaved(note.path, written)
       continue
     }
 
-    const file = read.get(note.path) ?? note.after
-    const now = endingsLike(file, note.after)
-    await writeFile(note.path, now === note.after ? note.content : carriedPast(note, file, now))
+    // Read again in the file's turn, for what the look above only said could be written:
+    // another window's write that came between would go under words worked out without it.
+    const down = await inFileTurn(note.path, async () => {
+      const file = await invoke<string>('read_note', { path: note.path }).catch(() => null)
+      if (file === null) throw new Error(`${note.path} will not read, so nothing is written over it`)
+      const now = endingsLike(file, note.after)
+      const words = now === note.after ? note.content : carriedPast(note, file, now)
+      await writeInTurn(note.path, words)
+      return words
+    })
+    links.noteSaved(note.path, down)
   }
 }
 

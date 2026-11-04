@@ -27,6 +27,7 @@ const trees = new Map<string, unknown>()
 
 vi.mock('../tauri', () => ({
   isNative: true,
+  platform: () => 'linux',
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     const content = typeof args?.content === 'string' ? args.content : ''

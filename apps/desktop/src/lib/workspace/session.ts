@@ -479,6 +479,21 @@ function bareFrame(frame: FrameDraft): FrameDraft {
   return { kind: 'pane', pane: { ...frame.pane, tabs } }
 }
 
+function withoutBases(layout: Layout): Layout | null {
+  if (!panesOf(layout.frame).some((pane) => pane.tabs.some((tab) => tab.base !== undefined)))
+    return null
+  const bare = (frame: FrameDraft): FrameDraft => {
+    if (frame.kind === 'split') return { ...frame, sides: [bare(frame.sides[0]), bare(frame.sides[1])] }
+    const tabs = frame.pane.tabs.map((draft) => {
+      const out = { ...draft }
+      delete out.base
+      return out
+    })
+    return { ...frame, pane: { ...frame.pane, tabs } }
+  }
+  return { ...layout, frame: bare(layout.frame) }
+}
+
 /** Writes the session down, giving things up until it fits.
  *
  *  Storage is finite. Unsaved work is what has to survive a full one, so the
@@ -498,6 +513,11 @@ export function writeSession(key: string, state: Session): boolean {
   // disk or were deliberately given up on.
   const shorter: Session = { ...state, closed: [] }
   if (put(key, shorter)) return true
+
+  // What the words were typed on, next: without it they come back all the same, with the
+  // file kept as a version rather than merged.
+  const unmerged = state.layout ? withoutBases(state.layout) : null
+  if (unmerged && put(key, { ...shorter, layout: unmerged })) return true
 
   const lean = state.layout ? withoutText(state.layout) : undefined
   return put(key, { ...shorter, ...(lean ? { layout: lean } : {}) })

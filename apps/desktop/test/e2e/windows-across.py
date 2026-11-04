@@ -216,6 +216,61 @@ def heard_writes(browser: Browser) -> None:
     ctx.close()
 
 
+def rewrite_in_turn(browser: Browser) -> None:
+    """A rename's link rewrite queued behind another window's write takes that write in
+    (R1): a third page holds the file's turn for the length of a slow write."""
+    ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
+    a = ctx.new_page()
+    DRIVE.open(a)
+    DRIVE.seed(a, "# Hub\n\nsee [[Target]] here\n", "# Target\n\nx\n")
+    b = another(ctx, a.url)
+    wait_for(b, f"()=>{WS}.files.some(f=>f.name.startsWith('Hub'))", "the list")
+    DRIVE.open_note(b, "Hub")
+    root = a.evaluate(f"()=>{WS}.activeSpace.root")
+    hub = f"{root}/Hub.md"
+    c = another(ctx, a.url)
+    c.evaluate(
+        "(p)=>{navigator.locks.request('nib:file:'+p,()=>new Promise(go=>{window.letGo=go}));"
+        "return new Promise(r=>setTimeout(r,50))}",
+        hub,
+    )
+    type_in(b, "WORDS-IN-B ")
+    a.bring_to_front()
+    a.evaluate(f"([f,t])=>{{window.renaming={WS}.rename(f,t)}}", [f"{root}/Target.md", "Renamed.md"])
+    a.wait_for_timeout(800)
+    c.evaluate("()=>window.letGo()")
+    wait_for(b, f"()=>{WS}.active.note.latest.includes('[[Renamed]]')", "B sees the link")
+    wait_for(b, f"()=>!{WS}.active.note.dirty", "B clean")
+    disk = c.evaluate(READ, hub)
+    for token in ("[[Renamed]]", "WORDS-IN-B"):
+        if token not in disk:
+            wrong(f"{token} is not on the disk: {disk!r}")
+    ctx.close()
+
+
+def busy_launch(browser: Browser) -> None:
+    """A task of more than two seconds in a launch does not put a second window on the
+    first one's session (R2)."""
+    ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
+    a = ctx.new_page()
+    DRIVE.open(a)
+    b = ctx.new_page()
+    b.add_init_script(
+        "const ask = LockManager.prototype.request; let once = false;"
+        "LockManager.prototype.request = function (name, ...rest) {"
+        "  const answer = ask.call(this, name, ...rest);"
+        "  if (!once && String(name).startsWith('nib:probe:')) { once = true;"
+        "    const until = Date.now() + 2300; while (Date.now() < until); }"
+        "  return answer }"
+    )
+    b.goto(a.url)
+    DRIVE.ready(b)
+    keys = [p.evaluate(f"()=>{WS}.sessionKey") for p in (a, b)]
+    if keys[0] == keys[1]:
+        wrong(f"two windows on one session: {keys!r}")
+    ctx.close()
+
+
 def drive(browser: Browser) -> None:
     line_endings(browser)
     say("line endings: held")
@@ -229,6 +284,10 @@ def drive(browser: Browser) -> None:
     say("old words over a file gone: held")
     heard_writes(browser)
     say("whole-file writes heard: held")
+    rewrite_in_turn(browser)
+    say("a rewrite in the file's turn: held")
+    busy_launch(browser)
+    say("a busy launch: held")
 
 
 if __name__ == "__main__":

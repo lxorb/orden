@@ -50,6 +50,9 @@ export interface Writes {
   keep(id: string): void
   scheduleSession(): void
   persist(): void
+  /** A note's file now says all its document does: whatever a closed tab kept of it is
+   *  on the disk, and the file is what to come back from. */
+  wroteAll(path: string, key: string): void
   loadTree(): Promise<void>
   /** The name a folder will take: the wanted one, or the next number after it where
    *  the folder already holds that name - `except` left out of what it holds. The
@@ -73,11 +76,6 @@ export const IN_THE_AIR_AT_MOST = 10_000
 export class Saving {
   /** What keeps writes in step with the other windows, once it is fetched. */
   across: Across | null = null
-
-  /** The launch's meeting with the other windows until it is over: a write before it would
-   *  go down blind, over whatever another window wrote since a restore read the file, and
-   *  say nothing to anybody. See `expectOthers` in workspace.svelte.ts. */
-  meeting: Promise<unknown> | null = null
 
   /** The write that waits for a pause in the changes; see timing.ts. */
   private readonly soon = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY, SAVE_AT_MOST)
@@ -640,8 +638,6 @@ export class Saving {
       await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
     }
 
-    if (this.meeting) await this.meeting
-
     // Sync is moving the file: the words go down where it lands, below.
     for (let move = this.syncMoving.get(note); move; move = this.syncMoving.get(note)) await move
 
@@ -681,6 +677,7 @@ export class Saving {
     if (landed === null) return
     content = landed.words
     note.written(path, nameOf(path), landed.revision)
+    if (!note.dirty) this.ws.wroteAll(path, note.key)
     // Moved under the write by something that did not wait for it: the words are
     // owed again at the path the note is at now; see `written`.
     if (!samePath(note.path, path)) this.owed(note)

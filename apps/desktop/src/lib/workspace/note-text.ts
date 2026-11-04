@@ -33,9 +33,7 @@ import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { FileAction, FileActions } from './undo.svelte'
-import type { Across } from './across'
-import { inFileTurn, writeInTurn } from './in-turn'
-import { writeFile } from './write-file'
+import { inFileTurn, writeEdited, writeInTurn } from './in-turn'
 
 /** What writing across a space needs of the store it belongs to. */
 export interface HoldsNotes {
@@ -49,8 +47,6 @@ export interface HoldsNotes {
   flush(): void
   loadTree(): Promise<void>
   persist(): unknown
-  /** The other windows, once this one has met them; see workspace/across.ts. */
-  readonly across?: Across | null
 }
 
 /** The tags of the open space, for the panel that draws them as a tree.
@@ -243,7 +239,7 @@ export async function replaceInNotes(
   for (const change of writable) {
     const open = ws.documentAt(change.path)
     const wrote = open
-      ? await writeOpen(ws, open, change, keeping)
+      ? await writeOpen(open, change, keeping)
       : await writeClosed(ws, change, keeping)
     if (wrote) done.push(wrote)
   }
@@ -268,12 +264,7 @@ export async function replaceInNotes(
  *  Carried by guessing where the document no longer remembers the words the change
  *  was read from, because a replacement somebody asked for has to be written; the
  *  guess is exact wherever the edits are clear of what changed. */
-async function writeOpen(
-  ws: HoldsNotes,
-  open: NoteDoc,
-  change: Change,
-  keeping: Keeping,
-): Promise<Undone> {
+async function writeOpen(open: NoteDoc, change: Change, keeping: Keeping): Promise<Undone> {
   open.flush()
   const before = open.text
   const onDisk = open.onDisk
@@ -282,30 +273,12 @@ async function writeOpen(
 
   open.edited(edits, after)
 
-  // These words are not on the disk, and another window's may be that this one has not heard.
-  // So, in the same breath: this note says what it knew the file to hold, what anything
-  // heard from here on is merged against, and goes down the way an autosave goes. Not written
-  // (the file went, the note moved) they are owed like any others.
-  const across = ws.across?.alone === false ? ws.across : null
-  if (across) {
-    open.onDisk = onDisk
-    open.dirty = true
-  }
-
   // Keeping the version about to be replaced, the same way saving does: the words
   // the reader had, unsaved ones and all.
-  await keep(change.path, before, keeping)
-  if (across) {
-    const written = await across.writing(open, change.path, (words) =>
-      invoke('write_note', { path: change.path, content: words }),
-    )
-    if (written !== null) {
-      open.dirty = open.revision !== written.revision
-      links.noteSaved(change.path, written.words)
-    }
-  } else {
-    await writeFile(change.path, after)
-  }
+  const written = await writeEdited(open, change.path, after, onDisk, () =>
+    keep(change.path, before, keeping),
+  )
+  if (written !== null) links.noteSaved(change.path, written)
 
   return { path: change.path, content: before, after, edits: reverse(before, edits) }
 }
