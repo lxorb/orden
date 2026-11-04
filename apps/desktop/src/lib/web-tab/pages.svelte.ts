@@ -580,6 +580,12 @@ class Pages {
     return this.held.get(tabId)?.url ?? null
   }
 
+  /** Whether words half typed into the tab's address field wait for it (#381), which a
+   *  new tab left alone keeps it for (#1040). Asked without making the tab's state. */
+  typedInto(tabId: string): boolean {
+    return (this.held.get(tabId)?.halfTyped ?? null) !== null
+  }
+
   /** Puts the page where the pane says, opening it if it is not there, and lets it be
    *  seen unless something of the app's is over it.
    *

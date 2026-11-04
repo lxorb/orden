@@ -185,6 +185,7 @@ const { noteId } = await import('./note-id')
 const { answeredCase } = await import('./space-paths')
 const { viewport } = await import('./viewport.svelte')
 const { pages } = await import('./web-tab/pages.svelte')
+const { agentMarks } = await import('./agent-marks.svelte')
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
 const ops = await import('./tab-strip/ops')
@@ -2526,6 +2527,101 @@ describe('closing, which never asks anything', () => {
  *  tab and nothing else until something is put in it, and then it is a file in the
  *  space with no question asked. A web tab is a browser tab: nothing is written until
  *  somebody keeps it. */
+/** Issue #1040: a new tab nothing was done with goes once it is left, without a trace
+ *  and without moving the reader. When it is asked is workspace/blank-tabs.svelte.ts. */
+describe('a new tab left alone', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
+    workspace.activeSpaceId = 's'
+    workspace.closed.stack = []
+    agentMarks.opened = {}
+  })
+
+  /** A new tab, and another tab in front of the same pane after it. */
+  function leftForAnother() {
+    workspace.newTab()
+    const blank = workspace.active
+    if (!blank) throw new Error('no new tab')
+    const other = workspace.openUnsaved('note', 'words')
+    return { blank, other }
+  }
+
+  const open = (id: string) => workspace.tabs.some((one) => one.id === id)
+
+  test('goes, leaves nothing to reopen, and the tab in front stays', () => {
+    const { blank, other } = leftForAnother()
+    workspace.closeLeftBlank()
+
+    expect(open(blank.id)).toBe(false)
+    expect(workspace.closed.stack).toEqual([])
+    expect(workspace.active).toBe(other)
+  })
+
+  test('stays while it is the one being worked in', () => {
+    workspace.newTab()
+    const blank = workspace.active
+    workspace.closeLeftBlank()
+    expect(blank && open(blank.id)).toBe(true)
+  })
+
+  test('stays with words half typed into its address field', () => {
+    const { blank } = leftForAnother()
+    pages.of(blank.id).halfTyped = { value: 'exam', typed: 'exam', from: 4, to: 4, over: '' }
+    workspace.closeLeftBlank()
+    expect(open(blank.id)).toBe(true)
+  })
+
+  test('stays once it went somewhere', () => {
+    const { blank } = leftForAnother()
+    workspace.webWalked(blank, 'https://www.example.com/')
+    workspace.closeLeftBlank()
+    expect(open(blank.id)).toBe(true)
+  })
+
+  /** #1070: what an agent opened is the agent's, and never pulled from under it. */
+  test('stays where an agent opened it', () => {
+    const { blank } = leftForAnother()
+    agentMarks.opened = { [blank.id]: 'Claude' }
+    workspace.closeLeftBlank()
+    expect(open(blank.id)).toBe(true)
+  })
+
+  test('in front of a pane left for another goes, and the keyboard stays where it went', () => {
+    // Written in, or opening the new tab would drop it as scaffolding.
+    workspace.openUnsaved('note', 'first').note.dirty = true
+    const left = workspace.panes.focusedId
+    workspace.newTab()
+    const blank = workspace.active
+    if (!blank) throw new Error('no new tab')
+    // A split shows the tab in front beside itself, a second new tab behind the note.
+    workspace.split('row')
+    const right = workspace.panes.focusedId
+    workspace.openUnsaved('note', 'beside').note.dirty = true
+    workspace.closeLeftBlank()
+
+    expect(open(blank.id)).toBe(false)
+    expect(workspace.tabs.filter((one) => workspace.isNewTab(one))).toEqual([])
+    expect(workspace.panes.focusedId).toBe(right)
+    expect(workspace.showing(left)?.doc).toBe('first')
+  })
+
+  /** A split the reader made is not taken away with the tab. */
+  test('stays as the only tab of a pane on screen', () => {
+    // Written in, or opening the new tab would drop it as scaffolding.
+    workspace.openUnsaved('note', 'first').note.dirty = true
+    const left = workspace.panes.focusedId
+    workspace.split('row')
+    const copy = workspace.active
+    workspace.newTab()
+    const blank = workspace.active
+    if (copy) workspace.close(copy.id)
+    workspace.focusPane(left)
+    workspace.closeLeftBlank()
+    expect(blank && open(blank.id)).toBe(true)
+  })
+})
+
 describe('a new tab', () => {
   beforeEach(() => {
     onePane()

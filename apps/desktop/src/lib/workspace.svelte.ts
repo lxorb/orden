@@ -116,6 +116,7 @@ import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
 import { apartOf, readWebFile } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
+import { agentMarks } from './agent-marks.svelte'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
 
 /** Whether a path is the AGENTS.md at the top of the space at `root`: one file, however
@@ -1728,6 +1729,32 @@ class Workspace {
    *  purpose, and has only its address field. See WebTab.svelte. */
   isNewTab(tab: Tab): boolean {
     return tab.nowhere && !tab.inPrivate && !pages.addressOf(tab.id)
+  }
+
+  /** Whether a tab is a new tab nothing was done with (#1040): a new tab, with no words
+   *  half typed into its address field and no agent's name on it. The one judgement of
+   *  it; see `closeLeftBlank`. */
+  isBlankTab(tab: Tab): boolean {
+    return this.isNewTab(tab) && !pages.typedInto(tab.id) && !(tab.id in agentMarks.opened)
+  }
+
+  /** Every new tab nothing was done with that is no longer the one being worked in goes
+   *  (#1040): left for another tab, another pane or another space, or by something opened
+   *  elsewhere. Without a trace, as a new tab a kind was chosen on goes (`chosenFor`):
+   *  the closed tabs are for things somebody had. Closing one that is out of sight or
+   *  behind moves nothing on screen, and one still in front of a pane the reader has left
+   *  gives way to the tab that pane used last (#1079), with the keyboard where it is.
+   *
+   *  Not the only tab of a pane on screen, which would take the pane with it: a split the
+   *  reader made stays. Heard after every change of what is being worked in, a turn late,
+   *  so the address field has said what it held; see workspace/blank-tabs.svelte.ts. */
+  closeLeftBlank() {
+    const here = this.activeTabId
+    for (const tab of this.tabs) {
+      if (tab.id === here || !this.isBlankTab(tab)) continue
+      if (this.panes.at(tab.paneId) && this.tabsIn(tab.paneId).length === 1) continue
+      this.close(tab.id, false)
+    }
   }
 
   /** The tab a tab asked for beside another is opened from: the one in front of its
