@@ -30,7 +30,7 @@ import { MINE } from './docs'
 import { holdsDocument, shapeOf, turn } from './kinds'
 import { folderOf, joined, nameOf, SEP, type SpaceState } from './places'
 import { wrote } from './project'
-import { GONE_KEPT, goneRow } from './records'
+import { GONE_KEPT, goneRow, outgoingBytes } from './records'
 import { put, remove, type Change, type EntryRow } from './store'
 
 /** What an entry is, read off its name: sync-core's rule, which the account reads by too. */
@@ -170,6 +170,22 @@ export async function made(
     changes.push(put('entries', { ...entry }))
   }
   return { id, changes }
+}
+
+/** A create still waiting to go, made `mergeable` after all: the file list said a moment
+ *  after the folder's watcher that it made the note, and as the day's note it is. */
+export function mergeableAfter(space: SpaceState, entry: EntryRow, text: string): Change[] {
+  const one = space.outbox.find(
+    (op) =>
+      op.record.t === 'op' &&
+      !op.record.sent &&
+      op.record.op.t === 'create' &&
+      op.record.op.id === entry.id,
+  )
+  if (one?.record.t !== 'op' || one.record.op.t !== 'create') return []
+  one.record = { t: 'op', op: { ...one.record.op, mergeable: { text } } }
+  one.row = { ...one.row, op: outgoingBytes(one.record) }
+  return [put('outbox', one.row)]
 }
 
 /** Every entry at or under a local path. */

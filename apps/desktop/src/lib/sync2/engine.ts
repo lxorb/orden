@@ -27,6 +27,7 @@ import {
   carried,
   intended,
   made,
+  mergeableAfter,
   moved,
   placed as placedRows,
   removed,
@@ -314,7 +315,16 @@ export class Engine implements AskedEngine {
     mergeable?: string,
   ): Promise<string | null> {
     const placed = this.placed(path)
-    if (!placed || placed.space.at(placed.path)) return null
+    if (!placed) return null
+    const there = placed.space.at(placed.path)
+    if (there) {
+      // Heard first from the folder's watcher, before the file list said it made it: the
+      // same entry, which takes what only the file list knows - a day's note made to be
+      // folded into one another device made (#1068).
+      if (mergeable !== undefined)
+        await this.core.commit(mergeableAfter(placed.space, there, mergeable))
+      return null
+    }
     if (!folder && (await this.heldPaper(path))) return null
     const { id, changes } = await made(this.core, placed.space, {
       path: placed.path,

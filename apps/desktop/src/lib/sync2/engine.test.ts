@@ -906,8 +906,8 @@ describe('the folder watcher', () => {
     return { say, moves, stop: () => watched.stop() }
   }
   const removed = (path: string): SpaceChange => ({ kind: 'removed', path, dir: false, id: null })
-  const created = (path: string): SpaceChange => ({
-    kind: 'created',
+  const created = (path: string) => ({
+    kind: 'created' as const,
     path,
     dir: false,
     size: 0,
@@ -994,6 +994,30 @@ describe('the folder watcher', () => {
 
     expect(here.engine.entryAt(`${ROOT}/Goals.md`)?.id).toBe(PLAN)
     expect(moves).toEqual([`file ${ROOT}/Plan.md -> ${ROOT}/Goals.md`])
+  })
+
+  test('hears a day’s note the file list makes, first, as the day’s note still (#1068)', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const there = await device(account, 'd1')
+    await there.disk.write(`${ROOT}/2026-11-04.md`, 'there mk1z')
+    await there.engine.created(`${ROOT}/2026-11-04.md`, false, 'there mk1z', '')
+    await there.engine.pass(SPACE)
+
+    const here = await device(account, 'd0')
+    const { say, stop } = listening(here.engine)
+    // The watcher's word comes before the file list has said it made the note.
+    await here.disk.write(`${ROOT}/2026-11-04.md`, 'here mk2z')
+    await say(created(`${ROOT}/2026-11-04.md`))
+    await here.engine.created(`${ROOT}/2026-11-04.md`, false, 'here mk2z', '')
+    stop()
+    await here.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+
+    const days = (await account.view()).entries.filter((entry) => entry.name.startsWith('2026'))
+    expect(days).toHaveLength(1)
+    const words = await textOn(account, days[0]?.id ?? '')
+    expect(words).toContain('mk1z')
+    expect(words).toContain('mk2z')
   })
 
   test('puts a rename back where the disk would not make it (#1068)', async () => {
