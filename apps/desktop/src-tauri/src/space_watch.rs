@@ -202,9 +202,11 @@ pub fn space_watch(app: AppHandle, roots: Vec<String>, news: Channel<News>) -> R
     // watched by nothing at all (#481). The old one stops the moment the new one is
     // there, before the new one has said anything.
     let spelled = judged.clone();
-    let made = armed(judged)?.replacing(&mut running).start(Box::new(move |heard| {
-        news.send(self::news(&spelled, heard)).is_ok()
-    }))?;
+    let made = armed(judged)?
+        .replacing(&mut running)
+        .start(Box::new(move |heard| {
+            news.send(self::news(&spelled, heard)).is_ok()
+        }))?;
     *running = Some(made);
     Ok(())
 }

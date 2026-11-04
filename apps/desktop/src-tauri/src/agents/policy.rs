@@ -1932,7 +1932,11 @@ mod tests {
             ("Continue", "This wipes your phone.", Category::Deleting),
             ("OK", "All your data is destroyed.", Category::Deleting),
             ("Yes", "Discard this draft?", Category::Deleting),
-            ("Agree", "We start the deletion of your data.", Category::Deleting),
+            (
+                "Agree",
+                "We start the deletion of your data.",
+                Category::Deleting,
+            ),
             ("Confirm", "20 EUR is debited today.", Category::Paying),
             (
                 "OK",

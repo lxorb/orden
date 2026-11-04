@@ -235,9 +235,8 @@ pub fn space_renamed(app: &AppHandle, from: &Path, to: &Path) {
         return;
     };
     let _guard = locked();
-    let moved = trash_dir(app).and_then(|dir| {
-        follows(&dir, &from.to_string_lossy(), &to.to_string_lossy())
-    });
+    let moved = trash_dir(app)
+        .and_then(|dir| follows(&dir, &from.to_string_lossy(), &to.to_string_lossy()));
     if let Err(error) = moved {
         eprintln!("nib: the trash did not follow a space's new name: {error}");
     }
