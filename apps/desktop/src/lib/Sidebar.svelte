@@ -55,6 +55,10 @@
   import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
+  import { edgePeek } from './edge-peek.svelte'
+  import { overlays } from './overlays'
+  import { fullscreen } from './fullscreen.svelte'
+  import { alone } from './alone.svelte'
   import { hiddenKinds } from './settings.svelte'
   import { canWriteAt } from './sharing.svelte'
   import Bookmarks from './Bookmarks.svelte'
@@ -164,6 +168,97 @@
     return () => cancelAnimationFrame(next)
   })
   const shut = $derived(!open || !entered)
+
+  /** Brought out over the note by the pointer resting at the window's edge, while the
+   *  left side is shut: Zen's way (#1034; see edge-peek.svelte.ts). Not opened: the
+   *  note does not move, and the list goes again once the pointer has left it. */
+  const peek = $derived(side === 'left' && shut && edgePeek.out)
+  /** Whether it is floating over the note at all, which outlasts `peek` by the slide
+   *  back; and whether it has slid in, a frame after it floats, so the slide plays. */
+  let floating = $state(false)
+  let slidIn = $state(false)
+  $effect(() => {
+    if (peek) {
+      floating = true
+      const next = requestAnimationFrame(() => (slidIn = true))
+      return () => cancelAnimationFrame(next)
+    }
+    slidIn = false
+    // Opened for good, it is the column again at once, with no slide back to wait out.
+    if (!shut) {
+      floating = false
+      return
+    }
+    if (!untrack(() => floating)) return
+    const settled = setTimeout(() => (floating = false), dur(190))
+    return () => clearTimeout(settled)
+  })
+
+  /** Whether a row is being carried out of the list, which keeps it out until it lands. */
+  let carrying = false
+
+  // The edge is watched by the left side alone, and only with a pointer: a drawer has
+  // an edge of its own, dragged by a finger.
+  $effect(() => {
+    if (side !== 'left' || viewport.touch) return
+    const stop = edgePeek.watch({
+      may: () =>
+        workspace.panel === null &&
+        !viewport.drawer &&
+        !fullscreen.on &&
+        !alone.on &&
+        workspace.panes.fills === null &&
+        overlays.depth === 0,
+      width: () => window.innerWidth,
+      rtl: () => getComputedStyle(document.documentElement).direction === 'rtl',
+      over: (x, y) => {
+        const box = aside?.getBoundingClientRect()
+        return !!box && x >= box.left && x <= box.right && y >= box.top && y <= box.bottom
+      },
+      busy: () => {
+        const on = document.activeElement
+        const typing =
+          !!on &&
+          !!aside?.contains(on) &&
+          (on.matches('input, textarea') || on.closest('[contenteditable="true"]') !== null)
+        // Its own place on the stack is one; anything over it is a menu it opened.
+        return carrying || typing || overlays.depth > 1
+      },
+    })
+    const moved = (event: PointerEvent) => edgePeek.moved(event)
+    const out = (event: MouseEvent) => {
+      if (event.relatedTarget === null) edgePeek.away()
+    }
+    const carried = (event: DragEvent) => {
+      carrying = event.type === 'dragstart' && !!aside?.contains(event.target as Node)
+    }
+    window.addEventListener('pointermove', moved, { passive: true })
+    document.addEventListener('mouseout', out)
+    window.addEventListener('dragstart', carried, true)
+    window.addEventListener('dragend', carried, true)
+    return () => {
+      stop()
+      window.removeEventListener('pointermove', moved)
+      document.removeEventListener('mouseout', out)
+      window.removeEventListener('dragstart', carried, true)
+      window.removeEventListener('dragend', carried, true)
+    }
+  })
+
+  // Out over the note, it is a layer like any other: Escape and a press past it put it
+  // away, and a web page under it steps aside for it; see overlays.ts. Opened for good,
+  // it is no longer out.
+  $effect(() =>
+    peek
+      ? overlays.show(
+          () => edgePeek.hide(),
+          () => [aside],
+        )
+      : undefined,
+  )
+  $effect(() => {
+    if (side === 'left' && !shut) untrack(() => edgePeek.hide())
+  })
 
   /** Whether the column is sliding, which is the only time it clips: at rest an
    *  open panel draws past its edge wherever something of it reaches over the note.
@@ -564,11 +659,13 @@
   class="column"
   class:right={side === 'right'}
   class:shut
+  class:floating
+  class:slid={slidIn}
   class:moving
   class:resizing={size.dragging}
   ontransitionend={slid}
   ontransitioncancel={slid}
-  inert={shut && !viewport.drawer}
+  inert={shut && !peek && !viewport.drawer}
   style:--panel-width={size.pixels !== null && !viewport.touch ? `${size.pixels}px` : undefined}
 >
   <!-- Named, because a region of the page that has no name is one a reader cannot
@@ -1134,6 +1231,33 @@
     transition:
       width var(--dur-base) var(--ease-out),
       visibility 0s var(--dur-base);
+  }
+
+  /* Brought out by the pointer at the window's edge (#1034): over the note rather than
+     beside it, so the column keeps no room and nothing moves, and slid in from the edge
+     it hides behind. */
+  .column.shut.floating {
+    position: relative;
+    visibility: visible;
+    overflow: visible;
+    transition: none;
+  }
+
+  .column.shut.floating aside {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: var(--z-drawer);
+    /* Its own ground under its own: at rest it stands on the window's chrome and lets
+       it show through, and over the note there is no chrome under it. */
+    background: linear-gradient(var(--side-ground), var(--side-ground)), var(--chrome-ground);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(calc(var(--dir) * -100%));
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .column.shut.floating.slid aside {
+    transform: none;
   }
 
   /* Clipped while it slides and while it is shut, rather than scrolled: `clip` is

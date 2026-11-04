@@ -334,6 +334,7 @@ describe('what hides a web page', () => {
     'lib/QuickQuestion.svelte': 'dialog',
     'lib/Select.svelte': 'dropdown',
     'lib/SettingsPanel.svelte': 'sheet',
+    'lib/Sidebar.svelte': 'the shut file list, out over the note while the pointer is on it',
     'lib/Sheet.svelte': 'sheet',
     'lib/SignIn.svelte': 'sheet',
     'lib/Slides.svelte': 'a deck over the whole window',
