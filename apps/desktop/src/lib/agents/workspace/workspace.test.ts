@@ -82,7 +82,6 @@ const tabs = [
     kind: 'note',
     path: '/s/Work/Plan.md',
     paneId: 'p1',
-    pinned: false,
     shown: 'Plan',
     note: { live: { readerAt: null }, shared: null },
   },
@@ -91,7 +90,6 @@ const tabs = [
     kind: 'note',
     path: '/s/Work/Pinned.md',
     paneId: 'p1',
-    pinned: true,
     shown: 'Pinned',
     note: { live: { readerAt: null }, shared: null },
   },
@@ -100,7 +98,6 @@ const tabs = [
     kind: 'web',
     path: '/s/Work/Docs.url',
     paneId: 'p2',
-    pinned: false,
     shown: 'Docs',
     note: { live: { readerAt: null }, shared: null },
   },
@@ -143,7 +140,7 @@ const workspace = {
   close: vi.fn(),
   activate: vi.fn(),
   split: vi.fn(),
-  showing: (pane: string) => tabs.find((one) => one.paneId === pane && !one.pinned) ?? null,
+  showing: (pane: string) => tabs.find((one) => one.paneId === pane) ?? null,
   webAddressOf: () => 'https://docs.example/',
   archive: {
     keysOf: (root: string) => new Set(root === '/s/Home' ? ['Old.md'] : []),
@@ -759,12 +756,6 @@ describe('the reader tabs', () => {
     expect(workspace.split).not.toHaveBeenCalled()
   })
 
-  test('a pinned tab is the reader to close', async () => {
-    expect(await call('workspace_tabs', { op: 'close', tab: 't2' })).toMatchObject({
-      code: 'by_hand',
-    })
-  })
-
   test('lists them, a page title marked as the page', async () => {
     expect(await call('workspace_tabs', { op: 'list' })).toMatchObject({
       result: [{ id: 't1', path: 'Plan.md', front: true }, { id: 't2' }, { id: 'w1', kind: 'web' }],
@@ -1302,7 +1293,6 @@ describe('what the crate asks', () => {
       kind: 'web',
       path: '/s/Home/Bank.url',
       paneId: 'p3',
-      pinned: false,
       shown: 'Bank',
       note: { live: { readerAt: null }, shared: null, home: 'home' },
     }

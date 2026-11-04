@@ -573,6 +573,9 @@ export const de: Dictionary = {
   Accent: 'Akzent',
   'Tidy up': 'Aufräumen',
   'Swipe in from the edge to see your notes.': 'Wische vom Rand herein, um deine Notizen zu sehen.',
+  'Show other tabs as icons': 'Andere Tabs als Symbole zeigen',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Jeder Tab außer dem vorderen zeigt nur sein Symbol; zeigst du auf einen, erscheint sein Name.',
   'Window corners': 'Fensterecken',
   Rounded: 'Abgerundet',
   Square: 'Eckig',

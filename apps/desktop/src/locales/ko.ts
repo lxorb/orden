@@ -565,6 +565,9 @@ export const ko: Dictionary = {
   Accent: '강조색',
   'Tidy up': '정리',
   'Swipe in from the edge to see your notes.': '가장자리에서 안쪽으로 밀어 노트를 보세요.',
+  'Show other tabs as icons': '다른 탭을 아이콘으로 보기',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    '앞에 있는 탭을 빼고 모든 탭이 아이콘만 보여 주며, 가리키면 이름이 나타납니다.',
   'Window corners': '창 모서리',
   Rounded: '둥글게',
   Square: '각지게',

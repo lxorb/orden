@@ -27,7 +27,6 @@ import { IN_A_PAGE } from '../trap'
 import { pages } from '../web-tab/pages.svelte'
 import { type Panel, type Tab, workspace } from '../workspace.svelte'
 import { type Frame, pane, paneIn, panesIn } from './pane-tree'
-import { byPin } from './pinning'
 import {
   focusIn,
   GLOBAL,
@@ -275,11 +274,11 @@ class Sets {
     ws.activeTabId = id
   }
 
-  /** Tabs moved to the end of a pane's strip, the kept ones to the end of the kept run. */
+  /** Tabs moved to the end of a pane's strip. */
   private carry(tabs: readonly Tab[], paneId: string) {
     const ws = workspace
     for (const tab of tabs) tab.paneId = paneId
-    ws.tabs = byPin([...ws.tabs.filter((tab) => !tabs.includes(tab)), ...tabs])
+    ws.tabs = [...ws.tabs.filter((tab) => !tabs.includes(tab)), ...tabs]
   }
 
   /** Tabs moved to another space's set. Each tab is the same tab - a shell keeps running and a page keeps its place -

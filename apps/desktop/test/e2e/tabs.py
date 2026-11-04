@@ -1,7 +1,6 @@
-"""Tabs that stay and tabs that remember, seen: a pinned tab at the head of the
-strip wearing its mark, holding its place against a drop and closing only when it
-is asked outright, and the trail a tab leaves as it moves from note to note,
-walked with the two arrows.
+"""Tabs that remember, seen: the trail a tab leaves as it moves from note to note,
+walked with the two arrows. The strip has no pinning since #1041; how its tabs are
+drawn is tab-icons.py's question.
 
 Serves the built web app and drives it in Chromium. The build has
 to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
@@ -52,13 +51,6 @@ STRIP = """
 () => ({
   tabs: [...document.querySelectorAll('.tab')].map((tab) => ({
     name: tab.querySelector('.label')?.textContent ?? null,
-    pinned: tab.classList.contains('pinned'),
-    // Every tab wears one of these since a4be39f4 - the mark of the kind of thing
-    // it holds - and a pinned tab is that mark with the name taken away. Which mark
-    // it is, and that there is exactly one, is tab-icons.py's question.
-    mark: !!tab.querySelector('.mark'),
-    shut: !!tab.querySelector('.shut'),
-    width: Math.round(tab.getBoundingClientRect().width),
   })),
   steps: [...document.querySelectorAll('.step')].map((one) => one.disabled),
   showing: window.nibApp.workspace.active?.name ?? null,
@@ -97,127 +89,8 @@ def peek(page: Page, name: str) -> None:
     page.wait_for_timeout(500)
 
 
-def keep(page: Page, name: str) -> None:
-    page.evaluate(
-        """async (starts) => {
-          const ws = window.nibApp.workspace
-          const note = ws.notes.find((one) => one.name.startsWith(starts))
-          await ws.openEntry(note.path, {})
-        }""",
-        name,
-    )
-    page.wait_for_timeout(500)
-
-
 def strip(page: Page) -> dict:
     return page.evaluate(STRIP)
-
-
-def drive_pinned(browser: Browser) -> None:
-    page = fresh(browser, "pinned")
-    keep(page, "Daily")
-    keep(page, "First")
-    keep(page, "Second")
-
-    before = strip(page)
-    say(f"[pinned] the strip: {json.dumps([one['name'] for one in before['tabs']])}")
-
-    # Pin the daily note, which is not the tab in front.
-    page.evaluate(
-        """() => {
-          const ws = window.nibApp.workspace
-          const tab = ws.tabs.find((one) => one.name.startsWith('Daily'))
-          ws.togglePin(tab.id)
-        }"""
-    )
-    page.wait_for_timeout(500)
-
-    pinned = strip(page)
-    say(f"[pinned] after pinning: {json.dumps(pinned['tabs'], ensure_ascii=False)}")
-    shot(page, "01-pinned")
-
-    first = pinned["tabs"][0]
-    if not first["pinned"]:
-        wrong("the pinned tab is not at the head of the strip")
-    # A pinned tab is its mark and nothing else: the name is what takes the room, and
-    # a tab kept open all day is one somebody knows by sight. So the mark has to be
-    # there - a pinned tab with neither a name nor a mark is a blank chip.
-    if not first["mark"]:
-        wrong("a pinned tab does not wear its mark")
-    if first["name"] is not None:
-        wrong(f"a pinned tab still spells its name: {first['name']!r}")
-    if first["shut"]:
-        wrong("a pinned tab offers a cross that cannot close it")
-    if first["width"] > 60:
-        wrong(f"a pinned tab is as wide as a named one: {first['width']}px")
-
-    # And it stays at the head: a tab dropped in front of it lands behind it instead,
-    # which is the rule the store holds rather than a thing the drag knows. See
-    # workspace/pinning.ts.
-    page.evaluate(
-        """() => {
-          const ws = window.nibApp.workspace
-          const tab = ws.tabs.find((one) => one.name.startsWith('Second'))
-          ws.dropTab(tab.id, { kind: 'strip', paneId: tab.paneId, at: 0 })
-        }"""
-    )
-    page.wait_for_timeout(400)
-    dropped = strip(page)
-    say(f"[pinned] after a drop at the head: {json.dumps([one['name'] for one in dropped['tabs']])}")
-    if not dropped["tabs"][0]["pinned"]:
-        wrong("a tab dropped at the head of the strip landed in front of the pinned one")
-
-    # It is never taken over by a preview.
-    page.evaluate(
-        """() => {
-          const ws = window.nibApp.workspace
-          const tab = ws.tabs.find((one) => one.pinned)
-          ws.activate(tab.id)
-          ws.previewTabId = tab.id
-        }"""
-    )
-    peek(page, "Third")
-    held = page.evaluate(
-        """() => {
-          const ws = window.nibApp.workspace
-          const tab = ws.tabs.find((one) => one.pinned)
-          return { name: tab?.name ?? null, tabs: ws.tabs.length }
-        }"""
-    )
-    say(f"[pinned] after previewing another note: {json.dumps(held)}")
-    shot(page, "02-not-taken-over")
-    if held["name"] != "Daily.md":
-        wrong(f"a preview took the pinned tab over: it now holds {held['name']}")
-
-    # And it comes back pinned.
-    page.reload(wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.tabs.length", "[pinned] the reload")
-    page.wait_for_timeout(1200)
-    back = strip(page)
-    say(f"[pinned] after a reload: {json.dumps(back['tabs'], ensure_ascii=False)}")
-    shot(page, "03-after-reload")
-    if not back["tabs"] or not back["tabs"][0]["pinned"]:
-        wrong("the pin did not survive a restart")
-
-    # And it closes when it is asked to. Emil: "to close them, there is no X anymore so
-    # you either have to right click close or Ctrl W" - both of which end up here, and
-    # this used to refuse, so a tab pinned in the morning could not be closed at all
-    # without being let go of first.
-    page.evaluate(
-        """async () => {
-          const ws = window.nibApp.workspace
-          const tab = ws.tabs.find((one) => one.pinned)
-          await ws.closeAsking(tab.id)
-        }"""
-    )
-    page.wait_for_timeout(400)
-    closed = strip(page)
-    say(f"[pinned] after closing it: {json.dumps([one['name'] for one in closed['tabs']])}")
-    shot(page, "04-closed")
-    if any(one["pinned"] for one in closed["tabs"]):
-        wrong("a pinned tab refused to close when the key asked it to")
-
-    page.context.close()
 
 
 def drive_trail(browser: Browser) -> None:
@@ -307,12 +180,10 @@ def drive_trail(browser: Browser) -> None:
 
 def main() -> int:
     with DRIVE.session() as browser:
-        say("--- a tab that stays ---")
-        drive_pinned(browser)
         say("--- a tab that remembers ---")
         drive_trail(browser)
 
-    return DRIVE.verdict("a tab can be kept at the front, and can go back where it came from")
+    return DRIVE.verdict("a tab can go back where it came from")
 
 
 if __name__ == "__main__":

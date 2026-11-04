@@ -571,6 +571,9 @@ export const pa: Dictionary = {
   Accent: 'ਉਭਾਰ ਰੰਗ',
   'Tidy up': 'ਤਰਤੀਬ ਦਿਓ',
   'Swipe in from the edge to see your notes.': 'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਕਿਨਾਰੇ ਤੋਂ ਅੰਦਰ ਸਵਾਈਪ ਕਰੋ।',
+  'Show other tabs as icons': 'ਹੋਰ ਟੈਬ ਆਈਕਨ ਵਜੋਂ ਦਿਖਾਓ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ਅੱਗੇ ਵਾਲੀ ਤੋਂ ਬਿਨਾਂ ਹਰ ਟੈਬ ਸਿਰਫ਼ ਆਪਣਾ ਆਈਕਨ ਦਿਖਾਉਂਦੀ ਹੈ; ਕਿਸੇ ਉੱਤੇ ਪੁਆਇੰਟਰ ਲਿਆਉਣ ਨਾਲ ਨਾਂ ਦਿਖਦਾ ਹੈ।',
   'Window corners': 'ਵਿੰਡੋ ਦੇ ਕੋਨੇ',
   Rounded: 'ਗੋਲ',
   Square: 'ਚੌਰਸ',

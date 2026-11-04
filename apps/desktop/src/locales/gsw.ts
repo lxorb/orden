@@ -569,6 +569,9 @@ export const gsw: Dictionary = {
   Accent: 'Akzänt',
   'Tidy up': 'Ufrume',
   'Swipe in from the edge to see your notes.': 'Wisch vom Rand ine, zum dini Notize z gseh.',
+  'Show other tabs as icons': 'Anderi Tabs als Symbol zeige',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Jede Tab usser em vordere zeigt nur sis Symbol; wenn du druf zeigsch, chunnt sin Name.',
   'Window corners': 'Fänschterecke',
   Rounded: 'Abgrundet',
   Square: 'Eggig',

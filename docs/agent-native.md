@@ -356,7 +356,7 @@ words from a page, a download, a PDF or a note in a shared space comes back insi
 
 | tool | what it answers | scope |
 | --- | --- | --- |
-| `get_context` | the space; every open tab by id with its kind, title, path or address, pane, and whether it is in front, selected, pinned, unsaved, the preview or a running terminal; the selected tab and what is selected inside it in its own terms (a note's words, caret and lines on screen, a canvas's or page note's picked objects, a terminal's selected words, a PDF's page); and whether the reader is typing right now | `context` |
+| `get_context` | the space; every open tab by id with its kind, title, path or address, pane, and whether it is in front, selected, unsaved, the preview or a running terminal; the selected tab and what is selected inside it in its own terms (a note's words, caret and lines on screen, a canvas's or page note's picked objects, a terminal's selected words, a PDF's page); and whether the reader is typing right now | `context` |
 | `agent_status` | this agent's grant, its mode, its open tabs, its pending approvals, whether it is stopped | always |
 
 ### 5.2 The browser

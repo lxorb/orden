@@ -591,6 +591,9 @@ export const pl: Dictionary = {
   Accent: 'Akcent',
   'Tidy up': 'Uporządkuj',
   'Swipe in from the edge to see your notes.': 'Przesuń od krawędzi, aby zobaczyć swoje notatki.',
+  'Show other tabs as icons': 'Pokazuj pozostałe karty jako ikony',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Każda karta poza tą na wierzchu pokazuje tylko ikonę; po wskazaniu pokazuje swoją nazwę.',
   'Window corners': 'Narożniki okna',
   Rounded: 'Zaokrąglone',
   Square: 'Kwadratowe',

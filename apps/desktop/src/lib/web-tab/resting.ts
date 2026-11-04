@@ -77,7 +77,6 @@ export interface Resting {
   notifying: boolean
   /** A field typed into and not sent, which a load would lose. */
   edited: boolean
-  pinned: boolean
   /** A private tab's, whose session ends with its last page; see private.ts. */
   inPrivate: boolean
 }
@@ -90,18 +89,11 @@ export function mayFreeze(page: Resting, now: number): boolean {
 }
 
 /** Whether Memory saver may take a page down: as `mayFreeze`, frozen or not, and never a
- *  pinned one or one with something typed into it, which Chrome's never takes either -
+ *  page with something typed into it, which Chrome's never takes either -
  *  nor a private one, whose page is the whole of what it holds: built again it would be
  *  signed out of everything, its last page would have ended its session. */
 export function mayPark(page: Resting, now: number): boolean {
-  return (
-    page.live &&
-    !page.onScreen &&
-    !page.edited &&
-    !page.pinned &&
-    !page.inPrivate &&
-    running(page, now)
-  )
+  return page.live && !page.onScreen && !page.edited && !page.inPrivate && running(page, now)
 }
 
 /** Nothing in the page that has to go on. */

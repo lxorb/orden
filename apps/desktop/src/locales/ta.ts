@@ -570,6 +570,9 @@ export const ta: Dictionary = {
   'Tidy up': 'ஒழுங்குபடுத்து',
   'Swipe in from the edge to see your notes.':
     'உங்கள் குறிப்புகளைப் பார்க்க ஓரத்திலிருந்து உள்ளே தேய்க்கவும்.',
+  'Show other tabs as icons': 'மற்ற தாவல்களை உருவங்களாகக் காட்டு',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'முன்னால் உள்ளதைத் தவிர ஒவ்வொரு தாவலும் உருவத்தை மட்டும் காட்டும்; ஒன்றின் மேல் சுட்டினால் அதன் பெயர் தெரியும்.',
   'Window corners': 'சாளர மூலைகள்',
   Rounded: 'வளைந்த',
   Square: 'சதுரம்',

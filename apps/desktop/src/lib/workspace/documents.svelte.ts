@@ -424,16 +424,6 @@ export class Tab {
     return this.at < this.trail.length - 1
   }
 
-  /** Whether this tab is held at the front of the strip.
-   *
-   *  A note somebody keeps open all day - the one they are writing towards, the
-   *  one they take notes in - and does not want a click in the file list to take
-   *  away. Pinned it stays at the left, wears its mark rather than its name, is
-   *  never the tab a preview reuses, and refuses the gestures that close a tab
-   *  until it is let go of again. Per tab and not per note, because it is about
-   *  this strip in this pane. */
-  pinned = $state(false)
-
   /** The file in the Essentials this tab was made for by a press on its tile, or null
    *  for a tab of the strip, which leaves an essential out. The file it was made for,
    *  since a link followed inside an essential stays in it; see essentials.ts. */

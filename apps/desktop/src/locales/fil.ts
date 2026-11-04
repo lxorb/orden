@@ -574,6 +574,9 @@ export const fil: Dictionary = {
   'Tidy up': 'Ayusin',
   'Swipe in from the edge to see your notes.':
     'Mag-swipe papasok mula sa gilid para makita ang iyong mga tala.',
+  'Show other tabs as icons': 'Ipakita ang ibang tab bilang icon',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Bawat tab maliban sa nasa harap ay icon lang ang ipinapakita; kapag tinuro ang isa, lalabas ang pangalan nito.',
   'Window corners': 'Mga sulok ng window',
   Rounded: 'Bilugan',
   Square: 'Parisukat',

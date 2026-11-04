@@ -580,6 +580,9 @@ export const fr: Dictionary = {
   Accent: 'Couleur',
   'Tidy up': 'Ranger',
   'Swipe in from the edge to see your notes.': 'Balayez depuis le bord pour voir vos notes.',
+  'Show other tabs as icons': 'Afficher les autres onglets en icônes',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Chaque onglet sauf celui au premier plan n’affiche que son icône ; en le pointant, son nom apparaît.',
   'Window corners': 'Coins de la fenêtre',
   Rounded: 'Arrondis',
   Square: 'Carrés',

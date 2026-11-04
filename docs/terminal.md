@@ -149,8 +149,7 @@ prompt.
 **Renaming** is Windows Terminal's: a double click on the tab (a terminal is never a preview,
 so the double click is free), F2 on it, or Rename in its menu and the palette put a field over
 the name where it is written. Enter or a click away keeps it, Escape leaves it, and an empty
-name gives the tab back to whatever runs in it. A pinned tab, which shows no name, asks in the
-question sheet instead. The name is in the tab's words (`name` in `lib/terminal/spec.ts`), so a
+name gives the tab back to whatever runs in it, which is brought to the front for it. The name is in the tab's words (`name` in `lib/terminal/spec.ts`), so a
 restart, Reopen closed tab and Move to space carry it; Open another and a split start a fresh,
 unnamed terminal. See `lib/terminal/rename.ts` and `lib/tab-strip/TabNameField.svelte`.
 

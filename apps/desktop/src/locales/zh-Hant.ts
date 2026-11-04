@@ -565,6 +565,9 @@ export const zhHant: Dictionary = {
   Accent: '強調色',
   'Tidy up': '整理',
   'Swipe in from the edge to see your notes.': '從邊緣向內滑動即可查看筆記。',
+  'Show other tabs as icons': '其他分頁只顯示圖示',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    '除前面的分頁外，每個分頁只顯示圖示；指向某個分頁時會顯示其名稱。',
   'Window corners': '視窗角',
   Rounded: '圓角',
   Square: '直角',

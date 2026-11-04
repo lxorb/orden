@@ -5,7 +5,6 @@
  *  store's to answer, since the palette greys its rows on it. */
 
 import { folderNote } from '../folder-notes'
-import { t } from '../i18n.svelte'
 import { canWriteAt } from '../sharing.svelte'
 import { folderOf } from '../space-paths'
 import { pages } from '../web-tab/pages.svelte'
@@ -15,7 +14,7 @@ import { nextPane } from '../workspace/pane-tree'
 
 /** Chrome's and Obsidian's duplicate: right after the tab and in front, a second view
  *  of the one document, where the tab was in it - the caret, the trail, the page of a
- *  site - and pinned where it was pinned. A split makes the same kind of copy. */
+ *  site. A split makes the same kind of copy. */
 export function duplicateTab(id: string) {
   const tab = workspace.tabs.find((one) => one.id === id)
   if (!tab || !workspace.canDuplicateTab(tab)) return
@@ -28,7 +27,6 @@ export function duplicateTab(id: string) {
   copy.folds = tab.folds
   copy.trail = tab.trail
   copy.at = tab.at
-  copy.pinned = tab.pinned
   copy.reading = tab.reading
   copy.source = tab.source
   copy.camera = tab.camera
@@ -81,7 +79,7 @@ export function renameFromTab(id: string) {
   // file's, and in a space shared to be read the field would only lose what was typed.
   if (!tab || !renamesFromTab(tab)) return
   if (tab.kind === 'terminal') {
-    void nameInStrip(tab)
+    nameInStrip(tab)
     return
   }
   const path = tab.path
@@ -97,19 +95,9 @@ export function renameFromTab(id: string) {
 }
 
 /** The field over a terminal's name in the strip, the tab brought to the front so its
- *  name is on it. A pinned tab is its mark and no name, so it is asked in the question
- *  sheet instead. See TabNameField.svelte and terminal/rename.ts. */
-async function nameInStrip(tab: Tab) {
-  if (tab.pinned) {
-    const [{ prompt }, { renameTerminal }] = await Promise.all([
-      import('../prompt.svelte'),
-      import('../terminal/rename'),
-    ])
-    const typed = await prompt.ask({ title: t('Rename'), value: tab.shown })
-    if (typed !== null) await renameTerminal(tab, typed)
-    return
-  }
-
+ *  name is on it - in front, a tab is never drawn as its mark alone. See
+ *  TabNameField.svelte and terminal/rename.ts. */
+function nameInStrip(tab: Tab) {
   for (const one of workspace.tabs) one.naming = one === tab
   workspace.activate(tab.id)
 }

@@ -75,7 +75,6 @@ import { OpenDocuments, secondWebTabs } from './workspace/open'
 import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
 import { successor } from './workspace/recency'
 import { type Landing, Panes } from './workspace/panes.svelte'
-import { byPin, pinnedRun, placeFor } from './workspace/pinning'
 import { type Around, closedAround } from './workspace/closing-around'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
@@ -222,7 +221,6 @@ const WORDS_KEPT = 1_000_000
 const TRAIL = 30
 
 const unread = (path: string) => import('./unread.svelte').then((one) => one.unread.there(path))
-const closesPinned = () => import('./workspace/closing-pinned').then((one) => one.closesPinned())
 /** A space made, renamed or deleted; see workspace/space-changes.ts. */
 const changes = () => import('./workspace/space-changes')
 /** What an essential's tile does, fetched with the first one; see essentials.svelte.ts. */
@@ -1114,7 +1112,6 @@ class Workspace {
     tab.folds = draft.folds
     tab.reading = draft.reading === true
     if (draft.source !== undefined) tab.source = draft.source
-    tab.pinned = draft.pinned === true
     tab.page = draft.page
     tab.zoom = draft.zoom
     tab.address = draft.address
@@ -1128,11 +1125,11 @@ class Workspace {
     const paneId = this.panes.focusedId
     const restored = await this.tabsFrom(drafts, paneId)
 
-    // Which tab was showing is read off the strip as it was written down, and the
-    // kept tabs are brought to the head afterwards: the index in the session counts
-    // along the order that session was written in. See workspace/pinning.ts.
+    // Which tab was showing is read off the strip as it was written down. A tab a
+    // session wrote as pinned, when there was pinning (until #1041), is a tab like any
+    // other, where it was.
     this.panes.activate(paneId, (restored[active] ?? restored[0])?.id ?? null)
-    this.tabs = byPin(restored)
+    this.tabs = restored
   }
 
   /** Puts an arrangement in place: the panes, the notes in each of them, which
@@ -1191,7 +1188,7 @@ class Workspace {
           : undefined) ??
         along.slice(draft.active).find((one) => one !== null)
       showing.set(draft.id, (shown ?? tabs.at(-1))?.id ?? null)
-      made.push(...byPin(tabs))
+      made.push(...tabs)
     }
 
     let frame: Frame = frameOf(layout.frame, (draft) => showing.get(draft.id) ?? null)
@@ -1231,8 +1228,7 @@ class Workspace {
       if (made.some((one) => one.note === tab.note)) continue
 
       tab.paneId = this.panes.focusedId
-      // At the end of the strip, and at the end of the pinned run if it was one of
-      // those: a tab carried over still belongs where its own kind of tab belongs.
+      // At the end of the strip.
       this.tabs = this.placed(tab, this.panes.focusedId, null)
     }
 
@@ -1330,7 +1326,6 @@ class Workspace {
       share: tab.note.key,
       ...(tab.reading ? { reading: true } : {}),
       ...(tab.kind === 'note' ? { source: tab.source } : {}),
-      ...(tab.pinned ? { pinned: true } : {}),
       ...(tab.page === undefined ? {} : { page: tab.page }),
       ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
       ...(tab.address === undefined ? {} : { address: tab.address }),
@@ -2041,7 +2036,6 @@ class Workspace {
         (tab) =>
           tab.id === this.previewTabId &&
           !tab.dirty &&
-          !tab.pinned &&
           tab.paneId === this.panes.focusedId &&
           !this.tabs.some((one) => one.id !== tab.id && one.note === tab.note),
       ) ?? null
@@ -3257,35 +3251,6 @@ class Workspace {
     if (path !== undefined) await this.openEntry(path, howFor(ask))
   }
 
-  /** Holds a tab at the front of its strip, or lets it go again.
-   *
-   *  Pinning keeps the note as well: a tab nobody wants taken over is a tab that
-   *  is being kept, and the two would otherwise have to be said one after the
-   *  other. The tab moves to the end of the pinned run rather than being sorted
-   *  on the way out, so every place that counts along a strip - the numbered
-   *  keys, Ctrl+Tab, where a closed tab comes back - counts the same order the
-   *  reader sees. Where a tab may sit once it is pinned is workspace/pinning.ts,
-   *  which is the one rule the drags and the drops go through as well.
-   *
-   *  This machine's own, like the rest of the session: which of somebody's notes
-   *  are worth a chip on this screen is a fact about the screen. It is written
-   *  into `nib:workspace` with everything else that is open and comes back with
-   *  the window; the account never hears of it. */
-  togglePin(id: string) {
-    const tab = this.tabs.find((one) => one.id === id)
-    if (!tab) return
-
-    tab.pinned = !tab.pinned
-    if (tab.pinned) this.keep(id)
-
-    // The end of the pinned run either way: pinned, it joins the back of it;
-    // let go of, it lands at the front of what is not pinned, which is the same
-    // place.
-    const others = this.tabsIn(tab.paneId).filter((one) => one.id !== id)
-    this.tabs = this.placed(tab, tab.paneId, pinnedRun(others))
-    this.persist()
-  }
-
   /** Makes a tab that was only previewing its note stay: the italic goes, and
    *  the next single click in the file list gets a tab of its own instead of
    *  taking this one over. Every way of keeping a preview ends up here -
@@ -3301,22 +3266,17 @@ class Workspace {
    *  write goes down as its tab closes; see `closed` in workspace/saving.svelte.ts. A
    *  tab with no file and words asks first, and so does a terminal running something;
    *  see `mayClose`. `close` below stays the plain operation, which is what everything
-   *  that closes a tab because the note has gone away needs.
-   *
-   *  A pinned tab has no cross, but its menu row and the middle button close it
-   *  outright, as a browser's do. */
+   *  that closes a tab because the note has gone away needs. */
   async closeAsking(id: string) {
     const tab = this.tabs.find((one) => one.id === id)
     if (tab && (await this.mayClose([tab]))) this.close(id)
   }
 
   /** The tab being worked in, closed. What Ctrl+W, the palette and `:q` all mean by
-   *  closing, and a pinned tab is asked about first; see workspace/closing-pinned.ts. */
+   *  closing. */
   async closeActive() {
     const tab = this.active
-    // A pinned one with unsaved words is asked about those instead.
-    if (tab && (!tab.pinned || unsaved(tab) || (await closesPinned())))
-      await this.closeAsking(tab.id)
+    if (tab) await this.closeAsking(tab.id)
   }
 
   /** The tabs of a pane around one; which tabs is workspace/closing-around.ts. */
@@ -3377,9 +3337,6 @@ class Workspace {
    *  gone away. Nothing is asked, and what the note was waiting to write goes down now;
    *  see `closed` in workspace/saving.svelte.ts. A draft with words keeps them on the
    *  closed stack and in Recently deleted; see workspace/placing.ts.
-   *
-   *  A pinned tab has no cross, but its menu row and the middle button close it
-   *  outright, as a browser's do.
    *
    *  `reopenable` false is for a tab nobody closed - a preview the next look took
    *  the place of - which the closed stack has no business bringing back. */
@@ -3512,17 +3469,11 @@ class Workspace {
    *  the spot occupies. Past the end of the strip, or `null`, means last.
    *
    *  The tab itself is taken out first, so this both puts a new one in and moves
-   *  one that is already open.
-   *
-   *  The place asked for is the place the reader aimed at, and the place taken is
-   *  what `placeFor` makes of it: the pinned tabs are a run at the head of the
-   *  strip, and this is the one door every drag, drop and reopen goes through, so
-   *  none of them has to know that. See workspace/pinning.ts. */
+   *  one that is already open. */
   private placed(tab: Tab, paneId: string, at: number | null): Tab[] {
     const rest = this.tabs.filter((one) => one.id !== tab.id)
     const strip = rest.filter((one) => one.paneId === paneId)
-    const place = placeFor(strip, tab.pinned, at)
-    const after = place === null ? undefined : strip[place]
+    const after = at === null ? undefined : strip[Math.max(0, at)]
     const index = after ? rest.findIndex((one) => one.id === after.id) : -1
     if (index < 0) return [...rest, tab]
 

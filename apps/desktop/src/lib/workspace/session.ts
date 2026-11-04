@@ -50,9 +50,6 @@ export interface Draft {
   reading?: boolean | undefined
   /** Source mode; absent means the default. */
   source?: boolean | undefined
-  /** Whether the tab was held at the front of its strip. Absent for the tabs
-   *  that were not, which is most of them. */
-  pinned?: boolean | undefined
   /** For a PDF: the page it was open at and how far it was zoomed. Absent for a
    *  tab holding a note, which keeps a caret and a scroll instead. */
   page?: number | undefined
@@ -232,7 +229,9 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom, pinned, address, space, source, apart } = value
+  // A `pinned` an older build wrote is not read: there is no pinning in the strip any
+  // more (#1041), and the tab comes back where it was, as any other.
+  const { folds, page, zoom, address, space, source, apart } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -251,7 +250,6 @@ export function readDraft(value: unknown): Draft | null {
     ...(isString(share) ? { share } : {}),
     ...(reading === true ? { reading: true } : {}),
     ...(typeof source === 'boolean' ? { source } : {}),
-    ...(pinned === true ? { pinned: true } : {}),
     ...(isNumber(page) && page >= 1 ? { page } : {}),
     ...(isNumber(zoom) && zoom > 0 ? { zoom } : {}),
     ...(isString(address) ? { address } : {}),

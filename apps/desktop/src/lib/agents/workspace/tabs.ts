@@ -8,8 +8,7 @@
  *  grows and nothing the reader is looking at moves. Bringing a tab to the front,
  *  closing the one they are reading, splitting a pane, the graph (which only opens in
  *  front), and anything in another space - whose tabs are not in this window until the
- *  reader goes there - are the screen changing, and ask for that scope (7.2). A pinned
- *  tab is the reader's to close.
+ *  reader goes there - are the screen changing, and ask for that scope (7.2).
  *
  *  Every kind of tab is listed with its id, which the verbs of its kind take: a note's
  *  (`read_note`, `edit_note`), a canvas's and a page note's (`read_canvas`,
@@ -35,7 +34,7 @@ import type { ReaderTab } from '../verbs'
 import { ACTIVE_FOR } from '../ui/marks'
 import { TYPING } from '../docs/edit'
 import { notes } from '../docs'
-import { asked, readersOwn } from './asks'
+import { asked } from './asks'
 import { type Call, done, maybe, need, needScope, text, writerOf } from './call'
 import { Refused } from './problem'
 import {
@@ -94,7 +93,6 @@ function tabOf(tab: Tab) {
     // A note, canvas or page note with no file yet: read and edited by this tab's id.
     ...(isDraft(tab.note) ? { unsaved: true } : {}),
     ...(workspace.previewTabId === tab.id ? { preview: true } : {}),
-    ...(tab.pinned ? { pinned: true } : {}),
     ...(tab.note.shared !== null ? { shared: true } : {}),
     ...(tab.kind === 'terminal' ? { running: ptyOf(tab.id) !== undefined } : {}),
   }
@@ -449,7 +447,6 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
     case 'close': {
       const tab = tabNamed(call)
-      if (tab.pinned) readersOwn(call, "a pinned tab is the reader's to close")
       if (front(tab)) needScope(call, 'workspace.focus', 'closing a tab the reader can see')
 
       workspace.close(tab.id)
@@ -513,7 +510,6 @@ export async function lendTab(id: string): Promise<null> {
   page.url ??= tab.address ?? workspace.webAddressOf(tab)
   page.space ??= workspace.spaceOf(tab.note)
   page.path = tab.path
-  page.pinned = tab.pinned
   if (!page.live) page.own = apartOf(tab)
   await lend(tab.id)
   setTimeout(() => {

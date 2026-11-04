@@ -35,8 +35,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-const { chosen, gathered, pick, pickingOf, placeBlock, pinMany, runOf } =
-  await import('./picking.svelte')
+const { chosen, gathered, pick, pickingOf, placeBlock, runOf } = await import('./picking.svelte')
 const { moved, nearestSlot } = await import('./layout')
 const { tabMenu, tabMenuTitle } = await import('./menu')
 const { workspace } = await import('../workspace.svelte')
@@ -139,7 +138,7 @@ describe("a picked tab's menu", () => {
 
     expect(tabMenuTitle(tab, workspace.panes.focusedId)).toBe('3 tabs')
     expect(labels('B')).toEqual(
-      expect.arrayContaining(['Duplicate', 'Pin', 'Close', 'Close others', 'Close all']),
+      expect.arrayContaining(['Duplicate', 'Close', 'Close others', 'Close all']),
     )
     expect(labels('B')).not.toContain('Show in the file list')
   })
@@ -147,20 +146,6 @@ describe("a picked tab's menu", () => {
   test('and one that is not picked is about itself alone', () => {
     click('B', 'toggle')
     expect(labels('D')).toContain('Show in the file list')
-  })
-
-  test('pins them together, in their order, and lets them go the same way', () => {
-    click('B', 'toggle')
-    click('D', 'toggle')
-    const picked = chosen.of(workspace.panes.focusedId)
-
-    pinMany(picked)
-    expect(strip()).toEqual(['A', 'B', 'D', 'C'])
-    expect(picked.every((one) => one.pinned)).toBe(true)
-
-    pinMany(picked)
-    expect(strip()).toEqual(['A', 'B', 'D', 'C'])
-    expect(picked.some((one) => one.pinned)).toBe(false)
   })
 })
 
@@ -222,7 +207,7 @@ describe('several tabs carried as one', () => {
   test('and go along the strip by the rules one tab goes by', () => {
     const block = gathered(tabs, widths, ['b', 'd'], 'b')
     // Past the middle of the tab after it: the block is one slot on.
-    expect(nearestSlot(block.widths, block.from, 160, 0, false)).toBe(2)
+    expect(nearestSlot(block.widths, block.from, 160)).toBe(2)
     expect(moved(block.order, block.from, 2).map((one) => one.id)).toEqual(['a', 'c', 'b', 'e'])
   })
 })

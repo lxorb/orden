@@ -568,6 +568,9 @@ export const ur: Dictionary = {
   Accent: 'نمایاں رنگ',
   'Tidy up': 'ترتیب دیں',
   'Swipe in from the edge to see your notes.': 'اپنے نوٹس دیکھنے کے لیے کنارے سے اندر سوائپ کریں۔',
+  'Show other tabs as icons': 'دوسرے ٹیب آئیکن کے طور پر دکھائیں',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'سامنے والے کے سوا ہر ٹیب صرف اپنا آئیکن دکھاتا ہے؛ کسی پر پوائنٹر لے جائیں تو اس کا نام دکھتا ہے۔',
   'Window corners': 'ونڈو کے کونے',
   Rounded: 'گول',
   Square: 'چوکور',

@@ -565,6 +565,9 @@ export const yue: Dictionary = {
   Accent: '強調色',
   'Tidy up': '整理',
   'Swipe in from the edge to see your notes.': '由邊緣向內掃就睇到你嘅筆記。',
+  'Show other tabs as icons': '其他分頁只顯示圖示',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    '除咗前面嗰個，每個分頁淨係顯示圖示；指住其中一個就會見到佢個名。',
   'Window corners': '視窗角',
   Rounded: '圓角',
   Square: '方角',

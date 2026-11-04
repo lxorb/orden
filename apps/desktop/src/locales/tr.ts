@@ -569,6 +569,9 @@ export const tr: Dictionary = {
   Accent: 'Vurgu rengi',
   'Tidy up': 'Düzenle',
   'Swipe in from the edge to see your notes.': 'Notlarını görmek için kenardan içeri kaydır.',
+  'Show other tabs as icons': 'Diğer sekmeleri simge olarak göster',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Öndeki dışındaki her sekme yalnızca simgesini gösterir; birinin üzerine gelince adı görünür.',
   'Window corners': 'Pencere köşeleri',
   Rounded: 'Yuvarlak',
   Square: 'Köşeli',

@@ -591,6 +591,9 @@ export const uk: Dictionary = {
   Accent: 'Акцент',
   'Tidy up': 'Упорядкувати',
   'Swipe in from the edge to see your notes.': 'Проведіть від краю, щоб побачити нотатки.',
+  'Show other tabs as icons': 'Показувати інші вкладки значками',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Кожна вкладка, крім передньої, показує лише значок; якщо навести на неї, з’являється назва.',
   'Window corners': 'Кути вікна',
   Rounded: 'Заокруглені',
   Square: 'Прямі',

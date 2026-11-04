@@ -1,13 +1,11 @@
 /** Which tabs a close around one tab takes: the rows of a tab's own menu that close
- *  more than the tab. A pinned tab is never one of them, as in Chrome, VS Code and
- *  Obsidian; see workspace/pinning.ts. */
+ *  more than the tab. */
 
 import { i18n, t } from '../i18n.svelte'
-import type { Pinnable } from './pinning'
 
 export type Around = 'others' | 'right' | 'all'
 
-export function closedAround<T extends Pinnable & { readonly id: string }>(
+export function closedAround<T extends { readonly id: string }>(
   strip: readonly T[],
   id: string,
   which: Around,
@@ -15,14 +13,11 @@ export function closedAround<T extends Pinnable & { readonly id: string }>(
   const at = strip.findIndex((one) => one.id === id)
   if (at < 0) return []
 
-  const taken =
-    which === 'all'
-      ? strip
-      : which === 'right'
-        ? strip.slice(at + 1)
-        : strip.filter((one) => one.id !== id)
-
-  return taken.filter((one) => !one.pinned)
+  return which === 'all'
+    ? [...strip]
+    : which === 'right'
+      ? strip.slice(at + 1)
+      : strip.filter((one) => one.id !== id)
 }
 
 /** Left and right in a label are the screen's, so a language that reads the other

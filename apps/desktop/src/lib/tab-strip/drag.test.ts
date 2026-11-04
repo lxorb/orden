@@ -2,14 +2,14 @@ import { describe, expect, test } from 'vitest'
 import { TabDrag, THRESHOLD } from './drag.svelte'
 
 /** Four tabs of a hundred each in a strip with room for eight hundred. */
-const frame = { widths: [100, 100, 100, 100], room: 800, pinnedRun: 0 }
+const frame = { widths: [100, 100, 100, 100], room: 800 }
 
 /** A press on the tab at `from`, thirty pixels into it, on a strip that starts at
  *  the left of the glass and runs along the top of it. */
 function pressed(from: number, finger = false) {
   const drag = new TabDrag()
   const along = from * 100 + 30
-  drag.down({ tabId: `t${from}`, from, pinned: false, along, x: along, y: 20, grab: 30, finger })
+  drag.down({ tabId: `t${from}`, from, along, x: along, y: 20, grab: 30, finger })
   return drag
 }
 
@@ -53,12 +53,11 @@ describe('a tab carried along the strip', () => {
 
   test('does not flick back on a pixel: the pointer has to come sixteen back first', () => {
     // Standard-width tabs, where the slack is the whole sixteen pixels.
-    const wide = { widths: [238, 238, 238], room: 1000, pinnedRun: 0 }
+    const wide = { widths: [238, 238, 238], room: 1000 }
     const drag = new TabDrag()
     drag.down({
       tabId: 't0',
       from: 0,
-      pinned: false,
       along: 30,
       x: 30,
       y: 20,

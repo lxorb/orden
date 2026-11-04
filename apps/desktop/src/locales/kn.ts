@@ -573,6 +573,9 @@ export const kn: Dictionary = {
   'Tidy up': 'ಅಚ್ಚುಕಟ್ಟು ಮಾಡಿ',
   'Swipe in from the edge to see your notes.':
     'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಅಂಚಿನಿಂದ ಒಳಗೆ ಸ್ವೈಪ್ ಮಾಡಿ.',
+  'Show other tabs as icons': 'ಇತರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಐಕಾನ್‌ಗಳಾಗಿ ತೋರಿಸಿ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ಮುಂದಿನದನ್ನು ಬಿಟ್ಟು ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್ ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ; ಒಂದರ ಮೇಲೆ ಪಾಯಿಂಟರ್ ಇಟ್ಟರೆ ಹೆಸರು ಕಾಣುತ್ತದೆ.',
   'Window corners': 'ವಿಂಡೋ ಮೂಲೆಗಳು',
   Rounded: 'ದುಂಡಾದ',
   Square: 'ಚೌಕ',

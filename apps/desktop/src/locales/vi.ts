@@ -565,6 +565,9 @@ export const vi: Dictionary = {
   Accent: 'Màu nhấn',
   'Tidy up': 'Sắp xếp gọn',
   'Swipe in from the edge to see your notes.': 'Vuốt vào từ mép để xem ghi chú của bạn.',
+  'Show other tabs as icons': 'Hiện các thẻ khác dưới dạng biểu tượng',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Mọi thẻ trừ thẻ ở phía trước chỉ hiện biểu tượng; trỏ vào một thẻ sẽ thấy tên của nó.',
   'Window corners': 'Góc cửa sổ',
   Rounded: 'Bo tròn',
   Square: 'Vuông',

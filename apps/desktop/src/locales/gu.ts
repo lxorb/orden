@@ -568,6 +568,9 @@ export const gu: Dictionary = {
   Accent: 'ઉપસાવ રંગ',
   'Tidy up': 'વ્યવસ્થિત કરો',
   'Swipe in from the edge to see your notes.': 'તમારી નોંધો જોવા માટે કિનારેથી અંદર સ્વાઇપ કરો.',
+  'Show other tabs as icons': 'બીજી ટૅબ આઇકન તરીકે બતાવો',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'આગળની ટૅબ સિવાય દરેક ટૅબ ફક્ત તેનું આઇકન બતાવે છે; કોઈ પર પોઇન્ટર રાખતાં તેનું નામ દેખાય છે.',
   'Window corners': 'વિન્ડોના ખૂણા',
   Rounded: 'ગોળ',
   Square: 'ચોરસ',

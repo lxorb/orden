@@ -578,6 +578,9 @@ export const ptBR: Dictionary = {
   Accent: 'Destaque',
   'Tidy up': 'Organizar',
   'Swipe in from the edge to see your notes.': 'Deslize a partir da borda para ver suas notas.',
+  'Show other tabs as icons': 'Mostrar as outras abas como ícones',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Cada aba, exceto a da frente, mostra só o ícone; ao apontar para uma, aparece o nome dela.',
   'Window corners': 'Cantos da janela',
   Rounded: 'Arredondados',
   Square: 'Quadrados',

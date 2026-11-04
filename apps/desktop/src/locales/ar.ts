@@ -600,6 +600,9 @@ export const ar: Dictionary = {
   Accent: 'اللون المميز',
   'Tidy up': 'ترتيب',
   'Swipe in from the edge to see your notes.': 'اسحب من الحافة لترى ملاحظاتك.',
+  'Show other tabs as icons': 'اعرض علامات التبويب الأخرى كأيقونات',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'كل علامة تبويب غير التي في الواجهة تعرض أيقونتها فقط، وتظهر اسمها عند الإشارة إليها.',
   'Window corners': 'زوايا النافذة',
   Rounded: 'مستديرة',
   Square: 'مربعة',

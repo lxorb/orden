@@ -14,8 +14,8 @@ strip out of the same window and holds them against each other. Emil, 2026-09-17
 *"for all note types, the tab icon and the explorer icon should always be the
 same."* Then it chooses one in the picker, on a canvas that had none, and holds the
 two against each other again - nothing tells the tab. And because the icon is the
-whole of a pinned tab, one tab is pinned at the end of the run and measured again as
-a chip.
+whole of a tab drawn as an icon (#1041), the dressed note is put behind another tab
+and measured again as a chip.
 
 Serves the built web app and drives it in Chromium, and serves one
 picture of its own for a website's favicon to point at. The build has to be one a
@@ -156,9 +156,9 @@ STRIP = """
 
     return {
       name: tab.querySelector('.label')?.textContent ?? null,
-      // A pinned tab is its mark alone, which is the one place the mark is the whole
-      // of what the reader has to go on.
-      pinned: tab.classList.contains('pinned'),
+      // A tab drawn as an icon is its mark alone, which is the one place the mark is
+      // the whole of what the reader has to go on (#1041).
+      icon: tab.classList.contains('icon'),
       shut: !!tab.querySelector('.shut'),
       marks: marks.length,
       kind: img ? 'picture' : svg ? 'stroke' : 'nothing',
@@ -179,14 +179,14 @@ STRIP = """
 }
 """
 
-# The note that chose an icon, pinned. Emil asked for both of these in one breath, and
-# they are one thing: a pinned tab is reduced to its icon, so the icon it is reduced to
-# had better be the one the file chose.
+# The note that chose an icon, behind another tab. Emil asked for both of these in one
+# breath, and they are one thing: a tab not in front is reduced to its icon (#1041), so
+# the icon it is reduced to had better be the one the file chose.
 PIN = """
 () => {
   const ws = window.nibApp.workspace
-  const tab = ws.tabs.find((one) => (one.name ?? '').startsWith('Plan'))
-  ws.togglePin(tab.id)
+  const other = ws.tabs.find((one) => !(one.name ?? '').startsWith('Plan'))
+  ws.activate(other.id)
 }
 """
 
@@ -258,40 +258,38 @@ def website(path: str) -> str:
     return f"{ORIGIN}{path}"
 
 
-def pinned(page: Page, scheme: str) -> None:
-    """The dressed note, pinned: a chip with the icon it chose in it and nothing else.
-
-    A pinned tab is its mark alone, so this is the one tab where the mark is the whole
-    of what the reader has to go on - and the two things Emil asked for meet here."""
+def iconned(page: Page, scheme: str) -> None:
+    """The dressed note, behind another: a chip with the icon it chose in it and nothing
+    else. A tab drawn as an icon is its mark alone, so this is the one tab where the mark
+    is the whole of what the reader has to go on - and the two things Emil asked for meet
+    here."""
 
     page.evaluate(PIN)
     page.wait_for_timeout(700)
 
     strip = page.evaluate(STRIP)
-    chip = strip[0] if strip else None
-    beside = strip[1] if len(strip) > 1 else None
-    say(f"[{scheme}] the pinned chip: {json.dumps(chip, ensure_ascii=False)}")
-    shot(page, f"03-the-pinned-chip-{scheme}", ".strip")
+    chip = next((one for one in strip if (one["name"] or "").startswith("Plan")), None)
+    beside = next((one for one in strip if one is not chip), None)
+    say(f"[{scheme}] the icon chip: {json.dumps(chip, ensure_ascii=False)}")
+    shot(page, f"03-the-icon-chip-{scheme}", ".strip")
 
     if not chip or not beside:
-        wrong(f"[{scheme}] the strip lost its tabs when one of them was pinned")
+        wrong(f"[{scheme}] the strip lost its tabs when another was put in front")
         return
 
-    if not chip["pinned"]:
-        wrong(f"[{scheme}] the pinned tab is not at the head of the strip")
-    if chip["name"] is not None:
-        wrong(f"[{scheme}] a pinned tab still spells its name: {chip['name']!r}")
+    if not chip["icon"]:
+        wrong(f"[{scheme}] the tab behind is not drawn as its icon")
     if chip["shut"]:
-        wrong(f"[{scheme}] a pinned tab offers a cross")
+        wrong(f"[{scheme}] a tab drawn as its icon offers a cross")
     if chip["tab"] > 48:
-        wrong(f"[{scheme}] a pinned tab is as wide as a named one: {chip['tab']}px")
+        wrong(f"[{scheme}] a tab drawn as its icon is as wide as a named one: {chip['tab']}px")
 
     # The mark it is reduced to: the one the row wears, in the box every other tab
     # keeps. A chip whose icon is not the file's own would be a chip nothing can be
     # told apart by.
     row = page.evaluate(ROWS).get("Plan", "")
     if chip["drawing"] != row:
-        wrong(f"[{scheme}] the pinned chip wears {chip['drawing']!r} where the row wears {row!r}")
+        wrong(f"[{scheme}] the icon chip wears {chip['drawing']!r} where the row wears {row!r}")
     if (chip["width"], chip["height"]) != (beside["width"], beside["height"]):
         wrong(f"[{scheme}] the chip's mark is not the box the other tabs keep: {chip}")
 
@@ -406,7 +404,7 @@ def drive(page: Page, scheme: str) -> list[dict]:
     elif tab and row != tab["drawing"]:
         wrong(f"[{scheme}] the tab wears {tab['drawing']!r} where the row wears {row!r}")
 
-    pinned(page, scheme)
+    iconned(page, scheme)
     chooses(page, scheme)
     return strip
 
@@ -434,7 +432,7 @@ def main() -> int:
 
     return DRIVE.verdict(
         "six kinds of tab, one mark each, one box, one weight, one place - and the"
-        " file's own mark in the strip as in the list, down to the pinned chip"
+        " file's own mark in the strip as in the list, down to the chip a tab behind is drawn as"
     )
 
 

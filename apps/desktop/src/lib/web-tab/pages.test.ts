@@ -1020,16 +1020,13 @@ describe('a page out of sight', () => {
       expect(commands()).not.toContain('web_close')
     })
 
-    test('never one with something typed into it, nor a pinned one', async () => {
+    test('never one with something typed into it', async () => {
       await memorySaver('maximum')
       looked = { url: SITE, x: 0, y: 0, trail: [SITE], at: 0, edited: true }
       await built('t0')
       away('t0', 60)
       await vi.waitFor(() => expect(pages.of('t0').edited).toBe(true))
       looked = { url: SITE, x: 0, y: 0, trail: [SITE], at: 0, edited: false }
-      await built('t1')
-      pages.of('t1').pinned = true
-      away('t1', 60)
       await built('t2')
       away('t2', 60)
       pages.retime()

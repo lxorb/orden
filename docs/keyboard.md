@@ -324,7 +324,7 @@ stops nothing, and the app still gets the key.
 | Ctrl+Shift+N | a new window |
 | Ctrl+T | **a new tab**, the way every browser answers it: an address field that has the keyboard, and under it the kinds a tab can be, each with its letter. The plus at the end of the strip makes the same tab. See *Ctrl+T is a new tab* below |
 | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip. Settings, General, can put Ctrl+Tab in order of use instead: the tab used last, and one further back for each press while Ctrl is held (VS Code's). Ctrl+PgDn and Ctrl+PgUp walk the strip either way |
-| Alt+1 to 9, Alt+0 | the tab at that place along the focused pane's strip, the last tab. Pinned tabs count, and a place past the end does nothing |
+| Alt+1 to 9, Alt+0 | the tab at that place along the focused pane's strip, the last tab. A place past the end does nothing |
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the same eight places and the last, as second keys |
 | Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at either end |
 | Ctrl+D | **put the tab down**: nothing in front of the pane, every tab still open |

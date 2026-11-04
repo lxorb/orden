@@ -568,6 +568,9 @@ export const fa: Dictionary = {
   Accent: 'رنگ تکیه',
   'Tidy up': 'مرتب‌سازی',
   'Swipe in from the edge to see your notes.': 'برای دیدن یادداشت‌هایتان از لبه به داخل بکشید.',
+  'Show other tabs as icons': 'نمایش زبانه‌های دیگر به‌صورت نماد',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'هر زبانه جز زبانهٔ جلو فقط نمادش را نشان می‌دهد؛ با اشاره به یکی، نامش نمایان می‌شود.',
   'Window corners': 'گوشه‌های پنجره',
   Rounded: 'گرد',
   Square: 'مربعی',

@@ -565,6 +565,9 @@ export const id: Dictionary = {
   Accent: 'Warna aksen',
   'Tidy up': 'Rapikan',
   'Swipe in from the edge to see your notes.': 'Geser masuk dari tepi untuk melihat catatanmu.',
+  'Show other tabs as icons': 'Tampilkan tab lain sebagai ikon',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Setiap tab kecuali yang di depan hanya menampilkan ikonnya; arahkan ke salah satunya untuk melihat namanya.',
   'Window corners': 'Sudut jendela',
   Rounded: 'Membulat',
   Square: 'Persegi',

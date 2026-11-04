@@ -565,6 +565,9 @@ export const th: Dictionary = {
   Accent: 'สีเน้น',
   'Tidy up': 'จัดระเบียบ',
   'Swipe in from the edge to see your notes.': 'ปัดเข้ามาจากขอบเพื่อดูโน้ตของคุณ',
+  'Show other tabs as icons': 'แสดงแท็บอื่นเป็นไอคอน',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ทุกแท็บยกเว้นแท็บด้านหน้าแสดงแค่ไอคอน ชี้ที่แท็บใดก็จะเห็นชื่อ',
   'Window corners': 'มุมหน้าต่าง',
   Rounded: 'มน',
   Square: 'เหลี่ยม',

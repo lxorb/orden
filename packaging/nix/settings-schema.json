@@ -282,6 +282,11 @@
     "default": "ask",
     "description": "What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time."
   },
+  "general.iconTabs": {
+    "type": "boolean",
+    "default": true,
+    "description": "Every tab but the one in front shows only its icon; pointing at one shows its name."
+  },
   "general.keepVersionEvery": {
     "type": "string",
     "enum": [
@@ -730,10 +735,6 @@
   "shortcuts.app-palette": {
     "type": "string",
     "description": "The key that runs Command palette, as the keys file writes it; empty for none."
-  },
-  "shortcuts.app-pin": {
-    "type": "string",
-    "description": "The key that runs Pin, as the keys file writes it; empty for none."
   },
   "shortcuts.app-present": {
     "type": "string",

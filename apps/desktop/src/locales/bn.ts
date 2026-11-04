@@ -568,6 +568,9 @@ export const bn: Dictionary = {
   Accent: 'অ্যাকসেন্ট',
   'Tidy up': 'গুছিয়ে নিন',
   'Swipe in from the edge to see your notes.': 'আপনার নোট দেখতে কিনারা থেকে ভেতরে সোয়াইপ করুন।',
+  'Show other tabs as icons': 'অন্য ট্যাবগুলো আইকন হিসেবে দেখান',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'সামনের ট্যাব ছাড়া প্রতিটি ট্যাব শুধু আইকন দেখায়; কোনোটির ওপর পয়েন্টার রাখলে নাম দেখায়।',
   'Window corners': 'উইন্ডোর কোণ',
   Rounded: 'গোলাকার',
   Square: 'বর্গাকার',

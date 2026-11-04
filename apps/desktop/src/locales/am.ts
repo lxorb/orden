@@ -566,6 +566,9 @@ export const am: Dictionary = {
   Accent: 'የማጉላት ቀለም',
   'Tidy up': 'አስተካክል',
   'Swipe in from the edge to see your notes.': 'ማስታወሻዎችዎን ለማየት ከጠርዙ ወደ ውስጥ ያንሸራትቱ።',
+  'Show other tabs as icons': 'ሌሎች ትሮችን እንደ አዶ አሳይ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ከፊት ካለው በስተቀር እያንዳንዱ ትር አዶውን ብቻ ያሳያል፤ ወደ አንዱ ሲጠቁሙ ስሙን ያሳያል።',
   'Window corners': 'የመስኮት ማዕዘኖች',
   Rounded: 'የተጠጋጋ',
   Square: 'ካሬ',

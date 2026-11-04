@@ -591,6 +591,9 @@ export const ru: Dictionary = {
   Accent: 'Акцент',
   'Tidy up': 'Упорядочить',
   'Swipe in from the edge to see your notes.': 'Проведите от края, чтобы увидеть заметки.',
+  'Show other tabs as icons': 'Показывать остальные вкладки значками',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Все вкладки, кроме передней, показывают только значок; при наведении появляется название.',
   'Window corners': 'Углы окна',
   Rounded: 'Скруглённые',
   Square: 'Прямые',

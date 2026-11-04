@@ -567,6 +567,9 @@ export const my: Dictionary = {
   'Tidy up': 'စနစ်တကျ စီရန်',
   'Swipe in from the edge to see your notes.':
     'သင့်မှတ်စုများကို ကြည့်ရန် အစွန်းမှ အတွင်းသို့ ပွတ်ဆွဲပါ။',
+  'Show other tabs as icons': 'အခြားတဘ်များကို အိုင်ကွန်အဖြစ် ပြပါ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ရှေ့ရှိတဘ်မှလွဲ၍ တဘ်တိုင်းသည် အိုင်ကွန်ကိုသာ ပြသည်၊ တစ်ခုကို ညွှန်လျှင် ၎င်း၏အမည် ပေါ်လာသည်။',
   'Window corners': 'ဝင်းဒိုး ထောင့်များ',
   Rounded: 'လုံးဝိုင်း',
   Square: 'လေးထောင့်',

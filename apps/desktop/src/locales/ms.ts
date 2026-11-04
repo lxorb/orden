@@ -566,6 +566,9 @@ export const ms: Dictionary = {
   Accent: 'Warna aksen',
   'Tidy up': 'Kemaskan',
   'Swipe in from the edge to see your notes.': 'Leret masuk dari tepi untuk melihat nota anda.',
+  'Show other tabs as icons': 'Tunjukkan tab lain sebagai ikon',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Setiap tab kecuali yang di hadapan hanya menunjukkan ikonnya; tuding pada satu untuk melihat namanya.',
   'Window corners': 'Sudut tetingkap',
   Rounded: 'Bulat',
   Square: 'Segi empat',

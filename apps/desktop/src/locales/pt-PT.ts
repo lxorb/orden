@@ -583,6 +583,9 @@ export const ptPT: Dictionary = {
   Accent: 'Destaque',
   'Tidy up': 'Arrumar',
   'Swipe in from the edge to see your notes.': 'Deslize a partir da margem para ver as suas notas.',
+  'Show other tabs as icons': 'Mostrar os outros separadores como ícones',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Cada separador, exceto o da frente, mostra só o ícone; ao apontar para um, aparece o nome.',
   'Window corners': 'Cantos da janela',
   Rounded: 'Arredondados',
   Square: 'Quadrados',

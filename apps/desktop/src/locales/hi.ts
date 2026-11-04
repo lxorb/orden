@@ -569,6 +569,9 @@ export const hi: Dictionary = {
   'Tidy up': 'व्यवस्थित करें',
   'Swipe in from the edge to see your notes.':
     'अपने नोट्स देखने के लिए किनारे से अंदर स्वाइप करें।',
+  'Show other tabs as icons': 'बाकी टैब आइकन के रूप में दिखाएँ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'सामने वाले को छोड़ हर टैब सिर्फ़ अपना आइकन दिखाता है; किसी पर पॉइंटर ले जाने पर उसका नाम दिखता है।',
   'Window corners': 'विंडो के कोने',
   Rounded: 'गोल',
   Square: 'चौकोर',

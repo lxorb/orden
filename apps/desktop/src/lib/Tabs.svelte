@@ -52,13 +52,16 @@
     placed,
     separated,
     slotAt,
+    widened,
     widthsFor,
     worthKeeping,
   } from './tab-strip/layout'
+  import { initialOf, siteLook, twins } from './tab-strip/twins'
+  import { chosenIcon } from './chosen-icon'
   import { pages } from './web-tab/pages.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import type { Landing } from './workspace/panes.svelte'
-  import { pinnedRun } from './workspace/pinning'
+  import { iconTabs } from './tab-strip/icon-tabs.svelte'
   import { isDraft } from './workspace/drafts'
   import { inside } from './workspace/zones'
   import { initial } from './icons'
@@ -183,16 +186,51 @@
   let grabY = 0
 
   const activeId = $derived(pane?.activeTabId ?? null)
+  /** Every tab but the one being read drawn as its mark alone, while Icon tabs is on and
+   *  the strip is a pointer's (#1041); see tab-strip/icon-tabs.svelte.ts. */
+  const icons = $derived(iconTabs.on && !viewport.touch)
   const sized = $derived(
-    tabs.map((tab) => ({ id: tab.id, pinned: tab.pinned, active: tab.id === activeId })),
+    tabs.map((tab) => ({
+      id: tab.id,
+      icon: icons && tab.id !== activeId,
+      active: tab.id === activeId,
+    })),
   )
-  const run = $derived(pinnedRun(tabs))
+
+  /** The tab drawn as its mark that the pointer is on, opened out to its name at once
+   *  and closed again as the pointer leaves. Not while a tab is being carried. */
+  const opened = $derived(
+    icons && !drag.on && hovered !== null && hovered !== activeId ? hovered : null,
+  )
+
+  /** The tabs drawn as icons that would wear the same drawing as another, which wear
+   *  their first letter on it as well; see tab-strip/twins.ts. */
+  const lettered = $derived.by(() => {
+    if (!icons) return new Set<string>()
+    const looks = tabs.map((tab) => {
+      const own =
+        tab.kind === 'terminal' ||
+        tab.kind === 'graph' ||
+        (tab.path !== null && chosenIcon(tab.path) !== null)
+      const look = own
+        ? null
+        : tab.kind === 'web'
+          ? siteLook(tab.address ?? pages.addressOf(tab.id))
+          : tab.kind
+      return { id: tab.id, look }
+    })
+    return twins(looks)
+  })
 
   /** Every tab's width in the strip's own order: held still while tabs are being
-   *  closed with the pointer, else shared out by Chrome's rule. */
-  const widths = $derived(
-    (closing?.widths ? keptWidths(sized, closing.widths) : null) ?? widthsFor(sized, room),
-  )
+   *  closed with the pointer, else shared out by Chrome's rule - and the tab opened
+   *  under the pointer as wide as its name wants, the rest where they were (`widened`). */
+  const widths = $derived.by(() => {
+    const shared =
+      (closing?.widths ? keptWidths(sized, closing.widths) : null) ?? widthsFor(sized, room)
+    const at = opened === null ? -1 : sized.findIndex((one) => one.id === opened)
+    return at < 0 ? shared : widened(shared, at, room)
+  })
   const base = $derived(placed(widths))
 
   /** The pick, and what a press on it carries; see tab-strip/picking.svelte.ts. */
@@ -243,7 +281,7 @@
       // exactly as they would be with the tab already there.
       const withGap = [
         ...sized.slice(0, incoming),
-        { id: '', pinned: false, active: false },
+        { id: '', icon: false, active: false },
         ...sized.slice(incoming),
       ]
       const bounds = placed(widthsFor(withGap, room))
@@ -303,7 +341,7 @@
   // they are drawn, so the answer does not move as the room opens under it.
   $effect(() =>
     register(paneId, {
-      slotAt: (clientX) => slotAt(base, alongOf(clientX), run),
+      slotAt: (clientX) => slotAt(base, alongOf(clientX)),
       top: () => (strip?.getBoundingClientRect().top ?? 0) + TOP,
     }),
   )
@@ -476,7 +514,6 @@
     drag.down({
       tabId: tab.id,
       from: block?.strip.from ?? at,
-      pinned: tab.pinned,
       along,
       x: event.clientX,
       y: event.clientY,
@@ -502,7 +539,7 @@
         event.clientY,
         press.finger ? MAGNETISM.touch : MAGNETISM.mouse,
       ),
-      block?.frame(room ?? endOf(base)) ?? { widths, room: room ?? endOf(base), pinnedRun: run },
+      block?.frame(room ?? endOf(base)) ?? { widths, room: room ?? endOf(base) },
     )
     if (!up) return
 
@@ -693,7 +730,7 @@
       event.dataTransfer.dropEffect = 'move'
     }
 
-    const at = slotAt(base, alongOf(event.clientX), run)
+    const at = slotAt(base, alongOf(event.clientX))
     const where: Landing = { kind: 'strip', paneId, at }
     if (keyOf(workspace.panes.landing) !== keyOf(where)) workspace.panes.landing = where
   }
@@ -705,7 +742,7 @@
     event.preventDefault()
     event.stopPropagation()
 
-    const at = slotAt(base, alongOf(event.clientX), run)
+    const at = slotAt(base, alongOf(event.clientX))
     workspace.panes.landing = null
     workspace.panes.dropped()
 
@@ -906,11 +943,8 @@
         {@const faces = seen?.people.slice(0, 3) ?? []}
         {@const elsewhere = Math.min(seen?.mine ?? rooms.present[tab.note.key] ?? 0, 3)}
         {@const box = layout.boxes[tab.id] ?? { x: 0, width: 0 }}
-        {@const parts = partsFor(
-          box.width,
-          { pinned: tab.pinned, active: tab.id === activeId },
-          viewport.touch,
-        )}
+        {@const icon = icons && tab.id !== activeId && tab.id !== opened}
+        {@const parts = partsFor(box.width, { icon, active: tab.id === activeId }, viewport.touch)}
         <!-- Placed by hand: a width, and a transform along the strip. The tab being
            dragged is drawn where the pointer has it; see `layout`. -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -918,7 +952,7 @@
           class="tab"
           data-box={tab.id}
           class:active={tab.id === activeId}
-          class:pinned={tab.pinned}
+          class:icon
           class:preview={tab.id === workspace.previewTabId}
           class:line={lines.has(tab.id)}
           class:closable={parts.close}
@@ -954,8 +988,8 @@
              and the middle button closes, as it does on every browser's tab. Dragged,
              it goes along its own strip, into another pane's strip, or against a side
              of a pane to make one there. -->
-          <!-- Named by the note, and named on the button. A pinned tab is a mark and
-             no words, and the name used to be put on the `span` around the mark -
+          <!-- Named by the note, and named on the button. A tab drawn as an icon is a mark
+             and no words, and the name used to be put on the `span` around the mark -
              which has no role, so nothing read it and the tab was a button with
              nothing to call it. No `title`: the hover card says the name. And the one in
              front says so, which the strip drew and nothing read (#523). -->
@@ -1000,9 +1034,14 @@
                canvas and two websites says which is which before any of the names
                are read. The icon the file chose for its row where it chose one,
                because it is the same file and one file wears one mark - which is the
-               whole of what a pinned tab is reduced to. See TabMark.svelte. -->
+               whole of what a tab drawn as an icon is reduced to. See TabMark.svelte.
+               Where two such tabs would wear the same drawing - two notes that chose
+               none - each wears its first letter on it as well (`lettered`). -->
             <span class="face" class:hidden={!parts.mark}
-              ><TabMark {tab} />{#if isDraft(tab.note) && (tab.pinned || !parts.title)}<UnsavedDot
+              ><TabMark {tab} />{#if icon && lettered.has(tab.id)}<span
+                  class="letter"
+                  aria-hidden="true">{initialOf(tab.shown)}</span
+                >{/if}{#if isDraft(tab.note) && (icon || !parts.title)}<UnsavedDot
                   corner
                   pressable
                 />{/if}</span
@@ -1025,16 +1064,17 @@
               </svg>
             {/if}
             <!-- The name, which takes whatever the tab has left and fades out at its
-               end rather than being cut with an ellipsis, as Chrome's does. A pinned
-               tab is its mark and nothing else: a tab kept open all day is one
-               somebody knows by sight. The name is still what it says to a reader
-               who cannot see it, and what the title shows. -->
-            {#if !tab.pinned}
-              <span class="label" class:hidden={!parts.title} class:naming={tab.naming}
-                >{tab.shown}</span
-              >
-            {/if}
-            {#if isDraft(tab.note) && !tab.pinned && parts.title}
+               end rather than being cut with an ellipsis, as Chrome's does. A tab drawn
+               as an icon keeps it, faded out, so opening out under the pointer is the
+               name coming in with the width rather than appearing at once. The name is
+               still what it says to a reader who cannot see it. -->
+            <span
+              class="label"
+              class:hidden={!parts.title && !icon}
+              class:quiet={icon}
+              class:naming={tab.naming}>{tab.shown}</span
+            >
+            {#if isDraft(tab.note) && !icon && parts.title}
               <UnsavedDot pressable />
             {/if}
             <!-- A private tab wears Chrome's mark for one; see web-tab/private.ts. -->
@@ -1087,12 +1127,9 @@
           {#if tab.naming && parts.title}
             {#await tabNameField() then Field}<Field {tab} />{/await}
           {/if}
-          <!-- A pinned tab has no cross: what is kept is not closed by the hand that
-             happened to be passing over it. Ctrl+W, the middle button and the row
-             in the tab's own menu still close it, which is what Emil asked for and
-             what a browser does. Any other tab shows it while it is the one being
-             read or has the room for it, as Chrome's do. -->
-          {#if !tab.pinned}
+          <!-- The cross, while the tab is the one being read or has the room for it, as
+             Chrome's do; a tab drawn as an icon has none until it opens out. -->
+          {#if !icon}
             <button
               class="shut"
               class:hidden={!parts.close}
@@ -1534,6 +1571,23 @@
     flex: none;
   }
 
+  /* The first letter a tab drawn as an icon wears where another would look the same
+     (#1041; tab-strip/twins.ts): small, at the mark's foot, on the strip's own ground. */
+  .letter {
+    position: absolute;
+    inset-inline-end: -6px;
+    bottom: -4px;
+    min-width: 11px;
+    padding: 0 2px;
+    border-radius: 3px;
+    background: var(--tab-ground);
+    color: var(--text-strong);
+    font-size: 9px;
+    font-weight: var(--weight-strong);
+    line-height: 11px;
+    text-align: center;
+  }
+
   .hidden {
     display: none;
   }
@@ -1566,6 +1620,16 @@
 
   :global(:root[dir='rtl']) .label {
     mask-image: linear-gradient(to left, #000 calc(100% - var(--fade)), transparent);
+  }
+
+  /* A tab drawn as its mark keeps its name, unseen, so it comes in with the width as the
+     tab opens out under the pointer (#1041). */
+  .label {
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .label.quiet {
+    opacity: 0;
   }
 
   /* Under the field typing it, holding its place. */

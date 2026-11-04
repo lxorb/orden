@@ -568,6 +568,9 @@ export const mr: Dictionary = {
   Accent: 'ॲक्सेंट',
   'Tidy up': 'नीटनेटके करा',
   'Swipe in from the edge to see your notes.': 'तुमच्या नोंदी पाहण्यासाठी कडेपासून आत स्वाइप करा.',
+  'Show other tabs as icons': 'इतर टॅब चिन्हांच्या रूपात दाखवा',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'पुढच्या टॅबशिवाय प्रत्येक टॅब फक्त त्याचे चिन्ह दाखवतो; एकावर पॉइंटर नेल्यास त्याचे नाव दिसते.',
   'Window corners': 'विंडोचे कोपरे',
   Rounded: 'गोलाकार',
   Square: 'चौकोनी',

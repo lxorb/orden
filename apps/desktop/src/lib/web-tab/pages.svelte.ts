@@ -492,8 +492,6 @@ export class Page {
   edited = false
   /** When it last stopped being heard; see heard.ts. */
   heard = 0
-  /** Set by the pane, like `path`. */
-  pinned = false
   /** A private tab's page: the engine's private mode, and nothing of it written down -
    *  no history, no mark, no place - and never parked, which would end its session. Set
    *  as the tab is made and never after; see private.ts. */

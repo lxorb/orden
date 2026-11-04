@@ -24,7 +24,7 @@
   aria-hidden="true"
 >
   <TabMark {tab} />
-  {#if !tab.pinned}<span class="label">{tab.shown}</span>{/if}
+  <span class="label">{tab.shown}</span>
 </div>
 
 <style>

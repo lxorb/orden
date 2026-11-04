@@ -573,6 +573,9 @@ export const ha: Dictionary = {
   Accent: 'Launin nuni',
   'Tidy up': 'Tsara',
   'Swipe in from the edge to see your notes.': 'Goge daga gefe zuwa ciki don ganin bayananka.',
+  'Show other tabs as icons': 'Nuna sauran shafuka a matsayin gumaka',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Kowane shafi banda na gaba yana nuna gumakinsa kawai; idan ka nuna ɗaya, sunansa zai bayyana.',
   'Window corners': 'Kusurwoyin taga',
   Rounded: 'Mai zagaye',
   Square: 'Mai murabba’i',

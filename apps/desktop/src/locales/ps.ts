@@ -568,6 +568,9 @@ export const ps: Dictionary = {
   Accent: 'ځانګړی رنګ',
   'Tidy up': 'ترتیب کړئ',
   'Swipe in from the edge to see your notes.': 'خپلې یادښتونه د لیدو لپاره له څنډې دننه سوایپ کړئ.',
+  'Show other tabs as icons': 'نور ټبونه د نښو په توګه ښکاره کړئ',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'له مخکني پرته هر ټب یوازې خپله نښه ښيي؛ کله چې یو ته اشاره وکړئ، نوم یې ښکاره کېږي.',
   'Window corners': 'د کړکۍ کونجونه',
   Rounded: 'ګرد',
   Square: 'مربع',

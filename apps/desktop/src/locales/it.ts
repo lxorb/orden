@@ -578,6 +578,9 @@ export const it: Dictionary = {
   Accent: 'Accento',
   'Tidy up': 'Riordina',
   'Swipe in from the edge to see your notes.': 'Scorri dal bordo per vedere le tue note.',
+  'Show other tabs as icons': 'Mostra le altre schede come icone',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Ogni scheda tranne quella in primo piano mostra solo la sua icona; puntandone una ne appare il nome.',
   'Window corners': 'Angoli della finestra',
   Rounded: 'Arrotondati',
   Square: 'Squadrati',

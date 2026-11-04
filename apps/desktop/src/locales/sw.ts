@@ -573,6 +573,9 @@ export const sw: Dictionary = {
   Accent: 'Rangi ya msisitizo',
   'Tidy up': 'Panga',
   'Swipe in from the edge to see your notes.': 'Telezesha kutoka ukingoni kuona madokezo yako.',
+  'Show other tabs as icons': 'Onyesha vichupo vingine kama aikoni',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'Kila kichupo isipokuwa cha mbele kinaonyesha aikoni yake tu; ukielekeza kimoja, jina lake linaonekana.',
   'Window corners': 'Pembe za dirisha',
   Rounded: 'Mviringo',
   Square: 'Mraba',

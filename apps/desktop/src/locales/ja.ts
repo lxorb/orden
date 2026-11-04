@@ -565,6 +565,9 @@ export const ja: Dictionary = {
   Accent: 'アクセント',
   'Tidy up': '整列',
   'Swipe in from the edge to see your notes.': '端から内側へスワイプするとノートが見られます。',
+  'Show other tabs as icons': 'ほかのタブをアイコンで表示',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    '手前のタブ以外はアイコンだけを表示し、ポインターを当てると名前が出ます。',
   'Window corners': 'ウィンドウの角',
   Rounded: '丸',
   Square: '四角',

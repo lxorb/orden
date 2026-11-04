@@ -37,7 +37,7 @@ export async function peek(
     const now = workspace.active
     if (now?.paneId === pane) {
       const gone = now.id === old.id ? undefined : workspace.tabs.find((one) => one.id === old.id)
-      if (gone && !gone.dirty && !gone.pinned) workspace.close(gone.id, false)
+      if (gone && !gone.dirty) workspace.close(gone.id, false)
       peeks.set(from, { tab: now.id, walk: [...walk], back: walking ? (held?.back ?? back) : back })
     } else workspace.activeTabId = old.id
     return

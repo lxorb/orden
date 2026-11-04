@@ -456,15 +456,6 @@ describe('previewing every kind of file', () => {
     expect(workspace.previewTabId).toBeNull()
   })
 
-  test('a pinned website is kept, and the next look gets a tab of its own', async () => {
-    const tab = await look(SITE)
-    workspace.togglePin(tab.id)
-    await look('/space/a.md')
-
-    expect(paths()).toEqual([SITE, '/space/a.md'])
-    workspace.togglePin(tab.id)
-  })
-
   test('drawing on a previewed plane keeps it, the way typing keeps a note', async () => {
     const tab = await look(PLANE)
     tab.note.live.replace(`${DRAWN} `)
@@ -1760,164 +1751,26 @@ describe('closing what is in a pane', () => {
   })
 })
 
-/** A tab somebody meant to keep.
- *
- *  Emil, 2026-09-17: *"I'd like to be able to pin open tabs (which is per device).
- *  Then they'll be reduced to an icon and all pinned tabs will always be at the left
- *  of the tabs. And to close them, there is no X anymore so you either have to right
- *  click close or Ctrl W."*
- *
- *  What a pinned tab looks like is Tabs.svelte; the order is here, because the order
- *  is the array of tabs itself and everything that counts along a strip counts along
- *  that - see workspace/pinning.ts, which holds the rule, and its own test, which
- *  holds the places a tab may land. What this file is about is that every door into
- *  the strip goes through it. */
-describe('a tab held at the head of its strip', () => {
+/** A tab an older build wrote down as pinned (#1041): the strip has no pinning any more,
+ *  every tab not in front looking pinned already, so such a tab comes back as any other,
+ *  where it was, and nothing about it is written down again. */
+describe('a tab a session wrote as pinned', () => {
   beforeEach(() => {
     onePane()
   })
 
-  const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)
-
-  /** Three notes open, and the tab holding one of them, by name. */
-  async function opened(): Promise<(path: string) => string> {
-    for (const path of ['/space/a.md', '/space/b.md', '/space/c.md']) await workspace.open(path)
-
-    return (path: string) => {
-      const tab = workspace.tabs.find((one) => one.path === path)
-      if (!tab) throw new Error(`${path} is not open`)
-      return tab.id
-    }
-  }
-
-  test('comes to the head of the strip, and the next one behind it', async () => {
-    const id = await opened()
-
-    workspace.togglePin(id('/space/c.md'))
-    expect(strip()).toEqual(['/space/c.md', '/space/a.md', '/space/b.md'])
-
-    workspace.togglePin(id('/space/b.md'))
-    expect(strip()).toEqual(['/space/c.md', '/space/b.md', '/space/a.md'])
+  const draft = (path: string, pinned = false) => ({
+    kind: 'note' as const,
+    path,
+    name: path.slice(path.lastIndexOf('/') + 1),
+    doc: '',
+    dirty: false,
+    cursor: 0,
+    scroll: 0,
+    ...(pinned ? { pinned: true } : {}),
   })
 
-  test('and goes back to the front of what is not pinned when it is let go of', async () => {
-    const id = await opened()
-    workspace.togglePin(id('/space/c.md'))
-    workspace.togglePin(id('/space/b.md'))
-
-    workspace.togglePin(id('/space/c.md'))
-
-    expect(strip()).toEqual(['/space/b.md', '/space/c.md', '/space/a.md'])
-  })
-
-  /** The drag is the door this used to be open at: pinning put the tab at the head
-   *  and the next drop put another one in front of it. */
-  test('stays in front of a tab dropped at the head of the strip', async () => {
-    const id = await opened()
-    workspace.togglePin(id('/space/c.md'))
-
-    workspace.dropTab(id('/space/b.md'), {
-      kind: 'strip',
-      paneId: workspace.panes.focusedId,
-      at: 0,
-    })
-
-    expect(strip()).toEqual(['/space/c.md', '/space/b.md', '/space/a.md'])
-  })
-
-  test('and stays in the run when it is itself dragged past the end of it', async () => {
-    const id = await opened()
-    workspace.togglePin(id('/space/c.md'))
-    workspace.togglePin(id('/space/b.md'))
-
-    workspace.dropTab(id('/space/c.md'), {
-      kind: 'strip',
-      paneId: workspace.panes.focusedId,
-      at: 3,
-    })
-
-    expect(strip()).toEqual(['/space/b.md', '/space/c.md', '/space/a.md'])
-  })
-
-  /** A pinned tab dragged into another pane is still one somebody meant to keep, so
-   *  it lands at the head of the strip it arrives in. */
-  test('and lands at the head of another pane s strip when it is dragged there', async () => {
-    await workspace.open('/space/a.md')
-    await beside('/space/b.md')
-    const [first, second] = workspace.panes.all
-    if (!first || !second) throw new Error('the split did not happen')
-
-    await workspace.open('/space/c.md')
-    const moving = workspace.tabs.find((one) => one.path === '/space/c.md')
-    if (!moving) throw new Error('nothing to move')
-    workspace.togglePin(moving.id)
-
-    workspace.dropTab(moving.id, { kind: 'strip', paneId: first.id, at: 1 })
-
-    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
-      '/space/c.md',
-      '/space/a.md',
-    ])
-  })
-
-  /** What Emil asked for: the cross is gone and the deliberate ways are not. This
-   *  used to refuse, so a tab pinned in the morning could not be closed at all until
-   *  it was let go of. Ctrl+W asks first; see pinned-close.effect.test.ts. */
-  test('closes when the row in its own menu asks', async () => {
-    const id = await opened()
-    const pinned = id('/space/c.md')
-    workspace.togglePin(pinned)
-
-    await workspace.closeAsking(pinned)
-
-    expect(strip()).toEqual(['/space/a.md', '/space/b.md'])
-  })
-
-  /** And is still not one of "the others": closing everything else around a tab is
-   *  about the tabs somebody left lying open, which is what a pinned one is not. */
-  test('but is not one of the others that close around a tab', async () => {
-    const id = await opened()
-    workspace.togglePin(id('/space/c.md'))
-
-    await workspace.closeAround(id('/space/a.md'), 'others')
-
-    expect(strip()).toEqual(['/space/c.md', '/space/a.md'])
-  })
-
-  /** Per device, which is what the session already is: it goes into this machine's
-   *  own storage with everything else that is open, and the account never hears of
-   *  it. */
-  test('is written into this machine s own session, and comes back from it', async () => {
-    const id = await opened()
-    workspace.togglePin(id('/space/c.md'))
-
-    const written = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
-      layout?: { frame: { pane?: { tabs?: { path: string | null; pinned?: boolean }[] } } }
-    }
-    const tabs = written.layout?.frame.pane?.tabs ?? []
-    expect(tabs.map((one) => [one.path, one.pinned === true])).toEqual([
-      ['/space/c.md', true],
-      ['/space/a.md', false],
-      ['/space/b.md', false],
-    ])
-  })
-
-  /** A session written by a build that let a pinned tab sit further along - or one
-   *  edited by hand - opens as a strip with the run at its head, and the tab that was
-   *  showing is still the one showing: that index counts along the strip as it was
-   *  written down. */
-  test('comes to the head of a strip an arrangement wrote it into the middle of', async () => {
-    const draft = (path: string, pinned = false) => ({
-      kind: 'note' as const,
-      path,
-      name: path.slice(path.lastIndexOf('/') + 1),
-      doc: '',
-      dirty: false,
-      cursor: 0,
-      scroll: 0,
-      ...(pinned ? { pinned: true } : {}),
-    })
-
+  test('comes back where it was, with the tab that was showing still showing', async () => {
     await workspace.applyLayout({
       frame: {
         kind: 'pane',
@@ -1933,11 +1786,13 @@ describe('a tab held at the head of its strip', () => {
     })
 
     expect(workspace.tabs.map((tab) => tab.path)).toEqual([
-      '/space/b.md',
       '/space/a.md',
+      '/space/b.md',
       '/space/c.md',
     ])
     expect(workspace.active?.path).toBe('/space/c.md')
+    const written = JSON.stringify(workspace.layout())
+    expect(written).not.toContain('pinned')
   })
 })
 
@@ -3248,17 +3103,6 @@ describe('closing a tab with unsaved words', () => {
     await vi.waitFor(() => expect(open(tab.id)).toBe(false))
     expect(sheet.asked).toHaveLength(1)
     expect(trash).toEqual([])
-  })
-
-  test('Ctrl+W on a pinned one asks about its words, and not also whether to close it', async () => {
-    const tab = draft('# Plan')
-    workspace.togglePin(tab.id)
-    sheet.answer = 'discard'
-
-    await workspace.closeActive()
-
-    expect(sheet.asked).toEqual([`Save changes to ${tab.shown}?`])
-    expect(open(tab.id)).toBe(false)
   })
 
   test('several close with one question, and Save gives each its file first', async () => {
@@ -4788,13 +4632,12 @@ describe('what a tab s own menu does to the strip', () => {
     expect(workspace.active?.path).toBe('/space/a.md')
   })
 
-  test('closes every tab of the strip but a pinned one', async () => {
+  test('closes every tab of the strip', async () => {
     const id = await opened('/space/a.md', '/space/b.md', '/space/c.md')
-    workspace.togglePin(id('/space/b.md'))
 
     await workspace.closeAround(id('/space/c.md'), 'all')
 
-    expect(strip()).toEqual(['/space/b.md'])
+    expect(strip()).toEqual([])
   })
 
   test('says how many tabs each close would take', async () => {
@@ -4819,19 +4662,6 @@ describe('what a tab s own menu does to the strip', () => {
     expect(copy?.id).not.toBe(original.id)
     expect(copy?.note).toBe(original.note)
     expect(copy?.cursor).toBe(2)
-  })
-
-  test('duplicates a pinned tab as a pinned one', async () => {
-    const id = await opened('/space/a.md', '/space/b.md')
-    workspace.togglePin(id('/space/b.md'))
-
-    ops.duplicateTab(id('/space/b.md'))
-
-    expect(workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.pinned)).toEqual([
-      true,
-      true,
-      false,
-    ])
   })
 
   test('does not duplicate the graph, which is one to a pane', () => {

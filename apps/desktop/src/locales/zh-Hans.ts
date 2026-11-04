@@ -565,6 +565,9 @@ export const zhHans: Dictionary = {
   Accent: '强调色',
   'Tidy up': '整理',
   'Swipe in from the edge to see your notes.': '从边缘向内滑动即可查看笔记。',
+  'Show other tabs as icons': '其他标签页只显示图标',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    '除前面的标签页外，每个标签页只显示图标；指向某个标签页时会显示其名称。',
   'Window corners': '窗口圆角',
   Rounded: '圆角',
   Square: '直角',

@@ -570,6 +570,9 @@ export const te: Dictionary = {
   'Tidy up': 'చక్కదిద్దు',
   'Swipe in from the edge to see your notes.':
     'మీ నోట్‌లను చూడడానికి అంచు నుండి లోపలికి స్వైప్ చేయండి.',
+  'Show other tabs as icons': 'ఇతర ట్యాబ్‌లను ఐకాన్‌లుగా చూపించు',
+  'Every tab but the one in front shows only its icon; pointing at one shows its name.':
+    'ముందున్నది తప్ప ప్రతి ట్యాబ్ తన ఐకాన్ మాత్రమే చూపిస్తుంది; ఒకదానిపై పాయింటర్ ఉంచితే పేరు కనిపిస్తుంది.',
   'Window corners': 'విండో మూలలు',
   Rounded: 'గుండ్రని',
   Square: 'చతురస్రం',
