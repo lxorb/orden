@@ -440,9 +440,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,866,700, for #1032: the right side shut whole by its
  *  one button, with the scratchpad one of its tabs (workspace.svelte.ts, Sidebar.svelte).
  *  Measured 5,866,534.
+ *
+ *  The code raised on 2026-11-04, to 5,868,500, for #331: the tab overview's cells, round
+ *  and holding every window on every frame (overview/membrane.ts, overview/Cells.svelte).
+ *  Measured 5,868,335.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_866_700,
+  code: 5_868_500,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
