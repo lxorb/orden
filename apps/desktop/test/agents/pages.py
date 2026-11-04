@@ -102,7 +102,7 @@ FRAME = page(
 
 LANDS = page(
     "Lands",
-    """<ul><li id="wrapper"><button id="pay" style="width:100%;height:40px">Pay now</button></li></ul>
+    """<section aria-label="Bill"><button id="pay" style="width:100%;height:40px">Pay now</button></section>
 <div id="built" onclick="record({kind: 'built'})"><div>Pay now</div><div>20.00 EUR</div></div>
 <p>The weather is fine today</p>
 <a href="/lands#guide">How to delete your account</a>""",

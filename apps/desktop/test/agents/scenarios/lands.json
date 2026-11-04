@@ -1,5 +1,5 @@
 {
-  "proves": "a press is judged by what it lands on: the list item round a Pay button asks and pays nothing, any part of a div built as one asks, and plain words and a link to a guide go",
+  "proves": "a press is judged by what it lands on: the section round a Pay button asks and pays nothing, any part of a div built as one asks, and plain words and a link to a guide go",
   "doc": "9.3",
   "steps": [
     {
@@ -22,7 +22,8 @@
       "call": "browser_find",
       "args": {
         "tab": "{tab}",
-        "role": "listitem"
+        "role": "region",
+        "name": "Bill"
       },
       "expect": {
         "status": "ok",

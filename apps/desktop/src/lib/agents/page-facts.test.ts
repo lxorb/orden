@@ -33,18 +33,22 @@ interface Said {
 
 function page(html: string): Document {
   const { window } = new JSDOM(`<!doctype html><body>${html}`, { url: 'https://shop.example/a' })
-  // jsdom lays nothing out, so it has no innerText.
+  // jsdom lays nothing out, so it has no innerText, and nothing it holds has a box.
   Object.defineProperty(window.HTMLElement.prototype, 'innerText', {
     get(this: HTMLElement) {
       return this.textContent
     },
   })
+  window.Element.prototype.getClientRects = function (this: Element) {
+    const hidden = (this as HTMLElement).style?.display === 'none'
+    return (hidden ? [] : [{}]) as unknown as DOMRectList
+  }
   return window.document
 }
 
-function factsOf(element: Element): Said {
+function factsOf(element: Element, heard?: Element): Said {
   // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the script under test is a string in the crate
-  return new Function(script).call(element) as Said
+  return new Function('heard', script).call(element, heard) as Said
 }
 
 function pressOn(document: Document): Said {
@@ -223,5 +227,102 @@ describe('a huge page', () => {
     expect(facts.fields).toEqual([])
     expect(facts as unknown as { cut: boolean }).toMatchObject({ cut: true })
     expect(performance.now() - started).toBeLessThan(30_000)
+  })
+})
+
+describe('a press no control holds goes to what acts for it', () => {
+  const hit = (html: string, at = '#hit') => {
+    const element = page(html).querySelector(at)
+    if (!element) throw new Error('no element')
+    return factsOf(element)
+  }
+
+  test.each([
+    ['a handler', '<div onclick="pay()"><div>Pay now</div><div id=hit>20.00 EUR</div></div>'],
+    [
+      'a pointer it sets',
+      '<div style="cursor:pointer"><div>Pay now</div><div id=hit>20.00 EUR</div></div>',
+    ],
+    ['the tab order', '<div tabindex=0><div>Pay now</div><div id=hit>20.00 EUR</div></div>'],
+    ['a role', '<div role=option><div>Pay now</div><div id=hit>20.00 EUR</div></div>'],
+    ['a press handler', '<div onmousedown="pay()"><div>Pay</div><div id=hit>20 EUR</div></div>'],
+  ])('%s: a part of it is called what it holds', (_, html) => {
+    const facts = hit(html)
+    expect(facts.name).toContain('Pay')
+    expect(facts.name).toContain('EUR')
+    // It is carried, not pressed, when a drag picks it up: no control.
+    expect(facts.control).toBe(false)
+  })
+
+  test('a listener only the engine can see', () => {
+    const document = page('<div id=round><div>Pay now</div><div id=hit>20.00 EUR</div></div>')
+    const facts = factsOf(
+      document.querySelector('#hit') as Element,
+      document.querySelector('#round') as Element,
+    )
+    expect(facts.name).toBe('Pay now 20.00 EUR')
+    expect(factsOf(document.querySelector('#hit') as Element).name).toBe('20.00 EUR')
+  })
+
+  test.each([
+    ['a label on it', '<div onclick="pay()" aria-label="Pay now"><div id=hit>20 EUR</div></div>'],
+    ['the words of one', '<div onclick="go()"><div>Pay now</div><span id=hit></span></div>'],
+  ])('%s', (_, html) => {
+    expect(hit(html).name).toContain('Pay now')
+  })
+
+  test.each([
+    [
+      'a row is not called what its button is',
+      '<table><tr onclick="go()"><td id=hit>Bob</td><td>Hi</td><td><button aria-label="Delete">x</button></td></tr></table>',
+      'Bob Hi',
+    ],
+    [
+      'words too long to be a name are none',
+      '<div onclick="go()"><p id=hit>Open</p><p>Please pay your dues and remove your shoes when you come into the house</p></div>',
+      'Open',
+    ],
+    [
+      'a column is no card',
+      '<div tabindex=0><h3 id=hit>Todo</h3><div>Pay rent before the end of the month</div><div>Delete the old backups from the attic</div></div>',
+      'Todo',
+    ],
+    [
+      'what does not show is not said',
+      '<div onclick="go()"><div id=hit>Open</div><div style="display:none">Delete</div></div>',
+      'Open',
+    ],
+    [
+      'a place out of the tab order is no press',
+      '<div tabindex=-1><p>Pay</p><p id=hit>Open</p></div>',
+      'Open',
+    ],
+    ['plain words are their own', '<div><p>Pay now</p><p id=hit>Open</p></div>', 'Open'],
+  ])('%s', (_, html, name) => {
+    expect(hit(html).name).toBe(name)
+  })
+
+  test('a field and a control are their own', () => {
+    expect(hit('<div onclick="go()"><input id=hit aria-label="Qty"><b>Delete</b></div>').name).toBe(
+      'Qty',
+    )
+    expect(hit('<div onclick="pay()"><b>Pay</b><button id=hit>Details</button></div>').name).toBe(
+      'Details',
+    )
+  })
+
+  test('words of a label press its button', () => {
+    const facts = hit(
+      '<form><label><span id=hit>Confirm</span> <button>Pay now</button></label></form>',
+    )
+    expect(facts.name).toContain('Pay now')
+    expect(facts.control).toBe(true)
+    expect(facts.submit).toBe(true)
+  })
+
+  test('a link keeps going where it goes', () => {
+    const facts = hit('<a id=hit href="/guide">Delete account</a>')
+    expect(facts.link).toBe(true)
+    expect(facts.control).toBe(true)
   })
 })
