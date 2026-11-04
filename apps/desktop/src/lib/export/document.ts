@@ -131,7 +131,7 @@ function spansOf(tokens: readonly Token[] | undefined, marks: Marks = {}): Span[
         if (closing && name === passing) passing = null
         continue
       }
-      if (name && !closing && !token.raw.trimEnd().endsWith('/>')) {
+      if (name && !closing && !VOID.test(name) && !token.raw.trimEnd().endsWith('/>')) {
         if (NOT_SHOWN.test(name) || HIDDEN.test(token.raw)) {
           passing = name
           continue
@@ -526,7 +526,7 @@ function wordsOfHtml(html: string): string[] {
   }
 
   for (const found of html.matchAll(
-    /<!--[\s\S]*?(?:-->|$)|<[!?][^>]*>|<(\/?)([a-z][\w-]*)(?:"[^"]*"|'[^']*'|[^'">])*>/gi,
+    /<!--[\s\S]*?(?:-->|$)|<[!?][^>]*>|<(\/?)([a-z][\w-]*)(?:"[^"]*"|'[^']*'|[^'"<>])*>/gi,
   )) {
     read(html.slice(at, found.index))
     at = found.index + found[0].length

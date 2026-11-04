@@ -5,7 +5,7 @@
  *  values rather than words (Today groups by whether a task is overdue), and this is
  *  where a value becomes what the reader reads, in their language. */
 
-import { addDays, groupName, type Value } from '@orden/bases'
+import { addDays, groupName, isWhen, type Value } from '@orden/bases'
 import { i18n, key, t } from '../i18n.svelte'
 import { dateAt } from './days'
 import { bare } from './columns'
@@ -137,7 +137,7 @@ export function groupLabel(
   if (property === 'formula.overdue') return value === true ? t('Overdue') : t('Today')
   if (value === 'overdue') return t('Overdue')
   // Todos' groups of when a task is due (`WHEN` in @orden/bases, #1046).
-  if (property === 'formula.when') {
+  if (isWhen(property)) {
     if (value === 'today') return t('Today')
     if (value === 'tomorrow') return t('Tomorrow')
     if (value === 'later') return t('Later')

@@ -50,6 +50,20 @@ describe('a block of raw HTML', () => {
     expect(said('<dialog open>w1</dialog>\n')).toEqual(['w1'])
   })
 
+  test('an element with no end passes over nothing after it, in a line', () => {
+    const line = (source: string) => {
+      const [first] = documentOf(source, 'n').blocks
+      return first?.kind === 'paragraph' ? words(first.spans) : null
+    }
+    expect(line('see <embed src="x.pdf"> these words stay\n')).toBe('see  these words stay')
+    expect(line('pic <img hidden src="x.png"> words after\n')).toBe('pic  words after')
+    expect(line('w1 <span hidden>secret</span> w2\n')).toBe('w1  w2')
+  })
+
+  test('a tag that never closes is no further than the next that opens', () => {
+    expect(said('<div <p>w1</p>\n')).toContain('w1')
+  })
+
   test('reads the entities a note holds', () => {
     expect(said('<p>f&uuml;r &mdash; &euro; &copy; &hellip; &#252; &#xfc; &nope;</p>\n')).toEqual([
       'für \u2014 € © … ü ü &nope;',

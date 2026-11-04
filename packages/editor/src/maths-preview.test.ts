@@ -91,6 +91,11 @@ describe('the formula the caret is in', () => {
 describe('the formula in a table cell', () => {
   test('read by the note’s parser', () => {
     expect(mathsInText('so $x^2$ here', 5)).toMatchObject({ from: 3, to: 8, tex: 'x^2' })
+    // A block's closing fence may carry a block's name, as the page reads it.
+    const named = '$$\nx\n$$ ^id\n\nwords below\n'
+    expect(mathsInText(named, 3)).toMatchObject({ from: 0, to: 7, tex: 'x' })
+    expect(mathsInText(named, named.indexOf('below'))).toBeNull()
+    expect(mathsInText('$$\nx\n$$ words\n', 3)?.tex).toContain('words')
     expect(mathsInText('so $x^2$ here', 1)).toBeNull()
     expect(mathsInText('$5 and $6', 4)).toBeNull()
   })

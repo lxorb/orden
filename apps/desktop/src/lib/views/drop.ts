@@ -19,6 +19,7 @@ import {
   type Row,
   type TaskChange,
   type Value,
+  isWhen,
 } from '@orden/bases'
 import type { RowChange } from '../rows/write'
 import { bare, isNoteProperty } from './columns'
@@ -135,7 +136,7 @@ export function dropInto(
   // Todos' groups of when a task is due (`WHEN` in @orden/bases): today and tomorrow are
   // its deadline, no date takes the deadline away. Overdue and Later name no one day, so
   // a card carried there goes back; the scheduler is the way to a day of them.
-  if (property === 'formula.when') {
+  if (isWhen(property)) {
     if (!row.task || row.task.done || row.task.cancelled) return null
     if (key === 'today') return taskDrop('deadline', today, row, today)
     if (key === 'tomorrow') return taskDrop('deadline', addDays(today, 1), row, today)

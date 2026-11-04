@@ -43,6 +43,13 @@ const quote = (text: string) => JSON.stringify(text)
 export const WHEN =
   'if(!task.deadline, null, if(task.deadline < today(), "overdue", if(task.deadline == today(), "today", if(task.deadline == today() + "1d", "tomorrow", "later"))))'
 
+/** The name WHEN goes by in a base whose own formula is called `when`, and whether a view
+ *  grouped by a property is grouped by it. */
+export const WHEN_ASIDE = 'ordenWhen'
+export function isWhen(property: string | undefined): boolean {
+  return property === 'formula.when' || property === `formula.${WHEN_ASIDE}`
+}
+
 /** The order of WHEN's groups; the group of no value comes after them. */
 export const WHEN_GROUPS = ['overdue', 'today', 'tomorrow', 'later']
 

@@ -8,6 +8,8 @@ What this drives, against the real rows store and the real files:
     each label, the calendar and the timeline once.
   * Carried out of one label to another, the task swaps that one and keeps the rest, and
     carried to none, it loses that one.
+  * The space renamed, the tab goes on showing it, with its layout and no second tab, and
+    what was kept for it is under the new name.
 
     python apps/desktop/test/e2e/todos-labels.py
 
@@ -169,6 +171,41 @@ def the_layouts(page: Page) -> None:
         DRIVE.shot(page, f"03-{layout}")
 
 
+def renamed(page: Page) -> None:
+    page.evaluate(LAID_OUT, "list")
+    quiet(page)
+    before = len(texts(page, ".view-tab .task .words"))
+    page.evaluate(
+        """async () => {
+          const ws = window.nibApp.workspace
+          await ws.renameSpace(ws.activeSpace.id, 'Renamed here')
+        }"""
+    )
+    wait_for(page, "window.nibApp.workspace.activeSpace.name.startsWith('Renamed here')", "the new name")
+    wait_for(page, "document.querySelector('.view-tab .task')", "the tab's rows under the new name")
+    quiet(page)
+    spec = page.evaluate(
+        "() => JSON.parse(window.nibApp.workspace.tabs.find((one) => one.kind === 'view').doc)"
+    )
+    name = page.evaluate("window.nibApp.workspace.activeSpace.name")
+    after = len(texts(page, ".view-tab .task .words"))
+    say(f"[renamed] {spec['space']} {before} -> {after}")
+    if spec["space"] != name or f'file.space == \\"{name}\\"' not in spec["yaml"]:
+        wrong(f"the tab still asks about {spec['space']!r}: {spec['yaml'][:160]}")
+    if after != before:
+        wrong(f"the tab shows {after} rows after the rename, not {before}")
+    if "task.tags" not in spec["yaml"]:
+        wrong("the tab lost its grouping in the rename")
+    kept = page.evaluate(
+        "(name) => { const all = JSON.parse(localStorage.getItem('nib:todos-views') ?? '{}'); return Object.keys(all) }",
+        name,
+    )
+    say(f"[kept] {kept}")
+    if name not in kept or len(kept) != 1:
+        wrong(f"what was kept for the space is under {kept}, not {name!r}")
+    DRIVE.shot(page, "04-renamed")
+
+
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -179,8 +216,9 @@ def drive(browser: Browser) -> None:
     after_a_reload(page)
     carried(page)
     the_layouts(page)
+    renamed(page)
     page.close()
 
 
 if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "A task under each of its labels held"))
+    raise SystemExit(DRIVE.run(drive, "A task under each of its labels, and a space renamed under it, held"))

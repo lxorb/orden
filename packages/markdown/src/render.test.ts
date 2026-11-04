@@ -1230,9 +1230,9 @@ describe('a named block, as a page holds it', () => {
   })
 
   test('is read by where the words are, whatever the parser keeps no token for', () => {
-    expect(
-      anchored('[ref]: http://x\n[ref]: http://y ^d\n\n> quote\n\n[ref]\n'),
-    ).toBe(renderMarkdown('[ref]: http://x\n[ref]: http://y\n\n> quote\n\n[ref]\n'))
+    expect(anchored('[ref]: http://x\n[ref]: http://y ^d\n\n> quote\n\n[ref]\n')).toBe(
+      renderMarkdown('[ref]: http://x\n[ref]: http://y\n\n> quote\n\n[ref]\n'),
+    )
     expect(without(anchored('[r]: http://x\n[r]: http://y\n\n$$x$$ ^d\n'))).toBe(
       renderMarkdown('[r]: http://x\n[r]: http://y\n\n$$x$$\n'),
     )
@@ -1252,8 +1252,6 @@ describe('a named block, as a page holds it', () => {
 
   test('takes a tag no further than the next one that opens', async () => {
     const { blockAnchorsDrawn } = await import('./links')
-    expect(blockAnchorsDrawn('<div <a title="x">y</a>\n')).toBe(
-      '<div <a title="">y</a>\n',
-    )
+    expect(blockAnchorsDrawn('<div <a title="x">y</a>\n')).toBe('<div <a title="">y</a>\n')
   })
 })

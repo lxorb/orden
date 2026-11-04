@@ -8,7 +8,7 @@
  *  status is more than quick add can carry, and there the view's own add row writes
  *  the words as they were typed, with the prefill's fields, through `addTask`. */
 
-import { addDays, type Base, nextId, type Priority, rowsInBase, type Value } from '@orden/bases'
+import { addDays, type Base, isWhen, nextId, type Priority, rowsInBase, type Value } from '@orden/bases'
 import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
 import { joinPath } from '../tauri'
 import { insideOnly } from '../automation/inside'
@@ -91,7 +91,7 @@ export function prefillOf(
   else if (property === 'task.priority' && isPriority(key)) out.priority = key
   else if (property === 'task.status' && typeof key === 'string') out.status = key
   else if (property === 'task.tags' && typeof key === 'string' && key) out.tags = [key]
-  else if (property === 'formula.when' && (key === 'today' || key === 'tomorrow')) {
+  else if (isWhen(property) && (key === 'today' || key === 'tomorrow')) {
     // Todos' due today, due tomorrow (#1046).
     out.deadline = key === 'today' ? today : addDays(today, 1)
   } else if (property === 'file.path' && typeof key === 'string' && key && spec.space) {

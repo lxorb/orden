@@ -28,6 +28,7 @@
     type Row,
     rowId,
     type Value,
+    isWhen,
   } from '@orden/bases'
   import { tick, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
@@ -237,7 +238,7 @@
     if (project && sectionOf(group) === null) return t('None')
     if (days) return dayHead(group.key, live.today)
     // Todos' tasks with no deadline are No date, as its list says.
-    if (property === 'formula.when') return groupLabel(property, group.key, live.today)
+    if (isWhen(property)) return groupLabel(property, group.key, live.today)
     if (group.key === null || group.key === '') return nothing
     return groupLabel(property, group.key, live.today, noteCounts)
   }
@@ -253,7 +254,7 @@
     // drawn (#1046).
     if (property === 'task.tags' && typeof key === 'string' && key)
       return labelColour(key, theme.current)
-    if (property === 'formula.when')
+    if (isWhen(property))
       return key === 'overdue'
         ? 'var(--danger)'
         : key === 'today'
