@@ -101,6 +101,28 @@ function sourceEdit(
   return { from, to: from + written.length, text: asSource(wanted, written) }
 }
 
+/** The inline code spans of `source`. A span may go over lines but not past a blank one or a
+ *  code block, so each run of lines is read alone, and a lone backtick reaches no further. */
+function spansByBlock(
+  source: string,
+  all: readonly { text: string; from: number; code: boolean }[],
+): [number, number][] {
+  const spans: [number, number][] = []
+  let run: { from: number; to: number } | null = null
+  const end = () => {
+    if (!run) return
+    const { from, to } = run
+    for (const [a, b] of codeSpans(source.slice(from, to))) spans.push([from + a, from + b])
+    run = null
+  }
+  for (const { text, from, code } of all) {
+    if (code || !text.trim()) end()
+    else run = { from: run?.from ?? from, to: from + text.length }
+  }
+  end()
+  return spans
+}
+
 /** Where every picture's source sits in the text, outside code: code as the links
  *  are read (`lines` in links.ts), so a block closes on its own mark only and a fence
  *  in a quote or a list item is code too. And outside front matter, which is the note's
@@ -109,16 +131,17 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
   const edits: Edit[] = []
   const body = source.length - stripFrontMatter(source).length
   let paragraph = false
+  const all = [...lines(source)]
+  const spans = spansByBlock(source, all)
 
-  for (const { text: line, from: at, code } of lines(source)) {
+  for (const { text: line, from: at, code } of all) {
     if (code || at < body) {
       paragraph = false
       continue
     }
 
-    const spans = codeSpans(line)
     for (const match of line.matchAll(PICTURE)) {
-      if (inCode(spans, match.index)) continue
+      if (inCode(spans, at + match.index)) continue
       const written = match[2] ?? ''
       // Past `![`, the alt and `](`: an alt may hold the same characters.
       const past = (match[1]?.length ?? 0) + 4
